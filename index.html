@@ -370,12 +370,13 @@ function mostrarDetalleModal(fila, header){
   // Campos a mostrar en el detalle
   const campos = [
     {label:"Nota Importante", key:"Nota Importante", isTitle: true},
-    {label:"Imagen del Vehiculo/Corte (Principal)", key:"Imagen del vehiculo"},
-    {label:"Tipo de Corte 1", key:"Descripcion del corte"},
-    {label:"Imagen del Corte 1", key:"Imagen del Corte"},
-    {label:"Tipo de Corte 2", key:"Tipo de corte 2"},
-    {label:"Descripción del Corte 2", key:"Descripción del Segundo corte"},
-    {label:"Imagen de corte 2", key:"Imagen de corte 2"},
+    {label:"Modelo", key:"Imagen del vehiculo"},
+    {label:"Tipo de Corte", key:"Tipo de corte"},
+    {label:"Descripción", key:"Descripcion del corte"},
+    {label:"Imagen", key:"Imagen del Corte"},
+    {label:"Segunda Opción", key:"Tipo de corte 2"},
+    {label:"Segunda Descripción:", key:"Descripción del Segundo corte"},
+    {label:"Imagen del Segundo Corte", key:"Imagen de corte 2"},
     {label:"Apertura", key:"Apertura"},
     {label:"Imagen de la Apertura", key:"Imagen de la apertura"},
     {label:"Alimentación", key:"Cables de Alimentacion"},
@@ -882,3 +883,4 @@ fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${
 </script>
 </body>
 </html>
+
