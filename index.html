@@ -133,7 +133,7 @@ h1.app-title {
     text-align: left;
     width: 100%;
     font-size: 1em;
-    color: #333; /* Estilo añadido para asegurar la visibilidad del texto */
+    color: #333;
 }
 
 /* --- ESTILOS DE LA SELECCIÓN DE SECCIÓN --- */
@@ -298,7 +298,7 @@ h1.app-title {
           </button>
           <div class="dropdown-menu" id="dropdown-menu">
               <div class="dropdown-menu-item">
-                  <button id="add-to-home-btn">Instalar App</button>
+                  <button id="add-to-home-btn">Añadir a pantalla de inicio</button>
               </div>
           </div>
       </div>
@@ -585,7 +585,7 @@ function extractYouTubeId(url) {
             videoId = urlObj.searchParams.get('v');
         } else if (urlObj.hostname.includes('youtu.be') && urlObj.pathname.length > 1) {
             videoId = urlObj.pathname.substring(1);
-        } else if (urlObj.pathname.includes('/embed/') && urlObj.pathname.length > 7) {
+        } else if (urlObj.hostname.includes('/embed/') && urlObj.pathname.length > 7) {
             const parts = urlObj.pathname.split('/embed/');
             if (parts.length > 1) videoId = parts[1].split(/[?&]/)[0];
         }
@@ -776,7 +776,7 @@ function mostrarCategorias(){
   }
   const header = datosOriginales[0];
   const indexes = getHeaderIndexes(header);
-  const categorias = [...new Set(datosOriginales.slice(1).map(f=>f[indexes.COL_CAT]))].filter(c => c);
+  const categorias = [...new Set(datosOriginales.slice(1).map(f=>f[indexes.COL_CAT]))].filter(c => c).sort();
   const grid = document.createElement("div"); grid.className="grid";
   categorias.forEach(cat=>{
     const ejemplo = datosOriginales.slice(1).find(f=>f[indexes.COL_CAT]===cat);
@@ -797,7 +797,7 @@ function mostrarMarcas(categoria){
   cont.innerHTML=`<span class="backBtn" onclick="mostrarCategorias()">${backSvg} Volver a Categorías</span><h4>Marcas de ${categoria}</h4>`;
   const header = datosOriginales[0];
   const indexes = getHeaderIndexes(header);
-  const marcas = [...new Set(datosOriginales.slice(1).filter(f=>f[indexes.COL_CAT]===categoria).map(f=>f[indexes.COL_MARCA]))].filter(m => m);
+  const marcas = [...new Set(datosOriginales.slice(1).filter(f=>f[indexes.COL_CAT]===categoria).map(f=>f[indexes.COL_MARCA]))].filter(m => m).sort();
   const grid = document.createElement("div"); grid.className="grid";
   marcas.forEach(m=>{
     const ejemplo = datosOriginales.slice(1).find(f=>f[indexes.COL_CAT]===categoria && f[indexes.COL_MARCA]===m);
@@ -822,7 +822,7 @@ function mostrarModelos(categoria, marca){
   const modelosRenderizar = {};
   modelosRaw.forEach(f=>{ const nombre = f[indexes.COL_MODELO]; if(!modelosRenderizar[nombre]) modelosRenderizar[nombre]=f; });
   const grid=document.createElement("div"); grid.className="grid";
-  Object.keys(modelosRenderizar).forEach(modelo=>{
+  Object.keys(modelosRenderizar).sort().forEach(modelo=>{
     const card=document.createElement("div"); card.className="card";
     const ejemplo=modelosRenderizar[modelo];
     const versiones = modelosRaw.filter(f => f[indexes.COL_MODELO] === modelo);
