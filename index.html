@@ -337,7 +337,7 @@ function fetchData(range, containerId, successCallback) {
 }
 
 function cargarDatosTutoriales() {
-    fetchData(RANGE_TUTORIALES, 'contenido-tutoriales', (values) => {
+    fetchData('contenido-tutoriales', (values) => {
         datosTutoriales = values;
         console.log("Datos de Tutoriales cargados:", datosTutoriales);
         mostrarContenidoTutoriales();
@@ -345,7 +345,7 @@ function cargarDatosTutoriales() {
 }
 
 function cargarDatosRelay() {
-    fetchData(RANGE_RELAY, 'contenido-relay', (values) => {
+    fetchData('contenido-relay', (values) => {
         datosRelay = values;
         console.log("Datos de Relay cargados:", datosRelay);
         mostrarContenidoRelay();
@@ -854,58 +854,8 @@ function mostrarVersiones(filas, categoria, marca, modelo){
   cont.appendChild(grid);
 }
 
-// --- INICIALIZACIÓN Y LÓGICA DEL MENÚ ---
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    document.getElementById('add-to-home-btn').style.display = 'block';
-});
-
-// Función de inicialización de la aplicación
-function startApp() {
-    const addToHomeBtn = document.getElementById('add-to-home-btn');
-    addToHomeBtn.style.display = deferredPrompt ? 'block' : 'none';
-
-    addToHomeBtn.addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log(`User response to the install prompt: ${outcome}`);
-            deferredPrompt = null;
-            addToHomeBtn.style.display = 'none';
-        }
-    });
-
-    // Iniciar la carga de datos inicial
-    fetchData(RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-}
-
-// --- REGISTRO DEL SERVICE WORKER Y ARRANQUE DE LA APP ---
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./service-worker.js').then(registration => {
-        console.log('ServiceWorker registrado con éxito:', registration.scope);
-        // Esperar a que el SW esté activo para iniciar la app
-        if (registration.active) {
-            startApp();
-        }
-        registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            newWorker.addEventListener('statechange', () => {
-                if (newWorker.state === 'activated') {
-                    startApp();
-                }
-            });
-        });
-    }).catch(err => {
-        console.log('Fallo en el registro de ServiceWorker:', err);
-        // Si el SW falla, iniciar la app de todas formas
-        startApp();
-    });
-} else {
-    // Si el SW no es compatible, iniciar la app
-    startApp();
-}
+// Carga inicial de datos de Cortes
+fetchData(RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
 
 </script>
 
