@@ -294,11 +294,11 @@ function mostrarSeccion(seccion) {
     } else if (seccion === 'tutoriales') {
         document.getElementById('contenido-tutoriales').style.display = 'block';
         document.getElementById('btn-tutoriales').classList.add('active');
-        if (datosTutoriales.length === 0) cargarDatosTutoriales();
+        if (datosTutoriales.length === 0) fetchData(RANGE_TUTORIALES, (vals) => datosTutoriales = vals, mostrarContenidoTutoriales, 'contenido-tutoriales');
     } else if (seccion === 'relay') {
         document.getElementById('contenido-relay').style.display = 'block';
         document.getElementById('btn-relay').classList.add('active');
-        if (datosRelay.length === 0) cargarDatosRelay();
+        if (datosRelay.length === 0) fetchData(RANGE_RELAY, (vals) => datosRelay = vals, mostrarContenidoRelay, 'contenido-relay');
     }
 }
 
@@ -317,7 +317,7 @@ let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
 // --- FUNCIONES DE CARGA DE DATOS ---
-function fetchData(range, containerId, successCallback) {
+function fetchData(range, dataVariableSetter, successCallback, containerId) {
     fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`)
         .then(res => {
             if (!res.ok) throw new Error(`Error ${res.status}: Fallo al cargar la hoja '${range}'.`);
@@ -329,7 +329,8 @@ function fetchData(range, containerId, successCallback) {
                 document.getElementById(containerId).innerHTML = `<p>No se encontraron datos en '${range}'.</p>`;
                 return;
             }
-            successCallback(values);
+            dataVariableSetter(values);
+            successCallback();
         })
         .catch(err => {
             console.error(`Error al cargar datos de ${range}:`, err);
@@ -337,27 +338,12 @@ function fetchData(range, containerId, successCallback) {
         });
 }
 
-function cargarDatosTutoriales() {
-    fetchData(RANGE_TUTORIALES, 'contenido-tutoriales', (values) => {
-        datosTutoriales = values;
-        console.log("Datos de Tutoriales cargados:", datosTutoriales);
-        mostrarContenidoTutoriales();
-    });
-}
-
-function cargarDatosRelay() {
-    fetchData(RANGE_RELAY, 'contenido-relay', (values) => {
-        datosRelay = values;
-        console.log("Datos de Relay cargados:", datosRelay);
-        mostrarContenidoRelay();
-    });
-}
-
 // --- FUNCIONES DE RENDERIZADO ---
 function mostrarContenidoTutoriales() {
     const cont = document.getElementById("contenido-tutoriales");
     cont.innerHTML = "<h4>Tutoriales</h4>";
     const grid = document.createElement("div"); grid.className = "grid";
+    if (datosTutoriales.length <= 1) { cont.innerHTML += "<p>No hay tutoriales disponibles.</p>"; return; }
     const header = datosTutoriales[0];
     const data = datosTutoriales.slice(1);
 
@@ -382,6 +368,7 @@ function mostrarContenidoRelay() {
     const cont = document.getElementById("contenido-relay");
     cont.innerHTML = "<h4>Configuración del Relay</h4>";
     const grid = document.createElement("div"); grid.className = "grid";
+    if (datosRelay.length <= 1) { cont.innerHTML += "<p>No hay configuraciones de relay disponibles.</p>"; return; }
     const header = datosRelay[0];
     const data = datosRelay.slice(1);
 
@@ -869,10 +856,12 @@ function initializeApp() {
     const dropdownMenu = document.getElementById('dropdown-menu');
     const addToHomeBtn = document.getElementById('add-to-home-btn');
 
-    menuBtn.addEventListener('click', () => { dropdownMenu.classList.toggle('show'); });
+    if(menuBtn) {
+        menuBtn.addEventListener('click', () => { dropdownMenu.classList.toggle('show'); });
+    }
 
     window.addEventListener('click', function(e) {
-        if (!menuBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+        if (menuBtn && !menuBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
             dropdownMenu.classList.remove('show');
         }
     });
