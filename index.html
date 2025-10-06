@@ -541,7 +541,9 @@ function mostrarLightbox(src){
   document.getElementById("lightboxImg").src = finalUrl;
   document.getElementById("lightbox").style.display="flex";
 }
-function cerrarModal(){ document.getElementById("modalDetalle").style.display="none"; }
+function cerrarModal(){ document.getElementById("detalleCompleto").innerHTML = "";
+    document.getElementById("modalDetalle").style.display="none"; 
+}
 function cerrarLightbox(){document.getElementById("lightbox").style.display="none";}
 
 function extractYouTubeId(url) {
