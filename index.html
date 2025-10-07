@@ -291,6 +291,11 @@ function mostrarSeccion(seccion) {
     if (seccion === 'cortes') {
         document.getElementById('contenido').style.display = 'block';
         document.getElementById('btn-cortes').classList.add('active');
+        if (datosOriginales.length > 0) {
+            mostrarCategorias();
+        } else {
+            fetchData(RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
+        }
     } else if (seccion === 'tutoriales') {
         document.getElementById('contenido-tutoriales').style.display = 'block';
         document.getElementById('btn-tutoriales').classList.add('active');
@@ -337,6 +342,7 @@ function fetchData(range, dataVariableSetter, successCallback, containerId) {
             document.getElementById(containerId).innerHTML = `<p style="color:red;">Error al cargar datos: ${err.message}</p>`;
         });
 }
+
 
 // --- FUNCIONES DE RENDERIZADO ---
 function mostrarContenidoTutoriales() {
@@ -541,9 +547,7 @@ function mostrarLightbox(src){
   document.getElementById("lightboxImg").src = finalUrl;
   document.getElementById("lightbox").style.display="flex";
 }
-function cerrarModal(){ document.getElementById("detalleCompleto").innerHTML = "";
-    document.getElementById("modalDetalle").style.display="none"; 
-}
+function cerrarModal(){ document.getElementById("modalDetalle").style.display="none"; }
 function cerrarLightbox(){document.getElementById("lightbox").style.display="none";}
 
 function extractYouTubeId(url) {
@@ -758,7 +762,47 @@ function mostrarCategorias(){
     grid.appendChild(card);
   });
   cont.appendChild(grid);
+  mostrarUltimosAgregados();
 }
+
+function mostrarUltimosAgregados() {
+    const cont = document.getElementById("contenido");
+    const header = datosOriginales[0];
+    const indexes = getHeaderIndexes(header);
+    const todosLosCortes = datosOriginales.slice(1);
+    const ultimosCortes = todosLosCortes.slice(-5);
+
+    const section = document.createElement('div');
+    section.style.marginTop = '40px';
+    const title = document.createElement('h4');
+    title.textContent = 'Últimos cortes agregados:';
+    section.appendChild(title);
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+
+    ultimosCortes.reverse().forEach(fila => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => mostrarDetalleModal(fila, header);
+
+        const img = document.createElement("img");
+        img.src = convertirAGoogleThumbnail(fila[indexes.COL_IMG_VEHICULO]);
+        img.alt = `${fila[indexes.COL_MARCA]} ${fila[indexes.COL_MODELO]}`;
+        card.appendChild(img);
+
+        const overlay = document.createElement("div");
+        overlay.className = "overlay";
+        overlay.innerHTML = `<div>${fila[indexes.COL_MARCA]}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila[indexes.COL_MODELO]} ${fila[indexes.COL_AÑOS]}</div>`;
+        card.appendChild(overlay);
+
+        grid.appendChild(card);
+    });
+
+    section.appendChild(grid);
+    cont.appendChild(section);
+}
+
 
 function mostrarMarcas(categoria){
   document.getElementById("searchInput").value = "";
@@ -844,61 +888,8 @@ function mostrarVersiones(filas, categoria, marca, modelo){
   cont.appendChild(grid);
 }
 
-// --- INICIALIZACIÓN Y LÓGICA DEL MENÚ ---
-let deferredPrompt;
-window.addEventListener('beforeinstallprompt', (e) => {
-    e.preventDefault();
-    deferredPrompt = e;
-    const addToHomeBtn = document.getElementById('add-to-home-btn');
-    if(addToHomeBtn) addToHomeBtn.style.display = 'block';
-});
-
-function initializeApp() {
-    const menuBtn = document.getElementById('menu-btn');
-    const dropdownMenu = document.getElementById('dropdown-menu');
-    const addToHomeBtn = document.getElementById('add-to-home-btn');
-
-    if(menuBtn) {
-        menuBtn.addEventListener('click', () => { dropdownMenu.classList.toggle('show'); });
-    }
-
-    window.addEventListener('click', function(e) {
-        if (menuBtn && !menuBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
-            dropdownMenu.classList.remove('show');
-        }
-    });
-
-    if(addToHomeBtn) {
-        addToHomeBtn.style.display = deferredPrompt ? 'block' : 'none';
-        addToHomeBtn.addEventListener('click', async () => {
-            if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                console.log(`User response to the install prompt: ${outcome}`);
-                deferredPrompt = null;
-                addToHomeBtn.style.display = 'none';
-            }
-        });
-    }
-
-    fetchData(RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-}
-
-// --- REGISTRO DEL SERVICE WORKER Y ARRANQUE DE LA APP ---
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js').then(registration => {
-            console.log('ServiceWorker registrado con éxito:', registration.scope);
-        }).catch(err => {
-            console.log('Fallo en el registro de ServiceWorker:', err);
-        });
-        // Iniciar la app después de que la página se haya cargado
-        initializeApp();
-    });
-} else {
-    // Si el SW no es compatible, iniciar la app de todas formas
-    window.addEventListener('load', initializeApp);
-}
+// --- INICIALIZACIÓN ---
+fetchData(RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
 
 </script>
 
