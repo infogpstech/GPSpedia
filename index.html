@@ -68,7 +68,10 @@ h1.app-title {
 
 #install-button {
     display: none; /* Oculto por defecto, JS lo mostrará */
-    margin-left: auto; /* Empuja el botón a la derecha */
+    position: fixed; /* Fijo en la pantalla */
+    top: 20px;       /* Distancia desde arriba */
+    right: 20px;      /* Distancia desde la derecha */
+    z-index: 1001;   /* Por encima de otros elementos */
     padding: 10px 20px;
     font-size: 1em;
     font-weight: bold;
@@ -77,21 +80,24 @@ h1.app-title {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    transition: background-color 0.3s;
-    white-space: nowrap; /* Evita que el texto se parta en dos líneas */
+    transition: background-color 0.3s, transform 0.2s;
+    white-space: nowrap;
 }
 
 #install-button:hover {
-    background-color: #218838; /* Un verde más oscuro al pasar el ratón */
+    background-color: #218838;
+    transform: scale(1.05); /* Efecto de zoom ligero */
 }
 
 @media (max-width: 480px) {
     h1.app-title {
-        font-size: 1.8em; /* Título más pequeño en móviles */
+        font-size: 1.8em;
     }
     #install-button {
+        top: 10px;
+        right: 10px;
         padding: 8px 12px;
-        font-size: 0.9em; /* Botón ligeramente más pequeño */
+        font-size: 0.9em;
     }
 }
 
