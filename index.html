@@ -66,6 +66,35 @@ h1.app-title {
     color: #333;
 }
 
+#install-button {
+    display: none; /* Oculto por defecto, JS lo mostrará */
+    margin-left: auto; /* Empuja el botón a la derecha */
+    padding: 10px 20px;
+    font-size: 1em;
+    font-weight: bold;
+    color: #fff;
+    background-color: #28a745; /* Verde para la acción de instalar */
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+    white-space: nowrap; /* Evita que el texto se parta en dos líneas */
+}
+
+#install-button:hover {
+    background-color: #218838; /* Un verde más oscuro al pasar el ratón */
+}
+
+@media (max-width: 480px) {
+    h1.app-title {
+        font-size: 1.8em; /* Título más pequeño en móviles */
+    }
+    #install-button {
+        padding: 8px 12px;
+        font-size: 0.9em; /* Botón ligeramente más pequeño */
+    }
+}
+
 /* --- ESTILOS DEL BUSCADOR --- */
 .search-container {
     margin-bottom: 30px;
@@ -235,6 +264,7 @@ h1.app-title {
   <div class="header-container">
       <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
       <h1 class="app-title">GPSpedia</h1>
+      <button id="install-button" style="display: none;">Instalar Aplicación</button>
   </div>
 
   <div class="search-container">
@@ -853,15 +883,35 @@ function mostrarVersiones(filas, categoria, marca, modelo){
 
 // --- INICIALIZACIÓN Y LÓGICA DE PWA ---
 let deferredPrompt;
+const installButton = document.getElementById('install-button');
+
 window.addEventListener('beforeinstallprompt', (e) => {
     // Prevenir que el navegador muestre el aviso de instalación por defecto
     e.preventDefault();
     // Guardar el evento para poder mostrarlo más tarde
     deferredPrompt = e;
-    console.log('`beforeinstallprompt` event was fired.');
-    // Mostrar el aviso de instalación si no estamos en modo standalone
+    console.log('`beforeinstallprompt` event was fired. App is installable.');
+
+    // Mostrar el botón de instalación si no estamos en modo standalone
     if (!window.matchMedia('(display-mode: standalone)').matches) {
+        installButton.style.display = 'block';
+    }
+});
+
+installButton.addEventListener('click', async () => {
+    if (deferredPrompt) {
+        // Mostrar el aviso de instalación
         deferredPrompt.prompt();
+
+        // Esperar a que el usuario responda al aviso
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log(`User response to the install prompt: ${outcome}`);
+
+        // Ya no necesitamos el evento, lo reseteamos
+        deferredPrompt = null;
+
+        // Ocultar el botón
+        installButton.style.display = 'none';
     }
 });
 
