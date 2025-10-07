@@ -74,13 +74,6 @@ h1.app-title {
     margin-left: auto;
     margin-right: auto;
 }
-.search-container label {
-    display: block;
-    font-size: 1.1em;
-    font-weight: bold;
-    color: #555;
-    margin-bottom: 8px;
-}
 .search-container input[type="text"] {
     width: 100%;
     padding: 12px 15px;
@@ -245,8 +238,7 @@ h1.app-title {
   </div>
 
   <div class="search-container">
-      <label for="searchInput">Buscar Corte</label>
-      <input type="text" id="searchInput" placeholder="Escribe marca, modelo, año o categoría..." oninput="filtrarContenido(this.value)">
+      <input type="text" id="searchInput" placeholder="Buscar Corte..." oninput="filtrarContenido(this.value)">
   </div>
 
   <div class="section-selector">
@@ -269,45 +261,16 @@ h1.app-title {
 </div>
 
 <script>
-// Bloqueo de teclas para seguridad
+// --- LÓGICA DE SEGURIDAD ---
 document.addEventListener('keydown', function(e) {
     if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) {
         e.preventDefault();
     }
 });
-document.addEventListener('contextmenu', function(e) {
-    e.preventDefault();
-});
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-function mostrarSeccion(seccion) {
-    document.getElementById('contenido').style.display = 'none';
-    document.getElementById('contenido-tutoriales').style.display = 'none';
-    document.getElementById('contenido-relay').style.display = 'none';
 
-    document.getElementById('btn-cortes').classList.remove('active');
-    document.getElementById('btn-tutoriales').classList.remove('active');
-    document.getElementById('btn-relay').classList.remove('active');
-
-    if (seccion === 'cortes') {
-        document.getElementById('contenido').style.display = 'block';
-        document.getElementById('btn-cortes').classList.add('active');
-        if (datosOriginales.length > 0) {
-            mostrarCategorias();
-        } else {
-            fetchData(RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-        }
-    } else if (seccion === 'tutoriales') {
-        document.getElementById('contenido-tutoriales').style.display = 'block';
-        document.getElementById('btn-tutoriales').classList.add('active');
-        if (datosTutoriales.length === 0) fetchData(RANGE_TUTORIALES, (vals) => datosTutoriales = vals, mostrarContenidoTutoriales, 'contenido-tutoriales');
-    } else if (seccion === 'relay') {
-        document.getElementById('contenido-relay').style.display = 'block';
-        document.getElementById('btn-relay').classList.add('active');
-        if (datosRelay.length === 0) fetchData(RANGE_RELAY, (vals) => datosRelay = vals, mostrarContenidoRelay, 'contenido-relay');
-    }
-}
-
-// CONFIGURACIÓN DE LA HOJA DE CÁLCULO
+// --- LÓGICA DE DATOS ---
 const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
 const API_KEY = "AIzaSyCooAsC52X4ccENCT6p3qh_82ErBxP47Lg";
 const RANGE_CORTES = "Cortes";
@@ -321,30 +284,50 @@ let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay 
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
-// --- FUNCIONES DE CARGA DE DATOS ---
-function fetchData(range, dataVariableSetter, successCallback, containerId) {
-    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`)
-        .then(res => {
-            if (!res.ok) throw new Error(`Error ${res.status}: Fallo al cargar la hoja '${range}'.`);
-            return res.json();
-        })
-        .then(data => {
-            const values = data.values || [];
-            if (values.length === 0) {
-                document.getElementById(containerId).innerHTML = `<p>No se encontraron datos en '${range}'.</p>`;
-                return;
-            }
+async function fetchData(range, dataVariableSetter, successCallback, containerId) {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Error de red: ${response.status}`);
+        const data = await response.json();
+        const values = data.values || [];
+
+        if (values.length > 0) {
             dataVariableSetter(values);
             successCallback();
-        })
-        .catch(err => {
-            console.error(`Error al cargar datos de ${range}:`, err);
-            document.getElementById(containerId).innerHTML = `<p style="color:red;">Error al cargar datos: ${err.message}</p>`;
-        });
+        } else {
+             document.getElementById(containerId).innerHTML = `<p>No se encontraron datos.</p>`;
+        }
+    } catch (error) {
+        console.error(`Fallo al obtener datos de ${range}:`, error);
+        document.getElementById(containerId).innerHTML = `<p style="color:red;">No se pudo conectar. Comprueba tu conexión.</p>`;
+    }
 }
 
+function mostrarSeccion(seccion) {
+    document.getElementById('contenido').style.display = 'none';
+    document.getElementById('contenido-tutoriales').style.display = 'none';
+    document.getElementById('contenido-relay').style.display = 'none';
 
-// --- FUNCIONES DE RENDERIZADO ---
+    document.getElementById('btn-cortes').classList.remove('active');
+    document.getElementById('btn-tutoriales').classList.remove('active');
+    document.getElementById('btn-relay').classList.remove('active');
+
+    if (seccion === 'cortes') {
+        document.getElementById('contenido').style.display = 'block';
+        document.getElementById('btn-cortes').classList.add('active');
+        if(datosOriginales.length === 0) fetchData(RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
+    } else if (seccion === 'tutoriales') {
+        document.getElementById('contenido-tutoriales').style.display = 'block';
+        document.getElementById('btn-tutoriales').classList.add('active');
+        if (datosTutoriales.length === 0) fetchData(RANGE_TUTORIALES, (vals) => datosTutoriales = vals, mostrarContenidoTutoriales, 'contenido-tutoriales');
+    } else if (seccion === 'relay') {
+        document.getElementById('contenido-relay').style.display = 'block';
+        document.getElementById('btn-relay').classList.add('active');
+        if (datosRelay.length === 0) fetchData(RANGE_RELAY, (vals) => datosRelay = vals, mostrarContenidoRelay, 'contenido-relay');
+    }
+}
+
 function mostrarContenidoTutoriales() {
     const cont = document.getElementById("contenido-tutoriales");
     cont.innerHTML = "<h4>Tutoriales</h4>";
@@ -395,7 +378,6 @@ function mostrarContenidoRelay() {
     cont.appendChild(grid);
 }
 
-// --- FUNCIONES DE DETALLE (MODAL) ---
 function crearElementoDetalle(label, value) {
     if (!value) return null;
     const p = document.createElement("p");
@@ -405,9 +387,7 @@ function crearElementoDetalle(label, value) {
 
 function crearImagenDetalle(label, value, container) {
     if (!value) return;
-    const h = document.createElement("h4");
-    h.textContent = label;
-    container.appendChild(h);
+    const h = document.createElement("h4"); h.textContent = label; container.appendChild(h);
     const img = document.createElement("img");
     img.src = convertirAGoogleThumbnail(value);
     img.alt = label;
@@ -419,10 +399,7 @@ function crearVideoDetalle(label, value, container) {
     if (!value) return;
     const videoId = extractYouTubeId(value.trim());
     if (!videoId) return;
-
-    const h = document.createElement("h4");
-    h.textContent = label;
-    container.appendChild(h);
+    const h = document.createElement("h4"); h.textContent = label; container.appendChild(h);
     const iframeContainer = document.createElement("div");
     iframeContainer.style.cssText = "position:relative; padding-bottom:56.25%; height:0; margin-bottom:20px;";
     const iframe = document.createElement("iframe");
@@ -435,38 +412,31 @@ function crearVideoDetalle(label, value, container) {
     container.appendChild(iframeContainer);
 }
 
-
 function mostrarDetalleTutorial(fila, header) {
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
-
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
     closeBtn.onclick = cerrarModal;
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
     cont.appendChild(closeBtn);
-
     const title = document.createElement("h2");
     title.textContent = fila[header.indexOf("Tema")];
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
     cont.appendChild(title);
-
     const campos = [
         { label: "Cómo identificarlo", key: "Como identificarlo" },
         { label: "Dónde encontrarlo", key: "Donde encontrarlo" },
         { label: "Detalles", key: "Detalles" }
     ];
-
     campos.forEach(c => {
         const p = crearElementoDetalle(c.label, fila[header.indexOf(c.key)]);
         if (p) cont.appendChild(p);
     });
-
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
     crearVideoDetalle("Video Guía", fila[header.indexOf("Video")], cont);
-
     const closeBtnBottom = closeBtn.cloneNode(true);
     closeBtnBottom.onclick = cerrarModal;
     cont.appendChild(closeBtnBottom);
@@ -477,19 +447,16 @@ function mostrarDetalleRelay(fila, header) {
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
-
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
     closeBtn.onclick = cerrarModal;
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
     cont.appendChild(closeBtn);
-
     const title = document.createElement("h2");
     title.textContent = `Detalle de: ${fila[header.indexOf("Configuración")]}`;
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
     cont.appendChild(title);
-
     const campos = [
         { label: "Función", key: "Función" },
         { label: "Vehículo donde se utiliza", key: "Vehiculo donde se utiliza" },
@@ -500,21 +467,17 @@ function mostrarDetalleRelay(fila, header) {
         { label: "PIN 87 (Comunmente Abierto)", key: "PIN 87 (Comunmente Abierto)" },
         { label: "Observación", key: "Observacion" }
     ];
-
     campos.forEach(c => {
         const p = crearElementoDetalle(c.label, fila[header.indexOf(c.key)]);
         if (p) cont.appendChild(p);
     });
-
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
-
     const closeBtnBottom = closeBtn.cloneNode(true);
     closeBtnBottom.onclick = cerrarModal;
     cont.appendChild(closeBtnBottom);
     modal.style.display = "flex";
 }
 
-// --- FUNCIONES ORIGINALES DE CORTES ---
 function getHeaderIndexes(header) {
     if (!header || header.length < 5) {
         console.error("Error: Encabezado de datos incompleto o no cargado.");
@@ -888,7 +851,32 @@ function mostrarVersiones(filas, categoria, marca, modelo){
   cont.appendChild(grid);
 }
 
-// --- INICIALIZACIÓN ---
+// --- INICIALIZACIÓN Y LÓGICA DE PWA ---
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    // Prevenir que el navegador muestre el aviso de instalación por defecto
+    e.preventDefault();
+    // Guardar el evento para poder mostrarlo más tarde
+    deferredPrompt = e;
+    console.log('`beforeinstallprompt` event was fired.');
+    // Mostrar el aviso de instalación si no estamos en modo standalone
+    if (!window.matchMedia('(display-mode: standalone)').matches) {
+        deferredPrompt.prompt();
+    }
+});
+
+// --- REGISTRO DEL SERVICE WORKER ---
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./service-worker.js').then(registration => {
+            console.log('ServiceWorker registrado con éxito:', registration.scope);
+        }).catch(err => {
+            console.log('Fallo en el registro de ServiceWorker:', err);
+        });
+    });
+}
+
+// Carga inicial de datos de la aplicación
 fetchData(RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
 
 </script>
