@@ -66,19 +66,20 @@ h1.app-title {
     color: #333;
 }
 
-/* --- ESTILOS DEL BUSCADOR Y MENÚ --- */
-.search-menu-container {
-    display: flex;
-    align-items: center;
-    gap: 15px;
+/* --- ESTILOS DEL BUSCADOR --- */
+.search-container {
     margin-bottom: 30px;
     padding: 10px 0;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
 }
-.search-container {
-    flex-grow: 1;
+.search-container label {
+    display: block;
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #555;
+    margin-bottom: 8px;
 }
 .search-container input[type="text"] {
     width: 100%;
@@ -93,47 +94,6 @@ h1.app-title {
     border-color: #007bff;
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
     outline: none;
-}
-.menu-container {
-    position: relative;
-}
-.menu-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    padding: 5px;
-}
-.menu-btn svg {
-    width: 32px;
-    height: 32px;
-    stroke: #333;
-}
-.dropdown-menu {
-    display: none;
-    position: absolute;
-    right: 0;
-    top: 45px;
-    background-color: white;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    z-index: 1001;
-    min-width: 220px;
-}
-.dropdown-menu.show {
-    display: block;
-}
-.dropdown-menu-item {
-    padding: 12px 15px;
-}
-.dropdown-menu-item button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    text-align: left;
-    width: 100%;
-    font-size: 1em;
-    color: #333;
 }
 
 /* --- ESTILOS DE LA SELECCIÓN DE SECCIÓN --- */
@@ -284,24 +244,9 @@ h1.app-title {
       <h1 class="app-title">GPSpedia</h1>
   </div>
 
-  <div class="search-menu-container">
-      <div class="search-container">
-          <input type="text" id="searchInput" placeholder="Buscar Corte..." oninput="filtrarContenido(this.value)">
-      </div>
-      <div class="menu-container">
-          <button class="menu-btn" id="menu-btn">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="3" y1="12" x2="21" y2="12"></line>
-                  <line x1="3" y1="6" x2="21" y2="6"></line>
-                  <line x1="3" y1="18" x2="21" y2="18"></line>
-              </svg>
-          </button>
-          <div class="dropdown-menu" id="dropdown-menu">
-              <div class="dropdown-menu-item">
-                  <button id="add-to-home-btn">Añadir a pantalla de inicio</button>
-              </div>
-          </div>
-      </div>
+  <div class="search-container">
+      <label for="searchInput">Buscar Corte</label>
+      <input type="text" id="searchInput" placeholder="Escribe marca, modelo, año o categoría..." oninput="filtrarContenido(this.value)">
   </div>
 
   <div class="section-selector">
@@ -324,48 +269,15 @@ h1.app-title {
 </div>
 
 <script>
-// --- LÓGICA DE SEGURIDAD ---
+// Bloqueo de teclas para seguridad
 document.addEventListener('keydown', function(e) {
     if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) {
         e.preventDefault();
     }
 });
-document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
-
-// --- LÓGICA DE DATOS ---
-const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
-const API_KEY = "AIzaSyCooAsC52X4ccENCT6p3qh_82ErBxP47Lg";
-const RANGE_CORTES = "Cortes";
-const RANGE_TUTORIALES = "Tutorial";
-const RANGE_RELAY = "Configuración del Relay";
-
-const COLUMN_NAME_AÑOS = "Año (generacion)";
-
-let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay = [],
-    estado = {nivel:"categorias", categoria:null, marca:null, modelo:null};
-
-const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-
-async function fetchData(range, dataVariableSetter, successCallback, containerId) {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Error de red: ${response.status}`);
-        const data = await response.json();
-        const values = data.values || [];
-
-        if (values.length > 0) {
-            dataVariableSetter(values);
-            successCallback();
-        } else {
-             document.getElementById(containerId).innerHTML = `<p>No se encontraron datos.</p>`;
-        }
-    } catch (error) {
-        console.error(`Fallo al obtener datos de ${range}:`, error);
-        document.getElementById(containerId).innerHTML = `<p style="color:red;">No se pudo conectar. Comprueba tu conexión.</p>`;
-    }
-}
+document.addEventListener('contextmenu', function(e) {
+    e.preventDefault();
+});
 
 function mostrarSeccion(seccion) {
     document.getElementById('contenido').style.display = 'none';
@@ -379,7 +291,6 @@ function mostrarSeccion(seccion) {
     if (seccion === 'cortes') {
         document.getElementById('contenido').style.display = 'block';
         document.getElementById('btn-cortes').classList.add('active');
-        if(datosOriginales.length === 0) fetchData(RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
     } else if (seccion === 'tutoriales') {
         document.getElementById('contenido-tutoriales').style.display = 'block';
         document.getElementById('btn-tutoriales').classList.add('active');
@@ -391,6 +302,43 @@ function mostrarSeccion(seccion) {
     }
 }
 
+// CONFIGURACIÓN DE LA HOJA DE CÁLCULO
+const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
+const API_KEY = "AIzaSyCooAsC52X4ccENCT6p3qh_82ErBxP47Lg";
+const RANGE_CORTES = "Cortes";
+const RANGE_TUTORIALES = "Tutorial";
+const RANGE_RELAY = "Configuración del Relay";
+
+const COLUMN_NAME_AÑOS = "Año (generacion)";
+
+let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay = [],
+    estado = {nivel:"categorias", categoria:null, marca:null, modelo:null};
+
+const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+
+// --- FUNCIONES DE CARGA DE DATOS ---
+function fetchData(range, dataVariableSetter, successCallback, containerId) {
+    fetch(`https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`)
+        .then(res => {
+            if (!res.ok) throw new Error(`Error ${res.status}: Fallo al cargar la hoja '${range}'.`);
+            return res.json();
+        })
+        .then(data => {
+            const values = data.values || [];
+            if (values.length === 0) {
+                document.getElementById(containerId).innerHTML = `<p>No se encontraron datos en '${range}'.</p>`;
+                return;
+            }
+            dataVariableSetter(values);
+            successCallback();
+        })
+        .catch(err => {
+            console.error(`Error al cargar datos de ${range}:`, err);
+            document.getElementById(containerId).innerHTML = `<p style="color:red;">Error al cargar datos: ${err.message}</p>`;
+        });
+}
+
+// --- FUNCIONES DE RENDERIZADO ---
 function mostrarContenidoTutoriales() {
     const cont = document.getElementById("contenido-tutoriales");
     cont.innerHTML = "<h4>Tutoriales</h4>";
@@ -441,6 +389,7 @@ function mostrarContenidoRelay() {
     cont.appendChild(grid);
 }
 
+// --- FUNCIONES DE DETALLE (MODAL) ---
 function crearElementoDetalle(label, value) {
     if (!value) return null;
     const p = document.createElement("p");
@@ -450,7 +399,9 @@ function crearElementoDetalle(label, value) {
 
 function crearImagenDetalle(label, value, container) {
     if (!value) return;
-    const h = document.createElement("h4"); h.textContent = label; container.appendChild(h);
+    const h = document.createElement("h4");
+    h.textContent = label;
+    container.appendChild(h);
     const img = document.createElement("img");
     img.src = convertirAGoogleThumbnail(value);
     img.alt = label;
@@ -462,7 +413,10 @@ function crearVideoDetalle(label, value, container) {
     if (!value) return;
     const videoId = extractYouTubeId(value.trim());
     if (!videoId) return;
-    const h = document.createElement("h4"); h.textContent = label; container.appendChild(h);
+
+    const h = document.createElement("h4");
+    h.textContent = label;
+    container.appendChild(h);
     const iframeContainer = document.createElement("div");
     iframeContainer.style.cssText = "position:relative; padding-bottom:56.25%; height:0; margin-bottom:20px;";
     const iframe = document.createElement("iframe");
@@ -475,31 +429,38 @@ function crearVideoDetalle(label, value, container) {
     container.appendChild(iframeContainer);
 }
 
+
 function mostrarDetalleTutorial(fila, header) {
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
     closeBtn.onclick = cerrarModal;
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
     cont.appendChild(closeBtn);
+
     const title = document.createElement("h2");
     title.textContent = fila[header.indexOf("Tema")];
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
     cont.appendChild(title);
+
     const campos = [
         { label: "Cómo identificarlo", key: "Como identificarlo" },
         { label: "Dónde encontrarlo", key: "Donde encontrarlo" },
         { label: "Detalles", key: "Detalles" }
     ];
+
     campos.forEach(c => {
         const p = crearElementoDetalle(c.label, fila[header.indexOf(c.key)]);
         if (p) cont.appendChild(p);
     });
+
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
     crearVideoDetalle("Video Guía", fila[header.indexOf("Video")], cont);
+
     const closeBtnBottom = closeBtn.cloneNode(true);
     closeBtnBottom.onclick = cerrarModal;
     cont.appendChild(closeBtnBottom);
@@ -510,16 +471,19 @@ function mostrarDetalleRelay(fila, header) {
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
     closeBtn.onclick = cerrarModal;
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
     cont.appendChild(closeBtn);
+
     const title = document.createElement("h2");
     title.textContent = `Detalle de: ${fila[header.indexOf("Configuración")]}`;
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
     cont.appendChild(title);
+
     const campos = [
         { label: "Función", key: "Función" },
         { label: "Vehículo donde se utiliza", key: "Vehiculo donde se utiliza" },
@@ -530,17 +494,21 @@ function mostrarDetalleRelay(fila, header) {
         { label: "PIN 87 (Comunmente Abierto)", key: "PIN 87 (Comunmente Abierto)" },
         { label: "Observación", key: "Observacion" }
     ];
+
     campos.forEach(c => {
         const p = crearElementoDetalle(c.label, fila[header.indexOf(c.key)]);
         if (p) cont.appendChild(p);
     });
+
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
+
     const closeBtnBottom = closeBtn.cloneNode(true);
     closeBtnBottom.onclick = cerrarModal;
     cont.appendChild(closeBtnBottom);
     modal.style.display = "flex";
 }
 
+// --- FUNCIONES ORIGINALES DE CORTES ---
 function getHeaderIndexes(header) {
     if (!header || header.length < 5) {
         console.error("Error: Encabezado de datos incompleto o no cargado.");
@@ -573,7 +541,9 @@ function mostrarLightbox(src){
   document.getElementById("lightboxImg").src = finalUrl;
   document.getElementById("lightbox").style.display="flex";
 }
-function cerrarModal(){ document.getElementById("modalDetalle").style.display="none"; }
+function cerrarModal(){ document.getElementById("detalleCompleto").innerHTML = "";
+    document.getElementById("modalDetalle").style.display="none"; 
+}
 function cerrarLightbox(){document.getElementById("lightbox").style.display="none";}
 
 function extractYouTubeId(url) {
@@ -585,7 +555,7 @@ function extractYouTubeId(url) {
             videoId = urlObj.searchParams.get('v');
         } else if (urlObj.hostname.includes('youtu.be') && urlObj.pathname.length > 1) {
             videoId = urlObj.pathname.substring(1);
-        } else if (urlObj.hostname.includes('/embed/') && urlObj.pathname.length > 7) {
+        } else if (urlObj.pathname.includes('/embed/') && urlObj.pathname.length > 7) {
             const parts = urlObj.pathname.split('/embed/');
             if (parts.length > 1) videoId = parts[1].split(/[?&]/)[0];
         }
@@ -690,7 +660,7 @@ function mostrarResultadosBusquedaMarca(busquedaTexto){
         return;
     }
     cont.innerHTML = `<h4>Resultados de búsqueda para: "${busquedaTexto}"</h4>`;
-    const marcasUnicas = [...new Set(datosFiltrados.map(f => f[indexes.COL_MARCA]))].filter(m => m);
+    const marcasUnicas = [...new Set(datosFiltrados.map(f => f[indexes.COL_MARCA]))].filter(m => m).sort();
     const grid = document.createElement("div"); grid.className = "grid";
     marcasUnicas.forEach(marca => {
         const ejemplo = datosFiltrados.find(f => f[indexes.COL_MARCA] === marca && f[indexes.COL_IMG_VEHICULO]) || datosFiltrados.find(f => f[indexes.COL_MARCA] === marca);
@@ -714,7 +684,7 @@ function mostrarResultadosBusquedaModelo(busquedaTexto, marcaFiltro){
     const modelosRenderizar = {};
     modelosRaw.forEach(f => { const nombre = f[indexes.COL_MODELO]; if (!modelosRenderizar[nombre]) modelosRenderizar[nombre] = f; });
     const grid=document.createElement("div"); grid.className = "grid";
-    Object.keys(modelosRenderizar).forEach(modelo => {
+    Object.keys(modelosRenderizar).sort().forEach(modelo => {
         const ejemplo = modelosRenderizar[modelo];
         const versiones = modelosRaw.filter(f => f[indexes.COL_MODELO] === modelo);
         const card=document.createElement("div"); card.className="card";
@@ -888,10 +858,12 @@ function initializeApp() {
     const dropdownMenu = document.getElementById('dropdown-menu');
     const addToHomeBtn = document.getElementById('add-to-home-btn');
 
-    menuBtn.addEventListener('click', () => { dropdownMenu.classList.toggle('show'); });
+    if(menuBtn) {
+        menuBtn.addEventListener('click', () => { dropdownMenu.classList.toggle('show'); });
+    }
 
     window.addEventListener('click', function(e) {
-        if (!menuBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
+        if (menuBtn && !menuBtn.contains(e.target) && !dropdownMenu.contains(e.target)) {
             dropdownMenu.classList.remove('show');
         }
     });
