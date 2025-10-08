@@ -1,16 +1,15 @@
-const CACHE_NAME = 'gpspedia-shell-v1';
+const SHELL_CACHE_NAME = 'gpspedia-shell-v2';
+const IMAGE_CACHE_NAME = 'gpspedia-images-v1';
 
-// Archivos que componen la "cáscara" de la aplicación.
 const urlsToCache = [
   '/',
   './index.html',
   './manifest.json'
 ];
 
-// Instala el Service Worker y guarda en caché los archivos de la cáscara.
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches.open(SHELL_CACHE_NAME)
       .then(cache => {
         console.log('Cache de la aplicación abierto y cacheando archivos base');
         return cache.addAll(urlsToCache);
@@ -18,14 +17,14 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activa el Service Worker y limpia las cachés antiguas.
 self.addEventListener('activate', event => {
-  const cacheWhitelist = [CACHE_NAME];
+  const cacheWhitelist = [SHELL_CACHE_NAME, IMAGE_CACHE_NAME];
   event.waitUntil(
     caches.keys().then(cacheNames => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Borrando caché antigua:', cacheName);
             return caches.delete(cacheName);
           }
         })
@@ -35,20 +34,38 @@ self.addEventListener('activate', event => {
   return self.clients.claim();
 });
 
-// Intercepta las peticiones.
 self.addEventListener('fetch', event => {
-  // Ignora completamente las peticiones a la API de Google Sheets,
-  // permitiendo que siempre vayan directamente a la red.
-  if (event.request.url.includes('sheets.googleapis.com')) {
-    return; // No hace nada, la petición va a la red como si no hubiera SW.
+  const url = new URL(event.request.url);
+
+  // Ignora las peticiones a la API de Google Sheets, siempre van a la red.
+  if (url.hostname.includes('sheets.googleapis.com')) {
+    return;
   }
 
-  // Para todos los demás recursos (la cáscara de la app), usa la estrategia Cache-First.
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Si el recurso está en la caché, lo devuelve. Si no, lo busca en la red.
-        return response || fetch(event.request);
+  // Estrategia Cache-First para imágenes de Google Drive.
+  if (url.hostname.includes('drive.google.com')) {
+    event.respondWith(
+      caches.open(IMAGE_CACHE_NAME).then(cache => {
+        return cache.match(event.request).then(cachedResponse => {
+          const fetchPromise = fetch(event.request).then(networkResponse => {
+            // Si la petición a la red es exitosa, la guardamos en caché.
+            if (networkResponse.ok) {
+              cache.put(event.request, networkResponse.clone());
+            }
+            return networkResponse;
+          });
+          // Devolvemos la respuesta de la caché si existe, si no, esperamos la de la red.
+          return cachedResponse || fetchPromise;
+        });
       })
+    );
+    return;
+  }
+
+  // Estrategia Cache-First para la cáscara de la aplicación.
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      return response || fetch(event.request);
+    })
   );
 });

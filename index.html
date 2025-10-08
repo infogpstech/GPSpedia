@@ -306,6 +306,73 @@ document.addEventListener('keydown', function(e) {
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
 
+// --- LÓGICA DE INDEXEDDB ---
+const DB_NAME = 'gpsepedia-db';
+const DB_VERSION = 1;
+const STORES = ['cortes', 'tutoriales', 'relay'];
+let db;
+
+function openDb() {
+    return new Promise((resolve, reject) => {
+        if (db) {
+            resolve(db);
+            return;
+        }
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+
+        request.onupgradeneeded = (event) => {
+            const dbInstance = event.target.result;
+            STORES.forEach(storeName => {
+                if (!dbInstance.objectStoreNames.contains(storeName)) {
+                    // Usaremos el nombre del almacén como clave única para el objeto de datos.
+                    dbInstance.createObjectStore(storeName, { keyPath: 'id' });
+                }
+            });
+        };
+
+        request.onsuccess = (event) => {
+            db = event.target.result;
+            console.log('Base de datos IndexedDB abierta con éxito.');
+            resolve(db);
+        };
+
+        request.onerror = (event) => {
+            console.error('Error al abrir IndexedDB:', event.target.error);
+            reject(event.target.error);
+        };
+    });
+}
+
+async function saveData(storeName, data) {
+    const db = await openDb();
+    const transaction = db.transaction([storeName], 'readwrite');
+    const store = transaction.objectStore(storeName);
+    // Limpiamos el almacén antes de guardar los nuevos datos para asegurar que siempre esté fresco.
+    await new Promise((resolve, reject) => {
+        const req = store.clear();
+        req.onsuccess = resolve;
+        req.onerror = reject;
+    });
+    // Guardamos todo el conjunto de datos bajo una clave única, el nombre del almacén.
+    return new Promise((resolve, reject) => {
+        const request = store.put({ id: storeName, data: data });
+        request.onsuccess = () => resolve();
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+async function readData(storeName) {
+    const db = await openDb();
+    return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        const request = store.get(storeName);
+        request.onsuccess = () => resolve(request.result ? request.result.data : null);
+        request.onerror = (e) => reject(e.target.error);
+    });
+}
+
+
 // --- LÓGICA DE DATOS ---
 const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
 const API_KEY = "AIzaSyCooAsC52X4ccENCT6p3qh_82ErBxP47Lg";
@@ -320,7 +387,25 @@ let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay 
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
-async function fetchData(range, dataVariableSetter, successCallback, containerId) {
+async function syncAndFetchData(storeName, range, dataVariableSetter, successCallback, containerId) {
+    const container = document.getElementById(containerId);
+
+    // 1. Cargar datos desde IndexedDB primero para una experiencia offline-first.
+    try {
+        const localData = await readData(storeName);
+        if (localData && localData.length > 0) {
+            console.log(`Datos cargados desde IndexedDB para: ${storeName}`);
+            dataVariableSetter(localData);
+            successCallback();
+        } else {
+            container.innerHTML = `<p>Buscando datos...</p>`;
+        }
+    } catch (dbError) {
+        console.error(`Error al leer de IndexedDB para ${storeName}:`, dbError);
+        container.innerHTML = `<p>Buscando datos...</p>`;
+    }
+
+    // 2. Intentar obtener datos frescos de la red.
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
     try {
         const response = await fetch(url);
@@ -329,14 +414,28 @@ async function fetchData(range, dataVariableSetter, successCallback, containerId
         const values = data.values || [];
 
         if (values.length > 0) {
+            // 3. Si hay datos nuevos, guardarlos en IndexedDB y actualizar la UI.
+            await saveData(storeName, values);
+            console.log(`Datos de ${storeName} guardados/actualizados en IndexedDB.`);
             dataVariableSetter(values);
-            successCallback();
+            successCallback(); // Volver a renderizar con los datos frescos.
         } else {
-             document.getElementById(containerId).innerHTML = `<p>No se encontraron datos.</p>`;
+            // Si la red no devuelve datos, pero teníamos datos locales, los mantenemos.
+            const localData = await readData(storeName);
+            if (!localData) {
+                 container.innerHTML = `<p>No se encontraron datos.</p>`;
+            }
         }
     } catch (error) {
-        console.error(`Fallo al obtener datos de ${range}:`, error);
-        document.getElementById(containerId).innerHTML = `<p style="color:red;">No se pudo conectar. Comprueba tu conexión.</p>`;
+        console.error(`Fallo al obtener datos de ${range} desde la red:`, error);
+        // Si la red falla, la app sigue funcionando con los datos de IndexedDB.
+        // Si no había datos locales, mostramos un error de conexión.
+        const localData = await readData(storeName);
+        if (!localData) {
+            container.innerHTML = `<p style="color:red;">No se pudo conectar. Comprueba tu conexión.</p>`;
+        } else {
+            console.log("Mostrando datos locales debido a un error de red.");
+        }
     }
 }
 
@@ -352,15 +451,15 @@ function mostrarSeccion(seccion) {
     if (seccion === 'cortes') {
         document.getElementById('contenido').style.display = 'block';
         document.getElementById('btn-cortes').classList.add('active');
-        if(datosOriginales.length === 0) fetchData(RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
+        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
     } else if (seccion === 'tutoriales') {
         document.getElementById('contenido-tutoriales').style.display = 'block';
         document.getElementById('btn-tutoriales').classList.add('active');
-        if (datosTutoriales.length === 0) fetchData(RANGE_TUTORIALES, (vals) => datosTutoriales = vals, mostrarContenidoTutoriales, 'contenido-tutoriales');
+        syncAndFetchData('tutoriales', RANGE_TUTORIALES, (vals) => datosTutoriales = vals, mostrarContenidoTutoriales, 'contenido-tutoriales');
     } else if (seccion === 'relay') {
         document.getElementById('contenido-relay').style.display = 'block';
         document.getElementById('btn-relay').classList.add('active');
-        if (datosRelay.length === 0) fetchData(RANGE_RELAY, (vals) => datosRelay = vals, mostrarContenidoRelay, 'contenido-relay');
+        syncAndFetchData('relay', RANGE_RELAY, (vals) => datosRelay = vals, mostrarContenidoRelay, 'contenido-relay');
     }
 }
 
@@ -435,7 +534,19 @@ function crearVideoDetalle(label, value, container) {
     if (!value) return;
     const videoId = extractYouTubeId(value.trim());
     if (!videoId) return;
-    const h = document.createElement("h4"); h.textContent = label; container.appendChild(h);
+
+    const h = document.createElement("h4");
+    h.textContent = label;
+    container.appendChild(h);
+
+    if (!navigator.onLine) {
+        const p = document.createElement("p");
+        p.textContent = "El video no está disponible sin conexión.";
+        p.style.cssText = "padding: 20px; background: #eee; border-radius: 8px; text-align: center; color: #555;";
+        container.appendChild(p);
+        return;
+    }
+
     const iframeContainer = document.createElement("div");
     iframeContainer.style.cssText = "position:relative; padding-bottom:56.25%; height:0; margin-bottom:20px;";
     const iframe = document.createElement("iframe");
@@ -933,7 +1044,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // Carga inicial de datos de la aplicación
-fetchData(RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
+syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
 
 </script>
 
