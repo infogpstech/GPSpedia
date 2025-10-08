@@ -657,7 +657,14 @@ function mostrarLightbox(src){
   document.getElementById("lightboxImg").src = finalUrl;
   document.getElementById("lightbox").style.display="flex";
 }
-function cerrarModal(){ document.getElementById("modalDetalle").style.display="none"; }
+function cerrarModal() {
+    const detalleCont = document.getElementById("detalleCompleto");
+    const iframe = detalleCont.querySelector('iframe');
+    if (iframe) {
+        iframe.src = ''; // Detiene la reproducción del video al vaciar el src.
+    }
+    document.getElementById("modalDetalle").style.display = "none";
+}
 function cerrarLightbox(){document.getElementById("lightbox").style.display="none";}
 
 function extractYouTubeId(url) {
