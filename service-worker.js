@@ -69,3 +69,18 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+
+// Gestionar el clic en una notificación
+self.addEventListener('notificationclick', event => {
+    event.notification.close(); // Cierra la notificación
+
+    event.waitUntil(
+        clients.matchAll({ type: 'window' }).then(clientsArr => {
+            // Si ya hay una ventana de la app abierta, la enfoca
+            const hadWindowToFocus = clientsArr.some(windowClient => windowClient.url === self.location.origin + '/' ? (windowClient.focus(), true) : false);
+
+            // Si no, abre una nueva ventana
+            if (!hadWindowToFocus) clients.openWindow(self.location.origin).then(windowClient => windowClient ? windowClient.focus() : null);
+        })
+    );
+});

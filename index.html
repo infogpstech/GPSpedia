@@ -306,6 +306,36 @@ document.addEventListener('keydown', function(e) {
 document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
 
+// --- LÓGICA DE NOTIFICACIONES ---
+function solicitarPermisoNotificaciones() {
+    if ('Notification' in window && navigator.serviceWorker) {
+        Notification.requestPermission().then(function(permission) {
+            if (permission === 'granted') {
+                console.log('Permiso para notificaciones concedido.');
+            } else {
+                console.log('Permiso para notificaciones denegado o ignorado.');
+            }
+        });
+    }
+}
+
+function mostrarNotificacionNovedades(storeName, count) {
+    if (Notification.permission !== 'granted') return;
+
+    const title = '¡Contenido Nuevo!';
+    const body = `Se han añadido ${count} nuevo(s) ${storeName === 'cortes' ? 'corte(s)' : 'tutorial(es)'}.`;
+    const options = {
+        body: body,
+        icon: 'https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w192-h192',
+        badge: 'https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w96-h96'
+    };
+
+    navigator.serviceWorker.ready.then(registration => {
+        registration.showNotification(title, options);
+    });
+}
+
+
 // --- LÓGICA DE INDEXEDDB ---
 const DB_NAME = 'gpsepedia-db';
 const DB_VERSION = 1;
@@ -344,19 +374,28 @@ function openDb() {
 }
 
 async function saveData(storeName, data) {
+    if (!data || data.length < 2) return;
+
     const db = await openDb();
     const transaction = db.transaction([storeName], 'readwrite');
     const store = transaction.objectStore(storeName);
-    // Limpiamos el almacén antes de guardar los nuevos datos para asegurar que siempre esté fresco.
-    await new Promise((resolve, reject) => {
-        const req = store.clear();
-        req.onsuccess = resolve;
-        req.onerror = reject;
+
+    const header = data[0];
+    const content = data.slice(1);
+    const identifiers = new Set();
+    content.forEach(fila => {
+        const id = getIdentifier(fila, header, storeName);
+        if (id) identifiers.add(id);
     });
-    // Guardamos todo el conjunto de datos bajo una clave única, el nombre del almacén.
+
     return new Promise((resolve, reject) => {
-        const request = store.put({ id: storeName, data: data });
-        request.onsuccess = () => resolve();
+        const objectToStore = {
+            id: storeName,
+            data: data,
+            identifiers: Array.from(identifiers)
+        };
+        const request = store.put(objectToStore);
+        request.onsuccess = resolve;
         request.onerror = (e) => reject(e.target.error);
     });
 }
@@ -367,13 +406,28 @@ async function readData(storeName) {
         const transaction = db.transaction([storeName], 'readonly');
         const store = transaction.objectStore(storeName);
         const request = store.get(storeName);
-        request.onsuccess = () => resolve(request.result ? request.result.data : null);
+        request.onsuccess = () => resolve(request.result || null);
         request.onerror = (e) => reject(e.target.error);
     });
 }
 
 
 // --- LÓGICA DE DATOS ---
+function getIdentifier(fila, header, storeName) {
+    if (storeName === 'cortes') {
+        const indexes = getHeaderIndexes(header);
+        const marca = fila[indexes.COL_MARCA] || '';
+        const modelo = fila[indexes.COL_MODELO] || '';
+        const anio = fila[indexes.COL_AÑOS] || '';
+        return `${marca}-${modelo}-${anio}`.toLowerCase().trim();
+    } else if (storeName === 'tutoriales') {
+        const temaIndex = header.indexOf("Tema");
+        return (fila[temaIndex] || '').toLowerCase().trim();
+    }
+    // Para 'relay' u otros, podemos usar un identificador simple si es necesario.
+    return null;
+}
+
 const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
 const API_KEY = "AIzaSyCooAsC52X4ccENCT6p3qh_82ErBxP47Lg";
 const RANGE_CORTES = "Cortes";
@@ -389,13 +443,13 @@ const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="
 
 async function syncAndFetchData(storeName, range, dataVariableSetter, successCallback, containerId) {
     const container = document.getElementById(containerId);
+    let localData = null;
 
-    // 1. Cargar datos desde IndexedDB primero para una experiencia offline-first.
     try {
-        const localData = await readData(storeName);
-        if (localData && localData.length > 0) {
+        localData = await readData(storeName);
+        if (localData && localData.data) {
             console.log(`Datos cargados desde IndexedDB para: ${storeName}`);
-            dataVariableSetter(localData);
+            dataVariableSetter(localData.data);
             successCallback();
         } else {
             container.innerHTML = `<p>Buscando datos...</p>`;
@@ -405,32 +459,36 @@ async function syncAndFetchData(storeName, range, dataVariableSetter, successCal
         container.innerHTML = `<p>Buscando datos...</p>`;
     }
 
-    // 2. Intentar obtener datos frescos de la red.
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
     try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error de red: ${response.status}`);
         const data = await response.json();
-        const values = data.values || [];
+        const networkValues = data.values || [];
 
-        if (values.length > 0) {
-            // 3. Si hay datos nuevos, guardarlos en IndexedDB y actualizar la UI.
-            await saveData(storeName, values);
-            console.log(`Datos de ${storeName} guardados/actualizados en IndexedDB.`);
-            dataVariableSetter(values);
-            successCallback(); // Volver a renderizar con los datos frescos.
-        } else {
-            // Si la red no devuelve datos, pero teníamos datos locales, los mantenemos.
-            const localData = await readData(storeName);
-            if (!localData) {
-                 container.innerHTML = `<p>No se encontraron datos.</p>`;
+        if (networkValues.length > 0) {
+            const oldIdentifiers = new Set(localData ? localData.identifiers : []);
+            const newIdentifiers = new Set();
+            const header = networkValues[0];
+            networkValues.slice(1).forEach(fila => {
+                const id = getIdentifier(fila, header, storeName);
+                if (id) newIdentifiers.add(id);
+            });
+
+            const addedItems = [...newIdentifiers].filter(id => !oldIdentifiers.has(id));
+            if (addedItems.length > 0 && oldIdentifiers.size > 0) {
+                console.log(`Novedades detectadas en ${storeName}:`, addedItems.length);
+                mostrarNotificacionNovedades(storeName, addedItems.length);
             }
+
+            await saveData(storeName, networkValues);
+            dataVariableSetter(networkValues);
+            successCallback();
+        } else if (!localData) {
+            container.innerHTML = `<p>No se encontraron datos.</p>`;
         }
     } catch (error) {
         console.error(`Fallo al obtener datos de ${range} desde la red:`, error);
-        // Si la red falla, la app sigue funcionando con los datos de IndexedDB.
-        // Si no había datos locales, mostramos un error de conexión.
-        const localData = await readData(storeName);
         if (!localData) {
             container.innerHTML = `<p style="color:red;">No se pudo conectar. Comprueba tu conexión.</p>`;
         } else {
@@ -1049,6 +1107,9 @@ if ('serviceWorker' in navigator) {
         });
     });
 }
+
+// Solicitar permiso para notificaciones al inicio
+solicitarPermisoNotificaciones();
 
 // Carga inicial de datos de la aplicación
 syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
