@@ -484,60 +484,67 @@ const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="
 
 async function syncAndFetchData(storeName, range, dataVariableSetter, successCallback, containerId) {
     const container = document.getElementById(containerId);
-    let localData = null;
+    let localDataObj = null;
 
+    // 1. Cargar desde IndexedDB
     try {
-        localData = await readData(storeName);
-        if (localData && localData.data) {
-            console.log(`Datos cargados desde IndexedDB para: ${storeName}`);
-            dataVariableSetter(localData.data);
+        localDataObj = await readData(storeName);
+        if (localDataObj && localDataObj.data) {
+            console.log(`[Offline] Datos cargados desde IndexedDB para: ${storeName}`);
+            dataVariableSetter(localDataObj.data);
             successCallback();
         } else {
-            container.innerHTML = `<p>Buscando datos...</p>`;
+            container.innerHTML = `<p>Buscando datos en la red...</p>`;
         }
     } catch (dbError) {
-        console.error(`Error al leer de IndexedDB para ${storeName}:`, dbError);
-        container.innerHTML = `<p>Buscando datos...</p>`;
+        console.error(`[Offline] Error al leer de IndexedDB para ${storeName}:`, dbError);
+        container.innerHTML = `<p>Error al cargar datos locales. Intentando conectar a la red...</p>`;
     }
 
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
+    // 2. Sincronizar con la red
+    if (!navigator.onLine) {
+        if (localDataObj) {
+             // Ya se mostraron los datos locales, solo informamos que son offline.
+            console.log("[Offline] El navegador está desconectado. Mostrando datos locales.");
+        } else {
+            container.innerHTML = `<p style="color:red;">Sin conexión y sin datos locales. Conéctate a internet para descargar el catálogo.</p>`;
+        }
+        return;
+    }
+
     try {
+        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error de red: ${response.status}`);
+
         const data = await response.json();
         const networkValues = data.values || [];
 
         if (networkValues.length > 0) {
-            const oldIdentifiers = new Set(localData ? localData.identifiers : []);
+            // Comprobar si hay novedades
+            const oldIdentifiers = new Set(localDataObj ? localDataObj.identifiers : []);
             const newIdentifiers = new Set();
-            const header = networkValues[0];
-            networkValues.slice(1).forEach(fila => {
-                const id = getIdentifier(fila, header, storeName);
-                if (id) newIdentifiers.add(id);
-            });
+            networkValues.slice(1).forEach(fila => newIdentifiers.add(getIdentifier(fila, networkValues[0], storeName)));
 
             const addedItems = [...newIdentifiers].filter(id => !oldIdentifiers.has(id));
             if (addedItems.length > 0 && oldIdentifiers.size > 0) {
-                console.log(`Novedades detectadas en ${storeName}:`, addedItems.length);
                 mostrarNotificacionNovedades(storeName, addedItems.length);
             }
 
-            // Iniciar el precaching de imágenes en segundo plano
-            const imageUrls = extractImageUrls(networkValues);
-            precacheImages(imageUrls);
-
+            // Actualizar UI y DB
             await saveData(storeName, networkValues);
             dataVariableSetter(networkValues);
             successCallback();
-        } else if (!localData) {
-            container.innerHTML = `<p>No se encontraron datos.</p>`;
+
+            // Precargar imágenes en segundo plano
+            precacheImages(extractImageUrls(networkValues));
+        } else if (!localDataObj) {
+            container.innerHTML = `<p>No se encontraron datos en la red.</p>`;
         }
     } catch (error) {
-        console.error(`Fallo al obtener datos de ${range} desde la red:`, error);
-        if (!localData) {
+        console.error(`[Online] Fallo al obtener datos de ${range} desde la red:`, error);
+        if (!localDataObj) {
             container.innerHTML = `<p style="color:red;">No se pudo conectar. Comprueba tu conexión.</p>`;
-        } else {
-            console.log("Mostrando datos locales debido a un error de red.");
         }
     }
 }
