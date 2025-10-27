@@ -95,3 +95,24 @@ self.addEventListener('notificationclick', event => {
         })
     );
 });
+
+// --- GESTIÓN DE MENSAJES (PARA PRECACHING) ---
+self.addEventListener('message', event => {
+    if (event.data && event.data.type === 'PRECACHE_IMAGES') {
+        const urlsToPrecache = event.data.payload;
+        if (urlsToPrecache && urlsToPrecache.length > 0) {
+            console.log('[Service Worker] Recibida solicitud de precache para', urlsToPrecache.length, 'imágenes.');
+            event.waitUntil(
+                caches.open(IMAGE_CACHE_NAME).then(cache => {
+                    return Promise.all(
+                        urlsToPrecache.map(url => {
+                            // Usamos add para evitar errores si la imagen ya está en caché.
+                            // Si una imagen falla, no detiene el resto del proceso.
+                            return cache.add(url).catch(err => console.warn(`[Service Worker] No se pudo cachear la imagen: ${url}`, err));
+                        })
+                    );
+                })
+            );
+        }
+    }
+});

@@ -428,6 +428,47 @@ function getIdentifier(fila, header, storeName) {
     return null;
 }
 
+function extractImageUrls(data) {
+    if (!data || data.length < 2) return [];
+
+    const header = data[0];
+    const content = data.slice(1);
+    const imageUrls = new Set();
+
+    // Nombres exactos de las columnas que contienen URLs de imágenes
+    const imageColumns = [
+        "Imagen del vehiculo", "Imagen del Corte", "Imagen de corte 2",
+        "Imagen de la apertura", "Imagen de los cables de alimentacion",
+        "Imagen", // Para tutoriales y relay
+    ];
+
+    const columnIndexes = imageColumns.map(colName => header.indexOf(colName)).filter(index => index > -1);
+
+    content.forEach(row => {
+        columnIndexes.forEach(index => {
+            const url = row[index];
+            if (url) {
+                // Convertimos a la URL de thumbnail de Google Drive antes de cachear
+                imageUrls.add(convertirAGoogleThumbnail(url));
+            }
+        });
+    });
+
+    return Array.from(imageUrls);
+}
+
+function precacheImages(urls) {
+    if (!('serviceWorker' in navigator)) {
+        return;
+    }
+    navigator.serviceWorker.ready.then(registration => {
+        registration.active.postMessage({
+            type: 'PRECACHE_IMAGES',
+            payload: urls
+        });
+    });
+}
+
 const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
 const API_KEY = "AIzaSyCooAsC52X4ccENCT6p3qh_82ErBxP47Lg";
 const RANGE_CORTES = "Cortes";
@@ -480,6 +521,10 @@ async function syncAndFetchData(storeName, range, dataVariableSetter, successCal
                 console.log(`Novedades detectadas en ${storeName}:`, addedItems.length);
                 mostrarNotificacionNovedades(storeName, addedItems.length);
             }
+
+            // Iniciar el precaching de imágenes en segundo plano
+            const imageUrls = extractImageUrls(networkValues);
+            precacheImages(imageUrls);
 
             await saveData(storeName, networkValues);
             dataVariableSetter(networkValues);
