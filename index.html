@@ -200,6 +200,85 @@ h1.app-title {
     z-index: 10;
 }
 
+/* --- ESTILOS DEL MODAL DE LOGIN --- */
+#login-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(5px);
+}
+
+#login-modal .modal-content {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 40px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    text-align: center;
+    color: #f0f0f0;
+}
+
+#login-modal h2 {
+    margin-bottom: 25px;
+    font-size: 2em;
+    font-weight: 300;
+}
+
+#login-modal .form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+#login-modal label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 300;
+    color: #ccc;
+}
+
+#login-modal input {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+#login-modal input:focus {
+    outline: none;
+    border-color: rgba(0, 123, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+#login-modal button {
+    width: 100%;
+    padding: 12px;
+    background: #007bff;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#login-modal button:hover {
+    background: #0056b3;
+}
+
 /* Modal */
 #modalDetalle{
     display:none;
@@ -265,12 +344,36 @@ h1.app-title {
 </head>
 <body>
 
-<div class="container">
+<!-- Login Modal -->
+<div id="login-modal" style="display: none;">
+    <div class="modal-content">
+        <h2>Iniciar Sesión</h2>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Usuario</label>
+                <input type="text" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <input type="password" id="password" required>
+            </div>
+            <button type="submit">Acceder</button>
+            <p id="login-error" style="color: red; display: none;"></p>
+        </form>
+        <a href="#" id="forgot-password-link" style="color: #a0cfff; text-decoration: none; margin-top: 15px; display: inline-block;">¿Olvidaste tu contraseña?</a>
+    </div>
+</div>
+
+<div class="container" style="display: none;">
 
   <div class="header-container">
       <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
       <h1 class="app-title">GPSpedia</h1>
-      <button id="install-button" style="display: none;">Instalar Aplicación</button>
+      <div id="header-controls" style="margin-left: auto; display: flex; align-items: center; gap: 15px;">
+          <span id="welcome-message" style="display: none; color: #333; font-weight: bold;"></span>
+          <button id="logout-button" style="display: none; background-color: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;">Cerrar Sesión</button>
+          <button id="install-button" style="display: none;">Instalar Aplicación</button>
+      </div>
   </div>
 
   <div class="search-container">
@@ -379,6 +482,170 @@ const API_KEY = "AIzaSyCooAsC52X4ccENCT6p3qh_82ErBxP47Lg";
 const RANGE_CORTES = "Cortes";
 const RANGE_TUTORIALES = "Tutorial";
 const RANGE_RELAY = "Configuración del Relay";
+const RANGE_USERS = "Users";
+
+// --- LÓGICA DE AUTENTICACIÓN Y SESIÓN ---
+
+function sanitizeInput(input) {
+    if (typeof input !== 'string') return '';
+    // Prevenir inyección de fórmulas de Excel escapando caracteres iniciales peligrosos
+    let sanitized = input.trim();
+    if (['=', '+', '-', '@', '\t', '\r'].includes(sanitized.charAt(0))) {
+        sanitized = "'" + sanitized;
+    }
+    // Escapar caracteres comunes de SQL para mitigar inyecciones básicas.
+    // Aunque la validación es del lado del cliente, esto añade una capa de "defensa en profundidad".
+    sanitized = sanitized.replace(/'/g, "''").replace(/--/g, "").replace(/;/g, "");
+    return sanitized;
+}
+
+const SESSION_KEY = 'gpsepedia_session';
+const SESSION_ID_KEY = 'gpsepedia_session_id';
+let userData = [];
+
+async function fetchUsers() {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(RANGE_USERS)}?key=${API_KEY}`;
+    try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Error de red al obtener usuarios: ${response.status}`);
+        const data = await response.json();
+        userData = data.values || [];
+        return userData;
+    } catch (error) {
+        console.error("Fallo al obtener la lista de usuarios:", error);
+        // Mostrar error en el modal de login si falla la carga de usuarios
+        const loginError = document.getElementById('login-error');
+        loginError.textContent = "No se pudo conectar al servidor de autenticación.";
+        loginError.style.display = 'block';
+        return [];
+    }
+}
+
+function checkSession() {
+    const session = localStorage.getItem(SESSION_KEY);
+    if (session) {
+        const { user, sessionId } = JSON.parse(session);
+
+        // Verificación de sesión única
+        const expectedSessionId = localStorage.getItem(SESSION_ID_KEY);
+
+        if (sessionId === expectedSessionId) {
+            // La sesión es válida y única para esta pestaña/navegador
+            document.getElementById('login-modal').style.display = 'none';
+            document.querySelector('.container').style.display = 'block';
+            document.getElementById('welcome-message').textContent = `Bienvenido, ${user.Nombre}`;
+            document.getElementById('welcome-message').style.display = 'block';
+            document.getElementById('logout-button').style.display = 'block';
+            syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
+        } else {
+            // Se ha iniciado sesión en otro lugar, cerrar esta sesión
+            logout("Se ha iniciado una nueva sesión en otro dispositivo o navegador.");
+        }
+    } else {
+        // No hay sesión, mostrar el modal de login
+        document.getElementById('login-modal').style.display = 'flex';
+    }
+}
+
+
+function login(username, password) {
+    if (userData.length === 0) {
+        document.getElementById('login-error').textContent = 'Error de autenticación. Intente de nuevo.';
+        document.getElementById('login-error').style.display = 'block';
+        return;
+    }
+    const header = userData[0];
+    const users = userData.slice(1);
+    const user = users.find(u => u[header.indexOf('Nombre_Usuario')] === username && u[header.indexOf('Password')] === password);
+
+    if (user) {
+        const sessionId = Date.now().toString(); // ID de sesión único
+        const sessionData = {
+            user: {
+                ID: user[header.indexOf('ID')],
+                Nombre_Usuario: user[header.indexOf('Nombre_Usuario')],
+                Privilegios: user[header.indexOf('Privilegios')],
+                Nombre: user[header.indexOf('Nombre')],
+            },
+            sessionId: sessionId
+        };
+
+        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+        localStorage.setItem(SESSION_ID_KEY, sessionId); // Almacena el ID de la sesión actual
+
+        // Simular notificación a otras pestañas
+        localStorage.setItem('session_update', Date.now());
+
+
+        document.getElementById('login-modal').style.display = 'none';
+        document.querySelector('.container').style.display = 'block';
+        document.getElementById('welcome-message').textContent = `Bienvenido, ${sessionData.user.Nombre}`;
+        document.getElementById('welcome-message').style.display = 'block';
+        document.getElementById('logout-button').style.display = 'block';
+
+        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
+
+    } else {
+        document.getElementById('login-error').textContent = 'Usuario o contraseña incorrectos.';
+        document.getElementById('login-error').style.display = 'block';
+    }
+}
+
+function logout(reason = null) {
+    localStorage.removeItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_ID_KEY);
+
+    // Limpiar la UI
+    document.getElementById('welcome-message').style.display = 'none';
+    document.getElementById('logout-button').style.display = 'none';
+    document.querySelector('.container').style.display = 'none';
+
+    // Mostrar el modal de login con un mensaje si es necesario
+    const loginModal = document.getElementById('login-modal');
+    loginModal.style.display = 'flex';
+    const loginError = document.getElementById('login-error');
+    if (reason) {
+        loginError.textContent = reason;
+        loginError.style.display = 'block';
+    } else {
+        loginError.style.display = 'none';
+    }
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+}
+
+
+document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = sanitizeInput(document.getElementById('username').value);
+    const password = sanitizeInput(document.getElementById('password').value);
+
+    // Asegurarse de que los datos de usuario estén cargados
+    if (userData.length === 0) {
+       await fetchUsers();
+    }
+
+    login(username, password);
+});
+
+document.getElementById('logout-button').addEventListener('click', () => {
+    logout();
+});
+
+document.getElementById('forgot-password-link').addEventListener('click', (e) => {
+    e.preventDefault();
+    const username = document.getElementById('username').value;
+    const message = encodeURIComponent(`Hola, necesito recuperar mi contraseña. Mi nombre de usuario es: ${username}`);
+    const whatsappUrl = `https://wa.me/50488422786?text=${message}`;
+    window.open(whatsappUrl, '_blank');
+});
+
+// Listener para detectar cambios de sesión en otras pestañas
+window.addEventListener('storage', (event) => {
+    if (event.key === 'session_update' || event.key === SESSION_ID_KEY) {
+        checkSession();
+    }
+});
 
 const COLUMN_NAME_AÑOS = "Año (generacion)";
 
@@ -1050,8 +1317,13 @@ if ('serviceWorker' in navigator) {
     });
 }
 
-// Carga inicial de datos de la aplicación
-syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
+// --- INICIALIZACIÓN DE LA APLICACIÓN ---
+async function inicializarApp() {
+    await fetchUsers(); // Carga los datos de usuarios primero
+    checkSession();     // Luego, comprueba si hay una sesión activa
+}
+
+inicializarApp();
 
 </script>
 
