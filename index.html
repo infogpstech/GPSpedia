@@ -1289,6 +1289,9 @@ function convertirAGoogleThumbnail(url){
 }
 
 function mostrarLightbox(src){
+  // Limpiar la imagen anterior para evitar el parpadeo
+  document.getElementById("lightboxImg").src = "";
+
   let idMatch = src.match(/id=([a-zA-Z0-9_-]+)/) || src.match(/\/d\/([a-zA-Z0-9_-]+)/);
   let finalUrl = src;
   if(idMatch && idMatch[1]){
