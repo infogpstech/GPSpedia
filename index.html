@@ -50,14 +50,23 @@ h1,h2,h3,h4 {
 .header-container {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between; /* Ajustado para espaciar los elementos */
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
     margin-bottom: 20px;
+    gap: 15px; /* Espacio entre el logo/título y los controles */
 }
+
+.header-branding {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
 .app-logo {
     max-width: 96px;
     height: auto;
     border-radius: 8px;
-    margin-right: 15px;
+    /* margin-right ya no es necesario gracias a 'gap' */
 }
 h1.app-title {
     text-align: left;
@@ -89,15 +98,36 @@ h1.app-title {
     transform: scale(1.05); /* Efecto de zoom ligero */
 }
 
-@media (max-width: 480px) {
+@media (max-width: 680px) {
+    .header-container {
+        flex-direction: column; /* Apila los elementos verticalmente */
+        align-items: center; /* Centra los elementos */
+        justify-content: center;
+    }
+    .header-branding {
+        justify-content: center;
+        width: 100%;
+    }
     h1.app-title {
         font-size: 1.8em;
     }
+    #header-controls {
+        margin-left: 0; /* Resetea el margen */
+        width: 100%;
+        justify-content: center; /* Centra los botones */
+    }
+}
+
+@media (max-width: 480px) {
     #install-button {
         top: 10px;
         right: 10px;
         padding: 8px 12px;
         font-size: 0.9em;
+    }
+    #header-controls {
+        flex-direction: column; /* Apila el saludo y el botón de cerrar sesión */
+        align-items: center;
     }
 }
 
@@ -339,23 +369,54 @@ h1.app-title {
     background-color: #333;
     color: #fff;
     font-size: 0.9em;
+    display: none; /* Oculto por defecto */
+    width: 100%;
+}
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000; /* Por encima de todo */
+    transition: opacity 0.5s ease-out;
+}
+#splash-screen img {
+    max-width: 150px;
+    border-radius: 15px;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 </style>
 </head>
 <body>
 
+<!-- Splash Screen -->
+<div id="splash-screen">
+    <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w512" alt="Logo de GPSpedia">
+</div>
+
 <!-- Login Modal -->
 <div id="login-modal" style="display: none;">
     <div class="modal-content">
+        <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256" alt="Logo de GPSpedia" style="max-width: 120px; margin-bottom: 20px; border-radius: 10px;">
         <h2>Iniciar Sesión</h2>
         <form id="login-form">
             <div class="form-group">
                 <label for="username">Usuario</label>
-                <input type="text" id="username" required>
+                <input type="text" id="username" required autocomplete="username">
             </div>
             <div class="form-group">
                 <label for="password">Contraseña</label>
-                <input type="password" id="password" required>
+                <input type="password" id="password" required autocomplete="current-password">
             </div>
             <button type="submit">Acceder</button>
             <p id="login-error" style="color: red; display: none;"></p>
@@ -367,9 +428,11 @@ h1.app-title {
 <div class="container" style="display: none;">
 
   <div class="header-container">
-      <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
-      <h1 class="app-title">GPSpedia</h1>
-      <div id="header-controls" style="margin-left: auto; display: flex; align-items: center; gap: 15px;">
+      <div class="header-branding">
+          <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
+          <h1 class="app-title">GPSpedia</h1>
+      </div>
+      <div id="header-controls" style="display: flex; align-items: center; gap: 15px;">
           <span id="welcome-message" style="display: none; color: #333; font-weight: bold;"></span>
           <button id="logout-button" style="display: none; background-color: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;">Cerrar Sesión</button>
           <button id="install-button" style="display: none;">Instalar Aplicación</button>
@@ -531,8 +594,7 @@ function checkSession() {
 
         if (sessionId === expectedSessionId) {
             // La sesión es válida y única para esta pestaña/navegador
-            document.getElementById('login-modal').style.display = 'none';
-            document.querySelector('.container').style.display = 'block';
+            hideLoginShowApp();
             document.getElementById('welcome-message').textContent = `Bienvenido, ${user.Nombre}`;
             document.getElementById('welcome-message').style.display = 'block';
             document.getElementById('logout-button').style.display = 'block';
@@ -543,7 +605,7 @@ function checkSession() {
         }
     } else {
         // No hay sesión, mostrar el modal de login
-        document.getElementById('login-modal').style.display = 'flex';
+        showLoginHideApp();
     }
 }
 
@@ -576,9 +638,7 @@ function login(username, password) {
         // Simular notificación a otras pestañas
         localStorage.setItem('session_update', Date.now());
 
-
-        document.getElementById('login-modal').style.display = 'none';
-        document.querySelector('.container').style.display = 'block';
+        hideLoginShowApp();
         document.getElementById('welcome-message').textContent = `Bienvenido, ${sessionData.user.Nombre}`;
         document.getElementById('welcome-message').style.display = 'block';
         document.getElementById('logout-button').style.display = 'block';
@@ -595,14 +655,20 @@ function logout(reason = null) {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_ID_KEY);
 
-    // Limpiar la UI
+    showLoginHideApp(reason);
+}
+
+function showLoginHideApp(reason = null) {
+    // Ocultar contenido principal y footer
+    document.querySelector('.container').style.display = 'none';
+    document.querySelector('.footer').style.display = 'none';
     document.getElementById('welcome-message').style.display = 'none';
     document.getElementById('logout-button').style.display = 'none';
-    document.querySelector('.container').style.display = 'none';
 
-    // Mostrar el modal de login con un mensaje si es necesario
+    // Mostrar el modal de login
     const loginModal = document.getElementById('login-modal');
     loginModal.style.display = 'flex';
+
     const loginError = document.getElementById('login-error');
     if (reason) {
         loginError.textContent = reason;
@@ -610,8 +676,24 @@ function logout(reason = null) {
     } else {
         loginError.style.display = 'none';
     }
+
     document.getElementById('username').value = '';
     document.getElementById('password').value = '';
+}
+
+function hideLoginShowApp() {
+    // Ocultar splash y login
+    const splash = document.getElementById('splash-screen');
+    splash.style.opacity = '0';
+    setTimeout(() => {
+        splash.style.display = 'none';
+    }, 500); // Coincide con la transición de opacidad
+
+    document.getElementById('login-modal').style.display = 'none';
+
+    // Mostrar contenido principal y footer
+    document.querySelector('.container').style.display = 'block';
+    document.querySelector('.footer').style.display = 'block';
 }
 
 
@@ -1283,9 +1365,19 @@ window.addEventListener('beforeinstallprompt', (e) => {
     deferredPrompt = e;
     console.log('`beforeinstallprompt` event was fired. App is installable.');
 
-    // Mostrar el botón de instalación si no estamos en modo standalone
-    if (!window.matchMedia('(display-mode: standalone)').matches) {
-        installButton.style.display = 'block';
+    // Lógica para mostrar el botón de instalación
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    if (!isStandalone) {
+        if (isIOS) {
+            // En iOS no se dispara 'beforeinstallprompt', manejaremos un botón personalizado.
+            // La lógica para mostrar el botón de iOS estará en inicializarApp.
+            installButton.style.display = 'none';
+        } else {
+            // Para otros dispositivos (Android, Desktop), mostrar el botón.
+            installButton.style.display = 'block';
+        }
     }
 });
 
@@ -1321,13 +1413,65 @@ if ('serviceWorker' in navigator) {
 async function inicializarApp() {
     await fetchUsers(); // Carga los datos de usuarios primero
     checkSession();     // Luego, comprueba si hay una sesión activa
+
+    // Lógica para el botón de instalación de iOS
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    if (!isStandalone && isIOS) {
+        // Crear y mostrar un botón/mensaje específico para iOS
+        const iosInstallMessage = document.createElement('div');
+        iosInstallMessage.id = 'ios-install-message';
+        iosInstallMessage.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #007bff;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            text-align: center;
+            z-index: 1002;
+            font-size: 0.9em;
+            width: 90%;
+            max-width: 400px;
+        `;
+        iosInstallMessage.innerHTML = `
+            Para instalar, pulsa el botón de Compartir
+            <svg style="width:20px; vertical-align:middle;" viewBox="0 0 24 24"><path fill="currentColor" d="M17,14V17A1,1 0 0,1 16,18H8A1,1 0 0,1 7,17V14H5V17A3,3 0 0,0 8,20H16A3,3 0 0,0 19,17V14H17M12,4L7,9H10V15H14V9H17L12,4Z" /></svg>
+            y luego "Añadir a pantalla de inicio".
+            <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; font-size:1.2em; position:absolute; top:5px; right:10px;">&times;</button>
+        `;
+        document.body.appendChild(iosInstallMessage);
+    }
 }
+
+// Ocultar el splash screen después de un tiempo para asegurar que no se quede atascado
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        const session = localStorage.getItem(SESSION_KEY);
+        // Si no hay sesión, el splash se ocultará cuando se muestre el login.
+        // Si hay sesión, el splash se ocultará cuando se muestre la app.
+        // Este es un fallback por si algo falla.
+        if (!session) {
+             const splash = document.getElementById('splash-screen');
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 500);
+        }
+    }, 3000); // 3 segundos de tiempo de espera máximo
+});
+
 
 inicializarApp();
 
 </script>
 
-<footer class="footer">
+<footer class="footer" style="display: none;">
   Gpspedia 2025© todos los derechos reservados.
 </footer>
 
