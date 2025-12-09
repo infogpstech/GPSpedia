@@ -501,17 +501,17 @@ body.search-active .app-logo {
 
 #detalleCompleto img {
     display: block;
-    width: 100%; /* Ocupa el ancho del contenedor */
-    height: 300px; /* Altura fija para uniformidad */
-    margin: 15px auto; /* Centrado horizontal y espaciado vertical */
+    width: auto; /* Ancho automático para mantener proporción */
+    max-width: 100%;
+    max-height: 300px; /* Límite de altura en lugar de altura fija */
+    margin: 15px auto;
     cursor: pointer;
-    object-fit: contain; /* Asegura que la imagen completa se vea sin distorsión */
+    object-fit: contain;
     border-radius: 8px;
-    background-color: #fff; /* Cambiado a blanco para coincidir con el modal */
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada */
 }
 .img-vehiculo {
-    height: 200px !important; /* Altura más pequeña para la imagen del vehículo */
+    max-height: 200px !important; /* Límite de altura más pequeño */
 }
 #detalleCompleto h4 {
     color: #007bff;
@@ -522,7 +522,7 @@ body.search-active .app-logo {
 /* --- ESTILOS PARA SECCIONES DESPLEGABLES (ACORDEÓN) --- */
 .accordion-btn {
     background-color: #f0f0f0;
-    color: #444;
+    color: #007bff; /* Color de texto azul */
     cursor: pointer;
     padding: 15px;
     width: 100%;
@@ -541,12 +541,12 @@ body.search-active .app-logo {
 .accordion-btn:hover, .accordion-btn.active {
     background-color: #e0e0e0;
 }
-.accordion-btn::after {
-    content: '\\25BC'; /* Flecha hacia abajo */
-    font-size: 0.8em;
+.accordion-arrow {
     transition: transform 0.3s ease;
+    width: 20px;
+    height: 20px;
 }
-.accordion-btn.active::after {
+.accordion-btn.active .accordion-arrow {
     transform: rotate(180deg); /* Flecha hacia arriba */
 }
 .panel-desplegable {
@@ -1385,7 +1385,7 @@ function mostrarDetalleModal(fila, header) {
             ]
         },
         {
-            titulo: "Alimentación de Cables",
+            titulo: "Cables de Alimentación",
             campos: [
                 { label: "Detalles", key: "Cables de Alimentacion" },
                 { label: "Imagen", key: "Imagen de los cables de alimentacion", esImagen: true }
@@ -1404,7 +1404,12 @@ function mostrarDetalleModal(fila, header) {
 
         const btn = document.createElement("button");
         btn.className = "accordion-btn";
-        btn.textContent = seccion.titulo;
+        btn.innerHTML = `
+            ${seccion.titulo}
+            <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+        `;
         cont.appendChild(btn);
 
         const panel = document.createElement("div");
