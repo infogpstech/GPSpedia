@@ -464,7 +464,7 @@ body.search-active .app-logo {
     overflow: auto;
     background: rgba(0, 0, 0, 0.6); /* Ligeramente más claro */
     color: #000;
-    z-index: 999;
+    z-index: 1600; /* Aumentado para estar sobre la barra de búsqueda */
     display: flex; /* Usar flex para centrar */
     align-items: center;
     justify-content: center;
@@ -507,13 +507,55 @@ body.search-active .app-logo {
     cursor: pointer;
     object-fit: contain; /* Asegura que la imagen completa se vea sin distorsión */
     border-radius: 8px;
-    background-color: #f0f0f0; /* Fondo sutil para letterboxing */
+    background-color: #fff; /* Cambiado a blanco para coincidir con el modal */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+.img-vehiculo {
+    height: 200px !important; /* Altura más pequeña para la imagen del vehículo */
 }
 #detalleCompleto h4 {
     color: #007bff;
     border-bottom: 2px solid #eee;
     padding-bottom: 5px;
+}
+
+/* --- ESTILOS PARA SECCIONES DESPLEGABLES (ACORDEÓN) --- */
+.accordion-btn {
+    background-color: #f0f0f0;
+    color: #444;
+    cursor: pointer;
+    padding: 15px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.accordion-btn:hover, .accordion-btn.active {
+    background-color: #e0e0e0;
+}
+.accordion-btn::after {
+    content: '\\25BC'; /* Flecha hacia abajo */
+    font-size: 0.8em;
+    transition: transform 0.3s ease;
+}
+.accordion-btn.active::after {
+    transform: rotate(180deg); /* Flecha hacia arriba */
+}
+.panel-desplegable {
+    padding: 0 18px;
+    background-color: white;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    border-bottom: 1px solid #eee;
 }
 
 /* Lightbox */
@@ -952,7 +994,8 @@ async function syncAndFetchData(storeName, range, dataVariableSetter, successCal
             dataVariableSetter(localData);
             successCallback();
             hasLocalData = true;
-            container.classList.add('animacion-ejecutada'); // Añade la clase después de la primera carga para prevenir re-animación.
+            // Retraso para asegurar que la animación inicial se complete antes de prevenir futuras animaciones.
+            setTimeout(() => container.classList.add('animacion-ejecutada'), 50);
         }
     } catch (dbError) {
         console.error(`Error al leer de IndexedDB para ${storeName}:`, dbError);
@@ -975,10 +1018,10 @@ async function syncAndFetchData(storeName, range, dataVariableSetter, successCal
             await saveData(storeName, values);
             console.log(`Datos de ${storeName} guardados/actualizados en IndexedDB.`);
             dataVariableSetter(values);
-            successCallback(); // La UI se actualiza con los nuevos datos.
+            successCallback();
             if (!hasLocalData) {
-                // Si esta fue la primera carga (sin datos locales), añade la clase ahora.
-                container.classList.add('animacion-ejecutada');
+                // Si es la primera carga (sin datos locales), añade la clase después de un breve retraso.
+                setTimeout(() => container.classList.add('animacion-ejecutada'), 50);
             }
         } else if (!hasLocalData) {
             container.innerHTML = `<p>No se encontraron datos.</p>`;
@@ -1079,12 +1122,15 @@ function crearElementoDetalle(label, value) {
     return p;
 }
 
-function crearImagenDetalle(label, value, container) {
+function crearImagenDetalle(label, value, container, extraClass = '') {
     if (!value) return;
     const h = document.createElement("h4"); h.textContent = label; container.appendChild(h);
     const img = document.createElement("img");
     img.src = convertirAGoogleThumbnail(value);
     img.alt = label;
+    if (extraClass) {
+        img.classList.add(extraClass);
+    }
     img.onclick = () => mostrarLightbox(value);
     container.appendChild(img);
 }
@@ -1134,7 +1180,10 @@ window.addEventListener('popstate', (event) => {
     // Si el estado anterior era la búsqueda activa, desactívala.
     else if (uiState.isSearchActive) {
         uiState.isSearchActive = false;
-        document.getElementById('searchInput').blur(); // Quita el foco para revertir la animación
+        const searchInput = document.getElementById('searchInput');
+        searchInput.value = ''; // Limpia el texto de búsqueda
+        searchInput.dispatchEvent(new Event('input', { bubbles: true })); // Dispara el evento para resetear los resultados
+        searchInput.blur();
         document.body.classList.remove('search-active');
     }
 });
@@ -1283,67 +1332,107 @@ function extractYouTubeId(url) {
     return videoId;
 }
 
-function mostrarDetalleModal(fila, header){
-  // Empujar un nuevo estado al historial para el modal
-  pushState({ modal: true });
-  uiState.isModalOpen = true;
+function mostrarDetalleModal(fila, header) {
+    pushState({ modal: true });
+    uiState.isModalOpen = true;
 
-  const modal = document.getElementById("modalDetalle");
-  const cont = document.getElementById("detalleCompleto");
-  cont.innerHTML = "";
-  const indexes = getHeaderIndexes(header);
+    const modal = document.getElementById("modalDetalle");
+    const cont = document.getElementById("detalleCompleto");
+    cont.innerHTML = "";
+    const indexes = getHeaderIndexes(header);
 
-  const closeBtn = document.createElement("button");
-  closeBtn.textContent = "Cerrar Detalle";
-  closeBtn.onclick = () => history.back(); // Ahora el botón de cerrar usa el historial
-  closeBtn.className = "backBtn";
-  closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
-  cont.appendChild(closeBtn);
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "Cerrar Detalle";
+    closeBtn.onclick = () => history.back();
+    closeBtn.className = "backBtn";
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
+    cont.appendChild(closeBtn);
 
-  const title = document.createElement("h2");
-  const modeloNombre = fila[indexes.COL_MODELO] || 'Modelo Desconocido';
-  const anosNombre = fila[indexes.COL_AÑOS] || '';
-  title.textContent = `Detalle de ${modeloNombre} ${anosNombre ? `(${anosNombre})` : ''}`;
-  title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
-  cont.appendChild(title);
+    const title = document.createElement("h2");
+    const modeloNombre = fila[indexes.COL_MODELO] || 'Modelo Desconocido';
+    const anosNombre = fila[indexes.COL_AÑOS] || '';
+    title.textContent = `Detalle de ${modeloNombre} ${anosNombre ? `(${anosNombre})` : ''}`;
+    title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
+    cont.appendChild(title);
 
-  const campos = [
-    {label:"Nota Importante", key:"Nota Importante", isTitle: true}, {label:"Modelo", key:"Imagen del vehiculo"},
-    {label:"Tipo de Corte", key:"Tipo de corte"}, {label:"Descripción", key:"Descripcion del corte"},
-    {label:"Imagen", key:"Imagen del Corte"}, {label:"Segunda Opción", key:"Tipo de corte 2"},
-    {label:"Segunda Descripción:", key:"Descripción del Segundo corte"}, {label:"Imagen del Segundo Corte", key:"Imagen de corte 2"},
-    {label:"Apertura", key:"Apertura"}, {label:"Imagen de la Apertura", key:"Imagen de la apertura"},
-    {label:"Alimentación", key:"Cables de Alimentacion"}, {label:"Imagen de Alimentación", key:"Imagen de los cables de alimentacion"},
-    {label:"Imagen de la portada (Alternativa)", key:"Imagen de la portada"}
-  ];
-
-  campos.forEach(c => {
-    let index = header.indexOf(c.key);
-    if(index > -1){
-        let valor = fila[index];
-        if(valor){
-            if(c.key.includes("Imagen")){
-                crearImagenDetalle(c.label, valor, cont);
-            } else {
-                const p=document.createElement("p");
-                if(c.isTitle){
-                    p.innerHTML = `<strong style="color:red;">${c.label}:</strong> <span style="color:#cc0000; font-weight: bold;">${valor}</span>`;
-                } else {
-                    p.innerHTML=`<strong>${c.label}:</strong> ${valor}`;
-                }
-                cont.appendChild(p);
-            }
-        }
+    // --- Contenido Principal (Siempre Visible) ---
+    const notaImportante = fila[header.indexOf("Nota Importante")];
+    if (notaImportante) {
+        const p = document.createElement("p");
+        p.innerHTML = `<strong style="color:red;">Nota Importante:</strong> <span style="color:#cc0000; font-weight: bold;">${notaImportante}</span>`;
+        cont.appendChild(p);
     }
-  });
+    crearImagenDetalle("Modelo", fila[header.indexOf("Imagen del vehiculo")], cont, 'img-vehiculo');
+    cont.appendChild(crearElementoDetalle("Tipo de Corte", fila[header.indexOf("Tipo de corte")]));
+    cont.appendChild(crearElementoDetalle("Descripción", fila[header.indexOf("Descripcion del corte")]));
+    crearImagenDetalle("Imagen", fila[header.indexOf("Imagen del Corte")], cont);
 
-  crearVideoDetalle("Video Guía de Desarme", fila[header.indexOf("Como desarmar los plasticos")], cont);
+    // --- Secciones Desplegables ---
+    const secciones = [
+        {
+            titulo: "Segunda Opción de Corte",
+            campos: [
+                { label: "Tipo de Corte", key: "Tipo de corte 2" },
+                { label: "Descripción", key: "Descripción del Segundo corte" },
+                { label: "Imagen", key: "Imagen de corte 2", esImagen: true }
+            ]
+        },
+        {
+            titulo: "Apertura",
+            campos: [
+                { label: "Detalles", key: "Apertura" },
+                { label: "Imagen", key: "Imagen de la apertura", esImagen: true }
+            ]
+        },
+        {
+            titulo: "Alimentación de Cables",
+            campos: [
+                { label: "Detalles", key: "Cables de Alimentacion" },
+                { label: "Imagen", key: "Imagen de los cables de alimentacion", esImagen: true }
+            ]
+        },
+        {
+            titulo: "Video Guía de Desarme",
+            campos: [{ key: "Como desarmar los plasticos", esVideo: true }]
+        }
+    ];
 
-  const closeBtnBottom = closeBtn.cloneNode(true);
-  closeBtnBottom.onclick = () => history.back();
-  cont.appendChild(closeBtnBottom);
-  modal.classList.add("visible");
+    secciones.forEach(seccion => {
+        // Comprueba si al menos un campo de la sección tiene contenido
+        const tieneContenido = seccion.campos.some(c => fila[header.indexOf(c.key)]);
+        if (!tieneContenido) return;
+
+        const btn = document.createElement("button");
+        btn.className = "accordion-btn";
+        btn.textContent = seccion.titulo;
+        cont.appendChild(btn);
+
+        const panel = document.createElement("div");
+        panel.className = "panel-desplegable";
+
+        seccion.campos.forEach(c => {
+            const valor = fila[header.indexOf(c.key)];
+            if (valor) {
+                if (c.esImagen) {
+                    crearImagenDetalle(c.label || seccion.titulo, valor, panel);
+                } else if (c.esVideo) {
+                    crearVideoDetalle(seccion.titulo, valor, panel);
+                } else {
+                    panel.appendChild(crearElementoDetalle(c.label, valor));
+                }
+            }
+        });
+        cont.appendChild(panel);
+    });
+
+    const closeBtnBottom = closeBtn.cloneNode(true);
+    closeBtnBottom.onclick = () => history.back();
+    cont.appendChild(closeBtnBottom);
+    modal.classList.add("visible");
 }
+
+// --- LÓGICA DE BÚSQUEDA ACTIVA ---
+const searchInput = document.getElementById('searchInput');
 
 function filtrarContenido(textoBusqueda){
     const busqueda = textoBusqueda.toLowerCase().trim();
@@ -1723,8 +1812,19 @@ window.addEventListener('load', () => {
 
 inicializarApp();
 
-// --- LÓGICA DE BÚSQUEDA ACTIVA ---
-const searchInput = document.getElementById('searchInput');
+// Event listener para el acordeón
+document.getElementById('detalleCompleto').addEventListener('click', function(e) {
+    if (e.target.classList.contains('accordion-btn')) {
+        e.target.classList.toggle('active');
+        const panel = e.target.nextElementSibling;
+        if (panel.style.maxHeight) {
+            panel.style.maxHeight = null;
+        } else {
+            panel.style.maxHeight = panel.scrollHeight + "px";
+        }
+    }
+});
+
 const searchContainer = document.querySelector('.search-container');
 const clearSearchBtn = document.getElementById('clear-search-btn');
 
