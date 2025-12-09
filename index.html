@@ -308,6 +308,11 @@ body.search-active .app-logo {
     opacity: 0; /* Estado inicial para la animación */
     animation: card-enter 0.5s ease-out forwards;
 }
+.animacion-ejecutada .card {
+    /* Deshabilita la animación si el contenedor ya la ejecutó */
+    animation: none;
+    opacity: 1; /* Asegura que la tarjeta sea visible */
+}
 .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
@@ -495,13 +500,14 @@ body.search-active .app-logo {
 }
 
 #detalleCompleto img {
-    display: block; /* Para que el margen automático funcione */
-    max-width: 100%;
-    max-height: 60vh;
+    display: block;
+    width: 100%; /* Ocupa el ancho del contenedor */
+    height: 300px; /* Altura fija para uniformidad */
     margin: 15px auto; /* Centrado horizontal y espaciado vertical */
     cursor: pointer;
-    object-fit: contain;
+    object-fit: contain; /* Asegura que la imagen completa se vea sin distorsión */
     border-radius: 8px;
+    background-color: #f0f0f0; /* Fondo sutil para letterboxing */
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 #detalleCompleto h4 {
@@ -936,28 +942,28 @@ const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="
 
 async function syncAndFetchData(storeName, range, dataVariableSetter, successCallback, containerId) {
     const container = document.getElementById(containerId);
-    let hasLocalData = false; // Bandera para saber si ya mostramos datos
+    let hasLocalData = false;
 
-    // 1. Cargar datos desde IndexedDB primero para una experiencia offline-first.
+    // 1. Cargar datos desde IndexedDB primero.
     try {
         const localData = await readData(storeName);
         if (localData && localData.length > 0) {
             console.log(`Datos cargados desde IndexedDB para: ${storeName}`);
             dataVariableSetter(localData);
             successCallback();
-            hasLocalData = true; // Marcamos que ya tenemos datos
+            hasLocalData = true;
+            container.classList.add('animacion-ejecutada'); // Añade la clase después de la primera carga para prevenir re-animación.
         }
     } catch (dbError) {
         console.error(`Error al leer de IndexedDB para ${storeName}:`, dbError);
-        // No hacer nada aquí, dejaremos que el fetch de red lo intente.
     }
 
-    // 2. Si NO hay datos locales, mostrar el skeleton loader mientras se busca en la red.
+    // 2. Si no hay datos locales, mostrar el skeleton loader.
     if (!hasLocalData) {
         showSkeletonLoader(container);
     }
 
-    // 2. Intentar obtener datos frescos de la red.
+    // 3. Intentar obtener datos frescos de la red.
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
     try {
         const response = await fetch(url);
@@ -966,24 +972,20 @@ async function syncAndFetchData(storeName, range, dataVariableSetter, successCal
         const values = data.values || [];
 
         if (values.length > 0) {
-            // 3. Si hay datos nuevos, guardarlos en IndexedDB y actualizar la UI.
             await saveData(storeName, values);
             console.log(`Datos de ${storeName} guardados/actualizados en IndexedDB.`);
             dataVariableSetter(values);
-            successCallback(); // Volver a renderizar con los datos frescos.
-        } else {
-            // Si la red no devuelve datos, pero teníamos datos locales, los mantenemos.
-            const localData = await readData(storeName);
-            if (!localData) {
-                 container.innerHTML = `<p>No se encontraron datos.</p>`;
+            successCallback(); // La UI se actualiza con los nuevos datos.
+            if (!hasLocalData) {
+                // Si esta fue la primera carga (sin datos locales), añade la clase ahora.
+                container.classList.add('animacion-ejecutada');
             }
+        } else if (!hasLocalData) {
+            container.innerHTML = `<p>No se encontraron datos.</p>`;
         }
     } catch (error) {
         console.error(`Fallo al obtener datos de ${range} desde la red:`, error);
-        // Si la red falla, la app sigue funcionando con los datos de IndexedDB.
-        // Si no había datos locales, mostramos un error de conexión.
-        const localData = await readData(storeName);
-        if (!localData) {
+        if (!hasLocalData) {
             container.innerHTML = `<p style="color:red;">No se pudo conectar. Comprueba tu conexión.</p>`;
         } else {
             console.log("Mostrando datos locales debido a un error de red.");
@@ -992,11 +994,16 @@ async function syncAndFetchData(storeName, range, dataVariableSetter, successCal
 }
 
 function mostrarSeccion(seccion) {
-    document.getElementById('contenido').style.display = 'none';
-    document.getElementById('contenido-tutoriales').style.display = 'none';
-    document.getElementById('contenido-relay').style.display = 'none';
+    // Oculta todas las secciones y resetea la animación
+    const sections = document.querySelectorAll('.content-section');
+    sections.forEach(s => {
+        s.style.display = 'none';
+        s.classList.remove('animacion-ejecutada');
+    });
 
-    document.getElementById('btn-cortes').classList.remove('active');
+    // Desactiva todos los botones
+    const buttons = document.querySelectorAll('.section-btn');
+    buttons.forEach(b => b.classList.remove('active'));
     document.getElementById('btn-tutoriales').classList.remove('active');
     document.getElementById('btn-relay').classList.remove('active');
 
