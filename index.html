@@ -266,6 +266,8 @@ body.search-active .app-logo {
 }
 .section-btn:hover:not(.active) {
     background-color: #e0e0e0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 
@@ -280,6 +282,16 @@ body.search-active .app-logo {
 }
 
 /* Estilos de la Tarjeta (Card) */
+@keyframes card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 .card {
     position: relative;
     background: #fff;
@@ -292,10 +304,49 @@ body.search-active .app-logo {
     width: 100%;
     max-width: 140px;
     justify-self: center;
+    /* Animación de entrada */
+    opacity: 0; /* Estado inicial para la animación */
+    animation: card-enter 0.5s ease-out forwards;
 }
 .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* --- ESTILOS DE SKELETON LOADER --- */
+.skeleton-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, 140px);
+    justify-content: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.skeleton-card {
+    background: #e0e0e0;
+    border-radius: 12px;
+    width: 140px;
+    height: 188px; /* Altura total de la tarjeta real */
+    position: relative;
+    overflow: hidden;
+}
+.skeleton-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: loading-shimmer 1.5s infinite;
+}
+@keyframes loading-shimmer {
+    0% {
+        left: -150%;
+    }
+    100% {
+        left: 150%;
+    }
 }
 .card img {
     width: 100%;
@@ -399,36 +450,59 @@ body.search-active .app-logo {
 }
 
 /* Modal */
-#modalDetalle{
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    overflow:auto;
-    background:rgba(0,0,0,0.8);
-    color:#000;
-    z-index:999;
+#modalDetalle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background: rgba(0, 0, 0, 0.6); /* Ligeramente más claro */
+    color: #000;
+    z-index: 999;
+    display: flex; /* Usar flex para centrar */
+    align-items: center;
+    justify-content: center;
+    /* Transiciones para la aparición */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-#detalleCompleto{
-    background:#fff;
-    margin:50px auto;
-    padding:30px;
-    max-width:90%;
-    border-radius:15px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+
+#modalDetalle.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+#detalleCompleto {
+    background: #fff;
+    padding: 30px;
+    width: 90%;
+    max-width: 800px; /* Ancho máximo para el modal */
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     max-height: 90vh;
     overflow-y: auto;
+    /* Transición para el efecto de escalado */
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
 }
-#detalleCompleto img{
-    max-width:100%;
-    max-height:60vh;
-    margin-bottom:15px;
-    cursor:pointer;
-    object-fit:contain;
-    border-radius:8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+#modalDetalle.visible #detalleCompleto {
+    transform: scale(1);
+}
+
+#detalleCompleto img {
+    display: block; /* Para que el margen automático funcione */
+    max-width: 100%;
+    max-height: 60vh;
+    margin: 15px auto; /* Centrado horizontal y espaciado vertical */
+    cursor: pointer;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 #detalleCompleto h4 {
     color: #007bff;
@@ -437,19 +511,43 @@ body.search-active .app-logo {
 }
 
 /* Lightbox */
-.lightbox{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.9);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index:1000;
+.lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Un poco más suave */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    /* Transiciones */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-.lightbox img{max-width:95%; max-height:95%;}
+
+.lightbox.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+.lightbox img {
+    max-width: 95%;
+    max-height: 95%;
+    border-radius: 8px; /* Bordes redondeados sutiles */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    /* Transición para el efecto de zoom */
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.lightbox.visible img {
+    transform: scale(1);
+}
 
 .footer {
     text-align: center;
@@ -549,7 +647,7 @@ body.search-active .app-logo {
   <div id="detalleCompleto"></div>
 </div>
 
-<div id="lightbox" class="lightbox" style="display:none;" onclick="cerrarLightbox()">
+<div id="lightbox" class="lightbox" onclick="cerrarLightbox()">
   <img id="lightboxImg" src="">
 </div>
 
@@ -820,6 +918,15 @@ window.addEventListener('storage', (event) => {
     }
 });
 
+function showSkeletonLoader(container) {
+    let skeletonHTML = '<div class="skeleton-grid">';
+    for (let i = 0; i < 10; i++) { // Muestra 10 tarjetas esqueleto
+        skeletonHTML += '<div class="skeleton-card"></div>';
+    }
+    skeletonHTML += '</div>';
+    container.innerHTML = skeletonHTML;
+}
+
 const COLUMN_NAME_AÑOS = "Año (generacion)";
 
 let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay = [],
@@ -829,6 +936,7 @@ const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="
 
 async function syncAndFetchData(storeName, range, dataVariableSetter, successCallback, containerId) {
     const container = document.getElementById(containerId);
+    let hasLocalData = false; // Bandera para saber si ya mostramos datos
 
     // 1. Cargar datos desde IndexedDB primero para una experiencia offline-first.
     try {
@@ -837,12 +945,16 @@ async function syncAndFetchData(storeName, range, dataVariableSetter, successCal
             console.log(`Datos cargados desde IndexedDB para: ${storeName}`);
             dataVariableSetter(localData);
             successCallback();
-        } else {
-            container.innerHTML = `<p>Buscando datos...</p>`;
+            hasLocalData = true; // Marcamos que ya tenemos datos
         }
     } catch (dbError) {
         console.error(`Error al leer de IndexedDB para ${storeName}:`, dbError);
-        container.innerHTML = `<p>Buscando datos...</p>`;
+        // No hacer nada aquí, dejaremos que el fetch de red lo intente.
+    }
+
+    // 2. Si NO hay datos locales, mostrar el skeleton loader mientras se busca en la red.
+    if (!hasLocalData) {
+        showSkeletonLoader(container);
     }
 
     // 2. Intentar obtener datos frescos de la red.
@@ -1057,7 +1169,7 @@ function mostrarDetalleTutorial(fila, header) {
     const closeBtnBottom = closeBtn.cloneNode(true);
     closeBtnBottom.onclick = () => history.back();
     cont.appendChild(closeBtnBottom);
-    modal.style.display = "flex";
+    modal.classList.add("visible");
 }
 
 function mostrarDetalleRelay(fila, header) {
@@ -1129,7 +1241,7 @@ function mostrarLightbox(src){
        console.warn("Advertencia: No se pudo encontrar un ID de Google Drive válido para el Lightbox. Usando URL original.");
   }
   document.getElementById("lightboxImg").src = finalUrl;
-  document.getElementById("lightbox").style.display="flex";
+  document.getElementById("lightbox").classList.add("visible");
 }
 function cerrarModal(manageHistory = true) {
     if (manageHistory && uiState.isModalOpen) {
@@ -1141,11 +1253,11 @@ function cerrarModal(manageHistory = true) {
         if (iframe) {
             iframe.src = ''; // Detiene la reproducción del video al vaciar el src.
         }
-        document.getElementById("modalDetalle").style.display = "none";
+        document.getElementById("modalDetalle").classList.remove("visible");
         uiState.isModalOpen = false; // Asegurarse de que el estado esté sincronizado
     }
 }
-function cerrarLightbox(){document.getElementById("lightbox").style.display="none";}
+function cerrarLightbox(){document.getElementById("lightbox").classList.remove("visible");}
 
 function extractYouTubeId(url) {
     if (!url) return null;
@@ -1223,7 +1335,7 @@ function mostrarDetalleModal(fila, header){
   const closeBtnBottom = closeBtn.cloneNode(true);
   closeBtnBottom.onclick = () => history.back();
   cont.appendChild(closeBtnBottom);
-  modal.style.display="flex";
+  modal.classList.add("visible");
 }
 
 function filtrarContenido(textoBusqueda){
