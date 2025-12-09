@@ -141,6 +141,7 @@ h1.app-title {
 
 /* --- ESTILOS DEL BUSCADOR --- */
 .search-container {
+    position: relative; /* Contenedor para el botón de limpiar */
     margin-bottom: 30px;
     padding: 10px 0;
     max-width: 600px;
@@ -148,6 +149,37 @@ h1.app-title {
     margin-right: auto;
     transition: all 0.35s ease-in-out;
 }
+
+#clear-search-btn {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #ccc;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+    line-height: 24px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.search-container.has-text #clear-search-btn {
+    opacity: 1;
+    pointer-events: all;
+}
+
+body.search-active .search-container.has-text #clear-search-btn {
+    right: 35px; /* Ajuste de posición cuando la búsqueda está activa */
+}
+
+
 .search-container input[type="text"] {
     width: 100%;
     padding: 12px 15px;
@@ -499,6 +531,7 @@ body.search-active .app-logo {
 
   <div class="search-container">
       <input type="text" id="searchInput" placeholder="Buscar Corte..." oninput="filtrarContenido(this.value)">
+      <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
   </div>
 
   <div class="section-selector">
@@ -966,13 +999,43 @@ function crearVideoDetalle(label, value, container) {
     container.appendChild(iframeContainer);
 }
 
+// --- GESTIÓN DE HISTORIAL Y ESTADO DE LA UI ---
+const uiState = {
+    isModalOpen: false,
+    isSearchActive: false
+};
+
+// Función centralizada para manejar el botón "atrás" del navegador
+window.addEventListener('popstate', (event) => {
+    // Si el estado anterior era un modal, ciérralo.
+    if (uiState.isModalOpen) {
+        uiState.isModalOpen = false; // El estado se revierte
+        cerrarModal(false); // Cierra el modal sin manipular el historial
+    }
+    // Si el estado anterior era la búsqueda activa, desactívala.
+    else if (uiState.isSearchActive) {
+        uiState.isSearchActive = false;
+        document.getElementById('searchInput').blur(); // Quita el foco para revertir la animación
+        document.body.classList.remove('search-active');
+    }
+});
+
+function pushState(state) {
+    history.pushState(state, '');
+}
+
+
 function mostrarDetalleTutorial(fila, header) {
+    // Empujar un nuevo estado al historial para el modal
+    pushState({ modal: true });
+    uiState.isModalOpen = true;
+
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = cerrarModal;
+    closeBtn.onclick = () => history.back(); // Ahora el botón de cerrar usa el historial
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
     cont.appendChild(closeBtn);
@@ -992,18 +1055,22 @@ function mostrarDetalleTutorial(fila, header) {
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
     crearVideoDetalle("Video Guía", fila[header.indexOf("Video")], cont);
     const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = cerrarModal;
+    closeBtnBottom.onclick = () => history.back();
     cont.appendChild(closeBtnBottom);
     modal.style.display = "flex";
 }
 
 function mostrarDetalleRelay(fila, header) {
+    // Empujar un nuevo estado al historial para el modal
+    pushState({ modal: true });
+    uiState.isModalOpen = true;
+
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = cerrarModal;
+    closeBtn.onclick = () => history.back(); // Ahora el botón de cerrar usa el historial
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
     cont.appendChild(closeBtn);
@@ -1027,7 +1094,7 @@ function mostrarDetalleRelay(fila, header) {
     });
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
     const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = cerrarModal;
+    closeBtnBottom.onclick = () => history.back();
     cont.appendChild(closeBtnBottom);
     modal.style.display = "flex";
 }
@@ -1064,13 +1131,19 @@ function mostrarLightbox(src){
   document.getElementById("lightboxImg").src = finalUrl;
   document.getElementById("lightbox").style.display="flex";
 }
-function cerrarModal() {
-    const detalleCont = document.getElementById("detalleCompleto");
-    const iframe = detalleCont.querySelector('iframe');
-    if (iframe) {
-        iframe.src = ''; // Detiene la reproducción del video al vaciar el src.
+function cerrarModal(manageHistory = true) {
+    if (manageHistory && uiState.isModalOpen) {
+        history.back(); // Usa el historial para cerrar si fue la acción principal
+    } else {
+        // Cierra el modal directamente (usado por el popstate handler)
+        const detalleCont = document.getElementById("detalleCompleto");
+        const iframe = detalleCont.querySelector('iframe');
+        if (iframe) {
+            iframe.src = ''; // Detiene la reproducción del video al vaciar el src.
+        }
+        document.getElementById("modalDetalle").style.display = "none";
+        uiState.isModalOpen = false; // Asegurarse de que el estado esté sincronizado
     }
-    document.getElementById("modalDetalle").style.display = "none";
 }
 function cerrarLightbox(){document.getElementById("lightbox").style.display="none";}
 
@@ -1092,6 +1165,10 @@ function extractYouTubeId(url) {
 }
 
 function mostrarDetalleModal(fila, header){
+  // Empujar un nuevo estado al historial para el modal
+  pushState({ modal: true });
+  uiState.isModalOpen = true;
+
   const modal = document.getElementById("modalDetalle");
   const cont = document.getElementById("detalleCompleto");
   cont.innerHTML = "";
@@ -1099,7 +1176,7 @@ function mostrarDetalleModal(fila, header){
 
   const closeBtn = document.createElement("button");
   closeBtn.textContent = "Cerrar Detalle";
-  closeBtn.onclick = cerrarModal;
+  closeBtn.onclick = () => history.back(); // Ahora el botón de cerrar usa el historial
   closeBtn.className = "backBtn";
   closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
   cont.appendChild(closeBtn);
@@ -1144,7 +1221,7 @@ function mostrarDetalleModal(fila, header){
   crearVideoDetalle("Video Guía de Desarme", fila[header.indexOf("Como desarmar los plasticos")], cont);
 
   const closeBtnBottom = closeBtn.cloneNode(true);
-  closeBtnBottom.onclick = cerrarModal;
+  closeBtnBottom.onclick = () => history.back();
   cont.appendChild(closeBtnBottom);
   modal.style.display="flex";
 }
@@ -1529,16 +1606,46 @@ inicializarApp();
 
 // --- LÓGICA DE BÚSQUEDA ACTIVA ---
 const searchInput = document.getElementById('searchInput');
-if (searchInput) {
+const searchContainer = document.querySelector('.search-container');
+const clearSearchBtn = document.getElementById('clear-search-btn');
+
+if (searchInput && searchContainer && clearSearchBtn) {
     searchInput.addEventListener('focus', () => {
+        if (!uiState.isSearchActive) {
+            // Solo empuja el estado si el campo está vacío. Si ya hay texto, no crees un nuevo estado.
+            if(searchInput.value.trim() === '') {
+                pushState({ search: true });
+            }
+            uiState.isSearchActive = true;
+        }
         document.body.classList.add('search-active');
     });
+
     searchInput.addEventListener('blur', () => {
-        // Se añade un pequeño retardo para dar tiempo a que se procesen los clics
-        // en los resultados de la búsqueda antes de que la interfaz vuelva a su estado normal.
-        setTimeout(() => {
-            document.body.classList.remove('search-active');
-        }, 150);
+        if (uiState.isSearchActive) {
+            // No hacemos history.back() al desenfocar para permitir hacer clic en los resultados.
+            // La UI se revierte visualmente, pero el estado del historial permanece.
+            setTimeout(() => {
+                 document.body.classList.remove('search-active');
+            }, 200);
+        }
+    });
+
+    searchInput.addEventListener('input', () => {
+        // Muestra u oculta el botón de limpiar basado en si hay texto
+        if (searchInput.value.length > 0) {
+            searchContainer.classList.add('has-text');
+        } else {
+            searchContainer.classList.remove('has-text');
+        }
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        // Dispara el evento 'input' para que la lógica de filtrado se ejecute
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        // Mantiene el foco en el input para una nueva búsqueda
+        searchInput.focus();
     });
 }
 
