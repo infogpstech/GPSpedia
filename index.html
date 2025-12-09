@@ -54,12 +54,14 @@ h1,h2,h3,h4 {
     flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
     margin-bottom: 20px;
     gap: 15px; /* Espacio entre el logo/título y los controles */
+    transition: all 0.35s ease-in-out;
 }
 
 .header-branding {
     display: flex;
     align-items: center;
     gap: 15px;
+    transition: all 0.35s ease-in-out;
 }
 
 .app-logo {
@@ -67,12 +69,18 @@ h1,h2,h3,h4 {
     height: auto;
     border-radius: 8px;
     /* margin-right ya no es necesario gracias a 'gap' */
+    transition: all 0.35s ease-in-out;
 }
 h1.app-title {
     text-align: left;
     margin: 0;
     font-size: 2.2em;
     color: #333;
+    transition: all 0.35s ease-in-out;
+}
+
+#header-controls {
+    transition: all 0.35s ease-in-out;
 }
 
 #install-button {
@@ -138,6 +146,7 @@ h1.app-title {
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
+    transition: all 0.35s ease-in-out;
 }
 .search-container input[type="text"] {
     width: 100%;
@@ -146,7 +155,7 @@ h1.app-title {
     border-radius: 8px;
     box-sizing: border-box;
     font-size: 1em;
-    transition: border-color 0.3s, box-shadow 0.3s;
+    transition: all 0.35s ease-in-out;
 }
 .search-container input[type="text"]:focus {
     border-color: #007bff;
@@ -154,11 +163,59 @@ h1.app-title {
     outline: none;
 }
 
+/* --- ESTILOS DE BÚSQUEDA ACTIVA --- */
+body.search-active .app-title,
+body.search-active #header-controls,
+body.search-active .section-selector,
+body.search-active .footer {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-20px);
+    max-height: 0; /* Colapsa el espacio vertical */
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border: none !important;
+}
+
+body.search-active .container {
+    padding-top: 80px; /* Crea espacio para la barra de búsqueda fija */
+    transition: padding-top 0.35s ease-in-out;
+}
+
+body.search-active .search-container {
+    position: fixed;
+    top: 15px;
+    left: 0;
+    right: 0;
+    padding: 0 20px;
+    margin: 0;
+    max-width: 100%;
+    z-index: 1500;
+}
+
+body.search-active #searchInput {
+    padding-left: 55px; /* Espacio para el logo */
+    height: 48px;
+    box-sizing: border-box;
+}
+
+body.search-active .app-logo {
+    position: fixed;
+    top: 22px;       /* 15px (search-container top) + 7px (para centrar) */
+    left: 30px;      /* 20px (search-container padding) + 10px (margen interno) */
+    max-width: 34px;
+    z-index: 1501;   /* Por encima del input */
+}
+
+
 /* --- ESTILOS DE LA SELECCIÓN DE SECCIÓN --- */
 .section-selector {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
+    transition: all 0.35s ease-in-out;
 }
 .section-btn {
     background-color: #f0f0f0;
@@ -371,6 +428,7 @@ h1.app-title {
     font-size: 0.9em;
     display: none; /* Oculto por defecto */
     width: 100%;
+    transition: all 0.35s ease-in-out;
 }
 #splash-screen {
     position: fixed;
@@ -1468,6 +1526,21 @@ window.addEventListener('load', () => {
 
 
 inicializarApp();
+
+// --- LÓGICA DE BÚSQUEDA ACTIVA ---
+const searchInput = document.getElementById('searchInput');
+if (searchInput) {
+    searchInput.addEventListener('focus', () => {
+        document.body.classList.add('search-active');
+    });
+    searchInput.addEventListener('blur', () => {
+        // Se añade un pequeño retardo para dar tiempo a que se procesen los clics
+        // en los resultados de la búsqueda antes de que la interfaz vuelva a su estado normal.
+        setTimeout(() => {
+            document.body.classList.remove('search-active');
+        }, 150);
+    });
+}
 
 </script>
 
