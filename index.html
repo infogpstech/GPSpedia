@@ -1822,14 +1822,25 @@ inicializarApp();
 
 // Event listener para el acordeón
 document.getElementById('detalleCompleto').addEventListener('click', function(e) {
-    if (e.target.classList.contains('accordion-btn')) {
-        e.target.classList.toggle('active');
-        const panel = e.target.nextElementSibling;
-        if (panel.style.maxHeight) {
-            panel.style.maxHeight = null;
-        } else {
-            panel.style.maxHeight = panel.scrollHeight + "px";
-        }
+    const clickedBtn = e.target.closest('.accordion-btn');
+    if (!clickedBtn) return; // Si el clic no fue en un botón o sus hijos, no hacer nada
+
+    const panel = clickedBtn.nextElementSibling;
+    const isActive = clickedBtn.classList.contains('active');
+
+    // Primero, cerrar todos los paneles y desactivar todos los botones
+    const allButtons = this.querySelectorAll('.accordion-btn');
+    allButtons.forEach(btn => {
+        // Cierra el panel de este botón
+        btn.classList.remove('active');
+        btn.nextElementSibling.style.maxHeight = null;
+    });
+
+    // Si el botón que se clickeó no era el que ya estaba activo, ábrelo.
+    // Esto permite que al hacer clic en un botón abierto, simplemente se cierre.
+    if (!isActive) {
+        clickedBtn.classList.add('active');
+        panel.style.maxHeight = panel.scrollHeight + "px";
     }
 });
 
