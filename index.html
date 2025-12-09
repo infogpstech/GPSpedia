@@ -1160,6 +1160,7 @@ function crearVideoDetalle(label, value, container) {
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     iframe.allowFullscreen = true;
     iframe.style.cssText = "border:none; position:absolute; top:0; left:0; width:100%; height:100%;";
+    iframe.dataset.originalSrc = iframe.src; // Guardar la URL original
     iframeContainer.appendChild(iframe);
     container.appendChild(iframeContainer);
 }
@@ -1823,24 +1824,33 @@ inicializarApp();
 // Event listener para el acordeón
 document.getElementById('detalleCompleto').addEventListener('click', function(e) {
     const clickedBtn = e.target.closest('.accordion-btn');
-    if (!clickedBtn) return; // Si el clic no fue en un botón o sus hijos, no hacer nada
+    if (!clickedBtn) return;
 
     const panel = clickedBtn.nextElementSibling;
     const isActive = clickedBtn.classList.contains('active');
 
-    // Primero, cerrar todos los paneles y desactivar todos los botones
-    const allButtons = this.querySelectorAll('.accordion-btn');
-    allButtons.forEach(btn => {
-        // Cierra el panel de este botón
-        btn.classList.remove('active');
-        btn.nextElementSibling.style.maxHeight = null;
+    // Cerrar todos los paneles y pausar videos
+    this.querySelectorAll('.accordion-btn').forEach(btn => {
+        const currentPanel = btn.nextElementSibling;
+        const iframe = currentPanel.querySelector('iframe');
+
+        if (btn !== clickedBtn || isActive) {
+            btn.classList.remove('active');
+            currentPanel.style.maxHeight = null;
+            if (iframe) {
+                iframe.src = ''; // Detiene el video
+            }
+        }
     });
 
-    // Si el botón que se clickeó no era el que ya estaba activo, ábrelo.
-    // Esto permite que al hacer clic en un botón abierto, simplemente se cierre.
+    // Abrir el panel clickeado si no estaba ya activo
     if (!isActive) {
         clickedBtn.classList.add('active');
         panel.style.maxHeight = panel.scrollHeight + "px";
+        const iframe = panel.querySelector('iframe');
+        if (iframe && iframe.dataset.originalSrc) {
+            iframe.src = iframe.dataset.originalSrc; // Restaura el video
+        }
     }
 });
 
