@@ -1032,6 +1032,13 @@ async function syncAndFetchData(storeName, range, dataVariableSetter, successCal
 }
 
 function mostrarSeccion(seccion) {
+    // Limpiar el campo de búsqueda para evitar conflictos de estado.
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput.value !== '') {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+
     // Oculta todas las secciones
     const sections = document.querySelectorAll('.content-section');
     sections.forEach(s => {
