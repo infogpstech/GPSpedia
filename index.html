@@ -1202,7 +1202,7 @@ function mostrarDetalleTutorial(fila, header) {
     cont.innerHTML = "";
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = () => history.back(); // Ahora el botón de cerrar usa el historial
+    closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
     cont.appendChild(closeBtn);
@@ -1222,7 +1222,7 @@ function mostrarDetalleTutorial(fila, header) {
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
     crearVideoDetalle("Video Guía", fila[header.indexOf("Video")], cont);
     const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = () => history.back();
+    closeBtnBottom.onclick = () => cerrarModal();
     cont.appendChild(closeBtnBottom);
     modal.classList.add("visible");
 }
@@ -1237,7 +1237,7 @@ function mostrarDetalleRelay(fila, header) {
     cont.innerHTML = "";
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = () => history.back(); // Ahora el botón de cerrar usa el historial
+    closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
     cont.appendChild(closeBtn);
@@ -1261,7 +1261,7 @@ function mostrarDetalleRelay(fila, header) {
     });
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
     const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = () => history.back();
+    closeBtnBottom.onclick = () => cerrarModal();
     cont.appendChild(closeBtnBottom);
     modal.classList.add("visible");
 }
@@ -1345,7 +1345,7 @@ function mostrarDetalleModal(fila, header) {
 
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = () => history.back();
+    closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
     cont.appendChild(closeBtn);
@@ -1433,7 +1433,7 @@ function mostrarDetalleModal(fila, header) {
     });
 
     const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = () => history.back();
+    closeBtnBottom.onclick = () => cerrarModal();
     cont.appendChild(closeBtnBottom);
     modal.classList.add("visible");
 }
