@@ -681,7 +681,7 @@ body.search-active .app-logo {
   </div>
 
   <div class="section-selector">
-      <button id="btn-cortes" class="section-btn active" onclick="mostrarSeccion('cortes', true)">Cortes</button>
+      <button id="btn-cortes" class="section-btn active" onclick="mostrarSeccion('cortes')">Cortes</button>
       <button id="btn-tutoriales" class="section-btn" onclick="mostrarSeccion('tutoriales')">Tutoriales</button>
       <button id="btn-relay" class="section-btn" onclick="mostrarSeccion('relay')">Relay</button>
   </div>
@@ -982,66 +982,56 @@ let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay 
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
-async function syncAndFetchData(storeName, range, dataVariableSetter, successCallback, containerId, forceNetwork = false) {
+async function syncAndFetchData(storeName, range, dataVariableSetter, successCallback, containerId) {
     const container = document.getElementById(containerId);
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
 
-    // Si no se fuerza la red, intenta cargar desde local primero para una carga rápida.
-    if (!forceNetwork) {
-        try {
-            const localData = await readData(storeName);
-            if (localData && localData.length > 0) {
-                console.log(`Datos cargados desde IndexedDB para: ${storeName}`);
-                dataVariableSetter(localData);
-                successCallback();
-                container.classList.add('animacion-ejecutada'); // Prevenir animación en carga local rápida
-                return;
-            }
-        } catch (dbError) {
-            console.error(`Error al leer de IndexedDB para ${storeName}:`, dbError);
-        }
-    }
-
-    // Si se fuerza la red o no hay datos locales, mostrar skeleton loader.
+    // Siempre mostrar el skeleton loader para indicar que se está cargando/actualizando.
     container.classList.remove('animacion-ejecutada');
     showSkeletonLoader(container);
 
     try {
-        // Priorizar la obtención de datos de la red.
+        // 1. Intentar obtener datos de la red primero.
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error de red: ${response.status}`);
         const data = await response.json();
         const values = data.values || [];
 
         if (values.length > 0) {
+            // 2. Si la red tiene éxito, guardar en caché y mostrar los datos.
             await saveData(storeName, values);
-            console.log(`Datos de ${storeName} guardados/actualizados en IndexedDB.`);
+            console.log(`Datos de ${storeName} obtenidos de la red y actualizados en IndexedDB.`);
             dataVariableSetter(values);
             successCallback();
+            // Añadir un pequeño retardo para que la animación CSS se active.
             setTimeout(() => container.classList.add('animacion-ejecutada'), 50);
         } else {
-             throw new Error("No se encontraron valores en la red, usando respaldo local si existe.");
+             // Si la red responde pero no hay datos, se considera un error y se intenta usar la caché.
+             throw new Error("No se encontraron valores en la red.");
         }
-    } catch (error) {
-        console.error(`Fallo al obtener datos de ${range} desde la red:`, error);
+    } catch (networkError) {
+        console.error(`Fallo al obtener datos de ${range} desde la red:`, networkError);
+        // 3. Si la red falla, intentar cargar desde la caché.
         try {
             const localData = await readData(storeName);
             if (localData && localData.length > 0) {
-                console.log(`Mostrando datos de respaldo desde IndexedDB para: ${storeName}`);
+                console.log(`Mostrando datos de respaldo (sin conexión) desde IndexedDB para: ${storeName}`);
                 dataVariableSetter(localData);
                 successCallback();
+                // Al cargar desde caché, no hay animación de entrada.
                 container.classList.add('animacion-ejecutada');
             } else {
-                container.innerHTML = `<p style="color:red;">No se pudo conectar y no hay datos locales.</p>`;
+                // 4. Si la red y la caché fallan, mostrar un error.
+                container.innerHTML = `<p style="color:red; text-align:center;">No se pudo conectar al servidor y no hay datos locales guardados. Por favor, revisa tu conexión a internet.</p>`;
             }
         } catch (dbError) {
-            console.error(`Error al leer de IndexedDB para ${storeName}:`, dbError);
-            container.innerHTML = `<p style="color:red;">Error crítico al intentar acceder a los datos.</p>`;
+            console.error(`Error crítico al leer de IndexedDB para ${storeName}:`, dbError);
+            container.innerHTML = `<p style="color:red; text-align:center;">Error crítico al intentar acceder a los datos locales.</p>`;
         }
     }
 }
 
-function mostrarSeccion(seccion, forceUpdate = false) {
+function mostrarSeccion(seccion) {
     // Oculta todas las secciones
     const sections = document.querySelectorAll('.content-section');
     sections.forEach(s => {
@@ -1056,21 +1046,21 @@ function mostrarSeccion(seccion, forceUpdate = false) {
     if (seccion === 'cortes') {
         document.getElementById('contenido').style.display = 'block';
         document.getElementById('btn-cortes').classList.add('active');
-        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido', forceUpdate);
+        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
     } else if (seccion === 'tutoriales') {
         document.getElementById('contenido-tutoriales').style.display = 'block';
         document.getElementById('btn-tutoriales').classList.add('active');
-        syncAndFetchData('tutoriales', RANGE_TUTORIALES, (vals) => datosTutoriales = vals, mostrarContenidoTutoriales, 'contenido-tutoriales', forceUpdate);
+        syncAndFetchData('tutoriales', RANGE_TUTORIALES, (vals) => datosTutoriales = vals, mostrarContenidoTutoriales, 'contenido-tutoriales');
     } else if (seccion === 'relay') {
         document.getElementById('contenido-relay').style.display = 'block';
         document.getElementById('btn-relay').classList.add('active');
-        syncAndFetchData('relay', RANGE_RELAY, (vals) => datosRelay = vals, mostrarContenidoRelay, 'contenido-relay', forceUpdate);
+        syncAndFetchData('relay', RANGE_RELAY, (vals) => datosRelay = vals, mostrarContenidoRelay, 'contenido-relay');
     }
 }
 
 function irAPaginaPrincipal() {
-    // Esta función vuelve a la vista principal y fuerza una actualización de datos de la red.
-    mostrarSeccion('cortes', true);
+    // Esta función vuelve a la vista principal. La nueva lógica de syncAndFetchData se encargará de actualizar.
+    mostrarSeccion('cortes');
 }
 
 function mostrarContenidoTutoriales() {
