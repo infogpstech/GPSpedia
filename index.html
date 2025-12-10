@@ -1265,7 +1265,7 @@ function mostrarDetalleRelay(fila, header) {
     const closeBtnBottom = closeBtn.cloneNode(true);
     closeBtnBottom.onclick = () => history.back();
     cont.appendChild(closeBtnBottom);
-    modal.style.display = "flex";
+    modal.classList.add("visible");
 }
 
 function getHeaderIndexes(header) {
