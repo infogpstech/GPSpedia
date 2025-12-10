@@ -1171,17 +1171,38 @@ const uiState = {
 
 // Función centralizada para manejar el botón "atrás" del navegador
 window.addEventListener('popstate', (event) => {
-    // Si el estado anterior era un modal, ciérralo.
-    if (uiState.isModalOpen) {
-        uiState.isModalOpen = false; // El estado se revierte
-        cerrarModal(false); // Cierra el modal sin manipular el historial
+    const state = event.state || {}; // Treat null state as the base state
+
+    // If we navigate to a state that is NOT a modal, but the modal is currently open, close it visually.
+    if (uiState.isModalOpen && !state.modal) {
+        const detalleCont = document.getElementById("detalleCompleto");
+
+        // Close all active accordions and stop videos within them.
+        detalleCont.querySelectorAll('.accordion-btn.active').forEach(btn => {
+            btn.classList.remove('active');
+            const panel = btn.nextElementSibling;
+            if (panel) {
+                panel.style.maxHeight = null;
+                const iframe = panel.querySelector('iframe');
+                if (iframe) {
+                    iframe.src = ''; // This stops playback.
+                }
+            }
+        });
+
+        // Hide the modal.
+        document.getElementById("modalDetalle").classList.remove("visible");
+
+        // Update state.
+        uiState.isModalOpen = false;
     }
-    // Si el estado anterior era la búsqueda activa, desactívala.
-    else if (uiState.isSearchActive) {
+
+    // If we navigate to a state that is NOT a search, but search is active, deactivate it.
+    else if (uiState.isSearchActive && !state.search) {
         uiState.isSearchActive = false;
         const searchInput = document.getElementById('searchInput');
-        searchInput.value = ''; // Limpia el texto de búsqueda
-        searchInput.dispatchEvent(new Event('input', { bubbles: true })); // Dispara el evento para resetear los resultados
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
         searchInput.blur();
         document.body.classList.remove('search-active');
     }
@@ -1301,18 +1322,40 @@ function mostrarLightbox(src){
   document.getElementById("lightboxImg").src = finalUrl;
   document.getElementById("lightbox").classList.add("visible");
 }
-function cerrarModal(manageHistory = true) {
-    if (manageHistory && uiState.isModalOpen) {
-        history.back(); // Usa el historial para cerrar si fue la acción principal
-    } else {
-        // Cierra el modal directamente (usado por el popstate handler)
-        const detalleCont = document.getElementById("detalleCompleto");
-        const iframe = detalleCont.querySelector('iframe');
-        if (iframe) {
-            iframe.src = ''; // Detiene la reproducción del video al vaciar el src.
+function cerrarModal() {
+    // 1. Forcefully close UI elements.
+    const detalleCont = document.getElementById("detalleCompleto");
+
+    // Close all active accordions and stop videos within them.
+    detalleCont.querySelectorAll('.accordion-btn.active').forEach(btn => {
+        btn.classList.remove('active');
+        const panel = btn.nextElementSibling;
+        if (panel) {
+            panel.style.maxHeight = null;
+            const iframe = panel.querySelector('iframe');
+            if (iframe) {
+                iframe.src = ''; // This stops playback.
+            }
         }
-        document.getElementById("modalDetalle").classList.remove("visible");
-        uiState.isModalOpen = false; // Asegurarse de que el estado esté sincronizado
+    });
+
+    // As a fallback, ensure any other iframe is also stopped.
+    detalleCont.querySelectorAll('iframe').forEach(iframe => {
+        if(iframe.src) iframe.src = '';
+    });
+
+    // Hide the modal.
+    document.getElementById("modalDetalle").classList.remove("visible");
+
+    // 2. Update internal state BEFORE managing history.
+    uiState.isModalOpen = false;
+
+    // 3. Manage browser history.
+    // If the current history state is a modal, go back to remove it from history.
+    // The popstate listener will fire, but since uiState.isModalOpen is now false,
+    // it won't re-trigger the closing logic.
+    if (history.state && history.state.modal) {
+        history.back();
     }
 }
 function cerrarLightbox(){document.getElementById("lightbox").classList.remove("visible");}
