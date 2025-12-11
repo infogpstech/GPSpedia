@@ -126,10 +126,16 @@ function logout(reason = null) {
  * @param {string|null} reason - Un mensaje opcional para mostrar en el formulario de inicio de sesión.
  */
 function showLoginHideApp(reason = null) {
+    const splash = document.getElementById('splash-screen');
     const container = document.querySelector('.container');
     const footer = document.querySelector('.footer');
     const loginModal = document.getElementById('login-modal');
     const loginError = document.getElementById('login-error');
+
+    if (splash) {
+        splash.style.opacity = '0';
+        setTimeout(() => { splash.style.display = 'none'; }, 500);
+    }
 
     if(container) container.style.display = 'none';
     if(footer) footer.style.display = 'none';
