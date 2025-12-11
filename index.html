@@ -7,6 +7,19 @@
 <link rel="icon" href="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256">
 <link rel="manifest" href="manifest.json">
 <style>
+/* --- ESTILOS BOTÓN AGREGAR --- */
+.add-btn {
+    text-decoration: none;
+    background-color: #28a745 !important; /* Usar !important para sobreescribir .section-btn */
+    color: white !important;
+    border-color: #218838 !important;
+}
+.add-btn:hover {
+    background-color: #218838 !important;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
 /* Estilos Globales */
 html {
     height: 100%;
@@ -684,6 +697,7 @@ body.search-active .app-logo {
       <button id="btn-cortes" class="section-btn active" onclick="mostrarSeccion('cortes')">Cortes</button>
       <button id="btn-tutoriales" class="section-btn" onclick="mostrarSeccion('tutoriales')">Tutoriales</button>
       <button id="btn-relay" class="section-btn" onclick="mostrarSeccion('relay')">Relay</button>
+      <a href="agregar_corte.html" class="section-btn add-btn">Agregar Registro</a>
   </div>
 
   <div id="contenido" class="content-section"></div>
