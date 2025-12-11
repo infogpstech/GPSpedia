@@ -403,11 +403,16 @@
         let existingRowData = null;
 
         // --- INICIALIZACIÓN ---
-        // La inicialización de la autenticación se maneja en auth.js.
-        // Aquí solo configuramos lo específico de esta página.
         document.addEventListener('DOMContentLoaded', () => {
             setupImagePreviews();
             setupFormListeners();
+            // Iniciar la autenticación DESPUÉS de que el resto del script esté listo.
+            if (typeof inicializarAuth === 'function') {
+                inicializarAuth();
+            } else {
+                console.error("Error: La función de inicialización de autenticación no está disponible.");
+                alert("Error crítico de autenticación. La página no puede funcionar.");
+            }
         });
 
         // Escuchamos el evento 'authSuccess' que es disparado por auth.js

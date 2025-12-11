@@ -1652,7 +1652,16 @@ if ('serviceWorker' in navigator) {
 }
 
 // --- INICIALIZACIÓN DE LA APLICACIÓN ---
-// La inicialización ahora es manejada por auth.js
+document.addEventListener('DOMContentLoaded', () => {
+    // Ahora que la página principal está lista, iniciamos el proceso de autenticación.
+    // auth.js esperará a esta llamada antes de comprobar la sesión.
+    if (typeof inicializarAuth === 'function') {
+        inicializarAuth();
+    } else {
+        console.error("Error: La función de inicialización de autenticación no está disponible.");
+        // Opcionalmente, mostrar un error en la UI.
+    }
+});
 
 // Event listener para el acordeón
 document.getElementById('detalleCompleto').addEventListener('click', function(e) {

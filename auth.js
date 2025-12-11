@@ -226,8 +226,8 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Iniciar el proceso de autenticación.
-    inicializarAuth();
+    // El proceso de autenticación ahora se inicia manualmente desde cada página (index.html, agregar_corte.html).
+    // inicializarAuth();
 });
 
 // Listener para sincronizar sesiones entre pestañas.
