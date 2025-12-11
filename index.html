@@ -713,7 +713,15 @@ body.search-active .app-logo {
   <img id="lightboxImg" src="">
 </div>
 
+<script src="auth.js"></script>
 <script>
+// --- LÓGICA DE LA APLICACIÓN PRINCIPAL ---
+
+// Esta función será llamada por auth.js después de un inicio de sesión exitoso.
+function onLoginSuccess() {
+    syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
+}
+
 // --- LÓGICA DE SEGURIDAD ---
 document.addEventListener('keydown', function(e) {
     if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) {
@@ -798,187 +806,6 @@ const RANGE_TUTORIALES = "Tutorial";
 const RANGE_RELAY = "Configuración del Relay";
 const RANGE_USERS = "Users";
 
-// --- LÓGICA DE AUTENTICACIÓN Y SESIÓN ---
-
-function sanitizeInput(input) {
-    if (typeof input !== 'string') return '';
-    // Prevenir inyección de fórmulas de Excel escapando caracteres iniciales peligrosos
-    let sanitized = input.trim();
-    if (['=', '+', '-', '@', '\t', '\r'].includes(sanitized.charAt(0))) {
-        sanitized = "'" + sanitized;
-    }
-    // Escapar caracteres comunes de SQL para mitigar inyecciones básicas.
-    // Aunque la validación es del lado del cliente, esto añade una capa de "defensa en profundidad".
-    sanitized = sanitized.replace(/'/g, "''").replace(/--/g, "").replace(/;/g, "");
-    return sanitized;
-}
-
-const SESSION_KEY = 'gpsepedia_session';
-const SESSION_ID_KEY = 'gpsepedia_session_id';
-let userData = [];
-
-async function fetchUsers() {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(RANGE_USERS)}?key=${API_KEY}`;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Error de red al obtener usuarios: ${response.status}`);
-        const data = await response.json();
-        userData = data.values || [];
-        return userData;
-    } catch (error) {
-        console.error("Fallo al obtener la lista de usuarios:", error);
-        // Mostrar error en el modal de login si falla la carga de usuarios
-        const loginError = document.getElementById('login-error');
-        loginError.textContent = "No se pudo conectar al servidor de autenticación.";
-        loginError.style.display = 'block';
-        return [];
-    }
-}
-
-function checkSession() {
-    const session = localStorage.getItem(SESSION_KEY);
-    if (session) {
-        const { user, sessionId } = JSON.parse(session);
-
-        // Verificación de sesión única
-        const expectedSessionId = localStorage.getItem(SESSION_ID_KEY);
-
-        if (sessionId === expectedSessionId) {
-            // La sesión es válida y única para esta pestaña/navegador
-            hideLoginShowApp();
-            document.getElementById('welcome-message').textContent = `Bienvenido, ${user.Nombre}`;
-            document.getElementById('welcome-message').style.display = 'block';
-            document.getElementById('logout-button').style.display = 'block';
-            syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-        } else {
-            // Se ha iniciado sesión en otro lugar, cerrar esta sesión
-            logout("Se ha iniciado una nueva sesión en otro dispositivo o navegador.");
-        }
-    } else {
-        // No hay sesión, mostrar el modal de login
-        showLoginHideApp();
-    }
-}
-
-
-function login(username, password) {
-    if (userData.length === 0) {
-        document.getElementById('login-error').textContent = 'Error de autenticación. Intente de nuevo.';
-        document.getElementById('login-error').style.display = 'block';
-        return;
-    }
-    const header = userData[0];
-    const users = userData.slice(1);
-    const user = users.find(u => u[header.indexOf('Nombre_Usuario')] === username && u[header.indexOf('Password')] === password);
-
-    if (user) {
-        const sessionId = Date.now().toString(); // ID de sesión único
-        const sessionData = {
-            user: {
-                ID: user[header.indexOf('ID')],
-                Nombre_Usuario: user[header.indexOf('Nombre_Usuario')],
-                Privilegios: user[header.indexOf('Privilegios')],
-                Nombre: user[header.indexOf('Nombre')],
-            },
-            sessionId: sessionId
-        };
-
-        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        localStorage.setItem(SESSION_ID_KEY, sessionId); // Almacena el ID de la sesión actual
-
-        // Simular notificación a otras pestañas
-        localStorage.setItem('session_update', Date.now());
-
-        hideLoginShowApp();
-        document.getElementById('welcome-message').textContent = `Bienvenido, ${sessionData.user.Nombre}`;
-        document.getElementById('welcome-message').style.display = 'block';
-        document.getElementById('logout-button').style.display = 'block';
-
-        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-
-    } else {
-        document.getElementById('login-error').textContent = 'Usuario o contraseña incorrectos.';
-        document.getElementById('login-error').style.display = 'block';
-    }
-}
-
-function logout(reason = null) {
-    localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(SESSION_ID_KEY);
-
-    showLoginHideApp(reason);
-}
-
-function showLoginHideApp(reason = null) {
-    // Ocultar contenido principal y footer
-    document.querySelector('.container').style.display = 'none';
-    document.querySelector('.footer').style.display = 'none';
-    document.getElementById('welcome-message').style.display = 'none';
-    document.getElementById('logout-button').style.display = 'none';
-
-    // Mostrar el modal de login
-    const loginModal = document.getElementById('login-modal');
-    loginModal.style.display = 'flex';
-
-    const loginError = document.getElementById('login-error');
-    if (reason) {
-        loginError.textContent = reason;
-        loginError.style.display = 'block';
-    } else {
-        loginError.style.display = 'none';
-    }
-
-    document.getElementById('username').value = '';
-    document.getElementById('password').value = '';
-}
-
-function hideLoginShowApp() {
-    // Ocultar splash y login
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500); // Coincide con la transición de opacidad
-
-    document.getElementById('login-modal').style.display = 'none';
-
-    // Mostrar contenido principal y footer
-    document.querySelector('.container').style.display = 'block';
-    document.querySelector('.footer').style.display = 'block';
-}
-
-
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = sanitizeInput(document.getElementById('username').value);
-    const password = sanitizeInput(document.getElementById('password').value);
-
-    // Asegurarse de que los datos de usuario estén cargados
-    if (userData.length === 0) {
-       await fetchUsers();
-    }
-
-    login(username, password);
-});
-
-document.getElementById('logout-button').addEventListener('click', () => {
-    logout();
-});
-
-document.getElementById('forgot-password-link').addEventListener('click', (e) => {
-    e.preventDefault();
-    const username = document.getElementById('username').value;
-    const message = encodeURIComponent(`Hola, necesito recuperar mi contraseña. Mi nombre de usuario es: ${username}`);
-    const whatsappUrl = `https://wa.me/50488422786?text=${message}`;
-    window.open(whatsappUrl, '_blank');
-});
-
-// Listener para detectar cambios de sesión en otras pestañas
-window.addEventListener('storage', (event) => {
-    if (event.key === 'session_update' || event.key === SESSION_ID_KEY) {
-        checkSession();
-    }
-});
 
 function showSkeletonLoader(container) {
     let skeletonHTML = '<div class="skeleton-grid">';
@@ -1824,64 +1651,7 @@ if ('serviceWorker' in navigator) {
 }
 
 // --- INICIALIZACIÓN DE LA APLICACIÓN ---
-async function inicializarApp() {
-    await fetchUsers(); // Carga los datos de usuarios primero
-    checkSession();     // Luego, comprueba si hay una sesión activa
-
-    // Lógica para el botón de instalación de iOS
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    if (!isStandalone && isIOS) {
-        // Crear y mostrar un botón/mensaje específico para iOS
-        const iosInstallMessage = document.createElement('div');
-        iosInstallMessage.id = 'ios-install-message';
-        iosInstallMessage.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #007bff;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            text-align: center;
-            z-index: 1002;
-            font-size: 0.9em;
-            width: 90%;
-            max-width: 400px;
-        `;
-        iosInstallMessage.innerHTML = `
-            Para instalar, pulsa el botón de Compartir
-            <svg style="width:20px; vertical-align:middle;" viewBox="0 0 24 24"><path fill="currentColor" d="M17,14V17A1,1 0 0,1 16,18H8A1,1 0 0,1 7,17V14H5V17A3,3 0 0,0 8,20H16A3,3 0 0,0 19,17V14H17M12,4L7,9H10V15H14V9H17L12,4Z" /></svg>
-            y luego "Añadir a pantalla de inicio".
-            <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; font-size:1.2em; position:absolute; top:5px; right:10px;">&times;</button>
-        `;
-        document.body.appendChild(iosInstallMessage);
-    }
-}
-
-// Ocultar el splash screen después de un tiempo para asegurar que no se quede atascado
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        const session = localStorage.getItem(SESSION_KEY);
-        // Si no hay sesión, el splash se ocultará cuando se muestre el login.
-        // Si hay sesión, el splash se ocultará cuando se muestre la app.
-        // Este es un fallback por si algo falla.
-        if (!session) {
-             const splash = document.getElementById('splash-screen');
-            splash.style.opacity = '0';
-            setTimeout(() => {
-                splash.style.display = 'none';
-            }, 500);
-        }
-    }, 3000); // 3 segundos de tiempo de espera máximo
-});
-
-
-inicializarApp();
+// La inicialización ahora es manejada por auth.js
 
 // Event listener para el acordeón
 document.getElementById('detalleCompleto').addEventListener('click', function(e) {

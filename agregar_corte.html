@@ -214,8 +214,14 @@
 <body>
 
     <div class="header-container">
-      <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
-      <h1 class="app-title">GPSpedia</h1>
+        <div class="header-branding">
+            <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
+            <h1 class="app-title">GPSpedia</h1>
+        </div>
+        <div id="header-controls" style="display: flex; align-items: center; gap: 15px;">
+            <span id="welcome-message" style="display: none; color: #333; font-weight: bold;"></span>
+            <button id="logout-button" style="display: none; background-color: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;">Cerrar Sesión</button>
+        </div>
     </div>
 
     <div class="container">
@@ -337,10 +343,6 @@
             <div class="form-section">
                 <h3>Finalización</h3>
                 <div class="form-group">
-                    <label for="colaborador">Colaborador</label>
-                    <input type="text" id="colaborador" name="colaborador" required>
-                </div>
-                <div class="form-group">
                     <label for="notas">Notas Adicionales</label>
                     <textarea id="notas" name="notas"></textarea>
                 </div>
@@ -371,6 +373,14 @@
         </div>
     </div>
 
+    <div id="login-modal" style="display: none;">
+        <!-- Este div es necesario para que auth.js funcione, aunque no se use directamente aquí -->
+        <p id="login-error"></p>
+        <input id="username">
+        <input id="password">
+    </div>
+
+    <script src="auth.js"></script>
     <script>
         const API_KEY = "AIzaSyCooAsC52X4ccENCT6p3qh_82ErBxP47Lg";
         const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
@@ -385,7 +395,7 @@
         // 5. Haz clic en "Implementar" y copia la "URL de la aplicación web".
         // 6. Pega esa URL aquí abajo, reemplazando 'URL_DE_TU_WEB_APP_AQUI'.
         // ===================================================================================
-        const SCRIPT_URL = 'URL_DE_TU_WEB_APP_AQUI';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx15SA7DHRD3j3RIHxOcdJEKYGnFIEjzamyJ4j6zND_I6HR-30ClLpD2BWoOhg-7tpG/exec';
 
         const form = document.getElementById('corte-form');
         const loadingOverlay = document.getElementById('loading-overlay');
@@ -393,11 +403,18 @@
         let existingRowData = null;
 
         // --- INICIALIZACIÓN ---
+        // La inicialización de la autenticación se maneja en auth.js.
+        // Aquí solo configuramos lo específico de esta página.
         document.addEventListener('DOMContentLoaded', () => {
-            loadDropdownData();
             setupImagePreviews();
             setupFormListeners();
         });
+
+        // Esta función será llamada por auth.js después de un inicio de sesión exitoso.
+        function onLoginSuccess() {
+            // Cargar los datos de los desplegables solo después de que el usuario haya iniciado sesión.
+            loadDropdownData();
+        }
 
         // --- CARGA DE DATOS PARA DROPDOWNS ---
         async function loadDropdownData() {
@@ -572,6 +589,15 @@
             const formData = new FormData(form);
             const data = {};
             formData.forEach((value, key) => { data[key] = value });
+
+            // Añadir el nombre del colaborador automáticamente desde la sesión
+            if (currentUser && currentUser.Nombre) {
+                data.colaborador = currentUser.Nombre;
+            } else {
+                alert("Error: No se pudo identificar al usuario. Por favor, inicia sesión de nuevo.");
+                loadingOverlay.classList.add('hidden');
+                return;
+            }
 
             try {
                 // Convertir archivos a Base64
