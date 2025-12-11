@@ -410,11 +410,11 @@
             setupFormListeners();
         });
 
-        // Esta función será llamada por auth.js después de un inicio de sesión exitoso.
-        function onLoginSuccess() {
+        // Escuchamos el evento 'authSuccess' que es disparado por auth.js
+        document.addEventListener('authSuccess', () => {
             // Cargar los datos de los desplegables solo después de que el usuario haya iniciado sesión.
             loadDropdownData();
-        }
+        });
 
         // --- CARGA DE DATOS PARA DROPDOWNS ---
         async function loadDropdownData() {
@@ -432,7 +432,7 @@
                 const data = await response.json();
 
                 const [categorias, encendidos, cortes1, cortes2, cortes3] = data.valueRanges.map(range =>
-                    [...new Set(range.values?.flat().filter(Boolean) || [])]
+                    [...new Set(range.values?.flat().filter(Boolean).map(item => item.trim()) || [])]
                 );
 
                 const allCortes = [...new Set([...cortes1, ...cortes2, ...cortes3])];
@@ -549,35 +549,51 @@
 
         function adaptFormForUpdate() {
             const fields = {
+                // Información general
                 categoria: 1, tipo_encendido: 5,
+                apertura: 13, cables_alimentacion: 16, notas: 15,
+                // Cortes
                 tipo_corte1: 7, descripcion_corte1: 8,
                 tipo_corte2: 11, descripcion_corte2: 10,
-                tipo_corte3: 20, descripcion_corte3: 21,
-                apertura: 13, cables_alimentacion: 16, notas: 15
+                tipo_corte3: 20, descripcion_corte3: 21
             };
 
-            // Llenar y deshabilitar campos con datos existentes
+            // Ocultar todas las secciones de corte para empezar de cero
+            ['corte1-section', 'corte2-section', 'corte3-section'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+
+            // Llenar y deshabilitar todos los campos que ya tienen datos
             Object.entries(fields).forEach(([id, index]) => {
                 const element = document.getElementById(id);
+                if (!element) return;
                 const value = existingRowData[index]?.v;
                 if (value) {
                     element.value = value;
                     element.disabled = true;
-                    // También deshabilitar input de imagen si la descripción existe
                     if(id.startsWith('descripcion')) {
-                        document.getElementById(id.replace('descripcion', 'imagen')).disabled = true;
+                        const imgInput = document.getElementById(id.replace('descripcion', 'imagen'));
+                        if(imgInput) imgInput.disabled = true;
                     }
                 }
             });
 
-            // Mostrar secciones de corte si están vacías
+            // Mostrar secciones de corte que ya existen
+            if (existingRowData[7]?.v) document.getElementById('corte1-section').classList.remove('hidden');
+            if (existingRowData[11]?.v) document.getElementById('corte2-section').classList.remove('hidden');
+            if (existingRowData[20]?.v) document.getElementById('corte3-section').classList.remove('hidden');
+
+            // Encontrar y mostrar solo la PRÓXIMA sección de corte disponible para edición
             if (!existingRowData[7]?.v) { // Si no hay corte 1
-                 // No hacer nada, el usuario llena corte 1
+                document.getElementById('corte1-section').classList.remove('hidden');
+                // Habilitar campos de corte 1
+                ['tipo_corte1', 'descripcion_corte1', 'imagen_corte1'].forEach(id => document.getElementById(id).disabled = false);
             } else if (!existingRowData[11]?.v) { // Si hay corte 1 pero no corte 2
                 document.getElementById('corte2-section').classList.remove('hidden');
+                 ['tipo_corte2', 'descripcion_corte2', 'imagen_corte2'].forEach(id => document.getElementById(id).disabled = false);
             } else if (!existingRowData[20]?.v) { // Si hay corte 1 y 2 pero no 3
-                document.getElementById('corte2-section').classList.remove('hidden');
                 document.getElementById('corte3-section').classList.remove('hidden');
+                 ['tipo_corte3', 'descripcion_corte3', 'imagen_corte3'].forEach(id => document.getElementById(id).disabled = false);
             }
         }
 

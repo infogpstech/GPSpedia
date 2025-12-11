@@ -174,10 +174,9 @@ function hideLoginShowApp() {
         if (logoutButton) logoutButton.style.display = 'block';
     }
 
-    // Si la función `onLoginSuccess` existe (definida en la página principal), la llamamos.
-    if (typeof onLoginSuccess === 'function') {
-        onLoginSuccess();
-    }
+    // Disparamos un evento global para notificar a la página que la autenticación fue exitosa.
+    // La página específica (index.html o agregar_corte.html) escuchará este evento.
+    document.dispatchEvent(new CustomEvent('authSuccess'));
 }
 
 // --- INICIALIZACIÓN Y LISTENERS ---

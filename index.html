@@ -717,10 +717,11 @@ body.search-active .app-logo {
 <script>
 // --- LÓGICA DE LA APLICACIÓN PRINCIPAL ---
 
-// Esta función será llamada por auth.js después de un inicio de sesión exitoso.
-function onLoginSuccess() {
+// Escuchamos el evento 'authSuccess' que es disparado por auth.js
+document.addEventListener('authSuccess', () => {
+    // Una vez que el usuario ha iniciado sesión, cargamos los datos del catálogo.
     syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-}
+});
 
 // --- LÓGICA DE SEGURIDAD ---
 document.addEventListener('keydown', function(e) {
