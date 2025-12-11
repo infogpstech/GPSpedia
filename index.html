@@ -266,6 +266,8 @@ body.search-active .app-logo {
 }
 .section-btn:hover:not(.active) {
     background-color: #e0e0e0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 
@@ -280,6 +282,16 @@ body.search-active .app-logo {
 }
 
 /* Estilos de la Tarjeta (Card) */
+@keyframes card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 .card {
     position: relative;
     background: #fff;
@@ -292,10 +304,54 @@ body.search-active .app-logo {
     width: 100%;
     max-width: 140px;
     justify-self: center;
+    /* Animación de entrada */
+    opacity: 0; /* Estado inicial para la animación */
+    animation: card-enter 0.5s ease-out forwards;
+}
+.animacion-ejecutada .card {
+    /* Deshabilita la animación si el contenedor ya la ejecutó */
+    animation: none;
+    opacity: 1; /* Asegura que la tarjeta sea visible */
 }
 .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* --- ESTILOS DE SKELETON LOADER --- */
+.skeleton-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, 140px);
+    justify-content: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.skeleton-card {
+    background: #e0e0e0;
+    border-radius: 12px;
+    width: 140px;
+    height: 188px; /* Altura total de la tarjeta real */
+    position: relative;
+    overflow: hidden;
+}
+.skeleton-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: loading-shimmer 1.5s infinite;
+}
+@keyframes loading-shimmer {
+    0% {
+        left: -150%;
+    }
+    100% {
+        left: 150%;
+    }
 }
 .card img {
     width: 100%;
@@ -399,36 +455,63 @@ body.search-active .app-logo {
 }
 
 /* Modal */
-#modalDetalle{
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    overflow:auto;
-    background:rgba(0,0,0,0.8);
-    color:#000;
-    z-index:999;
+#modalDetalle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background: rgba(0, 0, 0, 0.6); /* Ligeramente más claro */
+    color: #000;
+    z-index: 1600; /* Aumentado para estar sobre la barra de búsqueda */
+    display: flex; /* Usar flex para centrar */
+    align-items: center;
+    justify-content: center;
+    /* Transiciones para la aparición */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-#detalleCompleto{
-    background:#fff;
-    margin:50px auto;
-    padding:30px;
-    max-width:90%;
-    border-radius:15px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+
+#modalDetalle.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+#detalleCompleto {
+    background: #fff;
+    padding: 30px;
+    width: 90%;
+    max-width: 800px; /* Ancho máximo para el modal */
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     max-height: 90vh;
     overflow-y: auto;
+    /* Transición para el efecto de escalado */
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
 }
-#detalleCompleto img{
-    max-width:100%;
-    max-height:60vh;
-    margin-bottom:15px;
-    cursor:pointer;
-    object-fit:contain;
-    border-radius:8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+#modalDetalle.visible #detalleCompleto {
+    transform: scale(1);
+}
+
+#detalleCompleto img {
+    display: block;
+    width: auto; /* Ancho automático para mantener proporción */
+    max-width: 100%;
+    max-height: 300px; /* Límite de altura en lugar de altura fija */
+    margin: 15px auto;
+    cursor: pointer;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada */
+}
+.img-vehiculo {
+    max-height: 200px !important; /* Límite de altura más pequeño */
 }
 #detalleCompleto h4 {
     color: #007bff;
@@ -436,20 +519,83 @@ body.search-active .app-logo {
     padding-bottom: 5px;
 }
 
-/* Lightbox */
-.lightbox{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.9);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index:1000;
+/* --- ESTILOS PARA SECCIONES DESPLEGABLES (ACORDEÓN) --- */
+.accordion-btn {
+    background-color: #f0f0f0;
+    color: #007bff; /* Color de texto azul */
+    cursor: pointer;
+    padding: 15px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-.lightbox img{max-width:95%; max-height:95%;}
+.accordion-btn:hover, .accordion-btn.active {
+    background-color: #e0e0e0;
+}
+.accordion-arrow {
+    transition: transform 0.3s ease;
+    width: 20px;
+    height: 20px;
+}
+.accordion-btn.active .accordion-arrow {
+    transform: rotate(180deg); /* Flecha hacia arriba */
+}
+.panel-desplegable {
+    padding: 0 18px;
+    background-color: white;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    border-bottom: 1px solid #eee;
+}
+
+/* Lightbox */
+.lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Un poco más suave */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1700; /* Aumentado para estar sobre el modal de detalles */
+    /* Transiciones */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.lightbox.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+.lightbox img {
+    max-width: 95%;
+    max-height: 95%;
+    border-radius: 8px; /* Bordes redondeados sutiles */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    /* Transición para el efecto de zoom */
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.lightbox.visible img {
+    transform: scale(1);
+}
 
 .footer {
     text-align: center;
@@ -549,7 +695,7 @@ body.search-active .app-logo {
   <div id="detalleCompleto"></div>
 </div>
 
-<div id="lightbox" class="lightbox" style="display:none;" onclick="cerrarLightbox()">
+<div id="lightbox" class="lightbox" onclick="cerrarLightbox()">
   <img id="lightboxImg" src="">
 </div>
 
@@ -820,6 +966,15 @@ window.addEventListener('storage', (event) => {
     }
 });
 
+function showSkeletonLoader(container) {
+    let skeletonHTML = '<div class="skeleton-grid">';
+    for (let i = 0; i < 10; i++) { // Muestra 10 tarjetas esqueleto
+        skeletonHTML += '<div class="skeleton-card"></div>';
+    }
+    skeletonHTML += '</div>';
+    container.innerHTML = skeletonHTML;
+}
+
 const COLUMN_NAME_AÑOS = "Año (generacion)";
 
 let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay = [],
@@ -829,64 +984,71 @@ const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="
 
 async function syncAndFetchData(storeName, range, dataVariableSetter, successCallback, containerId) {
     const container = document.getElementById(containerId);
-
-    // 1. Cargar datos desde IndexedDB primero para una experiencia offline-first.
-    try {
-        const localData = await readData(storeName);
-        if (localData && localData.length > 0) {
-            console.log(`Datos cargados desde IndexedDB para: ${storeName}`);
-            dataVariableSetter(localData);
-            successCallback();
-        } else {
-            container.innerHTML = `<p>Buscando datos...</p>`;
-        }
-    } catch (dbError) {
-        console.error(`Error al leer de IndexedDB para ${storeName}:`, dbError);
-        container.innerHTML = `<p>Buscando datos...</p>`;
-    }
-
-    // 2. Intentar obtener datos frescos de la red.
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
+
+    // Siempre mostrar el skeleton loader para indicar que se está cargando/actualizando.
+    container.classList.remove('animacion-ejecutada');
+    showSkeletonLoader(container);
+
     try {
+        // 1. Intentar obtener datos de la red primero.
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error de red: ${response.status}`);
         const data = await response.json();
         const values = data.values || [];
 
         if (values.length > 0) {
-            // 3. Si hay datos nuevos, guardarlos en IndexedDB y actualizar la UI.
+            // 2. Si la red tiene éxito, guardar en caché y mostrar los datos.
             await saveData(storeName, values);
-            console.log(`Datos de ${storeName} guardados/actualizados en IndexedDB.`);
+            console.log(`Datos de ${storeName} obtenidos de la red y actualizados en IndexedDB.`);
             dataVariableSetter(values);
-            successCallback(); // Volver a renderizar con los datos frescos.
+            successCallback();
+            // Añadir un pequeño retardo para que la animación CSS se active.
+            setTimeout(() => container.classList.add('animacion-ejecutada'), 50);
         } else {
-            // Si la red no devuelve datos, pero teníamos datos locales, los mantenemos.
-            const localData = await readData(storeName);
-            if (!localData) {
-                 container.innerHTML = `<p>No se encontraron datos.</p>`;
-            }
+             // Si la red responde pero no hay datos, se considera un error y se intenta usar la caché.
+             throw new Error("No se encontraron valores en la red.");
         }
-    } catch (error) {
-        console.error(`Fallo al obtener datos de ${range} desde la red:`, error);
-        // Si la red falla, la app sigue funcionando con los datos de IndexedDB.
-        // Si no había datos locales, mostramos un error de conexión.
-        const localData = await readData(storeName);
-        if (!localData) {
-            container.innerHTML = `<p style="color:red;">No se pudo conectar. Comprueba tu conexión.</p>`;
-        } else {
-            console.log("Mostrando datos locales debido a un error de red.");
+    } catch (networkError) {
+        console.error(`Fallo al obtener datos de ${range} desde la red:`, networkError);
+        // 3. Si la red falla, intentar cargar desde la caché.
+        try {
+            const localData = await readData(storeName);
+            if (localData && localData.length > 0) {
+                console.log(`Mostrando datos de respaldo (sin conexión) desde IndexedDB para: ${storeName}`);
+                dataVariableSetter(localData);
+                successCallback();
+                // Al cargar desde caché, no hay animación de entrada.
+                container.classList.add('animacion-ejecutada');
+            } else {
+                // 4. Si la red y la caché fallan, mostrar un error.
+                container.innerHTML = `<p style="color:red; text-align:center;">No se pudo conectar al servidor y no hay datos locales guardados. Por favor, revisa tu conexión a internet.</p>`;
+            }
+        } catch (dbError) {
+            console.error(`Error crítico al leer de IndexedDB para ${storeName}:`, dbError);
+            container.innerHTML = `<p style="color:red; text-align:center;">Error crítico al intentar acceder a los datos locales.</p>`;
         }
     }
 }
 
 function mostrarSeccion(seccion) {
-    document.getElementById('contenido').style.display = 'none';
-    document.getElementById('contenido-tutoriales').style.display = 'none';
-    document.getElementById('contenido-relay').style.display = 'none';
+    // Limpiar el campo de búsqueda para evitar conflictos de estado.
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput.value !== '') {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
 
-    document.getElementById('btn-cortes').classList.remove('active');
-    document.getElementById('btn-tutoriales').classList.remove('active');
-    document.getElementById('btn-relay').classList.remove('active');
+    // Oculta todas las secciones
+    const sections = document.querySelectorAll('.content-section');
+    sections.forEach(s => {
+        s.style.display = 'none';
+        // No quitamos 'animacion-ejecutada' aquí para evitar re-animaciones al cambiar de pestaña
+    });
+
+    // Desactiva todos los botones
+    const buttons = document.querySelectorAll('.section-btn');
+    buttons.forEach(b => b.classList.remove('active'));
 
     if (seccion === 'cortes') {
         document.getElementById('contenido').style.display = 'block';
@@ -901,6 +1063,11 @@ function mostrarSeccion(seccion) {
         document.getElementById('btn-relay').classList.add('active');
         syncAndFetchData('relay', RANGE_RELAY, (vals) => datosRelay = vals, mostrarContenidoRelay, 'contenido-relay');
     }
+}
+
+function irAPaginaPrincipal() {
+    // Esta función vuelve a la vista principal. La nueva lógica de syncAndFetchData se encargará de actualizar.
+    mostrarSeccion('cortes');
 }
 
 function mostrarContenidoTutoriales() {
@@ -960,12 +1127,15 @@ function crearElementoDetalle(label, value) {
     return p;
 }
 
-function crearImagenDetalle(label, value, container) {
+function crearImagenDetalle(label, value, container, extraClass = '') {
     if (!value) return;
     const h = document.createElement("h4"); h.textContent = label; container.appendChild(h);
     const img = document.createElement("img");
     img.src = convertirAGoogleThumbnail(value);
     img.alt = label;
+    if (extraClass) {
+        img.classList.add(extraClass);
+    }
     img.onclick = () => mostrarLightbox(value);
     container.appendChild(img);
 }
@@ -995,6 +1165,7 @@ function crearVideoDetalle(label, value, container) {
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     iframe.allowFullscreen = true;
     iframe.style.cssText = "border:none; position:absolute; top:0; left:0; width:100%; height:100%;";
+    iframe.dataset.originalSrc = iframe.src; // Guardar la URL original
     iframeContainer.appendChild(iframe);
     container.appendChild(iframeContainer);
 }
@@ -1007,15 +1178,39 @@ const uiState = {
 
 // Función centralizada para manejar el botón "atrás" del navegador
 window.addEventListener('popstate', (event) => {
-    // Si el estado anterior era un modal, ciérralo.
-    if (uiState.isModalOpen) {
-        uiState.isModalOpen = false; // El estado se revierte
-        cerrarModal(false); // Cierra el modal sin manipular el historial
+    const state = event.state || {}; // Treat null state as the base state
+
+    // If we navigate to a state that is NOT a modal, but the modal is currently open, close it visually.
+    if (uiState.isModalOpen && !state.modal) {
+        const detalleCont = document.getElementById("detalleCompleto");
+
+        // Close all active accordions and stop videos within them.
+        detalleCont.querySelectorAll('.accordion-btn.active').forEach(btn => {
+            btn.classList.remove('active');
+            const panel = btn.nextElementSibling;
+            if (panel) {
+                panel.style.maxHeight = null;
+                const iframe = panel.querySelector('iframe');
+                if (iframe) {
+                    iframe.src = ''; // This stops playback.
+                }
+            }
+        });
+
+        // Hide the modal.
+        document.getElementById("modalDetalle").classList.remove("visible");
+
+        // Update state.
+        uiState.isModalOpen = false;
     }
-    // Si el estado anterior era la búsqueda activa, desactívala.
-    else if (uiState.isSearchActive) {
+
+    // If we navigate to a state that is NOT a search, but search is active, deactivate it.
+    else if (uiState.isSearchActive && !state.search) {
         uiState.isSearchActive = false;
-        document.getElementById('searchInput').blur(); // Quita el foco para revertir la animación
+        const searchInput = document.getElementById('searchInput');
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        searchInput.blur();
         document.body.classList.remove('search-active');
     }
 });
@@ -1035,7 +1230,7 @@ function mostrarDetalleTutorial(fila, header) {
     cont.innerHTML = "";
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = () => history.back(); // Ahora el botón de cerrar usa el historial
+    closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
     cont.appendChild(closeBtn);
@@ -1055,9 +1250,9 @@ function mostrarDetalleTutorial(fila, header) {
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
     crearVideoDetalle("Video Guía", fila[header.indexOf("Video")], cont);
     const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = () => history.back();
+    closeBtnBottom.onclick = () => cerrarModal();
     cont.appendChild(closeBtnBottom);
-    modal.style.display = "flex";
+    modal.classList.add("visible");
 }
 
 function mostrarDetalleRelay(fila, header) {
@@ -1070,7 +1265,7 @@ function mostrarDetalleRelay(fila, header) {
     cont.innerHTML = "";
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = () => history.back(); // Ahora el botón de cerrar usa el historial
+    closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
     cont.appendChild(closeBtn);
@@ -1094,9 +1289,9 @@ function mostrarDetalleRelay(fila, header) {
     });
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
     const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = () => history.back();
+    closeBtnBottom.onclick = () => cerrarModal();
     cont.appendChild(closeBtnBottom);
-    modal.style.display = "flex";
+    modal.classList.add("visible");
 }
 
 function getHeaderIndexes(header) {
@@ -1121,6 +1316,9 @@ function convertirAGoogleThumbnail(url){
 }
 
 function mostrarLightbox(src){
+  // Limpiar la imagen anterior para evitar el parpadeo
+  document.getElementById("lightboxImg").src = "";
+
   let idMatch = src.match(/id=([a-zA-Z0-9_-]+)/) || src.match(/\/d\/([a-zA-Z0-9_-]+)/);
   let finalUrl = src;
   if(idMatch && idMatch[1]){
@@ -1129,23 +1327,45 @@ function mostrarLightbox(src){
        console.warn("Advertencia: No se pudo encontrar un ID de Google Drive válido para el Lightbox. Usando URL original.");
   }
   document.getElementById("lightboxImg").src = finalUrl;
-  document.getElementById("lightbox").style.display="flex";
+  document.getElementById("lightbox").classList.add("visible");
 }
-function cerrarModal(manageHistory = true) {
-    if (manageHistory && uiState.isModalOpen) {
-        history.back(); // Usa el historial para cerrar si fue la acción principal
-    } else {
-        // Cierra el modal directamente (usado por el popstate handler)
-        const detalleCont = document.getElementById("detalleCompleto");
-        const iframe = detalleCont.querySelector('iframe');
-        if (iframe) {
-            iframe.src = ''; // Detiene la reproducción del video al vaciar el src.
+function cerrarModal() {
+    // 1. Forcefully close UI elements.
+    const detalleCont = document.getElementById("detalleCompleto");
+
+    // Close all active accordions and stop videos within them.
+    detalleCont.querySelectorAll('.accordion-btn.active').forEach(btn => {
+        btn.classList.remove('active');
+        const panel = btn.nextElementSibling;
+        if (panel) {
+            panel.style.maxHeight = null;
+            const iframe = panel.querySelector('iframe');
+            if (iframe) {
+                iframe.src = ''; // This stops playback.
+            }
         }
-        document.getElementById("modalDetalle").style.display = "none";
-        uiState.isModalOpen = false; // Asegurarse de que el estado esté sincronizado
+    });
+
+    // As a fallback, ensure any other iframe is also stopped.
+    detalleCont.querySelectorAll('iframe').forEach(iframe => {
+        if(iframe.src) iframe.src = '';
+    });
+
+    // Hide the modal.
+    document.getElementById("modalDetalle").classList.remove("visible");
+
+    // 2. Update internal state BEFORE managing history.
+    uiState.isModalOpen = false;
+
+    // 3. Manage browser history.
+    // If the current history state is a modal, go back to remove it from history.
+    // The popstate listener will fire, but since uiState.isModalOpen is now false,
+    // it won't re-trigger the closing logic.
+    if (history.state && history.state.modal) {
+        history.back();
     }
 }
-function cerrarLightbox(){document.getElementById("lightbox").style.display="none";}
+function cerrarLightbox(){document.getElementById("lightbox").classList.remove("visible");}
 
 function extractYouTubeId(url) {
     if (!url) return null;
@@ -1164,67 +1384,112 @@ function extractYouTubeId(url) {
     return videoId;
 }
 
-function mostrarDetalleModal(fila, header){
-  // Empujar un nuevo estado al historial para el modal
-  pushState({ modal: true });
-  uiState.isModalOpen = true;
+function mostrarDetalleModal(fila, header) {
+    pushState({ modal: true });
+    uiState.isModalOpen = true;
 
-  const modal = document.getElementById("modalDetalle");
-  const cont = document.getElementById("detalleCompleto");
-  cont.innerHTML = "";
-  const indexes = getHeaderIndexes(header);
+    const modal = document.getElementById("modalDetalle");
+    const cont = document.getElementById("detalleCompleto");
+    cont.innerHTML = "";
+    const indexes = getHeaderIndexes(header);
 
-  const closeBtn = document.createElement("button");
-  closeBtn.textContent = "Cerrar Detalle";
-  closeBtn.onclick = () => history.back(); // Ahora el botón de cerrar usa el historial
-  closeBtn.className = "backBtn";
-  closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
-  cont.appendChild(closeBtn);
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "Cerrar Detalle";
+    closeBtn.onclick = () => cerrarModal();
+    closeBtn.className = "backBtn";
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
+    cont.appendChild(closeBtn);
 
-  const title = document.createElement("h2");
-  const modeloNombre = fila[indexes.COL_MODELO] || 'Modelo Desconocido';
-  const anosNombre = fila[indexes.COL_AÑOS] || '';
-  title.textContent = `Detalle de ${modeloNombre} ${anosNombre ? `(${anosNombre})` : ''}`;
-  title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
-  cont.appendChild(title);
+    const title = document.createElement("h2");
+    const modeloNombre = fila[indexes.COL_MODELO] || 'Modelo Desconocido';
+    const anosNombre = fila[indexes.COL_AÑOS] || '';
+    title.textContent = `Detalle de ${modeloNombre} ${anosNombre ? `(${anosNombre})` : ''}`;
+    title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
+    cont.appendChild(title);
 
-  const campos = [
-    {label:"Nota Importante", key:"Nota Importante", isTitle: true}, {label:"Modelo", key:"Imagen del vehiculo"},
-    {label:"Tipo de Corte", key:"Tipo de corte"}, {label:"Descripción", key:"Descripcion del corte"},
-    {label:"Imagen", key:"Imagen del Corte"}, {label:"Segunda Opción", key:"Tipo de corte 2"},
-    {label:"Segunda Descripción:", key:"Descripción del Segundo corte"}, {label:"Imagen del Segundo Corte", key:"Imagen de corte 2"},
-    {label:"Apertura", key:"Apertura"}, {label:"Imagen de la Apertura", key:"Imagen de la apertura"},
-    {label:"Alimentación", key:"Cables de Alimentacion"}, {label:"Imagen de Alimentación", key:"Imagen de los cables de alimentacion"},
-    {label:"Imagen de la portada (Alternativa)", key:"Imagen de la portada"}
-  ];
-
-  campos.forEach(c => {
-    let index = header.indexOf(c.key);
-    if(index > -1){
-        let valor = fila[index];
-        if(valor){
-            if(c.key.includes("Imagen")){
-                crearImagenDetalle(c.label, valor, cont);
-            } else {
-                const p=document.createElement("p");
-                if(c.isTitle){
-                    p.innerHTML = `<strong style="color:red;">${c.label}:</strong> <span style="color:#cc0000; font-weight: bold;">${valor}</span>`;
-                } else {
-                    p.innerHTML=`<strong>${c.label}:</strong> ${valor}`;
-                }
-                cont.appendChild(p);
-            }
-        }
+    // --- Contenido Principal (Siempre Visible) ---
+    const notaImportante = fila[header.indexOf("Nota Importante")];
+    if (notaImportante) {
+        const p = document.createElement("p");
+        p.innerHTML = `<strong style="color:red;">Nota Importante:</strong> <span style="color:#cc0000; font-weight: bold;">${notaImportante}</span>`;
+        cont.appendChild(p);
     }
-  });
+    crearImagenDetalle("Modelo", fila[header.indexOf("Imagen del vehiculo")], cont, 'img-vehiculo');
+    cont.appendChild(crearElementoDetalle("Tipo de Corte", fila[header.indexOf("Tipo de corte")]));
+    cont.appendChild(crearElementoDetalle("Descripción", fila[header.indexOf("Descripcion del corte")]));
+    crearImagenDetalle("Imagen", fila[header.indexOf("Imagen del Corte")], cont);
 
-  crearVideoDetalle("Video Guía de Desarme", fila[header.indexOf("Como desarmar los plasticos")], cont);
+    // --- Secciones Desplegables ---
+    const secciones = [
+        {
+            titulo: "Segunda Opción de Corte",
+            campos: [
+                { label: "Tipo de Corte", key: "Tipo de corte 2" },
+                { label: "Descripción", key: "Descripción del Segundo corte" },
+                { label: "Imagen", key: "Imagen de corte 2", esImagen: true }
+            ]
+        },
+        {
+            titulo: "Apertura",
+            campos: [
+                { label: "Detalles", key: "Apertura" },
+                { label: "Imagen", key: "Imagen de la apertura", esImagen: true }
+            ]
+        },
+        {
+            titulo: "Cables de Alimentación",
+            campos: [
+                { label: "Detalles", key: "Cables de Alimentacion" },
+                { label: "Imagen", key: "Imagen de los cables de alimentacion", esImagen: true }
+            ]
+        },
+        {
+            titulo: "Video Guía de Desarme",
+            campos: [{ key: "Como desarmar los plasticos", esVideo: true }]
+        }
+    ];
 
-  const closeBtnBottom = closeBtn.cloneNode(true);
-  closeBtnBottom.onclick = () => history.back();
-  cont.appendChild(closeBtnBottom);
-  modal.style.display="flex";
+    secciones.forEach(seccion => {
+        // Comprueba si al menos un campo de la sección tiene contenido
+        const tieneContenido = seccion.campos.some(c => fila[header.indexOf(c.key)]);
+        if (!tieneContenido) return;
+
+        const btn = document.createElement("button");
+        btn.className = "accordion-btn";
+        btn.innerHTML = `
+            ${seccion.titulo}
+            <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+        `;
+        cont.appendChild(btn);
+
+        const panel = document.createElement("div");
+        panel.className = "panel-desplegable";
+
+        seccion.campos.forEach(c => {
+            const valor = fila[header.indexOf(c.key)];
+            if (valor) {
+                if (c.esImagen) {
+                    crearImagenDetalle(c.label || seccion.titulo, valor, panel);
+                } else if (c.esVideo) {
+                    crearVideoDetalle(seccion.titulo, valor, panel);
+                } else {
+                    panel.appendChild(crearElementoDetalle(c.label, valor));
+                }
+            }
+        });
+        cont.appendChild(panel);
+    });
+
+    const closeBtnBottom = closeBtn.cloneNode(true);
+    closeBtnBottom.onclick = () => cerrarModal();
+    cont.appendChild(closeBtnBottom);
+    modal.classList.add("visible");
 }
+
+// --- LÓGICA DE BÚSQUEDA ACTIVA ---
+const searchInput = document.getElementById('searchInput');
 
 function filtrarContenido(textoBusqueda){
     const busqueda = textoBusqueda.toLowerCase().trim();
@@ -1409,7 +1674,7 @@ function mostrarMarcas(categoria){
   document.getElementById("searchInput").value = "";
   estado.nivel="marcas"; estado.categoria=categoria;
   const cont=document.getElementById("contenido");
-  cont.innerHTML=`<span class="backBtn" onclick="mostrarCategorias()">${backSvg} Volver a Categorías</span><h4>Marcas de ${categoria}</h4>`;
+  cont.innerHTML=`<span class="backBtn" onclick="irAPaginaPrincipal()">${backSvg} Volver a Categorías</span><h4>Marcas de ${categoria}</h4>`;
   const header = datosOriginales[0];
   const indexes = getHeaderIndexes(header);
   const marcas = [...new Set(datosOriginales.slice(1).filter(f=>f[indexes.COL_CAT]===categoria).map(f=>f[indexes.COL_MARCA]))].filter(m => m).sort();
@@ -1604,8 +1869,39 @@ window.addEventListener('load', () => {
 
 inicializarApp();
 
-// --- LÓGICA DE BÚSQUEDA ACTIVA ---
-const searchInput = document.getElementById('searchInput');
+// Event listener para el acordeón
+document.getElementById('detalleCompleto').addEventListener('click', function(e) {
+    const clickedBtn = e.target.closest('.accordion-btn');
+    if (!clickedBtn) return;
+
+    const panel = clickedBtn.nextElementSibling;
+    const isActive = clickedBtn.classList.contains('active');
+
+    // Cerrar todos los paneles y pausar videos
+    this.querySelectorAll('.accordion-btn').forEach(btn => {
+        const currentPanel = btn.nextElementSibling;
+        const iframe = currentPanel.querySelector('iframe');
+
+        if (btn !== clickedBtn || isActive) {
+            btn.classList.remove('active');
+            currentPanel.style.maxHeight = null;
+            if (iframe) {
+                iframe.src = ''; // Detiene el video
+            }
+        }
+    });
+
+    // Abrir el panel clickeado si no estaba ya activo
+    if (!isActive) {
+        clickedBtn.classList.add('active');
+        panel.style.maxHeight = panel.scrollHeight + "px";
+        const iframe = panel.querySelector('iframe');
+        if (iframe && iframe.dataset.originalSrc) {
+            iframe.src = iframe.dataset.originalSrc; // Restaura el video
+        }
+    }
+});
+
 const searchContainer = document.querySelector('.search-container');
 const clearSearchBtn = document.getElementById('clear-search-btn');
 
