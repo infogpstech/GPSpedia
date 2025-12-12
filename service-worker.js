@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gpsepedia-cache-v1';
+const CACHE_NAME = 'gpsepedia-cache-v2';
 const urlsToCache = [
   '/',
   '/index.html'
@@ -8,24 +8,11 @@ self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Opened cache');
+        console.log('Opened cache and caching basic assets');
         return cache.addAll(urlsToCache);
       })
   );
-});
-
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      }
-    )
-  );
+  self.skipWaiting(); // Force the new service worker to activate immediately
 });
 
 self.addEventListener('activate', event => {
@@ -35,10 +22,31 @@ self.addEventListener('activate', event => {
       return Promise.all(
         cacheNames.map(cacheName => {
           if (cacheWhitelist.indexOf(cacheName) === -1) {
+            console.log('Deleting old cache:', cacheName);
             return caches.delete(cacheName);
           }
         })
       );
+    }).then(() => self.clients.claim()) // Take control of all open clients
+  );
+});
+
+self.addEventListener('fetch', event => {
+  // Use a network-first strategy
+  event.respondWith(
+    fetch(event.request).then(response => {
+      // If the fetch is successful, clone the response and cache it
+      if (response && response.status === 200) {
+        const responseToCache = response.clone();
+        caches.open(CACHE_NAME)
+          .then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+      }
+      return response;
+    }).catch(() => {
+      // If the network request fails, try to serve from the cache
+      return caches.match(event.request);
     })
   );
 });

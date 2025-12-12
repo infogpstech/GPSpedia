@@ -1297,17 +1297,24 @@ function mostrarDetalleTutorial(fila, header) {
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
+
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
     closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
-    cont.appendChild(closeBtn);
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;"; // Reset margin
+    headerDiv.appendChild(closeBtn);
 
     const id = fila[header.indexOf("ID")];
     const titulo = fila[header.indexOf("Tema")];
     const shareBtn = crearBotonCompartir('tutoriales', id, titulo);
-    cont.appendChild(shareBtn);
+    headerDiv.appendChild(shareBtn);
+
+    cont.appendChild(headerDiv);
+
     const title = document.createElement("h2");
     title.textContent = fila[header.indexOf("Tema")];
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
@@ -1323,9 +1330,6 @@ function mostrarDetalleTutorial(fila, header) {
     });
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
     crearVideoDetalle("Video Guía", fila[header.indexOf("Video")], cont);
-    const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = () => cerrarModal();
-    cont.appendChild(closeBtnBottom);
     modal.classList.add("visible");
 }
 
@@ -1337,17 +1341,23 @@ function mostrarDetalleRelay(fila, header) {
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
+
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
     closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
-    cont.appendChild(closeBtn);
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
+    headerDiv.appendChild(closeBtn);
 
     const id = fila[header.indexOf("ID")];
     const titulo = fila[header.indexOf("Configuración")];
     const shareBtn = crearBotonCompartir('relay', id, titulo);
-    cont.appendChild(shareBtn);
+    headerDiv.appendChild(shareBtn);
+
+    cont.appendChild(headerDiv);
 
     const title = document.createElement("h2");
     title.textContent = `Detalle de: ${fila[header.indexOf("Configuración")]}`;
@@ -1368,9 +1378,6 @@ function mostrarDetalleRelay(fila, header) {
         if (p) cont.appendChild(p);
     });
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
-    const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = () => cerrarModal();
-    cont.appendChild(closeBtnBottom);
     modal.classList.add("visible");
 }
 
@@ -1470,17 +1477,22 @@ function mostrarDetalleModal(fila, header) {
     cont.innerHTML = "";
     const indexes = getHeaderIndexes(header);
 
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
     closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
-    cont.appendChild(closeBtn);
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
+    headerDiv.appendChild(closeBtn);
 
     const id = fila[header.indexOf("ID")];
     const titulo = `${fila[indexes.COL_MODELO]} ${fila[indexes.COL_AÑOS] || ''}`;
     const shareBtn = crearBotonCompartir('cortes', id, titulo);
-    cont.appendChild(shareBtn);
+    headerDiv.appendChild(shareBtn);
+
+    cont.appendChild(headerDiv);
 
     const title = document.createElement("h2");
     const modeloNombre = fila[indexes.COL_MODELO] || 'Modelo Desconocido';
@@ -1564,9 +1576,6 @@ function mostrarDetalleModal(fila, header) {
         cont.appendChild(panel);
     });
 
-    const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = () => cerrarModal();
-    cont.appendChild(closeBtnBottom);
     modal.classList.add("visible");
 }
 
