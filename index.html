@@ -50,20 +50,37 @@ h1,h2,h3,h4 {
 .header-container {
     display: flex;
     align-items: center;
-    justify-content: flex-start;
+    justify-content: space-between; /* Ajustado para espaciar los elementos */
+    flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
     margin-bottom: 20px;
+    gap: 15px; /* Espacio entre el logo/título y los controles */
+    transition: all 0.35s ease-in-out;
 }
+
+.header-branding {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    transition: all 0.35s ease-in-out;
+}
+
 .app-logo {
     max-width: 96px;
     height: auto;
     border-radius: 8px;
-    margin-right: 15px;
+    /* margin-right ya no es necesario gracias a 'gap' */
+    transition: all 0.35s ease-in-out;
 }
 h1.app-title {
     text-align: left;
     margin: 0;
     font-size: 2.2em;
     color: #333;
+    transition: all 0.35s ease-in-out;
+}
+
+#header-controls {
+    transition: all 0.35s ease-in-out;
 }
 
 #install-button {
@@ -89,26 +106,80 @@ h1.app-title {
     transform: scale(1.05); /* Efecto de zoom ligero */
 }
 
-@media (max-width: 480px) {
+@media (max-width: 680px) {
+    .header-container {
+        flex-direction: column; /* Apila los elementos verticalmente */
+        align-items: center; /* Centra los elementos */
+        justify-content: center;
+    }
+    .header-branding {
+        justify-content: center;
+        width: 100%;
+    }
     h1.app-title {
         font-size: 1.8em;
     }
+    #header-controls {
+        margin-left: 0; /* Resetea el margen */
+        width: 100%;
+        justify-content: center; /* Centra los botones */
+    }
+}
+
+@media (max-width: 480px) {
     #install-button {
         top: 10px;
         right: 10px;
         padding: 8px 12px;
         font-size: 0.9em;
     }
+    #header-controls {
+        flex-direction: column; /* Apila el saludo y el botón de cerrar sesión */
+        align-items: center;
+    }
 }
 
 /* --- ESTILOS DEL BUSCADOR --- */
 .search-container {
+    position: relative; /* Contenedor para el botón de limpiar */
     margin-bottom: 30px;
     padding: 10px 0;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
+    transition: all 0.35s ease-in-out;
 }
+
+#clear-search-btn {
+    position: absolute;
+    right: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #ccc;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+    line-height: 24px;
+    text-align: center;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease-in-out;
+}
+
+.search-container.has-text #clear-search-btn {
+    opacity: 1;
+    pointer-events: all;
+}
+
+body.search-active .search-container.has-text #clear-search-btn {
+    right: 35px; /* Ajuste de posición cuando la búsqueda está activa */
+}
+
+
 .search-container input[type="text"] {
     width: 100%;
     padding: 12px 15px;
@@ -116,7 +187,7 @@ h1.app-title {
     border-radius: 8px;
     box-sizing: border-box;
     font-size: 1em;
-    transition: border-color 0.3s, box-shadow 0.3s;
+    transition: all 0.35s ease-in-out;
 }
 .search-container input[type="text"]:focus {
     border-color: #007bff;
@@ -124,11 +195,59 @@ h1.app-title {
     outline: none;
 }
 
+/* --- ESTILOS DE BÚSQUEDA ACTIVA --- */
+body.search-active .app-title,
+body.search-active #header-controls,
+body.search-active .section-selector,
+body.search-active .footer {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-20px);
+    max-height: 0; /* Colapsa el espacio vertical */
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border: none !important;
+}
+
+body.search-active .container {
+    padding-top: 80px; /* Crea espacio para la barra de búsqueda fija */
+    transition: padding-top 0.35s ease-in-out;
+}
+
+body.search-active .search-container {
+    position: fixed;
+    top: 15px;
+    left: 0;
+    right: 0;
+    padding: 0 20px;
+    margin: 0;
+    max-width: 100%;
+    z-index: 1500;
+}
+
+body.search-active #searchInput {
+    padding-left: 55px; /* Espacio para el logo */
+    height: 48px;
+    box-sizing: border-box;
+}
+
+body.search-active .app-logo {
+    position: fixed;
+    top: 22px;       /* 15px (search-container top) + 7px (para centrar) */
+    left: 30px;      /* 20px (search-container padding) + 10px (margen interno) */
+    max-width: 34px;
+    z-index: 1501;   /* Por encima del input */
+}
+
+
 /* --- ESTILOS DE LA SELECCIÓN DE SECCIÓN --- */
 .section-selector {
     display: flex;
     justify-content: center;
     margin-bottom: 20px;
+    transition: all 0.35s ease-in-out;
 }
 .section-btn {
     background-color: #f0f0f0;
@@ -147,6 +266,8 @@ h1.app-title {
 }
 .section-btn:hover:not(.active) {
     background-color: #e0e0e0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 
@@ -161,6 +282,16 @@ h1.app-title {
 }
 
 /* Estilos de la Tarjeta (Card) */
+@keyframes card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
 .card {
     position: relative;
     background: #fff;
@@ -173,10 +304,54 @@ h1.app-title {
     width: 100%;
     max-width: 140px;
     justify-self: center;
+    /* Animación de entrada */
+    opacity: 0; /* Estado inicial para la animación */
+    animation: card-enter 0.5s ease-out forwards;
+}
+.animacion-ejecutada .card {
+    /* Deshabilita la animación si el contenedor ya la ejecutó */
+    animation: none;
+    opacity: 1; /* Asegura que la tarjeta sea visible */
 }
 .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* --- ESTILOS DE SKELETON LOADER --- */
+.skeleton-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, 140px);
+    justify-content: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.skeleton-card {
+    background: #e0e0e0;
+    border-radius: 12px;
+    width: 140px;
+    height: 188px; /* Altura total de la tarjeta real */
+    position: relative;
+    overflow: hidden;
+}
+.skeleton-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: loading-shimmer 1.5s infinite;
+}
+@keyframes loading-shimmer {
+    0% {
+        left: -150%;
+    }
+    100% {
+        left: 150%;
+    }
 }
 .card img {
     width: 100%;
@@ -280,36 +455,63 @@ h1.app-title {
 }
 
 /* Modal */
-#modalDetalle{
-    display:none;
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    overflow:auto;
-    background:rgba(0,0,0,0.8);
-    color:#000;
-    z-index:999;
+#modalDetalle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background: rgba(0, 0, 0, 0.6); /* Ligeramente más claro */
+    color: #000;
+    z-index: 1600; /* Aumentado para estar sobre la barra de búsqueda */
+    display: flex; /* Usar flex para centrar */
+    align-items: center;
+    justify-content: center;
+    /* Transiciones para la aparición */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
 }
-#detalleCompleto{
-    background:#fff;
-    margin:50px auto;
-    padding:30px;
-    max-width:90%;
-    border-radius:15px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.5);
+
+#modalDetalle.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+#detalleCompleto {
+    background: #fff;
+    padding: 30px;
+    width: 90%;
+    max-width: 800px; /* Ancho máximo para el modal */
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
     max-height: 90vh;
     overflow-y: auto;
+    /* Transición para el efecto de escalado */
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
 }
-#detalleCompleto img{
-    max-width:100%;
-    max-height:60vh;
-    margin-bottom:15px;
-    cursor:pointer;
-    object-fit:contain;
-    border-radius:8px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+
+#modalDetalle.visible #detalleCompleto {
+    transform: scale(1);
+}
+
+#detalleCompleto img {
+    display: block;
+    width: auto; /* Ancho automático para mantener proporción */
+    max-width: 100%;
+    max-height: 300px; /* Límite de altura en lugar de altura fija */
+    margin: 15px auto;
+    cursor: pointer;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada */
+}
+.img-vehiculo {
+    max-height: 200px !important; /* Límite de altura más pequeño */
 }
 #detalleCompleto h4 {
     color: #007bff;
@@ -317,20 +519,83 @@ h1.app-title {
     padding-bottom: 5px;
 }
 
-/* Lightbox */
-.lightbox{
-    position:fixed;
-    top:0;
-    left:0;
-    width:100%;
-    height:100%;
-    background:rgba(0,0,0,0.9);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    z-index:1000;
+/* --- ESTILOS PARA SECCIONES DESPLEGABLES (ACORDEÓN) --- */
+.accordion-btn {
+    background-color: #f0f0f0;
+    color: #007bff; /* Color de texto azul */
+    cursor: pointer;
+    padding: 15px;
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    border-radius: 8px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
 }
-.lightbox img{max-width:95%; max-height:95%;}
+.accordion-btn:hover, .accordion-btn.active {
+    background-color: #e0e0e0;
+}
+.accordion-arrow {
+    transition: transform 0.3s ease;
+    width: 20px;
+    height: 20px;
+}
+.accordion-btn.active .accordion-arrow {
+    transform: rotate(180deg); /* Flecha hacia arriba */
+}
+.panel-desplegable {
+    padding: 0 18px;
+    background-color: white;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    border-bottom: 1px solid #eee;
+}
+
+/* Lightbox */
+.lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Un poco más suave */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1700; /* Aumentado para estar sobre el modal de detalles */
+    /* Transiciones */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.lightbox.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+.lightbox img {
+    max-width: 95%;
+    max-height: 95%;
+    border-radius: 8px; /* Bordes redondeados sutiles */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    /* Transición para el efecto de zoom */
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.lightbox.visible img {
+    transform: scale(1);
+}
 
 .footer {
     text-align: center;
@@ -339,23 +604,55 @@ h1.app-title {
     background-color: #333;
     color: #fff;
     font-size: 0.9em;
+    display: none; /* Oculto por defecto */
+    width: 100%;
+    transition: all 0.35s ease-in-out;
+}
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000; /* Por encima de todo */
+    transition: opacity 0.5s ease-out;
+}
+#splash-screen img {
+    max-width: 150px;
+    border-radius: 15px;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
 }
 </style>
 </head>
 <body>
 
+<!-- Splash Screen -->
+<div id="splash-screen">
+    <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w512" alt="Logo de GPSpedia">
+</div>
+
 <!-- Login Modal -->
 <div id="login-modal" style="display: none;">
     <div class="modal-content">
+        <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256" alt="Logo de GPSpedia" style="max-width: 120px; margin-bottom: 20px; border-radius: 10px;">
         <h2>Iniciar Sesión</h2>
         <form id="login-form">
             <div class="form-group">
                 <label for="username">Usuario</label>
-                <input type="text" id="username" required>
+                <input type="text" id="username" required autocomplete="username">
             </div>
             <div class="form-group">
                 <label for="password">Contraseña</label>
-                <input type="password" id="password" required>
+                <input type="password" id="password" required autocomplete="current-password">
             </div>
             <button type="submit">Acceder</button>
             <p id="login-error" style="color: red; display: none;"></p>
@@ -367,9 +664,11 @@ h1.app-title {
 <div class="container" style="display: none;">
 
   <div class="header-container">
-      <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
-      <h1 class="app-title">GPSpedia</h1>
-      <div id="header-controls" style="margin-left: auto; display: flex; align-items: center; gap: 15px;">
+      <div class="header-branding">
+          <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
+          <h1 class="app-title">GPSpedia</h1>
+      </div>
+      <div id="header-controls" style="display: flex; align-items: center; gap: 15px;">
           <span id="welcome-message" style="display: none; color: #333; font-weight: bold;"></span>
           <button id="logout-button" style="display: none; background-color: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;">Cerrar Sesión</button>
           <button id="install-button" style="display: none;">Instalar Aplicación</button>
@@ -378,6 +677,7 @@ h1.app-title {
 
   <div class="search-container">
       <input type="text" id="searchInput" placeholder="Buscar Corte..." oninput="filtrarContenido(this.value)">
+      <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
   </div>
 
   <div class="section-selector">
@@ -395,7 +695,7 @@ h1.app-title {
   <div id="detalleCompleto"></div>
 </div>
 
-<div id="lightbox" class="lightbox" style="display:none;" onclick="cerrarLightbox()">
+<div id="lightbox" class="lightbox" onclick="cerrarLightbox()">
   <img id="lightboxImg" src="">
 </div>
 
@@ -521,29 +821,42 @@ async function fetchUsers() {
     }
 }
 
-function checkSession() {
+async function checkSession() {
     const session = localStorage.getItem(SESSION_KEY);
     if (session) {
         const { user, sessionId } = JSON.parse(session);
-
-        // Verificación de sesión única
         const expectedSessionId = localStorage.getItem(SESSION_ID_KEY);
 
-        if (sessionId === expectedSessionId) {
-            // La sesión es válida y única para esta pestaña/navegador
-            document.getElementById('login-modal').style.display = 'none';
-            document.querySelector('.container').style.display = 'block';
+        if (sessionId !== expectedSessionId) {
+            logout("Se ha iniciado una nueva sesión en otro dispositivo o navegador.");
+            return;
+        }
+
+        // Re-verificar credenciales con los datos de usuario más recientes
+        if (userData.length === 0) {
+            await fetchUsers(); // Asegurarse de que los datos de usuario están cargados
+        }
+
+        const header = userData[0];
+        const users = userData.slice(1);
+        const currentUser = users.find(u =>
+            u[header.indexOf('Nombre_Usuario')] === user.Nombre_Usuario
+        );
+
+        if (currentUser) {
+            // Las credenciales son válidas, la sesión continúa
+            hideLoginShowApp();
             document.getElementById('welcome-message').textContent = `Bienvenido, ${user.Nombre}`;
             document.getElementById('welcome-message').style.display = 'block';
             document.getElementById('logout-button').style.display = 'block';
             syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
         } else {
-            // Se ha iniciado sesión en otro lugar, cerrar esta sesión
-            logout("Se ha iniciado una nueva sesión en otro dispositivo o navegador.");
+            // Credenciales inválidas (usuario eliminado, contraseña cambiada, etc.)
+            logout("Tu sesión ha expirado o tus credenciales han cambiado. Por favor, inicia sesión de nuevo.");
         }
     } else {
         // No hay sesión, mostrar el modal de login
-        document.getElementById('login-modal').style.display = 'flex';
+        showLoginHideApp();
     }
 }
 
@@ -576,9 +889,7 @@ function login(username, password) {
         // Simular notificación a otras pestañas
         localStorage.setItem('session_update', Date.now());
 
-
-        document.getElementById('login-modal').style.display = 'none';
-        document.querySelector('.container').style.display = 'block';
+        hideLoginShowApp();
         document.getElementById('welcome-message').textContent = `Bienvenido, ${sessionData.user.Nombre}`;
         document.getElementById('welcome-message').style.display = 'block';
         document.getElementById('logout-button').style.display = 'block';
@@ -595,14 +906,20 @@ function logout(reason = null) {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_ID_KEY);
 
-    // Limpiar la UI
+    showLoginHideApp(reason);
+}
+
+function showLoginHideApp(reason = null) {
+    // Ocultar contenido principal y footer
+    document.querySelector('.container').style.display = 'none';
+    document.querySelector('.footer').style.display = 'none';
     document.getElementById('welcome-message').style.display = 'none';
     document.getElementById('logout-button').style.display = 'none';
-    document.querySelector('.container').style.display = 'none';
 
-    // Mostrar el modal de login con un mensaje si es necesario
+    // Mostrar el modal de login
     const loginModal = document.getElementById('login-modal');
     loginModal.style.display = 'flex';
+
     const loginError = document.getElementById('login-error');
     if (reason) {
         loginError.textContent = reason;
@@ -610,8 +927,24 @@ function logout(reason = null) {
     } else {
         loginError.style.display = 'none';
     }
+
     document.getElementById('username').value = '';
     document.getElementById('password').value = '';
+}
+
+function hideLoginShowApp() {
+    // Ocultar splash y login
+    const splash = document.getElementById('splash-screen');
+    splash.style.opacity = '0';
+    setTimeout(() => {
+        splash.style.display = 'none';
+    }, 500); // Coincide con la transición de opacidad
+
+    document.getElementById('login-modal').style.display = 'none';
+
+    // Mostrar contenido principal y footer
+    document.querySelector('.container').style.display = 'block';
+    document.querySelector('.footer').style.display = 'block';
 }
 
 
@@ -647,73 +980,90 @@ window.addEventListener('storage', (event) => {
     }
 });
 
+function showSkeletonLoader(container) {
+    let skeletonHTML = '<div class="skeleton-grid">';
+    for (let i = 0; i < 10; i++) { // Muestra 10 tarjetas esqueleto
+        skeletonHTML += '<div class="skeleton-card"></div>';
+    }
+    skeletonHTML += '</div>';
+    container.innerHTML = skeletonHTML;
+}
+
 const COLUMN_NAME_AÑOS = "Año (generacion)";
 
 let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay = [],
-    estado = {nivel:"categorias", categoria:null, marca:null, modelo:null};
+    estado = {nivel:"categorias", categoria:null, marca:null, modelo:null},
+    appOpenedFromLink = false;
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
 async function syncAndFetchData(storeName, range, dataVariableSetter, successCallback, containerId) {
     const container = document.getElementById(containerId);
-
-    // 1. Cargar datos desde IndexedDB primero para una experiencia offline-first.
-    try {
-        const localData = await readData(storeName);
-        if (localData && localData.length > 0) {
-            console.log(`Datos cargados desde IndexedDB para: ${storeName}`);
-            dataVariableSetter(localData);
-            successCallback();
-        } else {
-            container.innerHTML = `<p>Buscando datos...</p>`;
-        }
-    } catch (dbError) {
-        console.error(`Error al leer de IndexedDB para ${storeName}:`, dbError);
-        container.innerHTML = `<p>Buscando datos...</p>`;
-    }
-
-    // 2. Intentar obtener datos frescos de la red.
     const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
+
+    // Siempre mostrar el skeleton loader para indicar que se está cargando/actualizando.
+    container.classList.remove('animacion-ejecutada');
+    showSkeletonLoader(container);
+
     try {
+        // 1. Intentar obtener datos de la red primero.
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error de red: ${response.status}`);
         const data = await response.json();
         const values = data.values || [];
 
         if (values.length > 0) {
-            // 3. Si hay datos nuevos, guardarlos en IndexedDB y actualizar la UI.
+            // 2. Si la red tiene éxito, guardar en caché y mostrar los datos.
             await saveData(storeName, values);
-            console.log(`Datos de ${storeName} guardados/actualizados en IndexedDB.`);
+            console.log(`Datos de ${storeName} obtenidos de la red y actualizados en IndexedDB.`);
             dataVariableSetter(values);
-            successCallback(); // Volver a renderizar con los datos frescos.
+            successCallback();
+            // Añadir un pequeño retardo para que la animación CSS se active.
+            setTimeout(() => container.classList.add('animacion-ejecutada'), 50);
         } else {
-            // Si la red no devuelve datos, pero teníamos datos locales, los mantenemos.
-            const localData = await readData(storeName);
-            if (!localData) {
-                 container.innerHTML = `<p>No se encontraron datos.</p>`;
-            }
+             // Si la red responde pero no hay datos, se considera un error y se intenta usar la caché.
+             throw new Error("No se encontraron valores en la red.");
         }
-    } catch (error) {
-        console.error(`Fallo al obtener datos de ${range} desde la red:`, error);
-        // Si la red falla, la app sigue funcionando con los datos de IndexedDB.
-        // Si no había datos locales, mostramos un error de conexión.
-        const localData = await readData(storeName);
-        if (!localData) {
-            container.innerHTML = `<p style="color:red;">No se pudo conectar. Comprueba tu conexión.</p>`;
-        } else {
-            console.log("Mostrando datos locales debido a un error de red.");
+    } catch (networkError) {
+        console.error(`Fallo al obtener datos de ${range} desde la red:`, networkError);
+        // 3. Si la red falla, intentar cargar desde la caché.
+        try {
+            const localData = await readData(storeName);
+            if (localData && localData.length > 0) {
+                console.log(`Mostrando datos de respaldo (sin conexión) desde IndexedDB para: ${storeName}`);
+                dataVariableSetter(localData);
+                successCallback();
+                // Al cargar desde caché, no hay animación de entrada.
+                container.classList.add('animacion-ejecutada');
+            } else {
+                // 4. Si la red y la caché fallan, mostrar un error.
+                container.innerHTML = `<p style="color:red; text-align:center;">No se pudo conectar al servidor y no hay datos locales guardados. Por favor, revisa tu conexión a internet.</p>`;
+            }
+        } catch (dbError) {
+            console.error(`Error crítico al leer de IndexedDB para ${storeName}:`, dbError);
+            container.innerHTML = `<p style="color:red; text-align:center;">Error crítico al intentar acceder a los datos locales.</p>`;
         }
     }
 }
 
 function mostrarSeccion(seccion) {
-    document.getElementById('contenido').style.display = 'none';
-    document.getElementById('contenido-tutoriales').style.display = 'none';
-    document.getElementById('contenido-relay').style.display = 'none';
+    // Limpiar el campo de búsqueda para evitar conflictos de estado.
+    const searchInput = document.getElementById('searchInput');
+    if (searchInput.value !== '') {
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+    }
 
-    document.getElementById('btn-cortes').classList.remove('active');
-    document.getElementById('btn-tutoriales').classList.remove('active');
-    document.getElementById('btn-relay').classList.remove('active');
+    // Oculta todas las secciones
+    const sections = document.querySelectorAll('.content-section');
+    sections.forEach(s => {
+        s.style.display = 'none';
+        // No quitamos 'animacion-ejecutada' aquí para evitar re-animaciones al cambiar de pestaña
+    });
+
+    // Desactiva todos los botones
+    const buttons = document.querySelectorAll('.section-btn');
+    buttons.forEach(b => b.classList.remove('active'));
 
     if (seccion === 'cortes') {
         document.getElementById('contenido').style.display = 'block';
@@ -728,6 +1078,11 @@ function mostrarSeccion(seccion) {
         document.getElementById('btn-relay').classList.add('active');
         syncAndFetchData('relay', RANGE_RELAY, (vals) => datosRelay = vals, mostrarContenidoRelay, 'contenido-relay');
     }
+}
+
+function irAPaginaPrincipal() {
+    // Esta función vuelve a la vista principal. La nueva lógica de syncAndFetchData se encargará de actualizar.
+    mostrarSeccion('cortes');
 }
 
 function mostrarContenidoTutoriales() {
@@ -787,12 +1142,15 @@ function crearElementoDetalle(label, value) {
     return p;
 }
 
-function crearImagenDetalle(label, value, container) {
+function crearImagenDetalle(label, value, container, extraClass = '') {
     if (!value) return;
     const h = document.createElement("h4"); h.textContent = label; container.appendChild(h);
     const img = document.createElement("img");
     img.src = convertirAGoogleThumbnail(value);
     img.alt = label;
+    if (extraClass) {
+        img.classList.add(extraClass);
+    }
     img.onclick = () => mostrarLightbox(value);
     container.appendChild(img);
 }
@@ -822,20 +1180,126 @@ function crearVideoDetalle(label, value, container) {
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     iframe.allowFullscreen = true;
     iframe.style.cssText = "border:none; position:absolute; top:0; left:0; width:100%; height:100%;";
+    iframe.dataset.originalSrc = iframe.src; // Guardar la URL original
     iframeContainer.appendChild(iframe);
     container.appendChild(iframeContainer);
 }
 
+// --- GESTIÓN DE HISTORIAL Y ESTADO DE LA UI ---
+const uiState = {
+    isModalOpen: false,
+    isSearchActive: false
+};
+
+// Función centralizada para manejar el botón "atrás" del navegador
+window.addEventListener('popstate', (event) => {
+    const state = event.state || {}; // Treat null state as the base state
+
+    // If we navigate to a state that is NOT a modal, but the modal is currently open, close it visually.
+    if (uiState.isModalOpen && !state.modal) {
+        const detalleCont = document.getElementById("detalleCompleto");
+
+        // Close all active accordions and stop videos within them.
+        detalleCont.querySelectorAll('.accordion-btn.active').forEach(btn => {
+            btn.classList.remove('active');
+            const panel = btn.nextElementSibling;
+            if (panel) {
+                panel.style.maxHeight = null;
+                const iframe = panel.querySelector('iframe');
+                if (iframe) {
+                    iframe.src = ''; // This stops playback.
+                }
+            }
+        });
+
+        // Hide the modal.
+        document.getElementById("modalDetalle").classList.remove("visible");
+
+        // Update state.
+        uiState.isModalOpen = false;
+    }
+
+    // If we navigate to a state that is NOT a search, but search is active, deactivate it.
+    else if (uiState.isSearchActive && !state.search) {
+        uiState.isSearchActive = false;
+        const searchInput = document.getElementById('searchInput');
+        searchInput.value = '';
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        searchInput.blur();
+        document.body.classList.remove('search-active');
+    }
+});
+
+function pushState(state) {
+    history.pushState(state, '');
+}
+
+function crearBotonCompartir(seccion, id, titulo) {
+    const shareBtn = document.createElement("button");
+    shareBtn.textContent = "Compartir";
+    shareBtn.className = "shareBtn"; // Agregamos una clase para identificarlo
+    shareBtn.style.cssText = "color:white; background:#007bff; border:none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;";
+
+    // Usamos location.origin y location.pathname para construir una URL limpia
+    const shareUrl = `${window.location.origin}${window.location.pathname}?seccion=${seccion}&id=${id}`;
+
+    shareBtn.onclick = async () => {
+        const shareData = {
+            title: 'GPSpedia Detalle',
+            text: `Mira este detalle de GPSpedia: ${titulo}`,
+            url: shareUrl,
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.error('Error al compartir:', err);
+            }
+        } else {
+            // Fallback para navegadores que no soportan navigator.share (ej. Desktop)
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                shareBtn.textContent = '¡Enlace Copiado!';
+                setTimeout(() => {
+                    shareBtn.textContent = 'Compartir';
+                }, 2000);
+            } catch (err) {
+                console.error('Error al copiar el enlace:', err);
+                alert('No se pudo copiar el enlace.');
+            }
+        }
+    };
+    return shareBtn;
+}
+
+
 function mostrarDetalleTutorial(fila, header) {
+    // Empujar un nuevo estado al historial para el modal
+    pushState({ modal: true });
+    uiState.isModalOpen = true;
+
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
+
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = cerrarModal;
+    closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
-    cont.appendChild(closeBtn);
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;"; // Reset margin
+    headerDiv.appendChild(closeBtn);
+
+    const id = fila[header.indexOf("ID")];
+    const titulo = fila[header.indexOf("Tema")];
+    const shareBtn = crearBotonCompartir('tutoriales', id, titulo);
+    headerDiv.appendChild(shareBtn);
+
+    cont.appendChild(headerDiv);
+
     const title = document.createElement("h2");
     title.textContent = fila[header.indexOf("Tema")];
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
@@ -851,22 +1315,35 @@ function mostrarDetalleTutorial(fila, header) {
     });
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
     crearVideoDetalle("Video Guía", fila[header.indexOf("Video")], cont);
-    const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = cerrarModal;
-    cont.appendChild(closeBtnBottom);
-    modal.style.display = "flex";
+    modal.classList.add("visible");
 }
 
 function mostrarDetalleRelay(fila, header) {
+    // Empujar un nuevo estado al historial para el modal
+    pushState({ modal: true });
+    uiState.isModalOpen = true;
+
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
+
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = cerrarModal;
+    closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
-    cont.appendChild(closeBtn);
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
+    headerDiv.appendChild(closeBtn);
+
+    const id = fila[header.indexOf("ID")];
+    const titulo = fila[header.indexOf("Configuración")];
+    const shareBtn = crearBotonCompartir('relay', id, titulo);
+    headerDiv.appendChild(shareBtn);
+
+    cont.appendChild(headerDiv);
+
     const title = document.createElement("h2");
     title.textContent = `Detalle de: ${fila[header.indexOf("Configuración")]}`;
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
@@ -886,10 +1363,7 @@ function mostrarDetalleRelay(fila, header) {
         if (p) cont.appendChild(p);
     });
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
-    const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = cerrarModal;
-    cont.appendChild(closeBtnBottom);
-    modal.style.display = "flex";
+    modal.classList.add("visible");
 }
 
 function getHeaderIndexes(header) {
@@ -914,6 +1388,9 @@ function convertirAGoogleThumbnail(url){
 }
 
 function mostrarLightbox(src){
+  // Limpiar la imagen anterior para evitar el parpadeo
+  document.getElementById("lightboxImg").src = "";
+
   let idMatch = src.match(/id=([a-zA-Z0-9_-]+)/) || src.match(/\/d\/([a-zA-Z0-9_-]+)/);
   let finalUrl = src;
   if(idMatch && idMatch[1]){
@@ -922,17 +1399,42 @@ function mostrarLightbox(src){
        console.warn("Advertencia: No se pudo encontrar un ID de Google Drive válido para el Lightbox. Usando URL original.");
   }
   document.getElementById("lightboxImg").src = finalUrl;
-  document.getElementById("lightbox").style.display="flex";
+  document.getElementById("lightbox").classList.add("visible");
 }
 function cerrarModal() {
+    // 1. Forzar el cierre de elementos de la UI.
     const detalleCont = document.getElementById("detalleCompleto");
-    const iframe = detalleCont.querySelector('iframe');
-    if (iframe) {
-        iframe.src = ''; // Detiene la reproducción del video al vaciar el src.
+
+    // Cierra todos los acordeones activos y detiene los videos dentro de ellos.
+    detalleCont.querySelectorAll('.accordion-btn.active').forEach(btn => {
+        btn.classList.remove('active');
+        const panel = btn.nextElementSibling;
+        if (panel) {
+            panel.style.maxHeight = null;
+            const iframe = panel.querySelector('iframe');
+            if (iframe) iframe.src = '';
+        }
+    });
+    detalleCont.querySelectorAll('iframe').forEach(iframe => { if(iframe.src) iframe.src = ''; });
+    document.getElementById("modalDetalle").classList.remove("visible");
+
+    // 2. Actualizar el estado interno.
+    uiState.isModalOpen = false;
+
+    // 3. Manejar el historial del navegador.
+    if (history.state && history.state.modal) {
+        history.back();
     }
-    document.getElementById("modalDetalle").style.display = "none";
+
+    // 4. Si la app se abrió desde un enlace, ahora se verifica la sesión.
+    if (appOpenedFromLink) {
+        appOpenedFromLink = false;
+        // Limpiar la URL para quitar los parámetros de sección/id
+        history.pushState({}, '', window.location.pathname);
+        checkSession(); // Ahora que el modal está cerrado, verificar si hay una sesión válida
+    }
 }
-function cerrarLightbox(){document.getElementById("lightbox").style.display="none";}
+function cerrarLightbox(){document.getElementById("lightbox").classList.remove("visible");}
 
 function extractYouTubeId(url) {
     if (!url) return null;
@@ -951,63 +1453,119 @@ function extractYouTubeId(url) {
     return videoId;
 }
 
-function mostrarDetalleModal(fila, header){
-  const modal = document.getElementById("modalDetalle");
-  const cont = document.getElementById("detalleCompleto");
-  cont.innerHTML = "";
-  const indexes = getHeaderIndexes(header);
+function mostrarDetalleModal(fila, header) {
+    pushState({ modal: true });
+    uiState.isModalOpen = true;
 
-  const closeBtn = document.createElement("button");
-  closeBtn.textContent = "Cerrar Detalle";
-  closeBtn.onclick = cerrarModal;
-  closeBtn.className = "backBtn";
-  closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
-  cont.appendChild(closeBtn);
+    const modal = document.getElementById("modalDetalle");
+    const cont = document.getElementById("detalleCompleto");
+    cont.innerHTML = "";
+    const indexes = getHeaderIndexes(header);
 
-  const title = document.createElement("h2");
-  const modeloNombre = fila[indexes.COL_MODELO] || 'Modelo Desconocido';
-  const anosNombre = fila[indexes.COL_AÑOS] || '';
-  title.textContent = `Detalle de ${modeloNombre} ${anosNombre ? `(${anosNombre})` : ''}`;
-  title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
-  cont.appendChild(title);
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
 
-  const campos = [
-    {label:"Nota Importante", key:"Nota Importante", isTitle: true}, {label:"Modelo", key:"Imagen del vehiculo"},
-    {label:"Tipo de Corte", key:"Tipo de corte"}, {label:"Descripción", key:"Descripcion del corte"},
-    {label:"Imagen", key:"Imagen del Corte"}, {label:"Segunda Opción", key:"Tipo de corte 2"},
-    {label:"Segunda Descripción:", key:"Descripción del Segundo corte"}, {label:"Imagen del Segundo Corte", key:"Imagen de corte 2"},
-    {label:"Apertura", key:"Apertura"}, {label:"Imagen de la Apertura", key:"Imagen de la apertura"},
-    {label:"Alimentación", key:"Cables de Alimentacion"}, {label:"Imagen de Alimentación", key:"Imagen de los cables de alimentacion"},
-    {label:"Imagen de la portada (Alternativa)", key:"Imagen de la portada"}
-  ];
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "Cerrar Detalle";
+    closeBtn.onclick = () => cerrarModal();
+    closeBtn.className = "backBtn";
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
+    headerDiv.appendChild(closeBtn);
 
-  campos.forEach(c => {
-    let index = header.indexOf(c.key);
-    if(index > -1){
-        let valor = fila[index];
-        if(valor){
-            if(c.key.includes("Imagen")){
-                crearImagenDetalle(c.label, valor, cont);
-            } else {
-                const p=document.createElement("p");
-                if(c.isTitle){
-                    p.innerHTML = `<strong style="color:red;">${c.label}:</strong> <span style="color:#cc0000; font-weight: bold;">${valor}</span>`;
-                } else {
-                    p.innerHTML=`<strong>${c.label}:</strong> ${valor}`;
-                }
-                cont.appendChild(p);
-            }
-        }
+    const id = fila[header.indexOf("ID")];
+    const titulo = `${fila[indexes.COL_MODELO]} ${fila[indexes.COL_AÑOS] || ''}`;
+    const shareBtn = crearBotonCompartir('cortes', id, titulo);
+    headerDiv.appendChild(shareBtn);
+
+    cont.appendChild(headerDiv);
+
+    const title = document.createElement("h2");
+    const modeloNombre = fila[indexes.COL_MODELO] || 'Modelo Desconocido';
+    const anosNombre = fila[indexes.COL_AÑOS] || '';
+    title.textContent = `Detalle de ${modeloNombre} ${anosNombre ? `(${anosNombre})` : ''}`;
+    title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
+    cont.appendChild(title);
+
+    // --- Contenido Principal (Siempre Visible) ---
+    const notaImportante = fila[header.indexOf("Nota Importante")];
+    if (notaImportante) {
+        const p = document.createElement("p");
+        p.innerHTML = `<strong style="color:red;">Nota Importante:</strong> <span style="color:#cc0000; font-weight: bold;">${notaImportante}</span>`;
+        cont.appendChild(p);
     }
-  });
+    crearImagenDetalle("Modelo", fila[header.indexOf("Imagen del vehiculo")], cont, 'img-vehiculo');
+    cont.appendChild(crearElementoDetalle("Tipo de Corte", fila[header.indexOf("Tipo de corte")]));
+    cont.appendChild(crearElementoDetalle("Descripción", fila[header.indexOf("Descripcion del corte")]));
+    crearImagenDetalle("Imagen", fila[header.indexOf("Imagen del Corte")], cont);
 
-  crearVideoDetalle("Video Guía de Desarme", fila[header.indexOf("Como desarmar los plasticos")], cont);
+    // --- Secciones Desplegables ---
+    const secciones = [
+        {
+            titulo: "Segunda Opción de Corte",
+            campos: [
+                { label: "Tipo de Corte", key: "Tipo de corte 2" },
+                { label: "Descripción", key: "Descripción del Segundo corte" },
+                { label: "Imagen", key: "Imagen de corte 2", esImagen: true }
+            ]
+        },
+        {
+            titulo: "Apertura",
+            campos: [
+                { label: "Detalles", key: "Apertura" },
+                { label: "Imagen", key: "Imagen de la apertura", esImagen: true }
+            ]
+        },
+        {
+            titulo: "Cables de Alimentación",
+            campos: [
+                { label: "Detalles", key: "Cables de Alimentacion" },
+                { label: "Imagen", key: "Imagen de los cables de alimentacion", esImagen: true }
+            ]
+        },
+        {
+            titulo: "Video Guía de Desarme",
+            campos: [{ key: "Como desarmar los plasticos", esVideo: true }]
+        }
+    ];
 
-  const closeBtnBottom = closeBtn.cloneNode(true);
-  closeBtnBottom.onclick = cerrarModal;
-  cont.appendChild(closeBtnBottom);
-  modal.style.display="flex";
+    secciones.forEach(seccion => {
+        // Comprueba si al menos un campo de la sección tiene contenido
+        const tieneContenido = seccion.campos.some(c => fila[header.indexOf(c.key)]);
+        if (!tieneContenido) return;
+
+        const btn = document.createElement("button");
+        btn.className = "accordion-btn";
+        btn.innerHTML = `
+            ${seccion.titulo}
+            <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+        `;
+        cont.appendChild(btn);
+
+        const panel = document.createElement("div");
+        panel.className = "panel-desplegable";
+
+        seccion.campos.forEach(c => {
+            const valor = fila[header.indexOf(c.key)];
+            if (valor) {
+                if (c.esImagen) {
+                    crearImagenDetalle(c.label || seccion.titulo, valor, panel);
+                } else if (c.esVideo) {
+                    crearVideoDetalle(seccion.titulo, valor, panel);
+                } else {
+                    panel.appendChild(crearElementoDetalle(c.label, valor));
+                }
+            }
+        });
+        cont.appendChild(panel);
+    });
+
+    modal.classList.add("visible");
 }
+
+// --- LÓGICA DE BÚSQUEDA ACTIVA ---
+const searchInput = document.getElementById('searchInput');
 
 function filtrarContenido(textoBusqueda){
     const busqueda = textoBusqueda.toLowerCase().trim();
@@ -1192,7 +1750,7 @@ function mostrarMarcas(categoria){
   document.getElementById("searchInput").value = "";
   estado.nivel="marcas"; estado.categoria=categoria;
   const cont=document.getElementById("contenido");
-  cont.innerHTML=`<span class="backBtn" onclick="mostrarCategorias()">${backSvg} Volver a Categorías</span><h4>Marcas de ${categoria}</h4>`;
+  cont.innerHTML=`<span class="backBtn" onclick="irAPaginaPrincipal()">${backSvg} Volver a Categorías</span><h4>Marcas de ${categoria}</h4>`;
   const header = datosOriginales[0];
   const indexes = getHeaderIndexes(header);
   const marcas = [...new Set(datosOriginales.slice(1).filter(f=>f[indexes.COL_CAT]===categoria).map(f=>f[indexes.COL_MARCA]))].filter(m => m).sort();
@@ -1283,9 +1841,19 @@ window.addEventListener('beforeinstallprompt', (e) => {
     deferredPrompt = e;
     console.log('`beforeinstallprompt` event was fired. App is installable.');
 
-    // Mostrar el botón de instalación si no estamos en modo standalone
-    if (!window.matchMedia('(display-mode: standalone)').matches) {
-        installButton.style.display = 'block';
+    // Lógica para mostrar el botón de instalación
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    if (!isStandalone) {
+        if (isIOS) {
+            // En iOS no se dispara 'beforeinstallprompt', manejaremos un botón personalizado.
+            // La lógica para mostrar el botón de iOS estará en inicializarApp.
+            installButton.style.display = 'none';
+        } else {
+            // Para otros dispositivos (Android, Desktop), mostrar el botón.
+            installButton.style.display = 'block';
+        }
     }
 });
 
@@ -1318,16 +1886,200 @@ if ('serviceWorker' in navigator) {
 }
 
 // --- INICIALIZACIÓN DE LA APLICACIÓN ---
-async function inicializarApp() {
-    await fetchUsers(); // Carga los datos de usuarios primero
-    checkSession();     // Luego, comprueba si hay una sesión activa
+async function handleSharedLink(seccion, id) {
+    appOpenedFromLink = true;
+
+    let data, header, item, mostrarDetalleFn;
+
+    // 1. Determinar qué datos buscar y qué función de modal usar
+    const seccionMap = {
+        'cortes': { range: RANGE_CORTES, dataSetter: (vals) => datosOriginales = vals, dataRef: () => datosOriginales, modalFn: mostrarDetalleModal },
+        'tutoriales': { range: RANGE_TUTORIALES, dataSetter: (vals) => datosTutoriales = vals, dataRef: () => datosTutoriales, modalFn: mostrarDetalleTutorial },
+        'relay': { range: RANGE_RELAY, dataSetter: (vals) => datosRelay = vals, dataRef: () => datosRelay, modalFn: mostrarDetalleRelay }
+    };
+
+    if (!seccionMap[seccion]) {
+        checkSession(); // Sección no válida, proceder con el inicio normal
+        return;
+    }
+
+    const { range, dataSetter, dataRef, modalFn } = seccionMap[seccion];
+
+    // 2. Intentar cargar los datos de la sección y encontrar el ítem
+    await syncAndFetchData(seccion, range, dataSetter, () => {}, 'contenido');
+    data = dataRef();
+
+    if (data && data.length > 1) {
+        header = data[0];
+        item = data.slice(1).find(fila => fila[header.indexOf("ID")] === id);
+    }
+
+    // 3. Solo si el ítem es válido, se muestra el modal y se oculta el resto
+    if (item) {
+        // Ocultar splash y login AHORA que sabemos que tenemos contenido para mostrar
+        const splash = document.getElementById('splash-screen');
+        splash.style.opacity = '0';
+        setTimeout(() => splash.style.display = 'none', 500);
+        document.getElementById('login-modal').style.display = 'none';
+
+        // Ocultar el contenedor principal para que solo se vea el modal
+        document.querySelector('.container').style.display = 'none';
+
+        mostrarDetalleFn = modalFn;
+        mostrarDetalleFn(item, header);
+    } else {
+        // 4. Si el ítem no se encuentra, proceder al flujo de inicio de sesión normal
+        checkSession();
+    }
 }
+
+
+async function inicializarApp() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const seccion = urlParams.get('seccion');
+    const id = urlParams.get('id');
+
+    if (seccion && id) {
+        await handleSharedLink(seccion, id);
+    } else {
+        await fetchUsers(); // Carga los datos de usuarios primero
+        checkSession();     // Luego, comprueba si hay una sesión activa
+    }
+
+    // Lógica para el botón de instalación de iOS
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+    if (!isStandalone && isIOS) {
+        // Crear y mostrar un botón/mensaje específico para iOS
+        const iosInstallMessage = document.createElement('div');
+        iosInstallMessage.id = 'ios-install-message';
+        iosInstallMessage.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #007bff;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            text-align: center;
+            z-index: 1002;
+            font-size: 0.9em;
+            width: 90%;
+            max-width: 400px;
+        `;
+        iosInstallMessage.innerHTML = `
+            Para instalar, pulsa el botón de Compartir
+            <svg style="width:20px; vertical-align:middle;" viewBox="0 0 24 24"><path fill="currentColor" d="M17,14V17A1,1 0 0,1 16,18H8A1,1 0 0,1 7,17V14H5V17A3,3 0 0,0 8,20H16A3,3 0 0,0 19,17V14H17M12,4L7,9H10V15H14V9H17L12,4Z" /></svg>
+            y luego "Añadir a pantalla de inicio".
+            <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; font-size:1.2em; position:absolute; top:5px; right:10px;">&times;</button>
+        `;
+        document.body.appendChild(iosInstallMessage);
+    }
+}
+
+// Ocultar el splash screen después de un tiempo para asegurar que no se quede atascado
+window.addEventListener('load', () => {
+    setTimeout(() => {
+        const splash = document.getElementById('splash-screen');
+        const session = localStorage.getItem(SESSION_KEY);
+        // Si no hay sesión, el splash se ocultará cuando se muestre el login.
+        // Si hay sesión, el splash se ocultará cuando se muestre la app.
+        // Este es un fallback por si algo falla.
+        if (!session) {
+             const splash = document.getElementById('splash-screen');
+            splash.style.opacity = '0';
+            setTimeout(() => {
+                splash.style.display = 'none';
+            }, 500);
+        }
+    }, 3000); // 3 segundos de tiempo de espera máximo
+});
+
 
 inicializarApp();
 
+// Event listener para el acordeón
+document.getElementById('detalleCompleto').addEventListener('click', function(e) {
+    const clickedBtn = e.target.closest('.accordion-btn');
+    if (!clickedBtn) return;
+
+    const panel = clickedBtn.nextElementSibling;
+    const isActive = clickedBtn.classList.contains('active');
+
+    // Cerrar todos los paneles y pausar videos
+    this.querySelectorAll('.accordion-btn').forEach(btn => {
+        const currentPanel = btn.nextElementSibling;
+        const iframe = currentPanel.querySelector('iframe');
+
+        if (btn !== clickedBtn || isActive) {
+            btn.classList.remove('active');
+            currentPanel.style.maxHeight = null;
+            if (iframe) {
+                iframe.src = ''; // Detiene el video
+            }
+        }
+    });
+
+    // Abrir el panel clickeado si no estaba ya activo
+    if (!isActive) {
+        clickedBtn.classList.add('active');
+        panel.style.maxHeight = panel.scrollHeight + "px";
+        const iframe = panel.querySelector('iframe');
+        if (iframe && iframe.dataset.originalSrc) {
+            iframe.src = iframe.dataset.originalSrc; // Restaura el video
+        }
+    }
+});
+
+const searchContainer = document.querySelector('.search-container');
+const clearSearchBtn = document.getElementById('clear-search-btn');
+
+if (searchInput && searchContainer && clearSearchBtn) {
+    searchInput.addEventListener('focus', () => {
+        if (!uiState.isSearchActive) {
+            // Solo empuja el estado si el campo está vacío. Si ya hay texto, no crees un nuevo estado.
+            if(searchInput.value.trim() === '') {
+                pushState({ search: true });
+            }
+            uiState.isSearchActive = true;
+        }
+        document.body.classList.add('search-active');
+    });
+
+    searchInput.addEventListener('blur', () => {
+        if (uiState.isSearchActive) {
+            // No hacemos history.back() al desenfocar para permitir hacer clic en los resultados.
+            // La UI se revierte visualmente, pero el estado del historial permanece.
+            setTimeout(() => {
+                 document.body.classList.remove('search-active');
+            }, 200);
+        }
+    });
+
+    searchInput.addEventListener('input', () => {
+        // Muestra u oculta el botón de limpiar basado en si hay texto
+        if (searchInput.value.length > 0) {
+            searchContainer.classList.add('has-text');
+        } else {
+            searchContainer.classList.remove('has-text');
+        }
+    });
+
+    clearSearchBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        // Dispara el evento 'input' para que la lógica de filtrado se ejecute
+        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
+        // Mantiene el foco en el input para una nueva búsqueda
+        searchInput.focus();
+    });
+}
+
 </script>
 
-<footer class="footer">
+<footer class="footer" style="display: none;">
   Gpspedia 2025© todos los derechos reservados.
 </footer>
 
