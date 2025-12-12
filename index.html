@@ -821,24 +821,39 @@ async function fetchUsers() {
     }
 }
 
-function checkSession() {
+async function checkSession() {
     const session = localStorage.getItem(SESSION_KEY);
     if (session) {
         const { user, sessionId } = JSON.parse(session);
-
-        // Verificación de sesión única
         const expectedSessionId = localStorage.getItem(SESSION_ID_KEY);
 
-        if (sessionId === expectedSessionId) {
-            // La sesión es válida y única para esta pestaña/navegador
+        if (sessionId !== expectedSessionId) {
+            logout("Se ha iniciado una nueva sesión en otro dispositivo o navegador.");
+            return;
+        }
+
+        // Re-verificar credenciales con los datos de usuario más recientes
+        if (userData.length === 0) {
+            await fetchUsers(); // Asegurarse de que los datos de usuario están cargados
+        }
+
+        const header = userData[0];
+        const users = userData.slice(1);
+        const currentUser = users.find(u =>
+            u[header.indexOf('Nombre_Usuario')] === user.Nombre_Usuario &&
+            u[header.indexOf('Password')] === user.Password
+        );
+
+        if (currentUser) {
+            // Las credenciales son válidas, la sesión continúa
             hideLoginShowApp();
             document.getElementById('welcome-message').textContent = `Bienvenido, ${user.Nombre}`;
             document.getElementById('welcome-message').style.display = 'block';
             document.getElementById('logout-button').style.display = 'block';
             syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
         } else {
-            // Se ha iniciado sesión en otro lugar, cerrar esta sesión
-            logout("Se ha iniciado una nueva sesión en otro dispositivo o navegador.");
+            // Credenciales inválidas (usuario eliminado, contraseña cambiada, etc.)
+            logout("Tu sesión ha expirado o tus credenciales han cambiado. Por favor, inicia sesión de nuevo.");
         }
     } else {
         // No hay sesión, mostrar el modal de login
@@ -863,6 +878,7 @@ function login(username, password) {
             user: {
                 ID: user[header.indexOf('ID')],
                 Nombre_Usuario: user[header.indexOf('Nombre_Usuario')],
+                Password: password, // Guardar la contraseña para re-verificación
                 Privilegios: user[header.indexOf('Privilegios')],
                 Nombre: user[header.indexOf('Nombre')],
             },
