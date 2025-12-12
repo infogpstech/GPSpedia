@@ -2,7 +2,7 @@
   "name": "GPSpedia | Catálogo Técnico",
   "short_name": "GPSpedia",
   "description": "Catálogo técnico de cortes de vehículos.",
-  "start_url": "/index.html",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#f4f4f4",
   "theme_color": "#007bff",
