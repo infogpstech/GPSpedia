@@ -1,22 +1,25 @@
-const CACHE_NAME = 'gpsepedia-cache-v4';
+const CACHE_NAME = 'gpsepedia-cache-v5';
+// The icon paths will be renamed in the next step, this is a placeholder
 const urlsToCache = [
   './',
   './index.html',
-  './icon-192x192.png',
-  './icon-512x512.png'
+  './icon-v2-192x192.png',
+  './icon-v2-512x512.png'
 ];
 
+// 1. Install: Caches the essential app shell files.
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
       .then(cache => {
-        console.log('Opened cache and caching basic assets');
+        console.log('Opened cache and caching app shell');
         return cache.addAll(urlsToCache);
       })
+      .then(() => self.skipWaiting()) // Activate the new service worker immediately
   );
-  self.skipWaiting(); // Force the new service worker to activate immediately
 });
 
+// 2. Activate: Deletes old caches to free up space.
 self.addEventListener('activate', event => {
   const cacheWhitelist = [CACHE_NAME];
   event.waitUntil(
@@ -33,22 +36,23 @@ self.addEventListener('activate', event => {
   );
 });
 
+// 3. Fetch: Implements a cache-first strategy.
 self.addEventListener('fetch', event => {
-  // Use a network-first strategy
   event.respondWith(
-    fetch(event.request).then(response => {
-      // If the fetch is successful, clone the response and cache it
-      if (response && response.status === 200) {
-        const responseToCache = response.clone();
-        caches.open(CACHE_NAME)
-          .then(cache => {
-            cache.put(event.request, responseToCache);
-          });
-      }
-      return response;
-    }).catch(() => {
-      // If the network request fails, try to serve from the cache
-      return caches.match(event.request);
-    })
+    caches.match(event.request)
+      .then(cachedResponse => {
+        // If the response is in the cache, return it.
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+        // If not in cache, fetch from the network.
+        return fetch(event.request).then(
+          networkResponse => {
+            // Optional: Cache the new response for future use.
+            // Be careful with what you cache, especially API responses.
+            return networkResponse;
+          }
+        );
+      })
   );
 });
