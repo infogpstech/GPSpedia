@@ -1,7 +1,9 @@
-const CACHE_NAME = 'gpsepedia-cache-v3';
+const CACHE_NAME = 'gpsepedia-cache-v4';
 const urlsToCache = [
   './',
-  './index.html'
+  './index.html',
+  './icon-192x192.png',
+  './icon-512x512.png'
 ];
 
 self.addEventListener('install', event => {
