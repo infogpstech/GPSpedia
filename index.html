@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>GPSpedia | Catálogo Técnico</title>
-<link rel="icon" href="icon-v2-192x192.png">
+<link rel="icon" href="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256">
 <link rel="manifest" href="manifest.json">
 <style>
 /* Estilos Globales */
@@ -637,13 +637,13 @@ body.search-active .app-logo {
 
 <!-- Splash Screen -->
 <div id="splash-screen">
-    <img src="icon-v2-512x512.png" alt="Logo de GPSpedia">
+    <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w512" alt="Logo de GPSpedia">
 </div>
 
 <!-- Login Modal -->
 <div id="login-modal" style="display: none;">
     <div class="modal-content">
-        <img src="icon-v2-192x192.png" alt="Logo de GPSpedia" style="max-width: 120px; margin-bottom: 20px; border-radius: 10px;">
+        <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256" alt="Logo de GPSpedia" style="max-width: 120px; margin-bottom: 20px; border-radius: 10px;">
         <h2>Iniciar Sesión</h2>
         <form id="login-form">
             <div class="form-group">
@@ -665,7 +665,7 @@ body.search-active .app-logo {
 
   <div class="header-container">
       <div class="header-branding">
-          <img src="icon-v2-192x192.png" alt="Logo de GPSpedia" class="app-logo">
+          <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
           <h1 class="app-title">GPSpedia</h1>
       </div>
       <div id="header-controls" style="display: flex; align-items: center; gap: 15px;">
@@ -1831,27 +1831,6 @@ function mostrarVersiones(filas, categoria, marca, modelo){
 }
 
 // --- INICIALIZACIÓN Y LÓGICA DE PWA ---
-function getBrowserAndOS() {
-    const ua = navigator.userAgent;
-    const os = {
-        isIOS: /iPad|iPhone|iPod/.test(ua) && !window.MSStream,
-        isAndroid: /Android/.test(ua),
-    };
-
-    const browser = {
-        isChrome: /Chrome/.test(ua) && !/Edg/.test(ua) && !/SamsungBrowser/.test(ua),
-        isSafari: /Safari/.test(ua) && !/CriOS/.test(ua) && !/FxiOS/.test(ua),
-    };
-
-    if (os.isAndroid) {
-        return { os: 'android', browser: browser.isChrome ? 'chrome' : 'other' };
-    }
-    if (os.isIOS) {
-        return { os: 'ios', browser: browser.isSafari ? 'safari' : 'other' };
-    }
-    return { os: 'other', browser: 'other' };
-}
-
 let deferredPrompt;
 const installButton = document.getElementById('install-button');
 
@@ -1967,50 +1946,37 @@ async function inicializarApp() {
         checkSession();     // Luego, comprueba si hay una sesión activa
     }
 
-    // Lógica para el aviso de instalación, ahora con detección de navegador
-    const { os, browser } = getBrowserAndOS();
+    // Lógica para el botón de instalación de iOS
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-    if (!isStandalone) {
-        let message = '';
-        if (os === 'android' && browser !== 'chrome') {
-            message = 'Para la mejor experiencia y funcionalidad completa, te recomendamos instalar esta aplicación usando el navegador <strong>Chrome</strong>.';
-        } else if (os === 'ios' && browser !== 'safari') {
-            message = 'Para la mejor experiencia y funcionalidad completa, te recomendamos instalar esta aplicación usando el navegador <strong>Safari</strong>.';
-        } else if (os === 'ios' && browser === 'safari') {
-            // Mensaje específico para instalar en iOS/Safari
-            message = `
-                Para instalar, pulsa el botón de Compartir
-                <svg style="width:20px; vertical-align:middle;" viewBox="0 0 24 24"><path fill="currentColor" d="M17,14V17A1,1 0 0,1 16,18H8A1,1 0 0,1 7,17V14H5V17A3,3 0 0,0 8,20H16A3,3 0 0,0 19,17V14H17M12,4L7,9H10V15H14V9H17L12,4Z" /></svg>
-                y luego "Añadir a pantalla de inicio".
-            `;
-        }
-
-        if (message) {
-            const installMessageDiv = document.createElement('div');
-            installMessageDiv.id = 'custom-install-message';
-            installMessageDiv.style.cssText = `
-                position: fixed;
-                bottom: 20px;
-                left: 50%;
-                transform: translateX(-50%);
-                background-color: #007bff;
-                color: white;
-                padding: 15px 20px;
-                border-radius: 10px;
-                box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-                text-align: center;
-                z-index: 1002;
-                font-size: 0.9em;
-                width: 90%;
-                max-width: 400px;
-            `;
-            installMessageDiv.innerHTML = `
-                ${message}
-                <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; font-size:1.2em; position:absolute; top:5px; right:10px;">&times;</button>
-            `;
-            document.body.appendChild(installMessageDiv);
-        }
+    if (!isStandalone && isIOS) {
+        // Crear y mostrar un botón/mensaje específico para iOS
+        const iosInstallMessage = document.createElement('div');
+        iosInstallMessage.id = 'ios-install-message';
+        iosInstallMessage.style.cssText = `
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #007bff;
+            color: white;
+            padding: 15px 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            text-align: center;
+            z-index: 1002;
+            font-size: 0.9em;
+            width: 90%;
+            max-width: 400px;
+        `;
+        iosInstallMessage.innerHTML = `
+            Para instalar, pulsa el botón de Compartir
+            <svg style="width:20px; vertical-align:middle;" viewBox="0 0 24 24"><path fill="currentColor" d="M17,14V17A1,1 0 0,1 16,18H8A1,1 0 0,1 7,17V14H5V17A3,3 0 0,0 8,20H16A3,3 0 0,0 19,17V14H17M12,4L7,9H10V15H14V9H17L12,4Z" /></svg>
+            y luego "Añadir a pantalla de inicio".
+            <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; font-size:1.2em; position:absolute; top:5px; right:10px;">&times;</button>
+        `;
+        document.body.appendChild(iosInstallMessage);
     }
 }
 
