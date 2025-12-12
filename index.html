@@ -1494,8 +1494,10 @@ function mostrarDetalleModal(fila, header) {
         cont.appendChild(p);
     }
     crearImagenDetalle("Modelo", fila[header.indexOf("Imagen del vehiculo")], cont, 'img-vehiculo');
-    cont.appendChild(crearElementoDetalle("Tipo de Corte", fila[header.indexOf("Tipo de corte")]));
-    cont.appendChild(crearElementoDetalle("Descripción", fila[header.indexOf("Descripcion del corte")]));
+    const tipoCorteEl = crearElementoDetalle("Tipo de Corte", fila[header.indexOf("Tipo de corte")]);
+    if (tipoCorteEl) cont.appendChild(tipoCorteEl);
+    const descCorteEl = crearElementoDetalle("Descripción", fila[header.indexOf("Descripcion del corte")]);
+    if (descCorteEl) cont.appendChild(descCorteEl);
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen del Corte")], cont);
 
     // --- Secciones Desplegables ---
@@ -1554,7 +1556,8 @@ function mostrarDetalleModal(fila, header) {
                 } else if (c.esVideo) {
                     crearVideoDetalle(seccion.titulo, valor, panel);
                 } else {
-                    panel.appendChild(crearElementoDetalle(c.label, valor));
+                    const el = crearElementoDetalle(c.label, valor);
+                    if (el) panel.appendChild(el);
                 }
             }
         });
@@ -1927,6 +1930,9 @@ async function handleSharedLink(seccion, id) {
 
         mostrarDetalleFn = modalFn;
         mostrarDetalleFn(item, header);
+
+        // Limpiar la URL para que un refresh no vuelva a abrir el modal
+        history.replaceState({}, document.title, window.location.pathname);
     } else {
         // 4. Si el ítem no se encuentra, proceder al flujo de inicio de sesión normal
         checkSession();
