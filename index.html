@@ -947,21 +947,6 @@ function hideLoginShowApp() {
     document.querySelector('.footer').style.display = 'block';
 }
 
-function prepareUIForSharedLink() {
-    // Ocultar splash y login
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500);
-
-    document.getElementById('login-modal').style.display = 'none';
-
-    // ASEGURARSE de que el contenido principal está oculto
-    document.querySelector('.container').style.display = 'none';
-    document.querySelector('.footer').style.display = 'none';
-}
-
 
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1903,35 +1888,47 @@ if ('serviceWorker' in navigator) {
 // --- INICIALIZACIÓN DE LA APLICACIÓN ---
 async function handleSharedLink(seccion, id) {
     appOpenedFromLink = true;
-    // Prepara la UI para un enlace compartido (oculta todo menos el futuro modal)
-    prepareUIForSharedLink();
 
-    let data, header, item;
-    let mostrarDetalleFn;
+    let data, header, item, mostrarDetalleFn;
 
-    if (seccion === 'cortes') {
-        await syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, () => {}, 'contenido');
-        data = datosOriginales;
-        mostrarDetalleFn = mostrarDetalleModal;
-    } else if (seccion === 'tutoriales') {
-        await syncAndFetchData('tutoriales', RANGE_TUTORIALES, (vals) => datosTutoriales = vals, () => {}, 'contenido-tutoriales');
-        data = datosTutoriales;
-        mostrarDetalleFn = mostrarDetalleTutorial;
-    } else if (seccion === 'relay') {
-        await syncAndFetchData('relay', RANGE_RELAY, (vals) => datosRelay = vals, () => {}, 'contenido-relay');
-        data = datosRelay;
-        mostrarDetalleFn = mostrarDetalleRelay;
+    // 1. Determinar qué datos buscar y qué función de modal usar
+    const seccionMap = {
+        'cortes': { range: RANGE_CORTES, dataSetter: (vals) => datosOriginales = vals, dataRef: () => datosOriginales, modalFn: mostrarDetalleModal },
+        'tutoriales': { range: RANGE_TUTORIALES, dataSetter: (vals) => datosTutoriales = vals, dataRef: () => datosTutoriales, modalFn: mostrarDetalleTutorial },
+        'relay': { range: RANGE_RELAY, dataSetter: (vals) => datosRelay = vals, dataRef: () => datosRelay, modalFn: mostrarDetalleRelay }
+    };
+
+    if (!seccionMap[seccion]) {
+        checkSession(); // Sección no válida, proceder con el inicio normal
+        return;
     }
+
+    const { range, dataSetter, dataRef, modalFn } = seccionMap[seccion];
+
+    // 2. Intentar cargar los datos de la sección y encontrar el ítem
+    await syncAndFetchData(seccion, range, dataSetter, () => {}, 'contenido');
+    data = dataRef();
 
     if (data && data.length > 1) {
         header = data[0];
         item = data.slice(1).find(fila => fila[header.indexOf("ID")] === id);
     }
 
+    // 3. Solo si el ítem es válido, se muestra el modal y se oculta el resto
     if (item) {
+        // Ocultar splash y login AHORA que sabemos que tenemos contenido para mostrar
+        const splash = document.getElementById('splash-screen');
+        splash.style.opacity = '0';
+        setTimeout(() => splash.style.display = 'none', 500);
+        document.getElementById('login-modal').style.display = 'none';
+
+        // Ocultar el contenedor principal para que solo se vea el modal
+        document.querySelector('.container').style.display = 'none';
+
+        mostrarDetalleFn = modalFn;
         mostrarDetalleFn(item, header);
     } else {
-        // Si no se encuentra el item, simplemente inicia la app normalmente.
+        // 4. Si el ítem no se encuentra, proceder al flujo de inicio de sesión normal
         checkSession();
     }
 }
