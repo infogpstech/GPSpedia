@@ -947,6 +947,21 @@ function hideLoginShowApp() {
     document.querySelector('.footer').style.display = 'block';
 }
 
+function prepareUIForSharedLink() {
+    // Ocultar splash y login
+    const splash = document.getElementById('splash-screen');
+    splash.style.opacity = '0';
+    setTimeout(() => {
+        splash.style.display = 'none';
+    }, 500);
+
+    document.getElementById('login-modal').style.display = 'none';
+
+    // ASEGURARSE de que el contenido principal está oculto
+    document.querySelector('.container').style.display = 'none';
+    document.querySelector('.footer').style.display = 'none';
+}
+
 
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
@@ -1879,8 +1894,8 @@ if ('serviceWorker' in navigator) {
 // --- INICIALIZACIÓN DE LA APLICACIÓN ---
 async function handleSharedLink(seccion, id) {
     appOpenedFromLink = true;
-    // Ocultar splash y login, mostrar contenedor principal
-    hideLoginShowApp();
+    // Prepara la UI para un enlace compartido (oculta todo menos el futuro modal)
+    prepareUIForSharedLink();
 
     let data, header, item;
     let mostrarDetalleFn;
