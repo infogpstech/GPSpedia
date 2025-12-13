@@ -910,6 +910,13 @@ function logout(reason = null) {
 }
 
 function showLoginHideApp(reason = null) {
+    // Ocultar splash screen
+    const splash = document.getElementById('splash-screen');
+    splash.style.opacity = '0';
+    setTimeout(() => {
+        splash.style.display = 'none';
+    }, 500);
+
     // Ocultar contenido principal y footer
     document.querySelector('.container').style.display = 'none';
     document.querySelector('.footer').style.display = 'none';
