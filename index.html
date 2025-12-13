@@ -643,7 +643,7 @@ body.search-active .app-logo {
 <!-- Login Modal -->
 <div id="login-modal" style="display: none;">
     <div class="modal-content">
-        <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256" alt="Logo de GPSpedia" style="max-width: 120px; margin-bottom: 20px; border-radius: 10px;">
+        <img src="icon-v3-512x512.png" alt="Logo de GPSpedia" style="max-width: 120px; margin-bottom: 20px;">
         <h2>Iniciar Sesión</h2>
         <form id="login-form">
             <div class="form-group">
@@ -840,8 +840,7 @@ async function checkSession() {
         const header = userData[0];
         const users = userData.slice(1);
         const currentUser = users.find(u =>
-            u[header.indexOf('Nombre_Usuario')] === user.Nombre_Usuario &&
-            u[header.indexOf('Password')] === user.Password
+            u[header.indexOf('Nombre_Usuario')] === user.Nombre_Usuario
         );
 
         if (currentUser) {
@@ -878,7 +877,6 @@ function login(username, password) {
             user: {
                 ID: user[header.indexOf('ID')],
                 Nombre_Usuario: user[header.indexOf('Nombre_Usuario')],
-                Password: password, // Guardar la contraseña para re-verificación
                 Privilegios: user[header.indexOf('Privilegios')],
                 Nombre: user[header.indexOf('Nombre')],
             },
@@ -912,6 +910,13 @@ function logout(reason = null) {
 }
 
 function showLoginHideApp(reason = null) {
+    // Ocultar splash screen
+    const splash = document.getElementById('splash-screen');
+    splash.style.opacity = '0';
+    setTimeout(() => {
+        splash.style.display = 'none';
+    }, 500);
+
     // Ocultar contenido principal y footer
     document.querySelector('.container').style.display = 'none';
     document.querySelector('.footer').style.display = 'none';
@@ -994,7 +999,8 @@ function showSkeletonLoader(container) {
 const COLUMN_NAME_AÑOS = "Año (generacion)";
 
 let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay = [],
-    estado = {nivel:"categorias", categoria:null, marca:null, modelo:null};
+    estado = {nivel:"categorias", categoria:null, marca:null, modelo:null},
+    appOpenedFromLink = false;
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
@@ -1235,6 +1241,45 @@ function pushState(state) {
     history.pushState(state, '');
 }
 
+function crearBotonCompartir(seccion, id, titulo) {
+    const shareBtn = document.createElement("button");
+    shareBtn.textContent = "Compartir";
+    shareBtn.className = "shareBtn"; // Agregamos una clase para identificarlo
+    shareBtn.style.cssText = "color:white; background:#007bff; border:none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;";
+
+    // Usamos location.origin y location.pathname para construir una URL limpia
+    const shareUrl = `${window.location.origin}${window.location.pathname}?seccion=${seccion}&id=${id}`;
+
+    shareBtn.onclick = async () => {
+        const shareData = {
+            title: 'GPSpedia Detalle',
+            text: `Mira este detalle de GPSpedia: ${titulo}`,
+            url: shareUrl,
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.error('Error al compartir:', err);
+            }
+        } else {
+            // Fallback para navegadores que no soportan navigator.share (ej. Desktop)
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                shareBtn.textContent = '¡Enlace Copiado!';
+                setTimeout(() => {
+                    shareBtn.textContent = 'Compartir';
+                }, 2000);
+            } catch (err) {
+                console.error('Error al copiar el enlace:', err);
+                alert('No se pudo copiar el enlace.');
+            }
+        }
+    };
+    return shareBtn;
+}
+
 
 function mostrarDetalleTutorial(fila, header) {
     // Empujar un nuevo estado al historial para el modal
@@ -1244,12 +1289,24 @@ function mostrarDetalleTutorial(fila, header) {
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
+
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
     closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
-    cont.appendChild(closeBtn);
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;"; // Reset margin
+    headerDiv.appendChild(closeBtn);
+
+    const id = fila[header.indexOf("ID")];
+    const titulo = fila[header.indexOf("Tema")];
+    const shareBtn = crearBotonCompartir('tutoriales', id, titulo);
+    headerDiv.appendChild(shareBtn);
+
+    cont.appendChild(headerDiv);
+
     const title = document.createElement("h2");
     title.textContent = fila[header.indexOf("Tema")];
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
@@ -1265,9 +1322,6 @@ function mostrarDetalleTutorial(fila, header) {
     });
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
     crearVideoDetalle("Video Guía", fila[header.indexOf("Video")], cont);
-    const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = () => cerrarModal();
-    cont.appendChild(closeBtnBottom);
     modal.classList.add("visible");
 }
 
@@ -1279,12 +1333,24 @@ function mostrarDetalleRelay(fila, header) {
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
+
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
     closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
-    cont.appendChild(closeBtn);
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
+    headerDiv.appendChild(closeBtn);
+
+    const id = fila[header.indexOf("ID")];
+    const titulo = fila[header.indexOf("Configuración")];
+    const shareBtn = crearBotonCompartir('relay', id, titulo);
+    headerDiv.appendChild(shareBtn);
+
+    cont.appendChild(headerDiv);
+
     const title = document.createElement("h2");
     title.textContent = `Detalle de: ${fila[header.indexOf("Configuración")]}`;
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
@@ -1304,9 +1370,6 @@ function mostrarDetalleRelay(fila, header) {
         if (p) cont.appendChild(p);
     });
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
-    const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = () => cerrarModal();
-    cont.appendChild(closeBtnBottom);
     modal.classList.add("visible");
 }
 
@@ -1346,39 +1409,36 @@ function mostrarLightbox(src){
   document.getElementById("lightbox").classList.add("visible");
 }
 function cerrarModal() {
-    // 1. Forcefully close UI elements.
+    // 1. Forzar el cierre de elementos de la UI.
     const detalleCont = document.getElementById("detalleCompleto");
 
-    // Close all active accordions and stop videos within them.
+    // Cierra todos los acordeones activos y detiene los videos dentro de ellos.
     detalleCont.querySelectorAll('.accordion-btn.active').forEach(btn => {
         btn.classList.remove('active');
         const panel = btn.nextElementSibling;
         if (panel) {
             panel.style.maxHeight = null;
             const iframe = panel.querySelector('iframe');
-            if (iframe) {
-                iframe.src = ''; // This stops playback.
-            }
+            if (iframe) iframe.src = '';
         }
     });
-
-    // As a fallback, ensure any other iframe is also stopped.
-    detalleCont.querySelectorAll('iframe').forEach(iframe => {
-        if(iframe.src) iframe.src = '';
-    });
-
-    // Hide the modal.
+    detalleCont.querySelectorAll('iframe').forEach(iframe => { if(iframe.src) iframe.src = ''; });
     document.getElementById("modalDetalle").classList.remove("visible");
 
-    // 2. Update internal state BEFORE managing history.
+    // 2. Actualizar el estado interno.
     uiState.isModalOpen = false;
 
-    // 3. Manage browser history.
-    // If the current history state is a modal, go back to remove it from history.
-    // The popstate listener will fire, but since uiState.isModalOpen is now false,
-    // it won't re-trigger the closing logic.
+    // 3. Manejar el historial del navegador.
     if (history.state && history.state.modal) {
         history.back();
+    }
+
+    // 4. Si la app se abrió desde un enlace, ahora se verifica la sesión.
+    if (appOpenedFromLink) {
+        appOpenedFromLink = false;
+        // Limpiar la URL para quitar los parámetros de sección/id
+        history.pushState({}, '', window.location.pathname);
+        checkSession(); // Ahora que el modal está cerrado, verificar si hay una sesión válida
     }
 }
 function cerrarLightbox(){document.getElementById("lightbox").classList.remove("visible");}
@@ -1409,12 +1469,22 @@ function mostrarDetalleModal(fila, header) {
     cont.innerHTML = "";
     const indexes = getHeaderIndexes(header);
 
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar Detalle";
     closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin-bottom:20px;";
-    cont.appendChild(closeBtn);
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
+    headerDiv.appendChild(closeBtn);
+
+    const id = fila[header.indexOf("ID")];
+    const titulo = `${fila[indexes.COL_MODELO]} ${fila[indexes.COL_AÑOS] || ''}`;
+    const shareBtn = crearBotonCompartir('cortes', id, titulo);
+    headerDiv.appendChild(shareBtn);
+
+    cont.appendChild(headerDiv);
 
     const title = document.createElement("h2");
     const modeloNombre = fila[indexes.COL_MODELO] || 'Modelo Desconocido';
@@ -1431,8 +1501,10 @@ function mostrarDetalleModal(fila, header) {
         cont.appendChild(p);
     }
     crearImagenDetalle("Modelo", fila[header.indexOf("Imagen del vehiculo")], cont, 'img-vehiculo');
-    cont.appendChild(crearElementoDetalle("Tipo de Corte", fila[header.indexOf("Tipo de corte")]));
-    cont.appendChild(crearElementoDetalle("Descripción", fila[header.indexOf("Descripcion del corte")]));
+    const tipoCorteEl = crearElementoDetalle("Tipo de Corte", fila[header.indexOf("Tipo de corte")]);
+    if (tipoCorteEl) cont.appendChild(tipoCorteEl);
+    const descCorteEl = crearElementoDetalle("Descripción", fila[header.indexOf("Descripcion del corte")]);
+    if (descCorteEl) cont.appendChild(descCorteEl);
     crearImagenDetalle("Imagen", fila[header.indexOf("Imagen del Corte")], cont);
 
     // --- Secciones Desplegables ---
@@ -1491,16 +1563,14 @@ function mostrarDetalleModal(fila, header) {
                 } else if (c.esVideo) {
                     crearVideoDetalle(seccion.titulo, valor, panel);
                 } else {
-                    panel.appendChild(crearElementoDetalle(c.label, valor));
+                    const el = crearElementoDetalle(c.label, valor);
+                    if (el) panel.appendChild(el);
                 }
             }
         });
         cont.appendChild(panel);
     });
 
-    const closeBtnBottom = closeBtn.cloneNode(true);
-    closeBtnBottom.onclick = () => cerrarModal();
-    cont.appendChild(closeBtnBottom);
     modal.classList.add("visible");
 }
 
@@ -1826,9 +1896,68 @@ if ('serviceWorker' in navigator) {
 }
 
 // --- INICIALIZACIÓN DE LA APLICACIÓN ---
+async function handleSharedLink(seccion, id) {
+    appOpenedFromLink = true;
+
+    let data, header, item, mostrarDetalleFn;
+
+    // 1. Determinar qué datos buscar y qué función de modal usar
+    const seccionMap = {
+        'cortes': { range: RANGE_CORTES, dataSetter: (vals) => datosOriginales = vals, dataRef: () => datosOriginales, modalFn: mostrarDetalleModal },
+        'tutoriales': { range: RANGE_TUTORIALES, dataSetter: (vals) => datosTutoriales = vals, dataRef: () => datosTutoriales, modalFn: mostrarDetalleTutorial },
+        'relay': { range: RANGE_RELAY, dataSetter: (vals) => datosRelay = vals, dataRef: () => datosRelay, modalFn: mostrarDetalleRelay }
+    };
+
+    if (!seccionMap[seccion]) {
+        checkSession(); // Sección no válida, proceder con el inicio normal
+        return;
+    }
+
+    const { range, dataSetter, dataRef, modalFn } = seccionMap[seccion];
+
+    // 2. Intentar cargar los datos de la sección y encontrar el ítem
+    await syncAndFetchData(seccion, range, dataSetter, () => {}, 'contenido');
+    data = dataRef();
+
+    if (data && data.length > 1) {
+        header = data[0];
+        item = data.slice(1).find(fila => fila[header.indexOf("ID")] === id);
+    }
+
+    // 3. Solo si el ítem es válido, se muestra el modal y se oculta el resto
+    if (item) {
+        // Ocultar splash y login AHORA que sabemos que tenemos contenido para mostrar
+        const splash = document.getElementById('splash-screen');
+        splash.style.opacity = '0';
+        setTimeout(() => splash.style.display = 'none', 500);
+        document.getElementById('login-modal').style.display = 'none';
+
+        // Ocultar el contenedor principal para que solo se vea el modal
+        document.querySelector('.container').style.display = 'none';
+
+        mostrarDetalleFn = modalFn;
+        mostrarDetalleFn(item, header);
+
+        // Limpiar la URL para que un refresh no vuelva a abrir el modal
+        history.replaceState({}, document.title, window.location.pathname);
+    } else {
+        // 4. Si el ítem no se encuentra, proceder al flujo de inicio de sesión normal
+        checkSession();
+    }
+}
+
+
 async function inicializarApp() {
-    await fetchUsers(); // Carga los datos de usuarios primero
-    checkSession();     // Luego, comprueba si hay una sesión activa
+    const urlParams = new URLSearchParams(window.location.search);
+    const seccion = urlParams.get('seccion');
+    const id = urlParams.get('id');
+
+    if (seccion && id) {
+        await handleSharedLink(seccion, id);
+    } else {
+        await fetchUsers(); // Carga los datos de usuarios primero
+        checkSession();     // Luego, comprueba si hay una sesión activa
+    }
 
     // Lógica para el botón de instalación de iOS
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
