@@ -83,8 +83,8 @@
 
         .accordion-button { background-color: #f7f7f7; color: var(--secondary-color); cursor: pointer; padding: 15px 20px; width: 100%; border: none; border-bottom: 1px solid var(--light-gray); text-align: left; outline: none; font-size: 1.1em; font-weight: 600; transition: background-color 0.3s; display: flex; justify-content: space-between; align-items: center; }
         .accordion-button:hover, .accordion-button.active { background-color: #e9e9e9; }
-        .accordion-button::after { content: '\\f078'; font-family: "Font Awesome 6 Free"; font-weight: 900; transition: transform 0.3s; }
-        .accordion-button.active::after { transform: rotate(-180deg); }
+        .accordion-button i { transition: transform 0.3s; }
+        .accordion-button.active i { transform: rotate(-180deg); }
         .accordion-panel { padding: 0 18px; background-color: white; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; }
         .accordion-panel.show { padding: 15px 18px; }
         .accordion-content { display: flex; flex-direction: column; gap: 15px; align-items: center; }
@@ -343,6 +343,31 @@ async function handlePhase3Submit(e) {
         .finally(() => toggleLoading(false));
 }
 
+function generateAccordionTitles(data) {
+    const cuts = [
+        { type: data.tipoDeCorte, desc: data.descripcionDelCorte, img: data.imagenDelCorte },
+        { type: data.tipoDeCorte2, desc: data.descripcionDelSegundoCorte, img: data.imagenDeCorte2 },
+        { type: data.tipoDeCorte3, desc: data.descripcionDelCorte3, img: data.imagenDeCorte3 }
+    ];
+
+    const cutCounts = cuts.reduce((acc, cut) => {
+        if (cut.type) acc[cut.type] = (acc[cut.type] || 0) + 1;
+        return acc;
+    }, {});
+
+    const cutTitles = {};
+    return cuts
+        .filter(cut => cut.desc)
+        .map(cut => {
+            let title = `Corte a ${cut.type}`;
+            if (cutCounts[cut.type] > 1) {
+                cutTitles[cut.type] = (cutTitles[cut.type] || 0) + 1;
+                title += ` ${cutTitles[cut.type]}`;
+            }
+            return { title, desc: cut.desc, img: cut.img };
+        });
+}
+
 function setupVerificationPhase() {
     const data = state.existingData;
     const container = document.getElementById('verification-data');
@@ -366,17 +391,17 @@ function setupVerificationPhase() {
     const accordionContainer = document.createElement('div');
     container.appendChild(accordionContainer);
 
-    // Define accordion sections
-    const sections = [
-        { title: `Corte 1: ${data.tipoDeCorte || ''}`, desc: data.descripcionDelCorte, img: data.imagenDeCorte },
-        { title: `Corte 2: ${data.tipoDeCorte2 || ''}`, desc: data.descripcionDelSegundoCorte, img: data.imagenDeCorte2 },
-        { title: `Corte 3: ${data.tipoDeCorte3 || ''}`, desc: data.descripcionDelCorte3, img: data.imagenDelCorte3 },
+    const dynamicCutSections = generateAccordionTitles(data);
+
+    const otherSections = [
         { title: 'Apertura de Puertas', desc: data.apertura, img: data.imagenDeLaApertura },
         { title: 'Cables de Alimentación', desc: data.cablesDeAlimentacion, img: data.imagenDeLosCablesDeAlimentacion },
         { title: 'Nota Importante', desc: data.notaImportante, img: null }
     ];
 
-    sections.forEach(section => {
+    const allSections = [...dynamicCutSections, ...otherSections];
+
+    allSections.forEach(section => {
         if (section.desc) { // Only create accordion if there is a description
             const accordionItem = createAccordionItem(section.title, section.desc, section.img);
             accordionContainer.appendChild(accordionItem);
@@ -422,7 +447,7 @@ function createAccordionItem(title, description, imageUrl) {
     const item = document.createElement('div');
     const btn = document.createElement('button');
     btn.className = 'accordion-button';
-    btn.textContent = title;
+    btn.innerHTML = `${title} <i class="fa-solid fa-chevron-down"></i>`;
 
     const panel = document.createElement('div');
     panel.className = 'accordion-panel';
