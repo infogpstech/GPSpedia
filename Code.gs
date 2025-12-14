@@ -31,6 +31,40 @@ const COLS = {
     IMG_CORTE_3: 23
 };
 
+/**
+ * Checks if a given year falls within a specified range from a sheet cell.
+ * @param {string} inputYear The year provided by the user (e.g., "2016").
+ * @param {string} sheetYearValue The value from the sheet, which can be a single year or a range (e.g., "2015-2020").
+ * @returns {boolean} True if the year is a match or within the range.
+ */
+function isYearInRange(inputYear, sheetYearValue) {
+  const year = parseInt(inputYear.trim(), 10);
+  if (isNaN(year)) {
+    return false; // User input is not a valid year number
+  }
+
+  const cleanedSheetYear = sheetYearValue.toString().trim();
+
+  // Check for range (e.g., "2015-2020" or "2015 - 2020")
+  if (cleanedSheetYear.includes('-')) {
+    const parts = cleanedSheetYear.split('-').map(part => parseInt(part.trim(), 10));
+    if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+      const [startYear, endYear] = parts;
+      return year >= startYear && year <= endYear;
+    }
+  }
+
+  // Check for single year match
+  const sheetYearNum = parseInt(cleanedSheetYear, 10);
+  if (!isNaN(sheetYearNum)) {
+    return year === sheetYearNum;
+  }
+
+  // Fallback for non-numeric or complex string exact matches like "2015-2020" vs "2015-2020"
+  return inputYear.trim() === cleanedSheetYear;
+}
+
+
 function doGet(e) {
   try {
     const action = e.parameter.action;
@@ -58,20 +92,25 @@ function doGet(e) {
       let existingRowData = null;
       let rowIndex = -1;
 
-      const paramMarca = safeToString(marca);
-      const paramModelo = safeToString(modelo);
-      const paramAnio = safeToString(anio);
-      const paramTipoEncendido = safeToString(tipoEncendido);
+      const paramMarca = marca.trim().toLowerCase();
+      const paramModelo = modelo.trim().toLowerCase();
+      const paramAnio = anio.trim(); // Keep raw for range check
+      const paramTipoEncendido = tipoEncendido.trim().toLowerCase();
 
       for(let i = 0; i < data.length; i++) {
         const row = data[i];
 
-        const sheetMarca = safeToString(row[COLS.MARCA - 1]);
-        const sheetModelo = safeToString(row[COLS.MODELO - 1]);
-        const sheetAnio = safeToString(row[COLS.ANIO - 1]);
-        const sheetTipoEncendido = safeToString(row[COLS.TIPO_ENCENDIDO - 1]);
+        const sheetMarca = (row[COLS.MARCA - 1] || "").toString().trim().toLowerCase();
+        const sheetModelo = (row[COLS.MODELO - 1] || "").toString().trim().toLowerCase();
+        const sheetAnioRaw = (row[COLS.ANIO - 1] || "").toString();
+        const sheetTipoEncendido = (row[COLS.TIPO_ENCENDIDO - 1] || "").toString().trim().toLowerCase();
 
-        if (sheetMarca === paramMarca && sheetModelo === paramModelo && sheetAnio === paramAnio && sheetTipoEncendido === paramTipoEncendido) {
+        if (
+          sheetMarca === paramMarca &&
+          sheetModelo === paramModelo &&
+          isYearInRange(paramAnio, sheetAnioRaw) &&
+          sheetTipoEncendido === paramTipoEncendido
+        ) {
           rowIndex = i + 2;
           const normalizedHeaders = normalizeHeaders(headers);
           existingRowData = normalizedHeaders.reduce((obj, header, index) => {

@@ -28,273 +28,79 @@
             background-color: var(--background-color);
             color: var(--text-color);
             overscroll-behavior-y: contain;
-            color-scheme: light; /* Prevents browser dark-mode inversion */
+            color-scheme: light;
         }
 
-        .app-container {
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-
-        header {
-            padding: 20px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-
-        .header-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            flex-wrap: wrap;
-            gap: 15px;
-        }
-
-        .header-branding {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .app-logo {
-            max-width: 76px; /* Reduced from 96px */
-            height: auto;
-            border-radius: 8px;
-        }
-
-        h1.app-title {
-            margin: 0;
-            font-size: 1.8em; /* Reduced from 2.2em */
-            color: #333;
-        }
-
-        main {
-            flex-grow: 1;
-            background-color: #f4f4f4;
-            padding: 20px;
-        }
-
-        .form-container {
-            background-color: var(--card-background);
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            max-width: 700px;
-            margin: 0 auto;
-        }
-
-        .form-phase {
-            display: none;
-        }
-        .form-phase.active {
-            display: block;
-            animation: fadeIn 0.5s ease-in-out;
-        }
+        .app-container { display: flex; flex-direction: column; min-height: 100vh; }
+        header { padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .header-container { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
+        .header-branding { display: flex; align-items: center; gap: 15px; }
+        .app-logo { max-width: 76px; height: auto; border-radius: 8px; }
+        h1.app-title { margin: 0; font-size: 1.8em; color: #333; }
+        main { flex-grow: 1; background-color: #f4f4f4; padding: 20px; }
+        .form-container { background-color: var(--card-background); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 700px; margin: 0 auto; }
+        .form-phase { display: none; }
+        .form-phase.active { display: block; animation: fadeIn 0.5s ease-in-out; }
 
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
-        h2, h3 {
-            text-align: center;
-            color: var(--secondary-color) !important; /* Ensure visibility */
-            margin-bottom: 25px;
-        }
-
-        h3 {
-            text-align: left;
-            margin-top: 25px;
-            margin-bottom: 15px;
-            border-bottom: 1px solid var(--light-gray);
-            padding-bottom: 8px;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        /* Force color visibility in headless browsers */
-        .form-group label {
-            color: #34495e !important;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-        }
-
-        .form-group input, .form-group select, .form-group textarea {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid var(--light-gray);
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 1em;
-            transition: border-color 0.3s;
-            color: var(--text-color);
-        }
-
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
-            outline: none;
-            border-color: var(--primary-color);
-            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
-        }
-
-        textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .form-actions {
-            display: flex;
-            justify-content: space-between;
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        .btn {
-            padding: 12px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1em;
-            font-weight: 600;
-            transition: all 0.3s;
-            flex-grow: 1;
-        }
-
-        .btn-primary {
-            background-color: var(--primary-color);
-            color: white;
-        }
-        .btn-primary:hover {
-            background-color: #2980b9;
-        }
-
-        .btn-secondary {
-            background-color: #f1f1f1;
-            color: var(--text-color);
-            border: 1px solid var(--light-gray);
-        }
-        .btn-secondary:hover {
-            background-color: #e5e5e5;
-        }
-
-        #loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0, 0, 0, 0.7);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.3s, visibility 0.3s;
-        }
-        #loading-overlay.visible {
-            opacity: 1;
-            visibility: visible;
-        }
-        .spinner {
-            border: 5px solid #f3f3f3;
-            border-top: 5px solid var(--primary-color);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* Verification Phase Specific Styles */
-        .verification-info {
-            border-left: 4px solid var(--primary-color);
-            padding-left: 15px;
-            margin-bottom: 25px;
-        }
-        .verification-info p {
-            margin: 8px 0;
-        }
-        .verification-info strong {
-            color: var(--secondary-color);
-        }
+        h2, h3 { text-align: center; color: var(--secondary-color) !important; margin-bottom: 25px; }
+        h3 { text-align: left; margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid var(--light-gray); padding-bottom: 8px; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { color: #34495e !important; display: block; margin-bottom: 8px; font-weight: 600; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--light-gray); border-radius: 8px; box-sizing: border-box; font-size: 1em; transition: border-color 0.3s; color: var(--text-color); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 5px rgba(52, 152, 219, 0.5); }
+        textarea { resize: vertical; min-height: 100px; }
+        .form-actions { display: flex; justify-content: space-between; gap: 15px; margin-top: 30px; }
+        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600; transition: all 0.3s; flex-grow: 1; }
+        .btn-primary { background-color: var(--primary-color); color: white; }
+        .btn-primary:hover { background-color: #2980b9; }
+        .btn-secondary { background-color: #f1f1f1; color: var(--text-color); border: 1px solid var(--light-gray); }
+        .btn-secondary:hover { background-color: #e5e5e5; }
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 9999; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
+        #loading-overlay.visible { opacity: 1; visibility: visible; }
+        .spinner { border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* Custom file input */
-        .file-input-wrapper {
-            position: relative;
-            overflow: hidden;
-            display: inline-block;
-            width: 100%;
-            border: 1px solid var(--light-gray);
-            border-radius: 8px;
-            padding: 12px;
-            background-color: #f9f9f9;
-            text-align: center;
-            cursor: pointer;
-        }
-        .file-input-wrapper input[type=file] {
-            font-size: 100px;
-            position: absolute;
-            left: 0;
-            top: 0;
-            opacity: 0;
-            cursor: pointer;
-        }
-        .file-input-wrapper .file-input-label {
-            color: var(--text-color);
-        }
-        .file-input-wrapper .file-name {
-            display: block;
-            margin-top: 8px;
-            font-style: italic;
-            color: var(--primary-color);
-            font-size: 0.9em;
-        }
+        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; border: 1px solid var(--light-gray); border-radius: 8px; padding: 12px; background-color: #f9f9f9; text-align: center; cursor: pointer; }
+        .file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
+        .file-input-wrapper .file-input-label { color: var(--text-color); }
+        .file-input-wrapper .file-name { display: block; margin-top: 8px; font-style: italic; color: var(--primary-color); font-size: 0.9em; }
+        .image-preview { display: none; max-width: 100%; max-height: 200px; margin-top: 15px; border-radius: 8px; border: 1px solid var(--light-gray); object-fit: contain; }
+        .image-preview.visible { display: block; }
+        .footer { text-align: center; padding: 20px 0; margin-top: auto; background-color: #333; color: #fff; font-size: 0.9em; width: 100%; }
 
-        .image-preview {
-            display: none; /* Hidden by default */
-            max-width: 100%;
-            max-height: 200px;
-            margin-top: 15px;
-            border-radius: 8px;
-            border: 1px solid var(--light-gray);
-            object-fit: contain;
-        }
-        .image-preview.visible {
-            display: block; /* Shown when an image is selected */
-        }
+        /* Verification Phase & Accordion Styles */
+        .verification-header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--light-gray); }
+        .verification-header img { width: 100%; max-width: 200px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid var(--light-gray); }
+        .verification-header-info { flex-grow: 1; }
+        .verification-header-info p { margin: 5px 0; font-size: 1.1em; }
+        .verification-header-info strong { color: var(--secondary-color); }
 
-        .footer {
-            text-align: center;
-            padding: 20px 0;
-            margin-top: auto; /* Push footer to the bottom */
-            background-color: #333;
-            color: #fff;
-            font-size: 0.9em;
-            width: 100%;
-        }
+        .accordion-button { background-color: #f7f7f7; color: var(--secondary-color); cursor: pointer; padding: 15px 20px; width: 100%; border: none; border-bottom: 1px solid var(--light-gray); text-align: left; outline: none; font-size: 1.1em; font-weight: 600; transition: background-color 0.3s; display: flex; justify-content: space-between; align-items: center; }
+        .accordion-button:hover, .accordion-button.active { background-color: #e9e9e9; }
+        .accordion-button::after { content: '\\f078'; font-family: "Font Awesome 6 Free"; font-weight: 900; transition: transform 0.3s; }
+        .accordion-button.active::after { transform: rotate(-180deg); }
+        .accordion-panel { padding: 0 18px; background-color: white; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; }
+        .accordion-panel.show { padding: 15px 18px; }
+        .accordion-content { display: flex; flex-direction: column; gap: 15px; align-items: center; }
+        .accordion-content p { margin: 0; align-self: flex-start; }
+        .accordion-content img { max-width: 100%; border-radius: 8px; border: 1px solid var(--light-gray); }
+
     </style>
 </head>
 <body>
 
-    <div id="loading-overlay">
-        <div class="spinner"></div>
-    </div>
+    <div id="loading-overlay"><div class="spinner"></div></div>
 
     <div class="app-container">
         <header class="header-container">
             <div class="header-branding">
-                <a href="index.html">
-                    <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
-                </a>
+                <a href="index.html"><img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo"></a>
                 <h1 class="app-title">Agregar Nuevo</h1>
             </div>
             <div id="header-controls" style="display: flex; align-items: center; gap: 15px; margin-left: auto;">
@@ -309,26 +115,11 @@
                 <div id="phase-1" class="form-phase active">
                     <h2>Información del Vehículo</h2>
                     <form id="vehicle-check-form">
-                        <div class="form-group">
-                            <label for="categoria">Categoría</label>
-                            <select id="categoria" name="categoria" required></select>
-                        </div>
-                        <div class="form-group">
-                            <label for="marca">Marca</label>
-                            <input type="text" id="marca" name="marca" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="modelo">Modelo</label>
-                            <input type="text" id="modelo" name="modelo" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="anio">Año (Generación)</label>
-                            <input type="text" id="anio" name="anio" placeholder="Ej: 2015 o 2015-2018" required>
-                        </div>
-                        <div class="form-group">
-                            <label for="tipo-encendido">Tipo de Encendido</label>
-                            <select id="tipo-encendido" name="tipo-encendido" required></select>
-                        </div>
+                        <div class="form-group"><label for="categoria">Categoría</label><select id="categoria" name="categoria" required></select></div>
+                        <div class="form-group"><label for="marca">Marca</label><input type="text" id="marca" name="marca" required></div>
+                        <div class="form-group"><label for="modelo">Modelo</label><input type="text" id="modelo" name="modelo" required></div>
+                        <div class="form-group"><label for="anio">Año (Generación)</label><input type="text" id="anio" name="anio" placeholder="Ej: 2015 o 2015-2018" required></div>
+                        <div class="form-group"><label for="tipo-encendido">Tipo de Encendido</label><select id="tipo-encendido" name="tipo-encendido" required></select></div>
                         <div class="form-actions">
                            <button type="button" onclick="window.location.href='index.html'" class="btn btn-secondary">Cancelar</button>
                            <button type="submit" class="btn btn-primary">Continuar</button>
@@ -339,11 +130,9 @@
                 <!-- FASE 2: VERIFICACIÓN -->
                 <div id="phase-2" class="form-phase">
                     <h2>Vehículo Encontrado</h2>
-                    <div id="verification-data" class="verification-info"></div>
+                    <div id="verification-data"></div>
                     <p>El vehículo ya existe en la base de datos. ¿Qué deseas hacer?</p>
-                    <div id="verification-actions" class="form-actions" style="flex-direction: column;">
-                         <!-- Buttons are added dynamically here -->
-                    </div>
+                    <div id="verification-actions" class="form-actions" style="flex-direction: column;"></div>
                 </div>
 
                 <!-- FASE 3: AGREGAR INFORMACIÓN -->
@@ -359,67 +148,44 @@
                             </div>
                             <img id="preview-imagenVehiculo" class="image-preview" alt="Vista previa de la imagen del vehículo">
                         </div>
-
                         <div id="nuevo-corte-group">
                            <h3>Nuevo Corte</h3>
-                           <div class="form-group">
-                               <label for="tipo-corte">Tipo de Corte</label>
-                               <select id="tipo-corte" name="tipo-corte"></select>
-                           </div>
-                           <div class="form-group">
-                               <label for="descripcion-corte">Descripción del Corte</label>
-                               <textarea id="descripcion-corte" name="descripcion-corte" placeholder="Color del cable, ubicación..."></textarea>
-                           </div>
+                           <div class="form-group"><label for="tipo-corte">Tipo de Corte</label><select id="tipo-corte" name="tipo-corte"></select></div>
+                           <div class="form-group"><label for="descripcion-corte">Descripción del Corte</label><textarea id="descripcion-corte" name="descripcion-corte" placeholder="Color del cable, ubicación..."></textarea></div>
                            <div class="form-group">
                                <label for="imagenCorte">Foto del Corte</label>
                                <div class="file-input-wrapper">
                                    <span class="file-input-label">Seleccionar imagen...</span>
-                                   <input type="file" id="imagenCorte" name="imagenCorte" accept="image/*">
-                                   <span class="file-name"></span>
+                                   <input type="file" id="imagenCorte" name="imagenCorte" accept="image/*"><span class="file-name"></span>
                                </div>
                                <img id="preview-imagenCorte" class="image-preview" alt="Vista previa de la imagen del corte">
                            </div>
                         </div>
-
                         <div id="apertura-group">
                             <h3>Apertura de Puertas</h3>
+                            <div class="form-group"><label for="apertura-desc">Descripción</label><textarea id="apertura-desc" name="apertura-desc" placeholder="Color del cable, ubicación..."></textarea></div>
                             <div class="form-group">
-                                <label for="apertura-desc">Descripción</label>
-                                <textarea id="apertura-desc" name="apertura-desc" placeholder="Color del cable, ubicación..."></textarea>
-                            </div>
-                            <div class="form-group">
-                                <label for="imagenApertura">Foto de Apertura</label>
-                                <div class="file-input-wrapper">
-                                    <span class="file-input-label">Seleccionar imagen...</span>
-                                    <input type="file" id="imagenApertura" name="imagenApertura" accept="image/*">
-                                    <span class="file-name"></span>
-                                </div>
-                                <img id="preview-imagenApertura" class="image-preview" alt="Vista previa de la imagen de apertura">
+                               <label for="imagenApertura">Foto de Apertura</label>
+                               <div class="file-input-wrapper">
+                                   <span class="file-input-label">Seleccionar imagen...</span>
+                                   <input type="file" id="imagenApertura" name="imagenApertura" accept="image/*"><span class="file-name"></span>
+                               </div>
+                               <img id="preview-imagenApertura" class="image-preview" alt="Vista previa de la imagen de apertura">
                             </div>
                         </div>
-
                         <div id="alimentacion-group">
                              <h3>Cables de Alimentación</h3>
-                             <div class="form-group">
-                                <label for="alimentacion-desc">Descripción</label>
-                                <textarea id="alimentacion-desc" name="alimentacion-desc" placeholder="Colores de cables 12v, GND, IGN, ubicación..."></textarea>
-                            </div>
+                             <div class="form-group"><label for="alimentacion-desc">Descripción</label><textarea id="alimentacion-desc" name="alimentacion-desc" placeholder="Colores de cables 12v, GND, IGN, ubicación..."></textarea></div>
                              <div class="form-group">
                                <label for="imagenAlimentacion">Foto de Alimentación</label>
                                <div class="file-input-wrapper">
                                    <span class="file-input-label">Seleccionar imagen...</span>
-                                   <input type="file" id="imagenAlimentacion" name="imagenAlimentacion" accept="image/*">
-                                   <span class="file-name"></span>
+                                   <input type="file" id="imagenAlimentacion" name="imagenAlimentacion" accept="image/*"><span class="file-name"></span>
                                </div>
                                <img id="preview-imagenAlimentacion" class="image-preview" alt="Vista previa de la imagen de alimentación">
                            </div>
                         </div>
-
-                        <div class="form-group">
-                            <label for="notas">Notas Adicionales</label>
-                            <textarea id="notas" name="notas"></textarea>
-                        </div>
-
+                        <div class="form-group"><label for="notas">Notas Adicionales</label><textarea id="notas" name="notas"></textarea></div>
                         <div class="form-actions">
                             <button type="button" id="back-to-phase-1" class="btn btn-secondary">Atrás</button>
                             <button type="submit" class="btn btn-primary">Guardar Registro</button>
@@ -428,38 +194,25 @@
                 </div>
             </div>
         </main>
-
-        <footer class="footer">
-            Gpspedia 2025© todos los derechos reservados.
-        </footer>
+        <footer class="footer">Gpspedia 2025© todos los derechos reservados.</footer>
     </div>
 
 <script>
 const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyh98aSOUgNaxkDApFpkJM4S67h4HqEF2jdVNevRkWbz2XZwsDaveK05MHju8qZpdpJ/exec";
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-const state = {
-    vehicleInfo: {},
-    existingData: null,
-    rowIndex: null,
-    filePromises: {} // Store promises for file conversions
-};
+const state = { vehicleInfo: {}, existingData: null, rowIndex: null, filePromises: {} };
 
 document.addEventListener('DOMContentLoaded', () => {
     init();
-
     document.getElementById('vehicle-check-form').addEventListener('submit', handlePhase1Submit);
     document.getElementById('add-info-form').addEventListener('submit', handlePhase3Submit);
     document.getElementById('back-to-phase-1').addEventListener('click', () => showPhase(1));
     document.getElementById('logout-button').addEventListener('click', () => {
-        localStorage.removeItem('userName');
-        localStorage.removeItem('gpsepedia_session');
+        localStorage.clear();
         window.location.href = 'index.html';
     });
-
-    document.querySelectorAll('input[type=file]').forEach(input => {
-        input.addEventListener('change', (e) => handleFileSelection(e));
-    });
+    document.querySelectorAll('input[type=file]').forEach(input => input.addEventListener('change', handleFileSelection));
 });
 
 function handleFileSelection(e) {
@@ -467,34 +220,25 @@ function handleFileSelection(e) {
     const inputId = e.target.id;
     const previewImg = document.getElementById(`preview-${inputId}`);
     const fileNameSpan = e.target.closest('.file-input-wrapper').querySelector('.file-name');
-
-    // Reset previous file promise for this input
     delete state.filePromises[inputId];
     fileNameSpan.textContent = '';
     previewImg.src = '';
     previewImg.classList.remove('visible');
-
     if (file) {
         if (file.size > MAX_FILE_SIZE) {
-            alert(`El archivo "${file.name}" es demasiado grande. El tamaño máximo es de 5 MB.`);
-            e.target.value = ''; // Clear the invalid file from input
+            alert(`El archivo es demasiado grande (Máx 5MB).`);
+            e.target.value = '';
             return;
         }
-
         fileNameSpan.textContent = file.name;
-
         const reader = new FileReader();
         reader.onload = (event) => {
             previewImg.src = event.target.result;
             previewImg.classList.add('visible');
         };
         reader.readAsDataURL(file);
-
-        // Store the promise in the state
         state.filePromises[inputId] = fileToBase64(file).then(base64String => ({
-            name: file.name,
-            mimeType: file.type,
-            data: base64String.split(',')[1] // Send only the base64 part
+            name: file.name, mimeType: file.type, data: base64String.split(',')[1]
         }));
     }
 }
@@ -508,7 +252,6 @@ function init() {
         window.location.href = 'index.html';
         return;
     }
-
     toggleLoading(true);
     fetch(`${SCRIPT_URL}?action=getDropdowns`)
         .then(response => response.json())
@@ -529,24 +272,16 @@ function handlePhase1Submit(e) {
     e.preventDefault();
     toggleLoading(true);
     const formData = new FormData(e.target);
-
     state.vehicleInfo = {};
     for (let [key, value] of formData.entries()) {
-        // Correctly camelCase the key: 'tipo-encendido' -> 'tipoEncendido'
         const normalizedKey = key.replace(/-(\w)/g, (_, c) => c.toUpperCase());
         state.vehicleInfo[normalizedKey] = value.trim();
     }
-
-    const params = new URLSearchParams({
-        action: 'checkVehicle',
-        ...state.vehicleInfo
-    });
-
+    const params = new URLSearchParams({ action: 'checkVehicle', ...state.vehicleInfo });
     fetch(`${SCRIPT_URL}?${params.toString()}`)
         .then(res => res.json())
         .then(res => {
-            if(res.error) throw new Error(res.details ? `${res.error}: ${res.details.message}` : res.error);
-
+            if (res.error) throw new Error(res.details ? `${res.error}: ${res.details.message}` : res.error);
             if (res.exists) {
                 state.existingData = res.data;
                 state.rowIndex = res.rowIndex;
@@ -569,15 +304,10 @@ function handlePhase1Submit(e) {
 async function handlePhase3Submit(e) {
     e.preventDefault();
     toggleLoading(true);
-
     let resolvedFiles = {};
     try {
-        // Wait for all file conversion promises to resolve
         const fileEntries = await Promise.all(
-            Object.entries(state.filePromises).map(async ([key, promise]) => {
-                const value = await promise;
-                return [key, value];
-            })
+            Object.entries(state.filePromises).map(async ([key, promise]) => [key, await promise])
         );
         resolvedFiles = Object.fromEntries(fileEntries);
     } catch (error) {
@@ -586,69 +316,77 @@ async function handlePhase3Submit(e) {
         toggleLoading(false);
         return;
     }
-
     const additionalInfo = {
-        nuevoCorte: {
-            tipo: document.getElementById('tipo-corte').value,
-            descripcion: document.getElementById('descripcion-corte').value
-        },
+        nuevoCorte: { tipo: document.getElementById('tipo-corte').value, descripcion: document.getElementById('descripcion-corte').value },
         apertura: document.getElementById('apertura-desc').value,
         alimentacion: document.getElementById('alimentacion-desc').value,
         notas: document.getElementById('notas').value
     };
-
     const payload = {
       vehicleInfo: { ...state.vehicleInfo, rowIndex: state.rowIndex, colaborador: state.colaborador },
-      additionalInfo,
-      files: resolvedFiles
+      additionalInfo, files: resolvedFiles
     };
-
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        body: JSON.stringify(payload)
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.success) {
-            alert('¡Éxito! ' + data.message);
-            window.location.href = 'index.html';
-        } else {
-            throw new Error(data.details ? `${data.error}: ${data.details.message}`: data.error);
-        }
-    })
-    .catch(error => {
-        console.error('Error submitting form:', error);
-        alert('Error al guardar el registro: ' + error.message);
-    })
-    .finally(() => toggleLoading(false));
+    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert('¡Éxito! ' + data.message);
+                window.location.href = 'index.html';
+            } else {
+                throw new Error(data.details ? `${data.error}: ${data.details.message}` : data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error submitting form:', error);
+            alert('Error al guardar el registro: ' + error.message);
+        })
+        .finally(() => toggleLoading(false));
 }
-
 
 function setupVerificationPhase() {
     const data = state.existingData;
     const container = document.getElementById('verification-data');
+    container.innerHTML = ''; // Clear previous content
 
-    // Helper to format cut information
-    const formatCut = (type, desc) => type && desc ? `${type} - ${desc}` : 'No registrado';
+    const header = document.createElement('div');
+    header.className = 'verification-header';
 
-    container.innerHTML = `
-        <p><strong>Categoría:</strong> ${data.categoria || 'N/A'}</p>
-        <p><strong>Marca:</strong> ${data.marca || 'N/A'}</p>
-        <p><strong>Modelo:</strong> ${data.modelo || 'N/A'}</p>
-        <p><strong>Año:</strong> ${data.anoGeneracion || 'N/A'}</p>
-        <p><strong>Encendido:</strong> ${data.tipoDeEncendido || 'N/A'}</p>
-        <hr>
-        <p><strong>Corte 1:</strong> ${formatCut(data.tipoDeCorte, data.descripcionDelCorte)}</p>
-        <p><strong>Corte 2:</strong> ${formatCut(data.tipoDeCorte2, data.descripcionDelSegundoCorte)}</p>
-        <p><strong>Corte 3:</strong> ${formatCut(data.tipoDeCorte3, data.descripcionDelCorte3)}</p>
-        <p><strong>Apertura:</strong> ${data.apertura ? 'Sí' : 'No registrado'}</p>
-        <p><strong>Alimentación:</strong> ${data.cablesDeAlimentacion ? 'Sí' : 'No registrado'}</p>
+    let vehicleImgHtml = data.imagenDelVehiculo ? `<img src="${transformGoogleDriveUrl(data.imagenDelVehiculo)}" alt="Foto del vehículo">` : '<div style="width: 200px; height: 150px; background: #eee; display:flex; align-items:center; justify-content:center; border-radius: 8px;">Sin foto</div>';
+    header.innerHTML = `
+        ${vehicleImgHtml}
+        <div class="verification-header-info">
+            <p><strong>Marca:</strong> ${data.marca || 'N/A'}</p>
+            <p><strong>Modelo:</strong> ${data.modelo || 'N/A'}</p>
+            <p><strong>Año:</strong> ${data.anoGeneracion || 'N/A'}</p>
+            <p><strong>Encendido:</strong> ${data.tipoDeEncendido || 'N/A'}</p>
+        </div>
     `;
+    container.appendChild(header);
+
+    const accordionContainer = document.createElement('div');
+    container.appendChild(accordionContainer);
+
+    // Define accordion sections
+    const sections = [
+        { title: `Corte 1: ${data.tipoDeCorte || ''}`, desc: data.descripcionDelCorte, img: data.imagenDeCorte },
+        { title: `Corte 2: ${data.tipoDeCorte2 || ''}`, desc: data.descripcionDelSegundoCorte, img: data.imagenDeCorte2 },
+        { title: `Corte 3: ${data.tipoDeCorte3 || ''}`, desc: data.descripcionDelCorte3, img: data.imagenDelCorte3 },
+        { title: 'Apertura de Puertas', desc: data.apertura, img: data.imagenDeLaApertura },
+        { title: 'Cables de Alimentación', desc: data.cablesDeAlimentacion, img: data.imagenDeLosCablesDeAlimentacion },
+        { title: 'Nota Importante', desc: data.notaImportante, img: null }
+    ];
+
+    sections.forEach(section => {
+        if (section.desc) { // Only create accordion if there is a description
+            const accordionItem = createAccordionItem(section.title, section.desc, section.img);
+            accordionContainer.appendChild(accordionItem);
+        }
+    });
+
+    setupAccordionListeners();
 
     const actionsContainer = document.getElementById('verification-actions');
-    actionsContainer.innerHTML = ''; // Clear previous buttons
-
-    // Use normalized keys for checks
+    actionsContainer.innerHTML = '';
     const hasAllCuts = data.descripcionDelCorte && data.descripcionDelSegundoCorte && data.descripcionDelCorte3;
     const hasApertura = data.apertura;
     const hasAlimentacion = data.cablesDeAlimentacion;
@@ -663,18 +401,16 @@ function setupVerificationPhase() {
         };
         actionsContainer.appendChild(btn);
     }
-
     if (!hasApertura || !hasAlimentacion) {
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
-        btn.textContent = 'Agregar Info Adicional (Apertura/Alimentación)';
+        btn.textContent = 'Agregar Info Adicional';
         btn.onclick = () => {
              setupDataEntryPhase(false, { corte: false, apertura: !hasApertura, alimentacion: !hasAlimentacion, notas: true });
              showPhase(3);
         };
         actionsContainer.appendChild(btn);
     }
-
     const cancelBtn = document.createElement('button');
     cancelBtn.className = 'btn btn-secondary';
     cancelBtn.textContent = 'Cancelar / Es un Duplicado';
@@ -682,6 +418,53 @@ function setupVerificationPhase() {
     actionsContainer.appendChild(cancelBtn);
 }
 
+function createAccordionItem(title, description, imageUrl) {
+    const item = document.createElement('div');
+    const btn = document.createElement('button');
+    btn.className = 'accordion-button';
+    btn.textContent = title;
+
+    const panel = document.createElement('div');
+    panel.className = 'accordion-panel';
+
+    let contentHtml = `<p>${description.replace(/\n/g, '<br>')}</p>`;
+    if (imageUrl) {
+        contentHtml += `<img src="${transformGoogleDriveUrl(imageUrl)}" alt="Detalle de ${title}">`;
+    }
+
+    panel.innerHTML = `<div class="accordion-content">${contentHtml}</div>`;
+    item.appendChild(btn);
+    item.appendChild(panel);
+    return item;
+}
+
+function setupAccordionListeners() {
+    const accordions = document.querySelectorAll('.accordion-button');
+    accordions.forEach(acc => {
+        acc.addEventListener('click', function() {
+            // Close all other panels
+            accordions.forEach(otherAcc => {
+                if (otherAcc !== this) {
+                    otherAcc.classList.remove('active');
+                    const otherPanel = otherAcc.nextElementSibling;
+                    otherPanel.style.maxHeight = null;
+                    otherPanel.classList.remove('show');
+                }
+            });
+
+            // Toggle current panel
+            this.classList.toggle('active');
+            const panel = this.nextElementSibling;
+            if (panel.style.maxHeight) {
+                panel.style.maxHeight = null;
+                panel.classList.remove('show');
+            } else {
+                panel.classList.add('show');
+                panel.style.maxHeight = panel.scrollHeight + 30 + "px";
+            }
+        });
+    });
+}
 
 function setupDataEntryPhase(isNewVehicle, sectionsToShow = {corte:true, apertura:true, alimentacion:true, notas:true}) {
     document.getElementById('add-info-form').reset();
@@ -691,35 +474,28 @@ function setupDataEntryPhase(isNewVehicle, sectionsToShow = {corte:true, apertur
         img.classList.remove('visible');
     });
     state.filePromises = {};
-
     document.getElementById('phase-3-title').textContent = isNewVehicle ? 'Agregar Nuevo Vehículo' : 'Agregar Información Adicional';
     document.getElementById('new-vehicle-photo-group').style.display = isNewVehicle ? 'block' : 'none';
-
     document.getElementById('nuevo-corte-group').style.display = sectionsToShow.corte ? 'block' : 'none';
     document.getElementById('apertura-group').style.display = sectionsToShow.apertura ? 'block' : 'none';
     document.getElementById('alimentacion-group').style.display = sectionsToShow.alimentacion ? 'block' : 'none';
 }
 
-
-// --- Helper Functions ---
 function showPhase(phaseNumber) {
-    document.querySelectorAll('.form-phase').forEach(phase => {
-        phase.classList.remove('active');
-    });
+    document.querySelectorAll('.form-phase').forEach(phase => phase.classList.remove('active'));
     document.getElementById(`phase-${phaseNumber}`).classList.add('active');
 }
 
 function toggleLoading(show) {
-    const overlay = document.getElementById('loading-overlay');
-    overlay.classList.toggle('visible', show);
+    document.getElementById('loading-overlay').classList.toggle('visible', show);
 }
 
 function populateSelect(id, options) {
     const select = document.getElementById(id);
     if (!select || !Array.isArray(options)) return;
-    select.innerHTML = '<option value="">Seleccione una opción...</option>';
+    select.innerHTML = '<option value="">Seleccione...</option>';
     options.forEach(option => {
-        if(option) {
+        if (option) {
             const opt = document.createElement('option');
             opt.value = option;
             opt.textContent = option;
@@ -735,6 +511,11 @@ function fileToBase64(file) {
         reader.onload = () => resolve(reader.result);
         reader.onerror = error => reject(error);
     });
+}
+
+function transformGoogleDriveUrl(url) {
+    if (!url || typeof url !== 'string') return '';
+    return url.replace('/file/d/', '/thumbnail?id=').replace('/view?usp=sharing', '&sz=w1024');
 }
 </script>
 </body>
