@@ -435,7 +435,7 @@
     </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWihhs6rPKcctqVji_4DdIBEghI94h6TZprVIt-k6d5qVCka_A09cEfMpJ5zh6BPzV/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyh98aSOUgNaxkDApFpkJM4S67h4HqEF2jdVNevRkWbz2XZwsDaveK05MHju8qZpdpJ/exec";
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 const state = {
@@ -627,26 +627,31 @@ async function handlePhase3Submit(e) {
 function setupVerificationPhase() {
     const data = state.existingData;
     const container = document.getElementById('verification-data');
+
+    // Helper to format cut information
+    const formatCut = (type, desc) => type && desc ? `${type} - ${desc}` : 'No registrado';
+
     container.innerHTML = `
-        <p><strong>Categoría:</strong> ${data['Categoria'] || 'N/A'}</p>
-        <p><strong>Marca:</strong> ${data['Marca'] || 'N/A'}</p>
-        <p><strong>Modelo:</strong> ${data['Modelo'] || 'N/A'}</p>
-        <p><strong>Año:</strong> ${data['Año (generacion)'] || 'N/A'}</p>
-        <p><strong>Encendido:</strong> ${data['Tipo de encendido'] || 'N/A'}</p>
+        <p><strong>Categoría:</strong> ${data.categoria || 'N/A'}</p>
+        <p><strong>Marca:</strong> ${data.marca || 'N/A'}</p>
+        <p><strong>Modelo:</strong> ${data.modelo || 'N/A'}</p>
+        <p><strong>Año:</strong> ${data.anoGeneracion || 'N/A'}</p>
+        <p><strong>Encendido:</strong> ${data.tipoDeEncendido || 'N/A'}</p>
         <hr>
-        <p><strong>Corte 1:</strong> ${data['Tipo de corte'] && data['Descripcion del corte'] ? `${data['Tipo de corte']} - ${data['Descripcion del corte']}` : 'No registrado'}</p>
-        <p><strong>Corte 2:</strong> ${data['Tipo de corte 2'] && data['Descripción del Segundo corte'] ? `${data['Tipo de corte 2']} - ${data['Descripción del Segundo corte']}` : 'No registrado'}</p>
-        <p><strong>Corte 3:</strong> ${data['Tipo de corte 3'] && data['Descripción del corte 3'] ? `${data['Tipo de corte 3']} - ${data['Descripción del corte 3']}` : 'No registrado'}</p>
-        <p><strong>Apertura:</strong> ${data['Apertura'] ? 'Sí' : 'No registrado'}</p>
-        <p><strong>Alimentación:</strong> ${data['Cables de Alimentacion'] ? 'Sí' : 'No registrado'}</p>
+        <p><strong>Corte 1:</strong> ${formatCut(data.tipoDeCorte, data.descripcionDelCorte)}</p>
+        <p><strong>Corte 2:</strong> ${formatCut(data.tipoDeCorte2, data.descripcionDelSegundoCorte)}</p>
+        <p><strong>Corte 3:</strong> ${formatCut(data.tipoDeCorte3, data.descripcionDelCorte3)}</p>
+        <p><strong>Apertura:</strong> ${data.apertura ? 'Sí' : 'No registrado'}</p>
+        <p><strong>Alimentación:</strong> ${data.cablesDeAlimentacion ? 'Sí' : 'No registrado'}</p>
     `;
 
     const actionsContainer = document.getElementById('verification-actions');
     actionsContainer.innerHTML = ''; // Clear previous buttons
 
-    const hasAllCuts = data['Descripcion del corte'] && data['Descripción del Segundo corte'] && data['Descripción del corte 3'];
-    const hasApertura = data['Apertura'];
-    const hasAlimentacion = data['Cables de Alimentacion'];
+    // Use normalized keys for checks
+    const hasAllCuts = data.descripcionDelCorte && data.descripcionDelSegundoCorte && data.descripcionDelCorte3;
+    const hasApertura = data.apertura;
+    const hasAlimentacion = data.cablesDeAlimentacion;
 
     if (!hasAllCuts) {
         const btn = document.createElement('button');
