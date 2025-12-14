@@ -42,10 +42,11 @@ function doGet(e) {
     const action = e.parameter.action;
 
     if (action === "getDropdowns") {
+      // ... (same as before)
       const dropdowns = {
         'categoria': getListDataValidationValues(COLS.CATEGORIA),
         'tipo-encendido': getListDataValidationValues(COLS.TIPO_ENCENDIDO),
-        'tipo-corte': getListDataValidationValues(COLS.TIPO_CORTE_1) // All cut types share the same validation
+        'tipo-corte': getListDataValidationValues(COLS.TIPO_CORTE_1)
       };
       return ContentService.createTextOutput(JSON.stringify(dropdowns))
         .setMimeType(ContentService.MimeType.JSON);
@@ -53,6 +54,8 @@ function doGet(e) {
 
     if (action === "checkVehicle") {
       const { marca, modelo, anio, tipoEncendido } = e.parameter;
+      Logger.log(`Checking vehicle with params: marca=${marca}, modelo=${modelo}, anio=${anio}, tipoEncendido=${tipoEncendido}`);
+
       const data = sheet.getDataRange().getValues();
       const headers = data.shift();
 
@@ -61,19 +64,38 @@ function doGet(e) {
 
       for(let i = 0; i < data.length; i++) {
         const row = data[i];
+
+        const sheetMarca = row[COLS.MARCA - 1].toString().trim().toLowerCase();
+        const sheetModelo = row[COLS.MODELO - 1].toString().trim().toLowerCase();
+        const sheetAnio = row[COLS.ANIO - 1].toString().trim().toLowerCase();
+        const sheetTipoEncendido = row[COLS.TIPO_ENCENDIDO - 1].toString().trim().toLowerCase();
+
+        const paramMarca = marca.trim().toLowerCase();
+        const paramModelo = modelo.trim().toLowerCase();
+        const paramAnio = anio.trim().toLowerCase();
+        const paramTipoEncendido = tipoEncendido.trim().toLowerCase();
+
+        // Detailed logging for each comparison
+        // Logger.log(`Row ${i+2}: Comparing '${sheetMarca}' vs '${paramMarca}', '${sheetModelo}' vs '${paramModelo}', '${sheetAnio}' vs '${paramAnio}', '${sheetTipoEncendido}' vs '${paramTipoEncendido}'`);
+
         if (
-          row[COLS.MARCA - 1].toString().trim().toLowerCase() === marca.trim().toLowerCase() &&
-          row[COLS.MODELO - 1].toString().trim().toLowerCase() === modelo.trim().toLowerCase() &&
-          row[COLS.ANIO - 1].toString().trim().toLowerCase() === anio.trim().toLowerCase() &&
-          row[COLS.TIPO_ENCENDIDO - 1].toString().trim().toLowerCase() === tipoEncendido.trim().toLowerCase()
+          sheetMarca === paramMarca &&
+          sheetModelo === paramModelo &&
+          sheetAnio === paramAnio &&
+          sheetTipoEncendido === paramTipoEncendido
         ) {
           rowIndex = i + 2; // +1 for header, +1 for 0-based index
           existingRow = headers.reduce((obj, header, index) => {
             obj[header] = row[index];
             return obj;
           }, {});
+          Logger.log(`Match found at row: ${rowIndex}`);
           break;
         }
+      }
+
+      if (!existingRow) {
+        Logger.log("No matching vehicle found.");
       }
 
       const response = {
@@ -86,14 +108,16 @@ function doGet(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
-    // Default response for invalid action
     return ContentService.createTextOutput(JSON.stringify({ error: "Invalid action." }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
-    Logger.log(error);
-    return ContentService.createTextOutput(JSON.stringify({ error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    Logger.log(`Error in doGet: ${error.message}\nStack: ${error.stack}`);
+    return ContentService.createTextOutput(JSON.stringify({
+      error: "Server error in doGet",
+      details: { message: error.message, stack: error.stack }
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
   }
 }
 
@@ -116,55 +140,63 @@ function getListDataValidationValues(column) {
  * and updates the Google Sheet.
  */
 function doPost(e) {
+  Logger.log("doPost started");
   try {
-    const params = JSON.parse(e.postData.contents);
-    const {
-      rowIndex,
-      categoria,
-      marca,
-      modelo,
-      anio,
-      tipoEncendido,
-      colaborador
-    } = params.vehicleInfo;
-
-    const files = params.files;
-    let fileUrls = {};
-
-    // 1. Handle File Uploads
-    if (Object.keys(files).length > 0) {
-        const parentFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
-        const categoriaFolder = getOrCreateFolder(parentFolder, categoria);
-        const marcaFolder = getOrCreateFolder(categoriaFolder, marca);
-        const modeloFolder = getOrCreateFolder(marcaFolder, modelo);
-        const anioFolder = getOrCreateFolder(modeloFolder, anio);
-
-        for (const fieldName in files) {
-            const file = files[fieldName];
-            if(file) {
-              const fileName = `${marca}_${modelo}_${anio}_${fieldName}`;
-              fileUrls[fieldName] = uploadFileToDrive(anioFolder, file, fileName);
-            }
-        }
+    // Step 1: Parse incoming data
+    let params;
+    try {
+      params = JSON.parse(e.postData.contents);
+      Logger.log("Successfully parsed JSON payload.");
+    } catch (parseError) {
+      Logger.log(`JSON Parsing Error: ${parseError.message}`);
+      throw new Error(`Invalid JSON format: ${parseError.message}`);
     }
 
-    // 2. Update Spreadsheet
+    const { vehicleInfo, additionalInfo, files } = params;
+    const { rowIndex, categoria, marca, modelo, anio, tipoEncendido, colaborador } = vehicleInfo;
+    Logger.log(`Processing data for: ${marca} ${modelo} ${anio}`);
+
+    // Step 2: Handle File Uploads
+    let fileUrls = {};
+    try {
+      if (files && Object.keys(files).length > 0) {
+          Logger.log("Starting file uploads.");
+          const parentFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+          const categoriaFolder = getOrCreateFolder(parentFolder, categoria);
+          const marcaFolder = getOrCreateFolder(categoriaFolder, marca);
+          const modeloFolder = getOrCreateFolder(marcaFolder, modelo);
+          const anioFolder = getOrCreateFolder(modeloFolder, anio);
+
+          for (const fieldName in files) {
+              const file = files[fieldName];
+              if(file && file.data) {
+                const fileName = `${marca}_${modelo}_${anio}_${fieldName}`;
+                Logger.log(`Uploading file for field: ${fieldName} with name: ${fileName}`);
+                fileUrls[fieldName] = uploadFileToDrive(anioFolder, file, fileName);
+              }
+          }
+          Logger.log("File uploads completed.");
+      }
+    } catch (fileError) {
+       Logger.log(`Error during file upload: ${fileError.message}`);
+       throw new Error(`File upload failed: ${fileError.message}`);
+    }
+
+
+    // Step 3: Update Spreadsheet
+    Logger.log("Starting spreadsheet update.");
     let targetRow;
     let isNewRow = !rowIndex || rowIndex === -1;
 
     if (isNewRow) {
-      sheet.appendRow([]); // Create a new row
+      Logger.log("Creating a new row.");
+      sheet.appendRow([]);
       targetRow = sheet.getLastRow();
-      // Inherit data validations from the row above
       const previousRowRange = sheet.getRange(targetRow - 1, 1, 1, sheet.getMaxColumns());
       const newRowRange = sheet.getRange(targetRow, 1, 1, sheet.getMaxColumns());
       previousRowRange.copyTo(newRowRange, {formatOnly: true});
+      sheet.getRange(targetRow, 2, 1, sheet.getMaxColumns() - 1).clearContent();
 
-      // Clear content of the new row except formulas (like ID)
-      const dataRangeToClear = sheet.getRange(targetRow, 2, 1, sheet.getMaxColumns() - 1);
-      dataRangeToClear.clearContent();
-
-      // Set basic vehicle info for the new row
       sheet.getRange(targetRow, COLS.CATEGORIA).setValue(categoria);
       sheet.getRange(targetRow, COLS.MARCA).setValue(marca);
       sheet.getRange(targetRow, COLS.MODELO).setValue(modelo);
@@ -173,18 +205,18 @@ function doPost(e) {
       if (fileUrls.imagenVehiculo) {
         sheet.getRange(targetRow, COLS.IMAGEN_VEHICULO).setValue(fileUrls.imagenVehiculo);
       }
-
+      Logger.log(`New row created at index: ${targetRow}`);
     } else {
-      targetRow = parseInt(rowIndex);
+      targetRow = parseInt(rowIndex, 10);
+      Logger.log(`Updating existing row at index: ${targetRow}`);
     }
 
     const rowValues = sheet.getRange(targetRow, 1, 1, sheet.getMaxColumns()).getValues()[0];
+    const { nuevoCorte, apertura, alimentacion, notas } = additionalInfo;
 
-    // Update fields based on what's new
-    const { nuevoCorte, apertura, alimentacion, notas } = params.additionalInfo;
-
-    // Add new cut information to the first available slot
+    // Update logic for cuts
     if (nuevoCorte && nuevoCorte.tipo) {
+      Logger.log("Adding new cut information.");
       if (!rowValues[COLS.DESC_CORTE_1 - 1]) {
         sheet.getRange(targetRow, COLS.TIPO_CORTE_1).setValue(nuevoCorte.tipo);
         sheet.getRange(targetRow, COLS.DESC_CORTE_1).setValue(nuevoCorte.descripcion);
@@ -200,39 +232,42 @@ function doPost(e) {
       }
     }
 
-    // Add other info if provided and cell is empty
+    // Update other fields
     if (apertura && !rowValues[COLS.APERTURA - 1]) {
       sheet.getRange(targetRow, COLS.APERTURA).setValue(apertura);
       if(fileUrls.imagenApertura) sheet.getRange(targetRow, COLS.IMG_APERTURA).setValue(fileUrls.imagenApertura);
     }
-
     if (alimentacion && !rowValues[COLS.CABLES_ALIMENTACION - 1]) {
       sheet.getRange(targetRow, COLS.CABLES_ALIMENTACION).setValue(alimentacion);
       if(fileUrls.imagenAlimentacion) sheet.getRange(targetRow, COLS.IMG_ALIMENTACION).setValue(fileUrls.imagenAlimentacion);
     }
-
     if (notas && !rowValues[COLS.NOTA_IMPORTANTE - 1]) {
       sheet.getRange(targetRow, COLS.NOTA_IMPORTANTE).setValue(notas);
     }
 
     // Update collaborator
-    const existingColaborador = sheet.getRange(targetRow, COLS.COLABORADOR).getValue();
-    if (existingColaborador) {
-        if (!existingColaborador.includes(colaborador)) {
-            sheet.getRange(targetRow, COLS.COLABORADOR).setValue(existingColaborador + "<br>" + colaborador);
-        }
-    } else {
-        sheet.getRange(targetRow, COLS.COLABORADOR).setValue(colaborador);
+    const existingColaborador = sheet.getRange(targetRow, COLS.COLABORADOR).getValue().toString();
+    if (existingColaborador && !existingColaborador.includes(colaborador)) {
+      sheet.getRange(targetRow, COLS.COLABORADOR).setValue(`${existingColaborador}<br>${colaborador}`);
+    } else if (!existingColaborador) {
+      sheet.getRange(targetRow, COLS.COLABORADOR).setValue(colaborador);
     }
-
+    Logger.log("Spreadsheet update complete.");
 
     return ContentService.createTextOutput(JSON.stringify({ success: true, message: "Registro guardado exitosamente.", row: targetRow }))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
-    Logger.log(error);
-    return ContentService.createTextOutput(JSON.stringify({ success: false, error: error.toString() }))
-      .setMimeType(ContentService.MimeType.JSON);
+    Logger.log(`Critical Error in doPost: ${error.message}\nStack: ${error.stack}`);
+    return ContentService.createTextOutput(JSON.stringify({
+        success: false,
+        error: "A server error occurred.",
+        details: {
+          message: error.message,
+          stack: error.stack
+        }
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
   }
 }
 

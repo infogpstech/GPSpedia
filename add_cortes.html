@@ -37,40 +37,39 @@
         }
 
         header {
-            background-color: var(--secondary-color);
-            color: white;
-            padding: 15px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-            position: sticky;
-            top: 0;
-            z-index: 1000;
+            padding: 20px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        header .logo-container {
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .header-branding {
             display: flex;
             align-items: center;
             gap: 15px;
         }
 
-        header .logo-container img {
-            height: 40px;
+        .app-logo {
+            max-width: 96px;
+            height: auto;
+            border-radius: 8px;
         }
 
-        header .logo-container h1 {
+        h1.app-title {
             margin: 0;
-            font-size: 1.5em;
-        }
-
-        .user-info {
-            font-size: 0.9em;
-            text-align: right;
+            font-size: 2.2em;
+            color: #333;
         }
 
         main {
             flex-grow: 1;
+            background-color: #f4f4f4;
             padding: 20px;
         }
 
@@ -246,20 +245,28 @@
             font-size: 0.9em;
         }
 
-        footer {
-            background-color: var(--secondary-color);
-            color: white;
-            text-align: center;
-            padding: 20px;
-            font-size: 0.9em;
+        .image-preview {
+            display: none; /* Hidden by default */
+            max-width: 100%;
+            max-height: 200px;
+            margin-top: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--light-gray);
+            object-fit: contain;
         }
-        .footer-logo {
-            margin-bottom: 10px;
-        }
-        .footer-logo img {
-            height: 40px;
+        .image-preview.visible {
+            display: block; /* Shown when an image is selected */
         }
 
+        .footer {
+            text-align: center;
+            padding: 20px 0;
+            margin-top: auto; /* Push footer to the bottom */
+            background-color: #333;
+            color: #fff;
+            font-size: 0.9em;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
@@ -269,12 +276,17 @@
     </div>
 
     <div class="app-container">
-        <header>
-            <div class="logo-container">
-                <a href="index.html"><img src="images/icons/icon-v2-192x192.png" alt="Logo"></a>
-                <h1>Agregar Nuevo</h1>
+        <header class="header-container">
+            <div class="header-branding">
+                <a href="index.html">
+                    <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
+                </a>
+                <h1 class="app-title">Agregar Nuevo</h1>
             </div>
-            <div id="user-info" class="user-info"></div>
+            <div id="header-controls" style="display: flex; align-items: center; gap: 15px;">
+                <span id="welcome-message" style="color: #333; font-weight: bold; text-align: right;"></span>
+                <button id="logout-button" style="background-color: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold;">Cerrar Sesión</button>
+            </div>
         </header>
 
         <main>
@@ -331,6 +343,7 @@
                                 <input type="file" id="imagenVehiculo" name="imagenVehiculo" accept="image/*">
                                 <span class="file-name"></span>
                             </div>
+                            <img id="preview-imagenVehiculo" class="image-preview" alt="Vista previa de la imagen del vehículo">
                         </div>
 
                         <div id="nuevo-corte-group">
@@ -350,6 +363,7 @@
                                    <input type="file" id="imagenCorte" name="imagenCorte" accept="image/*">
                                    <span class="file-name"></span>
                                </div>
+                               <img id="preview-imagenCorte" class="image-preview" alt="Vista previa de la imagen del corte">
                            </div>
                         </div>
 
@@ -366,6 +380,7 @@
                                     <input type="file" id="imagenApertura" name="imagenApertura" accept="image/*">
                                     <span class="file-name"></span>
                                 </div>
+                                <img id="preview-imagenApertura" class="image-preview" alt="Vista previa de la imagen de apertura">
                             </div>
                         </div>
 
@@ -382,6 +397,7 @@
                                    <input type="file" id="imagenAlimentacion" name="imagenAlimentacion" accept="image/*">
                                    <span class="file-name"></span>
                                </div>
+                               <img id="preview-imagenAlimentacion" class="image-preview" alt="Vista previa de la imagen de alimentación">
                            </div>
                         </div>
 
@@ -399,16 +415,13 @@
             </div>
         </main>
 
-        <footer>
-            <div class="footer-logo">
-                <img src="images/icons/icon-v2-192x192.png" alt="Logo GPS Lock">
-            </div>
-            <p>&copy; 2024 GPS Lock. Todos los derechos reservados.</p>
+        <footer class="footer">
+            Gpspedia 2025© todos los derechos reservados.
         </footer>
     </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTn1iJjr8tXn2scG5CTC8yXyuKS0TTDJ5npGIeItzBaOmpu4ENH2ml52pvYKi_NHls/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5MqMZ7IoUn9LUymmNu6B8Hu__Q_ABIbp4Ynb7wgK5bao5ww2pHi1xFjDLuEZg-b4D/exec";
 
 const state = {
     vehicleInfo: {},
@@ -425,22 +438,46 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('vehicle-check-form').addEventListener('submit', handlePhase1Submit);
     document.getElementById('add-info-form').addEventListener('submit', handlePhase3Submit);
     document.getElementById('back-to-phase-1').addEventListener('click', () => showPhase(1));
+    document.getElementById('logout-button').addEventListener('click', () => {
+        localStorage.removeItem('userName');
+        localStorage.removeItem('gpsepedia_session');
+        window.location.href = 'index.html';
+    });
 
     // File input listeners
     document.querySelectorAll('input[type=file]').forEach(input => {
         input.addEventListener('change', (e) => {
             const file = e.target.files[0];
+            const inputId = e.target.id;
+            const previewImg = document.getElementById(`preview-${inputId}`);
+            const fileNameSpan = e.target.closest('.file-input-wrapper').querySelector('.file-name');
+
             if (file) {
-                const fileNameSpan = e.target.nextElementSibling;
+                // 1. Show file name
                 fileNameSpan.textContent = file.name;
 
+                // 2. Show preview
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    previewImg.src = event.target.result;
+                    previewImg.classList.add('visible');
+                };
+                reader.readAsDataURL(file);
+
+                // 3. Convert to base64 for submission
                 fileToBase64(file).then(base64String => {
-                    state.files[e.target.id] = {
+                    state.files[inputId] = {
                         name: file.name,
                         mimeType: file.type,
                         data: base64String.split(',')[1]
                     };
                 });
+            } else {
+                 // Reset if no file is selected
+                fileNameSpan.textContent = '';
+                previewImg.src = '';
+                previewImg.classList.remove('visible');
+                delete state.files[inputId];
             }
         });
     });
@@ -450,7 +487,7 @@ function init() {
     // Display user info
     const userName = localStorage.getItem('userName');
     if (userName) {
-        document.getElementById('user-info').innerHTML = `Bienvenido,<br>${userName}`;
+        document.getElementById('welcome-message').innerHTML = `Bienvenido,<br>${userName}`;
     } else {
         window.location.href = 'index.html'; // Redirect if not logged in
         return;
@@ -618,6 +655,10 @@ function setupVerificationPhase() {
 function setupDataEntryPhase(isNewVehicle, sectionsToShow = {corte:true, apertura:true, alimentacion:true, notas:true}) {
     document.getElementById('add-info-form').reset();
     document.querySelectorAll('.file-name').forEach(span => span.textContent = '');
+    document.querySelectorAll('.image-preview').forEach(img => {
+        img.src = '';
+        img.classList.remove('visible');
+    });
     state.files = {};
 
     if (isNewVehicle) {
