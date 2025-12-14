@@ -56,14 +56,14 @@
         }
 
         .app-logo {
-            max-width: 96px;
+            max-width: 76px; /* Reduced from 96px */
             height: auto;
             border-radius: 8px;
         }
 
         h1.app-title {
             margin: 0;
-            font-size: 2.2em;
+            font-size: 1.8em; /* Reduced from 2.2em */
             color: #333;
         }
 
@@ -283,7 +283,7 @@
                 </a>
                 <h1 class="app-title">Agregar Nuevo</h1>
             </div>
-            <div id="header-controls" style="display: flex; align-items: center; gap: 15px;">
+            <div id="header-controls" style="display: flex; align-items: center; gap: 15px; margin-left: auto;">
                 <span id="welcome-message" style="color: #333; font-weight: bold; text-align: right;"></span>
                 <button id="logout-button" style="background-color: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold;">Cerrar Sesión</button>
             </div>
@@ -576,9 +576,8 @@ function handlePhase3Submit(e) {
     fetch(SCRIPT_URL, {
         method: 'POST',
         body: JSON.stringify(payload),
-        headers: {
-            'Content-Type': 'application/json'
-        }
+        // By removing the Content-Type header, the browser sends it as text/plain,
+        // which avoids a CORS preflight request that can fail with Google Apps Script.
     })
     .then(res => res.json())
     .then(data => {
