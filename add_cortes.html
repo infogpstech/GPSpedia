@@ -381,7 +381,7 @@ function setupVerificationPhase() {
     const header = document.createElement('div');
     header.className = 'verification-header';
 
-    let vehicleImgHtml = data.imagenDelVehiculo ? `<img src="${transformGoogleDriveUrl(data.imagenDelVehiculo)}" alt="Foto del vehículo">` : '<div style="width: 200px; height: 150px; background: #eee; display:flex; align-items:center; justify-content:center; border-radius: 8px;">Sin foto</div>';
+    let vehicleImgHtml = data.imagenDelVehiculo ? `<img src="${convertirAGoogleThumbnail(data.imagenDelVehiculo)}" alt="Foto del vehículo">` : '<div style="width: 200px; height: 150px; background: #eee; display:flex; align-items:center; justify-content:center; border-radius: 8px;">Sin foto</div>';
     header.innerHTML = `
         ${vehicleImgHtml}
         <div class="verification-header-info">
@@ -459,7 +459,7 @@ function createAccordionItem(title, description, imageUrl) {
 
     let contentHtml = `<p>${description.replace(/\n/g, '<br>')}</p>`;
     if (imageUrl) {
-        contentHtml += `<img src="${transformGoogleDriveUrl(imageUrl)}" alt="Detalle de ${title}">`;
+        contentHtml += `<img src="${convertirAGoogleThumbnail(imageUrl)}" alt="Detalle de ${title}">`;
     }
 
     panel.innerHTML = `<div class="accordion-content">${contentHtml}</div>`;
@@ -543,23 +543,11 @@ function fileToBase64(file) {
     });
 }
 
-function transformGoogleDriveUrl(url) {
-    if (!url || typeof url !== 'string') {
-        return '';
-    }
-    if (url.includes('thumbnail?id=')) {
-        return url;
-    }
-    const regex = /(?:d\/|id=)([-\w]{25,})/;
-    const match = url.match(regex);
-
-    if (match && match[1]) {
-        const fileId = match[1];
-        return `https://drive.google.com/thumbnail?sz=w1000&id=${fileId}`;
-    }
-
-    console.warn('Could not extract Google Drive ID from URL:', url);
-    return '';
+function convertirAGoogleThumbnail(url){
+  if(!url) return "https://placehold.co/400x300/cccccc/333333?text=Sin+Imagen";
+  let idMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
+  if(idMatch) return `https://drive.google.com/thumbnail?sz=w1000&id=${idMatch[1]}`;
+  return url; // Devuelve la URL original si no encuentra un ID, para enlaces que ya funcionan.
 }
 </script>
 </body>
