@@ -435,20 +435,19 @@
     </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyYoqIwrJL2TiHRpxiOcIM1NeV1oPetUKXLLyRbo-NkaA9N64A-tpiR5zYezugQlU3k/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyWihhs6rPKcctqVji_4DdIBEghI94h6TZprVIt-k6d5qVCka_A09cEfMpJ5zh6BPzV/exec";
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
 
 const state = {
     vehicleInfo: {},
     existingData: null,
     rowIndex: null,
-    files: {}
+    filePromises: {} // Store promises for file conversions
 };
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Basic setup
     init();
 
-    // Event Listeners
     document.getElementById('vehicle-check-form').addEventListener('submit', handlePhase1Submit);
     document.getElementById('add-info-form').addEventListener('submit', handlePhase3Submit);
     document.getElementById('back-to-phase-1').addEventListener('click', () => showPhase(1));
@@ -458,57 +457,58 @@ document.addEventListener('DOMContentLoaded', () => {
         window.location.href = 'index.html';
     });
 
-    // File input listeners
     document.querySelectorAll('input[type=file]').forEach(input => {
-        input.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            const inputId = e.target.id;
-            const previewImg = document.getElementById(`preview-${inputId}`);
-            const fileNameSpan = e.target.closest('.file-input-wrapper').querySelector('.file-name');
-
-            if (file) {
-                // 1. Show file name
-                fileNameSpan.textContent = file.name;
-
-                // 2. Show preview
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    previewImg.src = event.target.result;
-                    previewImg.classList.add('visible');
-                };
-                reader.readAsDataURL(file);
-
-                // 3. Convert to base64 for submission
-                fileToBase64(file).then(base64String => {
-                    state.files[inputId] = {
-                        name: file.name,
-                        mimeType: file.type,
-                        data: base64String.split(',')[1]
-                    };
-                });
-            } else {
-                 // Reset if no file is selected
-                fileNameSpan.textContent = '';
-                previewImg.src = '';
-                previewImg.classList.remove('visible');
-                delete state.files[inputId];
-            }
-        });
+        input.addEventListener('change', (e) => handleFileSelection(e));
     });
 });
 
+function handleFileSelection(e) {
+    const file = e.target.files[0];
+    const inputId = e.target.id;
+    const previewImg = document.getElementById(`preview-${inputId}`);
+    const fileNameSpan = e.target.closest('.file-input-wrapper').querySelector('.file-name');
+
+    // Reset previous file promise for this input
+    delete state.filePromises[inputId];
+    fileNameSpan.textContent = '';
+    previewImg.src = '';
+    previewImg.classList.remove('visible');
+
+    if (file) {
+        if (file.size > MAX_FILE_SIZE) {
+            alert(`El archivo "${file.name}" es demasiado grande. El tamaño máximo es de 5 MB.`);
+            e.target.value = ''; // Clear the invalid file from input
+            return;
+        }
+
+        fileNameSpan.textContent = file.name;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            previewImg.src = event.target.result;
+            previewImg.classList.add('visible');
+        };
+        reader.readAsDataURL(file);
+
+        // Store the promise in the state
+        state.filePromises[inputId] = fileToBase64(file).then(base64String => ({
+            name: file.name,
+            mimeType: file.type,
+            data: base64String.split(',')[1] // Send only the base64 part
+        }));
+    }
+}
+
 function init() {
-    // Display user info
     const userName = localStorage.getItem('userName');
     if (userName) {
         document.getElementById('welcome-message').innerHTML = `Bienvenido,<br>${userName}`;
+        state.colaborador = userName;
     } else {
-        window.location.href = 'index.html'; // Redirect if not logged in
+        window.location.href = 'index.html';
         return;
     }
-    state.colaborador = userName;
 
-    // Fetch dropdowns
     toggleLoading(true);
     fetch(`${SCRIPT_URL}?action=getDropdowns`)
         .then(response => response.json())
@@ -529,24 +529,23 @@ function handlePhase1Submit(e) {
     e.preventDefault();
     toggleLoading(true);
     const formData = new FormData(e.target);
-    const params = new URLSearchParams();
 
     state.vehicleInfo = {};
     for (let [key, value] of formData.entries()) {
-        const inputKey = key.replace(/-/g, ''); // a key like 'tipo-encendido' becomes 'tipoencendido'
-        state.vehicleInfo[inputKey] = value;
-        params.append(inputKey, value);
+        // Correctly camelCase the key: 'tipo-encendido' -> 'tipoEncendido'
+        const normalizedKey = key.replace(/-(\w)/g, (_, c) => c.toUpperCase());
+        state.vehicleInfo[normalizedKey] = value.trim();
     }
 
-    // The key in Apps Script for tipo-encendido is 'tipoEncendido'
-    params.set('tipoEncendido', state.vehicleInfo.tipoencendido);
-    params.delete('tipoencendido');
+    const params = new URLSearchParams({
+        action: 'checkVehicle',
+        ...state.vehicleInfo
+    });
 
-
-    fetch(`${SCRIPT_URL}?action=checkVehicle&${params.toString()}`)
+    fetch(`${SCRIPT_URL}?${params.toString()}`)
         .then(res => res.json())
         .then(res => {
-            if(res.error) throw new Error(res.error);
+            if(res.error) throw new Error(res.details ? `${res.error}: ${res.details.message}` : res.error);
 
             if (res.exists) {
                 state.existingData = res.data;
@@ -556,7 +555,7 @@ function handlePhase1Submit(e) {
             } else {
                 state.existingData = null;
                 state.rowIndex = -1;
-                setupDataEntryPhase(true); // isNewVehicle = true
+                setupDataEntryPhase(true);
                 showPhase(3);
             }
         })
@@ -567,9 +566,26 @@ function handlePhase1Submit(e) {
         .finally(() => toggleLoading(false));
 }
 
-function handlePhase3Submit(e) {
+async function handlePhase3Submit(e) {
     e.preventDefault();
     toggleLoading(true);
+
+    let resolvedFiles = {};
+    try {
+        // Wait for all file conversion promises to resolve
+        const fileEntries = await Promise.all(
+            Object.entries(state.filePromises).map(async ([key, promise]) => {
+                const value = await promise;
+                return [key, value];
+            })
+        );
+        resolvedFiles = Object.fromEntries(fileEntries);
+    } catch (error) {
+        console.error('Error processing file promises:', error);
+        alert('Hubo un error al procesar las imágenes. Por favor, inténtelo de nuevo.');
+        toggleLoading(false);
+        return;
+    }
 
     const additionalInfo = {
         nuevoCorte: {
@@ -584,14 +600,12 @@ function handlePhase3Submit(e) {
     const payload = {
       vehicleInfo: { ...state.vehicleInfo, rowIndex: state.rowIndex, colaborador: state.colaborador },
       additionalInfo,
-      files: state.files
+      files: resolvedFiles
     };
 
     fetch(SCRIPT_URL, {
         method: 'POST',
-        body: JSON.stringify(payload),
-        // By removing the Content-Type header, the browser sends it as text/plain,
-        // which avoids a CORS preflight request that can fail with Google Apps Script.
+        body: JSON.stringify(payload)
     })
     .then(res => res.json())
     .then(data => {
@@ -599,7 +613,7 @@ function handlePhase3Submit(e) {
             alert('¡Éxito! ' + data.message);
             window.location.href = 'index.html';
         } else {
-            throw new Error(data.error);
+            throw new Error(data.details ? `${data.error}: ${data.details.message}`: data.error);
         }
     })
     .catch(error => {
@@ -608,6 +622,7 @@ function handlePhase3Submit(e) {
     })
     .finally(() => toggleLoading(false));
 }
+
 
 function setupVerificationPhase() {
     const data = state.existingData;
@@ -619,9 +634,9 @@ function setupVerificationPhase() {
         <p><strong>Año:</strong> ${data['Año (generacion)'] || 'N/A'}</p>
         <p><strong>Encendido:</strong> ${data['Tipo de encendido'] || 'N/A'}</p>
         <hr>
-        <p><strong>Corte 1:</strong> ${data['Tipo de corte'] ? `${data['Tipo de corte']} - ${data['Descripcion del corte']}` : 'No registrado'}</p>
-        <p><strong>Corte 2:</strong> ${data['Tipo de corte 2'] ? `${data['Tipo de corte 2']} - ${data['Descripción del Segundo corte']}` : 'No registrado'}</p>
-        <p><strong>Corte 3:</strong> ${data['Tipo de corte 3'] ? `${data['Tipo de corte 3']} - ${data['Descripción del corte 3']}` : 'No registrado'}</p>
+        <p><strong>Corte 1:</strong> ${data['Tipo de corte'] && data['Descripcion del corte'] ? `${data['Tipo de corte']} - ${data['Descripcion del corte']}` : 'No registrado'}</p>
+        <p><strong>Corte 2:</strong> ${data['Tipo de corte 2'] && data['Descripción del Segundo corte'] ? `${data['Tipo de corte 2']} - ${data['Descripción del Segundo corte']}` : 'No registrado'}</p>
+        <p><strong>Corte 3:</strong> ${data['Tipo de corte 3'] && data['Descripción del corte 3'] ? `${data['Tipo de corte 3']} - ${data['Descripción del corte 3']}` : 'No registrado'}</p>
         <p><strong>Apertura:</strong> ${data['Apertura'] ? 'Sí' : 'No registrado'}</p>
         <p><strong>Alimentación:</strong> ${data['Cables de Alimentacion'] ? 'Sí' : 'No registrado'}</p>
     `;
@@ -629,13 +644,11 @@ function setupVerificationPhase() {
     const actionsContainer = document.getElementById('verification-actions');
     actionsContainer.innerHTML = ''; // Clear previous buttons
 
-    const hasCorte1 = data['Descripcion del corte'];
-    const hasCorte2 = data['Descripción del Segundo corte'];
-    const hasCorte3 = data['Descripción del corte 3'];
+    const hasAllCuts = data['Descripcion del corte'] && data['Descripción del Segundo corte'] && data['Descripción del corte 3'];
     const hasApertura = data['Apertura'];
     const hasAlimentacion = data['Cables de Alimentacion'];
 
-    if (!hasCorte1 || !hasCorte2 || !hasCorte3) {
+    if (!hasAllCuts) {
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
         btn.textContent = 'Agregar Nuevo Corte';
@@ -672,23 +685,14 @@ function setupDataEntryPhase(isNewVehicle, sectionsToShow = {corte:true, apertur
         img.src = '';
         img.classList.remove('visible');
     });
-    state.files = {};
+    state.filePromises = {};
 
-    if (isNewVehicle) {
-        document.getElementById('phase-3-title').textContent = 'Agregar Nuevo Vehículo';
-        document.getElementById('new-vehicle-photo-group').style.display = 'block';
-        document.getElementById('nuevo-corte-group').style.display = 'block';
-        document.getElementById('apertura-group').style.display = 'block';
-        document.getElementById('alimentacion-group').style.display = 'block';
-    } else {
-        document.getElementById('phase-3-title').textContent = 'Agregar Información Adicional';
-        document.getElementById('new-vehicle-photo-group').style.display = 'none';
+    document.getElementById('phase-3-title').textContent = isNewVehicle ? 'Agregar Nuevo Vehículo' : 'Agregar Información Adicional';
+    document.getElementById('new-vehicle-photo-group').style.display = isNewVehicle ? 'block' : 'none';
 
-        // Show/hide sections based on what the user clicked
-        document.getElementById('nuevo-corte-group').style.display = sectionsToShow.corte ? 'block' : 'none';
-        document.getElementById('apertura-group').style.display = sectionsToShow.apertura ? 'block' : 'none';
-        document.getElementById('alimentacion-group').style.display = sectionsToShow.alimentacion ? 'block' : 'none';
-    }
+    document.getElementById('nuevo-corte-group').style.display = sectionsToShow.corte ? 'block' : 'none';
+    document.getElementById('apertura-group').style.display = sectionsToShow.apertura ? 'block' : 'none';
+    document.getElementById('alimentacion-group').style.display = sectionsToShow.alimentacion ? 'block' : 'none';
 }
 
 

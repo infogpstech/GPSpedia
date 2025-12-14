@@ -54,6 +54,11 @@ function doGet(e) {
 
     if (action === "checkVehicle") {
       const { marca, modelo, anio, tipoEncendido } = e.parameter;
+
+      // --- Robust Validation ---
+      if (!marca || !modelo || !anio || !tipoEncendido) {
+        throw new Error("Parámetros de búsqueda incompletos. Se requiere marca, modelo, año y tipo de encendido.");
+      }
       Logger.log(`Checking vehicle with params: marca=${marca}, modelo=${modelo}, anio=${anio}, tipoEncendido=${tipoEncendido}`);
 
       const data = sheet.getDataRange().getValues();
@@ -159,13 +164,13 @@ function doPost(e) {
     const files = params.files || {};
 
     // Proceed if we have the essential vehicle info.
-    if (!vehicleInfo.marca || !vehicleInfo.modelo || !vehicleInfo.anio) {
-      throw new Error("Información esencial del vehículo (marca, modelo, año) no fue recibida.");
+    if (!vehicleInfo.marca || !vehicleInfo.modelo || !vehicleInfo.anio || !vehicleInfo.categoria || !vehicleInfo.tipoEncendido) {
+      throw new Error("Información esencial del vehículo (categoría, marca, modelo, año, tipoEncendido) está incompleta.");
     }
     const { rowIndex, categoria, marca, modelo, anio, tipoEncendido, colaborador } = vehicleInfo;
     // --- End Defensive Data Handling ---
 
-    Logger.log(`Processing data for: ${marca} ${modelo} ${anio}`);
+    Logger.log(`Processing data for: ${categoria} > ${marca} ${modelo} ${anio}`);
 
     // Step 2: Handle File Uploads
     let fileUrls = {};
