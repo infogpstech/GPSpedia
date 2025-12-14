@@ -152,14 +152,26 @@ function doPost(e) {
       throw new Error(`Invalid JSON format: ${parseError.message}`);
     }
 
-    const { vehicleInfo, additionalInfo, files } = params;
+    // --- Defensive Data Handling ---
+    // Ensure top-level keys exist to prevent destructuring errors.
+    const vehicleInfo = params.vehicleInfo || {};
+    const additionalInfo = params.additionalInfo || {};
+    const files = params.files || {};
+
+    // Proceed if we have the essential vehicle info.
+    if (!vehicleInfo.marca || !vehicleInfo.modelo || !vehicleInfo.anio) {
+      throw new Error("Información esencial del vehículo (marca, modelo, año) no fue recibida.");
+    }
     const { rowIndex, categoria, marca, modelo, anio, tipoEncendido, colaborador } = vehicleInfo;
+    // --- End Defensive Data Handling ---
+
     Logger.log(`Processing data for: ${marca} ${modelo} ${anio}`);
 
     // Step 2: Handle File Uploads
     let fileUrls = {};
     try {
-      if (files && Object.keys(files).length > 0) {
+      // Only proceed if files object is not empty
+      if (Object.keys(files).length > 0) {
           Logger.log("Starting file uploads.");
           const parentFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
           const categoriaFolder = getOrCreateFolder(parentFolder, categoria);
@@ -169,6 +181,7 @@ function doPost(e) {
 
           for (const fieldName in files) {
               const file = files[fieldName];
+              // Double-check file and data property exist before processing
               if(file && file.data) {
                 const fileName = `${marca}_${modelo}_${anio}_${fieldName}`;
                 Logger.log(`Uploading file for field: ${fieldName} with name: ${fileName}`);
@@ -176,6 +189,8 @@ function doPost(e) {
               }
           }
           Logger.log("File uploads completed.");
+      } else {
+        Logger.log("No files to upload.");
       }
     } catch (fileError) {
        Logger.log(`Error during file upload: ${fileError.message}`);
