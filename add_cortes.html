@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agregar Nuevo Corte - GPS Lock</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="images/icons/icon-v2-192x192.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#2c3e50">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2c3e50;
+            --background-color: #ecf0f1;
+            --card-background: #ffffff;
+            --text-color: #34495e;
+            --light-gray: #bdc3c7;
+            --success-color: #2ecc71;
+            --error-color: #e74c3c;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overscroll-behavior-y: contain;
+        }
+
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        header .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        header .logo-container img {
+            height: 40px;
+        }
+
+        header .logo-container h1 {
+            margin: 0;
+            font-size: 1.5em;
+        }
+
+        .user-info {
+            font-size: 0.9em;
+            text-align: right;
+        }
+
+        main {
+            flex-grow: 1;
+            padding: 20px;
+        }
+
+        .form-container {
+            background-color: var(--card-background);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        .form-phase {
+            display: none;
+        }
+        .form-phase.active {
+            display: block;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h2 {
+            text-align: center;
+            color: var(--secondary-color);
+            margin-bottom: 25px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            box-sizing: border-box;
+            font-size: 1em;
+            transition: border-color 0.3s;
+            color: var(--text-color);
+        }
+
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 5px rgba(52, 152, 219, 0.5);
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            transition: all 0.3s;
+            flex-grow: 1;
+        }
+
+        .btn-primary {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2980b9;
+        }
+
+        .btn-secondary {
+            background-color: #f1f1f1;
+            color: var(--text-color);
+            border: 1px solid var(--light-gray);
+        }
+        .btn-secondary:hover {
+            background-color: #e5e5e5;
+        }
+
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s;
+        }
+        #loading-overlay.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .spinner {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Verification Phase Specific Styles */
+        .verification-info {
+            border-left: 4px solid var(--primary-color);
+            padding-left: 15px;
+            margin-bottom: 25px;
+        }
+        .verification-info p {
+            margin: 8px 0;
+        }
+        .verification-info strong {
+            color: var(--secondary-color);
+        }
+
+        /* Custom file input */
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+            width: 100%;
+            border: 1px solid var(--light-gray);
+            border-radius: 8px;
+            padding: 12px;
+            background-color: #f9f9f9;
+            text-align: center;
+            cursor: pointer;
+        }
+        .file-input-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+        .file-input-wrapper .file-input-label {
+            color: var(--text-color);
+        }
+        .file-input-wrapper .file-name {
+            display: block;
+            margin-top: 8px;
+            font-style: italic;
+            color: var(--primary-color);
+            font-size: 0.9em;
+        }
+
+        footer {
+            background-color: var(--secondary-color);
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+        }
+        .footer-logo {
+            margin-bottom: 10px;
+        }
+        .footer-logo img {
+            height: 40px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+    </div>
+
+    <div class="app-container">
+        <header>
+            <div class="logo-container">
+                <a href="index.html"><img src="images/icons/icon-v2-192x192.png" alt="Logo"></a>
+                <h1>Agregar Nuevo</h1>
+            </div>
+            <div id="user-info" class="user-info"></div>
+        </header>
+
+        <main>
+            <div class="form-container">
+                <!-- FASE 1: INFORMACIÓN DEL VEHÍCULO -->
+                <div id="phase-1" class="form-phase active">
+                    <h2>Información del Vehículo</h2>
+                    <form id="vehicle-check-form">
+                        <div class="form-group">
+                            <label for="categoria">Categoría</label>
+                            <select id="categoria" name="categoria" required></select>
+                        </div>
+                        <div class="form-group">
+                            <label for="marca">Marca</label>
+                            <input type="text" id="marca" name="marca" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="modelo">Modelo</label>
+                            <input type="text" id="modelo" name="modelo" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="anio">Año (Generación)</label>
+                            <input type="text" id="anio" name="anio" placeholder="Ej: 2015 o 2015-2018" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="tipo-encendido">Tipo de Encendido</label>
+                            <select id="tipo-encendido" name="tipo-encendido" required></select>
+                        </div>
+                        <div class="form-actions">
+                           <button type="button" onclick="window.location.href='index.html'" class="btn btn-secondary">Cancelar</button>
+                           <button type="submit" class="btn btn-primary">Continuar</button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- FASE 2: VERIFICACIÓN -->
+                <div id="phase-2" class="form-phase">
+                    <h2>Vehículo Encontrado</h2>
+                    <div id="verification-data" class="verification-info"></div>
+                    <p>El vehículo ya existe en la base de datos. ¿Qué deseas hacer?</p>
+                    <div id="verification-actions" class="form-actions" style="flex-direction: column;">
+                         <!-- Buttons are added dynamically here -->
+                    </div>
+                </div>
+
+                <!-- FASE 3: AGREGAR INFORMACIÓN -->
+                <div id="phase-3" class="form-phase">
+                    <h2 id="phase-3-title">Agregar Nuevo Vehículo</h2>
+                    <form id="add-info-form">
+                        <div id="new-vehicle-photo-group" class="form-group" style="display: none;">
+                            <label for="imagenVehiculo">Foto del Vehículo</label>
+                            <div class="file-input-wrapper">
+                                <span class="file-input-label">Seleccionar imagen...</span>
+                                <input type="file" id="imagenVehiculo" name="imagenVehiculo" accept="image/*">
+                                <span class="file-name"></span>
+                            </div>
+                        </div>
+
+                        <div id="nuevo-corte-group">
+                           <h3>Nuevo Corte</h3>
+                           <div class="form-group">
+                               <label for="tipo-corte">Tipo de Corte</label>
+                               <select id="tipo-corte" name="tipo-corte"></select>
+                           </div>
+                           <div class="form-group">
+                               <label for="descripcion-corte">Descripción del Corte</label>
+                               <textarea id="descripcion-corte" name="descripcion-corte" placeholder="Color del cable, ubicación..."></textarea>
+                           </div>
+                           <div class="form-group">
+                               <label for="imagenCorte">Foto del Corte</label>
+                               <div class="file-input-wrapper">
+                                   <span class="file-input-label">Seleccionar imagen...</span>
+                                   <input type="file" id="imagenCorte" name="imagenCorte" accept="image/*">
+                                   <span class="file-name"></span>
+                               </div>
+                           </div>
+                        </div>
+
+                        <div id="apertura-group">
+                            <h3>Apertura de Puertas</h3>
+                            <div class="form-group">
+                                <label for="apertura-desc">Descripción</label>
+                                <textarea id="apertura-desc" name="apertura-desc" placeholder="Color del cable, ubicación..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="imagenApertura">Foto de Apertura</label>
+                                <div class="file-input-wrapper">
+                                    <span class="file-input-label">Seleccionar imagen...</span>
+                                    <input type="file" id="imagenApertura" name="imagenApertura" accept="image/*">
+                                    <span class="file-name"></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="alimentacion-group">
+                             <h3>Cables de Alimentación</h3>
+                             <div class="form-group">
+                                <label for="alimentacion-desc">Descripción</label>
+                                <textarea id="alimentacion-desc" name="alimentacion-desc" placeholder="Colores de cables 12v, GND, IGN, ubicación..."></textarea>
+                            </div>
+                             <div class="form-group">
+                               <label for="imagenAlimentacion">Foto de Alimentación</label>
+                               <div class="file-input-wrapper">
+                                   <span class="file-input-label">Seleccionar imagen...</span>
+                                   <input type="file" id="imagenAlimentacion" name="imagenAlimentacion" accept="image/*">
+                                   <span class="file-name"></span>
+                               </div>
+                           </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="notas">Notas Adicionales</label>
+                            <textarea id="notas" name="notas"></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="button" id="back-to-phase-1" class="btn btn-secondary">Atrás</button>
+                            <button type="submit" class="btn btn-primary">Guardar Registro</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-logo">
+                <img src="images/icons/icon-v2-192x192.png" alt="Logo GPS Lock">
+            </div>
+            <p>&copy; 2024 GPS Lock. Todos los derechos reservados.</p>
+        </footer>
+    </div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwk_LdG9N7yxJfT8bw36GpKf7OqrP8HGAQoWbVCVsRMwuT9dG1avOTJQMDvILXMPqU/exec";
+
+const state = {
+    vehicleInfo: {},
+    existingData: null,
+    rowIndex: null,
+    files: {}
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Basic setup
+    init();
+
+    // Event Listeners
+    document.getElementById('vehicle-check-form').addEventListener('submit', handlePhase1Submit);
+    document.getElementById('add-info-form').addEventListener('submit', handlePhase3Submit);
+    document.getElementById('back-to-phase-1').addEventListener('click', () => showPhase(1));
+
+    // File input listeners
+    document.querySelectorAll('input[type=file]').forEach(input => {
+        input.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const fileNameSpan = e.target.nextElementSibling;
+                fileNameSpan.textContent = file.name;
+
+                fileToBase64(file).then(base64String => {
+                    state.files[e.target.id] = {
+                        name: file.name,
+                        mimeType: file.type,
+                        data: base64String.split(',')[1]
+                    };
+                });
+            }
+        });
+    });
+});
+
+function init() {
+    // Display user info
+    const userName = localStorage.getItem('userName');
+    if (userName) {
+        document.getElementById('user-info').innerHTML = `Bienvenido,<br>${userName}`;
+    } else {
+        window.location.href = 'index.html'; // Redirect if not logged in
+        return;
+    }
+    state.colaborador = userName;
+
+    // Fetch dropdowns
+    toggleLoading(true);
+    fetch(`${SCRIPT_URL}?action=getDropdowns`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.error) throw new Error(data.error);
+            populateSelect('categoria', data.categoria);
+            populateSelect('tipo-encendido', data['tipo-encendido']);
+            populateSelect('tipo-corte', data['tipo-corte']);
+        })
+        .catch(error => {
+            console.error('Error fetching dropdowns:', error);
+            alert('No se pudieron cargar las opciones del formulario. Inténtalo de nuevo.');
+        })
+        .finally(() => toggleLoading(false));
+}
+
+function handlePhase1Submit(e) {
+    e.preventDefault();
+    toggleLoading(true);
+    const formData = new FormData(e.target);
+    const params = new URLSearchParams();
+
+    state.vehicleInfo = {};
+    for (let [key, value] of formData.entries()) {
+        const inputKey = key.replace(/-/g, ''); // a key like 'tipo-encendido' becomes 'tipoencendido'
+        state.vehicleInfo[inputKey] = value;
+        params.append(inputKey, value);
+    }
+
+    // The key in Apps Script for tipo-encendido is 'tipoEncendido'
+    params.set('tipoEncendido', state.vehicleInfo.tipoencendido);
+    params.delete('tipoencendido');
+
+
+    fetch(`${SCRIPT_URL}?action=checkVehicle&${params.toString()}`)
+        .then(res => res.json())
+        .then(res => {
+            if(res.error) throw new Error(res.error);
+
+            if (res.exists) {
+                state.existingData = res.data;
+                state.rowIndex = res.rowIndex;
+                setupVerificationPhase();
+                showPhase(2);
+            } else {
+                state.existingData = null;
+                state.rowIndex = -1;
+                setupDataEntryPhase(true); // isNewVehicle = true
+                showPhase(3);
+            }
+        })
+        .catch(error => {
+            console.error('Error checking vehicle:', error);
+            alert('Error al verificar el vehículo: ' + error.message);
+        })
+        .finally(() => toggleLoading(false));
+}
+
+function handlePhase3Submit(e) {
+    e.preventDefault();
+    toggleLoading(true);
+
+    const additionalInfo = {
+        nuevoCorte: {
+            tipo: document.getElementById('tipo-corte').value,
+            descripcion: document.getElementById('descripcion-corte').value
+        },
+        apertura: document.getElementById('apertura-desc').value,
+        alimentacion: document.getElementById('alimentacion-desc').value,
+        notas: document.getElementById('notas').value
+    };
+
+    const payload = {
+      vehicleInfo: { ...state.vehicleInfo, rowIndex: state.rowIndex, colaborador: state.colaborador },
+      additionalInfo,
+      files: state.files
+    };
+
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify(payload),
+        headers: {
+            'Content-Type': 'application/json'
+        }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success) {
+            alert('¡Éxito! ' + data.message);
+            window.location.href = 'index.html';
+        } else {
+            throw new Error(data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error submitting form:', error);
+        alert('Error al guardar el registro: ' + error.message);
+    })
+    .finally(() => toggleLoading(false));
+}
+
+function setupVerificationPhase() {
+    const data = state.existingData;
+    const container = document.getElementById('verification-data');
+    container.innerHTML = `
+        <p><strong>Categoría:</strong> ${data['Categoria'] || 'N/A'}</p>
+        <p><strong>Marca:</strong> ${data['Marca'] || 'N/A'}</p>
+        <p><strong>Modelo:</strong> ${data['Modelo'] || 'N/A'}</p>
+        <p><strong>Año:</strong> ${data['Año (generacion)'] || 'N/A'}</p>
+        <p><strong>Encendido:</strong> ${data['Tipo de encendido'] || 'N/A'}</p>
+        <hr>
+        <p><strong>Corte 1:</strong> ${data['Tipo de corte'] ? `${data['Tipo de corte']} - ${data['Descripcion del corte']}` : 'No registrado'}</p>
+        <p><strong>Corte 2:</strong> ${data['Tipo de corte 2'] ? `${data['Tipo de corte 2']} - ${data['Descripción del Segundo corte']}` : 'No registrado'}</p>
+        <p><strong>Corte 3:</strong> ${data['Tipo de corte 3'] ? `${data['Tipo de corte 3']} - ${data['Descripción del corte 3']}` : 'No registrado'}</p>
+        <p><strong>Apertura:</strong> ${data['Apertura'] ? 'Sí' : 'No registrado'}</p>
+        <p><strong>Alimentación:</strong> ${data['Cables de Alimentacion'] ? 'Sí' : 'No registrado'}</p>
+    `;
+
+    const actionsContainer = document.getElementById('verification-actions');
+    actionsContainer.innerHTML = ''; // Clear previous buttons
+
+    const hasCorte1 = data['Descripcion del corte'];
+    const hasCorte2 = data['Descripción del Segundo corte'];
+    const hasCorte3 = data['Descripción del corte 3'];
+    const hasApertura = data['Apertura'];
+    const hasAlimentacion = data['Cables de Alimentacion'];
+
+    if (!hasCorte1 || !hasCorte2 || !hasCorte3) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-primary';
+        btn.textContent = 'Agregar Nuevo Corte';
+        btn.onclick = () => {
+            setupDataEntryPhase(false, { corte: true, apertura: false, alimentacion: false, notas: false });
+            showPhase(3);
+        };
+        actionsContainer.appendChild(btn);
+    }
+
+    if (!hasApertura || !hasAlimentacion) {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-primary';
+        btn.textContent = 'Agregar Info Adicional (Apertura/Alimentación)';
+        btn.onclick = () => {
+             setupDataEntryPhase(false, { corte: false, apertura: !hasApertura, alimentacion: !hasAlimentacion, notas: true });
+             showPhase(3);
+        };
+        actionsContainer.appendChild(btn);
+    }
+
+    const cancelBtn = document.createElement('button');
+    cancelBtn.className = 'btn btn-secondary';
+    cancelBtn.textContent = 'Cancelar / Es un Duplicado';
+    cancelBtn.onclick = () => window.location.reload();
+    actionsContainer.appendChild(cancelBtn);
+}
+
+
+function setupDataEntryPhase(isNewVehicle, sectionsToShow = {corte:true, apertura:true, alimentacion:true, notas:true}) {
+    document.getElementById('add-info-form').reset();
+    document.querySelectorAll('.file-name').forEach(span => span.textContent = '');
+    state.files = {};
+
+    if (isNewVehicle) {
+        document.getElementById('phase-3-title').textContent = 'Agregar Nuevo Vehículo';
+        document.getElementById('new-vehicle-photo-group').style.display = 'block';
+        document.getElementById('nuevo-corte-group').style.display = 'block';
+        document.getElementById('apertura-group').style.display = 'block';
+        document.getElementById('alimentacion-group').style.display = 'block';
+    } else {
+        document.getElementById('phase-3-title').textContent = 'Agregar Información Adicional';
+        document.getElementById('new-vehicle-photo-group').style.display = 'none';
+
+        // Show/hide sections based on what the user clicked
+        document.getElementById('nuevo-corte-group').style.display = sectionsToShow.corte ? 'block' : 'none';
+        document.getElementById('apertura-group').style.display = sectionsToShow.apertura ? 'block' : 'none';
+        document.getElementById('alimentacion-group').style.display = sectionsToShow.alimentacion ? 'block' : 'none';
+    }
+}
+
+
+// --- Helper Functions ---
+function showPhase(phaseNumber) {
+    document.querySelectorAll('.form-phase').forEach(phase => {
+        phase.classList.remove('active');
+    });
+    document.getElementById(`phase-${phaseNumber}`).classList.add('active');
+}
+
+function toggleLoading(show) {
+    const overlay = document.getElementById('loading-overlay');
+    overlay.classList.toggle('visible', show);
+}
+
+function populateSelect(id, options) {
+    const select = document.getElementById(id);
+    if (!select || !Array.isArray(options)) return;
+    select.innerHTML = '<option value="">Seleccione una opción...</option>';
+    options.forEach(option => {
+        if(option) {
+            const opt = document.createElement('option');
+            opt.value = option;
+            opt.textContent = option;
+            select.appendChild(opt);
+        }
+    });
+}
+
+function fileToBase64(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = error => reject(error);
+    });
+}
+</script>
+</body>
+</html>

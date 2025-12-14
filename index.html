@@ -248,13 +248,15 @@ body.search-active .app-logo {
     justify-content: center;
     margin-bottom: 20px;
     transition: all 0.35s ease-in-out;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 .section-btn {
     background-color: #f0f0f0;
     border: 1px solid #ccc;
     border-radius: 8px;
     padding: 10px 20px;
-    margin: 0 5px;
+    margin: 0;
     cursor: pointer;
     font-size: 1em;
     transition: background-color 0.3s, color 0.3s;
@@ -684,6 +686,7 @@ body.search-active .app-logo {
       <button id="btn-cortes" class="section-btn active" onclick="mostrarSeccion('cortes')">Cortes</button>
       <button id="btn-tutoriales" class="section-btn" onclick="mostrarSeccion('tutoriales')">Tutoriales</button>
       <button id="btn-relay" class="section-btn" onclick="mostrarSeccion('relay')">Relay</button>
+      <button id="btn-add" class="section-btn" style="background-color: #28a745; color: white;" onclick="window.location.href='add_cortes.html'">Agregar Nuevo</button>
   </div>
 
   <div id="contenido" class="content-section"></div>
