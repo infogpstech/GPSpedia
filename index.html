@@ -848,6 +848,7 @@ async function checkSession() {
 
         if (currentUser) {
             // Las credenciales son válidas, la sesión continúa
+            localStorage.setItem('userName', user.Nombre); // <-- AÑADIDO
             hideLoginShowApp();
             document.getElementById('welcome-message').textContent = `Bienvenido, ${user.Nombre}`;
             document.getElementById('welcome-message').style.display = 'block';
@@ -888,6 +889,7 @@ function login(username, password) {
 
         localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
         localStorage.setItem(SESSION_ID_KEY, sessionId); // Almacena el ID de la sesión actual
+        localStorage.setItem('userName', sessionData.user.Nombre); // <-- AÑADIDO
 
         // Simular notificación a otras pestañas
         localStorage.setItem('session_update', Date.now());
@@ -908,6 +910,7 @@ function login(username, password) {
 function logout(reason = null) {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_ID_KEY);
+    localStorage.removeItem('userName'); // <-- AÑADIDO
 
     showLoginHideApp(reason);
 }
