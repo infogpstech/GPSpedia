@@ -313,7 +313,6 @@ function handleUserActions(payload) {
     case 'createUser': return createUser(sheet, allUsers, headers, data, actor);
     case 'updateUser': return updateUser(sheet, allUsers, headers, data, actor);
     case 'deleteUser': return deleteUser(sheet, allUsers, headers, data.username, actor);
-    case 'changePassword': return changePassword(sheet, allUsers, headers, data);
     default: return createJsonResponse({ status: 'error', message: 'Acción de usuario no válida.' });
   }
 }
@@ -348,9 +347,63 @@ function createUser(sheet, allUsers, headers, newUser, actor) {
   return createJsonResponse({ status: 'success', message: 'Usuario creado exitosamente.', username: username });
 }
 
+function hasPermission(actor, action, targetUser) {
+  const actorRole = actor.Privilegios;
+  const targetRole = targetUser[getHeaderIndices(SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(USERS_SHEET_NAME).getDataRange().getValues()[0])['Privilegios']];
+
+  const roleHierarchy = {
+    'Desarrollador': 4,
+    'Gefe': 3,
+    'Supervisor': 2,
+    'Técnico': 1,
+    'Tecnico_Exterior': 0
+  };
+
+  const actorLevel = roleHierarchy[actorRole];
+  const targetLevel = roleHierarchy[targetRole];
+
+  if (actorRole === 'Desarrollador') return true;
+
+  if (actorRole === 'Gefe') {
+    if (targetRole === 'Tecnico_Exterior' || actorLevel <= targetLevel) return false; // Gefes cannot edit other Gefes
+    return true;
+  }
+
+  if (actorRole === 'Supervisor') {
+     if (targetRole === 'Tecnico_Exterior' || actorLevel <= targetLevel) return false; // Supervisors cannot edit other Supervisors
+    return true;
+  }
+
+  // Technicians can only edit themselves (validated differently)
+  return false;
+}
+
+
 function updateUser(sheet, allUsers, headers, userData, actor) {
   const rowIndex = allUsers.findIndex(row => row[headers['Nombre_Usuario']] === userData.originalUsername);
   if (rowIndex === -1) return createJsonResponse({ status: 'error', message: 'Usuario no encontrado.' });
+
+  const targetUser = allUsers[rowIndex];
+
+  // Self-edit case for technicians
+  if (actor.Nombre_Usuario === userData.originalUsername) {
+     const sheetRowIndex = rowIndex + 1;
+     // Allow updating specific fields
+     sheet.getRange(sheetRowIndex, headers['Telefono'] + 1).setValue(userData.telefono);
+     sheet.getRange(sheetRowIndex, headers['Correo_Electronico'] + 1).setValue(userData.correo);
+     if (userData.password && userData.currentPassword) {
+         if(targetUser[headers['Password']] !== userData.currentPassword) {
+            return createJsonResponse({ status: 'error', message: 'La contraseña actual es incorrecta.' });
+         }
+         sheet.getRange(sheetRowIndex, headers['Password'] + 1).setValue(userData.password);
+     }
+     return createJsonResponse({ status: 'success', message: 'Tu perfil ha sido actualizado.' });
+  }
+
+  // Admin/Supervisor edit case
+  if (!hasPermission(actor, 'update', targetUser)) {
+    return createJsonResponse({ status: 'error', message: 'No tienes permiso para editar este usuario.' });
+  }
 
   const sheetRowIndex = rowIndex + 1;
   sheet.getRange(sheetRowIndex, headers['Nombre_Usuario'] + 1).setValue(userData.nombreUsuario);
@@ -367,20 +420,14 @@ function updateUser(sheet, allUsers, headers, userData, actor) {
 function deleteUser(sheet, allUsers, headers, username, actor) {
   const rowIndex = allUsers.findIndex(row => row[headers['Nombre_Usuario']] === username);
   if (rowIndex === -1) return createJsonResponse({ status: 'error', message: 'Usuario no encontrado.' });
+
+  const targetUser = allUsers[rowIndex];
+  if (!hasPermission(actor, 'delete', targetUser)) {
+    return createJsonResponse({ status: 'error', message: 'No tienes permiso para eliminar este usuario.' });
+  }
+
   sheet.deleteRow(rowIndex + 1);
   return createJsonResponse({ status: 'success', message: 'Usuario eliminado exitosamente.' });
-}
-
-function changePassword(sheet, allUsers, headers, passwordData) {
-  const { username, oldPassword, newPassword } = passwordData;
-  const rowIndex = allUsers.findIndex(row => row[headers['Nombre_Usuario']] === username);
-  if (rowIndex === -1) return createJsonResponse({ status: 'error', message: 'Usuario no encontrado.' });
-
-  if (allUsers[rowIndex][headers['Password']] !== oldPassword) {
-    return createJsonResponse({ status: 'error', message: 'La contraseña actual es incorrecta.' });
-  }
-  sheet.getRange(rowIndex + 1, headers['Password'] + 1).setValue(newPassword);
-  return createJsonResponse({ status: 'success', message: 'Contraseña cambiada exitosamente.' });
 }
 
 

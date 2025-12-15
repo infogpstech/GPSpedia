@@ -249,66 +249,78 @@ body.search-active .app-logo {
 }
 
 /* --- ESTILOS DEL MENÚ HAMBURGUESA Y SIDENAV --- */
-.hamburger-btn {
+#hamburger-btn {
     position: absolute;
-    right: -50px;
+    right: 8px;
     top: 50%;
     transform: translateY(-50%);
-    background: #007bff;
+    background: #3498db; /* Azul aquamarina */
     color: white;
     border: none;
-    border-radius: 8px;
-    width: 40px;
-    height: 40px;
-    font-size: 20px;
+    border-radius: 6px;
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
     cursor: pointer;
     transition: background-color 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
-.hamburger-btn:hover {
-    background-color: #0056b3;
+#hamburger-btn:hover {
+    background-color: #2980b9;
 }
+
 .sidenav {
-    height: 100%;
-    width: 0;
+    height: calc(100% - 70px); /* Altura total menos el header (aprox) */
+    width: 280px; /* Ancho fijo */
     position: fixed;
     z-index: 2000;
-    top: 0;
+    top: 70px; /* Se despliega desde debajo del header */
     right: 0;
-    background-color: #f9f9f9;
+    background-color: #f8f9fa;
     overflow-x: hidden;
-    transition: 0.5s;
-    padding-top: 60px;
+    transition: transform 0.3s ease-in-out;
+    transform: translateX(100%); /* Inicia oculto a la derecha */
     box-shadow: -5px 0 15px rgba(0,0,0,0.1);
     display: flex;
     flex-direction: column;
-    gap: 15px; /* Espacio entre botones */
-    align-items: center; /* Centra los botones horizontalmente */
+    gap: 10px;
+    padding: 20px;
+    box-sizing: border-box;
 }
+.sidenav.open {
+    transform: translateX(0);
+}
+
 .sidenav .close-btn {
-    position: absolute;
-    top: 15px;
-    right: 25px;
-    font-size: 36px;
-    text-decoration: none;
-    color: #818181;
+    display: none; /* El cierre es automático o con clic fuera */
 }
+
 .sidenav .section-btn, .sidenav a.section-btn {
-    padding: 15px 25px;
+    padding: 10px 15px;
     text-decoration: none;
-    font-size: 18px;
-    color: #333;
+    font-size: 16px; /* Tamaño de letra unificado */
+    color: #34495e; /* Texto oscuro */
     display: block;
-    transition: 0.3s;
-    width: 80%; /* Ancho de los botones */
-    text-align: center;
-    border-radius: 8px;
-    border: 1px solid #ddd;
+    transition: background-color 0.3s, color 0.3s;
+    width: 100%;
+    text-align: left;
+    border-radius: 6px;
+    border: 1px solid #dee2e6;
     background-color: #fff;
+    font-weight: 500;
 }
 .sidenav .section-btn:hover {
-    background-color: #f1f1f1;
-    color: #007bff;
+    background-color: #e9ecef;
+    color: #0056b3;
 }
+/* Colores específicos para botones especiales */
+#btn-add { background-color: #28a745; color: white !important; border-color: #28a745;}
+#btn-add:hover { background-color: #218838; }
+#account-management-link { background-color: #3182ce; color: white !important; border-color: #3182ce;}
+#account-management-link:hover { background-color: #2c71b8; }
+
 
 .section-btn {
     background-color: #f0f0f0;
@@ -461,6 +473,12 @@ body.search-active .app-logo {
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     text-align: center;
     color: #f0f0f0;
+}
+#login-modal .app-logo {
+    max-width: 96px; /* Mismo tamaño que en el header */
+    height: auto;
+    border-radius: 8px;
+    margin-bottom: 20px;
 }
 
 #login-modal h2 {
@@ -619,6 +637,40 @@ body.search-active .app-logo {
     border-bottom: 1px solid #eee;
 }
 
+/* --- Estilos de Feedback y Colaborador --- */
+.feedback-btn {
+    background-color: #f0f2f5;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 12px;
+    font-size: 14px;
+    font-weight: bold;
+    color: #65676b;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.feedback-btn:hover {
+    background-color: #e4e6e9;
+}
+.feedback-btn.report {
+    color: #e74c3c;
+}
+.feedback-btn .fas {
+    font-size: 16px;
+}
+.colaborador-box {
+    margin-top: 20px;
+    padding: 10px 15px;
+    background-color: #f0f8ff; /* Azul muy claro */
+    border-radius: 8px;
+    font-size: 0.9em;
+    text-align: right;
+    color: #555;
+}
+
 /* Lightbox */
 .lightbox {
     position: fixed;
@@ -704,7 +756,7 @@ body.search-active .app-logo {
 <!-- Login Modal -->
 <div id="login-modal" style="display: none;">
     <div class="modal-content">
-        <img src="icon-v3-512x512.png" alt="Logo de GPSpedia" style="max-width: 120px; margin-bottom: 20px;">
+        <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
         <h2>Iniciar Sesión</h2>
         <form id="login-form">
             <div class="form-group">
@@ -739,11 +791,10 @@ body.search-active .app-logo {
   <div class="search-container">
       <input type="text" id="searchInput" placeholder="Buscar Corte..." oninput="filtrarContenido(this.value)">
       <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
-      <button id="hamburger-btn" class="hamburger-btn"><i class="fas fa-bars"></i></button>
+      <button id="hamburger-btn"><i class="fas fa-bars"></i></button>
   </div>
 
   <div id="sidenav" class="sidenav">
-      <a href="javascript:void(0)" class="close-btn" id="close-sidenav-btn">&times;</a>
       <button id="btn-cortes" class="section-btn active" onclick="mostrarSeccion('cortes')">Cortes</button>
       <button id="btn-tutoriales" class="section-btn" onclick="mostrarSeccion('tutoriales')">Tutoriales</button>
       <button id="btn-relay" class="section-btn" onclick="mostrarSeccion('relay')">Relay</button>
@@ -889,21 +940,19 @@ async function fetchUsers() {
 }
 
 async function checkSession() {
+    console.log("Verificando sesión...");
     const session = localStorage.getItem(SESSION_KEY);
     if (session) {
+        console.log("Sesión encontrada en localStorage.");
         const { user, sessionId } = JSON.parse(session);
-        const expectedSessionId = localStorage.getItem(SESSION_ID_KEY);
-
-        if (sessionId !== expectedSessionId) {
-            logout("Se ha iniciado una nueva sesión en otro dispositivo o navegador.");
-            return;
-        }
 
         // Re-verificar credenciales con los datos de usuario más recientes
         if (userData.length === 0) {
-            await fetchUsers(); // Asegurarse de que los datos de usuario están cargados
+            console.log("userData está vacío, llamando a fetchUsers de nuevo.");
+            await fetchUsers();
         }
 
+        console.log(`Buscando usuario: ${user.Nombre_Usuario}`);
         const header = userData[0];
         const users = userData.slice(1);
         const currentUser = users.find(u =>
@@ -911,9 +960,9 @@ async function checkSession() {
         );
 
         if (currentUser) {
+            console.log("Usuario verificado exitosamente. Mostrando la aplicación.");
             const userPrivileges = user.Privilegios;
-            // Mostrar enlace de gestión de cuentas si el rol es apropiado
-            if (['Supervisor', 'Gefe', 'Desarrollador'].includes(userPrivileges)) {
+            if (['Supervisor', 'Gefe', 'Desarrollador', 'Técnico', 'Tecnico_Exterior'].includes(userPrivileges)) {
                 document.getElementById('account-management-link').style.display = 'block';
             }
 
@@ -1317,7 +1366,7 @@ function pushState(state) {
     history.pushState(state, '');
 }
 
-function crearBotonCompartir(seccion, id, titulo) {
+function crearBotonCompartir(seccion, ID, titulo) {
     const shareBtn = document.createElement("button");
     shareBtn.textContent = "Compartir";
     shareBtn.className = "shareBtn"; // Agregamos una clase para identificarlo
@@ -1376,7 +1425,7 @@ function mostrarDetalleTutorial(fila) {
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;"; // Reset margin
     headerDiv.appendChild(closeBtn);
 
-    const shareBtn = crearBotonCompartir('tutoriales', fila.id, fila.tema);
+    const shareBtn = crearBotonCompartir('tutoriales', fila.ID, fila.tema);
     headerDiv.appendChild(shareBtn);
 
     cont.appendChild(headerDiv);
@@ -1419,7 +1468,7 @@ function mostrarDetalleRelay(fila) {
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
 
-    const shareBtn = crearBotonCompartir('relay', fila.id, fila.configuracion);
+    const shareBtn = crearBotonCompartir('relay', fila.ID, fila.configuracion);
     headerDiv.appendChild(shareBtn);
 
     cont.appendChild(headerDiv);
@@ -1540,7 +1589,7 @@ function mostrarDetalleModal(fila) {
     headerDiv.appendChild(closeBtn);
 
     const titulo = `${fila.modelo} ${fila.anioGeneracion || ''}`;
-    const shareBtn = crearBotonCompartir('cortes', fila.id, titulo);
+    const shareBtn = crearBotonCompartir('cortes', fila.ID, titulo);
     headerDiv.appendChild(shareBtn);
 
     cont.appendChild(headerDiv);
@@ -1639,15 +1688,7 @@ function mostrarDetalleModal(fila) {
     // --- Sección del Colaborador ---
     if (fila.colaborador) {
         const colaboradorDiv = document.createElement('div');
-        colaboradorDiv.style.cssText = `
-            margin-top: 25px;
-            padding: 8px 12px;
-            background-color: rgba(0, 123, 255, 0.1);
-            border-left: 4px solid #007bff;
-            border-radius: 4px;
-            font-size: 0.9em;
-            text-align: right;
-        `;
+        colaboradorDiv.className = 'colaborador-box';
         colaboradorDiv.innerHTML = `Agregado por: <strong>${fila.colaborador.replace(/<br>/g, ', ')}</strong>`;
         cont.appendChild(colaboradorDiv);
     }
@@ -1662,11 +1703,13 @@ function mostrarDetalleModal(fila) {
 
     const utilBtn = document.createElement('button');
     utilBtn.innerHTML = `<i class="fas fa-thumbs-up"></i> Útil <span id="util-count">(...)</span>`;
-    utilBtn.onclick = () => handleAddLike(fila.id);
+    utilBtn.className = 'feedback-btn';
+    utilBtn.onclick = () => handleAddLike(fila.ID);
 
     const reportarBtn = document.createElement('button');
-    reportarBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Reportar Problema`;
-    reportarBtn.onclick = () => handleReportProblem(fila.id);
+    reportarBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Reportar`;
+    reportarBtn.className = 'feedback-btn report';
+    reportarBtn.onclick = () => handleReportProblem(fila.ID);
 
     feedbackActions.appendChild(utilBtn);
     feedbackActions.appendChild(reportarBtn);
@@ -2128,18 +2171,29 @@ installButton.addEventListener('click', async () => {
 });
 
 // --- LÓGICA DEL MENÚ HAMBURGUESA ---
-document.getElementById('hamburger-btn').addEventListener('click', () => {
-    document.getElementById('sidenav').style.width = '250px';
+const sidenav = document.getElementById('sidenav');
+const hamburgerBtn = document.getElementById('hamburger-btn');
+
+function toggleSidenav(open) {
+    sidenav.classList.toggle('open', open);
+}
+
+hamburgerBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Evita que el clic se propague al body
+    toggleSidenav(!sidenav.classList.contains('open'));
 });
 
-document.getElementById('close-sidenav-btn').addEventListener('click', () => {
-    document.getElementById('sidenav').style.width = '0';
+// Cerrar el sidenav si se hace clic fuera de él
+document.body.addEventListener('click', (e) => {
+    if (sidenav.classList.contains('open') && !sidenav.contains(e.target)) {
+        toggleSidenav(false);
+    }
 });
 
 // Cerrar el sidenav si se hace clic en una de sus opciones
-document.querySelectorAll('.sidenav .section-btn').forEach(btn => {
+document.querySelectorAll('.sidenav .section-btn, .sidenav a.section-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        document.getElementById('sidenav').style.width = '0';
+        toggleSidenav(false);
     });
 });
 
@@ -2180,7 +2234,7 @@ async function handleSharedLink(seccion, id) {
     data = dataRef();
 
     if (data && data.length > 0) {
-        item = data.find(fila => fila.id === id);
+        item = data.find(fila => fila.ID === id);
     }
 
     // 3. Solo si el ítem es válido, se muestra el modal y se oculta el resto

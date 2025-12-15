@@ -44,6 +44,47 @@
     .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
     .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
     .form-submit-btn { background-color: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; width: 100%; }
+
+    /* --- Media Queries para Responsividad --- */
+    @media screen and (max-width: 768px) {
+        .user-table thead {
+            display: none; /* Ocultar encabezados en móvil */
+        }
+        .user-table, .user-table tbody, .user-table tr, .user-table td {
+            display: block;
+            width: 100%;
+        }
+        .user-table tr {
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .user-table td {
+            text-align: right;
+            padding-left: 50%;
+            position: relative;
+            border: none;
+            border-bottom: 1px solid #eee;
+        }
+        .user-table td:before {
+            content: attr(data-label);
+            position: absolute;
+            left: 10px;
+            width: calc(50% - 20px);
+            padding-right: 10px;
+            white-space: nowrap;
+            text-align: left;
+            font-weight: bold;
+        }
+        .user-table td:last-child {
+            border-bottom: 0;
+        }
+        .action-btn {
+            font-size: 1.2em; /* Hacer los iconos un poco más grandes */
+            padding: 8px;
+        }
+    }
 </style>
 </head>
 <body>
@@ -148,18 +189,116 @@
             return;
         }
 
-        currentUser = user; // Guardar el usuario actual en el estado global
+        currentUser = user;
         document.getElementById('welcome-message').textContent = `Sesión activa: ${user.Nombre} (${user.Privilegios})`;
 
-        const privilegios = user.Privilegios;
-        if (['Supervisor', 'Gefe', 'Desarrollador'].includes(privilegios)) {
-            fetchAndDisplayUsers(privilegios);
+        const userRole = user.Privilegios;
+        if (['Técnico', 'Tecnico_Exterior'].includes(userRole)) {
+            document.querySelector('h2').textContent = 'Mi Perfil';
+            fetchAndRenderUserProfile(user.Nombre_Usuario);
+        } else if (['Supervisor', 'Gefe', 'Desarrollador'].includes(userRole)) {
+            fetchAndDisplayUsers(userRole);
         } else {
-            mostrarAccesoDenegado();
+            displayNoPermissionsMessage();
         }
     });
 
-    async function fetchAndDisplayUsers(currentUserPrivilegios) {
+    async function fetchAndRenderUserProfile(username) {
+        const container = document.getElementById('user-list-container');
+        container.innerHTML = '<p>Cargando tu perfil...</p>';
+        try {
+            // Reutilizamos la lógica de fetch, ya que carga todos los usuarios de todas formas
+            await fetchAndDisplayUsers(currentUser.Privilegios, true);
+            const header = allUsersData[0];
+            const userToEdit = allUsersData.slice(1).find(u => u[header.indexOf('Nombre_Usuario')] === username);
+
+            if (!userToEdit) {
+                container.innerHTML = '<p style="color:red;">No se pudo cargar tu perfil.</p>';
+                return;
+            }
+            renderUserProfile(userToEdit, header);
+        } catch (error) {
+            container.innerHTML = `<p style="color:red;">Error al cargar el perfil: ${error.message}</p>`;
+        }
+    }
+
+    function renderUserProfile(user, header) {
+        const container = document.getElementById('user-list-container');
+        const username = user[header.indexOf('Nombre_Usuario')];
+        container.innerHTML = `
+            <form id="profile-form" onsubmit="handleProfileFormSubmit(event)">
+                <input type="hidden" id="profile-original-username" value="${username}">
+                <div class="form-group">
+                    <label for="profile-nombre">Nombre Completo</label>
+                    <input type="text" id="profile-nombre" value="${user[header.indexOf('Nombre')] || ''}" required disabled>
+                </div>
+                <div class="form-group">
+                    <label for="profile-username">Nombre de Usuario</label>
+                    <input type="text" id="profile-username" value="${username}" required disabled>
+                </div>
+                <div class="form-group">
+                    <label for="profile-telefono">Teléfono</label>
+                    <input type="tel" id="profile-telefono" value="${user[header.indexOf('Telefono')] || ''}">
+                </div>
+                <div class="form-group">
+                    <label for="profile-correo">Correo Electrónico</label>
+                    <input type="email" id="profile-correo" value="${user[header.indexOf('Correo_Electronico')] || ''}">
+                </div>
+                <hr>
+                <p><strong>Cambiar Contraseña:</strong></p>
+                <div class="form-group">
+                    <label for="profile-current-password">Contraseña Actual (requerida para cambiar)</label>
+                    <input type="password" id="profile-current-password">
+                </div>
+                <div class="form-group">
+                    <label for="profile-new-password">Nueva Contraseña (mínimo 8 caracteres)</label>
+                    <input type="password" id="profile-new-password" minlength="8">
+                </div>
+                <button type="submit" class="form-submit-btn">Guardar Cambios en mi Perfil</button>
+            </form>
+        `;
+    }
+
+    async function handleProfileFormSubmit(event) {
+        event.preventDefault();
+
+        const newPassword = document.getElementById('profile-new-password').value;
+        if (newPassword && !document.getElementById('profile-current-password').value) {
+            alert('Debes ingresar tu contraseña actual para poder establecer una nueva.');
+            return;
+        }
+
+        const payload = {
+            action: 'updateUser',
+            actor: currentUser,
+            data: {
+                originalUsername: document.getElementById('profile-original-username').value,
+                nombreUsuario: document.getElementById('profile-username').value, // Aunque deshabilitado, lo enviamos
+                telefono: document.getElementById('profile-telefono').value,
+                correo: document.getElementById('profile-correo').value,
+                password: newPassword,
+                // Datos adicionales para validación en backend
+                currentPassword: document.getElementById('profile-current-password').value,
+            }
+        };
+
+        try {
+            const response = await fetch(USERS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                alert(result.message);
+                // No es necesario recargar, ya que los cambios son locales y no afectan la vista.
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            alert('Error al guardar: ' + error.message);
+        }
+    }
+
+
+    async function fetchAndDisplayUsers(currentUserPrivilegios, isForProfile = false) {
         const container = document.getElementById('user-list-container');
         container.innerHTML = '<p>Cargando lista de usuarios...</p>';
 
@@ -198,7 +337,7 @@
             visiblePrivileges.push('Gefe', 'Supervisor', 'Técnico');
         }
         if (currentUserPrivilegios === 'Supervisor') {
-            visiblePrivileges.push('Técnico');
+            visiblePrivileges.push('Supervisor', 'Técnico');
         }
 
         return users.filter(user => visiblePrivileges.includes(user[privilegeIndex]));
@@ -230,10 +369,10 @@
         for (const user of users) {
             tableHTML += `
                 <tr>
-                    <td>${user[usernameIndex] || ''}</td>
-                    <td>${user[nameIndex] || ''}</td>
-                    <td>${user[privilegeIndex] || ''}</td>
-                    <td>
+                    <td data-label="${header[usernameIndex]}">${user[usernameIndex] || ''}</td>
+                    <td data-label="${header[nameIndex]}">${user[nameIndex] || ''}</td>
+                    <td data-label="${header[privilegeIndex]}">${user[privilegeIndex] || ''}</td>
+                    <td data-label="Acciones">
                         <button class="action-btn edit" title="Editar Usuario" onclick="openEditModal('${user[usernameIndex]}')"><i class="fas fa-edit"></i></button>
                         <button class="action-btn delete" title="Borrar Usuario" onclick="confirmDelete('${user[usernameIndex]}')"><i class="fas fa-trash"></i></button>
                     </td>
@@ -350,6 +489,17 @@
 
             if (result.status === 'success') {
                 alert(result.message);
+
+                // Si el usuario editado es el actual, actualiza la sesión local
+                if (payload.data.originalUsername === currentUser.Nombre_Usuario) {
+                    const sessionData = JSON.parse(localStorage.getItem('gpsepedia_session'));
+                    if(sessionData) {
+                        sessionData.user.Privilegios = payload.data.privilegios;
+                        sessionData.user.Nombre = payload.data.nombre;
+                        localStorage.setItem('gpsepedia_session', JSON.stringify(sessionData));
+                    }
+                }
+
                 closeModal();
                 fetchAndDisplayUsers(currentUser.Privilegios); // Recargar la lista
             } else {
