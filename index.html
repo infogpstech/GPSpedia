@@ -782,9 +782,9 @@ async function readData(storeName) {
 
 // --- LÓGICA DE DATOS ---
 const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOPX2qCazuGzKQZqyPvHOngNGl3Dj09veswC47zcxo6hGkNoqSxHkGlsQOe5ZDRfRx/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyag2vcyqgBBxesZgbd9Jo2Uf1P_nwfmmVB-0VkEIKVvGHAc2izuttw82d5Z_LCGEqs/exec";
 // Se usa la misma URL para ambos, ya que el backend maneja diferentes 'acciones' o 'parámetros'.
-const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOPX2qCazuGzKQZqyPvHOngNGl3Dj09veswC47zcxo6hGkNoqSxHkGlsQOe5ZDRfRx/exec";
+const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyag2vcyqgBBxesZgbd9Jo2Uf1P_nwfmmVB-0VkEIKVvGHAc2izuttw82d5Z_LCGEqs/exec";
 const RANGE_CORTES = "Cortes";
 const RANGE_TUTORIALES = "Tutorial";
 const RANGE_RELAY = "Configuración del Relay";
@@ -1580,23 +1580,125 @@ function mostrarDetalleModal(fila) {
         cont.appendChild(colaboradorDiv);
     }
 
-    // --- Sección de Feedback (UI Placeholder) ---
-    const feedbackDiv = document.createElement('div');
-    feedbackDiv.style.cssText = "margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; align-items: center;";
+    // --- Sección de Feedback ---
+    const feedbackContainer = document.createElement('div');
+    feedbackContainer.id = "feedback-section";
+    feedbackContainer.style.cssText = "margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;";
+
+    const feedbackActions = document.createElement('div');
+    feedbackActions.style.cssText = "display: flex; gap: 10px; align-items: center;";
 
     const utilBtn = document.createElement('button');
-    utilBtn.innerHTML = `<i class="fas fa-thumbs-up"></i> Útil <span id="util-count">(0)</span>`; // Se usa fas para un ícono sólido
-    utilBtn.style.cssText = "background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px; padding: 8px 12px; cursor: pointer;";
+    utilBtn.innerHTML = `<i class="fas fa-thumbs-up"></i> Útil <span id="util-count">(...)</span>`;
+    utilBtn.onclick = () => handleAddLike(fila.id);
 
     const reportarBtn = document.createElement('button');
-    reportarBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Reportar Problema`; // Ícono de advertencia
-    reportarBtn.style.cssText = "background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.9em;";
+    reportarBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Reportar Problema`;
+    reportarBtn.onclick = () => handleReportProblem(fila.id);
 
-    feedbackDiv.appendChild(utilBtn);
-    feedbackDiv.appendChild(reportarBtn);
-    cont.appendChild(feedbackDiv);
+    feedbackActions.appendChild(utilBtn);
+    feedbackActions.appendChild(reportarBtn);
+    feedbackContainer.appendChild(feedbackActions);
+
+    const commentsContainer = document.createElement('div');
+    commentsContainer.id = 'comments-container';
+    commentsContainer.style.marginTop = '15px';
+    feedbackContainer.appendChild(commentsContainer);
+
+    cont.appendChild(feedbackContainer);
+
+    // Cargar y mostrar el feedback
+    loadFeedback(fila.id);
 
     modal.classList.add("visible");
+}
+
+async function loadFeedback(vehicleId) {
+    const container = document.getElementById('comments-container');
+    const likeCountSpan = document.getElementById('util-count');
+    container.innerHTML = '<p>Cargando feedback...</p>';
+
+    try {
+        const response = await fetch(`${SCRIPT_URL}?action=getFeedback&vehicleId=${vehicleId}`);
+        const data = await response.json();
+
+        likeCountSpan.textContent = `(${data.likeCount || 0})`;
+
+        if (data.comments && data.comments.length > 0) {
+            container.innerHTML = '<h4>Reportes de la Comunidad:</h4>';
+            data.comments.forEach(comment => {
+                const commentDiv = document.createElement('div');
+                commentDiv.style.cssText = "border: 1px solid #eee; border-radius: 8px; padding: 10px; margin-bottom: 10px; background: #f9f9f9;";
+                commentDiv.innerHTML = `
+                    <p><strong>${comment.user}:</strong> ${comment.problem}</p>
+                    ${comment.response ? `<p style="padding-left: 15px; border-left: 3px solid #007bff; margin-top: 8px;"><strong>Respuesta de ${comment.responder}:</strong> ${comment.response}</p>` : ''}
+                `;
+                container.appendChild(commentDiv);
+            });
+        } else {
+            container.innerHTML = '<p>No hay reportes para este vehículo.</p>';
+        }
+
+    } catch (error) {
+        container.innerHTML = '<p style="color:red;">No se pudo cargar el feedback.</p>';
+        likeCountSpan.textContent = '(E)';
+        console.error("Error cargando feedback:", error);
+    }
+}
+
+async function handleAddLike(vehicleId) {
+    const sessionData = localStorage.getItem(SESSION_KEY);
+    if (!sessionData) { alert("Necesitas iniciar sesión para hacer esto."); return; }
+    const { user } = JSON.parse(sessionData);
+
+    const payload = {
+        action: 'addLike',
+        actor: user,
+        data: { vehicleId: vehicleId }
+    };
+
+    try {
+        const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await response.json();
+        if(result.status === 'success') {
+            const likeCountSpan = document.getElementById('util-count');
+            const currentCount = parseInt(likeCountSpan.textContent.replace(/\D/g, ''), 10) || 0;
+            likeCountSpan.textContent = `(${currentCount + 1})`;
+            alert("¡Gracias por tu feedback!");
+        } else {
+            throw new Error(result.message || "Error desconocido del servidor.");
+        }
+    } catch (error) {
+        alert("No se pudo registrar tu feedback. Inténtalo de nuevo. " + error.message);
+    }
+}
+
+async function handleReportProblem(vehicleId) {
+    const sessionData = localStorage.getItem(SESSION_KEY);
+    if (!sessionData) { alert("Necesitas iniciar sesión para hacer esto."); return; }
+    const { user } = JSON.parse(sessionData);
+
+    const problem = prompt("Por favor, describe el problema que encontraste:");
+    if (!problem || problem.trim() === "") return;
+
+    const payload = {
+        action: 'reportProblem',
+        actor: user,
+        data: { vehicleId: vehicleId, problem: problem.trim() }
+    };
+
+    try {
+        const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await response.json();
+        if(result.status === 'success') {
+            alert("Reporte enviado. Gracias por tu contribución.");
+            loadFeedback(vehicleId); // Recargar comentarios
+        } else {
+            throw new Error(result.message || "Error desconocido del servidor.");
+        }
+    } catch (error) {
+        alert("No se pudo enviar tu reporte. Inténtalo de nuevo. " + error.message);
+    }
 }
 
 // --- LÓGICA DE BÚSQUEDA ACTIVA ---

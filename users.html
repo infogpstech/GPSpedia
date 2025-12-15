@@ -129,8 +129,10 @@
     });
     document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
-    // --- CONFIGURACIÓN ---
-    const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOPX2qCazuGzKQZqyPvHOngNGl3Dj09veswC47zcxo6hGkNoqSxHkGlsQOe5ZDRfRx/exec";
+    // --- CONFIGURACIÓN Y ESTADO GLOBAL ---
+    const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyag2vcyqgBBxesZgbd9Jo2Uf1P_nwfmmVB-0VkEIKVvGHAc2izuttw82d5Z_LCGEqs/exec";
+    let allUsersData = []; // Caché para los datos de todos los usuarios
+    let currentUser = null; // Información del usuario con sesión activa
 
     // --- LÓGICA DE INICIALIZACIÓN ---
     document.addEventListener('DOMContentLoaded', function() {
@@ -146,6 +148,7 @@
             return;
         }
 
+        currentUser = user; // Guardar el usuario actual en el estado global
         document.getElementById('welcome-message').textContent = `Sesión activa: ${user.Nombre} (${user.Privilegios})`;
 
         const privilegios = user.Privilegios;
@@ -161,21 +164,19 @@
         container.innerHTML = '<p>Cargando lista de usuarios...</p>';
 
         try {
-            // Se solicita explícitamente la hoja "Users"
             const response = await fetch(`${USERS_SCRIPT_URL}?sheet=Users`);
             if (!response.ok) throw new Error('Error al cargar los datos de usuarios.');
 
             const data = await response.json();
-            // El backend ahora debería devolver el array de filas directamente
-            const allUsers = data || [];
+            allUsersData = data.values || []; // Guardar datos en la caché global
 
-            if (allUsers.length <= 1) {
+            if (allUsersData.length <= 1) {
                 container.innerHTML = '<p>No se encontraron usuarios.</p>';
                 return;
             }
 
-            const header = allUsers[0];
-            const usersData = allUsers.slice(1);
+            const header = allUsersData[0];
+            const usersData = allUsersData.slice(1);
 
             const filteredUsers = filterUsersByPrivilege(usersData, header, currentUserPrivilegios);
             renderUserTable(filteredUsers, header);
@@ -191,7 +192,7 @@
 
         const visiblePrivileges = [];
         if (currentUserPrivilegios === 'Desarrollador') {
-            return users; // El desarrollador ve a todos.
+            return users;
         }
         if (currentUserPrivilegios === 'Gefe') {
             visiblePrivileges.push('Gefe', 'Supervisor', 'Técnico');
@@ -239,7 +240,6 @@
                 </tr>
             `;
         }
-
         tableHTML += '</tbody></table>';
         container.innerHTML = tableHTML;
     }
@@ -254,12 +254,138 @@
         `;
     }
 
-    // --- LÓGICA DE MODALES (aún no funcionales) ---
-    function openCreateUserModal() { alert('Funcionalidad para crear usuario se implementará próximamente.'); }
-    function openEditModal(username) { alert(`Funcionalidad para editar a ${username} se implementará próximamente.`); }
-    function confirmDelete(username) { alert(`Funcionalidad para eliminar a ${username} se implementará próximamente.`); }
-    function closeModal() { document.getElementById('user-form-modal').style.display = 'none'; }
-    function handleUserFormSubmit(event) { event.preventDefault(); }
+    // --- LÓGICA DE MODALES ---
+    const modal = document.getElementById('user-form-modal');
+    window.onclick = function(event) { if (event.target == modal) closeModal(); }
+
+    function closeModal() {
+        modal.style.display = "none";
+        document.getElementById('user-form').reset();
+    }
+
+    function openCreateUserModal() {
+        document.getElementById('modal-title').textContent = 'Crear Nuevo Usuario';
+        document.getElementById('form-action').value = 'createUser';
+        document.getElementById('original-username').value = '';
+        document.getElementById('nombre-usuario').value = '(Se generará automáticamente)';
+        document.getElementById('nombre-usuario').disabled = true;
+        document.getElementById('password').placeholder = 'Mínimo 8 caracteres';
+        document.getElementById('password').required = true; // La contraseña es obligatoria al crear
+        populatePrivilegesDropdown();
+        modal.style.display = "flex";
+    }
+
+    function openEditModal(username) {
+        const header = allUsersData[0];
+        const userToEdit = allUsersData.slice(1).find(u => u[header.indexOf('Nombre_Usuario')] === username);
+
+        if (!userToEdit) {
+            alert('Error: No se encontró al usuario.');
+            return;
+        }
+
+        document.getElementById('modal-title').textContent = 'Editar Usuario';
+        document.getElementById('form-action').value = 'updateUser';
+        document.getElementById('original-username').value = username;
+
+        document.getElementById('nombre').value = userToEdit[header.indexOf('Nombre')] || '';
+        document.getElementById('nombre-usuario').value = username;
+        document.getElementById('nombre-usuario').disabled = false;
+        document.getElementById('telefono').value = userToEdit[header.indexOf('Telefono')] || '';
+        document.getElementById('correo').value = userToEdit[header.indexOf('Correo_Electronico')] || '';
+        document.getElementById('password').placeholder = 'Dejar en blanco para no cambiar';
+        document.getElementById('password').required = false; // La contraseña es opcional al editar
+
+        populatePrivilegesDropdown(userToEdit[header.indexOf('Privilegios')]);
+        modal.style.display = "flex";
+    }
+
+    function populatePrivilegesDropdown(selectedValue = '') {
+        const select = document.getElementById('privilegios');
+        select.innerHTML = '';
+
+        let availableRoles = [];
+        const userPrivilege = currentUser.Privilegios;
+
+        if (userPrivilege === 'Desarrollador') {
+            availableRoles = ['Desarrollador', 'Gefe', 'Supervisor', 'Técnico', 'Tecnico_Exterior'];
+        } else if (userPrivilege === 'Gefe') {
+            availableRoles = ['Gefe', 'Supervisor', 'Técnico'];
+        } else if (userPrivilege === 'Supervisor') {
+            availableRoles = ['Técnico'];
+        }
+
+        availableRoles.forEach(role => {
+            const option = document.createElement('option');
+            option.value = role;
+            option.textContent = role.replace('_', ' ');
+            if (role === selectedValue) option.selected = true;
+            select.appendChild(option);
+        });
+    }
+
+    async function handleUserFormSubmit(event) {
+        event.preventDefault();
+
+        const payload = {
+            action: document.getElementById('form-action').value,
+            actor: currentUser, // Enviar información de quién realiza la acción
+            data: {
+                originalUsername: document.getElementById('original-username').value,
+                nombre: document.getElementById('nombre').value,
+                nombreUsuario: document.getElementById('nombre-usuario').value,
+                privilegios: document.getElementById('privilegios').value,
+                telefono: document.getElementById('telefono').value,
+                correo: document.getElementById('correo').value,
+                password: document.getElementById('password').value,
+            }
+        };
+
+        try {
+            const response = await fetch(USERS_SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                alert(result.message);
+                closeModal();
+                fetchAndDisplayUsers(currentUser.Privilegios); // Recargar la lista
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error) {
+            alert('Error al guardar: ' + error.message);
+        }
+    }
+
+    async function confirmDelete(username) {
+        if(confirm(`¿Estás seguro de que quieres eliminar al usuario ${username}? Esta acción no se puede deshacer.`)) {
+            const payload = {
+                action: 'deleteUser',
+                actor: currentUser,
+                data: { username: username }
+            };
+
+            try {
+                const response = await fetch(USERS_SCRIPT_URL, {
+                    method: 'POST',
+                    body: JSON.stringify(payload)
+                });
+                const result = await response.json();
+
+                if (result.status === 'success') {
+                    alert(result.message);
+                    fetchAndDisplayUsers(currentUser.Privilegios); // Recargar la lista
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (error) {
+                alert('Error al eliminar: ' + error.message);
+            }
+        }
+    }
 </script>
 
 </body>
