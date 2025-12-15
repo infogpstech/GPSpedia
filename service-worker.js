@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gpsepedia-cache-v5';
+const CACHE_NAME = 'gpsepedia-cache-v4';
 const urlsToCache = [
   '/',
   './index.html',

@@ -249,78 +249,66 @@ body.search-active .app-logo {
 }
 
 /* --- ESTILOS DEL MENÚ HAMBURGUESA Y SIDENAV --- */
-#hamburger-btn {
+.hamburger-btn {
     position: absolute;
-    right: 8px;
+    right: -50px;
     top: 50%;
     transform: translateY(-50%);
-    background: #3498db; /* Azul aquamarina */
+    background: #007bff;
     color: white;
     border: none;
-    border-radius: 6px;
-    width: 38px;
-    height: 38px;
-    font-size: 18px;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
     cursor: pointer;
     transition: background-color 0.3s;
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
-#hamburger-btn:hover {
-    background-color: #2980b9;
+.hamburger-btn:hover {
+    background-color: #0056b3;
 }
-
 .sidenav {
-    height: calc(100% - 70px); /* Altura total menos el header (aprox) */
-    width: 280px; /* Ancho fijo */
+    height: 100%;
+    width: 0;
     position: fixed;
     z-index: 2000;
-    top: 70px; /* Se despliega desde debajo del header */
+    top: 0;
     right: 0;
-    background-color: #f8f9fa;
+    background-color: #f9f9f9;
     overflow-x: hidden;
-    transition: transform 0.3s ease-in-out;
-    transform: translateX(100%); /* Inicia oculto a la derecha */
+    transition: 0.5s;
+    padding-top: 60px;
     box-shadow: -5px 0 15px rgba(0,0,0,0.1);
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 20px;
-    box-sizing: border-box;
+    gap: 15px; /* Espacio entre botones */
+    align-items: center; /* Centra los botones horizontalmente */
 }
-.sidenav.open {
-    transform: translateX(0);
-}
-
 .sidenav .close-btn {
-    display: none; /* El cierre es automático o con clic fuera */
-}
-
-.sidenav .section-btn, .sidenav a.section-btn {
-    padding: 10px 15px;
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    font-size: 36px;
     text-decoration: none;
-    font-size: 16px; /* Tamaño de letra unificado */
-    color: #34495e; /* Texto oscuro */
+    color: #818181;
+}
+.sidenav .section-btn, .sidenav a.section-btn {
+    padding: 15px 25px;
+    text-decoration: none;
+    font-size: 18px;
+    color: #333;
     display: block;
-    transition: background-color 0.3s, color 0.3s;
-    width: 100%;
-    text-align: left;
-    border-radius: 6px;
-    border: 1px solid #dee2e6;
+    transition: 0.3s;
+    width: 80%; /* Ancho de los botones */
+    text-align: center;
+    border-radius: 8px;
+    border: 1px solid #ddd;
     background-color: #fff;
-    font-weight: 500;
 }
 .sidenav .section-btn:hover {
-    background-color: #e9ecef;
-    color: #0056b3;
+    background-color: #f1f1f1;
+    color: #007bff;
 }
-/* Colores específicos para botones especiales */
-#btn-add { background-color: #28a745; color: white !important; border-color: #28a745;}
-#btn-add:hover { background-color: #218838; }
-#account-management-link { background-color: #3182ce; color: white !important; border-color: #3182ce;}
-#account-management-link:hover { background-color: #2c71b8; }
-
 
 .section-btn {
     background-color: #f0f0f0;
@@ -473,12 +461,6 @@ body.search-active .app-logo {
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     text-align: center;
     color: #f0f0f0;
-}
-#login-modal .app-logo {
-    max-width: 96px; /* Mismo tamaño que en el header */
-    height: auto;
-    border-radius: 8px;
-    margin-bottom: 20px;
 }
 
 #login-modal h2 {
@@ -637,40 +619,6 @@ body.search-active .app-logo {
     border-bottom: 1px solid #eee;
 }
 
-/* --- Estilos de Feedback y Colaborador --- */
-.feedback-btn {
-    background-color: #f0f2f5;
-    border: none;
-    border-radius: 20px;
-    padding: 8px 12px;
-    font-size: 14px;
-    font-weight: bold;
-    color: #65676b;
-    cursor: pointer;
-    transition: background-color 0.2s;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-}
-.feedback-btn:hover {
-    background-color: #e4e6e9;
-}
-.feedback-btn.report {
-    color: #e74c3c;
-}
-.feedback-btn .fas {
-    font-size: 16px;
-}
-.colaborador-box {
-    margin-top: 20px;
-    padding: 10px 15px;
-    background-color: #f0f8ff; /* Azul muy claro */
-    border-radius: 8px;
-    font-size: 0.9em;
-    text-align: right;
-    color: #555;
-}
-
 /* Lightbox */
 .lightbox {
     position: fixed;
@@ -756,7 +704,7 @@ body.search-active .app-logo {
 <!-- Login Modal -->
 <div id="login-modal" style="display: none;">
     <div class="modal-content">
-        <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
+        <img src="icon-v3-512x512.png" alt="Logo de GPSpedia" style="max-width: 120px; margin-bottom: 20px;">
         <h2>Iniciar Sesión</h2>
         <form id="login-form">
             <div class="form-group">
@@ -791,10 +739,11 @@ body.search-active .app-logo {
   <div class="search-container">
       <input type="text" id="searchInput" placeholder="Buscar Corte..." oninput="filtrarContenido(this.value)">
       <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
-      <button id="hamburger-btn"><i class="fas fa-bars"></i></button>
+      <button id="hamburger-btn" class="hamburger-btn"><i class="fas fa-bars"></i></button>
   </div>
 
   <div id="sidenav" class="sidenav">
+      <a href="javascript:void(0)" class="close-btn" id="close-sidenav-btn">&times;</a>
       <button id="btn-cortes" class="section-btn active" onclick="mostrarSeccion('cortes')">Cortes</button>
       <button id="btn-tutoriales" class="section-btn" onclick="mostrarSeccion('tutoriales')">Tutoriales</button>
       <button id="btn-relay" class="section-btn" onclick="mostrarSeccion('relay')">Relay</button>
@@ -894,9 +843,9 @@ async function readData(storeName) {
 
 // --- LÓGICA DE DATOS ---
 const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz__kv99hcTbBlA_IkVB0g8MnJRFCRfWrjKw1zsuRb2afdA7opQwBZbuLmJ-uoiyGgG/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNZPAmvtIPfsUrrMP3yZC00g3x6EYbIT2VccFcNy_hohnNzVDpIOq7ln9blkExck19/exec";
 // Se usa la misma URL para ambos, ya que el backend maneja diferentes 'acciones' o 'parámetros'.
-const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz__kv99hcTbBlA_IkVB0g8MnJRFCRfWrjKw1zsuRb2afdA7opQwBZbuLmJ-uoiyGgG/exec";
+const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzNZPAmvtIPfsUrrMP3yZC00g3x6EYbIT2VccFcNy_hohnNzVDpIOq7ln9blkExck19/exec";
 const RANGE_CORTES = "Cortes";
 const RANGE_TUTORIALES = "Tutorial";
 const RANGE_RELAY = "Configuración del Relay";
@@ -940,19 +889,21 @@ async function fetchUsers() {
 }
 
 async function checkSession() {
-    console.log("Verificando sesión...");
     const session = localStorage.getItem(SESSION_KEY);
     if (session) {
-        console.log("Sesión encontrada en localStorage.");
         const { user, sessionId } = JSON.parse(session);
+        const expectedSessionId = localStorage.getItem(SESSION_ID_KEY);
+
+        if (sessionId !== expectedSessionId) {
+            logout("Se ha iniciado una nueva sesión en otro dispositivo o navegador.");
+            return;
+        }
 
         // Re-verificar credenciales con los datos de usuario más recientes
         if (userData.length === 0) {
-            console.log("userData está vacío, llamando a fetchUsers de nuevo.");
-            await fetchUsers();
+            await fetchUsers(); // Asegurarse de que los datos de usuario están cargados
         }
 
-        console.log(`Buscando usuario: ${user.Nombre_Usuario}`);
         const header = userData[0];
         const users = userData.slice(1);
         const currentUser = users.find(u =>
@@ -960,9 +911,9 @@ async function checkSession() {
         );
 
         if (currentUser) {
-            console.log("Usuario verificado exitosamente. Mostrando la aplicación.");
             const userPrivileges = user.Privilegios;
-            if (['Supervisor', 'Gefe', 'Desarrollador', 'Técnico', 'Tecnico_Exterior'].includes(userPrivileges)) {
+            // Mostrar enlace de gestión de cuentas si el rol es apropiado
+            if (['Supervisor', 'Gefe', 'Desarrollador'].includes(userPrivileges)) {
                 document.getElementById('account-management-link').style.display = 'block';
             }
 
@@ -1366,7 +1317,7 @@ function pushState(state) {
     history.pushState(state, '');
 }
 
-function crearBotonCompartir(seccion, ID, titulo) {
+function crearBotonCompartir(seccion, id, titulo) {
     const shareBtn = document.createElement("button");
     shareBtn.textContent = "Compartir";
     shareBtn.className = "shareBtn"; // Agregamos una clase para identificarlo
@@ -1425,7 +1376,7 @@ function mostrarDetalleTutorial(fila) {
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;"; // Reset margin
     headerDiv.appendChild(closeBtn);
 
-    const shareBtn = crearBotonCompartir('tutoriales', fila.ID, fila.tema);
+    const shareBtn = crearBotonCompartir('tutoriales', fila.id, fila.tema);
     headerDiv.appendChild(shareBtn);
 
     cont.appendChild(headerDiv);
@@ -1468,7 +1419,7 @@ function mostrarDetalleRelay(fila) {
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
 
-    const shareBtn = crearBotonCompartir('relay', fila.ID, fila.configuracion);
+    const shareBtn = crearBotonCompartir('relay', fila.id, fila.configuracion);
     headerDiv.appendChild(shareBtn);
 
     cont.appendChild(headerDiv);
@@ -1588,15 +1539,15 @@ function mostrarDetalleModal(fila) {
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
 
-    const titulo = `${fila.modelo} ${fila.anoGeneracion || ''}`;
-    const shareBtn = crearBotonCompartir('cortes', fila.ID, titulo);
+    const titulo = `${fila.modelo} ${fila.anioGeneracion || ''}`;
+    const shareBtn = crearBotonCompartir('cortes', fila.id, titulo);
     headerDiv.appendChild(shareBtn);
 
     cont.appendChild(headerDiv);
 
     const title = document.createElement("h2");
     const modeloNombre = fila.modelo || 'Modelo Desconocido';
-    const anosNombre = fila.anoGeneracion || '';
+    const anosNombre = fila.anioGeneracion || '';
     title.textContent = `Detalle de ${modeloNombre} ${anosNombre ? `(${anosNombre})` : ''}`;
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
     cont.appendChild(title);
@@ -1688,7 +1639,15 @@ function mostrarDetalleModal(fila) {
     // --- Sección del Colaborador ---
     if (fila.colaborador) {
         const colaboradorDiv = document.createElement('div');
-        colaboradorDiv.className = 'colaborador-box';
+        colaboradorDiv.style.cssText = `
+            margin-top: 25px;
+            padding: 8px 12px;
+            background-color: rgba(0, 123, 255, 0.1);
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+            font-size: 0.9em;
+            text-align: right;
+        `;
         colaboradorDiv.innerHTML = `Agregado por: <strong>${fila.colaborador.replace(/<br>/g, ', ')}</strong>`;
         cont.appendChild(colaboradorDiv);
     }
@@ -1703,13 +1662,11 @@ function mostrarDetalleModal(fila) {
 
     const utilBtn = document.createElement('button');
     utilBtn.innerHTML = `<i class="fas fa-thumbs-up"></i> Útil <span id="util-count">(...)</span>`;
-    utilBtn.className = 'feedback-btn';
-    utilBtn.onclick = () => handleAddLike(fila.ID);
+    utilBtn.onclick = () => handleAddLike(fila.id);
 
     const reportarBtn = document.createElement('button');
-    reportarBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Reportar`;
-    reportarBtn.className = 'feedback-btn report';
-    reportarBtn.onclick = () => handleReportProblem(fila.ID);
+    reportarBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Reportar Problema`;
+    reportarBtn.onclick = () => handleReportProblem(fila.id);
 
     feedbackActions.appendChild(utilBtn);
     feedbackActions.appendChild(reportarBtn);
@@ -1854,7 +1811,7 @@ async function filtrarContenido(textoBusqueda) {
             fila.categoria,
             fila.marca,
             fila.modelo,
-            fila.anoGeneracion,
+            fila.anioGeneracion,
             fila.tipoDeEncendido
         ].map(s => String(s || '').toLowerCase()).join(' ');
 
@@ -1892,7 +1849,7 @@ function mostrarResultadosBusqueda(resultados) {
 
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.innerHTML = `<div>${fila.marca} ${fila.modelo}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila.anoGeneracion || ''}</div>`;
+        overlay.innerHTML = `<div>${fila.marca} ${fila.modelo}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila.anioGeneracion || ''}</div>`;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -1904,7 +1861,7 @@ function mostrarResultadosBusquedaMarca(busquedaTexto){
     const cont = document.getElementById("contenido");
     if (datosFiltrados.length === 1) {
         const fila = datosFiltrados[0];
-        const anosRaw = (fila.anoGeneracion || '').trim();
+        const anosRaw = (fila.anioGeneracion || '').trim();
         mostrarDetalleModal(fila);
         cont.innerHTML = `<h4>Resultado Exacto Encontrado</h4><p>Abriendo detalle de ${fila.modelo} ${anosRaw ? `(${anosRaw})` : ''}.</p>`;
         return;
@@ -1943,7 +1900,7 @@ function mostrarResultadosBusquedaModelo(busquedaTexto, marcaFiltro){
         const imgUrl = ejemplo.imagenDelVehiculo;
         const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Modelo ${modelo}`; card.appendChild(img);
         const overlay=document.createElement("div"); overlay.className="overlay";
-        const anos = ejemplo.anoGeneracion || '';
+        const anos = ejemplo.anioGeneracion || '';
         const encendido = ejemplo.tipoDeEncendido || '';
         if(versiones.length === 1) {
             overlay.innerHTML = `<div>${modelo}</div>
@@ -1968,9 +1925,9 @@ function mostrarResultadosBusquedaVersion(busquedaTexto, marcaFiltro, modeloFilt
     filasDetalle.forEach(f => {
         const card=document.createElement("div"); card.className="card";
         const imgUrl = f.imagenDelVehiculo;
-        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f.anoGeneracion}`; card.appendChild(img);
+        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f.anioGeneracion}`; card.appendChild(img);
         const overlay=document.createElement("div"); overlay.className="overlay";
-        const anosRaw = (f.anoGeneracion || '').trim();
+        const anosRaw = (f.anioGeneracion || '').trim();
         const encendido = (f.tipoDeEncendido || '').trim();
         let mainTitle = anosRaw || modeloFiltro;
         overlay.innerHTML = `<div style="font-weight:bold;">${mainTitle}</div>
@@ -2037,7 +1994,7 @@ function mostrarUltimosAgregados() {
 
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.innerHTML = `<div>${fila.marca}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila.modelo} ${fila.anoGeneracion}</div>`;
+        overlay.innerHTML = `<div>${fila.marca}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila.modelo} ${fila.anioGeneracion}</div>`;
         card.appendChild(overlay);
 
         grid.appendChild(card);
@@ -2083,7 +2040,7 @@ function mostrarModelos(categoria, marca){
     const imgUrl = ejemplo.imagenDelVehiculo;
     const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Modelo ${modelo}`; card.appendChild(img);
     const overlay=document.createElement("div"); overlay.className="overlay";
-    const anos = ejemplo.anoGeneracion || '';
+    const anos = ejemplo.anioGeneracion || '';
     const encendido = ejemplo.tipoDeEncendido || '';
     card.onclick=()=>{
       if(versiones.length===1) mostrarDetalleModal(ejemplo);
@@ -2112,9 +2069,9 @@ function mostrarVersiones(filas, categoria, marca, modelo){
   filas.forEach(f=>{
     const card=document.createElement("div"); card.className="card";
     const imgUrl = f.imagenDelVehiculo;
-    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f.anoGeneracion}`; card.appendChild(img);
+    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f.anioGeneracion}`; card.appendChild(img);
     const overlay=document.createElement("div"); overlay.className="overlay";
-    const anosRaw = (f.anoGeneracion || '').trim();
+    const anosRaw = (f.anioGeneracion || '').trim();
     const encendido = (f.tipoDeEncendido || '').trim();
     let mainTitle = anosRaw || modelo;
     overlay.innerHTML = `<div style="font-weight:bold;">${mainTitle}</div>
@@ -2171,29 +2128,18 @@ installButton.addEventListener('click', async () => {
 });
 
 // --- LÓGICA DEL MENÚ HAMBURGUESA ---
-const sidenav = document.getElementById('sidenav');
-const hamburgerBtn = document.getElementById('hamburger-btn');
-
-function toggleSidenav(open) {
-    sidenav.classList.toggle('open', open);
-}
-
-hamburgerBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // Evita que el clic se propague al body
-    toggleSidenav(!sidenav.classList.contains('open'));
+document.getElementById('hamburger-btn').addEventListener('click', () => {
+    document.getElementById('sidenav').style.width = '250px';
 });
 
-// Cerrar el sidenav si se hace clic fuera de él
-document.body.addEventListener('click', (e) => {
-    if (sidenav.classList.contains('open') && !sidenav.contains(e.target)) {
-        toggleSidenav(false);
-    }
+document.getElementById('close-sidenav-btn').addEventListener('click', () => {
+    document.getElementById('sidenav').style.width = '0';
 });
 
 // Cerrar el sidenav si se hace clic en una de sus opciones
-document.querySelectorAll('.sidenav .section-btn, .sidenav a.section-btn').forEach(btn => {
+document.querySelectorAll('.sidenav .section-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-        toggleSidenav(false);
+        document.getElementById('sidenav').style.width = '0';
     });
 });
 
@@ -2234,7 +2180,7 @@ async function handleSharedLink(seccion, id) {
     data = dataRef();
 
     if (data && data.length > 0) {
-        item = data.find(fila => fila.ID === id);
+        item = data.find(fila => fila.id === id);
     }
 
     // 3. Solo si el ítem es válido, se muestra el modal y se oculta el resto
