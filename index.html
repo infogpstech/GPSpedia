@@ -6,6 +6,7 @@
 <title>GPSpedia | Catálogo Técnico</title>
 <link rel="icon" href="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256">
 <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
 /* Estilos Globales */
 html {
@@ -781,7 +782,8 @@ async function readData(storeName) {
 
 // --- LÓGICA DE DATOS ---
 const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
-const API_KEY = "AIzaSyCooAsC52X4ccENCT6p3qh_82ErBxP47Lg";
+// LA SIGUIENTE URL DEBE SER REEMPLAZADA POR LA URL DE LA WEB APP OBTENIDA AL DESPLEGAR EL SCRIPT DE GOOGLE
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyZGc9Rg6NMHT_PiF3JigvgBTE47JeOspzLdRUpaEVndhNh3nNNEa8XOflCv89B5Zw-/exec";
 const RANGE_CORTES = "Cortes";
 const RANGE_TUTORIALES = "Tutorial";
 const RANGE_RELAY = "Configuración del Relay";
@@ -1002,8 +1004,6 @@ function showSkeletonLoader(container) {
     container.innerHTML = skeletonHTML;
 }
 
-const COLUMN_NAME_AÑOS = "Año (generacion)";
-
 let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay = [],
     estado = {nivel:"categorias", categoria:null, marca:null, modelo:null},
     appOpenedFromLink = false;
@@ -1012,7 +1012,7 @@ const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="
 
 async function syncAndFetchData(storeName, range, dataVariableSetter, successCallback, containerId) {
     const container = document.getElementById(containerId);
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
+    const url = `${SCRIPT_URL}?sheet=${encodeURIComponent(range)}`;
 
     // Siempre mostrar el skeleton loader para indicar que se está cargando/actualizando.
     container.classList.remove('animacion-ejecutada');
@@ -1023,10 +1023,11 @@ async function syncAndFetchData(storeName, range, dataVariableSetter, successCal
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error de red: ${response.status}`);
         const data = await response.json();
-        const values = data.values || [];
+        const values = data || []; // La respuesta de Apps Script es el array directamente
 
         if (values.length > 0) {
             // 2. Si la red tiene éxito, guardar en caché y mostrar los datos.
+            // NOTA: La caché de IndexedDB ahora guardará objetos, no arrays.
             await saveData(storeName, values);
             console.log(`Datos de ${storeName} obtenidos de la red y actualizados en IndexedDB.`);
             dataVariableSetter(values);
@@ -1102,21 +1103,19 @@ function mostrarContenidoTutoriales() {
     const cont = document.getElementById("contenido-tutoriales");
     cont.innerHTML = "<h4>Tutoriales</h4>";
     const grid = document.createElement("div"); grid.className = "grid";
-    if (datosTutoriales.length <= 1) { cont.innerHTML += "<p>No hay tutoriales disponibles.</p>"; return; }
-    const header = datosTutoriales[0];
-    const data = datosTutoriales.slice(1);
+    if (!datosTutoriales || datosTutoriales.length === 0) { cont.innerHTML += "<p>No hay tutoriales disponibles.</p>"; return; }
 
-    data.forEach(fila => {
+    datosTutoriales.forEach(fila => {
         const card = document.createElement("div"); card.className = "card";
-        card.onclick = () => mostrarDetalleTutorial(fila, header);
+        card.onclick = () => mostrarDetalleTutorial(fila);
 
         const img = document.createElement("img");
-        img.src = convertirAGoogleThumbnail(fila[header.indexOf("Imagen")]);
-        img.alt = fila[header.indexOf("Tema")];
+        img.src = convertirAGoogleThumbnail(fila.imagen);
+        img.alt = fila.tema;
         card.appendChild(img);
 
         const overlay = document.createElement("div"); overlay.className = "overlay";
-        overlay.innerHTML = fila[header.indexOf("Tema")];
+        overlay.innerHTML = fila.tema;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -1127,21 +1126,19 @@ function mostrarContenidoRelay() {
     const cont = document.getElementById("contenido-relay");
     cont.innerHTML = "<h4>Configuración del Relay</h4>";
     const grid = document.createElement("div"); grid.className = "grid";
-    if (datosRelay.length <= 1) { cont.innerHTML += "<p>No hay configuraciones de relay disponibles.</p>"; return; }
-    const header = datosRelay[0];
-    const data = datosRelay.slice(1);
+    if (!datosRelay || datosRelay.length === 0) { cont.innerHTML += "<p>No hay configuraciones de relay disponibles.</p>"; return; }
 
-    data.forEach(fila => {
+    datosRelay.forEach(fila => {
         const card = document.createElement("div"); card.className = "card";
-        card.onclick = () => mostrarDetalleRelay(fila, header);
+        card.onclick = () => mostrarDetalleRelay(fila);
 
         const img = document.createElement("img");
-        img.src = convertirAGoogleThumbnail(fila[header.indexOf("Imagen")]);
-        img.alt = fila[header.indexOf("Configuración")];
+        img.src = convertirAGoogleThumbnail(fila.imagen);
+        img.alt = fila.configuracion;
         card.appendChild(img);
 
         const overlay = document.createElement("div"); overlay.className = "overlay";
-        overlay.innerHTML = fila[header.indexOf("Configuración")];
+        overlay.innerHTML = fila.configuracion;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -1287,7 +1284,7 @@ function crearBotonCompartir(seccion, id, titulo) {
 }
 
 
-function mostrarDetalleTutorial(fila, header) {
+function mostrarDetalleTutorial(fila) {
     // Empujar un nuevo estado al historial para el modal
     pushState({ modal: true });
     uiState.isModalOpen = true;
@@ -1306,32 +1303,31 @@ function mostrarDetalleTutorial(fila, header) {
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;"; // Reset margin
     headerDiv.appendChild(closeBtn);
 
-    const id = fila[header.indexOf("ID")];
-    const titulo = fila[header.indexOf("Tema")];
-    const shareBtn = crearBotonCompartir('tutoriales', id, titulo);
+    const shareBtn = crearBotonCompartir('tutoriales', fila.id, fila.tema);
     headerDiv.appendChild(shareBtn);
 
     cont.appendChild(headerDiv);
 
     const title = document.createElement("h2");
-    title.textContent = fila[header.indexOf("Tema")];
+    title.textContent = fila.tema;
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
     cont.appendChild(title);
+
     const campos = [
-        { label: "Cómo identificarlo", key: "Como identificarlo" },
-        { label: "Dónde encontrarlo", key: "Donde encontrarlo" },
-        { label: "Detalles", key: "Detalles" }
+        { label: "Cómo identificarlo", valor: fila.comoIdentificarlo },
+        { label: "Dónde encontrarlo", valor: fila.dondeEncontrarlo },
+        { label: "Detalles", valor: fila.detalles }
     ];
     campos.forEach(c => {
-        const p = crearElementoDetalle(c.label, fila[header.indexOf(c.key)]);
+        const p = crearElementoDetalle(c.label, c.valor);
         if (p) cont.appendChild(p);
     });
-    crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
-    crearVideoDetalle("Video Guía", fila[header.indexOf("Video")], cont);
+    crearImagenDetalle("Imagen", fila.imagen, cont);
+    crearVideoDetalle("Video Guía", fila.video, cont);
     modal.classList.add("visible");
 }
 
-function mostrarDetalleRelay(fila, header) {
+function mostrarDetalleRelay(fila) {
     // Empujar un nuevo estado al historial para el modal
     pushState({ modal: true });
     uiState.isModalOpen = true;
@@ -1350,48 +1346,34 @@ function mostrarDetalleRelay(fila, header) {
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
 
-    const id = fila[header.indexOf("ID")];
-    const titulo = fila[header.indexOf("Configuración")];
-    const shareBtn = crearBotonCompartir('relay', id, titulo);
+    const shareBtn = crearBotonCompartir('relay', fila.id, fila.configuracion);
     headerDiv.appendChild(shareBtn);
 
     cont.appendChild(headerDiv);
 
     const title = document.createElement("h2");
-    title.textContent = `Detalle de: ${fila[header.indexOf("Configuración")]}`;
+    title.textContent = `Detalle de: ${fila.configuracion}`;
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
     cont.appendChild(title);
+
     const campos = [
-        { label: "Función", key: "Función" },
-        { label: "Vehículo donde se utiliza", key: "Vehiculo donde se utiliza" },
-        { label: "PIN 30 (entrada)", key: "PIN 30 (entrada)" },
-        { label: "PIN 85 (bobina +)", key: "PIN 85 (bobina +)" },
-        { label: "PIN 86 (bobina - )", key: "PIN 86 (bobina - )" },
-        { label: "PIN 87a (comun cerrado)", key: "PIN 87a (comun cerrado)" },
-        { label: "PIN 87 (Comunmente Abierto)", key: "PIN 87 (Comunmente Abierto)" },
-        { label: "Observación", key: "Observacion" }
+        { label: "Función", valor: fila.funcion },
+        { label: "Vehículo donde se utiliza", valor: fila.vehiculoDondeSeUtiliza },
+        { label: "PIN 30 (entrada)", valor: fila.pin30Entrada },
+        { label: "PIN 85 (bobina +)", valor: fila.pin85Bobina },
+        { label: "PIN 86 (bobina - )", valor: fila.pin86Bobina },
+        { label: "PIN 87a (comun cerrado)", valor: fila.pin87aComunCerrado },
+        { label: "PIN 87 (Comunmente Abierto)", valor: fila.pin87ComunmenteAbierto },
+        { label: "Observación", valor: fila.observacion }
     ];
     campos.forEach(c => {
-        const p = crearElementoDetalle(c.label, fila[header.indexOf(c.key)]);
+        const p = crearElementoDetalle(c.label, c.valor);
         if (p) cont.appendChild(p);
     });
-    crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
+    crearImagenDetalle("Imagen", fila.imagen, cont);
     modal.classList.add("visible");
 }
 
-function getHeaderIndexes(header) {
-    if (!header || header.length < 5) {
-        console.error("Error: Encabezado de datos incompleto o no cargado.");
-        return { COL_CAT: 1, COL_MARCA: 3, COL_MODELO: 4, COL_AÑOS: 6, COL_IMG_VEHICULO: 2, COL_IMG_PORTADA: -1, COL_IMG_APERTURA: 14, COL_TIPO_ENCENDIDO: 5 };
-    }
-    const indexAños = header.indexOf(COLUMN_NAME_AÑOS);
-    return {
-        COL_CAT: header.indexOf("Categoria"), COL_MARCA: header.indexOf("Marca"), COL_MODELO: header.indexOf("Modelo"),
-        COL_AÑOS: (indexAños > -1) ? indexAños : 6, COL_TIPO_ENCENDIDO: header.indexOf("Tipo de encendido"),
-        COL_IMG_VEHICULO: header.indexOf("Imagen del vehiculo"), COL_IMG_PORTADA: header.indexOf("Imagen de la portada"),
-        COL_IMG_APERTURA: header.indexOf("Imagen de la apertura"),
-    };
-}
 
 function convertirAGoogleThumbnail(url){
   if(!url) return "https://placehold.co/280x200/cccccc/333333?text=Sin+Imagen";
@@ -1466,14 +1448,13 @@ function extractYouTubeId(url) {
     return videoId;
 }
 
-function mostrarDetalleModal(fila, header) {
+function mostrarDetalleModal(fila) {
     pushState({ modal: true });
     uiState.isModalOpen = true;
 
     const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
-    const indexes = getHeaderIndexes(header);
 
     const headerDiv = document.createElement("div");
     headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
@@ -1485,67 +1466,73 @@ function mostrarDetalleModal(fila, header) {
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
 
-    const id = fila[header.indexOf("ID")];
-    const titulo = `${fila[indexes.COL_MODELO]} ${fila[indexes.COL_AÑOS] || ''}`;
-    const shareBtn = crearBotonCompartir('cortes', id, titulo);
+    const titulo = `${fila.modelo} ${fila.anioGeneracion || ''}`;
+    const shareBtn = crearBotonCompartir('cortes', fila.id, titulo);
     headerDiv.appendChild(shareBtn);
 
     cont.appendChild(headerDiv);
 
     const title = document.createElement("h2");
-    const modeloNombre = fila[indexes.COL_MODELO] || 'Modelo Desconocido';
-    const anosNombre = fila[indexes.COL_AÑOS] || '';
+    const modeloNombre = fila.modelo || 'Modelo Desconocido';
+    const anosNombre = fila.anioGeneracion || '';
     title.textContent = `Detalle de ${modeloNombre} ${anosNombre ? `(${anosNombre})` : ''}`;
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
     cont.appendChild(title);
 
     // --- Contenido Principal (Siempre Visible) ---
-    const notaImportante = fila[header.indexOf("Nota Importante")];
-    if (notaImportante) {
+    if (fila.notaImportante) {
         const p = document.createElement("p");
-        p.innerHTML = `<strong style="color:red;">Nota Importante:</strong> <span style="color:#cc0000; font-weight: bold;">${notaImportante}</span>`;
+        p.innerHTML = `<strong style="color:red;">Nota Importante:</strong> <span style="color:#cc0000; font-weight: bold;">${fila.notaImportante}</span>`;
         cont.appendChild(p);
     }
-    crearImagenDetalle("Modelo", fila[header.indexOf("Imagen del vehiculo")], cont, 'img-vehiculo');
-    const tipoCorteEl = crearElementoDetalle("Tipo de Corte", fila[header.indexOf("Tipo de corte")]);
+    crearImagenDetalle("Modelo", fila.imagenDelVehiculo, cont, 'img-vehiculo');
+    const tipoCorteEl = crearElementoDetalle("Tipo de Corte", fila.tipoDeCorte);
     if (tipoCorteEl) cont.appendChild(tipoCorteEl);
-    const descCorteEl = crearElementoDetalle("Descripción", fila[header.indexOf("Descripcion del corte")]);
+    const descCorteEl = crearElementoDetalle("Descripción", fila.descripcionDelCorte);
     if (descCorteEl) cont.appendChild(descCorteEl);
-    crearImagenDetalle("Imagen", fila[header.indexOf("Imagen del Corte")], cont);
+    crearImagenDetalle("Imagen", fila.imagenDelCorte, cont);
 
     // --- Secciones Desplegables ---
     const secciones = [
         {
             titulo: "Segunda Opción de Corte",
             campos: [
-                { label: "Tipo de Corte", key: "Tipo de corte 2" },
-                { label: "Descripción", key: "Descripción del Segundo corte" },
-                { label: "Imagen", key: "Imagen de corte 2", esImagen: true }
+                { label: "Tipo de Corte", valor: fila.tipoDeCorte2 },
+                { label: "Descripción", valor: fila.descripcionDelSegundoCorte },
+                { label: "Imagen", valor: fila.imagenDeCorte2, esImagen: true }
+            ]
+        },
+        {
+            titulo: "Tercera Opción de Corte",
+            campos: [
+                { label: "Tipo de Corte", valor: fila.tipoDeCorte3 },
+                { label: "Descripción", valor: fila.descripcionDelCorte3 },
+                { label: "Imagen", valor: fila.imagenDelCorte3, esImagen: true }
             ]
         },
         {
             titulo: "Apertura",
             campos: [
-                { label: "Detalles", key: "Apertura" },
-                { label: "Imagen", key: "Imagen de la apertura", esImagen: true }
+                { label: "Detalles", valor: fila.apertura },
+                { label: "Imagen", valor: fila.imagenDeLaApertura, esImagen: true }
             ]
         },
         {
             titulo: "Cables de Alimentación",
             campos: [
-                { label: "Detalles", key: "Cables de Alimentacion" },
-                { label: "Imagen", key: "Imagen de los cables de alimentacion", esImagen: true }
+                { label: "Detalles", valor: fila.cablesDeAlimentacion },
+                { label: "Imagen", valor: fila.imagenDeLosCablesDeAlimentacion, esImagen: true }
             ]
         },
         {
             titulo: "Video Guía de Desarme",
-            campos: [{ key: "Como desarmar los plasticos", esVideo: true }]
+            campos: [{ valor: fila.comoDesarmarLosPlasticos, esVideo: true }]
         }
     ];
 
     secciones.forEach(seccion => {
         // Comprueba si al menos un campo de la sección tiene contenido
-        const tieneContenido = seccion.campos.some(c => fila[header.indexOf(c.key)]);
+        const tieneContenido = seccion.campos.some(c => c.valor);
         if (!tieneContenido) return;
 
         const btn = document.createElement("button");
@@ -1562,20 +1549,51 @@ function mostrarDetalleModal(fila, header) {
         panel.className = "panel-desplegable";
 
         seccion.campos.forEach(c => {
-            const valor = fila[header.indexOf(c.key)];
-            if (valor) {
+            if (c.valor) {
                 if (c.esImagen) {
-                    crearImagenDetalle(c.label || seccion.titulo, valor, panel);
+                    crearImagenDetalle(c.label || seccion.titulo, c.valor, panel);
                 } else if (c.esVideo) {
-                    crearVideoDetalle(seccion.titulo, valor, panel);
+                    crearVideoDetalle(seccion.titulo, c.valor, panel);
                 } else {
-                    const el = crearElementoDetalle(c.label, valor);
+                    const el = crearElementoDetalle(c.label, c.valor);
                     if (el) panel.appendChild(el);
                 }
             }
         });
         cont.appendChild(panel);
     });
+
+    // --- Sección del Colaborador ---
+    if (fila.colaborador) {
+        const colaboradorDiv = document.createElement('div');
+        colaboradorDiv.style.cssText = `
+            margin-top: 25px;
+            padding: 8px 12px;
+            background-color: rgba(0, 123, 255, 0.1);
+            border-left: 4px solid #007bff;
+            border-radius: 4px;
+            font-size: 0.9em;
+            text-align: right;
+        `;
+        colaboradorDiv.innerHTML = `Agregado por: <strong>${fila.colaborador.replace(/<br>/g, ', ')}</strong>`;
+        cont.appendChild(colaboradorDiv);
+    }
+
+    // --- Sección de Feedback (UI Placeholder) ---
+    const feedbackDiv = document.createElement('div');
+    feedbackDiv.style.cssText = "margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee; display: flex; gap: 10px; align-items: center;";
+
+    const utilBtn = document.createElement('button');
+    utilBtn.innerHTML = `<i class="fas fa-thumbs-up"></i> Útil <span id="util-count">(0)</span>`; // Se usa fas para un ícono sólido
+    utilBtn.style.cssText = "background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px; padding: 8px 12px; cursor: pointer;";
+
+    const reportarBtn = document.createElement('button');
+    reportarBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Reportar Problema`; // Ícono de advertencia
+    reportarBtn.style.cssText = "background: #f0f0f0; border: 1px solid #ccc; border-radius: 8px; padding: 8px 12px; cursor: pointer; font-size: 0.9em;";
+
+    feedbackDiv.appendChild(utilBtn);
+    feedbackDiv.appendChild(reportarBtn);
+    cont.appendChild(feedbackDiv);
 
     modal.classList.add("visible");
 }
@@ -1591,17 +1609,16 @@ function filtrarContenido(textoBusqueda){
         mostrarCategorias();
         return;
     }
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
-    const dataToFilter = datosOriginales.slice(1);
+
     const palabrasBusqueda = busqueda.split(' ').filter(p => p.length > 0);
-    datosFiltrados = dataToFilter.filter(fila => {
+    datosFiltrados = datosOriginales.filter(fila => {
         const filaTexto = [
-            fila[indexes.COL_CAT], fila[indexes.COL_MARCA], fila[indexes.COL_MODELO],
-            fila[indexes.COL_AÑOS], fila[indexes.COL_TIPO_ENCENDIDO]
+            fila.categoria, fila.marca, fila.modelo,
+            fila.anioGeneracion, fila.tipoDeEncendido
         ].map(s => (s || '').toLowerCase()).join(' ');
         return palabrasBusqueda.every(palabra => filaTexto.includes(palabra));
     });
+
     if(datosFiltrados.length > 0){
         mostrarResultadosBusquedaMarca(busqueda);
     } else {
@@ -1613,22 +1630,21 @@ function filtrarContenido(textoBusqueda){
 
 function mostrarResultadosBusquedaMarca(busquedaTexto){
     const cont = document.getElementById("contenido");
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
     if (datosFiltrados.length === 1) {
-        const anosRaw = (datosFiltrados[0][indexes.COL_AÑOS] || '').trim();
-        mostrarDetalleModal(datosFiltrados[0], header);
-        cont.innerHTML = `<h4>Resultado Exacto Encontrado</h4><p>Abriendo detalle de ${datosFiltrados[0][indexes.COL_MODELO]} ${anosRaw ? `(${anosRaw})` : ''}.</p>`;
+        const fila = datosFiltrados[0];
+        const anosRaw = (fila.anioGeneracion || '').trim();
+        mostrarDetalleModal(fila);
+        cont.innerHTML = `<h4>Resultado Exacto Encontrado</h4><p>Abriendo detalle de ${fila.modelo} ${anosRaw ? `(${anosRaw})` : ''}.</p>`;
         return;
     }
     cont.innerHTML = `<h4>Resultados de búsqueda para: "${busquedaTexto}"</h4>`;
-    const marcasUnicas = [...new Set(datosFiltrados.map(f => f[indexes.COL_MARCA]))].filter(m => m).sort();
+    const marcasUnicas = [...new Set(datosFiltrados.map(f => f.marca))].filter(m => m).sort();
     const grid = document.createElement("div"); grid.className = "grid";
     marcasUnicas.forEach(marca => {
-        const ejemplo = datosFiltrados.find(f => f[indexes.COL_MARCA] === marca && f[indexes.COL_IMG_VEHICULO]) || datosFiltrados.find(f => f[indexes.COL_MARCA] === marca);
+        const ejemplo = datosFiltrados.find(f => f.marca === marca && f.imagenDelVehiculo) || datosFiltrados.find(f => f.marca === marca);
         const card=document.createElement("div"); card.className="card";
         card.onclick=()=>mostrarResultadosBusquedaModelo(busquedaTexto, marca);
-        const imgUrl = ejemplo ? ejemplo[indexes.COL_IMG_VEHICULO] : '';
+        const imgUrl = ejemplo ? ejemplo.imagenDelVehiculo : '';
         const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Marca ${marca}`; card.appendChild(img);
         const overlay=document.createElement("div"); overlay.className="overlay"; overlay.innerHTML = marca; card.appendChild(overlay);
         grid.appendChild(card);
@@ -1637,28 +1653,26 @@ function mostrarResultadosBusquedaMarca(busquedaTexto){
 }
 
 function mostrarResultadosBusquedaModelo(busquedaTexto, marcaFiltro){
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
     const cont = document.getElementById("contenido");
     cont.innerHTML = `<span class="backBtn" onclick="mostrarResultadosBusquedaMarca('${busquedaTexto}')">${backSvg} Volver a Marcas</span>
                       <h4>Modelos de ${marcaFiltro} (Búsqueda: "${busquedaTexto}")</h4>`;
-    const modelosRaw = datosFiltrados.filter(f => f[indexes.COL_MARCA] === marcaFiltro);
+    const modelosRaw = datosFiltrados.filter(f => f.marca === marcaFiltro);
     const modelosRenderizar = {};
-    modelosRaw.forEach(f => { const nombre = f[indexes.COL_MODELO]; if (!modelosRenderizar[nombre]) modelosRenderizar[nombre] = f; });
+    modelosRaw.forEach(f => { const nombre = f.modelo; if (!modelosRenderizar[nombre]) modelosRenderizar[nombre] = f; });
     const grid=document.createElement("div"); grid.className = "grid";
     Object.keys(modelosRenderizar).sort().forEach(modelo => {
         const ejemplo = modelosRenderizar[modelo];
-        const versiones = modelosRaw.filter(f => f[indexes.COL_MODELO] === modelo);
+        const versiones = modelosRaw.filter(f => f.modelo === modelo);
         const card=document.createElement("div"); card.className="card";
         card.onclick=()=>{
-            if(versiones.length===1) mostrarDetalleModal(ejemplo, header);
+            if(versiones.length===1) mostrarDetalleModal(ejemplo);
             else mostrarResultadosBusquedaVersion(busquedaTexto, marcaFiltro, modelo);
         };
-        const imgUrl = ejemplo[indexes.COL_IMG_VEHICULO];
+        const imgUrl = ejemplo.imagenDelVehiculo;
         const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Modelo ${modelo}`; card.appendChild(img);
         const overlay=document.createElement("div"); overlay.className="overlay";
-        const anos = ejemplo[indexes.COL_AÑOS] || '';
-        const encendido = ejemplo[indexes.COL_TIPO_ENCENDIDO] || '';
+        const anos = ejemplo.anioGeneracion || '';
+        const encendido = ejemplo.tipoDeEncendido || '';
         if(versiones.length === 1) {
             overlay.innerHTML = `<div>${modelo}</div>
                                  ${anos ? `<div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${anos}</div>` : ''}
@@ -1674,25 +1688,23 @@ function mostrarResultadosBusquedaModelo(busquedaTexto, marcaFiltro){
 }
 
 function mostrarResultadosBusquedaVersion(busquedaTexto, marcaFiltro, modeloFiltro){
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
     const cont = document.getElementById("contenido");
     cont.innerHTML = `<span class="backBtn" onclick="mostrarResultadosBusquedaModelo('${busquedaTexto}', '${marcaFiltro}')">${backSvg} Volver a Modelos (${modeloFiltro})</span>
                       <h4>Cortes/Años de ${modeloFiltro} (Búsqueda: "${busquedaTexto}")</h4>`;
-    const filasDetalle = datosFiltrados.filter(f => f[indexes.COL_MARCA] === marcaFiltro && f[indexes.COL_MODELO] === modeloFiltro);
+    const filasDetalle = datosFiltrados.filter(f => f.marca === marcaFiltro && f.modelo === modeloFiltro);
     const grid=document.createElement("div"); grid.className="grid";
     filasDetalle.forEach(f => {
         const card=document.createElement("div"); card.className="card";
-        const imgUrl = f[indexes.COL_IMG_VEHICULO];
-        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f[indexes.COL_AÑOS]}`; card.appendChild(img);
+        const imgUrl = f.imagenDelVehiculo;
+        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f.anioGeneracion}`; card.appendChild(img);
         const overlay=document.createElement("div"); overlay.className="overlay";
-        const anosRaw = (f[indexes.COL_AÑOS] || '').trim();
-        const encendido = (f[indexes.COL_TIPO_ENCENDIDO] || '').trim();
+        const anosRaw = (f.anioGeneracion || '').trim();
+        const encendido = (f.tipoDeEncendido || '').trim();
         let mainTitle = anosRaw || modeloFiltro;
         overlay.innerHTML = `<div style="font-weight:bold;">${mainTitle}</div>
                              ${encendido ? `<div style="font-size:0.8em; opacity:0.8;">${encendido}</div>` : ''}`;
         card.appendChild(overlay);
-        card.onclick=()=>mostrarDetalleModal(f, header);
+        card.onclick=()=>mostrarDetalleModal(f);
         grid.appendChild(card);
     });
     cont.appendChild(grid);
@@ -1702,19 +1714,18 @@ function mostrarCategorias(){
   if(document.getElementById("searchInput").value.trim().length > 0) return;
   estado.nivel="categorias"; estado.categoria=null;
   const cont=document.getElementById("contenido"); cont.innerHTML="<h4>Categorías</h4>";
-  if (datosOriginales.length <= 1) {
-    cont.innerHTML = '<p style="color:red; font-size:1.2em;">Advertencia: La hoja de cálculo está vacía o el rango es incorrecto.</p>';
+  if (!datosOriginales || datosOriginales.length === 0) {
+    cont.innerHTML += '<p style="text-align:center;">No hay datos de cortes disponibles.</p>';
     return;
   }
-  const header = datosOriginales[0];
-  const indexes = getHeaderIndexes(header);
-  const categorias = [...new Set(datosOriginales.slice(1).map(f=>f[indexes.COL_CAT]))].filter(c => c).sort();
+
+  const categorias = [...new Set(datosOriginales.map(f => f.categoria))].filter(c => c).sort();
   const grid = document.createElement("div"); grid.className="grid";
   categorias.forEach(cat=>{
-    const ejemplo = datosOriginales.slice(1).find(f=>f[indexes.COL_CAT]===cat);
+    const ejemplo = datosOriginales.find(f=>f.categoria===cat);
     const card=document.createElement("div"); card.className="card";
     card.onclick=()=>mostrarMarcas(cat);
-    const imgUrl = ejemplo ? ejemplo[indexes.COL_IMG_VEHICULO] : '';
+    const imgUrl = ejemplo ? ejemplo.imagenDelVehiculo : '';
     const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Imagen de la categoría ${cat}`; card.appendChild(img);
     const overlay=document.createElement("div"); overlay.className="overlay"; overlay.innerHTML = cat; card.appendChild(overlay);
     grid.appendChild(card);
@@ -1725,9 +1736,8 @@ function mostrarCategorias(){
 
 function mostrarUltimosAgregados() {
     const cont = document.getElementById("contenido");
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
-    const todosLosCortes = datosOriginales.slice(1);
+    if (!datosOriginales || datosOriginales.length === 0) return;
+    const todosLosCortes = datosOriginales;
     const ultimosCortes = todosLosCortes.slice(-5);
 
     const section = document.createElement('div');
@@ -1742,16 +1752,16 @@ function mostrarUltimosAgregados() {
     ultimosCortes.reverse().forEach(fila => {
         const card = document.createElement("div");
         card.className = "card";
-        card.onclick = () => mostrarDetalleModal(fila, header);
+        card.onclick = () => mostrarDetalleModal(fila);
 
         const img = document.createElement("img");
-        img.src = convertirAGoogleThumbnail(fila[indexes.COL_IMG_VEHICULO]);
-        img.alt = `${fila[indexes.COL_MARCA]} ${fila[indexes.COL_MODELO]}`;
+        img.src = convertirAGoogleThumbnail(fila.imagenDelVehiculo);
+        img.alt = `${fila.marca} ${fila.modelo}`;
         card.appendChild(img);
 
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.innerHTML = `<div>${fila[indexes.COL_MARCA]}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila[indexes.COL_MODELO]} ${fila[indexes.COL_AÑOS]}</div>`;
+        overlay.innerHTML = `<div>${fila.marca}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila.modelo} ${fila.anioGeneracion}</div>`;
         card.appendChild(overlay);
 
         grid.appendChild(card);
@@ -1767,15 +1777,13 @@ function mostrarMarcas(categoria){
   estado.nivel="marcas"; estado.categoria=categoria;
   const cont=document.getElementById("contenido");
   cont.innerHTML=`<span class="backBtn" onclick="irAPaginaPrincipal()">${backSvg} Volver a Categorías</span><h4>Marcas de ${categoria}</h4>`;
-  const header = datosOriginales[0];
-  const indexes = getHeaderIndexes(header);
-  const marcas = [...new Set(datosOriginales.slice(1).filter(f=>f[indexes.COL_CAT]===categoria).map(f=>f[indexes.COL_MARCA]))].filter(m => m).sort();
+  const marcas = [...new Set(datosOriginales.filter(f=>f.categoria===categoria).map(f=>f.marca))].filter(m => m).sort();
   const grid = document.createElement("div"); grid.className="grid";
   marcas.forEach(m=>{
-    const ejemplo = datosOriginales.slice(1).find(f=>f[indexes.COL_CAT]===categoria && f[indexes.COL_MARCA]===m);
+    const ejemplo = datosOriginales.find(f=>f.categoria===categoria && f.marca===m);
     const card=document.createElement("div"); card.className="card";
     card.onclick=()=>mostrarModelos(categoria,m);
-    const imgUrl = ejemplo ? ejemplo[indexes.COL_IMG_VEHICULO] : '';
+    const imgUrl = ejemplo ? ejemplo.imagenDelVehiculo : '';
     const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Imagen de la marca ${m}`; card.appendChild(img);
     const overlay=document.createElement("div"); overlay.className="overlay"; overlay.innerHTML = m; card.appendChild(overlay);
     grid.appendChild(card);
@@ -1788,23 +1796,21 @@ function mostrarModelos(categoria, marca){
   document.getElementById("searchInput").value = "";
   const cont=document.getElementById("contenido");
   cont.innerHTML=`<span class="backBtn" onclick="mostrarMarcas('${categoria}')">${backSvg} Volver a Marcas</span><h4>Modelos de ${marca}</h4>`;
-  const header = datosOriginales[0];
-  const indexes = getHeaderIndexes(header);
-  const modelosRaw = datosOriginales.slice(1).filter(f=>f[indexes.COL_CAT]===categoria && f[indexes.COL_MARCA]===marca);
+  const modelosRaw = datosOriginales.filter(f=>f.categoria===categoria && f.marca===marca);
   const modelosRenderizar = {};
-  modelosRaw.forEach(f=>{ const nombre = f[indexes.COL_MODELO]; if(!modelosRenderizar[nombre]) modelosRenderizar[nombre]=f; });
+  modelosRaw.forEach(f=>{ const nombre = f.modelo; if(!modelosRenderizar[nombre]) modelosRenderizar[nombre]=f; });
   const grid=document.createElement("div"); grid.className="grid";
   Object.keys(modelosRenderizar).sort().forEach(modelo=>{
     const card=document.createElement("div"); card.className="card";
     const ejemplo=modelosRenderizar[modelo];
-    const versiones = modelosRaw.filter(f => f[indexes.COL_MODELO] === modelo);
-    const imgUrl = ejemplo[indexes.COL_IMG_VEHICULO];
+    const versiones = modelosRaw.filter(f => f.modelo === modelo);
+    const imgUrl = ejemplo.imagenDelVehiculo;
     const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Modelo ${modelo}`; card.appendChild(img);
     const overlay=document.createElement("div"); overlay.className="overlay";
-    const anos = ejemplo[indexes.COL_AÑOS] || '';
-    const encendido = ejemplo[indexes.COL_TIPO_ENCENDIDO] || '';
+    const anos = ejemplo.anioGeneracion || '';
+    const encendido = ejemplo.tipoDeEncendido || '';
     card.onclick=()=>{
-      if(versiones.length===1) mostrarDetalleModal(ejemplo, datosOriginales[0]);
+      if(versiones.length===1) mostrarDetalleModal(ejemplo);
       else mostrarVersiones(versiones, categoria, marca, modelo);
     };
     if(versiones.length === 1) {
@@ -1827,20 +1833,18 @@ function mostrarVersiones(filas, categoria, marca, modelo){
   const cont=document.getElementById("contenido");
   cont.innerHTML=`<span class="backBtn" onclick="mostrarModelos('${categoria}','${marca}')">${backSvg} Volver a Modelos (${modelo})</span><h4>Cortes/Años de ${modelo}</h4>`;
   const grid=document.createElement("div"); grid.className="grid";
-  const header = datosOriginales[0];
-  const indexes = getHeaderIndexes(header);
   filas.forEach(f=>{
     const card=document.createElement("div"); card.className="card";
-    const imgUrl = f[indexes.COL_IMG_VEHICULO];
-    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f[indexes.COL_AÑOS]}`; card.appendChild(img);
+    const imgUrl = f.imagenDelVehiculo;
+    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f.anioGeneracion}`; card.appendChild(img);
     const overlay=document.createElement("div"); overlay.className="overlay";
-    const anosRaw = (f[indexes.COL_AÑOS] || '').trim();
-    const encendido = (f[indexes.COL_TIPO_ENCENDIDO] || '').trim();
+    const anosRaw = (f.anioGeneracion || '').trim();
+    const encendido = (f.tipoDeEncendido || '').trim();
     let mainTitle = anosRaw || modelo;
     overlay.innerHTML = `<div style="font-weight:bold;">${mainTitle}</div>
                          ${encendido ? `<div style="font-size:0.8em; opacity:0.8;">${encendido}</div>` : ''}`;
     card.appendChild(overlay);
-    card.onclick=()=>mostrarDetalleModal(f, header);
+    card.onclick=()=>mostrarDetalleModal(f);
     grid.appendChild(card);
   });
   cont.appendChild(grid);
@@ -1905,7 +1909,7 @@ if ('serviceWorker' in navigator) {
 async function handleSharedLink(seccion, id) {
     appOpenedFromLink = true;
 
-    let data, header, item, mostrarDetalleFn;
+    let data, item, mostrarDetalleFn;
 
     // 1. Determinar qué datos buscar y qué función de modal usar
     const seccionMap = {
@@ -1925,9 +1929,8 @@ async function handleSharedLink(seccion, id) {
     await syncAndFetchData(seccion, range, dataSetter, () => {}, 'contenido');
     data = dataRef();
 
-    if (data && data.length > 1) {
-        header = data[0];
-        item = data.slice(1).find(fila => fila[header.indexOf("ID")] === id);
+    if (data && data.length > 0) {
+        item = data.find(fila => fila.id === id);
     }
 
     // 3. Solo si el ítem es válido, se muestra el modal y se oculta el resto
@@ -1942,7 +1945,7 @@ async function handleSharedLink(seccion, id) {
         document.querySelector('.container').style.display = 'none';
 
         mostrarDetalleFn = modalFn;
-        mostrarDetalleFn(item, header);
+        mostrarDetalleFn(item);
 
         // Limpiar la URL para que un refresh no vuelva a abrir el modal
         history.replaceState({}, document.title, window.location.pathname);
