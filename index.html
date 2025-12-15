@@ -1373,7 +1373,7 @@ function crearBotonCompartir(seccion, ID, titulo) {
     shareBtn.style.cssText = "color:white; background:#007bff; border:none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;";
 
     // Usamos location.origin y location.pathname para construir una URL limpia
-    const shareUrl = `${window.location.origin}${window.location.pathname}?seccion=${seccion}&id=${id}`;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?seccion=${seccion}&id=${ID}`;
 
     shareBtn.onclick = async () => {
         const shareData = {
@@ -1425,7 +1425,7 @@ function mostrarDetalleTutorial(fila) {
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;"; // Reset margin
     headerDiv.appendChild(closeBtn);
 
-    const shareBtn = crearBotonCompartir('tutoriales', fila.ID, fila.tema);
+    const shareBtn = crearBotonCompartir('tutoriales', fila.id, fila.tema);
     headerDiv.appendChild(shareBtn);
 
     cont.appendChild(headerDiv);
@@ -1468,7 +1468,7 @@ function mostrarDetalleRelay(fila) {
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
 
-    const shareBtn = crearBotonCompartir('relay', fila.ID, fila.configuracion);
+    const shareBtn = crearBotonCompartir('relay', fila.id, fila.configuracion);
     headerDiv.appendChild(shareBtn);
 
     cont.appendChild(headerDiv);
@@ -1589,7 +1589,7 @@ function mostrarDetalleModal(fila) {
     headerDiv.appendChild(closeBtn);
 
     const titulo = `${fila.modelo} ${fila.anoGeneracion || ''}`;
-    const shareBtn = crearBotonCompartir('cortes', fila.ID, titulo);
+    const shareBtn = crearBotonCompartir('cortes', fila.id, titulo);
     headerDiv.appendChild(shareBtn);
 
     cont.appendChild(headerDiv);
@@ -1704,12 +1704,12 @@ function mostrarDetalleModal(fila) {
     const utilBtn = document.createElement('button');
     utilBtn.innerHTML = `<i class="fas fa-thumbs-up"></i> Útil <span id="util-count">(...)</span>`;
     utilBtn.className = 'feedback-btn';
-    utilBtn.onclick = () => handleAddLike(fila.ID);
+    utilBtn.onclick = () => handleAddLike(fila.id);
 
     const reportarBtn = document.createElement('button');
     reportarBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Reportar`;
     reportarBtn.className = 'feedback-btn report';
-    reportarBtn.onclick = () => handleReportProblem(fila.ID);
+    reportarBtn.onclick = () => handleReportProblem(fila.id);
 
     feedbackActions.appendChild(utilBtn);
     feedbackActions.appendChild(reportarBtn);
@@ -1900,87 +1900,6 @@ function mostrarResultadosBusqueda(resultados) {
     cont.appendChild(grid);
 }
 
-function mostrarResultadosBusquedaMarca(busquedaTexto){
-    const cont = document.getElementById("contenido");
-    if (datosFiltrados.length === 1) {
-        const fila = datosFiltrados[0];
-        const anosRaw = (fila.anoGeneracion || '').trim();
-        mostrarDetalleModal(fila);
-        cont.innerHTML = `<h4>Resultado Exacto Encontrado</h4><p>Abriendo detalle de ${fila.modelo} ${anosRaw ? `(${anosRaw})` : ''}.</p>`;
-        return;
-    }
-    cont.innerHTML = `<h4>Resultados de búsqueda para: "${busquedaTexto}"</h4>`;
-    const marcasUnicas = [...new Set(datosFiltrados.map(f => f.marca))].filter(m => m).sort();
-    const grid = document.createElement("div"); grid.className = "grid";
-    marcasUnicas.forEach(marca => {
-        const ejemplo = datosFiltrados.find(f => f.marca === marca && f.imagenDelVehiculo) || datosFiltrados.find(f => f.marca === marca);
-        const card=document.createElement("div"); card.className="card";
-        card.onclick=()=>mostrarResultadosBusquedaModelo(busquedaTexto, marca);
-        const imgUrl = ejemplo ? ejemplo.imagenDelVehiculo : '';
-        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Marca ${marca}`; card.appendChild(img);
-        const overlay=document.createElement("div"); overlay.className="overlay"; overlay.innerHTML = marca; card.appendChild(overlay);
-        grid.appendChild(card);
-    });
-    cont.appendChild(grid);
-}
-
-function mostrarResultadosBusquedaModelo(busquedaTexto, marcaFiltro){
-    const cont = document.getElementById("contenido");
-    cont.innerHTML = `<span class="backBtn" onclick="mostrarResultadosBusquedaMarca('${busquedaTexto}')">${backSvg} Volver a Marcas</span>
-                      <h4>Modelos de ${marcaFiltro} (Búsqueda: "${busquedaTexto}")</h4>`;
-    const modelosRaw = datosFiltrados.filter(f => f.marca === marcaFiltro);
-    const modelosRenderizar = {};
-    modelosRaw.forEach(f => { const nombre = f.modelo; if (!modelosRenderizar[nombre]) modelosRenderizar[nombre] = f; });
-    const grid=document.createElement("div"); grid.className = "grid";
-    Object.keys(modelosRenderizar).sort().forEach(modelo => {
-        const ejemplo = modelosRenderizar[modelo];
-        const versiones = modelosRaw.filter(f => f.modelo === modelo);
-        const card=document.createElement("div"); card.className="card";
-        card.onclick=()=>{
-            if(versiones.length===1) mostrarDetalleModal(ejemplo);
-            else mostrarResultadosBusquedaVersion(busquedaTexto, marcaFiltro, modelo);
-        };
-        const imgUrl = ejemplo.imagenDelVehiculo;
-        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Modelo ${modelo}`; card.appendChild(img);
-        const overlay=document.createElement("div"); overlay.className="overlay";
-        const anos = ejemplo.anoGeneracion || '';
-        const encendido = ejemplo.tipoDeEncendido || '';
-        if(versiones.length === 1) {
-            overlay.innerHTML = `<div>${modelo}</div>
-                                 ${anos ? `<div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${anos}</div>` : ''}
-                                 ${encendido ? `<div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${encendido}</div>` : ''}`;
-        } else {
-            overlay.innerHTML = `<div>${modelo}</div>
-                                 <div style="font-size:0.8em; opacity:0.8; font-weight:normal;">(${versiones.length} cortes)</div>`;
-        }
-        card.appendChild(overlay);
-        grid.appendChild(card);
-    });
-    cont.appendChild(grid);
-}
-
-function mostrarResultadosBusquedaVersion(busquedaTexto, marcaFiltro, modeloFiltro){
-    const cont = document.getElementById("contenido");
-    cont.innerHTML = `<span class="backBtn" onclick="mostrarResultadosBusquedaModelo('${busquedaTexto}', '${marcaFiltro}')">${backSvg} Volver a Modelos (${modeloFiltro})</span>
-                      <h4>Cortes/Años de ${modeloFiltro} (Búsqueda: "${busquedaTexto}")</h4>`;
-    const filasDetalle = datosFiltrados.filter(f => f.marca === marcaFiltro && f.modelo === modeloFiltro);
-    const grid=document.createElement("div"); grid.className="grid";
-    filasDetalle.forEach(f => {
-        const card=document.createElement("div"); card.className="card";
-        const imgUrl = f.imagenDelVehiculo;
-        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f.anoGeneracion}`; card.appendChild(img);
-        const overlay=document.createElement("div"); overlay.className="overlay";
-        const anosRaw = (f.anoGeneracion || '').trim();
-        const encendido = (f.tipoDeEncendido || '').trim();
-        let mainTitle = anosRaw || modeloFiltro;
-        overlay.innerHTML = `<div style="font-weight:bold;">${mainTitle}</div>
-                             ${encendido ? `<div style="font-size:0.8em; opacity:0.8;">${encendido}</div>` : ''}`;
-        card.appendChild(overlay);
-        card.onclick=()=>mostrarDetalleModal(f);
-        grid.appendChild(card);
-    });
-    cont.appendChild(grid);
-}
 
 function mostrarCategorias(){
   if(document.getElementById("searchInput").value.trim().length > 0) return;
@@ -2234,7 +2153,7 @@ async function handleSharedLink(seccion, id) {
     data = dataRef();
 
     if (data && data.length > 0) {
-        item = data.find(fila => fila.ID === id);
+        item = data.find(fila => fila.id === id);
     }
 
     // 3. Solo si el ítem es válido, se muestra el modal y se oculta el resto

@@ -440,11 +440,9 @@ function getSheetDataAsJson(sheetName) {
   const cachedData = cache.get(sheetName);
 
   if (cachedData) {
-    // Si los datos están en caché, devolverlos directamente
     return createJsonResponse(JSON.parse(cachedData));
   }
 
-  // Si no, obtener los datos de la hoja
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(sheetName);
   if (!sheet) return createJsonResponse([]);
 
@@ -460,7 +458,6 @@ function getSheetDataAsJson(sheetName) {
     return rowObject;
   });
 
-  // Guardar los datos en la caché por 10 minutos (600 segundos)
   cache.put(sheetName, JSON.stringify(data), 600);
 
   return createJsonResponse(data);
@@ -515,8 +512,27 @@ function normalizeHeaders(headers) {
 }
 
 function toCamelCase(text) {
-  if (!text) return '';
-  return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^\w\s]/g, '').replace(/\s+(.)/g, (_, chr) => chr.toUpperCase()).replace(/\s/g, '').replace(/^(.)/, (_, chr) => chr.toLowerCase());
+  if (!text || typeof text !== 'string') {
+    return '';
+  }
+
+  // Normaliza, quita acentos y convierte a minúsculas
+  let cleanedText = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+
+  // Quita caracteres especiales que no sean letras, números o espacios
+  cleanedText = cleanedText.replace(/[^a-z0-9\s]/g, '');
+
+  // Divide en palabras, eliminando las que estén vacías
+  const words = cleanedText.split(' ').filter(word => word.length > 0);
+
+  if (words.length === 0) {
+    return '';
+  }
+
+  // Toma la primera palabra y luego capitaliza y une el resto
+  const camelCaseText = words.slice(1).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+
+  return words[0] + camelCaseText;
 }
 
 function getOrCreateFolder(parentFolder, pathArray) {
