@@ -1588,7 +1588,7 @@ function mostrarDetalleModal(fila) {
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
 
-    const titulo = `${fila.modelo} ${fila.anioGeneracion || ''}`;
+    const titulo = `${fila.modelo} ${fila.anoGeneracion || ''}`;
     const shareBtn = crearBotonCompartir('cortes', fila.ID, titulo);
     headerDiv.appendChild(shareBtn);
 
@@ -1596,7 +1596,7 @@ function mostrarDetalleModal(fila) {
 
     const title = document.createElement("h2");
     const modeloNombre = fila.modelo || 'Modelo Desconocido';
-    const anosNombre = fila.anioGeneracion || '';
+    const anosNombre = fila.anoGeneracion || '';
     title.textContent = `Detalle de ${modeloNombre} ${anosNombre ? `(${anosNombre})` : ''}`;
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
     cont.appendChild(title);
@@ -1854,7 +1854,7 @@ async function filtrarContenido(textoBusqueda) {
             fila.categoria,
             fila.marca,
             fila.modelo,
-            fila.anioGeneracion,
+            fila.anoGeneracion,
             fila.tipoDeEncendido
         ].map(s => String(s || '').toLowerCase()).join(' ');
 
@@ -1892,7 +1892,7 @@ function mostrarResultadosBusqueda(resultados) {
 
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.innerHTML = `<div>${fila.marca} ${fila.modelo}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila.anioGeneracion || ''}</div>`;
+        overlay.innerHTML = `<div>${fila.marca} ${fila.modelo}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila.anoGeneracion || ''}</div>`;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -1904,7 +1904,7 @@ function mostrarResultadosBusquedaMarca(busquedaTexto){
     const cont = document.getElementById("contenido");
     if (datosFiltrados.length === 1) {
         const fila = datosFiltrados[0];
-        const anosRaw = (fila.anioGeneracion || '').trim();
+        const anosRaw = (fila.anoGeneracion || '').trim();
         mostrarDetalleModal(fila);
         cont.innerHTML = `<h4>Resultado Exacto Encontrado</h4><p>Abriendo detalle de ${fila.modelo} ${anosRaw ? `(${anosRaw})` : ''}.</p>`;
         return;
@@ -1943,7 +1943,7 @@ function mostrarResultadosBusquedaModelo(busquedaTexto, marcaFiltro){
         const imgUrl = ejemplo.imagenDelVehiculo;
         const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Modelo ${modelo}`; card.appendChild(img);
         const overlay=document.createElement("div"); overlay.className="overlay";
-        const anos = ejemplo.anioGeneracion || '';
+        const anos = ejemplo.anoGeneracion || '';
         const encendido = ejemplo.tipoDeEncendido || '';
         if(versiones.length === 1) {
             overlay.innerHTML = `<div>${modelo}</div>
@@ -1968,9 +1968,9 @@ function mostrarResultadosBusquedaVersion(busquedaTexto, marcaFiltro, modeloFilt
     filasDetalle.forEach(f => {
         const card=document.createElement("div"); card.className="card";
         const imgUrl = f.imagenDelVehiculo;
-        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f.anioGeneracion}`; card.appendChild(img);
+        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f.anoGeneracion}`; card.appendChild(img);
         const overlay=document.createElement("div"); overlay.className="overlay";
-        const anosRaw = (f.anioGeneracion || '').trim();
+        const anosRaw = (f.anoGeneracion || '').trim();
         const encendido = (f.tipoDeEncendido || '').trim();
         let mainTitle = anosRaw || modeloFiltro;
         overlay.innerHTML = `<div style="font-weight:bold;">${mainTitle}</div>
@@ -2037,7 +2037,7 @@ function mostrarUltimosAgregados() {
 
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.innerHTML = `<div>${fila.marca}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila.modelo} ${fila.anioGeneracion}</div>`;
+        overlay.innerHTML = `<div>${fila.marca}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila.modelo} ${fila.anoGeneracion}</div>`;
         card.appendChild(overlay);
 
         grid.appendChild(card);
@@ -2083,7 +2083,7 @@ function mostrarModelos(categoria, marca){
     const imgUrl = ejemplo.imagenDelVehiculo;
     const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Modelo ${modelo}`; card.appendChild(img);
     const overlay=document.createElement("div"); overlay.className="overlay";
-    const anos = ejemplo.anioGeneracion || '';
+    const anos = ejemplo.anoGeneracion || '';
     const encendido = ejemplo.tipoDeEncendido || '';
     card.onclick=()=>{
       if(versiones.length===1) mostrarDetalleModal(ejemplo);
@@ -2112,9 +2112,9 @@ function mostrarVersiones(filas, categoria, marca, modelo){
   filas.forEach(f=>{
     const card=document.createElement("div"); card.className="card";
     const imgUrl = f.imagenDelVehiculo;
-    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f.anioGeneracion}`; card.appendChild(img);
+    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f.anoGeneracion}`; card.appendChild(img);
     const overlay=document.createElement("div"); overlay.className="overlay";
-    const anosRaw = (f.anioGeneracion || '').trim();
+    const anosRaw = (f.anoGeneracion || '').trim();
     const encendido = (f.tipoDeEncendido || '').trim();
     let mainTitle = anosRaw || modelo;
     overlay.innerHTML = `<div style="font-weight:bold;">${mainTitle}</div>
