@@ -243,15 +243,73 @@ body.search-active .app-logo {
 }
 
 
-/* --- ESTILOS DE LA SELECCIÓN DE SECCIÓN --- */
+/* --- ESTILOS DE LA SELECCIÓN DE SECCIÓN (AHORA OCULTO) --- */
 .section-selector {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-    transition: all 0.35s ease-in-out;
-    flex-wrap: wrap;
-    gap: 10px;
+    display: none;
 }
+
+/* --- ESTILOS DEL MENÚ HAMBURGUESA Y SIDENAV --- */
+.hamburger-btn {
+    position: absolute;
+    right: -50px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #007bff;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    width: 40px;
+    height: 40px;
+    font-size: 20px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+.hamburger-btn:hover {
+    background-color: #0056b3;
+}
+.sidenav {
+    height: 100%;
+    width: 0;
+    position: fixed;
+    z-index: 2000;
+    top: 0;
+    right: 0;
+    background-color: #f9f9f9;
+    overflow-x: hidden;
+    transition: 0.5s;
+    padding-top: 60px;
+    box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espacio entre botones */
+    align-items: center; /* Centra los botones horizontalmente */
+}
+.sidenav .close-btn {
+    position: absolute;
+    top: 15px;
+    right: 25px;
+    font-size: 36px;
+    text-decoration: none;
+    color: #818181;
+}
+.sidenav .section-btn, .sidenav a.section-btn {
+    padding: 15px 25px;
+    text-decoration: none;
+    font-size: 18px;
+    color: #333;
+    display: block;
+    transition: 0.3s;
+    width: 80%; /* Ancho de los botones */
+    text-align: center;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background-color: #fff;
+}
+.sidenav .section-btn:hover {
+    background-color: #f1f1f1;
+    color: #007bff;
+}
+
 .section-btn {
     background-color: #f0f0f0;
     border: 1px solid #ccc;
@@ -681,13 +739,16 @@ body.search-active .app-logo {
   <div class="search-container">
       <input type="text" id="searchInput" placeholder="Buscar Corte..." oninput="filtrarContenido(this.value)">
       <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
+      <button id="hamburger-btn" class="hamburger-btn"><i class="fas fa-bars"></i></button>
   </div>
 
-  <div class="section-selector">
+  <div id="sidenav" class="sidenav">
+      <a href="javascript:void(0)" class="close-btn" id="close-sidenav-btn">&times;</a>
       <button id="btn-cortes" class="section-btn active" onclick="mostrarSeccion('cortes')">Cortes</button>
       <button id="btn-tutoriales" class="section-btn" onclick="mostrarSeccion('tutoriales')">Tutoriales</button>
       <button id="btn-relay" class="section-btn" onclick="mostrarSeccion('relay')">Relay</button>
       <button id="btn-add" class="section-btn" style="background-color: #28a745; color: white;" onclick="window.location.href='add_cortes.html'">Agregar Nuevo</button>
+      <a id="account-management-link" href="users.html" class="section-btn" style="display: none; background-color: #3498db; color: white;">Gestión de Cuentas</a>
   </div>
 
   <div id="contenido" class="content-section"></div>
@@ -850,8 +911,14 @@ async function checkSession() {
         );
 
         if (currentUser) {
+            const userPrivileges = user.Privilegios;
+            // Mostrar enlace de gestión de cuentas si el rol es apropiado
+            if (['Supervisor', 'Gefe', 'Desarrollador'].includes(userPrivileges)) {
+                document.getElementById('account-management-link').style.display = 'block';
+            }
+
             // Las credenciales son válidas, la sesión continúa
-            localStorage.setItem('userName', user.Nombre); // <-- AÑADIDO
+            localStorage.setItem('userName', user.Nombre);
             hideLoginShowApp();
             document.getElementById('welcome-message').textContent = `Bienvenido, ${user.Nombre}`;
             document.getElementById('welcome-message').style.display = 'block';
@@ -901,6 +968,11 @@ function login(username, password) {
         document.getElementById('welcome-message').textContent = `Bienvenido, ${sessionData.user.Nombre}`;
         document.getElementById('welcome-message').style.display = 'block';
         document.getElementById('logout-button').style.display = 'block';
+
+        // Mostrar enlace de gestión de cuentas si el rol es apropiado
+        if (['Supervisor', 'Gefe', 'Desarrollador'].includes(sessionData.user.Privilegios)) {
+            document.getElementById('account-management-link').style.display = 'block';
+        }
 
         syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
 
@@ -1648,28 +1720,41 @@ async function loadFeedback(vehicleId) {
 
 async function handleAddLike(vehicleId) {
     const sessionData = localStorage.getItem(SESSION_KEY);
-    if (!sessionData) { alert("Necesitas iniciar sesión para hacer esto."); return; }
+    if (!sessionData) {
+        alert("Necesitas iniciar sesión para hacer esto.");
+        return;
+    }
     const { user } = JSON.parse(sessionData);
 
     const payload = {
         action: 'addLike',
-        actor: user,
+        actor: user, // El backend espera 'actor' que contiene el objeto de usuario
         data: { vehicleId: vehicleId }
     };
 
     try {
-        const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        // Usar la URL unificada de usuarios para esta acción
+        const response = await fetch(USERS_SCRIPT_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload),
+            headers: { 'Content-Type': 'text/plain' } // Evitar preflight CORS
+        });
         const result = await response.json();
-        if(result.status === 'success') {
+
+        if (result.status === 'success') {
             const likeCountSpan = document.getElementById('util-count');
-            const currentCount = parseInt(likeCountSpan.textContent.replace(/\D/g, ''), 10) || 0;
-            likeCountSpan.textContent = `(${currentCount + 1})`;
-            alert("¡Gracias por tu feedback!");
+            if (likeCountSpan) {
+                 likeCountSpan.textContent = `(${result.newLikeCount})`;
+            }
+            // No mostrar alerta para una mejor UX
         } else {
+            // Arrojar el error con el mensaje específico del servidor
             throw new Error(result.message || "Error desconocido del servidor.");
         }
     } catch (error) {
-        alert("No se pudo registrar tu feedback. Inténtalo de nuevo. " + error.message);
+        // Mostrar el mensaje de error detallado
+        alert(`No se pudo registrar tu feedback: ${error.message}`);
+        console.error("Error en handleAddLike:", error);
     }
 }
 
@@ -1704,31 +1789,72 @@ async function handleReportProblem(vehicleId) {
 // --- LÓGICA DE BÚSQUEDA ACTIVA ---
 const searchInput = document.getElementById('searchInput');
 
-function filtrarContenido(textoBusqueda){
+async function filtrarContenido(textoBusqueda) {
     const busqueda = textoBusqueda.toLowerCase().trim();
+    const cont = document.getElementById("contenido");
+
     if (busqueda.length === 0) {
         datosFiltrados = [];
-        estado.nivel = "categorias";
-        mostrarCategorias();
+        mostrarCategorias(); // Vuelve a la vista principal de categorías
         return;
+    }
+
+    // Asegurarse de que los datos de cortes están cargados antes de buscar
+    if (!datosOriginales || datosOriginales.length === 0) {
+        await syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, () => {}, 'contenido');
     }
 
     const palabrasBusqueda = busqueda.split(' ').filter(p => p.length > 0);
     datosFiltrados = datosOriginales.filter(fila => {
+        // Asegurarse de que las propiedades existen antes de unirse a ellas
         const filaTexto = [
-            fila.categoria, fila.marca, fila.modelo,
-            fila.anioGeneracion, fila.tipoDeEncendido
-        ].map(s => (s || '').toLowerCase()).join(' ');
+            fila.categoria,
+            fila.marca,
+            fila.modelo,
+            fila.anioGeneracion,
+            fila.tipoDeEncendido
+        ].map(s => String(s || '').toLowerCase()).join(' ');
+
         return palabrasBusqueda.every(palabra => filaTexto.includes(palabra));
     });
 
-    if(datosFiltrados.length > 0){
-        mostrarResultadosBusquedaMarca(busqueda);
+    if (datosFiltrados.length > 0) {
+        if (datosFiltrados.length === 1) {
+            // Si solo hay un resultado, mostrarlo directamente
+            mostrarDetalleModal(datosFiltrados[0]);
+        } else {
+            // Si hay varios, mostrar la lista de resultados
+            mostrarResultadosBusqueda(datosFiltrados);
+        }
     } else {
-        document.getElementById("contenido").innerHTML = `<p style="text-align:center; padding: 20px;">No se encontraron resultados para "${busqueda}".</p>`;
+        cont.innerHTML = `<p style="text-align:center; padding: 20px;">No se encontraron resultados para "${textoBusqueda}".</p>`;
     }
-    estado.nivel = "busqueda";
-    estado.categoria = null; estado.marca = null; estado.modelo = null;
+}
+
+function mostrarResultadosBusqueda(resultados) {
+    const cont = document.getElementById("contenido");
+    cont.innerHTML = `<h4>Resultados de la Búsqueda</h4>`;
+    const grid = document.createElement("div");
+    grid.className = "grid";
+
+    resultados.forEach(fila => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => mostrarDetalleModal(fila);
+
+        const img = document.createElement("img");
+        img.src = convertirAGoogleThumbnail(fila.imagenDelVehiculo);
+        img.alt = `${fila.marca} ${fila.modelo}`;
+        card.appendChild(img);
+
+        const overlay = document.createElement("div");
+        overlay.className = "overlay";
+        overlay.innerHTML = `<div>${fila.marca} ${fila.modelo}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila.anioGeneracion || ''}</div>`;
+        card.appendChild(overlay);
+        grid.appendChild(card);
+    });
+
+    cont.appendChild(grid);
 }
 
 function mostrarResultadosBusquedaMarca(busquedaTexto){
@@ -1834,7 +1960,11 @@ function mostrarCategorias(){
     grid.appendChild(card);
   });
   cont.appendChild(grid);
-  mostrarUltimosAgregados();
+
+  // Solo mostrar "Últimos agregados" si no hay una búsqueda activa
+  if (document.getElementById("searchInput").value.trim().length === 0) {
+    mostrarUltimosAgregados();
+  }
 }
 
 function mostrarUltimosAgregados() {
@@ -1996,6 +2126,23 @@ installButton.addEventListener('click', async () => {
         installButton.style.display = 'none';
     }
 });
+
+// --- LÓGICA DEL MENÚ HAMBURGUESA ---
+document.getElementById('hamburger-btn').addEventListener('click', () => {
+    document.getElementById('sidenav').style.width = '250px';
+});
+
+document.getElementById('close-sidenav-btn').addEventListener('click', () => {
+    document.getElementById('sidenav').style.width = '0';
+});
+
+// Cerrar el sidenav si se hace clic en una de sus opciones
+document.querySelectorAll('.sidenav .section-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.getElementById('sidenav').style.width = '0';
+    });
+});
+
 
 // --- REGISTRO DEL SERVICE WORKER ---
 if ('serviceWorker' in navigator) {

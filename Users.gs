@@ -106,27 +106,45 @@ function handleFeedbackActions(payload) {
       return createJsonResponse({ status: 'success', message: 'Problema reportado exitosamente.' });
 
     case 'addLike':
-      if (!data.vehicleId) throw new Error("Falta el ID del vehículo.");
-      const cortesSheet = spreadsheet.getSheetByName(CORTES_SHEET_NAME);
-      const cortesData = cortesSheet.getDataRange().getValues();
-      const idIndex = COLS.ID - 1;
-
-      let rowIndex = -1;
-      for (let i = 1; i < cortesData.length; i++) { // Empezar desde 1 para saltar encabezados
-        if (cortesData[i][idIndex] == data.vehicleId) {
-          rowIndex = i + 1; // +1 porque los índices de rango son base 1
-          break;
+      try {
+        if (!data.vehicleId) {
+          throw new Error("Falta el ID del vehículo para 'addLike'.");
         }
-      }
 
-      if (rowIndex !== -1) {
-        const utilCell = cortesSheet.getRange(rowIndex, COLS.UTIL);
-        const currentLikes = parseInt(utilCell.getValue(), 10) || 0;
-        const newLikeCount = currentLikes + 1;
-        utilCell.setValue(newLikeCount);
-        return createJsonResponse({ status: 'success', message: 'Like añadido.', newLikeCount: newLikeCount });
-      } else {
-        return createJsonResponse({ status: 'error', message: 'No se encontró el vehículo para añadir el like.' });
+        // Invalidar la caché de 'Cortes' antes de modificar
+        CacheService.getScriptCache().remove(CORTES_SHEET_NAME);
+
+        const cortesSheet = spreadsheet.getSheetByName(CORTES_SHEET_NAME);
+        if (!cortesSheet) {
+          throw new Error("La hoja 'Cortes' no fue encontrada.");
+        }
+
+        const cortesData = cortesSheet.getDataRange().getValues();
+        const idIndex = COLS.ID - 1;
+
+        let rowIndex = -1;
+        // Se compara el vehicleId como string para evitar problemas de tipo de dato (ej. '1' vs 1)
+        const vehicleIdStr = String(data.vehicleId);
+        for (let i = 1; i < cortesData.length; i++) {
+          if (String(cortesData[i][idIndex]) == vehicleIdStr) {
+            rowIndex = i + 1;
+            break;
+          }
+        }
+
+        if (rowIndex !== -1) {
+          const utilCell = cortesSheet.getRange(rowIndex, COLS.UTIL);
+          const currentLikes = parseInt(utilCell.getValue(), 10) || 0;
+          const newLikeCount = currentLikes + 1;
+          utilCell.setValue(newLikeCount);
+          return createJsonResponse({ status: 'success', message: 'Like añadido.', newLikeCount: newLikeCount });
+        } else {
+          Logger.log(`No se encontró el vehículo con ID: ${data.vehicleId} para añadir el like.`);
+          return createJsonResponse({ status: 'error', message: 'No se encontró el registro del vehículo para actualizar.' });
+        }
+      } catch (error) {
+        Logger.log(`Error en 'addLike': ${error.message} (Vehicle ID: ${data.vehicleId}). Stack: ${error.stack}`);
+        return createJsonResponse({ status: 'error', message: `Error interno del servidor: ${error.message}` });
       }
 
     // Placeholder para futuras implementaciones
@@ -185,6 +203,9 @@ function checkVehicleExists(params) {
 }
 
 function handleCortesPost(payload) {
+  // Invalidar la caché de 'Cortes' porque se va a modificar
+  CacheService.getScriptCache().remove(CORTES_SHEET_NAME);
+
   const { vehicleInfo = {}, additionalInfo = {}, files = {} } = payload;
   const { rowIndex, categoria, marca, modelo, anio, tipoEncendido, colaborador } = vehicleInfo;
   if (!marca || !modelo || !anio || !categoria || !tipoEncendido) throw new Error("Información esencial del vehículo está incompleta.");
@@ -368,8 +389,18 @@ function changePassword(sheet, allUsers, headers, passwordData) {
 // ==================================================================
 
 function getSheetDataAsJson(sheetName) {
+  const cache = CacheService.getScriptCache();
+  const cachedData = cache.get(sheetName);
+
+  if (cachedData) {
+    // Si los datos están en caché, devolverlos directamente
+    return createJsonResponse(JSON.parse(cachedData));
+  }
+
+  // Si no, obtener los datos de la hoja
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(sheetName);
   if (!sheet) return createJsonResponse([]);
+
   const values = sheet.getDataRange().getValues();
   if (values.length < 2) return createJsonResponse([]);
 
@@ -381,6 +412,10 @@ function getSheetDataAsJson(sheetName) {
     });
     return rowObject;
   });
+
+  // Guardar los datos en la caché por 10 minutos (600 segundos)
+  cache.put(sheetName, JSON.stringify(data), 600);
+
   return createJsonResponse(data);
 }
 
