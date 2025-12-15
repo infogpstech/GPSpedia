@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GPSpedia | Gestión de Cuentas</title>
+<link rel="icon" href="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+    /* --- Estilos Reutilizados de index.html --- */
+    body { font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4; display: flex; flex-direction: column; min-height: 100vh; }
+    .container { padding: 20px; max-width: 1240px; margin: 0 auto; width: 100%; box-sizing: border-box; flex: 1 0 auto; }
+    .header-container { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; margin-bottom: 20px; gap: 15px; }
+    .header-branding { display: flex; align-items: center; gap: 15px; }
+    .app-logo { max-width: 96px; height: auto; border-radius: 8px; }
+    h1.app-title { text-align: left; margin: 0; font-size: 2.2em; color: #333; }
+    .footer { text-align: center; padding: 20px 0; margin-top: 40px; background-color: #333; color: #fff; font-size: 0.9em; width: 100%; }
+    .backBtn { display: inline-flex; align-items: center; font-weight: bold; padding: 8px 15px; border-radius: 8px; cursor: pointer; color: #fff; background-color: #007bff; text-decoration: none; border: none; margin-bottom: 20px;}
+    .backBtn svg { margin-right: 8px; }
+
+    /* --- Estilos Específicos para users.html --- */
+    #user-management-section { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    #user-list-container { margin-top: 20px; }
+    .access-denied { text-align: center; padding: 40px; color: #777; }
+    .user-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    .user-table th, .user-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+    .user-table th { background-color: #f2f2f2; }
+    .user-table tr:nth-child(even) { background-color: #f9f9f9; }
+    .user-table tr:hover { background-color: #f1f1f1; }
+    .action-btn { background: none; border: none; cursor: pointer; padding: 5px; }
+    .action-btn.edit { color: #007bff; }
+    .action-btn.delete { color: #dc3545; }
+    .create-user-btn { display: inline-flex; align-items: center; font-weight: bold; padding: 10px 18px; border-radius: 8px; cursor: pointer; color: #fff; background-color: #28a745; text-decoration: none; border: none; margin-bottom: 20px; }
+    .create-user-btn i { margin-right: 8px; }
+
+    /* --- Estilos para los Modales --- */
+    .modal { position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; }
+    .modal-content { background-color: #fefefe; margin: auto; padding: 30px; border: 1px solid #888; width: 80%; max-width: 500px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+    .modal-header h2 { margin: 0; }
+    .close-btn { color: #aaa; font-size: 28px; font-weight: bold; cursor: pointer; }
+    .close-btn:hover, .close-btn:focus { color: black; text-decoration: none; }
+    .form-group { margin-bottom: 15px; }
+    .form-group label { display: block; margin-bottom: 5px; font-weight: bold; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+    .form-submit-btn { background-color: #007bff; color: white; padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; width: 100%; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-container">
+        <div class="header-branding">
+            <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
+            <h1 class="app-title">GPSpedia</h1>
+        </div>
+        <div id="header-controls" style="display: flex; align-items: center; gap: 15px;">
+            <span id="welcome-message" style="color: #333; font-weight: bold;"></span>
+        </div>
+    </div>
+
+    <main id="user-management-section">
+        <a href="index.html" class="backBtn">
+            <svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            Volver al Catálogo
+        </a>
+        <h2>Gestión de Cuentas</h2>
+
+        <div id="user-list-container">
+            <!-- El contenido (lista de usuarios o mensaje de acceso denegado) se insertará aquí -->
+            <p>Cargando información de la cuenta...</p>
+        </div>
+    </main>
+</div>
+
+<footer class="footer">
+  Gpspedia 2025© todos los derechos reservados.
+</footer>
+
+<!-- --- MODALES PARA GESTIÓN DE USUARIOS --- -->
+
+<!-- Modal para Crear / Editar Usuario -->
+<div id="user-form-modal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modal-title">Crear Nuevo Usuario</h2>
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+        </div>
+        <form id="user-form" onsubmit="handleUserFormSubmit(event)">
+            <input type="hidden" id="form-action" value="createUser">
+            <input type="hidden" id="original-username" value="">
+
+            <div class="form-group">
+                <label for="nombre">Nombre Completo</label>
+                <input type="text" id="nombre" required>
+            </div>
+            <div class="form-group">
+                <label for="nombre-usuario">Nombre de Usuario (se genera automáticamente)</label>
+                <input type="text" id="nombre-usuario" disabled>
+            </div>
+            <div class="form-group">
+                <label for="privilegios">Rango (Privilegios)</label>
+                <select id="privilegios" required></select>
+            </div>
+             <div class="form-group">
+                <label for="telefono">Teléfono</label>
+                <input type="tel" id="telefono">
+            </div>
+            <div class="form-group">
+                <label for="correo">Correo Electrónico</label>
+                <input type="email" id="correo">
+            </div>
+            <hr>
+            <p><strong>Gestión de Contraseña:</strong></p>
+             <div class="form-group">
+                <label for="password">Nueva Contraseña (dejar en blanco para no cambiar)</label>
+                <input type="password" id="password" minlength="8">
+            </div>
+
+            <button type="submit" class="form-submit-btn">Guardar Cambios</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // --- LÓGICA DE SEGURIDAD ---
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) { e.preventDefault(); }
+    });
+    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+
+    // --- CONFIGURACIÓN ---
+    const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOPX2qCazuGzKQZqyPvHOngNGl3Dj09veswC47zcxo6hGkNoqSxHkGlsQOe5ZDRfRx/exec";
+
+    // --- LÓGICA DE INICIALIZACIÓN ---
+    document.addEventListener('DOMContentLoaded', function() {
+        const session = localStorage.getItem('gpsepedia_session');
+        if (!session) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        const { user } = JSON.parse(session);
+        if (!user || !user.Nombre || !user.Privilegios) {
+            window.location.href = 'index.html';
+            return;
+        }
+
+        document.getElementById('welcome-message').textContent = `Sesión activa: ${user.Nombre} (${user.Privilegios})`;
+
+        const privilegios = user.Privilegios;
+        if (['Supervisor', 'Gefe', 'Desarrollador'].includes(privilegios)) {
+            fetchAndDisplayUsers(privilegios);
+        } else {
+            mostrarAccesoDenegado();
+        }
+    });
+
+    async function fetchAndDisplayUsers(currentUserPrivilegios) {
+        const container = document.getElementById('user-list-container');
+        container.innerHTML = '<p>Cargando lista de usuarios...</p>';
+
+        try {
+            // Se solicita explícitamente la hoja "Users"
+            const response = await fetch(`${USERS_SCRIPT_URL}?sheet=Users`);
+            if (!response.ok) throw new Error('Error al cargar los datos de usuarios.');
+
+            const data = await response.json();
+            // El backend ahora debería devolver el array de filas directamente
+            const allUsers = data || [];
+
+            if (allUsers.length <= 1) {
+                container.innerHTML = '<p>No se encontraron usuarios.</p>';
+                return;
+            }
+
+            const header = allUsers[0];
+            const usersData = allUsers.slice(1);
+
+            const filteredUsers = filterUsersByPrivilege(usersData, header, currentUserPrivilegios);
+            renderUserTable(filteredUsers, header);
+
+        } catch (error) {
+            console.error('Error:', error);
+            container.innerHTML = `<p style="color:red;">${error.message}</p>`;
+        }
+    }
+
+    function filterUsersByPrivilege(users, header, currentUserPrivilegios) {
+        const privilegeIndex = header.indexOf('Privilegios');
+
+        const visiblePrivileges = [];
+        if (currentUserPrivilegios === 'Desarrollador') {
+            return users; // El desarrollador ve a todos.
+        }
+        if (currentUserPrivilegios === 'Gefe') {
+            visiblePrivileges.push('Gefe', 'Supervisor', 'Técnico');
+        }
+        if (currentUserPrivilegios === 'Supervisor') {
+            visiblePrivileges.push('Técnico');
+        }
+
+        return users.filter(user => visiblePrivileges.includes(user[privilegeIndex]));
+    }
+
+    function renderUserTable(users, header) {
+        const container = document.getElementById('user-list-container');
+
+        let tableHTML = `
+            <a href="#" class="create-user-btn" onclick="openCreateUserModal()">
+                <i class="fas fa-plus"></i> Crear Nuevo Usuario
+            </a>
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>${header[header.indexOf('Nombre_Usuario')]}</th>
+                        <th>${header[header.indexOf('Nombre')]}</th>
+                        <th>${header[header.indexOf('Privilegios')]}</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+        `;
+
+        const nameIndex = header.indexOf('Nombre');
+        const usernameIndex = header.indexOf('Nombre_Usuario');
+        const privilegeIndex = header.indexOf('Privilegios');
+
+        for (const user of users) {
+            tableHTML += `
+                <tr>
+                    <td>${user[usernameIndex] || ''}</td>
+                    <td>${user[nameIndex] || ''}</td>
+                    <td>${user[privilegeIndex] || ''}</td>
+                    <td>
+                        <button class="action-btn edit" title="Editar Usuario" onclick="openEditModal('${user[usernameIndex]}')"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn delete" title="Borrar Usuario" onclick="confirmDelete('${user[usernameIndex]}')"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>
+            `;
+        }
+
+        tableHTML += '</tbody></table>';
+        container.innerHTML = tableHTML;
+    }
+
+    function mostrarAccesoDenegado() {
+        const container = document.getElementById('user-list-container');
+        container.innerHTML = `
+            <div class="access-denied">
+                <h3>Acceso Denegado</h3>
+                <p>No tienes los privilegios necesarios para ver esta sección.</p>
+            </div>
+        `;
+    }
+
+    // --- LÓGICA DE MODALES (aún no funcionales) ---
+    function openCreateUserModal() { alert('Funcionalidad para crear usuario se implementará próximamente.'); }
+    function openEditModal(username) { alert(`Funcionalidad para editar a ${username} se implementará próximamente.`); }
+    function confirmDelete(username) { alert(`Funcionalidad para eliminar a ${username} se implementará próximamente.`); }
+    function closeModal() { document.getElementById('user-form-modal').style.display = 'none'; }
+    function handleUserFormSubmit(event) { event.preventDefault(); }
+</script>
+
+</body>
+</html>

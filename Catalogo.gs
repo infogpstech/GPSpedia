@@ -1,80 +1,101 @@
+// Definición de constantes para IDs y nombres de hojas.
 const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
-const DATA_SHEET_NAME = "Cortes";
+const DATA_SHEET_NAME_CORTES = "Cortes";
+const DATA_SHEET_NAME_TUTORIAL = "Tutorial";
+const DATA_SHEET_NAME_RELAY = "Configuración del Relay";
 
-// Función principal que se ejecuta cuando se hace una petición GET a la URL de la Web App
+/**
+ * Función de utilidad para convertir texto de cabecera a formato camelCase.
+ * Ejemplo: "Año (generacion)" se convierte en "anioGeneracion".
+ * Maneja acentos, diacríticos y caracteres especiales.
+ * @param {string} text El texto de la cabecera a convertir.
+ * @returns {string} El texto convertido a camelCase.
+ */
+function toCamelCase(text) {
+  if (!text) return '';
+  // Normaliza el texto para eliminar acentos y diacríticos.
+  const normalizedText = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  // Reemplaza caracteres no alfanuméricos (excepto espacios) por nada y luego convierte a camelCase.
+  return normalizedText
+    .replace(/[^\w\s]/g, '') // Elimina puntuación y caracteres especiales
+    .replace(/\s+(.)/g, (match, chr) => chr.toUpperCase()) // Convierte "palabra uno" a "palabraUno"
+    .replace(/\s/g, '') // Elimina espacios restantes
+    .replace(/^(.)/, (match, chr) => chr.toLowerCase()); // Asegura que la primera letra sea minúscula
+}
+
+
+/**
+ * Obtiene los datos de una hoja de cálculo específica y los convierte a un array de objetos JSON.
+ * @param {GoogleAppsScript.Spreadsheet.Spreadsheet} ss La instancia de la hoja de cálculo.
+ * @param {string} sheetName El nombre de la hoja de la que se obtendrán los datos.
+ * @returns {Array<Object>} Un array de objetos, donde cada objeto representa una fila.
+ */
+function getDataAsJson(ss, sheetName) {
+  const sheet = ss.getSheetByName(sheetName);
+  if (!sheet) {
+    console.error("No se encontró la hoja: " + sheetName);
+    return []; // Devuelve un array vacío si la hoja no existe
+  }
+  const range = sheet.getDataRange();
+  const values = range.getValues();
+
+  if (values.length < 2) {
+    return []; // No hay datos para procesar (solo cabecera o vacía)
+  }
+
+  const headers = values[0].map(toCamelCase); // Convierte todas las cabeceras a camelCase
+  const data = [];
+
+  for (let i = 1; i < values.length; i++) {
+    const rowObject = {};
+    for (let j = 0; j < headers.length; j++) {
+      if (headers[j]) { // Solo añade la propiedad si la cabecera no está vacía
+        rowObject[headers[j]] = values[i][j];
+      }
+    }
+    data.push(rowObject);
+  }
+  return data;
+}
+
+/**
+ * Función principal que se ejecuta cuando se hace una petición GET a la URL de la Web App.
+ * Determina qué datos devolver basándose en el parámetro 'sheet' en la URL.
+ * @param {Object} e El objeto de evento de la petición GET.
+ * @returns {GoogleAppsScript.Content.TextOutput} La respuesta JSON.
+ */
 function doGet(e) {
   try {
-    const sheetName = e.parameter.sheet || DATA_SHEET_NAME; // Lee el parámetro 'sheet', default a "Cortes"
-    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(sheetName);
+    const requestedSheet = e.parameter.sheet;
+    let data;
 
-    if (!sheet) {
-      return ContentService
-        .createTextOutput(JSON.stringify({ error: `Sheet named '${sheetName}' not found` }))
-        .setMimeType(ContentService.MimeType.JSON);
+    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+
+    // Selecciona qué datos obtener según el parámetro de la URL.
+    // Si no se especifica, por defecto devuelve "Cortes".
+    switch (requestedSheet) {
+      case DATA_SHEET_NAME_TUTORIAL:
+        data = getDataAsJson(ss, DATA_SHEET_NAME_TUTORIAL);
+        break;
+      case DATA_SHEET_NAME_RELAY:
+        data = getDataAsJson(ss, DATA_SHEET_NAME_RELAY);
+        break;
+      case DATA_SHEET_NAME_CORTES:
+      default:
+        data = getDataAsJson(ss, DATA_SHEET_NAME_CORTES);
+        break;
     }
 
-    const data = sheet.getDataRange().getValues();
-
-    // Si se solicitan los usuarios, devolvemos los datos en el formato que espera la lógica de login antigua
-    // para minimizar los cambios en el frontend.
-    if (sheetName === "Users") {
-      return ContentService
-        .createTextOutput(JSON.stringify({ values: data })) // Se empaqueta para simular la respuesta de la API de Sheets
-        .setMimeType(ContentService.MimeType.JSON);
-    }
-
-    // Para cualquier otra hoja (Cortes, Tutorial, etc.), procesamos a JSON con camelCase
-    const headers = data.shift().map(toCamelCase);
-
-    const json = data.map((row, index) => {
-      const rowData = {};
-      headers.forEach((header, i) => {
-        if (header) { // Ignorar columnas sin cabecera
-          rowData[header] = safeToString(row[i]);
-        }
-      });
-      rowData['rowIndex'] = index + 2;
-      return rowData;
-    });
-
+    // Crea y devuelve la respuesta en formato JSON.
     return ContentService
-      .createTextOutput(JSON.stringify(json))
+      .createTextOutput(JSON.stringify(data))
       .setMimeType(ContentService.MimeType.JSON);
 
   } catch (error) {
-    // Loguear el error para depuración en Apps Script
-    console.error(error);
+    // Manejo de errores: registra el error y devuelve una respuesta de error.
+    console.error("Error en doGet (Catalogo.gs): " + error.toString());
     return ContentService
-      .createTextOutput(JSON.stringify({ error: error.toString() }))
+      .createTextOutput(JSON.stringify({ error: "Ha ocurrido un error en el servidor: " + error.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
   }
-}
-
-/**
- * Convierte un string a formato camelCase.
- * Ejemplo: "Año (generacion)" se convierte en "anioGeneracion"
- * @param {string} str El string a convertir.
- * @returns {string} El string en camelCase.
- */
-function toCamelCase(str) {
-  if (!str) return '';
-  // Normaliza el string para separar caracteres base de los diacríticos (acentos, ñ, etc.)
-  // y luego elimina los diacríticos.
-  const sinAcentos = str.trim().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-
-  return sinAcentos
-    .toLowerCase()
-    // Convierte "palabra (otra)" a "palabraOtra" y maneja otros símbolos
-    .replace(/[^a-zA-Z0-9]+(.)?/g, (match, chr) => chr ? chr.toUpperCase() : '')
-    // Asegura que la primera letra sea minúscula
-    .replace(/^\w/, c => c.toLowerCase());
-}
-
-/**
- * Convierte un valor a string de forma segura, devolviendo un string vacío si es nulo o indefinido.
- * @param {*} value El valor a convertir.
- * @returns {string} El valor como string o un string vacío.
- */
-function safeToString(value) {
-  return (value === null || value === undefined) ? "" : value.toString();
 }

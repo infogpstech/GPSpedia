@@ -782,8 +782,9 @@ async function readData(storeName) {
 
 // --- LÓGICA DE DATOS ---
 const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
-// LA SIGUIENTE URL DEBE SER REEMPLAZADA POR LA URL DE LA WEB APP OBTENIDA AL DESPLEGAR EL SCRIPT DE GOOGLE
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyZGc9Rg6NMHT_PiF3JigvgBTE47JeOspzLdRUpaEVndhNh3nNNEa8XOflCv89B5Zw-/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOPX2qCazuGzKQZqyPvHOngNGl3Dj09veswC47zcxo6hGkNoqSxHkGlsQOe5ZDRfRx/exec";
+// Se usa la misma URL para ambos, ya que el backend maneja diferentes 'acciones' o 'parámetros'.
+const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOPX2qCazuGzKQZqyPvHOngNGl3Dj09veswC47zcxo6hGkNoqSxHkGlsQOe5ZDRfRx/exec";
 const RANGE_CORTES = "Cortes";
 const RANGE_TUTORIALES = "Tutorial";
 const RANGE_RELAY = "Configuración del Relay";
@@ -809,16 +810,16 @@ const SESSION_ID_KEY = 'gpsepedia_session_id';
 let userData = [];
 
 async function fetchUsers() {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(RANGE_USERS)}?key=${API_KEY}`;
+    const url = `${USERS_SCRIPT_URL}?sheet=Users`;
     try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error de red al obtener usuarios: ${response.status}`);
         const data = await response.json();
+        // Corrección: El script de Apps devuelve un objeto { values: [...] }, por lo que debemos acceder a esa propiedad.
         userData = data.values || [];
         return userData;
     } catch (error) {
         console.error("Fallo al obtener la lista de usuarios:", error);
-        // Mostrar error en el modal de login si falla la carga de usuarios
         const loginError = document.getElementById('login-error');
         loginError.textContent = "No se pudo conectar al servidor de autenticación.";
         loginError.style.display = 'block';
