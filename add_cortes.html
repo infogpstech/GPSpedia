@@ -91,6 +91,31 @@
         .accordion-content p { margin: 0; align-self: flex-start; }
         .accordion-content img { max-width: 100%; border-radius: 8px; border: 1px solid var(--light-gray); }
 
+        /* Estilos para Notificaciones Toast */
+        .toast-notification {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: var(--secondary-color);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            z-index: 10000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s, visibility 0.4s, transform 0.4s;
+            transform: translate(-50%, 20px);
+        }
+        .toast-notification.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%);
+        }
+        .toast-notification.success { background-color: var(--success-color); }
+        .toast-notification.error { background-color: var(--error-color); }
+
     </style>
 </head>
 <body>
@@ -228,7 +253,7 @@ function init() {
         })
         .catch(error => {
             console.error('Error fetching dropdowns:', error);
-            alert('No se pudieron cargar las opciones del formulario. Inténtalo de nuevo.');
+            showToast('No se pudieron cargar las opciones del formulario.', 'error');
         })
         .finally(() => toggleLoading(false));
 }
@@ -256,7 +281,7 @@ function handleFileSelection(e) {
     previewImg.classList.remove('visible');
     if (file) {
         if (file.size > MAX_FILE_SIZE) {
-            alert(`El archivo es demasiado grande (Máx 5MB).`);
+            showToast('El archivo es demasiado grande (Máx 5MB).', 'error');
             e.target.value = '';
             return;
         }
@@ -301,7 +326,7 @@ function handlePhase1Submit(e) {
         })
         .catch(error => {
             console.error('Error checking vehicle:', error);
-            alert('Error al verificar el vehículo: ' + error.message);
+            showToast('Error al verificar el vehículo: ' + error.message, 'error');
         })
         .finally(() => toggleLoading(false));
 }
@@ -317,7 +342,7 @@ async function handlePhase3Submit(e) {
         resolvedFiles = Object.fromEntries(fileEntries);
     } catch (error) {
         console.error('Error processing file promises:', error);
-        alert('Hubo un error al procesar las imágenes. Por favor, inténtelo de nuevo.');
+        showToast('Hubo un error al procesar las imágenes.', 'error');
         toggleLoading(false);
         return;
     }
@@ -335,7 +360,8 @@ async function handlePhase3Submit(e) {
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                alert('¡Éxito! ' + data.message);
+                // Usamos una variable en localStorage para pasar el mensaje de éxito a la página principal
+                localStorage.setItem('formSubmissionSuccess', data.message);
                 window.location.href = 'index.html';
             } else {
                 throw new Error(data.details ? `${data.error}: ${data.details.message}` : data.error);
@@ -343,7 +369,7 @@ async function handlePhase3Submit(e) {
         })
         .catch(error => {
             console.error('Error submitting form:', error);
-            alert('Error al guardar el registro: ' + error.message);
+            showToast('Error al guardar: ' + error.message, 'error');
         })
         .finally(() => toggleLoading(false));
 }
@@ -549,6 +575,25 @@ function convertirAGoogleThumbnail(url){
   if(idMatch) return `https://drive.google.com/thumbnail?sz=w1000&id=${idMatch[1]}`;
   return url; // Devuelve la URL original si no encuentra un ID, para enlaces que ya funcionan.
 }
+</script>
+
+<!-- Contenedor para la Notificación Toast -->
+<div id="toast-notification" class="toast-notification"></div>
+
+<script>
+    // Función para mostrar notificaciones toast (la ponemos aquí para que no se pierda en el script principal)
+    function showToast(message, type = 'info', duration = 3000) {
+        const toast = document.getElementById('toast-notification');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.className = 'toast-notification'; // Reset classes
+        toast.classList.add(type); // 'success', 'error', or default
+        toast.classList.add('show');
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, duration);
+    }
 </script>
 </body>
 </html>

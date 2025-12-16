@@ -192,7 +192,9 @@
         currentUser = user;
         document.getElementById('welcome-message').textContent = `Sesión activa: ${user.Nombre} (${user.Privilegios})`;
 
-        const userRole = user.Privilegios;
+        // Corrección: Limpiar el rol del usuario de cualquier espacio en blanco antes de evaluar los permisos.
+        // Esto soluciona el bug donde la lista no se carga si el rol en la DB tiene espacios (ej. " Supervisor ").
+        const userRole = user.Privilegios ? user.Privilegios.trim() : '';
         if (['Técnico', 'Tecnico_Exterior'].includes(userRole)) {
             document.querySelector('h2').textContent = 'Mi Perfil';
             fetchAndRenderUserProfile(user.Nombre_Usuario);

@@ -140,30 +140,36 @@ h1.app-title {
     }
 }
 
-/* --- ESTILOS DEL BUSCADOR --- */
+/* --- ESTILOS DEL BUSCADOR (REDISEÑADO) --- */
 .search-container {
-    position: relative; /* Contenedor para el botón de limpiar */
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espacio entre la barra y el botón hamburguesa */
     margin-bottom: 30px;
-    padding: 10px 0;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
     transition: all 0.35s ease-in-out;
 }
 
+.search-input-wrapper {
+    position: relative;
+    flex-grow: 1; /* El contenedor del input toma el espacio disponible */
+}
+
 #clear-search-btn {
     position: absolute;
-    right: 15px;
+    right: 10px;
     top: 50%;
     transform: translateY(-50%);
     background: #ccc;
     color: #fff;
     border: none;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    font-size: 16px;
-    line-height: 24px;
+    width: 22px;
+    height: 22px;
+    font-size: 14px;
+    line-height: 22px;
     text-align: center;
     cursor: pointer;
     opacity: 0;
@@ -171,26 +177,21 @@ h1.app-title {
     transition: opacity 0.2s ease-in-out;
 }
 
-.search-container.has-text #clear-search-btn {
+.search-input-wrapper.has-text #clear-search-btn {
     opacity: 1;
     pointer-events: all;
 }
 
-body.search-active .search-container.has-text #clear-search-btn {
-    right: 35px; /* Ajuste de posición cuando la búsqueda está activa */
-}
-
-
-.search-container input[type="text"] {
+#searchInput {
     width: 100%;
-    padding: 12px 15px;
+    padding: 12px 40px 12px 15px; /* Espacio a la derecha para el botón de limpiar */
     border: 1px solid #ccc;
     border-radius: 8px;
     box-sizing: border-box;
     font-size: 1em;
     transition: all 0.35s ease-in-out;
 }
-.search-container input[type="text"]:focus {
+#searchInput:focus {
     border-color: #007bff;
     box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
     outline: none;
@@ -248,45 +249,42 @@ body.search-active .app-logo {
     display: none;
 }
 
-/* --- ESTILOS DEL MENÚ HAMBURGUESA Y SIDENAV --- */
+/* --- ESTILOS DEL MENÚ HAMBURGUESA Y SIDENAV (REDISEÑADO) --- */
 #hamburger-btn {
-    position: absolute;
-    right: 8px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: #3498db; /* Azul aquamarina */
+    background: #3498db;
     color: white;
     border: none;
-    border-radius: 6px;
-    width: 38px;
-    height: 38px;
+    border-radius: 8px; /* Coincide con la barra de búsqueda */
+    width: 46px; /* Altura igual al input */
+    height: 46px;
     font-size: 18px;
     cursor: pointer;
     transition: background-color 0.3s;
     display: flex;
     align-items: center;
     justify-content: center;
+    flex-shrink: 0; /* Evita que el botón se encoja */
 }
 #hamburger-btn:hover {
     background-color: #2980b9;
 }
 
 .sidenav {
-    height: calc(100% - 70px); /* Altura total menos el header (aprox) */
-    width: 280px; /* Ancho fijo */
+    height: 100%;
+    width: 250px; /* Más estrecho */
     position: fixed;
-    z-index: 2000;
-    top: 70px; /* Se despliega desde debajo del header */
+    z-index: 3000; /* Por encima de todo */
+    top: 0;
     right: 0;
     background-color: #f8f9fa;
     overflow-x: hidden;
     transition: transform 0.3s ease-in-out;
-    transform: translateX(100%); /* Inicia oculto a la derecha */
-    box-shadow: -5px 0 15px rgba(0,0,0,0.1);
+    transform: translateX(100%);
+    box-shadow: -3px 0 10px rgba(0,0,0,0.1); /* Sombra más sutil */
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    padding: 20px;
+    gap: 8px; /* Espacio reducido */
+    padding: 15px;
     box-sizing: border-box;
 }
 .sidenav.open {
@@ -294,14 +292,15 @@ body.search-active .app-logo {
 }
 
 .sidenav .close-btn {
-    display: none; /* El cierre es automático o con clic fuera */
+    display: none;
 }
 
+/* Botones dentro del Sidenav */
 .sidenav .section-btn, .sidenav a.section-btn {
-    padding: 10px 15px;
+    padding: 8px 12px; /* Más compacto */
     text-decoration: none;
-    font-size: 16px; /* Tamaño de letra unificado */
-    color: #34495e; /* Texto oscuro */
+    font-size: 15px; /* Ligeramente más pequeño */
+    color: #34495e;
     display: block;
     transition: background-color 0.3s, color 0.3s;
     width: 100%;
@@ -744,6 +743,37 @@ body.search-active .app-logo {
     50% { transform: scale(1.05); }
     100% { transform: scale(1); }
 }
+
+/* Estilos para Notificaciones Toast */
+:root {
+    --success-color: #2ecc71;
+    --error-color: #e74c3c;
+    --secondary-color: #2c3e50;
+}
+.toast-notification {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: var(--secondary-color);
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    z-index: 10000;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.4s, visibility 0.4s, transform 0.4s;
+    transform: translate(-50%, 20px);
+}
+.toast-notification.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateX(-50%);
+}
+.toast-notification.success { background-color: var(--success-color); }
+.toast-notification.error { background-color: var(--error-color); }
+
 </style>
 </head>
 <body>
@@ -789,8 +819,10 @@ body.search-active .app-logo {
   </div>
 
   <div class="search-container">
-      <input type="text" id="searchInput" placeholder="Buscar Corte..." oninput="filtrarContenido(this.value)">
-      <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
+      <div class="search-input-wrapper">
+          <input type="text" id="searchInput" placeholder="Buscar Corte..." oninput="filtrarContenido(this.value)">
+          <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
+      </div>
       <button id="hamburger-btn"><i class="fas fa-bars"></i></button>
   </div>
 
@@ -1718,6 +1750,21 @@ function mostrarDetalleModal(fila) {
     const commentsContainer = document.createElement('div');
     commentsContainer.id = 'comments-container';
     commentsContainer.style.marginTop = '15px';
+
+    // Nuevo: Contenedor para el formulario de reporte
+    const reportFormContainer = document.createElement('div');
+    reportFormContainer.id = 'report-form-container';
+    reportFormContainer.style.display = 'none'; // Oculto por defecto
+    reportFormContainer.style.marginTop = '15px';
+    reportFormContainer.innerHTML = `
+        <textarea id="report-problem-input" placeholder="Describe el problema aquí..." style="width: 100%; min-height: 60px; padding: 8px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box;"></textarea>
+        <div style="display: flex; gap: 10px; margin-top: 8px;">
+            <button id="submit-report-btn" class="feedback-btn" style="background-color: #28a745; color: white;">Enviar Reporte</button>
+            <button id="cancel-report-btn" class="feedback-btn" style="background-color: #f0f2f5;">Cancelar</button>
+        </div>
+    `;
+
+    feedbackContainer.appendChild(reportFormContainer);
     feedbackContainer.appendChild(commentsContainer);
 
     cont.appendChild(feedbackContainer);
@@ -1764,69 +1811,116 @@ async function loadFeedback(vehicleId) {
 async function handleAddLike(vehicleId) {
     const sessionData = localStorage.getItem(SESSION_KEY);
     if (!sessionData) {
-        alert("Necesitas iniciar sesión para hacer esto.");
+        showToast("Necesitas iniciar sesión para hacer esto.", 'error');
         return;
     }
     const { user } = JSON.parse(sessionData);
 
+    const likeCountSpan = document.getElementById('util-count');
+    const utilBtn = likeCountSpan.parentElement;
+    if (utilBtn.disabled) return; // Prevenir doble clic
+
+    // UI Optimista: Actualizar la UI inmediatamente
+    const originalText = likeCountSpan.textContent;
+    const currentCount = parseInt(originalText.replace(/\D/g, '')) || 0;
+    likeCountSpan.textContent = `(${currentCount + 1})`;
+    utilBtn.disabled = true; // Deshabilitar mientras procesa
+
     const payload = {
         action: 'addLike',
-        actor: user, // El backend espera 'actor' que contiene el objeto de usuario
+        actor: user,
         data: { vehicleId: vehicleId }
     };
 
     try {
-        // Usar la URL unificada de usuarios para esta acción
         const response = await fetch(USERS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'text/plain' } // Evitar preflight CORS
+            headers: { 'Content-Type': 'text/plain' }
         });
         const result = await response.json();
 
         if (result.status === 'success') {
-            const likeCountSpan = document.getElementById('util-count');
-            if (likeCountSpan) {
-                 likeCountSpan.textContent = `(${result.newLikeCount})`;
-            }
-            // No mostrar alerta para una mejor UX
+            // La respuesta del servidor confirma el nuevo conteo
+            likeCountSpan.textContent = `(${result.newLikeCount})`;
         } else {
-            // Arrojar el error con el mensaje específico del servidor
+            // Si el servidor reporta un error, revertir la UI
             throw new Error(result.message || "Error desconocido del servidor.");
         }
     } catch (error) {
-        // Mostrar el mensaje de error detallado
-        alert(`No se pudo registrar tu feedback: ${error.message}`);
+        // Si hay cualquier error, revertir la UI y mostrar notificación
+        showToast(`Error en feedback: ${error.message}`, 'error');
+        likeCountSpan.textContent = originalText; // Revertir al conteo original
         console.error("Error en handleAddLike:", error);
+    } finally {
+        // Habilitar el botón de nuevo después de un segundo para evitar spam
+        setTimeout(() => { utilBtn.disabled = false; }, 1000);
     }
 }
 
 async function handleReportProblem(vehicleId) {
-    const sessionData = localStorage.getItem(SESSION_KEY);
-    if (!sessionData) { alert("Necesitas iniciar sesión para hacer esto."); return; }
-    const { user } = JSON.parse(sessionData);
+    const reportFormContainer = document.getElementById('report-form-container');
+    const commentsContainer = document.getElementById('comments-container');
+    const reportBtn = document.querySelector('.feedback-btn.report');
 
-    const problem = prompt("Por favor, describe el problema que encontraste:");
-    if (!problem || problem.trim() === "") return;
+    // Toggle para mostrar/ocultar el formulario
+    const isVisible = reportFormContainer.style.display === 'block';
+    reportFormContainer.style.display = isVisible ? 'none' : 'block';
+    commentsContainer.style.display = isVisible ? 'block' : 'none'; // Ocultar comentarios al reportar
+    if (reportBtn) reportBtn.style.display = isVisible ? 'inline-flex' : 'none'; // Ocultar botón original
 
-    const payload = {
-        action: 'reportProblem',
-        actor: user,
-        data: { vehicleId: vehicleId, problem: problem.trim() }
+    if (isVisible) return; // Si se estaba ocultando, no hacer más nada.
+
+    // Si se acaba de mostrar, añadir listeners
+    document.getElementById('cancel-report-btn').onclick = () => {
+        reportFormContainer.style.display = 'none';
+        commentsContainer.style.display = 'block';
+        if (reportBtn) reportBtn.style.display = 'inline-flex';
     };
 
-    try {
-        const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-        const result = await response.json();
-        if(result.status === 'success') {
-            alert("Reporte enviado. Gracias por tu contribución.");
-            loadFeedback(vehicleId); // Recargar comentarios
-        } else {
-            throw new Error(result.message || "Error desconocido del servidor.");
+    document.getElementById('submit-report-btn').onclick = async () => {
+        const sessionData = localStorage.getItem(SESSION_KEY);
+        if (!sessionData) {
+            showToast("Necesitas iniciar sesión para enviar un reporte.", 'error');
+            return;
         }
-    } catch (error) {
-        alert("No se pudo enviar tu reporte. Inténtalo de nuevo. " + error.message);
-    }
+        const { user } = JSON.parse(sessionData);
+        const problemInput = document.getElementById('report-problem-input');
+        const problem = problemInput.value.trim();
+
+        if (problem === "") {
+            showToast("Por favor, describe el problema.", 'error');
+            return;
+        }
+
+        const submitBtn = document.getElementById('submit-report-btn');
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Enviando...';
+
+        const payload = {
+            action: 'reportProblem',
+            actor: user,
+            data: { vehicleId: vehicleId, problem: problem }
+        };
+
+        try {
+            const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const result = await response.json();
+            if (result.status === 'success') {
+                showToast("Reporte enviado. ¡Gracias!", 'success');
+                problemInput.value = ''; // Limpiar
+                document.getElementById('cancel-report-btn').click(); // Simular clic en cancelar para cerrar
+                loadFeedback(vehicleId); // Recargar comentarios
+            } else {
+                throw new Error(result.message || "Error desconocido.");
+            }
+        } catch (error) {
+            showToast(`Error al enviar: ${error.message}`, 'error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.textContent = 'Enviar Reporte';
+        }
+    };
 }
 
 // --- LÓGICA DE BÚSQUEDA ACTIVA ---
@@ -2184,6 +2278,13 @@ async function handleSharedLink(seccion, id) {
 
 
 async function inicializarApp() {
+    // Comprobar si hay un mensaje de éxito desde el formulario de agregar corte
+    const successMessage = localStorage.getItem('formSubmissionSuccess');
+    if (successMessage) {
+        showToast(successMessage, 'success', 4000); // Mostrar por 4 segundos
+        localStorage.removeItem('formSubmissionSuccess'); // Limpiar para que no se muestre de nuevo
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const seccion = urlParams.get('seccion');
     const id = urlParams.get('id');
@@ -2331,6 +2432,25 @@ if (searchInput && searchContainer && clearSearchBtn) {
 <footer class="footer" style="display: none;">
   Gpspedia 2025© todos los derechos reservados.
 </footer>
+
+<!-- Contenedor para la Notificación Toast -->
+<div id="toast-notification" class="toast-notification"></div>
+
+<script>
+    // Función para mostrar notificaciones toast
+    function showToast(message, type = 'info', duration = 3000) {
+        const toast = document.getElementById('toast-notification');
+        if (!toast) return;
+        toast.textContent = message;
+        toast.className = 'toast-notification'; // Reset classes
+        toast.classList.add(type); // 'success', 'error', or default
+        toast.classList.add('show');
+
+        setTimeout(() => {
+            toast.classList.remove('show');
+        }, duration);
+    }
+</script>
 
 </body>
 </html>
