@@ -156,15 +156,14 @@ function doPost(e) {
 
     if (isNewRow) {
       Logger.log("Creating a new row.");
-      // Ensure appendRow receives an array of the correct length to prevent errors.
-      const placeholderRow = new Array(sheet.getMaxColumns()).fill('');
-      sheet.appendRow(placeholderRow);
-      targetRow = sheet.getLastRow();
+      const lastRow = sheet.getLastRow();
+      sheet.insertRowAfter(lastRow);
+      targetRow = lastRow + 1;
 
-      const previousRowRange = sheet.getRange(targetRow - 1, 1, 1, sheet.getMaxColumns());
+      const previousRowRange = sheet.getRange(lastRow, 1, 1, sheet.getMaxColumns());
       const newRowRange = sheet.getRange(targetRow, 1, 1, sheet.getMaxColumns());
-      previousRowRange.copyTo(newRowRange, {formatOnly: true});
-      sheet.getRange(targetRow, 2, 1, sheet.getMaxColumns() - 1).clearContent();
+      previousRowRange.copyTo(newRowRange, {contentsOnly: false, formatOnly: true});
+      newRowRange.clearContent();
 
       sheet.getRange(targetRow, COLS.CATEGORIA).setValue(categoria);
       sheet.getRange(targetRow, COLS.MARCA).setValue(marca);
