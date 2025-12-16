@@ -780,13 +780,13 @@ body.search-active .app-logo {
 
 <!-- Splash Screen -->
 <div id="splash-screen">
-    <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w512" alt="Logo de GPSpedia">
+    <img src="https://drive.google.com/thumbnail?id=1m-Go3h0S2WW717zm6Fhjy-phTuXiDdUl&sz=w512" alt="Logo de GPSpedia">
 </div>
 
 <!-- Login Modal -->
 <div id="login-modal" style="display: none;">
     <div class="modal-content">
-        <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
+        <img src="https://drive.google.com/thumbnail?id=1m-Go3h0S2WW717zm6Fhjy-phTuXiDdUl&sz=2048" alt="Logo de GPSpedia" class="app-logo">
         <h2>Iniciar Sesión</h2>
         <form id="login-form">
             <div class="form-group">
@@ -977,14 +977,13 @@ async function checkSession() {
         console.log("Sesión encontrada en localStorage.");
         const { user, sessionId } = JSON.parse(session);
 
-        // Re-verificar credenciales con los datos de usuario más recientes
         if (userData.length === 0) {
             console.log("userData está vacío, llamando a fetchUsers de nuevo.");
             await fetchUsers();
         }
 
-        console.log(`Buscando usuario: ${user.Nombre_Usuario}`);
-        const currentUser = userData.find(u => u.nombreUsuario === user.Nombre_Usuario);
+        console.log(`Buscando usuario: ${user.nombreUsuario}`);
+        const currentUser = userData.find(u => u.nombreUsuario === user.nombreUsuario);
 
         if (currentUser) {
             console.log("Usuario verificado exitosamente. Mostrando la aplicación.");
@@ -993,19 +992,16 @@ async function checkSession() {
                 document.getElementById('account-management-link').style.display = 'block';
             }
 
-            // Las credenciales son válidas, la sesión continúa
-            localStorage.setItem('userName', user.Nombre);
+            localStorage.setItem('userName', user.nombre);
             hideLoginShowApp();
-            document.getElementById('welcome-message').textContent = `Bienvenido, ${user.Nombre}`;
+            document.getElementById('welcome-message').textContent = `Bienvenido, ${user.nombre}`;
             document.getElementById('welcome-message').style.display = 'block';
             document.getElementById('logout-button').style.display = 'block';
             syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
         } else {
-            // Credenciales inválidas (usuario eliminado, contraseña cambiada, etc.)
             logout("Tu sesión ha expirado o tus credenciales han cambiado. Por favor, inicia sesión de nuevo.");
         }
     } else {
-        // No hay sesión, mostrar el modal de login
         showLoginHideApp();
     }
 }
@@ -1017,34 +1013,34 @@ function login(username, password) {
         document.getElementById('login-error').style.display = 'block';
         return;
     }
+    // CORRECCIÓN: Usar las claves exactas de la API
     const user = userData.find(u => u.nombreUsuario === username && u.password === password);
 
     if (user) {
         const sessionId = Date.now().toString(); // ID de sesión único
+        // CORRECCIÓN CRÍTICA: Estandarizar las claves del objeto de sesión a camelCase.
         const sessionData = {
             user: {
-                ID: user.id,
-                Nombre_Usuario: user.nombreUsuario,
-                Privilegios: user.privilegios,
-                Nombre: user.nombre,
+                id: user.id,
+                nombreUsuario: user.nombreUsuario, // Clave corregida
+                privilegios: user.privilegios,   // Clave corregida
+                nombre: user.nombre,             // Clave corregida
             },
             sessionId: sessionId
         };
 
         localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        localStorage.setItem(SESSION_ID_KEY, sessionId); // Almacena el ID de la sesión actual
-        localStorage.setItem('userName', sessionData.user.Nombre); // <-- AÑADIDO
+        localStorage.setItem(SESSION_ID_KEY, sessionId);
+        localStorage.setItem('userName', sessionData.user.nombre);
 
-        // Simular notificación a otras pestañas
         localStorage.setItem('session_update', Date.now());
 
         hideLoginShowApp();
-        document.getElementById('welcome-message').textContent = `Bienvenido, ${sessionData.user.Nombre}`;
+        document.getElementById('welcome-message').textContent = `Bienvenido, ${sessionData.user.nombre}`;
         document.getElementById('welcome-message').style.display = 'block';
         document.getElementById('logout-button').style.display = 'block';
 
-        // Mostrar enlace de gestión de cuentas si el rol es apropiado
-        if (['Supervisor', 'Gefe', 'Desarrollador'].includes(sessionData.user.Privilegios)) {
+        if (['Supervisor', 'Gefe', 'Desarrollador'].includes(sessionData.user.privilegios)) {
             document.getElementById('account-management-link').style.display = 'block';
         }
 

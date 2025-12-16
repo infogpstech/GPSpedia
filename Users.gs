@@ -343,35 +343,41 @@ function createUser(sheet, allUsers, headers, newUser, actor) {
   return createJsonResponse({ status: 'success', message: 'Usuario creado exitosamente.', username: username });
 }
 
-function hasPermission(actor, action, targetUser) {
-  const actorRole = actor.Privilegios;
-  const targetRole = targetUser[getHeaderIndices(SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(USERS_SHEET_NAME).getDataRange().getValues()[0])['Privilegios']];
+function hasPermission(actor, action, targetUserRow, headers) {
+    // Si no hay actor o usuario objetivo, denegar permiso
+    if (!actor || !targetUserRow) return false;
 
-  const roleHierarchy = {
-    'Desarrollador': 4,
-    'Gefe': 3,
-    'Supervisor': 2,
-    'Técnico': 1,
-    'Tecnico_Exterior': 0
-  };
+    const actorUsername = actor.Nombre_Usuario;
+    const targetUsername = targetUserRow[headers['Nombre_Usuario']];
 
-  const actorLevel = roleHierarchy[actorRole];
-  const targetLevel = roleHierarchy[targetRole];
+    // Un usuario no puede realizar acciones sobre sí mismo con esta función
+    // (la auto-edición se maneja por separado en updateUser).
+    if (actorUsername === targetUsername) return false;
 
-  if (actorRole === 'Desarrollador') return true;
+    const actorRole = (actor.Privilegios || "").trim();
+    const targetRole = (targetUserRow[headers['Privilegios']] || "").trim();
 
-  if (actorRole === 'Gefe') {
-    if (targetRole === 'Tecnico_Exterior' || actorLevel <= targetLevel) return false; // Gefes cannot edit other Gefes
-    return true;
-  }
+    const roleHierarchy = {
+        'Desarrollador': 4, 'Gefe': 3, 'Supervisor': 2,
+        'Técnico': 1, 'Tecnico_Exterior': 0
+    };
 
-  if (actorRole === 'Supervisor') {
-     if (targetRole === 'Tecnico_Exterior' || actorLevel <= targetLevel) return false; // Supervisors cannot edit other Supervisors
-    return true;
-  }
+    const actorLevel = roleHierarchy[actorRole] ?? -1;
+    const targetLevel = roleHierarchy[targetRole] ?? -1;
 
-  // Technicians can only edit themselves (validated differently)
-  return false;
+    // El desarrollador tiene todos los permisos
+    if (actorRole === 'Desarrollador') return true;
+
+    // Regla general: solo se puede actuar sobre roles de nivel estrictamente inferior.
+    if (actorLevel <= targetLevel) return false;
+
+    // Reglas específicas:
+    // Gefe y Supervisor no pueden ver/editar Tecnico_Exterior.
+    if (targetRole === 'Tecnico_Exterior' && (actorRole === 'Gefe' || actorRole === 'Supervisor')) {
+        return false;
+    }
+
+    return true; // Si ha pasado todas las comprobaciones, tiene permiso.
 }
 
 
@@ -503,27 +509,22 @@ function normalizeHeaders(headers) {
 }
 
 function toCamelCase(text) {
-  if (!text || typeof text !== 'string') {
-    return '';
-  }
+    if (!text || typeof text !== 'string') return '';
 
-  // Normaliza, quita acentos y convierte a minúsculas
-  let cleanedText = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    // Normaliza, quita acentos y convierte a minúsculas
+    let cleanedText = text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
 
-  // Quita caracteres especiales que no sean letras, números o espacios
-  cleanedText = cleanedText.replace(/[^a-z0-9\s]/g, '');
+    // Reemplaza guiones bajos y espacios con un espacio para la división
+    cleanedText = cleanedText.replace(/[_\s]+/g, ' ');
 
-  // Divide en palabras, eliminando las que estén vacías
-  const words = cleanedText.split(' ').filter(word => word.length > 0);
+    // Quita cualquier otro caracter no alfanumérico
+    cleanedText = cleanedText.replace(/[^a-z0-9\s]/g, '');
 
-  if (words.length === 0) {
-    return '';
-  }
+    const words = cleanedText.split(' ').filter(word => word.length > 0);
+    if (words.length === 0) return '';
 
-  // Toma la primera palabra y luego capitaliza y une el resto
-  const camelCaseText = words.slice(1).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
-
-  return words[0] + camelCaseText;
+    const camelCase = words.slice(1).map(word => word.charAt(0).toUpperCase() + word.slice(1)).join('');
+    return words[0] + camelCase;
 }
 
 function getOrCreateFolder(parentFolder, pathArray) {

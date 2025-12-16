@@ -184,20 +184,19 @@
         }
 
         const { user } = JSON.parse(session);
-        if (!user || !user.Nombre || !user.Privilegios) {
+        // Corregido: Usar camelCase para consistencia con el objeto de sesión
+        if (!user || !user.nombre || !user.privilegios) {
             window.location.href = 'index.html';
             return;
         }
 
         currentUser = user;
-        document.getElementById('welcome-message').textContent = `Sesión activa: ${user.Nombre} (${user.Privilegios})`;
+        document.getElementById('welcome-message').textContent = `Sesión activa: ${user.nombre} (${user.privilegios})`;
 
-        // Corrección: Limpiar el rol del usuario de cualquier espacio en blanco antes de evaluar los permisos.
-        // Esto soluciona el bug donde la lista no se carga si el rol en la DB tiene espacios (ej. " Supervisor ").
-        const userRole = user.Privilegios ? user.Privilegios.trim() : '';
+        const userRole = user.privilegios ? user.privilegios.trim() : '';
         if (['Técnico', 'Tecnico_Exterior'].includes(userRole)) {
             document.querySelector('h2').textContent = 'Mi Perfil';
-            fetchAndRenderUserProfile(user.Nombre_Usuario);
+            fetchAndRenderUserProfile(user.nombreUsuario);
         } else if (['Supervisor', 'Gefe', 'Desarrollador'].includes(userRole)) {
             fetchAndDisplayUsers(userRole);
         } else {
@@ -445,7 +444,7 @@
         select.innerHTML = '';
 
         let availableRoles = [];
-        const userPrivilege = currentUser.Privilegios;
+        const userPrivilege = currentUser.privilegios;
 
         if (userPrivilege === 'Desarrollador') {
             availableRoles = ['Desarrollador', 'Gefe', 'Supervisor', 'Técnico', 'Tecnico_Exterior'];
@@ -492,17 +491,17 @@
                 alert(result.message);
 
                 // Si el usuario editado es el actual, actualiza la sesión local
-                if (payload.data.originalUsername === currentUser.Nombre_Usuario) {
+                if (payload.data.originalUsername === currentUser.nombreUsuario) {
                     const sessionData = JSON.parse(localStorage.getItem('gpsepedia_session'));
                     if(sessionData) {
-                        sessionData.user.Privilegios = payload.data.privilegios;
-                        sessionData.user.Nombre = payload.data.nombre;
+                        sessionData.user.privilegios = payload.data.privilegios;
+                        sessionData.user.nombre = payload.data.nombre;
                         localStorage.setItem('gpsepedia_session', JSON.stringify(sessionData));
                     }
                 }
 
                 closeModal();
-                fetchAndDisplayUsers(currentUser.Privilegios); // Recargar la lista
+                fetchAndDisplayUsers(currentUser.privilegios); // Recargar la lista
             } else {
                 throw new Error(result.message);
             }
@@ -528,7 +527,7 @@
 
                 if (result.status === 'success') {
                     alert(result.message);
-                    fetchAndDisplayUsers(currentUser.Privilegios); // Recargar la lista
+                    fetchAndDisplayUsers(currentUser.privilegios); // Recargar la lista
                 } else {
                     throw new Error(result.message);
                 }
