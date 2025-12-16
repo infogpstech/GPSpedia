@@ -831,7 +831,7 @@ body.search-active .app-logo {
       <button id="btn-tutoriales" class="section-btn" onclick="mostrarSeccion('tutoriales')">Tutoriales</button>
       <button id="btn-relay" class="section-btn" onclick="mostrarSeccion('relay')">Relay</button>
       <button id="btn-add" class="section-btn" style="background-color: #28a745; color: white;" onclick="window.location.href='add_cortes.html'">Agregar Nuevo</button>
-      <a id="account-management-link" href="users.html" class="section-btn" style="display: none; background-color: #3498db; color: white;">Gestión de Cuentas</a>
+      <a id="account-management-link" href="users.html" class="section-btn" style="background-color: #3498db; color: white;">Gestión de Cuentas</a>
   </div>
 
   <div id="contenido" class="content-section"></div>
@@ -973,36 +973,38 @@ async function fetchUsers() {
 async function checkSession() {
     console.log("Verificando sesión...");
     const session = localStorage.getItem(SESSION_KEY);
-    if (session) {
-        console.log("Sesión encontrada en localStorage.");
-        const { user, sessionId } = JSON.parse(session);
-
-        if (userData.length === 0) {
-            console.log("userData está vacío, llamando a fetchUsers de nuevo.");
-            await fetchUsers();
-        }
-
-        console.log(`Buscando usuario: ${user.nombreUsuario}`);
-        const currentUser = userData.find(u => u.nombreUsuario === user.nombreUsuario);
-
-        if (currentUser) {
-            console.log("Usuario verificado exitosamente. Mostrando la aplicación.");
-            const userPrivileges = currentUser.privilegios;
-            if (['Supervisor', 'Gefe', 'Desarrollador', 'Técnico', 'Tecnico_Exterior'].includes(userPrivileges)) {
-                document.getElementById('account-management-link').style.display = 'block';
-            }
-
-            localStorage.setItem('userName', user.nombre);
-            hideLoginShowApp();
-            document.getElementById('welcome-message').textContent = `Bienvenido, ${user.nombre}`;
-            document.getElementById('welcome-message').style.display = 'block';
-            document.getElementById('logout-button').style.display = 'block';
-            syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-        } else {
-            logout("Tu sesión ha expirado o tus credenciales han cambiado. Por favor, inicia sesión de nuevo.");
-        }
-    } else {
+    // Si no hay sesión, simplemente muestra el formulario de inicio de sesión.
+    if (!session) {
         showLoginHideApp();
+        return;
+    }
+
+    console.log("Sesión encontrada en localStorage.");
+    const { user } = JSON.parse(session);
+
+    // Si userData no se ha cargado todavía, espera a fetchUsers.
+    if (userData.length === 0) {
+        console.log("userData está vacío, esperando a fetchUsers.");
+        await fetchUsers();
+    }
+
+    console.log(`Buscando usuario: ${user.nombreUsuario}`);
+    const currentUserData = userData.find(u => u.nombreUsuario === user.nombreUsuario);
+
+    if (currentUserData) {
+        console.log("Usuario verificado exitosamente. Mostrando la aplicación.");
+        const userPrivileges = currentUserData.privilegios; // Usar datos frescos
+
+        localStorage.setItem('userName', user.nombre);
+        hideLoginShowApp();
+        document.getElementById('welcome-message').textContent = `Bienvenido, ${user.nombre}`;
+        document.getElementById('welcome-message').style.display = 'block';
+        document.getElementById('logout-button').style.display = 'block';
+        // Iniciar la carga de datos de cortes
+        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
+    } else {
+        // Si el usuario no se encuentra, la sesión es inválida.
+        logout("Tu sesión ha expirado o es inválida. Por favor, inicia sesión de nuevo.");
     }
 }
 
@@ -1061,13 +1063,6 @@ function logout(reason = null) {
 }
 
 function showLoginHideApp(reason = null) {
-    // Ocultar splash screen
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500);
-
     // Ocultar contenido principal y footer
     document.querySelector('.container').style.display = 'none';
     document.querySelector('.footer').style.display = 'none';
@@ -1091,13 +1086,6 @@ function showLoginHideApp(reason = null) {
 }
 
 function hideLoginShowApp() {
-    // Ocultar splash y login
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500); // Coincide con la transición de opacidad
-
     document.getElementById('login-modal').style.display = 'none';
 
     // Mostrar contenido principal y footer
@@ -2266,7 +2254,17 @@ async function handleSharedLink(seccion, id) {
 }
 
 
+function hideSplashScreen() {
+    const splash = document.getElementById('splash-screen');
+    if (splash.style.display === 'none') return;
+    splash.style.opacity = '0';
+    setTimeout(() => {
+        splash.style.display = 'none';
+    }, 500);
+}
+
 async function inicializarApp() {
+    hideSplashScreen();
     // Comprobar si hay un mensaje de éxito desde el formulario de agregar corte
     const successMessage = localStorage.getItem('formSubmissionSuccess');
     if (successMessage) {
@@ -2281,8 +2279,10 @@ async function inicializarApp() {
     if (seccion && id) {
         await handleSharedLink(seccion, id);
     } else {
-        await fetchUsers(); // Carga los datos de usuarios primero
-        checkSession();     // Luego, comprueba si hay una sesión activa
+        // En lugar de bloquear, ahora se ejecuta en segundo plano
+        fetchUsers().then(() => {
+            checkSession();
+        });
     }
 
     // Lógica para el botón de instalación de iOS
@@ -2318,25 +2318,6 @@ async function inicializarApp() {
         document.body.appendChild(iosInstallMessage);
     }
 }
-
-// Ocultar el splash screen después de un tiempo para asegurar que no se quede atascado
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        const session = localStorage.getItem(SESSION_KEY);
-        // Si no hay sesión, el splash se ocultará cuando se muestre el login.
-        // Si hay sesión, el splash se ocultará cuando se muestre la app.
-        // Este es un fallback por si algo falla.
-        if (!session) {
-             const splash = document.getElementById('splash-screen');
-            splash.style.opacity = '0';
-            setTimeout(() => {
-                splash.style.display = 'none';
-            }, 500);
-        }
-    }, 3000); // 3 segundos de tiempo de espera máximo
-});
-
 
 inicializarApp();
 

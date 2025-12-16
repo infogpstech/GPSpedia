@@ -234,28 +234,32 @@ function init() {
     if (userName) {
         document.getElementById('welcome-message').innerHTML = `Bienvenido,<br>${userName}`;
         state.colaborador = userName;
+        // Solo carga los dropdowns si la sesión es válida
+        toggleLoading(true);
+        fetch(`${SCRIPT_URL}?action=getDropdowns`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                populateSelect('categoria', data.categoria);
+                populateSelect('tipo-encendido', data['tipo-encendido']);
+                populateSelect('tipo-corte', data['tipo-corte']);
+            })
+            .catch(error => {
+                console.error('Error fetching dropdowns:', error);
+                showToast('No se pudieron cargar las opciones del formulario.', 'error');
+            })
+            .finally(() => toggleLoading(false));
     } else {
-        // In a real browser, this would redirect. In Playwright's file:// context, it might not matter.
-        // For testing, we just need to ensure the dropdowns are populated, so we won't redirect.
-        if (window.location.protocol !== 'file:') {
+        // Muestra un mensaje de error y deshabilita el formulario
+        showToast('Sesión no válida, por favor inicia sesión.', 'error');
+        document.querySelector('.form-container').style.opacity = '0.5';
+        document.querySelector('.form-container').style.pointerEvents = 'none';
+
+        // Redirige después de un momento para que el usuario pueda leer el mensaje
+        setTimeout(() => {
             window.location.href = 'index.html';
-            return;
-        }
+        }, 3000); // 3 segundos de retraso
     }
-    toggleLoading(true);
-    fetch(`${SCRIPT_URL}?action=getDropdowns`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) throw new Error(data.error);
-            populateSelect('categoria', data.categoria);
-            populateSelect('tipo-encendido', data['tipo-encendido']);
-            populateSelect('tipo-corte', data['tipo-corte']);
-        })
-        .catch(error => {
-            console.error('Error fetching dropdowns:', error);
-            showToast('No se pudieron cargar las opciones del formulario.', 'error');
-        })
-        .finally(() => toggleLoading(false));
 }
 
 document.addEventListener('DOMContentLoaded', () => {

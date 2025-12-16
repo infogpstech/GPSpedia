@@ -194,13 +194,17 @@
         document.getElementById('welcome-message').textContent = `Sesión activa: ${user.nombre} (${user.privilegios})`;
 
         const userRole = user.privilegios ? user.privilegios.trim() : '';
-        if (['Técnico', 'Tecnico_Exterior'].includes(userRole)) {
+
+        // Convertir roles a un formato consistente para la comparación
+        const normalizedRole = userRole.toLowerCase().replace(/\s+/g, '');
+
+        if (normalizedRole === 'tecnico' || normalizedRole === 'tecnico_exterior') {
             document.querySelector('h2').textContent = 'Mi Perfil';
             fetchAndRenderUserProfile(user.nombreUsuario);
-        } else if (['Supervisor', 'Gefe', 'Desarrollador'].includes(userRole)) {
-            fetchAndDisplayUsers(userRole);
+        } else if (['supervisor', 'gefe', 'desarrollador'].includes(normalizedRole)) {
+            fetchAndDisplayUsers(userRole); // Pasamos el rol original para el filtrado
         } else {
-            displayNoPermissionsMessage();
+            mostrarAccesoDenegado();
         }
     });
 

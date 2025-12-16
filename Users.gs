@@ -66,15 +66,23 @@ function getFeedbackForVehicle(vehicleId) {
   const feedbackSheet = spreadsheet.getSheetByName(FEEDBACK_SHEET_NAME);
   const cortesSheet = spreadsheet.getSheetByName(CORTES_SHEET_NAME);
 
-  // Obtener comentarios (sin cambios)
+  // --- Obtener comentarios (Refactorizado para ser robusto) ---
   const feedbackData = feedbackSheet.getDataRange().getValues();
-  const feedbackHeaders = feedbackData.shift() || [];
-  const vehicleIdIndex = feedbackHeaders.indexOf("ID_vehiculo");
-  const comments = feedbackData.filter(row => row[vehicleIdIndex] == vehicleId).map(row => ({
-      id: row[0], user: row[1], problem: row[3], response: row[4], resolved: row[5], responder: row[6]
-  }));
+  const headerRow = feedbackData.shift() || [];
+  const headers = getHeaderIndices(headerRow); // Usa la función de ayuda para mapear encabezados
 
-  // Obtener likes de la hoja "Cortes"
+  const comments = feedbackData
+    .filter(row => row[headers['ID_vehiculo']] == vehicleId)
+    .map(row => ({
+      id: row[headers['ID']],
+      user: row[headers['Usuario']],
+      problem: row[headers['Problema']],
+      response: row[headers['Respuesta']],
+      resolved: row[headers['¿Se resolvió?']],
+      responder: row[headers['Responde']]
+    }));
+
+  // --- Obtener likes (sin cambios, ya es robusto) ---
   let likeCount = 0;
   const cortesData = cortesSheet.getDataRange().getValues();
   const idIndex = COLS.ID - 1;
@@ -88,6 +96,7 @@ function getFeedbackForVehicle(vehicleId) {
   return createJsonResponse({ comments, likeCount });
 }
 
+
 function handleFeedbackActions(payload) {
   const { action, data, actor } = payload;
   const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -96,7 +105,8 @@ function handleFeedbackActions(payload) {
     case 'reportProblem':
       if (!data.vehicleId || !data.problem || !actor) throw new Error("Faltan datos para reportar el problema.");
       const feedbackSheet = spreadsheet.getSheetByName(FEEDBACK_SHEET_NAME);
-      feedbackSheet.appendRow([ new Date().getTime(), actor.Nombre, data.vehicleId, data.problem, "", "No", "" ]);
+      // CORRECCIÓN CRÍTICA: El objeto de sesión del frontend usa `nombre` (minúscula), no `Nombre`.
+      feedbackSheet.appendRow([ new Date().getTime(), actor.nombre, data.vehicleId, data.problem, "", "No", "" ]);
       return createJsonResponse({ status: 'success', message: 'Problema reportado exitosamente.' });
 
     case 'addLike':
