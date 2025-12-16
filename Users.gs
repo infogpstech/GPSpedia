@@ -436,12 +436,9 @@ function deleteUser(sheet, allUsers, headers, username, actor) {
 // ==================================================================
 
 function getSheetDataAsJson(sheetName) {
-  const cache = CacheService.getScriptCache();
-  const cachedData = cache.get(sheetName);
-
-  if (cachedData) {
-    return createJsonResponse(JSON.parse(cachedData));
-  }
+  // NOTA: La caché se ha deshabilitado para las hojas grandes como "Cortes".
+  // El JSON generado excedía el límite de 100KB de CacheService, causando el error "Argument too large".
+  // Para hojas más pequeñas como Tutorial y Relay, la caché podría reactivarse si fuera necesario.
 
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(sheetName);
   if (!sheet) return createJsonResponse([]);
@@ -457,8 +454,6 @@ function getSheetDataAsJson(sheetName) {
     });
     return rowObject;
   });
-
-  cache.put(sheetName, JSON.stringify(data), 600);
 
   return createJsonResponse(data);
 }

@@ -171,7 +171,7 @@
     document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
 
     // --- CONFIGURACIÓN Y ESTADO GLOBAL ---
-    const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzE22Oy58O2btljrTSVK9GXfE9_2oi-Oln73IwwN-IWrIqWqsl3l3O3u_gd5czYrKg5/exec";
+    const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyqY6OcCLZlwc2TC1L-B2wlU-045qN3JUPhd-rdD2JniRKpo_RvYVUtXH8whBL9jfXs/exec";
     let allUsersData = []; // Caché para los datos de todos los usuarios
     let currentUser = null; // Información del usuario con sesión activa
 
@@ -340,7 +340,10 @@
             visiblePrivileges.push('Supervisor', 'Técnico');
         }
 
-        return users.filter(user => visiblePrivileges.includes(user[privilegeIndex]));
+        return users.filter(user => {
+            const userPrivilege = user[privilegeIndex] ? user[privilegeIndex].trim() : '';
+            return visiblePrivileges.includes(userPrivilege);
+        });
     }
 
     function renderUserTable(users, header) {
