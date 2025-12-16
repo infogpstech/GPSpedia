@@ -34,7 +34,7 @@ function doGet(e) {
     return getSheetDataAsJson(sheetName);
   } catch (error) {
     Logger.log(`Error en doGet: ${error.message}\nStack: ${error.stack}`);
-    return createJsonResponse({ error: "Error en el servidor (doGet)", details: { message: error.message } });
+    return createJsonResponse({ status: 'error', message: `Error en el servidor (doGet): ${error.message}` });
   }
 }
 
@@ -52,7 +52,7 @@ function doPost(e) {
     }
   } catch (error) {
     Logger.log(`Error crítico en doPost: ${error.message}\nStack: ${error.stack}`);
-    return createJsonResponse({ success: false, error: "Error en el servidor (doPost)", details: { message: error.message } });
+    return createJsonResponse({ status: 'error', message: `Error en el servidor (doPost): ${error.message}` });
   }
 }
 
@@ -357,19 +357,19 @@ function hasPermission(actor, action, targetUserRow, headers) {
     // Si no hay actor o usuario objetivo, denegar permiso
     if (!actor || !targetUserRow) return false;
 
-    const actorUsername = actor.Nombre_Usuario;
+    const actorUsername = actor.nombreUsuario;
     const targetUsername = targetUserRow[headers['Nombre_Usuario']];
 
     // Un usuario no puede realizar acciones sobre sí mismo con esta función
     // (la auto-edición se maneja por separado en updateUser).
     if (actorUsername === targetUsername) return false;
 
-    const actorRole = (actor.Privilegios || "").trim();
-    const targetRole = (targetUserRow[headers['Privilegios']] || "").trim();
+    const actorRole = normalizeRole(actor.privilegios);
+    const targetRole = normalizeRole(targetUserRow[headers['Privilegios']]);
 
     const roleHierarchy = {
-        'Desarrollador': 4, 'Gefe': 3, 'Supervisor': 2,
-        'Técnico': 1, 'Tecnico_Exterior': 0
+        'desarrollador': 4, 'gefe': 3, 'supervisor': 2,
+        'tecnico': 1, 'tecnico_exterior': 0
     };
 
     const actorLevel = roleHierarchy[actorRole] ?? -1;
@@ -398,7 +398,7 @@ function updateUser(sheet, allUsers, headers, userData, actor) {
   const targetUser = allUsers[rowIndex];
 
   // Self-edit case for technicians
-  if (actor.Nombre_Usuario === userData.originalUsername) {
+  if (actor.nombreUsuario === userData.originalUsername) {
      const sheetRowIndex = rowIndex + 1;
      // Allow updating specific fields
      sheet.getRange(sheetRowIndex, headers['Telefono'] + 1).setValue(userData.telefono);
@@ -482,6 +482,11 @@ function getHeaderIndices(headerRow) {
 
 function createJsonResponse(data) {
   return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+}
+
+function normalizeRole(role) {
+  if (!role || typeof role !== 'string') return '';
+  return role.trim().toLowerCase().replace('_', '');
 }
 
 function safeToString(value) {

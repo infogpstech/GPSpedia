@@ -848,15 +848,6 @@ body.search-active .app-logo {
 </div>
 
 <script>
-// --- LÓGICA DE SEGURIDAD ---
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) {
-        e.preventDefault();
-    }
-});
-document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
-
 // --- LÓGICA DE INDEXEDDB ---
 const DB_NAME = 'gpsepedia-db';
 const DB_VERSION = 1;
@@ -926,9 +917,9 @@ async function readData(storeName) {
 
 // --- LÓGICA DE DATOS ---
 const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSPZug3KicicdXJDWpL3tNAQtKSIXN9rIlP17I_yVHORMzI-csokGFYKXYIysiEAuT/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUyd7fw-LBo4gYmzTjh_FHppsuVx6MttiRysGIRiTO1HWBqpSg3PawpS-wyCL_2X7p/exec";
 // Se usa la misma URL para ambos, ya que el backend maneja diferentes 'acciones' o 'parámetros'.
-const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSPZug3KicicdXJDWpL3tNAQtKSIXN9rIlP17I_yVHORMzI-csokGFYKXYIysiEAuT/exec";
+const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUyd7fw-LBo4gYmzTjh_FHppsuVx6MttiRysGIRiTO1HWBqpSg3PawpS-wyCL_2X7p/exec";
 const RANGE_CORTES = "Cortes";
 const RANGE_TUTORIALES = "Tutorial";
 const RANGE_RELAY = "Configuración del Relay";
@@ -971,40 +962,39 @@ async function fetchUsers() {
 }
 
 async function checkSession() {
-    console.log("Verificando sesión...");
-    const session = localStorage.getItem(SESSION_KEY);
-    // Si no hay sesión, simplemente muestra el formulario de inicio de sesión.
-    if (!session) {
-        showLoginHideApp();
-        return;
-    }
+    try {
+        console.log("Verificando sesión...");
+        const session = localStorage.getItem(SESSION_KEY);
+        if (!session) {
+            showLoginHideApp();
+            return;
+        }
 
-    console.log("Sesión encontrada en localStorage.");
-    const { user } = JSON.parse(session);
+        console.log("Sesión encontrada en localStorage.");
+        const { user } = JSON.parse(session);
 
-    // Si userData no se ha cargado todavía, espera a fetchUsers.
-    if (userData.length === 0) {
-        console.log("userData está vacío, esperando a fetchUsers.");
-        await fetchUsers();
-    }
+        if (userData.length === 0) {
+            console.log("userData está vacío, esperando a fetchUsers.");
+            await fetchUsers();
+        }
 
-    console.log(`Buscando usuario: ${user.nombreUsuario}`);
-    const currentUserData = userData.find(u => u.nombreUsuario === user.nombreUsuario);
+        console.log(`Buscando usuario: ${user.nombreUsuario}`);
+        const currentUserData = userData.find(u => u.nombreUsuario === user.nombreUsuario);
 
-    if (currentUserData) {
-        console.log("Usuario verificado exitosamente. Mostrando la aplicación.");
-        const userPrivileges = currentUserData.privilegios; // Usar datos frescos
-
-        localStorage.setItem('userName', user.nombre);
-        hideLoginShowApp();
-        document.getElementById('welcome-message').textContent = `Bienvenido, ${user.nombre}`;
-        document.getElementById('welcome-message').style.display = 'block';
-        document.getElementById('logout-button').style.display = 'block';
-        // Iniciar la carga de datos de cortes
-        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-    } else {
-        // Si el usuario no se encuentra, la sesión es inválida.
-        logout("Tu sesión ha expirado o es inválida. Por favor, inicia sesión de nuevo.");
+        if (currentUserData) {
+            console.log("Usuario verificado exitosamente. Mostrando la aplicación.");
+            localStorage.setItem('userName', user.nombre);
+            hideLoginShowApp();
+            document.getElementById('welcome-message').textContent = `Bienvenido, ${user.nombre}`;
+            document.getElementById('welcome-message').style.display = 'block';
+            document.getElementById('logout-button').style.display = 'block';
+            syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
+        } else {
+            logout("Tu sesión ha expirado o es inválida. Por favor, inicia sesión de nuevo.");
+        }
+    } catch (error) {
+        console.error("Error crítico durante la verificación de sesión:", error);
+        logout("Ocurrió un error al verificar tu sesión. Por favor, inicia sesión de nuevo.");
     }
 }
 
@@ -1813,7 +1803,7 @@ async function handleAddLike(vehicleId) {
         const response = await fetch(USERS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'text/plain' }
+            headers: { 'Content-Type': 'application/json' }
         });
         const result = await response.json();
 
@@ -1881,7 +1871,11 @@ async function handleReportProblem(vehicleId) {
         };
 
         try {
-            const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'application/json' }
+            });
             const result = await response.json();
             if (result.status === 'success') {
                 showToast("Reporte enviado. ¡Gracias!", 'success');

@@ -164,14 +164,8 @@
 </div>
 
 <script>
-    // --- LÓGICA DE SEGURIDAD ---
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) { e.preventDefault(); }
-    });
-    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
     // --- CONFIGURACIÓN Y ESTADO GLOBAL ---
-    const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSPZug3KicicdXJDWpL3tNAQtKSIXN9rIlP17I_yVHORMzI-csokGFYKXYIysiEAuT/exec";
+    const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyUyd7fw-LBo4gYmzTjh_FHppsuVx6MttiRysGIRiTO1HWBqpSg3PawpS-wyCL_2X7p/exec";
     let allUsersData = []; // Caché para los datos de todos los usuarios
     let currentUser = null; // Información del usuario con sesión activa
 
@@ -198,11 +192,11 @@
         // Convertir roles a un formato consistente para la comparación
         const normalizedRole = userRole.toLowerCase().replace(/\s+/g, '');
 
-        if (normalizedRole === 'tecnico' || normalizedRole === 'tecnico_exterior') {
+        if (normalizedRole === 'tecnico' || normalizedRole === 'tecnicoexterior') {
             document.querySelector('h2').textContent = 'Mi Perfil';
             fetchAndRenderUserProfile(user.nombreUsuario);
         } else if (['supervisor', 'gefe', 'desarrollador'].includes(normalizedRole)) {
-            fetchAndDisplayUsers(userRole); // Pasamos el rol original para el filtrado
+            fetchAndDisplayUsers(normalizedRole);
         } else {
             mostrarAccesoDenegado();
         }
@@ -291,7 +285,11 @@
         };
 
         try {
-            const response = await fetch(USERS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const response = await fetch(USERS_SCRIPT_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
             const result = await response.json();
 
             if (result.status === 'success') {
@@ -331,23 +329,22 @@
         }
     }
 
-    function filterUsersByPrivilege(users, currentUserPrivilegios) {
+    function filterUsersByPrivilege(users, normalizedCurrentUserRole) {
         const visiblePrivileges = [];
-        const trimmedPrivilegios = currentUserPrivilegios.trim();
 
-        if (trimmedPrivilegios === 'Desarrollador') {
+        if (normalizedCurrentUserRole === 'desarrollador') {
             return users;
         }
-        if (trimmedPrivilegios === 'Gefe') {
-            visiblePrivileges.push('Gefe', 'Supervisor', 'Técnico');
+        if (normalizedCurrentUserRole === 'gefe') {
+            visiblePrivileges.push('gefe', 'supervisor', 'tecnico');
         }
-        if (trimmedPrivilegios === 'Supervisor') {
-            visiblePrivileges.push('Supervisor', 'Técnico');
+        if (normalizedCurrentUserRole === 'supervisor') {
+            visiblePrivileges.push('supervisor', 'tecnico');
         }
 
         return users.filter(user => {
-            const userPrivilege = user.privilegios ? String(user.privilegios).trim() : '';
-            return visiblePrivileges.includes(userPrivilege);
+            const normalizedUserRole = user.privilegios ? String(user.privilegios).trim().toLowerCase().replace(/\s+/g, '') : '';
+            return visiblePrivileges.includes(normalizedUserRole);
         });
     }
 
@@ -448,13 +445,13 @@
         select.innerHTML = '';
 
         let availableRoles = [];
-        const userPrivilege = currentUser.privilegios;
+        const normalizedUserRole = currentUser.privilegios ? currentUser.privilegios.trim().toLowerCase().replace(/\s+/g, '') : '';
 
-        if (userPrivilege === 'Desarrollador') {
+        if (normalizedUserRole === 'desarrollador') {
             availableRoles = ['Desarrollador', 'Gefe', 'Supervisor', 'Técnico', 'Tecnico_Exterior'];
-        } else if (userPrivilege === 'Gefe') {
+        } else if (normalizedUserRole === 'gefe') {
             availableRoles = ['Gefe', 'Supervisor', 'Técnico'];
-        } else if (userPrivilege === 'Supervisor') {
+        } else if (normalizedUserRole === 'supervisor') {
             availableRoles = ['Técnico'];
         }
 
@@ -487,6 +484,7 @@
         try {
             const response = await fetch(USERS_SCRIPT_URL, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
             const result = await response.json();
@@ -525,6 +523,7 @@
             try {
                 const response = await fetch(USERS_SCRIPT_URL, {
                     method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
                 const result = await response.json();
