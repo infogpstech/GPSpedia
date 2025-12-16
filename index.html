@@ -1204,7 +1204,7 @@ function mostrarSeccion(seccion) {
     if (seccion === 'cortes') {
         document.getElementById('contenido').style.display = 'block';
         document.getElementById('btn-cortes').classList.add('active');
-        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarContenidoCortes, 'contenido');
+        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
     } else if (seccion === 'tutoriales') {
         document.getElementById('contenido-tutoriales').style.display = 'block';
         document.getElementById('btn-tutoriales').classList.add('active');
@@ -1971,7 +1971,9 @@ function mostrarMarcas(categoria){
   document.getElementById("searchInput").value = "";
   estado.nivel="marcas"; estado.categoria=categoria;
   const cont=document.getElementById("contenido");
-  cont.innerHTML=`<span class="backBtn" onclick="irAPaginaPrincipal()">${backSvg} Volver a Categorías</span><h4>Marcas de ${categoria}</h4>`;
+  // Corrección: El botón "Volver a Categorías" debe llamar a `mostrarCategorias()`
+  // directamente, en lugar de a `irAPaginaPrincipal()`, que estaba roto.
+  cont.innerHTML=`<span class="backBtn" onclick="mostrarCategorias()">${backSvg} Volver a Categorías</span><h4>Marcas de ${categoria}</h4>`;
   const marcas = [...new Set(datosOriginales.filter(f=>f.categoria===categoria).map(f=>f.marca))].filter(m => m).sort();
   const grid = document.createElement("div"); grid.className="grid";
   marcas.forEach(m=>{
@@ -1998,7 +2000,9 @@ function mostrarModelos(categoria, marca){
   Object.keys(modelosRenderizar).sort().forEach(modelo=>{
     const card=document.createElement("div"); card.className="card";
     const ejemplo=modelosRenderizar[modelo];
-    const versiones = modelosRaw.filter(f => f.modelo === modelo);
+    // Corrección: Convertir f.modelo a String para asegurar una comparación correcta
+    // cuando el nombre del modelo es puramente numérico.
+    const versiones = modelosRaw.filter(f => String(f.modelo) === modelo);
     const imgUrl = ejemplo.imagenDelVehiculo;
     const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Modelo ${modelo}`; card.appendChild(img);
     const overlay=document.createElement("div"); overlay.className="overlay";

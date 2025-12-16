@@ -327,7 +327,9 @@
     }
 
     function filterUsersByPrivilege(users, header, currentUserPrivilegios) {
-        const privilegeIndex = header.indexOf('Privilegios');
+        // Corrección: Usar findIndex con trim para encontrar el índice de la columna
+        // de privilegios, ignorando posibles espacios en blanco en el encabezado.
+        const privilegeIndex = header.findIndex(h => h.trim() === 'Privilegios');
 
         const visiblePrivileges = [];
         if (currentUserPrivilegios === 'Desarrollador') {
@@ -337,11 +339,18 @@
             visiblePrivileges.push('Gefe', 'Supervisor', 'Técnico');
         }
         if (currentUserPrivilegios === 'Supervisor') {
+            // Un supervisor también debe poder ver su propia información
             visiblePrivileges.push('Supervisor', 'Técnico');
         }
 
+        if (privilegeIndex === -1) {
+            console.error("No se encontró la columna 'Privilegios' en los encabezados.");
+            return []; // Devolver una lista vacía si no se puede filtrar
+        }
+
         return users.filter(user => {
-            const userPrivilege = user[privilegeIndex] ? user[privilegeIndex].trim() : '';
+            // Asegurarse de que user[privilegeIndex] existe y luego limpiarlo
+            const userPrivilege = user[privilegeIndex] ? String(user[privilegeIndex]).trim() : '';
             return visiblePrivileges.includes(userPrivilege);
         });
     }
@@ -365,16 +374,26 @@
                 <tbody>
         `;
 
-        const nameIndex = header.indexOf('Nombre');
-        const usernameIndex = header.indexOf('Nombre_Usuario');
-        const privilegeIndex = header.indexOf('Privilegios');
+        // Corrección: Usar findIndex con trim para asegurar que se encuentren los índices
+        // correctos incluso si los encabezados tienen espacios en blanco.
+        const nameIndex = header.findIndex(h => h.trim() === 'Nombre');
+        const usernameIndex = header.findIndex(h => h.trim() === 'Nombre_Usuario');
+        const privilegeIndex = header.findIndex(h => h.trim() === 'Privilegios');
+
+        // Validar que todos los índices fueron encontrados
+        if ([nameIndex, usernameIndex, privilegeIndex].includes(-1)) {
+            container.innerHTML = '<p style="color:red;">Error: No se pudieron encontrar todas las columnas necesarias en la hoja de usuarios.</p>';
+            console.error(`Índices encontrados: Nombre=${nameIndex}, Usuario=${usernameIndex}, Privilegios=${privilegeIndex}`);
+            return;
+        }
 
         for (const user of users) {
+            const username = user[usernameIndex] || '';
             tableHTML += `
                 <tr>
-                    <td data-label="${header[usernameIndex]}">${user[usernameIndex] || ''}</td>
-                    <td data-label="${header[nameIndex]}">${user[nameIndex] || ''}</td>
-                    <td data-label="${header[privilegeIndex]}">${user[privilegeIndex] || ''}</td>
+                    <td data-label="${header[usernameIndex].trim()}">${username}</td>
+                    <td data-label="${header[nameIndex].trim()}">${user[nameIndex] || ''}</td>
+                    <td data-label="${header[privilegeIndex].trim()}">${user[privilegeIndex] || ''}</td>
                     <td data-label="Acciones">
                         <button class="action-btn edit" title="Editar Usuario" onclick="openEditModal('${user[usernameIndex]}')"><i class="fas fa-edit"></i></button>
                         <button class="action-btn delete" title="Borrar Usuario" onclick="confirmDelete('${user[usernameIndex]}')"><i class="fas fa-trash"></i></button>
