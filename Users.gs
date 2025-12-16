@@ -376,7 +376,7 @@ function hasPermission(actor, action, targetUserRow, headers) {
     const targetLevel = roleHierarchy[targetRole] ?? -1;
 
     // El desarrollador tiene todos los permisos
-    if (actorRole === 'Desarrollador') return true;
+    if (actorRole === 'desarrollador') return true;
 
     // Regla general: solo se puede actuar sobre roles de nivel estrictamente inferior.
     if (actorLevel <= targetLevel) return false;

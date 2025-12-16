@@ -330,21 +330,21 @@
     }
 
     function filterUsersByPrivilege(users, normalizedCurrentUserRole) {
-        const visiblePrivileges = [];
+        const visiblePrivileges = new Set();
 
         if (normalizedCurrentUserRole === 'desarrollador') {
-            return users;
+            return users; // El desarrollador ve a todos
         }
         if (normalizedCurrentUserRole === 'gefe') {
-            visiblePrivileges.push('gefe', 'supervisor', 'tecnico');
+            visiblePrivileges.add('gefe').add('supervisor').add('tecnico');
         }
         if (normalizedCurrentUserRole === 'supervisor') {
-            visiblePrivileges.push('supervisor', 'tecnico');
+            visiblePrivileges.add('supervisor').add('tecnico');
         }
 
         return users.filter(user => {
-            const normalizedUserRole = user.privilegios ? String(user.privilegios).trim().toLowerCase().replace(/\s+/g, '') : '';
-            return visiblePrivileges.includes(normalizedUserRole);
+            const normalizedUserRole = user.privilegios ? String(user.privilegios).trim().toLowerCase().replace(/_/g, '') : '';
+            return visiblePrivileges.has(normalizedUserRole);
         });
     }
 
