@@ -47,43 +47,13 @@
 
     /* --- Media Queries para Responsividad --- */
     @media screen and (max-width: 768px) {
-        .user-table thead {
-            display: none; /* Ocultar encabezados en móvil */
-        }
-        .user-table, .user-table tbody, .user-table tr, .user-table td {
-            display: block;
-            width: 100%;
-        }
-        .user-table tr {
-            margin-bottom: 15px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-        .user-table td {
-            text-align: right;
-            padding-left: 50%;
-            position: relative;
-            border: none;
-            border-bottom: 1px solid #eee;
-        }
-        .user-table td:before {
-            content: attr(data-label);
-            position: absolute;
-            left: 10px;
-            width: calc(50% - 20px);
-            padding-right: 10px;
-            white-space: nowrap;
-            text-align: left;
-            font-weight: bold;
-        }
-        .user-table td:last-child {
-            border-bottom: 0;
-        }
-        .action-btn {
-            font-size: 1.2em; /* Hacer los iconos un poco más grandes */
-            padding: 8px;
-        }
+        .user-table thead { display: none; }
+        .user-table, .user-table tbody, .user-table tr, .user-table td { display: block; width: 100%; }
+        .user-table tr { margin-bottom: 15px; border: 1px solid #ddd; border-radius: 8px; overflow: hidden; }
+        .user-table td { text-align: right; padding-left: 50%; position: relative; border: none; border-bottom: 1px solid #eee; }
+        .user-table td:before { content: attr(data-label); position: absolute; left: 10px; width: calc(50% - 20px); padding-right: 10px; white-space: nowrap; text-align: left; font-weight: bold; }
+        .user-table td:last-child { border-bottom: 0; }
+        .action-btn { font-size: 1.2em; padding: 8px; }
     }
 </style>
 </head>
@@ -105,11 +75,9 @@
             <svg style="width:20px;height:20px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
             Volver al Catálogo
         </a>
-        <h2>Gestión de Cuentas</h2>
-
-        <div id="user-list-container">
-            <!-- El contenido (lista de usuarios o mensaje de acceso denegado) se insertará aquí -->
-            <p>Cargando información de la cuenta...</p>
+        <h2 id="main-title">Gestión de Cuentas</h2>
+        <div id="user-content-container">
+            <p>Cargando información...</p>
         </div>
     </main>
 </div>
@@ -118,29 +86,26 @@
   Gpspedia 2025© todos los derechos reservados.
 </footer>
 
-<!-- --- MODALES PARA GESTIÓN DE USUARIOS --- -->
-
-<!-- Modal para Crear / Editar Usuario -->
+<!-- MODALES -->
 <div id="user-form-modal" class="modal">
     <div class="modal-content">
         <div class="modal-header">
             <h2 id="modal-title">Crear Nuevo Usuario</h2>
-            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <span class="close-btn" onclick="closeModal('user-form-modal')">&times;</span>
         </div>
         <form id="user-form" onsubmit="handleUserFormSubmit(event)">
             <input type="hidden" id="form-action" value="createUser">
             <input type="hidden" id="original-username" value="">
-
             <div class="form-group">
                 <label for="nombre">Nombre Completo</label>
                 <input type="text" id="nombre" required>
             </div>
             <div class="form-group">
-                <label for="nombre-usuario">Nombre de Usuario (se genera automáticamente)</label>
-                <input type="text" id="nombre-usuario" disabled>
+                <label for="nombre-usuario">Nombre de Usuario</label>
+                <input type="text" id="nombre-usuario" required>
             </div>
             <div class="form-group">
-                <label for="privilegios">Rango (Privilegios)</label>
+                <label for="privilegios">Rango</label>
                 <select id="privilegios" required></select>
             </div>
              <div class="form-group">
@@ -151,391 +116,297 @@
                 <label for="correo">Correo Electrónico</label>
                 <input type="email" id="correo">
             </div>
-            <hr>
-            <p><strong>Gestión de Contraseña:</strong></p>
-             <div class="form-group">
-                <label for="password">Nueva Contraseña (dejar en blanco para no cambiar)</label>
+            <div class="form-group">
+                <label for="password">Contraseña</label>
                 <input type="password" id="password" minlength="8">
             </div>
-
-            <button type="submit" class="form-submit-btn">Guardar Cambios</button>
+            <button type="submit" class="form-submit-btn">Guardar</button>
         </form>
     </div>
 </div>
 
+<div id="toast-notification" class="toast-notification"></div>
+
 <script>
-    // --- LÓGICA DE SEGURIDAD ---
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) { e.preventDefault(); }
-    });
-    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzAK5VfuFMxWBJIIyyqde4mm1aykZROR0g-rxqw829MbSo_5shgrmHAAe-UBCa5bvbZ/exec";
+let allUsersData = [];
+let currentUser = null;
 
-    // --- CONFIGURACIÓN Y ESTADO GLOBAL ---
-    const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSPZug3KicicdXJDWpL3tNAQtKSIXN9rIlP17I_yVHORMzI-csokGFYKXYIysiEAuT/exec";
-    let allUsersData = []; // Caché para los datos de todos los usuarios
-    let currentUser = null; // Información del usuario con sesión activa
+document.addEventListener('DOMContentLoaded', async () => {
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    if (!sessionData) {
+        localStorage.setItem('formSubmissionSuccess', 'Tu sesión ha expirado, por favor inicia sesión de nuevo.');
+        window.location.href = 'index.html';
+        return;
+    }
 
-    // --- LÓGICA DE INICIALIZACIÓN ---
-    document.addEventListener('DOMContentLoaded', function() {
-        const session = localStorage.getItem('gpsepedia_session');
-        if (!session) {
-            window.location.href = 'index.html';
-            return;
-        }
+    currentUser = JSON.parse(sessionData).user;
+    document.getElementById('welcome-message').textContent = `Sesión: ${currentUser.nombre} (${currentUser.privilegios})`;
 
-        const { user } = JSON.parse(session);
-        // Corregido: Usar camelCase para consistencia con el objeto de sesión
-        if (!user || !user.nombre || !user.privilegios) {
-            window.location.href = 'index.html';
-            return;
-        }
+    await loadInitialData();
+});
 
-        currentUser = user;
-        document.getElementById('welcome-message').textContent = `Sesión activa: ${user.nombre} (${user.privilegios})`;
+async function loadInitialData() {
+    const container = document.getElementById('user-content-container');
+    container.innerHTML = '<p>Cargando datos...</p>';
 
-        const userRole = user.privilegios ? user.privilegios.trim() : '';
+    try {
+        const response = await fetch(`${SCRIPT_URL}?sheet=Users`);
+        if (!response.ok) throw new Error('No se pudo conectar al servidor de usuarios.');
+        allUsersData = await response.json();
+
+        const userRole = (currentUser.privilegios || '').trim();
         if (['Técnico', 'Tecnico_Exterior'].includes(userRole)) {
-            document.querySelector('h2').textContent = 'Mi Perfil';
-            fetchAndRenderUserProfile(user.nombreUsuario);
+            document.getElementById('main-title').textContent = 'Mi Perfil';
+            renderUserProfile(currentUser.nombreUsuario);
         } else if (['Supervisor', 'Gefe', 'Desarrollador'].includes(userRole)) {
-            fetchAndDisplayUsers(userRole);
+            renderUserManagementView();
         } else {
-            displayNoPermissionsMessage();
+            container.innerHTML = '<p class="access-denied">No tienes permiso para ver esta sección.</p>';
         }
-    });
-
-    async function fetchAndRenderUserProfile(username) {
-        const container = document.getElementById('user-list-container');
-        container.innerHTML = '<p>Cargando tu perfil...</p>';
-        try {
-            // Si allUsersData no está cargado, lo carga.
-            if (allUsersData.length === 0) {
-                 const response = await fetch(`${USERS_SCRIPT_URL}?sheet=Users`);
-                 if (!response.ok) throw new Error('Error al cargar los datos de usuarios.');
-                 allUsersData = await response.json();
-            }
-
-            const userToEdit = allUsersData.find(u => u.nombreUsuario === username);
-
-            if (!userToEdit) {
-                container.innerHTML = '<p style="color:red;">No se pudo cargar tu perfil.</p>';
-                return;
-            }
-            renderUserProfile(userToEdit);
-        } catch (error) {
-            container.innerHTML = `<p style="color:red;">Error al cargar el perfil: ${error.message}</p>`;
-        }
+    } catch (error) {
+        container.innerHTML = `<p style="color:red;">${error.message}</p>`;
     }
+}
 
-    function renderUserProfile(user) {
-        const container = document.getElementById('user-list-container');
-        container.innerHTML = `
-            <form id="profile-form" onsubmit="handleProfileFormSubmit(event)">
-                <input type="hidden" id="profile-original-username" value="${user.nombreUsuario || ''}">
-                <div class="form-group">
-                    <label for="profile-nombre">Nombre Completo</label>
-                    <input type="text" id="profile-nombre" value="${user.nombre || ''}" required disabled>
-                </div>
-                <div class="form-group">
-                    <label for="profile-username">Nombre de Usuario</label>
-                    <input type="text" id="profile-username" value="${user.nombreUsuario || ''}" required disabled>
-                </div>
-                <div class="form-group">
-                    <label for="profile-telefono">Teléfono</label>
-                    <input type="tel" id="profile-telefono" value="${user.telefono || ''}">
-                </div>
-                <div class="form-group">
-                    <label for="profile-correo">Correo Electrónico</label>
-                    <input type="email" id="profile-correo" value="${user.correoElectronico || ''}">
-                </div>
-                <hr>
-                <p><strong>Cambiar Contraseña:</strong></p>
-                <div class="form-group">
-                    <label for="profile-current-password">Contraseña Actual (requerida para cambiar)</label>
-                    <input type="password" id="profile-current-password">
-                </div>
-                <div class="form-group">
-                    <label for="profile-new-password">Nueva Contraseña (mínimo 8 caracteres)</label>
-                    <input type="password" id="profile-new-password" minlength="8">
-                </div>
-                <button type="submit" class="form-submit-btn">Guardar Cambios en mi Perfil</button>
-            </form>
-        `;
-    }
+function renderUserProfile(username) {
+    const user = allUsersData.find(u => u.nombreUsuario === username);
+    if (!user) return;
 
-    async function handleProfileFormSubmit(event) {
-        event.preventDefault();
-
-        const newPassword = document.getElementById('profile-new-password').value;
-        if (newPassword && !document.getElementById('profile-current-password').value) {
-            alert('Debes ingresar tu contraseña actual para poder establecer una nueva.');
-            return;
-        }
-
-        const payload = {
-            action: 'updateUser',
-            actor: currentUser,
-            data: {
-                originalUsername: document.getElementById('profile-original-username').value,
-                nombreUsuario: document.getElementById('profile-username').value, // Aunque deshabilitado, lo enviamos
-                telefono: document.getElementById('profile-telefono').value,
-                correo: document.getElementById('profile-correo').value,
-                password: newPassword,
-                // Datos adicionales para validación en backend
-                currentPassword: document.getElementById('profile-current-password').value,
-            }
-        };
-
-        try {
-            const response = await fetch(USERS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-            const result = await response.json();
-
-            if (result.status === 'success') {
-                alert(result.message);
-                // No es necesario recargar, ya que los cambios son locales y no afectan la vista.
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (error) {
-            alert('Error al guardar: ' + error.message);
-        }
-    }
-
-
-    async function fetchAndDisplayUsers(currentUserPrivilegios, isForProfile = false) {
-        const container = document.getElementById('user-list-container');
-        container.innerHTML = '<p>Cargando lista de usuarios...</p>';
-
-        try {
-            const response = await fetch(`${USERS_SCRIPT_URL}?sheet=Users`);
-            if (!response.ok) throw new Error('Error al cargar los datos de usuarios.');
-
-            const users = await response.json();
-            allUsersData = users; // Guardar datos en la caché global (ahora son objetos)
-
-            if (!users || users.length === 0) {
-                container.innerHTML = '<p>No se encontraron usuarios.</p>';
-                return;
-            }
-
-            const filteredUsers = filterUsersByPrivilege(users, currentUserPrivilegios);
-            renderUserTable(filteredUsers);
-
-        } catch (error) {
-            console.error('Error:', error);
-            container.innerHTML = `<p style="color:red;">${error.message}</p>`;
-        }
-    }
-
-    function filterUsersByPrivilege(users, currentUserPrivilegios) {
-        const visiblePrivileges = [];
-        const trimmedPrivilegios = currentUserPrivilegios.trim();
-
-        if (trimmedPrivilegios === 'Desarrollador') {
-            return users;
-        }
-        if (trimmedPrivilegios === 'Gefe') {
-            visiblePrivileges.push('Gefe', 'Supervisor', 'Técnico');
-        }
-        if (trimmedPrivilegios === 'Supervisor') {
-            visiblePrivileges.push('Supervisor', 'Técnico');
-        }
-
-        return users.filter(user => {
-            const userPrivilege = user.privilegios ? String(user.privilegios).trim() : '';
-            return visiblePrivileges.includes(userPrivilege);
-        });
-    }
-
-    function renderUserTable(users) {
-        const container = document.getElementById('user-list-container');
-
-        let tableHTML = `
-            <a href="#" class="create-user-btn" onclick="openCreateUserModal()">
-                <i class="fas fa-plus"></i> Crear Nuevo Usuario
-            </a>
-            <table class="user-table">
-                <thead>
-                    <tr>
-                        <th>Nombre de Usuario</th>
-                        <th>Nombre Completo</th>
-                        <th>Rango</th>
-                        <th>Acciones</th>
-                    </tr>
-                </thead>
-                <tbody>
-        `;
-
-        for (const user of users) {
-            const username = user.nombreUsuario || '';
-            tableHTML += `
-                <tr>
-                    <td data-label="Nombre de Usuario">${username}</td>
-                    <td data-label="Nombre Completo">${user.nombre || ''}</td>
-                    <td data-label="Rango">${user.privilegios || ''}</td>
-                    <td data-label="Acciones">
-                        <button class="action-btn edit" title="Editar Usuario" onclick="openEditModal('${username}')"><i class="fas fa-edit"></i></button>
-                        <button class="action-btn delete" title="Borrar Usuario" onclick="confirmDelete('${username}')"><i class="fas fa-trash"></i></button>
-                    </td>
-                </tr>
-            `;
-        }
-        tableHTML += '</tbody></table>';
-        container.innerHTML = tableHTML;
-    }
-
-    function mostrarAccesoDenegado() {
-        const container = document.getElementById('user-list-container');
-        container.innerHTML = `
-            <div class="access-denied">
-                <h3>Acceso Denegado</h3>
-                <p>No tienes los privilegios necesarios para ver esta sección.</p>
+    const container = document.getElementById('user-content-container');
+    container.innerHTML = `
+        <form id="profile-form" onsubmit="handleProfileUpdate(event)">
+            <div class="form-group">
+                <label>Nombre Completo</label>
+                <input type="text" value="${user.nombre}" disabled>
             </div>
-        `;
+            <div class="form-group">
+                <label>Nombre de Usuario</label>
+                <input type="text" value="${user.nombreUsuario}" disabled>
+            </div>
+            <div class="form-group">
+                <label for="profile-telefono">Teléfono</label>
+                <input type="tel" id="profile-telefono" value="${user.telefono || ''}">
+            </div>
+            <div class="form-group">
+                <label for="profile-correo">Correo Electrónico</label>
+                <input type="email" id="profile-correo" value="${user.correoElectronico || ''}">
+            </div>
+            <hr>
+            <h4>Cambiar Contraseña</h4>
+            <div class="form-group">
+                <label for="profile-current-password">Contraseña Actual</label>
+                <input type="password" id="profile-current-password">
+            </div>
+            <div class="form-group">
+                <label for="profile-new-password">Nueva Contraseña (mínimo 8 caracteres)</label>
+                <input type="password" id="profile-new-password" minlength="8">
+            </div>
+            <button type="submit" class="form-submit-btn">Guardar Cambios</button>
+        </form>
+    `;
+}
+
+function renderUserManagementView() {
+    const container = document.getElementById('user-content-container');
+    const filteredUsers = filterUsersByPrivilege(allUsersData, currentUser.privilegios);
+
+    let tableHTML = `
+        <button class="create-user-btn" onclick="openModal('user-form-modal', 'createUser')">
+            <i class="fas fa-plus"></i> Crear Usuario
+        </button>
+        <div style="overflow-x:auto;">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th>Nombre de Usuario</th>
+                    <th>Nombre Completo</th>
+                    <th>Rango</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${filteredUsers.map(user => `
+                    <tr>
+                        <td data-label="Usuario">${user.nombreUsuario}</td>
+                        <td data-label="Nombre">${user.nombre}</td>
+                        <td data-label="Rango">${user.privilegios}</td>
+                        <td data-label="Acciones">
+                            <button class="action-btn edit" onclick="openModal('user-form-modal', 'updateUser', '${user.nombreUsuario}')"><i class="fas fa-edit"></i></button>
+                            <button class="action-btn delete" onclick="deleteUser('${user.nombreUsuario}')"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        </div>
+    `;
+    container.innerHTML = tableHTML;
+}
+
+function filterUsersByPrivilege(users, actorRole) {
+    const roleHierarchy = { 'Desarrollador': 4, 'Gefe': 3, 'Supervisor': 2, 'Técnico': 1, 'Tecnico_Exterior': 0 };
+    const actorLevel = roleHierarchy[actorRole] || -1;
+    return users.filter(user => {
+        const userLevel = roleHierarchy[user.privilegios] || -1;
+        if (actorRole === 'Desarrollador') return true;
+        if (user.privilegios === 'Tecnico_Exterior') return false;
+        return actorLevel >= userLevel;
+    });
+}
+
+function openModal(modalId, action, username = null) {
+    const modal = document.getElementById(modalId);
+    const form = modal.querySelector('form');
+    form.reset();
+
+    form.querySelector('#form-action').value = action;
+    const passwordInput = form.querySelector('#password');
+
+    if (action === 'createUser') {
+        modal.querySelector('#modal-title').textContent = 'Crear Nuevo Usuario';
+        form.querySelector('#original-username').value = '';
+        form.querySelector('#nombre-usuario').disabled = false;
+        passwordInput.required = true;
+        passwordInput.placeholder = 'Mínimo 8 caracteres';
+        populatePrivilegesDropdown(form.querySelector('#privilegios'), '');
+    } else if (action === 'updateUser') {
+        const user = allUsersData.find(u => u.nombreUsuario === username);
+        if (!user) return;
+        modal.querySelector('#modal-title').textContent = 'Editar Usuario';
+        form.querySelector('#original-username').value = user.nombreUsuario;
+        form.querySelector('#nombre').value = user.nombre;
+        form.querySelector('#nombre-usuario').value = user.nombreUsuario;
+        form.querySelector('#nombre-usuario').disabled = true; // No permitir cambiar username
+        form.querySelector('#telefono').value = user.telefono || '';
+        form.querySelector('#correo').value = user.correoElectronico || '';
+        passwordInput.required = false;
+        passwordInput.placeholder = 'Dejar en blanco para no cambiar';
+        populatePrivilegesDropdown(form.querySelector('#privilegios'), user.privilegios);
     }
 
-    // --- LÓGICA DE MODALES ---
-    const modal = document.getElementById('user-form-modal');
-    window.onclick = function(event) { if (event.target == modal) closeModal(); }
+    modal.style.display = 'flex';
+}
 
-    function closeModal() {
-        modal.style.display = "none";
-        document.getElementById('user-form').reset();
-    }
+function populatePrivilegesDropdown(selectElement, selectedValue) {
+    const actorRole = currentUser.privilegios;
+    const roleHierarchy = { 'Desarrollador': 4, 'Gefe': 3, 'Supervisor': 2, 'Técnico': 1, 'Tecnico_Exterior': 0 };
+    const actorLevel = roleHierarchy[actorRole] || -1;
 
-    function openCreateUserModal() {
-        document.getElementById('modal-title').textContent = 'Crear Nuevo Usuario';
-        document.getElementById('form-action').value = 'createUser';
-        document.getElementById('original-username').value = '';
-        document.getElementById('nombre-usuario').value = '(Se generará automáticamente)';
-        document.getElementById('nombre-usuario').disabled = true;
-        document.getElementById('password').placeholder = 'Mínimo 8 caracteres';
-        document.getElementById('password').required = true; // La contraseña es obligatoria al crear
-        populatePrivilegesDropdown();
-        modal.style.display = "flex";
-    }
+    selectElement.innerHTML = '';
 
-    function openEditModal(username) {
-        const userToEdit = allUsersData.find(u => u.nombreUsuario === username);
-
-        if (!userToEdit) {
-            alert('Error: No se encontró al usuario.');
-            return;
-        }
-
-        document.getElementById('modal-title').textContent = 'Editar Usuario';
-        document.getElementById('form-action').value = 'updateUser';
-        document.getElementById('original-username').value = username;
-
-        document.getElementById('nombre').value = userToEdit.nombre || '';
-        document.getElementById('nombre-usuario').value = userToEdit.nombreUsuario || '';
-        document.getElementById('nombre-usuario').disabled = false;
-        document.getElementById('telefono').value = userToEdit.telefono || '';
-        document.getElementById('correo').value = userToEdit.correoElectronico || '';
-        document.getElementById('password').placeholder = 'Dejar en blanco para no cambiar';
-        document.getElementById('password').required = false; // La contraseña es opcional al editar
-
-        populatePrivilegesDropdown(userToEdit.privilegios);
-        modal.style.display = "flex";
-    }
-
-    function populatePrivilegesDropdown(selectedValue = '') {
-        const select = document.getElementById('privilegios');
-        select.innerHTML = '';
-
-        let availableRoles = [];
-        const userPrivilege = currentUser.privilegios;
-
-        if (userPrivilege === 'Desarrollador') {
-            availableRoles = ['Desarrollador', 'Gefe', 'Supervisor', 'Técnico', 'Tecnico_Exterior'];
-        } else if (userPrivilege === 'Gefe') {
-            availableRoles = ['Gefe', 'Supervisor', 'Técnico'];
-        } else if (userPrivilege === 'Supervisor') {
-            availableRoles = ['Técnico'];
-        }
-
-        availableRoles.forEach(role => {
+    Object.keys(roleHierarchy).forEach(role => {
+        if ( (actorRole === 'Desarrollador') ||
+             (role !== 'Tecnico_Exterior' && actorLevel >= roleHierarchy[role]) ) {
             const option = document.createElement('option');
             option.value = role;
             option.textContent = role.replace('_', ' ');
-            if (role === selectedValue) option.selected = true;
-            select.appendChild(option);
-        });
-    }
-
-    async function handleUserFormSubmit(event) {
-        event.preventDefault();
-
-        const payload = {
-            action: document.getElementById('form-action').value,
-            actor: currentUser, // Enviar información de quién realiza la acción
-            data: {
-                originalUsername: document.getElementById('original-username').value,
-                nombre: document.getElementById('nombre').value,
-                nombreUsuario: document.getElementById('nombre-usuario').value,
-                privilegios: document.getElementById('privilegios').value,
-                telefono: document.getElementById('telefono').value,
-                correo: document.getElementById('correo').value,
-                password: document.getElementById('password').value,
+            if (role === selectedValue) {
+                option.selected = true;
             }
-        };
-
-        try {
-            const response = await fetch(USERS_SCRIPT_URL, {
-                method: 'POST',
-                body: JSON.stringify(payload)
-            });
-            const result = await response.json();
-
-            if (result.status === 'success') {
-                alert(result.message);
-
-                // Si el usuario editado es el actual, actualiza la sesión local
-                if (payload.data.originalUsername === currentUser.nombreUsuario) {
-                    const sessionData = JSON.parse(localStorage.getItem('gpsepedia_session'));
-                    if(sessionData) {
-                        sessionData.user.privilegios = payload.data.privilegios;
-                        sessionData.user.nombre = payload.data.nombre;
-                        localStorage.setItem('gpsepedia_session', JSON.stringify(sessionData));
-                    }
-                }
-
-                closeModal();
-                fetchAndDisplayUsers(currentUser.privilegios); // Recargar la lista
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (error) {
-            alert('Error al guardar: ' + error.message);
+            selectElement.appendChild(option);
         }
-    }
+    });
+}
 
-    async function confirmDelete(username) {
-        if(confirm(`¿Estás seguro de que quieres eliminar al usuario ${username}? Esta acción no se puede deshacer.`)) {
-            const payload = {
-                action: 'deleteUser',
-                actor: currentUser,
-                data: { username: username }
-            };
 
-            try {
-                const response = await fetch(USERS_SCRIPT_URL, {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
-                });
-                const result = await response.json();
+function closeModal(modalId) {
+    document.getElementById(modalId).style.display = 'none';
+}
 
-                if (result.status === 'success') {
-                    alert(result.message);
-                    fetchAndDisplayUsers(currentUser.privilegios); // Recargar la lista
-                } else {
-                    throw new Error(result.message);
-                }
-            } catch (error) {
-                alert('Error al eliminar: ' + error.message);
-            }
+async function handleUserFormSubmit(event) {
+    event.preventDefault();
+    const form = event.target;
+    const action = form.querySelector('#form-action').value;
+
+    const data = {
+        originalUsername: form.querySelector('#original-username').value,
+        nombre: form.querySelector('#nombre').value,
+        nombreUsuario: form.querySelector('#nombre-usuario').value,
+        privilegios: form.querySelector('#privilegios').value,
+        telefono: form.querySelector('#telefono').value,
+        correo: form.querySelector('#correo').value,
+        password: form.querySelector('#password').value
+    };
+
+    const payload = { action, actor: currentUser, data };
+
+    try {
+        const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await response.json();
+        if (result.status === 'success') {
+            showToast(result.message, 'success');
+            closeModal('user-form-modal');
+            loadInitialData(); // Recargar todo
+        } else {
+            throw new Error(result.message);
         }
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
     }
+}
+
+async function handleProfileUpdate(event) {
+    event.preventDefault();
+    const data = {
+        originalUsername: currentUser.nombreUsuario,
+        telefono: document.getElementById('profile-telefono').value,
+        correo: document.getElementById('profile-correo').value,
+        password: document.getElementById('profile-new-password').value,
+        currentPassword: document.getElementById('profile-current-password').value
+    };
+
+    if (data.password && !data.currentPassword) {
+        showToast('Debes ingresar tu contraseña actual para establecer una nueva.', 'error');
+        return;
+    }
+
+    const payload = { action: 'updateUser', actor: currentUser, data };
+
+    try {
+        const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await response.json();
+        if (result.status === 'success') {
+            showToast(result.message, 'success');
+            // Limpiar campos de contraseña
+            document.getElementById('profile-current-password').value = '';
+            document.getElementById('profile-new-password').value = '';
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
+async function deleteUser(username) {
+    if (!confirm(`¿Estás seguro de que quieres eliminar al usuario ${username}? Esta acción no se puede deshacer.`)) return;
+
+    const payload = { action: 'deleteUser', actor: currentUser, data: { username } };
+
+    try {
+        const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+        const result = await response.json();
+        if (result.status === 'success') {
+            showToast(result.message, 'success');
+            loadInitialData(); // Recargar
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        showToast(`Error: ${error.message}`, 'error');
+    }
+}
+
+function showToast(message, type = 'info', duration = 3000) {
+    const toast = document.getElementById('toast-notification');
+    toast.textContent = message;
+    toast.className = 'toast-notification';
+    toast.classList.add(type, 'show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, duration);
+}
 </script>
 
 </body>

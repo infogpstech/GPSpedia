@@ -235,12 +235,10 @@ function init() {
         document.getElementById('welcome-message').innerHTML = `Bienvenido,<br>${userName}`;
         state.colaborador = userName;
     } else {
-        // In a real browser, this would redirect. In Playwright's file:// context, it might not matter.
-        // For testing, we just need to ensure the dropdowns are populated, so we won't redirect.
-        if (window.location.protocol !== 'file:') {
-            window.location.href = 'index.html';
-            return;
-        }
+        // Si no hay sesión, guardar un mensaje y redirigir.
+        localStorage.setItem('formSubmissionSuccess', 'Necesitas iniciar sesión para agregar un nuevo corte.');
+        window.location.href = 'index.html';
+        return; // Detener la ejecución para evitar errores.
     }
     toggleLoading(true);
     fetch(`${SCRIPT_URL}?action=getDropdowns`)

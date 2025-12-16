@@ -938,15 +938,17 @@ const RANGE_USERS = "Users";
 
 function sanitizeInput(input) {
     if (typeof input !== 'string') return '';
-    // Prevenir inyección de fórmulas de Excel escapando caracteres iniciales peligrosos
     let sanitized = input.trim();
     if (['=', '+', '-', '@', '\t', '\r'].includes(sanitized.charAt(0))) {
         sanitized = "'" + sanitized;
     }
-    // Escapar caracteres comunes de SQL para mitigar inyecciones básicas.
-    // Aunque la validación es del lado del cliente, esto añade una capa de "defensa en profundidad".
     sanitized = sanitized.replace(/'/g, "''").replace(/--/g, "").replace(/;/g, "");
     return sanitized;
+}
+
+function normalizeRole(role) {
+    if (typeof role !== 'string') return '';
+    return role.trim().toLowerCase();
 }
 
 const SESSION_KEY = 'gpsepedia_session';
@@ -954,136 +956,103 @@ const SESSION_ID_KEY = 'gpsepedia_session_id';
 let userData = [];
 
 async function fetchUsers() {
+    // Si los datos ya están cargados, no los volvemos a buscar.
+    if (userData.length > 0) return userData;
+
     const url = `${USERS_SCRIPT_URL}?sheet=Users`;
     try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error de red al obtener usuarios: ${response.status}`);
-        // Corrección: El backend ahora devuelve un array de objetos directamente.
         userData = await response.json();
         return userData;
     } catch (error) {
         console.error("Fallo al obtener la lista de usuarios:", error);
-        const loginError = document.getElementById('login-error');
-        loginError.textContent = "No se pudo conectar al servidor de autenticación.";
-        loginError.style.display = 'block';
+        showToast("No se pudo conectar al servidor de autenticación.", "error");
         return [];
     }
 }
 
 async function checkSession() {
-    console.log("Verificando sesión...");
     const session = localStorage.getItem(SESSION_KEY);
-    if (session) {
-        console.log("Sesión encontrada en localStorage.");
-        const { user, sessionId } = JSON.parse(session);
+    if (!session) {
+        showLoginHideApp();
+        return;
+    }
 
-        if (userData.length === 0) {
-            console.log("userData está vacío, llamando a fetchUsers de nuevo.");
-            await fetchUsers();
-        }
-
-        console.log(`Buscando usuario: ${user.nombreUsuario}`);
+    try {
+        const { user } = JSON.parse(session);
+        await fetchUsers();
         const currentUser = userData.find(u => u.nombreUsuario === user.nombreUsuario);
 
         if (currentUser) {
-            console.log("Usuario verificado exitosamente. Mostrando la aplicación.");
-            const userPrivileges = currentUser.privilegios;
-            if (['Supervisor', 'Gefe', 'Desarrollador', 'Técnico', 'Tecnico_Exterior'].includes(userPrivileges)) {
-                document.getElementById('account-management-link').style.display = 'block';
-            }
+            // Actualizar la sesión local con los datos más recientes del servidor
+            const sessionData = { user: currentUser };
+            localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
+            localStorage.setItem('userName', currentUser.nombre);
 
-            localStorage.setItem('userName', user.nombre);
             hideLoginShowApp();
-            document.getElementById('welcome-message').textContent = `Bienvenido, ${user.nombre}`;
-            document.getElementById('welcome-message').style.display = 'block';
-            document.getElementById('logout-button').style.display = 'block';
-            syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
+            updateUIAfterLogin(currentUser);
         } else {
             logout("Tu sesión ha expirado o tus credenciales han cambiado. Por favor, inicia sesión de nuevo.");
         }
-    } else {
-        showLoginHideApp();
+    } catch (e) {
+        console.error("Error al parsear la sesión, limpiando...", e);
+        logout("Sesión inválida, por favor inicia sesión de nuevo.");
     }
 }
 
-
-function login(username, password) {
+async function login(username, password) {
+    await fetchUsers();
     if (userData.length === 0) {
-        document.getElementById('login-error').textContent = 'Error de autenticación. Intente de nuevo.';
-        document.getElementById('login-error').style.display = 'block';
+        showToast('Error de autenticación. Intente de nuevo.', 'error');
         return;
     }
-    // CORRECCIÓN: Usar las claves exactas de la API
     const user = userData.find(u => u.nombreUsuario === username && u.password === password);
 
     if (user) {
-        const sessionId = Date.now().toString(); // ID de sesión único
-        // CORRECCIÓN CRÍTICA: Estandarizar las claves del objeto de sesión a camelCase.
-        const sessionData = {
-            user: {
-                id: user.id,
-                nombreUsuario: user.nombreUsuario, // Clave corregida
-                privilegios: user.privilegios,   // Clave corregida
-                nombre: user.nombre,             // Clave corregida
-            },
-            sessionId: sessionId
-        };
-
+        const sessionData = { user }; // Guardamos el objeto de usuario completo
         localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        localStorage.setItem(SESSION_ID_KEY, sessionId);
-        localStorage.setItem('userName', sessionData.user.nombre);
-
+        localStorage.setItem('userName', user.nombre);
         localStorage.setItem('session_update', Date.now());
 
         hideLoginShowApp();
-        document.getElementById('welcome-message').textContent = `Bienvenido, ${sessionData.user.nombre}`;
-        document.getElementById('welcome-message').style.display = 'block';
-        document.getElementById('logout-button').style.display = 'block';
-
-        if (['Supervisor', 'Gefe', 'Desarrollador'].includes(sessionData.user.privilegios)) {
-            document.getElementById('account-management-link').style.display = 'block';
-        }
-
-        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-
+        updateUIAfterLogin(user);
     } else {
-        document.getElementById('login-error').textContent = 'Usuario o contraseña incorrectos.';
-        document.getElementById('login-error').style.display = 'block';
+        showToast('Usuario o contraseña incorrectos.', 'error');
     }
+}
+
+function updateUIAfterLogin(user) {
+    document.getElementById('welcome-message').textContent = `Bienvenido, ${user.nombre}`;
+    document.getElementById('welcome-message').style.display = 'block';
+    document.getElementById('logout-button').style.display = 'block';
+
+    // LÓGICA DE VISIBILIDAD DE ENLACES CORREGIDA
+    const userRole = normalizeRole(user.privilegios);
+    const managementRoles = ['supervisor', 'gefe', 'desarrollador'];
+    if (managementRoles.includes(userRole)) {
+        document.getElementById('account-management-link').style.display = 'block';
+    } else {
+        document.getElementById('account-management-link').style.display = 'none';
+    }
+
+    // Cargar los datos del catálogo después de que la UI principal esté visible
+    syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
 }
 
 function logout(reason = null) {
     localStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_ID_KEY);
-    localStorage.removeItem('userName'); // <-- AÑADIDO
-
+    localStorage.removeItem('userName');
     showLoginHideApp(reason);
 }
 
 function showLoginHideApp(reason = null) {
-    // Ocultar splash screen
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500);
-
-    // Ocultar contenido principal y footer
     document.querySelector('.container').style.display = 'none';
-    document.querySelector('.footer').style.display = 'none';
-    document.getElementById('welcome-message').style.display = 'none';
-    document.getElementById('logout-button').style.display = 'none';
+    document.getElementById('login-modal').style.display = 'flex';
 
-    // Mostrar el modal de login
-    const loginModal = document.getElementById('login-modal');
-    loginModal.style.display = 'flex';
-
-    const loginError = document.getElementById('login-error');
     if (reason) {
-        loginError.textContent = reason;
-        loginError.style.display = 'block';
-    } else {
-        loginError.style.display = 'none';
+        showToast(reason, 'error');
     }
 
     document.getElementById('username').value = '';
@@ -1091,18 +1060,8 @@ function showLoginHideApp(reason = null) {
 }
 
 function hideLoginShowApp() {
-    // Ocultar splash y login
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500); // Coincide con la transición de opacidad
-
     document.getElementById('login-modal').style.display = 'none';
-
-    // Mostrar contenido principal y footer
     document.querySelector('.container').style.display = 'block';
-    document.querySelector('.footer').style.display = 'block';
 }
 
 
@@ -1110,12 +1069,6 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = sanitizeInput(document.getElementById('username').value);
     const password = sanitizeInput(document.getElementById('password').value);
-
-    // Asegurarse de que los datos de usuario estén cargados
-    if (userData.length === 0) {
-       await fetchUsers();
-    }
-
     login(username, password);
 });
 
@@ -1616,91 +1569,77 @@ function mostrarDetalleModal(fila) {
     cont.appendChild(headerDiv);
 
     const title = document.createElement("h2");
-    const modeloNombre = fila.modelo || 'Modelo Desconocido';
-    const anosNombre = fila.anoGeneracion || '';
-    title.textContent = `Detalle de ${modeloNombre} ${anosNombre ? `(${anosNombre})` : ''}`;
+    title.textContent = `Detalle de ${fila.modelo || 'Desconocido'} ${fila.anoGeneracion ? `(${fila.anoGeneracion})` : ''}`;
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
     cont.appendChild(title);
 
-    // --- Contenido Principal (Siempre Visible) ---
+    // --- Contenido Principal y Secciones Dinámicas ---
     if (fila.notaImportante) {
         const p = document.createElement("p");
         p.innerHTML = `<strong style="color:red;">Nota Importante:</strong> <span style="color:#cc0000; font-weight: bold;">${fila.notaImportante}</span>`;
         cont.appendChild(p);
     }
     crearImagenDetalle("Modelo", fila.imagenDelVehiculo, cont, 'img-vehiculo');
-    const tipoCorteEl = crearElementoDetalle("Tipo de Corte", fila.tipoDeCorte);
-    if (tipoCorteEl) cont.appendChild(tipoCorteEl);
-    const descCorteEl = crearElementoDetalle("Descripción", fila.descripcionDelCorte);
-    if (descCorteEl) cont.appendChild(descCorteEl);
-    crearImagenDetalle("Imagen", fila.imagenDelCorte, cont);
 
-    // --- Secciones Desplegables ---
-    const secciones = [
-        {
+    const allSections = [];
+
+    // Corte 1 (siempre se muestra si existe)
+    if (fila.descripcionDelCorte) {
+        const corte1Section = document.createElement('div');
+        const tipoCorteEl = crearElementoDetalle("Tipo de Corte", fila.tipoDeCorte);
+        if (tipoCorteEl) corte1Section.appendChild(tipoCorteEl);
+        const descCorteEl = crearElementoDetalle("Descripción", fila.descripcionDelCorte);
+        if (descCorteEl) corte1Section.appendChild(descCorteEl);
+        cont.appendChild(corte1Section);
+        crearImagenDetalle("Imagen del Corte", fila.imagenDelCorte, cont);
+    }
+
+    // Secciones Desplegables
+    if (fila.descripcionDelSegundoCorte) {
+        allSections.push({
             titulo: "Segunda Opción de Corte",
-            campos: [
-                { label: "Tipo de Corte", valor: fila.tipoDeCorte2 },
-                { label: "Descripción", valor: fila.descripcionDelSegundoCorte },
-                { label: "Imagen", valor: fila.imagenDeCorte2, esImagen: true }
-            ]
-        },
-        {
+            campos: [{ label: "Tipo", valor: fila.tipoDeCorte2 }, { label: "Descripción", valor: fila.descripcionDelSegundoCorte }, { label: "Imagen", valor: fila.imagenDeCorte2, esImagen: true }]
+        });
+    }
+    if (fila.descripcionDelCorte3) {
+        allSections.push({
             titulo: "Tercera Opción de Corte",
-            campos: [
-                { label: "Tipo de Corte", valor: fila.tipoDeCorte3 },
-                { label: "Descripción", valor: fila.descripcionDelCorte3 },
-                { label: "Imagen", valor: fila.imagenDelCorte3, esImagen: true }
-            ]
-        },
-        {
+            campos: [{ label: "Tipo", valor: fila.tipoDeCorte3 }, { label: "Descripción", valor: fila.descripcionDelCorte3 }, { label: "Imagen", valor: fila.imagenDelCorte3, esImagen: true }]
+        });
+    }
+    if (fila.apertura) {
+        allSections.push({
             titulo: "Apertura",
-            campos: [
-                { label: "Detalles", valor: fila.apertura },
-                { label: "Imagen", valor: fila.imagenDeLaApertura, esImagen: true }
-            ]
-        },
-        {
+            campos: [{ label: "Detalles", valor: fila.apertura }, { label: "Imagen", valor: fila.imagenDeLaApertura, esImagen: true }]
+        });
+    }
+    if (fila.cablesDeAlimentacion) {
+        allSections.push({
             titulo: "Cables de Alimentación",
-            campos: [
-                { label: "Detalles", valor: fila.cablesDeAlimentacion },
-                { label: "Imagen", valor: fila.imagenDeLosCablesDeAlimentacion, esImagen: true }
-            ]
-        },
-        {
+            campos: [{ label: "Detalles", valor: fila.cablesDeAlimentacion }, { label: "Imagen", valor: fila.imagenDeLosCablesDeAlimentacion, esImagen: true }]
+        });
+    }
+    if (fila.comoDesarmarLosPlasticos) {
+         allSections.push({
             titulo: "Video Guía de Desarme",
             campos: [{ valor: fila.comoDesarmarLosPlasticos, esVideo: true }]
-        }
-    ];
+        });
+    }
 
-    secciones.forEach(seccion => {
-        // Comprueba si al menos un campo de la sección tiene contenido
+    allSections.forEach(seccion => {
         const tieneContenido = seccion.campos.some(c => c.valor);
         if (!tieneContenido) return;
-
         const btn = document.createElement("button");
         btn.className = "accordion-btn";
-        btn.innerHTML = `
-            ${seccion.titulo}
-            <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-        `;
+        btn.innerHTML = `${seccion.titulo} <svg class="accordion-arrow" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
         cont.appendChild(btn);
-
         const panel = document.createElement("div");
         panel.className = "panel-desplegable";
-
         seccion.campos.forEach(c => {
             if (c.valor) {
-                if (c.esImagen) {
-                    crearImagenDetalle(c.label || seccion.titulo, c.valor, panel);
-                } else if (c.esVideo) {
-                    crearVideoDetalle(seccion.titulo, c.valor, panel);
-                } else {
-                    const el = crearElementoDetalle(c.label, c.valor);
-                    if (el) panel.appendChild(el);
-                }
+                if (c.esImagen) crearImagenDetalle(c.label || seccion.titulo, c.valor, panel);
+                else if (c.esVideo) crearVideoDetalle(seccion.titulo, c.valor, panel);
+                else { const el = crearElementoDetalle(c.label, c.valor); if (el) panel.appendChild(el); }
             }
         });
         cont.appendChild(panel);
@@ -1710,7 +1649,7 @@ function mostrarDetalleModal(fila) {
     if (fila.colaborador) {
         const colaboradorDiv = document.createElement('div');
         colaboradorDiv.className = 'colaborador-box';
-        colaboradorDiv.innerHTML = `Agregado por: <strong>${fila.colaborador.replace(/<br>/g, ', ')}</strong>`;
+        colaboradorDiv.innerHTML = `Corte agregado por: <strong>${fila.colaborador.replace(/<br>/g, ', ')}</strong>`;
         cont.appendChild(colaboradorDiv);
     }
 
@@ -1718,49 +1657,38 @@ function mostrarDetalleModal(fila) {
     const feedbackContainer = document.createElement('div');
     feedbackContainer.id = "feedback-section";
     feedbackContainer.style.cssText = "margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;";
-
     const feedbackActions = document.createElement('div');
     feedbackActions.style.cssText = "display: flex; gap: 10px; align-items: center;";
-
     const utilBtn = document.createElement('button');
-    utilBtn.innerHTML = `<i class="fas fa-thumbs-up"></i> Útil <span id="util-count">(...)</span>`;
+    utilBtn.innerHTML = `<i class="fas fa-thumbs-up"></i> Útil <span id="util-count">(${fila.util || 0})</span>`;
     utilBtn.className = 'feedback-btn';
     utilBtn.onclick = () => handleAddLike(fila.id);
-
     const reportarBtn = document.createElement('button');
-    reportarBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Reportar`;
+    reportarBtn.innerHTML = `<i class="fas fa-exclamation-triangle"></i> Reportar problema`;
     reportarBtn.className = 'feedback-btn report';
     reportarBtn.onclick = () => handleReportProblem(fila.id);
-
     feedbackActions.appendChild(utilBtn);
     feedbackActions.appendChild(reportarBtn);
     feedbackContainer.appendChild(feedbackActions);
-
+    const reportFormContainer = document.createElement('div');
+    reportFormContainer.id = 'report-form-container';
+    reportFormContainer.style.display = 'none';
+    reportFormContainer.style.marginTop = '15px';
+    reportFormContainer.innerHTML = `
+        <textarea id="report-problem-input" placeholder="Describe el problema que encontraste..." style="width: 100%; min-height: 80px; padding: 10px; border-radius: 8px; border: 1px solid #ccc; box-sizing: border-box;"></textarea>
+        <div style="display: flex; gap: 10px; margin-top: 10px; justify-content: flex-end;">
+            <button id="cancel-report-btn" class="feedback-btn" style="background-color: #f0f2f5;">Cancelar</button>
+            <button id="submit-report-btn" class="feedback-btn" style="background-color: #28a745; color: white;">Enviar Reporte</button>
+        </div>
+    `;
+    feedbackContainer.appendChild(reportFormContainer);
     const commentsContainer = document.createElement('div');
     commentsContainer.id = 'comments-container';
     commentsContainer.style.marginTop = '15px';
-
-    // Nuevo: Contenedor para el formulario de reporte
-    const reportFormContainer = document.createElement('div');
-    reportFormContainer.id = 'report-form-container';
-    reportFormContainer.style.display = 'none'; // Oculto por defecto
-    reportFormContainer.style.marginTop = '15px';
-    reportFormContainer.innerHTML = `
-        <textarea id="report-problem-input" placeholder="Describe el problema aquí..." style="width: 100%; min-height: 60px; padding: 8px; border-radius: 6px; border: 1px solid #ccc; box-sizing: border-box;"></textarea>
-        <div style="display: flex; gap: 10px; margin-top: 8px;">
-            <button id="submit-report-btn" class="feedback-btn" style="background-color: #28a745; color: white;">Enviar Reporte</button>
-            <button id="cancel-report-btn" class="feedback-btn" style="background-color: #f0f2f5;">Cancelar</button>
-        </div>
-    `;
-
-    feedbackContainer.appendChild(reportFormContainer);
     feedbackContainer.appendChild(commentsContainer);
-
     cont.appendChild(feedbackContainer);
 
-    // Cargar y mostrar el feedback
     loadFeedback(fila.id);
-
     modal.classList.add("visible");
 }
 
@@ -2218,10 +2146,8 @@ if ('serviceWorker' in navigator) {
 // --- INICIALIZACIÓN DE LA APLICACIÓN ---
 async function handleSharedLink(seccion, id) {
     appOpenedFromLink = true;
-
     let data, item, mostrarDetalleFn;
 
-    // 1. Determinar qué datos buscar y qué función de modal usar
     const seccionMap = {
         'cortes': { range: RANGE_CORTES, dataSetter: (vals) => datosOriginales = vals, dataRef: () => datosOriginales, modalFn: mostrarDetalleModal },
         'tutoriales': { range: RANGE_TUTORIALES, dataSetter: (vals) => datosTutoriales = vals, dataRef: () => datosTutoriales, modalFn: mostrarDetalleTutorial },
@@ -2229,51 +2155,41 @@ async function handleSharedLink(seccion, id) {
     };
 
     if (!seccionMap[seccion]) {
-        checkSession(); // Sección no válida, proceder con el inicio normal
+        await checkSession();
         return;
     }
 
     const { range, dataSetter, dataRef, modalFn } = seccionMap[seccion];
-
-    // 2. Intentar cargar los datos de la sección y encontrar el ítem
     await syncAndFetchData(seccion, range, dataSetter, () => {}, 'contenido');
     data = dataRef();
-
     if (data && data.length > 0) {
-        item = data.find(fila => fila.id === id);
+        item = data.find(fila => String(fila.id) === String(id));
     }
 
-    // 3. Solo si el ítem es válido, se muestra el modal y se oculta el resto
     if (item) {
-        // Ocultar splash y login AHORA que sabemos que tenemos contenido para mostrar
-        const splash = document.getElementById('splash-screen');
-        splash.style.opacity = '0';
-        setTimeout(() => splash.style.display = 'none', 500);
-        document.getElementById('login-modal').style.display = 'none';
-
-        // Ocultar el contenedor principal para que solo se vea el modal
         document.querySelector('.container').style.display = 'none';
-
-        mostrarDetalleFn = modalFn;
-        mostrarDetalleFn(item);
-
-        // Limpiar la URL para que un refresh no vuelva a abrir el modal
+        modalFn(item);
         history.replaceState({}, document.title, window.location.pathname);
     } else {
-        // 4. Si el ítem no se encuentra, proceder al flujo de inicio de sesión normal
-        checkSession();
+        showToast("El contenido compartido no fue encontrado.", "error");
+        await checkSession();
     }
 }
 
-
 async function inicializarApp() {
-    // Comprobar si hay un mensaje de éxito desde el formulario de agregar corte
+    // 1. Quitar el splash screen inmediatamente para mejorar la percepción de velocidad.
+    const splash = document.getElementById('splash-screen');
+    splash.style.opacity = '0';
+    setTimeout(() => { splash.style.display = 'none'; }, 500);
+
+    // 2. Comprobar si hay un mensaje de éxito de un formulario anterior.
     const successMessage = localStorage.getItem('formSubmissionSuccess');
     if (successMessage) {
-        showToast(successMessage, 'success', 4000); // Mostrar por 4 segundos
-        localStorage.removeItem('formSubmissionSuccess'); // Limpiar para que no se muestre de nuevo
+        showToast(successMessage, 'success', 4000);
+        localStorage.removeItem('formSubmissionSuccess');
     }
 
+    // 3. Revisar si la URL contiene un enlace para compartir.
     const urlParams = new URLSearchParams(window.location.search);
     const seccion = urlParams.get('seccion');
     const id = urlParams.get('id');
@@ -2281,64 +2197,31 @@ async function inicializarApp() {
     if (seccion && id) {
         await handleSharedLink(seccion, id);
     } else {
-        await fetchUsers(); // Carga los datos de usuarios primero
-        checkSession();     // Luego, comprueba si hay una sesión activa
+        await checkSession(); // Flujo normal: verificar la sesión.
     }
 
-    // Lógica para el botón de instalación de iOS
+    // 4. Lógica para PWA en iOS.
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
     const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
     if (!isStandalone && isIOS) {
-        // Crear y mostrar un botón/mensaje específico para iOS
         const iosInstallMessage = document.createElement('div');
         iosInstallMessage.id = 'ios-install-message';
         iosInstallMessage.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #007bff;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            text-align: center;
-            z-index: 1002;
-            font-size: 0.9em;
-            width: 90%;
-            max-width: 400px;
-        `;
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            background-color: #007bff; color: white; padding: 15px 20px; border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: center; z-index: 1002;
+            font-size: 0.9em; width: 90%; max-width: 400px;`;
         iosInstallMessage.innerHTML = `
             Para instalar, pulsa el botón de Compartir
             <svg style="width:20px; vertical-align:middle;" viewBox="0 0 24 24"><path fill="currentColor" d="M17,14V17A1,1 0 0,1 16,18H8A1,1 0 0,1 7,17V14H5V17A3,3 0 0,0 8,20H16A3,3 0 0,0 19,17V14H17M12,4L7,9H10V15H14V9H17L12,4Z" /></svg>
             y luego "Añadir a pantalla de inicio".
-            <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; font-size:1.2em; position:absolute; top:5px; right:10px;">&times;</button>
-        `;
+            <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; font-size:1.2em; position:absolute; top:5px; right:10px;">&times;</button>`;
         document.body.appendChild(iosInstallMessage);
     }
 }
 
-// Ocultar el splash screen después de un tiempo para asegurar que no se quede atascado
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        const session = localStorage.getItem(SESSION_KEY);
-        // Si no hay sesión, el splash se ocultará cuando se muestre el login.
-        // Si hay sesión, el splash se ocultará cuando se muestre la app.
-        // Este es un fallback por si algo falla.
-        if (!session) {
-             const splash = document.getElementById('splash-screen');
-            splash.style.opacity = '0';
-            setTimeout(() => {
-                splash.style.display = 'none';
-            }, 500);
-        }
-    }, 3000); // 3 segundos de tiempo de espera máximo
-});
-
-
-inicializarApp();
+document.addEventListener('DOMContentLoaded', inicializarApp);
 
 // Event listener para el acordeón
 document.getElementById('detalleCompleto').addEventListener('click', function(e) {
