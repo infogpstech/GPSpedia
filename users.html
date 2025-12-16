@@ -209,42 +209,45 @@
         const container = document.getElementById('user-list-container');
         container.innerHTML = '<p>Cargando tu perfil...</p>';
         try {
-            // Reutilizamos la lógica de fetch, ya que carga todos los usuarios de todas formas
-            await fetchAndDisplayUsers(currentUser.Privilegios, true);
-            const header = allUsersData[0];
-            const userToEdit = allUsersData.slice(1).find(u => u[header.indexOf('Nombre_Usuario')] === username);
+            // Si allUsersData no está cargado, lo carga.
+            if (allUsersData.length === 0) {
+                 const response = await fetch(`${USERS_SCRIPT_URL}?sheet=Users`);
+                 if (!response.ok) throw new Error('Error al cargar los datos de usuarios.');
+                 allUsersData = await response.json();
+            }
+
+            const userToEdit = allUsersData.find(u => u.nombreUsuario === username);
 
             if (!userToEdit) {
                 container.innerHTML = '<p style="color:red;">No se pudo cargar tu perfil.</p>';
                 return;
             }
-            renderUserProfile(userToEdit, header);
+            renderUserProfile(userToEdit);
         } catch (error) {
             container.innerHTML = `<p style="color:red;">Error al cargar el perfil: ${error.message}</p>`;
         }
     }
 
-    function renderUserProfile(user, header) {
+    function renderUserProfile(user) {
         const container = document.getElementById('user-list-container');
-        const username = user[header.indexOf('Nombre_Usuario')];
         container.innerHTML = `
             <form id="profile-form" onsubmit="handleProfileFormSubmit(event)">
-                <input type="hidden" id="profile-original-username" value="${username}">
+                <input type="hidden" id="profile-original-username" value="${user.nombreUsuario || ''}">
                 <div class="form-group">
                     <label for="profile-nombre">Nombre Completo</label>
-                    <input type="text" id="profile-nombre" value="${user[header.indexOf('Nombre')] || ''}" required disabled>
+                    <input type="text" id="profile-nombre" value="${user.nombre || ''}" required disabled>
                 </div>
                 <div class="form-group">
                     <label for="profile-username">Nombre de Usuario</label>
-                    <input type="text" id="profile-username" value="${username}" required disabled>
+                    <input type="text" id="profile-username" value="${user.nombreUsuario || ''}" required disabled>
                 </div>
                 <div class="form-group">
                     <label for="profile-telefono">Teléfono</label>
-                    <input type="tel" id="profile-telefono" value="${user[header.indexOf('Telefono')] || ''}">
+                    <input type="tel" id="profile-telefono" value="${user.telefono || ''}">
                 </div>
                 <div class="form-group">
                     <label for="profile-correo">Correo Electrónico</label>
-                    <input type="email" id="profile-correo" value="${user[header.indexOf('Correo_Electronico')] || ''}">
+                    <input type="email" id="profile-correo" value="${user.correoElectronico || ''}">
                 </div>
                 <hr>
                 <p><strong>Cambiar Contraseña:</strong></p>
@@ -308,19 +311,16 @@
             const response = await fetch(`${USERS_SCRIPT_URL}?sheet=Users`);
             if (!response.ok) throw new Error('Error al cargar los datos de usuarios.');
 
-            const data = await response.json();
-            allUsersData = data.values || []; // Guardar datos en la caché global
+            const users = await response.json();
+            allUsersData = users; // Guardar datos en la caché global (ahora son objetos)
 
-            if (allUsersData.length <= 1) {
+            if (!users || users.length === 0) {
                 container.innerHTML = '<p>No se encontraron usuarios.</p>';
                 return;
             }
 
-            const header = allUsersData[0];
-            const usersData = allUsersData.slice(1);
-
-            const filteredUsers = filterUsersByPrivilege(usersData, header, currentUserPrivilegios);
-            renderUserTable(filteredUsers, header);
+            const filteredUsers = filterUsersByPrivilege(users, currentUserPrivilegios);
+            renderUserTable(filteredUsers);
 
         } catch (error) {
             console.error('Error:', error);
@@ -328,36 +328,27 @@
         }
     }
 
-    function filterUsersByPrivilege(users, header, currentUserPrivilegios) {
-        // Corrección: Usar findIndex con trim para encontrar el índice de la columna
-        // de privilegios, ignorando posibles espacios en blanco en el encabezado.
-        const privilegeIndex = header.findIndex(h => h.trim() === 'Privilegios');
-
+    function filterUsersByPrivilege(users, currentUserPrivilegios) {
         const visiblePrivileges = [];
-        if (currentUserPrivilegios === 'Desarrollador') {
+        const trimmedPrivilegios = currentUserPrivilegios.trim();
+
+        if (trimmedPrivilegios === 'Desarrollador') {
             return users;
         }
-        if (currentUserPrivilegios === 'Gefe') {
+        if (trimmedPrivilegios === 'Gefe') {
             visiblePrivileges.push('Gefe', 'Supervisor', 'Técnico');
         }
-        if (currentUserPrivilegios === 'Supervisor') {
-            // Un supervisor también debe poder ver su propia información
+        if (trimmedPrivilegios === 'Supervisor') {
             visiblePrivileges.push('Supervisor', 'Técnico');
         }
 
-        if (privilegeIndex === -1) {
-            console.error("No se encontró la columna 'Privilegios' en los encabezados.");
-            return []; // Devolver una lista vacía si no se puede filtrar
-        }
-
         return users.filter(user => {
-            // Asegurarse de que user[privilegeIndex] existe y luego limpiarlo
-            const userPrivilege = user[privilegeIndex] ? String(user[privilegeIndex]).trim() : '';
+            const userPrivilege = user.privilegios ? String(user.privilegios).trim() : '';
             return visiblePrivileges.includes(userPrivilege);
         });
     }
 
-    function renderUserTable(users, header) {
+    function renderUserTable(users) {
         const container = document.getElementById('user-list-container');
 
         let tableHTML = `
@@ -367,38 +358,25 @@
             <table class="user-table">
                 <thead>
                     <tr>
-                        <th>${header[header.indexOf('Nombre_Usuario')]}</th>
-                        <th>${header[header.indexOf('Nombre')]}</th>
-                        <th>${header[header.indexOf('Privilegios')]}</th>
+                        <th>Nombre de Usuario</th>
+                        <th>Nombre Completo</th>
+                        <th>Rango</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
                 <tbody>
         `;
 
-        // Corrección: Usar findIndex con trim para asegurar que se encuentren los índices
-        // correctos incluso si los encabezados tienen espacios en blanco.
-        const nameIndex = header.findIndex(h => h.trim() === 'Nombre');
-        const usernameIndex = header.findIndex(h => h.trim() === 'Nombre_Usuario');
-        const privilegeIndex = header.findIndex(h => h.trim() === 'Privilegios');
-
-        // Validar que todos los índices fueron encontrados
-        if ([nameIndex, usernameIndex, privilegeIndex].includes(-1)) {
-            container.innerHTML = '<p style="color:red;">Error: No se pudieron encontrar todas las columnas necesarias en la hoja de usuarios.</p>';
-            console.error(`Índices encontrados: Nombre=${nameIndex}, Usuario=${usernameIndex}, Privilegios=${privilegeIndex}`);
-            return;
-        }
-
         for (const user of users) {
-            const username = user[usernameIndex] || '';
+            const username = user.nombreUsuario || '';
             tableHTML += `
                 <tr>
-                    <td data-label="${header[usernameIndex].trim()}">${username}</td>
-                    <td data-label="${header[nameIndex].trim()}">${user[nameIndex] || ''}</td>
-                    <td data-label="${header[privilegeIndex].trim()}">${user[privilegeIndex] || ''}</td>
+                    <td data-label="Nombre de Usuario">${username}</td>
+                    <td data-label="Nombre Completo">${user.nombre || ''}</td>
+                    <td data-label="Rango">${user.privilegios || ''}</td>
                     <td data-label="Acciones">
-                        <button class="action-btn edit" title="Editar Usuario" onclick="openEditModal('${user[usernameIndex]}')"><i class="fas fa-edit"></i></button>
-                        <button class="action-btn delete" title="Borrar Usuario" onclick="confirmDelete('${user[usernameIndex]}')"><i class="fas fa-trash"></i></button>
+                        <button class="action-btn edit" title="Editar Usuario" onclick="openEditModal('${username}')"><i class="fas fa-edit"></i></button>
+                        <button class="action-btn delete" title="Borrar Usuario" onclick="confirmDelete('${username}')"><i class="fas fa-trash"></i></button>
                     </td>
                 </tr>
             `;
@@ -439,8 +417,7 @@
     }
 
     function openEditModal(username) {
-        const header = allUsersData[0];
-        const userToEdit = allUsersData.slice(1).find(u => u[header.indexOf('Nombre_Usuario')] === username);
+        const userToEdit = allUsersData.find(u => u.nombreUsuario === username);
 
         if (!userToEdit) {
             alert('Error: No se encontró al usuario.');
@@ -451,15 +428,15 @@
         document.getElementById('form-action').value = 'updateUser';
         document.getElementById('original-username').value = username;
 
-        document.getElementById('nombre').value = userToEdit[header.indexOf('Nombre')] || '';
-        document.getElementById('nombre-usuario').value = username;
+        document.getElementById('nombre').value = userToEdit.nombre || '';
+        document.getElementById('nombre-usuario').value = userToEdit.nombreUsuario || '';
         document.getElementById('nombre-usuario').disabled = false;
-        document.getElementById('telefono').value = userToEdit[header.indexOf('Telefono')] || '';
-        document.getElementById('correo').value = userToEdit[header.indexOf('Correo_Electronico')] || '';
+        document.getElementById('telefono').value = userToEdit.telefono || '';
+        document.getElementById('correo').value = userToEdit.correoElectronico || '';
         document.getElementById('password').placeholder = 'Dejar en blanco para no cambiar';
         document.getElementById('password').required = false; // La contraseña es opcional al editar
 
-        populatePrivilegesDropdown(userToEdit[header.indexOf('Privilegios')]);
+        populatePrivilegesDropdown(userToEdit.privilegios);
         modal.style.display = "flex";
     }
 

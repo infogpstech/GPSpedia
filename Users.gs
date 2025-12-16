@@ -31,13 +31,7 @@ function doGet(e) {
     if (action === "getFeedback") return getFeedbackForVehicle(e.parameter.vehicleId);
 
     const sheetName = e.parameter.sheet || CORTES_SHEET_NAME;
-    if (sheetName === USERS_SHEET_NAME) {
-      const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(USERS_SHEET_NAME);
-      const data = sheet.getDataRange().getValues();
-      return createJsonResponse({ values: data });
-    } else {
-      return getSheetDataAsJson(sheetName);
-    }
+    return getSheetDataAsJson(sheetName);
   } catch (error) {
     Logger.log(`Error en doGet: ${error.message}\nStack: ${error.stack}`);
     return createJsonResponse({ error: "Error en el servidor (doGet)", details: { message: error.message } });
@@ -313,6 +307,8 @@ function handleUserActions(payload) {
     case 'createUser': return createUser(sheet, allUsers, headers, data, actor);
     case 'updateUser': return updateUser(sheet, allUsers, headers, data, actor);
     case 'deleteUser': return deleteUser(sheet, allUsers, headers, data.username, actor);
+    case 'changePassword': // Este caso se maneja dentro de updateUser, pero lo dejamos explícito
+      return updateUser(sheet, allUsers, headers, data, actor);
     default: return createJsonResponse({ status: 'error', message: 'Acción de usuario no válida.' });
   }
 }

@@ -958,9 +958,8 @@ async function fetchUsers() {
     try {
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Error de red al obtener usuarios: ${response.status}`);
-        const data = await response.json();
-        // Corrección: El script de Apps devuelve un objeto { values: [...] }, por lo que debemos acceder a esa propiedad.
-        userData = data.values || [];
+        // Corrección: El backend ahora devuelve un array de objetos directamente.
+        userData = await response.json();
         return userData;
     } catch (error) {
         console.error("Fallo al obtener la lista de usuarios:", error);
@@ -985,15 +984,11 @@ async function checkSession() {
         }
 
         console.log(`Buscando usuario: ${user.Nombre_Usuario}`);
-        const header = userData[0];
-        const users = userData.slice(1);
-        const currentUser = users.find(u =>
-            u[header.indexOf('Nombre_Usuario')] === user.Nombre_Usuario
-        );
+        const currentUser = userData.find(u => u.nombreUsuario === user.Nombre_Usuario);
 
         if (currentUser) {
             console.log("Usuario verificado exitosamente. Mostrando la aplicación.");
-            const userPrivileges = user.Privilegios;
+            const userPrivileges = currentUser.privilegios;
             if (['Supervisor', 'Gefe', 'Desarrollador', 'Técnico', 'Tecnico_Exterior'].includes(userPrivileges)) {
                 document.getElementById('account-management-link').style.display = 'block';
             }
@@ -1022,18 +1017,16 @@ function login(username, password) {
         document.getElementById('login-error').style.display = 'block';
         return;
     }
-    const header = userData[0];
-    const users = userData.slice(1);
-    const user = users.find(u => u[header.indexOf('Nombre_Usuario')] === username && u[header.indexOf('Password')] === password);
+    const user = userData.find(u => u.nombreUsuario === username && u.password === password);
 
     if (user) {
         const sessionId = Date.now().toString(); // ID de sesión único
         const sessionData = {
             user: {
-                ID: user[header.indexOf('ID')],
-                Nombre_Usuario: user[header.indexOf('Nombre_Usuario')],
-                Privilegios: user[header.indexOf('Privilegios')],
-                Nombre: user[header.indexOf('Nombre')],
+                ID: user.id,
+                Nombre_Usuario: user.nombreUsuario,
+                Privilegios: user.privilegios,
+                Nombre: user.nombre,
             },
             sessionId: sessionId
         };
