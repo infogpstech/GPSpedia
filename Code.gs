@@ -155,15 +155,16 @@ function doPost(e) {
     const isNewRow = !rowIndex || rowIndex === -1;
 
     if (isNewRow) {
-      Logger.log("Creating a new row.");
+      Logger.log("Creating a new row with robust logic.");
       const lastRow = sheet.getLastRow();
       sheet.insertRowAfter(lastRow);
       targetRow = lastRow + 1;
 
+      // Copy formatting and data validation from the previous row
       const previousRowRange = sheet.getRange(lastRow, 1, 1, sheet.getMaxColumns());
       const newRowRange = sheet.getRange(targetRow, 1, 1, sheet.getMaxColumns());
-      previousRowRange.copyTo(newRowRange, {contentsOnly: false, formatOnly: true});
-      newRowRange.clearContent();
+      previousRowRange.copyTo(newRowRange); // Copy everything first
+      newRowRange.clearContent(); // Then clear content, keeping formats/validations
 
       sheet.getRange(targetRow, COLS.CATEGORIA).setValue(categoria);
       sheet.getRange(targetRow, COLS.MARCA).setValue(marca);
