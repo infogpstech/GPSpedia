@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios - GPSpedia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #333;
+            --background-color: #f4f4f4;
+            --card-background: #fff;
+            --text-color: #333;
+            --light-text: #fff;
+            --error-color: #dc3545;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+        }
+        .container {
+            padding: 20px;
+            max-width: 1000px;
+            margin: 20px auto;
+        }
+        .profile-section, .user-management-section {
+            background: var(--card-background);
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+        h1, h2 {
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .user-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .user-table th, .user-table td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        .user-table th {
+            background-color: #f8f9fa;
+        }
+        .actions-cell .btn {
+            margin-right: 5px;
+            padding: 5px 10px;
+            font-size: 0.9em;
+        }
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .btn-primary { background-color: var(--primary-color); color: var(--light-text); }
+        .btn-warning { background-color: #ffc107; color: var(--secondary-color); }
+        .btn-danger { background-color: var(--error-color); color: var(--light-text); }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-btn:hover, .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="profile-section" class="profile-section">
+            <h1>Mi Perfil</h1>
+            <p><strong>Nombre de Usuario:</strong> <span id="profile-username"></span></p>
+            <p><strong>Nombre Completo:</strong> <span id="profile-fullname"></span></p>
+            <p><strong>Rol:</strong> <span id="profile-role"></span></p>
+            <button id="change-password-btn" class="btn btn-primary">Cambiar Contraseña</button>
+        </div>
+
+        <div id="user-management-section" class="user-management-section" style="display: none;">
+            <h2>Gestión de Usuarios</h2>
+            <button id="create-user-btn" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Crear Nuevo Usuario
+            </button>
+            <table class="user-table">
+                <thead>
+                    <tr>
+                        <th>Nombre de Usuario</th>
+                        <th>Nombre Completo</th>
+                        <th>Rol</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="user-list-tbody">
+                    <!-- User rows will be inserted here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- User Modal (for Create/Edit) -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 id="user-modal-title"></h2>
+            <form id="user-form">
+                <input type="hidden" id="user-id">
+                <div class="form-group">
+                    <label for="fullname">Nombre Completo</label>
+                    <input type="text" id="fullname" required>
+                </div>
+                <div class="form-group">
+                    <label for="username-modal">Nombre de Usuario</label>
+                    <input type="text" id="username-modal" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Rol</label>
+                    <select id="role" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="password-modal">Contraseña</label>
+                    <input type="password" id="password-modal">
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Cambiar Contraseña</h2>
+            <form id="password-form">
+                <div class="form-group">
+                    <label for="current-password">Contraseña Actual</label>
+                    <input type="password" id="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">Nueva Contraseña</label>
+                    <input type="password" id="new-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirmar Nueva Contraseña</label>
+                    <input type="password" id="confirm-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
+            </form>
+        </div>
+    </div>
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx1WubkKI7Jr0RG0qfaITAlrFOBzPJ-qIES-1njU-IS7UTVx4CdUw2WErfKlFE38nEz/exec";
+const SESSION_KEY = 'gpsepedia_session';
+let currentUser = null;
+let allUsers = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    const sessionData = localStorage.getItem(SESSION_KEY);
+    if (!sessionData) {
+        window.location.href = 'index.html';
+        return;
+    }
+    currentUser = JSON.parse(sessionData);
+
+    displayProfile();
+    setupEventListeners();
+
+    if (['Desarrollador', 'Gefe', 'Supervisor'].includes(currentUser.privilegios)) {
+        document.getElementById('user-management-section').style.display = 'block';
+        fetchUsers();
+    }
+});
+
+function displayProfile() {
+    document.getElementById('profile-username').textContent = currentUser.nombreUsuario;
+    document.getElementById('profile-fullname').textContent = currentUser.nombre;
+    document.getElementById('profile-role').textContent = currentUser.privilegios;
+}
+
+async function postToAction(action, payload = {}) {
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, payload })
+        });
+        if (!response.ok) throw new Error(`Network error: ${response.statusText}`);
+        const result = await response.json();
+        if (result.status === 'error') throw new Error(result.details || result.message);
+        return result;
+    } catch (error) {
+        console.error(`Error in action '${action}':`, error);
+        alert(`Error: ${error.message}`);
+        throw error;
+    }
+}
+
+async function fetchUsers() {
+    try {
+        const result = await postToAction('getUsers', { privilegios: currentUser.privilegios });
+        allUsers = result.users;
+        renderUserTable();
+    } catch (error) {
+        // Error is handled in postToAction
+    }
+}
+
+function renderUserTable() {
+    const tbody = document.getElementById('user-list-tbody');
+    tbody.innerHTML = '';
+    allUsers.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${user.nombreUsuario}</td>
+            <td>${user.nombre}</td>
+            <td>${user.privilegios}</td>
+            <td class="actions-cell">
+                <button class="btn btn-warning btn-sm" onclick='openUserModal(${JSON.stringify(user)})'>Editar</button>
+                <button class="btn btn-danger btn-sm" onclick="deleteUser('${user.id}')">Eliminar</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+    });
+}
+
+function setupEventListeners() {
+    const userModal = document.getElementById('user-modal');
+    const passwordModal = document.getElementById('password-modal');
+    const closeBtns = document.querySelectorAll('.close-btn');
+
+    document.getElementById('create-user-btn').addEventListener('click', () => openUserModal());
+    document.getElementById('change-password-btn').addEventListener('click', () => passwordModal.style.display = 'block');
+
+    closeBtns.forEach(btn => {
+        btn.parentElement.parentElement.onclick = (e) => {
+            if (e.target === btn.parentElement.parentElement) {
+                 btn.parentElement.parentElement.style.display = 'none';
+            }
+        }
+        btn.onclick = () => {
+            btn.parentElement.parentElement.style.display = 'none';
+        }
+    });
+
+    document.getElementById('user-form').addEventListener('submit', handleUserFormSubmit);
+}
+
+function openUserModal(user = null) {
+    const modal = document.getElementById('user-modal');
+    const title = document.getElementById('user-modal-title');
+    const form = document.getElementById('user-form');
+    form.reset();
+
+    if (user) {
+        title.textContent = 'Editar Usuario';
+        document.getElementById('user-id').value = user.id;
+        document.getElementById('fullname').value = user.nombre;
+        document.getElementById('username-modal').value = user.nombreUsuario;
+    } else {
+        title.textContent = 'Crear Nuevo Usuario';
+        document.getElementById('user-id').value = '';
+    }
+
+    const roleSelect = document.getElementById('role');
+    roleSelect.innerHTML = '';
+    let availableRoles = [];
+    if (currentUser.privilegios === 'Desarrollador') availableRoles = ['Desarrollador', 'Gefe', 'Supervisor', 'Tecnico', 'Tecnico_Exterior'];
+    else if (currentUser.privilegios === 'Gefe') availableRoles = ['Gefe', 'Supervisor', 'Tecnico'];
+    else if (currentUser.privilegios === 'Supervisor') availableRoles = ['Tecnico'];
+
+    availableRoles.forEach(role => {
+        const option = document.createElement('option');
+        option.value = role;
+        option.textContent = role;
+        roleSelect.appendChild(option);
+    });
+    if(user) roleSelect.value = user.privilegios;
+
+    modal.style.display = 'block';
+}
+
+async function handleUserFormSubmit(e) {
+    e.preventDefault();
+    const userId = document.getElementById('user-id').value;
+    const userData = {
+        nombre: document.getElementById('fullname').value,
+        nombreUsuario: document.getElementById('username-modal').value,
+        privilegios: document.getElementById('role').value,
+        password: document.getElementById('password-modal').value,
+    };
+
+    try {
+        if (userId) {
+            await postToAction('updateUser', { userId, updates: userData, updaterRole: currentUser.privilegios });
+            alert('Usuario actualizado');
+        } else {
+            await postToAction('createUser', { newUser: userData, creatorRole: currentUser.privilegios });
+            alert('Usuario creado');
+        }
+        document.getElementById('user-modal').style.display = 'none';
+        fetchUsers();
+    } catch (error) {
+        // Error handled in postToAction
+    }
+}
+
+async function deleteUser(userId) {
+    if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+        try {
+            await postToAction('deleteUser', { userId, deleterRole: currentUser.privilegios });
+            alert('Usuario eliminado');
+            fetchUsers();
+        } catch (error) {
+            // Error handled in postToAction
+        }
+    }
+}
+</script>
+</body>
+</html>

@@ -328,6 +328,12 @@ async function handlePhase3Submit(e) {
         notas: document.getElementById('notas').value
     };
     const payload = {
+      action: 'addCorte',
+      payload: {
+        vehicleInfo: { ...state.vehicleInfo, rowIndex: state.rowIndex, colaborador: state.colaborador },
+        additionalInfo, files: resolvedFiles
+      }
+    };
       vehicleInfo: { ...state.vehicleInfo, rowIndex: state.rowIndex, colaborador: state.colaborador },
       additionalInfo, files: resolvedFiles
     };
