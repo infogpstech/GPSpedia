@@ -64,7 +64,9 @@ function doPost(e) {
 
     const action = payload.action;
 
-    if (['createUser', 'updateUser', 'deleteUser', 'changePassword'].includes(action)) {
+    if (action === 'login') {
+      return handleLogin(payload.data);
+    } else if (['createUser', 'updateUser', 'deleteUser'].includes(action)) {
       return handleUserActions(payload);
     } else if (['addLike', 'reportProblem', 'replyToProblem', 'resolveProblem'].includes(action)) {
       return handleFeedbackActions(payload);
@@ -321,6 +323,39 @@ function updateRowData(sheet, targetRow, additionalInfo, fileUrls, colaborador) 
     sheet.getRange(targetRow, COLS.COLABORADOR).setValue(`${rawColab}<br>${colaborador}`);
   } else if (!existingColab) {
     sheet.getRange(targetRow, COLS.COLABORADOR).setValue(colaborador);
+  }
+}
+
+// ==================================================================
+// LÓGICA DE AUTENTICACIÓN
+// ==================================================================
+
+function handleLogin(credentials) {
+  const { username, password } = credentials;
+  if (!username || !password) {
+    return createJsonResponse({ status: 'error', message: 'Usuario y contraseña son requeridos.' });
+  }
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(USERS_SHEET_NAME);
+  const allUsers = sheet.getDataRange().getValues();
+  const headersRaw = allUsers.shift();
+  const headers = getHeaderIndices(headersRaw);
+
+  const userRow = allUsers.find(row =>
+    row[headers['Nombre_Usuario']] === username &&
+    String(row[headers['Password']]) === String(password)
+  );
+
+  if (userRow) {
+    const actor = {
+      id: userRow[headers['ID']],
+      nombreUsuario: userRow[headers['Nombre_Usuario']],
+      privilegios: userRow[headers['Privilegios']],
+      nombre: userRow[headers['Nombre']]
+    };
+    return createJsonResponse({ status: 'success', actor: actor });
+  } else {
+    return createJsonResponse({ status: 'error', message: 'Credenciales inválidas.' });
   }
 }
 

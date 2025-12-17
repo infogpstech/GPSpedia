@@ -941,114 +941,82 @@ function sanitizeInput(input) {
 }
 
 const SESSION_KEY = 'gpsepedia_session';
-const SESSION_ID_KEY = 'gpsepedia_session_id';
-let userData = [];
 
-async function fetchUsers() {
-    const url = `${USERS_SCRIPT_URL}?sheet=Users`;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Error de red al obtener usuarios: ${response.status}`);
-        // Corrección: El backend ahora devuelve un array de objetos directamente.
-        userData = await response.json();
-        return userData;
-    } catch (error) {
-        console.error("Fallo al obtener la lista de usuarios:", error);
-        const loginError = document.getElementById('login-error');
-        loginError.textContent = "No se pudo conectar al servidor de autenticación.";
-        loginError.style.display = 'block';
-        return [];
-    }
-}
-
+// La validación de sesión ahora es mucho más simple.
 async function checkSession() {
     try {
-        console.log("Verificando sesión...");
-        const session = localStorage.getItem(SESSION_KEY);
-        if (!session) {
+        const sessionJSON = localStorage.getItem(SESSION_KEY);
+        if (!sessionJSON) {
             showLoginHideApp();
             return;
         }
 
-        console.log("Sesión encontrada en localStorage.");
-        const { user } = JSON.parse(session);
+        const session = JSON.parse(sessionJSON);
+        // La sesión es válida si contiene un objeto 'actor' con un 'nombreUsuario'.
+        if (session && session.actor && session.actor.nombreUsuario) {
+            console.log("Sesión válida encontrada. Mostrando aplicación.");
 
-        // Si no hay datos de usuario cargados, los obtenemos ahora.
-        if (userData.length === 0) {
-            console.log("userData está vacío, obteniendo usuarios...");
-            await fetchUsers();
-        }
+            // Almacenar el nombre de usuario para compatibilidad con add_cortes.html
+            localStorage.setItem('userName', session.actor.nombre);
 
-        console.log(`Buscando usuario: ${user.nombreUsuario}`);
-        const currentUserData = userData.find(u => u.nombreUsuario === user.nombreUsuario);
-
-        if (currentUserData) {
-            console.log("Usuario verificado. Mostrando la aplicación.");
-            localStorage.setItem('userName', user.nombre);
-
-            // Llama a la función que muestra la app y maneja el toast.
             hideLoginShowApp();
-
-            document.getElementById('welcome-message').textContent = `Bienvenido, ${user.nombre}`;
+            document.getElementById('welcome-message').textContent = `Bienvenido, ${session.actor.nombre}`;
             document.getElementById('welcome-message').style.display = 'block';
             document.getElementById('logout-button').style.display = 'block';
 
-            // Carga los datos principales de la aplicación.
+            // Mostrar enlace de gestión si el rol lo permite
+            const userRole = (session.actor.privilegios || '').toLowerCase();
+            if (['supervisor', 'gefe', 'desarrollador'].includes(userRole)) {
+                document.getElementById('account-management-link').style.display = 'block';
+            }
+
+            // Cargar datos principales
             syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
         } else {
-            // Si el usuario de la sesión no es válido, cerramos sesión.
-            logout("Tu sesión ha expirado o es inválida. Por favor, inicia sesión de nuevo.");
+            logout("Tu sesión es inválida. Por favor, inicia sesión de nuevo.");
         }
     } catch (error) {
-        // En caso de cualquier error (ej. JSON malformado), cerramos sesión para estar seguros.
-        console.error("Error crítico durante la verificación de sesión:", error);
-        logout("Ocurrió un error al verificar tu sesión. Por favor, inicia sesión de nuevo.");
+        console.error("Error al verificar sesión:", error);
+        logout("Error al verificar sesión. Por favor, inicia sesión.");
     }
 }
 
+async function login(username, password) {
+    const loginError = document.getElementById('login-error');
+    loginError.style.display = 'none';
 
-function login(username, password) {
-    if (userData.length === 0) {
-        document.getElementById('login-error').textContent = 'Error de autenticación. Intente de nuevo.';
-        document.getElementById('login-error').style.display = 'block';
-        return;
-    }
-    // CORRECCIÓN: Usar las claves exactas de la API
-    const user = userData.find(u => u.nombreUsuario === username && u.password === password);
+    try {
+        const response = await fetch(USERS_SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: 'login',
+                data: { username, password }
+            })
+        });
 
-    if (user) {
-        const sessionId = Date.now().toString(); // ID de sesión único
-        // CORRECCIÓN CRÍTICA: Estandarizar las claves del objeto de sesión a camelCase.
-        const sessionData = {
-            user: {
-                id: user.id,
-                nombreUsuario: user.nombreUsuario, // Clave corregida
-                privilegios: user.privilegios,   // Clave corregida
-                nombre: user.nombre,             // Clave corregida
-            },
-            sessionId: sessionId
-        };
+        const result = await response.json();
 
-        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        localStorage.setItem(SESSION_ID_KEY, sessionId);
-        localStorage.setItem('userName', sessionData.user.nombre);
+        if (result.status === 'success' && result.actor) {
+            // Guardar el actor devuelto por el backend como la nueva sesión
+            const sessionData = { actor: result.actor };
+            localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
 
-        localStorage.setItem('session_update', Date.now());
+            // Compatibilidad con add_cortes.html
+            localStorage.setItem('userName', result.actor.nombre);
 
-        hideLoginShowApp();
-        document.getElementById('welcome-message').textContent = `Bienvenido, ${sessionData.user.nombre}`;
-        document.getElementById('welcome-message').style.display = 'block';
-        document.getElementById('logout-button').style.display = 'block';
+            // Forzar actualización en otras pestañas
+            localStorage.setItem('session_update', Date.now());
 
-        if (['Supervisor', 'Gefe', 'Desarrollador'].includes(sessionData.user.privilegios)) {
-            document.getElementById('account-management-link').style.display = 'block';
+            // Proceder a mostrar la aplicación
+            checkSession();
+        } else {
+            throw new Error(result.message || 'Credenciales incorrectas.');
         }
-
-        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-
-    } else {
-        document.getElementById('login-error').textContent = 'Usuario o contraseña incorrectos.';
-        document.getElementById('login-error').style.display = 'block';
+    } catch (error) {
+        console.error("Error de login:", error);
+        loginError.textContent = error.message;
+        loginError.style.display = 'block';
     }
 }
 
@@ -1105,14 +1073,9 @@ function hideLoginShowApp() {
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = sanitizeInput(document.getElementById('username').value);
-    const password = sanitizeInput(document.getElementById('password').value);
+    const password = document.getElementById('password').value; // Sin sanitizar
 
-    // Asegurarse de que los datos de usuario estén cargados
-    if (userData.length === 0) {
-       await fetchUsers();
-    }
-
-    login(username, password);
+    await login(username, password);
 });
 
 document.getElementById('logout-button').addEventListener('click', () => {
@@ -2287,9 +2250,7 @@ async function inicializarApp() {
         if (seccion && id) {
             await handleSharedLink(seccion, id);
         } else {
-            // Se espera a que se carguen los usuarios y se verifique la sesión
-            // para que el splash se oculte en el momento correcto.
-            await fetchUsers();
+            // Ahora solo necesitamos verificar la sesión, ya no precargamos usuarios.
             await checkSession();
         }
 

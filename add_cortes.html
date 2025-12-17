@@ -228,13 +228,21 @@ const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 const state = { vehicleInfo: {}, existingData: null, rowIndex: null, filePromises: {} };
 
-// Make init a global function so it can be called from Playwright
 function init() {
-    const userName = localStorage.getItem('userName');
-    if (userName) {
-        document.getElementById('welcome-message').innerHTML = `Bienvenido,<br>${userName}`;
-        state.colaborador = userName;
-        // Solo carga los dropdowns si la sesión es válida
+    const sessionJSON = localStorage.getItem('gpsepedia_session');
+    let session;
+    try {
+        session = JSON.parse(sessionJSON);
+    } catch (e) {
+        session = null;
+    }
+
+    if (session && session.actor && session.actor.nombre) {
+        const actor = session.actor;
+        document.getElementById('welcome-message').innerHTML = `Bienvenido,<br>${actor.nombre}`;
+        state.colaborador = actor.nombre; // El colaborador es el nombre del actor logueado
+
+        // Cargar los dropdowns
         toggleLoading(true);
         fetch(`${SCRIPT_URL}?action=getDropdowns`)
             .then(response => response.json())
@@ -250,15 +258,14 @@ function init() {
             })
             .finally(() => toggleLoading(false));
     } else {
-        // Muestra un mensaje de error y deshabilita el formulario
+        // Si no hay sesión/actor válido, mostrar error y redirigir
         showToast('Sesión no válida, por favor inicia sesión.', 'error');
         document.querySelector('.form-container').style.opacity = '0.5';
         document.querySelector('.form-container').style.pointerEvents = 'none';
 
-        // Redirige después de un momento para que el usuario pueda leer el mensaje
         setTimeout(() => {
             window.location.href = 'index.html';
-        }, 3000); // 3 segundos de retraso
+        }, 2000);
     }
 }
 

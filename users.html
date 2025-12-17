@@ -220,17 +220,16 @@
             return;
         }
 
-        const { user } = JSON.parse(session);
-        // Corregido: Usar camelCase para consistencia con el objeto de sesión
-        if (!user || !user.nombre || !user.privilegios) {
+        const { actor } = JSON.parse(session);
+        if (!actor || !actor.nombre || !actor.privilegios) {
             window.location.href = 'index.html';
             return;
         }
 
-        currentUser = user;
-        document.getElementById('welcome-message').textContent = `Sesión activa: ${user.nombre} (${user.privilegios})`;
+        currentUser = actor;
+        document.getElementById('welcome-message').textContent = `Sesión activa: ${actor.nombre} (${actor.privilegios})`;
 
-        const userRole = user.privilegios ? user.privilegios.trim() : '';
+        const userRole = actor.privilegios ? actor.privilegios.trim() : '';
 
         // Convertir roles a un formato consistente para la comparación
         const normalizedRole = userRole.toLowerCase().replace(/\s+/g, '');
