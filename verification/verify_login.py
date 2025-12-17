@@ -46,10 +46,13 @@ if __name__ == "__main__":
         page = context.new_page()
 
         try:
-            # Usar add_init_script para garantizar que localStorage esté limpio ANTES de que se ejecute el JS de la página
-            page.add_init_script("localStorage.clear();")
+            # Ir a la página y esperar a que la red esté inactiva para asegurar que todo se haya cargado
+            page.goto("/index.html", wait_until="networkidle")
 
-            page.goto("/index.html")
+            # Limpiar localStorage y recargar para forzar el estado de no-sesión
+            page.evaluate("localStorage.clear()")
+            page.reload(wait_until="networkidle")
+
             verify_login_flow(page)
             print("\n✅ Verificación de login completada exitosamente.")
         except Exception as e:
