@@ -218,16 +218,16 @@ function handleCortesPost(payload) {
 
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(CORTES_SHEET_NAME);
   let targetRow;
+
+  // Si no hay rowIndex o es -1, significa que es un nuevo registro.
   if (!rowIndex || rowIndex === -1) {
-    const placeholderRow = new Array(sheet.getMaxColumns()).fill('');
-    sheet.appendRow(placeholderRow);
-    targetRow = sheet.getLastRow();
+    const lastRow = sheet.getLastRow();
+    // CORRECCIÓN CRÍTICA: Insertar una fila después de la última fila con contenido.
+    // Esto hereda automáticamente el formato y las validaciones de datos.
+    sheet.insertRowAfter(lastRow);
+    targetRow = lastRow + 1;
 
-    const previousRowRange = sheet.getRange(targetRow - 1, 1, 1, sheet.getMaxColumns());
-    const newRowRange = sheet.getRange(targetRow, 1, 1, sheet.getMaxColumns());
-    previousRowRange.copyTo(newRowRange, {formatOnly: true});
-    sheet.getRange(targetRow, 2, 1, sheet.getMaxColumns() - 1).clearContent();
-
+    // Poblar la nueva fila con la información básica del vehículo.
     sheet.getRange(targetRow, COLS.CATEGORIA).setValue(categoria);
     sheet.getRange(targetRow, COLS.MARCA).setValue(marca);
     sheet.getRange(targetRow, COLS.MODELO).setValue(modelo);
@@ -235,9 +235,11 @@ function handleCortesPost(payload) {
     sheet.getRange(targetRow, COLS.TIPO_ENCENDIDO).setValue(tipoEncendido);
     if (fileUrls.imagenVehiculo) sheet.getRange(targetRow, COLS.IMAGEN_VEHICULO).setValue(fileUrls.imagenVehiculo);
   } else {
+    // Si ya existe, simplemente usamos el rowIndex proporcionado.
     targetRow = parseInt(rowIndex, 10);
   }
 
+  // Llamar a la función unificada para actualizar o llenar el resto de la información.
   updateRowData(sheet, targetRow, additionalInfo, fileUrls, colaborador);
   return createJsonResponse({ success: true, message: "Registro guardado exitosamente.", row: targetRow });
 }
