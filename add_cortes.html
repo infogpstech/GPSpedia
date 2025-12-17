@@ -198,7 +198,7 @@
     </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx1WubkKI7Jr0RG0qfaITAlrFOBzPJ-qIES-1njU-IS7UTVx4CdUw2WErfKlFE38nEz/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5C2PsILb-y2PVD-Rq435E9cnWYQtaztcEoYkFVxbkYV7qZeacgQRXLp_2iwED-jkd/exec";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 const state = { vehicleInfo: {}, existingData: null, rowIndex: null, filePromises: {} };
@@ -333,9 +333,6 @@ async function handlePhase3Submit(e) {
         vehicleInfo: { ...state.vehicleInfo, rowIndex: state.rowIndex, colaborador: state.colaborador },
         additionalInfo, files: resolvedFiles
       }
-    };
-      vehicleInfo: { ...state.vehicleInfo, rowIndex: state.rowIndex, colaborador: state.colaborador },
-      additionalInfo, files: resolvedFiles
     };
     fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
         .then(res => res.json())

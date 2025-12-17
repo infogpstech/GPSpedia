@@ -197,7 +197,7 @@
         </div>
     </div>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx1WubkKI7Jr0RG0qfaITAlrFOBzPJ-qIES-1njU-IS7UTVx4CdUw2WErfKlFE38nEz/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw5C2PsILb-y2PVD-Rq435E9cnWYQtaztcEoYkFVxbkYV7qZeacgQRXLp_2iwED-jkd/exec";
 const SESSION_KEY = 'gpsepedia_session';
 let currentUser = null;
 let allUsers = [];
@@ -291,6 +291,7 @@ function setupEventListeners() {
     });
 
     document.getElementById('user-form').addEventListener('submit', handleUserFormSubmit);
+    document.getElementById('password-form').addEventListener('submit', handleChangePasswordSubmit);
 }
 
 function openUserModal(user = null) {
@@ -361,6 +362,36 @@ async function deleteUser(userId) {
         } catch (error) {
             // Error handled in postToAction
         }
+    }
+}
+
+async function handleChangePasswordSubmit(e) {
+    e.preventDefault();
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    if (newPassword !== confirmPassword) {
+        alert('Las nuevas contraseñas no coinciden.');
+        return;
+    }
+
+    if (newPassword.length < 8) {
+        alert('La nueva contraseña debe tener al menos 8 caracteres.');
+        return;
+    }
+
+    try {
+        await postToAction('changePassword', {
+            userId: currentUser.id, // Assuming currentUser has an ID
+            currentPassword,
+            newPassword
+        });
+        alert('Contraseña actualizada correctamente.');
+        document.getElementById('password-modal').style.display = 'none';
+        document.getElementById('password-form').reset();
+    } catch (error) {
+        // Error is already handled and alerted by postToAction
     }
 }
 </script>
