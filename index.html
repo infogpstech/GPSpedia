@@ -1061,6 +1061,7 @@ function logout(reason = null) {
 }
 
 function showLoginHideApp(reason = null) {
+    hideSplashScreen(); // Ocultar el splash antes de mostrar el login
     // Ocultar contenido principal y footer
     document.querySelector('.container').style.display = 'none';
     document.querySelector('.footer').style.display = 'none';
@@ -1084,6 +1085,7 @@ function showLoginHideApp(reason = null) {
 }
 
 function hideLoginShowApp() {
+    hideSplashScreen(); // Ocultar el splash antes de mostrar la app
     document.getElementById('login-modal').style.display = 'none';
 
     // Mostrar contenido principal y footer
@@ -1413,7 +1415,7 @@ function crearBotonCompartir(seccion, ID, titulo) {
                 }, 2000);
             } catch (err) {
                 console.error('Error al copiar el enlace:', err);
-                alert('No se pudo copiar el enlace.');
+                showToast('No se pudo copiar el enlace.', 'error');
             }
         }
     };
@@ -2274,54 +2276,54 @@ function hideSplashScreen() {
 }
 
 async function inicializarApp() {
-    hideSplashScreen();
-    // La lógica para mostrar el "toast" de éxito se ha movido a `hideLoginShowApp`
-    // para evitar condiciones de carrera durante la carga de la página.
+    try {
+        // La lógica para mostrar el "toast" de éxito se ha movido a `hideLoginShowApp`
+        // para evitar condiciones de carrera durante la carga de la página.
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const seccion = urlParams.get('seccion');
-    const id = urlParams.get('id');
+        const urlParams = new URLSearchParams(window.location.search);
+        const seccion = urlParams.get('seccion');
+        const id = urlParams.get('id');
 
-    if (seccion && id) {
-        await handleSharedLink(seccion, id);
-    } else {
-        // En lugar de bloquear, ahora se ejecuta en segundo plano
-        fetchUsers().then(() => {
-            checkSession();
-        });
-    }
+        if (seccion && id) {
+            await handleSharedLink(seccion, id);
+        } else {
+            // Se espera a que se carguen los usuarios y se verifique la sesión
+            // para que el splash se oculte en el momento correcto.
+            await fetchUsers();
+            await checkSession();
+        }
 
-    // Lógica para el botón de instalación de iOS
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        // Lógica para el botón de instalación de iOS (se ejecuta después de que el contenido principal es visible)
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-    if (!isStandalone && isIOS) {
-        // Crear y mostrar un botón/mensaje específico para iOS
-        const iosInstallMessage = document.createElement('div');
-        iosInstallMessage.id = 'ios-install-message';
-        iosInstallMessage.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #007bff;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            text-align: center;
-            z-index: 1002;
-            font-size: 0.9em;
-            width: 90%;
-            max-width: 400px;
+        if (!isStandalone && isIOS) {
+            const iosInstallMessage = document.createElement('div');
+            iosInstallMessage.id = 'ios-install-message';
+            iosInstallMessage.style.cssText = `
+                position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                background-color: #007bff; color: white; padding: 15px 20px; border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: center; z-index: 1002;
+                font-size: 0.9em; width: 90%; max-width: 400px;
+            `;
+            iosInstallMessage.innerHTML = `
+                Para instalar, pulsa el botón de Compartir
+                <svg style="width:20px; vertical-align:middle;" viewBox="0 0 24 24"><path fill="currentColor" d="M17,14V17A1,1 0 0,1 16,18H8A1,1 0 0,1 7,17V14H5V17A3,3 0 0,0 8,20H16A3,3 0 0,0 19,17V14H17M12,4L7,9H10V15H14V9H17L12,4Z" /></svg>
+                y luego "Añadir a pantalla de inicio".
+                <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; font-size:1.2em; position:absolute; top:5px; right:10px;">&times;</button>
+            `;
+            document.body.appendChild(iosInstallMessage);
+        }
+    } catch (error) {
+        console.error("Error crítico durante la inicialización:", error);
+        hideSplashScreen(); // Asegurarse de ocultar el splash en caso de error
+        document.body.innerHTML = `
+            <div style="text-align: center; padding: 40px; color: #333; font-family: Arial, sans-serif;">
+                <h2 style="color: #d9534f;">Error al Cargar la Aplicación</h2>
+                <p>No se pudo iniciar GPSpedia. Por favor, verifica tu conexión a internet e inténtalo de nuevo.</p>
+                <p style="color: #777; font-size: 0.8em; margin-top: 20px;">Detalle del error: ${error.message}</p>
+            </div>
         `;
-        iosInstallMessage.innerHTML = `
-            Para instalar, pulsa el botón de Compartir
-            <svg style="width:20px; vertical-align:middle;" viewBox="0 0 24 24"><path fill="currentColor" d="M17,14V17A1,1 0 0,1 16,18H8A1,1 0 0,1 7,17V14H5V17A3,3 0 0,0 8,20H16A3,3 0 0,0 19,17V14H17M12,4L7,9H10V15H14V9H17L12,4Z" /></svg>
-            y luego "Añadir a pantalla de inicio".
-            <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; font-size:1.2em; position:absolute; top:5px; right:10px;">&times;</button>
-        `;
-        document.body.appendChild(iosInstallMessage);
     }
 }
 

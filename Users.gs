@@ -24,14 +24,25 @@ const COLS = {
 
 function doGet(e) {
   try {
-    const action = e.parameter.action;
+    const params = e.parameter || {};
+    const action = params.action;
 
     if (action === "getDropdowns") return getDropdownData();
     if (action === "checkVehicle") return checkVehicleExists(e.parameter);
     if (action === "getFeedback") return getFeedbackForVehicle(e.parameter.vehicleId);
 
-    const sheetName = e.parameter.sheet || CORTES_SHEET_NAME;
-    return getSheetDataAsJson(sheetName);
+    // Lógica de enrutamiento de hoja más explícita para evitar errores.
+    if (params.sheet === 'Users') {
+      // Para la hoja de usuarios, se requiere un actor para filtrar por permisos.
+      if (!params.actor) return createJsonResponse({ status: 'error', message: 'Se requiere un actor para obtener la lista de usuarios.' });
+      const actor = JSON.parse(params.actor);
+      return getVisibleUsers(actor);
+    }
+
+    // Por defecto, o si no se especifica una hoja válida, se devuelve la de "Cortes".
+    // Esto previene que se devuelvan datos incorrectos a la página de gestión de usuarios.
+    return getSheetDataAsJson(CORTES_SHEET_NAME);
+
   } catch (error) {
     Logger.log(`Error en doGet: ${error.message}\nStack: ${error.stack}`);
     return createJsonResponse({ status: 'error', message: `Error en el servidor (doGet): ${error.message}` });
@@ -40,7 +51,17 @@ function doGet(e) {
 
 function doPost(e) {
   try {
-    const payload = JSON.parse(e.postData.contents);
+    // Registro para depuración: ver exactamente lo que se recibe.
+    Logger.log('doPost__Contenido_Recibido: ' + e.postData.contents);
+
+    let payload;
+    try {
+      payload = JSON.parse(e.postData.contents);
+    } catch (jsonError) {
+      Logger.log('Error de parseo JSON en doPost: ' + jsonError.message);
+      return createJsonResponse({ status: 'error', message: 'La solicitud no es un JSON válido: ' + e.postData.contents });
+    }
+
     const action = payload.action;
 
     if (['createUser', 'updateUser', 'deleteUser', 'changePassword'].includes(action)) {
@@ -304,130 +325,126 @@ function updateRowData(sheet, targetRow, additionalInfo, fileUrls, colaborador) 
 }
 
 // ==================================================================
-// LÓGICA PARA GESTIÓN DE USUARIOS (del antiguo Users.gs)
+// LÓGICA PARA GESTIÓN DE USUARIOS (REFACTORIZADO CON ROLES)
 // ==================================================================
 
 function handleUserActions(payload) {
   const { action, data, actor } = payload;
+  if (!actor) return createJsonResponse({ status: 'error', message: 'Acción no autorizada: actor no identificado.' });
+
   const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(USERS_SHEET_NAME);
   const allUsers = sheet.getDataRange().getValues();
-  const headers = getHeaderIndices(allUsers[0]);
-
-  if (!actor && action !== 'changePassword') return createJsonResponse({ status: 'error', message: 'No se ha identificado al actor de la acción.' });
+  const headers = getHeaderIndices(allUsers.shift() || []); // Consume la fila de cabecera
 
   switch (action) {
     case 'createUser': return createUser(sheet, allUsers, headers, data, actor);
     case 'updateUser': return updateUser(sheet, allUsers, headers, data, actor);
     case 'deleteUser': return deleteUser(sheet, allUsers, headers, data.username, actor);
-    case 'changePassword': // Este caso se maneja dentro de updateUser, pero lo dejamos explícito
-      return updateUser(sheet, allUsers, headers, data, actor);
     default: return createJsonResponse({ status: 'error', message: 'Acción de usuario no válida.' });
   }
 }
 
+function hasPermission(actor, action, targetRole) {
+    const actorRole = normalizeRole(actor.privilegios);
+    const normalizedTargetRole = normalizeRole(targetRole);
+
+    const roleHierarchy = { 'desarrollador': 4, 'gefe': 3, 'supervisor': 2, 'tecnico': 1, 'tecnico_exterior': 1 };
+    const actorLevel = roleHierarchy[actorRole] || 0;
+    const targetLevel = roleHierarchy[normalizedTargetRole] || 0;
+
+    // El desarrollador tiene control total
+    if (actorRole === 'desarrollador') return true;
+
+    // Reglas de Creación
+    if (action === 'create') {
+        if (actorRole === 'gefe' && ['supervisor', 'tecnico', 'gefe'].includes(normalizedTargetRole)) return true;
+        if (actorRole === 'supervisor' && normalizedTargetRole === 'tecnico') return true;
+        return false;
+    }
+
+    // Reglas de Edición y Eliminación
+    if (action === 'edit' || action === 'delete') {
+        // Un rol no puede actuar sobre un nivel igual o superior
+        if (actorLevel <= targetLevel) return false;
+
+        // Excepciones específicas
+        if (actorRole === 'gefe' && ['desarrollador', 'tecnico_exterior'].includes(normalizedTargetRole)) return false;
+        if (actorRole === 'supervisor' && normalizedTargetRole !== 'tecnico') return false;
+
+        // Restricción adicional para eliminar
+        if (action === 'delete' && actorRole === 'gefe' && normalizedTargetRole === 'gefe') return false;
+
+        return true;
+    }
+    return false;
+}
+
 function createUser(sheet, allUsers, headers, newUser, actor) {
+  if (!hasPermission(actor, 'create', newUser.privilegios)) {
+    return createJsonResponse({ status: 'error', message: 'No tienes permiso para crear este tipo de usuario.' });
+  }
+
+  // Lógica para generar nombre de usuario (sin cambios)
   const nombreCompleto = newUser.nombre;
   const partesNombre = nombreCompleto.split(' ');
   const primerNombre = partesNombre[0];
   let username = `${primerNombre.charAt(0).toLowerCase()}_${(partesNombre.length > 1 ? partesNombre[1] : '').toLowerCase()}`;
-
   const usernameIndex = headers['Nombre_Usuario'];
   if (allUsers.some(row => row[usernameIndex] === username)) {
-    const segundoApellido = partesNombre.length > 2 ? partesNombre[2] : null;
-    if(segundoApellido) username = `${primerNombre.charAt(0).toLowerCase()}_${segundoApellido.toLowerCase()}`;
-  }
-  if (allUsers.some(row => row[usernameIndex] === username)) {
-    let count = 1;
-    while(allUsers.some(row => row[usernameIndex] === `${username}${count}`)) count++;
-    username = `${username}${count}`;
+      let count = 1;
+      while (allUsers.some(row => row[usernameIndex] === `${username}${count}`)) count++;
+      username = `${username}${count}`;
   }
 
-  const newRow = [];
-  newRow[headers['ID']] = allUsers.length;
-  newRow[headers['Nombre_Usuario']] = username;
-  newRow[headers['Password']] = newUser.password;
-  newRow[headers['Privilegios']] = newUser.privilegios;
-  newRow[headers['Nombre']] = newUser.nombre;
-  newRow[headers['Telefono']] = newUser.telefono;
-  newRow[headers['Correo_Electronico']] = newUser.correo;
-  newRow[headers['SessionToken']] = '';
-  sheet.appendRow(newRow);
+  const newRowData = [];
+  newRowData[headers['ID']] = allUsers.length + 1;
+  newRowData[headers['Nombre_Usuario']] = username;
+  newRowData[headers['Password']] = newUser.password;
+  newRowData[headers['Privilegios']] = newUser.privilegios;
+  newRowData[headers['Nombre']] = newUser.nombre;
+  newRowData[headers['Telefono']] = newUser.telefono;
+  newRowData[headers['Correo_Electronico']] = newUser.correoElectronico;
+  newRowData[headers['SessionToken']] = '';
+
+  sheet.appendRow(newRowData);
   return createJsonResponse({ status: 'success', message: 'Usuario creado exitosamente.', username: username });
 }
-
-function hasPermission(actor, action, targetUserRow, headers) {
-    // Si no hay actor o usuario objetivo, denegar permiso
-    if (!actor || !targetUserRow) return false;
-
-    const actorUsername = actor.nombreUsuario;
-    const targetUsername = targetUserRow[headers['Nombre_Usuario']];
-
-    // Un usuario no puede realizar acciones sobre sí mismo con esta función
-    // (la auto-edición se maneja por separado en updateUser).
-    if (actorUsername === targetUsername) return false;
-
-    const actorRole = normalizeRole(actor.privilegios);
-    const targetRole = normalizeRole(targetUserRow[headers['Privilegios']]);
-
-    const roleHierarchy = {
-        'desarrollador': 4, 'gefe': 3, 'supervisor': 2,
-        'tecnico': 1, 'tecnico_exterior': 0
-    };
-
-    const actorLevel = roleHierarchy[actorRole] ?? -1;
-    const targetLevel = roleHierarchy[targetRole] ?? -1;
-
-    // El desarrollador tiene todos los permisos
-    if (actorRole === 'desarrollador') return true;
-
-    // Regla general: solo se puede actuar sobre roles de nivel estrictamente inferior.
-    if (actorLevel <= targetLevel) return false;
-
-    // Reglas específicas:
-    // Gefe y Supervisor no pueden ver/editar Tecnico_Exterior.
-    if (targetRole === 'tecnico_exterior' && (actorRole === 'gefe' || actorRole === 'supervisor')) {
-        return false;
-    }
-
-    return true; // Si ha pasado todas las comprobaciones, tiene permiso.
-}
-
 
 function updateUser(sheet, allUsers, headers, userData, actor) {
   const rowIndex = allUsers.findIndex(row => row[headers['Nombre_Usuario']] === userData.originalUsername);
   if (rowIndex === -1) return createJsonResponse({ status: 'error', message: 'Usuario no encontrado.' });
 
-  const targetUser = allUsers[rowIndex];
+  const targetUserRow = allUsers[rowIndex];
+  const targetUserRole = targetUserRow[headers['Privilegios']];
+  const sheetRowIndex = rowIndex + 2; // +1 porque findIndex es 0-based y +1 por la cabecera
 
-  // Self-edit case for technicians
+  // Caso 1: Auto-edición (cualquier rol puede editar su propio perfil)
   if (actor.nombreUsuario === userData.originalUsername) {
-     const sheetRowIndex = rowIndex + 1;
-     // Allow updating specific fields
-     sheet.getRange(sheetRowIndex, headers['Telefono'] + 1).setValue(userData.telefono);
-     sheet.getRange(sheetRowIndex, headers['Correo_Electronico'] + 1).setValue(userData.correo);
-     if (userData.password && userData.currentPassword) {
-         if(targetUser[headers['Password']] !== userData.currentPassword) {
-            return createJsonResponse({ status: 'error', message: 'La contraseña actual es incorrecta.' });
-         }
-         sheet.getRange(sheetRowIndex, headers['Password'] + 1).setValue(userData.password);
-     }
-     return createJsonResponse({ status: 'success', message: 'Tu perfil ha sido actualizado.' });
+      if (userData.password && userData.currentPassword) {
+          if (targetUserRow[headers['Password']] !== userData.currentPassword) {
+              return createJsonResponse({ status: 'error', message: 'La contraseña actual es incorrecta.' });
+          }
+          sheet.getRange(sheetRowIndex, headers['Password'] + 1).setValue(userData.password);
+      }
+      sheet.getRange(sheetRowIndex, headers['Telefono'] + 1).setValue(userData.telefono);
+      sheet.getRange(sheetRowIndex, headers['Correo_Electronico'] + 1).setValue(userData.correoElectronico);
+      return createJsonResponse({ status: 'success', message: 'Tu perfil ha sido actualizado.' });
   }
 
-  // Admin/Supervisor edit case
-  if (!hasPermission(actor, 'update', targetUser)) {
+  // Caso 2: Edición por un administrador
+  if (!hasPermission(actor, 'edit', targetUserRole)) {
     return createJsonResponse({ status: 'error', message: 'No tienes permiso para editar este usuario.' });
   }
 
-  const sheetRowIndex = rowIndex + 1;
-  sheet.getRange(sheetRowIndex, headers['Nombre_Usuario'] + 1).setValue(userData.nombreUsuario);
+  // Actualizar campos permitidos
   sheet.getRange(sheetRowIndex, headers['Nombre'] + 1).setValue(userData.nombre);
   sheet.getRange(sheetRowIndex, headers['Privilegios'] + 1).setValue(userData.privilegios);
   sheet.getRange(sheetRowIndex, headers['Telefono'] + 1).setValue(userData.telefono);
-  sheet.getRange(sheetRowIndex, headers['Correo_Electronico'] + 1).setValue(userData.correo);
+  sheet.getRange(sheetRowIndex, headers['Correo_Electronico'] + 1).setValue(userData.correoElectronico);
   if (userData.password && userData.password.length >= 8) {
     sheet.getRange(sheetRowIndex, headers['Password'] + 1).setValue(userData.password);
   }
+
   return createJsonResponse({ status: 'success', message: 'Usuario actualizado exitosamente.' });
 }
 
@@ -435,13 +452,44 @@ function deleteUser(sheet, allUsers, headers, username, actor) {
   const rowIndex = allUsers.findIndex(row => row[headers['Nombre_Usuario']] === username);
   if (rowIndex === -1) return createJsonResponse({ status: 'error', message: 'Usuario no encontrado.' });
 
-  const targetUser = allUsers[rowIndex];
-  if (!hasPermission(actor, 'delete', targetUser)) {
+  const targetUserRole = allUsers[rowIndex][headers['Privilegios']];
+
+  if (!hasPermission(actor, 'delete', targetUserRole)) {
     return createJsonResponse({ status: 'error', message: 'No tienes permiso para eliminar este usuario.' });
   }
 
-  sheet.deleteRow(rowIndex + 1);
+  sheet.deleteRow(rowIndex + 2); // +1 por 0-based y +1 por cabecera
   return createJsonResponse({ status: 'success', message: 'Usuario eliminado exitosamente.' });
+}
+
+function getVisibleUsers(actor) {
+  const actorRole = normalizeRole(actor.privilegios);
+
+  const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(USERS_SHEET_NAME);
+  const allUsersData = sheet.getDataRange().getValues();
+  const headersRaw = allUsersData.shift();
+  const headers = getHeaderIndices(headersRaw);
+  const privilegeIndex = headers['Privilegios'];
+
+  const visibleUsers = allUsersData.filter(userRow => {
+    const userRole = normalizeRole(userRow[privilegeIndex]);
+    if (actorRole === 'desarrollador') return true;
+    if (actorRole === 'gefe' && ['supervisor', 'tecnico'].includes(userRole)) return true;
+    if (actorRole === 'supervisor' && userRole === 'tecnico') return true;
+    return false;
+  });
+
+  // Convertir las filas filtradas a objetos JSON
+  const camelCaseHeaders = headersRaw.map(toCamelCase);
+  const jsonData = visibleUsers.map(row => {
+    const rowObject = {};
+    camelCaseHeaders.forEach((header, index) => {
+      if (header) rowObject[header] = row[index];
+    });
+    return rowObject;
+  });
+
+  return createJsonResponse(jsonData);
 }
 
 
@@ -483,7 +531,12 @@ function getHeaderIndices(headerRow) {
 }
 
 function createJsonResponse(data) {
-  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON);
+  const output = ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
+  // Añadir la cabecera CORS para permitir el acceso desde cualquier origen.
+  // Esencial para que el fetch desde el frontend funcione sin errores de CORS.
+  output.setHeader('Access-Control-Allow-Origin', '*');
+  return output;
 }
 
 function normalizeRole(role) {
