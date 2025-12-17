@@ -953,7 +953,7 @@ async function checkSession() {
 
         const session = JSON.parse(sessionJSON);
         // La sesión es válida si contiene un objeto 'actor' con un 'nombreUsuario'.
-        if (session && session.actor && session.actor.nombreUsuario) {
+        if (session && session.actor && (session.actor.nombreUsuario || session.actor.nombreUsuario)) {
             console.log("Sesión válida encontrada. Mostrando aplicación.");
 
             // Almacenar el nombre de usuario para compatibilidad con add_cortes.html
@@ -1022,7 +1022,6 @@ async function login(username, password) {
 
 function logout(reason = null) {
     localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(SESSION_ID_KEY);
     localStorage.removeItem('userName'); // <-- AÑADIDO
 
     showLoginHideApp(reason);
@@ -1092,7 +1091,7 @@ document.getElementById('forgot-password-link').addEventListener('click', (e) =>
 
 // Listener para detectar cambios de sesión en otras pestañas
 window.addEventListener('storage', (event) => {
-    if (event.key === 'session_update' || event.key === SESSION_ID_KEY) {
+    if (event.key === 'session_update') {
         checkSession();
     }
 });
@@ -2240,9 +2239,7 @@ function hideSplashScreen() {
 
 async function inicializarApp() {
     try {
-        // La lógica para mostrar el "toast" de éxito se ha movido a `hideLoginShowApp`
-        // para evitar condiciones de carrera durante la carga de la página.
-
+        hideSplashScreen(); // Ocultar splash INMEDIATO
         const urlParams = new URLSearchParams(window.location.search);
         const seccion = urlParams.get('seccion');
         const id = urlParams.get('id');
@@ -2250,7 +2247,6 @@ async function inicializarApp() {
         if (seccion && id) {
             await handleSharedLink(seccion, id);
         } else {
-            // Ahora solo necesitamos verificar la sesión, ya no precargamos usuarios.
             await checkSession();
         }
 
@@ -2277,14 +2273,8 @@ async function inicializarApp() {
         }
     } catch (error) {
         console.error("Error crítico durante la inicialización:", error);
-        hideSplashScreen(); // Asegurarse de ocultar el splash en caso de error
-        document.body.innerHTML = `
-            <div style="text-align: center; padding: 40px; color: #333; font-family: Arial, sans-serif;">
-                <h2 style="color: #d9534f;">Error al Cargar la Aplicación</h2>
-                <p>No se pudo iniciar GPSpedia. Por favor, verifica tu conexión a internet e inténtalo de nuevo.</p>
-                <p style="color: #777; font-size: 0.8em; margin-top: 20px;">Detalle del error: ${error.message}</p>
-            </div>
-        `;
+        hideSplashScreen();
+        document.getElementById('login-modal').style.display = 'flex';
     }
 }
 
