@@ -1,0 +1,135 @@
+
+# Especificación Funcional y Arquitectónica: GPSpedia
+
+## 1. Visión General del Proyecto
+
+**Objetivo:** Crear una Progressive Web App (PWA) llamada GPSpedia que funcione como un catálogo técnico centralizado para instaladores de GPS. La aplicación debe permitir a los técnicos consultar información detallada sobre cortes de vehículos, tutoriales y configuraciones de relay, así como agregar nueva información a la base de datos.
+
+**Filosofía:** La aplicación debe ser rápida, accesible desde cualquier dispositivo (especialmente móviles), y funcionar incluso con conexiones a internet intermitentes (offline-first). La gestión de usuarios se basará en un sistema de roles con permisos jerárquicos.
+
+---
+
+## 2. Arquitectura General
+
+### 2.1. Backend (Google Apps Script)
+- **Plataforma:** Google Apps Script, desplegado como una Web App.
+- **Base de Datos:** Hojas de cálculo de Google Sheets.
+- **Comunicación:** La aplicación frontend se comunica con el backend a través de una única URL de despliegue. Las diferentes acciones se gestionan mediante parámetros en las peticiones (`GET`) o un campo `action` en el cuerpo de las peticiones (`POST`).
+- **Formato de Datos:** Todas las respuestas del backend deben ser en formato JSON. Las claves de los objetos JSON deben seguir la convención `camelCase` para mantener la consistencia con el frontend.
+
+### 2.2. Frontend (HTML, CSS, JavaScript)
+- **Estructura:** Aplicación multi-página (`index.html`, `users.html`, `add_cortes.html`).
+- **Gestión de Estado:** El estado de la sesión del usuario se gestiona a través de `localStorage`. El objeto de sesión debe contener toda la información del usuario logueado.
+- **Persistencia de Datos (Offline):** Se utiliza `IndexedDB` para almacenar en caché los datos del catálogo (cortes, tutoriales, relay), permitiendo el acceso a la información sin conexión a internet. La estrategia es "network-first": siempre se intenta obtener los datos más recientes de la red y, si falla, se recurre a la caché de IndexedDB.
+- **Instalación:** La aplicación debe ser una PWA, permitiendo a los usuarios "instalarla" en la pantalla de inicio de sus dispositivos a través de un `manifest.json` y un `service-worker.js`.
+
+---
+
+## 3. Gestión de Datos y Hojas de Cálculo
+
+### 3.1. Hoja "Users"
+- **Propósito:** Almacena la información de todos los usuarios del sistema.
+- **Columnas:**
+  - `ID`: Identificador único.
+  - `Nombre_Usuario`: Nombre de usuario para el login (generado automáticamente, ej: `p_pena`).
+  - `Password`: Contraseña del usuario.
+  - `Privilegios`: Rol del usuario en el sistema.
+  - `Nombre`: Nombre completo del usuario.
+  - `Telefono`: Número de teléfono.
+  - `Correo_Electronico`: Dirección de correo electrónico.
+  - `SessionToken`: Token de sesión para gestionar sesiones activas (si se implementa en el futuro).
+
+### 3.2. Hoja "Cortes"
+- **Propósito:** Base de datos principal del catálogo de cortes de vehículos.
+- **Columnas:**
+  - `ID`: Identificador único.
+  - `Categoria`, `Marca`, `Modelo`, `Ano (generacion)`, `Tipo de encendido`.
+  - Múltiples secciones para hasta 3 tipos de corte, cada una con `Tipo de corte`, `Descripcion del corte`, `Imagen del Corte`.
+  - Secciones para `Apertura`, `Cables de Alimentacion`, `Como desarmar los plasticos` (video de YouTube), `Nota Importante`.
+  - `Colaborador`: Nombre(s) del/los técnico(s) que han contribuido con información.
+  - `Util`: Contador de "likes" para un registro específico.
+
+### 3.3. Hoja "Feedbacks"
+- **Propósito:** Almacena los reportes de problemas enviados por los usuarios.
+- **Columnas:**
+  - `ID`: Identificador único del feedback.
+  - `Usuario`: Nombre del usuario que reporta.
+  - `ID_vehiculo`: ID del corte al que se refiere el feedback.
+  - `Problema`: Descripción del problema.
+  - `Respuesta`, `¿Se resolvió?`, `Responde`: Campos para la gestión del feedback por parte de administradores.
+
+---
+
+## 4. Sistema de Usuarios y Roles
+
+### 4.1. Roles y Jerarquía
+- **Desarrollador:** Acceso total. Puede ver y gestionar a todos los usuarios.
+- **Gefe:** Puede gestionar a `Supervisor` y `Técnico`. No puede ver ni gestionar a `Desarrollador` ni a otros `Gefe`.
+- **Supervisor:** Puede gestionar únicamente a `Técnico`.
+- **Técnico / Tecnico_Exterior:** Rol base. Solo pueden ver y editar su propio perfil. No tienen acceso a la gestión de otros usuarios.
+
+### 4.2. Flujo de Autenticación
+- **Modelo:** Autenticación del lado del cliente.
+- **Proceso:**
+  1. Al iniciar sesión, el frontend descarga la lista completa de usuarios desde la hoja "Users".
+  2. La validación de `usuario` y `contraseña` se realiza en el cliente, comparando con la lista descargada.
+  3. Si las credenciales son correctas, el objeto completo del usuario se guarda en `localStorage` como la sesión activa.
+
+### 4.3. Gestión de Cuentas (`users.html`)
+- **Visibilidad:**
+  - Los roles `Desarrollador`, `Gefe` y `Supervisor` ven una tabla con los usuarios que tienen permiso para gestionar.
+  - Los roles `Técnico` y `Tecnico_Exterior` solo ven un formulario para editar su propio perfil.
+- **Funcionalidades para Administradores:**
+  - **Crear Usuario:** Un formulario modal permite crear nuevos usuarios. Los roles que se pueden asignar dependen del rol del administrador.
+  - **Editar Usuario:** Un formulario modal permite modificar la información de un usuario existente.
+  - **Eliminar Usuario:** Se debe poder eliminar usuarios, con una confirmación para evitar acciones accidentales.
+- **Funcionalidades para Técnicos:**
+  - **Editar Perfil:** Pueden actualizar su teléfono, correo electrónico y contraseña (requiriendo la contraseña actual).
+
+---
+
+## 5. Funcionalidades del Frontend
+
+### 5.1. Pantalla Principal (`index.html`)
+- **Carga Inicial:**
+  - La aplicación debe mostrar una pantalla de bienvenida (`splash screen`) mientras se inicializa.
+  - Se debe verificar si existe una sesión en `localStorage`. Si no, se muestra un modal de inicio de sesión. Si sí, se carga la aplicación principal.
+- **Vista Principal:**
+  - Muestra las categorías del catálogo en una cuadrícula de tarjetas (`.card`).
+  - Incluye una sección de "Últimos agregados".
+- **Navegación:**
+  - La navegación es jerárquica: Categorías -> Marcas -> Modelos -> Versiones/Años -> Detalle del Corte.
+- **Búsqueda:**
+  - Una barra de búsqueda permite filtrar el contenido del catálogo en tiempo real.
+- **Menú Lateral (`sidenav`):**
+  - Contiene enlaces a las diferentes secciones (Cortes, Tutoriales, Relay), un botón para "Agregar Nuevo", y el enlace a "Gestión de Cuentas" (visible solo para roles autorizados).
+
+### 5.2. Modal de Detalle del Corte
+- **Contenido Dinámico:**
+  - Muestra toda la información del corte, incluyendo imágenes y videos.
+  - Las secciones de información adicional (segundo/tercer corte, apertura, etc.) se presentan en formato de acordeón desplegable.
+  - Muestra el nombre del colaborador.
+- **Funcionalidad de Feedback:**
+  - **Botón "Útil":** Permite a los usuarios dar "like" a un corte. La UI se actualiza de forma optimista.
+  - **Botón "Reportar Problema":** Muestra un formulario para que los usuarios envíen un reporte sobre el corte actual.
+  - **Comentarios:** Muestra los reportes y respuestas de la comunidad para ese corte.
+
+### 5.3. Página "Agregar Nuevo Corte" (`add_cortes.html`)
+- **Flujo en Fases:**
+  1. **Fase 1 (Información del Vehículo):** El usuario introduce los datos básicos del vehículo (marca, modelo, año, etc.).
+  2. **Verificación en Backend:** Se comprueba si ya existe un vehículo con esas características.
+  3. **Fase 2 (Vehículo Existente):** Si el vehículo ya existe, se muestra la información actual y se ofrecen opciones para "Agregar Nuevo Corte" o "Agregar Información Adicional" a ese registro.
+  4. **Fase 3 (Agregar Información):** Si el vehículo es nuevo o se elige agregar información, se muestra un formulario para subir descripciones e imágenes del nuevo corte, apertura, alimentación, etc.
+- **Subida de Archivos:**
+  - Las imágenes se convierten a `base64` en el cliente y se envían en el payload JSON al backend.
+  - El backend se encarga de decodificar las imágenes y subirlas a una carpeta específica en Google Drive, guardando la URL de la imagen en la hoja de cálculo.
+- **Guardado:** Al guardar, se actualiza la hoja "Cortes" y se redirige al usuario a `index.html` con un mensaje de éxito.
+
+---
+
+## 6. Lógica de Negocio Clave
+
+- **Normalización de Roles:** Antes de cualquier comparación de permisos, los strings de los roles deben ser normalizados (ej: `.trim().toLowerCase()`) para evitar errores por inconsistencias de formato.
+- **Consistencia de `camelCase`:** Tanto el backend como el frontend deben usar `camelCase` para todas las claves de objetos de datos para evitar errores de deserialización y acceso a propiedades.
+- **No Redirecciones Silenciosas:** Si una página requiere una sesión y no la encuentra (ej: `add_cortes.html`), no debe redirigir silenciosamente. Debe mostrar un mensaje claro al usuario informando la razón.
+- **Seguridad en el Backend:** La validación de permisos para acciones críticas (crear, editar, eliminar usuarios) debe ser reforzada en el backend. El frontend solo debe ocultar/mostrar opciones en la UI como una mejora de la experiencia de usuario, no como la única medida de seguridad.

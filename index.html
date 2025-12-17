@@ -831,7 +831,7 @@ body.search-active .app-logo {
       <button id="btn-tutoriales" class="section-btn" onclick="mostrarSeccion('tutoriales')">Tutoriales</button>
       <button id="btn-relay" class="section-btn" onclick="mostrarSeccion('relay')">Relay</button>
       <button id="btn-add" class="section-btn" style="background-color: #28a745; color: white;" onclick="window.location.href='add_cortes.html'">Agregar Nuevo</button>
-      <a id="account-management-link" href="users.html" class="section-btn" style="display: none; background-color: #3498db; color: white;">Gestión de Cuentas</a>
+      <a id="account-management-link" href="users.html" class="section-btn" style="background-color: #3498db; color: white; display: none;">Gestión de Cuentas</a>
   </div>
 
   <div id="contenido" class="content-section"></div>
@@ -848,15 +848,6 @@ body.search-active .app-logo {
 </div>
 
 <script>
-// --- LÓGICA DE SEGURIDAD ---
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) {
-        e.preventDefault();
-    }
-});
-document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
-
 // --- LÓGICA DE INDEXEDDB ---
 const DB_NAME = 'gpsepedia-db';
 const DB_VERSION = 1;
@@ -926,9 +917,9 @@ async function readData(storeName) {
 
 // --- LÓGICA DE DATOS ---
 const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSPZug3KicicdXJDWpL3tNAQtKSIXN9rIlP17I_yVHORMzI-csokGFYKXYIysiEAuT/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCyuhwn_yCn5cMNoLlghhPojp1_clcerKGeNzv8Kr5dwkIuzjGehr54pOTz5y3wVgr/exec";
 // Se usa la misma URL para ambos, ya que el backend maneja diferentes 'acciones' o 'parámetros'.
-const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSPZug3KicicdXJDWpL3tNAQtKSIXN9rIlP17I_yVHORMzI-csokGFYKXYIysiEAuT/exec";
+const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCyuhwn_yCn5cMNoLlghhPojp1_clcerKGeNzv8Kr5dwkIuzjGehr54pOTz5y3wVgr/exec";
 const RANGE_CORTES = "Cortes";
 const RANGE_TUTORIALES = "Tutorial";
 const RANGE_RELAY = "Configuración del Relay";
@@ -936,138 +927,104 @@ const RANGE_USERS = "Users";
 
 // --- LÓGICA DE AUTENTICACIÓN Y SESIÓN ---
 
-function sanitizeInput(input) {
-    if (typeof input !== 'string') return '';
-    // Prevenir inyección de fórmulas de Excel escapando caracteres iniciales peligrosos
-    let sanitized = input.trim();
-    if (['=', '+', '-', '@', '\t', '\r'].includes(sanitized.charAt(0))) {
-        sanitized = "'" + sanitized;
-    }
-    // Escapar caracteres comunes de SQL para mitigar inyecciones básicas.
-    // Aunque la validación es del lado del cliente, esto añade una capa de "defensa en profundidad".
-    sanitized = sanitized.replace(/'/g, "''").replace(/--/g, "").replace(/;/g, "");
-    return sanitized;
-}
-
 const SESSION_KEY = 'gpsepedia_session';
-const SESSION_ID_KEY = 'gpsepedia_session_id';
-let userData = [];
+let allUsers = []; // Caché para la lista de usuarios
 
 async function fetchUsers() {
-    const url = `${USERS_SCRIPT_URL}?sheet=Users`;
+    if (allUsers.length > 0) return allUsers;
     try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Error de red al obtener usuarios: ${response.status}`);
-        // Corrección: El backend ahora devuelve un array de objetos directamente.
-        userData = await response.json();
-        return userData;
+        const response = await fetch(`${USERS_SCRIPT_URL}?sheet=Users`);
+        if (!response.ok) throw new Error('No se pudo conectar al servidor de usuarios.');
+        const users = await response.json();
+        allUsers = users;
+        return users;
     } catch (error) {
-        console.error("Fallo al obtener la lista de usuarios:", error);
-        const loginError = document.getElementById('login-error');
-        loginError.textContent = "No se pudo conectar al servidor de autenticación.";
-        loginError.style.display = 'block';
-        return [];
+        console.error("Error al descargar usuarios:", error);
+        throw error;
     }
 }
 
+
+// Refactorizado para mayor claridad y robustez.
 async function checkSession() {
-    console.log("Verificando sesión...");
-    const session = localStorage.getItem(SESSION_KEY);
-    if (session) {
-        console.log("Sesión encontrada en localStorage.");
-        const { user, sessionId } = JSON.parse(session);
-
-        if (userData.length === 0) {
-            console.log("userData está vacío, llamando a fetchUsers de nuevo.");
-            await fetchUsers();
+    try {
+        const sessionJSON = localStorage.getItem(SESSION_KEY);
+        if (!sessionJSON) {
+            console.log("No se encontró sesión, mostrando login.");
+            showLoginHideApp();
+            return; // Termina la ejecución aquí si no hay sesión.
         }
 
-        console.log(`Buscando usuario: ${user.nombreUsuario}`);
-        const currentUser = userData.find(u => u.nombreUsuario === user.nombreUsuario);
+        let user;
+        try {
+            user = JSON.parse(sessionJSON);
+        } catch (e) {
+            console.error("Error al parsear la sesión JSON:", e);
+            logout("La sesión estaba corrupta. Por favor, inicia sesión de nuevo.");
+            return;
+        }
 
-        if (currentUser) {
-            console.log("Usuario verificado exitosamente. Mostrando la aplicación.");
-            const userPrivileges = currentUser.privilegios;
-            if (['Supervisor', 'Gefe', 'Desarrollador', 'Técnico', 'Tecnico_Exterior'].includes(userPrivileges)) {
-                document.getElementById('account-management-link').style.display = 'block';
-            }
+        // La sesión es válida si contiene un objeto de usuario con un 'nombreUsuario'.
+        if (user && user.nombreUsuario) {
+            console.log(`Sesión válida para ${user.nombreUsuario}. Mostrando aplicación.`);
 
+            // Almacenar el nombre de usuario para compatibilidad con add_cortes.html
             localStorage.setItem('userName', user.nombre);
-            hideLoginShowApp();
-            document.getElementById('welcome-message').textContent = `Bienvenido, ${user.nombre}`;
-            document.getElementById('welcome-message').style.display = 'block';
-            document.getElementById('logout-button').style.display = 'block';
-            syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
+
+            // Muestra la app y configura la UI del usuario
+            hideLoginShowApp(user);
+
+            // Cargar datos principales de la aplicación
+            await syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
         } else {
-            logout("Tu sesión ha expirado o tus credenciales han cambiado. Por favor, inicia sesión de nuevo.");
+            console.log("La sesión es inválida o no contiene 'nombreUsuario'.");
+            logout("Tu sesión es inválida. Por favor, inicia sesión de nuevo.");
         }
-    } else {
-        showLoginHideApp();
+    } catch (error) {
+        console.error("Error crítico al verificar sesión:", error);
+        logout("Ocurrió un error al verificar la sesión. Por favor, inicia sesión.");
     }
 }
 
+async function login(username, password) {
+    const loginError = document.getElementById('login-error');
+    loginError.style.display = 'none';
 
-function login(username, password) {
-    if (userData.length === 0) {
-        document.getElementById('login-error').textContent = 'Error de autenticación. Intente de nuevo.';
-        document.getElementById('login-error').style.display = 'block';
-        return;
-    }
-    // CORRECCIÓN: Usar las claves exactas de la API
-    const user = userData.find(u => u.nombreUsuario === username && u.password === password);
+    try {
+        const users = await fetchUsers();
+        const foundUser = users.find(u => u.nombreUsuario === username && String(u.password) === String(password));
 
-    if (user) {
-        const sessionId = Date.now().toString(); // ID de sesión único
-        // CORRECCIÓN CRÍTICA: Estandarizar las claves del objeto de sesión a camelCase.
-        const sessionData = {
-            user: {
-                id: user.id,
-                nombreUsuario: user.nombreUsuario, // Clave corregida
-                privilegios: user.privilegios,   // Clave corregida
-                nombre: user.nombre,             // Clave corregida
-            },
-            sessionId: sessionId
-        };
+        if (foundUser) {
+            // Guardar el objeto de usuario encontrado directamente como la sesión
+            localStorage.setItem(SESSION_KEY, JSON.stringify(foundUser));
 
-        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        localStorage.setItem(SESSION_ID_KEY, sessionId);
-        localStorage.setItem('userName', sessionData.user.nombre);
+            // Compatibilidad con add_cortes.html
+            localStorage.setItem('userName', foundUser.nombre);
 
-        localStorage.setItem('session_update', Date.now());
+            // Forzar actualización en otras pestañas
+            localStorage.setItem('session_update', Date.now());
 
-        hideLoginShowApp();
-        document.getElementById('welcome-message').textContent = `Bienvenido, ${sessionData.user.nombre}`;
-        document.getElementById('welcome-message').style.display = 'block';
-        document.getElementById('logout-button').style.display = 'block';
-
-        if (['Supervisor', 'Gefe', 'Desarrollador'].includes(sessionData.user.privilegios)) {
-            document.getElementById('account-management-link').style.display = 'block';
+            // Proceder a mostrar la aplicación
+            await checkSession();
+        } else {
+            throw new Error('Credenciales incorrectas.');
         }
-
-        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-
-    } else {
-        document.getElementById('login-error').textContent = 'Usuario o contraseña incorrectos.';
-        document.getElementById('login-error').style.display = 'block';
+    } catch (error) {
+        console.error("Error de login:", error);
+        loginError.textContent = error.message;
+        loginError.style.display = 'block';
     }
 }
 
 function logout(reason = null) {
     localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(SESSION_ID_KEY);
     localStorage.removeItem('userName'); // <-- AÑADIDO
 
     showLoginHideApp(reason);
 }
 
 function showLoginHideApp(reason = null) {
-    // Ocultar splash screen
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500);
-
+    hideSplashScreen(); // Ocultar el splash antes de mostrar el login
     // Ocultar contenido principal y footer
     document.querySelector('.container').style.display = 'none';
     document.querySelector('.footer').style.display = 'none';
@@ -1090,33 +1047,49 @@ function showLoginHideApp(reason = null) {
     document.getElementById('password').value = '';
 }
 
-function hideLoginShowApp() {
-    // Ocultar splash y login
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500); // Coincide con la transición de opacidad
+function setupUserUI(user) {
+    if (!user) return;
+    document.getElementById('welcome-message').textContent = `Bienvenido, ${user.nombre}`;
+    document.getElementById('welcome-message').style.display = 'block';
+    document.getElementById('logout-button').style.display = 'block';
 
+    // Mostrar enlace de gestión si el rol lo permite
+    const userRole = (user.privilegios || '').trim().toLowerCase();
+    if (['supervisor', 'gefe', 'desarrollador'].includes(userRole)) {
+        // Se asegura que sea 'block' o el estilo que corresponda, no solo 'block'.
+        document.getElementById('account-management-link').style.display = '';
+    } else {
+        document.getElementById('account-management-link').style.display = 'none';
+    }
+}
+
+function hideLoginShowApp(user = null) {
+    hideSplashScreen(); // Ocultar el splash antes de mostrar la app
     document.getElementById('login-modal').style.display = 'none';
 
     // Mostrar contenido principal y footer
     document.querySelector('.container').style.display = 'block';
     document.querySelector('.footer').style.display = 'block';
+
+    if (user) {
+      setupUserUI(user);
+    }
+
+    // Lógica del "toast"
+    const successMessage = localStorage.getItem('formSubmissionSuccess');
+    if (successMessage) {
+        showToast(successMessage, 'success', 4000);
+        localStorage.removeItem('formSubmissionSuccess');
+    }
 }
 
 
 document.getElementById('login-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const username = sanitizeInput(document.getElementById('username').value);
-    const password = sanitizeInput(document.getElementById('password').value);
+    const password = document.getElementById('password').value; // Sin sanitizar
 
-    // Asegurarse de que los datos de usuario estén cargados
-    if (userData.length === 0) {
-       await fetchUsers();
-    }
-
-    login(username, password);
+    await login(username, password);
 });
 
 document.getElementById('logout-button').addEventListener('click', () => {
@@ -1133,7 +1106,7 @@ document.getElementById('forgot-password-link').addEventListener('click', (e) =>
 
 // Listener para detectar cambios de sesión en otras pestañas
 window.addEventListener('storage', (event) => {
-    if (event.key === 'session_update' || event.key === SESSION_ID_KEY) {
+    if (event.key === 'session_update') {
         checkSession();
     }
 });
@@ -1419,7 +1392,7 @@ function crearBotonCompartir(seccion, ID, titulo) {
                 }, 2000);
             } catch (err) {
                 console.error('Error al copiar el enlace:', err);
-                alert('No se pudo copiar el enlace.');
+                showToast('No se pudo copiar el enlace.', 'error');
             }
         }
     };
@@ -1825,7 +1798,7 @@ async function handleAddLike(vehicleId) {
         const response = await fetch(USERS_SCRIPT_URL, {
             method: 'POST',
             body: JSON.stringify(payload),
-            headers: { 'Content-Type': 'text/plain' }
+            headers: { 'Content-Type': 'application/json' }
         });
         const result = await response.json();
 
@@ -1893,7 +1866,11 @@ async function handleReportProblem(vehicleId) {
         };
 
         try {
-            const response = await fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
+            const response = await fetch(SCRIPT_URL, {
+                method: 'POST',
+                body: JSON.stringify(payload),
+                headers: { 'Content-Type': 'application/json' }
+            });
             const result = await response.json();
             if (result.status === 'success') {
                 showToast("Reporte enviado. ¡Gracias!", 'success');
@@ -2266,77 +2243,55 @@ async function handleSharedLink(seccion, id) {
 }
 
 
-async function inicializarApp() {
-    // Comprobar si hay un mensaje de éxito desde el formulario de agregar corte
-    const successMessage = localStorage.getItem('formSubmissionSuccess');
-    if (successMessage) {
-        showToast(successMessage, 'success', 4000); // Mostrar por 4 segundos
-        localStorage.removeItem('formSubmissionSuccess'); // Limpiar para que no se muestre de nuevo
-    }
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const seccion = urlParams.get('seccion');
-    const id = urlParams.get('id');
-
-    if (seccion && id) {
-        await handleSharedLink(seccion, id);
-    } else {
-        await fetchUsers(); // Carga los datos de usuarios primero
-        checkSession();     // Luego, comprueba si hay una sesión activa
-    }
-
-    // Lógica para el botón de instalación de iOS
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    if (!isStandalone && isIOS) {
-        // Crear y mostrar un botón/mensaje específico para iOS
-        const iosInstallMessage = document.createElement('div');
-        iosInstallMessage.id = 'ios-install-message';
-        iosInstallMessage.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #007bff;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            text-align: center;
-            z-index: 1002;
-            font-size: 0.9em;
-            width: 90%;
-            max-width: 400px;
-        `;
-        iosInstallMessage.innerHTML = `
-            Para instalar, pulsa el botón de Compartir
-            <svg style="width:20px; vertical-align:middle;" viewBox="0 0 24 24"><path fill="currentColor" d="M17,14V17A1,1 0 0,1 16,18H8A1,1 0 0,1 7,17V14H5V17A3,3 0 0,0 8,20H16A3,3 0 0,0 19,17V14H17M12,4L7,9H10V15H14V9H17L12,4Z" /></svg>
-            y luego "Añadir a pantalla de inicio".
-            <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; font-size:1.2em; position:absolute; top:5px; right:10px;">&times;</button>
-        `;
-        document.body.appendChild(iosInstallMessage);
-    }
+function hideSplashScreen() {
+    const splash = document.getElementById('splash-screen');
+    if (splash.style.display === 'none') return;
+    splash.style.opacity = '0';
+    setTimeout(() => {
+        splash.style.display = 'none';
+    }, 500);
 }
 
-// Ocultar el splash screen después de un tiempo para asegurar que no se quede atascado
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        const session = localStorage.getItem(SESSION_KEY);
-        // Si no hay sesión, el splash se ocultará cuando se muestre el login.
-        // Si hay sesión, el splash se ocultará cuando se muestre la app.
-        // Este es un fallback por si algo falla.
-        if (!session) {
-             const splash = document.getElementById('splash-screen');
-            splash.style.opacity = '0';
-            setTimeout(() => {
-                splash.style.display = 'none';
-            }, 500);
-        }
-    }, 3000); // 3 segundos de tiempo de espera máximo
-});
+async function inicializarApp() {
+    try {
+        hideSplashScreen(); // Ocultar splash INMEDIATO
+        const urlParams = new URLSearchParams(window.location.search);
+        const seccion = urlParams.get('seccion');
+        const id = urlParams.get('id');
 
+        if (seccion && id) {
+            await handleSharedLink(seccion, id);
+        } else {
+            await checkSession();
+        }
+
+        // Lógica para el botón de instalación de iOS (se ejecuta después de que el contenido principal es visible)
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+        if (!isStandalone && isIOS) {
+            const iosInstallMessage = document.createElement('div');
+            iosInstallMessage.id = 'ios-install-message';
+            iosInstallMessage.style.cssText = `
+                position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                background-color: #007bff; color: white; padding: 15px 20px; border-radius: 10px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.2); text-align: center; z-index: 1002;
+                font-size: 0.9em; width: 90%; max-width: 400px;
+            `;
+            iosInstallMessage.innerHTML = `
+                Para instalar, pulsa el botón de Compartir
+                <svg style="width:20px; vertical-align:middle;" viewBox="0 0 24 24"><path fill="currentColor" d="M17,14V17A1,1 0 0,1 16,18H8A1,1 0 0,1 7,17V14H5V17A3,3 0 0,0 8,20H16A3,3 0 0,0 19,17V14H17M12,4L7,9H10V15H14V9H17L12,4Z" /></svg>
+                y luego "Añadir a pantalla de inicio".
+                <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; font-size:1.2em; position:absolute; top:5px; right:10px;">&times;</button>
+            `;
+            document.body.appendChild(iosInstallMessage);
+        }
+    } catch (error) {
+        console.error("Error crítico durante la inicialización:", error);
+        hideSplashScreen();
+        document.getElementById('login-modal').style.display = 'flex';
+    }
+}
 
 inicializarApp();
 

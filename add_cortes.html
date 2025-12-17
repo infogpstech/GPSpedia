@@ -223,39 +223,49 @@
     </div>
 
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSPZug3KicicdXJDWpL3tNAQtKSIXN9rIlP17I_yVHORMzI-csokGFYKXYIysiEAuT/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCyuhwn_yCn5cMNoLlghhPojp1_clcerKGeNzv8Kr5dwkIuzjGehr54pOTz5y3wVgr/exec";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
 const state = { vehicleInfo: {}, existingData: null, rowIndex: null, filePromises: {} };
 
-// Make init a global function so it can be called from Playwright
 function init() {
-    const userName = localStorage.getItem('userName');
-    if (userName) {
-        document.getElementById('welcome-message').innerHTML = `Bienvenido,<br>${userName}`;
-        state.colaborador = userName;
-    } else {
-        // In a real browser, this would redirect. In Playwright's file:// context, it might not matter.
-        // For testing, we just need to ensure the dropdowns are populated, so we won't redirect.
-        if (window.location.protocol !== 'file:') {
-            window.location.href = 'index.html';
-            return;
-        }
+    const sessionJSON = localStorage.getItem('gpsepedia_session');
+    let session;
+    try {
+        session = JSON.parse(sessionJSON);
+    } catch (e) {
+        session = null;
     }
-    toggleLoading(true);
-    fetch(`${SCRIPT_URL}?action=getDropdowns`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) throw new Error(data.error);
-            populateSelect('categoria', data.categoria);
-            populateSelect('tipo-encendido', data['tipo-encendido']);
-            populateSelect('tipo-corte', data['tipo-corte']);
-        })
-        .catch(error => {
-            console.error('Error fetching dropdowns:', error);
-            showToast('No se pudieron cargar las opciones del formulario.', 'error');
-        })
-        .finally(() => toggleLoading(false));
+
+    if (session && session.nombre) {
+        document.getElementById('welcome-message').innerHTML = `Bienvenido,<br>${session.nombre}`;
+        state.colaborador = session.nombre; // El colaborador es el nombre del usuario logueado
+
+        // Cargar los dropdowns
+        toggleLoading(true);
+        fetch(`${SCRIPT_URL}?action=getDropdowns`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) throw new Error(data.error);
+                populateSelect('categoria', data.categoria);
+                populateSelect('tipo-encendido', data['tipo-encendido']);
+                populateSelect('tipo-corte', data['tipo-corte']);
+            })
+            .catch(error => {
+                console.error('Error fetching dropdowns:', error);
+                showToast('No se pudieron cargar las opciones del formulario.', 'error');
+            })
+            .finally(() => toggleLoading(false));
+    } else {
+        // Si no hay sesión/actor válido, mostrar error y redirigir
+        showToast('Sesión no válida, por favor inicia sesión.', 'error');
+        document.querySelector('.form-container').style.opacity = '0.5';
+        document.querySelector('.form-container').style.pointerEvents = 'none';
+
+        setTimeout(() => {
+            window.location.href = 'index.html';
+        }, 2000);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

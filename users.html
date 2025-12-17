@@ -85,6 +85,35 @@
             padding: 8px;
         }
     }
+
+    /* --- Estilos para Notificaciones Toast --- */
+    .toast {
+        visibility: hidden;
+        min-width: 250px;
+        margin-left: -125px;
+        background-color: #333;
+        color: #fff;
+        text-align: center;
+        border-radius: 8px;
+        padding: 16px;
+        position: fixed;
+        z-index: 2000;
+        left: 50%;
+        bottom: 30px;
+        font-size: 17px;
+        transition: visibility 0.5s, opacity 0.5s linear;
+        opacity: 0;
+    }
+    .toast.show {
+        visibility: visible;
+        opacity: 1;
+    }
+    .toast.error {
+        background-color: #dc3545; /* Rojo para errores */
+    }
+    .toast.success {
+        background-color: #28a745; /* Verde para éxito */
+    }
 </style>
 </head>
 <body>
@@ -117,6 +146,9 @@
 <footer class="footer">
   Gpspedia 2025© todos los derechos reservados.
 </footer>
+
+<!-- Toast Notification -->
+<div id="toast-notification" class="toast"></div>
 
 <!-- --- MODALES PARA GESTIÓN DE USUARIOS --- -->
 
@@ -164,16 +196,21 @@
 </div>
 
 <script>
-    // --- LÓGICA DE SEGURIDAD ---
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) { e.preventDefault(); }
-    });
-    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
     // --- CONFIGURACIÓN Y ESTADO GLOBAL ---
-    const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzSPZug3KicicdXJDWpL3tNAQtKSIXN9rIlP17I_yVHORMzI-csokGFYKXYIysiEAuT/exec";
+    const USERS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyCyuhwn_yCn5cMNoLlghhPojp1_clcerKGeNzv8Kr5dwkIuzjGehr54pOTz5y3wVgr/exec";
     let allUsersData = []; // Caché para los datos de todos los usuarios
     let currentUser = null; // Información del usuario con sesión activa
+
+    // --- LÓGICA DE NOTIFICACIONES ---
+    function showToast(message, type = 'info') {
+        const toast = document.getElementById('toast-notification');
+        toast.textContent = message;
+        toast.className = 'toast show'; // Reset and show
+        if (type === 'success') toast.classList.add('success');
+        if (type === 'error') toast.classList.add('error');
+
+        setTimeout(() => { toast.className = toast.className.replace('show', ''); }, 3000);
+    }
 
     // --- LÓGICA DE INICIALIZACIÓN ---
     document.addEventListener('DOMContentLoaded', function() {
@@ -183,8 +220,7 @@
             return;
         }
 
-        const { user } = JSON.parse(session);
-        // Corregido: Usar camelCase para consistencia con el objeto de sesión
+        const user = JSON.parse(session);
         if (!user || !user.nombre || !user.privilegios) {
             window.location.href = 'index.html';
             return;
@@ -194,13 +230,18 @@
         document.getElementById('welcome-message').textContent = `Sesión activa: ${user.nombre} (${user.privilegios})`;
 
         const userRole = user.privilegios ? user.privilegios.trim() : '';
-        if (['Técnico', 'Tecnico_Exterior'].includes(userRole)) {
+
+        // Convertir roles a un formato consistente para la comparación
+        const normalizedRole = userRole.toLowerCase().replace(/\s+/g, '');
+
+        if (normalizedRole === 'tecnico' || normalizedRole === 'tecnicoexterior') {
             document.querySelector('h2').textContent = 'Mi Perfil';
+            // Dado que no tenemos la lista completa de usuarios, buscamos el perfil directamente.
             fetchAndRenderUserProfile(user.nombreUsuario);
-        } else if (['Supervisor', 'Gefe', 'Desarrollador'].includes(userRole)) {
-            fetchAndDisplayUsers(userRole);
+        } else if (['supervisor', 'gefe', 'desarrollador'].includes(normalizedRole)) {
+            fetchAndDisplayUsers(user); // Pasamos el objeto de usuario completo
         } else {
-            displayNoPermissionsMessage();
+            mostrarAccesoDenegado();
         }
     });
 
@@ -268,7 +309,7 @@
 
         const newPassword = document.getElementById('profile-new-password').value;
         if (newPassword && !document.getElementById('profile-current-password').value) {
-            alert('Debes ingresar tu contraseña actual para poder establecer una nueva.');
+            showToast('Debes ingresar tu contraseña actual para poder establecer una nueva.', 'error');
             return;
         }
 
@@ -279,7 +320,7 @@
                 originalUsername: document.getElementById('profile-original-username').value,
                 nombreUsuario: document.getElementById('profile-username').value, // Aunque deshabilitado, lo enviamos
                 telefono: document.getElementById('profile-telefono').value,
-                correo: document.getElementById('profile-correo').value,
+                correoElectronico: document.getElementById('profile-correo').value,
                 password: newPassword,
                 // Datos adicionales para validación en backend
                 currentPassword: document.getElementById('profile-current-password').value,
@@ -287,73 +328,111 @@
         };
 
         try {
-            const response = await fetch(USERS_SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) });
-            const result = await response.json();
+            const response = await fetch(USERS_SCRIPT_URL, {
+                method: 'POST',
+                redirect: 'follow',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            const responseText = await response.text();
+            console.log('Raw server response:', responseText);
+            try {
+                const result = JSON.parse(responseText);
 
-            if (result.status === 'success') {
-                alert(result.message);
-                // No es necesario recargar, ya que los cambios son locales y no afectan la vista.
-            } else {
-                throw new Error(result.message);
+                if (result.status === 'success') {
+                    showToast(result.message, 'success');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (e) {
+                // Si el parseo falla, mostramos el texto crudo.
+                throw new Error('Respuesta inesperada del servidor: ' + responseText);
             }
+                // No es necesario recargar, ya que los cambios son locales y no afectan la vista.
         } catch (error) {
-            alert('Error al guardar: ' + error.message);
+            showToast('Error al guardar: ' + error.message, 'error');
         }
     }
 
 
-    async function fetchAndDisplayUsers(currentUserPrivilegios, isForProfile = false) {
+    async function fetchAndDisplayUsers(actor) {
         const container = document.getElementById('user-list-container');
         container.innerHTML = '<p>Cargando lista de usuarios...</p>';
 
         try {
             const response = await fetch(`${USERS_SCRIPT_URL}?sheet=Users`);
-            if (!response.ok) throw new Error('Error al cargar los datos de usuarios.');
+            if (!response.ok) throw new Error('No se pudo obtener la lista de usuarios.');
 
-            const users = await response.json();
-            allUsersData = users; // Guardar datos en la caché global (ahora son objetos)
+            const allUsers = await response.json();
+            allUsersData = allUsers; // Guardar en caché
 
-            if (!users || users.length === 0) {
-                container.innerHTML = '<p>No se encontraron usuarios.</p>';
-                return;
+            const visibleUsers = filterUsersByPrivilege(allUsers, actor);
+
+            if (visibleUsers.length === 0) {
+                 container.innerHTML = '<p>No tienes usuarios para gestionar.</p>';
+            } else {
+                renderUserTable(visibleUsers);
+            }
+             // El botón de crear se muestra independientemente de si hay usuarios para ver.
+            const actorRole = (actor.privilegios || '').toLowerCase().trim().replace('_', '');
+            if (['supervisor', 'gefe', 'desarrollador'].includes(actorRole)) {
+                container.insertAdjacentHTML('afterbegin', `<a href="#" class="create-user-btn" onclick="openCreateUserModal()"><i class="fas fa-plus"></i> Crear Nuevo Usuario</a>`);
             }
 
-            const filteredUsers = filterUsersByPrivilege(users, currentUserPrivilegios);
-            renderUserTable(filteredUsers);
-
         } catch (error) {
-            console.error('Error:', error);
-            container.innerHTML = `<p style="color:red;">${error.message}</p>`;
+            console.error('Error en fetchAndDisplayUsers:', error);
+            container.innerHTML = `<p style="color:red;">Error al cargar la lista de usuarios: ${error.message}</p>`;
         }
     }
 
-    function filterUsersByPrivilege(users, currentUserPrivilegios) {
-        const visiblePrivileges = [];
-        const trimmedPrivilegios = currentUserPrivilegios.trim();
+    function filterUsersByPrivilege(users, actor) {
+        const actorRole = (actor.privilegios || '').toLowerCase().trim().replace('_', '');
 
-        if (trimmedPrivilegios === 'Desarrollador') {
-            return users;
-        }
-        if (trimmedPrivilegios === 'Gefe') {
-            visiblePrivileges.push('Gefe', 'Supervisor', 'Técnico');
-        }
-        if (trimmedPrivilegios === 'Supervisor') {
-            visiblePrivileges.push('Supervisor', 'Técnico');
-        }
+        if (actorRole === 'desarrollador') return users;
 
         return users.filter(user => {
-            const userPrivilege = user.privilegios ? String(user.privilegios).trim() : '';
-            return visiblePrivileges.includes(userPrivilege);
+            const userRole = (user.privilegios || '').toLowerCase().trim().replace('_', '');
+            if (actorRole === 'gefe') {
+                return ['supervisor', 'tecnico'].includes(userRole);
+            }
+            if (actorRole === 'supervisor') {
+                return userRole === 'tecnico';
+            }
+            return false;
         });
+    }
+
+    // La lógica de filtrado ahora vive en el backend, esta función ya no es necesaria.
+    // function filterUsersByPrivilege(users, actor) { ... }
+
+    // --- LÓGICA DE PERMISOS EN FRONTEND ---
+    // Replica la lógica del backend para decisiones de UI.
+    function hasFrontEndPermission(actor, action, targetUser) {
+        const actorRole = (actor.privilegios || '').toLowerCase().trim();
+        const targetRole = (targetUser.privilegios || '').toLowerCase().trim();
+
+        const roleHierarchy = { 'desarrollador': 4, 'gefe': 3, 'supervisor': 2, 'tecnico': 1, 'tecnico_exterior': 1 };
+        const actorLevel = roleHierarchy[actorRole] || 0;
+        const targetLevel = roleHierarchy[targetRole] || 0;
+
+        if (actorRole === 'desarrollador') return true;
+
+        if (actorLevel <= targetLevel) return false;
+
+        if (actorRole === 'gefe' && (targetRole === 'desarrollador' || targetRole === 'tecnico_exterior')) return false;
+        if (actorRole === 'supervisor' && targetRole !== 'tecnico') return false;
+
+        if (action === 'delete' && actorRole === 'gefe' && targetRole === 'gefe') return false;
+
+        return true;
     }
 
     function renderUserTable(users) {
         const container = document.getElementById('user-list-container');
+        const canCreate = ['supervisor', 'gefe', 'desarrollador'].includes((currentUser.privilegios || '').toLowerCase());
 
         let tableHTML = `
-            <a href="#" class="create-user-btn" onclick="openCreateUserModal()">
-                <i class="fas fa-plus"></i> Crear Nuevo Usuario
-            </a>
+            ${canCreate ? `<a href="#" class="create-user-btn" onclick="openCreateUserModal()"><i class="fas fa-plus"></i> Crear Nuevo Usuario</a>` : ''}
             <table class="user-table">
                 <thead>
                     <tr>
@@ -368,14 +447,17 @@
 
         for (const user of users) {
             const username = user.nombreUsuario || '';
+            const canEdit = hasFrontEndPermission(currentUser, 'edit', user);
+            const canDelete = hasFrontEndPermission(currentUser, 'delete', user);
+
             tableHTML += `
                 <tr>
                     <td data-label="Nombre de Usuario">${username}</td>
                     <td data-label="Nombre Completo">${user.nombre || ''}</td>
                     <td data-label="Rango">${user.privilegios || ''}</td>
                     <td data-label="Acciones">
-                        <button class="action-btn edit" title="Editar Usuario" onclick="openEditModal('${username}')"><i class="fas fa-edit"></i></button>
-                        <button class="action-btn delete" title="Borrar Usuario" onclick="confirmDelete('${username}')"><i class="fas fa-trash"></i></button>
+                        ${canEdit ? `<button class="action-btn edit" title="Editar Usuario" onclick="openEditModal('${username}')"><i class="fas fa-edit"></i></button>` : ''}
+                        ${canDelete ? `<button class="action-btn delete" title="Borrar Usuario" onclick="confirmDelete('${username}')"><i class="fas fa-trash"></i></button>` : ''}
                     </td>
                 </tr>
             `;
@@ -419,7 +501,7 @@
         const userToEdit = allUsersData.find(u => u.nombreUsuario === username);
 
         if (!userToEdit) {
-            alert('Error: No se encontró al usuario.');
+            showToast('Error: No se encontró al usuario.', 'error');
             return;
         }
 
@@ -444,21 +526,27 @@
         select.innerHTML = '';
 
         let availableRoles = [];
-        const userPrivilege = currentUser.privilegios;
+        const actorRole = currentUser.privilegios ? currentUser.privilegios.trim().toLowerCase() : '';
 
-        if (userPrivilege === 'Desarrollador') {
+        // Definir los roles que cada nivel puede crear, según las reglas de negocio
+        if (actorRole === 'desarrollador') {
             availableRoles = ['Desarrollador', 'Gefe', 'Supervisor', 'Técnico', 'Tecnico_Exterior'];
-        } else if (userPrivilege === 'Gefe') {
+        } else if (actorRole === 'gefe') {
+            // Un Gefe puede crear Gefe, Supervisor y Tecnico
             availableRoles = ['Gefe', 'Supervisor', 'Técnico'];
-        } else if (userPrivilege === 'Supervisor') {
+        } else if (actorRole === 'supervisor') {
+            // Un Supervisor solo puede crear Tecnico
             availableRoles = ['Técnico'];
         }
 
         availableRoles.forEach(role => {
             const option = document.createElement('option');
             option.value = role;
+            // Reemplazar guion bajo con espacio para la visualización
             option.textContent = role.replace('_', ' ');
-            if (role === selectedValue) option.selected = true;
+            if (role === selectedValue) {
+                option.selected = true;
+            }
             select.appendChild(option);
         });
     }
@@ -475,7 +563,7 @@
                 nombreUsuario: document.getElementById('nombre-usuario').value,
                 privilegios: document.getElementById('privilegios').value,
                 telefono: document.getElementById('telefono').value,
-                correo: document.getElementById('correo').value,
+                correoElectronico: document.getElementById('correo').value,
                 password: document.getElementById('password').value,
             }
         };
@@ -483,12 +571,21 @@
         try {
             const response = await fetch(USERS_SCRIPT_URL, {
                 method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload)
             });
-            const result = await response.json();
-
-            if (result.status === 'success') {
-                alert(result.message);
+            const responseText = await response.text();
+            console.log('Raw server response:', responseText);
+            try {
+                const result = JSON.parse(responseText);
+                if (result.status === 'success') {
+                    showToast(result.message, 'success');
+                } else {
+                    throw new Error(result.message);
+                }
+            } catch (e) {
+                throw new Error('Respuesta inesperada del servidor: ' + responseText);
+            }
 
                 // Si el usuario editado es el actual, actualiza la sesión local
                 if (payload.data.originalUsername === currentUser.nombreUsuario) {
@@ -506,7 +603,7 @@
                 throw new Error(result.message);
             }
         } catch (error) {
-            alert('Error al guardar: ' + error.message);
+            showToast('Error al guardar: ' + error.message, 'error');
         }
     }
 
@@ -521,18 +618,24 @@
             try {
                 const response = await fetch(USERS_SCRIPT_URL, {
                     method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(payload)
                 });
-                const result = await response.json();
-
-                if (result.status === 'success') {
-                    alert(result.message);
-                    fetchAndDisplayUsers(currentUser.privilegios); // Recargar la lista
-                } else {
-                    throw new Error(result.message);
+                const responseText = await response.text();
+                console.log('Raw server response:', responseText);
+                try {
+                    const result = JSON.parse(responseText);
+                    if (result.status === 'success') {
+                        showToast(result.message, 'success');
+                        fetchAndDisplayUsers(currentUser.privilegios); // Recargar la lista
+                    } else {
+                        throw new Error(result.message);
+                    }
+                } catch (e) {
+                    throw new Error('Respuesta inesperada del servidor: ' + responseText);
                 }
             } catch (error) {
-                alert('Error al eliminar: ' + error.message);
+                showToast('Error al eliminar: ' + error.message, 'error');
             }
         }
     }
