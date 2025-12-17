@@ -565,13 +565,10 @@ function getHeaderIndices(headerRow) {
   return headers;
 }
 
-function createJsonResponse(data) {
-  const output = ContentService.createTextOutput(JSON.stringify(data))
+function createJsonResponse(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
     .setMimeType(ContentService.MimeType.JSON);
-  // Añadir la cabecera CORS para permitir el acceso desde cualquier origen.
-  // Esencial para que el fetch desde el frontend funcione sin errores de CORS.
-  output.setHeader('Access-Control-Allow-Origin', '*');
-  return output;
 }
 
 function normalizeRole(role) {
