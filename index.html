@@ -973,8 +973,9 @@ async function checkSession() {
         console.log("Sesión encontrada en localStorage.");
         const { user } = JSON.parse(session);
 
+        // Si no hay datos de usuario cargados, los obtenemos ahora.
         if (userData.length === 0) {
-            console.log("userData está vacío, esperando a fetchUsers.");
+            console.log("userData está vacío, obteniendo usuarios...");
             await fetchUsers();
         }
 
@@ -982,17 +983,24 @@ async function checkSession() {
         const currentUserData = userData.find(u => u.nombreUsuario === user.nombreUsuario);
 
         if (currentUserData) {
-            console.log("Usuario verificado exitosamente. Mostrando la aplicación.");
+            console.log("Usuario verificado. Mostrando la aplicación.");
             localStorage.setItem('userName', user.nombre);
+
+            // Llama a la función que muestra la app y maneja el toast.
             hideLoginShowApp();
+
             document.getElementById('welcome-message').textContent = `Bienvenido, ${user.nombre}`;
             document.getElementById('welcome-message').style.display = 'block';
             document.getElementById('logout-button').style.display = 'block';
+
+            // Carga los datos principales de la aplicación.
             syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
         } else {
+            // Si el usuario de la sesión no es válido, cerramos sesión.
             logout("Tu sesión ha expirado o es inválida. Por favor, inicia sesión de nuevo.");
         }
     } catch (error) {
+        // En caso de cualquier error (ej. JSON malformado), cerramos sesión para estar seguros.
         console.error("Error crítico durante la verificación de sesión:", error);
         logout("Ocurrió un error al verificar tu sesión. Por favor, inicia sesión de nuevo.");
     }
@@ -1081,6 +1089,14 @@ function hideLoginShowApp() {
     // Mostrar contenido principal y footer
     document.querySelector('.container').style.display = 'block';
     document.querySelector('.footer').style.display = 'block';
+
+    // CORRECCIÓN: Mover la lógica del "toast" aquí.
+    // Esto asegura que el toast solo se muestre DESPUÉS de que la UI principal sea visible.
+    const successMessage = localStorage.getItem('formSubmissionSuccess');
+    if (successMessage) {
+        showToast(successMessage, 'success', 4000);
+        localStorage.removeItem('formSubmissionSuccess');
+    }
 }
 
 
@@ -2259,12 +2275,8 @@ function hideSplashScreen() {
 
 async function inicializarApp() {
     hideSplashScreen();
-    // Comprobar si hay un mensaje de éxito desde el formulario de agregar corte
-    const successMessage = localStorage.getItem('formSubmissionSuccess');
-    if (successMessage) {
-        showToast(successMessage, 'success', 4000); // Mostrar por 4 segundos
-        localStorage.removeItem('formSubmissionSuccess'); // Limpiar para que no se muestre de nuevo
-    }
+    // La lógica para mostrar el "toast" de éxito se ha movido a `hideLoginShowApp`
+    // para evitar condiciones de carrera durante la carga de la página.
 
     const urlParams = new URLSearchParams(window.location.search);
     const seccion = urlParams.get('seccion');

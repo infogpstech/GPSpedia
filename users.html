@@ -330,22 +330,33 @@
     }
 
     function filterUsersByPrivilege(users, normalizedCurrentUserRole) {
-        const visiblePrivileges = new Set();
+        // Excluir siempre al propio usuario de la lista
+        const otherUsers = users.filter(user => user.nombreUsuario !== currentUser.nombreUsuario);
 
+        // Regla 1: El desarrollador ve a todos (excepto a sí mismo).
         if (normalizedCurrentUserRole === 'desarrollador') {
-            return users; // El desarrollador ve a todos
-        }
-        if (normalizedCurrentUserRole === 'gefe') {
-            visiblePrivileges.add('gefe').add('supervisor').add('tecnico');
-        }
-        if (normalizedCurrentUserRole === 'supervisor') {
-            visiblePrivileges.add('supervisor').add('tecnico');
+            return otherUsers;
         }
 
-        return users.filter(user => {
-            const normalizedUserRole = user.privilegios ? String(user.privilegios).trim().toLowerCase().replace(/_/g, '') : '';
-            return visiblePrivileges.has(normalizedUserRole);
-        });
+        // Regla 2: El 'Gefe' ve a todos excepto a 'Tecnico_Exterior' y 'Desarrollador'.
+        if (normalizedCurrentUserRole === 'gefe') {
+            const forbiddenRoles = new Set(['tecnicoexterior', 'desarrollador']);
+            return otherUsers.filter(user => {
+                const userRole = user.privilegios ? String(user.privilegios).trim().toLowerCase().replace(/_/g, '') : '';
+                return !forbiddenRoles.has(userRole);
+            });
+        }
+
+        // Regla 3: El 'Supervisor' solo ve a los 'Técnico'.
+        if (normalizedCurrentUserRole === 'supervisor') {
+            return otherUsers.filter(user => {
+                const userRole = user.privilegios ? String(user.privilegios).trim().toLowerCase().replace(/_/g, '') : '';
+                return userRole === 'tecnico';
+            });
+        }
+
+        // Por defecto (ej. un 'Técnico'), no se ve a nadie en la lista.
+        return [];
     }
 
     function renderUserTable(users) {

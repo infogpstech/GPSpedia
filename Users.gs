@@ -385,7 +385,7 @@ function hasPermission(actor, action, targetUserRow, headers) {
 
     // Reglas específicas:
     // Gefe y Supervisor no pueden ver/editar Tecnico_Exterior.
-    if (targetRole === 'Tecnico_Exterior' && (actorRole === 'Gefe' || actorRole === 'Supervisor')) {
+    if (targetRole === 'tecnico_exterior' && (actorRole === 'gefe' || actorRole === 'supervisor')) {
         return false;
     }
 
