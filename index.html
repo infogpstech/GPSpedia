@@ -773,7 +773,7 @@ body.search-active .app-logo {
 </div>
 
 <!-- Login Modal -->
-<div id="login-modal" style="display: none;">
+<div id="login-modal">
     <div class="modal-content">
         <img src="icon-v3-512x512.png" alt="Logo de GPSpedia" style="max-width: 120px; margin-bottom: 20px;">
         <h2>Iniciar Sesión</h2>
@@ -874,7 +874,7 @@ const STORES = ['cortes', 'tutoriales', 'relay'];
 let db;
 
 // --- LÓGICA DE DATOS Y API ---
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7Fobf8ptee5H48C2JV8eGSH7tdVosKq-l5QUwquDpwkqp7TF1ziQrDV0Fy95TtrFZ/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTYI8aYG4GxkPLu6wA5FSFSxqT9h8Rg4SvXJ9rYRNysqBEUFnyT-PTAmONsWpTJlty/exec";
 const SESSION_KEY = 'gpsepedia_session';
 
 // --- LÓGICA DE AUTENTICACIÓN Y SESIÓN ---
@@ -981,12 +981,9 @@ function logout(reason = null) {
 
 function showLoginHideApp(reason = null) {
     remoteLog('INFO', 'showLoginHideApp called', { reason });
-    // Ocultar splash screen
+    // Ocultar splash screen inmediatamente para evitar condiciones de carrera en las pruebas
     const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500);
+    splash.style.display = 'none';
 
     // Ocultar contenido principal y footer
     document.querySelector('.container').style.display = 'none';
