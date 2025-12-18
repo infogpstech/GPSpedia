@@ -141,13 +141,29 @@ h1.app-title {
 
 /* --- ESTILOS DEL BUSCADOR --- */
 .search-container {
-    position: relative; /* Contenedor para el botón de limpiar */
+    position: relative;
+    display: flex; /* Nuevo */
+    align-items: center; /* Nuevo */
+    gap: 10px; /* Nuevo */
     margin-bottom: 30px;
     padding: 10px 0;
     max-width: 600px;
     margin-left: auto;
     margin-right: auto;
     transition: all 0.35s ease-in-out;
+}
+
+#searchInput {
+    flex-grow: 1; /* El input ocupa el espacio disponible */
+}
+
+#hamburger-btn {
+    flex-shrink: 0; /* Evita que el botón se encoja */
+    margin-left: auto; /* Empuja el botón a la derecha */
+}
+
+#logout-button {
+    display: none !important; /* Ocultar siempre el botón principal de logout */
 }
 
 #clear-search-btn {
@@ -810,8 +826,8 @@ body.search-active .app-logo {
   <div class="search-container">
       <input type="text" id="searchInput" placeholder="Buscar Corte..." oninput="filtrarContenido(this.value)">
       <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
+      <button id="hamburger-btn"><i class="fa-solid fa-bars"></i></button>
   </div>
-    <button id="hamburger-btn"><i class="fa-solid fa-bars"></i></button>
   </div>
 
   <div class="section-selector">
@@ -856,15 +872,6 @@ window.onerror = function(message, source, lineno, colno, error) {
     return false; // Let the default browser error handling also run
 };
 
-// --- LÓGICA DE SEGURIDAD ---
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) {
-        e.preventDefault();
-    }
-});
-document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
-
 // --- LÓGICA DE INDEXEDDB ---
 // Note: IndexedDB logic is being kept for potential future offline capabilities,
 // but the current implementation will prioritize fetching from the Apps Script backend.
@@ -874,7 +881,7 @@ const STORES = ['cortes', 'tutoriales', 'relay'];
 let db;
 
 // --- LÓGICA DE DATOS Y API ---
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTYI8aYG4GxkPLu6wA5FSFSxqT9h8Rg4SvXJ9rYRNysqBEUFnyT-PTAmONsWpTJlty/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw9Shubus7k0_9IiaOH_zgfEyBV_oBnvFSb66tNTdSXFh-aMDb6bcvHFA_Maiz__nAP/exec";
 const SESSION_KEY = 'gpsepedia_session';
 
 // --- LÓGICA DE AUTENTICACIÓN Y SESIÓN ---
@@ -953,7 +960,6 @@ async function initializeAppData(user) {
     hideLoginShowApp();
     document.getElementById('welcome-message').textContent = `Bienvenido, ${user.nombre}`;
     document.getElementById('welcome-message').style.display = 'block';
-    document.getElementById('logout-button').style.display = 'block';
 
     showSkeletonLoader(document.getElementById('contenido'));
 
@@ -962,9 +968,6 @@ async function initializeAppData(user) {
         datosOriginales = result.data.cortes || [];
         datosTutoriales = result.data.tutoriales || [];
         datosRelay = result.data.relay || [];
-        // Convertir los datos a un formato compatible con la UI existente (array de arrays)
-        const header = Object.keys(datosOriginales[0] || {});
-        datosOriginales = [header, ...datosOriginales.map(row => header.map(h => row[h]))];
         mostrarCategorias();
     } catch (error) {
         document.getElementById('contenido').innerHTML = `<p style="color:red; text-align:center;">No se pudo cargar el catálogo. ${error.message}</p>`;
@@ -989,7 +992,6 @@ function showLoginHideApp(reason = null) {
     document.querySelector('.container').style.display = 'none';
     document.querySelector('.footer').style.display = 'none';
     document.getElementById('welcome-message').style.display = 'none';
-    document.getElementById('logout-button').style.display = 'none';
 
     // Mostrar el modal de login
     const loginModal = document.getElementById('login-modal');
@@ -1034,10 +1036,6 @@ document.getElementById('login-form').addEventListener('submit', async (e) => {
     login(username, password);
 });
 
-document.getElementById('logout-button').addEventListener('click', () => {
-    logout();
-});
-
 document.getElementById('forgot-password-link').addEventListener('click', (e) => {
     e.preventDefault();
     const username = document.getElementById('username').value;
@@ -1062,99 +1060,41 @@ function showSkeletonLoader(container) {
     container.innerHTML = skeletonHTML;
 }
 
-const COLUMN_NAME_AÑOS = "Año (generacion)";
-
-let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay = [],
-    estado = {nivel:"categorias", categoria:null, marca:null, modelo:null},
-    appOpenedFromLink = false;
+// --- VARIABLES GLOBALES DE DATOS ---
+let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay = [];
+let estado = { nivel: "categorias", categoria: null, marca: null, modelo: null };
+let appOpenedFromLink = false;
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
-async function syncAndFetchData(storeName, range, dataVariableSetter, successCallback, containerId) {
-    const container = document.getElementById(containerId);
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
-
-    // Siempre mostrar el skeleton loader para indicar que se está cargando/actualizando.
-    container.classList.remove('animacion-ejecutada');
-    showSkeletonLoader(container);
-
-    try {
-        // 1. Intentar obtener datos de la red primero.
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Error de red: ${response.status}`);
-        const data = await response.json();
-        const values = data.values || [];
-
-        if (values.length > 0) {
-            // 2. Si la red tiene éxito, guardar en caché y mostrar los datos.
-            await saveData(storeName, values);
-            console.log(`Datos de ${storeName} obtenidos de la red y actualizados en IndexedDB.`);
-            dataVariableSetter(values);
-            successCallback();
-            // Añadir un pequeño retardo para que la animación CSS se active.
-            setTimeout(() => container.classList.add('animacion-ejecutada'), 50);
-        } else {
-             // Si la red responde pero no hay datos, se considera un error y se intenta usar la caché.
-             throw new Error("No se encontraron valores en la red.");
-        }
-    } catch (networkError) {
-        console.error(`Fallo al obtener datos de ${range} desde la red:`, networkError);
-        // 3. Si la red falla, intentar cargar desde la caché.
-        try {
-            const localData = await readData(storeName);
-            if (localData && localData.length > 0) {
-                console.log(`Mostrando datos de respaldo (sin conexión) desde IndexedDB para: ${storeName}`);
-                dataVariableSetter(localData);
-                successCallback();
-                // Al cargar desde caché, no hay animación de entrada.
-                container.classList.add('animacion-ejecutada');
-            } else {
-                // 4. Si la red y la caché fallan, mostrar un error.
-                container.innerHTML = `<p style="color:red; text-align:center;">No se pudo conectar al servidor y no hay datos locales guardados. Por favor, revisa tu conexión a internet.</p>`;
-            }
-        } catch (dbError) {
-            console.error(`Error crítico al leer de IndexedDB para ${storeName}:`, dbError);
-            container.innerHTML = `<p style="color:red; text-align:center;">Error crítico al intentar acceder a los datos locales.</p>`;
-        }
-    }
-}
+// La función syncAndFetchData ha sido eliminada. La carga de datos ahora se centraliza en initializeAppData.
 
 function mostrarSeccion(seccion) {
-    // Limpiar el campo de búsqueda para evitar conflictos de estado.
     const searchInput = document.getElementById('searchInput');
     if (searchInput.value !== '') {
         searchInput.value = '';
         searchInput.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
-    // Oculta todas las secciones
-    const sections = document.querySelectorAll('.content-section');
-    sections.forEach(s => {
-        s.style.display = 'none';
-        // No quitamos 'animacion-ejecutada' aquí para evitar re-animaciones al cambiar de pestaña
-    });
+    document.querySelectorAll('.content-section').forEach(s => s.style.display = 'none');
+    document.querySelectorAll('.section-btn').forEach(b => b.classList.remove('active'));
 
-    // Desactiva todos los botones
-    const buttons = document.querySelectorAll('.section-btn');
-    buttons.forEach(b => b.classList.remove('active'));
+    const containerId = `contenido${seccion === 'cortes' ? '' : '-' + seccion}`;
+    const renderFunction = {
+        cortes: mostrarCategorias,
+        tutoriales: mostrarContenidoTutoriales,
+        relay: mostrarContenidoRelay
+    }[seccion];
 
-    if (seccion === 'cortes') {
-        document.getElementById('contenido').style.display = 'block';
-        document.getElementById('btn-cortes').classList.add('active');
-        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-    } else if (seccion === 'tutoriales') {
-        document.getElementById('contenido-tutoriales').style.display = 'block';
-        document.getElementById('btn-tutoriales').classList.add('active');
-        syncAndFetchData('tutoriales', RANGE_TUTORIALES, (vals) => datosTutoriales = vals, mostrarContenidoTutoriales, 'contenido-tutoriales');
-    } else if (seccion === 'relay') {
-        document.getElementById('contenido-relay').style.display = 'block';
-        document.getElementById('btn-relay').classList.add('active');
-        syncAndFetchData('relay', RANGE_RELAY, (vals) => datosRelay = vals, mostrarContenidoRelay, 'contenido-relay');
+    document.getElementById(containerId).style.display = 'block';
+    document.getElementById(`btn-${seccion}`).classList.add('active');
+
+    if (renderFunction) {
+        renderFunction(); // Renderiza con los datos ya cargados en memoria.
     }
 }
 
 function irAPaginaPrincipal() {
-    // Esta función vuelve a la vista principal. La nueva lógica de syncAndFetchData se encargará de actualizar.
     mostrarSeccion('cortes');
 }
 
@@ -1162,21 +1102,24 @@ function mostrarContenidoTutoriales() {
     const cont = document.getElementById("contenido-tutoriales");
     cont.innerHTML = "<h4>Tutoriales</h4>";
     const grid = document.createElement("div"); grid.className = "grid";
-    if (datosTutoriales.length <= 1) { cont.innerHTML += "<p>No hay tutoriales disponibles.</p>"; return; }
-    const header = datosTutoriales[0];
-    const data = datosTutoriales.slice(1);
+    if (!datosTutoriales || datosTutoriales.length === 0) {
+        cont.innerHTML += "<p>No hay tutoriales disponibles.</p>";
+        return;
+    }
 
-    data.forEach(fila => {
-        const card = document.createElement("div"); card.className = "card";
-        card.onclick = () => mostrarDetalleTutorial(fila, header);
+    datosTutoriales.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => mostrarDetalleTutorial(item);
 
         const img = document.createElement("img");
-        img.src = convertirAGoogleThumbnail(fila[header.indexOf("Imagen")]);
-        img.alt = fila[header.indexOf("Tema")];
+        img.src = convertirAGoogleThumbnail(item.imagen);
+        img.alt = item.tema;
         card.appendChild(img);
 
-        const overlay = document.createElement("div"); overlay.className = "overlay";
-        overlay.innerHTML = fila[header.indexOf("Tema")];
+        const overlay = document.createElement("div");
+        overlay.className = "overlay";
+        overlay.innerHTML = item.tema;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -1186,22 +1129,26 @@ function mostrarContenidoTutoriales() {
 function mostrarContenidoRelay() {
     const cont = document.getElementById("contenido-relay");
     cont.innerHTML = "<h4>Configuración del Relay</h4>";
-    const grid = document.createElement("div"); grid.className = "grid";
-    if (datosRelay.length <= 1) { cont.innerHTML += "<p>No hay configuraciones de relay disponibles.</p>"; return; }
-    const header = datosRelay[0];
-    const data = datosRelay.slice(1);
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    if (!datosRelay || datosRelay.length === 0) {
+        cont.innerHTML += "<p>No hay configuraciones de relay disponibles.</p>";
+        return;
+    }
 
-    data.forEach(fila => {
-        const card = document.createElement("div"); card.className = "card";
-        card.onclick = () => mostrarDetalleRelay(fila, header);
+    datosRelay.forEach(item => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => mostrarDetalleRelay(item);
 
         const img = document.createElement("img");
-        img.src = convertirAGoogleThumbnail(fila[header.indexOf("Imagen")]);
-        img.alt = fila[header.indexOf("Configuración")];
+        img.src = convertirAGoogleThumbnail(item.imagen);
+        img.alt = item.configuracion;
         card.appendChild(img);
 
-        const overlay = document.createElement("div"); overlay.className = "overlay";
-        overlay.innerHTML = fila[header.indexOf("Configuración")];
+        const overlay = document.createElement("div");
+        overlay.className = "overlay";
+        overlay.innerHTML = item.configuracion;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -1211,39 +1158,31 @@ function mostrarContenidoRelay() {
 function crearElementoDetalle(label, value) {
     if (!value) return null;
     const p = document.createElement("p");
-    p.innerHTML = `<strong>${label}:</strong> ${value}`;
+    p.innerHTML = `<strong>${label}:</strong> ${value.replace(/\n/g, '<br>')}`;
     return p;
 }
 
 function crearImagenDetalle(label, value, container, extraClass = '') {
     if (!value) return;
-    const h = document.createElement("h4"); h.textContent = label; container.appendChild(h);
+    const h = document.createElement("h4");
+    h.textContent = label;
+    container.appendChild(h);
     const img = document.createElement("img");
     img.src = convertirAGoogleThumbnail(value);
     img.alt = label;
-    if (extraClass) {
-        img.classList.add(extraClass);
-    }
+    if (extraClass) img.classList.add(extraClass);
     img.onclick = () => mostrarLightbox(value);
     container.appendChild(img);
 }
 
 function crearVideoDetalle(label, value, container) {
     if (!value) return;
-    const videoId = extractYouTubeId(value.trim());
+    const videoId = extractYouTubeId(String(value).trim());
     if (!videoId) return;
 
     const h = document.createElement("h4");
     h.textContent = label;
     container.appendChild(h);
-
-    if (!navigator.onLine) {
-        const p = document.createElement("p");
-        p.textContent = "El video no está disponible sin conexión.";
-        p.style.cssText = "padding: 20px; background: #eee; border-radius: 8px; text-align: center; color: #555;";
-        container.appendChild(p);
-        return;
-    }
 
     const iframeContainer = document.createElement("div");
     iframeContainer.style.cssText = "position:relative; padding-bottom:56.25%; height:0; margin-bottom:20px;";
@@ -1253,47 +1192,18 @@ function crearVideoDetalle(label, value, container) {
     iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
     iframe.allowFullscreen = true;
     iframe.style.cssText = "border:none; position:absolute; top:0; left:0; width:100%; height:100%;";
-    iframe.dataset.originalSrc = iframe.src; // Guardar la URL original
+    iframe.dataset.originalSrc = iframe.src;
     iframeContainer.appendChild(iframe);
     container.appendChild(iframeContainer);
 }
 
-// --- GESTIÓN DE HISTORIAL Y ESTADO DE LA UI ---
-const uiState = {
-    isModalOpen: false,
-    isSearchActive: false
-};
+const uiState = { isModalOpen: false, isSearchActive: false };
 
-// Función centralizada para manejar el botón "atrás" del navegador
 window.addEventListener('popstate', (event) => {
-    const state = event.state || {}; // Treat null state as the base state
-
-    // If we navigate to a state that is NOT a modal, but the modal is currently open, close it visually.
+    const state = event.state || {};
     if (uiState.isModalOpen && !state.modal) {
-        const detalleCont = document.getElementById("detalleCompleto");
-
-        // Close all active accordions and stop videos within them.
-        detalleCont.querySelectorAll('.accordion-btn.active').forEach(btn => {
-            btn.classList.remove('active');
-            const panel = btn.nextElementSibling;
-            if (panel) {
-                panel.style.maxHeight = null;
-                const iframe = panel.querySelector('iframe');
-                if (iframe) {
-                    iframe.src = ''; // This stops playback.
-                }
-            }
-        });
-
-        // Hide the modal.
-        document.getElementById("modalDetalle").classList.remove("visible");
-
-        // Update state.
-        uiState.isModalOpen = false;
-    }
-
-    // If we navigate to a state that is NOT a search, but search is active, deactivate it.
-    else if (uiState.isSearchActive && !state.search) {
+        cerrarModalVisualmente();
+    } else if (uiState.isSearchActive && !state.search) {
         uiState.isSearchActive = false;
         const searchInput = document.getElementById('searchInput');
         searchInput.value = '';
@@ -1310,470 +1220,316 @@ function pushState(state) {
 function crearBotonCompartir(seccion, id, titulo) {
     const shareBtn = document.createElement("button");
     shareBtn.textContent = "Compartir";
-    shareBtn.className = "shareBtn"; // Agregamos una clase para identificarlo
+    shareBtn.className = "shareBtn";
     shareBtn.style.cssText = "color:white; background:#007bff; border:none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;";
-
-    // Usamos location.origin y location.pathname para construir una URL limpia
     const shareUrl = `${window.location.origin}${window.location.pathname}?seccion=${seccion}&id=${id}`;
 
     shareBtn.onclick = async () => {
-        const shareData = {
-            title: 'GPSpedia Detalle',
-            text: `Mira este detalle de GPSpedia: ${titulo}`,
-            url: shareUrl,
-        };
-
-        if (navigator.share) {
-            try {
+        const shareData = { title: 'GPSpedia Detalle', text: `Mira este detalle: ${titulo}`, url: shareUrl };
+        try {
+            if (navigator.share) {
                 await navigator.share(shareData);
-            } catch (err) {
-                console.error('Error al compartir:', err);
-            }
-        } else {
-            // Fallback para navegadores que no soportan navigator.share (ej. Desktop)
-            try {
+            } else {
                 await navigator.clipboard.writeText(shareUrl);
                 shareBtn.textContent = '¡Enlace Copiado!';
-                setTimeout(() => {
-                    shareBtn.textContent = 'Compartir';
-                }, 2000);
-            } catch (err) {
-                console.error('Error al copiar el enlace:', err);
-                alert('No se pudo copiar el enlace.');
+                setTimeout(() => { shareBtn.textContent = 'Compartir'; }, 2000);
             }
+        } catch (err) {
+            console.error('Error al compartir/copiar:', err);
+            alert('No se pudo compartir o copiar el enlace.');
         }
     };
     return shareBtn;
 }
 
-
-function mostrarDetalleTutorial(fila, header) {
-    // Empujar un nuevo estado al historial para el modal
-    pushState({ modal: true });
+function mostrarDetalleTutorial(item) {
+    pushState({ modal: true, type: 'tutorial', id: item.id });
     uiState.isModalOpen = true;
 
-    const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
     const headerDiv = document.createElement("div");
     headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
-
     const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = () => cerrarModal();
-    closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;"; // Reset margin
-    headerDiv.appendChild(closeBtn);
-
-    const id = fila[header.indexOf("ID")];
-    const titulo = fila[header.indexOf("Tema")];
-    const shareBtn = crearBotonCompartir('tutoriales', id, titulo);
-    headerDiv.appendChild(shareBtn);
-
-    cont.appendChild(headerDiv);
-
-    const title = document.createElement("h2");
-    title.textContent = fila[header.indexOf("Tema")];
-    title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
-    cont.appendChild(title);
-    const campos = [
-        { label: "Cómo identificarlo", key: "Como identificarlo" },
-        { label: "Dónde encontrarlo", key: "Donde encontrarlo" },
-        { label: "Detalles", key: "Detalles" }
-    ];
-    campos.forEach(c => {
-        const p = crearElementoDetalle(c.label, fila[header.indexOf(c.key)]);
-        if (p) cont.appendChild(p);
-    });
-    crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
-    crearVideoDetalle("Video Guía", fila[header.indexOf("Video")], cont);
-    modal.classList.add("visible");
-}
-
-function mostrarDetalleRelay(fila, header) {
-    // Empujar un nuevo estado al historial para el modal
-    pushState({ modal: true });
-    uiState.isModalOpen = true;
-
-    const modal = document.getElementById("modalDetalle");
-    const cont = document.getElementById("detalleCompleto");
-    cont.innerHTML = "";
-
-    const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
-
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Cerrar Detalle";
+    closeBtn.textContent = "Cerrar";
     closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
-
-    const id = fila[header.indexOf("ID")];
-    const titulo = fila[header.indexOf("Configuración")];
-    const shareBtn = crearBotonCompartir('relay', id, titulo);
-    headerDiv.appendChild(shareBtn);
-
+    headerDiv.appendChild(crearBotonCompartir('tutoriales', item.id, item.tema));
     cont.appendChild(headerDiv);
 
     const title = document.createElement("h2");
-    title.textContent = `Detalle de: ${fila[header.indexOf("Configuración")]}`;
+    title.textContent = item.tema;
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
     cont.appendChild(title);
+
     const campos = [
-        { label: "Función", key: "Función" },
-        { label: "Vehículo donde se utiliza", key: "Vehiculo donde se utiliza" },
-        { label: "PIN 30 (entrada)", key: "PIN 30 (entrada)" },
-        { label: "PIN 85 (bobina +)", key: "PIN 85 (bobina +)" },
-        { label: "PIN 86 (bobina - )", key: "PIN 86 (bobina - )" },
-        { label: "PIN 87a (comun cerrado)", key: "PIN 87a (comun cerrado)" },
-        { label: "PIN 87 (Comunmente Abierto)", key: "PIN 87 (Comunmente Abierto)" },
-        { label: "Observación", key: "Observacion" }
+        { label: "Cómo identificarlo", value: item.comoIdentificarlo },
+        { label: "Dónde encontrarlo", value: item.dondeEncontrarlo },
+        { label: "Detalles", value: item.detalles }
     ];
     campos.forEach(c => {
-        const p = crearElementoDetalle(c.label, fila[header.indexOf(c.key)]);
+        const p = crearElementoDetalle(c.label, c.value);
         if (p) cont.appendChild(p);
     });
-    crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
-    modal.classList.add("visible");
+
+    crearImagenDetalle("Imagen", item.imagen, cont);
+    crearVideoDetalle("Video Guía", item.video, cont);
+    document.getElementById("modalDetalle").classList.add("visible");
 }
 
-function getHeaderIndexes(header) {
-    if (!header || header.length < 5) {
-        console.error("Error: Encabezado de datos incompleto o no cargado.");
-        return { COL_CAT: 1, COL_MARCA: 3, COL_MODELO: 4, COL_AÑOS: 6, COL_IMG_VEHICULO: 2, COL_IMG_PORTADA: -1, COL_IMG_APERTURA: 14, COL_TIPO_ENCENDIDO: 5 };
-    }
-    const indexAños = header.indexOf(COLUMN_NAME_AÑOS);
-    return {
-        COL_CAT: header.indexOf("Categoria"), COL_MARCA: header.indexOf("Marca"), COL_MODELO: header.indexOf("Modelo"),
-        COL_AÑOS: (indexAños > -1) ? indexAños : 6, COL_TIPO_ENCENDIDO: header.indexOf("Tipo de encendido"),
-        COL_IMG_VEHICULO: header.indexOf("Imagen del vehiculo"), COL_IMG_PORTADA: header.indexOf("Imagen de la portada"),
-        COL_IMG_APERTURA: header.indexOf("Imagen de la apertura"),
-    };
-}
+function mostrarDetalleRelay(item) {
+    pushState({ modal: true, type: 'relay', id: item.id });
+    uiState.isModalOpen = true;
 
-function convertirAGoogleThumbnail(url){
-  if(!url) return "https://placehold.co/280x200/cccccc/333333?text=Sin+Imagen";
-  let idMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(idMatch) return `https://drive.google.com/thumbnail?sz=w1000&id=${idMatch[1]}`;
-  return url;
-}
+    const cont = document.getElementById("detalleCompleto");
+    cont.innerHTML = "";
 
-function mostrarLightbox(src){
-  // Limpiar la imagen anterior para evitar el parpadeo
-  document.getElementById("lightboxImg").src = "";
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "Cerrar";
+    closeBtn.onclick = () => cerrarModal();
+    closeBtn.className = "backBtn";
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
+    headerDiv.appendChild(closeBtn);
+    headerDiv.appendChild(crearBotonCompartir('relay', item.id, item.configuracion));
+    cont.appendChild(headerDiv);
 
-  let idMatch = src.match(/id=([a-zA-Z0-9_-]+)/) || src.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  let finalUrl = src;
-  if(idMatch && idMatch[1]){
-      finalUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w2000`;
-  } else {
-       console.warn("Advertencia: No se pudo encontrar un ID de Google Drive válido para el Lightbox. Usando URL original.");
-  }
-  document.getElementById("lightboxImg").src = finalUrl;
-  document.getElementById("lightbox").classList.add("visible");
-}
-function cerrarModal() {
-    // 1. Forzar el cierre de elementos de la UI.
-    const detalleCont = document.getElementById("detalleCompleto");
+    const title = document.createElement("h2");
+    title.textContent = `Detalle de: ${item.configuracion}`;
+    title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
+    cont.appendChild(title);
 
-    // Cierra todos los acordeones activos y detiene los videos dentro de ellos.
-    detalleCont.querySelectorAll('.accordion-btn.active').forEach(btn => {
-        btn.classList.remove('active');
-        const panel = btn.nextElementSibling;
-        if (panel) {
-            panel.style.maxHeight = null;
-            const iframe = panel.querySelector('iframe');
-            if (iframe) iframe.src = '';
-        }
+    const campos = [
+        { label: "Función", value: item.funcion },
+        { label: "Vehículo donde se utiliza", value: item.vehiculoDondeSeUtiliza },
+        { label: "PIN 30 (entrada)", value: item.pin30Entrada },
+        { label: "PIN 85 (bobina +)", value: item.pin85Bobina },
+        { label: "PIN 86 (bobina - )", value: item.pin86Bobina },
+        { label: "PIN 87a (comun cerrado)", value: item.pin87aComunCerrado },
+        { label: "PIN 87 (Comunmente Abierto)", value: item.pin87ComunmenteAbierto },
+        { label: "Observación", value: item.observacion }
+    ];
+    campos.forEach(c => {
+        const p = crearElementoDetalle(c.label, c.value);
+        if (p) cont.appendChild(p);
     });
-    detalleCont.querySelectorAll('iframe').forEach(iframe => { if(iframe.src) iframe.src = ''; });
-    document.getElementById("modalDetalle").classList.remove("visible");
+    crearImagenDetalle("Imagen", item.imagen, cont);
+    document.getElementById("modalDetalle").classList.add("visible");
+}
 
-    // 2. Actualizar el estado interno.
-    uiState.isModalOpen = false;
+function convertirAGoogleThumbnail(url) {
+    if (!url) return "https://placehold.co/280x200/cccccc/333333?text=Sin+Imagen";
+    const idMatch = String(url).match(/id=([a-zA-Z0-9_-]+)|\/d\/([a-zA-Z0-9_-]+)/);
+    return idMatch ? `https://drive.google.com/thumbnail?sz=w1000&id=${idMatch[1] || idMatch[2]}` : url;
+}
 
-    // 3. Manejar el historial del navegador.
+function mostrarLightbox(src) {
+    const lightboxImg = document.getElementById("lightboxImg");
+    lightboxImg.src = ""; // Clear previous image
+    const idMatch = String(src).match(/id=([a-zA-Z0-9_-]+)|\/d\/([a-zA-Z0-9_-]+)/);
+    const finalUrl = idMatch ? `https://drive.google.com/thumbnail?id=${idMatch[1] || idMatch[2]}&sz=w2000` : src;
+    lightboxImg.src = finalUrl;
+    document.getElementById("lightbox").classList.add("visible");
+}
+
+function cerrarModal() {
+    cerrarModalVisualmente();
     if (history.state && history.state.modal) {
         history.back();
     }
-
-    // 4. Si la app se abrió desde un enlace, ahora se verifica la sesión.
     if (appOpenedFromLink) {
         appOpenedFromLink = false;
-        // Limpiar la URL para quitar los parámetros de sección/id
         history.pushState({}, '', window.location.pathname);
-        checkSession(); // Ahora que el modal está cerrado, verificar si hay una sesión válida
+        checkSession();
     }
 }
-function cerrarLightbox(){document.getElementById("lightbox").classList.remove("visible");}
+
+function cerrarModalVisualmente() {
+    const modal = document.getElementById("modalDetalle");
+    if (!modal.classList.contains("visible")) return;
+
+    const detalleCont = document.getElementById("detalleCompleto");
+    detalleCont.querySelectorAll('iframe').forEach(iframe => { if (iframe.src) iframe.src = ''; });
+    modal.classList.remove("visible");
+    uiState.isModalOpen = false;
+}
+
+function cerrarLightbox() { document.getElementById("lightbox").classList.remove("visible"); }
 
 function extractYouTubeId(url) {
     if (!url) return null;
-    let videoId = null;
-    try {
-        const urlObj = new URL(url);
-        if (urlObj.hostname.includes('youtube.com') && urlObj.searchParams.get('v')) {
-            videoId = urlObj.searchParams.get('v');
-        } else if (urlObj.hostname.includes('youtu.be') && urlObj.pathname.length > 1) {
-            videoId = urlObj.pathname.substring(1);
-        } else if (urlObj.pathname.includes('/embed/') && urlObj.pathname.length > 7) {
-            const parts = urlObj.pathname.split('/embed/');
-            if (parts.length > 1) videoId = parts[1].split(/[?&]/)[0];
-        }
-    } catch (e) { return null; }
-    return videoId;
+    const regex = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/;
+    const match = url.match(regex);
+    return match ? match[1] : null;
 }
 
-function mostrarDetalleModal(fila, header) {
-    pushState({ modal: true });
+function mostrarDetalleModal(item) {
+    pushState({ modal: true, type: 'corte', id: item.id });
     uiState.isModalOpen = true;
 
-    const modal = document.getElementById("modalDetalle");
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
-    const indexes = getHeaderIndexes(header);
 
     const headerDiv = document.createElement("div");
     headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
-
     const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Cerrar Detalle";
+    closeBtn.textContent = "Cerrar";
     closeBtn.onclick = () => cerrarModal();
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
-
-    const id = fila[header.indexOf("ID")];
-    const titulo = `${fila[indexes.COL_MODELO]} ${fila[indexes.COL_AÑOS] || ''}`;
-    const shareBtn = crearBotonCompartir('cortes', id, titulo);
-    headerDiv.appendChild(shareBtn);
-
+    const titulo = `${item.modelo} ${item.anoGeneracion || ''}`;
+    headerDiv.appendChild(crearBotonCompartir('cortes', item.id, titulo));
     cont.appendChild(headerDiv);
 
     const title = document.createElement("h2");
-    const modeloNombre = fila[indexes.COL_MODELO] || 'Modelo Desconocido';
-    const anosNombre = fila[indexes.COL_AÑOS] || '';
-    title.textContent = `Detalle de ${modeloNombre} ${anosNombre ? `(${anosNombre})` : ''}`;
+    title.textContent = `Detalle de ${item.modelo} ${item.anoGeneracion ? `(${item.anoGeneracion})` : ''}`;
     title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
     cont.appendChild(title);
 
-    // --- Contenido Principal (Siempre Visible) ---
-    const notaImportante = fila[header.indexOf("Nota Importante")];
-    if (notaImportante) {
+    // Contenido Principal
+    if (item.notaImportante) {
         const p = document.createElement("p");
-        p.innerHTML = `<strong style="color:red;">Nota Importante:</strong> <span style="color:#cc0000; font-weight: bold;">${notaImportante}</span>`;
+        p.innerHTML = `<strong style="color:red;">Nota Importante:</strong> <span style="color:#cc0000; font-weight: bold;">${item.notaImportante}</span>`;
         cont.appendChild(p);
     }
-    crearImagenDetalle("Modelo", fila[header.indexOf("Imagen del vehiculo")], cont, 'img-vehiculo');
-    const tipoCorteEl = crearElementoDetalle("Tipo de Corte", fila[header.indexOf("Tipo de corte")]);
+    crearImagenDetalle("Modelo", item.imagenDelVehiculo, cont, 'img-vehiculo');
+    const tipoCorteEl = crearElementoDetalle("Tipo de Corte", item.tipoDeCorte);
     if (tipoCorteEl) cont.appendChild(tipoCorteEl);
-    const descCorteEl = crearElementoDetalle("Descripción", fila[header.indexOf("Descripcion del corte")]);
+    const descCorteEl = crearElementoDetalle("Descripción", item.descripcionDelCorte);
     if (descCorteEl) cont.appendChild(descCorteEl);
-    crearImagenDetalle("Imagen", fila[header.indexOf("Imagen del Corte")], cont);
+    crearImagenDetalle("Imagen", item.imagenDelCorte, cont);
 
-    // --- Secciones Desplegables ---
+    // Secciones Desplegables
     const secciones = [
-        {
-            titulo: "Segunda Opción de Corte",
-            campos: [
-                { label: "Tipo de Corte", key: "Tipo de corte 2" },
-                { label: "Descripción", key: "Descripción del Segundo corte" },
-                { label: "Imagen", key: "Imagen de corte 2", esImagen: true }
-            ]
-        },
-        {
-            titulo: "Tercera Opción de Corte",
-            campos: [
-                { label: "Tipo de Corte", key: "Tipo de corte 3" },
-                { label: "Descripción", key: "Descripción del corte 3" },
-                { label: "Imagen", key: "Imagen del corte 3", esImagen: true }
-            ]
-        },
-        {
-            titulo: "Apertura",
-            campos: [
-                { label: "Detalles", key: "Apertura" },
-                { label: "Imagen", key: "Imagen de la apertura", esImagen: true }
-            ]
-        },
-        {
-            titulo: "Cables de Alimentación",
-            campos: [
-                { label: "Detalles", key: "Cables de Alimentacion" },
-                { label: "Imagen", key: "Imagen de los cables de alimentacion", esImagen: true }
-            ]
-        },
-        {
-            titulo: "Video Guía de Desarme",
-            campos: [{ key: "Como desarmar los plasticos", esVideo: true }]
-        }
+        { titulo: "Segunda Opción de Corte", campos: [{ label: "Tipo", value: item.tipoDeCorte2 }, { label: "Descripción", value: item.descripcionDelSegundoCorte }, { label: "Imagen", value: item.imagenDeCorte2, esImagen: true }] },
+        { titulo: "Tercera Opción de Corte", campos: [{ label: "Tipo", value: item.tipoDeCorte3 }, { label: "Descripción", value: item.descripcionDelCorte3 }, { label: "Imagen", value: item.imagenDelCorte3, esImagen: true }] },
+        { titulo: "Apertura", campos: [{ label: "Detalles", value: item.apertura }, { label: "Imagen", value: item.imagenDeLaApertura, esImagen: true }] },
+        { titulo: "Cables de Alimentación", campos: [{ label: "Detalles", value: item.cablesDeAlimentacion }, { label: "Imagen", value: item.imagenDeLosCablesDeAlimentacion, esImagen: true }] },
+        { titulo: "Video Guía de Desarme", campos: [{ value: item.comoDesarmarLosPlasticos, esVideo: true }] }
     ];
 
     secciones.forEach(seccion => {
-        // Comprueba si al menos un campo de la sección tiene contenido
-        const tieneContenido = seccion.campos.some(c => fila[header.indexOf(c.key)]);
-        if (!tieneContenido) return;
-
-        const btn = document.createElement("button");
-        btn.className = "accordion-btn";
-        btn.innerHTML = `
-            ${seccion.titulo}
-            <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-        `;
-        cont.appendChild(btn);
-
-        const panel = document.createElement("div");
-        panel.className = "panel-desplegable";
-
-        seccion.campos.forEach(c => {
-            const valor = fila[header.indexOf(c.key)];
-            if (valor) {
-                if (c.esImagen) {
-                    crearImagenDetalle(c.label || seccion.titulo, valor, panel);
-                } else if (c.esVideo) {
-                    crearVideoDetalle(seccion.titulo, valor, panel);
-                } else {
-                    const el = crearElementoDetalle(c.label, valor);
-                    if (el) panel.appendChild(el);
+        if (seccion.campos.some(c => c.value)) {
+            const btn = document.createElement("button");
+            btn.className = "accordion-btn";
+            btn.innerHTML = `${seccion.titulo} <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>`;
+            cont.appendChild(btn);
+            const panel = document.createElement("div");
+            panel.className = "panel-desplegable";
+            seccion.campos.forEach(c => {
+                if (c.value) {
+                    if (c.esImagen) crearImagenDetalle(c.label || seccion.titulo, c.value, panel);
+                    else if (c.esVideo) crearVideoDetalle(seccion.titulo, c.value, panel);
+                    else { const el = crearElementoDetalle(c.label, c.value); if (el) panel.appendChild(el); }
                 }
-            }
-        });
-        cont.appendChild(panel);
+            });
+            cont.appendChild(panel);
+        }
     });
 
-    // --- Información del Colaborador y Feedback ---
+    // Footer del Modal
     const footerModal = document.createElement("div");
     footerModal.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-top: 20px; padding-top: 15px; border-top: 1px solid #eee;";
-
     const colaboradorInfo = document.createElement("div");
     colaboradorInfo.style.cssText = "font-size: 0.8em; color: #555; background: rgba(0, 123, 255, 0.1); padding: 5px 10px; border-radius: 8px;";
-    colaboradorInfo.innerHTML = `Agregado por: <strong style="color: #0056b3;">${fila[header.indexOf("Colaborador")] || 'N/A'}</strong>`;
+    colaboradorInfo.innerHTML = `Agregado por: <strong style="color: #0056b3;">${item.colaborador || 'N/A'}</strong>`;
     footerModal.appendChild(colaboradorInfo);
 
     const feedbackContainer = document.createElement("div");
     feedbackContainer.style.cssText = "display: flex; gap: 10px;";
-
     const utilBtn = document.createElement("button");
-    const utilCount = (fila[header.indexOf("Util")] || '').split(',').filter(Boolean).length;
+    const utilCount = (item.util || '').split(',').filter(Boolean).length;
     utilBtn.innerHTML = `<i class="fa-solid fa-thumbs-up"></i> Útil <span class="util-count">${utilCount}</span>`;
     utilBtn.className = "feedback-btn util-btn";
-    utilBtn.onclick = () => handleLike(id, utilBtn);
+    utilBtn.onclick = () => handleLike(item.id, utilBtn);
     feedbackContainer.appendChild(utilBtn);
 
     const reportBtn = document.createElement("button");
     reportBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Reportar`;
     reportBtn.className = "feedback-btn report-btn";
-    reportBtn.onclick = () => toggleReportSection(id);
+    reportBtn.onclick = () => toggleReportSection(item.id);
     feedbackContainer.appendChild(reportBtn);
 
     footerModal.appendChild(feedbackContainer);
     cont.appendChild(footerModal);
 
-    // --- Report Problem Section (initially hidden) ---
+    // Sección de Reporte (oculta)
     const reportSection = document.createElement("div");
-    reportSection.id = `report-section-${id}`;
+    reportSection.id = `report-section-${item.id}`;
     reportSection.style.display = 'none';
     reportSection.style.marginTop = '15px';
-    reportSection.innerHTML = `
-        <textarea id="report-input-${id}" class="report-textarea" placeholder="Describe el problema que encontraste..."></textarea>
-        <button id="submit-report-${id}" class="submit-report-btn">Enviar Reporte</button>
-    `;
+    reportSection.innerHTML = `<textarea id="report-input-${item.id}" class="report-textarea" placeholder="Describe el problema..."></textarea><button id="submit-report-${item.id}" class="submit-report-btn">Enviar</button>`;
     cont.appendChild(reportSection);
 
-
-    modal.classList.add("visible");
+    document.getElementById("modalDetalle").classList.add("visible");
 }
 
-// --- LÓGICA DE BÚSQUEDA ACTIVA ---
-const searchInput = document.getElementById('searchInput');
-
-function filtrarContenido(textoBusqueda){
+function filtrarContenido(textoBusqueda) {
     const busqueda = textoBusqueda.toLowerCase().trim();
-    if (busqueda.length === 0) {
+    if (!busqueda) {
         datosFiltrados = [];
         estado.nivel = "categorias";
         mostrarCategorias();
         return;
     }
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
-    const dataToFilter = datosOriginales.slice(1);
-    const palabrasBusqueda = busqueda.split(' ').filter(p => p.length > 0);
-    datosFiltrados = dataToFilter.filter(fila => {
-        const filaTexto = [
-            fila[indexes.COL_CAT], fila[indexes.COL_MARCA], fila[indexes.COL_MODELO],
-            fila[indexes.COL_AÑOS], fila[indexes.COL_TIPO_ENCENDIDO]
-        ].map(s => (s || '').toLowerCase()).join(' ');
-        return palabrasBusqueda.every(palabra => filaTexto.includes(palabra));
+    const palabrasBusqueda = busqueda.split(' ').filter(p => p);
+    datosFiltrados = datosOriginales.filter(item => {
+        const itemTexto = `${item.categoria} ${item.marca} ${item.modelo} ${item.anoGeneracion} ${item.tipoDeEncendido}`.toLowerCase();
+        return palabrasBusqueda.every(palabra => itemTexto.includes(palabra));
     });
-    if(datosFiltrados.length > 0){
+
+    if (datosFiltrados.length > 0) {
         mostrarResultadosBusquedaMarca(busqueda);
     } else {
-        document.getElementById("contenido").innerHTML = `<p style="text-align:center; padding: 20px;">No se encontraron resultados para "${busqueda}".</p>`;
+        document.getElementById("contenido").innerHTML = `<p style="text-align:center; padding: 20px;">No se encontraron resultados para "${textoBusqueda}".</p>`;
     }
     estado.nivel = "busqueda";
-    estado.categoria = null; estado.marca = null; estado.modelo = null;
 }
 
-function mostrarResultadosBusquedaMarca(busquedaTexto){
+function mostrarResultadosBusquedaMarca(busquedaTexto) {
     const cont = document.getElementById("contenido");
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
     if (datosFiltrados.length === 1) {
-        const anosRaw = (datosFiltrados[0][indexes.COL_AÑOS] || '').trim();
-        mostrarDetalleModal(datosFiltrados[0], header);
-        cont.innerHTML = `<h4>Resultado Exacto Encontrado</h4><p>Abriendo detalle de ${datosFiltrados[0][indexes.COL_MODELO]} ${anosRaw ? `(${anosRaw})` : ''}.</p>`;
+        mostrarDetalleModal(datosFiltrados[0]);
+        cont.innerHTML = `<h4>Resultado Exacto Encontrado</h4><p>Abriendo detalle de ${datosFiltrados[0].modelo} ${datosFiltrados[0].anoGeneracion || ''}.</p>`;
         return;
     }
     cont.innerHTML = `<h4>Resultados de búsqueda para: "${busquedaTexto}"</h4>`;
-    const marcasUnicas = [...new Set(datosFiltrados.map(f => f[indexes.COL_MARCA]))].filter(m => m).sort();
+    const marcasUnicas = [...new Set(datosFiltrados.map(item => item.marca))].sort();
     const grid = document.createElement("div"); grid.className = "grid";
     marcasUnicas.forEach(marca => {
-        const ejemplo = datosFiltrados.find(f => f[indexes.COL_MARCA] === marca && f[indexes.COL_IMG_VEHICULO]) || datosFiltrados.find(f => f[indexes.COL_MARCA] === marca);
-        const card=document.createElement("div"); card.className="card";
-        card.onclick=()=>mostrarResultadosBusquedaModelo(busquedaTexto, marca);
-        const imgUrl = ejemplo ? ejemplo[indexes.COL_IMG_VEHICULO] : '';
-        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Marca ${marca}`; card.appendChild(img);
-        const overlay=document.createElement("div"); overlay.className="overlay"; overlay.innerHTML = marca; card.appendChild(overlay);
+        const ejemplo = datosFiltrados.find(item => item.marca === marca && item.imagenDelVehiculo) || datosFiltrados.find(item => item.marca === marca);
+        const card = document.createElement("div"); card.className = "card";
+        card.onclick = () => mostrarResultadosBusquedaModelo(busquedaTexto, marca);
+        const img = document.createElement("img"); img.src = convertirAGoogleThumbnail(ejemplo.imagenDelVehiculo); img.alt = `Marca ${marca}`; card.appendChild(img);
+        const overlay = document.createElement("div"); overlay.className = "overlay"; overlay.innerHTML = marca; card.appendChild(overlay);
         grid.appendChild(card);
     });
     cont.appendChild(grid);
 }
 
-function mostrarResultadosBusquedaModelo(busquedaTexto, marcaFiltro){
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
+function mostrarResultadosBusquedaModelo(busquedaTexto, marcaFiltro) {
     const cont = document.getElementById("contenido");
     cont.innerHTML = `<span class="backBtn" onclick="mostrarResultadosBusquedaMarca('${busquedaTexto}')">${backSvg} Volver a Marcas</span>
                       <h4>Modelos de ${marcaFiltro} (Búsqueda: "${busquedaTexto}")</h4>`;
-    const modelosRaw = datosFiltrados.filter(f => f[indexes.COL_MARCA] === marcaFiltro);
-    const modelosRenderizar = {};
-    modelosRaw.forEach(f => { const nombre = f[indexes.COL_MODELO]; if (!modelosRenderizar[nombre]) modelosRenderizar[nombre] = f; });
-    const grid=document.createElement("div"); grid.className = "grid";
-    Object.keys(modelosRenderizar).sort().forEach(modelo => {
-        const ejemplo = modelosRenderizar[modelo];
-        const versiones = modelosRaw.filter(f => f[indexes.COL_MODELO] === modelo);
-        const card=document.createElement("div"); card.className="card";
-        card.onclick=()=>{
-            if(versiones.length===1) mostrarDetalleModal(ejemplo, header);
-            else mostrarResultadosBusquedaVersion(busquedaTexto, marcaFiltro, modelo);
-        };
-        const imgUrl = ejemplo[indexes.COL_IMG_VEHICULO];
-        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Modelo ${modelo}`; card.appendChild(img);
-        const overlay=document.createElement("div"); overlay.className="overlay";
-        const anos = ejemplo[indexes.COL_AÑOS] || '';
-        const encendido = ejemplo[indexes.COL_TIPO_ENCENDIDO] || '';
-        if(versiones.length === 1) {
-            overlay.innerHTML = `<div>${modelo}</div>
-                                 ${anos ? `<div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${anos}</div>` : ''}
-                                 ${encendido ? `<div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${encendido}</div>` : ''}`;
+    const modelosFiltrados = datosFiltrados.filter(item => item.marca === marcaFiltro);
+    const modelosUnicos = [...new Map(modelosFiltrados.map(item => [item.modelo, item])).values()].sort((a,b) => a.modelo.localeCompare(b.modelo));
+
+    const grid = document.createElement("div"); grid.className = "grid";
+    modelosUnicos.forEach(ejemplo => {
+        const versiones = modelosFiltrados.filter(item => item.modelo === ejemplo.modelo);
+        const card = document.createElement("div"); card.className = "card";
+        card.onclick = () => (versiones.length === 1) ? mostrarDetalleModal(ejemplo) : mostrarResultadosBusquedaVersion(busquedaTexto, marcaFiltro, ejemplo.modelo);
+        const img = document.createElement("img"); img.src = convertirAGoogleThumbnail(ejemplo.imagenDelVehiculo); img.alt = `Modelo ${ejemplo.modelo}`; card.appendChild(img);
+        const overlay = document.createElement("div"); overlay.className = "overlay";
+        if (versiones.length === 1) {
+            overlay.innerHTML = `<div>${ejemplo.modelo}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${ejemplo.anoGeneracion || ''} ${ejemplo.tipoDeEncendido || ''}</div>`;
         } else {
-            overlay.innerHTML = `<div>${modelo}</div>
-                                 <div style="font-size:0.8em; opacity:0.8; font-weight:normal;">(${versiones.length} cortes)</div>`;
+            overlay.innerHTML = `<div>${ejemplo.modelo}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">(${versiones.length} cortes)</div>`;
         }
         card.appendChild(overlay);
         grid.appendChild(card);
@@ -1781,178 +1537,129 @@ function mostrarResultadosBusquedaModelo(busquedaTexto, marcaFiltro){
     cont.appendChild(grid);
 }
 
-function mostrarResultadosBusquedaVersion(busquedaTexto, marcaFiltro, modeloFiltro){
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
+function mostrarResultadosBusquedaVersion(busquedaTexto, marcaFiltro, modeloFiltro) {
     const cont = document.getElementById("contenido");
     cont.innerHTML = `<span class="backBtn" onclick="mostrarResultadosBusquedaModelo('${busquedaTexto}', '${marcaFiltro}')">${backSvg} Volver a Modelos (${modeloFiltro})</span>
-                      <h4>Cortes/Años de ${modeloFiltro} (Búsqueda: "${busquedaTexto}")</h4>`;
-    const filasDetalle = datosFiltrados.filter(f => f[indexes.COL_MARCA] === marcaFiltro && f[indexes.COL_MODELO] === modeloFiltro);
-    const grid=document.createElement("div"); grid.className="grid";
-    filasDetalle.forEach(f => {
-        const card=document.createElement("div"); card.className="card";
-        const imgUrl = f[indexes.COL_IMG_VEHICULO];
-        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f[indexes.COL_AÑOS]}`; card.appendChild(img);
-        const overlay=document.createElement("div"); overlay.className="overlay";
-        const anosRaw = (f[indexes.COL_AÑOS] || '').trim();
-        const encendido = (f[indexes.COL_TIPO_ENCENDIDO] || '').trim();
-        let mainTitle = anosRaw || modeloFiltro;
-        overlay.innerHTML = `<div style="font-weight:bold;">${mainTitle}</div>
-                             ${encendido ? `<div style="font-size:0.8em; opacity:0.8;">${encendido}</div>` : ''}`;
+                      <h4>Cortes/Años de ${modeloFiltro}</h4>`;
+    const versiones = datosFiltrados.filter(item => item.marca === marcaFiltro && item.modelo === modeloFiltro);
+    const grid = document.createElement("div"); grid.className = "grid";
+    versiones.forEach(item => {
+        const card = document.createElement("div"); card.className = "card";
+        card.onclick = () => mostrarDetalleModal(item);
+        const img = document.createElement("img"); img.src = convertirAGoogleThumbnail(item.imagenDelVehiculo); img.alt = `Corte ${item.anoGeneracion}`; card.appendChild(img);
+        const overlay = document.createElement("div"); overlay.className = "overlay";
+        overlay.innerHTML = `<div style="font-weight:bold;">${item.anoGeneracion || modeloFiltro}</div><div style="font-size:0.8em; opacity:0.8;">${item.tipoDeEncendido || ''}</div>`;
         card.appendChild(overlay);
-        card.onclick=()=>mostrarDetalleModal(f, header);
         grid.appendChild(card);
     });
     cont.appendChild(grid);
 }
 
-function mostrarCategorias(){
-  if(document.getElementById("searchInput").value.trim().length > 0) return;
-  estado.nivel="categorias"; estado.categoria=null;
-  const cont=document.getElementById("contenido"); cont.innerHTML="<h4>Categorías</h4>";
-  if (datosOriginales.length <= 1) {
-    cont.innerHTML = '<p style="color:red; font-size:1.2em;">Advertencia: La hoja de cálculo está vacía o el rango es incorrecto.</p>';
-    return;
-  }
-  const header = datosOriginales[0];
-  const indexes = getHeaderIndexes(header);
-  const dataRows = datosOriginales.slice(1);
-  const categorias = [...new Set(dataRows.map(f=>f[indexes.COL_CAT]))].filter(c => c).sort();
-  const grid = document.createElement("div"); grid.className="grid";
-  categorias.forEach(cat=>{
-    const ejemplo = dataRows.find(f=>f[indexes.COL_CAT]===cat && f[indexes.COL_IMG_VEHICULO]);
-    const card=document.createElement("div"); card.className="card";
-    card.onclick=()=>mostrarMarcas(cat);
-    const imgUrl = ejemplo ? ejemplo[indexes.COL_IMG_VEHICULO] : '';
-    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Imagen de la categoría ${cat}`; card.appendChild(img);
-    const overlay=document.createElement("div"); overlay.className="overlay"; overlay.innerHTML = cat; card.appendChild(overlay);
-    grid.appendChild(card);
-  });
-  cont.appendChild(grid);
-  mostrarUltimosAgregados();
+function mostrarCategorias() {
+    if (document.getElementById("searchInput").value.trim()) return;
+    estado = { nivel: "categorias", categoria: null };
+    const cont = document.getElementById("contenido");
+    cont.innerHTML = "<h4>Categorías</h4>";
+    if (!datosOriginales || datosOriginales.length === 0) {
+        cont.innerHTML += '<p style="text-align:center;">No hay datos de cortes disponibles.</p>';
+        return;
+    }
+    const categorias = [...new Set(datosOriginales.map(item => item.categoria))].filter(c => c).sort();
+    const grid = document.createElement("div"); grid.className = "grid";
+    categorias.forEach(cat => {
+        const ejemplo = datosOriginales.find(item => item.categoria === cat && item.imagenDelVehiculo);
+        const card = document.createElement("div"); card.className = "card";
+        card.onclick = () => mostrarMarcas(cat);
+        const img = document.createElement("img"); img.src = convertirAGoogleThumbnail(ejemplo?.imagenDelVehiculo); img.alt = `Categoría ${cat}`; card.appendChild(img);
+        const overlay = document.createElement("div"); overlay.className = "overlay"; overlay.innerHTML = cat; card.appendChild(overlay);
+        grid.appendChild(card);
+    });
+    cont.appendChild(grid);
+    mostrarUltimosAgregados();
 }
 
 function mostrarUltimosAgregados() {
     const cont = document.getElementById("contenido");
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
-    const todosLosCortes = datosOriginales.slice(1);
-    const ultimosCortes = todosLosCortes.slice(-5);
+    if (!datosOriginales || datosOriginales.length === 0) return;
+
+    const ultimosCortes = [...datosOriginales].sort((a, b) => b.id - a.id).slice(0, 5);
 
     const section = document.createElement('div');
     section.style.marginTop = '40px';
     const title = document.createElement('h4');
-    title.textContent = 'Últimos cortes agregados:';
+    title.textContent = 'Últimos agregados:';
     section.appendChild(title);
 
-    const grid = document.createElement('div');
-    grid.className = 'grid';
-
-    ultimosCortes.reverse().forEach(fila => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.onclick = () => mostrarDetalleModal(fila, header);
-
-        const img = document.createElement("img");
-        img.src = convertirAGoogleThumbnail(fila[indexes.COL_IMG_VEHICULO]);
-        img.alt = `${fila[indexes.COL_MARCA]} ${fila[indexes.COL_MODELO]}`;
-        card.appendChild(img);
-
-        const overlay = document.createElement("div");
-        overlay.className = "overlay";
-        overlay.innerHTML = `<div>${fila[indexes.COL_MARCA]}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila[indexes.COL_MODELO]} ${fila[indexes.COL_AÑOS]}</div>`;
+    const grid = document.createElement('div'); grid.className = 'grid';
+    ultimosCortes.forEach(item => {
+        const card = document.createElement("div"); card.className = "card";
+        card.onclick = () => mostrarDetalleModal(item);
+        const img = document.createElement("img"); img.src = convertirAGoogleThumbnail(item.imagenDelVehiculo); img.alt = `${item.marca} ${item.modelo}`; card.appendChild(img);
+        const overlay = document.createElement("div"); overlay.className = "overlay";
+        overlay.innerHTML = `<div>${item.marca}</div><div style="font-size:0.8em; opacity:0.8;">${item.modelo} ${item.anoGeneracion || ''}</div>`;
         card.appendChild(overlay);
-
         grid.appendChild(card);
     });
-
     section.appendChild(grid);
     cont.appendChild(section);
 }
 
-
-function mostrarMarcas(categoria){
-  document.getElementById("searchInput").value = "";
-  estado.nivel="marcas"; estado.categoria=categoria;
-  const cont=document.getElementById("contenido");
-  cont.innerHTML=`<span class="backBtn" onclick="irAPaginaPrincipal()">${backSvg} Volver a Categorías</span><h4>Marcas de ${categoria}</h4>`;
-  const header = datosOriginales[0];
-  const indexes = getHeaderIndexes(header);
-  const marcas = [...new Set(datosOriginales.slice(1).filter(f=>f[indexes.COL_CAT]===categoria).map(f=>f[indexes.COL_MARCA]))].filter(m => m).sort();
-  const grid = document.createElement("div"); grid.className="grid";
-  marcas.forEach(m=>{
-    const ejemplo = datosOriginales.slice(1).find(f=>f[indexes.COL_CAT]===categoria && f[indexes.COL_MARCA]===m);
-    const card=document.createElement("div"); card.className="card";
-    card.onclick=()=>mostrarModelos(categoria,m);
-    const imgUrl = ejemplo ? ejemplo[indexes.COL_IMG_VEHICULO] : '';
-    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Imagen de la marca ${m}`; card.appendChild(img);
-    const overlay=document.createElement("div"); overlay.className="overlay"; overlay.innerHTML = m; card.appendChild(overlay);
-    grid.appendChild(card);
-  });
-  cont.appendChild(grid);
+function mostrarMarcas(categoria) {
+    estado = { nivel: "marcas", categoria: categoria };
+    const cont = document.getElementById("contenido");
+    cont.innerHTML = `<span class="backBtn" onclick="irAPaginaPrincipal()">${backSvg} Volver</span><h4>Marcas de ${categoria}</h4>`;
+    const marcas = [...new Set(datosOriginales.filter(item => item.categoria === categoria).map(item => item.marca))].filter(m => m).sort();
+    const grid = document.createElement("div"); grid.className = "grid";
+    marcas.forEach(m => {
+        const ejemplo = datosOriginales.find(item => item.marca === m && item.imagenDelVehiculo);
+        const card = document.createElement("div"); card.className = "card";
+        card.onclick = () => mostrarModelos(categoria, m);
+        const img = document.createElement("img"); img.src = convertirAGoogleThumbnail(ejemplo?.imagenDelVehiculo); img.alt = `Marca ${m}`; card.appendChild(img);
+        const overlay = document.createElement("div"); overlay.className = "overlay"; overlay.innerHTML = m; card.appendChild(overlay);
+        grid.appendChild(card);
+    });
+    cont.appendChild(grid);
 }
 
-function mostrarModelos(categoria, marca){
-  estado.nivel="modelos"; estado.marca=marca;
-  document.getElementById("searchInput").value = "";
-  const cont=document.getElementById("contenido");
-  cont.innerHTML=`<span class="backBtn" onclick="mostrarMarcas('${categoria}')">${backSvg} Volver a Marcas</span><h4>Modelos de ${marca}</h4>`;
-  const header = datosOriginales[0];
-  const indexes = getHeaderIndexes(header);
-  const modelosRaw = datosOriginales.slice(1).filter(f=>f[indexes.COL_CAT]===categoria && f[indexes.COL_MARCA]===marca);
-  const modelosRenderizar = {};
-  modelosRaw.forEach(f=>{ const nombre = f[indexes.COL_MODELO]; if(!modelosRenderizar[nombre]) modelosRenderizar[nombre]=f; });
-  const grid=document.createElement("div"); grid.className="grid";
-  Object.keys(modelosRenderizar).sort().forEach(modelo=>{
-    const card=document.createElement("div"); card.className="card";
-    const ejemplo=modelosRenderizar[modelo];
-    const versiones = modelosRaw.filter(f => f[indexes.COL_MODELO] === modelo);
-    const imgUrl = ejemplo[indexes.COL_IMG_VEHICULO];
-    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Modelo ${modelo}`; card.appendChild(img);
-    const overlay=document.createElement("div"); overlay.className="overlay";
-    const anos = ejemplo[indexes.COL_AÑOS] || '';
-    const encendido = ejemplo[indexes.COL_TIPO_ENCENDIDO] || '';
-    card.onclick=()=>{
-      if(versiones.length===1) mostrarDetalleModal(ejemplo, datosOriginales[0]);
-      else mostrarVersiones(versiones, categoria, marca, modelo);
-    };
-    if(versiones.length === 1) {
-        overlay.innerHTML = `<div>${modelo}</div>
-                             ${anos ? `<div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${anos}</div>` : ''}
-                             ${encendido ? `<div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${encendido}</div>` : ''}`;
-    } else {
-        overlay.innerHTML = `<div>${modelo}</div>
-                             <div style="font-size:0.8em; opacity:0.8; font-weight:normal;">(${versiones.length} cortes)</div>`;
-    }
-    card.appendChild(overlay);
-    grid.appendChild(card);
-  });
-  cont.appendChild(grid);
+function mostrarModelos(categoria, marca) {
+    estado = { nivel: "modelos", categoria: categoria, marca: marca };
+    const cont = document.getElementById("contenido");
+    cont.innerHTML = `<span class="backBtn" onclick="mostrarMarcas('${categoria}')">${backSvg} Volver</span><h4>Modelos de ${marca}</h4>`;
+    const modelosFiltrados = datosOriginales.filter(item => item.categoria === categoria && item.marca === marca);
+    const modelosUnicos = [...new Map(modelosFiltrados.map(item => [item.modelo, item])).values()].sort((a,b) => a.modelo.localeCompare(b.modelo));
+    const grid = document.createElement("div"); grid.className = "grid";
+    modelosUnicos.forEach(ejemplo => {
+        const versiones = modelosFiltrados.filter(item => item.modelo === ejemplo.modelo);
+        const card = document.createElement("div"); card.className = "card";
+        card.onclick = () => (versiones.length === 1) ? mostrarDetalleModal(ejemplo) : mostrarVersiones(versiones, categoria, marca, ejemplo.modelo);
+        const img = document.createElement("img"); img.src = convertirAGoogleThumbnail(ejemplo.imagenDelVehiculo); img.alt = `Modelo ${ejemplo.modelo}`; card.appendChild(img);
+        const overlay = document.createElement("div"); overlay.className = "overlay";
+        if (versiones.length === 1) {
+             overlay.innerHTML = `<div>${ejemplo.modelo}</div><div style="font-size:0.8em; opacity:0.8;">${ejemplo.anoGeneracion || ''} ${ejemplo.tipoDeEncendido || ''}</div>`;
+        } else {
+             overlay.innerHTML = `<div>${ejemplo.modelo}</div><div style="font-size:0.8em; opacity:0.8;">(${versiones.length} cortes)</div>`;
+        }
+        card.appendChild(overlay);
+        grid.appendChild(card);
+    });
+    cont.appendChild(grid);
 }
 
-function mostrarVersiones(filas, categoria, marca, modelo){
-  estado.nivel="versiones"; estado.modelo=modelo;
-  document.getElementById("searchInput").value = "";
-  const cont=document.getElementById("contenido");
-  cont.innerHTML=`<span class="backBtn" onclick="mostrarModelos('${categoria}','${marca}')">${backSvg} Volver a Modelos (${modelo})</span><h4>Cortes/Años de ${modelo}</h4>`;
-  const grid=document.createElement("div"); grid.className="grid";
-  const header = datosOriginales[0];
-  const indexes = getHeaderIndexes(header);
-  filas.forEach(f=>{
-    const card=document.createElement("div"); card.className="card";
-    const imgUrl = f[indexes.COL_IMG_VEHICULO];
-    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f[indexes.COL_AÑOS]}`; card.appendChild(img);
-    const overlay=document.createElement("div"); overlay.className="overlay";
-    const anosRaw = (f[indexes.COL_AÑOS] || '').trim();
-    const encendido = (f[indexes.COL_TIPO_ENCENDIDO] || '').trim();
-    let mainTitle = anosRaw || modelo;
-    overlay.innerHTML = `<div style="font-weight:bold;">${mainTitle}</div>
-                         ${encendido ? `<div style="font-size:0.8em; opacity:0.8;">${encendido}</div>` : ''}`;
-    card.appendChild(overlay);
-    card.onclick=()=>mostrarDetalleModal(f, header);
-    grid.appendChild(card);
-  });
-  cont.appendChild(grid);
+function mostrarVersiones(filas, categoria, marca, modelo) {
+    estado = { nivel: "versiones", categoria, marca, modelo };
+    const cont = document.getElementById("contenido");
+    cont.innerHTML = `<span class="backBtn" onclick="mostrarModelos('${categoria}','${marca}')">${backSvg} Volver</span><h4>Cortes/Años de ${modelo}</h4>`;
+    const grid = document.createElement("div"); grid.className = "grid";
+    filas.forEach(item => {
+        const card = document.createElement("div"); card.className = "card";
+        card.onclick = () => mostrarDetalleModal(item);
+        const img = document.createElement("img"); img.src = convertirAGoogleThumbnail(item.imagenDelVehiculo); img.alt = `Corte ${item.anoGeneracion}`; card.appendChild(img);
+        const overlay = document.createElement("div"); overlay.className = "overlay";
+        overlay.innerHTML = `<div style="font-weight:bold;">${item.anoGeneracion || modelo}</div><div style="font-size:0.8em;">${item.tipoDeEncendido || ''}</div>`;
+        card.appendChild(overlay);
+        grid.appendChild(card);
+    });
+    cont.appendChild(grid);
 }
 
 // --- INICIALIZACIÓN Y LÓGICA DE PWA ---

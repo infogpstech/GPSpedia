@@ -198,64 +198,67 @@
     </div>
 
 <script>
-// --- LÓGICA DE DEPURACIÓN REMOTA ---
-function remoteLog(level, message, data = {}) {
-    fetch(SCRIPT_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'logFrontend', payload: { level, message, data } }),
-        keepalive: true
-    }).catch(console.error);
-}
-window.onerror = function(message, source, lineno, colno, error) {
-    remoteLog('ERROR', 'Unhandled exception on add_cortes.html', {
-        message: message, source: source, lineno: lineno, colno: colno, stack: error ? error.stack : 'N/A'
-    });
-    return false;
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw9Shubus7k0_9IiaOH_zgfEyBV_oBnvFSb66tNTdSXFh-aMDb6bcvHFA_Maiz__nAP/exec";
+const SESSION_KEY = 'gpsepedia_session';
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+
+const state = {
+    vehicleInfo: {},
+    existingData: null,
+    rowIndex: null,
+    filePromises: {},
+    colaborador: ''
 };
 
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzTYI8aYG4GxkPLu6wA5FSFSxqT9h8Rg4SvXJ9rYRNysqBEUFnyT-PTAmONsWpTJlty/exec";
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
-const state = { vehicleInfo: {}, existingData: null, rowIndex: null, filePromises: {} };
-
-// Make init a global function so it can be called from Playwright
-function init() {
-    const userName = localStorage.getItem('userName');
-    if (userName) {
-        document.getElementById('welcome-message').innerHTML = `Bienvenido,<br>${userName}`;
-        state.colaborador = userName;
-    } else {
-        // In a real browser, this would redirect. In Playwright's file:// context, it might not matter.
-        // For testing, we just need to ensure the dropdowns are populated, so we won't redirect.
-        if (window.location.protocol !== 'file:') {
-            window.location.href = 'index.html';
-            return;
-        }
+async function postToAction(action, payload = {}) {
+    try {
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action, payload })
+        });
+        if (!response.ok) throw new Error(`Error de red: ${response.statusText}`);
+        const result = await response.json();
+        if (result.status === 'error') throw new Error(result.details ? `${result.message}: ${result.details.message}` : result.message);
+        return result;
+    } catch (error) {
+        console.error(`Error en la acción '${action}':`, error);
+        alert(`Error en la acción '${action}': ${error.message}`);
+        throw error;
     }
+}
+
+async function init() {
+    const sessionData = localStorage.getItem(SESSION_KEY);
+    if (sessionData) {
+        const user = JSON.parse(sessionData);
+        document.getElementById('welcome-message').innerHTML = `Bienvenido,<br>${user.nombre}`;
+        state.colaborador = user.nombre;
+    } else {
+        window.location.href = 'index.html';
+        return;
+    }
+
     toggleLoading(true);
-    fetch(`${SCRIPT_URL}?action=getDropdowns`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) throw new Error(data.error);
-            populateSelect('categoria', data.categoria);
-            populateSelect('tipo-encendido', data['tipo-encendido']);
-            populateSelect('tipo-corte', data['tipo-corte']);
-        })
-        .catch(error => {
-            console.error('Error fetching dropdowns:', error);
-            alert('No se pudieron cargar las opciones del formulario. Inténtalo de nuevo.');
-        })
-        .finally(() => toggleLoading(false));
+    try {
+        const data = await postToAction('getDropdownData');
+        populateSelect('categoria', data.dropdowns.categoria);
+        populateSelect('tipo-encendido', data.dropdowns.tipoDeEncendido);
+        populateSelect('tipo-corte', data.dropdowns.tipoDeCorte);
+    } catch (error) {
+        alert('No se pudieron cargar las opciones del formulario. Inténtalo de nuevo.');
+    } finally {
+        toggleLoading(false);
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    init(); // Call the global init function
+    init();
     document.getElementById('vehicle-check-form').addEventListener('submit', handlePhase1Submit);
     document.getElementById('add-info-form').addEventListener('submit', handlePhase3Submit);
     document.getElementById('back-to-phase-1').addEventListener('click', () => showPhase(1));
     document.getElementById('logout-button').addEventListener('click', () => {
-        localStorage.clear();
+        localStorage.removeItem(SESSION_KEY);
         window.location.href = 'index.html';
     });
     document.querySelectorAll('input[type=file]').forEach(input => input.addEventListener('change', handleFileSelection));
@@ -266,10 +269,12 @@ function handleFileSelection(e) {
     const inputId = e.target.id;
     const previewImg = document.getElementById(`preview-${inputId}`);
     const fileNameSpan = e.target.closest('.file-input-wrapper').querySelector('.file-name');
+
     delete state.filePromises[inputId];
     fileNameSpan.textContent = '';
     previewImg.src = '';
     previewImg.classList.remove('visible');
+
     if (file) {
         if (file.size > MAX_FILE_SIZE) {
             alert(`El archivo es demasiado grande (Máx 5MB).`);
@@ -289,37 +294,30 @@ function handleFileSelection(e) {
     }
 }
 
-function handlePhase1Submit(e) {
+async function handlePhase1Submit(e) {
     e.preventDefault();
     toggleLoading(true);
     const formData = new FormData(e.target);
-    state.vehicleInfo = {};
-    for (let [key, value] of formData.entries()) {
-        const normalizedKey = key.replace(/-(\w)/g, (_, c) => c.toUpperCase());
-        state.vehicleInfo[normalizedKey] = value.trim();
+    state.vehicleInfo = Object.fromEntries(formData.entries());
+
+    try {
+        const res = await postToAction('checkVehicle', state.vehicleInfo);
+        if (res.exists) {
+            state.existingData = res.data;
+            state.rowIndex = res.rowIndex;
+            setupVerificationPhase();
+            showPhase(2);
+        } else {
+            state.existingData = null;
+            state.rowIndex = -1;
+            setupDataEntryPhase(true);
+            showPhase(3);
+        }
+    } catch (error) {
+        // Error already handled in postToAction
+    } finally {
+        toggleLoading(false);
     }
-    const params = new URLSearchParams({ action: 'checkVehicle', ...state.vehicleInfo });
-    fetch(`${SCRIPT_URL}?${params.toString()}`)
-        .then(res => res.json())
-        .then(res => {
-            if (res.error) throw new Error(res.details ? `${res.error}: ${res.details.message}` : res.error);
-            if (res.exists) {
-                state.existingData = res.data;
-                state.rowIndex = res.rowIndex;
-                setupVerificationPhase();
-                showPhase(2);
-            } else {
-                state.existingData = null;
-                state.rowIndex = -1;
-                setupDataEntryPhase(true);
-                showPhase(3);
-            }
-        })
-        .catch(error => {
-            console.error('Error checking vehicle:', error);
-            alert('Error al verificar el vehículo: ' + error.message);
-        })
-        .finally(() => toggleLoading(false));
 }
 
 async function handlePhase3Submit(e) {
@@ -332,74 +330,63 @@ async function handlePhase3Submit(e) {
         );
         resolvedFiles = Object.fromEntries(fileEntries);
     } catch (error) {
-        console.error('Error processing file promises:', error);
-        alert('Hubo un error al procesar las imágenes. Por favor, inténtelo de nuevo.');
+        alert('Hubo un error al procesar las imágenes.');
         toggleLoading(false);
         return;
     }
+
     const additionalInfo = {
         nuevoCorte: { tipo: document.getElementById('tipo-corte').value, descripcion: document.getElementById('descripcion-corte').value },
         apertura: document.getElementById('apertura-desc').value,
         alimentacion: document.getElementById('alimentacion-desc').value,
         notas: document.getElementById('notas').value
     };
+
     const payload = {
-      action: 'addCorte',
-      payload: {
         vehicleInfo: { ...state.vehicleInfo, rowIndex: state.rowIndex, colaborador: state.colaborador },
-        additionalInfo, files: resolvedFiles
-      }
+        additionalInfo,
+        files: resolvedFiles
     };
-    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                alert('¡Éxito! ' + data.message);
-                window.location.href = 'index.html';
-            } else {
-                throw new Error(data.details ? `${data.error}: ${data.details.message}` : data.error);
-            }
-        })
-        .catch(error => {
-            console.error('Error submitting form:', error);
-            alert('Error al guardar el registro: ' + error.message);
-        })
-        .finally(() => toggleLoading(false));
+
+    try {
+        const data = await postToAction('addCorte', payload);
+        alert('¡Éxito! ' + data.message);
+        window.location.href = 'index.html';
+    } catch (error) {
+        // Error already handled in postToAction
+    } finally {
+        toggleLoading(false);
+    }
 }
 
+// Resto de funciones auxiliares (generateAccordionTitles, setupVerificationPhase, etc.) sin cambios significativos en su lógica interna.
 function generateAccordionTitles(data) {
     const cuts = [
         { type: data.tipoDeCorte, desc: data.descripcionDelCorte, img: data.imagenDelCorte },
         { type: data.tipoDeCorte2, desc: data.descripcionDelSegundoCorte, img: data.imagenDeCorte2 },
         { type: data.tipoDeCorte3, desc: data.descripcionDelCorte3, img: data.imagenDeCorte3 }
     ];
-
     const cutCounts = cuts.reduce((acc, cut) => {
         if (cut.type) acc[cut.type] = (acc[cut.type] || 0) + 1;
         return acc;
     }, {});
-
     const cutTitles = {};
-    return cuts
-        .filter(cut => cut.desc)
-        .map(cut => {
-            let title = `Corte a ${cut.type}`;
-            if (cutCounts[cut.type] > 1) {
-                cutTitles[cut.type] = (cutTitles[cut.type] || 0) + 1;
-                title += ` ${cutTitles[cut.type]}`;
-            }
-            return { title, desc: cut.desc, img: cut.img };
-        });
+    return cuts.filter(cut => cut.desc).map(cut => {
+        let title = `Corte a ${cut.type}`;
+        if (cutCounts[cut.type] > 1) {
+            cutTitles[cut.type] = (cutTitles[cut.type] || 0) + 1;
+            title += ` ${cutTitles[cut.type]}`;
+        }
+        return { title, desc: cut.desc, img: cut.img };
+    });
 }
 
 function setupVerificationPhase() {
     const data = state.existingData;
     const container = document.getElementById('verification-data');
-    container.innerHTML = ''; // Clear previous content
-
+    container.innerHTML = '';
     const header = document.createElement('div');
     header.className = 'verification-header';
-
     let vehicleImgHtml = data.imagenDelVehiculo ? `<img src="${convertirAGoogleThumbnail(data.imagenDelVehiculo)}" alt="Foto del vehículo">` : '<div style="width: 200px; height: 150px; background: #eee; display:flex; align-items:center; justify-content:center; border-radius: 8px;">Sin foto</div>';
     header.innerHTML = `
         ${vehicleImgHtml}
@@ -408,56 +395,40 @@ function setupVerificationPhase() {
             <p><strong>Modelo:</strong> ${data.modelo || 'N/A'}</p>
             <p><strong>Año:</strong> ${data.anoGeneracion || 'N/A'}</p>
             <p><strong>Encendido:</strong> ${data.tipoDeEncendido || 'N/A'}</p>
-        </div>
-    `;
+        </div>`;
     container.appendChild(header);
-
     const accordionContainer = document.createElement('div');
     container.appendChild(accordionContainer);
-
     const dynamicCutSections = generateAccordionTitles(data);
-
     const otherSections = [
-        { title: 'Apertura de Puertas', desc: data.apertura, img: data.imagenDeLaApertura },
-        { title: 'Cables de Alimentación', desc: data.cablesDeAlimentacion, img: data.imagenDeLosCablesDeAlimentacion },
+        { title: 'Apertura', desc: data.apertura, img: data.imagenDeLaApertura },
+        { title: 'Alimentación', desc: data.cablesDeAlimentacion, img: data.imagenDeLosCablesDeAlimentacion },
         { title: 'Nota Importante', desc: data.notaImportante, img: null }
     ];
-
-    const allSections = [...dynamicCutSections, ...otherSections];
-
-    allSections.forEach(section => {
-        if (section.desc) { // Only create accordion if there is a description
-            const accordionItem = createAccordionItem(section.title, section.desc, section.img);
-            accordionContainer.appendChild(accordionItem);
+    [...dynamicCutSections, ...otherSections].forEach(section => {
+        if (section.desc) {
+            accordionContainer.appendChild(createAccordionItem(section.title, section.desc, section.img));
         }
     });
-
     setupAccordionListeners();
 
     const actionsContainer = document.getElementById('verification-actions');
     actionsContainer.innerHTML = '';
     const hasAllCuts = data.descripcionDelCorte && data.descripcionDelSegundoCorte && data.descripcionDelCorte3;
-    const hasApertura = data.apertura;
-    const hasAlimentacion = data.cablesDeAlimentacion;
-
     if (!hasAllCuts) {
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
         btn.textContent = 'Agregar Nuevo Corte';
-        btn.onclick = () => {
-            setupDataEntryPhase(false, { corte: true, apertura: false, alimentacion: false, notas: false });
-            showPhase(3);
-        };
+        btn.onclick = () => { setupDataEntryPhase(false, { corte: true, apertura: false, alimentacion: false, notas: false }); showPhase(3); };
         actionsContainer.appendChild(btn);
     }
+    const hasApertura = data.apertura;
+    const hasAlimentacion = data.cablesDeAlimentacion;
     if (!hasApertura || !hasAlimentacion) {
         const btn = document.createElement('button');
         btn.className = 'btn btn-primary';
-        btn.textContent = 'Agregar Info Adicional';
-        btn.onclick = () => {
-             setupDataEntryPhase(false, { corte: false, apertura: !hasApertura, alimentacion: !hasAlimentacion, notas: true });
-             showPhase(3);
-        };
+        btn.textContent = 'Agregar Info Adicional (Apertura/Alimentación)';
+        btn.onclick = () => { setupDataEntryPhase(false, { corte: false, apertura: !hasApertura, alimentacion: !hasAlimentacion, notas: true }); showPhase(3); };
         actionsContainer.appendChild(btn);
     }
     const cancelBtn = document.createElement('button');
@@ -472,15 +443,12 @@ function createAccordionItem(title, description, imageUrl) {
     const btn = document.createElement('button');
     btn.className = 'accordion-button';
     btn.innerHTML = `${title} <i class="fa-solid fa-chevron-down"></i>`;
-
     const panel = document.createElement('div');
     panel.className = 'accordion-panel';
-
-    let contentHtml = `<p>${description.replace(/\n/g, '<br>')}</p>`;
+    let contentHtml = `<p>${String(description).replace(/\n/g, '<br>')}</p>`;
     if (imageUrl) {
         contentHtml += `<img src="${convertirAGoogleThumbnail(imageUrl)}" alt="Detalle de ${title}">`;
     }
-
     panel.innerHTML = `<div class="accordion-content">${contentHtml}</div>`;
     item.appendChild(btn);
     item.appendChild(panel);
@@ -488,50 +456,36 @@ function createAccordionItem(title, description, imageUrl) {
 }
 
 function setupAccordionListeners() {
-    const accordions = document.querySelectorAll('.accordion-button');
-    accordions.forEach(acc => {
-        acc.addEventListener('click', function() {
-            // Close all other panels
-            accordions.forEach(otherAcc => {
-                if (otherAcc !== this) {
-                    otherAcc.classList.remove('active');
-                    const otherPanel = otherAcc.nextElementSibling;
-                    otherPanel.style.maxHeight = null;
-                    otherPanel.classList.remove('show');
-                }
+    document.querySelectorAll('.accordion-button').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const isActive = this.classList.contains('active');
+            document.querySelectorAll('.accordion-button').forEach(otherBtn => {
+                otherBtn.classList.remove('active');
+                otherBtn.nextElementSibling.style.maxHeight = null;
             });
-
-            // Toggle current panel
-            this.classList.toggle('active');
-            const panel = this.nextElementSibling;
-            if (panel.style.maxHeight) {
-                panel.style.maxHeight = null;
-                panel.classList.remove('show');
-            } else {
-                panel.classList.add('show');
-                panel.style.maxHeight = panel.scrollHeight + 30 + "px";
+            if (!isActive) {
+                this.classList.add('active');
+                const panel = this.nextElementSibling;
+                panel.style.maxHeight = panel.scrollHeight + "px";
             }
         });
     });
 }
 
-function setupDataEntryPhase(isNewVehicle, sectionsToShow = {corte:true, apertura:true, alimentacion:true, notas:true}) {
+function setupDataEntryPhase(isNewVehicle, sections = { corte: true, apertura: true, alimentacion: true, notas: true }) {
     document.getElementById('add-info-form').reset();
     document.querySelectorAll('.file-name').forEach(span => span.textContent = '');
-    document.querySelectorAll('.image-preview').forEach(img => {
-        img.src = '';
-        img.classList.remove('visible');
-    });
+    document.querySelectorAll('.image-preview').forEach(img => { img.src = ''; img.classList.remove('visible'); });
     state.filePromises = {};
     document.getElementById('phase-3-title').textContent = isNewVehicle ? 'Agregar Nuevo Vehículo' : 'Agregar Información Adicional';
     document.getElementById('new-vehicle-photo-group').style.display = isNewVehicle ? 'block' : 'none';
-    document.getElementById('nuevo-corte-group').style.display = sectionsToShow.corte ? 'block' : 'none';
-    document.getElementById('apertura-group').style.display = sectionsToShow.apertura ? 'block' : 'none';
-    document.getElementById('alimentacion-group').style.display = sectionsToShow.alimentacion ? 'block' : 'none';
+    document.getElementById('nuevo-corte-group').style.display = sections.corte ? 'block' : 'none';
+    document.getElementById('apertura-group').style.display = sections.apertura ? 'block' : 'none';
+    document.getElementById('alimentacion-group').style.display = sections.alimentacion ? 'block' : 'none';
 }
 
 function showPhase(phaseNumber) {
-    document.querySelectorAll('.form-phase').forEach(phase => phase.classList.remove('active'));
+    document.querySelectorAll('.form-phase').forEach(p => p.classList.remove('active'));
     document.getElementById(`phase-${phaseNumber}`).classList.add('active');
 }
 
@@ -562,11 +516,10 @@ function fileToBase64(file) {
     });
 }
 
-function convertirAGoogleThumbnail(url){
-  if(!url) return "https://placehold.co/400x300/cccccc/333333?text=Sin+Imagen";
-  let idMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(idMatch) return `https://drive.google.com/thumbnail?sz=w1000&id=${idMatch[1]}`;
-  return url; // Devuelve la URL original si no encuentra un ID, para enlaces que ya funcionan.
+function convertirAGoogleThumbnail(url) {
+    if (!url) return "https://placehold.co/400x300/cccccc/333333?text=Sin+Imagen";
+    const idMatch = String(url).match(/id=([a-zA-Z0-9_-]+)|\/d\/([a-zA-Z0-9_-]+)/);
+    return idMatch ? `https://drive.google.com/thumbnail?sz=w1000&id=${idMatch[1] || idMatch[2]}` : url;
 }
 </script>
 </body>
