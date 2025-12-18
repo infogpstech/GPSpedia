@@ -41,6 +41,8 @@ function doPost(e) {
       case 'updateUser': return handleUpdateUser(request.payload);
       case 'deleteUser': return handleDeleteUser(request.payload);
       case 'changePassword': return handleChangePassword(request.payload);
+      case 'validateSession': return handleValidateSession(request.payload);
+      case 'reportProblem': return handleReportProblem(request.payload);
       default: throw new Error(`Invalid action: ${request.action}`);
     }
   } catch (error) {
@@ -96,12 +98,29 @@ function handleLogin(payload) {
         throw new Error("Username and password are required.");
     }
 
-    const users = getSheetDataAsObjects(SHEET_NAMES.USERS);
-    const user = users.find(u => u.nombreUsuario === username && u.password === password);
+    const usersSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.USERS);
+    const [headers, ...rows] = usersSheet.getDataRange().getValues();
 
-    if (user) {
-        // Exclude password from the returned user object
-        const { password, ...safeUser } = user;
+    const usernameColIndex = headers.indexOf("Nombre_Usuario");
+    const passwordColIndex = headers.indexOf("Password");
+    const tokenColIndex = headers.indexOf("SessionToken");
+
+    const rowIndex = rows.findIndex(row => row[usernameColIndex] === username && row[passwordColIndex] === password);
+
+    if (rowIndex !== -1) {
+        const sessionToken = Utilities.getUuid();
+        usersSheet.getRange(rowIndex + 2, tokenColIndex + 1).setValue(sessionToken);
+
+        const user = rows[rowIndex];
+        const safeUser = {};
+        headers.forEach((header, i) => {
+            const key = header.trim().replace(/[^a-zA-Z0-9]+(.)?/g, (m, c) => c ? c.toUpperCase() : '').replace(/^./, m => m.toLowerCase());
+            if (key !== 'password') {
+                safeUser[key] = user[i];
+            }
+        });
+        safeUser.sessionToken = sessionToken; // Add token to the user object sent to client
+
         return jsonResponse({ status: 'success', user: safeUser });
     } else {
         throw new Error("Invalid username or password.");
@@ -200,10 +219,44 @@ function handleAddCorte(payload) {
       return newRowData[camelCaseHeader] || ''; // Use empty string for missing data
   });
 
-  // 4. Append the new row to the sheet
-  cortesSheet.appendRow(newRow);
+  // 4. Append or Update the row in the sheet
+  if (vehicleInfo.rowIndex && vehicleInfo.rowIndex !== -1) {
+    // It's an update to an existing row
+    const rangeToUpdate = cortesSheet.getRange(vehicleInfo.rowIndex, 1, 1, headers.length);
+    const existingValues = rangeToUpdate.getValues()[0];
 
-  return jsonResponse({ status: 'success', message: 'Nuevo corte agregado exitosamente.' });
+    // Find next available cut slot
+    const descCorte2Index = headers.indexOf("Descripción del Segundo corte");
+    const descCorte3Index = headers.indexOf("Descripción del corte 3");
+
+    if (existingValues[descCorte2Index] === '') {
+        // Add to Corte 2
+        newRowData['descripcionDelSegundoCorte'] = additionalInfo.nuevoCorte.descripcion;
+        newRowData['tipoDeCorte2'] = additionalInfo.nuevoCorte.tipo;
+        newRowData['imagenDeCorte2'] = fileUrls.imagenCorte || '';
+    } else if (existingValues[descCorte3Index] === '') {
+        // Add to Corte 3
+        newRowData['descripcionDelCorte3'] = additionalInfo.nuevoCorte.descripcion;
+        newRowData['tipoDeCorte3'] = additionalInfo.nuevoCorte.tipo;
+        newRowData['imagenDeCorte3'] = fileUrls.imagenCorte || '';
+    }
+
+    // Rebuild the row with the new data
+    const updatedRow = headers.map(header => {
+      const camelCaseHeader = header.trim().replace(/[^a-zA-Z0-9]+(.)?/g, (m, c) => c ? c.toUpperCase() : '').replace(/^./, m => m.toLowerCase());
+      return newRowData[camelCaseHeader] || '';
+    });
+
+    const finalValues = existingValues.map((oldValue, i) => updatedRow[i] ? updatedRow[i] : oldValue);
+
+    rangeToUpdate.setValues([finalValues]);
+    return jsonResponse({ status: 'success', message: 'Corte actualizado exitosamente.' });
+
+  } else {
+    // It's a new entry
+    cortesSheet.appendRow(newRow);
+    return jsonResponse({ status: 'success', message: 'Nuevo corte agregado exitosamente.' });
+  }
 }
 
 // Helper function to upload a base64 encoded file to Drive
@@ -368,23 +421,78 @@ function handleChangePassword(payload) {
     return jsonResponse({ status: 'success', message: 'Password updated successfully.' });
 }
 
+function handleValidateSession(payload) {
+    const { userId, sessionToken } = payload;
+    if (!userId || !sessionToken) {
+        throw new Error("User ID and Session Token are required for validation.");
+    }
+
+    const users = getSheetDataAsObjects(SHEET_NAMES.USERS);
+    const user = users.find(u => u.id.toString() === userId.toString());
+
+    if (user && user.sessionToken === sessionToken) {
+        return jsonResponse({ status: 'success', valid: true });
+    } else {
+        return jsonResponse({ status: 'success', valid: false });
+    }
+}
+
 function generateUsername(nombre, existingUsernames) {
     if (!nombre) return null;
-    const parts = nombre.toLowerCase().split(' ');
-    if (parts.length < 2) return null;
+    const names = nombre.toLowerCase().split(' ').filter(Boolean);
+    if (names.length < 2) return null; // Need at least a first name and a last name
 
-    const firstName = parts[0];
-    const lastName = parts[1];
+    const firstNameInitial = names[0].charAt(0);
+    const lastName1 = names[1];
+    const lastName2 = names.length > 2 ? names[2] : null;
+    const middleNameInitial = names.length > 3 ? names[3].charAt(0) : null;
 
-    let username = `${firstName.charAt(0)}_${lastName}`;
 
-    // Handle collisions
+    // Try initial_lastname1
+    let username = `${firstNameInitial}_${lastName1}`;
+    if (!existingUsernames.includes(username)) {
+        return username;
+    }
+
+    // Try initial_lastname2 if available
+    if (lastName2) {
+        username = `${firstNameInitial}_${lastName2}`;
+        if (!existingUsernames.includes(username)) {
+            return username;
+        }
+    }
+
+    // Try middlenameinitial_lastname1 if available
+    if (middleNameInitial) {
+        username = `${middleNameInitial}_${lastName1}`;
+         if (!existingUsernames.includes(username)) {
+            return username;
+        }
+    }
+
+    // Fallback to number suffix
     let counter = 1;
-    let originalUsername = username;
-    while(existingUsernames.includes(username)) {
-        username = `${originalUsername}${counter}`;
+    let originalUsername = `${firstNameInitial}_${lastName1}`;
+    username = `${originalUsername}${counter}`;
+    while (existingUsernames.includes(username)) {
         counter++;
+        username = `${originalUsername}${counter}`;
     }
 
     return username;
+}
+
+function handleReportProblem(payload) {
+    const { vehicleId, userName, problemText } = payload;
+    if (!vehicleId || !userName || !problemText) {
+        throw new Error("Vehicle ID, User Name, and Problem Text are required.");
+    }
+
+    const feedbacksSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.FEEDBACKS);
+
+    // The columns are: ID, Usuario, ID_vehiculo, Problema, Respuesta, ¿Se resolvió?, Responde
+    // We only fill the first few, the rest are for moderators.
+    feedbacksSheet.appendRow(["", userName, vehicleId, problemText, "", "", ""]);
+
+    return jsonResponse({ status: 'success', message: 'Problem reported successfully.' });
 }

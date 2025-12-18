@@ -642,6 +642,26 @@ body.search-active .app-logo {
     color: #c0392b;
 }
 
+.report-textarea {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    margin-bottom: 10px;
+    box-sizing: border-box;
+}
+
+.submit-report-btn {
+    width: 100%;
+    padding: 10px;
+    border: none;
+    border-radius: 8px;
+    background-color: var(--primary-color);
+    color: white;
+    cursor: pointer;
+}
+
 .panel-desplegable {
     padding: 0 18px;
     background-color: white;
@@ -851,7 +871,6 @@ function sanitizeInput(input) {
     return sanitized;
 }
 
-const SESSION_KEY = 'gpsepedia_session';
 const SESSION_ID_KEY = 'gpsepedia_session_id';
 async function postToAction(action, payload = {}) {
     try {
@@ -875,8 +894,20 @@ async function postToAction(action, payload = {}) {
 async function checkSession() {
     const sessionData = localStorage.getItem(SESSION_KEY);
     if (sessionData) {
-        console.log("Sesión encontrada, inicializando la aplicación.");
-        await initializeAppData(JSON.parse(sessionData));
+        const user = JSON.parse(sessionData);
+        try {
+            const result = await postToAction('validateSession', { userId: user.id, sessionToken: user.sessionToken });
+            if (result.valid) {
+                console.log("Sesión válida, inicializando la aplicación.");
+                await initializeAppData(user);
+            } else {
+                console.log("Sesión inválida, mostrando el login.");
+                logout("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
+            }
+        } catch (error) {
+            console.error("Error validando la sesión:", error);
+            showLoginHideApp();
+        }
     } else {
         console.log("No hay sesión, mostrando el login.");
         showLoginHideApp();
@@ -924,6 +955,13 @@ function logout(reason = null) {
 }
 
 function showLoginHideApp(reason = null) {
+    // Ocultar splash screen
+    const splash = document.getElementById('splash-screen');
+    splash.style.opacity = '0';
+    setTimeout(() => {
+        splash.style.display = 'none';
+    }, 500);
+
     // Ocultar contenido principal y footer
     document.querySelector('.container').style.display = 'none';
     document.querySelector('.footer').style.display = 'none';
@@ -1602,11 +1640,22 @@ function mostrarDetalleModal(fila, header) {
     const reportBtn = document.createElement("button");
     reportBtn.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Reportar`;
     reportBtn.className = "feedback-btn report-btn";
-    // reportBtn.onclick = () => handleReport(id); // Logic to be added
+    reportBtn.onclick = () => toggleReportSection(id);
     feedbackContainer.appendChild(reportBtn);
 
     footerModal.appendChild(feedbackContainer);
     cont.appendChild(footerModal);
+
+    // --- Report Problem Section (initially hidden) ---
+    const reportSection = document.createElement("div");
+    reportSection.id = `report-section-${id}`;
+    reportSection.style.display = 'none';
+    reportSection.style.marginTop = '15px';
+    reportSection.innerHTML = `
+        <textarea id="report-input-${id}" class="report-textarea" placeholder="Describe el problema que encontraste..."></textarea>
+        <button id="submit-report-${id}" class="submit-report-btn">Enviar Reporte</button>
+    `;
+    cont.appendChild(reportSection);
 
 
     modal.classList.add("visible");
@@ -2193,6 +2242,43 @@ async function handleLike(vehicleId, buttonElement) {
         buttonElement.disabled = false;
         buttonElement.style.backgroundColor = ''; // Revert to default color
         // The error is already shown by postToAction
+    }
+}
+
+function toggleReportSection(vehicleId) {
+    const reportSection = document.getElementById(`report-section-${vehicleId}`);
+    const submitBtn = document.getElementById(`submit-report-${vehicleId}`);
+
+    if (reportSection.style.display === 'none') {
+        reportSection.style.display = 'block';
+        submitBtn.onclick = () => handleReportSubmit(vehicleId);
+    } else {
+        reportSection.style.display = 'none';
+    }
+}
+
+async function handleReportSubmit(vehicleId) {
+    const user = JSON.parse(localStorage.getItem(SESSION_KEY))?.user;
+    if (!user || !user.nombre) {
+        alert("Debes iniciar sesión para reportar un problema.");
+        return;
+    }
+
+    const reportInput = document.getElementById(`report-input-${vehicleId}`);
+    const problemText = reportInput.value.trim();
+
+    if (!problemText) {
+        alert("Por favor, describe el problema.");
+        return;
+    }
+
+    try {
+        await postToAction('reportProblem', { vehicleId, userName: user.nombre, problemText });
+        alert("Gracias por tu reporte. Lo revisaremos pronto.");
+        reportInput.value = '';
+        toggleReportSection(vehicleId);
+    } catch (error) {
+        // Error is handled by postToAction
     }
 }
 </script>
