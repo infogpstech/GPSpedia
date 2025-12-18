@@ -835,6 +835,27 @@ body.search-active .app-logo {
 </div>
 
 <script>
+// --- LÓGICA DE DEPURACIÓN REMOTA ---
+function remoteLog(level, message, data = {}) {
+    // Non-blocking call to the backend logger
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'logFrontend', payload: { level, message, data } }),
+        keepalive: true // Ensure the request is sent even if the page is closing
+    }).catch(console.error);
+}
+window.onerror = function(message, source, lineno, colno, error) {
+    remoteLog('ERROR', 'Unhandled exception', {
+        message: message,
+        source: source,
+        lineno: lineno,
+        colno: colno,
+        stack: error ? error.stack : 'N/A'
+    });
+    return false; // Let the default browser error handling also run
+};
+
 // --- LÓGICA DE SEGURIDAD ---
 document.addEventListener('keydown', function(e) {
     if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) {
@@ -853,7 +874,7 @@ const STORES = ['cortes', 'tutoriales', 'relay'];
 let db;
 
 // --- LÓGICA DE DATOS Y API ---
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwjv0a3c8TOa5UxYVEFQUvdtk6jFeqKVNwiIVdEVWDTJyx7mrZWFBmfvHwHJmj7PFmm/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyX2Qw1RBdoZxdm19GJFBHHF--9r4mCFE8gAG0LhhLI0gHZSFqtuI7kRiXQ0Ergj0KX/exec";
 const SESSION_KEY = 'gpsepedia_session';
 
 // --- LÓGICA DE AUTENTICACIÓN Y SESIÓN ---
@@ -892,24 +913,28 @@ async function postToAction(action, payload = {}) {
 }
 
 async function checkSession() {
+    remoteLog('INFO', 'checkSession started');
     const sessionData = localStorage.getItem(SESSION_KEY);
     if (sessionData) {
-        const user = JSON.parse(sessionData);
+        remoteLog('INFO', 'Session data found in localStorage.');
         try {
+            const user = JSON.parse(sessionData);
+            remoteLog('INFO', 'Attempting to validate session for user.', { userId: user.id });
             const result = await postToAction('validateSession', { userId: user.id, sessionToken: user.sessionToken });
+
             if (result.valid) {
-                console.log("Sesión válida, inicializando la aplicación.");
+                remoteLog('INFO', 'Session is valid. Initializing app.');
                 await initializeAppData(user);
             } else {
-                console.log("Sesión inválida, mostrando el login.");
+                remoteLog('WARN', 'Session is invalid according to backend. Logging out.');
                 logout("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
             }
         } catch (error) {
-            console.error("Error validando la sesión:", error);
+            remoteLog('ERROR', 'Error during session validation.', { error: error.message, stack: error.stack });
             showLoginHideApp();
         }
     } else {
-        console.log("No hay sesión, mostrando el login.");
+        remoteLog('INFO', 'No session data found. Showing login.');
         showLoginHideApp();
     }
 }

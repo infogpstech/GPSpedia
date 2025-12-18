@@ -197,7 +197,23 @@
         </div>
     </div>
 <script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwjv0a3c8TOa5UxYVEFQUvdtk6jFeqKVNwiIVdEVWDTJyx7mrZWFBmfvHwHJmj7PFmm/exec";
+// --- LÓGICA DE DEPURACIÓN REMOTA ---
+function remoteLog(level, message, data = {}) {
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'logFrontend', payload: { level, message, data } }),
+        keepalive: true
+    }).catch(console.error);
+}
+window.onerror = function(message, source, lineno, colno, error) {
+    remoteLog('ERROR', 'Unhandled exception on users.html', {
+        message: message, source: source, lineno: lineno, colno: colno, stack: error ? error.stack : 'N/A'
+    });
+    return false;
+};
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyX2Qw1RBdoZxdm19GJFBHHF--9r4mCFE8gAG0LhhLI0gHZSFqtuI7kRiXQ0Ergj0KX/exec";
 const SESSION_KEY = 'gpsepedia_session';
 let currentUser = null;
 let allUsers = [];

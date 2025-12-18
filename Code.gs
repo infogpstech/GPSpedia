@@ -9,7 +9,8 @@ const SHEET_NAMES = {
   USERS: "Users",
   FEEDBACKS: "Feedbacks",
   TUTORIALES: "Tutorial",
-  RELAY: "Configuración del Relay"
+  RELAY: "Configuración del Relay",
+  LOGS: "Logs"
 };
 
 const ROLE_HIERARCHY = {
@@ -28,7 +29,7 @@ function doPost(e) {
   try {
     request = JSON.parse(e.postData.contents);
     if (!request.action) throw new Error("Action not specified.");
-    Logger.log(`Received action: ${request.action}`);
+    logDebug(request.action, { payload: request.payload });
 
     // Action router
     switch (request.action) {
@@ -43,6 +44,7 @@ function doPost(e) {
       case 'changePassword': return handleChangePassword(request.payload);
       case 'validateSession': return handleValidateSession(request.payload);
       case 'reportProblem': return handleReportProblem(request.payload);
+      case 'logFrontend': return handleLogFrontend(request.payload);
       default: throw new Error(`Invalid action: ${request.action}`);
     }
   } catch (error) {
@@ -51,18 +53,12 @@ function doPost(e) {
 }
 
 function jsonResponse(data, statusCode = 200) {
-  const output = JSON.stringify(data);
-  const textOutput = ContentService.createTextOutput(output).setMimeType(ContentService.MimeType.JSON);
-  // CORS Header: Allow all origins. Crucial for local development and deployment.
-  textOutput.setHeader('Access-Control-Allow-Origin', '*');
-  // It's good practice to also allow methods and headers for more complex requests.
-  textOutput.setHeader('Access-Control-Allow-Methods', 'POST, GET, OPTIONS');
-  textOutput.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  return textOutput;
+  return ContentService.createTextOutput(JSON.stringify(data))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function handleError(error, functionName = 'Unknown') {
-  Logger.log(`Error in ${functionName}: ${error.stack}`);
+  logDebug(`ERROR in ${functionName}`, { error: error.stack });
   return jsonResponse({
     status: 'error',
     message: `Server error in ${functionName}.`,
@@ -482,6 +478,23 @@ function generateUsername(nombre, existingUsernames) {
     return username;
 }
 
+function logDebug(action, details) {
+  try {
+    const logSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.LOGS);
+    if (!logSheet) {
+      // If "Logs" sheet doesn't exist, create it.
+      const newSheet = SpreadsheetApp.openById(SPREADSHEET_ID).insertSheet(SHEET_NAMES.LOGS);
+      newSheet.appendRow(["Timestamp", "Action", "Details"]);
+    }
+    const timestamp = new Date().toISOString();
+    const detailsString = typeof details === 'object' ? JSON.stringify(details) : details;
+    logSheet.appendRow([timestamp, action, detailsString]);
+  } catch (e) {
+    // If logging fails, log to the standard Apps Script logger to avoid infinite loops.
+    Logger.log(`Failed to write to Logs sheet: ${e.toString()}`);
+  }
+}
+
 function handleReportProblem(payload) {
     const { vehicleId, userName, problemText } = payload;
     if (!vehicleId || !userName || !problemText) {
@@ -495,4 +508,10 @@ function handleReportProblem(payload) {
     feedbacksSheet.appendRow(["", userName, vehicleId, problemText, "", "", ""]);
 
     return jsonResponse({ status: 'success', message: 'Problem reported successfully.' });
+}
+
+function handleLogFrontend(payload) {
+    const { level, message, data } = payload;
+    logDebug(`FRONTEND_${level.toUpperCase()}`, { message, data });
+    return jsonResponse({ status: 'success' });
 }
