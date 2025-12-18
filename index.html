@@ -874,7 +874,7 @@ const STORES = ['cortes', 'tutoriales', 'relay'];
 let db;
 
 // --- LÓGICA DE DATOS Y API ---
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyX2Qw1RBdoZxdm19GJFBHHF--9r4mCFE8gAG0LhhLI0gHZSFqtuI7kRiXQ0Ergj0KX/exec";
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz7Fobf8ptee5H48C2JV8eGSH7tdVosKq-l5QUwquDpwkqp7TF1ziQrDV0Fy95TtrFZ/exec";
 const SESSION_KEY = 'gpsepedia_session';
 
 // --- LÓGICA DE AUTENTICACIÓN Y SESIÓN ---
@@ -980,6 +980,7 @@ function logout(reason = null) {
 }
 
 function showLoginHideApp(reason = null) {
+    remoteLog('INFO', 'showLoginHideApp called', { reason });
     // Ocultar splash screen
     const splash = document.getElementById('splash-screen');
     splash.style.opacity = '0';
@@ -996,6 +997,7 @@ function showLoginHideApp(reason = null) {
     // Mostrar el modal de login
     const loginModal = document.getElementById('login-modal');
     loginModal.style.display = 'flex';
+    remoteLog('INFO', 'Login modal display style set to flex.');
 
     const loginError = document.getElementById('login-error');
     if (reason) {
@@ -1010,6 +1012,7 @@ function showLoginHideApp(reason = null) {
 }
 
 function hideLoginShowApp() {
+    remoteLog('INFO', 'hideLoginShowApp called');
     // Ocultar splash y login
     const splash = document.getElementById('splash-screen');
     splash.style.opacity = '0';
@@ -1018,10 +1021,12 @@ function hideLoginShowApp() {
     }, 500); // Coincide con la transición de opacidad
 
     document.getElementById('login-modal').style.display = 'none';
+    remoteLog('INFO', 'Login modal display style set to none.');
 
     // Mostrar contenido principal y footer
     document.querySelector('.container').style.display = 'block';
     document.querySelector('.footer').style.display = 'block';
+    remoteLog('INFO', 'Main container display style set to block.');
 }
 
 

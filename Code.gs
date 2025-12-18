@@ -24,6 +24,12 @@ const ROLE_HIERARCHY = {
 // =================================================================
 // --- MAIN ROUTER & HELPERS ---
 // =================================================================
+function doGet(e) {
+  // This function is required for the web app to be accessible via a GET request (e.g., in a browser).
+  // All the main logic is handled via POST requests from the frontend.
+  return jsonResponse({ status: 'success', message: 'GPSpedia backend is active and ready to receive POST requests.' });
+}
+
 function doPost(e) {
   let request;
   try {
