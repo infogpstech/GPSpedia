@@ -34,8 +34,11 @@ const SESSION_LIMITS = {
  */
 function doGet(e) {
   try {
-    // Retorna un mensaje simple para verificar que el script está activo.
-    return ContentService.createTextOutput("GPSpedia Backend v3 is active.").setMimeType(ContentService.MimeType.TEXT);
+    // Retorna un mensaje JSON para verificar que el script está activo y mantener la consistencia.
+    const response = { status: 'success', message: 'GPSpedia Backend v3.001 is active.' };
+    return ContentService
+      .createTextOutput(JSON.stringify(response))
+      .setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
     Logger.log(`Error en doGet: ${error.toString()}`);
     return ContentService
