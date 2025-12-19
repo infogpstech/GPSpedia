@@ -1,6 +1,15 @@
 # Registro de Cambios del Proyecto GPSpedia
 
-## v3.004 - [Fecha Actual]
+## v3.005 - [Fecha Actual]
+
+### Corregido
+- **Error Crítico de 'Failed to fetch':** Se solucionó la causa raíz del error de red al corregir una `SCRIPT_URL` malformada (cadena rota, sin comillas de cierre) en `index.html`, `users.html` y `add_cortes.html`. Este error impedía que el frontend enviara cualquier solicitud al backend.
+
+### Mejorado
+- **Robustez del Login:** La comparación de credenciales en `Code.gs` ahora ignora espacios en blanco iniciales/finales (`trim()`) para evitar fallos por datos sucios.
+- **Robustez de Permisos:** La lógica de permisos en `users.html` ahora normaliza el rol del usuario para manejar inconsistencias en los datos.
+
+## v3.004 - [Fecha Anterior]
 
 ### Depuración
 - **Manejo de Errores en `doPost`:** Se ha añadido un bloque `try/catch` específico alrededor del análisis `JSON.parse(e.postData.contents)` dentro de la función `doPost`. Si el análisis del JSON falla, el script ahora registrará el contenido bruto de la solicitud POST antes de lanzar un error. Este cambio es un paso de diagnóstico crucial para capturar la causa raíz del error "Failed to fetch", que se sospecha ocurre si el backend recibe un payload inesperado o malformado del frontend.
