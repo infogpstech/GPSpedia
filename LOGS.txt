@@ -1,0 +1,10 @@
+# Registro de Cambios del Proyecto GPSpedia
+
+## v3.002 - [Fecha Actual]
+
+### Corregido
+- **Error Crítico de Inicio de Sesión ("Failed to fetch"):** Se implementó un manejo de errores robusto (`try/catch`) dentro de la función `handleLogin` en `Code.gs`. Antes de este cambio, cualquier error interno durante el proceso de inicio de sesión provocaba que el script fallara silenciosamente, impidiendo que se enviara una respuesta al frontend. Esto resultaba en el error genérico "Failed to fetch" en la pantalla de inicio de sesión. Ahora, cualquier excepción es capturada, registrada, y se devuelve un mensaje de error JSON claro, mejorando drásticamente la capacidad de depuración y la experiencia del usuario.
+
+### Tareas
+- **Incremento de Versión:** Se actualizó el número de versión del backend a "v3.002" para reflejar los nuevos cambios.
+- **Creación de Changelog:** Se ha creado este archivo (`LOGS.txt`) para mantener un registro detallado de todos los cambios futuros en el código, mejorando la mantenibilidad y el seguimiento del proyecto.
