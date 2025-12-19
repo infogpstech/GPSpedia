@@ -1,17 +1,42 @@
 // ============================================================================
 // CONFIGURACIÓN GLOBAL
 // ============================================================================
-const SPREADSHEET_ID = "1jEdC_Test_NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo"; // Reemplazar con ID real
-const DRIVE_FOLDER_ID = '1-8QqhS-Test_wtEFFwyBG8CmnEOp5i8rxSM-2'; // Reemplazar con ID real
+const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
+const DRIVE_FOLDER_ID = '1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2';
 
-const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
+let spreadsheet = null; // Variable para cachear la instancia de la hoja de cálculo
+
+/**
+ * Obtiene la instancia de la hoja de cálculo, abriéndola solo una vez por ejecución.
+ * Esto mueve la conexión de la hoja de cálculo desde el ámbito global a una función,
+ * permitiendo que cualquier error de inicialización (ej. permisos) sea capturado
+ * por los bloques try/catch en doPost y doGet.
+ * @returns {Spreadsheet} El objeto de la hoja de cálculo activa.
+ */
+function getSpreadsheet() {
+  if (spreadsheet === null) {
+    spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
+  }
+  return spreadsheet;
+}
 
 // Definiciones de Hojas
 const SHEET_NAMES = {
     CORTES: "Cortes",
     USERS: "Users",
-    FEEDBACKS: "Feedbacks"
+    FEEDBACKS: "Feedbacks",
+    ACTIVE_SESSIONS: "ActiveSessions"
 };
+
+// Límites de sesión por rol de usuario
+const SESSION_LIMITS = {
+    'Desarrollador': 5,
+    'Gefe': 3,
+    'Supervisor': 2,
+    'Tecnico': 1,
+    'Tecnico_Exterior': 1
+};
+
 
 // ============================================================================
 // ROUTER PRINCIPAL (doGet y doPost)
@@ -23,8 +48,11 @@ const SHEET_NAMES = {
  */
 function doGet(e) {
   try {
-    // Retorna un mensaje simple para verificar que el script está activo.
-    return ContentService.createTextOutput("GPSpedia Backend v3 is active.").setMimeType(ContentService.MimeType.TEXT);
+    // Retorna un mensaje JSON para verificar que el script está activo y mantener la consistencia.
+    const response = { status: 'success', message: 'GPSpedia Backend v3.004 is active.' };
+    return ContentService
+      .createTextOutput(JSON.stringify(response))
+      .setMimeType(ContentService.MimeType.JSON);
   } catch (error) {
     Logger.log(`Error en doGet: ${error.toString()}`);
     return ContentService
@@ -40,8 +68,18 @@ function doGet(e) {
  */
 function doPost(e) {
     let response;
+    let request;
+
     try {
-        const request = JSON.parse(e.postData.contents);
+        // Intento de analizar el JSON
+        try {
+            request = JSON.parse(e.postData.contents);
+        } catch (jsonError) {
+            Logger.log(`Error GRAVE al analizar JSON: ${jsonError.stack}`);
+            Logger.log(`Contenido POST recibido (no es JSON válido): ${e.postData.contents}`);
+            throw new Error(`El formato de la solicitud no es un JSON válido.`);
+        }
+
         Logger.log(`Acción recibida: ${request.action}`);
 
         switch (request.action) {
@@ -135,7 +173,7 @@ function handleGetCatalogData() {
 
     for (const key in sheetsToFetch) {
         try {
-            const sheet = ss.getSheetByName(sheetsToFetch[key]);
+            const sheet = getSpreadsheet().getSheetByName(sheetsToFetch[key]);
             if (sheet) {
                 const data = sheet.getDataRange().getValues();
                 const headers = data.shift().map(header => camelCase(header.trim()));
@@ -161,7 +199,7 @@ function handleGetCatalogData() {
  * Obtiene los valores de las listas de validación de datos para los dropdowns.
  */
 function handleGetDropdownData() {
-    const cortesSheet = ss.getSheetByName(SHEET_NAMES.CORTES);
+    const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     if (!cortesSheet) throw new Error(`La hoja "${SHEET_NAMES.CORTES}" no fue encontrada.`);
 
     const getValues = (col) => {
@@ -195,7 +233,7 @@ function handleCheckVehicle(payload) {
         throw new Error("Parámetros de búsqueda incompletos.");
     }
 
-    const sheet = ss.getSheetByName(SHEET_NAMES.CORTES);
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();
     const headers = data.shift();
     const normalizedHeaders = headers.map(h => camelCase(h.trim()));
@@ -238,7 +276,7 @@ function handleAddCorte(payload) {
     }
 
     const fileUrls = handleFileUploads(files, { categoria, marca, modelo, anio });
-    const sheet = ss.getSheetByName(SHEET_NAMES.CORTES);
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const COLS = getColumnMap(SHEET_NAMES.CORTES);
 
     let targetRow;
@@ -280,7 +318,7 @@ function handleRecordLike(payload) {
     const { vehicleId, userName } = payload;
     if (!vehicleId || !userName) throw new Error("Falta el ID del vehículo o el nombre de usuario.");
 
-    const sheet = ss.getSheetByName(SHEET_NAMES.CORTES);
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const COLS = getColumnMap(SHEET_NAMES.CORTES);
     const data = sheet.getRange(2, COLS.id, sheet.getLastRow() - 1, COLS.util).getValues();
 
@@ -310,7 +348,7 @@ function handleReportProblem(payload) {
         throw new Error("Faltan datos para registrar el problema.");
     }
 
-    const feedbackSheet = ss.getSheetByName(SHEET_NAMES.FEEDBACKS);
+    const feedbackSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.FEEDBACKS);
     if (!feedbackSheet) throw new Error(`La hoja "${SHEET_NAMES.FEEDBACKS}" no existe.`);
 
     // ID, Usuario, ID_vehiculo, Problema, Respuesta, ¿Se resolvió?, Responde
@@ -324,40 +362,107 @@ function handleReportProblem(payload) {
 // Handlers: GESTIÓN DE USUARIOS
 // ----------------------------------------------------------------------------
 function handleLogin(payload) {
-    const { username, password } = payload;
-    if (!username || !password) throw new Error("Usuario y contraseña son requeridos.");
+    try {
+        const { username, password } = payload;
+        if (!username || !password) throw new Error("Usuario y contraseña son requeridos.");
 
-    const userSheet = ss.getSheetByName(SHEET_NAMES.USERS);
-    const COLS = getColumnMap(SHEET_NAMES.USERS);
-    const data = userSheet.getDataRange().getValues();
-    const headers = data.shift().map(h => camelCase(h.trim()));
+        const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
+        const COLS = getColumnMap(SHEET_NAMES.USERS);
+        const data = userSheet.getDataRange().getValues();
+        const headers = data.shift().map(h => camelCase(h.trim()));
 
-    for (let i = 0; i < data.length; i++) {
-        const userRow = data[i];
-        if (userRow[COLS.nombreUsuario - 1] === username && userRow[COLS.password - 1] === password) {
+        for (let i = 0; i < data.length; i++) {
+            const userRow = data[i];
+            const sheetUsername = (userRow[COLS.nombreUsuario - 1] || '').toString().trim();
+            const sheetPassword = (userRow[COLS.password - 1] || '').toString().trim();
+
+            if (sheetUsername !== username.trim() || sheetPassword !== password.trim()) {
+                continue; // Siguiente iteración si no coincide
+            }
+
+            // --- INICIO: LÓGICA DE LÍMITE DE SESIONES ---
+            const userRole = userRow[COLS.privilegios - 1];
+            const userId = userRow[COLS.id - 1];
+            const sessionLimit = SESSION_LIMITS[userRole] || 1;
+
+            let activeSessionsSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+            if (!activeSessionsSheet) {
+                activeSessionsSheet = getSpreadsheet().insertSheet(SHEET_NAMES.ACTIVE_SESSIONS);
+                activeSessionsSheet.appendRow(['UserID', 'SessionToken', 'Timestamp']);
+            }
+
+            const sessionsData = activeSessionsSheet.getDataRange().getValues();
+            sessionsData.shift(); // Quitar cabeceras
+
+            const userSessions = sessionsData
+                .map((row, index) => ({
+                    userId: row[0],
+                    token: row[1],
+                    timestamp: new Date(row[2]),
+                    rowIndex: index + 2
+                }))
+                .filter(session => session.userId == userId)
+                .sort((a, b) => a.timestamp - b.timestamp); // Ordenar: más antigua a más nueva
+
+            const sessionsToCloseCount = userSessions.length - sessionLimit + 1;
+            if (sessionsToCloseCount > 0) {
+                const sessionsToClose = userSessions.slice(0, sessionsToCloseCount);
+
+                // Invalidar tokens en la hoja de Users
+                const allUsersData = userSheet.getDataRange().getValues();
+                for (const session of sessionsToClose) {
+                    for (let j = 1; j < allUsersData.length; j++) {
+                        if (allUsersData[j][COLS.sessionToken - 1] === session.token) {
+                            userSheet.getRange(j + 1, COLS.sessionToken).clearContent();
+                            break;
+                        }
+                    }
+                }
+
+                // Eliminar filas de ActiveSessions (de abajo hacia arriba)
+                sessionsToClose.reverse().forEach(session => {
+                    activeSessionsSheet.deleteRow(session.rowIndex);
+                });
+            }
+            // --- FIN: LÓGICA DE LÍMITE DE SESIONES ---
+
             const sessionToken = Utilities.getUuid();
             userSheet.getRange(i + 2, COLS.sessionToken).setValue(sessionToken);
 
+            // Registrar nueva sesión
+            activeSessionsSheet.appendRow([userId, sessionToken, new Date().toISOString()]);
+
             const user = {};
             headers.forEach((header, index) => {
-                if(header !== 'password') { // No devolver la contraseña
-                   user[header] = userRow[index];
+                if (header !== 'password') {
+                    user[header] = userRow[index];
                 }
             });
             user.sessionToken = sessionToken;
-            user.id = userRow[COLS.id - 1]; // Asegurarse de que el ID se incluya
+            user.id = userId;
 
             return { status: 'success', user };
         }
+
+        throw new Error("Credenciales inválidas.");
+    } catch (error) {
+        Logger.log(`Error crítico en handleLogin para el usuario '${payload ? payload.username : 'N/A'}': ${error.stack}`);
+        return {
+            status: 'error',
+            message: 'Error interno al intentar iniciar sesión.',
+            details: {
+                message: error.message,
+                stack: error.stack
+            }
+        };
     }
-    throw new Error("Credenciales inválidas.");
 }
 
 function handleValidateSession(payload) {
     const { userId, sessionToken } = payload;
     if (!userId || !sessionToken) return { valid: false };
 
-    const userSheet = ss.getSheetByName(SHEET_NAMES.USERS);
+    const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
     const COLS = getColumnMap(SHEET_NAMES.USERS);
     const data = userSheet.getRange(2, 1, userSheet.getLastRow() - 1, Math.max(COLS.id, COLS.sessionToken)).getValues();
 
@@ -373,7 +478,7 @@ function handleGetUsers(payload) {
     const { privilegios } = payload;
     if (!privilegios) throw new Error("Se requiere el rol del solicitante.");
 
-    const userSheet = ss.getSheetByName(SHEET_NAMES.USERS);
+    const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
     const data = userSheet.getDataRange().getValues();
     const headers = data.shift().map(h => camelCase(h.trim()));
     const allUsers = data.map(row => {
@@ -430,7 +535,7 @@ function handleCreateUser(payload) {
     const { newUser, creatorRole } = payload;
     if (!newUser || !creatorRole) throw new Error("Datos insuficientes para crear el usuario.");
 
-    const userSheet = ss.getSheetByName(SHEET_NAMES.USERS);
+    const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
     const COLS = getColumnMap(SHEET_NAMES.USERS);
 
     // 1. Validar permisos
@@ -474,7 +579,7 @@ function handleUpdateUser(payload) {
     const { userId, updates, updaterRole } = payload;
     if (!userId || !updates || !updaterRole) throw new Error("Datos insuficientes para actualizar.");
 
-    const userSheet = ss.getSheetByName(SHEET_NAMES.USERS);
+    const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
     const COLS = getColumnMap(SHEET_NAMES.USERS);
     const data = userSheet.getDataRange().getValues();
     const headers = data.shift();
@@ -514,7 +619,7 @@ function handleDeleteUser(payload) {
     const { userId, deleterRole } = payload;
     if (!userId || !deleterRole) throw new Error("Datos insuficientes para eliminar.");
 
-    const userSheet = ss.getSheetByName(SHEET_NAMES.USERS);
+    const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
     const COLS = getColumnMap(SHEET_NAMES.USERS);
     const data = userSheet.getRange(2, 1, userSheet.getLastRow() - 1, COLS.privilegios).getValues();
 
@@ -545,7 +650,7 @@ function handleChangePassword(payload) {
     const { userId, currentPassword, newPassword } = payload;
     if(!userId || !currentPassword || !newPassword) throw new Error("Faltan datos para el cambio de contraseña.");
 
-    const userSheet = ss.getSheetByName(SHEET_NAMES.USERS);
+    const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
     const COLS = getColumnMap(SHEET_NAMES.USERS);
     const data = userSheet.getRange(2, 1, userSheet.getLastRow() - 1, Math.max(COLS.id, COLS.password)).getValues();
 
@@ -585,7 +690,7 @@ function camelCase(str) {
  * Obtiene un mapa de nombres de columna (camelCase) a sus índices (base 1).
  */
 function getColumnMap(sheetName) {
-    const sheet = ss.getSheetByName(sheetName);
+    const sheet = getSpreadsheet().getSheetByName(sheetName);
     if (!sheet) throw new Error(`Hoja no encontrada: ${sheetName}`);
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     return headers.reduce((map, header, i) => {

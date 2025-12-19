@@ -1,58 +1,76 @@
-# Resumen del Proyecto GPSpedia para la Nueva Sesión de Jules
+# Proyecto GPSpedia: Overhaul y Verificación
 
-## 1. Objetivo General del Proyecto
+## 1. Misión de esta Sesión
 
-Este proyecto es un "overhaul" completo de la aplicación GPSpedia, un catálogo de información de vehículos para técnicos instaladores de GPS. La tarea se divide en tres fases principales:
+El objetivo principal de esta sesión es realizar una revisión exhaustiva y una refactorización completa de la aplicación GPSpedia. La meta es asegurar que el código sea robusto, mantenible y siga las mejores prácticas, al tiempo que se implementan nuevas funcionalidades clave.
 
-*   **Fase 1: Overhaul del Catálogo:** Migrar el backend a un único archivo de Google Apps Script (`Code.gs`), actualizar la estructura de datos del catálogo (hoja "Cortes"), y refinar la UI del modal de detalles para incluir hasta 3 cortes, información del colaborador y un nuevo sistema de feedback (likes y reportes).
-*   **Fase 2: Gestión de Cuentas de Usuario:** Implementar un sistema robusto de gestión de usuarios basado en roles (Desarrollador, Gefe, Supervisor, Tecnico, Tecnico_Exterior) con una jerarquía de permisos estricta. Esto incluye la creación de una nueva página (`users.html`) y la lógica de backend para crear, ver, actualizar y eliminar usuarios según el rol del solicitante.
-*   **Fase 3: Sistema de Feedback Avanzado:** Desarrollar un sistema de reporte de problemas donde los usuarios pueden reportar fallos en la información, y los roles superiores (Supervisor+) pueden responder. Las interacciones se deben mostrar en el modal del vehículo afectado, similar a una sección de comentarios.
+Sin embargo, esta sesión también debe abordar y documentar un problema técnico crítico que ha impedido el progreso en sesiones anteriores.
 
-## 2. Estado Actual del Progreso
+## 2. Registro de Incidencia Técnica (¡MUY IMPORTANTE!)
 
-**El backend está 100% completo.**
+**Problema:** Se ha detectado un fallo de sincronización persistente entre el entorno de desarrollo del agente (Jules) y el repositorio del usuario.
 
-*   **Archivo `Code.gs`:** Toda la lógica para las tres fases ha sido implementada y unificada en el archivo `Code.gs`.
-    *   **Router `doPost`:** Implementado y maneja todas las acciones requeridas (`getCatalogData`, `login`, `getUsers`, `createUser`, `recordLike`, `reportProblem`, etc.).
-    *   **Lógica de Catálogo:** Funciones para obtener datos, rellenar dropdowns, verificar vehículos existentes y añadir nuevos cortes están completas.
-    *   **Lógica de Usuarios:** Se ha implementado la lógica completa y compleja para el login, validación de sesión, y el CRUD de usuarios respetando la jerarquía de roles especificada (ej. un Supervisor solo puede crear/ver Técnicos).
-    *   **Lógica de Feedback:** Las funciones para registrar "likes" (`recordLike`) y reportar problemas (`reportProblem`) están listas.
-*   **Archivos Frontend (`index.html`, `add_cortes.html`, `users.html`):** Los archivos HTML han sido analizados y se ha confirmado que la lógica del lado del cliente está correctamente refactorizada para comunicarse con el nuevo backend de Apps Script a través de una función central `postToAction`, eliminando la antigua dependencia de la API Key.
+*   **Síntomas:**
+    *   El agente realiza cambios en los archivos (ej. `Code.gs`), y sus herramientas internas reportan éxito.
+    *   El usuario **no ve** estos cambios reflejados en su vista del repositorio. No aparece la notificación "Update: <filename>".
+    *   Intentos de verificación (como borrar un archivo o añadir un comentario) han fallado, confirmado por el usuario a través de capturas de pantalla.
+    *   Intentos de entregar el código a través de otros medios (bloques de chat, commits de Git) también han fallado, resultando en formato incorrecto o archivos faltantes en el commit.
 
-## 3. Bloqueador Actual (¡MUY IMPORTANTE!)
+*   **Estado Actual:** Se ha determinado que el agente no puede, de forma fiable, modificar el código base. Cualquier operación de escritura de archivos debe ser verificada explícitamente por el usuario. Esta misma actualización del archivo `README.TXT` es una prueba para validar si el problema persiste.
 
-**El proyecto está detenido por un problema de despliegue en Google Apps Script.**
+*   **Próximo Paso (Solución Alternativa):** Si la edición de archivos sigue fallando, la única vía para avanzar es que el agente proporcione el código completo y correcto en un formato que el usuario pueda copiar y pegar manualmente en su entorno.
 
-*   **El Error:** Al intentar verificar el backend desplegado (usando `curl` o desde el frontend), se recibe un error `Exception: Unexpected error while getting the method or property openById on object SpreadsheetApp`.
-*   **Causa Raíz:** Este error ocurre porque la versión del código que está desplegada en la URL proporcionada por el usuario **no es la versión más reciente** que se encuentra en el repositorio. La versión desplegada todavía contiene IDs de prueba para la Spreadsheet y la carpeta de Drive, o no tiene los permisos necesarios.
-*   **Pasos de Depuración Realizados:**
-    1.  Se identificó que `Code.gs` tenía IDs de prueba.
-    2.  Se corrigió `Code.gs` para usar los IDs de producción correctos (`1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo` y `1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2`).
-    3.  El usuario proporcionó una nueva URL, pero el error persistió, indicando que el código desplegado seguía siendo el antiguo.
-    4.  Se le ha pedido repetidamente al usuario que se asegure de **crear una NUEVA implementación** (no gestionar una existente) usando el código más reciente del repositorio y que **otorgue todos los permisos** solicitados por Google.
+## 3. Plan de Trabajo Detallado
 
-## 4. Consejos y Estrategia para la Nueva Sesión
+A continuación se presenta el plan de acción completo, asumiendo que podemos superar el bloqueo técnico.
 
-1.  **NO TOCAR EL CÓDIGO INICIALMENTE:** El código en `Code.gs` es correcto y completo. El problema no está en el código, sino en el despliegue. No modifiques el backend hasta haber verificado que funciona.
+### Fase 1: Refactorización y Verificación del Backend (`Code.gs`)
 
-2.  **VERIFICAR EL DESPLIEGUE PRIMERO:** Tu primera acción debe ser solicitar al usuario una **NUEVA URL de despliegue**. Sé muy específico: "Por favor, copia el último `Code.gs` del repositorio, ve a Apps Script, haz clic en `Deploy` > `New deployment`, otorga todos los permisos y envíame la nueva URL."
+El código de `Code.gs` se considera casi completo, pero requiere una verificación final y una limpieza.
 
-3.  **USA `curl` PARA AISLAR EL PROBLEMA:** Antes de tocar el frontend, verifica el backend de forma aislada. Usa el comando `run_in_bash_session`:
-    ```bash
-    curl -L -X POST 'URL_DEL_USUARIO' -H 'Content-Type: application/json' -d '{"action":"getCatalogData"}'
-    ```
-    *   **Si esto funciona y devuelve datos JSON:** El backend está bien. El problema podría estar en el frontend (poco probable).
-    *   **Si esto devuelve el error de HTML/`openById`:** El problema SIGUE siendo el despliegue. Debes insistir al usuario en que el proceso de despliegue no se está haciendo correctamente. No hay nada que puedas hacer en el código para arreglarlo.
+1.  **Auditoría de Coherencia de Datos:**
+    *   Revisar todas las funciones que interactúan con las Hojas de Cálculo.
+    *   Asegurar que los nombres de las columnas se lean dinámicamente desde la fila de encabezado y se conviertan a `camelCase`.
+    *   Implementar `trim()` en los encabezados para eliminar espacios accidentales.
+    *   Garantizar que todas las respuestas JSON sigan un formato estándar (ej. `{ status: 'success', data: [...] }` o `{ status: 'error', message: '...' }`).
 
-4.  **DEPURACIÓN:**
-    *   **Backend:** Para depurar `Code.gs`, usa `Logger.log("mensaje")` abundantemente. Los logs se pueden ver en la sección "Executions" del proyecto de Apps Script.
-    *   **Frontend:** Una vez que el backend funcione, usa `console.log()` en los archivos JS y revisa la pestaña "Network" en las herramientas de desarrollador del navegador para ver las peticiones a la URL de Apps Script y sus respuestas.
+2.  **Robustecimiento de la Lógica de negocio:**
+    *   **Gestión de Usuarios:** Volver a verificar la jerarquía de roles. Un usuario no debe poder actuar sobre otro de su mismo nivel o superior (ej. Supervisor no puede modificar a otro Supervisor).
+    *   **Manejo de Sesiones:** Confirmar que la lógica de `SessionToken` funciona correctamente para limitar las sesiones por rol.
+    *   **Visibilidad de `Tecnico_Exterior`:** Asegurar que las contribuciones y la existencia de este rol solo sean visibles para el rol `Desarrollador`.
 
-5.  **PLAN DE TRABAJO (una vez desbloqueado):**
-    1.  Confirmar que `getCatalogData` funciona.
-    2.  Realizar una prueba de login completa.
-    3.  Probar la funcionalidad de `users.html` (ver usuarios según rol).
-    4.  Probar la creación de un nuevo corte desde `add_cortes.html`.
-    5.  Implementar y probar las nuevas características del modal en `index.html` (3 cortes, feedback, etc.).
-    6.  Realizar los cambios de estilo solicitados (menú hamburguesa, etc.).
-    7.  Completar los pasos de pre-commit y enviar.
+3.  **Manejo de Errores y Logging:**
+    *   Envolver las funciones críticas en bloques `try/catch`.
+    *   Utilizar `Logger.log()` de Apps Script para registrar errores detallados que ayuden a la depuración desde el panel de ejecuciones.
+    *   Asegurar que la función `logFrontend` esté funcionando para capturar errores del lado del cliente.
+
+### Fase 2: Actualización y Verificación del Frontend
+
+1.  **Consistencia de la Comunicación con el Backend:**
+    *   Verificar que todas las llamadas `fetch` al backend utilicen la función centralizada `postToAction`.
+    *   Asegurar que todas las solicitudes `POST` incluyan el encabezado `Content-Type: 'application/json'`.
+    *   Revisar el manejo de respuestas: el frontend debe interpretar correctamente los objetos JSON de éxito y error del backend.
+
+2.  **Implementación de Nuevas Características (UI):**
+    *   **Modal de Detalles del Vehículo (`index.html`):**
+        *   Mostrar dinámicamente hasta 3 "cortes" de información.
+        *   Mostrar el nombre del colaborador que añadió la información.
+        *   Implementar el sistema de feedback con botones "Útil" y "Reportar problema". La acción de "Útil" debe tener una respuesta visual inmediata (UI optimista).
+    *   **Página de Gestión de Usuarios (`users.html`):**
+        *   Asegurar que la vista se adapte correctamente según el rol del usuario (lista completa para admins, solo perfil propio para técnicos).
+        *   Implementar los modales para crear/editar usuarios y cambiar contraseñas.
+        *   Hacer la tabla de usuarios responsiva (formato de tarjetas en móvil).
+
+3.  **Mejoras de Experiencia de Usuario (UX):**
+    *   Reemplazar todos los `alert()` y `prompt()` nativos por notificaciones "toast" personalizadas.
+    *   Asegurar que el menú de hamburguesa esté presente y sea funcional.
+    *   Solucionar el error de la "pantalla en blanco" al redireccionar, asegurando que la lógica de sesión se complete antes de intentar mostrar notificaciones.
+
+### Fase 3: Pruebas y Despliegue
+
+1.  **Verificación Funcional:**
+    *   Una vez que el código esté estable, solicitar al usuario que realice un **nuevo despliegue** en Google Apps Script, otorgando todos los permisos necesarios.
+    *   Utilizar `curl` para realizar una prueba de humo inicial a la nueva URL, verificando que una acción básica como `getCatalogData` funcione correctamente.
+2.  **Pruebas End-to-End (Simuladas):**
+    *   Crear un plan de pruebas manual detallado que el usuario pueda seguir para verificar todas las funcionalidades críticas desde el frontend.
+    *   (Opcional, si el entorno lo permite) Escribir un script de Playwright para automatizar la verificación de las características clave.
