@@ -229,7 +229,8 @@ document.addEventListener('DOMContentLoaded', () => {
     displayProfile();
     setupEventListeners();
 
-    if (['Desarrollador', 'Gefe', 'Supervisor'].includes(currentUser.privilegios)) {
+    const userRole = (currentUser.privilegios || '').trim();
+    if (['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole)) {
         document.getElementById('user-management-section').style.display = 'block';
         fetchUsers();
     }

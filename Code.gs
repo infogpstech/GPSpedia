@@ -373,7 +373,10 @@ function handleLogin(payload) {
 
         for (let i = 0; i < data.length; i++) {
             const userRow = data[i];
-            if (userRow[COLS.nombreUsuario - 1] !== username || userRow[COLS.password - 1] !== password) {
+            const sheetUsername = (userRow[COLS.nombreUsuario - 1] || '').toString().trim();
+            const sheetPassword = (userRow[COLS.password - 1] || '').toString().trim();
+
+            if (sheetUsername !== username.trim() || sheetPassword !== password.trim()) {
                 continue; // Siguiente iteración si no coincide
             }
 
