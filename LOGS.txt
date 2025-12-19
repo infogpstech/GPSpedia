@@ -1,6 +1,22 @@
 # Registro de Cambios del Proyecto GPSpedia
 
-## v3.002 - [Fecha Actual]
+## v3.004 - [Fecha Actual]
+
+### Depuración
+- **Manejo de Errores en `doPost`:** Se ha añadido un bloque `try/catch` específico alrededor del análisis `JSON.parse(e.postData.contents)` dentro de la función `doPost`. Si el análisis del JSON falla, el script ahora registrará el contenido bruto de la solicitud POST antes de lanzar un error. Este cambio es un paso de diagnóstico crucial para capturar la causa raíz del error "Failed to fetch", que se sospecha ocurre si el backend recibe un payload inesperado o malformado del frontend.
+
+### Tareas
+- **Incremento de Versión:** Se actualizó el número de versión del backend a "v3.004".
+
+## v3.003 - [Fecha Anterior]
+
+### Refactorización
+- **Inicialización de la Hoja de Cálculo (Error "Failed to fetch"):** Se ha modificado la forma en que el script se conecta a Google Sheets. Anteriormente, la conexión se establecía en el ámbito global, lo que provocaba que cualquier error de permisos o de inicialización detuviera por completo la ejecución del script antes de que pudiera entrar en los bloques `try/catch` de las funciones `doPost` o `doGet`. Esto causaba el error persistente "Failed to fetch". El cambio mueve la lógica de conexión a una función `getSpreadsheet()` que se llama *dentro* de las funciones que la necesitan. Ahora, si la conexión falla, el error será capturado y se devolverá un mensaje JSON detallado, solucionando la causa raíz del problema de inicio de sesión.
+
+### Tareas
+- **Incremento de Versión:** Se actualizó el número de versión del backend a "v3.003".
+
+## v3.002 - [Fecha Anterior]
 
 ### Corregido
 - **Error Crítico de Inicio de Sesión ("Failed to fetch"):** Se implementó un manejo de errores robusto (`try/catch`) dentro de la función `handleLogin` en `Code.gs`. Antes de este cambio, cualquier error interno durante el proceso de inicio de sesión provocaba que el script fallara silenciosamente, impidiendo que se enviara una respuesta al frontend. Esto resultaba en el error genérico "Failed to fetch" en la pantalla de inicio de sesión. Ahora, cualquier excepción es capturada, registrada, y se devuelve un mensaje de error JSON claro, mejorando drásticamente la capacidad de depuración y la experiencia del usuario.

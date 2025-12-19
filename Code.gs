@@ -49,7 +49,7 @@ const SESSION_LIMITS = {
 function doGet(e) {
   try {
     // Retorna un mensaje JSON para verificar que el script está activo y mantener la consistencia.
-    const response = { status: 'success', message: 'GPSpedia Backend v3.003 is active.' };
+    const response = { status: 'success', message: 'GPSpedia Backend v3.004 is active.' };
     return ContentService
       .createTextOutput(JSON.stringify(response))
       .setMimeType(ContentService.MimeType.JSON);
@@ -68,8 +68,18 @@ function doGet(e) {
  */
 function doPost(e) {
     let response;
+    let request;
+
     try {
-        const request = JSON.parse(e.postData.contents);
+        // Intento de analizar el JSON
+        try {
+            request = JSON.parse(e.postData.contents);
+        } catch (jsonError) {
+            Logger.log(`Error GRAVE al analizar JSON: ${jsonError.stack}`);
+            Logger.log(`Contenido POST recibido (no es JSON válido): ${e.postData.contents}`);
+            throw new Error(`El formato de la solicitud no es un JSON válido.`);
+        }
+
         Logger.log(`Acción recibida: ${request.action}`);
 
         switch (request.action) {
