@@ -1,0 +1,29 @@
+GPSpedia Versión 1.0
+Descripción General:
+Es una Progressive Web App (PWA) diseñada como un catálogo técnico especializado para la consulta de información sobre vehículos (cortes de cables, tutoriales y diagramas de relay). Su propósito principal es servir como una herramienta de consulta rápida y confiable para técnicos e instaladores, permitiendo el acceso a datos críticos incluso en condiciones de baja conectividad.
+1. Características Principales (Features)
+ * Funcionamiento Offline: Gracias al Service Worker y a IndexedDB, la aplicación puede cargar y mostrar datos previamente consultados sin conexión a internet.
+ * Sincronización Híbrida: Implementa una estrategia de "Network First", donde intenta obtener los datos más recientes de Google Sheets, pero recurre a la base de datos local si el servidor no responde.
+ * Seguridad y Acceso: Sistema de autenticación vinculado a una base de datos de usuarios autorizados, con persistencia de sesión mediante localStorage.
+ * Interfaz Adaptativa: Diseño optimizado para móviles (Mobile-first) con navegación por pestañas y búsqueda en tiempo real.
+ * Experiencia de Usuario (UX): Uso de skeleton loaders para evitar saltos visuales durante la carga y sanitización de entradas para evitar errores de búsqueda.
+2. Análisis de Funciones por Archivo
+A. index.html (Lógica y UI)
+Es el motor de la aplicación. Maneja la interfaz, la seguridad y la base de datos local.
+ * openDb(): Gestiona la creación y apertura de la base de datos IndexedDB. Define los almacenes (stores) para organizar la información de cortes, tutoriales y relays.
+ * saveData() / readData(): Funciones de bajo nivel para escribir y leer objetos en la memoria del navegador, garantizando la persistencia de los datos técnicos.
+ * login(username, password): Valida las credenciales contra la lista de usuarios. Si es exitoso, genera un token de sesión y desbloquea el acceso al catálogo.
+ * checkSession(): Actúa como un guardián de seguridad; verifica si el usuario sigue siendo válido cada vez que se abre la aplicación.
+ * syncAndFetchData(): Es la función más crítica. Orquestra la descarga de datos desde la API de Google, los guarda localmente para uso futuro y dispara el renderizado en pantalla.
+ * filtrarContenido(valor): Realiza una búsqueda dinámica sobre los datos cargados, permitiendo al usuario encontrar un vehículo o componente específico instantáneamente.
+ * sanitizeInput(input): Una capa de seguridad que limpia el texto ingresado para evitar caracteres maliciosos o errores de ejecución.
+B. service-worker.js (Gestión de Red)
+Actúa como un intermediario entre el navegador y el servidor.
+ * Evento install: Descarga y guarda en el caché (gpsepedia-cache-v4) los archivos base (HTML e íconos) para que la app sea instalable.
+ * Evento activate: Limpia versiones antiguas del caché, asegurando que el usuario siempre utilice la lógica de programación más reciente.
+ * Evento fetch: Intercepta todas las peticiones de red. Si hay internet, actualiza el caché; si no, sirve los archivos guardados para evitar que la app se quede en blanco.
+C. manifest.json (Configuración PWA)
+Define la identidad visual de la aplicación.
+ * display: standalone: Permite que la web se abra sin las barras de navegación del navegador, dándole un aspecto de aplicación nativa.
+ * icons: Define los logotipos de GPSpedia que aparecerán en el menú de inicio y en las notificaciones.
+Nota Técnica: Dado que tu catálogo se enfoca en vehículos, recuerda que la base de datos está estructurada para segmentar la información por marca y modelo, facilitando la integración de datos sobre generaciones específicas y sus restylings.
