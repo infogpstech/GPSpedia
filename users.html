@@ -1,0 +1,611 @@
+<!-- GPSpedia Frontend Component | Version: 2.0 -->
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestión de Usuarios - GPSpedia</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #333;
+            --background-color: #f4f4f4;
+            --card-background: #fff;
+            --text-color: #333;
+            --light-text: #fff;
+            --error-color: #dc3545;
+        }
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            /* Prevención de selección de texto y asistente de Google */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        /* Excepciones para permitir entrada de texto */
+        input, textarea, select {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        .container {
+            padding: 20px;
+            max-width: 1000px;
+            margin: 20px auto;
+        }
+        .profile-section, .user-management-section {
+            background: var(--card-background);
+            padding: 15px; /* Reducido de 25px para mayor compactación */
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px; /* Reducido de 30px */
+        }
+        h1, h2 {
+            color: var(--secondary-color);
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        /* Contenedor para scroll horizontal invisible */
+        .table-scroll-container {
+            width: 100%;
+            overflow-x: auto;
+            -ms-overflow-style: none;  /* IE y Edge */
+            scrollbar-width: none;  /* Firefox */
+        }
+        .table-scroll-container::-webkit-scrollbar {
+            display: none; /* Chrome, Safari y Opera */
+        }
+        .user-table {
+            width: max-content; /* Permite que la tabla tome su ancho natural */
+            min-width: 100%;   /* Pero al menos el 100% del contenedor */
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .user-table th, .user-table td {
+            padding: 8px 10px; /* Reducido para hacer la tabla más compacta */
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+            font-size: 0.9rem; /* Tamaño optimizado para densidad de datos */
+            white-space: nowrap; /* Evita saltos de línea indeseados */
+        }
+        .user-table th {
+            background-color: #f8f9fa;
+        }
+        .actions-cell .btn {
+            margin-right: 5px;
+            padding: 5px 10px;
+            font-size: 0.9em;
+        }
+        .btn {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .btn-primary { background-color: var(--primary-color); color: var(--light-text); }
+        .btn-warning { background-color: #ffc107; color: var(--secondary-color); }
+        .btn-danger { background-color: var(--error-color); color: var(--light-text); }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 10% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            border-radius: 10px;
+        }
+        .close-btn {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+        .close-btn:hover, .close-btn:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            box-sizing: border-box;
+        }
+
+        /* --- ANIMACIONES DE CARGA EN BOTONES --- */
+        .btn-loading {
+            position: relative !important;
+            color: transparent !important;
+            pointer-events: none !important;
+        }
+
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            top: 50%;
+            left: 50%;
+            margin-top: -9px;
+            margin-left: -9px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin-button 0.6s linear infinite;
+            z-index: 5;
+        }
+
+        @keyframes spin-button {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" style="text-decoration: none; color: var(--primary-color); margin-bottom: 20px; display: inline-block;">&larr; Volver al Catálogo</a>
+        <div id="profile-section" class="profile-section">
+            <h1>Mi Perfil</h1>
+            <p><strong>Nombre de Usuario:</strong> <span id="profile-username"></span></p>
+            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <p style="margin: 0;"><strong>Nombre Completo:</strong> <span id="profile-fullname"></span></p>
+                <button id="edit-name-btn" class="btn btn-warning" style="padding: 2px 8px; font-size: 0.8rem;">Editar</button>
+            </div>
+            <p><strong>Rol:</strong> <span id="profile-role"></span></p>
+            <button id="change-password-btn" class="btn btn-primary">Cambiar Contraseña</button>
+        </div>
+
+        <div id="user-management-section" class="user-management-section" style="display: none;">
+            <h2>Gestión de Usuarios</h2>
+            <button id="create-user-btn" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> Crear Nuevo Usuario
+            </button>
+            <div class="table-scroll-container">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th>Nombre de Usuario</th>
+                            <th>Nombre Completo</th>
+                            <th>Rol</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-list-tbody">
+                        <!-- User rows will be inserted here -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Modal (for Create/Edit) -->
+    <div id="user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2 id="user-modal-title"></h2>
+            <form id="user-form">
+                <input type="hidden" id="user-id">
+                <div class="form-group">
+                    <label for="fullname">Nombre Completo</label>
+                    <input type="text" id="fullname" required>
+                </div>
+                <div class="form-group">
+                    <label for="username-modal">Nombre de Usuario</label>
+                    <input type="text" id="username-modal" required>
+                </div>
+                <div class="form-group">
+                    <label for="role">Rol</label>
+                    <select id="role" required></select>
+                </div>
+                <div class="form-group">
+                    <label for="user-password">Contraseña</label>
+                    <input type="password" id="user-password">
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Edit Name Modal -->
+    <div id="name-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Editar Nombre</h2>
+            <form id="name-form">
+                <div class="form-group">
+                    <label for="new-fullname">Nombre Completo</label>
+                    <input type="text" id="new-fullname" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Change Password Modal -->
+    <div id="password-modal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">&times;</span>
+            <h2>Cambiar Contraseña</h2>
+            <form id="password-form">
+                <div class="form-group">
+                    <label for="current-password">Contraseña Actual</label>
+                    <input type="password" id="current-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="new-password">Nueva Contraseña</label>
+                    <input type="password" id="new-password" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirm-password">Confirmar Nueva Contraseña</label>
+                    <input type="password" id="confirm-password" required>
+                </div>
+                <button type="submit" class="btn btn-primary">Actualizar Contraseña</button>
+            </form>
+        </div>
+    </div>
+<script type="module">
+import { routeAction } from './api-config.js';
+// COMPONENT VERSION: 3.9.1
+// --- LÓGICA DE DEPURACIÓN REMOTA ---
+function remoteLog(level, message, data = {}) {
+    fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'logFrontend', payload: { level, message, data } }),
+        keepalive: true
+    }).catch(console.error);
+}
+window.onerror = function(message, source, lineno, colno, error) {
+    remoteLog('ERROR', 'Unhandled exception on users.html', {
+        message: message, source: source, lineno: lineno, colno: colno, stack: error ? error.stack : 'N/A'
+    });
+    return false;
+};
+
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec";
+const SESSION_KEY = 'gpsepedia_session';
+let currentUser = null;
+let allUsers = [];
+
+document.addEventListener('DOMContentLoaded', () => {
+    const sessionData = localStorage.getItem(SESSION_KEY);
+    if (!sessionData) {
+        window.location.href = 'index.html';
+        return;
+    }
+    currentUser = JSON.parse(sessionData);
+
+    displayProfile();
+    setupEventListeners();
+
+    const userRole = (currentUser.Privilegios || '').trim();
+    if (['Desarrollador', 'Gefe', 'Jefe', 'Supervisor'].includes(userRole)) {
+        document.getElementById('user-management-section').style.display = 'block';
+        fetchUsers();
+    }
+});
+
+function displayProfile() {
+    document.getElementById('profile-username').textContent = currentUser.Nombre_Usuario;
+    document.getElementById('profile-fullname').textContent = currentUser.Nombre_Completo; // Corregido
+    document.getElementById('profile-role').textContent = currentUser.Privilegios;
+}
+
+async function postToAction(action, payload = {}) {
+    try {
+        // Usamos el nuevo enrutador del api-manager.js
+        const result = await routeAction(action, payload);
+        return result;
+    } catch (error) {
+        console.error(`Error in action '${action}':`, error);
+        alert(`Error: ${error.message}`);
+        throw error;
+    }
+}
+
+async function fetchUsers() {
+    try {
+        // FIX: Send sessionToken for secure, backend-driven authorization
+        const result = await postToAction('getUsers', {
+            sessionToken: currentUser.SessionToken
+        });
+        allUsers = result.users;
+        renderUserTable();
+    } catch (error) {
+        // Error is handled in postToAction
+    }
+}
+
+function renderUserTable() {
+    const tbody = document.getElementById('user-list-tbody');
+    tbody.innerHTML = '';
+    allUsers.forEach(user => {
+        const row = document.createElement('tr');
+
+        const userCell = document.createElement('td');
+        userCell.textContent = user.Nombre_Usuario;
+        row.appendChild(userCell);
+
+        const nameCell = document.createElement('td');
+        nameCell.textContent = user.Nombre_Completo;
+        row.appendChild(nameCell);
+
+        const roleCell = document.createElement('td');
+        roleCell.textContent = user.Privilegios;
+        row.appendChild(roleCell);
+
+        const actionsCell = document.createElement('td');
+        actionsCell.className = 'actions-cell';
+
+        const editButton = document.createElement('button');
+        editButton.className = 'btn btn-warning btn-sm';
+        editButton.textContent = 'Editar';
+        editButton.addEventListener('click', () => openUserModal(user));
+        actionsCell.appendChild(editButton);
+
+        const deleteButton = document.createElement('button');
+        deleteButton.className = 'btn btn-danger btn-sm';
+        deleteButton.textContent = 'Eliminar';
+        deleteButton.addEventListener('click', (e) => deleteUser(user.ID, e.currentTarget));
+        actionsCell.appendChild(deleteButton);
+
+        row.appendChild(actionsCell);
+        tbody.appendChild(row);
+    });
+}
+
+function setupEventListeners() {
+    const userModal = document.getElementById('user-modal');
+    const passwordModal = document.getElementById('password-modal');
+    const closeBtns = document.querySelectorAll('.close-btn');
+
+    document.getElementById('create-user-btn').addEventListener('click', () => openUserModal());
+    document.getElementById('change-password-btn').addEventListener('click', () => passwordModal.style.display = 'block');
+    document.getElementById('edit-name-btn').addEventListener('click', () => {
+        document.getElementById('new-fullname').value = currentUser.Nombre_Completo;
+        document.getElementById('name-modal').style.display = 'block';
+    });
+
+    closeBtns.forEach(btn => {
+        btn.parentElement.parentElement.onclick = (e) => {
+            if (e.target === btn.parentElement.parentElement) {
+                 btn.parentElement.parentElement.style.display = 'none';
+            }
+        }
+        btn.onclick = () => {
+            btn.parentElement.parentElement.style.display = 'none';
+        }
+    });
+
+    document.getElementById('user-form').addEventListener('submit', handleUserFormSubmit);
+    document.getElementById('password-form').addEventListener('submit', handleChangePasswordSubmit);
+    document.getElementById('name-form').addEventListener('submit', handleEditNameSubmit);
+}
+
+function openUserModal(user = null) {
+    const modal = document.getElementById('user-modal');
+    const title = document.getElementById('user-modal-title');
+        const form = document.getElementById('user-form');
+        form.reset();
+
+        if (user) {
+            title.textContent = 'Editar Usuario';
+            document.getElementById('user-id').value = user.ID;
+            document.getElementById('fullname').value = user.Nombre_Completo;
+            document.getElementById('username-modal').value = user.Nombre_Usuario;
+            document.getElementById('username-modal').disabled = true; // PROHIBIDO cambiar username
+        } else {
+            title.textContent = 'Crear Nuevo Usuario';
+            document.getElementById('user-id').value = '';
+            document.getElementById('username-modal').disabled = false;
+        }
+
+    const roleSelect = document.getElementById('role');
+    roleSelect.innerHTML = '';
+    let availableRoles = [];
+    if (currentUser.Privilegios === 'Desarrollador') availableRoles = ['Desarrollador', 'Gefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'];
+    else if (currentUser.Privilegios === 'Gefe' || currentUser.Privilegios === 'Jefe') availableRoles = ['Supervisor', 'Tecnico'];
+    else if (currentUser.Privilegios === 'Supervisor') availableRoles = ['Tecnico'];
+
+    availableRoles.forEach(role => {
+        const option = document.createElement('option');
+        option.value = role;
+        option.textContent = role;
+        roleSelect.appendChild(option);
+    });
+    if(user) roleSelect.value = user.Privilegios;
+
+    modal.style.display = 'block';
+}
+
+async function handleUserFormSubmit(e) {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn.classList.contains('btn-loading')) return;
+
+    const userId = document.getElementById('user-id').value;
+    const userData = {
+        Nombre_Completo: document.getElementById('fullname').value,
+        Nombre_Usuario: document.getElementById('username-modal').value,
+        Privilegios: document.getElementById('role').value,
+        Password: document.getElementById('user-password').value,
+    };
+
+    try {
+        submitBtn.classList.add('btn-loading');
+        submitBtn.disabled = true;
+
+        if (userId) {
+            await postToAction('updateUser', { userId, updates: userData, sessionToken: currentUser.SessionToken });
+            alert('Usuario actualizado');
+        } else {
+            await postToAction('createUser', { newUser: userData, sessionToken: currentUser.SessionToken });
+            alert('Usuario creado');
+        }
+        document.getElementById('user-modal').style.display = 'none';
+        await fetchUsers();
+    } catch (error) {
+        // Error handled in postToAction
+    } finally {
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.disabled = false;
+    }
+}
+
+async function deleteUser(userId, btnElement) {
+    if (btnElement && btnElement.classList.contains('btn-loading')) return;
+
+    if (confirm('¿Estás seguro de que quieres eliminar este usuario?')) {
+        try {
+            if (btnElement) {
+                btnElement.classList.add('btn-loading');
+                btnElement.disabled = true;
+            }
+            await postToAction('deleteUser', { userId, sessionToken: currentUser.SessionToken });
+            alert('Usuario eliminado');
+            await fetchUsers();
+        } catch (error) {
+            // Error handled in postToAction
+        } finally {
+            if (btnElement) {
+                btnElement.classList.remove('btn-loading');
+                btnElement.disabled = false;
+            }
+        }
+    }
+}
+
+async function handleChangePasswordSubmit(e) {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn.classList.contains('btn-loading')) return;
+
+    const currentPassword = document.getElementById('current-password').value;
+    const newPassword = document.getElementById('new-password').value;
+    const confirmPassword = document.getElementById('confirm-password').value;
+
+    if (newPassword !== confirmPassword) {
+        alert('Las nuevas contraseñas no coinciden.');
+        return;
+    }
+
+    if (newPassword.length < 8) {
+        alert('La nueva contraseña debe tener al menos 8 caracteres.');
+        return;
+    }
+
+    try {
+        submitBtn.classList.add('btn-loading');
+        submitBtn.disabled = true;
+
+        const userId = currentUser.ID || currentUser.id;
+        if (!userId) {
+            alert('Error: No se pudo identificar al usuario actual. Por favor reincie sesión.');
+            return;
+        }
+
+        await postToAction('changePassword', {
+            userId: userId,
+            currentPassword,
+            newPassword,
+            sessionToken: currentUser.SessionToken
+        });
+        alert('Contraseña actualizada correctamente.');
+        document.getElementById('password-modal').style.display = 'none';
+        document.getElementById('password-form').reset();
+    } catch (error) {
+        // Error handled in postToAction
+    } finally {
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.disabled = false;
+    }
+}
+
+async function handleEditNameSubmit(e) {
+    e.preventDefault();
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    if (submitBtn.classList.contains('btn-loading')) return;
+
+    const newFullname = document.getElementById('new-fullname').value;
+
+    try {
+        submitBtn.classList.add('btn-loading');
+        submitBtn.disabled = true;
+
+        const userId = currentUser.ID || currentUser.id;
+        await postToAction('updateProfile', {
+            userId: userId,
+            updates: { Nombre_Completo: newFullname },
+            sessionToken: currentUser.SessionToken
+        });
+
+        currentUser.Nombre_Completo = newFullname;
+        localStorage.setItem(SESSION_KEY, JSON.stringify(currentUser));
+        displayProfile();
+
+        alert('Nombre actualizado correctamente.');
+        document.getElementById('name-modal').style.display = 'none';
+    } catch (error) {
+        // Error handled
+    } finally {
+        submitBtn.classList.remove('btn-loading');
+        submitBtn.disabled = false;
+    }
+}
+
+// --- LÓGICA DE SEGURIDAD Y BLOQUEO DE INTERACCIONES ---
+document.addEventListener('contextmenu', event => event.preventDefault());
+document.addEventListener('keydown', (e) => {
+    if (e.keyCode === 123) { e.preventDefault(); return false; }
+    if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) { e.preventDefault(); return false; }
+    if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
+});
+document.addEventListener('wheel', (e) => {
+    if (e.ctrlKey) e.preventDefault();
+}, { passive: false });
+document.addEventListener('keydown', (e) => {
+    if (e.ctrlKey) {
+        if ([61, 107, 173, 109, 187, 189, 48, 96].includes(e.keyCode)) {
+            e.preventDefault();
+        }
+    }
+});
+document.addEventListener('touchstart', (e) => {
+    if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+document.addEventListener('touchmove', (e) => {
+    if (e.touches.length > 1) e.preventDefault();
+}, { passive: false });
+</script>
+</body>
+</html>

@@ -1,0 +1,1330 @@
+/* GPSpedia Styles | Version: 2.0 */
+/* Estilos Globales */
+*, *::before, *::after {
+    box-sizing: border-box;
+}
+
+html {
+    height: var(--app-height, 100%);
+    overflow: hidden; /* Previene el scroll del html */
+}
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: var(--bg-color);
+    color: var(--text-color);
+    display: flex;
+    flex-direction: column;
+    height: var(--app-height, 100%);
+    overflow: hidden; /* El scroll se maneja en .container */
+    transition: background-color 0.3s, color 0.3s;
+    /* Prevención de selección de texto y asistente de Google */
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+/* Excepciones para permitir entrada de texto */
+input, textarea, select {
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
+
+:root {
+    --bg-color: #f4f4f4;
+    --text-color: #333;
+    --card-bg: #fff;
+    --header-color: #333;
+    --modal-bg: #fff;
+    --modal-text: #000;
+    --button-bg: #f0f0f0;
+    --button-text: #007bff;
+    --menu-bg: #fff;
+}
+
+body.dark-mode {
+    --bg-color: #121212;
+    --text-color: #e0e0e0;
+    --card-bg: #1e1e1e;
+    --header-color: #e0e0e0;
+    --modal-bg: #2c2c2c;
+    --modal-text: #e0e0e0;
+    --button-bg: #333;
+    --button-text: #58a6ff;
+    --menu-bg: #1e1e1e;
+}
+
+h1,h2,h3,h4 {
+    margin: 10px 0;
+    color: var(--header-color);
+}
+h1.app-title {
+    color: var(--header-color) !important;
+}
+.container {
+    padding: 20px 20px 80px 20px; /* Aumento de padding inferior para evitar bloqueo del footer */
+    max-width: 1240px;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+    flex: 1 1 auto;
+    overflow-y: auto; /* Único elemento con scroll principal */
+    -webkit-overflow-scrolling: touch;
+}
+.backBtn {
+    margin-bottom: 15px;
+    cursor: pointer;
+    color: #007bff;
+    display: inline-flex;
+    align-items: center;
+    font-weight: bold;
+    padding: 5px 10px;
+    border-radius: 5px;
+    transition: background 0.2s;
+}
+.backBtn:hover {
+    background: #e9f7ff;
+}
+
+/* --- RECONSTRUCCIÓN EXTREMA DEL HEADER --- */
+.main-header {
+    background-color: var(--bg-color);
+    padding: 20px 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transition: all 0.35s ease-in-out;
+    position: relative;
+    z-index: 1500;
+    overflow: visible; /* Asegura que el logo animado sea visible */
+}
+
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    transition: all 0.35s ease-in-out;
+}
+
+.header-branding {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.title-welcome-group {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.app-logo {
+    max-width: 96px;
+    height: auto;
+    border-radius: 8px;
+    transition: all 0.35s ease-in-out;
+}
+
+h1.app-title {
+    margin: 0;
+    font-size: 2.2em;
+    color: var(--header-color) !important;
+    transition: all 0.35s ease-in-out;
+}
+
+#welcome-message {
+    color: var(--text-color);
+    font-weight: bold;
+    font-size: 0.8em;
+    opacity: 0.8;
+}
+
+.header-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    transition: all 0.35s ease-in-out;
+}
+
+#logout-button, #install-button {
+    border: none;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    font-size: 0.9em;
+    transition: background-color 0.3s;
+}
+
+#logout-button { background-color: #dc3545; color: white; }
+#install-button { background-color: #28a745; color: white; }
+
+.header-bottom {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    transition: all 0.35s ease-in-out;
+}
+
+.search-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.search-container {
+    flex-grow: 1;
+    position: relative;
+    max-width: 600px;
+    margin: 0 auto;
+    width: 100%;
+}
+
+.search-container input[type="text"] {
+    width: 100%;
+    padding: 12px 40px 12px 15px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1em;
+    background: var(--card-bg);
+    color: var(--text-color);
+    transition: all 0.35s ease-in-out;
+}
+
+#clear-search-btn {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: #ccc;
+    color: #fff;
+    border: none;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+}
+
+.search-container.has-text #clear-search-btn {
+    opacity: 1;
+    pointer-events: all;
+}
+
+/* --- ESTILOS DEL BUSCADOR --- */
+
+/* --- ESTILOS DEL MENÚ HAMBURGUESA --- */
+#hamburger-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-color);
+    padding: 10px;
+    border-radius: 8px;
+    transition: background-color 0.2s, opacity 0.35s ease-in-out, visibility 0.35s ease-in-out;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1500;
+}
+#hamburger-btn:hover {
+    background-color: rgba(0, 0, 0, 0.05);
+}
+#side-menu {
+    position: fixed;
+    top: 0;
+    right: -300px; /* Inicia fuera de la pantalla */
+    width: 280px;
+    height: 100%;
+    background-color: #fff;
+    box-shadow: -2px 0 10px rgba(0,0,0,0.1);
+    z-index: 2500;
+    transition: right 0.3s ease-in-out;
+    display: flex;
+    flex-direction: column;
+}
+#side-menu.open {
+    right: 0;
+}
+#menu-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 2400;
+}
+#menu-overlay.open {
+    display: block;
+}
+#side-menu nav a {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 20px;
+    text-decoration: none;
+    color: #333;
+    border-bottom: 1px solid #f0f0f0;
+}
+#side-menu nav a:hover {
+    background-color: #f7f7f7;
+}
+#side-menu nav a i {
+    width: 20px; /* Ancho fijo para alinear iconos */
+    text-align: center;
+    color: #007bff;
+}
+.dark-mode #side-menu, .dark-mode #side-menu nav a {
+    background-color: var(--menu-bg);
+    color: var(--text-color);
+}
+.dark-mode .backBtn {
+    color: var(--button-text);
+}
+.dark-mode .card {
+    background: var(--card-bg);
+    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+}
+.dark-mode .section-btn {
+    background-color: var(--button-bg);
+    color: var(--text-color);
+    border-color: #555;
+}
+.dark-mode .section-btn.active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+.dark-mode #detalleCompleto {
+    background: var(--modal-bg);
+    color: var(--modal-text);
+}
+.dark-mode .info-modal-content {
+    background-color: var(--modal-bg);
+    color: var(--modal-text);
+}
+.dark-mode .accordion-btn {
+    background-color: var(--button-bg);
+    color: var(--button-text);
+}
+.dark-mode .accordion-btn:hover, .dark-mode .accordion-btn.active {
+    background-color: #444;
+}
+.dark-mode .panel-desplegable {
+    background-color: var(--modal-bg);
+}
+/* Estilo para el switch de modo oscuro */
+.theme-switch-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 15px 20px;
+    border-top: 1px solid #f0f0f0;
+    margin-top: auto;
+}
+.dark-mode .theme-switch-wrapper {
+    border-top: 1px solid #333;
+}
+.theme-switch {
+    display: inline-block;
+    height: 24px;
+    position: relative;
+    width: 50px;
+}
+.theme-switch input {
+    display:none;
+}
+.slider {
+    background-color: #ccc;
+    bottom: 0;
+    cursor: pointer;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: .4s;
+    border-radius: 24px;
+}
+.slider:before {
+    background-color: #fff;
+    bottom: 4px;
+    content: "";
+    height: 16px;
+    left: 4px;
+    position: absolute;
+    transition: .4s;
+    width: 16px;
+    border-radius: 50%;
+}
+input:checked + .slider {
+    background-color: #007bff;
+}
+input:checked + .slider:before {
+    transform: translateX(26px);
+}
+
+/* --- ESTILOS DE BÚSQUEDA ACTIVA (UNIFICADOS) --- */
+/* Unificación de lógica de layout y animación para búsqueda activa */
+body.search-active .title-welcome-group,
+body.search-active .header-controls,
+body.search-active .section-selector,
+body.search-active #hamburger-btn {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    pointer-events: none;
+    max-height: 0;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    transition: opacity 0.3s ease-out, transform 0.3s ease-out, max-height 0.4s ease-in-out, visibility 0.3s;
+    will-change: opacity, transform, max-height;
+}
+
+body.search-active .footer {
+    display: none !important;
+}
+
+body.search-active .main-header {
+    padding: 10px 20px;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-sizing: border-box;
+    background: var(--bg-color);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    z-index: 1500;
+    overflow: hidden; /* Fix desbordamiento horizontal */
+    gap: 0; /* Unificado: elimina espacio de elementos ocultos */
+    transition: padding 0.3s ease-out, background-color 0.3s ease;
+    will-change: padding, background-color;
+}
+
+body.search-active .header-bottom,
+body.search-active .search-wrapper {
+    width: 100%;
+    gap: 0;
+}
+
+body.search-active #searchInput {
+    width: 100%;
+    padding-left: 55px; /* Espacio para el logo centrado */
+    box-sizing: border-box; /* Garantiza que el padding no cause desbordamiento */
+}
+
+/* Regla única y unificada para el logo en modo búsqueda */
+/* Se posiciona de forma absoluta dentro del header fijo para centrado vertical milimétrico */
+body.search-active .app-logo {
+    position: absolute;
+    top: 50%;
+    left: 30px;
+    transform: translateY(-50%);
+    height: 40px; /* ≈5% menor que la altura del input (~42-45px) */
+    width: auto;
+    max-width: none;
+    z-index: 2100;
+    filter: drop-shadow(1px 2px 3px rgba(0,0,0,0.2));
+    opacity: 1 !important;
+    visibility: visible !important;
+    transition: all 0.35s ease-in-out;
+}
+
+body.search-active .container {
+    padding-top: 70px; /* Compensación del header fijo */
+}
+
+
+/* --- ESTILOS DE LA SELECCIÓN DE SECCIÓN --- */
+.section-selector {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 20px;
+    transition: all 0.35s ease-in-out;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.section-btn {
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 10px 20px;
+    margin: 0;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s, color 0.3s;
+}
+.section-btn.active {
+    background-color: #007bff;
+    color: #fff;
+    border-color: #007bff;
+}
+.section-btn:hover:not(.active) {
+    background-color: #e0e0e0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+
+/* Estilos de la Cuadrícula */
+.grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    justify-content: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+@media (max-width: 480px) {
+    .grid {
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 15px;
+    }
+}
+
+/* Estilos de la Tarjeta (Card) */
+@keyframes card-enter {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.card {
+    position: relative;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    cursor: pointer;
+    padding: 0;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    width: 100%;
+    max-width: 140px;
+    justify-self: center;
+    /* Animación de entrada */
+    opacity: 0; /* Estado inicial para la animación */
+    animation: card-enter 0.5s ease-out forwards;
+}
+.animacion-ejecutada .card {
+    /* Deshabilita la animación si el contenedor ya la ejecutó */
+    animation: none;
+    opacity: 1; /* Asegura que la tarjeta sea visible */
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+/* --- ESTILOS PARA LOGOS DE MARCAS (ICONOS) --- */
+.brand-logo-item {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 10px !important;
+    max-width: 120px;
+    justify-self: center;
+    align-self: center;
+    animation: none !important; /* Override card enter animation */
+    opacity: 1 !important;
+    overflow: visible !important; /* Allow shadow to be visible */
+}
+.brand-logo-item:hover {
+    transform: scale(1.1);
+    box-shadow: none !important;
+}
+.brand-logo-item img {
+    filter: drop-shadow(2px 4px 5px rgba(0,0,0,0.3));
+    transition: filter 0.3s ease, transform 0.3s ease;
+    width: 100%;
+    height: auto;
+    max-height: 80px;
+    object-fit: contain;
+    border-radius: 0 !important;
+}
+.brand-logo-item:hover img {
+    filter: drop-shadow(3px 5px 7px rgba(0,0,0,0.4));
+}
+
+/* --- ESTILOS DEL CARRUSEL --- */
+.carousel-container {
+    position: relative;
+    overflow: hidden;
+    max-width: 100%;
+    margin: 0 auto;
+    padding: 0 25px; /* Espacio para que los botones no se superpongan */
+}
+.carousel-track {
+    display: flex;
+    overflow-x: auto;
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch; /* Para scrolling suave en iOS */
+    scrollbar-width: none; /* Ocultar scrollbar en Firefox */
+}
+.carousel-track::-webkit-scrollbar {
+    display: none; /* Ocultar scrollbar en Chrome, Safari, etc. */
+}
+.carousel-container .card {
+    flex: 0 0 140px; /* Ancho fijo para cada tarjeta */
+    margin-right: 20px;
+}
+.carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #ccc;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+.carousel-btn:hover {
+    background: #fff;
+}
+.carousel-btn.prev {
+    left: -5px;
+}
+.carousel-btn.next {
+    right: -5px;
+}
+
+/* --- ESTILOS DE SKELETON LOADER --- */
+.skeleton-grid {
+    display: grid;
+    gap: 20px;
+    grid-template-columns: repeat(auto-fit, 140px);
+    justify-content: center;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+.skeleton-card {
+    background: #e0e0e0;
+    border-radius: 12px;
+    width: 140px;
+    height: 188px; /* Altura total de la tarjeta real */
+    position: relative;
+    overflow: hidden;
+}
+.skeleton-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -150%;
+    width: 150%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+    animation: loading-shimmer 1.5s infinite;
+}
+@keyframes loading-shimmer {
+    0% {
+        left: -150%;
+    }
+    100% {
+        left: 150%;
+    }
+}
+.card img {
+    width: 100%;
+    height: 120px;
+    object-fit: contain;
+    display: block;
+    border-radius: 0;
+}
+.overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
+    color: #fff;
+    padding: 10px 8px 8px 8px;
+    font-size: 0.9em;
+    line-height: 1.3;
+    font-weight: bold;
+    border-radius: 0;
+    z-index: 10;
+}
+
+/* --- ESTILOS DEL MODAL DE LOGIN --- */
+#login-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2000;
+    backdrop-filter: blur(5px);
+}
+
+#login-modal .modal-content {
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    padding: 40px;
+    border-radius: 15px;
+    width: 100%;
+    max-width: 400px;
+    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+    text-align: center;
+    color: #f0f0f0;
+}
+
+#login-modal h2 {
+    margin-bottom: 25px;
+    font-size: 2em;
+    font-weight: 300;
+}
+
+#login-modal .form-group {
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+#login-modal label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 300;
+    color: #ccc;
+}
+
+#login-modal input {
+    width: 100%;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1em;
+    box-sizing: border-box;
+}
+
+#login-modal input:focus {
+    outline: none;
+    border-color: rgba(0, 123, 255, 0.5);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
+}
+
+#login-modal button {
+    width: 100%;
+    padding: 12px;
+    background: #007bff;
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 1.1em;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+#login-modal button:hover {
+    background: #0056b3;
+}
+
+/* --- ANIMACIONES DE CARGA EN BOTONES --- */
+.btn-loading {
+    position: relative !important;
+    color: transparent !important;
+    pointer-events: none !important;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    top: 50%;
+    left: 50%;
+    margin-top: -9px;
+    margin-left: -9px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: #fff;
+    animation: spin-button 0.6s linear infinite;
+    z-index: 5;
+}
+
+/* Spinner específico para el botón de login si se requiere otro color */
+#login-form button.btn-loading::after {
+    border-top-color: #fff; /* Se mantiene blanco sobre azul */
+}
+
+@keyframes spin-button {
+    to { transform: rotate(360deg); }
+}
+
+/* Modal */
+#modalDetalle {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    overflow: auto;
+    background: rgba(0, 0, 0, 0.6); /* Ligeramente más claro */
+    color: #000;
+    z-index: 1600; /* Aumentado para estar sobre la barra de búsqueda */
+    display: flex; /* Usar flex para centrar */
+    align-items: center;
+    justify-content: center;
+    /* Transiciones para la aparición */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+#modalDetalle.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+#detalleCompleto {
+    background: #fff;
+    padding: 15px; /* Reducido para economizar espacio */
+    width: 90%;
+    max-width: 800px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    max-height: calc(var(--app-height, 100%) * 0.9);
+    overflow-y: auto;
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+#modalDetalle.visible #detalleCompleto {
+    transform: scale(1);
+}
+
+#detalleCompleto img, .info-modal-content img {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    /* max-height eliminado para permitir que el ancho domine */
+    margin: 10px auto;
+    cursor: pointer;
+    object-fit: contain;
+}
+
+/* Reglas específicas para logo y vehículo que solo aplican drop-shadow */
+#detalleCompleto .img-vehiculo-modal,
+#detalleCompleto .brand-logo-modal {
+    filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
+    margin: 0; /* Anula el 'margin: auto' de la regla genérica */
+}
+
+/* Comentario: Ajustes de tamaño según la nueva solicitud de diseño. */
+.brand-logo-modal {
+    height: 44px !important; /* Aumento del 10% desde 40px */
+    width: auto !important;
+}
+
+.image-with-container {
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.img-vehiculo-modal {
+    max-width: 225px; /* Reducción del 10% desde 250px */
+    width: auto;
+    height: auto;
+    margin: 10px auto;
+}
+
+.img-corte {
+    width: 100%; /* Por defecto, ocupa el 100% de su contenedor */
+    height: auto;
+    max-width: 100%; /* Asegura que no se desborde */
+}
+
+/* Media query para móviles */
+@media (max-width: 600px) {
+    #modalDetalle #detalleCompleto .img-corte {
+        width: 80% !important; /* Aumentar especificidad */
+        margin-left: auto;
+        margin-right: auto;
+    }
+}
+
+/* Estilo para el botón de Relay */
+.btn-link {
+    background: none;
+    border: none;
+    color: #007bff;
+    text-decoration: underline;
+    cursor: pointer;
+    padding: 0;
+    font-size: inherit;
+}
+
+/* --- ESTILOS PARA LA SECCIÓN DE FEEDBACK EN MODAL --- */
+.image-container-with-feedback {
+    position: relative;
+    display: block; /* Cambiado para permitir que el contenedor se ajuste al 100% */
+    margin: 10px auto;
+}
+/* Comentario: Se ajusta el posicionamiento para mayor precisión en la esquina. */
+.image-container-with-feedback .feedback-overlay {
+    position: absolute;
+    bottom: 5px; /* Reducido para estar más cerca del borde */
+    right: 5px;  /* Reducido para estar más cerca del borde */
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+}
+/* Comentario: Se añade una nueva clase para el párrafo del colaborador para garantizar su propio espacio. */
+.colaborador-info {
+    display: block;
+    width: 100%;
+    font-style: italic;
+    color: #888;
+    margin-top: 15px;
+    text-align: left;
+    font-size: 0.8em;
+}
+.feedback-btn-overlay {
+    background-color: rgba(0, 0, 0, 0.6);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.2s;
+    font-size: 1.1em;
+}
+.feedback-btn-overlay:hover {
+    background-color: rgba(0, 0, 0, 0.8);
+    transform: scale(1.1);
+}
+
+.feedback-btn-overlay.util-btn.liked {
+    background-color: #28a745;
+}
+
+#detalleCompleto h4 {
+    color: #007bff;
+    border-bottom: 2px solid #eee;
+    padding-bottom: 5px;
+    margin-top: 8px; /* Reducido para economizar espacio */
+    margin-bottom: 4px; /* Reducido para economizar espacio */
+}
+
+#detalleCompleto p {
+    margin: 1px 0; /* Reducido para economizar espacio */
+}
+
+/* --- ESTILOS PARA SECCIONES DESPLEGABLES (ACORDEÓN) --- */
+.accordion-btn {
+    background-color: #f0f0f0;
+    color: #007bff;
+    cursor: pointer;
+    padding: 12px 15px; /* Reducido para economizar espacio */
+    width: 100%;
+    border: none;
+    text-align: left;
+    outline: none;
+    font-size: 1.1em;
+    font-weight: bold;
+    transition: background-color 0.3s ease;
+    border-radius: 8px;
+    margin-top: 3px; /* Reducido para economizar espacio */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.accordion-btn:hover, .accordion-btn.active {
+    background-color: #e0e0e0;
+}
+.accordion-arrow {
+    transition: transform 0.3s ease;
+    width: 20px;
+    height: 20px;
+}
+.accordion-btn.active .accordion-arrow,
+.accordion-item.active .accordion-header i {
+    transform: rotate(180deg); /* Flecha hacia arriba */
+}
+
+/* --- ESTILOS PARA ACORDEÓN DE FAQ --- */
+.accordion-item .accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out, padding 0.3s ease;
+    padding: 0 15px;
+}
+
+.accordion-item.active .accordion-content {
+    max-height: 200px; /* Suficiente para el contenido */
+    padding: 10px 15px;
+}
+
+.accordion-header {
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: var(--button-bg);
+    color: var(--button-text);
+    border-radius: 8px;
+    margin-top: 5px;
+    font-weight: bold;
+}
+
+.accordion-header i {
+    transition: transform 0.3s ease;
+}
+.panel-desplegable {
+    padding: 0 18px;
+    background-color: white;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    border-bottom: 1px solid #eee;
+}
+
+/* Lightbox */
+.lightbox {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.85); /* Un poco más suave */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1700; /* Aumentado para estar sobre el modal de detalles */
+    /* Transiciones */
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+}
+
+.lightbox.visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: all;
+}
+
+.lightbox img {
+    max-width: 95%;
+    max-height: 95%;
+    width: auto;
+    height: auto;
+    border-radius: 8px; /* Bordes redondeados sutiles */
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    /* Transición para el efecto de zoom */
+    transform: scale(0.95);
+    transition: transform 0.3s ease;
+}
+
+.lightbox.visible img {
+    transform: scale(1);
+}
+
+.footer {
+    text-align: center;
+    padding: 20px 0;
+    margin-top: 0; /* Ajustado para evitar espacio fantasma */
+    background-color: #333;
+    color: #fff;
+    font-size: 0.9em;
+    display: none; /* Oculto por defecto */
+    width: 100%;
+    transition: all 0.35s ease-in-out;
+    flex-shrink: 0; /* Garantiza que el footer no se colapse ni empuje excesivamente */
+}
+.footer-links {
+    margin-top: 10px; /* Added margin to separate from copyright */
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.footer-links a {
+    color: #a0cfff;
+    text-decoration: none;
+    transition: color 0.2s;
+    font-size: 0.8em; /* Adjusted to be smaller than the main footer text */
+    cursor: pointer; /* Make it look clickable */
+}
+/* --- ESTILOS PARA MODALES DE INFORMACIÓN --- */
+.info-modal {
+    display: none; position: fixed; z-index: 2100; left: 0; top: 0; width: 100%; height: 100%;
+    overflow: auto; background-color: rgba(0,0,0,0.6); backdrop-filter: blur(5px);
+    align-items: center; justify-content: center;
+}
+.info-modal-content {
+    background-color: #fff; margin: auto; padding: 25px; border-radius: 10px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.25); width: 90%; max-width: 700px;
+    max-height: calc(var(--app-height, 100%) * 0.9); overflow-y: auto; position: relative;
+}
+.info-close-btn {
+    color: #aaa; position: absolute; top: 10px; right: 20px; font-size: 28px;
+    font-weight: bold; cursor: pointer;
+}
+/* Estilos para el formulario de contacto */
+#contact-form .form-group {
+    margin-bottom: 15px;
+}
+#contact-form label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: bold;
+    color: #555;
+}
+#contact-form input,
+#contact-form textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    box-sizing: border-box;
+}
+#contact-form button {
+    background-color: #007bff;
+    color: white;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.3s;
+}
+#contact-form button:hover {
+    background-color: #0056b3;
+}
+.footer-links a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+#splash-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #f4f4f4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3000; /* Por encima de todo */
+    transition: opacity 0.5s ease-out;
+}
+#splash-screen img {
+    max-width: 150px;
+    border-radius: 15px;
+    animation: pulse 1.5s infinite ease-in-out;
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* --- ESTILOS DEL TOAST DE ERROR GLOBAL --- */
+#error-toast {
+    display: none; /* Oculto por defecto */
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #dc3545; /* Rojo de error */
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 4000; /* Por encima de todo */
+    font-size: 1em;
+    max-width: 90%;
+    text-align: center;
+}
+
+/* --- ESTILOS DEL TOAST DE NOTIFICACIÓN --- */
+#notification-toast {
+    display: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background-color: #007bff;
+    color: white;
+    padding: 15px 25px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+    z-index: 4001;
+    font-size: 1em;
+    cursor: pointer;
+}
+
+/* --- ESTILOS DEL MODAL DE INBOX (ALTA DENSIDAD) --- */
+#inbox-modal-content {
+    padding: 10px !important;
+    max-width: 1000px !important;
+    width: 95% !important;
+    max-height: 90vh !important;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+.inbox-modal-title {
+    font-size: 1.1rem !important;
+    margin: 0 0 8px 0 !important;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #eee;
+    flex-shrink: 0;
+}
+.inbox-layout-wrapper {
+    display: flex;
+    gap: 8px;
+    height: calc(100% - 40px);
+    overflow: hidden;
+}
+#inbox-list {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    border-right: 1px solid #eee;
+    padding-right: 4px;
+}
+#inbox-detail {
+    flex: 2;
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding-left: 4px;
+}
+.inbox-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 5px;
+    border-bottom: 1px solid #f5f5f5;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    margin-bottom: 1px;
+}
+.inbox-item:hover {
+    background-color: #f9f9f9;
+}
+.inbox-item.active {
+    background-color: #e9f7ff;
+    border-left: 2px solid #007bff;
+}
+.inbox-item.resolved {
+    opacity: 0.5;
+}
+.inbox-item.replied .inbox-item-content .inbox-item-title::after {
+    content: ' (Rep)';
+    color: #28a745;
+    font-size: 0.7em;
+}
+.inbox-item i {
+    color: #007bff;
+    font-size: 0.8em;
+}
+.inbox-item-content {
+    flex-grow: 1;
+    overflow: hidden;
+}
+.inbox-item-title {
+    font-size: 0.8rem !important;
+    display: block;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.inbox-item-type {
+    font-size: 0.7rem !important;
+    color: #999;
+    margin: 0 !important;
+}
+.inbox-detail-title {
+    margin: 0 0 4px 0 !important;
+    font-size: 0.9rem !important;
+    color: #007bff;
+    line-height: 1.2;
+}
+.inbox-detail-meta {
+    font-size: 0.8rem;
+    color: #666;
+    margin: 0 0 4px 0 !important;
+}
+.inbox-message-content,
+.inbox-reply-content {
+    background-color: #f8f8f8;
+    border-radius: 4px;
+    padding: 4px 6px;
+    margin: 4px 0;
+    font-size: 0.85rem;
+}
+.inbox-reply-content {
+    border-left: 3px solid #28a745;
+}
+.inbox-message-content pre,
+.inbox-reply-content pre {
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    font-family: inherit;
+    margin: 0;
+}
+.inbox-actions {
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+}
+.inbox-actions textarea {
+    width: 100%;
+    min-height: 50px;
+    padding: 4px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+    box-sizing: border-box;
+    margin-bottom: 4px;
+    font-size: 0.8rem;
+}
+.inbox-actions button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 6px 12px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    margin-right: 5px;
+}
+.inbox-actions button.resolve-btn {
+    background-color: #28a745;
+}

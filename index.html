@@ -1,641 +1,61 @@
+<!-- GPSpedia Frontend Component | Version: 2.0 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GPSpedia | Catálogo Técnico</title>
+    <title>GPSpedia v2.0</title>
 <link rel="icon" href="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256">
 <link rel="manifest" href="manifest.json">
-<style>
-/* Estilos Globales */
-html {
-    height: 100%;
-}
-body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: #f4f4f4;
-    display: flex;
-    flex-direction: column;
-    min-height: 100%;
-}
-h1,h2,h3,h4 {
-    margin: 10px 0;
-}
-.container {
-    padding: 20px;
-    max-width: 1240px;
-    margin: 0 auto;
-    width: 100%;
-    box-sizing: border-box;
-    flex: 1 0 auto;
-}
-.backBtn {
-    margin-bottom: 15px;
-    cursor: pointer;
-    color: #007bff;
-    display: inline-flex;
-    align-items: center;
-    font-weight: bold;
-    padding: 5px 10px;
-    border-radius: 5px;
-    transition: background 0.2s;
-}
-.backBtn:hover {
-    background: #e9f7ff;
-}
-
-/* --- ESTILOS DEL ENCABEZADO (Header) --- */
-.header-container {
-    display: flex;
-    align-items: center;
-    justify-content: space-between; /* Ajustado para espaciar los elementos */
-    flex-wrap: wrap; /* Permite que los elementos se envuelvan en pantallas pequeñas */
-    margin-bottom: 20px;
-    gap: 15px; /* Espacio entre el logo/título y los controles */
-    transition: all 0.35s ease-in-out;
-}
-
-.header-branding {
-    display: flex;
-    align-items: center;
-    gap: 15px;
-    transition: all 0.35s ease-in-out;
-}
-
-.app-logo {
-    max-width: 96px;
-    height: auto;
-    border-radius: 8px;
-    /* margin-right ya no es necesario gracias a 'gap' */
-    transition: all 0.35s ease-in-out;
-}
-h1.app-title {
-    text-align: left;
-    margin: 0;
-    font-size: 2.2em;
-    color: #333;
-    transition: all 0.35s ease-in-out;
-}
-
-#header-controls {
-    transition: all 0.35s ease-in-out;
-}
-
-#install-button {
-    display: none; /* Oculto por defecto, JS lo mostrará */
-    position: fixed; /* Fijo en la pantalla */
-    top: 20px;       /* Distancia desde arriba */
-    right: 20px;      /* Distancia desde la derecha */
-    z-index: 1001;   /* Por encima de otros elementos */
-    padding: 10px 20px;
-    font-size: 1em;
-    font-weight: bold;
-    color: #fff;
-    background-color: #28a745; /* Verde para la acción de instalar */
-    border: none;
-    border-radius: 8px;
-    cursor: pointer;
-    transition: background-color 0.3s, transform 0.2s;
-    white-space: nowrap;
-}
-
-#install-button:hover {
-    background-color: #218838;
-    transform: scale(1.05); /* Efecto de zoom ligero */
-}
-
-@media (max-width: 680px) {
-    .header-container {
-        flex-direction: column; /* Apila los elementos verticalmente */
-        align-items: center; /* Centra los elementos */
-        justify-content: center;
-    }
-    .header-branding {
-        justify-content: center;
-        width: 100%;
-    }
-    h1.app-title {
-        font-size: 1.8em;
-    }
-    #header-controls {
-        margin-left: 0; /* Resetea el margen */
-        width: 100%;
-        justify-content: center; /* Centra los botones */
-    }
-}
-
-@media (max-width: 480px) {
-    #install-button {
-        top: 10px;
-        right: 10px;
-        padding: 8px 12px;
-        font-size: 0.9em;
-    }
-    #header-controls {
-        flex-direction: column; /* Apila el saludo y el botón de cerrar sesión */
-        align-items: center;
-    }
-}
-
-/* --- ESTILOS DEL BUSCADOR --- */
-.search-container {
-    position: relative; /* Contenedor para el botón de limpiar */
-    margin-bottom: 30px;
-    padding: 10px 0;
-    max-width: 600px;
-    margin-left: auto;
-    margin-right: auto;
-    transition: all 0.35s ease-in-out;
-}
-
-#clear-search-btn {
-    position: absolute;
-    right: 15px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: #ccc;
-    color: #fff;
-    border: none;
-    border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    font-size: 16px;
-    line-height: 24px;
-    text-align: center;
-    cursor: pointer;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease-in-out;
-}
-
-.search-container.has-text #clear-search-btn {
-    opacity: 1;
-    pointer-events: all;
-}
-
-body.search-active .search-container.has-text #clear-search-btn {
-    right: 35px; /* Ajuste de posición cuando la búsqueda está activa */
-}
-
-
-.search-container input[type="text"] {
-    width: 100%;
-    padding: 12px 15px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    box-sizing: border-box;
-    font-size: 1em;
-    transition: all 0.35s ease-in-out;
-}
-.search-container input[type="text"]:focus {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
-    outline: none;
-}
-
-/* --- ESTILOS DE BÚSQUEDA ACTIVA --- */
-body.search-active .app-title,
-body.search-active #header-controls,
-body.search-active .section-selector,
-body.search-active .footer {
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-20px);
-    max-height: 0; /* Colapsa el espacio vertical */
-    margin-top: 0 !important;
-    margin-bottom: 0 !important;
-    padding-top: 0 !important;
-    padding-bottom: 0 !important;
-    border: none !important;
-}
-
-body.search-active .container {
-    padding-top: 80px; /* Crea espacio para la barra de búsqueda fija */
-    transition: padding-top 0.35s ease-in-out;
-}
-
-body.search-active .search-container {
-    position: fixed;
-    top: 15px;
-    left: 0;
-    right: 0;
-    padding: 0 20px;
-    margin: 0;
-    max-width: 100%;
-    z-index: 1500;
-}
-
-body.search-active #searchInput {
-    padding-left: 55px; /* Espacio para el logo */
-    height: 48px;
-    box-sizing: border-box;
-}
-
-body.search-active .app-logo {
-    position: fixed;
-    top: 22px;       /* 15px (search-container top) + 7px (para centrar) */
-    left: 30px;      /* 20px (search-container padding) + 10px (margen interno) */
-    max-width: 34px;
-    z-index: 1501;   /* Por encima del input */
-}
-
-
-/* --- ESTILOS DE LA SELECCIÓN DE SECCIÓN --- */
-.section-selector {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 20px;
-    transition: all 0.35s ease-in-out;
-    flex-wrap: wrap;
-    gap: 10px;
-}
-.section-btn {
-    background-color: #f0f0f0;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 10px 20px;
-    margin: 0;
-    cursor: pointer;
-    font-size: 1em;
-    transition: background-color 0.3s, color 0.3s;
-}
-.section-btn.active {
-    background-color: #007bff;
-    color: #fff;
-    border-color: #007bff;
-}
-.section-btn:hover:not(.active) {
-    background-color: #e0e0e0;
-    transform: translateY(-2px);
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-
-/* Estilos de la Cuadrícula */
-.grid {
-    display: grid;
-    gap: 20px;
-    grid-template-columns: repeat(auto-fit, 140px);
-    justify-content: center;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-
-/* Estilos de la Tarjeta (Card) */
-@keyframes card-enter {
-    from {
-        opacity: 0;
-        transform: translateY(20px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-.card {
-    position: relative;
-    background: #fff;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    cursor: pointer;
-    padding: 0;
-    overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
-    width: 100%;
-    max-width: 140px;
-    justify-self: center;
-    /* Animación de entrada */
-    opacity: 0; /* Estado inicial para la animación */
-    animation: card-enter 0.5s ease-out forwards;
-}
-.animacion-ejecutada .card {
-    /* Deshabilita la animación si el contenedor ya la ejecutó */
-    animation: none;
-    opacity: 1; /* Asegura que la tarjeta sea visible */
-}
-.card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
-}
-
-/* --- ESTILOS DE SKELETON LOADER --- */
-.skeleton-grid {
-    display: grid;
-    gap: 20px;
-    grid-template-columns: repeat(auto-fit, 140px);
-    justify-content: center;
-    max-width: 1200px;
-    margin: 0 auto;
-}
-.skeleton-card {
-    background: #e0e0e0;
-    border-radius: 12px;
-    width: 140px;
-    height: 188px; /* Altura total de la tarjeta real */
-    position: relative;
-    overflow: hidden;
-}
-.skeleton-card::after {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -150%;
-    width: 150%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    animation: loading-shimmer 1.5s infinite;
-}
-@keyframes loading-shimmer {
-    0% {
-        left: -150%;
-    }
-    100% {
-        left: 150%;
-    }
-}
-.card img {
-    width: 100%;
-    height: 120px;
-    object-fit: contain;
-    display: block;
-    border-radius: 0;
-}
-.overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0) 100%);
-    color: #fff;
-    padding: 10px 8px 8px 8px;
-    font-size: 0.9em;
-    line-height: 1.3;
-    font-weight: bold;
-    border-radius: 0;
-    z-index: 10;
-}
-
-/* --- ESTILOS DEL MODAL DE LOGIN --- */
-#login-modal {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.7);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 2000;
-    backdrop-filter: blur(5px);
-}
-
-#login-modal .modal-content {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 40px;
-    border-radius: 15px;
-    width: 100%;
-    max-width: 400px;
-    box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-    text-align: center;
-    color: #f0f0f0;
-}
-
-#login-modal h2 {
-    margin-bottom: 25px;
-    font-size: 2em;
-    font-weight: 300;
-}
-
-#login-modal .form-group {
-    margin-bottom: 20px;
-    text-align: left;
-}
-
-#login-modal label {
-    display: block;
-    margin-bottom: 8px;
-    font-weight: 300;
-    color: #ccc;
-}
-
-#login-modal input {
-    width: 100%;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 8px;
-    color: #fff;
-    font-size: 1em;
-    box-sizing: border-box;
-}
-
-#login-modal input:focus {
-    outline: none;
-    border-color: rgba(0, 123, 255, 0.5);
-    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.15);
-}
-
-#login-modal button {
-    width: 100%;
-    padding: 12px;
-    background: #007bff;
-    border: none;
-    border-radius: 8px;
-    color: #fff;
-    font-size: 1.1em;
-    font-weight: bold;
-    cursor: pointer;
-    transition: background-color 0.3s;
-}
-
-#login-modal button:hover {
-    background: #0056b3;
-}
-
-/* Modal */
-#modalDetalle {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    overflow: auto;
-    background: rgba(0, 0, 0, 0.6); /* Ligeramente más claro */
-    color: #000;
-    z-index: 1600; /* Aumentado para estar sobre la barra de búsqueda */
-    display: flex; /* Usar flex para centrar */
-    align-items: center;
-    justify-content: center;
-    /* Transiciones para la aparición */
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-#modalDetalle.visible {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: all;
-}
-
-#detalleCompleto {
-    background: #fff;
-    padding: 30px;
-    width: 90%;
-    max-width: 800px; /* Ancho máximo para el modal */
-    border-radius: 15px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
-    max-height: 90vh;
-    overflow-y: auto;
-    /* Transición para el efecto de escalado */
-    transform: scale(0.95);
-    transition: transform 0.3s ease;
-}
-
-#modalDetalle.visible #detalleCompleto {
-    transform: scale(1);
-}
-
-#detalleCompleto img {
-    display: block;
-    width: auto; /* Ancho automático para mantener proporción */
-    max-width: 100%;
-    max-height: 300px; /* Límite de altura en lugar de altura fija */
-    margin: 15px auto;
-    cursor: pointer;
-    object-fit: contain;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Sombra más pronunciada */
-}
-.img-vehiculo {
-    max-height: 200px !important; /* Límite de altura más pequeño */
-}
-#detalleCompleto h4 {
-    color: #007bff;
-    border-bottom: 2px solid #eee;
-    padding-bottom: 5px;
-}
-
-/* --- ESTILOS PARA SECCIONES DESPLEGABLES (ACORDEÓN) --- */
-.accordion-btn {
-    background-color: #f0f0f0;
-    color: #007bff; /* Color de texto azul */
-    cursor: pointer;
-    padding: 15px;
-    width: 100%;
-    border: none;
-    text-align: left;
-    outline: none;
-    font-size: 1.1em;
-    font-weight: bold;
-    transition: background-color 0.3s ease;
-    border-radius: 8px;
-    margin-top: 10px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-.accordion-btn:hover, .accordion-btn.active {
-    background-color: #e0e0e0;
-}
-.accordion-arrow {
-    transition: transform 0.3s ease;
-    width: 20px;
-    height: 20px;
-}
-.accordion-btn.active .accordion-arrow {
-    transform: rotate(180deg); /* Flecha hacia arriba */
-}
-.panel-desplegable {
-    padding: 0 18px;
-    background-color: white;
-    max-height: 0;
-    overflow: hidden;
-    transition: max-height 0.3s ease-out;
-    border-bottom: 1px solid #eee;
-}
-
-/* Lightbox */
-.lightbox {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.85); /* Un poco más suave */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1700; /* Aumentado para estar sobre el modal de detalles */
-    /* Transiciones */
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-}
-
-.lightbox.visible {
-    opacity: 1;
-    visibility: visible;
-    pointer-events: all;
-}
-
-.lightbox img {
-    max-width: 95%;
-    max-height: 95%;
-    border-radius: 8px; /* Bordes redondeados sutiles */
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-    /* Transición para el efecto de zoom */
-    transform: scale(0.95);
-    transition: transform 0.3s ease;
-}
-
-.lightbox.visible img {
-    transform: scale(1);
-}
-
-.footer {
-    text-align: center;
-    padding: 20px 0;
-    margin-top: 40px;
-    background-color: #333;
-    color: #fff;
-    font-size: 0.9em;
-    display: none; /* Oculto por defecto */
-    width: 100%;
-    transition: all 0.35s ease-in-out;
-}
-#splash-screen {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #f4f4f4;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 3000; /* Por encima de todo */
-    transition: opacity 0.5s ease-out;
-}
-#splash-screen img {
-    max-width: 150px;
-    border-radius: 15px;
-    animation: pulse 1.5s infinite ease-in-out;
-}
-@keyframes pulse {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.05); }
-    100% { transform: scale(1); }
-}
-</style>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
+<!-- Notificación Toast -->
+<div id="notification-toast"></div>
+
+<!-- Contenedor de la Consola de Depuración -->
+<div id="debug-console" style="display: none; position: fixed; bottom: 10px; right: 10px; width: 450px; height: 350px; background-color: rgba(20, 20, 30, 0.9); color: #00ff00; border: 1px solid #00ff00; border-radius: 8px; z-index: 9999; flex-direction: column; font-family: 'Courier New', Courier, monospace; box-shadow: 0 0 15px rgba(0, 255, 0, 0.5); backdrop-filter: blur(5px);">
+    <div id="debug-header" style="padding: 8px; background-color: #00ff00; color: #14141e; font-weight: bold; cursor: move; border-top-left-radius: 7px; border-top-right-radius: 7px; display: flex; justify-content: space-between; align-items: center;">
+        <span>GPSpedia Debug Console</span>
+        <div>
+            <button id="debug-clear" style="background:none; border:none; color:#14141e; cursor:pointer; font-size: 14px; margin-right: 5px;">[Clear]</button>
+            <button id="debug-close" style="background:none; border:none; color:#14141e; cursor:pointer; font-size: 16px;">[X]</button>
+        </div>
+    </div>
+    <div id="debug-log" style="flex-grow: 1; overflow-y: auto; padding: 10px; font-size: 13px; line-height: 1.4;"></div>
+    <div id="debug-resize-handle" style="height: 10px; background-color: #00ff00; cursor: ns-resize;"></div>
+</div>
+<!-- Notificación de Error Global -->
+<div id="error-toast"></div>
+
+<!-- Side Menu (Hamburger) -->
+<div id="menu-overlay"></div>
+<div id="side-menu">
+    <div style="padding: 20px; border-bottom: 1px solid #eee; text-align: center;">
+        <h3 id="menu-username" style="margin: 0; color: #007bff;"></h3>
+    </div>
+    <nav>
+        <a href="#" id="menu-cortes" class="menu-link"><i class="fa-solid fa-car-on"></i> Cortes</a>
+        <a href="add_cortes.html" class="menu-link"><i class="fa-solid fa-plus-circle"></i> Agregar Nuevo</a>
+        <a href="#" id="menu-tutoriales" class="menu-link"><i class="fa-solid fa-book-open"></i> Tutoriales</a>
+        <a href="#" id="menu-relay" class="menu-link"><i class="fa-solid fa-microchip"></i> Configuración Relay</a>
+        <a href="users.html" class="menu-link"><i class="fa-solid fa-users-cog"></i> Mi Perfil / Usuarios</a>
+        <a href="#" id="inbox-btn" class="menu-link" style="display: none;"><i class="fa-solid fa-inbox"></i> Inbox</a>
+        <a href="#" id="dashboard-btn" class="menu-link" style="display: none;"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+        <a href="#" id="dev-tools-btn" class="menu-link" style="display: none;"><i class="fa-solid fa-code"></i> Desarrollador</a>
+    </nav>
+    <div class="theme-switch-wrapper">
+        <label style="margin-right: 10px;">Modo Oscuro</label>
+        <label class="theme-switch" for="dark-mode-toggle">
+            <input type="checkbox" id="dark-mode-toggle" />
+            <div class="slider round"></div>
+        </label>
+    </div>
+    <div style="padding: 20px;">
+        <button id="side-menu-logout-button" style="width: 100%; background: #dc3545; color: #fff; border: none; padding: 12px; border-radius: 8px; cursor: pointer;">Cerrar Sesión</button>
+    </div>
+</div>
 
 <!-- Splash Screen -->
 <div id="splash-screen">
@@ -650,14 +70,17 @@ body.search-active .app-logo {
         <form id="login-form">
             <div class="form-group">
                 <label for="username">Usuario</label>
-                <input type="text" id="username" required autocomplete="username">
+                <input type="text" id="username" name="username" required autocomplete="username">
             </div>
             <div class="form-group">
                 <label for="password">Contraseña</label>
-                <input type="password" id="password" required autocomplete="current-password">
+                <input type="password" id="password" name="password" required autocomplete="current-password">
             </div>
             <button type="submit">Acceder</button>
             <p id="login-error" style="color: red; display: none;"></p>
+            <div style="text-align: center; margin-top: 20px;">
+                <small style="color: rgba(255,255,255,0.5);">v2.0</small>
+            </div>
         </form>
         <a href="#" id="forgot-password-link" style="color: #a0cfff; text-decoration: none; margin-top: 15px; display: inline-block;">¿Olvidaste tu contraseña?</a>
     </div>
@@ -665,29 +88,40 @@ body.search-active .app-logo {
 
 <div class="container" style="display: none;">
 
-  <div class="header-container">
-      <div class="header-branding">
-          <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
-          <h1 class="app-title">GPSpedia</h1>
+  <!-- RECONSTRUCCIÓN EXTREMA DEL HEADER: Contenedor Maestro Único -->
+  <header class="main-header">
+      <!-- Fila 1: Branding y Controles -->
+      <div class="header-top">
+          <div class="header-branding">
+              <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo">
+              <div class="title-welcome-group">
+                  <h1 class="app-title">GPSpedia</h1>
+                  <span id="welcome-message" style="display: none;"></span>
+              </div>
+          </div>
+          <div class="header-controls">
+              <button id="install-button" style="display: none;">Instalar</button>
+              <button id="logout-button" style="display: none;">Cerrar Sesión</button>
+          </div>
       </div>
-      <div id="header-controls" style="display: flex; align-items: center; gap: 15px;">
-          <span id="welcome-message" style="display: none; color: #333; font-weight: bold;"></span>
-          <button id="logout-button" style="display: none; background-color: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;">Cerrar Sesión</button>
-          <button id="install-button" style="display: none;">Instalar Aplicación</button>
+
+      <!-- Fila 2: Búsqueda y Navegación Principal -->
+      <div class="header-bottom">
+          <div class="search-wrapper">
+              <div class="search-container">
+                  <input type="text" id="searchInput" placeholder="Buscar Corte...">
+                  <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
+              </div>
+              <button id="hamburger-btn"><i class="fa-solid fa-bars"></i></button>
+          </div>
+
+          <nav class="section-selector">
+              <button id="btn-cortes" class="section-btn active">Cortes</button>
+              <button id="btn-tutoriales" class="section-btn">Tutoriales</button>
+              <button id="btn-relay" class="section-btn">Relay</button>
+          </nav>
       </div>
-  </div>
-
-  <div class="search-container">
-      <input type="text" id="searchInput" placeholder="Buscar Corte..." oninput="filtrarContenido(this.value)">
-      <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
-  </div>
-
-  <div class="section-selector">
-      <button id="btn-cortes" class="section-btn active" onclick="mostrarSeccion('cortes')">Cortes</button>
-      <button id="btn-tutoriales" class="section-btn" onclick="mostrarSeccion('tutoriales')">Tutoriales</button>
-      <button id="btn-relay" class="section-btn" onclick="mostrarSeccion('relay')">Relay</button>
-      <button id="btn-add" class="section-btn" style="background-color: #28a745; color: white;" onclick="window.location.href='add_cortes.html'">Agregar Nuevo</button>
-  </div>
+  </header>
 
   <div id="contenido" class="content-section"></div>
   <div id="contenido-tutoriales" class="content-section" style="display: none;"></div>
@@ -702,1404 +136,145 @@ body.search-active .app-logo {
   <img id="lightboxImg" src="">
 </div>
 
-<script>
-// --- LÓGICA DE SEGURIDAD ---
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'F12' || (e.ctrlKey && e.key === 'u') || (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i'))) {
-        e.preventDefault();
-    }
-});
-document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
-
-
-// --- LÓGICA DE INDEXEDDB ---
-const DB_NAME = 'gpsepedia-db';
-const DB_VERSION = 1;
-const STORES = ['cortes', 'tutoriales', 'relay'];
-let db;
-
-function openDb() {
-    return new Promise((resolve, reject) => {
-        if (db) {
-            resolve(db);
-            return;
-        }
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
-
-        request.onupgradeneeded = (event) => {
-            const dbInstance = event.target.result;
-            STORES.forEach(storeName => {
-                if (!dbInstance.objectStoreNames.contains(storeName)) {
-                    // Usaremos el nombre del almacén como clave única para el objeto de datos.
-                    dbInstance.createObjectStore(storeName, { keyPath: 'id' });
-                }
-            });
-        };
-
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            console.log('Base de datos IndexedDB abierta con éxito.');
-            resolve(db);
-        };
-
-        request.onerror = (event) => {
-            console.error('Error al abrir IndexedDB:', event.target.error);
-            reject(event.target.error);
-        };
-    });
-}
-
-async function saveData(storeName, data) {
-    const db = await openDb();
-    const transaction = db.transaction([storeName], 'readwrite');
-    const store = transaction.objectStore(storeName);
-    // Limpiamos el almacén antes de guardar los nuevos datos para asegurar que siempre esté fresco.
-    await new Promise((resolve, reject) => {
-        const req = store.clear();
-        req.onsuccess = resolve;
-        req.onerror = reject;
-    });
-    // Guardamos todo el conjunto de datos bajo una clave única, el nombre del almacén.
-    return new Promise((resolve, reject) => {
-        const request = store.put({ id: storeName, data: data });
-        request.onsuccess = () => resolve();
-        request.onerror = (e) => reject(e.target.error);
-    });
-}
-
-async function readData(storeName) {
-    const db = await openDb();
-    return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], 'readonly');
-        const store = transaction.objectStore(storeName);
-        const request = store.get(storeName);
-        request.onsuccess = () => resolve(request.result ? request.result.data : null);
-        request.onerror = (e) => reject(e.target.error);
-    });
-}
-
-
-// --- LÓGICA DE DATOS ---
-const SPREADSHEET_ID = "1jEdC2NMc2a5F36xE2MJfgxMZiZFVfeDqnCdVizNGIMo";
-const API_KEY = "AIzaSyCooAsC52X4ccENCT6p3qh_82ErBxP47Lg";
-const RANGE_CORTES = "Cortes";
-const RANGE_TUTORIALES = "Tutorial";
-const RANGE_RELAY = "Configuración del Relay";
-const RANGE_USERS = "Users";
-
-// --- LÓGICA DE AUTENTICACIÓN Y SESIÓN ---
-
-function sanitizeInput(input) {
-    if (typeof input !== 'string') return '';
-    // Prevenir inyección de fórmulas de Excel escapando caracteres iniciales peligrosos
-    let sanitized = input.trim();
-    if (['=', '+', '-', '@', '\t', '\r'].includes(sanitized.charAt(0))) {
-        sanitized = "'" + sanitized;
-    }
-    // Escapar caracteres comunes de SQL para mitigar inyecciones básicas.
-    // Aunque la validación es del lado del cliente, esto añade una capa de "defensa en profundidad".
-    sanitized = sanitized.replace(/'/g, "''").replace(/--/g, "").replace(/;/g, "");
-    return sanitized;
-}
-
-const SESSION_KEY = 'gpsepedia_session';
-const SESSION_ID_KEY = 'gpsepedia_session_id';
-let userData = [];
-
-async function fetchUsers() {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(RANGE_USERS)}?key=${API_KEY}`;
-    try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Error de red al obtener usuarios: ${response.status}`);
-        const data = await response.json();
-        userData = data.values || [];
-        return userData;
-    } catch (error) {
-        console.error("Fallo al obtener la lista de usuarios:", error);
-        // Mostrar error en el modal de login si falla la carga de usuarios
-        const loginError = document.getElementById('login-error');
-        loginError.textContent = "No se pudo conectar al servidor de autenticación.";
-        loginError.style.display = 'block';
-        return [];
-    }
-}
-
-async function checkSession() {
-    const session = localStorage.getItem(SESSION_KEY);
-    if (session) {
-        const { user, sessionId } = JSON.parse(session);
-        const expectedSessionId = localStorage.getItem(SESSION_ID_KEY);
-
-        if (sessionId !== expectedSessionId) {
-            logout("Se ha iniciado una nueva sesión en otro dispositivo o navegador.");
-            return;
-        }
-
-        // Re-verificar credenciales con los datos de usuario más recientes
-        if (userData.length === 0) {
-            await fetchUsers(); // Asegurarse de que los datos de usuario están cargados
-        }
-
-        const header = userData[0];
-        const users = userData.slice(1);
-        const currentUser = users.find(u =>
-            u[header.indexOf('Nombre_Usuario')] === user.Nombre_Usuario
-        );
-
-        if (currentUser) {
-            // Las credenciales son válidas, la sesión continúa
-            localStorage.setItem('userName', user.Nombre); // <-- AÑADIDO
-            hideLoginShowApp();
-            document.getElementById('welcome-message').textContent = `Bienvenido, ${user.Nombre}`;
-            document.getElementById('welcome-message').style.display = 'block';
-            document.getElementById('logout-button').style.display = 'block';
-            syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-        } else {
-            // Credenciales inválidas (usuario eliminado, contraseña cambiada, etc.)
-            logout("Tu sesión ha expirado o tus credenciales han cambiado. Por favor, inicia sesión de nuevo.");
-        }
-    } else {
-        // No hay sesión, mostrar el modal de login
-        showLoginHideApp();
-    }
-}
-
-
-function login(username, password) {
-    if (userData.length === 0) {
-        document.getElementById('login-error').textContent = 'Error de autenticación. Intente de nuevo.';
-        document.getElementById('login-error').style.display = 'block';
-        return;
-    }
-    const header = userData[0];
-    const users = userData.slice(1);
-    const user = users.find(u => u[header.indexOf('Nombre_Usuario')] === username && u[header.indexOf('Password')] === password);
-
-    if (user) {
-        const sessionId = Date.now().toString(); // ID de sesión único
-        const sessionData = {
-            user: {
-                ID: user[header.indexOf('ID')],
-                Nombre_Usuario: user[header.indexOf('Nombre_Usuario')],
-                Privilegios: user[header.indexOf('Privilegios')],
-                Nombre: user[header.indexOf('Nombre')],
-            },
-            sessionId: sessionId
-        };
-
-        localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData));
-        localStorage.setItem(SESSION_ID_KEY, sessionId); // Almacena el ID de la sesión actual
-        localStorage.setItem('userName', sessionData.user.Nombre); // <-- AÑADIDO
-
-        // Simular notificación a otras pestañas
-        localStorage.setItem('session_update', Date.now());
-
-        hideLoginShowApp();
-        document.getElementById('welcome-message').textContent = `Bienvenido, ${sessionData.user.Nombre}`;
-        document.getElementById('welcome-message').style.display = 'block';
-        document.getElementById('logout-button').style.display = 'block';
-
-        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-
-    } else {
-        document.getElementById('login-error').textContent = 'Usuario o contraseña incorrectos.';
-        document.getElementById('login-error').style.display = 'block';
-    }
-}
-
-function logout(reason = null) {
-    localStorage.removeItem(SESSION_KEY);
-    localStorage.removeItem(SESSION_ID_KEY);
-    localStorage.removeItem('userName'); // <-- AÑADIDO
-
-    showLoginHideApp(reason);
-}
-
-function showLoginHideApp(reason = null) {
-    // Ocultar splash screen
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500);
-
-    // Ocultar contenido principal y footer
-    document.querySelector('.container').style.display = 'none';
-    document.querySelector('.footer').style.display = 'none';
-    document.getElementById('welcome-message').style.display = 'none';
-    document.getElementById('logout-button').style.display = 'none';
-
-    // Mostrar el modal de login
-    const loginModal = document.getElementById('login-modal');
-    loginModal.style.display = 'flex';
-
-    const loginError = document.getElementById('login-error');
-    if (reason) {
-        loginError.textContent = reason;
-        loginError.style.display = 'block';
-    } else {
-        loginError.style.display = 'none';
-    }
-
-    document.getElementById('username').value = '';
-    document.getElementById('password').value = '';
-}
-
-function hideLoginShowApp() {
-    // Ocultar splash y login
-    const splash = document.getElementById('splash-screen');
-    splash.style.opacity = '0';
-    setTimeout(() => {
-        splash.style.display = 'none';
-    }, 500); // Coincide con la transición de opacidad
-
-    document.getElementById('login-modal').style.display = 'none';
-
-    // Mostrar contenido principal y footer
-    document.querySelector('.container').style.display = 'block';
-    document.querySelector('.footer').style.display = 'block';
-}
-
-
-document.getElementById('login-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const username = sanitizeInput(document.getElementById('username').value);
-    const password = sanitizeInput(document.getElementById('password').value);
-
-    // Asegurarse de que los datos de usuario estén cargados
-    if (userData.length === 0) {
-       await fetchUsers();
-    }
-
-    login(username, password);
-});
-
-document.getElementById('logout-button').addEventListener('click', () => {
-    logout();
-});
-
-document.getElementById('forgot-password-link').addEventListener('click', (e) => {
-    e.preventDefault();
-    const username = document.getElementById('username').value;
-    const message = encodeURIComponent(`Hola, necesito recuperar mi contraseña. Mi nombre de usuario es: ${username}`);
-    const whatsappUrl = `https://wa.me/50488422786?text=${message}`;
-    window.open(whatsappUrl, '_blank');
-});
-
-// Listener para detectar cambios de sesión en otras pestañas
-window.addEventListener('storage', (event) => {
-    if (event.key === 'session_update' || event.key === SESSION_ID_KEY) {
-        checkSession();
-    }
-});
-
-function showSkeletonLoader(container) {
-    let skeletonHTML = '<div class="skeleton-grid">';
-    for (let i = 0; i < 10; i++) { // Muestra 10 tarjetas esqueleto
-        skeletonHTML += '<div class="skeleton-card"></div>';
-    }
-    skeletonHTML += '</div>';
-    container.innerHTML = skeletonHTML;
-}
-
-const COLUMN_NAME_AÑOS = "Año (generacion)";
-
-let datosOriginales = [], datosFiltrados = [], datosTutoriales = [], datosRelay = [],
-    estado = {nivel:"categorias", categoria:null, marca:null, modelo:null},
-    appOpenedFromLink = false;
-
-const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
-
-async function syncAndFetchData(storeName, range, dataVariableSetter, successCallback, containerId) {
-    const container = document.getElementById(containerId);
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SPREADSHEET_ID}/values/${encodeURIComponent(range)}?key=${API_KEY}`;
-
-    // Siempre mostrar el skeleton loader para indicar que se está cargando/actualizando.
-    container.classList.remove('animacion-ejecutada');
-    showSkeletonLoader(container);
-
-    try {
-        // 1. Intentar obtener datos de la red primero.
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Error de red: ${response.status}`);
-        const data = await response.json();
-        const values = data.values || [];
-
-        if (values.length > 0) {
-            // 2. Si la red tiene éxito, guardar en caché y mostrar los datos.
-            await saveData(storeName, values);
-            console.log(`Datos de ${storeName} obtenidos de la red y actualizados en IndexedDB.`);
-            dataVariableSetter(values);
-            successCallback();
-            // Añadir un pequeño retardo para que la animación CSS se active.
-            setTimeout(() => container.classList.add('animacion-ejecutada'), 50);
-        } else {
-             // Si la red responde pero no hay datos, se considera un error y se intenta usar la caché.
-             throw new Error("No se encontraron valores en la red.");
-        }
-    } catch (networkError) {
-        console.error(`Fallo al obtener datos de ${range} desde la red:`, networkError);
-        // 3. Si la red falla, intentar cargar desde la caché.
-        try {
-            const localData = await readData(storeName);
-            if (localData && localData.length > 0) {
-                console.log(`Mostrando datos de respaldo (sin conexión) desde IndexedDB para: ${storeName}`);
-                dataVariableSetter(localData);
-                successCallback();
-                // Al cargar desde caché, no hay animación de entrada.
-                container.classList.add('animacion-ejecutada');
-            } else {
-                // 4. Si la red y la caché fallan, mostrar un error.
-                container.innerHTML = `<p style="color:red; text-align:center;">No se pudo conectar al servidor y no hay datos locales guardados. Por favor, revisa tu conexión a internet.</p>`;
-            }
-        } catch (dbError) {
-            console.error(`Error crítico al leer de IndexedDB para ${storeName}:`, dbError);
-            container.innerHTML = `<p style="color:red; text-align:center;">Error crítico al intentar acceder a los datos locales.</p>`;
-        }
-    }
-}
-
-function mostrarSeccion(seccion) {
-    // Limpiar el campo de búsqueda para evitar conflictos de estado.
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput.value !== '') {
-        searchInput.value = '';
-        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-    }
-
-    // Oculta todas las secciones
-    const sections = document.querySelectorAll('.content-section');
-    sections.forEach(s => {
-        s.style.display = 'none';
-        // No quitamos 'animacion-ejecutada' aquí para evitar re-animaciones al cambiar de pestaña
-    });
-
-    // Desactiva todos los botones
-    const buttons = document.querySelectorAll('.section-btn');
-    buttons.forEach(b => b.classList.remove('active'));
-
-    if (seccion === 'cortes') {
-        document.getElementById('contenido').style.display = 'block';
-        document.getElementById('btn-cortes').classList.add('active');
-        syncAndFetchData('cortes', RANGE_CORTES, (vals) => datosOriginales = vals, mostrarCategorias, 'contenido');
-    } else if (seccion === 'tutoriales') {
-        document.getElementById('contenido-tutoriales').style.display = 'block';
-        document.getElementById('btn-tutoriales').classList.add('active');
-        syncAndFetchData('tutoriales', RANGE_TUTORIALES, (vals) => datosTutoriales = vals, mostrarContenidoTutoriales, 'contenido-tutoriales');
-    } else if (seccion === 'relay') {
-        document.getElementById('contenido-relay').style.display = 'block';
-        document.getElementById('btn-relay').classList.add('active');
-        syncAndFetchData('relay', RANGE_RELAY, (vals) => datosRelay = vals, mostrarContenidoRelay, 'contenido-relay');
-    }
-}
-
-function irAPaginaPrincipal() {
-    // Esta función vuelve a la vista principal. La nueva lógica de syncAndFetchData se encargará de actualizar.
-    mostrarSeccion('cortes');
-}
-
-function mostrarContenidoTutoriales() {
-    const cont = document.getElementById("contenido-tutoriales");
-    cont.innerHTML = "<h4>Tutoriales</h4>";
-    const grid = document.createElement("div"); grid.className = "grid";
-    if (datosTutoriales.length <= 1) { cont.innerHTML += "<p>No hay tutoriales disponibles.</p>"; return; }
-    const header = datosTutoriales[0];
-    const data = datosTutoriales.slice(1);
-
-    data.forEach(fila => {
-        const card = document.createElement("div"); card.className = "card";
-        card.onclick = () => mostrarDetalleTutorial(fila, header);
-
-        const img = document.createElement("img");
-        img.src = convertirAGoogleThumbnail(fila[header.indexOf("Imagen")]);
-        img.alt = fila[header.indexOf("Tema")];
-        card.appendChild(img);
-
-        const overlay = document.createElement("div"); overlay.className = "overlay";
-        overlay.innerHTML = fila[header.indexOf("Tema")];
-        card.appendChild(overlay);
-        grid.appendChild(card);
-    });
-    cont.appendChild(grid);
-}
-
-function mostrarContenidoRelay() {
-    const cont = document.getElementById("contenido-relay");
-    cont.innerHTML = "<h4>Configuración del Relay</h4>";
-    const grid = document.createElement("div"); grid.className = "grid";
-    if (datosRelay.length <= 1) { cont.innerHTML += "<p>No hay configuraciones de relay disponibles.</p>"; return; }
-    const header = datosRelay[0];
-    const data = datosRelay.slice(1);
-
-    data.forEach(fila => {
-        const card = document.createElement("div"); card.className = "card";
-        card.onclick = () => mostrarDetalleRelay(fila, header);
-
-        const img = document.createElement("img");
-        img.src = convertirAGoogleThumbnail(fila[header.indexOf("Imagen")]);
-        img.alt = fila[header.indexOf("Configuración")];
-        card.appendChild(img);
-
-        const overlay = document.createElement("div"); overlay.className = "overlay";
-        overlay.innerHTML = fila[header.indexOf("Configuración")];
-        card.appendChild(overlay);
-        grid.appendChild(card);
-    });
-    cont.appendChild(grid);
-}
-
-function crearElementoDetalle(label, value) {
-    if (!value) return null;
-    const p = document.createElement("p");
-    p.innerHTML = `<strong>${label}:</strong> ${value}`;
-    return p;
-}
-
-function crearImagenDetalle(label, value, container, extraClass = '') {
-    if (!value) return;
-    const h = document.createElement("h4"); h.textContent = label; container.appendChild(h);
-    const img = document.createElement("img");
-    img.src = convertirAGoogleThumbnail(value);
-    img.alt = label;
-    if (extraClass) {
-        img.classList.add(extraClass);
-    }
-    img.onclick = () => mostrarLightbox(value);
-    container.appendChild(img);
-}
-
-function crearVideoDetalle(label, value, container) {
-    if (!value) return;
-    const videoId = extractYouTubeId(value.trim());
-    if (!videoId) return;
-
-    const h = document.createElement("h4");
-    h.textContent = label;
-    container.appendChild(h);
-
-    if (!navigator.onLine) {
-        const p = document.createElement("p");
-        p.textContent = "El video no está disponible sin conexión.";
-        p.style.cssText = "padding: 20px; background: #eee; border-radius: 8px; text-align: center; color: #555;";
-        container.appendChild(p);
-        return;
-    }
-
-    const iframeContainer = document.createElement("div");
-    iframeContainer.style.cssText = "position:relative; padding-bottom:56.25%; height:0; margin-bottom:20px;";
-    const iframe = document.createElement("iframe");
-    iframe.src = `https://www.youtube.com/embed/${videoId}`;
-    iframe.title = label;
-    iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture";
-    iframe.allowFullscreen = true;
-    iframe.style.cssText = "border:none; position:absolute; top:0; left:0; width:100%; height:100%;";
-    iframe.dataset.originalSrc = iframe.src; // Guardar la URL original
-    iframeContainer.appendChild(iframe);
-    container.appendChild(iframeContainer);
-}
-
-// --- GESTIÓN DE HISTORIAL Y ESTADO DE LA UI ---
-const uiState = {
-    isModalOpen: false,
-    isSearchActive: false
-};
-
-// Función centralizada para manejar el botón "atrás" del navegador
-window.addEventListener('popstate', (event) => {
-    const state = event.state || {}; // Treat null state as the base state
-
-    // If we navigate to a state that is NOT a modal, but the modal is currently open, close it visually.
-    if (uiState.isModalOpen && !state.modal) {
-        const detalleCont = document.getElementById("detalleCompleto");
-
-        // Close all active accordions and stop videos within them.
-        detalleCont.querySelectorAll('.accordion-btn.active').forEach(btn => {
-            btn.classList.remove('active');
-            const panel = btn.nextElementSibling;
-            if (panel) {
-                panel.style.maxHeight = null;
-                const iframe = panel.querySelector('iframe');
-                if (iframe) {
-                    iframe.src = ''; // This stops playback.
-                }
-            }
-        });
-
-        // Hide the modal.
-        document.getElementById("modalDetalle").classList.remove("visible");
-
-        // Update state.
-        uiState.isModalOpen = false;
-    }
-
-    // If we navigate to a state that is NOT a search, but search is active, deactivate it.
-    else if (uiState.isSearchActive && !state.search) {
-        uiState.isSearchActive = false;
-        const searchInput = document.getElementById('searchInput');
-        searchInput.value = '';
-        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-        searchInput.blur();
-        document.body.classList.remove('search-active');
-    }
-});
-
-function pushState(state) {
-    history.pushState(state, '');
-}
-
-function crearBotonCompartir(seccion, id, titulo) {
-    const shareBtn = document.createElement("button");
-    shareBtn.textContent = "Compartir";
-    shareBtn.className = "shareBtn"; // Agregamos una clase para identificarlo
-    shareBtn.style.cssText = "color:white; background:#007bff; border:none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: background-color 0.3s;";
-
-    // Usamos location.origin y location.pathname para construir una URL limpia
-    const shareUrl = `${window.location.origin}${window.location.pathname}?seccion=${seccion}&id=${id}`;
-
-    shareBtn.onclick = async () => {
-        const shareData = {
-            title: 'GPSpedia Detalle',
-            text: `Mira este detalle de GPSpedia: ${titulo}`,
-            url: shareUrl,
-        };
-
-        if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-            } catch (err) {
-                console.error('Error al compartir:', err);
-            }
-        } else {
-            // Fallback para navegadores que no soportan navigator.share (ej. Desktop)
-            try {
-                await navigator.clipboard.writeText(shareUrl);
-                shareBtn.textContent = '¡Enlace Copiado!';
-                setTimeout(() => {
-                    shareBtn.textContent = 'Compartir';
-                }, 2000);
-            } catch (err) {
-                console.error('Error al copiar el enlace:', err);
-                alert('No se pudo copiar el enlace.');
-            }
-        }
-    };
-    return shareBtn;
-}
-
-
-function mostrarDetalleTutorial(fila, header) {
-    // Empujar un nuevo estado al historial para el modal
-    pushState({ modal: true });
-    uiState.isModalOpen = true;
-
-    const modal = document.getElementById("modalDetalle");
-    const cont = document.getElementById("detalleCompleto");
-    cont.innerHTML = "";
-
-    const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
-
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = () => cerrarModal();
-    closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;"; // Reset margin
-    headerDiv.appendChild(closeBtn);
-
-    const id = fila[header.indexOf("ID")];
-    const titulo = fila[header.indexOf("Tema")];
-    const shareBtn = crearBotonCompartir('tutoriales', id, titulo);
-    headerDiv.appendChild(shareBtn);
-
-    cont.appendChild(headerDiv);
-
-    const title = document.createElement("h2");
-    title.textContent = fila[header.indexOf("Tema")];
-    title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
-    cont.appendChild(title);
-    const campos = [
-        { label: "Cómo identificarlo", key: "Como identificarlo" },
-        { label: "Dónde encontrarlo", key: "Donde encontrarlo" },
-        { label: "Detalles", key: "Detalles" }
-    ];
-    campos.forEach(c => {
-        const p = crearElementoDetalle(c.label, fila[header.indexOf(c.key)]);
-        if (p) cont.appendChild(p);
-    });
-    crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
-    crearVideoDetalle("Video Guía", fila[header.indexOf("Video")], cont);
-    modal.classList.add("visible");
-}
-
-function mostrarDetalleRelay(fila, header) {
-    // Empujar un nuevo estado al historial para el modal
-    pushState({ modal: true });
-    uiState.isModalOpen = true;
-
-    const modal = document.getElementById("modalDetalle");
-    const cont = document.getElementById("detalleCompleto");
-    cont.innerHTML = "";
-
-    const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
-
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = () => cerrarModal();
-    closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
-    headerDiv.appendChild(closeBtn);
-
-    const id = fila[header.indexOf("ID")];
-    const titulo = fila[header.indexOf("Configuración")];
-    const shareBtn = crearBotonCompartir('relay', id, titulo);
-    headerDiv.appendChild(shareBtn);
-
-    cont.appendChild(headerDiv);
-
-    const title = document.createElement("h2");
-    title.textContent = `Detalle de: ${fila[header.indexOf("Configuración")]}`;
-    title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
-    cont.appendChild(title);
-    const campos = [
-        { label: "Función", key: "Función" },
-        { label: "Vehículo donde se utiliza", key: "Vehiculo donde se utiliza" },
-        { label: "PIN 30 (entrada)", key: "PIN 30 (entrada)" },
-        { label: "PIN 85 (bobina +)", key: "PIN 85 (bobina +)" },
-        { label: "PIN 86 (bobina - )", key: "PIN 86 (bobina - )" },
-        { label: "PIN 87a (comun cerrado)", key: "PIN 87a (comun cerrado)" },
-        { label: "PIN 87 (Comunmente Abierto)", key: "PIN 87 (Comunmente Abierto)" },
-        { label: "Observación", key: "Observacion" }
-    ];
-    campos.forEach(c => {
-        const p = crearElementoDetalle(c.label, fila[header.indexOf(c.key)]);
-        if (p) cont.appendChild(p);
-    });
-    crearImagenDetalle("Imagen", fila[header.indexOf("Imagen")], cont);
-    modal.classList.add("visible");
-}
-
-function getHeaderIndexes(header) {
-    if (!header || header.length < 5) {
-        console.error("Error: Encabezado de datos incompleto o no cargado.");
-        return { COL_CAT: 1, COL_MARCA: 3, COL_MODELO: 4, COL_AÑOS: 6, COL_IMG_VEHICULO: 2, COL_IMG_PORTADA: -1, COL_IMG_APERTURA: 14, COL_TIPO_ENCENDIDO: 5 };
-    }
-    const indexAños = header.indexOf(COLUMN_NAME_AÑOS);
-    return {
-        COL_CAT: header.indexOf("Categoria"), COL_MARCA: header.indexOf("Marca"), COL_MODELO: header.indexOf("Modelo"),
-        COL_AÑOS: (indexAños > -1) ? indexAños : 6, COL_TIPO_ENCENDIDO: header.indexOf("Tipo de encendido"),
-        COL_IMG_VEHICULO: header.indexOf("Imagen del vehiculo"), COL_IMG_PORTADA: header.indexOf("Imagen de la portada"),
-        COL_IMG_APERTURA: header.indexOf("Imagen de la apertura"),
-    };
-}
-
-function convertirAGoogleThumbnail(url){
-  if(!url) return "https://placehold.co/280x200/cccccc/333333?text=Sin+Imagen";
-  let idMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(idMatch) return `https://drive.google.com/thumbnail?sz=w1000&id=${idMatch[1]}`;
-  return url;
-}
-
-function mostrarLightbox(src){
-  // Limpiar la imagen anterior para evitar el parpadeo
-  document.getElementById("lightboxImg").src = "";
-
-  let idMatch = src.match(/id=([a-zA-Z0-9_-]+)/) || src.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  let finalUrl = src;
-  if(idMatch && idMatch[1]){
-      finalUrl = `https://drive.google.com/thumbnail?id=${idMatch[1]}&sz=w2000`;
-  } else {
-       console.warn("Advertencia: No se pudo encontrar un ID de Google Drive válido para el Lightbox. Usando URL original.");
-  }
-  document.getElementById("lightboxImg").src = finalUrl;
-  document.getElementById("lightbox").classList.add("visible");
-}
-function cerrarModal() {
-    // 1. Forzar el cierre de elementos de la UI.
-    const detalleCont = document.getElementById("detalleCompleto");
-
-    // Cierra todos los acordeones activos y detiene los videos dentro de ellos.
-    detalleCont.querySelectorAll('.accordion-btn.active').forEach(btn => {
-        btn.classList.remove('active');
-        const panel = btn.nextElementSibling;
-        if (panel) {
-            panel.style.maxHeight = null;
-            const iframe = panel.querySelector('iframe');
-            if (iframe) iframe.src = '';
-        }
-    });
-    detalleCont.querySelectorAll('iframe').forEach(iframe => { if(iframe.src) iframe.src = ''; });
-    document.getElementById("modalDetalle").classList.remove("visible");
-
-    // 2. Actualizar el estado interno.
-    uiState.isModalOpen = false;
-
-    // 3. Manejar el historial del navegador.
-    if (history.state && history.state.modal) {
-        history.back();
-    }
-
-    // 4. Si la app se abrió desde un enlace, ahora se verifica la sesión.
-    if (appOpenedFromLink) {
-        appOpenedFromLink = false;
-        // Limpiar la URL para quitar los parámetros de sección/id
-        history.pushState({}, '', window.location.pathname);
-        checkSession(); // Ahora que el modal está cerrado, verificar si hay una sesión válida
-    }
-}
-function cerrarLightbox(){document.getElementById("lightbox").classList.remove("visible");}
-
-function extractYouTubeId(url) {
-    if (!url) return null;
-    let videoId = null;
-    try {
-        const urlObj = new URL(url);
-        if (urlObj.hostname.includes('youtube.com') && urlObj.searchParams.get('v')) {
-            videoId = urlObj.searchParams.get('v');
-        } else if (urlObj.hostname.includes('youtu.be') && urlObj.pathname.length > 1) {
-            videoId = urlObj.pathname.substring(1);
-        } else if (urlObj.pathname.includes('/embed/') && urlObj.pathname.length > 7) {
-            const parts = urlObj.pathname.split('/embed/');
-            if (parts.length > 1) videoId = parts[1].split(/[?&]/)[0];
-        }
-    } catch (e) { return null; }
-    return videoId;
-}
-
-function mostrarDetalleModal(fila, header) {
-    pushState({ modal: true });
-    uiState.isModalOpen = true;
-
-    const modal = document.getElementById("modalDetalle");
-    const cont = document.getElementById("detalleCompleto");
-    cont.innerHTML = "";
-    const indexes = getHeaderIndexes(header);
-
-    const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
-
-    const closeBtn = document.createElement("button");
-    closeBtn.textContent = "Cerrar Detalle";
-    closeBtn.onclick = () => cerrarModal();
-    closeBtn.className = "backBtn";
-    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
-    headerDiv.appendChild(closeBtn);
-
-    const id = fila[header.indexOf("ID")];
-    const titulo = `${fila[indexes.COL_MODELO]} ${fila[indexes.COL_AÑOS] || ''}`;
-    const shareBtn = crearBotonCompartir('cortes', id, titulo);
-    headerDiv.appendChild(shareBtn);
-
-    cont.appendChild(headerDiv);
-
-    const title = document.createElement("h2");
-    const modeloNombre = fila[indexes.COL_MODELO] || 'Modelo Desconocido';
-    const anosNombre = fila[indexes.COL_AÑOS] || '';
-    title.textContent = `Detalle de ${modeloNombre} ${anosNombre ? `(${anosNombre})` : ''}`;
-    title.style.cssText = "color:#007bff; border-bottom:3px solid #007bff; padding-bottom:10px;";
-    cont.appendChild(title);
-
-    // --- Contenido Principal (Siempre Visible) ---
-    const notaImportante = fila[header.indexOf("Nota Importante")];
-    if (notaImportante) {
-        const p = document.createElement("p");
-        p.innerHTML = `<strong style="color:red;">Nota Importante:</strong> <span style="color:#cc0000; font-weight: bold;">${notaImportante}</span>`;
-        cont.appendChild(p);
-    }
-    crearImagenDetalle("Modelo", fila[header.indexOf("Imagen del vehiculo")], cont, 'img-vehiculo');
-    const tipoCorteEl = crearElementoDetalle("Tipo de Corte", fila[header.indexOf("Tipo de corte")]);
-    if (tipoCorteEl) cont.appendChild(tipoCorteEl);
-    const descCorteEl = crearElementoDetalle("Descripción", fila[header.indexOf("Descripcion del corte")]);
-    if (descCorteEl) cont.appendChild(descCorteEl);
-    crearImagenDetalle("Imagen", fila[header.indexOf("Imagen del Corte")], cont);
-
-    // --- Secciones Desplegables ---
-    const secciones = [
-        {
-            titulo: "Segunda Opción de Corte",
-            campos: [
-                { label: "Tipo de Corte", key: "Tipo de corte 2" },
-                { label: "Descripción", key: "Descripción del Segundo corte" },
-                { label: "Imagen", key: "Imagen de corte 2", esImagen: true }
-            ]
-        },
-        {
-            titulo: "Apertura",
-            campos: [
-                { label: "Detalles", key: "Apertura" },
-                { label: "Imagen", key: "Imagen de la apertura", esImagen: true }
-            ]
-        },
-        {
-            titulo: "Cables de Alimentación",
-            campos: [
-                { label: "Detalles", key: "Cables de Alimentacion" },
-                { label: "Imagen", key: "Imagen de los cables de alimentacion", esImagen: true }
-            ]
-        },
-        {
-            titulo: "Video Guía de Desarme",
-            campos: [{ key: "Como desarmar los plasticos", esVideo: true }]
-        }
-    ];
-
-    secciones.forEach(seccion => {
-        // Comprueba si al menos un campo de la sección tiene contenido
-        const tieneContenido = seccion.campos.some(c => fila[header.indexOf(c.key)]);
-        if (!tieneContenido) return;
-
-        const btn = document.createElement("button");
-        btn.className = "accordion-btn";
-        btn.innerHTML = `
-            ${seccion.titulo}
-            <svg class="accordion-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-        `;
-        cont.appendChild(btn);
-
-        const panel = document.createElement("div");
-        panel.className = "panel-desplegable";
-
-        seccion.campos.forEach(c => {
-            const valor = fila[header.indexOf(c.key)];
-            if (valor) {
-                if (c.esImagen) {
-                    crearImagenDetalle(c.label || seccion.titulo, valor, panel);
-                } else if (c.esVideo) {
-                    crearVideoDetalle(seccion.titulo, valor, panel);
-                } else {
-                    const el = crearElementoDetalle(c.label, valor);
-                    if (el) panel.appendChild(el);
-                }
-            }
-        });
-        cont.appendChild(panel);
-    });
-
-    modal.classList.add("visible");
-}
-
-// --- LÓGICA DE BÚSQUEDA ACTIVA ---
-const searchInput = document.getElementById('searchInput');
-
-function filtrarContenido(textoBusqueda){
-    const busqueda = textoBusqueda.toLowerCase().trim();
-    if (busqueda.length === 0) {
-        datosFiltrados = [];
-        estado.nivel = "categorias";
-        mostrarCategorias();
-        return;
-    }
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
-    const dataToFilter = datosOriginales.slice(1);
-    const palabrasBusqueda = busqueda.split(' ').filter(p => p.length > 0);
-    datosFiltrados = dataToFilter.filter(fila => {
-        const filaTexto = [
-            fila[indexes.COL_CAT], fila[indexes.COL_MARCA], fila[indexes.COL_MODELO],
-            fila[indexes.COL_AÑOS], fila[indexes.COL_TIPO_ENCENDIDO]
-        ].map(s => (s || '').toLowerCase()).join(' ');
-        return palabrasBusqueda.every(palabra => filaTexto.includes(palabra));
-    });
-    if(datosFiltrados.length > 0){
-        mostrarResultadosBusquedaMarca(busqueda);
-    } else {
-        document.getElementById("contenido").innerHTML = `<p style="text-align:center; padding: 20px;">No se encontraron resultados para "${busqueda}".</p>`;
-    }
-    estado.nivel = "busqueda";
-    estado.categoria = null; estado.marca = null; estado.modelo = null;
-}
-
-function mostrarResultadosBusquedaMarca(busquedaTexto){
-    const cont = document.getElementById("contenido");
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
-    if (datosFiltrados.length === 1) {
-        const anosRaw = (datosFiltrados[0][indexes.COL_AÑOS] || '').trim();
-        mostrarDetalleModal(datosFiltrados[0], header);
-        cont.innerHTML = `<h4>Resultado Exacto Encontrado</h4><p>Abriendo detalle de ${datosFiltrados[0][indexes.COL_MODELO]} ${anosRaw ? `(${anosRaw})` : ''}.</p>`;
-        return;
-    }
-    cont.innerHTML = `<h4>Resultados de búsqueda para: "${busquedaTexto}"</h4>`;
-    const marcasUnicas = [...new Set(datosFiltrados.map(f => f[indexes.COL_MARCA]))].filter(m => m).sort();
-    const grid = document.createElement("div"); grid.className = "grid";
-    marcasUnicas.forEach(marca => {
-        const ejemplo = datosFiltrados.find(f => f[indexes.COL_MARCA] === marca && f[indexes.COL_IMG_VEHICULO]) || datosFiltrados.find(f => f[indexes.COL_MARCA] === marca);
-        const card=document.createElement("div"); card.className="card";
-        card.onclick=()=>mostrarResultadosBusquedaModelo(busquedaTexto, marca);
-        const imgUrl = ejemplo ? ejemplo[indexes.COL_IMG_VEHICULO] : '';
-        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Marca ${marca}`; card.appendChild(img);
-        const overlay=document.createElement("div"); overlay.className="overlay"; overlay.innerHTML = marca; card.appendChild(overlay);
-        grid.appendChild(card);
-    });
-    cont.appendChild(grid);
-}
-
-function mostrarResultadosBusquedaModelo(busquedaTexto, marcaFiltro){
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
-    const cont = document.getElementById("contenido");
-    cont.innerHTML = `<span class="backBtn" onclick="mostrarResultadosBusquedaMarca('${busquedaTexto}')">${backSvg} Volver a Marcas</span>
-                      <h4>Modelos de ${marcaFiltro} (Búsqueda: "${busquedaTexto}")</h4>`;
-    const modelosRaw = datosFiltrados.filter(f => f[indexes.COL_MARCA] === marcaFiltro);
-    const modelosRenderizar = {};
-    modelosRaw.forEach(f => { const nombre = f[indexes.COL_MODELO]; if (!modelosRenderizar[nombre]) modelosRenderizar[nombre] = f; });
-    const grid=document.createElement("div"); grid.className = "grid";
-    Object.keys(modelosRenderizar).sort().forEach(modelo => {
-        const ejemplo = modelosRenderizar[modelo];
-        const versiones = modelosRaw.filter(f => f[indexes.COL_MODELO] === modelo);
-        const card=document.createElement("div"); card.className="card";
-        card.onclick=()=>{
-            if(versiones.length===1) mostrarDetalleModal(ejemplo, header);
-            else mostrarResultadosBusquedaVersion(busquedaTexto, marcaFiltro, modelo);
-        };
-        const imgUrl = ejemplo[indexes.COL_IMG_VEHICULO];
-        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Modelo ${modelo}`; card.appendChild(img);
-        const overlay=document.createElement("div"); overlay.className="overlay";
-        const anos = ejemplo[indexes.COL_AÑOS] || '';
-        const encendido = ejemplo[indexes.COL_TIPO_ENCENDIDO] || '';
-        if(versiones.length === 1) {
-            overlay.innerHTML = `<div>${modelo}</div>
-                                 ${anos ? `<div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${anos}</div>` : ''}
-                                 ${encendido ? `<div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${encendido}</div>` : ''}`;
-        } else {
-            overlay.innerHTML = `<div>${modelo}</div>
-                                 <div style="font-size:0.8em; opacity:0.8; font-weight:normal;">(${versiones.length} cortes)</div>`;
-        }
-        card.appendChild(overlay);
-        grid.appendChild(card);
-    });
-    cont.appendChild(grid);
-}
-
-function mostrarResultadosBusquedaVersion(busquedaTexto, marcaFiltro, modeloFiltro){
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
-    const cont = document.getElementById("contenido");
-    cont.innerHTML = `<span class="backBtn" onclick="mostrarResultadosBusquedaModelo('${busquedaTexto}', '${marcaFiltro}')">${backSvg} Volver a Modelos (${modeloFiltro})</span>
-                      <h4>Cortes/Años de ${modeloFiltro} (Búsqueda: "${busquedaTexto}")</h4>`;
-    const filasDetalle = datosFiltrados.filter(f => f[indexes.COL_MARCA] === marcaFiltro && f[indexes.COL_MODELO] === modeloFiltro);
-    const grid=document.createElement("div"); grid.className="grid";
-    filasDetalle.forEach(f => {
-        const card=document.createElement("div"); card.className="card";
-        const imgUrl = f[indexes.COL_IMG_VEHICULO];
-        const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f[indexes.COL_AÑOS]}`; card.appendChild(img);
-        const overlay=document.createElement("div"); overlay.className="overlay";
-        const anosRaw = (f[indexes.COL_AÑOS] || '').trim();
-        const encendido = (f[indexes.COL_TIPO_ENCENDIDO] || '').trim();
-        let mainTitle = anosRaw || modeloFiltro;
-        overlay.innerHTML = `<div style="font-weight:bold;">${mainTitle}</div>
-                             ${encendido ? `<div style="font-size:0.8em; opacity:0.8;">${encendido}</div>` : ''}`;
-        card.appendChild(overlay);
-        card.onclick=()=>mostrarDetalleModal(f, header);
-        grid.appendChild(card);
-    });
-    cont.appendChild(grid);
-}
-
-function mostrarCategorias(){
-  if(document.getElementById("searchInput").value.trim().length > 0) return;
-  estado.nivel="categorias"; estado.categoria=null;
-  const cont=document.getElementById("contenido"); cont.innerHTML="<h4>Categorías</h4>";
-  if (datosOriginales.length <= 1) {
-    cont.innerHTML = '<p style="color:red; font-size:1.2em;">Advertencia: La hoja de cálculo está vacía o el rango es incorrecto.</p>';
-    return;
-  }
-  const header = datosOriginales[0];
-  const indexes = getHeaderIndexes(header);
-  const categorias = [...new Set(datosOriginales.slice(1).map(f=>f[indexes.COL_CAT]))].filter(c => c).sort();
-  const grid = document.createElement("div"); grid.className="grid";
-  categorias.forEach(cat=>{
-    const ejemplo = datosOriginales.slice(1).find(f=>f[indexes.COL_CAT]===cat);
-    const card=document.createElement("div"); card.className="card";
-    card.onclick=()=>mostrarMarcas(cat);
-    const imgUrl = ejemplo ? ejemplo[indexes.COL_IMG_VEHICULO] : '';
-    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Imagen de la categoría ${cat}`; card.appendChild(img);
-    const overlay=document.createElement("div"); overlay.className="overlay"; overlay.innerHTML = cat; card.appendChild(overlay);
-    grid.appendChild(card);
-  });
-  cont.appendChild(grid);
-  mostrarUltimosAgregados();
-}
-
-function mostrarUltimosAgregados() {
-    const cont = document.getElementById("contenido");
-    const header = datosOriginales[0];
-    const indexes = getHeaderIndexes(header);
-    const todosLosCortes = datosOriginales.slice(1);
-    const ultimosCortes = todosLosCortes.slice(-5);
-
-    const section = document.createElement('div');
-    section.style.marginTop = '40px';
-    const title = document.createElement('h4');
-    title.textContent = 'Últimos cortes agregados:';
-    section.appendChild(title);
-
-    const grid = document.createElement('div');
-    grid.className = 'grid';
-
-    ultimosCortes.reverse().forEach(fila => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.onclick = () => mostrarDetalleModal(fila, header);
-
-        const img = document.createElement("img");
-        img.src = convertirAGoogleThumbnail(fila[indexes.COL_IMG_VEHICULO]);
-        img.alt = `${fila[indexes.COL_MARCA]} ${fila[indexes.COL_MODELO]}`;
-        card.appendChild(img);
-
-        const overlay = document.createElement("div");
-        overlay.className = "overlay";
-        overlay.innerHTML = `<div>${fila[indexes.COL_MARCA]}</div><div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${fila[indexes.COL_MODELO]} ${fila[indexes.COL_AÑOS]}</div>`;
-        card.appendChild(overlay);
-
-        grid.appendChild(card);
-    });
-
-    section.appendChild(grid);
-    cont.appendChild(section);
-}
-
-
-function mostrarMarcas(categoria){
-  document.getElementById("searchInput").value = "";
-  estado.nivel="marcas"; estado.categoria=categoria;
-  const cont=document.getElementById("contenido");
-  cont.innerHTML=`<span class="backBtn" onclick="irAPaginaPrincipal()">${backSvg} Volver a Categorías</span><h4>Marcas de ${categoria}</h4>`;
-  const header = datosOriginales[0];
-  const indexes = getHeaderIndexes(header);
-  const marcas = [...new Set(datosOriginales.slice(1).filter(f=>f[indexes.COL_CAT]===categoria).map(f=>f[indexes.COL_MARCA]))].filter(m => m).sort();
-  const grid = document.createElement("div"); grid.className="grid";
-  marcas.forEach(m=>{
-    const ejemplo = datosOriginales.slice(1).find(f=>f[indexes.COL_CAT]===categoria && f[indexes.COL_MARCA]===m);
-    const card=document.createElement("div"); card.className="card";
-    card.onclick=()=>mostrarModelos(categoria,m);
-    const imgUrl = ejemplo ? ejemplo[indexes.COL_IMG_VEHICULO] : '';
-    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Imagen de la marca ${m}`; card.appendChild(img);
-    const overlay=document.createElement("div"); overlay.className="overlay"; overlay.innerHTML = m; card.appendChild(overlay);
-    grid.appendChild(card);
-  });
-  cont.appendChild(grid);
-}
-
-function mostrarModelos(categoria, marca){
-  estado.nivel="modelos"; estado.marca=marca;
-  document.getElementById("searchInput").value = "";
-  const cont=document.getElementById("contenido");
-  cont.innerHTML=`<span class="backBtn" onclick="mostrarMarcas('${categoria}')">${backSvg} Volver a Marcas</span><h4>Modelos de ${marca}</h4>`;
-  const header = datosOriginales[0];
-  const indexes = getHeaderIndexes(header);
-  const modelosRaw = datosOriginales.slice(1).filter(f=>f[indexes.COL_CAT]===categoria && f[indexes.COL_MARCA]===marca);
-  const modelosRenderizar = {};
-  modelosRaw.forEach(f=>{ const nombre = f[indexes.COL_MODELO]; if(!modelosRenderizar[nombre]) modelosRenderizar[nombre]=f; });
-  const grid=document.createElement("div"); grid.className="grid";
-  Object.keys(modelosRenderizar).sort().forEach(modelo=>{
-    const card=document.createElement("div"); card.className="card";
-    const ejemplo=modelosRenderizar[modelo];
-    const versiones = modelosRaw.filter(f => f[indexes.COL_MODELO] === modelo);
-    const imgUrl = ejemplo[indexes.COL_IMG_VEHICULO];
-    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Modelo ${modelo}`; card.appendChild(img);
-    const overlay=document.createElement("div"); overlay.className="overlay";
-    const anos = ejemplo[indexes.COL_AÑOS] || '';
-    const encendido = ejemplo[indexes.COL_TIPO_ENCENDIDO] || '';
-    card.onclick=()=>{
-      if(versiones.length===1) mostrarDetalleModal(ejemplo, datosOriginales[0]);
-      else mostrarVersiones(versiones, categoria, marca, modelo);
-    };
-    if(versiones.length === 1) {
-        overlay.innerHTML = `<div>${modelo}</div>
-                             ${anos ? `<div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${anos}</div>` : ''}
-                             ${encendido ? `<div style="font-size:0.8em; opacity:0.8; font-weight:normal;">${encendido}</div>` : ''}`;
-    } else {
-        overlay.innerHTML = `<div>${modelo}</div>
-                             <div style="font-size:0.8em; opacity:0.8; font-weight:normal;">(${versiones.length} cortes)</div>`;
-    }
-    card.appendChild(overlay);
-    grid.appendChild(card);
-  });
-  cont.appendChild(grid);
-}
-
-function mostrarVersiones(filas, categoria, marca, modelo){
-  estado.nivel="versiones"; estado.modelo=modelo;
-  document.getElementById("searchInput").value = "";
-  const cont=document.getElementById("contenido");
-  cont.innerHTML=`<span class="backBtn" onclick="mostrarModelos('${categoria}','${marca}')">${backSvg} Volver a Modelos (${modelo})</span><h4>Cortes/Años de ${modelo}</h4>`;
-  const grid=document.createElement("div"); grid.className="grid";
-  const header = datosOriginales[0];
-  const indexes = getHeaderIndexes(header);
-  filas.forEach(f=>{
-    const card=document.createElement("div"); card.className="card";
-    const imgUrl = f[indexes.COL_IMG_VEHICULO];
-    const img=document.createElement("img"); img.src=convertirAGoogleThumbnail(imgUrl); img.alt=`Corte ${f[indexes.COL_AÑOS]}`; card.appendChild(img);
-    const overlay=document.createElement("div"); overlay.className="overlay";
-    const anosRaw = (f[indexes.COL_AÑOS] || '').trim();
-    const encendido = (f[indexes.COL_TIPO_ENCENDIDO] || '').trim();
-    let mainTitle = anosRaw || modelo;
-    overlay.innerHTML = `<div style="font-weight:bold;">${mainTitle}</div>
-                         ${encendido ? `<div style="font-size:0.8em; opacity:0.8;">${encendido}</div>` : ''}`;
-    card.appendChild(overlay);
-    card.onclick=()=>mostrarDetalleModal(f, header);
-    grid.appendChild(card);
-  });
-  cont.appendChild(grid);
-}
-
-// --- INICIALIZACIÓN Y LÓGICA DE PWA ---
-let deferredPrompt;
-const installButton = document.getElementById('install-button');
-
-window.addEventListener('beforeinstallprompt', (e) => {
-    // Prevenir que el navegador muestre el aviso de instalación por defecto
-    e.preventDefault();
-    // Guardar el evento para poder mostrarlo más tarde
-    deferredPrompt = e;
-    console.log('`beforeinstallprompt` event was fired. App is installable.');
-
-    // Lógica para mostrar el botón de instalación
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    if (!isStandalone) {
-        if (isIOS) {
-            // En iOS no se dispara 'beforeinstallprompt', manejaremos un botón personalizado.
-            // La lógica para mostrar el botón de iOS estará en inicializarApp.
-            installButton.style.display = 'none';
-        } else {
-            // Para otros dispositivos (Android, Desktop), mostrar el botón.
-            installButton.style.display = 'block';
-        }
-    }
-});
-
-installButton.addEventListener('click', async () => {
-    if (deferredPrompt) {
-        // Mostrar el aviso de instalación
-        deferredPrompt.prompt();
-
-        // Esperar a que el usuario responda al aviso
-        const { outcome } = await deferredPrompt.userChoice;
-        console.log(`User response to the install prompt: ${outcome}`);
-
-        // Ya no necesitamos el evento, lo reseteamos
-        deferredPrompt = null;
-
-        // Ocultar el botón
-        installButton.style.display = 'none';
-    }
-});
-
-// --- REGISTRO DEL SERVICE WORKER ---
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./service-worker.js').then(registration => {
-            console.log('ServiceWorker registrado con éxito:', registration.scope);
-        }).catch(err => {
-            console.log('Fallo en el registro de ServiceWorker:', err);
-        });
-    });
-}
-
-// --- INICIALIZACIÓN DE LA APLICACIÓN ---
-async function handleSharedLink(seccion, id) {
-    appOpenedFromLink = true;
-
-    let data, header, item, mostrarDetalleFn;
-
-    // 1. Determinar qué datos buscar y qué función de modal usar
-    const seccionMap = {
-        'cortes': { range: RANGE_CORTES, dataSetter: (vals) => datosOriginales = vals, dataRef: () => datosOriginales, modalFn: mostrarDetalleModal },
-        'tutoriales': { range: RANGE_TUTORIALES, dataSetter: (vals) => datosTutoriales = vals, dataRef: () => datosTutoriales, modalFn: mostrarDetalleTutorial },
-        'relay': { range: RANGE_RELAY, dataSetter: (vals) => datosRelay = vals, dataRef: () => datosRelay, modalFn: mostrarDetalleRelay }
-    };
-
-    if (!seccionMap[seccion]) {
-        checkSession(); // Sección no válida, proceder con el inicio normal
-        return;
-    }
-
-    const { range, dataSetter, dataRef, modalFn } = seccionMap[seccion];
-
-    // 2. Intentar cargar los datos de la sección y encontrar el ítem
-    await syncAndFetchData(seccion, range, dataSetter, () => {}, 'contenido');
-    data = dataRef();
-
-    if (data && data.length > 1) {
-        header = data[0];
-        item = data.slice(1).find(fila => fila[header.indexOf("ID")] === id);
-    }
-
-    // 3. Solo si el ítem es válido, se muestra el modal y se oculta el resto
-    if (item) {
-        // Ocultar splash y login AHORA que sabemos que tenemos contenido para mostrar
-        const splash = document.getElementById('splash-screen');
-        splash.style.opacity = '0';
-        setTimeout(() => splash.style.display = 'none', 500);
-        document.getElementById('login-modal').style.display = 'none';
-
-        // Ocultar el contenedor principal para que solo se vea el modal
-        document.querySelector('.container').style.display = 'none';
-
-        mostrarDetalleFn = modalFn;
-        mostrarDetalleFn(item, header);
-
-        // Limpiar la URL para que un refresh no vuelva a abrir el modal
-        history.replaceState({}, document.title, window.location.pathname);
-    } else {
-        // 4. Si el ítem no se encuentra, proceder al flujo de inicio de sesión normal
-        checkSession();
-    }
-}
-
-
-async function inicializarApp() {
-    const urlParams = new URLSearchParams(window.location.search);
-    const seccion = urlParams.get('seccion');
-    const id = urlParams.get('id');
-
-    if (seccion && id) {
-        await handleSharedLink(seccion, id);
-    } else {
-        await fetchUsers(); // Carga los datos de usuarios primero
-        checkSession();     // Luego, comprueba si hay una sesión activa
-    }
-
-    // Lógica para el botón de instalación de iOS
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-    if (!isStandalone && isIOS) {
-        // Crear y mostrar un botón/mensaje específico para iOS
-        const iosInstallMessage = document.createElement('div');
-        iosInstallMessage.id = 'ios-install-message';
-        iosInstallMessage.style.cssText = `
-            position: fixed;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: #007bff;
-            color: white;
-            padding: 15px 20px;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            text-align: center;
-            z-index: 1002;
-            font-size: 0.9em;
-            width: 90%;
-            max-width: 400px;
-        `;
-        iosInstallMessage.innerHTML = `
-            Para instalar, pulsa el botón de Compartir
-            <svg style="width:20px; vertical-align:middle;" viewBox="0 0 24 24"><path fill="currentColor" d="M17,14V17A1,1 0 0,1 16,18H8A1,1 0 0,1 7,17V14H5V17A3,3 0 0,0 8,20H16A3,3 0 0,0 19,17V14H17M12,4L7,9H10V15H14V9H17L12,4Z" /></svg>
-            y luego "Añadir a pantalla de inicio".
-            <button onclick="this.parentElement.style.display='none'" style="background:none; border:none; color:white; font-size:1.2em; position:absolute; top:5px; right:10px;">&times;</button>
-        `;
-        document.body.appendChild(iosInstallMessage);
-    }
-}
-
-// Ocultar el splash screen después de un tiempo para asegurar que no se quede atascado
-window.addEventListener('load', () => {
-    setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        const session = localStorage.getItem(SESSION_KEY);
-        // Si no hay sesión, el splash se ocultará cuando se muestre el login.
-        // Si hay sesión, el splash se ocultará cuando se muestre la app.
-        // Este es un fallback por si algo falla.
-        if (!session) {
-             const splash = document.getElementById('splash-screen');
-            splash.style.opacity = '0';
-            setTimeout(() => {
-                splash.style.display = 'none';
-            }, 500);
-        }
-    }, 3000); // 3 segundos de tiempo de espera máximo
-});
-
-
-inicializarApp();
-
-// Event listener para el acordeón
-document.getElementById('detalleCompleto').addEventListener('click', function(e) {
-    const clickedBtn = e.target.closest('.accordion-btn');
-    if (!clickedBtn) return;
-
-    const panel = clickedBtn.nextElementSibling;
-    const isActive = clickedBtn.classList.contains('active');
-
-    // Cerrar todos los paneles y pausar videos
-    this.querySelectorAll('.accordion-btn').forEach(btn => {
-        const currentPanel = btn.nextElementSibling;
-        const iframe = currentPanel.querySelector('iframe');
-
-        if (btn !== clickedBtn || isActive) {
-            btn.classList.remove('active');
-            currentPanel.style.maxHeight = null;
-            if (iframe) {
-                iframe.src = ''; // Detiene el video
-            }
-        }
-    });
-
-    // Abrir el panel clickeado si no estaba ya activo
-    if (!isActive) {
-        clickedBtn.classList.add('active');
-        panel.style.maxHeight = panel.scrollHeight + "px";
-        const iframe = panel.querySelector('iframe');
-        if (iframe && iframe.dataset.originalSrc) {
-            iframe.src = iframe.dataset.originalSrc; // Restaura el video
-        }
-    }
-});
-
-const searchContainer = document.querySelector('.search-container');
-const clearSearchBtn = document.getElementById('clear-search-btn');
-
-if (searchInput && searchContainer && clearSearchBtn) {
-    searchInput.addEventListener('focus', () => {
-        if (!uiState.isSearchActive) {
-            // Solo empuja el estado si el campo está vacío. Si ya hay texto, no crees un nuevo estado.
-            if(searchInput.value.trim() === '') {
-                pushState({ search: true });
-            }
-            uiState.isSearchActive = true;
-        }
-        document.body.classList.add('search-active');
-    });
-
-    searchInput.addEventListener('blur', () => {
-        if (uiState.isSearchActive) {
-            // No hacemos history.back() al desenfocar para permitir hacer clic en los resultados.
-            // La UI se revierte visualmente, pero el estado del historial permanece.
-            setTimeout(() => {
-                 document.body.classList.remove('search-active');
-            }, 200);
-        }
-    });
-
-    searchInput.addEventListener('input', () => {
-        // Muestra u oculta el botón de limpiar basado en si hay texto
-        if (searchInput.value.length > 0) {
-            searchContainer.classList.add('has-text');
-        } else {
-            searchContainer.classList.remove('has-text');
-        }
-    });
-
-    clearSearchBtn.addEventListener('click', () => {
-        searchInput.value = '';
-        // Dispara el evento 'input' para que la lógica de filtrado se ejecute
-        searchInput.dispatchEvent(new Event('input', { bubbles: true }));
-        // Mantiene el foco en el input para una nueva búsqueda
-        searchInput.focus();
-    });
-}
-
-</script>
+<!-- ========= MODAL DE INBOX ========= -->
+<div id="inbox-modal" class="info-modal">
+    <div class="info-modal-content" id="inbox-modal-content">
+        <span class="info-close-btn">&times;</span>
+        <h2 class="inbox-modal-title"><i class="fa-solid fa-inbox"></i> Bandeja de Entrada</h2>
+        <div class="inbox-layout-wrapper">
+            <div id="inbox-list">
+                <!-- List of items will be rendered here -->
+            </div>
+            <div id="inbox-detail">
+                <!-- Detail of selected item will be rendered here -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========= MODAL DE DASHBOARD ========= -->
+<div id="dashboard-modal" class="info-modal">
+    <div class="info-modal-content" style="max-width: 900px;">
+        <span class="info-close-btn">&times;</span>
+        <h2 class="inbox-modal-title"><i class="fa-solid fa-chart-line"></i> Panel de Actividad</h2>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; margin-top: 15px;">
+                <thead>
+                    <tr style="border-bottom: 2px solid #eee; text-align: left;">
+                        <th style="padding: 10px;">Fecha</th>
+                        <th style="padding: 10px;">Usuario</th>
+                        <th style="padding: 10px;">Actividad</th>
+                        <th style="padding: 10px;">Detalle</th>
+                    </tr>
+                </thead>
+                <tbody id="activity-logs">
+                    <!-- Logs will be rendered here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- ========= MODAL DE DESARROLLADOR ========= -->
+<div id="dev-tools-modal" class="info-modal">
+    <div class="info-modal-content" style="max-width: 900px;">
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-code"></i> Herramientas de Desarrollador</h2>
+
+        <div style="display: flex; gap: 20px;">
+            <div style="flex: 1;">
+                <h4>Consola de Depuración</h4>
+                <div id="dev-console-container" style="height: 400px; border: 1px solid #ccc; border-radius: 8px;">
+                    <!-- The existing debug console will be moved here by JS -->
+                </div>
+            </div>
+            <div style="flex: 1;">
+                <h4>Acciones de Migración</h4>
+                <p>Ejecutar scripts de migración de datos. Usar con precaución.</p>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button id="run-migrate-years" class="btn btn-warning">Migrar Rangos de Años</button>
+                    <button id="run-migrate-timestamps" class="btn btn-warning">Migrar Timestamps</button>
+                </div>
+                <div id="migration-status" style="margin-top: 15px; padding: 10px; border-radius: 5px; background: #f0f0f0; display: none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- ========= MODALES DE INFORMACIÓN ========= -->
+<div id="about-us-modal" class="info-modal">
+  <div class="info-modal-content">
+    <span class="info-close-btn">&times;</span>
+    <h2>Sobre Nosotros</h2>
+    <p>GPSpedia es una plataforma especializada en la consulta técnica y estandarizada de información vehicular, orientada a técnicos, instaladores y profesionales que trabajan con sistemas de rastreo, seguridad y control vehicular.</p>
+    <p>Nuestro objetivo es facilitar el acceso rápido y confiable a información práctica, reduciendo errores en campo y optimizando los tiempos de instalación mediante una base de conocimiento clara, visual y en constante evolución.</p>
+    <p>La información que se presenta en GPSpedia es el resultado de una recopilación estructurada de datos técnicos provenientes de múltiples fuentes de libre acceso, experiencias prácticas y aportes colaborativos. No reclamamos derechos de autor sobre dicha información técnica; su propósito es educativo, operativo y de apoyo profesional.</p>
+    <hr>
+    <h4>¿Qué ofrece GPSpedia?</h4>
+    <p><strong>🔧 Información de cortes vehiculares:</strong> Identificación de puntos de corte eléctrico e ignición. Detalles claros sobre ubicación, color del cable y tipo de corte recomendado.</p>
+    <p><strong>🚗 Tipos de cortes disponibles:</strong> Bomba de combustible, señal al botón, corte de ignición y apertura de puertas.</p>
+    <hr>
+    <h4>Configuraciones de Relay</h4>
+    <p>GPSpedia incluye una sección dedicada a configuraciones de relay, donde se explican de forma visual y descriptiva la función de cada pin, su uso recomendado y diagramas claros para facilitar la correcta conexión.</p>
+    <hr>
+    <h4>Tutoriales y guías visuales</h4>
+    <p>Ofrecemos tutoriales paso a paso y guías visuales para la ubicación de módulos, desarme básico de interiores y reconocimiento de cableado.</p>
+    <hr>
+    <h4>Enfoque colaborativo y mejora continua</h4>
+    <p>GPSpedia evoluciona constantemente gracias a la retroalimentación de sus usuarios, lo que permite mejorar la precisión de la información y ampliar la cobertura de marcas y modelos.</p>
+  </div>
+</div>
+
+<div id="contact-modal" class="info-modal">
+  <div class="info-modal-content">
+    <span class="info-close-btn">&times;</span>
+    <h2>Contáctanos</h2>
+    <p>Si tienes sugerencias, problemas con la plataforma o necesitas soporte técnico, por favor utiliza este formulario. Tu feedback es importante para nosotros.</p>
+    <form id="contact-form">
+      <div class="form-group">
+        <label for="contact-name">Nombre</label>
+        <input type="text" id="contact-name" required>
+      </div>
+      <div class="form-group">
+        <label for="contact-email">Correo Electrónico</label>
+        <input type="email" id="contact-email" required>
+      </div>
+      <div class="form-group">
+        <label for="contact-message">Mensaje</label>
+        <textarea id="contact-message" rows="4" required></textarea>
+      </div>
+      <button type="submit" class="btn">Enviar Mensaje</button>
+    </form>
+  </div>
+</div>
+
+<div id="faq-modal" class="info-modal">
+  <div class="info-modal-content">
+    <span class="info-close-btn">&times;</span>
+    <h2>Preguntas Frecuentes (FAQ)</h2>
+    <div class="accordion">
+      <div class="accordion-item"><div class="accordion-header">¿GPSpedia es un sistema de rastreo GPS?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>No. GPSpedia no rastrea vehículos ni gestiona dispositivos. Es una plataforma informativa y de consulta técnica.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿La información tiene derechos de autor?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>La información técnica presentada es una compilación de datos de libre acceso y conocimiento práctico, organizada con fines educativos y profesionales. GPSpedia no reclama autoría exclusiva sobre dicha información.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿Puedo usar esta información en instalaciones reales?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>Sí. El contenido está pensado para apoyo técnico, pero siempre se recomienda que las instalaciones sean realizadas por personal capacitado y siguiendo buenas prácticas de seguridad eléctrica.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿Incluye información para diferentes tipos de vehículos?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>Sí. La plataforma contempla distintas categorías vehiculares, como automóviles, camiones, motocicletas y equipos especiales, según disponibilidad de información.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿La información se actualiza?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>Sí. GPSpedia está diseñada para crecer y mejorar continuamente, incorporando nuevos datos, correcciones y ampliaciones conforme se valida su uso en campo.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿GPSpedia enseña cómo instalar dispositivos?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>GPSpedia no sustituye la capacitación profesional, pero ofrece referencias técnicas, diagramas y guías que facilitan el trabajo de técnicos con experiencia.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿Cómo obtengo una cuenta?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>Para solicitar acceso, completa el formulario disponible en la sección “Contáctanos”. Nuestro equipo revisará la solicitud y te brindará seguimiento conforme al uso profesional de la plataforma.</p></div></div>
+      <div class="accordion-item"><div class="accordion-header">¿Qué hacer si no está la información de un vehículo?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>Si un vehículo no cuenta aún con información específica, GPSpedia ofrece tutoriales descriptivos y material audiovisual que facilitan la identificación de cables de corte, puntos de ignición y configuraciones comunes.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<script type="module" src="main.js"></script>
 
 <footer class="footer" style="display: none;">
-  Gpspedia 2025© todos los derechos reservados.
+  GPSpedia v2.0 © 2026 todos los derechos reservados.
+  <div class="footer-links">
+      <a id="footer-about-link">Sobre Nosotros</a>
+      <a id="footer-contact-link">Contáctanos</a>
+      <a id="footer-faq-link">Preguntas Frecuentes</a>
+  </div>
 </footer>
 
 </body>
