@@ -176,9 +176,9 @@
         <a href="index.html" style="text-decoration: none; color: var(--primary-color); margin-bottom: 20px; display: inline-block;">&larr; Volver al Catálogo</a>
         <div id="profile-section" class="profile-section">
             <h1>Mi Perfil</h1>
-            <p><strong>Nombre de Usuario:</strong> <span id="profile-username"></span></p>
+            <p><strong>Usuario:</strong> <span id="profile-username"></span></p>
             <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                <p style="margin: 0;"><strong>Nombre Completo:</strong> <span id="profile-fullname"></span></p>
+                <p style="margin: 0;"><strong>Nombre:</strong> <span id="profile-fullname"></span></p>
                 <button id="edit-name-btn" class="btn btn-warning" style="padding: 2px 8px; font-size: 0.8rem;">Editar</button>
             </div>
             <p><strong>Rol:</strong> <span id="profile-role"></span></p>
@@ -194,8 +194,8 @@
                 <table class="user-table">
                     <thead>
                         <tr>
-                            <th>Nombre de Usuario</th>
-                            <th>Nombre Completo</th>
+                            <th>Usuario</th>
+                            <th>Nombre</th>
                             <th>Rol</th>
                             <th>Acciones</th>
                         </tr>
@@ -216,11 +216,11 @@
             <form id="user-form">
                 <input type="hidden" id="user-id">
                 <div class="form-group">
-                    <label for="fullname">Nombre Completo</label>
+                    <label for="fullname">Nombre</label>
                     <input type="text" id="fullname" required>
                 </div>
                 <div class="form-group">
-                    <label for="username-modal">Nombre de Usuario</label>
+                    <label for="username-modal">Usuario</label>
                     <input type="text" id="username-modal" required>
                 </div>
                 <div class="form-group">
@@ -243,7 +243,7 @@
             <h2>Editar Nombre</h2>
             <form id="name-form">
                 <div class="form-group">
-                    <label for="new-fullname">Nombre Completo</label>
+                    <label for="new-fullname">Nombre</label>
                     <input type="text" id="new-fullname" required>
                 </div>
                 <button type="submit" class="btn btn-primary">Guardar Cambios</button>
