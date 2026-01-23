@@ -1415,12 +1415,12 @@ export function showApp(user) {
     document.querySelector('.footer').style.display = 'block';
 
     if (user && user.Nombre_Usuario) {
-        document.getElementById('menu-username').textContent = user.Nombre_Usuario;
+        document.getElementById('menu-username').textContent = user.Nombre_Completo;
 
         // Mostrar mensaje de bienvenida en el nuevo header si existe
         const welcomeMsg = document.getElementById('welcome-message');
         if (welcomeMsg) {
-            welcomeMsg.textContent = `Hola, ${user.Nombre_Usuario}`;
+            welcomeMsg.textContent = `Hola, ${user.Nombre_Completo}`;
             welcomeMsg.style.display = 'block';
         }
     }
@@ -1488,7 +1488,7 @@ export function showGlobalError(message) {
 export function openSideMenu() {
     const { currentUser } = getState();
     if (currentUser && currentUser.Nombre_Usuario) {
-        document.getElementById('menu-username').textContent = currentUser.Nombre_Usuario;
+        document.getElementById('menu-username').textContent = currentUser.Nombre_Completo;
     }
     document.getElementById('side-menu').classList.add('open');
     document.getElementById('menu-overlay').classList.add('open');
