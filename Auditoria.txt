@@ -1,0 +1,192 @@
+**AUDITORÍA TÉCNICA - TAREA 1: UNIFICAR README.md (05/02/2026)**
+
+**Archivo: README.md**
+- L10: "Navegación Inteligente" - Concuerda con la implementación en `ui.js` y `state.js`.
+- L11: "Buscador Avanzado" - Concuerda con la implementación en `main.js`.
+- L12: "Catálogo Optimizado" - Concuerda con el uso de `loading="lazy"` y constantes de tamaño en `ui.js`.
+- L13: "Detalle Técnico Exhaustivo" - Concuerda con el modal de detalles y vínculos a YouTube en `ui.js`.
+- L14: "Gestión de Feedback (Inbox)" - El frontend existe en `ui.js` (`getFeedbackItems`). El backend se encuentra ruteado en `api-config.js` a `FEEDBACK`. Sin embargo, `Instrucciones.txt` Tarea 8 dice "Lógica de Backend... PENDIENTE". Esto sugiere que aunque el endpoint existe, su lógica interna podría estar incompleta o en fase beta. Se mantendrá como característica v2.0 ya que el ruteo está presente.
+- L15: "Dashboard de Actividad" - Concuerda con `getActivityLogs` en `api-config.js` y `ui.js`.
+- L16: "Seguridad y Roles (RBAC)" - Concuerda con la implementación en `users.html` y `services/users/users.js`.
+- L22-31: Flujo de Registro - Concuerda con la lógica de 3 etapas en `add_cortes.html`.
+- L35-43: Arquitectura - Concuerda con la estructura de archivos y microservicios.
+- L47-59: Comparativa y Changelog - Refleja adecuadamente el salto tecnológico.
+
+**Hallazgos:**
+- El README parece estar bastante actualizado tras la revisión del 21/01/2026.
+- No se detectan bloques duplicados evidentes en el contenido actual (v2.0).
+- Se observa que la mención a "Votos de utilidad" en la comparativa (L55) contradice la Tarea 5 de `Instrucciones.txt` que la marca como PENDIENTE.
+- Se eliminarán menciones a funcionalidades marcadas explícitamente como PENDIENTES en el backlog de `Instrucciones.txt` para cumplir con "No documentar features no presentes en el código".
+
+**Acciones:**
+- Ajustar L55 (Feedback) para reflejar el estado actual (Likes/Reportes funcionales, Votos de años en desarrollo).
+- Consolidar cualquier información redundante si se encuentra durante la edición.
+
+--------------------------------------------------
+
+**AUDITORÍA TÉCNICA - TAREA 2: SISTEMA ANTI-DEBUGGING (05/02/2026)**
+
+**Archivos involucrados:** `main.js`, `index.html`, `users.html`, `add_cortes.html`, `style.css`.
+
+**Hallazgos:**
+- `main.js` L206: Ya existe un bloque de seguridad que bloquea menú contextual, F12, Ctrl+U y zoom.
+- Sin embargo, la Tarea 2 solicita una implementación "que no rompa funcionalidades normales" y "especialmente en la versión PWA".
+- El bloqueo de zoom debe permitir excepciones para el lightbox.
+- El bloqueo actual en `main.js` es:
+```javascript
+// Global security and interaction blocking
+document.addEventListener('contextmenu', event => event.preventDefault());
+document.onkeydown = function(e) {
+    if(e.keyCode == 123) return false; // F12
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
+    if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
+    if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
+};
+// Block zoom
+document.addEventListener('wheel', function(e) {
+    if (e.ctrlKey) e.preventDefault();
+}, { passive: false });
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && (e.keyCode == 61 || e.keyCode == 107 || e.keyCode == 173 || e.keyCode == 109 || e.keyCode == 187 || e.keyCode == 189)) {
+        e.preventDefault();
+    }
+});
+```
+- Falta la excepción para el lightbox.
+- Falta asegurar que estas restricciones se apliquen de forma consistente en todas las páginas (aunque `main.js` se carga en casi todas, `users.html` y `add_cortes.html` podrían no tenerlo si no importan `main.js` o si tienen su propia lógica).
+- `index.html` carga `main.js`.
+- `users.html` NO carga `main.js`. Tiene su propio `<script>`.
+- `add_cortes.html` NO carga `main.js`. Tiene su propio `<script>`.
+
+**Hallazgos Críticos:**
+1. Los bloqueos de seguridad no están presentes en `users.html` ni en `add_cortes.html`.
+2. El bloqueo de zoom en `main.js` no tiene la excepción para el lightbox.
+
+**Acciones:**
+- Crear una función de seguridad unificada o replicar el bloque en los archivos necesarios.
+- Implementar la lógica de excepción de zoom detectando la visibilidad del lightbox.
+- Usar `isLightboxVisible` (si existe en el estado) para controlar el zoom.
+
+--------------------------------------------------
+
+**AUDITORÍA TÉCNICA - TAREA 3: COMPATIBILIDAD PWA (05/02/2026)**
+
+**Archivo: manifest.json**
+- `display: standalone` es ideal para Android/iOS.
+- `icons` incluyen 192 y 512, estándar para PWA.
+- `theme_color` y `background_color` presentes.
+
+**Archivo: service-worker.js**
+- Implementa estrategia Network-First.
+- `self.skipWaiting()` y `self.clients.claim()` aseguran actualización rápida.
+
+**Hallazgos:**
+- **Android:** Compatibilidad completa (Chrome/Edge). Soporta instalación y notificaciones (aunque no se usan activamente).
+- **iOS:** Compatibilidad parcial. Requiere Safari y "Añadir a pantalla de inicio". No soporta `splash screens` automáticas sin etiquetas `<link rel="apple-touch-startup-image">` adicionales. El `manifest.json` es ignorado parcialmente por iOS antes de versiones recientes.
+- **HarmonyOS:** Basado en Android (EMUI), compatibilidad similar a Android mediante navegadores basados en Chromium.
+
+**Limitaciones Identificadas:**
+1. iOS requiere metatags específicos en el `<head>` para una experiencia "App-like" fluida (ej. `apple-mobile-web-app-capable`).
+2. El zoom bloqueado podría afectar la accesibilidad en iOS si el usuario tiene activadas funciones de asistencia, aunque el bloqueo vía JS suele respetarse.
+
+--------------------------------------------------
+**AUDITORÍA LÍNEA POR LÍNEA - MEJORAS DE RENDIMIENTO Y ROBUSTEZ (05/02/2026)**
+
+**Archivo: ui.js**
+- L188: `img.src` - Falta `loading="lazy"` en Categorías.
+- L212: `img.src` - Falta `loading="lazy"` en Marcas Vehículos.
+- L231: `img.src` - Falta `loading="lazy"` en Marcas Motos.
+- L261: `img.src` - Ya tiene `loading="lazy"` pero usa fallback manual.
+- L303: `innerHTML` - Contiene `style="padding-top: 10px;"`. Incumple separación de preocupaciones.
+- L399: `innerHTML` - Contiene `style="padding-top: 10px;"`. Incumple separación de preocupaciones.
+- L445: `img.loading = "lazy"` - Presente.
+- L488: `img.loading = "lazy"` - Presente.
+- L492: `innerHTML` - Contiene `style="padding-top: 10px;"`.
+- L556: `innerHTML` - Contiene `style="padding-top: 10px;"`.
+- L602: `img.loading = "lazy"` - Presente.
+- L634: `img.loading = "lazy"` - Presente.
+- L648: `innerHTML` - Contiene `style="padding-top: 10px;"`.
+- L799: `img.dataset.src` - Implementación de lazy load en acordeones. Correcto.
+- L1211: `img.dataset.src` - Implementación de lazy load en acordeones. Correcto.
+- L1250-1280: Lógica de `maxHeight` - El uso de `setTimeout(..., 0)` y el cálculo estático de `scrollHeight` no contempla el tiempo de carga de las imágenes asíncronas una vez se les asigna el `src`.
+
+**Archivo: style.css**
+- L642-654: `.overlay` - Tiene padding fijo. El `padding-top` adicional en JS es redundante o contradictorio. Se debe unificar en una clase hija o ajustar el padding general.
+
+**Hallazgos Críticos:**
+1. Varias funciones de renderizado de tarjetas no tienen `loading="lazy"`.
+2. El cálculo de altura de los acordeones fallará visualmente (el panel se cortará) si la imagen no está en caché y tarda >0ms en cargar.
+3. Estilos en línea duplicados en múltiples funciones de `ui.js`.
+
+**Acciones:**
+- Crear respaldo de `ui.js` y `style.css`.
+- Implementar `img.loading = "lazy"` de forma sistemática.
+- Refactorizar `loadAccordionImages` para que actualice el `maxHeight` del panel padre tras el evento `onload` de cada imagen.
+- Mover estilos de texto del overlay a `style.css`.
+
+--------------------------------------------------
+**AUDITORÍA LÍNEA POR LÍNEA - FIX CARGA IMÁGENES CORTES (05/02/2026)**
+
+**Archivo: ui.js**
+- L758: Llamada a `renderCutContent` para el Corte Recomendado. Esta sección es visible de inmediato en el modal.
+- L786: Definición de `renderCutContent`. Actualmente usa `img.dataset.src` incondicionalmente (L797).
+- L1196: Llamada a `renderCutContent` dentro de `createAccordionSection`. Esta sección está oculta inicialmente.
+
+**Hallazgo Crítico:**
+El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dataset.src`, pero al no estar dentro de un acordeón, la función `loadAccordionImages` nunca se ejecuta para él. Esto causa que el `src` permanezca vacío.
+
+**Solución:**
+1. Modificar `renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false)` para aceptar un parámetro de carga diferida.
+2. En `renderCutContent`, usar `img.src` si `isLazy` es falso, y `img.dataset.src` si es verdadero.
+3. Actualizar la llamada en L758 para pasar `false` (o dejar por defecto).
+4. Actualizar la llamada en L1196 para pasar `true`.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - TAREA 1: CORRECCIÓN DE NAVEGACIÓN (06/02/2026)**
+
+**Archivo: ui.js**
+- L221: La navegación por marca inicia en `mostrarModelosPorMarca(marca)`.
+- L288: `mostrarModelosPorMarca` establece `navigationState.level = "modelosPorMarca"`.
+- L291: Botón "Volver" en `mostrarModelosPorMarca` apunta a `irAPaginaPrincipal()`. Correcto.
+- L335, L346, L351: `navegarADetallesDeModelo` redirige a sub-pantallas sin preservar explícitamente el origen `modelosPorMarca`.
+- L399-402: `mostrarTiposEncendido` botón "Volver" asume que el paso previo fue `versionesEquipamiento` o `modelos`. Si se llegó desde `modelosPorMarca`, regresará a `mostrarModelos` (con filtro de categoría), lo cual es el fallo reportado.
+- L445-453: `mostrarVersiones` botón "Volver" tiene el mismo problema de fallback a `mostrarModelos`.
+- L505: `mostrarVersionesEquipamiento` tiene el botón "Volver" hardcodeado a `mostrarModelos`.
+
+**Hallazgos Críticos:**
+1. Las funciones de sub-navegación (`mostrarTiposEncendido`, `mostrarVersiones`, `mostrarVersionesEquipamiento`) no contemplan el flujo de "Búsqueda por Marca" (`modelosPorMarca`) al construir su botón de regreso.
+2. `mostrarModelos` siempre regresa a `mostrarMarcas(categoria)`, lo que rompe el flujo si el usuario no seleccionó una categoría inicialmente.
+
+**Acciones:**
+- Actualizar la lógica de `backAction` en todas las funciones de sub-navegación para verificar si el `previousState.level` es `modelosPorMarca`.
+- Si el origen es `modelosPorMarca`, el botón "Volver" debe llamar a `window.ui.mostrarModelosPorMarca(marca)`.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - TAREA 2: PREVENCIÓN DE SELECCIÓN DE TEXTO (06/02/2026)**
+
+**Archivos involucrados:** `style.css`, `users.html`, `add_cortes.html`.
+
+**Hallazgos:**
+- Ninguno de los archivos CSS o bloques `<style>` implementa `user-select: none`.
+- Esto permite la selección accidental de texto y activa el asistente de búsqueda de Google en móviles, afectando la experiencia de catálogo.
+
+**Acciones:**
+- Implementar reglas CSS globales para `user-select: none`.
+- Permitir excepciones para elementos de entrada (`input`, `textarea`) para asegurar la usabilidad.
+- Replicar en `users.html` y `add_cortes.html` para mantener la consistencia en toda la aplicación.
+
+--------------------------------------------------
+**AUTO-AUDITORÍA POST-IMPLEMENTACIÓN (06/02/2026)**
+
+**Hallazgos:**
+1. **Archivo style.css:** La regla de excepción para `user-select: text` no incluye el elemento `select`. Esto podría dificultar la interacción con menús desplegables en algunos navegadores si se hereda el `none` del body.
+2. **Archivo index.html (L107):** El input de búsqueda conserva un atributo `oninput="filtrarContenido(this.value)"` que es redundante con el event listener de `main.js`. Además, `filtrarContenido` no está expuesto globalmente (está bajo `window.navigation`), lo que causaría un error en consola al escribir.
+3. **Archivo add_cortes.html:** La lógica de bloqueo de zoom replicada no incluye la excepción `isLightboxVisible`. Esto impide que el técnico haga zoom en las imágenes de verificación dentro de esta sección, rompiendo una funcionalidad crítica de revisión de fotos.
+4. **Archivo ui.js (L376):** La función `mostrarModelos` mantiene un botón "Volver" con lógica hardcodeada que no consulta `previousState`. Aunque funcional bajo el flujo normal, es inconsistente con el resto de la refactorización.
+
+**Acciones Correctoras:**
+- Añadir `select` a las excepciones de `user-select` en todos los archivos.
+- Eliminar el `oninput` redundante en `index.html`.
+- Implementar la excepción de zoom por lightbox en `add_cortes.html`.
+- Refactorizar `mostrarModelos` para usar `previousState` en su botón de regreso.
