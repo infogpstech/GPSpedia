@@ -81,9 +81,9 @@ export function filtrarContenido(textoBusqueda) {
 
     // Se considera una búsqueda de marca si solo hay una marca en los resultados
     // y el término de búsqueda coincide con el nombre de esa marca.
-    const exactModelMatch = datosFiltrados.some(item => item.modelo.toLowerCase() === busqueda);
+    const exactModelMatch = datosFiltrados.some(item => String(item.modelo).toLowerCase() === busqueda);
 
-    if (!exactModelMatch && uniqueMarcasEnResultados.length === 1 && uniqueMarcasEnResultados[0].toLowerCase().includes(busqueda)) {
+    if (!exactModelMatch && uniqueMarcasEnResultados.length === 1 && String(uniqueMarcasEnResultados[0]).toLowerCase().includes(busqueda)) {
         mostrarResultadosDeBusqueda({ type: 'marca', query: textoBusqueda, results: uniqueMarcasEnResultados });
     } else {
         // En todos los demás casos (modelo, año, mixto), se muestran tarjetas de modelo.
