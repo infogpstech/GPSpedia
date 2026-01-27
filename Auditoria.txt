@@ -214,3 +214,23 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 **Acciones Correctoras:**
 - Implementar conversiones explícitas String() antes de llamar a métodos de String en todos los puntos identificados.
 - En la función 'normalize', envolver el parámetro en String().
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - TAREA: RESET DE ZOOM EN LIGHTBOX (05/02/2026)**
+
+**Archivos involucrados:** lightbox.js, index.html, add_cortes.html, ui.js
+
+**Hallazgos:**
+- **index.html:** El lightbox usa `#lightboxImg` (L136).
+- **add_cortes.html:** El lightbox usa `#lightbox-img` (L144). El cierre es inline `onclick="this.classList.remove('visible')"` (L143), lo que evita la ejecución de lógica de reset centralizada.
+- **ui.js:** Las llamadas a abrir el lightbox son manuales (L842-843, L997-998, L1254-1255, L1656-1657), asignando el src directamente y añadiendo la clase 'visible'.
+- **lightbox.js:** La función `cerrarLightbox` solo remueve la clase 'visible' del div '#lightbox'. No hay lógica para resetear el zoom del viewport ni las transformaciones CSS de las imágenes.
+
+**Riesgos y Dependencias:**
+- El bloqueo de zoom global en `main.js` y `add_cortes.html` depende de la visibilidad del lightbox. Si se cierra pero el navegador queda con zoom, la experiencia de usuario se degrada.
+- Es necesario centralizar la apertura para asegurar que el `viewport` se modifique consistentemente.
+
+**Acciones Correctoras:**
+- Centralizar apertura y cierre en `lightbox.js`.
+- Implementar reset de `viewport` y estilos CSS (`transform`, `scale`) al cerrar.
+- Sincronizar el uso de `cerrarLightbox` en `add_cortes.html`.

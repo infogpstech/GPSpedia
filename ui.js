@@ -839,8 +839,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         img.className = 'img-corte image-with-container';
         img.onclick = () => {
             const highResImgUrl = getImageUrl(cutData.img, IMG_SIZE_LARGE);
-            document.getElementById('lightboxImg').src = highResImgUrl;
-            document.getElementById('lightbox').classList.add('visible');
+            window.abrirLightbox(highResImgUrl);
         };
         imgContainer.appendChild(img);
 
@@ -994,8 +993,7 @@ function renderRelayInfoModal(relayInfo) {
     img.style.width = '100%';
     img.onclick = () => {
         const highResImgUrl = getImageUrl(relayInfo.imagen, IMG_SIZE_LARGE);
-        document.getElementById('lightboxImg').src = highResImgUrl;
-        document.getElementById('lightbox').classList.add('visible');
+        window.abrirLightbox(highResImgUrl);
     };
     content.appendChild(img);
 
@@ -1251,8 +1249,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
             img.className = 'img-corte image-with-container';
             img.onclick = () => {
                 const highResImgUrl = getImageUrl(sec.img, IMG_SIZE_LARGE);
-                document.getElementById('lightboxImg').src = highResImgUrl;
-                document.getElementById('lightbox').classList.add('visible');
+                window.abrirLightbox(highResImgUrl);
             };
             imgContainer.appendChild(img);
             panel.appendChild(imgContainer);
@@ -1653,8 +1650,7 @@ function mostrarDetalleRelayModal(item) {
         img.style.borderRadius = "8px";
         img.onclick = () => {
             const highResImgUrl = getImageUrl(item.imagen, IMG_SIZE_LARGE);
-            document.getElementById('lightboxImg').src = highResImgUrl;
-            document.getElementById('lightbox').classList.add('visible');
+            window.abrirLightbox(highResImgUrl);
         };
         cont.appendChild(img);
     }

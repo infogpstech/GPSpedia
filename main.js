@@ -5,12 +5,12 @@
 // - Expose modules to the global window object for HTML compatibility.
 
 // Importar la función `routeAction` desde el módulo de API unificado.
+import './lightbox.js';
 import { routeAction } from './api-config.js';
 import * as auth from './auth.js';
 import * as state from './state.js';
 import * as ui from './ui.js';
 import * as navigation from './navigation.js';
-import './lightbox.js';
 
 let deferredPrompt;
 let searchBlurTimeout;

@@ -238,6 +238,26 @@
 **Archivo: add_cortes.html**
 - **Líneas 615-645:** Implementada excepción `isLightboxVisible` en la lógica de bloqueo de zoom táctil y manual.
 
+--------------------------------------------------
+**CAMBIOS REALIZADOS - TAREA: RESET DE ZOOM EN LIGHTBOX (05/02/2026)**
+
+**Archivo: lightbox.js**
+- **Líneas 1-52:** Implementada función centralizada `abrirLightbox(url)` que habilita el zoom (`user-scalable=yes`) y asigna la imagen. Refactorizada `cerrarLightbox()` para que restablezca el viewport a `user-scalable=no` (forzando el reset del zoom del navegador) y limpie los estilos `transform`/`scale` de las imágenes (`#lightboxImg` y `#lightbox-img`).
+
+**Archivo: main.js**
+- **Línea 8:** Se movió el import de `lightbox.js` al inicio para asegurar la disponibilidad de funciones globales.
+
+**Archivo: ui.js**
+- **Líneas 842, 996, 1252, 1653:** Reemplazadas aperturas manuales de lightbox por llamadas a `window.abrirLightbox(highResImgUrl)`.
+
+**Archivo: add_cortes.html**
+- **Línea 143:** Actualizado `onclick` del lightbox para usar `window.cerrarLightbox()`.
+- **Línea 243:** Añadido import de `lightbox.js`.
+- **Línea 257:** Eliminada definición local redundante de `window.abrirLightbox`.
+
+**Archivo: Auditoria.txt**
+- Añadida sección de auditoría para la tarea de reset de zoom.
+
 **Archivo: ui.js**
 - **Líneas 381-395:** Refactorizada `mostrarModelos` para usar `previousState` y asegurar consistencia en el botón "Volver".
 
