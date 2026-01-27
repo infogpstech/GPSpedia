@@ -271,3 +271,23 @@
   - Sistema de verificación anti-duplicado en 3 etapas.
 
 **Versión:** Consolidación final v2.0 (Full Features).
+
+--------------------------------------------------
+**REGISTRO DE CAMBIOS - TAREA: VISIBILIDAD DE MODELOS NUMÉRICOS (10/05/2024)**
+
+**Archivo: ui.js**
+- L61: Modificada función 'normalize' para convertir parámetro a String antes de toLowerCase().
+- L200, L220: Añadida conversión String() en filtros de categoría para evitar fallos si la categoría es numérica.
+- L294, L297: Modificada navegación por marca para manejar marcas y modelos numéricos.
+- L335-338: Robustecida comparación de modelo en 'navegarADetallesDeModelo'.
+- L397-402: Robustecida filtración y ordenamiento de modelos en 'mostrarModelos'.
+- L447-451: Robustecida filtración en 'mostrarTiposEncendido'.
+- L563: Robustecida filtración en 'mostrarVersionesEquipamiento'.
+- L940: Robustecida verificación de configuración de relay.
+
+**Archivo: navigation.js**
+- L84: Añadida conversión String() en 'exactModelMatch' para modelos numéricos.
+- L86: Añadida conversión String() en verificación de marca única.
+
+**Descripción:**
+Se han implementado conversiones explícitas a String en todos los puntos donde el motor de JavaScript fallaba al intentar ejecutar métodos de cadena (toLowerCase, localeCompare) sobre valores numéricos provenientes de la base de datos. Esto restaura la visibilidad y capacidad de búsqueda de modelos como '1500', '3500', etc.

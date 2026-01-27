@@ -208,6 +208,10 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+11. **Tu00cdTULO: Correcciu00f3n de Visibilidad de Modelos Numu00e9ricos (v2.0.9)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, navigation.js
+   - **DESCRIPCIu00d3N DETALLADA:** Implementada normalizaciu00f3n a String en funciones de filtrado, ordenamiento y normalizaciu00f3n para permitir la visualizaciu00f3n y bu00fasqueda de modelos con nombres numu00e9ricos (ej. 1500, 700), evitando TypeErrors por llamadas a mu00e9todos de cadena en tipos Number.
 ---
 1. **TÍTULO: Lanzamiento Global GPSpedia v2.0 (v2.0.0)**
    - **ESTADO:** COMPLETADO

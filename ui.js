@@ -58,7 +58,7 @@ export function getLogoUrlForMarca(marca, categoria) {
         return null;
     }
 
-    const normalize = (str) => str ? str.toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+    const normalize = (str) => str ? String(str).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
     const normalizedMarca = normalize(marca);
     const normalizedCategoria = normalize(categoria);
 
@@ -197,7 +197,7 @@ export function mostrarCategorias() {
     });
 
     const marcasVehiculos = [...new Set(cortes
-        .filter(item => item.categoria && !['motocicletas', 'motos'].includes(item.categoria.toLowerCase()))
+        .filter(item => item.categoria && !['motocicletas', 'motos'].includes(String(item.categoria).toLowerCase()))
         .map(item => item.marca))]
         .filter(Boolean).sort();
 
@@ -217,7 +217,7 @@ export function mostrarCategorias() {
     });
 
     const marcasMotos = [...new Set(cortes
-        .filter(item => item.categoria && ['motocicletas', 'motos'].includes(item.categoria.toLowerCase()))
+        .filter(item => item.categoria && ['motocicletas', 'motos'].includes(String(item.categoria).toLowerCase()))
         .map(item => item.marca))]
         .filter(Boolean).sort();
 
@@ -291,10 +291,10 @@ export function mostrarModelosPorMarca(marca) {
     cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Modelos de ${marca}</h4>`;
 
     // Se filtran los cortes para obtener todos los modelos de la marca seleccionada, excluyendo motocicletas
-    const modelosFiltrados = cortes.filter(item => item.marca === marca && item.categoria && !['motocicletas', 'motos'].includes(item.categoria.toLowerCase()));
+    const modelosFiltrados = cortes.filter(item => String(item.marca) === String(marca) && item.categoria && !['motocicletas', 'motos'].includes(String(item.categoria).toLowerCase()));
 
     // Se obtienen modelos únicos para no repetir tarjetas
-    const modelosUnicos = [...new Map(modelosFiltrados.map(item => [item.modelo, item])).values()].sort((a,b) => a.modelo.localeCompare(b.modelo));
+    const modelosUnicos = [...new Map(modelosFiltrados.map(item => [item.modelo, item])).values()].sort((a,b) => String(a.modelo).localeCompare(String(b.modelo)));
 
     const grid = document.createElement("div");
     grid.className = "grid";
@@ -332,9 +332,9 @@ function navegarADetallesDeModelo(categoria, marca, modelo) {
     // Comentario: Lógica de navegación refactorizada para omitir pantallas de selección con una sola opción.
     // 1. Obtener todos los cortes para el modelo específico.
     let vehiculosFiltrados = cortes.filter(item =>
-        item.categoria === categoria &&
-        item.marca === marca &&
-        item.modelo === modelo
+        String(item.categoria) === String(categoria) &&
+        String(item.marca) === String(marca) &&
+        String(item.modelo) === String(modelo)
     );
 
     // 2. Analizar Versiones de Equipamiento.
@@ -394,12 +394,12 @@ export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
 
     cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Modelos de ${marca} ${versionEquipamiento || ''}</h4>`;
 
-    let modelosFiltrados = cortes.filter(item => item.categoria === categoria && item.marca === marca);
+    let modelosFiltrados = cortes.filter(item => String(item.categoria) === String(categoria) && String(item.marca) === String(marca));
     if (versionEquipamiento) {
-        modelosFiltrados = modelosFiltrados.filter(item => item.versionesAplicables === versionEquipamiento);
+        modelosFiltrados = modelosFiltrados.filter(item => String(item.versionesAplicables) === String(versionEquipamiento));
     }
 
-    const modelosUnicos = [...new Map(modelosFiltrados.map(item => [item.modelo, item])).values()].sort((a,b) => a.modelo.localeCompare(b.modelo));
+    const modelosUnicos = [...new Map(modelosFiltrados.map(item => [item.modelo, item])).values()].sort((a,b) => String(a.modelo).localeCompare(String(b.modelo)));
 
     // Comentario: Se elimina la lógica de omisión de pantalla. La decisión ahora se centraliza en `navegarADetallesDeModelo`.
 
@@ -444,10 +444,10 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
     cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Tipos de Encendido para ${modelo} ${versionEquipamiento || ''}</h4>`;
 
     let vehiculos = cortes.filter(item =>
-        item.categoria === categoria &&
-        item.marca === marca &&
-        item.modelo === modelo &&
-        (!versionEquipamiento || item.versionesAplicables === versionEquipamiento)
+        String(item.categoria) === String(categoria) &&
+        String(item.marca) === String(marca) &&
+        String(item.modelo) === String(modelo) &&
+        (!versionEquipamiento || String(item.versionesAplicables) === String(versionEquipamiento))
     );
 
     const tiposEncendido = [...new Set(vehiculos.map(v => v.tipoEncendido).filter(Boolean))];
@@ -560,7 +560,7 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
     cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Versiones de ${modelo}</h4>`;
 
     // Comentario: Se filtra por modelo específico para mostrar solo las versiones relevantes.
-    const vehiculosDelModelo = cortes.filter(item => item.categoria === categoria && item.marca === marca && item.modelo === modelo);
+    const vehiculosDelModelo = cortes.filter(item => String(item.categoria) === String(categoria) && String(item.marca) === String(marca) && String(item.modelo) === String(modelo));
     const versiones = [...new Set(vehiculosDelModelo.map(item => item.versionesAplicables).filter(v => v))];
 
     const grid = document.createElement("div");
@@ -937,7 +937,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
     const relayContainer = document.createElement('p');
     const configRelay = cutData.configRelay;
 
-    if (!configRelay || configRelay.toLowerCase() === 'sin relay') {
+    if (!configRelay || String(configRelay).toLowerCase() === 'sin relay') {
         relayContainer.innerHTML = `<strong>Configuración de Relay:</strong> Sin Relay`;
     } else {
         relayContainer.innerHTML = `<strong>Configuración de Relay: </strong>`;

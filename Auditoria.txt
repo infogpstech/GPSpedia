@@ -190,3 +190,27 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - Eliminar el `oninput` redundante en `index.html`.
 - Implementar la excepción de zoom por lightbox en `add_cortes.html`.
 - Refactorizar `mostrarModelos` para usar `previousState` en su botón de regreso.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - TAREA: VISIBILIDAD DE MODELOS NUMÉRICOS (10/05/2024)**
+
+**Archivos involucrados:** ui.js, navigation.js
+
+**Hallazgos en ui.js:**
+- L56: Función 'normalize' asume que el parámetro es string. Fallará con modelos/marcas numéricos.
+- L181: 'mostrarModelosPorMarca' usa .toLowerCase() en item.categoria sin asegurar que sea string.
+- L184: 'mostrarModelosPorMarca' usa .localeCompare() en item.modelo sin asegurar que sea string.
+- L269: 'mostrarModelos' usa .localeCompare() en item.modelo sin asegurar que sea string.
+- L541: 'getLogoUrlForMarca' llama a 'normalize', heredando su fragilidad ante tipos numéricos.
+
+**Hallazgos en navigation.js:**
+- L75: 'filtrarContenido' usa .toLowerCase() en item.modelo sin asegurar que sea string.
+- L77: 'filtrarContenido' usa .toLowerCase() en marcas sin asegurar que sean string.
+
+**Análisis de Riesgo:**
+- El uso de métodos de String directamente sobre propiedades que pueden venir como Number desde Google Sheets (vía JSON) causa TypeErrors que detienen el renderizado de la UI.
+- Esto explica por qué los modelos numéricos no son visibles: la función que debería mostrarlos falla silenciosamente o detiene la ejecución antes de añadir los elementos al DOM.
+
+**Acciones Correctoras:**
+- Implementar conversiones explícitas String() antes de llamar a métodos de String en todos los puntos identificados.
+- En la función 'normalize', envolver el parámetro en String().
