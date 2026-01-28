@@ -211,7 +211,7 @@ Cualquier cambio en estas zonas invalidará el commit.
 12. **TÍTULO: Reset de Zoom en Lightbox (v2.1.0)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** lightbox.js, main.js, ui.js, add_cortes.html
-   - **DESCRIPCIÓN DETALLADA:** Implementada lógica de reset de zoom definitiva mediante la técnica de "Opacity Fade + Viewport Snap". Al cerrar, se inicia un desvanecimiento visual inmediato manteniendo el lightbox programáticamente visible durante 250ms. Durante este intervalo, se fuerza el snap del viewport a escala 1.0. Esto asegura que el reset visual ocurra mientras las excepciones de los listeners de zoom siguen activas, permitiendo una restauración fluida y total del zoom por defecto.
+   - **DESCRIPCIÓN DETALLADA:** Implementada lógica de reset de zoom altamente robusta mediante la técnica de "Meta Tag Reinsertion" y corrección de VisualViewport. Se eliminó la interferencia que causaba que la aplicación se encogiera durante el zoom. Al cerrar el lightbox, se fuerza el reset del viewport a escala 1.0 mientras el elemento sigue visible y con los bloqueos de zoom desactivados, garantizando un snap visual inmediato y estable antes de ocultar el lightbox definitivamente.
 11. **Tu00cdTULO: Correcciu00f3n de Visibilidad de Modelos Numu00e9ricos (v2.0.9)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** ui.js, navigation.js

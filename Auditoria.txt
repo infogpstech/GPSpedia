@@ -232,6 +232,6 @@ El motor de renderizado del navegador móvil no siempre responde al cambio de `v
 
 **Acciones Correctoras:**
 - Modificar `cerrarLightbox` para realizar el reset de zoom (viewport + estilos) MIENTRAS el lightbox sigue visible.
-- Implementar técnica de desvanecimiento con delay: se establece `opacity: 0` mediante estilo inline pero se mantiene la clase `visible` durante 250ms.
-- Usar una cadena de viewport agresiva: `initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no` para forzar el snap a 100%.
-- Eliminar el `MutationObserver` para garantizar un flujo de control determinista y manual como se solicitó.
+- Implementar técnica de "Meta Tag Reinsertion": se remueve y re-inserta el tag viewport para forzar al navegador a aplicar el reset de zoom.
+- Corregir interferencia en `main.js`: se añadió una guarda en el listener de `visualViewport` para evitar que la aplicación cambie de tamaño (`--app-height`) durante el zoom, lo cual bloqueaba el reset visual.
+- Introducir retardo de 300ms antes de remover la clase `visible`, permitiendo que el motor de renderizado complete el zoom-out antes de reactivar los bloqueos globales.

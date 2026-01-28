@@ -242,7 +242,10 @@
 **CAMBIOS REALIZADOS - TAREA: RESET DE ZOOM EN LIGHTBOX (05/02/2026)**
 
 **Archivo: lightbox.js**
-- **Líneas 1-52:** Implementada lógica de reset de zoom robusta y fluida en `cerrarLightbox`. Al cerrar, se inicia un desvanecimiento inmediato mediante `opacity: 0` (estilo inline) mientras se mantiene el estado `visible`. Simultáneamente se fuerza un reset agresivo del viewport (`initial-scale=1.0, maximum-scale=1.0, user-scalable=no`). Se utiliza un retardo de 250ms para garantizar que el navegador realice el snap visual al 100% de zoom antes de remover la clase `visible` y reactivar los bloqueos globales. Se eliminó el `MutationObserver` previo para seguir el flujo de control manual.
+- **Líneas 1-52:** Implementada lógica de reset de zoom manual y altamente robusta. Se utiliza la técnica de "Meta Tag Reinsertion" para forzar al navegador a aplicar el reset de escala. El proceso de cierre ahora sigue una secuencia estrictamente visual: desvanecimiento inmediato (`opacity: 0`), reset de viewport MIENTRAS el elemento sigue visible (permitiendo el snap visual) y eliminación definitiva de la clase `visible` tras 300ms.
+
+**Archivo: main.js**
+- **Líneas 85-95:** Corregida interferencia de `visualViewport` en `handleViewportChange`. Se añadió una guarda para evitar que la variable CSS `--app-height` se actualice si el usuario tiene zoom activo, previniendo que la aplicación se encoja y bloquee el reset del navegador.
 
 **Archivo: main.js**
 - **Línea 8:** Se movió el import de `lightbox.js` al inicio para asegurar la disponibilidad de funciones globales.

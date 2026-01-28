@@ -22,30 +22,44 @@ function abrirLightbox(url) {
 
     if (lightbox) {
         lightbox.style.opacity = ''; // Asegurar que el estilo inline no interfiera con la apertura
+        lightbox.style.pointerEvents = '';
         lightbox.classList.add('visible');
     }
 }
 
 /**
+ * Función auxiliar para forzar la actualización del viewport del navegador.
+ */
+function updateViewportMeta(content) {
+    let meta = document.querySelector('meta[name="viewport"]');
+    if (meta) {
+        meta.setAttribute('content', content);
+        // Algunos navegadores requieren re-insertar el tag para notar el cambio de zoom
+        const parent = meta.parentNode;
+        const next = meta.nextSibling;
+        parent.removeChild(meta);
+        if (next) parent.insertBefore(meta, next);
+        else parent.appendChild(meta);
+    }
+}
+
+/**
  * Cierra el lightbox de imágenes y restablece el zoom de forma robusta.
- * El reset visual ocurre MIENTRAS el lightbox sigue visible (permitido por JS).
+ * El reset visual ocurre MIENTRAS el lightbox sigue visible.
  */
 function cerrarLightbox() {
     const lightbox = document.getElementById('lightbox');
     if (!lightbox || !lightbox.classList.contains('visible')) return;
 
-    // 1. Iniciamos el desvanecimiento visual inmediato (usando estilo inline)
+    // 1. Iniciamos el desvanecimiento visual inmediato
     lightbox.style.opacity = '0';
+    lightbox.style.pointerEvents = 'none';
 
     // 2. Restaurar zoom a su valor por defecto (viewport + estilos)
     // Se ejecuta mientras .visible sigue presente para que los listeners de main.js permitan el snap.
-    const viewport = document.querySelector('meta[name="viewport"]');
-    if (viewport) {
-        // Forzamos el reset visual del navegador a escala 1.0
-        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no');
-    }
+    updateViewportMeta('width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no');
 
-    // Reset de transformaciones en las imágenes para una salida fluida
+    // Reset de transformaciones en las imágenes
     const imgs = lightbox.querySelectorAll('img');
     imgs.forEach(img => {
         img.style.transform = 'scale(0.95)';
@@ -56,25 +70,22 @@ function cerrarLightbox() {
     setTimeout(() => {
         // 4. Cerrar el lightbox oficialmente
         lightbox.classList.remove('visible');
-        lightbox.style.opacity = ''; // Limpiar el estilo inline tras cerrar
+        lightbox.style.opacity = '';
+        lightbox.style.pointerEvents = '';
 
         // 5. Restaurar el meta tag original según la página actual
         const isAddCortes = window.location.pathname.includes('add_cortes.html');
-        if (viewport) {
-            if (isAddCortes) {
-                // add_cortes.html bloquea zoom por defecto en su HTML
-                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-            } else {
-                // index.html permite zoom por defecto (pero main.js lo bloquea condicionalmente)
-                viewport.setAttribute('content', 'width=device-width, initial-scale=1.0');
-            }
-        }
+        const originalContent = isAddCortes ?
+            'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no' :
+            'width=device-width, initial-scale=1.0';
+
+        updateViewportMeta(originalContent);
 
         // Limpiar estilos inline de imágenes
         imgs.forEach(img => {
             img.style.transform = '';
         });
-    }, 250); // Delay sincronizado con la transición CSS (0.3s)
+    }, 300); // Delay optimizado para snap del navegador
 }
 
 // Hacemos las funciones globalmente accesibles

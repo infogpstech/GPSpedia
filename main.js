@@ -82,6 +82,12 @@ async function initializeApp() {
         if (!window.visualViewport) return;
 
         const viewport = window.visualViewport;
+
+        // Solo actualizar si el usuario no está haciendo zoom.
+        // El zoom reduce visualViewport.height y aumentaría la escala.
+        // Si hay zoom, mantenemos el layout original para evitar que la app se encoja.
+        if (Math.abs(viewport.scale - 1) > 0.05) return;
+
         const height = viewport.height;
 
         // Establece la variable CSS --app-height en el elemento raíz.
