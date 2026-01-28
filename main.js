@@ -26,6 +26,7 @@ async function initializeApp() {
     window.state = state;
     window.ui = ui;
     window.navigation = navigation;
+    window.handleViewportChange = handleViewportChange;
 
     // 2. Setup primary event listeners
     document.getElementById('login-form').addEventListener('submit', (e) => {
@@ -85,7 +86,8 @@ async function initializeApp() {
 
         // Si el usuario está haciendo zoom, no recalculamos la altura para evitar saltos visuales
         // y permitir que el reset de zoom del lightbox funcione correctamente.
-        if (viewport.scale !== 1) return;
+        // Se utiliza un epsilon para manejar imprecisiones de coma flotante.
+        if (Math.abs(viewport.scale - 1) > 0.01) return;
 
         const height = viewport.height;
 

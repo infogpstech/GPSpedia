@@ -24,6 +24,10 @@ function abrirLightbox(url) {
     // 3. Cargar imagen
     if (img && url) {
         img.src = url;
+        // Asegurar que la imagen no tenga transformaciones previas
+        img.style.transform = '';
+        img.style.scale = '';
+        img.style.zoom = '1';
     }
 
     // 4. Mostrar lightbox
@@ -34,47 +38,59 @@ function abrirLightbox(url) {
 
 /**
  * Cierra el lightbox de imágenes y restaura la escala visual por defecto.
- * Esta función se adjunta al objeto `window` para que sea accesible
- * desde el atributo `onclick` en el HTML.
  */
 function cerrarLightbox() {
     const lightbox = document.getElementById('lightbox');
     const img = document.getElementById('lightboxImg') || document.getElementById('lightbox-img');
-    const viewport = document.querySelector('meta[name="viewport"]');
+    const oldViewport = document.querySelector('meta[name="viewport"]');
 
     // 1. Resetear el viewport MIENTRAS el lightbox sigue visible.
-    // Usamos la técnica de "Meta Tag Reinsertion" para forzar al navegador
-    // a aplicar el reset de escala visual (snap to 1.0).
-    if (viewport) {
-        const originalParent = viewport.parentNode;
-        viewport.remove();
-        // Forzamos el reset mediante maximum-scale=1.0
-        viewport.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
-        originalParent.appendChild(viewport);
+    // Usamos una técnica agresiva de reemplazo de elemento para forzar el reset de escala.
+    if (oldViewport) {
+        const resetViewport = document.createElement('meta');
+        resetViewport.name = "viewport";
+        resetViewport.content = "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no";
+
+        if (oldViewport.parentNode) {
+            oldViewport.parentNode.replaceChild(resetViewport, oldViewport);
+        }
+
+        // Forzar reflow para que el navegador procese el cambio inmediatamente
+        document.body.offsetHeight;
     }
 
-    // 2. Limpiar estilos residuales de la imagen para evitar desbordamientos
+    // 2. Limpiar estilos residuales de la imagen
     if (img) {
         img.style.transform = '';
         img.style.scale = '';
+        img.style.zoom = '1';
+        if (img.style.webkitTransform !== undefined) img.style.webkitTransform = '';
     }
 
-    // 3. Esperar a que el motor de renderizado complete el zoom-out (aprox 300ms)
-    // antes de ocultar el contenedor y reactivar los bloqueos globales.
+    // 3. Esperar a que el motor complete el zoom-out (aprox 400ms para mayor seguridad)
     setTimeout(() => {
         if (lightbox) {
             lightbox.classList.remove('visible');
         }
 
-        // 4. Restaurar el viewport EXACTO que tenía la página antes de abrir el lightbox.
-        // Se hace después de ocultar para evitar que el usuario vea el salto visual
-        // y para respetar las restricciones de zoom-blocking fuera del lightbox.
+        // 4. Restaurar el viewport original después de ocultar el lightbox
         setTimeout(() => {
-            if (viewport && originalViewportContent !== null) {
-                viewport.content = originalViewportContent;
+            const currentViewport = document.querySelector('meta[name="viewport"]');
+            if (currentViewport && originalViewportContent !== null) {
+                const restoredViewport = document.createElement('meta');
+                restoredViewport.name = "viewport";
+                restoredViewport.content = originalViewportContent;
+                if (currentViewport.parentNode) {
+                    currentViewport.parentNode.replaceChild(restoredViewport, currentViewport);
+                }
             }
-        }, 100);
-    }, 300);
+
+            // Forzar actualización de layout si existe la función global de main.js
+            if (window.handleViewportChange) {
+                window.handleViewportChange();
+            }
+        }, 150);
+    }, 400);
 }
 
 // Hacemos las funciones globalmente accesibles
