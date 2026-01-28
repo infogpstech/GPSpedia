@@ -242,7 +242,7 @@
 **CAMBIOS REALIZADOS - TAREA: RESET DE ZOOM EN LIGHTBOX (05/02/2026)**
 
 **Archivo: lightbox.js**
-- **Líneas 1-52:** Implementada función centralizada `abrirLightbox(url)` que habilita el zoom (`user-scalable=yes`) y asigna la imagen. Refactorizada `cerrarLightbox()` para que restablezca el viewport a `user-scalable=no` (forzando el reset del zoom del navegador) y limpie los estilos `transform`/`scale` de las imágenes (`#lightboxImg` y `#lightbox-img`).
+- **Líneas 1-75:** Implementada lógica reactiva mediante `MutationObserver` para el manejo del zoom. Al detectar la apertura del lightbox, se habilita `user-scalable=yes`. Al detectar el cierre (remoción de clase `visible`), se fuerza el reset del viewport a `user-scalable=no` (obligando al navegador a volver al nivel de zoom 1.0) y se limpian los estilos CSS de transformación.
 
 **Archivo: main.js**
 - **Línea 8:** Se movió el import de `lightbox.js` al inicio para asegurar la disponibilidad de funciones globales.
