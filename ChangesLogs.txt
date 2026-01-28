@@ -291,3 +291,24 @@
 
 **Descripción:**
 Se han implementado conversiones explícitas a String en todos los puntos donde el motor de JavaScript fallaba al intentar ejecutar métodos de cadena (toLowerCase, localeCompare) sobre valores numéricos provenientes de la base de datos. Esto restaura la visibilidad y capacidad de búsqueda de modelos como '1500', '3500', etc.
+
+--------------------------------------------------
+**RESTAURACIÓN DE ESCALA VISUAL TRAS CIERRE DE LIGHTBOX (06/02/2026)**
+
+**Archivo: main.js**
+- L87: Añadida guarda en `handleViewportChange` para ignorar eventos si `visualViewport.scale != 1`.
+- L110: Expuesta la función `handleViewportChange` globalmente en `window`.
+
+**Archivo: lightbox.js**
+- L5-L16: Implementada función `abrirLightbox(url)` centralizada con soporte para selectores de imagen duales.
+- L23-L42: Refactorizada `cerrarLightbox()` con técnica "Meta Tag Reinsertion" para forzar reset de zoom visual a 1.0.
+- L45-L51: Añadida limpieza de propiedades CSS (`transform`, `zoom`) en la imagen del lightbox.
+
+**Archivo: ui.js**
+- L842, L996, L1252, L1653: Reemplazadas aperturas manuales del lightbox por llamadas a `window.abrirLightbox(url)`.
+
+**Archivo: add_cortes.html**
+- L6: Corregido meta tag `viewport` eliminando restricciones de escala para permitir el zoom.
+- L143: Actualizado `onclick` del lightbox para usar `cerrarLightbox()`.
+- L243: Añadida importación de `lightbox.js`.
+- L256-L261: Eliminada definición local redundante de `window.abrirLightbox`.

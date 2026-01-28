@@ -84,6 +84,10 @@ async function initializeApp() {
         const viewport = window.visualViewport;
         const height = viewport.height;
 
+        // Estabilización: Si el usuario está haciendo zoom (escala != 1),
+        // no actualizamos la altura para evitar que la app colapse o se mueva.
+        if (Math.abs(viewport.scale - 1) > 0.01) return;
+
         // Establece la variable CSS --app-height en el elemento raíz.
         // Se utiliza para definir la altura de html, body y .container.
         document.documentElement.style.setProperty('--app-height', `${height}px`);
@@ -101,6 +105,9 @@ async function initializeApp() {
         window.visualViewport.addEventListener('scroll', handleViewportChange);
         handleViewportChange(); // Ejecución inicial
     }
+
+    // Exponer la función para que sea invocable desde el reset del lightbox
+    window.handleViewportChange = handleViewportChange;
 
     // Hamburger menu listeners
     document.getElementById('hamburger-btn').addEventListener('click', ui.openSideMenu);
