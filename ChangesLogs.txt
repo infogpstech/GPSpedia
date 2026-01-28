@@ -312,3 +312,16 @@ Se han implementado conversiones explícitas a String en todos los puntos donde 
 - L143: Actualizado `onclick` del lightbox para usar `cerrarLightbox()`.
 - L243: Añadida importación de `lightbox.js`.
 - L256-L261: Eliminada definición local redundante de `window.abrirLightbox`.
+
+--------------------------------------------------
+**RESTAURACIÓN DE ESCALA VISUAL - IMPLEMENTACIÓN FINAL (06/02/2026)**
+
+**Archivo: main.js**
+- L87-L97: Refactorizado `handleViewportChange` para usar el producto `visualViewport.height * scale`. Esto estabiliza el layout (--app-height) y la detección del teclado ante cualquier nivel de zoom.
+- L352-L368: Restaurados listeners estrictos de zoom para cumplir con la restricción de bloqueo fuera del lightbox.
+
+**Archivo: lightbox.js**
+- L23-L52: Implementada `cerrarLightbox()` asíncrona. Realiza un reset de escala forzando el meta-tag a `maximum-scale=1.0`, centra la vista y espera un retardo de 400ms para permitir la transición asíncrona del visual viewport antes de ocultar el DOM.
+
+**Archivo: Instrucciones.txt**
+- Actualizada la Tarea 12 para reflejar el enfoque de reset secuenciado asíncrono.

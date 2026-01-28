@@ -209,7 +209,7 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 
 **Análisis de Riesgo:**
 - El uso de métodos de String directamente sobre propiedades que pueden venir como Number desde Google Sheets (vía JSON) causa TypeErrors que detienen el renderizado de la UI.
-- Esto explica por qué los modelos numéricos no son visibles: la función que debería mostrarlos falla silenciosamente o detiene la ejecución antes de añadir los elementos al DOM.
+- Esto explica por qué los modelos numéricos no son visibles: la función que debería mostrarlos falla silenciosamente or detiene la ejecución antes de añadir los elementos al DOM.
 
 **Acciones Correctoras:**
 - Implementar conversiones explícitas String() antes de llamar a métodos de String en todos los puntos identificados.
@@ -225,39 +225,12 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - **add_cortes.html:** El lightbox usa `#lightbox-img`.
 - **ui.js:** Las llamadas a abrir el lightbox ahora usan `window.abrirLightbox`.
 - **main.js:** Controla el bloqueo de zoom global basado en la visibilidad del lightbox (`isLightboxVisible`).
-- **lightbox.js:** La lógica reactiva vía `MutationObserver` no lograba resetear el nivel de zoom visual en todos los navegadores, posiblemente porque el reset del viewport ocurría después del cierre o era ignorado por el motor.
 
-**Diagnóstico:**
-El motor de renderizado del navegador móvil no siempre responde al cambio de `viewport` si se realiza después de ocultar el elemento que permitía el zoom. El nivel de zoom se "congela" y los bloqueos globales de `main.js` impiden que el usuario regrese manualmente a 1.0.
+**Diagnóstico de Fallo en Reimplementación:**
+- El reset de escala visual mediante Meta-Tag falla si el DOM se oculta síncronamente antes de que el motor de renderizado procese el cambio asíncrono del viewport.
+- La guarda de escala en `main.js` bloqueaba actualizaciones legítimas de layout ante imprecisiones de coma flotante.
 
-**Acciones Correctoras:**
-- Modificar `cerrarLightbox` para realizar el reset de zoom (viewport + estilos) MIENTRAS el lightbox sigue visible.
-- Implementar técnica de "Meta Tag Reinsertion": se remueve y re-inserta el tag viewport para forzar al navegador a aplicar el reset de zoom.
-- Corregir interferencia en `main.js`: se añadió una guarda en el listener de `visualViewport` para evitar que la aplicación cambie de tamaño (`--app-height`) durante el zoom, lo cual bloqueaba el reset visual.
-- Introducir retardo de 300ms antes de remover la clase `visible`, permitiendo que el motor de renderizado complete el zoom-out antes de reactivar los bloqueos globales.
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - TAREA: RESTAURACIÓN DE ESCALA VISUAL (BASE LIMPIA) (06/02/2026)**
-
-**Archivos involucrados:** main.js, lightbox.js, ui.js, add_cortes.html, index.html
-
-**Hallazgos en main.js:**
-- La función `handleViewportChange` (L80-L97) actualiza la variable CSS `--app-height` incondicionalmente. Durante el zoom, `visualViewport.height` disminuye, lo que provoca que el layout de la aplicación colapse o se desplace visualmente.
-- La función es local a `initializeApp`, impidiendo su invocación desde otros módulos para recalcular el layout tras un reset de zoom.
-
-**Hallazgos en lightbox.js:**
-- `cerrarLightbox` (L9-L14) solo elimina la clase `visible`. No realiza ninguna acción para revertir el nivel de zoom del navegador (visual viewport scale), lo que deja la interfaz ampliada si el usuario hizo zoom en el lightbox.
-- No existe una función `abrirLightbox` centralizada, lo que provoca duplicidad de lógica en otros archivos.
-
-**Hallazgos en ui.js:**
-- Múltiples aperturas manuales del lightbox (L842, L997, L1254, L1656) manipulando el DOM directamente. Esto dificulta la implementación de mejoras globales en el comportamiento del lightbox.
-
-**Hallazgos en add_cortes.html:**
-- Meta tag `viewport` (L6) incluye `maximum-scale=1.0, user-scalable=no`, lo cual contradice el requerimiento de permitir zoom en el lightbox.
-- Posee una definición local de `window.abrirLightbox` (L256) y un cierre inline que no resetea la escala.
-
-**Acciones Correctoras Propuestas:**
-1. Centralizar la lógica de apertura y cierre en `lightbox.js`.
-2. Implementar técnica de "Meta Tag Reinsertion" en `cerrarLightbox` para forzar el reset de la escala visual a 1.0.
-3. Estabilizar `handleViewportChange` en `main.js` con una guarda de escala y exponerla globalmente.
-4. Sincronizar `add_cortes.html` con la lógica centralizada y corregir su meta tag.
+**Estrategia de Solución Final (v2.1.0):**
+1. **Reset Secuenciado:** Implementar `cerrarLightbox` como una función asíncrona que aplica el Meta-Tag de reset, centra el viewport y espera 400ms antes de ocultar el contenedor.
+2. **Estabilización de Layout:** Sustituir guardas de escala por un cálculo de `--app-height` basado en `visualViewport.height * scale`, garantizando un fondo estable independientemente del zoom.
+3. **Seguridad Robusta:** Mantener el bloqueo de zoom estricto fuera del lightbox para preservar la experiencia PWA.

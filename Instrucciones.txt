@@ -211,7 +211,7 @@ Cualquier cambio en estas zonas invalidará el commit.
 12. **TÍTULO: Restauración de Escala Visual tras Cierre de Lightbox (v2.1.0)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** main.js, lightbox.js, ui.js, add_cortes.html
-   - **DESCRIPCIÓN DETALLADA:** Implementado sistema de reset de zoom visual mediante la técnica de 'Meta Tag Reinsertion' en lightbox.js. Se centralizó la lógica de apertura/cierre, se estabilizó el layout de la app mediante una guarda de escala en el listener de visualViewport en main.js, y se sincronizó add_cortes.html eliminando lógica redundante y habilitando el zoom en su meta tag.
+   - **DESCRIPCIÓN DETALLADA:** Implementado sistema de reset de zoom visual mediante una secuencia asíncrona en lightbox.js que coordina la modificación del meta-tag viewport, el centrado de la vista y un retardo controlado de 400ms. Se estabilizó el layout de la app mediante un cálculo de altura Zoom-Agnostic en main.js, eliminando guardas restrictivas y preservando la seguridad de zoom fuera del lightbox.
 ---
 11. **Tu00cdTULO: Correcciu00f3n de Visibilidad de Modelos Numu00e9ricos (v2.0.9)**
    - **ESTADO:** COMPLETADO
