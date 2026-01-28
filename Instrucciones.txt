@@ -211,7 +211,7 @@ Cualquier cambio en estas zonas invalidará el commit.
 12. **TÍTULO: Reset de Zoom en Lightbox (v2.1.0)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** lightbox.js, main.js, ui.js, add_cortes.html
-   - **DESCRIPCIÓN DETALLADA:** Implementada lógica centralizada para el manejo del zoom en el lightbox. Al abrir, se habilita el zoom táctil mediante la modificación dinámica del viewport. Al cerrar, se restablece el viewport a `user-scalable=no` (forzando al navegador a volver al nivel de zoom 1.0) y se limpian los estilos CSS de transformación en las imágenes para asegurar un estado inicial consistente.
+   - **DESCRIPCIÓN DETALLADA:** Implementada lógica centralizada y robusta para el manejo del zoom en el lightbox. Al abrir, se habilita el escalado táctil. Al cerrar, se ejecuta un reset forzado del viewport (`initial-scale=1.0`) y se limpian estilos CSS ANTES de ocultar el elemento, garantizando que el navegador restaure el nivel de zoom por defecto antes de que los bloqueos globales entren en vigor.
 11. **Tu00cdTULO: Correcciu00f3n de Visibilidad de Modelos Numu00e9ricos (v2.0.9)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** ui.js, navigation.js

@@ -218,20 +218,20 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 --------------------------------------------------
 **AUDITORÍA TÉCNICA - TAREA: RESET DE ZOOM EN LIGHTBOX (05/02/2026)**
 
-**Archivos involucrados:** lightbox.js, index.html, add_cortes.html, ui.js
+**Archivos involucrados:** lightbox.js, main.js, index.html, add_cortes.html, ui.js, style.css
 
 **Hallazgos:**
-- **index.html:** El lightbox usa `#lightboxImg` (L136).
-- **add_cortes.html:** El lightbox usa `#lightbox-img` (L144). El cierre es inline `onclick="this.classList.remove('visible')"` (L143), lo que evita la ejecución de lógica de reset centralizada.
-- **ui.js:** Las llamadas a abrir el lightbox son manuales (L842-843, L997-998, L1254-1255, L1656-1657), asignando el src directamente y añadiendo la clase 'visible'.
-- **lightbox.js:** La función `cerrarLightbox` solo remueve la clase 'visible' del div '#lightbox'. No hay lógica para resetear el zoom del viewport ni las transformaciones CSS de las imágenes.
+- **index.html:** El lightbox usa `#lightboxImg`.
+- **add_cortes.html:** El lightbox usa `#lightbox-img`.
+- **ui.js:** Las llamadas a abrir el lightbox ahora usan `window.abrirLightbox`.
+- **main.js:** Controla el bloqueo de zoom global basado en la visibilidad del lightbox (`isLightboxVisible`).
+- **lightbox.js:** La lógica reactiva vía `MutationObserver` no lograba resetear el nivel de zoom visual en todos los navegadores, posiblemente porque el reset del viewport ocurría después del cierre o era ignorado por el motor.
 
-**Riesgos y Dependencias:**
-- El bloqueo de zoom global en `main.js` y `add_cortes.html` depende de la visibilidad del lightbox. Si se cierra pero el navegador queda con zoom, la experiencia de usuario se degrada.
-- Es necesario centralizar la apertura para asegurar que el `viewport` se modifique consistentemente.
+**Diagnóstico:**
+El motor de renderizado del navegador móvil no siempre responde al cambio de `viewport` si se realiza después de ocultar el elemento que permitía el zoom. El nivel de zoom se "congela" y los bloqueos globales de `main.js` impiden que el usuario regrese manualmente a 1.0.
 
 **Acciones Correctoras:**
-- Centralizar apertura y cierre en `lightbox.js`.
-- Implementar lógica reactiva mediante `MutationObserver` para gestionar el viewport y el reset de estilos de forma consistente.
-- Forzar el reset del viewport a `user-scalable=no` al cerrar para obligar al navegador a restaurar el zoom 1.0.
-- Sincronizar el uso de `cerrarLightbox` en `add_cortes.html`.
+- Modificar `cerrarLightbox` para realizar el reset de zoom (viewport + estilos) MIENTRAS el lightbox sigue visible.
+- Usar una cadena de viewport más agresiva: `initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no`.
+- Introducir un retardo controlado (50ms) entre el reset visual y la remoción de la clase `visible`.
+- Eliminar el `MutationObserver` para garantizar un flujo de control determinista y manual como se solicitó.

@@ -2,13 +2,18 @@
 
 /**
  * Abre el lightbox de imágenes.
- * La habilitación del zoom se maneja de forma reactiva vía MutationObserver.
  * @param {string} url - URL de la imagen a mostrar.
  */
 function abrirLightbox(url) {
     const lightbox = document.getElementById('lightbox');
     const imgNormal = document.getElementById('lightboxImg');
     const imgCortes = document.getElementById('lightbox-img');
+
+    // Habilitar zoom permitiendo escalado en el viewport
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=yes');
+    }
 
     const activeImg = imgNormal || imgCortes;
     if (activeImg) {
@@ -21,63 +26,35 @@ function abrirLightbox(url) {
 }
 
 /**
- * Cierra el lightbox de imágenes.
- * El restablecimiento del zoom se maneja de forma reactiva vía MutationObserver.
+ * Cierra el lightbox de imágenes y restablece el zoom de forma robusta.
+ * Sigue el flujo: 1. Reset zoom -> 2. Esperar frame -> 3. Cerrar.
  */
 function cerrarLightbox() {
     const lightbox = document.getElementById('lightbox');
-    if (lightbox) {
-        lightbox.classList.remove('visible');
+    if (!lightbox || !lightbox.classList.contains('visible')) return;
+
+    // 1. Restaurar zoom a su valor por defecto (viewport + estilos)
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+        // Establecemos escalas fijas y prohibimos zoom para forzar el reset visual a 1.0
+        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no');
     }
-}
 
-/**
- * Inicializa el observador reactivo para el lightbox.
- * Detecta cambios en la visibilidad y gestiona dinámicamente el viewport y el reset de estilos.
- */
-function initLightboxObserver() {
-    const lightbox = document.getElementById('lightbox');
-    if (!lightbox) return;
-
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'class') {
-                const isVisible = lightbox.classList.contains('visible');
-                const viewport = document.querySelector('meta[name="viewport"]');
-
-                if (!isVisible) {
-                    // --- RESET DE ZOOM (REACTIVO) ---
-                    if (viewport) {
-                        // Forzamos el reset del nivel de zoom restableciendo el viewport
-                        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
-                    }
-
-                    // Limpieza explícita de estilos de zoom/transformación en las imágenes
-                    const imgs = lightbox.querySelectorAll('img');
-                    imgs.forEach(img => {
-                        img.style.transform = '';
-                        img.style.scale = '';
-                    });
-                } else {
-                    // --- HABILITACIÓN DE ZOOM ---
-                    if (viewport) {
-                        viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, user-scalable=yes');
-                    }
-                }
-            }
-        });
+    // Limpieza explícita de estilos de transformación en las imágenes
+    const imgs = lightbox.querySelectorAll('img');
+    imgs.forEach(img => {
+        img.style.transform = '';
+        img.style.scale = '';
     });
 
-    observer.observe(lightbox, { attributes: true });
+    // 2. Esperar un breve lapso (frame) para que el navegador procese el cambio de viewport
+    // mientras el lightbox sigue 'visible' (evitando que los listeners de main.js bloqueen el proceso)
+    setTimeout(() => {
+        // 3. Cerrar el lightbox
+        lightbox.classList.remove('visible');
+    }, 50);
 }
 
 // Hacemos las funciones globalmente accesibles
 window.abrirLightbox = abrirLightbox;
 window.cerrarLightbox = cerrarLightbox;
-
-// Inicialización del observador al cargar el script
-if (document.readyState === 'complete' || document.readyState === 'interactive') {
-    initLightboxObserver();
-} else {
-    document.addEventListener('DOMContentLoaded', initLightboxObserver);
-}
