@@ -214,3 +214,24 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 **Acciones Correctoras:**
 - Implementar conversiones explícitas String() antes de llamar a métodos de String en todos los puntos identificados.
 - En la función 'normalize', envolver el parámetro en String().
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - TAREA: RESET DE ZOOM EN LIGHTBOX (05/02/2026)**
+
+**Archivos involucrados:** lightbox.js, main.js, index.html, add_cortes.html, ui.js, style.css
+
+**Hallazgos:**
+- **index.html:** El lightbox usa `#lightboxImg`.
+- **add_cortes.html:** El lightbox usa `#lightbox-img`.
+- **ui.js:** Las llamadas a abrir el lightbox ahora usan `window.abrirLightbox`.
+- **main.js:** Controla el bloqueo de zoom global basado en la visibilidad del lightbox (`isLightboxVisible`).
+- **lightbox.js:** La lógica reactiva vía `MutationObserver` no lograba resetear el nivel de zoom visual en todos los navegadores, posiblemente porque el reset del viewport ocurría después del cierre o era ignorado por el motor.
+
+**Diagnóstico:**
+El motor de renderizado del navegador móvil no siempre responde al cambio de `viewport` si se realiza después de ocultar el elemento que permitía el zoom. El nivel de zoom se "congela" y los bloqueos globales de `main.js` impiden que el usuario regrese manualmente a 1.0.
+
+**Acciones Correctoras:**
+- Modificar `cerrarLightbox` para realizar el reset de zoom (viewport + estilos) MIENTRAS el lightbox sigue visible.
+- Implementar técnica de "Meta Tag Reinsertion": se remueve y re-inserta el tag viewport para forzar al navegador a aplicar el reset de zoom.
+- Corregir interferencia en `main.js`: se añadió una guarda en el listener de `visualViewport` para evitar que la aplicación cambie de tamaño (`--app-height`) durante el zoom, lo cual bloqueaba el reset visual.
+- Introducir retardo de 300ms antes de remover la clase `visible`, permitiendo que el motor de renderizado complete el zoom-out antes de reactivar los bloqueos globales.
