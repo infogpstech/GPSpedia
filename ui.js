@@ -1405,6 +1405,14 @@ export function showApp(user) {
     splash.style.opacity = '0';
     setTimeout(() => {
         splash.style.display = 'none';
+        // Fallback: Verificar si los datos llegaron mientras el splash estaba visible
+        const { catalogData } = getState();
+        if (catalogData && Array.isArray(catalogData.cortes) && catalogData.cortes.length > 0) {
+            const cont = document.getElementById("contenido");
+            if (cont && (cont.querySelector('.loading-data-container') || cont.innerHTML === "")) {
+                mostrarCategorias();
+            }
+        }
     }, 500);
 
     document.getElementById('login-modal').style.display = 'none';

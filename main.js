@@ -20,6 +20,34 @@ let searchBlurTimeout;
  */
 async function initializeApp() {
 
+    // --- LÓGICA DINÁMICA DE VIEWPORT PARA MÓVIL ---
+    /**
+     * Ajusta la altura de la aplicación basándose en el visualViewport.
+     * Esto es crítico para dispositivos móviles donde el teclado virtual
+     * reduce el área visible de la pantalla.
+     */
+    const handleViewportChange = () => {
+        if (!window.visualViewport) return;
+
+        const viewport = window.visualViewport;
+
+        // Si el usuario está haciendo zoom, no recalculamos la altura para evitar saltos visuales.
+        if (viewport.scale !== 1) return;
+
+        const height = viewport.height;
+
+        // Establece la variable CSS --app-height en el elemento raíz.
+        // Se utiliza para definir la altura de html, body y .container.
+        document.documentElement.style.setProperty('--app-height', `${height}px`);
+
+        // Heurística para detectar si el teclado está abierto.
+        if (height < window.innerHeight * 0.85) {
+            document.body.classList.add('keyboard-open');
+        } else {
+            document.body.classList.remove('keyboard-open');
+        }
+    };
+
     // 1. Expose modules to the global scope for inline event handlers in HTML
     window.routeAction = routeAction; // Exponer la función central de API
     window.auth = auth;
@@ -72,36 +100,6 @@ async function initializeApp() {
             document.body.classList.remove('search-active');
         }, 250);
     });
-
-    // --- LÓGICA DINÁMICA DE VIEWPORT PARA MÓVIL ---
-    /**
-     * Ajusta la altura de la aplicación basándose en el visualViewport.
-     * Esto es crítico para dispositivos móviles donde el teclado virtual
-     * reduce el área visible de la pantalla.
-     */
-    const handleViewportChange = () => {
-        if (!window.visualViewport) return;
-
-        const viewport = window.visualViewport;
-
-        // Si el usuario está haciendo zoom, no recalculamos la altura para evitar saltos visuales
-        // y permitir que el reset de zoom del lightbox funcione correctamente.
-        // Se utiliza un epsilon para manejar imprecisiones de coma flotante.
-        if (Math.abs(viewport.scale - 1) > 0.01) return;
-
-        const height = viewport.height;
-
-        // Establece la variable CSS --app-height en el elemento raíz.
-        // Se utiliza para definir la altura de html, body y .container.
-        document.documentElement.style.setProperty('--app-height', `${height}px`);
-
-        // Heurística para detectar si el teclado está abierto.
-        if (height < window.innerHeight * 0.85) {
-            document.body.classList.add('keyboard-open');
-        } else {
-            document.body.classList.remove('keyboard-open');
-        }
-    };
 
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', handleViewportChange);
