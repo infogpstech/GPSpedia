@@ -209,7 +209,7 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 
 **Análisis de Riesgo:**
 - El uso de métodos de String directamente sobre propiedades que pueden venir como Number desde Google Sheets (vía JSON) causa TypeErrors que detienen el renderizado de la UI.
-- Esto explica por qué los modelos numéricos no son visibles: la función que debería mostrarlos falla silenciosamente or detiene la ejecución antes de añadir los elementos al DOM.
+- Esto explica por qué los modelos numéricos no son visibles: la función que debería mostrarlos falla silenciosamente o detiene la ejecución antes de añadir los elementos al DOM.
 
 **Acciones Correctoras:**
 - Implementar conversiones explícitas String() antes de llamar a métodos de String en todos los puntos identificados.

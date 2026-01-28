@@ -11,10 +11,14 @@ function abrirLightbox(url) {
     if (lightbox && img) {
         img.src = url;
         lightbox.classList.add('visible');
+
         // Asegurar que el viewport permita zoom mientras está abierto
         const viewport = document.querySelector('meta[name="viewport"]');
         if (viewport && !viewport.content.includes('user-scalable=yes')) {
-            viewport.dataset.originalContent = viewport.content;
+            // Guardamos el contenido original si no está guardado
+            if (!viewport.dataset.originalContent) {
+                viewport.dataset.originalContent = viewport.content;
+            }
             viewport.content = 'width=device-width, initial-scale=1.0, user-scalable=yes';
         }
     }
@@ -22,46 +26,50 @@ function abrirLightbox(url) {
 
 /**
  * Cierra el lightbox de imágenes de forma controlada y restaura la escala visual.
- * Emplea una secuencia asíncrona para garantizar que el navegador resetee el zoom.
+ * Emplea una actualización directa del meta tag viewport para forzar el reset del zoom nativo.
  */
-async function cerrarLightbox() {
+function cerrarLightbox() {
     const lightbox = document.getElementById('lightbox');
     if (!lightbox || !lightbox.classList.contains('visible')) return;
 
-    // 1. Limpieza de estilos de la imagen
+    // 1. Limpieza inmediata de estilos de la imagen para evitar interferencias
     const img = lightbox.querySelector('img');
     if (img) {
         img.style.transform = '';
         img.style.webkitTransform = '';
+        img.style.zoom = '';
     }
 
-    // 2. Reset de escala visual mediante Meta Tag
+    // 2. Reset de escala visual mediante Meta Tag Update
     const viewport = document.querySelector('meta[name="viewport"]');
     if (viewport) {
-        // Forzamos escala 1.0 y bloqueamos el zoom momentáneamente
+        const originalContent = viewport.dataset.originalContent || 'width=device-width, initial-scale=1.0';
+
+        // Forzamos escala 1.0 bloqueando zoom temporalmente
+        // El navegador ajustará la escala visual para cumplir con maximum-scale=1.0
         viewport.content = 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no';
 
-        // Centramos el viewport
-        window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+        // 3. Ocultar el lightbox tras un breve retraso para permitir el procesamiento del cambio
+        // Se aumenta a 100ms para mayor estabilidad frente a 50ms previos
+        setTimeout(() => {
+            lightbox.classList.remove('visible');
+        }, 100);
 
-        // 3. Esperar a que el motor de renderizado complete el zoom-out nativo
-        // Sin este retardo, la ocultación del DOM (visible -> hidden) ocurre antes
-        // de que el navegador procese el reset de escala.
-        await new Promise(resolve => setTimeout(resolve, 400));
+        // 4. Restauración diferida del estado original (500ms)
+        setTimeout(() => {
+            viewport.content = originalContent;
 
-        // 4. Restaurar el meta tag original o el guardado
-        viewport.content = viewport.dataset.originalContent || 'width=device-width, initial-scale=1.0';
-    }
-
-    // 5. Ocultar finalmente el contenedor
-    lightbox.classList.remove('visible');
-
-    // 6. Invocación de recálculo de layout global
-    if (typeof window.handleViewportChange === 'function') {
-        window.handleViewportChange();
+            // Invocación de recálculo de layout global (Zoom-Agnostic)
+            if (typeof window.handleViewportChange === 'function') {
+                window.handleViewportChange();
+            }
+        }, 500);
+    } else {
+        // Fallback si no hay meta viewport
+        lightbox.classList.remove('visible');
     }
 }
 
-// Exponer funciones al ámbito global para compatibilidad con handlers inline
+// Exponer funciones al ámbito global
 window.abrirLightbox = abrirLightbox;
 window.cerrarLightbox = cerrarLightbox;
