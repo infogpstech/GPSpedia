@@ -82,6 +82,11 @@ async function initializeApp() {
         if (!window.visualViewport) return;
 
         const viewport = window.visualViewport;
+
+        // Si el usuario está haciendo zoom, no recalculamos la altura para evitar saltos visuales
+        // y permitir que el reset de zoom del lightbox funcione correctamente.
+        if (viewport.scale !== 1) return;
+
         const height = viewport.height;
 
         // Establece la variable CSS --app-height en el elemento raíz.
