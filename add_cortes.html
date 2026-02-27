@@ -140,7 +140,7 @@
 </head>
 <body>
     <div id="loading-overlay"><div class="spinner"></div></div>
-    <div id="lightbox" onclick="this.classList.remove('visible')">
+    <div id="lightbox" class="lightbox" onclick="cerrarLightbox()">
         <img id="lightbox-img" src="" alt="Vista ampliada">
     </div>
     <div class="container">
@@ -240,6 +240,7 @@
     <script type="module">
         // COMPONENT VERSION: 3.0.1
         import { routeAction } from './api-config.js';
+        import './lightbox.js';
         const SESSION_KEY = 'gpsepedia_session';
         const state = {
             vehicleInfo: {},
@@ -253,12 +254,6 @@
 
         // Expose to window for inline onclicks in navigation
         window.showPhase = showPhase;
-        window.abrirLightbox = (url) => {
-            const lb = document.getElementById('lightbox');
-            const img = document.getElementById('lightbox-img');
-            img.src = url;
-            lb.classList.add('visible');
-        };
 
         async function init() {
             const sessionData = localStorage.getItem(SESSION_KEY);
@@ -267,7 +262,7 @@
                 window.location.href = 'index.html';
                 return;
             }
-            state.colaborador = JSON.parse(sessionData).Nombre_Usuario;
+            state.colaborador = JSON.parse(sessionData).Nombre_Completo;
 
             await populateAllDropdowns();
             setupEventListeners();
@@ -388,7 +383,7 @@
                                 <i class="fas fa-check-circle"></i>
                                 <span>Corte ${i}: ${type}</span>
                             </div>
-                            ${imgUrl ? `<img src="${getImageUrl(imgUrl, 400)}" class="cut-item-img" onclick="window.abrirLightbox('${getImageUrl(imgUrl, 1000)}')" onerror="this.src='https://via.placeholder.com/120x90?text=Sin+Imagen'">` : ''}
+                            ${imgUrl ? `<img src="${getImageUrl(imgUrl, 400)}" class="cut-item-img" onclick="window.abrirLightbox('${getImageUrl(imgUrl, 1000)}', 'lightbox-img')" onerror="this.src='https://via.placeholder.com/120x90?text=Sin+Imagen'">` : ''}
                         </div>`;
                 }
             }

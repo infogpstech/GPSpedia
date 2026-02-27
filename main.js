@@ -81,6 +81,11 @@ async function initializeApp() {
     const handleViewportChange = () => {
         if (!window.visualViewport) return;
 
+        // Si el lightbox está abierto, no recalculamos el layout de la app
+        if (isLightboxVisible() && Math.abs(window.visualViewport.scale - 1) > 0.01) {
+            return;
+        }
+
         const viewport = window.visualViewport;
         const height = viewport.height;
 
@@ -101,6 +106,39 @@ async function initializeApp() {
         window.visualViewport.addEventListener('scroll', handleViewportChange);
         handleViewportChange(); // Ejecución inicial
     }
+
+    // Exponer handleViewportChange globalmente para lightbox.js
+    window.handleViewportChange = handleViewportChange;
+
+    // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
+    window.addEventListener('popstate', (event) => {
+        // 1. Cerrar Lightbox si está abierto
+        const lightbox = document.getElementById('lightbox');
+        if (lightbox && lightbox.classList.contains('visible')) {
+            window.cerrarLightbox(true); // Pasar true para evitar bucle de back()
+            return;
+        }
+
+        // 2. Cerrar Modales de Información (About, Contact, FAQ, etc.)
+        const infoModals = document.querySelectorAll('.info-modal');
+        let modalClosed = false;
+        infoModals.forEach(modal => {
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+                modalClosed = true;
+            }
+        });
+
+        // 3. Cerrar Modal de Detalles
+        const modalDetalle = document.getElementById('modalDetalle');
+        if (modalDetalle && modalDetalle.classList.contains('visible')) {
+            modalDetalle.classList.remove('visible');
+            modalClosed = true;
+        }
+
+        // 4. Si no hay nada que cerrar, podemos manejar la navegación por niveles si es necesario
+        // Pero por ahora, el requisito es evitar que la app se cierre al retroceder estando en un modal.
+    });
 
     // Hamburger menu listeners
     document.getElementById('hamburger-btn').addEventListener('click', ui.openSideMenu);
@@ -320,10 +358,10 @@ async function initializeApp() {
 
     // Bloqueo de Zoom manual (Teclado y Rueda del ratón)
     // EXCEPCIÓN: Se permite zoom si el lightbox está visible.
-    const isLightboxVisible = () => {
+    function isLightboxVisible() {
         const lightbox = document.getElementById('lightbox');
         return lightbox && lightbox.classList.contains('visible');
-    };
+    }
 
     document.addEventListener('wheel', (e) => {
         if (e.ctrlKey && !isLightboxVisible()) {

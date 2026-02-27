@@ -709,7 +709,11 @@ export function mostrarDetalleModal(item) {
         if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
         }
-        document.getElementById("modalDetalle").classList.remove("visible");
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+        }
     };
     closeBtn.className = "info-close-btn";
     closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 10px;";
@@ -815,6 +819,9 @@ export function mostrarDetalleModal(item) {
     });
 
     document.getElementById("modalDetalle").classList.add("visible");
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
 }
 
 function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false) {
@@ -839,8 +846,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         img.className = 'img-corte image-with-container';
         img.onclick = () => {
             const highResImgUrl = getImageUrl(cutData.img, IMG_SIZE_LARGE);
-            document.getElementById('lightboxImg').src = highResImgUrl;
-            document.getElementById('lightbox').classList.add('visible');
+            window.abrirLightbox(highResImgUrl, 'lightboxImg');
         };
         imgContainer.appendChild(img);
 
@@ -982,7 +988,13 @@ function renderRelayInfoModal(relayInfo) {
     const closeBtn = document.createElement('span');
     closeBtn.className = 'info-close-btn';
     closeBtn.innerHTML = '&times;';
-    closeBtn.onclick = () => modal.style.display = 'none';
+    closeBtn.onclick = () => {
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            modal.style.display = 'none';
+        }
+    };
     content.appendChild(closeBtn);
 
     const title = document.createElement('h3');
@@ -994,13 +1006,16 @@ function renderRelayInfoModal(relayInfo) {
     img.style.width = '100%';
     img.onclick = () => {
         const highResImgUrl = getImageUrl(relayInfo.imagen, IMG_SIZE_LARGE);
-        document.getElementById('lightboxImg').src = highResImgUrl;
-        document.getElementById('lightbox').classList.add('visible');
+        window.abrirLightbox(highResImgUrl, 'lightboxImg');
     };
     content.appendChild(img);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
+
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
 }
 
 function setupModal(modalId, openFn) {
@@ -1013,8 +1028,18 @@ function setupModal(modalId, openFn) {
 
         const closeBtn = modal.querySelector('.info-close-btn');
         if (closeBtn && !closeBtn.dataset.listenerSet) {
-            closeBtn.addEventListener('click', () => modal.style.display = 'none');
+            closeBtn.addEventListener('click', () => {
+                if (window.history && window.history.state && window.history.state.modalOpen) {
+                    window.history.back();
+                } else {
+                    modal.style.display = 'none';
+                }
+            });
             closeBtn.dataset.listenerSet = 'true';
+        }
+
+        if (window.history && window.history.pushState) {
+            window.history.pushState({ modalOpen: true }, '');
         }
 
         return await openFn(...args);
@@ -1251,8 +1276,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
             img.className = 'img-corte image-with-container';
             img.onclick = () => {
                 const highResImgUrl = getImageUrl(sec.img, IMG_SIZE_LARGE);
-                document.getElementById('lightboxImg').src = highResImgUrl;
-                document.getElementById('lightbox').classList.add('visible');
+                window.abrirLightbox(highResImgUrl, 'lightboxImg');
             };
             imgContainer.appendChild(img);
             panel.appendChild(imgContainer);
@@ -1591,7 +1615,13 @@ function mostrarDetalleTutorialModal(item) {
     headerDiv.appendChild(title);
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar";
-    closeBtn.onclick = () => document.getElementById("modalDetalle").classList.remove("visible");
+    closeBtn.onclick = () => {
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+        }
+    };
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
@@ -1625,6 +1655,9 @@ function mostrarDetalleTutorialModal(item) {
     });
 
     document.getElementById("modalDetalle").classList.add("visible");
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
 }
 
 function mostrarDetalleRelayModal(item) {
@@ -1639,7 +1672,13 @@ function mostrarDetalleRelayModal(item) {
     headerDiv.appendChild(title);
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar";
-    closeBtn.onclick = () => document.getElementById("modalDetalle").classList.remove("visible");
+    closeBtn.onclick = () => {
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+        }
+    };
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
@@ -1653,8 +1692,7 @@ function mostrarDetalleRelayModal(item) {
         img.style.borderRadius = "8px";
         img.onclick = () => {
             const highResImgUrl = getImageUrl(item.imagen, IMG_SIZE_LARGE);
-            document.getElementById('lightboxImg').src = highResImgUrl;
-            document.getElementById('lightbox').classList.add('visible');
+            window.abrirLightbox(highResImgUrl, 'lightboxImg');
         };
         cont.appendChild(img);
     }
@@ -1679,4 +1717,7 @@ function mostrarDetalleRelayModal(item) {
     });
 
     document.getElementById("modalDetalle").classList.add("visible");
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
 }
