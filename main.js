@@ -82,14 +82,19 @@ async function initializeApp() {
         if (!window.visualViewport) return;
 
         const viewport = window.visualViewport;
-        const height = viewport.height;
+        const scale = viewport.scale || 1;
+        const visualHeight = viewport.height;
+
+        // Cálculo robusto de la altura del layout (independiente del zoom).
+        // Al multiplicar la altura visible por la escala, obtenemos la dimensión
+        // real del Layout Viewport que debe ocupar la aplicación.
+        const layoutHeight = visualHeight * scale;
 
         // Establece la variable CSS --app-height en el elemento raíz.
-        // Se utiliza para definir la altura de html, body y .container.
-        document.documentElement.style.setProperty('--app-height', `${height}px`);
+        document.documentElement.style.setProperty('--app-height', `${layoutHeight}px`);
 
-        // Heurística para detectar si el teclado está abierto.
-        if (height < window.innerHeight * 0.85) {
+        // Heurística para detectar si el teclado está abierto (corregida para zoom).
+        if (layoutHeight < window.innerHeight * 0.85) {
             document.body.classList.add('keyboard-open');
         } else {
             document.body.classList.remove('keyboard-open');
@@ -101,6 +106,9 @@ async function initializeApp() {
         window.visualViewport.addEventListener('scroll', handleViewportChange);
         handleViewportChange(); // Ejecución inicial
     }
+
+    // Exponer la función para que sea invocable desde el reset del lightbox
+    window.handleViewportChange = handleViewportChange;
 
     // Hamburger menu listeners
     document.getElementById('hamburger-btn').addEventListener('click', ui.openSideMenu);

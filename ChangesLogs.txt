@@ -291,3 +291,21 @@
 
 **Descripción:**
 Se han implementado conversiones explícitas a String en todos los puntos donde el motor de JavaScript fallaba al intentar ejecutar métodos de cadena (toLowerCase, localeCompare) sobre valores numéricos provenientes de la base de datos. Esto restaura la visibilidad y capacidad de búsqueda de modelos como '1500', '3500', etc.
+
+--------------------------------------------------
+**RESTAURACIÓN DE ESCALA VISUAL - VERSIÓN FINAL REFINADA (06/02/2026)**
+
+**Archivo: main.js**
+- L87-L97: Implementada estabilización de layout Zoom-Agnostic mediante el cálculo `--app-height = visualHeight * scale`.
+- L352-L368: Asegurados listeners de bloqueo de zoom estricto fuera del lightbox.
+
+**Archivo: lightbox.js**
+- Implementado sistema de reset de zoom mediante actualización directa de Meta Tag `viewport` con `maximum-scale=1.0`.
+- Optimizado el flujo de cierre: inicio de reset, retraso de 100ms para procesamiento del navegador, ocultación del lightbox y restauración diferida del meta tag original (500ms).
+- Eliminado scroll forzado a (0,0) para preservar la posición de navegación del usuario.
+
+**Archivo: index.html y add_cortes.html**
+- Restaurados meta tags base con `user-scalable=no` para cumplir con la política de bloqueo de zoom global.
+
+**Descripción:**
+Solución robusta que fuerza el zoom-out nativo al cerrar el lightbox sin romper el flujo de navegación ni permitir zoom accidental en el resto de la aplicación.
