@@ -1516,11 +1516,19 @@ export function openSideMenu() {
     }
     document.getElementById('side-menu').classList.add('open');
     document.getElementById('menu-overlay').classList.add('open');
+
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ sideMenuOpen: true }, '');
+    }
 }
 
-export function closeSideMenu() {
+export function closeSideMenu(isFromPopState = false) {
     document.getElementById('side-menu').classList.remove('open');
     document.getElementById('menu-overlay').classList.remove('open');
+
+    if (!isFromPopState && window.history && window.history.state && window.history.state.sideMenuOpen) {
+        window.history.back();
+    }
 }
 
 export function mostrarSeccion(sectionName) {

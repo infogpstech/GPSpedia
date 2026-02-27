@@ -112,32 +112,42 @@ async function initializeApp() {
 
     // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
     window.addEventListener('popstate', (event) => {
-        // 1. Cerrar Lightbox si está abierto
+        // 1. Cerrar Side Menu si está abierto
+        const sideMenu = document.getElementById('side-menu');
+        if (sideMenu && sideMenu.classList.contains('open')) {
+            ui.closeSideMenu(true);
+            return;
+        }
+
+        // 2. Cerrar Lightbox si está abierto
         const lightbox = document.getElementById('lightbox');
         if (lightbox && lightbox.classList.contains('visible')) {
             window.cerrarLightbox(true); // Pasar true para evitar bucle de back()
             return;
         }
 
-        // 2. Cerrar Modales de Información (About, Contact, FAQ, etc.)
+        // 3. Cerrar Modales de Información (About, Contact, FAQ, etc.)
         const infoModals = document.querySelectorAll('.info-modal');
-        let modalClosed = false;
+        let overlayClosed = false;
         infoModals.forEach(modal => {
             if (modal.style.display === 'flex') {
                 modal.style.display = 'none';
-                modalClosed = true;
+                overlayClosed = true;
             }
         });
+        if (overlayClosed) return;
 
-        // 3. Cerrar Modal de Detalles
+        // 4. Cerrar Modal de Detalles
         const modalDetalle = document.getElementById('modalDetalle');
         if (modalDetalle && modalDetalle.classList.contains('visible')) {
+            // Detener videos al cerrar via back button
+            const iframe = modalDetalle.querySelector('iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+            }
             modalDetalle.classList.remove('visible');
-            modalClosed = true;
+            return;
         }
-
-        // 4. Si no hay nada que cerrar, podemos manejar la navegación por niveles si es necesario
-        // Pero por ahora, el requisito es evitar que la app se cierre al retroceder estando en un modal.
     });
 
     // Hamburger menu listeners

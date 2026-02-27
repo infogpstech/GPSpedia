@@ -629,6 +629,16 @@
         document.addEventListener('touchmove', (e) => {
             if (e.touches.length > 1 && !isLightboxVisible()) e.preventDefault();
         }, { passive: false });
+
+        // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
+        window.addEventListener('popstate', (event) => {
+            // 1. Cerrar Lightbox si está abierto
+            const lightbox = document.getElementById('lightbox');
+            if (lightbox && lightbox.classList.contains('visible')) {
+                window.cerrarLightbox(true); // Pasar true para evitar bucle de back()
+                return;
+            }
+        });
     </script>
 </body>
 </html>
