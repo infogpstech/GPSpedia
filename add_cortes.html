@@ -1,554 +1,639 @@
+<!-- GPSpedia Frontend Component | Version: 2.0 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Agregar Nuevo Corte - GPS Lock</title>
+    <title>Agregar Nuevo - GPSpedia</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="images/icons/icon-v2-192x192.png">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="theme-color" content="#2c3e50">
     <style>
-        :root {
-            --primary-color: #3498db;
-            --secondary-color: #2c3e50;
-            --background-color: #ecf0f1;
-            --card-background: #ffffff;
-            --text-color: #34495e;
-            --light-gray: #bdc3c7;
-            --success-color: #2ecc71;
-            --error-color: #e74c3c;
-        }
-
+        /* General Styles */
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            background-color: var(--background-color);
-            color: var(--text-color);
-            overscroll-behavior-y: contain;
-            color-scheme: light;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f8f9fa; margin: 0; padding: 15px; color: #343a40;
+            /* Prevención de selección de texto y asistente de Google */
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
         }
+        /* Excepciones para permitir entrada de texto */
+        input, textarea, select {
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
+        h1, h2 { text-align: center; color: #007bff; margin-bottom: 20px; font-weight: 600; }
+        h2 { font-size: 1.4em; color: #495057; }
+        p { margin-top: 0; margin-bottom: 15px; font-size: 0.95em; color: #6c757d; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none; font-weight: 500; font-size: 0.9em; }
+        .back-link:hover { text-decoration: underline; }
 
-        .app-container { display: flex; flex-direction: column; min-height: 100vh; }
-        header { padding: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .header-container { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 15px; }
-        .header-branding { display: flex; align-items: center; gap: 15px; }
-        .app-logo { max-width: 76px; height: auto; border-radius: 8px; }
-        h1.app-title { margin: 0; font-size: 1.8em; color: #333; }
-        main { flex-grow: 1; background-color: #f4f4f4; padding: 20px; }
-        .form-container { background-color: var(--card-background); padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 700px; margin: 0 auto; }
+        /* Form & Layout */
         .form-phase { display: none; }
-        .form-phase.active { display: block; animation: fadeIn 0.5s ease-in-out; }
+        .form-phase.active { display: block; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .form-group { display: flex; flex-direction: column; }
+        .full-width { grid-column: 1 / -1; }
+        label { margin-bottom: 6px; font-weight: 500; font-size: 0.8em; color: #495057; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; box-sizing: border-box; font-size: 0.95em; transition: border-color 0.2s, box-shadow 0.2s; }
+        input:focus, select:focus, textarea:focus { border-color: #80bdff; box-shadow: 0 0 0 3px rgba(0,123,255,0.25); outline: none; }
+        .btn-container { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
+        .btn { padding: 12px 22px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+        .btn-primary { background-color: #007bff; color: white; }
+        .btn-primary:hover { background-color: #0069d9; }
+        .btn-secondary { background-color: #6c757d; color: white; }
+        .btn-secondary:hover { background-color: #5a6268; }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Stage 1.5 - Matches */
+        #matches-container .match-card { border: 1px solid #e9ecef; border-radius: 10px; padding: 15px; margin-bottom: 20px; display: flex; flex-direction: column; gap: 15px; }
+        .match-card-header { display: flex; gap: 15px; align-items: flex-start; }
+        .match-card-img { width: 120px; height: 90px; object-fit: cover; border-radius: 8px; background-color: #eee; flex-shrink: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        .match-card-info { flex-grow: 1; }
+        .match-card h4 { margin: 0 0 5px; color: #007bff; }
+        .match-cuts-info { background: #f1f3f5; padding: 10px; border-radius: 8px; font-size: 0.85em; }
+        .match-cuts-info h5 { margin: 0 0 8px; font-size: 1em; color: #495057; border-bottom: 1px solid #dee2e6; padding-bottom: 4px; }
+        .cut-item { margin-bottom: 15px; display: flex; flex-direction: column; gap: 8px; }
+        .cut-item-header { display: flex; align-items: center; gap: 8px; }
+        .cut-item i { color: #28a745; font-size: 0.9em; }
+        .cut-item-img {
+            width: 120px;
+            height: 90px;
+            object-fit: cover;
+            border-radius: 8px;
+            background-color: #eee;
+            margin: 5px 0;
+            cursor: pointer;
+            display: block;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        .cut-item-img:hover { transform: scale(1.02); }
+
+        /* Lightbox for add_cortes.html */
+        #lightbox {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); display: none; align-items: center;
+            justify-content: center; z-index: 2000; opacity: 0; transition: opacity 0.3s;
+        }
+        #lightbox.visible { display: flex; opacity: 1; }
+        #lightbox img { max-width: 95%; max-height: 95%; border-radius: 8px; transform: scale(0.9); transition: transform 0.3s; }
+        #lightbox.visible img { transform: scale(1); }
+
+        .inline-actions { margin-top: 10px; padding: 15px; background-color: #f8f9fa; border-radius: 8px; text-align: center; border: 1px solid #e9ecef; }
+        .inline-actions p { font-weight: 500; margin-bottom: 12px; color: #495057; }
+        .inline-actions .btn { margin: 5px; }
+
+        .info-msg { background-color: #e9f7ff; color: #004085; padding: 10px 15px; border-radius: 8px; border-left: 4px solid #007bff; margin-bottom: 15px; font-size: 0.9em; display: flex; align-items: center; gap: 10px; }
+        .info-msg i { font-size: 1.2em; }
+
+        /* --- ANIMACIONES DE CARGA EN BOTONES --- */
+        .btn-loading {
+            position: relative !important;
+            color: transparent !important;
+            pointer-events: none !important;
         }
 
-        h2, h3 { text-align: center; color: var(--secondary-color) !important; margin-bottom: 25px; }
-        h3 { text-align: left; margin-top: 25px; margin-bottom: 15px; border-bottom: 1px solid var(--light-gray); padding-bottom: 8px; }
-        .form-group { margin-bottom: 20px; }
-        .form-group label { color: #34495e !important; display: block; margin-bottom: 8px; font-weight: 600; }
-        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border: 1px solid var(--light-gray); border-radius: 8px; box-sizing: border-box; font-size: 1em; transition: border-color 0.3s; color: var(--text-color); }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline: none; border-color: var(--primary-color); box-shadow: 0 0 5px rgba(52, 152, 219, 0.5); }
-        textarea { resize: vertical; min-height: 100px; }
-        .form-actions { display: flex; justify-content: space-between; gap: 15px; margin-top: 30px; }
-        .btn { padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-size: 1em; font-weight: 600; transition: all 0.3s; flex-grow: 1; }
-        .btn-primary { background-color: var(--primary-color); color: white; }
-        .btn-primary:hover { background-color: #2980b9; }
-        .btn-secondary { background-color: #f1f1f1; color: var(--text-color); border: 1px solid var(--light-gray); }
-        .btn-secondary:hover { background-color: #e5e5e5; }
-        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7); display: flex; justify-content: center; align-items: center; z-index: 9999; opacity: 0; visibility: hidden; transition: opacity 0.3s, visibility 0.3s; }
-        #loading-overlay.visible { opacity: 1; visibility: visible; }
-        .spinner { border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .btn-loading::after {
+            content: "";
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            top: 50%;
+            left: 50%;
+            margin-top: -9px;
+            margin-left: -9px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin-button 0.6s linear infinite;
+            z-index: 5;
+        }
 
-        /* Custom file input */
-        .file-input-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; border: 1px solid var(--light-gray); border-radius: 8px; padding: 12px; background-color: #f9f9f9; text-align: center; cursor: pointer; }
-        .file-input-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; }
-        .file-input-wrapper .file-input-label { color: var(--text-color); }
-        .file-input-wrapper .file-name { display: block; margin-top: 8px; font-style: italic; color: var(--primary-color); font-size: 0.9em; }
-        .image-preview { display: none; max-width: 100%; max-height: 200px; margin-top: 15px; border-radius: 8px; border: 1px solid var(--light-gray); object-fit: contain; }
-        .image-preview.visible { display: block; }
-        .footer { text-align: center; padding: 20px 0; margin-top: auto; background-color: #333; color: #fff; font-size: 0.9em; width: 100%; }
+        @keyframes spin-button {
+            to { transform: rotate(360deg); }
+        }
 
-        /* Verification Phase & Accordion Styles */
-        .verification-header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--light-gray); }
-        .verification-header img { width: 100%; max-width: 200px; height: 150px; object-fit: cover; border-radius: 8px; border: 1px solid var(--light-gray); }
-        .verification-header-info { flex-grow: 1; }
-        .verification-header-info p { margin: 5px 0; font-size: 1.1em; }
-        .verification-header-info strong { color: var(--secondary-color); }
+        /* Stage 3 - Accordion */
+        .accordion-item { border: 1px solid #dee2e6; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
+        .accordion-header { background-color: #f8f9fa; padding: 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .accordion-header i { transition: transform 0.3s; }
+        .accordion-content { padding: 15px; border-top: 1px solid #dee2e6; display: none; }
+        .accordion-item.active .accordion-header i { transform: rotate(180deg); }
 
-        .accordion-button { background-color: #f7f7f7; color: var(--secondary-color); cursor: pointer; padding: 15px 20px; width: 100%; border: none; border-bottom: 1px solid var(--light-gray); text-align: left; outline: none; font-size: 1.1em; font-weight: 600; transition: background-color 0.3s; display: flex; justify-content: space-between; align-items: center; }
-        .accordion-button:hover, .accordion-button.active { background-color: #e9e9e9; }
-        .accordion-button i { transition: transform 0.3s; }
-        .accordion-button.active i { transform: rotate(-180deg); }
-        .accordion-panel { padding: 0 18px; background-color: white; max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, padding 0.3s ease-out; }
-        .accordion-panel.show { padding: 15px 18px; }
-        .accordion-content { display: flex; flex-direction: column; gap: 15px; align-items: center; }
-        .accordion-content p { margin: 0; align-self: flex-start; }
-        .accordion-content img { max-width: 100%; border-radius: 8px; border: 1px solid var(--light-gray); }
+        /* Image Handling */
+        .image-upload-group { display: flex; align-items: center; gap: 15px; }
+        .image-preview { width: 100px; height: 75px; border: 2px dashed #ced4da; border-radius: 8px; object-fit: cover; cursor: pointer; }
+        .image-preview:not([src]), .image-preview[src=""] { display: none; }
+        .image-preview[src] { display: block; }
+        .upload-label { cursor: pointer; }
 
+        /* Utilities */
+        #loading-overlay { /* ... */ }
+        .spinner { /* ... */ }
+        .suggestion { /* ... */ }
     </style>
 </head>
 <body>
-
     <div id="loading-overlay"><div class="spinner"></div></div>
+    <div id="lightbox" onclick="this.classList.remove('visible')">
+        <img id="lightbox-img" src="" alt="Vista ampliada">
+    </div>
+    <div class="container">
+        <a href="index.html" class="back-link"><i class="fas fa-arrow-left"></i> Volver al Catálogo</a>
+        <h1>Agregar Nuevo Registro</h1>
 
-    <div class="app-container">
-        <header class="header-container">
-            <div class="header-branding">
-                <a href="index.html"><img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048" alt="Logo de GPSpedia" class="app-logo"></a>
-                <h1 class="app-title">Agregar Nuevo</h1>
-            </div>
-            <div id="header-controls" style="display: flex; align-items: center; gap: 15px; margin-left: auto;">
-                <span id="welcome-message" style="color: #333; font-weight: bold; text-align: right;"></span>
-                <button id="logout-button" style="background-color: #dc3545; color: white; border: none; padding: 10px 15px; border-radius: 8px; cursor: pointer; font-weight: bold;">Cerrar Sesión</button>
-            </div>
-        </header>
-
-        <main>
-            <div class="form-container">
-                <!-- FASE 1: INFORMACIÓN DEL VEHÍCULO -->
-                <div id="phase-1" class="form-phase active">
-                    <h2>Información del Vehículo</h2>
-                    <form id="vehicle-check-form">
-                        <div class="form-group"><label for="categoria">Categoría</label><select id="categoria" name="categoria" required></select></div>
-                        <div class="form-group"><label for="marca">Marca</label><input type="text" id="marca" name="marca" required></div>
-                        <div class="form-group"><label for="modelo">Modelo</label><input type="text" id="modelo" name="modelo" required></div>
-                        <div class="form-group"><label for="anio">Año (Generación)</label><input type="text" id="anio" name="anio" placeholder="Ej: 2015 o 2015-2018" required></div>
-                        <div class="form-group"><label for="tipo-encendido">Tipo de Encendido</label><select id="tipo-encendido" name="tipo-encendido" required></select></div>
-                        <div class="form-actions">
-                           <button type="button" onclick="window.location.href='index.html'" class="btn btn-secondary">Cancelar</button>
-                           <button type="submit" class="btn btn-primary">Continuar</button>
-                        </div>
-                    </form>
+        <!-- STAGE 1: VEHICLE VERIFICATION -->
+        <div id="stage-1" class="form-phase active">
+            <h2>Paso 1: Verificar Vehículo</h2>
+            <p>Introduce los datos para comprobar si el vehículo ya existe.</p>
+            <form id="form-stage-1">
+                <div class="form-grid">
+                    <div class="form-group"><label for="marca">Marca</label><input type="text" id="marca" required><div class="suggestion" id="marca-suggestion"></div></div>
+                    <div class="form-group"><label for="modelo">Modelo</label><input type="text" id="modelo" required><div class="suggestion" id="modelo-suggestion"></div></div>
+                    <div class="form-group"><label for="anoDesde">Año</label><input type="text" id="anoDesde" required placeholder="Ej: 2023 o 2021-2024"></div>
+                    <div class="form-group"><label for="tipoEncendido">Tipo de Encendido</label><select id="tipoEncendido" required></select></div>
+                    <div class="form-group full-width"><label for="categoria">Categoría</label><select id="categoria" required></select></div>
+                    <div class="form-group full-width"><label for="versionesAplicables">Versión de Equipamiento (Opcional)</label><input type="text" id="versionesAplicables" placeholder="Ej: Frontier, NP300"></div>
                 </div>
+                <div class="btn-container"><button type="submit" class="btn btn-primary">Verificar</button></div>
+            </form>
+        </div>
 
-                <!-- FASE 2: VERIFICACIÓN -->
-                <div id="phase-2" class="form-phase">
-                    <h2>Vehículo Encontrado</h2>
-                    <div id="verification-data"></div>
-                    <p>El vehículo ya existe en la base de datos. ¿Qué deseas hacer?</p>
-                    <div id="verification-actions" class="form-actions" style="flex-direction: column;"></div>
-                </div>
+        <!-- STAGE 1.5: DISPLAY MATCHES -->
+        <div id="stage-1-5" class="form-phase">
+            <div id="matches-container"></div>
+        </div>
 
-                <!-- FASE 3: AGREGAR INFORMACIÓN -->
-                <div id="phase-3" class="form-phase">
-                    <h2 id="phase-3-title">Agregar Nuevo Vehículo</h2>
-                    <form id="add-info-form">
-                        <div id="new-vehicle-photo-group" class="form-group" style="display: none;">
-                            <label for="imagenVehiculo">Foto del Vehículo</label>
-                            <div class="file-input-wrapper">
-                                <span class="file-input-label">Seleccionar imagen...</span>
-                                <input type="file" id="imagenVehiculo" name="imagenVehiculo" accept="image/*">
-                                <span class="file-name"></span>
-                            </div>
-                            <img id="preview-imagenVehiculo" class="image-preview" alt="Vista previa de la imagen del vehículo">
+        <!-- STAGE 2: ADD NEW CUT -->
+        <div id="stage-2" class="form-phase">
+            <h2 id="stage-2-title"></h2>
+            <form id="form-stage-2">
+                <div id="new-vehicle-fields">
+                    <div class="form-group full-width">
+                        <label>Imagen del Vehículo</label>
+                        <div class="image-upload-group">
+                             <img id="imagenVehiculo_preview" class="image-preview" onclick="this.nextElementSibling.click()">
+                             <label for="imagenVehiculo" class="upload-label btn btn-secondary">Subir Imagen</label>
+                             <input type="file" id="imagenVehiculo" style="display:none;" accept="image/*">
                         </div>
-                        <div id="nuevo-corte-group">
-                           <h3>Nuevo Corte</h3>
-                           <div class="form-group"><label for="tipo-corte">Tipo de Corte</label><select id="tipo-corte" name="tipo-corte"></select></div>
-                           <div class="form-group"><label for="descripcion-corte">Descripción del Corte</label><textarea id="descripcion-corte" name="descripcion-corte" placeholder="Color del cable, ubicación..."></textarea></div>
-                           <div class="form-group">
-                               <label for="imagenCorte">Foto del Corte</label>
-                               <div class="file-input-wrapper">
-                                   <span class="file-input-label">Seleccionar imagen...</span>
-                                   <input type="file" id="imagenCorte" name="imagenCorte" accept="image/*"><span class="file-name"></span>
-                               </div>
-                               <img id="preview-imagenCorte" class="image-preview" alt="Vista previa de la imagen del corte">
-                           </div>
-                        </div>
-                        <div id="apertura-group">
-                            <h3>Apertura de Puertas</h3>
-                            <div class="form-group"><label for="apertura-desc">Descripción</label><textarea id="apertura-desc" name="apertura-desc" placeholder="Color del cable, ubicación..."></textarea></div>
-                            <div class="form-group">
-                               <label for="imagenApertura">Foto de Apertura</label>
-                               <div class="file-input-wrapper">
-                                   <span class="file-input-label">Seleccionar imagen...</span>
-                                   <input type="file" id="imagenApertura" name="imagenApertura" accept="image/*"><span class="file-name"></span>
-                               </div>
-                               <img id="preview-imagenApertura" class="image-preview" alt="Vista previa de la imagen de apertura">
-                            </div>
-                        </div>
-                        <div id="alimentacion-group">
-                             <h3>Cables de Alimentación</h3>
-                             <div class="form-group"><label for="alimentacion-desc">Descripción</label><textarea id="alimentacion-desc" name="alimentacion-desc" placeholder="Colores de cables 12v, GND, IGN, ubicación..."></textarea></div>
-                             <div class="form-group">
-                               <label for="imagenAlimentacion">Foto de Alimentación</label>
-                               <div class="file-input-wrapper">
-                                   <span class="file-input-label">Seleccionar imagen...</span>
-                                   <input type="file" id="imagenAlimentacion" name="imagenAlimentacion" accept="image/*"><span class="file-name"></span>
-                               </div>
-                               <img id="preview-imagenAlimentacion" class="image-preview" alt="Vista previa de la imagen de alimentación">
-                           </div>
-                        </div>
-                        <div class="form-group"><label for="notas">Notas Adicionales</label><textarea id="notas" name="notas"></textarea></div>
-                        <div class="form-actions">
-                            <button type="button" id="back-to-phase-1" class="btn btn-secondary">Atrás</button>
-                            <button type="submit" class="btn btn-primary">Guardar Registro</button>
-                        </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
-        </main>
-        <footer class="footer">Gpspedia 2025© todos los derechos reservados.</footer>
+                <div class="form-grid">
+                    <div class="form-group"><label for="tipoCorte1">Tipo de Corte</label><select id="tipoCorte1" required></select></div>
+                    <div class="form-group"><label for="configRelay1">Configuración de Relay</label><select id="configRelay1" required></select></div>
+                    <div class="form-group full-width"><label for="ubicacionCorte1">Ubicación del Corte</label><textarea id="ubicacionCorte1" rows="3"></textarea></div>
+                    <div class="form-group full-width"><label for="colorCableCorte1">Color(es) de Cable</label><input type="text" id="colorCableCorte1"></div>
+                    <div class="form-group full-width">
+                        <label>Imagen del Corte</label>
+                        <div class="image-upload-group">
+                           <img id="imgCorte1_preview" class="image-preview" onclick="this.nextElementSibling.click()">
+                           <label for="imgCorte1" class="upload-label btn btn-secondary">Subir Imagen</label>
+                           <input type="file" id="imgCorte1" style="display:none;" accept="image/*" required>
+                        </div>
+                    </div>
+                </div>
+                <div class="btn-container">
+                    <button type="button" class="btn btn-secondary" onclick="window.showPhase(state.matches.length > 0 ? '1-5' : 1)">Volver</button>
+                    <button type="submit" class="btn btn-primary">Continuar</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- STAGE 3: ADD SUPPLEMENTARY INFO -->
+        <div id="stage-3" class="form-phase">
+            <h2>Paso 3: Información Suplementaria (Opcional)</h2>
+            <p>El corte ha sido guardado. Puedes añadir detalles adicionales o finalizar.</p>
+            <div id="supplementary-warnings"></div>
+            <form id="form-stage-3">
+                <div class="accordion">
+                    <div class="accordion-item" id="apertura-accordion">
+                        <div class="accordion-header"><span>Agregar Apertura</span><i class="fas fa-chevron-down"></i></div>
+                        <div class="accordion-content form-grid">
+                            <div class="form-group full-width"><label for="apertura">Detalle de Apertura</label><textarea id="apertura" rows="3"></textarea></div>
+                            <div class="form-group full-width"><label>Imagen de Apertura</label><div class="image-upload-group"><img id="imgApertura_preview" class="image-preview" onclick="this.nextElementSibling.click()"><label for="imgApertura" class="btn btn-secondary">Subir</label><input type="file" id="imgApertura" style="display:none;" accept="image/*"></div></div>
+                        </div>
+                    </div>
+                    <div class="accordion-item" id="alimentacion-accordion">
+                        <div class="accordion-header"><span>Cable de Alimentación</span><i class="fas fa-chevron-down"></i></div>
+                        <div class="accordion-content form-grid">
+                            <div class="form-group full-width"><label for="cableAlimen">Detalle de Alimentación</label><textarea id="cableAlimen" rows="3"></textarea></div>
+                            <div class="form-group full-width"><label>Imagen de Alimentación</label><div class="image-upload-group"><img id="imgCableAlimen_preview" class="image-preview" onclick="this.nextElementSibling.click()"><label for="imgCableAlimen" class="btn btn-secondary">Subir</label><input type="file" id="imgCableAlimen" style="display:none;" accept="image/*"></div></div>
+                        </div>
+                    </div>
+                    <div class="accordion-item" id="nota-accordion">
+                        <div class="accordion-header"><span>Agregar Nota Importante</span><i class="fas fa-chevron-down"></i></div>
+                        <div class="accordion-content form-grid">
+                            <div class="form-group full-width"><label for="notaImportante">Nota</label><textarea id="notaImportante" rows="3"></textarea></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="btn-container"><button type="submit" class="btn btn-primary">Guardar y Finalizar</button></div>
+            </form>
+        </div>
     </div>
 
-<script>
-const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx1nwdZZDRAC0g4AUox52tXqXf2ZjEe4TZnqnllLzsK8JRSQMYgdr8iIM1Dt9zrr3aC/exec";
-const MAX_FILE_SIZE = 5 * 1024 * 1024;
-
-const state = { vehicleInfo: {}, existingData: null, rowIndex: null, filePromises: {} };
-
-// Make init a global function so it can be called from Playwright
-function init() {
-    const userName = localStorage.getItem('userName');
-    if (userName) {
-        document.getElementById('welcome-message').innerHTML = `Bienvenido,<br>${userName}`;
-        state.colaborador = userName;
-    } else {
-        // In a real browser, this would redirect. In Playwright's file:// context, it might not matter.
-        // For testing, we just need to ensure the dropdowns are populated, so we won't redirect.
-        if (window.location.protocol !== 'file:') {
-            window.location.href = 'index.html';
-            return;
-        }
-    }
-    toggleLoading(true);
-    fetch(`${SCRIPT_URL}?action=getDropdowns`)
-        .then(response => response.json())
-        .then(data => {
-            if (data.error) throw new Error(data.error);
-            populateSelect('categoria', data.categoria);
-            populateSelect('tipo-encendido', data['tipo-encendido']);
-            populateSelect('tipo-corte', data['tipo-corte']);
-        })
-        .catch(error => {
-            console.error('Error fetching dropdowns:', error);
-            alert('No se pudieron cargar las opciones del formulario. Inténtalo de nuevo.');
-        })
-        .finally(() => toggleLoading(false));
-}
-
-document.addEventListener('DOMContentLoaded', () => {
-    init(); // Call the global init function
-    document.getElementById('vehicle-check-form').addEventListener('submit', handlePhase1Submit);
-    document.getElementById('add-info-form').addEventListener('submit', handlePhase3Submit);
-    document.getElementById('back-to-phase-1').addEventListener('click', () => showPhase(1));
-    document.getElementById('logout-button').addEventListener('click', () => {
-        localStorage.clear();
-        window.location.href = 'index.html';
-    });
-    document.querySelectorAll('input[type=file]').forEach(input => input.addEventListener('change', handleFileSelection));
-});
-
-function handleFileSelection(e) {
-    const file = e.target.files[0];
-    const inputId = e.target.id;
-    const previewImg = document.getElementById(`preview-${inputId}`);
-    const fileNameSpan = e.target.closest('.file-input-wrapper').querySelector('.file-name');
-    delete state.filePromises[inputId];
-    fileNameSpan.textContent = '';
-    previewImg.src = '';
-    previewImg.classList.remove('visible');
-    if (file) {
-        if (file.size > MAX_FILE_SIZE) {
-            alert(`El archivo es demasiado grande (Máx 5MB).`);
-            e.target.value = '';
-            return;
-        }
-        fileNameSpan.textContent = file.name;
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            previewImg.src = event.target.result;
-            previewImg.classList.add('visible');
+    <script type="module">
+        // COMPONENT VERSION: 3.0.1
+        import { routeAction } from './api-config.js';
+        const SESSION_KEY = 'gpsepedia_session';
+        const state = {
+            vehicleInfo: {},
+            matches: [],
+            selectedVehicleId: null,
+            colaborador: ''
         };
-        reader.readAsDataURL(file);
-        state.filePromises[inputId] = fileToBase64(file).then(base64String => ({
-            name: file.name, mimeType: file.type, data: base64String.split(',')[1]
-        }));
-    }
-}
 
-function handlePhase1Submit(e) {
-    e.preventDefault();
-    toggleLoading(true);
-    const formData = new FormData(e.target);
-    state.vehicleInfo = {};
-    for (let [key, value] of formData.entries()) {
-        const normalizedKey = key.replace(/-(\w)/g, (_, c) => c.toUpperCase());
-        state.vehicleInfo[normalizedKey] = value.trim();
-    }
-    const params = new URLSearchParams({ action: 'checkVehicle', ...state.vehicleInfo });
-    fetch(`${SCRIPT_URL}?${params.toString()}`)
-        .then(res => res.json())
-        .then(res => {
-            if (res.error) throw new Error(res.details ? `${res.error}: ${res.details.message}` : res.error);
-            if (res.exists) {
-                state.existingData = res.data;
-                state.rowIndex = res.rowIndex;
-                setupVerificationPhase();
-                showPhase(2);
-            } else {
-                state.existingData = null;
-                state.rowIndex = -1;
-                setupDataEntryPhase(true);
-                showPhase(3);
-            }
-        })
-        .catch(error => {
-            console.error('Error checking vehicle:', error);
-            alert('Error al verificar el vehículo: ' + error.message);
-        })
-        .finally(() => toggleLoading(false));
-}
+        // --- INITIALIZATION ---
+        document.addEventListener('DOMContentLoaded', init);
 
-async function handlePhase3Submit(e) {
-    e.preventDefault();
-    toggleLoading(true);
-    let resolvedFiles = {};
-    try {
-        const fileEntries = await Promise.all(
-            Object.entries(state.filePromises).map(async ([key, promise]) => [key, await promise])
-        );
-        resolvedFiles = Object.fromEntries(fileEntries);
-    } catch (error) {
-        console.error('Error processing file promises:', error);
-        alert('Hubo un error al procesar las imágenes. Por favor, inténtelo de nuevo.');
-        toggleLoading(false);
-        return;
-    }
-    const additionalInfo = {
-        nuevoCorte: { tipo: document.getElementById('tipo-corte').value, descripcion: document.getElementById('descripcion-corte').value },
-        apertura: document.getElementById('apertura-desc').value,
-        alimentacion: document.getElementById('alimentacion-desc').value,
-        notas: document.getElementById('notas').value
-    };
-    const payload = {
-      vehicleInfo: { ...state.vehicleInfo, rowIndex: state.rowIndex, colaborador: state.colaborador },
-      additionalInfo, files: resolvedFiles
-    };
-    fetch(SCRIPT_URL, { method: 'POST', body: JSON.stringify(payload) })
-        .then(res => res.json())
-        .then(data => {
-            if (data.success) {
-                alert('¡Éxito! ' + data.message);
+        // Expose to window for inline onclicks in navigation
+        window.showPhase = showPhase;
+        window.abrirLightbox = (url) => {
+            const lb = document.getElementById('lightbox');
+            const img = document.getElementById('lightbox-img');
+            img.src = url;
+            lb.classList.add('visible');
+        };
+
+        async function init() {
+            const sessionData = localStorage.getItem(SESSION_KEY);
+            if (!sessionData) {
+                alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
                 window.location.href = 'index.html';
-            } else {
-                throw new Error(data.details ? `${data.error}: ${data.details.message}` : data.error);
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error submitting form:', error);
-            alert('Error al guardar el registro: ' + error.message);
-        })
-        .finally(() => toggleLoading(false));
-}
+            state.colaborador = JSON.parse(sessionData).Nombre_Usuario;
 
-function generateAccordionTitles(data) {
-    const cuts = [
-        { type: data.tipoDeCorte, desc: data.descripcionDelCorte, img: data.imagenDelCorte },
-        { type: data.tipoDeCorte2, desc: data.descripcionDelSegundoCorte, img: data.imagenDeCorte2 },
-        { type: data.tipoDeCorte3, desc: data.descripcionDelCorte3, img: data.imagenDeCorte3 }
-    ];
-
-    const cutCounts = cuts.reduce((acc, cut) => {
-        if (cut.type) acc[cut.type] = (acc[cut.type] || 0) + 1;
-        return acc;
-    }, {});
-
-    const cutTitles = {};
-    return cuts
-        .filter(cut => cut.desc)
-        .map(cut => {
-            let title = `Corte a ${cut.type}`;
-            if (cutCounts[cut.type] > 1) {
-                cutTitles[cut.type] = (cutTitles[cut.type] || 0) + 1;
-                title += ` ${cutTitles[cut.type]}`;
-            }
-            return { title, desc: cut.desc, img: cut.img };
-        });
-}
-
-function setupVerificationPhase() {
-    const data = state.existingData;
-    const container = document.getElementById('verification-data');
-    container.innerHTML = ''; // Clear previous content
-
-    const header = document.createElement('div');
-    header.className = 'verification-header';
-
-    let vehicleImgHtml = data.imagenDelVehiculo ? `<img src="${convertirAGoogleThumbnail(data.imagenDelVehiculo)}" alt="Foto del vehículo">` : '<div style="width: 200px; height: 150px; background: #eee; display:flex; align-items:center; justify-content:center; border-radius: 8px;">Sin foto</div>';
-    header.innerHTML = `
-        ${vehicleImgHtml}
-        <div class="verification-header-info">
-            <p><strong>Marca:</strong> ${data.marca || 'N/A'}</p>
-            <p><strong>Modelo:</strong> ${data.modelo || 'N/A'}</p>
-            <p><strong>Año:</strong> ${data.anoGeneracion || 'N/A'}</p>
-            <p><strong>Encendido:</strong> ${data.tipoDeEncendido || 'N/A'}</p>
-        </div>
-    `;
-    container.appendChild(header);
-
-    const accordionContainer = document.createElement('div');
-    container.appendChild(accordionContainer);
-
-    const dynamicCutSections = generateAccordionTitles(data);
-
-    const otherSections = [
-        { title: 'Apertura de Puertas', desc: data.apertura, img: data.imagenDeLaApertura },
-        { title: 'Cables de Alimentación', desc: data.cablesDeAlimentacion, img: data.imagenDeLosCablesDeAlimentacion },
-        { title: 'Nota Importante', desc: data.notaImportante, img: null }
-    ];
-
-    const allSections = [...dynamicCutSections, ...otherSections];
-
-    allSections.forEach(section => {
-        if (section.desc) { // Only create accordion if there is a description
-            const accordionItem = createAccordionItem(section.title, section.desc, section.img);
-            accordionContainer.appendChild(accordionItem);
+            await populateAllDropdowns();
+            setupEventListeners();
         }
-    });
 
-    setupAccordionListeners();
+        async function populateAllDropdowns() {
+            toggleLoading(true);
+            try {
+                const { dropdowns } = await routeAction('getDropdownData');
+                populateSelect('categoria', dropdowns.categoria);
+                populateSelect('tipoEncendido', dropdowns.tipoDeEncendido);
+                populateSelect('tipoCorte1', dropdowns.tipoDeCorte);
+                populateSelect('configRelay1', dropdowns.configRelay, "Corte a ignición");
+            } catch (error) {
+                alert(`Error al cargar datos del formulario: ${error.message}`);
+            } finally {
+                toggleLoading(false);
+            }
+        }
 
-    const actionsContainer = document.getElementById('verification-actions');
-    actionsContainer.innerHTML = '';
-    const hasAllCuts = data.descripcionDelCorte && data.descripcionDelSegundoCorte && data.descripcionDelCorte3;
-    const hasApertura = data.apertura;
-    const hasAlimentacion = data.cablesDeAlimentacion;
+        function setupEventListeners() {
+            // Form submissions
+            document.getElementById('form-stage-1').addEventListener('submit', handleStage1Submit);
+            document.getElementById('form-stage-2').addEventListener('submit', handleStage2Submit);
+            document.getElementById('form-stage-3').addEventListener('submit', handleStage3Submit);
 
-    if (!hasAllCuts) {
-        const btn = document.createElement('button');
-        btn.className = 'btn btn-primary';
-        btn.textContent = 'Agregar Nuevo Corte';
-        btn.onclick = () => {
-            setupDataEntryPhase(false, { corte: true, apertura: false, alimentacion: false, notas: false });
-            showPhase(3);
-        };
-        actionsContainer.appendChild(btn);
-    }
-    if (!hasApertura || !hasAlimentacion) {
-        const btn = document.createElement('button');
-        btn.className = 'btn btn-primary';
-        btn.textContent = 'Agregar Info Adicional';
-        btn.onclick = () => {
-             setupDataEntryPhase(false, { corte: false, apertura: !hasApertura, alimentacion: !hasAlimentacion, notas: true });
-             showPhase(3);
-        };
-        actionsContainer.appendChild(btn);
-    }
-    const cancelBtn = document.createElement('button');
-    cancelBtn.className = 'btn btn-secondary';
-    cancelBtn.textContent = 'Cancelar / Es un Duplicado';
-    cancelBtn.onclick = () => window.location.reload();
-    actionsContainer.appendChild(cancelBtn);
-}
+            // Suggestions
+            document.getElementById('marca').addEventListener('blur', (e) => handleSuggestion(e.target, 'marca'));
+            document.getElementById('modelo').addEventListener('blur', (e) => handleSuggestion(e.target, 'modelo'));
 
-function createAccordionItem(title, description, imageUrl) {
-    const item = document.createElement('div');
-    const btn = document.createElement('button');
-    btn.className = 'accordion-button';
-    btn.innerHTML = `${title} <i class="fa-solid fa-chevron-down"></i>`;
+            // Image previews
+            setupImagePreview('imagenVehiculo', 'imagenVehiculo_preview');
+            setupImagePreview('imgCorte1', 'imgCorte1_preview');
+            setupImagePreview('imgApertura', 'imgApertura_preview');
+            setupImagePreview('imgCableAlimen', 'imgCableAlimen_preview');
 
-    const panel = document.createElement('div');
-    panel.className = 'accordion-panel';
+            // Accordion
+            document.querySelectorAll('.accordion-header').forEach(header => {
+                header.addEventListener('click', () => {
+                    const item = header.parentElement;
+                    item.classList.toggle('active');
+                    const content = header.nextElementSibling;
+                    content.style.display = content.style.display === 'block' ? 'none' : 'block';
+                });
+            });
+        }
 
-    let contentHtml = `<p>${description.replace(/\n/g, '<br>')}</p>`;
-    if (imageUrl) {
-        contentHtml += `<img src="${convertirAGoogleThumbnail(imageUrl)}" alt="Detalle de ${title}">`;
-    }
+        // --- STAGE 1: VEHICLE VERIFICATION ---
+        async function handleStage1Submit(e) {
+            e.preventDefault();
+            const form = e.target;
+            const btn = form.querySelector('button[type="submit"]');
+            state.vehicleInfo = {
+                marca: form.querySelector('#marca').value,
+                modelo: form.querySelector('#modelo').value,
+                anoDesde: form.querySelector('#anoDesde').value,
+                tipoEncendido: form.querySelector('#tipoEncendido').value,
+                categoria: form.querySelector('#categoria').value,
+                versionesAplicables: form.querySelector('#versionesAplicables').value,
+            };
 
-    panel.innerHTML = `<div class="accordion-content">${contentHtml}</div>`;
-    item.appendChild(btn);
-    item.appendChild(panel);
-    return item;
-}
+            toggleLoading(true);
+            btn.classList.add('btn-loading');
+            try {
+                const response = await routeAction('checkVehicle', state.vehicleInfo);
+                if (response.status === 'error') throw new Error(response.message);
 
-function setupAccordionListeners() {
-    const accordions = document.querySelectorAll('.accordion-button');
-    accordions.forEach(acc => {
-        acc.addEventListener('click', function() {
-            // Close all other panels
-            accordions.forEach(otherAcc => {
-                if (otherAcc !== this) {
-                    otherAcc.classList.remove('active');
-                    const otherPanel = otherAcc.nextElementSibling;
-                    otherPanel.style.maxHeight = null;
-                    otherPanel.classList.remove('show');
+                state.matches = response.matches || [];
+                if (state.matches.length > 0) {
+                    displayMatches(state.matches);
+                    showPhase('1-5');
+                } else {
+                    proceedToStage2(null); // No matches, proceed to create new vehicle
                 }
+            } catch (error) {
+                alert(`Error al verificar: ${error.message}`);
+            } finally {
+                toggleLoading(false);
+                btn.classList.remove('btn-loading');
+            }
+        }
+
+        async function handleSuggestion(input, field) {
+            const container = document.getElementById(`${field}-suggestion`);
+            container.innerHTML = '';
+            if (input.value.length < 3) return;
+            try {
+                const { suggestion } = await routeAction('getSuggestion', { term: input.value, field });
+                if (suggestion) {
+                    container.innerHTML = `Quizás quisiste decir: <a onclick="applySuggestion('${field}', '${suggestion}')">${suggestion}</a>`;
+                }
+            } catch (e) { console.error(e); }
+        }
+
+        function applySuggestion(field, suggestion) {
+            document.getElementById(field).value = suggestion;
+            document.getElementById(`${field}-suggestion`).innerHTML = '';
+        }
+
+        // --- STAGE 1.5: DISPLAY MATCHES ---
+        function getImageUrl(url, size = 1000) {
+            if (!url) return '';
+            const match = url.match(/id=([^&]+)/);
+            const fileId = match ? match[1] : url;
+            if (fileId.length > 50 || fileId.includes('/')) return url;
+            return `https://lh3.googleusercontent.com/d/${fileId}=s${size}`;
+        }
+
+        function formatCutInfo(match) {
+            let cutsHtml = '';
+            for (let i = 1; i <= 3; i++) {
+                const type = match[`tipoCorte${i}`];
+                const imgUrl = match[`imgCorte${i}`];
+                if (type) {
+                    cutsHtml += `
+                        <div class="cut-item">
+                            <div class="cut-item-header">
+                                <i class="fas fa-check-circle"></i>
+                                <span>Corte ${i}: ${type}</span>
+                            </div>
+                            ${imgUrl ? `<img src="${getImageUrl(imgUrl, 400)}" class="cut-item-img" onclick="window.abrirLightbox('${getImageUrl(imgUrl, 1000)}')" onerror="this.src='https://via.placeholder.com/120x90?text=Sin+Imagen'">` : ''}
+                        </div>`;
+                }
+            }
+            return cutsHtml || '<p>No hay cortes registrados aún.</p>';
+        }
+
+        function displayMatches(matches) {
+            const container = document.getElementById('matches-container');
+            container.innerHTML = '<h2>Vehículos Similares Encontrados</h2><p>Hemos encontrado registros que coinciden con tu búsqueda. Selecciona una opción:</p>';
+
+            matches.forEach(match => {
+                const yearRange = (match.anoHasta && match.anoHasta != match.anoDesde) ? `${match.anoDesde} - ${match.anoHasta}` : match.anoDesde;
+                const card = document.createElement('div');
+                card.className = 'match-card';
+
+                const vehicleImg = getImageUrl(match.imagenVehiculo, 400);
+
+                card.innerHTML = `
+                    <div class="match-card-header">
+                        <img src="${vehicleImg}" class="match-card-img" onerror="this.src='https://via.placeholder.com/120x90?text=Sin+Imagen'">
+                        <div class="match-card-info">
+                            <h4>${match.marca} ${match.modelo} (${yearRange})</h4>
+                            <p><strong>Encendido:</strong> ${match.tipoEncendido}</p>
+                            <div class="match-cuts-info">
+                                <h5>Cortes Existentes:</h5>
+                                ${formatCutInfo(match)}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="inline-actions">
+                        <p>¿Qué deseas hacer con este vehículo?</p>
+                        <button class="btn btn-secondary btn-back-stage1">Volver</button>
+                        <button class="btn btn-primary btn-add-cut" data-id="${match.id}">Agregar Nuevo Corte</button>
+                        <button class="btn btn-primary btn-add-info" data-id="${match.id}">Info. Adicional</button>
+                    </div>
+                `;
+                container.appendChild(card);
             });
 
-            // Toggle current panel
-            this.classList.toggle('active');
-            const panel = this.nextElementSibling;
-            if (panel.style.maxHeight) {
-                panel.style.maxHeight = null;
-                panel.classList.remove('show');
+            const newVehicleOption = document.createElement('div');
+            newVehicleOption.className = 'inline-actions';
+            newVehicleOption.innerHTML = `
+                <p>¿Ninguno coincide con lo que buscas?</p>
+                <button class="btn btn-secondary btn-back-stage1">Corregir Datos</button>
+                <button class="btn btn-primary btn-create-new">Crear Vehículo Nuevo</button>
+            `;
+            container.appendChild(newVehicleOption);
+
+            // Attach listeners manually since it's a module
+            container.querySelectorAll('.btn-back-stage1').forEach(btn => btn.onclick = () => showPhase(1));
+            container.querySelectorAll('.btn-add-cut').forEach(btn => btn.onclick = () => proceedToStage2(btn.dataset.id));
+            container.querySelectorAll('.btn-add-info').forEach(btn => btn.onclick = () => proceedToStage3(btn.dataset.id));
+            container.querySelector('.btn-create-new').onclick = () => proceedToStage2(null);
+        }
+
+        // --- STAGE 2: ADD NEW CUT ---
+        function proceedToStage2(vehicleId) {
+            state.selectedVehicleId = vehicleId;
+            const form = document.getElementById('form-stage-2');
+            form.reset();
+            resetImagePreviews();
+
+            const title = document.getElementById('stage-2-title');
+            const newVehicleFields = document.getElementById('new-vehicle-fields');
+            const newVehicleImageInput = document.getElementById('imagenVehiculo');
+
+            if (vehicleId) {
+                const match = state.matches.find(m => m.id === vehicleId);
+                title.textContent = `Paso 2: Agregar Corte a ${match.marca} ${match.modelo}`;
+                newVehicleFields.style.display = 'none';
+                newVehicleImageInput.required = false;
             } else {
-                panel.classList.add('show');
-                panel.style.maxHeight = panel.scrollHeight + 30 + "px";
+                title.textContent = 'Paso 2: Agregar Vehículo y Corte';
+                newVehicleFields.style.display = 'block';
+                newVehicleImageInput.required = true;
+            }
+            showPhase(2);
+        }
+
+        async function handleStage2Submit(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            toggleLoading(true);
+            btn.classList.add('btn-loading');
+
+            const cutData = {
+                tipoCorte1: document.getElementById('tipoCorte1').value,
+                configRelay1: document.getElementById('configRelay1').value,
+                ubicacionCorte1: document.getElementById('ubicacionCorte1').value,
+                colorCableCorte1: document.getElementById('colorCableCorte1').value,
+                imgCorte1: await fileToBase64(document.getElementById('imgCorte1').files[0]),
+            };
+
+            const vehicleData = state.selectedVehicleId ? null : {
+                ...state.vehicleInfo,
+                imagenVehiculo: await fileToBase64(document.getElementById('imagenVehiculo').files[0]),
+            };
+
+            try {
+                const result = await routeAction('addOrUpdateCut', {
+                    vehicleId: state.selectedVehicleId,
+                    vehicleData,
+                    cutData,
+                    colaborador: state.colaborador
+                });
+                state.selectedVehicleId = result.vehicleId;
+                alert("Corte guardado exitosamente.");
+                proceedToStage3(result.vehicleId);
+            } catch(error) {
+                alert(`Error al guardar el corte: ${error.message}`);
+            } finally {
+                toggleLoading(false);
+                btn.classList.remove('btn-loading');
+            }
+        }
+
+        // --- STAGE 3: SUPPLEMENTARY INFO ---
+        function proceedToStage3(vehicleId) {
+            state.selectedVehicleId = vehicleId;
+            const warningContainer = document.getElementById('supplementary-warnings');
+            warningContainer.innerHTML = '';
+
+            const match = state.matches.find(m => m.id.toString() === vehicleId.toString());
+            if (match) {
+                if (match.apertura || match.imgApertura) {
+                    warningContainer.innerHTML += `<div class="info-msg"><i class="fas fa-info-circle"></i> Este vehículo ya cuenta con información de apertura.</div>`;
+                }
+                if (match.cableAlimen || match.imgCableAlimen) {
+                    warningContainer.innerHTML += `<div class="info-msg"><i class="fas fa-info-circle"></i> Este vehículo ya cuenta con información de cables de alimentación.</div>`;
+                }
+            }
+
+            document.getElementById('form-stage-3').reset();
+            resetImagePreviews();
+            showPhase(3);
+        }
+
+        async function handleStage3Submit(e) {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            toggleLoading(true);
+            btn.classList.add('btn-loading');
+
+            const payload = {
+                vehicleId: state.selectedVehicleId,
+                apertura: document.getElementById('apertura').value,
+                cableAlimen: document.getElementById('cableAlimen').value,
+                notaImportante: document.getElementById('notaImportante').value,
+                imgApertura: await fileToBase64(document.getElementById('imgApertura').files[0]),
+                imgCableAlimen: await fileToBase64(document.getElementById('imgCableAlimen').files[0]),
+            };
+
+            try {
+                await routeAction('addSupplementaryInfo', payload);
+                alert("Información guardada. Serás redirigido.");
+                window.location.href = 'index.html';
+            } catch(error) {
+                alert(`Error al guardar: ${error.message}`);
+                toggleLoading(false);
+                btn.classList.remove('btn-loading');
+            }
+        }
+
+        // --- UI & UTILITY HELPERS ---
+        function showPhase(phaseId) {
+            document.querySelectorAll('.form-phase').forEach(p => p.classList.remove('active'));
+            document.getElementById(`stage-${phaseId}`).classList.add('active');
+        }
+
+        function toggleLoading(isLoading) {
+            document.getElementById('loading-overlay').style.display = isLoading ? 'flex' : 'none';
+        }
+
+        function populateSelect(id, options, defaultValue = "") {
+            const select = document.getElementById(id);
+            if (!select) return;
+            select.innerHTML = '<option value="">Selecciona...</option>';
+            if (options) {
+                options.forEach(opt => select.innerHTML += `<option value="${opt}">${opt}</option>`);
+            }
+            if (defaultValue) select.value = defaultValue;
+        }
+
+        function setupImagePreview(inputId, previewId) {
+            const input = document.getElementById(inputId);
+            const preview = document.getElementById(previewId);
+            input.addEventListener('change', () => {
+                const file = input.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => { preview.src = e.target.result; };
+                    reader.readAsDataURL(file);
+                } else {
+                    preview.src = '';
+                }
+            });
+        }
+
+        function resetImagePreviews() {
+            document.querySelectorAll('.image-preview').forEach(img => img.src = '');
+        }
+
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                if (!file) resolve(null);
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        // --- LÓGICA DE SEGURIDAD Y BLOQUEO DE INTERACCIONES ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('keydown', (e) => {
+            if (e.keyCode === 123) { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) { e.preventDefault(); return false; }
+            if (e.ctrlKey && e.keyCode === 85) { e.preventDefault(); return false; }
+        });
+
+        // Bloqueo de Zoom manual con excepción para Lightbox
+        const isLightboxVisible = () => {
+            const lightbox = document.getElementById('lightbox');
+            return lightbox && lightbox.classList.contains('visible');
+        };
+
+        document.addEventListener('wheel', (e) => {
+            if (e.ctrlKey && !isLightboxVisible()) e.preventDefault();
+        }, { passive: false });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && !isLightboxVisible()) {
+                if ([61, 107, 173, 109, 187, 189, 48, 96].includes(e.keyCode)) {
+                    e.preventDefault();
+                }
             }
         });
-    });
-}
 
-function setupDataEntryPhase(isNewVehicle, sectionsToShow = {corte:true, apertura:true, alimentacion:true, notas:true}) {
-    document.getElementById('add-info-form').reset();
-    document.querySelectorAll('.file-name').forEach(span => span.textContent = '');
-    document.querySelectorAll('.image-preview').forEach(img => {
-        img.src = '';
-        img.classList.remove('visible');
-    });
-    state.filePromises = {};
-    document.getElementById('phase-3-title').textContent = isNewVehicle ? 'Agregar Nuevo Vehículo' : 'Agregar Información Adicional';
-    document.getElementById('new-vehicle-photo-group').style.display = isNewVehicle ? 'block' : 'none';
-    document.getElementById('nuevo-corte-group').style.display = sectionsToShow.corte ? 'block' : 'none';
-    document.getElementById('apertura-group').style.display = sectionsToShow.apertura ? 'block' : 'none';
-    document.getElementById('alimentacion-group').style.display = sectionsToShow.alimentacion ? 'block' : 'none';
-}
+        document.addEventListener('touchstart', (e) => {
+            if (e.touches.length > 1 && !isLightboxVisible()) e.preventDefault();
+        }, { passive: false });
 
-function showPhase(phaseNumber) {
-    document.querySelectorAll('.form-phase').forEach(phase => phase.classList.remove('active'));
-    document.getElementById(`phase-${phaseNumber}`).classList.add('active');
-}
-
-function toggleLoading(show) {
-    document.getElementById('loading-overlay').classList.toggle('visible', show);
-}
-
-function populateSelect(id, options) {
-    const select = document.getElementById(id);
-    if (!select || !Array.isArray(options)) return;
-    select.innerHTML = '<option value="">Seleccione...</option>';
-    options.forEach(option => {
-        if (option) {
-            const opt = document.createElement('option');
-            opt.value = option;
-            opt.textContent = option;
-            select.appendChild(opt);
-        }
-    });
-}
-
-function fileToBase64(file) {
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = error => reject(error);
-    });
-}
-
-function convertirAGoogleThumbnail(url){
-  if(!url) return "https://placehold.co/400x300/cccccc/333333?text=Sin+Imagen";
-  let idMatch = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/\/d\/([a-zA-Z0-9_-]+)/);
-  if(idMatch) return `https://drive.google.com/thumbnail?sz=w1000&id=${idMatch[1]}`;
-  return url; // Devuelve la URL original si no encuentra un ID, para enlaces que ya funcionan.
-}
-</script>
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 1 && !isLightboxVisible()) e.preventDefault();
+        }, { passive: false });
+    </script>
 </body>
 </html>

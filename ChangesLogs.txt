@@ -1,0 +1,273 @@
+**CHANGES LOG - 04/02/2026**
+
+**Archivo: index.html**
+- **Línea 1:** Actualización de versión a v4.9.18.
+
+**Archivo: main.js**
+- **Líneas 112-124:** Restauración y unificación de listeners de navegación (#menu-cortes, #menu-tutoriales, #menu-relay).
+- **Líneas 127-152:** Implementación robusta de Modo Oscuro con persistencia en localStorage e intercambio dinámico de logo.
+- **Líneas 62-72:** Estabilización de la clase 'search-active' mediante searchBlurTimeout (250ms).
+- **Líneas 206-214:** Restauración del listener para el botón Dashboard (#dashboard-btn).
+
+**Archivo: style.css**
+- **Línea 55:** Aumento del padding inferior en .container (20px -> 80px) para evitar que el footer bloquee el carrusel de marcas.
+- **Línea 1015-1025:** Ajuste de layout en .footer (margin-top: 0 y flex-shrink: 0) para estabilizar la posición al final del viewport.
+
+**Estado de la Tarea:** COMPLETADA.
+
+**CHANGES LOG - 04/02/2026**
+
+**Archivo: users.html**
+- **Líneas 436-455:** Implementada obtención robusta de `userId` (ID/id) y validación en el frontend para cambio de contraseña.
+- **Líneas 18-70:** Ajustes de CSS (box-sizing, padding, width: max-content) para asegurar que la tabla de usuarios no reduzca fuentes ni márgenes en móviles.
+
+**Archivo: services/users/users.js**
+- **Líneas 281-295:** Corregida lógica de backend para cambio de contraseña: comparación case-sensitive y ID string-matching.
+
+**Versión:** Incremento a v4.9.20.
+
+**CHANGES LOG - 04/02/2026**
+
+**Archivo: api-config.js**
+- **Línea 12:** Actualizado el endpoint del servicio `USERS` al nuevo URL proporcionado por el usuario.
+
+**Archivo: users.html**
+- **Líneas 33-70:** Se redujeron los márgenes internos de `.profile-section`, `.user-management-section` y las celdas de la tabla para un diseño más compacto. Se ajustó el tamaño de fuente de la tabla a `0.9rem`.
+
+**Versión:** Incremento a v4.9.21.
+
+**CHANGES LOG - 04/02/2026**
+
+**Archivo: users.html**
+- **Línea 188:** Se renombró el ID del campo de contraseña de `password-modal` a `user-password` en el formulario de creación/edición de usuario.
+- **Línea 191:** Se mantuvo el ID `password-modal` exclusivamente para el div del modal de cambio de contraseña, resolviendo un conflicto de duplicidad de IDs que impedía la apertura del modal.
+- **Línea 394:** Actualizada la referencia en el script para capturar el valor de la contraseña usando el nuevo ID `user-password`.
+
+**Versión:** Incremento a v4.9.22.
+
+**CHANGES LOG - 04/02/2026**
+
+**Archivo: services/users/users.js**
+- Líneas 90-128: Implementada función `getVerifiedSession` para centralizar la validación de tokens y obtención de `userId` y `role`.
+- Líneas 142-154: Refactorizada la lógica de `handleGetUsers` para filtrar el listado según el rol del solicitante (Jefe solo ve Supervisor/Tecnico, Supervisor solo ve Tecnico).
+- Líneas 230-245: Actualizada la lógica de `handleUpdateUser` para prohibir el cambio de nombre de usuario y aplicar RBAC estricto en la modificación de roles.
+- Líneas 303-324: Añadida función `handleUpdateProfile` para permitir a los usuarios editar su propio nombre completo, con validación de propiedad de sesión.
+- Líneas 334-342: Reforzada la seguridad en `handleChangePassword` mediante la verificación de que el `userId` autenticado coincide con el solicitado.
+
+**Archivo: users.html**
+- Líneas 140-143: Añadido botón "Editar" para el nombre completo en la sección "Mi Perfil".
+- Líneas 199-211: Implementado modal `name-modal` para la edición del nombre del perfil.
+- Líneas 386: Deshabilitado el campo `username-modal` en el modal de edición de usuarios para cumplir con la restricción de no cambio de username.
+- Líneas 397: Actualizada la lógica de roles disponibles para roles 'Gefe' (Jefe) y 'Supervisor'.
+- Líneas 488-511: Implementada función `handleEditNameSubmit` para procesar el cambio de nombre del perfil propio.
+
+**Versión:** Incremento a v4.9.23.
+
+**CHANGES LOG - 04/02/2026**
+
+**Archivo: api-config.js**
+- **Línea 12:** Actualizado el endpoint del servicio `USERS` al nuevo URL proporcionado por el usuario.
+
+**Archivo: index.html**
+- **Líneas 7, 269:** Actualizada la versión global a v4.9.24.
+
+**Archivo: users.html**
+- **Línea 238:** Actualizada la versión del componente a v3.9.1.
+
+**Archivo: services/users/users.js**
+- **Líneas 4, 48:** Actualizada la versión del componente a v2.4.2.
+
+**Estado de la Tarea:** COMPLETADA.
+
+**CHANGES LOG - 04/02/2026**
+
+**Archivo: users.html**
+- Líneas 133-159: Añadidos estilos CSS para `.btn-loading` y la animación `spin-button`.
+- Líneas 366: Actualizado el listener de "Eliminar" para pasar el elemento del botón como argumento.
+- Líneas 440-474: Implementada lógica de carga y anti-bloqueo (`disabled` y `classList.contains('btn-loading')`) en `handleUserFormSubmit`.
+- Líneas 476-493: Implementada lógica de carga y anti-bloqueo en `deleteUser`.
+- Líneas 495-539: Implementada lógica de carga y anti-bloqueo en `handleChangePasswordSubmit`.
+- Líneas 541-572: Implementada lógica de carga y anti-bloqueo en `handleEditNameSubmit`.
+
+**Versión:** Incremento a v4.9.25.
+
+**CHANGES LOG - 21/01/2026**
+
+**Archivo: index.html**
+- **Línea 1:** Actualizada la versión del componente a v4.9.26.
+- **Línea 7:** Actualizada la versión global a v4.9.26 en el título.
+- **Línea 269:** Actualizada la versión en el footer a v4.9.26.
+
+**Archivo: ui.js**
+- **Línea 1:** Añadida versión del componente v4.1.0.
+- **Líneas 12-15:** Definidas constantes `IMG_SIZE_SMALL` (300), `IMG_SIZE_MEDIUM` (800) y `IMG_SIZE_LARGE` (1600).
+- **Líneas 188, 212, 231, 261, 300, 394, 443, 486, 548, 600, 632, 693, 1308, 1487, 1513:** Implementado uso de `IMG_SIZE_SMALL` en todas las tarjetas y carruseles del catálogo.
+- **Líneas 190, 214, 233, 264, 302, 396, 445, 488, 550, 602, 634, 1310, 1489, 1515:** Añadido atributo `loading="lazy"` a todas las imágenes del catálogo.
+- **Líneas 723, 793, 954, 1207, 1595:** Implementado uso de `IMG_SIZE_MEDIUM` para imágenes en modales de detalle.
+- **Líneas 802, 957, 1214, 1598:** Optimizada la carga del lightbox para generar la URL `IMG_SIZE_LARGE` (alta resolución) únicamente al hacer clic, evitando la precarga.
+
+**Versión:** Incremento a v4.9.26.
+
+**CHANGES LOG - 21/01/2026**
+
+**Archivo: README.md**
+- **Líneas 1-60:** Reescritura total del documento para reflejar las capacidades de la versión 2.0.
+- **Secciones añadidas:** Descripción General, Características Principales, Flujo de Registro, Arquitectura, Comparativa v1.5 vs v2.0 y Changelog.
+- **Limpieza:** Eliminación de planes de implementación y checklists obsoletos.
+
+**Archivo: index.html**
+- **Línea 1:** Actualizada la versión del componente a v2.0.0.
+- **Línea 7:** Actualizada la versión global a v2.0 en el título.
+- **Línea 82:** Añadido número de versión v2.0 al modal de login (small text).
+- **Línea 213:** Actualizada la terminología de cortes en "Sobre Nosotros" (Bomba, Señal, Ignición).
+- **Línea 272:** Actualizada la versión y branding en el footer a "GPSpedia v2.0".
+
+**Archivo: main.js**
+- **Línea 1:** Actualizada la versión del componente a v2.0.0.
+- **Líneas 128-142:** Implementada lógica de acordeón para la sección de FAQ en la página principal.
+
+**Archivo: style.css**
+- **Línea 1:** Actualizada la versión del componente a v2.0.0.
+- **Líneas 960-991:** Añadidos estilos para el acordeón de FAQ y animaciones de iconos.
+
+**Archivos de Código (JS/HTML):**
+- **Actualización Global:** Sincronización de todos los archivos (`add_cortes.html`, `users.html`, `auth.js`, `state.js`, `navigation.js`, `ui.js`, `api-config.js`) a la versión v2.0.0.
+
+**Archivos de Backend (Services):**
+- **Actualización Global:** Sincronización de todos los microservicios (`auth`, `catalog`, `feedback`, `users`, `write`, `image`, `utilities`) a la versión v2.0.0.
+
+**Versión:** Lanzamiento Global GPSpedia v2.0.
+
+**CHANGES LOG - 05/02/2026**
+
+**Archivo: README.md**
+- Línea 46: Ajustada la descripción del sistema de Feedback para reflejar la funcionalidad real (Likes y Reportes) eliminando menciones a votos de utilidad en desarrollo.
+
+**Archivo: main.js**
+- Líneas 298-342: Implementada lógica global de seguridad: bloqueo de menú contextual, F12, Ctrl+Shift+I/J/C, Ctrl+U y zoom manual. Se añadió excepción de zoom para el Lightbox.
+
+**Archivo: users.html**
+- Líneas 574-591: Replicada lógica de seguridad para asegurar protección en la sección de gestión de usuarios.
+
+**Archivo: add_cortes.html**
+- Líneas 589-606: Replicada lógica de seguridad para asegurar protección en el formulario de registro de cortes.
+
+**Archivo: ChangeLog_v2.0_vs_v1.5.txt**
+- Creación del documento comparativo detallado de funcionalidades entre versiones.
+
+**Versión:** Mantenimiento de seguridad v2.0.1.
+
+**CHANGES LOG - 05/02/2026**
+
+**Archivos: main.js, users.html, add_cortes.html**
+- Implementado bloqueo de gestos de zoom (pinch-to-zoom) mediante listeners de 'touchstart' y 'touchmove'.
+- En main.js se mantiene la excepción para permitir zoom táctil cuando el lightbox está visible.
+
+**Versión:** Mantenimiento de seguridad v2.0.2.
+
+**CHANGES LOG - 05/02/2026**
+
+**Archivo: ui.js**
+- Línea 787: Modificada la función `renderCutContent` para aceptar un parámetro `isLazy` (default false).
+- Línea 798-805: Implementada lógica condicional en `renderCutContent` para asignar `img.src` (carga inmediata) o `img.dataset.src` (carga diferida) según el contexto.
+- Línea 759: Actualizada la llamada del Corte Recomendado para usar carga inmediata (`isLazy = false`).
+- Línea 1205: Actualizada la llamada de Cortes Alternativos dentro de acordeones para usar carga diferida (`isLazy = true`).
+
+**Versión:** Corrección de carga de imágenes v2.0.4.
+
+**CHANGES LOG - 05/02/2026**
+
+**Documentación: Instrucciones.txt**
+- Limpieza y reestructuración integral de la sección de tareas.
+- Movidas las Tareas 1-5 a la sección "TAREAS COMPLETADAS (Validadas por el PM)".
+- El historial ahora refleja con precisión los hitos de la versión 2.0 y sus parches de seguridad/rendimiento.
+
+**Versión:** Consolidación de documentación v2.0.5.
+
+**CHANGES LOG - 05/02/2026**
+
+**Documentación: Auditoria.txt**
+- Registro detallado de la solución al bug de imágenes en modales.
+- Documentación del flujo de carga híbrida (eager/lazy).
+
+**Versión:** Finalización de sesión v2.0.6.
+
+**CHANGES LOG - 05/02/2026**
+
+**Archivo: ui.js**
+- Línea 194, 306, 400, 451, 494, 558, 652: Actualizada la jerarquía visual de los overlays para usar las clases .overlay-text-primary y .overlay-text-secondary, eliminando el uso de estilos inline.
+- Línea 1324, 1500, 1526: Aplicadas las clases de overlay a las secciones de Últimos Agregados, Tutoriales y Relay Grid para consistencia total en el catálogo.
+
+**Versión:** Finalización y estandarización v2.0.7.
+
+**CHANGES LOG - 05/02/2026**
+
+**Documentación: Instrucciones.txt**
+- Se marcaron todas las tareas de la sesión (Seguridad, Documentación, Rendimiento y Bug Fix) como COMPLETADAS.
+- Se limpió el backlog para reflejar el estado actual del proyecto.
+
+**Estado Final de la Sesión:** EXITOSO.
+
+**CHANGES LOG - 06/02/2026**
+
+**Archivo: ui.js**
+- **Líneas 280-291:** Actualizada `mostrarModelosPorMarca` para capturar `previousState` y manejar dinámicamente el botón "Volver" (regreso a búsqueda o página principal).
+- **Líneas 416-424:** Actualizada `mostrarTiposEncendido` para detectar si el origen es `modelosPorMarca` y retornar correctamente a la lista global de modelos de la marca.
+- **Líneas 481-483:** Añadido caso en `mostrarVersiones` para retornar a `mostrarModelosPorMarca` si ese era el nivel previo.
+- **Líneas 532-540:** Modificada `mostrarVersionesEquipamiento` para capturar estado previo y corregir la navegación circular hacia atrás.
+
+**Archivo: style.css**
+- **Líneas 22-31:** Implementadas reglas de `user-select: none` en el body y excepciones de `user-select: text` en inputs/textareas para evitar asistentes de selección móviles.
+
+**Archivo: users.html**
+- **Líneas 27-39:** Replicadas reglas de prevención de selección de texto en el bloque de estilos interno.
+
+**Archivo: add_cortes.html**
+- **Líneas 12-24:** Replicadas reglas de prevención de selección de texto en el bloque de estilos interno.
+
+**Versión:** Corrección de navegación y UI v2.0.8.
+
+**CHANGES LOG - 06/02/2026 (Post-Auditoría)**
+
+**Archivo: style.css**
+- **Línea 34:** Añadido elemento `select` a las excepciones de `user-select: text`.
+
+**Archivo: index.html**
+- **Línea 112:** Eliminado atributo `oninput` redundante en el buscador.
+
+**Archivo: add_cortes.html**
+- **Líneas 615-645:** Implementada excepción `isLightboxVisible` en la lógica de bloqueo de zoom táctil y manual.
+
+**Archivo: ui.js**
+- **Líneas 381-395:** Refactorizada `mostrarModelos` para usar `previousState` y asegurar consistencia en el botón "Volver".
+
+**Versión:** Finalización de auditoría y correcciones v2.0.8.
+
+**CHANGES LOG - 06/02/2026 (Estandarización)**
+
+**Global:**
+- Sincronización de la versión a **v2.0** en todos los encabezados de archivos JS, CSS y HTML.
+- Actualización de la versión visible en el modal de login y el footer de `index.html` a **v2.0**.
+- Estandarización de mensajes de estado en los microservicios de backend (`Auth`, `Catalog`, `Feedback`, `Users`, `Write`, `Utilities`, `Image`) a la versión **v2.0**.
+
+**Versión:** Estandarización GPSpedia v2.0.
+
+**CHANGES LOG - 06/02/2026 (Auditoría Final)**
+
+**Documentación:**
+- Creación de `RELEASE NOTES.txt` con el detalle exhaustivo de mejoras técnicas y funcionales de la versión 2.0 vs 1.5.
+- Registro de hitos en arquitectura, seguridad, rendimiento y administración.
+
+**Versión:** Consolidación final v2.0.
+
+**CHANGES LOG - 06/02/2026 (Expansión de Notas)**
+
+**Documentación:**
+- Refactorización exhaustiva de `RELEASE NOTES.txt` para incluir features técnicas detalladas:
+  - Lógica de Corte Recomendado por votos de utilidad.
+  - Modales de diagramas de Relay vinculados.
+  - Identificación de técnicos colaboradores.
+  - Soporte para variantes de cortes múltiples.
+  - Sistema de verificación anti-duplicado en 3 etapas.
+
+**Versión:** Consolidación final v2.0 (Full Features).
