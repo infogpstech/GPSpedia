@@ -81,6 +81,11 @@ async function initializeApp() {
     const handleViewportChange = () => {
         if (!window.visualViewport) return;
 
+        // Si el lightbox está abierto, no recalculamos el layout de la app
+        if (isLightboxVisible() && Math.abs(window.visualViewport.scale - 1) > 0.01) {
+            return;
+        }
+
         const viewport = window.visualViewport;
         const height = viewport.height;
 
@@ -101,6 +106,49 @@ async function initializeApp() {
         window.visualViewport.addEventListener('scroll', handleViewportChange);
         handleViewportChange(); // Ejecución inicial
     }
+
+    // Exponer handleViewportChange globalmente para lightbox.js
+    window.handleViewportChange = handleViewportChange;
+
+    // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
+    window.addEventListener('popstate', (event) => {
+        // 1. Cerrar Side Menu si está abierto
+        const sideMenu = document.getElementById('side-menu');
+        if (sideMenu && sideMenu.classList.contains('open')) {
+            ui.closeSideMenu(true);
+            return;
+        }
+
+        // 2. Cerrar Lightbox si está abierto
+        const lightbox = document.getElementById('lightbox');
+        if (lightbox && lightbox.classList.contains('visible')) {
+            window.cerrarLightbox(true); // Pasar true para evitar bucle de back()
+            return;
+        }
+
+        // 3. Cerrar Modales de Información (About, Contact, FAQ, etc.)
+        const infoModals = document.querySelectorAll('.info-modal');
+        let overlayClosed = false;
+        infoModals.forEach(modal => {
+            if (modal.style.display === 'flex') {
+                modal.style.display = 'none';
+                overlayClosed = true;
+            }
+        });
+        if (overlayClosed) return;
+
+        // 4. Cerrar Modal de Detalles
+        const modalDetalle = document.getElementById('modalDetalle');
+        if (modalDetalle && modalDetalle.classList.contains('visible')) {
+            // Detener videos al cerrar via back button
+            const iframe = modalDetalle.querySelector('iframe');
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+            }
+            modalDetalle.classList.remove('visible');
+            return;
+        }
+    });
 
     // Hamburger menu listeners
     document.getElementById('hamburger-btn').addEventListener('click', ui.openSideMenu);
@@ -320,10 +368,10 @@ async function initializeApp() {
 
     // Bloqueo de Zoom manual (Teclado y Rueda del ratón)
     // EXCEPCIÓN: Se permite zoom si el lightbox está visible.
-    const isLightboxVisible = () => {
+    function isLightboxVisible() {
         const lightbox = document.getElementById('lightbox');
         return lightbox && lightbox.classList.contains('visible');
-    };
+    }
 
     document.addEventListener('wheel', (e) => {
         if (e.ctrlKey && !isLightboxVisible()) {

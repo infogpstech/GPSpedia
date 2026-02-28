@@ -709,7 +709,11 @@ export function mostrarDetalleModal(item) {
         if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
         }
-        document.getElementById("modalDetalle").classList.remove("visible");
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+        }
     };
     closeBtn.className = "info-close-btn";
     closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 10px;";
@@ -815,6 +819,9 @@ export function mostrarDetalleModal(item) {
     });
 
     document.getElementById("modalDetalle").classList.add("visible");
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
 }
 
 function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false) {
@@ -839,8 +846,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         img.className = 'img-corte image-with-container';
         img.onclick = () => {
             const highResImgUrl = getImageUrl(cutData.img, IMG_SIZE_LARGE);
-            document.getElementById('lightboxImg').src = highResImgUrl;
-            document.getElementById('lightbox').classList.add('visible');
+            window.abrirLightbox(highResImgUrl, 'lightboxImg');
         };
         imgContainer.appendChild(img);
 
@@ -876,7 +882,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
             utilBtn.classList.add('liked');
             utilBtn.style.backgroundColor = '#28a745';
 
-            recordLike(vehicleId, cutData.index, currentUser.ID, currentUser.Nombre_Usuario).then(() => {
+            recordLike(vehicleId, cutData.index, currentUser.ID, currentUser.Nombre_Completo || currentUser.Nombre_Usuario).then(() => {
                 // Persistir en el estado local de la sesión
                 const currentState = getState();
                 const newLiked = [...(currentState.likedCortes || []), likeKey];
@@ -918,7 +924,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
             const reason = window.prompt("Describe el problema con este corte:");
             if (reason && reason.trim()) {
                 reportBtn.classList.add('btn-loading');
-                reportProblem(vehicleId, reason, currentUser.ID, currentUser.Nombre_Usuario).then(() => {
+                reportProblem(vehicleId, reason, currentUser.ID, currentUser.Nombre_Completo || currentUser.Nombre_Usuario).then(() => {
                     alert("Reporte enviado. Gracias por tu ayuda.");
                 }).catch(err => {
                     console.error("Error reporting problem:", err);
@@ -982,7 +988,13 @@ function renderRelayInfoModal(relayInfo) {
     const closeBtn = document.createElement('span');
     closeBtn.className = 'info-close-btn';
     closeBtn.innerHTML = '&times;';
-    closeBtn.onclick = () => modal.style.display = 'none';
+    closeBtn.onclick = () => {
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            modal.style.display = 'none';
+        }
+    };
     content.appendChild(closeBtn);
 
     const title = document.createElement('h3');
@@ -994,13 +1006,16 @@ function renderRelayInfoModal(relayInfo) {
     img.style.width = '100%';
     img.onclick = () => {
         const highResImgUrl = getImageUrl(relayInfo.imagen, IMG_SIZE_LARGE);
-        document.getElementById('lightboxImg').src = highResImgUrl;
-        document.getElementById('lightbox').classList.add('visible');
+        window.abrirLightbox(highResImgUrl, 'lightboxImg');
     };
     content.appendChild(img);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
+
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
 }
 
 function setupModal(modalId, openFn) {
@@ -1013,8 +1028,18 @@ function setupModal(modalId, openFn) {
 
         const closeBtn = modal.querySelector('.info-close-btn');
         if (closeBtn && !closeBtn.dataset.listenerSet) {
-            closeBtn.addEventListener('click', () => modal.style.display = 'none');
+            closeBtn.addEventListener('click', () => {
+                if (window.history && window.history.state && window.history.state.modalOpen) {
+                    window.history.back();
+                } else {
+                    modal.style.display = 'none';
+                }
+            });
             closeBtn.dataset.listenerSet = 'true';
+        }
+
+        if (window.history && window.history.pushState) {
+            window.history.pushState({ modalOpen: true }, '');
         }
 
         return await openFn(...args);
@@ -1132,7 +1157,7 @@ function renderInboxList(items) {
 function renderInboxDetail(item) {
     const detailContainer = document.getElementById('inbox-detail');
     const { currentUser, catalogData } = getState();
-    const userName = currentUser ? currentUser.Nombre_Usuario : 'Usuario';
+    const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Usuario';
 
     let vehicleLabel = item.vehicleId ? `ID: ${item.vehicleId}` : '';
     if (item.vehicleId && catalogData && catalogData.cortes) {
@@ -1251,8 +1276,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
             img.className = 'img-corte image-with-container';
             img.onclick = () => {
                 const highResImgUrl = getImageUrl(sec.img, IMG_SIZE_LARGE);
-                document.getElementById('lightboxImg').src = highResImgUrl;
-                document.getElementById('lightbox').classList.add('visible');
+                window.abrirLightbox(highResImgUrl, 'lightboxImg');
             };
             imgContainer.appendChild(img);
             panel.appendChild(imgContainer);
@@ -1414,13 +1438,13 @@ export function showApp(user) {
     document.querySelector('.container').style.display = 'block';
     document.querySelector('.footer').style.display = 'block';
 
-    if (user && user.Nombre_Usuario) {
-        document.getElementById('menu-username').textContent = user.Nombre_Usuario;
+    if (user && (user.Nombre_Completo || user.Nombre_Usuario)) {
+        document.getElementById('menu-username').textContent = user.Nombre_Completo || user.Nombre_Usuario;
 
         // Mostrar mensaje de bienvenida en el nuevo header si existe
         const welcomeMsg = document.getElementById('welcome-message');
         if (welcomeMsg) {
-            welcomeMsg.textContent = `Hola, ${user.Nombre_Usuario}`;
+            welcomeMsg.textContent = `Hola, ${user.Nombre_Completo || user.Nombre_Usuario}`;
             welcomeMsg.style.display = 'block';
         }
     }
@@ -1487,16 +1511,24 @@ export function showGlobalError(message) {
 
 export function openSideMenu() {
     const { currentUser } = getState();
-    if (currentUser && currentUser.Nombre_Usuario) {
-        document.getElementById('menu-username').textContent = currentUser.Nombre_Usuario;
+    if (currentUser && (currentUser.Nombre_Completo || currentUser.Nombre_Usuario)) {
+        document.getElementById('menu-username').textContent = currentUser.Nombre_Completo || currentUser.Nombre_Usuario;
     }
     document.getElementById('side-menu').classList.add('open');
     document.getElementById('menu-overlay').classList.add('open');
+
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ sideMenuOpen: true }, '');
+    }
 }
 
-export function closeSideMenu() {
+export function closeSideMenu(isFromPopState = false) {
     document.getElementById('side-menu').classList.remove('open');
     document.getElementById('menu-overlay').classList.remove('open');
+
+    if (!isFromPopState && window.history && window.history.state && window.history.state.sideMenuOpen) {
+        window.history.back();
+    }
 }
 
 export function mostrarSeccion(sectionName) {
@@ -1591,7 +1623,13 @@ function mostrarDetalleTutorialModal(item) {
     headerDiv.appendChild(title);
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar";
-    closeBtn.onclick = () => document.getElementById("modalDetalle").classList.remove("visible");
+    closeBtn.onclick = () => {
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+        }
+    };
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
@@ -1625,6 +1663,9 @@ function mostrarDetalleTutorialModal(item) {
     });
 
     document.getElementById("modalDetalle").classList.add("visible");
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
 }
 
 function mostrarDetalleRelayModal(item) {
@@ -1639,7 +1680,13 @@ function mostrarDetalleRelayModal(item) {
     headerDiv.appendChild(title);
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar";
-    closeBtn.onclick = () => document.getElementById("modalDetalle").classList.remove("visible");
+    closeBtn.onclick = () => {
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+        }
+    };
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
     headerDiv.appendChild(closeBtn);
@@ -1653,8 +1700,7 @@ function mostrarDetalleRelayModal(item) {
         img.style.borderRadius = "8px";
         img.onclick = () => {
             const highResImgUrl = getImageUrl(item.imagen, IMG_SIZE_LARGE);
-            document.getElementById('lightboxImg').src = highResImgUrl;
-            document.getElementById('lightbox').classList.add('visible');
+            window.abrirLightbox(highResImgUrl, 'lightboxImg');
         };
         cont.appendChild(img);
     }
@@ -1679,4 +1725,7 @@ function mostrarDetalleRelayModal(item) {
     });
 
     document.getElementById("modalDetalle").classList.add("visible");
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
 }
