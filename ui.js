@@ -882,7 +882,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
             utilBtn.classList.add('liked');
             utilBtn.style.backgroundColor = '#28a745';
 
-            recordLike(vehicleId, cutData.index, currentUser.ID, currentUser.Nombre_Usuario).then(() => {
+            recordLike(vehicleId, cutData.index, currentUser.ID, currentUser.Nombre_Completo || currentUser.Nombre_Usuario).then(() => {
                 // Persistir en el estado local de la sesión
                 const currentState = getState();
                 const newLiked = [...(currentState.likedCortes || []), likeKey];
@@ -924,7 +924,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
             const reason = window.prompt("Describe el problema con este corte:");
             if (reason && reason.trim()) {
                 reportBtn.classList.add('btn-loading');
-                reportProblem(vehicleId, reason, currentUser.ID, currentUser.Nombre_Usuario).then(() => {
+                reportProblem(vehicleId, reason, currentUser.ID, currentUser.Nombre_Completo || currentUser.Nombre_Usuario).then(() => {
                     alert("Reporte enviado. Gracias por tu ayuda.");
                 }).catch(err => {
                     console.error("Error reporting problem:", err);
@@ -1157,7 +1157,7 @@ function renderInboxList(items) {
 function renderInboxDetail(item) {
     const detailContainer = document.getElementById('inbox-detail');
     const { currentUser, catalogData } = getState();
-    const userName = currentUser ? currentUser.Nombre_Usuario : 'Usuario';
+    const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Usuario';
 
     let vehicleLabel = item.vehicleId ? `ID: ${item.vehicleId}` : '';
     if (item.vehicleId && catalogData && catalogData.cortes) {
@@ -1438,13 +1438,13 @@ export function showApp(user) {
     document.querySelector('.container').style.display = 'block';
     document.querySelector('.footer').style.display = 'block';
 
-    if (user && user.Nombre_Usuario) {
-        document.getElementById('menu-username').textContent = user.Nombre_Usuario;
+    if (user && (user.Nombre_Completo || user.Nombre_Usuario)) {
+        document.getElementById('menu-username').textContent = user.Nombre_Completo || user.Nombre_Usuario;
 
         // Mostrar mensaje de bienvenida en el nuevo header si existe
         const welcomeMsg = document.getElementById('welcome-message');
         if (welcomeMsg) {
-            welcomeMsg.textContent = `Hola, ${user.Nombre_Usuario}`;
+            welcomeMsg.textContent = `Hola, ${user.Nombre_Completo || user.Nombre_Usuario}`;
             welcomeMsg.style.display = 'block';
         }
     }
@@ -1511,8 +1511,8 @@ export function showGlobalError(message) {
 
 export function openSideMenu() {
     const { currentUser } = getState();
-    if (currentUser && currentUser.Nombre_Usuario) {
-        document.getElementById('menu-username').textContent = currentUser.Nombre_Usuario;
+    if (currentUser && (currentUser.Nombre_Completo || currentUser.Nombre_Usuario)) {
+        document.getElementById('menu-username').textContent = currentUser.Nombre_Completo || currentUser.Nombre_Usuario;
     }
     document.getElementById('side-menu').classList.add('open');
     document.getElementById('menu-overlay').classList.add('open');

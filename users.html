@@ -390,21 +390,47 @@ function setupEventListeners() {
     const closeBtns = document.querySelectorAll('.close-btn');
 
     document.getElementById('create-user-btn').addEventListener('click', () => openUserModal());
-    document.getElementById('change-password-btn').addEventListener('click', () => passwordModal.style.display = 'block');
+    document.getElementById('change-password-btn').addEventListener('click', () => {
+        passwordModal.style.display = 'block';
+        if (window.history && window.history.pushState) {
+            window.history.pushState({ modalOpen: true }, '');
+        }
+    });
     document.getElementById('edit-name-btn').addEventListener('click', () => {
         document.getElementById('new-fullname').value = currentUser.Nombre_Completo;
         document.getElementById('name-modal').style.display = 'block';
+        if (window.history && window.history.pushState) {
+            window.history.pushState({ modalOpen: true }, '');
+        }
     });
 
     closeBtns.forEach(btn => {
-        btn.parentElement.parentElement.onclick = (e) => {
-            if (e.target === btn.parentElement.parentElement) {
-                 btn.parentElement.parentElement.style.display = 'none';
+        const modal = btn.parentElement.parentElement;
+        modal.onclick = (e) => {
+            if (e.target === modal) {
+                 closeModal(modal);
             }
         }
         btn.onclick = () => {
-            btn.parentElement.parentElement.style.display = 'none';
+            closeModal(modal);
         }
+    });
+
+    function closeModal(modal, isFromPopState = false) {
+        modal.style.display = 'none';
+        if (!isFromPopState && window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        }
+    }
+
+    // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
+    window.addEventListener('popstate', (event) => {
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            if (modal.style.display === 'block') {
+                closeModal(modal, true);
+            }
+        });
     });
 
     document.getElementById('user-form').addEventListener('submit', handleUserFormSubmit);
@@ -446,6 +472,9 @@ function openUserModal(user = null) {
     if(user) roleSelect.value = user.Privilegios;
 
     modal.style.display = 'block';
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
 }
 
 async function handleUserFormSubmit(e) {
@@ -472,7 +501,11 @@ async function handleUserFormSubmit(e) {
             await postToAction('createUser', { newUser: userData, sessionToken: currentUser.SessionToken });
             alert('Usuario creado');
         }
-        document.getElementById('user-modal').style.display = 'none';
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById('user-modal').style.display = 'none';
+        }
         await fetchUsers();
     } catch (error) {
         // Error handled in postToAction
@@ -541,7 +574,11 @@ async function handleChangePasswordSubmit(e) {
             sessionToken: currentUser.SessionToken
         });
         alert('Contraseña actualizada correctamente.');
-        document.getElementById('password-modal').style.display = 'none';
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById('password-modal').style.display = 'none';
+        }
         document.getElementById('password-form').reset();
     } catch (error) {
         // Error handled in postToAction
@@ -574,7 +611,11 @@ async function handleEditNameSubmit(e) {
         displayProfile();
 
         alert('Nombre actualizado correctamente.');
-        document.getElementById('name-modal').style.display = 'none';
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById('name-modal').style.display = 'none';
+        }
     } catch (error) {
         // Error handled
     } finally {
