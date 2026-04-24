@@ -826,7 +826,8 @@ export function mostrarDetalleModal(item) {
 
 function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false) {
     const contentP = document.createElement('p');
-    contentP.innerHTML = `<strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
+    contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
+                        <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
                         <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
     container.appendChild(contentP);
 

@@ -78,32 +78,37 @@ async function initializeApp() {
      * Esto es crítico para dispositivos móviles donde el teclado virtual
      * reduce el área visible de la pantalla.
      */
+    let viewportTicking = false;
     const handleViewportChange = () => {
-        if (!window.visualViewport) return;
+        if (!window.visualViewport || viewportTicking) return;
 
-        // Si el lightbox está abierto, no recalculamos el layout de la app
-        if (isLightboxVisible() && Math.abs(window.visualViewport.scale - 1) > 0.01) {
-            return;
-        }
+        viewportTicking = true;
+        requestAnimationFrame(() => {
+            // Si el lightbox está abierto y hay zoom activo, no recalculamos el layout de la app
+            if (isLightboxVisible() && Math.abs(window.visualViewport.scale - 1) > 0.01) {
+                viewportTicking = false;
+                return;
+            }
 
-        const viewport = window.visualViewport;
-        const height = viewport.height;
+            const viewport = window.visualViewport;
+            const height = viewport.height;
 
-        // Establece la variable CSS --app-height en el elemento raíz.
-        // Se utiliza para definir la altura de html, body y .container.
-        document.documentElement.style.setProperty('--app-height', `${height}px`);
+            // Establece la variable CSS --app-height en el elemento raíz.
+            document.documentElement.style.setProperty('--app-height', `${height}px`);
 
-        // Heurística para detectar si el teclado está abierto.
-        if (height < window.innerHeight * 0.85) {
-            document.body.classList.add('keyboard-open');
-        } else {
-            document.body.classList.remove('keyboard-open');
-        }
+            // Heurística para detectar si el teclado está abierto.
+            if (height < window.innerHeight * 0.85) {
+                document.body.classList.add('keyboard-open');
+            } else {
+                document.body.classList.remove('keyboard-open');
+            }
+            viewportTicking = false;
+        });
     };
 
     if (window.visualViewport) {
-        window.visualViewport.addEventListener('resize', handleViewportChange);
-        window.visualViewport.addEventListener('scroll', handleViewportChange);
+        window.visualViewport.addEventListener('resize', handleViewportChange, { passive: true });
+        window.visualViewport.addEventListener('scroll', handleViewportChange, { passive: true });
         handleViewportChange(); // Ejecución inicial
     }
 
@@ -170,10 +175,8 @@ async function initializeApp() {
     // Dark Mode Toggle Logic with Logo Swap and Persistence
     const darkModeToggle = document.getElementById('dark-mode-toggle');
     const appLogo = document.querySelector('.app-logo');
-    const lightLogo = "https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048";
-    const darkLogo = "Logo_TemaOscuro.png";
-
-    // --- LÓGICA DE ACORDEÓN PARA FAQ ---
+    // El logo usa una solución técnica por CSS filter en modo oscuro,
+    // por lo que no es necesario cambiar la URL de la imagen si darkLogo no existe.
     document.querySelectorAll('.accordion-header').forEach(header => {
         header.addEventListener('click', () => {
             const item = header.parentElement;
@@ -195,18 +198,15 @@ async function initializeApp() {
         if (localStorage.getItem('darkMode') === 'true') {
             document.body.classList.add('dark-mode');
             darkModeToggle.checked = true;
-            if (appLogo) appLogo.src = darkLogo;
         }
 
         darkModeToggle.addEventListener('change', () => {
             if (darkModeToggle.checked) {
                 document.body.classList.add('dark-mode');
                 localStorage.setItem('darkMode', 'true');
-                if (appLogo) appLogo.src = darkLogo;
             } else {
                 document.body.classList.remove('dark-mode');
                 localStorage.setItem('darkMode', 'false');
-                if (appLogo) appLogo.src = lightLogo;
             }
         });
     }
@@ -370,8 +370,10 @@ async function initializeApp() {
     // EXCEPCIÓN: Se permite zoom si el lightbox está visible.
     function isLightboxVisible() {
         const lightbox = document.getElementById('lightbox');
-        return lightbox && lightbox.classList.contains('visible');
+        return !!(lightbox && lightbox.classList.contains('visible'));
     }
+
+    window.isLightboxVisible = isLightboxVisible; // Exponer para otros módulos si es necesario
 
     document.addEventListener('wheel', (e) => {
         if (e.ctrlKey && !isLightboxVisible()) {
@@ -403,8 +405,15 @@ async function initializeApp() {
     }, { passive: false });
 
     // 5. Start the application by checking the user's session
-    await auth.checkSession();
+    // Se asegura que todo esté inicializado antes de validar la sesión
+    setTimeout(async () => {
+        await auth.checkSession();
+    }, 0);
 }
 
 // Start the application once the DOM is ready
-document.addEventListener('DOMContentLoaded', initializeApp);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeApp);
+} else {
+    initializeApp();
+}
