@@ -49,8 +49,8 @@ export function filtrarContenido(textoBusqueda) {
         yearSearchTerm = null;
     }
 
-    const nonYearBusqueda = yearSearchTerm ? busqueda.replace(yearSearchMatch[0], '').trim() : busqueda;
-    const palabrasBusqueda = nonYearBusqueda.split(' ').filter(p => p);
+    // Las palabras de búsqueda se derivan de la consulta completa para no excluir números de modelo (ej. 1500)
+    const palabrasBusqueda = busqueda.split(' ').filter(p => p);
 
     datosFiltrados = cortes.filter(item => {
         // 1. Verificación del año (si se especificó uno).
@@ -62,9 +62,13 @@ export function filtrarContenido(textoBusqueda) {
             }
         }
         // 2. Verificación del texto (si hay términos de búsqueda de texto).
-        if (nonYearBusqueda) {
-            const itemTexto = `${item.marca} ${item.modelo} ${item.versionesAplicables}`.toLowerCase();
-            return palabrasBusqueda.every(palabra => itemTexto.includes(palabra));
+        if (busqueda) {
+            const itemTexto = `${String(item.marca)} ${String(item.modelo)} ${String(item.versionesAplicables || '')} ${String(item.tipoEncendido || '')} ${String(item.categoria || '')} ${String(item.anoDesde || '')} ${String(item.anoHasta || '')}`.toLowerCase();
+            return palabrasBusqueda.every(palabra => {
+                // Si la palabra es exactamente el año detectado, ya se verificó con el rango.
+                if (yearSearchTerm && palabra === String(yearSearchTerm)) return true;
+                return itemTexto.includes(palabra);
+            });
         }
         // 3. Si solo se buscó un año y pasó la verificación, se incluye.
         return !!yearSearchTerm;
@@ -81,7 +85,7 @@ export function filtrarContenido(textoBusqueda) {
 
     // Se considera una búsqueda de marca si solo hay una marca en los resultados
     // y el término de búsqueda coincide con el nombre de esa marca.
-    const exactModelMatch = datosFiltrados.some(item => item.modelo.toLowerCase() === busqueda);
+    const exactModelMatch = datosFiltrados.some(item => String(item.modelo).toLowerCase() === busqueda);
 
     if (!exactModelMatch && uniqueMarcasEnResultados.length === 1 && uniqueMarcasEnResultados[0].toLowerCase().includes(busqueda)) {
         mostrarResultadosDeBusqueda({ type: 'marca', query: textoBusqueda, results: uniqueMarcasEnResultados });
