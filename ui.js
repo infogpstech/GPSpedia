@@ -32,6 +32,8 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
         const blob = await offline.getThumbnail(fileId);
         if (blob) {
             imgElement.src = URL.createObjectURL(blob);
+            // Liberar memoria del objeto URL cuando la imagen ya no se necesite (opcional/avanzado)
+            // imgElement.onload = () => URL.revokeObjectURL(imgElement.src);
             return;
         }
 
@@ -39,10 +41,16 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
         const remoteUrl = getImageUrl(fileId, size);
         imgElement.src = remoteUrl;
 
-        // 3. Comprimir y guardar para uso offline futuro (en segundo plano)
-        offline.compressAndStoreThumbnail(remoteUrl, fileId);
+        // 3. Comprimir y guardar para uso offline futuro (solo si es una imagen real de Drive)
+        if (fileId && typeof fileId === 'string' && !fileId.startsWith('blob:') && !fileId.includes('placehold.co')) {
+            // No esperamos a que termine para no bloquear el renderizado
+            offline.compressAndStoreThumbnail(remoteUrl, fileId).catch(err => {
+                console.warn("Fallo guardado asíncrono de miniatura:", err);
+            });
+        }
     } catch (e) {
         console.warn("Error en setOptimizedImage:", e);
+        // Fallback final a la URL directa de Drive
         imgElement.src = getImageUrl(fileId, size);
     }
 }

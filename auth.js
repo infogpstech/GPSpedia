@@ -18,12 +18,15 @@ function handleLoginSuccess(user) {
 }
 
 async function loadInitialData() {
+    let catalogLoaded = false;
+
     // 1. Intentar cargar desde caché local inmediatamente (Cache-First)
     try {
         const cachedCatalog = await offline.getCatalog();
         if (cachedCatalog) {
             console.log("Cargando catálogo desde caché local...");
             processCatalogData(cachedCatalog);
+            catalogLoaded = true;
         }
     } catch (e) {
         console.warn("Error al leer catálogo de IndexedDB:", e);
@@ -38,24 +41,30 @@ async function loadInitialData() {
         await offline.saveCatalog(catalogData);
 
         processCatalogData(catalogData);
+        catalogLoaded = true;
 
     } catch (error) {
-        const cachedCatalog = await offline.getCatalog();
-        if (!cachedCatalog) {
-            showGlobalError("Error al cargar los datos del catálogo. La funcionalidad puede ser limitada.");
-            setState({
-                catalogData: {
-                    cortes: [],
-                    tutoriales: [],
-                    relay: [],
-                    sortedCategories: []
-                }
-            });
-        } else {
-            showGlobalError("Trabajando en modo local/caché.");
-            // Phase 2: Incondicionalmente procesar la caché si falla la red
-            processCatalogData(cachedCatalog);
+        console.warn("Fallo al cargar catálogo desde red:", error);
+
+        if (!catalogLoaded) {
+            const cachedCatalog = await offline.getCatalog();
+            if (!cachedCatalog) {
+                showGlobalError("No se pudo cargar el catálogo. Verifica tu conexión.");
+                setState({
+                    catalogData: {
+                        cortes: [],
+                        tutoriales: [],
+                        relay: [],
+                        sortedCategories: []
+                    }
+                });
+            } else {
+                // Si no se había cargado antes (por alguna razón), cargarlo ahora
+                showGlobalError("Trabajando en modo local/caché.");
+                processCatalogData(cachedCatalog);
+            }
         }
+        // Si ya se cargó el catálogo (desde el caché en el paso 1), fallamos silenciosamente en la red
     }
 }
 
@@ -83,12 +92,11 @@ function processCatalogData(catalogData) {
 
 
 export async function checkSession() {
-    // Cargar historial y vistos desde IndexedDB
+    // Phase 3.2: Rehidratación inmediata al inicio
     try {
-        const [history, viewed] = await Promise.all([
-            offline.getSearchHistory(),
-            offline.getViewedItems()
-        ]);
+        const history = await offline.getSearchHistory();
+        const viewed = await offline.getViewedItems();
+        console.log("Rehidratando datos persistentes:", { historyCount: history.length, viewedCount: viewed.length });
         setState({ searchHistory: history, viewedItems: viewed });
     } catch (e) {
         console.warn("Error cargando historial/vistos:", e);
@@ -117,39 +125,34 @@ export async function checkSession() {
 
     try {
         const user = JSON.parse(sessionData);
-        const result = await apiValidateSession(user.ID, user.SessionToken);
 
-        if (result && result.valid) {
-            handleLoginSuccess(user);
-            loadInitialData(); // Carga en segundo plano sin bloquear
-        } else {
-            logout("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
-        }
-    } catch (error) {
-        // Mejorar la robustez ante fallos de red intermitentes
-        console.error("Error validando sesión:", error);
+        // Phase 3.1: Acceso inmediato si hay sesión local (Non-blocking)
+        handleLoginSuccess(user);
+        loadInitialData();
 
-        // Cualquier error que no sea una expiración explícita se trata como fallo de red/acceso para permitir modo offline
-        const isExpirationError = error.message && (
-            error.message.includes('expirada') ||
-            error.message.includes('inválida') ||
-            error.message.includes('expired')
-        );
-
-        if (!isExpirationError) {
-            showGlobalError("Trabajando en modo local/caché.");
-            // Restaurar sesión desde localStorage sin validar (fallback robusto)
-            try {
-                const user = JSON.parse(sessionData);
-                handleLoginSuccess(user);
-                loadInitialData();
-            } catch (e) {
+        // Validar en segundo plano
+        apiValidateSession(user.ID, user.SessionToken).then(result => {
+            if (!result || !result.valid) {
+                logout("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
+            }
+        }).catch(error => {
+            console.warn("Fallo validación de sesión (API inaccesible):", error.message);
+            // Phase 3.2: Suprimir mensajes de error de red durante el arranque si ya estamos en modo local
+            const isExpirationError = error.message && (
+                error.message.includes('expirada') ||
+                error.message.includes('inválida') ||
+                error.message.includes('expired')
+            );
+            if (isExpirationError) {
+                showGlobalError(`Error de sesión: ${error.message}`);
                 logout();
             }
-        } else {
-            showGlobalError(`Error de sesión: ${error.message}`);
-            logout();
-        }
+            // Si es un error de red (TypeError: Failed to fetch), simplemente continuamos en modo local silenciosamente
+        });
+
+    } catch (error) {
+        console.error("Error crítico en checkSession:", error);
+        logout();
     } finally {
         // Liberar el bloqueo para que otras pestañas puedan validar si es necesario.
         localStorage.removeItem(LOCK_KEY);
