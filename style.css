@@ -1335,3 +1335,51 @@ body.search-active .container {
 .inbox-actions button.resolve-btn {
     background-color: #28a745;
 }
+
+/* --- OFFLINE & VIEWED STYLES --- */
+.viewed-badge {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--accent-color);
+    color: white;
+    padding: 3px 8px;
+    border-radius: 4px;
+    font-size: 0.7em;
+    font-weight: bold;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 5;
+    pointer-events: none;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.search-tag {
+    display: inline-block;
+    background: #e9ecef;
+    padding: 6px 12px;
+    border-radius: 20px;
+    margin: 5px;
+    font-size: 0.9em;
+    cursor: pointer;
+    transition: background 0.2s;
+    border: 1px solid #dee2e6;
+}
+
+.search-tag:hover {
+    background: #dee2e6;
+}
+
+.dark-mode .search-tag {
+    background: #343a40;
+    border-color: #495057;
+    color: #f8f9fa;
+}
+
+.search-history-container {
+    padding: 10px 0;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+}

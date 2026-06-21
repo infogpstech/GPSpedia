@@ -7,6 +7,7 @@
 import { setState } from './state.js';
 import { routeAction, fetchCatalogData, login as apiLogin, validateSession as apiValidateSession } from './api-config.js';
 import { showLoginScreen, showApp, showGlobalError } from './ui.js';
+import * as offline from './offline.js';
 
 const SESSION_KEY = 'gpsepedia_session';
 
@@ -17,10 +18,47 @@ function handleLoginSuccess(user) {
 }
 
 async function loadInitialData() {
+    // 1. Intentar cargar desde caché local inmediatamente (Cache-First)
+    try {
+        const cachedCatalog = await offline.getCatalog();
+        if (cachedCatalog) {
+            console.log("Cargando catálogo desde caché local...");
+            processCatalogData(cachedCatalog);
+        }
+    } catch (e) {
+        console.warn("Error al leer catálogo de IndexedDB:", e);
+    }
+
+    // 2. Cargar desde la red en segundo plano
     try {
         const apiResponse = await fetchCatalogData();
         const catalogData = apiResponse.data;
 
+        // Guardar en caché local para futuros usos
+        await offline.saveCatalog(catalogData);
+
+        processCatalogData(catalogData);
+
+    } catch (error) {
+        const cachedCatalog = await offline.getCatalog();
+        if (!cachedCatalog) {
+            showGlobalError("Error al cargar los datos del catálogo. La funcionalidad puede ser limitada.");
+            setState({
+                catalogData: {
+                    cortes: [],
+                    tutoriales: [],
+                    relay: [],
+                    sortedCategories: []
+                }
+            });
+        } else {
+            showGlobalError("No se pudo actualizar el catálogo. Usando versión local.");
+        }
+    }
+}
+
+function processCatalogData(catalogData) {
+    try {
         const categoryCounts = catalogData.cortes.reduce((acc, item) => {
             if (item.categoria) {
                 acc[item.categoria] = (acc[item.categoria] || 0) + 1;
@@ -36,26 +74,24 @@ async function loadInitialData() {
                 sortedCategories: sortedCategories
             }
         });
-
-        // La UI ya está visible, esto solo refrescará el contenido si es necesario
-        // (asumiendo que las funciones de renderizado usan el estado actualizado)
-
-    } catch (error) {
-        showGlobalError("Error al cargar los datos del catálogo. La funcionalidad puede ser limitada.");
-        // FIX: Set a default empty state to prevent fatal rendering errors
-        setState({
-            catalogData: {
-                cortes: [],
-                tutoriales: [],
-                relay: [],
-                sortedCategories: []
-            }
-        });
+    } catch (e) {
+        console.error("Error procesando datos del catálogo:", e);
     }
 }
 
 
 export async function checkSession() {
+    // Cargar historial y vistos desde IndexedDB
+    try {
+        const [history, viewed] = await Promise.all([
+            offline.getSearchHistory(),
+            offline.getViewedItems()
+        ]);
+        setState({ searchHistory: history, viewedItems: viewed });
+    } catch (e) {
+        console.warn("Error cargando historial/vistos:", e);
+    }
+
     const LOCK_KEY = 'session_validation_lock';
     const LOCK_TIMEOUT = 5000; // 5 segundos, tiempo durante el cual una pestaña puede bloquear a otras.
 

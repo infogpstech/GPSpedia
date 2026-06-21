@@ -22,7 +22,9 @@ let state = {
         isModalOpen: false,
         isSearchActive: false
     },
-    likedCortes: []
+    likedCortes: [],
+    searchHistory: [],
+    viewedItems: []
 };
 
 export function getState() {

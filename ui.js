@@ -6,6 +6,7 @@
 
 import { getFeedbackItems, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
+import * as offline from './offline.js';
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
@@ -15,6 +16,11 @@ export const IMG_SIZE_MEDIUM = 800;  // Modal details
 export const IMG_SIZE_LARGE = 1600;  // Lightbox / High Resolution
 
 export function getImageUrl(fileId, size = 400) {
+    // Si ya es una URL de Blob (caché local), devolverla directamente.
+    if (fileId && typeof fileId === 'string' && fileId.startsWith('blob:')) {
+        return fileId;
+    }
+
     const placeholder = "https://placehold.co/400x300/cccccc/333333?text=Sin+Imagen";
 
     if (!fileId || typeof fileId !== 'string' || fileId.trim() === '') {
@@ -160,13 +166,43 @@ function crearCarrusel(titulo, items, cardGenerator) {
 }
 
 export function mostrarCategorias() {
-    const { catalogData } = getState();
+    const { catalogData, searchHistory, viewedItems } = getState();
     const { cortes, sortedCategories } = catalogData;
 
     if (document.getElementById("searchInput").value.trim()) return;
 
     const cont = document.getElementById("contenido");
     cont.innerHTML = "";
+
+    // 1. Mostrar Historial de Búsqueda (si existe)
+    if (searchHistory && searchHistory.length > 0) {
+        const historySection = document.createElement('div');
+        historySection.innerHTML = '<h4 style="margin-top:20px;">Búsquedas Recientes</h4>';
+        const historyContainer = document.createElement('div');
+        historyContainer.className = 'search-history-container';
+
+        searchHistory.forEach(item => {
+            const tag = document.createElement('span');
+            tag.className = 'search-tag';
+            tag.textContent = item.term;
+            tag.onclick = () => {
+                const input = document.getElementById('searchInput');
+                input.value = item.term;
+                window.navigation.filtrarContenido(item.term);
+            };
+            historyContainer.appendChild(tag);
+        });
+        historySection.appendChild(historyContainer);
+        cont.appendChild(historySection);
+    }
+
+    // 2. Mostrar Vistos Recientemente
+    if (viewedItems && viewedItems.length > 0) {
+        const viewedCortes = viewedItems.map(v => v.data);
+        crearCarrusel('Vistos Recientemente', viewedCortes, item => {
+            return crearCardVehiculo(item, true); // true para no mostrar badge en esta sección
+        });
+    }
 
     mostrarUltimosAgregados();
 
@@ -179,7 +215,7 @@ export function mostrarCategorias() {
         .sort((a, b) => b.poblacion - a.poblacion)
         .map(c => c.nombre);
 
-    crearCarrusel('Búsqueda por Categoría', categoriasPorPoblacion, cat => {
+    crearCarrusel('Categorías Populares', categoriasPorPoblacion, cat => {
         const ejemplo = cortes.find(item => item.categoria === cat && item.imagenVehiculo);
         const card = document.createElement("div");
         card.className = "card";
@@ -520,17 +556,7 @@ export function mostrarVersiones(filas, categoria, marca, modelo) {
     cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Años de ${modelo}</h4>`;
     const grid = document.createElement("div"); grid.className = "grid";
     filas.forEach(item => {
-        const card = document.createElement("div"); card.className = "card";
-        card.onclick = () => mostrarDetalleModal(item);
-        const img = document.createElement("img");
-        img.src = getImageUrl(item.imagenVehiculo, IMG_SIZE_SMALL);
-        img.alt = `Corte ${item.anoDesde}`;
-        img.loading = "lazy";
-        card.appendChild(img);
-        const overlay = document.createElement("div"); overlay.className = "overlay";
-        const yearRange = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
-        overlay.innerHTML = `<div style="font-weight:bold;">${yearRange || modelo}</div><div style="font-size:0.8em;">${item.tipoEncendido || ''}</div>`;
-        card.appendChild(overlay);
+        const card = crearCardVehiculo(item);
         grid.appendChild(card);
     });
     cont.appendChild(grid);
@@ -660,43 +686,7 @@ export function mostrarResultadosDeBusqueda({ type, query, results }) {
         })).values()];
 
         variantesUnicas.forEach(ejemplo => {
-            const card = document.createElement("div");
-            card.className = "card";
-
-            // CORRECCIÓN: El onclick ahora salta directamente a la selección de AÑO para la variante elegida,
-            // evitando el "retroceso" en el flujo de navegación.
-            card.onclick = () => {
-                const filasDeVariante = results.filter(r =>
-                    r.marca === ejemplo.marca &&
-                    r.modelo === ejemplo.modelo &&
-                    r.versionesAplicables === ejemplo.versionesAplicables
-                );
-                mostrarVersiones(filasDeVariante, ejemplo.categoria, ejemplo.marca, ejemplo.modelo);
-            };
-
-            const img = document.createElement("img");
-            img.src = getImageUrl(ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
-            img.alt = `Modelo ${ejemplo.modelo}`;
-            img.loading = "lazy";
-            card.appendChild(img);
-
-            const overlay = document.createElement("div");
-            overlay.className = "overlay";
-
-            // CORRECCIÓN: El texto de la tarjeta ahora representa la variante, no un año específico,
-            // para que coincida con la acción del onclick.
-            const version = ejemplo.versionesAplicables || '';
-            const tiposEncendido = [...new Set(results
-                .filter(r => r.marca === ejemplo.marca && r.modelo === ejemplo.modelo && r.categoria === ejemplo.categoria && r.versionesAplicables === ejemplo.versionesAplicables)
-                .map(r => r.tipoEncendido).filter(Boolean))].join(' / ');
-
-            // Si hay modelos con mismo nombre pero distinta categoría, lo mostramos
-            const tieneDuplicadosNombre = variantesUnicas.filter(v => v.modelo === ejemplo.modelo && v.marca === ejemplo.marca).length > 1;
-            const categoriaExtra = tieneDuplicadosNombre ? `${ejemplo.categoria} | ` : '';
-            const diferenciador = `${categoriaExtra}${version || tiposEncendido}`;
-
-            overlay.innerHTML = `<div class="overlay-text-primary">${ejemplo.marca} ${ejemplo.modelo}</div><div class="overlay-text-secondary">${diferenciador}</div>`;
-            card.appendChild(overlay);
+            const card = crearCardVehiculo(ejemplo, false, results);
             grid.appendChild(card);
         });
     }
@@ -709,6 +699,11 @@ export function showNoResultsMessage(textoBusqueda) {
 }
 
 export function mostrarDetalleModal(item) {
+    // Registrar como item visto (offline)
+    offline.saveViewedItem(item).then(() => {
+        offline.getViewedItems().then(viewed => setState({ viewedItems: viewed }));
+    });
+
     const { catalogData } = getState();
     const { relay: datosRelay } = catalogData;
 
@@ -1395,34 +1390,86 @@ function mostrarUltimosAgregados() {
     if (ultimosCortes.length === 0) return;
 
     crearCarrusel('Últimos Agregados', ultimosCortes, item => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.style.animation = 'none';
-        card.style.opacity = '1';
-        card.onclick = () => mostrarDetalleModal(item);
-
-        const img = document.createElement("img");
-        img.src = getImageUrl(item.imagenVehiculo, IMG_SIZE_SMALL);
-        img.alt = `${item.marca} ${item.modelo}`;
-        img.loading = "lazy";
-        card.appendChild(img);
-
-        const overlay = document.createElement("div");
-        overlay.className = "overlay";
-        const yearRange = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
-
-        const marcaDiv = document.createElement('div');
-        marcaDiv.textContent = item.marca;
-        overlay.appendChild(marcaDiv);
-
-        const modeloDiv = document.createElement('div');
-        modeloDiv.style.cssText = "font-size:0.8em; opacity:0.8;";
-        modeloDiv.textContent = `${item.modelo} ${yearRange || ''}`;
-        overlay.appendChild(modeloDiv);
-
-        card.appendChild(overlay);
-        return card;
+        return crearCardVehiculo(item);
     });
+}
+
+/**
+ * Función unificada para crear tarjetas de vehículos con soporte para caché local y badge de "Visto".
+ */
+function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
+    const { viewedItems } = getState();
+    const isViewed = !hideBadge && viewedItems.some(v => String(v.id) === String(item.id));
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.animation = 'none';
+    card.style.opacity = '1';
+
+    // Badge de "Visto"
+    if (isViewed) {
+        const badge = document.createElement('div');
+        badge.className = 'viewed-badge';
+        badge.innerHTML = '<i class="fa-solid fa-eye"></i> Visto';
+        card.appendChild(badge);
+    }
+
+    // Configurar OnClick según el contexto
+    if (resultsForVariant) {
+        // Contexto: Resultados de búsqueda (Variantes)
+        card.onclick = () => {
+            const filasDeVariante = resultsForVariant.filter(r =>
+                r.marca === item.marca &&
+                r.modelo === item.modelo &&
+                r.versionesAplicables === item.versionesAplicables
+            );
+            mostrarVersiones(filasDeVariante, item.categoria, item.marca, item.modelo);
+        };
+    } else if (item.anoDesde && !resultsForVariant) {
+        // Contexto: Lista de años o carruseles (Item específico)
+        card.onclick = () => mostrarDetalleModal(item);
+    }
+
+    const img = document.createElement("img");
+    img.className = 'card-img-top';
+    img.alt = `${item.marca} ${item.modelo}`;
+    img.loading = "lazy";
+
+    // Intentar cargar desde IndexedDB primero
+    offline.getThumbnail(item.imagenVehiculo).then(blob => {
+        if (blob) {
+            img.src = URL.createObjectURL(blob);
+        } else {
+            const remoteUrl = getImageUrl(item.imagenVehiculo, IMG_SIZE_SMALL);
+            img.src = remoteUrl;
+            // Generar y guardar thumbnail en segundo plano
+            offline.compressAndStoreThumbnail(remoteUrl, item.imagenVehiculo);
+        }
+    }).catch(() => {
+        img.src = getImageUrl(item.imagenVehiculo, IMG_SIZE_SMALL);
+    });
+
+    card.appendChild(img);
+
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+
+    if (resultsForVariant) {
+        // UI para variantes en búsqueda
+        const version = item.versionesAplicables || '';
+        const tiposEncendido = [...new Set(resultsForVariant
+            .filter(r => r.marca === item.marca && r.modelo === item.modelo && r.categoria === item.categoria && r.versionesAplicables === item.versionesAplicables)
+            .map(r => r.tipoEncendido).filter(Boolean))].join(' / ');
+
+        overlay.innerHTML = `<div class="overlay-text-primary">${item.marca} ${item.modelo}</div><div class="overlay-text-secondary">${item.categoria} | ${version || tiposEncendido}</div>`;
+    } else {
+        // UI para items específicos
+        const yearRange = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
+        overlay.innerHTML = `<div class="overlay-text-primary">${item.marca} ${item.modelo}</div><div class="overlay-text-secondary">${yearRange} | ${item.tipoEncendido || ''}</div>`;
+    }
+
+    card.appendChild(overlay);
+    return card;
 }
 
 export function showLoginScreen(reason = null) {
@@ -1503,12 +1550,14 @@ export function showApp(user) {
 // Suscribirse a cambios de estado para renderizar el catálogo cuando los datos lleguen
 subscribe((state) => {
     const splash = document.getElementById('splash-screen');
-    const isAppVisible = splash && splash.style.display === 'none';
+    // Consideramos que la app es visible si el splash no está presente o su opacidad es 0
+    const isAppVisible = !splash || splash.style.display === 'none' || splash.style.opacity === '0';
 
     if (isAppVisible && state.catalogData && Array.isArray(state.catalogData.cortes) && state.catalogData.cortes.length > 0) {
         const cont = document.getElementById("contenido");
-        // Solo renderizar si el contenedor tiene el mensaje de carga o está vacío
-        if (cont && (cont.querySelector('.loading-data-container') || cont.innerHTML === "")) {
+        // Solo renderizar si estamos en el nivel principal y el contenedor tiene el mensaje de carga o está vacío
+        const isMainLevel = state.navigationState.level === 'categorias';
+        if (isMainLevel && cont && (cont.querySelector('.loading-data-container') || cont.innerHTML === "")) {
              mostrarCategorias();
         }
     }

@@ -11,6 +11,7 @@ import {
     mostrarResultadosDeBusqueda, // Se importa la nueva función unificada de renderizado.
     showNoResultsMessage
 } from './ui.js';
+import * as offline from './offline.js';
 
 let datosFiltrados = [];
 
@@ -79,6 +80,11 @@ export function filtrarContenido(textoBusqueda) {
         setState({ navigationState: { level: "busqueda" } });
         return;
     }
+
+    // Guardar en historial de búsqueda (offline)
+    offline.saveSearch(textoBusqueda).then(() => {
+        offline.getSearchHistory().then(history => setState({ searchHistory: history }));
+    });
 
     // --- LÓGICA DE CLASIFICACIÓN MEJORADA (BASADA EN RESULTADOS) ---
     const uniqueMarcasEnResultados = [...new Set(datosFiltrados.map(item => item.marca))];

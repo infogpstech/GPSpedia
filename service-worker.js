@@ -1,7 +1,16 @@
-const CACHE_NAME = 'gpsepedia-cache-v10';
+const CACHE_NAME = 'gpsepedia-cache-v11';
 const urlsToCache = [
   '/',
   './index.html',
+  './main.js',
+  './auth.js',
+  './ui.js',
+  './state.js',
+  './navigation.js',
+  './offline.js',
+  './lightbox.js',
+  './api-config.js',
+  './style.css',
   './icon-v3-192x192.png',
   './icon-v3-512x512.png',
   './icon-pwa-192x192.png',
