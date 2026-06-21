@@ -1,4 +1,4 @@
-// GPSpedia UI Module | Version: 2.2
+// GPSpedia UI Module | Version: 2.3
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
@@ -29,11 +29,14 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
 
     try {
         // 1. Intentar obtener del caché local (IndexedDB)
-        const blob = await offline.getThumbnail(fileId);
+        // Usamos un timeout corto para no bloquear el renderizado si IndexedDB está lento
+        const blob = await Promise.race([
+            offline.getThumbnail(fileId),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("DB Timeout")), 1500))
+        ]).catch(() => null);
+
         if (blob) {
             imgElement.src = URL.createObjectURL(blob);
-            // Liberar memoria del objeto URL cuando la imagen ya no se necesite (opcional/avanzado)
-            // imgElement.onload = () => URL.revokeObjectURL(imgElement.src);
             return;
         }
 
