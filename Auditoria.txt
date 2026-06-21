@@ -190,3 +190,21 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - Eliminar el `oninput` redundante en `index.html`.
 - Implementar la excepción de zoom por lightbox en `add_cortes.html`.
 - Refactorizar `mostrarModelos` para usar `previousState` en su botón de regreso.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - FASE 2: ROBUSTEZ SISTEMA OFFLINE (06/02/2026)**
+
+**Archivos involucrados:** offline.js, auth.js, ui.js, navigation.js.
+
+**Hallazgos:**
+1. **offline.js:** La versión de la base de datos estaba en 1. Falta de manejo del evento 'onblocked' podía causar bloqueos en la actualización de esquemas si había múltiples pestañas abiertas.
+2. **auth.js:** La validación de sesión (checkSession) era demasiado estricta con los errores de red, lo que provocaba cierres de sesión innecesarios al estar offline. La carga de datos iniciales (loadInitialData) no procesaba la caché local si la red fallaba, dejando la app en un estado inútil.
+3. **ui.js:** El suscriptor al estado tenía guardas que podían impedir el renderizado si el contenedor ya tenía contenido de error o si la transición desde el splash screen no era limpia tras una carga fallida de red.
+4. **navigation.js:** Cada pulsación de tecla en el buscador disparaba una escritura en IndexedDB, causando contaminación del historial y degradación del rendimiento.
+
+**Acciones:**
+- **Robustez de Persistencia:** Incrementada DB_VERSION a 2 en offline.js y añadido listener 'onblocked'.
+- **Modo Local:** Modificada lógica de 'checkSession' en auth.js para permitir fallback a sesión local ante cualquier error que no sea expiración explícita.
+- **Catálogo Offline:** Asegurado el procesamiento de datos cacheados en 'loadInitialData' (auth.js) tras fallo de red.
+- **UI Resiliente:** Ajustada lógica de suscripción en ui.js para forzar renderizado de categorías si hay datos disponibles en el estado, incluso tras errores previos.
+- **Historial Limpio:** Implementado debounce de 1500ms y validación de longitud mínima (3 caracteres) para el guardado de búsquedas en navigation.js.

@@ -5,7 +5,7 @@
 // - Provide a clean API for offline data access.
 
 const DB_NAME = 'GPSpedia_DB';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Incremented for Phase 2 robustness
 
 let dbPromise = null;
 
@@ -22,6 +22,10 @@ export async function initDB() {
             console.error("IndexedDB error:", event.target.error);
             dbPromise = null;
             reject(event.target.error);
+        };
+
+        request.onblocked = () => {
+            console.warn("IndexedDB update blocked. Please close other tabs.");
         };
 
         request.onsuccess = (event) => {

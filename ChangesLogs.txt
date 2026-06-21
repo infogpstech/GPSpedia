@@ -271,3 +271,22 @@
   - Sistema de verificación anti-duplicado en 3 etapas.
 
 **Versión:** Consolidación final v2.0 (Full Features).
+
+**CHANGES LOG - 06/02/2026 (Fase 2 Offline)**
+
+**Archivo: offline.js**
+- **Línea 8:** Incrementada DB_VERSION a 2.
+- **Líneas 27-29:** Añadido listener 'onblocked' en initDB para mayor estabilidad en actualizaciones concurrentes.
+
+**Archivo: auth.js**
+- **Línea 56:** Implementado procesamiento incondicional de la caché local (processCatalogData) en el bloque catch de loadInitialData.
+- **Líneas 131-143:** Refactorizada validación de errores en checkSession para permitir el uso de la aplicación en modo local ante fallos de conexión (TypeError/Network Error), evitando el logout automático.
+
+**Archivo: ui.js**
+- **Línea 1558:** Ampliada la condición de renderizado en la suscripción al estado para incluir contenedores vacíos o con mensajes de error previos, garantizando que el catálogo se muestre al cargar desde caché.
+
+**Archivo: navigation.js**
+- **Línea 17:** Declarada variable global searchDebounceTimer.
+- **Líneas 85-93:** Implementado mecanismo de debounce (1500ms) y filtro de longitud mínima (>=3) para el guardado de términos en el historial de búsqueda.
+
+**Versión:** Robustecimiento del sistema offline v2.1.0.

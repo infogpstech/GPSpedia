@@ -1,4 +1,4 @@
-// GPSpedia Authentication Module | Version: 2.0
+// GPSpedia Authentication Module | Version: 2.1
 // Responsibilities:
 // - Manage the entire user authentication lifecycle (login, logout, session validation).
 // - Interact with the API module for backend communication.
@@ -53,6 +53,8 @@ async function loadInitialData() {
             });
         } else {
             showGlobalError("No se pudo actualizar el catálogo. Usando versión local.");
+            // Phase 2: Incondicionalmente procesar la caché si falla la red
+            processCatalogData(cachedCatalog);
         }
     }
 }
@@ -127,16 +129,23 @@ export async function checkSession() {
         // Mejorar la robustez ante fallos de red intermitentes
         console.error("Error validando sesión:", error);
 
-        const isNetworkError = error.message.includes('Failed to fetch') ||
-                               error.message.includes('network error') ||
-                               error.message.includes('decoding');
+        // Cualquier error que no sea una expiración explícita se trata como fallo de red/acceso para permitir modo offline
+        const isExpirationError = error.message && (
+            error.message.includes('expirada') ||
+            error.message.includes('inválida') ||
+            error.message.includes('expired')
+        );
 
-        if (isNetworkError) {
+        if (!isExpirationError) {
             showGlobalError("Error de conexión. Trabajando en modo local/caché.");
-            // Restaurar sesión desde localStorage sin validar (fallback)
-            const user = JSON.parse(sessionData);
-            handleLoginSuccess(user);
-            loadInitialData();
+            // Restaurar sesión desde localStorage sin validar (fallback robusto)
+            try {
+                const user = JSON.parse(sessionData);
+                handleLoginSuccess(user);
+                loadInitialData();
+            } catch (e) {
+                logout();
+            }
         } else {
             showGlobalError(`Error de sesión: ${error.message}`);
             logout();

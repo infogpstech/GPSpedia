@@ -1,4 +1,4 @@
-// GPSpedia UI Module | Version: 2.0
+// GPSpedia UI Module | Version: 2.1
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
@@ -1555,9 +1555,9 @@ subscribe((state) => {
 
     if (isAppVisible && state.catalogData && Array.isArray(state.catalogData.cortes) && state.catalogData.cortes.length > 0) {
         const cont = document.getElementById("contenido");
-        // Solo renderizar si estamos en el nivel principal y el contenedor tiene el mensaje de carga o está vacío
+        // Solo renderizar si estamos en el nivel principal y el contenedor tiene el mensaje de carga o está vacío o contiene errores previos
         const isMainLevel = state.navigationState.level === 'categorias';
-        if (isMainLevel && cont && (cont.querySelector('.loading-data-container') || cont.innerHTML === "")) {
+        if (isMainLevel && cont && (cont.querySelector('.loading-data-container') || cont.innerHTML.trim() === "" || cont.querySelector('.error-message'))) {
              mostrarCategorias();
         }
     }
