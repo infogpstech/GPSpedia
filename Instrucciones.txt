@@ -1,0 +1,260 @@
+Importante: 
+PROHIBIDO AGREGAR CONTENIDO ANTES DEL SIGUIENTE BLOQUE DE TEXTO. 
+
+— PROCEDIMIENTO OBLIGATORIO DE TRABAJO.
+===================================================================
+
+Este procedimiento es de CUMPLIMIENTO OBLIGATORIO en TODOS los proyectos.
+No se permite omitir, alterar ni reordenar pasos.
+
+--------------------------------------------------
+FLUJO PRINCIPAL DE TRABAJO
+--------------------------------------------------
+
+1. AUDITORÍA INICIAL DEL ARCHIVO
+   - Auditar el/los archivo(s) involucrados.
+   - Revisión archivo por archivo.
+   - Revisión línea por línea.
+   - Identificar estado actual, riesgos, dependencias y efectos colaterales.
+   - PROHIBIDO modificar código en esta etapa.
+
+2. REGISTRO DE HALLAZGOS
+   - Registrar TODOS los hallazgos en Auditoría.txt.
+   - Crear nueva entrada o actualizar la existente.
+   - PROHIBIDO eliminar información previa.
+   - NO realizar correcciones durante la auditoría.
+
+3. MANEJO DE HALLAZGOS FUERA DE ALCANCE
+   - Si se detectan problemas fuera de la tarea actual:
+     a) Resolverlos en el MISMO commit SOLO si es seguro.
+     b) Si no es posible:
+        -> Registrar nueva tarea en Instrucciones.txt
+        -> Referenciarla en Auditoría.txt
+
+4. RESPALDO OBLIGATORIO ANTES DE EDICIÓN
+   - Crear copia exacta del/los archivo(s) a modificar.
+   - El respaldo DEBE conservar:
+     · Nombre original
+     · Contenido íntegro
+   - El respaldo se usa EXCLUSIVAMENTE para comparación posterior.
+
+5. EJECUCIÓN DE LA TAREA
+   - Implementar ÚNICAMENTE lo solicitado.
+   - PROHIBIDO:
+     · Cambiar estilos no relacionados
+     · Alterar flujos existentes
+     · Introducir optimizaciones no solicitadas
+   - Todo cambio debe estar justificado por la tarea.
+
+6. VERIFICACIÓN FUNCIONAL
+   - Confirmar que la tarea cumple su objetivo.
+   - Verificar que no se rompan funciones existentes.
+   - Probar flujos relacionados directa e indirectamente.
+
+7. COMPARACIÓN POST-EDICIÓN (OBLIGATORIA)
+   - Comparar archivo editado contra el respaldo previo.
+   - Identificar:
+     · Líneas eliminadas
+     · Líneas modificadas
+     · Bloques sobreescritos
+   - Verificar que:
+     -> TODO cambio esté directamente relacionado con la tarea.
+   - Si se detectan cambios ajenos:
+     -> REVERTIRLOS inmediatamente
+     -> Repetir la comparación
+-Los archivos de Respaldo se debe eliminar DESPUES de la revision de codigo de Code Review. 
+-Todo archivo, captura generado para la verificación visual o ejecutable debe de ser eliminado en el pre-commit. 
+
+8. VERIFICACIÓN DE INTEGRIDAD Y EFECTOS COLATERALES
+   - Revisar dependencias internas y externas.
+   - Detectar efectos colaterales visuales o lógicos.
+   - Confirmar que no existen regresiones.
+
+9. REVISIÓN FINAL DE CÓDIGO
+   - Revisión completa nuevamente.
+   - Línea por línea.
+   - Función por función.
+   - Evaluar consistencia, claridad y impacto.
+
+10. REGISTRO EN CHANGESLOGS.TXT
+    - Registrar TODOS los cambios realizados.
+    - Indicar:
+      · Archivo modificado
+      · Líneas afectadas
+      · Descripción objetiva
+    - PROHIBIDO asumir éxito o usar frases de cierre.
+
+11. ACTUALIZACIÓN DE INSTRUCCIONES.TXT
+    - Mover la tarea ejecutada a:
+EXTENSIÓN OBLIGATORIA POR CODE REVIEW
+--------------------------------------------------
+
+Si el Code Review detecta:
+- Fallas
+- Bloqueantes
+- Riesgos
+- Cambios requeridos
+
+ENTONCES:
+-> Este MISMO procedimiento DEBE aplicarse nuevamente
+-> Incluso si implica modificar archivos ya editados
+-> NO se permiten correcciones parciales
+
+
+==================================================
+PROTOCOLO DE RESULTADO DE CODE REVIEW
+==================================================
+
+--------------------------------------------------
+FLUJO DE ANÁLISIS
+--------------------------------------------------
+
+1. LECTURA COMPLETA DEL CODE REVIEW
+   - Leer TODO el informe.
+   - No omitir secciones.
+
+2. SAFETY & SIDE EFFECTS
+   - Se considera FUENTE DE VERDAD PRINCIPAL.
+   - SOLO se ignora si el Code Review solicita
+     explícitamente revertir cambios.
+
+--------------------------------------------------
+TRATAMIENTO DE REVERSIÓN
+--------------------------------------------------
+
+3. EVALUACIÓN OBLIGATORIA
+
+   a) CAMBIOS "OUT OF SCOPE"
+      - Verificar si pertenecen a:
+        · Tareas anteriores
+        · Commits previos aprobados
+
+      - Si pertenecen a tareas anteriores:
+        -> IGNORAR solicitud de reversión
+        -> CONTINUAR con el commit actual
+
+   b) CAMBIOS DE LA TAREA ACTUAL
+      - Si los cambios NO solicitados
+        fueron introducidos durante la tarea actual:
+        -> REALIZAR reversión
+        -> REGISTRAR el motivo
+
+--------------------------------------------------
+IMPACTO EN EL FLUJO
+--------------------------------------------------
+
+4. REINICIO DEL CICLO
+   - Toda observación que implique cambios:
+     -> REINICIA el ciclo completo
+        desde la AUDITORÍA INICIAL
+
+   - El reinicio NO afecta:
+     · Commits anteriores
+     · Tareas aprobadas
+     · Cambios fuera de alcance
+
+
+--------------------------------------------------
+DOCUMENTACIÓN OBLIGATORIA
+--------------------------------------------------
+
+Toda acción derivada del Code Review
+DEBE quedar registrada en:
+- Auditoría.txt
+- ChangesLogs.txt
+- Instrucciones.txt (si aplica)
+
+
+--------------------------------------------------
+REGLA FINAL ABSOLUTA
+--------------------------------------------------
+
+SI NO SE AUDITA, NO SE CAMBIA.
+SI NO SE REGISTRA, NO EXISTE.
+
+El incumplimiento de CUALQUIER paso
+INVALIDA el proceso completo.
+
+
+— ZONAS SEGURAS (ACCESO RESTRINGIDO - PRECAUCIÓN)
+===================================================================
+Las siguientes secciones del código y funcionalidades están bajo PROTECCIÓN CRÍTICA y se consideran ZONAS SEGURAS. Cualquier modificación de su funcionamiento, lógica o estilos requiere autorización expresa y auditoría rigurosa.
+
+1. FORMULARIO AGREGAR CORTES (add_cortes.html):
+   - Etapa 1: Verificación de Vehículo.
+   - Etapa 1.5: Modal de Verificación (Anti-duplicado).
+   - Etapa 2: Registro de Nuevo Corte.
+
+2. NAVEGACIÓN Y MENÚ LATERAL (index.html, main.js):
+   - Listeners de navegación (Cortes, Tutoriales, Relay).
+   - Lógica de Modo Oscuro y persistencia del tema.
+   - Modal de Dashboard y visualización de logs de actividad.
+
+3. LAYOUT PRINCIPAL Y FOOTER (index.html, style.css):
+   - Estructura flex-column del body.
+   - Padding inferior del .container para evitar solapamiento con el footer.
+   - Visibilidad del carrusel de marcas en la página de inicio.
+
+4. GESTIÓN DE USUARIOS Y RBAC (users.html, services/users/users.js):
+   - Lógica de filtrado por rol (RBAC) en frontend y backend.
+   - Edición de perfil propio y restricciones de cambio de username.
+   - Modales de cambio de contraseña y edición de nombre.
+
+Cualquier cambio en estas zonas invalidará el commit.
+
+---
+*No hay tareas pendientes en esta sección.*
+
+---
+---
+**TAREAS COMPLETADAS (Validadas por el PM)**
+---
+1. **TÍTULO: Lanzamiento Global GPSpedia v2.0 (v2.0.0)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** Global (Frontend y Backend)
+   - **DESCRIPCIÓN DETALLADA:** Versioning, README integral, UI Branding v2.0, FAQ Accordion, Terminología técnica.
+
+2. **TÍTULO: Reparación de Funciones del Menú, Modo Oscuro y Footer (v4.9.18)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, main.js, style.css
+   - **DESCRIPCIÓN DETALLADA:** Restauración de navegación, Dashboard y persistencia de Modo Oscuro.
+
+3. **TÍTULO: Gestión de Usuarios, RBAC y Seguridad (v4.9.20 - v4.9.25)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** users.html, services/users/users.js, api-config.js
+   - **DESCRIPCIÓN DETALLADA:** Cambio de contraseña case-sensitive, filtrado RBAC, edición de perfil, animaciones de carga (spinners).
+
+4. **TÍTULO: Refinamiento de UI, PWA y Sistema Anti-Debugging (v2.0.4)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** Global (Frontend, Documentación)
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Seguridad:** Bloqueo de DevTools, click derecho, Ctrl+U y Zoom manual (con excepción en Lightbox).
+     - **Rendimiento:** Implementación de native lazy-load y carga híbrida (eager/lazy) para imágenes de cortes.
+     - **Robustez:** Recálculo dinámico de altura en acordeones mediante eventos 'onload'.
+     - **Estética:** Estandarización de overlays mediante clases CSS (.overlay-text-primary/secondary).
+     - **Documentación:** Unificación de README.md y creación de ChangeLog técnico v1.5 vs v2.0.
+     - **Compatibilidad:** Verificación de PWA en Android, iOS y HarmonyOS.
+
+10. **TÍTULO: Corrección de Navegación por Marca y UI (v2.0.8)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, style.css, users.html, add_cortes.html
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Navegación:** Implementada lógica de estado previo para asegurar que el regreso desde niveles profundos (años, versiones) respete el punto de entrada (Carrusel de Marcas o Búsqueda) evitando bucles de categorías.
+     - **UI:** Implementada prevención global de selección de texto mediante CSS `user-select: none` para optimizar experiencia móvil y evitar asistentes de búsqueda emergentes, manteniendo excepciones para campos de entrada.
+
+---
+**TAREAS PENDIENTES DE REVISIÓN**
+---
+11. **TÍTULO: Auditoría Total y Release Notes v2.0 (Full Features)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** Global (Documentación)
+   - **DESCRIPCIÓN DETALLADA:** Auditoría integral comparativa v1.5 vs v2.0. Creación de `RELEASE NOTES.txt` detallando todas las mejoras: arquitectura modular, seguridad RBAC, optimización de imágenes/lazy load, navegación contextual, sistema de votos y "Corte Recomendado", modales de Relay, crédito a colaboradores y asistente anti-duplicado.
+
+---
+**DERIVADO DE AUDITORÍA (ROADMAP v2.0) — NO EJECUTAR AÚN**
+---
+5. TÍTULO: Lógica de Backend para Gestión de Años y Votos (PENDIENTE)
+6. TÍTULO: Dashboard de Desempeño para Supervisores (PENDIENTE)
+7. TÍTULO: Funcionalidad de Edición 'In-Modal' (PENDIENTE)
+8. TÍTULO: Lógica de Backend para Feedback Inbox (PENDIENTE)
+9. TÍTULO: Expansión de Rango de Años por Feedback (PENDIENTE)
