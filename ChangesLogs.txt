@@ -271,3 +271,43 @@
   - Sistema de verificación anti-duplicado en 3 etapas.
 
 **Versión:** Consolidación final v2.0 (Full Features).
+
+**CHANGES LOG - 06/02/2026 (Fase 2 Offline)**
+
+**Archivo: offline.js**
+- **Línea 8:** Incrementada DB_VERSION a 2.
+- **Líneas 27-29:** Añadido listener 'onblocked' en initDB para mayor estabilidad en actualizaciones concurrentes.
+
+**Archivo: auth.js**
+- **Línea 56:** Implementado procesamiento incondicional de la caché local (processCatalogData) en el bloque catch de loadInitialData.
+- **Líneas 131-143:** Refactorizada validación de errores en checkSession para permitir el uso de la aplicación en modo local ante fallos de conexión (TypeError/Network Error), evitando el logout automático.
+
+**Archivo: ui.js**
+- **Línea 1558:** Ampliada la condición de renderizado en la suscripción al estado para incluir contenedores vacíos o con mensajes de error previos, garantizando que el catálogo se muestre al cargar desde caché.
+
+**Archivo: navigation.js**
+- **Línea 17:** Declarada variable global searchDebounceTimer.
+- **Líneas 85-93:** Implementado mecanismo de debounce (1500ms) y filtro de longitud mínima (>=3) para el guardado de términos en el historial de búsqueda.
+
+**Versión:** Robustecimiento del sistema offline v2.1.0.
+
+**CHANGES LOG - 06/02/2026 (Fase 3 Estabilidad Offline)**
+
+**Archivo: ui.js**
+- **Líneas 17-48:** Implementada función asíncrona 'setOptimizedImage' para centralizar la carga de imágenes con prioridad en IndexedDB.
+- **Líneas 253, 280, 299, 329, 378, 489, 548, 652, 704, 773, 803, 887, 1048, 1470, 1663, 1689, 1786:** Actualizados todos los componentes de renderizado de imágenes para usar 'setOptimizedImage', garantizando visibilidad offline completa.
+- **Líneas 1362-1364:** Refactorizada la carga de imágenes en acordeones (lazy load) para integrar el sistema de optimización de Phase 3.
+- **Líneas 1584-1596:** Optimizada la reactividad del suscriptor al estado para forzar el renderizado inicial de carruseles de actividad (Vistos Recientemente/Búsquedas) tras la carga desde IndexedDB.
+- **Línea 221:** Añadida clase 'has-text' al seleccionar términos del historial para mantener la visibilidad del botón 'X'.
+
+**Archivo: auth.js**
+- **Líneas 90-95:** Movida la carga de 'searchHistory' y 'viewedItems' al inicio de 'checkSession' para maximizar la velocidad de recuperación local.
+- **Líneas 55, 140:** Unificados mensajes de estado a "Trabajando en modo local/caché" para mayor coherencia ante fallos de red.
+
+**Archivo: main.js**
+- **Líneas 169, 245:** Actualizados listeners de botones "Cortes" para invocar 'navigation.irAPaginaPrincipal()', asegurando un reset total de la navegación y filtros.
+
+**Archivo: style.css**
+- **Líneas 1032-1038:** Añadidas reglas de visibilidad condicional para la sección de historial de búsqueda vinculadas a 'body.search-active'.
+
+**Versión:** Ajustes de estabilidad del sistema offline v2.2.0.

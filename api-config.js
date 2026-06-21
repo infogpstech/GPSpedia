@@ -1,4 +1,4 @@
-// GPSpedia Unified API Module | Version: 2.0
+// GPSpedia Unified API Module | Version: 2.2
 // ============================================================================
 // ÚNICA FUENTE DE VERDAD PARA LA CONFIGURACIÓN Y LÓGICA DE LA API
 // ============================================================================

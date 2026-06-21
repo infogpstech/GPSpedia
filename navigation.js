@@ -1,4 +1,4 @@
-// GPSpedia Navigation Module | Version: 2.0
+// GPSpedia Navigation Module | Version: 2.2
 // Responsibilities:
 // - Manage the application's view state and navigation flow.
 // - Handle user navigation actions (e.g., selecting a category or brand).
@@ -14,6 +14,7 @@ import {
 import * as offline from './offline.js';
 
 let datosFiltrados = [];
+let searchDebounceTimer = null;
 
 export function irAPaginaPrincipal() {
     // Se limpia el campo de búsqueda al regresar a la página principal.
@@ -81,10 +82,15 @@ export function filtrarContenido(textoBusqueda) {
         return;
     }
 
-    // Guardar en historial de búsqueda (offline)
-    offline.saveSearch(textoBusqueda).then(() => {
-        offline.getSearchHistory().then(history => setState({ searchHistory: history }));
-    });
+    // Guardar en historial de búsqueda (offline) con Debounce de Phase 2
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+        if (textoBusqueda.trim().length >= 3) {
+            offline.saveSearch(textoBusqueda).then(() => {
+                offline.getSearchHistory().then(history => setState({ searchHistory: history }));
+            });
+        }
+    }, 1500);
 
     // --- LÓGICA DE CLASIFICACIÓN MEJORADA (BASADA EN RESULTADOS) ---
     const uniqueMarcasEnResultados = [...new Set(datosFiltrados.map(item => item.marca))];

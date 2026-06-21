@@ -1,4 +1,4 @@
-// lightbox.js | Version: 2.1
+// lightbox.js | Version: 2.2
 // Responsibilities:
 // - Manage the application's lightbox for image zooming.
 // - Handle viewport meta tags to allow/restrict zoom dynamically.
