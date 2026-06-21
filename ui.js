@@ -1,4 +1,4 @@
-// GPSpedia UI Module | Version: 2.1
+// GPSpedia UI Module | Version: 2.2
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
@@ -14,6 +14,38 @@ const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="
 export const IMG_SIZE_SMALL = 300;   // Cards and thumbnails
 export const IMG_SIZE_MEDIUM = 800;  // Modal details
 export const IMG_SIZE_LARGE = 1600;  // Lightbox / High Resolution
+
+/**
+ * Establece una imagen optimizada intentando cargarla desde el caché de IndexedDB.
+ * @param {HTMLImageElement} imgElement - El elemento img a actualizar.
+ * @param {string} fileId - El ID o URL de la imagen.
+ * @param {number} size - El tamaño solicitado para la imagen.
+ */
+export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMALL) {
+    if (!fileId) {
+        imgElement.src = getImageUrl(null);
+        return;
+    }
+
+    try {
+        // 1. Intentar obtener del caché local (IndexedDB)
+        const blob = await offline.getThumbnail(fileId);
+        if (blob) {
+            imgElement.src = URL.createObjectURL(blob);
+            return;
+        }
+
+        // 2. Si no está en caché, usar URL remota
+        const remoteUrl = getImageUrl(fileId, size);
+        imgElement.src = remoteUrl;
+
+        // 3. Comprimir y guardar para uso offline futuro (en segundo plano)
+        offline.compressAndStoreThumbnail(remoteUrl, fileId);
+    } catch (e) {
+        console.warn("Error en setOptimizedImage:", e);
+        imgElement.src = getImageUrl(fileId, size);
+    }
+}
 
 export function getImageUrl(fileId, size = 400) {
     // Si ya es una URL de Blob (caché local), devolverla directamente.
@@ -177,6 +209,7 @@ export function mostrarCategorias() {
     // 1. Mostrar Historial de Búsqueda (si existe)
     if (searchHistory && searchHistory.length > 0) {
         const historySection = document.createElement('div');
+        historySection.className = 'search-history-section';
         historySection.innerHTML = '<h4 style="margin-top:20px;">Búsquedas Recientes</h4>';
         const historyContainer = document.createElement('div');
         historyContainer.className = 'search-history-container';
@@ -188,6 +221,8 @@ export function mostrarCategorias() {
             tag.onclick = () => {
                 const input = document.getElementById('searchInput');
                 input.value = item.term;
+                // Forzar visualización de botón X y filtrado
+                input.parentElement.classList.add('has-text');
                 window.navigation.filtrarContenido(item.term);
             };
             historyContainer.appendChild(tag);
@@ -221,7 +256,7 @@ export function mostrarCategorias() {
         card.className = "card";
         card.onclick = () => mostrarMarcas(cat);
         const img = document.createElement("img");
-        img.src = getImageUrl(ejemplo?.imagenVehiculo, IMG_SIZE_SMALL);
+        setOptimizedImage(img, ejemplo?.imagenVehiculo, IMG_SIZE_SMALL);
         img.alt = `Categoría ${cat}`;
         img.loading = "lazy";
         card.appendChild(img);
@@ -245,7 +280,7 @@ export function mostrarCategorias() {
         // Cambio Crítico: Corregir el flujo de navegación para que vaya de Marca -> Modelos.
         card.onclick = () => mostrarModelosPorMarca(marca);
         const img = document.createElement("img");
-        img.src = getImageUrl(logoUrl, IMG_SIZE_SMALL);
+        setOptimizedImage(img, logoUrl, IMG_SIZE_SMALL);
         img.alt = `Marca ${marca}`;
         img.loading = "lazy";
         card.appendChild(img);
@@ -264,7 +299,7 @@ export function mostrarCategorias() {
         card.className = "card brand-logo-item";
         card.onclick = () => mostrarModelos('Motocicletas', marca);
         const img = document.createElement("img");
-        img.src = getImageUrl(logoUrl, IMG_SIZE_SMALL);
+        setOptimizedImage(img, logoUrl, IMG_SIZE_SMALL);
         img.alt = `Marca ${marca}`;
         img.loading = "lazy";
         card.appendChild(img);
@@ -294,7 +329,7 @@ export function mostrarMarcas(categoria) {
         logoContainer.onclick = () => mostrarModelos(categoria, m);
 
         const img = document.createElement("img");
-        img.src = getImageUrl(logoUrl, IMG_SIZE_SMALL) || 'https://placehold.co/120x80/cccccc/333333?text=Sin+Logo';
+        setOptimizedImage(img, logoUrl, IMG_SIZE_SMALL); // 'https://placehold.co/120x80/cccccc/333333?text=Sin+Logo';
         img.alt = `Marca ${m}`;
         img.loading = "lazy";
 
@@ -343,7 +378,7 @@ export function mostrarModelosPorMarca(marca) {
         // Al hacer clic, pasamos la categoría para asegurar que el filtrado posterior sea preciso
         card.onclick = () => navegarADetallesDeModelo(ejemplo.categoria, marca, ejemplo.modelo);
         const img = document.createElement("img");
-        img.src = getImageUrl(ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
+        setOptimizedImage(img, ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
         img.alt = `Modelo ${ejemplo.modelo}`;
         img.loading = "lazy";
         card.appendChild(img);
@@ -454,7 +489,7 @@ export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
         const card = document.createElement("div"); card.className = "card";
         card.onclick = () => navegarADetallesDeModelo(ejemplo.categoria, marca, ejemplo.modelo);
         const img = document.createElement("img");
-        img.src = getImageUrl(ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
+        setOptimizedImage(img, ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
         img.alt = `Modelo ${ejemplo.modelo}`;
         img.loading = "lazy";
         card.appendChild(img);
@@ -513,7 +548,7 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
         card.onclick = () => mostrarVersiones(vehiculos.filter(v => v.tipoEncendido === tipo), categoria, marca, modelo);
 
         const img = document.createElement("img");
-        img.src = getImageUrl(ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
+        setOptimizedImage(img, ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
         img.alt = tipo;
         img.loading = "lazy";
         card.appendChild(img);
@@ -617,7 +652,7 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
         card.onclick = () => mostrarVersiones(vehiculosDeVersion, categoria, marca, modelo);
 
         const img = document.createElement("img");
-        img.src = getImageUrl(ejemplo?.imagenVehiculo, IMG_SIZE_SMALL);
+        setOptimizedImage(img, ejemplo?.imagenVehiculo, IMG_SIZE_SMALL);
         img.alt = `Versión ${version}`;
         img.loading = "lazy";
         card.appendChild(img);
@@ -669,7 +704,7 @@ export function mostrarResultadosDeBusqueda({ type, query, results }) {
             card.onclick = () => mostrarModelosPorMarca(marca);
 
             const img = document.createElement("img");
-            img.src = getImageUrl(logoUrl, IMG_SIZE_SMALL);
+            setOptimizedImage(img, logoUrl, IMG_SIZE_SMALL);
             img.alt = `Marca ${marca}`;
             img.loading = "lazy";
             card.appendChild(img);
@@ -738,7 +773,7 @@ export function mostrarDetalleModal(item) {
     const logoUrl = getLogoUrlForMarca(item.marca, item.categoria);
     if (logoUrl) {
         const logoImg = document.createElement("img");
-        logoImg.src = getImageUrl(logoUrl, IMG_SIZE_SMALL);
+        setOptimizedImage(logoImg, logoUrl, IMG_SIZE_SMALL);
         logoImg.alt = `Logo ${item.marca}`;
         logoImg.className = 'brand-logo-modal';
         // El tamaño se controla ahora desde style.css para mantener la consistencia.
@@ -768,7 +803,7 @@ export function mostrarDetalleModal(item) {
 
     if (item.imagenVehiculo) {
         const imgVehiculo = document.createElement("img");
-        imgVehiculo.src = getImageUrl(item.imagenVehiculo, IMG_SIZE_MEDIUM);
+        setOptimizedImage(imgVehiculo, item.imagenVehiculo, IMG_SIZE_MEDIUM);
         imgVehiculo.className = 'img-vehiculo-modal';
         cont.appendChild(imgVehiculo);
     }
@@ -847,12 +882,11 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         imgContainer.className = 'image-container-with-feedback';
 
         const img = document.createElement("img");
-        const imgUrl = getImageUrl(cutData.img, IMG_SIZE_MEDIUM);
 
         if (isLazy) {
-            img.dataset.src = imgUrl;
+            img.dataset.src = getImageUrl(cutData.img, IMG_SIZE_MEDIUM);
         } else {
-            img.src = imgUrl;
+            setOptimizedImage(img, cutData.img, IMG_SIZE_MEDIUM);
         }
 
         img.className = 'img-corte image-with-container';
@@ -1014,7 +1048,7 @@ function renderRelayInfoModal(relayInfo) {
     content.appendChild(title);
 
     const img = document.createElement('img');
-    img.src = getImageUrl(relayInfo.imagen, IMG_SIZE_MEDIUM);
+    setOptimizedImage(img, relayInfo.imagen, IMG_SIZE_MEDIUM);
     img.style.width = '100%';
     img.onclick = () => {
         const highResImgUrl = getImageUrl(relayInfo.imagen, IMG_SIZE_LARGE);
@@ -1328,7 +1362,9 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
                         panel.style.maxHeight = panel.scrollHeight + "px";
                     }
                 };
-                img.src = img.dataset.src;
+                // Phase 3: Usar setOptimizedImage para cargar desde caché o Drive
+                const fileId = img.dataset.src.includes('id=') ? img.dataset.src.split('id=')[1].split('&')[0] : img.dataset.src;
+                setOptimizedImage(img, fileId, IMG_SIZE_MEDIUM);
             }
         });
     };
@@ -1435,19 +1471,8 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
     img.alt = `${item.marca} ${item.modelo}`;
     img.loading = "lazy";
 
-    // Intentar cargar desde IndexedDB primero
-    offline.getThumbnail(item.imagenVehiculo).then(blob => {
-        if (blob) {
-            img.src = URL.createObjectURL(blob);
-        } else {
-            const remoteUrl = getImageUrl(item.imagenVehiculo, IMG_SIZE_SMALL);
-            img.src = remoteUrl;
-            // Generar y guardar thumbnail en segundo plano
-            offline.compressAndStoreThumbnail(remoteUrl, item.imagenVehiculo);
-        }
-    }).catch(() => {
-        img.src = getImageUrl(item.imagenVehiculo, IMG_SIZE_SMALL);
-    });
+    // Intentar cargar desde IndexedDB mediante la función centralizada
+    setOptimizedImage(img, item.imagenVehiculo, IMG_SIZE_SMALL);
 
     card.appendChild(img);
 
@@ -1547,6 +1572,10 @@ export function showApp(user) {
     }
 }
 
+// Variable local para rastrear el estado previo de los carruseles de actividad y evitar bucles
+let lastHistoryCount = 0;
+let lastViewedCount = 0;
+
 // Suscribirse a cambios de estado para renderizar el catálogo cuando los datos lleguen
 subscribe((state) => {
     const splash = document.getElementById('splash-screen');
@@ -1555,9 +1584,23 @@ subscribe((state) => {
 
     if (isAppVisible && state.catalogData && Array.isArray(state.catalogData.cortes) && state.catalogData.cortes.length > 0) {
         const cont = document.getElementById("contenido");
-        // Solo renderizar si estamos en el nivel principal y el contenedor tiene el mensaje de carga o está vacío o contiene errores previos
         const isMainLevel = state.navigationState.level === 'categorias';
-        if (isMainLevel && cont && (cont.querySelector('.loading-data-container') || cont.innerHTML.trim() === "" || cont.querySelector('.error-message'))) {
+
+        if (!isMainLevel || !cont) return;
+
+        // Detectar si el historial o los vistos han cambiado para forzar refresco del catálogo
+        const historyChanged = (state.searchHistory?.length || 0) !== lastHistoryCount;
+        const viewedChanged = (state.viewedItems?.length || 0) !== lastViewedCount;
+
+        if (historyChanged || viewedChanged) {
+            lastHistoryCount = state.searchHistory?.length || 0;
+            lastViewedCount = state.viewedItems?.length || 0;
+            mostrarCategorias();
+            return;
+        }
+
+        // Solo renderizar si el contenedor tiene el mensaje de carga o está vacío o contiene errores previos
+        if (cont.querySelector('.loading-data-container') || cont.innerHTML.trim() === "" || cont.querySelector('.error-message')) {
              mostrarCategorias();
         }
     }
@@ -1638,7 +1681,7 @@ function mostrarTutorialesGrid() {
         card.className = "card";
         card.onclick = () => mostrarDetalleTutorialModal(item);
         const img = document.createElement("img");
-        img.src = getImageUrl(item.Imagen, IMG_SIZE_SMALL);
+        setOptimizedImage(img, item.Imagen, IMG_SIZE_SMALL);
         img.alt = item.Tema;
         img.loading = "lazy";
         card.appendChild(img);
@@ -1664,7 +1707,7 @@ function mostrarRelayGrid() {
         card.className = "card";
         card.onclick = () => mostrarDetalleRelayModal(item);
         const img = document.createElement("img");
-        img.src = getImageUrl(item.imagen, IMG_SIZE_SMALL);
+        setOptimizedImage(img, item.imagen, IMG_SIZE_SMALL);
         img.alt = item.configuracion;
         img.loading = "lazy";
         card.appendChild(img);
@@ -1761,7 +1804,7 @@ function mostrarDetalleRelayModal(item) {
     // Comentario: Se refactoriza para usar appendChild y evitar `innerHTML +=` que es propenso a errores.
     if (item.imagen) {
         const img = document.createElement("img");
-        img.src = getImageUrl(item.imagen, IMG_SIZE_MEDIUM);
+        setOptimizedImage(img, item.imagen, IMG_SIZE_MEDIUM);
         img.style.width = "100%";
         img.style.borderRadius = "8px";
         img.onclick = () => {

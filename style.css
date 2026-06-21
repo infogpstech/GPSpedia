@@ -1383,3 +1383,12 @@ body.search-active .container {
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
 }
+
+/* --- PHASE 3: SEARCH HISTORY VISIBILITY --- */
+.search-history-section {
+    display: none;
+}
+
+body.search-active .search-history-section {
+    display: block;
+}

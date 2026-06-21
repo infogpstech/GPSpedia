@@ -1,4 +1,4 @@
-// GPSpedia Main Orchestration Module | Version: 2.1
+// GPSpedia Main Orchestration Module | Version: 2.2
 // Responsibilities:
 // - Import all feature modules.
 // - Initialize the application and set up global event listeners.
@@ -166,7 +166,11 @@ async function initializeApp() {
         if (btn) {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
-                ui.mostrarSeccion(section);
+                if (section === 'cortes') {
+                    navigation.irAPaginaPrincipal();
+                } else {
+                    ui.mostrarSeccion(section);
+                }
                 ui.closeSideMenu();
             });
         }
@@ -238,7 +242,11 @@ async function initializeApp() {
     document.querySelectorAll('.section-btn').forEach(button => {
         button.addEventListener('click', () => {
             const section = button.id.replace('btn-', '');
-            ui.mostrarSeccion(section);
+            if (section === 'cortes') {
+                navigation.irAPaginaPrincipal();
+            } else {
+                ui.mostrarSeccion(section);
+            }
         });
     });
 

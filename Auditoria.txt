@@ -208,3 +208,21 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - **Catálogo Offline:** Asegurado el procesamiento de datos cacheados en 'loadInitialData' (auth.js) tras fallo de red.
 - **UI Resiliente:** Ajustada lógica de suscripción en ui.js para forzar renderizado de categorías si hay datos disponibles en el estado, incluso tras errores previos.
 - **Historial Limpio:** Implementado debounce de 1500ms y validación de longitud mínima (3 caracteres) para el guardado de búsquedas en navigation.js.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - FASE 3: AJUSTES DE ESTABILIDAD OFFLINE (06/02/2026)**
+
+**Archivos involucrados:** ui.js, auth.js, main.js, style.css, offline.js.
+
+**Hallazgos:**
+1. **Caché de Imágenes Incompleto:** La función 'crearCardVehiculo' ya implementaba fallback a IndexedDB, pero 'renderCutContent' y el carrusel de categorías en 'mostrarCategorias' dependían exclusivamente de la red o del caché del navegador, rompiendo la experiencia offline.
+2. **Reactividad de "Vistos Recientemente":** Los datos de IndexedDB (viewedItems, searchHistory) se cargan de forma asíncrona tras la validación de sesión. Sin embargo, el suscriptor al estado solo dispara el renderizado inicial basándose en 'catalogData.cortes', lo que causa que los carruseles de actividad no aparezcan en el primer render si la carga desde DB tarda más que la validación local.
+3. **Inconsistencia de Mensajes:** Mensajes de error como "No se pudo actualizar el catálogo" pueden resultar confusos si el sistema está operando correctamente en modo local. Se requiere una comunicación unificada: "Trabajando en modo local/caché".
+4. **UI del Historial de Búsqueda:** El historial de búsqueda se muestra permanentemente en la vista de categorías, ocupando espacio innecesario. Debe estar vinculado al foco del buscador. Además, seleccionar un tag del historial rellena el input pero no activa la lógica visual del botón "X".
+5. **Reset de Navegación:** El botón "Cortes" simplemente llama a 'mostrarCategorias', pero no reinicia el estado interno de navegación ni limpia el buscador, lo que puede causar comportamientos inesperados si se regresa desde una búsqueda profunda.
+
+**Acciones Planificadas:**
+- Implementar 'setOptimizedImage' en ui.js para centralizar el uso de caché de IndexedDB en todos los componentes.
+- Optimizar 'checkSession' y el suscriptor de estado para asegurar la aparición inmediata de carruseles de actividad.
+- Ajustar CSS y eventos de búsqueda para una mejor experiencia de usuario.
+- Unificar listeners de navegación para asegurar resets de estado limpios.
