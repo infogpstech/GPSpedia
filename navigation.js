@@ -9,7 +9,8 @@ import { getState, setState } from './state.js';
 import {
     mostrarCategorias,
     mostrarResultadosDeBusqueda, // Se importa la nueva función unificada de renderizado.
-    showNoResultsMessage
+    showNoResultsMessage,
+    mostrarSeccion
 } from './ui.js';
 import * as offline from './offline.js';
 
@@ -21,9 +22,18 @@ export function irAPaginaPrincipal() {
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.value = '';
+        // Phase 3.1: Asegurar que se oculta el botón de limpiar (X)
+        if (searchInput.parentElement) {
+            searchInput.parentElement.classList.remove('has-text');
+        }
+        // Quitar el foco para que se oculte el historial y se desactive el modo búsqueda
+        searchInput.blur();
     }
     setState({ navigationState: { level: 'categorias', categoria: null, marca: null, modelo: null } });
-    mostrarCategorias();
+
+    // Phase 3.1: Asegurar que se muestra la sección de cortes (catálogo)
+    // Esto resuelve el problema de que el botón no funcionaba desde Tutoriales o Relay.
+    mostrarSeccion('cortes');
 }
 
 export function getDatosFiltrados() {

@@ -226,3 +226,19 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - Optimizar 'checkSession' y el suscriptor de estado para asegurar la aparición inmediata de carruseles de actividad.
 - Ajustar CSS y eventos de búsqueda para una mejor experiencia de usuario.
 - Unificar listeners de navegación para asegurar resets de estado limpios.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - FASE 3.1: CORRECCIÓN REGRESIÓN OFFLINE Y NAVEGACIÓN (22/06/2026)**
+
+**Archivos involucrados:** auth.js, navigation.js, ui.js.
+
+**Hallazgos:**
+1. **Regresión Offline (auth.js):** La validación de sesión en la Phase 3 era bloqueante. Si la API de validación fallaba por falta de red antes de completar el flujo, la aplicación se quedaba en el splash screen o mostraba errores que impedían el acceso al catálogo, incluso con datos locales presentes.
+2. **Navegación "Cortes" (navigation.js):** La función 'irAPaginaPrincipal' reseteaba el estado pero no aseguraba la visibilidad de la sección de cortes ('#contenido') si el usuario venía de 'Tutoriales' o 'Relay', ya que 'mostrarCategorias' no gestionaba el display de los contenedores de sección principales.
+3. **Persistencia de Imágenes (ui.js):** Se confirmó que 'setOptimizedImage' es el único punto de entrada para carga de imágenes en el catálogo, lo que garantiza el uso de IndexedDB. No se detectaron fallos adicionales pero se reforzó la carga silenciosa.
+
+**Acciones Realizadas:**
+- **auth.js:** Refactorizada 'checkSession' para ser no-bloqueante: restaura la sesión local inmediatamente e intenta la validación con la API en segundo plano.
+- **auth.js:** Optimizada 'loadInitialData' para suprimir alertas de error de red si los datos ya fueron cargados exitosamente desde el caché.
+- **navigation.js:** Actualizada 'irAPaginaPrincipal' para llamar a 'ui.mostrarSeccion("cortes")', garantizando el reset visual completo de la navegación.
+- **navigation.js:** Añadido 'searchInput.blur()' y limpieza de clase 'has-text' en el reset para asegurar consistencia de la Phase 3.

@@ -311,3 +311,12 @@
 - **Líneas 1032-1038:** Añadidas reglas de visibilidad condicional para la sección de historial de búsqueda vinculadas a 'body.search-active'.
 
 **Versión:** Ajustes de estabilidad del sistema offline v2.2.0.
+
+**CHANGES LOG - 22/06/2026 (Fase 3.1 Corrección de Regresión)**
+
+**Archivo: auth.js**
+- **Líneas 43-66:** Refactorizada 'loadInitialData' para usar un flag 'catalogLoaded'. Suprime mensajes de error de red si el catálogo se recuperó de IndexedDB.
+- **Líneas 128-155:** Refactorizada 'checkSession' para acceso inmediato (non-blocking). La validación de sesión se realiza en segundo plano, permitiendo el uso offline instantáneo.
+
+**Archivo: navigation.js**
+- **Líneas 23-35:** Actualizada 'irAPaginaPrincipal' para incluir limpieza total de UI (blur, has-text) e invocar 'ui.mostrarSeccion("cortes")', resolviendo el fallo de navegación desde otras secciones.
