@@ -293,24 +293,32 @@ export function mostrarModelosPorMarca(marca) {
     // Se filtran los cortes para obtener todos los modelos de la marca seleccionada, excluyendo motocicletas
     const modelosFiltrados = cortes.filter(item => item.marca === marca && item.categoria && !['motocicletas', 'motos'].includes(String(item.categoria).toLowerCase()));
 
-    // Se obtienen modelos únicos para no repetir tarjetas
-    const modelosUnicos = [...new Map(modelosFiltrados.map(item => [item.modelo, item])).values()].sort((a,b) => String(a.modelo).localeCompare(String(b.modelo)));
+    // De-duplicación inteligente: Considera modelo y categoría para no ocultar variantes (ej. Yaris Sedan vs Hatchback)
+    const variantesUnicas = [...new Map(modelosFiltrados.map(item => {
+        const key = `${item.modelo}|${item.categoria}`;
+        return [key, item];
+    })).values()].sort((a,b) => String(a.modelo).localeCompare(String(b.modelo)));
 
     const grid = document.createElement("div");
     grid.className = "grid";
-    modelosUnicos.forEach(ejemplo => {
+    variantesUnicas.forEach(ejemplo => {
         const card = document.createElement("div");
         card.className = "card";
-        // Comentario: Se utiliza la nueva función "hub" para decidir el siguiente paso.
+        // Al hacer clic, pasamos la categoría para asegurar que el filtrado posterior sea preciso
         card.onclick = () => navegarADetallesDeModelo(ejemplo.categoria, marca, ejemplo.modelo);
         const img = document.createElement("img");
         img.src = getImageUrl(ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
         img.alt = `Modelo ${ejemplo.modelo}`;
         img.loading = "lazy";
         card.appendChild(img);
+
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.innerHTML = `<div class="overlay-text-primary">${ejemplo.modelo}</div>`;
+        // Si hay múltiples categorías para el mismo nombre de modelo, mostramos la categoría para diferenciar
+        const tieneDuplicados = variantesUnicas.filter(v => v.modelo === ejemplo.modelo).length > 1;
+        const textoDiferenciador = tieneDuplicados ? `<div class="overlay-text-secondary">${ejemplo.categoria}</div>` : '';
+
+        overlay.innerHTML = `<div class="overlay-text-primary">${ejemplo.modelo}</div>${textoDiferenciador}`;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -399,22 +407,27 @@ export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
         modelosFiltrados = modelosFiltrados.filter(item => item.versionesAplicables === versionEquipamiento);
     }
 
-    const modelosUnicos = [...new Map(modelosFiltrados.map(item => [item.modelo, item])).values()].sort((a,b) => String(a.modelo).localeCompare(String(b.modelo)));
-
-    // Comentario: Se elimina la lógica de omisión de pantalla. La decisión ahora se centraliza en `navegarADetallesDeModelo`.
+    // De-duplicación inteligente también aquí
+    const variantesUnicas = [...new Map(modelosFiltrados.map(item => {
+        const key = `${item.modelo}|${item.categoria}`;
+        return [key, item];
+    })).values()].sort((a,b) => String(a.modelo).localeCompare(String(b.modelo)));
 
     const grid = document.createElement("div"); grid.className = "grid";
-    modelosUnicos.forEach(ejemplo => {
+    variantesUnicas.forEach(ejemplo => {
         const card = document.createElement("div"); card.className = "card";
-        // Comentario: Se utiliza la nueva función "hub" para decidir el siguiente paso.
-        card.onclick = () => navegarADetallesDeModelo(categoria, marca, ejemplo.modelo);
+        card.onclick = () => navegarADetallesDeModelo(ejemplo.categoria, marca, ejemplo.modelo);
         const img = document.createElement("img");
         img.src = getImageUrl(ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
         img.alt = `Modelo ${ejemplo.modelo}`;
         img.loading = "lazy";
         card.appendChild(img);
+
         const overlay = document.createElement("div"); overlay.className = "overlay";
-        overlay.innerHTML = `<div class="overlay-text-primary">${ejemplo.modelo}</div>`;
+        const tieneDuplicados = variantesUnicas.filter(v => v.modelo === ejemplo.modelo).length > 1;
+        const textoDiferenciador = tieneDuplicados ? `<div class="overlay-text-secondary">${ejemplo.categoria}</div>` : '';
+
+        overlay.innerHTML = `<div class="overlay-text-primary">${ejemplo.modelo}</div>${textoDiferenciador}`;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -639,10 +652,10 @@ export function mostrarResultadosDeBusqueda({ type, query, results }) {
     } else {
         // Renderizado para resultados de tipo MODELO (y por defecto).
 
-        // De-duplicar los resultados para mostrar solo una tarjeta por variante única (modelo + versión).
-        // Esto evita mostrar una tarjeta para cada año del mismo vehículo.
+        // De-duplicar los resultados para mostrar solo una tarjeta por variante única (modelo + categoría + versión).
+        // Esto evita mostrar una tarjeta para cada año del mismo vehículo y diferencia variantes de distinta categoría.
         const variantesUnicas = [...new Map(results.map(item => {
-            const key = `${item.marca}|${item.modelo}|${item.versionesAplicables || ''}`;
+            const key = `${item.marca}|${item.modelo}|${item.categoria}|${item.versionesAplicables || ''}`;
             return [key, item];
         })).values()];
 
@@ -674,10 +687,13 @@ export function mostrarResultadosDeBusqueda({ type, query, results }) {
             // para que coincida con la acción del onclick.
             const version = ejemplo.versionesAplicables || '';
             const tiposEncendido = [...new Set(results
-                .filter(r => r.marca === ejemplo.marca && r.modelo === ejemplo.modelo && r.versionesAplicables === ejemplo.versionesAplicables)
+                .filter(r => r.marca === ejemplo.marca && r.modelo === ejemplo.modelo && r.categoria === ejemplo.categoria && r.versionesAplicables === ejemplo.versionesAplicables)
                 .map(r => r.tipoEncendido).filter(Boolean))].join(' / ');
 
-            const diferenciador = version || tiposEncendido;
+            // Si hay modelos con mismo nombre pero distinta categoría, lo mostramos
+            const tieneDuplicadosNombre = variantesUnicas.filter(v => v.modelo === ejemplo.modelo && v.marca === ejemplo.marca).length > 1;
+            const categoriaExtra = tieneDuplicadosNombre ? `${ejemplo.categoria} | ` : '';
+            const diferenciador = `${categoriaExtra}${version || tiposEncendido}`;
 
             overlay.innerHTML = `<div class="overlay-text-primary">${ejemplo.marca} ${ejemplo.modelo}</div><div class="overlay-text-secondary">${diferenciador}</div>`;
             card.appendChild(overlay);
@@ -826,7 +842,8 @@ export function mostrarDetalleModal(item) {
 
 function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false) {
     const contentP = document.createElement('p');
-    contentP.innerHTML = `<strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
+    contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
+                        <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
                         <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
     container.appendChild(contentP);
 

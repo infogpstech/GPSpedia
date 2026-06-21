@@ -119,7 +119,7 @@ function handleAddOrUpdateCut(payload) {
         let imageUrl = '';
         if (cutData.imgCorte1) {
             const folder = getOrCreateFolder(vehicleInfo.categoria, vehicleInfo.marca, vehicleInfo.modelo, vehicleInfo.anoDesde);
-            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Corte${cutSlotIndex}.jpg`;
+            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Corte${cutSlotIndex}`;
             imageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder);
         }
 
@@ -167,12 +167,12 @@ function handleAddOrUpdateCut(payload) {
         const folder = getOrCreateFolder(vehicleData.categoria, vehicleData.marca, vehicleData.modelo, anioParaFolder);
         let vehiculoImageUrl = '';
         if (vehicleData.imagenVehiculo) {
-            const filename = `${sanitizeForFilename(vehicleData.marca)}_${sanitizeForFilename(vehicleData.modelo)}_${sanitizeForFilename(vehicleData.tipoEncendido)}_${yearInput}_Vehiculo.jpg`;
+            const filename = `${sanitizeForFilename(vehicleData.marca)}_${sanitizeForFilename(vehicleData.modelo)}_${sanitizeForFilename(vehicleData.tipoEncendido)}_${yearInput}_Vehiculo`;
             vehiculoImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder);
         }
         let corteImageUrl = '';
         if (cutData.imgCorte1) {
-            const filename = `${sanitizeForFilename(vehicleData.marca)}_${sanitizeForFilename(vehicleData.modelo)}_${sanitizeForFilename(vehicleData.tipoEncendido)}_${anioParaFolder}_Corte1.jpg`;
+            const filename = `${sanitizeForFilename(vehicleData.marca)}_${sanitizeForFilename(vehicleData.modelo)}_${sanitizeForFilename(vehicleData.tipoEncendido)}_${anioParaFolder}_Corte1`;
             corteImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder);
         }
 
@@ -285,12 +285,12 @@ function handleAddSupplementaryInfo(payload) {
 
     // Subir imágenes si se proporcionaron
     if (imgApertura) {
-        const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Apertura.jpg`;
+        const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Apertura`;
         const imageUrl = uploadImageToDrive(imgApertura, filename, folder);
         sheet.getRange(actualRow, COLS_CORTES.imgApertura).setValue(imageUrl);
     }
     if (imgCableAlimen) {
-        const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion.jpg`;
+        const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion`;
         const imageUrl = uploadImageToDrive(imgCableAlimen, filename, folder);
         sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen).setValue(imageUrl);
     }
@@ -425,9 +425,16 @@ function getOrCreateSubFolder(parentFolder, name) {
 function uploadImageToDrive(imageData, filename, folder) {
     if (!imageData) return "";
     let blob;
+    let finalFilename = filename;
+
     if (imageData.startsWith('http')) {
         try {
-            blob = UrlFetchApp.fetch(imageData).getBlob().setName(filename);
+            const response = UrlFetchApp.fetch(imageData);
+            blob = response.getBlob();
+            const mimeType = blob.getContentType();
+            const extension = getExtensionFromMimeType(mimeType);
+            finalFilename = filename + extension;
+            blob.setName(finalFilename);
         } catch (e) {
             console.error(`Failed to fetch image from URL: ${imageData}. Error: ${e.message}`);
             return "";
@@ -437,7 +444,12 @@ function uploadImageToDrive(imageData, filename, folder) {
             const parts = imageData.split(',');
             const mimeType = parts[0].match(/:(.*?);/)[1];
             const decodedData = Utilities.base64Decode(parts[1]);
-            blob = Utilities.newBlob(decodedData, mimeType, filename);
+
+            // Determinar la extensión correcta basándose en el tipo MIME
+            const extension = getExtensionFromMimeType(mimeType);
+            finalFilename = filename + extension;
+
+            blob = Utilities.newBlob(decodedData, mimeType, finalFilename);
         } catch (e) {
             console.error(`Failed to decode base64. Error: ${e.message}`);
             return "";
@@ -448,4 +460,22 @@ function uploadImageToDrive(imageData, filename, folder) {
     }
     const file = folder.createFile(blob);
     return `https://drive.google.com/uc?export=view&id=${file.getId()}`;
+}
+
+/**
+ * Mapea un tipo MIME a su extensión de archivo correspondiente.
+ * @param {string} mimeType - El tipo MIME de la imagen.
+ * @returns {string} - La extensión del archivo (incluyendo el punto).
+ */
+function getExtensionFromMimeType(mimeType) {
+    const mimeMap = {
+        'image/jpeg': '.jpg',
+        'image/png': '.png',
+        'image/gif': '.gif',
+        'image/webp': '.webp',
+        'image/svg+xml': '.svg',
+        'image/bmp': '.bmp',
+        'image/tiff': '.tiff'
+    };
+    return mimeMap[mimeType] || '.jpg'; // Fallback a .jpg si no se reconoce el tipo
 }

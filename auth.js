@@ -79,17 +79,32 @@ export async function checkSession() {
 
     try {
         const user = JSON.parse(sessionData);
-        const { valid } = await apiValidateSession(user.ID, user.SessionToken);
+        const result = await apiValidateSession(user.ID, user.SessionToken);
 
-        if (valid) {
+        if (result && result.valid) {
             handleLoginSuccess(user);
             loadInitialData(); // Carga en segundo plano sin bloquear
         } else {
             logout("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
         }
     } catch (error) {
-        showGlobalError(`Error de sesión: ${error.message}`);
-        logout();
+        // Mejorar la robustez ante fallos de red intermitentes
+        console.error("Error validando sesión:", error);
+
+        const isNetworkError = error.message.includes('Failed to fetch') ||
+                               error.message.includes('network error') ||
+                               error.message.includes('decoding');
+
+        if (isNetworkError) {
+            showGlobalError("Error de conexión. Trabajando en modo local/caché.");
+            // Restaurar sesión desde localStorage sin validar (fallback)
+            const user = JSON.parse(sessionData);
+            handleLoginSuccess(user);
+            loadInitialData();
+        } else {
+            showGlobalError(`Error de sesión: ${error.message}`);
+            logout();
+        }
     } finally {
         // Liberar el bloqueo para que otras pestañas puedan validar si es necesario.
         localStorage.removeItem(LOCK_KEY);

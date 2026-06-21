@@ -58,6 +58,13 @@ body.dark-mode {
     --menu-bg: #1e1e1e;
 }
 
+/* Solución técnica para el logo en modo oscuro cuando el recurso no está disponible */
+body.dark-mode .app-logo,
+body.dark-mode #splash-screen img,
+body.dark-mode #login-modal img {
+    filter: brightness(0) invert(1) drop-shadow(0px 0px 5px rgba(255,255,255,0.2));
+}
+
 h1,h2,h3,h4 {
     margin: 10px 0;
     color: var(--header-color);

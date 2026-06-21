@@ -16,6 +16,8 @@ function abrirLightbox(url, imgId = 'lightboxImg') {
 
     if (!lightbox || !lightboxImg) return;
 
+    // Limpiar la imagen anterior para evitar que sea visible mientras carga la nueva
+    lightboxImg.src = "";
     lightboxImg.src = url;
 
     // Permitir zoom al abrir el lightbox
