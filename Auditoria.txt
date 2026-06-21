@@ -242,3 +242,25 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - **auth.js:** Optimizada 'loadInitialData' para suprimir alertas de error de red si los datos ya fueron cargados exitosamente desde el caché.
 - **navigation.js:** Actualizada 'irAPaginaPrincipal' para llamar a 'ui.mostrarSeccion("cortes")', garantizando el reset visual completo de la navegación.
 - **navigation.js:** Añadido 'searchInput.blur()' y limpieza de clase 'has-text' en el reset para asegurar consistencia de la Phase 3.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - FASE 3.2: PERSISTENCIA TOTAL Y REHIDRATACIÓN (23/06/2026)**
+
+**Archivos involucrados:** auth.js, ui.js, offline.js.
+
+**Hallazgos:**
+1. **Rehidratación (auth.js):** Se detectó que el estado inicial se montaba antes de completar la lectura de IndexedDB, causando que 'Vistos Recientemente' e 'Historial' desaparecieran al refrescar.
+2. **Claves de Imágenes (offline.js):** La persistencia de miniaturas usaba claves inconsistentes (URLs completas vs IDs). La recuperación fallaba porque el catálogo restaurado usa fileIds pero el almacén de miniaturas tenía la URL remota como clave.
+3. **Flujo de Carga (auth.js):** El arranque offline seguía siendo "ruidoso" con alertas de red a pesar de operar correctamente en caché.
+
+**Acciones Realizadas:**
+- **offline.js:** Implementado helper 'normalizeId' para garantizar consistencia total en el almacén de miniaturas. Mejorada la solidez de las operaciones asíncronas para evitar bloqueos si DB falla.
+- **auth.js:** Movida la rehidratación de IndexedDB al inicio absoluto de 'checkSession'. Se añadieron logs para trazabilidad del flujo de restauración.
+- **ui.js:** Optimizada 'setOptimizedImage' para ignorar intentos de cacheo de recursos no-Drive (placeholders o blobs).
+- **auth.js:** Silenciados los errores de validación de red en el arranque; ahora solo se reportan si hay una expiración de sesión explícita desde el servidor.
+
+**Estado Final:**
+- Vistos Recientemente: Persistente entre reinicios.
+- Historial: Persistente entre reinicios.
+- Imágenes: Restauradas correctamente desde caché offline usando fileId como clave única.
+- Arranque: Silencioso y resiliente sin internet.

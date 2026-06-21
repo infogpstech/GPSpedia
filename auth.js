@@ -92,12 +92,11 @@ function processCatalogData(catalogData) {
 
 
 export async function checkSession() {
-    // Cargar historial y vistos desde IndexedDB
+    // Phase 3.2: Rehidratación inmediata al inicio
     try {
-        const [history, viewed] = await Promise.all([
-            offline.getSearchHistory(),
-            offline.getViewedItems()
-        ]);
+        const history = await offline.getSearchHistory();
+        const viewed = await offline.getViewedItems();
+        console.log("Rehidratando datos persistentes:", { historyCount: history.length, viewedCount: viewed.length });
         setState({ searchHistory: history, viewedItems: viewed });
     } catch (e) {
         console.warn("Error cargando historial/vistos:", e);
@@ -137,7 +136,8 @@ export async function checkSession() {
                 logout("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
             }
         }).catch(error => {
-            console.error("Error validando sesión en segundo plano:", error);
+            console.warn("Fallo validación de sesión (API inaccesible):", error.message);
+            // Phase 3.2: Suprimir mensajes de error de red durante el arranque si ya estamos en modo local
             const isExpirationError = error.message && (
                 error.message.includes('expirada') ||
                 error.message.includes('inválida') ||
@@ -147,7 +147,7 @@ export async function checkSession() {
                 showGlobalError(`Error de sesión: ${error.message}`);
                 logout();
             }
-            // Los errores de red se ignoran aquí porque ya estamos en modo local
+            // Si es un error de red (TypeError: Failed to fetch), simplemente continuamos en modo local silenciosamente
         });
 
     } catch (error) {

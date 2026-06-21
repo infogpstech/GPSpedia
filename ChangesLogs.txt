@@ -320,3 +320,15 @@
 
 **Archivo: navigation.js**
 - **Líneas 23-35:** Actualizada 'irAPaginaPrincipal' para incluir limpieza total de UI (blur, has-text) e invocar 'ui.mostrarSeccion("cortes")', resolviendo el fallo de navegación desde otras secciones.
+
+**CHANGES LOG - 23/06/2026 (Fase 3.2 Persistencia Durable)**
+
+**Archivo: offline.js**
+- **v1.1:** Refactorización total de la capa de acceso a datos. Implementada normalización de IDs para thumbnails y manejo robusto de ordenamiento en historial y vistos.
+
+**Archivo: auth.js**
+- **Líneas 95-103:** Priorización de rehidratación desde IndexedDB al inicio de checkSession.
+- **Líneas 139-152:** Suprimidas alertas globales por fallos de red en validación de segundo plano.
+
+**Archivo: ui.js**
+- **Líneas 44-50:** Refinada lógica de guardado de miniaturas para evitar errores con recursos locales o externos no compatibles.

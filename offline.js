@@ -1,4 +1,4 @@
-// GPSpedia Offline & Persistence Module | Version: 1.0
+// GPSpedia Offline & Persistence Module | Version: 1.1
 // Responsibilities:
 // - Manage IndexedDB for local storage of catalog, history, and thumbnails.
 // - Implement image compression and local caching.
@@ -56,21 +56,34 @@ export async function initDB() {
             }
         };
     });
+    return dbPromise;
 }
 
 /**
  * Generic helper to perform DB operations.
+ * Phase 3.2: Improved robustness and error handling.
  */
 async function performOp(storeName, mode, callback) {
-    const database = await initDB();
-    return new Promise((resolve, reject) => {
-        const transaction = database.transaction([storeName], mode);
-        const store = transaction.objectStore(storeName);
-        const request = callback(store);
+    try {
+        const database = await initDB();
+        if (!database) throw new Error("Could not initialize IndexedDB");
 
-        request.onsuccess = () => resolve(request.result);
-        request.onerror = () => reject(request.error);
-    });
+        return new Promise((resolve, reject) => {
+            try {
+                const transaction = database.transaction([storeName], mode);
+                const store = transaction.objectStore(storeName);
+                const request = callback(store);
+
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            } catch (e) {
+                reject(e);
+            }
+        });
+    } catch (err) {
+        console.error(`Database operation failed on ${storeName}:`, err);
+        return null;
+    }
 }
 
 // --- CATALOG PERSISTENCE ---
@@ -95,18 +108,9 @@ export async function saveSearch(term, metadata = {}) {
 }
 
 export async function getSearchHistory(limit = 10) {
-    const database = await initDB();
-    return new Promise((resolve, reject) => {
-        const transaction = database.transaction(['searchHistory'], 'readonly');
-        const store = transaction.objectStore('searchHistory');
-        const request = store.getAll();
-
-        request.onsuccess = () => {
-            const sorted = request.result.sort((a, b) => b.timestamp - a.timestamp);
-            resolve(sorted.slice(0, limit));
-        };
-        request.onerror = () => reject(request.error);
-    });
+    const all = await performOp('searchHistory', 'readonly', (store) => store.getAll());
+    if (!all) return [];
+    return all.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
 }
 
 // --- VIEWED ITEMS ---
@@ -121,27 +125,22 @@ export async function saveViewedItem(item) {
 }
 
 export async function getViewedItems(limit = 20) {
-    const database = await initDB();
-    return new Promise((resolve, reject) => {
-        const transaction = database.transaction(['viewedItems'], 'readonly');
-        const store = transaction.objectStore('viewedItems');
-        const request = store.getAll();
-
-        request.onsuccess = () => {
-            const sorted = request.result.sort((a, b) => b.timestamp - a.timestamp);
-            resolve(sorted.slice(0, limit));
-        };
-        request.onerror = () => reject(request.error);
-    });
+    const all = await performOp('viewedItems', 'readonly', (store) => store.getAll());
+    if (!all) return [];
+    return all.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
 }
 
 // --- THUMBNAIL CACHE & COMPRESSION ---
 
 /**
  * Compresses an image from a URL and stores it in IndexedDB.
+ * Phase 3.2: Normalize fileId to ensure consistency between save/load.
  */
-export async function compressAndStoreThumbnail(url, fileId) {
-    if (!url || !fileId || url.includes('placehold.co')) return null;
+export async function compressAndStoreThumbnail(url, rawFileId) {
+    if (!url || !rawFileId || url.includes('placehold.co')) return null;
+
+    // Normalizar el ID para usarlo como clave consistente
+    const fileId = normalizeId(rawFileId);
 
     try {
         // 1. Check if already cached
@@ -150,6 +149,8 @@ export async function compressAndStoreThumbnail(url, fileId) {
 
         // 2. Fetch image
         const response = await fetch(url);
+        if (!response.ok) return null;
+
         const blob = await response.blob();
         const bitmap = await createImageBitmap(blob);
 
@@ -180,6 +181,16 @@ export async function compressAndStoreThumbnail(url, fileId) {
     }
 }
 
-export async function getThumbnail(fileId) {
+export async function getThumbnail(rawFileId) {
+    const fileId = normalizeId(rawFileId);
     return performOp('thumbnails', 'readonly', (store) => store.get(fileId));
+}
+
+/**
+ * Normalizador interno para asegurar que las claves de IndexedDB sean IDs limpios.
+ */
+function normalizeId(id) {
+    if (!id || typeof id !== 'string') return id;
+    const match = id.match(/[\/&]id=([a-zA-Z0-9_-]+)/) || id.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+    return match ? match[1] : id;
 }
