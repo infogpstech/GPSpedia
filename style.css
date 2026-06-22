@@ -554,18 +554,14 @@ body.search-active .container {
 }
 
 /* --- ESTILOS PARA LOGOS DE MARCAS (ICONOS) --- */
+/* Se eliminan los !important para permitir que las marcas adopten el tratamiento visual de las tarjetas de cortes */
 .brand-logo-item {
-    background: transparent !important;
-    border: none !important;
-    box-shadow: none !important;
-    border-radius: 0 !important;
-    padding: 10px !important;
+    padding: 10px;
     max-width: 120px;
     justify-self: center;
     align-self: center;
     animation: none !important; /* Override card enter animation */
     opacity: 1 !important;
-    overflow: visible !important; /* Allow shadow to be visible */
 }
 .brand-logo-item:hover {
     transform: scale(1.1);
@@ -874,7 +870,7 @@ body.search-active .container {
 }
 
 .img-vehiculo-modal {
-    max-width: 158px; /* Reducción del 30% desde 225px */
+    max-width: 134px; /* Reducción adicional del 15% sobre 158px */
     width: auto;
     height: auto;
     margin: 10px auto;
@@ -1357,7 +1353,7 @@ body.search-active .container {
     position: absolute;
     top: 8px;
     right: 8px;
-    background: #333; /* Tono más oscuro para visibilidad en fondos claros */
+    background: rgba(51, 51, 51, 0.8); /* Mismo color con transparencia baja */
     color: white;
     padding: 3px 8px;
     border-radius: 4px;
@@ -1394,7 +1390,7 @@ body.search-active .container {
 }
 
 .dark-mode .viewed-badge {
-    background: var(--accent-color);
+    background: rgba(88, 166, 255, 0.8); /* Acento con transparencia baja */
 }
 
 .search-history-container {
