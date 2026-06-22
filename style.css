@@ -855,7 +855,7 @@ body.search-active .container {
 #detalleCompleto .img-vehiculo-modal,
 #detalleCompleto .brand-logo-modal {
     filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4));
-    margin: 0; /* Anula el 'margin: auto' de la regla genérica */
+    margin: 5px auto; /* Reducido para compactar el modal de detalle */
 }
 
 /* Comentario: Ajustes de tamaño según la nueva solicitud de diseño. */
@@ -873,7 +873,7 @@ body.search-active .container {
     max-width: 134px; /* Reducción adicional del 15% sobre 158px */
     width: auto;
     height: auto;
-    margin: 10px auto;
+    margin: 5px auto;
 }
 
 .img-corte {

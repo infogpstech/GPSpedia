@@ -804,7 +804,7 @@ export function mostrarDetalleModal(item) {
     cont.appendChild(titleContainer);
 
     const subHeaderDiv = document.createElement('div');
-    subHeaderDiv.style.marginBottom = '15px';
+    subHeaderDiv.style.marginBottom = '5px';
     const subHeaderText = document.createElement('p');
     subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
     const equipamiento = item.versionesAplicables || item.tipoEncendido || '';
@@ -826,7 +826,7 @@ export function mostrarDetalleModal(item) {
 
     if (item.notaImportante) {
         const p = document.createElement("p");
-        p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 15px 0;";
+        p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 5px 0;";
         p.textContent = `⚠️ ${item.notaImportante}`;
         cont.appendChild(p);
     }
