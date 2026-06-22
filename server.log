@@ -1,17 +1,36 @@
-127.0.0.1 - - [21/Jun/2026 23:56:43] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:43] "GET /style.css HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:43] "GET /main.js HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:43] "GET /icon-v3-512x512.png HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:43] "GET /auth.js HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:43] "GET /api-config.js HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:43] "GET /state.js HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:43] "GET /lightbox.js HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:43] "GET /navigation.js HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:43] "GET /ui.js HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:43] "GET /offline.js HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:44] "GET /service-worker.js HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:44] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:44] "GET /icon-v3-192x192.png HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:44] "GET /icon-pwa-192x192.png HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:44] "GET /icon-pwa-512x512.png HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jun/2026 23:56:44] "GET /index.html HTTP/1.1" 304 -
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/http/server.py", line 1329, in <module>
+    test(
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/http/server.py", line 1276, in test
+    with ServerClass(addr, HandlerClass) as httpd:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/socketserver.py", line 457, in __init__
+    self.server_bind()
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/http/server.py", line 1323, in server_bind
+    return super().server_bind()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/http/server.py", line 140, in server_bind
+    socketserver.TCPServer.server_bind(self)
+  File "/home/jules/.pyenv/versions/3.12.13/lib/python3.12/socketserver.py", line 478, in server_bind
+    self.socket.bind(self.server_address)
+OSError: [Errno 98] Address already in use
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /style.css HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /main.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /icon-v3-512x512.png HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /auth.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /navigation.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /ui.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /state.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /lightbox.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /api-config.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /offline.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /service-worker.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /users.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /add_cortes.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /icon-v3-192x192.png HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /icon-pwa-192x192.png HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jun/2026 01:10:42] "GET /icon-pwa-512x512.png HTTP/1.1" 200 -

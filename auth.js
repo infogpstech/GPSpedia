@@ -179,6 +179,9 @@ export async function checkSession() {
 
     } catch (error) {
         console.error("Error crítico en checkSession:", error);
+        // Phase 3.5: Asegurar que el splash screen se oculte incluso en error crítico
+        const splash = document.getElementById('splash-screen');
+        if (splash) splash.style.display = 'none';
         logout();
     } finally {
         // Liberar el bloqueo para que otras pestañas puedan validar si es necesario.
