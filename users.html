@@ -15,6 +15,16 @@
             --text-color: #333;
             --light-text: #fff;
             --error-color: #dc3545;
+            --modal-bg: #fff;
+            --transition-speed: 0.3s;
+        }
+        body.dark-mode {
+            --primary-color: #58a6ff;
+            --secondary-color: #FFFFFFDE;
+            --background-color: #121212;
+            --card-background: #1e1e1e;
+            --text-color: #FFFFFFDE;
+            --modal-bg: #242424;
         }
         *, *::before, *::after {
             box-sizing: border-box;
@@ -24,6 +34,7 @@
             margin: 0;
             background-color: var(--background-color);
             color: var(--text-color);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
             /* Prevención de selección de texto y asistente de Google */
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -48,6 +59,12 @@
             border-radius: 12px;
             box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             margin-bottom: 20px; /* Reducido de 30px */
+            transition: background-color var(--transition-speed);
+            border: 1px solid transparent;
+        }
+        .dark-mode .profile-section, .dark-mode .user-management-section {
+            border-color: rgba(255,255,255,0.05);
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
         }
         h1, h2 {
             color: var(--secondary-color);
@@ -79,7 +96,10 @@
             white-space: nowrap; /* Evita saltos de línea indeseados */
         }
         .user-table th {
-            background-color: #f8f9fa;
+            background-color: rgba(0,0,0,0.05);
+        }
+        .dark-mode .user-table th {
+            background-color: rgba(255,255,255,0.05);
         }
         .actions-cell .btn {
             margin-right: 5px;
@@ -111,13 +131,17 @@
             background-color: rgba(0,0,0,0.5);
         }
         .modal-content {
-            background-color: #fefefe;
+            background-color: var(--modal-bg);
             margin: 10% auto;
             padding: 20px;
             border: 1px solid #888;
             width: 80%;
             max-width: 500px;
             border-radius: 10px;
+            color: var(--text-color);
+        }
+        .dark-mode .modal-content {
+            border-color: rgba(255,255,255,0.1);
         }
         .close-btn {
             color: #aaa;
@@ -304,6 +328,11 @@ document.addEventListener('DOMContentLoaded', () => {
         return;
     }
     currentUser = JSON.parse(sessionData);
+
+    // Aplicar modo oscuro si está activo
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+    }
 
     displayProfile();
     setupEventListeners();

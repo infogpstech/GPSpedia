@@ -1,4 +1,4 @@
-/* GPSpedia Styles | Version: 2.0 */
+/* GPSpedia Styles | Version: 2.4 */
 /* Estilos Globales */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -37,32 +37,44 @@ input, textarea, select {
 :root {
     --bg-color: #f4f4f4;
     --text-color: #333;
+    --text-high: #333333;
+    --text-medium: #666666;
+    --text-disabled: #999999;
     --card-bg: #fff;
     --header-color: #333;
     --modal-bg: #fff;
-    --modal-text: #000;
+    --modal-text: #333;
     --button-bg: #f0f0f0;
     --button-text: #007bff;
     --menu-bg: #fff;
+    --accent-color: #007bff;
+    --transition-speed: 0.3s;
 }
 
 body.dark-mode {
     --bg-color: #121212;
-    --text-color: #e0e0e0;
+    --text-color: #FFFFFFDE;
+    --text-high: #FFFFFFDE;
+    --text-medium: #FFFFFF99;
+    --text-disabled: #FFFFFF61;
     --card-bg: #1e1e1e;
-    --header-color: #e0e0e0;
-    --modal-bg: #2c2c2c;
-    --modal-text: #e0e0e0;
-    --button-bg: #333;
+    --header-color: #FFFFFFDE;
+    --modal-bg: #242424;
+    --modal-text: #FFFFFFDE;
+    --button-bg: #2c2c2c;
     --button-text: #58a6ff;
     --menu-bg: #1e1e1e;
+    --accent-color: #58a6ff;
 }
 
 /* Solución técnica para el logo en modo oscuro cuando el recurso no está disponible */
+/* Se mantiene como fallback, pero ahora main.js gestiona el cambio de src */
 body.dark-mode .app-logo,
 body.dark-mode #splash-screen img,
 body.dark-mode #login-modal img {
-    filter: brightness(0) invert(1) drop-shadow(0px 0px 5px rgba(255,255,255,0.2));
+    filter: none; /* Desactivado porque ahora usamos Logo_TemaOscuro.png directamente */
+    /* El drop-shadow se aplica si es necesario mediante filter */
+    /* filter: drop-shadow(0px 0px 5px rgba(255,255,255,0.2)); */
 }
 
 h1,h2,h3,h4 {
@@ -300,7 +312,8 @@ h1.app-title {
 }
 .dark-mode .card {
     background: var(--card-bg);
-    box-shadow: 0 4px 12px rgba(255, 255, 255, 0.05);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 .dark-mode .section-btn {
     background-color: var(--button-bg);
@@ -315,10 +328,12 @@ h1.app-title {
 .dark-mode #detalleCompleto {
     background: var(--modal-bg);
     color: var(--modal-text);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .dark-mode .info-modal-content {
     background-color: var(--modal-bg);
     color: var(--modal-text);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 .dark-mode .accordion-btn {
     background-color: var(--button-bg);
@@ -514,13 +529,13 @@ body.search-active .container {
 }
 .card {
     position: relative;
-    background: #fff;
+    background: var(--card-bg);
     border-radius: 12px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     cursor: pointer;
     padding: 0;
     overflow: hidden;
-    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color var(--transition-speed), border-color var(--transition-speed);
     width: 100%;
     max-width: 140px;
     justify-self: center;
@@ -690,8 +705,8 @@ body.search-active .container {
 }
 
 #login-modal .modal-content {
-    background: rgba(255, 255, 255, 0.1);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--modal-bg);
+    border: 1px solid rgba(255, 255, 255, 0.1);
     padding: 40px;
     border-radius: 15px;
     width: 100%;
@@ -722,10 +737,10 @@ body.search-active .container {
 #login-modal input {
     width: 100%;
     padding: 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--card-bg);
+    border: 1px solid #444;
     border-radius: 8px;
-    color: #fff;
+    color: var(--text-color);
     font-size: 1em;
     box-sizing: border-box;
 }
@@ -813,7 +828,8 @@ body.search-active .container {
 }
 
 #detalleCompleto {
-    background: #fff;
+    background: var(--modal-bg);
+    color: var(--modal-text);
     padding: 15px; /* Reducido para economizar espacio */
     width: 90%;
     max-width: 800px;
@@ -822,7 +838,7 @@ body.search-active .container {
     max-height: calc(var(--app-height, 100%) * 0.9);
     overflow-y: auto;
     transform: scale(0.95);
-    transition: transform 0.3s ease;
+    transition: transform 0.3s ease, background-color var(--transition-speed), color var(--transition-speed);
 }
 
 #modalDetalle.visible #detalleCompleto {
@@ -858,7 +874,7 @@ body.search-active .container {
 }
 
 .img-vehiculo-modal {
-    max-width: 225px; /* Reducción del 10% desde 250px */
+    max-width: 158px; /* Reducción del 30% desde 225px */
     width: auto;
     height: auto;
     margin: 10px auto;
@@ -1341,7 +1357,7 @@ body.search-active .container {
     position: absolute;
     top: 8px;
     right: 8px;
-    background: var(--accent-color);
+    background: #333; /* Tono más oscuro para visibilidad en fondos claros */
     color: white;
     padding: 3px 8px;
     border-radius: 4px;
@@ -1375,6 +1391,10 @@ body.search-active .container {
     background: #343a40;
     border-color: #495057;
     color: #f8f9fa;
+}
+
+.dark-mode .viewed-badge {
+    background: var(--accent-color);
 }
 
 .search-history-container {

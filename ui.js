@@ -798,7 +798,7 @@ export function mostrarDetalleModal(item) {
 
     const title = document.createElement("h2");
     title.textContent = `${item.modelo}`;
-    title.style.cssText = "color:#007bff; margin: 0; padding: 0; font-size: 1.8em;";
+    title.style.cssText = "color: var(--accent-color); margin: 0; padding: 0; font-size: 1.8em;";
     titleContainer.appendChild(title);
 
     cont.appendChild(titleContainer);
@@ -806,7 +806,7 @@ export function mostrarDetalleModal(item) {
     const subHeaderDiv = document.createElement('div');
     subHeaderDiv.style.marginBottom = '15px';
     const subHeaderText = document.createElement('p');
-    subHeaderText.style.cssText = "margin: 0; padding: 0; color: #555; font-size: 1.1em;";
+    subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
     const equipamiento = item.versionesAplicables || item.tipoEncendido || '';
     const yearRangeText = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
     subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | ${yearRangeText}`;
@@ -852,7 +852,7 @@ export function mostrarDetalleModal(item) {
     if (recommendedCut) {
         const recommendedSection = document.createElement('div');
         const title = document.createElement('h4');
-        title.innerHTML = `Corte Recomendado <span style="font-weight:normal; color:#666;">(Votos: ${recommendedCut.util})</span>`;
+        title.innerHTML = `Corte Recomendado <span style="font-weight:normal; color: var(--text-medium);">(Votos: ${recommendedCut.util})</span>`;
         recommendedSection.appendChild(title);
         // El corte recomendado se carga de inmediato (isLazy = false)
         renderCutContent(recommendedSection, recommendedCut, datosRelay, item.id, false);
@@ -1348,7 +1348,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
     if (sec.colaborador) {
         const colabDiv = document.createElement('div');
         const colabP = document.createElement('p');
-        colabP.style.cssText = "font-style: italic; color: #888; margin-top: 10px; text-align: left;";
+        colabP.style.cssText = "font-style: italic; color: var(--text-disabled); margin-top: 10px; text-align: left;";
         colabP.innerHTML = `Aportado por: <strong>${sec.colaborador}</strong>`;
         colabDiv.appendChild(colabP);
         panel.appendChild(colabDiv);
