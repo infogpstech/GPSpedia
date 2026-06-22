@@ -1,4 +1,4 @@
-// GPSpedia Offline & Persistence Module | Version: 1.1
+// GPSpedia Offline & Persistence Module | Version: 1.3
 // Responsibilities:
 // - Manage IndexedDB for local storage of catalog, history, and thumbnails.
 // - Implement image compression and local caching.
@@ -11,14 +11,23 @@ let dbPromise = null;
 
 /**
  * Initializes the IndexedDB database.
+ * Phase 3.3: Added timeout and robustness to prevent startup hangs.
  */
 export async function initDB() {
     if (dbPromise) return dbPromise;
 
     dbPromise = new Promise((resolve, reject) => {
+        // Timeout de seguridad: Si la DB no responde en 5 segundos, fallamos para no bloquear el splash screen
+        const timeout = setTimeout(() => {
+            console.error("IndexedDB initialization timed out.");
+            dbPromise = null;
+            reject(new Error("IndexedDB timeout"));
+        }, 5000);
+
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
         request.onerror = (event) => {
+            clearTimeout(timeout);
             console.error("IndexedDB error:", event.target.error);
             dbPromise = null;
             reject(event.target.error);
@@ -26,9 +35,11 @@ export async function initDB() {
 
         request.onblocked = () => {
             console.warn("IndexedDB update blocked. Please close other tabs.");
+            // No rechazamos aquí, pero avisamos. El timeout eventualmente actuará si sigue bloqueado.
         };
 
         request.onsuccess = (event) => {
+            clearTimeout(timeout);
             resolve(event.target.result);
         };
 
@@ -134,13 +145,22 @@ export async function getViewedItems(limit = 20) {
 
 /**
  * Compresses an image from a URL and stores it in IndexedDB.
- * Phase 3.2: Normalize fileId to ensure consistency between save/load.
+ * Phase 3.3: Improved CORS handling using lh3.googleusercontent.com and normalization.
  */
 export async function compressAndStoreThumbnail(url, rawFileId) {
-    if (!url || !rawFileId || url.includes('placehold.co')) return null;
+    if (!rawFileId || (typeof rawFileId === 'string' && rawFileId.includes('placehold.co'))) return null;
 
     // Normalizar el ID para usarlo como clave consistente
     const fileId = normalizeId(rawFileId);
+    if (!fileId) return null;
+
+    // Phase 3.3: Usar URL de lh3 para evitar problemas de CORS y redirecciones en el fetch.
+    // Solo si el fileId parece ser un ID real de Google Drive.
+    const fetchUrl = (fileId.length > 20 && !fileId.includes('/') && !fileId.includes('http'))
+        ? `https://lh3.googleusercontent.com/d/${fileId}=s400`
+        : url;
+
+    if (!fetchUrl || fetchUrl.includes('placehold.co')) return null;
 
     try {
         // 1. Check if already cached
@@ -148,7 +168,7 @@ export async function compressAndStoreThumbnail(url, rawFileId) {
         if (cached) return cached;
 
         // 2. Fetch image
-        const response = await fetch(url);
+        const response = await fetch(fetchUrl, { mode: 'cors' });
         if (!response.ok) return null;
 
         const blob = await response.blob();
@@ -158,7 +178,7 @@ export async function compressAndStoreThumbnail(url, rawFileId) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
 
-        const MAX_WIDTH = 300;
+        const MAX_WIDTH = 400; // Phase 3.4: Incrementar un poco para mejor calidad offline
         const scale = MAX_WIDTH / bitmap.width;
         canvas.width = MAX_WIDTH;
         canvas.height = bitmap.height * scale;
@@ -166,6 +186,11 @@ export async function compressAndStoreThumbnail(url, rawFileId) {
         ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
 
         return new Promise((resolve) => {
+            // Phase 3.4: Intentar usar webp (que soporta alpha) si el navegador lo permite,
+            // de lo contrario usar png para asegurar transparencia si es necesario.
+            // Para ahorrar espacio, seguimos usando jpeg para la mayoría, pero png es el fallback seguro.
+            const mimeType = 'image/png'; // Cambiado a PNG para preservar transparencias en el catálogo
+
             canvas.toBlob(async (compressedBlob) => {
                 if (compressedBlob) {
                     await performOp('thumbnails', 'readwrite', (store) => store.put(compressedBlob, fileId));
@@ -173,7 +198,7 @@ export async function compressAndStoreThumbnail(url, rawFileId) {
                 } else {
                     resolve(null);
                 }
-            }, 'image/jpeg', 0.6);
+            }, mimeType);
         });
     } catch (e) {
         console.warn("Thumbnail compression failed for", fileId, e);
@@ -188,9 +213,13 @@ export async function getThumbnail(rawFileId) {
 
 /**
  * Normalizador interno para asegurar que las claves de IndexedDB sean IDs limpios.
+ * Phase 3.3: Soporte para patrones adicionales de lh3 y drive.
  */
 function normalizeId(id) {
     if (!id || typeof id !== 'string') return id;
-    const match = id.match(/[\/&]id=([a-zA-Z0-9_-]+)/) || id.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+    // Intenta extraer el ID de varios formatos de URL de Google
+    const match = id.match(/[\/&]id=([a-zA-Z0-9_-]+)/) ||
+                  id.match(/file\/d\/([a-zA-Z0-9_-]+)/) ||
+                  id.match(/\/d\/([a-zA-Z0-9_-]+)/);
     return match ? match[1] : id;
 }
