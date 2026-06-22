@@ -1,4 +1,4 @@
-// GPSpedia Offline & Persistence Module | Version: 1.2
+// GPSpedia Offline & Persistence Module | Version: 1.3
 // Responsibilities:
 // - Manage IndexedDB for local storage of catalog, history, and thumbnails.
 // - Implement image compression and local caching.
@@ -178,7 +178,7 @@ export async function compressAndStoreThumbnail(url, rawFileId) {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
 
-        const MAX_WIDTH = 300;
+        const MAX_WIDTH = 400; // Phase 3.4: Incrementar un poco para mejor calidad offline
         const scale = MAX_WIDTH / bitmap.width;
         canvas.width = MAX_WIDTH;
         canvas.height = bitmap.height * scale;
@@ -186,6 +186,11 @@ export async function compressAndStoreThumbnail(url, rawFileId) {
         ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
 
         return new Promise((resolve) => {
+            // Phase 3.4: Intentar usar webp (que soporta alpha) si el navegador lo permite,
+            // de lo contrario usar png para asegurar transparencia si es necesario.
+            // Para ahorrar espacio, seguimos usando jpeg para la mayoría, pero png es el fallback seguro.
+            const mimeType = 'image/png'; // Cambiado a PNG para preservar transparencias en el catálogo
+
             canvas.toBlob(async (compressedBlob) => {
                 if (compressedBlob) {
                     await performOp('thumbnails', 'readwrite', (store) => store.put(compressedBlob, fileId));
@@ -193,7 +198,7 @@ export async function compressAndStoreThumbnail(url, rawFileId) {
                 } else {
                     resolve(null);
                 }
-            }, 'image/jpeg', 0.6);
+            }, mimeType);
         });
     } catch (e) {
         console.warn("Thumbnail compression failed for", fileId, e);

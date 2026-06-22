@@ -1,4 +1,4 @@
-// GPSpedia UI Module | Version: 2.3
+// GPSpedia UI Module | Version: 2.4
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
@@ -27,12 +27,26 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
         return;
     }
 
+    // Phase 3.4: Priorizar siempre la red si el navegador está online para evitar degradación de calidad (transparencias, resolución)
+    const isOnline = window.navigator && window.navigator.onLine !== false;
+    const remoteUrl = getImageUrl(fileId, size);
+
+    if (isOnline) {
+        imgElement.src = remoteUrl;
+
+        // Intentar guardar en caché silenciosamente para uso offline futuro si es una imagen de Drive
+        if (fileId && typeof fileId === 'string' && !fileId.startsWith('blob:') && !fileId.includes('placehold.co')) {
+            offline.compressAndStoreThumbnail(remoteUrl, fileId).catch(() => {});
+        }
+        return;
+    }
+
+    // MODO OFFLINE: Usar caché local como fallback prioritario
     try {
-        // 1. Intentar obtener del caché local (IndexedDB)
-        // Usamos un timeout corto para no bloquear el renderizado si IndexedDB está lento
+        // 1. Intentar obtener del caché local (IndexedDB) con un timeout agresivo
         const blob = await Promise.race([
             offline.getThumbnail(fileId),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("DB Timeout")), 1500))
+            new Promise((_, reject) => setTimeout(() => reject(new Error("DB Timeout")), 1000))
         ]).catch(() => null);
 
         if (blob) {
@@ -40,17 +54,8 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
             return;
         }
 
-        // 2. Si no está en caché, usar URL remota
-        const remoteUrl = getImageUrl(fileId, size);
+        // 2. Si no está en caché local, intentar red (como último recurso, aunque estemos marcados como offline)
         imgElement.src = remoteUrl;
-
-        // 3. Comprimir y guardar para uso offline futuro (solo si es una imagen real de Drive)
-        if (fileId && typeof fileId === 'string' && !fileId.startsWith('blob:') && !fileId.includes('placehold.co')) {
-            // No esperamos a que termine para no bloquear el renderizado
-            offline.compressAndStoreThumbnail(remoteUrl, fileId).catch(err => {
-                console.warn("Fallo guardado asíncrono de miniatura:", err);
-            });
-        }
     } catch (e) {
         console.warn("Error en setOptimizedImage:", e);
         // Fallback final a la URL directa de Drive

@@ -1,4 +1,4 @@
-// GPSpedia Authentication Module | Version: 2.3
+// GPSpedia Authentication Module | Version: 2.4
 // Responsibilities:
 // - Manage the entire user authentication lifecycle (login, logout, session validation).
 // - Interact with the API module for backend communication.
@@ -51,20 +51,22 @@ async function loadInitialData() {
     } catch (error) {
         console.warn("Fallo al cargar catálogo desde red:", error);
 
-        // Phase 3.3: Solo mostrar error si REALMENTE no hay nada cargado ni se pudo cargar del caché tras el fallo de red
+        // Phase 3.3/3.4: Solo mostrar error si REALMENTE no hay nada cargado ni se pudo cargar del caché tras el fallo de red
         if (!catalogLoaded) {
             try {
                 const cachedCatalog = await offline.getCatalog();
-                if (cachedCatalog) {
+                if (cachedCatalog && cachedCatalog.cortes && cachedCatalog.cortes.length > 0) {
                     processCatalogData(cachedCatalog);
                     catalogLoaded = true;
-                    // No mostramos error bloqueante si el catálogo local funciona
                     console.log("Catalog rehydrated from cache after network failure.");
                     return;
                 }
             } catch (e) { /* silent */ }
 
+            // Si llegamos aquí, no hay datos locales ni de red.
             showGlobalError("No se pudo cargar el catálogo. Verifica tu conexión.");
+
+            // Aseguramos que el estado refleje un catálogo vacío para limpiar skeletons si los hubiera
             setState({
                 catalogData: {
                     cortes: [],
