@@ -284,3 +284,25 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - Header del Modal: Logo alineado a la izquierda seguido del título, con tamaño restaurado.
 - Imagen del Vehículo: Tamaño corregido al 50% del ancho del contenedor.
 - Scroll: Barras nativas ocultas, navegación fluida mantenida.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - SANEAMIENTO DE SEGURIDAD (06/02/2026)**
+
+**Archivos de Microservicios identificados para eliminación:**
+1. `services/write/write.js`: Contiene lógica de escritura en Google Sheets.
+2. `services/auth/auth.js`: Microservicio de autenticación de backend. **NO CONFUNDIR con el `auth.js` de la raíz.**
+3. `services/catalog/catalog.js`: Lógica de recuperación y procesamiento del catálogo en el backend.
+4. `services/feedback/feedback.js`: Gestión de reportes y mensajes en el backend.
+
+**Archivos Críticos de Frontend a conservar:**
+- `auth.js` (Raíz): Gestiona la lógica de sesión en el cliente y la comunicación con los microservicios. ESENCIAL para el funcionamiento de la app.
+- `api-config.js`: Contiene las rutas a los microservicios. Aunque los microservicios se eliminen del repo, este archivo se mantiene para la operatividad de la app contra los endpoints ya desplegados.
+
+**Hallazgos:**
+- Los archivos a eliminar están correctamente ubicados dentro de la carpeta `services/`.
+- El archivo `auth.js` de la raíz es un módulo ES6 y es fundamental para la carga inicial.
+- La eliminación de los microservicios no afectará el funcionamiento del frontend ya que estos residen en Google Apps Script en producción; su presencia en el repo era puramente informativa/de respaldo de desarrollo.
+
+**Acciones:**
+- Proceder con la eliminación segura de los 4 archivos de microservicios indicados.
+- Mantener intacto el archivo `auth.js` de la raíz.

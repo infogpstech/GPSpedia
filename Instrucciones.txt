@@ -209,6 +209,14 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
 ---
+0. **TÍTULO: Saneamiento de Seguridad y Documentación Final v2.4 (Etapa Final)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** Global (Saneamiento y Documentación)
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Seguridad:** Eliminación de microservicios de backend (`write.js`, `auth.js`, `catalog.js`, `feedback.js`) de la carpeta `services/` para asegurar el repositorio previo a producción.
+     - **Documentación:** Actualización integral del `README.md` reflejando la arquitectura actual v2.4, estructura modular del frontend y funcionalidades detalladas.
+     - **Administración:** Creación de `Resguardo_Microservicios.txt` documentando el almacenamiento seguro de componentes operativos.
+
 1. **TÍTULO: Lanzamiento Global GPSpedia v2.0 (v2.0.0)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** Global (Frontend y Backend)

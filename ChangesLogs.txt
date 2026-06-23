@@ -341,3 +341,26 @@
 - **Líneas 845, 850:** Añadido 'scrollbar-width: none' y oculta '-webkit-scrollbar' en '#detalleCompleto'.
 - **Líneas 862-870:** Separada lógica de '.brand-logo-modal' para restaurar altura a '60px !important' y eliminar márgenes automáticos para alineación izquierda.
 - **Líneas 884-888:** Ajustado '.img-vehiculo-modal' a 'width: 50% !important' para cumplir con el requisito de ser la mitad del tamaño de la imagen del corte, eliminando restricciones de max-width.
+
+**CHANGES LOG - 23/06/2026 (Saneamiento de Seguridad y Documentación Final)**
+
+**Archivo: README.md**
+- Reescritura completa del archivo para reflejar la versión v2.4 y la estructura actual del repositorio (App Shell y Frontend).
+- Documentación detallada de módulos, arquitectura desacoplada y funcionalidades presentes (Catálogo, Búsqueda, Historial, Offline).
+- Inclusión de nota de seguridad sobre la exclusión de microservicios operativos del repositorio.
+
+**Archivo: Auditoria.txt**
+- Documentación del proceso de saneamiento de seguridad y verificación de rutas de microservicios.
+
+**Archivo: Resguardo_Microservicios.txt**
+- Creación del archivo con la nota administrativa sobre el resguardo privado de los microservicios eliminados.
+
+**Eliminación de Archivos (Seguridad):**
+- Eliminados los archivos de microservicios en `services/`:
+  - `services/write/write.js`
+  - `services/auth/auth.js`
+  - `services/catalog/catalog.js`
+  - `services/feedback/feedback.js`
+- Se mantuvo intacto el archivo `auth.js` de la raíz del proyecto.
+
+**Estado de la Tarea:** COMPLETADA.
