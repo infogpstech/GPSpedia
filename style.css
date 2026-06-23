@@ -888,7 +888,7 @@ body.search-active .container {
 }
 
 .img-vehiculo-modal {
-    width: 50% !important; /* Ajustado para ser la mitad del tamaño de la imagen del corte */
+    width: 80% !important; /* Ajustado para ser la mitad del tamaño de la imagen del corte */
     height: auto;
     margin: 10px auto;
 }
