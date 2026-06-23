@@ -264,3 +264,23 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - Historial: Persistente entre reinicios.
 - Imágenes: Restauradas correctamente desde caché offline usando fileId como clave única.
 - Arranque: Silencioso y resiliente sin internet.
+
+**AUDITORÍA TÉCNICA - CORRECCIÓN DE LAYOUT Y REGRESIÓN (23/06/2026)**
+
+**Archivos involucrados:** style.css, ui.js.
+
+**Hallazgos:**
+1. **Regresión de Logo:** El logo de la marca en el modal de detalle tenía un tamaño de 44px (insuficiente) y estaba centrado mediante márgenes automáticos, rompiendo la alineación izquierda solicitada junto al título.
+2. **Dimensiones del Vehículo:** La imagen del modelo del vehículo estaba restringida a 134px, lo que no cumplía con el requisito de ser la mitad del tamaño de la imagen del corte.
+3. **Scrollbars:** Se detectaron barras de scroll nativas no estilizadas en los contenedores principales y modales, afectando la estética de la aplicación.
+
+**Acciones Realizadas:**
+- **style.css:** Restaurado el tamaño del logo a 60px y corregido su margen a 0 para respetar la alineación izquierda dentro del flex-container del header.
+- **style.css:** Ajustada la imagen del vehículo a 'width: 50% !important', asegurando una proporción consistente respecto a las imágenes de los cortes.
+- **style.css:** Implementada la ocultación global de barras de scroll nativas en '.container', '#modalDetalle' y '#detalleCompleto' para un acabado visual limpio.
+- **ui.js:** Se verificó que el 'titleContainer' implementa correctamente 'display: flex' y 'justify-content: flex-start' con gap de 15px, lo que junto al CSS corregido soluciona el layout del header.
+
+**Estado Final:**
+- Header del Modal: Logo alineado a la izquierda seguido del título, con tamaño restaurado.
+- Imagen del Vehículo: Tamaño corregido al 50% del ancho del contenedor.
+- Scroll: Barras nativas ocultas, navegación fluida mantenida.
