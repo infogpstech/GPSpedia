@@ -332,3 +332,12 @@
 
 **Archivo: ui.js**
 - **Líneas 44-50:** Refinada lógica de guardado de miniaturas para evitar errores con recursos locales o externos no compatibles.
+
+**CHANGES LOG - 23/06/2026 (Correcciones de Layout y Regresión)**
+
+**Archivo: style.css**
+- **Línea 96-98:** Añadido 'scrollbar-width: none' y oculta '-webkit-scrollbar' en '.container'.
+- **Líneas 811, 830:** Añadido 'scrollbar-width: none' y oculta '-webkit-scrollbar' en '#modalDetalle'.
+- **Líneas 845, 850:** Añadido 'scrollbar-width: none' y oculta '-webkit-scrollbar' en '#detalleCompleto'.
+- **Líneas 862-870:** Separada lógica de '.brand-logo-modal' para restaurar altura a '60px !important' y eliminar márgenes automáticos para alineación izquierda.
+- **Líneas 884-888:** Ajustado '.img-vehiculo-modal' a 'width: 50% !important' para cumplir con el requisito de ser la mitad del tamaño de la imagen del corte, eliminando restricciones de max-width.
