@@ -1,0 +1,5 @@
+Nota Administrativa: Resguardo de Microservicios
+
+Se deja constancia de que los archivos correspondientes a los microservicios del backend (write.js, auth.js, catalog.js, feedback.js) han sido retirados de este repositorio por motivos de seguridad y saneamiento previo a la producción.
+
+Dichos componentes operativos se encuentran resguardados de forma privada en la carpeta administrativa correspondiente en el Google Drive del administrador del proyecto. Su acceso y gestión quedan restringidos al personal autorizado.

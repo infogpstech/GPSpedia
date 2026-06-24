@@ -1,4 +1,4 @@
-// GPSpedia Navigation Module | Version: 2.0
+// GPSpedia Navigation Module | Version: 2.2
 // Responsibilities:
 // - Manage the application's view state and navigation flow.
 // - Handle user navigation actions (e.g., selecting a category or brand).
@@ -9,19 +9,31 @@ import { getState, setState } from './state.js';
 import {
     mostrarCategorias,
     mostrarResultadosDeBusqueda, // Se importa la nueva función unificada de renderizado.
-    showNoResultsMessage
+    showNoResultsMessage,
+    mostrarSeccion
 } from './ui.js';
+import * as offline from './offline.js';
 
 let datosFiltrados = [];
+let searchDebounceTimer = null;
 
 export function irAPaginaPrincipal() {
     // Se limpia el campo de búsqueda al regresar a la página principal.
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
         searchInput.value = '';
+        // Phase 3.1: Asegurar que se oculta el botón de limpiar (X)
+        if (searchInput.parentElement) {
+            searchInput.parentElement.classList.remove('has-text');
+        }
+        // Quitar el foco para que se oculte el historial y se desactive el modo búsqueda
+        searchInput.blur();
     }
     setState({ navigationState: { level: 'categorias', categoria: null, marca: null, modelo: null } });
-    mostrarCategorias();
+
+    // Phase 3.1: Asegurar que se muestra la sección de cortes (catálogo)
+    // Esto resuelve el problema de que el botón no funcionaba desde Tutoriales o Relay.
+    mostrarSeccion('cortes');
 }
 
 export function getDatosFiltrados() {
@@ -79,6 +91,16 @@ export function filtrarContenido(textoBusqueda) {
         setState({ navigationState: { level: "busqueda" } });
         return;
     }
+
+    // Guardar en historial de búsqueda (offline) con Debounce de Phase 2
+    if (searchDebounceTimer) clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+        if (textoBusqueda.trim().length >= 3) {
+            offline.saveSearch(textoBusqueda).then(() => {
+                offline.getSearchHistory().then(history => setState({ searchHistory: history }));
+            });
+        }
+    }, 1500);
 
     // --- LÓGICA DE CLASIFICACIÓN MEJORADA (BASADA EN RESULTADOS) ---
     const uniqueMarcasEnResultados = [...new Set(datosFiltrados.map(item => item.marca))];

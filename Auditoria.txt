@@ -190,3 +190,97 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - Eliminar el `oninput` redundante en `index.html`.
 - Implementar la excepción de zoom por lightbox en `add_cortes.html`.
 - Refactorizar `mostrarModelos` para usar `previousState` en su botón de regreso.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - FASE 2: ROBUSTEZ SISTEMA OFFLINE (06/02/2026)**
+
+**Archivos involucrados:** offline.js, auth.js, ui.js, navigation.js.
+
+**Hallazgos:**
+1. **offline.js:** La versión de la base de datos estaba en 1. Falta de manejo del evento 'onblocked' podía causar bloqueos en la actualización de esquemas si había múltiples pestañas abiertas.
+2. **auth.js:** La validación de sesión (checkSession) era demasiado estricta con los errores de red, lo que provocaba cierres de sesión innecesarios al estar offline. La carga de datos iniciales (loadInitialData) no procesaba la caché local si la red fallaba, dejando la app en un estado inútil.
+3. **ui.js:** El suscriptor al estado tenía guardas que podían impedir el renderizado si el contenedor ya tenía contenido de error o si la transición desde el splash screen no era limpia tras una carga fallida de red.
+4. **navigation.js:** Cada pulsación de tecla en el buscador disparaba una escritura en IndexedDB, causando contaminación del historial y degradación del rendimiento.
+
+**Acciones:**
+- **Robustez de Persistencia:** Incrementada DB_VERSION a 2 en offline.js y añadido listener 'onblocked'.
+- **Modo Local:** Modificada lógica de 'checkSession' en auth.js para permitir fallback a sesión local ante cualquier error que no sea expiración explícita.
+- **Catálogo Offline:** Asegurado el procesamiento de datos cacheados en 'loadInitialData' (auth.js) tras fallo de red.
+- **UI Resiliente:** Ajustada lógica de suscripción en ui.js para forzar renderizado de categorías si hay datos disponibles en el estado, incluso tras errores previos.
+- **Historial Limpio:** Implementado debounce de 1500ms y validación de longitud mínima (3 caracteres) para el guardado de búsquedas en navigation.js.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - FASE 3: AJUSTES DE ESTABILIDAD OFFLINE (06/02/2026)**
+
+**Archivos involucrados:** ui.js, auth.js, main.js, style.css, offline.js.
+
+**Hallazgos:**
+1. **Caché de Imágenes Incompleto:** La función 'crearCardVehiculo' ya implementaba fallback a IndexedDB, pero 'renderCutContent' y el carrusel de categorías en 'mostrarCategorias' dependían exclusivamente de la red o del caché del navegador, rompiendo la experiencia offline.
+2. **Reactividad de "Vistos Recientemente":** Los datos de IndexedDB (viewedItems, searchHistory) se cargan de forma asíncrona tras la validación de sesión. Sin embargo, el suscriptor al estado solo dispara el renderizado inicial basándose en 'catalogData.cortes', lo que causa que los carruseles de actividad no aparezcan en el primer render si la carga desde DB tarda más que la validación local.
+3. **Inconsistencia de Mensajes:** Mensajes de error como "No se pudo actualizar el catálogo" pueden resultar confusos si el sistema está operando correctamente en modo local. Se requiere una comunicación unificada: "Trabajando en modo local/caché".
+4. **UI del Historial de Búsqueda:** El historial de búsqueda se muestra permanentemente en la vista de categorías, ocupando espacio innecesario. Debe estar vinculado al foco del buscador. Además, seleccionar un tag del historial rellena el input pero no activa la lógica visual del botón "X".
+5. **Reset de Navegación:** El botón "Cortes" simplemente llama a 'mostrarCategorias', pero no reinicia el estado interno de navegación ni limpia el buscador, lo que puede causar comportamientos inesperados si se regresa desde una búsqueda profunda.
+
+**Acciones Planificadas:**
+- Implementar 'setOptimizedImage' en ui.js para centralizar el uso de caché de IndexedDB en todos los componentes.
+- Optimizar 'checkSession' y el suscriptor de estado para asegurar la aparición inmediata de carruseles de actividad.
+- Ajustar CSS y eventos de búsqueda para una mejor experiencia de usuario.
+- Unificar listeners de navegación para asegurar resets de estado limpios.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - FASE 3.1: CORRECCIÓN REGRESIÓN OFFLINE Y NAVEGACIÓN (22/06/2026)**
+
+**Archivos involucrados:** auth.js, navigation.js, ui.js.
+
+**Hallazgos:**
+1. **Regresión Offline (auth.js):** La validación de sesión en la Phase 3 era bloqueante. Si la API de validación fallaba por falta de red antes de completar el flujo, la aplicación se quedaba en el splash screen o mostraba errores que impedían el acceso al catálogo, incluso con datos locales presentes.
+2. **Navegación "Cortes" (navigation.js):** La función 'irAPaginaPrincipal' reseteaba el estado pero no aseguraba la visibilidad de la sección de cortes ('#contenido') si el usuario venía de 'Tutoriales' o 'Relay', ya que 'mostrarCategorias' no gestionaba el display de los contenedores de sección principales.
+3. **Persistencia de Imágenes (ui.js):** Se confirmó que 'setOptimizedImage' es el único punto de entrada para carga de imágenes en el catálogo, lo que garantiza el uso de IndexedDB. No se detectaron fallos adicionales pero se reforzó la carga silenciosa.
+
+**Acciones Realizadas:**
+- **auth.js:** Refactorizada 'checkSession' para ser no-bloqueante: restaura la sesión local inmediatamente e intenta la validación con la API en segundo plano.
+- **auth.js:** Optimizada 'loadInitialData' para suprimir alertas de error de red si los datos ya fueron cargados exitosamente desde el caché.
+- **navigation.js:** Actualizada 'irAPaginaPrincipal' para llamar a 'ui.mostrarSeccion("cortes")', garantizando el reset visual completo de la navegación.
+- **navigation.js:** Añadido 'searchInput.blur()' y limpieza de clase 'has-text' en el reset para asegurar consistencia de la Phase 3.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - FASE 3.2: PERSISTENCIA TOTAL Y REHIDRATACIÓN (23/06/2026)**
+
+**Archivos involucrados:** auth.js, ui.js, offline.js.
+
+**Hallazgos:**
+1. **Rehidratación (auth.js):** Se detectó que el estado inicial se montaba antes de completar la lectura de IndexedDB, causando que 'Vistos Recientemente' e 'Historial' desaparecieran al refrescar.
+2. **Claves de Imágenes (offline.js):** La persistencia de miniaturas usaba claves inconsistentes (URLs completas vs IDs). La recuperación fallaba porque el catálogo restaurado usa fileIds pero el almacén de miniaturas tenía la URL remota como clave.
+3. **Flujo de Carga (auth.js):** El arranque offline seguía siendo "ruidoso" con alertas de red a pesar de operar correctamente en caché.
+
+**Acciones Realizadas:**
+- **offline.js:** Implementado helper 'normalizeId' para garantizar consistencia total en el almacén de miniaturas. Mejorada la solidez de las operaciones asíncronas para evitar bloqueos si DB falla.
+- **auth.js:** Movida la rehidratación de IndexedDB al inicio absoluto de 'checkSession'. Se añadieron logs para trazabilidad del flujo de restauración.
+- **ui.js:** Optimizada 'setOptimizedImage' para ignorar intentos de cacheo de recursos no-Drive (placeholders o blobs).
+- **auth.js:** Silenciados los errores de validación de red en el arranque; ahora solo se reportan si hay una expiración de sesión explícita desde el servidor.
+
+**Estado Final:**
+- Vistos Recientemente: Persistente entre reinicios.
+- Historial: Persistente entre reinicios.
+- Imágenes: Restauradas correctamente desde caché offline usando fileId como clave única.
+- Arranque: Silencioso y resiliente sin internet.
+
+**AUDITORÍA TÉCNICA - CORRECCIÓN DE LAYOUT Y REGRESIÓN (23/06/2026)**
+
+**Archivos involucrados:** style.css, ui.js.
+
+**Hallazgos:**
+1. **Regresión de Logo:** El logo de la marca en el modal de detalle tenía un tamaño de 44px (insuficiente) y estaba centrado mediante márgenes automáticos, rompiendo la alineación izquierda solicitada junto al título.
+2. **Dimensiones del Vehículo:** La imagen del modelo del vehículo estaba restringida a 134px, lo que no cumplía con el requisito de ser la mitad del tamaño de la imagen del corte.
+3. **Scrollbars:** Se detectaron barras de scroll nativas no estilizadas en los contenedores principales y modales, afectando la estética de la aplicación.
+
+**Acciones Realizadas:**
+- **style.css:** Restaurado el tamaño del logo a 60px y corregido su margen a 0 para respetar la alineación izquierda dentro del flex-container del header.
+- **style.css:** Ajustada la imagen del vehículo a 'width: 50% !important', asegurando una proporción consistente respecto a las imágenes de los cortes.
+- **style.css:** Implementada la ocultación global de barras de scroll nativas en '.container', '#modalDetalle' y '#detalleCompleto' para un acabado visual limpio.
+- **ui.js:** Se verificó que el 'titleContainer' implementa correctamente 'display: flex' y 'justify-content: flex-start' con gap de 15px, lo que junto al CSS corregido soluciona el layout del header.
+
+**Estado Final:**
+- Header del Modal: Logo alineado a la izquierda seguido del título, con tamaño restaurado.
+- Imagen del Vehículo: Tamaño corregido al 50% del ancho del contenedor.
+- Scroll: Barras nativas ocultas, navegación fluida mantenida.

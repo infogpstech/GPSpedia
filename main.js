@@ -1,4 +1,4 @@
-// GPSpedia Main Orchestration Module | Version: 2.0
+// GPSpedia Main Orchestration Module | Version: 2.4
 // Responsibilities:
 // - Import all feature modules.
 // - Initialize the application and set up global event listeners.
@@ -166,7 +166,11 @@ async function initializeApp() {
         if (btn) {
             btn.addEventListener('click', (e) => {
                 e.preventDefault();
-                ui.mostrarSeccion(section);
+                if (section === 'cortes') {
+                    navigation.irAPaginaPrincipal();
+                } else {
+                    ui.mostrarSeccion(section);
+                }
                 ui.closeSideMenu();
             });
         }
@@ -174,9 +178,19 @@ async function initializeApp() {
 
     // Dark Mode Toggle Logic with Logo Swap and Persistence
     const darkModeToggle = document.getElementById('dark-mode-toggle');
-    const appLogo = document.querySelector('.app-logo');
-    // El logo usa una solución técnica por CSS filter en modo oscuro,
-    // por lo que no es necesario cambiar la URL de la imagen si darkLogo no existe.
+
+    const updateLogos = (isDark) => {
+        const logoUrl = isDark ? 'Logo_TemaOscuro.png' : 'https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=2048';
+        const splashUrl = isDark ? 'Logo_TemaOscuro.png' : 'https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=512';
+        const loginUrl = isDark ? 'Logo_TemaOscuro.png' : 'icon-v3-512x512.png';
+
+        document.querySelectorAll('.app-logo').forEach(img => img.src = logoUrl);
+        const splashImg = document.querySelector('#splash-screen img');
+        if (splashImg) splashImg.src = splashUrl;
+        const loginImg = document.querySelector('#login-modal img');
+        if (loginImg) loginImg.src = loginUrl;
+    };
+
     document.querySelectorAll('.accordion-header').forEach(header => {
         header.addEventListener('click', () => {
             const item = header.parentElement;
@@ -198,16 +212,19 @@ async function initializeApp() {
         if (localStorage.getItem('darkMode') === 'true') {
             document.body.classList.add('dark-mode');
             darkModeToggle.checked = true;
+            updateLogos(true);
         }
 
         darkModeToggle.addEventListener('change', () => {
-            if (darkModeToggle.checked) {
+            const isDark = darkModeToggle.checked;
+            if (isDark) {
                 document.body.classList.add('dark-mode');
                 localStorage.setItem('darkMode', 'true');
             } else {
                 document.body.classList.remove('dark-mode');
                 localStorage.setItem('darkMode', 'false');
             }
+            updateLogos(isDark);
         });
     }
 
@@ -238,7 +255,11 @@ async function initializeApp() {
     document.querySelectorAll('.section-btn').forEach(button => {
         button.addEventListener('click', () => {
             const section = button.id.replace('btn-', '');
-            ui.mostrarSeccion(section);
+            if (section === 'cortes') {
+                navigation.irAPaginaPrincipal();
+            } else {
+                ui.mostrarSeccion(section);
+            }
         });
     });
 
@@ -252,19 +273,19 @@ async function initializeApp() {
         });
     }
 
-    // Footer links listeners
-    document.getElementById('footer-about-link')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        ui.openAboutUs();
-    });
-    document.getElementById('footer-contact-link')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        ui.openContact();
-    });
-    document.getElementById('footer-faq-link')?.addEventListener('click', (e) => {
-        e.preventDefault();
-        ui.openFAQ();
-    });
+    // Footer links listeners (Global and Login Modal)
+    const openAbout = (e) => { e.preventDefault(); ui.openAboutUs(); };
+    const openContact = (e) => { e.preventDefault(); ui.openContact(); };
+    const openFAQ = (e) => { e.preventDefault(); ui.openFAQ(); };
+
+    document.getElementById('footer-about-link')?.addEventListener('click', openAbout);
+    document.getElementById('login-about-link')?.addEventListener('click', openAbout);
+
+    document.getElementById('footer-contact-link')?.addEventListener('click', openContact);
+    document.getElementById('login-contact-link')?.addEventListener('click', openContact);
+
+    document.getElementById('footer-faq-link')?.addEventListener('click', openFAQ);
+    document.getElementById('login-faq-link')?.addEventListener('click', openFAQ);
 
     // Dashboard button listener - Restauración de funcionalidad
     const dashboardBtn = document.getElementById('dashboard-btn');

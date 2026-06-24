@@ -1,4 +1,4 @@
-// GPSpedia UI Module | Version: 2.0
+// GPSpedia UI Module | Version: 2.4
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
@@ -6,6 +6,7 @@
 
 import { getFeedbackItems, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
+import * as offline from './offline.js';
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
@@ -14,7 +15,60 @@ export const IMG_SIZE_SMALL = 300;   // Cards and thumbnails
 export const IMG_SIZE_MEDIUM = 800;  // Modal details
 export const IMG_SIZE_LARGE = 1600;  // Lightbox / High Resolution
 
+/**
+ * Establece una imagen optimizada intentando cargarla desde el caché de IndexedDB.
+ * @param {HTMLImageElement} imgElement - El elemento img a actualizar.
+ * @param {string} fileId - El ID o URL de la imagen.
+ * @param {number} size - El tamaño solicitado para la imagen.
+ */
+export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMALL) {
+    if (!fileId) {
+        imgElement.src = getImageUrl(null);
+        return;
+    }
+
+    // Phase 3.4: Priorizar siempre la red si el navegador está online para evitar degradación de calidad (transparencias, resolución)
+    const isOnline = window.navigator && window.navigator.onLine !== false;
+    const remoteUrl = getImageUrl(fileId, size);
+
+    if (isOnline) {
+        imgElement.src = remoteUrl;
+
+        // Intentar guardar en caché silenciosamente para uso offline futuro si es una imagen de Drive
+        if (fileId && typeof fileId === 'string' && !fileId.startsWith('blob:') && !fileId.includes('placehold.co')) {
+            offline.compressAndStoreThumbnail(remoteUrl, fileId).catch(() => {});
+        }
+        return;
+    }
+
+    // MODO OFFLINE: Usar caché local como fallback prioritario
+    try {
+        // 1. Intentar obtener del caché local (IndexedDB) con un timeout agresivo
+        const blob = await Promise.race([
+            offline.getThumbnail(fileId),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("DB Timeout")), 1000))
+        ]).catch(() => null);
+
+        if (blob) {
+            imgElement.src = URL.createObjectURL(blob);
+            return;
+        }
+
+        // 2. Si no está en caché local, intentar red (como último recurso, aunque estemos marcados como offline)
+        imgElement.src = remoteUrl;
+    } catch (e) {
+        console.warn("Error en setOptimizedImage:", e);
+        // Fallback final a la URL directa de Drive
+        imgElement.src = getImageUrl(fileId, size);
+    }
+}
+
 export function getImageUrl(fileId, size = 400) {
+    // Si ya es una URL de Blob (caché local), devolverla directamente.
+    if (fileId && typeof fileId === 'string' && fileId.startsWith('blob:')) {
+        return fileId;
+    }
+
     const placeholder = "https://placehold.co/400x300/cccccc/333333?text=Sin+Imagen";
 
     if (!fileId || typeof fileId !== 'string' || fileId.trim() === '') {
@@ -160,13 +214,46 @@ function crearCarrusel(titulo, items, cardGenerator) {
 }
 
 export function mostrarCategorias() {
-    const { catalogData } = getState();
+    const { catalogData, searchHistory, viewedItems } = getState();
     const { cortes, sortedCategories } = catalogData;
 
     if (document.getElementById("searchInput").value.trim()) return;
 
     const cont = document.getElementById("contenido");
     cont.innerHTML = "";
+
+    // 1. Mostrar Historial de Búsqueda (si existe)
+    if (searchHistory && searchHistory.length > 0) {
+        const historySection = document.createElement('div');
+        historySection.className = 'search-history-section';
+        historySection.innerHTML = '<h4 style="margin-top:20px;">Búsquedas Recientes</h4>';
+        const historyContainer = document.createElement('div');
+        historyContainer.className = 'search-history-container';
+
+        searchHistory.forEach(item => {
+            const tag = document.createElement('span');
+            tag.className = 'search-tag';
+            tag.textContent = item.term;
+            tag.onclick = () => {
+                const input = document.getElementById('searchInput');
+                input.value = item.term;
+                // Forzar visualización de botón X y filtrado
+                input.parentElement.classList.add('has-text');
+                window.navigation.filtrarContenido(item.term);
+            };
+            historyContainer.appendChild(tag);
+        });
+        historySection.appendChild(historyContainer);
+        cont.appendChild(historySection);
+    }
+
+    // 2. Mostrar Vistos Recientemente
+    if (viewedItems && viewedItems.length > 0) {
+        const viewedCortes = viewedItems.map(v => v.data);
+        crearCarrusel('Vistos Recientemente', viewedCortes, item => {
+            return crearCardVehiculo(item, true); // true para no mostrar badge en esta sección
+        });
+    }
 
     mostrarUltimosAgregados();
 
@@ -179,13 +266,13 @@ export function mostrarCategorias() {
         .sort((a, b) => b.poblacion - a.poblacion)
         .map(c => c.nombre);
 
-    crearCarrusel('Búsqueda por Categoría', categoriasPorPoblacion, cat => {
+    crearCarrusel('Categorías Populares', categoriasPorPoblacion, cat => {
         const ejemplo = cortes.find(item => item.categoria === cat && item.imagenVehiculo);
         const card = document.createElement("div");
         card.className = "card";
         card.onclick = () => mostrarMarcas(cat);
         const img = document.createElement("img");
-        img.src = getImageUrl(ejemplo?.imagenVehiculo, IMG_SIZE_SMALL);
+        setOptimizedImage(img, ejemplo?.imagenVehiculo, IMG_SIZE_SMALL);
         img.alt = `Categoría ${cat}`;
         img.loading = "lazy";
         card.appendChild(img);
@@ -209,7 +296,7 @@ export function mostrarCategorias() {
         // Cambio Crítico: Corregir el flujo de navegación para que vaya de Marca -> Modelos.
         card.onclick = () => mostrarModelosPorMarca(marca);
         const img = document.createElement("img");
-        img.src = getImageUrl(logoUrl, IMG_SIZE_SMALL);
+        setOptimizedImage(img, logoUrl, IMG_SIZE_SMALL);
         img.alt = `Marca ${marca}`;
         img.loading = "lazy";
         card.appendChild(img);
@@ -228,7 +315,7 @@ export function mostrarCategorias() {
         card.className = "card brand-logo-item";
         card.onclick = () => mostrarModelos('Motocicletas', marca);
         const img = document.createElement("img");
-        img.src = getImageUrl(logoUrl, IMG_SIZE_SMALL);
+        setOptimizedImage(img, logoUrl, IMG_SIZE_SMALL);
         img.alt = `Marca ${marca}`;
         img.loading = "lazy";
         card.appendChild(img);
@@ -258,7 +345,7 @@ export function mostrarMarcas(categoria) {
         logoContainer.onclick = () => mostrarModelos(categoria, m);
 
         const img = document.createElement("img");
-        img.src = getImageUrl(logoUrl, IMG_SIZE_SMALL) || 'https://placehold.co/120x80/cccccc/333333?text=Sin+Logo';
+        setOptimizedImage(img, logoUrl, IMG_SIZE_SMALL); // 'https://placehold.co/120x80/cccccc/333333?text=Sin+Logo';
         img.alt = `Marca ${m}`;
         img.loading = "lazy";
 
@@ -307,7 +394,7 @@ export function mostrarModelosPorMarca(marca) {
         // Al hacer clic, pasamos la categoría para asegurar que el filtrado posterior sea preciso
         card.onclick = () => navegarADetallesDeModelo(ejemplo.categoria, marca, ejemplo.modelo);
         const img = document.createElement("img");
-        img.src = getImageUrl(ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
+        setOptimizedImage(img, ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
         img.alt = `Modelo ${ejemplo.modelo}`;
         img.loading = "lazy";
         card.appendChild(img);
@@ -418,7 +505,7 @@ export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
         const card = document.createElement("div"); card.className = "card";
         card.onclick = () => navegarADetallesDeModelo(ejemplo.categoria, marca, ejemplo.modelo);
         const img = document.createElement("img");
-        img.src = getImageUrl(ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
+        setOptimizedImage(img, ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
         img.alt = `Modelo ${ejemplo.modelo}`;
         img.loading = "lazy";
         card.appendChild(img);
@@ -477,7 +564,7 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
         card.onclick = () => mostrarVersiones(vehiculos.filter(v => v.tipoEncendido === tipo), categoria, marca, modelo);
 
         const img = document.createElement("img");
-        img.src = getImageUrl(ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
+        setOptimizedImage(img, ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
         img.alt = tipo;
         img.loading = "lazy";
         card.appendChild(img);
@@ -520,17 +607,7 @@ export function mostrarVersiones(filas, categoria, marca, modelo) {
     cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Años de ${modelo}</h4>`;
     const grid = document.createElement("div"); grid.className = "grid";
     filas.forEach(item => {
-        const card = document.createElement("div"); card.className = "card";
-        card.onclick = () => mostrarDetalleModal(item);
-        const img = document.createElement("img");
-        img.src = getImageUrl(item.imagenVehiculo, IMG_SIZE_SMALL);
-        img.alt = `Corte ${item.anoDesde}`;
-        img.loading = "lazy";
-        card.appendChild(img);
-        const overlay = document.createElement("div"); overlay.className = "overlay";
-        const yearRange = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
-        overlay.innerHTML = `<div style="font-weight:bold;">${yearRange || modelo}</div><div style="font-size:0.8em;">${item.tipoEncendido || ''}</div>`;
-        card.appendChild(overlay);
+        const card = crearCardVehiculo(item);
         grid.appendChild(card);
     });
     cont.appendChild(grid);
@@ -591,7 +668,7 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
         card.onclick = () => mostrarVersiones(vehiculosDeVersion, categoria, marca, modelo);
 
         const img = document.createElement("img");
-        img.src = getImageUrl(ejemplo?.imagenVehiculo, IMG_SIZE_SMALL);
+        setOptimizedImage(img, ejemplo?.imagenVehiculo, IMG_SIZE_SMALL);
         img.alt = `Versión ${version}`;
         img.loading = "lazy";
         card.appendChild(img);
@@ -643,7 +720,7 @@ export function mostrarResultadosDeBusqueda({ type, query, results }) {
             card.onclick = () => mostrarModelosPorMarca(marca);
 
             const img = document.createElement("img");
-            img.src = getImageUrl(logoUrl, IMG_SIZE_SMALL);
+            setOptimizedImage(img, logoUrl, IMG_SIZE_SMALL);
             img.alt = `Marca ${marca}`;
             img.loading = "lazy";
             card.appendChild(img);
@@ -660,43 +737,7 @@ export function mostrarResultadosDeBusqueda({ type, query, results }) {
         })).values()];
 
         variantesUnicas.forEach(ejemplo => {
-            const card = document.createElement("div");
-            card.className = "card";
-
-            // CORRECCIÓN: El onclick ahora salta directamente a la selección de AÑO para la variante elegida,
-            // evitando el "retroceso" en el flujo de navegación.
-            card.onclick = () => {
-                const filasDeVariante = results.filter(r =>
-                    r.marca === ejemplo.marca &&
-                    r.modelo === ejemplo.modelo &&
-                    r.versionesAplicables === ejemplo.versionesAplicables
-                );
-                mostrarVersiones(filasDeVariante, ejemplo.categoria, ejemplo.marca, ejemplo.modelo);
-            };
-
-            const img = document.createElement("img");
-            img.src = getImageUrl(ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
-            img.alt = `Modelo ${ejemplo.modelo}`;
-            img.loading = "lazy";
-            card.appendChild(img);
-
-            const overlay = document.createElement("div");
-            overlay.className = "overlay";
-
-            // CORRECCIÓN: El texto de la tarjeta ahora representa la variante, no un año específico,
-            // para que coincida con la acción del onclick.
-            const version = ejemplo.versionesAplicables || '';
-            const tiposEncendido = [...new Set(results
-                .filter(r => r.marca === ejemplo.marca && r.modelo === ejemplo.modelo && r.categoria === ejemplo.categoria && r.versionesAplicables === ejemplo.versionesAplicables)
-                .map(r => r.tipoEncendido).filter(Boolean))].join(' / ');
-
-            // Si hay modelos con mismo nombre pero distinta categoría, lo mostramos
-            const tieneDuplicadosNombre = variantesUnicas.filter(v => v.modelo === ejemplo.modelo && v.marca === ejemplo.marca).length > 1;
-            const categoriaExtra = tieneDuplicadosNombre ? `${ejemplo.categoria} | ` : '';
-            const diferenciador = `${categoriaExtra}${version || tiposEncendido}`;
-
-            overlay.innerHTML = `<div class="overlay-text-primary">${ejemplo.marca} ${ejemplo.modelo}</div><div class="overlay-text-secondary">${diferenciador}</div>`;
-            card.appendChild(overlay);
+            const card = crearCardVehiculo(ejemplo, false, results);
             grid.appendChild(card);
         });
     }
@@ -709,6 +750,11 @@ export function showNoResultsMessage(textoBusqueda) {
 }
 
 export function mostrarDetalleModal(item) {
+    // Registrar como item visto (offline)
+    offline.saveViewedItem(item).then(() => {
+        offline.getViewedItems().then(viewed => setState({ viewedItems: viewed }));
+    });
+
     const { catalogData } = getState();
     const { relay: datosRelay } = catalogData;
 
@@ -738,12 +784,12 @@ export function mostrarDetalleModal(item) {
 
     // Comentario: Se ajusta el layout del encabezado para cumplir con el nuevo requisito (logo a la izquierda).
     const titleContainer = document.createElement("div");
-    titleContainer.style.cssText = "border-bottom: 3px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 15px;";
+    titleContainer.style.cssText = "border-bottom: 3px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 10px;";
 
     const logoUrl = getLogoUrlForMarca(item.marca, item.categoria);
     if (logoUrl) {
         const logoImg = document.createElement("img");
-        logoImg.src = getImageUrl(logoUrl, IMG_SIZE_SMALL);
+        setOptimizedImage(logoImg, logoUrl, IMG_SIZE_SMALL);
         logoImg.alt = `Logo ${item.marca}`;
         logoImg.className = 'brand-logo-modal';
         // El tamaño se controla ahora desde style.css para mantener la consistencia.
@@ -752,15 +798,15 @@ export function mostrarDetalleModal(item) {
 
     const title = document.createElement("h2");
     title.textContent = `${item.modelo}`;
-    title.style.cssText = "color:#007bff; margin: 0; padding: 0; font-size: 1.8em;";
+    title.style.cssText = "color: var(--accent-color); margin: 0; padding: 0; font-size: 1.8em;";
     titleContainer.appendChild(title);
 
     cont.appendChild(titleContainer);
 
     const subHeaderDiv = document.createElement('div');
-    subHeaderDiv.style.marginBottom = '15px';
+    subHeaderDiv.style.marginBottom = '5px';
     const subHeaderText = document.createElement('p');
-    subHeaderText.style.cssText = "margin: 0; padding: 0; color: #555; font-size: 1.1em;";
+    subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
     const equipamiento = item.versionesAplicables || item.tipoEncendido || '';
     const yearRangeText = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
     subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | ${yearRangeText}`;
@@ -773,14 +819,14 @@ export function mostrarDetalleModal(item) {
 
     if (item.imagenVehiculo) {
         const imgVehiculo = document.createElement("img");
-        imgVehiculo.src = getImageUrl(item.imagenVehiculo, IMG_SIZE_MEDIUM);
+        setOptimizedImage(imgVehiculo, item.imagenVehiculo, IMG_SIZE_MEDIUM);
         imgVehiculo.className = 'img-vehiculo-modal';
         cont.appendChild(imgVehiculo);
     }
 
     if (item.notaImportante) {
         const p = document.createElement("p");
-        p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 15px 0;";
+        p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 5px 0;";
         p.textContent = `⚠️ ${item.notaImportante}`;
         cont.appendChild(p);
     }
@@ -806,7 +852,7 @@ export function mostrarDetalleModal(item) {
     if (recommendedCut) {
         const recommendedSection = document.createElement('div');
         const title = document.createElement('h4');
-        title.innerHTML = `Corte Recomendado <span style="font-weight:normal; color:#666;">(Votos: ${recommendedCut.util})</span>`;
+        title.innerHTML = `Corte Recomendado <span style="font-weight:normal; color: var(--text-medium);">(Votos: ${recommendedCut.util})</span>`;
         recommendedSection.appendChild(title);
         // El corte recomendado se carga de inmediato (isLazy = false)
         renderCutContent(recommendedSection, recommendedCut, datosRelay, item.id, false);
@@ -852,12 +898,11 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         imgContainer.className = 'image-container-with-feedback';
 
         const img = document.createElement("img");
-        const imgUrl = getImageUrl(cutData.img, IMG_SIZE_MEDIUM);
 
         if (isLazy) {
-            img.dataset.src = imgUrl;
+            img.dataset.src = getImageUrl(cutData.img, IMG_SIZE_MEDIUM);
         } else {
-            img.src = imgUrl;
+            setOptimizedImage(img, cutData.img, IMG_SIZE_MEDIUM);
         }
 
         img.className = 'img-corte image-with-container';
@@ -1019,7 +1064,7 @@ function renderRelayInfoModal(relayInfo) {
     content.appendChild(title);
 
     const img = document.createElement('img');
-    img.src = getImageUrl(relayInfo.imagen, IMG_SIZE_MEDIUM);
+    setOptimizedImage(img, relayInfo.imagen, IMG_SIZE_MEDIUM);
     img.style.width = '100%';
     img.onclick = () => {
         const highResImgUrl = getImageUrl(relayInfo.imagen, IMG_SIZE_LARGE);
@@ -1303,7 +1348,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
     if (sec.colaborador) {
         const colabDiv = document.createElement('div');
         const colabP = document.createElement('p');
-        colabP.style.cssText = "font-style: italic; color: #888; margin-top: 10px; text-align: left;";
+        colabP.style.cssText = "font-style: italic; color: var(--text-disabled); margin-top: 10px; text-align: left;";
         colabP.innerHTML = `Aportado por: <strong>${sec.colaborador}</strong>`;
         colabDiv.appendChild(colabP);
         panel.appendChild(colabDiv);
@@ -1333,7 +1378,9 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
                         panel.style.maxHeight = panel.scrollHeight + "px";
                     }
                 };
-                img.src = img.dataset.src;
+                // Phase 3: Usar setOptimizedImage para cargar desde caché o Drive
+                const fileId = img.dataset.src.includes('id=') ? img.dataset.src.split('id=')[1].split('&')[0] : img.dataset.src;
+                setOptimizedImage(img, fileId, IMG_SIZE_MEDIUM);
             }
         });
     };
@@ -1395,34 +1442,75 @@ function mostrarUltimosAgregados() {
     if (ultimosCortes.length === 0) return;
 
     crearCarrusel('Últimos Agregados', ultimosCortes, item => {
-        const card = document.createElement("div");
-        card.className = "card";
-        card.style.animation = 'none';
-        card.style.opacity = '1';
-        card.onclick = () => mostrarDetalleModal(item);
-
-        const img = document.createElement("img");
-        img.src = getImageUrl(item.imagenVehiculo, IMG_SIZE_SMALL);
-        img.alt = `${item.marca} ${item.modelo}`;
-        img.loading = "lazy";
-        card.appendChild(img);
-
-        const overlay = document.createElement("div");
-        overlay.className = "overlay";
-        const yearRange = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
-
-        const marcaDiv = document.createElement('div');
-        marcaDiv.textContent = item.marca;
-        overlay.appendChild(marcaDiv);
-
-        const modeloDiv = document.createElement('div');
-        modeloDiv.style.cssText = "font-size:0.8em; opacity:0.8;";
-        modeloDiv.textContent = `${item.modelo} ${yearRange || ''}`;
-        overlay.appendChild(modeloDiv);
-
-        card.appendChild(overlay);
-        return card;
+        return crearCardVehiculo(item);
     });
+}
+
+/**
+ * Función unificada para crear tarjetas de vehículos con soporte para caché local y badge de "Visto".
+ */
+function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
+    const { viewedItems } = getState();
+    const isViewed = !hideBadge && viewedItems.some(v => String(v.id) === String(item.id));
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.style.animation = 'none';
+    card.style.opacity = '1';
+
+    // Badge de "Visto"
+    if (isViewed) {
+        const badge = document.createElement('div');
+        badge.className = 'viewed-badge';
+        badge.innerHTML = '<i class="fa-solid fa-eye"></i> Visto';
+        card.appendChild(badge);
+    }
+
+    // Configurar OnClick según el contexto
+    if (resultsForVariant) {
+        // Contexto: Resultados de búsqueda (Variantes)
+        card.onclick = () => {
+            const filasDeVariante = resultsForVariant.filter(r =>
+                r.marca === item.marca &&
+                r.modelo === item.modelo &&
+                r.versionesAplicables === item.versionesAplicables
+            );
+            mostrarVersiones(filasDeVariante, item.categoria, item.marca, item.modelo);
+        };
+    } else if (item.anoDesde && !resultsForVariant) {
+        // Contexto: Lista de años o carruseles (Item específico)
+        card.onclick = () => mostrarDetalleModal(item);
+    }
+
+    const img = document.createElement("img");
+    img.className = 'card-img-top';
+    img.alt = `${item.marca} ${item.modelo}`;
+    img.loading = "lazy";
+
+    // Intentar cargar desde IndexedDB mediante la función centralizada
+    setOptimizedImage(img, item.imagenVehiculo, IMG_SIZE_SMALL);
+
+    card.appendChild(img);
+
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+
+    if (resultsForVariant) {
+        // UI para variantes en búsqueda
+        const version = item.versionesAplicables || '';
+        const tiposEncendido = [...new Set(resultsForVariant
+            .filter(r => r.marca === item.marca && r.modelo === item.modelo && r.categoria === item.categoria && r.versionesAplicables === item.versionesAplicables)
+            .map(r => r.tipoEncendido).filter(Boolean))].join(' / ');
+
+        overlay.innerHTML = `<div class="overlay-text-primary">${item.marca} ${item.modelo}</div><div class="overlay-text-secondary">${item.categoria} | ${version || tiposEncendido}</div>`;
+    } else {
+        // UI para items específicos
+        const yearRange = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
+        overlay.innerHTML = `<div class="overlay-text-primary">${item.marca} ${item.modelo}</div><div class="overlay-text-secondary">${yearRange} | ${item.tipoEncendido || ''}</div>`;
+    }
+
+    card.appendChild(overlay);
+    return card;
 }
 
 export function showLoginScreen(reason = null) {
@@ -1500,15 +1588,35 @@ export function showApp(user) {
     }
 }
 
+// Variable local para rastrear el estado previo de los carruseles de actividad y evitar bucles
+let lastHistoryCount = 0;
+let lastViewedCount = 0;
+
 // Suscribirse a cambios de estado para renderizar el catálogo cuando los datos lleguen
 subscribe((state) => {
     const splash = document.getElementById('splash-screen');
-    const isAppVisible = splash && splash.style.display === 'none';
+    // Consideramos que la app es visible si el splash no está presente o su opacidad es 0
+    const isAppVisible = !splash || splash.style.display === 'none' || splash.style.opacity === '0';
 
     if (isAppVisible && state.catalogData && Array.isArray(state.catalogData.cortes) && state.catalogData.cortes.length > 0) {
         const cont = document.getElementById("contenido");
-        // Solo renderizar si el contenedor tiene el mensaje de carga o está vacío
-        if (cont && (cont.querySelector('.loading-data-container') || cont.innerHTML === "")) {
+        const isMainLevel = state.navigationState.level === 'categorias';
+
+        if (!isMainLevel || !cont) return;
+
+        // Detectar si el historial o los vistos han cambiado para forzar refresco del catálogo
+        const historyChanged = (state.searchHistory?.length || 0) !== lastHistoryCount;
+        const viewedChanged = (state.viewedItems?.length || 0) !== lastViewedCount;
+
+        if (historyChanged || viewedChanged) {
+            lastHistoryCount = state.searchHistory?.length || 0;
+            lastViewedCount = state.viewedItems?.length || 0;
+            mostrarCategorias();
+            return;
+        }
+
+        // Solo renderizar si el contenedor tiene el mensaje de carga o está vacío o contiene errores previos
+        if (cont.querySelector('.loading-data-container') || cont.innerHTML.trim() === "" || cont.querySelector('.error-message')) {
              mostrarCategorias();
         }
     }
@@ -1589,7 +1697,7 @@ function mostrarTutorialesGrid() {
         card.className = "card";
         card.onclick = () => mostrarDetalleTutorialModal(item);
         const img = document.createElement("img");
-        img.src = getImageUrl(item.Imagen, IMG_SIZE_SMALL);
+        setOptimizedImage(img, item.Imagen, IMG_SIZE_SMALL);
         img.alt = item.Tema;
         img.loading = "lazy";
         card.appendChild(img);
@@ -1615,7 +1723,7 @@ function mostrarRelayGrid() {
         card.className = "card";
         card.onclick = () => mostrarDetalleRelayModal(item);
         const img = document.createElement("img");
-        img.src = getImageUrl(item.imagen, IMG_SIZE_SMALL);
+        setOptimizedImage(img, item.imagen, IMG_SIZE_SMALL);
         img.alt = item.configuracion;
         img.loading = "lazy";
         card.appendChild(img);
@@ -1712,7 +1820,7 @@ function mostrarDetalleRelayModal(item) {
     // Comentario: Se refactoriza para usar appendChild y evitar `innerHTML +=` que es propenso a errores.
     if (item.imagen) {
         const img = document.createElement("img");
-        img.src = getImageUrl(item.imagen, IMG_SIZE_MEDIUM);
+        setOptimizedImage(img, item.imagen, IMG_SIZE_MEDIUM);
         img.style.width = "100%";
         img.style.borderRadius = "8px";
         img.onclick = () => {

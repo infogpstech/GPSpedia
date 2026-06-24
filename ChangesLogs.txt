@@ -271,3 +271,73 @@
   - Sistema de verificación anti-duplicado en 3 etapas.
 
 **Versión:** Consolidación final v2.0 (Full Features).
+
+**CHANGES LOG - 06/02/2026 (Fase 2 Offline)**
+
+**Archivo: offline.js**
+- **Línea 8:** Incrementada DB_VERSION a 2.
+- **Líneas 27-29:** Añadido listener 'onblocked' en initDB para mayor estabilidad en actualizaciones concurrentes.
+
+**Archivo: auth.js**
+- **Línea 56:** Implementado procesamiento incondicional de la caché local (processCatalogData) en el bloque catch de loadInitialData.
+- **Líneas 131-143:** Refactorizada validación de errores en checkSession para permitir el uso de la aplicación en modo local ante fallos de conexión (TypeError/Network Error), evitando el logout automático.
+
+**Archivo: ui.js**
+- **Línea 1558:** Ampliada la condición de renderizado en la suscripción al estado para incluir contenedores vacíos o con mensajes de error previos, garantizando que el catálogo se muestre al cargar desde caché.
+
+**Archivo: navigation.js**
+- **Línea 17:** Declarada variable global searchDebounceTimer.
+- **Líneas 85-93:** Implementado mecanismo de debounce (1500ms) y filtro de longitud mínima (>=3) para el guardado de términos en el historial de búsqueda.
+
+**Versión:** Robustecimiento del sistema offline v2.1.0.
+
+**CHANGES LOG - 06/02/2026 (Fase 3 Estabilidad Offline)**
+
+**Archivo: ui.js**
+- **Líneas 17-48:** Implementada función asíncrona 'setOptimizedImage' para centralizar la carga de imágenes con prioridad en IndexedDB.
+- **Líneas 253, 280, 299, 329, 378, 489, 548, 652, 704, 773, 803, 887, 1048, 1470, 1663, 1689, 1786:** Actualizados todos los componentes de renderizado de imágenes para usar 'setOptimizedImage', garantizando visibilidad offline completa.
+- **Líneas 1362-1364:** Refactorizada la carga de imágenes en acordeones (lazy load) para integrar el sistema de optimización de Phase 3.
+- **Líneas 1584-1596:** Optimizada la reactividad del suscriptor al estado para forzar el renderizado inicial de carruseles de actividad (Vistos Recientemente/Búsquedas) tras la carga desde IndexedDB.
+- **Línea 221:** Añadida clase 'has-text' al seleccionar términos del historial para mantener la visibilidad del botón 'X'.
+
+**Archivo: auth.js**
+- **Líneas 90-95:** Movida la carga de 'searchHistory' y 'viewedItems' al inicio de 'checkSession' para maximizar la velocidad de recuperación local.
+- **Líneas 55, 140:** Unificados mensajes de estado a "Trabajando en modo local/caché" para mayor coherencia ante fallos de red.
+
+**Archivo: main.js**
+- **Líneas 169, 245:** Actualizados listeners de botones "Cortes" para invocar 'navigation.irAPaginaPrincipal()', asegurando un reset total de la navegación y filtros.
+
+**Archivo: style.css**
+- **Líneas 1032-1038:** Añadidas reglas de visibilidad condicional para la sección de historial de búsqueda vinculadas a 'body.search-active'.
+
+**Versión:** Ajustes de estabilidad del sistema offline v2.2.0.
+
+**CHANGES LOG - 22/06/2026 (Fase 3.1 Corrección de Regresión)**
+
+**Archivo: auth.js**
+- **Líneas 43-66:** Refactorizada 'loadInitialData' para usar un flag 'catalogLoaded'. Suprime mensajes de error de red si el catálogo se recuperó de IndexedDB.
+- **Líneas 128-155:** Refactorizada 'checkSession' para acceso inmediato (non-blocking). La validación de sesión se realiza en segundo plano, permitiendo el uso offline instantáneo.
+
+**Archivo: navigation.js**
+- **Líneas 23-35:** Actualizada 'irAPaginaPrincipal' para incluir limpieza total de UI (blur, has-text) e invocar 'ui.mostrarSeccion("cortes")', resolviendo el fallo de navegación desde otras secciones.
+
+**CHANGES LOG - 23/06/2026 (Fase 3.2 Persistencia Durable)**
+
+**Archivo: offline.js**
+- **v1.1:** Refactorización total de la capa de acceso a datos. Implementada normalización de IDs para thumbnails y manejo robusto de ordenamiento en historial y vistos.
+
+**Archivo: auth.js**
+- **Líneas 95-103:** Priorización de rehidratación desde IndexedDB al inicio de checkSession.
+- **Líneas 139-152:** Suprimidas alertas globales por fallos de red en validación de segundo plano.
+
+**Archivo: ui.js**
+- **Líneas 44-50:** Refinada lógica de guardado de miniaturas para evitar errores con recursos locales o externos no compatibles.
+
+**CHANGES LOG - 23/06/2026 (Correcciones de Layout y Regresión)**
+
+**Archivo: style.css**
+- **Línea 96-98:** Añadido 'scrollbar-width: none' y oculta '-webkit-scrollbar' en '.container'.
+- **Líneas 811, 830:** Añadido 'scrollbar-width: none' y oculta '-webkit-scrollbar' en '#modalDetalle'.
+- **Líneas 845, 850:** Añadido 'scrollbar-width: none' y oculta '-webkit-scrollbar' en '#detalleCompleto'.
+- **Líneas 862-870:** Separada lógica de '.brand-logo-modal' para restaurar altura a '60px !important' y eliminar márgenes automáticos para alineación izquierda.
+- **Líneas 884-888:** Ajustado '.img-vehiculo-modal' a 'width: 50% !important' para cumplir con el requisito de ser la mitad del tamaño de la imagen del corte, eliminando restricciones de max-width.

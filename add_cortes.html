@@ -8,10 +8,28 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
     <style>
+        :root {
+            --bg-color: #f8f9fa;
+            --text-color: #343a40;
+            --card-bg: #fff;
+            --primary-color: #007bff;
+            --secondary-color: #495057;
+            --border-color: #ced4da;
+            --transition-speed: 0.3s;
+        }
+        body.dark-mode {
+            --bg-color: #121212;
+            --text-color: #FFFFFFDE;
+            --card-bg: #1e1e1e;
+            --primary-color: #58a6ff;
+            --secondary-color: #FFFFFFDE;
+            --border-color: #444;
+        }
         /* General Styles */
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: #f8f9fa; margin: 0; padding: 15px; color: #343a40;
+            background-color: var(--bg-color); margin: 0; padding: 15px; color: var(--text-color);
+            transition: background-color var(--transition-speed), color var(--transition-speed);
             /* Prevención de selección de texto y asistente de Google */
             -webkit-user-select: none;
             -moz-user-select: none;
@@ -25,11 +43,12 @@
             -ms-user-select: text;
             user-select: text;
         }
-        .container { max-width: 800px; margin: 0 auto; background-color: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); }
-        h1, h2 { text-align: center; color: #007bff; margin-bottom: 20px; font-weight: 600; }
-        h2 { font-size: 1.4em; color: #495057; }
-        p { margin-top: 0; margin-bottom: 15px; font-size: 0.95em; color: #6c757d; }
-        .back-link { display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none; font-weight: 500; font-size: 0.9em; }
+        .container { max-width: 800px; margin: 0 auto; background-color: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 6px 20px rgba(0,0,0,0.08); transition: background-color var(--transition-speed); border: 1px solid transparent; }
+        .dark-mode .container { border-color: rgba(255,255,255,0.05); box-shadow: 0 6px 20px rgba(0,0,0,0.5); }
+        h1, h2 { text-align: center; color: var(--primary-color); margin-bottom: 20px; font-weight: 600; }
+        h2 { font-size: 1.4em; color: var(--secondary-color); }
+        p { margin-top: 0; margin-bottom: 15px; font-size: 0.95em; color: #888; }
+        .back-link { display: inline-block; margin-bottom: 20px; color: var(--primary-color); text-decoration: none; font-weight: 500; font-size: 0.9em; }
         .back-link:hover { text-decoration: underline; }
 
         /* Form & Layout */
@@ -39,8 +58,8 @@
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
         .form-group { display: flex; flex-direction: column; }
         .full-width { grid-column: 1 / -1; }
-        label { margin-bottom: 6px; font-weight: 500; font-size: 0.8em; color: #495057; }
-        input, select, textarea { width: 100%; padding: 12px; border: 1px solid #ced4da; border-radius: 8px; box-sizing: border-box; font-size: 0.95em; transition: border-color 0.2s, box-shadow 0.2s; }
+        label { margin-bottom: 6px; font-weight: 500; font-size: 0.8em; color: var(--secondary-color); }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; font-size: 0.95em; transition: border-color 0.2s, box-shadow 0.2s, background-color var(--transition-speed), color var(--transition-speed); background-color: var(--card-bg); color: var(--text-color); }
         input:focus, select:focus, textarea:focus { border-color: #80bdff; box-shadow: 0 0 0 3px rgba(0,123,255,0.25); outline: none; }
         .btn-container { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
         .btn { padding: 12px 22px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
@@ -120,9 +139,10 @@
 
         /* Stage 3 - Accordion */
         .accordion-item { border: 1px solid #dee2e6; border-radius: 8px; margin-bottom: 10px; overflow: hidden; }
-        .accordion-header { background-color: #f8f9fa; padding: 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .accordion-header { background-color: rgba(0,0,0,0.03); padding: 15px; font-weight: 600; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--text-color); }
+        .dark-mode .accordion-header { background-color: rgba(255,255,255,0.03); }
         .accordion-header i { transition: transform 0.3s; }
-        .accordion-content { padding: 15px; border-top: 1px solid #dee2e6; display: none; }
+        .accordion-content { padding: 15px; border-top: 1px solid var(--border-color); display: none; }
         .accordion-item.active .accordion-header i { transform: rotate(180deg); }
 
         /* Image Handling */
@@ -263,6 +283,11 @@
                 return;
             }
             state.colaborador = JSON.parse(sessionData).Nombre_Completo;
+
+            // Aplicar modo oscuro si está activo
+            if (localStorage.getItem('darkMode') === 'true') {
+                document.body.classList.add('dark-mode');
+            }
 
             await populateAllDropdowns();
             setupEventListeners();
