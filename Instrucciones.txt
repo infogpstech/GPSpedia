@@ -214,7 +214,7 @@ Cualquier cambio en estas zonas invalidará el commit.
    - **ALCANCE:** ui.js, style.css
    - **DESCRIPCIÓN DETALLADA:**
      - **Layout:** Implementado flex-wrap en el encabezado del modal de detalle para evitar scroll horizontal en dispositivos móviles.
-     - **Contraste:** Ajustados colores de fondo (--card-bg, --modal-bg) en modo oscuro a tonalidades de gris más claras con transparencia para mejorar legibilidad de logotipos oscuros.
+     - **Contraste:** Implementado drop-shadow claro en logotipos de marcas durante el modo oscuro para mejorar la visibilidad de elementos negros y grises sobre fondos oscuros, manteniendo los colores de fondo originales.
 
 1. **TÍTULO: Lanzamiento Global GPSpedia v2.0 (v2.0.0)**
    - **ESTADO:** COMPLETADO

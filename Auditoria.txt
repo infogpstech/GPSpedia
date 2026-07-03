@@ -300,3 +300,12 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 **Riesgos y Dependencias:**
 - El cambio en '--card-bg' afecta a todas las tarjetas del catálogo, no solo a las del modal. Esto es deseado según el requisito de la Tarea 2.
 - La transparencia podría revelar elementos subyacentes si el z-index o el stacking context no es el adecuado, pero dado que son fondos de tarjetas y modales sólidos por diseño, el uso de opacidad alta (0.95) mantendrá la integridad visual.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - RECTIFICACIÓN TASK 2 (11/02/2026)**
+
+**Archivo: style.css**
+- Hallazgo: La implementación anterior de Tarea 2 (cambio de colores de fondo) será revertida según la rectificación.
+- Hallazgo: Los logotipos ya tienen un drop-shadow oscuro por defecto (L575, L875).
+- Acción: En modo oscuro, se reemplazará o complementará el drop-shadow con uno de tonalidad clara para asegurar contraste de elementos negros y grises sobre el fondo oscuro.

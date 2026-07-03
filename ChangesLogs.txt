@@ -352,3 +352,11 @@
 - **Línea 62:** Actualizado '--modal-bg' en modo oscuro a 'rgba(55, 55, 55, 0.95)' para mejorar el contraste en el modal de detalle.
 
 **Versión:** Incremento a v2.4.1 (Ajustes Visuales).
+
+**CHANGES LOG - 11/02/2026 (Rectificación)**
+
+**Archivo: style.css**
+- **Línea 60, 62:** Revertidos '--card-bg' y '--modal-bg' a sus valores originales (#1e1e1e, #242424).
+- **Líneas 353-358:** Implementado 'drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6))' para logotipos de marca en modo oscuro (.brand-logo-item img, .brand-logo-modal) para mejorar el contraste de elementos negros y grises.
+
+**Versión:** Actualización v2.4.1 (Contraste por Sombra).

@@ -57,9 +57,9 @@ body.dark-mode {
     --text-high: #FFFFFFDE;
     --text-medium: #FFFFFF99;
     --text-disabled: #FFFFFF61;
-    --card-bg: #1e1e1e;
+    --card-bg: rgba(45, 45, 45, 0.95);
     --header-color: #FFFFFFDE;
-    --modal-bg: #242424;
+    --modal-bg: rgba(55, 55, 55, 0.95);
     --modal-text: #FFFFFFDE;
     --button-bg: #2c2c2c;
     --button-text: #58a6ff;
@@ -348,12 +348,6 @@ h1.app-title {
 }
 .dark-mode .panel-desplegable {
     background-color: var(--modal-bg);
-}
-
-/* Mejora de contraste para logotipos en modo oscuro */
-.dark-mode .brand-logo-item img,
-.dark-mode .brand-logo-modal {
-    filter: drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6)) !important;
 }
 /* Estilo para el switch de modo oscuro */
 .theme-switch-wrapper {
