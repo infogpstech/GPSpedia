@@ -288,9 +288,10 @@ async function initializeApp() {
     document.getElementById('login-faq-link')?.addEventListener('click', openFAQ);
 
     // --- LÓGICA DE VISIBILIDAD DINÁMICA DEL FOOTER ---
-    // El footer solo debe aparecer al llegar al final del catálogo.
+    // El footer solo debe aparecer al llegar al final del catálogo (cuando el centinela es visible).
     const footer = document.querySelector('.footer');
-    if (footer) {
+    const sentinel = document.getElementById('footer-sentinel');
+    if (footer && sentinel) {
         const observer = new IntersectionObserver((entries) => {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
@@ -300,10 +301,10 @@ async function initializeApp() {
                 }
             });
         }, {
-            threshold: 0.1 // Se activa cuando el 10% del footer es visible
+            threshold: 0.1
         });
 
-        observer.observe(footer);
+        observer.observe(sentinel);
     }
 
     // Dashboard button listener - Restauración de funcionalidad

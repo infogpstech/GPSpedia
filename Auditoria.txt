@@ -326,3 +326,27 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 **Archivo: main.js**
 - Hallazgo: No hay lógica actual que gestione la visibilidad del footer basada en scroll.
 - Acción: Implementar IntersectionObserver apuntando al footer.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REFINAMIENTO FOOTER (12/02/2026)**
+
+**Archivo: index.html**
+- L136-144: El element <footer> se encuentra dentro del div .container. Esto causa que se mueva con el scroll del contenido y herede restricciones de ancho y padding del contenedor.
+
+**Archivo: style.css**
+- L1099: .footer tiene 'display: none'. Esto interfiere con animaciones de opacidad y transformaciones si no se gestiona el cambio de display correctamente.
+- L1108: 'transform: translateY(20px)' es un desplazamiento pequeño. Para ocultarlo dinámicamente fuera de pantalla se requiere un valor mayor (ej. 100%) y posición fija.
+- L1114: .footer.visible activa la transición pero el elemento sigue siendo parte del flujo de scroll del contenedor.
+
+**Archivo: main.js**
+- L290-308: El IntersectionObserver observa directamente al footer. Si el footer está al final del contenido dentro de un scrollable, solo se activará al final, pero seguirá desplazándose.
+
+**Hallazgos Críticos:**
+1. El footer pegado al scroll se debe a su ubicación dentro de .container.
+2. El espacio en blanco inferior reportado suele ser consecuencia de márgenes o paddings residuales del contenedor o del propio footer al final del flujo.
+3. La falta de animaciones fluidas se debe a que el IntersectionObserver dispara la clase .visible pero el footer ya es parte del flujo de scroll, perdiendo el efecto de "aparición dinámica" sobre el contenido.
+
+**Acciones Planificadas:**
+- Mover footer fuera de .container.
+- Implementar 'position: fixed' y 'transform: translateY(100%)'.
+- Usar un centinela (#footer-sentinel) dentro de .container para disparar el footer.

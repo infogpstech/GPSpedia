@@ -1097,24 +1097,32 @@ body.search-active .container {
 }
 
 .footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
     text-align: center;
-    padding: 40px 0; /* Aumentado para mayor separación visual */
-    margin-top: 20px;
+    padding: 20px 0;
     background-color: #333;
     color: #fff;
     font-size: 0.9em;
-    display: none; /* Controlado por JS */
-    width: 100%;
+    z-index: 1000;
     /* Estados para animación fluida */
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(100%);
     transition: opacity 0.5s ease, transform 0.5s ease;
-    flex-shrink: 0;
+    margin: 0 !important;
 }
 
 .footer.visible {
     opacity: 1;
     transform: translateY(0);
+}
+
+#footer-sentinel {
+    height: 100px;
+    width: 100%;
+    pointer-events: none;
 }
 .footer-links {
     margin-top: 10px; /* Added margin to separate from copyright */

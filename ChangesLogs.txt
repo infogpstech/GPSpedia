@@ -374,3 +374,19 @@
 - **Líneas 290-308:** Implementada lógica de 'IntersectionObserver' para activar la visibilidad del footer al llegar al final del catálogo.
 
 **Versión:** Actualización v2.4.1 (Footer Dinámico).
+
+**CHANGES LOG - 04/02/2026 (Refinamiento de Footer)**
+
+**Archivo: index.html**
+- **Líneas 144-152:** Movido el elemento `<footer>` fuera del contenedor `.container` para permitir posicionamiento fijo independiente del flujo de scroll.
+- **Línea 143:** Añadido `<div id="footer-sentinel"></div>` al final de `.container` para servir como disparador de visibilidad.
+
+**Archivo: style.css**
+- **Líneas 1102-1115:** Refactorizada la clase `.footer` con `position: fixed`, `bottom: 0`, `left: 0` y `width: 100%`. Eliminados márgenes laterales e inferiores. Implementada transición de opacidad y desplazamiento (translateY).
+- **Línea 1117-1120:** Añadida clase `.footer.visible` para activar la visibilidad.
+- **Línea 1122-1124:** Definido `#footer-sentinel` con altura de 100px para gestionar el espacio de aparición del footer.
+
+**Archivo: main.js**
+- **Líneas 297-308:** Actualizado `IntersectionObserver` para observar `#footer-sentinel`. El footer ahora se muestra (`.visible`) solo cuando el sentinel entra en el viewport al final del catálogo.
+
+**Versión:** Refinamiento Frontend (Footer) v2.4.2.

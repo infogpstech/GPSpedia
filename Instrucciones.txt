@@ -253,6 +253,15 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 **TAREAS PENDIENTES DE REVISIÓN**
 ---
+1. **TÍTULO: Refinamiento - Frontend (Footer) (v2.4.2)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, style.css, main.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Layout:** Movido el footer fuera del contenedor scrollable para habilitar posicionamiento fijo independiente.
+     - **Dinámica:** Implementado un sentinel (`#footer-sentinel`) para disparar la visibilidad del footer mediante `IntersectionObserver` solo al final del catálogo.
+     - **Estética:** Eliminados márgenes laterales e inferiores del footer; implementadas animaciones fluidas de entrada (opacity y transform).
+     - **Integridad:** Corregido el solapamiento con el contenido y el espacio en blanco inferior.
+
 11. **TÍTULO: Auditoría Total y Release Notes v2.0 (Full Features)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** Global (Documentación)
