@@ -215,6 +215,7 @@ Cualquier cambio en estas zonas invalidará el commit.
    - **DESCRIPCIÓN DETALLADA:**
      - **Layout:** Implementado flex-wrap en el encabezado del modal de detalle para evitar scroll horizontal en dispositivos móviles.
      - **Contraste:** Implementado drop-shadow claro en logotipos de marcas durante el modo oscuro para mejorar la visibilidad de elementos negros y grises sobre fondos oscuros, manteniendo los colores de fondo originales.
+     - **Footer:** Ajustado comportamiento del footer para que sea dinámico, apareciendo con animación solo al final del scroll del catálogo y moviéndolo dentro del contenedor scrollable para evitar superposiciones fijas.
 
 1. **TÍTULO: Lanzamiento Global GPSpedia v2.0 (v2.0.0)**
    - **ESTADO:** COMPLETADO

@@ -360,3 +360,17 @@
 - **Líneas 353-358:** Implementado 'drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6))' para logotipos de marca en modo oscuro (.brand-logo-item img, .brand-logo-modal) para mejorar el contraste de elementos negros y grises.
 
 **Versión:** Actualización v2.4.1 (Contraste por Sombra).
+
+**CHANGES LOG - 11/02/2026 (Footer Dinámico)**
+
+**Archivo: index.html**
+- **Líneas 136-144:** Movido el elemento <footer> dentro del contenedor scrollable '.container'.
+
+**Archivo: style.css**
+- **Línea 88:** Reducido 'padding-bottom' de '.container' a 20px.
+- **Líneas 1101-1117:** Implementados estados de animación (opacity, transform) y clase '.visible' para el footer.
+
+**Archivo: main.js**
+- **Líneas 290-308:** Implementada lógica de 'IntersectionObserver' para activar la visibilidad del footer al llegar al final del catálogo.
+
+**Versión:** Actualización v2.4.1 (Footer Dinámico).

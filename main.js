@@ -287,6 +287,25 @@ async function initializeApp() {
     document.getElementById('footer-faq-link')?.addEventListener('click', openFAQ);
     document.getElementById('login-faq-link')?.addEventListener('click', openFAQ);
 
+    // --- LÓGICA DE VISIBILIDAD DINÁMICA DEL FOOTER ---
+    // El footer solo debe aparecer al llegar al final del catálogo.
+    const footer = document.querySelector('.footer');
+    if (footer) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    footer.classList.add('visible');
+                } else {
+                    footer.classList.remove('visible');
+                }
+            });
+        }, {
+            threshold: 0.1 // Se activa cuando el 10% del footer es visible
+        });
+
+        observer.observe(footer);
+    }
+
     // Dashboard button listener - Restauración de funcionalidad
     const dashboardBtn = document.getElementById('dashboard-btn');
     if (dashboardBtn) {

@@ -85,7 +85,7 @@ h1.app-title {
     color: var(--header-color) !important;
 }
 .container {
-    padding: 20px 20px 80px 20px; /* Aumento de padding inferior para evitar bloqueo del footer */
+    padding: 20px 20px 20px 20px; /* Padding normalizado: el footer ahora es dinámico */
     max-width: 1240px;
     margin: 0 auto;
     width: 100%;
@@ -1098,15 +1098,23 @@ body.search-active .container {
 
 .footer {
     text-align: center;
-    padding: 20px 0;
-    margin-top: 0; /* Ajustado para evitar espacio fantasma */
+    padding: 40px 0; /* Aumentado para mayor separación visual */
+    margin-top: 20px;
     background-color: #333;
     color: #fff;
     font-size: 0.9em;
-    display: none; /* Oculto por defecto */
+    display: none; /* Controlado por JS */
     width: 100%;
-    transition: all 0.35s ease-in-out;
-    flex-shrink: 0; /* Garantiza que el footer no se colapse ni empuje excesivamente */
+    /* Estados para animación fluida */
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    flex-shrink: 0;
+}
+
+.footer.visible {
+    opacity: 1;
+    transform: translateY(0);
 }
 .footer-links {
     margin-top: 10px; /* Added margin to separate from copyright */

@@ -309,3 +309,20 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - Hallazgo: La implementación anterior de Tarea 2 (cambio de colores de fondo) será revertida según la rectificación.
 - Hallazgo: Los logotipos ya tienen un drop-shadow oscuro por defecto (L575, L875).
 - Acción: En modo oscuro, se reemplazará o complementará el drop-shadow con uno de tonalidad clara para asegurar contraste de elementos negros y grises sobre el fondo oscuro.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - COMPORTAMIENTO DINÁMICO DEL FOOTER (11/02/2026)**
+
+**Archivo: index.html**
+- L305: El <footer> se encuentra fuera de '.container', lo que contribuye a su comportamiento fijo/desacoplado del contenido scrollable.
+- Acción: Mover el <footer> dentro de '.container' después de 'contenido-relay'.
+
+**Archivo: style.css**
+- L88: '.container' tiene un padding-bottom de 80px heredado de intentos previos de evitar solapamiento. Debe reducirse a 20px.
+- L1099: '.footer' tiene 'display: none' por defecto. La lógica de aparición se maneja por JS pero su estado visual debe ser mejorado.
+- Acción: Implementar estados de opacidad y transform para animación fluida.
+
+**Archivo: main.js**
+- Hallazgo: No hay lógica actual que gestione la visibilidad del footer basada en scroll.
+- Acción: Implementar IntersectionObserver apuntando al footer.
