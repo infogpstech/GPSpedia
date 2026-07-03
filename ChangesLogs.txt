@@ -341,3 +341,14 @@
 - **Líneas 845, 850:** Añadido 'scrollbar-width: none' y oculta '-webkit-scrollbar' en '#detalleCompleto'.
 - **Líneas 862-870:** Separada lógica de '.brand-logo-modal' para restaurar altura a '60px !important' y eliminar márgenes automáticos para alineación izquierda.
 - **Líneas 884-888:** Ajustado '.img-vehiculo-modal' a 'width: 50% !important' para cumplir con el requisito de ser la mitad del tamaño de la imagen del corte, eliminando restricciones de max-width.
+
+**CHANGES LOG - 11/02/2026**
+
+**Archivo: ui.js**
+- **Línea 813:** Implementado 'flex-wrap: wrap' en el titleContainer del modal de detalle para evitar scroll horizontal en móviles cuando el logo y el modelo exceden el ancho disponible.
+
+**Archivo: style.css**
+- **Línea 60:** Actualizado '--card-bg' en modo oscuro a 'rgba(45, 45, 45, 0.95)' para mejorar el contraste con logotipos PNG oscuros.
+- **Línea 62:** Actualizado '--modal-bg' en modo oscuro a 'rgba(55, 55, 55, 0.95)' para mejorar el contraste en el modal de detalle.
+
+**Versión:** Incremento a v2.4.1 (Ajustes Visuales).

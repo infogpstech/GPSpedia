@@ -783,8 +783,9 @@ export function mostrarDetalleModal(item) {
     cont.appendChild(headerDiv);
 
     // Comentario: Se ajusta el layout del encabezado para cumplir con el nuevo requisito (logo a la izquierda).
+    // Se añade 'flex-wrap: wrap' para evitar scroll horizontal en móviles con logos anchos.
     const titleContainer = document.createElement("div");
-    titleContainer.style.cssText = "border-bottom: 3px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 10px;";
+    titleContainer.style.cssText = "border-bottom: 3px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
 
     const logoUrl = getLogoUrlForMarca(item.marca, item.categoria);
     if (logoUrl) {

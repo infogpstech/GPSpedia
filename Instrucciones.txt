@@ -209,6 +209,13 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
 ---
+1. **TÍTULO: Ajustes Visuales de Header y Contraste (v2.4.1)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, style.css
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Layout:** Implementado flex-wrap en el encabezado del modal de detalle para evitar scroll horizontal en dispositivos móviles.
+     - **Contraste:** Ajustados colores de fondo (--card-bg, --modal-bg) en modo oscuro a tonalidades de gris más claras con transparencia para mejorar legibilidad de logotipos oscuros.
+
 1. **TÍTULO: Lanzamiento Global GPSpedia v2.0 (v2.0.0)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** Global (Frontend y Backend)
