@@ -1,4 +1,4 @@
-// GPSpedia Main Orchestration Module | Version: 2.4
+// GPSpedia Main Orchestration Module | Version: 2.4.2
 // Responsibilities:
 // - Import all feature modules.
 // - Initialize the application and set up global event listeners.

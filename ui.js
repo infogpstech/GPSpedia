@@ -1,4 +1,4 @@
-// GPSpedia UI Module | Version: 2.4
+// GPSpedia UI Module | Version: 2.4.2
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
@@ -1542,7 +1542,7 @@ export function showApp(user) {
 
     document.getElementById('login-modal').style.display = 'none';
     document.querySelector('.container').style.display = 'block';
-    document.querySelector('.footer').style.display = 'block';
+    document.querySelector('.footer').style.display = 'flex';
 
     if (user && (user.Nombre_Completo || user.Nombre_Usuario)) {
         document.getElementById('menu-username').textContent = user.Nombre_Completo || user.Nombre_Usuario;
