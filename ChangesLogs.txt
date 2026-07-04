@@ -341,3 +341,52 @@
 - **Líneas 845, 850:** Añadido 'scrollbar-width: none' y oculta '-webkit-scrollbar' en '#detalleCompleto'.
 - **Líneas 862-870:** Separada lógica de '.brand-logo-modal' para restaurar altura a '60px !important' y eliminar márgenes automáticos para alineación izquierda.
 - **Líneas 884-888:** Ajustado '.img-vehiculo-modal' a 'width: 50% !important' para cumplir con el requisito de ser la mitad del tamaño de la imagen del corte, eliminando restricciones de max-width.
+
+**CHANGES LOG - 11/02/2026**
+
+**Archivo: ui.js**
+- **Línea 813:** Implementado 'flex-wrap: wrap' en el titleContainer del modal de detalle para evitar scroll horizontal en móviles cuando el logo y el modelo exceden el ancho disponible.
+
+**Archivo: style.css**
+- **Línea 60:** Actualizado '--card-bg' en modo oscuro a 'rgba(45, 45, 45, 0.95)' para mejorar el contraste con logotipos PNG oscuros.
+- **Línea 62:** Actualizado '--modal-bg' en modo oscuro a 'rgba(55, 55, 55, 0.95)' para mejorar el contraste en el modal de detalle.
+
+**Versión:** Incremento a v2.4.1 (Ajustes Visuales).
+
+**CHANGES LOG - 11/02/2026 (Rectificación)**
+
+**Archivo: style.css**
+- **Línea 60, 62:** Revertidos '--card-bg' y '--modal-bg' a sus valores originales (#1e1e1e, #242424).
+- **Líneas 353-358:** Implementado 'drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6))' para logotipos de marca en modo oscuro (.brand-logo-item img, .brand-logo-modal) para mejorar el contraste de elementos negros y grises.
+
+**Versión:** Actualización v2.4.1 (Contraste por Sombra).
+
+**CHANGES LOG - 11/02/2026 (Footer Dinámico)**
+
+**Archivo: index.html**
+- **Líneas 136-144:** Movido el elemento <footer> dentro del contenedor scrollable '.container'.
+
+**Archivo: style.css**
+- **Línea 88:** Reducido 'padding-bottom' de '.container' a 20px.
+- **Líneas 1101-1117:** Implementados estados de animación (opacity, transform) y clase '.visible' para el footer.
+
+**Archivo: main.js**
+- **Líneas 290-308:** Implementada lógica de 'IntersectionObserver' para activar la visibilidad del footer al llegar al final del catálogo.
+
+**Versión:** Actualización v2.4.1 (Footer Dinámico).
+
+**CHANGES LOG - 04/02/2026 (Refinamiento de Footer)**
+
+**Archivo: index.html**
+- **Líneas 144-152:** Movido el elemento `<footer>` fuera del contenedor `.container` para permitir posicionamiento fijo independiente del flujo de scroll.
+- **Línea 143:** Añadido `<div id="footer-sentinel"></div>` al final de `.container` para servir como disparador de visibilidad.
+
+**Archivo: style.css**
+- **Líneas 1102-1115:** Refactorizada la clase `.footer` con `position: fixed`, `bottom: 0`, `left: 0` y `width: 100%`. Eliminados márgenes laterales e inferiores. Implementada transición de opacidad y desplazamiento (translateY).
+- **Línea 1117-1120:** Añadida clase `.footer.visible` para activar la visibilidad.
+- **Línea 1122-1124:** Definido `#footer-sentinel` con altura de 100px para gestionar el espacio de aparición del footer.
+
+**Archivo: main.js**
+- **Líneas 297-308:** Actualizado `IntersectionObserver` para observar `#footer-sentinel`. El footer ahora se muestra (`.visible`) solo cuando el sentinel entra en el viewport al final del catálogo.
+
+**Versión:** Refinamiento Frontend (Footer) v2.4.2.

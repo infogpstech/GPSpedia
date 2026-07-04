@@ -1,4 +1,4 @@
-/* GPSpedia Styles | Version: 2.4 */
+/* GPSpedia Styles | Version: 2.4.2 */
 /* Estilos Globales */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -85,7 +85,7 @@ h1.app-title {
     color: var(--header-color) !important;
 }
 .container {
-    padding: 20px 20px 80px 20px; /* Aumento de padding inferior para evitar bloqueo del footer */
+    padding: 20px 20px 20px 20px; /* Padding normalizado: el footer ahora es dinámico */
     max-width: 1240px;
     margin: 0 auto;
     width: 100%;
@@ -348,6 +348,12 @@ h1.app-title {
 }
 .dark-mode .panel-desplegable {
     background-color: var(--modal-bg);
+}
+
+/* Mejora de contraste para logotipos en modo oscuro */
+.dark-mode .brand-logo-item img,
+.dark-mode .brand-logo-modal {
+    filter: drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6)) !important;
 }
 /* Estilo para el switch de modo oscuro */
 .theme-switch-wrapper {
@@ -1091,16 +1097,38 @@ body.search-active .container {
 }
 
 .footer {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100vw !important;
     text-align: center;
     padding: 20px 0;
-    margin-top: 0; /* Ajustado para evitar espacio fantasma */
     background-color: #333;
     color: #fff;
     font-size: 0.9em;
-    display: none; /* Oculto por defecto */
+    z-index: 1000;
+    /* Estados para animación fluida */
+    display: none; /* Controlado por JS showApp/showLoginScreen */
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    transform: translateY(100%);
+    transition: opacity 0.4s ease-in-out, transform 0.4s ease-in-out;
+    margin: 0 !important;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+}
+
+.footer.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+#footer-sentinel {
+    height: 100px;
     width: 100%;
-    transition: all 0.35s ease-in-out;
-    flex-shrink: 0; /* Garantiza que el footer no se colapse ni empuje excesivamente */
+    pointer-events: none;
 }
 .footer-links {
     margin-top: 10px; /* Added margin to separate from copyright */

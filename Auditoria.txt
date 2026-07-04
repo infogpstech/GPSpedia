@@ -284,3 +284,69 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - Header del Modal: Logo alineado a la izquierda seguido del título, con tamaño restaurado.
 - Imagen del Vehículo: Tamaño corregido al 50% del ancho del contenedor.
 - Scroll: Barras nativas ocultas, navegación fluida mantenida.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - AJUSTES VISUALES MODAL Y MODO OSCURO (11/02/2026)**
+
+**Archivo: ui.js**
+- L813: 'titleContainer.style.cssText' define un layout flex sin envoltorio (wrap). Esto causa que en logos anchos + títulos largos en móviles se genere scroll horizontal.
+- Hallazgo: La adición de 'flex-wrap: wrap' en esta línea solucionará el problema de desbordamiento permitiendo el salto de línea solicitado.
+
+**Archivo: style.css**
+- L59: '--card-bg: #1e1e1e' es demasiado oscuro para logos negros con fondo transparente.
+- L62: '--modal-bg: #242424' presenta el mismo problema de contraste.
+- Hallazgo: Cambiar estos valores a una tonalidad gris más clara con transparencia (rgba) mejorará la legibilidad de los logotipos sin romper la estética del modo nocturno.
+
+**Riesgos y Dependencias:**
+- El cambio en '--card-bg' afecta a todas las tarjetas del catálogo, no solo a las del modal. Esto es deseado según el requisito de la Tarea 2.
+- La transparencia podría revelar elementos subyacentes si el z-index o el stacking context no es el adecuado, pero dado que son fondos de tarjetas y modales sólidos por diseño, el uso de opacidad alta (0.95) mantendrá la integridad visual.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - RECTIFICACIÓN TASK 2 (11/02/2026)**
+
+**Archivo: style.css**
+- Hallazgo: La implementación anterior de Tarea 2 (cambio de colores de fondo) será revertida según la rectificación.
+- Hallazgo: Los logotipos ya tienen un drop-shadow oscuro por defecto (L575, L875).
+- Acción: En modo oscuro, se reemplazará o complementará el drop-shadow con uno de tonalidad clara para asegurar contraste de elementos negros y grises sobre el fondo oscuro.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - COMPORTAMIENTO DINÁMICO DEL FOOTER (11/02/2026)**
+
+**Archivo: index.html**
+- L305: El <footer> se encuentra fuera de '.container', lo que contribuye a su comportamiento fijo/desacoplado del contenido scrollable.
+- Acción: Mover el <footer> dentro de '.container' después de 'contenido-relay'.
+
+**Archivo: style.css**
+- L88: '.container' tiene un padding-bottom de 80px heredado de intentos previos de evitar solapamiento. Debe reducirse a 20px.
+- L1099: '.footer' tiene 'display: none' por defecto. La lógica de aparición se maneja por JS pero su estado visual debe ser mejorado.
+- Acción: Implementar estados de opacidad y transform para animación fluida.
+
+**Archivo: main.js**
+- Hallazgo: No hay lógica actual que gestione la visibilidad del footer basada en scroll.
+- Acción: Implementar IntersectionObserver apuntando al footer.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REFINAMIENTO FOOTER (12/02/2026)**
+
+**Archivo: index.html**
+- L136-144: El element <footer> se encuentra dentro del div .container. Esto causa que se mueva con el scroll del contenido y herede restricciones de ancho y padding del contenedor.
+
+**Archivo: style.css**
+- L1099: .footer tiene 'display: none'. Esto interfiere con animaciones de opacidad y transformaciones si no se gestiona el cambio de display correctamente.
+- L1108: 'transform: translateY(20px)' es un desplazamiento pequeño. Para ocultarlo dinámicamente fuera de pantalla se requiere un valor mayor (ej. 100%) y posición fija.
+- L1114: .footer.visible activa la transición pero el elemento sigue siendo parte del flujo de scroll del contenedor.
+
+**Archivo: main.js**
+- L290-308: El IntersectionObserver observa directamente al footer. Si el footer está al final del contenido dentro de un scrollable, solo se activará al final, pero seguirá desplazándose.
+
+**Hallazgos Críticos:**
+1. El footer pegado al scroll se debe a su ubicación dentro de .container.
+2. El espacio en blanco inferior reportado suele ser consecuencia de márgenes o paddings residuales del contenedor o del propio footer al final del flujo.
+3. La falta de animaciones fluidas se debe a que el IntersectionObserver dispara la clase .visible pero el footer ya es parte del flujo de scroll, perdiendo el efecto de "aparición dinámica" sobre el contenido.
+
+**Acciones Planificadas:**
+- Mover footer fuera de .container.
+- Implementar 'position: fixed' y 'transform: translateY(100%)'.
+- Usar un centinela (#footer-sentinel) dentro de .container para disparar el footer.

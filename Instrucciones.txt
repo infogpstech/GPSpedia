@@ -209,6 +209,14 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
 ---
+1. **TÍTULO: Ajustes Visuales de Header y Contraste (v2.4.1)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, style.css
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Layout:** Implementado flex-wrap en el encabezado del modal de detalle para evitar scroll horizontal en dispositivos móviles.
+     - **Contraste:** Implementado drop-shadow claro en logotipos de marcas durante el modo oscuro para mejorar la visibilidad de elementos negros y grises sobre fondos oscuros, manteniendo los colores de fondo originales.
+     - **Footer:** Ajustado comportamiento del footer para que sea dinámico, apareciendo con animación solo al final del scroll del catálogo y moviéndolo dentro del contenedor scrollable para evitar superposiciones fijas.
+
 1. **TÍTULO: Lanzamiento Global GPSpedia v2.0 (v2.0.0)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** Global (Frontend y Backend)
@@ -245,6 +253,15 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 **TAREAS PENDIENTES DE REVISIÓN**
 ---
+1. **TÍTULO: Refinamiento - Frontend (Footer) (v2.4.2)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, style.css, main.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Layout:** Movido el footer fuera del contenedor scrollable para habilitar posicionamiento fijo independiente.
+     - **Dinámica:** Implementado un sentinel (`#footer-sentinel`) para disparar la visibilidad del footer mediante `IntersectionObserver` solo al final del catálogo.
+     - **Estética:** Eliminados márgenes laterales e inferiores del footer; implementadas animaciones fluidas de entrada (opacity y transform).
+     - **Integridad:** Corregido el solapamiento con el contenido y el espacio en blanco inferior.
+
 11. **TÍTULO: Auditoría Total y Release Notes v2.0 (Full Features)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** Global (Documentación)

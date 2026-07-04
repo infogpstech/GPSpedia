@@ -1,4 +1,4 @@
-// GPSpedia Main Orchestration Module | Version: 2.4
+// GPSpedia Main Orchestration Module | Version: 2.4.2
 // Responsibilities:
 // - Import all feature modules.
 // - Initialize the application and set up global event listeners.
@@ -286,6 +286,26 @@ async function initializeApp() {
 
     document.getElementById('footer-faq-link')?.addEventListener('click', openFAQ);
     document.getElementById('login-faq-link')?.addEventListener('click', openFAQ);
+
+    // --- LÓGICA DE VISIBILIDAD DINÁMICA DEL FOOTER ---
+    // El footer solo debe aparecer al llegar al final del catálogo (cuando el centinela es visible).
+    const footer = document.querySelector('.footer');
+    const sentinel = document.getElementById('footer-sentinel');
+    if (footer && sentinel) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    footer.classList.add('visible');
+                } else {
+                    footer.classList.remove('visible');
+                }
+            });
+        }, {
+            threshold: 0.1
+        });
+
+        observer.observe(sentinel);
+    }
 
     // Dashboard button listener - Restauración de funcionalidad
     const dashboardBtn = document.getElementById('dashboard-btn');

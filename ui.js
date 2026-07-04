@@ -1,4 +1,4 @@
-// GPSpedia UI Module | Version: 2.4
+// GPSpedia UI Module | Version: 2.4.2
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
@@ -783,8 +783,9 @@ export function mostrarDetalleModal(item) {
     cont.appendChild(headerDiv);
 
     // Comentario: Se ajusta el layout del encabezado para cumplir con el nuevo requisito (logo a la izquierda).
+    // Se añade 'flex-wrap: wrap' para evitar scroll horizontal en móviles con logos anchos.
     const titleContainer = document.createElement("div");
-    titleContainer.style.cssText = "border-bottom: 3px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 10px;";
+    titleContainer.style.cssText = "border-bottom: 3px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
 
     const logoUrl = getLogoUrlForMarca(item.marca, item.categoria);
     if (logoUrl) {
@@ -1541,7 +1542,7 @@ export function showApp(user) {
 
     document.getElementById('login-modal').style.display = 'none';
     document.querySelector('.container').style.display = 'block';
-    document.querySelector('.footer').style.display = 'block';
+    document.querySelector('.footer').style.display = 'flex';
 
     if (user && (user.Nombre_Completo || user.Nombre_Usuario)) {
         document.getElementById('menu-username').textContent = user.Nombre_Completo || user.Nombre_Usuario;
