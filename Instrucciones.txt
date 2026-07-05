@@ -208,6 +208,13 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+1. **TÍTULO: UX Refinement - Deep Linking & Share Functionality (v2.4.5)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, style.css, ui.js, main.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **UI:** Reubicado indicador de red al mensaje de bienvenida con reducción de tamaño al 50%.
+     - **Social:** Añadido botón de compartir en modal técnico.
+     - **Arquitectura:** Implementado sistema de Deep Linking para persistencia de búsquedas vía URL hash.
 1. **TÍTULO: UX Refinement - Reubicación de Status y Botón Compartir (v2.4.4)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** index.html, style.css, ui.js

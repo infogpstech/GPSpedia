@@ -399,3 +399,9 @@
 - index.html: Movido #connection-status a .header-controls.
 - style.css: Ajustados márgenes del indicador de conexión; añadidos estilos para .share-modal-btn.
 - ui.js: Añadido botón de compartir en mostrarDetalleModal con lógica de Web Share / Clipboard.
+
+- index.html: Reubicado #connection-status al grupo de bienvenida.
+- style.css: Redimensionado indicador a 6px; estilos para botón compartir.
+- ui.js: Implementado botón de compartir en modal.
+- main.js: Lógica de Deep Linking y navegación vía logo.
+- navigation.js: Sincronización de búsqueda con el hash de la URL.

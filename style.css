@@ -140,22 +140,21 @@ h1.app-title {
 }
 
 #connection-status {
-    width: 10px;
-    height: 10px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     transition: background-color 0.3s ease;
     flex-shrink: 0;
-    margin-right: 5px; /* Separación de los botones de la derecha */
 }
 
 #connection-status.online {
     background-color: #28a745;
-    box-shadow: 0 0 5px #28a745;
+    box-shadow: 0 0 3px #28a745;
 }
 
 #connection-status.offline {
     background-color: #ffc107;
-    box-shadow: 0 0 5px #ffc107;
+    box-shadow: 0 0 3px #ffc107;
     animation: pulse-offline 1.5s infinite ease-in-out;
 }
 
