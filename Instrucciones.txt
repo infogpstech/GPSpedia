@@ -208,6 +208,13 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+1. **TÍTULO: UX Refinement - Status Indicator & Deep Linking (v2.4.3)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, style.css, main.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Conectividad:** Añadido indicador visual de estado de red (online/offline) con animaciones CSS.
+     - **Navegación:** Implementado soporte para Deep Linking mediante hash de URL (#search=) y funcionalidad de "Home" al hacer clic en el logotipo.
+     - **Persistencia:** Restauración automática de resultados de búsqueda tras recarga de página.
 ---
 1. **TÍTULO: Ajustes Visuales de Header y Contraste (v2.4.1)**
    - **ESTADO:** COMPLETADO

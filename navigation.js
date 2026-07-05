@@ -31,6 +31,11 @@ export function irAPaginaPrincipal() {
     }
     setState({ navigationState: { level: 'categorias', categoria: null, marca: null, modelo: null } });
 
+    // Limpiar el hash de búsqueda al volver a la principal
+    if (window.location.hash.startsWith('#search=')) {
+        history.replaceState(null, null, window.location.pathname + window.location.search);
+    }
+
     // Phase 3.1: Asegurar que se muestra la sección de cortes (catálogo)
     // Esto resuelve el problema de que el botón no funcionaba desde Tutoriales o Relay.
     mostrarSeccion('cortes');
@@ -119,4 +124,7 @@ export function filtrarContenido(textoBusqueda) {
 
     // Se guarda el término de búsqueda en el estado para permitir la navegación hacia atrás.
     setState({ navigationState: { level: "busqueda", query: textoBusqueda } });
+
+    // Actualizar el hash para Deep Linking
+    window.location.hash = `search=${encodeURIComponent(textoBusqueda)}`;
 }

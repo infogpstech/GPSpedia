@@ -390,3 +390,8 @@
 - **Líneas 297-308:** Actualizado `IntersectionObserver` para observar `#footer-sentinel`. El footer ahora se muestra (`.visible`) solo cuando el sentinel entra en el viewport al final del catálogo.
 
 **Versión:** Refinamiento Frontend (Footer) v2.4.2.
+
+- index.html: Añadido div #connection-status para monitoreo de red.
+- style.css: Implementados estilos y animaciones para el indicador de conexión; cursor pointer para app-logo.
+- main.js: Implementada lógica de eventos online/offline y procesamiento inicial de hash para Deep Linking. Añadido listener de retorno al inicio en el logo.
+- navigation.js: Actualizada lógica de búsqueda para sincronizar con el hash de la URL; limpieza de hash en irAPaginaPrincipal.
