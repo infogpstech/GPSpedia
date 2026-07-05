@@ -193,8 +193,8 @@ function handleSuggestYear(payload) {
     // Asignar valores a columnas específicas según esquema
     sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario).setValue(userName);
     sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID_vehiculo).setValue(vehicleId);
-    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Problema).setValue('Sugerencia de año');
-    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Respuesta).setValue(response || "N/A");
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Problema).setValue(`Sugerencia de año: ${year}`);
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Respuesta).setValue(`La información funciona para el año ${year}`);
     sheet.getRange(newRowNumber, COLS_FEEDBACKS.anoSugerido).setValue(year);
 
     logUserActivity(userId, userName, 'suggest_year', vehicleId, `Año sugerido: ${year}. Respuesta: ${response}`);
@@ -284,6 +284,23 @@ function handleSuggestYear(payload) {
         cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoDesde).setValue(newAnoDesde);
         cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoHasta).setValue(newAnoHasta);
         logUserActivity(userId, userName, 'apply_year_suggestion', vehicleId, `Rango actualizado a ${newAnoDesde}-${newAnoHasta} basado en 3 votos para el año ${year}.`);
+
+        // 7. Depuración automática: Eliminar registros de Feedback que respaldaron esta actualización
+        const feedbackSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.FEEDBACKS);
+        const feedbackValues = feedbackSheet.getDataRange().getValues();
+
+        // Recorrer de abajo hacia arriba para evitar desajustes de índices al eliminar filas
+        for (let i = feedbackValues.length - 1; i >= 1; i--) {
+            const row = feedbackValues[i];
+            const isMatch = row[COLS_FEEDBACKS.ID_vehiculo - 1] == vehicleId &&
+                            row[COLS_FEEDBACKS.anoSugerido - 1] == year &&
+                            String(row[COLS_FEEDBACKS.Problema - 1]).includes('Sugerencia de año');
+
+            if (isMatch) {
+                feedbackSheet.deleteRow(i + 1);
+            }
+        }
+
         return { status: 'success', message: `¡Gracias! Con 3 votos confirmados, el rango de años se ha actualizado a ${newAnoDesde}-${newAnoHasta}.` };
     }
 
