@@ -292,11 +292,18 @@ Cualquier cambio en estas zonas invalidará el commit.
    - **ALCANCE:** Global (Documentación)
    - **DESCRIPCIÓN DETALLADA:** Auditoría integral comparativa v1.5 vs v2.0. Creación de `RELEASE NOTES.txt` detallando todas las mejoras: arquitectura modular, seguridad RBAC, optimización de imágenes/lazy load, navegación contextual, sistema de votos y "Corte Recomendado", modales de Relay, crédito a colaboradores y asistente anti-duplicado.
 
+12. **TÍTULO: Gestión Colaborativa de Años y Validación de Cortes (v2.4.6)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** Global (Frontend y Backend)
+   - **DESCRIPCIÓN DETALLADA:**
+     - **UI:** Banner de validación inteligente integrado en el modal técnico con flujos para modelos recientes y antiguos.
+     - **Lógica:** Implementado sistema anti-colisión para proteger la integridad de los rangos de años entre generaciones.
+     - **Backend:** Automatización de la actualización de la hoja 'Cortes' tras alcanzar un umbral de 3 votos positivos.
+     - **Persistencia:** Implementado 'validationCache' en IndexedDB (v3) para evitar redundancia en las consultas al usuario.
+
 ---
 **DERIVADO DE AUDITORÍA (ROADMAP v2.0) — NO EJECUTAR AÚN**
 ---
-5. TÍTULO: Lógica de Backend para Gestión de Años y Votos (COMPLETADO)
 6. TÍTULO: Dashboard de Desempeño para Supervisores (PENDIENTE)
 7. TÍTULO: Funcionalidad de Edición 'In-Modal' (PENDIENTE)
 8. TÍTULO: Lógica de Backend para Feedback Inbox (PENDIENTE)
-9. TÍTULO: Expansión de Rango de Años por Feedback (COMPLETADO)

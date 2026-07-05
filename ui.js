@@ -16,6 +16,12 @@ export const IMG_SIZE_MEDIUM = 800;  // Modal details
 export const IMG_SIZE_LARGE = 1600;  // Lightbox / High Resolution
 
 /**
+ * Helper para normalizar versiones (ej. "SR / TRD" -> "sr trd")
+ * Se utiliza para agrupar generaciones y validar colisiones.
+ */
+const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+
+/**
  * Establece una imagen optimizada intentando cargarla desde el caché de IndexedDB.
  * @param {HTMLImageElement} imgElement - El elemento img a actualizar.
  * @param {string} fileId - El ID o URL de la imagen.
@@ -685,7 +691,6 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
 }
 
 
-// --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
 /**
  * Determina si un vehículo es elegible para la validación colaborativa de años.
  * @param {object} item - El objeto de datos del vehículo actual.
@@ -700,9 +705,7 @@ async function checkValidationEligibility(item) {
     const cachedResponse = await offline.getValidationResponse(item.id);
     if (cachedResponse) return { eligible: false };
 
-    // Helper para normalizar versiones (ej. "SR / TRD" -> "sr trd")
-    const normalizeV = (v) => (v || "").toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
-    const normalizedItemVersion = normalizeV(item.versionesAplicables);
+    const normalizedItemVersion = normalizeVersion(item.versionesAplicables);
 
     // 2. Identificar todos los registros del mismo modelo/marca/categoría/encendido
     // Se incluye versionesAplicables normalizado en el agrupamiento para mayor robustez
@@ -711,7 +714,7 @@ async function checkValidationEligibility(item) {
         String(c.modelo).toLowerCase() === String(item.modelo).toLowerCase() &&
         String(c.categoria).toLowerCase() === String(item.categoria).toLowerCase() &&
         String(c.tipoEncendido).toLowerCase() === String(item.tipoEncendido).toLowerCase() &&
-        normalizeV(c.versionesAplicables) === normalizedItemVersion
+        normalizeVersion(c.versionesAplicables) === normalizedItemVersion
     );
 
     // 3. Determinar cuál es la generación más reciente basada en anoDesde
@@ -902,23 +905,27 @@ function showValidationBanner(item, isOldModel) {
 
             // Validar colisión con otras generaciones registradas
             const { catalogData } = getState();
+            const normalizedItemVersion = normalizeVersion(item.versionesAplicables);
             const collision = catalogData.cortes.find(c =>
                 String(c.marca).toLowerCase() === String(item.marca).toLowerCase() &&
                 String(c.modelo).toLowerCase() === String(item.modelo).toLowerCase() &&
                 String(c.categoria).toLowerCase() === String(item.categoria).toLowerCase() &&
                 String(c.tipoEncendido).toLowerCase() === String(item.tipoEncendido).toLowerCase() &&
-                normalizeV(c.versionesAplicables) === normalizedItemVersion &&
+                normalizeVersion(c.versionesAplicables) === normalizedItemVersion &&
                 yearVal >= (parseInt(c.anoDesde) || 0) &&
                 yearVal <= (parseInt(c.anoHasta) || parseInt(c.anoDesde) || 0)
             );
 
             if (collision && String(collision.id) !== String(item.id)) {
                 input.style.borderColor = 'red';
-                const err = document.createElement('div');
-                err.style.cssText = "color: #dc3545; font-size: 0.8em; margin-top: 5px;";
-                err.textContent = `El año ${yearVal} ya está registrado.`;
-                inputGroup.after(err);
-                setTimeout(() => err.remove(), 3000);
+                if (!banner.querySelector('.validation-error')) {
+                    const err = document.createElement('div');
+                    err.className = 'validation-error';
+                    err.style.cssText = "color: #dc3545; font-size: 0.8em; margin-top: 5px;";
+                    err.textContent = `El año ${yearVal} ya está registrado.`;
+                    inputGroup.after(err);
+                    setTimeout(() => err.remove(), 3000);
+                }
                 return;
             }
 
@@ -978,6 +985,7 @@ function showValidationBanner(item, isOldModel) {
  * @param {string} searchData.query - El texto original de la búsqueda.
  * @param {Array} searchData.results - El array de resultados (strings de marcas o objetos de modelos).
  */
+// --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
 export function mostrarResultadosDeBusqueda({ type, query, results }) {
     const cont = document.getElementById("contenido");
     // CORRECCIÓN: Se elimina el botón "Volver" de esta vista. La página de resultados
