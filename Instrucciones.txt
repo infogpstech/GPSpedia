@@ -278,7 +278,7 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 **TAREAS PENDIENTES DE REVISIÓN**
 ---
-1. **TÍTULO: Refinamiento - Frontend (Footer) (v2.4.2)**
+1. **TÍTULO: Refinamiento - Frontend (Footer) (v2.4.6)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** index.html, style.css, main.js
    - **DESCRIPCIÓN DETALLADA:**

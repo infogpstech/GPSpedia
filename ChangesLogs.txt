@@ -75,7 +75,7 @@
 - **Línea 238:** Actualizada la versión del componente a v3.9.1.
 
 **Archivo: services/users/users.js**
-- **Líneas 4, 48:** Actualizada la versión del componente a v2.4.2.
+- **Líneas 4, 48:** Actualizada la versión del componente a v2.4.6.
 
 **Estado de la Tarea:** COMPLETADA.
 
@@ -389,7 +389,7 @@
 **Archivo: main.js**
 - **Líneas 297-308:** Actualizado `IntersectionObserver` para observar `#footer-sentinel`. El footer ahora se muestra (`.visible`) solo cuando el sentinel entra en el viewport al final del catálogo.
 
-**Versión:** Refinamiento Frontend (Footer) v2.4.2.
+**Versión:** Refinamiento Frontend (Footer) v2.4.6.
 
 - index.html: Añadido div #connection-status para monitoreo de red.
 - style.css: Implementados estilos y animaciones para el indicador de conexión; cursor pointer para app-logo.
