@@ -21,7 +21,7 @@ const SHEET_NAMES = {
     FEEDBACKS: "Feedbacks",
     CONTACTANOS: "Contactanos",
     ACTIVIDAD_USUARIO: "ActividadUsuario",
-    SUGERENCIAS_ANO: "SugerenciasAño"
+    SUGERENCIAS_ANO: "Feedbacks"
 };
 
 // Mapa de columnas para la hoja "Cortes" (v2.0)
@@ -45,7 +45,8 @@ const COLS_FEEDBACKS = {
     Respuesta: 5,
     "Se resolvio": 6,
     Responde: 7,
-    "Reporte de util": 8
+    "Reporte de util": 8,
+    anoSugerido: 9
 };
 
 const COLS_CONTACTANOS = {
@@ -173,12 +174,29 @@ function handleSuggestYear(payload) {
         throw new Error("El año proporcionado no es un número válido.");
     }
 
-    const sugerenciasSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.SUGERENCIAS_ANO);
-    if (!sugerenciasSheet) throw new Error(`Hoja no encontrada: ${SHEET_NAMES.SUGERENCIAS_ANO}`);
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.SUGERENCIAS_ANO);
+    if (!sheet) throw new Error(`Hoja no encontrada: ${SHEET_NAMES.SUGERENCIAS_ANO}`);
 
-    // 1. Registrar la sugerencia
-    // Estructura: [Fecha, ID_Vehículo, ID_Usuario, Nombre_Usuario, Año_Sugerido, Respuesta_Texto]
-    sugerenciasSheet.appendRow([new Date(), vehicleId, userId, userName, year, response || ""]);
+    // 1. Registrar la sugerencia (preservando fórmula de ID 'F-XXX')
+    const lastRow = sheet.getLastRow();
+    const newRowNumber = lastRow + 1;
+    const FORMULA_ROW = 2; // Fila que contiene la fórmula base del ID
+
+    if (lastRow >= FORMULA_ROW) {
+        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, sheet.getLastColumn());
+        const newRowRange = sheet.getRange(newRowNumber, 1, 1, sheet.getLastColumn());
+        formulaRange.copyTo(newRowRange);
+        // Limpiar contenido de celdas de datos (col 2 en adelante) preservando la fórmula del ID (col 1)
+        sheet.getRange(newRowNumber, 2, 1, sheet.getLastColumn() - 1).clearContent();
+    }
+
+    // Asignar valores a columnas específicas según esquema
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario).setValue(userName);
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID_vehiculo).setValue(vehicleId);
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Problema).setValue('Sugerencia de año');
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Respuesta).setValue(response || "N/A");
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.anoSugerido).setValue(year);
+
     logUserActivity(userId, userName, 'suggest_year', vehicleId, `Año sugerido: ${year}. Respuesta: ${response}`);
 
     // Solo procesar actualización si la respuesta es positiva (Sí, Otro año o Es más antiguo)
@@ -188,8 +206,11 @@ function handleSuggestYear(payload) {
     }
 
     // 2. Contar votos para esta combinación (ID_Vehículo + Año_Sugerido)
-    const allSuggestions = sugerenciasSheet.getDataRange().getValues().slice(1);
-    const voteCount = allSuggestions.filter(row => row[1] == vehicleId && row[4] == year).length;
+    const allData = sheet.getDataRange().getValues().slice(1);
+    const voteCount = allData.filter(row =>
+        row[COLS_FEEDBACKS.ID_vehiculo - 1] == vehicleId &&
+        row[COLS_FEEDBACKS.anoSugerido - 1] == year
+    ).length;
 
     // 3. Si no se alcanzan los 3 votos (más de 2), terminar
     if (voteCount < 3) {
@@ -270,9 +291,6 @@ function handleSuggestYear(payload) {
 }
 
 function logUserActivity(userId, userName, activityType, associatedId, details) {
-    // CORRECCIÓN DE REGRESIÓN: Se implementa el método robusto que copia la fila
-    // completa para heredar la fórmula del ID, pero luego solo escribe en las
-    // columnas de datos para no sobrescribir la fórmula.
     try {
         const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.ACTIVIDAD_USUARIO);
         if (!sheet) {
@@ -282,12 +300,15 @@ function logUserActivity(userId, userName, activityType, associatedId, details) 
         const lastRow = sheet.getLastRow();
         const newRowNumber = lastRow + 1;
         const lastColumn = sheet.getLastColumn();
+        const FORMULA_ROW = 2;
 
-        // 1. Copiar la fila anterior para heredar TODAS las validaciones, formatos y FÓRMULAS (incluyendo ID).
-        if (lastRow > 0) {
-            const previousRowRange = sheet.getRange(lastRow, 1, 1, lastColumn);
+        // 1. Copiar la fila con fórmulas para asegurar el ID correcto (F-XXX)
+        if (lastRow >= FORMULA_ROW) {
+            const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastColumn);
             const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastColumn);
-            previousRowRange.copyTo(newRowRange);
+            formulaRange.copyTo(newRowRange);
+            // Preservar ID (col 1), limpiar el resto
+            sheet.getRange(newRowNumber, 2, 1, lastColumn - 1).clearContent();
         }
 
         // 2. Preparar los datos que se van a escribir, EXCLUYENDO la columna de ID.
@@ -361,43 +382,45 @@ function handleReportProblem(payload) {
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.FEEDBACKS);
     const lastRow = sheet.getLastRow();
-    const newRowRange = sheet.getRange(lastRow + 1, 1, 1, sheet.getLastColumn());
+    const newRowNumber = lastRow + 1;
+    const FORMULA_ROW = 2;
 
-    // Copy formatting and formulas from the previous row
-    if (lastRow > 0) {
-        sheet.getRange(lastRow, 1, 1, sheet.getLastColumn()).copyTo(newRowRange, {contentsOnly: false});
-        newRowRange.clearContent();
+    if (lastRow >= FORMULA_ROW) {
+        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, sheet.getLastColumn());
+        const newRowRange = sheet.getRange(newRowNumber, 1, 1, sheet.getLastColumn());
+        formulaRange.copyTo(newRowRange);
+        sheet.getRange(newRowNumber, 2, 1, sheet.getLastColumn() - 1).clearContent();
     }
 
-    // Set new values
-    newRowRange.getCell(1, COLS_FEEDBACKS.Usuario).setValue(userName); // Correctly store userName
-    newRowRange.getCell(1, COLS_FEEDBACKS.ID_vehiculo).setValue(vehicleId);
-    newRowRange.getCell(1, COLS_FEEDBACKS.Problema).setValue(problemText);
-    // The userId is captured in the user activity log, not stored in this sheet.
-
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario).setValue(userName);
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID_vehiculo).setValue(vehicleId);
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Problema).setValue(problemText);
 
     logUserActivity(userId, userName, 'report_problem', vehicleId, problemText);
     return { status: 'success', message: 'Problema reportado.' };
 }
 
 function handleSendContactForm(payload) {
-    const { name, email, message, userId } = payload; // Added userId
+    const { name, email, message, userId } = payload;
     if (!name || !email || !message) {
         throw new Error("Faltan datos para enviar el formulario de contacto (name, email, message).");
     }
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CONTACTANOS);
     const lastRow = sheet.getLastRow();
-    const newRowRange = sheet.getRange(lastRow + 1, 1, 1, sheet.getLastColumn());
+    const newRowNumber = lastRow + 1;
+    const FORMULA_ROW = 2;
 
-    if (lastRow > 0) {
-        sheet.getRange(lastRow, 1, 1, sheet.getLastColumn()).copyTo(newRowRange, {contentsOnly: false});
-        newRowRange.clearContent();
+    if (lastRow >= FORMULA_ROW) {
+        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, sheet.getLastColumn());
+        const newRowRange = sheet.getRange(newRowNumber, 1, 1, sheet.getLastColumn());
+        formulaRange.copyTo(newRowRange);
+        sheet.getRange(newRowNumber, 2, 1, sheet.getLastColumn() - 1).clearContent();
     }
 
-    newRowRange.getCell(1, COLS_CONTACTANOS.User_ID).setValue(userId || 'N/A'); // Save userId
-    newRowRange.getCell(1, COLS_CONTACTANOS.Asunto).setValue(`Contacto de ${name}`);
-    newRowRange.getCell(1, COLS_CONTACTANOS.Mensaje).setValue(`De: ${email}\n\n${message}`);
+    sheet.getRange(newRowNumber, COLS_CONTACTANOS.User_ID).setValue(userId || 'N/A');
+    sheet.getRange(newRowNumber, COLS_CONTACTANOS.Asunto).setValue(`Contacto de ${name}`);
+    sheet.getRange(newRowNumber, COLS_CONTACTANOS.Mensaje).setValue(`De: ${email}\n\n${message}`);
 
     return { status: 'success', message: 'Formulario de contacto enviado.' };
 }

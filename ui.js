@@ -768,9 +768,9 @@ function showValidationBanner(item, isOldModel) {
     };
 
     const registerAndClose = (response, suggestedYear = null) => {
-        // Registro silencioso en caché y backend
-        offline.saveValidationResponse(item.id, response);
+        // Registro silencioso en backend y luego caché
         suggestYear(item.id, suggestedYear || currentYear, response, userId, userName).catch(console.error);
+        offline.saveValidationResponse(item.id, response);
 
         const thanks = document.createElement('div');
         thanks.className = 'validation-message';
