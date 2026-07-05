@@ -112,6 +112,19 @@ async function initializeApp() {
         handleViewportChange(); // Ejecución inicial
     }
 
+    // --- LÓGICA DE ESTADO DE CONEXIÓN ---
+    const connectionStatus = document.getElementById('connection-status');
+    if (connectionStatus) {
+        const updateStatus = () => {
+            const isOnline = navigator.onLine;
+            connectionStatus.className = isOnline ? 'online' : 'offline';
+            connectionStatus.title = isOnline ? 'Conectado' : 'Trabajando Offline';
+        };
+        window.addEventListener('online', updateStatus);
+        window.addEventListener('offline', updateStatus);
+        updateStatus(); // Estado inicial
+    }
+
     // Exponer handleViewportChange globalmente para lightbox.js
     window.handleViewportChange = handleViewportChange;
 
@@ -158,6 +171,14 @@ async function initializeApp() {
     // Hamburger menu listeners
     document.getElementById('hamburger-btn').addEventListener('click', ui.openSideMenu);
     document.getElementById('menu-overlay').addEventListener('click', ui.closeSideMenu);
+
+    // Click on logo to go home
+    document.querySelectorAll('.app-logo').forEach(logo => {
+        logo.style.cursor = 'pointer';
+        logo.addEventListener('click', () => {
+            navigation.irAPaginaPrincipal();
+        });
+    });
 
     // Navigation links in side menu - Unified Handlers
     // Restauración de funciones para Cortes, Tutoriales y Relay
@@ -449,6 +470,30 @@ async function initializeApp() {
     // Se asegura que todo esté inicializado antes de validar la sesión
     setTimeout(async () => {
         await auth.checkSession();
+
+        // --- LÓGICA DE DEEP LINKING PARA BÚSQUEDA ---
+        const hash = window.location.hash;
+        if (hash.startsWith('#search=')) {
+            const query = decodeURIComponent(hash.substring(8));
+            if (query) {
+                const searchInput = document.getElementById('searchInput');
+                if (searchInput) {
+                    searchInput.value = query;
+                    searchInput.parentElement.classList.add('has-text');
+                }
+
+                // Esperar a que el catálogo esté cargado en el estado antes de filtrar
+                const checkDataAndSearch = () => {
+                    const { catalogData } = state.getState();
+                    if (catalogData && catalogData.cortes && catalogData.cortes.length > 0) {
+                        navigation.filtrarContenido(query);
+                    } else {
+                        setTimeout(checkDataAndSearch, 100);
+                    }
+                };
+                checkDataAndSearch();
+            }
+        }
     }, 0);
 }
 

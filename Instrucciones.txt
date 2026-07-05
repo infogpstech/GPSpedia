@@ -208,6 +208,31 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.4.6)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** style.css
+   - **DESCRIPCIÓN DETALLADA:**
+     - **UI:** Reducido el tamaño del punto de estado a 3px para una estética ultra-minimalista integrada en el texto de bienvenida.
+1. **TÍTULO: UX Refinement - Deep Linking & Share Functionality (v2.4.5)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, style.css, ui.js, main.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **UI:** Reubicado indicador de red al mensaje de bienvenida con reducción de tamaño al 50%.
+     - **Social:** Añadido botón de compartir en modal técnico.
+     - **Arquitectura:** Implementado sistema de Deep Linking para persistencia de búsquedas vía URL hash.
+1. **TÍTULO: UX Refinement - Reubicación de Status y Botón Compartir (v2.4.4)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, style.css, ui.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Layout:** Reubicado indicador de conexión a la esquina superior derecha (header-controls).
+     - **Funcionalidad:** Añadido botón de compartir en el modal de detalle para facilitar la difusión de información técnica.
+1. **TÍTULO: UX Refinement - Status Indicator & Deep Linking (v2.4.3)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, style.css, main.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Conectividad:** Añadido indicador visual de estado de red (online/offline) con animaciones CSS.
+     - **Navegación:** Implementado soporte para Deep Linking mediante hash de URL (#search=) y funcionalidad de "Home" al hacer clic en el logotipo.
+     - **Persistencia:** Restauración automática de resultados de búsqueda tras recarga de página.
 ---
 1. **TÍTULO: Ajustes Visuales de Header y Contraste (v2.4.1)**
    - **ESTADO:** COMPLETADO

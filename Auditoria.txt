@@ -350,3 +350,69 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - Mover footer fuera de .container.
 - Implementar 'position: fixed' y 'transform: translateY(100%)'.
 - Usar un centinela (#footer-sentinel) dentro de .container para disparar el footer.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - UX & DEEP LINKING (05/02/2026)**
+
+**Archivos involucrados:** index.html, style.css, main.js, navigation.js.
+
+**Hallazgos:**
+- La aplicación carecía de feedback visual sobre el estado de conexión, lo cual es crítico en una PWA.
+- No existía una forma de compartir o persistir resultados de búsqueda mediante la URL.
+- El logotipo principal no tenía funcionalidad de retorno al inicio, rompiendo una convención de UI estándar.
+
+**Acciones:**
+1. Implementado indicador visual de estado (#connection-status) con animaciones CSS para modo offline.
+2. Implementada lógica de Deep Linking sincronizando el buscador con window.location.hash (#search=).
+3. Añadido event listener al logotipo para invocar irAPaginaPrincipal().
+4. Refactorizada irAPaginaPrincipal para limpiar el hash de la URL sin recargar la página.
+
+**Verificación:**
+- Validado mediante Playwright que el indicador cambia de clase al pasar a modo offline.
+- Validado que el hash se actualiza al escribir en el buscador.
+- Validado que al recargar con un hash de búsqueda, los resultados se restauran automáticamente.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REUBICACIÓN INDICADOR Y BOTÓN COMPARTIR (05/02/2026)**
+
+**Archivos involucrados:** index.html, style.css, ui.js.
+
+**Hallazgos:**
+- El indicador de conexión interfería visualmente entre el logo y el título.
+- El modal de detalle carecía de una forma rápida de compartir información técnica específica.
+
+**Acciones:**
+1. Reubicado #connection-status a .header-controls (esquina superior derecha).
+2. Implementado botón de compartir (.share-modal-btn) en el modal de detalle, posicionado a la izquierda del botón de cierre.
+3. Añadida lógica de compartir usando Web Share API con fallback a portapapeles.
+
+**Verificación:**
+- Validada posición del indicador mediante Playwright.
+- Validada posición relativa de botones en el modal (Compartir a la izquierda de cerrar).
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REFINAMIENTO UX FINAL (05/02/2026)**
+
+**Archivos involucrados:** index.html, style.css, ui.js, main.js, navigation.js.
+
+**Acciones:**
+1. Reubicado y redimensionado el indicador de conexión (6px) para situarse al final del mensaje de bienvenida ("Hola, Usuario 🟢").
+2. Implementado botón de compartir en el modal de detalle (a la izquierda del botón de cierre).
+3. Implementado Deep Linking (#search=) y funcionalidad de retorno al inicio vía logotipo.
+
+**Verificación Final:**
+- El indicador es discreto y está correctamente alineado en el branding.
+- El botón de compartir funciona con Web Share API o Portapapeles.
+- El flujo de navegación es coherente y persistente vía URL.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REDUCCIÓN MINIMALISTA (05/02/2026)**
+
+**Archivos involucrados:** style.css.
+
+**Acciones:**
+1. Reducido el tamaño del indicador de conexión de 6px a 3px para una integración ultra-discreta en el saludo.
+2. Ajustados los valores de box-shadow para mantener la legibilidad en el nuevo tamaño reducido.
+
+**Verificación:**
+- Validado mediante Playwright que el tamaño efectivo es 3x3 píxeles.
