@@ -208,6 +208,12 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+1. **TÍTULO: UX Refinement - Reubicación de Status y Botón Compartir (v2.4.4)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, style.css, ui.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Layout:** Reubicado indicador de conexión a la esquina superior derecha (header-controls).
+     - **Funcionalidad:** Añadido botón de compartir en el modal de detalle para facilitar la difusión de información técnica.
 1. **TÍTULO: UX Refinement - Status Indicator & Deep Linking (v2.4.3)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** index.html, style.css, main.js, navigation.js

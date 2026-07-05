@@ -371,3 +371,21 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - Validado mediante Playwright que el indicador cambia de clase al pasar a modo offline.
 - Validado que el hash se actualiza al escribir en el buscador.
 - Validado que al recargar con un hash de búsqueda, los resultados se restauran automáticamente.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REUBICACIÓN INDICADOR Y BOTÓN COMPARTIR (05/02/2026)**
+
+**Archivos involucrados:** index.html, style.css, ui.js.
+
+**Hallazgos:**
+- El indicador de conexión interfería visualmente entre el logo y el título.
+- El modal de detalle carecía de una forma rápida de compartir información técnica específica.
+
+**Acciones:**
+1. Reubicado #connection-status a .header-controls (esquina superior derecha).
+2. Implementado botón de compartir (.share-modal-btn) en el modal de detalle, posicionado a la izquierda del botón de cierre.
+3. Añadida lógica de compartir usando Web Share API con fallback a portapapeles.
+
+**Verificación:**
+- Validada posición del indicador mediante Playwright.
+- Validada posición relativa de botones en el modal (Compartir a la izquierda de cerrar).

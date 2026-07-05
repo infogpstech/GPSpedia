@@ -395,3 +395,7 @@
 - style.css: Implementados estilos y animaciones para el indicador de conexión; cursor pointer para app-logo.
 - main.js: Implementada lógica de eventos online/offline y procesamiento inicial de hash para Deep Linking. Añadido listener de retorno al inicio en el logo.
 - navigation.js: Actualizada lógica de búsqueda para sincronizar con el hash de la URL; limpieza de hash en irAPaginaPrincipal.
+
+- index.html: Movido #connection-status a .header-controls.
+- style.css: Ajustados márgenes del indicador de conexión; añadidos estilos para .share-modal-btn.
+- ui.js: Añadido botón de compartir en mostrarDetalleModal con lógica de Web Share / Clipboard.

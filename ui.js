@@ -762,7 +762,33 @@ export function mostrarDetalleModal(item) {
     cont.innerHTML = "";
 
     const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px;";
+    headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px; gap: 10px;";
+
+    // Botón Compartir
+    const shareBtn = document.createElement("button");
+    shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>';
+    shareBtn.className = "share-modal-btn";
+    shareBtn.title = "Compartir este vehículo";
+    shareBtn.onclick = () => {
+        const shareData = {
+            title: `GPSpedia - ${item.marca} ${item.modelo}`,
+            text: `Mira la información técnica del ${item.marca} ${item.modelo} (${item.anoDesde}) en GPSpedia.`,
+            url: window.location.origin + window.location.pathname + `#search=${encodeURIComponent(item.marca + ' ' + item.modelo)}`
+        };
+
+        if (navigator.share) {
+            navigator.share(shareData).catch(console.error);
+        } else {
+            // Fallback: copiar al portapapeles
+            navigator.clipboard.writeText(shareData.url).then(() => {
+                alert("Enlace copiado al portapapeles");
+            }).catch(err => {
+                console.error("Error al copiar enlace:", err);
+            });
+        }
+    };
+    headerDiv.appendChild(shareBtn);
+
     const closeBtn = document.createElement("button");
     closeBtn.innerHTML = "&times;";
     closeBtn.onclick = () => {
