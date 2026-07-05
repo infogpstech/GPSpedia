@@ -208,6 +208,14 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+1. **TÍTULO: Collaborative Validation - Gestión Colaborativa de Años (v2.4.7)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, style.css, offline.js, api-config.js, Services/Feedback/feedback.gs
+   - **DESCRIPCIÓN DETALLADA:**
+     - **UI:** Implementada notificación compacta y animada que aparece tras la carga de la imagen del vehículo.
+     - **Lógica:** Implementado motor de reglas para identificar la generación más reciente y flujos diferenciados para modelos antiguos.
+     - **Persistencia:** Sistema de caché en IndexedDB para evitar redundancia y registro silencioso en el backend.
+     - **Automatización:** Lógica GAS para actualización automática del catálogo tras 3 confirmaciones comunitarias.
 1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.4.6)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** style.css
@@ -295,7 +303,7 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 **DERIVADO DE AUDITORÍA (ROADMAP v2.0) — NO EJECUTAR AÚN**
 ---
-5. TÍTULO: Lógica de Backend para Gestión de Años y Votos (PENDIENTE)
+
 6. TÍTULO: Dashboard de Desempeño para Supervisores (PENDIENTE)
 7. TÍTULO: Funcionalidad de Edición 'In-Modal' (PENDIENTE)
 8. TÍTULO: Lógica de Backend para Feedback Inbox (PENDIENTE)

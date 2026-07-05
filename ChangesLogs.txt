@@ -407,3 +407,27 @@
 - navigation.js: Sincronización de búsqueda con el hash de la URL.
 
 - style.css: Reducción del tamaño del indicador de conexión a 3px y ajuste de sombras.
+
+**CHANGES LOG - 05/03/2026 (Gestión Colaborativa de Años)**
+
+**Archivo: style.css**
+- **Líneas 1489-1588:** Implementados estilos para `.validation-notification` y sus componentes (`.val-btn`, `.val-input-group`, etc.), incluyendo soporte para Modo Oscuro y animaciones de entrada.
+
+**Archivo: offline.js**
+- **Líneas 70-73:** Añadido almacén `validationCache` en la inicialización de IndexedDB.
+- **Líneas 219-233:** Implementadas funciones `saveValidationResponse` y `getValidationResponse` para persistencia de respuestas de usuario.
+
+**Archivo: api-config.js**
+- **Líneas 28, 101-103:** Mapeada acción `suggestYear` al servicio `FEEDBACK` e implementado helper `suggestYear`.
+
+**Archivo: ui.js**
+- **Línea 7, 856, 1217-1375:** Implementada la lógica de validación colaborativa:
+    - `initCollaborativeValidation`: Determina si corresponde mostrar la consulta basándose en la generación más reciente y el rango de años.
+    - `renderValidationStep`: Gestiona dinámicamente los flujos de preguntas (Estándar y Modelos Antiguos).
+    - `sendValidation`: Realiza el registro silencioso en IndexedDB y el servidor.
+- **Línea 856:** Vinculada la inicialización al evento `onload` de la imagen del vehículo.
+
+**Archivo: Services/Feedback/feedback.gs**
+- **Nuevo Archivo:** Implementada la lógica de backend para procesar sugerencias, registrar en la hoja "Feedback" y actualizar automáticamente la hoja "Cortes" tras 3 confirmaciones para un año específico.
+
+**Versión:** Implementación de Validación Colaborativa v2.4.7.
