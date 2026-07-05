@@ -4,7 +4,7 @@
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem } from './api-config.js';
+import { getFeedbackItems, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 
@@ -14,6 +14,12 @@ const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="
 export const IMG_SIZE_SMALL = 300;   // Cards and thumbnails
 export const IMG_SIZE_MEDIUM = 800;  // Modal details
 export const IMG_SIZE_LARGE = 1600;  // Lightbox / High Resolution
+
+/**
+ * Helper para normalizar versiones (ej. "SR / TRD" -> "sr trd")
+ * Se utiliza para agrupar generaciones y validar colisiones.
+ */
+const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
 
 /**
  * Establece una imagen optimizada intentando cargarla desde el caché de IndexedDB.
@@ -685,7 +691,293 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
 }
 
 
-// --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
+/**
+ * Determina si un vehículo es elegible para la validación colaborativa de años.
+ * @param {object} item - El objeto de datos del vehículo actual.
+ * @returns {Promise<boolean>} - Verdadero si es elegible.
+ */
+async function checkValidationEligibility(item) {
+    const currentYear = new Date().getFullYear();
+    const { catalogData } = getState();
+    const { cortes } = catalogData;
+
+    // 1. Verificar si el usuario ya respondió anteriormente para este mismo registro (ID)
+    const cachedResponse = await offline.getValidationResponse(item.id);
+    if (cachedResponse) return { eligible: false };
+
+    const normalizedItemVersion = normalizeVersion(item.versionesAplicables);
+
+    // 2. Identificar todos los registros del mismo modelo/marca/categoría/encendido
+    // Se incluye versionesAplicables normalizado en el agrupamiento para mayor robustez
+    const sameModelGenerations = cortes.filter(c =>
+        String(c.marca).toLowerCase() === String(item.marca).toLowerCase() &&
+        String(c.modelo).toLowerCase() === String(item.modelo).toLowerCase() &&
+        String(c.categoria).toLowerCase() === String(item.categoria).toLowerCase() &&
+        String(c.tipoEncendido).toLowerCase() === String(item.tipoEncendido).toLowerCase() &&
+        normalizeVersion(c.versionesAplicables) === normalizedItemVersion
+    );
+
+    // 3. Determinar cuál es la generación más reciente basada en anoDesde
+    const latestGeneration = sameModelGenerations.reduce((prev, current) => {
+        const yearCurrent = parseInt(current.anoDesde) || 0;
+        const yearPrev = parseInt(prev.anoDesde) || 0;
+        return (yearCurrent > yearPrev) ? current : prev;
+    }, sameModelGenerations[0]);
+
+    // 4. Condición: El vehículo debe pertenecer a la generación más reciente registrada.
+    if (String(item.id) !== String(latestGeneration.id)) return { eligible: false };
+
+    // 5. Condición: El rango de años debe finalizar antes del año actual.
+    const anoHasta = item.anoHasta ? parseInt(item.anoHasta) : (parseInt(item.anoDesde) || 0);
+    if (anoHasta >= currentYear) return { eligible: false };
+
+    // Identificar si es un "modelo muy antiguo" (ej. > 10 años de antigüedad)
+    const isOldModel = anoHasta < (currentYear - 10);
+
+    return { eligible: true, isOldModel };
+}
+
+/**
+ * Muestra el banner de validación colaborativa en el modal de detalles.
+ * @param {object} item - El vehículo actual.
+ * @param {boolean} isOldModel - Si sigue el flujo de modelos antiguos.
+ */
+function showValidationBanner(item, isOldModel) {
+    const detailContainer = document.getElementById('detalleCompleto');
+    if (!detailContainer) return;
+
+    // Buscar la ubicación: Debajo de la imagen del vehículo o después del subheader
+    const imgVehiculo = detailContainer.querySelector('.img-vehiculo-modal');
+    const anchor = imgVehiculo || detailContainer.querySelector('div[style*="margin-bottom: 5px"]');
+
+    const banner = document.createElement('div');
+    banner.className = 'validation-banner';
+    banner.id = 'validation-banner';
+
+    const currentYear = new Date().getFullYear();
+    const { currentUser } = getState();
+    const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Anónimo';
+    const userId = currentUser ? currentUser.ID : '0';
+
+    const renderStep = (content) => {
+        banner.innerHTML = '';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'validation-content';
+        wrapper.appendChild(content);
+        banner.appendChild(wrapper);
+    };
+
+    const registerAndClose = (response, suggestedYear = null) => {
+        // Registro silencioso en caché y backend
+        offline.saveValidationResponse(item.id, response);
+        suggestYear(item.id, suggestedYear || currentYear, response, userId, userName).catch(console.error);
+
+        const thanks = document.createElement('div');
+        thanks.className = 'validation-message';
+        thanks.textContent = 'Gracias por tu aporte.';
+        renderStep(thanks);
+
+        setTimeout(() => {
+            banner.style.maxHeight = '0';
+            banner.style.margin = '0';
+            banner.style.padding = '0';
+            banner.style.opacity = '0';
+            banner.style.border = 'none';
+            setTimeout(() => banner.remove(), 400);
+        }, 1500);
+    };
+
+    const showStep1 = () => {
+        const msg = document.createElement('div');
+        msg.className = 'validation-message';
+        msg.textContent = isOldModel
+            ? '¿Estás trabajando una versión más reciente de este vehículo?'
+            : 'Este vehículo corresponde a un año anterior. ¿Estás trabajando un modelo más reciente?';
+
+        const actions = document.createElement('div');
+        actions.className = 'validation-actions';
+
+        const btnSi = document.createElement('button');
+        btnSi.className = 'validation-btn';
+        btnSi.textContent = 'Sí';
+        btnSi.onclick = () => isOldModel ? showStep2Old() : showStep2();
+
+        const btnNo = document.createElement('button');
+        btnNo.className = 'validation-btn secondary';
+        btnNo.textContent = 'No';
+        btnNo.onclick = () => registerAndClose('No');
+
+        actions.appendChild(btnSi);
+
+        if (!isOldModel) {
+            const btnAntiguo = document.createElement('button');
+            btnAntiguo.className = 'validation-btn secondary';
+            btnAntiguo.textContent = 'Es más antiguo';
+            btnAntiguo.onclick = () => registerAndClose('Es más antiguo', (parseInt(item.anoDesde) - 1));
+            actions.appendChild(btnAntiguo);
+        }
+
+        actions.appendChild(btnNo);
+
+        const content = document.createDocumentFragment();
+        content.appendChild(msg);
+        content.appendChild(actions);
+        renderStep(content);
+    };
+
+    // FLUJO REGULAR
+    const showStep2 = () => {
+        const msg = document.createElement('div');
+        msg.className = 'validation-message';
+        msg.textContent = `¿Este corte funciona correctamente para el modelo del año ${currentYear}?`;
+
+        const actions = document.createElement('div');
+        actions.className = 'validation-actions';
+
+        const btnOk = document.createElement('button');
+        btnOk.className = 'validation-btn';
+        btnOk.textContent = '✅';
+        btnOk.onclick = () => registerAndClose('Sí (Funciona)', currentYear);
+
+        const btnFail = document.createElement('button');
+        btnFail.className = 'validation-btn secondary';
+        btnFail.textContent = '❌';
+        btnFail.onclick = () => showStep3Fail();
+
+        const btnOther = document.createElement('button');
+        btnOther.className = 'validation-btn secondary';
+        btnOther.textContent = 'Otro año';
+        btnOther.onclick = () => showStepInput();
+
+        actions.appendChild(btnOk);
+        actions.appendChild(btnFail);
+        actions.appendChild(btnOther);
+
+        const content = document.createDocumentFragment();
+        content.appendChild(msg);
+        content.appendChild(actions);
+        renderStep(content);
+    };
+
+    const showStep3Fail = () => {
+        const msg = document.createElement('div');
+        msg.className = 'validation-message';
+        msg.innerHTML = `Muchas gracias por confirmarlo.<br>Recuerda que puedes agregar el nuevo corte de este modelo <a href="add_cortes.html" style="color: var(--accent-color); font-weight: bold;">aquí</a>.`;
+
+        const actions = document.createElement('div');
+        actions.className = 'validation-actions';
+        const btnAceptar = document.createElement('button');
+        btnAceptar.className = 'validation-btn';
+        btnAceptar.textContent = 'Aceptar';
+        btnAceptar.onclick = () => registerAndClose('No funciona');
+        actions.appendChild(btnAceptar);
+
+        const content = document.createDocumentFragment();
+        content.appendChild(msg);
+        content.appendChild(actions);
+        renderStep(content);
+    };
+
+    const showStepInput = () => {
+        const msg = document.createElement('div');
+        msg.className = 'validation-message';
+        msg.textContent = '¿Para qué año funciona correctamente este corte?';
+
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'validation-input-group';
+
+        const input = document.createElement('input');
+        input.type = 'number';
+        input.className = 'validation-input';
+        input.placeholder = 'Ingrese el año';
+        input.min = '1980';
+        input.max = (currentYear + 2).toString();
+
+        const btnSend = document.createElement('button');
+        btnSend.className = 'validation-btn';
+        btnSend.textContent = 'Enviar';
+        btnSend.onclick = () => {
+            const yearVal = parseInt(input.value);
+            if (isNaN(yearVal) || yearVal < 1980 || yearVal > (currentYear + 2)) {
+                input.style.borderColor = 'red';
+                return;
+            }
+
+            // Validar colisión con otras generaciones registradas
+            const { catalogData } = getState();
+            const normalizedItemVersion = normalizeVersion(item.versionesAplicables);
+            const collision = catalogData.cortes.find(c =>
+                String(c.marca).toLowerCase() === String(item.marca).toLowerCase() &&
+                String(c.modelo).toLowerCase() === String(item.modelo).toLowerCase() &&
+                String(c.categoria).toLowerCase() === String(item.categoria).toLowerCase() &&
+                String(c.tipoEncendido).toLowerCase() === String(item.tipoEncendido).toLowerCase() &&
+                normalizeVersion(c.versionesAplicables) === normalizedItemVersion &&
+                yearVal >= (parseInt(c.anoDesde) || 0) &&
+                yearVal <= (parseInt(c.anoHasta) || parseInt(c.anoDesde) || 0)
+            );
+
+            if (collision && String(collision.id) !== String(item.id)) {
+                input.style.borderColor = 'red';
+                if (!banner.querySelector('.validation-error')) {
+                    const err = document.createElement('div');
+                    err.className = 'validation-error';
+                    err.style.cssText = "color: #dc3545; font-size: 0.8em; margin-top: 5px;";
+                    err.textContent = `El año ${yearVal} ya está registrado.`;
+                    inputGroup.after(err);
+                    setTimeout(() => err.remove(), 3000);
+                }
+                return;
+            }
+
+            registerAndClose(`Otro año: ${yearVal}`, yearVal);
+        };
+
+        inputGroup.appendChild(input);
+        inputGroup.appendChild(btnSend);
+
+        const content = document.createDocumentFragment();
+        content.appendChild(msg);
+        content.appendChild(inputGroup);
+        renderStep(content);
+    };
+
+    // FLUJO ANTIGUO
+    const showStep2Old = () => {
+        const msg = document.createElement('div');
+        msg.className = 'validation-message';
+        msg.textContent = '¿Esta información te fue útil?';
+
+        const actions = document.createElement('div');
+        actions.className = 'validation-actions';
+
+        const btnSi = document.createElement('button');
+        btnSi.className = 'validation-btn';
+        btnSi.textContent = 'Sí';
+        btnSi.onclick = () => showStepInput();
+
+        const btnNo = document.createElement('button');
+        btnNo.className = 'validation-btn secondary';
+        btnNo.textContent = 'No';
+        btnNo.onclick = () => registerAndClose('No útil (Viejo)');
+
+        actions.appendChild(btnSi);
+        actions.appendChild(btnNo);
+
+        const content = document.createDocumentFragment();
+        content.appendChild(msg);
+        content.appendChild(actions);
+        renderStep(content);
+    };
+
+    showStep1();
+
+    if (anchor) {
+        anchor.after(banner);
+    } else {
+        detailContainer.appendChild(banner);
+    }
+}
+
 /**
  * Renderiza los resultados de una búsqueda de forma dinámica.
  * @param {object} searchData - Un objeto que contiene el tipo, la consulta y los resultados.
@@ -693,6 +985,7 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
  * @param {string} searchData.query - El texto original de la búsqueda.
  * @param {Array} searchData.results - El array de resultados (strings de marcas o objetos de modelos).
  */
+// --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
 export function mostrarResultadosDeBusqueda({ type, query, results }) {
     const cont = document.getElementById("contenido");
     // CORRECCIÓN: Se elimina el botón "Volver" de esta vista. La página de resultados
@@ -929,6 +1222,18 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         if (isLazy) {
             img.dataset.src = getImageUrl(cutData.img, IMG_SIZE_MEDIUM);
         } else {
+            // Phase Collaborative Update: Trigger validation banner after primary cut image loads
+            // Attachment happens before setOptimizedImage to ensure we catch the onload event.
+            const { catalogData } = getState();
+            const currentItem = catalogData.cortes.find(c => String(c.id) === String(vehicleId));
+            if (currentItem) {
+                img.onload = async () => {
+                    const { eligible, isOldModel } = await checkValidationEligibility(currentItem);
+                    if (eligible) {
+                        showValidationBanner(currentItem, isOldModel);
+                    }
+                };
+            }
             setOptimizedImage(img, cutData.img, IMG_SIZE_MEDIUM);
         }
 

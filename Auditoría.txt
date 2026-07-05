@@ -1,0 +1,31 @@
+**AUDITORÍA TÉCNICA - Lógica de Backend para Gestión Colaborativa de Años y Validación de Cortes (12/02/2026)**
+
+**Archivo: ui.js**
+- Función `mostrarDetalleModal`: Renderiza la imagen del vehículo (`img-vehiculo-modal`) y las secciones de cortes.
+- El requisito pide mostrar la notificación debajo de la imagen del modelo del vehículo.
+- El momento de aparición debe ser tras la carga de la imagen del corte principal.
+- Riesgo: Si no hay imagen de corte, ¿cuándo aparece? El requisito dice "después de que la imagen del corte principal del vehiculo haya terminado de cargar".
+- Necesidad: Implementar un sistema de notificaciones integrado (no modales del sistema).
+
+**Archivo: feedback.js (Backend)**
+- Función `handleSuggestYear`: Ya implementa una lógica de votación (3 votos) y actualización de `anoDesde`/`anoHasta`.
+- Requisito: "Cuando existan más de dos confirmaciones" (es decir, 3 o más). `voteCount < 3` en el código actual coincide.
+- Requisito: "La columna anoSugerido deberá contener el año actual."
+- Necesidad: Verificar si la estructura de la hoja `SugerenciasAño` coincide con lo que el frontend enviará.
+- Necesidad: Asegurar que el registro sea silencioso y no bloqueante.
+
+**Archivo: offline.js**
+- Necesidad: Añadir un nuevo ObjectStore (`validationCache`) para persistir que un usuario ya respondió a una validación para un `vehicleId` específico.
+
+**Archivo: api-config.js**
+- Necesidad: Añadir helper `suggestYear` para llamar a la acción `suggestYear` del servicio `FEEDBACK`.
+
+**Archivo: state.js**
+- Podría ser necesario mantener el estado de las validaciones respondidas en la sesión actual, aunque `offline.js` es preferible para persistencia entre sesiones.
+
+**Hallazgos Generales:**
+- La lógica de "generación más reciente" debe calcularse en el frontend basándose en `catalogData.cortes`.
+- Se debe comparar Marca, Modelo, Tipo de Encendido y Categoría para agrupar generaciones.
+- El año actual para 2026 debe ser dinámico o constante según se prefiera, pero el prompt usa 2026 como ejemplo. Usaré `new Date().getFullYear()`.
+
+--------------------------------------------------

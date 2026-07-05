@@ -1080,6 +1080,84 @@ body.search-active .container {
     border-bottom: 1px solid #eee;
 }
 
+/* --- VALIDATION BANNER --- */
+.validation-banner {
+    background: rgba(88, 166, 255, 0.15);
+    border: 1px solid rgba(88, 166, 255, 0.3);
+    border-radius: 12px;
+    padding: 12px;
+    margin: 10px 0;
+    font-size: 0.9em;
+    animation: slideDown 0.4s ease-out;
+    color: var(--text-primary);
+    overflow: hidden;
+    position: relative;
+}
+
+[data-theme="dark"] .validation-banner {
+    background: rgba(88, 166, 255, 0.1);
+    border-color: rgba(88, 166, 255, 0.2);
+}
+
+.validation-content {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.validation-message {
+    line-height: 1.4;
+    font-weight: 500;
+}
+
+.validation-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.validation-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85em;
+    font-weight: 600;
+    transition: background 0.2s, transform 0.1s;
+    background: var(--accent-color);
+    color: white;
+}
+
+.validation-btn:active {
+    transform: scale(0.95);
+}
+
+.validation-btn.secondary {
+    background: rgba(128, 128, 128, 0.2);
+    color: var(--text-primary);
+}
+
+.validation-input-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.validation-input {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(128, 128, 128, 0.3);
+    background: var(--card-bg);
+    color: var(--text-primary);
+    font-size: 0.9em;
+}
+
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
 /* Lightbox */
 .lightbox {
     position: fixed;
