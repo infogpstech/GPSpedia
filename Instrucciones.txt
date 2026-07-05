@@ -208,6 +208,11 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.4.6)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** style.css
+   - **DESCRIPCIÓN DETALLADA:**
+     - **UI:** Reducido el tamaño del punto de estado a 3px para una estética ultra-minimalista integrada en el texto de bienvenida.
 1. **TÍTULO: UX Refinement - Deep Linking & Share Functionality (v2.4.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** index.html, style.css, ui.js, main.js, navigation.js

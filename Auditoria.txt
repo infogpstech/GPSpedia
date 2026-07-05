@@ -404,3 +404,15 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - El indicador es discreto y está correctamente alineado en el branding.
 - El botón de compartir funciona con Web Share API o Portapapeles.
 - El flujo de navegación es coherente y persistente vía URL.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REDUCCIÓN MINIMALISTA (05/02/2026)**
+
+**Archivos involucrados:** style.css.
+
+**Acciones:**
+1. Reducido el tamaño del indicador de conexión de 6px a 3px para una integración ultra-discreta en el saludo.
+2. Ajustados los valores de box-shadow para mantener la legibilidad en el nuevo tamaño reducido.
+
+**Verificación:**
+- Validado mediante Playwright que el tamaño efectivo es 3x3 píxeles.

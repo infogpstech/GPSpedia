@@ -140,8 +140,8 @@ h1.app-title {
 }
 
 #connection-status {
-    width: 6px;
-    height: 6px;
+    width: 3px;
+    height: 3px;
     border-radius: 50%;
     transition: background-color 0.3s ease;
     flex-shrink: 0;
@@ -149,12 +149,12 @@ h1.app-title {
 
 #connection-status.online {
     background-color: #28a745;
-    box-shadow: 0 0 3px #28a745;
+    box-shadow: 0 0 2px #28a745;
 }
 
 #connection-status.offline {
     background-color: #ffc107;
-    box-shadow: 0 0 3px #ffc107;
+    box-shadow: 0 0 2px #ffc107;
     animation: pulse-offline 1.5s infinite ease-in-out;
 }
 

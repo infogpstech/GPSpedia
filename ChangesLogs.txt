@@ -405,3 +405,5 @@
 - ui.js: Implementado botón de compartir en modal.
 - main.js: Lógica de Deep Linking y navegación vía logo.
 - navigation.js: Sincronización de búsqueda con el hash de la URL.
+
+- style.css: Reducción del tamaño del indicador de conexión a 3px y ajuste de sombras.
