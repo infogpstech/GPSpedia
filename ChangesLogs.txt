@@ -407,3 +407,13 @@
 - navigation.js: Sincronización de búsqueda con el hash de la URL.
 
 - style.css: Reducción del tamaño del indicador de conexión a 3px y ajuste de sombras.
+--------------------------------------------------
+IMPLEMENTACIÓN: Lógica de actualización colaborativa del rango de años (12/02/2026)
+--------------------------------------------------
+Archivos modificados:
+- offline.js: L12, L128-143. Añadido almacén validationCache e implementadas funciones de persistencia para respuestas de validación.
+- api-config.js: L101-103. Añadida función suggestYear para envío de feedback de años.
+- style.css: L1082-1159. Implementados estilos para .validation-banner, animaciones y componentes internos.
+- ui.js: L689-726, L728-898, L1216-1229. Implementada lógica de elegibilidad, flujo de preguntas, renderizado del banner e integración con evento onload de imágenes.
+- Services/Feedback/feedback.js: L166, L180-191. Refinada lógica de backend para procesar respuestas de validación y condicionar la actualización automática a votos positivos.
+--------------------------------------------------

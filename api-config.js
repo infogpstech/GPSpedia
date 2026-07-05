@@ -98,6 +98,10 @@ export async function reportProblem(vehicleId, problemDescription, userId, userN
     return await routeAction('reportProblem', { vehicleId, problemText: problemDescription, userId, userName });
 }
 
+export async function suggestYear(vehicleId, newYear, responseText, userId, userName) {
+    return await routeAction('suggestYear', { vehicleId, newYear, response: responseText, userId, userName });
+}
+
 export async function sendContactForm(formData) {
     return await routeAction('sendContactForm', formData);
 }

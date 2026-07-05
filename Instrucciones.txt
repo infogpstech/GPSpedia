@@ -295,8 +295,8 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 **DERIVADO DE AUDITORÍA (ROADMAP v2.0) — NO EJECUTAR AÚN**
 ---
-5. TÍTULO: Lógica de Backend para Gestión de Años y Votos (PENDIENTE)
+5. TÍTULO: Lógica de Backend para Gestión de Años y Votos (COMPLETADO)
 6. TÍTULO: Dashboard de Desempeño para Supervisores (PENDIENTE)
 7. TÍTULO: Funcionalidad de Edición 'In-Modal' (PENDIENTE)
 8. TÍTULO: Lógica de Backend para Feedback Inbox (PENDIENTE)
-9. TÍTULO: Expansión de Rango de Años por Feedback (PENDIENTE)
+9. TÍTULO: Expansión de Rango de Años por Feedback (COMPLETADO)

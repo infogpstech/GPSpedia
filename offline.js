@@ -5,7 +5,7 @@
 // - Provide a clean API for offline data access.
 
 const DB_NAME = 'GPSpedia_DB';
-const DB_VERSION = 2; // Incremented for Phase 2 robustness
+const DB_VERSION = 3; // Incremented for Phase 2 robustness and Validation Cache
 
 let dbPromise = null;
 
@@ -65,6 +65,11 @@ export async function initDB() {
             if (!dbInstance.objectStoreNames.contains('thumbnails')) {
                 dbInstance.createObjectStore('thumbnails');
             }
+
+            // Validation Cache: Stores user responses to vehicle year validations
+            if (!dbInstance.objectStoreNames.contains('validationCache')) {
+                dbInstance.createObjectStore('validationCache', { keyPath: 'vehicleId' });
+            }
         };
     });
     return dbPromise;
@@ -122,6 +127,21 @@ export async function getSearchHistory(limit = 10) {
     const all = await performOp('searchHistory', 'readonly', (store) => store.getAll());
     if (!all) return [];
     return all.sort((a, b) => b.timestamp - a.timestamp).slice(0, limit);
+}
+
+// --- VALIDATION CACHE ---
+
+export async function saveValidationResponse(vehicleId, response) {
+    const entry = {
+        vehicleId: String(vehicleId),
+        timestamp: Date.now(),
+        response: response
+    };
+    return performOp('validationCache', 'readwrite', (store) => store.put(entry));
+}
+
+export async function getValidationResponse(vehicleId) {
+    return performOp('validationCache', 'readonly', (store) => store.get(String(vehicleId)));
 }
 
 // --- VIEWED ITEMS ---

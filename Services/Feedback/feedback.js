@@ -163,7 +163,7 @@ function handleAssignCollaborator(payload) {
 }
 
 function handleSuggestYear(payload) {
-    const { vehicleId, newYear, userId, userName } = payload;
+    const { vehicleId, newYear, response, userId, userName } = payload;
     if (!vehicleId || !newYear || !userId || !userName) {
         throw new Error("Faltan datos para sugerir año (vehicleId, newYear, userId, userName).");
     }
@@ -177,14 +177,21 @@ function handleSuggestYear(payload) {
     if (!sugerenciasSheet) throw new Error(`Hoja no encontrada: ${SHEET_NAMES.SUGERENCIAS_ANO}`);
 
     // 1. Registrar la sugerencia
-    sugerenciasSheet.appendRow([new Date(), vehicleId, userId, userName, year]);
-    logUserActivity(userId, userName, 'suggest_year', vehicleId, `Año sugerido: ${year}`);
+    // Estructura: [Fecha, ID_Vehículo, ID_Usuario, Nombre_Usuario, Año_Sugerido, Respuesta_Texto]
+    sugerenciasSheet.appendRow([new Date(), vehicleId, userId, userName, year, response || ""]);
+    logUserActivity(userId, userName, 'suggest_year', vehicleId, `Año sugerido: ${year}. Respuesta: ${response}`);
 
-    // 2. Contar votos para esta combinación
+    // Solo procesar actualización si la respuesta es positiva (Sí, Otro año o Es más antiguo)
+    const isPositive = response && (response.includes('Sí') || response.includes('Otro año') || response.includes('Es más antiguo'));
+    if (!isPositive) {
+        return { status: 'success', message: 'Respuesta registrada.' };
+    }
+
+    // 2. Contar votos para esta combinación (ID_Vehículo + Año_Sugerido)
     const allSuggestions = sugerenciasSheet.getDataRange().getValues().slice(1);
     const voteCount = allSuggestions.filter(row => row[1] == vehicleId && row[4] == year).length;
 
-    // 3. Si no se alcanzan los 3 votos, terminar
+    // 3. Si no se alcanzan los 3 votos (más de 2), terminar
     if (voteCount < 3) {
         return { status: 'success', message: `Sugerencia para el año ${year} registrada. Se necesitan ${3 - voteCount} más para aplicar el cambio.` };
     }
@@ -207,23 +214,33 @@ function handleSuggestYear(payload) {
     }
 
     // 5. Lógica Anti-colisión
-    const marca = vehicleRow[COLS_CORTES.marca - 1];
-    const modelo = vehicleRow[COLS_CORTES.modelo - 1];
-    const tipoEncendido = vehicleRow[COLS_CORTES.tipoEncendido - 1];
+    const marca = String(vehicleRow[COLS_CORTES.marca - 1]).toLowerCase();
+    const modelo = String(vehicleRow[COLS_CORTES.modelo - 1]).toLowerCase();
+    const categoria = String(vehicleRow[COLS_CORTES.categoria - 1]).toLowerCase();
+    const tipoEncendido = String(vehicleRow[COLS_CORTES.tipoEncendido - 1]).toLowerCase();
+
+    const normalizeV = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+    const versionNormalizada = normalizeV(vehicleRow[COLS_CORTES.versionesAplicables - 1]);
 
     for (const row of allCortesData) {
         if (row[COLS_CORTES.id - 1] == vehicleId) continue; // No comparar consigo mismo
 
-        const otherMarca = row[COLS_CORTES.marca - 1];
-        const otherModelo = row[COLS_CORTES.modelo - 1];
-        const otherTipoEncendido = row[COLS_CORTES.tipoEncendido - 1];
+        const otherMarca = String(row[COLS_CORTES.marca - 1]).toLowerCase();
+        const otherModelo = String(row[COLS_CORTES.modelo - 1]).toLowerCase();
+        const otherCategoria = String(row[COLS_CORTES.categoria - 1]).toLowerCase();
+        const otherTipoEncendido = String(row[COLS_CORTES.tipoEncendido - 1]).toLowerCase();
+        const otherVersion = normalizeV(row[COLS_CORTES.versionesAplicables - 1]);
 
-        if (otherMarca === marca && otherModelo === modelo && otherTipoEncendido === tipoEncendido) {
+        if (otherMarca === marca && otherModelo === modelo && otherCategoria === categoria &&
+            otherTipoEncendido === tipoEncendido && otherVersion === versionNormalizada) {
             const otherAnoDesde = parseInt(row[COLS_CORTES.anoDesde - 1], 10);
             const otherAnoHasta = parseInt(row[COLS_CORTES.anoHasta - 1] || otherAnoDesde, 10);
-            if (year >= otherAnoDesde && year <= otherAnoHasta) {
+
+            // Anti-colisión: El año sugerido no debe solaparse con otra generación
+            // ni "saltar" sobre ella si es una generación anterior.
+            if (year <= otherAnoHasta) {
                 logUserActivity(userId, userName, 'suggest_year_collision', vehicleId, `Año ${year} colisiona con rango de vehículo ID ${row[COLS_CORTES.id - 1]}`);
-                return { status: 'warning', message: `La sugerencia para el año ${year} no se puede aplicar porque parece corresponder a una generación diferente del mismo modelo. Se requiere revisión manual.` };
+                return { status: 'warning', message: `La sugerencia para el año ${year} no se puede aplicar porque el año ya está cubierto o es anterior a una generación registrada (${otherAnoDesde}-${otherAnoHasta}). Se requiere revisión manual.` };
             }
         }
     }
