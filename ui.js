@@ -913,8 +913,12 @@ function showValidationBanner(item, isOldModel) {
             );
 
             if (collision && String(collision.id) !== String(item.id)) {
-                alert(`El año ${yearVal} ya está cubierto por otra generación registrada.`);
                 input.style.borderColor = 'red';
+                const err = document.createElement('div');
+                err.style.cssText = "color: #dc3545; font-size: 0.8em; margin-top: 5px;";
+                err.textContent = `El año ${yearVal} ya está registrado.`;
+                inputGroup.after(err);
+                setTimeout(() => err.remove(), 3000);
                 return;
             }
 
