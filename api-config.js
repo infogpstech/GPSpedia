@@ -10,7 +10,7 @@ export const API_ENDPOINTS = {
     CATALOG:  "https://script.google.com/macros/s/AKfycbxenVjZe9C8-0RiYKLxpGfQtobRzydBke44IM4NdNNjh5VRdlB91Ce9dWvQ2xnDFXk0/exec",
     WRITE:    "https://script.google.com/macros/s/AKfycbwgpSXDpF9jW20mqvK8jP9clxs1Gacz-o6caOEBm1hBweAxkBe1lAW9hJTh1fMFcOvP/exec",
     USERS:    "https://script.google.com/macros/s/AKfycbxAqyEcAHetH6yN4qccGILL-L3IzMSPVuVJ1kpuO86GqfDXTKP8cHrrB7UkKN1r_0g5/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbySvpqh_sm1W_UL6eP0rNI11sOVN2KFZpIzPls3kSI910sw1ywl-PXwOK8CmWtKjg6Lfw/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbxW6u17FAEUhV9TfCQ3qq944Ocit2OjWnW9I_KESG0ZJdpxYuHChwVp3eC6EDaKVmgHRA/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec"
 };
 
