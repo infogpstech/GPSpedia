@@ -307,3 +307,8 @@ Cualquier cambio en estas zonas invalidará el commit.
 6. TÍTULO: Dashboard de Desempeño para Supervisores (PENDIENTE)
 7. TÍTULO: Funcionalidad de Edición 'In-Modal' (PENDIENTE)
 8. TÍTULO: Lógica de Backend para Feedback Inbox (PENDIENTE)
+
+1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.4.7)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:** Corregido el fallo que impedía renderizar la tarjeta y mantenía el modal cerrado al obtener un único resultado de búsqueda. Se eliminó el retorno prematuro en `ui.js` y se reordenó la actualización del hash en `navigation.js` para evitar colisiones con el listener de `popstate` en `main.js`.

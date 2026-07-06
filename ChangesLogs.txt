@@ -417,3 +417,13 @@ Archivos modificados:
 - ui.js: L689-726, L728-898, L1216-1229. Implementada lógica de elegibilidad, flujo de preguntas, renderizado del banner e integración con evento onload de imágenes.
 - Services/Feedback/feedback.js: L166, L180-191. Refinada lógica de backend para procesar respuestas de validación y condicionar la actualización automática a votos positivos.
 --------------------------------------------------
+
+**CHANGES LOG - 06/07/2026**
+
+**Archivo: ui.js**
+- **Línea 1014:** Eliminado el `return;` en la función `mostrarResultadosDeBusqueda` para permitir que la cuadrícula de resultados se renderice completamente incluso cuando se abre el modal automáticamente para un único resultado.
+
+**Archivo: navigation.js**
+- **Líneas 111-115:** Reordenada la lógica en `filtrarContenido` para actualizar el estado de navegación (`setState`) y el hash de la URL (`window.location.hash`) antes de invocar el renderizado de resultados. Esto previene que el evento `popstate` cierre prematuramente el modal de detalle automático.
+
+**Versión:** Incremento a v2.4.7 (Corrección de apertura de modal).

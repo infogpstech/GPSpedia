@@ -29,3 +29,29 @@
 - El año actual para 2026 debe ser dinámico o constante según se prefiera, pero el prompt usa 2026 como ejemplo. Usaré `new Date().getFullYear()`.
 
 --------------------------------------------------
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - Diagnóstico de bug en apertura automática del modal (24/06/2026)**
+
+**Archivos involucrados:** ui.js, navigation.js, main.js.
+
+**Hallazgos:**
+1. **ui.js (mostrarResultadosDeBusqueda):**
+   - El bloque condicional para resultados únicos (`results.length === 1`) invoca a `mostrarDetalleModal` pero realiza un `return` inmediato.
+   - Este `return` interrumpe el flujo de renderizado, impidiendo que se cree la cuadrícula (`grid`) y la tarjeta (`card`) del vehículo en la vista de resultados.
+   - Impacto: El usuario ve el modal (si no se cierra) pero al cerrarlo la lista de resultados está vacía (solo el título).
+
+2. **navigation.js (filtrarContenido):**
+   - La actualización del hash de la URL (`window.location.hash`) ocurre al final de la función, después de haber renderizado los resultados y abierto el modal.
+   - El cambio de hash dispara un evento `popstate` que es procesado por el listener global en `main.js`.
+
+3. **main.js (popstate listener):**
+   - El listener de `popstate` cierra automáticamente cualquier modal de detalle visible (`#modalDetalle.visible`) para soportar la navegación con el botón "Atrás".
+   - Debido a que el hash se actualiza después de abrir el modal, el evento `popstate` resultante cierra el modal inmediatamente después de que se abre.
+   - Esto explica por qué el vehículo se registra en "Vistos recientemente" (la función se ejecuta) pero el modal no permanece visible.
+
+**Acciones Correctoras:**
+- **ui.js:** Eliminar el `return` en el bloque de resultado único de `mostrarResultadosDeBusqueda` para permitir el renderizado completo de la UI.
+- **navigation.js:** Reordenar la ejecución para actualizar el hash de la URL antes de invocar el renderizado de resultados, evitando la colisión de eventos de historial con la apertura del modal.
+
+--------------------------------------------------

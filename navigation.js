@@ -107,6 +107,13 @@ export function filtrarContenido(textoBusqueda) {
         }
     }, 1500);
 
+    // Se guarda el término de búsqueda en el estado para permitir la navegación hacia atrás.
+    setState({ navigationState: { level: "busqueda", query: textoBusqueda } });
+
+    // Actualizar el hash para Deep Linking ANTES de renderizar resultados.
+    // Esto evita que el evento popstate cierre el modal de detalle cuando se abre automáticamente (resultado único).
+    window.location.hash = `search=${encodeURIComponent(textoBusqueda)}`;
+
     // --- LÓGICA DE CLASIFICACIÓN MEJORADA (BASADA EN RESULTADOS) ---
     const uniqueMarcasEnResultados = [...new Set(datosFiltrados.map(item => item.marca))];
 
@@ -121,10 +128,4 @@ export function filtrarContenido(textoBusqueda) {
         // Se elimina la de-duplicación para mostrar todas las versiones.
         mostrarResultadosDeBusqueda({ type: 'modelo', query: textoBusqueda, results: datosFiltrados });
     }
-
-    // Se guarda el término de búsqueda en el estado para permitir la navegación hacia atrás.
-    setState({ navigationState: { level: "busqueda", query: textoBusqueda } });
-
-    // Actualizar el hash para Deep Linking
-    window.location.hash = `search=${encodeURIComponent(textoBusqueda)}`;
 }
