@@ -504,3 +504,49 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - En 'main.js' (popstate), llamar a 'filtrarContenido' indicando que es una restauración.
 - 'filtrarContenido' debe propagar esta bandera a 'mostrarResultadosDeBusqueda'.
 - Si la bandera es verdadera, omitir el bloque de apertura automática del modal.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CIERRE DE MODAL Y GESTOS (12/02/2026)**
+
+**Problema:** Gesto de retroceso y botón 'X' no cierran el modal en ciertos escenarios.
+**Análisis:**
+1. **Gesto de Retroceso (main.js):**
+   - El listener de 'popstate' (L132) gestiona el retroceso.
+   - Bloque 0 (Buscador): Si hay una query en el estado, se restaura la búsqueda y se retorna prematuramente (L158).
+   - Bloque 4 (Modal): Si el modal está visible, se quita la clase 'visible' (L197).
+   - Conflicto: Si al retroceder desde un modal abierto por búsqueda, el evento 'popstate' trae el estado de la búsqueda (), el Bloque 0 captura el evento, restaura la búsqueda y retorna, IMPIDIENDO que el Bloque 4 cierre el modal.
+
+2. **Botón 'X' (ui.js):**
+   - 'closeBtn.onclick' (L1111) intenta cerrar el modal.
+   - Utiliza 'window.history.back()' si detecta 'modalOpen' en el estado.
+   - El retroceso dispara 'popstate', cayendo en el conflicto mencionado arriba: el buscador se restaura y el modal permanece visible por el retorno prematuro.
+
+**Causa Raíz:** El manejo del buscador en 'popstate' (Bloque 0) tiene prioridad sobre el cierre del modal (Bloque 4) y detiene la ejecución del listener, dejando el modal abierto cuando el retroceso debería haberlo cerrado.
+
+**Solución:**
+- Reordenar el listener de 'popstate' en 'main.js' para que el cierre de componentes UI (Modales, Side Menu, Lightbox) tenga prioridad absoluta sobre la restauración del buscador.
+- Asegurar que la restauración de búsqueda solo ocurra si no hay overlays activos.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CIERRE DE MODAL Y GESTOS (12/02/2026)**
+
+**Problema:** Gesto de retroceso y botón 'X' no cierran el modal en ciertos escenarios.
+**Análisis:**
+1. **Gesto de Retroceso (main.js):**
+   - El listener de 'popstate' (L132) gestiona el retroceso.
+   - Bloque 0 (Buscador): Si hay una query en el estado, se restaura la búsqueda y se retorna prematuramente (L158).
+   - Bloque 4 (Modal): Si el modal está visible, se quita la clase 'visible' (L197).
+   - Conflicto: Si al retroceder desde un modal abierto por búsqueda, el evento 'popstate' trae el estado de la búsqueda (state.query), el Bloque 0 captura el evento, restaura la búsqueda y retorna, IMPIDIENDO que el Bloque 4 cierre el modal.
+
+2. **Botón 'X' (ui.js):**
+   - 'closeBtn.onclick' (L1111) intenta cerrar el modal.
+   - Utiliza 'window.history.back()' si detecta 'modalOpen' en el estado.
+   - El retroceso dispara 'popstate', cayendo en el conflicto mencionado arriba: el buscador se restaura y el modal permanece visible por el retorno prematuro.
+
+**Causa Raíz:** El manejo del buscador en 'popstate' (Bloque 0) tiene prioridad sobre el cierre del modal (Bloque 4) y detiene la ejecución del listener, dejando el modal abierto cuando el retroceso debería haberlo cerrado.
+
+**Solución:**
+- Reordenar el listener de 'popstate' en 'main.js' para que el cierre de componentes UI (Modales, Side Menu, Lightbox) tenga prioridad absoluta sobre la restauración del buscador.
+- Asegurar que la restauración de búsqueda solo ocurra si no hay overlays activos.

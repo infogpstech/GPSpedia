@@ -451,3 +451,8 @@ Archivos modificados:
   - Añadido parámetro 'isRestoring' a filtrarContenido para propagar el estado de restauración de historial.
 - Archivo: main.js
   - El listener de popstate ahora invoca la restauración de búsqueda con isRestoring=true, evitando que los modales se reabran innecesariamente al navegar hacia atrás después de haber sido cerrados.
+
+--------------------------------------------------
+**VERSIÓN 2.4.11 (12/02/2026)**
+- Archivo: main.js
+  - Reestructurado el listener global de popstate para otorgar prioridad absoluta al cierre de componentes UI (Modales, Side Menu, Lightbox). Esto garantiza que el gesto de retroceso y el botón 'Atrás' cierren los overlays antes de intentar restaurar estados de búsqueda o secciones, resolviendo el bloqueo crítico del modal.
