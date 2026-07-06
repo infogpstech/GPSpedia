@@ -435,3 +435,10 @@ Archivos modificados:
 - Archivo: ui.js
   - Refactorizada la función mostrarResultadosDeBusqueda para postergar la apertura automática del modal mediante setTimeout.
   - Asegurada la inyección del grid en el DOM antes de disparar la apertura del modal para garantizar coherencia visual.
+
+--------------------------------------------------
+**VERSIÓN 2.4.9 (12/02/2026)**
+- Archivo: navigation.js
+  - Implementada gestión inteligente del historial de búsqueda. Se utiliza pushState al iniciar una búsqueda y replaceState para actualizaciones de texto (oninput), permitiendo que el botón 'Atrás' restaure el catálogo inicial correctamente.
+- Archivo: main.js
+  - Ajustado el listener de popstate para restaurar el estado de la barra de búsqueda y los resultados desde el historial, o limpiar el buscador si se regresa al estado inicial.

@@ -107,14 +107,23 @@ export function filtrarContenido(textoBusqueda) {
         }
     }, 1500);
 
+    // Phase 2.4.9: Gestión inteligente del historial de búsqueda.
+    // Se utiliza pushState solo la primera vez que se entra en modo búsqueda para registrar el estado en el historial.
+    // Las actualizaciones subsecuentes (mientras se teclea) usan replaceState para no saturar el historial.
+    const currentState = getState();
+    const wasAlreadySearching = currentState.navigationState && currentState.navigationState.level === "busqueda";
+
     // Se guarda el término de búsqueda en el estado para permitir la navegación hacia atrás.
     setState({ navigationState: { level: "busqueda", query: textoBusqueda } });
 
     // Actualizar el hash para Deep Linking ANTES de renderizar resultados.
-    // Phase 2.4.7: Se utiliza replaceState en lugar de hash directo para evitar disparar el evento 'popstate'
-    // que causaba el cierre automático del modal en resultados únicos.
     const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(textoBusqueda)}`;
-    history.replaceState(null, null, newUrl);
+
+    if (wasAlreadySearching) {
+        history.replaceState({ level: "busqueda", query: textoBusqueda }, '', newUrl);
+    } else {
+        history.pushState({ level: "busqueda", query: textoBusqueda }, '', newUrl);
+    }
 
     // --- LÓGICA DE CLASIFICACIÓN MEJORADA (BASADA EN RESULTADOS) ---
     const uniqueMarcasEnResultados = [...new Set(datosFiltrados.map(item => item.marca))];

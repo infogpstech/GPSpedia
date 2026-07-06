@@ -465,3 +465,20 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 **4. BANNER DE SUGERENCIA DE AÑO (DUPLICACIÓN):**
 - **Hallazgo:** 'showValidationBanner' (ui.js L745) crea e inyecta un nuevo nodo '#validation-banner' cada vez que es llamada. Se invoca en 'img.onload' dentro de 'renderCutContent'. Si la imagen se recarga o la función se ejecuta múltiples veces para el mismo modal, se inyectan múltiples banners.
 - **Acción:** Añadir una validación en 'showValidationBanner' para verificar la existencia previa del elemento mediante 'document.getElementById("validation-banner")' antes de proceder con la creación. Asegurar la limpieza del banner al cerrar el modal.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - HISTORIAL DE BÚSQUEDA (12/02/2026)**
+
+**Escenario de Fallo:** Búsqueda con resultado único -> Apertura automática de modal -> Cierre de modal -> Retroceso -> Cierre de App (incorrecto).
+
+**CAUSA RAÍZ CONFIRMADA:**
+- En navigation.js (filtrarContenido), se utiliza "history.replaceState" (L117) para actualizar el hash de búsqueda (#search=). Al ser un "replaceState", no se añade una nueva entrada al historial del navegador para el estado de "resultados de búsqueda".
+- Cuando el modal se abre automáticamente (ui.js L1060), éste sí ejecuta un "pushState" (ui.js L1229).
+- Al cerrar el modal, el historial retrocede al estado previo al modal, que es el estado inicial de la aplicación (porque la búsqueda hizo un replace, no un push).
+- Resultado: Al estar en la pantalla de resultados (con el modal ya cerrado) y dar 'Atrás', no hay más estados en el historial y la app se cierra.
+
+**SOLUCIÓN:**
+- En navigation.js (filtrarContenido), cambiar el uso de "history.replaceState" por "history.pushState" cuando se inicia una búsqueda desde el estado inicial o cuando el nivel cambia a 'busqueda'.
+- Para evitar bucles infinitos o contaminación excesiva del historial durante el tecleo (oninput), se debe diferenciar entre la primera entrada a búsqueda y las actualizaciones de la misma búsqueda.
+- Alternativamente, asegurar que el primer "filtrarContenido" que genera resultados realice un pushState si no estamos ya en el nivel de búsqueda.

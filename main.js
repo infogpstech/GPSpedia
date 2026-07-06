@@ -136,15 +136,29 @@ async function initializeApp() {
         const searchInput = document.getElementById('searchInput');
         const isSearchActive = document.body.classList.contains('search-active');
 
-        if (isSearchActive && !window.location.hash.includes('#search=')) {
+        // Si regresamos a un estado que no tiene información de búsqueda, limpiar buscador
+        if (!state.query && !window.location.hash.includes('#search=')) {
             if (searchInput) {
                 searchInput.value = '';
                 searchInput.blur();
                 searchInput.parentElement.classList.remove('has-text');
             }
             document.body.classList.remove('search-active');
-            // Si solo cerramos el buscador, detenemos el flujo para que no retroceda más en este gesto
-            return;
+
+            // Si estábamos en búsqueda y ahora no, restaurar catálogo
+            const currentNavState = window.state.getState().navigationState;
+            if (currentNavState && currentNavState.level === 'busqueda') {
+                navigation.irAPaginaPrincipal(true);
+            }
+        } else if (state.query) {
+            // Restaurar estado de búsqueda desde el historial
+            if (searchInput) {
+                searchInput.value = state.query;
+                searchInput.parentElement.classList.add('has-text');
+            }
+            document.body.classList.add('search-active');
+            navigation.filtrarContenido(state.query);
+            return; // Detener para que no retroceda más en este gesto
         }
 
         // 1. Cerrar Side Menu si está abierto
