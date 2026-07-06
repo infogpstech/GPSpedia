@@ -208,6 +208,13 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+1. **TÍTULO: Corrección de inconsistencia en historial con modal automático (v2.4.10)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, navigation.js, main.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Problema:** El modal de detalle se reabría automáticamente al retroceder en el historial después de haber sido cerrado por el usuario.
+     - **Solución:** Implementada bandera `isRestoring`/`autoOpen` a través del flujo de navegación para distinguir entre una búsqueda activa y una restauración de estado previo.
+     - **Efecto:** El retroceso desde resultados de búsqueda hacia el catálogo principal ahora es limpio y no dispara estados visuales residuales del modal.
 1. **TÍTULO: Expansión de navegación por gestos y corrección de historial (v2.4.9)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** main.js, navigation.js, ui.js

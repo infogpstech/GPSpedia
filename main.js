@@ -157,7 +157,8 @@ async function initializeApp() {
                 searchInput.parentElement.classList.add('has-text');
             }
             document.body.classList.add('search-active');
-            navigation.filtrarContenido(state.query);
+            // Phase 2.4.10: Se indica que es una restauración (true) para evitar la reapertura automática de modales.
+            navigation.filtrarContenido(state.query, true);
             return; // Detener para que no retroceda más en este gesto
         }
 

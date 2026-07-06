@@ -482,3 +482,25 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 - En navigation.js (filtrarContenido), cambiar el uso de "history.replaceState" por "history.pushState" cuando se inicia una búsqueda desde el estado inicial o cuando el nivel cambia a 'busqueda'.
 - Para evitar bucles infinitos o contaminación excesiva del historial durante el tecleo (oninput), se debe diferenciar entre la primera entrada a búsqueda y las actualizaciones de la misma búsqueda.
 - Alternativamente, asegurar que el primer "filtrarContenido" que genera resultados realice un pushState si no estamos ya en el nivel de búsqueda.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REAPERTURA DE MODAL EN BACK (12/02/2026)**
+
+**Problema:** Al cerrar un modal de resultado único y dar 'Atrás', el modal se reabre.
+**Análisis:**
+- El modal se abre mediante 'setTimeout' en 'mostrarResultadosDeBusqueda' (ui.js L1065).
+- 'mostrarResultadosDeBusqueda' se llama tanto al buscar como al restaurar el estado desde 'popstate' (main.js L154).
+- Al cerrar el modal, el historial retrocede al estado de 'busqueda'.
+- El listener de 'popstate' en main.js detecta el estado de búsqueda y llama a 'navigation.filtrarContenido(state.query)'.
+- 'filtrarContenido' llama a 'mostrarResultadosDeBusqueda'.
+- Si el resultado es único, 'mostrarResultadosDeBusqueda' dispara DE NUEVO el modal.
+- Ciclo Infinito: Retroceso -> popstate -> render results -> single result -> open modal -> back -> popstate...
+
+**Causa Raíz:** Falta de distinción en 'mostrarResultadosDeBusqueda' entre una búsqueda nueva y una restauración de historial (donde el modal ya fue procesado o cerrado).
+
+**Solución:**
+- Modificar 'mostrarResultadosDeBusqueda' para aceptar un parámetro 'isRestoring' o 'autoOpen'.
+- En 'main.js' (popstate), llamar a 'filtrarContenido' indicando que es una restauración.
+- 'filtrarContenido' debe propagar esta bandera a 'mostrarResultadosDeBusqueda'.
+- Si la bandera es verdadera, omitir el bloque de apertura automática del modal.

@@ -46,7 +46,7 @@ export function getDatosFiltrados() {
 }
 
 // Función refactorizada v2 para buscar, clasificar y mostrar resultados.
-export function filtrarContenido(textoBusqueda) {
+export function filtrarContenido(textoBusqueda, isRestoring = false) {
     const { catalogData } = getState();
     const { cortes } = catalogData;
     const busqueda = textoBusqueda.toLowerCase().trim();
@@ -133,10 +133,10 @@ export function filtrarContenido(textoBusqueda) {
     const exactModelMatch = datosFiltrados.some(item => String(item.modelo).toLowerCase() === busqueda);
 
     if (!exactModelMatch && uniqueMarcasEnResultados.length === 1 && uniqueMarcasEnResultados[0].toLowerCase().includes(busqueda)) {
-        mostrarResultadosDeBusqueda({ type: 'marca', query: textoBusqueda, results: uniqueMarcasEnResultados });
+        mostrarResultadosDeBusqueda({ type: 'marca', query: textoBusqueda, results: uniqueMarcasEnResultados }, !isRestoring);
     } else {
         // En todos los demás casos (modelo, año, mixto), se muestran tarjetas de modelo.
         // Se elimina la de-duplicación para mostrar todas las versiones.
-        mostrarResultadosDeBusqueda({ type: 'modelo', query: textoBusqueda, results: datosFiltrados });
+        mostrarResultadosDeBusqueda({ type: 'modelo', query: textoBusqueda, results: datosFiltrados }, !isRestoring);
     }
 }

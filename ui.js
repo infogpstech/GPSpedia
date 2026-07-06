@@ -1007,7 +1007,7 @@ function showValidationBanner(item, isOldModel) {
  * @param {Array} searchData.results - El array de resultados (strings de marcas o objetos de modelos).
  */
 // --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
-export function mostrarResultadosDeBusqueda({ type, query, results }) {
+export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen = true) {
     const cont = document.getElementById("contenido");
     // CORRECCIÓN: Se elimina el botón "Volver" de esta vista. La página de resultados
     // es el nivel superior del flujo de búsqueda y no debe tener un botón para regresar.
@@ -1053,9 +1053,9 @@ export function mostrarResultadosDeBusqueda({ type, query, results }) {
     cont.appendChild(grid);
 
     // Caso especial: Si solo hay un resultado de modelo, se muestra directamente el modal de detalle.
-    // Phase 2.4.7: Se posterga la apertura mediante setTimeout para asegurar que el grid esté renderizado
-    // y evitar colisiones asíncronas con el historial de navegación.
-    if (type === 'modelo' && results.length === 1) {
+    // Phase 2.4.10: Se añade la bandera 'autoOpen' para evitar la reapertura del modal al navegar hacia atrás
+    // en el historial (popstate).
+    if (autoOpen && type === 'modelo' && results.length === 1) {
         setTimeout(() => {
             mostrarDetalleModal(results[0]);
         }, 150);
