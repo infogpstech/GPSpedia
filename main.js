@@ -130,6 +130,23 @@ async function initializeApp() {
 
     // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
     window.addEventListener('popstate', (event) => {
+        const state = event.state || {};
+
+        // 0. Gestión del buscador (si tiene foco o texto activo en un nivel que no es búsqueda)
+        const searchInput = document.getElementById('searchInput');
+        const isSearchActive = document.body.classList.contains('search-active');
+
+        if (isSearchActive && !window.location.hash.includes('#search=')) {
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.blur();
+                searchInput.parentElement.classList.remove('has-text');
+            }
+            document.body.classList.remove('search-active');
+            // Si solo cerramos el buscador, detenemos el flujo para que no retroceda más en este gesto
+            return;
+        }
+
         // 1. Cerrar Side Menu si está abierto
         const sideMenu = document.getElementById('side-menu');
         if (sideMenu && sideMenu.classList.contains('open')) {
@@ -165,6 +182,14 @@ async function initializeApp() {
             }
             modalDetalle.classList.remove('visible');
             return;
+        }
+
+        // 5. Manejo de secciones (si el estado indica una sección específica)
+        if (state.section) {
+            ui.mostrarSeccion(state.section, true);
+        } else if (window.location.hash === '' || window.location.hash === '#') {
+            // Si no hay hash y no hay componentes abiertos, asegurar volver a principal
+            navigation.irAPaginaPrincipal(true);
         }
     });
 

@@ -746,6 +746,11 @@ function showValidationBanner(item, isOldModel) {
     const detailContainer = document.getElementById('detalleCompleto');
     if (!detailContainer) return;
 
+    // Phase 2.4.8: Prevenir duplicados - Verificar si el banner ya existe antes de crearlo
+    if (document.getElementById('validation-banner')) {
+        return;
+    }
+
     // Buscar la ubicación: Debajo de la imagen del vehículo o después del subheader
     const imgVehiculo = detailContainer.querySelector('.img-vehiculo-modal');
     const anchor = imgVehiculo || detailContainer.querySelector('div[style*="margin-bottom: 5px"]');
@@ -1830,7 +1835,24 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
         };
     } else if (item.anoDesde && !resultsForVariant) {
         // Contexto: Lista de años o carruseles (Item específico)
-        card.onclick = () => mostrarDetalleModal(item);
+        card.onclick = () => {
+            // Phase 2.4.8: Si se abre desde un carrusel (Vistos Recientemente), limpiar el hash de búsqueda
+            // para evitar que al retroceder se restauren resultados antiguos o contextos irrelevantes.
+            if (hideBadge) { // hideBadge es true en el carrusel de Vistos Recientemente
+                if (window.location.hash.startsWith('#search=')) {
+                    history.replaceState(null, null, window.location.pathname + window.location.search);
+                    // También limpiar el input visualmente
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) {
+                        searchInput.value = '';
+                        searchInput.parentElement.classList.remove('has-text');
+                        searchInput.blur();
+                    }
+                    document.body.classList.remove('search-active');
+                }
+            }
+            mostrarDetalleModal(item);
+        };
     }
 
     const img = document.createElement("img");
@@ -2007,7 +2029,7 @@ export function closeSideMenu(isFromPopState = false) {
     }
 }
 
-export function mostrarSeccion(sectionName) {
+export function mostrarSeccion(sectionName, isFromPopState = false) {
     document.querySelectorAll('.content-section').forEach(section => {
         section.style.display = 'none';
     });
@@ -2021,6 +2043,12 @@ export function mostrarSeccion(sectionName) {
 
     if (sectionElement) sectionElement.style.display = 'block';
     if (buttonElement) buttonElement.classList.add('active');
+
+    // Registrar en el historial si no viene de un popstate
+    if (!isFromPopState && window.history && window.history.pushState) {
+        const hash = sectionName === 'cortes' ? '' : `#${sectionName}`;
+        window.history.pushState({ section: sectionName }, '', window.location.pathname + window.location.search + hash);
+    }
 
     switch (sectionName) {
         case 'cortes':

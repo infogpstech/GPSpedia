@@ -17,7 +17,7 @@ import * as offline from './offline.js';
 let datosFiltrados = [];
 let searchDebounceTimer = null;
 
-export function irAPaginaPrincipal() {
+export function irAPaginaPrincipal(isFromPopState = false) {
     // Se limpia el campo de búsqueda al regresar a la página principal.
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -38,7 +38,7 @@ export function irAPaginaPrincipal() {
 
     // Phase 3.1: Asegurar que se muestra la sección de cortes (catálogo)
     // Esto resuelve el problema de que el botón no funcionaba desde Tutoriales o Relay.
-    mostrarSeccion('cortes');
+    mostrarSeccion('cortes', isFromPopState);
 }
 
 export function getDatosFiltrados() {

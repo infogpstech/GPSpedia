@@ -443,3 +443,25 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 
 1. **navigation.js:** Reemplazar "window.location.hash" por "history.replaceState" para actualizar la URL sin disparar el evento popstate.
 2. **ui.js:** Mover la apertura automática del modal al final de "mostrarResultadosDeBusqueda" (después de añadir el grid al DOM) y envolverla en un setTimeout de 100ms para asegurar estabilidad en el event loop.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - NAVEGACIÓN Y BANNERS (12/02/2026)**
+
+**Objetivo:** Mejorar la consistencia de la navegación (gestos/back) y corregir la duplicación del banner de validación.
+
+**1. NAVEGACIÓN Y BARRA DE BÚSQUEDA:**
+- **Hallazgo:** El listener de 'popstate' en main.js (L132) no gestiona el estado 'search-active'. Si el usuario tiene el foco en el buscador y usa el gesto de retroceso, la barra de búsqueda puede quedar en estado activo (animación expandida) o con resultados visibles indebidamente.
+- **Acción:** En el listener de 'popstate', si el buscador tiene foco o texto, se debe limpiar y cerrar el modo búsqueda antes de cerrar otros componentes o si no hay otros componentes abiertos.
+
+**2. NAVEGACIÓN ENTRE SECCIONES (TUTORIALES/RELAY):**
+- **Hallazgo:** 'ui.mostrarSeccion' (ui.js L2010) cambia la visibilidad de los contenedores pero no registra la navegación en el historial mediante 'pushState'. Esto causa que el botón 'Atrás' del sistema operativo cierre la aplicación en lugar de volver a la sección 'Cortes'.
+- **Acción:** Implementar 'pushState' en 'mostrarSeccion' y manejar el cambio de sección en el listener de 'popstate' de main.js.
+
+**3. NAVEGACIÓN DESDE "VISTOS RECIENTEMENTE":**
+- **Hallazgo:** 'crearCardVehiculo' (ui.js L1803) llama a 'mostrarDetalleModal'. Al retroceder, el flujo de 'popstate' puede estar restaurando estados de búsqueda previos si el hash contiene '#search='.
+- **Acción:** Asegurar que al abrir desde carruseles de actividad, el estado de navegación sea consistente y no recupere contextos de búsqueda huérfanos.
+
+**4. BANNER DE SUGERENCIA DE AÑO (DUPLICACIÓN):**
+- **Hallazgo:** 'showValidationBanner' (ui.js L745) crea e inyecta un nuevo nodo '#validation-banner' cada vez que es llamada. Se invoca en 'img.onload' dentro de 'renderCutContent'. Si la imagen se recarga o la función se ejecuta múltiples veces para el mismo modal, se inyectan múltiples banners.
+- **Acción:** Añadir una validación en 'showValidationBanner' para verificar la existencia previa del elemento mediante 'document.getElementById("validation-banner")' antes de proceder con la creación. Asegurar la limpieza del banner al cerrar el modal.
