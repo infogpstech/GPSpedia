@@ -1008,11 +1008,6 @@ export function mostrarResultadosDeBusqueda({ type, query, results }) {
     // es el nivel superior del flujo de búsqueda y no debe tener un botón para regresar.
     cont.innerHTML = `<h4>Resultados para: "${query}"</h4>`;
 
-    // Caso especial: Si solo hay un resultado de modelo, se muestra directamente el modal de detalle.
-    if (type === 'modelo' && results.length === 1) {
-        mostrarDetalleModal(results[0]);
-    }
-
     const grid = document.createElement("div");
     grid.className = "grid";
 
@@ -1051,6 +1046,15 @@ export function mostrarResultadosDeBusqueda({ type, query, results }) {
     }
 
     cont.appendChild(grid);
+
+    // Caso especial: Si solo hay un resultado de modelo, se muestra directamente el modal de detalle.
+    // Phase 2.4.7: Se posterga la apertura mediante setTimeout para asegurar que el grid esté renderizado
+    // y evitar colisiones asíncronas con el historial de navegación.
+    if (type === 'modelo' && results.length === 1) {
+        setTimeout(() => {
+            mostrarDetalleModal(results[0]);
+        }, 150);
+    }
 }
 
 export function showNoResultsMessage(textoBusqueda) {

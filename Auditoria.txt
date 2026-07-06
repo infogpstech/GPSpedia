@@ -416,3 +416,30 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 
 **Verificación:**
 - Validado mediante Playwright que el tamaño efectivo es 3x3 píxeles.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - DIAGNÓSTICO FALLO APERTURA AUTOMÁTICA MODAL (12/02/2026)**
+
+**Objetivo:** Investigar por qué el modal de detalle no se abre automáticamente y la tarjeta no aparece cuando hay un único resultado de búsqueda.
+
+**Archivos involucrados:** ui.js, navigation.js, main.js.
+
+**CAUSA RAÍZ CONFIRMADA:**
+
+1. **Colisión con Evento popstate:**
+   - En navigation.js, la línea "window.location.hash = ..." dispara un evento popstate asíncrono.
+   - El flujo continúa sincrónicamente hacia "mostrarResultadosDeBusqueda" en ui.js.
+   - Si hay un solo resultado, "mostrarResultadosDeBusqueda" llama a "mostrarDetalleModal" ANTES de renderizar la cuadrícula (grid).
+   - "mostrarDetalleModal" abre el modal y le asigna la clase "visible".
+   - Al finalizar la ejecución sincrónica, el navegador procesa el popstate encolado.
+   - El listener global de popstate en main.js detecta que hay un modal visible y lo cierra inmediatamente.
+   - Resultado: El modal se cierra tan rápido que no es perceptible.
+
+2. **Tarjeta Ausente (Grid no renderizado):**
+   - En ui.js, "mostrarResultadosDeBusqueda" llama a "mostrarDetalleModal" antes de inyectar el grid en el DOM.
+   - La apertura (y cierre inmediato) del modal interrumpe la percepción visual del renderizado posterior o causa una inconsistencia de estado que afecta la visibilidad.
+
+**SOLUCIÓN PROPUESTA:**
+
+1. **navigation.js:** Reemplazar "window.location.hash" por "history.replaceState" para actualizar la URL sin disparar el evento popstate.
+2. **ui.js:** Mover la apertura automática del modal al final de "mostrarResultadosDeBusqueda" (después de añadir el grid al DOM) y envolverla en un setTimeout de 100ms para asegurar estabilidad en el event loop.

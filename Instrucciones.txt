@@ -208,6 +208,13 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.4.7)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Causa Raíz:** Identificada colisión entre el evento asíncrono 'popstate' (disparado por el hash) y la apertura sincrónica del modal.
+     - **Corrección:** Implementado `history.replaceState` en `navigation.js` para actualizar la URL silenciosamente.
+     - **UX:** Postergada la apertura del modal en `ui.js` mediante `setTimeout` para garantizar que la cuadrícula de resultados se renderice primero.
 1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.4.6)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** style.css

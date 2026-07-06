@@ -111,8 +111,10 @@ export function filtrarContenido(textoBusqueda) {
     setState({ navigationState: { level: "busqueda", query: textoBusqueda } });
 
     // Actualizar el hash para Deep Linking ANTES de renderizar resultados.
-    // Esto evita que el evento popstate cierre el modal de detalle cuando se abre automáticamente (resultado único).
-    window.location.hash = `search=${encodeURIComponent(textoBusqueda)}`;
+    // Phase 2.4.7: Se utiliza replaceState en lugar de hash directo para evitar disparar el evento 'popstate'
+    // que causaba el cierre automático del modal en resultados únicos.
+    const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(textoBusqueda)}`;
+    history.replaceState(null, null, newUrl);
 
     // --- LÓGICA DE CLASIFICACIÓN MEJORADA (BASADA EN RESULTADOS) ---
     const uniqueMarcasEnResultados = [...new Set(datosFiltrados.map(item => item.marca))];

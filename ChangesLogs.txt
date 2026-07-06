@@ -427,3 +427,11 @@ Archivos modificados:
 - **Líneas 111-115:** Reordenada la lógica en `filtrarContenido` para actualizar el estado de navegación (`setState`) y el hash de la URL (`window.location.hash`) antes de invocar el renderizado de resultados. Esto previene que el evento `popstate` cierre prematuramente el modal de detalle automático.
 
 **Versión:** Incremento a v2.4.7 (Corrección de apertura de modal).
+
+--------------------------------------------------
+**VERSIÓN 2.4.7 (12/02/2026)**
+- Archivo: navigation.js
+  - Reemplazada la actualización de hash directa por history.replaceState en filtrarContenido. Esto evita disparar el evento popstate que cerraba el modal de detalle automático.
+- Archivo: ui.js
+  - Refactorizada la función mostrarResultadosDeBusqueda para postergar la apertura automática del modal mediante setTimeout.
+  - Asegurada la inyección del grid en el DOM antes de disparar la apertura del modal para garantizar coherencia visual.
