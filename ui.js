@@ -842,7 +842,10 @@ function showValidationBanner(item, isOldModel) {
         const btnFail = document.createElement('button');
         btnFail.className = 'validation-btn secondary';
         btnFail.textContent = '❌';
-        btnFail.onclick = () => showStep3Fail();
+        btnFail.onclick = () => {
+            // No registrar todavía, esperar a showStep3Fail
+            showStep3Fail();
+        };
 
         const btnOther = document.createElement('button');
         btnOther.className = 'validation-btn secondary';
@@ -859,7 +862,7 @@ function showValidationBanner(item, isOldModel) {
         renderStep(content);
     };
 
-    const showStep3Fail = () => {
+    const showStep3Fail = (isFromOld = false) => {
         const msg = document.createElement('div');
         msg.className = 'validation-message';
         msg.innerHTML = `Muchas gracias por confirmarlo.<br>Recuerda que puedes agregar el nuevo corte de este modelo <a href="add_cortes.html" style="color: var(--accent-color); font-weight: bold;">aquí</a>.`;
@@ -869,7 +872,13 @@ function showValidationBanner(item, isOldModel) {
         const btnAceptar = document.createElement('button');
         btnAceptar.className = 'validation-btn';
         btnAceptar.textContent = 'Aceptar';
-        btnAceptar.onclick = () => registerAndClose('No funciona');
+        btnAceptar.onclick = () => {
+            if (isFromOld) {
+                registerAndClose('No útil (Viejo)');
+            } else {
+                registerAndClose('No funciona', currentYear);
+            }
+        };
         actions.appendChild(btnAceptar);
 
         const content = document.createDocumentFragment();
@@ -953,12 +962,19 @@ function showValidationBanner(item, isOldModel) {
         const btnSi = document.createElement('button');
         btnSi.className = 'validation-btn';
         btnSi.textContent = 'Sí';
-        btnSi.onclick = () => showStepInput();
+        btnSi.onclick = () => {
+            // Primero registrar que se trata de una generación más reciente
+            suggestYear(item.id, currentYear, 'Modelo confirmado', userId, userName).catch(console.error);
+            showStepInput();
+        };
 
         const btnNo = document.createElement('button');
         btnNo.className = 'validation-btn secondary';
         btnNo.textContent = 'No';
-        btnNo.onclick = () => registerAndClose('No útil (Viejo)');
+        btnNo.onclick = () => {
+            // Mostrar mensaje para agregar nuevo corte antes de cerrar y registrar
+            showStep3Fail(true);
+        };
 
         actions.appendChild(btnSi);
         actions.appendChild(btnNo);

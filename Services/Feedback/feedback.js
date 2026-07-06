@@ -206,12 +206,49 @@ function handleSuggestYear(payload) {
         }
     }
 
+    // Mapeo de mensajes descriptivos basados en la respuesta del frontend
+    let problema = `Sugerencia de año: ${year}`;
+    let respuestaText = `La información funciona para el año ${year}`;
+    let isPositive = false;
+    let isLowerRange = false;
+
+    if (response === 'Sí (Funciona)') {
+        problema = `Confirmación de funcionamiento para año ${year}`;
+        respuestaText = `La información funciona para el año ${year}.`;
+        isPositive = true;
+    } else if (response.includes('Otro año')) {
+        problema = `Sugerencia de ampliar rango al año ${year}`;
+        respuestaText = `La información funciona para el año ${year}.`;
+        isPositive = true;
+    } else if (response === 'Es más antiguo') {
+        problema = `Sugerencia de ampliar rango inferior al año ${year}`;
+        respuestaText = `El usuario indicó que corresponde a un modelo anterior.`;
+        isPositive = true;
+        isLowerRange = true;
+    } else if (response === 'No funciona') {
+        problema = `Reporte de información no funcional`;
+        respuestaText = `La información no funciona para el año ${year}. El usuario fue dirigido para agregar un nuevo corte.`;
+        isPositive = false;
+    } else if (response === 'No') {
+        problema = `Reporte de información no funcional`;
+        respuestaText = `El usuario indicó que la información no fue útil.`;
+        isPositive = false;
+    } else if (response === 'Modelo confirmado') {
+        problema = `Modelo sin generaciones recientes registradas`;
+        respuestaText = `El usuario confirmó que se trata de una generación más reciente.`;
+        isPositive = true;
+    } else if (response === 'No útil (Viejo)') {
+        problema = `Modelo sin generaciones recientes registradas`;
+        respuestaText = `El usuario indicó que la información no fue útil.`;
+        isPositive = false;
+    }
+
     // Asignar valores a columnas específicas según esquema (batch write para mayor robustez)
     const values = [[
         userName,                              // Col 2: Usuario
         vehicleId,                             // Col 3: ID_vehiculo
-        `Sugerencia de año: ${year}`,          // Col 4: Problema
-        `La información funciona para el año ${year}`, // Col 5: Respuesta
+        problema,                              // Col 4: Problema
+        respuestaText,                         // Col 5: Respuesta
         "",                                    // Col 6: Se resolvio
         "",                                    // Col 7: Responde
         "",                                    // Col 8: Reporte de util
@@ -223,22 +260,27 @@ function handleSuggestYear(payload) {
 
     logUserActivity(userId, userName, 'suggest_year', vehicleId, `Año sugerido: ${year}. Respuesta: ${response}`);
 
-    // Solo procesar actualización si la respuesta es positiva (Sí, Otro año o Es más antiguo)
-    const isPositive = response && (response.includes('Sí') || response.includes('Otro año') || response.includes('Es más antiguo'));
+    // Solo procesar actualización si la respuesta es positiva
     if (!isPositive) {
-        return { status: 'success', message: 'Respuesta registrada.' };
+        return { status: 'success', message: 'Respuesta registrada correctamente.' };
     }
 
     // 2. Contar votos para esta combinación (ID_Vehículo + Año_Sugerido)
+    // Se filtran únicamente los reportes positivos que coincidan con el vehículo y año
     const allData = sheet.getDataRange().getValues().slice(1);
-    const voteCount = allData.filter(row =>
-        row[COLS_FEEDBACKS.ID_vehiculo - 1] == vehicleId &&
-        row[COLS_FEEDBACKS.anoSugerido - 1] == year
-    ).length;
+    const voteCount = allData.filter(row => {
+        const rowId = row[COLS_FEEDBACKS.ID_vehiculo - 1];
+        const rowYear = row[COLS_FEEDBACKS.anoSugerido - 1];
+        const rowProb = String(row[COLS_FEEDBACKS.Problema - 1]);
+        const isPositiveReport = rowProb.includes('Sugerencia de ampliar rango') ||
+                                 rowProb.includes('Confirmación de funcionamiento') ||
+                                 rowProb.includes('Modelo sin generaciones recientes');
+        return rowId == vehicleId && rowYear == year && isPositiveReport;
+    }).length;
 
-    // 3. Si no se alcanzan los 3 votos (más de 2), terminar
+    // 3. El rango únicamente deberá actualizarse cuando existan tres o más reportes válidos (más de dos).
     if (voteCount < 3) {
-        return { status: 'success', message: `Sugerencia para el año ${year} registrada. Se necesitan ${3 - voteCount} más para aplicar el cambio.` };
+        return { status: 'success', message: `Sugerencia registrada. Votos acumulados: ${voteCount}/3.` };
     }
 
     // 4. Si se alcanzan los 3 votos, proceder con la lógica de actualización
@@ -305,29 +347,41 @@ function handleSuggestYear(payload) {
     }
 
     if (updated) {
-        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoDesde).setValue(newAnoDesde);
-        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoHasta).setValue(newAnoHasta);
-        logUserActivity(userId, userName, 'apply_year_suggestion', vehicleId, `Rango actualizado a ${newAnoDesde}-${newAnoHasta} basado en 3 votos para el año ${year}.`);
+        const finalAnoDesde = newAnoDesde;
+        const finalAnoHasta = newAnoHasta;
+        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoDesde).setValue(finalAnoDesde);
+        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoHasta).setValue(finalAnoHasta);
+        logUserActivity(userId, userName, 'apply_year_suggestion', vehicleId, `Rango actualizado a ${finalAnoDesde}-${finalAnoHasta} basado en 3 o más votos para el año ${year}.`);
 
-        // 7. Depuración automática: Eliminar registros de Feedback que respaldaron esta actualización
+        // 7. Depuración automática: Eliminar únicamente los registros de Feedback que motivaron esa actualización
         const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
         if (feedbackSheet) {
-          const feedbackValues = feedbackSheet.getDataRange().getValues();
+            const feedbackValues = feedbackSheet.getDataRange().getValues();
+            const isActuallyLowerUpdate = (year < anoDesde);
 
-        // Recorrer de abajo hacia arriba para evitar desajustes de índices al eliminar filas
-        for (let i = feedbackValues.length - 1; i >= 1; i--) {
-            const row = feedbackValues[i];
-            const isMatch = row[COLS_FEEDBACKS.ID_vehiculo - 1] == vehicleId &&
-                            row[COLS_FEEDBACKS.anoSugerido - 1] == year &&
-                            String(row[COLS_FEEDBACKS.Problema - 1]).includes('Sugerencia de año');
+            // Prefijos permitidos para eliminación según el tipo de actualización realizada
+            const allowedPrefixes = isActuallyLowerUpdate
+                ? ['Sugerencia de ampliar rango inferior']
+                : ['Sugerencia de ampliar rango al año', 'Confirmación de funcionamiento', 'Modelo sin generaciones recientes'];
 
-            if (isMatch) {
-                feedbackSheet.deleteRow(i + 1);
+            // Recorrer de abajo hacia arriba para evitar desajustes de índices al eliminar filas
+            for (let i = feedbackValues.length - 1; i >= 1; i--) {
+                const row = feedbackValues[i];
+                const rowId = row[COLS_FEEDBACKS.ID_vehiculo - 1];
+                const rowYear = row[COLS_FEEDBACKS.anoSugerido - 1];
+                const rowProb = String(row[COLS_FEEDBACKS.Problema - 1]);
+
+                // Solo eliminar reportes del mismo vehículo, mismo año sugerido y que correspondan a la intención de la actualización
+                const hasAllowedPrefix = allowedPrefixes.some(prefix => rowProb.includes(prefix));
+                const isMatch = rowId == vehicleId && rowYear == year && hasAllowedPrefix;
+
+                if (isMatch) {
+                    feedbackSheet.deleteRow(i + 1);
+                }
             }
         }
-        }
 
-        return { status: 'success', message: `¡Gracias! Con 3 votos confirmados, el rango de años se ha actualizado a ${newAnoDesde}-${newAnoHasta}.` };
+        return { status: 'success', message: `¡Gracias! Con ${voteCount} votos confirmados, el catálogo se ha actualizado a ${finalAnoDesde}-${finalAnoHasta}.` };
     }
 
     return { status: 'info', message: 'No se realizaron cambios.' };
