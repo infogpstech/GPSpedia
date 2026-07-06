@@ -1011,7 +1011,6 @@ export function mostrarResultadosDeBusqueda({ type, query, results }) {
     // Caso especial: Si solo hay un resultado de modelo, se muestra directamente el modal de detalle.
     if (type === 'modelo' && results.length === 1) {
         mostrarDetalleModal(results[0]);
-        return;
     }
 
     const grid = document.createElement("div");
