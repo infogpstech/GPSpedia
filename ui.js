@@ -746,6 +746,11 @@ function showValidationBanner(item, isOldModel) {
     const detailContainer = document.getElementById('detalleCompleto');
     if (!detailContainer) return;
 
+    // Phase 2.4.8: Prevenir duplicados - Verificar si el banner ya existe antes de crearlo
+    if (document.getElementById('validation-banner')) {
+        return;
+    }
+
     // Buscar la ubicación: Debajo de la imagen del vehículo o después del subheader
     const imgVehiculo = detailContainer.querySelector('.img-vehiculo-modal');
     const anchor = imgVehiculo || detailContainer.querySelector('div[style*="margin-bottom: 5px"]');
@@ -1002,16 +1007,11 @@ function showValidationBanner(item, isOldModel) {
  * @param {Array} searchData.results - El array de resultados (strings de marcas o objetos de modelos).
  */
 // --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
-export function mostrarResultadosDeBusqueda({ type, query, results }) {
+export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen = true) {
     const cont = document.getElementById("contenido");
     // CORRECCIÓN: Se elimina el botón "Volver" de esta vista. La página de resultados
     // es el nivel superior del flujo de búsqueda y no debe tener un botón para regresar.
     cont.innerHTML = `<h4>Resultados para: "${query}"</h4>`;
-
-    // Caso especial: Si solo hay un resultado de modelo, se muestra directamente el modal de detalle.
-    if (type === 'modelo' && results.length === 1) {
-        mostrarDetalleModal(results[0]);
-    }
 
     const grid = document.createElement("div");
     grid.className = "grid";
@@ -1051,6 +1051,15 @@ export function mostrarResultadosDeBusqueda({ type, query, results }) {
     }
 
     cont.appendChild(grid);
+
+    // Caso especial: Si solo hay un resultado de modelo, se muestra directamente el modal de detalle.
+    // Phase 2.4.10: Se añade la bandera 'autoOpen' para evitar la reapertura del modal al navegar hacia atrás
+    // en el historial (popstate).
+    if (autoOpen && type === 'modelo' && results.length === 1) {
+        setTimeout(() => {
+            mostrarDetalleModal(results[0]);
+        }, 150);
+    }
 }
 
 export function showNoResultsMessage(textoBusqueda) {
@@ -1826,7 +1835,24 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
         };
     } else if (item.anoDesde && !resultsForVariant) {
         // Contexto: Lista de años o carruseles (Item específico)
-        card.onclick = () => mostrarDetalleModal(item);
+        card.onclick = () => {
+            // Phase 2.4.8: Si se abre desde un carrusel (Vistos Recientemente), limpiar el hash de búsqueda
+            // para evitar que al retroceder se restauren resultados antiguos o contextos irrelevantes.
+            if (hideBadge) { // hideBadge es true en el carrusel de Vistos Recientemente
+                if (window.location.hash.startsWith('#search=')) {
+                    history.replaceState(null, null, window.location.pathname + window.location.search);
+                    // También limpiar el input visualmente
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) {
+                        searchInput.value = '';
+                        searchInput.parentElement.classList.remove('has-text');
+                        searchInput.blur();
+                    }
+                    document.body.classList.remove('search-active');
+                }
+            }
+            mostrarDetalleModal(item);
+        };
     }
 
     const img = document.createElement("img");
@@ -2003,7 +2029,7 @@ export function closeSideMenu(isFromPopState = false) {
     }
 }
 
-export function mostrarSeccion(sectionName) {
+export function mostrarSeccion(sectionName, isFromPopState = false) {
     document.querySelectorAll('.content-section').forEach(section => {
         section.style.display = 'none';
     });
@@ -2017,6 +2043,12 @@ export function mostrarSeccion(sectionName) {
 
     if (sectionElement) sectionElement.style.display = 'block';
     if (buttonElement) buttonElement.classList.add('active');
+
+    // Registrar en el historial si no viene de un popstate
+    if (!isFromPopState && window.history && window.history.pushState) {
+        const hash = sectionName === 'cortes' ? '' : `#${sectionName}`;
+        window.history.pushState({ section: sectionName }, '', window.location.pathname + window.location.search + hash);
+    }
 
     switch (sectionName) {
         case 'cortes':

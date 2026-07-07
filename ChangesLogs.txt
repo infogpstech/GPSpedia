@@ -427,3 +427,32 @@ Archivos modificados:
 - **Líneas 111-115:** Reordenada la lógica en `filtrarContenido` para actualizar el estado de navegación (`setState`) y el hash de la URL (`window.location.hash`) antes de invocar el renderizado de resultados. Esto previene que el evento `popstate` cierre prematuramente el modal de detalle automático.
 
 **Versión:** Incremento a v2.4.7 (Corrección de apertura de modal).
+
+--------------------------------------------------
+**VERSIÓN 2.4.7 (12/02/2026)**
+- Archivo: navigation.js
+  - Reemplazada la actualización de hash directa por history.replaceState en filtrarContenido. Esto evita disparar el evento popstate que cerraba el modal de detalle automático.
+- Archivo: ui.js
+  - Refactorizada la función mostrarResultadosDeBusqueda para postergar la apertura automática del modal mediante setTimeout.
+  - Asegurada la inyección del grid en el DOM antes de disparar la apertura del modal para garantizar coherencia visual.
+
+--------------------------------------------------
+**VERSIÓN 2.4.9 (12/02/2026)**
+- Archivo: navigation.js
+  - Implementada gestión inteligente del historial de búsqueda. Se utiliza pushState al iniciar una búsqueda y replaceState para actualizaciones de texto (oninput), permitiendo que el botón 'Atrás' restaure el catálogo inicial correctamente.
+- Archivo: main.js
+  - Ajustado el listener de popstate para restaurar el estado de la barra de búsqueda y los resultados desde el historial, o limpiar el buscador si se regresa al estado inicial.
+
+--------------------------------------------------
+**VERSIÓN 2.4.10 (12/02/2026)**
+- Archivo: ui.js
+  - Añadido parámetro 'autoOpen' a mostrarResultadosDeBusqueda para controlar la apertura automática del modal.
+- Archivo: navigation.js
+  - Añadido parámetro 'isRestoring' a filtrarContenido para propagar el estado de restauración de historial.
+- Archivo: main.js
+  - El listener de popstate ahora invoca la restauración de búsqueda con isRestoring=true, evitando que los modales se reabran innecesariamente al navegar hacia atrás después de haber sido cerrados.
+
+--------------------------------------------------
+**VERSIÓN 2.4.11 (12/02/2026)**
+- Archivo: main.js
+  - Reestructurado el listener global de popstate para otorgar prioridad absoluta al cierre de componentes UI (Modales, Side Menu, Lightbox). Esto garantiza que el gesto de retroceso y el botón 'Atrás' cierren los overlays antes de intentar restaurar estados de búsqueda o secciones, resolviendo el bloqueo crítico del modal.

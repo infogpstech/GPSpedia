@@ -208,6 +208,34 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+1. **TÍTULO: Corrección de cierre de modal y prioridad de navegación (v2.4.11)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** main.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Causa Raíz:** El manejo del buscador en `popstate` tenía prioridad sobre el cierre de modales y retornaba prematuramente, impidiendo el cierre visual del modal al retroceder.
+     - **Corrección:** Reordenado el listener de `popstate` para procesar primero los cierres de componentes UI (Overlays) antes que las restauraciones de estado de contenido.
+     - **Efecto:** Garantizado el cierre determinista del modal mediante gestos, botón Atrás y botón "X" en todos los contextos de búsqueda.
+1. **TÍTULO: Corrección de inconsistencia en historial con modal automático (v2.4.10)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, navigation.js, main.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Problema:** El modal de detalle se reabría automáticamente al retroceder en el historial después de haber sido cerrado por el usuario.
+     - **Solución:** Implementada bandera `isRestoring`/`autoOpen` a través del flujo de navegación para distinguir entre una búsqueda activa y una restauración de estado previo.
+     - **Efecto:** El retroceso desde resultados de búsqueda hacia el catálogo principal ahora es limpio y no dispara estados visuales residuales del modal.
+1. **TÍTULO: Expansión de navegación por gestos y corrección de historial (v2.4.9)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** main.js, navigation.js, ui.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Historial:** Implementada lógica de `pushState`/`replaceState` para asegurar que el estado de resultados de búsqueda sea persistente y recuperable mediante el botón Atrás.
+     - **Navegación:** El listener de `popstate` ahora restaura dinámicamente el foco, el texto y los resultados de búsqueda, o limpia el contexto al volver al catálogo inicial.
+     - **Banners:** Corregida la duplicación del banner de validación mediante validación de existencia previa en el DOM.
+1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.4.7)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Causa Raíz:** Identificada colisión entre el evento asíncrono 'popstate' (disparado por el hash) y la apertura sincrónica del modal.
+     - **Corrección:** Implementado `history.replaceState` en `navigation.js` para actualizar la URL silenciosamente.
+     - **UX:** Postergada la apertura del modal en `ui.js` mediante `setTimeout` para garantizar que la cuadrícula de resultados se renderice primero.
 1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.4.6)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** style.css
