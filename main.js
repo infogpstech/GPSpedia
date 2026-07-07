@@ -68,7 +68,13 @@ async function initializeApp() {
     searchInput.addEventListener('blur', () => {
         // Se utiliza un timeout para evitar el cierre inmediato al hacer clic en el botón de limpiar (X)
         searchBlurTimeout = setTimeout(() => {
-            document.body.classList.remove('search-active');
+            const modalDetalle = document.getElementById('modalDetalle');
+            const isModalVisible = modalDetalle && modalDetalle.classList.contains('visible');
+
+            // No quitar la clase 'search-active' si el modal está visible para mantener la animación del header
+            if (!isModalVisible) {
+                document.body.classList.remove('search-active');
+            }
         }, 250);
     });
 
@@ -171,6 +177,13 @@ async function initializeApp() {
                 iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
             }
             modalDetalle.classList.remove('visible');
+
+            // Restaurar foco a la barra de búsqueda si estamos en modo búsqueda
+            const isSearchActive = document.body.classList.contains('search-active');
+            if (isSearchActive && searchInput) {
+                // Timeout para asegurar que la transición del modal no interfiera
+                setTimeout(() => searchInput.focus(), 300);
+            }
             return;
         }
 
@@ -179,17 +192,17 @@ async function initializeApp() {
 
         // Si regresamos a un estado que no tiene información de búsqueda, limpiar buscador
         if (!state.query && !window.location.hash.includes('#search=')) {
-            if (searchInput) {
-                searchInput.value = '';
-                searchInput.blur();
-                searchInput.parentElement.classList.remove('has-text');
-            }
-            document.body.classList.remove('search-active');
-
             // Si estábamos en búsqueda y ahora no, restaurar catálogo
             const currentNavState = window.state.getState().navigationState;
             if (currentNavState && currentNavState.level === 'busqueda') {
                 navigation.irAPaginaPrincipal(true);
+            } else {
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.blur();
+                    searchInput.parentElement.classList.remove('has-text');
+                }
+                document.body.classList.remove('search-active');
             }
         } else if (state.query) {
             // Restaurar estado de búsqueda desde el historial

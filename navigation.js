@@ -29,6 +29,10 @@ export function irAPaginaPrincipal(isFromPopState = false) {
         // Quitar el foco para que se oculte el historial y se desactive el modo búsqueda
         searchInput.blur();
     }
+
+    // Asegurar que se elimina la clase de búsqueda del body inmediatamente para disparar la animación inversa
+    document.body.classList.remove('search-active');
+
     setState({ navigationState: { level: 'categorias', categoria: null, marca: null, modelo: null } });
 
     // Limpiar el hash de búsqueda al volver a la principal

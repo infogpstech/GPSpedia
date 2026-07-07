@@ -1056,6 +1056,10 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
     // Phase 2.4.10: Se añade la bandera 'autoOpen' para evitar la reapertura del modal al navegar hacia atrás
     // en el historial (popstate).
     if (autoOpen && type === 'modelo' && results.length === 1) {
+        // Retirar el foco de la barra de búsqueda para ocultar el teclado virtual
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.blur();
+
         setTimeout(() => {
             mostrarDetalleModal(results[0]);
         }, 150);
@@ -1114,10 +1118,19 @@ export function mostrarDetalleModal(item) {
         if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
         }
+
+        // Restaurar foco a la barra de búsqueda al cerrar manualmente
+        const searchInput = document.getElementById('searchInput');
+        const isSearchActive = document.body.classList.contains('search-active');
+
         if (window.history && window.history.state && window.history.state.modalOpen) {
             window.history.back();
         } else {
             document.getElementById("modalDetalle").classList.remove("visible");
+            // Si el historial no maneja el cierre, forzamos la restauración del foco aquí
+            if (isSearchActive && searchInput) {
+                setTimeout(() => searchInput.focus(), 300);
+            }
         }
     };
     closeBtn.className = "info-close-btn";
