@@ -16,12 +16,25 @@ function getSpreadsheet() {
   return spreadsheet;
 }
 
+/**
+ * Obtiene una hoja por su nombre, con manejo de fallos para singular/plural.
+ */
+function getSafeSheet(name) {
+  const ss = getSpreadsheet();
+  let sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    const altName = name.endsWith('s') ? name.slice(0, -1) : name + 's';
+    sheet = ss.getSheetByName(altName);
+  }
+  return sheet;
+}
+
 const SHEET_NAMES = {
     CORTES: "Cortes",
     FEEDBACKS: "Feedbacks",
     CONTACTANOS: "Contactanos",
     ACTIVIDAD_USUARIO: "ActividadUsuario",
-    SUGERENCIAS_ANO: "SugerenciasAño"
+    SUGERENCIAS_ANO: "Feedbacks"
 };
 
 // Mapa de columnas para la hoja "Cortes" (v2.0)
@@ -45,7 +58,8 @@ const COLS_FEEDBACKS = {
     Respuesta: 5,
     "Se resolvio": 6,
     Responde: 7,
-    "Reporte de util": 8
+    "Reporte de util": 8,
+    anoSugerido: 9
 };
 
 const COLS_CONTACTANOS = {
@@ -145,7 +159,7 @@ function handleAssignCollaborator(payload) {
     if (!vehicleId || !corteIndex || !userName) {
         throw new Error("Faltan datos para asignar colaborador.");
     }
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    const sheet = getSafeSheet(SHEET_NAMES.CORTES);
     const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues();
 
     for (let i = 0; i < data.length; i++) {
@@ -163,7 +177,7 @@ function handleAssignCollaborator(payload) {
 }
 
 function handleSuggestYear(payload) {
-    const { vehicleId, newYear, userId, userName } = payload;
+    const { vehicleId, newYear, response, userId, userName } = payload;
     if (!vehicleId || !newYear || !userId || !userName) {
         throw new Error("Faltan datos para sugerir año (vehicleId, newYear, userId, userName).");
     }
@@ -173,20 +187,100 @@ function handleSuggestYear(payload) {
         throw new Error("El año proporcionado no es un número válido.");
     }
 
-    const sugerenciasSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.SUGERENCIAS_ANO);
-    if (!sugerenciasSheet) throw new Error(`Hoja no encontrada: ${SHEET_NAMES.SUGERENCIAS_ANO}`);
+    const sheet = getSafeSheet(SHEET_NAMES.SUGERENCIAS_ANO);
+    if (!sheet) throw new Error(`Hoja no encontrada: ${SHEET_NAMES.SUGERENCIAS_ANO}`);
 
-    // 1. Registrar la sugerencia
-    sugerenciasSheet.appendRow([new Date(), vehicleId, userId, userName, year]);
-    logUserActivity(userId, userName, 'suggest_year', vehicleId, `Año sugerido: ${year}`);
+    // 1. Registrar la sugerencia (preservando fórmula de ID 'F-XXX')
+    const lastRow = sheet.getLastRow();
+    const FORMULA_ROW = 2; // Fila que contiene la fórmula base del ID
+    const newRowNumber = lastRow + 1;
+    const lastCol = Math.max(sheet.getLastColumn(), 9);
 
-    // 2. Contar votos para esta combinación
-    const allSuggestions = sugerenciasSheet.getDataRange().getValues().slice(1);
-    const voteCount = allSuggestions.filter(row => row[1] == vehicleId && row[4] == year).length;
+    if (newRowNumber > FORMULA_ROW) {
+        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
+        const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
+        formulaRange.copyTo(newRowRange);
+        // Limpiar contenido de celdas de datos (col 2 en adelante) preservando la fórmula del ID (col 1)
+        if (lastCol > 1) {
+            sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
+        }
+    }
 
-    // 3. Si no se alcanzan los 3 votos, terminar
+    // Mapeo de mensajes descriptivos basados en la respuesta del frontend
+    let problema = `Sugerencia de año: ${year}`;
+    let respuestaText = `La información funciona para el año ${year}`;
+    let isPositive = false;
+    let isLowerRange = false;
+
+    if (response === 'Sí (Funciona)') {
+        problema = `Confirmación de funcionamiento para año ${year}`;
+        respuestaText = `La información funciona para el año ${year}.`;
+        isPositive = true;
+    } else if (response.includes('Otro año')) {
+        problema = `Sugerencia de ampliar rango al año ${year}`;
+        respuestaText = `La información funciona para el año ${year}.`;
+        isPositive = true;
+    } else if (response === 'Es más antiguo') {
+        problema = `Sugerencia de ampliar rango inferior al año ${year}`;
+        respuestaText = `El usuario indicó que corresponde a un modelo anterior.`;
+        isPositive = true;
+        isLowerRange = true;
+    } else if (response === 'No funciona') {
+        problema = `Reporte de información no funcional`;
+        respuestaText = `La información no funciona para el año ${year}. El usuario fue dirigido para agregar un nuevo corte.`;
+        isPositive = false;
+    } else if (response === 'No') {
+        problema = `Reporte de información no funcional`;
+        respuestaText = `El usuario indicó que la información no fue útil.`;
+        isPositive = false;
+    } else if (response === 'Modelo confirmado') {
+        problema = `Modelo sin generaciones recientes registradas`;
+        respuestaText = `El usuario confirmó que se trata de una generación más reciente.`;
+        isPositive = true;
+    } else if (response === 'No útil (Viejo)') {
+        problema = `Modelo sin generaciones recientes registradas`;
+        respuestaText = `El usuario indicó que la información no fue útil.`;
+        isPositive = false;
+    }
+
+    // Asignar valores a columnas específicas según esquema (batch write para mayor robustez)
+    const values = [[
+        userName,                              // Col 2: Usuario
+        vehicleId,                             // Col 3: ID_vehiculo
+        problema,                              // Col 4: Problema
+        respuestaText,                         // Col 5: Respuesta
+        "",                                    // Col 6: Se resolvio
+        "",                                    // Col 7: Responde
+        "",                                    // Col 8: Reporte de util
+        year                                   // Col 9: anoSugerido
+    ]];
+    sheet.getRange(newRowNumber, 2, 1, values[0].length).setValues(values);
+
+    SpreadsheetApp.flush(); // Garantizar persistencia inmediata
+
+    logUserActivity(userId, userName, 'suggest_year', vehicleId, `Año sugerido: ${year}. Respuesta: ${response}`);
+
+    // Solo procesar actualización si la respuesta es positiva
+    if (!isPositive) {
+        return { status: 'success', message: 'Respuesta registrada correctamente.' };
+    }
+
+    // 2. Contar votos para esta combinación (ID_Vehículo + Año_Sugerido)
+    // Se filtran únicamente los reportes positivos que coincidan con el vehículo y año
+    const allData = sheet.getDataRange().getValues().slice(1);
+    const voteCount = allData.filter(row => {
+        const rowId = row[COLS_FEEDBACKS.ID_vehiculo - 1];
+        const rowYear = row[COLS_FEEDBACKS.anoSugerido - 1];
+        const rowProb = String(row[COLS_FEEDBACKS.Problema - 1]);
+        const isPositiveReport = rowProb.includes('Sugerencia de ampliar rango') ||
+                                 rowProb.includes('Confirmación de funcionamiento') ||
+                                 rowProb.includes('Modelo sin generaciones recientes');
+        return rowId == vehicleId && rowYear == year && isPositiveReport;
+    }).length;
+
+    // 3. El rango únicamente deberá actualizarse cuando existan tres o más reportes válidos (más de dos).
     if (voteCount < 3) {
-        return { status: 'success', message: `Sugerencia para el año ${year} registrada. Se necesitan ${3 - voteCount} más para aplicar el cambio.` };
+        return { status: 'success', message: `Sugerencia registrada. Votos acumulados: ${voteCount}/3.` };
     }
 
     // 4. Si se alcanzan los 3 votos, proceder con la lógica de actualización
@@ -207,23 +301,33 @@ function handleSuggestYear(payload) {
     }
 
     // 5. Lógica Anti-colisión
-    const marca = vehicleRow[COLS_CORTES.marca - 1];
-    const modelo = vehicleRow[COLS_CORTES.modelo - 1];
-    const tipoEncendido = vehicleRow[COLS_CORTES.tipoEncendido - 1];
+    const marca = String(vehicleRow[COLS_CORTES.marca - 1]).toLowerCase();
+    const modelo = String(vehicleRow[COLS_CORTES.modelo - 1]).toLowerCase();
+    const categoria = String(vehicleRow[COLS_CORTES.categoria - 1]).toLowerCase();
+    const tipoEncendido = String(vehicleRow[COLS_CORTES.tipoEncendido - 1]).toLowerCase();
+
+    const normalizeV = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+    const versionNormalizada = normalizeV(vehicleRow[COLS_CORTES.versionesAplicables - 1]);
 
     for (const row of allCortesData) {
         if (row[COLS_CORTES.id - 1] == vehicleId) continue; // No comparar consigo mismo
 
-        const otherMarca = row[COLS_CORTES.marca - 1];
-        const otherModelo = row[COLS_CORTES.modelo - 1];
-        const otherTipoEncendido = row[COLS_CORTES.tipoEncendido - 1];
+        const otherMarca = String(row[COLS_CORTES.marca - 1]).toLowerCase();
+        const otherModelo = String(row[COLS_CORTES.modelo - 1]).toLowerCase();
+        const otherCategoria = String(row[COLS_CORTES.categoria - 1]).toLowerCase();
+        const otherTipoEncendido = String(row[COLS_CORTES.tipoEncendido - 1]).toLowerCase();
+        const otherVersion = normalizeV(row[COLS_CORTES.versionesAplicables - 1]);
 
-        if (otherMarca === marca && otherModelo === modelo && otherTipoEncendido === tipoEncendido) {
+        if (otherMarca === marca && otherModelo === modelo && otherCategoria === categoria &&
+            otherTipoEncendido === tipoEncendido && otherVersion === versionNormalizada) {
             const otherAnoDesde = parseInt(row[COLS_CORTES.anoDesde - 1], 10);
             const otherAnoHasta = parseInt(row[COLS_CORTES.anoHasta - 1] || otherAnoDesde, 10);
-            if (year >= otherAnoDesde && year <= otherAnoHasta) {
+
+            // Anti-colisión: El año sugerido no debe solaparse con otra generación
+            // ni "saltar" sobre ella si es una generación anterior.
+            if (year <= otherAnoHasta) {
                 logUserActivity(userId, userName, 'suggest_year_collision', vehicleId, `Año ${year} colisiona con rango de vehículo ID ${row[COLS_CORTES.id - 1]}`);
-                return { status: 'warning', message: `La sugerencia para el año ${year} no se puede aplicar porque parece corresponder a una generación diferente del mismo modelo. Se requiere revisión manual.` };
+                return { status: 'warning', message: `La sugerencia para el año ${year} no se puede aplicar porque el año ya está cubierto o es anterior a una generación registrada (${otherAnoDesde}-${otherAnoHasta}). Se requiere revisión manual.` };
             }
         }
     }
@@ -243,34 +347,67 @@ function handleSuggestYear(payload) {
     }
 
     if (updated) {
-        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoDesde).setValue(newAnoDesde);
-        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoHasta).setValue(newAnoHasta);
-        logUserActivity(userId, userName, 'apply_year_suggestion', vehicleId, `Rango actualizado a ${newAnoDesde}-${newAnoHasta} basado en 3 votos para el año ${year}.`);
-        return { status: 'success', message: `¡Gracias! Con 3 votos confirmados, el rango de años se ha actualizado a ${newAnoDesde}-${newAnoHasta}.` };
+        const finalAnoDesde = newAnoDesde;
+        const finalAnoHasta = newAnoHasta;
+        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoDesde).setValue(finalAnoDesde);
+        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoHasta).setValue(finalAnoHasta);
+        logUserActivity(userId, userName, 'apply_year_suggestion', vehicleId, `Rango actualizado a ${finalAnoDesde}-${finalAnoHasta} basado en 3 o más votos para el año ${year}.`);
+
+        // 7. Depuración automática: Eliminar únicamente los registros de Feedback que motivaron esa actualización
+        const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+        if (feedbackSheet) {
+            const feedbackValues = feedbackSheet.getDataRange().getValues();
+            const isActuallyLowerUpdate = (year < anoDesde);
+
+            // Prefijos permitidos para eliminación según el tipo de actualización realizada
+            const allowedPrefixes = isActuallyLowerUpdate
+                ? ['Sugerencia de ampliar rango inferior']
+                : ['Sugerencia de ampliar rango al año', 'Confirmación de funcionamiento', 'Modelo sin generaciones recientes'];
+
+            // Recorrer de abajo hacia arriba para evitar desajustes de índices al eliminar filas
+            for (let i = feedbackValues.length - 1; i >= 1; i--) {
+                const row = feedbackValues[i];
+                const rowId = row[COLS_FEEDBACKS.ID_vehiculo - 1];
+                const rowYear = row[COLS_FEEDBACKS.anoSugerido - 1];
+                const rowProb = String(row[COLS_FEEDBACKS.Problema - 1]);
+
+                // Solo eliminar reportes del mismo vehículo, mismo año sugerido y que correspondan a la intención de la actualización
+                const hasAllowedPrefix = allowedPrefixes.some(prefix => rowProb.includes(prefix));
+                const isMatch = rowId == vehicleId && rowYear == year && hasAllowedPrefix;
+
+                if (isMatch) {
+                    feedbackSheet.deleteRow(i + 1);
+                }
+            }
+        }
+
+        return { status: 'success', message: `¡Gracias! Con ${voteCount} votos confirmados, el catálogo se ha actualizado a ${finalAnoDesde}-${finalAnoHasta}.` };
     }
 
     return { status: 'info', message: 'No se realizaron cambios.' };
 }
 
 function logUserActivity(userId, userName, activityType, associatedId, details) {
-    // CORRECCIÓN DE REGRESIÓN: Se implementa el método robusto que copia la fila
-    // completa para heredar la fórmula del ID, pero luego solo escribe en las
-    // columnas de datos para no sobrescribir la fórmula.
     try {
-        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.ACTIVIDAD_USUARIO);
+        const sheet = getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
         if (!sheet) {
             Logger.log(`CRITICAL: No se encontró la hoja de actividad de usuario: ${SHEET_NAMES.ACTIVIDAD_USUARIO}`);
             return;
         }
         const lastRow = sheet.getLastRow();
         const newRowNumber = lastRow + 1;
-        const lastColumn = sheet.getLastColumn();
+        const lastCol = Math.max(sheet.getLastColumn(), 7);
+        const FORMULA_ROW = 2;
 
-        // 1. Copiar la fila anterior para heredar TODAS las validaciones, formatos y FÓRMULAS (incluyendo ID).
-        if (lastRow > 0) {
-            const previousRowRange = sheet.getRange(lastRow, 1, 1, lastColumn);
-            const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastColumn);
-            previousRowRange.copyTo(newRowRange);
+        // 1. Copiar la fila con fórmulas para asegurar el ID correcto (F-XXX)
+        if (lastRow >= FORMULA_ROW) {
+            const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
+            const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
+            formulaRange.copyTo(newRowRange);
+            // Preservar ID (col 1), limpiar el resto
+            if (lastCol > 1) {
+                sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
+            }
         }
 
         // 2. Preparar los datos que se van a escribir, EXCLUYENDO la columna de ID.
@@ -304,7 +441,7 @@ function handleRecordLike(payload) {
     lock.waitLock(15000); // Wait up to 15 seconds for the lock
 
     try {
-        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+        const sheet = getSafeSheet(SHEET_NAMES.CORTES);
         const ids = sheet.getRange(2, COLS_CORTES.id, sheet.getLastRow() - 1, 1).getValues().flat();
         const rowIndex = ids.findIndex(id => id == vehicleId);
 
@@ -342,45 +479,63 @@ function handleReportProblem(payload) {
         throw new Error("Faltan datos para reportar el problema (vehicleId, problemText, userId, userName).");
     }
 
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.FEEDBACKS);
+    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     const lastRow = sheet.getLastRow();
-    const newRowRange = sheet.getRange(lastRow + 1, 1, 1, sheet.getLastColumn());
+    const newRowNumber = lastRow + 1;
+    const FORMULA_ROW = 2;
+    const lastCol = sheet.getLastColumn() || 8;
 
-    // Copy formatting and formulas from the previous row
-    if (lastRow > 0) {
-        sheet.getRange(lastRow, 1, 1, sheet.getLastColumn()).copyTo(newRowRange, {contentsOnly: false});
-        newRowRange.clearContent();
+    if (lastRow >= FORMULA_ROW) {
+        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
+        const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
+        formulaRange.copyTo(newRowRange);
+        if (lastCol > 1) {
+            sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
+        }
     }
 
-    // Set new values
-    newRowRange.getCell(1, COLS_FEEDBACKS.Usuario).setValue(userName); // Correctly store userName
-    newRowRange.getCell(1, COLS_FEEDBACKS.ID_vehiculo).setValue(vehicleId);
-    newRowRange.getCell(1, COLS_FEEDBACKS.Problema).setValue(problemText);
-    // The userId is captured in the user activity log, not stored in this sheet.
+    const values = [[
+        userName,
+        vehicleId,
+        problemText
+    ]];
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
 
+    SpreadsheetApp.flush();
 
     logUserActivity(userId, userName, 'report_problem', vehicleId, problemText);
     return { status: 'success', message: 'Problema reportado.' };
 }
 
 function handleSendContactForm(payload) {
-    const { name, email, message, userId } = payload; // Added userId
+    const { name, email, message, userId } = payload;
     if (!name || !email || !message) {
         throw new Error("Faltan datos para enviar el formulario de contacto (name, email, message).");
     }
 
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CONTACTANOS);
+    const sheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
     const lastRow = sheet.getLastRow();
-    const newRowRange = sheet.getRange(lastRow + 1, 1, 1, sheet.getLastColumn());
+    const newRowNumber = lastRow + 1;
+    const FORMULA_ROW = 2;
+    const lastCol = sheet.getLastColumn() || 6;
 
-    if (lastRow > 0) {
-        sheet.getRange(lastRow, 1, 1, sheet.getLastColumn()).copyTo(newRowRange, {contentsOnly: false});
-        newRowRange.clearContent();
+    if (lastRow >= FORMULA_ROW) {
+        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
+        const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
+        formulaRange.copyTo(newRowRange);
+        if (lastCol > 1) {
+            sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
+        }
     }
 
-    newRowRange.getCell(1, COLS_CONTACTANOS.User_ID).setValue(userId || 'N/A'); // Save userId
-    newRowRange.getCell(1, COLS_CONTACTANOS.Asunto).setValue(`Contacto de ${name}`);
-    newRowRange.getCell(1, COLS_CONTACTANOS.Mensaje).setValue(`De: ${email}\n\n${message}`);
+    const values = [[
+        userId || 'N/A',
+        `Contacto de ${name}`,
+        `De: ${email}\n\n${message}`
+    ]];
+    sheet.getRange(newRowNumber, COLS_CONTACTANOS.User_ID, 1, values[0].length).setValues(values);
+
+    SpreadsheetApp.flush();
 
     return { status: 'success', message: 'Formulario de contacto enviado.' };
 }
@@ -390,10 +545,10 @@ function handleSendContactForm(payload) {
 // ============================================================================
 
 function handleGetFeedbackItems(payload) {
-    const feedbackSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.FEEDBACKS);
-    const contactSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CONTACTANOS);
+    const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    const contactSheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
 
-    const feedbackData = feedbackSheet.getDataRange().getValues().slice(1).map(row => ({
+    const feedbackData = (!feedbackSheet) ? [] : feedbackSheet.getDataRange().getValues().slice(1).map(row => ({
         type: 'problem_report',
         id: row[COLS_FEEDBACKS.ID - 1],
         subject: `Reporte en Vehículo #${row[COLS_FEEDBACKS.ID_vehiculo - 1]}`,
@@ -405,7 +560,7 @@ function handleGetFeedbackItems(payload) {
         responder: row[COLS_FEEDBACKS.Responde - 1]
     }));
 
-    const contactData = contactSheet.getDataRange().getValues().slice(1).map(row => ({
+    const contactData = (!contactSheet) ? [] : contactSheet.getDataRange().getValues().slice(1).map(row => ({
         type: 'contact_form',
         id: row[COLS_CONTACTANOS.Contacto_ID - 1],
         subject: row[COLS_CONTACTANOS.Asunto - 1],
@@ -428,7 +583,7 @@ function handleReplyToFeedback(payload) {
     }
 
     if (itemType === 'problem_report') {
-        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.FEEDBACKS);
+        const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
         const ids = sheet.getRange(2, COLS_FEEDBACKS.ID, sheet.getLastRow() -1, 1).getValues().flat();
         const rowIndex = ids.findIndex(id => id == itemId);
         if (rowIndex !== -1) {
@@ -438,7 +593,7 @@ function handleReplyToFeedback(payload) {
             throw new Error("No se encontró el reporte de problema.");
         }
     } else if (itemType === 'contact_form') {
-        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CONTACTANOS);
+        const sheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
         const ids = sheet.getRange(2, COLS_CONTACTANOS.Contacto_ID, sheet.getLastRow() - 1, 1).getValues().flat();
         const rowIndex = ids.findIndex(id => id == itemId);
         if (rowIndex !== -1) {
@@ -456,7 +611,7 @@ function handleMarkAsResolved(payload) {
     const { itemId } = payload;
     if (!itemId) throw new Error("ID del item es requerido.");
 
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.FEEDBACKS);
+    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     const ids = sheet.getRange(2, COLS_FEEDBACKS.ID, sheet.getLastRow() - 1, 1).getValues().flat();
     const rowIndex = ids.findIndex(id => id == itemId);
 
@@ -470,7 +625,7 @@ function handleMarkAsResolved(payload) {
 }
 
 function handleGetActivityLogs(payload) {
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.ACTIVIDAD_USUARIO);
+    const sheet = getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
     if (!sheet) return { status: 'success', data: [] };
 
     const data = sheet.getDataRange().getValues();

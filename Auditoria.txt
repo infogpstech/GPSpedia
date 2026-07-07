@@ -416,3 +416,137 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 
 **Verificación:**
 - Validado mediante Playwright que el tamaño efectivo es 3x3 píxeles.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - DIAGNÓSTICO FALLO APERTURA AUTOMÁTICA MODAL (12/02/2026)**
+
+**Objetivo:** Investigar por qué el modal de detalle no se abre automáticamente y la tarjeta no aparece cuando hay un único resultado de búsqueda.
+
+**Archivos involucrados:** ui.js, navigation.js, main.js.
+
+**CAUSA RAÍZ CONFIRMADA:**
+
+1. **Colisión con Evento popstate:**
+   - En navigation.js, la línea "window.location.hash = ..." dispara un evento popstate asíncrono.
+   - El flujo continúa sincrónicamente hacia "mostrarResultadosDeBusqueda" en ui.js.
+   - Si hay un solo resultado, "mostrarResultadosDeBusqueda" llama a "mostrarDetalleModal" ANTES de renderizar la cuadrícula (grid).
+   - "mostrarDetalleModal" abre el modal y le asigna la clase "visible".
+   - Al finalizar la ejecución sincrónica, el navegador procesa el popstate encolado.
+   - El listener global de popstate en main.js detecta que hay un modal visible y lo cierra inmediatamente.
+   - Resultado: El modal se cierra tan rápido que no es perceptible.
+
+2. **Tarjeta Ausente (Grid no renderizado):**
+   - En ui.js, "mostrarResultadosDeBusqueda" llama a "mostrarDetalleModal" antes de inyectar el grid en el DOM.
+   - La apertura (y cierre inmediato) del modal interrumpe la percepción visual del renderizado posterior o causa una inconsistencia de estado que afecta la visibilidad.
+
+**SOLUCIÓN PROPUESTA:**
+
+1. **navigation.js:** Reemplazar "window.location.hash" por "history.replaceState" para actualizar la URL sin disparar el evento popstate.
+2. **ui.js:** Mover la apertura automática del modal al final de "mostrarResultadosDeBusqueda" (después de añadir el grid al DOM) y envolverla en un setTimeout de 100ms para asegurar estabilidad en el event loop.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - NAVEGACIÓN Y BANNERS (12/02/2026)**
+
+**Objetivo:** Mejorar la consistencia de la navegación (gestos/back) y corregir la duplicación del banner de validación.
+
+**1. NAVEGACIÓN Y BARRA DE BÚSQUEDA:**
+- **Hallazgo:** El listener de 'popstate' en main.js (L132) no gestiona el estado 'search-active'. Si el usuario tiene el foco en el buscador y usa el gesto de retroceso, la barra de búsqueda puede quedar en estado activo (animación expandida) o con resultados visibles indebidamente.
+- **Acción:** En el listener de 'popstate', si el buscador tiene foco o texto, se debe limpiar y cerrar el modo búsqueda antes de cerrar otros componentes o si no hay otros componentes abiertos.
+
+**2. NAVEGACIÓN ENTRE SECCIONES (TUTORIALES/RELAY):**
+- **Hallazgo:** 'ui.mostrarSeccion' (ui.js L2010) cambia la visibilidad de los contenedores pero no registra la navegación en el historial mediante 'pushState'. Esto causa que el botón 'Atrás' del sistema operativo cierre la aplicación en lugar de volver a la sección 'Cortes'.
+- **Acción:** Implementar 'pushState' en 'mostrarSeccion' y manejar el cambio de sección en el listener de 'popstate' de main.js.
+
+**3. NAVEGACIÓN DESDE "VISTOS RECIENTEMENTE":**
+- **Hallazgo:** 'crearCardVehiculo' (ui.js L1803) llama a 'mostrarDetalleModal'. Al retroceder, el flujo de 'popstate' puede estar restaurando estados de búsqueda previos si el hash contiene '#search='.
+- **Acción:** Asegurar que al abrir desde carruseles de actividad, el estado de navegación sea consistente y no recupere contextos de búsqueda huérfanos.
+
+**4. BANNER DE SUGERENCIA DE AÑO (DUPLICACIÓN):**
+- **Hallazgo:** 'showValidationBanner' (ui.js L745) crea e inyecta un nuevo nodo '#validation-banner' cada vez que es llamada. Se invoca en 'img.onload' dentro de 'renderCutContent'. Si la imagen se recarga o la función se ejecuta múltiples veces para el mismo modal, se inyectan múltiples banners.
+- **Acción:** Añadir una validación en 'showValidationBanner' para verificar la existencia previa del elemento mediante 'document.getElementById("validation-banner")' antes de proceder con la creación. Asegurar la limpieza del banner al cerrar el modal.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - HISTORIAL DE BÚSQUEDA (12/02/2026)**
+
+**Escenario de Fallo:** Búsqueda con resultado único -> Apertura automática de modal -> Cierre de modal -> Retroceso -> Cierre de App (incorrecto).
+
+**CAUSA RAÍZ CONFIRMADA:**
+- En navigation.js (filtrarContenido), se utiliza "history.replaceState" (L117) para actualizar el hash de búsqueda (#search=). Al ser un "replaceState", no se añade una nueva entrada al historial del navegador para el estado de "resultados de búsqueda".
+- Cuando el modal se abre automáticamente (ui.js L1060), éste sí ejecuta un "pushState" (ui.js L1229).
+- Al cerrar el modal, el historial retrocede al estado previo al modal, que es el estado inicial de la aplicación (porque la búsqueda hizo un replace, no un push).
+- Resultado: Al estar en la pantalla de resultados (con el modal ya cerrado) y dar 'Atrás', no hay más estados en el historial y la app se cierra.
+
+**SOLUCIÓN:**
+- En navigation.js (filtrarContenido), cambiar el uso de "history.replaceState" por "history.pushState" cuando se inicia una búsqueda desde el estado inicial o cuando el nivel cambia a 'busqueda'.
+- Para evitar bucles infinitos o contaminación excesiva del historial durante el tecleo (oninput), se debe diferenciar entre la primera entrada a búsqueda y las actualizaciones de la misma búsqueda.
+- Alternativamente, asegurar que el primer "filtrarContenido" que genera resultados realice un pushState si no estamos ya en el nivel de búsqueda.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REAPERTURA DE MODAL EN BACK (12/02/2026)**
+
+**Problema:** Al cerrar un modal de resultado único y dar 'Atrás', el modal se reabre.
+**Análisis:**
+- El modal se abre mediante 'setTimeout' en 'mostrarResultadosDeBusqueda' (ui.js L1065).
+- 'mostrarResultadosDeBusqueda' se llama tanto al buscar como al restaurar el estado desde 'popstate' (main.js L154).
+- Al cerrar el modal, el historial retrocede al estado de 'busqueda'.
+- El listener de 'popstate' en main.js detecta el estado de búsqueda y llama a 'navigation.filtrarContenido(state.query)'.
+- 'filtrarContenido' llama a 'mostrarResultadosDeBusqueda'.
+- Si el resultado es único, 'mostrarResultadosDeBusqueda' dispara DE NUEVO el modal.
+- Ciclo Infinito: Retroceso -> popstate -> render results -> single result -> open modal -> back -> popstate...
+
+**Causa Raíz:** Falta de distinción en 'mostrarResultadosDeBusqueda' entre una búsqueda nueva y una restauración de historial (donde el modal ya fue procesado o cerrado).
+
+**Solución:**
+- Modificar 'mostrarResultadosDeBusqueda' para aceptar un parámetro 'isRestoring' o 'autoOpen'.
+- En 'main.js' (popstate), llamar a 'filtrarContenido' indicando que es una restauración.
+- 'filtrarContenido' debe propagar esta bandera a 'mostrarResultadosDeBusqueda'.
+- Si la bandera es verdadera, omitir el bloque de apertura automática del modal.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CIERRE DE MODAL Y GESTOS (12/02/2026)**
+
+**Problema:** Gesto de retroceso y botón 'X' no cierran el modal en ciertos escenarios.
+**Análisis:**
+1. **Gesto de Retroceso (main.js):**
+   - El listener de 'popstate' (L132) gestiona el retroceso.
+   - Bloque 0 (Buscador): Si hay una query en el estado, se restaura la búsqueda y se retorna prematuramente (L158).
+   - Bloque 4 (Modal): Si el modal está visible, se quita la clase 'visible' (L197).
+   - Conflicto: Si al retroceder desde un modal abierto por búsqueda, el evento 'popstate' trae el estado de la búsqueda (), el Bloque 0 captura el evento, restaura la búsqueda y retorna, IMPIDIENDO que el Bloque 4 cierre el modal.
+
+2. **Botón 'X' (ui.js):**
+   - 'closeBtn.onclick' (L1111) intenta cerrar el modal.
+   - Utiliza 'window.history.back()' si detecta 'modalOpen' en el estado.
+   - El retroceso dispara 'popstate', cayendo en el conflicto mencionado arriba: el buscador se restaura y el modal permanece visible por el retorno prematuro.
+
+**Causa Raíz:** El manejo del buscador en 'popstate' (Bloque 0) tiene prioridad sobre el cierre del modal (Bloque 4) y detiene la ejecución del listener, dejando el modal abierto cuando el retroceso debería haberlo cerrado.
+
+**Solución:**
+- Reordenar el listener de 'popstate' en 'main.js' para que el cierre de componentes UI (Modales, Side Menu, Lightbox) tenga prioridad absoluta sobre la restauración del buscador.
+- Asegurar que la restauración de búsqueda solo ocurra si no hay overlays activos.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CIERRE DE MODAL Y GESTOS (12/02/2026)**
+
+**Problema:** Gesto de retroceso y botón 'X' no cierran el modal en ciertos escenarios.
+**Análisis:**
+1. **Gesto de Retroceso (main.js):**
+   - El listener de 'popstate' (L132) gestiona el retroceso.
+   - Bloque 0 (Buscador): Si hay una query en el estado, se restaura la búsqueda y se retorna prematuramente (L158).
+   - Bloque 4 (Modal): Si el modal está visible, se quita la clase 'visible' (L197).
+   - Conflicto: Si al retroceder desde un modal abierto por búsqueda, el evento 'popstate' trae el estado de la búsqueda (state.query), el Bloque 0 captura el evento, restaura la búsqueda y retorna, IMPIDIENDO que el Bloque 4 cierre el modal.
+
+2. **Botón 'X' (ui.js):**
+   - 'closeBtn.onclick' (L1111) intenta cerrar el modal.
+   - Utiliza 'window.history.back()' si detecta 'modalOpen' en el estado.
+   - El retroceso dispara 'popstate', cayendo en el conflicto mencionado arriba: el buscador se restaura y el modal permanece visible por el retorno prematuro.
+
+**Causa Raíz:** El manejo del buscador en 'popstate' (Bloque 0) tiene prioridad sobre el cierre del modal (Bloque 4) y detiene la ejecución del listener, dejando el modal abierto cuando el retroceso debería haberlo cerrado.
+
+**Solución:**
+- Reordenar el listener de 'popstate' en 'main.js' para que el cierre de componentes UI (Modales, Side Menu, Lightbox) tenga prioridad absoluta sobre la restauración del buscador.
+- Asegurar que la restauración de búsqueda solo ocurra si no hay overlays activos.

@@ -17,7 +17,7 @@ import * as offline from './offline.js';
 let datosFiltrados = [];
 let searchDebounceTimer = null;
 
-export function irAPaginaPrincipal() {
+export function irAPaginaPrincipal(isFromPopState = false) {
     // Se limpia el campo de búsqueda al regresar a la página principal.
     const searchInput = document.getElementById('searchInput');
     if (searchInput) {
@@ -38,7 +38,7 @@ export function irAPaginaPrincipal() {
 
     // Phase 3.1: Asegurar que se muestra la sección de cortes (catálogo)
     // Esto resuelve el problema de que el botón no funcionaba desde Tutoriales o Relay.
-    mostrarSeccion('cortes');
+    mostrarSeccion('cortes', isFromPopState);
 }
 
 export function getDatosFiltrados() {
@@ -46,7 +46,7 @@ export function getDatosFiltrados() {
 }
 
 // Función refactorizada v2 para buscar, clasificar y mostrar resultados.
-export function filtrarContenido(textoBusqueda) {
+export function filtrarContenido(textoBusqueda, isRestoring = false) {
     const { catalogData } = getState();
     const { cortes } = catalogData;
     const busqueda = textoBusqueda.toLowerCase().trim();
@@ -107,6 +107,24 @@ export function filtrarContenido(textoBusqueda) {
         }
     }, 1500);
 
+    // Phase 2.4.9: Gestión inteligente del historial de búsqueda.
+    // Se utiliza pushState solo la primera vez que se entra en modo búsqueda para registrar el estado en el historial.
+    // Las actualizaciones subsecuentes (mientras se teclea) usan replaceState para no saturar el historial.
+    const currentState = getState();
+    const wasAlreadySearching = currentState.navigationState && currentState.navigationState.level === "busqueda";
+
+    // Se guarda el término de búsqueda en el estado para permitir la navegación hacia atrás.
+    setState({ navigationState: { level: "busqueda", query: textoBusqueda } });
+
+    // Actualizar el hash para Deep Linking ANTES de renderizar resultados.
+    const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(textoBusqueda)}`;
+
+    if (wasAlreadySearching) {
+        history.replaceState({ level: "busqueda", query: textoBusqueda }, '', newUrl);
+    } else {
+        history.pushState({ level: "busqueda", query: textoBusqueda }, '', newUrl);
+    }
+
     // --- LÓGICA DE CLASIFICACIÓN MEJORADA (BASADA EN RESULTADOS) ---
     const uniqueMarcasEnResultados = [...new Set(datosFiltrados.map(item => item.marca))];
 
@@ -115,16 +133,10 @@ export function filtrarContenido(textoBusqueda) {
     const exactModelMatch = datosFiltrados.some(item => String(item.modelo).toLowerCase() === busqueda);
 
     if (!exactModelMatch && uniqueMarcasEnResultados.length === 1 && uniqueMarcasEnResultados[0].toLowerCase().includes(busqueda)) {
-        mostrarResultadosDeBusqueda({ type: 'marca', query: textoBusqueda, results: uniqueMarcasEnResultados });
+        mostrarResultadosDeBusqueda({ type: 'marca', query: textoBusqueda, results: uniqueMarcasEnResultados }, !isRestoring);
     } else {
         // En todos los demás casos (modelo, año, mixto), se muestran tarjetas de modelo.
         // Se elimina la de-duplicación para mostrar todas las versiones.
-        mostrarResultadosDeBusqueda({ type: 'modelo', query: textoBusqueda, results: datosFiltrados });
+        mostrarResultadosDeBusqueda({ type: 'modelo', query: textoBusqueda, results: datosFiltrados }, !isRestoring);
     }
-
-    // Se guarda el término de búsqueda en el estado para permitir la navegación hacia atrás.
-    setState({ navigationState: { level: "busqueda", query: textoBusqueda } });
-
-    // Actualizar el hash para Deep Linking
-    window.location.hash = `search=${encodeURIComponent(textoBusqueda)}`;
 }

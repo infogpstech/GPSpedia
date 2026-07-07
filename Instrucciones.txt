@@ -208,6 +208,34 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+1. **TÍTULO: Corrección de cierre de modal y prioridad de navegación (v2.4.11)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** main.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Causa Raíz:** El manejo del buscador en `popstate` tenía prioridad sobre el cierre de modales y retornaba prematuramente, impidiendo el cierre visual del modal al retroceder.
+     - **Corrección:** Reordenado el listener de `popstate` para procesar primero los cierres de componentes UI (Overlays) antes que las restauraciones de estado de contenido.
+     - **Efecto:** Garantizado el cierre determinista del modal mediante gestos, botón Atrás y botón "X" en todos los contextos de búsqueda.
+1. **TÍTULO: Corrección de inconsistencia en historial con modal automático (v2.4.10)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, navigation.js, main.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Problema:** El modal de detalle se reabría automáticamente al retroceder en el historial después de haber sido cerrado por el usuario.
+     - **Solución:** Implementada bandera `isRestoring`/`autoOpen` a través del flujo de navegación para distinguir entre una búsqueda activa y una restauración de estado previo.
+     - **Efecto:** El retroceso desde resultados de búsqueda hacia el catálogo principal ahora es limpio y no dispara estados visuales residuales del modal.
+1. **TÍTULO: Expansión de navegación por gestos y corrección de historial (v2.4.9)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** main.js, navigation.js, ui.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Historial:** Implementada lógica de `pushState`/`replaceState` para asegurar que el estado de resultados de búsqueda sea persistente y recuperable mediante el botón Atrás.
+     - **Navegación:** El listener de `popstate` ahora restaura dinámicamente el foco, el texto y los resultados de búsqueda, o limpia el contexto al volver al catálogo inicial.
+     - **Banners:** Corregida la duplicación del banner de validación mediante validación de existencia previa en el DOM.
+1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.4.7)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Causa Raíz:** Identificada colisión entre el evento asíncrono 'popstate' (disparado por el hash) y la apertura sincrónica del modal.
+     - **Corrección:** Implementado `history.replaceState` en `navigation.js` para actualizar la URL silenciosamente.
+     - **UX:** Postergada la apertura del modal en `ui.js` mediante `setTimeout` para garantizar que la cuadrícula de resultados se renderice primero.
 1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.4.6)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** style.css
@@ -278,7 +306,7 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 **TAREAS PENDIENTES DE REVISIÓN**
 ---
-1. **TÍTULO: Refinamiento - Frontend (Footer) (v2.4.2)**
+1. **TÍTULO: Refinamiento - Frontend (Footer) (v2.4.6)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** index.html, style.css, main.js
    - **DESCRIPCIÓN DETALLADA:**
@@ -292,11 +320,23 @@ Cualquier cambio en estas zonas invalidará el commit.
    - **ALCANCE:** Global (Documentación)
    - **DESCRIPCIÓN DETALLADA:** Auditoría integral comparativa v1.5 vs v2.0. Creación de `RELEASE NOTES.txt` detallando todas las mejoras: arquitectura modular, seguridad RBAC, optimización de imágenes/lazy load, navegación contextual, sistema de votos y "Corte Recomendado", modales de Relay, crédito a colaboradores y asistente anti-duplicado.
 
+12. **TÍTULO: Gestión Colaborativa de Años y Validación de Cortes (v2.4.6)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** Global (Frontend y Backend)
+   - **DESCRIPCIÓN DETALLADA:**
+     - **UI:** Banner de validación inteligente integrado en el modal técnico con flujos para modelos recientes y antiguos.
+     - **Lógica:** Implementado sistema anti-colisión para proteger la integridad de los rangos de años entre generaciones.
+     - **Backend:** Automatización de la actualización de la hoja 'Cortes' tras alcanzar un umbral de 3 votos positivos.
+     - **Persistencia:** Implementado 'validationCache' en IndexedDB (v3) para evitar redundancia en las consultas al usuario.
+
 ---
 **DERIVADO DE AUDITORÍA (ROADMAP v2.0) — NO EJECUTAR AÚN**
 ---
-5. TÍTULO: Lógica de Backend para Gestión de Años y Votos (PENDIENTE)
 6. TÍTULO: Dashboard de Desempeño para Supervisores (PENDIENTE)
 7. TÍTULO: Funcionalidad de Edición 'In-Modal' (PENDIENTE)
 8. TÍTULO: Lógica de Backend para Feedback Inbox (PENDIENTE)
-9. TÍTULO: Expansión de Rango de Años por Feedback (PENDIENTE)
+
+1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.4.7)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:** Corregido el fallo que impedía renderizar la tarjeta y mantenía el modal cerrado al obtener un único resultado de búsqueda. Se eliminó el retorno prematuro en `ui.js` y se reordenó la actualización del hash en `navigation.js` para evitar colisiones con el listener de `popstate` en `main.js`.

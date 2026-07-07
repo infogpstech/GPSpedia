@@ -130,6 +130,13 @@ async function initializeApp() {
 
     // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
     window.addEventListener('popstate', (event) => {
+        const state = event.state || {};
+        const searchInput = document.getElementById('searchInput');
+
+        // Phase 2.4.11: PRIORIDAD DE CIERRE DE COMPONENTES UI (OVERLAYS)
+        // Se reordena el listener para asegurar que cualquier modal u overlay se cierre
+        // antes de intentar restaurar estados de búsqueda o secciones.
+
         // 1. Cerrar Side Menu si está abierto
         const sideMenu = document.getElementById('side-menu');
         if (sideMenu && sideMenu.classList.contains('open')) {
@@ -165,6 +172,43 @@ async function initializeApp() {
             }
             modalDetalle.classList.remove('visible');
             return;
+        }
+
+        // PRIORIDAD SECUNDARIA: GESTIÓN DE ESTADOS DE CONTENIDO
+        const isSearchActive = document.body.classList.contains('search-active');
+
+        // Si regresamos a un estado que no tiene información de búsqueda, limpiar buscador
+        if (!state.query && !window.location.hash.includes('#search=')) {
+            if (searchInput) {
+                searchInput.value = '';
+                searchInput.blur();
+                searchInput.parentElement.classList.remove('has-text');
+            }
+            document.body.classList.remove('search-active');
+
+            // Si estábamos en búsqueda y ahora no, restaurar catálogo
+            const currentNavState = window.state.getState().navigationState;
+            if (currentNavState && currentNavState.level === 'busqueda') {
+                navigation.irAPaginaPrincipal(true);
+            }
+        } else if (state.query) {
+            // Restaurar estado de búsqueda desde el historial
+            if (searchInput) {
+                searchInput.value = state.query;
+                searchInput.parentElement.classList.add('has-text');
+            }
+            document.body.classList.add('search-active');
+            // Phase 2.4.10: Se indica que es una restauración (true) para evitar la reapertura automática de modales.
+            navigation.filtrarContenido(state.query, true);
+            return; // Detener para que no retroceda más en este gesto
+        }
+
+        // 5. Manejo de secciones (si el estado indica una sección específica)
+        if (state.section) {
+            ui.mostrarSeccion(state.section, true);
+        } else if (window.location.hash === '' || window.location.hash === '#') {
+            // Si no hay hash y no hay componentes abiertos, asegurar volver a principal
+            navigation.irAPaginaPrincipal(true);
         }
     });
 
