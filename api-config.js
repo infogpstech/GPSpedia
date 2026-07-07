@@ -10,7 +10,7 @@ export const API_ENDPOINTS = {
     CATALOG:  "https://script.google.com/macros/s/AKfycbxenVjZe9C8-0RiYKLxpGfQtobRzydBke44IM4NdNNjh5VRdlB91Ce9dWvQ2xnDFXk0/exec",
     WRITE:    "https://script.google.com/macros/s/AKfycbwgpSXDpF9jW20mqvK8jP9clxs1Gacz-o6caOEBm1hBweAxkBe1lAW9hJTh1fMFcOvP/exec",
     USERS:    "https://script.google.com/macros/s/AKfycbxAqyEcAHetH6yN4qccGILL-L3IzMSPVuVJ1kpuO86GqfDXTKP8cHrrB7UkKN1r_0g5/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbxaBilmBZLUG1GpBnEEdQjTfqkAdbjoamvD3Q3ZzORd5g02HTw7qvHJOSYRI45sll0FJA/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbz3NzT3FPn40VDbc7irIF632xHoeopM0GdnCIim4APAYTzb9KYDjZWDXHHrtzq4atZ70Q/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec"
 };
 
@@ -96,6 +96,10 @@ export async function recordLike(vehicleId, corteIndex, userId, userName) {
 
 export async function reportProblem(vehicleId, problemDescription, userId, userName) {
     return await routeAction('reportProblem', { vehicleId, problemText: problemDescription, userId, userName });
+}
+
+export async function suggestYear(vehicleId, newYear, responseText, userId, userName) {
+    return await routeAction('suggestYear', { vehicleId, newYear, response: responseText, userId, userName });
 }
 
 export async function sendContactForm(formData) {
