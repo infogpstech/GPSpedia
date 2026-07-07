@@ -82,3 +82,31 @@
 **Riesgos y Dependencias:**
 - La animación del encabezado depende de la clase `search-active` en el body. No debe alterarse manualmente si no es a través de los flujos de búsqueda existentes.
 - El retraso de 150ms en la apertura automática del modal (`ui.js`) es crítico para evitar colisiones con el renderizado del grid.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - Sincronización de Historial y Navegación del Dispositivo (07/07/2026)**
+
+**Archivos involucrados:** ui.js, main.js, navigation.js.
+
+**Hallazgos:**
+1. **Inconsistencia de pushState (ui.js):**
+   - Funciones como `mostrarMarcas`, `mostrarModelosPorMarca`, `mostrarModelos`, `mostrarTiposEncendido`, `mostrarVersiones` y `mostrarVersionesEquipamiento` actualizan el estado interno (`setState`) pero NO ejecutan `history.pushState`.
+   - Esto causa que el botón Atrás del dispositivo ignore estos niveles y salte directamente al último estado registrado (usualmente el inicio o la búsqueda inicial).
+   - El botón interno "< Volver" funciona porque usa llamadas directas a funciones, no depende del historial del navegador.
+
+2. **Cierre de Modal y Historial:**
+   - `mostrarDetalleModal` realiza un `pushState({ modalOpen: true })`.
+   - Al cerrar el modal con "X", se llama a `history.back()`. Si el usuario ya estaba en el tope de la pila (ej. recarga de página con modal abierto), `history.back()` podría intentar salir de la aplicación.
+   - El cierre manual debe ser consistente con el estado del historial.
+
+3. **Reapertura de Modal:**
+   - Se debe asegurar que al retroceder desde un nivel a otro, si el nivel anterior tenía un modal abierto "automáticamente" (resultado único), este no se vuelva a abrir si ya fue cerrado. La bandera `autoOpen` implementada en v2.4.10 debe preservarse y reforzarse.
+
+4. **Navegación Agrupada (Búsqueda):**
+   - Al navegar desde resultados de búsqueda hacia niveles internos (ej. modelos de una marca encontrada), se debe registrar cada paso en el historial para permitir el retroceso granular solicitado.
+
+**Acciones Planificadas:**
+- Implementar `pushState` en todas las funciones de cambio de nivel en `ui.js`.
+- Actualizar el listener de `popstate` en `main.js` para manejar la reconstrucción de vistas basadas en el estado del historial (level, marca, modelo, categoria, etc.).
+- Asegurar que `irAPaginaPrincipal` sea el ancla base del historial.
