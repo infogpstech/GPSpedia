@@ -110,3 +110,7 @@
 - Implementar `pushState` en todas las funciones de cambio de nivel en `ui.js`.
 - Actualizar el listener de `popstate` en `main.js` para manejar la reconstrucción de vistas basadas en el estado del historial (level, marca, modelo, categoria, etc.).
 - Asegurar que `irAPaginaPrincipal` sea el ancla base del historial.
+
+### CORRECCIÓN DE NAVEGACIÓN Y TECLADO VIRTUAL
+- Implementada interceptación de popstate para cerrar el teclado virtual mediante blur() sin retroceder en el historial en el primer gesto.
+- Agregado el campo 'origin' ('marca' o 'categoria') en el navigationState y en history.pushState para mantener independientes los contextos de navegación y evitar mezclar rutas en el retroceso.

@@ -139,6 +139,17 @@ async function initializeApp() {
         const state = event.state || {};
         const searchInput = document.getElementById('searchInput');
 
+        // Tarea 1: Si el teclado virtual está visible (el input de búsqueda tiene el foco),
+        // el primer retroceso debe retirar el foco de la barra de búsqueda y conservar el estado de navegación.
+        if (searchInput && document.activeElement === searchInput) {
+            // Retirar foco
+            searchInput.blur();
+            // Evitar que el historial se desplace hacia atrás recuperando la posición actual
+            // mediante la re-inserción del estado actual.
+            history.pushState(state, '', window.location.href);
+            return;
+        }
+
         // Phase 2.4.11: PRIORIDAD DE CIERRE DE COMPONENTES UI (OVERLAYS)
         // Se reordena el listener para asegurar que cualquier modal u overlay se cierre
         // antes de intentar restaurar estados de búsqueda o secciones.
@@ -192,6 +203,11 @@ async function initializeApp() {
 
         // Manejo de niveles de navegación (Cortes / Categorías)
         if (state.level) {
+            // Rehidratar origin en el estado global para conservar el contexto
+            const origin = state.origin || "categoria";
+            const currentState = window.state.getState().navigationState || {};
+            window.state.setState({ navigationState: { ...currentState, origin } });
+
             switch (state.level) {
                 case 'marcas':
                     ui.mostrarMarcas(state.categoria);

@@ -477,3 +477,6 @@ Archivos modificados:
   - Asegurada la prioridad de cierre de overlays antes de la reconstrucción de niveles de contenido.
 - Archivo: navigation.js
   - Ajustada la función irAPaginaPrincipal para limpiar el historial y restaurar el estado base de forma consistente.
+
+- main.js (popstate): Añadida interceptación de retroceso con teclado activo.
+- ui.js: Propagación de 'origin' ('marca' o 'categoria') en las funciones de visualización de niveles y actualización dinámica del botón Volver.
