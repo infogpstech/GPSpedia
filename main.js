@@ -68,7 +68,13 @@ async function initializeApp() {
     searchInput.addEventListener('blur', () => {
         // Se utiliza un timeout para evitar el cierre inmediato al hacer clic en el botón de limpiar (X)
         searchBlurTimeout = setTimeout(() => {
-            document.body.classList.remove('search-active');
+            const modalDetalle = document.getElementById('modalDetalle');
+            const isModalVisible = modalDetalle && modalDetalle.classList.contains('visible');
+
+            // No quitar la clase 'search-active' si el modal está visible para mantener la animación del header
+            if (!isModalVisible) {
+                document.body.classList.remove('search-active');
+            }
         }, 250);
     });
 
@@ -171,36 +177,77 @@ async function initializeApp() {
                 iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
             }
             modalDetalle.classList.remove('visible');
+
+            // Restaurar foco a la barra de búsqueda si estamos en modo búsqueda
+            const isSearchActive = document.body.classList.contains('search-active');
+            if (isSearchActive && searchInput) {
+                // Timeout para asegurar que la transición del modal no interfiera
+                setTimeout(() => searchInput.focus(), 300);
+            }
             return;
         }
 
         // PRIORIDAD SECUNDARIA: GESTIÓN DE ESTADOS DE CONTENIDO
         const isSearchActive = document.body.classList.contains('search-active');
 
-        // Si regresamos a un estado que no tiene información de búsqueda, limpiar buscador
-        if (!state.query && !window.location.hash.includes('#search=')) {
-            if (searchInput) {
-                searchInput.value = '';
-                searchInput.blur();
-                searchInput.parentElement.classList.remove('has-text');
+        // Manejo de niveles de navegación (Cortes / Categorías)
+        if (state.level) {
+            switch (state.level) {
+                case 'marcas':
+                    ui.mostrarMarcas(state.categoria);
+                    break;
+                case 'modelosPorMarca':
+                    ui.mostrarModelosPorMarca(state.marca);
+                    break;
+                case 'modelos':
+                    ui.mostrarModelos(state.categoria, state.marca, state.versionEquipamiento);
+                    break;
+                case 'tiposEncendido':
+                    ui.mostrarTiposEncendido(state.categoria, state.marca, state.versionEquipamiento, state.modelo);
+                    break;
+                case 'versiones':
+                    // Reconstruir la lista de versiones para este modelo
+                    const { catalogData } = window.state.getState();
+                    const filter = catalogData.cortes.filter(c =>
+                        c.marca === state.marca &&
+                        c.modelo === state.modelo &&
+                        c.categoria === state.categoria &&
+                        (!state.versionEquipamiento || c.versionesAplicables === state.versionEquipamiento)
+                    );
+                    ui.mostrarVersiones(filter, state.categoria, state.marca, state.modelo);
+                    break;
+                case 'versionesEquipamiento':
+                    ui.mostrarVersionesEquipamiento(state.categoria, state.marca, state.modelo);
+                    break;
+                case 'busqueda':
+                    if (searchInput) {
+                        searchInput.value = state.query;
+                        searchInput.parentElement.classList.add('has-text');
+                    }
+                    document.body.classList.add('search-active');
+                    // Phase 2.4.10: Se indica que es una restauración (true) para evitar la reapertura automática de modales.
+                    navigation.filtrarContenido(state.query, true);
+                    break;
+                default:
+                    navigation.irAPaginaPrincipal(true);
             }
-            document.body.classList.remove('search-active');
+            return;
+        }
 
+        // Si regresamos a un estado que no tiene información de búsqueda ni de nivel, limpiar buscador
+        if (!state.query && !window.location.hash.includes('#search=')) {
             // Si estábamos en búsqueda y ahora no, restaurar catálogo
             const currentNavState = window.state.getState().navigationState;
-            if (currentNavState && currentNavState.level === 'busqueda') {
+            if (currentNavState && (currentNavState.level === 'busqueda' || currentNavState.level !== 'categorias')) {
                 navigation.irAPaginaPrincipal(true);
+            } else {
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.blur();
+                    searchInput.parentElement.classList.remove('has-text');
+                }
+                document.body.classList.remove('search-active');
             }
-        } else if (state.query) {
-            // Restaurar estado de búsqueda desde el historial
-            if (searchInput) {
-                searchInput.value = state.query;
-                searchInput.parentElement.classList.add('has-text');
-            }
-            document.body.classList.add('search-active');
-            // Phase 2.4.10: Se indica que es una restauración (true) para evitar la reapertura automática de modales.
-            navigation.filtrarContenido(state.query, true);
-            return; // Detener para que no retroceda más en este gesto
         }
 
         // 5. Manejo de secciones (si el estado indica una sección específica)

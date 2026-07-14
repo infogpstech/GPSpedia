@@ -456,3 +456,24 @@ Archivos modificados:
 **VERSIÓN 2.4.11 (12/02/2026)**
 - Archivo: main.js
   - Reestructurado el listener global de popstate para otorgar prioridad absoluta al cierre de componentes UI (Modales, Side Menu, Lightbox). Esto garantiza que el gesto de retroceso y el botón 'Atrás' cierren los overlays antes de intentar restaurar estados de búsqueda o secciones, resolviendo el bloqueo crítico del modal.
+
+--------------------------------------------------
+**VERSIÓN 2.4.12 (07/07/2026)**
+- Archivo: ui.js
+  - Implementada ocultación automática del teclado virtual mediante searchInput.blur() al detectar un único resultado de búsqueda y abrir el modal automáticamente.
+  - Modificado el manejador de cierre del modal para restaurar el foco a searchInput (tras 300ms) si la búsqueda está activa, asegurando que el teclado reaparezca.
+- Archivo: main.js
+  - Refinada la lógica de 'blur' en el buscador: ahora verifica si el modal de detalle está visible antes de retirar la clase 'search-active', preservando la animación del encabezado mientras se visualiza el vehículo.
+  - Actualizado el listener de 'popstate' para restaurar el foco al buscador al cerrar el modal mediante gestos de retroceso o botón Atrás.
+- Archivo: navigation.js
+  - Mejorada la función irAPaginaPrincipal para asegurar la eliminación de la clase 'search-active', disparando correctamente la animación inversa del encabezado al salir del modo búsqueda.
+
+--------------------------------------------------
+**VERSIÓN 2.5.0 (07/07/2026)**
+- Archivo: ui.js
+  - Implementada sincronización total del historial del navegador mediante history.pushState en todos los niveles de navegación (Marcas, Modelos, Tipos de Encendido, Versiones y Versiones de Equipamiento).
+- Archivo: main.js
+  - Refactorizado el listener global de popstate para reconstruir dinámicamente la vista correspondiente basándose en el estado almacenado en el historial. Esto permite que el botón Atrás del dispositivo recorra cada nivel de la aplicación de forma granular.
+  - Asegurada la prioridad de cierre de overlays antes de la reconstrucción de niveles de contenido.
+- Archivo: navigation.js
+  - Ajustada la función irAPaginaPrincipal para limpiar el historial y restaurar el estado base de forma consistente.

@@ -334,6 +334,9 @@ export function mostrarMarcas(categoria) {
     const { cortes } = catalogData;
 
     setState({ navigationState: { level: "marcas", categoria: categoria } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "marcas")) {
+        window.history.pushState({ level: "marcas", categoria: categoria }, '', window.location.pathname + window.location.search);
+    }
     const cont = document.getElementById("contenido");
     cont.innerHTML = `<span class="backBtn" onclick="window.navigation.irAPaginaPrincipal()">${backSvg} Volver</span><h4>Marcas de ${categoria}</h4>`;
     const itemsInCategory = cortes.filter(item => item.categoria === categoria);
@@ -373,6 +376,9 @@ export function mostrarModelosPorMarca(marca) {
     // Se establece el estado de navegación actual capturando el estado previo.
     const previousState = getState().navigationState || {};
     setState({ navigationState: { level: "modelosPorMarca", marca: marca, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "modelosPorMarca")) {
+        window.history.pushState({ level: "modelosPorMarca", marca: marca }, '', window.location.pathname + window.location.search);
+    }
     const cont = document.getElementById("contenido");
 
     // Lógica dinámica para el botón "Volver": regresa a búsqueda si ese era el origen.
@@ -481,6 +487,9 @@ export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
 
     const previousState = getState().navigationState || {};
     setState({ navigationState: { level: "modelos", categoria, marca, versionEquipamiento, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "modelos")) {
+        window.history.pushState({ level: "modelos", categoria, marca, versionEquipamiento }, '', window.location.pathname + window.location.search);
+    }
     const cont = document.getElementById("contenido");
 
     // Lógica dinámica para el botón "Volver"
@@ -532,6 +541,9 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
     const { cortes } = catalogData;
     const previousState = getState().navigationState || {};
     setState({ navigationState: { level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "tiposEncendido")) {
+        window.history.pushState({ level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo }, '', window.location.pathname + window.location.search);
+    }
 
     const cont = document.getElementById("contenido");
 
@@ -587,6 +599,9 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
 export function mostrarVersiones(filas, categoria, marca, modelo) {
     const previousState = getState().navigationState || {};
     setState({ navigationState: { level: "versiones", categoria, marca, modelo, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "versiones")) {
+        window.history.pushState({ level: "versiones", categoria, marca, modelo }, '', window.location.pathname + window.location.search);
+    }
     const cont = document.getElementById("contenido");
 
     // Comentario: Lógica dinámica MEJORADA para el botón "Volver".
@@ -645,6 +660,9 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
 
     const previousState = getState().navigationState || {};
     setState({ navigationState: { level: "versionesEquipamiento", categoria, marca, modelo, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "versionesEquipamiento")) {
+        window.history.pushState({ level: "versionesEquipamiento", categoria, marca, modelo }, '', window.location.pathname + window.location.search);
+    }
     const cont = document.getElementById("contenido");
 
     // Comentario: Lógica dinámica para el botón "Volver".
@@ -1056,6 +1074,10 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
     // Phase 2.4.10: Se añade la bandera 'autoOpen' para evitar la reapertura del modal al navegar hacia atrás
     // en el historial (popstate).
     if (autoOpen && type === 'modelo' && results.length === 1) {
+        // Retirar el foco de la barra de búsqueda para ocultar el teclado virtual
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.blur();
+
         setTimeout(() => {
             mostrarDetalleModal(results[0]);
         }, 150);
@@ -1114,10 +1136,19 @@ export function mostrarDetalleModal(item) {
         if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
         }
+
+        // Restaurar foco a la barra de búsqueda al cerrar manualmente
+        const searchInput = document.getElementById('searchInput');
+        const isSearchActive = document.body.classList.contains('search-active');
+
         if (window.history && window.history.state && window.history.state.modalOpen) {
             window.history.back();
         } else {
             document.getElementById("modalDetalle").classList.remove("visible");
+            // Si el historial no maneja el cierre, forzamos la restauración del foco aquí
+            if (isSearchActive && searchInput) {
+                setTimeout(() => searchInput.focus(), 300);
+            }
         }
     };
     closeBtn.className = "info-close-btn";
