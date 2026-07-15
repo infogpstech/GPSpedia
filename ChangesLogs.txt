@@ -482,3 +482,16 @@ Archivos modificados:
 - ui.js: Propagación de 'origin' ('marca' o 'categoria') en las funciones de visualización de niveles y actualización dinámica del botón Volver.
 
 - main.js, ui.js, navigation.js: Implementación del estado de historial 'busqueda_focused' para separar búsquedas con teclado activo de búsquedas inactivas, optimizando el flujo de retroceso de 2 y 3 gestos en móviles y PWA.
+
+
+--------------------------------------------------
+**VERSIÓN 2.5.2 (15/07/2026)**
+- Archivo: main.js
+  - Añadida inicialización del estado de historial con `{ level: "categorias" }` al arrancar la aplicación si el estado actual es nulo, previniendo el cierre abrupto de la aplicación/browser.
+  - Implementada interceptación robusta del primer retroceso usando `currentNavState.level === "busqueda_focused"` y `document.activeElement` para evitar colisiones con el desenfoque automático de navegadores móviles.
+  - Introducido flag `isBackGestureBlurring` para desactivar el delay del blur, ejecutando la ocultación del teclado, la pérdida de foco y la animación inversa en una transición visual instantánea y unificada.
+  - Simplificado el bloque final de restauración de popstate para invocar a `irAPaginaPrincipal(true)` siempre que `!state.query` independientemente de hashes residuales.
+- Archivo: navigation.js
+  - Reemplazadas las llamadas a `replaceState(null, ...)` por `replaceState({ level: "categorias" }, ...)` al limpiar parámetros de URL, homogeneizando el historial.
+- Archivo: ui.js
+  - Reemplazadas las llamadas a `replaceState(null, ...)` por `replaceState({ level: "categorias" }, ...)` en el carrusel de Vistos Recientemente al limpiar la URL.

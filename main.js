@@ -14,11 +14,17 @@ import './lightbox.js';
 
 let deferredPrompt;
 let searchBlurTimeout;
+let isBackGestureBlurring = false;
 
 /**
  * Main function to initialize the application.
  */
 async function initializeApp() {
+
+    // Inicializar el estado de historial si es null para evitar cierres abruptos
+    if (!window.history.state) {
+        window.history.replaceState({ level: 'categorias' }, '', window.location.href);
+    }
 
     // 1. Expose modules to the global scope for inline event handlers in HTML
     window.routeAction = routeAction; // Exponer la función central de API
@@ -81,6 +87,7 @@ async function initializeApp() {
     });
 
     searchInput.addEventListener('blur', () => {
+        if (isBackGestureBlurring) return;
         // Sincronizar historial con el estado desenfocado
         const currentQuery = searchInput.value;
         const currentState = window.history.state || {};
@@ -163,24 +170,34 @@ async function initializeApp() {
         const searchInput = document.getElementById('searchInput');
 
         // Tarea 1: Si el teclado virtual está visible (el input de búsqueda tiene el foco),
-        // el primer retroceso debe retirar el foco de la barra de búsqueda y conservar el estado de navegación.
-        if (searchInput && document.activeElement === searchInput) {
+        // o si el estado de navegación actual indica que estábamos en una búsqueda activa,
+        // el primer retroceso debe retirar el foco, ocultar el teclado e iniciar la animación inversa simultáneamente
+        // en una única transición visual sin desfase ni retardo, conservando el estado de resultados.
+        const currentNavState = window.state.getState().navigationState || {};
+        if (searchInput && (document.activeElement === searchInput || currentNavState.level === 'busqueda_focused')) {
             const currentQuery = searchInput.value;
 
             // Cancelar cualquier timeout activo para desenfocar y ocultar el teclado
             if (searchBlurTimeout) clearTimeout(searchBlurTimeout);
 
-            // Retirar foco inmediatamente
-            searchInput.blur();
+            // Activar flag para ignorar el delay en el listener de blur
+            isBackGestureBlurring = true;
 
             // Ocultar la barra activa e iniciar la animación inversa simultáneamente
             document.body.classList.remove('search-active');
+
+            // Retirar foco inmediatamente
+            searchInput.blur();
+
+            isBackGestureBlurring = false;
 
             // Evitar que el historial se desplace hacia atrás recuperando la posición actual
             // mediante la re-inserción del estado de búsqueda activo desenfocado.
             if (currentQuery) {
                 const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(currentQuery)}`;
                 history.pushState({ level: "busqueda", query: currentQuery }, '', newUrl);
+                // Sincronizar también el estado de navegación global
+                window.state.setState({ navigationState: { level: "busqueda", query: currentQuery } });
             } else {
                 navigation.irAPaginaPrincipal(true);
             }
@@ -296,7 +313,7 @@ async function initializeApp() {
         }
 
         // Si regresamos a un estado que no tiene información de búsqueda ni de nivel, limpiar buscador
-        if (!state.query && !window.location.hash.includes('#search=')) {
+        if (!state.query) {
             // Si estábamos en búsqueda y ahora no, restaurar catálogo
             const currentNavState = window.state.getState().navigationState;
             if (currentNavState && (currentNavState.level === 'busqueda' || currentNavState.level !== 'categorias')) {

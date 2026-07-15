@@ -571,3 +571,27 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
   4. En el primer retroceso (si está enfocado), se ejecuta blur() de inmediato, se elimina la clase "search-active" sin desfase de tiempo, y se re-inserta el estado "busqueda".
   5. En el segundo retroceso, se vuelve correctamente al estado inicial sin duplicaciones ni cierres de aplicación.
   6. Soportados ambos escenarios (Resultados múltiples y Modal de resultado único) con perfecta correspondencia en la pila de navegación del navegador y gestos del sistema.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REFINAMIENTO DEL FLUJO DE RETROCESO (15/07/2026)**
+
+**Archivos involucrados:** main.js, navigation.js, ui.js.
+
+**Hallazgos:**
+1. **Inicialización del Historial:**
+   - La aplicación no inicializa `window.history.state` en el arranque, dejando estados `null` iniciales. Esto puede provocar que al retroceder se cierre la aplicación de forma abrupta.
+   - Existen llamadas a `replaceState(null, ...)` en `navigation.js` y `ui.js` que rompen la homogeneidad del historial. Deberán ser reemplazadas por `{ level: "categorias" }`.
+
+2. **Gestión de Foco en Retroceso:**
+   - Algunos navegadores móviles desenfocan automáticamente los campos de entrada antes de disparar el evento `popstate`. Por ello, comprobar únicamente `document.activeElement === searchInput` no es robusto.
+   - Solución: Incorporar la verificación de `navigationState.level === "busqueda_focused"` para interceptar de manera confiable el primer retroceso desde una búsqueda activa, incluso si el foco físico ya se perdió en el dispositivo.
+
+3. **Teclado, Foco y Transición Visual:**
+   - La transición visual de salida (quitar `.search-active`) tiene un retardo de 250ms en el listener de `blur` del input de búsqueda para permitir clics en el botón "X".
+   - Sin embargo, para la navegación por gestos de retroceso, se requiere que la animación inversa, la pérdida de foco y la ocultación del teclado formen parte de una única transición inmediata.
+   - Solución: Introducir una variable `isBackGestureBlurring` para evitar el retardo del listener de `blur` durante la ejecución del retroceso, logrando una transición instantánea y unificada.
+
+4. **Simplificación de Restauración:**
+   - El bloque de restauración final en `popstate` verifica hashes de forma que los hashes residuales podrían bloquear la limpieza.
+   - Solución: Simplificar el bloque para que invoque a `irAPaginaPrincipal(true)` siempre que `!state.query`.

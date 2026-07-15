@@ -1877,7 +1877,7 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
             // para evitar que al retroceder se restauren resultados antiguos o contextos irrelevantes.
             if (hideBadge) { // hideBadge es true en el carrusel de Vistos Recientemente
                 if (window.location.hash.startsWith('#search=')) {
-                    history.replaceState(null, null, window.location.pathname + window.location.search);
+                    history.replaceState({ level: 'categorias' }, '', window.location.pathname + window.location.search);
                     // También limpiar el input visualmente
                     const searchInput = document.getElementById('searchInput');
                     if (searchInput) {
