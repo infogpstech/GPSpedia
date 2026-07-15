@@ -612,7 +612,7 @@ export function mostrarVersiones(filas, categoria, marca, modelo) {
     // Comentario: Lógica dinámica MEJORADA para el botón "Volver".
     // Determina si el paso anterior fue una búsqueda, selección de tipo de encendido o de versión de equipamiento.
     let backAction;
-    if (previousState.level === 'busqueda') {
+    if (previousState.level === 'busqueda' || previousState.level === 'busqueda_focused') {
         // Si venimos de una búsqueda, el botón debe regresar a los resultados de esa búsqueda.
         backAction = `window.ui.regresarABusqueda()`;
     } else if (previousState.level === 'tiposEncendido') {
@@ -650,7 +650,7 @@ export function regresarABusqueda() {
     // que contiene la información de la búsqueda es el 'previousState'.
     const prevState = navigationState ? navigationState.previousState : null;
 
-    if (prevState && prevState.level === 'busqueda' && prevState.query) {
+    if (prevState && (prevState.level === 'busqueda' || prevState.level === 'busqueda_focused') && prevState.query) {
         // Vuelve a ejecutar la función de filtrado con el término de búsqueda guardado en el estado anterior.
         window.navigation.filtrarContenido(prevState.query);
     } else {

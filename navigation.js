@@ -115,18 +115,18 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
     // Se utiliza pushState solo la primera vez que se entra en modo búsqueda para registrar el estado en el historial.
     // Las actualizaciones subsecuentes (mientras se teclea) usan replaceState para no saturar el historial.
     const currentState = getState();
-    const wasAlreadySearching = currentState.navigationState && currentState.navigationState.level === "busqueda";
+    const wasAlreadySearching = currentState.navigationState && (currentState.navigationState.level === "busqueda" || currentState.navigationState.level === "busqueda_focused");
 
     // Se guarda el término de búsqueda en el estado para permitir la navegación hacia atrás.
-    setState({ navigationState: { level: "busqueda", query: textoBusqueda } });
+    setState({ navigationState: { level: "busqueda_focused", query: textoBusqueda } });
 
     // Actualizar el hash para Deep Linking ANTES de renderizar resultados.
     const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(textoBusqueda)}`;
 
     if (wasAlreadySearching) {
-        history.replaceState({ level: "busqueda", query: textoBusqueda }, '', newUrl);
+        history.replaceState({ level: "busqueda_focused", query: textoBusqueda }, '', newUrl);
     } else {
-        history.pushState({ level: "busqueda", query: textoBusqueda }, '', newUrl);
+        history.pushState({ level: "busqueda_focused", query: textoBusqueda }, '', newUrl);
     }
 
     // --- LÓGICA DE CLASIFICACIÓN MEJORADA (BASADA EN RESULTADOS) ---

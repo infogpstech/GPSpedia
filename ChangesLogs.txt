@@ -480,3 +480,5 @@ Archivos modificados:
 
 - main.js (popstate): Añadida interceptación de retroceso con teclado activo.
 - ui.js: Propagación de 'origin' ('marca' o 'categoria') en las funciones de visualización de niveles y actualización dinámica del botón Volver.
+
+- main.js, ui.js, navigation.js: Implementación del estado de historial 'busqueda_focused' para separar búsquedas con teclado activo de búsquedas inactivas, optimizando el flujo de retroceso de 2 y 3 gestos en móviles y PWA.
