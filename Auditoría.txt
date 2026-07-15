@@ -110,3 +110,36 @@
 - Implementar `pushState` en todas las funciones de cambio de nivel en `ui.js`.
 - Actualizar el listener de `popstate` en `main.js` para manejar la reconstrucción de vistas basadas en el estado del historial (level, marca, modelo, categoria, etc.).
 - Asegurar que `irAPaginaPrincipal` sea el ancla base del historial.
+
+### CORRECCIÓN DE NAVEGACIÓN Y TECLADO VIRTUAL
+- Implementada interceptación de popstate para cerrar el teclado virtual mediante blur() sin retroceder en el historial en el primer gesto.
+- Agregado el campo 'origin' ('marca' o 'categoria') en el navigationState y en history.pushState para mantener independientes los contextos de navegación y evitar mezclar rutas en el retroceso.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CORRECCIÓN AJUSTE POST-COMMIT DE HISTORIAL (14/07/2026)**
+
+**Archivo: main.js (popstate)**
+- **Hallazgo:** Cuando el input de búsqueda está enfocado y se realiza un retroceso, el navegador ya ha retrocedido un estado en el historial (dejando activo el estado anterior, p. ej. 'categorias').
+- El código actual re-insertaba el estado actual ya modificado (), duplicando el estado de la página de inicio en lugar de preservar el estado de búsqueda activo (). Esto causaba que la búsqueda se borrara del historial y el siguiente retroceso cerrara la aplicación.
+- **Acción:** Re-insertar explícitamente el estado de búsqueda  reconstruido dinámicamente con el valor del input, preservando el historial y permitiendo que el segundo retroceso regrese correctamente a la página principal.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CORRECCIÓN AJUSTE POST-COMMIT DE HISTORIAL (14/07/2026)**
+
+**Archivo: main.js (popstate)**
+- **Hallazgo:** Cuando el input de búsqueda está enfocado y se realiza un retroceso, el navegador ya ha retrocedido un estado en el historial (dejando activo el estado anterior, p. ej. "categorias").
+- El código anterior re-insertaba el estado actual ya modificado (state), duplicando el estado de la página de inicio en lugar de preservar el estado de búsqueda activo ({ level: "busqueda", query: currentQuery }). Esto causaba que la búsqueda se borrara del historial y el siguiente retroceso cerrara la aplicación.
+- **Acción:** Re-insertar explícitamente el estado de búsqueda { level: "busqueda", query: currentQuery } reconstruido dinámicamente con el valor del input, preservando el historial y permitiendo que el segundo retroceso regrese correctamente a la página principal.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REFINAMIENTO POST-COMMIT DEL HISTORIAL DE BÚSQUEDA (14/07/2026)**
+
+**Archivos: main.js, ui.js, navigation.js**
+- **Hallazgo:** Se identificó que la barra de búsqueda en estado enfocado (teclado abierto) y desenfocado (teclado cerrado) compartían el mismo estado de historial "busqueda". Esto causaba una duplicación en la pila de historial cuando el usuario utilizaba el gesto de retroceso para desenfocar la barra de búsqueda, impidiendo regresar a la página principal en el segundo retroceso.
+- **Acción:**
+  1. Introducido el nuevo estado de historial "busqueda_focused" para representar la barra de búsqueda enfocada / teclado abierto.
+  2. Al enfocar o escribir, el estado se establece en "busqueda_focused".
+  3. Al desenfocar (blur), el estado se reemplaza silenciosamente con "busqueda" (desenfocado).
+  4. En el primer retroceso (si está enfocado), se ejecuta blur() de inmediato, se elimina la clase "search-active" sin desfase de tiempo, y se re-inserta el estado "busqueda".
+  5. En el segundo retroceso, se vuelve correctamente al estado inicial sin duplicaciones ni cierres de aplicación.
+  6. Soportados ambos escenarios (Resultados múltiples y Modal de resultado único) con perfecta correspondencia en la pila de navegación del navegador y gestos del sistema.

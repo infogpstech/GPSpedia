@@ -333,9 +333,9 @@ export function mostrarMarcas(categoria) {
     const { catalogData } = getState();
     const { cortes } = catalogData;
 
-    setState({ navigationState: { level: "marcas", categoria: categoria } });
+    setState({ navigationState: { level: "marcas", categoria: categoria, origin: "categoria" } });
     if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "marcas")) {
-        window.history.pushState({ level: "marcas", categoria: categoria }, '', window.location.pathname + window.location.search);
+        window.history.pushState({ level: "marcas", categoria: categoria, origin: "categoria" }, '', window.location.pathname + window.location.search);
     }
     const cont = document.getElementById("contenido");
     cont.innerHTML = `<span class="backBtn" onclick="window.navigation.irAPaginaPrincipal()">${backSvg} Volver</span><h4>Marcas de ${categoria}</h4>`;
@@ -375,9 +375,9 @@ export function mostrarModelosPorMarca(marca) {
 
     // Se establece el estado de navegación actual capturando el estado previo.
     const previousState = getState().navigationState || {};
-    setState({ navigationState: { level: "modelosPorMarca", marca: marca, previousState } });
+    setState({ navigationState: { level: "modelosPorMarca", marca: marca, origin: "marca", previousState } });
     if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "modelosPorMarca")) {
-        window.history.pushState({ level: "modelosPorMarca", marca: marca }, '', window.location.pathname + window.location.search);
+        window.history.pushState({ level: "modelosPorMarca", marca: marca, origin: "marca" }, '', window.location.pathname + window.location.search);
     }
     const cont = document.getElementById("contenido");
 
@@ -433,8 +433,9 @@ export function mostrarModelosPorMarca(marca) {
  * @param {string} modelo - El modelo del vehículo.
  */
 function navegarADetallesDeModelo(categoria, marca, modelo) {
-    const { catalogData } = getState();
+    const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
+    const origin = (navigationState && navigationState.origin) || "categoria";
 
     // Comentario: Lógica de navegación refactorizada para omitir pantallas de selección con una sola opción.
     // 1. Obtener todos los cortes para el modelo específico.
@@ -482,13 +483,14 @@ function navegarADetallesDeModelo(categoria, marca, modelo) {
 }
 
 export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
-    const { catalogData } = getState();
+    const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
 
-    const previousState = getState().navigationState || {};
-    setState({ navigationState: { level: "modelos", categoria, marca, versionEquipamiento, previousState } });
+    const previousState = navigationState || {};
+    const origin = previousState.origin || "categoria";
+    setState({ navigationState: { level: "modelos", categoria, marca, versionEquipamiento, origin, previousState } });
     if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "modelos")) {
-        window.history.pushState({ level: "modelos", categoria, marca, versionEquipamiento }, '', window.location.pathname + window.location.search);
+        window.history.pushState({ level: "modelos", categoria, marca, versionEquipamiento, origin }, '', window.location.pathname + window.location.search);
     }
     const cont = document.getElementById("contenido");
 
@@ -496,7 +498,7 @@ export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
     let backAction;
     if (versionEquipamiento) {
         backAction = `window.ui.mostrarVersionesEquipamiento('${categoria}', '${marca}')`;
-    } else if (previousState.level === 'modelosPorMarca') {
+    } else if (origin === 'marca' || previousState.level === 'modelosPorMarca') {
         backAction = `window.ui.mostrarModelosPorMarca('${marca}')`;
     } else {
         backAction = `window.ui.mostrarMarcas('${categoria}')`;
@@ -537,12 +539,13 @@ export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
 }
 
 export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, modelo) {
-     const { catalogData } = getState();
+     const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
-    const previousState = getState().navigationState || {};
-    setState({ navigationState: { level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, previousState } });
+    const previousState = navigationState || {};
+    const origin = previousState.origin || "categoria";
+    setState({ navigationState: { level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, origin, previousState } });
     if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "tiposEncendido")) {
-        window.history.pushState({ level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo }, '', window.location.pathname + window.location.search);
+        window.history.pushState({ level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, origin }, '', window.location.pathname + window.location.search);
     }
 
     const cont = document.getElementById("contenido");
@@ -553,7 +556,7 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
     let backAction;
     if (previousState.level === 'versionesEquipamiento') {
         backAction = `window.ui.mostrarVersionesEquipamiento('${categoria}', '${marca}', '${modelo}')`;
-    } else if (previousState.level === 'modelosPorMarca') {
+    } else if (origin === 'marca' || previousState.level === 'modelosPorMarca') {
         backAction = `window.ui.mostrarModelosPorMarca('${marca}')`;
     } else {
         backAction = `window.ui.mostrarModelos('${categoria}', '${marca}')`;
@@ -597,17 +600,19 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
 }
 
 export function mostrarVersiones(filas, categoria, marca, modelo) {
-    const previousState = getState().navigationState || {};
-    setState({ navigationState: { level: "versiones", categoria, marca, modelo, previousState } });
+    const { navigationState } = getState();
+    const previousState = navigationState || {};
+    const origin = previousState.origin || "categoria";
+    setState({ navigationState: { level: "versiones", categoria, marca, modelo, origin, previousState } });
     if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "versiones")) {
-        window.history.pushState({ level: "versiones", categoria, marca, modelo }, '', window.location.pathname + window.location.search);
+        window.history.pushState({ level: "versiones", categoria, marca, modelo, origin }, '', window.location.pathname + window.location.search);
     }
     const cont = document.getElementById("contenido");
 
     // Comentario: Lógica dinámica MEJORADA para el botón "Volver".
     // Determina si el paso anterior fue una búsqueda, selección de tipo de encendido o de versión de equipamiento.
     let backAction;
-    if (previousState.level === 'busqueda') {
+    if (previousState.level === 'busqueda' || previousState.level === 'busqueda_focused') {
         // Si venimos de una búsqueda, el botón debe regresar a los resultados de esa búsqueda.
         backAction = `window.ui.regresarABusqueda()`;
     } else if (previousState.level === 'tiposEncendido') {
@@ -617,7 +622,7 @@ export function mostrarVersiones(filas, categoria, marca, modelo) {
         backAction = `window.ui.mostrarTiposEncendido('${categoria}', '${marca}', ${veq}, '${modelo}')`;
     } else if (previousState.level === 'versionesEquipamiento') {
         backAction = `window.ui.mostrarVersionesEquipamiento('${categoria}', '${marca}', '${modelo}')`;
-    } else if (previousState.level === 'modelosPorMarca') {
+    } else if (origin === 'marca' || previousState.level === 'modelosPorMarca') {
         // Soporte para el flujo de navegación por marca (modelosPorMarca).
         backAction = `window.ui.mostrarModelosPorMarca('${marca}')`;
     } else {
@@ -645,7 +650,7 @@ export function regresarABusqueda() {
     // que contiene la información de la búsqueda es el 'previousState'.
     const prevState = navigationState ? navigationState.previousState : null;
 
-    if (prevState && prevState.level === 'busqueda' && prevState.query) {
+    if (prevState && (prevState.level === 'busqueda' || prevState.level === 'busqueda_focused') && prevState.query) {
         // Vuelve a ejecutar la función de filtrado con el término de búsqueda guardado en el estado anterior.
         window.navigation.filtrarContenido(prevState.query);
     } else {
@@ -655,19 +660,20 @@ export function regresarABusqueda() {
 }
 
 export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
-    const { catalogData } = getState();
+    const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
 
-    const previousState = getState().navigationState || {};
-    setState({ navigationState: { level: "versionesEquipamiento", categoria, marca, modelo, previousState } });
+    const previousState = navigationState || {};
+    const origin = previousState.origin || "categoria";
+    setState({ navigationState: { level: "versionesEquipamiento", categoria, marca, modelo, origin, previousState } });
     if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "versionesEquipamiento")) {
-        window.history.pushState({ level: "versionesEquipamiento", categoria, marca, modelo }, '', window.location.pathname + window.location.search);
+        window.history.pushState({ level: "versionesEquipamiento", categoria, marca, modelo, origin }, '', window.location.pathname + window.location.search);
     }
     const cont = document.getElementById("contenido");
 
     // Comentario: Lógica dinámica para el botón "Volver".
     // Se añade soporte para el flujo de navegación por marca (modelosPorMarca).
-    const backAction = previousState.level === 'modelosPorMarca'
+    const backAction = origin === 'marca' || previousState.level === 'modelosPorMarca'
         ? `window.ui.mostrarModelosPorMarca('${marca}')`
         : `window.ui.mostrarModelos('${categoria}', '${marca}')`;
 
