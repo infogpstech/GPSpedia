@@ -70,17 +70,16 @@ async function initializeApp() {
         if (searchBlurTimeout) clearTimeout(searchBlurTimeout);
         document.body.classList.add('search-active');
 
-        // Sincronizar historial con el estado enfocado
         const currentQuery = searchInput.value;
         const currentState = window.history.state || {};
-        const isSearch = currentState.level === 'busqueda' || currentState.level === 'busqueda_focused' || window.location.hash.startsWith('#search=');
         const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(currentQuery)}`;
 
-        // Actualizar el estado global con el nivel enfocado para que filtrarContenido detecte la búsqueda activa correctamente
         window.state.setState({ navigationState: { level: "busqueda_focused", query: currentQuery } });
 
-        if (isSearch) {
+        if (currentState.level === 'busqueda_focused') {
             history.replaceState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
+        } else if (currentState.level === 'busqueda') {
+            history.pushState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
         } else {
             history.pushState({ level: "busqueda", query: currentQuery }, '', newUrl);
             history.pushState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
@@ -247,7 +246,7 @@ async function initializeApp() {
             // mediante la re-inserción del estado de búsqueda activo desenfocado.
             if (currentQuery) {
                 const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(currentQuery)}`;
-                history.pushState({ level: "busqueda", query: currentQuery }, '', newUrl);
+                history.replaceState({ level: "busqueda", query: currentQuery }, '', newUrl);
                 // Sincronizar también el estado de navegación global
                 window.state.setState({ navigationState: { level: "busqueda", query: currentQuery } });
             } else {

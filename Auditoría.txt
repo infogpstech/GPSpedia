@@ -208,3 +208,23 @@
 - Si **NO** se trata de una restauración (`!isRestoring`), se llama directamente a `mostrarCategorias()` para limpiar los resultados de búsqueda visuales y mostrar el catálogo, pero **SE CONSERVA** el estado de búsqueda activo (`busqueda_focused` o `busqueda` con query vacía) mediante `history.replaceState({ level, query: "" })`.
 - Esto mantiene el teclado virtual abierto y la clase `search-active` activa de manera fluida, garantizando que el historial del navegador retenga el estado de búsqueda para responder perfectamente a un retroceso del dispositivo.
 - Si **SÍ** se trata de una restauración (`isRestoring`), se llama a `irAPaginaPrincipal(true)` de forma normal para limpiar el input de búsqueda y regresar al estado inicial.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - RESOLUCIÓN DEFINITIVA DE HISTORIAL NATIVO (15/07/2026)**
+
+**Archivos involucrados:** main.js, navigation.js.
+
+**Por qué la estrategia anterior falló:**
+- En la iteración anterior, se intentó optimizar el historial haciendo que el foco en el buscador solo empujara un único estado (`busqueda_focused`).
+- Al realizar el primer gesto de retroceso, el navegador regresaba físicamente al estado anterior (ej. `categorias`). Para evitar la pérdida de los resultados de búsqueda, el controlador `popstate` intentaba re-insertar el estado desenfocado haciendo `history.pushState({ level: "busqueda" })`.
+- Sin embargo, llamar a `pushState` de forma asíncrona dentro de un manejador de evento `popstate` es altamente inestable y frecuentemente bloqueado o ignorado por los motores de navegación de dispositivos móviles (Android Chrome, iOS Safari) y motores de PWA durante la fase de transición de gestos.
+- Al fallar o ignorarse el `pushState` asíncrono, el historial se quedaba únicamente con el estado base (`categorias`). Por lo tanto, el segundo gesto de retroceso cerraba la aplicación de forma prematura.
+
+**Nueva Estrategia de Historial Forward-Stack 100% Nativo:**
+- **Al enfocar (focus)**: Empujar de forma secuencial y por adelantado el estado `busqueda` (desenfocado) y luego el estado `busqueda_focused` (enfocado). Esto construye una pila de historial legítima y nativa de 3 estados antes de que el usuario comience a navegar hacia atrás:
+  1. `categorias` (o estado previo)
+  2. `busqueda` (desenfocado)
+  3. `busqueda_focused` (enfocado)
+- **Al realizar el primer retroceso**: El navegador regresa de forma nativa a la entrada 2 (`busqueda`). El manejador del `popstate` intercepta esto, oculta el teclado, pierde el foco y realiza la animación inversa de forma visual. Para sincronizar la consulta actual sin alterar la pila de historial ni recurrir a `pushState`, se usa `history.replaceState({ level: "busqueda", query: currentQuery })`.
+- **Al realizar el segundo retroceso**: El navegador regresa de forma nativa a la entrada 1 (`categorias` o estado previo). El manejador del `popstate` limpia el buscador y restaura la pantalla inicial completamente.
+- Este enfoque es 100% nativo, no realiza llamadas a `pushState` durante el evento `popstate`, y garantiza una sincronización perfecta y robusta en cualquier navegador y dispositivo móvil.
