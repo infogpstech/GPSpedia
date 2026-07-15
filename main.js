@@ -221,8 +221,10 @@ async function initializeApp() {
         // o si el estado de navegación actual indica que estábamos en una búsqueda activa,
         // el primer retroceso debe retirar el foco, ocultar el teclado e iniciar la animación inversa simultáneamente
         // en una única transición visual sin desfase ni retardo, conservando el estado de resultados.
+        // NOTA: Solo se intercepta si NO hay un modal visible para evitar interferir con el cierre de overlays.
+        const isModalVisible = modalDetalle && modalDetalle.classList.contains('visible');
         const currentNavState = window.state.getState().navigationState || {};
-        if (searchInput && (document.activeElement === searchInput || currentNavState.level === 'busqueda_focused')) {
+        if (!isModalVisible && searchInput && (document.activeElement === searchInput || currentNavState.level === 'busqueda_focused')) {
             const currentQuery = searchInput.value;
 
             // Cancelar cualquier timeout activo para desenfocar y ocultar el teclado
