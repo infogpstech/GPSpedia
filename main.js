@@ -82,6 +82,7 @@ async function initializeApp() {
         if (isSearch) {
             history.replaceState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
         } else {
+            history.pushState({ level: "busqueda", query: currentQuery }, '', newUrl);
             history.pushState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
         }
     });
