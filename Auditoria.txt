@@ -77,10 +77,10 @@
    - `navigation.irAPaginaPrincipal` ya realiza limpiezas de hash y estado, pero debe integrarse correctamente en el flujo de gestos.
 
 4. **Compatibilidad:**
-   - El uso de `document.activeElement.blur()` and `input.focus()` es estándar y compatible con PWA y navegadores móviles.
+   - El uso de `document.activeElement.blur()` y `input.focus()` es estándar y compatible con PWA y navegadores móviles.
 
 **Riesgos y Dependencias:**
-- El de la animación del encabezado depende de la clase `search-active` en el body. No debe alterarse manualmente si no es a través de los flujos de búsqueda existentes.
+- La animación del encabezado depende de la clase `search-active` en el body. No debe alterarse manualmente si no es a través de los flujos de búsqueda existentes.
 - El retraso de 150ms en la apertura automática del modal (`ui.js`) es crítico para evitar colisiones con el renderizado del grid.
 
 
@@ -191,3 +191,20 @@
 **Acciones Planificadas:**
 - Limpiar y simplificar la lógica de inserción de estados en `focus` de `main.js`.
 - Actualizar el listener de `popstate` para procesar limpiamente las transiciones del historial.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CAUSA RAÍZ DE NAVEGACIÓN FALLIDA (15/07/2026)**
+
+**Archivos involucrados:** navigation.js, main.js.
+
+**Causa Raíz de la Falla:**
+- Al borrar el contenido del buscador (por tecleo de retroceso o haciendo clic en "X"), `filtrarContenido("")` invocaba directamente a `irAPaginaPrincipal()`.
+- `irAPaginaPrincipal()` ejecuta `history.replaceState({ level: 'categorias' })` para limpiar los parámetros de la URL, removiendo la clase `search-active` y haciendo `blur()` del input.
+- Sin embargo, en el caso del botón "X" o si el usuario sigue con el foco puesto en la barra de búsqueda, el input se re-enfocaba, pero el historial del navegador ya había perdido el estado de búsqueda por completo (reemplazado por `categorias`).
+- Al estar en el estado `categorias` en la pila del historial, cualquier gesto de retroceso posterior del sistema operativo cerraba la aplicación abruptamente porque no quedaba ningún estado anterior al cual regresar en el navegador.
+
+**Solución Definida:**
+- En `navigation.js` (`filtrarContenido`), si la consulta se vuelve vacía (`!busqueda`), comprobar si se trata de una restauración (`isRestoring`).
+- Si **NO** se trata de una restauración (`!isRestoring`), se llama directamente a `mostrarCategorias()` para limpiar los resultados de búsqueda visuales y mostrar el catálogo, pero **SE CONSERVA** el estado de búsqueda activo (`busqueda_focused` o `busqueda` con query vacía) mediante `history.replaceState({ level, query: "" })`.
+- Esto mantiene el teclado virtual abierto y la clase `search-active` activa de manera fluida, garantizando que el historial del navegador retenga el estado de búsqueda para responder perfectamente a un retroceso del dispositivo.
+- Si **SÍ** se trata de una restauración (`isRestoring`), se llama a `irAPaginaPrincipal(true)` de forma normal para limpiar el input de búsqueda y regresar al estado inicial.

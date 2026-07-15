@@ -82,6 +82,7 @@ async function initializeApp() {
         if (isSearch) {
             history.replaceState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
         } else {
+            history.pushState({ level: "busqueda", query: currentQuery }, '', newUrl);
             history.pushState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
         }
     });
@@ -258,25 +259,23 @@ async function initializeApp() {
         // PRIORIDAD SECUNDARIA: GESTIÓN DE ESTADOS DE CONTENIDO
         const isSearchActive = document.body.classList.contains('search-active');
 
-        // Limpieza de búsqueda al salir del nivel de búsqueda hacia un nivel no-búsqueda
-        const isSearchLevel = state.level === 'busqueda' || state.level === 'busqueda_focused';
-        const wasSearchActive = currentNavState.level === 'busqueda' || currentNavState.level === 'busqueda_focused';
-
-        if (wasSearchActive && !isSearchLevel) {
-            if (searchInput) {
-                searchInput.value = '';
-                searchInput.parentElement.classList.remove('has-text');
-                searchInput.blur();
-            }
-            document.body.classList.remove('search-active');
-        }
-
         // Manejo de niveles de navegación (Cortes / Categorías)
         if (state.level) {
             // Rehidratar origin en el estado global para conservar el contexto
             const origin = state.origin || "categoria";
             const currentState = window.state.getState().navigationState || {};
             window.state.setState({ navigationState: { ...currentState, origin } });
+
+            // Limpieza de búsqueda al salir del nivel de búsqueda hacia un nivel no-búsqueda de catálogo
+            const isSearchLevel = state.level === 'busqueda' || state.level === 'busqueda_focused';
+            if (!isSearchLevel) {
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.parentElement.classList.remove('has-text');
+                    searchInput.blur();
+                }
+                document.body.classList.remove('search-active');
+            }
 
             switch (state.level) {
                 case 'marcas':

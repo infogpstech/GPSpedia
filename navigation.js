@@ -57,7 +57,21 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
 
     if (!busqueda) {
         datosFiltrados = [];
-        irAPaginaPrincipal();
+        if (isRestoring) {
+            irAPaginaPrincipal(true);
+        } else {
+            // Mostrar categorías en el contenedor principal sin salir de la vista de búsqueda
+            mostrarCategorias();
+
+            // Mantener el estado de búsqueda activo con query vacía
+            const isFocused = document.activeElement === document.getElementById('searchInput');
+            const level = isFocused ? "busqueda_focused" : "busqueda";
+
+            setState({ navigationState: { level, query: "" } });
+
+            const newUrl = window.location.pathname + window.location.search;
+            history.replaceState({ level, query: "" }, '', newUrl);
+        }
         return;
     }
 
