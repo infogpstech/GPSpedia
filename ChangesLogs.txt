@@ -482,3 +482,11 @@ Archivos modificados:
 - ui.js: Propagación de 'origin' ('marca' o 'categoria') en las funciones de visualización de niveles y actualización dinámica del botón Volver.
 
 - main.js, ui.js, navigation.js: Implementación del estado de historial 'busqueda_focused' para separar búsquedas con teclado activo de búsquedas inactivas, optimizando el flujo de retroceso de 2 y 3 gestos en móviles y PWA.
+
+--------------------------------------------------
+**VERSIÓN 2.5.1 (15/07/2026)**
+- Archivo: main.js
+  - Implementada inicialización robusta del estado de historial a `{ level: "categorias" }` en la carga inicial de la aplicación.
+  - Simplificada y robustecida la lógica de fallback de `popstate` para retornar a la página principal siempre que el estado de destino no contenga consulta, evitando quedar atrapado en resultados de búsqueda debido a hashes de URL residuales.
+- Archivos: navigation.js, ui.js
+  - Reemplazadas las llamadas a `replaceState(null, ...)` por `replaceState({ level: "categorias" }, ...)` al limpiar o alternar búsquedas para preservar la estructura estandarizada de estados del historial.

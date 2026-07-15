@@ -20,6 +20,11 @@ let searchBlurTimeout;
  */
 async function initializeApp() {
 
+    // 0. Initialize history state to a robust start
+    if (!window.history.state) {
+        window.history.replaceState({ level: "categorias" }, '', window.location.href);
+    }
+
     // 1. Expose modules to the global scope for inline event handlers in HTML
     window.routeAction = routeAction; // Exponer la función central de API
     window.auth = auth;
@@ -296,10 +301,10 @@ async function initializeApp() {
         }
 
         // Si regresamos a un estado que no tiene información de búsqueda ni de nivel, limpiar buscador
-        if (!state.query && !window.location.hash.includes('#search=')) {
+        if (!state.query) {
             // Si estábamos en búsqueda y ahora no, restaurar catálogo
             const currentNavState = window.state.getState().navigationState;
-            if (currentNavState && (currentNavState.level === 'busqueda' || currentNavState.level !== 'categorias')) {
+            if (currentNavState && (currentNavState.level === 'busqueda' || currentNavState.level === 'busqueda_focused' || currentNavState.level !== 'categorias')) {
                 navigation.irAPaginaPrincipal(true);
             } else {
                 if (searchInput) {

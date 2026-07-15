@@ -21,7 +21,7 @@
 - Necesidad: Añadir helper `suggestYear` para llamar a la acción `suggestYear` del servicio `FEEDBACK`.
 
 **Archivo: state.js**
-- Podría ser necesario mantener el estado de las validaciones respondidas en la sesión actual, aunque `offline.js` es preferible para persistencia entre sesiones.
+- Podría ser necesario mantener el estado de las validaciones respondidas en la sesión actual, aunque `offline.js` is preferible para persistencia entre sesiones.
 
 **Hallazgos Generales:**
 - La lógica de "generación más reciente" debe calcularse en el frontend basándose en `catalogData.cortes`.
@@ -143,3 +143,14 @@
   4. En el primer retroceso (si está enfocado), se ejecuta blur() de inmediato, se elimina la clase "search-active" sin desfase de tiempo, y se re-inserta el estado "busqueda".
   5. En el segundo retroceso, se vuelve correctamente al estado inicial sin duplicaciones ni cierres de aplicación.
   6. Soportados ambos escenarios (Resultados múltiples y Modal de resultado único) con perfecta correspondencia en la pila de navegación del navegador y gestos del sistema.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REFINAMIENTO DE FLUJO DE RETROCESO (15/07/2026)**
+
+**Archivos: main.js, navigation.js, ui.js**
+- **Hallazgo:** Cuando la aplicación se inicializaba por primera vez (con o sin un hash en la URL por deep linking), la pila de historial no se registraba con un estado inicial robusto `{ level: "categorias" }`, resultando en `history.state` como `null`.
+- Al realizar el retroceso, las comprobaciones de seguridad estrictas como `!window.location.hash.includes('#search=')` impedían la limpieza de los resultados de búsqueda si el hash residual persistía o se re-evaluaba, atrapando al usuario en una vista de búsqueda inactiva y causando el cierre de la PWA en el siguiente retroceso.
+- **Acción:**
+  1. Asegurar la inicialización inmediata de `window.history.state` a `{ level: "categorias" }` al cargar la aplicación.
+  2. Simplificar y robustecer la lógica de fallback de `popstate` para retornar a la página principal siempre que el estado de destino corresponda a `categorias` o sea un estado vacío sin consulta o nivel, removiendo restricciones frágiles sobre el hash.
+  3. Reemplazar invocaciones de `replaceState(null, ...)` por `replaceState({ level: "categorias" }, ...)` para preservar la estructura estandarizada del historial.

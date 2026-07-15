@@ -37,7 +37,7 @@ export function irAPaginaPrincipal(isFromPopState = false) {
 
     // Limpiar el hash de búsqueda al volver a la principal
     if (window.location.hash.startsWith('#search=')) {
-        history.replaceState(null, null, window.location.pathname + window.location.search);
+        history.replaceState({ level: 'categorias' }, '', window.location.pathname + window.location.search);
     }
 
     // Phase 3.1: Asegurar que se muestra la sección de cortes (catálogo)

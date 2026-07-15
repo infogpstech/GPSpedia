@@ -208,6 +208,13 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+1. **TÍTULO: Refinamiento de la navegación y sincronización del historial de búsqueda (v2.5.1)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** main.js, navigation.js, ui.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Problema:** En el retroceso desde resultados de búsqueda, la aplicación se cerraba o quedaba atrapada debido a la falta de un estado inicial en el historial (`history.state` era `null`) y a guardas rígidas sobre el hash de URL.
+     - **Solución:** Inicializado robustamente el estado en `{ level: "categorias" }` al cargar la aplicación. Simplificada la lógica de fallback de `popstate` para retornar a la página principal siempre que no haya query de búsqueda activa. Reemplazadas llamadas a `replaceState(null, ...)` por `replaceState({ level: "categorias" }, ...)` para preservar la consistencia estructural del historial.
+     - **Efecto:** Sincronizados y validados los flujos de 2 gestos (Escenario 1) y 3 gestos (Escenario 2) con total precisión, garantizando que el retroceso restaure limpiamente los estados y no cierre la aplicación de forma imprevista.
 1. **TÍTULO: Corrección de cierre de modal y prioridad de navegación (v2.4.11)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** main.js
