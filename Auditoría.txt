@@ -24,9 +24,9 @@
 - Podría ser necesario mantener el estado de las validaciones respondidas en la sesión actual, aunque `offline.js` es preferible para persistencia entre sesiones.
 
 **Hallazgos Generales:**
-- La lógica de "generación más reciente" debe calcularse en el frontend basándose en `catalogData.cortes`.
-- Se debe comparar Marca, Modelo, Tipo de Encendido y Categoría para agrupar generaciones.
-- El año actual para 2026 debe ser dinámico o constante según se prefiera, pero el prompt usa 2026 como ejemplo. Usaré `new Date().getFullYear()`.
+- Lógica de "generación más reciente" se calcula en el frontend basándose en `catalogData.cortes`.
+- Se compara Marca, Modelo, Tipo de Encendido y Categoría para agrupar generaciones.
+- El año actual se calcula mediante `new Date().getFullYear()`.
 
 --------------------------------------------------
 
@@ -167,3 +167,27 @@
 4. **Simplificación de Restauración:**
    - El bloque de restauración final en `popstate` verifica hashes de forma que los hashes residuales podrían bloquear la limpieza.
    - Solución: Simplificar el bloque para que invoque a `irAPaginaPrincipal(true)` siempre que `!state.query`.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REFINAMIENTO DE NAVEGACIÓN Y HISTORIAL DE BÚSQUEDA (15/07/2026)**
+
+**Archivos involucrados:** main.js, navigation.js, ui.js.
+
+**Hallazgos:**
+1. **Lógica de Doble y Triple Retroceso**:
+   - Actualmente, en `focus` de la barra de búsqueda, se insertan dos estados (`busqueda` y `busqueda_focused`).
+   - Al retroceder del primer estado (`busqueda_focused`), el popstate intercepta el retroceso y vuelve a empujar el estado `busqueda`, lo que resulta en un historial duplicado o hinchado que impide la correcta correspondencia de 1 gesto por transición.
+   - Para que el primer retroceso funcione exactamente como una transición visual unificada (ocultar teclado, perder foco, animación inversa), pero sin abandonar los resultados ni la consulta actual, se debe garantizar que el historial tenga exactamente un estado `busqueda_focused` por encima del estado anterior (`categorias` o `modelosPorMarca`).
+   - Al ocurrir el retroceso de `busqueda_focused`, el navegador ya regresa de forma nativa al estado anterior (ej. `categorias` o `modelosPorMarca`). En este popstate, capturamos que veníamos de `busqueda_focused`, desactivamos el foco/teclado/search-active, y empujamos un nuevo estado `busqueda` desenfocado en el historial. Esto mantiene la consulta y resultados en pantalla.
+   - En el segundo retroceso (desde `busqueda` desenfocado), el navegador vuelve de manera nativa al estado inicial (ej. `categorias` o `modelosPorMarca`). Al procesar ese popstate, dado que `currentNavState.level === 'busqueda'`, se limpia la búsqueda, se eliminan los resultados, y se restaura completamente el estado inicial de la aplicación.
+   - Esto reduce drásticamente la pila de historial redundante y sincroniza perfectamente la navegación de gestos del sistema.
+
+2. **Sincronización del Modal Automático (Escenario 2)**:
+   - Al abrirse automáticamente el modal por resultado único, se añade una entrada de historial (`modalOpen: true`).
+   - El primer retroceso cierra el modal de detalles de manera determinista y restaura el foco en el buscador (teclado visible, estado `busqueda_focused`).
+   - El segundo retroceso realiza la transición visual unificada (ocultar teclado, perder foco, animación inversa, estado `busqueda`).
+   - El tercer retroceso limpia la búsqueda y regresa por completo al estado inicial.
+
+**Acciones Planificadas:**
+- Limpiar y simplificar la lógica de inserción de estados en `focus` de `main.js`.
+- Actualizar el listener de `popstate` para procesar limpiamente las transiciones del historial.

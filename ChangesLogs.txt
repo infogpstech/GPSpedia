@@ -495,3 +495,10 @@ Archivos modificados:
   - Reemplazadas las llamadas a `replaceState(null, ...)` por `replaceState({ level: "categorias" }, ...)` al limpiar parámetros de URL, homogeneizando el historial.
 - Archivo: ui.js
   - Reemplazadas las llamadas a `replaceState(null, ...)` por `replaceState({ level: "categorias" }, ...)` en el carrusel de Vistos Recientemente al limpiar la URL.
+
+--------------------------------------------------
+**VERSIÓN 2.5.3 (15/07/2026)**
+- Archivo: main.js
+  - Refinado el listener de focus de `searchInput` para realizar un único `pushState` de `busqueda_focused` cuando no se está buscando en lugar de duplicar con un push previo de `busqueda`. Esto reduce la pila de historial y asegura la correspondencia exacta de 1 gesto por transición.
+  - Sincronizado el listener de blur para actualizar el estado global `navigationState` a `"busqueda"` cuando se pierde el foco por clic fuera, unificando la lógica con el gesto de retroceso.
+  - Implementada una validación robusta en el listener de `popstate` para limpiar automáticamente el input de búsqueda, quitar la clase `.search-active` y remover resultados cuando se regresa de un nivel de búsqueda (`busqueda` o `busqueda_focused`) a un nivel que no es búsqueda, restaurando perfectamente el estado inicial o el contexto previo (como `modelosPorMarca` o `categorias`).

@@ -1,555 +1,127 @@
-**AUDITORÍA TÉCNICA - TAREA 1: UNIFICAR README.md (05/02/2026)**
-
-**Archivo: README.md**
-- L10: "Navegación Inteligente" - Concuerda con la implementación en `ui.js` y `state.js`.
-- L11: "Buscador Avanzado" - Concuerda con la implementación en `main.js`.
-- L12: "Catálogo Optimizado" - Concuerda con el uso de `loading="lazy"` y constantes de tamaño en `ui.js`.
-- L13: "Detalle Técnico Exhaustivo" - Concuerda con el modal de detalles y vínculos a YouTube en `ui.js`.
-- L14: "Gestión de Feedback (Inbox)" - El frontend existe en `ui.js` (`getFeedbackItems`). El backend se encuentra ruteado en `api-config.js` a `FEEDBACK`. Sin embargo, `Instrucciones.txt` Tarea 8 dice "Lógica de Backend... PENDIENTE". Esto sugiere que aunque el endpoint existe, su lógica interna podría estar incompleta o en fase beta. Se mantendrá como característica v2.0 ya que el ruteo está presente.
-- L15: "Dashboard de Actividad" - Concuerda con `getActivityLogs` en `api-config.js` y `ui.js`.
-- L16: "Seguridad y Roles (RBAC)" - Concuerda con la implementación en `users.html` y `services/users/users.js`.
-- L22-31: Flujo de Registro - Concuerda con la lógica de 3 etapas en `add_cortes.html`.
-- L35-43: Arquitectura - Concuerda con la estructura de archivos y microservicios.
-- L47-59: Comparativa y Changelog - Refleja adecuadamente el salto tecnológico.
-
-**Hallazgos:**
-- El README parece estar bastante actualizado tras la revisión del 21/01/2026.
-- No se detectan bloques duplicados evidentes en el contenido actual (v2.0).
-- Se observa que la mención a "Votos de utilidad" en la comparativa (L55) contradice la Tarea 5 de `Instrucciones.txt` que la marca como PENDIENTE.
-- Se eliminarán menciones a funcionalidades marcadas explícitamente como PENDIENTES en el backlog de `Instrucciones.txt` para cumplir con "No documentar features no presentes en el código".
-
-**Acciones:**
-- Ajustar L55 (Feedback) para reflejar el estado actual (Likes/Reportes funcionales, Votos de años en desarrollo).
-- Consolidar cualquier información redundante si se encuentra durante la edición.
-
---------------------------------------------------
-
-**AUDITORÍA TÉCNICA - TAREA 2: SISTEMA ANTI-DEBUGGING (05/02/2026)**
-
-**Archivos involucrados:** `main.js`, `index.html`, `users.html`, `add_cortes.html`, `style.css`.
-
-**Hallazgos:**
-- `main.js` L206: Ya existe un bloque de seguridad que bloquea menú contextual, F12, Ctrl+U y zoom.
-- Sin embargo, la Tarea 2 solicita una implementación "que no rompa funcionalidades normales" y "especialmente en la versión PWA".
-- El bloqueo de zoom debe permitir excepciones para el lightbox.
-- El bloqueo actual en `main.js` es:
-```javascript
-// Global security and interaction blocking
-document.addEventListener('contextmenu', event => event.preventDefault());
-document.onkeydown = function(e) {
-    if(e.keyCode == 123) return false; // F12
-    if(e.ctrlKey && e.shiftKey && e.keyCode == 'I'.charCodeAt(0)) return false;
-    if(e.ctrlKey && e.shiftKey && e.keyCode == 'J'.charCodeAt(0)) return false;
-    if(e.ctrlKey && e.shiftKey && e.keyCode == 'C'.charCodeAt(0)) return false;
-    if(e.ctrlKey && e.keyCode == 'U'.charCodeAt(0)) return false;
-};
-// Block zoom
-document.addEventListener('wheel', function(e) {
-    if (e.ctrlKey) e.preventDefault();
-}, { passive: false });
-document.addEventListener('keydown', function(e) {
-    if (e.ctrlKey && (e.keyCode == 61 || e.keyCode == 107 || e.keyCode == 173 || e.keyCode == 109 || e.keyCode == 187 || e.keyCode == 189)) {
-        e.preventDefault();
-    }
-});
-```
-- Falta la excepción para el lightbox.
-- Falta asegurar que estas restricciones se apliquen de forma consistente en todas las páginas (aunque `main.js` se carga en casi todas, `users.html` y `add_cortes.html` podrían no tenerlo si no importan `main.js` o si tienen su propia lógica).
-- `index.html` carga `main.js`.
-- `users.html` NO carga `main.js`. Tiene su propio `<script>`.
-- `add_cortes.html` NO carga `main.js`. Tiene su propio `<script>`.
-
-**Hallazgos Críticos:**
-1. Los bloqueos de seguridad no están presentes en `users.html` ni en `add_cortes.html`.
-2. El bloqueo de zoom en `main.js` no tiene la excepción para el lightbox.
-
-**Acciones:**
-- Crear una función de seguridad unificada o replicar el bloque en los archivos necesarios.
-- Implementar la lógica de excepción de zoom detectando la visibilidad del lightbox.
-- Usar `isLightboxVisible` (si existe en el estado) para controlar el zoom.
-
---------------------------------------------------
-
-**AUDITORÍA TÉCNICA - TAREA 3: COMPATIBILIDAD PWA (05/02/2026)**
-
-**Archivo: manifest.json**
-- `display: standalone` es ideal para Android/iOS.
-- `icons` incluyen 192 y 512, estándar para PWA.
-- `theme_color` y `background_color` presentes.
-
-**Archivo: service-worker.js**
-- Implementa estrategia Network-First.
-- `self.skipWaiting()` y `self.clients.claim()` aseguran actualización rápida.
-
-**Hallazgos:**
-- **Android:** Compatibilidad completa (Chrome/Edge). Soporta instalación y notificaciones (aunque no se usan activamente).
-- **iOS:** Compatibilidad parcial. Requiere Safari y "Añadir a pantalla de inicio". No soporta `splash screens` automáticas sin etiquetas `<link rel="apple-touch-startup-image">` adicionales. El `manifest.json` es ignorado parcialmente por iOS antes de versiones recientes.
-- **HarmonyOS:** Basado en Android (EMUI), compatibilidad similar a Android mediante navegadores basados en Chromium.
-
-**Limitaciones Identificadas:**
-1. iOS requiere metatags específicos en el `<head>` para una experiencia "App-like" fluida (ej. `apple-mobile-web-app-capable`).
-2. El zoom bloqueado podría afectar la accesibilidad en iOS si el usuario tiene activadas funciones de asistencia, aunque el bloqueo vía JS suele respetarse.
-
---------------------------------------------------
-**AUDITORÍA LÍNEA POR LÍNEA - MEJORAS DE RENDIMIENTO Y ROBUSTEZ (05/02/2026)**
+**AUDITORÍA TÉCNICA - Lógica de Backend para Gestión Colaborativa de Años y Validación de Cortes (12/02/2026)**
 
 **Archivo: ui.js**
-- L188: `img.src` - Falta `loading="lazy"` en Categorías.
-- L212: `img.src` - Falta `loading="lazy"` en Marcas Vehículos.
-- L231: `img.src` - Falta `loading="lazy"` en Marcas Motos.
-- L261: `img.src` - Ya tiene `loading="lazy"` pero usa fallback manual.
-- L303: `innerHTML` - Contiene `style="padding-top: 10px;"`. Incumple separación de preocupaciones.
-- L399: `innerHTML` - Contiene `style="padding-top: 10px;"`. Incumple separación de preocupaciones.
-- L445: `img.loading = "lazy"` - Presente.
-- L488: `img.loading = "lazy"` - Presente.
-- L492: `innerHTML` - Contiene `style="padding-top: 10px;"`.
-- L556: `innerHTML` - Contiene `style="padding-top: 10px;"`.
-- L602: `img.loading = "lazy"` - Presente.
-- L634: `img.loading = "lazy"` - Presente.
-- L648: `innerHTML` - Contiene `style="padding-top: 10px;"`.
-- L799: `img.dataset.src` - Implementación de lazy load en acordeones. Correcto.
-- L1211: `img.dataset.src` - Implementación de lazy load en acordeones. Correcto.
-- L1250-1280: Lógica de `maxHeight` - El uso de `setTimeout(..., 0)` y el cálculo estático de `scrollHeight` no contempla el tiempo de carga de las imágenes asíncronas una vez se les asigna el `src`.
+- Función `mostrarDetalleModal`: Renderiza la imagen del vehículo (`img-vehiculo-modal`) y las secciones de cortes.
+- El requisito pide mostrar la notificación debajo de la imagen del modelo del vehículo.
+- El momento de aparición debe ser tras la carga de la imagen del corte principal.
+- Riesgo: Si no hay imagen de corte, ¿cuándo aparece? El requisito dice "después de que la imagen del corte principal del vehiculo haya terminado de cargar".
+- Necesidad: Implementar un sistema de notificaciones integrado (no modales del sistema).
 
-**Archivo: style.css**
-- L642-654: `.overlay` - Tiene padding fijo. El `padding-top` adicional en JS es redundante o contradictorio. Se debe unificar en una clase hija o ajustar el padding general.
+**Archivo: feedback.js (Backend)**
+- Función `handleSuggestYear`: Ya implementa una lógica de votación (3 votos) y actualización de `anoDesde`/`anoHasta`.
+- Requisito: "Cuando existan más de dos confirmaciones" (es decir, 3 o más). `voteCount < 3` en el código actual coincide.
+- Requisito: "La columna anoSugerido deberá contener el año actual."
+- Necesidad: Verificar si la estructura de la hoja `SugerenciasAño` coincide con lo que el frontend enviará.
+- Necesidad: Asegurar que el registro sea silencioso y no bloqueante.
 
-**Hallazgos Críticos:**
-1. Varias funciones de renderizado de tarjetas no tienen `loading="lazy"`.
-2. El cálculo de altura de los acordeones fallará visualmente (el panel se cortará) si la imagen no está en caché y tarda >0ms en cargar.
-3. Estilos en línea duplicados en múltiples funciones de `ui.js`.
+**Archivo: offline.js**
+- Necesidad: Añadir un nuevo ObjectStore (`validationCache`) para persistir que un usuario ya respondió a una validación para un `vehicleId` específico.
 
-**Acciones:**
-- Crear respaldo de `ui.js` y `style.css`.
-- Implementar `img.loading = "lazy"` de forma sistemática.
-- Refactorizar `loadAccordionImages` para que actualice el `maxHeight` del panel padre tras el evento `onload` de cada imagen.
-- Mover estilos de texto del overlay a `style.css`.
+**Archivo: api-config.js**
+- Necesidad: Añadir helper `suggestYear` para llamar a la acción `suggestYear` del servicio `FEEDBACK`.
+
+**Archivo: state.js**
+- Podría ser necesario mantener el estado de las validaciones respondidas en la sesión actual, aunque `offline.js` es preferible para persistencia entre sesiones.
+
+**Hallazgos Generales:**
+- Lógica de "generación más reciente" se calcula en el frontend basándose en `catalogData.cortes`.
+- Se compara Marca, Modelo, Tipo de Encendido y Categoría para agrupar generaciones.
+- El año actual se calcula mediante `new Date().getFullYear()`.
 
 --------------------------------------------------
-**AUDITORÍA LÍNEA POR LÍNEA - FIX CARGA IMÁGENES CORTES (05/02/2026)**
-
-**Archivo: ui.js**
-- L758: Llamada a `renderCutContent` para el Corte Recomendado. Esta sección es visible de inmediato en el modal.
-- L786: Definición de `renderCutContent`. Actualmente usa `img.dataset.src` incondicionalmente (L797).
-- L1196: Llamada a `renderCutContent` dentro de `createAccordionSection`. Esta sección está oculta inicialmente.
-
-**Hallazgo Crítico:**
-El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dataset.src`, pero al no estar dentro de un acordeón, la función `loadAccordionImages` nunca se ejecuta para él. Esto causa que el `src` permanezca vacío.
-
-**Solución:**
-1. Modificar `renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false)` para aceptar un parámetro de carga diferida.
-2. En `renderCutContent`, usar `img.src` si `isLazy` es falso, y `img.dataset.src` si es verdadero.
-3. Actualizar la llamada en L758 para pasar `false` (o dejar por defecto).
-4. Actualizar la llamada en L1196 para pasar `true`.
 
 --------------------------------------------------
-**AUDITORÍA TÉCNICA - TAREA 1: CORRECCIÓN DE NAVEGACIÓN (06/02/2026)**
-
-**Archivo: ui.js**
-- L221: La navegación por marca inicia en `mostrarModelosPorMarca(marca)`.
-- L288: `mostrarModelosPorMarca` establece `navigationState.level = "modelosPorMarca"`.
-- L291: Botón "Volver" en `mostrarModelosPorMarca` apunta a `irAPaginaPrincipal()`. Correcto.
-- L335, L346, L351: `navegarADetallesDeModelo` redirige a sub-pantallas sin preservar explícitamente el origen `modelosPorMarca`.
-- L399-402: `mostrarTiposEncendido` botón "Volver" asume que el paso previo fue `versionesEquipamiento` o `modelos`. Si se llegó desde `modelosPorMarca`, regresará a `mostrarModelos` (con filtro de categoría), lo cual es el fallo reportado.
-- L445-453: `mostrarVersiones` botón "Volver" tiene el mismo problema de fallback a `mostrarModelos`.
-- L505: `mostrarVersionesEquipamiento` tiene el botón "Volver" hardcodeado a `mostrarModelos`.
-
-**Hallazgos Críticos:**
-1. Las funciones de sub-navegación (`mostrarTiposEncendido`, `mostrarVersiones`, `mostrarVersionesEquipamiento`) no contemplan el flujo de "Búsqueda por Marca" (`modelosPorMarca`) al construir su botón de regreso.
-2. `mostrarModelos` siempre regresa a `mostrarMarcas(categoria)`, lo que rompe el flujo si el usuario no seleccionó una categoría inicialmente.
-
-**Acciones:**
-- Actualizar la lógica de `backAction` en todas las funciones de sub-navegación para verificar si el `previousState.level` es `modelosPorMarca`.
-- Si el origen es `modelosPorMarca`, el botón "Volver" debe llamar a `window.ui.mostrarModelosPorMarca(marca)`.
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - TAREA 2: PREVENCIÓN DE SELECCIÓN DE TEXTO (06/02/2026)**
-
-**Archivos involucrados:** `style.css`, `users.html`, `add_cortes.html`.
-
-**Hallazgos:**
-- Ninguno de los archivos CSS o bloques `<style>` implementa `user-select: none`.
-- Esto permite la selección accidental de texto y activa el asistente de búsqueda de Google en móviles, afectando la experiencia de catálogo.
-
-**Acciones:**
-- Implementar reglas CSS globales para `user-select: none`.
-- Permitir excepciones para elementos de entrada (`input`, `textarea`) para asegurar la usabilidad.
-- Replicar en `users.html` y `add_cortes.html` para mantener la consistencia en toda la aplicación.
-
---------------------------------------------------
-**AUTO-AUDITORÍA POST-IMPLEMENTACIÓN (06/02/2026)**
-
-**Hallazgos:**
-1. **Archivo style.css:** La regla de excepción para `user-select: text` no incluye el elemento `select`. Esto podría dificultar la interacción con menús desplegables en algunos navegadores si se hereda el `none` del body.
-2. **Archivo index.html (L107):** El input de búsqueda conserva un atributo `oninput="filtrarContenido(this.value)"` que es redundante con el event listener de `main.js`. Además, `filtrarContenido` no está expuesto globalmente (está bajo `window.navigation`), lo que causaría un error en consola al escribir.
-3. **Archivo add_cortes.html:** La lógica de bloqueo de zoom replicada no incluye la excepción `isLightboxVisible`. Esto impide que el técnico haga zoom en las imágenes de verificación dentro de esta sección, rompiendo una funcionalidad crítica de revisión de fotos.
-4. **Archivo ui.js (L376):** La función `mostrarModelos` mantiene un botón "Volver" con lógica hardcodeada que no consulta `previousState`. Aunque funcional bajo el flujo normal, es inconsistente con el resto de la refactorización.
-
-**Acciones Correctoras:**
-- Añadir `select` a las excepciones de `user-select` en todos los archivos.
-- Eliminar el `oninput` redundante en `index.html`.
-- Implementar la excepción de zoom por lightbox en `add_cortes.html`.
-- Refactorizar `mostrarModelos` para usar `previousState` en su botón de regreso.
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - FASE 2: ROBUSTEZ SISTEMA OFFLINE (06/02/2026)**
-
-**Archivos involucrados:** offline.js, auth.js, ui.js, navigation.js.
-
-**Hallazgos:**
-1. **offline.js:** La versión de la base de datos estaba en 1. Falta de manejo del evento 'onblocked' podía causar bloqueos en la actualización de esquemas si había múltiples pestañas abiertas.
-2. **auth.js:** La validación de sesión (checkSession) era demasiado estricta con los errores de red, lo que provocaba cierres de sesión innecesarios al estar offline. La carga de datos iniciales (loadInitialData) no procesaba la caché local si la red fallaba, dejando la app en un estado inútil.
-3. **ui.js:** El suscriptor al estado tenía guardas que podían impedir el renderizado si el contenedor ya tenía contenido de error o si la transición desde el splash screen no era limpia tras una carga fallida de red.
-4. **navigation.js:** Cada pulsación de tecla en el buscador disparaba una escritura en IndexedDB, causando contaminación del historial y degradación del rendimiento.
-
-**Acciones:**
-- **Robustez de Persistencia:** Incrementada DB_VERSION a 2 en offline.js y añadido listener 'onblocked'.
-- **Modo Local:** Modificada lógica de 'checkSession' en auth.js para permitir fallback a sesión local ante cualquier error que no sea expiración explícita.
-- **Catálogo Offline:** Asegurado el procesamiento de datos cacheados en 'loadInitialData' (auth.js) tras fallo de red.
-- **UI Resiliente:** Ajustada lógica de suscripción en ui.js para forzar renderizado de categorías si hay datos disponibles en el estado, incluso tras errores previos.
-- **Historial Limpio:** Implementado debounce de 1500ms y validación de longitud mínima (3 caracteres) para el guardado de búsquedas en navigation.js.
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - FASE 3: AJUSTES DE ESTABILIDAD OFFLINE (06/02/2026)**
-
-**Archivos involucrados:** ui.js, auth.js, main.js, style.css, offline.js.
-
-**Hallazgos:**
-1. **Caché de Imágenes Incompleto:** La función 'crearCardVehiculo' ya implementaba fallback a IndexedDB, pero 'renderCutContent' y el carrusel de categorías en 'mostrarCategorias' dependían exclusivamente de la red o del caché del navegador, rompiendo la experiencia offline.
-2. **Reactividad de "Vistos Recientemente":** Los datos de IndexedDB (viewedItems, searchHistory) se cargan de forma asíncrona tras la validación de sesión. Sin embargo, el suscriptor al estado solo dispara el renderizado inicial basándose en 'catalogData.cortes', lo que causa que los carruseles de actividad no aparezcan en el primer render si la carga desde DB tarda más que la validación local.
-3. **Inconsistencia de Mensajes:** Mensajes de error como "No se pudo actualizar el catálogo" pueden resultar confusos si el sistema está operando correctamente en modo local. Se requiere una comunicación unificada: "Trabajando en modo local/caché".
-4. **UI del Historial de Búsqueda:** El historial de búsqueda se muestra permanentemente en la vista de categorías, ocupando espacio innecesario. Debe estar vinculado al foco del buscador. Además, seleccionar un tag del historial rellena el input pero no activa la lógica visual del botón "X".
-5. **Reset de Navegación:** El botón "Cortes" simplemente llama a 'mostrarCategorias', pero no reinicia el estado interno de navegación ni limpia el buscador, lo que puede causar comportamientos inesperados si se regresa desde una búsqueda profunda.
-
-**Acciones Planificadas:**
-- Implementar 'setOptimizedImage' en ui.js para centralizar el uso de caché de IndexedDB en todos los componentes.
-- Optimizar 'checkSession' y el suscriptor de estado para asegurar la aparición inmediata de carruseles de actividad.
-- Ajustar CSS y eventos de búsqueda para una mejor experiencia de usuario.
-- Unificar listeners de navegación para asegurar resets de estado limpios.
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - FASE 3.1: CORRECCIÓN REGRESIÓN OFFLINE Y NAVEGACIÓN (22/06/2026)**
-
-**Archivos involucrados:** auth.js, navigation.js, ui.js.
-
-**Hallazgos:**
-1. **Regresión Offline (auth.js):** La validación de sesión en la Phase 3 era bloqueante. Si la API de validación fallaba por falta de red antes de completar el flujo, la aplicación se quedaba en el splash screen o mostraba errores que impedían el acceso al catálogo, incluso con datos locales presentes.
-2. **Navegación "Cortes" (navigation.js):** La función 'irAPaginaPrincipal' reseteaba el estado pero no aseguraba la visibilidad de la sección de cortes ('#contenido') si el usuario venía de 'Tutoriales' o 'Relay', ya que 'mostrarCategorias' no gestionaba el display de los contenedores de sección principales.
-3. **Persistencia de Imágenes (ui.js):** Se confirmó que 'setOptimizedImage' es el único punto de entrada para carga de imágenes en el catálogo, lo que garantiza el uso de IndexedDB. No se detectaron fallos adicionales pero se reforzó la carga silenciosa.
-
-**Acciones Realizadas:**
-- **auth.js:** Refactorizada 'checkSession' para ser no-bloqueante: restaura la sesión local inmediatamente e intenta la validación con la API en segundo plano.
-- **auth.js:** Optimizada 'loadInitialData' para suprimir alertas de error de red si los datos ya fueron cargados exitosamente desde el caché.
-- **navigation.js:** Actualizada 'irAPaginaPrincipal' para llamar a 'ui.mostrarSeccion("cortes")', garantizando el reset visual completo de la navegación.
-- **navigation.js:** Añadido 'searchInput.blur()' y limpieza de clase 'has-text' en el reset para asegurar consistencia de la Phase 3.
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - FASE 3.2: PERSISTENCIA TOTAL Y REHIDRATACIÓN (23/06/2026)**
-
-**Archivos involucrados:** auth.js, ui.js, offline.js.
-
-**Hallazgos:**
-1. **Rehidratación (auth.js):** Se detectó que el estado inicial se montaba antes de completar la lectura de IndexedDB, causando que 'Vistos Recientemente' e 'Historial' desaparecieran al refrescar.
-2. **Claves de Imágenes (offline.js):** La persistencia de miniaturas usaba claves inconsistentes (URLs completas vs IDs). La recuperación fallaba porque el catálogo restaurado usa fileIds pero el almacén de miniaturas tenía la URL remota como clave.
-3. **Flujo de Carga (auth.js):** El arranque offline seguía siendo "ruidoso" con alertas de red a pesar de operar correctamente en caché.
-
-**Acciones Realizadas:**
-- **offline.js:** Implementado helper 'normalizeId' para garantizar consistencia total en el almacén de miniaturas. Mejorada la solidez de las operaciones asíncronas para evitar bloqueos si DB falla.
-- **auth.js:** Movida la rehidratación de IndexedDB al inicio absoluto de 'checkSession'. Se añadieron logs para trazabilidad del flujo de restauración.
-- **ui.js:** Optimizada 'setOptimizedImage' para ignorar intentos de cacheo de recursos no-Drive (placeholders o blobs).
-- **auth.js:** Silenciados los errores de validación de red en el arranque; ahora solo se reportan si hay una expiración de sesión explícita desde el servidor.
-
-**Estado Final:**
-- Vistos Recientemente: Persistente entre reinicios.
-- Historial: Persistente entre reinicios.
-- Imágenes: Restauradas correctamente desde caché offline usando fileId como clave única.
-- Arranque: Silencioso y resiliente sin internet.
-
-**AUDITORÍA TÉCNICA - CORRECCIÓN DE LAYOUT Y REGRESIÓN (23/06/2026)**
-
-**Archivos involucrados:** style.css, ui.js.
-
-**Hallazgos:**
-1. **Regresión de Logo:** El logo de la marca en el modal de detalle tenía un tamaño de 44px (insuficiente) y estaba centrado mediante márgenes automáticos, rompiendo la alineación izquierda solicitada junto al título.
-2. **Dimensiones del Vehículo:** La imagen del modelo del vehículo estaba restringida a 134px, lo que no cumplía con el requisito de ser la mitad del tamaño de la imagen del corte.
-3. **Scrollbars:** Se detectaron barras de scroll nativas no estilizadas en los contenedores principales y modales, afectando la estética de la aplicación.
-
-**Acciones Realizadas:**
-- **style.css:** Restaurado el tamaño del logo a 60px y corregido su margen a 0 para respetar la alineación izquierda dentro del flex-container del header.
-- **style.css:** Ajustada la imagen del vehículo a 'width: 50% !important', asegurando una proporción consistente respecto a las imágenes de los cortes.
-- **style.css:** Implementada la ocultación global de barras de scroll nativas en '.container', '#modalDetalle' y '#detalleCompleto' para un acabado visual limpio.
-- **ui.js:** Se verificó que el 'titleContainer' implementa correctamente 'display: flex' y 'justify-content: flex-start' con gap de 15px, lo que junto al CSS corregido soluciona el layout del header.
-
-**Estado Final:**
-- Header del Modal: Logo alineado a la izquierda seguido del título, con tamaño restaurado.
-- Imagen del Vehículo: Tamaño corregido al 50% del ancho del contenedor.
-- Scroll: Barras nativas ocultas, navegación fluida mantenida.
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - AJUSTES VISUALES MODAL Y MODO OSCURO (11/02/2026)**
-
-**Archivo: ui.js**
-- L813: 'titleContainer.style.cssText' define un layout flex sin envoltorio (wrap). Esto causa que en logos anchos + títulos largos en móviles se genere scroll horizontal.
-- Hallazgo: La adición de 'flex-wrap: wrap' en esta línea solucionará el problema de desbordamiento permitiendo el salto de línea solicitado.
-
-**Archivo: style.css**
-- L59: '--card-bg: #1e1e1e' es demasiado oscuro para logos negros con fondo transparente.
-- L62: '--modal-bg: #242424' presenta el mismo problema de contraste.
-- Hallazgo: Cambiar estos valores a una tonalidad gris más clara con transparencia (rgba) mejorará la legibilidad de los logotipos sin romper la estética del modo nocturno.
-
-**Riesgos y Dependencias:**
-- El cambio en '--card-bg' afecta a todas las tarjetas del catálogo, no solo a las del modal. Esto es deseado según el requisito de la Tarea 2.
-- La transparencia podría revelar elementos subyacentes si el z-index o el stacking context no es el adecuado, pero dado que son fondos de tarjetas y modales sólidos por diseño, el uso de opacidad alta (0.95) mantendrá la integridad visual.
-
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - RECTIFICACIÓN TASK 2 (11/02/2026)**
-
-**Archivo: style.css**
-- Hallazgo: La implementación anterior de Tarea 2 (cambio de colores de fondo) será revertida según la rectificación.
-- Hallazgo: Los logotipos ya tienen un drop-shadow oscuro por defecto (L575, L875).
-- Acción: En modo oscuro, se reemplazará o complementará el drop-shadow con uno de tonalidad clara para asegurar contraste de elementos negros y grises sobre el fondo oscuro.
-
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - COMPORTAMIENTO DINÁMICO DEL FOOTER (11/02/2026)**
-
-**Archivo: index.html**
-- L305: El <footer> se encuentra fuera de '.container', lo que contribuye a su comportamiento fijo/desacoplado del contenido scrollable.
-- Acción: Mover el <footer> dentro de '.container' después de 'contenido-relay'.
-
-**Archivo: style.css**
-- L88: '.container' tiene un padding-bottom de 80px heredado de intentos previos de evitar solapamiento. Debe reducirse a 20px.
-- L1099: '.footer' tiene 'display: none' por defecto. La lógica de aparición se maneja por JS pero su estado visual debe ser mejorado.
-- Acción: Implementar estados de opacidad y transform para animación fluida.
-
-**Archivo: main.js**
-- Hallazgo: No hay lógica actual que gestione la visibilidad del footer basada en scroll.
-- Acción: Implementar IntersectionObserver apuntando al footer.
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - REFINAMIENTO FOOTER (12/02/2026)**
-
-**Archivo: index.html**
-- L136-144: El element <footer> se encuentra dentro del div .container. Esto causa que se mueva con el scroll del contenido y herede restricciones de ancho y padding del contenedor.
-
-**Archivo: style.css**
-- L1099: .footer tiene 'display: none'. Esto interfiere con animaciones de opacidad y transformaciones si no se gestiona el cambio de display correctamente.
-- L1108: 'transform: translateY(20px)' es un desplazamiento pequeño. Para ocultarlo dinámicamente fuera de pantalla se requiere un valor mayor (ej. 100%) y posición fija.
-- L1114: .footer.visible activa la transición pero el elemento sigue siendo parte del flujo de scroll del contenedor.
-
-**Archivo: main.js**
-- L290-308: El IntersectionObserver observa directamente al footer. Si el footer está al final del contenido dentro de un scrollable, solo se activará al final, pero seguirá desplazándose.
-
-**Hallazgos Críticos:**
-1. El footer pegado al scroll se debe a su ubicación dentro de .container.
-2. El espacio en blanco inferior reportado suele ser consecuencia de márgenes o paddings residuales del contenedor o del propio footer al final del flujo.
-3. La falta de animaciones fluidas se debe a que el IntersectionObserver dispara la clase .visible pero el footer ya es parte del flujo de scroll, perdiendo el efecto de "aparición dinámica" sobre el contenido.
-
-**Acciones Planificadas:**
-- Mover footer fuera de .container.
-- Implementar 'position: fixed' y 'transform: translateY(100%)'.
-- Usar un centinela (#footer-sentinel) dentro de .container para disparar el footer.
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - UX & DEEP LINKING (05/02/2026)**
-
-**Archivos involucrados:** index.html, style.css, main.js, navigation.js.
-
-**Hallazgos:**
-- La aplicación carecía de feedback visual sobre el estado de conexión, lo cual es crítico en una PWA.
-- No existía una forma de compartir o persistir resultados de búsqueda mediante la URL.
-- El logotipo principal no tenía funcionalidad de retorno al inicio, rompiendo una convención de UI estándar.
-
-**Acciones:**
-1. Implementado indicador visual de estado (#connection-status) con animaciones CSS para modo offline.
-2. Implementada lógica de Deep Linking sincronizando el buscador con window.location.hash (#search=).
-3. Añadido event listener al logotipo para invocar irAPaginaPrincipal().
-4. Refactorizada irAPaginaPrincipal para limpiar el hash de la URL sin recargar la página.
-
-**Verificación:**
-- Validado mediante Playwright que el indicador cambia de clase al pasar a modo offline.
-- Validado que el hash se actualiza al escribir en el buscador.
-- Validado que al recargar con un hash de búsqueda, los resultados se restauran automáticamente.
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - REUBICACIÓN INDICADOR Y BOTÓN COMPARTIR (05/02/2026)**
-
-**Archivos involucrados:** index.html, style.css, ui.js.
-
-**Hallazgos:**
-- El indicador de conexión interfería visualmente entre el logo y el título.
-- El modal de detalle carecía de una forma rápida de compartir información técnica específica.
-
-**Acciones:**
-1. Reubicado #connection-status a .header-controls (esquina superior derecha).
-2. Implementado botón de compartir (.share-modal-btn) en el modal de detalle, posicionado a la izquierda del botón de cierre.
-3. Añadida lógica de compartir usando Web Share API con fallback a portapapeles.
-
-**Verificación:**
-- Validada posición del indicador mediante Playwright.
-- Validada posición relativa de botones en el modal (Compartir a la izquierda de cerrar).
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - REFINAMIENTO UX FINAL (05/02/2026)**
-
-**Archivos involucrados:** index.html, style.css, ui.js, main.js, navigation.js.
-
-**Acciones:**
-1. Reubicado y redimensionado el indicador de conexión (6px) para situarse al final del mensaje de bienvenida ("Hola, Usuario 🟢").
-2. Implementado botón de compartir en el modal de detalle (a la izquierda del botón de cierre).
-3. Implementado Deep Linking (#search=) y funcionalidad de retorno al inicio vía logotipo.
-
-**Verificación Final:**
-- El indicador es discreto y está correctamente alineado en el branding.
-- El botón de compartir funciona con Web Share API o Portapapeles.
-- El flujo de navegación es coherente y persistente vía URL.
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - REDUCCIÓN MINIMALISTA (05/02/2026)**
-
-**Archivos involucrados:** style.css.
-
-**Acciones:**
-1. Reducido el tamaño del indicador de conexión de 6px a 3px para una integración ultra-discreta en el saludo.
-2. Ajustados los valores de box-shadow para mantener la legibilidad en el nuevo tamaño reducido.
-
-**Verificación:**
-- Validado mediante Playwright que el tamaño efectivo es 3x3 píxeles.
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - DIAGNÓSTICO FALLO APERTURA AUTOMÁTICA MODAL (12/02/2026)**
-
-**Objetivo:** Investigar por qué el modal de detalle no se abre automáticamente y la tarjeta no aparece cuando hay un único resultado de búsqueda.
+**AUDITORÍA TÉCNICA - Diagnóstico de bug en apertura automática del modal (24/06/2026)**
 
 **Archivos involucrados:** ui.js, navigation.js, main.js.
 
-**CAUSA RAÍZ CONFIRMADA:**
+**Hallazgos:**
+1. **ui.js (mostrarResultadosDeBusqueda):**
+   - El bloque condicional para resultados únicos (`results.length === 1`) invoca a `mostrarDetalleModal` pero realiza un `return` inmediato.
+   - Este `return` interrumpe el flujo de renderizado, impidiendo que se cree la cuadrícula (`grid`) y la tarjeta (`card`) del vehículo en la vista de resultados.
+   - Impacto: El usuario ve el modal (si no se cierra) pero al cerrarlo la lista de resultados está vacía (solo el título).
 
-1. **Colisión con Evento popstate:**
-   - En navigation.js, la línea "window.location.hash = ..." dispara un evento popstate asíncrono.
-   - El flujo continúa sincrónicamente hacia "mostrarResultadosDeBusqueda" en ui.js.
-   - Si hay un solo resultado, "mostrarResultadosDeBusqueda" llama a "mostrarDetalleModal" ANTES de renderizar la cuadrícula (grid).
-   - "mostrarDetalleModal" abre el modal y le asigna la clase "visible".
-   - Al finalizar la ejecución sincrónica, el navegador procesa el popstate encolado.
-   - El listener global de popstate en main.js detecta que hay un modal visible y lo cierra inmediatamente.
-   - Resultado: El modal se cierra tan rápido que no es perceptible.
+2. **navigation.js (filtrarContenido):**
+   - La actualización del hash de la URL (`window.location.hash`) ocurre al final de la función, después de haber renderizado los resultados y abierto el modal.
+   - El cambio de hash dispara un evento `popstate` que es procesado por el listener global en `main.js`.
 
-2. **Tarjeta Ausente (Grid no renderizado):**
-   - En ui.js, "mostrarResultadosDeBusqueda" llama a "mostrarDetalleModal" antes de inyectar el grid en el DOM.
-   - La apertura (y cierre inmediato) del modal interrumpe la percepción visual del renderizado posterior o causa una inconsistencia de estado que afecta la visibilidad.
+3. **main.js (popstate listener):**
+   - El listener de `popstate` cierra automáticamente cualquier modal de detalle visible (`#modalDetalle.visible`) para soportar la navegación con el botón "Atrás".
+   - Debido a que el hash se actualiza después de abrir el modal, el evento `popstate` resultante cierra el modal inmediatamente después de que se abre.
+   - Esto explica por qué el vehículo se registra en "Vistos recientemente" (la función se ejecuta) pero el modal no permanece visible.
 
-**SOLUCIÓN PROPUESTA:**
+**Acciones Correctoras:**
+- **ui.js:** Eliminar el `return` en el bloque de resultado único de `mostrarResultadosDeBusqueda` para permitir el renderizado completo de la UI.
+- **navigation.js:** Reordenar la ejecución para actualizar el hash de la URL antes de invocar el renderizado de resultados, evitando la colisión de eventos de historial con la apertura del modal.
 
-1. **navigation.js:** Reemplazar "window.location.hash" por "history.replaceState" para actualizar la URL sin disparar el evento popstate.
-2. **ui.js:** Mover la apertura automática del modal al final de "mostrarResultadosDeBusqueda" (después de añadir el grid al DOM) y envolverla en un setTimeout de 100ms para asegurar estabilidad en el event loop.
+--------------------------------------------------
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - Gestión automática del teclado y historial de navegación (07/07/2026)**
+
+**Archivos involucrados:** main.js, ui.js, navigation.js.
+
+**Hallazgos:**
+1. **Gestión del Foco (ui.js / main.js):**
+   - En `ui.js`, `mostrarResultadosDeBusqueda` abre el modal automáticamente si hay un solo resultado, pero no retira el foco de `searchInput`.
+   - El teclado virtual se mantiene abierto debido a que `searchInput` conserva el foco.
+   - En `main.js`, el listener de `popstate` cierra el modal pero no restaura el foco a la barra de búsqueda de forma explícita en todos los flujos de cierre.
+
+2. **Teclado Virtual:**
+   - No hay bloqueos explícitos, el comportamiento depende enteramente del foco de los elementos input.
+   - El uso de `visualViewport` en `main.js` ya gestiona clases como `keyboard-open`, lo cual es bueno para el layout.
+
+3. **Navegación e Historial (main.js / navigation.js):**
+   - El flujo de "segundo retroceso" requiere que, estando en resultados de búsqueda (sin modal), el siguiente "Atrás" limpie la búsqueda y restaure el catálogo.
+   - Actualmente, `main.js` en `popstate` intenta restaurar la búsqueda si `state.query` existe. Esto podría entrar en conflicto con el deseo de "retroceder" fuera de la búsqueda.
+   - `navigation.irAPaginaPrincipal` ya realiza limpiezas de hash y estado, pero debe integrarse correctamente en el flujo de gestos.
+
+4. **Compatibilidad:**
+   - El uso de `document.activeElement.blur()` and `input.focus()` es estándar y compatible con PWA y navegadores móviles.
+
+**Riesgos y Dependencias:**
+- El de la animación del encabezado depende de la clase `search-active` en el body. No debe alterarse manualmente si no es a través de los flujos de búsqueda existentes.
+- El retraso de 150ms en la apertura automática del modal (`ui.js`) es crítico para evitar colisiones con el renderizado del grid.
 
 
 --------------------------------------------------
-**AUDITORÍA TÉCNICA - NAVEGACIÓN Y BANNERS (12/02/2026)**
+**AUDITORÍA TÉCNICA - Sincronización de Historial y Navegación del Dispositivo (07/07/2026)**
 
-**Objetivo:** Mejorar la consistencia de la navegación (gestos/back) y corregir la duplicación del banner de validación.
+**Archivos involucrados:** ui.js, main.js, navigation.js.
 
-**1. NAVEGACIÓN Y BARRA DE BÚSQUEDA:**
-- **Hallazgo:** El listener de 'popstate' en main.js (L132) no gestiona el estado 'search-active'. Si el usuario tiene el foco en el buscador y usa el gesto de retroceso, la barra de búsqueda puede quedar en estado activo (animación expandida) o con resultados visibles indebidamente.
-- **Acción:** En el listener de 'popstate', si el buscador tiene foco o texto, se debe limpiar y cerrar el modo búsqueda antes de cerrar otros componentes o si no hay otros componentes abiertos.
+**Hallazgos:**
+1. **Inconsistencia de pushState (ui.js):**
+   - Funciones como `mostrarMarcas`, `mostrarModelosPorMarca`, `mostrarModelos`, `mostrarTiposEncendido`, `mostrarVersiones` y `mostrarVersionesEquipamiento` actualizan el estado interno (`setState`) pero NO ejecutan `history.pushState`.
+   - Esto causa que el botón Atrás del dispositivo ignore estos niveles y salte directamente al último estado registrado (usualmente el inicio o la búsqueda inicial).
+   - El botón interno "< Volver" funciona porque usa llamadas directas a funciones, no depende del historial del navegador.
 
-**2. NAVEGACIÓN ENTRE SECCIONES (TUTORIALES/RELAY):**
-- **Hallazgo:** 'ui.mostrarSeccion' (ui.js L2010) cambia la visibilidad de los contenedores pero no registra la navegación en el historial mediante 'pushState'. Esto causa que el botón 'Atrás' del sistema operativo cierre la aplicación en lugar de volver a la sección 'Cortes'.
-- **Acción:** Implementar 'pushState' en 'mostrarSeccion' y manejar el cambio de sección en el listener de 'popstate' de main.js.
+2. **Cierre de Modal y Historial:**
+   - `mostrarDetalleModal` realiza un `pushState({ modalOpen: true })`.
+   - Al cerrar el modal con "X", se llama a `history.back()`. Si el usuario ya estaba en el tope de la pila (ej. recarga de página con modal abierto), `history.back()` podría intentar salir de la aplicación.
+   - El cierre manual debe ser consistente con el estado del historial.
 
-**3. NAVEGACIÓN DESDE "VISTOS RECIENTEMENTE":**
-- **Hallazgo:** 'crearCardVehiculo' (ui.js L1803) llama a 'mostrarDetalleModal'. Al retroceder, el flujo de 'popstate' puede estar restaurando estados de búsqueda previos si el hash contiene '#search='.
-- **Acción:** Asegurar que al abrir desde carruseles de actividad, el estado de navegación sea consistente y no recupere contextos de búsqueda huérfanos.
+3. **Reapertura de Modal:**
+   - Se debe asegurar que al retroceder desde un nivel a otro, si el nivel anterior tenía un modal abierto "automáticamente" (resultado único), este no se vuelva a abrir si ya fue cerrado. La bandera `autoOpen` implementada en v2.4.10 debe preservarse y reforzarse.
 
-**4. BANNER DE SUGERENCIA DE AÑO (DUPLICACIÓN):**
-- **Hallazgo:** 'showValidationBanner' (ui.js L745) crea e inyecta un nuevo nodo '#validation-banner' cada vez que es llamada. Se invoca en 'img.onload' dentro de 'renderCutContent'. Si la imagen se recarga o la función se ejecuta múltiples veces para el mismo modal, se inyectan múltiples banners.
-- **Acción:** Añadir una validación en 'showValidationBanner' para verificar la existencia previa del elemento mediante 'document.getElementById("validation-banner")' antes de proceder con la creación. Asegurar la limpieza del banner al cerrar el modal.
+4. **Navegación Agrupada (Búsqueda):**
+   - Al navegar desde resultados de búsqueda hacia niveles internos (ej. modelos de una marca encontrada), se debe registrar cada paso en el historial para permitir el retroceso granular solicitado.
 
+**Acciones Planificadas:**
+- Implementar `pushState` en todas las funciones de cambio de nivel en `ui.js`.
+- Actualizar el listener de `popstate` en `main.js` para manejar la reconstrucción de vistas basadas en el estado del historial (level, marca, modelo, categoria, etc.).
+- Asegurar que `irAPaginaPrincipal` sea el ancla base del historial.
 
---------------------------------------------------
-**AUDITORÍA TÉCNICA - HISTORIAL DE BÚSQUEDA (12/02/2026)**
-
-**Escenario de Fallo:** Búsqueda con resultado único -> Apertura automática de modal -> Cierre de modal -> Retroceso -> Cierre de App (incorrecto).
-
-**CAUSA RAÍZ CONFIRMADA:**
-- En navigation.js (filtrarContenido), se utiliza "history.replaceState" (L117) para actualizar el hash de búsqueda (#search=). Al ser un "replaceState", no se añade una nueva entrada al historial del navegador para el estado de "resultados de búsqueda".
-- Cuando el modal se abre automáticamente (ui.js L1060), éste sí ejecuta un "pushState" (ui.js L1229).
-- Al cerrar el modal, el historial retrocede al estado previo al modal, que es el estado inicial de la aplicación (porque la búsqueda hizo un replace, no un push).
-- Resultado: Al estar en la pantalla de resultados (con el modal ya cerrado) y dar 'Atrás', no hay más estados en el historial y la app se cierra.
-
-**SOLUCIÓN:**
-- En navigation.js (filtrarContenido), cambiar el uso de "history.replaceState" por "history.pushState" cuando se inicia una búsqueda desde el estado inicial o cuando el nivel cambia a 'busqueda'.
-- Para evitar bucles infinitos o contaminación excesiva del historial durante el tecleo (oninput), se debe diferenciar entre la primera entrada a búsqueda y las actualizaciones de la misma búsqueda.
-- Alternativamente, asegurar que el primer "filtrarContenido" que genera resultados realice un pushState si no estamos ya en el nivel de búsqueda.
-
+### CORRECCIÓN DE NAVEGACIÓN Y TECLADO VIRTUAL
+- Implementada interceptación de popstate para cerrar el teclado virtual mediante blur() sin retroceder en el historial en el primer gesto.
+- Agregado el campo 'origin' ('marca' o 'categoria') en el navigationState y en history.pushState para mantener independientes los contextos de navegación y evitar mezclar rutas en el retroceso.
 
 --------------------------------------------------
-**AUDITORÍA TÉCNICA - REAPERTURA DE MODAL EN BACK (12/02/2026)**
+**AUDITORÍA TÉCNICA - CORRECCIÓN AJUSTE POST-COMMIT DE HISTORIAL (14/07/2026)**
 
-**Problema:** Al cerrar un modal de resultado único y dar 'Atrás', el modal se reabre.
-**Análisis:**
-- El modal se abre mediante 'setTimeout' en 'mostrarResultadosDeBusqueda' (ui.js L1065).
-- 'mostrarResultadosDeBusqueda' se llama tanto al buscar como al restaurar el estado desde 'popstate' (main.js L154).
-- Al cerrar el modal, el historial retrocede al estado de 'busqueda'.
-- El listener de 'popstate' en main.js detecta el estado de búsqueda y llama a 'navigation.filtrarContenido(state.query)'.
-- 'filtrarContenido' llama a 'mostrarResultadosDeBusqueda'.
-- Si el resultado es único, 'mostrarResultadosDeBusqueda' dispara DE NUEVO el modal.
-- Ciclo Infinito: Retroceso -> popstate -> render results -> single result -> open modal -> back -> popstate...
-
-**Causa Raíz:** Falta de distinción en 'mostrarResultadosDeBusqueda' entre una búsqueda nueva y una restauración de historial (donde el modal ya fue procesado o cerrado).
-
-**Solución:**
-- Modificar 'mostrarResultadosDeBusqueda' para aceptar un parámetro 'isRestoring' o 'autoOpen'.
-- En 'main.js' (popstate), llamar a 'filtrarContenido' indicando que es una restauración.
-- 'filtrarContenido' debe propagar esta bandera a 'mostrarResultadosDeBusqueda'.
-- Si la bandera es verdadera, omitir el bloque de apertura automática del modal.
-
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - CIERRE DE MODAL Y GESTOS (12/02/2026)**
-
-**Problema:** Gesto de retroceso y botón 'X' no cierran el modal en ciertos escenarios.
-**Análisis:**
-1. **Gesto de Retroceso (main.js):**
-   - El listener de 'popstate' (L132) gestiona el retroceso.
-   - Bloque 0 (Buscador): Si hay una query en el estado, se restaura la búsqueda y se retorna prematuramente (L158).
-   - Bloque 4 (Modal): Si el modal está visible, se quita la clase 'visible' (L197).
-   - Conflicto: Si al retroceder desde un modal abierto por búsqueda, el evento 'popstate' trae el estado de la búsqueda (), el Bloque 0 captura el evento, restaura la búsqueda y retorna, IMPIDIENDO que el Bloque 4 cierre el modal.
-
-2. **Botón 'X' (ui.js):**
-   - 'closeBtn.onclick' (L1111) intenta cerrar el modal.
-   - Utiliza 'window.history.back()' si detecta 'modalOpen' en el estado.
-   - El retroceso dispara 'popstate', cayendo en el conflicto mencionado arriba: el buscador se restaura y el modal permanece visible por el retorno prematuro.
-
-**Causa Raíz:** El manejo del buscador en 'popstate' (Bloque 0) tiene prioridad sobre el cierre del modal (Bloque 4) y detiene la ejecución del listener, dejando el modal abierto cuando el retroceso debería haberlo cerrado.
-
-**Solución:**
-- Reordenar el listener de 'popstate' en 'main.js' para que el cierre de componentes UI (Modales, Side Menu, Lightbox) tenga prioridad absoluta sobre la restauración del buscador.
-- Asegurar que la restauración de búsqueda solo ocurra si no hay overlays activos.
-
-
---------------------------------------------------
-**AUDITORÍA TÉCNICA - CIERRE DE MODAL Y GESTOS (12/02/2026)**
-
-**Problema:** Gesto de retroceso y botón 'X' no cierran el modal en ciertos escenarios.
-**Análisis:**
-1. **Gesto de Retroceso (main.js):**
-   - El listener de 'popstate' (L132) gestiona el retroceso.
-   - Bloque 0 (Buscador): Si hay una query en el estado, se restaura la búsqueda y se retorna prematuramente (L158).
-   - Bloque 4 (Modal): Si el modal está visible, se quita la clase 'visible' (L197).
-   - Conflicto: Si al retroceder desde un modal abierto por búsqueda, el evento 'popstate' trae el estado de la búsqueda (state.query), el Bloque 0 captura el evento, restaura la búsqueda y retorna, IMPIDIENDO que el Bloque 4 cierre el modal.
-
-2. **Botón 'X' (ui.js):**
-   - 'closeBtn.onclick' (L1111) intenta cerrar el modal.
-   - Utiliza 'window.history.back()' si detecta 'modalOpen' en el estado.
-   - El retroceso dispara 'popstate', cayendo en el conflicto mencionado arriba: el buscador se restaura y el modal permanece visible por el retorno prematuro.
-
-**Causa Raíz:** El manejo del buscador en 'popstate' (Bloque 0) tiene prioridad sobre el cierre del modal (Bloque 4) y detiene la ejecución del listener, dejando el modal abierto cuando el retroceso debería haberlo cerrado.
-
-**Solución:**
-- Reordenar el listener de 'popstate' en 'main.js' para que el cierre de componentes UI (Modales, Side Menu, Lightbox) tenga prioridad absoluta sobre la restauración del buscador.
-- Asegurar que la restauración de búsqueda solo ocurra si no hay overlays activos.
+**Archivo: main.js (popstate)**
+- **Hallazgo:** Cuando el input de búsqueda está enfocado y se realiza un retroceso, el navegador ya ha retrocedido un estado en el historial (dejando activo el estado anterior, p. ej. 'categorias').
+- El código actual re-insertaba el estado actual ya modificado (), duplicando el estado de la página de inicio en lugar de preservar el estado de búsqueda activo (). Esto causaba que la búsqueda se borrara del historial y el siguiente retroceso cerrara la aplicación.
+- **Acción:** Re-insertar explícitamente el estado de búsqueda  reconstruido dinámicamente con el valor del input, preservando el historial y permitiendo que el segundo retroceso regrese correctamente a la página principal.
 
 --------------------------------------------------
 **AUDITORÍA TÉCNICA - CORRECCIÓN AJUSTE POST-COMMIT DE HISTORIAL (14/07/2026)**
@@ -595,3 +167,27 @@ El Corte Recomendado no carga su imagen porque `renderCutContent` le asigna `dat
 4. **Simplificación de Restauración:**
    - El bloque de restauración final en `popstate` verifica hashes de forma que los hashes residuales podrían bloquear la limpieza.
    - Solución: Simplificar el bloque para que invoque a `irAPaginaPrincipal(true)` siempre que `!state.query`.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REFINAMIENTO DE NAVEGACIÓN Y HISTORIAL DE BÚSQUEDA (15/07/2026)**
+
+**Archivos involucrados:** main.js, navigation.js, ui.js.
+
+**Hallazgos:**
+1. **Lógica de Doble y Triple Retroceso**:
+   - Actualmente, en `focus` de la barra de búsqueda, se insertan dos estados (`busqueda` y `busqueda_focused`).
+   - Al retroceder del primer estado (`busqueda_focused`), el popstate intercepta el retroceso y vuelve a empujar el estado `busqueda`, lo que resulta en un historial duplicado o hinchado que impide la correcta correspondencia de 1 gesto por transición.
+   - Para que el primer retroceso funcione exactamente como una transición visual unificada (ocultar teclado, perder foco, animación inversa), pero sin abandonar los resultados ni la consulta actual, se debe garantizar que el historial tenga exactamente un estado `busqueda_focused` por encima del estado anterior (`categorias` o `modelosPorMarca`).
+   - Al ocurrir el retroceso de `busqueda_focused`, el navegador ya regresa de forma nativa al estado anterior (ej. `categorias` o `modelosPorMarca`). En este popstate, capturamos que veníamos de `busqueda_focused`, desactivamos el foco/teclado/search-active, y empujamos un nuevo estado `busqueda` desenfocado en el historial. Esto mantiene la consulta y resultados en pantalla.
+   - En el segundo retroceso (desde `busqueda` desenfocado), el navegador vuelve de manera nativa al estado inicial (ej. `categorias` o `modelosPorMarca`). Al procesar ese popstate, dado que `currentNavState.level === 'busqueda'`, se limpia la búsqueda, se eliminan los resultados, y se restaura completamente el estado inicial de la aplicación.
+   - Esto reduce drásticamente la pila de historial redundante y sincroniza perfectamente la navegación de gestos del sistema.
+
+2. **Sincronización del Modal Automático (Escenario 2)**:
+   - Al abrirse automáticamente el modal por resultado único, se añade una entrada de historial (`modalOpen: true`).
+   - El primer retroceso cierra el modal de detalles de manera determinista y restaura el foco en el buscador (teclado visible, estado `busqueda_focused`).
+   - El segundo retroceso realiza la transición visual unificada (ocultar teclado, perder foco, animación inversa, estado `busqueda`).
+   - El tercer retroceso limpia la búsqueda y regresa por completo al estado inicial.
+
+**Acciones Planificadas:**
+- Limpiar y simplificar la lógica de inserción de estados en `focus` de `main.js`.
+- Actualizar el listener de `popstate` para procesar limpiamente las transiciones del historial.
