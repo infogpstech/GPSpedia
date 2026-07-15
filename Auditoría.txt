@@ -114,3 +114,19 @@
 ### CORRECCIÓN DE NAVEGACIÓN Y TECLADO VIRTUAL
 - Implementada interceptación de popstate para cerrar el teclado virtual mediante blur() sin retroceder en el historial en el primer gesto.
 - Agregado el campo 'origin' ('marca' o 'categoria') en el navigationState y en history.pushState para mantener independientes los contextos de navegación y evitar mezclar rutas en el retroceso.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CORRECCIÓN AJUSTE POST-COMMIT DE HISTORIAL (14/07/2026)**
+
+**Archivo: main.js (popstate)**
+- **Hallazgo:** Cuando el input de búsqueda está enfocado y se realiza un retroceso, el navegador ya ha retrocedido un estado en el historial (dejando activo el estado anterior, p. ej. 'categorias').
+- El código actual re-insertaba el estado actual ya modificado (), duplicando el estado de la página de inicio en lugar de preservar el estado de búsqueda activo (). Esto causaba que la búsqueda se borrara del historial y el siguiente retroceso cerrara la aplicación.
+- **Acción:** Re-insertar explícitamente el estado de búsqueda  reconstruido dinámicamente con el valor del input, preservando el historial y permitiendo que el segundo retroceso regrese correctamente a la página principal.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CORRECCIÓN AJUSTE POST-COMMIT DE HISTORIAL (14/07/2026)**
+
+**Archivo: main.js (popstate)**
+- **Hallazgo:** Cuando el input de búsqueda está enfocado y se realiza un retroceso, el navegador ya ha retrocedido un estado en el historial (dejando activo el estado anterior, p. ej. "categorias").
+- El código anterior re-insertaba el estado actual ya modificado (state), duplicando el estado de la página de inicio en lugar de preservar el estado de búsqueda activo ({ level: "busqueda", query: currentQuery }). Esto causaba que la búsqueda se borrara del historial y el siguiente retroceso cerrara la aplicación.
+- **Acción:** Re-insertar explícitamente el estado de búsqueda { level: "busqueda", query: currentQuery } reconstruido dinámicamente con el valor del input, preservando el historial y permitiendo que el segundo retroceso regrese correctamente a la página principal.

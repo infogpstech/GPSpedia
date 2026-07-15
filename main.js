@@ -142,11 +142,17 @@ async function initializeApp() {
         // Tarea 1: Si el teclado virtual está visible (el input de búsqueda tiene el foco),
         // el primer retroceso debe retirar el foco de la barra de búsqueda y conservar el estado de navegación.
         if (searchInput && document.activeElement === searchInput) {
+            const currentQuery = searchInput.value;
             // Retirar foco
             searchInput.blur();
             // Evitar que el historial se desplace hacia atrás recuperando la posición actual
-            // mediante la re-inserción del estado actual.
-            history.pushState(state, '', window.location.href);
+            // mediante la re-inserción del estado de búsqueda activo.
+            if (currentQuery) {
+                const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(currentQuery)}`;
+                history.pushState({ level: "busqueda", query: currentQuery }, '', newUrl);
+            } else {
+                navigation.irAPaginaPrincipal(true);
+            }
             return;
         }
 
