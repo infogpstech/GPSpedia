@@ -169,41 +169,6 @@ async function initializeApp() {
         const state = event.state || {};
         const searchInput = document.getElementById('searchInput');
 
-        // Tarea 1: Si el teclado virtual está visible (el input de búsqueda tiene el foco),
-        // o si el estado de navegación actual indica que estábamos en una búsqueda activa,
-        // el primer retroceso debe retirar el foco, ocultar el teclado e iniciar la animación inversa simultáneamente
-        // en una única transición visual sin desfase ni retardo, conservando el estado de resultados.
-        const currentNavState = window.state.getState().navigationState || {};
-        if (searchInput && (document.activeElement === searchInput || currentNavState.level === 'busqueda_focused')) {
-            const currentQuery = searchInput.value;
-
-            // Cancelar cualquier timeout activo para desenfocar y ocultar el teclado
-            if (searchBlurTimeout) clearTimeout(searchBlurTimeout);
-
-            // Activar flag para ignorar el delay en el listener de blur
-            isBackGestureBlurring = true;
-
-            // Ocultar la barra activa e iniciar la animación inversa simultáneamente
-            document.body.classList.remove('search-active');
-
-            // Retirar foco inmediatamente
-            searchInput.blur();
-
-            isBackGestureBlurring = false;
-
-            // Evitar que el historial se desplace hacia atrás recuperando la posición actual
-            // mediante la re-inserción del estado de búsqueda activo desenfocado.
-            if (currentQuery) {
-                const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(currentQuery)}`;
-                history.pushState({ level: "busqueda", query: currentQuery }, '', newUrl);
-                // Sincronizar también el estado de navegación global
-                window.state.setState({ navigationState: { level: "busqueda", query: currentQuery } });
-            } else {
-                navigation.irAPaginaPrincipal(true);
-            }
-            return;
-        }
-
         // Phase 2.4.11: PRIORIDAD DE CIERRE DE COMPONENTES UI (OVERLAYS)
         // Se reordena el listener para asegurar que cualquier modal u overlay se cierre
         // antes de intentar restaurar estados de búsqueda o secciones.
@@ -248,6 +213,41 @@ async function initializeApp() {
             if (isSearchActive && searchInput) {
                 // Timeout para asegurar que la transición del modal no interfiera
                 setTimeout(() => searchInput.focus(), 300);
+            }
+            return;
+        }
+
+        // Tarea 1: Si el teclado virtual está visible (el input de búsqueda tiene el foco),
+        // o si el estado de navegación actual indica que estábamos en una búsqueda activa,
+        // el primer retroceso debe retirar el foco, ocultar el teclado e iniciar la animación inversa simultáneamente
+        // en una única transición visual sin desfase ni retardo, conservando el estado de resultados.
+        const currentNavState = window.state.getState().navigationState || {};
+        if (searchInput && (document.activeElement === searchInput || currentNavState.level === 'busqueda_focused')) {
+            const currentQuery = searchInput.value;
+
+            // Cancelar cualquier timeout activo para desenfocar y ocultar el teclado
+            if (searchBlurTimeout) clearTimeout(searchBlurTimeout);
+
+            // Activar flag para ignorar el delay en el listener de blur
+            isBackGestureBlurring = true;
+
+            // Ocultar la barra activa e iniciar la animación inversa simultáneamente
+            document.body.classList.remove('search-active');
+
+            // Retirar foco inmediatamente
+            searchInput.blur();
+
+            isBackGestureBlurring = false;
+
+            // Evitar que el historial se desplace hacia atrás recuperando la posición actual
+            // mediante la re-inserción del estado de búsqueda activo desenfocado.
+            if (currentQuery) {
+                const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(currentQuery)}`;
+                history.pushState({ level: "busqueda", query: currentQuery }, '', newUrl);
+                // Sincronizar también el estado de navegación global
+                window.state.setState({ navigationState: { level: "busqueda", query: currentQuery } });
+            } else {
+                navigation.irAPaginaPrincipal(true);
             }
             return;
         }
