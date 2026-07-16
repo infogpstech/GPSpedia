@@ -45,10 +45,6 @@ export function irAPaginaPrincipal(isFromPopState = false) {
     mostrarSeccion('cortes', isFromPopState);
 }
 
-export function getDatosFiltrados() {
-    return datosFiltrados;
-}
-
 // Función refactorizada v2 para buscar, clasificar y mostrar resultados.
 export function filtrarContenido(textoBusqueda, isRestoring = false) {
     const { catalogData } = getState();

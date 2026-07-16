@@ -511,3 +511,45 @@ Archivos modificados:
 - Archivo: main.js
   - Rediseñado por completo el flujo de foco en `searchInput` para implementar una pila de historial nativa "Forward-Stack": al enfocar por primera vez, se empuja de forma secuencial `busqueda` (desenfocado) y luego `busqueda_focused` (enfocado). Esto evita la inestabilidad de `pushState` asíncronos dentro de controladores `popstate`, garantizando compatibilidad 100% nativa con gestos táctiles en dispositivos móviles y PWAs.
   - Sincronizado el primer gesto de retroceso en `popstate` para realizar una transición visual inmediata (ocultar teclado, perder foco, animación inversa del header) utilizando `replaceState` para inyectar la consulta actual de forma segura sobre la entrada del historial `busqueda` nativa que acaba de ser activada.
+
+
+**CHANGES LOG - 16/02/2026**
+
+**Archivo: Services/Catálogo/catalog.js**
+- **Línea 268:** Se eliminó una llave de cierre redundante "}" que causaba un error de sintaxis crítico, impidiendo el correcto funcionamiento y la compilación del microservicio de catálogo.
+
+**Archivo: Auditoria.txt / Auditoría.txt**
+- Se añadió un diagnóstico técnico global, identificando la causa raíz del error de sintaxis y clasificando las funciones huérfanas y código duplicado del repositorio por nivel de impacto y riesgo.
+
+**Versión:** Incremento a v2.5.5 (Estabilización de Catálogo).
+
+
+**CHANGES LOG - 16/02/2026**
+
+**Archivo: ui.js**
+- **Líneas 1094-1104:** Hoisteada (elevada) la lógica para `createDetailParagraph` a nivel de módulo como una función utilitaria compartida.
+- **Líneas 2194-2203, 2247-2256:** Eliminadas las dos definiciones locales redundantes de `createDetailParagraph` dentro de `mostrarDetalleModal` y `mostrarDetalleRelayModal`, reduciendo duplicación de código de acuerdo al principio DRY.
+
+**Archivo: navigation.js**
+- **Líneas 48-50:** Eliminada la función huérfana `getDatosFiltrados` de la API pública y privada, removiendo código muerto sin uso.
+
+**Archivo: Services/Catálogo/catalog.js**
+- **Líneas 613-618:** Eliminada la función huérfana `isYearInRangeV2` (código muerto).
+
+**Archivo: Services/Write/write.js**
+- **Líneas 397-405:** Eliminada la función huérfana `isFlexibleModelMatch` (código muerto).
+
+**Archivo: Services/Users/users.js**
+- **Líneas 129-131:** Eliminada la función huérfana `getVerifiedRole` (código muerto).
+
+**Versión:** Incremento a v2.5.6 (Corrección Estructural y Saneamiento DRY).
+
+
+**CHANGES LOG - 16/02/2026**
+
+**General:**
+- Eliminación definitiva de todos los archivos de respaldo temporales (*.bak) creados durante la auditoría y estabilización del proyecto.
+- Saneamiento y optimización estructural final de los archivos de frontend y backend del repositorio.
+- Incrementada versión del título principal, pantalla de acceso y pie de página en index.html a v2.5.7.
+
+**Versión:** Incremento a v2.5.7 (Consolidación, Limpieza de Respaldos y Cierre de Auditoría).

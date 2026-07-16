@@ -1,0 +1,135 @@
+
+
+===================================================================
+AUDITORÍA GLOBAL, DIAGNÓSTICO TÉCNICO Y PLAN DE REPARACIÓN (16/02/2026)
+===================================================================
+
+-------------------------------------------------------------------
+DIAGNÓSTICO TÉCNICO Y HALLAZGOS DETALLADOS
+-------------------------------------------------------------------
+
+ID del hallazgo: H-01
+Título: Error de sintaxis crítico en el microservicio de Catálogo (catalog.js)
+Descripción: Una llave de cierre extra "}" en la línea 268 interrumpe prematuramente el bloque del callback del método ".map()" que procesa los cortes de vehículos de la hoja de cálculo. Esto provoca un SyntaxError que inhabilita por completo la función "handleGetCatalogData" y rompe la integración con el frontend.
+Ubicación:
+  - Archivo: Services/Catálogo/catalog.js
+  - Línea aproximada: 268 (dentro de handleGetCatalogData)
+Impacto: Crítico
+Riesgo:
+  - Riesgo funcional: Muy alto (el catálogo de vehículos no se puede cargar de forma dinámica desde el servidor de producción).
+  - Riesgo de regresión: Bajo.
+  - Riesgo de mantenimiento: Bajo.
+  - Riesgo de rendimiento: Bajo.
+Dependencias:
+  - Función: handleGetCatalogData
+  - Endpoints: api-config.js (fetchCatalogData)
+  - Frontend: ui.js, main.js
+Causa raíz: Se introdujo accidentalmente una llave de cierre "}" redundante durante modificaciones previas para la normalización robusta de URLs de YouTube o en el mapeo de objetos, lo que cerró el callback del .map antes del procesamiento de cortes y re-ordenamiento.
+Estrategia de corrección: Eliminar la llave de cierre redundante en la línea 268 de catalog.js. Verificar la validez de la sintaxis usando "node --check".
+
+---
+
+ID del hallazgo: H-02
+Título: Función huérfana getDatosFiltrados en navigation.js
+Descripción: La función "getDatosFiltrados" devuelve la variable local "datosFiltrados" pero no es consumida ni importada por ningún módulo o flujo en el frontend de la plataforma.
+Ubicación:
+  - Archivo: navigation.js
+  - Función: getDatosFiltrados
+  - Línea aproximada: 48-50
+Impacto: Bajo
+Riesgo:
+  - Riesgo de mantenimiento: Medio (acumulación de código muerto y peso residual en el App Shell).
+Dependencias:
+  - Variable: datosFiltrados en navigation.js
+Causa raíz: Evolución del motor de búsqueda y unificación del renderizado de resultados directamente en la función "filtrarContenido", haciendo obsoleta la consulta externa del arreglo local de datos filtrados.
+Estrategia de corrección: Eliminar por completo la función y su exportación en la Fase 2 (Corrección estructural).
+
+---
+
+ID del hallazgo: H-03
+Título: Función huérfana getVerifiedRole en el microservicio de usuarios (users.js)
+Descripción: La función "getVerifiedRole" en el backend de administración de usuarios se encuentra definida pero no es invocada por ningún flujo lógico de validación ni por otros controladores de microservicios.
+Ubicación:
+  - Archivo: Services/Users/users.js
+  - Función: getVerifiedRole
+  - Línea aproximada: 129
+Impacto: Bajo
+Riesgo:
+  - Riesgo de mantenimiento: Bajo (código muerto).
+Dependencias: Ninguna.
+Causa raíz: Transición a un esquema de RBAC centralizado o control de accesos que realiza verificaciones locales dentro de las llamadas directas de acción en lugar de una utilidad independiente.
+Estrategia de corrección: Eliminar la función huérfana en la Fase 2.
+
+---
+
+ID del hallazgo: H-04
+Título: Función huérfana isFlexibleModelMatch en el microservicio de escritura (write.js)
+Descripción: Función utilitaria de comparación flexible de nombres de modelos que ya no se utiliza en el asistente de creación de cortes.
+Ubicación:
+  - Archivo: Services/Write/write.js
+  - Función: isFlexibleModelMatch
+  - Línea aproximada: 397
+Impacto: Bajo
+Riesgo: Bajo.
+Dependencias: Ninguna.
+Causa raíz: Reemplazado en el asistente de registro por comparaciones exactas apoyadas por sugerencias de Levenshtein para garantizar la no-duplicidad de datos de forma más estricta.
+Estrategia de corrección: Eliminar la función en la Fase 2.
+
+---
+
+ID del hallazgo: H-05
+Título: Función huérfana isYearInRangeV2 en el microservicio de catálogo (catalog.js)
+Descripción: Versión secundaria o experimental de la lógica de evaluación de rango de años de vehículos que no tiene referencias de llamada activas.
+Ubicación:
+  - Archivo: Services/Catálogo/catalog.js
+  - Función: isYearInRangeV2
+  - Línea aproximada: 614
+Impacto: Bajo
+Riesgo: Bajo.
+Dependencias: Ninguna.
+Causa raíz: Mantención de la función original "isYearInRange" o simplificación de la consulta de catálogo en el Google Sheets, dejando esta variante como código muerto.
+Estrategia de corrección: Eliminar la función en la Fase 2.
+
+---
+
+ID del hallazgo: H-06
+Título: Código duplicado local createDetailParagraph en ui.js
+Descripción: La función helper utilitaria "createDetailParagraph" se define de forma local e idéntica dentro de las funciones de visualización de modales "mostrarDetalleModal" y "mostrarDetalleRelayModal".
+Ubicación:
+  - Archivo: ui.js
+  - Bloques aproximados: Líneas 2187 y 2249
+Impacto: Medio
+Riesgo:
+  - Riesgo de mantenimiento: Medio (viola el principio DRY, obligando a duplicar cambios de diseño de visualización de textos técnicos).
+Dependencias:
+  - Funciones: mostrarDetalleModal, mostrarDetalleRelayModal
+Causa raíz: Desarrollo desacoplado de las vistas de corte y de relay configuradas en el frontend, duplicando el método de asistencia visual local en lugar de modularizarlo a nivel del archivo.
+Estrategia de corrección: Hoistear (elevar) "createDetailParagraph" a la raíz del módulo ui.js para que sea compartida de forma limpia por ambas funciones de modal en la Fase 2.
+
+-------------------------------------------------------------------
+CONVERSIÓN DE AUDITORÍA EN TAREAS EJECUTABLES
+-------------------------------------------------------------------
+
+1. Tarea 1: Estabilización y Corrección Sintáctica de catalog.js
+   - Prioridad: Crítica
+   - Alcance: Services/Catálogo/catalog.js
+   - Archivos involucrados: Services/Catálogo/catalog.js
+   - Dependencias: Ninguna.
+   - Criterio de aceptación: catalog.js compila y pasa "node --check Services/Catálogo/catalog.js" de forma exitosa, eliminando el error de sintaxis de la línea 268.
+   - Riesgo de implementación: Muy bajo.
+
+2. Tarea 2: Saneamiento de Código Muerto y Funciones Huérfanas
+   - Prioridad: Media
+   - Alcance: navigation.js, Services/Users/users.js, Services/Write/write.js, Services/Catálogo/catalog.js
+   - Archivos involucrados: navigation.js, Services/Users/users.js, Services/Write/write.js, Services/Catálogo/catalog.js
+   - Dependencias: Tarea 1 completada.
+   - Criterio de aceptación: Se remueven las funciones obsoletas identificadas en el diagnóstico. Todos los archivos pasan sus validaciones sintácticas.
+   - Riesgo de implementación: Bajo.
+
+3. Tarea 3: Eliminación de Duplicación (Refactorización DRY en ui.js)
+   - Prioridad: Media
+   - Alcance: ui.js
+   - Archivos involucrados: ui.js
+   - Dependencias: Tarea 2 completada.
+   - Criterio de aceptación: Se unifica "createDetailParagraph" a nivel de archivo en ui.js, reduciendo la duplicidad estructural. El renderizado visual de modales sigue operando de forma idéntica.
+   - Riesgo de implementación: Bajo.

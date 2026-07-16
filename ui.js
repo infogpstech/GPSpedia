@@ -1094,6 +1094,16 @@ export function showNoResultsMessage(textoBusqueda) {
     document.getElementById("contenido").innerHTML = `<p style="text-align:center; padding: 20px;">No se encontraron resultados para "${textoBusqueda}".</p>`;
 }
 
+// Helper utilitario para crear párrafos de detalle compartidos en modales (Hoisted)
+function createDetailParagraph(label, text) {
+    if (text) {
+        const p = document.createElement('p');
+        p.innerHTML = `<strong>${label}:</strong> ${text}`;
+        return p;
+    }
+    return null;
+}
+
 export function mostrarDetalleModal(item) {
     // Registrar como item visto (offline)
     offline.saveViewedItem(item).then(() => {
@@ -2184,15 +2194,6 @@ function mostrarDetalleTutorialModal(item) {
         cont.appendChild(videoContainer);
     }
 
-    const createDetailParagraph = (label, text) => {
-        if (text) {
-            const p = document.createElement('p');
-            p.innerHTML = `<strong>${label}:</strong> ${text}`;
-            return p;
-        }
-        return null;
-    };
-
     const details = [
         createDetailParagraph('Cómo Identificarlo', item.comoIdentificarlo),
         createDetailParagraph('Dónde Encontrarlo', item.dondeEncontrarlo),
@@ -2245,15 +2246,6 @@ function mostrarDetalleRelayModal(item) {
         };
         cont.appendChild(img);
     }
-
-    const createDetailParagraph = (label, text) => {
-        if (text) {
-            const p = document.createElement('p');
-            p.innerHTML = `<strong>${label}:</strong> ${text}`;
-            return p;
-        }
-        return null;
-    };
 
     const details = [
         createDetailParagraph('Función', item.funcion),
