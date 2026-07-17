@@ -45,7 +45,13 @@ async function loadInitialData() {
         // Guardar en caché local para futuros usos (silencioso)
         offline.saveCatalog(catalogData).catch(e => console.warn("Error guardando catálogo en caché:", e));
 
-        processCatalogData(catalogData);
+        if (catalogLoaded) {
+            // Sincronización silenciosa si ya se cargó desde la caché
+            const { performSilentSync } = await import('./ui.js');
+            performSilentSync(catalogData);
+        } else {
+            processCatalogData(catalogData);
+        }
         catalogLoaded = true;
 
     } catch (error) {

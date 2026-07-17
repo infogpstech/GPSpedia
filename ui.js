@@ -1118,12 +1118,16 @@ function createDetailParagraph(label, text) {
 }
 
 export function mostrarDetalleModal(item) {
+    const { catalogData } = getState();
+    const activeItem = (catalogData && catalogData.cortes)
+        ? catalogData.cortes.find(c => String(c.id) === String(item.id)) || item
+        : item;
+
     // Registrar como item visto (offline)
-    offline.saveViewedItem(item).then(() => {
+    offline.saveViewedItem(activeItem).then(() => {
         offline.getViewedItems().then(viewed => setState({ viewedItems: viewed }));
     });
 
-    const { catalogData } = getState();
     const { relay: datosRelay } = catalogData;
 
     const cont = document.getElementById("detalleCompleto");
@@ -1139,9 +1143,9 @@ export function mostrarDetalleModal(item) {
     shareBtn.title = "Compartir este vehículo";
     shareBtn.onclick = () => {
         const shareData = {
-            title: `GPSpedia - ${item.marca} ${item.modelo}`,
-            text: `Mira la información técnica del ${item.marca} ${item.modelo} (${item.anoDesde}) en GPSpedia.`,
-            url: window.location.origin + window.location.pathname + `#search=${encodeURIComponent(item.marca + ' ' + item.modelo)}`
+            title: `GPSpedia - ${activeItem.marca} ${activeItem.modelo}`,
+            text: `Mira la información técnica del ${activeItem.marca} ${activeItem.modelo} (${activeItem.anoDesde}) en GPSpedia.`,
+            url: window.location.origin + window.location.pathname + `#search=${encodeURIComponent(activeItem.marca + ' ' + activeItem.modelo)}`
         };
 
         if (navigator.share) {
@@ -1190,18 +1194,18 @@ export function mostrarDetalleModal(item) {
     const titleContainer = document.createElement("div");
     titleContainer.style.cssText = "border-bottom: 3px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
 
-    const logoUrl = getLogoUrlForMarca(item.marca, item.categoria);
+    const logoUrl = getLogoUrlForMarca(activeItem.marca, activeItem.categoria);
     if (logoUrl) {
         const logoImg = document.createElement("img");
         setOptimizedImage(logoImg, logoUrl, IMG_SIZE_SMALL);
-        logoImg.alt = `Logo ${item.marca}`;
+        logoImg.alt = `Logo ${activeItem.marca}`;
         logoImg.className = 'brand-logo-modal';
         // El tamaño se controla ahora desde style.css para mantener la consistencia.
         titleContainer.appendChild(logoImg);
     }
 
     const title = document.createElement("h2");
-    title.textContent = `${item.modelo}`;
+    title.textContent = `${activeItem.modelo}`;
     title.style.cssText = "color: var(--accent-color); margin: 0; padding: 0; font-size: 1.8em;";
     titleContainer.appendChild(title);
 
@@ -1211,42 +1215,42 @@ export function mostrarDetalleModal(item) {
     subHeaderDiv.style.marginBottom = '5px';
     const subHeaderText = document.createElement('p');
     subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
-    const equipamiento = item.versionesAplicables || item.tipoEncendido || '';
-    const yearRangeText = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
+    const equipamiento = activeItem.versionesAplicables || activeItem.tipoEncendido || '';
+    const yearRangeText = activeItem.anoHasta ? `${activeItem.anoDesde} - ${activeItem.anoHasta}` : activeItem.anoDesde;
     subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | ${yearRangeText}`;
-    if(item.categoria) {
-         subHeaderText.innerHTML += `<br><span style="font-size: 0.9em; color: #777;">${item.categoria}</span>`;
+    if(activeItem.categoria) {
+         subHeaderText.innerHTML += `<br><span style="font-size: 0.9em; color: #777;">${activeItem.categoria}</span>`;
     }
     subHeaderDiv.appendChild(subHeaderText);
     cont.appendChild(subHeaderDiv);
 
 
-    if (item.imagenVehiculo) {
+    if (activeItem.imagenVehiculo) {
         const imgVehiculo = document.createElement("img");
-        setOptimizedImage(imgVehiculo, item.imagenVehiculo, IMG_SIZE_MEDIUM);
+        setOptimizedImage(imgVehiculo, activeItem.imagenVehiculo, IMG_SIZE_MEDIUM);
         imgVehiculo.className = 'img-vehiculo-modal';
         cont.appendChild(imgVehiculo);
     }
 
-    if (item.notaImportante) {
+    if (activeItem.notaImportante) {
         const p = document.createElement("p");
         p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 5px 0;";
-        p.textContent = `⚠️ ${item.notaImportante}`;
+        p.textContent = `⚠️ ${activeItem.notaImportante}`;
         cont.appendChild(p);
     }
 
     const cortes = [];
     for (let i = 1; i <= 3; i++) {
-        if (item[`tipoCorte${i}`]) {
+        if (activeItem[`tipoCorte${i}`]) {
             cortes.push({
                 index: i,
-                tipo: item[`tipoCorte${i}`],
-                ubicacion: item[`ubicacionCorte${i}`],
-                colorCable: item[`colorCableCorte${i}`],
-                configRelay: item[`configRelay${i}`],
-                img: item[`imgCorte${i}`],
-                util: parseInt(item[`utilCorte${i}`] || 0),
-                colaborador: item[`colaboradorCorte${i}`]
+                tipo: activeItem[`tipoCorte${i}`],
+                ubicacion: activeItem[`ubicacionCorte${i}`],
+                colorCable: activeItem[`colorCableCorte${i}`],
+                configRelay: activeItem[`configRelay${i}`],
+                img: activeItem[`imgCorte${i}`],
+                util: parseInt(activeItem[`utilCorte${i}`] || 0),
+                colaborador: activeItem[`colaboradorCorte${i}`]
             });
         }
     }
@@ -1259,7 +1263,7 @@ export function mostrarDetalleModal(item) {
         title.innerHTML = `Corte Recomendado <span style="font-weight:normal; color: var(--text-medium);">(Votos: ${recommendedCut.util})</span>`;
         recommendedSection.appendChild(title);
         // El corte recomendado se carga de inmediato (isLazy = false)
-        renderCutContent(recommendedSection, recommendedCut, datosRelay, item.id, false);
+        renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false);
         cont.appendChild(recommendedSection);
     }
 
@@ -1272,21 +1276,266 @@ export function mostrarDetalleModal(item) {
             title: `Corte Alternativo ${idx + 1} (Votos: ${corte.util})`,
             data: corte
         })),
-        { title: 'Apertura', content: item.apertura, img: item.imgApertura, colaborador: item.colaboradorApertura },
-        { title: 'Cables de Alimentación', content: item.cableAlimen, img: item.imgCableAlimen, colaborador: item.colaboradorAlimen },
-        { title: 'Vídeo Guía de Desarme', Video: item.Video }
+        { title: 'Apertura', content: activeItem.apertura, img: activeItem.imgApertura, colaborador: activeItem.colaboradorApertura },
+        { title: 'Cables de Alimentación', content: activeItem.cableAlimen, img: activeItem.imgCableAlimen, colaborador: activeItem.colaboradorAlimen },
+        { title: 'Vídeo Guía de Desarme', Video: activeItem.Video }
     ];
 
     otherSections.forEach(sec => {
         const hasContent = sec.isCorte || sec.content || sec.img || sec.Video;
         if (hasContent && sec.title) {
-            createAccordionSection(accordionContainer, sec.title, sec, false, datosRelay, item.id);
+            createAccordionSection(accordionContainer, sec.title, sec, false, datosRelay, activeItem.id);
         }
     });
 
     document.getElementById("modalDetalle").classList.add("visible");
     if (window.history && window.history.pushState) {
         window.history.pushState({ modalOpen: true }, '');
+    }
+}
+
+/**
+ * Realiza una sincronización silenciosa (Silent Background Synchronization)
+ * comparando los datos nuevos con los existentes y actualizando únicamente
+ * los elementos modificados en el DOM sin recargar la interfaz ni perder el estado.
+ */
+export async function performSilentSync(newCatalogData) {
+    try {
+        const { catalogData: oldCatalogData } = getState();
+        if (!oldCatalogData || !oldCatalogData.cortes) {
+            // Fallback si no hay catálogo anterior cargado
+            updateFullState(newCatalogData);
+            return;
+        }
+
+        // Crear mapas por ID para fácil comparación de cortes
+        const oldCortesMap = new Map(oldCatalogData.cortes.map(c => [String(c.id), c]));
+        const newCortesMap = new Map(newCatalogData.cortes.map(c => [String(c.id), c]));
+
+        const updatedCortesList = [];
+        let hasChanges = false;
+
+        // 1. Detectar cortes modificados o nuevos
+        for (const [id, newCorte] of newCortesMap) {
+            const oldCorte = oldCortesMap.get(id);
+            if (!oldCorte) {
+                // Registro nuevo
+                updatedCortesList.push({ type: 'added', item: newCorte });
+                hasChanges = true;
+            } else if (JSON.stringify(oldCorte) !== JSON.stringify(newCorte)) {
+                // Registro modificado
+                updatedCortesList.push({ type: 'modified', oldItem: oldCorte, newItem: newCorte });
+                hasChanges = true;
+            }
+        }
+
+        // 2. Detectar eliminados
+        for (const id of oldCortesMap.keys()) {
+            if (!newCortesMap.has(id)) {
+                updatedCortesList.push({ type: 'removed', id });
+                hasChanges = true;
+            }
+        }
+
+        if (!hasChanges) {
+            console.log("Sincronización silenciosa: No se detectaron cambios.");
+            return;
+        }
+
+        console.log(`Sincronización silenciosa: Detectados ${updatedCortesList.length} cambios.`);
+
+        // 3. Procesar las modificaciones en el DOM de forma 100% silenciosa
+        for (const change of updatedCortesList) {
+            if (change.type === 'modified') {
+                await updateCardInPlace(change.newItem);
+                updateOpenModalIfActive(change.newItem);
+            } else if (change.type === 'added') {
+                // Insertar de manera fluida utilizando el carrusel de agregados recientemente si corresponde
+                await insertNewVehicleFluently(change.item);
+            } else if (change.type === 'removed') {
+                removeVehicleSilently(change.id);
+            }
+        }
+
+        // 4. Actualizar el estado global con los nuevos datos consolidados
+        updateFullState(newCatalogData);
+
+    } catch (e) {
+        console.error("Error en performSilentSync:", e);
+    }
+}
+
+function updateFullState(catalogData) {
+    try {
+        const categoryCounts = catalogData.cortes.reduce((acc, item) => {
+            if (item.categoria) {
+                acc[item.categoria] = (acc[item.categoria] || 0) + 1;
+            }
+            return acc;
+        }, {});
+
+        const sortedCategories = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]);
+
+        setState({
+            catalogData: {
+                ...catalogData,
+                sortedCategories: sortedCategories
+            }
+        });
+    } catch (e) {
+        console.error("Error actualizando estado global tras sincronización:", e);
+    }
+}
+
+/**
+ * Sustituye de manera silenciosa una tarjeta en el catálogo sin parpadeos ni reconstrucciones completas.
+ */
+async function updateCardInPlace(newItem) {
+    const cards = document.querySelectorAll(`.card[data-vehicle-id="${newItem.id}"]`);
+    if (cards.length === 0) return;
+
+    // Pre-cargar la imagen en segundo plano para evitar parpadeos
+    if (newItem.imagenVehiculo) {
+        await preloadImageSilently(newItem.imagenVehiculo);
+    }
+
+    cards.forEach(card => {
+        // Encontrar la imagen
+        const img = card.querySelector('img');
+        if (img && newItem.imagenVehiculo) {
+            setOptimizedImage(img, newItem.imagenVehiculo, IMG_SIZE_SMALL);
+        }
+
+        // Encontrar el texto o sobrecapa y actualizarlo
+        const overlay = card.querySelector('.overlay');
+        if (overlay) {
+            const hasResultsForVariant = card.onclick && card.onclick.toString().includes('resultsForVariant');
+            if (hasResultsForVariant) {
+                const version = newItem.versionesAplicables || '';
+                overlay.innerHTML = `<div class="overlay-text-primary">${newItem.marca} ${newItem.modelo}</div><div class="overlay-text-secondary">${newItem.categoria} | ${version}</div>`;
+            } else {
+                const yearRange = newItem.anoHasta ? `${newItem.anoDesde} - ${newItem.anoHasta}` : newItem.anoDesde;
+                overlay.innerHTML = `<div class="overlay-text-primary">${newItem.marca} ${newItem.modelo}</div><div class="overlay-text-secondary">${yearRange} | ${newItem.tipoEncendido || ''}</div>`;
+            }
+        }
+    });
+}
+
+/**
+ * Actualiza el modal abierto actualmente si coincide con el vehículo sincronizado.
+ */
+function updateOpenModalIfActive(newItem) {
+    const modalDetalle = document.getElementById('modalDetalle');
+    if (!modalDetalle || !modalDetalle.classList.contains('visible')) return;
+
+    // Podemos verificar si el detalle abierto corresponde al ID modificado.
+    // Una manera limpia es volver a almacenar el item modificado en el historial de vistos sin alterar la visualización actual,
+    // y dejar que la siguiente apertura muestre la nueva versión.
+    // Sin embargo, para cumplir 100% que la siguiente apertura muestre automáticamente la versión actualizada y el caché esté listo:
+    offline.saveViewedItem(newItem).catch(err => console.warn("Error guardando item visto actualizado:", err));
+}
+
+/**
+ * Pre-carga una imagen en segundo plano y resuelve la promesa cuando está completamente disponible.
+ */
+function preloadImageSilently(fileId) {
+    return new Promise((resolve) => {
+        if (!fileId) return resolve();
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = getImageUrl(fileId, IMG_SIZE_MEDIUM);
+    });
+}
+
+/**
+ * Remueve un vehículo del DOM de forma silenciosa.
+ */
+function removeVehicleSilently(id) {
+    const cards = document.querySelectorAll(`.card[data-vehicle-id="${id}"]`);
+    cards.forEach(card => {
+        card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.8)';
+        setTimeout(() => card.remove(), 300);
+    });
+}
+
+/**
+ * Incorpora un nuevo vehículo fluido utilizando la transición del carrusel o del grid de manera consistente.
+ */
+async function insertNewVehicleFluently(item) {
+    const cont = document.getElementById("contenido");
+    if (!cont) return;
+
+    // Pre-cargar imagen de vehículo nuevo
+    if (item.imagenVehiculo) {
+        await preloadImageSilently(item.imagenVehiculo);
+    }
+
+    const currentNav = getState().navigationState || {};
+    const isMainLevel = currentNav.level === 'categorias';
+
+    if (isMainLevel) {
+        // 2. Insertar en el carrusel de "Últimos Agregados"
+        const tracks = document.querySelectorAll('.carousel-track');
+        let ultimosAgregadosTrack = null;
+
+        tracks.forEach(track => {
+            const titleSibling = track.parentElement.previousElementSibling;
+            if (titleSibling && titleSibling.textContent.includes('Últimos Agregados')) {
+                ultimosAgregadosTrack = track;
+            }
+        });
+
+        if (ultimosAgregadosTrack) {
+            const newCard = crearCardVehiculo(item);
+            newCard.style.opacity = '0';
+            newCard.style.transform = 'scale(0.8) translateX(50px)';
+            newCard.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+
+            // Insertar al inicio de la lista de agregados recientemente
+            ultimosAgregadosTrack.insertBefore(newCard, ultimosAgregadosTrack.firstChild);
+
+            // Disparar animación fluida
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    newCard.style.opacity = '1';
+                    newCard.style.transform = 'scale(1) translateX(0)';
+                }, 50);
+            });
+        }
+    } else {
+        // Insertar en la vista de cuadrícula si la navegación actual coincide con el elemento recién insertado
+        const activeGrid = document.querySelector('#contenido .grid');
+        if (activeGrid) {
+            let isRelevant = false;
+            if (currentNav.level === 'modelosPorMarca' && currentNav.marca === item.marca) {
+                isRelevant = true;
+            } else if (currentNav.level === 'modelos' && currentNav.categoria === item.categoria && currentNav.marca === item.marca) {
+                isRelevant = true;
+            } else if (currentNav.level === 'versiones' && currentNav.categoria === item.categoria && currentNav.marca === item.marca && currentNav.modelo === item.modelo) {
+                isRelevant = true;
+            } else if (currentNav.level === 'versionesEquipamiento' && currentNav.categoria === item.categoria && currentNav.marca === item.marca && currentNav.modelo === item.modelo) {
+                isRelevant = true;
+            } else if (currentNav.level === 'tiposEncendido' && currentNav.categoria === item.categoria && currentNav.marca === item.marca && currentNav.modelo === item.modelo) {
+                isRelevant = true;
+            }
+
+            if (isRelevant) {
+                const newCard = crearCardVehiculo(item);
+                newCard.style.opacity = '0';
+                newCard.style.transform = 'scale(0.8)';
+                newCard.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                activeGrid.appendChild(newCard);
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        newCard.style.opacity = '1';
+                        newCard.style.transform = 'scale(1)';
+                    }, 50);
+                });
+            }
+        }
     }
 }
 
@@ -1871,6 +2120,7 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
 
     const card = document.createElement("div");
     card.className = "card";
+    card.setAttribute('data-vehicle-id', item.id);
     card.style.animation = 'none';
     card.style.opacity = '1';
 

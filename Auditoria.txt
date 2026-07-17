@@ -413,3 +413,18 @@ Estrategia de corrección:
   - Hacer que el botón "Es más antiguo" se muestre siempre en `showStep1` independientemente de `isOldModel`.
   - Modificar su acción para invocar `showStepInput(true)`, permitiendo al usuario ingresar el año específico para la opción "Es más antiguo".
   - Actualizar `showStepInput` para aceptar el parámetro `isFromAntiguo` y registrar la respuesta adecuada.
+
+===================================================================
+AUDITORÍA DE MEJORAS DE CACHÉ Y SINCRONIZACIÓN SILENCIOSA (17/07/2026)
+===================================================================
+
+ID del hallazgo: H-SYNC-01
+Título: Inconsistencia y desactualización prolongada en datos del catálogo bajo el sistema de caché previo
+Descripción: El catálogo se cargaba desde el caché correctamente pero no reconciliaba silenciosamente los cambios del servidor en segundo plano, mostrando datos obsoletos indefinidamente a menos que se limpiara manualmente o se recargara toda la página de forma disruptiva.
+Ubicación:
+  - Archivos: auth.js, ui.js
+Estrategia de corrección:
+  - Convertir el flujo de datos en "Stale-While-Revalidate".
+  - Introducir `performSilentSync` en `ui.js` para reconciliar las modificaciones de cortes, marcas y agregados en segundo plano sin alterar el foco, scroll, ni modales abiertos.
+  - Sincronizar reactivamente el detalle del modal mediante resolución directa y dinámica por ID.
+  - Implementar pre-carga e inserción animada de nuevos recursos (imágenes, tarjetas) sin parpadeos visuales.

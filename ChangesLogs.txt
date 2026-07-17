@@ -575,3 +575,16 @@ Archivos modificados:
 **Archivo: ui.js**
 - Se habilitó la visualización del botón "Es más antiguo" en `showStep1` sin importar si se trata de un `isOldModel` para dar soporte a que el usuario siempre pueda indicar un año anterior.
 - Se actualizó `showStepInput` para aceptar el parámetro opcional `isFromAntiguo`. Cuando es verdadero, se muestra el título "¿Para qué año es este vehículo más antiguo?" y se registra la sugerencia en la base de datos bajo la descripción "Es más antiguo" con el año indicado.
+
+**CHANGES LOG - 17/07/2026**
+
+**Archivo: auth.js**
+- Se refactorizó la función `loadInitialData` para habilitar una estrategia "Stale-While-Revalidate". Tras cargar inmediatamente los datos desde el caché local (IndexedDB) para disponibilidad instantánea, realiza un fetch silencioso del catálogo más reciente en segundo plano. Si los datos ya estaban cargados desde el caché, se invoca de forma no-bloqueante a `performSilentSync` en `ui.js`.
+
+**Archivo: ui.js**
+- Se implementó la función `performSilentSync` para reconciliar las diferencias entre los datos locales y remotos (adiciones, modificaciones, eliminaciones) de forma 100% silenciosa en segundo plano.
+- Se modificó `crearCardVehiculo` para incluir un atributo `data-vehicle-id` que identifica a cada tarjeta de forma única en el DOM.
+- Se implementó `updateCardInPlace` para actualizar silenciosamente las tarjetas en el catálogo sin parpadeos, rediseños abruptos ni reinicios del catálogo, pre-cargando la imagen mediante `preloadImageSilently` antes de sustituirla en el DOM.
+- Se ajustó `mostrarDetalleModal` para que resuelva de forma dinámica y reactiva el ítem más reciente a partir del catálogo global por ID en tiempo de apertura, evitando inconsistencias debido a cierres de eventos en tarjetas existentes.
+- Se ajustó `updateOpenModalIfActive` para persistir los cambios visuales en segundo plano en el historial visto sin provocar bucles de suscripción de estado o reconstrucciones de grid en categorías que causen pérdida de la posición de scroll del usuario.
+- Se diseñó `insertNewVehicleFluently` para incorporar nuevos vehículos de manera fluida y animada en el carrusel de "Últimos Agregados" o en los sub-grids activos de catálogo de manera totalmente consistente con la interfaz.
