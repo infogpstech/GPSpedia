@@ -838,13 +838,11 @@ function showValidationBanner(item, isOldModel) {
 
         actions.appendChild(btnSi);
 
-        if (!isOldModel) {
-            const btnAntiguo = document.createElement('button');
-            btnAntiguo.className = 'validation-btn secondary';
-            btnAntiguo.textContent = 'Es más antiguo';
-            btnAntiguo.onclick = () => registerAndClose('Es más antiguo', (parseInt(item.anoDesde) - 1));
-            actions.appendChild(btnAntiguo);
-        }
+        const btnAntiguo = document.createElement('button');
+        btnAntiguo.className = 'validation-btn secondary';
+        btnAntiguo.textContent = 'Es más antiguo';
+        btnAntiguo.onclick = () => showStepInput(true);
+        actions.appendChild(btnAntiguo);
 
         actions.appendChild(btnNo);
 
@@ -916,10 +914,12 @@ function showValidationBanner(item, isOldModel) {
         renderStep(content);
     };
 
-    const showStepInput = () => {
+    const showStepInput = (isFromAntiguo = false) => {
         const msg = document.createElement('div');
         msg.className = 'validation-message';
-        msg.textContent = '¿Para qué año funciona correctamente este corte?';
+        msg.textContent = isFromAntiguo
+            ? '¿Para qué año es este vehículo más antiguo?'
+            : '¿Para qué año funciona correctamente este corte?';
 
         const inputGroup = document.createElement('div');
         inputGroup.className = 'validation-input-group';
@@ -976,7 +976,11 @@ function showValidationBanner(item, isOldModel) {
                 return;
             }
 
-            registerAndClose(`Otro año: ${yearVal}`, yearVal);
+            if (isFromAntiguo) {
+                registerAndClose('Es más antiguo', yearVal);
+            } else {
+                registerAndClose(`Otro año: ${yearVal}`, yearVal);
+            }
         };
 
         inputGroup.appendChild(input);

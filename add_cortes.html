@@ -318,28 +318,6 @@
             document.getElementById('form-stage-2').addEventListener('submit', handleStage2Submit);
             document.getElementById('form-stage-3').addEventListener('submit', handleStage3Submit);
 
-            // Testigo del motor checkbox
-            const checkbox = document.getElementById('testigoMotor');
-            checkbox.addEventListener('change', () => {
-                const testigoHTML = `<br><img src="https://drive.google.com/thumbnail?id=1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX&sz=w100-h50" style="height:50px; width:auto; float:right; margin-left:10px;"><br><b style="color: red;">NOTA:</b>Este corte activa el testigo del motor <br>`;
-                const textareas = [
-                    document.getElementById('ubicacionCorte1'),
-                    document.getElementById('ubicacionCorte2'),
-                    document.getElementById('ubicacionCorte3')
-                ].filter(Boolean);
-
-                textareas.forEach(textarea => {
-                    if (checkbox.checked) {
-                        if (!textarea.value.includes(testigoHTML)) {
-                            textarea.value = textarea.value + testigoHTML;
-                        }
-                    } else {
-                        if (textarea.value.includes(testigoHTML)) {
-                            textarea.value = textarea.value.replace(testigoHTML, '');
-                        }
-                    }
-                });
-            });
 
             // Suggestions
             document.getElementById('marca').addEventListener('blur', (e) => handleSuggestion(e.target, 'marca'));
@@ -520,6 +498,27 @@
             const btn = e.target.querySelector('button[type="submit"]');
             toggleLoading(true);
             btn.classList.add('btn-loading');
+
+            // Apply checkEngine motor warning HTML code insertion right before submitting to prevent editing/accidental deletion
+            const checkbox = document.getElementById('testigoMotor');
+            const testigoHTML = `<br><img src="https://drive.google.com/thumbnail?id=1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX&sz=w100-h50" style="height:50px; width:auto; float:right; margin-left:10px;"><br><b style="color: red;">NOTA:</b>Este corte activa el testigo del motor <br>`;
+            const textareas = [
+                document.getElementById('ubicacionCorte1'),
+                document.getElementById('ubicacionCorte2'),
+                document.getElementById('ubicacionCorte3')
+            ].filter(Boolean);
+
+            textareas.forEach(textarea => {
+                if (checkbox && checkbox.checked) {
+                    if (!textarea.value.includes(testigoHTML)) {
+                        textarea.value = textarea.value + testigoHTML;
+                    }
+                } else {
+                    if (textarea.value.includes(testigoHTML)) {
+                        textarea.value = textarea.value.replace(testigoHTML, '');
+                    }
+                }
+            });
 
             const cutData = {
                 tipoCorte1: document.getElementById('tipoCorte1').value,

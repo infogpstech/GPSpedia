@@ -566,3 +566,12 @@ Archivos modificados:
 
 **Archivo: Auditoria.txt / Auditoría.txt / Auditória.txt**
 - Se actualizó el registro histórico de auditorías con el análisis técnico detallado, dependencias y riesgos evaluados para las mejoras de frontend de la versión actual.
+
+**CHANGES LOG - 17/02/2026 (Refinamiento Post-Commit)**
+
+**Archivo: add_cortes.html**
+- Se modificó la lógica del checkbox `testigoMotor` para que la inserción o remoción del código HTML del testigo del motor en las ubicaciones de corte (`ubicacionCorte1`, `ubicacionCorte2`, `ubicacionCorte3`) se realice de manera diferida en el momento del envío del formulario (`handleStage2Submit`), en lugar de hacerlo inmediatamente en tiempo de tecleo. Esto evita que el usuario borre o altere accidentalmente el bloque de código mientras escribe.
+
+**Archivo: ui.js**
+- Se habilitó la visualización del botón "Es más antiguo" en `showStep1` sin importar si se trata de un `isOldModel` para dar soporte a que el usuario siempre pueda indicar un año anterior.
+- Se actualizó `showStepInput` para aceptar el parámetro opcional `isFromAntiguo`. Cuando es verdadero, se muestra el título "¿Para qué año es este vehículo más antiguo?" y se registra la sugerencia en la base de datos bajo la descripción "Es más antiguo" con el año indicado.

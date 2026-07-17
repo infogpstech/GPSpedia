@@ -264,3 +264,17 @@ PLAN DE RESPALDO OBLIGATORIO
 Archivos a respaldar:
 - `add_cortes.html` -> `add_cortes.html.bak`
 - `ui.js` -> `ui.js.bak`
+
+===================================================================
+AUDITORÍA DE MEJORAS DE FRONTEND - ADICIONAL "ES MÁS ANTIGUO" (17/02/2026)
+===================================================================
+
+ID del hallazgo: H-FRONT-03
+Título: El botón "Es más antiguo" no solicita el año al usuario y no se muestra para modelos antiguos
+Descripción:
+  1. En `ui.js` (`showStep1`), el botón "Es más antiguo" solo se muestra cuando `isOldModel` es falso (`if (!isOldModel)`). Sin embargo, incluso para modelos antiguos, el usuario puede estar trabajando en una versión aún más antigua, por lo que la opción debe estar disponible siempre.
+  2. Al presionar "Es más antiguo", el sistema invoca inmediatamente `registerAndClose` con un año precalculado, en lugar de solicitar el año específico mediante un campo de entrada (input text) como solicita el usuario.
+Estrategia de corrección:
+  - Hacer que el botón "Es más antiguo" se muestre siempre en `showStep1` independientemente de `isOldModel`.
+  - Modificar su acción para invocar `showStepInput(true)`, permitiendo al usuario ingresar el año específico para la opción "Es más antiguo".
+  - Actualizar `showStepInput` para aceptar el parámetro `isFromAntiguo` y registrar la respuesta adecuada.
