@@ -228,3 +228,39 @@
 - **Al realizar el primer retroceso**: El navegador regresa de forma nativa a la entrada 2 (`busqueda`). El manejador del `popstate` intercepta esto, oculta el teclado, pierde el foco y realiza la animación inversa de forma visual. Para sincronizar la consulta actual sin alterar la pila de historial ni recurrir a `pushState`, se usa `history.replaceState({ level: "busqueda", query: currentQuery })`.
 - **Al realizar el segundo retroceso**: El navegador regresa de forma nativa a la entrada 1 (`categorias` o estado previo). El manejador del `popstate` limpia el buscador y restaura la pantalla inicial completamente.
 - Este enfoque es 100% nativo, no realiza llamadas a `pushState` durante el evento `popstate`, y garantiza una sincronización perfecta y robusta en cualquier navegador y dispositivo móvil.
+
+
+===================================================================
+AUDITORÍA DE MEJORAS DE FRONTEND (SIN MODIFICACIONES AL BACKEND) (17/02/2026)
+===================================================================
+
+-------------------------------------------------------------------
+DIAGNÓSTICO TÉCNICO Y HALLAZGOS DETALLADOS
+-------------------------------------------------------------------
+
+ID del hallazgo: H-FRONT-01
+Título: Falta de opción para indicar activación del testigo del motor en formulario de cortes
+Descripción: En `add_cortes.html` (Etapa 2), los usuarios no disponen de una opción rápida para indicar si un corte activa el testigo del motor. El requisito exige un checkbox que inyecte un bloque HTML específico al final de la descripción del campo "Ubicación del Corte" y lo remueva de manera limpia y sin duplicarse si se desmarca.
+Ubicación:
+  - Archivo: add_cortes.html
+Impacto: Medio
+Riesgo: Bajo
+Dependencias: Campo `ubicacionCorte1`
+
+ID del hallazgo: H-FRONT-02
+Título: Determinación inexacta de generación más reciente y validación de año laxa
+Descripción:
+  1. En `ui.js` (`checkValidationEligibility`), la comparación de la generación más reciente asume que el ID del vehículo debe coincidir exactamente con el ID obtenido por `reduce` de la generación con mayor año de inicio. Si existen múltiples cortes registrados para la misma última generación, la comparación de IDs falla erróneamente para algunos registros. Debemos validar que no exista ninguna generación posterior para el mismo vehículo.
+  2. En `ui.js` (`showStepInput`), la validación del año introducido por el usuario permite letras en navegadores que no bloquean la entrada, permite valores no numéricos parciales y tolera años futuros de hasta `currentYear + 2`. El requisito exige restringir a números estrictos de 4 dígitos, con un máximo de `currentYear + 1` y mínimo de `1980` (rango esperado por el sistema).
+Ubicación:
+  - Archivo: ui.js
+Impacto: Alto
+Riesgo: Medio
+Dependencias: `checkValidationEligibility`, `showValidationBanner`
+
+-------------------------------------------------------------------
+PLAN DE RESPALDO OBLIGATORIO
+-------------------------------------------------------------------
+Archivos a respaldar:
+- `add_cortes.html` -> `add_cortes.html.bak`
+- `ui.js` -> `ui.js.bak`

@@ -207,6 +207,10 @@
                     <div class="form-group"><label for="tipoCorte1">Tipo de Corte</label><select id="tipoCorte1" required></select></div>
                     <div class="form-group"><label for="configRelay1">Configuración de Relay</label><select id="configRelay1" required></select></div>
                     <div class="form-group full-width"><label for="ubicacionCorte1">Ubicación del Corte</label><textarea id="ubicacionCorte1" rows="3"></textarea></div>
+                    <div class="form-group full-width" style="flex-direction: row; align-items: center; gap: 8px; margin-top: -10px; margin-bottom: 10px;">
+                        <input type="checkbox" id="testigoMotor" style="width: auto; margin: 0; cursor: pointer;">
+                        <label for="testigoMotor" style="margin: 0; font-size: 0.95em; cursor: pointer;">Este corte activa el testigo del motor.</label>
+                    </div>
                     <div class="form-group full-width"><label for="colorCableCorte1">Color(es) de Cable</label><input type="text" id="colorCableCorte1"></div>
                     <div class="form-group full-width">
                         <label>Imagen del Corte</label>
@@ -313,6 +317,29 @@
             document.getElementById('form-stage-1').addEventListener('submit', handleStage1Submit);
             document.getElementById('form-stage-2').addEventListener('submit', handleStage2Submit);
             document.getElementById('form-stage-3').addEventListener('submit', handleStage3Submit);
+
+            // Testigo del motor checkbox
+            const checkbox = document.getElementById('testigoMotor');
+            checkbox.addEventListener('change', () => {
+                const testigoHTML = `<br><img src="https://drive.google.com/thumbnail?id=1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX&sz=w100-h50" style="height:50px; width:auto; float:right; margin-left:10px;"><br><b style="color: red;">NOTA:</b>Este corte activa el testigo del motor <br>`;
+                const textareas = [
+                    document.getElementById('ubicacionCorte1'),
+                    document.getElementById('ubicacionCorte2'),
+                    document.getElementById('ubicacionCorte3')
+                ].filter(Boolean);
+
+                textareas.forEach(textarea => {
+                    if (checkbox.checked) {
+                        if (!textarea.value.includes(testigoHTML)) {
+                            textarea.value = textarea.value + testigoHTML;
+                        }
+                    } else {
+                        if (textarea.value.includes(testigoHTML)) {
+                            textarea.value = textarea.value.replace(testigoHTML, '');
+                        }
+                    }
+                });
+            });
 
             // Suggestions
             document.getElementById('marca').addEventListener('blur', (e) => handleSuggestion(e.target, 'marca'));

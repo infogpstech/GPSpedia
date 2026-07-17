@@ -553,3 +553,16 @@ Archivos modificados:
 - Incrementada versión del título principal, pantalla de acceso y pie de página en index.html a v2.5.7.
 
 **Versión:** Incremento a v2.5.7 (Consolidación, Limpieza de Respaldos y Cierre de Auditoría).
+
+**CHANGES LOG - 17/02/2026**
+
+**Archivo: add_cortes.html**
+- Se agregó el campo de opción (checkbox) con ID `testigoMotor` con la etiqueta "Este corte activa el testigo del motor." en la Etapa 2 del formulario.
+- Se añadió un event listener de tipo 'change' en `setupEventListeners`. Al marcar el checkbox, se inyecta automáticamente el fragmento HTML del testigo del motor al final de los campos `ubicacionCorte1`, `ubicacionCorte2` o `ubicacionCorte3` (siempre que estén presentes en el DOM). Al desmarcar el checkbox, se remueve de forma segura sin duplicidades ni alteración de texto previo del usuario.
+
+**Archivo: ui.js**
+- Se refactorizó la lógica de `checkValidationEligibility` para determinar con precisión si el vehículo corresponde a la última generación disponible basándose en la comparación de `anoDesde` del mismo vehículo (marca, modelo, categoría, tipo de encendido y equipamiento normalizado), asegurando total compatibilidad con agrupaciones de versiones como "LX, EX, Sport" o "Sport / EX / LX".
+- Se actualizó la validación del año introducido en `showStepInput` utilizando entrada de texto con patrón numérico, restringiendo el valor a números de 4 dígitos exactos en el rango lógico del sistema (mínimo 1980, máximo `currentYear + 2`).
+
+**Archivo: Auditoria.txt / Auditoría.txt / Auditória.txt**
+- Se actualizó el registro histórico de auditorías con el análisis técnico detallado, dependencias y riesgos evaluados para las mejoras de frontend de la versión actual.

@@ -741,15 +741,15 @@ async function checkValidationEligibility(item) {
         normalizeVersion(c.versionesAplicables) === normalizedItemVersion
     );
 
-    // 3. Determinar cuál es la generación más reciente basada en anoDesde
-    const latestGeneration = sameModelGenerations.reduce((prev, current) => {
-        const yearCurrent = parseInt(current.anoDesde) || 0;
-        const yearPrev = parseInt(prev.anoDesde) || 0;
-        return (yearCurrent > yearPrev) ? current : prev;
-    }, sameModelGenerations[0]);
+    // 3. Condición: El vehículo debe pertenecer a la generación más reciente registrada.
+    // Si existe una generación posterior registrada para el mismo vehículo (mismo modelo/marca/categoría/encendido/versión), la notificación no deberá mostrarse.
+    const hasPosteriorGeneration = sameModelGenerations.some(c => {
+        const yearC = parseInt(c.anoDesde) || 0;
+        const yearItem = parseInt(item.anoDesde) || 0;
+        return yearC > yearItem;
+    });
 
-    // 4. Condición: El vehículo debe pertenecer a la generación más reciente registrada.
-    if (String(item.id) !== String(latestGeneration.id)) return { eligible: false };
+    if (hasPosteriorGeneration) return { eligible: false };
 
     // 5. Condición: El rango de años debe finalizar antes del año actual.
     const anoHasta = item.anoHasta ? parseInt(item.anoHasta) : (parseInt(item.anoDesde) || 0);
@@ -925,17 +925,26 @@ function showValidationBanner(item, isOldModel) {
         inputGroup.className = 'validation-input-group';
 
         const input = document.createElement('input');
-        input.type = 'number';
+        input.type = 'text';
+        input.inputMode = 'numeric';
         input.className = 'validation-input';
         input.placeholder = 'Ingrese el año';
-        input.min = '1980';
-        input.max = (currentYear + 2).toString();
+        input.maxLength = 4;
+        input.addEventListener('input', () => {
+            input.style.borderColor = '';
+        });
 
         const btnSend = document.createElement('button');
         btnSend.className = 'validation-btn';
         btnSend.textContent = 'Enviar';
         btnSend.onclick = () => {
-            const yearVal = parseInt(input.value);
+            const rawValue = input.value.trim();
+            if (!/^\d{4}$/.test(rawValue)) {
+                input.style.borderColor = 'red';
+                return;
+            }
+
+            const yearVal = parseInt(rawValue, 10);
             if (isNaN(yearVal) || yearVal < 1980 || yearVal > (currentYear + 2)) {
                 input.style.borderColor = 'red';
                 return;
