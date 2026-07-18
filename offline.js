@@ -1,4 +1,4 @@
-// GPSpedia Offline & Persistence Module | Version: 1.3
+// GPSpedia Offline & Persistence Module | Version: 2.1.5
 // Responsibilities:
 // - Manage IndexedDB for local storage of catalog, history, and thumbnails.
 // - Implement image compression and local caching.

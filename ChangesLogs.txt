@@ -212,7 +212,7 @@
 
 **Archivo: ui.js**
 - **Líneas 280-291:** Actualizada `mostrarModelosPorMarca` para capturar `previousState` y manejar dinámicamente el botón "Volver" (regreso a búsqueda o página principal).
-- **Líneas 416-424:** Actualizada `mostrarTiposEncendido` para detectar si el origen es `modelosPorMarca` y retornar correctamente a la lista global de modelos de la marca.
+- **Líneas 416-424:** Actualizada `mostrarTiposEncendido` para detectar si el origen es `modelosPorMarca` and retornar correctamente a la lista global de modelos de la marca.
 - **Líneas 481-483:** Añadido caso en `mostrarVersiones` para retornar a `mostrarModelosPorMarca` si ese era el nivel previo.
 - **Líneas 532-540:** Modificada `mostrarVersionesEquipamiento` para capturar estado previo y corregir la navegación circular hacia atrás.
 
@@ -588,3 +588,19 @@ Archivos modificados:
 - Se ajustó `mostrarDetalleModal` para que resuelva de forma dinámica y reactiva el ítem más reciente a partir del catálogo global por ID en tiempo de apertura, evitando inconsistencias debido a cierres de eventos en tarjetas existentes.
 - Se ajustó `updateOpenModalIfActive` para persistir los cambios visuales en segundo plano en el historial visto sin provocar bucles de suscripción de estado o reconstrucciones de grid en categorías que causen pérdida de la posición de scroll del usuario.
 - Se diseñó `insertNewVehicleFluently` para incorporar nuevos vehículos de manera fluida y animada en el carrusel de "Últimos Agregados" o en los sub-grids activos de catálogo de manera totalmente consistente con la interfaz.
+
+**CHANGES LOG - 18/02/2026 (REFINAMIENTOS DEL FRONTEND - VERSIÓN 2.1.5)**
+
+**Archivo: add_cortes.html**
+- Tarea 1: Agregada la versión de equipamiento en las tarjetas de coincidencias del formulario de registro en la Etapa 1.5. Implementado un algoritmo robusto de normalización de variantes agrupadas (ej. "LX, EX, Sport" vs "sport / lx / ex") que las identifica como equivalentes independientemente del orden, espacios, mayúsculas o delimitadores, mostrando una etiqueta de color verde "(Coincide)" cuando hay coincidencia exacta con el formulario.
+
+**Archivo: style.css**
+- Tarea 2: Se ajustó el z-index de la clase `.lightbox` a `2200` para garantizar que la imagen técnica ampliada del diagrama se superponga adecuadamente al modal secundario de configuración del relay (z-index: 2100) y al modal de detalle (z-index: 1600).
+
+**Archivo: ui.js**
+- Tarea 3: Modificado el logotipo de marca en el modal de detalle para actuar como enlace interactivo clickable (`cursor: pointer`). Al hacer clic, cierra el modal de detalle, cambia el estado de navegación de manera segura (con `replaceState`) y muestra todos los modelos de dicha marca.
+- Tarea 4: Convertida la categoría del vehículo en el modal de detalle en un enlace clickable con estilo subrayado. Al hacer clic, se cierra el modal y se muestra únicamente los modelos de esa categoría bajo la misma marca.
+- Tarea 5: Implementadas flechas navegables `<` y `>` para viajar de manera rápida entre las generaciones del mismo modelo de vehículo (con idénticos marca, modelo, categoría, encendido y versión de equipamiento) ordenadas cronológicamente por año. Las flechas solo aparecen si hay múltiples generaciones disponibles y respetan los límites cronológicos. El cambio de generación reutiliza de forma limpia la función `mostrarDetalleModal` enviando un flag de control para evitar la inserción de registros duplicados en el historial de navegación.
+
+**Global:**
+- Tarea 6: Se incrementó la versión global del proyecto en todos los archivos del frontend y recursos de documentación a la versión **2.1.5** (ej. index.html, ui.js, main.js, style.css, navigation.js, auth.js, state.js, etc.), manteniendo todos los microservicios e integraciones del backend intactas.

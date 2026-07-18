@@ -1,4 +1,4 @@
-<!-- GPSpedia Frontend Component | Version: 2.0 -->
+<!-- GPSpedia Frontend Component | Version: 2.1.5 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -262,7 +262,7 @@
     </div>
 
     <script type="module">
-        // COMPONENT VERSION: 3.0.1
+        // COMPONENT VERSION: 2.1.5
         import { routeAction } from './api-config.js';
         import './lightbox.js';
         const SESSION_KEY = 'gpsepedia_session';
@@ -272,6 +272,8 @@
             selectedVehicleId: null,
             colaborador: ''
         };
+
+        const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', init);
@@ -424,6 +426,8 @@
             const container = document.getElementById('matches-container');
             container.innerHTML = '<h2>Vehículos Similares Encontrados</h2><p>Hemos encontrado registros que coinciden con tu búsqueda. Selecciona una opción:</p>';
 
+            const userVersionNormalized = normalizeVersion(state.vehicleInfo.versionesAplicables);
+
             matches.forEach(match => {
                 const yearRange = (match.anoHasta && match.anoHasta != match.anoDesde) ? `${match.anoDesde} - ${match.anoHasta}` : match.anoDesde;
                 const card = document.createElement('div');
@@ -431,12 +435,16 @@
 
                 const vehicleImg = getImageUrl(match.imagenVehiculo, 400);
 
+                const matchVersionNormalized = normalizeVersion(match.versionesAplicables);
+                const matchesUserVersion = userVersionNormalized && matchVersionNormalized && (userVersionNormalized === matchVersionNormalized);
+
                 card.innerHTML = `
                     <div class="match-card-header">
                         <img src="${vehicleImg}" class="match-card-img" onerror="this.src='https://via.placeholder.com/120x90?text=Sin+Imagen'">
                         <div class="match-card-info">
                             <h4>${match.marca} ${match.modelo} (${yearRange})</h4>
                             <p><strong>Encendido:</strong> ${match.tipoEncendido}</p>
+                            <p><strong>Versión:</strong> ${match.versionesAplicables || 'No especificada'} ${matchesUserVersion ? '<span style="color: #28a745; font-weight: bold; font-size: 0.9em;">(Coincide)</span>' : ''}</p>
                             <div class="match-cuts-info">
                                 <h5>Cortes Existentes:</h5>
                                 ${formatCutInfo(match)}

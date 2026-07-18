@@ -1,4 +1,4 @@
-// GPSpedia Authentication Module | Version: 2.4
+// GPSpedia Authentication Module | Version: 2.1.5
 // Responsibilities:
 // - Manage the entire user authentication lifecycle (login, logout, session validation).
 // - Interact with the API module for backend communication.

@@ -1,4 +1,4 @@
-// GPSpedia UI Module | Version: 2.4.2
+// GPSpedia UI Module | Version: 2.1.5
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
@@ -1117,7 +1117,7 @@ function createDetailParagraph(label, text) {
     return null;
 }
 
-export function mostrarDetalleModal(item) {
+export function mostrarDetalleModal(item, isNavigation = false) {
     const { catalogData } = getState();
     const activeItem = (catalogData && catalogData.cortes)
         ? catalogData.cortes.find(c => String(c.id) === String(item.id)) || item
@@ -1200,6 +1200,15 @@ export function mostrarDetalleModal(item) {
         setOptimizedImage(logoImg, logoUrl, IMG_SIZE_SMALL);
         logoImg.alt = `Logo ${activeItem.marca}`;
         logoImg.className = 'brand-logo-modal';
+        logoImg.style.cursor = 'pointer';
+        logoImg.onclick = () => {
+            document.getElementById("modalDetalle").classList.remove("visible");
+            setState({ navigationState: { level: "modelosPorMarca", marca: activeItem.marca, origin: "marca", previousState: {} } });
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState({ level: "modelosPorMarca", marca: activeItem.marca, origin: "marca" }, '', window.location.pathname + window.location.search);
+            }
+            mostrarModelosPorMarca(activeItem.marca);
+        };
         // El tamaño se controla ahora desde style.css para mantener la consistencia.
         titleContainer.appendChild(logoImg);
     }
@@ -1216,10 +1225,73 @@ export function mostrarDetalleModal(item) {
     const subHeaderText = document.createElement('p');
     subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
     const equipamiento = activeItem.versionesAplicables || activeItem.tipoEncendido || '';
-    const yearRangeText = activeItem.anoHasta ? `${activeItem.anoDesde} - ${activeItem.anoHasta}` : activeItem.anoDesde;
-    subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | ${yearRangeText}`;
+
+    // Tarea 5: Identificar todas las generaciones del mismo modelo
+    const allCortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+
+    const normalizedItemVersion = normalizeVersion(activeItem.versionesAplicables);
+    const generations = allCortes.filter(c =>
+        String(c.marca).toLowerCase() === String(activeItem.marca).toLowerCase() &&
+        String(c.modelo).toLowerCase() === String(activeItem.modelo).toLowerCase() &&
+        String(c.categoria).toLowerCase() === String(activeItem.categoria).toLowerCase() &&
+        String(c.tipoEncendido).toLowerCase() === String(activeItem.tipoEncendido).toLowerCase() &&
+        normalizeVersion(c.versionesAplicables) === normalizedItemVersion
+    ).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
+
+    const currentIndex = generations.findIndex(g => String(g.id) === String(activeItem.id));
+
+    const yearRangeText = activeItem.anoHasta ? `${activeItem.anoDesde} – ${activeItem.anoHasta}` : activeItem.anoDesde;
+
+    const yearRangeContainer = document.createElement('span');
+    yearRangeContainer.style.cssText = "display: inline-flex; align-items: center; gap: 8px;";
+
+    if (generations.length > 1) {
+        if (currentIndex > 0) {
+            const leftArrow = document.createElement('span');
+            leftArrow.innerHTML = '&lt;';
+            leftArrow.style.cssText = "cursor: pointer; font-weight: bold; padding: 0 5px; color: var(--accent-color); user-select: none;";
+            leftArrow.onclick = () => {
+                mostrarDetalleModal(generations[currentIndex - 1], true);
+            };
+            yearRangeContainer.appendChild(leftArrow);
+        }
+
+        const yearTextSpan = document.createElement('span');
+        yearTextSpan.textContent = yearRangeText;
+        yearRangeContainer.appendChild(yearTextSpan);
+
+        if (currentIndex < generations.length - 1 && currentIndex !== -1) {
+            const rightArrow = document.createElement('span');
+            rightArrow.innerHTML = '&gt;';
+            rightArrow.style.cssText = "cursor: pointer; font-weight: bold; padding: 0 5px; color: var(--accent-color); user-select: none;";
+            rightArrow.onclick = () => {
+                mostrarDetalleModal(generations[currentIndex + 1], true);
+            };
+            yearRangeContainer.appendChild(rightArrow);
+        }
+    } else {
+        const yearTextSpan = document.createElement('span');
+        yearTextSpan.textContent = yearRangeText;
+        yearRangeContainer.appendChild(yearTextSpan);
+    }
+
+    subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | `;
+    subHeaderText.appendChild(yearRangeContainer);
     if(activeItem.categoria) {
-         subHeaderText.innerHTML += `<br><span style="font-size: 0.9em; color: #777;">${activeItem.categoria}</span>`;
+         subHeaderText.appendChild(document.createElement("br"));
+         const catSpan = document.createElement("span");
+         catSpan.className = "category-nav-link";
+         catSpan.style.cssText = "font-size: 0.9em; color: #777; cursor: pointer; text-decoration: underline;";
+         catSpan.textContent = activeItem.categoria;
+         catSpan.onclick = () => {
+             document.getElementById("modalDetalle").classList.remove("visible");
+             setState({ navigationState: { level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria", previousState: {} } });
+             if (window.history && window.history.replaceState) {
+                 window.history.replaceState({ level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria" }, '', window.location.pathname + window.location.search);
+             }
+             mostrarModelos(activeItem.categoria, activeItem.marca);
+         };
+         subHeaderText.appendChild(catSpan);
     }
     subHeaderDiv.appendChild(subHeaderText);
     cont.appendChild(subHeaderDiv);
@@ -1289,7 +1361,7 @@ export function mostrarDetalleModal(item) {
     });
 
     document.getElementById("modalDetalle").classList.add("visible");
-    if (window.history && window.history.pushState) {
+    if (!isNavigation && window.history && window.history.pushState) {
         window.history.pushState({ modalOpen: true }, '');
     }
 }

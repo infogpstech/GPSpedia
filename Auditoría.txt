@@ -278,3 +278,62 @@ Estrategia de corrección:
   - Hacer que el botón "Es más antiguo" se muestre siempre en `showStep1` independientemente de `isOldModel`.
   - Modificar su acción para invocar `showStepInput(true)`, permitiendo al usuario ingresar el año específico para la opción "Es más antiguo".
   - Actualizar `showStepInput` para aceptar el parámetro `isFromAntiguo` y registrar la respuesta adecuada.
+
+===================================================================
+AUDITORÍA DE MEJORAS DE FRONTEND (VERSIÓN 2.1.5) (18/02/2026)
+===================================================================
+
+ID del hallazgo: H-FRONT-v2.1.5-01
+Título: Ausencia de versión de equipamiento en coincidencias del formulario de nuevos cortes
+Descripción: Durante la Etapa 1.5 en `add_cortes.html`, se listan coincidencias de vehículos similares para evitar duplicados, pero no se indica la versión de equipamiento (`match.versionesAplicables`). Adicionalmente, el sistema debe ser capaz de comparar y emparejar versiones agrupadas de forma flexible (ej. 'LX / EX / Sport' vs 'Sport, LX, EX') sin importar el orden, casing o delimitadores.
+Ubicación:
+  - Archivo: `add_cortes.html` (displayMatches)
+Impacto: Medio
+Riesgo: Bajo
+Estrategia de corrección:
+  - Mostrar la versión del vehículo en la match card.
+  - Implementar un normalizador de versiones similar a `normalizeVersion` de `ui.js` para realizar una comparación de compatibilidad e indicar si coincide con la versión ingresada por el usuario.
+
+ID del hallazgo: H-FRONT-v2.1.5-02
+Título: Orden incorrecto de z-index en Lightbox de configuración de relay
+Descripción: Cuando se abre el modal secundario de configuración de relay desde el modal de detalle, abrir el Lightbox del diagrama técnico lo muestra por detrás del modal de relay debido a que el z-index de `.lightbox` (1700) es menor que el de `.info-modal` (2100).
+Ubicación:
+  - Archivo: `style.css` (.lightbox)
+Impacto: Alto
+Riesgo: Muy bajo
+Estrategia de corrección:
+  - Incrementar el z-index de `.lightbox` a 2200 para que se superponga correctamente a los modales de información y detalle.
+
+ID del hallazgo: H-FRONT-v2.1.5-03
+Título: Falta de navegación interactiva desde logotipo de marca en modal de detalle
+Descripción: El logotipo de la marca mostrado en el encabezado del modal de detalle es estático. Al hacer clic debería cerrar el modal y navegar al catálogo mostrando únicamente los modelos pertenecientes a esa marca.
+Ubicación:
+  - Archivo: `ui.js` (mostrarDetalleModal)
+Impacto: Medio
+Riesgo: Bajo
+Estrategia de corrección:
+  - Hacer clickable el logotipo de marca con un cursor `pointer`.
+  - En su evento de clic, cerrar el modal, actualizar el estado de historial a `modelosPorMarca` (vía replaceState) y ejecutar `mostrarModelosPorMarca` para la marca correspondiente.
+
+ID del hallazgo: H-FRONT-v2.1.5-04
+Título: Falta de navegación desde categoría del vehículo en modal de detalle
+Descripción: La categoría del vehículo mostrada debajo de la marca/modelo en el modal de detalle es estática. Al hacer clic debería cerrar el modal y filtrar los modelos de esa marca que correspondan a esa categoría específica.
+Ubicación:
+  - Archivo: `ui.js` (mostrarDetalleModal)
+Impacto: Medio
+Riesgo: Bajo
+Estrategia de corrección:
+  - Convertir el texto de categoría en un elemento de navegación interactivo clickable.
+  - Al hacer clic, cerrar el modal, actualizar el estado de navegación a `modelos` (vía replaceState) y ejecutar `mostrarModelos` para filtrar por marca y categoría.
+
+ID del hallazgo: H-FRONT-v2.1.5-05
+Título: Falta de navegación rápida entre generaciones en el modal de detalle
+Descripción: No existe una vía rápida para saltar entre generaciones del mismo modelo de vehículo desde el modal de detalle, lo que obliga al usuario a volver atrás y re-navegar.
+Ubicación:
+  - Archivo: `ui.js` (mostrarDetalleModal)
+Impacto: Alto
+Riesgo: Medio
+Estrategia de corrección:
+  - Identificar todas las generaciones del mismo modelo del vehículo (coincidiendo en marca, modelo, categoría, tipo de encendido y versión normalizada) ordenadas de forma ascendente por año de inicio (`anoDesde`).
+  - Añadir flechas navegables `<` y `>` al lado del rango de años si existen múltiples generaciones.
+  - Implementar acciones en las flechas que llamen a `mostrarDetalleModal` para la generación anterior o siguiente, enviando un parámetro `isNavigation = true` para actualizar la vista sin agregar nuevos registros repetidos a la pila del historial.

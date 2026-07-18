@@ -1,4 +1,4 @@
-/* GPSpedia Styles | Version: 2.4.2 */
+/* GPSpedia Styles | Version: 2.1.5 */
 /* Estilos Globales */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -1169,7 +1169,7 @@ body.search-active .container {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1700; /* Aumentado para estar sobre el modal de detalles */
+    z-index: 2200; /* Aumentado para estar sobre el modal de detalles y configuracion de relay */
     /* Transiciones */
     opacity: 0;
     visibility: hidden;
