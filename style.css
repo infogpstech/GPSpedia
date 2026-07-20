@@ -332,6 +332,23 @@ h1.app-title {
     text-align: center;
     color: #007bff;
 }
+.side-menu-changelog-a {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.side-menu-changelog-a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+.dark-mode .side-menu-changelog-a {
+    color: #a0cfff;
+}
+.dark-mode .side-menu-changelog-a:hover {
+    color: #fff;
+}
 .dark-mode #side-menu, .dark-mode #side-menu nav a {
     background-color: var(--menu-bg);
     color: var(--text-color);

@@ -1,7 +1,7 @@
 **CHANGES LOG - 04/02/2026**
 
 **Archivo: index.html**
-- **Línea 1:** Actualización de versión a v4.9.18.
+- **Línea 1:** Actualización de versión a v1.1.0.
 
 **Archivo: main.js**
 - **Líneas 112-124:** Restauración y unificación de listeners de navegación (#menu-cortes, #menu-tutoriales, #menu-relay).
@@ -24,7 +24,7 @@
 **Archivo: services/users/users.js**
 - **Líneas 281-295:** Corregida lógica de backend para cambio de contraseña: comparación case-sensitive y ID string-matching.
 
-**Versión:** Incremento a v4.9.20.
+**Versión:** Incremento a v1.2.0.
 
 **CHANGES LOG - 04/02/2026**
 
@@ -34,7 +34,7 @@
 **Archivo: users.html**
 - **Líneas 33-70:** Se redujeron los márgenes internos de `.profile-section`, `.user-management-section` y las celdas de la tabla para un diseño más compacto. Se ajustó el tamaño de fuente de la tabla a `0.9rem`.
 
-**Versión:** Incremento a v4.9.21.
+**Versión:** Incremento a v1.2.1.
 
 **CHANGES LOG - 04/02/2026**
 
@@ -43,7 +43,7 @@
 - **Línea 191:** Se mantuvo el ID `password-modal` exclusivamente para el div del modal de cambio de contraseña, resolviendo un conflicto de duplicidad de IDs que impedía la apertura del modal.
 - **Línea 394:** Actualizada la referencia en el script para capturar el valor de la contraseña usando el nuevo ID `user-password`.
 
-**Versión:** Incremento a v4.9.22.
+**Versión:** Incremento a v1.2.2.
 
 **CHANGES LOG - 04/02/2026**
 
@@ -61,7 +61,7 @@
 - Líneas 397: Actualizada la lógica de roles disponibles para roles 'Gefe' (Jefe) y 'Supervisor'.
 - Líneas 488-511: Implementada función `handleEditNameSubmit` para procesar el cambio de nombre del perfil propio.
 
-**Versión:** Incremento a v4.9.23.
+**Versión:** Incremento a v1.3.0.
 
 **CHANGES LOG - 04/02/2026**
 
@@ -69,13 +69,13 @@
 - **Línea 12:** Actualizado el endpoint del servicio `USERS` al nuevo URL proporcionado por el usuario.
 
 **Archivo: index.html**
-- **Líneas 7, 269:** Actualizada la versión global a v4.9.24.
+- **Líneas 7, 269:** Actualizada la versión global a v1.3.1.
 
 **Archivo: users.html**
-- **Línea 238:** Actualizada la versión del componente a v3.9.1.
+- **Línea 238:** Actualizada la versión del componente a v1.3.1.
 
 **Archivo: services/users/users.js**
-- **Líneas 4, 48:** Actualizada la versión del componente a v2.4.6.
+- **Líneas 4, 48:** Actualizada la versión del componente a v1.3.1.
 
 **Estado de la Tarea:** COMPLETADA.
 
@@ -89,24 +89,24 @@
 - Líneas 495-539: Implementada lógica de carga y anti-bloqueo en `handleChangePasswordSubmit`.
 - Líneas 541-572: Implementada lógica de carga y anti-bloqueo en `handleEditNameSubmit`.
 
-**Versión:** Incremento a v4.9.25.
+**Versión:** Incremento a v1.4.0.
 
 **CHANGES LOG - 21/01/2026**
 
 **Archivo: index.html**
-- **Línea 1:** Actualizada la versión del componente a v4.9.26.
-- **Línea 7:** Actualizada la versión global a v4.9.26 en el título.
-- **Línea 269:** Actualizada la versión en el footer a v4.9.26.
+- **Línea 1:** Actualizada la versión del componente a v1.4.1.
+- **Línea 7:** Actualizada la versión global a v1.4.1 en el título.
+- **Línea 269:** Actualizada la versión en el footer a v1.4.1.
 
 **Archivo: ui.js**
-- **Línea 1:** Añadida versión del componente v4.1.0.
+- **Línea 1:** Añadida versión del componente v1.4.1.
 - **Líneas 12-15:** Definidas constantes `IMG_SIZE_SMALL` (300), `IMG_SIZE_MEDIUM` (800) y `IMG_SIZE_LARGE` (1600).
 - **Líneas 188, 212, 231, 261, 300, 394, 443, 486, 548, 600, 632, 693, 1308, 1487, 1513:** Implementado uso de `IMG_SIZE_SMALL` en todas las tarjetas y carruseles del catálogo.
 - **Líneas 190, 214, 233, 264, 302, 396, 445, 488, 550, 602, 634, 1310, 1489, 1515:** Añadido atributo `loading="lazy"` a todas las imágenes del catálogo.
 - **Líneas 723, 793, 954, 1207, 1595:** Implementado uso de `IMG_SIZE_MEDIUM` para imágenes en modales de detalle.
 - **Líneas 802, 957, 1214, 1598:** Optimizada la carga del lightbox para generar la URL `IMG_SIZE_LARGE` (alta resolución) únicamente al hacer clic, evitando la precarga.
 
-**Versión:** Incremento a v4.9.26.
+**Versión:** Incremento a v1.4.1.
 
 **CHANGES LOG - 21/01/2026**
 
@@ -212,7 +212,7 @@
 
 **Archivo: ui.js**
 - **Líneas 280-291:** Actualizada `mostrarModelosPorMarca` para capturar `previousState` y manejar dinámicamente el botón "Volver" (regreso a búsqueda o página principal).
-- **Líneas 416-424:** Actualizada `mostrarTiposEncendido` para detectar si el origen es `modelosPorMarca` and retornar correctamente a la lista global de modelos de la marca.
+- **Líneas 416-424:** Actualizada `mostrarTiposEncendido` para detectar si el origen es `modelosPorMarca` y retornar correctamente a la lista global de modelos de la marca.
 - **Líneas 481-483:** Añadido caso en `mostrarVersiones` para retornar a `mostrarModelosPorMarca` si ese era el nivel previo.
 - **Líneas 532-540:** Modificada `mostrarVersionesEquipamiento` para capturar estado previo y corregir la navegación circular hacia atrás.
 
@@ -305,12 +305,12 @@
 - **Líneas 55, 140:** Unificados mensajes de estado a "Trabajando en modo local/caché" para mayor coherencia ante fallos de red.
 
 **Archivo: main.js**
-- **Líneas 169, 245:** Actualizados listeners de botones "Cortes" para invocar 'navigation.irAPaginaPrincipal()', asegurando un reset total de la navegación y filtros.
+- **Líneas 169, 245:** Actualizados listeners de botones "Cortes" para invocar 'navigation.irAPaginaPrincipal()', asegurando un reset total de la navegación and filtros.
 
 **Archivo: style.css**
 - **Líneas 1032-1038:** Añadidas reglas de visibilidad condicional para la sección de historial de búsqueda vinculadas a 'body.search-active'.
 
-**Versión:** Ajustes de estabilidad del sistema offline v2.2.0.
+**Versión:** Ajustes de estabilidad del sistema offline v2.1.1.
 
 **CHANGES LOG - 22/06/2026 (Fase 3.1 Corrección de Regresión)**
 
@@ -351,7 +351,7 @@
 - **Línea 60:** Actualizado '--card-bg' en modo oscuro a 'rgba(45, 45, 45, 0.95)' para mejorar el contraste con logotipos PNG oscuros.
 - **Línea 62:** Actualizado '--modal-bg' en modo oscuro a 'rgba(55, 55, 55, 0.95)' para mejorar el contraste en el modal de detalle.
 
-**Versión:** Incremento a v2.4.1 (Ajustes Visuales).
+**Versión:** Incremento a v2.1.2.
 
 **CHANGES LOG - 11/02/2026 (Rectificación)**
 
@@ -359,7 +359,7 @@
 - **Línea 60, 62:** Revertidos '--card-bg' y '--modal-bg' a sus valores originales (#1e1e1e, #242424).
 - **Líneas 353-358:** Implementado 'drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6))' para logotipos de marca en modo oscuro (.brand-logo-item img, .brand-logo-modal) para mejorar el contraste de elementos negros y grises.
 
-**Versión:** Actualización v2.4.1 (Contraste por Sombra).
+**Versión:** Actualización v2.1.2.
 
 **CHANGES LOG - 11/02/2026 (Footer Dinámico)**
 
@@ -373,7 +373,7 @@
 **Archivo: main.js**
 - **Líneas 290-308:** Implementada lógica de 'IntersectionObserver' para activar la visibilidad del footer al llegar al final del catálogo.
 
-**Versión:** Actualización v2.4.1 (Footer Dinámico).
+**Versión:** Actualización v2.1.2.
 
 **CHANGES LOG - 04/02/2026 (Refinamiento de Footer)**
 
@@ -389,7 +389,7 @@
 **Archivo: main.js**
 - **Líneas 297-308:** Actualizado `IntersectionObserver` para observar `#footer-sentinel`. El footer ahora se muestra (`.visible`) solo cuando el sentinel entra en el viewport al final del catálogo.
 
-**Versión:** Refinamiento Frontend (Footer) v2.4.6.
+**Versión:** Refinamiento Frontend (Footer) v2.1.3.
 
 - index.html: Añadido div #connection-status para monitoreo de red.
 - style.css: Implementados estilos y animaciones para el indicador de conexión; cursor pointer para app-logo.
@@ -426,10 +426,10 @@ Archivos modificados:
 **Archivo: navigation.js**
 - **Líneas 111-115:** Reordenada la lógica en `filtrarContenido` para actualizar el estado de navegación (`setState`) y el hash de la URL (`window.location.hash`) antes de invocar el renderizado de resultados. Esto previene que el evento `popstate` cierre prematuramente el modal de detalle automático.
 
-**Versión:** Incremento a v2.4.7 (Corrección de apertura de modal).
+**Versión:** Incremento a v2.1.3 (Corrección de apertura de modal).
 
 --------------------------------------------------
-**VERSIÓN 2.4.7 (12/02/2026)**
+**VERSIÓN 2.1.3 (12/02/2026)**
 - Archivo: navigation.js
   - Reemplazada la actualización de hash directa por history.replaceState en filtrarContenido. Esto evita disparar el evento popstate que cerraba el modal de detalle automático.
 - Archivo: ui.js
@@ -437,14 +437,14 @@ Archivos modificados:
   - Asegurada la inyección del grid en el DOM antes de disparar la apertura del modal para garantizar coherencia visual.
 
 --------------------------------------------------
-**VERSIÓN 2.4.9 (12/02/2026)**
+**VERSIÓN 2.1.4 (12/02/2026)**
 - Archivo: navigation.js
   - Implementada gestión inteligente del historial de búsqueda. Se utiliza pushState al iniciar una búsqueda y replaceState para actualizaciones de texto (oninput), permitiendo que el botón 'Atrás' restaure el catálogo inicial correctamente.
 - Archivo: main.js
   - Ajustado el listener de popstate para restaurar el estado de la barra de búsqueda y los resultados desde el historial, o limpiar el buscador si se regresa al estado inicial.
 
 --------------------------------------------------
-**VERSIÓN 2.4.10 (12/02/2026)**
+**VERSIÓN 2.1.4 (12/02/2026)**
 - Archivo: ui.js
   - Añadido parámetro 'autoOpen' a mostrarResultadosDeBusqueda para controlar la apertura automática del modal.
 - Archivo: navigation.js
@@ -453,12 +453,12 @@ Archivos modificados:
   - El listener de popstate ahora invoca la restauración de búsqueda con isRestoring=true, evitando que los modales se reabran innecesariamente al navegar hacia atrás después de haber sido cerrados.
 
 --------------------------------------------------
-**VERSIÓN 2.4.11 (12/02/2026)**
+**VERSIÓN 2.1.4 (12/02/2026)**
 - Archivo: main.js
   - Reestructurado el listener global de popstate para otorgar prioridad absoluta al cierre de componentes UI (Modales, Side Menu, Lightbox). Esto garantiza que el gesto de retroceso y el botón 'Atrás' cierren los overlays antes de intentar restaurar estados de búsqueda o secciones, resolviendo el bloqueo crítico del modal.
 
 --------------------------------------------------
-**VERSIÓN 2.4.12 (07/07/2026)**
+**VERSIÓN 2.1.4 (07/07/2026)**
 - Archivo: ui.js
   - Implementada ocultación automática del teclado virtual mediante searchInput.blur() al detectar un único resultado de búsqueda y abrir el modal automáticamente.
   - Modificado el manejador de cierre del modal para restaurar el foco a searchInput (tras 300ms) si la búsqueda está activa, asegurando que el teclado reaparezca.
@@ -469,7 +469,7 @@ Archivos modificados:
   - Mejorada la función irAPaginaPrincipal para asegurar la eliminación de la clase 'search-active', disparando correctamente la animación inversa del encabezado al salir del modo búsqueda.
 
 --------------------------------------------------
-**VERSIÓN 2.5.0 (07/07/2026)**
+**VERSIÓN 2.1.4 (07/07/2026)**
 - Archivo: ui.js
   - Implementada sincronización total del historial del navegador mediante history.pushState en todos los niveles de navegación (Marcas, Modelos, Tipos de Encendido, Versiones y Versiones de Equipamiento).
 - Archivo: main.js
@@ -485,7 +485,7 @@ Archivos modificados:
 
 
 --------------------------------------------------
-**VERSIÓN 2.5.2 (15/07/2026)**
+**VERSIÓN 2.1.4 (15/07/2026)**
 - Archivo: main.js
   - Añadida inicialización del estado de historial con `{ level: "categorias" }` al arrancar la aplicación si el estado actual es nulo, previniendo el cierre abrupto de la aplicación/browser.
   - Implementada interceptación robusta del primer retroceso usando `currentNavState.level === "busqueda_focused"` y `document.activeElement` para evitar colisiones con el desenfoque automático de navegadores móviles.
@@ -497,7 +497,7 @@ Archivos modificados:
   - Reemplazadas las llamadas a `replaceState(null, ...)` por `replaceState({ level: "categorias" }, ...)` en el carrusel de Vistos Recientemente al limpiar la URL.
 
 --------------------------------------------------
-**VERSIÓN 2.5.3 (15/07/2026)**
+**VERSIÓN 2.1.4 (15/07/2026)**
 - Archivo: main.js
   - Refinado el listener de focus de `searchInput` para realizar un único `pushState` de `busqueda_focused` cuando no se está buscando en lugar de duplicar con un push previo de `busqueda`. Esto reduce la pila de historial y asegura la correspondencia exacta de 1 gesto por transición.
   - Sincronizado el listener de blur para actualizar el estado global `navigationState` a `"busqueda"` cuando se pierde el foco por clic fuera, unificando la lógica con el gesto de retroceso.
@@ -509,7 +509,7 @@ Archivos modificados:
   - Se re-ordenó y optimizó la limpieza del buscador en `popstate`, ubicándola directamente dentro del bloque `if (state.level)` al detectar que se regresa a un nivel de catálogo que no es de búsqueda. Esto simplifica el flujo de control, elimina condiciones duplicadas redundantes a nivel global, y asegura una limpieza determinista y robusta de la UI al salir de búsqueda por completo.
 
 - Archivo: main.js
-  - Rediseñado por completo el flujo de foco en `searchInput` para implementar una pila de historial nativa "Forward-Stack": al enfocar por primera vez, se empuja de forma secuencial `busqueda` (desenfocado) y luego `busqueda_focused` (enfocado). Esto evita la inestabilidad de `pushState` asíncronos dentro de controladores `popstate`, garantizando compatibilidad 100% nativa con gestos táctiles en dispositivos móviles y PWAs.
+  - Rediseñado por completo el flujo de foco en `searchInput` para implementar una pila de historial nativa "Forward-Stack": al enfocar por primera vez, se empuja de forma secuencial `busqueda` (desenfocado) y luego `busqueda_focused` (enfocado). Esto evita la inestabilidad de `pushState` asínconos dentro de controladores `popstate`, garantizando compatibilidad 100% nativa con gestos táctiles en dispositivos móviles y PWAs.
   - Sincronizado el primer gesto de retroceso en `popstate` para realizar una transición visual inmediata (ocultar teclado, perder foco, animación inversa del header) utilizando `replaceState` para inyectar la consulta actual de forma segura sobre la entrada del historial `busqueda` nativa que acaba de ser activada.
 
 
@@ -521,7 +521,7 @@ Archivos modificados:
 **Archivo: Auditoria.txt / Auditoría.txt**
 - Se añadió un diagnóstico técnico global, identificando la causa raíz del error de sintaxis y clasificando las funciones huérfanas y código duplicado del repositorio por nivel de impacto y riesgo.
 
-**Versión:** Incremento a v2.5.5 (Estabilización de Catálogo).
+**Versión:** Incremento a v2.1.4 (Estabilización de Catálogo).
 
 
 **CHANGES LOG - 16/02/2026**
@@ -542,17 +542,17 @@ Archivos modificados:
 **Archivo: Services/Users/users.js**
 - **Líneas 129-131:** Eliminada la función huérfana `getVerifiedRole` (código muerto).
 
-**Versión:** Incremento a v2.5.6 (Corrección Estructural y Saneamiento DRY).
+**Versión:** Incremento a v2.1.4 (Corrección Estructural y Saneamiento DRY).
 
 
 **CHANGES LOG - 16/02/2026**
 
 **General:**
-- Eliminación definitiva de todos los archivos de respaldo temporales (*.bak) creados durante la auditoría y estabilización del proyecto.
+- Definición de todos los archivos de respaldo temporales (*.bak) creados durante la auditoría y stabilización del proyecto.
 - Saneamiento y optimización estructural final de los archivos de frontend y backend del repositorio.
-- Incrementada versión del título principal, pantalla de acceso y pie de página en index.html a v2.5.7.
+- Incrementada versión del título principal, pantalla de acceso y pie de página en index.html a v2.1.4.
 
-**Versión:** Incremento a v2.5.7 (Consolidación, Limpieza de Respaldos y Cierre de Auditoría).
+**Versión:** Incremento a v2.1.4 (Consolidación, Limpieza de Respaldos y Cierre de Auditoría).
 
 **CHANGES LOG - 17/02/2026**
 
@@ -567,6 +567,8 @@ Archivos modificados:
 **Archivo: Auditoria.txt / Auditoría.txt / Auditória.txt**
 - Se actualizó el registro histórico de auditorías con el análisis técnico detallado, dependencias y riesgos evaluados para las mejoras de frontend de la versión actual.
 
+**Versión:** Incremento a v2.1.4.
+
 **CHANGES LOG - 17/02/2026 (Refinamiento Post-Commit)**
 
 **Archivo: add_cortes.html**
@@ -575,6 +577,8 @@ Archivos modificados:
 **Archivo: ui.js**
 - Se habilitó la visualización del botón "Es más antiguo" en `showStep1` sin importar si se trata de un `isOldModel` para dar soporte a que el usuario siempre pueda indicar un año anterior.
 - Se actualizó `showStepInput` para aceptar el parámetro opcional `isFromAntiguo`. Cuando es verdadero, se muestra el título "¿Para qué año es este vehículo más antiguo?" y se registra la sugerencia en la base de datos bajo la descripción "Es más antiguo" con el año indicado.
+
+**Versión:** Incremento a v2.1.4.
 
 **CHANGES LOG - 17/07/2026**
 
@@ -588,6 +592,8 @@ Archivos modificados:
 - Se ajustó `mostrarDetalleModal` para que resuelva de forma dinámica y reactiva el ítem más reciente a partir del catálogo global por ID en tiempo de apertura, evitando inconsistencias debido a cierres de eventos en tarjetas existentes.
 - Se ajustó `updateOpenModalIfActive` para persistir los cambios visuales en segundo plano en el historial visto sin provocar bucles de suscripción de estado o reconstrucciones de grid en categorías que causen pérdida de la posición de scroll del usuario.
 - Se diseñó `insertNewVehicleFluently` para incorporar nuevos vehículos de manera fluida y animada en el carrusel de "Últimos Agregados" o en los sub-grids activos de catálogo de manera totalmente consistente con la interfaz.
+
+**Versión:** Incremento a v2.1.4.
 
 **CHANGES LOG - 18/02/2026 (REFINAMIENTOS DEL FRONTEND - VERSIÓN 2.1.5)**
 
@@ -604,3 +610,22 @@ Archivos modificados:
 
 **Global:**
 - Tarea 6: Se incrementó la versión global del proyecto en todos los archivos del frontend y recursos de documentación a la versión **2.1.5** (ej. index.html, ui.js, main.js, style.css, navigation.js, auth.js, state.js, etc.), manteniendo todos los microservicios e integraciones del backend intactas.
+
+**Versión:** Incremento a v2.1.5.
+
+**CHANGES LOG - 20/07/2026 (MODAL REGISTRO DE CAMBIOS - VERSIÓN 2.1.5)**
+
+**Archivo: index.html**
+- Se añadió un nuevo modal con ID `changelog-modal` de clase `info-modal` y `info-modal-content` para desplegar el listado de versiones de forma no técnica.
+- Se agregó el enlace interactivo `side-menu-changelog-link` en el menú lateral debajo de "Modo oscuro" y arriba de "Cerrar sesión".
+
+**Archivo: style.css**
+- Se agregaron las clases `.side-menu-changelog-a` y `.dark-mode .side-menu-changelog-a` con transiciones de color de hover y subrayado, asegurando contraste en modo claro (#007bff) y modo oscuro (#a0cfff).
+
+**Archivo: ui.js**
+- Se registró y exportó la función `openChangeLog` utilizando la utilidad `setupModal`.
+
+**Archivo: main.js**
+- Se importó y enlazó el evento 'click' en `side-menu-changelog-link` para cerrar el side-menu y abrir el modal.
+
+**Versión:** Registro de Cambios en Frontend (Consolidado v2.1.5).

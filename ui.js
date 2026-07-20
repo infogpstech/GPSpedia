@@ -1907,6 +1907,10 @@ export const openAboutUs = setupModal('about-us-modal', () => {
     document.getElementById('about-us-modal').style.display = 'flex';
 });
 
+export const openChangeLog = setupModal('changelog-modal', () => {
+    document.getElementById('changelog-modal').style.display = 'flex';
+});
+
 export const openContact = setupModal('contact-modal', () => {
     document.getElementById('contact-modal').style.display = 'flex';
 });

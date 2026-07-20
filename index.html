@@ -52,6 +52,9 @@
             <div class="slider round"></div>
         </label>
     </div>
+    <div style="text-align: center; margin: 10px 0;">
+        <a id="side-menu-changelog-link" class="side-menu-changelog-a">Registro de cambios</a>
+    </div>
     <div style="padding: 20px;">
         <button id="side-menu-logout-button" style="width: 100%; background: #dc3545; color: #fff; border: none; padding: 12px; border-radius: 8px; cursor: pointer;">Cerrar Sesión</button>
     </div>
@@ -282,6 +285,78 @@
       <div class="accordion-item"><div class="accordion-header">¿GPSpedia enseña cómo instalar dispositivos?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>GPSpedia no sustituye la capacitación profesional, pero ofrece referencias técnicas, diagramas y guías que facilitan el trabajo de técnicos con experiencia.</p></div></div>
       <div class="accordion-item"><div class="accordion-header">¿Cómo obtengo una cuenta?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>Para solicitar acceso, completa el formulario disponible en la sección “Contáctanos”. Nuestro equipo revisará la solicitud y te brindará seguimiento conforme al uso profesional de la plataforma.</p></div></div>
       <div class="accordion-item"><div class="accordion-header">¿Qué hacer si no está la información de un vehículo?<i class="fas fa-chevron-down"></i></div><div class="accordion-content"><p>Si un vehículo no cuenta aún con información específica, GPSpedia ofrece tutoriales descriptivos y material audiovisual que facilitan la identificación de cables de corte, puntos de ignición y configuraciones comunes.</p></div></div>
+    </div>
+  </div>
+</div>
+
+<div id="changelog-modal" class="info-modal">
+  <div class="info-modal-content">
+    <span class="info-close-btn">&times;</span>
+    <h2 style="margin-bottom: 15px;"><i class="fa-solid fa-history"></i> Registro de Cambios</h2>
+    <p style="margin-bottom: 25px; color: var(--text-disabled, #777); font-size: 0.9em; line-height: 1.4;">Descubre la evolución y mejoras incorporadas en la plataforma de forma cronológica.</p>
+
+    <div class="changelog-list" style="display: flex; flex-direction: column; gap: 20px;">
+
+      <!-- Versión 2.1.5 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.1.5 (Actual)</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li>Sincronización de datos ultra-rápida y silenciosa en segundo plano para mantener la información siempre actualizada sin interrumpir tu navegación.</li>
+          <li>Mejoras avanzadas en la navegación por gestos y retrocesos, permitiendo cerrar menús y pantallas secundarias de forma intuitiva.</li>
+          <li>Optimización de imágenes técnicas de alta resolución para un consumo inteligente de datos móviles en el campo.</li>
+          <li>Integración de enlaces directos en el detalle técnico para buscar instantáneamente por fabricante o categoría de vehículo.</li>
+          <li>Navegación bidireccional ágil mediante flechas cronológicas entre generaciones continuas del mismo modelo.</li>
+          <li>Mecanismo inteligente de prevención de registros duplicados con soporte integral para variantes de equipamiento.</li>
+          <li>Soporte y registro simplificado para vehículos que activen el testigo del motor tras el corte.</li>
+          <li>Estabilización general del buscador para asegurar consultas libres de errores y cierres de modal fluidos.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 2.1 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.1</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li>Robustecimiento y mayor velocidad de respuesta del sistema en condiciones de nula o baja conectividad offline.</li>
+          <li>Almacenamiento local inteligente y carga optimizada de miniaturas de vehículos para agilizar la navegación en caché.</li>
+          <li>Indicador visual de estado de red ultra-minimalista perfectamente integrado en el saludo de bienvenida.</li>
+          <li>Implementación del sistema colaborativo para sugerencia de rangos de años de vehículos con validación de la comunidad.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 2.0 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.0</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li>Lanzamiento oficial de la plataforma con arquitectura moderna basada en microservicios modulares de alto rendimiento.</li>
+          <li>Control de acceso basado en roles (RBAC) y perfiles independientes para técnicos, supervisores y administradores.</li>
+          <li>Modo Oscuro nativo persistente para reducir la fatiga visual, con realce dinámico de logotipos de marcas.</li>
+          <li>Sección interactiva de Preguntas Frecuentes (FAQ) y Sobre Nosotros con terminología técnica unificada.</li>
+          <li>Implementación de sistemas globales de protección del código y prevención de ingeniería inversa en el frontend.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 1.5 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 1.5 (Legacy)</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li>Carga inicial híbrida con prioridad a la red y respaldo local ante fallos de conexión.</li>
+          <li>Formularios interactivos en etapas para el registro guiado de nuevos esquemas de instalación.</li>
+          <li>Biblioteca visual ampliada de diagramas técnicos y configuraciones físicas de relay.</li>
+          <li>Sincronización automatizada bidireccional con hojas de datos centrales.</li>
+        </ul>
+      </div>
+
+      <!-- Versión 1.0 -->
+      <div class="changelog-item">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 1.0</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li>Lanzamiento del catálogo digital especializado en cortes eléctricos vehiculares para profesionales.</li>
+          <li>Buscador básico en tiempo real por marcas y categorización general de modelos.</li>
+          <li>Primeras fichas descriptivas de cableados e indicaciones de instalación física en campo.</li>
+          <li>Persistencia de sesión segura y base de datos local inicial en el dispositivo del usuario.</li>
+        </ul>
+      </div>
+
     </div>
   </div>
 </div>

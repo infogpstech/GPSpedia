@@ -455,6 +455,15 @@ async function initializeApp() {
         auth.logout();
     });
 
+    const changelogLink = document.getElementById('side-menu-changelog-link');
+    if (changelogLink) {
+        changelogLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            ui.openChangeLog();
+            ui.closeSideMenu();
+        });
+    }
+
     // General section buttons
     document.querySelectorAll('.section-btn').forEach(button => {
         button.addEventListener('click', () => {
