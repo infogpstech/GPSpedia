@@ -487,3 +487,22 @@ Estrategia de corrección:
   - Identificar todas las generaciones del mismo modelo del vehículo (coincidiendo en marca, modelo, categoría, tipo de encendido y versión normalizada) ordenadas de forma ascendente por año de inicio (`anoDesde`).
   - Añadir flechas navegables `<` y `>` al lado del rango de años si existen múltiples generaciones.
   - Implementar acciones en las flechas que llamen a `mostrarDetalleModal` para la generación anterior o siguiente, enviando un parámetro `isNavigation = true` para actualizar la vista sin agregar nuevos registros repetidos a la pila del historial.
+
+ID del hallazgo: H-NAV-v2.1.5-06
+Título: Comportamiento intermitente en la navegación por marcas
+Descripción: Se ha identificado un problema de inconsistencia en la navegación por marcas desde el carrusel de la página de inicio, resultados de búsqueda y detalles del modal. El problema ocurre de manera intermitente debido a la falta de normalización y homogeneización de los nombres de marcas, modelos y categorías que se cargan desde el catálogo central (Google Sheets o IndexedDB local). Si un registro de marca tiene espacios en blanco o variaciones de capitalización (ej. "Toyota" vs "Toyota " o "TOYOTA"), el carrusel genera duplicados o utiliza un término no homogeneizado, y las comparaciones con igualdad estricta (`===`) descartan los modelos que no coinciden exactamente con esa cadena específica, mostrando solo una lista parcial de modelos.
+Frecuencia del problema: Intermitente / Aleatorio. Depende del orden de carga de los registros en cortes y de si se activa la sincronización silenciosa de fondo.
+Condiciones de aparición: Aparece cuando la base de datos de cortes contiene registros con inconsistencias de espaciado o casing en campos de marca, modelo o categoría, y se hace clic en una marca cuyos datos no están homogeneizados.
+Ubicación:
+  - Archivos involucrados: `auth.js` y `ui.js`.
+  - Funciones implicadas: `loadInitialData()`, `processCatalogData()`, `updateFullState()`.
+  - Dependencias relacionadas: Lógica de filtrado de modelos, navegación por marca, carruseles de inicio, buscador, y sincronización en segundo plano.
+Impacto: Alto
+Riesgo de regresión: Bajo
+Impacto sobre navegación: Alto (se corrigen listas parciales de modelos).
+Impacto sobre búsqueda: Bajo.
+Impacto sobre agrupaciones: Bajo.
+Impacto sobre el historial: Bajo.
+Estrategia de corrección:
+  - Implementar una función centralizada de normalización de datos del catálogo (`normalizeCatalogData`) en `auth.js` que unifique de manera inteligente el espaciado (trim) y la capitalización de nombres de marcas, categorías y modelos en el catálogo completo.
+  - Aplicar esta normalización de datos al cargar desde la caché en IndexedDB, al recibir datos de la red en segundo plano antes de guardarlos y pasarlos a la sincronización silenciosa, y en `updateFullState` de `ui.js` para asegurar que el estado y la caché siempre operen sobre un dataset 100% libre de inconsistencias y duplicidades.

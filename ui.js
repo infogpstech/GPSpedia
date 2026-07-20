@@ -1439,6 +1439,61 @@ export async function performSilentSync(newCatalogData) {
 
 function updateFullState(catalogData) {
     try {
+        // Normalizar los datos del catálogo antes de actualizar el estado global
+        if (catalogData && Array.isArray(catalogData.cortes)) {
+            const brandCasingMap = new Map();
+            const modelCasingMap = new Map();
+            const categoryCasingMap = new Map();
+
+            catalogData.cortes.forEach(item => {
+                if (item.marca) {
+                    const trimmed = String(item.marca).trim();
+                    const lower = trimmed.toLowerCase();
+                    if (!brandCasingMap.has(lower) || (trimmed !== lower && trimmed !== trimmed.toUpperCase())) {
+                        brandCasingMap.set(lower, trimmed);
+                    }
+                }
+                if (item.categoria) {
+                    const trimmed = String(item.categoria).trim();
+                    const lower = trimmed.toLowerCase();
+                    if (!categoryCasingMap.has(lower) || (trimmed !== lower && trimmed !== trimmed.toUpperCase())) {
+                        categoryCasingMap.set(lower, trimmed);
+                    }
+                }
+            });
+
+            catalogData.cortes.forEach(item => {
+                if (item.marca) {
+                    const trimmed = String(item.marca).trim();
+                    const lower = trimmed.toLowerCase();
+                    item.marca = brandCasingMap.get(lower) || trimmed;
+                }
+                if (item.categoria) {
+                    const trimmed = String(item.categoria).trim();
+                    const lower = trimmed.toLowerCase();
+                    item.categoria = categoryCasingMap.get(lower) || trimmed;
+                }
+
+                if (item.modelo && item.marca) {
+                    const trimmed = String(item.modelo).trim();
+                    const lower = trimmed.toLowerCase();
+                    const key = `${item.marca.toLowerCase()}|${lower}`;
+                    if (!modelCasingMap.has(key) || (trimmed !== lower && trimmed !== trimmed.toUpperCase())) {
+                        modelCasingMap.set(key, trimmed);
+                    }
+                }
+            });
+
+            catalogData.cortes.forEach(item => {
+                if (item.modelo && item.marca) {
+                    const trimmed = String(item.modelo).trim();
+                    const lower = trimmed.toLowerCase();
+                    const key = `${item.marca.toLowerCase()}|${lower}`;
+                    item.modelo = modelCasingMap.get(key) || trimmed;
+                }
+            });
+        }
+
         const categoryCounts = catalogData.cortes.reduce((acc, item) => {
             if (item.categoria) {
                 acc[item.categoria] = (acc[item.categoria] || 0) + 1;
