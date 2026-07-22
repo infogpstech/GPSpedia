@@ -265,7 +265,6 @@ function handleGetCatalogData() {
                 vehicle.Video = normalizeYouTubeUrl(vehicle.videoGuiaDesarmeUrl);
                 delete vehicle.videoGuiaDesarmeUrl;
             }
-            }
 
             const cortes = [
                 { index: 1, util: parseInt(vehicle.utilCorte1, 10) || 0 },
@@ -611,9 +610,3 @@ function normalizeYouTubeUrl(url) {
     return `https://www.youtube.com/embed/${id}?enablejsapi=1`;
 }
 
-function isYearInRangeV2(inputYear, anoDesde, anoHasta) {
-    if (isNaN(inputYear)) return false;
-    const desde = anoDesde ? parseInt(anoDesde, 10) : inputYear;
-    const hasta = anoHasta ? parseInt(anoHasta, 10) : desde; // Si no hay 'hasta', el rango es solo un año.
-    return inputYear >= desde && inputYear <= hasta;
-}

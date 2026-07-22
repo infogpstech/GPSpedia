@@ -1,4 +1,4 @@
-// GPSpedia Authentication Module | Version: 2.4
+// GPSpedia Authentication Module | Version: 2.1.5
 // Responsibilities:
 // - Manage the entire user authentication lifecycle (login, logout, session validation).
 // - Interact with the API module for backend communication.
@@ -30,7 +30,8 @@ async function loadInitialData() {
 
         if (cachedCatalog) {
             console.log("Cargando catálogo desde caché local...");
-            processCatalogData(cachedCatalog);
+            const normalizedCached = normalizeCatalogData(cachedCatalog);
+            processCatalogData(normalizedCached);
             catalogLoaded = true;
         }
     } catch (e) {
@@ -40,12 +41,18 @@ async function loadInitialData() {
     // 2. Cargar desde la red en segundo plano
     try {
         const apiResponse = await fetchCatalogData();
-        const catalogData = apiResponse.data;
+        const catalogData = normalizeCatalogData(apiResponse.data);
 
         // Guardar en caché local para futuros usos (silencioso)
         offline.saveCatalog(catalogData).catch(e => console.warn("Error guardando catálogo en caché:", e));
 
-        processCatalogData(catalogData);
+        if (catalogLoaded) {
+            // Sincronización silenciosa si ya se cargó desde la caché
+            const { performSilentSync } = await import('./ui.js');
+            performSilentSync(catalogData);
+        } else {
+            processCatalogData(catalogData);
+        }
         catalogLoaded = true;
 
     } catch (error) {
@@ -56,7 +63,8 @@ async function loadInitialData() {
             try {
                 const cachedCatalog = await offline.getCatalog();
                 if (cachedCatalog && cachedCatalog.cortes && cachedCatalog.cortes.length > 0) {
-                    processCatalogData(cachedCatalog);
+                    const normalizedCached = normalizeCatalogData(cachedCatalog);
+                    processCatalogData(normalizedCached);
                     catalogLoaded = true;
                     console.log("Catalog rehydrated from cache after network failure.");
                     return;
@@ -207,4 +215,67 @@ export function logout(reason = null) {
     localStorage.removeItem(SESSION_KEY);
     // localStorage.removeItem(SESSION_ID_KEY); // This key is not used in the new architecture
     showLoginScreen(reason);
+}
+
+/**
+ * Normaliza y homogeneiza la información de marcas, categorías y modelos del catálogo
+ * para evitar intermitencias, duplicidades e inconsistencias debido a diferencias de espaciado o capitalización.
+ */
+export function normalizeCatalogData(catalogData) {
+    if (!catalogData || !Array.isArray(catalogData.cortes)) return catalogData;
+
+    const brandCasingMap = new Map(); // lowercase -> original
+    const modelCasingMap = new Map(); // brandLowercase|modelLowercase -> original
+    const categoryCasingMap = new Map(); // lowercase -> original
+
+    catalogData.cortes.forEach(item => {
+        if (item.marca) {
+            const trimmed = String(item.marca).trim();
+            const lower = trimmed.toLowerCase();
+            // Preferimos una capitalización que no sea puramente todo minúscula o todo mayúscula
+            if (!brandCasingMap.has(lower) || (trimmed !== lower && trimmed !== trimmed.toUpperCase())) {
+                brandCasingMap.set(lower, trimmed);
+            }
+        }
+        if (item.categoria) {
+            const trimmed = String(item.categoria).trim();
+            const lower = trimmed.toLowerCase();
+            if (!categoryCasingMap.has(lower) || (trimmed !== lower && trimmed !== trimmed.toUpperCase())) {
+                categoryCasingMap.set(lower, trimmed);
+            }
+        }
+    });
+
+    catalogData.cortes.forEach(item => {
+        if (item.marca) {
+            const trimmed = String(item.marca).trim();
+            const lower = trimmed.toLowerCase();
+            item.marca = brandCasingMap.get(lower) || trimmed;
+        }
+        if (item.categoria) {
+            const trimmed = String(item.categoria).trim();
+            const lower = trimmed.toLowerCase();
+            item.categoria = categoryCasingMap.get(lower) || trimmed;
+        }
+
+        if (item.modelo && item.marca) {
+            const trimmed = String(item.modelo).trim();
+            const lower = trimmed.toLowerCase();
+            const key = `${item.marca.toLowerCase()}|${lower}`;
+            if (!modelCasingMap.has(key) || (trimmed !== lower && trimmed !== trimmed.toUpperCase())) {
+                modelCasingMap.set(key, trimmed);
+            }
+        }
+    });
+
+    catalogData.cortes.forEach(item => {
+        if (item.modelo && item.marca) {
+            const trimmed = String(item.modelo).trim();
+            const lower = trimmed.toLowerCase();
+            const key = `${item.marca.toLowerCase()}|${lower}`;
+            item.modelo = modelCasingMap.get(key) || trimmed;
+        }
+    });
+
+    return catalogData;
 }

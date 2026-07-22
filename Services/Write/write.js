@@ -394,15 +394,6 @@ function isYearInRange(inputYear, anoDesde, anoHasta) {
     return inputYear >= desde && inputYear <= hasta;
 }
 
-function isFlexibleModelMatch(inputModelo, sheetModelo, sheetVersiones) {
-    const inputWords = new Set(inputModelo.toLowerCase().split(' ').filter(Boolean));
-    const sheetWords = new Set(`${sheetModelo.toLowerCase()} ${sheetVersiones.toLowerCase()}`.split(' ').filter(Boolean));
-    for (const word of inputWords) {
-        if (sheetWords.has(word)) return true;
-    }
-    return false;
-}
-
 function getOrCreateFolder(categoria, marca, modelo, anio) {
     const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
     const cat = sanitizeForFilename(categoria || 'Sin_Categoria');

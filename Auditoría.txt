@@ -24,9 +24,9 @@
 - Podría ser necesario mantener el estado de las validaciones respondidas en la sesión actual, aunque `offline.js` es preferible para persistencia entre sesiones.
 
 **Hallazgos Generales:**
-- La lógica de "generación más reciente" debe calcularse en el frontend basándose en `catalogData.cortes`.
-- Se debe comparar Marca, Modelo, Tipo de Encendido y Categoría para agrupar generaciones.
-- El año actual para 2026 debe ser dinámico o constante según se prefiera, pero el prompt usa 2026 como ejemplo. Usaré `new Date().getFullYear()`.
+- Lógica de "generación más reciente" se calcula en el frontend basándose en `catalogData.cortes`.
+- Se compara Marca, Modelo, Tipo de Encendido y Categoría para agrupar generaciones.
+- El año actual se calcula mediante `new Date().getFullYear()`.
 
 --------------------------------------------------
 
@@ -55,3 +55,304 @@
 - **navigation.js:** Reordenar la ejecución para actualizar el hash de la URL antes de invocar el renderizado de resultados, evitando la colisión de eventos de historial con la apertura del modal.
 
 --------------------------------------------------
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - Gestión automática del teclado y historial de navegación (07/07/2026)**
+
+**Archivos involucrados:** main.js, ui.js, navigation.js.
+
+**Hallazgos:**
+1. **Gestión del Foco (ui.js / main.js):**
+   - En `ui.js`, `mostrarResultadosDeBusqueda` abre el modal automáticamente si hay un solo resultado, pero no retira el foco de `searchInput`.
+   - El teclado virtual se mantiene abierto debido a que `searchInput` conserva el foco.
+   - En `main.js`, el listener de `popstate` cierra el modal pero no restaura el foco a la barra de búsqueda de forma explícita en todos los flujos de cierre.
+
+2. **Teclado Virtual:**
+   - No hay bloqueos explícitos, el comportamiento depende enteramente del foco de los elementos input.
+   - El uso de `visualViewport` en `main.js` ya gestiona clases como `keyboard-open`, lo cual es bueno para el layout.
+
+3. **Navegación e Historial (main.js / navigation.js):**
+   - El flujo de "segundo retroceso" requiere que, estando en resultados de búsqueda (sin modal), el siguiente "Atrás" limpie la búsqueda y restaure el catálogo.
+   - Actualmente, `main.js` en `popstate` intenta restaurar la búsqueda si `state.query` existe. Esto podría entrar en conflicto con el deseo de "retroceder" fuera de la búsqueda.
+   - `navigation.irAPaginaPrincipal` ya realiza limpiezas de hash y estado, pero debe integrarse correctamente en el flujo de gestos.
+
+4. **Compatibilidad:**
+   - El uso de `document.activeElement.blur()` y `input.focus()` es estándar y compatible con PWA y navegadores móviles.
+
+**Riesgos y Dependencias:**
+- La animación del encabezado depende de la clase `search-active` en el body. No debe alterarse manualmente si no es a través de los flujos de búsqueda existentes.
+- El retraso de 150ms en la apertura automática del modal (`ui.js`) es crítico para evitar colisiones con el renderizado del grid.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - Sincronización de Historial y Navegación del Dispositivo (07/07/2026)**
+
+**Archivos involucrados:** ui.js, main.js, navigation.js.
+
+**Hallazgos:**
+1. **Inconsistencia de pushState (ui.js):**
+   - Funciones como `mostrarMarcas`, `mostrarModelosPorMarca`, `mostrarModelos`, `mostrarTiposEncendido`, `mostrarVersiones` y `mostrarVersionesEquipamiento` actualizan el estado interno (`setState`) pero NO ejecutan `history.pushState`.
+   - Esto causa que el botón Atrás del dispositivo ignore estos niveles y salte directamente al último estado registrado (usualmente el inicio o la búsqueda inicial).
+   - El botón interno "< Volver" funciona porque usa llamadas directas a funciones, no depende del historial del navegador.
+
+2. **Cierre de Modal y Historial:**
+   - `mostrarDetalleModal` realiza un `pushState({ modalOpen: true })`.
+   - Al cerrar el modal con "X", se llama a `history.back()`. Si el usuario ya estaba en el tope de la pila (ej. recarga de página con modal abierto), `history.back()` podría intentar salir de la aplicación.
+   - El cierre manual debe ser consistente con el estado del historial.
+
+3. **Reapertura de Modal:**
+   - Se debe asegurar que al retroceder desde un nivel a otro, si el nivel anterior tenía un modal abierto "automáticamente" (resultado único), este no se vuelva a abrir si ya fue cerrado. La bandera `autoOpen` implementada en v2.4.10 debe preservarse y reforzarse.
+
+4. **Navegación Agrupada (Búsqueda):**
+   - Al navegar desde resultados de búsqueda hacia niveles internos (ej. modelos de una marca encontrada), se debe registrar cada paso en el historial para permitir el retroceso granular solicitado.
+
+**Acciones Planificadas:**
+- Implementar `pushState` en todas las funciones de cambio de nivel en `ui.js`.
+- Actualizar el listener de `popstate` en `main.js` para manejar la reconstrucción de vistas basadas en el estado del historial (level, marca, modelo, categoria, etc.).
+- Asegurar que `irAPaginaPrincipal` sea el ancla base del historial.
+
+### CORRECCIÓN DE NAVEGACIÓN Y TECLADO VIRTUAL
+- Implementada interceptación de popstate para cerrar el teclado virtual mediante blur() sin retroceder en el historial en el primer gesto.
+- Agregado el campo 'origin' ('marca' o 'categoria') en el navigationState y en history.pushState para mantener independientes los contextos de navegación y evitar mezclar rutas en el retroceso.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CORRECCIÓN AJUSTE POST-COMMIT DE HISTORIAL (14/07/2026)**
+
+**Archivo: main.js (popstate)**
+- **Hallazgo:** Cuando el input de búsqueda está enfocado y se realiza un retroceso, el navegador ya ha retrocedido un estado en el historial (dejando activo el estado anterior, p. ej. 'categorias').
+- El código actual re-insertaba el estado actual ya modificado (), duplicando el estado de la página de inicio en lugar de preservar el estado de búsqueda activo (). Esto causaba que la búsqueda se borrara del historial y el siguiente retroceso cerrara la aplicación.
+- **Acción:** Re-insertar explícitamente el estado de búsqueda  reconstruido dinámicamente con el valor del input, preservando el historial y permitiendo que el segundo retroceso regrese correctamente a la página principal.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CORRECCIÓN AJUSTE POST-COMMIT DE HISTORIAL (14/07/2026)**
+
+**Archivo: main.js (popstate)**
+- **Hallazgo:** Cuando el input de búsqueda está enfocado y se realiza un retroceso, el navegador ya ha retrocedido un estado en el historial (dejando activo el estado anterior, p. ej. "categorias").
+- El código anterior re-insertaba el estado actual ya modificado (state), duplicando el estado de la página de inicio en lugar de preservar el estado de búsqueda activo ({ level: "busqueda", query: currentQuery }). Esto causaba que la búsqueda se borrara del historial y el siguiente retroceso cerrara la aplicación.
+- **Acción:** Re-insertar explícitamente el estado de búsqueda { level: "busqueda", query: currentQuery } reconstruido dinámicamente con el valor del input, preservando el historial y permitiendo que el segundo retroceso regrese correctamente a la página principal.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REFINAMIENTO POST-COMMIT DEL HISTORIAL DE BÚSQUEDA (14/07/2026)**
+
+**Archivos: main.js, ui.js, navigation.js**
+- **Hallazgo:** Se identificó que la barra de búsqueda en estado enfocado (teclado abierto) y desenfocado (teclado cerrado) compartían el mismo estado de historial "busqueda". Esto causaba una duplicación en la pila de historial cuando el usuario utilizaba el gesto de retroceso para desenfocar la barra de búsqueda, impidiendo regresar a la página principal en el segundo retroceso.
+- **Acción:**
+  1. Introducido el nuevo estado de historial "busqueda_focused" para representar la barra de búsqueda enfocada / teclado abierto.
+  2. Al enfocar o escribir, el estado se establece en "busqueda_focused".
+  3. Al desenfocar (blur), el estado se reemplaza silenciosamente con "busqueda" (desenfocado).
+  4. En el primer retroceso (si está enfocado), se ejecuta blur() de inmediato, se elimina la clase "search-active" sin desfase de tiempo, y se re-inserta el estado "busqueda".
+  5. En el segundo retroceso, se vuelve correctamente al estado inicial sin duplicaciones ni cierres de aplicación.
+  6. Soportados ambos escenarios (Resultados múltiples y Modal de resultado único) con perfecta correspondencia en la pila de navegación del navegador y gestos del sistema.
+
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REFINAMIENTO DEL FLUJO DE RETROCESO (15/07/2026)**
+
+**Archivos involucrados:** main.js, navigation.js, ui.js.
+
+**Hallazgos:**
+1. **Inicialización del Historial:**
+   - La aplicación no inicializa `window.history.state` en el arranque, dejando estados `null` iniciales. Esto puede provocar que al retroceder se cierre la aplicación de forma abrupta.
+   - Existen llamadas a `replaceState(null, ...)` en `navigation.js` y `ui.js` que rompen la homogeneidad del historial. Deberán ser reemplazadas por `{ level: "categorias" }`.
+
+2. **Gestión de Foco en Retroceso:**
+   - Algunos navegadores móviles desenfocan automáticamente los campos de entrada antes de disparar el evento `popstate`. Por ello, comprobar únicamente `document.activeElement === searchInput` no es robusto.
+   - Solución: Incorporar la verificación de `navigationState.level === "busqueda_focused"` para interceptar de manera confiable el primer retroceso desde una búsqueda activa, incluso si el foco físico ya se perdió en el dispositivo.
+
+3. **Teclado, Foco y Transición Visual:**
+   - La transición visual de salida (quitar `.search-active`) tiene un retardo de 250ms en el listener de `blur` del input de búsqueda para permitir clics en el botón "X".
+   - Sin embargo, para la navegación por gestos de retroceso, se requiere que la animación inversa, la pérdida de foco y la ocultación del teclado formen parte de una única transición inmediata.
+   - Solución: Introducir una variable `isBackGestureBlurring` para evitar el retardo del listener de `blur` durante la ejecución del retroceso, logrando una transición instantánea y unificada.
+
+4. **Simplificación de Restauración:**
+   - El bloque de restauración final en `popstate` verifica hashes de forma que los hashes residuales podrían bloquear la limpieza.
+   - Solución: Simplificar el bloque para que invoque a `irAPaginaPrincipal(true)` siempre que `!state.query`.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - REFINAMIENTO DE NAVEGACIÓN Y HISTORIAL DE BÚSQUEDA (15/07/2026)**
+
+**Archivos involucrados:** main.js, navigation.js, ui.js.
+
+**Hallazgos:**
+1. **Lógica de Doble y Triple Retroceso**:
+   - Actualmente, en `focus` de la barra de búsqueda, se insertan dos estados (`busqueda` y `busqueda_focused`).
+   - Al retroceder del primer estado (`busqueda_focused`), el popstate intercepta el retroceso y vuelve a empujar el estado `busqueda`, lo que resulta en un historial duplicado o hinchado que impide la correcta correspondencia de 1 gesto por transición.
+   - Para que el primer retroceso funcione exactamente como una transición visual unificada (ocultar teclado, perder foco, animación inversa), pero sin abandonar los resultados ni la consulta actual, se debe garantizar que el historial tenga exactamente un estado `busqueda_focused` por encima del estado anterior (`categorias` o `modelosPorMarca`).
+   - Al ocurrir el retroceso de `busqueda_focused`, el navegador ya regresa de forma nativa al estado anterior (ej. `categorias` o `modelosPorMarca`). En este popstate, capturamos que veníamos de `busqueda_focused`, desactivamos el foco/teclado/search-active, y empujamos un nuevo estado `busqueda` desenfocado en el historial. Esto mantiene la consulta y resultados en pantalla.
+   - En el segundo retroceso (desde `busqueda` desenfocado), el navegador vuelve de manera nativa al estado inicial (ej. `categorias` o `modelosPorMarca`). Al procesar ese popstate, dado que `currentNavState.level === 'busqueda'`, se limpia la búsqueda, se eliminan los resultados, y se restaura completamente el estado inicial de la aplicación.
+   - Esto reduce drásticamente la pila de historial redundante y sincroniza perfectamente la navegación de gestos del sistema.
+
+2. **Sincronización del Modal Automático (Escenario 2)**:
+   - Al abrirse automáticamente el modal por resultado único, se añade una entrada de historial (`modalOpen: true`).
+   - El primer retroceso cierra el modal de detalles de manera determinista y restaura el foco en el buscador (teclado visible, estado `busqueda_focused`).
+   - El segundo retroceso realiza la transición visual unificada (ocultar teclado, perder foco, animación inversa, estado `busqueda`).
+   - El tercer retroceso limpia la búsqueda y regresa por completo al estado inicial.
+
+**Acciones Planificadas:**
+- Limpiar y simplificar la lógica de inserción de estados en `focus` de `main.js`.
+- Actualizar el listener de `popstate` para procesar limpiamente las transiciones del historial.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CAUSA RAÍZ DE NAVEGACIÓN FALLIDA (15/07/2026)**
+
+**Archivos involucrados:** navigation.js, main.js.
+
+**Causa Raíz de la Falla:**
+- Al borrar el contenido del buscador (por tecleo de retroceso o haciendo clic en "X"), `filtrarContenido("")` invocaba directamente a `irAPaginaPrincipal()`.
+- `irAPaginaPrincipal()` ejecuta `history.replaceState({ level: 'categorias' })` para limpiar los parámetros de la URL, removiendo la clase `search-active` y haciendo `blur()` del input.
+- Sin embargo, en el caso del botón "X" o si el usuario sigue con el foco puesto en la barra de búsqueda, el input se re-enfocaba, pero el historial del navegador ya había perdido el estado de búsqueda por completo (reemplazado por `categorias`).
+- Al estar en el estado `categorias` en la pila del historial, cualquier gesto de retroceso posterior del sistema operativo cerraba la aplicación abruptamente porque no quedaba ningún estado anterior al cual regresar en el navegador.
+
+**Solución Definida:**
+- En `navigation.js` (`filtrarContenido`), si la consulta se vuelve vacía (`!busqueda`), comprobar si se trata de una restauración (`isRestoring`).
+- Si **NO** se trata de una restauración (`!isRestoring`), se llama directamente a `mostrarCategorias()` para limpiar los resultados de búsqueda visuales y mostrar el catálogo, pero **SE CONSERVA** el estado de búsqueda activo (`busqueda_focused` o `busqueda` con query vacía) mediante `history.replaceState({ level, query: "" })`.
+- Esto mantiene el teclado virtual abierto y la clase `search-active` activa de manera fluida, garantizando que el historial del navegador retenga el estado de búsqueda para responder perfectamente a un retroceso del dispositivo.
+- Si **SÍ** se trata de una restauración (`isRestoring`), se llama a `irAPaginaPrincipal(true)` de forma normal para limpiar el input de búsqueda y regresar al estado inicial.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - RESOLUCIÓN DEFINITIVA DE HISTORIAL NATIVO (15/07/2026)**
+
+**Archivos involucrados:** main.js, navigation.js.
+
+**Por qué la estrategia anterior falló:**
+- En la iteración anterior, se intentó optimizar el historial haciendo que el foco en el buscador solo empujara un único estado (`busqueda_focused`).
+- Al realizar el primer gesto de retroceso, el navegador regresaba físicamente al estado anterior (ej. `categorias`). Para evitar la pérdida de los resultados de búsqueda, el controlador `popstate` intentaba re-insertar el estado desenfocado haciendo `history.pushState({ level: "busqueda" })`.
+- Sin embargo, llamar a `pushState` de forma asíncrona dentro de un manejador de evento `popstate` es altamente inestable y frecuentemente bloqueado o ignorado por los motores de navegación de dispositivos móviles (Android Chrome, iOS Safari) y motores de PWA durante la fase de transición de gestos.
+- Al fallar o ignorarse el `pushState` asíncrono, el historial se quedaba únicamente con el estado base (`categorias`). Por lo tanto, el segundo gesto de retroceso cerraba la aplicación de forma prematura.
+
+**Nueva Estrategia de Historial Forward-Stack 100% Nativo:**
+- **Al enfocar (focus)**: Empujar de forma secuencial y por adelantado el estado `busqueda` (desenfocado) y luego el estado `busqueda_focused` (enfocado). Esto construye una pila de historial legítima y nativa de 3 estados antes de que el usuario comience a navegar hacia atrás:
+  1. `categorias` (o estado previo)
+  2. `busqueda` (desenfocado)
+  3. `busqueda_focused` (enfocado)
+- **Al realizar el primer retroceso**: El navegador regresa de forma nativa a la entrada 2 (`busqueda`). El manejador del `popstate` intercepta esto, oculta el teclado, pierde el foco y realiza la animación inversa de forma visual. Para sincronizar la consulta actual sin alterar la pila de historial ni recurrir a `pushState`, se usa `history.replaceState({ level: "busqueda", query: currentQuery })`.
+- **Al realizar el segundo retroceso**: El navegador regresa de forma nativa a la entrada 1 (`categorias` o estado previo). El manejador del `popstate` limpia el buscador y restaura la pantalla inicial completamente.
+- Este enfoque es 100% nativo, no realiza llamadas a `pushState` durante el evento `popstate`, y garantiza una sincronización perfecta y robusta en cualquier navegador y dispositivo móvil.
+
+
+===================================================================
+AUDITORÍA DE MEJORAS DE FRONTEND (SIN MODIFICACIONES AL BACKEND) (17/02/2026)
+===================================================================
+
+-------------------------------------------------------------------
+DIAGNÓSTICO TÉCNICO Y HALLAZGOS DETALLADOS
+-------------------------------------------------------------------
+
+ID del hallazgo: H-FRONT-01
+Título: Falta de opción para indicar activación del testigo del motor en formulario de cortes
+Descripción: En `add_cortes.html` (Etapa 2), los usuarios no disponen de una opción rápida para indicar si un corte activa el testigo del motor. El requisito exige un checkbox que inyecte un bloque HTML específico al final de la descripción del campo "Ubicación del Corte" y lo remueva de manera limpia y sin duplicarse si se desmarca.
+Ubicación:
+  - Archivo: add_cortes.html
+Impacto: Medio
+Riesgo: Bajo
+Dependencias: Campo `ubicacionCorte1`
+
+ID del hallazgo: H-FRONT-02
+Título: Determinación inexacta de generación más reciente y validación de año laxa
+Descripción:
+  1. En `ui.js` (`checkValidationEligibility`), la comparación de la generación más reciente asume que el ID del vehículo debe coincidir exactamente con el ID obtenido por `reduce` de la generación con mayor año de inicio. Si existen múltiples cortes registrados para la misma última generación, la comparación de IDs falla erróneamente para algunos registros. Debemos validar que no exista ninguna generación posterior para el mismo vehículo.
+  2. En `ui.js` (`showStepInput`), la validación del año introducido por el usuario permite letras en navegadores que no bloquean la entrada, permite valores no numéricos parciales y tolera años futuros de hasta `currentYear + 2`. El requisito exige restringir a números estrictos de 4 dígitos, con un máximo de `currentYear + 1` y mínimo de `1980` (rango esperado por el sistema).
+Ubicación:
+  - Archivo: ui.js
+Impacto: Alto
+Riesgo: Medio
+Dependencias: `checkValidationEligibility`, `showValidationBanner`
+
+-------------------------------------------------------------------
+PLAN DE RESPALDO OBLIGATORIO
+-------------------------------------------------------------------
+Archivos a respaldar:
+- `add_cortes.html` -> `add_cortes.html.bak`
+- `ui.js` -> `ui.js.bak`
+
+===================================================================
+AUDITORÍA DE MEJORAS DE FRONTEND - ADICIONAL "ES MÁS ANTIGUO" (17/02/2026)
+===================================================================
+
+ID del hallazgo: H-FRONT-03
+Título: El botón "Es más antiguo" no solicita el año al usuario y no se muestra para modelos antiguos
+Descripción:
+  1. En `ui.js` (`showStep1`), el botón "Es más antiguo" solo se muestra cuando `isOldModel` es falso (`if (!isOldModel)`). Sin embargo, incluso para modelos antiguos, el usuario puede estar trabajando en una versión aún más antigua, por lo que la opción debe estar disponible siempre.
+  2. Al presionar "Es más antiguo", el sistema invoca inmediatamente `registerAndClose` con un año precalculado, en lugar de solicitar el año específico mediante un campo de entrada (input text) como solicita el usuario.
+Estrategia de corrección:
+  - Hacer que el botón "Es más antiguo" se muestre siempre en `showStep1` independientemente de `isOldModel`.
+  - Modificar su acción para invocar `showStepInput(true)`, permitiendo al usuario ingresar el año específico para la opción "Es más antiguo".
+  - Actualizar `showStepInput` para aceptar el parámetro `isFromAntiguo` y registrar la respuesta adecuada.
+
+===================================================================
+AUDITORÍA DE MEJORAS DE FRONTEND (VERSIÓN 2.1.5) (18/02/2026)
+===================================================================
+
+ID del hallazgo: H-FRONT-v2.1.5-01
+Título: Ausencia de versión de equipamiento en coincidencias del formulario de nuevos cortes
+Descripción: Durante la Etapa 1.5 en `add_cortes.html`, se listan coincidencias de vehículos similares para evitar duplicados, pero no se indica la versión de equipamiento (`match.versionesAplicables`). Adicionalmente, el sistema debe ser capaz de comparar y emparejar versiones agrupadas de forma flexible (ej. 'LX / EX / Sport' vs 'Sport, LX, EX') sin importar el orden, casing o delimitadores.
+Ubicación:
+  - Archivo: `add_cortes.html` (displayMatches)
+Impacto: Medio
+Riesgo: Bajo
+Estrategia de corrección:
+  - Mostrar la versión del vehículo en la match card.
+  - Implementar un normalizador de versiones similar a `normalizeVersion` de `ui.js` para realizar una comparación de compatibilidad e indicar si coincide con la versión ingresada por el usuario.
+
+ID del hallazgo: H-FRONT-v2.1.5-02
+Título: Orden incorrecto de z-index en Lightbox de configuración de relay
+Descripción: Cuando se abre el modal secundario de configuración de relay desde el modal de detalle, abrir el Lightbox del diagrama técnico lo muestra por detrás del modal de relay debido a que el z-index de `.lightbox` (1700) es menor que el de `.info-modal` (2100).
+Ubicación:
+  - Archivo: `style.css` (.lightbox)
+Impacto: Alto
+Riesgo: Muy bajo
+Estrategia de corrección:
+  - Incrementar el z-index de `.lightbox` a 2200 para que se superponga correctamente a los modales de información y detalle.
+
+ID del hallazgo: H-FRONT-v2.1.5-03
+Título: Falta de navegación interactiva desde logotipo de marca en modal de detalle
+Descripción: El logotipo de la marca mostrado en el encabezado del modal de detalle es estático. Al hacer clic debería cerrar el modal y navegar al catálogo mostrando únicamente los modelos pertenecientes a esa marca.
+Ubicación:
+  - Archivo: `ui.js` (mostrarDetalleModal)
+Impacto: Medio
+Riesgo: Bajo
+Estrategia de corrección:
+  - Hacer clickable el logotipo de marca con un cursor `pointer`.
+  - En su evento de clic, cerrar el modal, actualizar el estado de historial a `modelosPorMarca` (vía replaceState) y ejecutar `mostrarModelosPorMarca` para la marca correspondiente.
+
+ID del hallazgo: H-FRONT-v2.1.5-04
+Título: Falta de navegación desde categoría del vehículo en modal de detalle
+Descripción: La categoría del vehículo mostrada debajo de la marca/modelo en el modal de detalle es estática. Al hacer clic debería cerrar el modal y filtrar los modelos de esa marca que correspondan a esa categoría específica.
+Ubicación:
+  - Archivo: `ui.js` (mostrarDetalleModal)
+Impacto: Medio
+Riesgo: Bajo
+Estrategia de corrección:
+  - Convertir el texto de categoría en un elemento de navegación interactivo clickable.
+  - Al hacer clic, cerrar el modal, actualizar el estado de navegación a `modelos` (vía replaceState) y ejecutar `mostrarModelos` para filtrar por marca y categoría.
+
+ID del hallazgo: H-FRONT-v2.1.5-05
+Título: Falta de navegación rápida entre generaciones en el modal de detalle
+Descripción: No existe una vía rápida para saltar entre generaciones del mismo modelo de vehículo desde el modal de detalle, lo que obliga al usuario a volver atrás y re-navegar.
+Ubicación:
+  - Archivo: `ui.js` (mostrarDetalleModal)
+Impacto: Alto
+Riesgo: Medio
+Estrategia de corrección:
+  - Identificar todas las generaciones del mismo modelo del vehículo (coincidiendo en marca, modelo, categoría, tipo de encendido y versión normalizada) ordenadas de forma ascendente por año de inicio (`anoDesde`).
+  - Añadir flechas navegables `<` y `>` al lado del rango de años si existen múltiples generaciones.
+  - Implementar acciones en las flechas que llamen a `mostrarDetalleModal` para la generación anterior o siguiente, enviando un parámetro `isNavigation = true` para actualizar la vista sin agregar nuevos registros repetidos a la pila del historial.
+
+ID del hallazgo: H-NAV-v2.1.5-06
+Título: Comportamiento intermitente en la navegación por marcas
+Descripción: Se ha identificado un problema de inconsistencia en la navegación por marcas desde el carrusel de la página de inicio, resultados de búsqueda y detalles del modal. El problema ocurre de manera intermitente debido a la falta de normalización y homogeneización de los nombres de marcas, modelos y categorías que se cargan desde el catálogo central (Google Sheets o IndexedDB local). Si un registro de marca tiene espacios en blanco o variaciones de capitalización (ej. "Toyota" vs "Toyota " o "TOYOTA"), el carrusel genera duplicados o utiliza un término no homogeneizado, y las comparaciones con igualdad estricta (`===`) descartan los modelos que no coinciden exactamente con esa cadena específica, mostrando solo una lista parcial de modelos.
+Frecuencia del problema: Intermitente / Aleatorio. Depende del orden de carga de los registros en cortes y de si se activa la sincronización silenciosa de fondo.
+Condiciones de aparición: Aparece cuando la base de datos de cortes contiene registros con inconsistencias de espaciado o casing en campos de marca, modelo o categoría, y se hace clic en una marca cuyos datos no están homogeneizados.
+Ubicación:
+  - Archivos involucrados: `auth.js` y `ui.js`.
+  - Funciones implicadas: `loadInitialData()`, `processCatalogData()`, `updateFullState()`.
+  - Dependencias relacionadas: Lógica de filtrado de modelos, navegación por marca, carruseles de inicio, buscador, y sincronización en segundo plano.
+Impacto: Alto
+Riesgo de regresión: Bajo
+Impacto sobre navegación: Alto (se corrigen listas parciales de modelos).
+Impacto sobre búsqueda: Bajo.
+Impacto sobre agrupaciones: Bajo.
+Impacto sobre el historial: Bajo.
+Estrategia de corrección:
+  - Implementar una función centralizada de normalización de datos del catálogo (`normalizeCatalogData`) en `auth.js` que unifique de manera inteligente el espaciado (trim) y la capitalización de nombres de marcas, categorías y modelos en el catálogo completo.
+  - Aplicar esta normalización de datos al cargar desde la caché en IndexedDB, al recibir datos de la red en segundo plano antes de guardarlos y pasarlos a la sincronización silenciosa, y en `updateFullState` de `ui.js` para asegurar que el estado y la caché siempre operen sobre un dataset 100% libre de inconsistencias y duplicidades.

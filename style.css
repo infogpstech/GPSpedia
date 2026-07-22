@@ -1,4 +1,4 @@
-/* GPSpedia Styles | Version: 2.4.2 */
+/* GPSpedia Styles | Version: 2.1.5 */
 /* Estilos Globales */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -331,6 +331,23 @@ h1.app-title {
     width: 20px; /* Ancho fijo para alinear iconos */
     text-align: center;
     color: #007bff;
+}
+.side-menu-changelog-a {
+    color: #007bff;
+    text-decoration: none;
+    font-size: 0.85em;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+.side-menu-changelog-a:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+.dark-mode .side-menu-changelog-a {
+    color: #a0cfff;
+}
+.dark-mode .side-menu-changelog-a:hover {
+    color: #fff;
 }
 .dark-mode #side-menu, .dark-mode #side-menu nav a {
     background-color: var(--menu-bg);
@@ -1169,7 +1186,7 @@ body.search-active .container {
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 1700; /* Aumentado para estar sobre el modal de detalles */
+    z-index: 2200; /* Aumentado para estar sobre el modal de detalles y configuracion de relay */
     /* Transiciones */
     opacity: 0;
     visibility: hidden;

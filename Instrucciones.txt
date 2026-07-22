@@ -340,3 +340,29 @@ Cualquier cambio en estas zonas invalidará el commit.
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** ui.js, navigation.js
    - **DESCRIPCIÓN DETALLADA:** Corregido el fallo que impedía renderizar la tarjeta y mantenía el modal cerrado al obtener un único resultado de búsqueda. Se eliminó el retorno prematuro en `ui.js` y se reordenó la actualización del hash en `navigation.js` para evitar colisiones con el listener de `popstate` en `main.js`.
+
+
+13. **TÍTULO: Auditoría técnica global, diagnóstico y estabilización de Catálogo (v2.5.5)**
+   - **ESTADO:** COMPLETADO (Fase 1)
+   - **ALCANCE:** Services/Catálogo/catalog.js, Auditoria.txt, index.html, ChangesLogs.txt, Instrucciones.txt
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Auditoría:** Realizada auditoría de todo el repositorio, identificando errores sintácticos, funciones huérfanas y duplicación.
+     - **Catálogo:** Corregido error sintáctico crítico (llave redundante) en Services/Catálogo/catalog.js.
+     - **Versión:** Actualizada la versión de la plataforma a v2.5.5 para reflejar la estabilización de Catálogo.
+
+
+14. **TÍTULO: Saneamiento Estructural de Código Muerto y Eliminación de Duplicación DRY (v2.5.6)**
+   - **ESTADO:** COMPLETADO (Fase 2)
+   - **ALCANCE:** ui.js, navigation.js, Services/Catálogo/catalog.js, Services/Write/write.js, Services/Users/users.js, Instrucciones.txt
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Código Duplicado:** Hoisteada la función "createDetailParagraph" en ui.js y eliminadas las definiciones redundantes.
+     - **Código Muerto:** Eliminadas las funciones huérfanas "getDatosFiltrados", "isYearInRangeV2", "isFlexibleModelMatch" y "getVerifiedRole" de todo el codebase.
+     - **Versión:** Incremento a v2.5.6.
+
+
+15. **TÍTULO: Consolidación, Limpieza de Respaldos y Cierre de Auditoría Técnica (v2.5.7)**
+   - **ESTADO:** COMPLETADO (Fase 3)
+   - **ALCANCE:** index.html, ChangesLogs.txt, Instrucciones.txt
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Limpieza:** Se eliminaron todos los archivos temporales de respaldo (*.bak) y utilidades creadas.
+     - **Versión:** Incrementada la versión de la plataforma en index.html a v2.5.7 para el despliegue de consolidación.

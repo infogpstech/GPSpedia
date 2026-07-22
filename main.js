@@ -1,4 +1,4 @@
-// GPSpedia Main Orchestration Module | Version: 2.4.2
+// GPSpedia Main Orchestration Module | Version: 2.1.5
 // Responsibilities:
 // - Import all feature modules.
 // - Initialize the application and set up global event listeners.
@@ -14,11 +14,17 @@ import './lightbox.js';
 
 let deferredPrompt;
 let searchBlurTimeout;
+let isBackGestureBlurring = false;
 
 /**
  * Main function to initialize the application.
  */
 async function initializeApp() {
+
+    // Inicializar el estado de historial si es null para evitar cierres abruptos
+    if (!window.history.state) {
+        window.history.replaceState({ level: 'categorias' }, '', window.location.href);
+    }
 
     // 1. Expose modules to the global scope for inline event handlers in HTML
     window.routeAction = routeAction; // Exponer la función central de API
@@ -63,12 +69,43 @@ async function initializeApp() {
     searchInput.addEventListener('focus', () => {
         if (searchBlurTimeout) clearTimeout(searchBlurTimeout);
         document.body.classList.add('search-active');
+
+        const currentQuery = searchInput.value;
+        const currentState = window.history.state || {};
+        const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(currentQuery)}`;
+
+        window.state.setState({ navigationState: { level: "busqueda_focused", query: currentQuery } });
+
+        if (currentState.level === 'busqueda_focused') {
+            history.replaceState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
+        } else if (currentState.level === 'busqueda') {
+            history.pushState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
+        } else {
+            history.pushState({ level: "busqueda", query: currentQuery }, '', newUrl);
+            history.pushState({ level: "busqueda_focused", query: currentQuery }, '', newUrl);
+        }
     });
 
     searchInput.addEventListener('blur', () => {
+        if (isBackGestureBlurring) return;
+        // Sincronizar historial con el estado desenfocado
+        const currentQuery = searchInput.value;
+        const currentState = window.history.state || {};
+        if (currentState.level === 'busqueda_focused') {
+            const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(currentQuery)}`;
+            history.replaceState({ level: "busqueda", query: currentQuery }, '', newUrl);
+            window.state.setState({ navigationState: { level: "busqueda", query: currentQuery } });
+        }
+
         // Se utiliza un timeout para evitar el cierre inmediato al hacer clic en el botón de limpiar (X)
         searchBlurTimeout = setTimeout(() => {
-            document.body.classList.remove('search-active');
+            const modalDetalle = document.getElementById('modalDetalle');
+            const isModalVisible = modalDetalle && modalDetalle.classList.contains('visible');
+
+            // No quitar la clase 'search-active' si el modal está visible para mantener la animación del header
+            if (!isModalVisible) {
+                document.body.classList.remove('search-active');
+            }
         }, 250);
     });
 
@@ -171,36 +208,138 @@ async function initializeApp() {
                 iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
             }
             modalDetalle.classList.remove('visible');
+
+            // Restaurar foco a la barra de búsqueda si estamos en modo búsqueda
+            const isSearchActive = document.body.classList.contains('search-active');
+            if (isSearchActive && searchInput) {
+                // Timeout para asegurar que la transición del modal no interfiera
+                setTimeout(() => searchInput.focus(), 300);
+            }
+            return;
+        }
+
+        // Tarea 1: Si el teclado virtual está visible (el input de búsqueda tiene el foco),
+        // o si el estado de navegación actual indica que estábamos en una búsqueda activa,
+        // el primer retroceso debe retirar el foco, ocultar el teclado e iniciar la animación inversa simultáneamente
+        // en una única transición visual sin desfase ni retardo, conservando el estado de resultados.
+        // NOTA: Solo se intercepta si NO hay un modal visible para evitar interferir con el cierre de overlays.
+        const isModalVisible = modalDetalle && modalDetalle.classList.contains('visible');
+        const currentNavState = window.state.getState().navigationState || {};
+        if (!isModalVisible && searchInput && (document.activeElement === searchInput || currentNavState.level === 'busqueda_focused')) {
+            const currentQuery = searchInput.value;
+
+            // Cancelar cualquier timeout activo para desenfocar y ocultar el teclado
+            if (searchBlurTimeout) clearTimeout(searchBlurTimeout);
+
+            // Activar flag para ignorar el delay en el listener de blur
+            isBackGestureBlurring = true;
+
+            // Ocultar la barra activa e iniciar la animación inversa simultáneamente
+            document.body.classList.remove('search-active');
+
+            // Retirar foco inmediatamente
+            searchInput.blur();
+
+            isBackGestureBlurring = false;
+
+            // Evitar que el historial se desplace hacia atrás recuperando la posición actual
+            // mediante la re-inserción del estado de búsqueda activo desenfocado.
+            if (currentQuery) {
+                const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(currentQuery)}`;
+                history.replaceState({ level: "busqueda", query: currentQuery }, '', newUrl);
+                // Sincronizar también el estado de navegación global
+                window.state.setState({ navigationState: { level: "busqueda", query: currentQuery } });
+            } else {
+                navigation.irAPaginaPrincipal(true);
+            }
             return;
         }
 
         // PRIORIDAD SECUNDARIA: GESTIÓN DE ESTADOS DE CONTENIDO
         const isSearchActive = document.body.classList.contains('search-active');
 
-        // Si regresamos a un estado que no tiene información de búsqueda, limpiar buscador
-        if (!state.query && !window.location.hash.includes('#search=')) {
-            if (searchInput) {
-                searchInput.value = '';
-                searchInput.blur();
-                searchInput.parentElement.classList.remove('has-text');
-            }
-            document.body.classList.remove('search-active');
+        // Manejo de niveles de navegación (Cortes / Categorías)
+        if (state.level) {
+            // Rehidratar origin en el estado global para conservar el contexto
+            const origin = state.origin || "categoria";
+            const currentState = window.state.getState().navigationState || {};
+            window.state.setState({ navigationState: { ...currentState, origin } });
 
+            // Limpieza de búsqueda al salir del nivel de búsqueda hacia un nivel no-búsqueda de catálogo
+            const isSearchLevel = state.level === 'busqueda' || state.level === 'busqueda_focused';
+            if (!isSearchLevel) {
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.parentElement.classList.remove('has-text');
+                    searchInput.blur();
+                }
+                document.body.classList.remove('search-active');
+            }
+
+            switch (state.level) {
+                case 'marcas':
+                    ui.mostrarMarcas(state.categoria);
+                    break;
+                case 'modelosPorMarca':
+                    ui.mostrarModelosPorMarca(state.marca);
+                    break;
+                case 'modelos':
+                    ui.mostrarModelos(state.categoria, state.marca, state.versionEquipamiento);
+                    break;
+                case 'tiposEncendido':
+                    ui.mostrarTiposEncendido(state.categoria, state.marca, state.versionEquipamiento, state.modelo);
+                    break;
+                case 'versiones':
+                    // Reconstruir la lista de versiones para este modelo
+                    const { catalogData } = window.state.getState();
+                    const filter = catalogData.cortes.filter(c =>
+                        c.marca === state.marca &&
+                        c.modelo === state.modelo &&
+                        c.categoria === state.categoria &&
+                        (!state.versionEquipamiento || c.versionesAplicables === state.versionEquipamiento)
+                    );
+                    ui.mostrarVersiones(filter, state.categoria, state.marca, state.modelo);
+                    break;
+                case 'versionesEquipamiento':
+                    ui.mostrarVersionesEquipamiento(state.categoria, state.marca, state.modelo);
+                    break;
+                case 'busqueda_focused':
+                case 'busqueda':
+                    if (searchInput) {
+                        searchInput.value = state.query;
+                        searchInput.parentElement.classList.add('has-text');
+                    }
+                    if (state.level === 'busqueda_focused') {
+                        document.body.classList.add('search-active');
+                        // Forzar el enfoque para re-abrir el teclado virtual de inmediato
+                        setTimeout(() => searchInput.focus(), 300);
+                    } else {
+                        document.body.classList.remove('search-active');
+                        searchInput.blur();
+                    }
+                    // Phase 2.4.10: Se indica que es una restauración (true) para evitar la reapertura automática de modales.
+                    navigation.filtrarContenido(state.query, true);
+                    break;
+                default:
+                    navigation.irAPaginaPrincipal(true);
+            }
+            return;
+        }
+
+        // Si regresamos a un estado que no tiene información de búsqueda ni de nivel, limpiar buscador
+        if (!state.query) {
             // Si estábamos en búsqueda y ahora no, restaurar catálogo
             const currentNavState = window.state.getState().navigationState;
-            if (currentNavState && currentNavState.level === 'busqueda') {
+            if (currentNavState && (currentNavState.level === 'busqueda' || currentNavState.level !== 'categorias')) {
                 navigation.irAPaginaPrincipal(true);
+            } else {
+                if (searchInput) {
+                    searchInput.value = '';
+                    searchInput.blur();
+                    searchInput.parentElement.classList.remove('has-text');
+                }
+                document.body.classList.remove('search-active');
             }
-        } else if (state.query) {
-            // Restaurar estado de búsqueda desde el historial
-            if (searchInput) {
-                searchInput.value = state.query;
-                searchInput.parentElement.classList.add('has-text');
-            }
-            document.body.classList.add('search-active');
-            // Phase 2.4.10: Se indica que es una restauración (true) para evitar la reapertura automática de modales.
-            navigation.filtrarContenido(state.query, true);
-            return; // Detener para que no retroceda más en este gesto
         }
 
         // 5. Manejo de secciones (si el estado indica una sección específica)
@@ -315,6 +454,15 @@ async function initializeApp() {
         ui.closeSideMenu();
         auth.logout();
     });
+
+    const changelogLink = document.getElementById('side-menu-changelog-link');
+    if (changelogLink) {
+        changelogLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            ui.openChangeLog();
+            ui.closeSideMenu();
+        });
+    }
 
     // General section buttons
     document.querySelectorAll('.section-btn').forEach(button => {

@@ -1,4 +1,4 @@
-// GPSpedia Navigation Module | Version: 2.2
+// GPSpedia Navigation Module | Version: 2.1.5
 // Responsibilities:
 // - Manage the application's view state and navigation flow.
 // - Handle user navigation actions (e.g., selecting a category or brand).
@@ -29,20 +29,20 @@ export function irAPaginaPrincipal(isFromPopState = false) {
         // Quitar el foco para que se oculte el historial y se desactive el modo búsqueda
         searchInput.blur();
     }
+
+    // Asegurar que se elimina la clase de búsqueda del body inmediatamente para disparar la animación inversa
+    document.body.classList.remove('search-active');
+
     setState({ navigationState: { level: 'categorias', categoria: null, marca: null, modelo: null } });
 
     // Limpiar el hash de búsqueda al volver a la principal
     if (window.location.hash.startsWith('#search=')) {
-        history.replaceState(null, null, window.location.pathname + window.location.search);
+        history.replaceState({ level: 'categorias' }, '', window.location.pathname + window.location.search);
     }
 
     // Phase 3.1: Asegurar que se muestra la sección de cortes (catálogo)
     // Esto resuelve el problema de que el botón no funcionaba desde Tutoriales o Relay.
     mostrarSeccion('cortes', isFromPopState);
-}
-
-export function getDatosFiltrados() {
-    return datosFiltrados;
 }
 
 // Función refactorizada v2 para buscar, clasificar y mostrar resultados.
@@ -53,7 +53,21 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
 
     if (!busqueda) {
         datosFiltrados = [];
-        irAPaginaPrincipal();
+        if (isRestoring) {
+            irAPaginaPrincipal(true);
+        } else {
+            // Mostrar categorías en el contenedor principal sin salir de la vista de búsqueda
+            mostrarCategorias();
+
+            // Mantener el estado de búsqueda activo con query vacía
+            const isFocused = document.activeElement === document.getElementById('searchInput');
+            const level = isFocused ? "busqueda_focused" : "busqueda";
+
+            setState({ navigationState: { level, query: "" } });
+
+            const newUrl = window.location.pathname + window.location.search;
+            history.replaceState({ level, query: "" }, '', newUrl);
+        }
         return;
     }
 
@@ -107,22 +121,22 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         }
     }, 1500);
 
-    // Phase 2.4.9: Gestión inteligente del historial de búsqueda.
-    // Se utiliza pushState solo la primera vez que se entra en modo búsqueda para registrar el estado en el historial.
-    // Las actualizaciones subsecuentes (mientras se teclea) usan replaceState para no saturar el historial.
-    const currentState = getState();
-    const wasAlreadySearching = currentState.navigationState && currentState.navigationState.level === "busqueda";
+    // Phase 2.4.9: Gestión inteligente del historial de búsqueda con estados nativos.
+    const historyState = window.history.state || {};
+    const wasAlreadySearching = historyState.level === "busqueda" || historyState.level === "busqueda_focused";
 
     // Se guarda el término de búsqueda en el estado para permitir la navegación hacia atrás.
-    setState({ navigationState: { level: "busqueda", query: textoBusqueda } });
+    setState({ navigationState: { level: "busqueda_focused", query: textoBusqueda } });
 
     // Actualizar el hash para Deep Linking ANTES de renderizar resultados.
     const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(textoBusqueda)}`;
 
-    if (wasAlreadySearching) {
-        history.replaceState({ level: "busqueda", query: textoBusqueda }, '', newUrl);
-    } else {
-        history.pushState({ level: "busqueda", query: textoBusqueda }, '', newUrl);
+    if (!isRestoring) {
+        if (wasAlreadySearching) {
+            history.replaceState({ level: "busqueda_focused", query: textoBusqueda }, '', newUrl);
+        } else {
+            history.pushState({ level: "busqueda_focused", query: textoBusqueda }, '', newUrl);
+        }
     }
 
     // --- LÓGICA DE CLASIFICACIÓN MEJORADA (BASADA EN RESULTADOS) ---

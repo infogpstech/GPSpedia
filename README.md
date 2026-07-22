@@ -1,4 +1,4 @@
-# GPSpedia v2.4 - Plataforma Técnica Vehicular
+# GPSpedia v2.1.5 - Plataforma Técnica Vehicular
 
 ## 1. Descripción General
 GPSpedia es una Aplicación Web Progresiva (PWA) de alto rendimiento diseñada específicamente para técnicos e instaladores de sistemas de seguridad y rastreo vehicular. La plataforma centraliza, estandariza y facilita el acceso a información crítica sobre puntos de corte (bomba de combustible, ignición, señal a boton de encendido), diagramas de conexión y guías de desarme de paneles plasticod para una amplia variedad de marcas y modelos de vehículos.
@@ -78,4 +78,4 @@ Por motivos de seguridad operativa y saneamiento del código antes de producció
 La lógica de estos componentes se encuentra resguardada de forma privada bajo la administración del proyecto. El repositorio actual contiene la totalidad de la interfaz de usuario y la lógica de integración necesaria para que la plataforma opere contra los endpoints autorizados definidos en la configuración.
 
 ---
-*GPSpedia v2.4 - 2026 todos los derechos reservados.*
+*GPSpedia v2.1.5 - 2026 todos los derechos reservados.*

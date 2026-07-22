@@ -126,10 +126,6 @@ function getVerifiedSession(sessionToken) {
     throw new Error("Acceso no autorizado: Usuario asociado a la sesión no encontrado.");
 }
 
-function getVerifiedRole(sessionToken) {
-    return getVerifiedSession(sessionToken).role;
-}
-
 // ============================================================================
 // MANEJADORES DE ACCIONES
 // ============================================================================

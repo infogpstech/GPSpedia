@@ -1,4 +1,4 @@
-<!-- GPSpedia Frontend Component | Version: 2.0 -->
+<!-- GPSpedia Frontend Component | Version: 2.1.5 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -207,6 +207,10 @@
                     <div class="form-group"><label for="tipoCorte1">Tipo de Corte</label><select id="tipoCorte1" required></select></div>
                     <div class="form-group"><label for="configRelay1">Configuración de Relay</label><select id="configRelay1" required></select></div>
                     <div class="form-group full-width"><label for="ubicacionCorte1">Ubicación del Corte</label><textarea id="ubicacionCorte1" rows="3"></textarea></div>
+                    <div class="form-group full-width" style="flex-direction: row; align-items: center; gap: 8px; margin-top: -10px; margin-bottom: 10px;">
+                        <input type="checkbox" id="testigoMotor" style="width: auto; margin: 0; cursor: pointer;">
+                        <label for="testigoMotor" style="margin: 0; font-size: 0.95em; cursor: pointer;">Este corte activa el testigo del motor.</label>
+                    </div>
                     <div class="form-group full-width"><label for="colorCableCorte1">Color(es) de Cable</label><input type="text" id="colorCableCorte1"></div>
                     <div class="form-group full-width">
                         <label>Imagen del Corte</label>
@@ -258,7 +262,7 @@
     </div>
 
     <script type="module">
-        // COMPONENT VERSION: 3.0.1
+        // COMPONENT VERSION: 2.1.5
         import { routeAction } from './api-config.js';
         import './lightbox.js';
         const SESSION_KEY = 'gpsepedia_session';
@@ -268,6 +272,8 @@
             selectedVehicleId: null,
             colaborador: ''
         };
+
+        const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', init);
@@ -313,6 +319,7 @@
             document.getElementById('form-stage-1').addEventListener('submit', handleStage1Submit);
             document.getElementById('form-stage-2').addEventListener('submit', handleStage2Submit);
             document.getElementById('form-stage-3').addEventListener('submit', handleStage3Submit);
+
 
             // Suggestions
             document.getElementById('marca').addEventListener('blur', (e) => handleSuggestion(e.target, 'marca'));
@@ -419,6 +426,8 @@
             const container = document.getElementById('matches-container');
             container.innerHTML = '<h2>Vehículos Similares Encontrados</h2><p>Hemos encontrado registros que coinciden con tu búsqueda. Selecciona una opción:</p>';
 
+            const userVersionNormalized = normalizeVersion(state.vehicleInfo.versionesAplicables);
+
             matches.forEach(match => {
                 const yearRange = (match.anoHasta && match.anoHasta != match.anoDesde) ? `${match.anoDesde} - ${match.anoHasta}` : match.anoDesde;
                 const card = document.createElement('div');
@@ -426,12 +435,16 @@
 
                 const vehicleImg = getImageUrl(match.imagenVehiculo, 400);
 
+                const matchVersionNormalized = normalizeVersion(match.versionesAplicables);
+                const matchesUserVersion = userVersionNormalized && matchVersionNormalized && (userVersionNormalized === matchVersionNormalized);
+
                 card.innerHTML = `
                     <div class="match-card-header">
                         <img src="${vehicleImg}" class="match-card-img" onerror="this.src='https://via.placeholder.com/120x90?text=Sin+Imagen'">
                         <div class="match-card-info">
                             <h4>${match.marca} ${match.modelo} (${yearRange})</h4>
                             <p><strong>Encendido:</strong> ${match.tipoEncendido}</p>
+                            <p><strong>Versión:</strong> ${match.versionesAplicables || 'No especificada'} ${matchesUserVersion ? '<span style="color: #28a745; font-weight: bold; font-size: 0.9em;">(Coincide)</span>' : ''}</p>
                             <div class="match-cuts-info">
                                 <h5>Cortes Existentes:</h5>
                                 ${formatCutInfo(match)}
@@ -493,6 +506,27 @@
             const btn = e.target.querySelector('button[type="submit"]');
             toggleLoading(true);
             btn.classList.add('btn-loading');
+
+            // Apply checkEngine motor warning HTML code insertion right before submitting to prevent editing/accidental deletion
+            const checkbox = document.getElementById('testigoMotor');
+            const testigoHTML = `<br><img src="https://drive.google.com/thumbnail?id=1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX&sz=w100-h50" style="height:50px; width:auto; float:right; margin-left:10px;"><br><b style="color: red;">NOTA:</b>Este corte activa el testigo del motor <br>`;
+            const textareas = [
+                document.getElementById('ubicacionCorte1'),
+                document.getElementById('ubicacionCorte2'),
+                document.getElementById('ubicacionCorte3')
+            ].filter(Boolean);
+
+            textareas.forEach(textarea => {
+                if (checkbox && checkbox.checked) {
+                    if (!textarea.value.includes(testigoHTML)) {
+                        textarea.value = textarea.value + testigoHTML;
+                    }
+                } else {
+                    if (textarea.value.includes(testigoHTML)) {
+                        textarea.value = textarea.value.replace(testigoHTML, '');
+                    }
+                }
+            });
 
             const cutData = {
                 tipoCorte1: document.getElementById('tipoCorte1').value,

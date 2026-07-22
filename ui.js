@@ -1,4 +1,4 @@
-// GPSpedia UI Module | Version: 2.4.2
+// GPSpedia UI Module | Version: 2.1.5
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
@@ -333,7 +333,10 @@ export function mostrarMarcas(categoria) {
     const { catalogData } = getState();
     const { cortes } = catalogData;
 
-    setState({ navigationState: { level: "marcas", categoria: categoria } });
+    setState({ navigationState: { level: "marcas", categoria: categoria, origin: "categoria" } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "marcas")) {
+        window.history.pushState({ level: "marcas", categoria: categoria, origin: "categoria" }, '', window.location.pathname + window.location.search);
+    }
     const cont = document.getElementById("contenido");
     cont.innerHTML = `<span class="backBtn" onclick="window.navigation.irAPaginaPrincipal()">${backSvg} Volver</span><h4>Marcas de ${categoria}</h4>`;
     const itemsInCategory = cortes.filter(item => item.categoria === categoria);
@@ -372,7 +375,10 @@ export function mostrarModelosPorMarca(marca) {
 
     // Se establece el estado de navegación actual capturando el estado previo.
     const previousState = getState().navigationState || {};
-    setState({ navigationState: { level: "modelosPorMarca", marca: marca, previousState } });
+    setState({ navigationState: { level: "modelosPorMarca", marca: marca, origin: "marca", previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "modelosPorMarca")) {
+        window.history.pushState({ level: "modelosPorMarca", marca: marca, origin: "marca" }, '', window.location.pathname + window.location.search);
+    }
     const cont = document.getElementById("contenido");
 
     // Lógica dinámica para el botón "Volver": regresa a búsqueda si ese era el origen.
@@ -427,8 +433,9 @@ export function mostrarModelosPorMarca(marca) {
  * @param {string} modelo - El modelo del vehículo.
  */
 function navegarADetallesDeModelo(categoria, marca, modelo) {
-    const { catalogData } = getState();
+    const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
+    const origin = (navigationState && navigationState.origin) || "categoria";
 
     // Comentario: Lógica de navegación refactorizada para omitir pantallas de selección con una sola opción.
     // 1. Obtener todos los cortes para el modelo específico.
@@ -476,18 +483,22 @@ function navegarADetallesDeModelo(categoria, marca, modelo) {
 }
 
 export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
-    const { catalogData } = getState();
+    const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
 
-    const previousState = getState().navigationState || {};
-    setState({ navigationState: { level: "modelos", categoria, marca, versionEquipamiento, previousState } });
+    const previousState = navigationState || {};
+    const origin = previousState.origin || "categoria";
+    setState({ navigationState: { level: "modelos", categoria, marca, versionEquipamiento, origin, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "modelos")) {
+        window.history.pushState({ level: "modelos", categoria, marca, versionEquipamiento, origin }, '', window.location.pathname + window.location.search);
+    }
     const cont = document.getElementById("contenido");
 
     // Lógica dinámica para el botón "Volver"
     let backAction;
     if (versionEquipamiento) {
         backAction = `window.ui.mostrarVersionesEquipamiento('${categoria}', '${marca}')`;
-    } else if (previousState.level === 'modelosPorMarca') {
+    } else if (origin === 'marca' || previousState.level === 'modelosPorMarca') {
         backAction = `window.ui.mostrarModelosPorMarca('${marca}')`;
     } else {
         backAction = `window.ui.mostrarMarcas('${categoria}')`;
@@ -528,10 +539,14 @@ export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
 }
 
 export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, modelo) {
-     const { catalogData } = getState();
+     const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
-    const previousState = getState().navigationState || {};
-    setState({ navigationState: { level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, previousState } });
+    const previousState = navigationState || {};
+    const origin = previousState.origin || "categoria";
+    setState({ navigationState: { level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, origin, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "tiposEncendido")) {
+        window.history.pushState({ level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, origin }, '', window.location.pathname + window.location.search);
+    }
 
     const cont = document.getElementById("contenido");
 
@@ -541,7 +556,7 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
     let backAction;
     if (previousState.level === 'versionesEquipamiento') {
         backAction = `window.ui.mostrarVersionesEquipamiento('${categoria}', '${marca}', '${modelo}')`;
-    } else if (previousState.level === 'modelosPorMarca') {
+    } else if (origin === 'marca' || previousState.level === 'modelosPorMarca') {
         backAction = `window.ui.mostrarModelosPorMarca('${marca}')`;
     } else {
         backAction = `window.ui.mostrarModelos('${categoria}', '${marca}')`;
@@ -585,14 +600,19 @@ export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, mod
 }
 
 export function mostrarVersiones(filas, categoria, marca, modelo) {
-    const previousState = getState().navigationState || {};
-    setState({ navigationState: { level: "versiones", categoria, marca, modelo, previousState } });
+    const { navigationState } = getState();
+    const previousState = navigationState || {};
+    const origin = previousState.origin || "categoria";
+    setState({ navigationState: { level: "versiones", categoria, marca, modelo, origin, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "versiones")) {
+        window.history.pushState({ level: "versiones", categoria, marca, modelo, origin }, '', window.location.pathname + window.location.search);
+    }
     const cont = document.getElementById("contenido");
 
     // Comentario: Lógica dinámica MEJORADA para el botón "Volver".
     // Determina si el paso anterior fue una búsqueda, selección de tipo de encendido o de versión de equipamiento.
     let backAction;
-    if (previousState.level === 'busqueda') {
+    if (previousState.level === 'busqueda' || previousState.level === 'busqueda_focused') {
         // Si venimos de una búsqueda, el botón debe regresar a los resultados de esa búsqueda.
         backAction = `window.ui.regresarABusqueda()`;
     } else if (previousState.level === 'tiposEncendido') {
@@ -602,7 +622,7 @@ export function mostrarVersiones(filas, categoria, marca, modelo) {
         backAction = `window.ui.mostrarTiposEncendido('${categoria}', '${marca}', ${veq}, '${modelo}')`;
     } else if (previousState.level === 'versionesEquipamiento') {
         backAction = `window.ui.mostrarVersionesEquipamiento('${categoria}', '${marca}', '${modelo}')`;
-    } else if (previousState.level === 'modelosPorMarca') {
+    } else if (origin === 'marca' || previousState.level === 'modelosPorMarca') {
         // Soporte para el flujo de navegación por marca (modelosPorMarca).
         backAction = `window.ui.mostrarModelosPorMarca('${marca}')`;
     } else {
@@ -630,7 +650,7 @@ export function regresarABusqueda() {
     // que contiene la información de la búsqueda es el 'previousState'.
     const prevState = navigationState ? navigationState.previousState : null;
 
-    if (prevState && prevState.level === 'busqueda' && prevState.query) {
+    if (prevState && (prevState.level === 'busqueda' || prevState.level === 'busqueda_focused') && prevState.query) {
         // Vuelve a ejecutar la función de filtrado con el término de búsqueda guardado en el estado anterior.
         window.navigation.filtrarContenido(prevState.query);
     } else {
@@ -640,16 +660,20 @@ export function regresarABusqueda() {
 }
 
 export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
-    const { catalogData } = getState();
+    const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
 
-    const previousState = getState().navigationState || {};
-    setState({ navigationState: { level: "versionesEquipamiento", categoria, marca, modelo, previousState } });
+    const previousState = navigationState || {};
+    const origin = previousState.origin || "categoria";
+    setState({ navigationState: { level: "versionesEquipamiento", categoria, marca, modelo, origin, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "versionesEquipamiento")) {
+        window.history.pushState({ level: "versionesEquipamiento", categoria, marca, modelo, origin }, '', window.location.pathname + window.location.search);
+    }
     const cont = document.getElementById("contenido");
 
     // Comentario: Lógica dinámica para el botón "Volver".
     // Se añade soporte para el flujo de navegación por marca (modelosPorMarca).
-    const backAction = previousState.level === 'modelosPorMarca'
+    const backAction = origin === 'marca' || previousState.level === 'modelosPorMarca'
         ? `window.ui.mostrarModelosPorMarca('${marca}')`
         : `window.ui.mostrarModelos('${categoria}', '${marca}')`;
 
@@ -717,15 +741,15 @@ async function checkValidationEligibility(item) {
         normalizeVersion(c.versionesAplicables) === normalizedItemVersion
     );
 
-    // 3. Determinar cuál es la generación más reciente basada en anoDesde
-    const latestGeneration = sameModelGenerations.reduce((prev, current) => {
-        const yearCurrent = parseInt(current.anoDesde) || 0;
-        const yearPrev = parseInt(prev.anoDesde) || 0;
-        return (yearCurrent > yearPrev) ? current : prev;
-    }, sameModelGenerations[0]);
+    // 3. Condición: El vehículo debe pertenecer a la generación más reciente registrada.
+    // Si existe una generación posterior registrada para el mismo vehículo (mismo modelo/marca/categoría/encendido/versión), la notificación no deberá mostrarse.
+    const hasPosteriorGeneration = sameModelGenerations.some(c => {
+        const yearC = parseInt(c.anoDesde) || 0;
+        const yearItem = parseInt(item.anoDesde) || 0;
+        return yearC > yearItem;
+    });
 
-    // 4. Condición: El vehículo debe pertenecer a la generación más reciente registrada.
-    if (String(item.id) !== String(latestGeneration.id)) return { eligible: false };
+    if (hasPosteriorGeneration) return { eligible: false };
 
     // 5. Condición: El rango de años debe finalizar antes del año actual.
     const anoHasta = item.anoHasta ? parseInt(item.anoHasta) : (parseInt(item.anoDesde) || 0);
@@ -814,13 +838,11 @@ function showValidationBanner(item, isOldModel) {
 
         actions.appendChild(btnSi);
 
-        if (!isOldModel) {
-            const btnAntiguo = document.createElement('button');
-            btnAntiguo.className = 'validation-btn secondary';
-            btnAntiguo.textContent = 'Es más antiguo';
-            btnAntiguo.onclick = () => registerAndClose('Es más antiguo', (parseInt(item.anoDesde) - 1));
-            actions.appendChild(btnAntiguo);
-        }
+        const btnAntiguo = document.createElement('button');
+        btnAntiguo.className = 'validation-btn secondary';
+        btnAntiguo.textContent = 'Es más antiguo';
+        btnAntiguo.onclick = () => showStepInput(true);
+        actions.appendChild(btnAntiguo);
 
         actions.appendChild(btnNo);
 
@@ -892,26 +914,37 @@ function showValidationBanner(item, isOldModel) {
         renderStep(content);
     };
 
-    const showStepInput = () => {
+    const showStepInput = (isFromAntiguo = false) => {
         const msg = document.createElement('div');
         msg.className = 'validation-message';
-        msg.textContent = '¿Para qué año funciona correctamente este corte?';
+        msg.textContent = isFromAntiguo
+            ? '¿Para qué año es este vehículo más antiguo?'
+            : '¿Para qué año funciona correctamente este corte?';
 
         const inputGroup = document.createElement('div');
         inputGroup.className = 'validation-input-group';
 
         const input = document.createElement('input');
-        input.type = 'number';
+        input.type = 'text';
+        input.inputMode = 'numeric';
         input.className = 'validation-input';
         input.placeholder = 'Ingrese el año';
-        input.min = '1980';
-        input.max = (currentYear + 2).toString();
+        input.maxLength = 4;
+        input.addEventListener('input', () => {
+            input.style.borderColor = '';
+        });
 
         const btnSend = document.createElement('button');
         btnSend.className = 'validation-btn';
         btnSend.textContent = 'Enviar';
         btnSend.onclick = () => {
-            const yearVal = parseInt(input.value);
+            const rawValue = input.value.trim();
+            if (!/^\d{4}$/.test(rawValue)) {
+                input.style.borderColor = 'red';
+                return;
+            }
+
+            const yearVal = parseInt(rawValue, 10);
             if (isNaN(yearVal) || yearVal < 1980 || yearVal > (currentYear + 2)) {
                 input.style.borderColor = 'red';
                 return;
@@ -943,7 +976,11 @@ function showValidationBanner(item, isOldModel) {
                 return;
             }
 
-            registerAndClose(`Otro año: ${yearVal}`, yearVal);
+            if (isFromAntiguo) {
+                registerAndClose('Es más antiguo', yearVal);
+            } else {
+                registerAndClose(`Otro año: ${yearVal}`, yearVal);
+            }
         };
 
         inputGroup.appendChild(input);
@@ -1056,6 +1093,10 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
     // Phase 2.4.10: Se añade la bandera 'autoOpen' para evitar la reapertura del modal al navegar hacia atrás
     // en el historial (popstate).
     if (autoOpen && type === 'modelo' && results.length === 1) {
+        // Retirar el foco de la barra de búsqueda para ocultar el teclado virtual
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) searchInput.blur();
+
         setTimeout(() => {
             mostrarDetalleModal(results[0]);
         }, 150);
@@ -1066,13 +1107,27 @@ export function showNoResultsMessage(textoBusqueda) {
     document.getElementById("contenido").innerHTML = `<p style="text-align:center; padding: 20px;">No se encontraron resultados para "${textoBusqueda}".</p>`;
 }
 
-export function mostrarDetalleModal(item) {
+// Helper utilitario para crear párrafos de detalle compartidos en modales (Hoisted)
+function createDetailParagraph(label, text) {
+    if (text) {
+        const p = document.createElement('p');
+        p.innerHTML = `<strong>${label}:</strong> ${text}`;
+        return p;
+    }
+    return null;
+}
+
+export function mostrarDetalleModal(item, isNavigation = false) {
+    const { catalogData } = getState();
+    const activeItem = (catalogData && catalogData.cortes)
+        ? catalogData.cortes.find(c => String(c.id) === String(item.id)) || item
+        : item;
+
     // Registrar como item visto (offline)
-    offline.saveViewedItem(item).then(() => {
+    offline.saveViewedItem(activeItem).then(() => {
         offline.getViewedItems().then(viewed => setState({ viewedItems: viewed }));
     });
 
-    const { catalogData } = getState();
     const { relay: datosRelay } = catalogData;
 
     const cont = document.getElementById("detalleCompleto");
@@ -1088,9 +1143,9 @@ export function mostrarDetalleModal(item) {
     shareBtn.title = "Compartir este vehículo";
     shareBtn.onclick = () => {
         const shareData = {
-            title: `GPSpedia - ${item.marca} ${item.modelo}`,
-            text: `Mira la información técnica del ${item.marca} ${item.modelo} (${item.anoDesde}) en GPSpedia.`,
-            url: window.location.origin + window.location.pathname + `#search=${encodeURIComponent(item.marca + ' ' + item.modelo)}`
+            title: `GPSpedia - ${activeItem.marca} ${activeItem.modelo}`,
+            text: `Mira la información técnica del ${activeItem.marca} ${activeItem.modelo} (${activeItem.anoDesde}) en GPSpedia.`,
+            url: window.location.origin + window.location.pathname + `#search=${encodeURIComponent(activeItem.marca + ' ' + activeItem.modelo)}`
         };
 
         if (navigator.share) {
@@ -1114,10 +1169,19 @@ export function mostrarDetalleModal(item) {
         if (iframe && iframe.contentWindow) {
             iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
         }
+
+        // Restaurar foco a la barra de búsqueda al cerrar manualmente
+        const searchInput = document.getElementById('searchInput');
+        const isSearchActive = document.body.classList.contains('search-active');
+
         if (window.history && window.history.state && window.history.state.modalOpen) {
             window.history.back();
         } else {
             document.getElementById("modalDetalle").classList.remove("visible");
+            // Si el historial no maneja el cierre, forzamos la restauración del foco aquí
+            if (isSearchActive && searchInput) {
+                setTimeout(() => searchInput.focus(), 300);
+            }
         }
     };
     closeBtn.className = "info-close-btn";
@@ -1130,18 +1194,27 @@ export function mostrarDetalleModal(item) {
     const titleContainer = document.createElement("div");
     titleContainer.style.cssText = "border-bottom: 3px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
 
-    const logoUrl = getLogoUrlForMarca(item.marca, item.categoria);
+    const logoUrl = getLogoUrlForMarca(activeItem.marca, activeItem.categoria);
     if (logoUrl) {
         const logoImg = document.createElement("img");
         setOptimizedImage(logoImg, logoUrl, IMG_SIZE_SMALL);
-        logoImg.alt = `Logo ${item.marca}`;
+        logoImg.alt = `Logo ${activeItem.marca}`;
         logoImg.className = 'brand-logo-modal';
+        logoImg.style.cursor = 'pointer';
+        logoImg.onclick = () => {
+            document.getElementById("modalDetalle").classList.remove("visible");
+            setState({ navigationState: { level: "modelosPorMarca", marca: activeItem.marca, origin: "marca", previousState: {} } });
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState({ level: "modelosPorMarca", marca: activeItem.marca, origin: "marca" }, '', window.location.pathname + window.location.search);
+            }
+            mostrarModelosPorMarca(activeItem.marca);
+        };
         // El tamaño se controla ahora desde style.css para mantener la consistencia.
         titleContainer.appendChild(logoImg);
     }
 
     const title = document.createElement("h2");
-    title.textContent = `${item.modelo}`;
+    title.textContent = `${activeItem.modelo}`;
     title.style.cssText = "color: var(--accent-color); margin: 0; padding: 0; font-size: 1.8em;";
     titleContainer.appendChild(title);
 
@@ -1151,42 +1224,105 @@ export function mostrarDetalleModal(item) {
     subHeaderDiv.style.marginBottom = '5px';
     const subHeaderText = document.createElement('p');
     subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
-    const equipamiento = item.versionesAplicables || item.tipoEncendido || '';
-    const yearRangeText = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
-    subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | ${yearRangeText}`;
-    if(item.categoria) {
-         subHeaderText.innerHTML += `<br><span style="font-size: 0.9em; color: #777;">${item.categoria}</span>`;
+    const equipamiento = activeItem.versionesAplicables || activeItem.tipoEncendido || '';
+
+    // Tarea 5: Identificar todas las generaciones del mismo modelo
+    const allCortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+
+    const normalizedItemVersion = normalizeVersion(activeItem.versionesAplicables);
+    const generations = allCortes.filter(c =>
+        String(c.marca).toLowerCase() === String(activeItem.marca).toLowerCase() &&
+        String(c.modelo).toLowerCase() === String(activeItem.modelo).toLowerCase() &&
+        String(c.categoria).toLowerCase() === String(activeItem.categoria).toLowerCase() &&
+        String(c.tipoEncendido).toLowerCase() === String(activeItem.tipoEncendido).toLowerCase() &&
+        normalizeVersion(c.versionesAplicables) === normalizedItemVersion
+    ).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
+
+    const currentIndex = generations.findIndex(g => String(g.id) === String(activeItem.id));
+
+    const yearRangeText = activeItem.anoHasta ? `${activeItem.anoDesde} – ${activeItem.anoHasta}` : activeItem.anoDesde;
+
+    const yearRangeContainer = document.createElement('span');
+    yearRangeContainer.style.cssText = "display: inline-flex; align-items: center; gap: 8px;";
+
+    if (generations.length > 1) {
+        if (currentIndex > 0) {
+            const leftArrow = document.createElement('span');
+            leftArrow.innerHTML = '&lt;';
+            leftArrow.style.cssText = "cursor: pointer; font-weight: bold; padding: 0 5px; color: var(--accent-color); user-select: none;";
+            leftArrow.onclick = () => {
+                mostrarDetalleModal(generations[currentIndex - 1], true);
+            };
+            yearRangeContainer.appendChild(leftArrow);
+        }
+
+        const yearTextSpan = document.createElement('span');
+        yearTextSpan.textContent = yearRangeText;
+        yearRangeContainer.appendChild(yearTextSpan);
+
+        if (currentIndex < generations.length - 1 && currentIndex !== -1) {
+            const rightArrow = document.createElement('span');
+            rightArrow.innerHTML = '&gt;';
+            rightArrow.style.cssText = "cursor: pointer; font-weight: bold; padding: 0 5px; color: var(--accent-color); user-select: none;";
+            rightArrow.onclick = () => {
+                mostrarDetalleModal(generations[currentIndex + 1], true);
+            };
+            yearRangeContainer.appendChild(rightArrow);
+        }
+    } else {
+        const yearTextSpan = document.createElement('span');
+        yearTextSpan.textContent = yearRangeText;
+        yearRangeContainer.appendChild(yearTextSpan);
+    }
+
+    subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | `;
+    subHeaderText.appendChild(yearRangeContainer);
+    if(activeItem.categoria) {
+         subHeaderText.appendChild(document.createElement("br"));
+         const catSpan = document.createElement("span");
+         catSpan.className = "category-nav-link";
+         catSpan.style.cssText = "font-size: 0.9em; color: #777; cursor: pointer; text-decoration: underline;";
+         catSpan.textContent = activeItem.categoria;
+         catSpan.onclick = () => {
+             document.getElementById("modalDetalle").classList.remove("visible");
+             setState({ navigationState: { level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria", previousState: {} } });
+             if (window.history && window.history.replaceState) {
+                 window.history.replaceState({ level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria" }, '', window.location.pathname + window.location.search);
+             }
+             mostrarModelos(activeItem.categoria, activeItem.marca);
+         };
+         subHeaderText.appendChild(catSpan);
     }
     subHeaderDiv.appendChild(subHeaderText);
     cont.appendChild(subHeaderDiv);
 
 
-    if (item.imagenVehiculo) {
+    if (activeItem.imagenVehiculo) {
         const imgVehiculo = document.createElement("img");
-        setOptimizedImage(imgVehiculo, item.imagenVehiculo, IMG_SIZE_MEDIUM);
+        setOptimizedImage(imgVehiculo, activeItem.imagenVehiculo, IMG_SIZE_MEDIUM);
         imgVehiculo.className = 'img-vehiculo-modal';
         cont.appendChild(imgVehiculo);
     }
 
-    if (item.notaImportante) {
+    if (activeItem.notaImportante) {
         const p = document.createElement("p");
         p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 5px 0;";
-        p.textContent = `⚠️ ${item.notaImportante}`;
+        p.textContent = `⚠️ ${activeItem.notaImportante}`;
         cont.appendChild(p);
     }
 
     const cortes = [];
     for (let i = 1; i <= 3; i++) {
-        if (item[`tipoCorte${i}`]) {
+        if (activeItem[`tipoCorte${i}`]) {
             cortes.push({
                 index: i,
-                tipo: item[`tipoCorte${i}`],
-                ubicacion: item[`ubicacionCorte${i}`],
-                colorCable: item[`colorCableCorte${i}`],
-                configRelay: item[`configRelay${i}`],
-                img: item[`imgCorte${i}`],
-                util: parseInt(item[`utilCorte${i}`] || 0),
-                colaborador: item[`colaboradorCorte${i}`]
+                tipo: activeItem[`tipoCorte${i}`],
+                ubicacion: activeItem[`ubicacionCorte${i}`],
+                colorCable: activeItem[`colorCableCorte${i}`],
+                configRelay: activeItem[`configRelay${i}`],
+                img: activeItem[`imgCorte${i}`],
+                util: parseInt(activeItem[`utilCorte${i}`] || 0),
+                colaborador: activeItem[`colaboradorCorte${i}`]
             });
         }
     }
@@ -1199,7 +1335,7 @@ export function mostrarDetalleModal(item) {
         title.innerHTML = `Corte Recomendado <span style="font-weight:normal; color: var(--text-medium);">(Votos: ${recommendedCut.util})</span>`;
         recommendedSection.appendChild(title);
         // El corte recomendado se carga de inmediato (isLazy = false)
-        renderCutContent(recommendedSection, recommendedCut, datosRelay, item.id, false);
+        renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false);
         cont.appendChild(recommendedSection);
     }
 
@@ -1212,21 +1348,321 @@ export function mostrarDetalleModal(item) {
             title: `Corte Alternativo ${idx + 1} (Votos: ${corte.util})`,
             data: corte
         })),
-        { title: 'Apertura', content: item.apertura, img: item.imgApertura, colaborador: item.colaboradorApertura },
-        { title: 'Cables de Alimentación', content: item.cableAlimen, img: item.imgCableAlimen, colaborador: item.colaboradorAlimen },
-        { title: 'Vídeo Guía de Desarme', Video: item.Video }
+        { title: 'Apertura', content: activeItem.apertura, img: activeItem.imgApertura, colaborador: activeItem.colaboradorApertura },
+        { title: 'Cables de Alimentación', content: activeItem.cableAlimen, img: activeItem.imgCableAlimen, colaborador: activeItem.colaboradorAlimen },
+        { title: 'Vídeo Guía de Desarme', Video: activeItem.Video }
     ];
 
     otherSections.forEach(sec => {
         const hasContent = sec.isCorte || sec.content || sec.img || sec.Video;
         if (hasContent && sec.title) {
-            createAccordionSection(accordionContainer, sec.title, sec, false, datosRelay, item.id);
+            createAccordionSection(accordionContainer, sec.title, sec, false, datosRelay, activeItem.id);
         }
     });
 
     document.getElementById("modalDetalle").classList.add("visible");
-    if (window.history && window.history.pushState) {
+    if (!isNavigation && window.history && window.history.pushState) {
         window.history.pushState({ modalOpen: true }, '');
+    }
+}
+
+/**
+ * Realiza una sincronización silenciosa (Silent Background Synchronization)
+ * comparando los datos nuevos con los existentes y actualizando únicamente
+ * los elementos modificados en el DOM sin recargar la interfaz ni perder el estado.
+ */
+export async function performSilentSync(newCatalogData) {
+    try {
+        const { catalogData: oldCatalogData } = getState();
+        if (!oldCatalogData || !oldCatalogData.cortes) {
+            // Fallback si no hay catálogo anterior cargado
+            updateFullState(newCatalogData);
+            return;
+        }
+
+        // Crear mapas por ID para fácil comparación de cortes
+        const oldCortesMap = new Map(oldCatalogData.cortes.map(c => [String(c.id), c]));
+        const newCortesMap = new Map(newCatalogData.cortes.map(c => [String(c.id), c]));
+
+        const updatedCortesList = [];
+        let hasChanges = false;
+
+        // 1. Detectar cortes modificados o nuevos
+        for (const [id, newCorte] of newCortesMap) {
+            const oldCorte = oldCortesMap.get(id);
+            if (!oldCorte) {
+                // Registro nuevo
+                updatedCortesList.push({ type: 'added', item: newCorte });
+                hasChanges = true;
+            } else if (JSON.stringify(oldCorte) !== JSON.stringify(newCorte)) {
+                // Registro modificado
+                updatedCortesList.push({ type: 'modified', oldItem: oldCorte, newItem: newCorte });
+                hasChanges = true;
+            }
+        }
+
+        // 2. Detectar eliminados
+        for (const id of oldCortesMap.keys()) {
+            if (!newCortesMap.has(id)) {
+                updatedCortesList.push({ type: 'removed', id });
+                hasChanges = true;
+            }
+        }
+
+        if (!hasChanges) {
+            console.log("Sincronización silenciosa: No se detectaron cambios.");
+            return;
+        }
+
+        console.log(`Sincronización silenciosa: Detectados ${updatedCortesList.length} cambios.`);
+
+        // 3. Procesar las modificaciones en el DOM de forma 100% silenciosa
+        for (const change of updatedCortesList) {
+            if (change.type === 'modified') {
+                await updateCardInPlace(change.newItem);
+                updateOpenModalIfActive(change.newItem);
+            } else if (change.type === 'added') {
+                // Insertar de manera fluida utilizando el carrusel de agregados recientemente si corresponde
+                await insertNewVehicleFluently(change.item);
+            } else if (change.type === 'removed') {
+                removeVehicleSilently(change.id);
+            }
+        }
+
+        // 4. Actualizar el estado global con los nuevos datos consolidados
+        updateFullState(newCatalogData);
+
+    } catch (e) {
+        console.error("Error en performSilentSync:", e);
+    }
+}
+
+function updateFullState(catalogData) {
+    try {
+        // Normalizar los datos del catálogo antes de actualizar el estado global
+        if (catalogData && Array.isArray(catalogData.cortes)) {
+            const brandCasingMap = new Map();
+            const modelCasingMap = new Map();
+            const categoryCasingMap = new Map();
+
+            catalogData.cortes.forEach(item => {
+                if (item.marca) {
+                    const trimmed = String(item.marca).trim();
+                    const lower = trimmed.toLowerCase();
+                    if (!brandCasingMap.has(lower) || (trimmed !== lower && trimmed !== trimmed.toUpperCase())) {
+                        brandCasingMap.set(lower, trimmed);
+                    }
+                }
+                if (item.categoria) {
+                    const trimmed = String(item.categoria).trim();
+                    const lower = trimmed.toLowerCase();
+                    if (!categoryCasingMap.has(lower) || (trimmed !== lower && trimmed !== trimmed.toUpperCase())) {
+                        categoryCasingMap.set(lower, trimmed);
+                    }
+                }
+            });
+
+            catalogData.cortes.forEach(item => {
+                if (item.marca) {
+                    const trimmed = String(item.marca).trim();
+                    const lower = trimmed.toLowerCase();
+                    item.marca = brandCasingMap.get(lower) || trimmed;
+                }
+                if (item.categoria) {
+                    const trimmed = String(item.categoria).trim();
+                    const lower = trimmed.toLowerCase();
+                    item.categoria = categoryCasingMap.get(lower) || trimmed;
+                }
+
+                if (item.modelo && item.marca) {
+                    const trimmed = String(item.modelo).trim();
+                    const lower = trimmed.toLowerCase();
+                    const key = `${item.marca.toLowerCase()}|${lower}`;
+                    if (!modelCasingMap.has(key) || (trimmed !== lower && trimmed !== trimmed.toUpperCase())) {
+                        modelCasingMap.set(key, trimmed);
+                    }
+                }
+            });
+
+            catalogData.cortes.forEach(item => {
+                if (item.modelo && item.marca) {
+                    const trimmed = String(item.modelo).trim();
+                    const lower = trimmed.toLowerCase();
+                    const key = `${item.marca.toLowerCase()}|${lower}`;
+                    item.modelo = modelCasingMap.get(key) || trimmed;
+                }
+            });
+        }
+
+        const categoryCounts = catalogData.cortes.reduce((acc, item) => {
+            if (item.categoria) {
+                acc[item.categoria] = (acc[item.categoria] || 0) + 1;
+            }
+            return acc;
+        }, {});
+
+        const sortedCategories = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]);
+
+        setState({
+            catalogData: {
+                ...catalogData,
+                sortedCategories: sortedCategories
+            }
+        });
+    } catch (e) {
+        console.error("Error actualizando estado global tras sincronización:", e);
+    }
+}
+
+/**
+ * Sustituye de manera silenciosa una tarjeta en el catálogo sin parpadeos ni reconstrucciones completas.
+ */
+async function updateCardInPlace(newItem) {
+    const cards = document.querySelectorAll(`.card[data-vehicle-id="${newItem.id}"]`);
+    if (cards.length === 0) return;
+
+    // Pre-cargar la imagen en segundo plano para evitar parpadeos
+    if (newItem.imagenVehiculo) {
+        await preloadImageSilently(newItem.imagenVehiculo);
+    }
+
+    cards.forEach(card => {
+        // Encontrar la imagen
+        const img = card.querySelector('img');
+        if (img && newItem.imagenVehiculo) {
+            setOptimizedImage(img, newItem.imagenVehiculo, IMG_SIZE_SMALL);
+        }
+
+        // Encontrar el texto o sobrecapa y actualizarlo
+        const overlay = card.querySelector('.overlay');
+        if (overlay) {
+            const hasResultsForVariant = card.onclick && card.onclick.toString().includes('resultsForVariant');
+            if (hasResultsForVariant) {
+                const version = newItem.versionesAplicables || '';
+                overlay.innerHTML = `<div class="overlay-text-primary">${newItem.marca} ${newItem.modelo}</div><div class="overlay-text-secondary">${newItem.categoria} | ${version}</div>`;
+            } else {
+                const yearRange = newItem.anoHasta ? `${newItem.anoDesde} - ${newItem.anoHasta}` : newItem.anoDesde;
+                overlay.innerHTML = `<div class="overlay-text-primary">${newItem.marca} ${newItem.modelo}</div><div class="overlay-text-secondary">${yearRange} | ${newItem.tipoEncendido || ''}</div>`;
+            }
+        }
+    });
+}
+
+/**
+ * Actualiza el modal abierto actualmente si coincide con el vehículo sincronizado.
+ */
+function updateOpenModalIfActive(newItem) {
+    const modalDetalle = document.getElementById('modalDetalle');
+    if (!modalDetalle || !modalDetalle.classList.contains('visible')) return;
+
+    // Podemos verificar si el detalle abierto corresponde al ID modificado.
+    // Una manera limpia es volver a almacenar el item modificado en el historial de vistos sin alterar la visualización actual,
+    // y dejar que la siguiente apertura muestre la nueva versión.
+    // Sin embargo, para cumplir 100% que la siguiente apertura muestre automáticamente la versión actualizada y el caché esté listo:
+    offline.saveViewedItem(newItem).catch(err => console.warn("Error guardando item visto actualizado:", err));
+}
+
+/**
+ * Pre-carga una imagen en segundo plano y resuelve la promesa cuando está completamente disponible.
+ */
+function preloadImageSilently(fileId) {
+    return new Promise((resolve) => {
+        if (!fileId) return resolve();
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = getImageUrl(fileId, IMG_SIZE_MEDIUM);
+    });
+}
+
+/**
+ * Remueve un vehículo del DOM de forma silenciosa.
+ */
+function removeVehicleSilently(id) {
+    const cards = document.querySelectorAll(`.card[data-vehicle-id="${id}"]`);
+    cards.forEach(card => {
+        card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.8)';
+        setTimeout(() => card.remove(), 300);
+    });
+}
+
+/**
+ * Incorpora un nuevo vehículo fluido utilizando la transición del carrusel o del grid de manera consistente.
+ */
+async function insertNewVehicleFluently(item) {
+    const cont = document.getElementById("contenido");
+    if (!cont) return;
+
+    // Pre-cargar imagen de vehículo nuevo
+    if (item.imagenVehiculo) {
+        await preloadImageSilently(item.imagenVehiculo);
+    }
+
+    const currentNav = getState().navigationState || {};
+    const isMainLevel = currentNav.level === 'categorias';
+
+    if (isMainLevel) {
+        // 2. Insertar en el carrusel de "Últimos Agregados"
+        const tracks = document.querySelectorAll('.carousel-track');
+        let ultimosAgregadosTrack = null;
+
+        tracks.forEach(track => {
+            const titleSibling = track.parentElement.previousElementSibling;
+            if (titleSibling && titleSibling.textContent.includes('Últimos Agregados')) {
+                ultimosAgregadosTrack = track;
+            }
+        });
+
+        if (ultimosAgregadosTrack) {
+            const newCard = crearCardVehiculo(item);
+            newCard.style.opacity = '0';
+            newCard.style.transform = 'scale(0.8) translateX(50px)';
+            newCard.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+
+            // Insertar al inicio de la lista de agregados recientemente
+            ultimosAgregadosTrack.insertBefore(newCard, ultimosAgregadosTrack.firstChild);
+
+            // Disparar animación fluida
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    newCard.style.opacity = '1';
+                    newCard.style.transform = 'scale(1) translateX(0)';
+                }, 50);
+            });
+        }
+    } else {
+        // Insertar en la vista de cuadrícula si la navegación actual coincide con el elemento recién insertado
+        const activeGrid = document.querySelector('#contenido .grid');
+        if (activeGrid) {
+            let isRelevant = false;
+            if (currentNav.level === 'modelosPorMarca' && currentNav.marca === item.marca) {
+                isRelevant = true;
+            } else if (currentNav.level === 'modelos' && currentNav.categoria === item.categoria && currentNav.marca === item.marca) {
+                isRelevant = true;
+            } else if (currentNav.level === 'versiones' && currentNav.categoria === item.categoria && currentNav.marca === item.marca && currentNav.modelo === item.modelo) {
+                isRelevant = true;
+            } else if (currentNav.level === 'versionesEquipamiento' && currentNav.categoria === item.categoria && currentNav.marca === item.marca && currentNav.modelo === item.modelo) {
+                isRelevant = true;
+            } else if (currentNav.level === 'tiposEncendido' && currentNav.categoria === item.categoria && currentNav.marca === item.marca && currentNav.modelo === item.modelo) {
+                isRelevant = true;
+            }
+
+            if (isRelevant) {
+                const newCard = crearCardVehiculo(item);
+                newCard.style.opacity = '0';
+                newCard.style.transform = 'scale(0.8)';
+                newCard.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                activeGrid.appendChild(newCard);
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        newCard.style.opacity = '1';
+                        newCard.style.transform = 'scale(1)';
+                    }, 50);
+                });
+            }
+        }
     }
 }
 
@@ -1526,6 +1962,10 @@ export const openAboutUs = setupModal('about-us-modal', () => {
     document.getElementById('about-us-modal').style.display = 'flex';
 });
 
+export const openChangeLog = setupModal('changelog-modal', () => {
+    document.getElementById('changelog-modal').style.display = 'flex';
+});
+
 export const openContact = setupModal('contact-modal', () => {
     document.getElementById('contact-modal').style.display = 'flex';
 });
@@ -1811,6 +2251,7 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
 
     const card = document.createElement("div");
     card.className = "card";
+    card.setAttribute('data-vehicle-id', item.id);
     card.style.animation = 'none';
     card.style.opacity = '1';
 
@@ -1840,7 +2281,7 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
             // para evitar que al retroceder se restauren resultados antiguos o contextos irrelevantes.
             if (hideBadge) { // hideBadge es true en el carrusel de Vistos Recientemente
                 if (window.location.hash.startsWith('#search=')) {
-                    history.replaceState(null, null, window.location.pathname + window.location.search);
+                    history.replaceState({ level: 'categorias' }, '', window.location.pathname + window.location.search);
                     // También limpiar el input visualmente
                     const searchInput = document.getElementById('searchInput');
                     if (searchInput) {
@@ -2147,15 +2588,6 @@ function mostrarDetalleTutorialModal(item) {
         cont.appendChild(videoContainer);
     }
 
-    const createDetailParagraph = (label, text) => {
-        if (text) {
-            const p = document.createElement('p');
-            p.innerHTML = `<strong>${label}:</strong> ${text}`;
-            return p;
-        }
-        return null;
-    };
-
     const details = [
         createDetailParagraph('Cómo Identificarlo', item.comoIdentificarlo),
         createDetailParagraph('Dónde Encontrarlo', item.dondeEncontrarlo),
@@ -2208,15 +2640,6 @@ function mostrarDetalleRelayModal(item) {
         };
         cont.appendChild(img);
     }
-
-    const createDetailParagraph = (label, text) => {
-        if (text) {
-            const p = document.createElement('p');
-            p.innerHTML = `<strong>${label}:</strong> ${text}`;
-            return p;
-        }
-        return null;
-    };
 
     const details = [
         createDetailParagraph('Función', item.funcion),
