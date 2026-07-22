@@ -356,3 +356,23 @@ Impacto sobre el historial: Bajo.
 Estrategia de corrección:
   - Implementar una función centralizada de normalización de datos del catálogo (`normalizeCatalogData`) en `auth.js` que unifique de manera inteligente el espaciado (trim) y la capitalización de nombres de marcas, categorías y modelos en el catálogo completo.
   - Aplicar esta normalización de datos al cargar desde la caché en IndexedDB, al recibir datos de la red en segundo plano antes de guardarlos y pasarlos a la sincronización silenciosa, y en `updateFullState` de `ui.js` para asegurar que el estado y la caché siempre operen sobre un dataset 100% libre de inconsistencias y duplicidades.
+
+
+===================================================================
+AUDITORÍA DE REPRODUCCIÓN PERSISTENTE DE VÍDEOS EN MODALES DE TUTORIALES (22/02/2026)
+===================================================================
+
+ID del hallazgo: H-TUTORIAL-VIDEO-01
+Título: Reproducción persistente de vídeos en modales de tutoriales al cerrar
+Descripción: Al cerrar el modal de detalle de tutoriales, el vídeo de YouTube continúa reproduciéndose, el audio permanece activo y los recursos del reproductor no se liberan.
+Causa Raíz:
+  1. En `mostrarDetalleTutorialModal` (archivo `ui.js`), el iframe del vídeo se inserta utilizando un simple string replace de "watch?v=" con "embed/" en lugar del helper unificado `getYouTubeEmbedUrl`, por lo que el parámetro `enablejsapi=1` no se incluye. Esto impide que el reproductor reciba comandos del sistema (como `stopVideo`).
+  2. Al cerrar el modal de detalles, el contenedor `#detalleCompleto` no destruye el iframe del reproductor, sino que simplemente se oculta la clase `.visible` de `#modalDetalle`. Como consecuencia, el iframe sigue cargado y reproduciendo contenido oculto en segundo plano.
+  3. No todos los flujos de cierre (cierre manual, popstate, etc.) llaman a la detención del vídeo del tutorial, y cuando lo intentan, la API de postMessage falla debido a la falta de `enablejsapi=1`.
+Ubicación:
+  - Archivos: `ui.js`, `main.js`
+Impacto: Alto (consumo de CPU, datos y reproducción molesta de audio en segundo plano).
+Riesgo de regresión: Muy bajo.
+Estrategia de corrección:
+  - En `ui.js`, robustecer `mostrarDetalleTutorialModal` para usar `getYouTubeEmbedUrl(item.Video)` y establecer la propiedad `dataset.modalType = 'tutorial'` en el elemento `#modalDetalle`. Para cortes y relays, establecer `dataset.modalType` en 'corte' y 'relay' respectivamente.
+  - En `main.js`, registrar un `MutationObserver` sobre `#modalDetalle` dentro de la inicialización de la app (`initializeApp`). Cuando se detecte la remoción de la clase `.visible` (modal cerrado) de forma instantánea por cualquier mecanismo de cierre, y el tipo de modal sea 'tutorial', detener completamente la reproducción, remover el iframe del DOM y liberar los recursos del reproductor de forma definitiva.

@@ -1,4 +1,4 @@
-// GPSpedia UI Module | Version: 2.1.5
+// GPSpedia UI Module | Version: 2.1.6
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
@@ -1360,7 +1360,9 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     });
 
-    document.getElementById("modalDetalle").classList.add("visible");
+    const modalDetalle = document.getElementById("modalDetalle");
+    modalDetalle.dataset.modalType = 'corte';
+    modalDetalle.classList.add("visible");
     if (!isNavigation && window.history && window.history.pushState) {
         window.history.pushState({ modalOpen: true }, '');
     }
@@ -2583,8 +2585,8 @@ function mostrarDetalleTutorialModal(item) {
     // Comentario: Se refactoriza para usar appendChild y evitar `innerHTML +=` que es propenso a errores.
     if (item.Video) {
         const videoContainer = document.createElement('div');
-        const videoUrl = item.Video.replace("watch?v=", "embed/");
-        videoContainer.innerHTML = `<iframe width="100%" height="315" src="${videoUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px;"></iframe>`;
+        const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || item.Video.replace("watch?v=", "embed/");
+        videoContainer.innerHTML = `<iframe width="100%" height="315" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px;"></iframe>`;
         cont.appendChild(videoContainer);
     }
 
@@ -2598,7 +2600,9 @@ function mostrarDetalleTutorialModal(item) {
         if (detail) cont.appendChild(detail);
     });
 
-    document.getElementById("modalDetalle").classList.add("visible");
+    const modalDetalle = document.getElementById("modalDetalle");
+    modalDetalle.dataset.modalType = 'tutorial';
+    modalDetalle.classList.add("visible");
     if (window.history && window.history.pushState) {
         window.history.pushState({ modalOpen: true }, '');
     }
@@ -2651,7 +2655,9 @@ function mostrarDetalleRelayModal(item) {
         if (detail) cont.appendChild(detail);
     });
 
-    document.getElementById("modalDetalle").classList.add("visible");
+    const modalDetalle = document.getElementById("modalDetalle");
+    modalDetalle.dataset.modalType = 'relay';
+    modalDetalle.classList.add("visible");
     if (window.history && window.history.pushState) {
         window.history.pushState({ modalOpen: true }, '');
     }
