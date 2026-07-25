@@ -542,11 +542,20 @@
             };
 
             try {
-                const result = await routeAction('addOrUpdateCut', {
+                const urlParams = new URLSearchParams(window.location.search);
+                const isSilent = urlParams.get('silent') === 'true';
+                const action = isSilent ? 'addCorteSilent' : 'addOrUpdateCut';
+
+                // Añadir sessionToken si es una acción silenciosa de administrador
+                const sessionData = localStorage.getItem(SESSION_KEY);
+                const token = sessionData ? JSON.parse(sessionData).SessionToken : "";
+
+                const result = await routeAction(action, {
                     vehicleId: state.selectedVehicleId,
                     vehicleData,
                     cutData,
-                    colaborador: state.colaborador
+                    colaborador: state.colaborador,
+                    sessionToken: token
                 });
                 state.selectedVehicleId = result.vehicleId;
                 alert("Corte guardado exitosamente.");
@@ -586,6 +595,9 @@
             toggleLoading(true);
             btn.classList.add('btn-loading');
 
+            const sessionData = localStorage.getItem(SESSION_KEY);
+            const token = sessionData ? JSON.parse(sessionData).SessionToken : "";
+
             const payload = {
                 vehicleId: state.selectedVehicleId,
                 apertura: document.getElementById('apertura').value,
@@ -593,6 +605,7 @@
                 notaImportante: document.getElementById('notaImportante').value,
                 imgApertura: await fileToBase64(document.getElementById('imgApertura').files[0]),
                 imgCableAlimen: await fileToBase64(document.getElementById('imgCableAlimen').files[0]),
+                sessionToken: token
             };
 
             try {

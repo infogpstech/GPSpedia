@@ -1117,8 +1117,185 @@ function createDetailParagraph(label, text) {
     return null;
 }
 
+// Module scope editing variables for admin in-modal editing
+let isEditingModeActive = false;
+let changedFields = {};
+
+export function handleModalClose() {
+    if (window.isEditingActive && Object.keys(changedFields).length > 0) {
+        const { currentUser } = getState();
+        const sessionToken = currentUser ? currentUser.SessionToken : "";
+        const activeItemId = localStorage.getItem('active_editing_id');
+        if (activeItemId) {
+            const { catalogData } = getState();
+            const activeItem = catalogData && catalogData.cortes && catalogData.cortes.find(c => String(c.id) === String(activeItemId));
+            if (activeItem) {
+                Object.entries(changedFields).forEach(([field, origVal]) => {
+                    activeItem[field] = origVal;
+                    routeAction('updateCorteField', {
+                        vehicleId: activeItem.id,
+                        field: field,
+                        value: origVal,
+                        sessionToken: sessionToken
+                    }).catch(console.error);
+                });
+            }
+        }
+    }
+    window.isEditingActive = false;
+    changedFields = {};
+    localStorage.removeItem('active_editing_id');
+}
+
+function makeFieldEditable(htmlElement, fieldName, type, options = null, activeItem) {
+    const { currentUser } = getState();
+    const userRole = currentUser ? currentUser.Privilegios : '';
+    const isDev = userRole === 'Desarrollador' || userRole === 'desarrollador';
+    if (!isDev) return;
+
+    htmlElement.addEventListener("mouseenter", () => {
+        if (window.isEditingActive) {
+            htmlElement.style.outline = "1px dashed var(--accent-color)";
+            htmlElement.title = "Clic para editar campo";
+        }
+    });
+    htmlElement.addEventListener("mouseleave", () => {
+        htmlElement.style.outline = "";
+    });
+
+    htmlElement.addEventListener("click", (e) => {
+        if (!window.isEditingActive) return;
+        e.stopPropagation();
+        e.preventDefault();
+
+        if (htmlElement.querySelector('input') || htmlElement.querySelector('textarea') || htmlElement.querySelector('select')) return;
+
+        const currentValue = activeItem[fieldName] || "";
+        let inputControl;
+
+        if (type === 'text') {
+            inputControl = document.createElement("input");
+            inputControl.type = "text";
+            inputControl.value = currentValue;
+            inputControl.style.cssText = "width: 100%; padding: 4px; border-radius: 4px; border: 1px solid #007bff; color: var(--text-color); background-color: var(--card-bg);";
+        } else if (type === 'textarea') {
+            inputControl = document.createElement("textarea");
+            inputControl.value = currentValue;
+            inputControl.rows = 3;
+            inputControl.style.cssText = "width: 100%; padding: 4px; border-radius: 4px; border: 1px solid #007bff; color: var(--text-color); background-color: var(--card-bg);";
+        } else if (type === 'select') {
+            inputControl = document.createElement("select");
+            const opts = options || [];
+            opts.forEach(opt => {
+                const optEl = document.createElement("option");
+                optEl.value = opt;
+                optEl.textContent = opt;
+                if (opt === currentValue) optEl.selected = true;
+                inputControl.appendChild(optEl);
+            });
+            inputControl.style.cssText = "width: 100%; padding: 4px; border-radius: 4px; border: 1px solid #007bff; color: var(--text-color); background-color: var(--card-bg);";
+        }
+
+        const originalContent = htmlElement.innerHTML;
+        htmlElement.innerHTML = "";
+        htmlElement.appendChild(inputControl);
+        inputControl.focus();
+
+        let finished = false;
+        const saveEdit = () => {
+            if (finished) return;
+            finished = true;
+
+            const newValue = inputControl.value;
+            htmlElement.innerHTML = originalContent;
+
+            if (newValue !== currentValue) {
+                if (!(fieldName in changedFields)) {
+                    changedFields[fieldName] = currentValue;
+                }
+
+                const sessionToken = currentUser ? currentUser.SessionToken : "";
+                routeAction('updateCorteField', {
+                    vehicleId: activeItem.id,
+                    field: fieldName,
+                    value: newValue,
+                    sessionToken: sessionToken
+                }).catch(console.error);
+
+                activeItem[fieldName] = newValue;
+                mostrarDetalleModal(activeItem, true);
+            } else {
+                mostrarDetalleModal(activeItem, true);
+            }
+        };
+
+        inputControl.addEventListener("blur", saveEdit);
+        inputControl.addEventListener("keydown", (evt) => {
+            if (evt.key === "Enter" && type !== 'textarea') {
+                saveEdit();
+            }
+        });
+    });
+}
+
+function makeImageEditable(imgElement, fieldName, activeItem) {
+    const { currentUser } = getState();
+    const userRole = currentUser ? currentUser.Privilegios : '';
+    const isDev = userRole === 'Desarrollador' || userRole === 'desarrollador';
+    if (!isDev) return;
+
+    imgElement.addEventListener("mouseenter", () => {
+        if (window.isEditingActive) {
+            imgElement.style.outline = "2px dashed #ffc107";
+            imgElement.title = "Clic para cambiar imagen";
+        }
+    });
+    imgElement.addEventListener("mouseleave", () => {
+        imgElement.style.outline = "";
+    });
+
+    imgElement.addEventListener("click", (e) => {
+        if (!window.isEditingActive) return;
+        e.stopPropagation();
+        e.preventDefault();
+
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = "image/*";
+        fileInput.onchange = () => {
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (evt) => {
+                    const base64Data = evt.target.result;
+                    imgElement.src = base64Data;
+
+                    const originalValue = activeItem[fieldName] || "";
+                    if (!(fieldName in changedFields)) {
+                        changedFields[fieldName] = originalValue;
+                    }
+
+                    const sessionToken = currentUser ? currentUser.SessionToken : "";
+                    routeAction('updateCorteField', {
+                        vehicleId: activeItem.id,
+                        field: fieldName,
+                        value: base64Data,
+                        sessionToken: sessionToken
+                    }).then(result => {
+                        if (result.status === 'success') {
+                            activeItem[fieldName] = result.newValue;
+                        }
+                    }).catch(console.error);
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+        fileInput.click();
+    });
+}
+
 export function mostrarDetalleModal(item, isNavigation = false) {
-    const { catalogData } = getState();
+    const { catalogData, currentUser } = getState();
     const activeItem = (catalogData && catalogData.cortes)
         ? catalogData.cortes.find(c => String(c.id) === String(item.id)) || item
         : item;
@@ -1128,6 +1305,12 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         offline.getViewedItems().then(viewed => setState({ viewedItems: viewed }));
     });
 
+    if (!isNavigation) {
+        window.isEditingActive = false;
+        changedFields = {};
+        localStorage.removeItem('active_editing_id');
+    }
+
     const { relay: datosRelay } = catalogData;
 
     const cont = document.getElementById("detalleCompleto");
@@ -1135,6 +1318,72 @@ export function mostrarDetalleModal(item, isNavigation = false) {
 
     const headerDiv = document.createElement("div");
     headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px; gap: 10px;";
+
+    const userRole = currentUser ? currentUser.Privilegios : '';
+    const isDev = userRole === 'Desarrollador' || userRole === 'desarrollador';
+
+    if (isDev) {
+        if (window.isEditingActive) {
+            localStorage.setItem('active_editing_id', activeItem.id);
+
+            const saveBtn = document.createElement("button");
+            saveBtn.textContent = "Guardar";
+            saveBtn.className = "btn btn-primary";
+            saveBtn.style.cssText = "margin-right: 10px; font-size: 0.8em; padding: 4px 10px;";
+            saveBtn.onclick = () => {
+                window.isEditingActive = false;
+                changedFields = {};
+                localStorage.removeItem('active_editing_id');
+                mostrarDetalleModal(activeItem, true);
+            };
+            headerDiv.appendChild(saveBtn);
+
+            const resetBtn = document.createElement("button");
+            resetBtn.textContent = "Restablecer";
+            resetBtn.className = "btn btn-secondary";
+            resetBtn.style.cssText = "margin-right: auto; font-size: 0.8em; padding: 4px 10px;";
+            resetBtn.onclick = () => {
+                window.isEditingActive = false;
+                const sessionToken = currentUser ? currentUser.SessionToken : "";
+
+                const revertPromises = Object.entries(changedFields).map(([field, origVal]) => {
+                    activeItem[field] = origVal;
+                    return routeAction('updateCorteField', {
+                        vehicleId: activeItem.id,
+                        field: field,
+                        value: origVal,
+                        sessionToken: sessionToken
+                    });
+                });
+
+                Promise.all(revertPromises).then(() => {
+                    changedFields = {};
+                    localStorage.removeItem('active_editing_id');
+                    mostrarDetalleModal(activeItem, true);
+                }).catch(err => {
+                    console.error("Error reverting:", err);
+                    changedFields = {};
+                    localStorage.removeItem('active_editing_id');
+                    mostrarDetalleModal(activeItem, true);
+                });
+            };
+            headerDiv.appendChild(resetBtn);
+        } else {
+            const editBtn = document.createElement("button");
+            editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+            editBtn.className = "edit-modal-btn";
+            editBtn.title = "Entrar en modo edición";
+            editBtn.style.cssText = "margin-right: auto; background: none; border: none; font-size: 1.25em; color: var(--accent-color); cursor: pointer; padding: 5px 10px;";
+            editBtn.onclick = () => {
+                window.isEditingActive = true;
+                localStorage.setItem('active_editing_id', activeItem.id);
+                localStorage.setItem('gp_edit_backup_' + activeItem.id, JSON.stringify(activeItem));
+                changedFields = {};
+                mostrarDetalleModal(activeItem, true);
+            };
+            headerDiv.appendChild(editBtn);
+        }
+    }
 
     // Botón Compartir
     const shareBtn = document.createElement("button");
@@ -1213,9 +1462,14 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         titleContainer.appendChild(logoImg);
     }
 
+    const editCortesList = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+    const editCategorias = [...new Set(editCortesList.map(c => c.categoria).filter(Boolean))].sort();
+    const editTiposEncendido = [...new Set(editCortesList.map(c => c.tipoEncendido).filter(Boolean))].sort();
+
     const title = document.createElement("h2");
     title.textContent = `${activeItem.modelo}`;
     title.style.cssText = "color: var(--accent-color); margin: 0; padding: 0; font-size: 1.8em;";
+    makeFieldEditable(title, 'modelo', 'text', null, activeItem);
     titleContainer.appendChild(title);
 
     cont.appendChild(titleContainer);
@@ -1224,7 +1478,6 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     subHeaderDiv.style.marginBottom = '5px';
     const subHeaderText = document.createElement('p');
     subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
-    const equipamiento = activeItem.versionesAplicables || activeItem.tipoEncendido || '';
 
     // Tarea 5: Identificar todas las generaciones del mismo modelo
     const allCortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
@@ -1240,8 +1493,6 @@ export function mostrarDetalleModal(item, isNavigation = false) {
 
     const currentIndex = generations.findIndex(g => String(g.id) === String(activeItem.id));
 
-    const yearRangeText = activeItem.anoHasta ? `${activeItem.anoDesde} – ${activeItem.anoHasta}` : activeItem.anoDesde;
-
     const yearRangeContainer = document.createElement('span');
     yearRangeContainer.style.cssText = "display: inline-flex; align-items: center; gap: 8px;";
 
@@ -1256,9 +1507,18 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             yearRangeContainer.appendChild(leftArrow);
         }
 
-        const yearTextSpan = document.createElement('span');
-        yearTextSpan.textContent = yearRangeText;
-        yearRangeContainer.appendChild(yearTextSpan);
+        const anoDesdeSpan = document.createElement('span');
+        anoDesdeSpan.textContent = activeItem.anoDesde || '';
+        makeFieldEditable(anoDesdeSpan, 'anoDesde', 'text', null, activeItem);
+        yearRangeContainer.appendChild(anoDesdeSpan);
+
+        if (activeItem.anoHasta || window.isEditingActive) {
+            yearRangeContainer.appendChild(document.createTextNode(" – "));
+            const anoHastaSpan = document.createElement('span');
+            anoHastaSpan.textContent = activeItem.anoHasta || "[Hasta]";
+            makeFieldEditable(anoHastaSpan, 'anoHasta', 'text', null, activeItem);
+            yearRangeContainer.appendChild(anoHastaSpan);
+        }
 
         if (currentIndex < generations.length - 1 && currentIndex !== -1) {
             const rightArrow = document.createElement('span');
@@ -1270,20 +1530,44 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             yearRangeContainer.appendChild(rightArrow);
         }
     } else {
-        const yearTextSpan = document.createElement('span');
-        yearTextSpan.textContent = yearRangeText;
-        yearRangeContainer.appendChild(yearTextSpan);
+        const anoDesdeSpan = document.createElement('span');
+        anoDesdeSpan.textContent = activeItem.anoDesde || '';
+        makeFieldEditable(anoDesdeSpan, 'anoDesde', 'text', null, activeItem);
+        yearRangeContainer.appendChild(anoDesdeSpan);
+
+        if (activeItem.anoHasta || window.isEditingActive) {
+            yearRangeContainer.appendChild(document.createTextNode(" – "));
+            const anoHastaSpan = document.createElement('span');
+            anoHastaSpan.textContent = activeItem.anoHasta || "[Hasta]";
+            makeFieldEditable(anoHastaSpan, 'anoHasta', 'text', null, activeItem);
+            yearRangeContainer.appendChild(anoHastaSpan);
+        }
     }
 
-    subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | `;
+    subHeaderText.innerHTML = "";
+    const equipStrong = document.createElement("strong");
+    equipStrong.textContent = activeItem.versionesAplicables || "[Versión]";
+    makeFieldEditable(equipStrong, 'versionesAplicables', 'text', null, activeItem);
+    subHeaderText.appendChild(equipStrong);
+
+    subHeaderText.appendChild(document.createTextNode(" | "));
+
+    const encendidoSpan = document.createElement("span");
+    encendidoSpan.textContent = activeItem.tipoEncendido || "[Encendido]";
+    makeFieldEditable(encendidoSpan, 'tipoEncendido', 'select', editTiposEncendido, activeItem);
+    subHeaderText.appendChild(encendidoSpan);
+
+    subHeaderText.appendChild(document.createTextNode(" | "));
     subHeaderText.appendChild(yearRangeContainer);
-    if(activeItem.categoria) {
+
+    if(activeItem.categoria || window.isEditingActive) {
          subHeaderText.appendChild(document.createElement("br"));
          const catSpan = document.createElement("span");
          catSpan.className = "category-nav-link";
          catSpan.style.cssText = "font-size: 0.9em; color: #777; cursor: pointer; text-decoration: underline;";
-         catSpan.textContent = activeItem.categoria;
-         catSpan.onclick = () => {
+         catSpan.textContent = activeItem.categoria || "[Asignar Categoría]";
+         catSpan.onclick = (e) => {
+             if (window.isEditingActive) return;
              document.getElementById("modalDetalle").classList.remove("visible");
              setState({ navigationState: { level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria", previousState: {} } });
              if (window.history && window.history.replaceState) {
@@ -1291,6 +1575,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
              }
              mostrarModelos(activeItem.categoria, activeItem.marca);
          };
+         makeFieldEditable(catSpan, 'categoria', 'select', editCategorias, activeItem);
          subHeaderText.appendChild(catSpan);
     }
     subHeaderDiv.appendChild(subHeaderText);
@@ -1301,6 +1586,13 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         const imgVehiculo = document.createElement("img");
         setOptimizedImage(imgVehiculo, activeItem.imagenVehiculo, IMG_SIZE_MEDIUM);
         imgVehiculo.className = 'img-vehiculo-modal';
+        makeImageEditable(imgVehiculo, 'imagenVehiculo', activeItem);
+        cont.appendChild(imgVehiculo);
+    } else if (window.isEditingActive) {
+        const imgVehiculo = document.createElement("img");
+        setOptimizedImage(imgVehiculo, null, IMG_SIZE_MEDIUM);
+        imgVehiculo.className = 'img-vehiculo-modal';
+        makeImageEditable(imgVehiculo, 'imagenVehiculo', activeItem);
         cont.appendChild(imgVehiculo);
     }
 
@@ -1308,6 +1600,13 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         const p = document.createElement("p");
         p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 5px 0;";
         p.textContent = `⚠️ ${activeItem.notaImportante}`;
+        makeFieldEditable(p, 'notaImportante', 'textarea', null, activeItem);
+        cont.appendChild(p);
+    } else if (window.isEditingActive) {
+        const p = document.createElement("p");
+        p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 5px 0; cursor: pointer;";
+        p.textContent = "⚠️ [Clic para agregar Nota Importante]";
+        makeFieldEditable(p, 'notaImportante', 'textarea', null, activeItem);
         cont.appendChild(p);
     }
 
@@ -1348,13 +1647,13 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             title: `Corte Alternativo ${idx + 1} (Votos: ${corte.util})`,
             data: corte
         })),
-        { title: 'Apertura', content: activeItem.apertura, img: activeItem.imgApertura, colaborador: activeItem.colaboradorApertura },
-        { title: 'Cables de Alimentación', content: activeItem.cableAlimen, img: activeItem.imgCableAlimen, colaborador: activeItem.colaboradorAlimen },
-        { title: 'Vídeo Guía de Desarme', Video: activeItem.Video }
+        { title: 'Apertura', content: activeItem.apertura, img: activeItem.imgApertura, colaborador: activeItem.colaboradorApertura, fieldContent: 'apertura', fieldImg: 'imgApertura' },
+        { title: 'Cables de Alimentación', content: activeItem.cableAlimen, img: activeItem.imgCableAlimen, colaborador: activeItem.colaboradorAlimen, fieldContent: 'cableAlimen', fieldImg: 'imgCableAlimen' },
+        { title: 'Vídeo Guía de Desarme', Video: activeItem.Video, fieldVideo: 'videoGuiaDesarmeUrl' }
     ];
 
     otherSections.forEach(sec => {
-        const hasContent = sec.isCorte || sec.content || sec.img || sec.Video;
+        const hasContent = sec.isCorte || sec.content || sec.img || sec.Video || (window.isEditingActive && (sec.fieldContent || sec.fieldImg || sec.fieldVideo));
         if (hasContent && sec.title) {
             createAccordionSection(accordionContainer, sec.title, sec, false, datosRelay, activeItem.id);
         }
@@ -1669,30 +1968,56 @@ async function insertNewVehicleFluently(item) {
 }
 
 function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false) {
-    const contentP = document.createElement('p');
-    contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
-                        <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
-                        <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
-    container.appendChild(contentP);
+    const { catalogData } = getState();
+    const activeItem = catalogData && catalogData.cortes && catalogData.cortes.find(c => String(c.id) === String(vehicleId));
 
-    if (cutData.img) {
+    const pTipo = document.createElement('p');
+    pTipo.innerHTML = `<strong>Tipo de Corte: </strong>`;
+    const spanTipo = document.createElement('span');
+    spanTipo.textContent = cutData.tipo || 'No especificado';
+    if (activeItem) {
+        const tiposCorte = ["Señal al botón", "Bomba de combustible", "Corte de ignición", "Apertura de puertas"];
+        makeFieldEditable(spanTipo, `tipoCorte${cutData.index}`, 'select', tiposCorte, activeItem);
+    }
+    pTipo.appendChild(spanTipo);
+    container.appendChild(pTipo);
+
+    const pUbi = document.createElement('p');
+    pUbi.innerHTML = `<strong>Ubicación: </strong>`;
+    const spanUbi = document.createElement('span');
+    spanUbi.textContent = cutData.ubicacion || 'No especificada';
+    if (activeItem) {
+        makeFieldEditable(spanUbi, `ubicacionCorte${cutData.index}`, 'textarea', null, activeItem);
+    }
+    pUbi.appendChild(spanUbi);
+    container.appendChild(pUbi);
+
+    const pColor = document.createElement('p');
+    pColor.innerHTML = `<strong>Color de Cable: </strong>`;
+    const spanColor = document.createElement('span');
+    spanColor.textContent = cutData.colorCable || 'No especificado';
+    if (activeItem) {
+        makeFieldEditable(spanColor, `colorCableCorte${cutData.index}`, 'text', null, activeItem);
+    }
+    pColor.appendChild(spanColor);
+    container.appendChild(pColor);
+
+    if (cutData.img || window.isEditingActive) {
         const imgContainer = document.createElement('div');
         imgContainer.className = 'image-container-with-feedback';
 
         const img = document.createElement("img");
 
-        if (isLazy) {
+        if (isLazy && cutData.img) {
             img.dataset.src = getImageUrl(cutData.img, IMG_SIZE_MEDIUM);
         } else {
             // Phase Collaborative Update: Trigger validation banner after primary cut image loads
             // Attachment happens before setOptimizedImage to ensure we catch the onload event.
-            const { catalogData } = getState();
-            const currentItem = catalogData.cortes.find(c => String(c.id) === String(vehicleId));
-            if (currentItem) {
+            if (activeItem) {
                 img.onload = async () => {
-                    const { eligible, isOldModel } = await checkValidationEligibility(currentItem);
+                    const { eligible, isOldModel } = await checkValidationEligibility(activeItem);
                     if (eligible) {
-                        showValidationBanner(currentItem, isOldModel);
+                        showValidationBanner(activeItem, isOldModel);
                     }
                 };
             }
@@ -1704,6 +2029,9 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
             const highResImgUrl = getImageUrl(cutData.img, IMG_SIZE_LARGE);
             window.abrirLightbox(highResImgUrl, 'lightboxImg');
         };
+        if (activeItem) {
+            makeImageEditable(img, `imgCorte${cutData.index}`, activeItem);
+        }
         imgContainer.appendChild(img);
 
         const feedbackOverlay = document.createElement('div');
@@ -1716,7 +2044,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
 
         // Optimistic UI for recordLike
         // Check if already liked in this session
-        const { likedCortes, catalogData: catData } = getState();
+        const { likedCortes } = getState();
         const likeKey = `${vehicleId}-${cutData.index}`;
         if (likedCortes && likedCortes.includes(likeKey)) {
             utilBtn.classList.add('liked');
@@ -1797,14 +2125,20 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
     }
 
     const relayContainer = document.createElement('p');
+    relayContainer.innerHTML = `<strong>Configuración de Relay: </strong>`;
     const configRelay = cutData.configRelay;
 
-    if (!configRelay || String(configRelay).toLowerCase() === 'sin relay') {
-        relayContainer.innerHTML = `<strong>Configuración de Relay:</strong> Sin Relay`;
-    } else {
-        relayContainer.innerHTML = `<strong>Configuración de Relay: </strong>`;
+    const relaySpan = document.createElement('span');
+    relaySpan.textContent = configRelay || 'Sin Relay';
+    if (activeItem) {
+        const configRelays = ["Normalmente Cerrado (NC)", "Normalmente Abierto (NA)", "Sin Relay"];
+        makeFieldEditable(relaySpan, `configRelay${cutData.index}`, 'select', configRelays, activeItem);
+    }
+    relayContainer.appendChild(relaySpan);
+
+    if (!window.isEditingActive && configRelay && String(configRelay).toLowerCase() !== 'sin relay') {
         const relayButton = document.createElement('button');
-        relayButton.textContent = configRelay;
+        relayButton.textContent = " [Ver Info]";
         relayButton.className = 'btn-link';
         relayButton.onclick = () => {
             const relayInfo = datosRelay.find(r => r.configuracion === configRelay);
@@ -1957,7 +2291,138 @@ export const openInbox = setupModal('inbox-modal', async () => {
 });
 
 export const openDevTools = setupModal('dev-tools-modal', () => {
-    document.getElementById('dev-tools-modal').style.display = 'flex';
+    const modal = document.getElementById('dev-tools-modal');
+    modal.style.display = 'flex';
+
+    if (modal.dataset.listenersSet) return;
+    modal.dataset.listenersSet = "true";
+
+    const statusEl = document.getElementById('migration-status');
+
+    const showMsg = (text, isError = false) => {
+        if (statusEl) {
+            statusEl.style.display = "block";
+            statusEl.style.background = isError ? "#f8d7da" : "#d4edda";
+            statusEl.style.color = isError ? "#721c24" : "#155724";
+            statusEl.textContent = text;
+        }
+    };
+
+    const { currentUser } = getState();
+    const token = currentUser ? currentUser.SessionToken : "";
+
+    // 1. Respaldos y Restauración
+    document.getElementById('admin-backup-db').onclick = () => {
+        showMsg("Generando respaldo de Base de Datos...");
+        routeAction('backupDatabase', { sessionToken: token }).then(res => {
+            showMsg(`Respaldo creado con ID: ${res.backupId}`);
+        }).catch(err => showMsg(err.message, true));
+    };
+
+    document.getElementById('admin-backup-drive').onclick = () => {
+        showMsg("Generando respaldo de Drive de imágenes...");
+        routeAction('backupDrive', { sessionToken: token }).then(res => {
+            showMsg(`Respaldo creado con ID: ${res.backupFolderId}`);
+        }).catch(err => showMsg(err.message, true));
+    };
+
+    const idContainer = document.getElementById('admin-backup-restore-id-container');
+    const restoreInput = document.getElementById('admin-restore-id-input');
+    let restoreActionType = '';
+
+    document.getElementById('admin-restore-db').onclick = () => {
+        idContainer.style.display = "block";
+        restoreInput.placeholder = "Ingrese el ID del archivo de respaldo de Spreadsheet";
+        restoreActionType = 'restoreDatabase';
+    };
+
+    document.getElementById('admin-restore-drive').onclick = () => {
+        idContainer.style.display = "block";
+        restoreInput.placeholder = "Ingrese el ID de la carpeta de respaldo de Drive";
+        restoreActionType = 'restoreDrive';
+    };
+
+    document.getElementById('admin-confirm-restore-btn').onclick = () => {
+        const idVal = restoreInput.value.trim();
+        if (!idVal) {
+            alert("ID de respaldo requerido.");
+            return;
+        }
+        if (!confirm("⚠️ ADVERTENCIA: Esta operación sobrescribirá los datos actuales de forma permanente. ¿Desea continuar?")) {
+            return;
+        }
+        showMsg("Ejecutando restauración crítica...");
+        const payload = { sessionToken: token };
+        if (restoreActionType === 'restoreDatabase') {
+            payload.backupId = idVal;
+        } else {
+            payload.backupFolderId = idVal;
+        }
+
+        routeAction(restoreActionType, payload).then(res => {
+            showMsg("Restauración completada con éxito. Recargando catálogo...");
+            setTimeout(() => window.location.reload(), 2000);
+        }).catch(err => showMsg(err.message, true));
+    };
+
+    // 2. Organización y Mantenimiento
+    document.getElementById('admin-organize-db').onclick = () => {
+        showMsg("Reorganizando base de datos por marca...");
+        routeAction('organizeDatabase', { sessionToken: token }).then(res => {
+            showMsg("Base de datos organizada con éxito.");
+        }).catch(err => showMsg(err.message, true));
+    };
+
+    document.getElementById('admin-normalize-images').onclick = () => {
+        showMsg("Normalizando nombres de imágenes...");
+        routeAction('normalizeImageNames', { sessionToken: token }).then(res => {
+            showMsg("Nombres de imágenes normalizados con éxito.");
+        }).catch(err => showMsg(err.message, true));
+    };
+
+    document.getElementById('admin-reorganize-drive').onclick = () => {
+        showMsg("Reorganizando Drive físicamente por jerarquía...");
+        routeAction('reorganizeImagesInDrive', { sessionToken: token }).then(res => {
+            showMsg("Imágenes en Drive reorganizadas con éxito.");
+        }).catch(err => showMsg(err.message, true));
+    };
+
+    // 3. Registro de Logotipos
+    const logoFileInput = document.getElementById('admin-logo-file');
+    const logoFilename = document.getElementById('admin-logo-filename');
+    logoFileInput.onchange = () => {
+        const file = logoFileInput.files[0];
+        logoFilename.textContent = file ? file.name : "Ningún archivo";
+    };
+
+    document.getElementById('admin-register-logo-form').onsubmit = (e) => {
+        e.preventDefault();
+        const brandVal = document.getElementById('admin-logo-brand').value.trim();
+        const fabVal = document.getElementById('admin-logo-fabricante').value.trim();
+        const file = logoFileInput.files[0];
+
+        if (!brandVal || !file) {
+            alert("Marca y Logotipo requeridos.");
+            return;
+        }
+
+        showMsg("Registrando logotipo...");
+        const reader = new FileReader();
+        reader.onload = () => {
+            const base64Data = reader.result;
+            routeAction('registerBrandLogo', {
+                nombreMarca: brandVal,
+                logoData: base64Data,
+                fabricanteNombre: fabVal,
+                sessionToken: token
+            }).then(res => {
+                showMsg(`Marca y logo registrados con éxito. URL: ${res.logoUrl}`);
+                document.getElementById('admin-register-logo-form').reset();
+                logoFilename.textContent = "Ningún archivo";
+            }).catch(err => showMsg(err.message, true));
+        };
+        reader.readAsDataURL(file);
+    };
 });
 
 export const openAboutUs = setupModal('about-us-modal', () => {
@@ -2111,6 +2576,9 @@ function getYouTubeEmbedUrl(url) {
 }
 
 function createAccordionSection(container, title, sec, isOpen = false, datosRelay = [], vehicleId = null) {
+    const { catalogData } = getState();
+    const activeItem = catalogData && catalogData.cortes && catalogData.cortes.find(c => String(c.id) === String(vehicleId));
+
     const btn = document.createElement("button");
     btn.className = "accordion-btn";
     btn.innerHTML = `${title} <span class="accordion-arrow">▼</span>`;
@@ -2122,22 +2590,32 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
         // Los cortes dentro de acordeones son diferidos (isLazy = true)
         renderCutContent(panel, sec.data, datosRelay, vehicleId, true);
     } else {
-        if (sec.content) {
+        if (sec.content || (window.isEditingActive && sec.fieldContent)) {
             const contentP = document.createElement('p');
-            contentP.innerHTML = sec.content;
+            contentP.innerHTML = sec.content || "[Clic para agregar detalles]";
+            if (activeItem && sec.fieldContent) {
+                makeFieldEditable(contentP, sec.fieldContent, 'textarea', null, activeItem);
+            }
             panel.appendChild(contentP);
         }
 
-        if (sec.img) {
+        if (sec.img || (window.isEditingActive && sec.fieldImg)) {
             const imgContainer = document.createElement('div');
             imgContainer.className = 'image-container-with-feedback';
             const img = document.createElement("img");
-            img.dataset.src = getImageUrl(sec.img, IMG_SIZE_MEDIUM);
+            if (sec.img) {
+                img.dataset.src = getImageUrl(sec.img, IMG_SIZE_MEDIUM);
+            } else {
+                setOptimizedImage(img, null, IMG_SIZE_MEDIUM);
+            }
             img.className = 'img-corte image-with-container';
             img.onclick = () => {
                 const highResImgUrl = getImageUrl(sec.img, IMG_SIZE_LARGE);
                 window.abrirLightbox(highResImgUrl, 'lightboxImg');
             };
+            if (activeItem && sec.fieldImg) {
+                makeImageEditable(img, sec.fieldImg, activeItem);
+            }
             imgContainer.appendChild(img);
             panel.appendChild(imgContainer);
         }
@@ -2152,7 +2630,16 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
         panel.appendChild(colabDiv);
     }
 
-    if (sec.Video) {
+    if (sec.Video || (window.isEditingActive && sec.fieldVideo)) {
+        if (window.isEditingActive && sec.fieldVideo && activeItem) {
+            const videoP = document.createElement('p');
+            videoP.innerHTML = `<strong>YouTube Video URL o ID: </strong>`;
+            const videoSpan = document.createElement('span');
+            videoSpan.textContent = activeItem[sec.fieldVideo] || '[Asignar Video URL/ID]';
+            makeFieldEditable(videoSpan, sec.fieldVideo, 'text', null, activeItem);
+            videoP.appendChild(videoSpan);
+            panel.appendChild(videoP);
+        }
         const videoEmbedUrl = getYouTubeEmbedUrl(sec.Video);
         if (videoEmbedUrl) {
             const videoContainer = document.createElement('div');

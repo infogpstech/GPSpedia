@@ -360,6 +360,9 @@ async function initializeApp() {
                     const isVisible = modalDetalle.classList.contains('visible');
                     if (!isVisible) {
                         // El modal se ha cerrado
+                        if (window.ui && typeof window.ui.handleModalClose === 'function') {
+                            window.ui.handleModalClose();
+                        }
                         if (modalDetalle.dataset.modalType === 'tutorial') {
                             const iframe = modalDetalle.querySelector('iframe');
                             if (iframe) {

@@ -10,6 +10,7 @@
  * @param {string} imgId - (Opcional) El ID del elemento <img> dentro del lightbox.
  */
 function abrirLightbox(url, imgId = 'lightboxImg') {
+    if (window.isEditingActive) return; // Disable during edit mode
     const lightbox = document.getElementById('lightbox');
     const lightboxImg = document.getElementById(imgId) || document.getElementById('lightboxImg') || document.getElementById('lightbox-img');
     const viewport = document.querySelector('meta[name="viewport"]');

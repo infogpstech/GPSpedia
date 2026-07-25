@@ -200,25 +200,79 @@
 
 <!-- ========= MODAL DE DESARROLLADOR ========= -->
 <div id="dev-tools-modal" class="info-modal">
-    <div class="info-modal-content" style="max-width: 900px;">
+    <div class="info-modal-content" style="max-width: 900px; max-height: 90vh; overflow-y: auto;">
         <span class="info-close-btn">&times;</span>
-        <h2><i class="fa-solid fa-code"></i> Herramientas de Desarrollador</h2>
+        <h2><i class="fa-solid fa-code"></i> Panel de Administración y Desarrollo</h2>
 
-        <div style="display: flex; gap: 20px;">
-            <div style="flex: 1;">
-                <h4>Consola de Depuración</h4>
-                <div id="dev-console-container" style="height: 400px; border: 1px solid #ccc; border-radius: 8px;">
-                    <!-- The existing debug console will be moved here by JS -->
+        <div style="display: flex; flex-direction: column; gap: 25px;">
+            <!-- Fila 1: Consola y Acciones de Respaldo/Restauración -->
+            <div style="display: flex; gap: 20px; flex-wrap: wrap;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h4>Consola de Depuración</h4>
+                    <div id="dev-console-container" style="height: 250px; border: 1px solid #ccc; border-radius: 8px;">
+                        <!-- El contenedor se moverá aquí por JS -->
+                    </div>
+                </div>
+                <div style="flex: 1; min-width: 300px;">
+                    <h4>Copias de Seguridad y Recuperación</h4>
+                    <p style="font-size: 0.85em; margin-bottom: 12px; color: var(--text-disabled);">Antes de realizar cambios estructurales, respalde la base de datos o el Drive de imágenes.</p>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px;">
+                        <button id="admin-backup-db" class="btn btn-primary" style="font-size: 0.85em; padding: 8px;"><i class="fa-solid fa-database"></i> Respaldar DB</button>
+                        <button id="admin-restore-db" class="btn btn-warning" style="font-size: 0.85em; padding: 8px;"><i class="fa-solid fa-rotate-left"></i> Restaurar DB</button>
+                        <button id="admin-backup-drive" class="btn btn-primary" style="font-size: 0.85em; padding: 8px;"><i class="fa-solid fa-folder-open"></i> Respaldar Drive</button>
+                        <button id="admin-restore-drive" class="btn btn-warning" style="font-size: 0.85em; padding: 8px;"><i class="fa-solid fa-rotate-left"></i> Restaurar Drive</button>
+                    </div>
+                    <div id="admin-backup-restore-id-container" style="display:none; margin-top: 10px;">
+                        <input type="text" id="admin-restore-id-input" placeholder="ID de Respaldo o Carpeta" style="padding: 8px; font-size: 0.85em; margin-bottom: 5px;">
+                        <button id="admin-confirm-restore-btn" class="btn btn-danger" style="width:100%; font-size: 0.85em; padding: 8px;">Confirmar Restauración Crítica</button>
+                    </div>
                 </div>
             </div>
-            <div style="flex: 1;">
-                <h4>Acciones de Migración</h4>
-                <p>Ejecutar scripts de migración de datos. Usar con precaución.</p>
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <button id="run-migrate-years" class="btn btn-warning">Migrar Rangos de Años</button>
-                    <button id="run-migrate-timestamps" class="btn btn-warning">Migrar Timestamps</button>
+
+            <!-- Fila 2: Tareas de Mantenimiento y Organización -->
+            <div style="display: flex; gap: 20px; flex-wrap: wrap; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <div style="flex: 1; min-width: 300px;">
+                    <h4>Organización y Mantenimiento</h4>
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button id="admin-organize-db" class="btn" style="background:#28a745; color:#fff; font-size: 0.9em; padding: 10px;"><i class="fa-solid fa-sort"></i> Reorganizar DB por Marca</button>
+                        <button id="admin-normalize-images" class="btn" style="background:#17a2b8; color:#fff; font-size: 0.9em; padding: 10px;"><i class="fa-solid fa-file-signature"></i> Normalizar Nombres de Imágenes</button>
+                        <button id="admin-reorganize-drive" class="btn" style="background:#6f42c1; color:#fff; font-size: 0.9em; padding: 10px;"><i class="fa-solid fa-folder-tree"></i> Reorganizar Imágenes físicamente en Drive</button>
+                    </div>
                 </div>
-                <div id="migration-status" style="margin-top: 15px; padding: 10px; border-radius: 5px; background: #f0f0f0; display: none;"></div>
+                <div style="flex: 1; min-width: 300px;">
+                    <h4>Registro de Nuevos Logotipos</h4>
+                    <form id="admin-register-logo-form" style="display: flex; flex-direction: column; gap: 8px;">
+                        <input type="text" id="admin-logo-brand" placeholder="Nombre de la Marca" required style="padding: 8px; font-size: 0.85em;">
+                        <input type="text" id="admin-logo-fabricante" placeholder="Nombre del Fabricante (Opcional)" style="padding: 8px; font-size: 0.85em;">
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <label for="admin-logo-file" class="btn btn-secondary" style="font-size:0.8em; padding: 6px 12px; margin:0; cursor:pointer;">Seleccionar Logo</label>
+                            <input type="file" id="admin-logo-file" accept="image/png, image/svg+xml, image/webp" required style="display:none;">
+                            <span id="admin-logo-filename" style="font-size:0.8em; color:var(--text-disabled);">Ningún archivo</span>
+                        </div>
+                        <button type="submit" class="btn btn-primary" style="font-size: 0.9em; padding: 10px;">Registrar Logo de Marca</button>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Fila 3: Registro Silencioso de Cortes -->
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h4>Registro Silencioso de Nuevos Cortes</h4>
+                        <p style="font-size: 0.85em; margin: 0; color: var(--text-disabled);">Registre cortes sin que aparezcan en la sección de "Agregados recientemente" del catálogo público.</p>
+                    </div>
+                    <button id="admin-silent-add-btn" class="btn btn-primary" onclick="window.location.href='add_cortes.html?silent=true'" style="padding: 10px 20px;"><i class="fa-solid fa-user-secret"></i> Ir a Formulario Silencioso</button>
+                </div>
+            </div>
+
+            <!-- Fila 4: Migraciones Legacy -->
+            <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+                <h4>Acciones de Migración (Legacy)</h4>
+                <div style="display: flex; gap: 10px;">
+                    <button id="run-migrate-years" class="btn btn-warning" style="font-size:0.85em; padding: 8px;">Migrar Rangos de Años</button>
+                    <button id="run-migrate-timestamps" class="btn btn-warning" style="font-size:0.85em; padding: 8px;">Migrar Timestamps</button>
+                </div>
+                <div id="migration-status" style="margin-top: 10px; padding: 10px; border-radius: 5px; background: #f0f0f0; display: none; color:#000; font-size:0.85em;"></div>
             </div>
         </div>
     </div>
