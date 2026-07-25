@@ -629,3 +629,14 @@ Archivos modificados:
 - Se importó y enlazó el evento 'click' en `side-menu-changelog-link` para cerrar el side-menu y abrir el modal.
 
 **Versión:** Registro de Cambios en Frontend (Consolidado v2.1.5).
+
+**CHANGES LOG - 22/02/2026 (CORRECCIÓN DE REPRODUCCIÓN PERSISTENTE DE VÍDEOS EN TUTORIALES - VERSIÓN 2.1.6)**
+
+**Archivo: ui.js**
+- Se modificaron las funciones `mostrarDetalleModal`, `mostrarDetalleTutorialModal` y `mostrarDetalleRelayModal` para asignar síncronamente la propiedad `dataset.modalType` con los valores `'corte'`, `'tutorial'` y `'relay'` respectivamente en el elemento `#modalDetalle` al abrir cualquier vista de detalle.
+- Se robusteció la función `mostrarDetalleTutorialModal` utilizando el helper unificado `getYouTubeEmbedUrl(item.Video)` para la incrustación del iframe del vídeo del tutorial de YouTube, garantizando que incluya automáticamente el parámetro `enablejsapi=1`.
+
+**Archivo: main.js**
+- Se implementó un `MutationObserver` reactivo sobre `#modalDetalle` dentro de la inicialización de la app (`initializeApp`). Cuando el modal es cerrado por cualquier mecanismo (clic en botón, gesto de retroceso, botón físico o clic fuera), el observador detecta síncronamente la remoción de la clase `.visible`. Si el tipo de modal cerrado era un tutorial (`dataset.modalType === 'tutorial'`), se detiene de forma instantánea la reproducción y se destruye el iframe del vídeo estableciendo su `src` a `about:blank` y removiendo el elemento del DOM. Esto garantiza la total e inmediata detención del audio, la liberación de recursos de red y CPU y evita ejecuciones ocultas en segundo plano.
+
+**Versión:** Incremento a v2.1.6.

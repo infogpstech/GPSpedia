@@ -208,7 +208,15 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
-1. **TÍTULO: Corrección de cierre de modal y prioridad de navegación (v2.4.11)**
+1. **TÍTULO: Corrección de reproducción persistente de vídeos en modales de tutoriales (v2.1.6)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** ui.js, main.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Problema:** Al cerrar el modal de detalle de tutoriales por cualquier método (botón, gesto, atrás), el vídeo de YouTube continuaba reproduciéndose, el audio seguía activo y los recursos no se liberaban en segundo plano.
+     - **Causa Raíz:** El iframe se insertaba sin habilitar la API de YouTube (`enablejsapi=1`) y el elemento iframe no se destruía ni se limpiaba del DOM tras el cierre del modal.
+     - **Solución:** Se implementó la asignación síncrona de `dataset.modalType = 'tutorial'` al abrir el modal, y se configuró un `MutationObserver` reactivo sobre `#modalDetalle` en `main.js`. Cuando el modal se cierra, si es un tutorial, el iframe se remueve y su `src` se limpia síncronamente. Se robusteció además la carga del iframe utilizando el helper `getYouTubeEmbedUrl` para incorporar siempre `enablejsapi=1`.
+     - **Efecto:** El audio y la reproducción se detienen instantáneamente y por completo al cerrar el modal en cualquier circunstancia, liberando todos los recursos de red y CPU.
+2. **TÍTULO: Corrección de cierre de modal y prioridad de navegación (v2.4.11)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** main.js
    - **DESCRIPCIÓN DETALLADA:**
