@@ -45,6 +45,14 @@ async function saveFieldSilently(vehicleId, fieldName, value) {
 }
 
 async function exitModalEditMode(saveChanges, vehicleId) {
+    // Si no tenemos backup local en memoria, intentar recuperarlo desde localStorage
+    if (!originalItemBackup) {
+        const storedBackup = localStorage.getItem('gpsepedia_edit_backup');
+        if (storedBackup) {
+            originalItemBackup = JSON.parse(storedBackup);
+        }
+    }
+
     if (!saveChanges && originalItemBackup) {
         // Revertir todos los cambios realizados silenciosamente
         const fieldsToRestore = Object.keys(originalItemBackup).filter(key => {
@@ -62,6 +70,7 @@ async function exitModalEditMode(saveChanges, vehicleId) {
         const restoredItem = { ...originalItemBackup };
         originalItemBackup = null;
         editedItemBuffer = null;
+        localStorage.removeItem('gpsepedia_edit_backup');
 
         mostrarDetalleModal(restoredItem);
     } else {
@@ -69,6 +78,7 @@ async function exitModalEditMode(saveChanges, vehicleId) {
         window.inEditMode = false;
         originalItemBackup = null;
         editedItemBuffer = null;
+        localStorage.removeItem('gpsepedia_edit_backup');
 
         // Forzar sincronización silenciosa para refrescar el catálogo
         routeAction('getCatalogData').then(res => {
@@ -1299,6 +1309,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
                 inEditMode = true;
                 window.inEditMode = true;
                 originalItemBackup = JSON.parse(JSON.stringify(activeItem));
+                localStorage.setItem('gpsepedia_edit_backup', JSON.stringify(originalItemBackup));
                 editedItemBuffer = { ...activeItem };
                 await precargarDropdownOptions();
                 mostrarDetalleModal(editedItemBuffer);
@@ -2192,6 +2203,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         relayButton.textContent = configRelay;
         relayButton.className = 'btn-link';
         relayButton.onclick = () => {
+            if (inEditMode) return; // Bloquear en modo edición In-Modal
             const relayInfo = datosRelay.find(r => r.configuracion === configRelay);
             if (relayInfo) {
                 renderRelayInfoModal(relayInfo);

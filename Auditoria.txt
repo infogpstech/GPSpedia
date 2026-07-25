@@ -42,7 +42,7 @@
    - Impacto: El usuario ve el modal (si no se cierra) pero al cerrarlo la lista de resultados está vacía (solo el título).
 
 2. **navigation.js (filtrarContenido):**
-   - La actualización del hash de la URL (`window.location.hash`) ocurre al final de la función, después de haber renderizado los resultados y abierto el modal.
+   - La actualización del hash de la URL (`window.location.hash`) occurs al final de la función, después de haber renderizado los resultados y abierto el modal.
    - El cambio de hash dispara un evento `popstate` que es procesado por el listener global en `main.js`.
 
 3. **main.js (popstate listener):**
@@ -77,7 +77,7 @@
    - `navigation.irAPaginaPrincipal` ya realiza limpiezas de hash y estado, pero debe integrarse correctamente en el flujo de gestos.
 
 4. **Compatibilidad:**
-   - El uso de `document.activeElement.blur()` y `input.focus()` is estándar y compatible con PWA y navegadores móviles.
+   - El uso de `document.activeElement.blur()` y `input.focus()` es estándar y compatible con PWA y navegadores móviles.
 
 **Riesgos y Dependencias:**
 - La animación del encabezado depende de la clase `search-active` en el body. No debe alterarse manualmente si no es a través de los flujos de búsqueda existentes.
@@ -199,7 +199,7 @@
 
 **Causa Raíz de la Falla:**
 - Al borrar el contenido del buscador (por tecleo de retroceso o haciendo clic en "X"), `filtrarContenido("")` invocaba directamente a `irAPaginaPrincipal()`.
-- `irAPaginaPrincipal()` ejecuta `history.replaceState({ level: 'categorias' })` para limpiar los parámetros de la URL, removiendo la clase `search-active` y haciendo `blur()` del input.
+- `irAPaginaPrincipal()` ejecuta `history.replaceState({ level: 'categorias' })` para limpiar los parámetros de la URL, removiendo la clase `search-active` and haciendo `blur()` del input.
 - Sin embargo, en el caso del botón "X" o si el usuario sigue con el foco puesto en la barra de búsqueda, el input se re-enfocaba, pero el historial del navegador ya había perdido el estado de búsqueda por completo (reemplazado por `categorias`).
 - Al estar en el estado `categorias` en la pila del historial, cualquier gesto de retroceso posterior del sistema operativo cerraba la aplicación abruptamente porque no quedaba ningún estado anterior al cual regresar en el navegador.
 
@@ -524,7 +524,7 @@ Ubicación:
 Impacto: Alto (consumo de CPU, datos y reproducción molesta de audio en segundo plano).
 Riesgo de regresión: Muy bajo.
 Estrategia de corrección:
-  - En `ui.js`, robustecer `mostrarDetalleTutorialModal` para usar `getYouTubeEmbedUrl(item.Video)` y establecer la propiedad `dataset.modalType = 'tutorial'` en el elemento `#modalDetalle`. Para cortes y relays, establecer `dataset.modalType` en 'corte' y 'relay' respectivamente.
+  - En `ui.js`, robustecer `mostrarDetalleTutorialModal` para usar `getYouTubeEmbedUrl(item.Video)` y establecer la propiedad `dataset.modalType = 'tutorial'` en el elemento `#modalDetalle`. Para cortes y relays, establecer `dataset.modalType` en 'corte' and 'relay' respectivamente.
   - En `main.js`, registrar un `MutationObserver` sobre `#modalDetalle` dentro de la inicialización de la app (`initializeApp`). Cuando se detecte la remoción de la clase `.visible` (modal cerrado) de forma instantánea por cualquier mecanismo de cierre, y el tipo de modal sea 'tutorial', detener completamente la reproducción, remover el iframe del DOM y liberar los recursos del reproductor de forma definitiva.
 
 
@@ -545,3 +545,17 @@ Estrategia de corrección:
   - Implementar en `ui.js` un modo de edición "In-Modal" interactivo al pulsar un icono de lápiz, con guardado silencioso inmediato al perder foco (evento blur) o cargar archivos, y persistencia de restauración por si el usuario cancela o cierra sin guardar.
   - Agregar opción "Registro Silencioso" en `add_cortes.html` enviando un timestamp de hace más de 30 días en el backend.
   - Implementar en `#dev-tools-modal` una consola interactiva de diagnóstico en tiempo real que muestre logs de progreso paso a paso con estadísticas detalladas y botones dedicados de copiado de IDs y enlaces generados de Spreadsheet y Drive.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - AJUSTES ADICIONALES DE EDICIÓN IN-MODAL Y COMPATIBILIDAD (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js
+
+**Hallazgos:**
+1. **Falta de Try-Catch en Normalización de Imágenes Individuales (`Services/admin.js`):**
+   - Si una imagen falla debido a permisos, cuotas o archivo inexistente en Drive, la ejecución masiva se interrumpe.
+   - Solución: Envolver las operaciones de Drive para cada archivo individual en un bloque try-catch, registrando cualquier fallo como advertencia en los logs sin interrumpir la normalización del resto de los registros.
+
+2. **Edición In-Modal No Invasiva y Compatibilidad de Eventos (`ui.js`):**
+   - El modo de edición previo modificaba y reemplazaba componentes de la estructura HTML original (lo que violaba las nuevas restricciones de preservación HTML y estilos).
+   - Solución: Implementar una edición in-place (doble clic o clic en caliente sobre los textos los transforma en inputs temporales, y el listener de blur los vuelve a renderizar estáticos y envía el cambio silencioso). Los botones de las flechas de navegación por generaciones, de apertura de relay, Lightbox, de utilidad y de reportes se mantienen 100% idénticos en estilos y HTML, pero se interceptan y bloquean sus eventos únicamente mientras `inEditMode === true`. Al desactivar la edición o confirmar/restaurar, se levantan todos los bloqueos de forma síncrona sin recargar, asegurando compatibilidad absoluta.

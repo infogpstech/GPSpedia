@@ -300,22 +300,20 @@ function handleReorganizeDatabase(payload, logMessage) {
  * 4. Normalización automática de nombres de imágenes (Nomenclatura uniforme e imágenes compartidas)
  */
 function handleNormalizeImages(payload, logMessage) {
-    logMessage("Normalización Imágenes", "Iniciando normalización de nomenclatura de imágenes...");
+    const { startIndex = 0, limit = 10 } = payload || {};
+
+    logMessage("Normalización Imágenes", `Iniciando normalización de lote: elementos del ${startIndex} al ${startIndex + limit}...`);
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();
-    const headers = data.shift();
+    const headers = data.shift(); // Quitar cabecera
 
     const totalVehicles = data.length;
-    logMessage("Normalización Imágenes", `Se detectaron ${totalVehicles} registros de vehículos para analizar.`);
-
-    let processedCount = 0;
     let imagesRenamed = 0;
 
-    // Mapeo para detectar imágenes compartidas por múltiples vehículos
-    const imageToRowMap = {};
     const imgFields = ['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen'];
 
-    // Fase 1: Recopilar uso de imágenes para detectar duplicidades virtuales/compartidas
+    // Mapeo para detectar imágenes compartidas
+    const imageToRowMap = {};
     data.forEach((row, index) => {
         const rowNum = index + 2;
         imgFields.forEach(field => {
@@ -332,16 +330,26 @@ function handleNormalizeImages(payload, logMessage) {
         });
     });
 
-    // Fase 2: Procesar y duplicar si son compartidas, y renombrar de forma estandarizada
-    data.forEach((row, index) => {
-        const rowNum = index + 2;
-        const marca = sanitizeForFilename(row[COLS_CORTES.marca - 1]);
-        const modelo = sanitizeForFilename(row[COLS_CORTES.modelo - 1]);
-        const version = sanitizeForFilename(row[COLS_CORTES.versionesAplicables - 1] || "base");
-        const encendido = sanitizeForFilename(row[COLS_CORTES.tipoEncendido - 1]);
-        const anio = sanitizeForFilename(row[COLS_CORTES.anoDesde - 1] || "XXXX");
+    // Procesar solo las filas dentro del lote especificado
+    const batchData = data.slice(startIndex, startIndex + limit);
 
-        const baseName = `${modelo}_${version}_${encendido}_${anio}`.toLowerCase();
+    batchData.forEach((row, index) => {
+        const rowNum = startIndex + index + 2;
+
+        // Obtener datos reales para la nomenclatura
+        const rawModelo = (row[COLS_CORTES.modelo - 1] || "").toString().trim();
+        const rawVersion = (row[COLS_CORTES.versionesAplicables - 1] || "").toString().trim();
+        const rawEncendido = (row[COLS_CORTES.tipoEncendido - 1] || "").toString().trim();
+        const rawAnio = (row[COLS_CORTES.anoDesde - 1] || "").toString().trim();
+
+        const versionPart = rawVersion ? rawVersion : rawEncendido;
+
+        // Sanitización para nomenclatura uniforme
+        const modelo = sanitizeForNomenclature(rawModelo);
+        const version = sanitizeForNomenclature(versionPart);
+        const anio = sanitizeForNomenclature(rawAnio || "XXXX");
+
+        const baseName = `${modelo}_${version}_${anio}`.toLowerCase();
 
         imgFields.forEach(field => {
             const colIndex = COLS_CORTES[field] - 1;
@@ -352,61 +360,60 @@ function handleNormalizeImages(payload, logMessage) {
                 if (idMatch) {
                     const id = idMatch[1];
                     const usages = imageToRowMap[id];
-                    let file;
                     try {
-                        file = DriveApp.getFileById(id);
-                    } catch (e) {
-                        return; // Omitir si no se puede acceder
-                    }
+                        const file = DriveApp.getFileById(id);
+                        let fileToProcess = file;
 
-                    let fileToProcess = file;
-                    // Si se comparte entre más de un registro, crear copia física propia para este vehículo
-                    if (usages && usages.length > 1) {
-                        const usageIndexForThisRow = usages.findIndex(u => u.rowNum === rowNum && u.field === field);
-                        if (usageIndexForThisRow > 0) { // Solo duplicar a partir del segundo uso
-                            logMessage("Normalización Imágenes", `Imagen compartida detectada en fila ${rowNum}. Creando copia física propia...`);
-                            const currentFolders = file.getParents();
-                            const parentFolder = currentFolders.hasNext() ? currentFolders.next() : DriveApp.getRootFolder();
-                            fileToProcess = file.makeCopy(file.getName(), parentFolder);
-                            imgUrl = `https://drive.google.com/uc?export=view&id=${fileToProcess.getId()}`;
-                            sheet.getRange(rowNum, colIndex + 1).setValue(imgUrl);
-                            imagesRenamed++;
+                        // Si se comparte entre más de un registro, crear copia física propia para este vehículo
+                        if (usages && usages.length > 1) {
+                            const usageIndexForThisRow = usages.findIndex(u => u.rowNum === rowNum && u.field === field);
+                            if (usageIndexForThisRow > 0) { // Solo duplicar a partir del segundo uso
+                                logMessage("Normalización Imágenes", `Fila ${rowNum}: Imagen compartida para el campo ${field}. Duplicando archivo en Drive...`);
+                                const currentFolders = file.getParents();
+                                const parentFolder = currentFolders.hasNext() ? currentFolders.next() : DriveApp.getRootFolder();
+                                fileToProcess = file.makeCopy(file.getName(), parentFolder);
+                                imgUrl = `https://drive.google.com/uc?export=view&id=${fileToProcess.getId()}`;
+                                sheet.getRange(rowNum, colIndex + 1).setValue(imgUrl);
+                                imagesRenamed++;
+                            }
                         }
-                    }
 
-                    // Determinar el sufijo según el tipo de campo
-                    let suffix = "";
-                    if (field === "imagenVehiculo") suffix = "";
-                    else if (field === "imgCorte1") suffix = "_corte1";
-                    else if (field === "imgCorte2") suffix = "_corte2";
-                    else if (field === "imgCorte3") suffix = "_corte3";
-                    else if (field === "imgApertura") suffix = "_apert";
-                    else if (field === "imgCableAlimen") suffix = "_alimen";
+                        // Determinar el tipoFuncion de nomenclatura según el campo
+                        let typeFuncion = "";
+                        if (field === "imagenVehiculo") typeFuncion = "";
+                        else if (field === "imgCorte1") typeFuncion = "_corte1";
+                        else if (field === "imgCorte2") typeFuncion = "_corte2";
+                        else if (field === "imgCorte3") typeFuncion = "_corte3";
+                        else if (field === "imgApertura") typeFuncion = "_apert";
+                        else if (field === "imgCableAlimen") typeFuncion = "_alimen";
 
-                    const extension = getExtensionFromName(fileToProcess.getName());
-                    const newFilename = `${baseName}${suffix}${extension}`;
+                        const extension = getExtensionFromName(fileToProcess.getName());
+                        const newFilename = `${baseName}${typeFuncion}${extension}`;
 
-                    if (fileToProcess.getName() !== newFilename) {
-                        fileToProcess.setName(newFilename);
-                        imagesRenamed++;
+                        if (fileToProcess.getName() !== newFilename) {
+                            logMessage("Normalización Imágenes", `Fila ${rowNum}: Renombrando '${fileToProcess.getName()}' a '${newFilename}'`);
+                            fileToProcess.setName(newFilename);
+                            imagesRenamed++;
+                        } else {
+                            logMessage("Normalización Imágenes", `Fila ${rowNum}: Imagen '${newFilename}' ya está normalizada.`);
+                        }
+                    } catch (e) {
+                        logMessage("Normalización Imágenes", `Advertencia: Falla con imagen ID '${id}' (Fila ${rowNum}, Campo ${field}). Causa: ${e.message}`, 0, 0, true);
                     }
                 }
             }
         });
-
-        processedCount++;
-        if (processedCount % 10 === 0 || processedCount === totalVehicles) {
-            logMessage("Normalización Imágenes", `Progreso de normalización...`, processedCount, totalVehicles);
-        }
     });
 
     SpreadsheetApp.flush();
-    logMessage("Normalización Imágenes", `Normalización finalizada de manera segura. Archivos renombrados/duplicados: ${imagesRenamed}`);
+    logMessage("Normalización Imágenes", `Lote finalizado. Elementos procesados de esta tanda: ${batchData.length}. Archivos modificados: ${imagesRenamed}`);
+
     return {
         status: 'success',
-        processedCount: processedCount,
+        processedCount: batchData.length,
+        totalVehicles: totalVehicles,
         imagesRenamed: imagesRenamed,
-        message: "Nomenclatura uniforme aplicada a todas las imágenes e independientes físicas aseguradas."
+        nextIndex: startIndex + batchData.length
     };
 }
 
@@ -415,31 +422,52 @@ function getExtensionFromName(filename) {
     return dotIndex !== -1 ? filename.substring(dotIndex) : ".jpg";
 }
 
+function sanitizeForNomenclature(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+        .toLowerCase()
+        .replace(/[\/,]/g, '_') // Reemplazar barras y comas con guión bajo
+        .replace(/[^a-z0-9_.-]/g, '_') // Limpiar cualquier carácter extraño
+        .replace(/__+/g, '_') // Eliminar guiones bajos múltiples
+        .replace(/^_+|_+$/g, ''); // Limpiar extremos
+}
+
 /**
  * 5. Reorganización automática de imágenes en carpetas de Drive según la estructura jerárquica oficial
  */
 function handleReorganizeImagesInDrive(payload, logMessage) {
-    logMessage("Reorganización Drive", "Reestructurando y reorganizando carpetas e imágenes en Google Drive...");
+    const { startIndex = 0, limit = 10 } = payload || {};
+
+    logMessage("Reorganización Drive", `Iniciando reorganización de lote: elementos del ${startIndex} al ${startIndex + limit}...`);
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();
     data.shift(); // Quitar cabecera
 
     const totalVehicles = data.length;
-    let processedCount = 0;
     let movedFiles = 0;
 
     const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
     const imgFields = ['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen'];
 
-    data.forEach((row, index) => {
-        const rowNum = index + 2;
+    const batchData = data.slice(startIndex, startIndex + limit);
+
+    batchData.forEach((row, index) => {
+        const rowNum = startIndex + index + 2;
+
+        // Datos reales para las carpetas
         const categoria = sanitizeForFilename(row[COLS_CORTES.categoria - 1] || 'Sin_Categoria');
         const marca = sanitizeForFilename(row[COLS_CORTES.marca - 1] || 'Sin_Marca');
         const modelo = sanitizeForFilename(row[COLS_CORTES.modelo - 1] || 'Sin_Modelo');
-        const versionEncendido = sanitizeForFilename((row[COLS_CORTES.versionesAplicables - 1] || "SRV") + "_" + (row[COLS_CORTES.tipoEncendido - 1] || "BTN"));
+
+        // Versión de equipamiento / Tipo de encendido unificado
+        const rawVersion = (row[COLS_CORTES.versionesAplicables - 1] || "").toString().trim();
+        const rawEncendido = (row[COLS_CORTES.tipoEncendido - 1] || "").toString().trim();
+        const folderVersionName = rawVersion ? `${rawVersion} / ${rawEncendido}` : rawEncendido;
+        const versionEncendido = sanitizeForFilename(folderVersionName);
+
         const generacion = sanitizeForFilename(row[COLS_CORTES.anoDesde - 1] || 'Sin_Ano');
 
-        // Construir jerarquía de carpetas
+        // Construir jerarquía de carpetas real
         const catFolder = getOrCreateSubFolder(rootFolder, categoria);
         const marFolder = getOrCreateSubFolder(catFolder, marca);
         const modFolder = getOrCreateSubFolder(marFolder, modelo);
@@ -466,9 +494,10 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                         }
 
                         if (!alreadyInPlace) {
-                            // Mover archivo
+                            logMessage("Reorganización Drive", `Fila ${rowNum}: Moviendo '${file.getName()}' a carpeta jerárquica...`);
                             genFolder.addFile(file);
-                            // Remover de padres antiguos
+
+                            // Remover de carpetas padres antiguas
                             const oldParents = file.getParents();
                             while (oldParents.hasNext()) {
                                 const oldParent = oldParents.next();
@@ -477,26 +506,24 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                                 }
                             }
                             movedFiles++;
+                        } else {
+                            logMessage("Reorganización Drive", `Fila ${rowNum}: Imagen '${file.getName()}' ya está en su ubicación jerárquica correcta.`);
                         }
                     } catch (e) {
-                        // Error de acceso u omitido
+                        logMessage("Reorganización Drive", `Advertencia: Falla con archivo ID '${id}' (Fila ${rowNum}, Campo ${field}). Causa: ${e.message}`, 0, 0, true);
                     }
                 }
             }
         });
-
-        processedCount++;
-        if (processedCount % 10 === 0 || processedCount === totalVehicles) {
-            logMessage("Reorganización Drive", "Reestructurando jerarquía...", processedCount, totalVehicles);
-        }
     });
 
-    logMessage("Reorganización Drive", `Organización jerárquica completada. Archivos movidos o reubicados: ${movedFiles}`);
+    logMessage("Reorganización Drive", `Lote finalizado. Elementos procesados de esta tanda: ${batchData.length}. Archivos movidos: ${movedFiles}`);
     return {
         status: 'success',
-        processedCount: processedCount,
+        processedCount: batchData.length,
+        totalVehicles: totalVehicles,
         movedFiles: movedFiles,
-        message: "Estructura jerárquica unificada de carpetas de imágenes asegurada con éxito."
+        nextIndex: startIndex + batchData.length
     };
 }
 
