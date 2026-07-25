@@ -302,6 +302,15 @@
                 if (silentContainer) silentContainer.style.display = 'flex';
             }
 
+            const urlParams = new URLSearchParams(window.location.search);
+            const isSilentParam = urlParams.get('silent') === 'true';
+            if (isSilentParam) {
+                const silentCheckbox = document.getElementById('silentRegister');
+                if (silentCheckbox) {
+                    silentCheckbox.checked = true;
+                }
+            }
+
             // Aplicar modo oscuro si está activo
             if (localStorage.getItem('darkMode') === 'true') {
                 document.body.classList.add('dark-mode');
@@ -496,6 +505,15 @@
             form.reset();
             resetImagePreviews();
 
+            const urlParams = new URLSearchParams(window.location.search);
+            const isSilentParam = urlParams.get('silent') === 'true';
+            if (isSilentParam) {
+                const silentCheckbox = document.getElementById('silentRegister');
+                if (silentCheckbox) {
+                    silentCheckbox.checked = true;
+                }
+            }
+
             const title = document.getElementById('stage-2-title');
             const newVehicleFields = document.getElementById('new-vehicle-fields');
             const newVehicleImageInput = document.getElementById('imagenVehiculo');
@@ -554,6 +572,7 @@
             };
 
             const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
+            const serviceOverride = silentVal ? 'ADMIN' : null;
 
             try {
                 const result = await routeAction('addOrUpdateCut', {
@@ -562,7 +581,7 @@
                     cutData,
                     colaborador: state.colaborador,
                     silent: silentVal
-                });
+                }, serviceOverride);
                 state.selectedVehicleId = result.vehicleId;
                 alert("Corte guardado exitosamente.");
                 proceedToStage3(result.vehicleId);
@@ -610,8 +629,11 @@
                 imgCableAlimen: await fileToBase64(document.getElementById('imgCableAlimen').files[0]),
             };
 
+            const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
+            const serviceOverride = silentVal ? 'ADMIN' : null;
+
             try {
-                await routeAction('addSupplementaryInfo', payload);
+                await routeAction('addSupplementaryInfo', payload, serviceOverride);
                 alert("Información guardada. Serás redirigido.");
                 window.location.href = 'index.html';
             } catch(error) {

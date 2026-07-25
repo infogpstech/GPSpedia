@@ -686,3 +686,26 @@ Archivos modificados:
 - Bloqueada de forma global la apertura del Lightbox de zoom si `window.inEditMode === true` para evitar conflictos en el modo edición in-modal.
 
 **Versión:** Despliegue del Microservicio Administrativo (v2.6.0).
+
+-------------------------------------------------------------------
+**REVISIÓN POST COMMIT - CORRECCIONES DEL MICROSERVICIO ADMINISTRATIVO (25/07/2026)**
+
+**Archivo: Services/admin.js**
+- Implementado el manejador de `addOrUpdateCut` y `addSupplementaryInfo` para registro administrativo silencioso de cortes.
+- Corregido `handleUploadAdminImage` para limpiar prefijos base64, buscar la carpeta del archivo original en Drive y renombrar los archivos con la nomenclatura oficial del sistema (`modelo_versionEquipamiento_tipoEncendido_año_tipoImagen.extensión`).
+- Implementado el gestor de estado persistente (`AdminState` en Spreadsheet).
+- Modificadas las operaciones masivas de `normalizeImages` y `reorganizeImagesInDrive` para reanudar el procesamiento desde el último índice guardado de forma robusta con try-catch individual.
+
+**Archivo: ui.js**
+- Actualizadas las funciones de edición in-modal para usar la nomenclatura oficial y limpiar los datos de imagen en `convertImageToEditable`.
+- Añadida restauración local y server-side completa al cancelar o cerrar el modal mediante `skipReopen` en `exitModalEditMode`.
+- Refactorizada la consola de diagnóstico administrativo para realizar llamadas sucesivas automáticas por lotes con estadísticas completas en tiempo real (progreso, lote, registro actual/total, tiempo transcurrido, ETA, advertencias, errores y estado guardado).
+
+**Archivo: add_cortes.html**
+- Parseado el parámetro `silent=true` en la URL de inicio para activar por defecto la inyección del timestamp administrativo y el ruteo de las acciones `addOrUpdateCut` y `addSupplementaryInfo` al microservicio de administración (`ADMIN`).
+
+**Archivo: index.html**
+- Añadido el botón de acceso directo `#btn-admin-add-silent-cut` en el modal administrativo.
+
+**Archivo: main.js**
+- Agregada interceptación de cierre de modal por popstate/gesto de retroceso para forzar la restauración/cancelación de los cambios in-modal si `window.inEditMode === true`.
