@@ -640,3 +640,49 @@ Archivos modificados:
 - Se implementó un `MutationObserver` reactivo sobre `#modalDetalle` dentro de la inicialización de la app (`initializeApp`). Cuando el modal es cerrado por cualquier mecanismo (clic en botón, gesto de retroceso, botón físico o clic fuera), el observador detecta síncronamente la remoción de la clase `.visible`. Si el tipo de modal cerrado era un tutorial (`dataset.modalType === 'tutorial'`), se detiene de forma instantánea la reproducción y se destruye el iframe del vídeo estableciendo su `src` a `about:blank` y removiendo el elemento del DOM. Esto garantiza la total e inmediata detención del audio, la liberación de recursos de red y CPU y evita ejecuciones ocultas en segundo plano.
 
 **Versión:** Incremento a v2.1.6.
+
+**CHANGES LOG - 25/07/2026 (MICROSERVICIO ADMINISTRATIVO Y DIAGNÓSTICO - VERSIÓN 2.6.0)**
+
+**Archivo: Services/admin.js**
+- Se creó e implementó por completo el microservicio de Google Apps Script exclusivo para administradores y desarrolladores.
+- Implementado `handleBackupDatabase` para generar copias completas de Spreadsheet en la raíz de Drive con nombre estandarizado y timestamp.
+- Implementado `handleBackupDrive` para copiar recursivamente la jerarquía completa de carpetas e imágenes del catálogo en una nueva carpeta de respaldo.
+- Implementado `handleRestoreDatabase` y `handleRestoreDrive` para restaurar la información al estado de copias anteriores mediante sus IDs respectivos.
+- Implementado `handleReorganizeDatabase` para agrupar y ordenar todos los registros de vehículos alfabéticamente por marca.
+- Implementado `handleNormalizeImages` para renombrar de forma uniforme las imágenes principales, cortes, apertura y alimentación basándose en el nombre del modelo, versión, encendido y año de inicio, clonando además los archivos físicos en Drive para eliminar enlaces compartidos.
+- Implementado `handleReorganizeImagesInDrive` para reestructurar físicamente las carpetas en Drive siguiendo el esquema: Cortes/Categoría/Marca/Modelo/Versión_Encendido/Generación/.
+- Implementado `handleAddLogo` para subir nuevos logotipos PNG, SVG y WEBP conservando su transparencia y registrándolos en la hoja LogosMarca.
+- Implementado `handleUpdateVehicleField` para modificar de manera silenciosa cualquier celda en Google Sheets por ID de vehículo y nombre del campo.
+- Implementado `handleUploadAdminImage` para subir imágenes modificadas "In-Modal" a Drive y actualizar el Sheets silenciosamente en segundo plano.
+
+**Archivo: Services/Write/write.js**
+- Se actualizó la función `handleAddOrUpdateCut` para aceptar un flag `silent` opcional en el payload. Si es verdadero, calcula una fecha de timestamp de hace 45 días en lugar de la actual, evitando que aparezca en el feed público de "Agregados recientemente".
+
+**Archivo: api-config.js**
+- Registrado el endpoint `ADMIN` para apuntar al nuevo microservicio administrativo.
+- Asociadas las acciones `backupDatabase`, `backupDrive`, `restoreDatabase`, `restoreDrive`, `reorganizeDatabase`, `normalizeImages`, `reorganizeImagesInDrive` y `addLogo` en `ACTION_TO_SERVICE_MAP`.
+
+**Archivo: add_cortes.html**
+- Añadido un checkbox con ID `silentRegister` para que el desarrollador pueda seleccionar el registro silencioso.
+- Se lee el rol desde la sesión de `localStorage` (`Privilegios`) e inicializa la visibilidad de dicho checkbox solo si el rol del usuario es "Desarrollador".
+- Envía el flag `silent: true` al disparar la acción `addOrUpdateCut`.
+
+**Archivo: ui.js**
+- Implementado el Modo Edición "In-Modal" exclusivo para desarrolladores.
+- Agregado el botón con icono de lápiz ✏️ en la esquina superior izquierda del modal de detalle de vehículo.
+- Al activarse, los elementos editables (modelo, rango de años, equipamiento, tipo de encendido, categoría, tipo de corte, configuración de relay, nota, apertura, alimentación) se transforman dinámicamente en inputs, textareas o selects (cuyas opciones de validaciones se cargan dinámicamente desde el backend).
+- Cada campo se guarda en Sheets de forma silenciosa en segundo plano al perder el foco (`blur` o `change`).
+- Deshabilitado el Lightbox y habilitado el clic sobre imágenes para abrir el selector de archivos, reemplazarlas visualmente y subirlas silenciosamente a Drive (`uploadAdminImage`).
+- Añadidos botones con los iconos indicados (↩️ para Restablecer/Descartar y ✅ para Guardar/Finalizar).
+- Almacenada una copia temporal preventiva original en `originalItemBackup`. Si se cancela o cierra el modal sin guardar, se restauran silenciosamente las celdas en Sheets a su estado inicial.
+- Diseñado el Panel Administrativo y de Diagnóstico interactivo en `#dev-tools-modal` con consola estilo terminal negra con texto verde que transmite los logs detallados del progreso en tiempo real de cada operación administrativa de Apps Script.
+- Barra de progreso y porcentaje animados en tiempo real.
+- Entradas de texto específicas para IDs de respaldos de base de datos y Drive con botones "Copiar ID" independientes y botón de enlace directo.
+
+**Archivo: index.html**
+- Rediseñado el modal de `#dev-tools-modal` para ofrecer una interfaz clara con la terminal de depuración de diagnóstico, barra de progreso animada, entradas con copy buttons para copias de seguridad de Spreadsheet/Drive y un panel de control con botones dedicados para todas las operaciones y formularios administrativos.
+
+**Archivo: lightbox.js**
+- Bloqueada de forma global la apertura del Lightbox de zoom si `window.inEditMode === true` para evitar conflictos en el modo edición in-modal.
+
+**Versión:** Despliegue del Microservicio Administrativo (v2.6.0).

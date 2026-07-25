@@ -15,6 +15,112 @@ export const IMG_SIZE_SMALL = 300;   // Cards and thumbnails
 export const IMG_SIZE_MEDIUM = 800;  // Modal details
 export const IMG_SIZE_LARGE = 1600;  // Lightbox / High Resolution
 
+// Variables de control para el Modo Edición In-Modal
+let inEditMode = false;
+let originalItemBackup = null;
+let editedItemBuffer = null;
+let dropdownOptions = null;
+
+window.inEditMode = false;
+
+async function precargarDropdownOptions() {
+    if (dropdownOptions) return dropdownOptions;
+    try {
+        const res = await routeAction('getDropdownData');
+        if (res && res.dropdowns) {
+            dropdownOptions = res.dropdowns;
+        }
+    } catch (e) {
+        console.error("Error precargando dropdowns para edición:", e);
+    }
+    return dropdownOptions;
+}
+
+async function saveFieldSilently(vehicleId, fieldName, value) {
+    try {
+        await routeAction('updateVehicleField', { vehicleId, fieldName, value });
+    } catch (e) {
+        console.error(`Error guardando silenciosamente el campo ${fieldName}:`, e);
+    }
+}
+
+async function exitModalEditMode(saveChanges, vehicleId) {
+    if (!saveChanges && originalItemBackup) {
+        // Revertir todos los cambios realizados silenciosamente
+        const fieldsToRestore = Object.keys(originalItemBackup).filter(key => {
+            return JSON.stringify(originalItemBackup[key]) !== JSON.stringify(editedItemBuffer[key]);
+        });
+
+        if (fieldsToRestore.length > 0) {
+            for (const field of fieldsToRestore) {
+                await saveFieldSilently(vehicleId, field, originalItemBackup[field]);
+            }
+        }
+
+        inEditMode = false;
+        window.inEditMode = false;
+        const restoredItem = { ...originalItemBackup };
+        originalItemBackup = null;
+        editedItemBuffer = null;
+
+        mostrarDetalleModal(restoredItem);
+    } else {
+        inEditMode = false;
+        window.inEditMode = false;
+        originalItemBackup = null;
+        editedItemBuffer = null;
+
+        // Forzar sincronización silenciosa para refrescar el catálogo
+        routeAction('getCatalogData').then(res => {
+            if (res && res.data) {
+                setState({ catalogData: res.data });
+                const updatedItem = res.data.cortes.find(c => String(c.id) === String(vehicleId));
+                if (updatedItem) mostrarDetalleModal(updatedItem);
+            }
+        });
+    }
+}
+
+function convertImageToEditable(imgElement, vehicleId, fieldName) {
+    imgElement.style.cursor = "pointer";
+    imgElement.style.border = "2px dashed #007bff";
+    imgElement.title = "Haga clic para reemplazar esta imagen";
+    imgElement.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = "image/*";
+        fileInput.onchange = async () => {
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    imgElement.src = event.target.result;
+                    const base64Data = event.target.result;
+                    try {
+                        const res = await routeAction('uploadAdminImage', {
+                            vehicleId: vehicleId,
+                            fileData: base64Data,
+                            filename: `${fieldName}_${Date.now()}.png`,
+                            mimeType: file.type || "image/png",
+                            fieldName: fieldName
+                        });
+                        if (res && res.imageUrl) {
+                            editedItemBuffer[fieldName] = res.imageUrl;
+                        }
+                    } catch (err) {
+                        console.error("Error al subir imagen editada:", err);
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+        fileInput.click();
+    };
+}
+
 /**
  * Helper para normalizar versiones (ej. "SR / TRD" -> "sr trd")
  * Se utiliza para agrupar generaciones y validar colisiones.
@@ -1161,9 +1267,53 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     };
     headerDiv.appendChild(shareBtn);
 
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
+
+    if (userRole === 'Desarrollador') {
+        if (inEditMode) {
+            // Botón Restablecer (↩️)
+            const resetBtn = document.createElement("button");
+            resetBtn.innerHTML = '↩️';
+            resetBtn.className = "share-modal-btn";
+            resetBtn.title = "Descartar cambios";
+            resetBtn.style.fontSize = "1.2em";
+            resetBtn.onclick = () => exitModalEditMode(false, activeItem.id);
+            headerDiv.appendChild(resetBtn);
+
+            // Botón Guardar (✅)
+            const saveBtn = document.createElement("button");
+            saveBtn.innerHTML = '✅';
+            saveBtn.className = "share-modal-btn";
+            saveBtn.title = "Guardar cambios y finalizar";
+            saveBtn.style.fontSize = "1.2em";
+            saveBtn.onclick = () => exitModalEditMode(true, activeItem.id);
+            headerDiv.appendChild(saveBtn);
+        } else {
+            // Botón de lápiz de Edición
+            const editBtn = document.createElement("button");
+            editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+            editBtn.className = "share-modal-btn";
+            editBtn.title = "Activar modo edición";
+            editBtn.onclick = async () => {
+                inEditMode = true;
+                window.inEditMode = true;
+                originalItemBackup = JSON.parse(JSON.stringify(activeItem));
+                editedItemBuffer = { ...activeItem };
+                await precargarDropdownOptions();
+                mostrarDetalleModal(editedItemBuffer);
+            };
+            headerDiv.appendChild(editBtn);
+        }
+    }
+
     const closeBtn = document.createElement("button");
     closeBtn.innerHTML = "&times;";
     closeBtn.onclick = () => {
+        if (inEditMode) {
+            exitModalEditMode(false, activeItem.id);
+        }
+
         // Detener cualquier video de YouTube que se esté reproduciendo en el modal
         const iframe = cont.querySelector('iframe');
         if (iframe && iframe.contentWindow) {
@@ -1214,9 +1364,23 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     }
 
     const title = document.createElement("h2");
-    title.textContent = `${activeItem.modelo}`;
-    title.style.cssText = "color: var(--accent-color); margin: 0; padding: 0; font-size: 1.8em;";
-    titleContainer.appendChild(title);
+    if (inEditMode) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = activeItem.modelo;
+        input.style.cssText = "font-size: 1.1em; width: 100%; border: 1px solid #007bff; border-radius: 4px; padding: 5px; background: var(--bg-color); color: var(--text-color);";
+        input.onblur = async () => {
+            if (input.value.trim() && input.value.trim() !== editedItemBuffer.modelo) {
+                editedItemBuffer.modelo = input.value.trim();
+                await saveFieldSilently(activeItem.id, 'modelo', input.value.trim());
+            }
+        };
+        titleContainer.appendChild(input);
+    } else {
+        title.textContent = `${activeItem.modelo}`;
+        title.style.cssText = "color: var(--accent-color); margin: 0; padding: 0; font-size: 1.8em;";
+        titleContainer.appendChild(title);
+    }
 
     cont.appendChild(titleContainer);
 
@@ -1224,7 +1388,6 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     subHeaderDiv.style.marginBottom = '5px';
     const subHeaderText = document.createElement('p');
     subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
-    const equipamiento = activeItem.versionesAplicables || activeItem.tipoEncendido || '';
 
     // Tarea 5: Identificar todas las generaciones del mismo modelo
     const allCortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
@@ -1240,71 +1403,199 @@ export function mostrarDetalleModal(item, isNavigation = false) {
 
     const currentIndex = generations.findIndex(g => String(g.id) === String(activeItem.id));
 
-    const yearRangeText = activeItem.anoHasta ? `${activeItem.anoDesde} – ${activeItem.anoHasta}` : activeItem.anoDesde;
+    if (inEditMode) {
+        // En modo edición mostramos controles de input
+        const editHeaderWrapper = document.createElement('div');
+        editHeaderWrapper.style.cssText = "display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;";
 
-    const yearRangeContainer = document.createElement('span');
-    yearRangeContainer.style.cssText = "display: inline-flex; align-items: center; gap: 8px;";
+        // 1. Versión de Equipamiento
+        const versLabel = document.createElement('label');
+        versLabel.textContent = "Versiones aplicables:";
+        versLabel.style.fontSize = "0.85em";
+        const versInput = document.createElement('input');
+        versInput.type = "text";
+        versInput.value = activeItem.versionesAplicables || "";
+        versInput.placeholder = "Equipamiento / Versiones";
+        versInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        versInput.onblur = async () => {
+            if (versInput.value.trim() !== editedItemBuffer.versionesAplicables) {
+                editedItemBuffer.versionesAplicables = versInput.value.trim();
+                await saveFieldSilently(activeItem.id, 'versionesAplicables', versInput.value.trim());
+            }
+        };
 
-    if (generations.length > 1) {
-        if (currentIndex > 0) {
-            const leftArrow = document.createElement('span');
-            leftArrow.innerHTML = '&lt;';
-            leftArrow.style.cssText = "cursor: pointer; font-weight: bold; padding: 0 5px; color: var(--accent-color); user-select: none;";
-            leftArrow.onclick = () => {
-                mostrarDetalleModal(generations[currentIndex - 1], true);
-            };
-            yearRangeContainer.appendChild(leftArrow);
+        // 2. Tipo de Encendido
+        const encLabel = document.createElement('label');
+        encLabel.textContent = "Tipo de Encendido:";
+        encLabel.style.fontSize = "0.85em";
+        const encSelect = document.createElement('select');
+        encSelect.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        if (dropdownOptions && dropdownOptions.tipoDeEncendido) {
+            dropdownOptions.tipoDeEncendido.forEach(itemOpt => {
+                const opt = document.createElement('option');
+                opt.value = itemOpt;
+                opt.textContent = itemOpt;
+                if (itemOpt === activeItem.tipoEncendido) opt.selected = true;
+                encSelect.appendChild(opt);
+            });
         }
+        encSelect.onchange = async () => {
+            editedItemBuffer.tipoEncendido = encSelect.value;
+            await saveFieldSilently(activeItem.id, 'tipoEncendido', encSelect.value);
+        };
 
-        const yearTextSpan = document.createElement('span');
-        yearTextSpan.textContent = yearRangeText;
-        yearRangeContainer.appendChild(yearTextSpan);
+        // 3. Rango de Años
+        const yearLabel = document.createElement('label');
+        yearLabel.textContent = "Rango de Años (Desde - Hasta):";
+        yearLabel.style.fontSize = "0.85em";
+        const yearsWrapper = document.createElement('div');
+        yearsWrapper.style.cssText = "display: flex; gap: 5px; align-items: center;";
+        const inputDesde = document.createElement('input');
+        inputDesde.type = "number";
+        inputDesde.value = activeItem.anoDesde;
+        inputDesde.style.cssText = "width: 70px; padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        inputDesde.onblur = async () => {
+            const val = parseInt(inputDesde.value, 10);
+            if (val >= 1980 && val <= 2027 && val !== editedItemBuffer.anoDesde) {
+                editedItemBuffer.anoDesde = val;
+                await saveFieldSilently(activeItem.id, 'anoDesde', val);
+            }
+        };
 
-        if (currentIndex < generations.length - 1 && currentIndex !== -1) {
-            const rightArrow = document.createElement('span');
-            rightArrow.innerHTML = '&gt;';
-            rightArrow.style.cssText = "cursor: pointer; font-weight: bold; padding: 0 5px; color: var(--accent-color); user-select: none;";
-            rightArrow.onclick = () => {
-                mostrarDetalleModal(generations[currentIndex + 1], true);
-            };
-            yearRangeContainer.appendChild(rightArrow);
+        const dash = document.createTextNode(" - ");
+
+        const inputHasta = document.createElement('input');
+        inputHasta.type = "number";
+        inputHasta.value = activeItem.anoHasta || activeItem.anoDesde;
+        inputHasta.style.cssText = "width: 70px; padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        inputHasta.onblur = async () => {
+            const val = parseInt(inputHasta.value, 10);
+            if (val >= 1980 && val <= 2027 && val !== editedItemBuffer.anoHasta) {
+                editedItemBuffer.anoHasta = val;
+                await saveFieldSilently(activeItem.id, 'anoHasta', val);
+            }
+        };
+        yearsWrapper.appendChild(inputDesde);
+        yearsWrapper.appendChild(dash);
+        yearsWrapper.appendChild(inputHasta);
+
+        // 4. Categoría
+        const catLabel = document.createElement('label');
+        catLabel.textContent = "Categoría:";
+        catLabel.style.fontSize = "0.85em";
+        const catSelect = document.createElement('select');
+        catSelect.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        if (dropdownOptions && dropdownOptions.categoria) {
+            dropdownOptions.categoria.forEach(itemOpt => {
+                const opt = document.createElement('option');
+                opt.value = itemOpt;
+                opt.textContent = itemOpt;
+                if (itemOpt === activeItem.categoria) opt.selected = true;
+                catSelect.appendChild(opt);
+            });
         }
+        catSelect.onchange = async () => {
+            editedItemBuffer.categoria = catSelect.value;
+            await saveFieldSilently(activeItem.id, 'categoria', catSelect.value);
+        };
+
+        editHeaderWrapper.appendChild(versLabel);
+        editHeaderWrapper.appendChild(versInput);
+        editHeaderWrapper.appendChild(encLabel);
+        editHeaderWrapper.appendChild(encSelect);
+        editHeaderWrapper.appendChild(yearLabel);
+        editHeaderWrapper.appendChild(yearsWrapper);
+        editHeaderWrapper.appendChild(catLabel);
+        editHeaderWrapper.appendChild(catSelect);
+
+        subHeaderText.appendChild(editHeaderWrapper);
     } else {
-        const yearTextSpan = document.createElement('span');
-        yearTextSpan.textContent = yearRangeText;
-        yearRangeContainer.appendChild(yearTextSpan);
-    }
+        const yearRangeText = activeItem.anoHasta ? `${activeItem.anoDesde} – ${activeItem.anoHasta}` : activeItem.anoDesde;
+        const yearRangeContainer = document.createElement('span');
+        yearRangeContainer.style.cssText = "display: inline-flex; align-items: center; gap: 8px;";
 
-    subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | `;
-    subHeaderText.appendChild(yearRangeContainer);
-    if(activeItem.categoria) {
-         subHeaderText.appendChild(document.createElement("br"));
-         const catSpan = document.createElement("span");
-         catSpan.className = "category-nav-link";
-         catSpan.style.cssText = "font-size: 0.9em; color: #777; cursor: pointer; text-decoration: underline;";
-         catSpan.textContent = activeItem.categoria;
-         catSpan.onclick = () => {
-             document.getElementById("modalDetalle").classList.remove("visible");
-             setState({ navigationState: { level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria", previousState: {} } });
-             if (window.history && window.history.replaceState) {
-                 window.history.replaceState({ level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria" }, '', window.location.pathname + window.location.search);
-             }
-             mostrarModelos(activeItem.categoria, activeItem.marca);
-         };
-         subHeaderText.appendChild(catSpan);
+        if (generations.length > 1) {
+            if (currentIndex > 0) {
+                const leftArrow = document.createElement('span');
+                leftArrow.innerHTML = '&lt;';
+                leftArrow.style.cssText = "cursor: pointer; font-weight: bold; padding: 0 5px; color: var(--accent-color); user-select: none;";
+                leftArrow.onclick = () => {
+                    mostrarDetalleModal(generations[currentIndex - 1], true);
+                };
+                yearRangeContainer.appendChild(leftArrow);
+            }
+
+            const yearTextSpan = document.createElement('span');
+            yearTextSpan.textContent = yearRangeText;
+            yearRangeContainer.appendChild(yearTextSpan);
+
+            if (currentIndex < generations.length - 1 && currentIndex !== -1) {
+                const rightArrow = document.createElement('span');
+                rightArrow.innerHTML = '&gt;';
+                rightArrow.style.cssText = "cursor: pointer; font-weight: bold; padding: 0 5px; color: var(--accent-color); user-select: none;";
+                rightArrow.onclick = () => {
+                    mostrarDetalleModal(generations[currentIndex + 1], true);
+                };
+                yearRangeContainer.appendChild(rightArrow);
+            }
+        } else {
+            const yearTextSpan = document.createElement('span');
+            yearTextSpan.textContent = yearRangeText;
+            yearRangeContainer.appendChild(yearTextSpan);
+        }
+
+        const equipamiento = activeItem.versionesAplicables || activeItem.tipoEncendido || '';
+        subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | `;
+        subHeaderText.appendChild(yearRangeContainer);
+
+        if(activeItem.categoria) {
+             subHeaderText.appendChild(document.createElement("br"));
+             const catSpan = document.createElement("span");
+             catSpan.className = "category-nav-link";
+             catSpan.style.cssText = "font-size: 0.9em; color: #777; cursor: pointer; text-decoration: underline;";
+             catSpan.textContent = activeItem.categoria;
+             catSpan.onclick = () => {
+                 document.getElementById("modalDetalle").classList.remove("visible");
+                 setState({ navigationState: { level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria", previousState: {} } });
+                 if (window.history && window.history.replaceState) {
+                     window.history.replaceState({ level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria" }, '', window.location.pathname + window.location.search);
+                 }
+                 mostrarModelos(activeItem.categoria, activeItem.marca);
+             };
+             subHeaderText.appendChild(catSpan);
+        }
     }
     subHeaderDiv.appendChild(subHeaderText);
     cont.appendChild(subHeaderDiv);
 
 
-    if (activeItem.imagenVehiculo) {
+    if (inEditMode || activeItem.imagenVehiculo) {
         const imgVehiculo = document.createElement("img");
-        setOptimizedImage(imgVehiculo, activeItem.imagenVehiculo, IMG_SIZE_MEDIUM);
+        setOptimizedImage(imgVehiculo, activeItem.imagenVehiculo || null, IMG_SIZE_MEDIUM);
         imgVehiculo.className = 'img-vehiculo-modal';
+        if (inEditMode) {
+            convertImageToEditable(imgVehiculo, activeItem.id, 'imagenVehiculo');
+        }
         cont.appendChild(imgVehiculo);
     }
 
-    if (activeItem.notaImportante) {
+    if (inEditMode) {
+        const notaLabel = document.createElement('label');
+        notaLabel.textContent = "Nota Importante / Descripción:";
+        notaLabel.style.cssText = "display: block; font-weight: bold; margin-top: 10px; font-size: 0.85em;";
+        const notaInput = document.createElement("textarea");
+        notaInput.rows = 2;
+        notaInput.value = activeItem.notaImportante || "";
+        notaInput.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); margin-bottom: 10px; box-sizing: border-box;";
+        notaInput.onblur = async () => {
+            if (notaInput.value.trim() !== editedItemBuffer.notaImportante) {
+                editedItemBuffer.notaImportante = notaInput.value.trim();
+                await saveFieldSilently(activeItem.id, 'notaImportante', notaInput.value.trim());
+            }
+        };
+        cont.appendChild(notaLabel);
+        cont.appendChild(notaInput);
+    } else if (activeItem.notaImportante) {
         const p = document.createElement("p");
         p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 5px 0;";
         p.textContent = `⚠️ ${activeItem.notaImportante}`;
@@ -1354,7 +1645,8 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     ];
 
     otherSections.forEach(sec => {
-        const hasContent = sec.isCorte || sec.content || sec.img || sec.Video;
+        const isSupplementary = sec.title === 'Apertura' || sec.title === 'Cables de Alimentación';
+        const hasContent = sec.isCorte || sec.content || sec.img || sec.Video || (inEditMode && isSupplementary);
         if (hasContent && sec.title) {
             createAccordionSection(accordionContainer, sec.title, sec, false, datosRelay, activeItem.id);
         }
@@ -1669,13 +1961,100 @@ async function insertNewVehicleFluently(item) {
 }
 
 function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false) {
-    const contentP = document.createElement('p');
-    contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
-                        <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
-                        <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
-    container.appendChild(contentP);
+    if (inEditMode) {
+        const idx = cutData.index;
+        const editCutsWrapper = document.createElement('div');
+        editCutsWrapper.style.cssText = "display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding: 10px; border: 1px solid #007bffd0; border-radius: 6px; background: rgba(0, 123, 255, 0.03);";
 
-    if (cutData.img) {
+        // 1. Tipo de Corte
+        const typeLabel = document.createElement('label');
+        typeLabel.textContent = `Tipo de Corte ${idx}:`;
+        typeLabel.style.fontSize = "0.85em";
+        const typeSelect = document.createElement('select');
+        typeSelect.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        if (dropdownOptions && dropdownOptions.tipoDeCorte) {
+            dropdownOptions.tipoDeCorte.forEach(optVal => {
+                const opt = document.createElement('option');
+                opt.value = optVal;
+                opt.textContent = optVal;
+                if (optVal === cutData.tipo) opt.selected = true;
+                typeSelect.appendChild(opt);
+            });
+        }
+        typeSelect.onchange = async () => {
+            editedItemBuffer[`tipoCorte${idx}`] = typeSelect.value;
+            await saveFieldSilently(vehicleId, `tipoCorte${idx}`, typeSelect.value);
+        };
+
+        // 2. Configuración de Relay
+        const configLabel = document.createElement('label');
+        configLabel.textContent = `Configuración de Relay ${idx}:`;
+        configLabel.style.fontSize = "0.85em";
+        const configSelect = document.createElement('select');
+        configSelect.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        if (dropdownOptions && dropdownOptions.configRelay) {
+            dropdownOptions.configRelay.forEach(optVal => {
+                const opt = document.createElement('option');
+                opt.value = optVal;
+                opt.textContent = optVal;
+                if (optVal === cutData.configRelay) opt.selected = true;
+                configSelect.appendChild(opt);
+            });
+        }
+        configSelect.onchange = async () => {
+            editedItemBuffer[`configRelay${idx}`] = configSelect.value;
+            await saveFieldSilently(vehicleId, `configRelay${idx}`, configSelect.value);
+        };
+
+        // 3. Ubicación del Corte
+        const locLabel = document.createElement('label');
+        locLabel.textContent = `Ubicación del Corte ${idx}:`;
+        locLabel.style.fontSize = "0.85em";
+        const locInput = document.createElement('textarea');
+        locInput.rows = 2;
+        locInput.value = cutData.ubicacion || "";
+        locInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box; width: 100%;";
+        locInput.onblur = async () => {
+            if (locInput.value.trim() !== editedItemBuffer[`ubicacionCorte${idx}`]) {
+                editedItemBuffer[`ubicacionCorte${idx}`] = locInput.value.trim();
+                await saveFieldSilently(vehicleId, `ubicacionCorte${idx}`, locInput.value.trim());
+            }
+        };
+
+        // 4. Color de Cable
+        const colorLabel = document.createElement('label');
+        colorLabel.textContent = `Color de Cable ${idx}:`;
+        colorLabel.style.fontSize = "0.85em";
+        const colorInput = document.createElement('input');
+        colorInput.type = "text";
+        colorInput.value = cutData.colorCable || "";
+        colorInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box; width: 100%;";
+        colorInput.onblur = async () => {
+            if (colorInput.value.trim() !== editedItemBuffer[`colorCableCorte${idx}`]) {
+                editedItemBuffer[`colorCableCorte${idx}`] = colorInput.value.trim();
+                await saveFieldSilently(vehicleId, `colorCableCorte${idx}`, colorInput.value.trim());
+            }
+        };
+
+        editCutsWrapper.appendChild(typeLabel);
+        editCutsWrapper.appendChild(typeSelect);
+        editCutsWrapper.appendChild(configLabel);
+        editCutsWrapper.appendChild(configSelect);
+        editCutsWrapper.appendChild(locLabel);
+        editCutsWrapper.appendChild(locInput);
+        editCutsWrapper.appendChild(colorLabel);
+        editCutsWrapper.appendChild(colorInput);
+
+        container.appendChild(editCutsWrapper);
+    } else {
+        const contentP = document.createElement('p');
+        contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
+                            <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
+                            <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
+        container.appendChild(contentP);
+    }
+
+    if (inEditMode || cutData.img) {
         const imgContainer = document.createElement('div');
         imgContainer.className = 'image-container-with-feedback';
 
@@ -1688,7 +2067,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
             // Attachment happens before setOptimizedImage to ensure we catch the onload event.
             const { catalogData } = getState();
             const currentItem = catalogData.cortes.find(c => String(c.id) === String(vehicleId));
-            if (currentItem) {
+            if (currentItem && !inEditMode) {
                 img.onload = async () => {
                     const { eligible, isOldModel } = await checkValidationEligibility(currentItem);
                     if (eligible) {
@@ -1696,18 +2075,23 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
                     }
                 };
             }
-            setOptimizedImage(img, cutData.img, IMG_SIZE_MEDIUM);
+            setOptimizedImage(img, cutData.img || null, IMG_SIZE_MEDIUM);
         }
 
         img.className = 'img-corte image-with-container';
-        img.onclick = () => {
-            const highResImgUrl = getImageUrl(cutData.img, IMG_SIZE_LARGE);
-            window.abrirLightbox(highResImgUrl, 'lightboxImg');
-        };
+        if (inEditMode) {
+            convertImageToEditable(img, vehicleId, `imgCorte${cutData.index}`);
+        } else {
+            img.onclick = () => {
+                const highResImgUrl = getImageUrl(cutData.img, IMG_SIZE_LARGE);
+                window.abrirLightbox(highResImgUrl, 'lightboxImg');
+            };
+        }
         imgContainer.appendChild(img);
 
-        const feedbackOverlay = document.createElement('div');
-        feedbackOverlay.className = 'feedback-overlay';
+        if (!inEditMode) {
+            const feedbackOverlay = document.createElement('div');
+            feedbackOverlay.className = 'feedback-overlay';
 
         const utilBtn = document.createElement('button');
         utilBtn.className = 'feedback-btn-overlay util-btn';
@@ -1793,6 +2177,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         feedbackOverlay.appendChild(reportBtn);
 
         imgContainer.appendChild(feedbackOverlay);
+        }
         container.appendChild(imgContainer);
     }
 
@@ -1958,7 +2343,202 @@ export const openInbox = setupModal('inbox-modal', async () => {
 
 export const openDevTools = setupModal('dev-tools-modal', () => {
     document.getElementById('dev-tools-modal').style.display = 'flex';
+    initAdminPanelListeners();
 });
+
+function initAdminPanelListeners() {
+    const consoleLog = document.getElementById('dev-console-log');
+    if (!consoleLog) return; // Evitar inicializaciones duplicadas si no está en el DOM
+
+    // Prevenir re-registro de listeners
+    if (window.adminListenersAttached) return;
+    window.adminListenersAttached = true;
+
+    // Helper para logs
+    function log(msg, isWarning = false, isError = false) {
+        const time = new Date().toLocaleTimeString();
+        const p = document.createElement('div');
+        p.style.marginBottom = "4px";
+        if (isWarning) p.style.color = "#ffcc00";
+        else if (isError) p.style.color = "#ff3333";
+        p.textContent = `[${time}] ${msg}`;
+        consoleLog.appendChild(p);
+        consoleLog.scrollTop = consoleLog.scrollHeight;
+    }
+
+    // Helper para progreso
+    function setProgress(percent) {
+        const container = document.getElementById('dev-progress-container');
+        const bar = document.getElementById('dev-progress-bar');
+        const text = document.getElementById('dev-progress-text');
+        if (container && bar && text) {
+            container.style.display = 'block';
+            bar.style.width = `${percent}%`;
+            text.textContent = `${percent}%`;
+            if (percent >= 100) {
+                setTimeout(() => { container.style.display = 'none'; }, 2000);
+            }
+        }
+    }
+
+    // Reproducir logs progresivamente para emular tiempo real
+    async function playLogs(logs) {
+        if (!logs || logs.length === 0) return;
+        for (const item of logs) {
+            log(item.message, item.isWarning, item.isError);
+            if (item.percentage !== undefined) {
+                setProgress(item.percentage);
+            }
+            await new Promise(resolve => setTimeout(resolve, 80)); // Pausa para animación fluida
+        }
+    }
+
+    // Función genérica para disparar tareas
+    async function runAction(action, payload = {}) {
+        log(`Enviando comando administrativo '${action}' al servidor...`);
+        setProgress(5);
+        try {
+            const res = await routeAction(action, payload);
+            setProgress(50);
+            if (res.status === 'success') {
+                if (res.logs) {
+                    await playLogs(res.logs);
+                }
+                setProgress(100);
+                log(`[SISTEMA] Acción '${action}' finalizada con éxito.`);
+                return res;
+            } else {
+                setProgress(0);
+                log(`[ERROR] Acción fallida: ${res.message}`, false, true);
+                if (res.logs) await playLogs(res.logs);
+            }
+        } catch (error) {
+            setProgress(0);
+            log(`[FALLA CRÍTICA] Error de comunicación: ${error.message}`, false, true);
+        }
+    }
+
+    // 1. Botón Respaldar DB
+    document.getElementById('btn-admin-backup-db').onclick = async () => {
+        const res = await runAction('backupDatabase');
+        if (res && res.backupId) {
+            document.getElementById('dev-ss-backup-id').value = res.backupId;
+            const linkBtn = document.getElementById('link-ss-backup-btn');
+            linkBtn.disabled = false;
+            linkBtn.onclick = () => window.open(res.backupUrl || `https://docs.google.com/spreadsheets/d/${res.backupId}`, '_blank');
+        }
+    };
+
+    // 2. Botón Respaldar Drive
+    document.getElementById('btn-admin-backup-drive').onclick = async () => {
+        const res = await runAction('backupDrive');
+        if (res && res.backupId) {
+            document.getElementById('dev-drive-backup-id').value = res.backupId;
+            const linkBtn = document.getElementById('link-drive-backup-btn');
+            linkBtn.disabled = false;
+            linkBtn.onclick = () => window.open(res.backupUrl || `https://drive.google.com/drive/folders/${res.backupId}`, '_blank');
+        }
+    };
+
+    // 3. Copiado de IDs
+    document.getElementById('copy-ss-backup-btn').onclick = () => {
+        const idVal = document.getElementById('dev-ss-backup-id').value;
+        if (idVal) {
+            navigator.clipboard.writeText(idVal).then(() => log("ID de Spreadsheet copiado al portapapeles."));
+        }
+    };
+    document.getElementById('copy-drive-backup-btn').onclick = () => {
+        const idVal = document.getElementById('dev-drive-backup-id').value;
+        if (idVal) {
+            navigator.clipboard.writeText(idVal).then(() => log("ID de carpeta de Drive copiado al portapapeles."));
+        }
+    };
+
+    // 4. Restauración
+    document.getElementById('btn-admin-restore-db').onclick = async () => {
+        const backupId = document.getElementById('restore-backup-id-input').value.trim();
+        if (!backupId) {
+            log("[ADVERTENCIA] Por favor introduce un ID de Backup válido para restaurar.", true);
+            return;
+        }
+        if (confirm("¿Estás seguro de que deseas RESTAURAR la base de datos completa? Esto sobreescribirá la información actual de producción.")) {
+            await runAction('restoreDatabase', { backupId });
+        }
+    };
+    document.getElementById('btn-admin-restore-drive').onclick = async () => {
+        const backupId = document.getElementById('restore-backup-id-input').value.trim();
+        if (!backupId) {
+            log("[ADVERTENCIA] Por favor introduce un ID de Backup válido para restaurar.", true);
+            return;
+        }
+        if (confirm("¿Estás seguro de que deseas RESTAURAR toda la estructura de Drive? Esto limpiará y sobreescribirá las imágenes actuales en producción.")) {
+            await runAction('restoreDrive', { backupId });
+        }
+    };
+
+    // 5. Mantenimiento y Organización
+    document.getElementById('btn-admin-reorganize-db').onclick = async () => {
+        if (confirm("¿Deseas reorganizar y ordenar la base de datos alfabéticamente por Marca? Se generará automáticamente un respaldo preventivo.")) {
+            await runAction('reorganizeDatabase');
+        }
+    };
+    document.getElementById('btn-admin-normalize-images').onclick = async () => {
+        if (confirm("¿Deseas iniciar la normalización de imágenes? Esto renombrará los archivos con nomenclatura uniforme y duplicará físicamente las imágenes compartidas.")) {
+            await runAction('normalizeImages');
+        }
+    };
+    document.getElementById('btn-admin-reorganize-drive').onclick = async () => {
+        if (confirm("¿Deseas reorganizar físicamente las imágenes de Drive según el esquema oficial jerárquico?")) {
+            await runAction('reorganizeImagesInDrive');
+        }
+    };
+
+    // 6. Selección de archivo para Logotipo
+    const fileInput = document.getElementById('logo-file-input');
+    const fileSpan = document.getElementById('selected-logo-file-name');
+    let selectedLogoBase64 = null;
+    let selectedLogoFilename = null;
+
+    fileInput.onchange = () => {
+        const file = fileInput.files[0];
+        if (file) {
+            selectedLogoFilename = file.name;
+            fileSpan.textContent = `Seleccionado: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                selectedLogoBase64 = e.target.result.split(',')[1]; // Solo la parte de datos base64
+            };
+            reader.readAsDataURL(file);
+        } else {
+            selectedLogoBase64 = null;
+            selectedLogoFilename = null;
+            fileSpan.textContent = "Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP";
+        }
+    };
+
+    // 7. Registrar Logotipo
+    document.getElementById('btn-admin-register-logo').onclick = async () => {
+        const brandName = document.getElementById('logo-brand-name-input').value.trim();
+        if (!brandName || !selectedLogoBase64) {
+            log("[ADVERTENCIA] Por favor completa el nombre del fabricante y selecciona un archivo de imagen.", true);
+            return;
+        }
+        const file = fileInput.files[0];
+        const res = await runAction('addLogo', {
+            nombreMarca: brandName,
+            fileData: selectedLogoBase64,
+            filename: selectedLogoFilename,
+            mimeType: file.type || "image/png"
+        });
+        if (res && res.status === 'success') {
+            document.getElementById('logo-brand-name-input').value = "";
+            fileInput.value = "";
+            fileSpan.textContent = "Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP";
+            selectedLogoBase64 = null;
+            selectedLogoFilename = null;
+        }
+    };
+}
 
 export const openAboutUs = setupModal('about-us-modal', () => {
     document.getElementById('about-us-modal').style.display = 'flex';
@@ -2121,6 +2701,37 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
     if (sec.isCorte) {
         // Los cortes dentro de acordeones son diferidos (isLazy = true)
         renderCutContent(panel, sec.data, datosRelay, vehicleId, true);
+    } else if (inEditMode && (title === 'Apertura' || title === 'Cables de Alimentación')) {
+        const fieldName = title === 'Apertura' ? 'apertura' : 'cableAlimen';
+        const imgFieldName = title === 'Apertura' ? 'imgApertura' : 'imgCableAlimen';
+        const currentValue = title === 'Apertura' ? editedItemBuffer.apertura : editedItemBuffer.cableAlimen;
+        const currentImg = title === 'Apertura' ? editedItemBuffer.imgApertura : editedItemBuffer.imgCableAlimen;
+
+        const label = document.createElement('label');
+        label.textContent = `Detalle de ${title}:`;
+        label.style.cssText = "display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85em;";
+        const textarea = document.createElement('textarea');
+        textarea.rows = 3;
+        textarea.value = currentValue || "";
+        textarea.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;";
+        textarea.onblur = async () => {
+            if (textarea.value.trim() !== editedItemBuffer[fieldName]) {
+                editedItemBuffer[fieldName] = textarea.value.trim();
+                await saveFieldSilently(vehicleId, fieldName, textarea.value.trim());
+            }
+        };
+        panel.appendChild(label);
+        panel.appendChild(textarea);
+
+        const imgContainer = document.createElement('div');
+        imgContainer.className = 'image-container-with-feedback';
+        imgContainer.style.marginTop = "10px";
+        const img = document.createElement("img");
+        setOptimizedImage(img, currentImg || null, IMG_SIZE_MEDIUM);
+        img.className = 'img-corte image-with-container';
+        convertImageToEditable(img, vehicleId, imgFieldName);
+        imgContainer.appendChild(img);
+        panel.appendChild(imgContainer);
     } else {
         if (sec.content) {
             const contentP = document.createElement('p');
@@ -2143,7 +2754,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
         }
     }
 
-    if (sec.colaborador) {
+    if (sec.colaborador && !inEditMode) {
         const colabDiv = document.createElement('div');
         const colabP = document.createElement('p');
         colabP.style.cssText = "font-style: italic; color: var(--text-disabled); margin-top: 10px; text-align: left;";

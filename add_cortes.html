@@ -211,6 +211,12 @@
                         <input type="checkbox" id="testigoMotor" style="width: auto; margin: 0; cursor: pointer;">
                         <label for="testigoMotor" style="margin: 0; font-size: 0.95em; cursor: pointer;">Este corte activa el testigo del motor.</label>
                     </div>
+                    <div id="silent-container" class="form-group full-width" style="display: none; flex-direction: row; align-items: center; gap: 8px; margin-top: -5px; margin-bottom: 10px;">
+                        <input type="checkbox" id="silentRegister" style="width: auto; margin: 0; cursor: pointer;">
+                        <label for="silentRegister" style="margin: 0; font-size: 0.95em; cursor: pointer; color: #d9534f; font-weight: bold;">
+                            <i class="fa-solid fa-eye-slash"></i> Registro Silencioso (Omitir de Agregados Recientemente)
+                        </label>
+                    </div>
                     <div class="form-group full-width"><label for="colorCableCorte1">Color(es) de Cable</label><input type="text" id="colorCableCorte1"></div>
                     <div class="form-group full-width">
                         <label>Imagen del Corte</label>
@@ -288,7 +294,13 @@
                 window.location.href = 'index.html';
                 return;
             }
-            state.colaborador = JSON.parse(sessionData).Nombre_Completo;
+            const parsedSession = JSON.parse(sessionData);
+            state.colaborador = parsedSession.Nombre_Completo;
+            const userRole = parsedSession.Privilegios;
+            if (userRole === 'Desarrollador') {
+                const silentContainer = document.getElementById('silent-container');
+                if (silentContainer) silentContainer.style.display = 'flex';
+            }
 
             // Aplicar modo oscuro si está activo
             if (localStorage.getItem('darkMode') === 'true') {
@@ -541,12 +553,15 @@
                 imagenVehiculo: await fileToBase64(document.getElementById('imagenVehiculo').files[0]),
             };
 
+            const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
+
             try {
                 const result = await routeAction('addOrUpdateCut', {
                     vehicleId: state.selectedVehicleId,
                     vehicleData,
                     cutData,
-                    colaborador: state.colaborador
+                    colaborador: state.colaborador,
+                    silent: silentVal
                 });
                 state.selectedVehicleId = result.vehicleId;
                 alert("Corte guardado exitosamente.");

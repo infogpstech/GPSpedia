@@ -77,7 +77,7 @@
    - `navigation.irAPaginaPrincipal` ya realiza limpiezas de hash y estado, pero debe integrarse correctamente en el flujo de gestos.
 
 4. **Compatibilidad:**
-   - El uso de `document.activeElement.blur()` y `input.focus()` es estándar y compatible con PWA y navegadores móviles.
+   - El uso de `document.activeElement.blur()` y `input.focus()` is estándar y compatible con PWA y navegadores móviles.
 
 **Riesgos y Dependencias:**
 - La animación del encabezado depende de la clase `search-active` en el body. No debe alterarse manualmente si no es a través de los flujos de búsqueda existentes.
@@ -526,3 +526,22 @@ Riesgo de regresión: Muy bajo.
 Estrategia de corrección:
   - En `ui.js`, robustecer `mostrarDetalleTutorialModal` para usar `getYouTubeEmbedUrl(item.Video)` y establecer la propiedad `dataset.modalType = 'tutorial'` en el elemento `#modalDetalle`. Para cortes y relays, establecer `dataset.modalType` en 'corte' y 'relay' respectivamente.
   - En `main.js`, registrar un `MutationObserver` sobre `#modalDetalle` dentro de la inicialización de la app (`initializeApp`). Cuando se detecte la remoción de la clase `.visible` (modal cerrado) de forma instantánea por cualquier mecanismo de cierre, y el tipo de modal sea 'tutorial', detener completamente la reproducción, remover el iframe del DOM y liberar los recursos del reproductor de forma definitiva.
+
+
+===================================================================
+AUDITORÍA TÉCNICA - DESARROLLO DE MICROSERVICIO ADMINISTRATIVO (16/07/2026)
+===================================================================
+
+ID del hallazgo: H-ADMIN-01
+Título: Falta de interfaz y backend para tareas avanzadas de mantenimiento y diagnóstico
+Descripción: No existen herramientas centralizadas para que el usuario Desarrollador/Administrador realice tareas como copias de seguridad de Spreadsheet y Drive, normalización de archivos e imágenes, reestructuración y reorganización automatizada, registro silencioso de cortes ni edición de datos "In-Modal". El modal `#dev-tools-modal` actual solo tiene botones de migraciones rudimentarias y carece de una consola de seguimiento de progreso paso a paso.
+Ubicación:
+  - Archivos: index.html, ui.js, api-config.js, add_cortes.html, Services/admin.js (nuevo archivo)
+Impacto: Alto
+Riesgo de regresión: Bajo
+Estrategia de corrección:
+  - Crear e implementar por completo `Services/admin.js` para Apps Script para manejar las tareas de backend.
+  - Agregar un endpoint de API en `api-config.js` apuntando a este servicio y registrar sus acciones.
+  - Implementar en `ui.js` un modo de edición "In-Modal" interactivo al pulsar un icono de lápiz, con guardado silencioso inmediato al perder foco (evento blur) o cargar archivos, y persistencia de restauración por si el usuario cancela o cierra sin guardar.
+  - Agregar opción "Registro Silencioso" en `add_cortes.html` enviando un timestamp de hace más de 30 días en el backend.
+  - Implementar en `#dev-tools-modal` una consola interactiva de diagnóstico en tiempo real que muestre logs de progreso paso a paso con estadísticas detalladas y botones dedicados de copiado de IDs y enlaces generados de Spreadsheet y Drive.
