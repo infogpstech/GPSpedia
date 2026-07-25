@@ -304,7 +304,7 @@
 
             const urlParams = new URLSearchParams(window.location.search);
             const isSilentParam = urlParams.get('silent') === 'true';
-            if (isSilentParam) {
+            if (isSilentParam && userRole === 'Desarrollador') {
                 const silentCheckbox = document.getElementById('silentRegister');
                 if (silentCheckbox) {
                     silentCheckbox.checked = true;
