@@ -286,45 +286,35 @@ function copyFolderRecursively(source, target, logMessage) {
     }
 }
 
-function attemptRestoreImage(fileId, originalName, brandFolder, logMessage) {
+function attemptRestoreImage(fileId, expectedBaseName, brandFolder, logMessage) {
+    if (!fileId || typeof fileId !== 'string' || !/^[a-zA-Z0-9_-]{25,110}$/.test(fileId)) {
+        return null;
+    }
+
     try {
         const file = DriveApp.getFileById(fileId);
         if (file.isTrashed()) {
             file.setTrashed(false);
             if (logMessage) logMessage("Restauración", `Archivo '${file.getName()}' restaurado desde la papelera.`);
-            return file;
         }
         return file;
     } catch (err) {
-        if (logMessage) logMessage("Restauración", `Falla de acceso directo para ID '${fileId}'. Buscando duplicados en la marca...`, 0, 0, true);
+        if (logMessage) logMessage("Restauración", `ID '${fileId}' inalcanzable. Buscando equivalente '${expectedBaseName}' de forma indexada...`, 0, 0, true);
 
-        // Buscar un duplicado por nombre, tamaño, etc., bajo el árbol de la marca
-        if (brandFolder) {
-            const found = findEquivalentFileInFolder(brandFolder, originalName);
-            if (found) {
-                if (logMessage) logMessage("Restauración", `Archivo equivalente encontrado: '${found.getName()}' (ID: ${found.getId()}).`);
-                return found;
+        // Buscar un duplicado usando búsqueda indexada nativa de Drive (súper veloz, evita timeouts)
+        if (brandFolder && expectedBaseName) {
+            try {
+                const query = "title contains '" + expectedBaseName + "' and trashed = false";
+                const files = brandFolder.searchFiles(query);
+                if (files.hasNext()) {
+                    const found = files.next();
+                    if (logMessage) logMessage("Restauración", `Archivo equivalente encontrado indexado: '${found.getName()}' (ID: ${found.getId()}).`);
+                    return found;
+                }
+            } catch (searchErr) {
+                if (logMessage) logMessage("Restauración", `Error en búsqueda indexada: ${searchErr.message}`, 0, 0, true);
             }
         }
-    }
-    return null;
-}
-
-function findEquivalentFileInFolder(folder, targetName) {
-    const files = folder.getFiles();
-    const cleanTargetName = getCanonicalName(targetName);
-    while (files.hasNext()) {
-        const file = files.next();
-        if (getCanonicalName(file.getName()) === cleanTargetName) {
-            return file;
-        }
-    }
-
-    const subFolders = folder.getFolders();
-    while (subFolders.hasNext()) {
-        const sub = subFolders.next();
-        const found = findEquivalentFileInFolder(sub, targetName);
-        if (found) return found;
     }
     return null;
 }
@@ -726,6 +716,12 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
         const verFolder = getOrCreateSubFolder(modFolder, versionEncendido);
         const genFolder = getOrCreateSubFolder(verFolder, generacion);
 
+        const nameModelo = sanitizeForNomenclature(modelo);
+        const nameVersion = sanitizeForNomenclature(rawVersion ? rawVersion : rawEncendido);
+        const nameAnio = sanitizeForNomenclature(rawDesde || "XXXX");
+
+        const baseName = `${nameModelo}_${nameVersion}_${nameAnio}`.toLowerCase();
+
         imgFields.forEach(field => {
             const colIndex = COLS_CORTES[field] - 1;
             const imgUrl = row[colIndex];
@@ -734,8 +730,18 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                 if (idMatch) {
                     const id = idMatch[1];
                     try {
+                        let typeFuncion = "";
+                        if (field === "imagenVehiculo") typeFuncion = "";
+                        else if (field === "imgCorte1") typeFuncion = "_corte1";
+                        else if (field === "imgCorte2") typeFuncion = "_corte2";
+                        else if (field === "imgCorte3") typeFuncion = "_corte3";
+                        else if (field === "imgApertura") typeFuncion = "_apert";
+                        else if (field === "imgCableAlimen") typeFuncion = "_alimen";
+
+                        const expectedBaseName = `${baseName}${typeFuncion}`;
+
                         // Intentar obtener y restaurar/recuperar la imagen
-                        const file = attemptRestoreImage(id, `${marca}_${modelo}_${field}`, marFolder, logMessage);
+                        const file = attemptRestoreImage(id, expectedBaseName, marFolder, logMessage);
                         if (!file) {
                             throw new Error(`Archivo no existe físicamente en Drive ni se pudo recuperar.`);
                         }
