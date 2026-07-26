@@ -753,3 +753,9 @@ Archivos modificados:
 
 **Archivo: Auditoria.txt**
 - Se documentó el análisis de latencia y diagnóstico detallado de la excepción de timeout del backend provocada por el escaneo masivo de papelera, junto con la estrategia para solucionarlo.
+
+**Archivo: index.html**
+- Se añadió un nuevo botón con ID `btn-admin-restore-trash` ("Saneamiento y recuperación de imágenes en papelera") dentro del bloque de mantenimiento en el Panel Administrativo.
+
+**Archivo: ui.js**
+- Se vinculó el botón `#btn-admin-restore-trash` para ejecutar la acción de Saneamiento exhaustivo de la papelera (`restoreAllTrashedImages`) de forma separada del flujo continuo de lotes con confirmación interactiva.

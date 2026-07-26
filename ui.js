@@ -2855,6 +2855,11 @@ ${elapsedSec}s
         const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
         await runAction('reorganizeImagesInDrive', { reset: !continueSaved });
     };
+    document.getElementById('btn-admin-restore-trash').onclick = async () => {
+        if (confirm("¿Deseas INICIAR el saneamiento y recuperación exhaustiva de imágenes en la papelera?\n\nEsta operación analizará todas las hojas del Spreadsheet, identificará enlaces rotos de Drive y restaurará de la papelera cualquier imagen eliminada. Puede tomar unos minutos.")) {
+            await runAction('restoreAllTrashedImages');
+        }
+    };
 
     // Botón Agregar corte silencioso
     const silentCutBtn = document.getElementById('btn-admin-add-silent-cut');
