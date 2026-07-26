@@ -1,7 +1,7 @@
 // ============================================================================
 // GPSPEDIA-ADMIN SERVICE (DESACOPLADO Y EXCLUSIVO PARA DESARROLLADOR/ADMIN)
 // ============================================================================
-// COMPONENT VERSION: 2.5.0
+// COMPONENT VERSION: 2.6.0
 
 const SPREADSHEET_ID = "1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs";
 const DRIVE_FOLDER_ID = '1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2';
@@ -50,7 +50,11 @@ function getAdminState(action) {
           total: parseInt(data[i][2]) || 0,
           percentage: parseFloat(data[i][3]) || 0,
           date: data[i][4],
-          processId: data[i][5]
+          processId: data[i][5],
+          lote: parseInt(data[i][6]) || 0,
+          filaInicial: parseInt(data[i][7]) || 0,
+          ultimaFilaProcesada: parseInt(data[i][8]) || 0,
+          estado: data[i][9] || "pendiente"
         };
       }
     }
@@ -60,12 +64,12 @@ function getAdminState(action) {
   return null;
 }
 
-function saveAdminState(action, lastIndex, total, percentage, processId) {
+function saveAdminState(action, lastIndex, total, percentage, processId, lote, filaInicial, ultimaFilaProcesada, estado) {
   try {
     let sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.ADMIN_STATE);
     if (!sheet) {
       sheet = getSpreadsheet().insertSheet(SHEET_NAMES.ADMIN_STATE);
-      sheet.appendRow(["Action", "LastIndex", "Total", "Percentage", "Date", "ProcessId"]);
+      sheet.appendRow(["Action", "LastIndex", "Total", "Percentage", "Date", "ProcessId", "Lote", "FilaInicial", "UltimaFilaProcesada", "Estado"]);
     }
     const data = sheet.getDataRange().getValues();
     let rowIndex = -1;
@@ -82,8 +86,12 @@ function saveAdminState(action, lastIndex, total, percentage, processId) {
       sheet.getRange(rowIndex, 4).setValue(percentage);
       sheet.getRange(rowIndex, 5).setValue(dateStr);
       sheet.getRange(rowIndex, 6).setValue(processId);
+      sheet.getRange(rowIndex, 7).setValue(lote);
+      sheet.getRange(rowIndex, 8).setValue(filaInicial);
+      sheet.getRange(rowIndex, 9).setValue(ultimaFilaProcesada);
+      sheet.getRange(rowIndex, 10).setValue(estado);
     } else {
-      sheet.appendRow([action, lastIndex, total, percentage, dateStr, processId]);
+      sheet.appendRow([action, lastIndex, total, percentage, dateStr, processId, lote, filaInicial, ultimaFilaProcesada, estado]);
     }
     SpreadsheetApp.flush();
   } catch (e) {
@@ -385,16 +393,22 @@ function handleNormalizeImages(payload, logMessage) {
     const { limit = 10, reset = false } = payload || {};
 
     let startIndex = 0;
+    let lote = 1;
+    let filaInicial = 2;
+    let processId = payload?.processId || ("P-" + Date.now());
+
     if (reset) {
         clearAdminState('normalizeImages');
     } else {
         const savedState = getAdminState('normalizeImages');
         if (savedState) {
             startIndex = savedState.lastIndex;
+            lote = (savedState.lote || 0) + 1;
+            filaInicial = savedState.ultimaFilaProcesada + 1;
         }
     }
 
-    logMessage("Normalización Imágenes", `Iniciando normalización de lote: elementos del ${startIndex} al ${startIndex + limit}...`);
+    logMessage("Normalización Imágenes", `Iniciando normalización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();
     const headers = data.shift(); // Quitar cabecera
@@ -456,6 +470,37 @@ function handleNormalizeImages(payload, logMessage) {
                         const file = DriveApp.getFileById(id);
                         let fileToProcess = file;
 
+                        // Determinar el tipoFuncion de nomenclatura según el campo
+                        let typeFuncion = "";
+                        if (field === "imagenVehiculo") typeFuncion = "";
+                        else if (field === "imgCorte1") typeFuncion = "_corte1";
+                        else if (field === "imgCorte2") typeFuncion = "_corte2";
+                        else if (field === "imgCorte3") typeFuncion = "_corte3";
+                        else if (field === "imgApertura") typeFuncion = "_apert";
+                        else if (field === "imgCableAlimen") typeFuncion = "_alimen";
+
+                        const extension = getExtensionFromName(fileToProcess.getName());
+                        const newFilename = `${baseName}${typeFuncion}${extension}`;
+
+                        // --- OPTIMIZACIÓN: EVITAR RENOMBRADO SI YA ESTÁ CORRECTO Y UBICADO EN LA GENERACIÓN ---
+                        const parents = fileToProcess.getParents();
+                        let inCorrectFolder = false;
+                        const rawDesde = (row[COLS_CORTES.anoDesde - 1] || "").toString().trim();
+                        const rawHasta = (row[COLS_CORTES.anoHasta - 1] || "").toString().trim();
+                        const expectedGenName = (rawDesde && rawHasta && rawDesde !== rawHasta) ? `${rawDesde}_${rawHasta}` : (rawDesde || 'Sin_Ano');
+
+                        while (parents.hasNext()) {
+                            if (parents.next().getName() === expectedGenName) {
+                                inCorrectFolder = true;
+                                break;
+                            }
+                        }
+
+                        if (fileToProcess.getName() === newFilename && inCorrectFolder) {
+                            logMessage("Normalización Imágenes", `Fila ${rowNum}: Imagen '${newFilename}' ya está correctamente nombrada y ubicada.`);
+                            return;
+                        }
+
                         // Si se comparte entre más de un registro, crear copia física propia para este vehículo
                         if (usages && usages.length > 1) {
                             const usageIndexForThisRow = usages.findIndex(u => u.rowNum === rowNum && u.field === field);
@@ -470,24 +515,10 @@ function handleNormalizeImages(payload, logMessage) {
                             }
                         }
 
-                        // Determinar el tipoFuncion de nomenclatura según el campo
-                        let typeFuncion = "";
-                        if (field === "imagenVehiculo") typeFuncion = "";
-                        else if (field === "imgCorte1") typeFuncion = "_corte1";
-                        else if (field === "imgCorte2") typeFuncion = "_corte2";
-                        else if (field === "imgCorte3") typeFuncion = "_corte3";
-                        else if (field === "imgApertura") typeFuncion = "_apert";
-                        else if (field === "imgCableAlimen") typeFuncion = "_alimen";
-
-                        const extension = getExtensionFromName(fileToProcess.getName());
-                        const newFilename = `${baseName}${typeFuncion}${extension}`;
-
                         if (fileToProcess.getName() !== newFilename) {
                             logMessage("Normalización Imágenes", `Fila ${rowNum}: Renombrando '${fileToProcess.getName()}' a '${newFilename}'`);
                             fileToProcess.setName(newFilename);
                             imagesRenamed++;
-                        } else {
-                            logMessage("Normalización Imágenes", `Fila ${rowNum}: Imagen '${newFilename}' ya está normalizada.`);
                         }
                     } catch (e) {
                         logMessage("Normalización Imágenes", `Advertencia: Falla con imagen ID '${id}' (Fila ${rowNum}, Campo ${field}). Causa: ${e.message}`, 0, 0, true);
@@ -500,23 +531,28 @@ function handleNormalizeImages(payload, logMessage) {
     SpreadsheetApp.flush();
 
     const nextIndex = startIndex + batchData.length;
+    const ultimaFilaProcesada = startIndex + batchData.length + 1;
     const percentage = totalVehicles > 0 ? Math.round((nextIndex / totalVehicles) * 100) : 100;
-    const processId = payload?.processId || ("P-" + Date.now());
+    const estado = nextIndex >= totalVehicles ? "completado" : "pendiente";
 
     if (nextIndex >= totalVehicles) {
         clearAdminState('normalizeImages');
     } else {
-        saveAdminState('normalizeImages', nextIndex, totalVehicles, percentage, processId);
+        saveAdminState('normalizeImages', nextIndex, totalVehicles, percentage, processId, lote, filaInicial, ultimaFilaProcesada, estado);
     }
 
-    logMessage("Normalización Imágenes", `Lote finalizado. Elementos procesados de esta tanda: ${batchData.length}. Archivos modificados: ${imagesRenamed}`);
+    logMessage("Normalización Imágenes", `Lote ${lote} finalizado. Filas del ${filaInicial} al ${ultimaFilaProcesada} procesadas. Archivos modificados: ${imagesRenamed}`);
 
     return {
         status: 'success',
         processedCount: batchData.length,
         totalVehicles: totalVehicles,
         imagesRenamed: imagesRenamed,
-        nextIndex: nextIndex
+        nextIndex: nextIndex,
+        lote: lote,
+        filaInicial: filaInicial,
+        ultimaFilaProcesada: ultimaFilaProcesada,
+        estado: estado
     };
 }
 
@@ -542,16 +578,22 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
     const { limit = 10, reset = false } = payload || {};
 
     let startIndex = 0;
+    let lote = 1;
+    let filaInicial = 2;
+    let processId = payload?.processId || ("P-" + Date.now());
+
     if (reset) {
         clearAdminState('reorganizeImagesInDrive');
     } else {
         const savedState = getAdminState('reorganizeImagesInDrive');
         if (savedState) {
             startIndex = savedState.lastIndex;
+            lote = (savedState.lote || 0) + 1;
+            filaInicial = savedState.ultimaFilaProcesada + 1;
         }
     }
 
-    logMessage("Reorganización Drive", `Iniciando reorganización de lote: elementos del ${startIndex} al ${startIndex + limit}...`);
+    logMessage("Reorganización Drive", `Iniciando reorganización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();
     data.shift(); // Quitar cabecera
@@ -568,17 +610,20 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
         const rowNum = startIndex + index + 2;
 
         // Datos reales para las carpetas
-        const categoria = sanitizeForFilename(row[COLS_CORTES.categoria - 1] || 'Sin_Categoria');
-        const marca = sanitizeForFilename(row[COLS_CORTES.marca - 1] || 'Sin_Marca');
-        const modelo = sanitizeForFilename(row[COLS_CORTES.modelo - 1] || 'Sin_Modelo');
+        const categoria = sanitizeForFolderDisplay(row[COLS_CORTES.categoria - 1] || 'Sin_Categoria');
+        const marca = sanitizeForFolderDisplay(row[COLS_CORTES.marca - 1] || 'Sin_Marca');
+        const modelo = sanitizeForFolderDisplay(row[COLS_CORTES.modelo - 1] || 'Sin_Modelo');
 
         // Versión de equipamiento / Tipo de encendido unificado
         const rawVersion = (row[COLS_CORTES.versionesAplicables - 1] || "").toString().trim();
         const rawEncendido = (row[COLS_CORTES.tipoEncendido - 1] || "").toString().trim();
         const folderVersionName = rawVersion ? `${rawVersion} / ${rawEncendido}` : rawEncendido;
-        const versionEncendido = sanitizeForFilename(folderVersionName);
+        const versionEncendido = sanitizeForFolderDisplay(folderVersionName);
 
-        const generacion = sanitizeForFilename(row[COLS_CORTES.anoDesde - 1] || 'Sin_Ano');
+        const rawDesde = (row[COLS_CORTES.anoDesde - 1] || "").toString().trim();
+        const rawHasta = (row[COLS_CORTES.anoHasta - 1] || "").toString().trim();
+        const folderGeneracion = (rawDesde && rawHasta && rawDesde !== rawHasta) ? `${rawDesde}_${rawHasta}` : (rawDesde || 'Sin_Ano');
+        const generacion = sanitizeForFolderDisplay(folderGeneracion);
 
         // Construir jerarquía de carpetas real
         const catFolder = getOrCreateSubFolder(rootFolder, categoria);
@@ -600,28 +645,31 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                         let alreadyInPlace = false;
 
                         while (currentParents.hasNext()) {
-                            if (currentParents.next().getId() === genFolder.getId()) {
+                            const parent = currentParents.next();
+                            if (parent.getId() === genFolder.getId() && parent.getName() === generacion) {
                                 alreadyInPlace = true;
                                 break;
                             }
                         }
 
-                        if (!alreadyInPlace) {
-                            logMessage("Reorganización Drive", `Fila ${rowNum}: Moviendo '${file.getName()}' a carpeta jerárquica...`);
-                            genFolder.addFile(file);
-
-                            // Remover de carpetas padres antiguas
-                            const oldParents = file.getParents();
-                            while (oldParents.hasNext()) {
-                                const oldParent = oldParents.next();
-                                if (oldParent.getId() !== genFolder.getId()) {
-                                    oldParent.removeFile(file);
-                                }
-                            }
-                            movedFiles++;
-                        } else {
+                        // --- OPTIMIZACIÓN: EVITAR MOVER IMÁGENES QUE YA ESTÁN CORRECTAMENTE UBICADAS ---
+                        if (alreadyInPlace) {
                             logMessage("Reorganización Drive", `Fila ${rowNum}: Imagen '${file.getName()}' ya está en su ubicación jerárquica correcta.`);
+                            return;
                         }
+
+                        logMessage("Reorganización Drive", `Fila ${rowNum}: Moviendo '${file.getName()}' a carpeta jerárquica...`);
+                        genFolder.addFile(file);
+
+                        // Remover de carpetas padres antiguas
+                        const oldParents = file.getParents();
+                        while (oldParents.hasNext()) {
+                            const oldParent = oldParents.next();
+                            if (oldParent.getId() !== genFolder.getId()) {
+                                oldParent.removeFile(file);
+                            }
+                        }
+                        movedFiles++;
                     } catch (e) {
                         logMessage("Reorganización Drive", `Advertencia: Falla con archivo ID '${id}' (Fila ${rowNum}, Campo ${field}). Causa: ${e.message}`, 0, 0, true);
                     }
@@ -630,30 +678,149 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
         });
     });
 
+    // Limpieza recursiva de carpetas vacías dentro de la carpeta raíz
+    logMessage("Reorganización Drive", "Iniciando limpieza de carpetas vacías...");
+    deleteEmptyFoldersRecursively(rootFolder, DRIVE_FOLDER_ID);
+    logMessage("Reorganización Drive", "Limpieza de carpetas vacías completada.");
+
     const nextIndex = startIndex + batchData.length;
+    const ultimaFilaProcesada = startIndex + batchData.length + 1;
     const percentage = totalVehicles > 0 ? Math.round((nextIndex / totalVehicles) * 100) : 100;
-    const processId = payload?.processId || ("P-" + Date.now());
+    const estado = nextIndex >= totalVehicles ? "completado" : "pendiente";
 
     if (nextIndex >= totalVehicles) {
         clearAdminState('reorganizeImagesInDrive');
     } else {
-        saveAdminState('reorganizeImagesInDrive', nextIndex, totalVehicles, percentage, processId);
+        saveAdminState('reorganizeImagesInDrive', nextIndex, totalVehicles, percentage, processId, lote, filaInicial, ultimaFilaProcesada, estado);
     }
 
-    logMessage("Reorganización Drive", `Lote finalizado. Elementos procesados de esta tanda: ${batchData.length}. Archivos movidos: ${movedFiles}`);
+    logMessage("Reorganización Drive", `Lote ${lote} finalizado. Filas del ${filaInicial} al ${ultimaFilaProcesada} procesadas. Archivos movidos: ${movedFiles}`);
     return {
         status: 'success',
         processedCount: batchData.length,
         totalVehicles: totalVehicles,
         movedFiles: movedFiles,
-        nextIndex: nextIndex
+        nextIndex: nextIndex,
+        lote: lote,
+        filaInicial: filaInicial,
+        ultimaFilaProcesada: ultimaFilaProcesada,
+        estado: estado
     };
 }
 
-function getOrCreateSubFolder(parentFolder, name) {
-    const folders = parentFolder.getFoldersByName(name);
-    if (folders.hasNext()) return folders.next();
-    return parentFolder.createFolder(name);
+function getCanonicalName(name) {
+    if (!name) return "";
+    return String(name)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "") // remove all non-alphanumeric chars
+        .trim();
+}
+
+function getOrCreateSubFolder(parentFolder, desiredName) {
+    const canonicalDesired = getCanonicalName(desiredName);
+    const subFolders = parentFolder.getFolders();
+    let matchedFolder = null;
+    let foldersToMerge = [];
+
+    while (subFolders.hasNext()) {
+        const folder = subFolders.next();
+        const canonicalCurrent = getCanonicalName(folder.getName());
+        if (canonicalCurrent === canonicalDesired) {
+            foldersToMerge.push(folder);
+        }
+    }
+
+    if (foldersToMerge.length > 0) {
+        // Priorizar la carpeta que tenga el mejor formato visual (frecuencia de underscores más baja)
+        foldersToMerge.sort((a, b) => {
+            const nameA = a.getName();
+            const nameB = b.getName();
+            const underscoresA = (nameA.match(/_/g) || []).length;
+            const underscoresB = (nameB.match(/_/g) || []).length;
+            if (underscoresA !== underscoresB) {
+                return underscoresA - underscoresB; // Menos underscores primero
+            }
+            const humanA = (nameA.match(/[\s()]/g) || []).length;
+            const humanB = (nameB.match(/[\s()]/g) || []).length;
+            return humanB - humanA; // Más espacios y paréntesis primero
+        });
+
+        matchedFolder = foldersToMerge[0];
+
+        // Renombrar la carpeta seleccionada si desiredName está mejor formateado
+        const matchedName = matchedFolder.getName();
+        const desiredUnderscores = (desiredName.match(/_/g) || []).length;
+        const matchedUnderscores = (matchedName.match(/_/g) || []).length;
+        if (desiredUnderscores < matchedUnderscores) {
+            matchedFolder.setName(desiredName);
+        }
+
+        // Fusionar subcarpetas y archivos de los duplicados restantes
+        for (let i = 1; i < foldersToMerge.length; i++) {
+            const extraFolder = foldersToMerge[i];
+            mergeFolders(extraFolder, matchedFolder);
+        }
+    } else {
+        matchedFolder = parentFolder.createFolder(desiredName);
+    }
+
+    return matchedFolder;
+}
+
+function mergeFolders(sourceFolder, targetFolder) {
+    if (sourceFolder.getId() === targetFolder.getId()) return;
+
+    // Mover archivos
+    const files = sourceFolder.getFiles();
+    while (files.hasNext()) {
+        const file = files.next();
+        targetFolder.addFile(file);
+        sourceFolder.removeFile(file);
+    }
+
+    // Fusionar subcarpetas de manera recursiva
+    const subFolders = sourceFolder.getFolders();
+    while (subFolders.hasNext()) {
+        const sub = subFolders.next();
+        const subName = sub.getName();
+        const targetSub = getOrCreateSubFolder(targetFolder, subName);
+        mergeFolders(sub, targetSub);
+    }
+
+    // Eliminar carpeta origen duplicada ya vacía
+    try {
+        sourceFolder.setTrashed(true);
+    } catch (e) {
+        Logger.log("Error trashing merged folder: " + e.message);
+    }
+}
+
+function deleteEmptyFoldersRecursively(folder, rootDriveFolderId) {
+    if (folder.getId() === rootDriveFolderId) {
+        const subDirs = folder.getFolders();
+        while (subDirs.hasNext()) {
+            deleteEmptyFoldersRecursively(subDirs.next(), rootDriveFolderId);
+        }
+        return;
+    }
+
+    const subDirs = folder.getFolders();
+    while (subDirs.hasNext()) {
+        deleteEmptyFoldersRecursively(subDirs.next(), rootDriveFolderId);
+    }
+
+    const files = folder.getFiles();
+    const subFolders = folder.getFolders();
+
+    if (!files.hasNext() && !subFolders.hasNext()) {
+        try {
+            if (folder.getName() !== "Logos") {
+                folder.setTrashed(true);
+            }
+        } catch (e) {
+            Logger.log("Error trashing empty folder: " + e.message);
+        }
+    }
 }
 
 /**
@@ -794,11 +961,11 @@ function handleUploadAdminImage(payload, logMessage) {
     // 2. Si no se encontró la carpeta original, usar o crear la estructura jerárquica
     if (!genFolder) {
         const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
-        const catFolder = getOrCreateSubFolder(rootFolder, sanitizeForFilename(categoria));
-        const marFolder = getOrCreateSubFolder(catFolder, sanitizeForFilename(marca));
-        const modFolder = getOrCreateSubFolder(marFolder, sanitizeForFilename(modelo));
-        const verFolder = getOrCreateSubFolder(modFolder, sanitizeForFilename(versionEncendido));
-        genFolder = getOrCreateSubFolder(verFolder, sanitizeForFilename(generacion));
+        const catFolder = getOrCreateSubFolder(rootFolder, sanitizeForFolderDisplay(categoria));
+        const marFolder = getOrCreateSubFolder(catFolder, sanitizeForFolderDisplay(marca));
+        const modFolder = getOrCreateSubFolder(marFolder, sanitizeForFolderDisplay(modelo));
+        const verFolder = getOrCreateSubFolder(modFolder, sanitizeForFolderDisplay(versionEncendido));
+        genFolder = getOrCreateSubFolder(verFolder, sanitizeForFolderDisplay(generacion));
         logMessage("Edición In-Modal", `Carpeta original no encontrada. Usando carpeta jerárquica: '${genFolder.getName()}'`);
     }
 
@@ -1060,6 +1227,14 @@ function sanitizeForFilename(text) {
     return String(text).replace(/[^a-zA-Z0-9.-]/g, '_').replace(/\s+/g, '_');
 }
 
+function sanitizeForFolderDisplay(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+        .replace(/\s+/g, ' ')      // normalizar multiples espacios
+        .replace(/__+/g, '_')      // limpiar multiples underscores
+        .trim();
+}
+
 function mapRowToObject(row, colMap) {
     const obj = {};
     for (const key in colMap) {
@@ -1078,10 +1253,10 @@ function isYearInRange(inputYear, anoDesde, anoHasta) {
 
 function getOrCreateFolder(categoria, marca, modelo, anio) {
     const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
-    const cat = sanitizeForFilename(categoria || 'Sin_Categoria');
-    const mar = sanitizeForFilename(marca || 'Sin_Marca');
-    const mod = sanitizeForFilename(modelo || 'Sin_Modelo');
-    const an = sanitizeForFilename(anio || 'Sin_Año');
+    const cat = sanitizeForFolderDisplay(categoria || 'Sin_Categoria');
+    const mar = sanitizeForFolderDisplay(marca || 'Sin_Marca');
+    const mod = sanitizeForFolderDisplay(modelo || 'Sin_Modelo');
+    const an = sanitizeForFolderDisplay(anio || 'Sin_Año');
 
     const categoriaFolder = getOrCreateSubFolder(rootFolder, cat);
     const marcaFolder = getOrCreateSubFolder(categoriaFolder, mar);

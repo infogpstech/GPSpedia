@@ -12,7 +12,7 @@ export const API_ENDPOINTS = {
     USERS:    "https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec",
     FEEDBACK: "https://script.google.com/macros/s/AKfycbz3NzT3FPn40VDbc7irIF632xHoeopM0GdnCIim4APAYTzb9KYDjZWDXHHrtzq4atZ70Q/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec",
-    ADMIN: "https://script.google.com/macros/s/AKfycbxjKmBpHJO7O-CURzaR-RnJQ3oBJCTD_BRtOtn0RsV33yqryJeUsRel1CqzwonaaImu/exec"
+    ADMIN: "https://script.google.com/macros/s/AKfycbwwfOFBxV2MBHl90r7f8NQYIkA5CdEZeCvNri0bbEpwVY280bmrDuu9JQZPCi9sX9r7/exec"
 };
 
 export const ACTION_TO_SERVICE_MAP = {
@@ -25,6 +25,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'migrateYearRanges': 'UTILITIES', 'migrateTimestamps': 'UTILITIES',
     'backupDatabase': 'ADMIN', 'backupDrive': 'ADMIN', 'restoreDatabase': 'ADMIN', 'restoreDrive': 'ADMIN',
     'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'reorganizeImagesInDrive': 'ADMIN', 'addLogo': 'ADMIN',
+    'updateVehicleField': 'ADMIN', 'uploadAdminImage': 'ADMIN',
     'logFrontend': 'LEGACY'
 };
 

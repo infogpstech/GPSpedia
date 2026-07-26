@@ -575,3 +575,41 @@ Estrategia de corrección:
 3. **Procesamiento por Lotes y Consola de Diagnóstico (Tarea 3):**
    - Problema: Las operaciones masivas siempre comenzaban desde cero y se detenían tras los primeros diez registros.
    - Resolución: Implementado administrador de estado persistente (`AdminState` en Spreadsheet). Las operaciones masivas en `Services/admin.js` ahora leen y guardan el último registro procesado. En `ui.js`, el panel de consola organiza llamadas sucesivas hasta completar el 100% de los registros, mostrando métricas en tiempo real como progreso, lote, registro actual/total, tiempo transcurrido, estimación de tiempo restante (ETA), advertencias y errores.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - OPTIMIZACIÓN DE REORGANIZACIÓN Y EDICIÓN IN-MODAL (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js, api-config.js
+
+**Hallazgos y Resoluciones:**
+1. **Reorganización física y Duplicación de Carpetas:**
+   - Problema: Se creaban carpetas duplicadas (ZNA_dongfeng, ZNA__dongfeng, ZNA(Dongfeng)) o vacías, y se perdía el formato humano de nombres (espacios, paréntesis).
+   - Resolución: Implementada normalización canónica en `getOrCreateSubFolder` en `Services/admin.js`. Compara nombres usando una clave simplificada (`replace(/[^a-z0-9]/g, '')`), detecta equivalentes, elige la de mejor formato, renombra si es necesario y fusiona subcarpetas y archivos de las duplicadas de forma recursiva. Añadido saneamiento de carpetas vacías (`deleteEmptyFoldersRecursively`) con protección de la carpeta de Logos.
+2. **Registro de Progreso por Lotes:**
+   - Problema: El registro de avance volvía a comenzar desde la fila 1 debido a que no guardaba/leía correctamente la fila de detención.
+   - Resolución: Actualizado el administrador de estado `AdminState` para persistir `lote`, `filaInicial`, `ultimaFilaProcesada`, `total` y `estado` de forma precisa en Google Sheets.
+3. **Pérdida de Persistencia In-Modal:**
+   - Problema: Las acciones `updateVehicleField` y `uploadAdminImage` no estaban mapeadas en `ACTION_TO_SERVICE_MAP`, por lo que fallaban de forma silenciosa o usaban el endpoint equivocado.
+   - Resolución: Mapeadas a la acción `ADMIN` en `api-config.js` de forma unificada.
+4. **Indicador Visual de Guardado:**
+   - Problema: Falta de feedback visual durante la comunicación con el servidor al editar.
+   - Resolución: Diseñado `#modal-saving-indicator` flotando a la izquierda en el encabezado del modal. Muestra estados (Guardando..., Procesando..., Guardado correctamente, Error al guardar) con animaciones de spinners en tiempo real.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - OPTIMIZACIÓN DE REORGANIZACIÓN Y EDICIÓN IN-MODAL (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js, api-config.js
+
+**Hallazgos y Resoluciones:**
+1. **Reorganización física y Duplicación de Carpetas:**
+   - Problema: Se creaban carpetas duplicadas (ZNA_dongfeng, ZNA__dongfeng, ZNA(Dongfeng)) o vacías, y se perdía el formato humano de nombres (espacios, paréntesis).
+   - Resolución: Implementada normalización canónica en `getOrCreateSubFolder` en `Services/admin.js`. Compara nombres usando una clave simplificada (`replace(/[^a-z0-9]/g, '')`), detecta equivalentes, elige la de mejor formato, renombra si es necesario y fusiona subcarpetas y archivos de las duplicadas de forma recursiva. Añadido saneamiento de carpetas vacías (`deleteEmptyFoldersRecursively`) con protección de la carpeta de Logos.
+2. **Registro de Progreso por Lotes:**
+   - Problema: El registro de avance volvía a comenzar desde la fila 1 debido a que no guardaba/leía correctamente la fila de detención.
+   - Resolución: Actualizado el administrador de estado `AdminState` para persistir `lote`, `filaInicial`, `ultimaFilaProcesada`, `total` y `estado` de forma precisa en Google Sheets.
+3. **Pérdida de Persistencia In-Modal:**
+   - Problema: Las acciones `updateVehicleField` y `uploadAdminImage` no estaban mapeadas en `ACTION_TO_SERVICE_MAP`, por lo que fallaban de forma silenciosa o usaban el endpoint equivocado.
+   - Resolución: Mapeadas a la acción `ADMIN` en `api-config.js` de forma unificada.
+4. **Indicador Visual de Guardado:**
+   - Problema: Falta de feedback visual durante la comunicación con el servidor al editar.
+   - Resolución: Diseñado `#modal-saving-indicator` flotando a la izquierda en el encabezado del modal. Muestra estados (Guardando..., Procesando..., Guardado correctamente, Error al guardar) con animaciones de spinners en tiempo real.

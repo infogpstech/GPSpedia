@@ -36,11 +36,48 @@ async function precargarDropdownOptions() {
     return dropdownOptions;
 }
 
+export function showSavingIndicator(status, message = "") {
+    const indicator = document.getElementById("modal-saving-indicator");
+    if (!indicator) return;
+
+    indicator.innerHTML = "";
+    indicator.style.opacity = "1";
+
+    if (status === "saving") {
+        indicator.style.color = "var(--accent-color, #007bff)";
+        indicator.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>${message || 'Guardando...'}</span>`;
+    } else if (status === "processing") {
+        indicator.style.color = "var(--accent-color, #007bff)";
+        indicator.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>${message || 'Procesando...'}</span>`;
+    } else if (status === "success") {
+        indicator.style.color = "#28a745";
+        indicator.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>${message || 'Guardado correctamente'}</span>`;
+        setTimeout(() => {
+            if (indicator.innerHTML.includes("fa-circle-check")) {
+                indicator.style.opacity = "0";
+            }
+        }, 2000);
+    } else if (status === "error") {
+        indicator.style.color = "#dc3545";
+        indicator.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>${message || 'Error al guardar'}</span>`;
+        setTimeout(() => {
+            if (indicator.innerHTML.includes("fa-circle-exclamation")) {
+                indicator.style.opacity = "0";
+            }
+        }, 3000);
+    } else {
+        indicator.style.opacity = "0";
+    }
+}
+
 async function saveFieldSilently(vehicleId, fieldName, value) {
+    showSavingIndicator("saving", "Guardando...");
     try {
         await routeAction('updateVehicleField', { vehicleId, fieldName, value });
+        showSavingIndicator("success", "Guardado correctamente");
     } catch (e) {
         console.error(`Error guardando silenciosamente el campo ${fieldName}:`, e);
+        showSavingIndicator("error", "Error al guardar");
     }
 }
 
@@ -126,6 +163,7 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
                 reader.onload = async (event) => {
                     imgElement.src = event.target.result;
                     const base64Data = event.target.result;
+                    showSavingIndicator("processing", "Subiendo imagen...");
                     try {
                         const res = await routeAction('uploadAdminImage', {
                             vehicleId: vehicleId,
@@ -136,9 +174,13 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
                         });
                         if (res && res.imageUrl) {
                             editedItemBuffer[fieldName] = res.imageUrl;
+                            showSavingIndicator("success", "Imagen guardada");
+                        } else {
+                            showSavingIndicator("error", "Error al subir");
                         }
                     } catch (err) {
                         console.error("Error al subir imagen editada:", err);
+                        showSavingIndicator("error", "Error al subir");
                     }
                 };
                 reader.readAsDataURL(file);
@@ -1268,6 +1310,12 @@ export function mostrarDetalleModal(item, isNavigation = false) {
 
     const headerDiv = document.createElement("div");
     headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px; gap: 10px;";
+
+    // Indicador visual de guardado/comunicación para modo edición
+    const savingIndicator = document.createElement("div");
+    savingIndicator.id = "modal-saving-indicator";
+    savingIndicator.style.cssText = "margin-right: auto; font-size: 0.85em; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: opacity 0.3s; opacity: 0; color: #007bffd0;";
+    headerDiv.appendChild(savingIndicator);
 
     // Botón Compartir
     const shareBtn = document.createElement("button");
