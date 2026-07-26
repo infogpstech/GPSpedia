@@ -709,3 +709,24 @@ Archivos modificados:
 
 **Archivo: main.js**
 - Agregada interceptación de cierre de modal por popstate/gesto de retroceso para forzar la restauración/cancelación de los cambios in-modal si `window.inEditMode === true`.
+
+-------------------------------------------------------------------
+**REVISIÓN POST COMMIT - OPTIMIZACIÓN DE REORGANIZACIÓN Y CONSOLA DE DIAGNÓSTICO (25/07/2026)**
+
+**Archivo: Services/admin.js**
+- Optimizado el flujo de reorganización de Drive posponiendo el saneamiento y borrado recursivo de carpetas vacías (`deleteEmptyFoldersRecursively`) para que se ejecute únicamente en el lote final del procesamiento masivo (`nextIndex >= totalVehicles`).
+- Envolvió con try-catch localizado todas las operaciones de archivos y carpetas (`getOrCreateSubFolder`, `mergeFolders`, `deleteEmptyFoldersRecursively`) para mitigar fallas catastróficas y capturar de forma segura estadísticas de Drive.
+- Añadidos contadores de rendimiento a nivel de lote: `foldersChecked`, `foldersCreated`, `foldersRenamed` y `foldersDeleted`.
+
+**Archivo: ui.js**
+- Implementado ping de conexión automática (`routeAction('ping')`) al abrir el modal administrativo, calculando y reportando la latencia en milisegundos.
+- Rediseñada la consola para reportar de forma continua en cada lote: la carpeta actual, el archivo actual, la fila actual, el lote actual, el porcentaje, el tiempo transcurrido y la cantidad procesada.
+- Diseñado un bloque estructurado para detallar de manera integral las excepciones capturadas (operación, etapa, recurso, fila, lote, función, código HTTP, mensaje y stack trace de error).
+- Añadido un resumen estadístico de finalización que acumula y detalla las acciones realizadas en Drive y el tiempo total formateado en `MM:SS`.
+- Integrado el disparador de ping en aperturas subsecuentes sin duplicar listeners de eventos.
+
+**Archivo: api-config.js**
+- Mapeada la acción `'ping'` al servicio `'ADMIN'` en la constante `ACTION_TO_SERVICE_MAP`.
+
+**Archivo: index.html**
+- Agregado el botón `#btn-copy-console-log` ("Copiar registro") estilizado con flexbox al lado del título de la consola de diagnóstico en el panel administrativo.

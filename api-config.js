@@ -23,6 +23,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'suggestYear': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK',
     'migrateYearRanges': 'UTILITIES', 'migrateTimestamps': 'UTILITIES',
+    'ping': 'ADMIN',
     'backupDatabase': 'ADMIN', 'backupDrive': 'ADMIN', 'restoreDatabase': 'ADMIN', 'restoreDrive': 'ADMIN',
     'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'reorganizeImagesInDrive': 'ADMIN', 'addLogo': 'ADMIN',
     'updateVehicleField': 'ADMIN', 'uploadAdminImage': 'ADMIN',

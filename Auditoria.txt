@@ -596,6 +596,24 @@ Estrategia de corrección:
    - Resolución: Diseñado `#modal-saving-indicator` flotando a la izquierda en el encabezado del modal. Muestra estados (Guardando..., Procesando..., Guardado correctamente, Error al guardar) con animaciones de spinners en tiempo real.
 
 --------------------------------------------------
+**AUDITORÍA TÉCNICA - OPTIMIZACIÓN DE REORGANIZACIÓN Y CONSOLA DE DIAGNÓSTICO (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js, api-config.js, index.html
+
+**Hallazgos y Resoluciones:**
+1. **Error de comunicación en organización de carpetas (Lote 1):**
+   - Problema: El proceso de limpieza recursiva de carpetas vacías (`deleteEmptyFoldersRecursively`) se ejecutaba de manera generalizada al final de cada lote. Esto provocaba un consumo masivo de tiempo de ejecución y superaba el tiempo de ejecución límite de Google Apps Script o causaba timeouts de conexión, resultando en "Error de comunicación".
+   - Resolución: Se optimizó `handleReorganizeImagesInDrive` en `Services/admin.js` para ejecutar el borrado recursivo de carpetas vacías únicamente al procesar el lote final (`nextIndex >= totalVehicles`). Se envolvieron las operaciones críticas de Drive (creación, fusión, borrado recursivo) en bloques try-catch individuales para evitar la caída catastrófica de los lotes intermedios, actualizando de forma robusta los nuevos contadores (`foldersChecked`, `foldersCreated`, `foldersRenamed`, `foldersDeleted`).
+2. **Diagnóstico nulo en Panel Administrativo:**
+   - Problema: La consola mostraba únicamente "Error de comunicación" genérico, lo que impedía diagnosticar el origen exacto de los fallos de red o de Apps Script.
+   - Resolución: Se diseñó e implementó un sistema detallado de diagnóstico técnico en `ui.js`:
+     - Al abrir el modal, se ejecuta automáticamente un ping (`ping` mapeado al servicio `ADMIN` en `api-config.js`) y se calcula la latencia en ms.
+     - Se implementó un panel de log estructurado y formateado que captura y detalla: la operación ejecutada, la etapa actual, el recurso afectado, la fila, el lote, la función ejecutada, el código HTTP estimado, el mensaje del servidor, el stack trace de la excepción, y el tiempo de ejecución transcurrido.
+     - Se añadió un botón "Copiar registro" (`#btn-copy-console-log`) en `index.html` que copia con un clic todo el historial de la terminal al portapapeles.
+     - Se añadió un bloque de progreso continuo que actualiza de forma síncrona en cada lote: la carpeta actual, el archivo actual, la fila actual, el lote actual, el porcentaje, el tiempo transcurrido y la cantidad procesada.
+     - Se añadió un resumen acumulativo final (MM:SS) de todas las operaciones físicas realizadas en Drive y errores ocurridos.
+
+--------------------------------------------------
 **AUDITORÍA TÉCNICA - OPTIMIZACIÓN DE REORGANIZACIÓN Y EDICIÓN IN-MODAL (25/07/2026)**
 
 **Archivos involucrados:** Services/admin.js, ui.js, api-config.js

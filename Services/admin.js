@@ -146,6 +146,9 @@ function doPost(e) {
         logMessage("Inicio", `Iniciando acción administrativa: ${action}`);
 
         switch (action) {
+            case 'ping':
+                response = { status: 'success', message: 'pong' };
+                break;
             case 'backupDatabase':
                 response = handleBackupDatabase(payload, logMessage);
                 break;
@@ -577,6 +580,12 @@ function sanitizeForNomenclature(text) {
 function handleReorganizeImagesInDrive(payload, logMessage) {
     const { limit = 10, reset = false } = payload || {};
 
+    // Inicializar contadores de rendimiento para este lote
+    foldersCheckedCount = 0;
+    foldersCreatedCount = 0;
+    foldersRenamedCount = 0;
+    foldersDeletedCount = 0;
+
     let startIndex = 0;
     let lote = 1;
     let filaInicial = 2;
@@ -678,28 +687,37 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
         });
     });
 
-    // Limpieza recursiva de carpetas vacías dentro de la carpeta raíz
-    logMessage("Reorganización Drive", "Iniciando limpieza de carpetas vacías...");
-    deleteEmptyFoldersRecursively(rootFolder, DRIVE_FOLDER_ID);
-    logMessage("Reorganización Drive", "Limpieza de carpetas vacías completada.");
-
     const nextIndex = startIndex + batchData.length;
     const ultimaFilaProcesada = startIndex + batchData.length + 1;
     const percentage = totalVehicles > 0 ? Math.round((nextIndex / totalVehicles) * 100) : 100;
     const estado = nextIndex >= totalVehicles ? "completado" : "pendiente";
 
+    // Limpieza recursiva de carpetas vacías dentro de la carpeta raíz.
+    // OPTIMIZACIÓN CRÍTICA: Solo se ejecuta en el lote final (cuando no hay más vehículos pendientes),
+    // y se envuelve en try-catch para que un error de cuota/permisos en Drive no arruine la respuesta del lote.
     if (nextIndex >= totalVehicles) {
+        try {
+            logMessage("Reorganización Drive", "Lote final alcanzado. Iniciando limpieza recursiva de carpetas vacías...");
+            deleteEmptyFoldersRecursively(rootFolder, DRIVE_FOLDER_ID);
+            logMessage("Reorganización Drive", "Limpieza de carpetas vacías completada.");
+        } catch (e) {
+            logMessage("Reorganización Drive", "Advertencia en limpieza de carpetas vacías: " + e.message, 0, 0, true);
+        }
         clearAdminState('reorganizeImagesInDrive');
     } else {
         saveAdminState('reorganizeImagesInDrive', nextIndex, totalVehicles, percentage, processId, lote, filaInicial, ultimaFilaProcesada, estado);
     }
 
-    logMessage("Reorganización Drive", `Lote ${lote} finalizado. Filas del ${filaInicial} al ${ultimaFilaProcesada} procesadas. Archivos movidos: ${movedFiles}`);
+    logMessage("Reorganización Drive", `Lote ${lote} finalizado. Filas del ${filaInicial} al ${ultimaFilaProcesada} procesadas. Archivos movidos: ${movedFiles}. Carpetas creadas: ${foldersCreatedCount}, renombradas: ${foldersRenamedCount}, eliminadas: ${foldersDeletedCount}`);
     return {
         status: 'success',
         processedCount: batchData.length,
         totalVehicles: totalVehicles,
         movedFiles: movedFiles,
+        foldersChecked: foldersCheckedCount,
+        foldersCreated: foldersCreatedCount,
+        foldersRenamed: foldersRenamedCount,
+        foldersDeleted: foldersDeletedCount,
         nextIndex: nextIndex,
         lote: lote,
         filaInicial: filaInicial,
@@ -707,6 +725,12 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
         estado: estado
     };
 }
+
+// Contadores de rendimiento para el lote actual
+let foldersCheckedCount = 0;
+let foldersCreatedCount = 0;
+let foldersRenamedCount = 0;
+let foldersDeletedCount = 0;
 
 function getCanonicalName(name) {
     if (!name) return "";
@@ -717,81 +741,115 @@ function getCanonicalName(name) {
 }
 
 function getOrCreateSubFolder(parentFolder, desiredName) {
-    const canonicalDesired = getCanonicalName(desiredName);
-    const subFolders = parentFolder.getFolders();
-    let matchedFolder = null;
-    let foldersToMerge = [];
+    try {
+        foldersCheckedCount++;
+        const canonicalDesired = getCanonicalName(desiredName);
+        const subFolders = parentFolder.getFolders();
+        let matchedFolder = null;
+        let foldersToMerge = [];
 
-    while (subFolders.hasNext()) {
-        const folder = subFolders.next();
-        const canonicalCurrent = getCanonicalName(folder.getName());
-        if (canonicalCurrent === canonicalDesired) {
-            foldersToMerge.push(folder);
-        }
-    }
-
-    if (foldersToMerge.length > 0) {
-        // Priorizar la carpeta que tenga el mejor formato visual (frecuencia de underscores más baja)
-        foldersToMerge.sort((a, b) => {
-            const nameA = a.getName();
-            const nameB = b.getName();
-            const underscoresA = (nameA.match(/_/g) || []).length;
-            const underscoresB = (nameB.match(/_/g) || []).length;
-            if (underscoresA !== underscoresB) {
-                return underscoresA - underscoresB; // Menos underscores primero
+        while (subFolders.hasNext()) {
+            const folder = subFolders.next();
+            const canonicalCurrent = getCanonicalName(folder.getName());
+            if (canonicalCurrent === canonicalDesired) {
+                foldersToMerge.push(folder);
             }
-            const humanA = (nameA.match(/[\s()]/g) || []).length;
-            const humanB = (nameB.match(/[\s()]/g) || []).length;
-            return humanB - humanA; // Más espacios y paréntesis primero
-        });
-
-        matchedFolder = foldersToMerge[0];
-
-        // Renombrar la carpeta seleccionada si desiredName está mejor formateado
-        const matchedName = matchedFolder.getName();
-        const desiredUnderscores = (desiredName.match(/_/g) || []).length;
-        const matchedUnderscores = (matchedName.match(/_/g) || []).length;
-        if (desiredUnderscores < matchedUnderscores) {
-            matchedFolder.setName(desiredName);
         }
 
-        // Fusionar subcarpetas y archivos de los duplicados restantes
-        for (let i = 1; i < foldersToMerge.length; i++) {
-            const extraFolder = foldersToMerge[i];
-            mergeFolders(extraFolder, matchedFolder);
+        if (foldersToMerge.length > 0) {
+            // Priorizar la carpeta que tenga el mejor formato visual (frecuencia de underscores más baja)
+            foldersToMerge.sort((a, b) => {
+                const nameA = a.getName();
+                const nameB = b.getName();
+                const underscoresA = (nameA.match(/_/g) || []).length;
+                const underscoresB = (nameB.match(/_/g) || []).length;
+                if (underscoresA !== underscoresB) {
+                    return underscoresA - underscoresB; // Menos underscores primero
+                }
+                const humanA = (nameA.match(/[\s()]/g) || []).length;
+                const humanB = (nameB.match(/[\s()]/g) || []).length;
+                return humanB - humanA; // Más espacios y paréntesis primero
+            });
+
+            matchedFolder = foldersToMerge[0];
+
+            // Renombrar la carpeta seleccionada si desiredName está mejor formateado
+            const matchedName = matchedFolder.getName();
+            const desiredUnderscores = (desiredName.match(/_/g) || []).length;
+            const matchedUnderscores = (matchedName.match(/_/g) || []).length;
+            if (desiredUnderscores < matchedUnderscores) {
+                try {
+                    matchedFolder.setName(desiredName);
+                    foldersRenamedCount++;
+                } catch(e) {
+                    Logger.log("Error renaming folder: " + e.message);
+                }
+            }
+
+            // Fusionar subcarpetas y archivos de los duplicados restantes
+            for (let i = 1; i < foldersToMerge.length; i++) {
+                const extraFolder = foldersToMerge[i];
+                try {
+                    mergeFolders(extraFolder, matchedFolder);
+                } catch(e) {
+                    Logger.log("Error merging folders: " + e.message);
+                }
+            }
+        } else {
+            try {
+                matchedFolder = parentFolder.createFolder(desiredName);
+                foldersCreatedCount++;
+            } catch(e) {
+                Logger.log("Error creating subfolder " + desiredName + ": " + e.message);
+                return parentFolder;
+            }
         }
-    } else {
-        matchedFolder = parentFolder.createFolder(desiredName);
+
+        return matchedFolder;
+    } catch (e) {
+        Logger.log("Critical error in getOrCreateSubFolder: " + e.message);
+        return parentFolder;
     }
-
-    return matchedFolder;
 }
 
 function mergeFolders(sourceFolder, targetFolder) {
-    if (sourceFolder.getId() === targetFolder.getId()) return;
-
-    // Mover archivos
-    const files = sourceFolder.getFiles();
-    while (files.hasNext()) {
-        const file = files.next();
-        targetFolder.addFile(file);
-        sourceFolder.removeFile(file);
-    }
-
-    // Fusionar subcarpetas de manera recursiva
-    const subFolders = sourceFolder.getFolders();
-    while (subFolders.hasNext()) {
-        const sub = subFolders.next();
-        const subName = sub.getName();
-        const targetSub = getOrCreateSubFolder(targetFolder, subName);
-        mergeFolders(sub, targetSub);
-    }
-
-    // Eliminar carpeta origen duplicada ya vacía
     try {
-        sourceFolder.setTrashed(true);
+        if (sourceFolder.getId() === targetFolder.getId()) return;
+
+        // Mover archivos
+        const files = sourceFolder.getFiles();
+        while (files.hasNext()) {
+            try {
+                const file = files.next();
+                targetFolder.addFile(file);
+                sourceFolder.removeFile(file);
+            } catch(e) {
+                Logger.log("Error moving file in mergeFolders: " + e.message);
+            }
+        }
+
+        // Fusionar subcarpetas de manera recursiva
+        const subFolders = sourceFolder.getFolders();
+        while (subFolders.hasNext()) {
+            try {
+                const sub = subFolders.next();
+                const subName = sub.getName();
+                const targetSub = getOrCreateSubFolder(targetFolder, subName);
+                mergeFolders(sub, targetSub);
+            } catch(e) {
+                Logger.log("Error merging subfolders in mergeFolders: " + e.message);
+            }
+        }
+
+        // Eliminar carpeta origen duplicada ya vacía
+        try {
+            sourceFolder.setTrashed(true);
+            foldersDeletedCount++;
+        } catch (e) {
+            Logger.log("Error trashing merged folder: " + e.message);
+        }
     } catch (e) {
-        Logger.log("Error trashing merged folder: " + e.message);
+        Logger.log("Error in mergeFolders: " + e.message);
     }
 }
 
