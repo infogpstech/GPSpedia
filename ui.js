@@ -208,6 +208,19 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
         return;
     }
 
+    // Si la imagen falla al cargar, podría estar en la papelera o eliminada de Drive.
+    // Detectamos la falla y habilitamos/mostramos automáticamente el botón de restauración de papelera.
+    const originalOnError = imgElement.onerror;
+    imgElement.onerror = (e) => {
+        const restoreBtn = document.getElementById('btn-admin-restore-trash');
+        if (restoreBtn) {
+            restoreBtn.style.display = 'block';
+        }
+        if (typeof originalOnError === 'function') {
+            originalOnError(e);
+        }
+    };
+
     // Phase 3.4: Priorizar siempre la red si el navegador está online para evitar degradación de calidad (transparencias, resolución)
     const isOnline = window.navigator && window.navigator.onLine !== false;
     const remoteUrl = getImageUrl(fileId, size);

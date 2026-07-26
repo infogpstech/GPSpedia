@@ -659,3 +659,17 @@ Estrategia de corrección:
 2. **Exponer el Escaneo Exhaustivo como una Acción Administrativa Independiente:**
    - En `doPost` en `Services/admin.js`, se añadirá la acción `'restoreAllTrashedImages'` que invoque de forma directa, aislada y bajo demanda a `validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage)`.
    - Esto permite que el Desarrollador ejecute el saneamiento exhaustivo de forma separada del proceso continuo de normalización o reubicación, previniendo cuotas de red y timeouts inesperados en la pila por lotes principal.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - VISIBILIDAD CONDICIONAL DE BOTÓN POR DETECCIÓN DE IMÁGENES ROTAS/PAPELERA (26/07/2026)**
+
+**Archivos involucrados:** index.html, ui.js
+
+**Hallazgos y Solución:**
+1. **Visibilidad Condicional de la Herramienta de Saneamiento:**
+   - El botón `#btn-admin-restore-trash` ("Saneamiento y recuperación de imágenes en papelera") debe ocultarse por defecto en `index.html` para no saturar la UI administrativa.
+   - Solo debe estar visible y disponible cuando el sistema detecte de manera activa la existencia de alguna imagen cuyo enlace dirija a un archivo eliminado o en la papelera de Drive.
+2. **Detección Automatizada en el Cargador de Imágenes:**
+   - En `ui.js`, la función centralizada `setOptimizedImage` gestiona el renderizado de cada imagen del catálogo y de la vista de detalles.
+   - Si una imagen de Drive es borrada o enviada a la papelera, su carga remota fallará, disparando de forma nativa el evento `onerror` en el elemento `imgElement`.
+   - Capturando este evento en `setOptimizedImage`, el sistema detecta de forma inmediata que existe al menos una imagen inalcanzable, procediendo de manera reactiva y silenciosa a mostrar el botón de restauración (`#btn-admin-restore-trash`) en el panel administrativo.
