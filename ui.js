@@ -36,15 +36,56 @@ async function precargarDropdownOptions() {
     return dropdownOptions;
 }
 
-async function saveFieldSilently(vehicleId, fieldName, value) {
-    try {
-        await routeAction('updateVehicleField', { vehicleId, fieldName, value });
-    } catch (e) {
-        console.error(`Error guardando silenciosamente el campo ${fieldName}:`, e);
+export function showSavingIndicator(status, message = "") {
+    const indicator = document.getElementById("modal-saving-indicator");
+    if (!indicator) return;
+
+    indicator.innerHTML = "";
+    indicator.style.opacity = "1";
+
+    if (status === "saving") {
+        indicator.style.color = "var(--accent-color, #007bff)";
+        indicator.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>${message || 'Guardando...'}</span>`;
+    } else if (status === "processing") {
+        indicator.style.color = "var(--accent-color, #007bff)";
+        indicator.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>${message || 'Procesando...'}</span>`;
+    } else if (status === "success") {
+        indicator.style.color = "#28a745";
+        indicator.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>${message || 'Guardado correctamente'}</span>`;
+        setTimeout(() => {
+            if (indicator.innerHTML.includes("fa-circle-check")) {
+                indicator.style.opacity = "0";
+            }
+        }, 2000);
+    } else if (status === "error") {
+        indicator.style.color = "#dc3545";
+        indicator.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>${message || 'Error al guardar'}</span>`;
+        setTimeout(() => {
+            if (indicator.innerHTML.includes("fa-circle-exclamation")) {
+                indicator.style.opacity = "0";
+            }
+        }, 3000);
+    } else {
+        indicator.style.opacity = "0";
     }
 }
 
-async function exitModalEditMode(saveChanges, vehicleId) {
+async function saveFieldSilently(vehicleId, fieldName, value) {
+    showSavingIndicator("saving", "Guardando...");
+    try {
+        await routeAction('updateVehicleField', { vehicleId, fieldName, value });
+        showSavingIndicator("success", "Guardado correctamente");
+    } catch (e) {
+        console.error(`Error guardando silenciosamente el campo ${fieldName}:`, e);
+        showSavingIndicator("error", "Error al guardar");
+    }
+}
+
+async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false) {
+    if (!vehicleId) {
+        vehicleId = editedItemBuffer?.id || originalItemBackup?.id;
+    }
+
     // Si no tenemos backup local en memoria, intentar recuperarlo desde localStorage
     if (!originalItemBackup) {
         const storedBackup = localStorage.getItem('gpsepedia_edit_backup');
@@ -72,7 +113,11 @@ async function exitModalEditMode(saveChanges, vehicleId) {
         editedItemBuffer = null;
         localStorage.removeItem('gpsepedia_edit_backup');
 
-        mostrarDetalleModal(restoredItem);
+        if (!skipReopen) {
+            mostrarDetalleModal(restoredItem);
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+        }
     } else {
         inEditMode = false;
         window.inEditMode = false;
@@ -80,14 +125,23 @@ async function exitModalEditMode(saveChanges, vehicleId) {
         editedItemBuffer = null;
         localStorage.removeItem('gpsepedia_edit_backup');
 
-        // Forzar sincronización silenciosa para refrescar el catálogo
-        routeAction('getCatalogData').then(res => {
-            if (res && res.data) {
-                setState({ catalogData: res.data });
-                const updatedItem = res.data.cortes.find(c => String(c.id) === String(vehicleId));
-                if (updatedItem) mostrarDetalleModal(updatedItem);
-            }
-        });
+        if (!skipReopen) {
+            // Forzar sincronización silenciosa para refrescar el catálogo
+            routeAction('getCatalogData').then(res => {
+                if (res && res.data) {
+                    setState({ catalogData: res.data });
+                    const updatedItem = res.data.cortes.find(c => String(c.id) === String(vehicleId));
+                    if (updatedItem) mostrarDetalleModal(updatedItem);
+                }
+            });
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+            routeAction('getCatalogData').then(res => {
+                if (res && res.data) {
+                    setState({ catalogData: res.data });
+                }
+            });
+        }
     }
 }
 
@@ -109,19 +163,24 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
                 reader.onload = async (event) => {
                     imgElement.src = event.target.result;
                     const base64Data = event.target.result;
+                    showSavingIndicator("processing", "Subiendo imagen...");
                     try {
                         const res = await routeAction('uploadAdminImage', {
                             vehicleId: vehicleId,
                             fileData: base64Data,
-                            filename: `${fieldName}_${Date.now()}.png`,
+                            filename: file.name || `${fieldName}_${Date.now()}.png`,
                             mimeType: file.type || "image/png",
                             fieldName: fieldName
                         });
                         if (res && res.imageUrl) {
                             editedItemBuffer[fieldName] = res.imageUrl;
+                            showSavingIndicator("success", "Imagen guardada");
+                        } else {
+                            showSavingIndicator("error", "Error al subir");
                         }
                     } catch (err) {
                         console.error("Error al subir imagen editada:", err);
+                        showSavingIndicator("error", "Error al subir");
                     }
                 };
                 reader.readAsDataURL(file);
@@ -1251,6 +1310,12 @@ export function mostrarDetalleModal(item, isNavigation = false) {
 
     const headerDiv = document.createElement("div");
     headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px; gap: 10px;";
+
+    // Indicador visual de guardado/comunicación para modo edición
+    const savingIndicator = document.createElement("div");
+    savingIndicator.id = "modal-saving-indicator";
+    savingIndicator.style.cssText = "margin-right: auto; font-size: 0.85em; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: opacity 0.3s; opacity: 0; color: #007bffd0;";
+    headerDiv.appendChild(savingIndicator);
 
     // Botón Compartir
     const shareBtn = document.createElement("button");
@@ -2405,28 +2470,113 @@ function initAdminPanelListeners() {
         }
     }
 
-    // Función genérica para disparar tareas
+    // Función genérica para disparar tareas con soporte para lotes automáticos, ETA y estadísticas en tiempo real
     async function runAction(action, payload = {}) {
-        log(`Enviando comando administrativo '${action}' al servidor...`);
-        setProgress(5);
-        try {
-            const res = await routeAction(action, payload);
-            setProgress(50);
-            if (res.status === 'success') {
-                if (res.logs) {
-                    await playLogs(res.logs);
+        const isBatch = (action === 'normalizeImages' || action === 'reorganizeImagesInDrive');
+
+        if (!isBatch) {
+            log(`Enviando comando administrativo '${action}' al servidor...`);
+            setProgress(5);
+            try {
+                const res = await routeAction(action, payload);
+                setProgress(50);
+                if (res.status === 'success') {
+                    if (res.logs) {
+                        await playLogs(res.logs);
+                    }
+                    setProgress(100);
+                    log(`[SISTEMA] Acción '${action}' finalizada con éxito.`);
+                    return res;
+                } else {
+                    setProgress(0);
+                    log(`[ERROR] Acción fallida: ${res.message}`, false, true);
+                    if (res.logs) await playLogs(res.logs);
                 }
-                setProgress(100);
-                log(`[SISTEMA] Acción '${action}' finalizada con éxito.`);
-                return res;
-            } else {
+            } catch (error) {
                 setProgress(0);
-                log(`[ERROR] Acción fallida: ${res.message}`, false, true);
-                if (res.logs) await playLogs(res.logs);
+                log(`[FALLA CRÍTICA] Error de comunicación: ${error.message}`, false, true);
             }
-        } catch (error) {
-            setProgress(0);
-            log(`[FALLA CRÍTICA] Error de comunicación: ${error.message}`, false, true);
+            return;
+        }
+
+        // --- PROCESAMIENTO SECUENCIAL POR LOTES ---
+        log(`[LOTE] Iniciando procesamiento por lotes para '${action}'...`);
+        const limit = 10;
+        let finished = false;
+        let processId = "P-" + Date.now();
+        const startTime = Date.now();
+        let loopCount = 0;
+        let errorCount = 0;
+
+        while (!finished) {
+            loopCount++;
+            log(`[LOTE] Ejecutando lote ${loopCount}...`);
+            try {
+                const res = await routeAction(action, { limit, reset: payload.reset, processId });
+                if (res.status === 'success') {
+                    if (res.logs) {
+                        await playLogs(res.logs);
+                    }
+
+                    const nextIndex = res.nextIndex;
+                    const totalVehicles = res.totalVehicles;
+                    const percentage = totalVehicles > 0 ? Math.round((nextIndex / totalVehicles) * 100) : 100;
+
+                    setProgress(percentage);
+
+                    // Calcular tiempos y estadísticas
+                    const elapsedMs = Date.now() - startTime;
+                    const elapsedSec = (elapsedMs / 1000).toFixed(1);
+                    let etaStr = "Calculando...";
+                    if (nextIndex > 0 && nextIndex < totalVehicles) {
+                        const msPerItem = elapsedMs / nextIndex;
+                        const remainingItems = totalVehicles - nextIndex;
+                        const etaMs = msPerItem * remainingItems;
+                        const etaSec = Math.round(etaMs / 1000);
+                        etaStr = `${etaSec}s`;
+                    } else if (nextIndex >= totalVehicles) {
+                        etaStr = "0s";
+                    }
+
+                    log(`[ESTADO] Lote ${loopCount} completado. Registro actual: ${nextIndex}/${totalVehicles} (${percentage}%).`);
+                    log(`[TIEMPO] Transcurrido: ${elapsedSec}s | Restante estimado: ${etaStr}`);
+
+                    if (res.imagesRenamed !== undefined) {
+                        log(`[DETALLE] Imágenes normalizadas en esta tanda: ${res.imagesRenamed}`);
+                    }
+                    if (res.movedFiles !== undefined) {
+                        log(`[DETALLE] Imágenes reorganizadas en esta tanda: ${res.movedFiles}`);
+                    }
+
+                    if (nextIndex >= totalVehicles) {
+                        finished = true;
+                        log(`[LOTE] ¡Operación '${action}' finalizada con éxito! Total de registros procesados: ${totalVehicles}.`);
+                        setProgress(100);
+                    }
+
+                    // Asegurar que subsiguientes llamadas continúen sin volver a resetear
+                    payload.reset = false;
+                } else {
+                    errorCount++;
+                    log(`[ERROR] Lote ${loopCount} falló: ${res.message}`, false, true);
+                    if (res.logs) await playLogs(res.logs);
+
+                    if (errorCount > 3) {
+                        log(`[INTERRUPCIÓN] Demasiados errores consecutivos. Operación interrumpida.`, false, true);
+                        finished = true;
+                    }
+                }
+            } catch (error) {
+                errorCount++;
+                log(`[FALLA] Error de comunicación en lote ${loopCount}: ${error.message}`, false, true);
+
+                log(`[INTERRUPCIÓN] Conexión interrumpida o fallo de tiempo de ejecución. El progreso se ha guardado en el servidor. Podrás reanudar desde el registro actual en la próxima ejecución.`, true, false);
+                finished = true;
+            }
+
+            if (!finished) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
         }
     }
 
@@ -2495,15 +2645,21 @@ function initAdminPanelListeners() {
         }
     };
     document.getElementById('btn-admin-normalize-images').onclick = async () => {
-        if (confirm("¿Deseas iniciar la normalización de imágenes? Esto renombrará los archivos con nomenclatura uniforme y duplicará físicamente las imágenes compartidas.")) {
-            await runAction('normalizeImages');
-        }
+        const reset = confirm("¿Deseas INICIAR LA OPERACIÓN DESDE EL PRINCIPIO (Borrar progreso anterior)? Cancela para CONTINUAR desde el último punto guardado.");
+        await runAction('normalizeImages', { reset: reset });
     };
     document.getElementById('btn-admin-reorganize-drive').onclick = async () => {
-        if (confirm("¿Deseas reorganizar físicamente las imágenes de Drive según el esquema oficial jerárquico?")) {
-            await runAction('reorganizeImagesInDrive');
-        }
+        const reset = confirm("¿Deseas INICIAR LA OPERACIÓN DESDE EL PRINCIPIO (Borrar progreso anterior)? Cancela para CONTINUAR desde el último punto guardado.");
+        await runAction('reorganizeImagesInDrive', { reset: reset });
     };
+
+    // Botón Agregar corte silencioso
+    const silentCutBtn = document.getElementById('btn-admin-add-silent-cut');
+    if (silentCutBtn) {
+        silentCutBtn.onclick = () => {
+            window.location.href = 'add_cortes.html?silent=true';
+        };
+    }
 
     // 6. Selección de archivo para Logotipo
     const fileInput = document.getElementById('logo-file-input');

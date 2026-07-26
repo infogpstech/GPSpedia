@@ -1,7 +1,7 @@
 // ============================================================================
 // GPSPEDIA-ADMIN SERVICE (DESACOPLADO Y EXCLUSIVO PARA DESARROLLADOR/ADMIN)
 // ============================================================================
-// COMPONENT VERSION: 1.0.0
+// COMPONENT VERSION: 2.6.0
 
 const SPREADSHEET_ID = "1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs";
 const DRIVE_FOLDER_ID = '1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2';
@@ -18,7 +18,8 @@ const SHEET_NAMES = {
     CORTES: "Cortes",
     LOGOS_MARCA: "LogosMarca",
     TUTORIALES: "Tutorial",
-    RELAY: "Relay"
+    RELAY: "Relay",
+    ADMIN_STATE: "AdminState"
 };
 
 const COLS_CORTES = {
@@ -31,6 +32,89 @@ const COLS_CORTES = {
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
     timestamp: 37, notaImportante: 38
 };
+
+// ============================================================================
+// PERSISTENCIA DEL ESTADO ADMINISTRATIVO (AdminState Sheet)
+// ============================================================================
+
+function getAdminState(action) {
+  try {
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.ADMIN_STATE);
+    if (!sheet) return null;
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === action) {
+        return {
+          action: data[i][0],
+          lastIndex: parseInt(data[i][1]) || 0,
+          total: parseInt(data[i][2]) || 0,
+          percentage: parseFloat(data[i][3]) || 0,
+          date: data[i][4],
+          processId: data[i][5],
+          lote: parseInt(data[i][6]) || 0,
+          filaInicial: parseInt(data[i][7]) || 0,
+          ultimaFilaProcesada: parseInt(data[i][8]) || 0,
+          estado: data[i][9] || "pendiente"
+        };
+      }
+    }
+  } catch (e) {
+    Logger.log("Error getting admin state: " + e.message);
+  }
+  return null;
+}
+
+function saveAdminState(action, lastIndex, total, percentage, processId, lote, filaInicial, ultimaFilaProcesada, estado) {
+  try {
+    let sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.ADMIN_STATE);
+    if (!sheet) {
+      sheet = getSpreadsheet().insertSheet(SHEET_NAMES.ADMIN_STATE);
+      sheet.appendRow(["Action", "LastIndex", "Total", "Percentage", "Date", "ProcessId", "Lote", "FilaInicial", "UltimaFilaProcesada", "Estado"]);
+    }
+    const data = sheet.getDataRange().getValues();
+    let rowIndex = -1;
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === action) {
+        rowIndex = i + 1;
+        break;
+      }
+    }
+    const dateStr = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
+    if (rowIndex !== -1) {
+      sheet.getRange(rowIndex, 2).setValue(lastIndex);
+      sheet.getRange(rowIndex, 3).setValue(total);
+      sheet.getRange(rowIndex, 4).setValue(percentage);
+      sheet.getRange(rowIndex, 5).setValue(dateStr);
+      sheet.getRange(rowIndex, 6).setValue(processId);
+      sheet.getRange(rowIndex, 7).setValue(lote);
+      sheet.getRange(rowIndex, 8).setValue(filaInicial);
+      sheet.getRange(rowIndex, 9).setValue(ultimaFilaProcesada);
+      sheet.getRange(rowIndex, 10).setValue(estado);
+    } else {
+      sheet.appendRow([action, lastIndex, total, percentage, dateStr, processId, lote, filaInicial, ultimaFilaProcesada, estado]);
+    }
+    SpreadsheetApp.flush();
+  } catch (e) {
+    Logger.log("Error saving admin state: " + e.message);
+  }
+}
+
+function clearAdminState(action) {
+  try {
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.ADMIN_STATE);
+    if (!sheet) return;
+    const data = sheet.getDataRange().getValues();
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === action) {
+        sheet.deleteRow(i + 1);
+        SpreadsheetApp.flush();
+        break;
+      }
+    }
+  } catch (e) {
+    Logger.log("Error clearing admin state: " + e.message);
+  }
+}
 
 // ============================================================================
 // ROUTER PRINCIPAL (doPost)
@@ -91,6 +175,12 @@ function doPost(e) {
                 break;
             case 'uploadAdminImage':
                 response = handleUploadAdminImage(payload, logMessage);
+                break;
+            case 'addOrUpdateCut':
+                response = handleAddOrUpdateCut(payload, logMessage);
+                break;
+            case 'addSupplementaryInfo':
+                response = handleAddSupplementaryInfo(payload, logMessage);
                 break;
             default:
                 throw new Error(`La acción administrativa '${action}' es desconocida o no está soportada.`);
@@ -300,9 +390,25 @@ function handleReorganizeDatabase(payload, logMessage) {
  * 4. Normalización automática de nombres de imágenes (Nomenclatura uniforme e imágenes compartidas)
  */
 function handleNormalizeImages(payload, logMessage) {
-    const { startIndex = 0, limit = 10 } = payload || {};
+    const { limit = 10, reset = false } = payload || {};
 
-    logMessage("Normalización Imágenes", `Iniciando normalización de lote: elementos del ${startIndex} al ${startIndex + limit}...`);
+    let startIndex = 0;
+    let lote = 1;
+    let filaInicial = 2;
+    let processId = payload?.processId || ("P-" + Date.now());
+
+    if (reset) {
+        clearAdminState('normalizeImages');
+    } else {
+        const savedState = getAdminState('normalizeImages');
+        if (savedState) {
+            startIndex = savedState.lastIndex;
+            lote = (savedState.lote || 0) + 1;
+            filaInicial = savedState.ultimaFilaProcesada + 1;
+        }
+    }
+
+    logMessage("Normalización Imágenes", `Iniciando normalización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();
     const headers = data.shift(); // Quitar cabecera
@@ -364,6 +470,37 @@ function handleNormalizeImages(payload, logMessage) {
                         const file = DriveApp.getFileById(id);
                         let fileToProcess = file;
 
+                        // Determinar el tipoFuncion de nomenclatura según el campo
+                        let typeFuncion = "";
+                        if (field === "imagenVehiculo") typeFuncion = "";
+                        else if (field === "imgCorte1") typeFuncion = "_corte1";
+                        else if (field === "imgCorte2") typeFuncion = "_corte2";
+                        else if (field === "imgCorte3") typeFuncion = "_corte3";
+                        else if (field === "imgApertura") typeFuncion = "_apert";
+                        else if (field === "imgCableAlimen") typeFuncion = "_alimen";
+
+                        const extension = getExtensionFromName(fileToProcess.getName());
+                        const newFilename = `${baseName}${typeFuncion}${extension}`;
+
+                        // --- OPTIMIZACIÓN: EVITAR RENOMBRADO SI YA ESTÁ CORRECTO Y UBICADO EN LA GENERACIÓN ---
+                        const parents = fileToProcess.getParents();
+                        let inCorrectFolder = false;
+                        const rawDesde = (row[COLS_CORTES.anoDesde - 1] || "").toString().trim();
+                        const rawHasta = (row[COLS_CORTES.anoHasta - 1] || "").toString().trim();
+                        const expectedGenName = (rawDesde && rawHasta && rawDesde !== rawHasta) ? `${rawDesde}_${rawHasta}` : (rawDesde || 'Sin_Ano');
+
+                        while (parents.hasNext()) {
+                            if (parents.next().getName() === expectedGenName) {
+                                inCorrectFolder = true;
+                                break;
+                            }
+                        }
+
+                        if (fileToProcess.getName() === newFilename && inCorrectFolder) {
+                            logMessage("Normalización Imágenes", `Fila ${rowNum}: Imagen '${newFilename}' ya está correctamente nombrada y ubicada.`);
+                            return;
+                        }
+
                         // Si se comparte entre más de un registro, crear copia física propia para este vehículo
                         if (usages && usages.length > 1) {
                             const usageIndexForThisRow = usages.findIndex(u => u.rowNum === rowNum && u.field === field);
@@ -378,24 +515,10 @@ function handleNormalizeImages(payload, logMessage) {
                             }
                         }
 
-                        // Determinar el tipoFuncion de nomenclatura según el campo
-                        let typeFuncion = "";
-                        if (field === "imagenVehiculo") typeFuncion = "";
-                        else if (field === "imgCorte1") typeFuncion = "_corte1";
-                        else if (field === "imgCorte2") typeFuncion = "_corte2";
-                        else if (field === "imgCorte3") typeFuncion = "_corte3";
-                        else if (field === "imgApertura") typeFuncion = "_apert";
-                        else if (field === "imgCableAlimen") typeFuncion = "_alimen";
-
-                        const extension = getExtensionFromName(fileToProcess.getName());
-                        const newFilename = `${baseName}${typeFuncion}${extension}`;
-
                         if (fileToProcess.getName() !== newFilename) {
                             logMessage("Normalización Imágenes", `Fila ${rowNum}: Renombrando '${fileToProcess.getName()}' a '${newFilename}'`);
                             fileToProcess.setName(newFilename);
                             imagesRenamed++;
-                        } else {
-                            logMessage("Normalización Imágenes", `Fila ${rowNum}: Imagen '${newFilename}' ya está normalizada.`);
                         }
                     } catch (e) {
                         logMessage("Normalización Imágenes", `Advertencia: Falla con imagen ID '${id}' (Fila ${rowNum}, Campo ${field}). Causa: ${e.message}`, 0, 0, true);
@@ -406,14 +529,30 @@ function handleNormalizeImages(payload, logMessage) {
     });
 
     SpreadsheetApp.flush();
-    logMessage("Normalización Imágenes", `Lote finalizado. Elementos procesados de esta tanda: ${batchData.length}. Archivos modificados: ${imagesRenamed}`);
+
+    const nextIndex = startIndex + batchData.length;
+    const ultimaFilaProcesada = startIndex + batchData.length + 1;
+    const percentage = totalVehicles > 0 ? Math.round((nextIndex / totalVehicles) * 100) : 100;
+    const estado = nextIndex >= totalVehicles ? "completado" : "pendiente";
+
+    if (nextIndex >= totalVehicles) {
+        clearAdminState('normalizeImages');
+    } else {
+        saveAdminState('normalizeImages', nextIndex, totalVehicles, percentage, processId, lote, filaInicial, ultimaFilaProcesada, estado);
+    }
+
+    logMessage("Normalización Imágenes", `Lote ${lote} finalizado. Filas del ${filaInicial} al ${ultimaFilaProcesada} procesadas. Archivos modificados: ${imagesRenamed}`);
 
     return {
         status: 'success',
         processedCount: batchData.length,
         totalVehicles: totalVehicles,
         imagesRenamed: imagesRenamed,
-        nextIndex: startIndex + batchData.length
+        nextIndex: nextIndex,
+        lote: lote,
+        filaInicial: filaInicial,
+        ultimaFilaProcesada: ultimaFilaProcesada,
+        estado: estado
     };
 }
 
@@ -436,9 +575,25 @@ function sanitizeForNomenclature(text) {
  * 5. Reorganización automática de imágenes en carpetas de Drive según la estructura jerárquica oficial
  */
 function handleReorganizeImagesInDrive(payload, logMessage) {
-    const { startIndex = 0, limit = 10 } = payload || {};
+    const { limit = 10, reset = false } = payload || {};
 
-    logMessage("Reorganización Drive", `Iniciando reorganización de lote: elementos del ${startIndex} al ${startIndex + limit}...`);
+    let startIndex = 0;
+    let lote = 1;
+    let filaInicial = 2;
+    let processId = payload?.processId || ("P-" + Date.now());
+
+    if (reset) {
+        clearAdminState('reorganizeImagesInDrive');
+    } else {
+        const savedState = getAdminState('reorganizeImagesInDrive');
+        if (savedState) {
+            startIndex = savedState.lastIndex;
+            lote = (savedState.lote || 0) + 1;
+            filaInicial = savedState.ultimaFilaProcesada + 1;
+        }
+    }
+
+    logMessage("Reorganización Drive", `Iniciando reorganización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();
     data.shift(); // Quitar cabecera
@@ -455,17 +610,20 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
         const rowNum = startIndex + index + 2;
 
         // Datos reales para las carpetas
-        const categoria = sanitizeForFilename(row[COLS_CORTES.categoria - 1] || 'Sin_Categoria');
-        const marca = sanitizeForFilename(row[COLS_CORTES.marca - 1] || 'Sin_Marca');
-        const modelo = sanitizeForFilename(row[COLS_CORTES.modelo - 1] || 'Sin_Modelo');
+        const categoria = sanitizeForFolderDisplay(row[COLS_CORTES.categoria - 1] || 'Sin_Categoria');
+        const marca = sanitizeForFolderDisplay(row[COLS_CORTES.marca - 1] || 'Sin_Marca');
+        const modelo = sanitizeForFolderDisplay(row[COLS_CORTES.modelo - 1] || 'Sin_Modelo');
 
         // Versión de equipamiento / Tipo de encendido unificado
         const rawVersion = (row[COLS_CORTES.versionesAplicables - 1] || "").toString().trim();
         const rawEncendido = (row[COLS_CORTES.tipoEncendido - 1] || "").toString().trim();
         const folderVersionName = rawVersion ? `${rawVersion} / ${rawEncendido}` : rawEncendido;
-        const versionEncendido = sanitizeForFilename(folderVersionName);
+        const versionEncendido = sanitizeForFolderDisplay(folderVersionName);
 
-        const generacion = sanitizeForFilename(row[COLS_CORTES.anoDesde - 1] || 'Sin_Ano');
+        const rawDesde = (row[COLS_CORTES.anoDesde - 1] || "").toString().trim();
+        const rawHasta = (row[COLS_CORTES.anoHasta - 1] || "").toString().trim();
+        const folderGeneracion = (rawDesde && rawHasta && rawDesde !== rawHasta) ? `${rawDesde}_${rawHasta}` : (rawDesde || 'Sin_Ano');
+        const generacion = sanitizeForFolderDisplay(folderGeneracion);
 
         // Construir jerarquía de carpetas real
         const catFolder = getOrCreateSubFolder(rootFolder, categoria);
@@ -487,28 +645,31 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                         let alreadyInPlace = false;
 
                         while (currentParents.hasNext()) {
-                            if (currentParents.next().getId() === genFolder.getId()) {
+                            const parent = currentParents.next();
+                            if (parent.getId() === genFolder.getId() && parent.getName() === generacion) {
                                 alreadyInPlace = true;
                                 break;
                             }
                         }
 
-                        if (!alreadyInPlace) {
-                            logMessage("Reorganización Drive", `Fila ${rowNum}: Moviendo '${file.getName()}' a carpeta jerárquica...`);
-                            genFolder.addFile(file);
-
-                            // Remover de carpetas padres antiguas
-                            const oldParents = file.getParents();
-                            while (oldParents.hasNext()) {
-                                const oldParent = oldParents.next();
-                                if (oldParent.getId() !== genFolder.getId()) {
-                                    oldParent.removeFile(file);
-                                }
-                            }
-                            movedFiles++;
-                        } else {
+                        // --- OPTIMIZACIÓN: EVITAR MOVER IMÁGENES QUE YA ESTÁN CORRECTAMENTE UBICADAS ---
+                        if (alreadyInPlace) {
                             logMessage("Reorganización Drive", `Fila ${rowNum}: Imagen '${file.getName()}' ya está en su ubicación jerárquica correcta.`);
+                            return;
                         }
+
+                        logMessage("Reorganización Drive", `Fila ${rowNum}: Moviendo '${file.getName()}' a carpeta jerárquica...`);
+                        genFolder.addFile(file);
+
+                        // Remover de carpetas padres antiguas
+                        const oldParents = file.getParents();
+                        while (oldParents.hasNext()) {
+                            const oldParent = oldParents.next();
+                            if (oldParent.getId() !== genFolder.getId()) {
+                                oldParent.removeFile(file);
+                            }
+                        }
+                        movedFiles++;
                     } catch (e) {
                         logMessage("Reorganización Drive", `Advertencia: Falla con archivo ID '${id}' (Fila ${rowNum}, Campo ${field}). Causa: ${e.message}`, 0, 0, true);
                     }
@@ -517,20 +678,149 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
         });
     });
 
-    logMessage("Reorganización Drive", `Lote finalizado. Elementos procesados de esta tanda: ${batchData.length}. Archivos movidos: ${movedFiles}`);
+    // Limpieza recursiva de carpetas vacías dentro de la carpeta raíz
+    logMessage("Reorganización Drive", "Iniciando limpieza de carpetas vacías...");
+    deleteEmptyFoldersRecursively(rootFolder, DRIVE_FOLDER_ID);
+    logMessage("Reorganización Drive", "Limpieza de carpetas vacías completada.");
+
+    const nextIndex = startIndex + batchData.length;
+    const ultimaFilaProcesada = startIndex + batchData.length + 1;
+    const percentage = totalVehicles > 0 ? Math.round((nextIndex / totalVehicles) * 100) : 100;
+    const estado = nextIndex >= totalVehicles ? "completado" : "pendiente";
+
+    if (nextIndex >= totalVehicles) {
+        clearAdminState('reorganizeImagesInDrive');
+    } else {
+        saveAdminState('reorganizeImagesInDrive', nextIndex, totalVehicles, percentage, processId, lote, filaInicial, ultimaFilaProcesada, estado);
+    }
+
+    logMessage("Reorganización Drive", `Lote ${lote} finalizado. Filas del ${filaInicial} al ${ultimaFilaProcesada} procesadas. Archivos movidos: ${movedFiles}`);
     return {
         status: 'success',
         processedCount: batchData.length,
         totalVehicles: totalVehicles,
         movedFiles: movedFiles,
-        nextIndex: startIndex + batchData.length
+        nextIndex: nextIndex,
+        lote: lote,
+        filaInicial: filaInicial,
+        ultimaFilaProcesada: ultimaFilaProcesada,
+        estado: estado
     };
 }
 
-function getOrCreateSubFolder(parentFolder, name) {
-    const folders = parentFolder.getFoldersByName(name);
-    if (folders.hasNext()) return folders.next();
-    return parentFolder.createFolder(name);
+function getCanonicalName(name) {
+    if (!name) return "";
+    return String(name)
+        .toLowerCase()
+        .replace(/[^a-z0-9]/g, "") // remove all non-alphanumeric chars
+        .trim();
+}
+
+function getOrCreateSubFolder(parentFolder, desiredName) {
+    const canonicalDesired = getCanonicalName(desiredName);
+    const subFolders = parentFolder.getFolders();
+    let matchedFolder = null;
+    let foldersToMerge = [];
+
+    while (subFolders.hasNext()) {
+        const folder = subFolders.next();
+        const canonicalCurrent = getCanonicalName(folder.getName());
+        if (canonicalCurrent === canonicalDesired) {
+            foldersToMerge.push(folder);
+        }
+    }
+
+    if (foldersToMerge.length > 0) {
+        // Priorizar la carpeta que tenga el mejor formato visual (frecuencia de underscores más baja)
+        foldersToMerge.sort((a, b) => {
+            const nameA = a.getName();
+            const nameB = b.getName();
+            const underscoresA = (nameA.match(/_/g) || []).length;
+            const underscoresB = (nameB.match(/_/g) || []).length;
+            if (underscoresA !== underscoresB) {
+                return underscoresA - underscoresB; // Menos underscores primero
+            }
+            const humanA = (nameA.match(/[\s()]/g) || []).length;
+            const humanB = (nameB.match(/[\s()]/g) || []).length;
+            return humanB - humanA; // Más espacios y paréntesis primero
+        });
+
+        matchedFolder = foldersToMerge[0];
+
+        // Renombrar la carpeta seleccionada si desiredName está mejor formateado
+        const matchedName = matchedFolder.getName();
+        const desiredUnderscores = (desiredName.match(/_/g) || []).length;
+        const matchedUnderscores = (matchedName.match(/_/g) || []).length;
+        if (desiredUnderscores < matchedUnderscores) {
+            matchedFolder.setName(desiredName);
+        }
+
+        // Fusionar subcarpetas y archivos de los duplicados restantes
+        for (let i = 1; i < foldersToMerge.length; i++) {
+            const extraFolder = foldersToMerge[i];
+            mergeFolders(extraFolder, matchedFolder);
+        }
+    } else {
+        matchedFolder = parentFolder.createFolder(desiredName);
+    }
+
+    return matchedFolder;
+}
+
+function mergeFolders(sourceFolder, targetFolder) {
+    if (sourceFolder.getId() === targetFolder.getId()) return;
+
+    // Mover archivos
+    const files = sourceFolder.getFiles();
+    while (files.hasNext()) {
+        const file = files.next();
+        targetFolder.addFile(file);
+        sourceFolder.removeFile(file);
+    }
+
+    // Fusionar subcarpetas de manera recursiva
+    const subFolders = sourceFolder.getFolders();
+    while (subFolders.hasNext()) {
+        const sub = subFolders.next();
+        const subName = sub.getName();
+        const targetSub = getOrCreateSubFolder(targetFolder, subName);
+        mergeFolders(sub, targetSub);
+    }
+
+    // Eliminar carpeta origen duplicada ya vacía
+    try {
+        sourceFolder.setTrashed(true);
+    } catch (e) {
+        Logger.log("Error trashing merged folder: " + e.message);
+    }
+}
+
+function deleteEmptyFoldersRecursively(folder, rootDriveFolderId) {
+    if (folder.getId() === rootDriveFolderId) {
+        const subDirs = folder.getFolders();
+        while (subDirs.hasNext()) {
+            deleteEmptyFoldersRecursively(subDirs.next(), rootDriveFolderId);
+        }
+        return;
+    }
+
+    const subDirs = folder.getFolders();
+    while (subDirs.hasNext()) {
+        deleteEmptyFoldersRecursively(subDirs.next(), rootDriveFolderId);
+    }
+
+    const files = folder.getFiles();
+    const subFolders = folder.getFolders();
+
+    if (!files.hasNext() && !subFolders.hasNext()) {
+        try {
+            if (folder.getName() !== "Logos") {
+                folder.setTrashed(true);
+            }
+        } catch (e) {
+            Logger.log("Error trashing empty folder: " + e.message);
+        }
+    }
 }
 
 /**
@@ -649,17 +939,80 @@ function handleUploadAdminImage(payload, logMessage) {
     const versionEncendido = (rowValues[COLS_CORTES.versionesAplicables - 1] || "SRV") + "_" + (rowValues[COLS_CORTES.tipoEncendido - 1] || "BTN");
     const generacion = rowValues[COLS_CORTES.anoDesde - 1] || "Sin_Ano";
 
-    // Ubicar o crear subcarpeta oficial
-    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
-    const catFolder = getOrCreateSubFolder(rootFolder, sanitizeForFilename(categoria));
-    const marFolder = getOrCreateSubFolder(catFolder, sanitizeForFilename(marca));
-    const modFolder = getOrCreateSubFolder(marFolder, sanitizeForFilename(modelo));
-    const verFolder = getOrCreateSubFolder(modFolder, sanitizeForFilename(versionEncendido));
-    const genFolder = getOrCreateSubFolder(verFolder, sanitizeForFilename(generacion));
+    // 1. Intentar ubicar la carpeta original de la imagen que ya está guardada para el registro
+    const originalUrl = rowValues[COLS_CORTES[fieldName] - 1];
+    let genFolder = null;
+    if (originalUrl && typeof originalUrl === "string" && originalUrl.startsWith("http")) {
+        const match = originalUrl.match(/id=([a-zA-Z0-9_-]+)/);
+        if (match) {
+            try {
+                const originalFile = DriveApp.getFileById(match[1]);
+                const parents = originalFile.getParents();
+                if (parents.hasNext()) {
+                    genFolder = parents.next();
+                    logMessage("Edición In-Modal", `Carpeta original encontrada: '${genFolder.getName()}'`);
+                }
+            } catch (err) {
+                logMessage("Edición In-Modal", `No se pudo acceder al archivo original o su carpeta: ${err.message}`, 0, 0, true);
+            }
+        }
+    }
+
+    // 2. Si no se encontró la carpeta original, usar o crear la estructura jerárquica
+    if (!genFolder) {
+        const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+        const catFolder = getOrCreateSubFolder(rootFolder, sanitizeForFolderDisplay(categoria));
+        const marFolder = getOrCreateSubFolder(catFolder, sanitizeForFolderDisplay(marca));
+        const modFolder = getOrCreateSubFolder(marFolder, sanitizeForFolderDisplay(modelo));
+        const verFolder = getOrCreateSubFolder(modFolder, sanitizeForFolderDisplay(versionEncendido));
+        genFolder = getOrCreateSubFolder(verFolder, sanitizeForFolderDisplay(generacion));
+        logMessage("Edición In-Modal", `Carpeta original no encontrada. Usando carpeta jerárquica: '${genFolder.getName()}'`);
+    }
+
+    // 3. Generar la nomenclatura uniforme oficial basada en los datos reales del registro
+    const rawModelo = (rowValues[COLS_CORTES.modelo - 1] || "").toString().trim();
+    const rawVersion = (rowValues[COLS_CORTES.versionesAplicables - 1] || "").toString().trim();
+    const rawEncendido = (rowValues[COLS_CORTES.tipoEncendido - 1] || "").toString().trim();
+    const rawAnio = (rowValues[COLS_CORTES.anoDesde - 1] || "").toString().trim();
+
+    const nameModelo = sanitizeForNomenclature(rawModelo);
+    const nameVersion = sanitizeForNomenclature(rawVersion);
+    const nameEncendido = sanitizeForNomenclature(rawEncendido);
+    const nameAnio = sanitizeForNomenclature(rawAnio || "XXXX");
+
+    let baseNameParts = [nameModelo];
+    if (nameVersion) baseNameParts.push(nameVersion);
+    if (nameEncendido) baseNameParts.push(nameEncendido);
+    baseNameParts.push(nameAnio);
+
+    const baseName = baseNameParts.join("_").toLowerCase();
+
+    let typeFuncion = "";
+    if (fieldName === "imagenVehiculo") typeFuncion = "";
+    else if (fieldName === "imgCorte1") typeFuncion = "_corte1";
+    else if (fieldName === "imgCorte2") typeFuncion = "_corte2";
+    else if (fieldName === "imgCorte3") typeFuncion = "_corte3";
+    else if (fieldName === "imgApertura") typeFuncion = "_apert";
+    else if (fieldName === "imgCableAlimen") typeFuncion = "_alimen";
+
+    const extension = getExtensionFromName(filename);
+    const newFilename = `${baseName}${typeFuncion}${extension}`;
+
+    // 4. Limpiar datos Base64 de prefijos tipo Data URL
+    let cleanBase64 = fileData;
+    let actualMimeType = mimeType;
+    if (fileData.indexOf(",") !== -1) {
+        const parts = fileData.split(",");
+        const mimeMatch = parts[0].match(/:(.*?);/);
+        if (mimeMatch) {
+            actualMimeType = mimeMatch[1];
+        }
+        cleanBase64 = parts[1];
+    }
 
     // Guardar archivo en Drive
-    const decodedData = Utilities.base64Decode(fileData);
-    const blob = Utilities.newBlob(decodedData, mimeType, filename);
+    const decodedData = Utilities.base64Decode(cleanBase64);
+    const blob = Utilities.newBlob(decodedData, actualMimeType, newFilename);
     const file = genFolder.createFile(blob);
     const imageUrl = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
 
@@ -677,9 +1030,289 @@ function handleUploadAdminImage(payload, logMessage) {
 }
 
 // ============================================================================
+// MICROSERVICIO REGISTRO DE CORTES (Silencioso y Administrativo)
+// ============================================================================
+
+function handleAddOrUpdateCut(payload, logMessage) {
+    const { vehicleData, cutData, vehicleId, colaborador } = payload;
+    if (!cutData || !colaborador) {
+        throw new Error("Datos del corte y del colaborador son requeridos.");
+    }
+
+    logMessage("Registro Administrativo", `Procesando addOrUpdateCut administrativo...`);
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+
+    // Forzar timestamp administrativo (hace 45 días) para registro silencioso
+    let targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() - 45);
+    const formattedDate = Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
+
+    let rowIndex;
+    let newId;
+
+    if (vehicleId) { // --- Lógica para vehículo EXISTENTE ---
+        const ids = sheet.getRange(2, 1, sheet.getLastRow(), 1).getValues().flat();
+        const existingIndex = ids.findIndex(id => id.toString() == vehicleId.toString());
+        if (existingIndex === -1) throw new Error("El ID del vehículo no fue encontrado.");
+        rowIndex = existingIndex + 2;
+
+        const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
+        const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
+
+        let cutSlotIndex = -1;
+        for (let i = 1; i <= 3; i++) {
+            if (!rowValues[COLS_CORTES[`tipoCorte${i}`] - 1]) {
+                cutSlotIndex = i;
+                break;
+            }
+        }
+        if (cutSlotIndex === -1) throw new Error("No hay espacios disponibles para más cortes.");
+
+        let imageUrl = '';
+        if (cutData.imgCorte1) {
+            const folder = getOrCreateFolder(vehicleInfo.categoria, vehicleInfo.marca, vehicleInfo.modelo, vehicleInfo.anoDesde);
+            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Corte${cutSlotIndex}`;
+            imageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder);
+        }
+
+        sheet.getRange(rowIndex, COLS_CORTES[`tipoCorte${cutSlotIndex}`]).setValue(cutData.tipoCorte1);
+        sheet.getRange(rowIndex, COLS_CORTES[`ubicacionCorte${cutSlotIndex}`]).setValue(cutData.ubicacionCorte1);
+        sheet.getRange(rowIndex, COLS_CORTES[`colorCableCorte${cutSlotIndex}`]).setValue(cutData.colorCableCorte1);
+        sheet.getRange(rowIndex, COLS_CORTES[`configRelay${cutSlotIndex}`]).setValue(cutData.configRelay1);
+        sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${cutSlotIndex}`]).setValue(imageUrl);
+        sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${cutSlotIndex}`]).setValue(colaborador);
+        sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
+
+        newId = vehicleId;
+
+    } else { // --- Lógica para vehículo NUEVO (CORREGIDO PARA PRESERVAR FÓRMULA DE ID) ---
+        if (!vehicleData) throw new Error("Los datos del vehículo son requeridos para un nuevo registro.");
+
+        const lastRow = sheet.getLastRow();
+        rowIndex = lastRow + 1;
+        const lastColumn = sheet.getLastColumn();
+
+        // 1. Copiar la fila anterior para heredar TODAS las validaciones, formatos y FÓRMULAS (incluyendo ID).
+        const previousRowRange = sheet.getRange(lastRow, 1, 1, lastColumn);
+        const newRowRange = sheet.getRange(rowIndex, 1, 1, lastColumn);
+        previousRowRange.copyTo(newRowRange);
+
+        // 2. Limpiar el contenido de las columnas de DATOS para eliminar datos viejos, preservando la fórmula del ID.
+        const dataRange = sheet.getRange(rowIndex, 2, 1, lastColumn - 1);
+        dataRange.clearContent();
+
+        // 3. Preparar los datos que se van a escribir.
+        // Parsear año...
+        const yearInput = vehicleData.anoDesde.trim();
+        let anoDesde, anoHasta, anioParaFolder;
+        if (yearInput.includes('-')) {
+            const [start, end] = yearInput.split('-').map(y => parseInt(y.trim(), 10));
+            anoDesde = Math.min(start, end);
+            anoHasta = Math.max(start, end);
+        } else {
+            anoDesde = parseInt(yearInput, 10);
+            anoHasta = anoDesde;
+        }
+        anioParaFolder = anoDesde;
+
+        // Subir imágenes y obtener URLs...
+        const folder = getOrCreateFolder(vehicleData.categoria, vehicleData.marca, vehicleData.modelo, anioParaFolder);
+        let vehiculoImageUrl = '';
+        if (vehicleData.imagenVehiculo) {
+            const filename = `${sanitizeForFilename(vehicleData.marca)}_${sanitizeForFilename(vehicleData.modelo)}_${sanitizeForFilename(vehicleData.tipoEncendido)}_${yearInput}_Vehiculo`;
+            vehiculoImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder);
+        }
+        let corteImageUrl = '';
+        if (cutData.imgCorte1) {
+            const filename = `${sanitizeForFilename(vehicleData.marca)}_${sanitizeForFilename(vehicleData.modelo)}_${sanitizeForFilename(vehicleData.tipoEncendido)}_${anioParaFolder}_Corte1`;
+            corteImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder);
+        }
+
+        // 4. Escribir los nuevos datos en las celdas específicas usando múltiples `setValue` para claridad.
+        sheet.getRange(rowIndex, COLS_CORTES.categoria).setValue(vehicleData.categoria || '');
+        sheet.getRange(rowIndex, COLS_CORTES.marca).setValue(vehicleData.marca);
+        sheet.getRange(rowIndex, COLS_CORTES.modelo).setValue(vehicleData.modelo);
+        sheet.getRange(rowIndex, COLS_CORTES.versionesAplicables).setValue(vehicleData.versionesAplicables || '');
+        sheet.getRange(rowIndex, COLS_CORTES.anoDesde).setValue(anoDesde);
+        sheet.getRange(rowIndex, COLS_CORTES.anoHasta).setValue(anoHasta);
+        sheet.getRange(rowIndex, COLS_CORTES.tipoEncendido).setValue(vehicleData.tipoEncendido);
+        sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(vehiculoImageUrl);
+        sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
+
+        // Datos del primer corte
+        sheet.getRange(rowIndex, COLS_CORTES.tipoCorte1).setValue(cutData.tipoCorte1);
+        sheet.getRange(rowIndex, COLS_CORTES.ubicacionCorte1).setValue(cutData.ubicacionCorte1);
+        sheet.getRange(rowIndex, COLS_CORTES.colorCableCorte1).setValue(cutData.colorCableCorte1);
+        sheet.getRange(rowIndex, COLS_CORTES.configRelay1).setValue(cutData.configRelay1);
+        sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
+        sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaborador);
+
+        // 5. Esperar a que la hoja calcule el valor del ID generado por la fórmula.
+        SpreadsheetApp.flush();
+        Utilities.sleep(1500); // Espera para asegurar que la fórmula se calcule.
+        newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
+
+        // 6. Si el ID sigue vacío, intentar forzar la fórmula de la fila anterior o usar una genérica
+        if (!newId) {
+            const previousFormula = sheet.getRange(lastRow, COLS_CORTES.id).getFormula();
+            if (previousFormula) {
+                sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(previousFormula);
+            } else {
+                sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(`=ROW()-1`);
+            }
+            SpreadsheetApp.flush();
+            Utilities.sleep(500);
+            newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
+        }
+    }
+
+    logMessage("Registro Administrativo", `Corte administrativo guardado exitosamente. ID asignado: ${newId}`);
+    return { status: 'success', message: `Corte administrativo agregado de forma silenciosa.`, vehicleId: newId };
+}
+
+function handleAddSupplementaryInfo(payload, logMessage) {
+    const { vehicleId, apertura, imgApertura, cableAlimen, imgCableAlimen, notaImportante } = payload;
+    if (!vehicleId) {
+        throw new Error("El ID del vehículo es requerido para agregar información suplementaria.");
+    }
+
+    logMessage("Registro Administrativo", `Procesando addSupplementaryInfo administrativo para ID: ${vehicleId}...`);
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    const ids = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat();
+    const rowIndex = ids.findIndex(id => id.toString() == vehicleId.toString());
+
+    if (rowIndex === -1) {
+        throw new Error("El ID del vehículo proporcionado no fue encontrado para actualizar.");
+    }
+    const actualRow = rowIndex + 2;
+
+    const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
+    const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
+
+    const folder = getOrCreateFolder(vehicleInfo.categoria, vehicleInfo.marca, vehicleInfo.modelo, vehicleInfo.anoDesde);
+
+    // Actualizar campos de texto si se proporcionaron
+    if (apertura) sheet.getRange(actualRow, COLS_CORTES.apertura).setValue(apertura);
+    if (cableAlimen) sheet.getRange(actualRow, COLS_CORTES.cableAlimen).setValue(cableAlimen);
+    if (notaImportante) sheet.getRange(actualRow, COLS_CORTES.notaImportante).setValue(notaImportante);
+
+    // Subir imágenes si se proporcionaron
+    if (imgApertura) {
+        const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Apertura`;
+        const imageUrl = uploadImageToDrive(imgApertura, filename, folder);
+        sheet.getRange(actualRow, COLS_CORTES.imgApertura).setValue(imageUrl);
+    }
+    if (imgCableAlimen) {
+        const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion`;
+        const imageUrl = uploadImageToDrive(imgCableAlimen, filename, folder);
+        sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen).setValue(imageUrl);
+    }
+
+    // Forzar timestamp administrativo (hace 45 días)
+    let targetDate = new Date();
+    targetDate.setDate(targetDate.getDate() - 45);
+    const formattedDate = Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
+    sheet.getRange(actualRow, COLS_CORTES.timestamp).setValue(formattedDate);
+
+    SpreadsheetApp.flush();
+    logMessage("Registro Administrativo", `Información suplementaria administrativa agregada con éxito.`);
+    return { status: 'success', message: 'Información suplementaria administrativa agregada de forma silenciosa.' };
+}
+
+// ============================================================================
 // HELPERS COMUNES
 // ============================================================================
 function sanitizeForFilename(text) {
     if (text === null || text === undefined) return '';
     return String(text).replace(/[^a-zA-Z0-9.-]/g, '_').replace(/\s+/g, '_');
+}
+
+function sanitizeForFolderDisplay(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+        .replace(/\s+/g, ' ')      // normalizar multiples espacios
+        .replace(/__+/g, '_')      // limpiar multiples underscores
+        .trim();
+}
+
+function mapRowToObject(row, colMap) {
+    const obj = {};
+    for (const key in colMap) {
+        const colIndex = colMap[key] - 1;
+        obj[key] = (colIndex < row.length) ? row[colIndex] : "";
+    }
+    return obj;
+}
+
+function isYearInRange(inputYear, anoDesde, anoHasta) {
+    if (isNaN(inputYear)) return false;
+    const desde = anoDesde ? parseInt(anoDesde, 10) : inputYear;
+    const hasta = anoHasta ? parseInt(anoHasta, 10) : desde;
+    return inputYear >= desde && inputYear <= hasta;
+}
+
+function getOrCreateFolder(categoria, marca, modelo, anio) {
+    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const cat = sanitizeForFolderDisplay(categoria || 'Sin_Categoria');
+    const mar = sanitizeForFolderDisplay(marca || 'Sin_Marca');
+    const mod = sanitizeForFolderDisplay(modelo || 'Sin_Modelo');
+    const an = sanitizeForFolderDisplay(anio || 'Sin_Año');
+
+    const categoriaFolder = getOrCreateSubFolder(rootFolder, cat);
+    const marcaFolder = getOrCreateSubFolder(categoriaFolder, mar);
+    const modeloFolder = getOrCreateSubFolder(marcaFolder, mod);
+    return getOrCreateSubFolder(modeloFolder, an);
+}
+
+function uploadImageToDrive(imageData, filename, folder) {
+    if (!imageData) return "";
+    let blob;
+    let finalFilename = filename;
+
+    if (imageData.startsWith('http')) {
+        try {
+            const response = UrlFetchApp.fetch(imageData);
+            blob = response.getBlob();
+            const mimeType = blob.getContentType();
+            const extension = getExtensionFromMimeType(mimeType);
+            finalFilename = filename + extension;
+            blob.setName(finalFilename);
+        } catch (e) {
+            console.error(`Failed to fetch image from URL: ${imageData}. Error: ${e.message}`);
+            return "";
+        }
+    } else if (imageData.startsWith('data:image/')) {
+        try {
+            const parts = imageData.split(',');
+            const mimeType = parts[0].match(/:(.*?);/)[1];
+            const decodedData = Utilities.base64Decode(parts[1]);
+
+            // Determinar la extensión correcta basándose en el tipo MIME
+            const extension = getExtensionFromMimeType(mimeType);
+            finalFilename = filename + extension;
+
+            blob = Utilities.newBlob(decodedData, mimeType, finalFilename);
+        } catch (e) {
+            console.error(`Failed to decode base64. Error: ${e.message}`);
+            return "";
+        }
+    } else {
+        console.error("Unrecognized image data format.");
+        return "";
+    }
+    const file = folder.createFile(blob);
+    return `https://drive.google.com/uc?export=view&id=${file.getId()}`;
+}
+
+function getExtensionFromMimeType(mimeType) {
+    const mimeMap = {
+        'image/jpeg': '.jpg',
+        'image/png': '.png',
+        'image/gif': '.gif',
+        'image/webp': '.webp',
+        'image/svg+xml': '.svg',
+        'image/bmp': '.bmp',
+        'image/tiff': '.tiff'
+    };
+    return mimeMap[mimeType] || '.jpg';
 }

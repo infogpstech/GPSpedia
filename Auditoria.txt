@@ -559,3 +559,57 @@ Estrategia de corrección:
 2. **Edición In-Modal No Invasiva y Compatibilidad de Eventos (`ui.js`):**
    - El modo de edición previo modificaba y reemplazaba componentes de la estructura HTML original (lo que violaba las nuevas restricciones de preservación HTML y estilos).
    - Solución: Implementar una edición in-place (doble clic o clic en caliente sobre los textos los transforma en inputs temporales, y el listener de blur los vuelve a renderizar estáticos y envía el cambio silencioso). Los botones de las flechas de navegación por generaciones, de apertura de relay, Lightbox, de utilidad y de reportes se mantienen 100% idénticos en estilos y HTML, pero se interceptan y bloquean sus eventos únicamente mientras `inEditMode === true`. Al desactivar la edición o confirmar/restaurar, se levantan todos los bloqueos de forma síncrona sin recargar, asegurando compatibilidad absoluta.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CORRECCIONES PENDIENTES DEL MICROSERVICIO ADMINISTRATIVO (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js, add_cortes.html, main.js, index.html
+
+**Hallazgos y Resoluciones:**
+1. **Edición de Imágenes In-Modal (Tarea 1):**
+   - Problema: Las nuevas imágenes no se cargaban a Drive, no actualizaban el enlace en la spreadsheet y no persistían.
+   - Resolución: Corregido `handleUploadAdminImage` en `Services/admin.js` para limpiar el prefijo base64, extraer el ID de la imagen anterior y su correspondiente carpeta en Drive para guardar allí la nueva imagen, y renombrarla automáticamente siguiendo el formato oficial del sistema. Se agregó restauración inmediata local al descartar o cerrar.
+2. **Botón Agregar Corte Silencioso (Tarea 2):**
+   - Problema: No había acceso ni botón visible para agregar cortes silenciosos en el panel de desarrollador.
+   - Resolución: Agregado el botón `#btn-admin-add-silent-cut` en `index.html` bajo el Panel Administrativo y Diagnóstico. En `ui.js`, se configuró para abrir `add_cortes.html?silent=true`. En `add_cortes.html`, se parsea el parámetro, se marca automáticamente el checkbox `#silentRegister` y se rutea la acción a `ADMIN` para inyectar automáticamente el timestamp de hace 45 días.
+3. **Procesamiento por Lotes y Consola de Diagnóstico (Tarea 3):**
+   - Problema: Las operaciones masivas siempre comenzaban desde cero y se detenían tras los primeros diez registros.
+   - Resolución: Implementado administrador de estado persistente (`AdminState` en Spreadsheet). Las operaciones masivas en `Services/admin.js` ahora leen y guardan el último registro procesado. En `ui.js`, el panel de consola organiza llamadas sucesivas hasta completar el 100% de los registros, mostrando métricas en tiempo real como progreso, lote, registro actual/total, tiempo transcurrido, estimación de tiempo restante (ETA), advertencias y errores.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - OPTIMIZACIÓN DE REORGANIZACIÓN Y EDICIÓN IN-MODAL (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js, api-config.js
+
+**Hallazgos y Resoluciones:**
+1. **Reorganización física y Duplicación de Carpetas:**
+   - Problema: Se creaban carpetas duplicadas (ZNA_dongfeng, ZNA__dongfeng, ZNA(Dongfeng)) o vacías, y se perdía el formato humano de nombres (espacios, paréntesis).
+   - Resolución: Implementada normalización canónica en `getOrCreateSubFolder` en `Services/admin.js`. Compara nombres usando una clave simplificada (`replace(/[^a-z0-9]/g, '')`), detecta equivalentes, elige la de mejor formato, renombra si es necesario y fusiona subcarpetas y archivos de las duplicadas de forma recursiva. Añadido saneamiento de carpetas vacías (`deleteEmptyFoldersRecursively`) con protección de la carpeta de Logos.
+2. **Registro de Progreso por Lotes:**
+   - Problema: El registro de avance volvía a comenzar desde la fila 1 debido a que no guardaba/leía correctamente la fila de detención.
+   - Resolución: Actualizado el administrador de estado `AdminState` para persistir `lote`, `filaInicial`, `ultimaFilaProcesada`, `total` y `estado` de forma precisa en Google Sheets.
+3. **Pérdida de Persistencia In-Modal:**
+   - Problema: Las acciones `updateVehicleField` y `uploadAdminImage` no estaban mapeadas en `ACTION_TO_SERVICE_MAP`, por lo que fallaban de forma silenciosa o usaban el endpoint equivocado.
+   - Resolución: Mapeadas a la acción `ADMIN` en `api-config.js` de forma unificada.
+4. **Indicador Visual de Guardado:**
+   - Problema: Falta de feedback visual durante la comunicación con el servidor al editar.
+   - Resolución: Diseñado `#modal-saving-indicator` flotando a la izquierda en el encabezado del modal. Muestra estados (Guardando..., Procesando..., Guardado correctamente, Error al guardar) con animaciones de spinners en tiempo real.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - OPTIMIZACIÓN DE REORGANIZACIÓN Y EDICIÓN IN-MODAL (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js, api-config.js
+
+**Hallazgos y Resoluciones:**
+1. **Reorganización física y Duplicación de Carpetas:**
+   - Problema: Se creaban carpetas duplicadas (ZNA_dongfeng, ZNA__dongfeng, ZNA(Dongfeng)) o vacías, y se perdía el formato humano de nombres (espacios, paréntesis).
+   - Resolución: Implementada normalización canónica en `getOrCreateSubFolder` en `Services/admin.js`. Compara nombres usando una clave simplificada (`replace(/[^a-z0-9]/g, '')`), detecta equivalentes, elige la de mejor formato, renombra si es necesario y fusiona subcarpetas y archivos de las duplicadas de forma recursiva. Añadido saneamiento de carpetas vacías (`deleteEmptyFoldersRecursively`) con protección de la carpeta de Logos.
+2. **Registro de Progreso por Lotes:**
+   - Problema: El registro de avance volvía a comenzar desde la fila 1 debido a que no guardaba/leía correctamente la fila de detención.
+   - Resolución: Actualizado el administrador de estado `AdminState` para persistir `lote`, `filaInicial`, `ultimaFilaProcesada`, `total` y `estado` de forma precisa en Google Sheets.
+3. **Pérdida de Persistencia In-Modal:**
+   - Problema: Las acciones `updateVehicleField` y `uploadAdminImage` no estaban mapeadas en `ACTION_TO_SERVICE_MAP`, por lo que fallaban de forma silenciosa o usaban el endpoint equivocado.
+   - Resolución: Mapeadas a la acción `ADMIN` en `api-config.js` de forma unificada.
+4. **Indicador Visual de Guardado:**
+   - Problema: Falta de feedback visual durante la comunicación con el servidor al editar.
+   - Resolución: Diseñado `#modal-saving-indicator` flotando a la izquierda en el encabezado del modal. Muestra estados (Guardando..., Procesando..., Guardado correctamente, Error al guardar) con animaciones de spinners en tiempo real.
