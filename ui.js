@@ -2848,12 +2848,12 @@ ${elapsedSec}s
         }
     };
     document.getElementById('btn-admin-normalize-images').onclick = async () => {
-        const reset = confirm("¿Deseas INICIAR LA OPERACIÓN DESDE EL PRINCIPIO (Borrar progreso anterior)? Cancela para CONTINUAR desde el último punto guardado.");
-        await runAction('normalizeImages', { reset: reset });
+        const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
+        await runAction('normalizeImages', { reset: !continueSaved });
     };
     document.getElementById('btn-admin-reorganize-drive').onclick = async () => {
-        const reset = confirm("¿Deseas INICIAR LA OPERACIÓN DESDE EL PRINCIPIO (Borrar progreso anterior)? Cancela para CONTINUAR desde el último punto guardado.");
-        await runAction('reorganizeImagesInDrive', { reset: reset });
+        const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
+        await runAction('reorganizeImagesInDrive', { reset: !continueSaved });
     };
 
     // Botón Agregar corte silencioso

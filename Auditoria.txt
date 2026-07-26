@@ -596,6 +596,22 @@ Estrategia de corrección:
    - Resolución: Diseñado `#modal-saving-indicator` flotando a la izquierda en el encabezado del modal. Muestra estados (Guardando..., Procesando..., Guardado correctamente, Error al guardar) con animaciones de spinners en tiempo real.
 
 --------------------------------------------------
+**AUDITORÍA TÉCNICA - CORRECCIONES ADICIONALES DE REORGANIZACIÓN Y ESPACIO EN DRIVE (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js
+
+**Hallazgos y Resoluciones:**
+1. **Duplicación de imágenes y reducción de almacenamiento (addFile/removeFile):**
+   - Problema: Las operaciones usaban `addFile()` y `removeFile()`. Al ser métodos obsoletos y desaconsejados por Google (que ya no soporta múltiples padres de forma nativa), causaban copias virtuales de las imágenes en Drive, reteniendo el espacio disponible del usuario.
+   - Resolución: Se reemplazaron todas las referencias de movimiento con la llamada oficial `file.moveTo(destinationFolder)`, lo que garantiza un traslado atómico y definitivo de los archivos.
+2. **Proliferación de carpetas vacías:**
+   - Problema: El bucle procesaba todas las filas de la base de datos y creaba carpetas para ellas incluso si la fila no contenía ninguna imagen.
+   - Resolución: Se inyectó un validador que comprueba si la fila tiene al menos una URL de imagen válida. Si no tiene imágenes, se omite de inmediato la creación de la jerarquía de carpetas.
+3. **Reinicios involuntarios por UX confusa:**
+   - Problema: Los diálogos de confirmación pedían presionar 'Aceptar' para empezar de cero, lo que causaba que los usuarios restablecieran accidentalmente el progreso.
+   - Resolución: Se modificó la UX para que 'Aceptar' continúe desde el último estado guardado y 'Cancelar' reinicie desde el principio de forma intuitiva.
+
+--------------------------------------------------
 **AUDITORÍA TÉCNICA - OPTIMIZACIÓN DE REORGANIZACIÓN Y CONSOLA DE DIAGNÓSTICO (25/07/2026)**
 
 **Archivos involucrados:** Services/admin.js, ui.js, api-config.js, index.html

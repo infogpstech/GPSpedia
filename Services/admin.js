@@ -618,6 +618,25 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
     batchData.forEach((row, index) => {
         const rowNum = startIndex + index + 2;
 
+        // --- HIGIENE CRÍTICA: EVITAR POPULAR CARPETAS VACÍAS EN DRIVE ---
+        // Verificar si la fila realmente tiene al menos una imagen antes de crear cualquier estructura de carpetas
+        let hasValidImages = false;
+        imgFields.forEach(field => {
+            const colIndex = COLS_CORTES[field] - 1;
+            const imgUrl = row[colIndex];
+            if (imgUrl && typeof imgUrl === 'string' && imgUrl.startsWith('http')) {
+                const idMatch = imgUrl.match(/id=([a-zA-Z0-9_-]+)/);
+                if (idMatch) {
+                    hasValidImages = true;
+                }
+            }
+        });
+
+        if (!hasValidImages) {
+            logMessage("Reorganización Drive", `Fila ${rowNum}: No tiene imágenes asociadas. Omitiendo creación de carpetas.`);
+            return;
+        }
+
         // Datos reales para las carpetas
         const categoria = sanitizeForFolderDisplay(row[COLS_CORTES.categoria - 1] || 'Sin_Categoria');
         const marca = sanitizeForFolderDisplay(row[COLS_CORTES.marca - 1] || 'Sin_Marca');
@@ -668,16 +687,10 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                         }
 
                         logMessage("Reorganización Drive", `Fila ${rowNum}: Moviendo '${file.getName()}' a carpeta jerárquica...`);
-                        genFolder.addFile(file);
 
-                        // Remover de carpetas padres antiguas
-                        const oldParents = file.getParents();
-                        while (oldParents.hasNext()) {
-                            const oldParent = oldParents.next();
-                            if (oldParent.getId() !== genFolder.getId()) {
-                                oldParent.removeFile(file);
-                            }
-                        }
+                        // --- RESOLUCIÓN DE COPIAS BUGGY: USAR MOVETO EN LUGAR DE ADDFILE/REMOVEFILE ---
+                        // moveTo() es el estándar oficial de Google que previene la duplicación de padres
+                        file.moveTo(genFolder);
                         movedFiles++;
                     } catch (e) {
                         logMessage("Reorganización Drive", `Advertencia: Falla con archivo ID '${id}' (Fila ${rowNum}, Campo ${field}). Causa: ${e.message}`, 0, 0, true);
@@ -821,8 +834,7 @@ function mergeFolders(sourceFolder, targetFolder) {
         while (files.hasNext()) {
             try {
                 const file = files.next();
-                targetFolder.addFile(file);
-                sourceFolder.removeFile(file);
+                file.moveTo(targetFolder);
             } catch(e) {
                 Logger.log("Error moving file in mergeFolders: " + e.message);
             }
