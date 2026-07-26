@@ -698,3 +698,33 @@ Estrategia de corrección:
 6. **Mejora del botón de copia de errores:**
    - Diagnóstico: Copiado desordenado de logs sin poder localizar errores rápidamente.
    - Solución: Clasificación CSS de cada línea y filtrado preciso del texto copiado por el selector `.log-error`.
+
+
+===================================================================
+AUDITORÍA TÉCNICA - ORGANIZACIÓN DE IMÁGENES Y PROCESAMIENTO POR LOTES (19/02/2026)
+===================================================================
+
+ID del hallazgo: H-BATCH-01
+Título: Detención en el último lote con "TypeError: Failed to fetch" (HTTP 500)
+Descripción: El organizador se interrumpe y aborta al llegar al último lote.
+Causa Raíz:
+1. Cuando el proceso alcanza el lote final (`nextIndex >= totalVehicles`), se ejecutan de manera sincrónica tareas sumamente pesadas como `cleanUpDuplicatesInBrandTree` para cada marca activa, y `deleteEmptyFoldersRecursively` en toda la jerarquía de Drive. Estas operaciones realizan cientos de llamadas remotas que exceden fácilmente el límite de tiempo de 6 minutos de Google Apps Script o causan desbordamientos de memoria, lo que genera una excepción de Apps Script interpretada como TypeError: Failed to fetch en el frontend.
+2. No se valida si existen registros pendientes reales antes de iniciar un lote.
+3. El frontend y backend carecen de variables globales de seguimiento para determinar con precisión en qué etapa, lote, fila, y recurso específico ocurrió la excepción en caso de falla.
+
+Estrategia de corrección:
+- Registrar variables globales del estado del proceso (`currentStage`, `currentLote`, `currentFila`, `currentRecurso`) en `Services/admin.js` para enriquecer el manejo de excepciones de `doPost`.
+- Responder un JSON estructurado con detalles completos del diagnóstico en caso de error.
+- En el lote final, evitar la ejecución de tareas lentas / redundantes o diferirlas/ejecutarlas de forma controlada y segura para evitar timeouts. Si no hay registros pendientes reales antes de iniciar un lote, finalizar de inmediato.
+
+ID del hallazgo: H-IMAGE-01
+Título: Imágenes "imagenVehiculo" extraviadas de su carpeta de generación
+Descripción: Numerosas imágenes `imagenVehiculo` conservan su URL en el Spreadsheet, pero el archivo físico no reside en la carpeta de la generación.
+Causa Raíz:
+1. En `handleReorganizeImagesInDrive`, el bucle que recorre `imgFields` procesa las imágenes complementarias (`imgCorte1`, etc.), pero la lógica para ubicar, mover y validar `imagenVehiculo` se omite de forma inadecuada o no garantiza su relocalización en la carpeta de su generación (`genFolder`).
+2. Las expresiones regulares usadas para extraer el ID de la URL (`match(/id=([a-zA-Z0-9_-]+)/)`) son limitadas y no soportan el formato alternativo de URL de Google Drive `file/d/([a-zA-Z0-9_-]+)`.
+
+Estrategia de corrección:
+- Asegurar que `handleReorganizeImagesInDrive` recorra y procese consistentemente todos los campos de imagen incluyendo `imagenVehiculo`.
+- Actualizar los patrones de coincidencia de regex de ID para admitir ambos formatos oficiales de Drive (`id=` y `file/d/`).
+- Aplicar un flujo registro por registro: Leer las URLs de todos los campos, resolver el archivo físico en Drive, determinar la carpeta de la generación correspondiente (`genFolder`), verificar si está allí, y de no ser así, moverlo preservando el ID y la URL pública.

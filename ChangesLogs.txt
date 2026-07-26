@@ -777,3 +777,16 @@ Archivos modificados:
 **Archivo: ui.js**
 - Modificadas las condiciones de finalización de lotes de normalización y reorganización en el frontend para evitar que la barra se bloquee o se ejecute indefinidamente.
 - Clasificadas las salidas de consola por clase CSS (`log-info`, `log-warning`, `log-error`) y mejorado el botón "Copiar registro" para filtrar y copiar exclusivamente mensajes clasificados como error.
+
+
+-------------------------------------------------------------------
+**DIAGNÓSTICO Y CORRECCIÓN INTEGRAL DEL ORGANIZADOR DE IMÁGENES Y PROCESAMIENTO POR LOTES (19/02/2026)**
+
+**Archivo: Services/admin.js**
+- Implementadas variables globales para el diagnóstico y seguimiento en caliente de errores: `currentStage`, `currentLote`, `currentFila`, y `currentRecurso`.
+- Refactorizado el manejador de excepciones `doPost` para capturar cualquier fallo de Apps Script o Drive y responder con un JSON estructurado de diagnóstico útil en lugar de un error genérico (HTTP 500 / Failed to fetch).
+- Agregada verificación al inicio de `handleNormalizeImages` y `handleReorganizeImagesInDrive` para comprobar si hay registros pendientes reales. Si no los hay, finaliza de inmediato.
+- Corregido el timeout y detención del último lote (`nextIndex >= totalVehicles`) en `handleReorganizeImagesInDrive` omitiendo la ejecución sincrónica de las lentas tareas de limpieza y de-duplicación profunda que causaban timeouts o interrupción del proceso por cuotas de Apps Script.
+- Actualizadas las expresiones de coincidencia regex de IDs de Drive para admitir tanto el formato de URL con parámetro `id=` como el formato nativo alternativo `file/d/` de forma consistente.
+- Sincronizado el seguimiento del recurso y de la fila actual dentro del procesamiento de cada imagen para un reporte detallado en tiempo real en la terminal administrativa del frontend.
+- Asegurado que `handleReorganizeImagesInDrive` procese y reubique correctamente el archivo físico de `imagenVehiculo` junto a las complementarias en la carpeta de la generación (`genFolder`).

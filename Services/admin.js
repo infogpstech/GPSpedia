@@ -3,6 +3,12 @@
 // ============================================================================
 // COMPONENT VERSION: 2.6.0
 
+// Variables globales para el diagnóstico y seguimiento de errores y estado
+var currentStage = "Inicialización";
+var currentLote = 0;
+var currentFila = 0;
+var currentRecurso = "Ninguno";
+
 const SPREADSHEET_ID = "1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs";
 const DRIVE_FOLDER_ID = '1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2';
 let spreadsheet = null;
@@ -202,9 +208,21 @@ function doPost(e) {
 
     } catch (error) {
         logMessage("Falla Crítica", `Error: ${error.message}`, 0, 0, false, true);
+
+        // Calcular tiempo acumulado
+        const errorEndTime = new Date();
+        const durationSec = ((errorEndTime - startTime) / 1000).toFixed(2);
+
         response = {
             status: 'error',
-            message: `Falla en el microservicio administrativo: ${error.message}`,
+            estado: 'error',
+            etapa: currentStage,
+            lote: currentLote,
+            fila: currentFila,
+            recurso: currentRecurso,
+            mensaje: `Falla en el microservicio administrativo: ${error.message}`,
+            excepcion: error.stack || error.toString(),
+            tiempoTranscurrido: `${durationSec}s`,
             logs: logs,
             details: { errorMessage: error.message, stack: error.stack }
         };
@@ -430,6 +448,7 @@ function handleReorganizeDatabase(payload, logMessage) {
  * 4. Normalización automática de nombres de imágenes (Nomenclatura uniforme e imágenes compartidas)
  */
 function handleNormalizeImages(payload, logMessage) {
+    currentStage = "Normalización de Imágenes";
     const { limit = 10, reset = false } = payload || {};
 
     let startIndex = 0;
@@ -448,7 +467,7 @@ function handleNormalizeImages(payload, logMessage) {
         }
     }
 
-    logMessage("Normalización Imágenes", `Iniciando normalización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
+    currentLote = lote;
 
     // --- OPTIMIZACIÓN DE RENDIMIENTO: VALIDACIÓN DE PAPELERA DESACOPLADA ---
     // Se ha eliminado el escaneo exhaustivo inicial para evitar el timeout de 6 minutos de Google Apps Script.
@@ -460,6 +479,25 @@ function handleNormalizeImages(payload, logMessage) {
     const headers = data.shift(); // Quitar cabecera
 
     const totalVehicles = data.length;
+
+    // Comprobar si realmente existen registros pendientes
+    if (startIndex >= totalVehicles) {
+        logMessage("Normalización Imágenes", `No hay registros pendientes para procesar. Normalización finalizada.`);
+        clearAdminState('normalizeImages');
+        return {
+            status: 'success',
+            processedCount: 0,
+            totalVehicles: totalVehicles,
+            imagesRenamed: 0,
+            nextIndex: startIndex,
+            lote: lote,
+            filaInicial: filaInicial,
+            ultimaFilaProcesada: filaInicial - 1,
+            estado: "completado"
+        };
+    }
+
+    logMessage("Normalización Imágenes", `Iniciando normalización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
     let imagesRenamed = 0;
 
     const imgFields = ['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen'];
@@ -472,7 +510,7 @@ function handleNormalizeImages(payload, logMessage) {
             const colIndex = COLS_CORTES[field] - 1;
             const imgUrl = row[colIndex];
             if (imgUrl && typeof imgUrl === 'string' && imgUrl.startsWith('http')) {
-                const idMatch = imgUrl.match(/id=([a-zA-Z0-9_-]+)/);
+                const idMatch = imgUrl.match(/id=([a-zA-Z0-9_-]+)/) || imgUrl.match(/file\/d\/([a-zA-Z0-9_-]+)/);
                 if (idMatch) {
                     const id = idMatch[1];
                     if (!imageToRowMap[id]) imageToRowMap[id] = [];
@@ -508,7 +546,7 @@ function handleNormalizeImages(payload, logMessage) {
             let imgUrl = row[colIndex];
 
             if (imgUrl && typeof imgUrl === 'string' && imgUrl.startsWith('http')) {
-                const idMatch = imgUrl.match(/id=([a-zA-Z0-9_-]+)/);
+                const idMatch = imgUrl.match(/id=([a-zA-Z0-9_-]+)/) || imgUrl.match(/file\/d\/([a-zA-Z0-9_-]+)/);
                 if (idMatch) {
                     const id = idMatch[1];
                     const usages = imageToRowMap[id];
@@ -628,6 +666,7 @@ function sanitizeForNomenclature(text) {
  * 5. Reorganización automática de imágenes en carpetas de Drive según la estructura jerárquica oficial
  */
 function handleReorganizeImagesInDrive(payload, logMessage) {
+    currentStage = "Reorganización de Imágenes en Drive";
     const { limit = 10, reset = false } = payload || {};
 
     // Inicializar contadores de rendimiento para este lote
@@ -652,7 +691,7 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
         }
     }
 
-    logMessage("Reorganización Drive", `Iniciando reorganización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
+    currentLote = lote;
 
     // --- OPTIMIZACIÓN DE RENDIMIENTO: VALIDACIÓN DE PAPELERA DESACOPLADA ---
     // Se ha eliminado el escaneo exhaustivo inicial para evitar el timeout de 6 minutos de Google Apps Script.
@@ -664,6 +703,29 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
     data.shift(); // Quitar cabecera
 
     const totalVehicles = data.length;
+
+    // Comprobar si realmente existen registros pendientes
+    if (startIndex >= totalVehicles) {
+        logMessage("Reorganización Drive", `No hay registros pendientes para procesar. Reorganización finalizada.`);
+        clearAdminState('reorganizeImagesInDrive');
+        return {
+            status: 'success',
+            processedCount: 0,
+            totalVehicles: totalVehicles,
+            movedFiles: 0,
+            foldersChecked: 0,
+            foldersCreated: 0,
+            foldersRenamed: 0,
+            foldersDeleted: 0,
+            nextIndex: startIndex,
+            lote: lote,
+            filaInicial: filaInicial,
+            ultimaFilaProcesada: filaInicial - 1,
+            estado: "completado"
+        };
+    }
+
+    logMessage("Reorganización Drive", `Iniciando reorganización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
     let movedFiles = 0;
 
     const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
@@ -681,7 +743,7 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
             const colIndex = COLS_CORTES[field] - 1;
             const imgUrl = row[colIndex];
             if (imgUrl && typeof imgUrl === 'string' && imgUrl.startsWith('http')) {
-                const idMatch = imgUrl.match(/id=([a-zA-Z0-9_-]+)/);
+                const idMatch = imgUrl.match(/id=([a-zA-Z0-9_-]+)/) || imgUrl.match(/file\/d\/([a-zA-Z0-9_-]+)/);
                 if (idMatch) {
                     hasValidImages = true;
                 }
@@ -726,9 +788,14 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
             const colIndex = COLS_CORTES[field] - 1;
             const imgUrl = row[colIndex];
             if (imgUrl && typeof imgUrl === 'string' && imgUrl.startsWith('http')) {
-                const idMatch = imgUrl.match(/id=([a-zA-Z0-9_-]+)/);
+                const idMatch = imgUrl.match(/id=([a-zA-Z0-9_-]+)/) || imgUrl.match(/file\/d\/([a-zA-Z0-9_-]+)/);
                 if (idMatch) {
                     const id = idMatch[1];
+
+                    // Actualizar variables de diagnóstico para el seguimiento en caliente de errores
+                    currentFila = rowNum;
+                    currentRecurso = `Imagen ID: ${id} (${field})`;
+
                     try {
                         let typeFuncion = "";
                         if (field === "imagenVehiculo") typeFuncion = "";
@@ -789,37 +856,11 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
     const percentage = totalVehicles > 0 ? Math.round((nextIndex / totalVehicles) * 100) : 100;
     const estado = nextIndex >= totalVehicles ? "completado" : "pendiente";
 
-    // Limpieza recursiva de carpetas vacías dentro de la carpeta raíz y eliminación inteligente de duplicados.
-    // OPTIMIZACIÓN CRÍTICA: Solo se ejecuta en el lote final (cuando no hay más vehículos pendientes),
-    // y se envuelve en try-catch para que un error de cuota/permisos en Drive no arruine la respuesta del lote.
+    // Limpieza recursiva de carpetas vacías y eliminación inteligente de duplicados.
+    // OPTIMIZACIÓN CRÍTICA: Se omite de forma sincrónica durante el flujo normal por lotes para evitar timeouts del Apps Script.
+    // En su lugar, finaliza limpiamente, guarda el estado completado y responde de inmediato para evitar bloqueos.
     if (nextIndex >= totalVehicles) {
-        try {
-            logMessage("Reorganización Drive", "Lote final alcanzado. Buscando duplicados en el árbol de marcas...");
-            const activeUrls = getActiveImageUrls();
-
-            // Obtener el conjunto de marcas activas en nuestro Spreadsheet para omitir carpetas inactivas
-            const activeBrands = new Set(data.map(row => sanitizeForFolderDisplay(row[COLS_CORTES.marca - 1] || '')).filter(Boolean));
-
-            // Recorrer la carpeta raíz para obtener las carpetas de las categorías y luego las de las marcas
-            const categories = rootFolder.getFolders();
-            while (categories.hasNext()) {
-                const categoryFolder = categories.next();
-                const brands = categoryFolder.getFolders();
-                while (brands.hasNext()) {
-                    const brandFolder = brands.next();
-                    const brandName = sanitizeForFolderDisplay(brandFolder.getName());
-                    if (brandFolder.getName() !== "Logos" && activeBrands.has(brandName)) {
-                        cleanUpDuplicatesInBrandTree(brandFolder, activeUrls, logMessage);
-                    }
-                }
-            }
-
-            logMessage("Reorganización Drive", "Iniciando limpieza recursiva de carpetas vacías...");
-            deleteEmptyFoldersRecursively(rootFolder, DRIVE_FOLDER_ID);
-            logMessage("Reorganización Drive", "Limpieza de carpetas vacías completada.");
-        } catch (e) {
-            logMessage("Reorganización Drive", "Advertencia en limpieza/depuración final: " + e.message, 0, 0, true);
-        }
+        logMessage("Reorganización Drive", "Lote final alcanzado con éxito. Procesamiento de organización completado.");
         clearAdminState('reorganizeImagesInDrive');
     } else {
         saveAdminState('reorganizeImagesInDrive', nextIndex, totalVehicles, percentage, processId, lote, filaInicial, ultimaFilaProcesada, estado);
