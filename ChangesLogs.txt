@@ -742,3 +742,14 @@ Archivos modificados:
 
 **Archivo: ui.js**
 - Mejorada la lógica UX de los diálogos de confirmación para que presionar 'Aceptar' continúe con el progreso guardado y 'Cancelar' inicie desde la Fila 1 de forma intuitiva, resolviendo el problema de reinicio involuntario.
+
+-------------------------------------------------------------------
+**CORRECCIÓN DE TIMEOUT Y DESACOPLE DE PAPELERA - VERSIÓN 2.6.1 (26/07/2026)**
+
+**Archivo: Services/admin.js**
+- **Líneas 173-176:** Añadido el caso `'restoreAllTrashedImages'` en `doPost` para exponer el saneamiento exhaustivo de papelera como una acción independiente aislada bajo demanda.
+- **Líneas 417-422, 621-626:** Se eliminó la invocación obligatoria a `validateAndRestoreAllTrashedImagesInSpreadsheet` al inicio del lote 1 de `handleNormalizeImages` y `handleReorganizeImagesInDrive` para prevenir que las llamadas sincrónicas masivas a `DriveApp` agoten el límite de 6 minutos de Google Apps Script y gatillen un timeout de red ("Failed to fetch") en el primer lote.
+- **Optimización de Papelera:** Se mantiene y confía en el sistema de recuperación "al vuelo" que opera de forma rápida y segura dentro del bucle de procesamiento principal para los archivos que corresponden exclusivamente a las filas activas de cada lote.
+
+**Archivo: Auditoria.txt**
+- Se documentó el análisis de latencia y diagnóstico detallado de la excepción de timeout del backend provocada por el escaneo masivo de papelera, junto con la estrategia para solucionarlo.

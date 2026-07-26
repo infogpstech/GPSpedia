@@ -170,6 +170,10 @@ function doPost(e) {
             case 'reorganizeImagesInDrive':
                 response = handleReorganizeImagesInDrive(payload, logMessage);
                 break;
+            case 'restoreAllTrashedImages':
+                validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage);
+                response = { status: 'success', message: 'Saneamiento exhaustivo de papelera completado exitosamente.' };
+                break;
             case 'addLogo':
                 response = handleAddLogo(payload, logMessage);
                 break;
@@ -413,15 +417,10 @@ function handleNormalizeImages(payload, logMessage) {
 
     logMessage("Normalización Imágenes", `Iniciando normalización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
 
-    // --- INTEGRACIÓN EXHAUSTIVA DE PAPELERA (Paso inicial) ---
-    // Ejecutar el escaneo completo de papelera y restauración en todas las hojas solo en el lote 1 para optimizar el rendimiento
-    if (startIndex === 0 || lote === 1) {
-        try {
-            validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage);
-        } catch (e) {
-            logMessage("Normalización Imágenes", `Advertencia en escaneo de papelera: ${e.message}`, 0, 0, true);
-        }
-    }
+    // --- OPTIMIZACIÓN DE RENDIMIENTO: VALIDACIÓN DE PAPELERA DESACOPLADA ---
+    // Se ha eliminado el escaneo exhaustivo inicial para evitar el timeout de 6 minutos de Google Apps Script.
+    // La recuperación de archivos en la papelera de Drive se realiza de manera segura "al vuelo"
+    // dentro del bucle de procesamiento principal para los archivos correspondientes a este lote.
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();
@@ -622,15 +621,10 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
 
     logMessage("Reorganización Drive", `Iniciando reorganización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
 
-    // --- INTEGRACIÓN EXHAUSTIVA DE PAPELERA (Paso inicial) ---
-    // Ejecutar el escaneo completo de papelera y restauración en todas las hojas solo en el lote 1 para optimizar el rendimiento
-    if (startIndex === 0 || lote === 1) {
-        try {
-            validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage);
-        } catch (e) {
-            logMessage("Reorganización Drive", `Advertencia en escaneo de papelera: ${e.message}`, 0, 0, true);
-        }
-    }
+    // --- OPTIMIZACIÓN DE RENDIMIENTO: VALIDACIÓN DE PAPELERA DESACOPLADA ---
+    // Se ha eliminado el escaneo exhaustivo inicial para evitar el timeout de 6 minutos de Google Apps Script.
+    // La recuperación de archivos en la papelera de Drive se realiza de manera segura "al vuelo"
+    // dentro del bucle de procesamiento principal para los archivos correspondientes a este lote.
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();

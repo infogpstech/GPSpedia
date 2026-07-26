@@ -516,7 +516,7 @@ ID del hallazgo: H-TUTORIAL-VIDEO-01
 Título: Reproducción persistente de vídeos en modales de tutoriales al cerrar
 Descripción: Al cerrar el modal de detalle de tutoriales, el vídeo de YouTube continúa reproduciéndose, el audio permanece activo y los recursos del reproductor no se liberan.
 Causa Raíz:
-  1. En `mostrarDetalleTutorialModal` (archivo `ui.js`), el iframe del vídeo se inserta utilizando un simple string replace de "watch?v=" con "embed/" en lugar del helper unificado `getYouTubeEmbedUrl`, por lo que el parámetro `enablejsapi=1` no se incluye. Esto impide que el reproductor reciba comandos del sistema (como `stopVideo`).
+  1. En `mostrarDetalleTutorialModal` (archivo `ui.js`), el iframe del vídeo se inserta utilizando un simple string replace de "watch?v=" con "embed/" en lugar del helper unificado `getYouTubeEmbedUrl`, por lo que el parámetro `enablejsapi=1` no se incluye. Esto impide que el reproductor reciva comandos del sistema (como `stopVideo`).
   2. Al cerrar el modal de detalles, el contenedor `#detalleCompleto` no destruye el iframe del reproductor, sino que simplemente se oculta la clase `.visible` de `#modalDetalle`. Como consecuencia, el iframe sigue cargado y reproduciendo contenido oculto en segundo plano.
   3. No todos los flujos de cierre (cierre manual, popstate, etc.) llaman a la detención del vídeo del tutorial, y cuando lo intentan, la API de postMessage falla debido a la falta de `enablejsapi=1`.
 Ubicación:
@@ -633,20 +633,29 @@ Estrategia de corrección:
      - Se añadió un resumen acumulativo final (MM:SS) de todas las operaciones físicas realizadas en Drive y errores ocurridos.
 
 --------------------------------------------------
-**AUDITORÍA TÉCNICA - OPTIMIZACIÓN DE REORGANIZACIÓN Y EDICIÓN IN-MODAL (25/07/2026)**
+**AUDITORÍA TÉCNICA - DIAGNÓSTICO DETALLADO DE TIMEOUT POR ESCANEO EXHAUSTIVO DE PAPELERA (26/07/2026)**
 
-**Archivos involucrados:** Services/admin.js, ui.js, api-config.js
+**Archivos involucrados:** Services/admin.js
 
-**Hallazgos y Resoluciones:**
-1. **Reorganización física y Duplicación de Carpetas:**
-   - Problema: Se creaban carpetas duplicadas (ZNA_dongfeng, ZNA__dongfeng, ZNA(Dongfeng)) o vacías, y se perdía el formato humano de nombres (espacios, paréntesis).
-   - Resolución: Implementada normalización canónica en `getOrCreateSubFolder` en `Services/admin.js`. Compara nombres usando una clave simplificada (`replace(/[^a-z0-9]/g, '')`), detecta equivalentes, elige la de mejor formato, renombra si es necesario y fusiona subcarpetas y archivos de las duplicadas de forma recursiva. Añadido saneamiento de carpetas vacías (`deleteEmptyFoldersRecursively`) con protección de la carpeta de Logos.
-2. **Registro de Progreso por Lotes:**
-   - Problema: El registro de avance volvía a comenzar desde la fila 1 debido a que no guardaba/leía correctamente la fila de detención.
-   - Resolución: Actualizado el administrador de estado `AdminState` para persistir `lote`, `filaInicial`, `ultimaFilaProcesada`, `total` y `estado` de forma precisa en Google Sheets.
-3. **Pérdida de Persistencia In-Modal:**
-   - Problema: Las acciones `updateVehicleField` y `uploadAdminImage` no estaban mapeadas en `ACTION_TO_SERVICE_MAP`, por lo que fallaban de forma silenciosa o usaban el endpoint equivocado.
-   - Resolución: Mapeadas a la acción `ADMIN` en `api-config.js` de forma unificada.
-4. **Indicador Visual de Guardado:**
-   - Problema: Falta de feedback visual durante la comunicación con el servidor al editar.
-   - Resolución: Diseñado `#modal-saving-indicator` flotando a la izquierda en el encabezado del modal. Muestra estados (Guardando..., Procesando..., Guardado correctamente, Error al guardar) con animaciones de spinners en tiempo real.
+**Hallazgos y Diagnóstico:**
+1. **Análisis de Falla de Red / Error de Comunicación en Lote 1:**
+   - Detalle del Error: La consola reportó `Failed to fetch` al ejecutar `routeAction` en el primer lote tras un tiempo de ejecución de **361.3s**.
+   - Causa Raíz del Timeout: El límite de ejecución de Google Apps Script para cuentas regulares y Workspace es de exactamente **6 minutos (360 segundos)**. Al superarse este límite, Google aborta abruptamente la solicitud de forma unilateral en el backend, devolviendo una falla de conexión de socket que en el frontend del navegador se captura como un `TypeError: Failed to fetch`.
+   - Culpable del Retraso: En `Services/admin.js`, tanto `handleNormalizeImages` como `handleReorganizeImagesInDrive` llaman de forma obligatoria a `validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage)` al inicio del lote 1 (`startIndex === 0 || lote === 1`).
+   - Overhead de Escaneo: La función `validateAndRestoreAllTrashedImagesInSpreadsheet` recorre celda por celda cada una de las múltiples hojas de la base de datos (Spreadsheet) y, para cada URL de Google Drive que encuentra, realiza una llamada a la API `DriveApp.getFileById(id)` y verifica si está en la papelera con `file.isTrashed()`.
+   - Problema de Latencia: Las llamadas sincrónicas a la API de Drive en Apps Script conllevan una latencia promedio de 200ms a 500ms por archivo. Al ejecutarse de manera masiva y exhaustiva sobre cientos de registros en una sola ejecución sincrónica de Lote 1, la función consume el presupuesto total de 6 minutos de Google Apps Script por completo antes de que el procesamiento de las primeras imágenes del lote siquiera empiece.
+
+**Estrategia de Solución:**
+1. **Desacoplar Escaneo Exhaustivo de Papelera del Lote Inicial:**
+   - Se debe eliminar la llamada obligatoria a `validateAndRestoreAllTrashedImagesInSpreadsheet` al inicio del lote 1 de `handleNormalizeImages` y `handleReorganizeImagesInDrive` en `Services/admin.js`.
+   - El sistema ya es robusto contra la papelera "al vuelo" porque dentro de los bucles de procesamiento principales de cada registro del lote se incluye la verificación y restauración individual de las imágenes del registro:
+     ```javascript
+     if (file.isTrashed()) {
+         logMessage("...", `Fila ${rowNum}: Imagen '${file.getName()}' de la papelera restaurada correctamente.`);
+         file.setTrashed(false);
+     }
+     ```
+     Esto garantiza que todas las imágenes que se van a procesar se recuperen oportunamente del basurero sin tener que escanear todo el Spreadsheet innecesariamente.
+2. **Exponer el Escaneo Exhaustivo como una Acción Administrativa Independiente:**
+   - En `doPost` en `Services/admin.js`, se añadirá la acción `'restoreAllTrashedImages'` que invoque de forma directa, aislada y bajo demanda a `validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage)`.
+   - Esto permite que el Desarrollador ejecute el saneamiento exhaustivo de forma separada del proceso continuo de normalización o reubicación, previniendo cuotas de red y timeouts inesperados en la pila por lotes principal.
