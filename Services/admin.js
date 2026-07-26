@@ -797,6 +797,9 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
             logMessage("Reorganización Drive", "Lote final alcanzado. Buscando duplicados en el árbol de marcas...");
             const activeUrls = getActiveImageUrls();
 
+            // Obtener el conjunto de marcas activas en nuestro Spreadsheet para omitir carpetas inactivas
+            const activeBrands = new Set(data.map(row => sanitizeForFolderDisplay(row[COLS_CORTES.marca - 1] || '')).filter(Boolean));
+
             // Recorrer la carpeta raíz para obtener las carpetas de las categorías y luego las de las marcas
             const categories = rootFolder.getFolders();
             while (categories.hasNext()) {
@@ -804,7 +807,8 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                 const brands = categoryFolder.getFolders();
                 while (brands.hasNext()) {
                     const brandFolder = brands.next();
-                    if (brandFolder.getName() !== "Logos") {
+                    const brandName = sanitizeForFolderDisplay(brandFolder.getName());
+                    if (brandFolder.getName() !== "Logos" && activeBrands.has(brandName)) {
                         cleanUpDuplicatesInBrandTree(brandFolder, activeUrls, logMessage);
                     }
                 }
@@ -853,10 +857,19 @@ function getCanonicalName(name) {
         .trim();
 }
 
+let folderCacheMap = {};
+
 function getOrCreateSubFolder(parentFolder, desiredName) {
+    const parentId = parentFolder.getId();
+    const canonicalDesired = getCanonicalName(desiredName);
+    const cacheKey = `${parentId}_${canonicalDesired}`;
+
+    if (folderCacheMap[cacheKey]) {
+        return folderCacheMap[cacheKey];
+    }
+
     try {
         foldersCheckedCount++;
-        const canonicalDesired = getCanonicalName(desiredName);
         const subFolders = parentFolder.getFolders();
         let matchedFolder = null;
         let foldersToMerge = [];
@@ -918,6 +931,9 @@ function getOrCreateSubFolder(parentFolder, desiredName) {
             }
         }
 
+        if (matchedFolder) {
+            folderCacheMap[cacheKey] = matchedFolder;
+        }
         return matchedFolder;
     } catch (e) {
         Logger.log("Critical error in getOrCreateSubFolder: " + e.message);
