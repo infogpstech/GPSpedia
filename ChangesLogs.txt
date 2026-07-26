@@ -709,3 +709,54 @@ Archivos modificados:
 
 **Archivo: main.js**
 - Agregada interceptación de cierre de modal por popstate/gesto de retroceso para forzar la restauración/cancelación de los cambios in-modal si `window.inEditMode === true`.
+
+-------------------------------------------------------------------
+**REVISIÓN POST COMMIT - OPTIMIZACIÓN DE REORGANIZACIÓN Y CONSOLA DE DIAGNÓSTICO (25/07/2026)**
+
+**Archivo: Services/admin.js**
+- Optimizado el flujo de reorganización de Drive posponiendo el saneamiento y borrado recursivo de carpetas vacías (`deleteEmptyFoldersRecursively`) para que se ejecute únicamente en el lote final del procesamiento masivo (`nextIndex >= totalVehicles`).
+- Envolvió con try-catch localizado todas las operaciones de archivos y carpetas (`getOrCreateSubFolder`, `mergeFolders`, `deleteEmptyFoldersRecursively`) para mitigar fallas catastróficas y capturar de forma segura estadísticas de Drive.
+- Añadidos contadores de rendimiento a nivel de lote: `foldersChecked`, `foldersCreated`, `foldersRenamed` y `foldersDeleted`.
+
+**Archivo: ui.js**
+- Implementado ping de conexión automática (`routeAction('ping')`) al abrir el modal administrativo, calculando y reportando la latencia en milisegundos.
+- Rediseñada la consola para reportar de forma continua en cada lote: la carpeta actual, el archivo actual, la fila actual, el lote actual, el porcentaje, el tiempo transcurrido y la cantidad procesada.
+- Diseñado un bloque estructurado para detallar de manera integral las excepciones capturadas (operación, etapa, recurso, fila, lote, función, código HTTP, mensaje y stack trace de error).
+- Añadido un resumen estadístico de finalización que acumula y detalla las acciones realizadas en Drive y el tiempo total formateado en `MM:SS`.
+- Integrado el disparador de ping en aperturas subsecuentes sin duplicar listeners de eventos.
+
+**Archivo: api-config.js**
+- Mapeada la acción `'ping'` al servicio `'ADMIN'` en la constante `ACTION_TO_SERVICE_MAP`.
+
+**Archivo: index.html**
+- Agregado el botón `#btn-copy-console-log` ("Copiar registro") estilizado con flexbox al lado del título de la consola de diagnóstico en el panel administrativo.
+
+-------------------------------------------------------------------
+**CORRECCIONES ADICIONALES DE REORGANIZACIÓN Y ESPACIO EN DRIVE (25/07/2026)**
+
+**Archivo: Services/admin.js**
+- Sustituidas las llamadas obsoletas y deprecadas de `addFile`/`removeFile` por la API oficial `file.moveTo(genFolder)` para mover las imágenes de forma atómica y definitiva, solucionando la duplicación buggy de padres e impidiendo que se agote el espacio disponible en Google Drive.
+- Implementada higiene contra carpetas vacías: el bucle comprueba si la fila de la hoja de cálculo contiene al menos una URL de imagen válida antes de crear la estructura de carpetas en Drive, evitando poblar el almacenamiento de directorios vacíos.
+- Diseñado e implementado el sistema global de validación y restauración de imágenes de la papelera `validateAndRestoreAllTrashedImagesInSpreadsheet`. Escanea dinámicamente todas las hojas del Spreadsheet, detecta archivos en la papelera de Drive que estén vinculados, los recupera automáticamente mediante `file.setTrashed(false)` y los reubica en su carpeta jerárquica correspondiente.
+- Integrado el control de restauración automática en papelera dentro de las operaciones por lotes `handleNormalizeImages` y `handleReorganizeImagesInDrive`.
+
+**Archivo: ui.js**
+- Mejorada la lógica UX de los diálogos de confirmación para que presionar 'Aceptar' continúe con el progreso guardado y 'Cancelar' inicie desde la Fila 1 de forma intuitiva, resolviendo el problema de reinicio involuntario.
+
+-------------------------------------------------------------------
+**CORRECCIÓN DE TIMEOUT Y DESACOPLE DE PAPELERA - VERSIÓN 2.6.1 (26/07/2026)**
+
+**Archivo: Services/admin.js**
+- **Líneas 173-176:** Añadido el caso `'restoreAllTrashedImages'` en `doPost` para exponer el saneamiento exhaustivo de papelera como una acción independiente aislada bajo demanda.
+- **Líneas 417-422, 621-626:** Se eliminó la invocación obligatoria a `validateAndRestoreAllTrashedImagesInSpreadsheet` al inicio del lote 1 de `handleNormalizeImages` y `handleReorganizeImagesInDrive` para prevenir que las llamadas sincrónicas masivas a `DriveApp` agoten el límite de 6 minutos de Google Apps Script y gatillen un timeout de red ("Failed to fetch") en el primer lote.
+- **Optimización de Papelera:** Se mantiene y confía en el sistema de recuperación "al vuelo" que opera de forma rápida y segura dentro del bucle de procesamiento principal para los archivos que corresponden exclusivamente a las filas activas de cada lote.
+
+**Archivo: Auditoria.txt**
+- Se documentó el análisis de latencia y diagnóstico detallado de la excepción de timeout del backend provocada por el escaneo masivo de papelera, junto con la estrategia para solucionarlo.
+
+**Archivo: index.html**
+- Se añadió un nuevo botón con ID `btn-admin-restore-trash` ("Saneamiento y recuperación de imágenes en papelera") dentro del bloque de mantenimiento en el Panel Administrativo, oculto por defecto mediante `display: none;`.
+
+**Archivo: ui.js**
+- Se vinculó el botón `#btn-admin-restore-trash` para ejecutar la acción de Saneamiento exhaustivo de la papelera (`restoreAllTrashedImages`) de forma separada del flujo continuo de lotes con confirmación interactiva.
+- Implementado event listener `onerror` en `setOptimizedImage` para detectar de manera activa errores de carga de imágenes (lo que indica que la imagen está en la papelera o borrada) y mostrar de forma reactiva el botón `#btn-admin-restore-trash` en el panel administrativo.

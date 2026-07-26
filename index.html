@@ -207,7 +207,10 @@
         <div style="display: flex; gap: 20px; flex-wrap: wrap;">
             <!-- Panel de Consola y Resultados -->
             <div style="flex: 1 1 450px; min-width: 300px; display: flex; flex-direction: column; gap: 15px;">
-                <h4 style="margin: 0;"><i class="fa-solid fa-terminal"></i> Consola de Diagnóstico en Tiempo Real</h4>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin: 0;">
+                    <h4 style="margin: 0;"><i class="fa-solid fa-terminal"></i> Consola de Diagnóstico en Tiempo Real</h4>
+                    <button id="btn-copy-console-log" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8em; margin: 0;"><i class="fa-solid fa-copy"></i> Copiar registro</button>
+                </div>
                 <div id="dev-console-log" style="height: 320px; border: 1px solid #333; border-radius: 8px; background-color: #121212; color: #00ff66; font-family: monospace; padding: 12px; overflow-y: auto; font-size: 0.85rem; line-height: 1.4; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);">
                     [SISTEMA] Consola inicializada. Esperando comando administrativo...
                 </div>
@@ -258,6 +261,7 @@
                         <button id="btn-admin-reorganize-db" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-sort-alpha-down"></i> Reorganizar base de datos alfabéticamente (por Marca)</button>
                         <button id="btn-admin-normalize-images" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-images"></i> Normalizar nomenclatura y deduplicar imágenes en base de datos</button>
                         <button id="btn-admin-reorganize-drive" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-folder-tree"></i> Reorganizar imágenes físicamente en carpetas jerárquicas</button>
+                        <button id="btn-admin-restore-trash" class="btn btn-warning" style="display: none; font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-trash-arrow-up"></i> Saneamiento y recuperación exhaustiva de imágenes en papelera</button>
                         <button id="btn-admin-add-silent-cut" class="btn btn-danger" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-eye-slash"></i> Agregar corte silenciosamente (Panel Administrativo)</button>
                     </div>
 

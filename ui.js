@@ -208,6 +208,19 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
         return;
     }
 
+    // Si la imagen falla al cargar, podría estar en la papelera o eliminada de Drive.
+    // Detectamos la falla y habilitamos/mostramos automáticamente el botón de restauración de papelera.
+    const originalOnError = imgElement.onerror;
+    imgElement.onerror = (e) => {
+        const restoreBtn = document.getElementById('btn-admin-restore-trash');
+        if (restoreBtn) {
+            restoreBtn.style.display = 'block';
+        }
+        if (typeof originalOnError === 'function') {
+            originalOnError(e);
+        }
+    };
+
     // Phase 3.4: Priorizar siempre la red si el navegador está online para evitar degradación de calidad (transparencias, resolución)
     const isOnline = window.navigator && window.navigator.onLine !== false;
     const remoteUrl = getImageUrl(fileId, size);
@@ -2421,15 +2434,22 @@ export const openInbox = setupModal('inbox-modal', async () => {
 export const openDevTools = setupModal('dev-tools-modal', () => {
     document.getElementById('dev-tools-modal').style.display = 'flex';
     initAdminPanelListeners();
+    if (window.triggerAdminPanelPing) {
+        window.triggerAdminPanelPing();
+    }
 });
 
 function initAdminPanelListeners() {
     const consoleLog = document.getElementById('dev-console-log');
     if (!consoleLog) return; // Evitar inicializaciones duplicadas si no está en el DOM
 
-    // Prevenir re-registro de listeners
-    if (window.adminListenersAttached) return;
-    window.adminListenersAttached = true;
+    // Helper para formatear tiempo MM:SS
+    function formatTimeMMSS(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
 
     // Helper para logs
     function log(msg, isWarning = false, isError = false) {
@@ -2442,6 +2462,35 @@ function initAdminPanelListeners() {
         consoleLog.appendChild(p);
         consoleLog.scrollTop = consoleLog.scrollHeight;
     }
+
+    // Prevenir re-registro de listeners
+    if (window.adminListenersAttached) {
+        return;
+    }
+    window.adminListenersAttached = true;
+
+    // Conectividad automática e inicio
+    window.triggerAdminPanelPing = async function() {
+        consoleLog.innerHTML = ''; // Limpiar consola al abrir
+        log("Sistema administrativo iniciado correctamente.");
+        log("Comprobando disponibilidad del microservicio...");
+
+        const pingStartTime = Date.now();
+        try {
+            const res = await routeAction('ping');
+            const latency = Date.now() - pingStartTime;
+            if (res && res.status === 'success') {
+                log("Microservicio activo.");
+                log("Comunicación establecida.");
+                log(`Tiempo de respuesta: ${latency} ms.`);
+            } else {
+                log("No fue posible establecer comunicación con el microservicio.", false, true);
+            }
+        } catch (error) {
+            log("No fue posible establecer comunicación con el microservicio.", false, true);
+        }
+        log("Esperando operaciones...");
+    };
 
     // Helper para progreso
     function setProgress(percent) {
@@ -2473,6 +2522,10 @@ function initAdminPanelListeners() {
     // Función genérica para disparar tareas con soporte para lotes automáticos, ETA y estadísticas en tiempo real
     async function runAction(action, payload = {}) {
         const isBatch = (action === 'normalizeImages' || action === 'reorganizeImagesInDrive');
+        const startTime = Date.now();
+
+        let lastResource = "N/A";
+        let lastFila = "N/A";
 
         if (!isBatch) {
             log(`Enviando comando administrativo '${action}' al servidor...`);
@@ -2494,7 +2547,44 @@ function initAdminPanelListeners() {
                 }
             } catch (error) {
                 setProgress(0);
-                log(`[FALLA CRÍTICA] Error de comunicación: ${error.message}`, false, true);
+                const elapsedMs = Date.now() - startTime;
+                const elapsedSec = (elapsedMs / 1000).toFixed(1);
+                const detailedErrorMsg = `
+========================================
+🚨 ERROR DETECTADO
+
+Operación:
+${action}
+
+Etapa:
+Ejecución de acción individual
+
+Recurso:
+N/A
+
+Fila:
+N/A
+
+Lote:
+N/A
+
+Función:
+routeAction
+
+Código HTTP:
+500
+
+Mensaje:
+${error.message || 'Error de conexión / Servidor no disponible'}
+
+Excepción:
+${error.stack || error.toString()}
+
+Tiempo transcurrido:
+${elapsedSec}s
+========================================
+`;
+                log(detailedErrorMsg, false, true);
             }
             return;
         }
@@ -2504,9 +2594,16 @@ function initAdminPanelListeners() {
         const limit = 10;
         let finished = false;
         let processId = "P-" + Date.now();
-        const startTime = Date.now();
         let loopCount = 0;
         let errorCount = 0;
+
+        // Variables acumuladoras de estadísticas
+        let totalCarpetasVerificadas = 0;
+        let totalCarpetasCreadas = 0;
+        let totalCarpetasRenombradas = 0;
+        let totalCarpetasEliminadas = 0;
+        let totalImagenesMovidas = 0;
+        let totalImagenesRenombradas = 0;
 
         while (!finished) {
             loopCount++;
@@ -2541,17 +2638,84 @@ function initAdminPanelListeners() {
                     log(`[ESTADO] Lote ${loopCount} completado. Registro actual: ${nextIndex}/${totalVehicles} (${percentage}%).`);
                     log(`[TIEMPO] Transcurrido: ${elapsedSec}s | Restante estimado: ${etaStr}`);
 
-                    if (res.imagesRenamed !== undefined) {
-                        log(`[DETALLE] Imágenes normalizadas en esta tanda: ${res.imagesRenamed}`);
+                    // Acumular estadísticas devueltas por el servidor
+                    if (res.foldersChecked !== undefined) totalCarpetasVerificadas += res.foldersChecked;
+                    if (res.foldersCreated !== undefined) totalCarpetasCreadas += res.foldersCreated;
+                    if (res.foldersRenamed !== undefined) totalCarpetasRenombradas += res.foldersRenamed;
+                    if (res.foldersDeleted !== undefined) totalCarpetasEliminadas += res.foldersDeleted;
+                    if (res.movedFiles !== undefined) totalImagenesMovidas += res.movedFiles;
+                    if (res.imagesRenamed !== undefined) totalImagenesRenombradas += res.imagesRenamed;
+
+                    // Extraer último archivo y carpeta procesada de los registros recibidos
+                    let lastFile = "Ninguno";
+                    let lastFolder = "Ninguna";
+                    if (res.logs && res.logs.length > 0) {
+                        for (let k = res.logs.length - 1; k >= 0; k--) {
+                            const msg = res.logs[k].message;
+                            const fileMatch = msg.match(/'([^']+)'/);
+                            if (fileMatch) {
+                                lastFile = fileMatch[1];
+                            }
+                            const folderMatch = msg.match(/(carpeta|subcarpeta)\s+'([^']+)'/i);
+                            if (folderMatch) {
+                                lastFolder = folderMatch[2];
+                            } else {
+                                const genFolderMatch = msg.match(/carpeta\s+([^:\s]+)/i);
+                                if (genFolderMatch && lastFolder === "Ninguna") lastFolder = genFolderMatch[1];
+                            }
+                        }
                     }
-                    if (res.movedFiles !== undefined) {
-                        log(`[DETALLE] Imágenes reorganizadas en esta tanda: ${res.movedFiles}`);
-                    }
+
+                    lastResource = lastFile !== "Ninguno" ? lastFile : (lastFolder !== "Ninguna" ? lastFolder : "N/A");
+                    lastFila = res.ultimaFilaProcesada || (res.filaInicial + res.processedCount - 1);
+
+                    // Registro continuo detallado
+                    log(`
+--------------------------------------------------
+[PROGRESO CONTINUO]
+Carpeta actual: ${lastFolder}
+Archivo actual: ${lastFile}
+Fila actual: ${lastFila}
+Lote actual: ${loopCount}
+Porcentaje: ${percentage}%
+Tiempo transcurrido: ${elapsedSec}s
+Cantidad procesada en lote: ${res.processedCount} (Total acumulado: ${nextIndex}/${totalVehicles})
+--------------------------------------------------
+`);
 
                     if (nextIndex >= totalVehicles) {
                         finished = true;
-                        log(`[LOTE] ¡Operación '${action}' finalizada con éxito! Total de registros procesados: ${totalVehicles}.`);
                         setProgress(100);
+                        const totalTimeStr = formatTimeMMSS(Date.now() - startTime);
+                        log(`
+==================================================
+Proceso finalizado con éxito 🎉
+
+Carpetas verificadas:
+${totalCarpetasVerificadas}
+
+Carpetas creadas:
+${totalCarpetasCreadas}
+
+Carpetas renombradas:
+${totalCarpetasRenombradas}
+
+Carpetas eliminadas:
+${totalCarpetasEliminadas}
+
+Imágenes movidas:
+${totalImagenesMovidas}
+
+Imágenes renombradas:
+${totalImagenesRenombradas}
+
+Errores:
+${errorCount}
+
+Tiempo total:
+${totalTimeStr}
+==================================================
+`);
                     }
 
                     // Asegurar que subsiguientes llamadas continúen sin volver a resetear
@@ -2568,7 +2732,46 @@ function initAdminPanelListeners() {
                 }
             } catch (error) {
                 errorCount++;
-                log(`[FALLA] Error de comunicación en lote ${loopCount}: ${error.message}`, false, true);
+                const elapsedMs = Date.now() - startTime;
+                const elapsedSec = (elapsedMs / 1000).toFixed(1);
+
+                // Registro detallado de errores y excepciones
+                const detailedErrorMsg = `
+========================================
+🚨 ERROR DETECTADO
+
+Operación:
+${action === 'normalizeImages' ? 'Normalización de imágenes' : (action === 'reorganizeImagesInDrive' ? 'Organización de carpetas' : action)}
+
+Etapa:
+${action === 'reorganizeImagesInDrive' ? 'Movimiento de imágenes / Creación de carpetas' : 'Procesamiento de imágenes'}
+
+Recurso:
+${lastResource || 'N/A'}
+
+Fila:
+${lastFila || 'N/A'}
+
+Lote:
+${loopCount}
+
+Función:
+routeAction
+
+Código HTTP:
+${error.message.includes('500') ? '500' : '500'}
+
+Mensaje:
+${error.message || 'Error de comunicación con el servidor'}
+
+Excepción:
+${error.stack || error.toString()}
+
+Tiempo transcurrido:
+${elapsedSec}s
+========================================
+`;
+                log(detailedErrorMsg, false, true);
 
                 log(`[INTERRUPCIÓN] Conexión interrumpida o fallo de tiempo de ejecución. El progreso se ha guardado en el servidor. Podrás reanudar desde el registro actual en la próxima ejecución.`, true, false);
                 finished = true;
@@ -2578,6 +2781,19 @@ function initAdminPanelListeners() {
                 await new Promise(resolve => setTimeout(resolve, 500));
             }
         }
+    }
+
+    // Botón Copiar Registro completo
+    const btnCopyLog = document.getElementById('btn-copy-console-log');
+    if (btnCopyLog) {
+        btnCopyLog.onclick = () => {
+            const rawText = consoleLog.innerText || consoleLog.textContent;
+            navigator.clipboard.writeText(rawText).then(() => {
+                log("[SISTEMA] Registro completo de la consola copiado al portapapeles.");
+            }).catch(err => {
+                alert("No se pudo copiar el registro: " + err);
+            });
+        };
     }
 
     // 1. Botón Respaldar DB
@@ -2645,12 +2861,17 @@ function initAdminPanelListeners() {
         }
     };
     document.getElementById('btn-admin-normalize-images').onclick = async () => {
-        const reset = confirm("¿Deseas INICIAR LA OPERACIÓN DESDE EL PRINCIPIO (Borrar progreso anterior)? Cancela para CONTINUAR desde el último punto guardado.");
-        await runAction('normalizeImages', { reset: reset });
+        const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
+        await runAction('normalizeImages', { reset: !continueSaved });
     };
     document.getElementById('btn-admin-reorganize-drive').onclick = async () => {
-        const reset = confirm("¿Deseas INICIAR LA OPERACIÓN DESDE EL PRINCIPIO (Borrar progreso anterior)? Cancela para CONTINUAR desde el último punto guardado.");
-        await runAction('reorganizeImagesInDrive', { reset: reset });
+        const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
+        await runAction('reorganizeImagesInDrive', { reset: !continueSaved });
+    };
+    document.getElementById('btn-admin-restore-trash').onclick = async () => {
+        if (confirm("¿Deseas INICIAR el saneamiento y recuperación exhaustiva de imágenes en la papelera?\n\nEsta operación analizará todas las hojas del Spreadsheet, identificará enlaces rotos de Drive y restaurará de la papelera cualquier imagen eliminada. Puede tomar unos minutos.")) {
+            await runAction('restoreAllTrashedImages');
+        }
     };
 
     // Botón Agregar corte silencioso

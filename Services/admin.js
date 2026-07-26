@@ -146,6 +146,9 @@ function doPost(e) {
         logMessage("Inicio", `Iniciando acción administrativa: ${action}`);
 
         switch (action) {
+            case 'ping':
+                response = { status: 'success', message: 'pong' };
+                break;
             case 'backupDatabase':
                 response = handleBackupDatabase(payload, logMessage);
                 break;
@@ -166,6 +169,10 @@ function doPost(e) {
                 break;
             case 'reorganizeImagesInDrive':
                 response = handleReorganizeImagesInDrive(payload, logMessage);
+                break;
+            case 'restoreAllTrashedImages':
+                validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage);
+                response = { status: 'success', message: 'Saneamiento exhaustivo de papelera completado exitosamente.' };
                 break;
             case 'addLogo':
                 response = handleAddLogo(payload, logMessage);
@@ -409,6 +416,12 @@ function handleNormalizeImages(payload, logMessage) {
     }
 
     logMessage("Normalización Imágenes", `Iniciando normalización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
+
+    // --- OPTIMIZACIÓN DE RENDIMIENTO: VALIDACIÓN DE PAPELERA DESACOPLADA ---
+    // Se ha eliminado el escaneo exhaustivo inicial para evitar el timeout de 6 minutos de Google Apps Script.
+    // La recuperación de archivos en la papelera de Drive se realiza de manera segura "al vuelo"
+    // dentro del bucle de procesamiento principal para los archivos correspondientes a este lote.
+
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();
     const headers = data.shift(); // Quitar cabecera
@@ -468,6 +481,13 @@ function handleNormalizeImages(payload, logMessage) {
                     const usages = imageToRowMap[id];
                     try {
                         const file = DriveApp.getFileById(id);
+
+                        // --- INTEGRACIÓN: VALIDACIÓN Y RECUPERACIÓN DE LA PAPELERA EN EL BUCLE ---
+                        if (file.isTrashed()) {
+                            logMessage("Normalización Imágenes", `Fila ${rowNum}: Imagen '${file.getName()}' de la papelera restaurada correctamente.`);
+                            file.setTrashed(false);
+                        }
+
                         let fileToProcess = file;
 
                         // Determinar el tipoFuncion de nomenclatura según el campo
@@ -577,6 +597,12 @@ function sanitizeForNomenclature(text) {
 function handleReorganizeImagesInDrive(payload, logMessage) {
     const { limit = 10, reset = false } = payload || {};
 
+    // Inicializar contadores de rendimiento para este lote
+    foldersCheckedCount = 0;
+    foldersCreatedCount = 0;
+    foldersRenamedCount = 0;
+    foldersDeletedCount = 0;
+
     let startIndex = 0;
     let lote = 1;
     let filaInicial = 2;
@@ -594,6 +620,12 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
     }
 
     logMessage("Reorganización Drive", `Iniciando reorganización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
+
+    // --- OPTIMIZACIÓN DE RENDIMIENTO: VALIDACIÓN DE PAPELERA DESACOPLADA ---
+    // Se ha eliminado el escaneo exhaustivo inicial para evitar el timeout de 6 minutos de Google Apps Script.
+    // La recuperación de archivos en la papelera de Drive se realiza de manera segura "al vuelo"
+    // dentro del bucle de procesamiento principal para los archivos correspondientes a este lote.
+
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();
     data.shift(); // Quitar cabecera
@@ -608,6 +640,25 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
 
     batchData.forEach((row, index) => {
         const rowNum = startIndex + index + 2;
+
+        // --- HIGIENE CRÍTICA: EVITAR POPULAR CARPETAS VACÍAS EN DRIVE ---
+        // Verificar si la fila realmente tiene al menos una imagen antes de crear cualquier estructura de carpetas
+        let hasValidImages = false;
+        imgFields.forEach(field => {
+            const colIndex = COLS_CORTES[field] - 1;
+            const imgUrl = row[colIndex];
+            if (imgUrl && typeof imgUrl === 'string' && imgUrl.startsWith('http')) {
+                const idMatch = imgUrl.match(/id=([a-zA-Z0-9_-]+)/);
+                if (idMatch) {
+                    hasValidImages = true;
+                }
+            }
+        });
+
+        if (!hasValidImages) {
+            logMessage("Reorganización Drive", `Fila ${rowNum}: No tiene imágenes asociadas. Omitiendo creación de carpetas.`);
+            return;
+        }
 
         // Datos reales para las carpetas
         const categoria = sanitizeForFolderDisplay(row[COLS_CORTES.categoria - 1] || 'Sin_Categoria');
@@ -641,6 +692,13 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                     const id = idMatch[1];
                     try {
                         const file = DriveApp.getFileById(id);
+
+                        // --- INTEGRACIÓN: VALIDACIÓN Y RECUPERACIÓN DE LA PAPELERA EN EL BUCLE ---
+                        if (file.isTrashed()) {
+                            logMessage("Reorganización Drive", `Fila ${rowNum}: Imagen '${file.getName()}' de la papelera restaurada correctamente.`);
+                            file.setTrashed(false);
+                        }
+
                         const currentParents = file.getParents();
                         let alreadyInPlace = false;
 
@@ -659,16 +717,10 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                         }
 
                         logMessage("Reorganización Drive", `Fila ${rowNum}: Moviendo '${file.getName()}' a carpeta jerárquica...`);
-                        genFolder.addFile(file);
 
-                        // Remover de carpetas padres antiguas
-                        const oldParents = file.getParents();
-                        while (oldParents.hasNext()) {
-                            const oldParent = oldParents.next();
-                            if (oldParent.getId() !== genFolder.getId()) {
-                                oldParent.removeFile(file);
-                            }
-                        }
+                        // --- RESOLUCIÓN DE COPIAS BUGGY: USAR MOVETO EN LUGAR DE ADDFILE/REMOVEFILE ---
+                        // moveTo() es el estándar oficial de Google que previene la duplicación de padres
+                        file.moveTo(genFolder);
                         movedFiles++;
                     } catch (e) {
                         logMessage("Reorganización Drive", `Advertencia: Falla con archivo ID '${id}' (Fila ${rowNum}, Campo ${field}). Causa: ${e.message}`, 0, 0, true);
@@ -678,28 +730,37 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
         });
     });
 
-    // Limpieza recursiva de carpetas vacías dentro de la carpeta raíz
-    logMessage("Reorganización Drive", "Iniciando limpieza de carpetas vacías...");
-    deleteEmptyFoldersRecursively(rootFolder, DRIVE_FOLDER_ID);
-    logMessage("Reorganización Drive", "Limpieza de carpetas vacías completada.");
-
     const nextIndex = startIndex + batchData.length;
     const ultimaFilaProcesada = startIndex + batchData.length + 1;
     const percentage = totalVehicles > 0 ? Math.round((nextIndex / totalVehicles) * 100) : 100;
     const estado = nextIndex >= totalVehicles ? "completado" : "pendiente";
 
+    // Limpieza recursiva de carpetas vacías dentro de la carpeta raíz.
+    // OPTIMIZACIÓN CRÍTICA: Solo se ejecuta en el lote final (cuando no hay más vehículos pendientes),
+    // y se envuelve en try-catch para que un error de cuota/permisos en Drive no arruine la respuesta del lote.
     if (nextIndex >= totalVehicles) {
+        try {
+            logMessage("Reorganización Drive", "Lote final alcanzado. Iniciando limpieza recursiva de carpetas vacías...");
+            deleteEmptyFoldersRecursively(rootFolder, DRIVE_FOLDER_ID);
+            logMessage("Reorganización Drive", "Limpieza de carpetas vacías completada.");
+        } catch (e) {
+            logMessage("Reorganización Drive", "Advertencia en limpieza de carpetas vacías: " + e.message, 0, 0, true);
+        }
         clearAdminState('reorganizeImagesInDrive');
     } else {
         saveAdminState('reorganizeImagesInDrive', nextIndex, totalVehicles, percentage, processId, lote, filaInicial, ultimaFilaProcesada, estado);
     }
 
-    logMessage("Reorganización Drive", `Lote ${lote} finalizado. Filas del ${filaInicial} al ${ultimaFilaProcesada} procesadas. Archivos movidos: ${movedFiles}`);
+    logMessage("Reorganización Drive", `Lote ${lote} finalizado. Filas del ${filaInicial} al ${ultimaFilaProcesada} procesadas. Archivos movidos: ${movedFiles}. Carpetas creadas: ${foldersCreatedCount}, renombradas: ${foldersRenamedCount}, eliminadas: ${foldersDeletedCount}`);
     return {
         status: 'success',
         processedCount: batchData.length,
         totalVehicles: totalVehicles,
         movedFiles: movedFiles,
+        foldersChecked: foldersCheckedCount,
+        foldersCreated: foldersCreatedCount,
+        foldersRenamed: foldersRenamedCount,
+        foldersDeleted: foldersDeletedCount,
         nextIndex: nextIndex,
         lote: lote,
         filaInicial: filaInicial,
@@ -707,6 +768,12 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
         estado: estado
     };
 }
+
+// Contadores de rendimiento para el lote actual
+let foldersCheckedCount = 0;
+let foldersCreatedCount = 0;
+let foldersRenamedCount = 0;
+let foldersDeletedCount = 0;
 
 function getCanonicalName(name) {
     if (!name) return "";
@@ -717,82 +784,160 @@ function getCanonicalName(name) {
 }
 
 function getOrCreateSubFolder(parentFolder, desiredName) {
-    const canonicalDesired = getCanonicalName(desiredName);
-    const subFolders = parentFolder.getFolders();
-    let matchedFolder = null;
-    let foldersToMerge = [];
+    try {
+        foldersCheckedCount++;
+        const canonicalDesired = getCanonicalName(desiredName);
+        const subFolders = parentFolder.getFolders();
+        let matchedFolder = null;
+        let foldersToMerge = [];
 
-    while (subFolders.hasNext()) {
-        const folder = subFolders.next();
-        const canonicalCurrent = getCanonicalName(folder.getName());
-        if (canonicalCurrent === canonicalDesired) {
-            foldersToMerge.push(folder);
-        }
-    }
-
-    if (foldersToMerge.length > 0) {
-        // Priorizar la carpeta que tenga el mejor formato visual (frecuencia de underscores más baja)
-        foldersToMerge.sort((a, b) => {
-            const nameA = a.getName();
-            const nameB = b.getName();
-            const underscoresA = (nameA.match(/_/g) || []).length;
-            const underscoresB = (nameB.match(/_/g) || []).length;
-            if (underscoresA !== underscoresB) {
-                return underscoresA - underscoresB; // Menos underscores primero
+        while (subFolders.hasNext()) {
+            const folder = subFolders.next();
+            const canonicalCurrent = getCanonicalName(folder.getName());
+            if (canonicalCurrent === canonicalDesired) {
+                foldersToMerge.push(folder);
             }
-            const humanA = (nameA.match(/[\s()]/g) || []).length;
-            const humanB = (nameB.match(/[\s()]/g) || []).length;
-            return humanB - humanA; // Más espacios y paréntesis primero
-        });
-
-        matchedFolder = foldersToMerge[0];
-
-        // Renombrar la carpeta seleccionada si desiredName está mejor formateado
-        const matchedName = matchedFolder.getName();
-        const desiredUnderscores = (desiredName.match(/_/g) || []).length;
-        const matchedUnderscores = (matchedName.match(/_/g) || []).length;
-        if (desiredUnderscores < matchedUnderscores) {
-            matchedFolder.setName(desiredName);
         }
 
-        // Fusionar subcarpetas y archivos de los duplicados restantes
-        for (let i = 1; i < foldersToMerge.length; i++) {
-            const extraFolder = foldersToMerge[i];
-            mergeFolders(extraFolder, matchedFolder);
+        if (foldersToMerge.length > 0) {
+            // Priorizar la carpeta que tenga el mejor formato visual (frecuencia de underscores más baja)
+            foldersToMerge.sort((a, b) => {
+                const nameA = a.getName();
+                const nameB = b.getName();
+                const underscoresA = (nameA.match(/_/g) || []).length;
+                const underscoresB = (nameB.match(/_/g) || []).length;
+                if (underscoresA !== underscoresB) {
+                    return underscoresA - underscoresB; // Menos underscores primero
+                }
+                const humanA = (nameA.match(/[\s()]/g) || []).length;
+                const humanB = (nameB.match(/[\s()]/g) || []).length;
+                return humanB - humanA; // Más espacios y paréntesis primero
+            });
+
+            matchedFolder = foldersToMerge[0];
+
+            // Renombrar la carpeta seleccionada si desiredName está mejor formateado
+            const matchedName = matchedFolder.getName();
+            const desiredUnderscores = (desiredName.match(/_/g) || []).length;
+            const matchedUnderscores = (matchedName.match(/_/g) || []).length;
+            if (desiredUnderscores < matchedUnderscores) {
+                try {
+                    matchedFolder.setName(desiredName);
+                    foldersRenamedCount++;
+                } catch(e) {
+                    Logger.log("Error renaming folder: " + e.message);
+                }
+            }
+
+            // Fusionar subcarpetas y archivos de los duplicados restantes
+            for (let i = 1; i < foldersToMerge.length; i++) {
+                const extraFolder = foldersToMerge[i];
+                try {
+                    mergeFolders(extraFolder, matchedFolder);
+                } catch(e) {
+                    Logger.log("Error merging folders: " + e.message);
+                }
+            }
+        } else {
+            try {
+                matchedFolder = parentFolder.createFolder(desiredName);
+                foldersCreatedCount++;
+            } catch(e) {
+                Logger.log("Error creating subfolder " + desiredName + ": " + e.message);
+                return parentFolder;
+            }
         }
-    } else {
-        matchedFolder = parentFolder.createFolder(desiredName);
+
+        return matchedFolder;
+    } catch (e) {
+        Logger.log("Critical error in getOrCreateSubFolder: " + e.message);
+        return parentFolder;
     }
-
-    return matchedFolder;
 }
 
 function mergeFolders(sourceFolder, targetFolder) {
-    if (sourceFolder.getId() === targetFolder.getId()) return;
-
-    // Mover archivos
-    const files = sourceFolder.getFiles();
-    while (files.hasNext()) {
-        const file = files.next();
-        targetFolder.addFile(file);
-        sourceFolder.removeFile(file);
-    }
-
-    // Fusionar subcarpetas de manera recursiva
-    const subFolders = sourceFolder.getFolders();
-    while (subFolders.hasNext()) {
-        const sub = subFolders.next();
-        const subName = sub.getName();
-        const targetSub = getOrCreateSubFolder(targetFolder, subName);
-        mergeFolders(sub, targetSub);
-    }
-
-    // Eliminar carpeta origen duplicada ya vacía
     try {
-        sourceFolder.setTrashed(true);
+        if (sourceFolder.getId() === targetFolder.getId()) return;
+
+        // Mover archivos
+        const files = sourceFolder.getFiles();
+        while (files.hasNext()) {
+            try {
+                const file = files.next();
+                file.moveTo(targetFolder);
+            } catch(e) {
+                Logger.log("Error moving file in mergeFolders: " + e.message);
+            }
+        }
+
+        // Fusionar subcarpetas de manera recursiva
+        const subFolders = sourceFolder.getFolders();
+        while (subFolders.hasNext()) {
+            try {
+                const sub = subFolders.next();
+                const subName = sub.getName();
+                const targetSub = getOrCreateSubFolder(targetFolder, subName);
+                mergeFolders(sub, targetSub);
+            } catch(e) {
+                Logger.log("Error merging subfolders in mergeFolders: " + e.message);
+            }
+        }
+
+        // Eliminar carpeta origen duplicada ya vacía
+        try {
+            sourceFolder.setTrashed(true);
+            foldersDeletedCount++;
+        } catch (e) {
+            Logger.log("Error trashing merged folder: " + e.message);
+        }
     } catch (e) {
-        Logger.log("Error trashing merged folder: " + e.message);
+        Logger.log("Error in mergeFolders: " + e.message);
     }
+}
+
+function validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage) {
+    logMessage("Validación de Papelera", "Iniciando escaneo preventivo de todas las URL de imágenes en todas las hojas de la base de datos...");
+
+    const spreadsheet = getSpreadsheet();
+    const sheets = spreadsheet.getSheets();
+    let restoredCount = 0;
+    let checkedUrls = 0;
+
+    sheets.forEach(sheet => {
+        const sheetName = sheet.getName();
+        // Omitir hojas administrativas o de log internas
+        if (sheetName === SHEET_NAMES.ADMIN_STATE || sheetName === SHEET_NAMES.LOGS || sheetName === "Logs" || sheetName === "Feedbacks" || sheetName === "Feedback") {
+            return;
+        }
+
+        const data = sheet.getDataRange().getValues();
+        for (let rowIdx = 0; rowIdx < data.length; rowIdx++) {
+            const rowNum = rowIdx + 1;
+            const cols = data[rowIdx];
+            for (let colIdx = 0; colIdx < cols.length; colIdx++) {
+                const value = cols[colIdx];
+                if (value && typeof value === 'string' && value.indexOf('id=') !== -1) {
+                    const idMatch = value.match(/id=([a-zA-Z0-9_-]+)/);
+                    if (idMatch) {
+                        const id = idMatch[1];
+                        checkedUrls++;
+                        try {
+                            const file = DriveApp.getFileById(id);
+                            if (file.isTrashed()) {
+                                logMessage("Validación de Papelera", `Higiene: El archivo '${file.getName()}' de la hoja '${sheetName}' (Fila ${rowNum}, Col ${colIdx + 1}) estaba en la papelera. Recuperándolo...`);
+                                file.setTrashed(false);
+                                restoredCount++;
+                            }
+                        } catch (e) {
+                            // Ignorar si el ID no es accesible o no es un archivo de Drive real
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    logMessage("Validación de Papelera", `Escaneo completo de la papelera finalizado. Enlaces verificados: ${checkedUrls}. Archivos restaurados: ${restoredCount}.`);
 }
 
 function deleteEmptyFoldersRecursively(folder, rootDriveFolderId) {
