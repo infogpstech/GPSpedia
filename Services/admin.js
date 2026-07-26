@@ -412,6 +412,17 @@ function handleNormalizeImages(payload, logMessage) {
     }
 
     logMessage("Normalización Imágenes", `Iniciando normalización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
+
+    // --- INTEGRACIÓN EXHAUSTIVA DE PAPELERA (Paso inicial) ---
+    // Ejecutar el escaneo completo de papelera y restauración en todas las hojas solo en el lote 1 para optimizar el rendimiento
+    if (startIndex === 0 || lote === 1) {
+        try {
+            validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage);
+        } catch (e) {
+            logMessage("Normalización Imágenes", `Advertencia en escaneo de papelera: ${e.message}`, 0, 0, true);
+        }
+    }
+
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();
     const headers = data.shift(); // Quitar cabecera
@@ -471,6 +482,13 @@ function handleNormalizeImages(payload, logMessage) {
                     const usages = imageToRowMap[id];
                     try {
                         const file = DriveApp.getFileById(id);
+
+                        // --- INTEGRACIÓN: VALIDACIÓN Y RECUPERACIÓN DE LA PAPELERA EN EL BUCLE ---
+                        if (file.isTrashed()) {
+                            logMessage("Normalización Imágenes", `Fila ${rowNum}: Imagen '${file.getName()}' de la papelera restaurada correctamente.`);
+                            file.setTrashed(false);
+                        }
+
                         let fileToProcess = file;
 
                         // Determinar el tipoFuncion de nomenclatura según el campo
@@ -603,6 +621,17 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
     }
 
     logMessage("Reorganización Drive", `Iniciando reorganización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
+
+    // --- INTEGRACIÓN EXHAUSTIVA DE PAPELERA (Paso inicial) ---
+    // Ejecutar el escaneo completo de papelera y restauración en todas las hojas solo en el lote 1 para optimizar el rendimiento
+    if (startIndex === 0 || lote === 1) {
+        try {
+            validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage);
+        } catch (e) {
+            logMessage("Reorganización Drive", `Advertencia en escaneo de papelera: ${e.message}`, 0, 0, true);
+        }
+    }
+
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const data = sheet.getDataRange().getValues();
     data.shift(); // Quitar cabecera
@@ -669,6 +698,13 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                     const id = idMatch[1];
                     try {
                         const file = DriveApp.getFileById(id);
+
+                        // --- INTEGRACIÓN: VALIDACIÓN Y RECUPERACIÓN DE LA PAPELERA EN EL BUCLE ---
+                        if (file.isTrashed()) {
+                            logMessage("Reorganización Drive", `Fila ${rowNum}: Imagen '${file.getName()}' de la papelera restaurada correctamente.`);
+                            file.setTrashed(false);
+                        }
+
                         const currentParents = file.getParents();
                         let alreadyInPlace = false;
 
@@ -863,6 +899,51 @@ function mergeFolders(sourceFolder, targetFolder) {
     } catch (e) {
         Logger.log("Error in mergeFolders: " + e.message);
     }
+}
+
+function validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage) {
+    logMessage("Validación de Papelera", "Iniciando escaneo preventivo de todas las URL de imágenes en todas las hojas de la base de datos...");
+
+    const spreadsheet = getSpreadsheet();
+    const sheets = spreadsheet.getSheets();
+    let restoredCount = 0;
+    let checkedUrls = 0;
+
+    sheets.forEach(sheet => {
+        const sheetName = sheet.getName();
+        // Omitir hojas administrativas o de log internas
+        if (sheetName === SHEET_NAMES.ADMIN_STATE || sheetName === SHEET_NAMES.LOGS || sheetName === "Logs" || sheetName === "Feedbacks" || sheetName === "Feedback") {
+            return;
+        }
+
+        const data = sheet.getDataRange().getValues();
+        for (let rowIdx = 0; rowIdx < data.length; rowIdx++) {
+            const rowNum = rowIdx + 1;
+            const cols = data[rowIdx];
+            for (let colIdx = 0; colIdx < cols.length; colIdx++) {
+                const value = cols[colIdx];
+                if (value && typeof value === 'string' && value.indexOf('id=') !== -1) {
+                    const idMatch = value.match(/id=([a-zA-Z0-9_-]+)/);
+                    if (idMatch) {
+                        const id = idMatch[1];
+                        checkedUrls++;
+                        try {
+                            const file = DriveApp.getFileById(id);
+                            if (file.isTrashed()) {
+                                logMessage("Validación de Papelera", `Higiene: El archivo '${file.getName()}' de la hoja '${sheetName}' (Fila ${rowNum}, Col ${colIdx + 1}) estaba en la papelera. Recuperándolo...`);
+                                file.setTrashed(false);
+                                restoredCount++;
+                            }
+                        } catch (e) {
+                            // Ignorar si el ID no es accesible o no es un archivo de Drive real
+                        }
+                    }
+                }
+            }
+        }
+    });
+
+    logMessage("Validación de Papelera", `Escaneo completo de la papelera finalizado. Enlaces verificados: ${checkedUrls}. Archivos restaurados: ${restoredCount}.`);
 }
 
 function deleteEmptyFoldersRecursively(folder, rootDriveFolderId) {

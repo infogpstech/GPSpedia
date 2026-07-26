@@ -737,6 +737,8 @@ Archivos modificados:
 **Archivo: Services/admin.js**
 - Sustituidas las llamadas obsoletas y deprecadas de `addFile`/`removeFile` por la API oficial `file.moveTo(genFolder)` para mover las imágenes de forma atómica y definitiva, solucionando la duplicación buggy de padres e impidiendo que se agote el espacio disponible en Google Drive.
 - Implementada higiene contra carpetas vacías: el bucle comprueba si la fila de la hoja de cálculo contiene al menos una URL de imagen válida antes de crear la estructura de carpetas en Drive, evitando poblar el almacenamiento de directorios vacíos.
+- Diseñado e implementado el sistema global de validación y restauración de imágenes de la papelera `validateAndRestoreAllTrashedImagesInSpreadsheet`. Escanea dinámicamente todas las hojas del Spreadsheet, detecta archivos en la papelera de Drive que estén vinculados, los recupera automáticamente mediante `file.setTrashed(false)` y los reubica en su carpeta jerárquica correspondiente.
+- Integrado el control de restauración automática en papelera dentro de las operaciones por lotes `handleNormalizeImages` y `handleReorganizeImagesInDrive`.
 
 **Archivo: ui.js**
 - Mejorada la lógica UX de los diálogos de confirmación para que presionar 'Aceptar' continúe con el progreso guardado y 'Cancelar' inicie desde la Fila 1 de forma intuitiva, resolviendo el problema de reinicio involuntario.

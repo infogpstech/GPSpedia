@@ -610,6 +610,9 @@ Estrategia de corrección:
 3. **Reinicios involuntarios por UX confusa:**
    - Problema: Los diálogos de confirmación pedían presionar 'Aceptar' para empezar de cero, lo que causaba que los usuarios restablecieran accidentalmente el progreso.
    - Resolución: Se modificó la UX para que 'Aceptar' continúe desde el último estado guardado y 'Cancelar' reinicie desde el principio de forma intuitiva.
+4. **Validación de Papelera y Restauración de Imágenes:**
+   - Problema: El usuario requería asegurarse de que ningún archivo de imagen referenciado en cualquier hoja del Spreadsheet permaneciera en la papelera de Drive, y en caso afirmativo, recuperarlo automáticamente y colocarlo en su carpeta correspondiente.
+   - Resolución: Se implementó la función global `validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage)` en `Services/admin.js`. Esta función recorre dinámicamente todas las hojas visibles del Spreadsheet, analiza el contenido de todas las celdas buscando IDs de Google Drive, verifica si el archivo está en la papelera usando `file.isTrashed()` y lo recupera inmediatamente mediante `file.setTrashed(false)`. Esta validación se ejecuta de manera preventiva durante el primer lote de `normalizeImages` y `reorganizeImagesInDrive`, restaurando las imágenes antes de reubicarlas físicamente.
 
 --------------------------------------------------
 **AUDITORÍA TÉCNICA - OPTIMIZACIÓN DE REORGANIZACIÓN Y CONSOLA DE DIAGNÓSTICO (25/07/2026)**
