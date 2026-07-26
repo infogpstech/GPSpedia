@@ -673,3 +673,28 @@ Estrategia de corrección:
    - En `ui.js`, la función centralizada `setOptimizedImage` gestiona el renderizado de cada imagen del catálogo y de la vista de detalles.
    - Si una imagen de Drive es borrada o enviada a la papelera, su carga remota fallará, disparando de forma nativa el evento `onerror` en el elemento `imgElement`.
    - Capturando este evento en `setOptimizedImage`, el sistema detecta de forma inmediata que existe al menos una imagen inalcanzable, procediendo de manera reactiva y silenciosa a mostrar el botón de restauración (`#btn-admin-restore-trash`) en el panel administrativo.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CORRECCIÓN DE REGISTROS SILENCIOSOS, DEPURACIÓN DE DUPLICADOS Y PROCESAMIENTO (26/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, Services/Write/write.js, ui.js
+
+**Hallazgos y Soluciones:**
+1. **Registro silencioso no 100% silencioso:**
+   - Diagnóstico: Se usaba un offset de timestamp de 45 días, insuficiente para omitirlo del feed público. Asimismo, registros consecutivos sin Lock de script de Google Apps Script causaban colisiones de ID/datos. En el paso 3 del formulario `add_cortes.html`, `handleAddSupplementaryInfo` volvía a inyectar un timestamp de hace 45 días, sobreescribiendo el del modo sigiloso.
+   - Solución: Se actualizó el offset de timestamp administrativo a 365 días en `handleAddOrUpdateCut` y `handleAddSupplementaryInfo`. Se introdujo script locking (`LockService.getScriptLock()`) y limpieza y asignación unívoca de fórmula de ID para evitar sobreescritura consecutiva.
+2. **Duplicación de imágenes y Reorganización:**
+   - Diagnóstico: En la reorganización de Drive se presentaban duplicaciones por copias virtuales. No se hacía una depuración inteligente.
+   - Solución: Implementado un trasladador oficial con `file.moveTo(genFolder)` para traslados atómicos, higiene contra carpetas vacías antes de procesar un lote, y relocalización de la imagen del vehículo a la misma carpeta de la generación (`genFolder`).
+3. **Casos de Duplicados en Carpetas:**
+   - Diagnóstico: Inexistencia de rutinas de de-duplicación física (Casos 1, 2, 3).
+   - Solución: Diseñada la función `cleanUpDuplicatesInBrandTree()` que analiza el árbol y realiza de-duplicación para los tres casos de forma inteligente y segura.
+4. **Protección de Duplicados Permitidos:**
+   - Diagnóstico: Se debe priorizar el Spreadsheet antes de remover duplicados físicos.
+   - Solución: Se introdujo la función `getActiveImageUrls()` que detecta todas las URLs de imágenes referenciadas en el Spreadsheet completo, protegiéndolas de ser eliminadas.
+5. **Bloqueo del último lote y guardado de progreso:**
+   - Diagnóstico: El último lote no finalizaba o se bloqueaba debido a condiciones laxas de término en el frontend.
+   - Solución: El frontend ahora detiene inmediatamente el bucle secuencial si el servidor reporta estado de completado o si `processedCount === 0`.
+6. **Mejora del botón de copia de errores:**
+   - Diagnóstico: Copiado desordenado de logs sin poder localizar errores rápidamente.
+   - Solución: Clasificación CSS de cada línea y filtrado preciso del texto copiado por el selector `.log-error`.

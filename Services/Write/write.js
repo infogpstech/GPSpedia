@@ -96,7 +96,7 @@ function handleAddOrUpdateCut(payload) {
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     let targetDate = new Date();
     if (payload && payload.silent === true) {
-        targetDate.setDate(targetDate.getDate() - 45); // Hace 45 días para evitar "Agregados recientemente"
+        targetDate.setDate(targetDate.getDate() - 365); // Hace 365 días para evitar "Agregados recientemente"
     }
     const formattedDate = Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
     let rowIndex;

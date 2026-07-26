@@ -760,3 +760,20 @@ Archivos modificados:
 **Archivo: ui.js**
 - Se vinculó el botón `#btn-admin-restore-trash` para ejecutar la acción de Saneamiento exhaustivo de la papelera (`restoreAllTrashedImages`) de forma separada del flujo continuo de lotes con confirmación interactiva.
 - Implementado event listener `onerror` en `setOptimizedImage` para detectar de manera activa errores de carga de imágenes (lo que indica que la imagen está en la papelera o borrada) y mostrar de forma reactiva el botón `#btn-admin-restore-trash` en el panel administrativo.
+
+-------------------------------------------------------------------
+**CORRECCIÓN DE REGISTROS SILENCIOSOS, DEPURACIÓN DE DUPLICADOS Y PROCESAMIENTO (26/07/2026)**
+
+**Archivo: Services/admin.js**
+- Actualizadas las funciones `handleAddOrUpdateCut` y `handleAddSupplementaryInfo` para usar un timestamp de hace 365 días en lugar de 45 días al realizar registros silenciosos, asegurando que se omitan del feed público.
+- Implementada la exclusión de condiciones de carrera con `LockService` y reescritura limpia e independiente de la fórmula del ID del Spreadsheet.
+- Añadida la función helper `getActiveImageUrls` que escanea las celdas del Spreadsheet para almacenar y retornar las IDs de imágenes activas para evitar eliminaciones accidentales.
+- Implementada la función `cleanUpDuplicatesInBrandTree` para recorrer el árbol de la marca y eliminar duplicados (Caso 1, Caso 2, y Caso 3) con soporte robusto y prioritario para metadatos físicos activos/inactivos de Google Drive.
+- Integrado el control de verificación, restauración individual y relocalización de la imagen principal a la carpeta de la generación (`genFolder`) dentro de `handleReorganizeImagesInDrive`.
+
+**Archivo: Services/Write/write.js**
+- Modificada la función `handleAddOrUpdateCut` para utilizar un offset de timestamp administrativo de hace 365 días en modo silencioso.
+
+**Archivo: ui.js**
+- Modificadas las condiciones de finalización de lotes de normalización y reorganización en el frontend para evitar que la barra se bloquee o se ejecute indefinidamente.
+- Clasificadas las salidas de consola por clase CSS (`log-info`, `log-warning`, `log-error`) y mejorado el botón "Copiar registro" para filtrar y copiar exclusivamente mensajes clasificados como error.

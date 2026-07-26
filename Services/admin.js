@@ -286,6 +286,39 @@ function copyFolderRecursively(source, target, logMessage) {
     }
 }
 
+function attemptRestoreImage(fileId, expectedBaseName, brandFolder, logMessage) {
+    if (!fileId || typeof fileId !== 'string' || !/^[a-zA-Z0-9_-]{25,110}$/.test(fileId)) {
+        return null;
+    }
+
+    try {
+        const file = DriveApp.getFileById(fileId);
+        if (file.isTrashed()) {
+            file.setTrashed(false);
+            if (logMessage) logMessage("Restauración", `Archivo '${file.getName()}' restaurado desde la papelera.`);
+        }
+        return file;
+    } catch (err) {
+        if (logMessage) logMessage("Restauración", `ID '${fileId}' inalcanzable. Buscando equivalente '${expectedBaseName}' de forma indexada...`, 0, 0, true);
+
+        // Buscar un duplicado usando búsqueda indexada nativa de Drive (súper veloz, evita timeouts)
+        if (brandFolder && expectedBaseName) {
+            try {
+                const query = "title contains '" + expectedBaseName + "' and trashed = false";
+                const files = brandFolder.searchFiles(query);
+                if (files.hasNext()) {
+                    const found = files.next();
+                    if (logMessage) logMessage("Restauración", `Archivo equivalente encontrado indexado: '${found.getName()}' (ID: ${found.getId()}).`);
+                    return found;
+                }
+            } catch (searchErr) {
+                if (logMessage) logMessage("Restauración", `Error en búsqueda indexada: ${searchErr.message}`, 0, 0, true);
+            }
+        }
+    }
+    return null;
+}
+
 /**
  * Restaurar la base de datos completa a partir de un ID de copia
  */
@@ -683,6 +716,12 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
         const verFolder = getOrCreateSubFolder(modFolder, versionEncendido);
         const genFolder = getOrCreateSubFolder(verFolder, generacion);
 
+        const nameModelo = sanitizeForNomenclature(modelo);
+        const nameVersion = sanitizeForNomenclature(rawVersion ? rawVersion : rawEncendido);
+        const nameAnio = sanitizeForNomenclature(rawDesde || "XXXX");
+
+        const baseName = `${nameModelo}_${nameVersion}_${nameAnio}`.toLowerCase();
+
         imgFields.forEach(field => {
             const colIndex = COLS_CORTES[field] - 1;
             const imgUrl = row[colIndex];
@@ -691,12 +730,28 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                 if (idMatch) {
                     const id = idMatch[1];
                     try {
-                        const file = DriveApp.getFileById(id);
+                        let typeFuncion = "";
+                        if (field === "imagenVehiculo") typeFuncion = "";
+                        else if (field === "imgCorte1") typeFuncion = "_corte1";
+                        else if (field === "imgCorte2") typeFuncion = "_corte2";
+                        else if (field === "imgCorte3") typeFuncion = "_corte3";
+                        else if (field === "imgApertura") typeFuncion = "_apert";
+                        else if (field === "imgCableAlimen") typeFuncion = "_alimen";
 
-                        // --- INTEGRACIÓN: VALIDACIÓN Y RECUPERACIÓN DE LA PAPELERA EN EL BUCLE ---
-                        if (file.isTrashed()) {
-                            logMessage("Reorganización Drive", `Fila ${rowNum}: Imagen '${file.getName()}' de la papelera restaurada correctamente.`);
-                            file.setTrashed(false);
+                        const expectedBaseName = `${baseName}${typeFuncion}`;
+
+                        // Intentar obtener y restaurar/recuperar la imagen
+                        const file = attemptRestoreImage(id, expectedBaseName, marFolder, logMessage);
+                        if (!file) {
+                            throw new Error(`Archivo no existe físicamente en Drive ni se pudo recuperar.`);
+                        }
+
+                        // Si el archivo recuperado es diferente (ej. un duplicado o respaldo de otra ubicación),
+                        // actualizar la URL en la hoja de cálculo
+                        const newUrl = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
+                        if (id !== file.getId()) {
+                            sheet.getRange(rowNum, colIndex + 1).setValue(newUrl);
+                            logMessage("Reorganización Drive", `Fila ${rowNum}: Imagen restaurada con equivalente ID '${file.getId()}'. URL actualizada en Spreadsheet.`);
                         }
 
                         const currentParents = file.getParents();
@@ -713,15 +768,14 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                         // --- OPTIMIZACIÓN: EVITAR MOVER IMÁGENES QUE YA ESTÁN CORRECTAMENTE UBICADAS ---
                         if (alreadyInPlace) {
                             logMessage("Reorganización Drive", `Fila ${rowNum}: Imagen '${file.getName()}' ya está en su ubicación jerárquica correcta.`);
-                            return;
+                        } else {
+                            logMessage("Reorganización Drive", `Fila ${rowNum}: Moviendo '${file.getName()}' a carpeta jerárquica...`);
+
+                            // --- RESOLUCIÓN DE COPIAS BUGGY: USAR MOVETO EN LUGAR DE ADDFILE/REMOVEFILE ---
+                            // moveTo() es el estándar oficial de Google que previene la duplicación de padres
+                            file.moveTo(genFolder);
+                            movedFiles++;
                         }
-
-                        logMessage("Reorganización Drive", `Fila ${rowNum}: Moviendo '${file.getName()}' a carpeta jerárquica...`);
-
-                        // --- RESOLUCIÓN DE COPIAS BUGGY: USAR MOVETO EN LUGAR DE ADDFILE/REMOVEFILE ---
-                        // moveTo() es el estándar oficial de Google que previene la duplicación de padres
-                        file.moveTo(genFolder);
-                        movedFiles++;
                     } catch (e) {
                         logMessage("Reorganización Drive", `Advertencia: Falla con archivo ID '${id}' (Fila ${rowNum}, Campo ${field}). Causa: ${e.message}`, 0, 0, true);
                     }
@@ -735,16 +789,32 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
     const percentage = totalVehicles > 0 ? Math.round((nextIndex / totalVehicles) * 100) : 100;
     const estado = nextIndex >= totalVehicles ? "completado" : "pendiente";
 
-    // Limpieza recursiva de carpetas vacías dentro de la carpeta raíz.
+    // Limpieza recursiva de carpetas vacías dentro de la carpeta raíz y eliminación inteligente de duplicados.
     // OPTIMIZACIÓN CRÍTICA: Solo se ejecuta en el lote final (cuando no hay más vehículos pendientes),
     // y se envuelve en try-catch para que un error de cuota/permisos en Drive no arruine la respuesta del lote.
     if (nextIndex >= totalVehicles) {
         try {
-            logMessage("Reorganización Drive", "Lote final alcanzado. Iniciando limpieza recursiva de carpetas vacías...");
+            logMessage("Reorganización Drive", "Lote final alcanzado. Buscando duplicados en el árbol de marcas...");
+            const activeUrls = getActiveImageUrls();
+
+            // Recorrer la carpeta raíz para obtener las carpetas de las categorías y luego las de las marcas
+            const categories = rootFolder.getFolders();
+            while (categories.hasNext()) {
+                const categoryFolder = categories.next();
+                const brands = categoryFolder.getFolders();
+                while (brands.hasNext()) {
+                    const brandFolder = brands.next();
+                    if (brandFolder.getName() !== "Logos") {
+                        cleanUpDuplicatesInBrandTree(brandFolder, activeUrls, logMessage);
+                    }
+                }
+            }
+
+            logMessage("Reorganización Drive", "Iniciando limpieza recursiva de carpetas vacías...");
             deleteEmptyFoldersRecursively(rootFolder, DRIVE_FOLDER_ID);
             logMessage("Reorganización Drive", "Limpieza de carpetas vacías completada.");
         } catch (e) {
-            logMessage("Reorganización Drive", "Advertencia en limpieza de carpetas vacías: " + e.message, 0, 0, true);
+            logMessage("Reorganización Drive", "Advertencia en limpieza/depuración final: " + e.message, 0, 0, true);
         }
         clearAdminState('reorganizeImagesInDrive');
     } else {
@@ -893,6 +963,104 @@ function mergeFolders(sourceFolder, targetFolder) {
     } catch (e) {
         Logger.log("Error in mergeFolders: " + e.message);
     }
+}
+
+function cleanUpDuplicatesInBrandTree(brandFolder, activeUrls, logMessage) {
+    if (!brandFolder) return;
+
+    // Almacenar metadatos para Caso 3 (mismo tamaño/KB, dimensiones, tipo de archivo)
+    const fileMetadataMap = {};
+
+    function traverse(folder) {
+        // Analizar archivos en el nivel actual
+        const files = folder.getFiles();
+        while (files.hasNext()) {
+            const file = files.next();
+            const id = file.getId();
+            const name = file.getName();
+
+            const size = file.getSize();
+            const mimeType = file.getMimeType();
+            const metaKey = `${size}_${mimeType}`;
+
+            // Si la imagen está en uso por Spreadsheet, NUNCA eliminarla.
+            if (activeUrls.has(id)) {
+                if (fileMetadataMap[metaKey]) {
+                    const existingFile = fileMetadataMap[metaKey];
+                    if (!activeUrls.has(existingFile.getId())) {
+                        existingFile.setTrashed(true);
+                        if (logMessage) logMessage("Depuración", `Caso 3: Eliminado duplicado físico '${existingFile.getName()}' por coincidencia de metadatos con el referenciado '${name}'.`);
+                    }
+                }
+                fileMetadataMap[metaKey] = file;
+                continue;
+            }
+
+            // Caso 1: Duplicados por sufijo automático (ej: "hilux (2).png", "hilux(1).png")
+            const cleanName = name.replace(/\s*\(\d+\)/g, '').replace(/\(\d+\)/g, '');
+            if (cleanName !== name) {
+                // Verificar si existe la versión sin el sufijo en esta carpeta
+                const siblings = folder.getFiles();
+                let originalFound = false;
+                while (siblings.hasNext()) {
+                    const sibling = siblings.next();
+                    if (sibling.getName() === cleanName && activeUrls.has(sibling.getId())) {
+                        originalFound = true;
+                        break;
+                    }
+                }
+                if (originalFound) {
+                    file.setTrashed(true);
+                    if (logMessage) logMessage("Depuración", `Caso 1: Eliminado duplicado con sufijo automático '${name}'.`);
+                    continue;
+                }
+            }
+
+            // Caso 2: Duplicados con exactamente el mismo nombre en distintas carpetas
+            // Si existe otro archivo con el mismo nombre que está siendo referenciado en el Spreadsheet,
+            // y este no lo está, procedemos a eliminarlo.
+            let isReferencedSameNameFound = false;
+            activeUrls.forEach(activeId => {
+                try {
+                    const activeFile = DriveApp.getFileById(activeId);
+                    if (activeFile.getName() === name) {
+                        isReferencedSameNameFound = true;
+                    }
+                } catch(e) {}
+            });
+            if (isReferencedSameNameFound) {
+                file.setTrashed(true);
+                if (logMessage) logMessage("Depuración", `Caso 2: Eliminado duplicado con idéntico nombre '${name}' en carpeta no utilizada.`);
+                continue;
+            }
+
+            // Caso 3: Duplicados con diferente nombre pero idénticos metadatos (tamaño, tipo)
+            if (fileMetadataMap[metaKey]) {
+                const existingFile = fileMetadataMap[metaKey];
+                // Si el ya existente está en Spreadsheet, o viceversa
+                if (activeUrls.has(existingFile.getId())) {
+                    file.setTrashed(true);
+                    if (logMessage) logMessage("Depuración", `Caso 3: Eliminado duplicado físico '${name}' por coincidencia de metadatos con el referenciado '${existingFile.getName()}'.`);
+                    continue;
+                } else {
+                    // Ambos no están en Spreadsheet, podemos eliminar cualquiera (por ejemplo, el actual)
+                    file.setTrashed(true);
+                    if (logMessage) logMessage("Depuración", `Caso 3: Eliminado duplicado físico '${name}' no utilizado.`);
+                    continue;
+                }
+            } else {
+                fileMetadataMap[metaKey] = file;
+            }
+        }
+
+        // Recorrer subcarpetas
+        const subDirs = folder.getFolders();
+        while (subDirs.hasNext()) {
+            traverse(subDirs.next());
+        }
+    }
+
+    traverse(brandFolder);
 }
 
 function validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage) {
@@ -1179,21 +1347,30 @@ function handleUploadAdminImage(payload, logMessage) {
 // ============================================================================
 
 function handleAddOrUpdateCut(payload, logMessage) {
-    const { vehicleData, cutData, vehicleId, colaborador } = payload;
-    if (!cutData || !colaborador) {
-        throw new Error("Datos del corte y del colaborador son requeridos.");
+    const lock = LockService.getScriptLock();
+    try {
+        // Intentar obtener el bloqueo por un máximo de 30 segundos
+        lock.waitLock(30000);
+    } catch (e) {
+        throw new Error("No se pudo obtener el bloqueo de la hoja de cálculo. Por favor reintente en unos instantes.");
     }
 
-    logMessage("Registro Administrativo", `Procesando addOrUpdateCut administrativo...`);
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    try {
+        const { vehicleData, cutData, vehicleId, colaborador } = payload;
+        if (!cutData || !colaborador) {
+            throw new Error("Datos del corte y del colaborador son requeridos.");
+        }
 
-    // Forzar timestamp administrativo (hace 45 días) para registro silencioso
-    let targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() - 45);
-    const formattedDate = Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
+        logMessage("Registro Administrativo", `Procesando addOrUpdateCut administrativo...`);
+        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
 
-    let rowIndex;
-    let newId;
+        // Forzar timestamp administrativo (hace 365 días) para registro silencioso
+        let targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() - 365);
+        const formattedDate = Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
+
+        let rowIndex;
+        let newId;
 
     if (vehicleId) { // --- Lógica para vehículo EXISTENTE ---
         const ids = sheet.getRange(2, 1, sheet.getLastRow(), 1).getValues().flat();
@@ -1309,10 +1486,20 @@ function handleAddOrUpdateCut(payload, logMessage) {
             Utilities.sleep(500);
             newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
         }
+
+        // Limpiar explícitamente cualquier celda residual de ID que no deba estar compartida
+        sheet.getRange(rowIndex, COLS_CORTES.id).setValue("");
+        sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(sheet.getRange(lastRow, COLS_CORTES.id).getFormula() || `=ROW()-1`);
+        SpreadsheetApp.flush();
+        Utilities.sleep(500);
+        newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
     }
 
     logMessage("Registro Administrativo", `Corte administrativo guardado exitosamente. ID asignado: ${newId}`);
     return { status: 'success', message: `Corte administrativo agregado de forma silenciosa.`, vehicleId: newId };
+    } finally {
+        lock.releaseLock();
+    }
 }
 
 function handleAddSupplementaryInfo(payload, logMessage) {
@@ -1353,9 +1540,9 @@ function handleAddSupplementaryInfo(payload, logMessage) {
         sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen).setValue(imageUrl);
     }
 
-    // Forzar timestamp administrativo (hace 45 días)
+    // Forzar timestamp administrativo (hace 365 días)
     let targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() - 45);
+    targetDate.setDate(targetDate.getDate() - 365);
     const formattedDate = Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
     sheet.getRange(actualRow, COLS_CORTES.timestamp).setValue(formattedDate);
 
@@ -1367,6 +1554,38 @@ function handleAddSupplementaryInfo(payload, logMessage) {
 // ============================================================================
 // HELPERS COMUNES
 // ============================================================================
+function getActiveImageUrls() {
+    const activeUrls = new Set();
+    const ss = getSpreadsheet();
+    const sheets = ss.getSheets();
+
+    sheets.forEach(sheet => {
+        const sheetName = sheet.getName();
+        if (sheetName === SHEET_NAMES.ADMIN_STATE || sheetName === "Logs" || sheetName === "Feedbacks" || sheetName === "Feedback") {
+            return;
+        }
+        const data = sheet.getDataRange().getValues();
+        for (let r = 0; r < data.length; r++) {
+            const row = data[r];
+            for (let c = 0; c < row.length; c++) {
+                const cell = row[c];
+                if (cell && typeof cell === 'string' && cell.startsWith('http')) {
+                    const idMatch = cell.match(/id=([a-zA-Z0-9_-]+)/);
+                    if (idMatch) {
+                        activeUrls.add(idMatch[1]);
+                    } else if (cell.includes('drive.google.com')) {
+                        const fileIdMatch = cell.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+                        if (fileIdMatch) {
+                            activeUrls.add(fileIdMatch[1]);
+                        }
+                    }
+                }
+            }
+        }
+    });
+    return activeUrls;
+}
+
 function sanitizeForFilename(text) {
     if (text === null || text === undefined) return '';
     return String(text).replace(/[^a-zA-Z0-9.-]/g, '_').replace(/\s+/g, '_');
