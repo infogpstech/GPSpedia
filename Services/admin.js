@@ -1133,31 +1133,35 @@ function validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage) {
 }
 
 function deleteEmptyFoldersRecursively(folder, rootDriveFolderId) {
-    if (folder.getId() === rootDriveFolderId) {
-        const subDirs = folder.getFolders();
-        while (subDirs.hasNext()) {
-            deleteEmptyFoldersRecursively(subDirs.next(), rootDriveFolderId);
-        }
-        return;
-    }
+    const isRoot = (folder.getId() === rootDriveFolderId);
+    let hasContents = false;
 
     const subDirs = folder.getFolders();
     while (subDirs.hasNext()) {
-        deleteEmptyFoldersRecursively(subDirs.next(), rootDriveFolderId);
+        const subDir = subDirs.next();
+        const subDirIsEmpty = deleteEmptyFoldersRecursively(subDir, rootDriveFolderId);
+        if (!subDirIsEmpty) {
+            hasContents = true;
+        }
     }
 
     const files = folder.getFiles();
-    const subFolders = folder.getFolders();
+    if (files.hasNext()) {
+        hasContents = true;
+    }
 
-    if (!files.hasNext() && !subFolders.hasNext()) {
+    if (!isRoot && !hasContents) {
         try {
             if (folder.getName() !== "Logos") {
                 folder.setTrashed(true);
+                return true; // indicamos que fue borrado / está vacío
             }
         } catch (e) {
             Logger.log("Error trashing empty folder: " + e.message);
         }
     }
+
+    return false; // no está vacío o no se borró
 }
 
 /**
@@ -1589,18 +1593,43 @@ function getActiveImageUrls() {
             return;
         }
         const data = sheet.getDataRange().getValues();
+        if (data.length <= 1) return;
+
+        // Determinar qué índices de columnas escanear para esta hoja
+        let colIndices = null;
+        if (sheetName === SHEET_NAMES.CORTES) {
+            // Columnas: 9 (imagenVehiculo), 16 (imgCorte1), 23 (imgCorte2), 30 (imgCorte3), 34 (imgApertura), 36 (imgCableAlimen)
+            // En base 0: 8, 15, 22, 29, 33, 35
+            colIndices = [8, 15, 22, 29, 33, 35];
+        } else if (sheetName === SHEET_NAMES.LOGOS_MARCA) {
+            colIndices = [2]; // Columna 3 (urlLogo)
+        } else if (sheetName === SHEET_NAMES.RELAY) {
+            colIndices = [2]; // Columna 3 (imagen)
+        }
+
         for (let r = 0; r < data.length; r++) {
             const row = data[r];
-            for (let c = 0; c < row.length; c++) {
-                const cell = row[c];
-                if (cell && typeof cell === 'string' && cell.startsWith('http')) {
-                    const idMatch = cell.match(/id=([a-zA-Z0-9_-]+)/);
-                    if (idMatch) {
-                        activeUrls.add(idMatch[1]);
-                    } else if (cell.includes('drive.google.com')) {
-                        const fileIdMatch = cell.match(/file\/d\/([a-zA-Z0-9_-]+)/);
-                        if (fileIdMatch) {
-                            activeUrls.add(fileIdMatch[1]);
+            if (colIndices) {
+                for (let i = 0; i < colIndices.length; i++) {
+                    const c = colIndices[i];
+                    if (c < row.length) {
+                        const cell = row[c];
+                        if (cell && typeof cell === 'string' && cell.indexOf('drive.google.com') !== -1) {
+                            const idMatch = cell.match(/id=([a-zA-Z0-9_-]+)/) || cell.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+                            if (idMatch) {
+                                activeUrls.add(idMatch[1]);
+                            }
+                        }
+                    }
+                }
+            } else {
+                // Para Tutorial u otras hojas pequeñas, escaneo normal rápido
+                for (let c = 0; c < row.length; c++) {
+                    const cell = row[c];
+                    if (cell && typeof cell === 'string' && cell.indexOf('drive.google.com') !== -1) {
+                        const idMatch = cell.match(/id=([a-zA-Z0-9_-]+)/) || cell.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+                        if (idMatch) {
+                            activeUrls.add(idMatch[1]);
                         }
                     }
                 }
