@@ -2456,8 +2456,15 @@ function initAdminPanelListeners() {
         const time = new Date().toLocaleTimeString();
         const p = document.createElement('div');
         p.style.marginBottom = "4px";
-        if (isWarning) p.style.color = "#ffcc00";
-        else if (isError) p.style.color = "#ff3333";
+        if (isWarning) {
+            p.style.color = "#ffcc00";
+            p.className = "log-warning";
+        } else if (isError) {
+            p.style.color = "#ff3333";
+            p.className = "log-error";
+        } else {
+            p.className = "log-info";
+        }
         p.textContent = `[${time}] ${msg}`;
         consoleLog.appendChild(p);
         consoleLog.scrollTop = consoleLog.scrollHeight;
@@ -2683,7 +2690,7 @@ Cantidad procesada en lote: ${res.processedCount} (Total acumulado: ${nextIndex}
 --------------------------------------------------
 `);
 
-                    if (nextIndex >= totalVehicles) {
+                    if (res.processedCount === 0 || nextIndex >= totalVehicles || res.estado === 'completado') {
                         finished = true;
                         setProgress(100);
                         const totalTimeStr = formatTimeMMSS(Date.now() - startTime);
@@ -2783,13 +2790,30 @@ ${elapsedSec}s
         }
     }
 
-    // Botón Copiar Registro completo
+    // Botón Copiar Registro de errores y advertencias críticas
     const btnCopyLog = document.getElementById('btn-copy-console-log');
     if (btnCopyLog) {
         btnCopyLog.onclick = () => {
-            const rawText = consoleLog.innerText || consoleLog.textContent;
+            const divs = consoleLog.querySelectorAll('div');
+            const filteredTexts = [];
+            divs.forEach(div => {
+                const text = div.textContent || div.innerText;
+                const isErr = div.classList.contains('log-error') || div.classList.contains('log-warning');
+                const hasPatterns = /🚨|error|advertencia|falla|excepción|exception|stack|trace|fallo/i.test(text);
+                const isExcluded = /sistema administrativo iniciado|comprobando disponibilidad|microservicio activo|comunicación establecida|tiempo de respuesta/i.test(text);
+                if ((isErr || hasPatterns) && !isExcluded) {
+                    filteredTexts.push(text);
+                }
+            });
+
+            if (filteredTexts.length === 0) {
+                alert("No se encontraron errores ni advertencias críticas para copiar.");
+                return;
+            }
+
+            const rawText = filteredTexts.join('\n');
             navigator.clipboard.writeText(rawText).then(() => {
-                log("[SISTEMA] Registro completo de la consola copiado al portapapeles.");
+                log("[SISTEMA] Registro filtrado de errores copiado al portapapeles.");
             }).catch(err => {
                 alert("No se pudo copiar el registro: " + err);
             });

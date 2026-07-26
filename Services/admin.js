@@ -968,99 +968,123 @@ function mergeFolders(sourceFolder, targetFolder) {
 function cleanUpDuplicatesInBrandTree(brandFolder, activeUrls, logMessage) {
     if (!brandFolder) return;
 
-    // Almacenar metadatos para Caso 3 (mismo tamaño/KB, dimensiones, tipo de archivo)
-    const fileMetadataMap = {};
+    if (logMessage) logMessage("Depuración", `Iniciando escaneo indexado de duplicados para la marca: '${brandFolder.getName()}'`);
 
-    function traverse(folder) {
-        // Analizar archivos en el nivel actual
-        const files = folder.getFiles();
-        while (files.hasNext()) {
-            const file = files.next();
-            const id = file.getId();
-            const name = file.getName();
-
-            const size = file.getSize();
-            const mimeType = file.getMimeType();
-            const metaKey = `${size}_${mimeType}`;
-
-            // Si la imagen está en uso por Spreadsheet, NUNCA eliminarla.
-            if (activeUrls.has(id)) {
-                if (fileMetadataMap[metaKey]) {
-                    const existingFile = fileMetadataMap[metaKey];
-                    if (!activeUrls.has(existingFile.getId())) {
-                        existingFile.setTrashed(true);
-                        if (logMessage) logMessage("Depuración", `Caso 3: Eliminado duplicado físico '${existingFile.getName()}' por coincidencia de metadatos con el referenciado '${name}'.`);
-                    }
-                }
-                fileMetadataMap[metaKey] = file;
-                continue;
-            }
-
-            // Caso 1: Duplicados por sufijo automático (ej: "hilux (2).png", "hilux(1).png")
-            const cleanName = name.replace(/\s*\(\d+\)/g, '').replace(/\(\d+\)/g, '');
-            if (cleanName !== name) {
-                // Verificar si existe la versión sin el sufijo en esta carpeta
-                const siblings = folder.getFiles();
-                let originalFound = false;
-                while (siblings.hasNext()) {
-                    const sibling = siblings.next();
-                    if (sibling.getName() === cleanName && activeUrls.has(sibling.getId())) {
-                        originalFound = true;
-                        break;
-                    }
-                }
-                if (originalFound) {
-                    file.setTrashed(true);
-                    if (logMessage) logMessage("Depuración", `Caso 1: Eliminado duplicado con sufijo automático '${name}'.`);
-                    continue;
-                }
-            }
-
-            // Caso 2: Duplicados con exactamente el mismo nombre en distintas carpetas
-            // Si existe otro archivo con el mismo nombre que está siendo referenciado en el Spreadsheet,
-            // y este no lo está, procedemos a eliminarlo.
-            let isReferencedSameNameFound = false;
-            activeUrls.forEach(activeId => {
-                try {
-                    const activeFile = DriveApp.getFileById(activeId);
-                    if (activeFile.getName() === name) {
-                        isReferencedSameNameFound = true;
-                    }
-                } catch(e) {}
+    // 1. Obtener todos los archivos del árbol de la marca mediante una única búsqueda indexada (ultra-rápido)
+    const filesList = [];
+    try {
+        const query = "trashed = false";
+        const filesIter = brandFolder.searchFiles(query);
+        while (filesIter.hasNext()) {
+            const file = filesIter.next();
+            filesList.push({
+                file: file,
+                id: file.getId(),
+                name: file.getName(),
+                size: file.getSize(),
+                mimeType: file.getMimeType(),
+                created: file.getDateCreated().getTime()
             });
-            if (isReferencedSameNameFound) {
-                file.setTrashed(true);
-                if (logMessage) logMessage("Depuración", `Caso 2: Eliminado duplicado con idéntico nombre '${name}' en carpeta no utilizada.`);
-                continue;
-            }
-
-            // Caso 3: Duplicados con diferente nombre pero idénticos metadatos (tamaño, tipo)
-            if (fileMetadataMap[metaKey]) {
-                const existingFile = fileMetadataMap[metaKey];
-                // Si el ya existente está en Spreadsheet, o viceversa
-                if (activeUrls.has(existingFile.getId())) {
-                    file.setTrashed(true);
-                    if (logMessage) logMessage("Depuración", `Caso 3: Eliminado duplicado físico '${name}' por coincidencia de metadatos con el referenciado '${existingFile.getName()}'.`);
-                    continue;
-                } else {
-                    // Ambos no están en Spreadsheet, podemos eliminar cualquiera (por ejemplo, el actual)
-                    file.setTrashed(true);
-                    if (logMessage) logMessage("Depuración", `Caso 3: Eliminado duplicado físico '${name}' no utilizado.`);
-                    continue;
-                }
-            } else {
-                fileMetadataMap[metaKey] = file;
-            }
         }
-
-        // Recorrer subcarpetas
-        const subDirs = folder.getFolders();
-        while (subDirs.hasNext()) {
-            traverse(subDirs.next());
-        }
+    } catch (e) {
+        if (logMessage) logMessage("Depuración", `Error en búsqueda indexada de archivos de marca: ${e.message}`, 0, 0, true);
+        return;
     }
 
-    traverse(brandFolder);
+    if (logMessage) logMessage("Depuración", `Total archivos indexados en la marca: ${filesList.length}`);
+
+    // Separar archivos activos (referenciados en Spreadsheet) y archivos candidatos a eliminación
+    const activeFiles = [];
+    const candidateFiles = [];
+
+    filesList.forEach(item => {
+        if (activeUrls.has(item.id)) {
+            activeFiles.push(item);
+        } else {
+            candidateFiles.push(item);
+        }
+    });
+
+    const activeIds = new Set(activeFiles.map(i => i.id));
+    const activeNames = new Set(activeFiles.map(i => i.name));
+
+    // Mapa para Caso 3 & Caso 4 (búsqueda rápida por metadatos / tamaño)
+    const activeMetadataMap = {};
+    activeFiles.forEach(item => {
+        const key = `${item.size}_${item.mimeType}`;
+        activeMetadataMap[key] = item;
+    });
+
+    const candidateMetadataMap = {};
+
+    candidateFiles.forEach(item => {
+        const id = item.id;
+        const name = item.name;
+
+        // Caso 1: Duplicados por sufijo automático (ej: "hilux_srv_boton_2020(2).png" o "hilux_srv_boton_2020 (2).png")
+        const cleanName = name.replace(/\s*\(\d+\)/g, '').replace(/\(\d+\)/g, '');
+        if (cleanName !== name) {
+            // Verificar si existe el archivo original sin el sufijo y está en Spreadsheet
+            const originalInSpreadsheet = activeFiles.some(f => f.name === cleanName);
+            if (originalInSpreadsheet) {
+                try {
+                    item.file.setTrashed(true);
+                    if (logMessage) logMessage("Depuración", `Caso 1: Eliminado duplicado con sufijo automático '${name}' (no referenciado).`);
+                    return; // Ya procesado, no continuar con otros casos
+                } catch (e) {
+                    Logger.log("Error trashing file Caso 1: " + e.message);
+                }
+            }
+        }
+
+        // Caso 2: Duplicados con exactamente el mismo nombre pero en carpetas no utilizadas o duplicadas
+        // Si existe otro archivo con exactamente el mismo nombre que está siendo referenciado en el Spreadsheet
+        const hasReferencedSameName = activeNames.has(name);
+        if (hasReferencedSameName) {
+            try {
+                item.file.setTrashed(true);
+                if (logMessage) logMessage("Depuración", `Caso 2: Eliminado duplicado con idéntico nombre '${name}' en carpeta no utilizada.`);
+                return; // Ya procesado
+            } catch (e) {
+                Logger.log("Error trashing file Caso 2: " + e.message);
+            }
+        }
+
+        // Caso 3: Duplicados con el mismo nombre y mismos metadatos
+        // Caso 4: Duplicados con nombres distintos pero compartiendo tamaño, mime-type, y metadatos idénticos
+        const metaKey = `${item.size}_${item.mimeType}`;
+        const activeEquivalent = activeMetadataMap[metaKey];
+        if (activeEquivalent) {
+            try {
+                item.file.setTrashed(true);
+                if (logMessage) logMessage("Depuración", `Caso 3/4: Eliminado archivo equivalente '${name}' por coincidencia de metadatos con el referenciado '${activeEquivalent.name}'.`);
+                return; // Ya procesado
+            } catch (e) {
+                Logger.log("Error trashing file Caso 3/4: " + e.message);
+            }
+        }
+
+        // Si hay duplicados entre los mismos archivos no referenciados, conservar el más antiguo
+        if (candidateMetadataMap[metaKey]) {
+            const existingCandidate = candidateMetadataMap[metaKey];
+            if (item.created < existingCandidate.created) {
+                // El actual es más antiguo, eliminar el existente y registrar el actual
+                try {
+                    existingCandidate.file.setTrashed(true);
+                    if (logMessage) logMessage("Depuración", `Depuración: Eliminado duplicado no referenciado '${existingCandidate.name}' por duplicidad física.`);
+                } catch (e) {}
+                candidateMetadataMap[metaKey] = item;
+            } else {
+                // El existente es más antiguo, eliminar el actual
+                try {
+                    item.file.setTrashed(true);
+                    if (logMessage) logMessage("Depuración", `Depuración: Eliminado duplicado no referenciado '${name}' por duplicidad física.`);
+                } catch (e) {}
+            }
+        } else {
+            candidateMetadataMap[metaKey] = item;
+        }
+    });
 }
 
 function validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage) {
@@ -1496,14 +1520,14 @@ function handleAddOrUpdateCut(payload, logMessage) {
     }
 
     logMessage("Registro Administrativo", `Corte administrativo guardado exitosamente. ID asignado: ${newId}`);
-    return { status: 'success', message: `Corte administrativo agregado de forma silenciosa.`, vehicleId: newId };
+    return { status: 'success', message: `Corte administrativo agregado de forma silenciosa.`, vehicleId: newId, timestamp: formattedDate };
     } finally {
         lock.releaseLock();
     }
 }
 
 function handleAddSupplementaryInfo(payload, logMessage) {
-    const { vehicleId, apertura, imgApertura, cableAlimen, imgCableAlimen, notaImportante } = payload;
+    const { vehicleId, apertura, imgApertura, cableAlimen, imgCableAlimen, notaImportante, timestamp } = payload;
     if (!vehicleId) {
         throw new Error("El ID del vehículo es requerido para agregar información suplementaria.");
     }
@@ -1540,10 +1564,10 @@ function handleAddSupplementaryInfo(payload, logMessage) {
         sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen).setValue(imageUrl);
     }
 
-    // Forzar timestamp administrativo (hace 365 días)
+    // Forzar timestamp administrativo (hace 365 días) o el recibido en la carga
     let targetDate = new Date();
     targetDate.setDate(targetDate.getDate() - 365);
-    const formattedDate = Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
+    const formattedDate = timestamp || Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
     sheet.getRange(actualRow, COLS_CORTES.timestamp).setValue(formattedDate);
 
     SpreadsheetApp.flush();

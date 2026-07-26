@@ -276,7 +276,8 @@
             vehicleInfo: {},
             matches: [],
             selectedVehicleId: null,
-            colaborador: ''
+            colaborador: '',
+            timestamp: null
         };
 
         const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
@@ -583,6 +584,9 @@
                     silent: silentVal
                 }, serviceOverride);
                 state.selectedVehicleId = result.vehicleId;
+                if (result.timestamp) {
+                    state.timestamp = result.timestamp;
+                }
                 alert("Corte guardado exitosamente.");
                 proceedToStage3(result.vehicleId);
             } catch(error) {
@@ -627,6 +631,7 @@
                 notaImportante: document.getElementById('notaImportante').value,
                 imgApertura: await fileToBase64(document.getElementById('imgApertura').files[0]),
                 imgCableAlimen: await fileToBase64(document.getElementById('imgCableAlimen').files[0]),
+                timestamp: state.timestamp
             };
 
             const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;

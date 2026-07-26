@@ -220,7 +220,7 @@ function handleAddOrUpdateCut(payload) {
         }
     }
 
-    return { status: 'success', message: `Corte agregado exitosamente.`, vehicleId: newId };
+    return { status: 'success', message: `Corte agregado exitosamente.`, vehicleId: newId, timestamp: formattedDate };
 }
 
 
@@ -263,7 +263,7 @@ function handleCheckVehicle(payload) {
 }
 
 function handleAddSupplementaryInfo(payload) {
-    const { vehicleId, apertura, imgApertura, cableAlimen, imgCableAlimen, notaImportante } = payload;
+    const { vehicleId, apertura, imgApertura, cableAlimen, imgCableAlimen, notaImportante, timestamp } = payload;
     if (!vehicleId) {
         throw new Error("El ID del vehículo es requerido para agregar información suplementaria.");
     }
@@ -299,8 +299,8 @@ function handleAddSupplementaryInfo(payload) {
         sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen).setValue(imageUrl);
     }
 
-    // Actualizar siempre el timestamp al añadir información
-    const formattedDate = Utilities.formatDate(new Date(), "GMT-6", "dd/MM/yyyy");
+    // Actualizar el timestamp al añadir información o usar el proporcionado si es registro silencioso
+    const formattedDate = timestamp || Utilities.formatDate(new Date(), "GMT-6", "dd/MM/yyyy");
     sheet.getRange(actualRow, COLS_CORTES.timestamp).setValue(formattedDate);
 
     return { status: 'success', message: 'Información suplementaria agregada exitosamente.' };
