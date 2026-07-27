@@ -42,7 +42,7 @@
    - Impacto: El usuario ve el modal (si no se cierra) pero al cerrarlo la lista de resultados está vacía (solo el título).
 
 2. **navigation.js (filtrarContenido):**
-   - La actualización del hash de la URL (`window.location.hash`) ocurre al final de la función, después de haber renderizado los resultados y abierto el modal.
+   - La actualización del hash de la URL (`window.location.hash`) occurs al final de la función, después de haber renderizado los resultados y abierto el modal.
    - El cambio de hash dispara un evento `popstate` que es procesado por el listener global en `main.js`.
 
 3. **main.js (popstate listener):**
@@ -199,7 +199,7 @@
 
 **Causa Raíz de la Falla:**
 - Al borrar el contenido del buscador (por tecleo de retroceso o haciendo clic en "X"), `filtrarContenido("")` invocaba directamente a `irAPaginaPrincipal()`.
-- `irAPaginaPrincipal()` ejecuta `history.replaceState({ level: 'categorias' })` para limpiar los parámetros de la URL, removiendo la clase `search-active` y haciendo `blur()` del input.
+- `irAPaginaPrincipal()` ejecuta `history.replaceState({ level: 'categorias' })` para limpiar los parámetros de la URL, removiendo la clase `search-active` and haciendo `blur()` del input.
 - Sin embargo, en el caso del botón "X" o si el usuario sigue con el foco puesto en la barra de búsqueda, el input se re-enfocaba, pero el historial del navegador ya había perdido el estado de búsqueda por completo (reemplazado por `categorias`).
 - Al estar en el estado `categorias` en la pila del historial, cualquier gesto de retroceso posterior del sistema operativo cerraba la aplicación abruptamente porque no quedaba ningún estado anterior al cual regresar en el navegador.
 
@@ -516,7 +516,7 @@ ID del hallazgo: H-TUTORIAL-VIDEO-01
 Título: Reproducción persistente de vídeos en modales de tutoriales al cerrar
 Descripción: Al cerrar el modal de detalle de tutoriales, el vídeo de YouTube continúa reproduciéndose, el audio permanece activo y los recursos del reproductor no se liberan.
 Causa Raíz:
-  1. En `mostrarDetalleTutorialModal` (archivo `ui.js`), el iframe del vídeo se inserta utilizando un simple string replace de "watch?v=" con "embed/" en lugar del helper unificado `getYouTubeEmbedUrl`, por lo que el parámetro `enablejsapi=1` no se incluye. Esto impide que el reproductor reciba comandos del sistema (como `stopVideo`).
+  1. En `mostrarDetalleTutorialModal` (archivo `ui.js`), el iframe del vídeo se inserta utilizando un simple string replace de "watch?v=" con "embed/" en lugar del helper unificado `getYouTubeEmbedUrl`, por lo que el parámetro `enablejsapi=1` no se incluye. Esto impide que el reproductor reciva comandos del sistema (como `stopVideo`).
   2. Al cerrar el modal de detalles, el contenedor `#detalleCompleto` no destruye el iframe del reproductor, sino que simplemente se oculta la clase `.visible` de `#modalDetalle`. Como consecuencia, el iframe sigue cargado y reproduciendo contenido oculto en segundo plano.
   3. No todos los flujos de cierre (cierre manual, popstate, etc.) llaman a la detención del vídeo del tutorial, y cuando lo intentan, la API de postMessage falla debido a la falta de `enablejsapi=1`.
 Ubicación:
@@ -524,5 +524,207 @@ Ubicación:
 Impacto: Alto (consumo de CPU, datos y reproducción molesta de audio en segundo plano).
 Riesgo de regresión: Muy bajo.
 Estrategia de corrección:
-  - En `ui.js`, robustecer `mostrarDetalleTutorialModal` para usar `getYouTubeEmbedUrl(item.Video)` y establecer la propiedad `dataset.modalType = 'tutorial'` en el elemento `#modalDetalle`. Para cortes y relays, establecer `dataset.modalType` en 'corte' y 'relay' respectivamente.
+  - En `ui.js`, robustecer `mostrarDetalleTutorialModal` para usar `getYouTubeEmbedUrl(item.Video)` y establecer la propiedad `dataset.modalType = 'tutorial'` en el elemento `#modalDetalle`. Para cortes y relays, establecer `dataset.modalType` en 'corte' and 'relay' respectivamente.
   - En `main.js`, registrar un `MutationObserver` sobre `#modalDetalle` dentro de la inicialización de la app (`initializeApp`). Cuando se detecte la remoción de la clase `.visible` (modal cerrado) de forma instantánea por cualquier mecanismo de cierre, y el tipo de modal sea 'tutorial', detener completamente la reproducción, remover el iframe del DOM y liberar los recursos del reproductor de forma definitiva.
+
+
+===================================================================
+AUDITORÍA TÉCNICA - DESARROLLO DE MICROSERVICIO ADMINISTRATIVO (16/07/2026)
+===================================================================
+
+ID del hallazgo: H-ADMIN-01
+Título: Falta de interfaz y backend para tareas avanzadas de mantenimiento y diagnóstico
+Descripción: No existen herramientas centralizadas para que el usuario Desarrollador/Administrador realice tareas como copias de seguridad de Spreadsheet y Drive, normalización de archivos e imágenes, reestructuración y reorganización automatizada, registro silencioso de cortes ni edición de datos "In-Modal". El modal `#dev-tools-modal` actual solo tiene botones de migraciones rudimentarias y carece de una consola de seguimiento de progreso paso a paso.
+Ubicación:
+  - Archivos: index.html, ui.js, api-config.js, add_cortes.html, Services/admin.js (nuevo archivo)
+Impacto: Alto
+Riesgo de regresión: Bajo
+Estrategia de corrección:
+  - Crear e implementar por completo `Services/admin.js` para Apps Script para manejar las tareas de backend.
+  - Agregar un endpoint de API en `api-config.js` apuntando a este servicio y registrar sus acciones.
+  - Implementar en `ui.js` un modo de edición "In-Modal" interactivo al pulsar un icono de lápiz, con guardado silencioso inmediato al perder foco (evento blur) o cargar archivos, y persistencia de restauración por si el usuario cancela o cierra sin guardar.
+  - Agregar opción "Registro Silencioso" en `add_cortes.html` enviando un timestamp de hace más de 30 días en el backend.
+  - Implementar en `#dev-tools-modal` una consola interactiva de diagnóstico en tiempo real que muestre logs de progreso paso a paso con estadísticas detalladas y botones dedicados de copiado de IDs y enlaces generados de Spreadsheet y Drive.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - AJUSTES ADICIONALES DE EDICIÓN IN-MODAL Y COMPATIBILIDAD (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js
+
+**Hallazgos:**
+1. **Falta de Try-Catch en Normalización de Imágenes Individuales (`Services/admin.js`):**
+   - Si una imagen falla debido a permisos, cuotas o archivo inexistente en Drive, la ejecución masiva se interrumpe.
+   - Solución: Envolver las operaciones de Drive para cada archivo individual en un bloque try-catch, registrando cualquier fallo como advertencia en los logs sin interrumpir la normalización del resto de los registros.
+
+2. **Edición In-Modal No Invasiva y Compatibilidad de Eventos (`ui.js`):**
+   - El modo de edición previo modificaba y reemplazaba componentes de la estructura HTML original (lo que violaba las nuevas restricciones de preservación HTML y estilos).
+   - Solución: Implementar una edición in-place (doble clic o clic en caliente sobre los textos los transforma en inputs temporales, y el listener de blur los vuelve a renderizar estáticos y envía el cambio silencioso). Los botones de las flechas de navegación por generaciones, de apertura de relay, Lightbox, de utilidad y de reportes se mantienen 100% idénticos en estilos y HTML, pero se interceptan y bloquean sus eventos únicamente mientras `inEditMode === true`. Al desactivar la edición o confirmar/restaurar, se levantan todos los bloqueos de forma síncrona sin recargar, asegurando compatibilidad absoluta.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CORRECCIONES PENDIENTES DEL MICROSERVICIO ADMINISTRATIVO (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js, add_cortes.html, main.js, index.html
+
+**Hallazgos y Resoluciones:**
+1. **Edición de Imágenes In-Modal (Tarea 1):**
+   - Problema: Las nuevas imágenes no se cargaban a Drive, no actualizaban el enlace en la spreadsheet y no persistían.
+   - Resolución: Corregido `handleUploadAdminImage` en `Services/admin.js` para limpiar el prefijo base64, extraer el ID de la imagen anterior y su correspondiente carpeta en Drive para guardar allí la nueva imagen, y renombrarla automáticamente siguiendo el formato oficial del sistema. Se agregó restauración inmediata local al descartar o cerrar.
+2. **Botón Agregar Corte Silencioso (Tarea 2):**
+   - Problema: No había acceso ni botón visible para agregar cortes silenciosos en el panel de desarrollador.
+   - Resolución: Agregado el botón `#btn-admin-add-silent-cut` en `index.html` bajo el Panel Administrativo y Diagnóstico. En `ui.js`, se configuró para abrir `add_cortes.html?silent=true`. En `add_cortes.html`, se parsea el parámetro, se marca automáticamente el checkbox `#silentRegister` y se rutea la acción a `ADMIN` para inyectar automáticamente el timestamp de hace 45 días.
+3. **Procesamiento por Lotes y Consola de Diagnóstico (Tarea 3):**
+   - Problema: Las operaciones masivas siempre comenzaban desde cero y se detenían tras los primeros diez registros.
+   - Resolución: Implementado administrador de estado persistente (`AdminState` en Spreadsheet). Las operaciones masivas en `Services/admin.js` ahora leen y guardan el último registro procesado. En `ui.js`, el panel de consola organiza llamadas sucesivas hasta completar el 100% de los registros, mostrando métricas en tiempo real como progreso, lote, registro actual/total, tiempo transcurrido, estimación de tiempo restante (ETA), advertencias y errores.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - OPTIMIZACIÓN DE REORGANIZACIÓN Y EDICIÓN IN-MODAL (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js, api-config.js
+
+**Hallazgos y Resoluciones:**
+1. **Reorganización física y Duplicación de Carpetas:**
+   - Problema: Se creaban carpetas duplicadas (ZNA_dongfeng, ZNA__dongfeng, ZNA(Dongfeng)) o vacías, y se perdía el formato humano de nombres (espacios, paréntesis).
+   - Resolución: Implementada normalización canónica en `getOrCreateSubFolder` en `Services/admin.js`. Compara nombres usando una clave simplificada (`replace(/[^a-z0-9]/g, '')`), detecta equivalentes, elige la de mejor formato, renombra si es necesario y fusiona subcarpetas y archivos de las duplicadas de forma recursiva. Añadido saneamiento de carpetas vacías (`deleteEmptyFoldersRecursively`) con protección de la carpeta de Logos.
+2. **Registro de Progreso por Lotes:**
+   - Problema: El registro de avance volvía a comenzar desde la fila 1 debido a que no guardaba/leía correctamente la fila de detención.
+   - Resolución: Actualizado el administrador de estado `AdminState` para persistir `lote`, `filaInicial`, `ultimaFilaProcesada`, `total` y `estado` de forma precisa en Google Sheets.
+3. **Pérdida de Persistencia In-Modal:**
+   - Problema: Las acciones `updateVehicleField` y `uploadAdminImage` no estaban mapeadas en `ACTION_TO_SERVICE_MAP`, por lo que fallaban de forma silenciosa o usaban el endpoint equivocado.
+   - Resolución: Mapeadas a la acción `ADMIN` en `api-config.js` de forma unificada.
+4. **Indicador Visual de Guardado:**
+   - Problema: Falta de feedback visual durante la comunicación con el servidor al editar.
+   - Resolución: Diseñado `#modal-saving-indicator` flotando a la izquierda en el encabezado del modal. Muestra estados (Guardando..., Procesando..., Guardado correctamente, Error al guardar) con animaciones de spinners en tiempo real.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CORRECCIONES ADICIONALES DE REORGANIZACIÓN Y ESPACIO EN DRIVE (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js
+
+**Hallazgos y Resoluciones:**
+1. **Duplicación de imágenes y reducción de almacenamiento (addFile/removeFile):**
+   - Problema: Las operaciones usaban `addFile()` y `removeFile()`. Al ser métodos obsoletos y desaconsejados por Google (que ya no soporta múltiples padres de forma nativa), causaban copias virtuales de las imágenes en Drive, reteniendo el espacio disponible del usuario.
+   - Resolución: Se reemplazaron todas las referencias de movimiento con la llamada oficial `file.moveTo(destinationFolder)`, lo que garantiza un traslado atómico y definitivo de los archivos.
+2. **Proliferación de carpetas vacías:**
+   - Problema: El bucle procesaba todas las filas de la base de datos y creaba carpetas para ellas incluso si la fila no contenía ninguna imagen.
+   - Resolución: Se inyectó un validador que comprueba si la fila tiene al menos una URL de imagen válida. Si no tiene imágenes, se omite de inmediato la creación de la jerarquía de carpetas.
+3. **Reinicios involuntarios por UX confusa:**
+   - Problema: Los diálogos de confirmación pedían presionar 'Aceptar' para empezar de cero, lo que causaba que los usuarios restablecieran accidentalmente el progreso.
+   - Resolución: Se modificó la UX para que 'Aceptar' continúe desde el último estado guardado y 'Cancelar' reinicie desde el principio de forma intuitiva.
+4. **Validación de Papelera y Restauración de Imágenes:**
+   - Problema: El usuario requería asegurarse de que ningún archivo de imagen referenciado en cualquier hoja del Spreadsheet permaneciera en la papelera de Drive, y en caso afirmativo, recuperarlo automáticamente y colocarlo en su carpeta correspondiente.
+   - Resolución: Se implementó la función global `validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage)` en `Services/admin.js`. Esta función recorre dinámicamente todas las hojas visibles del Spreadsheet, analiza el contenido de todas las celdas buscando IDs de Google Drive, verifica si el archivo está en la papelera usando `file.isTrashed()` y lo recupera inmediatamente mediante `file.setTrashed(false)`. Esta validación se ejecuta de manera preventiva durante el primer lote de `normalizeImages` y `reorganizeImagesInDrive`, restaurando las imágenes antes de reubicarlas físicamente.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - OPTIMIZACIÓN DE REORGANIZACIÓN Y CONSOLA DE DIAGNÓSTICO (25/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, ui.js, api-config.js, index.html
+
+**Hallazgos y Resoluciones:**
+1. **Error de comunicación en organización de carpetas (Lote 1):**
+   - Problema: El proceso de limpieza recursiva de carpetas vacías (`deleteEmptyFoldersRecursively`) se ejecutaba de manera generalizada al final de cada lote. Esto provocaba un consumo masivo de tiempo de ejecución y superaba el tiempo de ejecución límite de Google Apps Script o causaba timeouts de conexión, resultando en "Error de comunicación".
+   - Resolución: Se optimizó `handleReorganizeImagesInDrive` en `Services/admin.js` para ejecutar el borrado recursivo de carpetas vacías únicamente al procesar el lote final (`nextIndex >= totalVehicles`). Se envolvieron las operaciones críticas de Drive (creación, fusión, borrado recursivo) en bloques try-catch individuales para evitar la caída catastrófica de los lotes intermedios, actualizando de forma robusta los nuevos contadores (`foldersChecked`, `foldersCreated`, `foldersRenamed`, `foldersDeleted`).
+2. **Diagnóstico nulo en Panel Administrativo:**
+   - Problema: La consola mostraba únicamente "Error de comunicación" genérico, lo que impedía diagnosticar el origen exacto de los fallos de red o de Apps Script.
+   - Resolución: Se diseñó e implementó un sistema detallado de diagnóstico técnico en `ui.js`:
+     - Al abrir el modal, se ejecuta automáticamente un ping (`ping` mapeado al servicio `ADMIN` en `api-config.js`) y se calcula la latencia en ms.
+     - Se implementó un panel de log estructurado y formateado que captura y detalla: la operación ejecutada, la etapa actual, el recurso afectado, la fila, el lote, la función ejecutada, el código HTTP estimado, el mensaje del servidor, el stack trace de la excepción, y el tiempo de ejecución transcurrido.
+     - Se añadió un botón "Copiar registro" (`#btn-copy-console-log`) en `index.html` que copia con un clic todo el historial de la terminal al portapapeles.
+     - Se añadió un bloque de progreso continuo que actualiza de forma síncrona en cada lote: la carpeta actual, el archivo actual, la fila actual, el lote actual, el porcentaje, el tiempo transcurrido y la cantidad procesada.
+     - Se añadió un resumen acumulativo final (MM:SS) de todas las operaciones físicas realizadas en Drive y errores ocurridos.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - DIAGNÓSTICO DETALLADO DE TIMEOUT POR ESCANEO EXHAUSTIVO DE PAPELERA (26/07/2026)**
+
+**Archivos involucrados:** Services/admin.js
+
+**Hallazgos y Diagnóstico:**
+1. **Análisis de Falla de Red / Error de Comunicación en Lote 1:**
+   - Detalle del Error: La consola reportó `Failed to fetch` al ejecutar `routeAction` en el primer lote tras un tiempo de ejecución de **361.3s**.
+   - Causa Raíz del Timeout: El límite de ejecución de Google Apps Script para cuentas regulares y Workspace es de exactamente **6 minutos (360 segundos)**. Al superarse este límite, Google aborta abruptamente la solicitud de forma unilateral en el backend, devolviendo una falla de conexión de socket que en el frontend del navegador se captura como un `TypeError: Failed to fetch`.
+   - Culpable del Retraso: En `Services/admin.js`, tanto `handleNormalizeImages` como `handleReorganizeImagesInDrive` llaman de forma obligatoria a `validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage)` al inicio del lote 1 (`startIndex === 0 || lote === 1`).
+   - Overhead de Escaneo: La función `validateAndRestoreAllTrashedImagesInSpreadsheet` recorre celda por celda cada una de las múltiples hojas de la base de datos (Spreadsheet) y, para cada URL de Google Drive que encuentra, realiza una llamada a la API `DriveApp.getFileById(id)` y verifica si está en la papelera con `file.isTrashed()`.
+   - Problema de Latencia: Las llamadas sincrónicas a la API de Drive en Apps Script conllevan una latencia promedio de 200ms a 500ms por archivo. Al ejecutarse de manera masiva y exhaustiva sobre cientos de registros en una sola ejecución sincrónica de Lote 1, la función consume el presupuesto total de 6 minutos de Google Apps Script por completo antes de que el procesamiento de las primeras imágenes del lote siquiera empiece.
+
+**Estrategia de Solución:**
+1. **Desacoplar Escaneo Exhaustivo de Papelera del Lote Inicial:**
+   - Se debe eliminar la llamada obligatoria a `validateAndRestoreAllTrashedImagesInSpreadsheet` al inicio del lote 1 de `handleNormalizeImages` y `handleReorganizeImagesInDrive` en `Services/admin.js`.
+   - El sistema ya es robusto contra la papelera "al vuelo" porque dentro de los bucles de procesamiento principales de cada registro del lote se incluye la verificación y restauración individual de las imágenes del registro:
+     ```javascript
+     if (file.isTrashed()) {
+         logMessage("...", `Fila ${rowNum}: Imagen '${file.getName()}' de la papelera restaurada correctamente.`);
+         file.setTrashed(false);
+     }
+     ```
+     Esto garantiza que todas las imágenes que se van a procesar se recuperen oportunamente del basurero sin tener que escanear todo el Spreadsheet innecesariamente.
+2. **Exponer el Escaneo Exhaustivo como una Acción Administrativa Independiente:**
+   - En `doPost` en `Services/admin.js`, se añadirá la acción `'restoreAllTrashedImages'` que invoque de forma directa, aislada y bajo demanda a `validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage)`.
+   - Esto permite que el Desarrollador ejecute el saneamiento exhaustivo de forma separada del proceso continuo de normalización o reubicación, previniendo cuotas de red y timeouts inesperados en la pila por lotes principal.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - VISIBILIDAD CONDICIONAL DE BOTÓN POR DETECCIÓN DE IMÁGENES ROTAS/PAPELERA (26/07/2026)**
+
+**Archivos involucrados:** index.html, ui.js
+
+**Hallazgos y Solución:**
+1. **Visibilidad Condicional de la Herramienta de Saneamiento:**
+   - El botón `#btn-admin-restore-trash` ("Saneamiento y recuperación de imágenes en papelera") debe ocultarse por defecto en `index.html` para no saturar la UI administrativa.
+   - Solo debe estar visible y disponible cuando el sistema detecte de manera activa la existencia de alguna imagen cuyo enlace dirija a un archivo eliminado o en la papelera de Drive.
+2. **Detección Automatizada en el Cargador de Imágenes:**
+   - En `ui.js`, la función centralizada `setOptimizedImage` gestiona el renderizado de cada imagen del catálogo y de la vista de detalles.
+   - Si una imagen de Drive es borrada o enviada a la papelera, su carga remota fallará, disparando de forma nativa el evento `onerror` en el elemento `imgElement`.
+   - Capturando este evento en `setOptimizedImage`, el sistema detecta de forma inmediata que existe al menos una imagen inalcanzable, procediendo de manera reactiva y silenciosa a mostrar el botón de restauración (`#btn-admin-restore-trash`) en el panel administrativo.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - CORRECCIÓN DE REGISTROS SILENCIOSOS, DEPURACIÓN DE DUPLICADOS Y PROCESAMIENTO (26/07/2026)**
+
+**Archivos involucrados:** Services/admin.js, Services/Write/write.js, ui.js
+
+**Hallazgos y Soluciones:**
+1. **Registro silencioso no 100% silencioso:**
+   - Diagnóstico: Se usaba un offset de timestamp de 45 días, insuficiente para omitirlo del feed público. Asimismo, registros consecutivos sin Lock de script de Google Apps Script causaban colisiones de ID/datos. En el paso 3 del formulario `add_cortes.html`, `handleAddSupplementaryInfo` volvía a inyectar un timestamp de hace 45 días, sobreescribiendo el del modo sigiloso.
+   - Solución: Se actualizó el offset de timestamp administrativo a 365 días en `handleAddOrUpdateCut` y `handleAddSupplementaryInfo`. Se introdujo script locking (`LockService.getScriptLock()`) y limpieza y asignación unívoca de fórmula de ID para evitar sobreescritura consecutiva.
+2. **Duplicación de imágenes y Reorganización:**
+   - Diagnóstico: En la reorganización de Drive se presentaban duplicaciones por copias virtuales. No se hacía una depuración inteligente.
+   - Solución: Implementado un trasladador oficial con `file.moveTo(genFolder)` para traslados atómicos, higiene contra carpetas vacías antes de procesar un lote, y relocalización de la imagen del vehículo a la misma carpeta de la generación (`genFolder`).
+3. **Casos de Duplicados en Carpetas:**
+   - Diagnóstico: Inexistencia de rutinas de de-duplicación física (Casos 1, 2, 3).
+   - Solución: Diseñada la función `cleanUpDuplicatesInBrandTree()` que analiza el árbol y realiza de-duplicación para los tres casos de forma inteligente y segura.
+4. **Protección de Duplicados Permitidos:**
+   - Diagnóstico: Se debe priorizar el Spreadsheet antes de remover duplicados físicos.
+   - Solución: Se introdujo la función `getActiveImageUrls()` que detecta todas las URLs de imágenes referenciadas en el Spreadsheet completo, protegiéndolas de ser eliminadas.
+5. **Bloqueo del último lote y guardado de progreso:**
+   - Diagnóstico: El último lote no finalizaba o se bloqueaba debido a condiciones laxas de término en el frontend.
+   - Solución: El frontend ahora detiene inmediatamente el bucle secuencial si el servidor reporta estado de completado o si `processedCount === 0`.
+6. **Mejora del botón de copia de errores:**
+   - Diagnóstico: Copiado desordenado de logs sin poder localizar errores rápidamente.
+   - Solución: Clasificación CSS de cada línea y filtrado preciso del texto copiado por el selector `.log-error`.
+
+
+===================================================================
+AUDITORÍA TÉCNICA - ORGANIZACIÓN DE IMÁGENES Y PROCESAMIENTO POR LOTES (19/02/2026)
+===================================================================
+
+ID del hallazgo: H-BATCH-01
+Título: Detención en el último lote con "TypeError: Failed to fetch" (HTTP 500)
+Descripción: El organizador se interrumpe y aborta al llegar al último lote.
+Causa Raíz:
+1. Cuando el proceso alcanza el lote final (`nextIndex >= totalVehicles`), se ejecutan de manera sincrónica tareas sumamente pesadas como `cleanUpDuplicatesInBrandTree` para cada marca activa, y `deleteEmptyFoldersRecursively` en toda la jerarquía de Drive. Estas operaciones realizan cientos de llamadas remotas que exceden fácilmente el límite de tiempo de 6 minutos de Google Apps Script o causan desbordamientos de memoria, lo que genera una excepción de Apps Script interpretada como TypeError: Failed to fetch en el frontend.
+2. No se valida si existen registros pendientes reales antes de iniciar un lote.
+3. El frontend y backend carecen de variables globales de seguimiento para determinar con precisión en qué etapa, lote, fila, y recurso específico ocurrió la excepción en caso de falla.
+
+Estrategia de corrección:
+- Registrar variables globales del estado del proceso (`currentStage`, `currentLote`, `currentFila`, `currentRecurso`) en `Services/admin.js` para enriquecer el manejo de excepciones de `doPost`.
+- Responder un JSON estructurado con detalles completos del diagnóstico en caso de error.
+- En el lote final, evitar la ejecución de tareas lentas / redundantes o diferirlas/ejecutarlas de forma controlada y segura para evitar timeouts. Si no hay registros pendientes reales antes de iniciar un lote, finalizar de inmediato.
+
+ID del hallazgo: H-IMAGE-01
+Título: Imágenes "imagenVehiculo" extraviadas de su carpeta de generación
+Descripción: Numerosas imágenes `imagenVehiculo` conservan su URL en el Spreadsheet, pero el archivo físico no reside en la carpeta de la generación.
+Causa Raíz:
+1. En `handleReorganizeImagesInDrive`, el bucle que recorre `imgFields` procesa las imágenes complementarias (`imgCorte1`, etc.), pero la lógica para ubicar, mover y validar `imagenVehiculo` se omite de forma inadecuada o no garantiza su relocalización en la carpeta de su generación (`genFolder`).
+2. Las expresiones regulares usadas para extraer el ID de la URL (`match(/id=([a-zA-Z0-9_-]+)/)`) son limitadas y no soportan el formato alternativo de URL de Google Drive `file/d/([a-zA-Z0-9_-]+)`.
+
+Estrategia de corrección:
+- Asegurar que `handleReorganizeImagesInDrive` recorra y procese consistentemente todos los campos de imagen incluyendo `imagenVehiculo`.
+- Actualizar los patrones de coincidencia de regex de ID para admitir ambos formatos oficiales de Drive (`id=` y `file/d/`).
+- Aplicar un flujo registro por registro: Leer las URLs de todos los campos, resolver el archivo físico en Drive, determinar la carpeta de la generación correspondiente (`genFolder`), verificar si está allí, y de no ser así, moverlo preservando el ID y la URL pública.

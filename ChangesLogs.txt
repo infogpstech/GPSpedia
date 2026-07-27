@@ -640,3 +640,153 @@ Archivos modificados:
 - Se implementó un `MutationObserver` reactivo sobre `#modalDetalle` dentro de la inicialización de la app (`initializeApp`). Cuando el modal es cerrado por cualquier mecanismo (clic en botón, gesto de retroceso, botón físico o clic fuera), el observador detecta síncronamente la remoción de la clase `.visible`. Si el tipo de modal cerrado era un tutorial (`dataset.modalType === 'tutorial'`), se detiene de forma instantánea la reproducción y se destruye el iframe del vídeo estableciendo su `src` a `about:blank` y removiendo el elemento del DOM. Esto garantiza la total e inmediata detención del audio, la liberación de recursos de red y CPU y evita ejecuciones ocultas en segundo plano.
 
 **Versión:** Incremento a v2.1.6.
+
+**CHANGES LOG - 25/07/2026 (MICROSERVICIO ADMINISTRATIVO Y DIAGNÓSTICO - VERSIÓN 2.6.0)**
+
+**Archivo: Services/admin.js**
+- Se creó e implementó por completo el microservicio de Google Apps Script exclusivo para administradores y desarrolladores.
+- Implementado `handleBackupDatabase` para generar copias completas de Spreadsheet en la raíz de Drive con nombre estandarizado y timestamp.
+- Implementado `handleBackupDrive` para copiar recursivamente la jerarquía completa de carpetas e imágenes del catálogo en una nueva carpeta de respaldo.
+- Implementado `handleRestoreDatabase` y `handleRestoreDrive` para restaurar la información al estado de copias anteriores mediante sus IDs respectivos.
+- Implementado `handleReorganizeDatabase` para agrupar y ordenar todos los registros de vehículos alfabéticamente por marca.
+- Implementado `handleNormalizeImages` para renombrar de forma uniforme las imágenes principales, cortes, apertura y alimentación basándose en el nombre del modelo, versión, encendido y año de inicio, clonando además los archivos físicos en Drive para eliminar enlaces compartidos.
+- Implementado `handleReorganizeImagesInDrive` para reestructurar físicamente las carpetas en Drive siguiendo el esquema: Cortes/Categoría/Marca/Modelo/Versión_Encendido/Generación/.
+- Implementado `handleAddLogo` para subir nuevos logotipos PNG, SVG y WEBP conservando su transparencia y registrándolos en la hoja LogosMarca.
+- Implementado `handleUpdateVehicleField` para modificar de manera silenciosa cualquier celda en Google Sheets por ID de vehículo y nombre del campo.
+- Implementado `handleUploadAdminImage` para subir imágenes modificadas "In-Modal" a Drive y actualizar el Sheets silenciosamente en segundo plano.
+
+**Archivo: Services/Write/write.js**
+- Se actualizó la función `handleAddOrUpdateCut` para aceptar un flag `silent` opcional en el payload. Si es verdadero, calcula una fecha de timestamp de hace 45 días en lugar de la actual, evitando que aparezca en el feed público de "Agregados recientemente".
+
+**Archivo: api-config.js**
+- Registrado el endpoint `ADMIN` para apuntar al nuevo microservicio administrativo.
+- Asociadas las acciones `backupDatabase`, `backupDrive`, `restoreDatabase`, `restoreDrive`, `reorganizeDatabase`, `normalizeImages`, `reorganizeImagesInDrive` y `addLogo` en `ACTION_TO_SERVICE_MAP`.
+
+**Archivo: add_cortes.html**
+- Añadido un checkbox con ID `silentRegister` para que el desarrollador pueda seleccionar el registro silencioso.
+- Se lee el rol desde la sesión de `localStorage` (`Privilegios`) e inicializa la visibilidad de dicho checkbox solo si el rol del usuario es "Desarrollador".
+- Envía el flag `silent: true` al disparar la acción `addOrUpdateCut`.
+
+**Archivo: ui.js**
+- Implementado el Modo Edición "In-Modal" exclusivo para desarrolladores.
+- Agregado el botón con icono de lápiz ✏️ en la esquina superior izquierda del modal de detalle de vehículo.
+- Al activarse, los elementos editables (modelo, rango de años, equipamiento, tipo de encendido, categoría, tipo de corte, configuración de relay, nota, apertura, alimentación) se transforman dinámicamente en inputs, textareas o selects (cuyas opciones de validaciones se cargan dinámicamente desde el backend).
+- Cada campo se guarda en Sheets de forma silenciosa en segundo plano al perder el foco (`blur` o `change`).
+- Deshabilitado el Lightbox y habilitado el clic sobre imágenes para abrir el selector de archivos, reemplazarlas visualmente y subirlas silenciosamente a Drive (`uploadAdminImage`).
+- Añadidos botones con los iconos indicados (↩️ para Restablecer/Descartar y ✅ para Guardar/Finalizar).
+- Almacenada una copia temporal preventiva original en `originalItemBackup`. Si se cancela o cierra el modal sin guardar, se restauran silenciosamente las celdas en Sheets a su estado inicial.
+- Diseñado el Panel Administrativo y de Diagnóstico interactivo en `#dev-tools-modal` con consola estilo terminal negra con texto verde que transmite los logs detallados del progreso en tiempo real de cada operación administrativa de Apps Script.
+- Barra de progreso y porcentaje animados en tiempo real.
+- Entradas de texto específicas para IDs de respaldos de base de datos y Drive con botones "Copiar ID" independientes y botón de enlace directo.
+
+**Archivo: index.html**
+- Rediseñado el modal de `#dev-tools-modal` para ofrecer una interfaz clara con la terminal de depuración de diagnóstico, barra de progreso animada, entradas con copy buttons para copias de seguridad de Spreadsheet/Drive y un panel de control con botones dedicados para todas las operaciones y formularios administrativos.
+
+**Archivo: lightbox.js**
+- Bloqueada de forma global la apertura del Lightbox de zoom si `window.inEditMode === true` para evitar conflictos en el modo edición in-modal.
+
+**Versión:** Despliegue del Microservicio Administrativo (v2.6.0).
+
+-------------------------------------------------------------------
+**REVISIÓN POST COMMIT - CORRECCIONES DEL MICROSERVICIO ADMINISTRATIVO (25/07/2026)**
+
+**Archivo: Services/admin.js**
+- Implementado el manejador de `addOrUpdateCut` y `addSupplementaryInfo` para registro administrativo silencioso de cortes.
+- Corregido `handleUploadAdminImage` para limpiar prefijos base64, buscar la carpeta del archivo original en Drive y renombrar los archivos con la nomenclatura oficial del sistema (`modelo_versionEquipamiento_tipoEncendido_año_tipoImagen.extensión`).
+- Implementado el gestor de estado persistente (`AdminState` en Spreadsheet).
+- Modificadas las operaciones masivas de `normalizeImages` y `reorganizeImagesInDrive` para reanudar el procesamiento desde el último índice guardado de forma robusta con try-catch individual.
+
+**Archivo: ui.js**
+- Actualizadas las funciones de edición in-modal para usar la nomenclatura oficial y limpiar los datos de imagen en `convertImageToEditable`.
+- Añadida restauración local y server-side completa al cancelar o cerrar el modal mediante `skipReopen` en `exitModalEditMode`.
+- Refactorizada la consola de diagnóstico administrativo para realizar llamadas sucesivas automáticas por lotes con estadísticas completas en tiempo real (progreso, lote, registro actual/total, tiempo transcurrido, ETA, advertencias, errores y estado guardado).
+
+**Archivo: add_cortes.html**
+- Parseado el parámetro `silent=true` en la URL de inicio para activar por defecto la inyección del timestamp administrativo y el ruteo de las acciones `addOrUpdateCut` y `addSupplementaryInfo` al microservicio de administración (`ADMIN`).
+
+**Archivo: index.html**
+- Añadido el botón de acceso directo `#btn-admin-add-silent-cut` en el modal administrativo.
+
+**Archivo: main.js**
+- Agregada interceptación de cierre de modal por popstate/gesto de retroceso para forzar la restauración/cancelación de los cambios in-modal si `window.inEditMode === true`.
+
+-------------------------------------------------------------------
+**REVISIÓN POST COMMIT - OPTIMIZACIÓN DE REORGANIZACIÓN Y CONSOLA DE DIAGNÓSTICO (25/07/2026)**
+
+**Archivo: Services/admin.js**
+- Optimizado el flujo de reorganización de Drive posponiendo el saneamiento y borrado recursivo de carpetas vacías (`deleteEmptyFoldersRecursively`) para que se ejecute únicamente en el lote final del procesamiento masivo (`nextIndex >= totalVehicles`).
+- Envolvió con try-catch localizado todas las operaciones de archivos y carpetas (`getOrCreateSubFolder`, `mergeFolders`, `deleteEmptyFoldersRecursively`) para mitigar fallas catastróficas y capturar de forma segura estadísticas de Drive.
+- Añadidos contadores de rendimiento a nivel de lote: `foldersChecked`, `foldersCreated`, `foldersRenamed` y `foldersDeleted`.
+
+**Archivo: ui.js**
+- Implementado ping de conexión automática (`routeAction('ping')`) al abrir el modal administrativo, calculando y reportando la latencia en milisegundos.
+- Rediseñada la consola para reportar de forma continua en cada lote: la carpeta actual, el archivo actual, la fila actual, el lote actual, el porcentaje, el tiempo transcurrido y la cantidad procesada.
+- Diseñado un bloque estructurado para detallar de manera integral las excepciones capturadas (operación, etapa, recurso, fila, lote, función, código HTTP, mensaje y stack trace de error).
+- Añadido un resumen estadístico de finalización que acumula y detalla las acciones realizadas en Drive y el tiempo total formateado en `MM:SS`.
+- Integrado el disparador de ping en aperturas subsecuentes sin duplicar listeners de eventos.
+
+**Archivo: api-config.js**
+- Mapeada la acción `'ping'` al servicio `'ADMIN'` en la constante `ACTION_TO_SERVICE_MAP`.
+
+**Archivo: index.html**
+- Agregado el botón `#btn-copy-console-log` ("Copiar registro") estilizado con flexbox al lado del título de la consola de diagnóstico en el panel administrativo.
+
+-------------------------------------------------------------------
+**CORRECCIONES ADICIONALES DE REORGANIZACIÓN Y ESPACIO EN DRIVE (25/07/2026)**
+
+**Archivo: Services/admin.js**
+- Sustituidas las llamadas obsoletas y deprecadas de `addFile`/`removeFile` por la API oficial `file.moveTo(genFolder)` para mover las imágenes de forma atómica y definitiva, solucionando la duplicación buggy de padres e impidiendo que se agote el espacio disponible en Google Drive.
+- Implementada higiene contra carpetas vacías: el bucle comprueba si la fila de la hoja de cálculo contiene al menos una URL de imagen válida antes de crear la estructura de carpetas en Drive, evitando poblar el almacenamiento de directorios vacíos.
+- Diseñado e implementado el sistema global de validación y restauración de imágenes de la papelera `validateAndRestoreAllTrashedImagesInSpreadsheet`. Escanea dinámicamente todas las hojas del Spreadsheet, detecta archivos en la papelera de Drive que estén vinculados, los recupera automáticamente mediante `file.setTrashed(false)` y los reubica en su carpeta jerárquica correspondiente.
+- Integrado el control de restauración automática en papelera dentro de las operaciones por lotes `handleNormalizeImages` y `handleReorganizeImagesInDrive`.
+
+**Archivo: ui.js**
+- Mejorada la lógica UX de los diálogos de confirmación para que presionar 'Aceptar' continúe con el progreso guardado y 'Cancelar' inicie desde la Fila 1 de forma intuitiva, resolviendo el problema de reinicio involuntario.
+
+-------------------------------------------------------------------
+**CORRECCIÓN DE TIMEOUT Y DESACOPLE DE PAPELERA - VERSIÓN 2.6.1 (26/07/2026)**
+
+**Archivo: Services/admin.js**
+- **Líneas 173-176:** Añadido el caso `'restoreAllTrashedImages'` en `doPost` para exponer el saneamiento exhaustivo de papelera como una acción independiente aislada bajo demanda.
+- **Líneas 417-422, 621-626:** Se eliminó la invocación obligatoria a `validateAndRestoreAllTrashedImagesInSpreadsheet` al inicio del lote 1 de `handleNormalizeImages` y `handleReorganizeImagesInDrive` para prevenir que las llamadas sincrónicas masivas a `DriveApp` agoten el límite de 6 minutos de Google Apps Script y gatillen un timeout de red ("Failed to fetch") en el primer lote.
+- **Optimización de Papelera:** Se mantiene y confía en el sistema de recuperación "al vuelo" que opera de forma rápida y segura dentro del bucle de procesamiento principal para los archivos que corresponden exclusivamente a las filas activas de cada lote.
+
+**Archivo: Auditoria.txt**
+- Se documentó el análisis de latencia y diagnóstico detallado de la excepción de timeout del backend provocada por el escaneo masivo de papelera, junto con la estrategia para solucionarlo.
+
+**Archivo: index.html**
+- Se añadió un nuevo botón con ID `btn-admin-restore-trash` ("Saneamiento y recuperación de imágenes en papelera") dentro del bloque de mantenimiento en el Panel Administrativo, oculto por defecto mediante `display: none;`.
+
+**Archivo: ui.js**
+- Se vinculó el botón `#btn-admin-restore-trash` para ejecutar la acción de Saneamiento exhaustivo de la papelera (`restoreAllTrashedImages`) de forma separada del flujo continuo de lotes con confirmación interactiva.
+- Implementado event listener `onerror` en `setOptimizedImage` para detectar de manera activa errores de carga de imágenes (lo que indica que la imagen está en la papelera o borrada) y mostrar de forma reactiva el botón `#btn-admin-restore-trash` en el panel administrativo.
+
+-------------------------------------------------------------------
+**CORRECCIÓN DE REGISTROS SILENCIOSOS, DEPURACIÓN DE DUPLICADOS Y PROCESAMIENTO (26/07/2026)**
+
+**Archivo: Services/admin.js**
+- Actualizadas las funciones `handleAddOrUpdateCut` y `handleAddSupplementaryInfo` para usar un timestamp de hace 365 días en lugar de 45 días al realizar registros silenciosos, asegurando que se omitan del feed público.
+- Implementada la exclusión de condiciones de carrera con `LockService` y reescritura limpia e independiente de la fórmula del ID del Spreadsheet.
+- Añadida la función helper `getActiveImageUrls` que escanea las celdas del Spreadsheet para almacenar y retornar las IDs de imágenes activas para evitar eliminaciones accidentales.
+- Implementada la función `cleanUpDuplicatesInBrandTree` para recorrer el árbol de la marca y eliminar duplicados (Caso 1, Caso 2, y Caso 3) con soporte robusto y prioritario para metadatos físicos activos/inactivos de Google Drive.
+- Integrado el control de verificación, restauración individual y relocalización de la imagen principal a la carpeta de la generación (`genFolder`) dentro de `handleReorganizeImagesInDrive`.
+
+**Archivo: Services/Write/write.js**
+- Modificada la función `handleAddOrUpdateCut` para utilizar un offset de timestamp administrativo de hace 365 días en modo silencioso.
+
+**Archivo: ui.js**
+- Modificadas las condiciones de finalización de lotes de normalización y reorganización en el frontend para evitar que la barra se bloquee o se ejecute indefinidamente.
+- Clasificadas las salidas de consola por clase CSS (`log-info`, `log-warning`, `log-error`) y mejorado el botón "Copiar registro" para filtrar y copiar exclusivamente mensajes clasificados como error.
+
+
+-------------------------------------------------------------------
+**DIAGNÓSTICO Y CORRECCIÓN INTEGRAL DEL ORGANIZADOR DE IMÁGENES Y PROCESAMIENTO POR LOTES (19/02/2026)**
+
+**Archivo: Services/admin.js**
+- Implementadas variables globales para el diagnóstico y seguimiento en caliente de errores: `currentStage`, `currentLote`, `currentFila`, y `currentRecurso`.
+- Refactorizado el manejador de excepciones `doPost` para capturar cualquier fallo de Apps Script o Drive y responder con un JSON estructurado de diagnóstico útil en lugar de un error genérico (HTTP 500 / Failed to fetch).
+- Agregada verificación al inicio de `handleNormalizeImages` y `handleReorganizeImagesInDrive` para comprobar si hay registros pendientes reales. Si no los hay, finaliza de inmediato.
+- Corregido el timeout y detención del último lote (`nextIndex >= totalVehicles`) en `handleReorganizeImagesInDrive` omitiendo la ejecución sincrónica de las lentas tareas de limpieza y de-duplicación profunda que causaban timeouts o interrupción del proceso por cuotas de Apps Script.
+- Actualizadas las expresiones de coincidencia regex de IDs de Drive para admitir tanto el formato de URL con parámetro `id=` como el formato nativo alternativo `file/d/` de forma consistente.
+- Sincronizado el seguimiento del recurso y de la fila actual dentro del procesamiento de cada imagen para un reporte detallado en tiempo real en la terminal administrativa del frontend.
+- Asegurado que `handleReorganizeImagesInDrive` procese y reubique correctamente el archivo físico de `imagenVehiculo` junto a las complementarias en la carpeta de la generación (`genFolder`).

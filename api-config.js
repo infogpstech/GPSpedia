@@ -8,10 +8,11 @@ export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
     AUTH:     "https://script.google.com/macros/s/AKfycbwATstMSSnuYZMeGEjI7Q5cznO6kA8rqLo7zNZLmu_f29qwcyt4Fucn5VIBdB9tMoRg/exec",
     CATALOG:  "https://script.google.com/macros/s/AKfycbwDLzfOoVGypw51bG_ISSsvETtDGdpOBv_7OkX82GgMh13cVnVoHRyEqW_TU6r7m7-2Kg/exec",
-    WRITE:    "https://script.google.com/macros/s/AKfycbx-a6yvMX5IbxTCCUpPCS0sb0iDGkA2iUkLXMdTzJf9kuCbZGfqLQTQWtOq4xN_bANW/exec",
+    WRITE:    "https://script.google.com/macros/s/AKfycbxuTrzO1_Lfd1H_QAL-QfF7r5SqBWaS7WxWn7r7SZkJ4olU8gK3bLZ9vdSt5Cga9H3S/exec",
     USERS:    "https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec",
     FEEDBACK: "https://script.google.com/macros/s/AKfycbz3NzT3FPn40VDbc7irIF632xHoeopM0GdnCIim4APAYTzb9KYDjZWDXHHrtzq4atZ70Q/exec",
-    UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec"
+    UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec",
+    ADMIN: "https://script.google.com/macros/s/AKfycbxmGmEIALoLCsvQLktLkc4wKBaTOCRK7Q67ES52ZA_GxQMuCuPhpHyN31FUXKBH5CNP/exec"
 };
 
 export const ACTION_TO_SERVICE_MAP = {
@@ -22,6 +23,10 @@ export const ACTION_TO_SERVICE_MAP = {
     'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'suggestYear': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK',
     'migrateYearRanges': 'UTILITIES', 'migrateTimestamps': 'UTILITIES',
+    'ping': 'ADMIN',
+    'backupDatabase': 'ADMIN', 'backupDrive': 'ADMIN', 'restoreDatabase': 'ADMIN', 'restoreDrive': 'ADMIN',
+    'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'reorganizeImagesInDrive': 'ADMIN', 'addLogo': 'ADMIN',
+    'updateVehicleField': 'ADMIN', 'uploadAdminImage': 'ADMIN',
     'logFrontend': 'LEGACY'
 };
 

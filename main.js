@@ -202,12 +202,16 @@ async function initializeApp() {
         // 4. Cerrar Modal de Detalles
         const modalDetalle = document.getElementById('modalDetalle');
         if (modalDetalle && modalDetalle.classList.contains('visible')) {
+            if (window.inEditMode) {
+                window.ui.exitModalEditMode(false, null, true);
+            } else {
+                modalDetalle.classList.remove('visible');
+            }
             // Detener videos al cerrar via back button
             const iframe = modalDetalle.querySelector('iframe');
             if (iframe && iframe.contentWindow) {
                 iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
             }
-            modalDetalle.classList.remove('visible');
 
             // Restaurar foco a la barra de búsqueda si estamos en modo búsqueda
             const isSearchActive = document.body.classList.contains('search-active');
