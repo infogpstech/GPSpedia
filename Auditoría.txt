@@ -101,7 +101,7 @@
    - El cierre manual debe ser consistente con el estado del historial.
 
 3. **Reapertura de Modal:**
-   - Se debe asegurar que al retroceder desde un nivel a otro, si el nivel anterior tenía un modal abierto "automáticamente" (resultado único), este no se vuelva a abrir si ya fue cerrado. La bandera `autoOpen` implementada en v2.4.10 debe preservarse y reforzarse.
+   - Se debe asegurar que al retroceder desde un nivel a otro, si el nivel anterior tenía un modal abierto "automáticamente" (resultado único), este no se vuelva a abrir si ya fue cerrado. La bandera `autoOpen` implementada en v2.1.5 debe preservarse y reforzarse.
 
 4. **Navegación Agrupada (Búsqueda):**
    - Al navegar desde resultados de búsqueda hacia niveles internos (ej. modelos de una marca encontrada), se debe registrar cada paso en el historial para permitir el retroceso granular solicitado.
@@ -480,7 +480,7 @@ Estrategia de corrección:
    - El cierre manual debe ser consistente con el estado del historial.
 
 3. **Reapertura de Modal:**
-   - Se debe asegurar que al retroceder desde un nivel a otro, si el nivel anterior tenía un modal abierto "automáticamente" (resultado único), este no se vuelva a abrir si ya fue cerrado. La bandera `autoOpen` implementada en v2.4.10 debe preservarse y reforzarse.
+   - Se debe asegurar que al retroceder desde un nivel a otro, si el nivel anterior tenía un modal abierto "automáticamente" (resultado único), este no se vuelva a abrir si ya fue cerrado. La bandera `autoOpen` implementada en v2.1.5 debe preservarse y reforzarse.
 
 4. **Navegación Agrupada (Búsqueda):**
    - Al navegar desde resultados de búsqueda hacia niveles internos (ej. modelos de una marca encontrada), se debe registrar cada paso en el historial para permitir el retroceso granular solicitado.

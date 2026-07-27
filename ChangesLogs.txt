@@ -630,7 +630,7 @@ Archivos modificados:
 
 **Versión:** Registro de Cambios en Frontend (Consolidado v2.1.5).
 
-**CHANGES LOG - 22/02/2026 (CORRECCIÓN DE REPRODUCCIÓN PERSISTENTE DE VÍDEOS EN TUTORIALES - VERSIÓN 2.1.6)**
+**CHANGES LOG - 22/02/2026 (CORRECCIÓN DE REPRODUCCIÓN PERSISTENTE DE VÍDEOS EN TUTORIALES - VERSIÓN 2.1.5)**
 
 **Archivo: ui.js**
 - Se modificaron las funciones `mostrarDetalleModal`, `mostrarDetalleTutorialModal` y `mostrarDetalleRelayModal` para asignar síncronamente la propiedad `dataset.modalType` con los valores `'corte'`, `'tutorial'` y `'relay'` respectivamente en el elemento `#modalDetalle` al abrir cualquier vista de detalle.
@@ -639,9 +639,9 @@ Archivos modificados:
 **Archivo: main.js**
 - Se implementó un `MutationObserver` reactivo sobre `#modalDetalle` dentro de la inicialización de la app (`initializeApp`). Cuando el modal es cerrado por cualquier mecanismo (clic en botón, gesto de retroceso, botón físico o clic fuera), el observador detecta síncronamente la remoción de la clase `.visible`. Si el tipo de modal cerrado era un tutorial (`dataset.modalType === 'tutorial'`), se detiene de forma instantánea la reproducción y se destruye el iframe del vídeo estableciendo su `src` a `about:blank` y removiendo el elemento del DOM. Esto garantiza la total e inmediata detención del audio, la liberación de recursos de red y CPU y evita ejecuciones ocultas en segundo plano.
 
-**Versión:** Incremento a v2.1.6.
+**Versión:** Incremento a v2.1.5.
 
-**CHANGES LOG - 25/07/2026 (MICROSERVICIO ADMINISTRATIVO Y DIAGNÓSTICO - VERSIÓN 2.6.0)**
+**CHANGES LOG - 25/07/2026 (MICROSERVICIO ADMINISTRATIVO Y DIAGNÓSTICO - VERSIÓN 2.1.5)**
 
 **Archivo: Services/admin.js**
 - Se creó e implementó por completo el microservicio de Google Apps Script exclusivo para administradores y desarrolladores.
@@ -685,7 +685,7 @@ Archivos modificados:
 **Archivo: lightbox.js**
 - Bloqueada de forma global la apertura del Lightbox de zoom si `window.inEditMode === true` para evitar conflictos en el modo edición in-modal.
 
-**Versión:** Despliegue del Microservicio Administrativo (v2.6.0).
+**Versión:** Despliegue del Microservicio Administrativo (v2.1.5).
 
 -------------------------------------------------------------------
 **REVISIÓN POST COMMIT - CORRECCIONES DEL MICROSERVICIO ADMINISTRATIVO (25/07/2026)**
@@ -744,7 +744,7 @@ Archivos modificados:
 - Mejorada la lógica UX de los diálogos de confirmación para que presionar 'Aceptar' continúe con el progreso guardado y 'Cancelar' inicie desde la Fila 1 de forma intuitiva, resolviendo el problema de reinicio involuntario.
 
 -------------------------------------------------------------------
-**CORRECCIÓN DE TIMEOUT Y DESACOPLE DE PAPELERA - VERSIÓN 2.6.1 (26/07/2026)**
+**CORRECCIÓN DE TIMEOUT Y DESACOPLE DE PAPELERA - VERSIÓN 2.1.5 (26/07/2026)**
 
 **Archivo: Services/admin.js**
 - **Líneas 173-176:** Añadido el caso `'restoreAllTrashedImages'` en `doPost` para exponer el saneamiento exhaustivo de papelera como una acción independiente aislada bajo demanda.
