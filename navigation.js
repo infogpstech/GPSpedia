@@ -121,7 +121,7 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         }
     }, 1500);
 
-    // Phase 2.4.9: Gestión inteligente del historial de búsqueda con estados nativos.
+    // Phase 2.1.5: Gestión inteligente del historial de búsqueda con estados nativos.
     const historyState = window.history.state || {};
     const wasAlreadySearching = historyState.level === "busqueda" || historyState.level === "busqueda_focused";
 

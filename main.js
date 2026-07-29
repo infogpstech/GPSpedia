@@ -1,4 +1,4 @@
-// GPSpedia Main Orchestration Module | Version: 2.1.6
+// GPSpedia Main Orchestration Module | Version: 2.1.5
 // Responsibilities:
 // - Import all feature modules.
 // - Initialize the application and set up global event listeners.
@@ -170,7 +170,7 @@ async function initializeApp() {
         const state = event.state || {};
         const searchInput = document.getElementById('searchInput');
 
-        // Phase 2.4.11: PRIORIDAD DE CIERRE DE COMPONENTES UI (OVERLAYS)
+        // Phase 2.1.5: PRIORIDAD DE CIERRE DE COMPONENTES UI (OVERLAYS)
         // Se reordena el listener para asegurar que cualquier modal u overlay se cierre
         // antes de intentar restaurar estados de búsqueda o secciones.
 
@@ -321,7 +321,7 @@ async function initializeApp() {
                         document.body.classList.remove('search-active');
                         searchInput.blur();
                     }
-                    // Phase 2.4.10: Se indica que es una restauración (true) para evitar la reapertura automática de modales.
+                    // Phase 2.1.5: Se indica que es una restauración (true) para evitar la reapertura automática de modales.
                     navigation.filtrarContenido(state.query, true);
                     break;
                 default:
