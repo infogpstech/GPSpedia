@@ -570,23 +570,101 @@ async function initializeApp() {
 
     // 3. PWA installation prompt handler
     const installButton = document.getElementById('install-button');
+
+    const isPWAInstalled = () => {
+        // Standalone mode check
+        if (window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true) {
+            return true;
+        }
+        // Local/Session storage check
+        if (localStorage.getItem('pwa_installed') === 'true' || sessionStorage.getItem('pwa_installed_session') === 'true') {
+            return true;
+        }
+        return false;
+    };
+
+    const isIOSSafari = () => {
+        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+        return isIOS && isSafari;
+    };
+
+    const checkPWAInstallStatus = () => {
+        if (!installButton) return;
+
+        if (isPWAInstalled()) {
+            installButton.style.display = 'none';
+            // Save state to prevent displaying again in the same session
+            sessionStorage.setItem('pwa_installed_session', 'true');
+            return;
+        }
+
+        // For iOS Safari: show button if not standalone/installed
+        if (isIOSSafari()) {
+            installButton.style.display = 'block';
+        }
+    };
+
+    // Initial check
+    checkPWAInstallStatus();
+
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        if (installButton) {
+        if (installButton && !isPWAInstalled()) {
             installButton.style.display = 'block';
+        }
+    });
+
+    window.addEventListener('appinstalled', (e) => {
+        deferredPrompt = null;
+        localStorage.setItem('pwa_installed', 'true');
+        sessionStorage.setItem('pwa_installed_session', 'true');
+        if (installButton) {
+            installButton.style.display = 'none';
         }
     });
 
     if (installButton) {
         installButton.addEventListener('click', async () => {
             if (deferredPrompt) {
-                deferredPrompt.prompt();
-                const { outcome } = await deferredPrompt.userChoice;
-                deferredPrompt = null;
-                installButton.style.display = 'none';
+                try {
+                    deferredPrompt.prompt();
+                    const { outcome } = await deferredPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                        localStorage.setItem('pwa_installed', 'true');
+                        sessionStorage.setItem('pwa_installed_session', 'true');
+                        installButton.style.display = 'none';
+                    }
+                    deferredPrompt = null;
+                } catch (err) {
+                    console.error('Error triggering PWA install:', err);
+                }
+            } else if (isIOSSafari()) {
+                const iosModal = document.getElementById('ios-install-modal');
+                if (iosModal) {
+                    iosModal.style.display = 'flex';
+                }
             }
         });
+    }
+
+    // iOS Install Modal Close Handlers
+    const iosInstallModal = document.getElementById('ios-install-modal');
+    const iosInstallClose = document.getElementById('ios-install-close');
+    const iosInstallBtnOk = document.getElementById('ios-install-btn-ok');
+
+    const closeIosModal = () => {
+        if (iosInstallModal) {
+            iosInstallModal.style.display = 'none';
+        }
+    };
+
+    if (iosInstallClose) {
+        iosInstallClose.addEventListener('click', closeIosModal);
+    }
+    if (iosInstallBtnOk) {
+        iosInstallBtnOk.addEventListener('click', closeIosModal);
     }
 
     // Contact form logic

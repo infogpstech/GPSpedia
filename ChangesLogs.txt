@@ -187,7 +187,7 @@
 **CHANGES LOG - 05/02/2026**
 
 **Documentación: Auditoria.txt**
-- Registro detallado de la solución al bug de imágenes en modales.
+- Registro de la solución al bug de imágenes en modales.
 - Documentación del flujo de carga híbrida (eager/lazy).
 
 **Versión:** Finalización de sesión v2.0.6.
@@ -305,12 +305,12 @@
 - **Líneas 55, 140:** Unificados mensajes de estado a "Trabajando en modo local/caché" para mayor coherencia ante fallos de red.
 
 **Archivo: main.js**
-- **Líneas 169, 245:** Actualizados listeners de botones "Cortes" para invocar 'navigation.irAPaginaPrincipal()', asegurando un reset total de la navegación and filtros.
+- **Líneas 169, 245:** Actualizados listeners de botones "Cortes" para invocar 'navigation.irAPaginaPrincipal()', asegurando un reset total de la navegación y filtros.
 
 **Archivo: style.css**
 - **Líneas 1032-1038:** Añadidas reglas de visibilidad condicional para la sección de historial de búsqueda vinculadas a 'body.search-active'.
 
-**Versión:** Ajustes de estabilidad del sistema offline v2.1.1.
+**Versión:** Robustecimiento del sistema offline v2.1.1.
 
 **CHANGES LOG - 22/06/2026 (Fase 3.1 Corrección de Regresión)**
 
@@ -368,7 +368,7 @@
 
 **Archivo: style.css**
 - **Línea 88:** Reducido 'padding-bottom' de '.container' a 20px.
-- **Líneas 1101-1117:** Implementados estados de animación (opacity, transform) y clase '.visible' para el footer.
+- **Líneas 1101-1117:** Implementados estados de animación (opacity, transform) and clase '.visible' para el footer.
 
 **Archivo: main.js**
 - **Líneas 290-308:** Implementada lógica de 'IntersectionObserver' para activar la visibilidad del footer al llegar al final del catálogo.
@@ -488,7 +488,7 @@ Archivos modificados:
 **VERSIÓN 2.1.4 (15/07/2026)**
 - Archivo: main.js
   - Añadida inicialización del estado de historial con `{ level: "categorias" }` al arrancar la aplicación si el estado actual es nulo, previniendo el cierre abrupto de la aplicación/browser.
-  - Implementada interceptación robusta del primer retroceso usando `currentNavState.level === "busqueda_focused"` y `document.activeElement` para evitar colisiones con el desenfoque automático de navegadores móviles.
+  - Implementada interceptación robusta del primer retroceso usando `currentNavState.level === "busqueda_focused"` and `document.activeElement` para evitar colisiones con el de-enfoque automático de navegadores móviles.
   - Introducido flag `isBackGestureBlurring` para desactivar el delay del blur, ejecutando la ocultación del teclado, la pérdida de foco y la animación inversa en una transición visual instantánea y unificada.
   - Simplificado el bloque final de restauración de popstate para invocar a `irAPaginaPrincipal(true)` siempre que `!state.query` independientemente de hashes residuales.
 - Archivo: navigation.js
@@ -736,7 +736,7 @@ Archivos modificados:
 
 **Archivo: Services/admin.js**
 - Sustituidas las llamadas obsoletas y deprecadas de `addFile`/`removeFile` por la API oficial `file.moveTo(genFolder)` para mover las imágenes de forma atómica y definitiva, solucionando la duplicación buggy de padres e impidiendo que se agote el espacio disponible en Google Drive.
-- Implementada higiene contra carpetas vacías: el bucle comprueba si la fila de la hoja de cálculo contiene al menos una URL de imagen válida antes de crear la estructura de carpetas en Drive, evitando poblar el almacenamiento de directorios vacíos.
+- Implementada higiene contra carpetas vacías: el bucle comprueba si la fila de la hoja de cálculo contiene al menos una URL de imagen válida antes de crear la estructura de carpetas en Drive, evitando de esta forma poblar el almacenamiento de directorios vacíos.
 - Diseñado e implementado el sistema global de validación y restauración de imágenes de la papelera `validateAndRestoreAllTrashedImagesInSpreadsheet`. Escanea dinámicamente todas las hojas del Spreadsheet, detecta archivos en la papelera de Drive que estén vinculados, los recupera automáticamente mediante `file.setTrashed(false)` y los reubica en su carpeta jerárquica correspondiente.
 - Integrado el control de restauración automática en papelera dentro de las operaciones por lotes `handleNormalizeImages` y `handleReorganizeImagesInDrive`.
 
@@ -790,3 +790,20 @@ Archivos modificados:
 - Actualizadas las expresiones de coincidencia regex de IDs de Drive para admitir tanto el formato de URL con parámetro `id=` como el formato nativo alternativo `file/d/` de forma consistente.
 - Sincronizado el seguimiento del recurso y de la fila actual dentro del procesamiento de cada imagen para un reporte detallado en tiempo real en la terminal administrativa del frontend.
 - Asegurado que `handleReorganizeImagesInDrive` procese y reubique correctamente el archivo físico de `imagenVehiculo` junto a las complementarias en la carpeta de la generación (`genFolder`).
+
+**CHANGES LOG - 29/07/2026 (INSTALACIÓN Y SOPORTE DE PWA - VERSIÓN 2.1.5)**
+
+**Archivo: index.html**
+- **Líneas 115:** Cambiado el texto del botón `#install-button` de "Instalar" a "Instala la app" para ajustarse rigurosamente a las especificaciones dinámicas.
+- **Líneas 426-453:** Agregado el modal `#ios-install-modal` que despliega hermosas instrucciones de estilo iOS nativo para instalar la aplicación en Safari para iPhone mediante el menú de compartir.
+
+**Archivo: main.js**
+- **Líneas 573-649:** Implementadas funciones asíncronas para detección inteligente del estado de instalación de la PWA (standalone mode y localStorage/sessionStorage fallback).
+- **Líneas 583-587:** Implementada la detección de la plataforma Safari en iPhone (`isIOSSafari`).
+- **Líneas 589-601:** Implementada la función `checkPWAInstallStatus` que oculta el botón si ya está instalada o guardada, y lo muestra para iPhone Safari de forma condicional.
+- **Líneas 606-611:** Sincronizado el evento `beforeinstallprompt` para almacenar el evento nativo y desplegar el botón solo si el usuario no tiene la PWA instalada.
+- **Líneas 613-620:** Sincronizado el evento `appinstalled` para ocultar automáticamente el botón y registrar de forma persistente la instalación en `localStorage` y `sessionStorage`.
+- **Líneas 622-642:** Vinculado el listener de clic en `#install-button` para disparar el flujo oficial de instalación nativo en Chromium/Android/Edge, o mostrar el modal interactivo de instrucciones `#ios-install-modal` en Safari para iPhone.
+- **Líneas 644-659:** Agregados los manejadores de cierre de modal para `#ios-install-modal`.
+
+**Versión:** Mantenimiento y optimización de PWA v2.1.5.

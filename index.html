@@ -112,7 +112,7 @@
               </div>
           </div>
           <div class="header-controls">
-              <button id="install-button" style="display: none;">Instalar</button>
+              <button id="install-button" style="display: none;">Instala la app</button>
               <button id="logout-button" style="display: none;">Cerrar Sesión</button>
           </div>
       </div>
@@ -424,6 +424,33 @@
 
     </div>
   </div>
+</div>
+
+<!-- ========= MODAL DE INSTALACIÓN PARA iOS ========= -->
+<div id="ios-install-modal" class="info-modal" style="display: none; z-index: 2100;">
+    <div class="info-modal-content" style="max-width: 400px; padding: 20px; border-radius: 15px; text-align: center;">
+        <span class="info-close-btn" id="ios-install-close" style="top: 5px; right: 15px;">&times;</span>
+        <img src="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256" alt="Logo de GPSpedia" style="max-width: 80px; border-radius: 12px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.15);">
+        <h3 style="margin-top: 0; margin-bottom: 10px; color: var(--accent-color);">Instala GPSpedia en tu iPhone</h3>
+        <p style="font-size: 0.95em; color: var(--text-color); margin-bottom: 20px; line-height: 1.5;">Instala esta aplicación en tu dispositivo para acceder de forma rápida y usarla offline en cualquier momento.</p>
+
+        <div style="text-align: left; background: var(--bg-color); padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid var(--border-color);">
+            <div style="display: flex; align-items: flex-start; gap: 12px; margin-bottom: 12px;">
+                <div style="background: var(--accent-color); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85em; flex-shrink: 0; margin-top: 2px;">1</div>
+                <div style="font-size: 0.9em; line-height: 1.4; color: var(--text-color);">
+                    Pulsa el botón de <strong>Compartir</strong> <i class="fa-solid fa-arrow-up-from-bracket" style="color: var(--accent-color); margin-left: 2px;"></i> en la barra de navegación de Safari.
+                </div>
+            </div>
+            <div style="display: flex; align-items: flex-start; gap: 12px;">
+                <div style="background: var(--accent-color); color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.85em; flex-shrink: 0; margin-top: 2px;">2</div>
+                <div style="font-size: 0.9em; line-height: 1.4; color: var(--text-color);">
+                    Selecciona la opción <strong>Añadir a la pantalla de inicio</strong> <i class="fa-solid fa-square-plus" style="color: var(--accent-color); margin-left: 2px;"></i> en el menú desplegable.
+                </div>
+            </div>
+        </div>
+
+        <button id="ios-install-btn-ok" style="background: var(--accent-color); color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; font-size: 0.95em;">Entendido</button>
+    </div>
 </div>
 
 <script type="module" src="main.js"></script>
