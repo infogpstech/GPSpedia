@@ -583,10 +583,8 @@ async function initializeApp() {
         return false;
     };
 
-    const isIOSSafari = () => {
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-        const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-        return isIOS && isSafari;
+    const isIOSDevice = () => {
+        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
     };
 
     const checkPWAInstallStatus = () => {
@@ -599,8 +597,8 @@ async function initializeApp() {
             return;
         }
 
-        // For iOS Safari: show button if not standalone/installed
-        if (isIOSSafari()) {
+        // For iOS browsers (Safari, Chrome, Edge, etc.): show button if not standalone/installed
+        if (isIOSDevice()) {
             installButton.style.display = 'block';
         }
     };
@@ -640,7 +638,7 @@ async function initializeApp() {
                 } catch (err) {
                     console.error('Error triggering PWA install:', err);
                 }
-            } else if (isIOSSafari()) {
+            } else if (isIOSDevice() && !isPWAInstalled()) {
                 const iosModal = document.getElementById('ios-install-modal');
                 if (iosModal) {
                     iosModal.style.display = 'flex';
