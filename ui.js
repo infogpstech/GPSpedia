@@ -1336,10 +1336,20 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     shareBtn.className = "share-modal-btn";
     shareBtn.title = "Compartir este vehículo";
     shareBtn.onclick = () => {
+        const queryParts = [
+            activeItem.marca,
+            activeItem.modelo,
+            activeItem.versionesAplicables,
+            activeItem.tipoEncendido,
+            activeItem.anoDesde
+        ].filter(part => part && String(part).trim() !== "");
+
+        const shareQuery = queryParts.join(' ');
+
         const shareData = {
             title: `GPSpedia - ${activeItem.marca} ${activeItem.modelo}`,
             text: `Mira la información técnica del ${activeItem.marca} ${activeItem.modelo} (${activeItem.anoDesde}) en GPSpedia.`,
-            url: window.location.origin + window.location.pathname + `#search=${encodeURIComponent(activeItem.marca + ' ' + activeItem.modelo)}`
+            url: window.location.origin + window.location.pathname + `#search=${encodeURIComponent(shareQuery)}`
         };
 
         if (navigator.share) {

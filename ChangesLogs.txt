@@ -807,3 +807,9 @@ Archivos modificados:
 - **Líneas 644-659:** Agregados los manejadores de cierre de modal para `#ios-install-modal`.
 
 **Versión:** Mantenimiento y optimización de PWA v2.1.5.
+
+-------------------------------------------------------------------
+**CORRECCIÓN DE DIRECCIONAMIENTO DE ENLACES DE MODELOS COMPARTIDOS (30/07/2024)**
+
+**Archivo: ui.js**
+- **Líneas 1339-1349:** Se rediseñó la propiedad `url` en el objeto `shareData` dentro de `shareBtn.onclick` para construir dinámicamente un término de búsqueda muy preciso en el hash de Deep Linking (`#search=`). El término ahora concatena la marca, modelo, versión de equipamiento (`versionesAplicables`), tipo de encendido (`tipoEncendido`) y año de inicio (`anoDesde`), filtrando valores inexistentes o vacíos. Esto permite que el enlace de compartir filtre con total precisión la generación y variante específica del vehículo y la abra automáticamente de inmediato al cargar la URL.

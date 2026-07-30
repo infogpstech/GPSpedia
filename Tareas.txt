@@ -345,6 +345,14 @@ Cualquier cambio en estas zonas invalidará el commit.
       - **Implementación:** Modificado el texto del botón `#install-button` a "Instala la app" de forma estricta. Creado el modal de ayuda interactivo `#ios-install-modal` para guiar la instalación en Safari para iPhone. Desarrollada lógica robusta de detección e inicialización para ocultar el botón si ya está instalada o guardada en la sesión.
       - **Efecto:** Flujo de instalación fluido y multiplataforma 100% libre de errores.
 
+17. **TÍTULO: Corrección de redireccionamiento de enlaces de modelos compartidos (v2.1.5)**
+    - **ESTADO:** PENDIENTE DE REVISIÓN
+    - **ALCANCE:** ui.js, ChangesLogs.txt, Auditoría.txt, Tareas.txt
+    - **DESCRIPCIÓN DETALLADA:**
+      - **Objetivo:** Asegurar que compartir un vehículo desde el modal de detalles cree un enlace específico que se dirija directamente al modelo detallado en lugar de a la lista general de generaciones.
+      - **Implementación:** Se rediseñó la propiedad `url` en el objeto `shareData` en `ui.js` para construir dinámicamente un término de búsqueda concatenando `marca`, `modelo`, `versionesAplicables` (versión de equipamiento), `tipoEncendido` (tipo de encendido) y `anoDesde` (año), filtrando campos vacíos.
+      - **Efecto:** Al hacer clic en el enlace compartido, la aplicación filtra exactamente la generación y variante específica del vehículo y la abre de forma automática e inmediata en el modal de detalle, evitando mostrar una lista genérica de generaciones o tarjetas repetidas.
+
 ---
 **DERIVADO DE AUDITORÍA (ROADMAP v2.0) — NO EJECUTAR AÚN**
 ---

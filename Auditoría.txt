@@ -395,3 +395,20 @@ Estrategia de corrección:
   - Implementar funciones de detección de instalación existente standalone (`window.matchMedia('(display-mode: standalone)').matches` y `navigator.standalone`).
   - Implementar la detección de Safari en iPhone y añadir un modal instructivo e interactivo personalizado para guiar al usuario en la instalación nativa.
   - Guardar el estado de la instalación/omisión de sesión en `sessionStorage` para cumplir con las especificaciones de no volver a mostrar el botón si ya está instalado o si se completó en la sesión actual.
+
+===================================================================
+AUDITORÍA DE DIRECCIONAMIENTO DE ENLACES DE MODELOS COMPARTIDOS (30/07/2024)
+===================================================================
+
+ID del hallazgo: H-SHARE-DEEPLINK-01
+Título: El enlace compartido de un modelo en el modal de detalle no se dirige al modelo específico, sino a la lista de generaciones del modelo
+Descripción: Al compartir la información de un modelo desde el modal de detalles, el botón de compartir genera un enlace que contiene la marca y el modelo como parámetros de búsqueda, pero no incluye el año de inicio (anoDesde) del modelo específico. Cuando se hace clic en el enlace, el sistema realiza una búsqueda de marca y modelo que devuelve múltiples generaciones de ese vehículo. Al haber más de un resultado, no se abre el modal de detalles del modelo de forma automática, sino que se muestra la tarjeta del modelo, y al hacer clic en ella, el usuario es redirigido a la lista de generaciones (años) en lugar de ver el detalle del modelo específico compartido.
+Ubicación:
+  - Archivo: `ui.js` (mostrarDetalleModal)
+Impacto: Alto (Afecta negativamente la experiencia del usuario al recibir un enlace compartido, no pudiendo visualizar directamente la información técnica del vehículo esperado).
+Riesgo de regresión: Muy bajo.
+Estrategia de corrección:
+  - Modificar el url del objeto shareData generado al hacer clic en el botón Compartir en `ui.js`.
+  - Construir un término de búsqueda concatenando `marca`, `modelo`, `versionesAplicables` (si existe), `tipoEncendido` (si existe) y `anoDesde`.
+  - Filtrar las propiedades vacías para asegurar que se cree una consulta limpia y bien estructurada.
+  - Esto restringirá con absoluta precisión los resultados de búsqueda a una sola generación y variante específica del vehículo. Al tener un único resultado exacto en `filtrarContenido`, la aplicación abrirá de forma inmediata e interactiva el modal de detalle para el modelo específico compartido originalmente.
