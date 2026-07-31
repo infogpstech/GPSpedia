@@ -1,4 +1,4 @@
-// GPSpedia UI Module | Version: 2.1.6
+// GPSpedia UI Module | Version: 2.1.5
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
@@ -958,7 +958,7 @@ function showValidationBanner(item, isOldModel) {
     const detailContainer = document.getElementById('detalleCompleto');
     if (!detailContainer) return;
 
-    // Phase 2.4.8: Prevenir duplicados - Verificar si el banner ya existe antes de crearlo
+    // Phase 2.1.5: Prevenir duplicados - Verificar si el banner ya existe antes de crearlo
     if (document.getElementById('validation-banner')) {
         return;
     }
@@ -1278,7 +1278,7 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
     cont.appendChild(grid);
 
     // Caso especial: Si solo hay un resultado de modelo, se muestra directamente el modal de detalle.
-    // Phase 2.4.10: Se añade la bandera 'autoOpen' para evitar la reapertura del modal al navegar hacia atrás
+    // Phase 2.1.5: Se añade la bandera 'autoOpen' para evitar la reapertura del modal al navegar hacia atrás
     // en el historial (popstate).
     if (autoOpen && type === 'modelo' && results.length === 1) {
         // Retirar el foco de la barra de búsqueda para ocultar el teclado virtual
@@ -1336,10 +1336,20 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     shareBtn.className = "share-modal-btn";
     shareBtn.title = "Compartir este vehículo";
     shareBtn.onclick = () => {
+        const queryParts = [
+            activeItem.marca,
+            activeItem.modelo,
+            activeItem.versionesAplicables,
+            activeItem.tipoEncendido,
+            activeItem.anoDesde
+        ].filter(part => part && String(part).trim() !== "");
+
+        const shareQuery = queryParts.join(' ');
+
         const shareData = {
             title: `GPSpedia - ${activeItem.marca} ${activeItem.modelo}`,
             text: `Mira la información técnica del ${activeItem.marca} ${activeItem.modelo} (${activeItem.anoDesde}) en GPSpedia.`,
-            url: window.location.origin + window.location.pathname + `#search=${encodeURIComponent(activeItem.marca + ' ' + activeItem.modelo)}`
+            url: window.location.origin + window.location.pathname + `#search=${encodeURIComponent(shareQuery)}`
         };
 
         if (navigator.share) {
@@ -3303,7 +3313,7 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
     } else if (item.anoDesde && !resultsForVariant) {
         // Contexto: Lista de años o carruseles (Item específico)
         card.onclick = () => {
-            // Phase 2.4.8: Si se abre desde un carrusel (Vistos Recientemente), limpiar el hash de búsqueda
+            // Phase 2.1.5: Si se abre desde un carrusel (Vistos Recientemente), limpiar el hash de búsqueda
             // para evitar que al retroceder se restauren resultados antiguos o contextos irrelevantes.
             if (hideBadge) { // hideBadge es true en el carrusel de Vistos Recientemente
                 if (window.location.hash.startsWith('#search=')) {

@@ -208,7 +208,7 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
-1. **TÍTULO: Corrección de reproducción persistente de vídeos en modales de tutoriales (v2.1.6)**
+1. **TÍTULO: Corrección de reproducción persistente de vídeos en modales de tutoriales (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** ui.js, main.js
    - **DESCRIPCIÓN DETALLADA:**
@@ -216,53 +216,53 @@ Cualquier cambio en estas zonas invalidará el commit.
      - **Causa Raíz:** El iframe se insertaba sin habilitar la API de YouTube (`enablejsapi=1`) y el elemento iframe no se destruía ni se limpiaba del DOM tras el cierre del modal.
      - **Solución:** Se implementó la asignación síncrona de `dataset.modalType = 'tutorial'` al abrir el modal, y se configuró un `MutationObserver` reactivo sobre `#modalDetalle` en `main.js`. Cuando el modal se cierra, si es un tutorial, el iframe se remueve y su `src` se limpia síncronamente. Se robusteció además la carga del iframe utilizando el helper `getYouTubeEmbedUrl` para incorporar siempre `enablejsapi=1`.
      - **Efecto:** El audio y la reproducción se detienen instantáneamente y por completo al cerrar el modal en cualquier circunstancia, liberando todos los recursos de red y CPU.
-2. **TÍTULO: Corrección de cierre de modal y prioridad de navegación (v2.4.11)**
+2. **TÍTULO: Corrección de cierre de modal y prioridad de navegación (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** main.js
    - **DESCRIPCIÓN DETALLADA:**
      - **Causa Raíz:** El manejo del buscador en `popstate` tenía prioridad sobre el cierre de modales y retornaba prematuramente, impidiendo el cierre visual del modal al retroceder.
      - **Corrección:** Reordenado el listener de `popstate` para procesar primero los cierres de componentes UI (Overlays) antes que las restauraciones de estado de contenido.
      - **Efecto:** Garantizado el cierre determinista del modal mediante gestos, botón Atrás y botón "X" en todos los contextos de búsqueda.
-1. **TÍTULO: Corrección de inconsistencia en historial con modal automático (v2.4.10)**
+1. **TÍTULO: Corrección de inconsistencia en historial con modal automático (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** ui.js, navigation.js, main.js
    - **DESCRIPCIÓN DETALLADA:**
      - **Problema:** El modal de detalle se reabría automáticamente al retroceder en el historial después de haber sido cerrado por el usuario.
      - **Solución:** Implementada bandera `isRestoring`/`autoOpen` a través del flujo de navegación para distinguir entre una búsqueda activa y una restauración de estado previo.
      - **Efecto:** El retroceso desde resultados de búsqueda hacia el catálogo principal ahora es limpio y no dispara estados visuales residuales del modal.
-1. **TÍTULO: Expansión de navegación por gestos y corrección de historial (v2.4.9)**
+1. **TÍTULO: Expansión de navegación por gestos y corrección de historial (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** main.js, navigation.js, ui.js
    - **DESCRIPCIÓN DETALLADA:**
      - **Historial:** Implementada lógica de `pushState`/`replaceState` para asegurar que el estado de resultados de búsqueda sea persistente y recuperable mediante el botón Atrás.
      - **Navegación:** El listener de `popstate` ahora restaura dinámicamente el foco, el texto y los resultados de búsqueda, o limpia el contexto al volver al catálogo inicial.
      - **Banners:** Corregida la duplicación del banner de validación mediante validación de existencia previa en el DOM.
-1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.4.7)**
+1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** ui.js, navigation.js
    - **DESCRIPCIÓN DETALLADA:**
      - **Causa Raíz:** Identificada colisión entre el evento asíncrono 'popstate' (disparado por el hash) y la apertura sincrónica del modal.
      - **Corrección:** Implementado `history.replaceState` en `navigation.js` para actualizar la URL silenciosamente.
      - **UX:** Postergada la apertura del modal en `ui.js` mediante `setTimeout` para garantizar que la cuadrícula de resultados se renderice primero.
-1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.4.6)**
+1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** style.css
    - **DESCRIPCIÓN DETALLADA:**
      - **UI:** Reducido el tamaño del punto de estado a 3px para una estética ultra-minimalista integrada en el texto de bienvenida.
-1. **TÍTULO: UX Refinement - Deep Linking & Share Functionality (v2.4.5)**
+1. **TÍTULO: UX Refinement - Deep Linking & Share Functionality (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** index.html, style.css, ui.js, main.js, navigation.js
    - **DESCRIPCIÓN DETALLADA:**
      - **UI:** Reubicado indicador de red al mensaje de bienvenida con reducción de tamaño al 50%.
      - **Social:** Añadido botón de compartir en modal técnico.
      - **Arquitectura:** Implementado sistema de Deep Linking para persistencia de búsquedas vía URL hash.
-1. **TÍTULO: UX Refinement - Reubicación de Status y Botón Compartir (v2.4.4)**
+1. **TÍTULO: UX Refinement - Reubicación de Status y Botón Compartir (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** index.html, style.css, ui.js
    - **DESCRIPCIÓN DETALLADA:**
      - **Layout:** Reubicado indicador de conexión a la esquina superior derecha (header-controls).
      - **Funcionalidad:** Añadido botón de compartir en el modal de detalle para facilitar la difusión de información técnica.
-1. **TÍTULO: UX Refinement - Status Indicator & Deep Linking (v2.4.3)**
+1. **TÍTULO: UX Refinement - Status Indicator & Deep Linking (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** index.html, style.css, main.js, navigation.js
    - **DESCRIPCIÓN DETALLADA:**
@@ -270,7 +270,7 @@ Cualquier cambio en estas zonas invalidará el commit.
      - **Navegación:** Implementado soporte para Deep Linking mediante hash de URL (#search=) y funcionalidad de "Home" al hacer clic en el logotipo.
      - **Persistencia:** Restauración automática de resultados de búsqueda tras recarga de página.
 ---
-1. **TÍTULO: Ajustes Visuales de Header y Contraste (v2.4.1)**
+1. **TÍTULO: Ajustes Visuales de Header y Contraste (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** ui.js, style.css
    - **DESCRIPCIÓN DETALLADA:**
@@ -298,7 +298,7 @@ Cualquier cambio en estas zonas invalidará el commit.
    - **ALCANCE:** Global (Frontend, Documentación)
    - **DESCRIPCIÓN DETALLADA:**
      - **Seguridad:** Bloqueo de DevTools, click derecho, Ctrl+U y Zoom manual (con excepción en Lightbox).
-     - **Rendimiento:** Implementación de native lazy-load y carga híbrida (eager/lazy) para imágenes de cortes.
+     - **Rendimiento:** Implementation de native lazy-load y carga híbrida (eager/lazy) para imágenes de cortes.
      - **Robustez:** Recálculo dinámico de altura en acordeones mediante eventos 'onload'.
      - **Estética:** Estandarización de overlays mediante clases CSS (.overlay-text-primary/secondary).
      - **Documentación:** Unificación de README.md y creación de ChangeLog técnico v1.5 vs v2.0.
@@ -314,7 +314,7 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 **TAREAS PENDIENTES DE REVISIÓN**
 ---
-1. **TÍTULO: Refinamiento - Frontend (Footer) (v2.4.6)**
+1. **TÍTULO: Refinamiento - Frontend (Footer) (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** index.html, style.css, main.js
    - **DESCRIPCIÓN DETALLADA:**
@@ -328,7 +328,7 @@ Cualquier cambio en estas zonas invalidará el commit.
    - **ALCANCE:** Global (Documentación)
    - **DESCRIPCIÓN DETALLADA:** Auditoría integral comparativa v1.5 vs v2.0. Creación de `RELEASE NOTES.txt` detallando todas las mejoras: arquitectura modular, seguridad RBAC, optimización de imágenes/lazy load, navegación contextual, sistema de votos y "Corte Recomendado", modales de Relay, crédito a colaboradores y asistente anti-duplicado.
 
-12. **TÍTULO: Gestión Colaborativa de Años y Validación de Cortes (v2.4.6)**
+12. **TÍTULO: Gestión Colaborativa de Años y Validación de Cortes (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** Global (Frontend y Backend)
    - **DESCRIPCIÓN DETALLADA:**
@@ -337,6 +337,22 @@ Cualquier cambio en estas zonas invalidará el commit.
      - **Backend:** Automatización de la actualización de la hoja 'Cortes' tras alcanzar un umbral de 3 votos positivos.
      - **Persistencia:** Implementado 'validationCache' en IndexedDB (v3) para evitar redundancia en las consultas al usuario.
 
+16. **TÍTULO: Implementación y corrección del botón dinámico de instalación de la PWA (v2.1.5)**
+    - **ESTADO:** PENDIENTE DE REVISIÓN
+    - **ALCANCE:** index.html, main.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
+    - **DESCRIPCIÓN DETALLADA:**
+      - **Objetivo:** Implementar y corregir completamente la instalación de la Progressive Web App (PWA).
+      - **Implementación:** Modificado el texto del botón `#install-button` a "Instala la app" de forma estricta. Creado el modal de ayuda interactivo `#ios-install-modal` para guiar la instalación en Safari para iPhone. Desarrollada lógica robusta de detección e inicialización para ocultar el botón si ya está instalada o guardada en la sesión.
+      - **Efecto:** Flujo de instalación fluido y multiplataforma 100% libre de errores.
+
+17. **TÍTULO: Corrección de redireccionamiento de enlaces de modelos compartidos (v2.1.5)**
+    - **ESTADO:** PENDIENTE DE REVISIÓN
+    - **ALCANCE:** ui.js, ChangesLogs.txt, Auditoría.txt, Tareas.txt
+    - **DESCRIPCIÓN DETALLADA:**
+      - **Objetivo:** Asegurar que compartir un vehículo desde el modal de detalles cree un enlace específico que se dirija directamente al modelo detallado en lugar de a la lista general de generaciones.
+      - **Implementación:** Se rediseñó la propiedad `url` en el objeto `shareData` en `ui.js` para construir dinámicamente un término de búsqueda concatenando `marca`, `modelo`, `versionesAplicables` (versión de equipamiento), `tipoEncendido` (tipo de encendido) y `anoDesde` (año), filtrando campos vacíos.
+      - **Efecto:** Al hacer clic en el enlace compartido, la aplicación filtra exactamente la generación y variante específica del vehículo y la abre de forma automática e inmediata en el modal de detalle, evitando mostrar una lista genérica de generaciones o tarjetas repetidas.
+
 ---
 **DERIVADO DE AUDITORÍA (ROADMAP v2.0) — NO EJECUTAR AÚN**
 ---
@@ -344,33 +360,33 @@ Cualquier cambio en estas zonas invalidará el commit.
 7. TÍTULO: Funcionalidad de Edición 'In-Modal' (PENDIENTE)
 8. TÍTULO: Lógica de Backend para Feedback Inbox (PENDIENTE)
 
-1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.4.7)**
+1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** ui.js, navigation.js
    - **DESCRIPCIÓN DETALLADA:** Corregido el fallo que impedía renderizar la tarjeta y mantenía el modal cerrado al obtener un único resultado de búsqueda. Se eliminó el retorno prematuro en `ui.js` y se reordenó la actualización del hash en `navigation.js` para evitar colisiones con el listener de `popstate` en `main.js`.
 
 
-13. **TÍTULO: Auditoría técnica global, diagnóstico y estabilización de Catálogo (v2.5.5)**
+13. **TÍTULO: Auditoría técnica global, diagnóstico y estabilización de Catálogo (v2.1.5)**
    - **ESTADO:** COMPLETADO (Fase 1)
    - **ALCANCE:** Services/Catálogo/catalog.js, Auditoria.txt, index.html, ChangesLogs.txt, Instrucciones.txt
    - **DESCRIPCIÓN DETALLADA:**
      - **Auditoría:** Realizada auditoría de todo el repositorio, identificando errores sintácticos, funciones huérfanas y duplicación.
      - **Catálogo:** Corregido error sintáctico crítico (llave redundante) en Services/Catálogo/catalog.js.
-     - **Versión:** Actualizada la versión de la plataforma a v2.5.5 para reflejar la estabilización de Catálogo.
+     - **Versión:** Actualizada la versión de la plataforma a v2.1.5 para reflejar la estabilización de Catálogo.
 
 
-14. **TÍTULO: Saneamiento Estructural de Código Muerto y Eliminación de Duplicación DRY (v2.5.6)**
+14. **TÍTULO: Saneamiento Estructural de Código Muerto y Eliminación de Duplicación DRY (v2.1.5)**
    - **ESTADO:** COMPLETADO (Fase 2)
    - **ALCANCE:** ui.js, navigation.js, Services/Catálogo/catalog.js, Services/Write/write.js, Services/Users/users.js, Instrucciones.txt
    - **DESCRIPCIÓN DETALLADA:**
      - **Código Duplicado:** Hoisteada la función "createDetailParagraph" en ui.js y eliminadas las definiciones redundantes.
      - **Código Muerto:** Eliminadas las funciones huérfanas "getDatosFiltrados", "isYearInRangeV2", "isFlexibleModelMatch" y "getVerifiedRole" de todo el codebase.
-     - **Versión:** Incremento a v2.5.6.
+     - **Versión:** Incremento a v2.1.5.
 
 
-15. **TÍTULO: Consolidación, Limpieza de Respaldos y Cierre de Auditoría Técnica (v2.5.7)**
+15. **TÍTULO: Consolidación, Limpieza de Respaldos y Cierre de Auditoría Técnica (v2.1.5)**
    - **ESTADO:** COMPLETADO (Fase 3)
    - **ALCANCE:** index.html, ChangesLogs.txt, Instrucciones.txt
    - **DESCRIPCIÓN DETALLADA:**
      - **Limpieza:** Se eliminaron todos los archivos temporales de respaldo (*.bak) y utilidades creadas.
-     - **Versión:** Incrementada la versión de la plataforma en index.html a v2.5.7 para el despliegue de consolidación.
+     - **Versión:** Incrementada la versión de la plataforma en index.html a v2.1.5 para el despliegue de consolidación.
