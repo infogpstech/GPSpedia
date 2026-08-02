@@ -1741,16 +1741,9 @@ body.search-active .search-history-section {
 }
 
 /* --- ESTILOS DE LOS LOGOS DE GPSpedia Y TRACKLINK EN TÉRMINOS Y CONDICIONES --- */
-.terms-agreement-logos-container {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 30px;
-    margin-top: 25px;
-    margin-bottom: 10px;
-}
-
 .terms-agreement-logo {
+    display: block;
+    margin: 15px auto 25px auto;
     height: 45px;
     width: auto;
     object-fit: contain;
@@ -1763,11 +1756,8 @@ body.dark-mode .terms-agreement-logo {
 }
 
 @media (max-width: 600px) {
-    .terms-agreement-logos-container {
-        gap: 15px;
-        margin-top: 20px;
-    }
     .terms-agreement-logo {
         height: 30px;
+        margin: 10px auto 15px auto;
     }
 }
