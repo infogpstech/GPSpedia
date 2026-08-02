@@ -170,6 +170,13 @@ async function initializeApp() {
         const state = event.state || {};
         const searchInput = document.getElementById('searchInput');
 
+        // Impedir cualquier retroceso o acción de popstate si el modal de aviso inicial está activo
+        const termsModal = document.getElementById('terms-modal');
+        if (termsModal && termsModal.style.display === 'flex') {
+            history.pushState(state, '');
+            return;
+        }
+
         // Phase 2.1.5: PRIORIDAD DE CIERRE DE COMPONENTES UI (OVERLAYS)
         // Se reordena el listener para asegurar que cualquier modal u overlay se cierre
         // antes de intentar restaurar estados de búsqueda o secciones.
@@ -535,6 +542,7 @@ async function initializeApp() {
     document.getElementById('login-faq-link')?.addEventListener('click', openFAQ);
 
     document.getElementById('footer-terms-link')?.addEventListener('click', openTerms);
+    document.getElementById('terms-link-in-modal')?.addEventListener('click', openTerms);
 
     // --- LÓGICA DE VISIBILIDAD DINÁMICA DEL FOOTER ---
     // El footer solo debe aparecer al llegar al final del catálogo (cuando el centinela es visible).

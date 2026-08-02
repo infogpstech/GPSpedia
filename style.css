@@ -1689,3 +1689,7 @@ body.search-active .search-history-section {
 .dark-mode .terms-logo {
     filter: drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6)) !important;
 }
+
+#terms-agreement-modal {
+    z-index: 3200; /* Asegurar que se sobreponga sobre el modal de aviso inicial (3100) sin interferencias */
+}

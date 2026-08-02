@@ -2370,7 +2370,10 @@ function setupModal(modalId, openFn) {
         const closeBtn = modal.querySelector('.info-close-btn');
         if (closeBtn && !closeBtn.dataset.listenerSet) {
             closeBtn.addEventListener('click', () => {
-                if (window.history && window.history.state && window.history.state.modalOpen) {
+                const termsModal = document.getElementById('terms-modal');
+                const isTermsModalActive = termsModal && termsModal.style.display === 'flex';
+
+                if (!isTermsModalActive && window.history && window.history.state && window.history.state.modalOpen) {
                     window.history.back();
                 } else {
                     modal.style.display = 'none';

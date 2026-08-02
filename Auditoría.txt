@@ -218,7 +218,7 @@
 - En la iteración anterior, se intentó optimizar el historial haciendo que el foco en el buscador solo empujara un único estado (`busqueda_focused`).
 - Al realizar el primer gesto de retroceso, el navegador regresa físicamente al estado anterior (ej. `categorias`). Para evitar la pérdida de los resultados de búsqueda, el controlador `popstate` intentaba re-insertar el estado desenfocado haciendo `history.pushState({ level: "busqueda" })`.
 - Sin embargo, llamar a `pushState` de forma asíncrona dentro de un manejador de evento `popstate` es altamente inestable y frecuentemente bloqueado o ignorado por los motores de navegación de dispositivos móviles (Android Chrome, iOS Safari) y motores de PWA durante la fase de transición de gestos.
-- Al fallar o ignorarse el `pushState` asíncrono, el historial se quedaba únicamente con el estado base (`categorias`). Por lo tanto, el segundo gesto de retroceso cerraba la aplicación de forma prematura.
+- Al fallar o ignorarse el `pushState` asíncrono, el historial se quedaba únicamente con el estado base (`categorias`). Por lo tanto, el segundo gesto de retroceso cerrará la aplicación de forma prematura.
 
 **Nueva Estrategia de Historial Forward-Stack 100% Nativo:**
 - **Al enfocar (focus)**: Empujar de forma secuencial y por adelantado el estado `busqueda` (desenfocado) y luego el estado `busqueda_focused` (enfocado). Esto construye una pila de historial legítima y nativa de 3 estados antes de que el usuario comience a navegar hacia atrás:
@@ -457,3 +457,29 @@ Estrategia de corrección:
    - Utilizaremos la clase `.info-modal` y `.info-modal-content` en un nuevo modal `#terms-agreement-modal`.
    - Añadiremos un botón de cierre, cabecera y el contenido estructurado del Acuerdo legal provisto por el usuario.
    - Vincularemos el modal con el método `setupModal` de `ui.js` para controlar su apertura y cierre de forma idéntica a los otros modales legales.
+
+--------------------------------------------------
+
+**AUDITORÍA TÉCNICA - Ajuste de Integración del Enlace de Términos y Condiciones en el Aviso Inicial (03/03/2026)**
+
+**Archivos involucrados:** index.html, ui.js, main.js, style.css.
+
+**Hallazgos:**
+1. **Renombrar enlace del footer (index.html / main.js):**
+   - El enlace permanente de Acuerdo Legal en el footer debe renombrarse de "Acuerdo de Uso y Privacidad" a exactamente "Términos y Condiciones".
+   - Esto requiere modificar el texto del enlace `#footer-terms-link` en `index.html`. No se altera su ID, estilos ni lógica.
+
+2. **Agregar enlace interactivo en el aviso inicial (index.html / main.js):**
+   - El aviso inicial `#terms-modal` debe cambiar el texto "Al continuar, usted acepta estos términos." a "Al continuar, usted acepta los Términos y Condiciones.".
+   - La cadena "Términos y Condiciones" debe ser un elemento `<a>` interactivo con ID `terms-link-in-modal`, estilizado con color de acento y subrayado.
+   - Al hacer clic, debe abrirse el modal legal `#terms-agreement-modal` mediante `ui.openTermsAgreement()`, manteniendo el aviso inicial visible en el fondo y sin registrar la aceptación.
+
+3. **Ineludibilidad del Aviso Inicial (main.js / ui.js):**
+   - El aviso inicial no debe poder cerrarse por ningún método externo (botón X, clic fuera, popstate/gesto de retroceso).
+   - Para esto, debemos:
+     a) Asegurar que `#terms-modal` no tenga ningún botón X de cierre.
+     b) Bloquear el listener global de `popstate` de manera absoluta cuando `#terms-modal` esté visible para ignorar retrocesos y evitar el cierre de la app o modal de fondo.
+     c) Condicionar que el único disparador de cierre sea pulsar el botón "Aceptar Términos", el cual efectúa el guardado de la preferencia en `localStorage` y desbloquea el catálogo.
+
+4. **Estratificación de Capas Z-Index (style.css):**
+   - El modal legal `#terms-agreement-modal` debe tener un `z-index: 3200` mayor que el de `#terms-modal` (`z-index: 3100`), garantizando que se muestre en primer plano de manera limpia y sin conflictos lógicos cuando se abre desde el aviso inicial.
