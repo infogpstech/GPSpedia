@@ -813,3 +813,23 @@ Archivos modificados:
 
 **Archivo: ui.js**
 - **Líneas 1339-1349:** Se rediseñó la propiedad `url` en el objeto `shareData` dentro de `shareBtn.onclick` para construir dinámicamente un término de búsqueda muy preciso en el hash de Deep Linking (`#search=`). El término ahora concatena la marca, modelo, versión de equipamiento (`versionesAplicables`), tipo de encendido (`tipoEncendido`) y año de inicio (`anoDesde`), filtrando valores inexistentes o vacíos. Esto permite que el enlace de compartir filtre con total precisión la generación y variante específica del vehículo y la abra automáticamente de inmediato al cargar la URL.
+
+**AVISO DE CONDICIONES AL INICIAR SESIÓN Y ACUERDO LEGAL PERMANENTE EN EL FOOTER (03/03/2026)**
+
+**Archivo: index.html**
+- **Líneas 287-357:** Implementada la estructura HTML de `#terms-modal` para primer inicio de sesión usando logotipo local `icon-v3-512x512.png`.
+- **Líneas 148-152:** Integrado de manera permanente el enlace de "Acuerdo de Uso y Privacidad" en `.footer-links` del pie de página.
+- **Líneas 301-357:** Añadido modal independiente `#terms-agreement-modal` con las 9 secciones íntegras del Acuerdo Legal.
+
+**Archivo: style.css**
+- **Líneas 1599-1691:** Diseñados estilos responsivos para `.terms-overlay` y `.terms-modal-content` con bloqueo de pantalla completa e interacción, y soporte de modo claro/oscuro.
+
+**Archivo: main.js**
+- **Líneas 424-428:** Agregado el logotipo de aviso de condiciones a la regla de intercambio dinámico de logos para soporte de modo claro/oscuro.
+- **Líneas 523-535:** Enlazados listeners de interacción para `#footer-terms-link` con la apertura del modal legal.
+
+**Archivo: ui.js**
+- **Líneas 3390-3416:** Modificada `showApp` para verificar el estado de aceptación en `localStorage` (`gpsepedia_terms_accepted`), impidiendo el acceso y bloqueando el catálogo trasero si no ha sido aceptado por primera vez en el dispositivo.
+- **Líneas 2979-2983:** Exportado el controlador `openTermsAgreement` para el modal legal mediante la utilidad `setupModal`.
+
+**Versión:** Actualización v2.1.5.

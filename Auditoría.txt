@@ -412,3 +412,48 @@ Estrategia de corrección:
   - Construir un término de búsqueda concatenando `marca`, `modelo`, `versionesAplicables` (si existe), `tipoEncendido` (si existe) y `anoDesde`.
   - Filtrar las propiedades vacías para asegurar que se cree una consulta limpia y bien estructurada.
   - Esto restringirá con absoluta precisión los resultados de búsqueda a una sola generación y variante específica del vehículo. Al tener un único resultado exacto en `filtrarContenido`, la aplicación abrirá de forma inmediata e interactiva el modal de detalle para el modelo específico compartido originalmente.
+
+--------------------------------------------------
+
+**AUDITORÍA TÉCNICA - Implementación de aviso de aceptación de condiciones para primer inicio de sesión (03/03/2026)**
+
+**Archivos involucrados:** index.html, ui.js, main.js, style.css.
+
+**Hallazgos:**
+1. **Flujo de Inicio de Sesión y de Inicialización (auth.js / ui.js):**
+   - En `auth.js`, al completar la validación o el inicio de sesión correcto, se llama a `showApp(user)`.
+   - En `ui.js`, la función `showApp(user)` oculta la pantalla de carga (`#splash-screen`), muestra el catálogo principal (`.container` y `.footer`) y renderiza las categorías.
+   - Si un usuario accede por primera vez en un dispositivo dado, el aviso de términos y condiciones debe bloquear la pantalla e impedir que el usuario interactúe con el catálogo o lo use.
+   - El punto más adecuado para verificar el aviso es inmediatamente después del éxito en `showApp(user)`, pero antes de renderizar la interactividad completa del catálogo, o bien mostrando un modal ineludible sobrepuesto sobre `.container` y ocultando el resto de controles de navegación de la app.
+
+2. **Caché y Almacenamiento Local (localStorage / IndexedDB):**
+   - La plataforma utiliza `localStorage` activamente para almacenar preferencias de la sesión actual (`gpsepedia_session`, `darkMode`, etc.) e IndexedDB (`offline.js`) para persistencia local de catálogo, historial de búsqueda, visto recientemente y validationCache.
+   - El uso de `localStorage` con la clave `gpsepedia_terms_accepted` es el mecanismo más robusto y de persistencia rápida en el frontend solicitado para almacenar de manera unificada la aceptación del aviso.
+
+3. **Logotipos y Tema de Color (main.js / style.css):**
+   - En `main.js`, la función `updateLogos` intercambia dinámicamente las rutas del logotipo principal y del modal según el modo oscuro o claro (utilizando `Logo_TemaOscuro.png` o la url clásica de Drive).
+   - Necesitamos asegurar que el logotipo del modal de términos (`.terms-logo`) sea incluido en el mecanismo de actualización dinámica de logos de `main.js` para mantener la consistencia estética.
+
+4. **Compatibilidad y Restricciones:**
+   - No se debe modificar el backend ni el sistema de autenticación de `auth.js`.
+   - El aviso debe ser modal, ineludible, con el texto exacto requerido, centrado, con logotipo oficial con proporciones originales y tamaño reducido.
+   - Una vez aceptados los términos por primera vez, se guarda la preferencia localmente y se permite el acceso total al catálogo, impidiendo que vuelva a presentarse en recargas o nuevas aperturas.
+
+--------------------------------------------------
+
+**AUDITORÍA TÉCNICA - Enlace de Acuerdo de Uso, Privacidad y Deslinde de Responsabilidad en el Footer (03/03/2026)**
+
+**Archivos involucrados:** index.html, ui.js, main.js, style.css.
+
+**Hallazgos:**
+1. **Estructura y estilos del pie de página (`.footer` en index.html / style.css):**
+   - El footer se ubica al fondo del DOM con un sentinel de IntersectionObserver.
+   - Contiene la clase `.footer` y un contenedor `.footer-links` con los enlaces existentes: Sobre nosotros, Contáctanos y Preguntas frecuentes.
+   - Los estilos en `style.css` aplican colores, bordes, márgenes y una tipografía específica a los enlaces (`.footer-links a`).
+   - El nuevo enlace "Acuerdo de Uso" debe añadirse dentro del contenedor `.footer-links` conservando la jerarquía exacta de estilos sin alterar el tamaño, altura, colores ni tipografías existentes.
+
+2. **Visualización en Modal (ui.js / index.html):**
+   - El acuerdo debe ser completamente legible y desplazable de forma interactiva en un modal del mismo diseño visual que los otros modales de información de la plataforma (como `#about-us-modal`, `#faq-modal`, etc.).
+   - Utilizaremos la clase `.info-modal` y `.info-modal-content` en un nuevo modal `#terms-agreement-modal`.
+   - Añadiremos un botón de cierre, cabecera y el contenido estructurado del Acuerdo legal provisto por el usuario.
+   - Vincularemos el modal con el método `setupModal` de `ui.js` para controlar su apertura y cierre de forma idéntica a los otros modales legales.

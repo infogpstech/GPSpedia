@@ -2979,6 +2979,10 @@ export const openFAQ = setupModal('faq-modal', () => {
     document.getElementById('faq-modal').style.display = 'flex';
 });
 
+export const openTermsAgreement = setupModal('terms-agreement-modal', () => {
+    document.getElementById('terms-agreement-modal').style.display = 'flex';
+});
+
 function renderInboxList(items) {
     const listContainer = document.getElementById('inbox-list');
     listContainer.innerHTML = '';
@@ -3390,8 +3394,34 @@ export function showApp(user) {
     }, 500);
 
     document.getElementById('login-modal').style.display = 'none';
-    document.querySelector('.container').style.display = 'block';
-    document.querySelector('.footer').style.display = 'flex';
+
+    // Comprobación de aceptación del aviso de condiciones
+    const termsAccepted = localStorage.getItem('gpsepedia_terms_accepted') === 'true';
+    const termsModal = document.getElementById('terms-modal');
+
+    if (!termsAccepted && termsModal) {
+        // Bloquear acceso mostrando solo el modal de términos
+        document.querySelector('.container').style.display = 'none';
+        document.querySelector('.footer').style.display = 'none';
+        termsModal.style.display = 'flex';
+
+        // Manejar el evento del botón
+        const acceptBtn = document.getElementById('btn-accept-terms');
+        if (acceptBtn) {
+            acceptBtn.onclick = () => {
+                localStorage.setItem('gpsepedia_terms_accepted', 'true');
+                termsModal.style.display = 'none';
+                document.querySelector('.container').style.display = 'block';
+                document.querySelector('.footer').style.display = 'flex';
+            };
+        }
+    } else {
+        if (termsModal) {
+            termsModal.style.display = 'none';
+        }
+        document.querySelector('.container').style.display = 'block';
+        document.querySelector('.footer').style.display = 'flex';
+    }
 
     if (user && (user.Nombre_Completo || user.Nombre_Usuario)) {
         document.getElementById('menu-username').textContent = user.Nombre_Completo || user.Nombre_Usuario;

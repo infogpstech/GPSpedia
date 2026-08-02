@@ -420,6 +420,12 @@ async function initializeApp() {
         if (splashImg) splashImg.src = splashUrl;
         const loginImg = document.querySelector('#login-modal img');
         if (loginImg) loginImg.src = loginUrl;
+
+        // Soporte dinámico para el logo del modal de términos y condiciones
+        const termsImg = document.querySelector('.terms-logo');
+        if (termsImg) {
+            termsImg.src = isDark ? 'Logo_TemaOscuro.png' : 'icon-v3-512x512.png';
+        }
     };
 
     document.querySelectorAll('.accordion-header').forEach(header => {
@@ -517,6 +523,7 @@ async function initializeApp() {
     const openAbout = (e) => { e.preventDefault(); ui.openAboutUs(); };
     const openContact = (e) => { e.preventDefault(); ui.openContact(); };
     const openFAQ = (e) => { e.preventDefault(); ui.openFAQ(); };
+    const openTerms = (e) => { e.preventDefault(); ui.openTermsAgreement(); };
 
     document.getElementById('footer-about-link')?.addEventListener('click', openAbout);
     document.getElementById('login-about-link')?.addEventListener('click', openAbout);
@@ -526,6 +533,8 @@ async function initializeApp() {
 
     document.getElementById('footer-faq-link')?.addEventListener('click', openFAQ);
     document.getElementById('login-faq-link')?.addEventListener('click', openFAQ);
+
+    document.getElementById('footer-terms-link')?.addEventListener('click', openTerms);
 
     // --- LÓGICA DE VISIBILIDAD DINÁMICA DEL FOOTER ---
     // El footer solo debe aparecer al llegar al final del catálogo (cuando el centinela es visible).

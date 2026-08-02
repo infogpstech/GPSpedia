@@ -208,7 +208,17 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
-1. **TÍTULO: Corrección de reproducción persistente de vídeos en modales de tutoriales (v2.1.5)**
+1. **TÍTULO: Implementación del aviso de aceptación de condiciones y enlace permanente de Acuerdo Legal (v2.1.5)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, ui.js, main.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Problema:** Necesidad de implementar un aviso inicial de condiciones al iniciar sesión por primera vez por dispositivo y un acceso permanente en el pie de página al Acuerdo de Uso y Privacidad de GPSpedia sin alterar dimensiones ni estilos del footer.
+     - **Aviso Inicial:** Se diseñó el modal `#terms-modal` ineludible de pantalla completa con el logotipo local oficial `icon-v3-512x512.png` centrado, el aviso importante exacto solicitado y el botón "Aceptar Términos". Se valida mediante `localStorage.getItem('gpsepedia_terms_accepted')` bloqueando todo el catálogo de fondo hasta su aceptación.
+     - **Acuerdo Legal:** Se integró el enlace "Acuerdo de Uso y Privacidad" en el footer `.footer-links` heredando de forma exacta los mismos estilos visuales. Se creó un modal responsivo `#terms-agreement-modal` con las 9 secciones íntegras de deslinde legal, controlable mediante la utilidad `setupModal`.
+     - **Branding:** Soportado el intercambio dinámico de logotipos locales claro/oscuro en `main.js` para mantener una estética profesional de alto nivel.
+     - **Efecto:** Cumplimiento total de ambas especificaciones legales de manera completamente independiente y robusta.
+
+2. **TÍTULO: Corrección de reproducción persistente de vídeos en modales de tutoriales (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** ui.js, main.js
    - **DESCRIPCIÓN DETALLADA:**
