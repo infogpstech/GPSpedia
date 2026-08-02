@@ -91,6 +91,7 @@
             <a id="login-about-link" style="font-size: 0.8em; cursor: pointer;">Sobre Nosotros</a>
             <a id="login-contact-link" style="font-size: 0.8em; cursor: pointer;">Contáctanos</a>
             <a id="login-faq-link" style="font-size: 0.8em; cursor: pointer;">Preguntas Frecuentes</a>
+            <a id="login-terms-link" style="font-size: 0.8em; cursor: pointer;">Términos y Condiciones</a>
         </div>
     </div>
 </div>
@@ -148,6 +149,7 @@
       <a id="footer-about-link">Sobre Nosotros</a>
       <a id="footer-contact-link">Contáctanos</a>
       <a id="footer-faq-link">Preguntas Frecuentes</a>
+      <a id="footer-terms-link">Términos y Condiciones</a>
   </div>
 </footer>
 
@@ -282,6 +284,78 @@
     </div>
 </div>
 
+
+<!-- ========= MODAL DE ACEPTACIÓN DE CONDICIONES ========= -->
+<div id="terms-modal" class="terms-overlay" style="display: none;">
+    <div class="terms-modal-content">
+        <div class="terms-header">
+            <img src="icon-v3-512x512.png" alt="Logo de GPSpedia" class="terms-logo">
+            <h2>Aviso Importante</h2>
+        </div>
+        <div class="terms-body">
+            <p>La información de GPSpedia es únicamente de referencia y puede contener errores, omisiones o no aplicar a todos los vehículos. Antes de realizar cualquier intervención, verifique la información y siga los procedimientos y medidas de seguridad correspondientes.</p>
+            <p>El uso de este catálogo es bajo su propia responsabilidad. GPSpedia no se hace responsable por daños, fallas o pérdidas derivadas del uso de la información, ni por malas prácticas, procedimientos incorrectos o la falta de precauciones de seguridad durante el trabajo en el vehículo.</p>
+            <p>Al continuar, usted acepta los <a href="#" id="terms-link-in-modal" style="color: var(--accent-color); text-decoration: underline; font-weight: bold;">Términos y Condiciones</a>.</p>
+        </div>
+        <div class="terms-footer">
+            <button id="btn-accept-terms">Aceptar Términos</button>
+        </div>
+    </div>
+</div>
+
+<!-- ========= MODAL DEL ACUERDO DE USO, PRIVACIDAD Y DESLINDE DE RESPONSABILIDAD ========= -->
+<div id="terms-agreement-modal" class="info-modal">
+  <div class="info-modal-content">
+    <span class="info-close-btn">&times;</span>
+    <h2>Acuerdo de uso, términos y condiciones</h2>
+    <p>Al ingresar y utilizar la plataforma GPSpedia, el usuario declara haber leído, comprendido y aceptado los siguientes términos y condiciones de uso.</p>
+    <hr>
+    <h4>1. Naturaleza y propósito de la plataforma</h4>
+    <p>GPSpedia es una herramienta privada de consulta técnica desarrollada para brindar apoyo a profesionales del sector automotriz, técnicos instaladores y personal autorizado. Su objetivo es facilitar el acceso a información de referencia relacionada con procedimientos técnicos, identificación de componentes, configuraciones vehiculares y procesos de instalación.</p>
+    <p>La información proporcionada en la plataforma tiene carácter orientativo y complementario, y no sustituye manuales oficiales del fabricante, procedimientos certificados ni la experiencia y criterio profesional del técnico responsable.</p>
+    <hr>
+    <h4>2. Uso profesional y responsabilidad del usuario</h4>
+    <p>El contenido de GPSpedia está dirigido exclusivamente a usuarios con conocimientos técnicos y experiencia en el área automotriz. El usuario debe contar con la preparación, herramientas adecuadas y criterio profesional necesarios para interpretar y aplicar correctamente la información consultada.</p>
+    <p>Toda intervención realizada sobre un vehículo utilizando información de la plataforma será ejecutada bajo la responsabilidad exclusiva del técnico o usuario que la realice.</p>
+    <hr>
+    <h4>3. Precisión y actualización de la información</h4>
+    <p>GPSpedia realiza esfuerzos para mantener la información organizada, actualizada y disponible para consulta. Sin embargo, debido a la diversidad de fabricantes, versiones, mercados y modificaciones existentes en los vehículos, no se garantiza que toda la información sea exacta, completa o aplicable a cada caso específico.</p>
+    <p>El usuario tiene la responsabilidad de validar la información antes de realizar cualquier procedimiento técnico.</p>
+    <hr>
+    <h4>4. Deslinde de responsabilidad</h4>
+    <p>Motorlink S.A. y GPSpedia no asumen responsabilidad por daños directos o indirectos, fallas mecánicas, daños eléctricos, pérdidas económicas, lesiones personales o cualquier otro perjuicio ocasionado por:</p>
+    <ul>
+      <li>La interpretación incorrecta de la información publicada.</li>
+      <li>Procedimientos de instalación realizados de manera incorrecta.</li>
+      <li>Malas prácticas técnicas.</li>
+      <li>Uso de herramientas o métodos inadecuados.</li>
+      <li>Falta de aplicación de medidas de seguridad.</li>
+      <li>Modificaciones realizadas al vehículo sin considerar las especificaciones del fabricante.</li>
+    </ul>
+    <p>El usuario reconoce que cualquier trabajo realizado sobre un vehículo implica riesgos técnicos y acepta asumir la responsabilidad correspondiente por sus acciones.</p>
+    <hr>
+    <h4>5. Origen y recopilación de la información</h4>
+    <p>La información disponible en GPSpedia ha sido recopilada, organizada y estructurada a partir de diversas fuentes públicas disponibles en Internet, incluyendo documentación técnica, publicaciones especializadas, blogs técnicos, comunidades automotrices y material de consulta disponible públicamente.</p>
+    <p>GPSpedia funciona como una plataforma de organización y consulta técnica, sin atribuirse derechos de propiedad sobre información perteneciente a fabricantes o terceros.</p>
+    <hr>
+    <h4>6. Acceso privado y control de usuarios</h4>
+    <p>GPSpedia es una plataforma de acceso privado destinada exclusivamente a usuarios autorizados por Motorlink S.A.</p>
+    <p>El acceso requiere una cuenta proporcionada por Motorlink S.A. Las credenciales asignadas son personales, confidenciales e intransferibles.</p>
+    <p>El usuario es responsable de mantener la seguridad de sus datos de acceso y de cualquier actividad realizada mediante su cuenta.</p>
+    <hr>
+    <h4>7. Protección del contenido y prohibición de reproducción</h4>
+    <p>Todo el contenido organizado dentro de GPSpedia, incluyendo textos, imágenes, diagramas, tablas, procedimientos, fotografías, estructuras de información y demás elementos propios de la plataforma, está destinado exclusivamente al uso interno de usuarios autorizados.</p>
+    <p>Queda prohibida la copia, reproducción, extracción, distribución, publicación, comercialización, modificación, almacenamiento o divulgación total o parcial del contenido de GPSpedia por cualquier medio físico o digital sin autorización previa y por escrito de Motorlink S.A.</p>
+    <p>El uso no autorizado del contenido podrá ocasionar la suspensión inmediata del acceso a la plataforma, además de las acciones legales correspondientes.</p>
+    <hr>
+    <h4>8. Privacidad y manejo de información</h4>
+    <p>Motorlink S.A. podrá recopilar y gestionar la información necesaria para la creación y administración de cuentas, seguridad de la plataforma, mejora del servicio y análisis operativo.</p>
+    <p>Los datos recopilados serán utilizados exclusivamente para fines relacionados con la operación de GPSpedia y la prestación del servicio, y no serán comercializados ni compartidos con terceros, salvo cuando exista una obligación legal o autorización expresa.</p>
+    <hr>
+    <h4>9. Aceptación de términos</h4>
+    <p>Al utilizar GPSpedia, el usuario confirma que comprende las limitaciones de la información proporcionada, acepta las condiciones establecidas en este acuerdo y reconoce que el uso de la plataforma debe realizarse de manera profesional, responsable y conforme a las buenas prácticas técnicas y de seguridad.</p>
+  </div>
+</div>
 
 <!-- ========= MODALES DE INFORMACIÓN ========= -->
 <div id="about-us-modal" class="info-modal">
