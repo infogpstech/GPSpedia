@@ -543,6 +543,7 @@ async function initializeApp() {
 
     document.getElementById('footer-terms-link')?.addEventListener('click', openTerms);
     document.getElementById('terms-link-in-modal')?.addEventListener('click', openTerms);
+    document.getElementById('login-terms-link')?.addEventListener('click', openTerms);
 
     // --- LÓGICA DE VISIBILIDAD DINÁMICA DEL FOOTER ---
     // El footer solo debe aparecer al llegar al final del catálogo (cuando el centinela es visible).

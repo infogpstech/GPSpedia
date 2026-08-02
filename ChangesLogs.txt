@@ -819,17 +819,20 @@ Archivos modificados:
 **Archivo: index.html**
 - **Líneas 287-357:** Implementada la estructura HTML de `#terms-modal` para primer inicio de sesión usando logotipo local `icon-v3-512x512.png`.
 - **Líneas 294-296:** Integrado de manera interactiva el enlace de "Términos y Condiciones" dentro del texto del aviso inicial.
+- **Líneas 91-92:** Integrado el enlace de "Términos y Condiciones" en `.footer-links` de `#login-modal` de la pantalla de inicio de sesión.
 - **Líneas 148-152:** Integrado de manera permanente el enlace de "Términos y Condiciones" en `.footer-links` del pie de página.
-- **Líneas 301-357:** Añadido modal independiente `#terms-agreement-modal` con las 9 secciones íntegras de Términos y Condiciones.
+- **Líneas 301-357:** Añadido modal independiente `#terms-agreement-modal` con las 9 secciones íntegras de Términos y Condiciones, y renombrado su título a 'Acuerdo de uso, términos y condiciones'.
 
 **Archivo: style.css**
 - **Líneas 1599-1691:** Diseñados estilos responsivos para `.terms-overlay` y `.terms-modal-content` con bloqueo de pantalla completa e interacción, y soporte de modo claro/oscuro.
 - **Líneas 1693-1697:** Modificado el `z-index` de `#terms-agreement-modal` a `3200` para sobreponerse de forma impecable sobre el aviso inicial.
+- **Líneas 1699-1703:** Añadida justificación de textos para `#terms-modal .terms-body` y `#terms-agreement-modal p, #terms-agreement-modal li`.
+- **Líneas 1705-1743:** Compactado el aviso de inicio `#terms-modal` para móviles para eliminar scrollbars y reducidos espacios del footer responsivo.
 
 **Archivo: main.js**
 - **Líneas 171-178:** Añadido bloqueo absoluto en `popstate` contra escapes y retrocesos de navegación mientras el aviso inicial esté visible.
 - **Líneas 424-428:** Agregado el logotipo de aviso de condiciones a la regla de intercambio dinámico de logos para soporte de modo claro/oscuro.
-- **Líneas 523-545:** Enlazados listeners de interacción para `#footer-terms-link` y `#terms-link-in-modal` con la apertura de `ui.openTermsAgreement()`.
+- **Líneas 523-545:** Enlazados listeners de interacción para `#footer-terms-link`, `#terms-link-in-modal` y `#login-terms-link` con la apertura de `ui.openTermsAgreement()`.
 
 **Archivo: ui.js**
 - **Líneas 3390-3416:** Modificada `showApp` para verificar el estado de aceptación en `localStorage` (`gpsepedia_terms_accepted`), impidiendo el acceso y bloqueando el catálogo trasero si no ha sido aceptado por primera vez en el dispositivo.

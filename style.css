@@ -1649,10 +1649,8 @@ body.search-active .search-history-section {
     font-size: 0.95em;
     line-height: 1.5;
     margin-bottom: 25px;
-    max-height: 250px;
-    overflow-y: auto;
+    max-height: none;
     padding-right: 5px;
-    scrollbar-width: thin;
 }
 
 .terms-body p {
@@ -1692,4 +1690,49 @@ body.search-active .search-history-section {
 
 #terms-agreement-modal {
     z-index: 3200; /* Asegurar que se sobreponga sobre el modal de aviso inicial (3100) sin interferencias */
+}
+
+/* Justificación de textos legales */
+#terms-modal .terms-body,
+#terms-agreement-modal p,
+#terms-agreement-modal li {
+    text-align: justify;
+}
+
+/* Compactación y optimización responsive de modales de aviso inicial y footer */
+@media (max-width: 600px) {
+    .footer {
+        padding: 10px 0 !important;
+    }
+    .footer-links {
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
+        row-gap: 5px !important;
+        column-gap: 15px !important;
+    }
+
+    .terms-modal-content {
+        padding: 15px !important;
+        max-width: 90% !important;
+        width: 90% !important;
+    }
+    .terms-logo {
+        max-width: 50px !important;
+        margin-bottom: 10px !important;
+    }
+    .terms-header h2 {
+        font-size: 1.3em !important;
+    }
+    .terms-body {
+        font-size: 0.85em !important;
+        line-height: 1.4 !important;
+        margin-bottom: 15px !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+        padding-right: 0 !important;
+    }
+    .terms-footer button {
+        padding: 10px 20px !important;
+        font-size: 0.9em !important;
+    }
 }
