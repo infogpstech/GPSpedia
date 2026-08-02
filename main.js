@@ -428,10 +428,16 @@ async function initializeApp() {
         const loginImg = document.querySelector('#login-modal img');
         if (loginImg) loginImg.src = loginUrl;
 
-        // Soporte dinámico para el logo del modal de términos y condiciones
+        // Soporte dinámico para el logo del modal de términos y condiciones (aviso inicial)
         const termsImg = document.querySelector('.terms-logo');
         if (termsImg) {
             termsImg.src = isDark ? 'Logo_TemaOscuro.png' : 'icon-v3-512x512.png';
+        }
+
+        // Soporte dinámico para el logo de GPSpedia en el modal de Términos y Condiciones completo
+        const termsAgreementImg = document.querySelector('.terms-agreement-logo.gpsepedia-logo');
+        if (termsAgreementImg) {
+            termsAgreementImg.src = isDark ? 'Logo_TemaOscuro.png' : 'icon-v3-512x512.png';
         }
     };
 

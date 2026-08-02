@@ -67,14 +67,11 @@ body.dark-mode {
     --accent-color: #58a6ff;
 }
 
-/* Solución técnica para el logo en modo oscuro cuando el recurso no está disponible */
-/* Se mantiene como fallback, pero ahora main.js gestiona el cambio de src */
+/* Solución técnica para el logo en modo oscuro */
 body.dark-mode .app-logo,
 body.dark-mode #splash-screen img,
 body.dark-mode #login-modal img {
-    filter: none; /* Desactivado porque ahora usamos Logo_TemaOscuro.png directamente */
-    /* El drop-shadow se aplica si es necesario mediante filter */
-    /* filter: drop-shadow(0px 0px 5px rgba(255,255,255,0.2)); */
+    filter: drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6)) !important;
 }
 
 h1,h2,h3,h4 {
@@ -173,8 +170,8 @@ h1.app-title {
 .app-logo {
     max-width: 96px;
     height: auto;
-    border-radius: 8px;
     transition: all 0.35s ease-in-out;
+    filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
 }
 
 h1.app-title {
@@ -738,6 +735,13 @@ body.search-active .container {
 }
 
 /* --- ESTILOS DEL MODAL DE LOGIN --- */
+#login-modal img {
+    max-width: 120px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
+    transition: filter 0.3s ease;
+}
+
 #login-modal {
     position: fixed;
     top: 0;
@@ -1352,8 +1356,8 @@ body.search-active .container {
 }
 #splash-screen img {
     max-width: 150px;
-    border-radius: 15px;
     animation: pulse 1.5s infinite ease-in-out;
+    filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
 }
 @keyframes pulse {
     0% { transform: scale(1); }
@@ -1631,11 +1635,10 @@ body.search-active .search-history-section {
 .terms-logo {
     max-width: 80px;
     height: auto;
-    border-radius: 12px;
     margin-bottom: 15px;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
     display: inline-block;
     transition: filter 0.3s ease;
+    filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
 }
 
 .terms-header h2 {
@@ -1734,5 +1737,37 @@ body.search-active .search-history-section {
     .terms-footer button {
         padding: 10px 20px !important;
         font-size: 0.9em !important;
+    }
+}
+
+/* --- ESTILOS DE LOS LOGOS DE GPSpedia Y TRACKLINK EN TÉRMINOS Y CONDICIONES --- */
+.terms-agreement-logos-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    margin-top: 25px;
+    margin-bottom: 10px;
+}
+
+.terms-agreement-logo {
+    height: 45px;
+    width: auto;
+    object-fit: contain;
+    transition: filter 0.3s ease;
+    filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
+}
+
+body.dark-mode .terms-agreement-logo {
+    filter: drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6)) !important;
+}
+
+@media (max-width: 600px) {
+    .terms-agreement-logos-container {
+        gap: 15px;
+        margin-top: 20px;
+    }
+    .terms-agreement-logo {
+        height: 30px;
     }
 }
