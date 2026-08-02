@@ -509,3 +509,39 @@ Estrategia de corrección:
 5. **Compactación del footer móvil (style.css):**
    - En la vista móvil/PWA, debido al tamaño de la pantalla, el nuevo enlace "Términos y Condiciones" salta a una segunda fila.
    - Esto incrementa la altura del footer. Debemos compactar el footer disminuyendo el espacio vertical (`margin` o `padding`) entre la primera fila de enlaces y la segunda fila, y conservar la distribución limpia y unificada de los elementos de derechos reservados.
+
+===================================================================
+AUDITORÍA DE ACTUALIZACIÓN DE CONTENIDO Y ESTILOS DE MODALES (04/03/2026)
+===================================================================
+
+ID del hallazgo: H-MODAL-01
+Título: Actualización del contenido y estilos del modal "Sobre Nosotros"
+Descripción: El contenido del modal `#about-us-modal` contiene emojis, iconos y un formato informal. Se requiere reescribir por completo el contenido utilizando una redacción puramente institucional enfocada en la consulta técnica, alineada a la izquierda y completamente libre de elementos visuales/decorativos no solicitados.
+Ubicación:
+  - Archivo: index.html (líneas 517-538)
+  - Archivo: style.css
+Impacto: Medio
+Riesgo: Bajo
+Dependencias: `#about-us-modal`
+
+ID del hallazgo: H-MODAL-02
+Título: Ajuste de alineación y separación en el modal "Términos y Condiciones"
+Descripción:
+  1. El contenido del modal legal `#terms-agreement-modal` está justificado. Se requiere cambiar a alineación a la izquierda (`text-align: left`) para títulos, subtítulos, listas y párrafos, manteniendo su estructura legal y legibilidad.
+  2. El logo de TRACKLINK (`tracklink_logo.png`) al final de la página de términos debe tener mayor separación vertical con respecto a la última línea de texto para lograr una distribución visual equilibrada.
+  3. El logo de GPSpedia al inicio del modal legal debe mantenerse en la parte superior (sin compartir espacio horizontal con el de TRACKLINK) e incrementar ligeramente su tamaño, manteniendo sus sombras tipo `drop-shadow` y diseño limpio sin contenedores visibles.
+Ubicación:
+  - Archivo: index.html (líneas 301-514)
+  - Archivo: style.css
+Impacto: Medio
+Riesgo: Bajo
+Dependencias: `#terms-agreement-modal`, `.gpsepedia-logo`, `.tracklink-logo`
+
+ID del hallazgo: H-MODAL-03
+Título: Ajuste de alineación del texto del aviso inicial (Aviso Importante)
+Descripción: El texto del modal de aviso inicial `#terms-modal` debe estar centrado horizontalmente (`text-align: center`) en lugar de justificado. No se debe modificar su comportamiento ni caché de aceptación.
+Ubicación:
+  - Archivo: style.css
+Impacto: Medio
+Riesgo: Bajo
+Dependencias: `#terms-modal .terms-body`

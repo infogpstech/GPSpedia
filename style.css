@@ -1695,11 +1695,46 @@ body.search-active .search-history-section {
     z-index: 3200; /* Asegurar que se sobreponga sobre el modal de aviso inicial (3100) sin interferencias */
 }
 
-/* Justificación de textos legales */
-#terms-modal .terms-body,
+/* Alineación de textos de modales informativos */
+#about-us-modal .info-modal-content {
+    text-align: left;
+}
+
+#terms-agreement-modal .info-modal-content {
+    text-align: left;
+}
+
 #terms-agreement-modal p,
-#terms-agreement-modal li {
-    text-align: justify;
+#terms-agreement-modal li,
+#terms-agreement-modal h1,
+#terms-agreement-modal h2,
+#terms-agreement-modal h3,
+#terms-agreement-modal h4 {
+    text-align: left;
+}
+
+#terms-modal .terms-body {
+    text-align: center;
+}
+
+#terms-modal .terms-body p {
+    text-align: center;
+}
+
+/* Separación específica para el logo GPSpedia e incremento ligero de tamaño */
+#terms-agreement-modal .gpsepedia-logo {
+    height: 55px; /* Tamaño ligeramente incrementado */
+}
+
+@media (max-width: 600px) {
+    #terms-agreement-modal .gpsepedia-logo {
+        height: 38px; /* Proporcionalmente ajustado para versión móvil */
+    }
+}
+
+/* Separación específica para el logo TRACKLINK al final de Términos y Condiciones */
+#terms-agreement-modal .tracklink-logo {
+    margin-top: 50px; /* Aumentar separación vertical respecto al contenido */
 }
 
 /* Compactación y optimización responsive de modales de aviso inicial y footer */

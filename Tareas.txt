@@ -208,6 +208,15 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+1. **TÍTULO: Actualización de contenido y estilos de modales informativos de GPSpedia (v2.1.5)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Modal Sobre Nosotros:** Reemplazado por completo su contenido actual con la redacción institucional solicitada, centrada en la naturaleza técnica y de consulta organizada de GPSpedia. Se eliminaron por completo emojis, emoticonos e iconos decorativos. Se alineó todo el contenido y texto a la izquierda, manteniendo total compatibilidad con pantallas móviles y de escritorio.
+     - **Modal Términos y Condiciones:** Modificada la presentación visual para alinear todo el texto legal, encabezados, párrafos y listas completamente a la izquierda. Incrementada la separación vertical con el logotipo de TRACKLINK ubicado al final mediante un margen superior de 50px para una mejor distribución visual. Se incrementó ligeramente el tamaño del logotipo de GPSpedia al inicio del modal (alto de 55px en escritorio y 38px en móvil) respetando su sombra drop-shadow y asegurando que no comparta espacio horizontal con el logotipo de TRACKLINK ni tenga contenedores visibles.
+     - **Modal de Aviso Inicial:** Modificada la presentación visual del texto de aviso de inicio para centrarlo horizontalmente de manera elegante, sin alterar su lógica funcional ni su comportamiento ineludible o persistencia en el caché local.
+
+
 1. **TÍTULO: Implementación del aviso de aceptación de condiciones y enlace permanente de Términos y Condiciones (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** index.html, ui.js, main.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
