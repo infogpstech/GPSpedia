@@ -67,14 +67,11 @@ body.dark-mode {
     --accent-color: #58a6ff;
 }
 
-/* Solución técnica para el logo en modo oscuro cuando el recurso no está disponible */
-/* Se mantiene como fallback, pero ahora main.js gestiona el cambio de src */
+/* Solución técnica para el logo en modo oscuro */
 body.dark-mode .app-logo,
 body.dark-mode #splash-screen img,
 body.dark-mode #login-modal img {
-    filter: none; /* Desactivado porque ahora usamos Logo_TemaOscuro.png directamente */
-    /* El drop-shadow se aplica si es necesario mediante filter */
-    /* filter: drop-shadow(0px 0px 5px rgba(255,255,255,0.2)); */
+    filter: drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6)) !important;
 }
 
 h1,h2,h3,h4 {
@@ -173,8 +170,8 @@ h1.app-title {
 .app-logo {
     max-width: 96px;
     height: auto;
-    border-radius: 8px;
     transition: all 0.35s ease-in-out;
+    filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
 }
 
 h1.app-title {
@@ -738,6 +735,13 @@ body.search-active .container {
 }
 
 /* --- ESTILOS DEL MODAL DE LOGIN --- */
+#login-modal img {
+    max-width: 120px;
+    margin-bottom: 20px;
+    filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
+    transition: filter 0.3s ease;
+}
+
 #login-modal {
     position: fixed;
     top: 0;
@@ -1352,8 +1356,8 @@ body.search-active .container {
 }
 #splash-screen img {
     max-width: 150px;
-    border-radius: 15px;
     animation: pulse 1.5s infinite ease-in-out;
+    filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
 }
 @keyframes pulse {
     0% { transform: scale(1); }
@@ -1594,4 +1598,201 @@ body.search-active .container {
 
 body.search-active .search-history-section {
     display: block;
+}
+
+/* --- MODAL DE ACEPTACIÓN DE CONDICIONES (AVISO IMPORTANTE) --- */
+.terms-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 3100; /* Mayor que el modal de detalle para ineludibilidad y bloqueo de interacción */
+    backdrop-filter: blur(5px);
+}
+
+.terms-modal-content {
+    background-color: var(--modal-bg, #fff);
+    color: var(--modal-text, #333);
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    max-width: 500px;
+    width: 90%;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    animation: slideDown 0.4s ease-out;
+}
+
+.terms-header {
+    margin-bottom: 20px;
+}
+
+.terms-logo {
+    max-width: 80px;
+    height: auto;
+    margin-bottom: 15px;
+    display: inline-block;
+    transition: filter 0.3s ease;
+    filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
+}
+
+.terms-header h2 {
+    font-size: 1.6em;
+    margin: 0;
+    color: var(--header-color);
+}
+
+.terms-body {
+    text-align: left;
+    font-size: 0.95em;
+    line-height: 1.5;
+    margin-bottom: 25px;
+    max-height: none;
+    padding-right: 5px;
+}
+
+.terms-body p {
+    margin: 0 0 15px 0;
+    font-weight: normal;
+}
+
+.terms-body p:last-child {
+    margin-bottom: 0;
+    font-weight: bold;
+}
+
+.terms-footer button {
+    background-color: var(--accent-color, #007bff);
+    color: white;
+    border: none;
+    padding: 12px 25px;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1em;
+    transition: background-color 0.2s, transform 0.1s;
+    width: 100%;
+}
+
+.terms-footer button:hover {
+    background-color: #0056b3;
+}
+
+.terms-footer button:active {
+    transform: scale(0.98);
+}
+
+.dark-mode .terms-logo {
+    filter: drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6)) !important;
+}
+
+#terms-agreement-modal {
+    z-index: 3200; /* Asegurar que se sobreponga sobre el modal de aviso inicial (3100) sin interferencias */
+}
+
+/* Alineación de textos de modales informativos */
+#about-us-modal .info-modal-content {
+    text-align: left;
+}
+
+#terms-agreement-modal .info-modal-content {
+    text-align: left;
+}
+
+#terms-agreement-modal p,
+#terms-agreement-modal li,
+#terms-agreement-modal h1,
+#terms-agreement-modal h2,
+#terms-agreement-modal h3,
+#terms-agreement-modal h4 {
+    text-align: left;
+}
+
+#terms-modal .terms-body {
+    text-align: center;
+}
+
+#terms-modal .terms-body p {
+    text-align: center;
+}
+
+/* Separación específica para el logo GPSpedia e incremento ligero de tamaño */
+#terms-agreement-modal .gpsepedia-logo {
+    height: 55px; /* Tamaño ligeramente incrementado */
+}
+
+@media (max-width: 600px) {
+    #terms-agreement-modal .gpsepedia-logo {
+        height: 38px; /* Proporcionalmente ajustado para versión móvil */
+    }
+}
+
+/* Separación específica para el logo TRACKLINK al final de Términos y Condiciones */
+#terms-agreement-modal .tracklink-logo {
+    margin-top: 50px; /* Aumentar separación vertical respecto al contenido */
+}
+
+/* Compactación y optimización responsive de modales de aviso inicial y footer */
+@media (max-width: 600px) {
+    .footer {
+        padding: 10px 0 !important;
+    }
+    .footer-links {
+        margin-top: 5px !important;
+        margin-bottom: 5px !important;
+        row-gap: 5px !important;
+        column-gap: 15px !important;
+    }
+
+    .terms-modal-content {
+        padding: 15px !important;
+        max-width: 90% !important;
+        width: 90% !important;
+    }
+    .terms-logo {
+        max-width: 50px !important;
+        margin-bottom: 10px !important;
+    }
+    .terms-header h2 {
+        font-size: 1.3em !important;
+    }
+    .terms-body {
+        font-size: 0.85em !important;
+        line-height: 1.4 !important;
+        margin-bottom: 15px !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+        padding-right: 0 !important;
+    }
+    .terms-footer button {
+        padding: 10px 20px !important;
+        font-size: 0.9em !important;
+    }
+}
+
+/* --- ESTILOS DE LOS LOGOS DE GPSpedia Y TRACKLINK EN TÉRMINOS Y CONDICIONES --- */
+.terms-agreement-logo {
+    display: block;
+    margin: 15px auto 25px auto;
+    height: 45px;
+    width: auto;
+    object-fit: contain;
+    transition: filter 0.3s ease;
+    filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
+}
+
+body.dark-mode .terms-agreement-logo {
+    filter: drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6)) !important;
+}
+
+@media (max-width: 600px) {
+    .terms-agreement-logo {
+        height: 30px;
+        margin: 10px auto 15px auto;
+    }
 }

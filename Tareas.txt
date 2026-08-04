@@ -208,7 +208,26 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
-1. **TÍTULO: Corrección de reproducción persistente de vídeos en modales de tutoriales (v2.1.5)**
+1. **TÍTULO: Actualización de contenido y estilos de modales informativos de GPSpedia (v2.1.5)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Modal Sobre Nosotros:** Reemplazado por completo su contenido actual con la redacción institucional solicitada, centrada en la naturaleza técnica y de consulta organizada de GPSpedia. Se eliminaron por completo emojis, emoticonos e iconos decorativos. Se alineó todo el contenido y texto a la izquierda, manteniendo total compatibilidad con pantallas móviles y de escritorio.
+     - **Modal Términos y Condiciones:** Modificada la presentación visual para alinear todo el texto legal, encabezados, párrafos y listas completamente a la izquierda. Incrementada la separación vertical con el logotipo de TRACKLINK ubicado al final mediante un margen superior de 50px para una mejor distribución visual. Se incrementó ligeramente el tamaño del logotipo de GPSpedia al inicio del modal (alto de 55px en escritorio y 38px en móvil) respetando su sombra drop-shadow y asegurando que no comparta espacio horizontal con el logotipo de TRACKLINK ni tenga contenedores visibles.
+     - **Modal de Aviso Inicial:** Modificada la presentación visual del texto de aviso de inicio para centrarlo horizontalmente de manera elegante, sin alterar su lógica funcional ni su comportamiento ineludible o persistencia en el caché local.
+
+
+1. **TÍTULO: Implementación del aviso de aceptación de condiciones y enlace permanente de Términos y Condiciones (v2.1.5)**
+   - **ESTADO:** COMPLETADO
+   - **ALCANCE:** index.html, ui.js, main.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Problema:** Necesidad de implementar un aviso inicial de condiciones al iniciar sesión por primera vez por dispositivo y un acceso permanente en el pie de página a los "Términos y Condiciones" de GPSpedia sin alterar dimensiones ni estilos del footer, permitiendo la integración de este enlace en el aviso inicial y en la pantalla de inicio de sesión sin mezclar su comportamiento, y con optimización responsive para evitar scrolls e incrementar legibilidad.
+     - **Aviso Inicial:** Se diseñó el modal `#terms-modal` ineludible de pantalla completa con el logotipo local oficial `icon-v3-512x512.png` centrado, el aviso importante exacto solicitado con texto justificado, un enlace interactivo para abrir los términos y condiciones, y el botón "Aceptar Términos". Se optimizaron las proporciones y márgenes para móviles de forma que todo el texto y botón permanezcan completamente visibles sin barras de desplazamiento vertical. El modal es ineludible por cualquier método (incluyendo popstate / retrocesos bloqueados en `main.js`).
+     - **Términos y Condiciones:** Se integró el enlace "Términos y Condiciones" en el footer `.footer-links` y en la sección `.footer-links` de `#login-modal` de la pantalla de login, heredando de forma exacta los mismos estilos visuales. Se creó un modal responsivo `#terms-agreement-modal` con las 9 secciones de deslinde legal y texto justificado, con un `z-index: 3200` para sobreponerse perfectamente al aviso de inicio. Su título se actualizó a 'Acuerdo de uso, términos y condiciones'.
+     - **Branding:** Soportado el intercambio dinámico de logotipos locales claro/oscuro en `main.js` para mantener una estética profesional de alto nivel.
+     - **Efecto:** Cumplimiento total de todas las especificaciones legales de manera completamente independiente, responsiva, robusta y con ineludibilidad perfecta.
+
+2. **TÍTULO: Corrección de reproducción persistente de vídeos en modales de tutoriales (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** ui.js, main.js
    - **DESCRIPCIÓN DETALLADA:**

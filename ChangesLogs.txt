@@ -813,3 +813,42 @@ Archivos modificados:
 
 **Archivo: ui.js**
 - **Líneas 1339-1349:** Se rediseñó la propiedad `url` en el objeto `shareData` dentro de `shareBtn.onclick` para construir dinámicamente un término de búsqueda muy preciso en el hash de Deep Linking (`#search=`). El término ahora concatena la marca, modelo, versión de equipamiento (`versionesAplicables`), tipo de encendido (`tipoEncendido`) y año de inicio (`anoDesde`), filtrando valores inexistentes o vacíos. Esto permite que el enlace de compartir filtre con total precisión la generación y variante específica del vehículo y la abra automáticamente de inmediato al cargar la URL.
+
+**AVISO DE CONDICIONES AL INICIAR SESIÓN Y ACUERDO LEGAL PERMANENTE EN EL FOOTER (03/03/2026)**
+
+**Archivo: index.html**
+- **Líneas 287-357:** Implementada la estructura HTML de `#terms-modal` para primer inicio de sesión usando logotipo local `icon-v3-512x512.png`.
+- **Líneas 294-296:** Integrado de manera interactiva el enlace de "Términos y Condiciones" dentro del texto del aviso inicial.
+- **Líneas 91-92:** Integrado el enlace de "Términos y Condiciones" en `.footer-links` de `#login-modal` de la pantalla de inicio de sesión.
+- **Líneas 148-152:** Integrado de manera permanente el enlace de "Términos y Condiciones" en `.footer-links` del pie de página.
+- **Líneas 301-357:** Añadido modal independiente `#terms-agreement-modal` con las 9 secciones íntegras de Términos y Condiciones, y renombrado su título a 'Acuerdo de uso, términos y condiciones'.
+
+**Archivo: style.css**
+- **Líneas 1599-1691:** Diseñados estilos responsivos para `.terms-overlay` y `.terms-modal-content` con bloqueo de pantalla completa e interacción, y soporte de modo claro/oscuro.
+- **Líneas 1693-1697:** Modificado el `z-index` de `#terms-agreement-modal` a `3200` para sobreponerse de forma impecable sobre el aviso inicial.
+- **Líneas 1699-1703:** Añadida justificación de textos para `#terms-modal .terms-body` y `#terms-agreement-modal p, #terms-agreement-modal li`.
+- **Líneas 1705-1743:** Compactado el aviso de inicio `#terms-modal` para móviles para eliminar scrollbars y reducidos espacios del footer responsivo.
+
+**Archivo: main.js**
+- **Líneas 171-178:** Añadido bloqueo absoluto en `popstate` contra escapes y retrocesos de navegación mientras el aviso inicial esté visible.
+- **Líneas 424-428:** Agregado el logotipo de aviso de condiciones a la regla de intercambio dinámico de logos para soporte de modo claro/oscuro.
+- **Líneas 523-545:** Enlazados listeners de interacción para `#footer-terms-link`, `#terms-link-in-modal` y `#login-terms-link` con la apertura de `ui.openTermsAgreement()`.
+
+**Archivo: ui.js**
+- **Líneas 3390-3416:** Modificada `showApp` para verificar el estado de aceptación en `localStorage` (`gpsepedia_terms_accepted`), impidiendo el acceso y bloqueando el catálogo trasero si no ha sido aceptado por primera vez en el dispositivo.
+- **Líneas 2370-2374:** Ajustada la utilidad `setupModal` para evitar ejecutar `history.back()` al cerrar el modal legal si el aviso inicial está activo, preservando el flujo.
+- **Líneas 2979-2983:** Exportado el controlador `openTermsAgreement` para el modal legal mediante la utilidad `setupModal`.
+
+**Versión:** Actualización v2.1.5.
+
+
+**CHANGES LOG - 05/03/2026 (ACTUALIZACIÓN DE MODALES INFORMATIVOS Y ESTILOS - VERSIÓN 2.1.5)**
+
+**Archivo: index.html**
+- **Líneas 520-544:** Reemplazado por completo el contenido del modal "Sobre Nosotros" (#about-us-modal) con una redacción institucional especializada enfocada en la naturaleza técnica de GPSpedia, alineado a la izquierda, y removiendo emojis, emoticonos e iconos decorativos.
+
+**Archivo: style.css**
+- **Líneas 1698-1703:** Añadidas reglas para alinear a la izquierda el contenido de `#about-us-modal` e `#terms-agreement-modal` (incluyendo títulos, subtítulos, párrafos y listas).
+- **Líneas 1705-1707:** Añadida regla para centrar el texto dentro de `.terms-body` del modal `#terms-modal` (aviso inicial).
+- **Líneas 1709-1721:** Incrementado el tamaño del logo de GPSpedia únicamente dentro del modal de términos y condiciones (`#terms-agreement-modal .gpsepedia-logo`) a 55px (con regla responsiva a 38px en pantallas menores a 600px).
+- **Líneas 1723-1727:** Incrementado el margen superior del logo de TRACKLINK (`#terms-agreement-modal .tracklink-logo`) a 50px para una separación vertical adecuada al final de los términos y condiciones.
