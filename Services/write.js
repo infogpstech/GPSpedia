@@ -59,6 +59,10 @@ function doPost(e) {
     try {
         const request = JSON.parse(e.postData.contents);
         switch (request.action) {
+            case 'getHeaders':
+                const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+                response = { status: 'success', headers: cortesSheet.getRange(1, 1, 1, cortesSheet.getLastColumn()).getValues()[0] };
+                break;
             case 'checkVehicle':
                 response = handleCheckVehicle(request.payload);
                 break;
@@ -96,11 +100,13 @@ function handleAddOrUpdateCut(payload) {
         throw new Error("Datos del corte y del colaborador son requeridos.");
     }
 
-    let opId = null;
-    if (colaborador) {
-        const opMatch = colaborador.match(/\[(OP-[a-zA-Z0-9_-]+)\]/);
+    let opId = payload.opId || null;
+    let colaboradorName = colaborador;
+    if (colaboradorName) {
+        const opMatch = colaboradorName.match(/\[(OP-[a-zA-Z0-9_-]+)\]/);
         if (opMatch) {
-            opId = opMatch[1];
+            opId = opId || opMatch[1];
+            colaboradorName = colaboradorName.replace(/\s*\[OP-[a-zA-Z0-9_-]+\]/, '').trim();
         }
     }
 
@@ -112,11 +118,13 @@ function handleAddOrUpdateCut(payload) {
             const rowIndex = match.rowIndex;
             const rowValues = match.rowValues;
             const rowObj = mapRowToObject(rowValues, COLS_CORTES);
+            const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+            const matchedColName = String(headers[match.colIndex - 1]).toLowerCase();
 
             let slotIndex = 1;
-            if (match.colIndex === COLS_CORTES.colaboradorCorte1) slotIndex = 1;
-            else if (match.colIndex === COLS_CORTES.colaboradorCorte2) slotIndex = 2;
-            else if (match.colIndex === COLS_CORTES.colaboradorCorte3) slotIndex = 3;
+            if (matchedColName.includes("1") || match.colIndex === COLS_CORTES.colaboradorCorte1) slotIndex = 1;
+            else if (matchedColName.includes("2") || match.colIndex === COLS_CORTES.colaboradorCorte2) slotIndex = 2;
+            else if (matchedColName.includes("3") || match.colIndex === COLS_CORTES.colaboradorCorte3) slotIndex = 3;
 
             // 1. Check and repair vehicle image if it was registered but is invalid/corrupted/trashed
             if (vehicleData && vehicleData.imagenVehiculo) {
@@ -188,7 +196,11 @@ function handleAddOrUpdateCut(payload) {
         sheet.getRange(rowIndex, COLS_CORTES[`colorCableCorte${cutSlotIndex}`]).setValue(cutData.colorCableCorte1);
         sheet.getRange(rowIndex, COLS_CORTES[`configRelay${cutSlotIndex}`]).setValue(cutData.configRelay1);
         sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${cutSlotIndex}`]).setValue(imageUrl);
-        sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${cutSlotIndex}`]).setValue(colaborador);
+        sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${cutSlotIndex}`]).setValue(colaboradorName);
+        if (opId) {
+            const opIdColIndex = getOpIdColIndex(sheet, cutSlotIndex);
+            sheet.getRange(rowIndex, opIdColIndex).setValue(opId);
+        }
         sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
 
         newId = vehicleId;
@@ -254,7 +266,11 @@ function handleAddOrUpdateCut(payload) {
         sheet.getRange(rowIndex, COLS_CORTES.colorCableCorte1).setValue(cutData.colorCableCorte1);
         sheet.getRange(rowIndex, COLS_CORTES.configRelay1).setValue(cutData.configRelay1);
         sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
-        sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaborador);
+        sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
+        if (opId) {
+            const opIdColIndex = getOpIdColIndex(sheet, 1);
+            sheet.getRange(rowIndex, opIdColIndex).setValue(opId);
+        }
 
         // 5. Esperar a que la hoja calcule el valor del ID generado por la fórmula.
         SpreadsheetApp.flush();
@@ -555,15 +571,57 @@ function checkFileIdValid(url) {
     }
 }
 
+function getOpIdColIndex(sheet, slotIndex) {
+    const lastCol = sheet.getLastColumn();
+    const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
+    const expectedHeader = `idOperacion${slotIndex}`;
+
+    for (let c = 0; c < headers.length; c++) {
+        const header = String(headers[c]).trim();
+        if (header === expectedHeader || header.toLowerCase() === `id_operacion_${slotIndex}` || header.toLowerCase() === `idoperacion${slotIndex}`) {
+            return c + 1;
+        }
+    }
+
+    // Not found, append dynamically
+    const newColIndex = lastCol + 1;
+    sheet.getRange(1, newColIndex).setValue(expectedHeader);
+    SpreadsheetApp.flush();
+    return newColIndex;
+}
+
 function findRowByOpId(sheet, opId) {
     if (!opId) return null;
     const data = sheet.getDataRange().getValues();
+    if (data.length <= 1) return null;
+
+    const headers = data[0];
+    const opIdCols = [];
+    for (let c = 0; c < headers.length; c++) {
+        const h = String(headers[c]).toLowerCase();
+        if (h.includes("idoperacion") || h.includes("id_operacion")) {
+            opIdCols.push(c);
+        }
+    }
+
+    for (let r = 1; r < data.length; r++) {
+        const row = data[r];
+        for (let i = 0; i < opIdCols.length; i++) {
+            const idx = opIdCols[i];
+            const cellVal = row[idx];
+            if (cellVal && String(cellVal).trim() === opId.trim()) {
+                return { rowIndex: r + 1, rowValues: row, colIndex: idx + 1 };
+            }
+        }
+    }
+
+    // Fallback for old tagged collaborator format
     const tag = `[${opId}]`;
     for (let r = 1; r < data.length; r++) {
         const row = data[r];
         for (let c = 0; c < row.length; c++) {
             const cell = row[c];
-            if (cell && typeof cell === 'string' && cell.indexOf(tag) !== -1) {
+            if (cell && typeof cell === 'string' && (cell.indexOf(tag) !== -1 || cell === opId)) {
                 return { rowIndex: r + 1, rowValues: row, colIndex: c + 1 };
             }
         }
@@ -579,11 +637,13 @@ function handleCheckOperation(payload) {
     const match = findRowByOpId(sheet, opId);
     if (match) {
         const rowObj = mapRowToObject(match.rowValues, COLS_CORTES);
+        const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+        const matchedColName = String(headers[match.colIndex - 1]).toLowerCase();
 
         let slotIndex = 1;
-        if (match.colIndex === COLS_CORTES.colaboradorCorte1) slotIndex = 1;
-        else if (match.colIndex === COLS_CORTES.colaboradorCorte2) slotIndex = 2;
-        else if (match.colIndex === COLS_CORTES.colaboradorCorte3) slotIndex = 3;
+        if (matchedColName.includes("1") || match.colIndex === COLS_CORTES.colaboradorCorte1) slotIndex = 1;
+        else if (matchedColName.includes("2") || match.colIndex === COLS_CORTES.colaboradorCorte2) slotIndex = 2;
+        else if (matchedColName.includes("3") || match.colIndex === COLS_CORTES.colaboradorCorte3) slotIndex = 3;
 
         const filesStatus = {
             imagenVehiculo: checkFileIdValid(rowObj.imagenVehiculo),

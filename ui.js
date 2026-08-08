@@ -10,6 +10,11 @@ import * as offline from './offline.js';
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
+export function cleanColaboradorName(name) {
+    if (!name || typeof name !== 'string') return name || '';
+    return name.replace(/\s*\[OP-[a-zA-Z0-9_-]+\]/gi, '').trim();
+}
+
 // Constants for optimized image loading
 export const IMG_SIZE_SMALL = 300;   // Cards and thumbnails
 export const IMG_SIZE_MEDIUM = 800;  // Modal details
@@ -2307,7 +2312,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         const colabP = document.createElement('p');
         // Comentario: Se añade una clase para un estilo dedicado y robusto desde style.css
         colabP.className = "colaborador-info";
-        colabP.innerHTML = `Aportado por: <strong>${cutData.colaborador}</strong>`;
+        colabP.innerHTML = `Aportado por: <strong>${cleanColaboradorName(cutData.colaborador)}</strong>`;
         container.appendChild(colabP);
     }
 }
@@ -3188,7 +3193,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
         const colabDiv = document.createElement('div');
         const colabP = document.createElement('p');
         colabP.style.cssText = "font-style: italic; color: var(--text-disabled); margin-top: 10px; text-align: left;";
-        colabP.innerHTML = `Aportado por: <strong>${sec.colaborador}</strong>`;
+        colabP.innerHTML = `Aportado por: <strong>${cleanColaboradorName(sec.colaborador)}</strong>`;
         colabDiv.appendChild(colabP);
         panel.appendChild(colabDiv);
     }

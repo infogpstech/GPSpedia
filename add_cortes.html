@@ -847,7 +847,8 @@
                         colorCableCorte1: pendingOp.formData.colorCableCorte1,
                         imgCorte1: base64Corte
                     },
-                    colaborador: `${state.colaborador} [${opId}]`,
+                    colaborador: state.colaborador,
+                    opId: opId,
                     silent: silentVal
                 }, serviceOverride);
 
