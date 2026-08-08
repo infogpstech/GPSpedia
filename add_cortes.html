@@ -462,6 +462,16 @@
             }
         }
 
+        function isNoRecomendadoValue(val) {
+            if (!val) return false;
+            const clean = val.toLowerCase()
+                             .normalize("NFD")
+                             .replace(/[\u0300-\u036f]/g, "")
+                             .replace(/[-_]/g, ' ')
+                             .trim();
+            return clean === 'no recomendado';
+        }
+
         function toggleNoRecomendado() {
             const tipoCorteSelect = document.getElementById('tipoCorte1');
             const configRelaySelect = document.getElementById('configRelay1');
@@ -470,7 +480,7 @@
             const imgCorteInput = document.getElementById('imgCorte1');
             const uploadLabel = document.querySelector('label[for="imgCorte1"]');
 
-            const isNoRecomendado = tipoCorteSelect && tipoCorteSelect.value === 'No recomendado';
+            const isNoRecomendado = tipoCorteSelect && isNoRecomendadoValue(tipoCorteSelect.value);
 
             if (isNoRecomendado) {
                 if (configRelaySelect) {
@@ -784,11 +794,14 @@
             }
 
             let base64Corte = null;
-            const corteFileInput = document.getElementById('imgCorte1');
-            if (corteFileInput && corteFileInput.files[0]) {
-                base64Corte = await fileToBase64(corteFileInput.files[0]);
-            } else if (state.restoredFiles.imgCorte1) {
-                base64Corte = state.restoredFiles.imgCorte1;
+            const isNoRecomendadoType = isNoRecomendadoValue(document.getElementById('tipoCorte1').value);
+            if (!isNoRecomendadoType) {
+                const corteFileInput = document.getElementById('imgCorte1');
+                if (corteFileInput && corteFileInput.files[0]) {
+                    base64Corte = await fileToBase64(corteFileInput.files[0]);
+                } else if (state.restoredFiles.imgCorte1) {
+                    base64Corte = state.restoredFiles.imgCorte1;
+                }
             }
 
             const pendingOp = {
