@@ -545,3 +545,45 @@ Ubicación:
 Impacto: Medio
 Riesgo: Bajo
 Dependencias: `#terms-modal .terms-body`
+
+
+===================================================================
+AUDITORÍA TÉCNICA - Registro de modelos sin información de corte, prevención de duplicados y recuperación ante interrupciones (08/08/2026)
+===================================================================
+
+ID del hallazgo: H-REG-01
+Título: Registro de nuevos modelos sin información de corte ("No recomendado")
+Descripción:
+  1. En `add_cortes.html`, cuando el usuario selecciona "No recomendado" como tipo de corte, los campos Configuración de relay (`configRelay1`), Descripción del corte (`ubicacionCorte1`), Colores de cable (`colorCableCorte1`) y Fotografía del corte (`imgCorte1`) deben bloquearse (deshabilitarse) y dejar de ser obligatorios.
+  2. Actualmente, `configRelay1` e `imgCorte1` tienen el atributo `required` en el HTML de `add_cortes.html`. Debemos remover el atributo `required` y deshabilitar los elementos de manera dinámica cuando `tipoCorte1 === "No recomendado"`.
+  3. La fotografía del modelo del vehículo (`imagenVehiculo`) debe seguir siendo obligatoria para nuevos vehículos, incluso si el tipo de corte es "No recomendado".
+Ubicación:
+  - Archivo: add_cortes.html (form-stage-2)
+Impacto: Alto
+Riesgo: Bajo
+Dependencias: `tipoCorte1`, `configRelay1`, `ubicacionCorte1`, `colorCableCorte1`, `imgCorte1`, `imagenVehiculo`
+
+ID del hallazgo: H-DUP-02
+Título: Prevención de duplicados mediante validación silenciosa e idempotencia
+Descripción:
+  1. Las interrupciones de red durante la segunda etapa (pérdida de conexión, suspensión, `Fail to fetch`) pueden provocar que un registro ya procesado en el servidor se vuelva a enviar, creando filas duplicadas e imágenes huérfanas en Drive.
+  2. Para solucionar esto, implementaremos una validación silenciosa en el servidor. Al llamar a `addOrUpdateCut`, el servidor buscará si ya existe un registro con el ID de operación único (`opId`) que el cliente genera y asocia a la solicitud.
+  3. Almacenaremos el `opId` de manera transparente en la columna del colaborador concatenando ` [${opId}]` a su nombre (por ejemplo, `Juan Perez [OP-XXXXXXXXXXXX]`).
+  4. Si el servidor detecta que el `opId` ya existe en la hoja de cálculo, no creará una nueva fila, sino que devolverá la información existente (`vehicleId` y `timestamp`), y reparará cualquier archivo que falte o esté dañado (comprobación `checkFileIdValid`).
+Ubicación:
+  - Archivos: Services/write.js, Services/admin.js, add_cortes.html
+Impacto: Crítico
+Riesgo: Medio
+Dependencias: `addOrUpdateCut`, `addSupplementaryInfo`, `colaborador`
+
+ID del hallazgo: H-REC-03
+Título: Persistencia temporal del estado y recuperación automática
+Descripción:
+  1. El cliente debe guardar el estado completo del formulario y archivos en `localStorage` bajo la clave `gpsepedia_pending_operation` cuando inicia el procesamiento de la etapa 2.
+  2. Al iniciarse la aplicación o reanudarse la conectividad (`online` event), el sistema comprobará si hay una operación pendiente de recuperación. Si es así, consultará silenciosamente al servidor mediante una nueva acción `checkOperation` para verificar si la operación se completó en el servidor.
+  3. Si se completó con éxito (o parcialmente), reanudará el flujo desde el paso correspondiente sin requerir acción del usuario y sin duplicar registros. Si faltan archivos, los re-subirá automáticamente usando el base64 guardado.
+Ubicación:
+  - Archivos: add_cortes.html, Services/write.js, Services/admin.js, api-config.js
+Impacto: Alto
+Riesgo: Medio
+Dependencias: `init`, `online`, `localStorage`

@@ -852,3 +852,30 @@ Archivos modificados:
 - **Líneas 1705-1707:** Añadida regla para centrar el texto dentro de `.terms-body` del modal `#terms-modal` (aviso inicial).
 - **Líneas 1709-1721:** Incrementado el tamaño del logo de GPSpedia únicamente dentro del modal de términos y condiciones (`#terms-agreement-modal .gpsepedia-logo`) a 55px (con regla responsiva a 38px en pantallas menores a 600px).
 - **Líneas 1723-1727:** Incrementado el margen superior del logo de TRACKLINK (`#terms-agreement-modal .tracklink-logo`) a 50px para una separación vertical adecuada al final de los términos y condiciones.
+
+
+**CHANGES LOG - 08/08/2026 (REGISTRO SIN CORTES, PREVENCIÓN DE DUPLICADOS Y IDEMPOTENCIA - VERSIÓN 2.1.6)**
+
+**Archivo: add_cortes.html**
+- **Líneas 61-78:** Añadidos estilos CSS en modo claro y oscuro para campos deshabilitados (`:disabled`) y botón label de subida de imágenes de corte (`.upload-label.disabled`).
+- **Líneas 297-322:** Añadidos campos `opId` y `restoredFiles` al objeto central `state`. Implementada la utilidad `getOrGenerateOpId` para generar o recuperar del almacenamiento local el identificador de operación única.
+- **Líneas 325-410:** Implementada la lógica dinámica `toggleNoRecomendado` para deshabilitar los campos `configRelay1`, `ubicacionCorte1`, `colorCableCorte1`, e `imgCorte1` y remover su propiedad `required` al seleccionar "No recomendado".
+- **Líneas 462-475:** Vinculados listeners para borrar el estado de imágenes restauradas al seleccionar archivos manualmente.
+- **Líneas 614-617:** Integrada la llamada de `toggleNoRecomendado` al iniciar el Paso 2 de registro.
+- **Líneas 741-860:** Re-diseñado por completo el manejador `handleStage2Submit` con protección contra clics múltiples, persistencia temporal asíncrona de base64 y formulario en `localStorage`, consulta previa contra duplicados (`checkOperation`), y soporte de restauración inteligente de archivos restaurados.
+- **Líneas 322-385:** Implementada la lógica de reanudación automática `checkAndRecoverPendingOperation` al iniciar la app o restaurar conectividad (`online` event) que valida el estado del servidor y continúa de manera fluida.
+
+**Archivo: api-config.js**
+- **Líneas 18-22:** Declarada la acción `'checkOperation'` mapeada al microservicio de escritura (`WRITE`) en `ACTION_TO_SERVICE_MAP`.
+
+**Archivo: Services/write.js**
+- **Líneas 65-70:** Agregado el caso `'checkOperation'` en el enrutador de entrada `doPost`.
+- **Líneas 95-155:** Implementada la validación idempotente por `opId` y reparación de archivos (papelera o faltantes) en Drive dentro de `handleAddOrUpdateCut`.
+- **Líneas 340-365:** Añadida la comprobación e idempotencia de imágenes de apertura/alimentación dentro de `handleAddSupplementaryInfo`.
+- **Líneas 535-605:** Implementadas las utilidades de asistencia en base de datos `checkFileIdValid`, `findRowByOpId`, y el manejador `handleCheckOperation`.
+
+**Archivo: Services/admin.js**
+- **Líneas 189-195:** Agregado el caso `'checkOperation'` en el enrutador `doPost`.
+- **Líneas 1450-1510:** Implementada la validación idempotente por `opId` y reparación de archivos dentro del servicio de actualización administrativa `handleAddOrUpdateCut`.
+- **Líneas 1665-1690:** Añadido soporte de control de paridad para imágenes dentro de `handleAddSupplementaryInfo`.
+- **Líneas 1795-1865:** Implementadas las utilidades idénticas `checkFileIdValid`, `findRowByOpId`, y el manejador `handleCheckOperation` para compatibilidad completa en registros silenciosos.

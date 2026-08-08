@@ -65,6 +65,9 @@ function doPost(e) {
             case 'getSuggestion': // Acción nueva para sugerencias
                 response = handleGetSuggestion(request.payload);
                 break;
+            case 'checkOperation':
+                response = handleCheckOperation(request.payload);
+                break;
             case 'addOrUpdateCut':
                 response = handleAddOrUpdateCut(request.payload);
                 break;
@@ -93,7 +96,60 @@ function handleAddOrUpdateCut(payload) {
         throw new Error("Datos del corte y del colaborador son requeridos.");
     }
 
+    let opId = null;
+    if (colaborador) {
+        const opMatch = colaborador.match(/\[(OP-[a-zA-Z0-9_-]+)\]/);
+        if (opMatch) {
+            opId = opMatch[1];
+        }
+    }
+
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+
+    if (opId) {
+        const match = findRowByOpId(sheet, opId);
+        if (match) {
+            const rowIndex = match.rowIndex;
+            const rowValues = match.rowValues;
+            const rowObj = mapRowToObject(rowValues, COLS_CORTES);
+
+            let slotIndex = 1;
+            if (match.colIndex === COLS_CORTES.colaboradorCorte1) slotIndex = 1;
+            else if (match.colIndex === COLS_CORTES.colaboradorCorte2) slotIndex = 2;
+            else if (match.colIndex === COLS_CORTES.colaboradorCorte3) slotIndex = 3;
+
+            // 1. Check and repair vehicle image if it was registered but is invalid/corrupted/trashed
+            if (vehicleData && vehicleData.imagenVehiculo) {
+                const currentImg = rowObj.imagenVehiculo;
+                if (!checkFileIdValid(currentImg)) {
+                    const folder = getOrCreateFolder(rowObj.categoria, rowObj.marca, rowObj.modelo, rowObj.anoDesde);
+                    const filename = `${sanitizeForFilename(rowObj.marca)}_${sanitizeForFilename(rowObj.modelo)}_${sanitizeForFilename(rowObj.tipoEncendido)}_${rowObj.anoDesde}_Vehiculo_repaired`;
+                    const newUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder);
+                    sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(newUrl);
+                }
+            }
+
+            // 2. Check and repair cut image if it was registered but is invalid/corrupted/trashed
+            if (cutData && cutData.imgCorte1 && cutData.tipoCorte1 !== 'No recomendado') {
+                const currentCorteImg = rowObj[`imgCorte${slotIndex}`];
+                if (!checkFileIdValid(currentCorteImg)) {
+                    const folder = getOrCreateFolder(rowObj.categoria, rowObj.marca, rowObj.modelo, rowObj.anoDesde);
+                    const filename = `${sanitizeForFilename(rowObj.marca)}_${sanitizeForFilename(rowObj.modelo)}_${sanitizeForFilename(rowObj.tipoEncendido)}_${rowObj.anoDesde}_Corte${slotIndex}_repaired`;
+                    const newCorteImgUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder);
+                    sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(newCorteImgUrl);
+                }
+            }
+
+            SpreadsheetApp.flush();
+            return {
+                status: 'success',
+                message: 'La operación ya fue completada (recuperada y reparada).',
+                vehicleId: rowObj.id,
+                timestamp: rowObj.timestamp
+            };
+        }
+    }
+
     let targetDate = new Date();
     if (payload && payload.silent === true) {
         targetDate.setDate(targetDate.getDate() - 365); // Hace 365 días para evitar "Agregados recientemente"
@@ -287,16 +343,22 @@ function handleAddSupplementaryInfo(payload) {
     if (cableAlimen) sheet.getRange(actualRow, COLS_CORTES.cableAlimen).setValue(cableAlimen);
     if (notaImportante) sheet.getRange(actualRow, COLS_CORTES.notaImportante).setValue(notaImportante);
 
-    // Subir imágenes si se proporcionaron
+    // Subir imágenes si se proporcionaron y no están ya correctamente subidas
     if (imgApertura) {
-        const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Apertura`;
-        const imageUrl = uploadImageToDrive(imgApertura, filename, folder);
-        sheet.getRange(actualRow, COLS_CORTES.imgApertura).setValue(imageUrl);
+        const currentAperturaImg = rowValues[COLS_CORTES.imgApertura - 1];
+        if (!checkFileIdValid(currentAperturaImg)) {
+            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Apertura`;
+            const imageUrl = uploadImageToDrive(imgApertura, filename, folder);
+            sheet.getRange(actualRow, COLS_CORTES.imgApertura).setValue(imageUrl);
+        }
     }
     if (imgCableAlimen) {
-        const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion`;
-        const imageUrl = uploadImageToDrive(imgCableAlimen, filename, folder);
-        sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen).setValue(imageUrl);
+        const currentAlimenImg = rowValues[COLS_CORTES.imgCableAlimen - 1];
+        if (!checkFileIdValid(currentAlimenImg)) {
+            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion`;
+            const imageUrl = uploadImageToDrive(imgCableAlimen, filename, folder);
+            sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen).setValue(imageUrl);
+        }
     }
 
     // Actualizar el timestamp al añadir información o usar el proporcionado si es registro silencioso
@@ -473,4 +535,73 @@ function getExtensionFromMimeType(mimeType) {
         'image/tiff': '.tiff'
     };
     return mimeMap[mimeType] || '.jpg'; // Fallback a .jpg si no se reconoce el tipo
+}
+
+function checkFileIdValid(url) {
+    if (!url || typeof url !== 'string' || url.indexOf('drive.google.com') === -1) {
+        return false;
+    }
+    const match = url.match(/id=([a-zA-Z0-9_-]+)/) || url.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+    if (!match) return false;
+    const id = match[1];
+    try {
+        const file = DriveApp.getFileById(id);
+        if (file.isTrashed()) {
+            return false;
+        }
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+function findRowByOpId(sheet, opId) {
+    if (!opId) return null;
+    const data = sheet.getDataRange().getValues();
+    const tag = `[${opId}]`;
+    for (let r = 1; r < data.length; r++) {
+        const row = data[r];
+        for (let c = 0; c < row.length; c++) {
+            const cell = row[c];
+            if (cell && typeof cell === 'string' && cell.indexOf(tag) !== -1) {
+                return { rowIndex: r + 1, rowValues: row, colIndex: c + 1 };
+            }
+        }
+    }
+    return null;
+}
+
+function handleCheckOperation(payload) {
+    const { opId } = payload;
+    if (!opId) throw new Error("ID de operación requerido.");
+
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    const match = findRowByOpId(sheet, opId);
+    if (match) {
+        const rowObj = mapRowToObject(match.rowValues, COLS_CORTES);
+
+        let slotIndex = 1;
+        if (match.colIndex === COLS_CORTES.colaboradorCorte1) slotIndex = 1;
+        else if (match.colIndex === COLS_CORTES.colaboradorCorte2) slotIndex = 2;
+        else if (match.colIndex === COLS_CORTES.colaboradorCorte3) slotIndex = 3;
+
+        const filesStatus = {
+            imagenVehiculo: checkFileIdValid(rowObj.imagenVehiculo),
+            imgCorte1: checkFileIdValid(rowObj[`imgCorte${slotIndex}`])
+        };
+
+        return {
+            status: 'success',
+            exists: true,
+            vehicleId: rowObj.id,
+            timestamp: rowObj.timestamp,
+            slotIndex: slotIndex,
+            filesStatus: filesStatus,
+            rowData: rowObj
+        };
+    }
+    return {
+        status: 'success',
+        exists: false
+    };
 }
