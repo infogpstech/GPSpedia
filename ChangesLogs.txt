@@ -879,3 +879,12 @@ Archivos modificados:
 - **Líneas 1450-1510:** Implementada la validación idempotente por `opId` y reparación de archivos dentro del servicio de actualización administrativa `handleAddOrUpdateCut`.
 - **Líneas 1665-1690:** Añadido soporte de control de paridad para imágenes dentro de `handleAddSupplementaryInfo`.
 - **Líneas 1795-1865:** Implementadas las utilidades idénticas `checkFileIdValid`, `findRowByOpId`, y el manejador `handleCheckOperation` para compatibilidad completa en registros silenciosos.
+
+**CHANGES LOG - 10/08/2026 (DIAGNÓSTICO PROFUNDO EN REGISTRO DE NUEVOS MODELOS - VERSIÓN 2.1.6)**
+
+**Archivo: add_cortes.html**
+- **Líneas 741-860:** Se implementaron logs de depuración descriptivos tipo "ping-pong" numerados del [1] al [9] para rastrear con exactitud la ejecución del formulario.
+- **Líneas 828-831:** Se encapsuló la llamada a `localStorage.setItem` en un bloque `try-catch` para capturar posibles errores de cuota (`QuotaExceededError`) cuando el tamaño base64 de las imágenes de alta resolución excede los límites locales, permitiendo que la operación de guardado continúe hacia el servidor de forma segura.
+
+**Archivo: Services/write.js**
+- **Líneas 290-297:** Se implementó la lógica de reset y limpieza explícita de la celda del ID del vehículo recién copiada en el backend, heredando la fórmula o usando el fallback `=ROW()-1`, para garantizar un cálculo limpio de la clave de registro de manera consistente con el microservicio de administración.

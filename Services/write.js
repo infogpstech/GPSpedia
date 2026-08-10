@@ -290,6 +290,13 @@ function handleAddOrUpdateCut(payload) {
             Utilities.sleep(500);
             newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
         }
+
+        // Limpiar explícitamente cualquier celda residual de ID que no deba estar compartida
+        sheet.getRange(rowIndex, COLS_CORTES.id).setValue("");
+        sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(sheet.getRange(lastRow, COLS_CORTES.id).getFormula() || `=ROW()-1`);
+        SpreadsheetApp.flush();
+        Utilities.sleep(500);
+        newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
     }
 
     return { status: 'success', message: `Corte agregado exitosamente.`, vehicleId: newId, timestamp: formattedDate };

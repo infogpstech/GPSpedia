@@ -756,11 +756,15 @@
             if (isSubmittingStage2) return;
             isSubmittingStage2 = true;
 
+            console.log("[PING-PONG][1] Inicio de handleStage2Submit: Formulario enviado.");
+
             const btn = e.target.querySelector('button[type="submit"]');
             toggleLoading(true);
             btn.classList.add('btn-loading');
 
             const opId = getOrGenerateOpId();
+            console.log(`[PING-PONG][2] opId obtenido o generado: ${opId}`);
+
             const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
             const serviceOverride = silentVal ? 'ADMIN' : null;
 
@@ -785,12 +789,15 @@
                 }
             });
 
+            console.log("[PING-PONG][3] Procesando imágenes a Base64...");
             let base64Veh = null;
             const vehFileInput = document.getElementById('imagenVehiculo');
             if (vehFileInput && vehFileInput.files[0]) {
                 base64Veh = await fileToBase64(vehFileInput.files[0]);
+                console.log(`[PING-PONG][3a] Imagen del vehículo procesada. Longitud: ${base64Veh.length}`);
             } else if (state.restoredFiles.imagenVehiculo) {
                 base64Veh = state.restoredFiles.imagenVehiculo;
+                console.log("[PING-PONG][3a] Usando imagen de vehículo restaurada.");
             }
 
             let base64Corte = null;
@@ -799,8 +806,10 @@
                 const corteFileInput = document.getElementById('imgCorte1');
                 if (corteFileInput && corteFileInput.files[0]) {
                     base64Corte = await fileToBase64(corteFileInput.files[0]);
+                    console.log(`[PING-PONG][3b] Imagen de corte procesada. Longitud: ${base64Corte.length}`);
                 } else if (state.restoredFiles.imgCorte1) {
                     base64Corte = state.restoredFiles.imgCorte1;
+                    console.log("[PING-PONG][3b] Usando imagen de corte restaurada.");
                 }
             }
 
@@ -825,18 +834,27 @@
                 status: 'processing'
             };
 
-            // Save to localStorage before calling API
-            localStorage.setItem('gpsepedia_pending_operation', JSON.stringify(pendingOp));
+            // Save to localStorage before calling API (safe against QuotaExceededError)
+            console.log("[PING-PONG][4] Intentando persistir operación pendiente en localStorage...");
+            try {
+                localStorage.setItem('gpsepedia_pending_operation', JSON.stringify(pendingOp));
+                console.log("[PING-PONG][4a] Persistencia en localStorage exitosa.");
+            } catch (storageError) {
+                console.warn("[PING-PONG][4b] Advertencia: No se pudo guardar en localStorage por exceder la cuota (QuotaExceededError), continuando el guardado en servidor de todos modos.", storageError);
+            }
 
             try {
                 // First, check if operation already exists on the server to prevent duplicates!
+                console.log("[PING-PONG][5] Comprobando duplicados en el servidor con checkOperation...");
                 const checkRes = await routeAction('checkOperation', { opId }, serviceOverride);
+                console.log(`[PING-PONG][5a] Respuesta de checkOperation recibida. Existe en el servidor: ${checkRes.exists}`);
 
                 let result;
                 if (checkRes.exists) {
-                    console.log("Operation detected on server before submit. Doing recovery/repair flow...");
+                    console.log("[PING-PONG][5b] Operación ya detectada en el servidor. Iniciando recuperación...");
                 }
 
+                console.log("[PING-PONG][6] Enviando datos de registro/actualización de corte al servidor (addOrUpdateCut)...");
                 result = await routeAction('addOrUpdateCut', {
                     vehicleId: state.selectedVehicleId,
                     vehicleData: state.selectedVehicleId ? null : { ...state.vehicleInfo, imagenVehiculo: base64Veh },
@@ -852,8 +870,14 @@
                     silent: silentVal
                 }, serviceOverride);
 
+                console.log("[PING-PONG][7] addOrUpdateCut completado exitosamente con el servidor.", result);
+
                 // Clean up operation upon success
-                localStorage.removeItem('gpsepedia_pending_operation');
+                try {
+                    localStorage.removeItem('gpsepedia_pending_operation');
+                } catch (cleanError) {
+                    console.error("No se pudo limpiar localStorage", cleanError);
+                }
                 state.opId = null; // Clear so next registration gets a new ID
                 state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
 
@@ -861,15 +885,20 @@
                 if (result.timestamp) {
                     state.timestamp = result.timestamp;
                 }
+                console.log(`[PING-PONG][8] Guardado finalizado correctamente. ID Vehículo: ${result.vehicleId}. Redirigiendo a Etapa 3.`);
                 alert("Corte guardado exitosamente.");
                 proceedToStage3(result.vehicleId);
             } catch(error) {
+                console.error("[PING-PONG][ERROR] Ocurrió un error durante la comunicación/procesamiento de guardado:", error);
                 pendingOp.status = 'failed';
                 pendingOp.error = error.message;
-                localStorage.setItem('gpsepedia_pending_operation', JSON.stringify(pendingOp));
+                try {
+                    localStorage.setItem('gpsepedia_pending_operation', JSON.stringify(pendingOp));
+                } catch (err) {}
 
                 alert(`Error al guardar el corte: ${error.message}`);
             } finally {
+                console.log("[PING-PONG][9] Finalización de handleStage2Submit: Limpiando cargadores.");
                 toggleLoading(false);
                 btn.classList.remove('btn-loading');
                 isSubmittingStage2 = false;

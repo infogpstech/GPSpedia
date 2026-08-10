@@ -46,7 +46,7 @@
    - El cambio de hash dispara un evento `popstate` que es procesado por el listener global en `main.js`.
 
 3. **main.js (popstate listener):**
-   - El listener de `popstate` cierra automáticamente cualquier modal de detalle visible (`#modalDetalle.visible`) para soportar la navegación con el botón "Atrás".
+   - El listener de `popstate` closes automáticamente cualquier modal de detalle visible (`#modalDetalle.visible`) para soportar la navegación con el botón "Atrás".
    - Debido a que el hash se actualiza después de abrir el modal, el evento `popstate` resultante cierra el modal inmediatamente después de que se abre.
    - Esto explica por qué el vehículo se registra en "Vistos recientemente" (la función se ejecuta) pero el modal no permanece visible.
 
@@ -153,7 +153,7 @@
 **Hallazgos:**
 1. **Inicialización del Historial:**
    - La aplicación no inicializa `window.history.state` en el arranque, dejando estados `null` iniciales. Esto puede provocar que al retroceder se cierre la aplicación de forma abrupta.
-   - Existen llamadas a `replaceState(null, ...)` en `navigation.js` y `ui.js` que rompen la homogeneidad del historial. Deberán ser reemplazadas por `{ level: "categorias" }`.
+   - Existen llamadas a `replaceState(null, ...)` en `navigation.js` and `ui.js` que rompen la homogeneidad del historial. Deberán ser reemplazadas por `{ level: "categorias" }`.
 
 2. **Gestión de Foco en Retroceso:**
    - Algunos navegadores móviles desenfocan automáticamente los campos de entrada antes de disparar el evento `popstate`. Por ello, comprobar únicamente `document.activeElement === searchInput` no es robusto.
@@ -587,3 +587,27 @@ Ubicación:
 Impacto: Alto
 Riesgo: Medio
 Dependencias: `init`, `online`, `localStorage`
+
+===================================================================
+AUDITORÍA DE DIAGNÓSTICO PROFUNDO EN REGISTRO DE NUEVOS MODELOS (10/08/2026)
+===================================================================
+
+ID del hallazgo: H-DIAG-01
+Título: QuotaExceededError al persistir en localStorage imágenes de alta resolución
+Descripción: En `add_cortes.html`, la función `handleStage2Submit` recopila y convierte las imágenes en base64 de alta resolución para el vehículo y el corte. Inmediatamente antes de guardarlo en `localStorage` con la clave `gpsepedia_pending_operation`, el sistema no realiza una captura segura ni controlada de posibles errores de cupo (`QuotaExceededError`). Al dispararse este error, la ejecución de la función se bloquea totalmente y la petición asíncrona de guardado `addOrUpdateCut` nunca llega a invocarse en el servidor, provocando la falla silenciosa del proceso de guardado para imágenes grandes.
+Ubicación:
+  - Archivo: `add_cortes.html` (Línea 828-831 aprox.)
+Impacto: Crítico
+Riesgo de regresión: Muy bajo.
+Estrategia de corrección:
+  - Envolver el guardado del estado en localStorage en un bloque `try-catch` robusto para capturar el error `QuotaExceededError`. Si ocurre, emitir una advertencia a la consola de diagnóstico y continuar de manera transparente con el guardado en el servidor.
+
+ID del hallazgo: H-DIAG-02
+Título: Disparidad de saneamiento e inconsistencia de ID en registro de vehículos en write.js
+Descripción: Al registrar un vehículo nuevo en `Services/write.js` (a diferencia del microservicio `Services/admin.js`), no se realiza el limpiado explícito y reset de la celda de ID de la fila copiada. Esto puede provocar colisiones de IDs redundantes o nulos, impidiendo que el backend devuelva el `vehicleId` recién calculado de manera consistente.
+Ubicación:
+  - Archivo: `Services/write.js` (Líneas 270-280 aprox.)
+Impacto: Alto
+Riesgo de regresión: Bajo
+Estrategia de corrección:
+  - Copiar la lógica de control del ID implementada con éxito en `Services/admin.js` para limpiar y volver a calcular la celda de ID usando la fórmula de la fila anterior o un fallback `=ROW()-1`.
