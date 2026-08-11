@@ -620,9 +620,16 @@
             container.innerHTML = '';
             if (input.value.length < 3) return;
             try {
-                const { suggestion } = await routeAction('getSuggestion', { term: input.value, field });
+                const payload = { term: input.value, field };
+                if (field === 'modelo') {
+                    const brandInput = document.getElementById('marca');
+                    if (brandInput && brandInput.value.trim()) {
+                        payload.brand = brandInput.value.trim();
+                    }
+                }
+                const { suggestion } = await routeAction('getSuggestion', payload);
                 if (suggestion) {
-                    container.innerHTML = `Quizás quisiste decir: <a onclick="applySuggestion('${field}', '${suggestion}')">${suggestion}</a>`;
+                    container.innerHTML = `Quizás quisiste decir: <a onclick="applySuggestion('${field}', '${suggestion}')" style="cursor:pointer; color:#007bff; text-decoration:underline;">${suggestion}</a>`;
                 }
             } catch (e) { console.error(e); }
         }
@@ -631,6 +638,8 @@
             document.getElementById(field).value = suggestion;
             document.getElementById(`${field}-suggestion`).innerHTML = '';
         }
+
+        window.applySuggestion = applySuggestion;
 
         // --- STAGE 1.5: DISPLAY MATCHES ---
         function getImageUrl(url, size = 1000) {
