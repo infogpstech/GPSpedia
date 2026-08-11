@@ -61,6 +61,23 @@
         label { margin-bottom: 6px; font-weight: 500; font-size: 0.8em; color: var(--secondary-color); }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; box-sizing: border-box; font-size: 0.95em; transition: border-color 0.2s, box-shadow 0.2s, background-color var(--transition-speed), color var(--transition-speed); background-color: var(--card-bg); color: var(--text-color); }
         input:focus, select:focus, textarea:focus { border-color: #80bdff; box-shadow: 0 0 0 3px rgba(0,123,255,0.25); outline: none; }
+        input:disabled, select:disabled, textarea:disabled {
+            background-color: #e9ecef !important;
+            color: #6c757d !important;
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+        body.dark-mode input:disabled, body.dark-mode select:disabled, body.dark-mode textarea:disabled {
+            background-color: #2c2c2c !important;
+            color: #888 !important;
+            opacity: 0.6;
+        }
+        .upload-label.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            pointer-events: none;
+            background-color: #6c757d !important;
+        }
         .btn-container { display: flex; justify-content: flex-end; gap: 10px; margin-top: 25px; }
         .btn { padding: 12px 22px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
         .btn-primary { background-color: #007bff; color: white; }
@@ -277,10 +294,118 @@
             matches: [],
             selectedVehicleId: null,
             colaborador: '',
-            timestamp: null
+            timestamp: null,
+            opId: null,
+            restoredFiles: {
+                imagenVehiculo: null,
+                imgCorte1: null
+            }
         };
 
+        function getOrGenerateOpId() {
+            if (state.opId) return state.opId;
+            const pending = localStorage.getItem('gpsepedia_pending_operation');
+            if (pending) {
+                try {
+                    const parsed = JSON.parse(pending);
+                    if (parsed && parsed.id) {
+                        state.opId = parsed.id;
+                        return state.opId;
+                    }
+                } catch (e) {
+                    console.error("Error parsing pending op for opId", e);
+                }
+            }
+            state.opId = 'OP-' + Date.now() + '-' + Math.random().toString(36).substring(2, 9).toUpperCase();
+            return state.opId;
+        }
+
         const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+
+        async function checkAndRecoverPendingOperation() {
+            const pendingStr = localStorage.getItem('gpsepedia_pending_operation');
+            if (!pendingStr) return;
+
+            let pendingOp;
+            try {
+                pendingOp = JSON.parse(pendingStr);
+            } catch (e) {
+                console.error("Error parsing pending operation", e);
+                localStorage.removeItem('gpsepedia_pending_operation');
+                return;
+            }
+
+            if (!pendingOp || (pendingOp.status !== 'processing' && pendingOp.status !== 'failed')) {
+                return;
+            }
+
+            if (!navigator.onLine) {
+                console.log("Device is offline. Will attempt recovery when connection is restored.");
+                return;
+            }
+
+            console.log("Found interrupted operation. Attempting automatic silent recovery...", pendingOp);
+            toggleLoading(true);
+
+            const silentVal = pendingOp.formData.silentRegister || false;
+            const serviceOverride = silentVal ? 'ADMIN' : null;
+
+            try {
+                const checkRes = await routeAction('checkOperation', { opId: pendingOp.id }, serviceOverride);
+
+                if (checkRes.exists) {
+                    console.log("Operation already completed on the server!", checkRes);
+
+                    localStorage.removeItem('gpsepedia_pending_operation');
+                    state.selectedVehicleId = checkRes.vehicleId;
+                    state.timestamp = checkRes.timestamp;
+
+                    alert("Hemos detectado y recuperado exitosamente una operación que se interrumpió.");
+                    proceedToStage3(checkRes.vehicleId);
+                } else {
+                    console.log("Operation was not executed on the server. Restoring form data for user...", pendingOp);
+
+                    state.selectedVehicleId = pendingOp.vehicleId;
+                    state.vehicleInfo = pendingOp.vehicleInfo;
+
+                    const form2 = document.getElementById('form-stage-2');
+                    if (form2) {
+                        document.getElementById('tipoCorte1').value = pendingOp.formData.tipoCorte1 || '';
+                        document.getElementById('configRelay1').value = pendingOp.formData.configRelay1 || '';
+                        document.getElementById('ubicacionCorte1').value = pendingOp.formData.ubicacionCorte1 || '';
+                        document.getElementById('colorCableCorte1').value = pendingOp.formData.colorCableCorte1 || '';
+                        if (document.getElementById('silentRegister')) {
+                            document.getElementById('silentRegister').checked = pendingOp.formData.silentRegister || false;
+                        }
+                        if (document.getElementById('testigoMotor')) {
+                            document.getElementById('testigoMotor').checked = pendingOp.formData.testigoMotor || false;
+                        }
+
+                        if (pendingOp.files) {
+                            if (pendingOp.files.imagenVehiculo) {
+                                state.restoredFiles.imagenVehiculo = pendingOp.files.imagenVehiculo;
+                                const previewVeh = document.getElementById('imagenVehiculo_preview');
+                                if (previewVeh) previewVeh.src = pendingOp.files.imagenVehiculo;
+                            }
+                            if (pendingOp.files.imgCorte1) {
+                                state.restoredFiles.imgCorte1 = pendingOp.files.imgCorte1;
+                                const previewCorte = document.getElementById('imgCorte1_preview');
+                                if (previewCorte) previewCorte.src = pendingOp.files.imgCorte1;
+                            }
+                        }
+
+                        toggleNoRecomendado();
+                        showPhase(2);
+                    }
+                }
+            } catch (error) {
+                console.error("Automatic recovery check failed", error);
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        window.addEventListener('online', checkAndRecoverPendingOperation);
 
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', init);
@@ -319,6 +444,7 @@
 
             await populateAllDropdowns();
             setupEventListeners();
+            await checkAndRecoverPendingOperation();
         }
 
         async function populateAllDropdowns() {
@@ -336,6 +462,77 @@
             }
         }
 
+        function isNoRecomendadoValue(val) {
+            if (!val) return false;
+            const clean = val.toLowerCase()
+                             .normalize("NFD")
+                             .replace(/[\u0300-\u036f]/g, "")
+                             .replace(/[-_]/g, ' ')
+                             .trim();
+            return clean === 'no recomendado';
+        }
+
+        function toggleNoRecomendado() {
+            const tipoCorteSelect = document.getElementById('tipoCorte1');
+            const configRelaySelect = document.getElementById('configRelay1');
+            const ubicacionCorteTextarea = document.getElementById('ubicacionCorte1');
+            const colorCableCorteInput = document.getElementById('colorCableCorte1');
+            const imgCorteInput = document.getElementById('imgCorte1');
+            const uploadLabel = document.querySelector('label[for="imgCorte1"]');
+
+            const isNoRecomendado = tipoCorteSelect && isNoRecomendadoValue(tipoCorteSelect.value);
+
+            if (isNoRecomendado) {
+                if (configRelaySelect) {
+                    configRelaySelect.disabled = true;
+                    configRelaySelect.required = false;
+                    configRelaySelect.value = '';
+                }
+                if (ubicacionCorteTextarea) {
+                    ubicacionCorteTextarea.disabled = true;
+                    ubicacionCorteTextarea.required = false;
+                    ubicacionCorteTextarea.value = '';
+                }
+                if (colorCableCorteInput) {
+                    colorCableCorteInput.disabled = true;
+                    colorCableCorteInput.required = false;
+                    colorCableCorteInput.value = '';
+                }
+                if (imgCorteInput) {
+                    imgCorteInput.disabled = true;
+                    imgCorteInput.required = false;
+                    imgCorteInput.value = '';
+                }
+                const preview = document.getElementById('imgCorte1_preview');
+                if (preview) {
+                    preview.src = '';
+                }
+                if (uploadLabel) {
+                    uploadLabel.classList.add('disabled');
+                }
+            } else {
+                if (configRelaySelect) {
+                    configRelaySelect.disabled = false;
+                    configRelaySelect.required = true;
+                }
+                if (ubicacionCorteTextarea) {
+                    ubicacionCorteTextarea.disabled = false;
+                    ubicacionCorteTextarea.required = false;
+                }
+                if (colorCableCorteInput) {
+                    colorCableCorteInput.disabled = false;
+                    colorCableCorteInput.required = false;
+                }
+                if (imgCorteInput) {
+                    imgCorteInput.disabled = false;
+                    imgCorteInput.required = true;
+                }
+                if (uploadLabel) {
+                    uploadLabel.classList.remove('disabled');
+                }
+            }
+        }
+
         function setupEventListeners() {
             // Form submissions
             document.getElementById('form-stage-1').addEventListener('submit', handleStage1Submit);
@@ -347,11 +544,30 @@
             document.getElementById('marca').addEventListener('blur', (e) => handleSuggestion(e.target, 'marca'));
             document.getElementById('modelo').addEventListener('blur', (e) => handleSuggestion(e.target, 'modelo'));
 
+            // "No recomendado" behavior trigger
+            const tipoCorteSelect = document.getElementById('tipoCorte1');
+            if (tipoCorteSelect) {
+                tipoCorteSelect.addEventListener('change', toggleNoRecomendado);
+            }
+
             // Image previews
             setupImagePreview('imagenVehiculo', 'imagenVehiculo_preview');
             setupImagePreview('imgCorte1', 'imgCorte1_preview');
             setupImagePreview('imgApertura', 'imgApertura_preview');
             setupImagePreview('imgCableAlimen', 'imgCableAlimen_preview');
+
+            const imVeh = document.getElementById('imagenVehiculo');
+            if (imVeh) {
+                imVeh.addEventListener('change', () => {
+                    state.restoredFiles.imagenVehiculo = null;
+                });
+            }
+            const imCor = document.getElementById('imgCorte1');
+            if (imCor) {
+                imCor.addEventListener('change', () => {
+                    state.restoredFiles.imgCorte1 = null;
+                });
+            }
 
             // Accordion
             document.querySelectorAll('.accordion-header').forEach(header => {
@@ -529,14 +745,28 @@
                 newVehicleFields.style.display = 'block';
                 newVehicleImageInput.required = true;
             }
+            toggleNoRecomendado();
             showPhase(2);
         }
 
+        let isSubmittingStage2 = false;
+
         async function handleStage2Submit(e) {
             e.preventDefault();
+            if (isSubmittingStage2) return;
+            isSubmittingStage2 = true;
+
+            console.log("[PING-PONG][1] Inicio de handleStage2Submit: Formulario enviado.");
+
             const btn = e.target.querySelector('button[type="submit"]');
             toggleLoading(true);
             btn.classList.add('btn-loading');
+
+            const opId = getOrGenerateOpId();
+            console.log(`[PING-PONG][2] opId obtenido o generado: ${opId}`);
+
+            const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
+            const serviceOverride = silentVal ? 'ADMIN' : null;
 
             // Apply checkEngine motor warning HTML code insertion right before submitting to prevent editing/accidental deletion
             const checkbox = document.getElementById('testigoMotor');
@@ -559,41 +789,119 @@
                 }
             });
 
-            const cutData = {
-                tipoCorte1: document.getElementById('tipoCorte1').value,
-                configRelay1: document.getElementById('configRelay1').value,
-                ubicacionCorte1: document.getElementById('ubicacionCorte1').value,
-                colorCableCorte1: document.getElementById('colorCableCorte1').value,
-                imgCorte1: await fileToBase64(document.getElementById('imgCorte1').files[0]),
+            console.log("[PING-PONG][3] Procesando imágenes a Base64...");
+            let base64Veh = null;
+            const vehFileInput = document.getElementById('imagenVehiculo');
+            if (vehFileInput && vehFileInput.files[0]) {
+                base64Veh = await fileToBase64(vehFileInput.files[0]);
+                console.log(`[PING-PONG][3a] Imagen del vehículo procesada. Longitud: ${base64Veh.length}`);
+            } else if (state.restoredFiles.imagenVehiculo) {
+                base64Veh = state.restoredFiles.imagenVehiculo;
+                console.log("[PING-PONG][3a] Usando imagen de vehículo restaurada.");
+            }
+
+            let base64Corte = null;
+            const isNoRecomendadoType = isNoRecomendadoValue(document.getElementById('tipoCorte1').value);
+            if (!isNoRecomendadoType) {
+                const corteFileInput = document.getElementById('imgCorte1');
+                if (corteFileInput && corteFileInput.files[0]) {
+                    base64Corte = await fileToBase64(corteFileInput.files[0]);
+                    console.log(`[PING-PONG][3b] Imagen de corte procesada. Longitud: ${base64Corte.length}`);
+                } else if (state.restoredFiles.imgCorte1) {
+                    base64Corte = state.restoredFiles.imgCorte1;
+                    console.log("[PING-PONG][3b] Usando imagen de corte restaurada.");
+                }
+            }
+
+            const pendingOp = {
+                id: opId,
+                stage: 2,
+                vehicleId: state.selectedVehicleId,
+                colaborador: state.colaborador,
+                vehicleInfo: { ...state.vehicleInfo },
+                formData: {
+                    tipoCorte1: document.getElementById('tipoCorte1').value,
+                    configRelay1: document.getElementById('configRelay1').value,
+                    ubicacionCorte1: document.getElementById('ubicacionCorte1').value,
+                    colorCableCorte1: document.getElementById('colorCableCorte1').value,
+                    silentRegister: silentVal,
+                    testigoMotor: checkbox ? checkbox.checked : false,
+                },
+                files: {
+                    imagenVehiculo: base64Veh,
+                    imgCorte1: base64Corte,
+                },
+                status: 'processing'
             };
 
-            const vehicleData = state.selectedVehicleId ? null : {
-                ...state.vehicleInfo,
-                imagenVehiculo: await fileToBase64(document.getElementById('imagenVehiculo').files[0]),
-            };
-
-            const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
-            const serviceOverride = silentVal ? 'ADMIN' : null;
+            // Save to localStorage before calling API (safe against QuotaExceededError)
+            console.log("[PING-PONG][4] Intentando persistir operación pendiente en localStorage...");
+            try {
+                localStorage.setItem('gpsepedia_pending_operation', JSON.stringify(pendingOp));
+                console.log("[PING-PONG][4a] Persistencia en localStorage exitosa.");
+            } catch (storageError) {
+                console.warn("[PING-PONG][4b] Advertencia: No se pudo guardar en localStorage por exceder la cuota (QuotaExceededError), continuando el guardado en servidor de todos modos.", storageError);
+            }
 
             try {
-                const result = await routeAction('addOrUpdateCut', {
+                // First, check if operation already exists on the server to prevent duplicates!
+                console.log("[PING-PONG][5] Comprobando duplicados en el servidor con checkOperation...");
+                const checkRes = await routeAction('checkOperation', { opId }, serviceOverride);
+                console.log(`[PING-PONG][5a] Respuesta de checkOperation recibida. Existe en el servidor: ${checkRes.exists}`);
+
+                let result;
+                if (checkRes.exists) {
+                    console.log("[PING-PONG][5b] Operación ya detectada en el servidor. Iniciando recuperación...");
+                }
+
+                console.log("[PING-PONG][6] Enviando datos de registro/actualización de corte al servidor (addOrUpdateCut)...");
+                result = await routeAction('addOrUpdateCut', {
                     vehicleId: state.selectedVehicleId,
-                    vehicleData,
-                    cutData,
+                    vehicleData: state.selectedVehicleId ? null : { ...state.vehicleInfo, imagenVehiculo: base64Veh },
+                    cutData: {
+                        tipoCorte1: pendingOp.formData.tipoCorte1,
+                        configRelay1: pendingOp.formData.configRelay1,
+                        ubicacionCorte1: pendingOp.formData.ubicacionCorte1,
+                        colorCableCorte1: pendingOp.formData.colorCableCorte1,
+                        imgCorte1: base64Corte
+                    },
                     colaborador: state.colaborador,
+                    opId: opId,
                     silent: silentVal
                 }, serviceOverride);
+
+                console.log("[PING-PONG][7] addOrUpdateCut completado exitosamente con el servidor.", result);
+
+                // Clean up operation upon success
+                try {
+                    localStorage.removeItem('gpsepedia_pending_operation');
+                } catch (cleanError) {
+                    console.error("No se pudo limpiar localStorage", cleanError);
+                }
+                state.opId = null; // Clear so next registration gets a new ID
+                state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
+
                 state.selectedVehicleId = result.vehicleId;
                 if (result.timestamp) {
                     state.timestamp = result.timestamp;
                 }
+                console.log(`[PING-PONG][8] Guardado finalizado correctamente. ID Vehículo: ${result.vehicleId}. Redirigiendo a Etapa 3.`);
                 alert("Corte guardado exitosamente.");
                 proceedToStage3(result.vehicleId);
             } catch(error) {
+                console.error("[PING-PONG][ERROR] Ocurrió un error durante la comunicación/procesamiento de guardado:", error);
+                pendingOp.status = 'failed';
+                pendingOp.error = error.message;
+                try {
+                    localStorage.setItem('gpsepedia_pending_operation', JSON.stringify(pendingOp));
+                } catch (err) {}
+
                 alert(`Error al guardar el corte: ${error.message}`);
             } finally {
+                console.log("[PING-PONG][9] Finalización de handleStage2Submit: Limpiando cargadores.");
                 toggleLoading(false);
                 btn.classList.remove('btn-loading');
+                isSubmittingStage2 = false;
             }
         }
 

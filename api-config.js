@@ -8,17 +8,17 @@ export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
     AUTH:     "https://script.google.com/macros/s/AKfycbwATstMSSnuYZMeGEjI7Q5cznO6kA8rqLo7zNZLmu_f29qwcyt4Fucn5VIBdB9tMoRg/exec",
     CATALOG:  "https://script.google.com/macros/s/AKfycbwDLzfOoVGypw51bG_ISSsvETtDGdpOBv_7OkX82GgMh13cVnVoHRyEqW_TU6r7m7-2Kg/exec",
-    WRITE:    "https://script.google.com/macros/s/AKfycbxuTrzO1_Lfd1H_QAL-QfF7r5SqBWaS7WxWn7r7SZkJ4olU8gK3bLZ9vdSt5Cga9H3S/exec",
-    USERS:    "https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec",
+    WRITE:    "https://script.google.com/macros/s/AKfycbzhvsu8GCFFJUFnnXxbUQPZ13WaBW1uwSpDtjlC1CdMyAzwQwLgW-YYQcBwIXRVlC-b/exec",
+    USERS:    "https://script.google.com/macros/s/AKfycbxpDSLvKqb2taxKS0PbGqhTPxgO01lJyGsDn1Tgpe4zxZii8QWnvlvj5Xltrn6Vmkf6/exec",
     FEEDBACK: "https://script.google.com/macros/s/AKfycbz3NzT3FPn40VDbc7irIF632xHoeopM0GdnCIim4APAYTzb9KYDjZWDXHHrtzq4atZ70Q/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec",
-    ADMIN: "https://script.google.com/macros/s/AKfycbxmGmEIALoLCsvQLktLkc4wKBaTOCRK7Q67ES52ZA_GxQMuCuPhpHyN31FUXKBH5CNP/exec"
+    ADMIN: "https://script.google.com/macros/s/AKfycbznfmGtu52_BdOb_hrLjKFbXWFSDeYWiSWwDmUThKjlHx3eaWotJA7z2uRm5-Gg7SFa/exec"
 };
 
 export const ACTION_TO_SERVICE_MAP = {
     'login': 'AUTH', 'validateSession': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG',
-    'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'addCorte': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE',
+    'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'addCorte': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE',
     'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'USERS', 'deleteUser': 'USERS', 'changePassword': 'USERS', 'updateProfile': 'USERS',
     'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'suggestYear': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK',

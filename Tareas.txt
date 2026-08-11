@@ -409,3 +409,13 @@ Cualquier cambio en estas zonas invalidará el commit.
    - **DESCRIPCIÓN DETALLADA:**
      - **Limpieza:** Se eliminaron todos los archivos temporales de respaldo (*.bak) y utilidades creadas.
      - **Versión:** Incrementada la versión de la plataforma en index.html a v2.1.5 para el despliegue de consolidación.
+
+
+16. **TÍTULO: Registro sin Cortes, Prevención de Duplicados e Idempotencia con Recuperación (v2.1.6)**
+   - **ESTADO:** COMPLETADO (Fase 1)
+   - **ALCANCE:** add_cortes.html, api-config.js, Services/write.js, Services/admin.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Registro sin Cortes:** Modificado el formulario de registro de nuevos cortes para permitir registrar un nuevo modelo cuando no exista información técnica de corte, siempre que el usuario seleccione "No recomendado" como tipo de corte.
+     - **Prevención de Duplicados:** Añadido un opId único y validación silenciosa en el backend para evitar duplicar registros ante pérdidas de conexión (por ej. `Fail to fetch`).
+     - **Idempotencia y Reparación:** Implementado un sistema de auto-reparación en el servidor que recupera el registro existente y valida síncronamente el estado de los archivos en Drive, reparándolos si están corruptos, eliminados o en la papelera sin duplicar la fila.
+     - **Persistencia y Reanudación:** Diseñado un mecanismo de persistencia temporal del formulario y archivos base64 en localStorage que recupera y reanuda silenciosamente el flujo al restaurarse la conexión (evento `online`) o recargarse la app.
