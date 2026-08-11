@@ -611,3 +611,29 @@ Impacto: Alto
 Riesgo de regresión: Bajo
 Estrategia de corrección:
   - Copiar la lógica de control del ID implementada con éxito en `Services/admin.js` para limpiar y volver a calcular la celda de ID usando la fórmula de la fila anterior o un fallback `=ROW()-1`.
+
+===================================================================
+AUDITORÍA TÉCNICA - Normalización de Marcas, Modelos y Versiones (22/02/2026)
+===================================================================
+
+ID del hallazgo: H-NORM-01
+Título: Sensibilidad a mayúsculas/minúsculas y formatos duplicados en catálogo
+Descripción: Al registrar un vehículo o corte en `Services/write.js` y `Services/admin.js`, las marcas, modelos y versiones de equipamiento se registran tal como las escribe el usuario. Esto provoca registros duplicados (como "RAM" y "Ram", o "Mercedes-Benz" y "mercedes benz").
+Ubicación:
+  - Archivo: `Services/write.js`
+  - Archivo: `Services/admin.js`
+Impacto: Crítico (Genera inconsistencias de catálogo y fragmentación de datos)
+Riesgo de regresión: Bajo
+Estrategia de corrección:
+  - Implementar lógica unificada de generación de claves de comparación (`toComparisonKey`) y normalización para almacenamiento (`normalizeForStorage`).
+  - Buscar y reutilizar el formato existente en el spreadsheet si se detecta una entidad equivalente para marcas, modelos y versiones de equipamiento.
+
+ID del hallazgo: H-NORM-02
+Título: Falta de contexto de marca en sugerencias de modelos y tolerancia aproximada laxa
+Descripción:
+  1. En `Services/write.js` and `Services/catalog.js`, `handleGetSuggestion` busca sugerencias en toda la columna de modelos sin considerar la marca seleccionada, lo que puede resultar en sugerencias cruzadas irrelevantes.
+  2. Al escribir un modelo similar a uno existente con diferencias menores de separación, no se utiliza una equivalencia estricta por claves, lo que puede dar falsos negativos.
+Estrategia de corrección:
+  - Modificar `handleGetSuggestion` en el backend para recibir opcionalmente la marca y priorizar/filtrar las sugerencias de modelos de esa marca.
+  - Implementar umbral adaptativo para Levenshtein y equivalencia exacta de claves de comparación antes de sugerir.
+  - Modificar `handleSuggestion` en `add_cortes.html` para enviar la marca seleccionada al solicitar sugerencias de modelos.

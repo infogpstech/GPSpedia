@@ -208,6 +208,11 @@ function handleAddOrUpdateCut(payload) {
     } else { // --- Lógica para vehículo NUEVO (CORREGIDO PARA PRESERVAR FÓRMULA DE ID) ---
         if (!vehicleData) throw new Error("Los datos del vehículo son requeridos para un nuevo registro.");
 
+        var entities = getExistingEntities(sheet);
+        vehicleData.marca = resolveAndNormalizeEntity(vehicleData.marca, entities.brands, false);
+        vehicleData.modelo = resolveAndNormalizeEntity(vehicleData.modelo, entities.models, false);
+        vehicleData.versionesAplicables = resolveAndNormalizeEntity(vehicleData.versionesAplicables, entities.versions, true);
+
         const lastRow = sheet.getLastRow();
         rowIndex = lastRow + 1;
         const lastColumn = sheet.getLastColumn();
@@ -327,9 +332,15 @@ function handleCheckVehicle(payload) {
         const sheetAnoDesde = row[COLS_CORTES.anoDesde - 1];
         const sheetAnoHasta = row[COLS_CORTES.anoHasta - 1];
 
-        // Búsqueda flexible (parcial) para marca y modelo
-        const marcaMatch = sheetMarca.includes(paramMarca) || paramMarca.includes(sheetMarca);
-        const modeloMatch = sheetModelo.includes(paramModelo) || paramModelo.includes(sheetModelo) || sheetVersiones.includes(paramModelo);
+        // Búsqueda flexible (parcial) basada en claves de comparación normalizadas
+        const compSheetMarca = toComparisonKey(sheetMarca, false);
+        const compParamMarca = toComparisonKey(paramMarca, false);
+        const marcaMatch = compSheetMarca.indexOf(compParamMarca) !== -1 || compParamMarca.indexOf(compSheetMarca) !== -1;
+
+        const compSheetModelo = toComparisonKey(sheetModelo, false);
+        const compParamModelo = toComparisonKey(paramModelo, false);
+        const compSheetVersiones = toComparisonKey(sheetVersiones, true);
+        const modeloMatch = compSheetModelo.indexOf(compParamModelo) !== -1 || compParamModelo.indexOf(compSheetModelo) !== -1 || compSheetVersiones.indexOf(compParamModelo) !== -1;
 
         // Búsqueda exacta para año y tipo de encendido
         const anioMatch = isYearInRange(paramAnio, sheetAnoDesde, sheetAnoHasta);
@@ -392,7 +403,7 @@ function handleAddSupplementaryInfo(payload) {
 }
 
 function handleGetSuggestion(payload) {
-    const { term, field } = payload;
+    const { term, field, brand } = payload;
     if (!term || !field) {
         throw new Error("El término y el campo son requeridos para obtener una sugerencia.");
     }
@@ -412,27 +423,59 @@ function handleGetSuggestion(payload) {
     const data = sheet.getDataRange().getValues();
     data.shift();
 
-    const uniqueValues = Array.from(new Set(data.map(row => row[columnIndex]).filter(String)));
+    var uniqueValues = [];
+    if (field.toLowerCase() === 'modelo' && brand) {
+        var compBrand = toComparisonKey(brand, false);
+        var rowsForBrand = data.filter(function(row) {
+            var rowBrand = row[COLS_CORTES.marca - 1];
+            return rowBrand && toComparisonKey(rowBrand, false) === compBrand;
+        });
 
-    let bestMatch = null;
-    let minDistance = Infinity;
-    const searchTerm = term.toLowerCase();
+        uniqueValues = Array.from(new Set(rowsForBrand.map(function(row) { return row[columnIndex]; }).filter(Boolean)));
 
-    for (const value of uniqueValues) {
-        const valueLower = value.toLowerCase();
-        if (valueLower === searchTerm) {
-            return { status: 'success', suggestion: null }; // Coincidencia exacta
+        if (uniqueValues.length === 0) {
+            uniqueValues = Array.from(new Set(data.map(function(row) { return row[columnIndex]; }).filter(Boolean)));
         }
+    } else {
+        uniqueValues = Array.from(new Set(data.map(function(row) { return row[columnIndex]; }).filter(Boolean)));
+    }
 
-        const distance = levenshteinDistance(searchTerm, valueLower);
-        if (distance < minDistance) {
-            minDistance = distance;
-            bestMatch = value;
+    const searchTerm = term.trim();
+    const searchKey = toComparisonKey(searchTerm, false);
+
+    // 1. Buscar coincidencia exacta por clave de comparación
+    for (var i = 0; i < uniqueValues.length; i++) {
+        var val = uniqueValues[i];
+        if (toComparisonKey(val, false) === searchKey) {
+            if (val !== searchTerm) {
+                return { status: 'success', suggestion: val };
+            } else {
+                return { status: 'success', suggestion: null };
+            }
         }
     }
 
-    // Umbral: solo sugerir si la distancia es <= 3 y no es un substring obvio
-    if (minDistance <= 3 && bestMatch.toLowerCase().indexOf(searchTerm) === -1) {
+    // 2. Buscar coincidencia aproximada usando Levenshtein
+    let bestMatch = null;
+    let minDistance = Infinity;
+    const searchTermLower = searchTerm.toLowerCase();
+
+    for (var i = 0; i < uniqueValues.length; i++) {
+        var val = uniqueValues[i];
+        var valLower = val.toLowerCase();
+        if (valLower === searchTermLower) {
+            return { status: 'success', suggestion: null };
+        }
+
+        const distance = levenshteinDistance(searchTermLower, valLower);
+        if (distance < minDistance) {
+            minDistance = distance;
+            bestMatch = val;
+        }
+    }
+
+    var maxDistance = searchTerm.length <= 3 ? 1 : 3;
+    if (minDistance <= maxDistance && bestMatch.toLowerCase().indexOf(searchTermLower) === -1) {
         return { status: 'success', suggestion: bestMatch };
     }
 
@@ -671,4 +714,80 @@ function handleCheckOperation(payload) {
         status: 'success',
         exists: false
     };
+}
+
+// ============================================================================
+// LÓGICA DE NORMALIZACIÓN Y EQUIVALENCIA
+// ============================================================================
+
+function toComparisonKey(str, isVersion) {
+  if (!str) return "";
+  var val = String(str).toLowerCase().trim();
+  val = val.replace(/[\/\\.,_\-]/g, ' ');
+  var words = val.split(/\s+/).filter(Boolean);
+  if (isVersion) {
+    words.sort();
+  }
+  return words.join(' ');
+}
+
+function normalizeForStorage(text) {
+  if (!text) return "";
+  var tokens = String(text).split(/([a-zA-Z0-9]+)/);
+  var normalizedTokens = [];
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i];
+    if (/^[a-zA-Z0-9]+$/.test(token)) {
+      if (token.length <= 3) {
+        normalizedTokens.push(token.toUpperCase());
+      } else {
+        normalizedTokens.push(token.charAt(0).toUpperCase() + token.substring(1).toLowerCase());
+      }
+    } else {
+      normalizedTokens.push(token);
+    }
+  }
+  return normalizedTokens.join('');
+}
+
+function resolveAndNormalizeEntity(value, existingList, isVersion) {
+  if (!value) return "";
+  var valTrimmed = String(value).trim();
+  var keyVal = toComparisonKey(valTrimmed, isVersion);
+
+  for (var i = 0; i < existingList.length; i++) {
+    var item = existingList[i];
+    if (item) {
+      var keyItem = toComparisonKey(item, isVersion);
+      if (keyVal === keyItem) {
+        return item;
+      }
+    }
+  }
+
+  return normalizeForStorage(valTrimmed);
+}
+
+function getExistingEntities(sheet) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return { brands: [], models: [], versions: [] };
+  }
+  var data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  var brands = [];
+  var models = [];
+  var versions = [];
+
+  for (var i = 0; i < data.length; i++) {
+    var row = data[i];
+    var brandVal = String(row[COLS_CORTES.marca - 1] || "").trim();
+    var modelVal = String(row[COLS_CORTES.modelo - 1] || "").trim();
+    var versionVal = String(row[COLS_CORTES.versionesAplicables - 1] || "").trim();
+
+    if (brandVal && brands.indexOf(brandVal) === -1) brands.push(brandVal);
+    if (modelVal && models.indexOf(modelVal) === -1) models.push(modelVal);
+    if (versionVal && versions.indexOf(versionVal) === -1) versions.push(versionVal);
+  }
+
+  return { brands: brands, models: models, versions: versions };
 }

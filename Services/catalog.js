@@ -464,8 +464,19 @@ function handleGetNavigationData() {
 // ============================================================================
 // MANEJADOR DE SUGERENCIAS (PARA "QUIZÁS QUISISTE DECIR...")
 // ============================================================================
+function toComparisonKey(str, isVersion) {
+  if (!str) return "";
+  var val = String(str).toLowerCase().trim();
+  val = val.replace(/[\/\\.,_\-]/g, ' ');
+  var words = val.split(/\s+/).filter(Boolean);
+  if (isVersion) {
+    words.sort();
+  }
+  return words.join(' ');
+}
+
 function handleGetSuggestion(payload) {
-    const { term, field } = payload;
+    const { term, field, brand } = payload;
     if (!term || !field) {
         throw new Error("El término y el campo son requeridos para obtener una sugerencia.");
     }
@@ -485,30 +496,59 @@ function handleGetSuggestion(payload) {
     const data = sheet.getDataRange().getValues();
     data.shift();
 
-    const uniqueValues = Array.from(new Set(data.map(row => row[columnIndex]).filter(String)));
+    var uniqueValues = [];
+    if (field.toLowerCase() === 'modelo' && brand) {
+        var compBrand = toComparisonKey(brand, false);
+        var rowsForBrand = data.filter(function(row) {
+            var rowBrand = row[COLS_CORTES.marca - 1];
+            return rowBrand && toComparisonKey(rowBrand, false) === compBrand;
+        });
 
-    let bestMatch = null;
-    let minDistance = Infinity;
-    const searchTerm = term.toLowerCase();
+        uniqueValues = Array.from(new Set(rowsForBrand.map(function(row) { return row[columnIndex]; }).filter(Boolean)));
 
-    for (const value of uniqueValues) {
-        const valueLower = value.toLowerCase();
-        if (valueLower === searchTerm) {
-            // Es una coincidencia exacta, no se necesita sugerencia.
-            return { status: 'success', suggestion: null };
+        if (uniqueValues.length === 0) {
+            uniqueValues = Array.from(new Set(data.map(function(row) { return row[columnIndex]; }).filter(Boolean)));
         }
+    } else {
+        uniqueValues = Array.from(new Set(data.map(function(row) { return row[columnIndex]; }).filter(Boolean)));
+    }
 
-        const distance = levenshteinDistance(searchTerm, valueLower);
+    const searchTerm = term.trim();
+    const searchKey = toComparisonKey(searchTerm, false);
 
-        if (distance < minDistance) {
-            minDistance = distance;
-            bestMatch = value;
+    // 1. Buscar coincidencia exacta por clave de comparación
+    for (var i = 0; i < uniqueValues.length; i++) {
+        var val = uniqueValues[i];
+        if (toComparisonKey(val, false) === searchKey) {
+            if (val !== searchTerm) {
+                return { status: 'success', suggestion: val };
+            } else {
+                return { status: 'success', suggestion: null };
+            }
         }
     }
 
-    // Umbral: solo sugerir si la distancia es razonablemente pequeña (ej. <= 3)
-    // y el término no es un substring de la sugerencia (ej. "Chev" y "Chevrolet")
-    if (minDistance <= 3 && bestMatch.toLowerCase().indexOf(searchTerm) === -1) {
+    // 2. Buscar coincidencia aproximada usando Levenshtein
+    let bestMatch = null;
+    let minDistance = Infinity;
+    const searchTermLower = searchTerm.toLowerCase();
+
+    for (var i = 0; i < uniqueValues.length; i++) {
+        var val = uniqueValues[i];
+        var valLower = val.toLowerCase();
+        if (valLower === searchTermLower) {
+            return { status: 'success', suggestion: null };
+        }
+
+        const distance = levenshteinDistance(searchTermLower, valLower);
+        if (distance < minDistance) {
+            minDistance = distance;
+            bestMatch = val;
+        }
+    }
+
+    var maxDistance = searchTerm.length <= 3 ? 1 : 3;
+    if (minDistance <= maxDistance && bestMatch.toLowerCase().indexOf(searchTermLower) === -1) {
         return { status: 'success', suggestion: bestMatch };
     }
 

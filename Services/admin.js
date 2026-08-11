@@ -1558,6 +1558,11 @@ function handleAddOrUpdateCut(payload, logMessage) {
     } else { // --- Lógica para vehículo NUEVO (CORREGIDO PARA PRESERVAR FÓRMULA DE ID) ---
         if (!vehicleData) throw new Error("Los datos del vehículo son requeridos para un nuevo registro.");
 
+        var entities = getExistingEntities(sheet);
+        vehicleData.marca = resolveAndNormalizeEntity(vehicleData.marca, entities.brands, false);
+        vehicleData.modelo = resolveAndNormalizeEntity(vehicleData.modelo, entities.models, false);
+        vehicleData.versionesAplicables = resolveAndNormalizeEntity(vehicleData.versionesAplicables, entities.versions, true);
+
         const lastRow = sheet.getLastRow();
         rowIndex = lastRow + 1;
         const lastColumn = sheet.getLastColumn();
@@ -1975,4 +1980,80 @@ function handleCheckOperation(payload) {
         status: 'success',
         exists: false
     };
+}
+
+// ============================================================================
+// LÓGICA DE NORMALIZACIÓN Y EQUIVALENCIA
+// ============================================================================
+
+function toComparisonKey(str, isVersion) {
+  if (!str) return "";
+  var val = String(str).toLowerCase().trim();
+  val = val.replace(/[\/\\.,_\-]/g, ' ');
+  var words = val.split(/\s+/).filter(Boolean);
+  if (isVersion) {
+    words.sort();
+  }
+  return words.join(' ');
+}
+
+function normalizeForStorage(text) {
+  if (!text) return "";
+  var tokens = String(text).split(/([a-zA-Z0-9]+)/);
+  var normalizedTokens = [];
+  for (var i = 0; i < tokens.length; i++) {
+    var token = tokens[i];
+    if (/^[a-zA-Z0-9]+$/.test(token)) {
+      if (token.length <= 3) {
+        normalizedTokens.push(token.toUpperCase());
+      } else {
+        normalizedTokens.push(token.charAt(0).toUpperCase() + token.substring(1).toLowerCase());
+      }
+    } else {
+      normalizedTokens.push(token);
+    }
+  }
+  return normalizedTokens.join('');
+}
+
+function resolveAndNormalizeEntity(value, existingList, isVersion) {
+  if (!value) return "";
+  var valTrimmed = String(value).trim();
+  var keyVal = toComparisonKey(valTrimmed, isVersion);
+
+  for (var i = 0; i < existingList.length; i++) {
+    var item = existingList[i];
+    if (item) {
+      var keyItem = toComparisonKey(item, isVersion);
+      if (keyVal === keyItem) {
+        return item;
+      }
+    }
+  }
+
+  return normalizeForStorage(valTrimmed);
+}
+
+function getExistingEntities(sheet) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return { brands: [], models: [], versions: [] };
+  }
+  var data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  var brands = [];
+  var models = [];
+  var versions = [];
+
+  for (var i = 0; i < data.length; i++) {
+    var row = data[i];
+    var brandVal = String(row[COLS_CORTES.marca - 1] || "").trim();
+    var modelVal = String(row[COLS_CORTES.modelo - 1] || "").trim();
+    var versionVal = String(row[COLS_CORTES.versionesAplicables - 1] || "").trim();
+
+    if (brandVal && brands.indexOf(brandVal) === -1) brands.push(brandVal);
+    if (modelVal && models.indexOf(modelVal) === -1) models.push(modelVal);
+    if (versionVal && versions.indexOf(versionVal) === -1) versions.push(versionVal);
+  }
+
+  return { brands: brands, models: models, versions: versions };
 }
