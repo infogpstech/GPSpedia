@@ -1,10 +1,10 @@
-<!-- GPSpedia Frontend Component | Version: 2.1.5 -->
+<!-- GPSpedia Frontend Component | Version: 2.1.6 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GPSpedia v2.1.5</title>
+    <title>GPSpedia v2.1.6</title>
 <link rel="icon" href="https://drive.google.com/thumbnail?id=1NxBx-W_gWmcq3fA9zog6Dpe-WXpH_2e8&sz=w256">
 <link rel="manifest" href="manifest.json">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -82,7 +82,7 @@
             <button type="submit">Acceder</button>
             <p id="login-error" style="color: red; display: none;"></p>
             <div style="text-align: center; margin-top: 20px;">
-                <small style="color: var(--text-disabled);">v2.1.5</small>
+                <small style="color: var(--text-disabled);">v2.1.6</small>
             </div>
         </form>
         <a href="#" id="forgot-password-link" style="color: var(--accent-color); text-decoration: none; margin-top: 15px; display: inline-block;">¿Olvidaste tu contraseña?</a>
@@ -144,7 +144,7 @@
 </div>
 
 <footer class="footer">
-  GPSpedia v2.1.5 © 2026 todos los derechos reservados.
+  GPSpedia v2.1.6 © 2026 todos los derechos reservados.
   <div class="footer-links">
       <a id="footer-about-link">Sobre Nosotros</a>
       <a id="footer-contact-link">Contáctanos</a>
@@ -593,9 +593,22 @@
 
     <div class="changelog-list" style="display: flex; flex-direction: column; gap: 20px;">
 
+      <!-- Versión 2.1.6 -->
+      <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.1.6 (Actual)</h3>
+        <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
+          <li><strong>Múltiples cables de alimentación:</strong> Soporte completo para registrar y visualizar hasta 3 cables de alimentación con descripciones e imágenes independientes por modelo de vehículo.</li>
+          <li><strong>Carrusel de cables responsivo:</strong> Carrusel interactivo e integrado en el modal de detalle que sincroniza la descripción y la imagen. Navegación fluida por botones en escritorio y gestos táctiles (swipe) nativos en móvil/PWA.</li>
+          <li><strong>Inmutabilidad de marcas de tiempo:</strong> La incorporación de cables adicionales o información suplementaria conserva el timestamp original e intacto del registro del vehículo.</li>
+          <li><strong>Herramientas de edición in-modal:</strong> Modo de desarrollador actualizado para permitir la visualización, edición y carga de imágenes en las tres posiciones de cables directamente desde el modal de detalle.</li>
+          <li><strong>Registro sin cortes ("No recomendado"):</strong> Soporte para indicar registro "No recomendado" en la etapa 2, inyectando un bloque de deshabilitación dinámica de campos en add_cortes.html de forma limpia.</li>
+          <li><strong>Prevención de duplicados e idempotencia:</strong> Sistema inteligente de validación en el servidor mediante opId para evitar duplicidad de registros y re-subida de imágenes bajo fallas de conexión o interrupciones de red.</li>
+        </ul>
+      </div>
+
       <!-- Versión 2.1.5 -->
       <div class="changelog-item" style="border-bottom: 1px solid rgba(255,255,255,0.15); padding-bottom: 15px;">
-        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.1.5 (Actual)</h3>
+        <h3 style="color: var(--accent-color, #007bff); font-size: 1.15em; margin-bottom: 8px;">Versión 2.1.5</h3>
         <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 0.9em;">
           <li><strong>Mejoras de navegación:</strong> Transiciones fluidas por niveles con retroceso inteligente sin perder el contexto de visualización.</li>
           <li><strong>Mejoras de búsqueda:</strong> Buscador inteligente y predictivo en tiempo real con historial dinámico de términos consultados.</li>

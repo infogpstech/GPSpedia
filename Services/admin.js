@@ -36,7 +36,8 @@ const COLS_CORTES = {
     utilCorte2: 24, colaboradorCorte2: 25, tipoCorte3: 26, ubicacionCorte3: 27, colorCableCorte3: 28,
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
-    timestamp: 37, notaImportante: 38
+    timestamp: 37, notaImportante: 38,
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
 };
 
 // ============================================================================
@@ -503,7 +504,7 @@ function handleNormalizeImages(payload, logMessage) {
     logMessage("Normalización Imágenes", `Iniciando normalización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
     let imagesRenamed = 0;
 
-    const imgFields = ['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen'];
+    const imgFields = ['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen', 'imgCableAlimen2', 'imgCableAlimen3'];
 
     // Mapeo para detectar imágenes compartidas
     const imageToRowMap = {};
@@ -572,6 +573,8 @@ function handleNormalizeImages(payload, logMessage) {
                         else if (field === "imgCorte3") typeFuncion = "_corte3";
                         else if (field === "imgApertura") typeFuncion = "_apert";
                         else if (field === "imgCableAlimen") typeFuncion = "_alimen";
+                        else if (field === "imgCableAlimen2") typeFuncion = "_alimen2";
+                        else if (field === "imgCableAlimen3") typeFuncion = "_alimen3";
 
                         const extension = getExtensionFromName(fileToProcess.getName());
                         const newFilename = `${baseName}${typeFuncion}${extension}`;
@@ -732,7 +735,7 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
     let movedFiles = 0;
 
     const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
-    const imgFields = ['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen'];
+    const imgFields = ['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen', 'imgCableAlimen2', 'imgCableAlimen3'];
 
     const batchData = data.slice(startIndex, startIndex + limit);
 
@@ -807,6 +810,8 @@ function handleReorganizeImagesInDrive(payload, logMessage) {
                         else if (field === "imgCorte3") typeFuncion = "_corte3";
                         else if (field === "imgApertura") typeFuncion = "_apert";
                         else if (field === "imgCableAlimen") typeFuncion = "_alimen";
+                        else if (field === "imgCableAlimen2") typeFuncion = "_alimen2";
+                        else if (field === "imgCableAlimen3") typeFuncion = "_alimen3";
 
                         const expectedBaseName = `${baseName}${typeFuncion}`;
 
@@ -1395,6 +1400,8 @@ function handleUploadAdminImage(payload, logMessage) {
     else if (fieldName === "imgCorte3") typeFuncion = "_corte3";
     else if (fieldName === "imgApertura") typeFuncion = "_apert";
     else if (fieldName === "imgCableAlimen") typeFuncion = "_alimen";
+    else if (fieldName === "imgCableAlimen2") typeFuncion = "_alimen2";
+    else if (fieldName === "imgCableAlimen3") typeFuncion = "_alimen3";
 
     const extension = getExtensionFromName(filename);
     const newFilename = `${baseName}${typeFuncion}${extension}`;
@@ -1660,7 +1667,7 @@ function handleAddOrUpdateCut(payload, logMessage) {
 }
 
 function handleAddSupplementaryInfo(payload, logMessage) {
-    const { vehicleId, apertura, imgApertura, cableAlimen, imgCableAlimen, notaImportante, timestamp } = payload;
+    const { vehicleId, apertura, imgApertura, cableAlimen, imgCableAlimen, cableAlimen2, imgCableAlimen2, cableAlimen3, imgCableAlimen3, notaImportante, timestamp } = payload;
     if (!vehicleId) {
         throw new Error("El ID del vehículo es requerido para agregar información suplementaria.");
     }
@@ -1683,6 +1690,8 @@ function handleAddSupplementaryInfo(payload, logMessage) {
     // Actualizar campos de texto si se proporcionaron
     if (apertura) sheet.getRange(actualRow, COLS_CORTES.apertura).setValue(apertura);
     if (cableAlimen) sheet.getRange(actualRow, COLS_CORTES.cableAlimen).setValue(cableAlimen);
+    if (cableAlimen2) sheet.getRange(actualRow, COLS_CORTES.cableAlimen2).setValue(cableAlimen2);
+    if (cableAlimen3) sheet.getRange(actualRow, COLS_CORTES.cableAlimen3).setValue(cableAlimen3);
     if (notaImportante) sheet.getRange(actualRow, COLS_CORTES.notaImportante).setValue(notaImportante);
 
     // Subir imágenes si se proporcionaron y no están ya correctamente subidas
@@ -1702,12 +1711,31 @@ function handleAddSupplementaryInfo(payload, logMessage) {
             sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen).setValue(imageUrl);
         }
     }
+    if (imgCableAlimen2) {
+        const currentAlimenImg2 = rowValues[COLS_CORTES.imgCableAlimen2 - 1];
+        if (!checkFileIdValid(currentAlimenImg2)) {
+            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion2`;
+            const imageUrl = uploadImageToDrive(imgCableAlimen2, filename, folder);
+            sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen2).setValue(imageUrl);
+        }
+    }
+    if (imgCableAlimen3) {
+        const currentAlimenImg3 = rowValues[COLS_CORTES.imgCableAlimen3 - 1];
+        if (!checkFileIdValid(currentAlimenImg3)) {
+            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion3`;
+            const imageUrl = uploadImageToDrive(imgCableAlimen3, filename, folder);
+            sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen3).setValue(imageUrl);
+        }
+    }
 
-    // Forzar timestamp administrativo (hace 365 días) o el recibido en la carga
-    let targetDate = new Date();
-    targetDate.setDate(targetDate.getDate() - 365);
-    const formattedDate = timestamp || Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
-    sheet.getRange(actualRow, COLS_CORTES.timestamp).setValue(formattedDate);
+    // Forzar timestamp administrativo (hace 365 días) o el recibido en la carga (solo si está vacío)
+    const currentTimestamp = rowValues[COLS_CORTES.timestamp - 1];
+    if (!currentTimestamp) {
+        let targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() - 365);
+        const formattedDate = timestamp || Utilities.formatDate(targetDate, "GMT-6", "dd/MM/yyyy");
+        sheet.getRange(actualRow, COLS_CORTES.timestamp).setValue(formattedDate);
+    }
 
     SpreadsheetApp.flush();
     logMessage("Registro Administrativo", `Información suplementaria administrativa agregada con éxito.`);
@@ -1733,9 +1761,9 @@ function getActiveImageUrls() {
         // Determinar qué índices de columnas escanear para esta hoja
         let colIndices = null;
         if (sheetName === SHEET_NAMES.CORTES) {
-            // Columnas: 9 (imagenVehiculo), 16 (imgCorte1), 23 (imgCorte2), 30 (imgCorte3), 34 (imgApertura), 36 (imgCableAlimen)
-            // En base 0: 8, 15, 22, 29, 33, 35
-            colIndices = [8, 15, 22, 29, 33, 35];
+            // Columnas: 9 (imagenVehiculo), 16 (imgCorte1), 23 (imgCorte2), 30 (imgCorte3), 34 (imgApertura), 36 (imgCableAlimen), 40 (imgCableAlimen2), 42 (imgCableAlimen3)
+            // En base 0: 8, 15, 22, 29, 33, 35, 39, 41
+            colIndices = [8, 15, 22, 29, 33, 35, 39, 41];
         } else if (sheetName === SHEET_NAMES.LOGOS_MARCA) {
             colIndices = [2]; // Columna 3 (urlLogo)
         } else if (sheetName === SHEET_NAMES.RELAY) {

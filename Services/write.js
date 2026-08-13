@@ -29,7 +29,8 @@ const COLS_CORTES = {
     utilCorte2: 24, colaboradorCorte2: 25, tipoCorte3: 26, ubicacionCorte3: 27, colorCableCorte3: 28,
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
-    timestamp: 37, notaImportante: 38
+    timestamp: 37, notaImportante: 38,
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
 };
 
 
@@ -353,7 +354,7 @@ function handleCheckVehicle(payload) {
 }
 
 function handleAddSupplementaryInfo(payload) {
-    const { vehicleId, apertura, imgApertura, cableAlimen, imgCableAlimen, notaImportante, timestamp } = payload;
+    const { vehicleId, apertura, imgApertura, cableAlimen, imgCableAlimen, cableAlimen2, imgCableAlimen2, cableAlimen3, imgCableAlimen3, notaImportante, timestamp } = payload;
     if (!vehicleId) {
         throw new Error("El ID del vehículo es requerido para agregar información suplementaria.");
     }
@@ -375,6 +376,8 @@ function handleAddSupplementaryInfo(payload) {
     // Actualizar campos de texto si se proporcionaron
     if (apertura) sheet.getRange(actualRow, COLS_CORTES.apertura).setValue(apertura);
     if (cableAlimen) sheet.getRange(actualRow, COLS_CORTES.cableAlimen).setValue(cableAlimen);
+    if (cableAlimen2) sheet.getRange(actualRow, COLS_CORTES.cableAlimen2).setValue(cableAlimen2);
+    if (cableAlimen3) sheet.getRange(actualRow, COLS_CORTES.cableAlimen3).setValue(cableAlimen3);
     if (notaImportante) sheet.getRange(actualRow, COLS_CORTES.notaImportante).setValue(notaImportante);
 
     // Subir imágenes si se proporcionaron y no están ya correctamente subidas
@@ -394,10 +397,29 @@ function handleAddSupplementaryInfo(payload) {
             sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen).setValue(imageUrl);
         }
     }
+    if (imgCableAlimen2) {
+        const currentAlimenImg2 = rowValues[COLS_CORTES.imgCableAlimen2 - 1];
+        if (!checkFileIdValid(currentAlimenImg2)) {
+            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion2`;
+            const imageUrl = uploadImageToDrive(imgCableAlimen2, filename, folder);
+            sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen2).setValue(imageUrl);
+        }
+    }
+    if (imgCableAlimen3) {
+        const currentAlimenImg3 = rowValues[COLS_CORTES.imgCableAlimen3 - 1];
+        if (!checkFileIdValid(currentAlimenImg3)) {
+            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion3`;
+            const imageUrl = uploadImageToDrive(imgCableAlimen3, filename, folder);
+            sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen3).setValue(imageUrl);
+        }
+    }
 
-    // Actualizar el timestamp al añadir información o usar el proporcionado si es registro silencioso
-    const formattedDate = timestamp || Utilities.formatDate(new Date(), "GMT-6", "dd/MM/yyyy");
-    sheet.getRange(actualRow, COLS_CORTES.timestamp).setValue(formattedDate);
+    // Actualizar el timestamp al añadir información o usar el proporcionado si es registro silencioso (solo si está vacío)
+    const currentTimestamp = rowValues[COLS_CORTES.timestamp - 1];
+    if (!currentTimestamp) {
+        const formattedDate = timestamp || Utilities.formatDate(new Date(), "GMT-6", "dd/MM/yyyy");
+        sheet.getRange(actualRow, COLS_CORTES.timestamp).setValue(formattedDate);
+    }
 
     return { status: 'success', message: 'Información suplementaria agregada exitosamente.' };
 }

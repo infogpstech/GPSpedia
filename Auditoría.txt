@@ -48,7 +48,7 @@
 3. **main.js (popstate listener):**
    - El listener de `popstate` closes automáticamente cualquier modal de detalle visible (`#modalDetalle.visible`) para soportar la navegación con el botón "Atrás".
    - Debido a que el hash se actualiza después de abrir el modal, el evento `popstate` resultante cierra el modal inmediatamente después de que se abre.
-   - Esto explica por qué el vehículo se registra en "Vistos recientemente" (la función se ejecuta) pero el modal no permanece visible.
+   - Esto explica por qué el vehículo se registra en "Vistos recientemente" (the función se ejecuta) pero el modal no permanece visible.
 
 **Acciones Correctoras:**
 - **ui.js:** Eliminar el `return` en el bloque de resultado único de `mostrarResultadosDeBusqueda` para permitir el renderizado completo de la UI.
@@ -600,7 +600,7 @@ Ubicación:
 Impacto: Crítico
 Riesgo de regresión: Muy bajo.
 Estrategia de corrección:
-  - Envolver el guardado del estado en localStorage en un bloque `try-catch` robusto para capturar el error `QuotaExceededError`. Si ocurre, emitir una advertencia a la consola de diagnóstico y continuar de manera transparente con el guardado en el servidor.
+  - Envolver el guardado del estado en localStorage en un bloque `try-catch` robusto para hacer una captura segura del error `QuotaExceededError`. Si ocurre, emitir una advertencia a la consola de diagnóstico y continuar de manera transparente con el guardado en el servidor.
 
 ID del hallazgo: H-DIAG-02
 Título: Disparidad de saneamiento e inconsistencia de ID en registro de vehículos en write.js
@@ -637,3 +637,42 @@ Estrategia de corrección:
   - Modificar `handleGetSuggestion` en el backend para recibir opcionalmente la marca y priorizar/filtrar las sugerencias de modelos de esa marca.
   - Implementar umbral adaptativo para Levenshtein y equivalencia exacta de claves de comparación antes de sugerir.
   - Modificar `handleSuggestion` en `add_cortes.html` para enviar la marca seleccionada al solicitar sugerencias de modelos.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - SOPORTE PARA MÚLTIPLES CABLES DE ALIMENTACIÓN POR MODELO (13/08/2026)**
+
+**Archivos involucrados:** Services/write.js, Services/admin.js, Services/catalog.js, Services/feedback.js, add_cortes.html, ui.js, style.css, ChangesLogs.txt, index.html.
+
+**Hallazgos:**
+1. **Mapeo de Columnas:**
+   - La estructura de columnas de la hoja `Cortes` tiene `apertura: 33`, `imgApertura: 34`, `cableAlimen: 35`, `imgCableAlimen: 36`, `timestamp: 37`, `notaImportante: 38`.
+   - Añadiremos soporte para `cableAlimen2: 39`, `imgCableAlimen2: 40`, `cableAlimen3: 41`, `imgCableAlimen3: 42` al final del registro.
+   - En todos los archivos de backend (`write.js`, `admin.js`, `catalog.js`, `feedback.js`), extenderemos el objeto `COLS_CORTES`.
+
+2. **Procesamiento de Imágenes en el Backend:**
+   - En `Services/admin.js`, las funciones como `getActiveImageUrls`, `validateAndRestoreAllTrashedImagesInSpreadsheet`, `cleanUpDuplicatesInBrandTree`, and `handleUploadAdminImage` escanean o procesan campos de imágenes en listas explícitas como `imgFields` o `colIndices`.
+   - Añadiremos `imgCableAlimen2` (col 40 / índice 39) y `imgCableAlimen3` (col 42 / índice 41) a estas listas.
+   - Definiremos `typeFuncion = "_alimen2"` y `typeFuncion = "_alimen3"` respectivamente.
+
+3. **Inmutabilidad de Timestamp:**
+   - Al registrar información suplementaria mediante `handleAddSupplementaryInfo` (en `write.js` and `admin.js`), se actualiza el `timestamp` por defecto.
+   - El requisito exige que agregar un nuevo cable de alimentación no altere el timestamp existente.
+   - Solución: En `handleAddSupplementaryInfo`, verificaremos si la fila ya contiene un valor de timestamp válido (`currentTimestamp = rowValues[COLS_CORTES.timestamp - 1]`). Si es así, no sobrescribiremos el timestamp.
+
+4. **Formulario de Registro (Stage 3 en `add_cortes.html`):**
+   - Calcularemos dinámicamente el próximo slot de cable libre (1, 2, o 3) en `proceedToStage3(vehicleId)` usando el registro coincidente en `state.matches`.
+   - Si ya existen cables en slots 1 y 2, el slot destino será el 3. Si ya existen en slots 1, 2 y 3, deshabilitaremos la sección de cables y mostraremos un mensaje indicando el límite alcanzado.
+   - Actualizaremos los textos del formulario (ej. "Cable de Alimentación 2") dinámicamente.
+   - Al guardar, mapearemos las variables `cableAlimen` e `imgCableAlimen` del formulario a las propiedades del slot correcto (`cableAlimen2`/`imgCableAlimen2` o `cableAlimen3`/`imgCableAlimen3`).
+
+5. **Modal de Detalle y Carrusel Responsivo (`ui.js` & `style.css`):**
+   - Recopilaremos todos los cables de alimentación existentes (hasta 3) en `mostrarDetalleModal`.
+   - Si solo hay 1 cable, se mantendrá el diseño actual estático y sin botones de navegación.
+   - Si hay 2 o 3 cables, se inicializará un carrusel interactivo que actualiza simultáneamente la descripción y la imagen.
+   - En escritorio, se mostrarán botones `<` y `>` para la navegación.
+   - En móvil y PWA, se ocultarán los botones `<` y `>` usando CSS responsivo y `@media (display-mode: standalone)`, y se implementarán gestos táctiles nativos (`touchstart`/`touchend`) para cambiar de slide.
+   - Se adaptará el modo de edición in-modal para desarrolladores para que puedan visualizar y editar de forma independiente las 3 posiciones de cables e imágenes.
+
+6. **Incremento de Versión y Changelog:**
+   - Incrementaremos la versión global del sistema a `2.1.6` en `index.html`, etc.
+   - Documentaremos detalladamente los cambios en `ChangesLogs.txt` y en el modal `#changelog-modal`.

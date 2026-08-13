@@ -1,4 +1,4 @@
-/* GPSpedia Styles | Version: 2.1.5 */
+/* GPSpedia Styles | Version: 2.1.6 */
 /* Estilos Globales */
 *, *::before, *::after {
     box-sizing: border-box;
@@ -1794,5 +1794,57 @@ body.dark-mode .terms-agreement-logo {
     .terms-agreement-logo {
         height: 30px;
         margin: 10px auto 15px auto;
+    }
+}
+
+/* --- ESTILOS DEL CARRUSEL DE CABLES DE ALIMENTACIÓN --- */
+.cable-carousel-container {
+    position: relative;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.cable-carousel-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 123, 255, 0.85);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 10;
+    transition: background 0.2s, opacity 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.cable-carousel-btn:hover {
+    background: #0056b3;
+}
+
+.cable-carousel-btn.prev {
+    left: 10px;
+}
+
+.cable-carousel-btn.next {
+    right: 10px;
+}
+
+/* Ocultar botones en versión móvil */
+@media (max-width: 768px) {
+    .cable-carousel-btn {
+        display: none !important;
+    }
+}
+
+/* Ocultar botones en versión PWA standalone */
+@media all and (display-mode: standalone) {
+    .cable-carousel-btn {
+        display: none !important;
     }
 }

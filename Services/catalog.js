@@ -34,7 +34,8 @@ const COLS_CORTES = {
     utilCorte2: 24, colaboradorCorte2: 25, tipoCorte3: 26, ubicacionCorte3: 27, colorCableCorte3: 28,
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
-    timestamp: 37, notaImportante: 38
+    timestamp: 37, notaImportante: 38,
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
 };
 
 const COLS_LOGOS_MARCA = {
@@ -170,7 +171,7 @@ function doPost(e) {
  * en estos campos serán siempre un fileId de Google Drive válido (string) o null.
  * El frontend NUNCA recibirá una URL completa.
  */
-const IMAGE_FIELDS_CORTES = new Set(['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen']);
+const IMAGE_FIELDS_CORTES = new Set(['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen', 'imgCableAlimen2', 'imgCableAlimen3']);
 
 /**
  * @const {Set<string>}

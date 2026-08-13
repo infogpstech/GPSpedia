@@ -1,4 +1,4 @@
-<!-- GPSpedia Frontend Component | Version: 2.1.5 -->
+<!-- GPSpedia Frontend Component | Version: 2.1.6 -->
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -285,7 +285,7 @@
     </div>
 
     <script type="module">
-        // COMPONENT VERSION: 2.1.5
+        // COMPONENT VERSION: 2.1.6
         import { routeAction } from './api-config.js';
         import './lightbox.js';
         const SESSION_KEY = 'gpsepedia_session';
@@ -920,14 +920,71 @@
             const warningContainer = document.getElementById('supplementary-warnings');
             warningContainer.innerHTML = '';
 
+            let cableSlot = 1;
             const match = state.matches.find(m => m.id.toString() === vehicleId.toString());
+
+            const alimentacionHeader = document.querySelector('#alimentacion-accordion .accordion-header span');
+            const alimentacionLabel = document.querySelector('label[for="cableAlimen"]');
+            const textareaCable = document.getElementById('cableAlimen');
+            const fileCable = document.getElementById('imgCableAlimen');
+            const uploadBtn = document.querySelector('#alimentacion-accordion label.btn');
+
+            // Reset disabled states
+            textareaCable.disabled = false;
+            fileCable.disabled = false;
+            if (uploadBtn) {
+                uploadBtn.style.pointerEvents = 'auto';
+                uploadBtn.style.opacity = '1';
+            }
+
             if (match) {
                 if (match.apertura || match.imgApertura) {
                     warningContainer.innerHTML += `<div class="info-msg"><i class="fas fa-info-circle"></i> Este vehículo ya cuenta con información de apertura.</div>`;
                 }
-                if (match.cableAlimen || match.imgCableAlimen) {
-                    warningContainer.innerHTML += `<div class="info-msg"><i class="fas fa-info-circle"></i> Este vehículo ya cuenta con información de cables de alimentación.</div>`;
+
+                const hasCable1 = !!(match.cableAlimen || match.imgCableAlimen);
+                const hasCable2 = !!(match.cableAlimen2 || match.imgCableAlimen2);
+                const hasCable3 = !!(match.cableAlimen3 || match.imgCableAlimen3);
+
+                if (hasCable1 && hasCable2 && hasCable3) {
+                    cableSlot = 4;
+                } else if (hasCable1 && hasCable2) {
+                    cableSlot = 3;
+                } else if (hasCable1) {
+                    cableSlot = 2;
+                } else {
+                    cableSlot = 1;
                 }
+
+                if (hasCable1) {
+                    warningContainer.innerHTML += `<div class="info-msg"><i class="fas fa-info-circle"></i> Este vehículo ya cuenta con el cable de alimentación 1.</div>`;
+                }
+                if (hasCable2) {
+                    warningContainer.innerHTML += `<div class="info-msg"><i class="fas fa-info-circle"></i> Este vehículo ya cuenta con el cable de alimentación 2.</div>`;
+                }
+                if (hasCable3) {
+                    warningContainer.innerHTML += `<div class="info-msg"><i class="fas fa-info-circle"></i> Este vehículo ya cuenta con el cable de alimentación 3.</div>`;
+                }
+            }
+
+            state.cableSlotToRegister = cableSlot;
+
+            if (cableSlot === 4) {
+                alimentacionHeader.textContent = "Cable de Alimentación (Límite de 3 alcanzado)";
+                alimentacionLabel.textContent = "Límite alcanzado";
+                textareaCable.disabled = true;
+                fileCable.disabled = true;
+                if (uploadBtn) {
+                    uploadBtn.style.pointerEvents = 'none';
+                    uploadBtn.style.opacity = '0.5';
+                }
+                warningContainer.innerHTML += `<div class="info-msg" style="background-color: #f8d7da; color: #721c24; border-color: #f5c6cb;"><i class="fas fa-exclamation-triangle"></i> Límite de 3 cables de alimentación alcanzado para este modelo.</div>`;
+            } else if (cableSlot > 1) {
+                alimentacionHeader.textContent = `Cable de Alimentación ${cableSlot}`;
+                alimentacionLabel.textContent = `Detalle de Alimentación ${cableSlot}`;
+            } else {
+                alimentacionHeader.textContent = "Cable de Alimentación";
+                alimentacionLabel.textContent = "Detalle de Alimentación";
             }
 
             document.getElementById('form-stage-3').reset();
@@ -941,15 +998,28 @@
             toggleLoading(true);
             btn.classList.add('btn-loading');
 
+            const cableAlimenVal = document.getElementById('cableAlimen').value;
+            const imgCableAlimenVal = await fileToBase64(document.getElementById('imgCableAlimen').files[0]);
+
             const payload = {
                 vehicleId: state.selectedVehicleId,
                 apertura: document.getElementById('apertura').value,
-                cableAlimen: document.getElementById('cableAlimen').value,
                 notaImportante: document.getElementById('notaImportante').value,
                 imgApertura: await fileToBase64(document.getElementById('imgApertura').files[0]),
-                imgCableAlimen: await fileToBase64(document.getElementById('imgCableAlimen').files[0]),
                 timestamp: state.timestamp
             };
+
+            const slot = state.cableSlotToRegister || 1;
+            if (slot === 1) {
+                payload.cableAlimen = cableAlimenVal;
+                payload.imgCableAlimen = imgCableAlimenVal;
+            } else if (slot === 2) {
+                payload.cableAlimen2 = cableAlimenVal;
+                payload.imgCableAlimen2 = imgCableAlimenVal;
+            } else if (slot === 3) {
+                payload.cableAlimen3 = cableAlimenVal;
+                payload.imgCableAlimen3 = imgCableAlimenVal;
+            }
 
             const silentVal = document.getElementById('silentRegister') ? document.getElementById('silentRegister').checked : false;
             const serviceOverride = silentVal ? 'ADMIN' : null;

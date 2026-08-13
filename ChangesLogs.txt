@@ -888,3 +888,41 @@ Archivos modificados:
 
 **Archivo: Services/write.js**
 - **Líneas 290-297:** Se implementó la lógica de reset y limpieza explícita de la celda del ID del vehículo recién copiada en el backend, heredando la fórmula o usando el fallback `=ROW()-1`, para garantizar un cálculo limpio de la clave de registro de manera consistente con el microservicio de administración.
+
+
+**CHANGES LOG - 13/08/2026 (SOPORTE PARA MÚLTIPLES CABLES DE ALIMENTACIÓN POR MODELO - VERSIÓN 2.1.6)**
+
+**Archivo: Services/write.js**
+- **Líneas 30-38:** Extendida la estructura `COLS_CORTES` para agregar soporte a `cableAlimen2` (columna 39), `imgCableAlimen2` (columna 40), `cableAlimen3` (columna 41), e `imgCableAlimen3` (columna 42).
+- **Líneas 354-416:** Modificada la función `handleAddSupplementaryInfo` para recibir y registrar múltiples cables y subir sus imágenes a Drive de forma compatible. Implementada la protección de timestamp para que adiciones subsiguientes conserven el timestamp original.
+
+**Archivo: Services/admin.js**
+- **Líneas 36-44:** Sincronizada la estructura `COLS_CORTES` con las nuevas columnas de cables 2 y 3.
+- **Líneas 504-510, 735-741:** Añadidas `imgCableAlimen2` e `imgCableAlimen3` al conjunto `imgFields` en normalizaciones y reorganización de carpetas en Drive.
+- **Líneas 573-575, 810-812, 1400-1402:** Agregado soporte para tipos de función de nomenclatura uniforme (`_alimen2` y `_alimen3`).
+- **Líneas 1667-1730:** Sincronizada `handleAddSupplementaryInfo` administrativo para persistir las nuevas imágenes y descripciones de cables 2 y 3 respetando la inmutabilidad de marcas de tiempo existentes.
+- **Líneas 1740-1748:** Modificado el array `colIndices` para incluir las columnas 39 (Cable 2 img) y 41 (Cable 3 img) en el escaneo de URLs activas.
+
+**Archivo: Services/catalog.js**
+- **Líneas 34-40:** Extendida la estructura `COLS_CORTES` para incluir las columnas 39 a 42 de los cables adicionales para que se retornen de forma nativa en las consultas al catálogo.
+
+**Archivo: Services/feedback.js**
+- **Líneas 46-52:** Sincronizado el esquema `COLS_CORTES` con las nuevas columnas adicionales para mantener paridad absoluta en el backend.
+
+**Archivo: add_cortes.html**
+- **Línea 1, 288:** Incrementada la versión global del componente a `2.1.6`.
+- **Líneas 920-985:** Rediseñado el flujo de Step 3 en `proceedToStage3` para determinar dinámicamente cuál es el siguiente cable slot vacío (1, 2, o 3) basándose en `state.matches`. Deshabilitados los campos de cables e inyectado un mensaje si se alcanza el límite.
+- **Líneas 998-1026:** Actualizado `handleStage3Submit` para mapear los campos del formulario a la propiedad del slot correspondiente (`cableAlimen`/`imgCableAlimen`, `cableAlimen2`/`imgCableAlimen2`, o `cableAlimen3`/`imgCableAlimen3`) en el payload de envío.
+
+**Archivo: ui.js**
+- **Línea 1:** Incrementada la versión global del módulo a `2.1.6`.
+- **Líneas 1744-1755:** Actualizado `mostrarDetalleModal` para agrupar y filtrar todas las posiciones de cables de alimentación disponibles del modelo.
+- **Líneas 3148-3320:** Rediseñada la sección de cables en `createAccordionSection` para renderizar un carrusel responsivo sincronizado con transiciones de descripción e imagen, controles de escritorio `<` / `>` y swipe táctil nativo en móvil/PWA. Adaptado el modo de edición in-modal para desarrolladores para habilitar la visualización y edición independiente de las 3 posiciones.
+
+**Archivo: style.css**
+- **Línea 1:** Incrementada la versión global del archivo a `2.1.6`.
+- **Líneas 1798-1850:** Añadidas reglas responsivas para estilizar el contenedor y botones del carrusel de cables. Ocultación selectiva de los botones en pantallas móviles y en modo standalone de PWA.
+
+**Archivo: index.html, api-config.js, auth.js, main.js, navigation.js, state.js, offline.js, lightbox.js, users.html**
+- **Línea 1, etc.:** Incrementada la versión global a `2.1.6`.
+- **index.html (Líneas 593-610):** Añadido el registro de cambios detallado para la versión 2.1.6 en el modal `#changelog-modal`.

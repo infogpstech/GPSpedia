@@ -1,4 +1,4 @@
-// GPSpedia Navigation Module | Version: 2.1.5
+// GPSpedia Navigation Module | Version: 2.1.6
 // Responsibilities:
 // - Manage the application's view state and navigation flow.
 // - Handle user navigation actions (e.g., selecting a category or brand).
