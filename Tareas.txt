@@ -412,10 +412,11 @@ Cualquier cambio en estas zonas invalidará el commit.
 
 
 16. **TÍTULO: Registro sin Cortes, Prevención de Duplicados e Idempotencia con Recuperación (v2.1.6)**
-   - **ESTADO:** COMPLETADO (Fase 1)
+   - **ESTADO:** COMPLETADO (Fase Completa)
    - **ALCANCE:** add_cortes.html, api-config.js, Services/write.js, Services/admin.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt
    - **DESCRIPCIÓN DETALLADA:**
      - **Registro sin Cortes:** Modificado el formulario de registro de nuevos cortes para permitir registrar un nuevo modelo cuando no exista información técnica de corte, siempre que el usuario seleccione "No recomendado" como tipo de corte.
      - **Prevención de Duplicados:** Añadido un opId único y validación silenciosa en el backend para evitar duplicar registros ante pérdidas de conexión (por ej. `Fail to fetch`).
-     - **Idempotencia y Reparación:** Implementado un sistema de auto-reparación en el servidor que recupera el registro existente y valida síncronamente el estado de los archivos en Drive, reparándolos si están corruptos, eliminados o en la papelera sin duplicar la fila.
-     - **Persistencia y Reanudación:** Diseñado un mecanismo de persistencia temporal del formulario y archivos base64 en localStorage que recupera y reanuda silenciosamente el flujo al restaurarse la conexión (evento `online`) o recargarse la app.
+     - **Idempotencia y Reparación:** Implementado un sistema de auto-reparación en el servidor que recupera el registro existente, completa campos faltantes y valida síncronamente el estado de los archivos en Drive, reparándolos si están corruptos, eliminados o en la papelera sin duplicar la fila.
+     - **Persistencia y Reanudación:** Diseñado un mecanismo de persistencia temporal del formulario y archivos base64 en localStorage que recupera y reanuda silenciosamente el flujo al restaurarse la conexión (evento `online`), registrarse un evento de visibilidad (`visibilitychange`) o recargarse la app.
+     - **Diferenciación de Red:** Implementado un tratamiento diferenciado para fallas de red ("Fail to fetch" o modo offline) mostrando notificaciones especializadas de guardado local.

@@ -149,10 +149,61 @@ function handleAddOrUpdateCut(payload) {
                 }
             }
 
+            // 3. Complete missing/empty text fields in the sheet (partially completed registration)
+            if (vehicleData) {
+                if (!rowObj.categoria && vehicleData.categoria) {
+                    sheet.getRange(rowIndex, COLS_CORTES.categoria).setValue(vehicleData.categoria);
+                }
+                if (!rowObj.marca && vehicleData.marca) {
+                    sheet.getRange(rowIndex, COLS_CORTES.marca).setValue(vehicleData.marca);
+                }
+                if (!rowObj.modelo && vehicleData.modelo) {
+                    sheet.getRange(rowIndex, COLS_CORTES.modelo).setValue(vehicleData.modelo);
+                }
+                if (!rowObj.versionesAplicables && vehicleData.versionesAplicables) {
+                    sheet.getRange(rowIndex, COLS_CORTES.versionesAplicables).setValue(vehicleData.versionesAplicables);
+                }
+                if (!rowObj.anoDesde && vehicleData.anoDesde) {
+                    const yearInput = String(vehicleData.anoDesde).trim();
+                    let anoDesde = yearInput;
+                    let anoHasta = yearInput;
+                    if (yearInput.includes('-')) {
+                        const [start, end] = yearInput.split('-').map(function(y) { return parseInt(y.trim(), 10); });
+                        anoDesde = Math.min(start, end);
+                        anoHasta = Math.max(start, end);
+                    }
+                    sheet.getRange(rowIndex, COLS_CORTES.anoDesde).setValue(anoDesde);
+                    if (!rowObj.anoHasta) {
+                        sheet.getRange(rowIndex, COLS_CORTES.anoHasta).setValue(anoHasta);
+                    }
+                }
+                if (!rowObj.tipoEncendido && vehicleData.tipoEncendido) {
+                    sheet.getRange(rowIndex, COLS_CORTES.tipoEncendido).setValue(vehicleData.tipoEncendido);
+                }
+            }
+
+            if (cutData) {
+                if (!rowObj[`tipoCorte${slotIndex}`] && cutData.tipoCorte1) {
+                    sheet.getRange(rowIndex, COLS_CORTES[`tipoCorte${slotIndex}`]).setValue(cutData.tipoCorte1 || "");
+                }
+                if (!rowObj[`ubicacionCorte${slotIndex}`] && cutData.ubicacionCorte1) {
+                    sheet.getRange(rowIndex, COLS_CORTES[`ubicacionCorte${slotIndex}`]).setValue(cutData.ubicacionCorte1 || "");
+                }
+                if (!rowObj[`colorCableCorte${slotIndex}`] && cutData.colorCableCorte1) {
+                    sheet.getRange(rowIndex, COLS_CORTES[`colorCableCorte${slotIndex}`]).setValue(cutData.colorCableCorte1 || "");
+                }
+                if (!rowObj[`configRelay${slotIndex}`] && cutData.configRelay1) {
+                    sheet.getRange(rowIndex, COLS_CORTES[`configRelay${slotIndex}`]).setValue(cutData.configRelay1 || "");
+                }
+                if (!rowObj[`colaboradorCorte${slotIndex}`] && colaboradorName) {
+                    sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${slotIndex}`]).setValue(colaboradorName || "");
+                }
+            }
+
             SpreadsheetApp.flush();
             return {
                 status: 'success',
-                message: 'La operación ya fue completada (recuperada y reparada).',
+                message: 'La operación ya fue completada (recuperada, reparada y completada).',
                 vehicleId: rowObj.id,
                 timestamp: rowObj.timestamp
             };

@@ -77,7 +77,7 @@
    - `navigation.irAPaginaPrincipal` ya realiza limpiezas de hash y estado, pero debe integrarse correctamente en el flujo de gestos.
 
 4. **Compatibilidad:**
-   - El uso de `document.activeElement.blur()` y `input.focus()` es estándar y compatible con PWA y navegadores móviles.
+   - El uso de `document.activeElement.blur()` and `input.focus()` es estándar y compatible con PWA y navegadores móviles.
 
 **Riesgos y Dependencias:**
 - La animación del encabezado depende de la clase `search-active` en el body. No debe alterarse manualmente si no es a través de los flujos de búsqueda existentes.
@@ -217,7 +217,7 @@
 **Por qué la estrategia anterior falló:**
 - En la iteración anterior, se intentó optimizar el historial haciendo que el foco en el buscador solo empujara un único estado (`busqueda_focused`).
 - Al realizar el primer gesto de retroceso, el navegador regresa físicamente al estado anterior (ej. `categorias`). Para evitar la pérdida de los resultados de búsqueda, el controlador `popstate` intentaba re-insertar el estado desenfocado haciendo `history.pushState({ level: "busqueda" })`.
-- Sin embargo, llamar a `pushState` de forma asíncrona dentro de un manejador de evento `popstate` es altamente inestable y frecuentemente bloqueado o ignorado por los motores de navegación de dispositivos móviles (Android Chrome, iOS Safari) y motores de PWA durante la fase de transición de gestos.
+- Sin embargo, llamar a `pushState` de forma asíncrona dentro de un manejador de evento `popstate` is altamente inestable y frecuentemente bloqueado o ignorado por los motores de navegación de dispositivos móviles (Android Chrome, iOS Safari) y motores de PWA durante la fase de transición de gestos.
 - Al fallar o ignorarse el `pushState` asíncrono, el historial se quedaba únicamente con el estado base (`categorias`). Por lo tanto, el segundo gesto de retroceso cerrará la aplicación de forma prematura.
 
 **Nueva Estrategia de Historial Forward-Stack 100% Nativo:**
@@ -676,3 +676,32 @@ Estrategia de corrección:
 6. **Incremento de Versión y Changelog:**
    - Incrementaremos la versión global del sistema a `2.1.6` en `index.html`, etc.
    - Documentaremos detalladamente los cambios en `ChangesLogs.txt` y en el modal `#changelog-modal`.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - Registro de modelos sin información de corte, prevención de duplicados y recuperación ante interrupciones (16/08/2026)**
+
+**Archivos involucrados:** add_cortes.html, Services/write.js, Services/admin.js
+
+**Hallazgos de Auditoría:**
+1. **add_cortes.html**:
+   - `toggleNoRecomendado` ya existe en el frontend y gestiona la deshabilitación y remoción del atributo `required` para configRelay1, ubicacionCorte1, colorCableCorte1, e imgCorte1.
+   - Sin embargo, para que el backend funcione robustamente, si el usuario selecciona "No recomendado", los campos se deben inyectar como vacíos, y la imagen del corte principal (`imgCorte1`) no debe ser requerida ni enviada.
+   - En `handleStage2Submit`, la verificación silenciosa se inicia mediante `checkOperation` para comprobar si existe una operación con el mismo ID de operación (`opId`).
+   - Pero si `checkRes.exists` es verdadero, el script *aún* llama a `addOrUpdateCut` en lugar de saltar directamente a la Fase 3 con el vehículo recuperado. Esto anula la protección de duplicados y causa re-subidas lentas innecesarias o filas duplicadas si no se maneja en el backend.
+   - **Solución**: Si `checkRes.exists` es `true` dentro de `handleStage2Submit`, debemos proceder directamente a la Fase 3 recuperando la información del vehículo y timestamp.
+
+2. **Visibilidad en segundo plano y bloqueo de pantalla (visibilitychange)**:
+   - El evento `visibilitychange` no está actualmente registrado para realizar una comprobación automática de recuperación cuando el usuario vuelve a la PWA.
+   - **Solución**: Registrar un listener para `visibilitychange` en `add_cortes.html`. Si la página se vuelve visible (`document.visibilityState === 'visible'`), invocar silenciosamente `checkAndRecoverPendingOperation()`.
+
+3. **Manejo de Errores de Conectividad (Network Error vs Server Error)**:
+   - En `handleStage2Submit`, todos los errores se muestran como una alerta genérica con el mensaje original.
+   - El error "Fail to fetch" o errores de red no diferencian si la conexión se interrumpió o si la solicitud fue rechazada por el servidor.
+   - **Solución**: Capturar de manera específica errores que contengan "fetch" o "network", o cuando `navigator.onLine === false`, mostrando un mensaje claro al usuario indicando que el progreso se guardó localmente y que el sistema comprobará el estado automáticamente cuando vuelva la conexión.
+
+4. **Integridad del Backend (Services/write.js y Services/admin.js)**:
+   - En `handleAddOrUpdateCut`, cuando un `opId` existente es detectado, actualmente repara y valida las imágenes del vehículo y el corte, pero no valida ni completa de forma progresiva campos faltantes si el registro quedó parcialmente completado (por ejemplo, si faltan metadatos como configuración de relay o ubicación).
+   - **Solución**: Enriquecer la lógica del backend para completar e integrar campos faltantes en el registro existente si se detecta que el registro ya existe por su `opId`, preservando la información que ya existe y actualizando únicamente lo faltante.
+
+5. **Respaldos**:
+   - Se realizarán respaldos de `add_cortes.html`, `Services/write.js`, y `Services/admin.js` antes de cualquier modificación.

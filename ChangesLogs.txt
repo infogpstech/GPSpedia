@@ -926,3 +926,16 @@ Archivos modificados:
 **Archivo: index.html, api-config.js, auth.js, main.js, navigation.js, state.js, offline.js, lightbox.js, users.html**
 - **Línea 1, etc.:** Incrementada la versión global a `2.1.6`.
 - **index.html (Líneas 593-610):** Añadido el registro de cambios detallado para la versión 2.1.6 en el modal `#changelog-modal`.
+
+**CHANGES LOG - 16/08/2026 (REGISTRO SIN CORTES, PREVENCIÓN DE DUPLICADOS E IDEMPOTENCIA CON RECUPERACIÓN - VERSIÓN 2.1.6)**
+
+**Archivo: add_cortes.html**
+- **Líneas 407-414:** Registrado un manejador para el evento `visibilitychange` que reanuda e identifica automáticamente operaciones pendientes en localStorage cuando el usuario regresa a la PWA.
+- **Líneas 867-884:** Modificada la función `handleStage2Submit` para que, si el servidor indica que la operación ya existe (`checkRes.exists === true`), limpie el estado de guardado, recupere la información y avance inmediatamente al Paso 3, evitando re-subir archivos o duplicar registros.
+- **Líneas 929-948:** Actualizado el bloque `catch` de `handleStage2Submit` para identificar y aislar errores de red, pérdida de conexión y excepciones "Fail to fetch", mostrando alertas interactivas amigables de persistencia local en lugar de errores técnicos.
+
+**Archivo: Services/write.js**
+- **Líneas 149-200:** Ampliado el manejador `handleAddOrUpdateCut` para realizar una completación progresiva e inteligente de todos los metadatos de texto y dropdown que se encuentren vacíos en el registro si la operación ya existe (evitando duplicar filas e inyectar valores ficticios).
+
+**Archivo: Services/admin.js**
+- **Líneas 1505-1556:** Modificado el manejador `handleAddOrUpdateCut` administrativo con el mismo bloque de completación progresiva e higiene de datos de registro para mantener consistencia absoluta entre microservicios.
