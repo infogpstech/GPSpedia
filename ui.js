@@ -15,6 +15,16 @@ export function cleanColaboradorName(name) {
     return name.replace(/\s*\[OP-[a-zA-Z0-9_-]+\]/gi, '').trim();
 }
 
+export function isNoRecomendadoValue(val) {
+    if (!val) return false;
+    const clean = val.toLowerCase()
+                     .normalize("NFD")
+                     .replace(/[\u0300-\u036f]/g, "")
+                     .replace(/[-_]/g, ' ')
+                     .trim();
+    return clean === 'no recomendado';
+}
+
 // Constants for optimized image loading
 export const IMG_SIZE_SMALL = 300;   // Cards and thumbnails
 export const IMG_SIZE_MEDIUM = 800;  // Modal details
@@ -1727,7 +1737,11 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     if (recommendedCut) {
         const recommendedSection = document.createElement('div');
         const title = document.createElement('h4');
-        title.innerHTML = `Corte Recomendado <span style="font-weight:normal; color: var(--text-medium);">(Votos: ${recommendedCut.util})</span>`;
+        if (isNoRecomendadoValue(recommendedCut.tipo)) {
+            title.innerHTML = `Tipo de Corte`;
+        } else {
+            title.innerHTML = `Corte Recomendado <span style="font-weight:normal; color: var(--text-medium);">(Votos: ${recommendedCut.util})</span>`;
+        }
         recommendedSection.appendChild(title);
         // El corte recomendado se carga de inmediato (isLazy = false)
         renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false);
@@ -2163,13 +2177,17 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         container.appendChild(editCutsWrapper);
     } else {
         const contentP = document.createElement('p');
-        contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
-                            <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
-                            <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
+        if (isNoRecomendadoValue(cutData.tipo)) {
+            contentP.innerHTML = `<strong>Tipo de Corte:</strong> No recomendado`;
+        } else {
+            contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
+                                <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
+                                <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
+        }
         container.appendChild(contentP);
     }
 
-    if (inEditMode || cutData.img) {
+    if (inEditMode || (cutData.img && !isNoRecomendadoValue(cutData.tipo))) {
         const imgContainer = document.createElement('div');
         imgContainer.className = 'image-container-with-feedback';
 
@@ -2296,35 +2314,37 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         container.appendChild(imgContainer);
     }
 
-    const relayContainer = document.createElement('p');
-    const configRelay = cutData.configRelay;
+    if (inEditMode || !isNoRecomendadoValue(cutData.tipo)) {
+        const relayContainer = document.createElement('p');
+        const configRelay = cutData.configRelay;
 
-    if (!configRelay || String(configRelay).toLowerCase() === 'sin relay') {
-        relayContainer.innerHTML = `<strong>Configuración de Relay:</strong> Sin Relay`;
-    } else {
-        relayContainer.innerHTML = `<strong>Configuración de Relay: </strong>`;
-        const relayButton = document.createElement('button');
-        relayButton.textContent = configRelay;
-        relayButton.className = 'btn-link';
-        relayButton.onclick = () => {
-            if (inEditMode) return; // Bloquear en modo edición In-Modal
-            const relayInfo = datosRelay.find(r => r.configuracion === configRelay);
-            if (relayInfo) {
-                renderRelayInfoModal(relayInfo);
-            } else {
-                alert('No se encontraron detalles para esta configuración de relay.');
-            }
-        };
-        relayContainer.appendChild(relayButton);
-    }
-    container.appendChild(relayContainer);
+        if (!configRelay || String(configRelay).toLowerCase() === 'sin relay') {
+            relayContainer.innerHTML = `<strong>Configuración de Relay:</strong> Sin Relay`;
+        } else {
+            relayContainer.innerHTML = `<strong>Configuración de Relay: </strong>`;
+            const relayButton = document.createElement('button');
+            relayButton.textContent = configRelay;
+            relayButton.className = 'btn-link';
+            relayButton.onclick = () => {
+                if (inEditMode) return; // Bloquear en modo edición In-Modal
+                const relayInfo = datosRelay.find(r => r.configuracion === configRelay);
+                if (relayInfo) {
+                    renderRelayInfoModal(relayInfo);
+                } else {
+                    alert('No se encontraron detalles para esta configuración de relay.');
+                }
+            };
+            relayContainer.appendChild(relayButton);
+        }
+        container.appendChild(relayContainer);
 
-    if (cutData.colaborador) {
-        const colabP = document.createElement('p');
-        // Comentario: Se añade una clase para un estilo dedicado y robusto desde style.css
-        colabP.className = "colaborador-info";
-        colabP.innerHTML = `Aportado por: <strong>${cleanColaboradorName(cutData.colaborador)}</strong>`;
-        container.appendChild(colabP);
+        if (cutData.colaborador && !inEditMode) {
+            const colabP = document.createElement('p');
+            // Comentario: Se añade una clase para un estilo dedicado y robusto desde style.css
+            colabP.className = "colaborador-info";
+            colabP.innerHTML = `Aportado por: <strong>${cleanColaboradorName(cutData.colaborador)}</strong>`;
+            container.appendChild(colabP);
+        }
     }
 }
 
