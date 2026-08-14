@@ -7,12 +7,12 @@
 export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
     AUTH:     "https://script.google.com/macros/s/AKfycbwATstMSSnuYZMeGEjI7Q5cznO6kA8rqLo7zNZLmu_f29qwcyt4Fucn5VIBdB9tMoRg/exec",
-    CATALOG:  "https://script.google.com/macros/s/AKfycby0OKxNJHuiV-cLR2Q_kgwBmkP1-VK6yEM1hXUtZcKMhKl85tMUi9h0M9DAE4p-9Axcdw/exec",
-    WRITE:    "https://script.google.com/macros/s/AKfycbzMY5szTQyUUBsoFg5q2UpE3q0Zc9CJHpkIxL7KhoOtCEECiobPZv6MAiCIrbyY1S-J/exec",
+    CATALOG:  "https://script.google.com/macros/s/AKfycbzZ3dBoUuYquNYxYjAZJgPhj11g9r1chLFEJna9_6V9Y2-QZ0_3NsINtHvIYe29LHcZyQ/exec",
+    WRITE:    "https://script.google.com/macros/s/AKfycbzn0Pid4ztnekMq5I8YW03tCSGdd67QPlsN1HQhhqkp1qbJRiOnrEl_JIjGJ66MePcK/exec",
     USERS:    "https://script.google.com/macros/s/AKfycbxpDSLvKqb2taxKS0PbGqhTPxgO01lJyGsDn1Tgpe4zxZii8QWnvlvj5Xltrn6Vmkf6/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbz3NzT3FPn40VDbc7irIF632xHoeopM0GdnCIim4APAYTzb9KYDjZWDXHHrtzq4atZ70Q/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbyL5vgD0atgXM1Mdf5k9wqhGLpuBjDXBXv_a7BUeitw_Fu9h8UWZOuDpZUCCsCAXXux/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec",
-    ADMIN: "https://script.google.com/macros/s/AKfycbxVN3LeiHSVzexMj63gTI425SzQX4lNDPoRStmc8re9NAuwo1VE44-7KGvyuJoC_VJX/exec"
+    ADMIN: "https://script.google.com/macros/s/AKfycby9nSdXq-KUJBw9p6On-LKUhCISqmg0fXB510JRScu3I5QoiNxsbZRsvABXNcBMQxcO/exec"
 };
 
 export const ACTION_TO_SERVICE_MAP = {
