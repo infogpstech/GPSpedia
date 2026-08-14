@@ -407,6 +407,13 @@
 
         window.addEventListener('online', checkAndRecoverPendingOperation);
 
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible') {
+                console.log("PWA returned to foreground. Checking for pending operations...");
+                checkAndRecoverPendingOperation();
+            }
+        });
+
         // --- INITIALIZATION ---
         document.addEventListener('DOMContentLoaded', init);
 
@@ -860,7 +867,24 @@
 
                 let result;
                 if (checkRes.exists) {
-                    console.log("[PING-PONG][5b] Operación ya detectada en el servidor. Iniciando recuperación...");
+                    console.log("[PING-PONG][5b] Operación ya detectada en el servidor como completada. Recuperando silenciosamente...");
+
+                    try {
+                        localStorage.removeItem('gpsepedia_pending_operation');
+                    } catch (cleanError) {
+                        console.error("No se pudo limpiar localStorage", cleanError);
+                    }
+                    state.opId = null;
+                    state.restoredFiles = { imagenVehiculo: null, imgCorte1: null };
+                    state.selectedVehicleId = checkRes.vehicleId;
+                    if (checkRes.timestamp) {
+                        state.timestamp = checkRes.timestamp;
+                    }
+
+                    console.log(`[PING-PONG][8] Operación recuperada con éxito. ID Vehículo: ${checkRes.vehicleId}. Redirigiendo directamente a Etapa 3.`);
+                    alert("Corte recuperado exitosamente.");
+                    proceedToStage3(checkRes.vehicleId);
+                    return;
                 }
 
                 console.log("[PING-PONG][6] Enviando datos de registro/actualización de corte al servidor (addOrUpdateCut)...");
@@ -905,7 +929,19 @@
                     localStorage.setItem('gpsepedia_pending_operation', JSON.stringify(pendingOp));
                 } catch (err) {}
 
-                alert(`Error al guardar el corte: ${error.message}`);
+                const isNetworkError = !navigator.onLine ||
+                                       (error.message && (
+                                           error.message.toLowerCase().includes("fetch") ||
+                                           error.message.toLowerCase().includes("network") ||
+                                           error.message.toLowerCase().includes("failed to fetch") ||
+                                           error.message.toLowerCase().includes("timeout")
+                                       ));
+
+                if (isNetworkError) {
+                    alert("Se ha detectado una interrupción en la conexión de red o un error de comunicación ('Fail to fetch'). Tu progreso y archivos se han guardado localmente de forma segura en tu dispositivo. El sistema intentará completar y reanudar la operación automáticamente cuando se restablezca la conexión, o bien puedes pulsar 'Continuar' nuevamente para reintentarlo.");
+                } else {
+                    alert(`Error al guardar el corte: ${error.message}`);
+                }
             } finally {
                 console.log("[PING-PONG][9] Finalización de handleStage2Submit: Limpiando cargadores.");
                 toggleLoading(false);
