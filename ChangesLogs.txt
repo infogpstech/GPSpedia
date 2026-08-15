@@ -960,3 +960,8 @@ Archivo: lightbox.js
 Archivo: ui.js
 - Líneas 3270-3293: Actualizado el manejador slideImg.onclick en el carrusel de cables de alimentación para enviar la lista filtrada de imágenes válidas, el índice inicial del cable activo y el callback onSlideChange.
 - Líneas 3370-3386: Actualizado el manejador img.onclick para enviar el contexto de cables al abrir la imagen en lightbox.
+
+CHANGES LOG - 17/08/2026 (DIAGNÓSTICO Y CORRECCIÓN DE CADA DE DATOS DE USUARIOS)
+
+Archivo: api-config.js
+- Línea 12: Se corrigió el endpoint API_ENDPOINTS.USERS con la URL oficial del microservicio Users-SERVICE (`https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec`). Esto resuelve el problema por el cual el cliente llamaba a un despliegue de Write-SERVICE que desconocía la acción 'getUsers'.
