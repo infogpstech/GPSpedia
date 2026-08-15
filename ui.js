@@ -3269,8 +3269,28 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
                 const fileId = activeCable.img.includes('id=') ? activeCable.img.split('id=')[1].split('&')[0] : activeCable.img;
                 setOptimizedImage(slideImg, fileId, IMG_SIZE_MEDIUM);
                 slideImg.onclick = () => {
+                    const validCableImages = sec.cables.filter(c => c.img).map(c => ({
+                        img: c.img,
+                        url: getImageUrl(c.img, IMG_SIZE_LARGE),
+                        label: c.label,
+                        content: c.content
+                    }));
+                    const initialIndex = validCableImages.findIndex(c => c.img === activeCable.img);
                     const highResImgUrl = getImageUrl(activeCable.img, IMG_SIZE_LARGE);
-                    window.abrirLightbox(highResImgUrl, 'lightboxImg');
+
+                    window.abrirLightbox(highResImgUrl, 'lightboxImg', {
+                        cables: validCableImages,
+                        currentIndex: initialIndex >= 0 ? initialIndex : 0,
+                        onSlideChange: (newIndex) => {
+                            const targetCable = validCableImages[newIndex];
+                            if (targetCable) {
+                                const targetSlideIndex = sec.cables.findIndex(c => c.img === targetCable.img);
+                                if (targetSlideIndex >= 0) {
+                                    updateSlide(targetSlideIndex);
+                                }
+                            }
+                        }
+                    });
                 };
             } else {
                 slideImg.style.display = 'none';
@@ -3349,7 +3369,19 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
             img.className = 'img-corte image-with-container';
             img.onclick = () => {
                 const highResImgUrl = getImageUrl(activeImg, IMG_SIZE_LARGE);
-                window.abrirLightbox(highResImgUrl, 'lightboxImg');
+                const validCableImages = (sec.isCarousel && sec.cables) ? sec.cables.filter(c => c.img).map(c => ({
+                    img: c.img,
+                    url: getImageUrl(c.img, IMG_SIZE_LARGE),
+                    label: c.label,
+                    content: c.content
+                })) : null;
+
+                const context = (validCableImages && validCableImages.length > 0) ? {
+                    cables: validCableImages,
+                    currentIndex: 0
+                } : null;
+
+                window.abrirLightbox(highResImgUrl, 'lightboxImg', context);
             };
             imgContainer.appendChild(img);
             panel.appendChild(imgContainer);

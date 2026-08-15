@@ -420,3 +420,13 @@ Cualquier cambio en estas zonas invalidará el commit.
      - **Idempotencia y Reparación:** Implementado un sistema de auto-reparación en el servidor que recupera el registro existente, completa campos faltantes y valida síncronamente el estado de los archivos en Drive, reparándolos si están corruptos, eliminados o en la papelera sin duplicar la fila.
      - **Persistencia y Reanudación:** Diseñado un mecanismo de persistencia temporal del formulario y archivos base64 en localStorage que recupera y reanuda silenciosamente el flujo al restaurarse la conexión (evento `online`), registrarse un evento de visibilidad (`visibilitychange`) o recargarse la app.
      - **Diferenciación de Red:** Implementado un tratamiento diferenciado para fallas de red ("Fail to fetch" o modo offline) mostrando notificaciones especializadas de guardado local.
+
+17. **TÍTULO: Navegación del carrusel de cables de alimentación dentro del lightbox (v2.1.6)**
+    - **ESTADO:** COMPLETADO
+    - **ALCANCE:** index.html, style.css, lightbox.js, ui.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+    - **DESCRIPCIÓN DETALLADA:**
+      - **Objetivo:** Permitir la navegación entre las imágenes de los cables de alimentación registrados dentro del visor Lightbox, manteniendo de forma estricta todas las funcionalidades de zoom y cierre existentes.
+      - **Lightbox:** Extendido `abrirLightbox` para soportar contexto de carrusel de cables e índice inicial. Añadidos los botones semitransparentes de navegación `<` y `>` para escritorio y gestos de deslizamiento horizontal (`swipe`) para móviles/PWA.
+      - **Zoom:** Implementada la detección dinámica `isLightboxZoomed()` que bloquea los gestos de cambio de imagen cuando la imagen está ampliada (`scale > 1.02`), permitiendo desplazar la imagen ampliada. La navegación se reactiva automáticamente al regresar al tamaño normal.
+      - **Evitar Cierres Involuntarios:** Gestionada la bandera `ignoreNextClick` para evitar que los clics generados tras un gesto de deslizamiento cierren el visor.
+      - **Integración:** Actualizada la llamada en `ui.js` para filtrar únicamente los cables registrados con imágenes válidas y pasar el callback de sincronización `onSlideChange` con el carrusel del modal de detalles.

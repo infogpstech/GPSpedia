@@ -1220,6 +1220,51 @@ body.search-active .container {
     transform: scale(1);
 }
 
+/* Botones de navegación del Lightbox */
+.lightbox-nav-btn {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(0, 0, 0, 0.5);
+    color: #ffffff;
+    border: none;
+    border-radius: 50%;
+    width: 44px;
+    height: 44px;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 2210;
+    transition: background 0.2s ease, opacity 0.2s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+    font-size: 1.2rem;
+}
+
+.lightbox-nav-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+}
+
+.lightbox-nav-btn.prev {
+    left: 20px;
+}
+
+.lightbox-nav-btn.next {
+    right: 20px;
+}
+
+@media (max-width: 768px) {
+    .lightbox-nav-btn {
+        display: none !important;
+    }
+}
+
+@media all and (display-mode: standalone) {
+    .lightbox-nav-btn {
+        display: none !important;
+    }
+}
+
 .footer {
     position: fixed !important;
     bottom: 0 !important;

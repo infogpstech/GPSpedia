@@ -101,7 +101,7 @@
    - El cierre manual debe ser consistente con el estado del historial.
 
 3. **Reapertura de Modal:**
-   - Se debe asegurar que al retroceder desde un nivel a otro, si el nivel anterior tenía un modal abierto "automáticamente" (resultado único), este no se vuelva a abrir si ya fue cerrado. La bandera `autoOpen` implementada en v2.1.5 debe preservarse y reforzarse.
+   - Se debe asegurar que al retroceder desde un nivel a otro, si el nivel anterior tenía un modal abierto "automáticamente" (resultado único), este no se vuelva a abrir si ya fue cerrado. La bandera `autoOpen` implementada en v2.1.5 debe preservarse y reinforced.
 
 4. **Navegación Agrupada (Búsqueda):**
    - Al navegar desde resultados de búsqueda hacia niveles internos (ej. modelos de una marca encontrada), se debe registrar cada paso en el historial para permitir el retroceso granular solicitado.
@@ -205,7 +205,7 @@
 
 **Solución Definida:**
 - En `navigation.js` (`filtrarContenido`), si la consulta se vuelve vacía (`!busqueda`), comprobar si se trata de una restauración (`isRestoring`).
-- Si **NO** se trata de una restauración (`!isRestoring`), se llama directamente a `mostrarCategorias()` para limpiar los resultados de búsqueda visuales y mostrar el catálogo, pero **SE CONSERVA** el estado de búsqueda activo (`busqueda_focused` o `busqueda` con query vacía) mediante `history.replaceState({ level, query: "" })`.
+- Si **NO** se trata de una restauración (`!isRestoring`), se llama directamente a `mostrarCategorias()` para limpiar los resultados de búsqueda visuales y mostrar el catálogo, pero **SE CONSERVA** el estado de búsqueda activo (`busqueda_focused` or `busqueda` con query vacía) mediante `history.replaceState({ level, query: "" })`.
 - Esto mantiene el teclado virtual abierto y la clase `search-active` activa de manera fluida, garantizando que el historial del navegador retenga el estado de búsqueda para responder perfectamente a un retroceso del dispositivo.
 - Si **SÍ** se trata de una restauración (`isRestoring`), se llama a `irAPaginaPrincipal(true)` de forma normal para limpiar el input de búsqueda y regresar al estado inicial.
 
@@ -604,7 +604,7 @@ Estrategia de corrección:
 
 ID del hallazgo: H-DIAG-02
 Título: Disparidad de saneamiento e inconsistencia de ID en registro de vehículos en write.js
-Descripción: Al registrar un vehículo nuevo en `Services/write.js` (a diferencia del microservicio `Services/admin.js`), no se realiza el limpiado explícito y reset de la celda de ID de la fila copiada. Esto puede provocar colisiones de IDs redundantes o nulos, impidiendo que el backend devuelva el `vehicleId` recién calculado de manera consistente.
+Descripción: Al registrar un vehículo nuevo en `Services/write.js` (a diferencia del microservicio `Services/admin.js`), no se realiza el limpiado explícito y reset de la celda de ID de la fila copiada. Esto puede provocar colisiones de IDs redundantes o nulos, impidiendo que el backend devuelva el `vehicleId` recién calculated de manera consistente.
 Ubicación:
   - Archivo: `Services/write.js` (Líneas 270-280 aprox.)
 Impacto: Alto
@@ -705,3 +705,30 @@ Estrategia de corrección:
 
 5. **Respaldos**:
    - Se realizarán respaldos de `add_cortes.html`, `Services/write.js`, y `Services/admin.js` antes de cualquier modificación.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - Navegación del carrusel de cables de alimentación dentro del lightbox (16/08/2026)**
+
+**Archivos involucrados:** lightbox.js, ui.js, index.html, style.css.
+
+**Hallazgos de Auditoría:**
+1. **lightbox.js**:
+   - `abrirLightbox(url, imgId)` actualmente solo acepta la URL de una imagen individual y no almacena contexto de carrusel ni lista de imágenes navegables.
+   - Para permitir la navegación entre las imágenes de los cables de alimentación, se debe extender la firma a `abrirLightbox(url, imgId, context)`, donde `context` contendrá `{ cables: [...], currentIndex: number, onSlideChange: function }`.
+   - Se requiere implementar la detección dinámica del estado de zoom mediante `isLightboxZoomed()`, evaluando `window.visualViewport.scale > 1.02` y posibles transformaciones CSS de escala.
+   - En versión móvil/PWA, la navegación debe ser por gestos de deslizamiento horizontal (`touchstart`, `touchmove`, `touchend`).
+   - REQUISITO CRÍTICO DE ZOOM: Cuando `isLightboxZoomed()` sea `true` (imagen ampliada), los gestos horizontales NO deben cambiar de imagen ni interferir con el desplazamiento de la imagen. La navegación mediante gestos solo debe reactivarse cuando la imagen vuelva a su tamaño predeterminado (`scale === 1.0`).
+   - Para evitar cierres involuntarios del Lightbox tras un gesto de deslizamiento, se debe implementar la bandera `ignoreNextClick`.
+
+2. **ui.js**:
+   - En el renderizado del carrusel de cables de alimentación (líneas 3240-3360 aprox.), la interacción de clic en las imágenes de los cables (`slideImg.onclick` e `img.onclick`) invoca `abrirLightbox` pasando solo la URL de alta resolución.
+   - Se debe actualizar esta llamada para filtrar los cables de alimentación registrados que cuentan con imagen válida (`sec.cables.filter(c => c.img)`), determinando el índice del cable seleccionado y enviando la lista y el callback de sincronización `onSlideChange` a `abrirLightbox`.
+
+3. **index.html**:
+   - El contenedor `#lightbox` no dispone de botones de navegación en el marcado.
+   - Se deben agregar los botones semitransparentes `#lightboxPrevBtn` y `#lightboxNextBtn` dentro de `#lightbox`.
+   - El manejo de clics debe delegarse limpiamente desde `lightbox.js` para evitar cierres accidentales o interferencias con el zoom.
+
+4. **style.css**:
+   - Se deben incorporar los estilos para `.lightbox-nav-btn` con posicionamiento absoluto centrado verticalmente, fondo semitransparente, bordes redondeados y sombra.
+   - Se deben aplicar las reglas de media query `@media (max-width: 768px)` y `@media all and (display-mode: standalone)` para ocultar los botones de escritorio en dispositivos móviles/PWA, garantizando que en dichas plataformas la navegación sea exclusivamente táctil.

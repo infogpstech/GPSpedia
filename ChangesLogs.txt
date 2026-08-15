@@ -939,3 +939,24 @@ Archivos modificados:
 
 **Archivo: Services/admin.js**
 - **Líneas 1505-1556:** Modificado el manejador `handleAddOrUpdateCut` administrativo con el mismo bloque de completación progresiva e higiene de datos de registro para mantener consistencia absoluta entre microservicios.
+
+CHANGES LOG - 16/08/2026 (NAVEGACIÓN DEL CARRUSEL DE CABLES DE ALIMENTACIÓN DENTRO DEL LIGHTBOX - VERSIÓN 2.1.6)
+
+Archivo: index.html
+- Líneas 160-164: Añadidos los botones semitransparentes de navegación #lightboxPrevBtn y #lightboxNextBtn dentro de #lightbox, y removido el evento onclick directo para delegar la gestión de clics a lightbox.js.
+
+Archivo: style.css
+- Líneas 1222-1267: Añadidos los estilos para .lightbox-nav-btn con posicionamiento absoluto, sombras, efectos hover y reglas media query para ocultar los botones en móviles (max-width: 768px) y PWA standalone.
+
+Archivo: lightbox.js
+- Líneas 8-16: Definidas las variables de estado del módulo para gestionar el contexto de navegación de cables (currentLightboxContext) y parámetros táctiles.
+- Líneas 22-35: Implementada la función isLightboxZoomed() para determinar si la escala del visualViewport o de la imagen supera 1.02.
+- Líneas 40-52: Implementada la función actualizarBotonesLightbox() para controlar la visibilidad de los botones de navegación según la cantidad de cables.
+- Líneas 57-79: Implementada la función navegarLightbox(direction) para cambiar la imagen del cable en el lightbox y ejecutar el callback onSlideChange.
+- Líneas 84-182: Implementada la función initLightboxEvents() con listeners para clics, botones de escritorio y gestos táctiles (swipe) con verificación estricta de zoom para bloquear la navegación cuando la imagen está ampliada y prevenir cierres accidentales con ignoreNextClick.
+- Líneas 191-218: Extendida la función abrirLightbox para recibir el contexto de navegación con cables e índice inicial.
+- Líneas 223-268: Actualizada la función cerrarLightbox para limpiar el contexto y reiniciar el estado de los botones.
+
+Archivo: ui.js
+- Líneas 3270-3293: Actualizado el manejador slideImg.onclick en el carrusel de cables de alimentación para enviar la lista filtrada de imágenes válidas, el índice inicial del cable activo y el callback onSlideChange.
+- Líneas 3370-3386: Actualizado el manejador img.onclick para enviar el contexto de cables al abrir la imagen en lightbox.
