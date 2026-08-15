@@ -9,7 +9,7 @@ export const API_ENDPOINTS = {
     AUTH:     "https://script.google.com/macros/s/AKfycbwATstMSSnuYZMeGEjI7Q5cznO6kA8rqLo7zNZLmu_f29qwcyt4Fucn5VIBdB9tMoRg/exec",
     CATALOG:  "https://script.google.com/macros/s/AKfycbzZ3dBoUuYquNYxYjAZJgPhj11g9r1chLFEJna9_6V9Y2-QZ0_3NsINtHvIYe29LHcZyQ/exec",
     WRITE:    "https://script.google.com/macros/s/AKfycbzPY2hPB6zxWm91NTeiVckJmn9H-Fcm21iRYUiieXA_r3GxkYOop4XKUpB2fSsVFaKJ/exec",
-    USERS:    "https://script.google.com/macros/s/AKfycbxpDSLvKqb2taxKS0PbGqhTPxgO01lJyGsDn1Tgpe4zxZii8QWnvlvj5Xltrn6Vmkf6/exec",
+    USERS:    "https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec",
     FEEDBACK: "https://script.google.com/macros/s/AKfycbyL5vgD0atgXM1Mdf5k9wqhGLpuBjDXBXv_a7BUeitw_Fu9h8UWZOuDpZUCCsCAXXux/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec",
     ADMIN: "https://script.google.com/macros/s/AKfycby5WAIH8prr6GYb36CntPT4FYg3a7VGT3SpVWIKIokQyVoHo-ufhTWSjx2L4MwOEv5b/exec"
