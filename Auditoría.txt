@@ -732,3 +732,22 @@ Estrategia de corrección:
 4. **style.css**:
    - Se deben incorporar los estilos para `.lightbox-nav-btn` con posicionamiento absoluto centrado verticalmente, fondo semitransparente, bordes redondeados y sombra.
    - Se deben aplicar las reglas de media query `@media (max-width: 768px)` y `@media all and (display-mode: standalone)` para ocultar los botones de escritorio en dispositivos móviles/PWA, garantizando que en dichas plataformas la navegación sea exclusivamente táctil.
+
+--------------------------------------------------
+**AUDITORÍA TÉCNICA - Diagnóstico y corrección de la acción 'getUsers' desconocida (17/08/2026)**
+
+**Archivos involucrados:** api-config.js, Services/users.js, users.html.
+
+**Hallazgos de Auditoría:**
+1. **api-config.js**:
+   - En `ACTION_TO_SERVICE_MAP`, las acciones relativas a la administración de usuarios (`getUsers`, `createUser`, `updateUser`, `deleteUser`, `changePassword`, `updateProfile`) están mapeadas al servicio `USERS`.
+   - Sin embargo, en `API_ENDPOINTS.USERS`, la URL asignada (`https://script.google.com/macros/s/AKfycbxpDSLvKqb2taxKS0PbGqhTPxgO01lJyGsDn1Tgpe4zxZii8QWnvlvj5Xltrn6Vmkf6/exec`) corresponde en realidad a un despliegue de `Write-SERVICE` (`GPSpedia Write-SERVICE v2.0`).
+   - Al realizar una petición POST con `action: 'getUsers'` hacia este endpoint, el despachador `doPost` de `Write-SERVICE` (ubicado en `Services/write.js`) evalúa la acción `getUsers`, no la encuentra registrada en sus casos de `switch`, y lanza la excepción: `La acción 'getUsers' es desconocida.`
+
+2. **Services/users.js**:
+   - El archivo `Services/users.js` sí contiene la definición adecuada de `getUsers` y de `handleGetUsers(payload)`, así como el control de privilegios RBAC correspondiente (`['Desarrollador', 'Gefe', 'Jefe', 'Supervisor']`).
+   - La acción `getUsers` existe y está correctamente implementada en el código del microservicio `users.js`.
+
+3. **Estrategia de Corrección**:
+   - Para resolver la discrepancia de forma definitiva, se requiere actualizar `API_ENDPOINTS.USERS` en `api-config.js` apuntando a la URL del despliegue activo del servicio `Users-SERVICE`.
+   - Se creará primero un respaldo de `api-config.js` previo a la modificación, se verificará la respuesta tras la corrección y se validará la integridad y seguridad del servicio.

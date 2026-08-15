@@ -208,6 +208,15 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+18. **TÍTULO: Diagnóstico y corrección de la acción 'getUsers' desconocida al cargar datos de usuarios (v2.1.6)**
+    - **ESTADO:** COMPLETADO
+    - **ALCANCE:** api-config.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+    - **DESCRIPCIÓN DETALLADA:**
+      - **Problema:** Al acceder a la lista de administración de usuarios (`users.html`), la aplicación mostraba el error "Error: Ocurrió un error en el servicio.: La acción 'getUsers' es desconocida", impidiendo cargar los usuarios y cuentas.
+      - **Causa Raíz:** `API_ENDPOINTS.USERS` en `api-config.js` estaba configurado con una URL incorrecta que apuntaba a un despliegue del servicio de escritura (`Write-SERVICE`), el cual no maneja la acción `getUsers`.
+      - **Solución:** Se actualizó `API_ENDPOINTS.USERS` en `api-config.js` con la URL oficial correspondiente a `Users-SERVICE` (`https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec`).
+      - **Efecto:** La solicitud `getUsers` es enrutada al microservicio adecuado (`Users-SERVICE`), permitiendo cargar, verificar privilegios y renderizar los usuarios correctamente.
+
 1. **TÍTULO: Actualización de contenido y estilos de modales informativos de GPSpedia (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** index.html, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
