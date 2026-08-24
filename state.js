@@ -1,4 +1,4 @@
-// GPSpedia State Management Module | Version: 2.1.5
+// GPSpedia State Management Module | Version: 2.1.6
 // Responsibilities:
 // - Act as the single source of truth for all application data.
 // - Provide getter and setter functions to manage state mutations.

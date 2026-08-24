@@ -1,4 +1,4 @@
-// GPSpedia UI Module | Version: 2.1.5
+// GPSpedia UI Module | Version: 2.1.6
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
@@ -13,6 +13,16 @@ const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="
 export function cleanColaboradorName(name) {
     if (!name || typeof name !== 'string') return name || '';
     return name.replace(/\s*\[OP-[a-zA-Z0-9_-]+\]/gi, '').trim();
+}
+
+export function isNoRecomendadoValue(val) {
+    if (!val) return false;
+    const clean = val.toLowerCase()
+                     .normalize("NFD")
+                     .replace(/[\u0300-\u036f]/g, "")
+                     .replace(/[-_]/g, ' ')
+                     .trim();
+    return clean === 'no recomendado';
 }
 
 // Constants for optimized image loading
@@ -1727,7 +1737,11 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     if (recommendedCut) {
         const recommendedSection = document.createElement('div');
         const title = document.createElement('h4');
-        title.innerHTML = `Corte Recomendado <span style="font-weight:normal; color: var(--text-medium);">(Votos: ${recommendedCut.util})</span>`;
+        if (isNoRecomendadoValue(recommendedCut.tipo)) {
+            title.innerHTML = `Tipo de Corte`;
+        } else {
+            title.innerHTML = `Corte Recomendado <span style="font-weight:normal; color: var(--text-medium);">(Votos: ${recommendedCut.util})</span>`;
+        }
         recommendedSection.appendChild(title);
         // El corte recomendado se carga de inmediato (isLazy = false)
         renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false);
@@ -1744,13 +1758,24 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             data: corte
         })),
         { title: 'Apertura', content: activeItem.apertura, img: activeItem.imgApertura, colaborador: activeItem.colaboradorApertura },
-        { title: 'Cables de Alimentación', content: activeItem.cableAlimen, img: activeItem.imgCableAlimen, colaborador: activeItem.colaboradorAlimen },
+        {
+            title: 'Cables de Alimentación',
+            isCarousel: true,
+            cables: [
+                { label: 'Cable 1', content: activeItem.cableAlimen, img: activeItem.imgCableAlimen },
+                { label: 'Cable 2', content: activeItem.cableAlimen2, img: activeItem.imgCableAlimen2 },
+                { label: 'Cable 3', content: activeItem.cableAlimen3, img: activeItem.imgCableAlimen3 }
+            ].filter(c => c.content || c.img),
+            content: activeItem.cableAlimen,
+            img: activeItem.imgCableAlimen,
+            colaborador: activeItem.colaboradorAlimen
+        },
         { title: 'Vídeo Guía de Desarme', Video: activeItem.Video }
     ];
 
     otherSections.forEach(sec => {
         const isSupplementary = sec.title === 'Apertura' || sec.title === 'Cables de Alimentación';
-        const hasContent = sec.isCorte || sec.content || sec.img || sec.Video || (inEditMode && isSupplementary);
+        const hasContent = sec.isCorte || sec.content || sec.img || sec.Video || (sec.isCarousel && sec.cables && sec.cables.length > 0) || (inEditMode && isSupplementary);
         if (hasContent && sec.title) {
             createAccordionSection(accordionContainer, sec.title, sec, false, datosRelay, activeItem.id);
         }
@@ -2152,13 +2177,17 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         container.appendChild(editCutsWrapper);
     } else {
         const contentP = document.createElement('p');
-        contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
-                            <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
-                            <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
+        if (isNoRecomendadoValue(cutData.tipo)) {
+            contentP.innerHTML = `<strong>Tipo de Corte:</strong> No recomendado`;
+        } else {
+            contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
+                                <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
+                                <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
+        }
         container.appendChild(contentP);
     }
 
-    if (inEditMode || cutData.img) {
+    if (inEditMode || (cutData.img && !isNoRecomendadoValue(cutData.tipo))) {
         const imgContainer = document.createElement('div');
         imgContainer.className = 'image-container-with-feedback';
 
@@ -2285,35 +2314,37 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         container.appendChild(imgContainer);
     }
 
-    const relayContainer = document.createElement('p');
-    const configRelay = cutData.configRelay;
+    if (inEditMode || !isNoRecomendadoValue(cutData.tipo)) {
+        const relayContainer = document.createElement('p');
+        const configRelay = cutData.configRelay;
 
-    if (!configRelay || String(configRelay).toLowerCase() === 'sin relay') {
-        relayContainer.innerHTML = `<strong>Configuración de Relay:</strong> Sin Relay`;
-    } else {
-        relayContainer.innerHTML = `<strong>Configuración de Relay: </strong>`;
-        const relayButton = document.createElement('button');
-        relayButton.textContent = configRelay;
-        relayButton.className = 'btn-link';
-        relayButton.onclick = () => {
-            if (inEditMode) return; // Bloquear en modo edición In-Modal
-            const relayInfo = datosRelay.find(r => r.configuracion === configRelay);
-            if (relayInfo) {
-                renderRelayInfoModal(relayInfo);
-            } else {
-                alert('No se encontraron detalles para esta configuración de relay.');
-            }
-        };
-        relayContainer.appendChild(relayButton);
-    }
-    container.appendChild(relayContainer);
+        if (!configRelay || String(configRelay).toLowerCase() === 'sin relay') {
+            relayContainer.innerHTML = `<strong>Configuración de Relay:</strong> Sin Relay`;
+        } else {
+            relayContainer.innerHTML = `<strong>Configuración de Relay: </strong>`;
+            const relayButton = document.createElement('button');
+            relayButton.textContent = configRelay;
+            relayButton.className = 'btn-link';
+            relayButton.onclick = () => {
+                if (inEditMode) return; // Bloquear en modo edición In-Modal
+                const relayInfo = datosRelay.find(r => r.configuracion === configRelay);
+                if (relayInfo) {
+                    renderRelayInfoModal(relayInfo);
+                } else {
+                    alert('No se encontraron detalles para esta configuración de relay.');
+                }
+            };
+            relayContainer.appendChild(relayButton);
+        }
+        container.appendChild(relayContainer);
 
-    if (cutData.colaborador) {
-        const colabP = document.createElement('p');
-        // Comentario: Se añade una clase para un estilo dedicado y robusto desde style.css
-        colabP.className = "colaborador-info";
-        colabP.innerHTML = `Aportado por: <strong>${cleanColaboradorName(cutData.colaborador)}</strong>`;
-        container.appendChild(colabP);
+        if (cutData.colaborador && !inEditMode) {
+            const colabP = document.createElement('p');
+            // Comentario: Se añade una clase para un estilo dedicado y robusto desde style.css
+            colabP.className = "colaborador-info";
+            colabP.innerHTML = `Aportado por: <strong>${cleanColaboradorName(cutData.colaborador)}</strong>`;
+            container.appendChild(colabP);
+        }
     }
 }
 
@@ -3137,52 +3168,220 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
         // Los cortes dentro de acordeones son diferidos (isLazy = true)
         renderCutContent(panel, sec.data, datosRelay, vehicleId, true);
     } else if (inEditMode && (title === 'Apertura' || title === 'Cables de Alimentación')) {
-        const fieldName = title === 'Apertura' ? 'apertura' : 'cableAlimen';
-        const imgFieldName = title === 'Apertura' ? 'imgApertura' : 'imgCableAlimen';
-        const currentValue = title === 'Apertura' ? editedItemBuffer.apertura : editedItemBuffer.cableAlimen;
-        const currentImg = title === 'Apertura' ? editedItemBuffer.imgApertura : editedItemBuffer.imgCableAlimen;
+        if (title === 'Apertura') {
+            const fieldName = 'apertura';
+            const imgFieldName = 'imgApertura';
+            const currentValue = editedItemBuffer.apertura;
+            const currentImg = editedItemBuffer.imgApertura;
 
-        const label = document.createElement('label');
-        label.textContent = `Detalle de ${title}:`;
-        label.style.cssText = "display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85em;";
-        const textarea = document.createElement('textarea');
-        textarea.rows = 3;
-        textarea.value = currentValue || "";
-        textarea.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;";
-        textarea.onblur = async () => {
-            if (textarea.value.trim() !== editedItemBuffer[fieldName]) {
-                editedItemBuffer[fieldName] = textarea.value.trim();
-                await saveFieldSilently(vehicleId, fieldName, textarea.value.trim());
-            }
-        };
-        panel.appendChild(label);
-        panel.appendChild(textarea);
+            const label = document.createElement('label');
+            label.textContent = `Detalle de ${title}:`;
+            label.style.cssText = "display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85em;";
+            const textarea = document.createElement('textarea');
+            textarea.rows = 3;
+            textarea.value = currentValue || "";
+            textarea.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;";
+            textarea.onblur = async () => {
+                if (textarea.value.trim() !== editedItemBuffer[fieldName]) {
+                    editedItemBuffer[fieldName] = textarea.value.trim();
+                    await saveFieldSilently(vehicleId, fieldName, textarea.value.trim());
+                }
+            };
+            panel.appendChild(label);
+            panel.appendChild(textarea);
+
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'image-container-with-feedback';
+            imgContainer.style.marginTop = "10px";
+            const img = document.createElement("img");
+            setOptimizedImage(img, currentImg || null, IMG_SIZE_MEDIUM);
+            img.className = 'img-corte image-with-container';
+            convertImageToEditable(img, vehicleId, imgFieldName);
+            imgContainer.appendChild(img);
+            panel.appendChild(imgContainer);
+        } else {
+            // Cables de Alimentación: Mostrar las 3 posiciones
+            const cableFields = [
+                { label: 'Cable de Alimentación 1', textKey: 'cableAlimen', imgKey: 'imgCableAlimen' },
+                { label: 'Cable de Alimentación 2', textKey: 'cableAlimen2', imgKey: 'imgCableAlimen2' },
+                { label: 'Cable de Alimentación 3', textKey: 'cableAlimen3', imgKey: 'imgCableAlimen3' }
+            ];
+
+            cableFields.forEach(field => {
+                const fieldLabel = document.createElement('label');
+                fieldLabel.textContent = `${field.label}:`;
+                fieldLabel.style.cssText = "display: block; font-weight: bold; margin-top: 15px; margin-bottom: 5px; font-size: 0.85em;";
+
+                const textarea = document.createElement('textarea');
+                textarea.rows = 2;
+                textarea.value = editedItemBuffer[field.textKey] || "";
+                textarea.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;";
+                textarea.onblur = async () => {
+                    if (textarea.value.trim() !== editedItemBuffer[field.textKey]) {
+                        editedItemBuffer[field.textKey] = textarea.value.trim();
+                        await saveFieldSilently(vehicleId, field.textKey, textarea.value.trim());
+                    }
+                };
+                panel.appendChild(fieldLabel);
+                panel.appendChild(textarea);
+
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'image-container-with-feedback';
+                imgContainer.style.marginTop = "5px";
+                imgContainer.style.marginBottom = "10px";
+                const img = document.createElement("img");
+                setOptimizedImage(img, editedItemBuffer[field.imgKey] || null, IMG_SIZE_MEDIUM);
+                img.className = 'img-corte image-with-container';
+                convertImageToEditable(img, vehicleId, field.imgKey);
+                imgContainer.appendChild(img);
+                panel.appendChild(imgContainer);
+            });
+        }
+    } else if (sec.isCarousel && sec.cables && sec.cables.length > 1) {
+        // Renderizar un carrusel responsivo para múltiples cables de alimentación
+        const carouselContainer = document.createElement('div');
+        carouselContainer.className = 'cable-carousel-container';
+        carouselContainer.style.cssText = "position: relative; width: 100%; min-height: 100px;";
+
+        const slideText = document.createElement('p');
+        slideText.className = 'cable-carousel-text';
+        slideText.style.cssText = "margin-bottom: 10px; font-weight: 500;";
 
         const imgContainer = document.createElement('div');
         imgContainer.className = 'image-container-with-feedback';
-        imgContainer.style.marginTop = "10px";
-        const img = document.createElement("img");
-        setOptimizedImage(img, currentImg || null, IMG_SIZE_MEDIUM);
-        img.className = 'img-corte image-with-container';
-        convertImageToEditable(img, vehicleId, imgFieldName);
-        imgContainer.appendChild(img);
-        panel.appendChild(imgContainer);
+        const slideImg = document.createElement('img');
+        slideImg.className = 'img-corte image-with-container';
+        imgContainer.appendChild(slideImg);
+
+        carouselContainer.appendChild(slideText);
+        carouselContainer.appendChild(imgContainer);
+
+        let currentSlideIndex = 0;
+        const totalSlides = sec.cables.length;
+
+        function updateSlide(index) {
+            currentSlideIndex = (index + totalSlides) % totalSlides;
+            const activeCable = sec.cables[currentSlideIndex];
+            slideText.innerHTML = `<strong>${activeCable.label}:</strong> ${activeCable.content || "Sin descripción"}`;
+
+            if (activeCable.img) {
+                slideImg.style.display = 'block';
+                const fileId = activeCable.img.includes('id=') ? activeCable.img.split('id=')[1].split('&')[0] : activeCable.img;
+                setOptimizedImage(slideImg, fileId, IMG_SIZE_MEDIUM);
+                slideImg.onclick = () => {
+                    const validCableImages = sec.cables.filter(c => c.img).map(c => ({
+                        img: c.img,
+                        url: getImageUrl(c.img, IMG_SIZE_LARGE),
+                        label: c.label,
+                        content: c.content
+                    }));
+                    const initialIndex = validCableImages.findIndex(c => c.img === activeCable.img);
+                    const highResImgUrl = getImageUrl(activeCable.img, IMG_SIZE_LARGE);
+
+                    window.abrirLightbox(highResImgUrl, 'lightboxImg', {
+                        cables: validCableImages,
+                        currentIndex: initialIndex >= 0 ? initialIndex : 0,
+                        onSlideChange: (newIndex) => {
+                            const targetCable = validCableImages[newIndex];
+                            if (targetCable) {
+                                const targetSlideIndex = sec.cables.findIndex(c => c.img === targetCable.img);
+                                if (targetSlideIndex >= 0) {
+                                    updateSlide(targetSlideIndex);
+                                }
+                            }
+                        }
+                    });
+                };
+            } else {
+                slideImg.style.display = 'none';
+            }
+        }
+
+        function adjustPanelHeight() {
+            if (btn.classList.contains('active')) {
+                setTimeout(() => {
+                    panel.style.maxHeight = panel.scrollHeight + "px";
+                }, 50);
+            }
+        }
+
+        // Botones de navegación para escritorio
+        const prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.className = 'cable-carousel-btn prev';
+        prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        prevBtn.onclick = (e) => {
+            e.stopPropagation();
+            updateSlide(currentSlideIndex - 1);
+            adjustPanelHeight();
+        };
+
+        const nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.className = 'cable-carousel-btn next';
+        nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        nextBtn.onclick = (e) => {
+            e.stopPropagation();
+            updateSlide(currentSlideIndex + 1);
+            adjustPanelHeight();
+        };
+
+        carouselContainer.appendChild(prevBtn);
+        carouselContainer.appendChild(nextBtn);
+        panel.appendChild(carouselContainer);
+
+        // Soporte de gestos táctiles (swipe) para móvil y PWA
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        carouselContainer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        carouselContainer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            const threshold = 50;
+            if (touchEndX < touchStartX - threshold) {
+                updateSlide(currentSlideIndex + 1);
+                adjustPanelHeight();
+            } else if (touchEndX > touchStartX + threshold) {
+                updateSlide(currentSlideIndex - 1);
+                adjustPanelHeight();
+            }
+        }, { passive: true });
+
+        updateSlide(0);
     } else {
-        if (sec.content) {
+        const activeContent = (sec.isCarousel && sec.cables && sec.cables.length === 1) ? sec.cables[0].content : sec.content;
+        const activeImg = (sec.isCarousel && sec.cables && sec.cables.length === 1) ? sec.cables[0].img : sec.img;
+
+        if (activeContent) {
             const contentP = document.createElement('p');
-            contentP.innerHTML = sec.content;
+            contentP.innerHTML = activeContent;
             panel.appendChild(contentP);
         }
 
-        if (sec.img) {
+        if (activeImg) {
             const imgContainer = document.createElement('div');
             imgContainer.className = 'image-container-with-feedback';
             const img = document.createElement("img");
-            img.dataset.src = getImageUrl(sec.img, IMG_SIZE_MEDIUM);
+            img.dataset.src = getImageUrl(activeImg, IMG_SIZE_MEDIUM);
             img.className = 'img-corte image-with-container';
             img.onclick = () => {
-                const highResImgUrl = getImageUrl(sec.img, IMG_SIZE_LARGE);
-                window.abrirLightbox(highResImgUrl, 'lightboxImg');
+                const highResImgUrl = getImageUrl(activeImg, IMG_SIZE_LARGE);
+                const validCableImages = (sec.isCarousel && sec.cables) ? sec.cables.filter(c => c.img).map(c => ({
+                    img: c.img,
+                    url: getImageUrl(c.img, IMG_SIZE_LARGE),
+                    label: c.label,
+                    content: c.content
+                })) : null;
+
+                const context = (validCableImages && validCableImages.length > 0) ? {
+                    cables: validCableImages,
+                    currentIndex: 0
+                } : null;
+
+                window.abrirLightbox(highResImgUrl, 'lightboxImg', context);
             };
             imgContainer.appendChild(img);
             panel.appendChild(imgContainer);
