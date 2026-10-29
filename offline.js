@@ -104,8 +104,48 @@ async function performOp(storeName, mode, callback) {
 
 // --- CATALOG PERSISTENCE ---
 
-export async function saveCatalog(data) {
-    return performOp('catalog', 'readwrite', (store) => store.put(data, 'current'));
+export async function saveCatalog(newData) {
+    if (!newData) return null;
+    try {
+        const existingData = await getCatalog();
+        let finalData = newData;
+
+        if (existingData && existingData.cortes && Array.isArray(existingData.cortes) && Array.isArray(newData.cortes)) {
+            // Fusión incremental del catálogo para preservar datos locales
+            const cortesMap = new Map(existingData.cortes.map(c => [String(c.id), c]));
+            newData.cortes.forEach(item => {
+                cortesMap.set(String(item.id), item);
+            });
+
+            const tutorialesMap = new Map((existingData.tutoriales || []).map(t => [String(t.id || t.titulo), t]));
+            (newData.tutoriales || []).forEach(t => tutorialesMap.set(String(t.id || t.titulo), t));
+
+            const relayMap = new Map((existingData.relay || []).map(r => [String(r.id || r.nombre), r]));
+            (newData.relay || []).forEach(r => relayMap.set(String(r.id || r.nombre), r));
+
+            finalData = {
+                ...existingData,
+                ...newData,
+                cortes: Array.from(cortesMap.values()),
+                tutoriales: Array.from(tutorialesMap.values()),
+                relay: Array.from(relayMap.values()),
+                lastUpdated: Date.now()
+            };
+        }
+
+        const res = await performOp('catalog', 'readwrite', (store) => store.put(finalData, 'current'));
+
+        // Pre-cargar miniaturas de los vehículos recientes en segundo plano
+        if (finalData.cortes && finalData.cortes.length > 0) {
+            const recentCortes = finalData.cortes.slice(-15);
+            recentCortes.forEach(item => cacheItemImages(item));
+        }
+
+        return res;
+    } catch (e) {
+        console.warn("Error en saveCatalog incremental:", e);
+        return performOp('catalog', 'readwrite', (store) => store.put(newData, 'current'));
+    }
 }
 
 export async function getCatalog() {
@@ -147,12 +187,36 @@ export async function getValidationResponse(vehicleId) {
 // --- VIEWED ITEMS ---
 
 export async function saveViewedItem(item) {
+    if (!item || item.id === undefined || item.id === null) return null;
     const entry = {
         id: String(item.id),
         timestamp: Date.now(),
         data: item
     };
-    return performOp('viewedItems', 'readwrite', (store) => store.put(entry));
+    const res = await performOp('viewedItems', 'readwrite', (store) => store.put(entry));
+
+    // Precargar proactivamente todas las imágenes asociadas al vehículo visto
+    cacheItemImages(item).catch(err => console.warn("Error precargando imágenes de visto recientemente:", err));
+    return res;
+}
+
+/**
+ * Precarga y almacena en IndexedDB todas las imágenes de un registro de vehículo.
+ */
+export async function cacheItemImages(item) {
+    if (!item) return;
+    const fieldsToCache = [
+        item.imagenVehiculo,
+        item.imgCorte1, item.imgCorte2, item.imgCorte3,
+        item.imgCableAlimen, item.imgCableAlimen2, item.imgCableAlimen3,
+        item.imagenRelay, item.imagen, item.Imagen
+    ];
+
+    for (const field of fieldsToCache) {
+        if (field && typeof field === 'string' && !field.startsWith('blob:') && !field.includes('placehold.co')) {
+            compressAndStoreThumbnail(field, field).catch(() => {});
+        }
+    }
 }
 
 export async function getViewedItems(limit = 20) {

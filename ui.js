@@ -217,6 +217,9 @@ const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-
  * @param {string} fileId - El ID o URL de la imagen.
  * @param {number} size - El tamaño solicitado para la imagen.
  */
+// Caché local en memoria RAM para URLs de objeto (0ms carga sincrónica)
+const memoryUrlCache = new Map();
+
 export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMALL) {
     if (!fileId) {
         imgElement.src = getImageUrl(null);
@@ -236,39 +239,43 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
         }
     };
 
-    // Phase 3.4: Priorizar siempre la red si el navegador está online para evitar degradación de calidad (transparencias, resolución)
-    const isOnline = window.navigator && window.navigator.onLine !== false;
-    const remoteUrl = getImageUrl(fileId, size);
+    const cleanId = typeof fileId === 'string' ? fileId.trim() : fileId;
 
-    if (isOnline) {
-        imgElement.src = remoteUrl;
-
-        // Intentar guardar en caché silenciosamente para uso offline futuro si es una imagen de Drive
-        if (fileId && typeof fileId === 'string' && !fileId.startsWith('blob:') && !fileId.includes('placehold.co')) {
-            offline.compressAndStoreThumbnail(remoteUrl, fileId).catch(() => {});
-        }
+    // 1. Memoria RAM sincrónica (0ms latencia)
+    if (memoryUrlCache.has(cleanId)) {
+        imgElement.src = memoryUrlCache.get(cleanId);
         return;
     }
 
-    // MODO OFFLINE: Usar caché local como fallback prioritario
+    // 2. Estrategia Local-First: Recuperar desde IndexedDB tanto online como offline
     try {
-        // 1. Intentar obtener del caché local (IndexedDB) con un timeout agresivo
-        const blob = await Promise.race([
-            offline.getThumbnail(fileId),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("DB Timeout")), 1000))
+        const cachedBlob = await Promise.race([
+            offline.getThumbnail(cleanId),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("DB Timeout")), 800))
         ]).catch(() => null);
 
-        if (blob) {
-            imgElement.src = URL.createObjectURL(blob);
+        if (cachedBlob) {
+            const objectUrl = URL.createObjectURL(cachedBlob);
+            memoryUrlCache.set(cleanId, objectUrl);
+            imgElement.src = objectUrl;
             return;
         }
-
-        // 2. Si no está en caché local, intentar red (como último recurso, aunque estemos marcados como offline)
-        imgElement.src = remoteUrl;
     } catch (e) {
-        console.warn("Error en setOptimizedImage:", e);
-        // Fallback final a la URL directa de Drive
-        imgElement.src = getImageUrl(fileId, size);
+        // Continuar a red si falla la lectura local
+    }
+
+    // 3. Cargar desde la red (Google Drive CDN) si no está presente en el caché local
+    const remoteUrl = getImageUrl(cleanId, size);
+    imgElement.src = remoteUrl;
+
+    // 4. Compresión y persistencia en segundo plano para uso offline/futuro
+    if (cleanId && typeof cleanId === 'string' && !cleanId.startsWith('blob:') && !cleanId.includes('placehold.co')) {
+        offline.compressAndStoreThumbnail(remoteUrl, cleanId).then(blob => {
+            if (blob) {
+                const objectUrl = URL.createObjectURL(blob);
+                memoryUrlCache.set(cleanId, objectUrl);
+            }
+        }).catch(() => {});
     }
 }
 
