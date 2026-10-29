@@ -727,7 +727,7 @@ body.search-active .container {
     object-fit: contain;
     display: block;
     border-radius: 0;
-    background-color: var(--card-bg);
+    background-color: transparent;
 }
 
 .dark-mode .card:not(.brand-logo-item) img,

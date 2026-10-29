@@ -177,7 +177,7 @@ export async function compressAndStoreThumbnail(url, rawFileId) {
     // Phase 3.3: Usar URL de lh3 para evitar problemas de CORS y redirecciones en el fetch.
     // Solo si el fileId parece ser un ID real de Google Drive.
     const fetchUrl = (fileId.length > 20 && !fileId.includes('/') && !fileId.includes('http'))
-        ? `https://lh3.googleusercontent.com/d/${fileId}=s400`
+        ? `https://lh3.googleusercontent.com/d/${fileId}`
         : url;
 
     if (!fetchUrl || fetchUrl.includes('placehold.co')) return null;

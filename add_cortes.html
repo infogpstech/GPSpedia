@@ -654,7 +654,7 @@
             const match = url.match(/id=([^&]+)/);
             const fileId = match ? match[1] : url;
             if (fileId.length > 50 || fileId.includes('/')) return url;
-            return `https://lh3.googleusercontent.com/d/${fileId}=s${size}`;
+            return `https://lh3.googleusercontent.com/d/${fileId}`;
         }
 
         function formatCutInfo(match) {

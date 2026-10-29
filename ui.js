@@ -307,10 +307,8 @@ export function getImageUrl(fileId, size = 400) {
         return placeholder;
     }
 
-    // Optimización de resolución: duplicar tamaño para pantallas Retina si es pequeño
-    const finalSize = (typeof size === 'number' && size < 600) ? size * 2 : size;
-    const sizeParam = typeof finalSize === 'number' ? `w${finalSize}` : finalSize;
-    return `https://lh3.googleusercontent.com/d/${id}=${sizeParam}`;
+    // Evitar parámetros de miniaturas (=w / =s) de Google que convierten PNGs transparentes a JPEG con fondo negro
+    return `https://lh3.googleusercontent.com/d/${id}`;
 }
 
 export function getLogoUrlForMarca(marca, categoria) {
