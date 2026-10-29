@@ -431,10 +431,13 @@ Cualquier cambio en estas zonas invalidará el commit.
       - **Evitar Cierres Involuntarios:** Gestionada la bandera `ignoreNextClick` para evitar que los clics generados tras un gesto de deslizamiento cierren el visor.
       - **Integración:** Actualizada la llamada en `ui.js` para filtrar únicamente los cables registrados con imágenes válidas y pasar el callback de sincronización `onSlideChange` con el carrusel del modal de detalles.
 
-
-18. **TÍTULO: Solución de miniaturas PNG de modelos de vehículos con fondo negro y adaptabilidad a modo oscuro (v2.1.6)**
+18. **TÍTULO: Visualización de miniaturas PNG transparentes en tarjetas de vehículos (v2.1.6)**
     - **ESTADO:** COMPLETADO
-    - **ALCANCE:** ui.js, style.css, add_cortes.html, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+    - **ALCANCE:** ui.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
     - **DESCRIPCIÓN DETALLADA:**
-      - **Preservación de Transparencia PNG:** Se actualizó `getImageUrl` en `ui.js` para consumir las imágenes de Google Drive desde el endpoint CDN directo `https://lh3.googleusercontent.com/d/${id}=${sizeParam}`, asegurando la entrega del archivo PNG original preservando su canal alfa de transparencia nativo en lugar del JPEG rasterizado con fondo negro generado por la miniatura de Drive.
-      - **Adaptabilidad y Tratamiento Visual:** Se agregaron y ajustaron reglas en `style.css` y `add_cortes.html` exclusivamente para miniaturas e imágenes de modelos de vehículos (`.card:not(.brand-logo-item) img`, `.card-img-top`, `.img-vehiculo-modal`, `.match-card-img`, `#imagenVehiculo_preview`). Se implementó integración con `var(--card-bg)` y mezcla en modo oscuro (`body.dark-mode`), previniendo tarjetas de color blanco al activar el modo oscuro.
+      - **Objetivo:** Solucionar el problema de visualización de miniaturas con fondo negro en imágenes PNG transparentes provenientes de Google Drive en las tarjetas de vehículos del catálogo frontend.
+      - **Implementación:**
+        - Se actualizó la función `getImageUrl` en `ui.js` para construir la URL utilizando la CDN directa `https://lh3.googleusercontent.com/d/${id}=${sizeParam}`, permitiendo renderizar nativamente la transparencia del canal alfa en imágenes PNG.
+        - Se configuró la propiedad `background-color: var(--card-bg)` en `.card img` en `style.css` y se añadió `mix-blend-mode: lighten` para el modo oscuro (`body.dark-mode`) específicamente en las tarjetas/miniaturas de vehículos (`.card:not(.brand-logo-item) img`, `.card-img-top`, `.match-card-img`, `#imagenVehiculo_preview`).
+        - Se aseguró que la vista detallada del vehículo (`.img-vehiculo-modal`) permanezca completamente intacta sin contenedores, cajas con fondo o alterations visuales no solicitadas.
+      - **Efecto:** Las imágenes PNG transparentes de los vehículos se muestran de forma limpia en tarjetas en modo claro y oscuro.
