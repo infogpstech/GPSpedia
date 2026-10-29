@@ -719,6 +719,25 @@ body.search-active .container {
     display: block;
     border-radius: 0;
 }
+
+/* Tratamiento visual y adaptabilidad de imágenes de modelos de vehículos */
+.card:not(.brand-logo-item) img,
+.card-img-top,
+.img-vehiculo-modal,
+.match-card-img,
+#imagenVehiculo_preview {
+    background-color: var(--card-bg);
+    transition: background-color 0.3s ease;
+}
+
+body.dark-mode .card:not(.brand-logo-item) img,
+body.dark-mode .card-img-top,
+body.dark-mode .img-vehiculo-modal,
+body.dark-mode .match-card-img,
+body.dark-mode #imagenVehiculo_preview {
+    background-color: var(--card-bg);
+    mix-blend-mode: lighten;
+}
 .overlay {
     position: absolute;
     bottom: 0;

@@ -960,3 +960,15 @@ Archivo: lightbox.js
 Archivo: ui.js
 - Líneas 3270-3293: Actualizado el manejador slideImg.onclick en el carrusel de cables de alimentación para enviar la lista filtrada de imágenes válidas, el índice inicial del cable activo y el callback onSlideChange.
 - Líneas 3370-3386: Actualizado el manejador img.onclick para enviar el contexto de cables al abrir la imagen en lightbox.
+
+
+CHANGES LOG - 29/10/2026 (SOLUCIÓN DE MINIATURAS CON FONDO NEGRO Y ADAPTABILIDAD VISUAL A MODO OSCURO EN MODELOS DE VEHÍCULOS - VERSIÓN 2.1.6)
+
+Archivo: ui.js
+- Línea 313: Actualizada la función getImageUrl para retornar las imágenes de Google Drive utilizando la ruta directa de CDN https://lh3.googleusercontent.com/d/${id}=${sizeParam}, garantizando la entrega del archivo PNG original preservando su canal de transparencia nativo (Content-Type: image/png) en lugar del renderizado JPEG con fondo negro.
+
+Archivo: style.css
+- Líneas 722-740: Añadidos estilos específicos para las imágenes de modelos de vehículos (.card:not(.brand-logo-item) img, .card-img-top, .img-vehiculo-modal, .match-card-img, #imagenVehiculo_preview) estableciendo background-color: var(--card-bg) y adaptación a modo oscuro (body.dark-mode) mediante mix-blend-mode: lighten, asegurando que las tarjetas no se queden de color blanco al activar el tema oscuro.
+
+Archivo: add_cortes.html
+- Línea 91: Actualizado el estilo .match-card-img reemplazando el fondo estático #eee por var(--card-bg, #eee) para mantener coherencia cromática con la tarjeta del vehículo en modo claro y modo oscuro.

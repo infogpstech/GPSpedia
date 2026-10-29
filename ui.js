@@ -310,7 +310,7 @@ export function getImageUrl(fileId, size = 400) {
     // Optimización de resolución: duplicar tamaño para pantallas Retina si es pequeño
     const finalSize = (typeof size === 'number' && size < 600) ? size * 2 : size;
     const sizeParam = typeof finalSize === 'number' ? `w${finalSize}` : finalSize;
-    return `https://drive.google.com/thumbnail?id=${id}&sz=${sizeParam}`;
+    return `https://lh3.googleusercontent.com/d/${id}=${sizeParam}`;
 }
 
 export function getLogoUrlForMarca(marca, categoria) {

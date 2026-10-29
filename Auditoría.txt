@@ -732,3 +732,23 @@ Estrategia de corrección:
 4. **style.css**:
    - Se deben incorporar los estilos para `.lightbox-nav-btn` con posicionamiento absoluto centrado verticalmente, fondo semitransparente, bordes redondeados y sombra.
    - Se deben aplicar las reglas de media query `@media (max-width: 768px)` y `@media all and (display-mode: standalone)` para ocultar los botones de escritorio en dispositivos móviles/PWA, garantizando que en dichas plataformas la navegación sea exclusivamente táctil.
+
+
+**AUDITORÍA TÉCNICA - Visualización de miniaturas PNG de modelos de vehículos (29/10/2026)**
+
+**Archivos involucrados:** ui.js, style.css, add_cortes.html.
+
+**Hallazgos de Auditoría:**
+1. **ui.js (`getImageUrl`)**:
+   - En la línea 313, `getImageUrl` genera las URLs de miniaturas para Google Drive utilizando `https://drive.google.com/thumbnail?id=${id}&sz=${sizeParam}`.
+   - Google Drive procesa las imágenes PNG transparentes enviadas mediante este endpoint convirtiéndolas a JPEG/rasterizado con un fondo negro sólido (`#000000`).
+   - Solución: Cambiar la URL devuelta para imágenes de Google Drive al endpoint directo de CDN `https://lh3.googleusercontent.com/d/${id}=${sizeParam}`, el cual entrega la imagen PNG original conservando su canal alfa de transparencia (`Content-Type: image/png`).
+
+2. **style.css**:
+   - En las reglas `.card img` (líneas 715-720) y `.img-vehiculo-modal` (líneas 921-946), las imágenes de los vehículos se renderizan directamente sin un tratamiento contenedor que se adapte al modo oscuro o neutralize residuos de fondos oscuros en miniaturas.
+   - Solución: Definir reglas de estilo visual específicas y soporte responsivo de tema para las imágenes de vehículos (`.card img`, `.card-img-top`, `.img-vehiculo-modal`, `.match-card-img`, `#imagenVehiculo_preview`).
+   - En modo claro, asegurar que el fondo sea fluido y coincida con la tarjeta (`var(--card-bg)`). En modo oscuro (`body.dark-mode`), adaptar las tarjetas e imágenes para que conserven la paleta oscura (`var(--card-bg)`) utilizando la propiedad de mezcla o filtros si fuere necesario, previniendo que las tarjetas se queden de color blanco al activar el modo oscuro.
+
+3. **add_cortes.html**:
+   - En `.match-card-img` (línea 91), la miniatura tiene un `background-color: #eee` fijo que puede contrastar en vistas o temas oscuros.
+   - Solución: Asegurar adaptabilidad a variables o colores de tarjeta sin romper la vista ni modificar la lógica de subida de archivos al backend.
