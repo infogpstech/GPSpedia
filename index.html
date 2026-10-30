@@ -121,12 +121,13 @@
       <!-- Fila 2: Búsqueda y Navegación Principal -->
       <div class="header-bottom">
           <div class="search-wrapper">
-              <div class="search-container">
-                  <input type="text" id="searchInput" placeholder="Buscar Corte...">
+              <div class="search-container" style="display: flex; align-items: center; gap: 5px;">
+                  <input type="text" id="searchInput" placeholder="Buscar Corte..." style="flex: 1;">
                   <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
+                  <button id="btn-toggle-filters" type="button" class="btn btn-secondary" title="Filtros opcionales" style="padding: 4px 8px; font-size: 0.85em; height: 36px; border-radius: 6px; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-filter"></i> <i class="fa-solid fa-chevron-down" id="filter-chevron-icon" style="font-size: 0.7em;"></i></button>
               </div>
-              <!-- Barra de Filtros Rápidos por Categoría y Año -->
-              <div id="catalog-filters-bar" style="display: flex; gap: 6px; align-items: center; margin-top: 5px; flex-wrap: wrap;">
+              <!-- Barra de Filtros Rápidos por Categoría y Año (Oculta por defecto) -->
+              <div id="catalog-filters-bar" style="display: none; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
                   <select id="filter-category-select" class="dev-input" style="padding: 4px 8px; font-size: 0.85em; border-radius: 6px; height: 32px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color);">
                       <option value="">Todas las Categorías</option>
                       <option value="Autos">Autos</option>

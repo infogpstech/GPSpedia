@@ -1281,15 +1281,13 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
         });
     } else {
         // Renderizado para resultados de tipo MODELO (y por defecto).
-
-        // De-duplicar los resultados para mostrar solo una tarjeta por variante única (modelo + categoría + versión).
-        // Esto evita mostrar una tarjeta para cada año del mismo vehículo y diferencia variantes de distinta categoría.
-        const variantesUnicas = [...new Map(results.map(item => {
-            const key = `${item.marca}|${item.modelo}|${item.categoria}|${item.versionesAplicables || ''}`;
+        // Agrupar los resultados primero por Modelo único (Marca + Modelo)
+        const modelosUnicos = [...new Map(results.map(item => {
+            const key = `${item.marca}|${item.modelo}`;
             return [key, item];
         })).values()];
 
-        variantesUnicas.forEach(ejemplo => {
+        modelosUnicos.forEach(ejemplo => {
             const card = crearCardVehiculo(ejemplo, false, results);
             grid.appendChild(card);
         });
@@ -1297,17 +1295,20 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
 
     cont.appendChild(grid);
 
-    // Caso especial: Si solo hay un resultado de modelo, se muestra directamente el modal de detalle.
-    // Phase 2.1.5: Se añade la bandera 'autoOpen' para evitar la reapertura del modal al navegar hacia atrás
-    // en el historial (popstate).
-    if (autoOpen && type === 'modelo' && results.length === 1) {
-        // Retirar el foco de la barra de búsqueda para ocultar el teclado virtual
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) searchInput.blur();
+    // Caso especial: Si solo existe 1 modelo con 1 versión aplicable y 1 solo rango de año, abrir directamente el modal de detalle.
+    if (autoOpen && type === 'modelo') {
+        const uniqueModels = [...new Set(results.map(r => `${r.marca}|${r.modelo}`))];
+        const uniqueVersions = [...new Set(results.map(r => r.versionesAplicables || ''))];
+        const uniqueYears = [...new Set(results.map(r => `${r.anoDesde}-${r.anoHasta || ''}`))];
 
-        setTimeout(() => {
-            mostrarDetalleModal(results[0]);
-        }, 150);
+        if (uniqueModels.length === 1 && uniqueVersions.length === 1 && uniqueYears.length === 1 && results.length === 1) {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.blur();
+
+            setTimeout(() => {
+                mostrarDetalleModal(results[0]);
+            }, 150);
+        }
     }
 }
 
