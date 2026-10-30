@@ -4,7 +4,7 @@
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, sendContactForm, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 
@@ -4577,7 +4577,12 @@ export function openAddProblemModal() {
 
     const form = content.querySelector("#add-pys-form");
     form.onsubmit = async (e) => {
-        e.preventDefault();
+        e.preventDefault()
+        const pysVid = content.querySelector("#pys-video").value.trim();
+        if (pysVid && !pysVid.includes("youtube.com") && !pysVid.includes("youtu.be")) {
+            showGlobalError("Por favor ingresa una URL válida de YouTube para el vídeo.");
+            return;
+        };
         const { currentUser } = getState();
         if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
 
@@ -4777,14 +4782,14 @@ export function openAddTutorialModal() {
         };
 
         try {
-            await sendContactForm({ name: payload.colaborador, email: "tutorial@gpspedia.com", message: `[NUEVO TUTORIAL] ${payload.tema} | Video: ${payload.videoUrl} | Desc: ${payload.descripcion}` });
-            alert("Tutorial agregado con éxito.");
+            await addTutorial(payload);
+            alert("Tutorial registrado con éxito.");
             modal.remove();
             const res = await routeAction("getCatalogData");
             if (res && res.data) setState({ catalogData: res.data });
         } catch(err) {
             console.error(err);
-            showGlobalError("Error: " + err.message);
+            showGlobalError("Error al registrar tutorial: " + err.message);
             submitBtn.disabled = false;
             submitBtn.innerText = "Agregar Tutorial";
         }

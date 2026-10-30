@@ -139,6 +139,9 @@ function doPost(e) {
             case 'suggestYear':
                 response = handleSuggestYear(payload);
                 break;
+            case 'addTutorial':
+                response = handleAddTutorial(payload);
+                break;
             case 'sendContactForm':
                 response = handleSendContactForm(payload);
                 break;
@@ -744,6 +747,9 @@ function handleAddProblem(payload) {
     if (!sinSolucion && !solucion) throw new Error("Debe proporcionar una solucion si no marca 'Sin solucion'.");
     if (solucion && solucion.length > 200) throw new Error("La solucion no puede superar 200 caracteres.");
     if (prevenir && prevenir.length > 100) throw new Error("La prevencion no puede superar 100 caracteres.");
+    if (videoUrl && !videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be")) {
+        throw new Error("El enlace del vídeo debe ser una URL válida de YouTube.");
+    }
 
     const lock = LockService.getScriptLock();
     lock.waitLock(10000);
@@ -832,4 +838,34 @@ function handleAddPrevention(payload) {
     SpreadsheetApp.flush();
 
     return { status: "success", message: "Prevencion agregada con exito." };
+}
+
+function handleAddTutorial(payload) {
+    const { tema, videoUrl, descripcion, colaborador } = payload;
+    if (!tema || !videoUrl) throw new Error("Tema y enlace de vídeo son obligatorios.");
+    if (!videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be")) {
+        throw new Error("El enlace del vídeo debe ser una URL válida de YouTube.");
+    }
+
+    const sheet = getSafeSheet("Tutoriales") || getSpreadsheet().insertSheet("Tutoriales");
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, 4).setValues([["Tema", "Imagen", "Video", "Colaborador"]]);
+    }
+
+    const newRow = [
+        tema,
+        `https://img.youtube.com/vi/${extractYouTubeId(videoUrl)}/hqdefault.jpg`,
+        videoUrl,
+        colaborador || ""
+    ];
+
+    sheet.appendRow(newRow);
+    SpreadsheetApp.flush();
+    return { status: "success", message: "Tutorial registrado con éxito." };
+}
+
+function extractYouTubeId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : "";
 }
