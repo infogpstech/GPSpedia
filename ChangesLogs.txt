@@ -969,3 +969,28 @@ Archivo: ui.js
 
 **Archivo: style.css**
 - **Líneas 721-729:** Asignada la propiedad `background-color: var(--card-bg)` en `.card img` y agregada la regla `mix-blend-mode: lighten` en modo oscuro (`body.dark-mode`) exclusivamente para miniaturas de modelos de vehículos (`.card:not(.brand-logo-item) img`, `.card-img-top`, `.match-card-img`, `#imagenVehiculo_preview`), excluyendo intencionalmente el modal de detalles (`.img-vehiculo-modal`).
+
+--------------------------------------------------
+**CHANGES LOG - 30/10/2026 (RENOVACIÓN INTEGRAL GPSpedia - VERSIÓN 2.2.0)**
+
+**Archivo: ui.js**
+- Incorporadas funciones openSuggestCutModal, openExpandMenuModal, openAddCutForModelModal, openAddAperturaModal, openAddFeedModal, openAddVideoModal, openAddProblemModal, openPysDetailModal, openAddTutorialModal, renderPysSection y sanitizeHtmlContent.
+- Agregados botones e indicadores visuales de ampliación de modelo (+) y navegación de la sección Problemas y Soluciones.
+
+**Archivo: navigation.js**
+- Ampliada la función filtrarContenido para consultar de forma unificada Cortes, Relays, Tutoriales y PYS asignando etiquetas visuales _sectionType.
+
+**Archivo: main.js**
+- Registrados eventos de navegación para el selector de secciónProblemas / Soluciones (#btn-pys).
+
+**Archivo: index.html**
+- Agregados el botón #btn-pys en la barra de navegación principal y el contenedor #contenido-pys.
+
+**Archivo: add_cortes.html**
+- Incorporadas las opciones de registro para segundo corte y enlace de vídeo guía de desarme en la etapa 3 del formulario.
+
+**Archivo: api-config.js**
+- Mapeadas las acciones getPysData, addProblem, addSolution, addPrevention, suggestCutChange y addTutorial hacia el servicio FEEDBACK.
+
+**Archivo: Services/feedback.js**
+- Implementados los manejadores handleSuggestCutChange, handleGetPysData, handleAddProblem, handleAddSolution, handleAddPrevention y handleAddTutorial con hoja pys de 9 columnas, LockService e IDs isue-001.

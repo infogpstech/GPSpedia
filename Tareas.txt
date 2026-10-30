@@ -208,6 +208,17 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
+
+19. **TÍTULO: Renovación Integral de GPSpedia (v2.2.0)**
+    - **ESTADO:** COMPLETADO
+    - **ALCANCE:** index.html, ui.js, main.js, navigation.js, add_cortes.html, api-config.js, Services/feedback.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+    - **DESCRIPCIÓN DETALLADA:**
+      - **Reportes y Sugerencias:** Incorporado botón de reporte individual por corte y flujo independiente para sugerencias de cambios vinculadas sin alterar el catálogo original.
+      - **Ampliación de Detalles:** Agregado botón "+" en el modal de detalles con menú dinámico (Nuevo corte, Apertura, Cable de alimentación y Vídeo).
+      - **add_cortes.html:** Ampliada la etapa 3 con opciones para registrar un segundo corte e ingresar enlace de vídeo guía de desarme.
+      - **Problemas y Soluciones:** Nueva sección con tarjeta de creación "+", hoja "pys" de 9 columnas en Google Sheets, identificadores "isue-001" y subida de imágenes a Google Drive.
+      - **Editor Enriquecido:** Implementadas utilidades de formato liviano (negrita, colores) y sanitización HTML para representación segura sin XSS.
+      - **Búsqueda Global:** Búsqueda unificada multi-sección (Cortes, Relays, Tutoriales, PYS) con asignación de badges y apertura de modales específicos.
 1. **TÍTULO: Actualización de contenido y estilos de modales informativos de GPSpedia (v2.1.5)**
    - **ESTADO:** COMPLETADO
    - **ALCANCE:** index.html, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
