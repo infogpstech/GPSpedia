@@ -74,3 +74,32 @@
 
 3. **Respaldos y Verificación:**
    - Se crearon y compararon los respaldos `index.html.bak` y `style.css.bak`, eliminándolos posteriormente.
+
+
+**AUDITORÍA TÉCNICA Y AUDITORÍA DE AUDITOR - REGISTRO, ALMACENAMIENTO, COLECCIONES Y BÚSQUEDA GLOBAL POR VIN (30/10/2026)**
+
+**Perfil del Auditor y Alcance Auditoría Línea por Línea:**
+Se auditó en detalle la integración de extremos a extremos de la funcionalidad de identificación por número de chasis / VIN (Vehicle Identification Number):
+
+1. **Estructura de Google Spreadsheet y Mapeo en Backend (`Services/write.js`, `Services/catalog.js`, `Services/admin.js`, `Services/feedback.js`):**
+   - Confirmado que la columna `vin` es la última columna (índice 43) en `COLS_CORTES`. No altera ni desplaza columnas anteriores.
+   - Implementadas funciones `extractVinPrefix(vinStr)`, `countEquipmentVersions(versionesStr)`, `parseVinCollection(rawVin)`, `serializeVinCollection(vinArray)`, `checkVinDuplicateInSheet`, `handleCheckVinDuplicate` y `handleAddVinToVehicle`.
+   - Garantizado que el VIN nunca se almacena completo, omitiendo los últimos 5 caracteres y guardando solo el prefijo.
+   - Garantizado que el VIN se almacena como colección/Array JSON en la celda correspondiente sin crear columnas `vin2` o `vin3`.
+   - Confirmado que la adición de VIN no actualiza el `timestamp` del registro del vehículo.
+
+2. **Formulario de Registro (`add_cortes.html`):**
+   - Agregado el campo opcional `vinInput` (máximo 18 caracteres) en la etapa de fotografía del vehículo.
+   - Implementada validación en `blur` y al enviar el formulario (`handleStage2Submit`), mostrando el aviso `"VIN ya está registrado para:"` acompañado de un botón/enlace interactivo al modelo coincidente en caso de duplicados.
+
+3. **Modal de Detalle y Menú de Ampliación (`ui.js`):**
+   - Agregada la opción "Agregar VIN" en el menú flotante (+), evaluando la disponibilidad según las versiones de equipamiento (`countEquipmentVersionsFrontend`, max 3).
+   - Implementado el modal `openAddVinModal` con placeholder `"Ingresa el VIN completo del vehículo"`, límite de 18 caracteres, validación de duplicados y adición a la colección existente sin sobrescribir VINs previos.
+   - Incorporada la visualización y edición del campo `vin` en el panel de edición in-modal para el rol de Desarrollador.
+
+4. **Búsqueda Global Multi-sección (`navigation.js`):**
+   - Actualizado `filtrarContenido` para parsear colecciones de VIN y detectar consultas de búsqueda por VIN (longitud 6–18 chars), extrayendo el prefijo y filtrando exactamente en el orden del catálogo.
+
+5. **Verificación de Integridad:**
+   - Todos los archivos temporales y capturas han sido eliminados del repositorio.
+   - Code Review aprobado sin observaciones bloqueantes (#Correct).

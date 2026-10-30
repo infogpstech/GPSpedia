@@ -453,3 +453,14 @@ Cualquier cambio en estas zonas invalidará el commit.
         - Se configuró la propiedad `background-color: var(--card-bg)` en `.card img` en `style.css` y se añadió `mix-blend-mode: lighten` para el modo oscuro (`body.dark-mode`) específicamente en las tarjetas/miniaturas de vehículos (`.card:not(.brand-logo-item) img`, `.card-img-top`, `.match-card-img`, `#imagenVehiculo_preview`).
         - Se aseguró que la vista detallada del vehículo (`.img-vehiculo-modal`) permanezca completamente intacta sin contenedores, cajas con fondo o alterations visuales no solicitadas.
       - **Efecto:** Las imágenes PNG transparentes de los vehículos se muestran de forma limpia en tarjetas en modo claro y oscuro.
+
+19. **TÍTULO: Registro, almacenamiento, colecciones y búsqueda global por VIN (v2.2.0)**
+    - **ESTADO:** COMPLETADO
+    - **ALCANCE:** Services/write.js, Services/catalog.js, Services/admin.js, Services/feedback.js, api-config.js, add_cortes.html, ui.js, navigation.js, index.html, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+    - **DESCRIPCIÓN DETALLADA:**
+      - **Objetivo:** Incorporar la identificación de modelos por número VIN (número de chasis) agregando la columna `vin` (índice 43) en `Cortes`.
+      - **Procesamiento de VIN:** Implementado `extractVinPrefix` para omitir los últimos 5 caracteres y almacenar solo el prefijo.
+      - **Colecciones de VINs:** Múltiples VINs para diferentes versiones de equipamiento se almacenan como arrays/colecciones en la misma celda sin crear columnas adicionales. La cantidad máxima permitida (1 a 3) se determina según las versiones en `versionesAplicables`.
+      - **Formulario y Modal:** Agregados el campo opcional en `add_cortes.html` y la opción 'Agregar VIN' en el menú (+) de detalles en `ui.js`. Si se detecta un duplicado, se muestra la advertencia `"VIN ya está registrado para:"` con un botón/enlace interactivo al modelo coincidente.
+      - **Búsqueda Global:** Adaptado `filtrarContenido` en `navigation.js` para consultar colecciones de VINs por coincidencia exacta con el prefijo procesado.
+      - **Estilos Modal Desarrollador:** Estilizados paneles y controles en `#dev-tools-modal` respetando la terminal `#dev-console-log`.

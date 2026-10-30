@@ -1004,3 +1004,30 @@ Archivo: ui.js
 **Archivo: style.css**
 - Líneas 52, 69: Definida la variable `--border-color` (#e0e0e0 en tema claro, #3a3a3a en tema oscuro).
 - Líneas 1282-1301: Creadas las clases CSS `.dev-card` y `.dev-input` con transiciones de color de tema claro y oscuro para el modal de herramientas del desarrollador.
+
+--------------------------------------------------
+**CHANGES LOG - 30/10/2026 (SISTEMA DE IDENTIFICACIÓN Y REGISTRO POR VIN - VERSIÓN 2.2.0)**
+
+**Archivo: Services/write.js**
+- Agregado `vin: 43` en la constante `COLS_CORTES`.
+- Implementadas las funciones `countEquipmentVersions(versionesStr)`, `parseVinCollection(rawVin)`, `serializeVinCollection(vinArray)` y `extractVinPrefix(vinStr)`.
+- Creados los manejadores de backend `handleCheckVinDuplicate(payload)` y `handleAddVinToVehicle(payload)` para la validación y persistencia de colecciones VIN sin alterar la fecha de registro (`timestamp`).
+- Actualizado `handleAddOrUpdateCut` / `addCorte` para procesar y escribir el VIN en la columna 43.
+
+**Archivo: Services/catalog.js, Services/admin.js, Services/feedback.js**
+- Agregado `vin: 43` en las definiciones `COLS_CORTES` de cada microservicio.
+
+**Archivo: api-config.js**
+- Mapeadas las acciones `checkVinDuplicate` y `addVinToVehicle` hacia el servicio `WRITE` en `ACTION_TO_SERVICE_MAP`.
+
+**Archivo: add_cortes.html**
+- Incorporado el campo de entrada opcional `#vinInput` (límite 18 caracteres) en la etapa de foto del vehículo.
+- Implementado evento `blur` y validación pre-submit en `handleStage2Submit` que verifica duplicados en tiempo real y muestra `"VIN ya está registrado para:"` con botón interactivo de búsqueda.
+
+**Archivo: ui.js**
+- Actualizado `openExpandMenuModal` para habilitar "Agregar VIN" según la cantidad de versiones de equipamiento detectadas (máximo 3).
+- Creado el modal `openAddVinModal` para agregar un nuevo VIN a la colección existente del modelo sin sobrescribir identificadores anteriores.
+- Agregada la edición del campo `vin` en la interfaz de edición in-modal para desarrolladores.
+
+**Archivo: navigation.js**
+- Actualizado `filtrarContenido` para parsear colecciones de VINs e identificar búsquedas exactas por prefijo procesado.
