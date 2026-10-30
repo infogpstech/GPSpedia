@@ -107,9 +107,16 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         }
     }
 
-    // --- LÓGICA DE FILTRADO MEJORADA ---
+    // --- LÓGICA DE FILTRADO Y SELECTORES DE FILTROS RÁPIDOS ---
+    const catSelect = document.getElementById('filter-category-select');
+    const yearSelect = document.getElementById('filter-year-select');
+
+    const selectedCategory = catSelect ? catSelect.value.toLowerCase().trim() : '';
+    const selectedYearStr = yearSelect ? yearSelect.value.trim() : '';
+    const selectedYearNum = selectedYearStr ? parseInt(selectedYearStr, 10) : null;
+
     const yearSearchMatch = busqueda.match(/\b\d{4}\b/);
-    let yearSearchTerm = yearSearchMatch ? parseInt(yearSearchMatch[0], 10) : null;
+    let yearSearchTerm = yearSearchMatch ? parseInt(yearSearchMatch[0], 10) : selectedYearNum;
 
     if (yearSearchTerm && (yearSearchTerm < 1900 || yearSearchTerm > 2100)) {
         yearSearchTerm = null;
@@ -135,6 +142,10 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
 
     // 1. Search in Cortes
     const cortesMatches = cortes.filter(item => {
+        if (selectedCategory) {
+            const cat = (item.categoria || '').toLowerCase().trim();
+            if (!cat.includes(selectedCategory) && !selectedCategory.includes(cat)) return false;
+        }
         if (isVinQuery) {
             const vins = parseVinCollectionNavigation(item.vin);
             return vins.includes(targetVinPrefix);

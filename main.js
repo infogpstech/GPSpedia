@@ -64,6 +64,20 @@ async function initializeApp() {
         });
     }
 
+    const catSelect = document.getElementById('filter-category-select');
+    const yearSelect = document.getElementById('filter-year-select');
+
+    if (catSelect) {
+        catSelect.addEventListener('change', () => {
+            navigation.filtrarContenido(searchInput.value || ' ');
+        });
+    }
+    if (yearSelect) {
+        yearSelect.addEventListener('change', () => {
+            navigation.filtrarContenido(searchInput.value || ' ');
+        });
+    }
+
     // --- LÓGICA DE ANIMACIÓN DE LA BARRA DE BÚSQUEDA ---
     // Estabilización de la clase 'search-active' para evitar saltos visuales al limpiar búsqueda.
     searchInput.addEventListener('focus', () => {

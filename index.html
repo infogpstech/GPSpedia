@@ -125,6 +125,26 @@
                   <input type="text" id="searchInput" placeholder="Buscar Corte...">
                   <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
               </div>
+              <!-- Barra de Filtros Rápidos por Categoría y Año -->
+              <div id="catalog-filters-bar" style="display: flex; gap: 6px; align-items: center; margin-top: 5px; flex-wrap: wrap;">
+                  <select id="filter-category-select" class="dev-input" style="padding: 4px 8px; font-size: 0.85em; border-radius: 6px; height: 32px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color);">
+                      <option value="">Todas las Categorías</option>
+                      <option value="Autos">Autos</option>
+                      <option value="Suv">SUV / Camionetas</option>
+                      <option value="Motos">Motos</option>
+                      <option value="Pesados">Pesados / Camiones</option>
+                  </select>
+                  <select id="filter-year-select" class="dev-input" style="padding: 4px 8px; font-size: 0.85em; border-radius: 6px; height: 32px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color);">
+                      <option value="">Todos los Años</option>
+                      <option value="2026">2026</option>
+                      <option value="2025">2025</option>
+                      <option value="2024">2024</option>
+                      <option value="2023">2023</option>
+                      <option value="2022">2022</option>
+                      <option value="2021">2021</option>
+                      <option value="2020">2020</option>
+                  </select>
+              </div>
               <button id="hamburger-btn"><i class="fa-solid fa-bars"></i></button>
           </div>
 

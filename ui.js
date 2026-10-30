@@ -1385,6 +1385,15 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     };
     headerDiv.appendChild(shareBtn);
 
+    // Botón Imprimir Ficha Técnica
+    const printBtn = document.createElement("button");
+    printBtn.innerHTML = '<i class="fa-solid fa-print"></i>';
+    printBtn.className = "share-modal-btn";
+    printBtn.title = "Imprimir / Exportar Ficha Técnica";
+    printBtn.style.marginRight = "5px";
+    printBtn.onclick = () => exportVehiclePrintSheet(activeItem);
+    headerDiv.appendChild(printBtn);
+
     const sessionData = localStorage.getItem('gpsepedia_session');
     const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
 
@@ -5111,6 +5120,88 @@ export function sanitizeHtmlContent(htmlStr) {
 }
 
 let inboxCacheData = null;
+
+export function exportVehiclePrintSheet(item) {
+    if (!item) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert("Por favor permite la apertura de ventanas emergentes para imprimir la ficha técnica.");
+        return;
+    }
+
+    const title = `${item.marca} ${item.modelo} (${item.anoDesde}${item.anoHasta ? '-' + item.anoHasta : ''})`;
+    const cuts = [];
+    if (item.tipoCorte1) cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, colab: item.colaboradorCorte1 });
+    if (item.tipoCorte2) cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, colab: item.colaboradorCorte2 });
+    if (item.tipoCorte3) cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, colab: item.colaboradorCorte3 });
+
+    let cutsHtml = cuts.map(c => `
+        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
+            <h4 style="margin: 0 0 5px 0; color: #007bff;">Corte #${c.num}: ${c.tipo}</h4>
+            <p style="margin: 3px 0;"><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
+            <p style="margin: 3px 0;"><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
+            <p style="margin: 3px 0;"><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
+            ${c.colab ? `<p style="margin: 3px 0; font-size: 0.85em; color: #666;">Aportado por: ${cleanColaboradorName(c.colab)}</p>` : ''}
+        </div>
+    `).join('');
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Ficha Técnica GPSpedia - ${title}</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.4; }
+                .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; }
+                .logo { font-size: 24px; font-weight: bold; color: #007bff; }
+                .vehicle-title { font-size: 20px; margin: 0 0 10px 0; }
+                .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+                .meta-table td { padding: 6px; border: 1px solid #ddd; }
+                .meta-table td.label { font-weight: bold; background: #f9f9f9; width: 30%; }
+                @media print {
+                    .no-print { display: none; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <div class="logo">GPSpedia - Ficha Técnica de Instalación</div>
+                <button class="no-print" onclick="window.print()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Imprimir / Guardar PDF</button>
+            </div>
+
+            <h2 class="vehicle-title">${title}</h2>
+
+            <table class="meta-table">
+                <tr><td class="label">Marca:</td><td>${item.marca || '-'}</td></tr>
+                <tr><td class="label">Modelo:</td><td>${item.modelo || '-'}</td></tr>
+                <tr><td class="label">Categoría:</td><td>${item.categoria || '-'}</td></tr>
+                <tr><td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td></tr>
+                <tr><td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td></tr>
+                <tr><td class="label">Años:</td><td>${item.anoDesde || ''} - ${item.anoHasta || 'Presente'}</td></tr>
+                ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td>${item.vin}</td></tr>` : ''}
+            </table>
+
+            <h3>Puntos de Corte de Motor</h3>
+            ${cutsHtml || '<p>No hay cortes registrados para este modelo.</p>'}
+
+            ${item.apertura ? `
+                <h3>Apertura de Puertas</h3>
+                <p>${item.apertura}</p>
+            ` : ''}
+
+            ${item.cableAlimen ? `
+                <h3>Alimentación Electrónica</h3>
+                <p>${item.cableAlimen}</p>
+            ` : ''}
+
+            <div style="margin-top: 30px; font-size: 0.8em; color: #777; border-top: 1px solid #ddd; padding-top: 10px; text-align: center;">
+                Documento generado automáticamente desde la plataforma técnica GPSpedia.
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
 
 export async function loadAndRenderInbox() {
     const listContainer = document.getElementById('inbox-list');
