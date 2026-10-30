@@ -4,7 +4,7 @@
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 
@@ -2565,6 +2565,39 @@ function initAdminPanelListeners() {
     }
     window.adminListenersAttached = true;
 
+    // Escaneo de salud de todos los microservicios
+    async function runServicesHealthScan() {
+        const healthGrid = document.getElementById('services-health-grid');
+        if (healthGrid) {
+            healthGrid.innerHTML = `<span style="color: var(--text-disabled); font-style: italic; grid-column: span 2;">Escaneando microservicios...</span>`;
+        }
+        log("[SALUD] Ejecutando diagnóstico de latencia y estado en los microservicios...");
+        try {
+            const healthResults = await checkAllServicesHealth();
+            if (healthGrid) {
+                healthGrid.innerHTML = '';
+                Object.keys(healthResults).forEach(srvKey => {
+                    const item = healthResults[srvKey];
+                    const div = document.createElement('div');
+                    div.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.05); font-size: 0.8em;";
+
+                    const isOnline = item.status === 'online';
+                    const statusDot = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${isOnline ? '#28a745' : '#dc3545'}; margin-right:6px;"></span>`;
+                    div.innerHTML = `<div>${statusDot}<strong>${srvKey}</strong></div><span style="color:${isOnline ? 'var(--text-color)' : '#dc3545'}; font-family:monospace;">${isOnline ? item.latency + 'ms' : 'Error'}</span>`;
+                    healthGrid.appendChild(div);
+                });
+            }
+            log("[SALUD] Escaneo de salud completado.");
+        } catch (e) {
+            log(`[SALUD ERROR] Fallo al escanear servicios: ${e.message}`, false, true);
+        }
+    }
+
+    const scanBtn = document.getElementById('btn-check-services-health');
+    if (scanBtn) {
+        scanBtn.onclick = () => runServicesHealthScan();
+    }
+
     // Conectividad automática e inicio
     window.triggerAdminPanelPing = async function() {
         consoleLog.innerHTML = ''; // Limpiar consola al abrir
@@ -2585,6 +2618,7 @@ function initAdminPanelListeners() {
         } catch (error) {
             log("No fue posible establecer comunicación con el microservicio.", false, true);
         }
+        runServicesHealthScan();
         log("Esperando operaciones...");
     };
 
@@ -2987,6 +3021,60 @@ ${elapsedSec}s
         }
     };
 
+    // Vaciar Caché Local de Cliente (IndexedDB/Storage)
+    const clearCacheBtn = document.getElementById('btn-admin-clear-client-cache');
+    if (clearCacheBtn) {
+        clearCacheBtn.onclick = async () => {
+            if (confirm("¿Deseas VACIAR la caché local de IndexedDB y localStorage del navegador?\n\nEsto forzará a la aplicación a descargar datos e imágenes frescas desde los microservicios.")) {
+                try {
+                    log("[SISTEMA] Vaciando IndexedDB y caché local...");
+                    if (window.indexedDB) {
+                        try {
+                            window.indexedDB.deleteDatabase('GPSpedia_DB');
+                        } catch (e) {}
+                    }
+                    localStorage.removeItem('gpsepedia_catalog_cache');
+                    localStorage.removeItem('gpsepedia_pending_operation');
+                    log("[EXITO] Caché local eliminada correctamente. Recargando la aplicación...");
+                    mostrarNotificacion("Caché local vaciada. Recargando...", "success");
+                    setTimeout(() => window.location.reload(), 1200);
+                } catch (e) {
+                    log(`[ERROR] Fallo al vaciar caché local: ${e.message}`, false, true);
+                }
+            }
+        };
+    }
+
+    // Purgar Logs de Actividad / Eventos
+    const clearLogsBtn = document.getElementById('btn-admin-clear-activity-logs');
+    if (clearLogsBtn) {
+        clearLogsBtn.onclick = async () => {
+            const selectEl = document.getElementById('clear-logs-option-select');
+            const keepLastWeek = selectEl ? selectEl.value === 'week' : false;
+            const promptText = keepLastWeek
+                ? "¿Estás seguro de que deseas ELIMINAR los registros de eventos con antigüedad MAYOR a una semana? (Los de los últimos 7 días se conservarán)."
+                : "¿Estás seguro de que deseas BORRAR TODOS los registros de eventos y logs de actividad?";
+
+            if (confirm(promptText)) {
+                try {
+                    clearLogsBtn.disabled = true;
+                    log(`Iniciando purga de logs de actividad (Conservar última semana: ${keepLastWeek ? 'Sí' : 'No'})...`);
+                    const res = await clearActivityLogs(keepLastWeek);
+                    if (res && res.status === 'success') {
+                        log(`[EXITO] ${res.message}`);
+                        mostrarNotificacion(res.message, 'success');
+                    } else {
+                        log(`[ERROR] No se pudo purgar los logs: ${res ? res.message : 'Error desconocido'}`, false, true);
+                    }
+                } catch (err) {
+                    log(`[EXCEPCION] Error al purgar logs: ${err.message}`, false, true);
+                } finally {
+                    clearLogsBtn.disabled = false;
+                }
+            }
+        };
+    }
+
     // Botón Agregar corte silencioso
     const silentCutBtn = document.getElementById('btn-admin-add-silent-cut');
     if (silentCutBtn) {
@@ -3128,10 +3216,13 @@ function renderInboxDetail(item) {
         }
         <div class="inbox-actions">
             <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
-            <button id="inbox-reply-btn">Enviar Respuesta</button>
-            ${item.type === 'problem_report' && !item.isResolved ?
-                `<button id="inbox-resolve-btn" class="resolve-btn">Marcar como Resuelto</button>` : ''
-            }
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
+                ${item.type === 'problem_report' && !item.isResolved ?
+                    `<button id="inbox-resolve-btn" class="resolve-btn btn btn-secondary">Marcar como Resuelto</button>` : ''
+                }
+                <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+            </div>
         </div>
     `;
 
@@ -3159,11 +3250,32 @@ function renderInboxDetail(item) {
              try {
                 resolveBtn.classList.add('btn-loading');
                 await markAsResolved(item.id);
+                inboxCacheData = null;
                 openInbox();
             } catch (error) {
                 showGlobalError(`Error al resolver: ${error.message}`);
             } finally {
                 resolveBtn.classList.remove('btn-loading');
+            }
+        });
+    }
+
+    const deleteBtn = document.getElementById('inbox-delete-btn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+            if (confirm("¿Estás seguro de que deseas eliminar permanentemente este mensaje del Inbox?")) {
+                try {
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...`;
+                    await deleteFeedbackItem(item.id, item.type);
+                    inboxCacheData = null;
+                    mostrarNotificacion("Mensaje eliminado con éxito", "success");
+                    openInbox();
+                } catch (error) {
+                    showGlobalError(`Error al eliminar mensaje: ${error.message}`);
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i> Borrar Mensaje`;
+                }
             }
         });
     }

@@ -241,6 +241,18 @@
                         <button id="link-drive-backup-btn" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8em;" disabled>Enlace</button>
                     </div>
                 </div>
+
+                <!-- Panel de Monitoreo de Microservicios -->
+                <div class="dev-card" style="padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong><i class="fa-solid fa-server"></i> Estado y Métricas de Microservicios:</strong>
+                        <button id="btn-check-services-health" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.8em;"><i class="fa-solid fa-arrows-rotate"></i> Escanear</button>
+                    </div>
+                    <div id="services-health-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 5px;">
+                        <!-- Se llena dinámicamente -->
+                        <span style="color: var(--text-disabled); font-style: italic;">Iniciando diagnóstico...</span>
+                    </div>
+                </div>
             </div>
 
             <!-- Panel de Acciones -->
@@ -269,7 +281,15 @@
                         <button id="btn-admin-normalize-images" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-images"></i> Normalizar nomenclatura y deduplicar imágenes en base de datos</button>
                         <button id="btn-admin-reorganize-drive" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-folder-tree"></i> Reorganizar imágenes físicamente en carpetas jerárquicas</button>
                         <button id="btn-admin-restore-trash" class="btn btn-warning" style="display: none; font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-trash-arrow-up"></i> Saneamiento y recuperación exhaustiva de imágenes en papelera</button>
-                        <button id="btn-admin-add-silent-cut" class="btn btn-danger" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-eye-slash"></i> Agregar corte silenciosamente (Panel Administrativo)</button>
+                        <button id="btn-admin-clear-client-cache" class="btn btn-danger" style="font-size: 0.85em; text-align: left; padding: 8px 12px; background-color: #dc3545; color: white;"><i class="fa-solid fa-database"></i> Vaciar Caché Local de Cliente (IndexedDB/Storage) y Recargar</button>
+                        <div style="display: flex; gap: 5px; align-items: center; margin-top: 5px;">
+                            <select id="clear-logs-option-select" class="dev-input" style="flex: 1; padding: 6px; font-size: 0.85em; height: 34px;">
+                                <option value="week">Conservar registros de la última semana</option>
+                                <option value="all">Borrar todos los registros de eventos/logs</option>
+                            </select>
+                            <button id="btn-admin-clear-activity-logs" class="btn btn-danger" style="font-size: 0.8em; padding: 8px 12px; height: 34px; background-color: #dc3545; color: white;"><i class="fa-solid fa-trash-can"></i> Purgar Logs</button>
+                        </div>
+                        <button id="btn-admin-add-silent-cut" class="btn btn-danger" style="font-size: 0.85em; text-align: left; padding: 8px 12px; margin-top: 5px;"><i class="fa-solid fa-eye-slash"></i> Agregar corte silenciosamente (Panel Administrativo)</button>
                     </div>
 
                     <!-- Carga de Logotipo -->

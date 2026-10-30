@@ -159,6 +159,12 @@ function doPost(e) {
             case 'getActivityLogs':
                 response = handleGetActivityLogs(payload);
                 break;
+            case 'deleteFeedbackItem':
+                response = handleDeleteFeedbackItem(payload);
+                break;
+            case 'clearActivityLogs':
+                response = handleClearActivityLogs(payload);
+                break;
             default:
                 throw new Error(`Acción desconocida en Feedback Service: ${action}`);
         }
@@ -870,4 +876,83 @@ function extractYouTubeId(url) {
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : "";
+}
+
+function handleDeleteFeedbackItem(payload) {
+    const { id, type } = payload;
+    if (!id || !type) {
+        throw new Error("Se requieren ID y Tipo de mensaje para eliminar.");
+    }
+
+    if (type === 'problem_report') {
+        const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+        if (!sheet) throw new Error("No se encontró la hoja de Feedbacks.");
+        const data = sheet.getDataRange().getValues();
+        for (let i = 1; i < data.length; i++) {
+            if (String(data[i][COLS_FEEDBACKS.ID - 1]) === String(id)) {
+                sheet.deleteRow(i + 1);
+                SpreadsheetApp.flush();
+                return { status: 'success', message: 'Reporte de problema eliminado correctamente.' };
+            }
+        }
+        throw new Error("No se encontró el reporte especificado.");
+    } else if (type === 'contact_form') {
+        const sheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
+        if (!sheet) throw new Error("No se encontró la hoja de Contactanos.");
+        const data = sheet.getDataRange().getValues();
+        for (let i = 1; i < data.length; i++) {
+            if (String(data[i][COLS_CONTACTANOS.Contacto_ID - 1]) === String(id)) {
+                sheet.deleteRow(i + 1);
+                SpreadsheetApp.flush();
+                return { status: 'success', message: 'Mensaje de contacto eliminado correctamente.' };
+            }
+        }
+        throw new Error("No se encontró el mensaje de contacto especificado.");
+    } else {
+        throw new Error("Tipo de mensaje desconocido.");
+    }
+}
+
+function handleClearActivityLogs(payload) {
+    const keepLastWeek = payload && payload.keepLastWeek === true;
+    const sheet = getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
+    if (!sheet) {
+        return { status: 'success', message: 'Hoja de actividad no encontrada, nada que limpiar.', deletedCount: 0 };
+    }
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+        return { status: 'success', message: 'No hay registros de actividad para eliminar.', deletedCount: 0 };
+    }
+
+    if (!keepLastWeek) {
+        // Borrar todos los registros excepto el encabezado
+        sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
+        SpreadsheetApp.flush();
+        return { status: 'success', message: 'Todos los registros de actividad han sido eliminados.', deletedCount: lastRow - 1 };
+    } else {
+        // Borrar registros con antigüedad mayor a 7 días
+        const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+        const now = new Date().getTime();
+        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+        let deletedCount = 0;
+
+        // Recorrer de abajo hacia arriba para poder borrar filas sin desfasar índices
+        for (let i = data.length - 1; i >= 0; i--) {
+            const rawTimestamp = data[i][COLS_ACTIVIDAD_USUARIO.timestamp - 1];
+            let entryTime = 0;
+            if (rawTimestamp instanceof Date) {
+                entryTime = rawTimestamp.getTime();
+            } else if (rawTimestamp) {
+                entryTime = new Date(rawTimestamp).getTime();
+            }
+
+            if (entryTime > 0 && (now - entryTime) > sevenDaysMs) {
+                sheet.deleteRow(i + 2);
+                deletedCount++;
+            }
+        }
+        SpreadsheetApp.flush();
+        return { status: 'success', message: `Se eliminaron ${deletedCount} registros con antigüedad mayor a una semana.`, deletedCount };
+    }
 }

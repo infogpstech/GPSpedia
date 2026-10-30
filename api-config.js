@@ -21,7 +21,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'addCorte': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE',
     'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'USERS', 'deleteUser': 'USERS', 'changePassword': 'USERS', 'updateProfile': 'USERS',
     'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK',
-    'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK',
+    'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK',
     'migrateYearRanges': 'UTILITIES', 'migrateTimestamps': 'UTILITIES',
     'ping': 'ADMIN',
     'backupDatabase': 'ADMIN', 'backupDrive': 'ADMIN', 'restoreDatabase': 'ADMIN', 'restoreDrive': 'ADMIN',
@@ -91,6 +91,14 @@ export async function markAsResolved(itemId) {
     return await routeAction('markAsResolved', { itemId });
 }
 
+export async function deleteFeedbackItem(id, type) {
+    return await routeAction('deleteFeedbackItem', { id, type });
+}
+
+export async function clearActivityLogs(keepLastWeek = false) {
+    return await routeAction('clearActivityLogs', { keepLastWeek });
+}
+
 export async function getActivityLogs() {
     return await routeAction('getActivityLogs');
 }
@@ -117,4 +125,30 @@ export async function suggestCutChange(data) {
 
 export async function addTutorial(data) {
     return await routeAction("addTutorial", data);
+}
+
+export async function checkAllServicesHealth() {
+    const services = Object.keys(API_ENDPOINTS);
+    const results = {};
+
+    await Promise.all(services.map(async (srvKey) => {
+        const url = API_ENDPOINTS[srvKey];
+        const start = Date.now();
+        try {
+            const res = await fetch(`${url}?debug=true`, {
+                method: 'GET',
+                redirect: 'follow'
+            });
+            const duration = Date.now() - start;
+            if (res.ok) {
+                results[srvKey] = { status: 'online', latency: duration };
+            } else {
+                results[srvKey] = { status: 'error', latency: duration, code: res.status };
+            }
+        } catch (err) {
+            results[srvKey] = { status: 'offline', latency: Date.now() - start, error: err.message };
+        }
+    }));
+
+    return results;
 }
