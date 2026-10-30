@@ -1035,3 +1035,7 @@ Archivo: ui.js
 Archivo: style.css / ui.js / Auditoría.txt
 Líneas: Auditoría completa de capas z-index (1600 - 4001)
 Descripción: Verificación y documentación de la jerarquía de capas de modales (modalDetalle: 1600, plusBtn: 1700, info-modal: 2100, lightbox: 2200, side-menu: 2500, terms-modal: 3100, terms-agreement-modal: 3200, toasts: 4000+).
+
+Archivo: api-config.js
+Líneas: 10-15
+Descripción: Actualizadas las URLs de producción de Google Apps Script para los microservicios Admin, Catalog, Feedback y Write en API_ENDPOINTS.

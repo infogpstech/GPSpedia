@@ -132,3 +132,10 @@ Se realizó una auditoría específica línea por línea sobre el apilamiento y 
 6. Términos y Condiciones Emergentes (`#terms-modal`): `z-index: 3100` y Modal Legal Completo (`#terms-agreement-modal`): `z-index: 3200` (para asegurar prioridad sobre aviso previo).
 7. Notificaciones Toast Globales (`#error-toast`, `#notification-toast`): `z-index: 4000` / `4001` (cobertura total sobre cualquier capa).
 Resultado: La jerarquía de capas es completamente consistente, previene bloqueos de clic accidentales y cumple los requerimientos de navegación.
+
+**ACTUALIZACIÓN DE ENDPOINTS DE MICROSERVICIOS (30/10/2026):**
+Se actualizaron los endpoints de producción de Google Apps Script en `api-config.js`:
+- ADMIN: https://script.google.com/macros/s/AKfycbwvYQKoT04N4KLZIMLGQB42zaO5cdz4bIY3rFKJ0Nx6ePDi8IxHyTP2Fmvknsz9SvckYg/exec
+- CATALOG: https://script.google.com/macros/s/AKfycbxtqkdUfXAEmbPz7zfE4kZCie8sql4SM43kxkBw__5iGwXVyzzYsIFG5jpWkQc7-Ug9/exec
+- FEEDBACK: https://script.google.com/macros/s/AKfycby1s6gb64qI0LO55jgPKEIrxlpVw4mBaFWY6CCct8aBim8h7Ah_qu9gQlie_7DoyCZT_g/exec
+- WRITE: https://script.google.com/macros/s/AKfycbz1qZSAExI_JEoLfxYiszD93tcPPWIju5tMJ9l5wexmkXM0Bx1Wgw0MyxGfyY0gjUCnDg/exec
