@@ -1814,6 +1814,48 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     });
 
+    // Acordeón de Problemas relacionados a este vehículo
+    const { pysData = [] } = getState();
+    const relatedProblems = pysData.filter(p => Array.isArray(p.modelosAsociados) && p.modelosAsociados.includes(String(activeItem.id)));
+
+    if (relatedProblems.length > 0) {
+        const pysAccordionBtn = document.createElement("button");
+        pysAccordionBtn.className = "accordion-header";
+        pysAccordionBtn.style.cssText = "width: 100%; text-align: left; padding: 12px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold;";
+        pysAccordionBtn.innerHTML = `<span><i class="fa-solid fa-triangle-exclamation" style="color:#e6a23c; margin-right:6px;"></i> Problemas relacionados a este vehículo (${relatedProblems.length})</span> <i class="fa-solid fa-chevron-down"></i>`;
+
+        const pysPanel = document.createElement("div");
+        pysPanel.style.cssText = "display: none; padding: 10px; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; background: var(--card-bg); margin-bottom: 10px;";
+
+        const pysTrack = document.createElement("div");
+        pysTrack.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;";
+
+        relatedProblems.forEach(p => {
+            const pCard = document.createElement("div");
+            pCard.style.cssText = "flex: 0 0 140px; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; background: var(--bg-color); cursor: pointer;";
+            pCard.innerHTML = `
+                <img src="${p.Imagen || 'https://via.placeholder.com/150'}" style="width: 100%; height: 75px; object-fit: cover; border-radius: 6px;">
+                <div style="font-size: 0.8rem; font-weight: bold; margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.Problema}</div>
+                <span style="font-size: 0.7rem; color: ${p.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                    ${p.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}
+                </span>
+            `;
+            pCard.onclick = () => openPysDetailModal(p);
+            pysTrack.appendChild(pCard);
+        });
+
+        pysPanel.appendChild(pysTrack);
+
+        pysAccordionBtn.onclick = () => {
+            const isHidden = pysPanel.style.display === 'none';
+            pysPanel.style.display = isHidden ? 'block' : 'none';
+            pysAccordionBtn.querySelector('.fa-chevron-down, .fa-chevron-up').className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
+        };
+
+        accordionContainer.appendChild(pysAccordionBtn);
+        accordionContainer.appendChild(pysPanel);
+    }
+
     const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
         const plusBtn = document.createElement("button");
@@ -4897,6 +4939,21 @@ export function openAddProblemModal() {
 
         <form id="add-pys-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
             <div class="form-group">
+                <label>Alcance del Problema</label>
+                <select id="pys-alcance" class="dev-input" style="padding: 6px;">
+                    <option value="general" selected>General (Aplica a todos los vehículos)</option>
+                    <option value="especifico">Modelo específico</option>
+                </select>
+            </div>
+
+            <div id="pys-models-section" style="display: none; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.02);">
+                <label>Buscar Vehículos Relacionados</label>
+                <input type="text" id="pys-search-vehicle" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width: 100%; padding: 6px; margin-top: 4px;">
+                <div id="pys-vehicle-search-results" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-top: 6px;"></div>
+                <div id="pys-selected-models-list" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;"></div>
+            </div>
+
+            <div class="form-group">
                 <label>Título del Problema (Máx 15 caracteres)</label>
                 <input type="text" id="pys-titulo" maxlength="15" required placeholder="Ej. Falla relay pump">
             </div>
@@ -4932,6 +4989,64 @@ export function openAddProblemModal() {
     document.body.appendChild(modal);
 
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const alcanceSelect = content.querySelector("#pys-alcance");
+    const modelsSection = content.querySelector("#pys-models-section");
+    const searchVehicleInput = content.querySelector("#pys-search-vehicle");
+    const searchVehicleResults = content.querySelector("#pys-vehicle-search-results");
+    const selectedModelsContainer = content.querySelector("#pys-selected-models-list");
+
+    const selectedVehicleIds = new Set();
+
+    alcanceSelect.onchange = () => {
+        modelsSection.style.display = alcanceSelect.value === 'especifico' ? 'block' : 'none';
+    };
+
+    function renderProvisionalSelectedModels() {
+        selectedModelsContainer.innerHTML = '';
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+
+        selectedVehicleIds.forEach(vId => {
+            const v = cortes.find(c => String(c.id) === String(vId));
+            if (!v) return;
+            const tag = document.createElement("div");
+            tag.style.cssText = "display: inline-flex; align-items: center; gap: 6px; background: var(--accent-color); color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8em;";
+            tag.innerHTML = `<span>${v.marca} ${v.modelo} (${v.anoDesde})</span> <i class="fa-solid fa-xmark" style="cursor: pointer;"></i>`;
+            tag.querySelector("i").onclick = () => {
+                selectedVehicleIds.delete(vId);
+                renderProvisionalSelectedModels();
+            };
+            selectedModelsContainer.appendChild(tag);
+        });
+    }
+
+    searchVehicleInput.oninput = () => {
+        const query = searchVehicleInput.value.toLowerCase().trim();
+        searchVehicleResults.innerHTML = '';
+        if (!query) return;
+
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+        const matches = cortes.filter(c =>
+            `${c.marca} ${c.modelo} ${c.versionesAplicables || ''}`.toLowerCase().includes(query)
+        ).slice(0, 8);
+
+        matches.forEach(v => {
+            const itemDiv = document.createElement("div");
+            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px;";
+            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:30px; height:30px; object-fit:cover; border-radius:4px;"> <span>${v.marca} ${v.modelo} (${v.anoDesde}${v.anoHasta ? '-' + v.anoHasta : ''})</span>`;
+            itemDiv.onclick = () => {
+                searchVehicleResults.innerHTML = '';
+                searchVehicleInput.value = '';
+                openConfirmVehicleForPysModal(v, (confirmedVehicle) => {
+                    selectedVehicleIds.add(String(confirmedVehicle.id));
+                    renderProvisionalSelectedModels();
+                });
+            };
+            searchVehicleResults.appendChild(itemDiv);
+        });
+    };
 
     const chkSinSolucion = content.querySelector("#pys-sin-solucion");
     const txtSolucion = content.querySelector("#pys-solucion");
@@ -4972,6 +5087,8 @@ export function openAddProblemModal() {
             solucion: txtSolucion.value.trim(),
             prevenir: content.querySelector("#pys-prevenir").value.trim(),
             videoUrl: content.querySelector("#pys-video").value.trim(),
+            alcance: alcanceSelect.value,
+            modelosAsociados: Array.from(selectedVehicleIds),
             imgBase64,
             userId: currentUser.ID,
             userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario
@@ -4988,6 +5105,114 @@ export function openAddProblemModal() {
             submitBtn.disabled = false;
             submitBtn.innerText = "Agregar";
         }
+    };
+}
+
+export function openSearchVehicleForPysAssociationModal(problemId, onAssociated) {
+    const existing = document.getElementById("pys-add-vehicle-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "pys-add-vehicle-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2400";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "450px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2>Asociar Modelo a Problema</h2>
+        <div style="margin-top:10px;">
+            <input type="text" id="assoc-search-input" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width:100%; padding:8px;">
+            <div id="assoc-search-results" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:10px;"></div>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeModal = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = closeModal;
+
+    const input = content.querySelector("#assoc-search-input");
+    const resultsContainer = content.querySelector("#assoc-search-results");
+
+    input.oninput = () => {
+        const query = input.value.toLowerCase().trim();
+        resultsContainer.innerHTML = '';
+        if (!query) return;
+
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+        const matches = cortes.filter(c => `${c.marca} ${c.modelo}`.toLowerCase().includes(query)).slice(0, 8);
+
+        matches.forEach(v => {
+            const itemDiv = document.createElement("div");
+            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px;";
+            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:35px; height:35px; object-fit:cover; border-radius:4px;"> <span>${v.marca} ${v.modelo} (${v.anoDesde})</span>`;
+            itemDiv.onclick = () => {
+                closeModal();
+                openConfirmVehicleForPysModal(v, async (confirmedVehicle) => {
+                    try {
+                        const res = await routeAction('addVehicleToProblem', { problemId, vehicleId: confirmedVehicle.id });
+                        if (res.status === 'success') {
+                            mostrarNotificacion("Vehículo vinculado correctamente", "success");
+                            if (typeof onAssociated === 'function') onAssociated(res.modelosAsociados);
+                        }
+                    } catch (e) {
+                        showGlobalError("Error al vincular vehículo: " + e.message);
+                    }
+                });
+            };
+            resultsContainer.appendChild(itemDiv);
+        });
+    };
+}
+
+export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
+    const existing = document.getElementById("confirm-vehicle-pys-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "confirm-vehicle-pys-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2400";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "420px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2>Confirmar Vehículo</h2>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:10px;">
+            <img src="${getImageUrl(vehicle.imagenVehiculo, IMG_SIZE_MEDIUM)}" style="width:100%; max-height:180px; object-fit:cover; border-radius:8px;">
+            <div style="width:100%; font-size:0.9rem;">
+                <p style="margin:4px 0;"><strong>Marca:</strong> ${vehicle.marca}</p>
+                <p style="margin:4px 0;"><strong>Modelo:</strong> ${vehicle.modelo}</p>
+                <p style="margin:4px 0;"><strong>Versión:</strong> ${vehicle.versionesAplicables || 'Todas'}</p>
+                <p style="margin:4px 0;"><strong>Años:</strong> ${vehicle.anoDesde}${vehicle.anoHasta ? '-' + vehicle.anoHasta : ''}</p>
+                <p style="margin:4px 0;"><strong>Encendido:</strong> ${vehicle.tipoEncendido || '-'}</p>
+            </div>
+            <div style="display:flex; gap:10px; width:100%; margin-top:10px;">
+                <button id="btn-cancel-pys-veh" class="btn btn-secondary" style="flex:1;">Regresar</button>
+                <button id="btn-accept-pys-veh" class="btn btn-primary" style="flex:1;">Aceptar</button>
+            </div>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeModal = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = closeModal;
+    content.querySelector("#btn-cancel-pys-veh").onclick = closeModal;
+
+    content.querySelector("#btn-accept-pys-veh").onclick = () => {
+        closeModal();
+        if (typeof onConfirm === 'function') onConfirm(vehicle);
     };
 }
 
@@ -5037,6 +5262,53 @@ export function openPysDetailModal(item) {
         const vid = document.createElement("p");
         vid.innerHTML = '<strong>Vídeo:</strong> <a href="' + item.Video + '" target="_blank">Ver guía en YouTube</a>';
         cont.appendChild(vid);
+    }
+
+    // Carrusel de Modelos de Vehículos Relacionados
+    const { catalogData } = getState();
+    const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+    const modelosAsociadosIds = Array.isArray(item.modelosAsociados) ? item.modelosAsociados : [];
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
+    const canEditPys = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+
+    if (modelosAsociadosIds.length > 0 || canEditPys) {
+        const carouselSection = document.createElement("div");
+        carouselSection.style.cssText = "margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;";
+        carouselSection.innerHTML = `<h4 style="margin: 0 0 10px 0; font-size: 1rem;"><i class="fa-solid fa-car"></i> Vehículos Relacionados:</h4>`;
+
+        const track = document.createElement("div");
+        track.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;";
+
+        modelosAsociadosIds.forEach(vId => {
+            const v = cortes.find(c => String(c.id) === String(vId));
+            if (!v) return;
+            const card = document.createElement("div");
+            card.style.cssText = "flex: 0 0 120px; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; background: var(--card-bg); cursor: pointer; text-align: center;";
+            card.innerHTML = `
+                <img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width: 100%; height: 70px; object-fit: cover; border-radius: 6px;">
+                <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${v.marca} ${v.modelo}</div>
+                <div style="font-size: 0.7rem; color: var(--text-disabled);">${v.anoDesde}</div>
+            `;
+            card.onclick = () => mostrarDetalleModal(v, true);
+            track.appendChild(card);
+        });
+
+        if (canEditPys) {
+            const addCard = document.createElement("div");
+            addCard.style.cssText = "flex: 0 0 120px; border: 2px dashed var(--accent-color); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--accent-color); font-size: 0.8rem; background: rgba(0, 123, 255, 0.05);";
+            addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.5rem; margin-bottom: 4px;"></i> <span>Agregar Modelo</span>`;
+            addCard.onclick = () => {
+                openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
+                    item.modelosAsociados = updatedList;
+                    openPysDetailModal(item);
+                });
+            };
+            track.appendChild(addCard);
+        }
+
+        carouselSection.appendChild(track);
+        cont.appendChild(carouselSection);
     }
 
     if (item.Colaborador) {

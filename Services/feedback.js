@@ -131,6 +131,9 @@ function doPost(e) {
             case 'addPrevention':
                 response = handleAddPrevention(payload);
                 break;
+            case 'addVehicleToProblem':
+                response = handleAddVehicleToProblem(payload);
+                break;
             case 'suggestCutChange':
                 response = handleSuggestCutChange(payload);
                 break;
@@ -723,13 +726,27 @@ function handleSuggestCutChange(payload) {
     return { status: "success", message: "Sugerencia de cambio registrada correctamente.", reportId: reportId || ("FB-" + newRowNumber) };
 }
 
+function parseModelosAsociados(rawVal) {
+    if (!rawVal) return [];
+    const str = String(rawVal).trim();
+    if (!str) return [];
+    if (str.startsWith("[") && str.endsWith("]")) {
+        try {
+            const arr = JSON.parse(str);
+            if (Array.isArray(arr)) return arr.map(String).filter(Boolean);
+        } catch (e) {}
+    }
+    return str.split(/[,/\\;]+/).map(s => s.trim()).filter(Boolean);
+}
+
 function handleGetPysData() {
     const sheet = getSafeSheet("pys");
     if (!sheet) return { status: "success", data: [] };
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) return { status: "success", data: [] };
 
-    const data = sheet.getRange(2, 1, lastRow - 1, 9).getValues();
+    const lastCol = Math.max(10, sheet.getLastColumn());
+    const data = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
     const result = data.map(row => ({
         id_problem: row[0],
         Problema: row[1],
@@ -739,13 +756,14 @@ function handleGetPysData() {
         Prevenir: row[5],
         Imagen: row[6],
         Video: row[7],
-        Colaborador: row[8] || ""
+        Colaborador: row[8] || "",
+        modelosAsociados: parseModelosAsociados(row[9] || "")
     }));
     return { status: "success", data: result };
 }
 
 function handleAddProblem(payload) {
-    const { titulo, descripcion, sinSolucion, solucion, prevenir, videoUrl, imgBase64, userId, userName } = payload;
+    const { titulo, descripcion, sinSolucion, solucion, prevenir, videoUrl, imgBase64, userId, userName, modelosAsociados, alcance } = payload;
     if (!titulo || !descripcion) {
         throw new Error("Titulo y descripcion son obligatorios.");
     }
@@ -764,7 +782,7 @@ function handleAddProblem(payload) {
     try {
         const sheet = getSafeSheet("pys") || getSpreadsheet().insertSheet("pys");
         if (sheet.getLastRow() === 0) {
-            sheet.getRange(1, 1, 1, 9).setValues([["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video", "Colaborador"]]);
+            sheet.getRange(1, 1, 1, 10).setValues([["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video", "Colaborador", "modelos_asociados"]]);
         }
 
         const lastRow = sheet.getLastRow();
@@ -784,6 +802,11 @@ function handleAddProblem(payload) {
             } catch(e) { console.error("Error guardando imagen PYS:", e); }
         }
 
+        let modelosArr = [];
+        if (alcance === 'especifico' && Array.isArray(modelosAsociados)) {
+            modelosArr = Array.from(new Set(modelosAsociados.map(String).filter(Boolean)));
+        }
+
         const newRow = [
             problemId,
             titulo,
@@ -793,7 +816,8 @@ function handleAddProblem(payload) {
             prevenir || "",
             imageUrl,
             videoUrl || "",
-            userName || ""
+            userName || "",
+            modelosArr.length > 0 ? JSON.stringify(modelosArr) : ""
         ];
 
         sheet.appendRow(newRow);
@@ -911,6 +935,41 @@ function handleDeleteFeedbackItem(payload) {
     } else {
         throw new Error("Tipo de mensaje desconocido.");
     }
+}
+
+function handleAddVehicleToProblem(payload) {
+    const { problemId, vehicleId } = payload;
+    if (!problemId || !vehicleId) {
+        throw new Error("Se requieren problemId y vehicleId.");
+    }
+
+    const sheet = getSafeSheet("pys");
+    if (!sheet) throw new Error("Hoja pys no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+
+    const data = sheet.getRange(2, 1, lastRow - 1, Math.max(10, sheet.getLastColumn())).getValues();
+    let rowIndex = -1;
+    let currentRaw = "";
+
+    for (let i = 0; i < data.length; i++) {
+        if (String(data[i][0]) === String(problemId)) {
+            rowIndex = i + 2;
+            currentRaw = data[i][9] || "";
+            break;
+        }
+    }
+
+    if (rowIndex === -1) throw new Error("Problema no encontrado.");
+
+    const currentList = parseModelosAsociados(currentRaw);
+    if (!currentList.includes(String(vehicleId))) {
+        currentList.push(String(vehicleId));
+        sheet.getRange(rowIndex, 10).setValue(JSON.stringify(currentList));
+        SpreadsheetApp.flush();
+    }
+
+    return { status: 'success', message: 'Vehículo asociado al problema correctamente.', modelosAsociados: currentList };
 }
 
 function handleClearActivityLogs(payload) {
