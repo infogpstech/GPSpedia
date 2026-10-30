@@ -2580,6 +2580,7 @@ export const openDevTools = setupModal('dev-tools-modal', () => {
     }
 });
 
+/* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR (#dev-tools-modal) */
 function initAdminPanelListeners() {
     const consoleLog = document.getElementById('dev-console-log');
     if (!consoleLog) return; // Evitar inicializaciones duplicadas si no está en el DOM

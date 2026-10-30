@@ -133,14 +133,27 @@ Se realizó una auditoría específica línea por línea sobre el apilamiento y 
 7. Notificaciones Toast Globales (`#error-toast`, `#notification-toast`): `z-index: 4000` / `4001` (cobertura total sobre cualquier capa).
 Resultado: La jerarquía de capas es completamente consistente, previene bloqueos de clic accidentales y cumple los requerimientos de navegación.
 
-**AUDITORÍA TÉCNICA - TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN (30/10/2026)**
+**AUDITORÍA TÉCNICA - TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR (#dev-tools-modal) (RE-IMPLEMENTADO 30/10/2026)**
+
+**Archivos Auditados:** `ui.js`, `index.html`, `api-config.js`.
+
+**Hallazgos y Verificación:**
+1. **Acciones y Panel de Desarrollador:** Se re-auditó `initAdminPanelListeners()` en `ui.js` y el marcado de `#dev-tools-modal` en `index.html`. Se confirmó la integración directa de todas las funciones con los microservicios reales:
+   - Terminal interactiva de Drive (`executeTerminalCommand` -> `driveCommand`).
+   - Métricas de salud de servicios (`runServicesHealthScan` -> `checkAllServicesHealth`).
+   - Respaldos y restauración DB/Drive (`backupDatabase`, `backupDrive`, `restoreDatabase`, `restoreDrive`).
+   - Reorganización y saneamiento de imágenes/DB (`reorganizeDatabase`, `normalizeImages`, `reorganizeImagesInDrive`, `restoreAllTrashedImages`).
+   - Vaciado de caché de cliente e IndexedDB (`clearCacheBtn`) y purgado de logs (`clearActivityLogs`).
+2. **Marcado del Código:** Inyectada la etiqueta identificativa `/* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR (#dev-tools-modal) */` sobre `function initAdminPanelListeners()` en `ui.js`.
+
+**AUDITORÍA TÉCNICA - TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN (RE-IMPLEMENTADO 30/10/2026)**
 
 **Archivos Auditados:** `api-config.js`, `Services/admin.js`, `ui.js`, `main.js`.
 
 **Hallazgos y Verificación:**
-1. **Comprobación de Rutas y Métodos:** Se comprobó que `API_ENDPOINTS.ADMIN` apunta a la URL oficial de despliegue (`https://script.google.com/macros/s/AKfycbwvYQKoT04N4KLZIMLGQB42zaO5cdz4bIY3rFKJ0Nx6ePDi8IxHyTP2Fmvknsz9SvckYg/exec`) y mapea todas las acciones administrativas (`ping`, `backupDatabase`, `backupDrive`, `restoreDatabase`, `restoreDrive`, `reorganizeDatabase`, `normalizeImages`, `reorganizeImagesInDrive`, `restoreAllTrashedImages`, `addLogo`, `createSheet`, `addColumn`, `driveCommand`, `updateVehicleField`, `uploadAdminImage`).
-2. **Integridad de Contrato:** `routeAction` envía peticiones `POST` con tipo de contenido `text/plain` y cuerpo JSON conteniendo `{ action, payload }`. El microservicio procesa y retorna objetos JSON estructurados con `status: 'success'` o `status: 'error'`, manejados de forma determinista por el cliente.
-3. **Marcado del Código:** El código existente en `api-config.js` satisface íntegramente los requerimientos funcionales de extremo a extremo. Se insertó el comentario identificativo `/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */` sobre `ACTION_TO_SERVICE_MAP`.
+1. **Re-implementación de `routeAction`:** Se re-implementó la función central de ruteo `routeAction` en `api-config.js` para adjuntar contexto explícito (`action`, `status`, `rawResponse`, `serverResult`) a las excepciones lanzadas en respuestas HTTP fallidas o JSON con `status: 'error'`.
+2. **Comunicación con Microservicio Admin:** Se verificó que todas las 15 acciones administrativas mapeadas en `ACTION_TO_SERVICE_MAP` son despachadas mediante peticiones HTTP `POST` hacia `API_ENDPOINTS.ADMIN`, transmitiendo solicitudes de tipo `text/plain` en formato JSON y procesando respuestas estructuradas sin simulación.
+3. **Marcado del Código:** Se insertó la etiqueta identificativa `/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */` encima de `routeAction` en `api-config.js`.
 
 **ACTUALIZACIÓN DE ENDPOINTS DE MICROSERVICIOS (30/10/2026):**
 Se actualizaron los endpoints de producción de Google Apps Script en `api-config.js`:

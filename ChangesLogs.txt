@@ -1,8 +1,13 @@
 --------------------------------------------------
-**CHANGES LOG - 30/10/2026 (TAREA 1.1 - COMUNICACIÓN DE ADMINISTRACIÓN)**
+**CHANGES LOG - 30/10/2026 (TAREA 1.2 - RECUPERACIÓN DE FUNCIONES DEL PANEL DE DESARROLLADOR)**
+
+**Archivo: ui.js**
+- **Línea 2583:** Inyectado comentario identificativo `/* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR (#dev-tools-modal) */` sobre `function initAdminPanelListeners()` tras re-auditar la conexión de todas las herramientas administrativas del panel (`#dev-tools-modal`) con los microservicios de backend.
+
+**CHANGES LOG - 30/10/2026 (TAREA 1.1 - RECUPERACIÓN DE COMUNICACIÓN CON MICROSERVICIO ADMIN)**
 
 **Archivo: api-config.js**
-- **Línea 18:** Agregado comentario identificativo `/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */` sobre la constante `ACTION_TO_SERVICE_MAP` tras verificar la comunicación de extremo a extremo entre el cliente frontend y el microservicio administrativo.
+- **Líneas 34-69:** Re-implementada la función `routeAction` para enriquecer y propagar metadatos de diagnóstico (`action`, `status`, `rawResponse`, `serverResult`) en los objetos de excepción lanzados ante errores HTTP o respuestas con `status: 'error'`. Agregado comentario identificativo de la Tarea 1.1.
 
 **CHANGES LOG - 04/02/2026**
 
