@@ -125,30 +125,8 @@ function clearAdminState(action) {
 }
 
 // ============================================================================
-// ROUTER PRINCIPAL (doGet y doPost)
+// ROUTER PRINCIPAL (doPost)
 // ============================================================================
-
-/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */
-function doGet(e) {
-    if (e && e.parameter && e.parameter.debug === 'true') {
-        const serviceState = {
-            service: 'GPSpedia-Admin',
-            version: '2.6.0',
-            spreadsheetId: SPREADSHEET_ID,
-            driveFolderId: DRIVE_FOLDER_ID,
-            sheetsAccessed: [SHEET_NAMES.CORTES, SHEET_NAMES.LOGOS_MARCA, SHEET_NAMES.ADMIN_STATE]
-        };
-        return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
-            .setMimeType(ContentService.MimeType.TEXT);
-    }
-    const defaultResponse = {
-        status: 'success',
-        message: 'GPSpedia Admin-SERVICE v2.6.0 is active.'
-    };
-    return ContentService.createTextOutput(JSON.stringify(defaultResponse))
-        .setMimeType(ContentService.MimeType.TEXT);
-}
-
 function doPost(e) {
     let response;
     const logs = [];

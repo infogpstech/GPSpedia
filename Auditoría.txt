@@ -122,46 +122,6 @@ Se realizó una comprobación de sintaxis e integridad línea por línea en todo
    - El botón de filtro colapsable `#btn-toggle-filters` se controla dinámicamente y se oculta automáticamente al desenfocar o limpiar la búsqueda.
    - La navegación de resultados por Modelo -> Versiones -> Rango de Años funciona de forma fluida y abre automáticamente la vista detallada cuando la coincidencia es única.
 
-**AUDITORÍA TÉCNICA - TAREA 1.3: RECUPERACIÓN DEL FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES (30/10/2026)**
-
-**Archivos Auditados:** `ui.js`, `index.html`, `api-config.js`, `Services/feedback.js`.
-
-**Hallazgos y Verificación Funcional:**
-1. **Flujo de Apertura del Formulario:** Se inspeccionó la tarjeta de creación de problemas (`.card-create-pys`) en `renderPysSection` (`ui.js`). El evento `onclick` invoca deterministamente a `openAddProblemModal()`, construyendo el modal `#add-pys-modal` con `z-index: 2300` y clase `.info-modal.visible`.
-2. **Validaciones e Interacciones:** El formulario incluye selector de alcance (`General` vs `Modelo específico`), sección dinámica de búsqueda y selección múltiple de vehículos (`pys-search-vehicle`, `openConfirmVehicleForPysModal`), campo título (máx 15 chars), carga de imágenes a Drive, detalle con texto enriquecido (máx 200 chars), casilla «Sin solución» que deshabilita el campo solución, prevención (máx 100 chars), validación de URLs de YouTube y envío mediante `routeAction("addProblem", payload)`.
-3. **Marcado del Código:** Se insertó la etiqueta `/* TAREA 1.3: RECUPERACIÓN DEL FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES */` sobre `export function openAddProblemModal()` en `ui.js`.
-
-**AUDITORÍA TÉCNICA - TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR (#dev-tools-modal) (30/10/2026)**
-
-**Archivos Auditados:** `ui.js`, `index.html`, `api-config.js`, `Services/admin.js`.
-
-**Hallazgos y Verificación Funcional:**
-1. **Revisión de Controles y Eventos del Panel:** Se verificó exhaustivamente el flujo de cada función del panel administrativo en `initAdminPanelListeners()` (`ui.js`):
-   - Terminal interactiva de comandos Drive (`executeTerminalCommand` -> `routeAction('driveCommand')`).
-   - Escaneo de métricas y diagnóstico de microservicios (`runServicesHealthScan` -> `checkAllServicesHealth()`).
-   - Ping de verificación de latencia en apertura (`routeAction('ping')`).
-   - Copia de seguridad de base de datos (`btn-admin-backup-db` -> `routeAction('backupDatabase')`).
-   - Copia de seguridad de Drive (`btn-admin-backup-drive` -> `routeAction('backupDrive')`).
-   - Restauración de base de datos y Drive (`btn-admin-restore-db` -> `restoreDatabase`, `btn-admin-restore-drive` -> `restoreDrive`).
-   - Reorganización de base de datos por marca (`btn-admin-reorganize-db` -> `reorganizeDatabase`).
-   - Normalización de nomenclatura de imágenes (`btn-admin-normalize-images` -> `normalizeImages`).
-   - Reorganización de archivos jerárquicos en Drive (`btn-admin-reorganize-drive` -> `reorganizeImagesInDrive`).
-   - Saneamiento y recuperación de imágenes en papelera (`btn-admin-restore-trash` -> `restoreAllTrashedImages`).
-   - Vaciado de caché local del cliente e IndexedDB (`btn-admin-clear-client-cache`).
-   - Purga de logs de actividad (`btn-admin-clear-activity-logs` -> `clearActivityLogs`).
-   - Registro de logotipo de fabricante (`btn-admin-register-logo` -> `addLogo`).
-2. **Cumplimiento de Requisitos:** Todos los controles invocan endpoints reales y devuelven respuestas válidas y formateadas sin simulación. Se agregó la identificación de Tarea 1.2 sobre `function initAdminPanelListeners()` en `ui.js`.
-
-**AUDITORÍA TÉCNICA - TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN (30/10/2026)**
-
-**Archivos Auditados y Modificados:** `Services/admin.js`, `api-config.js`.
-
-**Hallazgos y Corrección Implementada:**
-1. **Causa del fallo de comunicación/monitoreo:** El microservicio `Services/admin.js` únicamente implementaba el manejador `doPost(e)` y carecía del router de verificación `doGet(e)`. Como consecuencia, cuando `checkAllServicesHealth()` en `api-config.js` ejecutaba el escaneo GET con `?debug=true`, el servicio no respondía adecuadamente.
-2. **Implementación de `doGet(e)`:** Se incorporó la función `doGet(e)` en `Services/admin.js` para responder tanto a peticiones GET de diagnóstico (`debug=true`) con el estado del servicio (`GPSpedia-Admin v2.6.0`, ID de Spreadsheet y Drive Folder ID) como a verificaciones GET estándar con `status: 'success'`, logrando paridad con los microservicios de Catálogo, Feedback y Write.
-3. **Integridad de Ruteo:** En `api-config.js`, se verificó que `routeAction` dirija todas las 15 acciones administrativas a `API_ENDPOINTS.ADMIN`.
-4. **Comentarios de Tarea:** Se agregaron los comentarios identificativos `/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */` en `Services/admin.js` y `api-config.js`.
-
 **AUDITORÍA DE CAPAS Y JERARQUÍA DE MODALES (30/10/2026):**
 Se realizó una auditoría específica línea por línea sobre el apilamiento y capas CSS (z-index) de todos los modales e interfaces emergentes en `style.css`, `ui.js`, `main.js`, e `index.html`:
 1. Modal de Detalle de Vehículo (`#modalDetalle`): `z-index: 1600` (ubicado por encima de la barra de búsqueda y encabezado principal `z-index: 1500`).
