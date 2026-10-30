@@ -2580,6 +2580,7 @@ export const openDevTools = setupModal('dev-tools-modal', () => {
     }
 });
 
+/* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR (#dev-tools-modal) */
 function initAdminPanelListeners() {
     const consoleLog = document.getElementById('dev-console-log');
     if (!consoleLog) return; // Evitar inicializaciones duplicadas si no está en el DOM
@@ -4920,6 +4921,7 @@ export async function renderPysSection() {
     cont.appendChild(grid);
 }
 
+/* TAREA 1.3: RECUPERACIÓN DEL FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES */
 export function openAddProblemModal() {
     const existing = document.getElementById("add-pys-modal");
     if (existing) existing.remove();

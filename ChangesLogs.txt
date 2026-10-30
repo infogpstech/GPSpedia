@@ -1,4 +1,16 @@
 --------------------------------------------------
+**CHANGES LOG - 30/10/2026 (TAREA 1.3: RECUPERACIÓN DEL FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES)**
+
+**Archivo: ui.js**
+- **Línea 4924:** Añadido comentario identificativo `/* TAREA 1.3: RECUPERACIÓN DEL FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES */` sobre `export function openAddProblemModal()` tras verificar el correcto enlace de clic desde la tarjeta de creación y la operatividad integral de las validaciones y guardado del formulario.
+
+--------------------------------------------------
+**CHANGES LOG - 30/10/2026 (TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR)**
+
+**Archivo: ui.js**
+- **Línea 2583:** Inyectado comentario identificativo `/* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR (#dev-tools-modal) */` sobre la función `initAdminPanelListeners()` tras auditar y verificar el funcionamiento de todos los controles y operaciones administrativas del panel (#dev-tools-modal).
+
+--------------------------------------------------
 **CHANGES LOG - 30/10/2026 (TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN)**
 
 **Archivo: Services/admin.js**
