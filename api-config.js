@@ -25,7 +25,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'migrateYearRanges': 'UTILITIES', 'migrateTimestamps': 'UTILITIES',
     'ping': 'ADMIN',
     'backupDatabase': 'ADMIN', 'backupDrive': 'ADMIN', 'restoreDatabase': 'ADMIN', 'restoreDrive': 'ADMIN',
-    'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'reorganizeImagesInDrive': 'ADMIN', 'addLogo': 'ADMIN',
+    'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'reorganizeImagesInDrive': 'ADMIN', 'restoreAllTrashedImages': 'ADMIN', 'addLogo': 'ADMIN',
     'updateVehicleField': 'ADMIN', 'uploadAdminImage': 'ADMIN',
     'logFrontend': 'LEGACY'
 };
