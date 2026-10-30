@@ -121,3 +121,14 @@ Se realizó una comprobación de sintaxis e integridad línea por línea en todo
 3. **Interfaz y Experiencia de Usuario:**
    - El botón de filtro colapsable `#btn-toggle-filters` se controla dinámicamente y se oculta automáticamente al desenfocar o limpiar la búsqueda.
    - La navegación de resultados por Modelo -> Versiones -> Rango de Años funciona de forma fluida y abre automáticamente la vista detallada cuando la coincidencia es única.
+
+**AUDITORÍA DE CAPAS Y JERARQUÍA DE MODALES (30/10/2026):**
+Se realizó una auditoría específica línea por línea sobre el apilamiento y capas CSS (z-index) de todos los modales e interfaces emergentes en `style.css`, `ui.js`, `main.js`, e `index.html`:
+1. Modal de Detalle de Vehículo (`#modalDetalle`): `z-index: 1600` (ubicado por encima de la barra de búsqueda y encabezado principal `z-index: 1500`).
+2. Botón Flotante (+): `z-index: 1700` (ubicado dentro/sobre el modal de detalle para interactividad).
+3. Modales Informativos y Secundarios (`.info-modal`, `#ios-install-modal`): `z-index: 2100` (sobrepone modals de detalle sin colisiones).
+4. Lightbox de Imágenes (`.lightbox`): `z-index: 2200` y botones de navegación `z-index: 2210`.
+5. Menú Lateral Hamburguesa (`#side-menu` y `#menu-overlay`): `z-index: 2500` / `2400`.
+6. Términos y Condiciones Emergentes (`#terms-modal`): `z-index: 3100` y Modal Legal Completo (`#terms-agreement-modal`): `z-index: 3200` (para asegurar prioridad sobre aviso previo).
+7. Notificaciones Toast Globales (`#error-toast`, `#notification-toast`): `z-index: 4000` / `4001` (cobertura total sobre cualquier capa).
+Resultado: La jerarquía de capas es completamente consistente, previene bloqueos de clic accidentales y cumple los requerimientos de navegación.
