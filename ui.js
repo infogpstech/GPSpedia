@@ -1319,7 +1319,7 @@ export function showNoResultsMessage(textoBusqueda) {
 function createDetailParagraph(label, text) {
     if (text) {
         const p = document.createElement('p');
-        p.innerHTML = `<strong>${label}:</strong> ${text}`;
+        p.innerHTML = `<strong>${label}:</strong> ${sanitizeHtmlContent(text)}`;
         return p;
     }
     return null;
@@ -3520,21 +3520,32 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
 
     const card = document.createElement("div");
     card.className = "card";
-    card.setAttribute('data-vehicle-id', item.id);
+    card.setAttribute('data-vehicle-id', item.id || '');
     card.style.animation = 'none';
     card.style.opacity = '1';
 
-    // Badge de "Visto"
-    if (isViewed) {
+    // Badge de tipo de sección si es un resultado multi-sección
+    if (item._sectionType && item._sectionType !== 'corte') {
+        const typeBadge = document.createElement('div');
+        typeBadge.className = 'viewed-badge';
+        typeBadge.style.cssText = 'background: #007bff; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; position: absolute; top: 8px; left: 8px; z-index: 2;';
+        typeBadge.innerText = item._sectionType.toUpperCase();
+        card.appendChild(typeBadge);
+    } else if (isViewed) {
         const badge = document.createElement('div');
         badge.className = 'viewed-badge';
         badge.innerHTML = '<i class="fa-solid fa-eye"></i> Visto';
         card.appendChild(badge);
     }
 
-    // Configurar OnClick según el contexto
-    if (resultsForVariant) {
-        // Contexto: Resultados de búsqueda (Variantes)
+    // Configurar OnClick según la sección
+    if (item._sectionType === 'relay') {
+        card.onclick = () => mostrarDetalleRelayModal(item);
+    } else if (item._sectionType === 'tutorial') {
+        card.onclick = () => mostrarDetalleTutorialModal(item);
+    } else if (item._sectionType === 'pys') {
+        card.onclick = () => openPysDetailModal(item);
+    } else if (resultsForVariant) {
         card.onclick = () => {
             const filasDeVariante = resultsForVariant.filter(r =>
                 r.marca === item.marca &&
@@ -3544,14 +3555,10 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
             mostrarVersiones(filasDeVariante, item.categoria, item.marca, item.modelo);
         };
     } else if (item.anoDesde && !resultsForVariant) {
-        // Contexto: Lista de años o carruseles (Item específico)
         card.onclick = () => {
-            // Phase 2.1.5: Si se abre desde un carrusel (Vistos Recientemente), limpiar el hash de búsqueda
-            // para evitar que al retroceder se restauren resultados antiguos o contextos irrelevantes.
-            if (hideBadge) { // hideBadge es true en el carrusel de Vistos Recientemente
+            if (hideBadge) {
                 if (window.location.hash.startsWith('#search=')) {
                     history.replaceState({ level: 'categorias' }, '', window.location.pathname + window.location.search);
-                    // También limpiar el input visualmente
                     const searchInput = document.getElementById('searchInput');
                     if (searchInput) {
                         searchInput.value = '';
@@ -3567,19 +3574,18 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
 
     const img = document.createElement("img");
     img.className = 'card-img-top';
-    img.alt = `${item.marca} ${item.modelo}`;
+    img.alt = `${item.marca || ''} ${item.modelo || ''}`;
     img.loading = "lazy";
 
-    // Intentar cargar desde IndexedDB mediante la función centralizada
-    setOptimizedImage(img, item.imagenVehiculo, IMG_SIZE_SMALL);
-
+    setOptimizedImage(img, item.Imagen || item.imagenVehiculo || item.imagen, IMG_SIZE_SMALL);
     card.appendChild(img);
 
     const overlay = document.createElement("div");
     overlay.className = "overlay";
 
-    if (resultsForVariant) {
-        // UI para variantes en búsqueda
+    if (item._sectionType && item._sectionType !== 'corte') {
+        overlay.innerHTML = `<div class="overlay-text-primary">${item.marca || ''}</div><div class="overlay-text-secondary">${item.modelo || ''}</div>`;
+    } else if (resultsForVariant) {
         const version = item.versionesAplicables || '';
         const tiposEncendido = [...new Set(resultsForVariant
             .filter(r => r.marca === item.marca && r.modelo === item.modelo && r.categoria === item.categoria && r.versionesAplicables === item.versionesAplicables)
@@ -3587,7 +3593,6 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
 
         overlay.innerHTML = `<div class="overlay-text-primary">${item.marca} ${item.modelo}</div><div class="overlay-text-secondary">${item.categoria} | ${version || tiposEncendido}</div>`;
     } else {
-        // UI para items específicos
         const yearRange = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
         overlay.innerHTML = `<div class="overlay-text-primary">${item.marca} ${item.modelo}</div><div class="overlay-text-secondary">${yearRange} | ${item.tipoEncendido || ''}</div>`;
     }
@@ -4642,25 +4647,32 @@ export function openPysDetailModal(item) {
     }
 
     const desc = document.createElement("p");
-    desc.innerHTML = `<strong>Descripción:</strong> ${item.Descripcion || ""}`;
+    desc.innerHTML = "<strong>Descripción:</strong> " + sanitizeHtmlContent(item.Descripcion || "");
     cont.appendChild(desc);
 
     if (item.Solucion) {
         const sol = document.createElement("p");
-        sol.innerHTML = `<strong>Solución:</strong> ${item.Solucion}`;
+        sol.innerHTML = "<strong>Solución:</strong> " + sanitizeHtmlContent(item.Solucion);
         cont.appendChild(sol);
     }
 
     if (item.Prevenir) {
         const prev = document.createElement("p");
-        prev.innerHTML = `<strong>Prevención:</strong> ${item.Prevenir}`;
+        prev.innerHTML = "<strong>Prevención:</strong> " + sanitizeHtmlContent(item.Prevenir);
         cont.appendChild(prev);
     }
 
     if (item.Video) {
         const vid = document.createElement("p");
-        vid.innerHTML = `<strong>Vídeo:</strong> <a href="${item.Video}" target="_blank">Ver guía en YouTube</a>`;
+        vid.innerHTML = '<strong>Vídeo:</strong> <a href="' + item.Video + '" target="_blank">Ver guía en YouTube</a>';
         cont.appendChild(vid);
+    }
+
+    if (item.Colaborador) {
+        const colDiv = document.createElement("div");
+        colDiv.style.cssText = "margin-top: 15px; font-size: 0.85rem; color: var(--text-disabled); text-align: right;";
+        colDiv.innerHTML = "Registrado por: <strong>" + cleanColaboradorName(item.Colaborador) + "</strong>";
+        cont.appendChild(colDiv);
     }
 
     if (item.Se_soluciono !== 'x') {
@@ -4698,7 +4710,6 @@ export function openPysDetailModal(item) {
         cont.appendChild(addPrevBtn);
     }
 
-    const modalDetalle = document.getElementById("modalDetalle");
     modalDetalle.classList.add("visible");
 }
 

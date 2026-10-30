@@ -728,7 +728,8 @@ function handleGetPysData() {
         Solucion: row[4],
         Prevenir: row[5],
         Imagen: row[6],
-        Video: row[7]
+        Video: row[7],
+        Colaborador: row[8] || ""
     }));
     return { status: "success", data: result };
 }
@@ -750,7 +751,7 @@ function handleAddProblem(payload) {
     try {
         const sheet = getSafeSheet("pys") || getSpreadsheet().insertSheet("pys");
         if (sheet.getLastRow() === 0) {
-            sheet.getRange(1, 1, 1, 8).setValues([["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video"]]);
+            sheet.getRange(1, 1, 1, 8).setValues([["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video", "Colaborador"]]);
         }
 
         const lastRow = sheet.getLastRow();
@@ -778,7 +779,8 @@ function handleAddProblem(payload) {
             sinSolucion ? "" : (solucion || ""),
             prevenir || "",
             imageUrl,
-            videoUrl || ""
+            videoUrl || "",
+            userName || ""
         ];
 
         sheet.appendRow(newRow);
