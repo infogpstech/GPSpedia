@@ -272,6 +272,22 @@
                             <div class="form-group full-width"><label>Imagen de Alimentación</label><div class="image-upload-group"><img id="imgCableAlimen_preview" class="image-preview" onclick="this.nextElementSibling.click()"><label for="imgCableAlimen" class="btn btn-secondary">Subir</label><input type="file" id="imgCableAlimen" style="display:none;" accept="image/*"></div></div>
                         </div>
                     </div>
+                    <div class="accordion-item" id="second-cut-accordion">
+                        <div class="accordion-header"><span>Agregar Segundo Corte</span><i class="fas fa-chevron-down"></i></div>
+                        <div class="accordion-content form-grid">
+                            <p style="font-size:0.85em; color:var(--text-disabled);" class="full-width">Deseas registrar un corte adicional para este mismo vehiculo?</p>
+                            <button type="button" id="btn-add-second-cut" class="btn btn-secondary full-width"><i class="fa-solid fa-plus-circle"></i> Registrar Segundo Corte</button>
+                        </div>
+                    </div>
+                    <div class="accordion-item" id="video-accordion">
+                        <div class="accordion-header"><span>Video Guia de Desarme</span><i class="fas fa-chevron-down"></i></div>
+                        <div class="accordion-content form-grid">
+                            <div class="form-group full-width">
+                                <label for="videoGuiaUrl">Enlace de YouTube</label>
+                                <input type="url" id="videoGuiaUrl" placeholder="https://www.youtube.com/watch?v=...">
+                            </div>
+                        </div>
+                    </div>
                     <div class="accordion-item" id="nota-accordion">
                         <div class="accordion-header"><span>Agregar Nota Importante</span><i class="fas fa-chevron-down"></i></div>
                         <div class="accordion-content form-grid">
@@ -545,6 +561,9 @@
             document.getElementById('form-stage-1').addEventListener('submit', handleStage1Submit);
             document.getElementById('form-stage-2').addEventListener('submit', handleStage2Submit);
             document.getElementById('form-stage-3').addEventListener('submit', handleStage3Submit);
+            document.getElementById('btn-add-second-cut').addEventListener('click', () => {
+                proceedToStage2(state.selectedVehicleId);
+            });
 
 
             // Suggestions
@@ -952,6 +971,19 @@
 
         // --- STAGE 3: SUPPLEMENTARY INFO ---
         function proceedToStage3(vehicleId) {
+            state.selectedVehicleId = vehicleId;
+            // Check if vehicle already has a video
+            if (state.catalog && state.catalog.cortes) {
+                const v = state.catalog.cortes.find(c => c.id == vehicleId);
+                const vidAcc = document.getElementById('video-accordion');
+                if (vidAcc) {
+                    if (v && v.videoGuiaDesarmeUrl) {
+                        vidAcc.style.display = 'none';
+                    } else {
+                        vidAcc.style.display = 'block';
+                    }
+                }
+            }
             state.selectedVehicleId = vehicleId;
             const warningContainer = document.getElementById('supplementary-warnings');
             warningContainer.innerHTML = '';

@@ -83,7 +83,56 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
     // Las palabras de búsqueda se derivan de la consulta completa para no excluir números de modelo (ej. 1500)
     const palabrasBusqueda = busqueda.split(' ').filter(p => p);
 
+    // --- LÓGICA DE BÚSQUEDA GLOBAL MULTI-SECCIÓN ---
+    const { relay = [], tutoriales = [] } = catalogData;
+    let pysItems = [];
+    try {
+        const pysState = getState().pysData;
+        if (pysState) pysItems = pysState;
+    } catch(e) {}
+
+    // Clean HTML tags helper for search matching
+    const stripHtml = (str) => String(str || '').replace(/<[^>]*>/g, ' ').toLowerCase();
+
+    // 1. Search in Cortes
     datosFiltrados = cortes.filter(item => {
+        if (yearSearchTerm) {
+            const anoDesde = parseInt(item.anoDesde, 10);
+            const anoHasta = item.anoHasta ? parseInt(item.anoHasta, 10) : anoDesde;
+            if (yearSearchTerm < anoDesde || yearSearchTerm > anoHasta) return false;
+        }
+        if (busqueda) {
+            const itemTexto = stripHtml(`${item.marca} ${item.modelo} ${item.versionesAplicables || ''} ${item.tipoEncendido || ''} ${item.categoria || ''} ${item.anoDesde || ''} ${item.anoHasta || ''} ${item.tipoCorte1 || ''} ${item.ubicacionCorte1 || ''} ${item.colorCableCorte1 || ''}`);
+            return palabrasBusqueda.every(palabra => {
+                if (yearSearchTerm && palabra === String(yearSearchTerm)) return true;
+                return itemTexto.includes(palabra);
+            });
+        }
+        return !!yearSearchTerm;
+    }).map(i => ({ ...i, _sectionType: 'corte' }));
+
+    // 2. Search in Relay
+    const relayMatches = relay.filter(item => {
+        const t = stripHtml(`${item.nombre || ''} ${item.tipo || ''} ${item.descripcion || ''} ${item.funcion || ''} ${item.observacion || ''}`);
+        return palabrasBusqueda.every(p => t.includes(p));
+    }).map(i => ({ ...i, _sectionType: 'relay', marca: i.nombre || 'Relay', modelo: i.tipo || 'Configuración' }));
+
+    // 3. Search in Tutorials
+    const tutorialMatches = tutoriales.filter(item => {
+        const t = stripHtml(`${item.Tema || ''} ${item.Descripcion || ''}`);
+        return palabrasBusqueda.every(p => t.includes(p));
+    }).map(i => ({ ...i, _sectionType: 'tutorial', marca: 'Tutorial', modelo: item.Tema }));
+
+    // 4. Search in PYS (Problemas y Soluciones)
+    const pysMatches = pysItems.filter(item => {
+        const t = stripHtml(`${item.Problema || ''} ${item.Descripcion || ''} ${item.Solucion || ''} ${item.Prevenir || ''}`);
+        return palabrasBusqueda.every(p => t.includes(p));
+    }).map(i => ({ ...i, _sectionType: 'pys', marca: 'Problema', modelo: item.Problema }));
+
+    // Combine all global search results
+    datosFiltrados = [...datosFiltrados, ...relayMatches, ...tutorialMatches, ...pysMatches];
+
+    const unusedFilter = [].filter(item => {
         // 1. Verificación del año (si se especificó uno).
         if (yearSearchTerm) {
             const anoDesde = parseInt(item.anoDesde, 10);

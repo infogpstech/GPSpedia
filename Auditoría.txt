@@ -15,3 +15,32 @@
 
 3. **Respaldos:**
    - Se generarán los respaldos `style.css.bak` y `ui.js.bak` antes de realizar las modificaciones.
+
+**AUDITORÍA TÉCNICA GLOBAL Y DE RENOVACIÓN INTEGRAL (30/10/2026)**
+
+**Archivos Auditados:**
+- Frontend: index.html, ui.js, main.js, navigation.js, add_cortes.html, users.html, api-config.js, style.css, offline.js
+- Backend Services: Services/catalog.js, Services/write.js, Services/feedback.js, Services/admin.js, Services/users.js
+
+**Hallazgos Principales de Estructura y Flujos:**
+1. Modal de Detalle (ui.js / #modalDetalle):
+   - Maneja renderizado de cortes (renderModalDetalle), tutoriales (renderModalTutorial) y relays.
+   - Cuenta con controles de edición para rol Desarrollador (window.inEditMode).
+   - Requiere extenderse para incorporar botón "Reportar" por corte específico con enlace al formulario/modal de sugerencia de cambio.
+   - Requiere incorporar el botón "+" en la esquina inferior para desplegar opciones dinámicas de "Nuevo corte", "Apertura", "Cable de alimentación" y "Agregar vídeo guía".
+
+2. Servicios Backend (Services/feedback.js, Services/write.js, Services/catalog.js, Services/admin.js):
+   - feedback.js: Maneja reportes (reportProblem), sugerencias de año (suggestYear), respuestas y bandeja de entrada. Admite extensión para registrar sugerencias de cambio y la nueva sección de "Problemas y Soluciones" en la hoja dedicada "pys".
+   - write.js: Gestiona inserción/actualización de cortes (addCorte, addSupplementaryInfo, addOrUpdateCut). Cuenta con soporte para hasta 3 cortes (tipoCorte1..3), 1 apertura y hasta 3 cables de alimentación (cableAlimen1..3).
+   - admin.js: Microservicio de desarrollador con edición directa de campos (updateVehicleField), respaldo/restauración de DB/Drive y reorganización.
+
+3. Nueva Sección "Problemas y Soluciones":
+   - Requiere nueva hoja "pys" con encabezados exactos: id_problem (ej. "isue-001"), Problema (máx 15 chars), Descripción (máx 200 chars), Se soluciono ("x" o ""), Solucion (máx 200 chars), Prevenir (máx 100 chars), Imagen (Drive URL), Video (YouTube URL).
+   - Carpeta dedicada en Drive para imágenes de problemas ("Problemas y Soluciones").
+   - Tarjetas responsivas en UI con tarjeta de creación "+" en primera posición y orden cronológico inverso.
+
+4. Editor de Texto Enriquecido:
+   - Componente ligero JS/CSS para Negrita y Colores de texto, preservando saltos de línea y sanitizando HTML.
+
+5. Identidad de Usuario y Permisos:
+   - Usuario autenticado obtiene nombre personal desde gpsepedia_user o sessionToken. Nombre del colaborador almacenado de forma limpia sin ID de usuario.

@@ -4,7 +4,7 @@
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear } from './api-config.js';
+import { getFeedbackItems, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 
@@ -1787,6 +1787,19 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     });
 
     const modalDetalle = document.getElementById("modalDetalle");
+    if (!inEditMode) {
+        const plusBtn = document.createElement("button");
+        plusBtn.className = "btn-expand-plus";
+        plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+        plusBtn.style.cssText = "position: fixed; bottom: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background-color: #007bff; color: #fff; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 1.2rem; cursor: pointer; z-index: 1700; display: flex; align-items: center; justify-content: center;";
+        plusBtn.title = "Ampliar información del modelo";
+        plusBtn.onclick = (e) => {
+            e.stopPropagation();
+            openExpandMenuModal(activeItem);
+        };
+        cont.appendChild(plusBtn);
+    }
+
     modalDetalle.dataset.modalType = 'corte';
     modalDetalle.classList.add("visible");
     if (!isNavigation && window.history && window.history.pushState) {
@@ -2299,11 +2312,15 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
                 return;
             }
 
-            const reason = window.prompt("Describe el problema con este corte:");
+            const reason = window.prompt(`Describe el problema con el Corte #${index + 1}:`);
             if (reason && reason.trim()) {
                 reportBtn.classList.add('btn-loading');
-                reportProblem(vehicleId, reason, currentUser.ID, currentUser.Nombre_Completo || currentUser.Nombre_Usuario).then(() => {
-                    alert("Reporte enviado. Gracias por tu ayuda.");
+                reportProblem(vehicleId, `[Corte #${index + 1}] ${reason.trim()}`, currentUser.ID, currentUser.Nombre_Completo || currentUser.Nombre_Usuario).then((res) => {
+                    const reportId = res && res.reportId ? res.reportId : `REP-${Date.now()}`;
+                    const suggest = window.confirm("Reporte enviado con éxito.\n\n¿Deseas proponer una sugerencia de cambio para corregir este corte ahora mismo?");
+                    if (suggest) {
+                        openSuggestCutModal(vehicleId, index + 1, cutData, reportId);
+                    }
                 }).catch(err => {
                     console.error("Error reporting problem:", err);
                     showGlobalError("Error al enviar reporte.");
@@ -3779,6 +3796,9 @@ export function mostrarSeccion(sectionName, isFromPopState = false) {
         case 'relay':
             mostrarRelayGrid();
             break;
+        case 'pys':
+            renderPysSection();
+            break;
     }
 }
 
@@ -3790,6 +3810,17 @@ function mostrarTutorialesGrid() {
 
     const grid = document.createElement('div');
     grid.className = 'grid';
+
+    // First card: Add Tutorial Card (+)
+    const createCard = document.createElement('div');
+    createCard.className = 'card card-create-tutorial';
+    createCard.style.cssText = 'background: transparent; border: 2px dashed #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; cursor: pointer; border-radius: 12px;';
+    createCard.innerHTML = `
+        <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
+        <span style="font-weight: bold; color: #007bff;">Agregar Tutorial</span>
+    `;
+    createCard.onclick = () => openAddTutorialModal();
+    grid.appendChild(createCard);
     tutoriales.forEach(item => {
         const card = document.createElement("div");
         card.className = "card";
@@ -3936,5 +3967,892 @@ function mostrarDetalleRelayModal(item) {
     modalDetalle.classList.add("visible");
     if (window.history && window.history.pushState) {
         window.history.pushState({ modalOpen: true }, '');
+    }
+}
+
+
+export function openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId) {
+    const existing = document.getElementById("suggest-cut-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "suggest-cut-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2500";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-pen-to-square"></i> Sugerir Cambio - Corte #${corteNum}</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">Vinculado al Reporte: <strong>${reportId}</strong></p>
+
+        <form id="suggest-cut-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Tipo de Corte</label>
+                <input type="text" id="sug-tipo" value="${currentCutData.tipo || ""}" placeholder="Ej. Bomba de combustible">
+            </div>
+            <div class="form-group">
+                <label>Ubicación</label>
+                <input type="text" id="sug-ubicacion" value="${currentCutData.ubicacion || ""}" placeholder="Ej. Bajo el asiento trasero">
+            </div>
+            <div class="form-group">
+                <label>Color de Cable</label>
+                <input type="text" id="sug-color" value="${currentCutData.colorCable || ""}" placeholder="Ej. Azul / Blanco">
+            </div>
+            <div class="form-group">
+                <label>Configuración Relay</label>
+                <input type="text" id="sug-relay" value="${currentCutData.configRelay || ""}" placeholder="Ej. 5 pines NC">
+            </div>
+            <div class="form-group">
+                <label>Imagen de Referencia (Opcional)</label>
+                <input type="file" id="sug-img-file" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label>Detalles / Explicación del cambio</label>
+
+                <textarea id="sug-detalles" rows="3" placeholder="Explica brevemente los cambios propuestos..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Enviar Sugerencia</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeBtn = content.querySelector(".info-close-btn");
+    closeBtn.onclick = () => modal.remove();
+
+    const form = content.querySelector("#suggest-cut-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) {
+            showGlobalError("Debes estar autenticado.");
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Enviando...";
+
+        const fileInput = content.querySelector("#sug-img-file");
+        let imgBase64 = "";
+
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            imgBase64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (re) => resolve(re.target.result);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        const payload = {
+            reportId,
+            vehicleId,
+            corteIndex: corteNum,
+            userId: currentUser.ID,
+            userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
+            details: content.querySelector("#sug-detalles").value.trim(),
+            imgBase64,
+            proposedValues: {
+                tipo: content.querySelector("#sug-tipo").value.trim(),
+                ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
+                colorCable: content.querySelector("#sug-color").value.trim(),
+                configRelay: content.querySelector("#sug-relay").value.trim()
+            }
+        };
+
+        try {
+            await suggestCutChange(payload);
+            alert("Sugerencia enviada correctamente. Será revisada por un administrador.");
+            modal.remove();
+        } catch (err) {
+            console.error("Error al enviar sugerencia:", err);
+            showGlobalError("Error al guardar la sugerencia: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Enviar Sugerencia";
+        }
+    };
+}
+
+
+export function openExpandMenuModal(item) {
+    const existing = document.getElementById("expand-menu-modal");
+    if (existing) existing.remove();
+
+    // Calculate available slots
+    let cutsCount = 0;
+    if (item.tipoCorte1) cutsCount++;
+    if (item.tipoCorte2) cutsCount++;
+    if (item.tipoCorte3) cutsCount++;
+    const cutsAvailable = 3 - cutsCount;
+
+    let feedsCount = 0;
+    if (item.cableAlimen) feedsCount++;
+    if (item.cableAlimen2) feedsCount++;
+    if (item.cableAlimen3) feedsCount++;
+    const feedsAvailable = 3 - feedsCount;
+
+    const modal = document.createElement("div");
+    modal.id = "expand-menu-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2100";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "400px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-circle-plus"></i> Ampliar Información</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            ${cutsAvailable > 0 ? `<button id="btn-exp-cut" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-car-on"></i> Nuevo corte (${cutsAvailable} disponibles)</button>` : ""}
+            ${!item.apertura ? `<button id="btn-exp-apertura" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-door-open"></i> Apertura de puertas</button>` : ""}
+            ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
+            ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const cutBtn = content.querySelector("#btn-exp-cut");
+    if (cutBtn) cutBtn.onclick = () => { modal.remove(); openAddCutForModelModal(item); };
+
+    const apBtn = content.querySelector("#btn-exp-apertura");
+    if (apBtn) apBtn.onclick = () => { modal.remove(); openAddAperturaModal(item); };
+
+    const feedBtn = content.querySelector("#btn-exp-feed");
+    if (feedBtn) feedBtn.onclick = () => { modal.remove(); openAddFeedModal(item); };
+
+    const videoBtn = content.querySelector("#btn-exp-video");
+    if (videoBtn) videoBtn.onclick = () => { modal.remove(); openAddVideoModal(item); };
+}
+
+export function openAddCutForModelModal(item) {
+    const existing = document.getElementById("add-cut-for-model-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-cut-for-model-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-plus-circle"></i> Agregar Nuevo Corte</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">Modelo: ${item.marca} ${item.modelo}</p>
+
+        <form id="add-cut-model-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Tipo de Corte</label>
+                <select id="add-cut-tipo" required>
+                    <option value="Bomba de combustible">Bomba de combustible</option>
+                    <option value="Ignición">Ignición</option>
+                    <option value="Botón de encendido">Botón de encendido</option>
+                    <option value="No recomendado">No recomendado</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Configuración Relay</label>
+                <input type="text" id="add-cut-relay" placeholder="Ej. 5 pines NC">
+            </div>
+            <div class="form-group">
+                <label>Ubicación y Detalles del Corte</label>
+                <textarea id="add-cut-detalles" rows="3" placeholder="Detalles de ubicación y conexión..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Color del Cable</label>
+                <input type="text" id="add-cut-color" placeholder="Ej. Verde / Negro">
+            </div>
+            <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="add-cut-testigo" style="width:auto;">
+                <label for="add-cut-testigo" style="margin:0;">Este corte activa el testigo del motor</label>
+            </div>
+            <div class="form-group">
+                <label>Subir Imagen del Corte</label>
+                <input type="file" id="add-cut-img-file" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Corte</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-cut-model-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const fileInput = content.querySelector("#add-cut-img-file");
+        let imgBase64 = "";
+        if (fileInput.files && fileInput.files[0]) {
+            imgBase64 = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = (re) => res(re.target.result);
+                r.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        const payload = {
+            vehicleId: item.id,
+            colaborador: currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
+            cutData: {
+                tipo: content.querySelector("#add-cut-tipo").value,
+                configRelay: content.querySelector("#add-cut-relay").value,
+                ubicacion: content.querySelector("#add-cut-detalles").value,
+                colorCable: content.querySelector("#add-cut-color").value,
+                activaTestigo: content.querySelector("#add-cut-testigo").checked,
+                imgBase64
+            }
+        };
+
+        try {
+            await routeAction("addOrUpdateCut", payload);
+            alert("Corte agregado con éxito.");
+            modal.remove();
+            // Refresh catalog
+            const catRes = await routeAction("getCatalogData");
+            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+        } catch (err) {
+            console.error("Error agregando corte:", err);
+            showGlobalError("Error al agregar corte: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Corte";
+        }
+    };
+}
+
+export function openAddAperturaModal(item) {
+    const existing = document.getElementById("add-apertura-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-apertura-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-door-open"></i> Agregar Apertura de Puertas</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
+
+        <form id="add-apertura-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Detalles de la Apertura</label>
+                <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Subir Imagen</label>
+                <input type="file" id="add-apertura-img-file" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Apertura</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-apertura-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const fileInput = content.querySelector("#add-apertura-img-file");
+        let imgBase64 = "";
+        if (fileInput.files && fileInput.files[0]) {
+            imgBase64 = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = (re) => res(re.target.result);
+                r.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        try {
+            await routeAction("addSupplementaryInfo", {
+                vehicleId: item.id,
+                apertura: content.querySelector("#add-apertura-detalles").value,
+                imgApertura: imgBase64
+            });
+            alert("Apertura agregada con éxito.");
+            modal.remove();
+            const catRes = await routeAction("getCatalogData");
+            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+        } catch (err) {
+            console.error(err);
+            showGlobalError("Error: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Apertura";
+        }
+    };
+}
+
+export function openAddFeedModal(item) {
+    const existing = document.getElementById("add-feed-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-feed-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-plug"></i> Agregar Cable de Alimentación</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
+
+        <form id="add-feed-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Detalles de la Alimentación</label>
+                <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Subir Imagen</label>
+                <input type="file" id="add-feed-img-file" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Alimentación</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-feed-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const fileInput = content.querySelector("#add-feed-img-file");
+        let imgBase64 = "";
+        if (fileInput.files && fileInput.files[0]) {
+            imgBase64 = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = (re) => res(re.target.result);
+                r.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        const payload = { vehicleId: item.id };
+        const details = content.querySelector("#add-feed-detalles").value;
+
+        if (!item.cableAlimen) {
+            payload.cableAlimen = details;
+            payload.imgCableAlimen = imgBase64;
+        } else if (!item.cableAlimen2) {
+            payload.cableAlimen2 = details;
+            payload.imgCableAlimen2 = imgBase64;
+        } else if (!item.cableAlimen3) {
+            payload.cableAlimen3 = details;
+            payload.imgCableAlimen3 = imgBase64;
+        }
+
+        try {
+            await routeAction("addSupplementaryInfo", payload);
+            alert("Cable de alimentación agregado con éxito.");
+            modal.remove();
+            const catRes = await routeAction("getCatalogData");
+            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+        } catch (err) {
+            console.error(err);
+            showGlobalError("Error: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Alimentación";
+        }
+    };
+}
+
+export function openAddVideoModal(item) {
+    const existing = document.getElementById("add-video-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-video-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-brands fa-youtube"></i> Agregar Enlace de Vídeo</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
+
+        <form id="add-video-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Enlace de YouTube</label>
+                <input type="url" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Vídeo</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-video-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const url = content.querySelector("#add-video-url").value.trim();
+        if (!url.includes("youtube.com") && !url.includes("youtu.be")) {
+            showGlobalError("Por favor ingresa un enlace válido de YouTube.");
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        try {
+            await routeAction("updateVehicleField", {
+                vehicleId: item.id,
+                fieldName: "videoGuiaDesarmeUrl",
+                fieldValue: url
+            });
+            alert("Vídeo agregado con éxito.");
+            modal.remove();
+            const catRes = await routeAction("getCatalogData");
+            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+        } catch (err) {
+            console.error(err);
+            showGlobalError("Error: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Vídeo";
+        }
+    };
+}
+
+
+export async function renderPysSection() {
+    const cont = document.getElementById("contenido-pys");
+    if (!cont) return;
+    cont.innerHTML = "<h4>Problemas y Soluciones</h4>";
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+
+    // First card: Creation Card (+)
+    const createCard = document.createElement("div");
+    createCard.className = "card card-create-pys";
+    createCard.style.cssText = "background: transparent; border: 2px dashed #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; cursor: pointer; border-radius: 12px;";
+    createCard.innerHTML = `
+        <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
+        <span style="font-weight: bold; color: #007bff;">Agregar Problema</span>
+    `;
+    createCard.onclick = () => openAddProblemModal();
+    grid.appendChild(createCard);
+
+    try {
+        const res = await routeAction("getPysData");
+        const items = (res && res.data) ? res.data : [];
+        items.reverse(); // Most recent first
+
+        items.forEach(item => {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.style.cssText = "cursor: pointer; display: flex; flex-direction: column; gap: 8px; padding: 12px;";
+            card.innerHTML = `
+                <img src="${item.Imagen || 'https://via.placeholder.com/150'}" alt="${item.Problema}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;">
+                <h3 style="margin: 0; font-size: 1rem; color: var(--text-color);">${item.Problema}</h3>
+                <span style="font-size: 0.8rem; color: ${item.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight: bold;">
+                    ${item.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}
+                </span>
+            `;
+            card.onclick = () => openPysDetailModal(item);
+            grid.appendChild(card);
+        });
+    } catch(err) {
+        console.error("Error cargando PYS:", err);
+    }
+
+    cont.appendChild(grid);
+}
+
+export function openAddProblemModal() {
+    const existing = document.getElementById("add-pys-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-pys-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2300";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "550px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-triangle-exclamation"></i> Registrar Problema</h2>
+
+        <form id="add-pys-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+            <div class="form-group">
+                <label>Título del Problema (Máx 15 caracteres)</label>
+                <input type="text" id="pys-titulo" maxlength="15" required placeholder="Ej. Falla relay pump">
+            </div>
+            <div class="form-group">
+                <label>Imagen del Problema</label>
+                <input type="file" id="pys-img-file" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label>Detalle del Problema (Máx 200 caracteres)</label>
+                <textarea id="pys-detalle" maxlength="200" rows="3" required placeholder="Describe el problema..."></textarea>
+            </div>
+            <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="pys-sin-solucion" style="width:auto;">
+                <label for="pys-sin-solucion" style="margin:0;">Sin solución aún</label>
+            </div>
+            <div class="form-group" id="grp-solucion">
+                <label>Solución (Máx 200 caracteres)</label>
+                <textarea id="pys-solucion" maxlength="200" rows="3" placeholder="Explica la solución..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
+                <input type="text" id="pys-prevenir" maxlength="100" placeholder="Recomendación preventiva...">
+            </div>
+            <div class="form-group">
+                <label>Enlace de Vídeo YouTube (Opcional)</label>
+                <input type="url" id="pys-video" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const chkSinSolucion = content.querySelector("#pys-sin-solucion");
+    const txtSolucion = content.querySelector("#pys-solucion");
+    chkSinSolucion.onchange = () => {
+        txtSolucion.disabled = chkSinSolucion.checked;
+        if (chkSinSolucion.checked) txtSolucion.value = "";
+    };
+
+    const form = content.querySelector("#add-pys-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const fileInput = content.querySelector("#pys-img-file");
+        let imgBase64 = "";
+        if (fileInput.files && fileInput.files[0]) {
+            imgBase64 = await new Promise(res => {
+                const r = new FileReader();
+                r.onload = re => res(re.target.result);
+                r.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        const payload = {
+            titulo: content.querySelector("#pys-titulo").value.trim(),
+            descripcion: content.querySelector("#pys-detalle").value.trim(),
+            sinSolucion: chkSinSolucion.checked,
+            solucion: txtSolucion.value.trim(),
+            prevenir: content.querySelector("#pys-prevenir").value.trim(),
+            videoUrl: content.querySelector("#pys-video").value.trim(),
+            imgBase64,
+            userId: currentUser.ID,
+            userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+        };
+
+        try {
+            await routeAction("addProblem", payload);
+            alert("Problema registrado con éxito.");
+            modal.remove();
+            renderPysSection();
+        } catch(err) {
+            console.error(err);
+            showGlobalError("Error al registrar problema: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar";
+        }
+    };
+}
+
+export function openPysDetailModal(item) {
+    const cont = document.getElementById("detalleCompleto");
+    cont.innerHTML = "";
+
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;";
+
+    const title = document.createElement("h2");
+    title.innerText = item.Problema;
+    title.style.margin = "0";
+    headerDiv.appendChild(title);
+
+    const closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.onclick = () => document.getElementById("modalDetalle").classList.remove("visible");
+    headerDiv.appendChild(closeBtn);
+
+    cont.appendChild(headerDiv);
+
+    if (item.Imagen) {
+        const img = document.createElement("img");
+        img.src = item.Imagen;
+        img.style.cssText = "width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;";
+        cont.appendChild(img);
+    }
+
+    const desc = document.createElement("p");
+    desc.innerHTML = `<strong>Descripción:</strong> ${item.Descripcion || ""}`;
+    cont.appendChild(desc);
+
+    if (item.Solucion) {
+        const sol = document.createElement("p");
+        sol.innerHTML = `<strong>Solución:</strong> ${item.Solucion}`;
+        cont.appendChild(sol);
+    }
+
+    if (item.Prevenir) {
+        const prev = document.createElement("p");
+        prev.innerHTML = `<strong>Prevención:</strong> ${item.Prevenir}`;
+        cont.appendChild(prev);
+    }
+
+    if (item.Video) {
+        const vid = document.createElement("p");
+        vid.innerHTML = `<strong>Vídeo:</strong> <a href="${item.Video}" target="_blank">Ver guía en YouTube</a>`;
+        cont.appendChild(vid);
+    }
+
+    if (item.Se_soluciono !== 'x') {
+        const addSolBtn = document.createElement("button");
+        addSolBtn.className = "btn btn-secondary";
+        addSolBtn.innerText = "+ Agregar Solución";
+        addSolBtn.onclick = () => {
+            const solText = window.prompt("Introduce la solución a este problema (máx 200 caracteres):");
+            if (solText && solText.trim()) {
+                routeAction("addSolution", { problemId: item.id_problem, solucion: solText.trim() }).then(() => {
+                    alert("Solución agregada con éxito.");
+                    document.getElementById("modalDetalle").classList.remove("visible");
+                    renderPysSection();
+                }).catch(e => showGlobalError("Error: " + e.message));
+            }
+        };
+        cont.appendChild(addSolBtn);
+    }
+
+    if (!item.Prevenir) {
+        const addPrevBtn = document.createElement("button");
+        addPrevBtn.className = "btn btn-secondary";
+        addPrevBtn.style.marginLeft = "10px";
+        addPrevBtn.innerText = "+ Agregar Prevención";
+        addPrevBtn.onclick = () => {
+            const prevText = window.prompt("Introduce recomendación preventiva (máx 100 caracteres):");
+            if (prevText && prevText.trim()) {
+                routeAction("addPrevention", { problemId: item.id_problem, prevenir: prevText.trim() }).then(() => {
+                    alert("Prevención agregada con éxito.");
+                    document.getElementById("modalDetalle").classList.remove("visible");
+                    renderPysSection();
+                }).catch(e => showGlobalError("Error: " + e.message));
+            }
+        };
+        cont.appendChild(addPrevBtn);
+    }
+
+    const modalDetalle = document.getElementById("modalDetalle");
+    modalDetalle.classList.add("visible");
+}
+
+
+export function openAddTutorialModal() {
+    const existing = document.getElementById("add-tutorial-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-tutorial-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2300";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-book-open"></i> Agregar Nuevo Tutorial</h2>
+
+        <form id="add-tutorial-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+            <div class="form-group">
+                <label>Tema / Título</label>
+                <input type="text" id="tut-tema" required placeholder="Ej. Desarme de consola frontal">
+            </div>
+            <div class="form-group">
+                <label>Enlace de Vídeo YouTube</label>
+                <input type="url" id="tut-video" required placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+            <div class="form-group">
+                <label>Descripción / Detalles</label>
+                <div class="rich-editor-toolbar" style="display:flex; gap:8px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('tut-desc', 'bold')"><strong>B</strong></button>
+                    <input type="color" id="tut-color-picker" onchange="applyRichColor('tut-desc', this.value)" style="width:30px; height:30px; padding:0; border:none; cursor:pointer;" title="Color de texto">
+                </div>
+                <textarea id="tut-desc" rows="4" placeholder="Detalles del tutorial..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Tutorial</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-tutorial-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const payload = {
+            tema: content.querySelector("#tut-tema").value.trim(),
+            videoUrl: content.querySelector("#tut-video").value.trim(),
+            descripcion: content.querySelector("#tut-desc").value.trim(),
+            colaborador: currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+        };
+
+        try {
+            await routeAction("updateVehicleField", { vehicleId: "TUT-" + Date.now(), fieldName: "tutorial", fieldValue: payload });
+            alert("Tutorial agregado con éxito.");
+            modal.remove();
+            const res = await routeAction("getCatalogData");
+            if (res && res.data) setState({ catalogData: res.data });
+        } catch(err) {
+            console.error(err);
+            showGlobalError("Error: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Tutorial";
+        }
+    };
+}
+
+window.applyRichFormat = function(targetId, format) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+    if (!selected) return;
+    const formatted = `<b>${selected}</b>`;
+    textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+};
+
+window.applyRichColor = function(targetId, color) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+    if (!selected) return;
+    const formatted = `<span style="color:${color}">${selected}</span>`;
+    textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+};
+
+export function sanitizeHtmlContent(htmlStr) {
+    if (!htmlStr) return '';
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlStr, 'text/html');
+    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'U', 'A', 'IMG', 'SMALL', 'EM', 'MARK'];
+
+    function cleanNode(node) {
+        const children = Array.from(node.childNodes);
+        children.forEach(child => {
+            if (child.nodeType === 1) {
+                if (!allowedTags.includes(child.tagName)) {
+                    const textNode = doc.createTextNode(child.outerHTML);
+                    node.replaceChild(textNode, child);
+                } else {
+                    Array.from(child.attributes).forEach(attr => {
+                        const name = attr.name.toLowerCase();
+                        const val = attr.value.toLowerCase();
+                        if (name.startsWith('on') || val.includes('javascript:') || val.includes('data:text/html')) {
+                            child.removeAttribute(attr.name);
+                        }
+                    });
+                    cleanNode(child);
+                }
+            }
+        });
+    }
+
+    cleanNode(doc.body);
+    return doc.body.innerHTML;
+}
+
+let inboxCacheData = null;
+
+export async function loadAndRenderInbox() {
+    const listContainer = document.getElementById('inbox-list');
+    if (!listContainer) return;
+
+    if (inboxCacheData) {
+        renderInboxList(inboxCacheData);
+    } else {
+        listContainer.innerHTML = '<p><i class="fa-solid fa-spinner fa-spin"></i> Cargando bandeja...</p>';
+    }
+
+    try {
+        const res = await getFeedbackItems();
+        if (res && res.data) {
+            inboxCacheData = res.data;
+            renderInboxList(inboxCacheData);
+        }
+    } catch(err) {
+        console.error("Error cargando inbox:", err);
+        if (!inboxCacheData) {
+            listContainer.innerHTML = '<p class="text-danger">Error de conexión al cargar bandeja.</p>';
+        }
     }
 }

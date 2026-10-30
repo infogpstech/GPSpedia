@@ -399,7 +399,7 @@ async function initializeApp() {
 
     // Navigation links in side menu - Unified Handlers
     // Restauración de funciones para Cortes, Tutoriales y Relay
-    ['cortes', 'tutoriales', 'relay'].forEach(section => {
+    ['cortes', 'tutoriales', 'relay', 'pys'].forEach(section => {
         const btn = document.getElementById(`menu-${section}`);
         if (btn) {
             btn.addEventListener('click', (e) => {
