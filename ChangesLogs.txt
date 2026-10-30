@@ -1,3 +1,12 @@
+--------------------------------------------------
+**CHANGES LOG - 30/10/2026 (TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN)**
+
+**Archivo: Services/admin.js**
+- **Líneas 130-151:** Implementada la función `doGet(e)` para responder a comprobaciones de salud del servicio con `?debug=true` y solicitudes GET estándar, retornando JSON estructurado con metadatos del servicio y estado `success`. Añadido comentario identificativo de Tarea 1.1.
+
+**Archivo: api-config.js**
+- **Línea 33:** Añadido comentario identificativo `/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */` sobre la función `routeAction`.
+
 **CHANGES LOG - 04/02/2026**
 
 **Archivo: index.html**

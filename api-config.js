@@ -30,6 +30,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'logFrontend': 'LEGACY'
 };
 
+/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */
 // 2. LÓGICA DE RUTEO CENTRAL
 export async function routeAction(action, payload = {}, serviceOverride = null) {
     const service = serviceOverride || ACTION_TO_SERVICE_MAP[action];

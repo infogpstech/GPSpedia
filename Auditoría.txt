@@ -122,6 +122,16 @@ Se realizó una comprobación de sintaxis e integridad línea por línea en todo
    - El botón de filtro colapsable `#btn-toggle-filters` se controla dinámicamente y se oculta automáticamente al desenfocar o limpiar la búsqueda.
    - La navegación de resultados por Modelo -> Versiones -> Rango de Años funciona de forma fluida y abre automáticamente la vista detallada cuando la coincidencia es única.
 
+**AUDITORÍA TÉCNICA - TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN (30/10/2026)**
+
+**Archivos Auditados y Modificados:** `Services/admin.js`, `api-config.js`.
+
+**Hallazgos y Corrección Implementada:**
+1. **Causa del fallo de comunicación/monitoreo:** El microservicio `Services/admin.js` únicamente implementaba el manejador `doPost(e)` y carecía del router de verificación `doGet(e)`. Como consecuencia, cuando `checkAllServicesHealth()` en `api-config.js` ejecutaba el escaneo GET con `?debug=true`, el servicio no respondía adecuadamente.
+2. **Implementación de `doGet(e)`:** Se incorporó la función `doGet(e)` en `Services/admin.js` para responder tanto a peticiones GET de diagnóstico (`debug=true`) con el estado del servicio (`GPSpedia-Admin v2.6.0`, ID de Spreadsheet y Drive Folder ID) como a verificaciones GET estándar con `status: 'success'`, logrando paridad con los microservicios de Catálogo, Feedback y Write.
+3. **Integridad de Ruteo:** En `api-config.js`, se verificó que `routeAction` dirija todas las 15 acciones administrativas a `API_ENDPOINTS.ADMIN`.
+4. **Comentarios de Tarea:** Se agregaron los comentarios identificativos `/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */` en `Services/admin.js` y `api-config.js`.
+
 **AUDITORÍA DE CAPAS Y JERARQUÍA DE MODALES (30/10/2026):**
 Se realizó una auditoría específica línea por línea sobre el apilamiento y capas CSS (z-index) de todos los modales e interfaces emergentes en `style.css`, `ui.js`, `main.js`, e `index.html`:
 1. Modal de Detalle de Vehículo (`#modalDetalle`): `z-index: 1600` (ubicado por encima de la barra de búsqueda y encabezado principal `z-index: 1500`).
