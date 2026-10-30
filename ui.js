@@ -1795,7 +1795,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         plusBtn.title = "Ampliar información del modelo";
         plusBtn.onclick = (e) => {
             e.stopPropagation();
-            openExpandMenuModal(activeItem);
+            openExpandMenuModal(item);
         };
         cont.appendChild(plusBtn);
     }
@@ -3542,7 +3542,7 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
     if (item._sectionType === 'relay') {
         card.onclick = () => mostrarDetalleRelayModal(item);
     } else if (item._sectionType === 'tutorial') {
-        card.onclick = () => { if (item.Video) window.open(item.Video, "_blank"); else alert(item.Tema || "Tutorial"); };
+        card.onclick = () => mostrarDetalleTutorialModal(item);
     } else if (item._sectionType === 'pys') {
         card.onclick = () => openPysDetailModal(item);
     } else if (resultsForVariant) {
@@ -3829,7 +3829,7 @@ function mostrarTutorialesGrid() {
     tutoriales.forEach(item => {
         const card = document.createElement("div");
         card.className = "card";
-        card.onclick = () => { if (item.Video) window.open(item.Video, "_blank"); else alert(item.Tema || "Tutorial"); };
+        card.onclick = () => mostrarDetalleTutorialModal(item);
         const img = document.createElement("img");
         setOptimizedImage(img, item.Imagen, IMG_SIZE_SMALL);
         img.alt = item.Tema;

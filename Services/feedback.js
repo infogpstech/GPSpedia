@@ -849,13 +849,14 @@ function handleAddTutorial(payload) {
 
     const sheet = getSafeSheet("Tutoriales") || getSpreadsheet().insertSheet("Tutoriales");
     if (sheet.getLastRow() === 0) {
-        sheet.getRange(1, 1, 1, 4).setValues([["Tema", "Imagen", "Video", "Colaborador"]]);
+        sheet.getRange(1, 1, 1, 5).setValues([["Tema", "Imagen", "Video", "Descripción", "Colaborador"]]);
     }
 
     const newRow = [
         tema,
         `https://img.youtube.com/vi/${extractYouTubeId(videoUrl)}/hqdefault.jpg`,
         videoUrl,
+        descripcion || "",
         colaborador || ""
     ];
 
