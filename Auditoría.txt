@@ -11,7 +11,7 @@
    - Las miniaturas de tarjetas de modelos (`.card img`, `.card-img-top`, `.match-card-img`, `#imagenVehiculo_preview`) se renderizan dentro de contenedores `.card`.
    - En modo claro, las tarjetas tienen fondo blanco `var(--card-bg)`, lo que permite que la transparencia de los PNGs se muestre con fondo blanco uniforme.
    - En modo oscuro (`body.dark-mode`), las tarjetas adoptan `var(--card-bg)`. Al aplicar la propiedad CSS `mix-blend-mode: lighten` exclusivamente a las imágenes de tarjetas de vehículos (`.card:not(.brand-logo-item) img`, `.card-img-top`), cualquier artefacto de fondo negro residual en imágenes PNG antiguas de Drive se mezcla visualmente con el fondo oscuro de la tarjeta, manteniendo una apariencia limpia sin afectar la tarjeta completa ni hacerla blanca.
-   - **Exclusión Crítica del Modal de Detalle:** Se verifica estrictamente que `#detalleCompleto .img-vehiculo-modal` y `.img-vehiculo-modal` mantengan únicamente su estilo nativo `filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4))` sin aplicar `mix-blend-mode`, ni bordes, ni contenedores oscuros.
+   - **Exclusión Crítica del Modal de Detalle:** Se verifica strictly que `#detalleCompleto .img-vehiculo-modal` y `.img-vehiculo-modal` mantengan únicamente su estilo nativo `filter: drop-shadow(2px 4px 6px rgba(0,0,0,0.4))` sin aplicar `mix-blend-mode`, ni bordes, ni contenedores oscuros.
 
 3. **Respaldos:**
    - Se generarán los respaldos `style.css.bak` y `ui.js.bak` antes de realizar las modificaciones.
@@ -49,11 +49,28 @@
 **AUDITORÍA TÉCNICA - CORRECCIÓN DE REVISIÓN Y REGISTRO FINAL (30/10/2026)**
 
 **Archivos Auditados y Corregidos:**
-- : Corregida la referencia  dentro de . Restaurado el clic en tarjetas de tutoriales hacia .
-- : Registrado el listener  en la barra de navegación superior.
-- : Incluida la columna  en  y alineadas las 9 columnas de la hoja .
-- : Corregida la referencia  e  en los callbacks  de Búsqueda Global y acotada la búsqueda multi-sección a consultas activas.
+- Corregida la referencia dentro de . Restaurado el clic en tarjetas de tutoriales hacia .
+- Registrado el listener en la barra de navegación superior.
+- Incluida la columna en y alineadas las 9 columnas de la hoja .
+- Corregida la referencia e en los callbacks de Búsqueda Global y acotada la búsqueda multi-sección a consultas activas.
 
 **Verificación:**
 - Sintaxis ES Module validada con Node.js sin excepciones.
 - Todos los respaldos y archivos temporales eliminados del repositorio.
+
+
+**AUDITORÍA TÉCNICA - Estilización del Modal del Desarrollador `#dev-tools-modal` (30/10/2026)**
+
+**Archivos involucrados:** `index.html`, `style.css`.
+
+**Hallazgos de Auditoría:**
+1. **index.html (`#dev-tools-modal`):**
+   - El modal `#dev-tools-modal` contaba con estilos inline rígidos (p. ej. `border: 1px solid #333; background-color: #121212` en contenedores, bordes hardcoded y colores fijos) que no se adaptaban al sistema de temas claro/oscuro de GPSpedia.
+   - Las tarjetas/paneles de acciones administrativas, las entradas de texto, etiquetas y botones fueron estilisados mediante clases CSS dedicadas (`.dev-card`, `.dev-input`).
+   - **Restricción y Excepción:** La consola de terminal `#dev-console-log` mantiene de forma estricta su apariencia de terminal de comandos de desarrollador (`background-color: #121212`, texto verde `#00ff66`, fuente `monospace`, borde `#333`).
+
+2. **style.css:**
+   - Se agregaron las reglas CSS `.dev-card` y `.dev-input` utilizando variables de tema (`var(--card-bg)`, `var(--text-color)`, `var(--border-color)`), adaptándose automáticamente al modo claro y al modo oscuro.
+
+3. **Respaldos y Verificación:**
+   - Se crearon y compararon los respaldos `index.html.bak` y `style.css.bak`, eliminándolos posteriormente.

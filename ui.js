@@ -4818,6 +4818,7 @@ window.applyRichColor = function(targetId, color) {
     textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
 };
 
+// TAREA ADICIONAL: PERMITIR CONTENIDO HTML ENRIQUECIDO EN CAMPOS DE TEXTO
 export function sanitizeHtmlContent(htmlStr) {
     if (!htmlStr) return '';
     const parser = new DOMParser();

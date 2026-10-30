@@ -205,6 +205,7 @@
 </div>
 
 <!-- ========= MODAL DE DESARROLLADOR ========= -->
+<!-- Tarea adicional: Estilos adaptados al tema de la plataforma para el Modal de Desarrollador -->
 <div id="dev-tools-modal" class="info-modal">
     <div class="info-modal-content" style="max-width: 1000px; width: 95%;">
         <span class="info-close-btn">&times;</span>
@@ -221,21 +222,21 @@
                     [SISTEMA] Consola inicializada. Esperando comando administrativo...
                 </div>
                 <!-- Barra de Progreso -->
-                <div id="dev-progress-container" style="display: none; background-color: #333; border-radius: 8px; height: 24px; overflow: hidden; position: relative;">
-                    <div id="dev-progress-bar" style="background-color: #007bff; width: 0%; height: 100%; transition: width 0.3s ease;"></div>
-                    <span id="dev-progress-text" style="position: absolute; width: 100%; text-align: center; top: 0; left: 0; line-height: 24px; color: #fff; font-size: 0.85rem; font-weight: bold;">0%</span>
+                <div id="dev-progress-container" style="display: none; background-color: var(--button-bg); border-radius: 8px; height: 24px; overflow: hidden; position: relative; border: 1px solid var(--border-color);">
+                    <div id="dev-progress-bar" style="background-color: var(--accent-color); width: 0%; height: 100%; transition: width 0.3s ease;"></div>
+                    <span id="dev-progress-text" style="position: absolute; width: 100%; text-align: center; top: 0; left: 0; line-height: 24px; color: var(--text-color); font-size: 0.85rem; font-weight: bold;">0%</span>
                 </div>
 
                 <!-- Resultados de Respaldos -->
-                <div id="backup-results-panel" style="padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem;">
+                <div id="backup-results-panel" class="dev-card" style="padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem;">
                     <strong><i class="fa-solid fa-shield-halved"></i> Accesos Directos a Copias de Seguridad:</strong>
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                        <span>Spreadsheet ID: <input type="text" id="dev-ss-backup-id" readonly style="width: 140px; padding: 4px; display: inline-block; font-size: 0.8em; font-family: monospace;"></span>
+                        <span>Spreadsheet ID: <input type="text" id="dev-ss-backup-id" readonly class="dev-input" style="width: 140px; padding: 4px; display: inline-block; font-size: 0.8em; font-family: monospace;"></span>
                         <button id="copy-ss-backup-btn" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8em;">Copiar ID</button>
                         <button id="link-ss-backup-btn" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8em;" disabled>Enlace</button>
                     </div>
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                        <span>Drive Folder ID: <input type="text" id="dev-drive-backup-id" readonly style="width: 140px; padding: 4px; display: inline-block; font-size: 0.8em; font-family: monospace;"></span>
+                        <span>Drive Folder ID: <input type="text" id="dev-drive-backup-id" readonly class="dev-input" style="width: 140px; padding: 4px; display: inline-block; font-size: 0.8em; font-family: monospace;"></span>
                         <button id="copy-drive-backup-btn" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8em;">Copiar ID</button>
                         <button id="link-drive-backup-btn" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8em;" disabled>Enlace</button>
                     </div>
@@ -248,21 +249,21 @@
 
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <!-- Respaldos -->
-                    <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+                    <div class="dev-card" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px;">
                         <strong style="font-size: 0.9rem;"><i class="fa-solid fa-cloud-arrow-up"></i> Respaldos y Restauración de Seguridad</strong>
                         <div style="display: flex; gap: 5px;">
                             <button id="btn-admin-backup-db" class="btn btn-primary" style="flex: 1; font-size: 0.85em; padding: 8px;"><i class="fa-solid fa-database"></i> Respaldar DB</button>
                             <button id="btn-admin-backup-drive" class="btn btn-primary" style="flex: 1; font-size: 0.85em; padding: 8px;"><i class="fa-brands fa-google-drive"></i> Respaldar Drive</button>
                         </div>
                         <div style="display: flex; gap: 5px; align-items: center; margin-top: 5px;">
-                            <input type="text" id="restore-backup-id-input" placeholder="ID del Backup para restaurar..." style="flex: 1; padding: 6px; font-size: 0.85em; height: 34px;">
+                            <input type="text" id="restore-backup-id-input" placeholder="ID del Backup para restaurar..." class="dev-input" style="flex: 1; padding: 6px; font-size: 0.85em; height: 34px;">
                             <button id="btn-admin-restore-db" class="btn btn-warning" style="font-size: 0.8em; padding: 8px 12px; height: 34px;">Restaurar DB</button>
                             <button id="btn-admin-restore-drive" class="btn btn-warning" style="font-size: 0.8em; padding: 8px 12px; height: 34px;">Restaurar Drive</button>
                         </div>
                     </div>
 
                     <!-- Mantenimiento -->
-                    <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+                    <div class="dev-card" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px;">
                         <strong style="font-size: 0.9rem;"><i class="fa-solid fa-broom"></i> Organización y Mantenimiento</strong>
                         <button id="btn-admin-reorganize-db" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-sort-alpha-down"></i> Reorganizar base de datos alfabéticamente (por Marca)</button>
                         <button id="btn-admin-normalize-images" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-images"></i> Normalizar nomenclatura y deduplicar imágenes en base de datos</button>
@@ -272,14 +273,14 @@
                     </div>
 
                     <!-- Carga de Logotipo -->
-                    <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+                    <div class="dev-card" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px;">
                         <strong style="font-size: 0.9rem;"><i class="fa-solid fa-square-poll-horizontal"></i> Registro de Logotipo de Fabricante</strong>
                         <div style="display: flex; gap: 5px; align-items: center;">
-                            <input type="text" id="logo-brand-name-input" placeholder="Nombre de la Marca (ej. Toyota)..." style="flex: 1; padding: 6px; font-size: 0.85em;">
+                            <input type="text" id="logo-brand-name-input" placeholder="Nombre de la Marca (ej. Toyota)..." class="dev-input" style="flex: 1; padding: 6px; font-size: 0.85em;">
                             <input type="file" id="logo-file-input" accept="image/png, image/svg+xml, image/webp" style="display: none;">
                             <button onclick="document.getElementById('logo-file-input').click()" class="btn btn-secondary" style="font-size: 0.8em; padding: 6px 10px;">Seleccionar Imagen</button>
                         </div>
-                        <span id="selected-logo-file-name" style="font-size: 0.8em; color: #888; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP</span>
+                        <span id="selected-logo-file-name" style="font-size: 0.8em; color: var(--text-disabled); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP</span>
                         <button id="btn-admin-register-logo" class="btn btn-primary" style="font-size: 0.85em; padding: 8px;"><i class="fa-solid fa-upload"></i> Subir y Registrar Logotipo</button>
                     </div>
                 </div>

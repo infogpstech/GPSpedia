@@ -994,3 +994,13 @@ Archivo: ui.js
 
 **Archivo: Services/feedback.js**
 - Implementados los manejadores handleSuggestCutChange, handleGetPysData, handleAddProblem, handleAddSolution, handleAddPrevention y handleAddTutorial con hoja pys de 9 columnas, LockService e IDs isue-001.
+
+--------------------------------------------------
+**CHANGES LOG - 30/10/2026 (ESTILOS MODAL DESARROLLADOR - VERSIÓN 2.2.0)**
+
+**Archivo: index.html**
+- Líneas 208-285: Aplicadas las clases `.dev-card` y `.dev-input` a los contenedores, barras de progreso y campos de entrada dentro del modal `#dev-tools-modal`. Reemplazados colores rígidos inline por variables CSS (`var(--card-bg)`, `var(--text-color)`, `var(--button-bg)`, `var(--border-color)`), conservando intacta la apariencia de terminal de comandos en `#dev-console-log`.
+
+**Archivo: style.css**
+- Líneas 52, 69: Definida la variable `--border-color` (#e0e0e0 en tema claro, #3a3a3a en tema oscuro).
+- Líneas 1282-1301: Creadas las clases CSS `.dev-card` y `.dev-input` con transiciones de color de tema claro y oscuro para el modal de herramientas del desarrollador.

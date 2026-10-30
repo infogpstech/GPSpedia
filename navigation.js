@@ -47,6 +47,7 @@ export function irAPaginaPrincipal(isFromPopState = false) {
 }
 
 // Función refactorizada v2 para buscar, clasificar y mostrar resultados.
+// TAREA ADICIONAL: EXTENDER LA BÚSQUEDA PARA INCLUIR TODAS LAS SECCIONES DE GPSPEDIA
 export function filtrarContenido(textoBusqueda, isRestoring = false) {
     const { catalogData } = getState();
     const { cortes } = catalogData;

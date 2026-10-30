@@ -49,6 +49,7 @@ input, textarea, select {
     --menu-bg: #fff;
     --accent-color: #007bff;
     --transition-speed: 0.3s;
+    --border-color: #e0e0e0;
 }
 
 body.dark-mode {
@@ -65,6 +66,7 @@ body.dark-mode {
     --button-text: #58a6ff;
     --menu-bg: #1e1e1e;
     --accent-color: #58a6ff;
+    --border-color: #3a3a3a;
 }
 
 /* Solución técnica para el logo en modo oscuro */
@@ -1274,6 +1276,28 @@ body.search-active .container {
     .lightbox-nav-btn {
         display: none !important;
     }
+}
+
+/* Tarea adicional: Estilos para el Modal del Desarrollador (#dev-tools-modal) */
+.dev-card {
+    background-color: var(--card-bg);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    transition: background-color var(--transition-speed), border-color var(--transition-speed);
+}
+
+.dev-input {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    transition: background-color var(--transition-speed), color var(--transition-speed), border-color var(--transition-speed);
+}
+
+.dev-input:focus {
+    outline: none;
+    border-color: var(--accent-color);
 }
 
 @media all and (display-mode: standalone) {
