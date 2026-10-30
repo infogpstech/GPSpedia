@@ -30,7 +30,8 @@ const COLS_CORTES = {
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
     timestamp: 37, notaImportante: 38,
-    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42,
+    vin: 43
 };
 
 
@@ -78,6 +79,12 @@ function doPost(e) {
                 break;
             case 'addSupplementaryInfo':
                 response = handleAddSupplementaryInfo(request.payload);
+                break;
+            case 'checkVinDuplicate':
+                response = handleCheckVinDuplicate(request.payload);
+                break;
+            case 'addVinToVehicle':
+                response = handleAddVinToVehicle(request.payload);
                 break;
             default:
                 throw new Error(`La acción '${request.action}' es desconocida.`);
@@ -324,6 +331,12 @@ function handleAddOrUpdateCut(payload) {
         sheet.getRange(rowIndex, COLS_CORTES.configRelay1).setValue(cutData.configRelay1);
         sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
         sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
+        if (cutData.vin) {
+            const vinPrefix = extractVinPrefix(cutData.vin);
+            if (vinPrefix) {
+                sheet.getRange(rowIndex, COLS_CORTES.vin).setValue(vinPrefix);
+            }
+        }
         if (opId) {
             const opIdColIndex = getOpIdColIndex(sheet, 1);
             sheet.getRange(rowIndex, opIdColIndex).setValue(opId);
@@ -863,4 +876,102 @@ function getExistingEntities(sheet) {
   }
 
   return { brands: brands, models: models, versions: versions };
+}
+
+// ============================================================================
+// LÓGICA Y HANDLERS DE VIN (Vehicle Identification Number)
+// ============================================================================
+
+function extractVinPrefix(vinStr) {
+  if (!vinStr) return "";
+  const cleaned = String(vinStr).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (cleaned.length <= 5) return "";
+  return cleaned.substring(0, cleaned.length - 5);
+}
+
+function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId) {
+  if (!vinPrefix) return null;
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return null;
+
+  const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    const rowId = row[COLS_CORTES.id - 1];
+    if (currentVehicleId && String(rowId) === String(currentVehicleId)) continue;
+
+    const rowVin = row[COLS_CORTES.vin - 1];
+    if (rowVin && String(rowVin).trim().toUpperCase() === vinPrefix) {
+      const marca = row[COLS_CORTES.marca - 1] || "";
+      const modelo = row[COLS_CORTES.modelo - 1] || "";
+      const anoDesde = row[COLS_CORTES.anoDesde - 1] || "";
+      const anoHasta = row[COLS_CORTES.anoHasta - 1] || "";
+      const modelName = `${marca} ${modelo} (${anoDesde}${anoHasta ? '-' + anoHasta : ''})`.trim();
+      return {
+        vehicleId: rowId,
+        modelName: modelName,
+        vinPrefix: rowVin
+      };
+    }
+  }
+  return null;
+}
+
+function handleCheckVinDuplicate(payload) {
+  const { vin, currentVehicleId } = payload;
+  const prefix = extractVinPrefix(vin);
+  if (!prefix) {
+    return { status: 'success', duplicate: false };
+  }
+  const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+  const match = checkVinDuplicateInSheet(sheet, prefix, currentVehicleId);
+  if (match) {
+    return {
+      status: 'duplicate',
+      duplicate: true,
+      vehicleId: match.vehicleId,
+      modelName: match.modelName,
+      vinPrefix: match.vinPrefix
+    };
+  }
+  return { status: 'success', duplicate: false, vinPrefix: prefix };
+}
+
+function handleAddVinToVehicle(payload) {
+  const { vehicleId, vin } = payload;
+  const prefix = extractVinPrefix(vin);
+  if (!vehicleId || !prefix) {
+    return { status: 'error', message: 'ID de vehículo y VIN son requeridos.' };
+  }
+  const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+  const match = checkVinDuplicateInSheet(sheet, prefix, vehicleId);
+  if (match) {
+    return {
+      status: 'duplicate',
+      message: `El VIN ya está registrado para: ${match.modelName}`,
+      vehicleId: match.vehicleId,
+      modelName: match.modelName
+    };
+  }
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return { status: 'error', message: 'No se encontraron vehículos registrados.' };
+  }
+
+  const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  let targetRowIndex = -1;
+  for (let i = 0; i < data.length; i++) {
+    if (String(data[i][COLS_CORTES.id - 1]) === String(vehicleId)) {
+      targetRowIndex = i + 2;
+      break;
+    }
+  }
+
+  if (targetRowIndex === -1) {
+    return { status: 'error', message: 'Vehículo no encontrado.' };
+  }
+
+  sheet.getRange(targetRowIndex, COLS_CORTES.vin).setValue(prefix);
+  return { status: 'success', message: 'VIN registrado correctamente.', vinPrefix: prefix };
 }

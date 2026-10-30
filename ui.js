@@ -4121,6 +4121,7 @@ export function openExpandMenuModal(item) {
             ${!item.apertura ? `<button id="btn-exp-apertura" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-door-open"></i> Apertura de puertas</button>` : ""}
             ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
             ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
+            ${!item.vin ? `<button id="btn-exp-vin" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-barcode"></i> Agregar VIN</button>` : ""}
         </div>
     `;
 
@@ -4140,6 +4141,96 @@ export function openExpandMenuModal(item) {
 
     const videoBtn = content.querySelector("#btn-exp-video");
     if (videoBtn) videoBtn.onclick = () => { modal.remove(); openAddVideoModal(item); };
+
+    const vinBtn = content.querySelector("#btn-exp-vin");
+    if (vinBtn) vinBtn.onclick = () => { modal.remove(); openAddVinModal(item); };
+}
+
+export function openAddVinModal(item) {
+    const existing = document.getElementById("add-vin-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-vin-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "450px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-barcode"></i> Agregar VIN / Chasis</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
+
+        <form id="add-vin-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label for="modal-vin-input">Número de Chasis / VIN</label>
+                <input type="text" id="modal-vin-input" placeholder="Ingresa el VIN completo del vehículo" maxlength="18" required style="text-transform: uppercase; width:100%; padding:8px;">
+                <div id="modal-vin-warning" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 5px; font-weight: bold;"></div>
+            </div>
+            <button type="submit" id="btn-save-vin" class="btn btn-primary" style="margin-top:10px;"><i class="fa-solid fa-save"></i> Guardar VIN</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-vin-form");
+    const vinInput = content.querySelector("#modal-vin-input");
+    const warningEl = content.querySelector("#modal-vin-warning");
+
+    vinInput.addEventListener('blur', async () => {
+        const vinVal = vinInput.value.trim();
+        if (!vinVal) {
+            warningEl.style.display = 'none';
+            return;
+        }
+        try {
+            const res = await routeAction('checkVinDuplicate', { vin: vinVal, currentVehicleId: item.id });
+            if (res.duplicate) {
+                warningEl.style.display = 'block';
+                warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="document.getElementById('add-vin-modal')?.remove(); window.location.href='index.html#search=${encodeURIComponent(res.modelName)}'"><strong>${res.modelName}</strong></button>`;
+            } else {
+                warningEl.style.display = 'none';
+            }
+        } catch (err) {
+            console.error('Error al validar VIN:', err);
+        }
+    });
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const vinVal = vinInput.value.trim();
+        if (!vinVal) return;
+
+        const btn = form.querySelector("#btn-save-vin");
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+
+        try {
+            const res = await routeAction('addVinToVehicle', { vehicleId: item.id, vin: vinVal });
+            if (res.status === 'success') {
+                item.vin = res.vinPrefix;
+                modal.remove();
+                mostrarNotificacion('VIN registrado correctamente', 'success');
+                mostrarDetalleModal(item, true);
+            } else {
+                warningEl.style.display = 'block';
+                warningEl.textContent = res.message || 'Error al guardar el VIN.';
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar VIN`;
+            }
+        } catch (err) {
+            console.error('Error guardando VIN:', err);
+            mostrarNotificacion('Error de comunicación con el servidor', 'error');
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar VIN`;
+        }
+    };
 }
 
 export function openAddCutForModelModal(item) {

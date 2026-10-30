@@ -73,6 +73,20 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         return;
     }
 
+    // --- LÓGICA DE DETECCIÓN Y BÚSQUEDA POR VIN ---
+    const cleanVinSearch = busqueda.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    let isVinQuery = false;
+    let targetVinPrefix = "";
+    if (cleanVinSearch.length >= 6 && cleanVinSearch.length <= 18) {
+        // If query is full VIN (> 5 chars), omit last 5 chars; otherwise use exact clean string
+        targetVinPrefix = cleanVinSearch.length > 5 ? cleanVinSearch.substring(0, cleanVinSearch.length - 5) : cleanVinSearch;
+        // Check if any cortes item has a matching VIN prefix
+        const vinMatchExists = cortes.some(c => c.vin && String(c.vin).trim().toUpperCase() === targetVinPrefix);
+        if (vinMatchExists) {
+            isVinQuery = true;
+        }
+    }
+
     // --- LÓGICA DE FILTRADO MEJORADA ---
     const yearSearchMatch = busqueda.match(/\b\d{4}\b/);
     let yearSearchTerm = yearSearchMatch ? parseInt(yearSearchMatch[0], 10) : null;
@@ -101,13 +115,16 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
 
     // 1. Search in Cortes
     const cortesMatches = cortes.filter(item => {
+        if (isVinQuery) {
+            return item.vin && String(item.vin).trim().toUpperCase() === targetVinPrefix;
+        }
         if (yearSearchTerm) {
             const anoDesde = parseInt(item.anoDesde, 10);
             const anoHasta = item.anoHasta ? parseInt(item.anoHasta, 10) : anoDesde;
             if (yearSearchTerm < anoDesde || yearSearchTerm > anoHasta) return false;
         }
         if (busqueda) {
-            const itemTexto = stripHtml(`${item.marca} ${item.modelo} ${item.versionesAplicables || ''} ${item.tipoEncendido || ''} ${item.categoria || ''} ${item.anoDesde || ''} ${item.anoHasta || ''} ${item.tipoCorte1 || ''} ${item.ubicacionCorte1 || ''} ${item.colorCableCorte1 || ''}`);
+            const itemTexto = stripHtml(`${item.marca} ${item.modelo} ${item.versionesAplicables || ''} ${item.tipoEncendido || ''} ${item.categoria || ''} ${item.anoDesde || ''} ${item.anoHasta || ''} ${item.tipoCorte1 || ''} ${item.ubicacionCorte1 || ''} ${item.colorCableCorte1 || ''} ${item.vin || ''}`);
             return palabrasBusqueda.every(palabra => {
                 if (yearSearchTerm && palabra === String(yearSearchTerm)) return true;
                 return itemTexto.includes(palabra);

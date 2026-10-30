@@ -219,6 +219,11 @@
                              <input type="file" id="imagenVehiculo" style="display:none;" accept="image/*">
                         </div>
                     </div>
+                    <div class="form-group full-width" style="margin-top: 10px;">
+                        <label for="vinInput">Número de Chasis / VIN (Opcional)</label>
+                        <input type="text" id="vinInput" placeholder="Ingresa el VIN del vehículo (ej: 8AFZZZ3ZZHE123456)" maxlength="18" style="text-transform: uppercase;">
+                        <div id="vinDuplicateWarning" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 5px; font-weight: bold;"></div>
+                    </div>
                 </div>
                 <div class="form-grid">
                     <div class="form-group"><label for="tipoCorte1">Tipo de Corte</label><select id="tipoCorte1" required></select></div>
@@ -566,9 +571,32 @@
             });
 
 
-            // Suggestions
+            // Suggestions & VIN check
             document.getElementById('marca').addEventListener('blur', (e) => handleSuggestion(e.target, 'marca'));
             document.getElementById('modelo').addEventListener('blur', (e) => handleSuggestion(e.target, 'modelo'));
+
+            const vinInput = document.getElementById('vinInput');
+            if (vinInput) {
+                vinInput.addEventListener('blur', async () => {
+                    const vinVal = vinInput.value.trim();
+                    const warningEl = document.getElementById('vinDuplicateWarning');
+                    if (!vinVal) {
+                        if (warningEl) warningEl.style.display = 'none';
+                        return;
+                    }
+                    try {
+                        const res = await routeAction('checkVinDuplicate', { vin: vinVal, currentVehicleId: state.selectedVehicleId });
+                        if (res.duplicate) {
+                            warningEl.style.display = 'block';
+                            warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="window.location.href='index.html#search=${encodeURIComponent(res.modelName)}'"><strong>${res.modelName}</strong></button>`;
+                        } else {
+                            warningEl.style.display = 'none';
+                        }
+                    } catch (err) {
+                        console.error('Error al validar VIN:', err);
+                    }
+                });
+            }
 
             // "No recomendado" behavior trigger
             const tipoCorteSelect = document.getElementById('tipoCorte1');
@@ -861,6 +889,7 @@
                     colorCableCorte1: document.getElementById('colorCableCorte1').value,
                     silentRegister: silentVal,
                     testigoMotor: checkbox ? checkbox.checked : false,
+                    vin: document.getElementById('vinInput') ? document.getElementById('vinInput').value.trim() : ''
                 },
                 files: {
                     imagenVehiculo: base64Veh,
