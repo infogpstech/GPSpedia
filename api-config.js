@@ -15,7 +15,6 @@ export const API_ENDPOINTS = {
     ADMIN: "https://script.google.com/macros/s/AKfycbwvYQKoT04N4KLZIMLGQB42zaO5cdz4bIY3rFKJ0Nx6ePDi8IxHyTP2Fmvknsz9SvckYg/exec"
 };
 
-/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */
 export const ACTION_TO_SERVICE_MAP = {
     'login': 'AUTH', 'validateSession': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG',
@@ -31,7 +30,7 @@ export const ACTION_TO_SERVICE_MAP = {
     'logFrontend': 'LEGACY'
 };
 
-/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */
+// 2. LÓGICA DE RUTEO CENTRAL
 export async function routeAction(action, payload = {}, serviceOverride = null) {
     const service = serviceOverride || ACTION_TO_SERVICE_MAP[action];
     if (!service) throw new Error(`Acción no definida: ${action}`);

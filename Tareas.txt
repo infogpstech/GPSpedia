@@ -212,309 +212,287 @@ Cualquier cambio en estas zonas invalidará el commit.
 ===================================================================
 
 ===================================================================
-PRIORIDAD 1: TAREAS CORRECTIVAS, RECUPERACIÓN Y ESTABILIZACIÓN CRÍTICA DE GPSPEDIA
+PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DE GPSpedia
 ===================================================================
 
-1.1. RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN [X]
-   - **ESTADO:** COMPLETADO
-   - **Objetivo:** Restablecer comunicación funcional de extremo a extremo entre el cliente frontend (api-config.js / ui.js / main.js) y el microservicio Services/admin.js.
-   - **Requisitos:**
-     · Diagnosticar URL, parámetros, acciones, métodos HTTP y contratos de solicitud/respuesta.
-     · Garantizar que las solicitudes lleguen al microservicio correcto sin fallas de red ni respuestas simuladas.
-     · Manejar adecuadamente errores de red o excepciones del servidor y retornar mensajes estructurados.
-     · Verificar la operación con usuarios autorizados (rol Desarrollador / Admin).
+1.1. Recuperación de la comunicación con el microservicio de administración
+- **Problema detectado:** Se ha identificado que GPSpedia no mantiene una comunicación funcional con el microservicio de administración. Este defecto debe tratarse como una prioridad alta porque puede afectar a las operaciones administrativas y a otras funcionalidades que dependan de dicho servicio.
+- **Diagnóstico de la comunicación:** Inspecciona el flujo completo entre el cliente y el microservicio de administración. Determina la causa real del fallo revisando: URL y configuración del servicio, acciones y parámetros enviados, contratos de solicitud y respuesta, métodos HTTP y configuración de solicitudes, autenticación y autorización, manejo de errores, restricciones de acceso y configuración de despliegue, identificadores de acciones, nombres de funciones y rutas de ejecución, formato de los datos intercambiados, y dependencias entre los servicios y el cliente.
+- **Recuperación del servicio:** Una vez identificada la causa, corrige los componentes necesarios para restablecer la comunicación. La solución debe garantizar que: las solicitudes lleguen al servicio correcto, las acciones reconocidas por el cliente existan en el backend correspondiente, los parámetros se interpreten correctamente, las respuestas mantengan el formato esperado, los errores del servicio se comuniquen de forma comprensible, los fallos de red no se presenten como respuestas válidas, los controles de acceso continúen funcionando, y las funciones administrativas recuperadas utilicen el servicio real y no respuestas simuladas. No introduzcas un segundo mecanismo administrativo paralelo para ocultar el problema.
+- **Alcance de los cambios:** Modifica únicamente los componentes necesarios para recuperar la comunicación. Si es indispensable modificar un contrato compartido, identifica sus consumidores y conserva la compatibilidad con las funcionalidades existentes. No realices cambios indiscriminados en otros microservicios.
+- **Criterios de finalización:** La comunicación debe verificarse mediante operaciones reales de lectura y, cuando corresponda, escritura, utilizando usuarios y permisos adecuados. No es suficiente comprobar que la URL responde o que el servicio puede abrirse. Debe comprobarse que las acciones administrativas requeridas funcionan correctamente de extremo a extremo.
 
-1.2. RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR (#dev-tools-modal) [X]
-   - **ESTADO:** COMPLETADO
-   - **Objetivo:** Garantizar el correcto funcionamiento de todas las acciones del panel administrativo.
-   - **Requisitos:**
-     · Revisar controles visuales, eventos, funciones, parámetros y respuestas en `#dev-tools-modal`.
-     · Conectar las operaciones administrativas (gestión de caché, diagnóstico de salud de microservicios, terminal de comandos de Drive, reestructuración y auditoría) con los backend reales.
-     · Reflejar estados reales sin respuestas ficticias ni interfaces exclusivamente visuales.
+1.2. Recuperación de las funciones del panel de desarrollador
+- **Problema detectado:** Se han incorporado funciones al panel de desarrollador que no funcionan correctamente. No se debe asumir que el problema afecta a una sola opción ni corregir únicamente la primera función defectuosa que se encuentre. Es necesario revisar todas las funciones incorporadas al panel y resolver los problemas detectados.
+- **Revisión funcional:** Identifica las funciones disponibles en el panel y determina el flujo que corresponde a cada una. Para cada función, revisa: el control visual que la activa, el evento asociado, la función ejecutada, los parámetros requeridos, los permisos necesarios, el servicio o microservicio que debe procesar la solicitud, la estructura de la respuesta, la actualización de la interfaz, el tratamiento de errores, y la persistencia de los cambios cuando corresponda. Corrige los errores que impidan ejecutar las operaciones o que produzcan resultados diferentes de los esperados.
+- **Comunicación con los servicios:** Presta especial atención a las funciones que dependen del microservicio de administración. Si una operación falla porque el servicio no responde, porque se utiliza una acción incorrecta o porque el contrato de datos no coincide, corrige la causa correspondiente. No implementes respuestas ficticias ni comportamientos exclusivamente visuales para aparentar que las operaciones funcionan.
+- **Integridad de las operaciones administrativas:** Las funciones del panel deben respetar los permisos y la integridad de los datos. Cuando una operación modifique información, debe ejecutarse mediante el servicio correspondiente y actualizar la interfaz a partir del resultado real. Cuando una operación no pueda completarse, debe comunicarse el error sin mostrar un estado de éxito falso. Las acciones administrativas no deben afectar registros ajenos a la operación solicitada.
+- **Criterios de finalización:** Todas las funciones incorporadas al panel de desarrollador deben haber sido examinadas y corregidas cuando corresponda. No marques esta tarea como completada si solamente funciona una parte del panel o si existen opciones que continúan sin ejecutar su operación real.
 
-1.3. RECUPERACIÓN Y CORRECCIÓN DEL FORMULARIO DE PROBLEMAS Y SOLUCIONES
-   - **Objetivo:** Corregir el fallo que impide que el botón de agregar problemas abra el modal correspondiente.
-   - **Requisitos:**
-     · Inspeccionar selectores DOM, listeners de eventos (`click`), funciones de inicialización y comunicación de backend.
-     · Habilitar la apertura determinista del modal de creación/edición de problemas y soluciones.
-     · Garantizar validación, carga de imágenes a Google Drive, persistencia en Google Sheets (`pys`) y recuperación de datos.
+1.3. Recuperación del formulario de registro de problemas y soluciones
+- **Problema detectado:** El botón para agregar un problema no abre el modal del formulario y no ejecuta ninguna acción útil.
+- **Inspección y corrección:** Inspecciona el flujo completo que conecta el botón de agregar problemas con el formulario correspondiente. Determina por qué el botón no ejecuta su acción y corrige la causa. Verifica: existencia y correcta identificación del botón, registro del evento de clic, funciones asociadas al evento, selectores y referencias a elementos del DOM, existencia y disponibilidad del modal, inicialización de los componentes necesarios, errores de JavaScript que impidan ejecutar el flujo, dependencias entre módulos, comunicación con los servicios del backend, y compatibilidad entre el formulario y la estructura de datos de "pys". El botón debe abrir efectivamente el modal de creación de problemas y soluciones. No se considerará resuelto si únicamente se modifica su estilo, se agrega una animación o se simula la apertura sin habilitar las operaciones reales del formulario.
+- **Funcionamiento completo del formulario:** Una vez abierto, el formulario debe permitir realizar las operaciones que correspondan a su implementación. Verifica que el usuario pueda introducir información, ejecutar las validaciones, guardar un registro y recuperar posteriormente los datos almacenados. Si existen funciones de edición, consulta o actualización, deben conservarse y continuar funcionando. Los errores de validación, permisos, conexión o almacenamiento deben manejarse correctamente. No se debe mostrar un mensaje de éxito cuando la operación no se haya completado.
 
-1.4. CORRECCIÓN DE LAS DEMORAS DE CARGA EN LA SECCIÓN PROBLEMAS Y SOLUCIONES
-   - **Objetivo:** Eliminar la latencia excesiva al acceder o alternar a la sección de Problemas y Soluciones.
-   - **Requisitos:**
-     · Optimizar peticiones de red duplicadas, lecturas redundantes a Google Sheets y re-renderizados pesados en cliente.
-     · Implementar o reutilizar la estrategia de caché local (IndexedDB/RAM) con invalidación automática tras operaciones de escritura (crear, editar, eliminar).
+1.4. Corrección de las demoras de carga en la sección de problemas y soluciones
+- **Problema detectado:** La sección de problemas y soluciones tarda varios segundos en aparecer cada vez que el usuario cambia a ella.
+- **Análisis y optimización:** Analiza por qué la sección tarda varios segundos en aparecer cada vez que se accede a ella. No resuelvas el problema ocultando indicadores de carga ni eliminando funcionalidades. Identifica las operaciones que provocan la demora y determina si existen: solicitudes de red innecesarias, peticiones duplicadas, inicializaciones repetitivas, lecturas redundantes de Google Sheets, esperas secuenciales que podrían evitarse, cargas repetidas de componentes, procesamiento excesivo de datos en el cliente, consultas que se ejecutan cada vez que se cambia de sección aunque los datos ya estén disponibles, errores que provoquen reintentos repetidos, o problemas de comunicación con el backend. Aplica las optimizaciones necesarias sin comprometer la actualización de los datos, los permisos ni la coherencia entre la interfaz y el almacenamiento.
+- **Estrategia de caché:** Si corresponde utilizar caché, reutiliza los mecanismos existentes y establece una estrategia coherente de actualización e invalidación. La caché no debe provocar que se muestren registros obsoletos cuando se haya creado, editado o eliminado información.
+- **Criterios de finalización:** La sección debe abrirse correctamente; el formulario de registro debe funcionar; la carga no debe repetir operaciones innecesarias; los datos deben recuperarse correctamente; los errores no deben bloquear silenciosamente la sección; las funcionalidades existentes de problemas y soluciones deben conservarse.
 
-1.5. RECUPERACIÓN Y AJUSTE DEL BOTÓN "+" EN EL MODAL DE DETALLE DEL VEHÍCULO
-   - **Objetivo:** Corregir la ubicación, tamaño y funcionalidad del botón flotante (+).
-   - **Requisitos:**
-     · Posicionar el botón estrictamente en la esquina inferior derecha del modal `#modalDetalle`, manteniéndolo accesible en móvil y escritorio sin tapar contenido técnico.
-     · Reducir las dimensiones visuales del botón "+" en exactamente un 10%, asegurando que el área táctil siga siendo cómoda.
-     · Restaurar el evento clic para desplegar el menú modal con las opciones de ampliación (Nuevo corte, Apertura, Cable de alimentación, Agregar enlace de vídeo, Agregar VIN).
+1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
+- **Problemas detectados:**
+  1. Su ubicación es incorrecta en dispositivos móviles y debe revisarse también en equipos de escritorio.
+  2. No funciona y no muestra el modal con las opciones para agregar información al modelo.
+- **Posición del botón:** El botón debe ubicarse en la esquina inferior derecha del modal de detalle del vehículo. Esta posición debe mantenerse tanto en la versión móvil como en la versión de escritorio. El botón debe permanecer dentro de los límites visuales del modal, sin tapar información importante ni interferir con los controles existentes. Debes revisar los contenedores, el posicionamiento, los márgenes, los rellenos y las reglas de adaptación utilizadas por el modal. Considera el comportamiento cuando su contenido es más alto que el espacio disponible, el usuario desplaza verticalmente, la pantalla tiene dimensiones reducidas, o cambia de orientación. No apliques una posición absoluta sin comprobar cómo interactúa con el desplazamiento y la estructura del modal.
+- **Tamaño del botón:** Reducir el tamaño actual del botón "+" en un 10 %. La reducción debe aplicarse de manera coherente a sus dimensiones visuales y a sus elementos internos. El área interactiva debe continuar siendo accesible, especialmente en dispositivos táctiles. No reduzcas el botón hasta dificultar su uso.
+- **Recuperación de la funcionalidad:** Al pulsar el botón "+", debe aparecer el menú o modal con las opciones disponibles para agregar información al modelo. Revisa el flujo completo: evento de clic, función que gestiona la acción, construcción o apertura del menú, identificación de opciones disponibles, apertura del formulario correspondiente a cada opción, validación de permisos de usuario, ejecución de la operación seleccionada, persistencia de los datos, y actualización de la información mostrada en el modal de detalle. Cada opción disponible debe conducir al flujo funcional que le corresponda. Si alguna opción está vinculada a una funcionalidad existente, recupera esa implementación en lugar de crear una versión paralela.
+- **Criterios de finalización:** El botón debe aparecer en la esquina inferior derecha, ser un 10 % más pequeño y ejecutar correctamente las acciones disponibles en el menú, verificado en móvil y escritorio.
 
-1.6. AJUSTE DE ESPACIOS EN LA CABECERA DEL MODAL DE DETALLE
-   - **Objetivo:** Corregir la distribución visual y espacios excesivos introducidos por el botón de impresión.
-   - **Requisitos:**
-     · Revisar márgenes, paddings, gaps y alineaciones CSS entre los botones de editar, compartir, imprimir, el logo de la marca y el título del modelo.
-     · Compactar la distribución sin eliminar el botón de exportación/impresión (`exportVehiclePrintSheet`) ni comprimir logotipos o títulos largos.
+1.6. Corrección de la cabecera del modal de detalle
+- **Problema detectado:** La incorporación del botón de imprimir en la cabecera del modal de detalle ha provocado un espacio excesivo entre los botones de editar, compartir e imprimir, el logotipo de la marca y el nombre del modelo. Se requiere revisar los márgenes y rellenos para recuperar una distribución compacta y equilibrada.
+- **Requisitos:** Inspeccionar la estructura de la cabecera; identificar las reglas de "margin", "padding", "gap", alineación y distribución que producen los espacios excesivos; reducir el espacio innecesario entre los controles y la información del vehículo; mantener una separación visual suficiente para distinguir los botones; conservar la visibilidad y funcionalidad de editar, compartir e imprimir; evitar que el logotipo o el nombre del modelo queden comprimidos, recortados o desplazados; mantener la adaptación a pantallas móviles y de escritorio; y evitar que la cabecera se desborde cuando los nombres de los modelos sean largos. La solución debe corregir la distribución sin eliminar el botón de imprimir ni perjudicar el resto de los controles.
+- **Criterios de finalización:** La cabecera debe presentar una distribución compacta, ordenada y coherente con el diseño del modal, sin espacios excesivos ni perjuicio de la visualización de la marca y el modelo.
 
-1.7. CORRECCIÓN DE DIMENSIONES EN TARJETAS PARA AGREGAR TUTORIALES Y PROBLEMAS
-   - **Objetivo:** Igualar las dimensiones visuales de las tarjetas de creación con las tarjetas de contenido.
-   - **Requisitos:**
-     · Ajustar la altura, ancho y márgenes de las tarjetas de creación de Tutoriales y Problemas y Soluciones para que coincidan exactamente con el resto de tarjetas de la sección.
-     · Mantener fondo transparente, icono "+" centrado y sombra azul institucional (`var(--primary-color)`).
+1.7. Corrección de las tarjetas para agregar tutoriales y problemas
+- **Problema detectado:** Los botones o tarjetas destinados a agregar tutoriales y problemas tienen una altura superior a la de las demás tarjetas del carrusel o sección correspondiente, rompiendo la uniformidad visual de la interfaz.
+- **Requisitos funcionales y visuales:** Identificar los componentes responsables de las tarjetas para agregar tutoriales y problemas; comparar sus dimensiones y estilos con los de las tarjetas existentes; corregir las diferencias de altura; mantener una alineación coherente con el resto de las tarjetas; conservar los botones, iconos, textos y acciones existentes; asegurar que el diseño se adapte correctamente a dispositivos móviles y de escritorio; y evitar que la corrección provoque desbordamientos, recortes o cambios inesperados en otros carruseles. Las tarjetas para agregar contenido deben integrarse visualmente con las tarjetas existentes, respetando sus dimensiones y comportamiento.
+- **Criterios de finalización:** La tarea estará completa cuando las tarjetas para agregar tutoriales y problemas tengan dimensiones coherentes con las tarjetas de su sección, tanto en dispositivos móviles como en equipos de escritorio. La corrección no debe limitarse a establecer una altura fija que produzca problemas en otros tamaños de pantalla.
 
 ===================================================================
-PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES
+PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXISTENTES
 ===================================================================
 
-2.1. BOTÓN INDIVIDUAL DE REPORTE POR CORTE
-   - **Objetivo:** Permitir reportar errores de forma independiente para cada corte específico de un modelo.
-   - **Requisitos:**
-     · Vincular cada botón de reporte al identificador explícito del corte (`corteId` / `tipoCorteX`), no solo al vehículo.
-     · Permitir describir el error, detallar la información incorrecta, adjuntar imagen opcional y enviar el reporte a la bandeja de entrada existente sin alterar el catálogo.
+2.1. Botón individual de reporte por corte
+- **Objetivo:** Incorporar en el modal de detalle de cada corte un mecanismo accesible para todos los usuarios autorizados que permita reportar errores y, posteriormente, sugerir modificaciones a la información técnica del corte. El reporte de errores y la sugerencia de cambios deben ser operaciones independientes de la modificación directa del registro original. Una sugerencia no debe reemplazar, modificar ni sobrescribir automáticamente los datos del corte reportado.
+- **Requisitos del botón:** Cada corte debe tener su propio botón para reportar un problema, asociado al identificador del corte específico, no únicamente al modelo del vehículo. Al presionarlo, se abrirá el formulario de reporte existente, o se ampliará su implementación actual para permitir al usuario: describir el error detectado, explicar qué información considera incorrecta o incompleta, adjuntar una imagen de referencia cuando corresponda, y enviar el reporte. Reutiliza el sistema de inbox y de recepción de reportes existente siempre que sea posible. Después de enviar el reporte correctamente, muestra una confirmación y ofrece la opción «Sugerir cambio». Si el reporte no se ha enviado correctamente, no muestres una confirmación de éxito ni avances a un estado que dependa de un reporte guardado.
 
-2.2. MODAL Y FLUJO INDEPENDIENTE DE SUGERENCIA DE CAMBIOS
-   - **Objetivo:** Ofrecer la opción «Sugerir cambio» tras un reporte exitoso para proponer correcciones técnicas.
-   - **Requisitos:**
-     · Abrir modal vinculado al reporte y corte de origen.
-     · Permitir proponer: imagen del corte, tipo de corte, configuración de relay, detalles técnicos, color de cable y activación de testigo check engine.
-     · Permitir modificar uno o varios campos específicos sin obligar a completar información ajena.
-     · Restricción fundamental: La propuesta solo puede afectar al corte reportado, manteniendo intactos los demás cortes del modelo.
+2.2. Modal de sugerencia de cambios
+- **Requisitos del modal:** Al seleccionar «Sugerir cambio», abre un modal independiente para proponer una corrección del corte reportado, vinculado al reporte y al corte de origen. Debe permitir al usuario: subir una imagen del corte sugerido, seleccionar el tipo de corte cuando corresponda, seleccionar la configuración del relay, introducir los detalles técnicos del corte, introducir el color del cable, e indicar si el corte activa el testigo del motor (cuando forme parte del esquema existente). Los campos deben ajustarse a la estructura y las opciones admitidas por el sistema actual. Si la sugerencia está destinada a corregir un campo específico, permite proponer una nueva versión de ese campo sin obligar al usuario a completar información ajena al cambio. No obstante, el formulario debe admitir la propuesta de varios campos relacionados cuando el usuario necesite corregir más de un dato del mismo corte.
+- **Restricción fundamental:** La sugerencia solo puede afectar al corte identificado en el reporte. Si un modelo contiene varios cortes, no deben mostrarse ni modificarse accidentalmente los campos correspondientes a los otros cortes.
 
-2.3. GESTIÓN Y PERSISTENCIA DE PROPUESTAS PENDIENTES
-   - **Objetivo:** Conservar la propuesta como un registro pendiente de revisión administrativa.
-   - **Requisitos:**
-     · Almacenar en la hoja de reportes/feedback sin aplicar cambios automáticos al catálogo.
-     · Conservar: ID de reporte, ID de modelo, ID de corte, usuario solicitante, fecha, imagen de referencia, valores propuestos y estado de revisión.
+2.3. Gestión de las sugerencias
+- **Persistencia:** Guarda la sugerencia como una propuesta pendiente de revisión, asociada al reporte original. No la apliques automáticamente al catálogo. Reutiliza el mecanismo existente de inbox, reportes o administración si ya permite gestionar este tipo de solicitudes. Si el sistema actual no permite conservar una propuesta independiente, implementa el almacenamiento adicional mínimo necesario, sin sobrescribir la información original.
+- **Datos obligatorios de la propuesta:** La propuesta debe conservar, como mínimo: Identificador del reporte original, Identificador del modelo, Identificador del corte reportado, Usuario que presentó la propuesta, Fecha de creación, Imagen de referencia si existe, Valores propuestos, y Estado de revisión. Reutiliza campos existentes en la arquitectura. El usuario debe recibir una confirmación cuando la sugerencia se guarde correctamente.
+- **Criterios de aceptación:** Cada corte dispone de su propio botón de reporte; el reporte puede enviarse sin modificar el catálogo; después del envío correcto se ofrece «Sugerir cambio»; la sugerencia se guarda independientemente del registro original; las imágenes se almacenan utilizando los mecanismos existentes; las propuestas quedan vinculadas al corte correcto; los demás cortes del mismo modelo permanecen intactos; y los usuarios no pueden utilizar este flujo para modificar directamente registros que requieren autorización administrativa.
 
 ===================================================================
 PRIORIDAD 3: FASE 2 Y FASE 3 - AMPLIACIÓN DIRECTA DE LOS DETALLES DEL MODELO
 ===================================================================
 
-3.1. MENÚ DE AMPLIACIÓN DINÁMICO EN EL BOTÓN "+"
-   - **Objetivo:** Desplegar opciones de ampliación según los espacios reales disponibles en Google Sheets.
-   - **Requisitos:**
-     · Opciones: "Nuevo corte (X disponibles)", "Apertura", "Cable de alimentación (X disponibles)", "Agregar enlace de vídeo", "Agregar VIN".
-     · Calcular X dinámicamente según la estructura actual de la hoja `Cortes` (máximo 3 cortes, 1 apertura, 3 cables de alimentación).
-     · Ocultar opciones cuando los espacios estén agotados o no sean compatibles con el modelo. Validar disponibilidad tanto en frontend como en backend (prevención de concurrencia).
+3.1. Botón de ampliación (+) y menú en el modal de detalle
+- **Ubicación y apariencia:** Al final del modal de detalle del modelo, después del último acordeón existente, agrega un botón pequeño con el icono «+». Debe situarse en una esquina inferior del modal, sin interferir con el contenido, el desplazamiento ni los controles existentes. Utiliza como referencia el botón de edición que actualmente aparece en el modal de detalle para el rol de desarrollador. Conserva el tamaño visual, los estilos, las sombras y el comportamiento de los componentes existentes. Disponible para todos los usuarios autorizados (su disponibilidad no implica modificación libre de datos existentes).
+- **Menú de ampliación:** Al presionar el botón «+», abre un modal con las opciones: «Nuevo corte (X disponibles)», «Apertura», «Cable de alimentación (X disponibles)», «Agregar enlace de vídeo», y «Agregar VIN». La cantidad X debe calcularse a partir de los espacios disponibles en la estructura actual de Google Sheets; no utilices cantidades fijas ni valores escritos manualmente en el frontend. Si no existen espacios disponibles para registrar un nuevo corte o cable de alimentación, oculta la opción correspondiente. Las opciones de apertura y vídeo deben respetar las limitaciones reales del esquema de datos y del modelo (no mostrar opciones incompatibles). Comprobar disponibilidad también en el backend antes de guardar para evitar colisiones concurrentes por el último espacio.
 
-3.2. AGREGAR NUEVO CORTE DESDE EL MODAL DE DETALLE
-   - **Objetivo:** Registrar un corte adicional para un modelo existente sin duplicar el vehículo.
-   - **Requisitos:**
-     · Formulario con: Subir imagen, Selector de tipo de corte, Selector de configuración de relay, Detalles técnicos, Color de cable, Casilla check engine.
-     · Reutilizar validaciones y lógica de `add_cortes.html`.
-     · Registrar en el siguiente espacio disponible (`tipoCorte2` o `tipoCorte3`), subir imagen a Drive, guardar el nombre personal del colaborador y actualizar la fecha de modificación del modelo.
+3.2. Agregar un nuevo corte desde el modal de detalle
+- **Campos requeridos:** Botón «Subir imagen», Selector del tipo de corte, Selector de configuración del relay, Campo de detalles, Campo del color del cable, Casilla «Este corte activa el testigo del motor», y Botón «Agregar corte». Las opciones de los selectores deben proceder de las listas y configuraciones existentes en Google Sheets (no duplicar en frontend).
+- **Comportamiento:** Comportarse de manera equivalente a la etapa de registro de un nuevo corte de add_corte.html, reutilizando validaciones, carga de imágenes, normalización de datos, tratamiento de errores y escritura. Debe agregar un corte al modelo existente sin volver a registrar el vehículo ni sobrescribir los cortes que ya contiene.
+- **Al guardar correctamente:** Registrar el nuevo corte en el espacio disponible, asociarlo con el modelo correcto, guardar la imagen mediante el sistema existente, registrar el nombre personal del colaborador, actualizar la fecha de modificación del modelo según la regla del sistema, actualizar los datos visibles del modal sin generar duplicados, e informar al usuario.
+- **Nombre del colaborador:** Debe almacenarse el nombre personal del usuario registrado en su perfil (ej. Juan Pérez), no su identificador de acceso (ej. J_perez). Obtener el nombre desde la fuente de datos oficial del perfil del usuario autenticado; no permitir enviar nombres arbitrarios ni inventar identidades si falla la recuperación.
+- **Fecha del registro:** Actualizar la fecha del registro del modelo de acuerdo con el mecanismo existente, limitando la modificación a los campos temporales de actualización según el esquema actual sin alterar la fecha de creación original.
 
-3.3. AGREGAR APERTURA DE PUERTAS DESDE EL MODAL DE DETALLE
-   - **Objetivo:** Registrar detalles de apertura de puertas para el modelo.
-   - **Requisitos:**
-     · Formulario con: Subir imagen y campo de texto enriquecido para detalles.
-     · Guardar en los campos `apertura` e `imgApertura` del modelo existente.
-     · No actualizar la fecha de modificación del modelo ni sobrescribir datos no relacionados.
+3.3. Agregar apertura desde el modal de detalle
+- **Formulario:** Modal con botón «Subir imagen», Campo de texto enriquecido para los detalles de la apertura, y Botón «Agregar apertura».
+- **Comportamiento:** Guardar la información en el campo y la ubicación que correspondan al modelo existente en Google Sheets (`apertura` e `imgApertura`). Reutilizar el mecanismo actual de carga de imágenes y escritura. Después de guardar, actualizar el modal de detalle. No actualizar la fecha del registro del modelo ni sobrescribir cortes, cables u otros campos no relacionados. Si el modelo ya dispone de una apertura, ajustarse a la estructura existente sin sobrescribir silenciosamente.
 
-3.4. AGREGAR CABLE DE ALIMENTACIÓN ELÉCTRICA DESDE EL MODAL DE DETALLE
-   - **Objetivo:** Registrar cables de alimentación adicionales (hasta 3 cables).
-   - **Requisitos:**
-     · Formulario con: Subir imagen y campo de texto enriquecido para detalles de alimentación.
-     · Registrar en el siguiente espacio disponible (`cableAlimen`, `cableAlimen2`, `cableAlimen3`) y sus respectivas imágenes (`imgCableAlimen`, etc.).
-     · Impedir la operación si los 3 espacios están ocupados. Actualizar el carrusel de alimentación en el modal.
+3.4. Agregar cable de alimentación desde el modal de detalle
+- **Formulario:** Modal con botón «Subir imagen», Campo de texto enriquecido para los detalles de la alimentación, y Botón «Agregar alimentación».
+- **Comportamiento:** Integrarse con los campos de alimentación que admite actualmente el catálogo. Si el esquema permite varios cables de alimentación, registrar la nueva información en el siguiente espacio disponible (`cableAlimen`, `cableAlimen2`, `cableAlimen3`). Si no quedan espacios, impedir la operación en interfaz y backend. No reemplazar cables anteriores ni sus imágenes. Actualizar la vista del modelo y el carrusel de alimentación existente para mostrar únicamente los cables realmente registrados (sin mostrar espacios vacíos o imágenes huérfanas). La operación no debe modificar datos ajenos a la alimentación ni actualizar la fecha del registro.
 
-3.5. AGREGAR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE
-   - **Objetivo:** Incorporar enlace de vídeo guía de YouTube para el modelo.
-   - **Requisitos:**
-     · Validar que sea una URL de YouTube válida y normalizarla.
-     · Guardar en el campo `videoGuiaDesarmeUrl`. Ocultar la opción si el vehículo ya tiene un vídeo registrado.
+3.5. Agregar vídeo guía de desarme desde el modal de detalle
+- **Formulario:** Modal con campo para introducir enlace de YouTube (obligatorio) y Botón «Agregar vídeo».
+- **Validación y almacenamiento:** Validar que sea un enlace de YouTube admisible y normalizarlo mediante las utilidades existentes (no aceptar URLs arbitrarias). Guardar el enlace en el campo `videoGuiaDesarmeUrl`. Al terminar, actualizar el modal de detalle mostrando el vídeo con el componente existente. Agregar un vídeo no debe actualizar la fecha del registro del modelo. Si el modelo ya tiene un vídeo guía y la estructura no admite varios, no sobrescribir el enlace anterior sin advertencia y confirmación explícita del usuario.
 
 ===================================================================
 PRIORIDAD 4: FASE 4 - AMPLIACIÓN DEL FORMULARIO ADD_CORTE.HTML
 ===================================================================
 
-4.1. OPCIONES EN LA ÚLTIMA ETAPA DEL REGISTRO
-   - **Objetivo:** Ampliar la última etapa de `add_cortes.html` para permitir registrar un segundo corte e ingresar enlace de vídeo guía.
-   - **Requisitos:**
-     · Conservar el flujo actual sin reiniciar el formulario ni volver a solicitar la fotografía general del vehículo.
+4.1. Nuevas opciones en la última etapa del registro
+- **Modificación:** Modificar add_corte.html en la última etapa donde actualmente se solicita información adicional (apertura y cable de alimentación) para agregar opciones que permitan: registrar un segundo corte para el mismo modelo, y agregar el vídeo guía de desarme. Conservar el flujo actual y evitar reiniciar innecesariamente el formulario completo.
 
-4.2. FLUJO PARA REGISTRAR UN SEGUNDO CORTE
-   - **Objetivo:** Retornar al usuario a la etapa de datos del corte conservando los datos del modelo.
-   - **Requisitos:**
-     · Registrar el nuevo corte en el espacio `tipoCorte2` asociado al mismo modelo.
-     · Evitar duplicados del vehículo o de imágenes en Google Drive.
+4.2. Registrar un segundo corte
+- **Comportamiento:** La opción «Agregar nuevo corte» debe devolver al usuario a la etapa del formulario donde se introducen los datos del corte, sin volver a solicitar la imagen general del modelo del vehículo. El formulario debe conservar la información del modelo y los datos previamente introducidos. El nuevo corte debe registrarse en el siguiente espacio disponible y quedar asociado al mismo modelo. Después de completar el segundo corte, permitir continuar con la información adicional y finalizar el registro sin duplicar el modelo, sus imágenes ni los registros guardados.
 
-4.3. DISPONIBILIDAD DINÁMICA DE OPCIONES EN EL FORMULARIO
-   - **Objetivo:** Ocultar o deshabilitar opciones en función del estado del registro y validar nuevamente en backend.
+4.3. Agregar vídeo guía
+- **Comportamiento:** Incluir opción para registrar el enlace de YouTube del vídeo guía de desarme. Validar el enlace antes de guardar. Si el espacio correspondiente al vídeo ya está ocupado y el esquema no admite varios vídeos, no mostrar esta opción en la última etapa.
+
+4.4. Disponibilidad dinámica de opciones
+- **Validación:** Calcular la disponibilidad según el estado real del registro y los espacios disponibles en la hoja de cálculo. Ocultar opciones cuando estén ocupados todos los espacios para cortes adicionales o vídeo guía. El backend debe volver a verificar la disponibilidad antes de escribir los datos, informando si otro usuario ocupó el espacio durante el proceso sin perder los datos introducidos en el formulario.
 
 ===================================================================
 PRIORIDAD 5: FASE 5, FASE 6 Y FASE 7 - SECCIÓN «PROBLEMAS Y SOLUCIONES» (PYS)
 ===================================================================
 
-5.1. SECCIÓN Y BOTÓN PRINCIPAL «PROBLEMAS Y SOLUCIONES»
-   - **Objetivo:** Integrar el botón `#btn-pys` en el menú/navegación de la página principal.
-   - **Requisitos:**
-     · Armonizar con botones existentes (Cortes, Tutoriales, Relay). Permitir dos líneas ("Problemas y / Soluciones") con interlineado reducido si es necesario.
+5.1. Incorporar la sección en la página principal
+- **Ubicación y botón:** Agregar nueva sección en la página de inicio junto a Cortes, Tutoriales y Relay, denominada «Problemas y Soluciones». El botón debe armonizar con el diseño actual (tamaños, colores, sombras, bordes y comportamiento adaptable). Si el texto no cabe, utilizar dos líneas con interlineado reducido («Problemas y / Soluciones») o abreviatura comprensible («Problemas / Soluciones») sin cambiar el diseño de los botones existentes.
 
-5.2. TARJETAS Y TARJETA DE CREACIÓN DE PROBLEMAS
-   - **Objetivo:** Renderizar grid de tarjetas ordenadas cronológicamente de más reciente a más antiguo, precedidas siempre por la tarjeta de creación.
-   - **Requisitos:**
-     · Primera tarjeta: Fondo transparente, icono "+" centrado, sombra azul institucional, dimensiones idénticas a las tarjetas de contenido.
+5.2. Tarjetas de Problemas y Soluciones y Tarjeta de creación
+- **Tarjetas de contenido:** Utilizar el mismo sistema visual de tarjetas de las demás secciones. Cada tarjeta debe mostrar: miniatura de la imagen asociada al problema, título del problema, y elementos visuales compatibles. Ordenar de más reciente a más antiguo.
+- **Tarjeta de creación:** La primera tarjeta debe estar siempre reservada para agregar un nuevo problema (no incluirla en el orden cronológico). Ocupar el mismo espacio que las demás tarjetas, fondo transparente, icono «+» centrado, sombra azul institucional de GPSpedia, proporciones y estados visuales coherentes. Al seleccionarla, abrir el modal para registrar un nuevo problema (no usar imágenes de relleno).
 
-5.3. FORMULARIO DE REGISTRO DE PROBLEMAS
-   - **Objetivo:** Capturar datos del problema con validaciones estrictas.
-   - **Requisitos:**
-     · Título del problema (máx 15 caracteres).
-     · Imagen (cómputo y subida a Google Drive).
-     · Detalle del problema (texto enriquecido, máx 200 caracteres).
-     · Casilla «Sin solución»: al marcarla, deshabilita el campo solución y no exige contenido. La columna `Se soluciono` se establece en 'x' únicamente si el problema tiene solución.
-     · Solución (texto enriquecido, máx 200 caracteres, requerida si no está marcada "Sin solución").
-     · Prevención (opcional, máx 100 caracteres).
-     · Vídeo de YouTube (opcional, URL validada).
+5.3. Formulario para registrar problemas
+- **Título del problema:** Campo de texto con un máximo de 15 caracteres (columna B `Problema`).
+- **Imagen:** Botón «Subir imagen» para cargar a Google Drive utilizando el mecanismo existente; almacenar el enlace para recuperación; comprobar carga antes de confirmar el registro.
+- **Detalle del problema:** Campo de texto enriquecido con máximo de 200 caracteres (columna C `Descripción`), admitiendo negrita, colores y saltos de línea.
+- **Casilla «Sin solución»:** Cuando esté marcada: deshabilitar el campo «Solución», no exigir solución para guardar, no marcar el registro como solucionado, y evitar guardar soluciones ficticias. Cuando esté desmarcada: habilitar «Solución», permitir introducir descripción de cómo se resolvió, exigir solución válida antes de guardar. La columna D `Se soluciono` contendrá una `x` únicamente cuando esté marcado como solucionado; vacío cuando no tenga solución.
+- **Solución:** Campo de texto enriquecido con máximo de 200 caracteres (columna E `Solucion`). Deshabilitado y no exigido si está marcada «Sin solución».
+- **Prevención:** Campo opcional titulado «Cómo prevenir» con máximo de 100 caracteres (columna F `Prevenir`).
+- **Vídeo:** Campo opcional para enlace de YouTube explicativo (columna H `Video`). Validar enlace antes de guardar.
+- **Botón de registro:** Botón «Agregar». Validar campos, límites de caracteres, condiciones entre «Sin solución» y «Solución», enlace de YouTube, cargar imagen a Drive, guardar registro en Google Sheets, actualizar tarjetas, y mostrar confirmación. Manejar errores conservando datos introducidos y prevenir envíos duplicados por doble clic.
 
-5.4. ESTRUCTURA DE ALMACENAMIENTO EN GOOGLE DRIVE Y GOOGLE SHEETS
-   - **Objetivo:** Configurar carpeta dedicada en Drive y hoja `pys` en Google Sheets.
-   - **Requisitos:**
-     · Carpeta en Drive: "Problemas y Soluciones" dentro de la carpeta principal de GPSpedia.
-     · Hoja `pys` con 8 columnas obligatorias en este orden exacto:
-       Columna A: `id_problem`
-       Columna B: `Problema`
-       Columna C: `Descripción`
-       Columna D: `Se soluciono`
-       Columna E: `Solucion`
-       Columna F: `Prevenir`
-       Columna G: `Imagen`
-       Columna H: `Video`
-     · Generar identificadores únicos con formato `isue-001`, `isue-002`, etc., mediante `LockService` en backend.
+5.4. Estructura de almacenamiento en Google Drive y Google Sheets
+- **Carpeta de Drive:** Carpeta dedicada «Problemas y Soluciones» dentro de la carpeta principal de GPSpedia. Reutilizar si ya existe; no crear carpetas nuevas por cada problema ni por usuario.
+- **Hoja pys:** Hoja dedicada `pys` compartida entre todos los usuarios. Reutilizar si existe y configurar si no existe, con 8 columnas obligatorias en este orden exacto:
+  - Columna A: `id_problem` (Identificador único con formato `isue-001`, `isue-002`, `isue-003`, generado en backend mediante `LockService`).
+  - Columna B: `Problema` (Título, máx 15 caracteres).
+  - Columna C: `Descripción` (Detalle, máx 200 caracteres).
+  - Columna D: `Se soluciono` (`x` cuando solucionado; vacío si sin solución).
+  - Columna E: `Solucion` (Descripción de solución, máx 200 caracteres).
+  - Columna F: `Prevenir` (Recomendación preventiva opcional, máx 100 caracteres).
+  - Columna G: `Imagen` (Enlace de Drive).
+  - Columna H: `Video` (Enlace de YouTube opcional).
+  - Metadatos adicionales (colaborador, fechas, modelos asociados) deben almacenarse de forma compatible al final sin alterar los encabezados obligatorios A-H.
+- **Validación de integridad:** Validar campos obligatorios, longitudes, enlaces y carga en backend. Gestionar archivos huérfanos de Drive de forma segura en caso de fallos de escritura en Sheets sin borrar archivos de otros registros.
 
-5.5. MODAL DE DETALLE Y ACCIONES DE PROBLEMAS Y SOLUCIONES
-   - **Objetivo:** Mostrar información completa del problema en modal responsivo.
-   - **Requisitos:**
-     · Orden: Título, Imagen, Descripción, Solución, Prevención, Vídeo, Colaborador.
-     · Si no tiene solución, mostrar botón «Agregar solución». Si no tiene prevención, mostrar botón «Agregar prevención».
-     · Permitir edición in-modal para el rol de Desarrollador.
+5.5. Modal de detalle de Problemas y Soluciones
+- **Presentación:** Modal con diseño idéntico al resto de GPSpedia. Presentar información en orden: Título del problema, Imagen, Descripción del problema, Solución (si existe), Prevención (si existe), Vídeo (si existe), y Nombre del colaborador (patrón visual idéntico a cortes). Respetar saltos de línea, negrita y colores guardados; no mostrar campos vacíos como si tuvieran datos.
+- **Problemas sin solución:** Mostrar botón «Agregar solución» al final del contenido disponible. Al pulsarlo, permitir introducir solución; al guardar, actualizar columna `Solucion`, marcar `Se soluciono` con `x`, actualizar modal y tarjeta sin crear un problema nuevo.
+- **Problemas sin prevención:** Mostrar botón «Agregar prevención» para introducir recomendación de hasta 100 caracteres y actualizar columna `Prevenir`.
+- **Colaborador:** Mostrar nombre personal del colaborador al final del modal.
+- **Edición in-modal:** Permitir edición directa para el rol de desarrollador con autorización verificada en el backend, conservando identificador y trazabilidad.
 
 ===================================================================
 PRIORIDAD 6: FASE 8 - AMPLIAR LA SECCIÓN DE TUTORIALES
 ===================================================================
 
-6.1. TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES
-   - **Objetivo:** Integrar tarjeta de creación "+" en la primera posición de la sección Tutoriales.
-   - **Requisitos:**
-     · Formularios con soporte de texto enriquecido en la descripción.
-     · Guardar registros en la hoja `Tutoriales` de Google Sheets con campos: Tema, Imagen, Video, Descripción y Colaborador.
+6.1. Tarjeta para agregar tutoriales y formulario
+- **Tarjeta de creación:** En la sección «Tutoriales», agregar tarjeta de creación «+» en primera posición antes de las demás tarjetas, con idéntico estilo visual a la de Problemas y Soluciones.
+- **Formulario de tutoriales:** Reutilizar campos y esquema existente (`Tema`, `Imagen`, `Video`, `Descripción`, `Colaborador`) en la hoja `Tutorial` de Google Sheets. Incorporar barra de texto enriquecido en descripciones. Guardar mediante servicio existente, mantener compatibilidad con tutoriales anteriores, actualizar tarjetas sin duplicados, y mostrar el colaborador al final del modal de detalle.
 
 ===================================================================
-PRIORIDAD 7: FASE 9 Y TAREA ADICIONAL 1 - EDITOR Y CONTENIDO HTML ENRIQUECIDO
+PRIORIDAD 7: FASE 9 Y TAREA ADICIONAL 1 - BARRA DE TEXTO ENRIQUECIDO Y CONTENIDO HTML
 ===================================================================
 
-7.1. BARRA DE TEXTO ENRIQUECIDO Y SOPORTE DE CONTENIDO HTML
-   - **Objetivo:** Permitir formato visual (negrita, colores de texto, saltos de línea) y representación HTML limpia en campos descriptivos.
-   - **Campos afectados:** Detalles de cortes, aperturas, cables de alimentación, descripciones de tutoriales, problemas, soluciones y prevención.
-   - **MECANISMO DE CONFIGURACIÓN GLOBAL DE PLATAFORMA (MODO ENRIQUECIDO CONFIGURABLE):**
-     · Para resolver disputas entre la barra de formato liviano (negrita/color/saltos de línea) y la interpretación de HTML/CSS avanzados, se implementa una opción de configuración en la plataforma (`api-config.js` / `#dev-tools-modal` / localStorage: `gpsepedia_rich_text_mode`).
-     · Modo 'LIGHTWEIGHT': Aplica sanitización estricta permitiendo únicamente `<b>`, `<strong>`, `<span>` con color y `<br>`.
-     · Modo 'ADVANCED_HTML': Permite etiquetas estructurales adicionales (`<p>`, `<div>`, `<i>`, `<u>`, `<a>`, `<img>`, `<em>`, `<mark>`) manteniendo protección contra scripts XSS.
-
-7.2. SEGURIDAD Y PREVENCIÓN DE XSS
-   - **Objetivo:** Sanitizar todo contenido HTML asegurando que no se ejecuten scripts, controladores de eventos (`onload`, `onerror`) ni código JS ejecutable.
+7.1. Editor ligero y tratamiento de contenido enriquecido
+- **Editor ligero:** Barra de texto enriquecido en campos descriptivos (cortes, aperturas, alimentación, tutoriales, problemas, soluciones, prevención). Incluir funciones de: Negrita, Colores de texto y conservación de Saltos de línea. Ajustable al ancho de formularios en móviles y escritorio.
+- **MECANISMO DE CONFIGURACIÓN GLOBAL DE PLATAFORMA (MODO ENRIQUECIDO CONFIGURABLE):**
+  - Dado que la FASE 9 solicita exclusivamente negrita, colores y saltos de línea sin formato complejo, mientras que la TAREA ADICIONAL 1 solicita admitir etiquetas HTML y reglas de estilo CSS sin mostrarlas como texto plano:
+  - Se implementa la opción de configuración global en la plataforma (`api-config.js` / `#dev-tools-modal` / `localStorage: gpsepedia_rich_text_mode`):
+    - **Modo Estricto / Liviano (Default FASE 9):** Sanitiza y permite exclusivamente etiquetas de formato esencial (`<b>`, `<strong>`, `<span>` con estilo color, `<br>`).
+    - **Modo Avanzado HTML/CSS (TAREA ADICIONAL 1):** Permite etiquetas estructurales adicionales y formateadores (`<p>`, `<div>`, `<i>`, `<u>`, `<a>`, `<img>`, `<small>`, `<em>`, `<mark>`) y reglas CSS de presentación de texto.
+  - En ambos modos, queda prohibida la ejecución de código arbitrario, scripts (`<script>`), atributos de eventos (`onload`, `onerror`, `onclick`), o JavaScript ejecutable.
+  - El texto enriquecido debe conservarse en la captura, serialización, backend, Sheets, recuperación y visualización en modales sin convertirse en texto plano ni mostrar tags HTML visibles al usuario.
+  - Mantener compatibilidad 100% con registros anteriores almacenados como texto plano.
 
 ===================================================================
 PRIORIDAD 8: FASE 10 - MEJORAS DEL INBOX, MI PERFIL Y GESTIÓN DE USUARIOS
 ===================================================================
 
-8.1. REDISEÑO Y OPTIMIZACIÓN DE INBOX, PERFIL Y USUARIOS
-   - **Objetivo:** Mejorar organización, legibilidad, adaptación móvil y flujos de trabajo.
-   - **Requisitos:**
-     · Optimizar la carga y la presentación de notificaciones, mensajes, edición de perfil de usuario y panel RBAC.
-
-8.2. CACHÉ E INVALIDACIÓN INTELIGENTE
-   - **Objetivo:** Reutilizar datos en memoria/IndexedDB evitando peticiones redundantes.
-   - **Requisitos:**
-     · Invalidar entradas de caché automáticamente tras crear, editar o eliminar registros de usuarios o mensajes. Evitar fuga de datos entre roles o cuentas.
+8.1. Auditoría, rediseño y optimización de flujos
+- **Diseño y coherencia:** Mejorar organización, legibilidad de mensajes, presentación de formularios, estados de carga, confirmaciones, mensajes de error, adaptación a móviles y navegación fluida entre inbox, reportes y contacto sin crear estilos desconectados.
+- **Caché e invalidación:** Reutilizar datos previamente cargados de inbox, perfil y gestión de usuarios sin peticiones repetidas innecesarias al backend. Invalidar o actualizar caché inmediatamente tras crear, editar o eliminar registros. Si falla la red, conservar datos seguros indicando posible desactualización. No almacenar información sensible en cachés accesibles a otros usuarios ni suplantar la autorización del backend.
+- **Gestión de usuarios y permisos (RBAC):** Mejoras exclusivas para desarrolladores y usuarios con autorización para gestionar usuarios. Mantener validación estricta de permisos en backend para evitar escalación de privilegios.
 
 ===================================================================
-PRIORIDAD 9: FASE 11 Y FASE 12 - VALIDACIONES, INTEGRIDAD Y PRUEBAS FUNCIONALES
+PRIORIDAD 9: FASE 11 Y FASE 12 - VALIDACIONES, INTEGRIDAD Y PRUEBAS
 ===================================================================
 
-9.1. VALIDACIONES EN BACKEND E INTEGRIDAD DE DATOS
-   - **Objetivo:** Validar en el servidor todos los campos obligatorios, longitudes máximas, URLs de YouTube, imágenes y permisos de usuario.
-   - **Requisitos:**
-     · Garantizar compatibilidad 100% retroactiva con registros antiguos.
-     · Garantizar inicializaciones idempotentes sin duplicar hojas ni columnas.
+9.1. Validaciones en backend e integridad
+- **Validaciones obligatorias:** Validar en el backend: campos obligatorios, longitudes máximas, tipos de datos, identificadores, disponibilidad de espacios, enlaces de YouTube, carga de imágenes en Drive, relaciones entre modelos/cortes/reportes, y permisos de sesión.
+- **Integridad y compatibilidad:** Asegurar que las actualizaciones afecten únicamente al registro e identificador correspondiente sin sobrescribir registros ajenos. Tratamiento de errores que prevenga escrituras parciales. Mantener compatibilidad absoluta con registros anteriores (modelos sin apertura, vídeo o segundo corte). Inicializaciones estrictamente idempotentes.
 
-9.2. BATERÍA DE PRUEBAS FUNCIONALES Y CRITERIOS DE ACEPTACIÓN
-   - **Objetivo:** Ejecutar comprobaciones completas (pruebas 31 a 38 de la especificación):
-     · Pruebas de reportes y sugerencias.
-     · Pruebas de ampliación de detalles (+).
-     · Pruebas de `add_cortes.html`.
-     · Pruebas de Problemas y Soluciones.
-     · Pruebas de tutoriales.
-     · Pruebas de editor enriquecido.
-     · Pruebas de inbox, perfil y gestión de usuarios.
-     · Pruebas de regresión del catálogo.
+9.2. Batería de pruebas y criterios de aceptación (Pruebas 31 a 38)
+- Ejecutar y verificar: Pruebas de reportes y sugerencias; Pruebas de ampliación de detalles (+); Pruebas de add_corte.html; Pruebas de Problemas y Soluciones; Pruebas de tutoriales; Pruebas del editor enriquecido; Pruebas de inbox, perfil y gestión de usuarios; y Pruebas de regresión completa del catálogo.
 
 ===================================================================
-PRIORIDAD 10: TAREA ADICIONAL 2 - EXTENDER LA BÚSQUEDA GLOBAL MULTI-SECCIÓN
+PRIORIDAD 10: TAREA ADICIONAL 2 - EXTENDER LA BÚSQUEDA A TODAS LAS SECCIONES
 ===================================================================
 
-10.1. BÚSQUEDA UNIFICADA MULTI-SECCIÓN
-   - **Objetivo:** Ampliar la barra de búsqueda para consultar simultáneamente en: Cortes, Relays, Tutoriales y Problemas y Soluciones.
-   - **Requisitos:**
-     · Buscar en marcas, modelos, versiones, años, tipos de corte, detalles, cables, relés, títulos, soluciones, descripciones y recomendaciones.
-     · Extraer texto de contenido HTML enriquecido para permitir coincidencias sin interferencia de etiquetas markup.
-     · Asignar badges o etiquetas visuales de sección ('Corte', 'Relay', 'Tutorial', 'Problema y Solución').
-     · Abrir directamente el modal correspondiente al seleccionar un resultado.
+10.1. Búsqueda global multi-sección
+- **Fuentes consultables:** Convertir la búsqueda en global incluyendo: Cortes (marca, modelo, versión, años, tipo corte, detalles, color cable, relay), Configuraciones de relay (nombre, tipo, descripción, detalles), Tutoriales (títulos, descripciones), y Problemas y Soluciones (título, descripción, solución, prevención).
+- **Tratamiento de texto enriquecido:** Extraer texto consultable de campos HTML para coincidir con el contenido sin que las etiquetas markup interfieran con la búsqueda.
+- **Estrategia de coincidencias:** Coincidencia exacta, por palabras, parcial, normalización (mayúsculas/minúsculas/acentos), espacios y clasificación por relevancia (título principal > campos descriptivos).
+- **Organización y navegación:** Distinguir claramente la categoría con etiqueta o indicador visual (`Corte`, `Relay`, `Tutorial`, `Problema y Solución`). Cada resultado debe abrir su respectivo modal o detalle técnico sin enviar erróneamente todos los resultados al modal de cortes. Preservar eficiencia mediante caché y evitar búsquedas difusas excesivamente permisivas.
 
 ===================================================================
-PRIORIDAD 11: NUEVA TAREA - REGISTRO, ALMACENAMIENTO Y BÚSQUEDA GLOBAL POR VIN
+PRIORIDAD 11: NUEVA TAREA - REGISTRO DE VIN, IDENTIFICACIÓN DE MODELOS Y BÚSQUEDA POR VIN
 ===================================================================
 
-11.1. ESTRUCTURA DE VIN EN GOOGLE SPREADSHEET
-   - **Objetivo:** Incorporar la columna `vin` como la última columna de la hoja `Cortes` (índice 43).
-   - **Requisitos:**
-     · No modificar ni desplazar columnas anteriores.
+11.1. Modificación de Google Spreadsheet
+- Agregar la columna `vin` al final de la hoja `Cortes` (última columna, índice 43) sin alterar, desplazar ni eliminar columnas existentes. Compatible con registros previos. Reconocimiento en backend para lectura y escritura.
 
-11.2. REGISTRO Y PROCESAMIENTO DE VIN EN ADD_CORTE.HTML
-   - **Objetivo:** Permitir ingresar VIN completo de hasta 18 caracteres en la etapa de fotografía del vehículo.
-   - **Requisitos:**
-     · El campo es opcional.
-     · Procesar el VIN omitiendo siempre los últimos 5 caracteres y guardar únicamente el prefijo resultante.
-     · Validar duplicados antes de guardar y mostrar aviso `"VIN ya está registrado para: [Modelo]"` con enlace interactivo.
+11.2. Procesamiento y exclusión de los últimos 5 caracteres
+- **Regla obligatoria:** El usuario ingresa el VIN completo (hasta 18 caracteres), pero el sistema descarta estrictamente los últimos 5 caracteres para almacenar únicamente la parte anterior (prefijo identificador de modelo/versión). Queda estrictamente prohibido almacenar el VIN completo o sus últimos 5 caracteres.
 
-11.3. OPCIÓN «AGREGAR VIN» EN EL BOTÓN "+" DEL MODAL DE DETALLE
-   - **Objetivo:** Permitir agregar VINs adicionales desde el modal de detalles.
-   - **Requisitos:**
-     · Input de texto de hasta 18 caracteres. Recortar los últimos 5 caracteres antes de almacenar.
-     · Almacenar en la celda `vin` como colección/Array JSON (`["1HGCM82633A", "2HGCM82633B"]`).
-     · Determinar la cantidad máxima de VINs (1 a 3) calculando dinámicamente el número de versiones de equipamiento detectadas en `versionesAplicables` (separadores `,`, `/`, `\`).
+11.3. Registro en add_corte.html
+- Incorporar campo de entrada opcional para VIN en la fase de fotografía del vehículo (máximo 18 caracteres). Procesar excluyendo los últimos 5 caracteres y guardar en la columna `vin`. Validar duplicados antes de guardar (mostrando el aviso con enlace interactivo si ya existe). Si el usuario no ingresa VIN, continuar con normalidad.
 
-11.4. BÚSQUEDA GLOBAL POR VIN
-   - **Objetivo:** Detectar búsquedas de VIN en la barra de búsqueda global y filtrar por coincidencia exacta con el prefijo guardado en la colección.
+11.4. Opción «Agregar VIN» en el botón (+) del modal de detalle
+- Opción «Agregar VIN» en el menú (+). Formulario de texto simple sin editor enriquecido, placeholder "Ingresa el VIN completo del vehículo", límite 18 caracteres, botón "Agregar VIN". Recortar los últimos 5 caracteres, validar duplicados, verificar disponibilidad según versiones de equipamiento, agregar a la colección existente en la celda y actualizar el modal sin sobrescribir identificadores previos.
 
-===================================================================
-PRIORIDAD 12: NUEVA TAREA - VINCULACIÓN DE PROBLEMAS Y SOLUCIONES CON MODELOS
-===================================================================
+11.5. Validación de duplicados
+- Comparar identificadores procesados (sin los últimos 5 caracteres) contra todos los registros de `Cortes`. Si existe coincidencia, mostrar el mensaje exacto:
+  `VIN ya está registrado para: [Enlace interactivo con nombre del modelo]`
+  Al pulsar el enlace, abrir el modal de detalle del modelo coincidente. Validar en todos los VINs de la colección y verificar en el backend.
 
-12.1. CONTROL DE ALCANZABILIDAD Y SELECCIÓN DE MODELOS EN PYS
-   - **Objetivo:** Permitir definir el alcance de un problema: 'General' vs 'Modelo específico'.
-   - **Requisitos:**
-     · Si se selecciona 'Modelo específico', habilitar barra de búsqueda de vehículos.
-     · Al seleccionar un modelo, abrir modal de confirmación con datos del vehículo (Marca, Modelo, Versión, Años, Encendido, Imagen) omitiendo detalles de cortes o diagramas.
-     · Botón "Aceptar" incorpora el modelo a la lista provisional del problema.
+11.6. Gestión de múltiples VINs según versiones de equipamiento
+- Detectar separadores (`,`, `/`, `\`) en `versionesAplicables` para determinar el número de versiones (ej: "LX, EX": 2; "Sport / Touring": 2; "Base \ Limited": 2; "EX": 1).
+- **Disponibilidad:**
+  - 1 versión y 0 VIN: mostrar opción, registrar hasta 1 VIN.
+  - 1 versión y 1 VIN: ocultar opción.
+  - 2 versiones: registrar hasta 2 VINs en total (ocultar al alcanzar 2).
+  - 3 versiones: registrar hasta 3 VINs en total (ocultar al alcanzar 3).
+- Límite máximo: 3 identificadores por registro.
 
-12.2. ALMACENAMIENTO EN HOJA `PYS` (COLUMNA 10)
-   - **Objetivo:** Almacenar colecciones de IDs de modelos asociados en la columna 10 (`modelos_asociados`) de la hoja `pys` como Array JSON.
+11.7. Almacenamiento en una sola celda como colección (Array)
+- Almacenar múltiples VINs en la misma celda de la columna `vin` como colección/Array JSON (ej: `["1HGCM82633A", "2HGCM82633B"]`). Prohibido crear columnas adicionales (`vin2`, `vin3`) o filas nuevas por VIN.
 
-12.3. CARRUSEL DE MODELOS EN MODAL DE PYS Y ACORDEÓN EN MODAL DE VEHÍCULO
-   - **Objetivo:**
-     · Renderizar carrusel horizontal de tarjetas pequeñas de modelos vinculados en el detalle del problema, con botón "+" al final para asociar más vehículos.
-     · Agregar el acordeón «Problemas relacionados a este vehículo» en el modal de detalles del vehículo, cargando los problemas asociados.
-     · Al abrir un problema desde el acordeón del vehículo, ocultar detalles de corte, apertura, alimentación y el botón "+" de adición de modelos.
+11.8. Integración con la barra de búsqueda global por VIN
+- Permitir ingresar el VIN en la barra de búsqueda. Al detectar entrada de VIN, excluir los últimos 5 caracteres y buscar coincidencia exacta con los identificadores almacenados en la colección de la celda `vin` (no coincidencias parciales). Mostrar resultados en el orden secuencial de coincidencia del VIN y abrir el modal del modelo coincidente.
 
 ===================================================================
-PRIORIDAD 13: FASE 13 - REVISIÓN FINAL, INFORME OBLIGATORIO Y DOCUMENTACIÓN
+PRIORIDAD 12: NUEVA TAREA - VINCULACIÓN DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VEHÍCULOS
 ===================================================================
 
-13.1. REVISIÓN TÉCNICA E INFORME FINAL ESTRUCTURADO
-   - **Objetivo:** Consolidar cambios, realizar auditoría final y emitir el informe estructurado con las secciones A a G exigidas por el procedimiento.
+12.1. Alcance en el formulario de problemas y soluciones
+- Agregar control dropselect en el formulario de creación/edición de problemas para definir el alcance: `General` vs `Modelo específico` (default: `General`).
+  - `General`: Aplica a todos los vehículos; no mostrar búsqueda de modelos; no requerir vehículos para guardar; no borrar modelos previamente asociados durante edición accidental.
+  - `Modelo específico`: Muestra barra de búsqueda predictiva para localizar vehículos por marca y modelo en el catálogo existente.
+
+12.2. Modal de confirmación del vehículo
+- Al seleccionar un modelo en la búsqueda, abrir un segundo modal de verificación que muestre ÚNICAMENTE: Marca, Modelo, Versión, Rango de años, Tipo de encendido e Imagen del modelo. Prohibido mostrar puntos de corte, apertura, alimentación o relays.
+- Botón «Aceptar»: Confirma el vehículo y lo agrega a la lista provisional en el formulario principal.
+- Permitir regresar a los resultados de búsqueda conservando la consulta previa sin agregar el modelo rechazado ni cerrar el formulario principal.
+
+12.3. Asociación de múltiples modelos
+- Permitir asociar múltiples modelos repitiendo el flujo de búsqueda y confirmación, identificados por ID único sin duplicados. Lista provisional visible con opción de remover modelos antes de guardar. Persistencia en la columna 10 de la hoja `pys` como colección/Array JSON (ej: `["id_modelo_1", "id_modelo_2"]`) en una sola celda en la misma fila del problema. Compatibilidad con registros antiguos vacíos.
+
+12.4. Carrusel de modelos en el modal de detalle del problema
+- Carrusel horizontal al final del modal de detalle de problemas mostrando tarjetas pequeñas de los vehículos vinculados, navegables hacia el detalle del vehículo correspondiente sin destruir el estado del problema. Tarjeta final con botón «+» (para usuarios autorizados) para agregar nuevos modelos mediante el mismo flujo de búsqueda y confirmación modal.
+
+12.5. Acordeón «Problemas relacionados a este vehículo» en el modal de detalle del vehículo
+- Botón acordeón al final del modal de detalle del vehículo titulado exactamente: `Problemas relacionados a este vehículo`.
+- Al abrirlo, muestra un carrusel horizontal con tarjetas de los problemas vinculados cuyo array contenga el ID del vehículo actual.
+- Al seleccionar un problema, abre el modal de detalle del problema en un contexto independiente con estas condiciones especiales:
+  - No mostrar los detalles de corte del vehículo.
+  - No mostrar información de apertura ni alimentación.
+  - No mostrar el botón "+" para agregar modelos.
+  - Al cerrar, regresar limpiamente al modal del vehículo conservando el estado.
+
+===================================================================
+PRIORIDAD 13: FASE 13 - REVISIÓN FINAL, DOCUMENTACIÓN E INFORME FINAL OBLIGATORIO
+===================================================================
+
+13.1. Revisión técnica, documentación y reporte estructurado
+- Ejecutar revisión exhaustiva de código, compatibilidad de esquemas, idempotencia y ausencia de código huérfano.
+- Emitir el informe final obligatorio estructurado con las 7 secciones:
+  - A. Resumen de implementación
+  - B. Archivos modificados
+  - C. Servicios y estructuras de datos
+  - D. Pruebas ejecutadas (superadas, fallidas, no ejecutadas, validación manual)
+  - E. Compatibilidad
+  - F. Problemas pendientes
+  - G. Estado por tarea (COMPLETADA, IMPLEMENTADA PENDIENTE DE VALIDACIÓN, PARCIAL, BLOQUEADA, NO IMPLEMENTADA).
 
 ---
 ---
