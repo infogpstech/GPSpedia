@@ -200,6 +200,15 @@ function doPost(e) {
             case 'addSupplementaryInfo':
                 response = handleAddSupplementaryInfo(payload, logMessage);
                 break;
+            case 'createSheet':
+                response = handleCreateSheet(payload, logMessage);
+                break;
+            case 'addColumn':
+                response = handleAddColumn(payload, logMessage);
+                break;
+            case 'driveCommand':
+                response = handleDriveCommand(payload, logMessage);
+                break;
             default:
                 throw new Error(`La acción administrativa '${action}' es desconocida o no está soportada.`);
         }
@@ -2136,4 +2145,138 @@ function getExistingEntities(sheet) {
   }
 
   return { brands: brands, models: models, versions: versions };
+}
+
+// ============================================================================
+// FUNCIONES DE GESTIÓN AVANZADA DE SPREADSHEET Y TERMINAL DE DRIVE
+// ============================================================================
+
+function handleCreateSheet(payload, logMessage) {
+    const { sheetName, headers, idFormula } = payload;
+    if (!sheetName) throw new Error("Nombre de hoja requerido.");
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName(sheetName);
+    if (sheet) throw new Error(`La hoja '${sheetName}' ya existe en el libro.`);
+
+    sheet = ss.insertSheet(sheetName);
+    if (Array.isArray(headers) && headers.length > 0) {
+        sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#f3f3f3");
+    }
+
+    if (idFormula && headers && headers.length > 0) {
+        // Asignar plantilla de fórmula de ID a la primera columna si se especificó
+        sheet.getRange(2, 1).setFormula(idFormula || '=ROW()-1');
+    }
+
+    logMessage && logMessage("Spreadsheet", `Hoja '${sheetName}' creada con exito.`);
+    return { status: 'success', message: `Hoja '${sheetName}' creada correctamente.` };
+}
+
+function handleAddColumn(payload, logMessage) {
+    const { sheetName, columnName } = payload;
+    if (!sheetName || !columnName) throw new Error("Nombre de hoja y nombre de columna requeridos.");
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) throw new Error(`La hoja '${sheetName}' no existe.`);
+
+    const lastCol = sheet.getLastColumn();
+    const newColIndex = lastCol + 1;
+    sheet.getRange(1, newColIndex).setValue(columnName).setFontWeight("bold").setBackground("#f3f3f3");
+
+    logMessage && logMessage("Spreadsheet", `Columna '${columnName}' agregada a '${sheetName}' en el indice ${newColIndex}.`);
+    return { status: 'success', message: `Columna '${columnName}' agregada en la posicion ${newColIndex}.`, columnIndex: newColIndex };
+}
+
+function handleDriveCommand(payload, logMessage) {
+    const { command, currentFolderId, args } = payload;
+    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    let activeFolder = currentFolderId ? DriveApp.getFolderById(currentFolderId) : rootFolder;
+
+    const cmd = (command || '').toLowerCase().trim();
+
+    if (cmd === 'dir' || cmd === 'ls') {
+        const folders = [];
+        const files = [];
+
+        const subFolders = activeFolder.getFolders();
+        while (subFolders.hasNext()) {
+            const f = subFolders.next();
+            folders.push({ id: f.getId(), name: f.getName(), type: 'folder' });
+        }
+
+        const subFiles = activeFolder.getFiles();
+        while (subFiles.hasNext()) {
+            const file = subFiles.next();
+            files.push({ id: file.getId(), name: file.getName(), size: file.getSize(), mimeType: file.getMimeType(), type: 'file' });
+        }
+
+        return {
+            status: 'success',
+            currentFolder: { id: activeFolder.getId(), name: activeFolder.getName() },
+            isRoot: activeFolder.getId() === rootFolder.getId(),
+            folders: folders,
+            files: files
+        };
+    } else if (cmd === 'cd') {
+        const target = args ? args.trim() : '';
+        if (target === '\\' || target === '/') {
+            return {
+                status: 'success',
+                currentFolder: { id: rootFolder.getId(), name: rootFolder.getName() }
+            };
+        } else if (target === '..') {
+            const parents = activeFolder.getParents();
+            if (parents.hasNext()) {
+                const parent = parents.next();
+                return {
+                    status: 'success',
+                    currentFolder: { id: parent.getId(), name: parent.getName() }
+                };
+            } else {
+                return { status: 'success', currentFolder: { id: rootFolder.getId(), name: rootFolder.getName() } };
+            }
+        } else {
+            const subFolders = activeFolder.getFoldersByName(target);
+            if (subFolders.hasNext()) {
+                const found = subFolders.next();
+                return {
+                    status: 'success',
+                    currentFolder: { id: found.getId(), name: found.getName() }
+                };
+            } else {
+                throw new Error(`Carpeta '${target}' no encontrada en '${activeFolder.getName()}'.`);
+            }
+        }
+    } else if (cmd === 'mkdir') {
+        if (!args) throw new Error("Nombre de carpeta requerido para mkdir.");
+        const newSub = activeFolder.createFolder(args.trim());
+        return { status: 'success', message: `Carpeta '${newSub.getName()}' creada con ID: ${newSub.getId()}`, folderId: newSub.getId() };
+    } else if (cmd === 'move') {
+        // args: { fileId, targetFolderId }
+        const { fileId, targetFolderId } = payload;
+        if (!fileId || !targetFolderId) throw new Error("ID de archivo y ID de carpeta destino requeridos.");
+        const file = DriveApp.getFileById(fileId);
+        const targetDir = DriveApp.getFolderById(targetFolderId);
+        file.moveTo(targetDir);
+        return { status: 'success', message: `Archivo '${file.getName()}' movido a '${targetDir.getName()}'.` };
+    } else if (cmd === 'tree') {
+        function buildTree(folder, depth = 0) {
+            if (depth > 2) return `${'  '.repeat(depth)}... (profundidad maxima)\n`;
+            let result = `${'  '.repeat(depth)}📁 [${folder.getName()}]\n`;
+            const files = folder.getFiles();
+            while (files.hasNext()) {
+                result += `${'  '.repeat(depth + 1)}📄 ${files.next().getName()}\n`;
+            }
+            const subs = folder.getFolders();
+            while (subs.hasNext()) {
+                result += buildTree(subs.next(), depth + 1);
+            }
+            return result;
+        }
+        const treeStr = buildTree(activeFolder);
+        return { status: 'success', tree: treeStr };
+    }
+
+    throw new Error(`Comando de terminal '${command}' no reconocido.`);
 }

@@ -2922,6 +2922,101 @@ ${elapsedSec}s
         }
     }
 
+    // --- NAVEGACIÓN Y COMANDOS DE TERMINAL DRIVE (cd, dir, tree, mkdir, move) ---
+    let currentTerminalFolderId = null;
+    let commandHistory = [];
+    let commandHistoryIndex = -1;
+
+    async function executeTerminalCommand(inputCmd) {
+        if (!inputCmd || !inputCmd.trim()) return;
+        const rawCmd = inputCmd.trim();
+        commandHistory.push(rawCmd);
+        commandHistoryIndex = commandHistory.length;
+
+        log(`> ${rawCmd}`);
+
+        const parts = rawCmd.split(/\s+/);
+        let cmd = parts[0].toLowerCase();
+        let args = parts.slice(1).join(' ');
+
+        // Soportar cd /d D:\ o cd \ o cd ..
+        if (cmd === 'cd' && (args.startsWith('/d') || args.startsWith('/D'))) {
+            args = args.replace(/^\/[dD]\s*/, '');
+        }
+
+        try {
+            const res = await routeAction('driveCommand', {
+                command: cmd,
+                args: args,
+                currentFolderId: currentTerminalFolderId
+            });
+
+            if (res && res.status === 'success') {
+                if (res.currentFolder) {
+                    currentTerminalFolderId = res.currentFolder.id;
+                    log(`Ruta actual: [${res.currentFolder.name}] (${res.currentFolder.id})`);
+                }
+                if (res.tree) {
+                    log(`\n${res.tree}`);
+                }
+                if (res.folders || res.files) {
+                    if (res.folders.length === 0 && res.files.length === 0) {
+                        log("(Carpeta vacía)");
+                    }
+                    res.folders.forEach(f => {
+                        log(`📁 [${f.name}]  (Escribe 'cd ${f.name}' para entrar)`);
+                    });
+                    res.files.forEach(f => {
+                        log(`📄 ${f.name} (${(f.size / 1024).toFixed(1)} KB)`);
+                    });
+                }
+                if (res.message) {
+                    log(`[DRIVE] ${res.message}`);
+                }
+            } else {
+                log(`[ERROR TERMINAL] ${res ? res.message : 'Error al ejecutar comando.'}`, false, true);
+            }
+        } catch (err) {
+            log(`[ERROR TERMINAL] ${err.message}`, false, true);
+        }
+    }
+
+    const termInput = document.getElementById('dev-terminal-input');
+    const termSendBtn = document.getElementById('btn-terminal-send');
+
+    if (termInput) {
+        termInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const val = termInput.value;
+                termInput.value = '';
+                await executeTerminalCommand(val);
+            } else if (e.key === 'ArrowUp') {
+                if (commandHistory.length > 0 && commandHistoryIndex > 0) {
+                    commandHistoryIndex--;
+                    termInput.value = commandHistory[commandHistoryIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (commandHistoryIndex < commandHistory.length - 1) {
+                    commandHistoryIndex++;
+                    termInput.value = commandHistory[commandHistoryIndex];
+                } else {
+                    commandHistoryIndex = commandHistory.length;
+                    termInput.value = '';
+                }
+            }
+        });
+    }
+
+    if (termSendBtn) {
+        termSendBtn.onclick = async () => {
+            if (termInput && termInput.value) {
+                const val = termInput.value;
+                termInput.value = '';
+                await executeTerminalCommand(val);
+            }
+        };
+    }
+
     // Botón Copiar Registro de errores y advertencias críticas
     const btnCopyLog = document.getElementById('btn-copy-console-log');
     if (btnCopyLog) {
