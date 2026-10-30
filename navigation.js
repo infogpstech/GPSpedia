@@ -6,6 +6,7 @@
 // - Handle search functionality.
 
 import { getState, setState } from './state.js';
+import { routeAction } from './api-config.js';
 import {
     mostrarCategorias,
     mostrarResultadosDeBusqueda, // Se importa la nueva función unificada de renderizado.
@@ -75,27 +76,30 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
     const yearSearchMatch = busqueda.match(/\b\d{4}\b/);
     let yearSearchTerm = yearSearchMatch ? parseInt(yearSearchMatch[0], 10) : null;
 
-    // Limitar detección de años a rangos válidos (1900-2100)
     if (yearSearchTerm && (yearSearchTerm < 1900 || yearSearchTerm > 2100)) {
         yearSearchTerm = null;
     }
 
-    // Las palabras de búsqueda se derivan de la consulta completa para no excluir números de modelo (ej. 1500)
     const palabrasBusqueda = busqueda.split(' ').filter(p => p);
 
     // --- LÓGICA DE BÚSQUEDA GLOBAL MULTI-SECCIÓN ---
-    const { relay = [], tutoriales = [] } = catalogData;
+    const { relay = [], tutoriales = [] } = catalogData || {};
     let pysItems = [];
     try {
         const pysState = getState().pysData;
-        if (pysState) pysItems = pysState;
+        if (pysState) {
+            pysItems = pysState;
+        } else {
+            routeAction('getPysData').then(res => {
+                if (res && res.data) setState({ pysData: res.data });
+            }).catch(() => {});
+        }
     } catch(e) {}
 
-    // Clean HTML tags helper for search matching
     const stripHtml = (str) => String(str || '').replace(/<[^>]*>/g, ' ').toLowerCase();
 
     // 1. Search in Cortes
-    datosFiltrados = cortes.filter(item => {
+    const cortesMatches = cortes.filter(item => {
         if (yearSearchTerm) {
             const anoDesde = parseInt(item.anoDesde, 10);
             const anoHasta = item.anoHasta ? parseInt(item.anoHasta, 10) : anoDesde;
@@ -108,51 +112,33 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
                 return itemTexto.includes(palabra);
             });
         }
-        return !!yearSearchTerm;
+        return true;
     }).map(i => ({ ...i, _sectionType: 'corte' }));
 
-    // 2. Search in Relay
-    const relayMatches = relay.filter(item => {
-        const t = stripHtml(`${item.nombre || ''} ${item.tipo || ''} ${item.descripcion || ''} ${item.funcion || ''} ${item.observacion || ''}`);
-        return palabrasBusqueda.every(p => t.includes(p));
-    }).map(i => ({ ...i, _sectionType: 'relay', marca: i.nombre || 'Relay', modelo: i.tipo || 'Configuración' }));
+    let relayMatches = [];
+    let tutorialMatches = [];
+    let pysMatches = [];
 
-    // 3. Search in Tutorials
-    const tutorialMatches = tutoriales.filter(item => {
-        const t = stripHtml(`${item.Tema || ''} ${item.Descripcion || ''}`);
-        return palabrasBusqueda.every(p => t.includes(p));
-    }).map(i => ({ ...i, _sectionType: 'tutorial', marca: 'Tutorial', modelo: item.Tema }));
+    // Evaluate multi-section matches only when an active text query is present
+    if (busqueda && palabrasBusqueda.length > 0) {
+        relayMatches = relay.filter(item => {
+            const t = stripHtml(`${item.nombre || ''} ${item.tipo || ''} ${item.descripcion || ''} ${item.funcion || ''} ${item.observacion || ''}`);
+            return palabrasBusqueda.every(p => t.includes(p));
+        }).map(i => ({ ...i, _sectionType: 'relay', marca: i.nombre || 'Relay', modelo: i.tipo || 'Configuración' }));
 
-    // 4. Search in PYS (Problemas y Soluciones)
-    const pysMatches = pysItems.filter(item => {
-        const t = stripHtml(`${item.Problema || ''} ${item.Descripcion || ''} ${item.Solucion || ''} ${item.Prevenir || ''}`);
-        return palabrasBusqueda.every(p => t.includes(p));
-    }).map(i => ({ ...i, _sectionType: 'pys', marca: 'Problema', modelo: item.Problema }));
+        tutorialMatches = tutoriales.filter(item => {
+            const t = stripHtml(`${item.Tema || ''} ${item.Descripcion || ''}`);
+            return palabrasBusqueda.every(p => t.includes(p));
+        }).map(i => ({ ...i, _sectionType: 'tutorial', marca: 'Tutorial', modelo: item.Tema }));
 
-    // Combine all global search results
-    datosFiltrados = [...datosFiltrados, ...relayMatches, ...tutorialMatches, ...pysMatches];
+        pysMatches = pysItems.filter(item => {
+            const t = stripHtml(`${item.Problema || ''} ${item.Descripcion || ''} ${item.Solucion || ''} ${item.Prevenir || ''}`);
+            return palabrasBusqueda.every(p => t.includes(p));
+        }).map(i => ({ ...i, _sectionType: 'pys', marca: 'Problema', modelo: item.Problema }));
+    }
 
-    const unusedFilter = [].filter(item => {
-        // 1. Verificación del año (si se especificó uno).
-        if (yearSearchTerm) {
-            const anoDesde = parseInt(item.anoDesde, 10);
-            const anoHasta = item.anoHasta ? parseInt(item.anoHasta, 10) : anoDesde;
-            if (yearSearchTerm < anoDesde || yearSearchTerm > anoHasta) {
-                return false; // El año no está en el rango, se descarta el item.
-            }
-        }
-        // 2. Verificación del texto (si hay términos de búsqueda de texto).
-        if (busqueda) {
-            const itemTexto = `${String(item.marca)} ${String(item.modelo)} ${String(item.versionesAplicables || '')} ${String(item.tipoEncendido || '')} ${String(item.categoria || '')} ${String(item.anoDesde || '')} ${String(item.anoHasta || '')}`.toLowerCase();
-            return palabrasBusqueda.every(palabra => {
-                // Si la palabra es exactamente el año detectado, ya se verificó con el rango.
-                if (yearSearchTerm && palabra === String(yearSearchTerm)) return true;
-                return itemTexto.includes(palabra);
-            });
-        }
-        // 3. Si solo se buscó un año y pasó la verificación, se incluye.
-        return !!yearSearchTerm;
-    });
+    // Combine global search results
+    datosFiltrados = [...cortesMatches, ...relayMatches, ...tutorialMatches, ...pysMatches];
 
     if (datosFiltrados.length === 0) {
         showNoResultsMessage(textoBusqueda);

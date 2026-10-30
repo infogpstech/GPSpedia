@@ -110,3 +110,7 @@ export async function suggestYear(vehicleId, newYear, responseText, userId, user
 export async function sendContactForm(formData) {
     return await routeAction('sendContactForm', formData);
 }
+
+export async function suggestCutChange(data) {
+    return await routeAction("suggestCutChange", data);
+}

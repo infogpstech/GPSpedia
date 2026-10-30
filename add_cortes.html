@@ -973,8 +973,8 @@
         function proceedToStage3(vehicleId) {
             state.selectedVehicleId = vehicleId;
             // Check if vehicle already has a video
-            if (state.catalog && state.catalog.cortes) {
-                const v = state.catalog.cortes.find(c => c.id == vehicleId);
+            if (state.catalogData && state.catalogData.cortes) {
+                const v = state.catalogData.cortes.find(c => c.id == vehicleId);
                 const vidAcc = document.getElementById('video-accordion');
                 if (vidAcc) {
                     if (v && v.videoGuiaDesarmeUrl) {

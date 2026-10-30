@@ -719,7 +719,7 @@ function handleGetPysData() {
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) return { status: "success", data: [] };
 
-    const data = sheet.getRange(2, 1, lastRow - 1, 8).getValues();
+    const data = sheet.getRange(2, 1, lastRow - 1, 9).getValues();
     const result = data.map(row => ({
         id_problem: row[0],
         Problema: row[1],
@@ -751,7 +751,7 @@ function handleAddProblem(payload) {
     try {
         const sheet = getSafeSheet("pys") || getSpreadsheet().insertSheet("pys");
         if (sheet.getLastRow() === 0) {
-            sheet.getRange(1, 1, 1, 8).setValues([["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video", "Colaborador"]]);
+            sheet.getRange(1, 1, 1, 9).setValues([["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video", "Colaborador"]]);
         }
 
         const lastRow = sheet.getLastRow();
@@ -800,7 +800,9 @@ function handleAddSolution(payload) {
 
     const sheet = getSafeSheet("pys");
     if (!sheet) throw new Error("Hoja pys no encontrada.");
-    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat();
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+    const data = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
     const index = data.findIndex(id => id.toString() === problemId.toString());
     if (index === -1) throw new Error("Problema no encontrado.");
 
@@ -819,7 +821,9 @@ function handleAddPrevention(payload) {
 
     const sheet = getSafeSheet("pys");
     if (!sheet) throw new Error("Hoja pys no encontrada.");
-    const data = sheet.getRange(2, 1, sheet.getLastRow() - 1, 1).getValues().flat();
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+    const data = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
     const index = data.findIndex(id => id.toString() === problemId.toString());
     if (index === -1) throw new Error("Problema no encontrado.");
 

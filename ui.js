@@ -4,7 +4,7 @@
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
+import { getFeedbackItems, sendContactForm, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 
@@ -1787,7 +1787,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     });
 
     const modalDetalle = document.getElementById("modalDetalle");
-    if (!inEditMode) {
+    if (!window.inEditMode) {
         const plusBtn = document.createElement("button");
         plusBtn.className = "btn-expand-plus";
         plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
@@ -2240,7 +2240,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         }
         imgContainer.appendChild(img);
 
-        if (!inEditMode) {
+        if (!window.inEditMode) {
             const feedbackOverlay = document.createElement('div');
             feedbackOverlay.className = 'feedback-overlay';
 
@@ -3542,7 +3542,7 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
     if (item._sectionType === 'relay') {
         card.onclick = () => mostrarDetalleRelayModal(item);
     } else if (item._sectionType === 'tutorial') {
-        card.onclick = () => mostrarDetalleTutorialModal(item);
+        card.onclick = () => { if (item.Video) window.open(item.Video, "_blank"); else alert(item.Tema || "Tutorial"); };
     } else if (item._sectionType === 'pys') {
         card.onclick = () => openPysDetailModal(item);
     } else if (resultsForVariant) {
@@ -3829,7 +3829,7 @@ function mostrarTutorialesGrid() {
     tutoriales.forEach(item => {
         const card = document.createElement("div");
         card.className = "card";
-        card.onclick = () => mostrarDetalleTutorialModal(item);
+        card.onclick = () => { if (item.Video) window.open(item.Video, "_blank"); else alert(item.Tema || "Tutorial"); };
         const img = document.createElement("img");
         setOptimizedImage(img, item.Imagen, IMG_SIZE_SMALL);
         img.alt = item.Tema;
@@ -4448,7 +4448,7 @@ export function openAddVideoModal(item) {
         submitBtn.innerText = "Guardando...";
 
         try {
-            await routeAction("updateVehicleField", {
+            await routeAction("addSupplementaryInfo", {
                 vehicleId: item.id,
                 fieldName: "videoGuiaDesarmeUrl",
                 fieldValue: url
@@ -4489,6 +4489,7 @@ export async function renderPysSection() {
     try {
         const res = await routeAction("getPysData");
         const items = (res && res.data) ? res.data : [];
+        setState({ pysData: items });
         items.reverse(); // Most recent first
 
         items.forEach(item => {
@@ -4710,6 +4711,7 @@ export function openPysDetailModal(item) {
         cont.appendChild(addPrevBtn);
     }
 
+    const modalDetalle = document.getElementById("modalDetalle");
     modalDetalle.classList.add("visible");
 }
 
@@ -4775,7 +4777,7 @@ export function openAddTutorialModal() {
         };
 
         try {
-            await routeAction("updateVehicleField", { vehicleId: "TUT-" + Date.now(), fieldName: "tutorial", fieldValue: payload });
+            await sendContactForm({ name: payload.colaborador, email: "tutorial@gpspedia.com", message: `[NUEVO TUTORIAL] ${payload.tema} | Video: ${payload.videoUrl} | Desc: ${payload.descripcion}` });
             alert("Tutorial agregado con éxito.");
             modal.remove();
             const res = await routeAction("getCatalogData");
