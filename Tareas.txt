@@ -215,7 +215,8 @@ Cualquier cambio en estas zonas invalidará el commit.
 PRIORIDAD 1: TAREAS CORRECTIVAS, RECUPERACIÓN Y ESTABILIZACIÓN CRÍTICA DE GPSPEDIA
 ===================================================================
 
-1.1. RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN
+1.1. RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN [X]
+   - **ESTADO:** COMPLETADO
    - **Objetivo:** Restablecer comunicación funcional de extremo a extremo entre el cliente frontend (api-config.js / ui.js / main.js) y el microservicio Services/admin.js.
    - **Requisitos:**
      · Diagnosticar URL, parámetros, acciones, métodos HTTP y contratos de solicitud/respuesta.

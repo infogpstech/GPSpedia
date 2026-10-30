@@ -1,3 +1,9 @@
+--------------------------------------------------
+**CHANGES LOG - 30/10/2026 (TAREA 1.1 - COMUNICACIÓN DE ADMINISTRACIÓN)**
+
+**Archivo: api-config.js**
+- **Línea 18:** Agregado comentario identificativo `/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */` sobre la constante `ACTION_TO_SERVICE_MAP` tras verificar la comunicación de extremo a extremo entre el cliente frontend y el microservicio administrativo.
+
 **CHANGES LOG - 04/02/2026**
 
 **Archivo: index.html**

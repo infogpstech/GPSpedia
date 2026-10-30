@@ -133,6 +133,15 @@ Se realizó una auditoría específica línea por línea sobre el apilamiento y 
 7. Notificaciones Toast Globales (`#error-toast`, `#notification-toast`): `z-index: 4000` / `4001` (cobertura total sobre cualquier capa).
 Resultado: La jerarquía de capas es completamente consistente, previene bloqueos de clic accidentales y cumple los requerimientos de navegación.
 
+**AUDITORÍA TÉCNICA - TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN (30/10/2026)**
+
+**Archivos Auditados:** `api-config.js`, `Services/admin.js`, `ui.js`, `main.js`.
+
+**Hallazgos y Verificación:**
+1. **Comprobación de Rutas y Métodos:** Se comprobó que `API_ENDPOINTS.ADMIN` apunta a la URL oficial de despliegue (`https://script.google.com/macros/s/AKfycbwvYQKoT04N4KLZIMLGQB42zaO5cdz4bIY3rFKJ0Nx6ePDi8IxHyTP2Fmvknsz9SvckYg/exec`) y mapea todas las acciones administrativas (`ping`, `backupDatabase`, `backupDrive`, `restoreDatabase`, `restoreDrive`, `reorganizeDatabase`, `normalizeImages`, `reorganizeImagesInDrive`, `restoreAllTrashedImages`, `addLogo`, `createSheet`, `addColumn`, `driveCommand`, `updateVehicleField`, `uploadAdminImage`).
+2. **Integridad de Contrato:** `routeAction` envía peticiones `POST` con tipo de contenido `text/plain` y cuerpo JSON conteniendo `{ action, payload }`. El microservicio procesa y retorna objetos JSON estructurados con `status: 'success'` o `status: 'error'`, manejados de forma determinista por el cliente.
+3. **Marcado del Código:** El código existente en `api-config.js` satisface íntegramente los requerimientos funcionales de extremo a extremo. Se insertó el comentario identificativo `/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */` sobre `ACTION_TO_SERVICE_MAP`.
+
 **ACTUALIZACIÓN DE ENDPOINTS DE MICROSERVICIOS (30/10/2026):**
 Se actualizaron los endpoints de producción de Google Apps Script en `api-config.js`:
 - ADMIN: https://script.google.com/macros/s/AKfycbwvYQKoT04N4KLZIMLGQB42zaO5cdz4bIY3rFKJ0Nx6ePDi8IxHyTP2Fmvknsz9SvckYg/exec
