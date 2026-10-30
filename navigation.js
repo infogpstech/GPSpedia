@@ -73,17 +73,37 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         return;
     }
 
+    // Helper para interpretar colecciones de VIN
+    function parseVinCollectionNavigation(rawVin) {
+        if (!rawVin) return [];
+        const str = String(rawVin).trim();
+        if (!str) return [];
+        if (str.startsWith("[") && str.endsWith("]")) {
+            try {
+                const arr = JSON.parse(str);
+                if (Array.isArray(arr)) {
+                    return arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                }
+            } catch (e) {}
+        }
+        return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    }
+
     // --- LÓGICA DE DETECCIÓN Y BÚSQUEDA POR VIN ---
     const cleanVinSearch = busqueda.toUpperCase().replace(/[^A-Z0-9]/g, "");
     let isVinQuery = false;
     let targetVinPrefix = "";
     if (cleanVinSearch.length >= 6 && cleanVinSearch.length <= 18) {
-        // If query is full VIN (> 5 chars), omit last 5 chars; otherwise use exact clean string
-        targetVinPrefix = cleanVinSearch.length > 5 ? cleanVinSearch.substring(0, cleanVinSearch.length - 5) : cleanVinSearch;
-        // Check if any cortes item has a matching VIN prefix
-        const vinMatchExists = cortes.some(c => c.vin && String(c.vin).trim().toUpperCase() === targetVinPrefix);
-        if (vinMatchExists) {
-            isVinQuery = true;
+        // Excluir los últimos 5 caracteres
+        targetVinPrefix = cleanVinSearch.length > 5 ? cleanVinSearch.substring(0, cleanVinSearch.length - 5) : "";
+        if (targetVinPrefix) {
+            const vinMatchExists = cortes.some(c => {
+                const vins = parseVinCollectionNavigation(c.vin);
+                return vins.includes(targetVinPrefix);
+            });
+            if (vinMatchExists) {
+                isVinQuery = true;
+            }
         }
     }
 
@@ -116,7 +136,8 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
     // 1. Search in Cortes
     const cortesMatches = cortes.filter(item => {
         if (isVinQuery) {
-            return item.vin && String(item.vin).trim().toUpperCase() === targetVinPrefix;
+            const vins = parseVinCollectionNavigation(item.vin);
+            return vins.includes(targetVinPrefix);
         }
         if (yearSearchTerm) {
             const anoDesde = parseInt(item.anoDesde, 10);

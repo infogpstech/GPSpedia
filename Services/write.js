@@ -882,6 +882,38 @@ function getExistingEntities(sheet) {
 // LÓGICA Y HANDLERS DE VIN (Vehicle Identification Number)
 // ============================================================================
 
+function countEquipmentVersions(versionesStr) {
+  if (!versionesStr) return 1;
+  const str = String(versionesStr).trim();
+  if (!str) return 1;
+  const parts = str.split(/[,/\\;]+/).map(p => p.trim()).filter(Boolean);
+  const count = parts.length;
+  if (count <= 1) return 1;
+  if (count === 2) return 2;
+  return 3; // Máximo 3
+}
+
+function parseVinCollection(rawVin) {
+  if (!rawVin) return [];
+  const str = String(rawVin).trim();
+  if (!str) return [];
+  if (str.startsWith("[") && str.endsWith("]")) {
+    try {
+      const arr = JSON.parse(str);
+      if (Array.isArray(arr)) {
+        return arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+      }
+    } catch (e) {}
+  }
+  return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+}
+
+function serializeVinCollection(vinArray) {
+  if (!vinArray || vinArray.length === 0) return "";
+  const unique = Array.from(new Set(vinArray.map(v => String(v).trim().toUpperCase()).filter(Boolean)));
+  return JSON.stringify(unique);
+}
+
 function extractVinPrefix(vinStr) {
   if (!vinStr) return "";
   const cleaned = String(vinStr).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
@@ -900,8 +932,9 @@ function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId) {
     const rowId = row[COLS_CORTES.id - 1];
     if (currentVehicleId && String(rowId) === String(currentVehicleId)) continue;
 
-    const rowVin = row[COLS_CORTES.vin - 1];
-    if (rowVin && String(rowVin).trim().toUpperCase() === vinPrefix) {
+    const rowVinRaw = row[COLS_CORTES.vin - 1];
+    const vinList = parseVinCollection(rowVinRaw);
+    if (vinList.includes(vinPrefix)) {
       const marca = row[COLS_CORTES.marca - 1] || "";
       const modelo = row[COLS_CORTES.modelo - 1] || "";
       const anoDesde = row[COLS_CORTES.anoDesde - 1] || "";
@@ -910,7 +943,7 @@ function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId) {
       return {
         vehicleId: rowId,
         modelName: modelName,
-        vinPrefix: rowVin
+        vinPrefix: vinPrefix
       };
     }
   }
@@ -961,17 +994,37 @@ function handleAddVinToVehicle(payload) {
 
   const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
   let targetRowIndex = -1;
+  let targetRow = null;
   for (let i = 0; i < data.length; i++) {
     if (String(data[i][COLS_CORTES.id - 1]) === String(vehicleId)) {
       targetRowIndex = i + 2;
+      targetRow = data[i];
       break;
     }
   }
 
-  if (targetRowIndex === -1) {
+  if (targetRowIndex === -1 || !targetRow) {
     return { status: 'error', message: 'Vehículo no encontrado.' };
   }
 
-  sheet.getRange(targetRowIndex, COLS_CORTES.vin).setValue(prefix);
-  return { status: 'success', message: 'VIN registrado correctamente.', vinPrefix: prefix };
+  const versionesStr = targetRow[COLS_CORTES.versionesAplicables - 1] || "";
+  const maxAllowed = countEquipmentVersions(versionesStr);
+
+  const existingVinRaw = targetRow[COLS_CORTES.vin - 1] || "";
+  const vinCollection = parseVinCollection(existingVinRaw);
+
+  if (vinCollection.includes(prefix)) {
+    return { status: 'success', message: 'El VIN ya está en la colección de este vehículo.', vinCollection };
+  }
+
+  if (vinCollection.length >= maxAllowed) {
+    return { status: 'error', message: `Este vehículo solo permite un máximo de ${maxAllowed} VIN(s) según sus versiones.` };
+  }
+
+  vinCollection.push(prefix);
+  const serialized = serializeVinCollection(vinCollection);
+  sheet.getRange(targetRowIndex, COLS_CORTES.vin).setValue(serialized);
+
+  // NOTA OBLIGATORIA: Agregar VIN no debe actualizar la fecha de registro (timestamp)
+  return { status: 'success', message: 'VIN registrado correctamente.', vinPrefix: prefix, vinCollection };
 }

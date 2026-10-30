@@ -825,6 +825,27 @@
             toggleLoading(true);
             btn.classList.add('btn-loading');
 
+            const vinInput = document.getElementById('vinInput');
+            if (vinInput && vinInput.value.trim()) {
+                const vinVal = vinInput.value.trim();
+                try {
+                    const checkVin = await routeAction('checkVinDuplicate', { vin: vinVal, currentVehicleId: state.selectedVehicleId });
+                    if (checkVin.duplicate) {
+                        toggleLoading(false);
+                        btn.classList.remove('btn-loading');
+                        isSubmittingStage2 = false;
+                        const warningEl = document.getElementById('vinDuplicateWarning');
+                        if (warningEl) {
+                            warningEl.style.display = 'block';
+                            warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="window.location.href='index.html#search=${encodeURIComponent(checkVin.modelName)}'"><strong>${checkVin.modelName}</strong></button>`;
+                        }
+                        return;
+                    }
+                } catch (err) {
+                    console.error('Error verificando VIN en submit:', err);
+                }
+            }
+
             const opId = getOrGenerateOpId();
             console.log(`[PING-PONG][2] opId obtenido o generado: ${opId}`);
 

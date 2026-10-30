@@ -1618,6 +1618,22 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             await saveFieldSilently(activeItem.id, 'categoria', catSelect.value);
         };
 
+        // 5. VIN / Chasis
+        const vinLabel = document.createElement('label');
+        vinLabel.textContent = "Colección de VINs / Chasis:";
+        vinLabel.style.fontSize = "0.85em";
+        const vinInput = document.createElement('input');
+        vinInput.type = "text";
+        vinInput.value = activeItem.vin || "";
+        vinInput.placeholder = 'ej. ["1HGCM82633A", "2HGCM82633B"]';
+        vinInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        vinInput.onblur = async () => {
+            if (vinInput.value.trim() !== editedItemBuffer.vin) {
+                editedItemBuffer.vin = vinInput.value.trim();
+                await saveFieldSilently(activeItem.id, 'vin', vinInput.value.trim());
+            }
+        };
+
         editHeaderWrapper.appendChild(versLabel);
         editHeaderWrapper.appendChild(versInput);
         editHeaderWrapper.appendChild(encLabel);
@@ -1626,6 +1642,8 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         editHeaderWrapper.appendChild(yearsWrapper);
         editHeaderWrapper.appendChild(catLabel);
         editHeaderWrapper.appendChild(catSelect);
+        editHeaderWrapper.appendChild(vinLabel);
+        editHeaderWrapper.appendChild(vinInput);
 
         subHeaderText.appendChild(editHeaderWrapper);
     } else {
@@ -4102,6 +4120,37 @@ export function openExpandMenuModal(item) {
     if (item.cableAlimen3) feedsCount++;
     const feedsAvailable = 3 - feedsCount;
 
+    // Lógica para determinar la cantidad de versiones y la disponibilidad del botón "Agregar VIN"
+    function countEquipmentVersionsFrontend(versionesStr) {
+        if (!versionesStr) return 1;
+        const str = String(versionesStr).trim();
+        if (!str) return 1;
+        const parts = str.split(/[,/\\;]+/).map(p => p.trim()).filter(Boolean);
+        const count = parts.length;
+        if (count <= 1) return 1;
+        if (count === 2) return 2;
+        return 3;
+    }
+
+    function parseVinCollectionFrontend(rawVin) {
+        if (!rawVin) return [];
+        const str = String(rawVin).trim();
+        if (!str) return [];
+        if (str.startsWith("[") && str.endsWith("]")) {
+            try {
+                const arr = JSON.parse(str);
+                if (Array.isArray(arr)) {
+                    return arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                }
+            } catch (e) {}
+        }
+        return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    }
+
+    const maxVinAllowed = countEquipmentVersionsFrontend(item.versionesAplicables);
+    const registeredVins = parseVinCollectionFrontend(item.vin);
+    const canAddVin = registeredVins.length < maxVinAllowed;
+
     const modal = document.createElement("div");
     modal.id = "expand-menu-modal";
     modal.className = "info-modal visible";
@@ -4121,7 +4170,7 @@ export function openExpandMenuModal(item) {
             ${!item.apertura ? `<button id="btn-exp-apertura" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-door-open"></i> Apertura de puertas</button>` : ""}
             ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
             ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
-            ${!item.vin ? `<button id="btn-exp-vin" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-barcode"></i> Agregar VIN</button>` : ""}
+            ${canAddVin ? `<button id="btn-exp-vin" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-barcode"></i> Agregar VIN (${maxVinAllowed - registeredVins.length} disponible${maxVinAllowed - registeredVins.length > 1 ? 's' : ''})</button>` : ""}
         </div>
     `;
 
@@ -4214,13 +4263,21 @@ export function openAddVinModal(item) {
         try {
             const res = await routeAction('addVinToVehicle', { vehicleId: item.id, vin: vinVal });
             if (res.status === 'success') {
-                item.vin = res.vinPrefix;
+                if (res.vinCollection) {
+                    item.vin = JSON.stringify(res.vinCollection);
+                } else if (res.vinPrefix) {
+                    item.vin = res.vinPrefix;
+                }
                 modal.remove();
                 mostrarNotificacion('VIN registrado correctamente', 'success');
                 mostrarDetalleModal(item, true);
             } else {
                 warningEl.style.display = 'block';
-                warningEl.textContent = res.message || 'Error al guardar el VIN.';
+                if (res.modelName) {
+                    warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="document.getElementById('add-vin-modal')?.remove(); window.location.href='index.html#search=${encodeURIComponent(res.modelName)}'"><strong>${res.modelName}</strong></button>`;
+                } else {
+                    warningEl.textContent = res.message || 'Error al guardar el VIN.';
+                }
                 btn.disabled = false;
                 btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar VIN`;
             }
