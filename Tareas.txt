@@ -231,7 +231,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
 - Implementación: Se verificó la tarjeta interactiva de creación en ui.js y la apertura de #add-pys-modal con saneamiento de campos y vinculación con la hoja pys.
 - Estado: COMPLETADA.
 
-[ ] 1.4. Corrección de las demoras de carga en la sección de problemas y soluciones
+[X] 1.4. Corrección de las demoras de carga en la sección de problemas y soluciones
 - Problema detectado: La sección de problemas y soluciones tarda varios segundos en aparecer cada vez que el usuario cambia a ella.
 - Requisitos:
   - Analizar por qué la sección tarda varios segundos en aparecer cada vez que se accede a ella.
@@ -239,7 +239,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   - Identificar operaciones redundantes (solicitudes duplicadas, esperas síncronas bloqueantes, lecturas innecesarias).
   - Implementar estrategia de renderizado inmediato apoyado en el caché local/estado persistido y sincronización en segundo plano sin mostrar datos obsoletos de forma permanente.
   - Asegurar que la sección abra instantáneamente, el formulario de registro funcione y se conserven todas las capacidades.
-- Estado: PENDIENTE.
+- Estado: COMPLETADA.
 
 [ ] 1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
 - Problema detectado: Ubicación incorrecta en móviles y fallo en la apertura de opciones.
