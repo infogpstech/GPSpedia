@@ -156,3 +156,12 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
   2. Unificación y aplicación de estilos CSS a todos los botones de la aplicación (páginas HTML, formularios, modales, paneles de administración y desarrollador, tarjetas y menús interactivos) con estados hover, active, focus, disabled, loading y soporte de temas (modo oscuro).
   3. Verificación obligatoria de interactividad, no regresión y diseño adaptativo.
 - Todo el contenido y detalles técnicos se incorporan sin resumir ni omitir requerimientos, manteniendo intactas todas las tareas previas.
+
+**AUDITORÍA TAREA 1.5: RECUPERACIÓN Y AJUSTE DEL BOTÓN "+" EN EL MODAL DE DETALLE (31/10/2026)**
+- Archivos analizados: ui.js (función mostrarDetalleModal), style.css (#modalDetalle, #detalleCompleto).
+- Diagnóstico específico:
+  1. El botón (+) utilizaba estilos en línea (position: fixed; bottom: 20px; right: 20px; width: 44px; height: 44px) agregándose a cont (#detalleCompleto).
+  2. En pantallas móviles y de diferentes relaciones de aspecto, fixed bottom: 20px / right: 20px posiciona el botón respecto a la ventana del navegador (viewport) en lugar de anclarlo dentro de los límites visuales del modal de contenido #detalleCompleto.
+  3. Tamaño: Reducir dimensiones visuales en un 10% (de 44px a 40px de diámetro, font-size de 1.2rem a 1.08rem), manteniendo área interactiva táctil cómoda.
+  4. Posicionamiento: Al configurar #detalleCompleto con position: relative y .btn-expand-plus con position: sticky; bottom: 12px; margin-left: auto; margin-right: 4px; el botón se sitúa fijamente en la esquina inferior derecha del modal dentro de sus límites visuales, acompañando el desplazamiento vertical sin desbordar el contenedor ni bloquear controles.
+  5. Interactividad: Al hacer clic, ejecuta openExpandMenuModal(item) desplegando el cálculo dinámico de opciones según disponibilidad real en Google Sheets (cortes, apertura, alimentación, vídeo y VIN).

@@ -241,13 +241,13 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   - Asegurar que la sección abra instantáneamente, el formulario de registro funcione y se conserven todas las capacidades.
 - Estado: COMPLETADA.
 
-[ ] 1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
+[X] 1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
 - Problema detectado: Ubicación incorrecta en móviles y fallo en la apertura de opciones.
 - Requisitos:
   - Ubicar en la esquina inferior derecha del modal de detalle en móvil y escritorio dentro de los límites visuales.
   - Reducir el tamaño visual del botón en un 10% conservando área interactiva táctil.
   - Garantizar apertura del menú con cálculo dinámico de opciones disponibles (cortes, apertura, alimentación, vídeo, VIN).
-- Estado: PENDIENTE.
+- Estado: COMPLETADA.
 
 [ ] 1.6. Corrección de la cabecera del modal de detalle
 - Problema detectado: Espacio excesivo entre botones de acción (editar, compartir, imprimir), logo y título del modelo.
