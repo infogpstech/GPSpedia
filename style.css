@@ -1286,6 +1286,31 @@ body.search-active .container {
     }
 }
 
+/* Tarjetas para agregar Tutorial y Problema (Tarea 1.7) */
+.card-create-tutorial,
+.card-create-pys {
+    background: transparent;
+    border: 2px dashed #007bff;
+    box-shadow: 0 0 10px rgba(0, 123, 255, 0.4);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    border-radius: 12px;
+    box-sizing: border-box;
+}
+
+.card-create-tutorial {
+    height: 120px;
+    min-height: 120px;
+}
+
+.card-create-pys {
+    height: 100%;
+    min-height: 140px;
+}
+
 /* Tarea adicional: Estilos para el Modal del Desarrollador (#dev-tools-modal) */
 .dev-card {
     background-color: var(--card-bg);

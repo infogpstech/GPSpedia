@@ -4093,13 +4093,13 @@ function mostrarTutorialesGrid() {
     const grid = document.createElement('div');
     grid.className = 'grid';
 
+    // Tarea 1.7: Corrección de las tarjetas para agregar tutoriales y problemas
     // First card: Add Tutorial Card (+)
     const createCard = document.createElement('div');
     createCard.className = 'card card-create-tutorial';
-    createCard.style.cssText = 'background: transparent; border: 2px dashed #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; cursor: pointer; border-radius: 12px;';
     createCard.innerHTML = `
-        <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
-        <span style="font-weight: bold; color: #007bff;">Agregar Tutorial</span>
+        <i class="fa-solid fa-plus" style="font-size: 2rem; color: #007bff; margin-bottom: 6px;"></i>
+        <span style="font-weight: bold; color: #007bff; font-size: 0.95rem;">Agregar Tutorial</span>
     `;
     createCard.onclick = () => openAddTutorialModal();
     grid.appendChild(createCard);
@@ -4884,10 +4884,10 @@ export async function renderPysSection() {
         const grid = document.createElement("div");
         grid.className = "grid";
 
+        // Tarea 1.7: Corrección de las tarjetas para agregar tutoriales y problemas
         // First card: Creation Card (+)
         const createCard = document.createElement("div");
         createCard.className = "card card-create-pys";
-        createCard.style.cssText = "background: transparent; border: 2px dashed #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; cursor: pointer; border-radius: 12px;";
         createCard.innerHTML = `
             <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
             <span style="font-weight: bold; color: #007bff;">Agregar Problema</span>

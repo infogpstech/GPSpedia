@@ -1051,3 +1051,12 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
   - Línea 1474: Compactado el contenedor del título (`titleContainer`) con borde inferior de 2px, `padding-bottom: 6px` y `margin-bottom: 10px`.
 - Archivo: style.css
   - Líneas 952-962: Ajustada la altura máxima de `.brand-logo-modal` a 48px en escritorio y 38px en pantallas móviles (<= 600px), garantizando proporciones compactas y evitando que el logotipo desplace o comprima el nombre del modelo.
+
+**TAREA 1.7: CORRECCIÓN DE LAS TARJETAS PARA AGREGAR TUTORIALES Y PROBLEMAS**
+- Archivo: style.css
+  - Líneas 1289-1311: Agregadas reglas CSS unificadas para `.card-create-tutorial` y `.card-create-pys` con borde discontinuo, borde redondeado y flexbox. Para `.card-create-tutorial` se estableció `height: 120px; min-height: 120px;` coincidente con las tarjetas estándar de tutoriales. Para `.card-create-pys` se estableció `height: 100%; min-height: 140px;` asegurando adaptabilidad a la rejilla.
+- Archivo: ui.js
+  - Línea 4096: Agregado comentario identificativo de la Tarea 1.7 en `mostrarTutorialesGrid()`.
+  - Líneas 4097-4103: Eliminado estilo en línea fijo `min-height: 180px;` en `.card-create-tutorial` delegando el dimensionamiento a `style.css`.
+  - Línea 4887: Agregado comentario identificativo de la Tarea 1.7 en `renderPysSection()`.
+  - Líneas 4888-4896: Eliminado estilo en línea fijo `min-height: 180px;` en `.card-create-pys` delegando el dimensionamiento a `style.css`.

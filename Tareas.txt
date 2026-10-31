@@ -378,7 +378,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   La cabecera debe presentar una distribución compacta, ordenada y coherente con el diseño del modal. La incorporación del botón de imprimir no debe producir espacios excesivos ni perjudicar la visualización de la marca y el modelo.
 - **Estado:** COMPLETADA.
 
-[ ] 1.7. Corrección de las tarjetas para agregar tutoriales y problemas
+[X] 1.7. Corrección de las tarjetas para agregar tutoriales y problemas
 - **Problema detectado:**
   Los botones o tarjetas destinados a agregar tutoriales y problemas tienen una altura superior a la de las demás tarjetas del carrusel o sección correspondiente. Esta diferencia rompe la uniformidad visual de la interfaz.
 - **Requisitos funcionales y visuales:**
@@ -392,7 +392,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   Las tarjetas para agregar contenido deben integrarse visualmente con las tarjetas existentes, respetando sus dimensiones y comportamiento.
 - **Criterios de finalización:**
   La tarea estará completa cuando las tarjetas para agregar tutoriales y problemas tengan dimensiones coherentes con las tarjetas de su sección, tanto en dispositivos móviles como en equipos de escritorio. La corrección no debe limitarse a establecer una altura fija que produzca problemas en otros tamaños de pantalla.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA.
 
 [ ] 1.8. Reejecución de las tareas afectadas y pruebas de regresión
 - **Alcance:**

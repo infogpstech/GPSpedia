@@ -163,3 +163,16 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
      - Ajustar `titleContainer` para tener `margin-bottom: 10px; padding-bottom: 6px; gap: 10px; align-items: center;`.
      - En `style.css`: Ajustar `.brand-logo-modal` a una altura máxima más compacta y balanceada (40px en móvil, 48px en escritorio con `max-height`) para evitar que comprima o desplace el nombre del modelo.
      - Añadir comentario identificativo de la Tarea 1.6 al inicio de la construcción de la cabecera en `ui.js`.
+
+**AUDITORÍA TAREA 1.7: CORRECCIÓN DE LAS TARJETAS PARA AGREGAR TUTORIALES Y PROBLEMAS**
+- Archivos analizados: ui.js (funciones mostrarTutorialesGrid y renderPysSection), style.css.
+- Diagnóstico y Hallazgos:
+  1. En `ui.js`:
+     - Tanto `.card-create-tutorial` como `.card-create-pys` tenían estilos en línea fijos con `min-height: 180px;`.
+     - Las tarjetas de tutoriales estándar (`.card img`) tienen una altura de 120px, lo que generaba un estiramiento vertical en la primera fila al compartir cuadrícula con la tarjeta de creación de 180px, provocando un desnivel evidente con respecto a las tarjetas de filas subsecuentes.
+     - En la sección de Problemas y Soluciones (PyS), el contenedor flex interno de las tarjetas de problemas no llenaba el 100% de la celda del grid cuando la tarjeta de creación fijaba 180px rígidamente.
+  2. Plan de mitigación:
+     - En `style.css`: Declarar estilos unificados para `.card-create-tutorial` y `.card-create-pys` con borde discontinuo (`2px dashed #007bff`), box-shadow azul, flexbox centrado y cursor pointer.
+     - Definir para `.card-create-tutorial` una altura uniforme `height: 120px; min-height: 120px;` para igualar exactamente la altura de las tarjetas de tutoriales estándar.
+     - Definir para `.card-create-pys` una altura flexible `height: 100%; min-height: 140px;` para que acompañe de manera armónica el tamaño dinámico de las tarjetas de problemas.
+     - En `ui.js`: Remover los estilos en línea redundantes de `min-height: 180px;` en `createCard` dentro de `mostrarTutorialesGrid()` y `renderPysSection()`, asignando las clases correspondientes y añadiendo el comentario identificativo de la Tarea 1.7.
