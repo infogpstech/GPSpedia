@@ -1096,3 +1096,31 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
 - Archivo: ui.js
   - Líneas 4420-4445: En `openSuggestCutModal()`, se blindó el acceso a `dropdownOptions` mediante `safeDropdowns` evaluando `(typeof dropdownOptions !== "undefined" && dropdownOptions) || (typeof window !== "undefined" && window.dropdownOptions) || (typeof getState === "function" && getState() && getState().dropdownOptions) || null`.
   - Se previenen errores en tiempo de ejecución del tipo `ReferenceError` si la función es invocada o probada en entornos modulares aislados, conservando las matrices de opciones por defecto para tipo de corte y configuración de relay.
+
+**TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DEL APP SHELL (v2.2.0)**
+- Services/admin.js:
+  - Líneas 128-147: Implementado el manejador doGet(e) con soporte de diagnósticos (?debug=true) retornando JSON estructurado con metadatos del servicio (service, version, spreadsheetId, driveFolderId, sheetsAccessed) y respuesta GET por defecto, garantizando paridad con los demás microservicios y permitiendo a checkAllServicesHealth() monitorear el estado del servicio Admin.
+  - Agregado comentario identificativo /* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */.
+- ui.js:
+  - Línea 1862: Agregado comentario identificativo de TAREA 1.5 / 1.8 en la instanciación del botón flotante (+) .btn-expand-plus dentro de mostrarDetalleModal().
+  - Línea 2562: Agregado comentario identificativo /* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */ sobre openDevTools.
+  - Línea 5167: Agregado comentario identificativo /* TAREA 1.3: RECUPERACIÓN DEL FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES */ sobre openAddProblemModal.
+
+**TAREA 2: CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL (v2.2.0)**
+- Services/users.js:
+  - Línea 240: Agregado comentario identificativo /* TAREA 2 (B16): GESTIÓN DE USUARIOS, RBAC Y SEGURIDAD */ en la función handleUpdateUser, verificando la jerarquía de roles (Desarrollador, Jefe/Gefe, Supervisor, Técnico) y restricciones de seguridad.
+- users.html:
+  - Línea 324: Agregado comentario identificativo /* TAREA 2 (B16): GESTIÓN DE USUARIOS, RBAC Y SEGURIDAD */ en el manejador DOMContentLoaded para la inicialización y filtrado de usuarios según privilegios.
+- index.html:
+  - Línea 341: Agregado comentario identificativo <!-- TAREA 2 (B03): IMPLEMENTACIÓN DEL AVISO DE ACEPTACIÓN DE CONDICIONES Y ENLACE PERMANENTE --> en #terms-modal.
+  - Línea 570: Agregado comentario identificativo <!-- TAREA 2 (B02): ACTUALIZACIÓN DE CONTENIDO Y ESTILOS DE MODALES INFORMATIVOS (SOBRE NOSOTROS Y TÉRMINOS) --> en #about-us-modal.
+
+**TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA EN CONECTIVIDAD (v2.2.0)**
+- add_cortes.html:
+  - Línea 346: Agregado comentario identificativo /* TAREA 3 (B31): PERSISTENCIA, RECUPERACIÓN E IDEMPOTENCIA CON OPID */ en checkAndRecoverPendingOperation.
+  - Línea 570: Agregado comentario identificativo /* TAREA 3 (4.2): REGISTRAR UN SEGUNDO CORTE */ en el listener de clic para btn-add-second-cut.
+  - Línea 820: Agregado comentario identificativo /* TAREA 3 (B31): REGISTRO SIN CORTES, PREVENCIÓN DE DUPLICADOS Y RESILIENCIA DE RED */ en handleStage2Submit.
+  - Línea 1027: Agregado comentario identificativo /* TAREA 3 (4.1, 4.3, 4.4): OPCIONES EN ÚLTIMA ETAPA, VÍDEO GUÍA Y DISPONIBILIDAD DINÁMICA */ en proceedToStage3.
+- Services/write.js:
+  - Línea 105: Agregado comentario identificativo /* TAREA 3 (4.2, 4.4, B31): REGISTRO Y ACTUALIZACIÓN DE CORTES E IDEMPOTENCIA CON REPARACIÓN */ en handleAddOrUpdateCut.
+  - Línea 770: Agregado comentario identificativo /* TAREA 3 (B31): COMPROBACIÓN ASÍNCRONA DE OPERACIÓN E IDEMPOTENCIA EN SERVIDOR */ en handleCheckOperation.

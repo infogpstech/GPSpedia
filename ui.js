@@ -1859,7 +1859,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
 
     const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
-        // Tarea 1.8: Reejecución de las tareas afectadas y pruebas de regresión (Botón +)
+        // TAREA 1.5 / 1.8: RECUPERACIÓN, AJUSTE Y REEJECUCIÓN DEL BOTÓN (+) EN EL MODAL DE DETALLE DEL VEHÍCULO
         const plusBtn = document.createElement("button");
         plusBtn.className = "btn-expand-plus";
         plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
@@ -2559,6 +2559,7 @@ export const openInbox = setupModal('inbox-modal', async () => {
     }
 });
 
+/* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
 export const openDevTools = setupModal('dev-tools-modal', () => {
     document.getElementById('dev-tools-modal').style.display = 'flex';
     initAdminPanelListeners();
@@ -5163,6 +5164,7 @@ export async function renderPysSection() {
     }
 }
 
+/* TAREA 1.3: RECUPERACIÓN DEL FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES */
 export function openAddProblemModal() {
     const existing = document.getElementById("add-pys-modal");
     if (existing) existing.remove();

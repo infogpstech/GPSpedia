@@ -102,6 +102,7 @@ function doPost(e) {
 // HANDLERS DE ACCIONES
 // ============================================================================
 
+/* TAREA 3 (4.2, 4.4, B31): REGISTRO Y ACTUALIZACIÓN DE CORTES E IDEMPOTENCIA CON REPARACIÓN */
 function handleAddOrUpdateCut(payload) {
     const { vehicleData, cutData, vehicleId, colaborador } = payload;
     if (!cutData || !colaborador) {
@@ -765,6 +766,7 @@ function findRowByOpId(sheet, opId) {
     return null;
 }
 
+/* TAREA 3 (B31): COMPROBACIÓN ASÍNCRONA DE OPERACIÓN E IDEMPOTENCIA EN SERVIDOR */
 function handleCheckOperation(payload) {
     const { opId } = payload;
     if (!opId) throw new Error("ID de operación requerido.");
