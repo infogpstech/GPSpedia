@@ -4874,29 +4874,28 @@ export function openAddVideoModal(item) {
 }
 
 
+/* TAREA 1.4: CORRECCIÓN DE LAS DEMORAS DE CARGA EN LA SECCIÓN PROBLEMAS Y SOLUCIONES */
 export async function renderPysSection() {
     const cont = document.getElementById("contenido-pys");
     if (!cont) return;
-    cont.innerHTML = "<h4>Problemas y Soluciones</h4>";
 
-    const grid = document.createElement("div");
-    grid.className = "grid";
+    const renderGridWithItems = (rawItems) => {
+        cont.innerHTML = "<h4>Problemas y Soluciones</h4>";
+        const grid = document.createElement("div");
+        grid.className = "grid";
 
-    // First card: Creation Card (+)
-    const createCard = document.createElement("div");
-    createCard.className = "card card-create-pys";
-    createCard.style.cssText = "background: transparent; border: 2px dashed #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; cursor: pointer; border-radius: 12px;";
-    createCard.innerHTML = `
-        <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
-        <span style="font-weight: bold; color: #007bff;">Agregar Problema</span>
-    `;
-    createCard.onclick = () => openAddProblemModal();
-    grid.appendChild(createCard);
+        // First card: Creation Card (+)
+        const createCard = document.createElement("div");
+        createCard.className = "card card-create-pys";
+        createCard.style.cssText = "background: transparent; border: 2px dashed #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; cursor: pointer; border-radius: 12px;";
+        createCard.innerHTML = `
+            <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
+            <span style="font-weight: bold; color: #007bff;">Agregar Problema</span>
+        `;
+        createCard.onclick = () => openAddProblemModal();
+        grid.appendChild(createCard);
 
-    try {
-        const res = await routeAction("getPysData");
-        const items = (res && res.data) ? res.data : [];
-        setState({ pysData: items });
+        const items = [...(rawItems || [])];
         items.reverse(); // Most recent first
 
         items.forEach(item => {
@@ -4913,11 +4912,49 @@ export async function renderPysSection() {
             card.onclick = () => openPysDetailModal(item);
             grid.appendChild(card);
         });
-    } catch(err) {
-        console.error("Error cargando PYS:", err);
+
+        cont.appendChild(grid);
+    };
+
+    // Fast-path: Si ya existen datos en caché/estado, renderizar inmediatamente (0ms)
+    const cachedData = getState().pysData;
+    const hasCache = Array.isArray(cachedData) && cachedData.length > 0;
+    if (hasCache) {
+        renderGridWithItems(cachedData);
+    } else {
+        cont.innerHTML = `
+            <h4>Problemas y Soluciones</h4>
+            <div id="pys-loading" style="text-align: center; padding: 40px; color: var(--text-color);">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-color, #007bff); margin-bottom: 12px;"></i>
+                <p style="margin: 0;">Cargando problemas y soluciones...</p>
+            </div>
+        `;
     }
 
-    cont.appendChild(grid);
+    // Sincronización en segundo plano con el backend
+    try {
+        const res = await routeAction("getPysData");
+        const freshItems = (res && res.data) ? res.data : [];
+        setState({ pysData: freshItems });
+
+        // Si no había caché o si los datos cambiaron, renderizar con datos frescos
+        const cacheHash = JSON.stringify(cachedData || []);
+        const freshHash = JSON.stringify(freshItems || []);
+        if (!hasCache || cacheHash !== freshHash) {
+            renderGridWithItems(freshItems);
+        }
+    } catch(err) {
+        console.error("Error cargando PYS:", err);
+        if (!hasCache) {
+            cont.innerHTML = `
+                <h4>Problemas y Soluciones</h4>
+                <div style="text-align: center; padding: 30px; color: #dc3545;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 8px;"></i>
+                    <p>No se pudo cargar la sección de problemas y soluciones. Verifique su conexión.</p>
+                </div>
+            `;
+        }
+    }
 }
 
 export function openAddProblemModal() {

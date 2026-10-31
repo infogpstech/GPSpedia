@@ -298,7 +298,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   Una vez abierto, el formulario debe permitir realizar las operaciones que correspondan a su implementación. Verifica que el usuario pueda introducir información, ejecutar las validaciones, guardar un registro y recuperar posteriormente los datos almacenados. Si existen funciones de edición, consulta o actualización, deben conservarse y continuar funcionando. Los errores de validación, permisos, conexión o almacenamiento deben manejarse correctamente. No se debe mostrar un mensaje de éxito cuando la operación no se haya completado.
 - **Estado:** COMPLETADA.
 
-[ ] 1.4. Corrección de las demoras de carga en la sección de problemas y soluciones
+[X] 1.4. Corrección de las demoras de carga en la sección de problemas y soluciones
 - **Problema detectado:**
   La sección de problemas y soluciones tarda varios segundos en aparecer cada vez que el usuario cambia a ella.
 - **Corrección de las demoras de carga:**
@@ -322,7 +322,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   - Los datos deben recuperarse correctamente.
   - Los errores no deben bloquear silenciosamente la sección.
   - Las funcionalidades existentes de problemas y soluciones deben conservarse.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA.
 
 [ ] 1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
 - **Problemas detectados:**

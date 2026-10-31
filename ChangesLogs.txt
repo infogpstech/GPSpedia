@@ -1039,3 +1039,5 @@ Descripción: Verificación y documentación de la jerarquía de capas de modale
 Archivo: api-config.js
 Líneas: 10-15
 Descripción: Actualizadas las URLs de producción de Google Apps Script para los microservicios Admin, Catalog, Feedback y Write en API_ENDPOINTS.
+- ui.js:
+  - Líneas 4877-4958: En renderPysSection(), se implementó la estrategia de renderizado inmediato (fast-path) recuperando los datos en memoria de getState().pysData (0ms de latencia percibida al acceder a la sección) y sincronizando en segundo plano con routeAction('getPysData') para refrescar las tarjetas si los datos difieren, evitando bloqueos síncronos de red. Se añadió el comentario identificativo /* TAREA 1.4: CORRECCIÓN DE LAS DEMORAS DE CARGA EN LA SECCIÓN PROBLEMAS Y SOLUCIONES */.
