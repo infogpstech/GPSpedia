@@ -400,6 +400,80 @@ PRIORIDAD 13: FASE 13 - REVISIÓN FINAL, DOCUMENTACIÓN E INFORME FINAL OBLIGATO
 [ ] 13.1. Revisión técnica, documentación y reporte estructurado
 - Actualización de documentación según Proceso de desarrollo.md y generación del informe final obligatorio con las 7 secciones (A hasta G).
 
+===================================================================
+PRIORIDAD 14: NUEVA TAREA - CORRECCIÓN DEL FILTRO DE BÚSQUEDA Y UNIFICACIÓN DE ESTILOS DE BOTONES
+===================================================================
+
+[ ] 14.1. Corregir la posición y el comportamiento del botón desplegable del filtro de búsqueda
+- Problemas detectados:
+  - El botón desplegable del filtro de búsqueda tipo "drop select" quedó superpuesto sobre el elemento de búsqueda y está interfiriendo con su funcionamiento.
+  - El botón del filtro ocupa el mismo espacio que el campo o elemento de búsqueda.
+  - Al presionar el filtro, la interacción puede cancelar la búsqueda o provocar que esta falle.
+  - El menú desplegable se abre y se cierra inmediatamente, impidiendo seleccionar una opción.
+  - Existe un conflicto de posición, eventos o propagación de clics entre los controles.
+- Cambios requeridos:
+  - Revisar la estructura HTML, los estilos CSS y los eventos JavaScript que controlan la barra de búsqueda y el filtro.
+  - Corregir la superposición entre el campo de búsqueda, el botón desplegable del filtro y el botón de icono de lupa.
+  - Ajustar las dimensiones y distribución de la barra de búsqueda para reservar espacio suficiente para cada control.
+  - Garantizar que el campo de búsqueda, el botón del filtro y el icono de lupa tengan áreas independientes, sin superposición ni interferencias.
+  - Corregir los eventos de apertura y cierre del desplegable para evitar que se cierre inmediatamente después de abrirse.
+  - Revisar la propagación de eventos ("click", "mousedown", "pointerdown" u otros que correspondan) y los mecanismos de cierre automático del menú.
+  - Garantizar que seleccionar una opción del filtro no active accidentalmente el campo de búsqueda ni provoque una búsqueda no solicitada.
+  - Mantener el funcionamiento de la búsqueda, los filtros, las sugerencias y cualquier otra funcionalidad existente.
+- Comportamiento esperado:
+  - El botón del filtro debe abrir su menú y permanecer abierto mientras el usuario interactúa con él.
+  - El usuario debe poder seleccionar una opción sin que se cancele la interacción.
+  - El campo de búsqueda debe conservar su funcionalidad y disponer de espacio suficiente para escribir.
+  - El icono de lupa debe permanecer correctamente ubicado y no invadir el espacio del filtro ni del campo de texto.
+  - La distribución debe adaptarse correctamente a dispositivos móviles y pantallas de escritorio.
+- Estado: PENDIENTE.
+
+[ ] 14.2. Unificación y aplicación de estilos CSS a todos los botones de GPSpedia
+- Problema detectado:
+  - Numerosos botones de la aplicación carecen de estilos visuales propios y están utilizando la apariencia predeterminada del navegador, provocando inconsistencias visuales entre páginas, formularios, ventanas modales y paneles.
+- Alcance de la revisión global:
+  - Todas las páginas HTML (index.html, add_cortes.html, users.html, etc.).
+  - Todos los formularios y ventanas modales (#modalDetalle, #expand-menu-modal, #add-pys-modal, #pys-detail-modal, #terms-modal, #terms-agreement-modal, #about-us-modal, #dev-tools-modal, #changelog-modal, #ios-install-modal, modales de confirmación, etc.).
+  - Paneles de administración y desarrollador.
+  - Tarjetas, carruseles y secciones de contenido.
+  - Menús desplegables y controles de acciones.
+  - Ventanas de confirmación, alertas y notificaciones que contengan botones.
+  - Cualquier otro componente de la aplicación que incluya controles de tipo botón.
+- Cambios requeridos:
+  - Identificar los botones que actualmente utilizan estilos predeterminados del navegador.
+  - Implementar estilos CSS coherentes con la identidad visual y el sistema de diseño existente en GPSpedia.
+  - Establecer criterios visuales uniformes para botones principales, secundarios, de acción, de confirmación, de cancelación, de eliminación y botones representados únicamente mediante iconos.
+  - Definir adecuadamente colores, fondos, bordes, radios, dimensiones, tipografía, espaciado, alineación y estados interactivos.
+  - Incorporar estados visuales para "hover", "active", "focus", "disabled" y "loading", cuando corresponda.
+  - Garantizar que los botones sean legibles, identificables y fáciles de utilizar tanto en dispositivos móviles como en escritorio.
+  - Mantener las diferencias funcionales y de jerarquía visual entre los distintos tipos de acciones.
+  - Evitar que la aplicación de estilos globales altere controles que no deberían recibirlos, como campos de entrada, selectores, elementos desplegables u otros componentes interactivos.
+  - Evitar reglas CSS demasiado generales que puedan romper componentes existentes.
+  - Reutilizar las variables, clases y componentes de estilo existentes cuando sea posible sin duplicar reglas innecesariamente.
+- Criterios de compatibilidad:
+  - Los estilos deben ser compatibles con la arquitectura y las hojas CSS actuales de GPSpedia.
+  - No introducir dependencias externas innecesarias.
+  - Evitar conflictos entre estilos globales, estilos específicos de cada página y estilos de los modales.
+  - Respetar los temas visuales existentes, incluido el modo oscuro (.dark-mode).
+  - No modificar la lógica de funcionamiento de los botones al aplicarles estilos.
+  - Mantener las dimensiones y alineaciones de los componentes que ya tienen un diseño correcto, salvo los ajustes necesarios para conseguir uniformidad.
+- Comportamiento esperado:
+  - Todos los botones de la aplicación deben presentar una apariencia integrada con el diseño de GPSpedia, sin controles que conserven accidentalmente la apariencia predeterminada del navegador. Experiencia visual consistente entre páginas, formularios, modales y paneles sin afectar funcionalidades existentes.
+- Estado: PENDIENTE.
+
+[ ] 14.3. Verificación obligatoria de interactividad, botones y no regresión
+- Requisitos de verificación antes de finalizar:
+  1. Comprobar que el filtro de búsqueda abre, permanece abierto y permite seleccionar opciones correctamente.
+  2. Verificar que el filtro no cancela ni interfiere con la búsqueda.
+  3. Probar la barra de búsqueda en dispositivos móviles y escritorio, comprobando que el campo, el filtro y la lupa no se superponen.
+  4. Revisar los botones de todas las páginas HTML y modales para identificar controles que todavía utilicen estilos predeterminados.
+  5. Comprobar que los nuevos estilos no rompan formularios, menús, modales, paneles, confirmaciones ni controles existentes.
+  6. Verificar los estados interactivos y la accesibilidad básica de los botones.
+  7. Comprobar la compatibilidad con los temas visuales existentes (claro y oscuro).
+  8. Ejecutar las pruebas y revisiones establecidas en "Proceso de desarrollo.md".
+- Restricción: No considerar terminada la tarea únicamente porque los botones tengan una apariencia diferente o porque la barra de búsqueda se vea correctamente. Es obligatorio verificar que las interacciones y funcionalidades continúen operando correctamente.
+- Estado: PENDIENTE.
+
 ---
 ---
 **TAREAS COMPLETADAS (Validadas por el PM)**
