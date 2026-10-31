@@ -776,9 +776,9 @@ TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE D
 ---
 
 ===================================================================
-TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y RENDERIZADO DE TRANSPARENCIAS
+TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y RENDERIZADO DE TRANSPARENCIAS [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Proporcionar a los instaladores una herramienta de consulta visual precisa y fluida de diagramas y fotografías de instalación sin artefactos visuales ni colisiones gestuales.
 - **Tareas originales integradas:** B32, B33
 - **Justificación técnica de convergencia:** Agrupa las mejoras técnicas del visualizador de alta resolución (Lightbox) y renderizado de imágenes de vehículos: navegación por deslizamiento táctil (swipe) y controles de carrusel sincronizados entre modal y visor para cables de alimentación, aislamiento inteligente del zoom táctil, y corrección del canal alfa (transparencia) en miniaturas PNG provenientes de Google Drive en modo claro y oscuro.
@@ -790,7 +790,7 @@ TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y REN
 #### Especificación Original (B32): 17. **TÍTULO: Navegación del carrusel de cables de alimentación dentro del lightbox (v2.1.6)**
 
 17. **TÍTULO: Navegación del carrusel de cables de alimentación dentro del lightbox (v2.1.6)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
     - **ALCANCE:** index.html, style.css, lightbox.js, ui.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt
     - **DESCRIPCIÓN DETALLADA:**
       - **Objetivo:** Permitir la navegación entre las imágenes de los cables de alimentación registrados dentro del visor Lightbox, manteniendo de forma estricta todas las funcionalidades de zoom y cierre existentes.
@@ -802,7 +802,7 @@ TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y REN
 #### Especificación Original (B33): 18. **TÍTULO: Visualización de miniaturas PNG transparentes en tarjetas de vehículos (v2.1.6)**
 
 18. **TÍTULO: Visualización de miniaturas PNG transparentes en tarjetas de vehículos (v2.1.6)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
     - **ALCANCE:** ui.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
     - **DESCRIPCIÓN DETALLADA:**
       - **Objetivo:** Solucionar el problema de visualización de miniaturas con fondo negro en imágenes PNG transparentes provenientes de Google Drive en las tarjetas de vehículos del catálogo frontend.

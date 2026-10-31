@@ -314,6 +314,7 @@ export function getImageUrl(fileId, size = 400) {
         return placeholder;
     }
 
+    /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES */
     // Evitar parámetros de miniaturas (=w / =s) de Google que convierten PNGs transparentes a JPEG con fondo negro
     return `https://lh3.googleusercontent.com/d/${id}`;
 }

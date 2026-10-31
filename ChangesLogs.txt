@@ -1142,3 +1142,11 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
   - Línea 4869: Agregado comentario identificativo /* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */ en openAddAperturaModal.
   - Línea 4943: Agregado comentario identificativo /* TAREA 5 (3.4): AGREGAR CABLE DE ALIMENTACIÓN DESDE EL MODAL DE DETALLE */ en openAddFeedModal.
   - Línea 5027: Agregado comentario identificativo /* TAREA 5 (3.5): AGREGAR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */ en openAddVideoModal.
+
+**TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y RENDERIZADO DE TRANSPARENCIAS (v2.2.0)**
+- lightbox.js:
+  - Línea 18: Agregado comentario identificativo /* TAREA 6 (B32): NAVEGACIÓN DEL CARRUSEL DE CABLES DE ALIMENTACIÓN DENTRO DEL LIGHTBOX */ sobre la función isLightboxZoomed.
+- ui.js:
+  - Línea 317: Agregado comentario identificativo /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES */ en la función getImageUrl.
+- style.css:
+  - Línea 735: Agregado comentario identificativo /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES EN MODO OSCURO */ en la regla mix-blend-mode de miniaturas.

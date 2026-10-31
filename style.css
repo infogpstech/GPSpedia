@@ -732,6 +732,7 @@ body.search-active .container {
     background-color: transparent;
 }
 
+/* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES EN MODO OSCURO */
 .dark-mode .card:not(.brand-logo-item) img,
 .dark-mode .card-img-top,
 .dark-mode .match-card-img,

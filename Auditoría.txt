@@ -373,3 +373,18 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
    - `openAddFeedModal(item)`: subida de imagen, texto enriquecido, cálculo de ranuras disponibles e integración al carrusel sin actualizar la fecha del modelo.
    - `openAddVideoModal(item)`: valida enlace de YouTube y no actualiza fecha histórica de registro.
    - El código cumple plenamente todos los requisitos de la Tarea 5. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y RENDERIZADO DE TRANSPARENCIAS (31/10/2026)**
+
+**Archivos involucrados:** `lightbox.js`, `ui.js`, `style.css`, `index.html`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **lightbox.js y ui.js (Tarea B32: Navegación del carrusel de cables dentro de Lightbox):**
+   - En `lightbox.js`, `abrirLightbox` admite contexto de cables (`cables`, `currentIndex`, callback `onSlideChange`).
+   - Se proporcionan botones de navegación de escritorio (`<` y `>`) y soporte de gestos táctiles horizontales (`swipe`) para móviles y PWA.
+   - `isLightboxZoomed()` detecta la escala de ampliación de la imagen o del `visualViewport` (`scale > 1.02`), bloqueando de forma determinista la navegación por deslizamiento cuando el usuario ha hecho zoom, para permitir el desplazamiento por la imagen sin saltar de diapositiva accidentalmente.
+   - `ignoreNextClick` previene que el toque final de un gesto de deslizamiento cierre el visor.
+2. **ui.js y style.css (Tarea B33: Miniaturas PNG transparentes):**
+   - En `ui.js` (`getImageUrl`), las URLs de Google Drive se construyen mediante CDN directa `https://lh3.googleusercontent.com/d/${id}` omitiendo parámetros de miniaturas `=w...` que degradan la transparencia convirtiendo PNGs a JPEG con fondo negro.
+   - En `style.css` (líneas 734-740), se aplica `mix-blend-mode: lighten` exclusivamente en `.dark-mode .card:not(.brand-logo-item) img`, `.dark-mode .card-img-top`, `.dark-mode .match-card-img` y `#imagenVehiculo_preview`, permitiendo que cualquier residuo oscuro se funda con el fondo de la tarjeta oscura, mientras que en modo claro las tarjetas conservan fondo blanco uniforme.
+   - Todo el flujo cumple los requisitos funcionales de la Tarea 6. Se insertarán los comentarios identificativos pertinentes.
