@@ -949,8 +949,16 @@ body.search-active .container {
 
 /* Comentario: Ajustes de tamaño según la nueva solicitud de diseño. */
 .brand-logo-modal {
-    height: 60px !important; /* Restaurado a un tamaño óptimo */
+    height: 48px !important;
+    max-height: 48px !important;
     width: auto !important;
+}
+
+@media (max-width: 600px) {
+    .brand-logo-modal {
+        height: 38px !important;
+        max-height: 38px !important;
+    }
 }
 
 .image-with-container {

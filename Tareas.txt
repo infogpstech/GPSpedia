@@ -361,7 +361,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   El botón debe aparecer en la esquina inferior derecha, ser un 10 % más pequeño y ejecutar correctamente las acciones disponibles en el menú. Estos requisitos deben verificarse en móvil y escritorio.
 - **Estado:** PENDIENTE.
 
-[ ] 1.6. Corrección de la cabecera del modal de detalle
+[X] 1.6. Corrección de la cabecera del modal de detalle
 - **Problema detectado:**
   La incorporación del botón de imprimir en la cabecera del modal de detalle ha provocado un espacio excesivo entre los botones de editar, compartir e imprimir, el logotipo de la marca y el nombre del modelo. Se requiere revisar los márgenes y rellenos para recuperar una distribución compacta y equilibrada.
 - **Requisitos:**
@@ -376,7 +376,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   La solución debe corregir la distribución sin eliminar el botón de imprimir ni perjudicar el resto de los controles.
 - **Criterios de finalización:**
   La cabecera debe presentar una distribución compacta, ordenada y coherente con el diseño del modal. La incorporación del botón de imprimir no debe producir espacios excesivos ni perjudicar la visualización de la marca y el modelo.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA.
 
 [ ] 1.7. Corrección de las tarjetas para agregar tutoriales y problemas
 - **Problema detectado:**

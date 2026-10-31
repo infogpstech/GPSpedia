@@ -1342,8 +1342,9 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
+    // Tarea 1.6: Corrección y compactación de la cabecera del modal de detalle
     const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px; gap: 10px;";
+    headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 4px; gap: 8px;";
 
     // Indicador visual de guardado/comunicación para modo edición
     const savingIndicator = document.createElement("div");
@@ -1391,7 +1392,6 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     printBtn.innerHTML = '<i class="fa-solid fa-print"></i>';
     printBtn.className = "share-modal-btn";
     printBtn.title = "Imprimir / Exportar Ficha Técnica";
-    printBtn.style.marginRight = "5px";
     printBtn.onclick = () => exportVehiclePrintSheet(activeItem);
     headerDiv.appendChild(printBtn);
 
@@ -1464,14 +1464,14 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     };
     closeBtn.className = "info-close-btn";
-    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 10px;";
+    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 4px;";
     headerDiv.appendChild(closeBtn);
     cont.appendChild(headerDiv);
 
     // Comentario: Se ajusta el layout del encabezado para cumplir con el nuevo requisito (logo a la izquierda).
     // Se añade 'flex-wrap: wrap' para evitar scroll horizontal en móviles con logos anchos.
     const titleContainer = document.createElement("div");
-    titleContainer.style.cssText = "border-bottom: 3px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
+    titleContainer.style.cssText = "border-bottom: 2px solid #007bff; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
 
     const logoUrl = getLogoUrlForMarca(activeItem.marca, activeItem.categoria);
     if (logoUrl) {

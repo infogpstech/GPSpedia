@@ -147,3 +147,19 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
   1. Utilizar una estrategia de renderizado inmediato apoyada en el estado local en memoria (getState().pysData). Si ya existen datos previamente cargados, renderizar instantáneamente (0ms) las tarjetas.
   2. Ejecutar la sincronización con routeAction('getPysData') en segundo plano. Si los datos obtenidos difieren de los previamente cacheados, actualizar el estado y refrescar el contenedor sin parpadeos.
   3. Si es la primera visita y no hay datos en memoria, presentar un indicador de carga mientras se resuelve la solicitud.
+
+**AUDITORÍA TAREA 1.6: CORRECCIÓN DE LA CABECERA DEL MODAL DE DETALLE**
+- Archivos analizados: ui.js (función mostrarDetalleModal), style.css (#detalleCompleto, .brand-logo-modal, .share-modal-btn).
+- Diagnóstico y Hallazgos:
+  1. En `ui.js`:
+     - `headerDiv` tiene `margin-bottom: 10px; gap: 10px;`.
+     - `printBtn` tiene `printBtn.style.marginRight = "5px"`, lo que sumado a `gap: 10px` en `headerDiv` genera una separación asimétrica y acumulada con los demás controles (cerrar, editar, compartir).
+     - `closeBtn` tiene `padding: 0 10px; font-size: 1.8em;`.
+     - `titleContainer` tiene `margin-bottom: 15px; padding-bottom: 8px; gap: 10px;` produciendo un exceso de distancia vertical con `headerDiv` y con `subHeaderDiv`.
+     - El logotipo `.brand-logo-modal` tiene en CSS `height: 60px !important;`, lo que eleva notablemente la altura del contenedor de título y desplaza el nombre del modelo. En móviles o pantallas estrechas, 60px es excesivo y empuja el texto hacia abajo de forma desproporcionada.
+  2. Plan de mitigación:
+     - En `ui.js`: Reducir el margen inferior de `headerDiv` a `4px` y unificar `gap: 8px;`.
+     - Eliminar el `marginRight: 5px` innecesario de `printBtn` para que el espaciado sea uniforme con `gap`.
+     - Ajustar `titleContainer` para tener `margin-bottom: 10px; padding-bottom: 6px; gap: 10px; align-items: center;`.
+     - En `style.css`: Ajustar `.brand-logo-modal` a una altura máxima más compacta y balanceada (40px en móvil, 48px en escritorio con `max-height`) para evitar que comprima o desplace el nombre del modelo.
+     - Añadir comentario identificativo de la Tarea 1.6 al inicio de la construcción de la cabecera en `ui.js`.
