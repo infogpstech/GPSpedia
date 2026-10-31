@@ -139,3 +139,11 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
 - CATALOG: https://script.google.com/macros/s/AKfycbxtqkdUfXAEmbPz7zfE4kZCie8sql4SM43kxkBw__5iGwXVyzzYsIFG5jpWkQc7-Ug9/exec
 - FEEDBACK: https://script.google.com/macros/s/AKfycby1s6gb64qI0LO55jgPKEIrxlpVw4mBaFWY6CCct8aBim8h7Ah_qu9gQlie_7DoyCZT_g/exec
 - WRITE: https://script.google.com/macros/s/AKfycbz1qZSAExI_JEoLfxYiszD93tcPPWIju5tMJ9l5wexmkXM0Bx1Wgw0MyxGfyY0gjUCnDg/exec
+
+**AUDITORÍA TAREA 1.4: DEMORAS DE CARGA EN SECCIÓN PROBLEMAS Y SOLUCIONES (pys)**
+- Archivos analizados: ui.js (función renderPysSection), state.js.
+- Causa raíz identificada: En renderPysSection() se realizaba una llamada de red síncrona y bloqueante mediante await routeAction('getPysData') cada vez que el usuario cambiaba a la pestaña de Problemas y Soluciones. Durante esa espera de red (de varios segundos), el contenedor se limpiaba y no se mostraba contenido hasta recibir la respuesta, causando una percepción de bloqueo y lentitud.
+- Plan de mitigación:
+  1. Utilizar una estrategia de renderizado inmediato apoyada en el estado local en memoria (getState().pysData). Si ya existen datos previamente cargados, renderizar instantáneamente (0ms) las tarjetas.
+  2. Ejecutar la sincronización con routeAction('getPysData') en segundo plano. Si los datos obtenidos difieren de los previamente cacheados, actualizar el estado y refrescar el contenedor sin parpadeos.
+  3. Si es la primera visita y no hay datos en memoria, presentar un indicador de carga mientras se resuelve la solicitud.
