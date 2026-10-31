@@ -455,7 +455,7 @@ PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXI
   Si un modelo contiene varios cortes, no deben mostrarse ni modificarse accidentalmente los campos correspondientes a los otros cortes.
 - **Estado:** COMPLETADA.
 
-[ ] 2.3. Almacenamiento y gestión independiente de sugerencias
+[X] 2.3. Almacenamiento y gestión independiente de sugerencias
 - **Gestión de las sugerencias:**
   Guarda la sugerencia como una propuesta pendiente de revisión, asociada al reporte original.
   No la apliques automáticamente al catálogo.
@@ -481,7 +481,7 @@ PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXI
   - Las propuestas quedan vinculadas al corte correcto.
   - Los demás cortes del mismo modelo permanecen intactos.
   - Los usuarios no pueden utilizar este flujo para modificar directamente registros que requieren autorización administrativa.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA.
 
 ===================================================================
 PRIORIDAD 3: FASE 2 Y FASE 3 - AMPLIACIÓN DIRECTA DE LOS DETALLES DEL MODELO

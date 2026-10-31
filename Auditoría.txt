@@ -228,3 +228,24 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
        * Input file opcional para subir imagen del corte propuesto con conversión a Base64.
        * Textarea obligatorio para detalles/explicación del cambio propuesto.
        * Botón de envío que envíe el payload estructurado mediante `suggestCutChange()`.
+
+**AUDITORÍA TAREA 2.3: ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS**
+- Archivos analizados: Services/feedback.js (función handleSuggestCutChange), ui.js (función openSuggestCutModal).
+- Diagnóstico y Hallazgos:
+  1. En `Services/feedback.js`:
+     - La función `handleSuggestCutChange` registra las sugerencias en la hoja `Feedbacks` como propuestas para revisión en el Inbox/Panel de Administración, sin alterar las filas del catálogo en la hoja `Cortes`.
+     - Para cumplir estrictamente los requisitos mínimos de la Tarea 2.3, la propuesta guardada debe contener de forma estructurada e inequívoca:
+       * Identificador del reporte original (`reportId`).
+       * Identificador del modelo (`vehicleId`).
+       * Identificador del corte reportado (`corteIndex`).
+       * Usuario que presentó la propuesta (`userName`, `userId`).
+       * Fecha de creación (marca temporal ISO / timestamp legible).
+       * Imagen de referencia en Google Drive, si existe (`imageUrl`).
+       * Valores propuestos (`proposedValues`).
+       * Estado de revisión explícito (`Se resolvio = false`).
+     - Al procesarse la sugerencia, no debe modificar el catálogo original y debe emitir un mensaje de confirmación claro para el usuario.
+  2. Plan de mitigación:
+     - Enriquecer la estructura del registro en `handleSuggestCutChange` serializando el objeto de la propuesta con `reportId`, `corteIndex`, `timestamp`, `proposedValues`, `details` e `imageUrl`.
+     - Asignar `false` a la columna `Se resolvio` para que permanezca pendiente de revisión administrativa en el sistema de Inbox.
+     - Registrar la actividad de usuario en `ActividadUsuario`.
+     - En `ui.js`, mostrar notificación clara de confirmación tras recibir la respuesta exitosa del microservicio sin modificar los valores en pantalla del catálogo actual.

@@ -1777,7 +1777,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
         recommendedSection.appendChild(title);
         // El corte recomendado se carga de inmediato (isLazy = false)
-        renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false);
+        renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false, recommendedCut.index);
         cont.appendChild(recommendedSection);
     }
 
@@ -3451,7 +3451,8 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
 
     if (sec.isCorte) {
         // Los cortes dentro de acordeones son diferidos (isLazy = true)
-        renderCutContent(panel, sec.data, datosRelay, vehicleId, true);
+        const cIndex = (sec.data && sec.data.index) ? sec.data.index : 0;
+        renderCutContent(panel, sec.data, datosRelay, vehicleId, true, cIndex);
     } else if (inEditMode && (title === 'Apertura' || title === 'Cables de Alimentación')) {
         if (title === 'Apertura') {
             const fieldName = 'apertura';
@@ -4009,6 +4010,26 @@ export function showGlobalError(message) {
     setTimeout(() => {
         toast.style.display = 'none';
     }, 7000);
+}
+
+export function showGlobalNotification(message, type = 'info') {
+    const toast = document.getElementById('notification-toast');
+    if (!toast) {
+        alert(message);
+        return;
+    }
+    toast.textContent = message;
+    if (type === 'success') {
+        toast.style.backgroundColor = '#28a745';
+    } else if (type === 'error') {
+        toast.style.backgroundColor = '#dc3545';
+    } else {
+        toast.style.backgroundColor = '#007bff';
+    }
+    toast.style.display = 'block';
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 5000);
 }
 
 export function openSideMenu() {
