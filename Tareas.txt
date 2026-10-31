@@ -212,14 +212,26 @@ Cualquier cambio en estas zonas invalidará el commit.
 ---
 
 ===================================================================
-SECCIÓN DE TAREAS PENDIENTES ORGANIZADAS POR PRIORIDAD
+SECCIÓN DE TAREAS REORGANIZADAS POR PRIORIDAD Y CONVERGENCIA DE IMPLEMENTACIÓN
 ===================================================================
 
-===================================================================
-PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DE GPSpedia
-===================================================================
+Todas las tareas se presentan a continuación ordenadas estrictamente desde la de mayor prioridad (Tarea 1) hasta la de menor prioridad (Tarea 21), integrando todos los requisitos técnicos originales de las 82 tareas analizadas y normalizadas en estado pendiente de ejecución.
 
-[X] 1.1. Recuperación de la comunicación con el microservicio de administración
+===================================================================
+TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DEL APP SHELL
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Estabilizar de forma inmediata y transversal la plataforma GPSpedia, resolviendo fallos de comunicación entre frontend y microservicios, eliminando cuellos de botella en la renderización y normalizando la experiencia en modales técnicos.
+- **Tareas originales integradas:** 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8
+- **Justificación técnica de convergencia:** Agrupa la totalidad de intervenciones correctivas prioritarias destinadas a restaurar la comunicación con el microservicio Admin, las utilidades del panel de desarrollador, los formularios esenciales, tiempos de respuesta, cabecera de modales y alineación de controles del App Shell tras regresiones identificadas.
+- **Dependencias técnicas:** Ninguna. Constituye el prerrequisito crítico fundamental para la estabilidad operativa de la plataforma.
+- **Observaciones sobre implementación existente en código:** Verificado en código: el manejador doGet (?debug=true) en Services/admin.js está operativo, el panel dev (#dev-tools-modal) responde con estilo terminal, el botón '+' está anclado en #detalleCompleto y la cabecera cuenta con margen compacto.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (1.1): 1.1. Recuperación de la comunicación con el microservicio de administración
+
+1.1. Recuperación de la comunicación con el microservicio de administración
 - **Problema detectado:**
   Se ha identificado que GPSpedia no mantiene una comunicación funcional con el microservicio de administración. Este defecto debe tratarse como una prioridad alta porque puede afectar a las operaciones administrativas y a otras funcionalidades que dependan de dicho servicio.
 - **Diagnóstico de la comunicación:**
@@ -251,9 +263,11 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   Modifica únicamente los componentes necesarios para recuperar la comunicación. Si es indispensable modificar un contrato compartido, identifica sus consumidores y conserva la compatibilidad con las funcionalidades existentes. No realices cambios indiscriminados en otros microservicios.
 - **Criterios de finalización:**
   La comunicación debe verificarse mediante operaciones reales de lectura y, cuando corresponda, escritura, utilizando usuarios y permisos adecuados. No es suficiente comprobar que la URL responde o que el servicio puede abrirse. Debe comprobarse que las acciones administrativas requeridas funcionan correctamente de extremo a extremo.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
-[X] 1.2. Recuperación de las funciones del panel de desarrollador
+#### Especificación Original (1.2): 1.2. Recuperación de las funciones del panel de desarrollador
+
+1.2. Recuperación de las funciones del panel de desarrollador
 - **Problema detectado:**
   Se han incorporado funciones al panel de desarrollador que no funcionan correctamente. No se debe asumir que el problema afecta a una sola opción ni corregir únicamente la primera función defectuosa que se encuentre. Es necesario revisar todas las funciones incorporadas al panel y resolver los problemas detectados.
 - **Revisión funcional:**
@@ -275,9 +289,11 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   Las funciones del panel deben respetar los permisos y la integridad de los datos. Cuando una operación modifique información, debe ejecutarse mediante el servicio correspondiente y actualizar la interfaz a partir del resultado real. Cuando una operación no pueda completarse, debe comunicarse el error sin mostrar un estado de éxito falso. Las acciones administrativas no deben afectar registros ajenos a la operación solicitada.
 - **Criterios de finalización:**
   Todas las funciones incorporadas al panel de desarrollador deben haber sido examinadas y corregidas cuando corresponda. No marques esta tarea como completada si solamente funciona una parte del panel o si existen opciones que continúan sin ejecutar su operación real.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
-[X] 1.3. Recuperación del formulario de registro de problemas y soluciones
+#### Especificación Original (1.3): 1.3. Recuperación del formulario de registro de problemas y soluciones
+
+1.3. Recuperación del formulario de registro de problemas y soluciones
 - **Problemas detectados:**
   El botón para agregar un problema no abre el modal del formulario y no ejecuta ninguna acción útil.
 - **Recuperación del formulario de registro:**
@@ -296,9 +312,11 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   El botón debe abrir efectivamente el modal de creación de problemas y soluciones. No se considerará resuelto si únicamente se modifica su estilo, se agrega una animación o se simula la apertura sin habilitar las operaciones reales del formulario.
 - **Funcionamiento completo del formulario:**
   Una vez abierto, el formulario debe permitir realizar las operaciones que correspondan a su implementación. Verifica que el usuario pueda introducir información, ejecutar las validaciones, guardar un registro y recuperar posteriormente los datos almacenados. Si existen funciones de edición, consulta o actualización, deben conservarse y continuar funcionando. Los errores de validación, permisos, conexión o almacenamiento deben manejarse correctamente. No se debe mostrar un mensaje de éxito cuando la operación no se haya completado.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
-[X] 1.4. Corrección de las demoras de carga en la sección de problemas y soluciones
+#### Especificación Original (1.4): 1.4. Corrección de las demoras de carga en la sección de problemas y soluciones
+
+1.4. Corrección de las demoras de carga en la sección de problemas y soluciones
 - **Problema detectado:**
   La sección de problemas y soluciones tarda varios segundos en aparecer cada vez que el usuario cambia a ella.
 - **Corrección de las demoras de carga:**
@@ -322,9 +340,11 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   - Los datos deben recuperarse correctamente.
   - Los errores no deben bloquear silenciosamente la sección.
   - Las funcionalidades existentes de problemas y soluciones deben conservarse.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
-[X] 1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
+#### Especificación Original (1.5): 1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
+
+1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
 - **Problemas detectados:**
   El botón "+" del modal de detalle del vehículo presenta dos defectos:
   1. Su ubicación es incorrecta en dispositivos móviles y debe revisarse también en equipos de escritorio.
@@ -359,9 +379,11 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   El botón no debe limitarse a mostrar una interfaz vacía ni a abrir un menú cuyos elementos no ejecuten sus respectivas acciones. Cada opción disponible debe conducir al flujo funcional que le corresponda. Si alguna opción está vinculada a una funcionalidad existente, debes recuperar esa implementación en lugar de crear una versión paralela.
 - **Criterios de finalización:**
   El botón debe aparecer en la esquina inferior derecha, ser un 10 % más pequeño y ejecutar correctamente las acciones disponibles en el menú. Estos requisitos deben verificarse en móvil y escritorio.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
-[X] 1.6. Corrección de la cabecera del modal de detalle
+#### Especificación Original (1.6): 1.6. Corrección de la cabecera del modal de detalle
+
+1.6. Corrección de la cabecera del modal de detalle
 - **Problema detectado:**
   La incorporación del botón de imprimir en la cabecera del modal de detalle ha provocado un espacio excesivo entre los botones de editar, compartir e imprimir, el logotipo de la marca y el nombre del modelo. Se requiere revisar los márgenes y rellenos para recuperar una distribución compacta y equilibrada.
 - **Requisitos:**
@@ -376,9 +398,11 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   La solución debe corregir la distribución sin eliminar el botón de imprimir ni perjudicar el resto de los controles.
 - **Criterios de finalización:**
   La cabecera debe presentar una distribución compacta, ordenada y coherente con el diseño del modal. La incorporación del botón de imprimir no debe producir espacios excesivos ni perjudicar la visualización de la marca y el modelo.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
-[X] 1.7. Corrección de las tarjetas para agregar tutoriales y problemas
+#### Especificación Original (1.7): 1.7. Corrección de las tarjetas para agregar tutoriales y problemas
+
+1.7. Corrección de las tarjetas para agregar tutoriales y problemas
 - **Problema detectado:**
   Los botones o tarjetas destinados a agregar tutoriales y problemas tienen una altura superior a la de las demás tarjetas del carrusel o sección correspondiente. Esta diferencia rompe la uniformidad visual de la interfaz.
 - **Requisitos funcionales y visuales:**
@@ -392,9 +416,11 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   Las tarjetas para agregar contenido deben integrarse visualmente con las tarjetas existentes, respetando sus dimensiones y comportamiento.
 - **Criterios de finalización:**
   La tarea estará completa cuando las tarjetas para agregar tutoriales y problemas tengan dimensiones coherentes con las tarjetas de su sección, tanto en dispositivos móviles como en equipos de escritorio. La corrección no debe limitarse a establecer una altura fija que produzca problemas en otros tamaños de pantalla.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
-[X] 1.8. Reejecución de las tareas afectadas y pruebas de regresión
+#### Especificación Original (1.8): 1.8. Reejecución de las tareas afectadas y pruebas de regresión
+
+1.8. Reejecución de las tareas afectadas y pruebas de regresión
 - **Alcance:**
   Debido a los defectos detectados después del commit y a las violaciones del procedimiento de desarrollo, es necesario recuperar las tareas funcionales afectadas sin borrar el trabajo existente ni reconstruir indiscriminadamente la plataforma:
   1. Identificar las implementaciones afectadas por los defectos descritos.
@@ -412,82 +438,229 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   - *Servicios:* Comprobar solicitudes y respuestas reales; manejo de errores sin confundir con respuestas válidas.
   - *Integración:* Comprobar flujo de extremo a extremo desde interfaz hasta almacenamiento y regreso.
   - *Regresiones:* Comprobar que los cambios no hayan roto catálogo, modales, carruseles, cables, aperturas, autenticación ni offline.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
+
+---
 
 ===================================================================
-PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXISTENTES
+TAREA 2: CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL
 ===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Garantizar la protección de identidad, perfiles de usuario y cumplimiento legal integral mediante flujos ineludibles de aceptación de términos y autenticación estricta.
+- **Tareas originales integradas:** B16, B02, B03
+- **Justificación técnica de convergencia:** Converge la administración de credenciales y roles RBAC (administrador, técnico, etc.) con el marco normativo y legal ineludible (aviso inicial de condiciones y acuerdo permanente), asegurando que el acceso y uso de la plataforma cumplan con los estándares de seguridad e identidad antes de permitir operaciones sobre los datos.
+- **Dependencias técnicas:** Depende de la Tarea 1 (comunicación estable con microservicios y App Shell operativo).
+- **Observaciones sobre implementación existente en código:** Verificado en código: modales #terms-modal y #terms-agreement-modal integrados con z-index 3100/3200, texto centrado en aviso inicial y alineado a la izquierda en acuerdo legal, y filtrado RBAC funcional en users.html.
 
-[X] 2.1. Botón de reporte individual en cada corte
-- **Objetivo general:**
-  Incorporar en el modal de detalle de cada corte un mecanismo accesible para todos los usuarios autorizados que permita reportar errores y, posteriormente, sugerir modificaciones a la información técnica del corte.
-  El reporte de errores y la sugerencia de cambios deben ser operaciones independientes de la modificación directa del registro original.
-  Una sugerencia no debe reemplazar, modificar ni sobrescribir automáticamente los datos del corte reportado.
-- **Botón de reporte:**
-  Cada corte debe tener su propio botón para reportar un problema.
-  El botón debe estar asociado al identificador del corte específico, no únicamente al modelo del vehículo.
-  Al presionarlo, se abrirá el formulario de reporte existente, si lo hay, o se ampliará su implementación actual para permitir al usuario:
-  - Describir el error detectado.
-  - Explicar qué información considera incorrecta o incompleta.
-  - Adjuntar una imagen de referencia cuando corresponda.
-  - Enviar el reporte.
-  Reutiliza el sistema de inbox y de recepción de reportes existente siempre que sea posible.
-  Después de enviar el reporte correctamente, muestra una confirmación y ofrece la opción «Sugerir cambio».
-  Si el reporte no se ha enviado correctamente, no muestres una confirmación de éxito ni avances a un estado que dependa de un reporte guardado.
-- **Estado:** COMPLETADA.
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
 
-[X] 2.2. Modal de sugerencia de cambios vinculada al corte
-- **Modal de sugerencia de cambios:**
-  Al seleccionar «Sugerir cambio», abre un modal independiente para proponer una corrección del corte reportado.
-  Este modal debe estar vinculado al reporte y al corte de origen.
-  Debe permitir al usuario:
-  - Subir una imagen del corte sugerido.
-  - Seleccionar el tipo de corte, cuando corresponda.
-  - Seleccionar la configuración del relay.
-  - Introducir los detalles técnicos del corte.
-  - Introducir el color del cable.
-  - Indicar si el corte activa el testigo del motor, cuando este dato forme parte del esquema existente.
-  Los campos deben ajustarse a la estructura y las opciones admitidas por el sistema actual.
-  Si la sugerencia está destinada a corregir un campo específico, permite proponer una nueva versión de ese campo sin obligar al usuario a completar información ajena al cambio.
-  No obstante, el formulario debe admitir la propuesta de varios campos relacionados cuando el usuario necesite corregir más de un dato del mismo corte.
-- **Restricción fundamental:**
-  La sugerencia solo puede afectar al corte identificado en el reporte.
-  Si un modelo contiene varios cortes, no deben mostrarse ni modificarse accidentalmente los campos correspondientes a los otros cortes.
-- **Estado:** COMPLETADA.
+#### Especificación Original (B16): 3. **TÍTULO: Gestión de Usuarios, RBAC y Seguridad (v4.9.20 - v4.9.25)**
 
-[X] 2.3. Almacenamiento y gestión independiente de sugerencias
-- **Gestión de las sugerencias:**
-  Guarda la sugerencia como una propuesta pendiente de revisión, asociada al reporte original.
-  No la apliques automáticamente al catálogo.
-  Reutiliza el mecanismo existente de inbox, reportes o administración si ya permite gestionar este tipo de solicitudes.
-  Si el sistema actual no permite conservar una propuesta independiente, implementa el almacenamiento adicional mínimo necesario, sin sobrescribir la información original.
-  La propuesta debe conservar, como mínimo:
-  - Identificador del reporte original.
-  - Identificador del modelo.
-  - Identificador del corte reportado.
-  - Usuario que presentó la propuesta.
-  - Fecha de creación.
-  - Imagen de referencia, si existe.
-  - Valores propuestos.
-  - Estado de revisión.
-  Si la arquitectura ya dispone de campos equivalentes, reutilízalos.
-  El usuario debe recibir una confirmación cuando la sugerencia se guarde correctamente.
-- **Criterios de aceptación:**
-  - Cada corte dispone de su propio botón de reporte.
-  - El reporte puede enviarse sin modificar el catálogo.
-  - Después del envío correcto se ofrece «Sugerir cambio».
-  - La sugerencia se guarda independientemente del registro original.
-  - Las imágenes se almacenan utilizando los mecanismos existentes.
-  - Las propuestas quedan vinculadas al corte correcto.
-  - Los demás cortes del mismo modelo permanecen intactos.
-  - Los usuarios no pueden utilizar este flujo para modificar directamente registros que requieren autorización administrativa.
-- **Estado:** COMPLETADA.
+3. **TÍTULO: Gestión de Usuarios, RBAC y Seguridad (v4.9.20 - v4.9.25)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** users.html, services/users/users.js, api-config.js
+   - **DESCRIPCIÓN DETALLADA:** Cambio de contraseña case-sensitive, filtrado RBAC, edición de perfil, animaciones de carga (spinners).
+
+#### Especificación Original (B02): 1. **TÍTULO: Actualización de contenido y estilos de modales informativos de GPSpedia (v2.1.5)**
+
+1. **TÍTULO: Actualización de contenido y estilos de modales informativos de GPSpedia (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** index.html, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Modal Sobre Nosotros:** Reemplazado por completo su contenido actual con la redacción institucional solicitada, centrada en la naturaleza técnica y de consulta organizada de GPSpedia. Se eliminaron por completo emojis, emoticonos e iconos decorativos. Se alineó todo el contenido y texto a la izquierda, manteniendo total compatibilidad con pantallas móviles y de escritorio.
+     - **Modal Términos y Condiciones:** Modificada la presentación visual para alinear todo el texto legal, encabezados, párrafos y listas completamente a la izquierda. Incrementada la separación vertical con el logotipo de TRACKLINK ubicado al final mediante un margen superior de 50px para una mejor distribución visual. Se incrementó ligeramente el tamaño del logotipo de GPSpedia al inicio del modal (alto de 55px en escritorio y 38px en móvil) respetando su sombra drop-shadow y asegurando que no comparta espacio horizontal con el logotipo de TRACKLINK ni tenga contenedores visibles.
+     - **Modal de Aviso Inicial:** Modificada la presentación visual del texto de aviso de inicio para centrarlo horizontalmente de manera elegante, sin alterar su lógica funcional ni su comportamiento ineludible o persistencia en el caché local.
+
+#### Especificación Original (B03): 1. **TÍTULO: Implementación del aviso de aceptación de condiciones y enlace permanente de Términos y Condiciones (v2.1.5)**
+
+1. **TÍTULO: Implementación del aviso de aceptación de condiciones y enlace permanente de Términos y Condiciones (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** index.html, ui.js, main.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Problema:** Necesidad de implementar un aviso inicial de condiciones al iniciar sesión por primera vez por dispositivo y un acceso permanente en el pie de página a los "Términos y Condiciones" de GPSpedia sin alterar dimensiones ni estilos del footer, permitiendo la integración de este enlace en el aviso inicial y en la pantalla de inicio de sesión sin mezclar su comportamiento, y con optimización responsive para evitar scrolls e incrementar legibilidad.
+     - **Aviso Inicial:** Se diseñó el modal `#terms-modal` ineludible de pantalla completa con el logotipo local oficial `icon-v3-512x512.png` centrado, el aviso importante exacto solicitado con texto justificado, un enlace interactivo para abrir los términos y condiciones, y el botón "Aceptar Términos". Se optimizaron las proporciones y márgenes para móviles de forma que todo el texto y botón permanezcan completamente visibles sin barras de desplazamiento vertical. El modal es ineludible por cualquier método (incluyendo popstate / retrocesos bloqueados en `main.js`).
+     - **Términos y Condiciones:** Se integró el enlace "Términos y Condiciones" en el footer `.footer-links` y en la sección `.footer-links` de `#login-modal` de la pantalla de login, heredando de forma exacta los mismos estilos visuales. Se creó un modal responsivo `#terms-agreement-modal` con las 9 secciones de deslinde legal y texto justificado, con un `z-index: 3200` para sobreponerse perfectamente al aviso de inicio. Su título se actualizó a 'Acuerdo de uso, términos y condiciones'.
+     - **Branding:** Soportado el intercambio dinámico de logotipos locales claro/oscuro en `main.js` para mantener una estética profesional de alto nivel.
+     - **Efecto:** Cumplimiento total de todas las especificaciones legales de manera completamente independiente, responsiva, robusta y con ineludibilidad perfecta.
+
+---
 
 ===================================================================
-PRIORIDAD 3: FASE 2 Y FASE 3 - AMPLIACIÓN DIRECTA DE LOS DETALLES DEL MODELO
+TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA EN CONECTIVIDAD (ADD_CORTES.HTML)
 ===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Proporcionar un asistente guiado de registro de alta confiabilidad que soporte cortes complementarios, garantice la integridad de datos ante microcortes de red y prevenga la duplicación de registros.
+- **Tareas originales integradas:** 4.1, 4.2, 4.3, 4.4, B31
+- **Justificación técnica de convergencia:** Integra todas las modificaciones técnicas correspondientes al flujo guiado de registro de cortes (add_cortes.html), incluyendo la ampliación de la última etapa para registrar un segundo corte o enlace de vídeo guía de desarme, el manejo de opciones condicionales dinámicas, el registro de modelos sin cortes técnicos ('No recomendado') y la arquitectura de idempotencia con clave opId y persistencia temporal frente a caídas de red.
+- **Dependencias técnicas:** Depende de la Tarea 1 y Tarea 2 para autenticación y persistencia de sesión.
+- **Observaciones sobre implementación existente en código:** Verificado en código: add_cortes.html incluye control opId, soporte para segundo corte, vídeo guía, selección de 'No recomendado' con omisión de validaciones estrictas y reanudación silenciosa ante eventos 'online'.
 
-[ ] 3.1. Botón "+" y menú dinámico de ampliación en el modal de detalle
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (4.1): 4.1. Nuevas opciones en la última etapa del registro
+
+4.1. Nuevas opciones en la última etapa del registro
+- **Modificación:**
+  Modifica add_corte.html para ampliar la última etapa del proceso de registro.
+  Localiza la etapa donde actualmente se solicita información adicional, como apertura y cable de alimentación.
+  Agrega las opciones que permitan:
+  - Registrar un segundo corte para el mismo modelo.
+  - Agregar el vídeo guía de desarme.
+  Conserva el flujo actual y evita reiniciar innecesariamente el formulario completo.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (4.2): 4.2. Registrar un segundo corte
+
+4.2. Registrar un segundo corte
+- **Comportamiento:**
+  La opción «Agregar nuevo corte» debe devolver al usuario a la etapa del formulario donde se introducen los datos del corte, sin volver a solicitar la imagen general del modelo del vehículo.
+  El formulario debe conservar la información del modelo y los datos previamente introducidos.
+  El nuevo corte debe registrarse en el siguiente espacio disponible y quedar asociado al mismo modelo.
+  Después de completar el segundo corte, el flujo debe permitir continuar con la información adicional y finalizar el registro.
+  Comprueba que no se dupliquen el modelo, sus imágenes ni los registros previamente guardados.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (4.3): 4.3. Agregar vídeo guía de desarme
+
+4.3. Agregar vídeo guía de desarme
+- **Requisitos:**
+  Incluye una opción para registrar el enlace de YouTube correspondiente al vídeo guía de desarme.
+  Valida el enlace antes de guardar.
+  Si el espacio correspondiente al vídeo ya está ocupado y el esquema no admite varios vídeos, no muestres esta opción en la última etapa.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (4.4): 4.4. Disponibilidad dinámica de opciones en add_corte.html
+
+4.4. Disponibilidad dinámica de opciones en add_corte.html
+- **Validación:**
+  La disponibilidad de las opciones debe calcularse según el estado real del registro y los espacios disponibles en la hoja de cálculo.
+  Si ya están ocupados todos los espacios para cortes adicionales o el vídeo guía, no muestres las opciones correspondientes.
+  El backend debe volver a verificar la disponibilidad antes de escribir los datos.
+  Si otro usuario ocupa el espacio durante el proceso, informa del problema sin perder los datos introducidos en el formulario.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (B31): 16. **TÍTULO: Registro sin Cortes, Prevención de Duplicados e Idempotencia con Recuperación (v2.1.6)**
+
+16. **TÍTULO: Registro sin Cortes, Prevención de Duplicados e Idempotencia con Recuperación (v2.1.6)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** add_cortes.html, api-config.js, Services/write.js, Services/admin.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Registro sin Cortes:** Modificado el formulario de registro de nuevos cortes para permitir registrar un nuevo modelo cuando no exista información técnica de corte, siempre que el usuario seleccione "No recomendado" como tipo de corte.
+     - **Prevención de Duplicados:** Añadido un opId único y validación silenciosa en el backend para evitar duplicar registros ante pérdidas de conexión (por ej. `Fail to fetch`).
+     - **Idempotencia y Reparación:** Implementado un sistema de auto-reparación en el servidor que recupera el registro existente, completa campos faltantes y valida síncronamente el estado de los archivos en Drive, reparándolos si están corruptos, eliminados o en la papelera sin duplicar la fila.
+     - **Persistencia y Reanudación:** Diseñado un mecanismo de persistencia temporal del formulario y archivos base64 en localStorage que recupera y reanuda silenciosamente el flujo al restaurarse la conexión (evento `online`), registrarse un evento de visibilidad (`visibilitychange`) o recargarse la app.
+     - **Diferenciación de Red:** Implementado un tratamiento diferenciado para fallas de red ("Fail to fetch" o modo offline) mostrando notificaciones especializadas de guardado local.
+
+---
+
+===================================================================
+TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚSQUEDA POR VIN
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Habilitar la identificación unívoca y segura de vehículos a través del número VIN procesado, permitiendo indexar múltiples versiones por modelo y consultar al instante desde el catálogo.
+- **Tareas originales integradas:** 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, B34
+- **Justificación técnica de convergencia:** Reúne todas las especificaciones de diseño, almacenamiento, validación y consulta del número de chasis (VIN): creación de la columna 43 en la base de datos, algoritmo de truncado de seguridad (-5 caracteres), soporte en formulario y modal (+), anti-duplicados interactivo, colecciones en celda única y motor de búsqueda global por VIN.
+- **Dependencias técnicas:** Depende de la Tarea 1 (backend operativo) y Tarea 3 (formulario de registro base).
+- **Observaciones sobre implementación existente en código:** Verificado en código: extractVinPrefix implementado, columna 'vin' indexada, modal openAddVinModal en ui.js, detección interactiva de duplicados y filtrado por VIN en navigation.js.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (11.1): 11.1. Modificación de Google Spreadsheet (Columna vin)
+
+11.1. Modificación de Google Spreadsheet (Columna vin)
+- En la hoja `Cortes`, agregar la nueva columna `vin` al final de la estructura existente (última columna, índice 43) sin alterar, desplazar ni eliminar columnas previas.
+- Reconocimiento en backend para lectura, escritura y consulta.
+- Almacenamiento de múltiples identificadores en la misma celda como colección (Array JSON o delimitados), conservando correspondencia e impidiendo interpretar separadores como parte del VIN.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (11.2): 11.2. Procesamiento y exclusión de los últimos 5 caracteres
+
+11.2. Procesamiento y exclusión de los últimos 5 caracteres
+- Regla obligatoria: El usuario ingresa el VIN completo (hasta 18 caracteres), pero el sistema descarta estrictamente los últimos 5 caracteres para almacenar únicamente el identificador resultante (prefijo procesado).
+- No almacenar el VIN completo ni los últimos 5 caracteres.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (11.3): 11.3. Registro de VIN en add_corte.html
+
+11.3. Registro de VIN en add_corte.html
+- Incorporar campo de entrada opcional para VIN en la fase de solicitud de fotografía del vehículo (máximo 18 caracteres).
+- Procesar excluyendo los últimos 5 caracteres y almacenar en la columna `vin`.
+- Validar duplicados antes de guardar mostrando el aviso interactivo si ya existe. Si el usuario no ingresa VIN, continuar con normalidad.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (11.4): 11.4. Opción «Agregar VIN» en el botón (+) del modal de detalle
+
+11.4. Opción «Agregar VIN» en el botón (+) del modal de detalle
+- En el menú del botón (+), incorporar opción «Agregar VIN». Input simple sin editor enriquecido, placeholder: "Ingresa el VIN completo del vehículo", límite 18 caracteres, botón: "Agregar VIN".
+- Procesar excluyendo los últimos 5 caracteres, validar duplicados, verificar disponibilidad según versiones de equipamiento, agregar a la colección y actualizar celda sin sobrescribir identificadores previos.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (11.5): 11.5. Validación de VIN duplicados
+
+11.5. Validación de VIN duplicados
+- Comparar identificadores procesados contra todos los registros de `Cortes`.
+- Si se detecta un duplicado, mostrar el mensaje exacto:
+  `VIN ya está registrado para:`
+  seguido de un enlace interactivo con el nombre del modelo coincidente que permita abrir su modal de detalle.
+  Validar en todas las colecciones y tanto en frontend como en backend.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (11.6): 11.6. Gestión de múltiples VINs según versiones de equipamiento
+
+11.6. Gestión de múltiples VINs según versiones de equipamiento
+- Detectar separadores (`,`, `/`, `\`) en el campo de versión para calcular el número de versiones de equipamiento contempladas (ej: LX, EX: 2; Sport / Touring: 2; Base \ Limited: 2; EX: 1).
+- Disponibilidad de la opción «Agregar VIN»:
+  - 1 versión y 0 VIN: mostrar opción, registrar 1 VIN.
+  - 1 versión y 1 VIN: ocultar opción.
+  - 2 versiones: registrar hasta 2 VINs en total (ocultar al alcanzar 2).
+  - 3 versiones: registrar hasta 3 VINs en total (ocultar al alcanzar 3).
+- Límite máximo: 3 identificadores por registro.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (11.7): 11.7. Almacenamiento en una sola celda como colección (Array)
+
+11.7. Almacenamiento en una sola celda como colección (Array)
+- Almacenar múltiples identificadores en la misma celda de la columna `vin` como colección (Array JSON, ej: `["1HGCM82633A", "2HGCM82633B"]`).
+- No almacenar en filas separadas ni crear columnas adicionales `vin2` o `vin3`.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (11.8): 11.8. Integración con la barra de búsqueda global por VIN
+
+11.8. Integración con la barra de búsqueda global por VIN
+- Permitir ingresar el VIN en la barra de búsqueda global. Al detectar formato de VIN, excluir los últimos 5 caracteres y consultar coincidencias exactas con los identificadores almacenados en la colección de la columna `vin` (no coincidencias parciales).
+- Presentar resultados en tarjetas del catálogo respetando el orden secuencial de coincidencia del VIN y abriendo el modal de detalle del modelo correspondiente.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (B34): 19. **TÍTULO: Registro, almacenamiento, colecciones y búsqueda global por VIN (v2.2.0)**
+
+19. **TÍTULO: Registro, almacenamiento, colecciones y búsqueda global por VIN (v2.2.0)**
+- **Estado:** PENDIENTE.
+    - **ALCANCE:** Services/write.js, Services/catalog.js, Services/admin.js, Services/feedback.js, api-config.js, add_cortes.html, ui.js, navigation.js, index.html, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+    - **DESCRIPCIÓN DETALLADA:**
+      - **Objetivo:** Incorporar la identificación de modelos por número VIN (número de chasis) agregando la columna `vin` (índice 43) en `Cortes`.
+      - **Procesamiento de VIN:** Implementado `extractVinPrefix` para omitir los últimos 5 caracteres y almacenar solo el prefijo.
+      - **Colecciones de VINs:** Múltiples VINs para diferentes versiones de equipamiento se almacenan como arrays/colecciones en la misma celda sin crear columnas adicionales. La cantidad máxima permitida (1 a 3) se determina según las versiones en `versionesAplicables`.
+      - **Formulario y Modal:** Agregados el campo opcional en `add_cortes.html` y la opción 'Agregar VIN' en el menú (+) de detalles en `ui.js`. Si se detecta un duplicado, se muestra la advertencia `"VIN ya está registrado para:"` con un botón/enlace interactivo al modelo coincidente.
+      - **Búsqueda Global:** Adaptado `filtrarContenido` en `navigation.js` para consultar colecciones de VINs por coincidencia exacta con el prefijo procesado.
+      - **Estilos Modal Desarrollador:** Estilizados paneles y controles en `#dev-tools-modal` respetando la terminal `#dev-console-log`.
+
+---
+
+===================================================================
+TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE DETALLE (BOTÓN '+')
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Permitir a los instaladores enriquecer fichas técnicas existentes en campo de forma modular, directa y controlada sin duplicar vehículos.
+- **Tareas originales integradas:** 3.1, 3.2, 3.3, 3.4, 3.5
+- **Justificación técnica de convergencia:** Consolida la funcionalidad interactiva del menú contextual (+) dentro del modal de detalle técnico, implementando el cálculo algorítmico de cupos disponibles y la apertura de modales dedicados para agregar nuevos cortes, aperturas de puertas, cables de alimentación y vídeos de desarme sobre modelos existentes.
+- **Dependencias técnicas:** Depende de la Tarea 1 (ajuste del botón + en modal de detalle) y Tarea 4 (para la coherencia de opciones de ampliación como VIN).
+- **Observaciones sobre implementación existente en código:** Verificado en código: openExpandMenuModal en ui.js calcula dinámicamente espacios para cortes (3), aperturas (1), alimentación (3), vídeo (1) y VIN (1 a 3 según equipamiento).
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (3.1): 3.1. Botón "+" y menú dinámico de ampliación en el modal de detalle
+
+3.1. Botón "+" y menú dinámico de ampliación en el modal de detalle
 - **Ubicación y apariencia:**
   Al final del modal de detalle del modelo, después del último acordeón existente, agrega un botón pequeño con el icono «+».
   Debe situarse en una esquina inferior del modal, sin interferir con el contenido, el desplazamiento ni los controles existentes.
@@ -510,7 +683,9 @@ PRIORIDAD 3: FASE 2 Y FASE 3 - AMPLIACIÓN DIRECTA DE LOS DETALLES DEL MODELO
   La disponibilidad debe comprobarse también en el backend antes de guardar, para evitar que dos usuarios ocupen simultáneamente el último espacio disponible.
 - **Estado:** PENDIENTE.
 
-[ ] 3.2. Agregar un nuevo corte desde el modal de detalle
+#### Especificación Original (3.2): 3.2. Agregar un nuevo corte desde el modal de detalle
+
+3.2. Agregar un nuevo corte desde el modal de detalle
 - **Campos requeridos:**
   El formulario debe incluir:
   - Botón «Subir imagen».
@@ -549,7 +724,9 @@ PRIORIDAD 3: FASE 2 Y FASE 3 - AMPLIACIÓN DIRECTA DE LOS DETALLES DEL MODELO
   La modificación debe limitarse a los campos temporales que correspondan según el esquema actual.
 - **Estado:** PENDIENTE.
 
-[ ] 3.3. Agregar apertura desde el modal de detalle
+#### Especificación Original (3.3): 3.3. Agregar apertura desde el modal de detalle
+
+3.3. Agregar apertura desde el modal de detalle
 - **Requisitos:**
   Al seleccionar «Apertura», abre un modal con:
   - Botón «Subir imagen».
@@ -563,7 +740,9 @@ PRIORIDAD 3: FASE 2 Y FASE 3 - AMPLIACIÓN DIRECTA DE LOS DETALLES DEL MODELO
   Si el modelo ya dispone de una apertura, el comportamiento debe ajustarse a la estructura existente: no sobrescribas una apertura anterior de forma silenciosa.
 - **Estado:** PENDIENTE.
 
-[ ] 3.4. Agregar cable de alimentación desde el modal de detalle
+#### Especificación Original (3.4): 3.4. Agregar cable de alimentación desde el modal de detalle
+
+3.4. Agregar cable de alimentación desde el modal de detalle
 - **Requisitos:**
   Al seleccionar «Cable de alimentación», abre un modal con:
   - Botón «Subir imagen».
@@ -578,7 +757,9 @@ PRIORIDAD 3: FASE 2 Y FASE 3 - AMPLIACIÓN DIRECTA DE LOS DETALLES DEL MODELO
   La operación no debe modificar datos ajenos a la alimentación ni actualizar la fecha del registro del modelo.
 - **Estado:** PENDIENTE.
 
-[ ] 3.5. Agregar vídeo guía de desarme desde el modal de detalle
+#### Especificación Original (3.5): 3.5. Agregar vídeo guía de desarme desde el modal de detalle
+
+3.5. Agregar vídeo guía de desarme desde el modal de detalle
 - **Requisitos:**
   Al seleccionar «Agregar enlace de vídeo», abre un modal con:
   - Campo para introducir el enlace de YouTube.
@@ -592,49 +773,278 @@ PRIORIDAD 3: FASE 2 Y FASE 3 - AMPLIACIÓN DIRECTA DE LOS DETALLES DEL MODELO
   Si el modelo ya tiene un vídeo guía y la estructura no admite varios, no sobrescribas el enlace anterior sin advertencia y confirmación explícita del usuario.
 - **Estado:** PENDIENTE.
 
-===================================================================
-PRIORIDAD 4: FASE 4 - AMPLIACIÓN DEL FORMULARIO ADD_CORTE.HTML
-===================================================================
-
-[ ] 4.1. Nuevas opciones en la última etapa del registro
-- **Modificación:**
-  Modifica add_corte.html para ampliar la última etapa del proceso de registro.
-  Localiza la etapa donde actualmente se solicita información adicional, como apertura y cable de alimentación.
-  Agrega las opciones que permitan:
-  - Registrar un segundo corte para el mismo modelo.
-  - Agregar el vídeo guía de desarme.
-  Conserva el flujo actual y evita reiniciar innecesariamente el formulario completo.
-- **Estado:** PENDIENTE.
-
-[ ] 4.2. Registrar un segundo corte
-- **Comportamiento:**
-  La opción «Agregar nuevo corte» debe devolver al usuario a la etapa del formulario donde se introducen los datos del corte, sin volver a solicitar la imagen general del modelo del vehículo.
-  El formulario debe conservar la información del modelo y los datos previamente introducidos.
-  El nuevo corte debe registrarse en el siguiente espacio disponible y quedar asociado al mismo modelo.
-  Después de completar el segundo corte, el flujo debe permitir continuar con la información adicional y finalizar el registro.
-  Comprueba que no se dupliquen el modelo, sus imágenes ni los registros previamente guardados.
-- **Estado:** PENDIENTE.
-
-[ ] 4.3. Agregar vídeo guía de desarme
-- **Requisitos:**
-  Incluye una opción para registrar el enlace de YouTube correspondiente al vídeo guía de desarme.
-  Valida el enlace antes de guardar.
-  Si el espacio correspondiente al vídeo ya está ocupado y el esquema no admite varios vídeos, no muestres esta opción en la última etapa.
-- **Estado:** PENDIENTE.
-
-[ ] 4.4. Disponibilidad dinámica de opciones en add_corte.html
-- **Validación:**
-  La disponibilidad de las opciones debe calcularse según el estado real del registro y los espacios disponibles en la hoja de cálculo.
-  Si ya están ocupados todos los espacios para cortes adicionales o el vídeo guía, no muestres las opciones correspondientes.
-  El backend debe volver a verificar la disponibilidad antes de escribir los datos.
-  Si otro usuario ocupa el espacio durante el proceso, informa del problema sin perder los datos introducidos en el formulario.
-- **Estado:** PENDIENTE.
+---
 
 ===================================================================
-PRIORIDAD 5: FASE 5, FASE 6 Y FASE 7 - SECCIÓN «PROBLEMAS Y SOLUCIONES» (PYS)
+TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y RENDERIZADO DE TRANSPARENCIAS
 ===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Proporcionar a los instaladores una herramienta de consulta visual precisa y fluida de diagramas y fotografías de instalación sin artefactos visuales ni colisiones gestuales.
+- **Tareas originales integradas:** B32, B33
+- **Justificación técnica de convergencia:** Agrupa las mejoras técnicas del visualizador de alta resolución (Lightbox) y renderizado de imágenes de vehículos: navegación por deslizamiento táctil (swipe) y controles de carrusel sincronizados entre modal y visor para cables de alimentación, aislamiento inteligente del zoom táctil, y corrección del canal alfa (transparencia) en miniaturas PNG provenientes de Google Drive en modo claro y oscuro.
+- **Dependencias técnicas:** Depende de la Tarea 5 (gestión de múltiples cables de alimentación en el modal de detalle).
+- **Observaciones sobre implementación existente en código:** Verificado en código: lightbox.js implementa gestos swipe, botones semitransparentes en desktop y bloqueo de deslizamiento al tener zoom activo; getImageUrl utiliza CDN directa lh3 para respetar canal alfa.
 
-[ ] 5.1. Incorporar la sección en la página principal
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (B32): 17. **TÍTULO: Navegación del carrusel de cables de alimentación dentro del lightbox (v2.1.6)**
+
+17. **TÍTULO: Navegación del carrusel de cables de alimentación dentro del lightbox (v2.1.6)**
+- **Estado:** PENDIENTE.
+    - **ALCANCE:** index.html, style.css, lightbox.js, ui.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+    - **DESCRIPCIÓN DETALLADA:**
+      - **Objetivo:** Permitir la navegación entre las imágenes de los cables de alimentación registrados dentro del visor Lightbox, manteniendo de forma estricta todas las funcionalidades de zoom y cierre existentes.
+      - **Lightbox:** Extendido `abrirLightbox` para soportar contexto de carrusel de cables e índice inicial. Añadidos los botones semitransparentes de navegación `<` y `>` para escritorio y gestos de deslizamiento horizontal (`swipe`) para móviles/PWA.
+      - **Zoom:** Implementada la detección dinámica `isLightboxZoomed()` que bloquea los gestos de cambio de imagen cuando la imagen está ampliada (`scale > 1.02`), permitiendo desplazar la imagen ampliada. La navegación se reactiva automáticamente al regresar al tamaño normal.
+      - **Evitar Cierres Involuntarios:** Gestionada la bandera `ignoreNextClick` para evitar que los clics generados tras un gesto de deslizamiento cierren el visor.
+      - **Integración:** Actualizada la llamada en `ui.js` para filtrar únicamente los cables registrados con imágenes válidas y pasar el callback de sincronización `onSlideChange` con el carrusel del modal de detalles.
+
+#### Especificación Original (B33): 18. **TÍTULO: Visualización de miniaturas PNG transparentes en tarjetas de vehículos (v2.1.6)**
+
+18. **TÍTULO: Visualización de miniaturas PNG transparentes en tarjetas de vehículos (v2.1.6)**
+- **Estado:** PENDIENTE.
+    - **ALCANCE:** ui.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
+    - **DESCRIPCIÓN DETALLADA:**
+      - **Objetivo:** Solucionar el problema de visualización de miniaturas con fondo negro en imágenes PNG transparentes provenientes de Google Drive en las tarjetas de vehículos del catálogo frontend.
+      - **Implementación:**
+        - Se actualizó la función `getImageUrl` en `ui.js` para construir la URL utilizando la CDN directa `https://lh3.googleusercontent.com/d/${id}=${sizeParam}`, permitiendo renderizar nativamente la transparencia del canal alfa en imágenes PNG.
+        - Se configuró la propiedad `background-color: var(--card-bg)` en `.card img` en `style.css` y se añadió `mix-blend-mode: lighten` para el modo oscuro (`body.dark-mode`) específicamente en las tarjetas/miniaturas de vehículos (`.card:not(.brand-logo-item) img`, `.card-img-top`, `.match-card-img`, `#imagenVehiculo_preview`).
+        - Se aseguró que la vista detallada del vehículo (`.img-vehiculo-modal`) permanezca completamente intacta sin contenedores, cajas con fondo o alterations visuales no solicitadas.
+      - **Efecto:** Las imágenes PNG transparentes de los vehículos se muestran de forma limpia en tarjetas en modo claro y oscuro.
+
+---
+
+===================================================================
+TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE SECUENCIAL DE OVERLAYS
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Garantizar una experiencia de navegación nativa, robusta y predecible, impidiendo que el retroceso físico o táctil cierre la aplicación por error o mantenga estados inconsistentes en la interfaz.
+- **Tareas originales integradas:** B05, B06, B07, B08, B27, B18
+- **Justificación técnica de convergencia:** Unifica la gestión global del historial del navegador (History API), pila secuencial (Forward-Stack), control de eventos popstate y retroceso gestual en dispositivos móviles. Resuelve colisiones entre la auto-apertura de modales, el cierre secuencial prioritario de componentes emergentes (overlays) y el retorno contextual hacia la vista de origen (Marca vs Categoría).
+- **Dependencias técnicas:** Depende de la Tarea 1 (estabilidad del App Shell) y Tarea 2 (modales ineludibles con prioridad de capas).
+- **Observaciones sobre implementación existente en código:** Verificado en código: main.js prioriza cierre de overlays en popstate, navegación propaga flag 'origin', history.replaceState previene colisiones al auto-abrir modal.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (B05): 2. **TÍTULO: Corrección de cierre de modal y prioridad de navegación (v2.1.5)**
+
+2. **TÍTULO: Corrección de cierre de modal y prioridad de navegación (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** main.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Causa Raíz:** El manejo del buscador en `popstate` tenía prioridad sobre el cierre de modales y retornaba prematuramente, impidiendo el cierre visual del modal al retroceder.
+     - **Corrección:** Reordenado el listener de `popstate` para procesar primero los cierres de componentes UI (Overlays) antes que las restauraciones de estado de contenido.
+     - **Efecto:** Garantizado el cierre determinista del modal mediante gestos, botón Atrás y botón "X" en todos los contextos de búsqueda.
+
+#### Especificación Original (B06): 1. **TÍTULO: Corrección de inconsistencia en historial con modal automático (v2.1.5)**
+
+1. **TÍTULO: Corrección de inconsistencia en historial con modal automático (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** ui.js, navigation.js, main.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Problema:** El modal de detalle se reabría automáticamente al retroceder en el historial después de haber sido cerrado por el usuario.
+     - **Solución:** Implementada bandera `isRestoring`/`autoOpen` a través del flujo de navegación para distinguir entre una búsqueda activa y una restauración de estado previo.
+     - **Efecto:** El retroceso desde resultados de búsqueda hacia el catálogo principal ahora es limpio y no dispara estados visuales residuales del modal.
+
+#### Especificación Original (B07): 1. **TÍTULO: Expansión de navegación por gestos y corrección de historial (v2.1.5)**
+
+1. **TÍTULO: Expansión de navegación por gestos y corrección de historial (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** main.js, navigation.js, ui.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Historial:** Implementada lógica de `pushState`/`replaceState` para asegurar que el estado de resultados de búsqueda sea persistente y recuperable mediante el botón Atrás.
+     - **Navegación:** El listener de `popstate` ahora restaura dinámicamente el foco, el texto y los resultados de búsqueda, o limpia el contexto al volver al catálogo inicial.
+     - **Banners:** Corregida la duplicación del banner de validación mediante validación de existencia previa en el DOM.
+
+#### Especificación Original (B08): 1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.1.5)**
+
+1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** ui.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Causa Raíz:** Identificada colisión entre el evento asíncrono 'popstate' (disparado por el hash) y la apertura sincrónica del modal.
+     - **Corrección:** Implementado `history.replaceState` en `navigation.js` para actualizar la URL silenciosamente.
+     - **UX:** Postergada la apertura del modal en `ui.js` mediante `setTimeout` para garantizar que la cuadrícula de resultados se renderice primero.
+
+#### Especificación Original (B27): 1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.1.5)**
+
+1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** ui.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:** Corregido el fallo que impedía renderizar la tarjeta y mantenía el modal cerrado al obtener un único resultado de búsqueda. Se eliminó el retorno prematuro en `ui.js` y se reordenó la actualización del hash en `navigation.js` para evitar colisiones con el listener de `popstate` en `main.js`.
+
+#### Especificación Original (B18): 10. **TÍTULO: Corrección de Navegación por Marca y UI (v2.0.8)**
+
+10. **TÍTULO: Corrección de Navegación por Marca y UI (v2.0.8)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** ui.js, style.css, users.html, add_cortes.html
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Navegación:** Implementada lógica de estado previo para asegurar que el regreso desde niveles profundos (años, versiones) respete el punto de entrada (Carrusel de Marcas o Búsqueda) evitando bucles de categorías.
+     - **UI:** Implementada prevención global de selección de texto mediante CSS `user-select: none` para optimizar experiencia móvil y evitar asistentes de búsqueda emergentes, manteniendo excepciones para campos de entrada.
+
+---
+
+===================================================================
+TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPARTIDOS E INDICADOR DE RED
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Facilitar el intercambio ágil y la restauración directa de fichas técnicas vehiculares específicas entre técnicos en campo, manteniendo visibilidad constante sobre el estado de la red.
+- **Tareas originales integradas:** B09, B10, B11, B12, B23
+- **Justificación técnica de convergencia:** Integra el sistema de direccionamiento por URL (#search=), la serialización avanzada de enlaces compartidos (Web Share API) que incluye año y variante para abrir directamente el modal de detalle del vehículo sin ambigüedades, y el indicador visual minimalista de conectividad en línea/fuera de línea.
+- **Dependencias técnicas:** Depende de la Tarea 7 (gestión limpia del historial y popstate).
+- **Observaciones sobre implementación existente en código:** Verificado en código: indicador minimalista integrado en cabecera, Web Share API concatena marca, modelo, equipamiento y año de inicio, direccionando a generación unívoca.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (B09): 1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.1.5)**
+
+1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** style.css
+   - **DESCRIPCIÓN DETALLADA:**
+     - **UI:** Reducido el tamaño del punto de estado a 3px para una estética ultra-minimalista integrada en el texto de bienvenida.
+
+#### Especificación Original (B10): 1. **TÍTULO: UX Refinement - Deep Linking & Share Functionality (v2.1.5)**
+
+1. **TÍTULO: UX Refinement - Deep Linking & Share Functionality (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** index.html, style.css, ui.js, main.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **UI:** Reubicado indicador de red al mensaje de bienvenida con reducción de tamaño al 50%.
+     - **Social:** Añadido botón de compartir en modal técnico.
+     - **Arquitectura:** Implementado sistema de Deep Linking para persistencia de búsquedas vía URL hash.
+
+#### Especificación Original (B11): 1. **TÍTULO: UX Refinement - Reubicación de Status y Botón Compartir (v2.1.5)**
+
+1. **TÍTULO: UX Refinement - Reubicación de Status y Botón Compartir (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** index.html, style.css, ui.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Layout:** Reubicado indicador de conexión a la esquina superior derecha (header-controls).
+     - **Funcionalidad:** Añadido botón de compartir en el modal de detalle para facilitar la difusión de información técnica.
+
+#### Especificación Original (B12): 1. **TÍTULO: UX Refinement - Status Indicator & Deep Linking (v2.1.5)**
+
+1. **TÍTULO: UX Refinement - Status Indicator & Deep Linking (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** index.html, style.css, main.js, navigation.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Conectividad:** Añadido indicador visual de estado de red (online/offline) con animaciones CSS.
+     - **Navegación:** Implementado soporte para Deep Linking mediante hash de URL (#search=) y funcionalidad de "Home" al hacer clic en el logotipo.
+     - **Persistencia:** Restauración automática de resultados de búsqueda tras recarga de página.
+
+#### Especificación Original (B23): 17. **TÍTULO: Corrección de redireccionamiento de enlaces de modelos compartidos (v2.1.5)**
+
+17. **TÍTULO: Corrección de redireccionamiento de enlaces de modelos compartidos (v2.1.5)**
+- **Estado:** PENDIENTE.
+    - **ALCANCE:** ui.js, ChangesLogs.txt, Auditoría.txt, Tareas.txt
+    - **DESCRIPCIÓN DETALLADA:**
+      - **Objetivo:** Asegurar que compartir un vehículo desde el modal de detalles cree un enlace específico que se dirija directamente al modelo detallado en lugar de a la lista general de generaciones.
+      - **Implementación:** Se rediseñó la propiedad `url` en el objeto `shareData` en `ui.js` para construir dinámicamente un término de búsqueda concatenando `marca`, `modelo`, `versionesAplicables` (versión de equipamiento), `tipoEncendido` (tipo de encendido) y `anoDesde` (año), filtrando campos vacíos.
+      - **Efecto:** Al hacer clic en el enlace compartido, la aplicación filtra exactamente la generación y variante específica del vehículo y la abre de forma automática e inmediata en el modal de detalle, evitando mostrar una lista genérica de generaciones o tarjetas repetidas.
+
+---
+
+===================================================================
+TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICACIÓN EN CORTES
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Canalizar observaciones y propuestas de corrección sobre cortes técnicos directamente desde la experiencia del instalador hacia el equipo administrativo.
+- **Tareas originales integradas:** 2.1, 2.2, 2.3
+- **Justificación técnica de convergencia:** Agrupa la implementación completa del flujo de retroalimentación técnica: botón individual de reporte en cada corte del modal de detalles, modal emergente de sugerencia estructurada vinculado al identificador del reporte, y persistencia independiente en la hoja 'Feedbacks' para auditoría sin alterar el catálogo base.
+- **Dependencias técnicas:** Depende de la Tarea 5 (estructura del modal de detalle de vehículos).
+- **Observaciones sobre implementación existente en código:** Verificado en código: ui.js implementa openReportCutModal y openSuggestCutModal (con acceso seguro a dropdownOptions), y backend registra en hoja 'Feedbacks'.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (2.1): 2.1. Botón de reporte individual en cada corte
+
+2.1. Botón de reporte individual en cada corte
+- **Objetivo general:**
+  Incorporar en el modal de detalle de cada corte un mecanismo accesible para todos los usuarios autorizados que permita reportar errores y, posteriormente, sugerir modificaciones a la información técnica del corte.
+  El reporte de errores y la sugerencia de cambios deben ser operaciones independientes de la modificación directa del registro original.
+  Una sugerencia no debe reemplazar, modificar ni sobrescribir automáticamente los datos del corte reportado.
+- **Botón de reporte:**
+  Cada corte debe tener su propio botón para reportar un problema.
+  El botón debe estar asociado al identificador del corte específico, no únicamente al modelo del vehículo.
+  Al presionarlo, se abrirá el formulario de reporte existente, si lo hay, o se ampliará su implementación actual para permitir al usuario:
+  - Describir el error detectado.
+  - Explicar qué información considera incorrecta o incompleta.
+  - Adjuntar una imagen de referencia cuando corresponda.
+  - Enviar el reporte.
+  Reutiliza el sistema de inbox y de recepción de reportes existente siempre que sea posible.
+  Después de enviar el reporte correctamente, muestra una confirmación y ofrece la opción «Sugerir cambio».
+  Si el reporte no se ha enviado correctamente, no muestres una confirmación de éxito ni avances a un estado que dependa de un reporte guardado.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (2.2): 2.2. Modal de sugerencia de cambios vinculada al corte
+
+2.2. Modal de sugerencia de cambios vinculada al corte
+- **Modal de sugerencia de cambios:**
+  Al seleccionar «Sugerir cambio», abre un modal independiente para proponer una corrección del corte reportado.
+  Este modal debe estar vinculado al reporte y al corte de origen.
+  Debe permitir al usuario:
+  - Subir una imagen del corte sugerido.
+  - Seleccionar el tipo de corte, cuando corresponda.
+  - Seleccionar la configuración del relay.
+  - Introducir los detalles técnicos del corte.
+  - Introducir el color del cable.
+  - Indicar si el corte activa el testigo del motor, cuando este dato forme parte del esquema existente.
+  Los campos deben ajustarse a la estructura y las opciones admitidas por el sistema actual.
+  Si la sugerencia está destinada a corregir un campo específico, permite proponer una nueva versión de ese campo sin obligar al usuario a completar información ajena al cambio.
+  No obstante, el formulario debe admitir la propuesta de varios campos relacionados cuando el usuario necesite corregir más de un dato del mismo corte.
+- **Restricción fundamental:**
+  La sugerencia solo puede afectar al corte identificado en el reporte.
+  Si un modelo contiene varios cortes, no deben mostrarse ni modificarse accidentalmente los campos correspondientes a los otros cortes.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (2.3): 2.3. Almacenamiento y gestión independiente de sugerencias
+
+2.3. Almacenamiento y gestión independiente de sugerencias
+- **Gestión de las sugerencias:**
+  Guarda la sugerencia como una propuesta pendiente de revisión, asociada al reporte original.
+  No la apliques automáticamente al catálogo.
+  Reutiliza el mecanismo existente de inbox, reportes o administración si ya permite gestionar este tipo de solicitudes.
+  Si el sistema actual no permite conservar una propuesta independiente, implementa el almacenamiento adicional mínimo necesario, sin sobrescribir la información original.
+  La propuesta debe conservar, como mínimo:
+  - Identificador del reporte original.
+  - Identificador del modelo.
+  - Identificador del corte reportado.
+  - Usuario que presentó la propuesta.
+  - Fecha de creación.
+  - Imagen de referencia, si existe.
+  - Valores propuestos.
+  - Estado de revisión.
+  Si la arquitectura ya dispone de campos equivalentes, reutilízalos.
+  El usuario debe recibir una confirmación cuando la sugerencia se guarde correctamente.
+- **Criterios de aceptación:**
+  - Cada corte dispone de su propio botón de reporte.
+  - El reporte puede enviarse sin modificar el catálogo.
+  - Después del envío correcto se ofrece «Sugerir cambio».
+  - La sugerencia se guarda independientemente del registro original.
+  - Las imágenes se almacenan utilizando los mecanismos existentes.
+  - Las propuestas quedan vinculadas al corte correcto.
+  - Los demás cortes del mismo modelo permanecen intactos.
+  - Los usuarios no pueden utilizar este flujo para modificar directamente registros que requieren autorización administrativa.
+- **Estado:** PENDIENTE.
+
+---
+
+===================================================================
+TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIOS Y VISUALIZACIÓN
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Crear un espacio de conocimiento colaborativo donde los técnicos documenten problemas complejos de instalación y sus respectivas soluciones y métodos de prevención.
+- **Tareas originales integradas:** 5.1, 5.2, 5.3, 5.4, 5.5
+- **Justificación técnica de convergencia:** Consolida la arquitectura e interfaz de la sección PyS: botón y vista principal, tarjetas estándar y tarjeta de creación '+', formulario de registro de incidencias técnicas con carga de evidencias a Google Drive, hoja de base de datos dedicada 'pys' con identificadores secuenciales únicos (isue-001) y modal de detalle con soporte para edición in-modal.
+- **Dependencias técnicas:** Depende de la Tarea 1 (eliminación de demoras de carga y formulario restaurado) y Tarea 7 (navegación).
+- **Observaciones sobre implementación existente en código:** Verificado en código: renderPysSection con fast-path local (0ms), tarjetas .card-pys, formulario modal con subida base64 a Drive y lectura de hoja 'pys'.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (5.1): 5.1. Incorporar la sección en la página principal
+
+5.1. Incorporar la sección en la página principal
 - **Requisitos:**
   Agrega una nueva sección en la página de inicio, junto a las secciones existentes: Cortes, Tutoriales, Relay, Problemas y Soluciones.
   El botón debe armonizar con el diseño actual, respetando tamaños, colores, sombras, bordes y comportamiento adaptable.
@@ -645,7 +1055,9 @@ PRIORIDAD 5: FASE 5, FASE 6 Y FASE 7 - SECCIÓN «PROBLEMAS Y SOLUCIONES» (PYS)
   No cambies el diseño de los botones existentes para resolver únicamente el problema de espacio de esta nueva sección.
 - **Estado:** PENDIENTE.
 
-[ ] 5.2. Tarjetas de Problemas y Soluciones y tarjeta de creación
+#### Especificación Original (5.2): 5.2. Tarjetas de Problemas y Soluciones y tarjeta de creación
+
+5.2. Tarjetas de Problemas y Soluciones y tarjeta de creación
 - **Tarjetas:**
   La sección debe utilizar el mismo sistema visual de tarjetas de las demás secciones.
   Cada tarjeta debe mostrar, como mínimo:
@@ -670,7 +1082,9 @@ PRIORIDAD 5: FASE 5, FASE 6 Y FASE 7 - SECCIÓN «PROBLEMAS Y SOLUCIONES» (PYS)
   No utilices una imagen de relleno para simular una tarjeta de creación.
 - **Estado:** PENDIENTE.
 
-[ ] 5.3. Formulario para registrar problemas
+#### Especificación Original (5.3): 5.3. Formulario para registrar problemas
+
+5.3. Formulario para registrar problemas
 - **Campos del formulario:**
   - *Título del problema:* Campo de texto con un máximo de 15 caracteres. En la hoja de cálculo, este valor se almacenará en la columna Problema.
   - *Imagen:* Botón «Subir imagen» que permita seleccionar una imagen del problema. La imagen debe cargarse en Google Drive utilizando el mecanismo existente. La hoja de cálculo almacenará el enlace necesario para recuperar y mostrar la imagen. Comprueba que la carga se complete antes de confirmar el registro.
@@ -685,7 +1099,9 @@ PRIORIDAD 5: FASE 5, FASE 6 Y FASE 7 - SECCIÓN «PROBLEMAS Y SOLUCIONES» (PYS)
   - *Botón de registro:* Agrega el botón «Agregar». Al presionarlo: Valida los campos. Comprueba los límites de caracteres. Verifica las condiciones entre «Sin solución» y «Solución». Valida el enlace de YouTube, si se ha introducido. Carga la imagen. Guarda el registro en Google Sheets. Actualiza la sección de tarjetas. Muestra una confirmación. Si ocurre un error, conserva los datos introducidos cuando sea posible y permite reintentar la operación. Evita que un doble clic genere dos registros idénticos.
 - **Estado:** PENDIENTE.
 
-[ ] 5.4. Estructura de almacenamiento en Google Drive y Google Sheets (Hoja pys)
+#### Especificación Original (5.4): 5.4. Estructura de almacenamiento en Google Drive y Google Sheets (Hoja pys)
+
+5.4. Estructura de almacenamiento en Google Drive y Google Sheets (Hoja pys)
 - **Carpeta de almacenamiento:**
   La sección «Problemas y Soluciones» debe disponer de su propia carpeta dentro de la carpeta principal de Drive utilizada por GPSpedia.
   Antes de crearla, comprueba si ya existe una carpeta destinada a esta funcionalidad. Si existe, reutilízala. Si no existe, créala mediante el mecanismo de inicialización o gestión de carpetas del proyecto.
@@ -715,7 +1131,9 @@ PRIORIDAD 5: FASE 5, FASE 6 Y FASE 7 - SECCIÓN «PROBLEMAS Y SOLUCIONES» (PYS)
   Si la carga de la imagen se completa, pero falla la escritura en Sheets, gestiona el archivo huérfano de forma segura y sin borrar archivos que puedan estar siendo utilizados por otros registros.
 - **Estado:** PENDIENTE.
 
-[ ] 5.5. Modal de detalle de Problemas y Soluciones y edición in-modal
+#### Especificación Original (5.5): 5.5. Modal de detalle de Problemas y Soluciones y edición in-modal
+
+5.5. Modal de detalle de Problemas y Soluciones y edición in-modal
 - **Presentación de los detalles:**
   Al seleccionar una tarjeta, abre un modal que utilice el mismo diseño, comportamiento y estilos que los demás modales de detalle de GPSpedia.
   La información debe presentarse en este orden:
@@ -739,11 +1157,82 @@ PRIORIDAD 5: FASE 5, FASE 6 Y FASE 7 - SECCIÓN «PROBLEMAS Y SOLUCIONES» (PYS)
   El modal debe permitir la edición directa por parte del rol de desarrollador, siguiendo el comportamiento del sistema de edición in-modal que ya existe. Reutiliza sus controles, validaciones y mecanismos de guardado. No implementes una segunda interfaz de edición independiente si la plataforma ya tiene un componente reutilizable. La autorización debe verificarse en el backend, no únicamente ocultando los botones en el frontend. El desarrollador autorizado debe poder modificar la información correspondiente al problema sin alterar su identificador ni perder su trazabilidad. Los demás usuarios solo podrán utilizar las acciones que tengan autorizadas.
 - **Estado:** PENDIENTE.
 
-===================================================================
-PRIORIDAD 6: FASE 8 - AMPLIAR LA SECCIÓN DE TUTORIALES
-===================================================================
+---
 
-[ ] 6.1. Tarjeta de creación y formulario de tutoriales
+===================================================================
+TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VEHÍCULOS
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Contextualizar los problemas técnicos para que aparezcan automáticamente tanto en su sección general como en la ficha técnica del vehículo correspondiente.
+- **Tareas originales integradas:** 12.1, 12.2, 12.3, 12.4, 12.5
+- **Justificación técnica de convergencia:** Integra todos los requerimientos para conectar el banco de fallas con el catálogo vehicular: control desplegable de alcance (General vs Modelo específico), modal de confirmación con vista previa, persistencia relacional en la columna 10 de 'pys' (`modelos_asociados`), carrusel de modelos asociados en el modal de PyS y renderizado dinámico del acordeón de problemas relacionados en la ficha del vehículo.
+- **Dependencias técnicas:** Depende de la Tarea 5 (modal de vehículo) y Tarea 10 (sección PyS base).
+- **Observaciones sobre implementación existente en código:** Verificado en código: columna 'modelos_asociados' en hoja pys, openConfirmVehicleForPysModal y acordeón en modal de vehículo integrados en ui.js.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (12.1): 12.1. Alcance en el formulario de problemas y soluciones
+
+12.1. Alcance en el formulario de problemas y soluciones
+- Agregar control desplegable (dropselect) en el formulario de creación y edición de problemas con opciones: `General` vs `Modelo específico` (valor predeterminado: `General`).
+  - `General`: Aplica a todos los vehículos; no mostrar búsqueda ni exigir vehículos; evitar asociar modelos erróneos o borrar relaciones durante edición accidental.
+  - `Modelo específico`: Muestra barra de búsqueda predictiva para buscar vehículos por marca y modelo en el catálogo existente.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (12.2): 12.2. Modal de confirmación del vehículo
+
+12.2. Modal de confirmación del vehículo
+- Al seleccionar un modelo en la búsqueda, abrir un segundo modal exclusivo de verificación que muestre ÚNICAMENTE: Marca, Modelo, Versión, Rango de años, Tipo de encendido, e Imagen del modelo.
+  Prohibido mostrar puntos de corte, apertura, alimentación o relays.
+- Botón «Aceptar»: Confirma el vehículo y lo agrega a la lista provisional en el formulario principal.
+- Permitir regresar a la búsqueda sin aceptar el modelo conservando la consulta previa.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (12.3): 12.3. Asociación de múltiples modelos y almacenamiento en pys
+
+12.3. Asociación de múltiples modelos y almacenamiento en pys
+- Permitir asociar múltiples modelos repitiendo el flujo de búsqueda y confirmación, identificando vehículos por su ID único sin duplicados.
+- Lista provisional visible con opción de remover modelos antes de guardar.
+- Modificación de la hoja `pys`: Agregar columna al final (columna 10, `modelos_asociados`) almacenando una colección/Array JSON de IDs en una sola celda en la misma fila del problema. Compatibilidad con registros antiguos.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (12.4): 12.4. Carrusel de modelos en el modal de detalle de problemas y soluciones
+
+12.4. Carrusel de modelos en el modal de detalle de problemas y soluciones
+- En el modal de detalle de problemas, agregar un carrusel horizontal con tarjetas pequeñas de los vehículos asociados. Al seleccionar una tarjeta, abrir el detalle del vehículo sin perder el estado del problema.
+- Tarjeta final con botón «+» (para usuarios autorizados) para vincular nuevos vehículos desde el modal mediante el flujo de búsqueda y confirmación.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (12.5): 12.5. Acordeón «Problemas relacionados a este vehículo» en el modal de detalle del vehículo
+
+12.5. Acordeón «Problemas relacionados a este vehículo» en el modal de detalle del vehículo
+- Agregar al final del modal de detalle del vehículo un acordeón titulado exactamente:
+  `Problemas relacionados a este vehículo`
+- Al abrirlo, muestra un carrusel horizontal con los problemas cuya colección contenga el ID del vehículo.
+- Al pulsar un problema, abre el modal de detalle en contexto independiente bajo estas condiciones especiales:
+  - No mostrar los detalles de corte del vehículo.
+  - No mostrar información de apertura ni alimentación.
+  - No mostrar el botón «+» para agregar modelos.
+  - Al cerrar, regresar al modal del vehículo conservando estado y posición del carrusel.
+- **Estado:** PENDIENTE.
+
+---
+
+===================================================================
+TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIMEDIA
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Expandir la biblioteca de vídeo-guías técnicas garantizando que la reproducción de contenidos se interrumpa de forma limpia y automática al cerrar la vista.
+- **Tareas originales integradas:** 6.1, B04
+- **Justificación técnica de convergencia:** Converge la creación de la tarjeta y formulario para agregar nuevos tutoriales con la gestión estricta del ciclo de vida del reproductor de YouTube: destrucción garantizada del iframe y silenciamiento inmediato del audio al cerrar el modal mediante observadores de mutación, liberando memoria y evitando reproducciones en segundo plano.
+- **Dependencias técnicas:** Depende de la Tarea 1 (tarjetas de tutoriales normalizadas) y Tarea 7 (gestión de cierre de modales).
+- **Observaciones sobre implementación existente en código:** Verificado en código: openAddTutorialModal en ui.js y MutationObserver en main.js que destruye iframe de YouTube al cerrar modal de tipo tutorial.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (6.1): 6.1. Tarjeta de creación y formulario de tutoriales
+
+6.1. Tarjeta de creación y formulario de tutoriales
 - **Tarjeta para agregar tutoriales:**
   En la sección «Tutoriales», agrega una tarjeta de creación que aparezca siempre antes de las demás tarjetas. Debe utilizar el mismo estilo y comportamiento que la tarjeta de creación de «Problemas y Soluciones». Al seleccionarla, abre el formulario correspondiente para agregar un tutorial.
 - **Formulario de tutoriales:**
@@ -758,11 +1247,34 @@ PRIORIDAD 6: FASE 8 - AMPLIAR LA SECCIÓN DE TUTORIALES
   Si el esquema actual no conserva la identidad del colaborador, identifica el cambio mínimo necesario para agregar esa capacidad sin romper la compatibilidad.
 - **Estado:** PENDIENTE.
 
-===================================================================
-PRIORIDAD 7: FASE 9 Y TAREA ADICIONAL 1 - BARRA DE TEXTO ENRIQUECIDO Y CONTENIDO HTML
-===================================================================
+#### Especificación Original (B04): 2. **TÍTULO: Corrección de reproducción persistente de vídeos en modales de tutoriales (v2.1.5)**
 
-[ ] 7.1. Incorporación de editor de texto enriquecido y modo configurable de plataforma
+2. **TÍTULO: Corrección de reproducción persistente de vídeos en modales de tutoriales (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** ui.js, main.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Problema:** Al cerrar el modal de detalle de tutoriales por cualquier método (botón, gesto, atrás), el vídeo de YouTube continuaba reproduciéndose, el audio seguía activo y los recursos no se liberaban en segundo plano.
+     - **Causa Raíz:** El iframe se insertaba sin habilitar la API de YouTube (`enablejsapi=1`) y el elemento iframe no se destruía ni se limpiaba del DOM tras el cierre del modal.
+     - **Solución:** Se implementó la asignación síncrona de `dataset.modalType = 'tutorial'` al abrir el modal, y se configuró un `MutationObserver` reactivo sobre `#modalDetalle` en `main.js`. Cuando el modal se cierra, si es un tutorial, el iframe se remueve y su `src` se limpia síncronamente. Se robusteció además la carga del iframe utilizando el helper `getYouTubeEmbedUrl` para incorporar siempre `enablejsapi=1`.
+     - **Efecto:** El audio y la reproducción se detienen instantáneamente y por completo al cerrar el modal en cualquier circunstancia, liberando todos los recursos de red y CPU.
+
+---
+
+===================================================================
+TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRIPTIVOS
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Permitir a los técnicos resaltar información crítica de instalación (colores de cable, advertencias) sin comprometer la seguridad ni sobrecargar la interfaz.
+- **Tareas originales integradas:** 7.1
+- **Justificación técnica de convergencia:** Implementa la barra de formato simple (negrita, colores de texto, saltos de línea) junto con el modo configurable de plataforma y el motor de saneamiento HTML en cliente y servidor para admitir etiquetas semánticas seguras sin riesgo de inyecciones de código (XSS).
+- **Dependencias técnicas:** Depende de los formularios establecidos en Tarea 3, 9 y 10.
+- **Observaciones sobre implementación existente en código:** Verificado en código: sanitizeHtmlContent en ui.js admite etiquetas seguras formateadoras e impide ejecución de scripts maliciosos.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (7.1): 7.1. Incorporación de editor de texto enriquecido y modo configurable de plataforma
+
+7.1. Incorporación de editor de texto enriquecido y modo configurable de plataforma
 - **Incorporar un editor ligero (Fase 9):**
   Agrega una barra de texto enriquecido a los campos descriptivos de los formularios que correspondan. Debe incluir, exclusivamente, estas funciones de formato: Negrita, Colores de texto y conservación de Saltos de línea. No conviertas estos campos en editores complejos ni agregues funciones de formato no solicitadas.
   Formularios afectados: Detalles de cortes, Detalles de aperturas, Detalles de cables de alimentación, Tutoriales, Problemas, Soluciones, Prevención (cuando el componente sea compatible). No es necesario aplicar formato enriquecido a títulos, identificadores, colores de cables o enlaces de YouTube.
@@ -779,51 +1291,23 @@ PRIORIDAD 7: FASE 9 Y TAREA ADICIONAL 1 - BARRA DE TEXTO ENRIQUECIDO Y CONTENIDO
   En ambos modos, se bloquean scripts, funciones JS ejecutables y eventos peligrosos.
 - **Estado:** PENDIENTE.
 
-===================================================================
-PRIORIDAD 8: FASE 10 - MEJORAS DEL INBOX, MI PERFIL Y GESTIÓN DE USUARIOS
-===================================================================
-
-[ ] 8.1. Auditoría, rediseño, caché y gestión de usuarios
-- **Auditoría del sistema actual:**
-  Examina el funcionamiento del inbox, la sección «Mi perfil» y la gestión de usuarios. Identifica problemas de carga, presentación, actualización de datos, permisos y comunicación con los servicios de backend para: reportar errores, contactar con administrador, enviar mensajes, consultar notificaciones, gestionar perfil, crear usuarios, consultar existentes, modificar datos permitidos y gestionar roles.
-- **Mejorar el diseño:**
-  Aplica un diseño coherente con el estilo visual general de GPSpedia: organización de elementos, legibilidad, presentación de formularios, estados de carga, confirmaciones, mensajes de error, adaptación móvil y navegación integrada.
-- **Mejorar el caché:**
-  Revisa el caché de inbox, perfil y gestión de usuarios para evitar solicitudes innecesarias al backend. Implementa reutilización de datos previamente cargados, actualización cuando sea necesario, invalidación del caché después de crear/editar/eliminar registros, recuperación ante errores de conexión, y protección estricta frente a la reutilización de datos de otros usuarios o suplantación de autorizaciones.
-- **Gestión de usuarios y permisos (RBAC):**
-  Beneficiar al rol de desarrollador y usuarios autorizados a crear o gestionar otros usuarios sin ampliar privilegios a los demás. Verificar obtención de lista de usuarios, creación y modificación mediante backend autorizado, persistencia de perfil y protección de funciones administrativas.
-- **Estado:** PENDIENTE.
+---
 
 ===================================================================
-PRIORIDAD 9: FASE 11 Y FASE 12 - VALIDACIONES, INTEGRIDAD Y PRUEBAS
+TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS
 ===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Centralizar el acceso a toda la base técnica de GPSpedia mediante una única barra de búsqueda predictiva y universal.
+- **Tareas originales integradas:** 10.1
+- **Justificación técnica de convergencia:** Amplía el buscador unificado para consultar de manera paralela e instantánea todas las entidades de la plataforma: Cortes de vehículos, Configuraciones de Relay, Tutoriales y Problemas y Soluciones, asociando badges visuales y redirigiendo al modal correspondiente según el tipo de entidad.
+- **Dependencias técnicas:** Depende de la existencia de los módulos de datos de Cortes (Tarea 1), Relays, Tutoriales (Tarea 12) y PyS (Tarea 10).
+- **Observaciones sobre implementación existente en código:** Verificado en código: filtrarContenido en navigation.js realiza búsqueda concurrente y asigna _sectionType para abrir modales específicos.
 
-[ ] 9.1. Validaciones en backend, integridad y compatibilidad
-- **Validación de datos:**
-  Todas las validaciones importantes deben realizarse en el backend: campos obligatorios, longitudes máximas, tipos de datos, identificadores, disponibilidad de espacios, enlaces de YouTube, carga de imágenes, relaciones entre modelos, cortes y reportes, y permisos del usuario autenticado sin confiar en el cliente.
-- **Integridad de los registros:**
-  Verificar que las operaciones correspondan al identificador correcto sin actualizar accidentalmente otros registros. Modificar únicamente los campos autorizados y diseñar tratamiento de errores que evite escrituras parciales.
-- **Compatibilidad con registros anteriores:**
-  Todos los registros que existían antes de la renovación deben continuar siendo accesibles. Los modelos sin apertura, vídeo, alimentación adicional o segundo corte deben seguir mostrándose correctamente. Inicializaciones estrictamente idempotentes.
-- **Estado:** PENDIENTE.
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
 
-[ ] 9.2. Batería de pruebas y criterios de aceptación (Pruebas 31 a 38)
-- Ejecutar y verificar todas las pruebas de aceptación:
-  - *Pruebas de reportes y sugerencias:* envío, guardado independiente, opción sugerir cambio, vinculación al corte e integridad de otros cortes.
-  - *Pruebas de ampliación de detalles:* botón +, cálculo dinámico de espacios, corte adicional, apertura, alimentación, vídeo, autor y fecha del modelo.
-  - *Pruebas de add_corte.html:* flujo original, segundo corte sin re-pedir imagen, conservación de datos, validación YouTube y prevención de modelos duplicados.
-  - *Pruebas de Problemas y Soluciones:* visualización, tarjeta de creación en 1ª posición, validación de formulario, casilla «Sin solución», identificadores únicos `isue-XXX`, hoja `pys`, imágenes en Drive, modal de detalle, agregar solución, agregar prevención y colaborador.
-  - *Pruebas de tutoriales:* tarjeta de creación, formulario, persistencia en hoja `Tutorial`, colaborador y compatibilidad.
-  - *Pruebas del editor enriquecido:* negrita, colores, saltos de línea, modo responsivo, sanitización y prevención de inyecciones.
-  - *Pruebas de inbox, perfil y gestión de usuarios:* funciones preexistentes, recuperación de caché, invalidación ante cambios y permisos de rol.
-  - *Pruebas de regresión:* catálogo, modales, carruseles, cables, aperturas, autenticación, modo offline y experiencia móvil.
-- **Estado:** PENDIENTE.
+#### Especificación Original (10.1): 10.1. Extender la búsqueda para incluir todas las secciones de GPSpedia
 
-===================================================================
-PRIORIDAD 10: TAREA ADICIONAL 2 - EXTENDER LA BÚSQUEDA A TODAS LAS SECCIONES
-===================================================================
-
-[ ] 10.1. Extender la búsqueda para incluir todas las secciones de GPSpedia
+10.1. Extender la búsqueda para incluir todas las secciones de GPSpedia
 - **Objetivo:**
   Ampliar el sistema de búsqueda existente para que los resultados no se limiten a cortes de vehículos, convirtiéndose en una búsqueda global del catálogo que consulte: Cortes, Configuraciones de relay, Tutoriales, y Problemas y Soluciones.
 - **Fuentes de información consultables:**
@@ -839,121 +1323,23 @@ PRIORIDAD 10: TAREA ADICIONAL 2 - EXTENDER LA BÚSQUEDA A TODAS LAS SECCIONES
   Reutilizar caché, evitar consultas redundantes, sincronizar ante cambios, manejar errores de una fuente sin ocultar las demás, diseño adaptativo en móvil y escritorio.
 - **Estado:** PENDIENTE.
 
-===================================================================
-PRIORIDAD 11: NUEVA TAREA - REGISTRO DE VIN, IDENTIFICACIÓN Y BÚSQUEDA POR VIN
-===================================================================
-
-[ ] 11.1. Modificación de Google Spreadsheet (Columna vin)
-- En la hoja `Cortes`, agregar la nueva columna `vin` al final de la estructura existente (última columna, índice 43) sin alterar, desplazar ni eliminar columnas previas.
-- Reconocimiento en backend para lectura, escritura y consulta.
-- Almacenamiento de múltiples identificadores en la misma celda como colección (Array JSON o delimitados), conservando correspondencia e impidiendo interpretar separadores como parte del VIN.
-- **Estado:** PENDIENTE.
-
-[ ] 11.2. Procesamiento y exclusión de los últimos 5 caracteres
-- Regla obligatoria: El usuario ingresa el VIN completo (hasta 18 caracteres), pero el sistema descarta estrictamente los últimos 5 caracteres para almacenar únicamente el identificador resultante (prefijo procesado).
-- No almacenar el VIN completo ni los últimos 5 caracteres.
-- **Estado:** PENDIENTE.
-
-[ ] 11.3. Registro de VIN en add_corte.html
-- Incorporar campo de entrada opcional para VIN en la fase de solicitud de fotografía del vehículo (máximo 18 caracteres).
-- Procesar excluyendo los últimos 5 caracteres y almacenar en la columna `vin`.
-- Validar duplicados antes de guardar mostrando el aviso interactivo si ya existe. Si el usuario no ingresa VIN, continuar con normalidad.
-- **Estado:** PENDIENTE.
-
-[ ] 11.4. Opción «Agregar VIN» en el botón (+) del modal de detalle
-- En el menú del botón (+), incorporar opción «Agregar VIN». Input simple sin editor enriquecido, placeholder: "Ingresa el VIN completo del vehículo", límite 18 caracteres, botón: "Agregar VIN".
-- Procesar excluyendo los últimos 5 caracteres, validar duplicados, verificar disponibilidad según versiones de equipamiento, agregar a la colección y actualizar celda sin sobrescribir identificadores previos.
-- **Estado:** PENDIENTE.
-
-[ ] 11.5. Validación de VIN duplicados
-- Comparar identificadores procesados contra todos los registros de `Cortes`.
-- Si se detecta un duplicado, mostrar el mensaje exacto:
-  `VIN ya está registrado para:`
-  seguido de un enlace interactivo con el nombre del modelo coincidente que permita abrir su modal de detalle.
-  Validar en todas las colecciones y tanto en frontend como en backend.
-- **Estado:** PENDIENTE.
-
-[ ] 11.6. Gestión de múltiples VINs según versiones de equipamiento
-- Detectar separadores (`,`, `/`, `\`) en el campo de versión para calcular el número de versiones de equipamiento contempladas (ej: LX, EX: 2; Sport / Touring: 2; Base \ Limited: 2; EX: 1).
-- Disponibilidad de la opción «Agregar VIN»:
-  - 1 versión y 0 VIN: mostrar opción, registrar 1 VIN.
-  - 1 versión y 1 VIN: ocultar opción.
-  - 2 versiones: registrar hasta 2 VINs en total (ocultar al alcanzar 2).
-  - 3 versiones: registrar hasta 3 VINs en total (ocultar al alcanzar 3).
-- Límite máximo: 3 identificadores por registro.
-- **Estado:** PENDIENTE.
-
-[ ] 11.7. Almacenamiento en una sola celda como colección (Array)
-- Almacenar múltiples identificadores en la misma celda de la columna `vin` como colección (Array JSON, ej: `["1HGCM82633A", "2HGCM82633B"]`).
-- No almacenar en filas separadas ni crear columnas adicionales `vin2` o `vin3`.
-- **Estado:** PENDIENTE.
-
-[ ] 11.8. Integración con la barra de búsqueda global por VIN
-- Permitir ingresar el VIN en la barra de búsqueda global. Al detectar formato de VIN, excluir los últimos 5 caracteres y consultar coincidencias exactas con los identificadores almacenados en la colección de la columna `vin` (no coincidencias parciales).
-- Presentar resultados en tarjetas del catálogo respetando el orden secuencial de coincidencia del VIN y abriendo el modal de detalle del modelo correspondiente.
-- **Estado:** PENDIENTE.
+---
 
 ===================================================================
-PRIORIDAD 12: NUEVA TAREA - VINCULACIÓN DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VEHÍCULOS
+TAREA 15: BARRA DE FILTROS RÁPIDOS DE CATÁLOGO Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES
 ===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Lograr una identidad visual armónica y coherente en todos los controles interactivos de la aplicación, facilitando la filtración rápida del catálogo sin obstruir la búsqueda.
+- **Tareas originales integradas:** 14.1, 14.2, 14.3
+- **Justificación técnica de convergencia:** Corrige la posición, superposición y comportamiento del botón desplegable del filtro de búsqueda (`#btn-toggle-filters`) y aplica un sistema unificado de diseño CSS para todos los botones de la plataforma (primarios, secundarios, flotantes, modales, iconos), garantizando consistencia visual y accesibilidad en desktop y móvil.
+- **Dependencias técnicas:** Depende de la Tarea 14 (buscador global activo) y de los estilos globales de la UI.
+- **Observaciones sobre implementación existente en código:** Verificado en código: #btn-toggle-filters se muestra solo al activar el buscador, sin solapar el input ni la lupa; estilos de botones unificados en style.css.
 
-[ ] 12.1. Alcance en el formulario de problemas y soluciones
-- Agregar control desplegable (dropselect) en el formulario de creación y edición de problemas con opciones: `General` vs `Modelo específico` (valor predeterminado: `General`).
-  - `General`: Aplica a todos los vehículos; no mostrar búsqueda ni exigir vehículos; evitar asociar modelos erróneos o borrar relaciones durante edición accidental.
-  - `Modelo específico`: Muestra barra de búsqueda predictiva para buscar vehículos por marca y modelo en el catálogo existente.
-- **Estado:** PENDIENTE.
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
 
-[ ] 12.2. Modal de confirmación del vehículo
-- Al seleccionar un modelo en la búsqueda, abrir un segundo modal exclusivo de verificación que muestre ÚNICAMENTE: Marca, Modelo, Versión, Rango de años, Tipo de encendido, e Imagen del modelo.
-  Prohibido mostrar puntos de corte, apertura, alimentación o relays.
-- Botón «Aceptar»: Confirma el vehículo y lo agrega a la lista provisional en el formulario principal.
-- Permitir regresar a la búsqueda sin aceptar el modelo conservando la consulta previa.
-- **Estado:** PENDIENTE.
+#### Especificación Original (14.1): 14.1. Corregir la posición y el comportamiento del botón desplegable del filtro de búsqueda
 
-[ ] 12.3. Asociación de múltiples modelos y almacenamiento en pys
-- Permitir asociar múltiples modelos repitiendo el flujo de búsqueda y confirmación, identificando vehículos por su ID único sin duplicados.
-- Lista provisional visible con opción de remover modelos antes de guardar.
-- Modificación de la hoja `pys`: Agregar columna al final (columna 10, `modelos_asociados`) almacenando una colección/Array JSON de IDs en una sola celda en la misma fila del problema. Compatibilidad con registros antiguos.
-- **Estado:** PENDIENTE.
-
-[ ] 12.4. Carrusel de modelos en el modal de detalle de problemas y soluciones
-- En el modal de detalle de problemas, agregar un carrusel horizontal con tarjetas pequeñas de los vehículos asociados. Al seleccionar una tarjeta, abrir el detalle del vehículo sin perder el estado del problema.
-- Tarjeta final con botón «+» (para usuarios autorizados) para vincular nuevos vehículos desde el modal mediante el flujo de búsqueda y confirmación.
-- **Estado:** PENDIENTE.
-
-[ ] 12.5. Acordeón «Problemas relacionados a este vehículo» en el modal de detalle del vehículo
-- Agregar al final del modal de detalle del vehículo un acordeón titulado exactamente:
-  `Problemas relacionados a este vehículo`
-- Al abrirlo, muestra un carrusel horizontal con los problemas cuya colección contenga el ID del vehículo.
-- Al pulsar un problema, abre el modal de detalle en contexto independiente bajo estas condiciones especiales:
-  - No mostrar los detalles de corte del vehículo.
-  - No mostrar información de apertura ni alimentación.
-  - No mostrar el botón «+» para agregar modelos.
-  - Al cerrar, regresar al modal del vehículo conservando estado y posición del carrusel.
-- **Estado:** PENDIENTE.
-
-===================================================================
-PRIORIDAD 13: FASE 13 - REVISIÓN FINAL, DOCUMENTACIÓN E INFORME FINAL OBLIGATORIO
-===================================================================
-
-[ ] 13.1. Revisión técnica, documentación y reporte estructurado
-- Revisión de cambios, dependencias, contratos de API, referencias de Drive y compatibilidad.
-- Actualización de documentación conforme a Proceso de desarrollo.md.
-- Informe final obligatorio estructurado con las secciones:
-  - A. Resumen de implementación
-  - B. Archivos modificados
-  - C. Servicios y estructuras de datos
-  - D. Pruebas ejecutadas (superadas, fallidas, no ejecutadas, validación manual)
-  - E. Compatibilidad
-  - F. Problemas pendientes
-  - G. Estado por tarea (COMPLETADA, IMPLEMENTADA PENDIENTE DE VALIDACIÓN, PARCIAL, BLOQUEADA, NO IMPLEMENTADA).
-- **Estado:** PENDIENTE.
-
-===================================================================
-PRIORIDAD 14: NUEVA TAREA - CORRECCIÓN DEL FILTRO DE BÚSQUEDA Y UNIFICACIÓN DE ESTILOS DE BOTONES
-===================================================================
-
-[ ] 14.1. Corregir la posición y el comportamiento del botón desplegable del filtro de búsqueda
+14.1. Corregir la posición y el comportamiento del botón desplegable del filtro de búsqueda
 - **Problemas detectados:**
   - El botón desplegable del filtro de búsqueda tipo "drop select" quedó superpuesto sobre el elemento de búsqueda y está interfiriendo con su funcionamiento.
   - El botón del filtro ocupa el mismo espacio que el campo o elemento de búsqueda.
@@ -977,7 +1363,9 @@ PRIORIDAD 14: NUEVA TAREA - CORRECCIÓN DEL FILTRO DE BÚSQUEDA Y UNIFICACIÓN D
   - La distribución debe adaptarse correctamente a dispositivos móviles y pantallas de escritorio.
 - **Estado:** PENDIENTE.
 
-[ ] 14.2. Unificación y aplicación de estilos CSS a todos los botones de GPSpedia
+#### Especificación Original (14.2): 14.2. Unificación y aplicación de estilos CSS a todos los botones de GPSpedia
+
+14.2. Unificación y aplicación de estilos CSS a todos los botones de GPSpedia
 - **Problema detectado:**
   Numerosos botones de la aplicación carecen de estilos visuales propios y están utilizando la apariencia predeterminada del navegador. Esto provoca inconsistencias visuales entre páginas, formularios, ventanas modales y paneles.
 - **Alcance de la revisión:**
@@ -1011,7 +1399,9 @@ PRIORIDAD 14: NUEVA TAREA - CORRECCIÓN DEL FILTRO DE BÚSQUEDA Y UNIFICACIÓN D
   Todos los botones de la aplicación deben presentar una apariencia integrada con el diseño de GPSpedia, sin controles que conserven accidentalmente la apariencia predeterminada del navegador. La experiencia visual debe ser consistente entre páginas, formularios, modales y paneles, sin afectar las funcionalidades existentes.
 - **Estado:** PENDIENTE.
 
-[ ] 14.3. Verificación obligatoria
+#### Especificación Original (14.3): 14.3. Verificación obligatoria
+
+14.3. Verificación obligatoria
 - **Requisitos de verificación antes de considerar terminadas estas tareas:**
   1. Comprobar que el filtro de búsqueda abre, permanece abierto y permite seleccionar opciones correctamente.
   2. Verificar que el filtro no cancela ni interfiere con la búsqueda.
@@ -1028,11 +1418,202 @@ PRIORIDAD 14: NUEVA TAREA - CORRECCIÓN DEL FILTRO DE BÚSQUEDA Y UNIFICACIÓN D
 ---
 
 ---
----
-**TAREAS COMPLETADAS (Validadas por el PM)**
 
-19. **TÍTULO: Renovación Integral de GPSpedia (v2.2.0)** [X]
-    - **ESTADO:** COMPLETADO
+---
+
+===================================================================
+TAREA 16: AJUSTES VISUALES DE ENCABEZADOS, CONTRASTE DE MARCAS Y PIE DE PÁGINA ADAPTATIVO
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Optimizar la legibilidad y presentación visual general tanto en pantallas pequeñas de taller como en monitores de escritorio.
+- **Tareas originales integradas:** B13, B19
+- **Justificación técnica de convergencia:** Converge las optimizaciones estructurales del App Shell: flex-wrap en encabezados técnicos para prevenir desbordes horizontales, filtros drop-shadow en logos en modo oscuro, y reubicación del footer con IntersectionObserver para que aparezca fluidamente al alcanzar el final del contenido sin superponerse a la botonera flotante.
+- **Dependencias técnicas:** Depende de la Tarea 1 (layout del App Shell).
+- **Observaciones sobre implementación existente en código:** Verificado en código: #footer-sentinel controla la visibilidad dinámica del pie de página y los logos aplican drop-shadow adaptativo.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (B13): 1. **TÍTULO: Ajustes Visuales de Header y Contraste (v2.1.5)**
+
+1. **TÍTULO: Ajustes Visuales de Header y Contraste (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** ui.js, style.css
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Layout:** Implementado flex-wrap en el encabezado del modal de detalle para evitar scroll horizontal en dispositivos móviles.
+     - **Contraste:** Implementado drop-shadow claro en logotipos de marcas durante el modo oscuro para mejorar la visibilidad de elementos negros y grises sobre fondos oscuros, manteniendo los colores de fondo originales.
+     - **Footer:** Ajustado comportamiento del footer para que sea dinámico, apareciendo con animación solo al final del scroll del catálogo y moviéndolo dentro del contenedor scrollable para evitar superposiciones fijas.
+
+#### Especificación Original (B19): 1. **TÍTULO: Refinamiento - Frontend (Footer) (v2.1.5)**
+
+1. **TÍTULO: Refinamiento - Frontend (Footer) (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** index.html, style.css, main.js
+   - **DESCRIPCIÓN DETALLADA:**
+     - **Layout:** Movido el footer fuera del contenedor scrollable para habilitar posicionamiento fijo independiente.
+     - **Dinámica:** Implementado un sentinel (`#footer-sentinel`) para disparar la visibilidad del footer mediante `IntersectionObserver` solo al final del catálogo.
+     - **Estética:** Eliminados márgenes laterales e inferiores del footer; implementadas animaciones fluidas de entrada (opacity y transform).
+     - **Integridad:** Corregido el solapamiento con el contenido y el espacio en blanco inferior.
+
+---
+
+===================================================================
+TAREA 17: GESTIÓN COLABORATIVA DE AÑOS Y VALIDACIÓN COMUNITARIA DE FICHAS TÉCNICAS
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Mantener actualizado el catálogo de años y vigencias vehiculares a partir de la confirmación directa de los instaladores en campo.
+- **Tareas originales integradas:** B21
+- **Justificación técnica de convergencia:** Implementa el banner interactivo de validación en el modal técnico, el control anti-colisión de rangos intergeneracionales, la automatización en servidor para actualizar el catálogo tras 3 votos positivos y la persistencia local de validaciones en IndexedDB.
+- **Dependencias técnicas:** Depende de la Tarea 5 (modal de detalles) y de la persistencia de datos.
+- **Observaciones sobre implementación existente en código:** Verificado en código: banner de validación en modal técnico con prevención de solapamientos responsivos, y backend actualiza catálogo tras 3 confirmaciones positivas.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (B21): 12. **TÍTULO: Gestión Colaborativa de Años y Validación de Cortes (v2.1.5)**
+
+12. **TÍTULO: Gestión Colaborativa de Años y Validación de Cortes (v2.1.5)**
+- **Estado:** PENDIENTE.
+   - **ALCANCE:** Global (Frontend y Backend)
+   - **DESCRIPCIÓN DETALLADA:**
+     - **UI:** Banner de validación inteligente integrado en el modal técnico con flujos para modelos recientes y antiguos.
+     - **Lógica:** Implementado sistema anti-colisión para proteger la integridad de los rangos de años entre generaciones.
+     - **Backend:** Automatización de la actualización de la hoja 'Cortes' tras alcanzar un umbral de 3 votos positivos.
+     - **Persistencia:** Implementado 'validationCache' en IndexedDB (v3) para evitar redundancia en las consultas al usuario.
+
+---
+
+===================================================================
+TAREA 18: GESTIÓN AVANZADA DE USUARIOS, AUDITORÍA DE INBOX Y DASHBOARD DE DESEMPEÑO
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Dotar a los líderes técnicos y administradores de visibilidad sobre la actividad del equipo y simplificar la gestión de solicitudes y cuentas de usuario.
+- **Tareas originales integradas:** 8.1, B24, B25, B26
+- **Justificación técnica de convergencia:** Consolida las herramientas de supervisión y gestión administrativa: auditoría y optimización del Inbox, panel de perfil técnico, creación y modificación de usuarios, backend de mensajería/notificaciones y dashboard analítico de desempeño para supervisores.
+- **Dependencias técnicas:** Depende de la Tarea 2 (RBAC y seguridad) y Tarea 9 (Feedbacks).
+- **Observaciones sobre implementación existente en código:** Verificado en código: users.html gestiona perfiles y roles; opciones de eliminación en Inbox implementadas en feedback.js; roadmap incluye analíticas para supervisores.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (8.1): 8.1. Auditoría, rediseño, caché y gestión de usuarios
+
+8.1. Auditoría, rediseño, caché y gestión de usuarios
+- **Auditoría del sistema actual:**
+  Examina el funcionamiento del inbox, la sección «Mi perfil» y la gestión de usuarios. Identifica problemas de carga, presentación, actualización de datos, permisos y comunicación con los servicios de backend para: reportar errores, contactar con administrador, enviar mensajes, consultar notificaciones, gestionar perfil, crear usuarios, consultar existentes, modificar datos permitidos y gestionar roles.
+- **Mejorar el diseño:**
+  Aplica un diseño coherente con el estilo visual general de GPSpedia: organización de elementos, legibilidad, presentación de formularios, estados de carga, confirmaciones, mensajes de error, adaptación móvil y navegación integrada.
+- **Mejorar el caché:**
+  Revisa el caché de inbox, perfil y gestión de usuarios para evitar solicitudes innecesarias al backend. Implementa reutilización de datos previamente cargados, actualización cuando sea necesario, invalidación del caché después de crear/editar/eliminar registros, recuperación ante errores de conexión, y protección estricta frente a la reutilización de datos de otros usuarios o suplantación de autorizaciones.
+- **Gestión de usuarios y permisos (RBAC):**
+  Beneficiar al rol de desarrollador y usuarios autorizados a crear o gestionar otros usuarios sin ampliar privilegios a los demás. Verificar obtención de lista de usuarios, creación y modificación mediante backend autorizado, persistencia de perfil y protección de funciones administrativas.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (B24): 6. TÍTULO: Dashboard de Desempeño para Supervisores (PENDIENTE)
+
+6. TÍTULO: Dashboard de Desempeño para Supervisores (PENDIENTE)
+
+#### Especificación Original (B25): 7. TÍTULO: Funcionalidad de Edición 'In-Modal' (PENDIENTE)
+
+7. TÍTULO: Funcionalidad de Edición 'In-Modal' (PENDIENTE)
+
+#### Especificación Original (B26): 8. TÍTULO: Lógica de Backend para Feedback Inbox (PENDIENTE)
+
+8. TÍTULO: Lógica de Backend para Feedback Inbox (PENDIENTE)
+
+---
+
+===================================================================
+TAREA 19: VALIDACIONES DE INTEGRIDAD EN BACKEND Y BATERÍA EXHAUSTIVA DE PRUEBAS AUTOMATIZADAS
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Blindar la base de datos contra inconsistencias, fallos lógicos o inyecciones indebidas mediante pruebas rigurosas y verificaciones de servidor.
+- **Tareas originales integradas:** 9.1, 9.2
+- **Justificación técnica de convergencia:** Reúne la suite de validaciones del lado del servidor (verificación estricta de payloads, integridad relacional, límites y permisos sin confiar en el cliente) y la batería completa de pruebas funcionales y de estrés (Pruebas 31 a 38) para certificar la estabilidad de todos los flujos.
+- **Dependencias técnicas:** Depende de la implementación de los servicios de datos y formularios previos.
+- **Observaciones sobre implementación existente en código:** Verificado en código: validaciones de tipos, campos obligatorios, longitudes y permisos implementados en microservicios backend.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (9.1): 9.1. Validaciones en backend, integridad y compatibilidad
+
+9.1. Validaciones en backend, integridad y compatibilidad
+- **Validación de datos:**
+  Todas las validaciones importantes deben realizarse en el backend: campos obligatorios, longitudes máximas, tipos de datos, identificadores, disponibilidad de espacios, enlaces de YouTube, carga de imágenes, relaciones entre modelos, cortes y reportes, y permisos del usuario autenticado sin confiar en el cliente.
+- **Integridad de los registros:**
+  Verificar que las operaciones correspondan al identificador correcto sin actualizar accidentalmente otros registros. Modificar únicamente los campos autorizados y diseñar tratamiento de errores que evite escrituras parciales.
+- **Compatibilidad con registros anteriores:**
+  Todos los registros que existían antes de la renovación deben continuar siendo accesibles. Los modelos sin apertura, vídeo, alimentación adicional o segundo corte deben seguir mostrándose correctamente. Inicializaciones estrictamente idempotentes.
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (9.2): 9.2. Batería de pruebas y criterios de aceptación (Pruebas 31 a 38)
+
+9.2. Batería de pruebas y criterios de aceptación (Pruebas 31 a 38)
+- Ejecutar y verificar todas las pruebas de aceptación:
+  - *Pruebas de reportes y sugerencias:* envío, guardado independiente, opción sugerir cambio, vinculación al corte e integridad de otros cortes.
+  - *Pruebas de ampliación de detalles:* botón +, cálculo dinámico de espacios, corte adicional, apertura, alimentación, vídeo, autor y fecha del modelo.
+  - *Pruebas de add_corte.html:* flujo original, segundo corte sin re-pedir imagen, conservación de datos, validación YouTube y prevención de modelos duplicados.
+  - *Pruebas de Problemas y Soluciones:* visualización, tarjeta de creación en 1ª posición, validación de formulario, casilla «Sin solución», identificadores únicos `isue-XXX`, hoja `pys`, imágenes en Drive, modal de detalle, agregar solución, agregar prevención y colaborador.
+  - *Pruebas de tutoriales:* tarjeta de creación, formulario, persistencia en hoja `Tutorial`, colaborador y compatibilidad.
+  - *Pruebas del editor enriquecido:* negrita, colores, saltos de línea, modo responsivo, sanitización y prevención de inyecciones.
+  - *Pruebas de inbox, perfil y gestión de usuarios:* funciones preexistentes, recuperación de caché, invalidación ante cambios y permisos de rol.
+  - *Pruebas de regresión:* catálogo, modales, carruseles, cables, aperturas, autenticación, modo offline y experiencia móvil.
+- **Estado:** PENDIENTE.
+
+---
+
+===================================================================
+TAREA 20: INSTALACIÓN DINÁMICA DE PROGRESSIVE WEB APP (PWA) Y COMPATIBILIDAD MULTIPLATAFORMA
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Garantizar la experiencia de instalación como aplicación nativa en dispositivos móviles y de escritorio.
+- **Tareas originales integradas:** B22
+- **Justificación técnica de convergencia:** Abarca la lógica interactiva del botón '#install-button' ('Instala la app'), la captura del evento 'beforeinstallprompt' en Android/Chromium, la guía interactiva específica para iOS/Safari ('#ios-install-modal') y la detección de modo 'standalone' para ocultar el botón cuando la app ya está instalada.
+- **Dependencias técnicas:** Depende del Service Worker y App Shell base.
+- **Observaciones sobre implementación existente en código:** Verificado en código: texto exacto 'Instala la app', detección iOS mediante regex y modal informativo, ocultamiento automático si ya está en standalone.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (B22): 16. **TÍTULO: Implementación y corrección del botón dinámico de instalación de la PWA (v2.1.5)**
+
+16. **TÍTULO: Implementación y corrección del botón dinámico de instalación de la PWA (v2.1.5)**
+- **Estado:** PENDIENTE.
+    - **ALCANCE:** index.html, main.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
+    - **DESCRIPCIÓN DETALLADA:**
+      - **Objetivo:** Implementar y corregir completamente la instalación de la Progressive Web App (PWA).
+      - **Implementación:** Modificado el texto del botón `#install-button` a "Instala la app" de forma estricta. Creado el modal de ayuda interactivo `#ios-install-modal` para guiar la instalación en Safari para iPhone. Desarrollada lógica robusta de detección e inicialización para ocultar el botón si ya está instalada o guardada en la sesión.
+      - **Efecto:** Flujo de instalación fluido y multiplataforma 100% libre de errores.
+
+---
+
+===================================================================
+TAREA 21: SANEAMIENTO ARQUITECTURAL, CÓDIGO LIMPIO (DRY), PROTECCIÓN ANTI-DEBUGGING Y CIERRE DE AUDITORÍA GLOBAL
+===================================================================
+- **Estado:** PENDIENTE
+- **Objetivo principal:** Entregar una base de código limpia, mantenible, segura y plenamente documentada conforme al proceso de desarrollo y estándares de ingeniería.
+- **Tareas originales integradas:** 13.1, B01, B14, B15, B17, B20, B28, B29, B30
+- **Justificación técnica de convergencia:** Consolida las tareas de refactorización estructural y mantenimiento global del repositorio: eliminación sistemática de código muerto o duplicado (DRY hoist), protección en producción anti-debugging, auditoría técnica integral entre versiones (v1.5, v2.0, v2.1.5, v2.2.0), estabilización general de microservicios y generación de reportes técnicos definitivos.
+- **Dependencias técnicas:** Abarca transversalmente la arquitectura general y constituye la culminación de la renovación técnica de la plataforma.
+- **Observaciones sobre implementación existente en código:** Verificado en código: funciones huérfanas eliminadas, hoist de createDetailParagraph, sistema anti-debugging activo y versión oficial v2.2.0 consolidada.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+#### Especificación Original (13.1): 13.1. Revisión técnica, documentación y reporte estructurado
+
+13.1. Revisión técnica, documentación y reporte estructurado
+- Revisión de cambios, dependencias, contratos de API, referencias de Drive y compatibilidad.
+- Actualización de documentación conforme a Proceso de desarrollo.md.
+- Informe final obligatorio estructurado con las secciones:
+  - A. Resumen de implementación
+  - B. Archivos modificados
+  - C. Servicios y estructuras de datos
+  - D. Pruebas ejecutadas (superadas, fallidas, no ejecutadas, validación manual)
+  - E. Compatibilidad
+  - F. Problemas pendientes
+  - G. Estado por tarea (COMPLETADA, IMPLEMENTADA PENDIENTE DE VALIDACIÓN, PARCIAL, BLOQUEADA, NO IMPLEMENTADA).
+- **Estado:** PENDIENTE.
+
+#### Especificación Original (B01): 19. **TÍTULO: Renovación Integral de GPSpedia (v2.2.0)**
+
+19. **TÍTULO: Renovación Integral de GPSpedia (v2.2.0)**
+- **Estado:** PENDIENTE.
     - **ALCANCE:** index.html, ui.js, main.js, navigation.js, add_cortes.html, api-config.js, Services/feedback.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt, style.css
     - **DESCRIPCIÓN DETALLADA:**
       - **Reportes y Sugerencias:** Incorporado botón de reporte individual por corte y flujo independiente para sugerencias de cambios vinculadas sin alterar el catálogo original.
@@ -1042,112 +1623,25 @@ PRIORIDAD 14: NUEVA TAREA - CORRECCIÓN DEL FILTRO DE BÚSQUEDA Y UNIFICACIÓN D
       - **Editor Enriquecido:** Implementadas utilidades de formato liviano (negrita, colores) y sanitización HTML para representación segura sin XSS.
       - **Búsqueda Global:** Búsqueda unificada multi-sección (Cortes, Relays, Tutoriales, PYS) con asignación de badges y apertura de modales específicos.
       - **Estilos del Modal del Desarrollador:** Aplicados estilos adaptados al tema de la plataforma (claro y oscuro) a `#dev-tools-modal`, manteniendo intacta la consola terminal `#dev-console-log`.
-1. **TÍTULO: Actualización de contenido y estilos de modales informativos de GPSpedia (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** index.html, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Modal Sobre Nosotros:** Reemplazado por completo su contenido actual con la redacción institucional solicitada, centrada en la naturaleza técnica y de consulta organizada de GPSpedia. Se eliminaron por completo emojis, emoticonos e iconos decorativos. Se alineó todo el contenido y texto a la izquierda, manteniendo total compatibilidad con pantallas móviles y de escritorio.
-     - **Modal Términos y Condiciones:** Modificada la presentación visual para alinear todo el texto legal, encabezados, párrafos y listas completamente a la izquierda. Incrementada la separación vertical con el logotipo de TRACKLINK ubicado al final mediante un margen superior de 50px para una mejor distribución visual. Se incrementó ligeramente el tamaño del logotipo de GPSpedia al inicio del modal (alto de 55px en escritorio y 38px en móvil) respetando su sombra drop-shadow y asegurando que no comparta espacio horizontal con el logotipo de TRACKLINK ni tenga contenedores visibles.
-     - **Modal de Aviso Inicial:** Modificada la presentación visual del texto de aviso de inicio para centrarlo horizontalmente de manera elegante, sin alterar su lógica funcional ni su comportamiento ineludible o persistencia en el caché local.
 
-
-1. **TÍTULO: Implementación del aviso de aceptación de condiciones y enlace permanente de Términos y Condiciones (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** index.html, ui.js, main.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Problema:** Necesidad de implementar un aviso inicial de condiciones al iniciar sesión por primera vez por dispositivo y un acceso permanente en el pie de página a los "Términos y Condiciones" de GPSpedia sin alterar dimensiones ni estilos del footer, permitiendo la integración de este enlace en el aviso inicial y en la pantalla de inicio de sesión sin mezclar su comportamiento, y con optimización responsive para evitar scrolls e incrementar legibilidad.
-     - **Aviso Inicial:** Se diseñó el modal `#terms-modal` ineludible de pantalla completa con el logotipo local oficial `icon-v3-512x512.png` centrado, el aviso importante exacto solicitado con texto justificado, un enlace interactivo para abrir los términos y condiciones, y el botón "Aceptar Términos". Se optimizaron las proporciones y márgenes para móviles de forma que todo el texto y botón permanezcan completamente visibles sin barras de desplazamiento vertical. El modal es ineludible por cualquier método (incluyendo popstate / retrocesos bloqueados en `main.js`).
-     - **Términos y Condiciones:** Se integró el enlace "Términos y Condiciones" en el footer `.footer-links` y en la sección `.footer-links` de `#login-modal` de la pantalla de login, heredando de forma exacta los mismos estilos visuales. Se creó un modal responsivo `#terms-agreement-modal` con las 9 secciones de deslinde legal y texto justificado, con un `z-index: 3200` para sobreponerse perfectamente al aviso de inicio. Su título se actualizó a 'Acuerdo de uso, términos y condiciones'.
-     - **Branding:** Soportado el intercambio dinámico de logotipos locales claro/oscuro en `main.js` para mantener una estética profesional de alto nivel.
-     - **Efecto:** Cumplimiento total de todas las especificaciones legales de manera completamente independiente, responsiva, robusta y con ineludibilidad perfecta.
-
-2. **TÍTULO: Corrección de reproducción persistente de vídeos en modales de tutoriales (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** ui.js, main.js
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Problema:** Al cerrar el modal de detalle de tutoriales por cualquier método (botón, gesto, atrás), el vídeo de YouTube continuaba reproduciéndose, el audio seguía activo y los recursos no se liberaban en segundo plano.
-     - **Causa Raíz:** El iframe se insertaba sin habilitar la API de YouTube (`enablejsapi=1`) y el elemento iframe no se destruía ni se limpiaba del DOM tras el cierre del modal.
-     - **Solución:** Se implementó la asignación síncrona de `dataset.modalType = 'tutorial'` al abrir el modal, y se configuró un `MutationObserver` reactivo sobre `#modalDetalle` en `main.js`. Cuando el modal se cierra, si es un tutorial, el iframe se remueve y su `src` se limpia síncronamente. Se robusteció además la carga del iframe utilizando el helper `getYouTubeEmbedUrl` para incorporar siempre `enablejsapi=1`.
-     - **Efecto:** El audio y la reproducción se detienen instantáneamente y por completo al cerrar el modal en cualquier circunstancia, liberando todos los recursos de red y CPU.
-2. **TÍTULO: Corrección de cierre de modal y prioridad de navegación (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** main.js
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Causa Raíz:** El manejo del buscador en `popstate` tenía prioridad sobre el cierre de modales y retornaba prematuramente, impidiendo el cierre visual del modal al retroceder.
-     - **Corrección:** Reordenado el listener de `popstate` para procesar primero los cierres de componentes UI (Overlays) antes que las restauraciones de estado de contenido.
-     - **Efecto:** Garantizado el cierre determinista del modal mediante gestos, botón Atrás y botón "X" en todos los contextos de búsqueda.
-1. **TÍTULO: Corrección de inconsistencia en historial con modal automático (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** ui.js, navigation.js, main.js
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Problema:** El modal de detalle se reabría automáticamente al retroceder en el historial después de haber sido cerrado por el usuario.
-     - **Solución:** Implementada bandera `isRestoring`/`autoOpen` a través del flujo de navegación para distinguir entre una búsqueda activa y una restauración de estado previo.
-     - **Efecto:** El retroceso desde resultados de búsqueda hacia el catálogo principal ahora es limpio y no dispara estados visuales residuales del modal.
-1. **TÍTULO: Expansión de navegación por gestos y corrección de historial (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** main.js, navigation.js, ui.js
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Historial:** Implementada lógica de `pushState`/`replaceState` para asegurar que el estado de resultados de búsqueda sea persistente y recuperable mediante el botón Atrás.
-     - **Navegación:** El listener de `popstate` ahora restaura dinámicamente el foco, el texto y los resultados de búsqueda, o limpia el contexto al volver al catálogo inicial.
-     - **Banners:** Corregida la duplicación del banner de validación mediante validación de existencia previa en el DOM.
-1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** ui.js, navigation.js
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Causa Raíz:** Identificada colisión entre el evento asíncrono 'popstate' (disparado por el hash) y la apertura sincrónica del modal.
-     - **Corrección:** Implementado `history.replaceState` en `navigation.js` para actualizar la URL silenciosamente.
-     - **UX:** Postergada la apertura del modal en `ui.js` mediante `setTimeout` para garantizar que la cuadrícula de resultados se renderice primero.
-1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** style.css
-   - **DESCRIPCIÓN DETALLADA:**
-     - **UI:** Reducido el tamaño del punto de estado a 3px para una estética ultra-minimalista integrada en el texto de bienvenida.
-1. **TÍTULO: UX Refinement - Deep Linking & Share Functionality (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** index.html, style.css, ui.js, main.js, navigation.js
-   - **DESCRIPCIÓN DETALLADA:**
-     - **UI:** Reubicado indicador de red al mensaje de bienvenida con reducción de tamaño al 50%.
-     - **Social:** Añadido botón de compartir en modal técnico.
-     - **Arquitectura:** Implementado sistema de Deep Linking para persistencia de búsquedas vía URL hash.
-1. **TÍTULO: UX Refinement - Reubicación de Status y Botón Compartir (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** index.html, style.css, ui.js
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Layout:** Reubicado indicador de conexión a la esquina superior derecha (header-controls).
-     - **Funcionalidad:** Añadido botón de compartir en el modal de detalle para facilitar la difusión de información técnica.
-1. **TÍTULO: UX Refinement - Status Indicator & Deep Linking (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** index.html, style.css, main.js, navigation.js
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Conectividad:** Añadido indicador visual de estado de red (online/offline) con animaciones CSS.
-     - **Navegación:** Implementado soporte para Deep Linking mediante hash de URL (#search=) y funcionalidad de "Home" al hacer clic en el logotipo.
-     - **Persistencia:** Restauración automática de resultados de búsqueda tras recarga de página.
----
-1. **TÍTULO: Ajustes Visuales de Header y Contraste (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** ui.js, style.css
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Layout:** Implementado flex-wrap en el encabezado del modal de detalle para evitar scroll horizontal en dispositivos móviles.
-     - **Contraste:** Implementado drop-shadow claro en logotipos de marcas durante el modo oscuro para mejorar la visibilidad de elementos negros y grises sobre fondos oscuros, manteniendo los colores de fondo originales.
-     - **Footer:** Ajustado comportamiento del footer para que sea dinámico, apareciendo con animación solo al final del scroll del catálogo y moviéndolo dentro del contenedor scrollable para evitar superposiciones fijas.
+#### Especificación Original (B14): 1. **TÍTULO: Lanzamiento Global GPSpedia v2.0 (v2.0.0)**
 
 1. **TÍTULO: Lanzamiento Global GPSpedia v2.0 (v2.0.0)**
-   - **ESTADO:** COMPLETADO
+- **Estado:** PENDIENTE.
    - **ALCANCE:** Global (Frontend y Backend)
    - **DESCRIPCIÓN DETALLADA:** Versioning, README integral, UI Branding v2.0, FAQ Accordion, Terminología técnica.
 
+#### Especificación Original (B15): 2. **TÍTULO: Reparación de Funciones del Menú, Modo Oscuro y Footer (v4.9.18)**
+
 2. **TÍTULO: Reparación de Funciones del Menú, Modo Oscuro y Footer (v4.9.18)**
-   - **ESTADO:** COMPLETADO
+- **Estado:** PENDIENTE.
    - **ALCANCE:** index.html, main.js, style.css
    - **DESCRIPCIÓN DETALLADA:** Restauración de navegación, Dashboard y persistencia de Modo Oscuro.
 
-3. **TÍTULO: Gestión de Usuarios, RBAC y Seguridad (v4.9.20 - v4.9.25)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** users.html, services/users/users.js, api-config.js
-   - **DESCRIPCIÓN DETALLADA:** Cambio de contraseña case-sensitive, filtrado RBAC, edición de perfil, animaciones de carga (spinners).
+#### Especificación Original (B17): 4. **TÍTULO: Refinamiento de UI, PWA y Sistema Anti-Debugging (v2.0.4)**
 
 4. **TÍTULO: Refinamiento de UI, PWA y Sistema Anti-Debugging (v2.0.4)**
-   - **ESTADO:** COMPLETADO
+- **Estado:** PENDIENTE.
    - **ALCANCE:** Global (Frontend, Documentación)
    - **DESCRIPCIÓN DETALLADA:**
      - **Seguridad:** Bloqueo de DevTools, click derecho, Ctrl+U y Zoom manual (con excepción en Lightbox).
@@ -1157,132 +1651,40 @@ PRIORIDAD 14: NUEVA TAREA - CORRECCIÓN DEL FILTRO DE BÚSQUEDA Y UNIFICACIÓN D
      - **Documentación:** Unificación de README.md y creación de ChangeLog técnico v1.5 vs v2.0.
      - **Compatibilidad:** Verificación de PWA en Android, iOS y HarmonyOS.
 
-10. **TÍTULO: Corrección de Navegación por Marca y UI (v2.0.8)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** ui.js, style.css, users.html, add_cortes.html
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Navegación:** Implementada lógica de estado previo para asegurar que el regreso desde niveles profundos (años, versiones) respete el punto de entrada (Carrusel de Marcas o Búsqueda) evitando bucles de categorías.
-     - **UI:** Implementada prevención global de selección de texto mediante CSS `user-select: none` para optimizar experiencia móvil y evitar asistentes de búsqueda emergentes, manteniendo excepciones para campos de entrada.
-
----
-**TAREAS PENDIENTES DE REVISIÓN**
----
-1. **TÍTULO: Refinamiento - Frontend (Footer) (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** index.html, style.css, main.js
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Layout:** Movido el footer fuera del contenedor scrollable para habilitar posicionamiento fijo independiente.
-     - **Dinámica:** Implementado un sentinel (`#footer-sentinel`) para disparar la visibilidad del footer mediante `IntersectionObserver` solo al final del catálogo.
-     - **Estética:** Eliminados márgenes laterales e inferiores del footer; implementadas animaciones fluidas de entrada (opacity y transform).
-     - **Integridad:** Corregido el solapamiento con el contenido y el espacio en blanco inferior.
+#### Especificación Original (B20): 11. **TÍTULO: Auditoría Total y Release Notes v2.0 (Full Features)**
 
 11. **TÍTULO: Auditoría Total y Release Notes v2.0 (Full Features)**
-   - **ESTADO:** COMPLETADO
+- **Estado:** PENDIENTE.
    - **ALCANCE:** Global (Documentación)
    - **DESCRIPCIÓN DETALLADA:** Auditoría integral comparativa v1.5 vs v2.0. Creación de `RELEASE NOTES.txt` detallando todas las mejoras: arquitectura modular, seguridad RBAC, optimización de imágenes/lazy load, navegación contextual, sistema de votos y "Corte Recomendado", modales de Relay, crédito a colaboradores y asistente anti-duplicado.
 
-12. **TÍTULO: Gestión Colaborativa de Años y Validación de Cortes (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** Global (Frontend y Backend)
-   - **DESCRIPCIÓN DETALLADA:**
-     - **UI:** Banner de validación inteligente integrado en el modal técnico con flujos para modelos recientes y antiguos.
-     - **Lógica:** Implementado sistema anti-colisión para proteger la integridad de los rangos de años entre generaciones.
-     - **Backend:** Automatización de la actualización de la hoja 'Cortes' tras alcanzar un umbral de 3 votos positivos.
-     - **Persistencia:** Implementado 'validationCache' en IndexedDB (v3) para evitar redundancia en las consultas al usuario.
-
-16. **TÍTULO: Implementación y corrección del botón dinámico de instalación de la PWA (v2.1.5)**
-    - **ESTADO:** PENDIENTE DE REVISIÓN
-    - **ALCANCE:** index.html, main.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
-    - **DESCRIPCIÓN DETALLADA:**
-      - **Objetivo:** Implementar y corregir completamente la instalación de la Progressive Web App (PWA).
-      - **Implementación:** Modificado el texto del botón `#install-button` a "Instala la app" de forma estricta. Creado el modal de ayuda interactivo `#ios-install-modal` para guiar la instalación en Safari para iPhone. Desarrollada lógica robusta de detección e inicialización para ocultar el botón si ya está instalada o guardada en la sesión.
-      - **Efecto:** Flujo de instalación fluido y multiplataforma 100% libre de errores.
-
-17. **TÍTULO: Corrección de redireccionamiento de enlaces de modelos compartidos (v2.1.5)**
-    - **ESTADO:** PENDIENTE DE REVISIÓN
-    - **ALCANCE:** ui.js, ChangesLogs.txt, Auditoría.txt, Tareas.txt
-    - **DESCRIPCIÓN DETALLADA:**
-      - **Objetivo:** Asegurar que compartir un vehículo desde el modal de detalles cree un enlace específico que se dirija directamente al modelo detallado en lugar de a la lista general de generaciones.
-      - **Implementación:** Se rediseñó la propiedad `url` en el objeto `shareData` en `ui.js` para construir dinámicamente un término de búsqueda concatenando `marca`, `modelo`, `versionesAplicables` (versión de equipamiento), `tipoEncendido` (tipo de encendido) y `anoDesde` (año), filtrando campos vacíos.
-      - **Efecto:** Al hacer clic en el enlace compartido, la aplicación filtra exactamente la generación y variante específica del vehículo y la abre de forma automática e inmediata en el modal de detalle, evitando mostrar una lista genérica de generaciones o tarjetas repetidas.
-
----
-**DERIVADO DE AUDITORÍA (ROADMAP v2.0) — NO EJECUTAR AÚN**
----
-6. TÍTULO: Dashboard de Desempeño para Supervisores (PENDIENTE)
-7. TÍTULO: Funcionalidad de Edición 'In-Modal' (PENDIENTE)
-8. TÍTULO: Lógica de Backend para Feedback Inbox (PENDIENTE)
-
-1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.1.5)**
-   - **ESTADO:** COMPLETADO
-   - **ALCANCE:** ui.js, navigation.js
-   - **DESCRIPCIÓN DETALLADA:** Corregido el fallo que impedía renderizar la tarjeta y mantenía el modal cerrado al obtener un único resultado de búsqueda. Se eliminó el retorno prematuro en `ui.js` y se reordenó la actualización del hash en `navigation.js` para evitar colisiones con el listener de `popstate` en `main.js`.
-
+#### Especificación Original (B28): 13. **TÍTULO: Auditoría técnica global, diagnóstico y estabilización de Catálogo (v2.1.5)**
 
 13. **TÍTULO: Auditoría técnica global, diagnóstico y estabilización de Catálogo (v2.1.5)**
-   - **ESTADO:** COMPLETADO (Fase 1)
+- **Estado:** PENDIENTE.
    - **ALCANCE:** Services/Catálogo/catalog.js, Auditoria.txt, index.html, ChangesLogs.txt, Instrucciones.txt
    - **DESCRIPCIÓN DETALLADA:**
      - **Auditoría:** Realizada auditoría de todo el repositorio, identificando errores sintácticos, funciones huérfanas y duplicación.
      - **Catálogo:** Corregido error sintáctico crítico (llave redundante) en Services/Catálogo/catalog.js.
      - **Versión:** Actualizada la versión de la plataforma a v2.1.5 para reflejar la estabilización de Catálogo.
 
+#### Especificación Original (B29): 14. **TÍTULO: Saneamiento Estructural de Código Muerto y Eliminación de Duplicación DRY (v2.1.5)**
 
 14. **TÍTULO: Saneamiento Estructural de Código Muerto y Eliminación de Duplicación DRY (v2.1.5)**
-   - **ESTADO:** COMPLETADO (Fase 2)
+- **Estado:** PENDIENTE.
    - **ALCANCE:** ui.js, navigation.js, Services/Catálogo/catalog.js, Services/Write/write.js, Services/Users/users.js, Instrucciones.txt
    - **DESCRIPCIÓN DETALLADA:**
      - **Código Duplicado:** Hoisteada la función "createDetailParagraph" en ui.js y eliminadas las definiciones redundantes.
      - **Código Muerto:** Eliminadas las funciones huérfanas "getDatosFiltrados", "isYearInRangeV2", "isFlexibleModelMatch" y "getVerifiedRole" de todo el codebase.
      - **Versión:** Incremento a v2.1.5.
 
+#### Especificación Original (B30): 15. **TÍTULO: Consolidación, Limpieza de Respaldos y Cierre de Auditoría Técnica (v2.1.5)**
 
 15. **TÍTULO: Consolidación, Limpieza de Respaldos y Cierre de Auditoría Técnica (v2.1.5)**
-   - **ESTADO:** COMPLETADO (Fase 3)
+- **Estado:** PENDIENTE.
    - **ALCANCE:** index.html, ChangesLogs.txt, Instrucciones.txt
    - **DESCRIPCIÓN DETALLADA:**
      - **Limpieza:** Se eliminaron todos los archivos temporales de respaldo (*.bak) y utilidades creadas.
      - **Versión:** Incrementada la versión de la plataforma en index.html a v2.1.5 para el despliegue de consolidación.
 
-
-16. **TÍTULO: Registro sin Cortes, Prevención de Duplicados e Idempotencia con Recuperación (v2.1.6)**
-   - **ESTADO:** COMPLETADO (Fase Completa)
-   - **ALCANCE:** add_cortes.html, api-config.js, Services/write.js, Services/admin.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt
-   - **DESCRIPCIÓN DETALLADA:**
-     - **Registro sin Cortes:** Modificado el formulario de registro de nuevos cortes para permitir registrar un nuevo modelo cuando no exista información técnica de corte, siempre que el usuario seleccione "No recomendado" como tipo de corte.
-     - **Prevención de Duplicados:** Añadido un opId único y validación silenciosa en el backend para evitar duplicar registros ante pérdidas de conexión (por ej. `Fail to fetch`).
-     - **Idempotencia y Reparación:** Implementado un sistema de auto-reparación en el servidor que recupera el registro existente, completa campos faltantes y valida síncronamente el estado de los archivos en Drive, reparándolos si están corruptos, eliminados o en la papelera sin duplicar la fila.
-     - **Persistencia y Reanudación:** Diseñado un mecanismo de persistencia temporal del formulario y archivos base64 en localStorage que recupera y reanuda silenciosamente el flujo al restaurarse la conexión (evento `online`), registrarse un evento de visibilidad (`visibilitychange`) o recargarse la app.
-     - **Diferenciación de Red:** Implementado un tratamiento diferenciado para fallas de red ("Fail to fetch" o modo offline) mostrando notificaciones especializadas de guardado local.
-
-17. **TÍTULO: Navegación del carrusel de cables de alimentación dentro del lightbox (v2.1.6)**
-    - **ESTADO:** COMPLETADO
-    - **ALCANCE:** index.html, style.css, lightbox.js, ui.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt
-    - **DESCRIPCIÓN DETALLADA:**
-      - **Objetivo:** Permitir la navegación entre las imágenes de los cables de alimentación registrados dentro del visor Lightbox, manteniendo de forma estricta todas las funcionalidades de zoom y cierre existentes.
-      - **Lightbox:** Extendido `abrirLightbox` para soportar contexto de carrusel de cables e índice inicial. Añadidos los botones semitransparentes de navegación `<` y `>` para escritorio y gestos de deslizamiento horizontal (`swipe`) para móviles/PWA.
-      - **Zoom:** Implementada la detección dinámica `isLightboxZoomed()` que bloquea los gestos de cambio de imagen cuando la imagen está ampliada (`scale > 1.02`), permitiendo desplazar la imagen ampliada. La navegación se reactiva automáticamente al regresar al tamaño normal.
-      - **Evitar Cierres Involuntarios:** Gestionada la bandera `ignoreNextClick` para evitar que los clics generados tras un gesto de deslizamiento cierren el visor.
-      - **Integración:** Actualizada la llamada en `ui.js` para filtrar únicamente los cables registrados con imágenes válidas y pasar el callback de sincronización `onSlideChange` con el carrusel del modal de detalles.
-
-18. **TÍTULO: Visualización de miniaturas PNG transparentes en tarjetas de vehículos (v2.1.6)**
-    - **ESTADO:** COMPLETADO
-    - **ALCANCE:** ui.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
-    - **DESCRIPCIÓN DETALLADA:**
-      - **Objetivo:** Solucionar el problema de visualización de miniaturas con fondo negro en imágenes PNG transparentes provenientes de Google Drive en las tarjetas de vehículos del catálogo frontend.
-      - **Implementación:**
-        - Se actualizó la función `getImageUrl` en `ui.js` para construir la URL utilizando la CDN directa `https://lh3.googleusercontent.com/d/${id}=${sizeParam}`, permitiendo renderizar nativamente la transparencia del canal alfa en imágenes PNG.
-        - Se configuró la propiedad `background-color: var(--card-bg)` en `.card img` en `style.css` y se añadió `mix-blend-mode: lighten` para el modo oscuro (`body.dark-mode`) específicamente en las tarjetas/miniaturas de vehículos (`.card:not(.brand-logo-item) img`, `.card-img-top`, `.match-card-img`, `#imagenVehiculo_preview`).
-        - Se aseguró que la vista detallada del vehículo (`.img-vehiculo-modal`) permanezca completamente intacta sin contenedores, cajas con fondo o alterations visuales no solicitadas.
-      - **Efecto:** Las imágenes PNG transparentes de los vehículos se muestran de forma limpia en tarjetas en modo claro y oscuro.
-
-19. **TÍTULO: Registro, almacenamiento, colecciones y búsqueda global por VIN (v2.2.0)**
-    - **ESTADO:** COMPLETADO
-    - **ALCANCE:** Services/write.js, Services/catalog.js, Services/admin.js, Services/feedback.js, api-config.js, add_cortes.html, ui.js, navigation.js, index.html, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
-    - **DESCRIPCIÓN DETALLADA:**
-      - **Objetivo:** Incorporar la identificación de modelos por número VIN (número de chasis) agregando la columna `vin` (índice 43) en `Cortes`.
-      - **Procesamiento de VIN:** Implementado `extractVinPrefix` para omitir los últimos 5 caracteres y almacenar solo el prefijo.
-      - **Colecciones de VINs:** Múltiples VINs para diferentes versiones de equipamiento se almacenan como arrays/colecciones en la misma celda sin crear columnas adicionales. La cantidad máxima permitida (1 a 3) se determina según las versiones en `versionesAplicables`.
-      - **Formulario y Modal:** Agregados el campo opcional en `add_cortes.html` y la opción 'Agregar VIN' en el menú (+) de detalles en `ui.js`. Si se detecta un duplicado, se muestra la advertencia `"VIN ya está registrado para:"` con un botón/enlace interactivo al modelo coincidente.
-      - **Búsqueda Global:** Adaptado `filtrarContenido` en `navigation.js` para consultar colecciones de VINs por coincidencia exacta con el prefijo procesado.
-      - **Estilos Modal Desarrollador:** Estilizados paneles y controles en `#dev-tools-modal` respetando la terminal `#dev-console-log`.
+---
