@@ -1080,6 +1080,10 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
 - Archivo: ui.js
   - Líneas 4383-4530: En `openSuggestCutModal()`, se reconstruyó el formulario modal de sugerencias de cambios vinculadas a un corte específico. Se agregaron selectores dinámicos para Tipo de Corte y Configuración de Relay (utilizando las opciones homologadas del catálogo), campo de selección para testigo de motor Check Engine ("Sí, activa testigo", "No activa testigo", "No aplica"), inputs para ubicación y color de cable, carga opcional de imagen en Base64, y textarea obligatorio para la justificación del cambio. Se garantizó el aislamiento estricto del corte seleccionado (`validCorteNum = corteNum || currentCutData.index || 1`) y la vinculación con el `reportId` de origen.
 
+**TAREA 2.3: ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS**
+- Archivo: Services/feedback.js
+  - Líneas 685-760: En `handleSuggestCutChange()`, se estructura la propuesta de cambio para almacenarla como un registro independiente en la hoja 'Feedbacks' sin sobrescribir ni modificar la hoja 'Cortes' del catálogo. Se conservan inequívocamente: `reportId` (reporte de origen), `vehicleId`, `corteIndex`, `userId`, `userName`, marca temporal de creación ISO (`createdAt`), `imageUrl` en Google Drive, `details`, `proposedValues` estructurados y el estado de revisión (`Se resolvio = false`). Se registra la auditoría en `ActividadUsuario` y se retorna confirmación explícita con `suggestionData`.
+
 **TAREA: CORREGIR EL RECORTE DE TEXTO EN LAS NOTIFICACIONES DE CONSULTA DE VEHÍCULOS DE AÑOS ANTERIORES**
 - Archivo: style.css
   - Líneas 1170-1235:
@@ -1087,3 +1091,8 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
     * En `.validation-message`, se añadió `line-height: 1.45; word-break: normal; overflow-wrap: break-word; white-space: normal; margin: 0;` para que el texto de consulta de modelos de años anteriores se visualice íntegro y sin truncamientos.
     * En `.validation-actions`, se configuró `width: 100%; box-sizing: border-box; align-items: center; flex-wrap: wrap; gap: 8px;` evitando que los botones de respuesta se solapen o desborden el contenedor.
     * Se añadieron reglas responsivas `@media (max-width: 480px)` para ajustar paddings y tamaños de botones en dispositivos móviles y resoluciones reducidas (hasta 320px).
+
+**RESOLUCIÓN DE BLOCKING ISSUE: ALCANCE SEGURO DE DROPDOWNOPTIONS EN OPENSUGGESTCUTMODAL**
+- Archivo: ui.js
+  - Líneas 4420-4445: En `openSuggestCutModal()`, se blindó el acceso a `dropdownOptions` mediante `safeDropdowns` evaluando `(typeof dropdownOptions !== "undefined" && dropdownOptions) || (typeof window !== "undefined" && window.dropdownOptions) || (typeof getState === "function" && getState() && getState().dropdownOptions) || null`.
+  - Se previenen errores en tiempo de ejecución del tipo `ReferenceError` si la función es invocada o probada en entornos modulares aislados, conservando las matrices de opciones por defecto para tipo de corte y configuración de relay.

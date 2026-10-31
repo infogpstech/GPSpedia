@@ -265,3 +265,30 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
        * Agregar `word-break: normal;` y `overflow-wrap: break-word;` en `.validation-message` para garantizar que todo el texto se visualice completo.
        * Asegurar que `.validation-actions` permita envoltura natural de botones (`flex-wrap: wrap`) con `width: 100%` y altura automática.
        * Añadir reglas responsivas para dispositivos móviles (`@media (max-width: 480px)`) para garantizar espaciado adecuado.
+
+**AUDITORÍA TAREA 3.1: BOTÓN "+" Y MENÚ DINÁMICO DE AMPLIACIÓN EN EL MODAL DE DETALLE**
+- Archivos analizados: ui.js (openExpandMenuModal, mostrarDetalleModal), style.css (.btn-expand-plus, #detalleCompleto).
+- Diagnóstico y Hallazgos:
+  1. En `ui.js`:
+     - El botón flotante `.btn-expand-plus` se genera dinámicamente al abrir `mostrarDetalleModal` cuando `!window.inEditMode`, anclándose dentro de `cont` (`#detalleCompleto`) como un elemento accesible para usuarios autorizados.
+     - Al presionar `.btn-expand-plus`, se invoca `openExpandMenuModal(item)`, el cual realiza el cálculo dinámico de los espacios disponibles:
+       * Cortes disponibles: Se evalúan `item.tipoCorte1`, `item.tipoCorte2`, `item.tipoCorte3`, calculando `cutsAvailable = 3 - cutsCount`. Si `cutsAvailable <= 0`, la opción se oculta de la interfaz.
+       * Apertura de puertas: Se evalúa `!item.apertura`. Si ya existe registro de apertura, la opción se oculta dinámicamente.
+       * Cables de alimentación: Se evalúan `item.cableAlimen`, `item.cableAlimen2`, `item.cableAlimen3`, calculando `feedsAvailable = 3 - feedsCount`. Si `feedsAvailable <= 0`, la opción se oculta.
+       * Enlace de vídeo guía: Se evalúa `!item.videoGuiaDesarmeUrl`. Si ya cuenta con video guía registrado, la opción no se muestra.
+       * Agregar VIN: Determina dinámicamente el límite permitido según la cantidad de versiones de equipamiento (`versionesAplicables`: 1 a 3 VINs) y evalúa los VINs ya registrados en la colección `vin`. Oculta la opción si se ha alcanzado la cuota máxima.
+     - Cada opción enlaza directamente a sus respectivos flujos funcionales: `openAddCutForModelModal(item)`, `openAddAperturaModal(item)`, `openAddFeedModal(item)`, `openAddVideoModal(item)` y `openAddVinModal(item)`.
+     - Se requiere agregar el comentario identificativo de la Tarea 3.1 en la primera línea de `openExpandMenuModal(item)` para cumplir con los estándares del proyecto.
+
+**AUDITORÍA BLOCKING ISSUE: ALCANCE SEGURO DE DROPDOWNOPTIONS EN OPENSUGGESTCUTMODAL**
+- Archivo analizado: ui.js (openSuggestCutModal, líneas 4420-4445).
+- Diagnóstico y Hallazgos:
+  1. En `ui.js`, dentro de `openSuggestCutModal`, las expresiones:
+     `const tiposCorteOptions = (dropdownOptions && dropdownOptions.tipoDeCorte && ...)`
+     `const relayOptions = (dropdownOptions && dropdownOptions.configRelay && ...)`
+     acceden directamente al identificador `dropdownOptions` sin validar previamente su definición en el ámbito de ejecución ni resolverlo de fuentes seguras (`window.dropdownOptions`, `getState().dropdownOptions`, o verificación `typeof dropdownOptions !== "undefined"`).
+  2. Aunque `dropdownOptions` está declarado en el nivel superior del módulo `ui.js`, si `openSuggestCutModal` se exporta y evalúa o invoca en contextos donde no se haya cargado previamente la variable o en entornos de prueba modulares aislados, una referencia no protegida puede disparar un `ReferenceError`.
+  3. Plan de mitigación:
+     - Obtener las opciones de manera segura:
+       `const opts = (typeof dropdownOptions !== "undefined" && dropdownOptions) || (typeof window !== "undefined" && window.dropdownOptions) || (typeof getState === "function" && getState() && getState().dropdownOptions) || null;`
+     - Usar `opts` de manera blindada para resolver `opts.tipoDeCorte` y `opts.configRelay`, cayendo a las matrices por defecto si no están presentes.
