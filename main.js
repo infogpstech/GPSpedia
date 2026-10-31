@@ -199,6 +199,7 @@ async function initializeApp() {
     // Exponer handleViewportChange globalmente para lightbox.js
     window.handleViewportChange = handleViewportChange;
 
+    /* TAREA 7 (B05, B07): CIERRE DETERMINISTA DE OVERLAYS Y NAVEGACIÓN POR GESTOS EN POPSTATE */
     // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
     window.addEventListener('popstate', (event) => {
         const state = event.state || {};

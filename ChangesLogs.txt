@@ -1150,3 +1150,12 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
   - Línea 317: Agregado comentario identificativo /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES */ en la función getImageUrl.
 - style.css:
   - Línea 735: Agregado comentario identificativo /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES EN MODO OSCURO */ en la regla mix-blend-mode de miniaturas.
+
+**TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE SECUENCIAL DE OVERLAYS (v2.2.0)**
+- main.js:
+  - Línea 202: Agregado comentario identificativo /* TAREA 7 (B05, B07): CIERRE DETERMINISTA DE OVERLAYS Y NAVEGACIÓN POR GESTOS EN POPSTATE */ en el listener global de popstate.
+- navigation.js:
+  - Línea 220: Agregado comentario identificativo /* TAREA 7 (B08, B27): REPLACESTATE EN BÚSQUEDA PARA EVITAR COLISIONES CON AUTO-APERTURA */ en filtrarContenido.
+- ui.js:
+  - Línea 871: Agregado comentario identificativo /* TAREA 7 (B18): CONTEXTO 'ORIGIN' MARCA/CATEGORÍA Y RETORNO LIMPIO SIN BUCLES */ en mostrarVersionesEquipamiento.
+  - Línea 1256: Agregado comentario identificativo /* TAREA 7 (B06): DISTINCIÓN ENTRE BÚSQUEDA ACTIVA Y RESTAURACIÓN DEL HISTORIAL CON AUTO-OPEN */ en mostrarResultadosDeBusqueda.

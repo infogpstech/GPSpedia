@@ -217,6 +217,7 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
     // Actualizar el hash para Deep Linking ANTES de renderizar resultados.
     const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(textoBusqueda)}`;
 
+    /* TAREA 7 (B08, B27): REPLACESTATE EN BÚSQUEDA PARA EVITAR COLISIONES CON AUTO-APERTURA */
     if (!isRestoring) {
         if (wasAlreadySearching) {
             history.replaceState({ level: "busqueda_focused", query: textoBusqueda }, '', newUrl);

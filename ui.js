@@ -868,6 +868,7 @@ export function regresarABusqueda() {
     }
 }
 
+/* TAREA 7 (B18): CONTEXTO 'ORIGIN' MARCA/CATEGORÍA Y RETORNO LIMPIO SIN BUCLES */
 export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
     const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
@@ -1252,6 +1253,7 @@ function showValidationBanner(item, isOldModel) {
  * @param {string} searchData.query - El texto original de la búsqueda.
  * @param {Array} searchData.results - El array de resultados (strings de marcas o objetos de modelos).
  */
+/* TAREA 7 (B06): DISTINCIÓN ENTRE BÚSQUEDA ACTIVA Y RESTAURACIÓN DEL HISTORIAL CON AUTO-OPEN */
 // --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
 export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen = true) {
     const cont = document.getElementById("contenido");

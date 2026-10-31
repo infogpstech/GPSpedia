@@ -815,9 +815,9 @@ TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y REN
 ---
 
 ===================================================================
-TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE SECUENCIAL DE OVERLAYS
+TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE SECUENCIAL DE OVERLAYS [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Garantizar una experiencia de navegación nativa, robusta y predecible, impidiendo que el retroceso físico o táctil cierre la aplicación por error o mantenga estados inconsistentes en la interfaz.
 - **Tareas originales integradas:** B05, B06, B07, B08, B27, B18
 - **Justificación técnica de convergencia:** Unifica la gestión global del historial del navegador (History API), pila secuencial (Forward-Stack), control de eventos popstate y retroceso gestual en dispositivos móviles. Resuelve colisiones entre la auto-apertura de modales, el cierre secuencial prioritario de componentes emergentes (overlays) y el retorno contextual hacia la vista de origen (Marca vs Categoría).
@@ -829,7 +829,7 @@ TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE 
 #### Especificación Original (B05): 2. **TÍTULO: Corrección de cierre de modal y prioridad de navegación (v2.1.5)**
 
 2. **TÍTULO: Corrección de cierre de modal y prioridad de navegación (v2.1.5)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** main.js
    - **DESCRIPCIÓN DETALLADA:**
      - **Causa Raíz:** El manejo del buscador en `popstate` tenía prioridad sobre el cierre de modales y retornaba prematuramente, impidiendo el cierre visual del modal al retroceder.
@@ -839,7 +839,7 @@ TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE 
 #### Especificación Original (B06): 1. **TÍTULO: Corrección de inconsistencia en historial con modal automático (v2.1.5)**
 
 1. **TÍTULO: Corrección de inconsistencia en historial con modal automático (v2.1.5)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** ui.js, navigation.js, main.js
    - **DESCRIPCIÓN DETALLADA:**
      - **Problema:** El modal de detalle se reabría automáticamente al retroceder en el historial después de haber sido cerrado por el usuario.
@@ -849,7 +849,7 @@ TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE 
 #### Especificación Original (B07): 1. **TÍTULO: Expansión de navegación por gestos y corrección de historial (v2.1.5)**
 
 1. **TÍTULO: Expansión de navegación por gestos y corrección de historial (v2.1.5)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** main.js, navigation.js, ui.js
    - **DESCRIPCIÓN DETALLADA:**
      - **Historial:** Implementada lógica de `pushState`/`replaceState` para asegurar que el estado de resultados de búsqueda sea persistente y recuperable mediante el botón Atrás.
@@ -859,7 +859,7 @@ TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE 
 #### Especificación Original (B08): 1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.1.5)**
 
 1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.1.5)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** ui.js, navigation.js
    - **DESCRIPCIÓN DETALLADA:**
      - **Causa Raíz:** Identificada colisión entre el evento asíncrono 'popstate' (disparado por el hash) y la apertura sincrónica del modal.
@@ -869,14 +869,14 @@ TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE 
 #### Especificación Original (B27): 1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.1.5)**
 
 1. **TÍTULO: Diagnóstico y corrección de la apertura automática del modal (v2.1.5)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** ui.js, navigation.js
    - **DESCRIPCIÓN DETALLADA:** Corregido el fallo que impedía renderizar la tarjeta y mantenía el modal cerrado al obtener un único resultado de búsqueda. Se eliminó el retorno prematuro en `ui.js` y se reordenó la actualización del hash en `navigation.js` para evitar colisiones con el listener de `popstate` en `main.js`.
 
 #### Especificación Original (B18): 10. **TÍTULO: Corrección de Navegación por Marca y UI (v2.0.8)**
 
 10. **TÍTULO: Corrección de Navegación por Marca y UI (v2.0.8)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** ui.js, style.css, users.html, add_cortes.html
    - **DESCRIPCIÓN DETALLADA:**
      - **Navegación:** Implementada lógica de estado previo para asegurar que el regreso desde niveles profundos (años, versiones) respete el punto de entrada (Carrusel de Marcas o Búsqueda) evitando bucles de categorías.

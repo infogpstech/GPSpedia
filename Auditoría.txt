@@ -388,3 +388,21 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
    - En `ui.js` (`getImageUrl`), las URLs de Google Drive se construyen mediante CDN directa `https://lh3.googleusercontent.com/d/${id}` omitiendo parámetros de miniaturas `=w...` que degradan la transparencia convirtiendo PNGs a JPEG con fondo negro.
    - En `style.css` (líneas 734-740), se aplica `mix-blend-mode: lighten` exclusivamente en `.dark-mode .card:not(.brand-logo-item) img`, `.dark-mode .card-img-top`, `.dark-mode .match-card-img` y `#imagenVehiculo_preview`, permitiendo que cualquier residuo oscuro se funda con el fondo de la tarjeta oscura, mientras que en modo claro las tarjetas conservan fondo blanco uniforme.
    - Todo el flujo cumple los requisitos funcionales de la Tarea 6. Se insertarán los comentarios identificativos pertinentes.
+
+**AUDITORÍA TÉCNICA - TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE SECUENCIAL DE OVERLAYS (31/10/2026)**
+
+**Archivos involucrados:** `main.js`, `navigation.js`, `ui.js`, `style.css`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **main.js (Tareas B05, B07):**
+   - El listener de `popstate` implementa una jerarquía estricta: primero evalúa y cierra componentes emergentes (Overlays: `#modalDetalle`, Lightbox, menús modales, side-menu, modales secundarios) antes de restaurar o cambiar estados de búsqueda o secciones, garantizando un cierre determinista del modal al retroceder.
+   - Bloquea retrocesos si el modal ineludible `#terms-modal` está activo.
+   - Restaura dinámicamente el foco, texto y vista de búsqueda al retroceder.
+2. **navigation.js y ui.js (Tareas B06, B08, B27):**
+   - `history.replaceState` sincroniza la URL en búsquedas continuas para evitar acumular estados redundantes en el historial.
+   - La bandera `isRestoring` y `autoOpen` diferencia búsquedas activas de navegaciones del historial, evitando reaperturas involuntarias del modal al volver atrás.
+   - En resultados únicos, posterga mediante `setTimeout` la apertura del modal para permitir que la cuadrícula se renderice primero.
+3. **ui.js y style.css (Tarea B18):**
+   - La navegación propaga y persiste el atributo `origin` ('marca' o 'categoria') en `navigationState` en todos los niveles (versiones, tipos de encendido, equipamiento), garantizando que el botón '< Volver' regrese a la vista adecuada sin bucles.
+   - En `style.css`, se previene la selección accidental de texto en dispositivos móviles con `user-select: none`.
+   - Todo el flujo cumple plenamente con los requisitos funcionales de la Tarea 7. Se insertarán los comentarios identificativos conforme a la Regla 6.
