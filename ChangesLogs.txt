@@ -1041,3 +1041,58 @@ Líneas: 10-15
 Descripción: Actualizadas las URLs de producción de Google Apps Script para los microservicios Admin, Catalog, Feedback y Write en API_ENDPOINTS.
 - ui.js:
   - Líneas 4877-4958: En renderPysSection(), se implementó la estrategia de renderizado inmediato (fast-path) recuperando los datos en memoria de getState().pysData (0ms de latencia percibida al acceder a la sección) y sincronizando en segundo plano con routeAction('getPysData') para refrescar las tarjetas si los datos difieren, evitando bloqueos síncronos de red. Se añadió el comentario identificativo /* TAREA 1.4: CORRECCIÓN DE LAS DEMORAS DE CARGA EN LA SECCIÓN PROBLEMAS Y SOLUCIONES */.
+
+**TAREA 1.6: CORRECCIÓN DE LA CABECERA DEL MODAL DE DETALLE**
+- Archivo: ui.js
+  - Línea 1345: Agregado comentario identificativo de la Tarea 1.6.
+  - Línea 1347: Reducido el margen inferior de `headerDiv` a 4px y unificado el espaciado con `gap: 8px`.
+  - Línea 1395: Removido el margen derecho asimétrico (`marginRight: 5px`) del botón de imprimir ficha técnica (`printBtn`).
+  - Línea 1467: Ajustado el padding del botón de cerrar modal (`closeBtn`) a `padding: 0 4px`.
+  - Línea 1474: Compactado el contenedor del título (`titleContainer`) con borde inferior de 2px, `padding-bottom: 6px` y `margin-bottom: 10px`.
+- Archivo: style.css
+  - Líneas 952-962: Ajustada la altura máxima de `.brand-logo-modal` a 48px en escritorio y 38px en pantallas móviles (<= 600px), garantizando proporciones compactas y evitando que el logotipo desplace o comprima el nombre del modelo.
+
+**TAREA 1.7: CORRECCIÓN DE LAS TARJETAS PARA AGREGAR TUTORIALES Y PROBLEMAS**
+- Archivo: style.css
+  - Líneas 1289-1311: Agregadas reglas CSS unificadas para `.card-create-tutorial` y `.card-create-pys` con borde discontinuo, borde redondeado y flexbox. Para `.card-create-tutorial` se estableció `height: 120px; min-height: 120px;` coincidente con las tarjetas estándar de tutoriales. Para `.card-create-pys` se estableció `height: 100%; min-height: 140px;` asegurando adaptabilidad a la rejilla.
+- Archivo: ui.js
+  - Línea 4096: Agregado comentario identificativo de la Tarea 1.7 en `mostrarTutorialesGrid()`.
+  - Líneas 4097-4103: Eliminado estilo en línea fijo `min-height: 180px;` en `.card-create-tutorial` delegando el dimensionamiento a `style.css`.
+  - Línea 4887: Agregado comentario identificativo de la Tarea 1.7 en `renderPysSection()`.
+  - Líneas 4888-4896: Eliminado estilo en línea fijo `min-height: 180px;` en `.card-create-pys` delegando el dimensionamiento a `style.css`.
+
+**TAREA 1.8: REEJECUCIÓN DE LAS TAREAS AFECTADAS Y PRUEBAS DE REGRESIÓN**
+- Archivo: style.css
+  - Líneas 906-950: Consolidado el contenedor `#detalleCompleto` con `position: relative; display: flex; flex-direction: column;` y estandarizado el botón `.btn-expand-plus` con `position: sticky; bottom: 12px; margin-left: auto; width: 40px; height: 40px; border-radius: 50%; font-size: 1.08rem; z-index: 1700;`.
+  - Agregada la regla `.info-modal.visible { display: flex !important; }` para garantizar la apertura confiable de sub-modales.
+- Archivo: ui.js
+  - Líneas 1860-1875: Agregado comentario identificativo de la Tarea 1.8 en `mostrarDetalleModal()`, eliminando estilos en línea innecesarios en `.btn-expand-plus` y delegando su control a `style.css`.
+  - Verificada la ejecución de pruebas automatizadas integrales de extremo a extremo sin regresiones en modales, carruseles, catálogos ni formularios.
+
+**TAREA 2.1: BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE**
+- Archivo: Services/feedback.js
+  - Líneas 535-545: En `handleReportProblem()`, se genera y retorna el identificador único `reportId` (`REP-...`) tras registrar el problema en la hoja 'Feedbacks' para posibilitar la vinculación con las sugerencias de cambios posteriores.
+- Archivo: ui.js
+  - Líneas 2367-2388: En `renderCutContent()`, el botón `reportBtn` (`.report-btn`) invoca el modal de reporte individual `openReportCutModal(vehicleId, corteNum, cutData)`. Se garantiza el cálculo robusto de `corteNum` (`cutData.index || (index + 1)`).
+  - Líneas 4240-4380: Se implementó `openReportCutModal()` con formulario estructurado (descripción del error, información incorrecta o incompleta, y adjunto opcional de imagen de referencia). Tras el envío exitoso, muestra el diálogo accesible `showReportSuccessModal()` confirmando el identificador del reporte y ofreciendo la opción interactiva «Sugerir cambio» que abre `openSuggestCutModal()`. Si el reporte falla, se cancela la confirmación y se presenta un mensaje de error sin avanzar.
+
+**TAREA 2.2: MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE**
+- Archivo: ui.js
+  - Líneas 4383-4530: En `openSuggestCutModal()`, se reconstruyó el formulario modal de sugerencias de cambios vinculadas a un corte específico. Se agregaron selectores dinámicos para Tipo de Corte y Configuración de Relay (utilizando las opciones homologadas del catálogo), campo de selección para testigo de motor Check Engine ("Sí, activa testigo", "No activa testigo", "No aplica"), inputs para ubicación y color de cable, carga opcional de imagen en Base64, y textarea obligatorio para la justificación del cambio. Se garantizó el aislamiento estricto del corte seleccionado (`validCorteNum = corteNum || currentCutData.index || 1`) y la vinculación con el `reportId` de origen.
+
+**TAREA 2.3: ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS**
+- Archivo: Services/feedback.js
+  - Líneas 685-760: En `handleSuggestCutChange()`, se estructura la propuesta de cambio para almacenarla como un registro independiente en la hoja 'Feedbacks' sin sobrescribir ni modificar la hoja 'Cortes' del catálogo. Se conservan inequívocamente: `reportId` (reporte de origen), `vehicleId`, `corteIndex`, `userId`, `userName`, marca temporal de creación ISO (`createdAt`), `imageUrl` en Google Drive, `details`, `proposedValues` estructurados y el estado de revisión (`Se resolvio = false`). Se registra la auditoría en `ActividadUsuario` y se retorna confirmación explícita con `suggestionData`.
+
+**TAREA: CORREGIR EL RECORTE DE TEXTO EN LAS NOTIFICACIONES DE CONSULTA DE VEHÍCULOS DE AÑOS ANTERIORES**
+- Archivo: style.css
+  - Líneas 1170-1235:
+    * Se corrigió el recorte de texto en `.validation-banner` modificando `overflow: hidden;` por `overflow: visible;`, asegurando `box-sizing: border-box; width: 100%;` y ajustando padding a 14px.
+    * En `.validation-message`, se añadió `line-height: 1.45; word-break: normal; overflow-wrap: break-word; white-space: normal; margin: 0;` para que el texto de consulta de modelos de años anteriores se visualice íntegro y sin truncamientos.
+    * En `.validation-actions`, se configuró `width: 100%; box-sizing: border-box; align-items: center; flex-wrap: wrap; gap: 8px;` evitando que los botones de respuesta se solapen o desborden el contenedor.
+    * Se añadieron reglas responsivas `@media (max-width: 480px)` para ajustar paddings y tamaños de botones en dispositivos móviles y resoluciones reducidas (hasta 320px).
+
+**RESOLUCIÓN DE BLOCKING ISSUE: ALCANCE SEGURO DE DROPDOWNOPTIONS EN OPENSUGGESTCUTMODAL**
+- Archivo: ui.js
+  - Líneas 4420-4445: En `openSuggestCutModal()`, se blindó el acceso a `dropdownOptions` mediante `safeDropdowns` evaluando `(typeof dropdownOptions !== "undefined" && dropdownOptions) || (typeof window !== "undefined" && window.dropdownOptions) || (typeof getState === "function" && getState() && getState().dropdownOptions) || null`.
+  - Se previenen errores en tiempo de ejecución del tipo `ReferenceError` si la función es invocada o probada en entornos modulares aislados, conservando las matrices de opciones por defecto para tipo de corte y configuración de relay.

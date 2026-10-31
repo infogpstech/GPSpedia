@@ -532,8 +532,15 @@ function handleReportProblem(payload) {
 
     SpreadsheetApp.flush();
 
+    // Tarea 2.1: Retornar identificador único del reporte para vinculación con sugerencias
+    let generatedReportId = `REP-${Date.now()}`;
+    try {
+        const idVal = sheet.getRange(newRowNumber, 1).getValue();
+        if (idVal) generatedReportId = `REP-${idVal}`;
+    } catch(e) {}
+
     logUserActivity(userId, userName, 'report_problem', vehicleId, problemText);
-    return { status: 'success', message: 'Problema reportado.' };
+    return { status: 'success', message: 'Problema reportado.', reportId: generatedReportId };
 }
 
 function handleSendContactForm(payload) {
@@ -677,11 +684,14 @@ function handleGetActivityLogs(payload) {
 }
 
 
+// Tarea 2.3: Almacenamiento y gestión independiente de sugerencias
 function handleSuggestCutChange(payload) {
     const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, proposedValues } = payload;
     if (!vehicleId || !corteIndex || !userId || !userName) {
         throw new Error("Faltan datos para sugerir cambio (vehicleId, corteIndex, userId, userName).");
     }
+
+    const createdAt = new Date().toISOString();
 
     let imageUrl = "";
     if (imgBase64) {
@@ -698,6 +708,7 @@ function handleSuggestCutChange(payload) {
         }
     }
 
+    // Almacenamiento independiente en la hoja Feedbacks como propuesta pendiente de revisión
     const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     const lastRow = sheet.getLastRow();
     const newRowNumber = lastRow + 1;
@@ -713,7 +724,22 @@ function handleSuggestCutChange(payload) {
         }
     }
 
-    const problemDesc = `[SUGERENCIA CORTE #${corteIndex}] ${details || ""} | Propuestos: ${JSON.stringify(proposedValues || {})} ${imageUrl ? " | Img: " + imageUrl : ""}`;
+    // Registro estructurado conservando: reportId, vehículo, corte, fecha, usuario, imagen y valores propuestos
+    const suggestionRecord = {
+        tipo: 'sugerencia_corte',
+        reportId: reportId || 'N/A',
+        vehicleId: String(vehicleId),
+        corteIndex: parseInt(corteIndex, 10) || 1,
+        userId: String(userId),
+        userName: String(userName),
+        createdAt: createdAt,
+        imageUrl: imageUrl || '',
+        details: details || '',
+        proposedValues: proposedValues || {},
+        status: 'pendiente_revision'
+    };
+
+    const problemDesc = `[SUGERENCIA CORTE #${corteIndex}] (Reporte Origen: ${reportId || 'N/A'}) (Fecha: ${createdAt}) ${details || ""} | Propuestos: ${JSON.stringify(proposedValues || {})} ${imageUrl ? " | Img: " + imageUrl : ""}`;
     const values = [[
         userName,
         vehicleId,
@@ -721,9 +747,21 @@ function handleSuggestCutChange(payload) {
     ]];
     sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
 
+    // Estado explícito: Pendiente de revisión (Se resolvio = false)
+    if (COLS_FEEDBACKS['Se resolvio']) {
+        sheet.getRange(newRowNumber, COLS_FEEDBACKS['Se resolvio']).setValue(false);
+    }
+
     SpreadsheetApp.flush();
     logUserActivity(userId, userName, "suggest_cut_change", vehicleId, problemDesc);
-    return { status: "success", message: "Sugerencia de cambio registrada correctamente.", reportId: reportId || ("FB-" + newRowNumber) };
+
+    // Retornar confirmación completa sin alterar el catálogo
+    return {
+        status: "success",
+        message: "Sugerencia de cambio registrada correctamente como propuesta independiente.",
+        reportId: reportId || ("FB-" + newRowNumber),
+        suggestionData: suggestionRecord
+    };
 }
 
 function parseModelosAsociados(rawVal) {

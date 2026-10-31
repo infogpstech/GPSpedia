@@ -147,3 +147,148 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
   1. Utilizar una estrategia de renderizado inmediato apoyada en el estado local en memoria (getState().pysData). Si ya existen datos previamente cargados, renderizar instantáneamente (0ms) las tarjetas.
   2. Ejecutar la sincronización con routeAction('getPysData') en segundo plano. Si los datos obtenidos difieren de los previamente cacheados, actualizar el estado y refrescar el contenedor sin parpadeos.
   3. Si es la primera visita y no hay datos en memoria, presentar un indicador de carga mientras se resuelve la solicitud.
+
+**AUDITORÍA TAREA 1.6: CORRECCIÓN DE LA CABECERA DEL MODAL DE DETALLE**
+- Archivos analizados: ui.js (función mostrarDetalleModal), style.css (#detalleCompleto, .brand-logo-modal, .share-modal-btn).
+- Diagnóstico y Hallazgos:
+  1. En `ui.js`:
+     - `headerDiv` tiene `margin-bottom: 10px; gap: 10px;`.
+     - `printBtn` tiene `printBtn.style.marginRight = "5px"`, lo que sumado a `gap: 10px` en `headerDiv` genera una separación asimétrica y acumulada con los demás controles (cerrar, editar, compartir).
+     - `closeBtn` tiene `padding: 0 10px; font-size: 1.8em;`.
+     - `titleContainer` tiene `margin-bottom: 15px; padding-bottom: 8px; gap: 10px;` produciendo un exceso de distancia vertical con `headerDiv` y con `subHeaderDiv`.
+     - El logotipo `.brand-logo-modal` tiene en CSS `height: 60px !important;`, lo que eleva notablemente la altura del contenedor de título y desplaza el nombre del modelo. En móviles o pantallas estrechas, 60px es excesivo y empuja el texto hacia abajo de forma desproporcionada.
+  2. Plan de mitigación:
+     - En `ui.js`: Reducir el margen inferior de `headerDiv` a `4px` y unificar `gap: 8px;`.
+     - Eliminar el `marginRight: 5px` innecesario de `printBtn` para que el espaciado sea uniforme con `gap`.
+     - Ajustar `titleContainer` para tener `margin-bottom: 10px; padding-bottom: 6px; gap: 10px; align-items: center;`.
+     - En `style.css`: Ajustar `.brand-logo-modal` a una altura máxima más compacta y balanceada (40px en móvil, 48px en escritorio con `max-height`) para evitar que comprima o desplace el nombre del modelo.
+     - Añadir comentario identificativo de la Tarea 1.6 al inicio de la construcción de la cabecera en `ui.js`.
+
+**AUDITORÍA TAREA 1.7: CORRECCIÓN DE LAS TARJETAS PARA AGREGAR TUTORIALES Y PROBLEMAS**
+- Archivos analizados: ui.js (funciones mostrarTutorialesGrid y renderPysSection), style.css.
+- Diagnóstico y Hallazgos:
+  1. En `ui.js`:
+     - Tanto `.card-create-tutorial` como `.card-create-pys` tenían estilos en línea fijos con `min-height: 180px;`.
+     - Las tarjetas de tutoriales estándar (`.card img`) tienen una altura de 120px, lo que generaba un estiramiento vertical en la primera fila al compartir cuadrícula con la tarjeta de creación de 180px, provocando un desnivel evidente con respecto a las tarjetas de filas subsecuentes.
+     - En la sección de Problemas y Soluciones (PyS), el contenedor flex interno de las tarjetas de problemas no llenaba el 100% de la celda del grid cuando la tarjeta de creación fijaba 180px rígidamente.
+  2. Plan de mitigación:
+     - En `style.css`: Declarar estilos unificados para `.card-create-tutorial` y `.card-create-pys` con borde discontinuo (`2px dashed #007bff`), box-shadow azul, flexbox centrado y cursor pointer.
+     - Definir para `.card-create-tutorial` una altura uniforme `height: 120px; min-height: 120px;` para igualar exactamente la altura de las tarjetas de tutoriales estándar.
+     - Definir para `.card-create-pys` una altura flexible `height: 100%; min-height: 140px;` para que acompañe de manera armónica el tamaño dinámico de las tarjetas de problemas.
+     - En `ui.js`: Remover los estilos en línea redundantes de `min-height: 180px;` en `createCard` dentro de `mostrarTutorialesGrid()` y `renderPysSection()`, asignando las clases correspondientes y añadiendo el comentario identificativo de la Tarea 1.7.
+
+**AUDITORÍA TAREA 1.8: REEJECUCIÓN DE LAS TAREAS AFECTADAS Y PRUEBAS DE REGRESIÓN**
+- Archivos analizados: ui.js (mostrarDetalleModal, openExpandMenuModal, renderPysSection, mostrarTutorialesGrid), style.css (.btn-expand-plus, #detalleCompleto, .info-modal).
+- Diagnóstico y Hallazgos de Regresiones y Mejoras Funcionales:
+  1. En `ui.js`:
+     - El botón de ampliación `.btn-expand-plus` en la línea 1864 aún conservaba `plusBtn.style.cssText = "position: fixed; bottom: 20px; right: 20px; ..."` en lugar de `position: sticky; bottom: 12px; margin-left: auto; width: 40px; height: 40px; font-size: 1.08rem; z-index: 1700;`. La regla `position: fixed` hace que el botón se desborde fuera del contenedor `#detalleCompleto` en resoluciones móviles o modales largos en lugar de mantenerse anclado al pie interno del modal.
+     - En `style.css` se debe definir explícitamente `.btn-expand-plus` para consolidar su diseño (diámetro 40px, font-size 1.08rem, sticky bottom 12px, margin-left: auto, border-radius 50%, z-index: 1700) y asegurarse de que el contenedor `#detalleCompleto` posea `position: relative` para el correcto comportamiento del posicionamiento sticky.
+     - Asegurar que `.info-modal.visible { display: flex; }` esté activo en `style.css` para que todos los sub-modales invocados por `openExpandMenuModal` (agregar corte, agregar alimentación, agregar VIN, etc.) y `openAddProblemModal` abran correctamente sin bloqueos de CSS.
+  2. Plan de mitigación:
+     - Trasladar los estilos de `.btn-expand-plus` a `style.css` y simplificar su creación en `ui.js`.
+     - Asegurar que `#detalleCompleto` tenga `position: relative; display: flex; flex-direction: column;`.
+     - Ejecutar una batería completa de pruebas automatizadas con Playwright cubriendo todas las tareas de la Prioridad 1 (1.1 a 1.7) para verificar que no existan regresiones.
+
+**AUDITORÍA TAREA 2.1: BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE**
+- Archivos analizados: ui.js (función renderCutDetail, openSuggestCutModal), Services/feedback.js (función handleReportProblem).
+- Diagnóstico y Hallazgos:
+  1. En `ui.js`:
+     - El botón `reportBtn` ejecutaba un simple `window.prompt` y un `window.confirm`.
+     - Este mecanismo no cumple los requisitos completos de la Tarea 2.1, que estipula un formulario accesible e interactivo donde el usuario pueda:
+       a) Describir el error detectado.
+       b) Explicar qué información considera incorrecta o incompleta.
+       c) Adjuntar una imagen de referencia cuando corresponda.
+       d) Enviar el reporte a través de los servicios existentes de reportes/inbox.
+       e) Tras la confirmación de guardado exitoso, mostrar una confirmación accesible con la opción interactiva «Sugerir cambio».
+       f) Si el reporte falla o no se envía, no mostrar confirmación de éxito ni avanzar al estado de sugerencia de cambio.
+  2. En `Services/feedback.js`:
+     - `handleReportProblem` almacena el problema en la hoja `Feedbacks`, pero actualmente retorna `{ status: 'success', message: 'Problema reportado.' }` sin retornar el identificador único del reporte (`reportId`), lo que dificulta vincular la sugerencia de cambio con el reporte de origen. Debe retornar `reportId` con fallback para preservar la trazabilidad.
+  3. Plan de mitigación:
+     - Diseñar e implementar `openReportCutModal(vehicleId, corteNum, cutData)` en `ui.js` como un diálogo emergente accesible (`.info-modal`).
+     - Permitir adjuntar imagen de referencia convirtiéndola a Base64 si se proporciona.
+     - Vincular el flujo tras la respuesta exitosa para ofrecer un diálogo de confirmación con el botón «Sugerir cambio» que enlace a `openSuggestCutModal`.
+
+**AUDITORÍA TAREA 2.2: MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE**
+- Archivos analizados: ui.js (función openSuggestCutModal), Services/feedback.js (handleSuggestCutChange).
+- Diagnóstico y Hallazgos:
+  1. En `ui.js`:
+     - La implementación previa de `openSuggestCutModal` utilizaba `input[type="text"]` genéricos para el Tipo de Corte y la Configuración de Relay en vez de `select` con las opciones homologadas del catálogo (`dropdownOptions.tipoDeCorte` y `dropdownOptions.configRelay`).
+     - No incluía el campo para indicar si el corte activa el testigo del motor (Check Engine), requisito explícito de la Tarea 2.2.
+     - En `corteNum` existía el riesgo de recibir `undefined` si `cutData.index` no estuviera presente; se requiere blindar la obtención del número de corte (`corteNum = corteNum || cutData.index || 1`).
+     - Se debe garantizar que el formulario permita proponer cambios sobre un campo individual o varios a la vez sin forzar datos obligatorios ajenos al cambio (únicamente la descripción/motivo de la sugerencia es obligatoria).
+     - La sugerencia debe aislar estrictamente el corte identificado en el reporte (`corteNum`), sin mostrar ni tocar campos de otros cortes del vehículo.
+  2. Plan de mitigación:
+     - En `ui.js`, reconstruir `openSuggestCutModal` con:
+       * Encabezado y subtexto claro vinculado al `reportId` y a `Corte #${corteNum}`.
+       * Select para Tipo de Corte con opciones estándar del sistema.
+       * Select para Configuración de Relay con opciones estándar del sistema.
+       * Input para Ubicación del corte.
+       * Input para Color de cable.
+       * Select para Testigo Check Engine ("No aplica / No activa", "Sí, activa testigo", "No activa testigo").
+       * Input file opcional para subir imagen del corte propuesto con conversión a Base64.
+       * Textarea obligatorio para detalles/explicación del cambio propuesto.
+       * Botón de envío que envíe el payload estructurado mediante `suggestCutChange()`.
+
+**AUDITORÍA TAREA 2.3: ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS**
+- Archivos analizados: Services/feedback.js (función handleSuggestCutChange), ui.js (función openSuggestCutModal).
+- Diagnóstico y Hallazgos:
+  1. En `Services/feedback.js`:
+     - La función `handleSuggestCutChange` registra las sugerencias en la hoja `Feedbacks` como propuestas para revisión en el Inbox/Panel de Administración, sin alterar las filas del catálogo en la hoja `Cortes`.
+     - Para cumplir estrictamente los requisitos mínimos de la Tarea 2.3, la propuesta guardada debe contener de forma estructurada e inequívoca:
+       * Identificador del reporte original (`reportId`).
+       * Identificador del modelo (`vehicleId`).
+       * Identificador del corte reportado (`corteIndex`).
+       * Usuario que presentó la propuesta (`userName`, `userId`).
+       * Fecha de creación (marca temporal ISO / timestamp legible).
+       * Imagen de referencia en Google Drive, si existe (`imageUrl`).
+       * Valores propuestos (`proposedValues`).
+       * Estado de revisión explícito (`Se resolvio = false`).
+     - Al procesarse la sugerencia, no debe modificar el catálogo original y debe emitir un mensaje de confirmación claro para el usuario.
+  2. Plan de mitigación:
+     - Enriquecer la estructura del registro en `handleSuggestCutChange` serializando el objeto de la propuesta con `reportId`, `corteIndex`, `timestamp`, `proposedValues`, `details` e `imageUrl`.
+     - Asignar `false` a la columna `Se resolvio` para que permanezca pendiente de revisión administrativa en el sistema de Inbox.
+     - Registrar la actividad de usuario en `ActividadUsuario`.
+     - En `ui.js`, mostrar notificación clara de confirmación tras recibir la respuesta exitosa del microservicio sin modificar los valores en pantalla del catálogo actual.
+
+**AUDITORÍA TAREA: CORREGIR EL RECORTE DE TEXTO EN LAS NOTIFICACIONES DE CONSULTA DE VEHÍCULOS DE AÑOS ANTERIORES**
+- Archivos analizados: style.css (.validation-banner, .validation-content, .validation-message, .validation-actions, .validation-btn), ui.js (showValidationBanner).
+- Diagnóstico y Hallazgos:
+  1. En `style.css`:
+     - La clase `.validation-banner` tiene definida la propiedad `overflow: hidden;` en la línea 1182.
+     - En pantallas con anchos reducidos (móviles <= 400px o dispositivos táctiles pequeños), el texto informativo largo ("Este vehículo corresponde a un año anterior. ¿Estás trabajando un modelo más reciente?") junto con los botones de acción ("Sí", "Es más antiguo", "No") ocupan múltiples líneas verticales.
+     - Al tener `overflow: hidden;` combinado con alturas calculadas por la animación o márgenes de contenedor, el texto inferior o los botones de respuesta quedan recortados o fuera del área visible.
+     - La clase `.validation-message` carece de `overflow-wrap: break-word;` y `word-break: normal;`, lo que puede provocar colisiones de caja en resoluciones muy estrechas.
+     - `.validation-actions` debe tener `width: 100%;` y `flex-wrap: wrap;` fluido con espacio suficiente para que los botones mantengan su accesibilidad.
+  2. Plan de mitigación:
+     - En `style.css`:
+       * Modificar `.validation-banner` para usar `overflow: visible;` (permitiendo que el contenido fluya libremente sin recortes) o `overflow: hidden` únicamente durante la animación de cierre.
+       * Agregar `word-break: normal;` y `overflow-wrap: break-word;` en `.validation-message` para garantizar que todo el texto se visualice completo.
+       * Asegurar que `.validation-actions` permita envoltura natural de botones (`flex-wrap: wrap`) con `width: 100%` y altura automática.
+       * Añadir reglas responsivas para dispositivos móviles (`@media (max-width: 480px)`) para garantizar espaciado adecuado.
+
+**AUDITORÍA TAREA 3.1: BOTÓN "+" Y MENÚ DINÁMICO DE AMPLIACIÓN EN EL MODAL DE DETALLE**
+- Archivos analizados: ui.js (openExpandMenuModal, mostrarDetalleModal), style.css (.btn-expand-plus, #detalleCompleto).
+- Diagnóstico y Hallazgos:
+  1. En `ui.js`:
+     - El botón flotante `.btn-expand-plus` se genera dinámicamente al abrir `mostrarDetalleModal` cuando `!window.inEditMode`, anclándose dentro de `cont` (`#detalleCompleto`) como un elemento accesible para usuarios autorizados.
+     - Al presionar `.btn-expand-plus`, se invoca `openExpandMenuModal(item)`, el cual realiza el cálculo dinámico de los espacios disponibles:
+       * Cortes disponibles: Se evalúan `item.tipoCorte1`, `item.tipoCorte2`, `item.tipoCorte3`, calculando `cutsAvailable = 3 - cutsCount`. Si `cutsAvailable <= 0`, la opción se oculta de la interfaz.
+       * Apertura de puertas: Se evalúa `!item.apertura`. Si ya existe registro de apertura, la opción se oculta dinámicamente.
+       * Cables de alimentación: Se evalúan `item.cableAlimen`, `item.cableAlimen2`, `item.cableAlimen3`, calculando `feedsAvailable = 3 - feedsCount`. Si `feedsAvailable <= 0`, la opción se oculta.
+       * Enlace de vídeo guía: Se evalúa `!item.videoGuiaDesarmeUrl`. Si ya cuenta con video guía registrado, la opción no se muestra.
+       * Agregar VIN: Determina dinámicamente el límite permitido según la cantidad de versiones de equipamiento (`versionesAplicables`: 1 a 3 VINs) y evalúa los VINs ya registrados en la colección `vin`. Oculta la opción si se ha alcanzado la cuota máxima.
+     - Cada opción enlaza directamente a sus respectivos flujos funcionales: `openAddCutForModelModal(item)`, `openAddAperturaModal(item)`, `openAddFeedModal(item)`, `openAddVideoModal(item)` y `openAddVinModal(item)`.
+     - Se requiere agregar el comentario identificativo de la Tarea 3.1 en la primera línea de `openExpandMenuModal(item)` para cumplir con los estándares del proyecto.
+
+**AUDITORÍA BLOCKING ISSUE: ALCANCE SEGURO DE DROPDOWNOPTIONS EN OPENSUGGESTCUTMODAL**
+- Archivo analizado: ui.js (openSuggestCutModal, líneas 4420-4445).
+- Diagnóstico y Hallazgos:
+  1. En `ui.js`, dentro de `openSuggestCutModal`, las expresiones:
+     `const tiposCorteOptions = (dropdownOptions && dropdownOptions.tipoDeCorte && ...)`
+     `const relayOptions = (dropdownOptions && dropdownOptions.configRelay && ...)`
+     acceden directamente al identificador `dropdownOptions` sin validar previamente su definición en el ámbito de ejecución ni resolverlo de fuentes seguras (`window.dropdownOptions`, `getState().dropdownOptions`, o verificación `typeof dropdownOptions !== "undefined"`).
+  2. Aunque `dropdownOptions` está declarado en el nivel superior del módulo `ui.js`, si `openSuggestCutModal` se exporta y evalúa o invoca en contextos donde no se haya cargado previamente la variable o en entornos de prueba modulares aislados, una referencia no protegida puede disparar un `ReferenceError`.
+  3. Plan de mitigación:
+     - Obtener las opciones de manera segura:
+       `const opts = (typeof dropdownOptions !== "undefined" && dropdownOptions) || (typeof window !== "undefined" && window.dropdownOptions) || (typeof getState === "function" && getState() && getState().dropdownOptions) || null;`
+     - Usar `opts` de manera blindada para resolver `opts.tipoDeCorte` y `opts.configRelay`, cayendo a las matrices por defecto si no están presentes.
