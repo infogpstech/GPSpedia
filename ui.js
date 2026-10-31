@@ -1342,9 +1342,8 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
-    // Tarea 1.6: Corrección y compactación de la cabecera del modal de detalle
     const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 4px; gap: 8px;";
+    headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px; gap: 10px;";
 
     // Indicador visual de guardado/comunicación para modo edición
     const savingIndicator = document.createElement("div");
@@ -1392,6 +1391,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     printBtn.innerHTML = '<i class="fa-solid fa-print"></i>';
     printBtn.className = "share-modal-btn";
     printBtn.title = "Imprimir / Exportar Ficha Técnica";
+    printBtn.style.marginRight = "5px";
     printBtn.onclick = () => exportVehiclePrintSheet(activeItem);
     headerDiv.appendChild(printBtn);
 
@@ -1464,14 +1464,14 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     };
     closeBtn.className = "info-close-btn";
-    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 4px;";
+    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 10px;";
     headerDiv.appendChild(closeBtn);
     cont.appendChild(headerDiv);
 
     // Comentario: Se ajusta el layout del encabezado para cumplir con el nuevo requisito (logo a la izquierda).
     // Se añade 'flex-wrap: wrap' para evitar scroll horizontal en móviles con logos anchos.
     const titleContainer = document.createElement("div");
-    titleContainer.style.cssText = "border-bottom: 2px solid #007bff; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
+    titleContainer.style.cssText = "border-bottom: 3px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
 
     const logoUrl = getLogoUrlForMarca(activeItem.marca, activeItem.categoria);
     if (logoUrl) {
@@ -1777,7 +1777,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
         recommendedSection.appendChild(title);
         // El corte recomendado se carga de inmediato (isLazy = false)
-        renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false, recommendedCut.index);
+        renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false);
         cont.appendChild(recommendedSection);
     }
 
@@ -1858,10 +1858,10 @@ export function mostrarDetalleModal(item, isNavigation = false) {
 
     const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
-        // Tarea 1.8: Reejecución de las tareas afectadas y pruebas de regresión (Botón +)
         const plusBtn = document.createElement("button");
         plusBtn.className = "btn-expand-plus";
         plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+        plusBtn.style.cssText = "position: fixed; bottom: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background-color: #007bff; color: #fff; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 1.2rem; cursor: pointer; z-index: 1700; display: flex; align-items: center; justify-content: center;";
         plusBtn.title = "Ampliar información del modelo";
         plusBtn.onclick = (e) => {
             e.stopPropagation();
@@ -2177,7 +2177,7 @@ async function insertNewVehicleFluently(item) {
     }
 }
 
-function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false, index = 0) {
+function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false) {
     if (inEditMode) {
         const idx = cutData.index;
         const editCutsWrapper = document.createElement('div');
@@ -2366,13 +2366,12 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         };
         feedbackOverlay.appendChild(utilBtn);
 
-        // Tarea 2.1: Botón de reporte individual en cada corte
-        const corteNum = cutData.index || (index + 1);
         const reportBtn = document.createElement('button');
         reportBtn.className = 'feedback-btn-overlay report-btn';
         reportBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
-        reportBtn.title = `Reportar error en Corte #${corteNum}`;
+        reportBtn.title = 'Reportar un problema';
 
+        // Optimistic UI for reportProblem
         reportBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -2383,7 +2382,22 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
                 return;
             }
 
-            openReportCutModal(vehicleId, corteNum, cutData);
+            const reason = window.prompt(`Describe el problema con el Corte #${index + 1}:`);
+            if (reason && reason.trim()) {
+                reportBtn.classList.add('btn-loading');
+                reportProblem(vehicleId, `[Corte #${index + 1}] ${reason.trim()}`, currentUser.ID, currentUser.Nombre_Completo || currentUser.Nombre_Usuario).then((res) => {
+                    const reportId = res && res.reportId ? res.reportId : `REP-${Date.now()}`;
+                    const suggest = window.confirm("Reporte enviado con éxito.\n\n¿Deseas proponer una sugerencia de cambio para corregir este corte ahora mismo?");
+                    if (suggest) {
+                        openSuggestCutModal(vehicleId, index + 1, cutData, reportId);
+                    }
+                }).catch(err => {
+                    console.error("Error reporting problem:", err);
+                    showGlobalError("Error al enviar reporte.");
+                }).finally(() => {
+                    reportBtn.classList.remove('btn-loading');
+                });
+            }
         };
         feedbackOverlay.appendChild(reportBtn);
 
@@ -3451,8 +3465,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
 
     if (sec.isCorte) {
         // Los cortes dentro de acordeones son diferidos (isLazy = true)
-        const cIndex = (sec.data && sec.data.index) ? sec.data.index : 0;
-        renderCutContent(panel, sec.data, datosRelay, vehicleId, true, cIndex);
+        renderCutContent(panel, sec.data, datosRelay, vehicleId, true);
     } else if (inEditMode && (title === 'Apertura' || title === 'Cables de Alimentación')) {
         if (title === 'Apertura') {
             const fieldName = 'apertura';
@@ -4012,26 +4025,6 @@ export function showGlobalError(message) {
     }, 7000);
 }
 
-export function showGlobalNotification(message, type = 'info') {
-    const toast = document.getElementById('notification-toast');
-    if (!toast) {
-        alert(message);
-        return;
-    }
-    toast.textContent = message;
-    if (type === 'success') {
-        toast.style.backgroundColor = '#28a745';
-    } else if (type === 'error') {
-        toast.style.backgroundColor = '#dc3545';
-    } else {
-        toast.style.backgroundColor = '#007bff';
-    }
-    toast.style.display = 'block';
-    setTimeout(() => {
-        toast.style.display = 'none';
-    }, 5000);
-}
-
 export function openSideMenu() {
     const { currentUser } = getState();
     if (currentUser && (currentUser.Nombre_Completo || currentUser.Nombre_Usuario)) {
@@ -4100,13 +4093,13 @@ function mostrarTutorialesGrid() {
     const grid = document.createElement('div');
     grid.className = 'grid';
 
-    // Tarea 1.7: Corrección de las tarjetas para agregar tutoriales y problemas
     // First card: Add Tutorial Card (+)
     const createCard = document.createElement('div');
     createCard.className = 'card card-create-tutorial';
+    createCard.style.cssText = 'background: transparent; border: 2px dashed #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; cursor: pointer; border-radius: 12px;';
     createCard.innerHTML = `
-        <i class="fa-solid fa-plus" style="font-size: 2rem; color: #007bff; margin-bottom: 6px;"></i>
-        <span style="font-weight: bold; color: #007bff; font-size: 0.95rem;">Agregar Tutorial</span>
+        <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
+        <span style="font-weight: bold; color: #007bff;">Agregar Tutorial</span>
     `;
     createCard.onclick = () => openAddTutorialModal();
     grid.appendChild(createCard);
@@ -4260,13 +4253,12 @@ function mostrarDetalleRelayModal(item) {
 }
 
 
-// Tarea 2.1: Modal de reporte individual para corte específico
-export function openReportCutModal(vehicleId, corteNum, currentCutData) {
-    const existing = document.getElementById("report-cut-modal");
+export function openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId) {
+    const existing = document.getElementById("suggest-cut-modal");
     if (existing) existing.remove();
 
     const modal = document.createElement("div");
-    modal.id = "report-cut-modal";
+    modal.id = "suggest-cut-modal";
     modal.className = "info-modal visible";
     modal.style.zIndex = "2500";
 
@@ -4276,221 +4268,36 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
-        <h2><i class="fa-solid fa-triangle-exclamation" style="color: #dc3545;"></i> Reportar Problema en Corte #${corteNum}</h2>
-        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">
-            Corte seleccionado: <strong>${currentCutData.tipo || 'Sin tipo definido'}</strong>
-        </p>
-
-        <form id="report-cut-form" style="display:flex; flex-direction:column; gap:12px;">
-            <div class="form-group">
-                <label>Descripción del Error Detectado *</label>
-                <textarea id="rep-error" rows="3" placeholder="Describe claramente el problema o fallo detectado..." required></textarea>
-            </div>
-            <div class="form-group">
-                <label>Información Incorrecta o Incompleta</label>
-                <textarea id="rep-incorrecto" rows="2" placeholder="Indica qué datos específicos considera erróneos o incompletos..."></textarea>
-            </div>
-            <div class="form-group">
-                <label>Imagen de Referencia (Opcional)</label>
-                <input type="file" id="rep-img-file" accept="image/*">
-            </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Enviar Reporte</button>
-        </form>
-    `;
-
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-
-    const closeBtn = content.querySelector(".info-close-btn");
-    closeBtn.onclick = () => modal.remove();
-
-    const form = content.querySelector("#report-cut-form");
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const { currentUser } = getState();
-        if (!currentUser) {
-            showGlobalError("Debes estar conectado para reportar.");
-            return;
-        }
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.classList.add("btn-loading");
-
-        const errorDesc = content.querySelector("#rep-error").value.trim();
-        const incorrectInfo = content.querySelector("#rep-incorrecto").value.trim();
-        let fullProblemText = `[Corte #${corteNum}] ${errorDesc}`;
-        if (incorrectInfo) {
-            fullProblemText += ` | Info incorrecta: ${incorrectInfo}`;
-        }
-
-        const fileInput = content.querySelector("#rep-img-file");
-        if (fileInput.files && fileInput.files[0]) {
-            fullProblemText += ` [Imagen de referencia adjunta: ${fileInput.files[0].name}]`;
-        }
-
-        try {
-            const res = await reportProblem(
-                vehicleId,
-                fullProblemText,
-                currentUser.ID,
-                currentUser.Nombre_Completo || currentUser.Nombre_Usuario
-            );
-
-            const reportId = res && res.reportId ? res.reportId : `REP-${Date.now()}`;
-            modal.remove();
-
-            // Modal de confirmación con opción accesible de «Sugerir cambio»
-            showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId);
-        } catch (err) {
-            console.error("Error al enviar reporte de corte:", err);
-            showGlobalError("Error al enviar el reporte. Por favor inténtalo de nuevo.");
-            submitBtn.disabled = false;
-            submitBtn.classList.remove("btn-loading");
-        }
-    };
-}
-
-// Modal de confirmación accesible posterior al reporte con opción «Sugerir cambio»
-function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
-    const existing = document.getElementById("report-success-modal");
-    if (existing) existing.remove();
-
-    const modal = document.createElement("div");
-    modal.id = "report-success-modal";
-    modal.className = "info-modal visible";
-    modal.style.zIndex = "2500";
-
-    const content = document.createElement("div");
-    content.className = "info-modal-content";
-    content.style.maxWidth = "450px";
-    content.style.textAlign = "center";
-
-    content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
-        <div style="font-size: 2.5rem; color: #28a745; margin-bottom: 10px;">
-            <i class="fa-solid fa-circle-check"></i>
-        </div>
-        <h3 style="margin: 0 0 10px 0;">¡Reporte Enviado con Éxito!</h3>
-        <p style="font-size: 0.9em; color: var(--text-color); margin-bottom: 15px;">
-            Tu reporte para el Corte #${corteNum} ha sido registrado bajo el identificador <strong>${reportId}</strong>.
-        </p>
-        <p style="font-size: 0.9em; color: var(--text-color); margin-bottom: 20px;">
-            ¿Deseas proponer una sugerencia de cambio técnica para este corte ahora mismo?
-        </p>
-        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
-            <button id="btn-suggest-change-action" class="btn btn-primary" style="display: flex; align-items: center; gap: 6px;">
-                <i class="fa-solid fa-pen-to-square"></i> Sugerir cambio
-            </button>
-            <button id="btn-close-report-success" class="btn btn-secondary">
-                Cerrar
-            </button>
-        </div>
-    `;
-
-    modal.appendChild(content);
-    document.body.appendChild(modal);
-
-    const close = () => modal.remove();
-    content.querySelector(".info-close-btn").onclick = close;
-    content.querySelector("#btn-close-report-success").onclick = close;
-
-    content.querySelector("#btn-suggest-change-action").onclick = () => {
-        modal.remove();
-        openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId);
-    };
-}
-
-// Tarea 2.2: Modal de sugerencia de cambios vinculada al corte
-export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "") {
-    const existing = document.getElementById("suggest-cut-modal");
-    if (existing) existing.remove();
-
-    // Asegurar número de corte numérico válido
-    const validCorteNum = corteNum || currentCutData.index || 1;
-    const reportRef = reportId || `REP-${Date.now()}`;
-
-    const modal = document.createElement("div");
-    modal.id = "suggest-cut-modal";
-    modal.className = "info-modal visible";
-    modal.style.zIndex = "2500";
-
-    const content = document.createElement("div");
-    content.className = "info-modal-content";
-    content.style.maxWidth = "520px";
-
-    // Opciones para tipo de corte
-    const defaultTipos = ["Bomba de combustible", "Ignición", "Marcha / Arranque", "Fusible Principal", "Sensor CKP / CMP", "No recomendado"];
-    const tiposCorteOptions = (dropdownOptions && dropdownOptions.tipoDeCorte && dropdownOptions.tipoDeCorte.length > 0)
-        ? dropdownOptions.tipoDeCorte
-        : defaultTipos;
-
-    const tipoOptionsHtml = tiposCorteOptions.map(opt => {
-        const isSel = (currentCutData.tipo && currentCutData.tipo.toLowerCase() === opt.toLowerCase()) ? "selected" : "";
-        return `<option value="${opt}" ${isSel}>${opt}</option>`;
-    }).join("");
-
-    // Opciones para configuración de relay
-    const defaultRelays = ["Sin relay", "Relay 5 pines (Normalmente Cerrado)", "Relay 5 pines (Normalmente Abierto)", "Relay 4 pines"];
-    const relayOptions = (dropdownOptions && dropdownOptions.configRelay && dropdownOptions.configRelay.length > 0)
-        ? dropdownOptions.configRelay
-        : defaultRelays;
-
-    const relayOptionsHtml = relayOptions.map(opt => {
-        const isSel = (currentCutData.configRelay && currentCutData.configRelay.toLowerCase() === opt.toLowerCase()) ? "selected" : "";
-        return `<option value="${opt}" ${isSel}>${opt}</option>`;
-    }).join("");
-
-    // Opciones para testigo Check Engine
-    const currentCheckEngine = currentCutData.checkEngine || currentCutData.activaCheckEngine || "";
-
-    content.innerHTML = `
-        <span class="info-close-btn">&times;</span>
-        <h2><i class="fa-solid fa-pen-to-square"></i> Sugerir Cambio - Corte #${validCorteNum}</h2>
-        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
-            Vinculado al Reporte: <strong>${reportRef}</strong> | Vehículo: <strong>${vehicleId}</strong>
-        </p>
+        <h2><i class="fa-solid fa-pen-to-square"></i> Sugerir Cambio - Corte #${corteNum}</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">Vinculado al Reporte: <strong>${reportId}</strong></p>
 
         <form id="suggest-cut-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
-                <label for="sug-tipo">Tipo de Corte</label>
-                <select id="sug-tipo" class="dev-input" style="padding: 6px;">
-                    <option value="">-- Conservar / Seleccionar Tipo --</option>
-                    ${tipoOptionsHtml}
-                </select>
+                <label>Tipo de Corte</label>
+                <input type="text" id="sug-tipo" value="${currentCutData.tipo || ""}" placeholder="Ej. Bomba de combustible">
             </div>
             <div class="form-group">
-                <label for="sug-relay">Configuración de Relay</label>
-                <select id="sug-relay" class="dev-input" style="padding: 6px;">
-                    <option value="">-- Conservar / Seleccionar Relay --</option>
-                    ${relayOptionsHtml}
-                </select>
+                <label>Ubicación</label>
+                <input type="text" id="sug-ubicacion" value="${currentCutData.ubicacion || ""}" placeholder="Ej. Bajo el asiento trasero">
             </div>
             <div class="form-group">
-                <label for="sug-ubicacion">Ubicación / Detalles Técnicos del Corte</label>
-                <input type="text" id="sug-ubicacion" value="${currentCutData.ubicacion || ""}" placeholder="Ej. Bajo el asiento trasero, ramal principal izquierdo">
+                <label>Color de Cable</label>
+                <input type="text" id="sug-color" value="${currentCutData.colorCable || ""}" placeholder="Ej. Azul / Blanco">
             </div>
             <div class="form-group">
-                <label for="sug-color">Color de Cable</label>
-                <input type="text" id="sug-color" value="${currentCutData.colorCable || ""}" placeholder="Ej. Azul / Blanco, Verde grueso">
+                <label>Configuración Relay</label>
+                <input type="text" id="sug-relay" value="${currentCutData.configRelay || ""}" placeholder="Ej. 5 pines NC">
             </div>
             <div class="form-group">
-                <label for="sug-check-engine">¿El corte activa el testigo de motor (Check Engine)?</label>
-                <select id="sug-check-engine" class="dev-input" style="padding: 6px;">
-                    <option value="No" ${currentCheckEngine.toLowerCase().includes('no') ? 'selected' : ''}>No activa testigo</option>
-                    <option value="Sí" ${currentCheckEngine.toLowerCase().includes('si') || currentCheckEngine.toLowerCase().includes('sí') ? 'selected' : ''}>Sí, activa testigo</option>
-                    <option value="No aplica" ${!currentCheckEngine ? 'selected' : ''}>No aplica / No especificado</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="sug-img-file">Imagen de Referencia del Corte (Opcional)</label>
+                <label>Imagen de Referencia (Opcional)</label>
                 <input type="file" id="sug-img-file" accept="image/*">
             </div>
             <div class="form-group">
-                <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
-                <textarea id="sug-detalles" rows="3" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
+                <label>Detalles / Explicación del cambio</label>
+
+                <textarea id="sug-detalles" rows="3" placeholder="Explica brevemente los cambios propuestos..." required></textarea>
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:8px;">Enviar Sugerencia</button>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Enviar Sugerencia</button>
         </form>
     `;
 
@@ -4505,13 +4312,12 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
         e.preventDefault();
         const { currentUser } = getState();
         if (!currentUser) {
-            showGlobalError("Debes estar conectado para sugerir un cambio.");
+            showGlobalError("Debes estar autenticado.");
             return;
         }
 
         const submitBtn = form.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
-        submitBtn.classList.add("btn-loading");
         submitBtn.innerText = "Enviando...";
 
         const fileInput = content.querySelector("#sug-img-file");
@@ -4526,34 +4332,30 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             });
         }
 
-        const proposedValues = {
-            tipo: content.querySelector("#sug-tipo").value.trim() || currentCutData.tipo || "",
-            ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
-            colorCable: content.querySelector("#sug-color").value.trim(),
-            configRelay: content.querySelector("#sug-relay").value.trim() || currentCutData.configRelay || "",
-            activaCheckEngine: content.querySelector("#sug-check-engine").value
-        };
-
         const payload = {
-            reportId: reportRef,
+            reportId,
             vehicleId,
-            corteIndex: validCorteNum,
+            corteIndex: corteNum,
             userId: currentUser.ID,
             userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
             details: content.querySelector("#sug-detalles").value.trim(),
             imgBase64,
-            proposedValues
+            proposedValues: {
+                tipo: content.querySelector("#sug-tipo").value.trim(),
+                ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
+                colorCable: content.querySelector("#sug-color").value.trim(),
+                configRelay: content.querySelector("#sug-relay").value.trim()
+            }
         };
 
         try {
             await suggestCutChange(payload);
+            alert("Sugerencia enviada correctamente. Será revisada por un administrador.");
             modal.remove();
-            showGlobalNotification("Sugerencia enviada correctamente. Será revisada por un administrador.", "success");
         } catch (err) {
             console.error("Error al enviar sugerencia:", err);
             showGlobalError("Error al guardar la sugerencia: " + err.message);
             submitBtn.disabled = false;
-            submitBtn.classList.remove("btn-loading");
             submitBtn.innerText = "Enviar Sugerencia";
         }
     };
@@ -5082,10 +4884,10 @@ export async function renderPysSection() {
         const grid = document.createElement("div");
         grid.className = "grid";
 
-        // Tarea 1.7: Corrección de las tarjetas para agregar tutoriales y problemas
         // First card: Creation Card (+)
         const createCard = document.createElement("div");
         createCard.className = "card card-create-pys";
+        createCard.style.cssText = "background: transparent; border: 2px dashed #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; cursor: pointer; border-radius: 12px;";
         createCard.innerHTML = `
             <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
             <span style="font-weight: bold; color: #007bff;">Agregar Problema</span>

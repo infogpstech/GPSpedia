@@ -904,9 +904,6 @@ body.search-active .container {
 }
 
 #detalleCompleto {
-    position: relative;
-    display: flex;
-    flex-direction: column;
     background: var(--modal-bg);
     color: var(--modal-text);
     padding: 15px; /* Reducido para economizar espacio */
@@ -919,44 +916,6 @@ body.search-active .container {
     scrollbar-width: none; /* Ocultar scrollbar */
     transform: scale(0.95);
     transition: transform 0.3s ease, background-color var(--transition-speed), color var(--transition-speed);
-}
-
-/* Tarea 1.8 / 1.5: Botón flotante (+) en el modal de detalle del vehículo */
-.btn-expand-plus {
-    position: sticky;
-    bottom: 12px;
-    margin-left: auto;
-    margin-top: 10px;
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
-    border-radius: 50%;
-    background-color: #007bff;
-    color: #ffffff;
-    border: none;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
-    font-size: 1.08rem;
-    cursor: pointer;
-    z-index: 1700;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.2s ease, background-color 0.2s ease;
-}
-
-.btn-expand-plus:hover {
-    background-color: #0056b3;
-    transform: scale(1.05);
-}
-
-.btn-expand-plus:active {
-    transform: scale(0.95);
-}
-
-/* Asegurar visibilidad de sub-modales dinámicos .info-modal */
-.info-modal.visible {
-    display: flex !important;
 }
 
 #detalleCompleto::-webkit-scrollbar {
@@ -990,16 +949,8 @@ body.search-active .container {
 
 /* Comentario: Ajustes de tamaño según la nueva solicitud de diseño. */
 .brand-logo-modal {
-    height: 48px !important;
-    max-height: 48px !important;
+    height: 60px !important; /* Restaurado a un tamaño óptimo */
     width: auto !important;
-}
-
-@media (max-width: 600px) {
-    .brand-logo-modal {
-        height: 38px !important;
-        max-height: 38px !important;
-    }
 }
 
 .image-with-container {
@@ -1170,17 +1121,20 @@ body.search-active .container {
 }
 
 /* --- VALIDATION BANNER --- */
+/* Tarea: Corregir recorte de texto en notificación de consulta de vehículos de años anteriores */
 .validation-banner {
     background: rgba(88, 166, 255, 0.15);
     border: 1px solid rgba(88, 166, 255, 0.3);
     border-radius: 12px;
-    padding: 12px;
+    padding: 14px;
     margin: 10px 0;
     font-size: 0.9em;
     animation: slideDown 0.4s ease-out;
     color: var(--text-primary);
-    overflow: hidden;
+    overflow: visible;
     position: relative;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 [data-theme="dark"] .validation-banner {
@@ -1191,18 +1145,40 @@ body.search-active .container {
 .validation-content {
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .validation-message {
-    line-height: 1.4;
+    line-height: 1.45;
     font-weight: 500;
+    word-break: normal;
+    overflow-wrap: break-word;
+    white-space: normal;
+    margin: 0;
 }
 
 .validation-actions {
     display: flex;
     gap: 8px;
     flex-wrap: wrap;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+@media (max-width: 480px) {
+    .validation-banner {
+        padding: 12px 10px;
+    }
+    .validation-actions {
+        gap: 6px;
+    }
+    .validation-btn {
+        padding: 8px 10px;
+        font-size: 0.82em;
+    }
 }
 
 .validation-btn {
@@ -1325,31 +1301,6 @@ body.search-active .container {
     .lightbox-nav-btn {
         display: none !important;
     }
-}
-
-/* Tarjetas para agregar Tutorial y Problema (Tarea 1.7) */
-.card-create-tutorial,
-.card-create-pys {
-    background: transparent;
-    border: 2px dashed #007bff;
-    box-shadow: 0 0 10px rgba(0, 123, 255, 0.4);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border-radius: 12px;
-    box-sizing: border-box;
-}
-
-.card-create-tutorial {
-    height: 120px;
-    min-height: 120px;
-}
-
-.card-create-pys {
-    height: 100%;
-    min-height: 140px;
 }
 
 /* Tarea adicional: Estilos para el Modal del Desarrollador (#dev-tools-modal) */

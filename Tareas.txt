@@ -324,7 +324,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   - Las funcionalidades existentes de problemas y soluciones deben conservarse.
 - **Estado:** COMPLETADA.
 
-[X] 1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
+[ ] 1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
 - **Problemas detectados:**
   El botón "+" del modal de detalle del vehículo presenta dos defectos:
   1. Su ubicación es incorrecta en dispositivos móviles y debe revisarse también en equipos de escritorio.
@@ -359,9 +359,9 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   El botón no debe limitarse a mostrar una interfaz vacía ni a abrir un menú cuyos elementos no ejecuten sus respectivas acciones. Cada opción disponible debe conducir al flujo funcional que le corresponda. Si alguna opción está vinculada a una funcionalidad existente, debes recuperar esa implementación en lugar de crear una versión paralela.
 - **Criterios de finalización:**
   El botón debe aparecer en la esquina inferior derecha, ser un 10 % más pequeño y ejecutar correctamente las acciones disponibles en el menú. Estos requisitos deben verificarse en móvil y escritorio.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
-[X] 1.6. Corrección de la cabecera del modal de detalle
+[ ] 1.6. Corrección de la cabecera del modal de detalle
 - **Problema detectado:**
   La incorporación del botón de imprimir en la cabecera del modal de detalle ha provocado un espacio excesivo entre los botones de editar, compartir e imprimir, el logotipo de la marca y el nombre del modelo. Se requiere revisar los márgenes y rellenos para recuperar una distribución compacta y equilibrada.
 - **Requisitos:**
@@ -376,9 +376,9 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   La solución debe corregir la distribución sin eliminar el botón de imprimir ni perjudicar el resto de los controles.
 - **Criterios de finalización:**
   La cabecera debe presentar una distribución compacta, ordenada y coherente con el diseño del modal. La incorporación del botón de imprimir no debe producir espacios excesivos ni perjudicar la visualización de la marca y el modelo.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
-[X] 1.7. Corrección de las tarjetas para agregar tutoriales y problemas
+[ ] 1.7. Corrección de las tarjetas para agregar tutoriales y problemas
 - **Problema detectado:**
   Los botones o tarjetas destinados a agregar tutoriales y problemas tienen una altura superior a la de las demás tarjetas del carrusel o sección correspondiente. Esta diferencia rompe la uniformidad visual de la interfaz.
 - **Requisitos funcionales y visuales:**
@@ -392,9 +392,9 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   Las tarjetas para agregar contenido deben integrarse visualmente con las tarjetas existentes, respetando sus dimensiones y comportamiento.
 - **Criterios de finalización:**
   La tarea estará completa cuando las tarjetas para agregar tutoriales y problemas tengan dimensiones coherentes con las tarjetas de su sección, tanto en dispositivos móviles como en equipos de escritorio. La corrección no debe limitarse a establecer una altura fija que produzca problemas en otros tamaños de pantalla.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
-[X] 1.8. Reejecución de las tareas afectadas y pruebas de regresión
+[ ] 1.8. Reejecución de las tareas afectadas y pruebas de regresión
 - **Alcance:**
   Debido a los defectos detectados después del commit y a las violaciones del procedimiento de desarrollo, es necesario recuperar las tareas funcionales afectadas sin borrar el trabajo existente ni reconstruir indiscriminadamente la plataforma:
   1. Identificar las implementaciones afectadas por los defectos descritos.
@@ -412,13 +412,13 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   - *Servicios:* Comprobar solicitudes y respuestas reales; manejo de errores sin confundir con respuestas válidas.
   - *Integración:* Comprobar flujo de extremo a extremo desde interfaz hasta almacenamiento y regreso.
   - *Regresiones:* Comprobar que los cambios no hayan roto catálogo, modales, carruseles, cables, aperturas, autenticación ni offline.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
 ===================================================================
 PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXISTENTES
 ===================================================================
 
-[X] 2.1. Botón de reporte individual en cada corte
+[ ] 2.1. Botón de reporte individual en cada corte
 - **Objetivo general:**
   Incorporar en el modal de detalle de cada corte un mecanismo accesible para todos los usuarios autorizados que permita reportar errores y, posteriormente, sugerir modificaciones a la información técnica del corte.
   El reporte de errores y la sugerencia de cambios deben ser operaciones independientes de la modificación directa del registro original.
@@ -434,9 +434,9 @@ PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXI
   Reutiliza el sistema de inbox y de recepción de reportes existente siempre que sea posible.
   Después de enviar el reporte correctamente, muestra una confirmación y ofrece la opción «Sugerir cambio».
   Si el reporte no se ha enviado correctamente, no muestres una confirmación de éxito ni avances a un estado que dependa de un reporte guardado.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
-[X] 2.2. Modal de sugerencia de cambios vinculada al corte
+[ ] 2.2. Modal de sugerencia de cambios vinculada al corte
 - **Modal de sugerencia de cambios:**
   Al seleccionar «Sugerir cambio», abre un modal independiente para proponer una corrección del corte reportado.
   Este modal debe estar vinculado al reporte y al corte de origen.
@@ -453,9 +453,9 @@ PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXI
 - **Restricción fundamental:**
   La sugerencia solo puede afectar al corte identificado en el reporte.
   Si un modelo contiene varios cortes, no deben mostrarse ni modificarse accidentalmente los campos correspondientes a los otros cortes.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
-[X] 2.3. Almacenamiento y gestión independiente de sugerencias
+[ ] 2.3. Almacenamiento y gestión independiente de sugerencias
 - **Gestión de las sugerencias:**
   Guarda la sugerencia como una propuesta pendiente de revisión, asociada al reporte original.
   No la apliques automáticamente al catálogo.
@@ -481,7 +481,7 @@ PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXI
   - Las propuestas quedan vinculadas al corte correcto.
   - Los demás cortes del mismo modelo permanecen intactos.
   - Los usuarios no pueden utilizar este flujo para modificar directamente registros que requieren autorización administrativa.
-- **Estado:** COMPLETADA.
+- **Estado:** PENDIENTE.
 
 ===================================================================
 PRIORIDAD 3: FASE 2 Y FASE 3 - AMPLIACIÓN DIRECTA DE LOS DETALLES DEL MODELO

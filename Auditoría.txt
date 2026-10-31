@@ -249,3 +249,19 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
      - Asignar `false` a la columna `Se resolvio` para que permanezca pendiente de revisión administrativa en el sistema de Inbox.
      - Registrar la actividad de usuario en `ActividadUsuario`.
      - En `ui.js`, mostrar notificación clara de confirmación tras recibir la respuesta exitosa del microservicio sin modificar los valores en pantalla del catálogo actual.
+
+**AUDITORÍA TAREA: CORREGIR EL RECORTE DE TEXTO EN LAS NOTIFICACIONES DE CONSULTA DE VEHÍCULOS DE AÑOS ANTERIORES**
+- Archivos analizados: style.css (.validation-banner, .validation-content, .validation-message, .validation-actions, .validation-btn), ui.js (showValidationBanner).
+- Diagnóstico y Hallazgos:
+  1. En `style.css`:
+     - La clase `.validation-banner` tiene definida la propiedad `overflow: hidden;` en la línea 1182.
+     - En pantallas con anchos reducidos (móviles <= 400px o dispositivos táctiles pequeños), el texto informativo largo ("Este vehículo corresponde a un año anterior. ¿Estás trabajando un modelo más reciente?") junto con los botones de acción ("Sí", "Es más antiguo", "No") ocupan múltiples líneas verticales.
+     - Al tener `overflow: hidden;` combinado con alturas calculadas por la animación o márgenes de contenedor, el texto inferior o los botones de respuesta quedan recortados o fuera del área visible.
+     - La clase `.validation-message` carece de `overflow-wrap: break-word;` y `word-break: normal;`, lo que puede provocar colisiones de caja en resoluciones muy estrechas.
+     - `.validation-actions` debe tener `width: 100%;` y `flex-wrap: wrap;` fluido con espacio suficiente para que los botones mantengan su accesibilidad.
+  2. Plan de mitigación:
+     - En `style.css`:
+       * Modificar `.validation-banner` para usar `overflow: visible;` (permitiendo que el contenido fluya libremente sin recortes) o `overflow: hidden` únicamente durante la animación de cierre.
+       * Agregar `word-break: normal;` y `overflow-wrap: break-word;` en `.validation-message` para garantizar que todo el texto se visualice completo.
+       * Asegurar que `.validation-actions` permita envoltura natural de botones (`flex-wrap: wrap`) con `width: 100%` y altura automática.
+       * Añadir reglas responsivas para dispositivos móviles (`@media (max-width: 480px)`) para garantizar espaciado adecuado.
