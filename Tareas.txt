@@ -554,9 +554,9 @@ TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA
 ---
 
 ===================================================================
-TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚSQUEDA POR VIN
+TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚSQUEDA POR VIN [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Habilitar la identificación unívoca y segura de vehículos a través del número VIN procesado, permitiendo indexar múltiples versiones por modelo y consultar al instante desde el catálogo.
 - **Tareas originales integradas:** 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, B34
 - **Justificación técnica de convergencia:** Reúne todas las especificaciones de diseño, almacenamiento, validación y consulta del número de chasis (VIN): creación de la columna 43 en la base de datos, algoritmo de truncado de seguridad (-5 caracteres), soporte en formulario y modal (+), anti-duplicados interactivo, colecciones en celda única y motor de búsqueda global por VIN.
@@ -571,14 +571,14 @@ TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚS
 - En la hoja `Cortes`, agregar la nueva columna `vin` al final de la estructura existente (última columna, índice 43) sin alterar, desplazar ni eliminar columnas previas.
 - Reconocimiento en backend para lectura, escritura y consulta.
 - Almacenamiento de múltiples identificadores en la misma celda como colección (Array JSON o delimitados), conservando correspondencia e impidiendo interpretar separadores como parte del VIN.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (11.2): 11.2. Procesamiento y exclusión de los últimos 5 caracteres
 
 11.2. Procesamiento y exclusión de los últimos 5 caracteres
 - Regla obligatoria: El usuario ingresa el VIN completo (hasta 18 caracteres), pero el sistema descarta estrictamente los últimos 5 caracteres para almacenar únicamente el identificador resultante (prefijo procesado).
 - No almacenar el VIN completo ni los últimos 5 caracteres.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (11.3): 11.3. Registro de VIN en add_corte.html
 
@@ -586,14 +586,14 @@ TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚS
 - Incorporar campo de entrada opcional para VIN en la fase de solicitud de fotografía del vehículo (máximo 18 caracteres).
 - Procesar excluyendo los últimos 5 caracteres y almacenar en la columna `vin`.
 - Validar duplicados antes de guardar mostrando el aviso interactivo si ya existe. Si el usuario no ingresa VIN, continuar con normalidad.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (11.4): 11.4. Opción «Agregar VIN» en el botón (+) del modal de detalle
 
 11.4. Opción «Agregar VIN» en el botón (+) del modal de detalle
 - En el menú del botón (+), incorporar opción «Agregar VIN». Input simple sin editor enriquecido, placeholder: "Ingresa el VIN completo del vehículo", límite 18 caracteres, botón: "Agregar VIN".
 - Procesar excluyendo los últimos 5 caracteres, validar duplicados, verificar disponibilidad según versiones de equipamiento, agregar a la colección y actualizar celda sin sobrescribir identificadores previos.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (11.5): 11.5. Validación de VIN duplicados
 
@@ -603,7 +603,7 @@ TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚS
   `VIN ya está registrado para:`
   seguido de un enlace interactivo con el nombre del modelo coincidente que permita abrir su modal de detalle.
   Validar en todas las colecciones y tanto en frontend como en backend.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (11.6): 11.6. Gestión de múltiples VINs según versiones de equipamiento
 
@@ -615,26 +615,26 @@ TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚS
   - 2 versiones: registrar hasta 2 VINs en total (ocultar al alcanzar 2).
   - 3 versiones: registrar hasta 3 VINs en total (ocultar al alcanzar 3).
 - Límite máximo: 3 identificadores por registro.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (11.7): 11.7. Almacenamiento en una sola celda como colección (Array)
 
 11.7. Almacenamiento en una sola celda como colección (Array)
 - Almacenar múltiples identificadores en la misma celda de la columna `vin` como colección (Array JSON, ej: `["1HGCM82633A", "2HGCM82633B"]`).
 - No almacenar en filas separadas ni crear columnas adicionales `vin2` o `vin3`.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (11.8): 11.8. Integración con la barra de búsqueda global por VIN
 
 11.8. Integración con la barra de búsqueda global por VIN
 - Permitir ingresar el VIN en la barra de búsqueda global. Al detectar formato de VIN, excluir los últimos 5 caracteres y consultar coincidencias exactas con los identificadores almacenados en la colección de la columna `vin` (no coincidencias parciales).
 - Presentar resultados en tarjetas del catálogo respetando el orden secuencial de coincidencia del VIN y abriendo el modal de detalle del modelo correspondiente.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (B34): 19. **TÍTULO: Registro, almacenamiento, colecciones y búsqueda global por VIN (v2.2.0)**
 
 19. **TÍTULO: Registro, almacenamiento, colecciones y búsqueda global por VIN (v2.2.0)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
     - **ALCANCE:** Services/write.js, Services/catalog.js, Services/admin.js, Services/feedback.js, api-config.js, add_cortes.html, ui.js, navigation.js, index.html, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
     - **DESCRIPCIÓN DETALLADA:**
       - **Objetivo:** Incorporar la identificación de modelos por número VIN (número de chasis) agregando la columna `vin` (índice 43) en `Cortes`.

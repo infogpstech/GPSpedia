@@ -916,6 +916,7 @@ function serializeVinCollection(vinArray) {
   return JSON.stringify(unique);
 }
 
+/* TAREA 4 (11.1, 11.2, 11.7, B34): EXCLUSIÓN DE ÚLTIMOS 5 CARACTERES Y PROCESAMIENTO DE VIN */
 function extractVinPrefix(vinStr) {
   if (!vinStr) return "";
   const cleaned = String(vinStr).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");

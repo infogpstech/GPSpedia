@@ -89,6 +89,7 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
     }
 
+    /* TAREA 4 (11.8): INTEGRACIÓN CON LA BARRA DE BÚSQUEDA GLOBAL POR VIN */
     // --- LÓGICA DE DETECCIÓN Y BÚSQUEDA POR VIN ---
     const cleanVinSearch = busqueda.toUpperCase().replace(/[^A-Z0-9]/g, "");
     let isVinQuery = false;

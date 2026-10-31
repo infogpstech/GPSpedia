@@ -577,6 +577,7 @@
             document.getElementById('marca').addEventListener('blur', (e) => handleSuggestion(e.target, 'marca'));
             document.getElementById('modelo').addEventListener('blur', (e) => handleSuggestion(e.target, 'modelo'));
 
+            /* TAREA 4 (11.3, 11.5): REGISTRO Y VALIDACIÓN DE DUPLICADOS POR VIN EN FORMULARIO */
             const vinInput = document.getElementById('vinInput');
             if (vinInput) {
                 vinInput.addEventListener('blur', async () => {

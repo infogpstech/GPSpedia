@@ -4661,6 +4661,7 @@ export function openExpandMenuModal(item) {
     if (vinBtn) vinBtn.onclick = () => { modal.remove(); openAddVinModal(item); };
 }
 
+/* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO */
 export function openAddVinModal(item) {
     const existing = document.getElementById("add-vin-modal");
     if (existing) existing.remove();

@@ -1124,3 +1124,13 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
 - Services/write.js:
   - Línea 105: Agregado comentario identificativo /* TAREA 3 (4.2, 4.4, B31): REGISTRO Y ACTUALIZACIÓN DE CORTES E IDEMPOTENCIA CON REPARACIÓN */ en handleAddOrUpdateCut.
   - Línea 770: Agregado comentario identificativo /* TAREA 3 (B31): COMPROBACIÓN ASÍNCRONA DE OPERACIÓN E IDEMPOTENCIA EN SERVIDOR */ en handleCheckOperation.
+
+**TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚSQUEDA POR VIN (v2.2.0)**
+- Services/write.js:
+  - Línea 919: Agregado comentario identificativo /* TAREA 4 (11.1, 11.2, 11.7, B34): EXCLUSIÓN DE ÚLTIMOS 5 CARACTERES Y PROCESAMIENTO DE VIN */ en extractVinPrefix.
+- add_cortes.html:
+  - Línea 580: Agregado comentario identificativo /* TAREA 4 (11.3, 11.5): REGISTRO Y VALIDACIÓN DE DUPLICADOS POR VIN EN FORMULARIO */ en el listener de blur de vinInput.
+- ui.js:
+  - Línea 4664: Agregado comentario identificativo /* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO */ en openAddVinModal.
+- navigation.js:
+  - Línea 92: Agregado comentario identificativo /* TAREA 4 (11.8): INTEGRACIÓN CON LA BARRA DE BÚSQUEDA GLOBAL POR VIN */ en filtrarContenido.
