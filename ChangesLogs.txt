@@ -1114,3 +1114,13 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
 - index.html:
   - Línea 341: Agregado comentario identificativo <!-- TAREA 2 (B03): IMPLEMENTACIÓN DEL AVISO DE ACEPTACIÓN DE CONDICIONES Y ENLACE PERMANENTE --> en #terms-modal.
   - Línea 570: Agregado comentario identificativo <!-- TAREA 2 (B02): ACTUALIZACIÓN DE CONTENIDO Y ESTILOS DE MODALES INFORMATIVOS (SOBRE NOSOTROS Y TÉRMINOS) --> en #about-us-modal.
+
+**TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA EN CONECTIVIDAD (v2.2.0)**
+- add_cortes.html:
+  - Línea 346: Agregado comentario identificativo /* TAREA 3 (B31): PERSISTENCIA, RECUPERACIÓN E IDEMPOTENCIA CON OPID */ en checkAndRecoverPendingOperation.
+  - Línea 570: Agregado comentario identificativo /* TAREA 3 (4.2): REGISTRAR UN SEGUNDO CORTE */ en el listener de clic para btn-add-second-cut.
+  - Línea 820: Agregado comentario identificativo /* TAREA 3 (B31): REGISTRO SIN CORTES, PREVENCIÓN DE DUPLICADOS Y RESILIENCIA DE RED */ en handleStage2Submit.
+  - Línea 1027: Agregado comentario identificativo /* TAREA 3 (4.1, 4.3, 4.4): OPCIONES EN ÚLTIMA ETAPA, VÍDEO GUÍA Y DISPONIBILIDAD DINÁMICA */ en proceedToStage3.
+- Services/write.js:
+  - Línea 105: Agregado comentario identificativo /* TAREA 3 (4.2, 4.4, B31): REGISTRO Y ACTUALIZACIÓN DE CORTES E IDEMPOTENCIA CON REPARACIÓN */ en handleAddOrUpdateCut.
+  - Línea 770: Agregado comentario identificativo /* TAREA 3 (B31): COMPROBACIÓN ASÍNCRONA DE OPERACIÓN E IDEMPOTENCIA EN SERVIDOR */ en handleCheckOperation.

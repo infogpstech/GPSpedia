@@ -320,3 +320,17 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
    - El modal `#terms-agreement-modal` (líneas 359-568) contiene el acuerdo legal completo de 16 secciones con alineación a la izquierda, logotipo superior centrado y logo de TRACKLINK al final con separación vertical de 50px.
    - El modal `#about-us-modal` (líneas 569-605) contiene la redacción técnica institucional sin emojis ni iconos decorativos, con texto alineado a la izquierda.
    - Se agregarán los comentarios identificativos formales de TAREA 2 (B16, B02, B03) conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA EN CONECTIVIDAD (ADD_CORTES.HTML) (31/10/2026)**
+
+**Archivos involucrados:** `add_cortes.html`, `Services/write.js`, `Services/admin.js`, `api-config.js`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **add_cortes.html (Tareas 4.1, 4.2, 4.3, 4.4):**
+   - En la etapa 3 (`#stage-3`), el formulario ofrece acordeones para apertura, cable de alimentación (calculando hasta 3 ranuras), registro de segundo corte (`#second-cut-accordion` con botón `#btn-add-second-cut` que invoca `proceedToStage2(state.selectedVehicleId)` sin solicitar nuevamente la foto del vehículo ni duplicar la ficha base) y vídeo guía de desarme (`#video-accordion` con `#videoGuiaUrl`, el cual se oculta dinámicamente si el modelo ya dispone de un vídeo en el catálogo).
+   - El cálculo de disponibilidad es dinámico y verifica el estado de las ranuras disponibles tanto en frontend como en backend.
+2. **add_cortes.html y Services/write.js (Tarea B31: Idempotencia y Resiliencia):**
+   - El frontend genera un `opId` unívoco (`getOrGenerateOpId()`), persiste la operación en `localStorage` bajo `gpsepedia_pending_operation` ante posibles interrupciones de red, y verifica síncronamente con `checkOperation` si el registro ya existe en el servidor antes de proceder a la inserción.
+   - En `Services/write.js` (`handleCheckOperation` y `handleAddOrUpdateCut`), el servidor busca si la operación fue registrada previamente, previene duplicados, y repara campos vacíos sin duplicar filas.
+   - Si se selecciona 'No recomendado' como `tipoCorte1`, los campos técnicos se deshabilitan y pierden la obligatoriedad, permitiendo guardar el modelo sin corte técnico.
+   - Todo el flujo cumple los requisitos funcionales de la Tarea 3. Se insertarán los comentarios identificativos pertinentes.

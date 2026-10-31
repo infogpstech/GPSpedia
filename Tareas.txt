@@ -486,9 +486,9 @@ TAREA 2: CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL [X]
 ---
 
 ===================================================================
-TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA EN CONECTIVIDAD (ADD_CORTES.HTML)
+TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA EN CONECTIVIDAD (ADD_CORTES.HTML) [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Proporcionar un asistente guiado de registro de alta confiabilidad que soporte cortes complementarios, garantice la integridad de datos ante microcortes de red y prevenga la duplicación de registros.
 - **Tareas originales integradas:** 4.1, 4.2, 4.3, 4.4, B31
 - **Justificación técnica de convergencia:** Integra todas las modificaciones técnicas correspondientes al flujo guiado de registro de cortes (add_cortes.html), incluyendo la ampliación de la última etapa para registrar un segundo corte o enlace de vídeo guía de desarme, el manejo de opciones condicionales dinámicas, el registro de modelos sin cortes técnicos ('No recomendado') y la arquitectura de idempotencia con clave opId y persistencia temporal frente a caídas de red.
@@ -507,7 +507,7 @@ TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA
   - Registrar un segundo corte para el mismo modelo.
   - Agregar el vídeo guía de desarme.
   Conserva el flujo actual y evita reiniciar innecesariamente el formulario completo.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (4.2): 4.2. Registrar un segundo corte
 
@@ -518,7 +518,7 @@ TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA
   El nuevo corte debe registrarse en el siguiente espacio disponible y quedar asociado al mismo modelo.
   Después de completar el segundo corte, el flujo debe permitir continuar con la información adicional y finalizar el registro.
   Comprueba que no se dupliquen el modelo, sus imágenes ni los registros previamente guardados.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (4.3): 4.3. Agregar vídeo guía de desarme
 
@@ -527,7 +527,7 @@ TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA
   Incluye una opción para registrar el enlace de YouTube correspondiente al vídeo guía de desarme.
   Valida el enlace antes de guardar.
   Si el espacio correspondiente al vídeo ya está ocupado y el esquema no admite varios vídeos, no muestres esta opción en la última etapa.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (4.4): 4.4. Disponibilidad dinámica de opciones en add_corte.html
 
@@ -537,12 +537,12 @@ TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA
   Si ya están ocupados todos los espacios para cortes adicionales o el vídeo guía, no muestres las opciones correspondientes.
   El backend debe volver a verificar la disponibilidad antes de escribir los datos.
   Si otro usuario ocupa el espacio durante el proceso, informa del problema sin perder los datos introducidos en el formulario.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (B31): 16. **TÍTULO: Registro sin Cortes, Prevención de Duplicados e Idempotencia con Recuperación (v2.1.6)**
 
 16. **TÍTULO: Registro sin Cortes, Prevención de Duplicados e Idempotencia con Recuperación (v2.1.6)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** add_cortes.html, api-config.js, Services/write.js, Services/admin.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt
    - **DESCRIPCIÓN DETALLADA:**
      - **Registro sin Cortes:** Modificado el formulario de registro de nuevos cortes para permitir registrar un nuevo modelo cuando no exista información técnica de corte, siempre que el usuario seleccione "No recomendado" como tipo de corte.

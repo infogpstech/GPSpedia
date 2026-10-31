@@ -343,6 +343,7 @@
 
         const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
 
+        /* TAREA 3 (B31): PERSISTENCIA, RECUPERACIÓN E IDEMPOTENCIA CON OPID */
         async function checkAndRecoverPendingOperation() {
             const pendingStr = localStorage.getItem('gpsepedia_pending_operation');
             if (!pendingStr) return;
@@ -566,6 +567,7 @@
             document.getElementById('form-stage-1').addEventListener('submit', handleStage1Submit);
             document.getElementById('form-stage-2').addEventListener('submit', handleStage2Submit);
             document.getElementById('form-stage-3').addEventListener('submit', handleStage3Submit);
+            /* TAREA 3 (4.2): REGISTRAR UN SEGUNDO CORTE */
             document.getElementById('btn-add-second-cut').addEventListener('click', () => {
                 proceedToStage2(state.selectedVehicleId);
             });
@@ -814,6 +816,7 @@
 
         let isSubmittingStage2 = false;
 
+        /* TAREA 3 (B31): REGISTRO SIN CORTES, PREVENCIÓN DE DUPLICADOS Y RESILIENCIA DE RED */
         async function handleStage2Submit(e) {
             e.preventDefault();
             if (isSubmittingStage2) return;
@@ -1020,6 +1023,7 @@
         }
 
         // --- STAGE 3: SUPPLEMENTARY INFO ---
+        /* TAREA 3 (4.1, 4.3, 4.4): OPCIONES EN ÚLTIMA ETAPA, VÍDEO GUÍA Y DISPONIBILIDAD DINÁMICA */
         function proceedToStage3(vehicleId) {
             state.selectedVehicleId = vehicleId;
             // Check if vehicle already has a video
