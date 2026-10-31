@@ -436,7 +436,7 @@ PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXI
   Si el reporte no se ha enviado correctamente, no muestres una confirmación de éxito ni avances a un estado que dependa de un reporte guardado.
 - **Estado:** COMPLETADA.
 
-[ ] 2.2. Modal de sugerencia de cambios vinculada al corte
+[X] 2.2. Modal de sugerencia de cambios vinculada al corte
 - **Modal de sugerencia de cambios:**
   Al seleccionar «Sugerir cambio», abre un modal independiente para proponer una corrección del corte reportado.
   Este modal debe estar vinculado al reporte y al corte de origen.
@@ -453,7 +453,7 @@ PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXI
 - **Restricción fundamental:**
   La sugerencia solo puede afectar al corte identificado en el reporte.
   Si un modelo contiene varios cortes, no deben mostrarse ni modificarse accidentalmente los campos correspondientes a los otros cortes.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA.
 
 [ ] 2.3. Almacenamiento y gestión independiente de sugerencias
 - **Gestión de las sugerencias:**

@@ -207,3 +207,24 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
      - Diseñar e implementar `openReportCutModal(vehicleId, corteNum, cutData)` en `ui.js` como un diálogo emergente accesible (`.info-modal`).
      - Permitir adjuntar imagen de referencia convirtiéndola a Base64 si se proporciona.
      - Vincular el flujo tras la respuesta exitosa para ofrecer un diálogo de confirmación con el botón «Sugerir cambio» que enlace a `openSuggestCutModal`.
+
+**AUDITORÍA TAREA 2.2: MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE**
+- Archivos analizados: ui.js (función openSuggestCutModal), Services/feedback.js (handleSuggestCutChange).
+- Diagnóstico y Hallazgos:
+  1. En `ui.js`:
+     - La implementación previa de `openSuggestCutModal` utilizaba `input[type="text"]` genéricos para el Tipo de Corte y la Configuración de Relay en vez de `select` con las opciones homologadas del catálogo (`dropdownOptions.tipoDeCorte` y `dropdownOptions.configRelay`).
+     - No incluía el campo para indicar si el corte activa el testigo del motor (Check Engine), requisito explícito de la Tarea 2.2.
+     - En `corteNum` existía el riesgo de recibir `undefined` si `cutData.index` no estuviera presente; se requiere blindar la obtención del número de corte (`corteNum = corteNum || cutData.index || 1`).
+     - Se debe garantizar que el formulario permita proponer cambios sobre un campo individual o varios a la vez sin forzar datos obligatorios ajenos al cambio (únicamente la descripción/motivo de la sugerencia es obligatoria).
+     - La sugerencia debe aislar estrictamente el corte identificado en el reporte (`corteNum`), sin mostrar ni tocar campos de otros cortes del vehículo.
+  2. Plan de mitigación:
+     - En `ui.js`, reconstruir `openSuggestCutModal` con:
+       * Encabezado y subtexto claro vinculado al `reportId` y a `Corte #${corteNum}`.
+       * Select para Tipo de Corte con opciones estándar del sistema.
+       * Select para Configuración de Relay con opciones estándar del sistema.
+       * Input para Ubicación del corte.
+       * Input para Color de cable.
+       * Select para Testigo Check Engine ("No aplica / No activa", "Sí, activa testigo", "No activa testigo").
+       * Input file opcional para subir imagen del corte propuesto con conversión a Base64.
+       * Textarea obligatorio para detalles/explicación del cambio propuesto.
+       * Botón de envío que envíe el payload estructurado mediante `suggestCutChange()`.

@@ -4380,9 +4380,14 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
     };
 }
 
-export function openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId) {
+// Tarea 2.2: Modal de sugerencia de cambios vinculada al corte
+export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "") {
     const existing = document.getElementById("suggest-cut-modal");
     if (existing) existing.remove();
+
+    // Asegurar número de corte numérico válido
+    const validCorteNum = corteNum || currentCutData.index || 1;
+    const reportRef = reportId || `REP-${Date.now()}`;
 
     const modal = document.createElement("div");
     modal.id = "suggest-cut-modal";
@@ -4391,40 +4396,80 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData, reportI
 
     const content = document.createElement("div");
     content.className = "info-modal-content";
-    content.style.maxWidth = "500px";
+    content.style.maxWidth = "520px";
+
+    // Opciones para tipo de corte
+    const defaultTipos = ["Bomba de combustible", "Ignición", "Marcha / Arranque", "Fusible Principal", "Sensor CKP / CMP", "No recomendado"];
+    const tiposCorteOptions = (dropdownOptions && dropdownOptions.tipoDeCorte && dropdownOptions.tipoDeCorte.length > 0)
+        ? dropdownOptions.tipoDeCorte
+        : defaultTipos;
+
+    const tipoOptionsHtml = tiposCorteOptions.map(opt => {
+        const isSel = (currentCutData.tipo && currentCutData.tipo.toLowerCase() === opt.toLowerCase()) ? "selected" : "";
+        return `<option value="${opt}" ${isSel}>${opt}</option>`;
+    }).join("");
+
+    // Opciones para configuración de relay
+    const defaultRelays = ["Sin relay", "Relay 5 pines (Normalmente Cerrado)", "Relay 5 pines (Normalmente Abierto)", "Relay 4 pines"];
+    const relayOptions = (dropdownOptions && dropdownOptions.configRelay && dropdownOptions.configRelay.length > 0)
+        ? dropdownOptions.configRelay
+        : defaultRelays;
+
+    const relayOptionsHtml = relayOptions.map(opt => {
+        const isSel = (currentCutData.configRelay && currentCutData.configRelay.toLowerCase() === opt.toLowerCase()) ? "selected" : "";
+        return `<option value="${opt}" ${isSel}>${opt}</option>`;
+    }).join("");
+
+    // Opciones para testigo Check Engine
+    const currentCheckEngine = currentCutData.checkEngine || currentCutData.activaCheckEngine || "";
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
-        <h2><i class="fa-solid fa-pen-to-square"></i> Sugerir Cambio - Corte #${corteNum}</h2>
-        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">Vinculado al Reporte: <strong>${reportId}</strong></p>
+        <h2><i class="fa-solid fa-pen-to-square"></i> Sugerir Cambio - Corte #${validCorteNum}</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
+            Vinculado al Reporte: <strong>${reportRef}</strong> | Vehículo: <strong>${vehicleId}</strong>
+        </p>
 
         <form id="suggest-cut-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
-                <label>Tipo de Corte</label>
-                <input type="text" id="sug-tipo" value="${currentCutData.tipo || ""}" placeholder="Ej. Bomba de combustible">
+                <label for="sug-tipo">Tipo de Corte</label>
+                <select id="sug-tipo" class="dev-input" style="padding: 6px;">
+                    <option value="">-- Conservar / Seleccionar Tipo --</option>
+                    ${tipoOptionsHtml}
+                </select>
             </div>
             <div class="form-group">
-                <label>Ubicación</label>
-                <input type="text" id="sug-ubicacion" value="${currentCutData.ubicacion || ""}" placeholder="Ej. Bajo el asiento trasero">
+                <label for="sug-relay">Configuración de Relay</label>
+                <select id="sug-relay" class="dev-input" style="padding: 6px;">
+                    <option value="">-- Conservar / Seleccionar Relay --</option>
+                    ${relayOptionsHtml}
+                </select>
             </div>
             <div class="form-group">
-                <label>Color de Cable</label>
-                <input type="text" id="sug-color" value="${currentCutData.colorCable || ""}" placeholder="Ej. Azul / Blanco">
+                <label for="sug-ubicacion">Ubicación / Detalles Técnicos del Corte</label>
+                <input type="text" id="sug-ubicacion" value="${currentCutData.ubicacion || ""}" placeholder="Ej. Bajo el asiento trasero, ramal principal izquierdo">
             </div>
             <div class="form-group">
-                <label>Configuración Relay</label>
-                <input type="text" id="sug-relay" value="${currentCutData.configRelay || ""}" placeholder="Ej. 5 pines NC">
+                <label for="sug-color">Color de Cable</label>
+                <input type="text" id="sug-color" value="${currentCutData.colorCable || ""}" placeholder="Ej. Azul / Blanco, Verde grueso">
             </div>
             <div class="form-group">
-                <label>Imagen de Referencia (Opcional)</label>
+                <label for="sug-check-engine">¿El corte activa el testigo de motor (Check Engine)?</label>
+                <select id="sug-check-engine" class="dev-input" style="padding: 6px;">
+                    <option value="No" ${currentCheckEngine.toLowerCase().includes('no') ? 'selected' : ''}>No activa testigo</option>
+                    <option value="Sí" ${currentCheckEngine.toLowerCase().includes('si') || currentCheckEngine.toLowerCase().includes('sí') ? 'selected' : ''}>Sí, activa testigo</option>
+                    <option value="No aplica" ${!currentCheckEngine ? 'selected' : ''}>No aplica / No especificado</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sug-img-file">Imagen de Referencia del Corte (Opcional)</label>
                 <input type="file" id="sug-img-file" accept="image/*">
             </div>
             <div class="form-group">
-                <label>Detalles / Explicación del cambio</label>
-
-                <textarea id="sug-detalles" rows="3" placeholder="Explica brevemente los cambios propuestos..." required></textarea>
+                <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
+                <textarea id="sug-detalles" rows="3" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Enviar Sugerencia</button>
+            <button type="submit" class="btn btn-primary" style="margin-top:8px;">Enviar Sugerencia</button>
         </form>
     `;
 
@@ -4439,12 +4484,13 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData, reportI
         e.preventDefault();
         const { currentUser } = getState();
         if (!currentUser) {
-            showGlobalError("Debes estar autenticado.");
+            showGlobalError("Debes estar conectado para sugerir un cambio.");
             return;
         }
 
         const submitBtn = form.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
+        submitBtn.classList.add("btn-loading");
         submitBtn.innerText = "Enviando...";
 
         const fileInput = content.querySelector("#sug-img-file");
@@ -4459,30 +4505,34 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData, reportI
             });
         }
 
+        const proposedValues = {
+            tipo: content.querySelector("#sug-tipo").value.trim() || currentCutData.tipo || "",
+            ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
+            colorCable: content.querySelector("#sug-color").value.trim(),
+            configRelay: content.querySelector("#sug-relay").value.trim() || currentCutData.configRelay || "",
+            activaCheckEngine: content.querySelector("#sug-check-engine").value
+        };
+
         const payload = {
-            reportId,
+            reportId: reportRef,
             vehicleId,
-            corteIndex: corteNum,
+            corteIndex: validCorteNum,
             userId: currentUser.ID,
             userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
             details: content.querySelector("#sug-detalles").value.trim(),
             imgBase64,
-            proposedValues: {
-                tipo: content.querySelector("#sug-tipo").value.trim(),
-                ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
-                colorCable: content.querySelector("#sug-color").value.trim(),
-                configRelay: content.querySelector("#sug-relay").value.trim()
-            }
+            proposedValues
         };
 
         try {
             await suggestCutChange(payload);
-            alert("Sugerencia enviada correctamente. Será revisada por un administrador.");
             modal.remove();
+            showGlobalNotification("Sugerencia enviada correctamente. Será revisada por un administrador.", "success");
         } catch (err) {
             console.error("Error al enviar sugerencia:", err);
             showGlobalError("Error al guardar la sugerencia: " + err.message);
             submitBtn.disabled = false;
+            submitBtn.classList.remove("btn-loading");
             submitBtn.innerText = "Enviar Sugerencia";
         }
     };
