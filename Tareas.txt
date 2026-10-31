@@ -218,9 +218,9 @@ SECCIÓN DE TAREAS REORGANIZADAS POR PRIORIDAD Y CONVERGENCIA DE IMPLEMENTACIÓN
 Todas las tareas se presentan a continuación ordenadas estrictamente desde la de mayor prioridad (Tarea 1) hasta la de menor prioridad (Tarea 21), integrando todos los requisitos técnicos originales de las 82 tareas analizadas y normalizadas en estado pendiente de ejecución.
 
 ===================================================================
-TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DEL APP SHELL
+TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DEL APP SHELL [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Estabilizar de forma inmediata y transversal la plataforma GPSpedia, resolviendo fallos de comunicación entre frontend y microservicios, eliminando cuellos de botella en la renderización y normalizando la experiencia en modales técnicos.
 - **Tareas originales integradas:** 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8
 - **Justificación técnica de convergencia:** Agrupa la totalidad de intervenciones correctivas prioritarias destinadas a restaurar la comunicación con el microservicio Admin, las utilidades del panel de desarrollador, los formularios esenciales, tiempos de respuesta, cabecera de modales y alineación de controles del App Shell tras regresiones identificadas.
@@ -263,7 +263,7 @@ TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN D
   Modifica únicamente los componentes necesarios para recuperar la comunicación. Si es indispensable modificar un contrato compartido, identifica sus consumidores y conserva la compatibilidad con las funcionalidades existentes. No realices cambios indiscriminados en otros microservicios.
 - **Criterios de finalización:**
   La comunicación debe verificarse mediante operaciones reales de lectura y, cuando corresponda, escritura, utilizando usuarios y permisos adecuados. No es suficiente comprobar que la URL responde o que el servicio puede abrirse. Debe comprobarse que las acciones administrativas requeridas funcionan correctamente de extremo a extremo.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (1.2): 1.2. Recuperación de las funciones del panel de desarrollador
 
@@ -289,7 +289,7 @@ TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN D
   Las funciones del panel deben respetar los permisos y la integridad de los datos. Cuando una operación modifique información, debe ejecutarse mediante el servicio correspondiente y actualizar la interfaz a partir del resultado real. Cuando una operación no pueda completarse, debe comunicarse el error sin mostrar un estado de éxito falso. Las acciones administrativas no deben afectar registros ajenos a la operación solicitada.
 - **Criterios de finalización:**
   Todas las funciones incorporadas al panel de desarrollador deben haber sido examinadas y corregidas cuando corresponda. No marques esta tarea como completada si solamente funciona una parte del panel o si existen opciones que continúan sin ejecutar su operación real.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (1.3): 1.3. Recuperación del formulario de registro de problemas y soluciones
 
@@ -312,7 +312,7 @@ TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN D
   El botón debe abrir efectivamente el modal de creación de problemas y soluciones. No se considerará resuelto si únicamente se modifica su estilo, se agrega una animación o se simula la apertura sin habilitar las operaciones reales del formulario.
 - **Funcionamiento completo del formulario:**
   Una vez abierto, el formulario debe permitir realizar las operaciones que correspondan a su implementación. Verifica que el usuario pueda introducir información, ejecutar las validaciones, guardar un registro y recuperar posteriormente los datos almacenados. Si existen funciones de edición, consulta o actualización, deben conservarse y continuar funcionando. Los errores de validación, permisos, conexión o almacenamiento deben manejarse correctamente. No se debe mostrar un mensaje de éxito cuando la operación no se haya completado.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (1.4): 1.4. Corrección de las demoras de carga en la sección de problemas y soluciones
 
@@ -340,7 +340,7 @@ TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN D
   - Los datos deben recuperarse correctamente.
   - Los errores no deben bloquear silenciosamente la sección.
   - Las funcionalidades existentes de problemas y soluciones deben conservarse.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (1.5): 1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
 
@@ -379,7 +379,7 @@ TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN D
   El botón no debe limitarse a mostrar una interfaz vacía ni a abrir un menú cuyos elementos no ejecuten sus respectivas acciones. Cada opción disponible debe conducir al flujo funcional que le corresponda. Si alguna opción está vinculada a una funcionalidad existente, debes recuperar esa implementación en lugar de crear una versión paralela.
 - **Criterios de finalización:**
   El botón debe aparecer en la esquina inferior derecha, ser un 10 % más pequeño y ejecutar correctamente las acciones disponibles en el menú. Estos requisitos deben verificarse en móvil y escritorio.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (1.6): 1.6. Corrección de la cabecera del modal de detalle
 
@@ -398,7 +398,7 @@ TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN D
   La solución debe corregir la distribución sin eliminar el botón de imprimir ni perjudicar el resto de los controles.
 - **Criterios de finalización:**
   La cabecera debe presentar una distribución compacta, ordenada y coherente con el diseño del modal. La incorporación del botón de imprimir no debe producir espacios excesivos ni perjudicar la visualización de la marca y el modelo.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (1.7): 1.7. Corrección de las tarjetas para agregar tutoriales y problemas
 
@@ -416,7 +416,7 @@ TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN D
   Las tarjetas para agregar contenido deben integrarse visualmente con las tarjetas existentes, respetando sus dimensiones y comportamiento.
 - **Criterios de finalización:**
   La tarea estará completa cuando las tarjetas para agregar tutoriales y problemas tengan dimensiones coherentes con las tarjetas de su sección, tanto en dispositivos móviles como en equipos de escritorio. La corrección no debe limitarse a establecer una altura fija que produzca problemas en otros tamaños de pantalla.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (1.8): 1.8. Reejecución de las tareas afectadas y pruebas de regresión
 
@@ -438,7 +438,7 @@ TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN D
   - *Servicios:* Comprobar solicitudes y respuestas reales; manejo de errores sin confundir con respuestas válidas.
   - *Integración:* Comprobar flujo de extremo a extremo desde interfaz hasta almacenamiento y regreso.
   - *Regresiones:* Comprobar que los cambios no hayan roto catálogo, modales, carruseles, cables, aperturas, autenticación ni offline.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 ---
 

@@ -292,3 +292,16 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
      - Obtener las opciones de manera segura:
        `const opts = (typeof dropdownOptions !== "undefined" && dropdownOptions) || (typeof window !== "undefined" && window.dropdownOptions) || (typeof getState === "function" && getState() && getState().dropdownOptions) || null;`
      - Usar `opts` de manera blindada para resolver `opts.tipoDeCorte` y `opts.configRelay`, cayendo a las matrices por defecto si no están presentes.
+
+**AUDITORÍA TÉCNICA - TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DEL APP SHELL (31/10/2026)**
+
+**Archivos involucrados:** `Services/admin.js`, `api-config.js`, `ui.js`, `style.css`, `index.html`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **Services/admin.js (Tarea 1.1):**
+   - El microservicio de administración carece de manejador `doGet(e)`, a diferencia de los otros microservicios (`catalog.js`, `write.js`, `feedback.js`, `users.js`).
+   - Al ejecutarse `checkAllServicesHealth()` en `api-config.js` mediante la consulta GET `?debug=true`, el servicio no responde con JSON estructurado de diagnóstico, lo cual afecta la detección de estado en el panel de salud.
+   - Solución: Incorporar `doGet(e)` estructurado respondiendo con metadatos del servicio (`GPSpedia-Admin`, versión, `spreadsheetId`, `driveFolderId`, hojas accedidas y estado) y respuesta GET por defecto, garantizando paridad arquitectural con los demás microservicios.
+2. **ui.js y style.css (Tareas 1.2 a 1.8):**
+   - Se verificó que las funciones del panel de desarrollador (`initDevToolsModal`), el botón '+' (`.btn-expand-plus`), el formulario de problemas (`openAddProblemModal`), la optimización de carga de PyS (`renderPysSection` con fast-path 0ms), la cabecera compacta del modal y las dimensiones uniformes de tarjetas de creación se encuentran operativas en el codebase.
+   - Se incorporarán los comentarios identificativos formales de las subtareas 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8 en los bloques de código correspondientes conforme al procedimiento.

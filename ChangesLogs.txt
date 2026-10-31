@@ -1096,3 +1096,12 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
 - Archivo: ui.js
   - Líneas 4420-4445: En `openSuggestCutModal()`, se blindó el acceso a `dropdownOptions` mediante `safeDropdowns` evaluando `(typeof dropdownOptions !== "undefined" && dropdownOptions) || (typeof window !== "undefined" && window.dropdownOptions) || (typeof getState === "function" && getState() && getState().dropdownOptions) || null`.
   - Se previenen errores en tiempo de ejecución del tipo `ReferenceError` si la función es invocada o probada en entornos modulares aislados, conservando las matrices de opciones por defecto para tipo de corte y configuración de relay.
+
+**TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DEL APP SHELL (v2.2.0)**
+- Services/admin.js:
+  - Líneas 128-147: Implementado el manejador doGet(e) con soporte de diagnósticos (?debug=true) retornando JSON estructurado con metadatos del servicio (service, version, spreadsheetId, driveFolderId, sheetsAccessed) y respuesta GET por defecto, garantizando paridad con los demás microservicios y permitiendo a checkAllServicesHealth() monitorear el estado del servicio Admin.
+  - Agregado comentario identificativo /* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */.
+- ui.js:
+  - Línea 1862: Agregado comentario identificativo de TAREA 1.5 / 1.8 en la instanciación del botón flotante (+) .btn-expand-plus dentro de mostrarDetalleModal().
+  - Línea 2562: Agregado comentario identificativo /* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */ sobre openDevTools.
+  - Línea 5167: Agregado comentario identificativo /* TAREA 1.3: RECUPERACIÓN DEL FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES */ sobre openAddProblemModal.
