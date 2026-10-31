@@ -1159,3 +1159,11 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
 - ui.js:
   - Línea 871: Agregado comentario identificativo /* TAREA 7 (B18): CONTEXTO 'ORIGIN' MARCA/CATEGORÍA Y RETORNO LIMPIO SIN BUCLES */ en mostrarVersionesEquipamiento.
   - Línea 1256: Agregado comentario identificativo /* TAREA 7 (B06): DISTINCIÓN ENTRE BÚSQUEDA ACTIVA Y RESTAURACIÓN DEL HISTORIAL CON AUTO-OPEN */ en mostrarResultadosDeBusqueda.
+
+**TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPARTIDOS E INDICADOR DE RED (v2.2.0)**
+- ui.js:
+  - Línea 1363: Agregado comentario identificativo /* TAREA 8 (B10, B11, B23): COMPARTIR MODELO Y REDIRECCIONAMIENTO PRECISO CON DEEP LINKING */ en el manejador shareBtn.onclick de mostrarDetalleModal.
+- main.js:
+  - Línea 186: Agregado comentario identificativo /* TAREA 8 (B10, B12): ESTADO DE CONEXIÓN E INDICADOR DE RED */ en la lógica del indicador de red.
+- style.css:
+  - Línea 141: Agregado comentario identificativo /* TAREA 8 (B09, B11): INDICADOR ULTRA-MINIMALISTA DE ESTADO DE RED */ sobre la regla de estilo #connection-status.

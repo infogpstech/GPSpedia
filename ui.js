@@ -1360,6 +1360,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>';
     shareBtn.className = "share-modal-btn";
     shareBtn.title = "Compartir este vehículo";
+    /* TAREA 8 (B10, B11, B23): COMPARTIR MODELO Y REDIRECCIONAMIENTO PRECISO CON DEEP LINKING */
     shareBtn.onclick = () => {
         const queryParts = [
             activeItem.marca,

@@ -183,6 +183,7 @@ async function initializeApp() {
         handleViewportChange(); // Ejecución inicial
     }
 
+    /* TAREA 8 (B10, B12): ESTADO DE CONEXIÓN E INDICADOR DE RED */
     // --- LÓGICA DE ESTADO DE CONEXIÓN ---
     const connectionStatus = document.getElementById('connection-status');
     if (connectionStatus) {

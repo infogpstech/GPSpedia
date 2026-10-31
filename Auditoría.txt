@@ -406,3 +406,20 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
    - La navegación propaga y persiste el atributo `origin` ('marca' o 'categoria') en `navigationState` en todos los niveles (versiones, tipos de encendido, equipamiento), garantizando que el botón '< Volver' regrese a la vista adecuada sin bucles.
    - En `style.css`, se previene la selección accidental de texto en dispositivos móviles con `user-select: none`.
    - Todo el flujo cumple plenamente con los requisitos funcionales de la Tarea 7. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPARTIDOS E INDICADOR DE RED (31/10/2026)**
+
+**Archivos involucrados:** `ui.js`, `main.js`, `style.css`, `index.html`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **ui.js (Tareas B10, B11, B23: Botón Compartir y URL de Deep Linking):**
+   - El botón `.share-modal-btn` en la cabecera del modal de detalle implementa `shareBtn.onclick`.
+   - La construcción de `shareQuery` y `shareData.url` concatena de forma unívoca `marca`, `modelo`, `versionesAplicables`, `tipoEncendido` y `anoDesde`.
+   - Esto previene ambigüedades intergeneracionales y garantiza que al abrir el enlace compartido (`#search=...`) se filtre la variante exacta y se auto-abra el modal técnico correspondiente.
+2. **main.js e index.html (Tareas B10, B12: Estado de Red y Restauración de Búsqueda):**
+   - En `index.html`, `#connection-status` se ubica de forma elegante en el encabezado.
+   - En `main.js`, los eventos `online` y `offline` actualizan en tiempo real la clase (`online` / `offline`) y el tooltip (`Conectado` / `Trabajando Offline`).
+   - Al cargar la aplicación, `window.location.hash` restaura automáticamente los resultados de búsqueda si existe `#search=...`.
+3. **style.css (Tareas B09, B11: Indicador de Red Ultra-minimalista):**
+   - `#connection-status` cuenta con dimensiones de 3px x 3px, radio de 50%, color verde (#28a745) en online y ámbar con animación de pulso (#ffc107) en offline.
+   - Todo el flujo cumple plenamente con los requisitos funcionales de la Tarea 8. Se insertarán los comentarios identificativos pertinentes.

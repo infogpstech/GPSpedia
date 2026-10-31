@@ -885,9 +885,9 @@ TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE 
 ---
 
 ===================================================================
-TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPARTIDOS E INDICADOR DE RED
+TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPARTIDOS E INDICADOR DE RED [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Facilitar el intercambio ágil y la restauración directa de fichas técnicas vehiculares específicas entre técnicos en campo, manteniendo visibilidad constante sobre el estado de la red.
 - **Tareas originales integradas:** B09, B10, B11, B12, B23
 - **Justificación técnica de convergencia:** Integra el sistema de direccionamiento por URL (#search=), la serialización avanzada de enlaces compartidos (Web Share API) que incluye año y variante para abrir directamente el modal de detalle del vehículo sin ambigüedades, y el indicador visual minimalista de conectividad en línea/fuera de línea.
@@ -899,7 +899,7 @@ TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPA
 #### Especificación Original (B09): 1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.1.5)**
 
 1. **TÍTULO: UX Refinement - Minimalist Status Indicator (v2.1.5)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** style.css
    - **DESCRIPCIÓN DETALLADA:**
      - **UI:** Reducido el tamaño del punto de estado a 3px para una estética ultra-minimalista integrada en el texto de bienvenida.
@@ -907,7 +907,7 @@ TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPA
 #### Especificación Original (B10): 1. **TÍTULO: UX Refinement - Deep Linking & Share Functionality (v2.1.5)**
 
 1. **TÍTULO: UX Refinement - Deep Linking & Share Functionality (v2.1.5)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** index.html, style.css, ui.js, main.js, navigation.js
    - **DESCRIPCIÓN DETALLADA:**
      - **UI:** Reubicado indicador de red al mensaje de bienvenida con reducción de tamaño al 50%.
@@ -917,7 +917,7 @@ TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPA
 #### Especificación Original (B11): 1. **TÍTULO: UX Refinement - Reubicación de Status y Botón Compartir (v2.1.5)**
 
 1. **TÍTULO: UX Refinement - Reubicación de Status y Botón Compartir (v2.1.5)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** index.html, style.css, ui.js
    - **DESCRIPCIÓN DETALLADA:**
      - **Layout:** Reubicado indicador de conexión a la esquina superior derecha (header-controls).
@@ -926,7 +926,7 @@ TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPA
 #### Especificación Original (B12): 1. **TÍTULO: UX Refinement - Status Indicator & Deep Linking (v2.1.5)**
 
 1. **TÍTULO: UX Refinement - Status Indicator & Deep Linking (v2.1.5)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** index.html, style.css, main.js, navigation.js
    - **DESCRIPCIÓN DETALLADA:**
      - **Conectividad:** Añadido indicador visual de estado de red (online/offline) con animaciones CSS.
@@ -936,7 +936,7 @@ TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPA
 #### Especificación Original (B23): 17. **TÍTULO: Corrección de redireccionamiento de enlaces de modelos compartidos (v2.1.5)**
 
 17. **TÍTULO: Corrección de redireccionamiento de enlaces de modelos compartidos (v2.1.5)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
     - **ALCANCE:** ui.js, ChangesLogs.txt, Auditoría.txt, Tareas.txt
     - **DESCRIPCIÓN DETALLADA:**
       - **Objetivo:** Asegurar que compartir un vehículo desde el modal de detalles cree un enlace específico que se dirija directamente al modelo detallado en lugar de a la lista general de generaciones.

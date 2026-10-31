@@ -138,6 +138,7 @@ h1.app-title {
     gap: 15px;
 }
 
+/* TAREA 8 (B09, B11): INDICADOR ULTRA-MINIMALISTA DE ESTADO DE RED */
 #connection-status {
     width: 3px;
     height: 3px;
