@@ -443,9 +443,9 @@ TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN D
 ---
 
 ===================================================================
-TAREA 2: CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL
+TAREA 2: CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Garantizar la protección de identidad, perfiles de usuario y cumplimiento legal integral mediante flujos ineludibles de aceptación de términos y autenticación estricta.
 - **Tareas originales integradas:** B16, B02, B03
 - **Justificación técnica de convergencia:** Converge la administración de credenciales y roles RBAC (administrador, técnico, etc.) con el marco normativo y legal ineludible (aviso inicial de condiciones y acuerdo permanente), asegurando que el acceso y uso de la plataforma cumplan con los estándares de seguridad e identidad antes de permitir operaciones sobre los datos.
@@ -457,14 +457,14 @@ TAREA 2: CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL
 #### Especificación Original (B16): 3. **TÍTULO: Gestión de Usuarios, RBAC y Seguridad (v4.9.20 - v4.9.25)**
 
 3. **TÍTULO: Gestión de Usuarios, RBAC y Seguridad (v4.9.20 - v4.9.25)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** users.html, services/users/users.js, api-config.js
    - **DESCRIPCIÓN DETALLADA:** Cambio de contraseña case-sensitive, filtrado RBAC, edición de perfil, animaciones de carga (spinners).
 
 #### Especificación Original (B02): 1. **TÍTULO: Actualización de contenido y estilos de modales informativos de GPSpedia (v2.1.5)**
 
 1. **TÍTULO: Actualización de contenido y estilos de modales informativos de GPSpedia (v2.1.5)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** index.html, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
    - **DESCRIPCIÓN DETALLADA:**
      - **Modal Sobre Nosotros:** Reemplazado por completo su contenido actual con la redacción institucional solicitada, centrada en la naturaleza técnica y de consulta organizada de GPSpedia. Se eliminaron por completo emojis, emoticonos e iconos decorativos. Se alineó todo el contenido y texto a la izquierda, manteniendo total compatibilidad con pantallas móviles y de escritorio.
@@ -474,7 +474,7 @@ TAREA 2: CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL
 #### Especificación Original (B03): 1. **TÍTULO: Implementación del aviso de aceptación de condiciones y enlace permanente de Términos y Condiciones (v2.1.5)**
 
 1. **TÍTULO: Implementación del aviso de aceptación de condiciones y enlace permanente de Términos y Condiciones (v2.1.5)**
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
    - **ALCANCE:** index.html, ui.js, main.js, style.css, ChangesLogs.txt, Auditoría.txt, Tareas.txt
    - **DESCRIPCIÓN DETALLADA:**
      - **Problema:** Necesidad de implementar un aviso inicial de condiciones al iniciar sesión por primera vez por dispositivo y un acceso permanente en el pie de página a los "Términos y Condiciones" de GPSpedia sin alterar dimensiones ni estilos del footer, permitiendo la integración de este enlace en el aviso inicial y en la pantalla de inicio de sesión sin mezclar su comportamiento, y con optimización responsive para evitar scrolls e incrementar legibilidad.
