@@ -394,7 +394,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   La tarea estará completa cuando las tarjetas para agregar tutoriales y problemas tengan dimensiones coherentes con las tarjetas de su sección, tanto en dispositivos móviles como en equipos de escritorio. La corrección no debe limitarse a establecer una altura fija que produzca problemas en otros tamaños de pantalla.
 - **Estado:** COMPLETADA.
 
-[ ] 1.8. Reejecución de las tareas afectadas y pruebas de regresión
+[X] 1.8. Reejecución de las tareas afectadas y pruebas de regresión
 - **Alcance:**
   Debido a los defectos detectados después del commit y a las violaciones del procedimiento de desarrollo, es necesario recuperar las tareas funcionales afectadas sin borrar el trabajo existente ni reconstruir indiscriminadamente la plataforma:
   1. Identificar las implementaciones afectadas por los defectos descritos.
@@ -412,7 +412,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   - *Servicios:* Comprobar solicitudes y respuestas reales; manejo de errores sin confundir con respuestas válidas.
   - *Integración:* Comprobar flujo de extremo a extremo desde interfaz hasta almacenamiento y regreso.
   - *Regresiones:* Comprobar que los cambios no hayan roto catálogo, modales, carruseles, cables, aperturas, autenticación ni offline.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA.
 
 ===================================================================
 PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXISTENTES

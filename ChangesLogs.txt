@@ -1060,3 +1060,11 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
   - Líneas 4097-4103: Eliminado estilo en línea fijo `min-height: 180px;` en `.card-create-tutorial` delegando el dimensionamiento a `style.css`.
   - Línea 4887: Agregado comentario identificativo de la Tarea 1.7 en `renderPysSection()`.
   - Líneas 4888-4896: Eliminado estilo en línea fijo `min-height: 180px;` en `.card-create-pys` delegando el dimensionamiento a `style.css`.
+
+**TAREA 1.8: REEJECUCIÓN DE LAS TAREAS AFECTADAS Y PRUEBAS DE REGRESIÓN**
+- Archivo: style.css
+  - Líneas 906-950: Consolidado el contenedor `#detalleCompleto` con `position: relative; display: flex; flex-direction: column;` y estandarizado el botón `.btn-expand-plus` con `position: sticky; bottom: 12px; margin-left: auto; width: 40px; height: 40px; border-radius: 50%; font-size: 1.08rem; z-index: 1700;`.
+  - Agregada la regla `.info-modal.visible { display: flex !important; }` para garantizar la apertura confiable de sub-modales.
+- Archivo: ui.js
+  - Líneas 1860-1875: Agregado comentario identificativo de la Tarea 1.8 en `mostrarDetalleModal()`, eliminando estilos en línea innecesarios en `.btn-expand-plus` y delegando su control a `style.css`.
+  - Verificada la ejecución de pruebas automatizadas integrales de extremo a extremo sin regresiones en modales, carruseles, catálogos ni formularios.

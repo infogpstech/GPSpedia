@@ -176,3 +176,15 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
      - Definir para `.card-create-tutorial` una altura uniforme `height: 120px; min-height: 120px;` para igualar exactamente la altura de las tarjetas de tutoriales estándar.
      - Definir para `.card-create-pys` una altura flexible `height: 100%; min-height: 140px;` para que acompañe de manera armónica el tamaño dinámico de las tarjetas de problemas.
      - En `ui.js`: Remover los estilos en línea redundantes de `min-height: 180px;` en `createCard` dentro de `mostrarTutorialesGrid()` y `renderPysSection()`, asignando las clases correspondientes y añadiendo el comentario identificativo de la Tarea 1.7.
+
+**AUDITORÍA TAREA 1.8: REEJECUCIÓN DE LAS TAREAS AFECTADAS Y PRUEBAS DE REGRESIÓN**
+- Archivos analizados: ui.js (mostrarDetalleModal, openExpandMenuModal, renderPysSection, mostrarTutorialesGrid), style.css (.btn-expand-plus, #detalleCompleto, .info-modal).
+- Diagnóstico y Hallazgos de Regresiones y Mejoras Funcionales:
+  1. En `ui.js`:
+     - El botón de ampliación `.btn-expand-plus` en la línea 1864 aún conservaba `plusBtn.style.cssText = "position: fixed; bottom: 20px; right: 20px; ..."` en lugar de `position: sticky; bottom: 12px; margin-left: auto; width: 40px; height: 40px; font-size: 1.08rem; z-index: 1700;`. La regla `position: fixed` hace que el botón se desborde fuera del contenedor `#detalleCompleto` en resoluciones móviles o modales largos en lugar de mantenerse anclado al pie interno del modal.
+     - En `style.css` se debe definir explícitamente `.btn-expand-plus` para consolidar su diseño (diámetro 40px, font-size 1.08rem, sticky bottom 12px, margin-left: auto, border-radius 50%, z-index: 1700) y asegurarse de que el contenedor `#detalleCompleto` posea `position: relative` para el correcto comportamiento del posicionamiento sticky.
+     - Asegurar que `.info-modal.visible { display: flex; }` esté activo en `style.css` para que todos los sub-modales invocados por `openExpandMenuModal` (agregar corte, agregar alimentación, agregar VIN, etc.) y `openAddProblemModal` abran correctamente sin bloqueos de CSS.
+  2. Plan de mitigación:
+     - Trasladar los estilos de `.btn-expand-plus` a `style.css` y simplificar su creación en `ui.js`.
+     - Asegurar que `#detalleCompleto` tenga `position: relative; display: flex; flex-direction: column;`.
+     - Ejecutar una batería completa de pruebas automatizadas con Playwright cubriendo todas las tareas de la Prioridad 1 (1.1 a 1.7) para verificar que no existan regresiones.

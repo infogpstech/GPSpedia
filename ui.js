@@ -1858,10 +1858,10 @@ export function mostrarDetalleModal(item, isNavigation = false) {
 
     const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
+        // Tarea 1.8: Reejecución de las tareas afectadas y pruebas de regresión (Botón +)
         const plusBtn = document.createElement("button");
         plusBtn.className = "btn-expand-plus";
         plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
-        plusBtn.style.cssText = "position: fixed; bottom: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background-color: #007bff; color: #fff; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 1.2rem; cursor: pointer; z-index: 1700; display: flex; align-items: center; justify-content: center;";
         plusBtn.title = "Ampliar información del modelo";
         plusBtn.onclick = (e) => {
             e.stopPropagation();
