@@ -353,3 +353,23 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
 4. **navigation.js (Tarea 11.8):**
    - `filtrarContenido` detecta consultas por VIN (6 a 18 caracteres), extrae el prefijo procesado (omitiendo los últimos 5 caracteres) y realiza coincidencia exacta contra las colecciones en `item.vin`.
    - Todo el flujo cumple los requisitos funcionales de la Tarea 4. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE DETALLE (BOTÓN '+') (31/10/2026)**
+
+**Archivos involucrados:** `ui.js`, `style.css`, `Services/write.js`, `api-config.js`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **ui.js (Tarea 3.1: Botón '+' y menú dinámico):**
+   - En `openExpandMenuModal(item)`, el cálculo de opciones disponibles es 100% dinámico:
+     * Cortes: `cutsAvailable = 3 - cutsCount` (oculta si es 0).
+     * Apertura: `!item.apertura` (oculta si ya existe).
+     * Alimentación: `feedsAvailable = 3 - feedsCount` (oculta si es 0).
+     * Vídeo: `!item.videoGuiaDesarmeUrl` (oculta si ya existe).
+     * VIN: `canAddVin = registeredVins.length < maxVinAllowed` (calculado dinámicamente de 1 a 3 según `versionesAplicables`).
+2. **ui.js (Tarea 3.2: Agregar un nuevo corte desde el modal):**
+   - En `openAddCutForModelModal(item)`, el modal incluye subida de imagen, selectores de tipo de corte y relay, detalles, color de cable, casilla de testigo de motor Check Engine y botón para agregar corte. Utiliza el nombre del colaborador autenticado y actualiza la fecha del registro al guardar el nuevo corte sin duplicar el vehículo.
+3. **ui.js (Tareas 3.3, 3.4, 3.5: Apertura, Alimentación y Vídeo guía):**
+   - `openAddAperturaModal(item)`: subida de imagen, texto enriquecido, no actualiza la fecha de registro y previene sobrescrituras accidentales.
+   - `openAddFeedModal(item)`: subida de imagen, texto enriquecido, cálculo de ranuras disponibles e integración al carrusel sin actualizar la fecha del modelo.
+   - `openAddVideoModal(item)`: valida enlace de YouTube y no actualiza fecha histórica de registro.
+   - El código cumple plenamente todos los requisitos de la Tarea 5. Se insertarán los comentarios identificativos conforme a la Regla 6.

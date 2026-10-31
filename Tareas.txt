@@ -647,9 +647,9 @@ TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚS
 ---
 
 ===================================================================
-TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE DETALLE (BOTÓN '+')
+TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE DETALLE (BOTÓN '+') [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Permitir a los instaladores enriquecer fichas técnicas existentes en campo de forma modular, directa y controlada sin duplicar vehículos.
 - **Tareas originales integradas:** 3.1, 3.2, 3.3, 3.4, 3.5
 - **Justificación técnica de convergencia:** Consolida la funcionalidad interactiva del menú contextual (+) dentro del modal de detalle técnico, implementando el cálculo algorítmico de cupos disponibles y la apertura de modales dedicados para agregar nuevos cortes, aperturas de puertas, cables de alimentación y vídeos de desarme sobre modelos existentes.
@@ -681,7 +681,7 @@ TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE D
   Las opciones de apertura y vídeo deben respetar las limitaciones reales del esquema de datos y del modelo.
   Si una operación no es compatible con el registro actual, no muestres una opción que no pueda completarse correctamente.
   La disponibilidad debe comprobarse también en el backend antes de guardar, para evitar que dos usuarios ocupen simultáneamente el último espacio disponible.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (3.2): 3.2. Agregar un nuevo corte desde el modal de detalle
 
@@ -722,7 +722,7 @@ TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE D
   Al agregar un corte, actualiza la fecha del registro del modelo de acuerdo con el mecanismo existente.
   Evita modificar otras fechas históricas o alterar la fecha de creación original si el sistema distingue entre creación y última actualización.
   La modificación debe limitarse a los campos temporales que correspondan según el esquema actual.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (3.3): 3.3. Agregar apertura desde el modal de detalle
 
@@ -738,7 +738,7 @@ TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE D
   Agregar una apertura no debe actualizar la fecha del registro del modelo.
   Tampoco debe sobrescribir información de cortes, cables de alimentación u otros campos no relacionados.
   Si el modelo ya dispone de una apertura, el comportamiento debe ajustarse a la estructura existente: no sobrescribas una apertura anterior de forma silenciosa.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (3.4): 3.4. Agregar cable de alimentación desde el modal de detalle
 
@@ -755,7 +755,7 @@ TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE D
   Al terminar, actualiza la vista del modelo y el carrusel de alimentación existente para mostrar únicamente los cables realmente registrados.
   No muestres imágenes, marcadores o espacios vacíos como si fueran cables válidos.
   La operación no debe modificar datos ajenos a la alimentación ni actualizar la fecha del registro del modelo.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (3.5): 3.5. Agregar vídeo guía de desarme desde el modal de detalle
 
@@ -771,7 +771,7 @@ TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE D
   Al terminar, actualiza el modal de detalle para mostrar el vídeo utilizando el componente existente.
   Agregar un vídeo no debe actualizar la fecha del registro del modelo.
   Si el modelo ya tiene un vídeo guía y la estructura no admite varios, no sobrescribas el enlace anterior sin advertencia y confirmación explícita del usuario.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 ---
 

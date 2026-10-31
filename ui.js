@@ -4568,6 +4568,7 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
 }
 
 
+/* TAREA 5 (3.1): MENÚ DINÁMICO DE AMPLIACIÓN EN EL MODAL DE DETALLE Y CÁLCULO DE ESPACIOS */
 export function openExpandMenuModal(item) {
     // Tarea 3.1: Botón "+" y menú dinámico de ampliación en el modal de detalle
     const existing = document.getElementById("expand-menu-modal");
@@ -4757,6 +4758,7 @@ export function openAddVinModal(item) {
     };
 }
 
+/* TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
 export function openAddCutForModelModal(item) {
     const existing = document.getElementById("add-cut-for-model-modal");
     if (existing) existing.remove();
@@ -4863,6 +4865,7 @@ export function openAddCutForModelModal(item) {
     };
 }
 
+/* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */
 export function openAddAperturaModal(item) {
     const existing = document.getElementById("add-apertura-modal");
     if (existing) existing.remove();
@@ -4935,6 +4938,7 @@ export function openAddAperturaModal(item) {
     };
 }
 
+/* TAREA 5 (3.4): AGREGAR CABLE DE ALIMENTACIÓN DESDE EL MODAL DE DETALLE */
 export function openAddFeedModal(item) {
     const existing = document.getElementById("add-feed-modal");
     if (existing) existing.remove();
@@ -5017,6 +5021,7 @@ export function openAddFeedModal(item) {
     };
 }
 
+/* TAREA 5 (3.5): AGREGAR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */
 export function openAddVideoModal(item) {
     const existing = document.getElementById("add-video-modal");
     if (existing) existing.remove();
