@@ -532,8 +532,15 @@ function handleReportProblem(payload) {
 
     SpreadsheetApp.flush();
 
+    // Tarea 2.1: Retornar identificador único del reporte para vinculación con sugerencias
+    let generatedReportId = `REP-${Date.now()}`;
+    try {
+        const idVal = sheet.getRange(newRowNumber, 1).getValue();
+        if (idVal) generatedReportId = `REP-${idVal}`;
+    } catch(e) {}
+
     logUserActivity(userId, userName, 'report_problem', vehicleId, problemText);
-    return { status: 'success', message: 'Problema reportado.' };
+    return { status: 'success', message: 'Problema reportado.', reportId: generatedReportId };
 }
 
 function handleSendContactForm(payload) {

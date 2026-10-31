@@ -1068,3 +1068,10 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
 - Archivo: ui.js
   - Líneas 1860-1875: Agregado comentario identificativo de la Tarea 1.8 en `mostrarDetalleModal()`, eliminando estilos en línea innecesarios en `.btn-expand-plus` y delegando su control a `style.css`.
   - Verificada la ejecución de pruebas automatizadas integrales de extremo a extremo sin regresiones en modales, carruseles, catálogos ni formularios.
+
+**TAREA 2.1: BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE**
+- Archivo: Services/feedback.js
+  - Líneas 535-545: En `handleReportProblem()`, se genera y retorna el identificador único `reportId` (`REP-...`) tras registrar el problema en la hoja 'Feedbacks' para posibilitar la vinculación con las sugerencias de cambios posteriores.
+- Archivo: ui.js
+  - Líneas 2367-2388: En `renderCutContent()`, el botón `reportBtn` (`.report-btn`) invoca el modal de reporte individual `openReportCutModal(vehicleId, corteNum, cutData)`. Se garantiza el cálculo robusto de `corteNum` (`cutData.index || (index + 1)`).
+  - Líneas 4240-4380: Se implementó `openReportCutModal()` con formulario estructurado (descripción del error, información incorrecta o incompleta, y adjunto opcional de imagen de referencia). Tras el envío exitoso, muestra el diálogo accesible `showReportSuccessModal()` confirmando el identificador del reporte y ofreciendo la opción interactiva «Sugerir cambio» que abre `openSuggestCutModal()`. Si el reporte falla, se cancela la confirmación y se presenta un mensaje de error sin avanzar.

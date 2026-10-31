@@ -2177,7 +2177,7 @@ async function insertNewVehicleFluently(item) {
     }
 }
 
-function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false) {
+function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false, index = 0) {
     if (inEditMode) {
         const idx = cutData.index;
         const editCutsWrapper = document.createElement('div');
@@ -2366,12 +2366,13 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         };
         feedbackOverlay.appendChild(utilBtn);
 
+        // Tarea 2.1: Botón de reporte individual en cada corte
+        const corteNum = cutData.index || (index + 1);
         const reportBtn = document.createElement('button');
         reportBtn.className = 'feedback-btn-overlay report-btn';
         reportBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
-        reportBtn.title = 'Reportar un problema';
+        reportBtn.title = `Reportar error en Corte #${corteNum}`;
 
-        // Optimistic UI for reportProblem
         reportBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -2382,22 +2383,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
                 return;
             }
 
-            const reason = window.prompt(`Describe el problema con el Corte #${index + 1}:`);
-            if (reason && reason.trim()) {
-                reportBtn.classList.add('btn-loading');
-                reportProblem(vehicleId, `[Corte #${index + 1}] ${reason.trim()}`, currentUser.ID, currentUser.Nombre_Completo || currentUser.Nombre_Usuario).then((res) => {
-                    const reportId = res && res.reportId ? res.reportId : `REP-${Date.now()}`;
-                    const suggest = window.confirm("Reporte enviado con éxito.\n\n¿Deseas proponer una sugerencia de cambio para corregir este corte ahora mismo?");
-                    if (suggest) {
-                        openSuggestCutModal(vehicleId, index + 1, cutData, reportId);
-                    }
-                }).catch(err => {
-                    console.error("Error reporting problem:", err);
-                    showGlobalError("Error al enviar reporte.");
-                }).finally(() => {
-                    reportBtn.classList.remove('btn-loading');
-                });
-            }
+            openReportCutModal(vehicleId, corteNum, cutData);
         };
         feedbackOverlay.appendChild(reportBtn);
 
@@ -4252,6 +4238,147 @@ function mostrarDetalleRelayModal(item) {
     }
 }
 
+
+// Tarea 2.1: Modal de reporte individual para corte específico
+export function openReportCutModal(vehicleId, corteNum, currentCutData) {
+    const existing = document.getElementById("report-cut-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "report-cut-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2500";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-triangle-exclamation" style="color: #dc3545;"></i> Reportar Problema en Corte #${corteNum}</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">
+            Corte seleccionado: <strong>${currentCutData.tipo || 'Sin tipo definido'}</strong>
+        </p>
+
+        <form id="report-cut-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Descripción del Error Detectado *</label>
+                <textarea id="rep-error" rows="3" placeholder="Describe claramente el problema o fallo detectado..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Información Incorrecta o Incompleta</label>
+                <textarea id="rep-incorrecto" rows="2" placeholder="Indica qué datos específicos considera erróneos o incompletos..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Imagen de Referencia (Opcional)</label>
+                <input type="file" id="rep-img-file" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Enviar Reporte</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeBtn = content.querySelector(".info-close-btn");
+    closeBtn.onclick = () => modal.remove();
+
+    const form = content.querySelector("#report-cut-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) {
+            showGlobalError("Debes estar conectado para reportar.");
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.classList.add("btn-loading");
+
+        const errorDesc = content.querySelector("#rep-error").value.trim();
+        const incorrectInfo = content.querySelector("#rep-incorrecto").value.trim();
+        let fullProblemText = `[Corte #${corteNum}] ${errorDesc}`;
+        if (incorrectInfo) {
+            fullProblemText += ` | Info incorrecta: ${incorrectInfo}`;
+        }
+
+        const fileInput = content.querySelector("#rep-img-file");
+        if (fileInput.files && fileInput.files[0]) {
+            fullProblemText += ` [Imagen de referencia adjunta: ${fileInput.files[0].name}]`;
+        }
+
+        try {
+            const res = await reportProblem(
+                vehicleId,
+                fullProblemText,
+                currentUser.ID,
+                currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+            );
+
+            const reportId = res && res.reportId ? res.reportId : `REP-${Date.now()}`;
+            modal.remove();
+
+            // Modal de confirmación con opción accesible de «Sugerir cambio»
+            showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId);
+        } catch (err) {
+            console.error("Error al enviar reporte de corte:", err);
+            showGlobalError("Error al enviar el reporte. Por favor inténtalo de nuevo.");
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("btn-loading");
+        }
+    };
+}
+
+// Modal de confirmación accesible posterior al reporte con opción «Sugerir cambio»
+function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
+    const existing = document.getElementById("report-success-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "report-success-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2500";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "450px";
+    content.style.textAlign = "center";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <div style="font-size: 2.5rem; color: #28a745; margin-bottom: 10px;">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h3 style="margin: 0 0 10px 0;">¡Reporte Enviado con Éxito!</h3>
+        <p style="font-size: 0.9em; color: var(--text-color); margin-bottom: 15px;">
+            Tu reporte para el Corte #${corteNum} ha sido registrado bajo el identificador <strong>${reportId}</strong>.
+        </p>
+        <p style="font-size: 0.9em; color: var(--text-color); margin-bottom: 20px;">
+            ¿Deseas proponer una sugerencia de cambio técnica para este corte ahora mismo?
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button id="btn-suggest-change-action" class="btn btn-primary" style="display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-pen-to-square"></i> Sugerir cambio
+            </button>
+            <button id="btn-close-report-success" class="btn btn-secondary">
+                Cerrar
+            </button>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const close = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = close;
+    content.querySelector("#btn-close-report-success").onclick = close;
+
+    content.querySelector("#btn-suggest-change-action").onclick = () => {
+        modal.remove();
+        openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId);
+    };
+}
 
 export function openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId) {
     const existing = document.getElementById("suggest-cut-modal");

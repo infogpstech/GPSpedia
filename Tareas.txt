@@ -324,7 +324,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   - Las funcionalidades existentes de problemas y soluciones deben conservarse.
 - **Estado:** COMPLETADA.
 
-[ ] 1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
+[X] 1.5. Recuperación y ajuste del botón "+" en el modal de detalle del vehículo
 - **Problemas detectados:**
   El botón "+" del modal de detalle del vehículo presenta dos defectos:
   1. Su ubicación es incorrecta en dispositivos móviles y debe revisarse también en equipos de escritorio.
@@ -359,7 +359,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
   El botón no debe limitarse a mostrar una interfaz vacía ni a abrir un menú cuyos elementos no ejecuten sus respectivas acciones. Cada opción disponible debe conducir al flujo funcional que le corresponda. Si alguna opción está vinculada a una funcionalidad existente, debes recuperar esa implementación en lugar de crear una versión paralela.
 - **Criterios de finalización:**
   El botón debe aparecer en la esquina inferior derecha, ser un 10 % más pequeño y ejecutar correctamente las acciones disponibles en el menú. Estos requisitos deben verificarse en móvil y escritorio.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA.
 
 [X] 1.6. Corrección de la cabecera del modal de detalle
 - **Problema detectado:**
@@ -418,7 +418,7 @@ PRIORIDAD 1: TAREA CORRECTIVA: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESION
 PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXISTENTES
 ===================================================================
 
-[ ] 2.1. Botón de reporte individual en cada corte
+[X] 2.1. Botón de reporte individual en cada corte
 - **Objetivo general:**
   Incorporar en el modal de detalle de cada corte un mecanismo accesible para todos los usuarios autorizados que permita reportar errores y, posteriormente, sugerir modificaciones a la información técnica del corte.
   El reporte de errores y la sugerencia de cambios deben ser operaciones independientes de la modificación directa del registro original.
@@ -434,7 +434,7 @@ PRIORIDAD 2: FASE 1 - REPORTES DE ERRORES Y SUGERENCIAS DE CAMBIOS EN CORTES EXI
   Reutiliza el sistema de inbox y de recepción de reportes existente siempre que sea posible.
   Después de enviar el reporte correctamente, muestra una confirmación y ofrece la opción «Sugerir cambio».
   Si el reporte no se ha enviado correctamente, no muestres una confirmación de éxito ni avances a un estado que dependa de un reporte guardado.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA.
 
 [ ] 2.2. Modal de sugerencia de cambios vinculada al corte
 - **Modal de sugerencia de cambios:**
