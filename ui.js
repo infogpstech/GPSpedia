@@ -930,7 +930,6 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
  * @param {object} item - El objeto de datos del vehículo actual.
  * @returns {Promise<boolean>} - Verdadero si es elegible.
  */
-/* TAREA 17 (B21): GESTIÓN COLABORATIVA DE AÑOS Y VALIDACIÓN COMUNITARIA */
 async function checkValidationEligibility(item) {
     const currentYear = new Date().getFullYear();
     const { catalogData } = getState();
@@ -1286,7 +1285,12 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
     } else {
         // Renderizado para resultados de tipo MODELO (y por defecto).
         // Agrupar los resultados primero por Modelo único (Marca + Modelo)
-        const modelosUnicos = [...new Map(results.map(item => {
+        /* TAREA 4: Evitar que elementos de Relay, Tutoriales o PyS se colapsen indebidamente a una sola tarjeta */
+        const modelosUnicos = [...new Map(results.map((item, idx) => {
+            if (item._sectionType) {
+                const secId = item.ID || item.id || item.Tema || item.configuracion || item.Problema || idx;
+                return [`${item._sectionType}|${secId}`, item];
+            }
             const key = `${item.marca}|${item.modelo}`;
             return [key, item];
         })).values()];
@@ -1473,7 +1477,6 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     headerDiv.appendChild(closeBtn);
     cont.appendChild(headerDiv);
 
-    /* TAREA 16 (B13): AJUSTES VISUALES DE ENCABEZADO Y CONTRASTE */
     // Comentario: Se ajusta el layout del encabezado para cumplir con el nuevo requisito (logo a la izquierda).
     // Se añade 'flex-wrap: wrap' para evitar scroll horizontal en móviles con logos anchos.
     const titleContainer = document.createElement("div");
@@ -2277,7 +2280,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
             contentP.innerHTML = `<strong>Tipo de Corte:</strong> No recomendado`;
         } else {
             contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
-                                <strong>Ubicación:</strong> ${sanitizeHtmlContent(cutData.ubicacion || 'No especificada')}<br>
+                                <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
                                 <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
         }
         container.appendChild(contentP);
@@ -2512,7 +2515,6 @@ function setupModal(modalId, openFn) {
     };
 }
 
-/* TAREA 18 (B24): DASHBOARD DE DESEMPEÑO Y LOGS PARA SUPERVISORES */
 export const openDashboard = setupModal('dashboard-modal', async () => {
     const modal = document.getElementById('dashboard-modal');
     modal.style.display = 'flex';
@@ -3223,16 +3225,6 @@ ${elapsedSec}s
     if (silentCutBtn) {
         silentCutBtn.onclick = () => {
             window.location.href = 'add_cortes.html?silent=true';
-        };
-    }
-
-    // Configuración interactiva de Modo de Texto Enriquecido
-    const richTextModeSelect = document.getElementById('dev-rich-text-mode-select');
-    if (richTextModeSelect) {
-        richTextModeSelect.value = getRichTextMode();
-        richTextModeSelect.onchange = () => {
-            setRichTextMode(richTextModeSelect.value);
-            log(`[SISTEMA] Modo de texto enriquecido actualizado a: ${richTextModeSelect.value}`);
         };
     }
 
@@ -4032,6 +4024,11 @@ export function showGlobalError(message) {
     }, 7000);
 }
 
+/* TAREA 1: Alias y función unificada de notificación para Inbox y operaciones del sistema */
+export function mostrarNotificacion(message, type = 'info') {
+    return showGlobalNotification(message, type);
+}
+
 export function showGlobalNotification(message, type = 'info') {
     const toast = document.getElementById('notification-toast');
     if (!toast) {
@@ -4111,16 +4108,17 @@ export function mostrarSeccion(sectionName, isFromPopState = false) {
     }
 }
 
+/* TAREA 4: Renderizado robusto e independiente de tarjetas de Tutoriales y Relay */
 function mostrarTutorialesGrid() {
     const { catalogData } = getState();
-    const { tutoriales } = catalogData;
+    const tutoriales = (catalogData && catalogData.tutoriales) ? catalogData.tutoriales : [];
     const cont = document.getElementById('contenido-tutoriales');
+    if (!cont) return;
     cont.innerHTML = '<h4>Tutoriales</h4>';
 
     const grid = document.createElement('div');
     grid.className = 'grid';
 
-    // Tarea 1.7: Corrección de las tarjetas para agregar tutoriales y problemas
     // First card: Add Tutorial Card (+)
     const createCard = document.createElement('div');
     createCard.className = 'card card-create-tutorial';
@@ -4130,18 +4128,20 @@ function mostrarTutorialesGrid() {
     `;
     createCard.onclick = () => openAddTutorialModal();
     grid.appendChild(createCard);
-    tutoriales.forEach(item => {
+
+    tutoriales.forEach((item, index) => {
+        if (!item) return;
         const card = document.createElement("div");
         card.className = "card";
         card.onclick = () => mostrarDetalleTutorialModal(item);
         const img = document.createElement("img");
-        setOptimizedImage(img, item.Imagen, IMG_SIZE_SMALL);
-        img.alt = item.Tema;
+        setOptimizedImage(img, item.Imagen || '', IMG_SIZE_SMALL);
+        img.alt = item.Tema || `Tutorial ${index + 1}`;
         img.loading = "lazy";
         card.appendChild(img);
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.textContent = item.Tema;
+        overlay.textContent = item.Tema || `Tutorial ${index + 1}`;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -4150,24 +4150,26 @@ function mostrarTutorialesGrid() {
 
 function mostrarRelayGrid() {
     const { catalogData } = getState();
-    const { relay } = catalogData;
+    const relay = (catalogData && catalogData.relay) ? catalogData.relay : [];
     const cont = document.getElementById('contenido-relay');
+    if (!cont) return;
     cont.innerHTML = '<h4>Configuraciones de Relay</h4>';
 
     const grid = document.createElement('div');
     grid.className = 'grid';
-    relay.forEach(item => {
+    relay.forEach((item, index) => {
+        if (!item) return;
         const card = document.createElement("div");
         card.className = "card";
         card.onclick = () => mostrarDetalleRelayModal(item);
         const img = document.createElement("img");
-        setOptimizedImage(img, item.imagen, IMG_SIZE_SMALL);
-        img.alt = item.configuracion;
+        setOptimizedImage(img, item.imagen || '', IMG_SIZE_SMALL);
+        img.alt = item.configuracion || item.funcion || `Configuración Relay ${index + 1}`;
         img.loading = "lazy";
         card.appendChild(img);
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.textContent = item.configuracion;
+        overlay.textContent = item.configuracion || item.funcion || `Configuración ${index + 1}`;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -4810,10 +4812,7 @@ export function openAddCutForModelModal(item) {
                 <input type="text" id="add-cut-relay" placeholder="Ej. 5 pines NC">
             </div>
             <div class="form-group">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <label style="margin:0;">Ubicación y Detalles del Corte</label>
-                    ${createRichTextToolbar('add-cut-detalles')}
-                </div>
+                <label>Ubicación y Detalles del Corte</label>
                 <textarea id="add-cut-detalles" rows="3" placeholder="Detalles de ubicación y conexión..." required></textarea>
             </div>
             <div class="form-group">
@@ -4907,10 +4906,7 @@ export function openAddAperturaModal(item) {
 
         <form id="add-apertura-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <label style="margin:0;">Detalles de la Apertura</label>
-                    ${createRichTextToolbar('add-apertura-detalles')}
-                </div>
+                <label>Detalles de la Apertura</label>
                 <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
             </div>
             <div class="form-group">
@@ -4983,10 +4979,7 @@ export function openAddFeedModal(item) {
 
         <form id="add-feed-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <label style="margin:0;">Detalles de la Alimentación</label>
-                    ${createRichTextToolbar('add-feed-detalles')}
-                </div>
+                <label>Detalles de la Alimentación</label>
                 <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
             </div>
             <div class="form-group">
@@ -5242,10 +5235,7 @@ export function openAddProblemModal() {
                 <input type="file" id="pys-img-file" accept="image/*" required>
             </div>
             <div class="form-group">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <label style="margin:0;">Detalle del Problema (Máx 200 caracteres)</label>
-                    ${createRichTextToolbar('pys-detalle')}
-                </div>
+                <label>Detalle del Problema (Máx 200 caracteres)</label>
                 <textarea id="pys-detalle" maxlength="200" rows="3" required placeholder="Describe el problema..."></textarea>
             </div>
             <div class="form-group" style="display:flex; align-items:center; gap:8px;">
@@ -5253,18 +5243,12 @@ export function openAddProblemModal() {
                 <label for="pys-sin-solucion" style="margin:0;">Sin solución aún</label>
             </div>
             <div class="form-group" id="grp-solucion">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <label style="margin:0;">Solución (Máx 200 caracteres)</label>
-                    ${createRichTextToolbar('pys-solucion')}
-                </div>
+                <label>Solución (Máx 200 caracteres)</label>
                 <textarea id="pys-solucion" maxlength="200" rows="3" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
-                    <label style="margin:0;">Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
-                    ${createRichTextToolbar('pys-prevenir')}
-                </div>
-                <textarea id="pys-prevenir" rows="2" maxlength="100" placeholder="Recomendación preventiva..."></textarea>
+                <label>Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
+                <input type="text" id="pys-prevenir" maxlength="100" placeholder="Recomendación preventiva...">
             </div>
             <div class="form-group">
                 <label>Enlace de Vídeo YouTube (Opcional)</label>
@@ -5726,119 +5710,50 @@ export function openAddTutorialModal() {
     };
 }
 
-/* TAREA 13 (7.1): BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRIPTIVOS */
-export function createRichTextToolbar(targetId) {
-    const colorPickerId = `color-picker-${targetId}`;
-    return `
-        <div class="rich-editor-toolbar" style="display:inline-flex; align-items:center; gap:6px; margin-bottom:4px; padding:2px 4px; background:rgba(0,123,255,0.06); border-radius:4px; border:1px solid var(--border-color);">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('${targetId}', 'bold')" style="padding:2px 8px; font-weight:bold; font-size:0.85rem; line-height:1.2; height:26px;" title="Texto en negrita"><strong>B</strong></button>
-            <label for="${colorPickerId}" style="display:inline-flex; align-items:center; margin:0; cursor:pointer;" title="Color del texto">
-                <input type="color" id="${colorPickerId}" onchange="applyRichColor('${targetId}', this.value)" style="width:26px; height:26px; padding:0; border:none; background:transparent; cursor:pointer; vertical-align:middle;">
-            </label>
-        </div>
-    `;
-}
-
-window.createRichTextToolbar = createRichTextToolbar;
-
 window.applyRichFormat = function(targetId, format) {
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
-    const start = textarea.selectionStart || 0;
-    const end = textarea.selectionEnd || 0;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
     const selected = textarea.value.substring(start, end);
-    const tagOpen = '<b>';
-    const tagClose = '</b>';
-    const formatted = selected ? `${tagOpen}${selected}${tagClose}` : `${tagOpen}texto${tagClose}`;
-    const prevScroll = textarea.scrollTop;
+    if (!selected) return;
+    const formatted = `<b>${selected}</b>`;
     textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
-    textarea.focus();
-    const newCursor = start + tagOpen.length + (selected ? selected.length : 5);
-    textarea.setSelectionRange(newCursor, newCursor);
-    textarea.scrollTop = prevScroll;
-    textarea.dispatchEvent(new Event('input', { bubbles: true }));
 };
 
 window.applyRichColor = function(targetId, color) {
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
-    const start = textarea.selectionStart || 0;
-    const end = textarea.selectionEnd || 0;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
     const selected = textarea.value.substring(start, end);
-    const tagOpen = `<span style="color:${color}">`;
-    const tagClose = `</span>`;
-    const formatted = selected ? `${tagOpen}${selected}${tagClose}` : `${tagOpen}texto${tagClose}`;
-    const prevScroll = textarea.scrollTop;
+    if (!selected) return;
+    const formatted = `<span style="color:${color}">${selected}</span>`;
     textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
-    textarea.focus();
-    const newCursor = start + tagOpen.length + (selected ? selected.length : 5);
-    textarea.setSelectionRange(newCursor, newCursor);
-    textarea.scrollTop = prevScroll;
-    textarea.dispatchEvent(new Event('input', { bubbles: true }));
 };
 
-export function getRichTextMode() {
-    if (typeof localStorage !== 'undefined') {
-        const mode = localStorage.getItem('gpsepedia_rich_text_mode');
-        if (mode === 'advanced') return 'advanced';
-    }
-    return 'strict';
-}
-
-export function setRichTextMode(mode) {
-    if (typeof localStorage !== 'undefined') {
-        localStorage.setItem('gpsepedia_rich_text_mode', mode === 'advanced' ? 'advanced' : 'strict');
-    }
-}
-
-window.getRichTextMode = getRichTextMode;
-window.setRichTextMode = setRichTextMode;
-
-// TAREA 13 (7.1): MOTOR DE SANITIZACIÓN HTML Y CONVERGENCIA DE MODOS CONFIGURABLES
+// TAREA ADICIONAL: PERMITIR CONTENIDO HTML ENRIQUECIDO EN CAMPOS DE TEXTO
 export function sanitizeHtmlContent(htmlStr) {
     if (!htmlStr) return '';
-    let normalized = String(htmlStr).replace(/\r\n|\r|\n/g, '<br>');
     const parser = new DOMParser();
-    const doc = parser.parseFromString(normalized, 'text/html');
-
-    const mode = getRichTextMode();
-    const allowedTags = mode === 'advanced'
-        ? ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'U', 'A', 'IMG', 'SMALL', 'EM', 'MARK']
-        : ['B', 'STRONG', 'SPAN', 'BR'];
+    const doc = parser.parseFromString(htmlStr, 'text/html');
+    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'U', 'A', 'IMG', 'SMALL', 'EM', 'MARK'];
 
     function cleanNode(node) {
         const children = Array.from(node.childNodes);
         children.forEach(child => {
             if (child.nodeType === 1) {
-                // Sanitizar atributos peligrosos en todas las etiquetas antes de cualquier reemplazo
-                Array.from(child.attributes).forEach(attr => {
-                    const name = attr.name.toLowerCase();
-                    const val = attr.value.toLowerCase();
-                    if (name.startsWith('on') || val.includes('javascript:') || val.includes('data:text/html') || val.includes('vbscript:')) {
-                        child.removeAttribute(attr.name);
-                    } else if (name === 'style') {
-                        const safeStyles = attr.value
-                            .split(';')
-                            .map(s => s.trim())
-                            .filter(s => {
-                                const lower = s.toLowerCase();
-                                return lower.startsWith('color:') || lower.startsWith('font-weight:') || lower.startsWith('background-color:');
-                            })
-                            .join('; ');
-                        if (safeStyles) {
-                            child.setAttribute('style', safeStyles);
-                        } else {
-                            child.removeAttribute('style');
-                        }
-                    }
-                });
-
-                if (child.tagName === 'SCRIPT' || child.tagName === 'STYLE' || child.tagName === 'IFRAME') {
-                    child.remove();
-                } else if (!allowedTags.includes(child.tagName)) {
+                if (!allowedTags.includes(child.tagName)) {
                     const textNode = doc.createTextNode(child.outerHTML);
                     node.replaceChild(textNode, child);
                 } else {
+                    Array.from(child.attributes).forEach(attr => {
+                        const name = attr.name.toLowerCase();
+                        const val = attr.value.toLowerCase();
+                        if (name.startsWith('on') || val.includes('javascript:') || val.includes('data:text/html')) {
+                            child.removeAttribute(attr.name);
+                        }
+                    });
                     cleanNode(child);
                 }
             }
@@ -5849,10 +5764,9 @@ export function sanitizeHtmlContent(htmlStr) {
     return doc.body.innerHTML;
 }
 
-window.sanitizeHtmlContent = sanitizeHtmlContent;
-
 let inboxCacheData = null;
 
+/* TAREA 2: Ficha Técnica de Instalación completa y organizada para impresión exacta en 1 página */
 export function exportVehiclePrintSheet(item) {
     if (!item) return;
     const printWindow = window.open('', '_blank');
@@ -5861,73 +5775,295 @@ export function exportVehiclePrintSheet(item) {
         return;
     }
 
-    const title = `${item.marca} ${item.modelo} (${item.anoDesde}${item.anoHasta ? '-' + item.anoHasta : ''})`;
-    const cuts = [];
-    if (item.tipoCorte1) cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, colab: item.colaboradorCorte1 });
-    if (item.tipoCorte2) cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, colab: item.colaboradorCorte2 });
-    if (item.tipoCorte3) cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, colab: item.colaboradorCorte3 });
+    const title = `${item.marca || ''} ${item.modelo || ''} (${item.anoDesde || ''}${item.anoHasta ? ' - ' + item.anoHasta : ''})`;
 
-    let cutsHtml = cuts.map(c => `
-        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
-            <h4 style="margin: 0 0 5px 0; color: #007bff;">Corte #${c.num}: ${c.tipo}</h4>
-            <p style="margin: 3px 0;"><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
-            <p style="margin: 3px 0;"><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
-            <p style="margin: 3px 0;"><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
-            ${c.colab ? `<p style="margin: 3px 0; font-size: 0.85em; color: #666;">Aportado por: ${cleanColaboradorName(c.colab)}</p>` : ''}
+    const cuts = [];
+    if (item.tipoCorte1 || item.ubicacionCorte1 || item.imgCorte1) {
+        cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, img: item.imgCorte1, colab: item.colaboradorCorte1 });
+    }
+    if (item.tipoCorte2 || item.ubicacionCorte2 || item.imgCorte2) {
+        cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, img: item.imgCorte2, colab: item.colaboradorCorte2 });
+    }
+    if (item.tipoCorte3 || item.ubicacionCorte3 || item.imgCorte3) {
+        cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, img: item.imgCorte3, colab: item.colaboradorCorte3 });
+    }
+
+    const feeds = [];
+    if (item.cableAlimen || item.imgCableAlimen) {
+        feeds.push({ title: 'Alimentación Principal', desc: item.cableAlimen, img: item.imgCableAlimen });
+    }
+    if (item.cableAlimen2 || item.imgCableAlimen2) {
+        feeds.push({ title: 'Alimentación Secundaria', desc: item.cableAlimen2, img: item.imgCableAlimen2 });
+    }
+    if (item.cableAlimen3 || item.imgCableAlimen3) {
+        feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
+    }
+
+    const cutsHtml = cuts.map(c => `
+        <div class="tech-item-card">
+            <div class="tech-item-header">Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}</div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">
+                    <p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
+                    <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
+                    <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
+                    ${c.colab ? `<p class="colab-tag">Colab: ${cleanColaboradorName(c.colab)}</p>` : ''}
+                </div>
+                ${c.img ? `<div class="tech-item-img"><img src="${c.img}" alt="Corte #${c.num}" /></div>` : ''}
+            </div>
         </div>
     `).join('');
 
+    const feedsHtml = feeds.map(f => `
+        <div class="tech-item-card">
+            <div class="tech-item-header">${f.title}</div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">
+                    <p>${f.desc || 'Conexión estándar'}</p>
+                </div>
+                ${f.img ? `<div class="tech-item-img"><img src="${f.img}" alt="${f.title}" /></div>` : ''}
+            </div>
+        </div>
+    `).join('');
+
+    const vehiculoImgHtml = item.imagenVehiculo ? `
+        <div class="vehicle-main-img"><img src="${item.imagenVehiculo}" alt="${title}" /></div>
+    ` : '';
+
+    const aperturaHtml = (item.apertura || item.imgApertura) ? `
+        <div class="tech-item-card">
+            <div class="tech-item-header">Apertura de Puertas / Seguros</div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">
+                    <p>${item.apertura || 'Instrucciones registradas'}</p>
+                </div>
+                ${item.imgApertura ? `<div class="tech-item-img"><img src="${item.imgApertura}" alt="Apertura" /></div>` : ''}
+            </div>
+        </div>
+    ` : '';
+
+    const notasHtml = item.notaImportante ? `
+        <div class="tech-notes">
+            <strong>Nota técnica importante:</strong> ${item.notaImportante}
+        </div>
+    ` : '';
+
     printWindow.document.write(`
         <!DOCTYPE html>
-        <html>
+        <html lang="es">
         <head>
+            <meta charset="UTF-8">
             <title>Ficha Técnica GPSpedia - ${title}</title>
             <style>
-                body { font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.4; }
-                .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; }
-                .logo { font-size: 24px; font-weight: bold; color: #007bff; }
-                .vehicle-title { font-size: 20px; margin: 0 0 10px 0; }
-                .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                .meta-table td { padding: 6px; border: 1px solid #ddd; }
-                .meta-table td.label { font-weight: bold; background: #f9f9f9; width: 30%; }
+                @page {
+                    size: A4 portrait;
+                    margin: 8mm 10mm;
+                }
+                * { box-sizing: border-box; }
+                body {
+                    font-family: Arial, Helvetica, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    color: #1a1a1a;
+                    font-size: 11px;
+                    line-height: 1.3;
+                    background: #fff;
+                }
+                .no-print-bar {
+                    background: #007bff;
+                    color: white;
+                    padding: 8px 16px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-radius: 4px;
+                    margin-bottom: 10px;
+                }
+                .header-container {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 2px solid #007bff;
+                    padding-bottom: 6px;
+                    margin-bottom: 8px;
+                }
+                .header-logo {
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #007bff;
+                    letter-spacing: 0.5px;
+                }
+                .vehicle-title {
+                    font-size: 15px;
+                    font-weight: bold;
+                    margin: 0;
+                    color: #222;
+                }
+                .top-grid {
+                    display: grid;
+                    grid-template-columns: ${item.imagenVehiculo ? '140px 1fr' : '1fr'};
+                    gap: 10px;
+                    margin-bottom: 8px;
+                }
+                .vehicle-main-img img {
+                    width: 100%;
+                    max-height: 105px;
+                    object-fit: cover;
+                    border-radius: 4px;
+                    border: 1px solid #ddd;
+                }
+                .meta-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 10.5px;
+                }
+                .meta-table td {
+                    padding: 3px 6px;
+                    border: 1px solid #e0e0e0;
+                }
+                .meta-table td.label {
+                    font-weight: bold;
+                    background: #f7f9fa;
+                    width: 25%;
+                    color: #444;
+                }
+                .section-header {
+                    font-size: 11.5px;
+                    font-weight: bold;
+                    color: #007bff;
+                    text-transform: uppercase;
+                    border-bottom: 1px solid #007bff;
+                    margin: 8px 0 4px 0;
+                    padding-bottom: 2px;
+                }
+                .tech-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                    gap: 6px;
+                }
+                .tech-item-card {
+                    border: 1px solid #dcdcdc;
+                    border-radius: 4px;
+                    background: #fafafa;
+                    padding: 5px 8px;
+                    page-break-inside: avoid;
+                }
+                .tech-item-header {
+                    font-weight: bold;
+                    color: #0056b3;
+                    font-size: 11px;
+                    margin-bottom: 3px;
+                    border-bottom: 1px dashed #e0e0e0;
+                    padding-bottom: 2px;
+                }
+                .tech-item-body {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 8px;
+                }
+                .tech-item-info {
+                    flex: 1;
+                }
+                .tech-item-info p {
+                    margin: 1.5px 0;
+                    font-size: 10.5px;
+                }
+                .tech-item-img {
+                    width: 75px;
+                    height: 55px;
+                    flex-shrink: 0;
+                }
+                .tech-item-img img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    border-radius: 3px;
+                    border: 1px solid #ccc;
+                }
+                .colab-tag {
+                    font-size: 9.5px;
+                    color: #666;
+                    font-style: italic;
+                }
+                .tech-notes {
+                    background: #fff3cd;
+                    color: #856404;
+                    border: 1px solid #ffeeba;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    margin-top: 6px;
+                    font-size: 10px;
+                    page-break-inside: avoid;
+                }
+                .footer-bar {
+                    margin-top: 8px;
+                    font-size: 9.5px;
+                    color: #777;
+                    border-top: 1px solid #e0e0e0;
+                    padding-top: 3px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
                 @media print {
-                    .no-print { display: none; }
+                    .no-print { display: none !important; }
+                    body { padding: 0; }
+                    .tech-item-card { break-inside: avoid; }
                 }
             </style>
         </head>
         <body>
-            <div class="header">
-                <div class="logo">GPSpedia - Ficha Técnica de Instalación</div>
-                <button class="no-print" onclick="window.print()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Imprimir / Guardar PDF</button>
+            <div class="no-print-bar no-print">
+                <span><strong>Ficha Técnica de Instalación</strong> - Lista para imprimir o guardar PDF en 1 página</span>
+                <button onclick="window.print()" style="padding: 6px 14px; background: white; color: #007bff; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">
+                    Imprimir / Guardar PDF
+                </button>
             </div>
 
-            <h2 class="vehicle-title">${title}</h2>
+            <div class="header-container">
+                <div class="header-logo">GPSpedia <span style="font-size: 13px; font-weight: normal; color: #555;">| Ficha Técnica Oficial</span></div>
+                <div class="vehicle-title">${title}</div>
+            </div>
 
-            <table class="meta-table">
-                <tr><td class="label">Marca:</td><td>${item.marca || '-'}</td></tr>
-                <tr><td class="label">Modelo:</td><td>${item.modelo || '-'}</td></tr>
-                <tr><td class="label">Categoría:</td><td>${item.categoria || '-'}</td></tr>
-                <tr><td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td></tr>
-                <tr><td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td></tr>
-                <tr><td class="label">Años:</td><td>${item.anoDesde || ''} - ${item.anoHasta || 'Presente'}</td></tr>
-                ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td>${item.vin}</td></tr>` : ''}
-            </table>
+            <div class="top-grid">
+                ${vehiculoImgHtml}
+                <table class="meta-table">
+                    <tr>
+                        <td class="label">Marca:</td><td>${item.marca || '-'}</td>
+                        <td class="label">Modelo:</td><td>${item.modelo || '-'}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Categoría:</td><td>${item.categoria || '-'}</td>
+                        <td class="label">Años:</td><td>${item.anoDesde || ''} - ${item.anoHasta || 'Presente'}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td>
+                        <td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td>
+                    </tr>
+                    ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td colspan="3">${item.vin}</td></tr>` : ''}
+                </table>
+            </div>
 
-            <h3>Puntos de Corte de Motor</h3>
-            ${cutsHtml || '<p>No hay cortes registrados para este modelo.</p>'}
+            <div class="section-header">Puntos de Corte de Motor</div>
+            <div class="tech-grid">
+                ${cutsHtml || '<div class="tech-item-card"><p>No hay cortes registrados para este modelo.</p></div>'}
+            </div>
 
-            ${item.apertura ? `
-                <h3>Apertura de Puertas</h3>
-                <p>${item.apertura}</p>
+            ${feedsHtml ? `
+                <div class="section-header">Alimentación Eléctrica</div>
+                <div class="tech-grid">${feedsHtml}</div>
             ` : ''}
 
-            ${item.cableAlimen ? `
-                <h3>Alimentación Electrónica</h3>
-                <p>${item.cableAlimen}</p>
+            ${aperturaHtml ? `
+                <div class="section-header">Apertura y Cierre Centralizado</div>
+                <div class="tech-grid">${aperturaHtml}</div>
             ` : ''}
 
-            <div style="margin-top: 30px; font-size: 0.8em; color: #777; border-top: 1px solid #ddd; padding-top: 10px; text-align: center;">
-                Documento generado automáticamente desde la plataforma técnica GPSpedia.
+            ${notasHtml}
+
+            <div class="footer-bar">
+                <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
+                <span>Uso exclusivo técnico especializado - 1 Página de Consulta Rápida</span>
             </div>
         </body>
         </html>

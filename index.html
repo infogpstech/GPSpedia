@@ -113,8 +113,7 @@
               </div>
           </div>
           <div class="header-controls">
-              <!-- TAREA 20 (B22): BOTÓN DINÁMICO DE INSTALACIÓN PWA -->
-              <button id="install-button" style="display: none;">Instala la app</button>
+              <button id="install-button" style="display: none;">Instalar la App</button>
               <button id="logout-button" style="display: none;">Cerrar Sesión</button>
           </div>
       </div>
@@ -122,10 +121,13 @@
       <!-- Fila 2: Búsqueda y Navegación Principal -->
       <div class="header-bottom">
           <div class="search-wrapper">
-              <div class="search-container" style="display: flex; align-items: center; gap: 5px;">
-                  <input type="text" id="searchInput" placeholder="Buscar Corte..." style="flex: 1;">
-                  <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
-                  <button id="btn-toggle-filters" type="button" class="btn btn-secondary" title="Filtros opcionales" style="padding: 4px 8px; font-size: 0.85em; height: 36px; border-radius: 6px; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-filter"></i> <i class="fa-solid fa-chevron-down" id="filter-chevron-icon" style="font-size: 0.7em;"></i></button>
+              <!-- TAREAS 5 y 6: Integración limpia del botón X dentro del input de búsqueda y separación del botón de filtros -->
+              <div class="search-container" style="display: flex; align-items: center; gap: 8px;">
+                  <div class="search-input-box" style="position: relative; flex: 1; display: flex; align-items: center;">
+                      <input type="text" id="searchInput" placeholder="Buscar Corte..." style="width: 100%; padding-right: 34px;">
+                      <button id="clear-search-btn" title="Limpiar búsqueda" type="button">&times;</button>
+                  </div>
+                  <button id="btn-toggle-filters" type="button" class="btn btn-secondary" title="Filtros opcionales" style="display: none; padding: 4px 8px; font-size: 0.85em; height: 36px; border-radius: 6px; align-items: center; gap: 4px; flex-shrink: 0;"><i class="fa-solid fa-filter"></i> <i class="fa-solid fa-chevron-down" id="filter-chevron-icon" style="font-size: 0.7em;"></i></button>
               </div>
               <!-- Barra de Filtros Rápidos por Categoría y Año (Oculta por defecto) -->
               <div id="catalog-filters-bar" style="display: none; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
@@ -165,7 +167,6 @@
   <div id="contenido-relay" class="content-section" style="display: none;"></div>
   <div id="contenido-pys" class="content-section" style="display: none;"></div>
 
-  <!-- TAREA 16 (B19): FOOTER DINÁMICO Y SENTINEL -->
   <div id="footer-sentinel"></div>
 </div>
 
@@ -320,15 +321,6 @@
                             <button id="btn-admin-clear-activity-logs" class="btn btn-danger" style="font-size: 0.8em; padding: 8px 12px; height: 34px; background-color: #dc3545; color: white;"><i class="fa-solid fa-trash-can"></i> Purgar Logs</button>
                         </div>
                         <button id="btn-admin-add-silent-cut" class="btn btn-danger" style="font-size: 0.85em; text-align: left; padding: 8px 12px; margin-top: 5px;"><i class="fa-solid fa-eye-slash"></i> Agregar corte silenciosamente (Panel Administrativo)</button>
-
-                        <!-- TAREA 13 (7.1): Configuración de Modo de Texto Enriquecido -->
-                        <div style="display: flex; gap: 8px; align-items: center; margin-top: 5px; border-top: 1px dashed var(--border-color); padding-top: 8px;">
-                            <label for="dev-rich-text-mode-select" style="font-size: 0.85em; margin: 0; flex: 1;"><i class="fa-solid fa-font"></i> Modo Texto Enriquecido:</label>
-                            <select id="dev-rich-text-mode-select" class="dev-input" style="width: 170px; padding: 4px; font-size: 0.85em; height: 32px;">
-                                <option value="strict">Estricto / Liviano</option>
-                                <option value="advanced">Avanzado (HTML/CSS)</option>
-                            </select>
-                        </div>
                     </div>
 
                     <!-- Carga de Logotipo -->

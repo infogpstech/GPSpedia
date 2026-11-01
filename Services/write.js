@@ -102,7 +102,7 @@ function doPost(e) {
 // HANDLERS DE ACCIONES
 // ============================================================================
 
-/* TAREA 3 (4.2, 4.4, B31) / TAREA 19 (9.1): REGISTRO, IDEMPOTENCIA Y VALIDACIONES DE INTEGRIDAD EN BACKEND */
+/* TAREA 3 (4.2, 4.4, B31): REGISTRO Y ACTUALIZACIÓN DE CORTES E IDEMPOTENCIA CON REPARACIÓN */
 function handleAddOrUpdateCut(payload) {
     const { vehicleData, cutData, vehicleId, colaborador } = payload;
     if (!cutData || !colaborador) {
