@@ -1199,3 +1199,27 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
   - Línea 5622: Agregado comentario identificativo /* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */ en openAddTutorialModal.
 - main.js:
   - Línea 401: Agregado comentario identificativo /* TAREA 12 (B04): CONTROL DEL CICLO DE VIDA DEL REPRODUCTOR DE YOUTUBE MEDIANTE MUTATIONOBSERVER */ en el bloque de observación de cierre de #modalDetalle.
+
+**CHANGES LOG - 01/11/2026 (TAREA 13: FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML)**
+
+**Archivo: ui.js**
+- Líneas 4800-4805: Incorporada barra de formato enriquecido con `createRichTextToolbar('add-cut-detalles')` en el formulario modal para agregar nuevo corte a un modelo existente.
+- Líneas 4895-4903: Incorporada barra de formato enriquecido con `createRichTextToolbar('add-apertura-detalles')` en el formulario modal de apertura de puertas.
+- Líneas 4970-4978: Incorporada barra de formato enriquecido con `createRichTextToolbar('add-feed-detalles')` en el formulario modal de cable de alimentación.
+- Líneas 5230-5260: Incorporada barra de formato enriquecido en los campos de detalle, solución y prevención en el formulario de Problemas y Soluciones (`openAddProblemModal`).
+- Líneas 5665-5672: Estandarizada la barra de formato en el formulario modal de tutoriales (`openAddTutorialModal`).
+- Líneas 2275-2280: Asegurada la invocación de `sanitizeHtmlContent` al renderizar la ubicación y detalles del corte en `renderCutContent`.
+- Líneas 3555-3560, 3650-3655: Aplicada `sanitizeHtmlContent` sobre las descripciones de cables de alimentación en carruseles y acordeones.
+- Líneas 5720-5845: Creada la función exportada `createRichTextToolbar(targetId)`. Implementadas las funciones `getRichTextMode()` y `setRichTextMode(mode)` vinculadas a `localStorage` ('gpsepedia_rich_text_mode'). Rediseñada la función `sanitizeHtmlContent(htmlStr)` para soportar:
+  * Modo Estricto (default): Permite exclusivamente `<b>`, `<strong>`, `<span style="color:...">`, y `<br>`, normalizando saltos de línea y sanitizando atributos inline.
+  * Modo Avanzado: Permite etiquetas adicionales (`<p>`, `<div>`, `<i>`, `<u>`, `<a>`, `<img>`, `<small>`, `<em>`, `<mark>`) y reglas CSS de texto seguras.
+  * Eliminación sistemática de scripts, iframes, estilos maliciosos y eventos `on*` / `javascript:` en ambos modos.
+- Líneas 3225-3235: Conectado selector de modo de texto enriquecido en el panel de desarrollador (`dev-rich-text-mode-select`).
+
+**Archivo: add_cortes.html**
+- Líneas 228-245: Incorporada barra de formato de texto con botones de negrita y selector de color interactivo en el campo `ubicacionCorte1`.
+- Líneas 280-335: Incorporada barra de formato en los campos descriptivos `apertura`, `cableAlimen` y `notaImportante` de la Etapa 3.
+- Líneas 1245-1275: Implementadas funciones auxiliares globales `applyRichFormat` y `applyRichColor` para manipulación de selección en textareas.
+
+**Archivo: index.html**
+- Líneas 320-330: Añadido selector interactivo `#dev-rich-text-mode-select` en el modal de herramientas del desarrollador (`#dev-tools-modal`) para alternar entre Modo Estricto y Modo Avanzado HTML/CSS.

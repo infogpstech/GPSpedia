@@ -228,7 +228,18 @@
                 <div class="form-grid">
                     <div class="form-group"><label for="tipoCorte1">Tipo de Corte</label><select id="tipoCorte1" required></select></div>
                     <div class="form-group"><label for="configRelay1">Configuración de Relay</label><select id="configRelay1" required></select></div>
-                    <div class="form-group full-width"><label for="ubicacionCorte1">Ubicación del Corte</label><textarea id="ubicacionCorte1" rows="3"></textarea></div>
+                    <div class="form-group full-width">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                            <label for="ubicacionCorte1" style="margin:0;">Ubicación del Corte</label>
+                            <div class="rich-editor-toolbar" style="display:inline-flex; align-items:center; gap:6px; padding:2px 4px; background:rgba(0,123,255,0.06); border-radius:4px; border:1px solid var(--border-color);">
+                                <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('ubicacionCorte1', 'bold')" style="padding:2px 8px; font-weight:bold; font-size:0.85rem; line-height:1.2; height:26px;" title="Texto en negrita"><strong>B</strong></button>
+                                <label for="color-picker-ubicacionCorte1" style="display:inline-flex; align-items:center; margin:0; cursor:pointer;" title="Color del texto">
+                                    <input type="color" id="color-picker-ubicacionCorte1" onchange="applyRichColor('ubicacionCorte1', this.value)" style="width:26px; height:26px; padding:0; border:none; background:transparent; cursor:pointer; vertical-align:middle;">
+                                </label>
+                            </div>
+                        </div>
+                        <textarea id="ubicacionCorte1" rows="3"></textarea>
+                    </div>
                     <div class="form-group full-width" style="flex-direction: row; align-items: center; gap: 8px; margin-top: -10px; margin-bottom: 10px;">
                         <input type="checkbox" id="testigoMotor" style="width: auto; margin: 0; cursor: pointer;">
                         <label for="testigoMotor" style="margin: 0; font-size: 0.95em; cursor: pointer;">Este corte activa el testigo del motor.</label>
@@ -266,14 +277,36 @@
                     <div class="accordion-item" id="apertura-accordion">
                         <div class="accordion-header"><span>Agregar Apertura</span><i class="fas fa-chevron-down"></i></div>
                         <div class="accordion-content form-grid">
-                            <div class="form-group full-width"><label for="apertura">Detalle de Apertura</label><textarea id="apertura" rows="3"></textarea></div>
+                            <div class="form-group full-width">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                    <label for="apertura" style="margin:0;">Detalle de Apertura</label>
+                                    <div class="rich-editor-toolbar" style="display:inline-flex; align-items:center; gap:6px; padding:2px 4px; background:rgba(0,123,255,0.06); border-radius:4px; border:1px solid var(--border-color);">
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('apertura', 'bold')" style="padding:2px 8px; font-weight:bold; font-size:0.85rem; line-height:1.2; height:26px;" title="Texto en negrita"><strong>B</strong></button>
+                                        <label for="color-picker-apertura" style="display:inline-flex; align-items:center; margin:0; cursor:pointer;" title="Color del texto">
+                                            <input type="color" id="color-picker-apertura" onchange="applyRichColor('apertura', this.value)" style="width:26px; height:26px; padding:0; border:none; background:transparent; cursor:pointer; vertical-align:middle;">
+                                        </label>
+                                    </div>
+                                </div>
+                                <textarea id="apertura" rows="3"></textarea>
+                            </div>
                             <div class="form-group full-width"><label>Imagen de Apertura</label><div class="image-upload-group"><img id="imgApertura_preview" class="image-preview" onclick="this.nextElementSibling.click()"><label for="imgApertura" class="btn btn-secondary">Subir</label><input type="file" id="imgApertura" style="display:none;" accept="image/*"></div></div>
                         </div>
                     </div>
                     <div class="accordion-item" id="alimentacion-accordion">
                         <div class="accordion-header"><span>Cable de Alimentación</span><i class="fas fa-chevron-down"></i></div>
                         <div class="accordion-content form-grid">
-                            <div class="form-group full-width"><label for="cableAlimen">Detalle de Alimentación</label><textarea id="cableAlimen" rows="3"></textarea></div>
+                            <div class="form-group full-width">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                    <label for="cableAlimen" style="margin:0;">Detalle de Alimentación</label>
+                                    <div class="rich-editor-toolbar" style="display:inline-flex; align-items:center; gap:6px; padding:2px 4px; background:rgba(0,123,255,0.06); border-radius:4px; border:1px solid var(--border-color);">
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('cableAlimen', 'bold')" style="padding:2px 8px; font-weight:bold; font-size:0.85rem; line-height:1.2; height:26px;" title="Texto en negrita"><strong>B</strong></button>
+                                        <label for="color-picker-cableAlimen" style="display:inline-flex; align-items:center; margin:0; cursor:pointer;" title="Color del texto">
+                                            <input type="color" id="color-picker-cableAlimen" onchange="applyRichColor('cableAlimen', this.value)" style="width:26px; height:26px; padding:0; border:none; background:transparent; cursor:pointer; vertical-align:middle;">
+                                        </label>
+                                    </div>
+                                </div>
+                                <textarea id="cableAlimen" rows="3"></textarea>
+                            </div>
                             <div class="form-group full-width"><label>Imagen de Alimentación</label><div class="image-upload-group"><img id="imgCableAlimen_preview" class="image-preview" onclick="this.nextElementSibling.click()"><label for="imgCableAlimen" class="btn btn-secondary">Subir</label><input type="file" id="imgCableAlimen" style="display:none;" accept="image/*"></div></div>
                         </div>
                     </div>
@@ -296,7 +329,18 @@
                     <div class="accordion-item" id="nota-accordion">
                         <div class="accordion-header"><span>Agregar Nota Importante</span><i class="fas fa-chevron-down"></i></div>
                         <div class="accordion-content form-grid">
-                            <div class="form-group full-width"><label for="notaImportante">Nota</label><textarea id="notaImportante" rows="3"></textarea></div>
+                            <div class="form-group full-width">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                    <label for="notaImportante" style="margin:0;">Nota</label>
+                                    <div class="rich-editor-toolbar" style="display:inline-flex; align-items:center; gap:6px; padding:2px 4px; background:rgba(0,123,255,0.06); border-radius:4px; border:1px solid var(--border-color);">
+                                        <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('notaImportante', 'bold')" style="padding:2px 8px; font-weight:bold; font-size:0.85rem; line-height:1.2; height:26px;" title="Texto en negrita"><strong>B</strong></button>
+                                        <label for="color-picker-notaImportante" style="display:inline-flex; align-items:center; margin:0; cursor:pointer;" title="Color del texto">
+                                            <input type="color" id="color-picker-notaImportante" onchange="applyRichColor('notaImportante', this.value)" style="width:26px; height:26px; padding:0; border:none; background:transparent; cursor:pointer; vertical-align:middle;">
+                                        </label>
+                                    </div>
+                                </div>
+                                <textarea id="notaImportante" rows="3"></textarea>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1250,6 +1294,42 @@
                 return;
             }
         });
+    </script>
+    <script>
+        function applyRichFormat(targetId, format) {
+            const textarea = document.getElementById(targetId);
+            if (!textarea) return;
+            const start = textarea.selectionStart || 0;
+            const end = textarea.selectionEnd || 0;
+            const selected = textarea.value.substring(start, end);
+            const tagOpen = '<b>';
+            const tagClose = '</b>';
+            const formatted = selected ? tagOpen + selected + tagClose : tagOpen + 'texto' + tagClose;
+            const prevScroll = textarea.scrollTop;
+            textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+            textarea.focus();
+            const newCursor = start + tagOpen.length + (selected ? selected.length : 5);
+            textarea.setSelectionRange(newCursor, newCursor);
+            textarea.scrollTop = prevScroll;
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        }
+        function applyRichColor(targetId, color) {
+            const textarea = document.getElementById(targetId);
+            if (!textarea) return;
+            const start = textarea.selectionStart || 0;
+            const end = textarea.selectionEnd || 0;
+            const selected = textarea.value.substring(start, end);
+            const tagOpen = '<span style="color:' + color + '">';
+            const tagClose = '</span>';
+            const formatted = selected ? tagOpen + selected + tagClose : tagOpen + 'texto' + tagClose;
+            const prevScroll = textarea.scrollTop;
+            textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+            textarea.focus();
+            const newCursor = start + tagOpen.length + (selected ? selected.length : 5);
+            textarea.setSelectionRange(newCursor, newCursor);
+            textarea.scrollTop = prevScroll;
+            textarea.dispatchEvent(new Event('input', { bubbles: true }));
+        }
     </script>
 </body>
 </html>

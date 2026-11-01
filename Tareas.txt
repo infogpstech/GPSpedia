@@ -1261,9 +1261,9 @@ TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIM
 ---
 
 ===================================================================
-TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRIPTIVOS
+TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRIPTIVOS [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Permitir a los técnicos resaltar información crítica de instalación (colores de cable, advertencias) sin comprometer la seguridad ni sobrecargar la interfaz.
 - **Tareas originales integradas:** 7.1
 - **Justificación técnica de convergencia:** Implementa la barra de formato simple (negrita, colores de texto, saltos de línea) junto con el modo configurable de plataforma y el motor de saneamiento HTML en cliente y servidor para admitir etiquetas semánticas seguras sin riesgo de inyecciones de código (XSS).
@@ -1289,7 +1289,7 @@ TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRI
   1. **Modo Estricto / Liviano (Default Fase 9):** Sanitiza y permite exclusivamente etiquetas de formato esencial (`<b>`, `<strong>`, `<span>` con estilo de color, y `<br>`).
   2. **Modo Avanzado HTML/CSS (Tarea Adicional 1):** Permite etiquetas estructurales adicionales y formateadores (`<p>`, `<div>`, `<i>`, `<u>`, `<a>`, `<img>`, `<small>`, `<em>`, `<mark>`) y reglas CSS seguras de presentación de texto.
   En ambos modos, se bloquean scripts, funciones JS ejecutables y eventos peligrosos.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 ---
 
