@@ -170,18 +170,28 @@ h1.app-title {
     align-items: flex-start;
 }
 
+/* TAREA 7: Aplicar sombras elegantes y legibles al logo principal y título GPSpedia */
 .app-logo {
     max-width: 96px;
     height: auto;
     transition: all 0.35s ease-in-out;
-    filter: drop-shadow(0px 4px 10px rgba(0, 0, 0, 0.15));
+    filter: drop-shadow(0px 3px 6px rgba(0, 0, 0, 0.22));
+}
+
+body.dark-mode .app-logo {
+    filter: drop-shadow(0px 2px 8px rgba(0, 123, 255, 0.4)) drop-shadow(0px 0px 4px rgba(255, 255, 255, 0.3)) !important;
 }
 
 h1.app-title {
     margin: 0;
     font-size: 2.2em;
     color: var(--header-color) !important;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
     transition: all 0.35s ease-in-out;
+}
+
+body.dark-mode h1.app-title {
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.6), 0 0 10px rgba(0, 123, 255, 0.25);
 }
 
 #welcome-message {
@@ -261,7 +271,8 @@ h1.app-title {
     transition: opacity 0.2s;
 }
 
-.search-container.has-text #clear-search-btn {
+.search-container.has-text #clear-search-btn,
+.search-input-box.has-text #clear-search-btn {
     opacity: 1;
     pointer-events: all;
 }
@@ -1351,6 +1362,116 @@ body.search-active .container {
 @media (max-width: 768px) {
     .lightbox-nav-btn {
         display: none !important;
+    }
+}
+
+/* ==========================================================================
+   TAREA 3 & TAREA 8: ESTILIZACIÓN INTEGRAL DE MODALES CON FORMULARIOS Y CONTROLES
+   ========================================================================== */
+
+.info-modal-content form,
+.modal form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.info-modal-content label,
+.modal form label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-color, #333);
+    margin-bottom: 2px;
+    display: block;
+    text-align: left;
+}
+
+.info-modal-content input[type="text"],
+.info-modal-content input[type="email"],
+.info-modal-content input[type="password"],
+.info-modal-content input[type="number"],
+.info-modal-content input[type="url"],
+.info-modal-content select,
+.info-modal-content textarea,
+.modal form input[type="text"],
+.modal form input[type="email"],
+.modal form input[type="password"],
+.modal form input[type="number"],
+.modal form select,
+.modal form textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 0.95rem;
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 6px;
+    background-color: var(--card-bg, #ffffff);
+    color: var(--text-color, #222222);
+    box-sizing: border-box;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    font-family: inherit;
+}
+
+.info-modal-content input:focus,
+.info-modal-content select:focus,
+.info-modal-content textarea:focus,
+.modal form input:focus,
+.modal form select:focus,
+.modal form textarea:focus {
+    outline: none;
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.25);
+}
+
+.info-modal-content textarea,
+.modal form textarea {
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.4;
+}
+
+.info-modal-content input:disabled,
+.info-modal-content select:disabled,
+.info-modal-content textarea:disabled,
+.modal form input:disabled,
+.modal form select:disabled,
+.modal form textarea:disabled {
+    background-color: #e9ecef;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+body.dark-mode .info-modal-content input:disabled,
+body.dark-mode .info-modal-content select:disabled,
+body.dark-mode .info-modal-content textarea:disabled,
+body.dark-mode .modal form input:disabled,
+body.dark-mode .modal form select:disabled,
+body.dark-mode .modal form textarea:disabled {
+    background-color: #2b3035;
+    opacity: 0.6;
+}
+
+/* Botones de acción en modales */
+.modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+    margin-top: 15px;
+    flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+    .info-modal-content {
+        padding: 18px 14px !important;
+        width: 95% !important;
+    }
+    .modal-actions {
+        flex-direction: column;
+    }
+    .modal-actions button,
+    .info-modal-content form button[type="submit"] {
+        width: 100%;
     }
 }
 

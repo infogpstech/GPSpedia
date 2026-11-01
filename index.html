@@ -113,7 +113,8 @@
               </div>
           </div>
           <div class="header-controls">
-              <button id="install-button" style="display: none;">Instalar la App</button>
+              <!-- TAREA 20: Texto exacto 'Instala la app' -->
+              <button id="install-button" style="display: none;">Instala la app</button>
               <button id="logout-button" style="display: none;">Cerrar Sesión</button>
           </div>
       </div>
@@ -121,10 +122,13 @@
       <!-- Fila 2: Búsqueda y Navegación Principal -->
       <div class="header-bottom">
           <div class="search-wrapper">
-              <div class="search-container" style="display: flex; align-items: center; gap: 5px;">
-                  <input type="text" id="searchInput" placeholder="Buscar Corte..." style="flex: 1;">
-                  <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
-                  <button id="btn-toggle-filters" type="button" class="btn btn-secondary" title="Filtros opcionales" style="padding: 4px 8px; font-size: 0.85em; height: 36px; border-radius: 6px; display: flex; align-items: center; gap: 4px;"><i class="fa-solid fa-filter"></i> <i class="fa-solid fa-chevron-down" id="filter-chevron-icon" style="font-size: 0.7em;"></i></button>
+              <!-- TAREAS 5 y 6: Integración limpia del botón X dentro del input de búsqueda y separación del botón de filtros -->
+              <div class="search-container" style="display: flex; align-items: center; gap: 8px;">
+                  <div class="search-input-box" style="position: relative; flex: 1; display: flex; align-items: center;">
+                      <input type="text" id="searchInput" placeholder="Buscar Corte..." style="width: 100%; padding-right: 34px;">
+                      <button id="clear-search-btn" title="Limpiar búsqueda" type="button">&times;</button>
+                  </div>
+                  <button id="btn-toggle-filters" type="button" class="btn btn-secondary" title="Filtros opcionales" style="display: none; padding: 4px 8px; font-size: 0.85em; height: 36px; border-radius: 6px; align-items: center; gap: 4px; flex-shrink: 0;"><i class="fa-solid fa-filter"></i> <i class="fa-solid fa-chevron-down" id="filter-chevron-icon" style="font-size: 0.7em;"></i></button>
               </div>
               <!-- Barra de Filtros Rápidos por Categoría y Año (Oculta por defecto) -->
               <div id="catalog-filters-bar" style="display: none; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
@@ -616,6 +620,11 @@
       </div>
       <div class="form-group">
         <label for="contact-message">Mensaje</label>
+        <!-- TAREA 3.5: Barra de enriquecimiento para Contáctanos -->
+        <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('contact-message', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+            <input type="color" onchange="applyRichColor('contact-message', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+        </div>
         <textarea id="contact-message" rows="4" required></textarea>
       </div>
       <button type="submit" class="btn">Enviar Mensaje</button>
