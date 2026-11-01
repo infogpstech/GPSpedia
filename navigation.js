@@ -125,6 +125,7 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
 
     const palabrasBusqueda = busqueda.split(' ').filter(p => p);
 
+    /* TAREA 14 (10.1): MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS */
     // --- LÓGICA DE BÚSQUEDA GLOBAL MULTI-SECCIÓN ---
     const { relay = [], tutoriales = [] } = catalogData || {};
     let pysItems = [];

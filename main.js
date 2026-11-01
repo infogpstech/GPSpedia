@@ -64,18 +64,33 @@ async function initializeApp() {
         });
     }
 
+    /* TAREA 15 (14.1): CORREGIR POSICIÓN Y COMPORTAMIENTO DEL BOTÓN DESPLEGABLE DEL FILTRO DE BÚSQUEDA */
     const toggleFiltersBtn = document.getElementById('btn-toggle-filters');
     const filtersBar = document.getElementById('catalog-filters-bar');
     const chevronIcon = document.getElementById('filter-chevron-icon');
 
     if (toggleFiltersBtn && filtersBar) {
         toggleFiltersBtn.style.display = 'none'; // Oculto por defecto si la búsqueda no está activa
-        toggleFiltersBtn.addEventListener('click', () => {
+        toggleFiltersBtn.addEventListener('mousedown', (e) => {
+            // Evitar que el mousedown desenfoque searchInput o active comportamientos no deseados
+            e.preventDefault();
+        });
+        toggleFiltersBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             const isHidden = filtersBar.style.display === 'none';
             filtersBar.style.display = isHidden ? 'flex' : 'none';
             if (chevronIcon) {
                 chevronIcon.className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
             }
+        });
+
+        // Prevenir que clics dentro de la barra de filtros la cierren o cancelen la búsqueda
+        filtersBar.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+        });
+        filtersBar.addEventListener('click', (e) => {
+            e.stopPropagation();
         });
     }
 
@@ -83,12 +98,14 @@ async function initializeApp() {
     const yearSelect = document.getElementById('filter-year-select');
 
     if (catSelect) {
-        catSelect.addEventListener('change', () => {
+        catSelect.addEventListener('change', (e) => {
+            e.stopPropagation();
             navigation.filtrarContenido(searchInput.value || '');
         });
     }
     if (yearSelect) {
-        yearSelect.addEventListener('change', () => {
+        yearSelect.addEventListener('change', (e) => {
+            e.stopPropagation();
             navigation.filtrarContenido(searchInput.value || '');
         });
     }

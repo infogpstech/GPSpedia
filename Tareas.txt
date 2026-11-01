@@ -1294,9 +1294,9 @@ TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRI
 ---
 
 ===================================================================
-TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS
+TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Centralizar el acceso a toda la base técnica de GPSpedia mediante una única barra de búsqueda predictiva y universal.
 - **Tareas originales integradas:** 10.1
 - **Justificación técnica de convergencia:** Amplía el buscador unificado para consultar de manera paralela e instantánea todas las entidades de la plataforma: Cortes de vehículos, Configuraciones de Relay, Tutoriales y Problemas y Soluciones, asociando badges visuales y redirigiendo al modal correspondiente según el tipo de entidad.
@@ -1321,14 +1321,14 @@ TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE
   Distinguir claramente la sección con etiqueta o indicador visual (`Corte`, `Relay`, `Tutorial`, `Problema y Solución`). Cada resultado debe abrir su contenido correcto sin forzar a todos los resultados a dirigirse al modal de cortes.
 - **Rendimiento y experiencia:**
   Reutilizar caché, evitar consultas redundantes, sincronizar ante cambios, manejar errores de una fuente sin ocultar las demás, diseño adaptativo en móvil y escritorio.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 ---
 
 ===================================================================
-TAREA 15: BARRA DE FILTROS RÁPIDOS DE CATÁLOGO Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES
+TAREA 15: BARRA DE FILTROS RÁPIDOS DE CATÁLOGO Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Lograr una identidad visual armónica y coherente en todos los controles interactivos de la aplicación, facilitando la filtración rápida del catálogo sin obstruir la búsqueda.
 - **Tareas originales integradas:** 14.1, 14.2, 14.3
 - **Justificación técnica de convergencia:** Corrige la posición, superposición y comportamiento del botón desplegable del filtro de búsqueda (`#btn-toggle-filters`) y aplica un sistema unificado de diseño CSS para todos los botones de la plataforma (primarios, secundarios, flotantes, modales, iconos), garantizando consistencia visual y accesibilidad en desktop y móvil.
@@ -1361,7 +1361,7 @@ TAREA 15: BARRA DE FILTROS RÁPIDOS DE CATÁLOGO Y ESTANDARIZACIÓN UNIVERSAL DE
   - El campo de búsqueda debe conservar su funcionalidad y disponer de espacio suficiente para escribir.
   - El icono de lupa debe permanecer correctamente ubicado y no invadir el espacio del filtro ni del campo de texto.
   - La distribución debe adaptarse correctamente a dispositivos móviles y pantallas de escritorio.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (14.2): 14.2. Unificación y aplicación de estilos CSS a todos los botones de GPSpedia
 
@@ -1397,7 +1397,7 @@ TAREA 15: BARRA DE FILTROS RÁPIDOS DE CATÁLOGO Y ESTANDARIZACIÓN UNIVERSAL DE
   - Mantener las dimensiones y alineaciones de los componentes que ya tienen un diseño correcto, salvo los ajustes necesarios para conseguir uniformidad.
 - **Comportamiento esperado:**
   Todos los botones de la aplicación deben presentar una apariencia integrada con el diseño de GPSpedia, sin controles que conserven accidentalmente la apariencia predeterminada del navegador. La experiencia visual debe ser consistente entre páginas, formularios, modales y paneles, sin afectar las funcionalidades existentes.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (14.3): 14.3. Verificación obligatoria
 
@@ -1412,7 +1412,7 @@ TAREA 15: BARRA DE FILTROS RÁPIDOS DE CATÁLOGO Y ESTANDARIZACIÓN UNIVERSAL DE
   7. Comprobar la compatibilidad con los temas visuales existentes.
   8. Ejecutar las pruebas y revisiones establecidas en "Proceso de desarrollo.md".
   No considerar terminada la tarea únicamente porque los botones tengan una apariencia diferente o porque la barra de búsqueda se vea correctamente. Es obligatorio verificar que las interacciones y funcionalidades continúen operando correctamente.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 ---
 ---

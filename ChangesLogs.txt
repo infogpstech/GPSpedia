@@ -1223,3 +1223,19 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
 
 **Archivo: index.html**
 - Líneas 320-330: Añadido selector interactivo `#dev-rich-text-mode-select` en el modal de herramientas del desarrollador (`#dev-tools-modal`) para alternar entre Modo Estricto y Modo Avanzado HTML/CSS.
+
+**CHANGES LOG - 01/11/2026 (TAREA 14: VERIFICACIÓN MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN)**
+
+**Archivo: navigation.js**
+- Línea 128: Agregado comentario identificativo /* TAREA 14 (10.1): MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS */ sobre el bloque de búsqueda multi-sección (Cortes, Relays, Tutoriales y PyS).
+
+**Archivo: Auditoría.txt, Tareas.txt**
+- Verificados individualmente todos los requisitos funcionales de la Tarea 14 (10.1): búsqueda en cortes, configuraciones de relay, tutoriales, problemas y soluciones, sanitización de markup en coincidencias, asignación de badges por sección y direccionamiento modal específico. Marcada como completada [X].
+
+**CHANGES LOG - 01/11/2026 (TAREA 15: FILTROS RÁPIDOS Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES)**
+
+**Archivo: style.css**
+- Líneas 844-945: Implementada suite unificada de estilos CSS para todos los botones (.btn, .btn-primary, .btn-secondary, .btn-warning, .btn-danger, .btn-sm) con radio de 8px, flexbox alineado, pesos de fuente consistentes, sombras sutiles, estados de hover, active con microinteracción scale(0.98), focus-visible accesible y soporte adaptativo para modo claro y modo oscuro.
+
+**Archivo: main.js**
+- Líneas 67-110: Ajustados los eventos del botón desplegable del filtro (#btn-toggle-filters) y del panel de filtros (#catalog-filters-bar) con preventDefault() en mousedown y stopPropagation() para evitar que la interacción cierre prematuramente el menú desplegable, cancele la búsqueda o interfiera con el campo de búsqueda. Agregado comentario identificativo de TAREA 15 (14.1).
