@@ -208,394 +208,172 @@ TAREAS EN EJECUCIÓN (SESIÓN ACTUAL)
 ===================================================================
 
 ===================================================================
-TAREA 1: IMPLEMENTACIÓN: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN [X]
+BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O NO IMPLEMENTADAS)
 ===================================================================
-- **Estado:** COMPLETADA
-- **Objetivo general:**
-  Ampliar la función existente de control e identificación de VIN para incorporar un motor de análisis diferencial que permita identificar las características y versiones de un vehículo utilizando únicamente los caracteres del VIN que realmente permiten distinguirlo de otros vehículos de la misma marca, modelo, generación, año o versión aplicable.
-  Actualmente, la base de datos vehicular dispone de información estructurada que incluye:
-  - Marca.
-  - Modelo.
-  - Generación, cuando esté registrada.
-  - Versiones de equipamiento o versiones aplicables.
-  - Rangos de años de vigencia de las diferentes actualizaciones dentro de cada generación.
-  - VIN completo asociado a cada registro vehicular.
-  La nueva funcionalidad debe aprovechar esta información para comparar automáticamente los VIN registrados, descubrir sus posiciones diferenciales y generar firmas de identificación que permitan distinguir las distintas configuraciones vehiculares.
-  El propósito principal es que el sistema pueda determinar automáticamente cuáles son los caracteres mínimos del VIN necesarios para diferenciar un vehículo de otro, sin exigir que el usuario tenga que visualizar o consultar permanentemente el VIN completo.
-  No se pretende crear un decodificador universal basado en posiciones fijas. Se pretende desarrollar un sistema de identificación basado en el análisis estadístico y comparativo de los VIN reales existentes en la base de datos, complementado con reglas configurables y validaciones.
 
-### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+### TAREA 1.1: Configuración de Relay en el formulario de agregar corte del botón «+» [ ]
+- **Estado detectado:** Fallida. La implementación no corresponde a lo solicitado.
+- **Problema:** En el formulario de agregar corte que se abre desde el botón «+» del modal de detalles del modelo, el campo de configuración de Relay continúa siendo un "input text". El campo debe funcionar mediante un selector desplegable ("DropSelect") con las opciones disponibles en la configuración almacenada en Spreadsheet.
+- **Referencia obligatoria:** Selector de configuración de Relay de la etapa 2 de "add_corte.html".
+- **Requisitos:**
+  1. Localizar el selector de configuración de Relay de la etapa 2 de "add_corte.html".
+  2. Identificar cómo obtiene las opciones desde Spreadsheet, cómo las carga, cómo administra su estado y cómo guarda el valor seleccionado.
+  3. Reutilizar esa misma lógica y comportamiento en el formulario de agregar corte del botón «+».
+  4. Eliminar el "input text" actual y sustituirlo por el selector correspondiente.
+  5. Las opciones deben provenir de la configuración existente, no de valores escritos manualmente en el código.
+  6. Mantener la compatibilidad con el mecanismo actual de registro y almacenamiento de cortes.
+  7. Comprobar que el valor seleccionado se conserva correctamente y llega al proceso de guardado.
+  8. Evitar duplicar funciones, consultas, servicios o estructuras de configuración.
+- **Pruebas obligatorias:** Carga correcta de las opciones, selección de cada opción, conservación del valor, guardado correcto, manejo sin opciones y en escritorio/móvil.
 
-1. **Inspección previa obligatoria:**
-   - Leer las instrucciones generales del repositorio.
-   - Consultar "Instrucciones.txt", "README" y los documentos de metodología o arquitectura existentes, cuando estén disponibles.
-   - Identificar la implementación actual de la función de control de VIN.
-   - Identificar dónde se almacenan los VIN completos.
-   - Identificar cómo se relacionan los VIN con las marcas, modelos, versiones y rangos de años.
-   - Examinar las estructuras de datos y los servicios que intervienen en el registro, consulta y visualización de vehículos.
-   - Identificar las validaciones existentes para VIN de 17 caracteres y otros formatos.
-   - Revisar si existen funciones previas de decodificación, comparación o identificación de vehículos.
-   - Identificar qué componentes reutilizables pueden aprovecharse.
-   - No asumir que una funcionalidad existe porque esté mencionada en la documentación o aparezca en la interfaz. Comprobar su implementación real.
-   - No crear estructuras duplicadas ni implementar nuevamente funcionalidades que ya existan.
-   - La solución debe integrarse con la arquitectura actual y conservar el comportamiento de las funciones existentes.
+---
 
-2. **Respetar la estructura real del catálogo vehicular:**
-   - Esta condición es fundamental para toda la implementación.
-   - La clasificación de vehículos debe utilizar los conceptos que realmente maneja la base de datos.
-   - 2.1. Versiones de equipamiento o versiones aplicables:
-     * No utilizar "trim level" como campo obligatorio ni introducirlo como una nueva jerarquía de clasificación.
-     * La base de datos trabaja con versiones de equipamiento o versiones aplicables a cada vehículo.
-     * El motor debe utilizar las versiones existentes, conservar sus denominaciones originales y respetar las relaciones actuales entre marca, modelo y versión (ej. Toyota Land Cruiser Prado VX, Toyota Land Cruiser Prado VL, Chevrolet Silverado 7ZR, etc.).
-     * Estos nombres son ejemplos de clasificación comercial y no deben confundirse automáticamente con códigos contenidos en el VIN.
-   - 2.2. Rangos de años de vigencia dentro de una generación:
-     * No crear un campo independiente denominado facelift.
-     * La estructura actual representa las actualizaciones de una generación mediante rangos de años (ej. Toyota Land Cruiser Prado Generación 2021–2027: Primera configuración 2021–2024; Segunda configuración 2025–2027).
-     * El sistema debe interpretar estos rangos como periodos de vigencia de diferentes configuraciones o actualizaciones dentro de una misma generación.
-     * Requisitos:
-       1. Respetar los rangos de años existentes.
-       2. Identificar a qué generación pertenece cada rango.
-       3. No considerar cada rango como una generación independiente.
-       4. No inventar rangos de años.
-       5. No asumir que todos los modelos cambian de configuración en los mismos años.
-       6. No aplicar automáticamente una firma de un rango a otro.
-       7. Permitir que una misma versión de equipamiento exista en varios rangos.
-       8. Permitir que un mismo rango contenga varias versiones aplicables.
-       9. Respetar las relaciones existentes entre los registros.
-     * Cuando se analicen los VIN, el motor debe considerar tanto la generación como el rango de vigencia correspondiente.
-     * No modificar innecesariamente el modelo de datos actual para introducir conceptos que ya están representados mediante las estructuras existentes.
+### TAREA 1.2: Barra de enriquecimiento de texto en los formularios [ ]
+- **Estado detectado:** Fallida o no implementada.
+- **Problema:** Los campos destinados a introducir información detallada o de varias líneas continúan sin mostrar la barra de enriquecimiento de texto. Los botones de negrita y selección de colores están completamente ausentes.
+- **Requisitos:**
+  1. Revisar los formularios incluidos en la solicitud original.
+  2. Identificar campos de texto multilínea destinados a información descriptiva o técnica.
+  3. Incorporar barra de enriquecimiento con, como mínimo: Negrita y Selector de colores.
+  4. La barra debe aparecer junto a los campos correspondientes.
+  5. Los controles deben modificar el contenido del campo asociado.
+  6. El formato debe conservarse al guardar, recuperar, visualizar y editar.
+  7. No aplicar la barra a campos cortos o de valores simples (marca, modelo, color del cable, etc.).
+  8. Reutilizar el editor o componentes existentes en el proyecto.
+  9. Evitar implementar barras independientes con comportamientos diferentes.
+- **Alcance de revisión:** Agregar corte, agregar problema o solución, agregar tutorial, agregar información desde botón «+», y edición in-modal del desarrollador.
 
-3. **Motor automático de análisis diferencial de VIN:**
-   - Implementar un motor que analice los VIN completos registrados y determine qué posiciones permiten diferenciar las distintas clasificaciones vehiculares.
-   - La identificación debe realizarse mediante comparaciones progresivas.
-   - 3.1. Niveles de comparación:
-     * El motor debe poder analizar los VIN en diferentes niveles:
-       1. Marca.
-       2. Marca + modelo.
-       3. Marca + modelo + generación.
-       4. Marca + modelo + generación + rango de años.
-       5. Marca + modelo + generación + rango de años + versión de equipamiento o versión aplicable.
-     * Estos niveles permiten descubrir qué caracteres identifican cada característica.
-     * No es obligatorio que todos los niveles tengan una firma diferente. Si una misma combinación de caracteres permite identificar varios niveles, el sistema debe aprovecharla.
-   - 3.2. Comparación carácter por carácter:
-     * El motor debe comparar los VIN registrados utilizando posiciones absolutas.
-     * Construir una matriz de comparación que permita determinar:
-       - Posiciones constantes entre registros de una misma clasificación.
-       - Posiciones variables dentro de una misma clasificación.
-       - Posiciones que cambian entre versiones diferentes.
-       - Posiciones que diferencian rangos de años.
-       - Posiciones que distinguen modelos de una misma marca.
-       - Posiciones que únicamente identifican unidades individuales.
-       - Posiciones que pueden contener información de serie y no deben utilizarse como identificadores de configuración.
-     * No considerar que cualquier carácter diferente representa una diferencia de modelo o versión.
-   - 3.3. Identificación de posiciones relevantes:
-     * El motor debe encontrar las posiciones que permiten distinguir una clasificación de las demás.
-     * Para ello:
-       1. Analizar todos los VIN disponibles del grupo correspondiente.
-       2. Identificar posiciones estables dentro de cada clasificación.
-       3. Comparar esas posiciones con las de las demás clasificaciones.
-       4. Eliminar posiciones que varían dentro de la misma clasificación y no permiten una identificación consistente.
-       5. Buscar la combinación mínima de posiciones que permita diferenciar inequívocamente los grupos.
-       6. Verificar la combinación contra todos los VIN registrados.
-       7. Registrar el resultado y su nivel de confiabilidad.
-     * El análisis debe permitir combinaciones de posiciones consecutivas y no consecutivas (ej. Posición 5, Posición 8, Posición 10 -> Firma: "A - B - 2").
-     * No debe limitarse a extraer cuatro caracteres consecutivos.
-   - 3.4. Algoritmo de combinación mínima:
-     * Implementar un mecanismo que encuentre la menor combinación de posiciones necesaria para distinguir las clasificaciones.
-     * La solución debe considerar que pueden existir varias combinaciones igualmente válidas.
-     * En ese caso, preferir la combinación que:
-       1. Sea estable dentro de todos los registros de la clasificación.
-       2. Diferencie la mayor cantidad de clasificaciones competidoras.
-       3. Utilice menos posiciones.
-       4. Evite posiciones variables por número de serie.
-       5. Mantenga consistencia entre las muestras disponibles.
-     * No seleccionar arbitrariamente la primera combinación encontrada.
-     * Si una combinación de una posición es suficiente, no mostrar cuatro caracteres innecesariamente.
-     * Si se necesitan dos, tres, cuatro o más posiciones, utilizar las estrictamente necesarias.
-     * El objetivo es minimizar la cantidad de caracteres mostrados, no imponer un límite fijo de cuatro.
+---
 
-4. **Generación automática de firmas diferenciales:**
-   - Una vez identificadas las posiciones relevantes, el sistema debe generar una firma asociada a la clasificación correspondiente.
-   - Cada firma debe contener como mínimo:
-     - Identificador de la firma.
-     - Marca.
-     - Modelo.
-     - Generación, cuando aplique.
-     - Rango de años de vigencia.
-     - Versión de equipamiento o versión aplicable, cuando corresponda.
-     - Longitud y formato del VIN de referencia.
-     - Posiciones utilizadas.
-     - Valores encontrados en esas posiciones.
-     - Representación legible de la firma.
-     - Cantidad de VIN utilizados para calcularla.
-     - Fecha de cálculo.
-     - Estado de validación.
-     - Nivel de confiabilidad.
-     - Referencia a los registros que sustentan la identificación.
-   - 4.1. Ejemplo conceptual:
-     * Toyota Land Cruiser Prado 2025: motor compara versiones VX y VL y descubre que posición 8 permite distinguirlas (VX: 8=A, VL: 8=B). La interfaz muestra: Toyota Land Cruiser Prado 2025 -> Versión VX: carácter diferencial A, posición 8; Versión VL: carácter diferencial B, posición 8. No es necesario mostrar el VIN completo como elemento principal.
-   - 4.2. Firmas con posiciones no consecutivas:
-     * Si las posiciones relevantes no son consecutivas, conservar su ubicación original (ej. Posiciones: 4, 7, 10, 12; Firma: A-B-2-C). No concatenar los caracteres sin conservar la información de sus posiciones. El sistema debe poder reconstruir qué caracteres fueron extraídos y de dónde proceden.
+### TAREA 1.3: Corregir el botón «Volver» en el formulario "add_corte.html" [ ]
+- **Estado detectado:** No implementada.
+- **Problema:** El botón «Volver» continúa sin funcionar. Al presionarlo no ejecuta ninguna acción y no permite regresar a la etapa anterior.
+- **Requisitos:**
+  1. Inspeccionar la navegación entre etapas de "add_corte.html".
+  2. Identificar los eventos asociados al botón «Volver».
+  3. Determinar por qué el botón no ejecuta ninguna acción y corregir la navegación.
+  4. Permitir regresar a la etapa inmediatamente anterior.
+  5. Conservar todos los datos introducidos previamente (texto, selectores, configuración de Relay, imágenes, información del modelo y corte).
+  6. Respetar ambos flujos: modelo existente y modelo nuevo.
+  7. Considerar que el registro puede haberse creado previamente en Spreadsheet y Drive al avanzar a la etapa de información adicional.
+  8. Si el usuario regresa y modifica datos, actualizar el registro correspondiente sin crear registros duplicados.
+  9. No volver a cargar ni duplicar imágenes que no hayan cambiado.
+  10. Gestionar correctamente el reemplazo o eliminación de imágenes.
 
-5. **Identificación de vehículos mediante firmas:**
-   - Implementar una función de consulta que utilice las firmas generadas.
-   - El sistema debe poder recibir:
-     - VIN completo.
-     - Fragmento de VIN con posiciones conocidas.
-     - Combinación de cuatro caracteres cuando corresponda.
-     - Una selección de marca, modelo, generación y rango de años, cuando sea necesaria para desambiguar.
-   - 5.1. Consulta mediante VIN completo:
-     1. Validar su formato según las reglas aplicables.
-     2. Identificar las posiciones necesarias.
-     3. Extraer los caracteres correspondientes.
-     4. Consultar el catálogo de firmas.
-     5. Identificar las clasificaciones compatibles.
-     6. Devolver la información vehicular que pueda determinarse.
-   - 5.2. Consulta mediante cuatro caracteres:
-     1. Buscar las firmas compatibles.
-     2. Consultar las posiciones a las que corresponden esos caracteres.
-     3. Identificar las posibles clasificaciones.
-     4. Utilizar el contexto disponible para reducir coincidencias.
-     5. Devolver una coincidencia exacta únicamente cuando exista evidencia suficiente.
-     * Si la firma corresponde a varias configuraciones, no seleccionar arbitrariamente una; solicitar información adicional o mostrar las alternativas.
-   - 5.3. Identificación parcial:
-     * Permitir identificar un vehículo sin que el usuario tenga que introducir necesariamente el VIN completo.
-     * Distinguir entre: Identificación completa, Identificación parcial, Identificación ambigua, Identificación sin coincidencias.
-     * Nunca afirmar que se conoce el VIN completo cuando únicamente se ha proporcionado una firma parcial.
+---
 
-6. **Tratamiento de VIN de diferentes longitudes y formatos:**
-   - No asumir que todos los identificadores vehiculares tienen 17 caracteres.
-   - El motor debe respetar los formatos admitidos por la implementación actual y permitir reglas específicas para diferentes longitudes.
-   - Requisitos:
-     1. No rechazar automáticamente identificadores cortos.
-     2. No completar con ceros los identificadores que tengan menos caracteres.
-     3. No desplazar posiciones para forzar una estructura de 17 caracteres.
-     4. Mantener las posiciones originales del identificador.
-     5. Distinguir VIN, número de chasis y otros números de serie cuando la información disponible lo permita.
-     6. Permitir reglas asociadas a longitudes y formatos específicos.
-     7. Evitar comparar directamente identificadores de estructuras incompatibles.
-     8. No aplicar automáticamente las reglas de un fabricante a otro.
-   - Las firmas deben estar vinculadas a la estructura y longitud del identificador del que proceden.
+### TAREA 1.4: Retirar la animación de carga de la sección «Problemas / Soluciones» [ ]
+- **Estado detectado:** Fallida. El comportamiento original continúa presente.
+- **Problema:** Al seleccionar la sección «Problemas / Soluciones», sigue apareciendo una animación de carga que no debería mostrarse.
+- **Requisitos:**
+  1. Comparar el comportamiento de esta sección con Cortes, Tutoriales y Relay.
+  2. Inspeccionar cómo se realiza la carga y renderizado de estas secciones.
+  3. Identificar la condición o función que provoca el indicador de carga en Problemas / Soluciones.
+  4. Corregir para que la sección se presente sin ese indicador, siguiendo el patrón de las demás.
+  5. No eliminar mecanismos necesarios de carga de datos, validación o manejo de errores.
+  6. No ocultar indiscriminadamente todos los indicadores de carga de la plataforma.
 
-7. **Gestión de muestras insuficientes:**
-   - El motor no debe inventar firmas ni presentar como confirmadas identificaciones que no estén respaldadas por suficientes registros.
-   - Casos: Existe solamente un VIN de una versión; Existen varios VIN, pero todos pertenecen a la misma configuración; Las posiciones que cambian también varían dentro de la misma versión; No existen suficientes muestras para distinguir dos versiones; Dos versiones tienen exactamente la misma firma en los registros disponibles.
-   - En estos casos, el sistema debe indicar que no dispone de información suficiente para generar una firma diferencial confiable.
-   - Requisitos:
-     1. Registrar la cantidad de muestras disponibles.
-     2. Identificar qué clasificaciones pueden compararse.
-     3. Detectar clasificaciones sin muestras suficientes.
-     4. Diferenciar entre una firma calculada y una firma validada.
-     5. No generar firmas confirmadas a partir de coincidencias accidentales.
-     6. Permitir recalcular las firmas cuando se agreguen nuevos VIN.
-     7. Mostrar qué información adicional permitiría mejorar la identificación.
-   - No imponer una cantidad universal de VIN como garantía de exactitud. La suficiencia depende de la diversidad de las muestras y de la capacidad real de distinguir las clasificaciones.
+---
 
-8. **Detección de conflictos, ambigüedades y duplicaciones:**
-   - Identificar posibles conflictos en las firmas: Dos versiones diferentes producen la misma firma; Una firma identifica dos rangos de años; Una firma que anteriormente era única deja de serlo al incorporar nuevos VIN; Una posición seleccionada cambia dentro de una misma clasificación; Dos reglas diferentes producen resultados contradictorios.
-   - Requisitos:
-     1. Detectar firmas duplicadas.
-     2. Detectar posiciones inconsistentes.
-     3. Identificar clasificaciones que no pueden diferenciarse con las muestras disponibles.
-     4. Registrar conflictos entre reglas.
-     5. Evitar activar automáticamente firmas ambiguas.
-     6. Mantener las firmas anteriores como referencia histórica cuando sean sustituidas.
-     7. Informar qué registros originaron el conflicto.
-     8. Permitir recalcular y validar las firmas después de corregir o ampliar los datos.
-   - No resolver conflictos eligiendo arbitrariamente una versión.
+### TAREA 1.5: Estandarizar sombras de tarjetas, logo y título principal de GPSpedia [ ]
+- **Estado detectado:** Fallida. Los cambios solicitados no se reflejan correctamente.
+- **Problema:** Las tarjetas «Crear nuevo problema» y «Nuevo tutorial» siguen utilizando una sombra azul, diferente al estilo de sombras grises utilizado en las tarjetas del catálogo. También debe comprobarse el tratamiento visual del logo y del título principal GPSpedia.
+- **Referencia visual obligatoria:** Sombras de las tarjetas de los carruseles del catálogo.
+- **Excepción:** El carrusel de logos de marcas debe conservar su tratamiento visual propio sin alteraciones.
+- **Requisitos:**
+  1. Localizar reglas CSS de sombras de tarjetas de referencia y sombras azules actuales.
+  2. Corregir «Crear nuevo problema» y «Nuevo tutorial» aplicando sombras grises (`box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)` y en hover `0 8px 20px rgba(0, 0, 0, 0.15)`).
+  3. Revisar y estandarizar el tratamiento de sombras del logo principal y del título GPSpedia en el encabezado.
+  4. Mantener coherencia visual con el resto del catálogo sin alterar dimensiones ni funcionalidades.
+  5. Comprobar que el carrusel de marcas permanezca intacto.
 
-9. **Actualización automática de las firmas:**
-   - Mantener las firmas sincronizadas con la información de la base de datos.
-   - Cuando se registre un nuevo VIN:
-     1. Asociarlo con su marca, modelo, generación, rango de años y versión correspondiente.
-     2. Incorporarlo al conjunto de muestras.
-     3. Determinar qué grupos de clasificación podrían verse afectados.
-     4. Verificar si las firmas actuales siguen siendo válidas.
-     5. Recalcular las firmas cuando corresponda.
-     6. Detectar nuevas ambigüedades.
-     7. Actualizar el catálogo únicamente cuando los resultados hayan sido validados.
-   - Posibilidad de ejecutar un recálculo general de todas las firmas.
-   - No ejecutar comparaciones completas de toda la base de datos en cada consulta de usuario. El análisis debe realizarse durante el registro, actualización o mantenimiento de las firmas, mientras que las consultas deben utilizar los resultados previamente calculados.
-   - 9.1. Protección contra cambios incorrectos: Si una nueva muestra provoca que una firma deje de ser única: no sobrescribir silenciosamente una firma validada; marcarla como pendiente de revisión; registrar la causa; identificar clasificaciones afectadas; evitar utilizarla como identificación exacta hasta resolver el conflicto.
+---
 
-10. **Interfaz y presentación de resultados:**
-    - Integrar la funcionalidad con la interfaz actual de control de VIN. No crear una interfaz independiente si la función existente puede ampliarse correctamente.
-    - 10.1. Visualización del identificador diferencial: Cuando el sistema identifique una firma, mostrar: Marca, Modelo, Generación, Rango de años, Versión de equipamiento o versión aplicable, Caracteres diferenciales, Posiciones del VIN utilizadas, Cantidad de caracteres necesarios para identificar la configuración, Nivel de certeza. El VIN completo puede mantenerse disponible para consulta técnica, auditoría y validación, pero no debe ser el elemento principal de la presentación.
-    - 10.2. Ejemplo de presentación: Toyota Land Cruiser Prado | Año modelo: 2025 | Rango de vigencia: 2025–2027 | Versión: VX | Firma diferencial: Posición 8: A | Identificación: Toyota Prado VX | Estado: Identificación validada.
-    - 10.3. Visualización de coincidencias múltiples: Cuando existan varias coincidencias: mostrar posibles versiones; indicar caracteres que comparten; identificar posiciones que faltan para diferenciarlas; solicitar información adicional cuando sea necesario. No presentar una coincidencia probable como identificación exacta.
+### TAREA 1.6: ~~Corregir el botón de filtros rápidos durante el modo búsqueda~~ (CANCELADA Y A RETIRAR) [X]
+- **Estado:** CANCELADA. Se ha decidido eliminar la función de filtros rápidos de búsqueda de la plataforma. La barra de búsqueda buscará elementos sin necesidad de filtros. Esta implementación debe retirarse por completo de la plataforma.
+- **Acción requerida:** Retirar el botón `#btn-toggle-filters`, la barra `#catalog-filters-bar` y sus listeners asociados en `index.html`, `navigation.js` y `style.css`.
 
-11. **Herramientas de administración y diagnóstico:**
-    - Incorporar herramientas administrativas aprovechando los componentes existentes.
-    - El administrador debe poder:
-      1. Consultar las firmas generadas.
-      2. Consultar las posiciones diferenciales de cada firma.
-      3. Consultar las muestras utilizadas.
-      4. Ver las clasificaciones que se compararon.
-      5. Identificar firmas sin validación.
-      6. Consultar conflictos.
-      7. Ejecutar un recálculo general.
-      8. Recalcular firmas de un fabricante, modelo o rango de años.
-      9. Consultar el historial de cambios.
-      10. Desactivar firmas obsoletas sin eliminar la información histórica.
-    - Ampliar consola administrativa existente en lugar de duplicarla. No permitir que modificaciones manuales omitan validaciones de consistencia.
+---
 
-12. **Estructura de datos y persistencia:**
-    - Inspeccionar esquema actual e integrar las firmas sin duplicar información vehicular existente.
-    - Información de firmas debe conservar como mínimo: Identificador, Clasificación vehicular asociada, Generación y rango de años correspondientes, Versión aplicable, Longitud y formato del VIN, Posiciones diferenciales, Valores de los caracteres, Firma resultante, Número de muestras utilizadas, Estado de validación, Fecha de generación, Versión del algoritmo, Historial de modificaciones, Referencias a los VIN que sustentan la regla.
-    - Persistencia en infraestructura existente (sin segunda base de datos ni duplicación de registros de marcas, modelos y versiones). Si requiere nuevas tablas/hojas, justificar necesidad y respetar mecanismos actuales.
-
-13. **Seguridad, privacidad e integridad:**
-    - VINs completos conservados conforme a reglas actuales de acceso y almacenamiento.
-    - Requisitos:
-      1. No exponer VIN completos a usuarios que no tengan permisos para consultarlos.
-      2. No permitir que una firma parcial revele automáticamente registros individuales.
-      3. Respetar los permisos existentes.
-      4. Validar los datos antes de generar firmas.
-      5. Evitar alteraciones accidentales de los VIN originales.
-      6. Mantener trazabilidad de las firmas y sus modificaciones.
-      7. No utilizar datos de una clasificación para generar firmas de otra sin justificar la relación.
-    - El motor no debe modificar los VIN originales ni reemplazarlos por sus firmas (las firmas son información derivada y complementaria).
-
-14. **Criterios de aceptación y pruebas obligatorias:**
-    - Demostrar comportamientos:
-      * A. Diferenciación entre versiones.
-      * B. Diferenciación entre rangos de años.
-      * C. Diferenciación entre modelos.
-      * D. Firmas mínimas (1 carácter si es suficiente, 2, 3 o 4 si corresponde, posiciones no consecutivas, más de 4 solo si es necesario, sin caracteres redundantes).
-      * E. Muestras insuficientes (evitar confirmar firmas sin evidencia suficiente, mostrar motivos, permitir recálculo).
-      * F. Ambigüedad (detectar firmas compartidas, no seleccionar arbitrariamente, solicitar información).
-      * G. Actualización (comprobar que nuevos VIN no invaliden silenciosamente firmas existentes, recalcular y mantener trazabilidad).
-      * H. Compatibilidad (conservar función actual de control de VIN, no romper consulta ni registro, respetar formatos admitidos y compatibilidad).
-
-15. **Pruebas de regresión y validación:**
-    - Conjuntos de prueba obligatorios:
-      1. Dos versiones diferentes del mismo modelo y año.
-      2. Dos versiones iguales del mismo modelo con VIN diferentes.
-      3. Dos rangos de años diferentes dentro de una misma generación.
-      4. Dos generaciones diferentes del mismo modelo.
-      5. Dos modelos diferentes de una misma marca.
-      6. Identificadores de 17 caracteres.
-      7. Identificadores de longitudes alternativas admitidas.
-      8. VIN con caracteres variables por número de serie.
-      9. Registros duplicados.
-      10. Clasificaciones con una sola muestra.
-      11. Firmas coincidentes entre versiones.
-      12. Nuevos registros que provoquen conflictos con firmas existentes.
-    - Verificar que no confunda variaciones individuales con diferencias de configuración, ni genere identificaciones falsas. Usar datos controlados sin alterar registros reales sin autorización.
-
-16. **Restricciones de implementación:**
-    - No modificar innecesariamente estructura del catálogo.
-    - No introducir "trim level" como clasificación obligatoria.
-    - No crear campo independiente de facelift.
-    - No convertir rangos de años en generaciones independientes.
-    - No imponer cuatro posiciones fijas para todos los VIN.
-    - No asumir que todos los VIN tienen 17 caracteres.
-    - No inventar firmas ni códigos de fabricantes.
-    - No asumir que una diferencia de caracteres representa una versión diferente.
-    - No considerar una firma válida únicamente porque coincide con dos ejemplos.
-    - No eliminar ni reemplazar VIN completos.
-    - No duplicar servicios, funciones o estructuras existentes.
-    - No modificar componentes ajenos a la funcionalidad.
-    - No realizar refactorizaciones generales ni cambiar otros módulos o microservicios salvo indispensables y autorizados.
-    - No eliminar datos existentes ni introducir dependencias externas innecesarias.
-    - Priorizar implementación incremental.
-
-17. **Documentación técnica:**
-    - Actualizar documentación de control de VIN con: Arquitectura del motor diferencial, Algoritmo utilizado para seleccionar posiciones, Criterios de suficiencia de muestras, Estructura de las firmas, Relación con marca/modelo/generación/rango/versiones, Procedimiento de actualización y recálculo, Tratamiento de conflictos, Niveles de certeza, Limitaciones conocidas, Pruebas realizadas. No documentar como terminado lo no verificado.
-
-18. **Auditoría final y pasos pre-commit:**
-    - Revisar cambios, estructura de datos, duplicaciones, ejecutar pruebas y pre-commit, sintaxis, compatibilidad, permisos, code review, corrección de observaciones, status y diff. No revertir modificaciones ajenas ni desplegar/commitear sin autorización.
-
-19. **Informe final obligatorio:**
-    - Presentar informe con: Implementación (componentes, funciones, integración, estructuras), Algoritmo diferencial (comparación, selección de posiciones, firmas mínimas, tratamiento de series), Resultados (VINs analizados, clasificaciones, firmas generadas/validadas/pendientes, muestras insuficientes, conflictos), Pruebas (casos, resultados, errores corregidos, limitaciones), Auditoría (archivos modificados, resultado code review, pre-commit, confirmación de funcionalidades y datos originales).
-
-20. **Resultado esperado:**
-    - Sistema de diferenciación automática de VIN que utilice los identificadores completos existentes en la base de datos para descubrir las posiciones y combinaciones mínimas de caracteres que permiten distinguir las diferentes configuraciones vehiculares (Marca, Modelo, Generación, Rangos de años dentro de cada generación, Versiones aplicables).
-    - Identificación dinámica, verificable, actualizable, sin posiciones universales ni códigos inventados ni reglas fijas manuales.
+### TAREA 1.7: Incorporar la barra de enriquecimiento de texto del Inbox [ ]
+- **Estado detectado:** Fallida. La barra de enriquecimiento continúa ausente.
+- **Problema:** El editor de mensajes del Inbox no dispone de la barra de enriquecimiento solicitada.
+- **Requisitos:**
+  Incorporar una barra de herramientas funcional para redactar y editar mensajes con:
+  - Negrita, Cursiva, Subrayado, Tachado.
+  - Selector de color de texto.
+  - Selección de fuente tipográfica.
+  - Listas ordenadas y no ordenadas.
+  - Sanitización HTML estricta contra contenido peligroso.
+  - Persistencia de formato al enviar, almacenar, recuperar y visualizar.
 
 ---
 
 ===================================================================
-TAREA 2: MEJORAS VISUALES E INVESTIGACIÓN DE VIABILIDAD PARA LA INTEGRACIÓN DE SUBIDA DE VÍDEOS A YOUTUBE [X]
+BLOQUE 2: AUDITORÍA, CORRECCIÓN Y MEJORAS FUNCIONALES Y VISUALES ADICIONALES
+===================================================================
+
+### TAREA 2.1: Corregir el botón para eliminar mensajes del Inbox [ ]
+- **Problema:** El botón para eliminar mensajes no funciona y muestra el error "mostrarNotificacion is not defined".
+- **Requisitos:** Corregir la referencia de función/dependencia, verificar eliminación real y notificación al usuario sin eliminar visualmente si falla.
+
+### TAREA 2.2: Completar y optimizar la ficha técnica de instalación en una sola página [ ]
+- **Objetivo:** Contener toda la información del modelo (cortes, cables 1..3, apertura, notas) organizada e imprimible en una sola página Carta vertical con márgenes de 10mm.
+
+### TAREA 2.3: Aplicar estilos a todos los modales con formularios [ ]
+- **Requisitos:** Revisar y aplicar diseño uniforme y consistente a todos los modales con formularios en escritorio y móvil sin desbordamientos.
+
+### TAREA 2.4: Corregir la renderización de las tarjetas de tutoriales y Relay [ ]
+- **Problema:** Solo aparece una tarjeta en lugar de todas las disponibles.
+- **Requisitos:** Corregir el proceso de obtención y renderizado sin limitar artificialmente la cantidad de tarjetas.
+
+### TAREA 2.5: Corregir la posición del botón para limpiar la búsqueda ("X") [ ]
+- **Requisitos:** El botón "X" debe permanecer dentro de la barra de búsqueda sin solaparse con ningún otro control.
+
+### TAREA 2.6: Auditoría integral de estilos CSS y elementos HTML sin estilos [ ]
+- **Requisitos:** Fases 1 (Auditoría), 2 (Corrección) y 3 (Verificación) para identificar y corregir elementos que carecen de estilos o tienen clases inexistentes.
+
+---
+
+===================================================================
+BLOQUE 3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES
+===================================================================
+
+### TAREA 3.1: Relación entre modelos y problemas y acordeón «Posibles problemas» [ ]
+- **Requisitos:**
+  1. Relación por ID único del modelo (no por nombre visible).
+  2. Si hay 1 problema: mostrar tarjeta individual.
+  3. Si hay 2 o más: mostrar carrusel horizontal navegable.
+  4. Si no hay problemas relacionados: NO mostrar acordeón vacío.
+  5. Tarjetas de Problemas y Soluciones deben compartir el estándar visual de las tarjetas de referencia (.card, .card-img-top, .overlay).
+
+---
+
+===================================================================
+BLOQUE 4: MEJORA DEL SISTEMA DE VIN, IDENTIFICACIÓN DE VERSIONES DE EQUIPAMIENTO Y NAVEGACIÓN ENTRE GENERACIONES
+===================================================================
+
+### TAREA 4.1: Relacionar cada VIN con su versión de equipamiento y visualización en modal [ ]
+- **Requisitos:**
+  1. Normalización dinámica de separadores (",", "/", "\") en versionesAplicables sin alterar la estructura ni celdas de la Spreadsheet.
+  2. Visualización limpia en modal: "VX (1A2B) / VL (1A2C)" con tipografía reducida para los dígitos y "/" como único separador visual.
+  3. Navegación intergeneracional mediante continuidad de versiones de equipamiento, permitiendo navegar entre rangos de años aunque cambie la cantidad de versiones o VINs.
+
+---
+
+===================================================================
+BLOQUE 5: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN [X]
 ===================================================================
 - **Estado:** COMPLETADA
-- **Objetivo principal:**
-  Para las mejoras visuales, inspeccionar e implementar los cambios (Parte 1). Para la integración con YouTube, realizar exclusivamente una investigación técnica de factibilidad, auditoría de la arquitectura actual y diseño de implementación (Parte 2 y 3). No desarrollar ni activar todavía esta última funcionalidad.
-  Antes de comenzar, leer "Proceso de desarollo.md" y documentación pertinente. Inspeccionar componentes, estilos, servicios, microservicios, Spreadsheet, sistema de autenticación y estructura de almacenamiento.
+- **Objetivo general:** Ampliar la función existente de control e identificación de VIN mediante motor diferencial multinivel (VinDifferentialEngine.js), combinación mínima de posiciones y visualización de firmas.
 
-### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+---
 
-#### PARTE 1. UNIFICAR EL ESTILO DE LAS TARJETAS PARA CREAR NUEVO CONTENIDO (IMPLEMENTACIÓN):
-1. **Tarjeta «Crear nuevo problema»:**
-   - En la sección «Problemas / Soluciones» (`.card-create-pys`), la tarjeta para crear un nuevo problema tiene actualmente un sombreado azul que no corresponde al estilo visual del resto del catálogo.
-   - Sustituir el sombreado azul por el mismo estilo de sombras en tonos grises que utilizan las tarjetas de las demás secciones del catálogo (`box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)` y en hover `box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15)`).
-   - Conservar las dimensiones, estructura, contenido, iconografía y funcionalidad actual de la tarjeta.
-   - No alterar su comportamiento de creación de nuevos problemas.
-   - Mantener la coherencia visual con las demás tarjetas.
-2. **Tarjeta «Nuevo tutorial»:**
-   - Aplicar exactamente el mismo criterio a la tarjeta para crear un nuevo tutorial de la sección «Tutoriales» (`.card-create-tutorial`).
-   - Eliminar el sombreado azul actual, si está presente.
-   - Aplicar el mismo sistema de sombras en tonos grises utilizado por las tarjetas del catálogo.
-   - Mantener las dimensiones, estructura, contenido y funcionalidad existentes.
-3. **Restricciones generales:**
-   - Utilizar como referencia los estilos de las tarjetas existentes en las demás secciones.
-   - Reutilizar las reglas CSS existentes cuando sea posible.
-   - No crear reglas duplicadas ni introducir conflictos de especificidad.
-   - No modificar los estilos de las tarjetas de otras secciones.
-   - No alterar los efectos de interacción, animaciones ni estados de las tarjetas.
-   - Verificar visualmente ambas tarjetas en dispositivos móviles y de escritorio.
-
-#### PARTE 2. ESTUDIO DE FACTIBILIDAD PARA SUBIR VÍDEOS DIRECTAMENTE A YOUTUBE DESDE GPSPEDIA (INVESTIGACIÓN Y DISEÑO):
-1. **Objetivo de la nueva funcionalidad:**
-   - Investigar y diseñar una implementación que permita a cualquier usuario registrado y autorizado de GPSpedia subir vídeos directamente desde la plataforma al canal de YouTube asociado a la cuenta de Google administradora de GPSpedia, sin tener que descargar el vídeo, abrir YouTube ni utilizar manualmente otra plataforma.
-   - El proceso debe: recibir el vídeo del usuario, solicitar título y descripción, asociarlo con vehículo/tutorial/problema, subirlo al canal configurado, obtener URL pública, almacenarla en la Spreadsheet correspondiente y mostrar el vídeo en la sección/modal donde corresponda.
-   - IMPORTANTE: No implementar todavía esta funcionalidad. Primero estudiar su viabilidad, identificar limitaciones técnicas y elaborar un plan completo.
-2. **Investigar la integración con YouTube y Google Apps Script:**
-   - Analizar si es posible usar Google Apps Script como intermediario entre GPSpedia, Google Drive y YouTube Data API.
-   - Analizar específicamente: YouTube Data API v3, método "videos.insert" para subir vídeos, autorización OAuth 2.0, autenticación mediante la cuenta administradora del canal, permisos y scopes necesarios, gestión de credenciales y tokens de acceso, posibilidad de subida por usuarios de GPSpedia sin autenticarse individualmente en YouTube, subida mediante solicitudes reanudables (resumable uploads), integración con servicios/microservicios actuales de Apps Script, almacenamiento temporal y gestión de archivos, recuperación de operaciones interrumpidas, obtención/almacenamiento de URL pública, gestión de errores, cuotas y límites de ejecución.
-   - Investigar si Apps Script puede actuar como intermediario de subida reanudable o si se requiere otro componente para transferir directamente a YouTube. Comprobar documentación oficial vigente de Google y YouTube.
-3. **Analizar los costos y las cuotas gratuitas (Requisito fundamental):**
-   - Determinar si es posible implementar y mantener el sistema sin contratar servicios adicionales ni generar costos monetarios recurrentes.
-   - Investigar: Cuotas gratuitas de Google Apps Script (tiempo máximo de ejecución por solicitud de 6 min, límites de transferencia y tamaño, cuotas diarias de "UrlFetchApp", límites de almacenamiento de Google Drive). Cuotas de YouTube Data API (unidades de cuota necesarias para "videos.insert": 1,600 unidades por inserción, límites diarios de publicación: cuota base predeterminada de 10,000 unidades/día = aprox. 6 vídeos diarios, requisitos para solicitar ampliaciones de cuota gratuita a Google Cloud, restricciones de proyectos, posibles costos indirectos o futuros, variaciones según cuenta Google estándar vs Google Workspace).
-   - Diferenciar: 1. Funcionalidades gratuitas disponibles. 2. Cuotas gratuitas sujetas a límites. 3. Servicios que requieren habilitación/configuración sin pago. 4. Servicios de pago. 5. Costos indirectos/futuros.
-   - Criterio económico obligatorio: La solución preferida debe funcionar utilizando los recursos gratuitos disponibles de Google y Apps Script sin contratar infraestructura externa. Si no es viable, demostrar por qué y presentar alternativas.
-4. **Diseño del proceso de subida desde GPSpedia:**
-   - Diseñar flujo completo de interacción para usuarios registrados y autorizados. Formulario: seleccionar vídeo, introducir título, introducir detalles/descripción, relacionar con vehículo/tutorial/problema y confirmar publicación.
-   - La plataforma debe usar la cuenta administradora sin exponer credenciales, tokens ni permisos a los usuarios de GPSpedia.
-5. **Convenciones para los títulos de los vídeos:**
-   - Para vídeo guías de vehículos: "Video Guía: Marca - Modelo - Versión - Año" (ej. "Video Guía: Toyota - Hilux SRV - 2027").
-   - Para tutoriales generales: título del usuario (ej. "Video Tutorial: Como encontrar apertura con resistencia").
-   - Determinar partes automáticas vs editables y prevención de duplicados.
-6. **Integración con las secciones existentes de GPSpedia:**
-   - Almacenamiento y relación de URLs públicas en Spreadsheet: A. Vídeo Guía de vehículo (fila del modelo en Cortes, visualización en modal de detalle). B. Vídeos de tutoriales (hoja Tutorial, visualización en tutorial). C. Vídeos de Problemas / Soluciones (hoja pys, visualización en modal PyS). D. Posibilidad de varios vídeos sin sobrescribir URLs anteriores. Respetar estructura actual de Spreadsheet sin base de datos paralela.
-7. **Pantalla de carga y progreso real:**
-   - Interfaz con mensaje visible: «Por favor, no abandone este diálogo mientras carga el vídeo». Barra de progreso con avance real de transferencia (no animación simulada).
-   - Estados: 1. Selección. 2. Preparación. 3. Inicio de subida. 4. Transferencia en curso. 5. Pausa/interrupción. 6. Reanudación. 7. Fin de transferencia. 8. Procesamiento de YouTube. 9. Publicación y URL. 10. Registro en Spreadsheet. 11. Confirmación de disponibilidad. 12. Error y recuperación. Diferenciar % de transferencia del % de procesamiento de YouTube.
-8. **Recuperación ante interrupciones y fallos:**
-   - Recuperación ante: pérdida de conexión, cierre accidental del modal, recarga de página, cierre de app, suspensión del navegador, ahorro de batería o suspensión de Android, timeout de Apps Script, expiración de token, errores de red o registro en Sheets.
-   - Uso de sesiones reanudables (Resumable Uploads) de YouTube Data API para continuar desde el punto de interrupción. Persistencia de estado (ID único, formulario, archivo, sesión, reanudación, prevención de subida duplicada, recuperación de URL si falló el guardado en Sheets) mediante IndexedDB y almacenamiento local. No asumir ejecución en segundo plano con navegador suspendido.
-9. **Seguridad, permisos y control de publicación:**
-   - Verificación de identidad y roles en GPSpedia, autorización con cuenta administradora del canal, protección de tokens, validación de tipo/tamaño de archivo, títulos/descripciones, auditoría de subidas (usuario, fecha, hora, modelo/sección, resultado), controles de privacidad de YouTube (público, no listado, privado) bajo control administrativo.
-10. **Análisis de alternativas arquitectónicas:**
-    - Evaluar y comparar:
-      1. Subida completa mediante Apps Script como proxy hacia YouTube Data API.
-      2. Subida directa navegador -> YouTube con sesiones reanudables (Apps Script como intermediario de autorización, inicialización de sesión y registro de URL).
-      3. Google Drive como almacenamiento temporal y posterior transferencia a YouTube.
-      4. Arquitectura híbrida.
-    - Criterios de evaluación: viabilidad técnica, costos, cuotas, tamaño máximo de archivo, duración, progreso real, recuperación, seguridad, complejidad, compatibilidad y mantenimiento. Recomendar la mejor alternativa.
-
-#### PARTE 3. PLAN TÉCNICO DE IMPLEMENTACIÓN:
-- Elaborar plan completo y ordenado: arquitectura propuesta, componentes existentes y nuevos, funciones de Apps Script, servicios/APIs a habilitar, gestión OAuth, flujo de transferencia, archivos temporales, persistencia/recuperación, estructura de Spreadsheet, interfaz y progreso, validaciones, seguridad, errores, duplicados, auditoría, pruebas funcionales/integración, límites técnicos, costos y procedimiento de despliegue.
-- Fases independientes con dependencias y criterios de aceptación. Casos de prueba para archivos pequeños/grandes, conexiones lentas, corte de red, cierre de app y reanudación.
-
-#### PARTE 4. CONDICIONES DE EJECUCIÓN Y ENTREGA:
-- Implementar ÚNICAMENTE la Parte 1 (tarjetas visuales). NO implementar, activar ni modificar todavía el sistema de subida a YouTube.
-- Basar investigación en documentación oficial de Google Apps Script, Google Drive y YouTube Data API con citas y fechas de consulta.
-- No asumir gratuidad sin verificar cuotas. No modificar Spreadsheet ni microservicios para YouTube. No contratar servicios de pago ni exponer credenciales.
-- Mantener procedimientos de "Proceso de desarollo.md", pruebas, code review, "Auditoría.txt" y "ChangesLogs.txt".
-- Entregables:
-  * Resultado A: Mejoras visuales (archivos modificados, reglas CSS, verificación de ambas tarjetas, pruebas).
-  * Resultado B: Estudio de factibilidad de YouTube (diagnóstico de arquitectura, investigación técnica, análisis de cuotas gratuitas y costos, comparación de alternativas, limitaciones, arquitectura recomendada, plan detallado por fases, riesgos/recuperación, y conclusión expresa sobre viabilidad a costo cero).
+===================================================================
+BLOQUE 6: MEJORAS VISUALES E INVESTIGACIÓN DE VIABILIDAD PARA LA INTEGRACIÓN DE SUBIDA DE VÍDEOS A YOUTUBE [X]
+===================================================================
+- **Estado:** COMPLETADA
+- **Objetivo general:** Parte 1 implementada con sombras grises en style.css; Partes 2, 3 y 4 investigadas y documentadas exhaustivamente en Estudio_Factibilidad_YouTube.md demostrando viabilidad a costo cero.
 
 ---
 
@@ -1714,10 +1492,11 @@ TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE
 ---
 
 ===================================================================
-TAREA 15: BARRA DE FILTROS RÁPIDOS DE CATÁLOGO Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES [X]
+TAREA 15: ~~BARRA DE FILTROS RÁPIDOS DE CATÁLOGO~~ Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES [X]
 ===================================================================
-- **Estado:** COMPLETADA [X]
-- **Objetivo principal:** Lograr una identidad visual armónica y coherente en todos los controles interactivos de la aplicación, facilitando la filtración rápida del catálogo sin obstruir la búsqueda.
+- **Estado:** COMPLETADA [X] (FILTROS RÁPIDOS: CANCELADA Y RETIRADA)
+- **Objetivo principal:** ~~Lograr una identidad visual armónica y coherente en todos los controles interactivos de la aplicación, facilitando la filtración rápida del catálogo sin obstruir la búsqueda.~~
+- **DECISIÓN TÉCNICA OBLIGATORIA:** Se ha decidido eliminar la función de filtros rápidos de búsqueda de la plataforma. La barra de búsqueda busca elementos de forma universal sin necesidad de filtros. Esta implementación debe retirarse por completo de la plataforma.
 - **Tareas originales integradas:** 14.1, 14.2, 14.3
 - **Justificación técnica de convergencia:** Corrige la posición, superposición y comportamiento del botón desplegable del filtro de búsqueda (`#btn-toggle-filters`) y aplica un sistema unificado de diseño CSS para todos los botones de la plataforma (primarios, secundarios, flotantes, modales, iconos), garantizando consistencia visual y accesibilidad en desktop y móvil.
 - **Dependencias técnicas:** Depende de la Tarea 14 (buscador global activo) y de los estilos globales de la UI.
