@@ -211,6 +211,54 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
  */
 const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
 
+/* FUNCIONES DE RELACIÓN VIN - VERSIONES DE EQUIPAMIENTO */
+export function parseEquipmentVersions(rawStr) {
+    if (!rawStr) return [];
+    // Normalizar separadores admitidos: comas ",", diagonales "/" y diagonales inversas "\"
+    return String(rawStr)
+        .split(/[,/\\\\]+/)
+        .map(v => v.trim())
+        .filter(Boolean);
+}
+
+export function parseVinCollection(rawVin) {
+    if (!rawVin) return [];
+    if (Array.isArray(rawVin)) {
+        return rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    }
+    const str = String(rawVin).trim();
+    if (str.startsWith("[") && str.endsWith("]")) {
+        try {
+            const parsed = JSON.parse(str);
+            if (Array.isArray(parsed)) {
+                return parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+            }
+        } catch (e) {}
+    }
+    return str
+        .split(/[,/\\\\]+/)
+        .map(v => v.trim().toUpperCase())
+        .filter(Boolean);
+}
+
+export function mapVersionsWithVins(versionesStr, vinRaw) {
+    const versions = parseEquipmentVersions(versionesStr);
+    const vins = parseVinCollection(vinRaw);
+
+    if (versions.length === 0 && vins.length === 0) return [];
+    if (versions.length === 0) {
+        return vins.map(vin => ({ version: "", vin }));
+    }
+
+    // Cada versión se relaciona individualmente con su correspondiente VIN si existe
+    return versions.map((version, index) => {
+        return {
+            version,
+            vin: vins[index] || null
+        };
+    });
+}
+
 /**
  * Establece una imagen optimizada intentando cargarla desde el caché de IndexedDB.
  * @param {HTMLImageElement} imgElement - El elemento img a actualizar.
@@ -1527,17 +1575,34 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     const subHeaderText = document.createElement('p');
     subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
 
-    // Tarea 5: Identificar todas las generaciones del mismo modelo
+    /* TAREA: NAVEGACIÓN ENTRE GENERACIONES BASADA EN CONTINUIDAD DE VERSIONES DE EQUIPAMIENTO */
     const allCortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
 
-    const normalizedItemVersion = normalizeVersion(activeItem.versionesAplicables);
-    const generations = allCortes.filter(c =>
-        String(c.marca).toLowerCase() === String(activeItem.marca).toLowerCase() &&
-        String(c.modelo).toLowerCase() === String(activeItem.modelo).toLowerCase() &&
-        String(c.categoria).toLowerCase() === String(activeItem.categoria).toLowerCase() &&
-        String(c.tipoEncendido).toLowerCase() === String(activeItem.tipoEncendido).toLowerCase() &&
-        normalizeVersion(c.versionesAplicables) === normalizedItemVersion
-    ).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
+    const activeItemVersions = parseEquipmentVersions(activeItem.versionesAplicables).map(v => v.toLowerCase());
+
+    const generations = allCortes.filter(c => {
+        if (String(c.marca).toLowerCase() !== String(activeItem.marca).toLowerCase() ||
+            String(c.modelo).toLowerCase() !== String(activeItem.modelo).toLowerCase() ||
+            String(c.categoria).toLowerCase() !== String(activeItem.categoria).toLowerCase()) {
+            return false;
+        }
+
+        // Si tienen tipos de encendido diferentes, no pertenecen a la misma línea
+        if (activeItem.tipoEncendido && c.tipoEncendido &&
+            String(c.tipoEncendido).toLowerCase() !== String(activeItem.tipoEncendido).toLowerCase()) {
+            return false;
+        }
+
+        // Continuidad de versiones de equipamiento:
+        // Si alguno no tiene versiones especificadas, se considera continuo
+        const cVersions = parseEquipmentVersions(c.versionesAplicables).map(v => v.toLowerCase());
+        if (activeItemVersions.length === 0 || cVersions.length === 0) {
+            return true;
+        }
+
+        // Si ambos tienen versiones, debe existir al menos una versión en común
+        return activeItemVersions.some(av => cVersions.includes(av));
+    }).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
 
     const currentIndex = generations.findIndex(g => String(g.id) === String(activeItem.id));
 
@@ -1700,8 +1765,26 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             yearRangeContainer.appendChild(yearTextSpan);
         }
 
-        const equipamiento = activeItem.versionesAplicables || activeItem.tipoEncendido || '';
-        subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | `;
+        /* TAREA: PRESENTACIÓN VISUAL DE VERSIONES Y DÍGITOS DE CHASIS CON SEPARADOR "/" */
+        const mappedVersions = mapVersionsWithVins(activeItem.versionesAplicables, activeItem.vin);
+        let equipamientoHtml = '';
+
+        if (mappedVersions.length > 0) {
+            equipamientoHtml = mappedVersions.map(mv => {
+                if (mv.version && mv.vin) {
+                    return `${mv.version} <span class="chassis-digits" style="font-size: 0.82em; font-weight: normal; opacity: 0.85;">(${mv.vin})</span>`;
+                } else if (mv.version) {
+                    return mv.version;
+                } else if (mv.vin) {
+                    return `<span class="chassis-digits" style="font-size: 0.82em; font-weight: normal; opacity: 0.85;">(${mv.vin})</span>`;
+                }
+                return '';
+            }).filter(Boolean).join(' / ');
+        } else {
+            equipamientoHtml = activeItem.tipoEncendido || '';
+        }
+
+        subHeaderText.innerHTML = `<strong>${equipamientoHtml}</strong> | `;
         subHeaderText.appendChild(yearRangeContainer);
 
         if(activeItem.categoria) {

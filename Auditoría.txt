@@ -521,3 +521,19 @@ Se comprobó la consulta por identificador único del modelo, la no aparición d
 CIERRE DE AUDITORÍA Y VERIFICACIÓN - BLOQUES 1 A 6
 Se implementaron y verificaron todos los requisitos funcionales de los 6 bloques mediante pruebas automatizadas Playwright sin errores ni regresiones.
 ===================================================================
+
+===================================================================
+AUDITORÍA TÉCNICA: MEJORA DEL SISTEMA DE VIN, VERSIONES DE EQUIPAMIENTO Y NAVEGACIÓN ENTRE GENERACIONES
+Fecha: $(date)
+Archivos: ui.js, style.css
+
+Hallazgos de Inspección:
+1. Asociación VIN - Versión de equipamiento: Actualmente en ui.js el VIN se muestra en bloque crudo sin asociarse a su versión de equipamiento. En la Spreadsheet, versionesAplicables puede tener múltiples versiones separadas por ",", "/", "\" o combinadas (ej. "VX / VL / LX"). Los VINs están serializados como array JSON o texto delimitado en la columna vin. Se deben normalizar los separadores y emparejar cada VIN con su versión correspondiente.
+2. Presentación visual de dígitos de chasis: Actualmente el VIN completo o prefijo se coloca en una fila separada o pie de tabla, lo que deforma el encabezado del modal. Se diseñará la presentación en línea junto al nombre de la versión: "VX (1A2B) / VL (1A2C)" con tipografía reducida para los dígitos y separador visual estricto "/".
+3. Navegación intergeneracional: En ui.js línea 1534, el filtro de generaciones requería igualdad exacta en normalizeVersion(c.versionesAplicables) === normalizedItemVersion, bloqueando la navegación cuando una generación cambia de número de versiones (ej. de 3 versiones a 1 sola versión VX). Se ampliará el algoritmo de generaciones para detectar continuidad si comparten al menos una versión de equipamiento en común.
+===================================================================
+
+===================================================================
+CIERRE DE AUDITORÍA: MEJORA DE VIN, VERSIONES DE EQUIPAMIENTO Y NAVEGACIÓN
+Se verificó el correcto emparejamiento de VINs con versiones, la normalización de separadores sin alterar la Spreadsheet, la presentación limpia en el modal y la continuidad de navegación intergeneracional.
+===================================================================

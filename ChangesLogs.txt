@@ -1236,3 +1236,12 @@ TAREAS: AUDITORÍA, CORRECCIÓN Y AMPLIACIÓN DE FUNCIONALIDADES (1 a 6)
 7. Bloques 5 y 6: Corrección de imágenes rotas en la ficha técnica de impresión mediante getImageUrl(..., IMG_SIZE_LARGE); reducción exclusiva del icono Check Engine en impresión (max-height: 20px); configuración de hoja tamaño Carta vertical (@page { size: letter portrait; margin: 10mm; }).
 Archivos modificados: ui.js, add_cortes.html, index.html, Auditoría.txt, ChangesLogs.txt
 ===================================================================
+
+===================================================================
+FECHA: $(date)
+TAREA: MEJORA DEL SISTEMA DE VIN, IDENTIFICACIÓN DE VERSIONES DE EQUIPAMIENTO Y NAVEGACIÓN ENTRE GENERACIONES
+- Creadas las funciones parseEquipmentVersions, parseVinCollection y mapVersionsWithVins en ui.js soportando separadores comas, diagonales y diagonales inversas.
+- Reorganizada la presentación visual en el modal de detalle para mostrar cada versión con sus dígitos identificadores entre paréntesis ("VX (1A2B) / VL (1A2C)"), usando "/" como único separador visual y formato compacto que evita deformaciones.
+- Ampliada la lógica de navegación entre generaciones en ui.js, permitiendo navegar entre rangos de años mediante correspondencia y continuidad de versiones de equipamiento, incluso cuando las generaciones poseen cantidades distintas de versiones o VINs.
+- Verificados los 14 escenarios funcionales con Playwright.
+===================================================================
