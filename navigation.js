@@ -1,3 +1,4 @@
+import { vinDifferentialEngine } from './VinDifferentialEngine.js';
 // GPSpedia Navigation Module | Version: 2.1.6
 // Responsibilities:
 // - Manage the application's view state and navigation flow.
@@ -104,6 +105,26 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
             });
             if (vinMatchExists) {
                 isVinQuery = true;
+            } else {
+                // Hook motor de análisis diferencial de VIN
+                try {
+                    if (vinDifferentialEngine.signatures.size === 0 && cortes) {
+                        vinDifferentialEngine.calculateSignatures(cortes);
+                    }
+                    const diffMatch = vinDifferentialEngine.queryVehicle({ vin: cleanVinSearch });
+                    if (diffMatch && diffMatch.match && (diffMatch.identificationType === 'completa' || diffMatch.identificationType === 'parcial')) {
+                        const matchedVehicle = cortes.find(c =>
+                            c.marca.toUpperCase() === diffMatch.match.marca.toUpperCase() &&
+                            c.modelo.toUpperCase() === diffMatch.match.modelo.toUpperCase()
+                        );
+                        if (matchedVehicle) {
+                            isVinQuery = true;
+                            targetVinPrefix = matchedVehicle.vin ? (Array.isArray(matchedVehicle.vin) ? matchedVehicle.vin[0] : String(matchedVehicle.vin).replace(/[^A-Z0-9]/g, '')) : '';
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error en búsqueda de motor diferencial:', e);
+                }
             }
         }
     }

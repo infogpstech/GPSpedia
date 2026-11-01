@@ -203,12 +203,303 @@ Las siguientes secciones del código y funcionalidades están bajo PROTECCIÓN C
 Cualquier cambio en estas zonas invalidará el commit.
 
 ---
-*No hay tareas pendientes en esta sección.*
+===================================================================
+TAREAS EN EJECUCIÓN (SESIÓN ACTUAL)
+===================================================================
+
+===================================================================
+BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O NO IMPLEMENTADAS)
+===================================================================
+
+### TAREA 1.1: Configuración de Relay en el formulario de agregar corte del botón «+» [ ]
+- **Estado detectado:** Fallida. La implementación no corresponde a lo solicitado.
+- **Problema:** En el formulario de agregar corte que se abre desde el botón «+» del modal de detalles del modelo, el campo de configuración de Relay continúa siendo un "input text". El campo debe funcionar mediante un selector desplegable ("DropSelect") con las opciones disponibles en la configuración almacenada en Spreadsheet.
+- **Referencia obligatoria:** Selector de configuración de Relay de la etapa 2 de "add_corte.html".
+- **Requisitos:**
+  1. Localizar el selector de configuración de Relay de la etapa 2 de "add_corte.html".
+  2. Identificar cómo obtiene las opciones desde Spreadsheet, cómo las carga, cómo administra su estado y cómo guarda el valor seleccionado.
+  3. Reutilizar esa misma lógica y comportamiento en el formulario de agregar corte del botón «+».
+  4. Eliminar el "input text" actual y sustituirlo por el selector correspondiente.
+  5. Las opciones deben provenir de la configuración existente, no de valores escritos manualmente en el código.
+  6. Mantener la compatibilidad con el mecanismo actual de registro y almacenamiento de cortes.
+  7. Comprobar que el valor seleccionado se conserva correctamente y llega al proceso de guardado.
+  8. Evitar duplicar funciones, consultas, servicios o estructuras de configuración.
+- **Pruebas obligatorias:** Carga correcta de las opciones, selección de cada opción, conservación del valor, guardado correcto, manejo sin opciones y en escritorio/móvil.
 
 ---
----
+
+### TAREA 1.2: Barra de enriquecimiento de texto en los formularios [ ]
+- **Estado detectado:** Fallida o no implementada.
+- **Problema:** Los campos destinados a introducir información detallada o de varias líneas continúan sin mostrar la barra de enriquecimiento de texto. Los botones de negrita y selección de colores están completamente ausentes.
+- **Requisitos:**
+  1. Revisar los formularios incluidos en la solicitud original.
+  2. Identificar campos de texto multilínea destinados a información descriptiva o técnica.
+  3. Incorporar barra de enriquecimiento con, como mínimo: Negrita y Selector de colores.
+  4. La barra debe aparecer junto a los campos correspondientes.
+  5. Los controles deben modificar el contenido del campo asociado.
+  6. El formato debe conservarse al guardar, recuperar, visualizar y editar.
+  7. No aplicar la barra a campos cortos o de valores simples (marca, modelo, color del cable, etc.).
+  8. Reutilizar el editor o componentes existentes en el proyecto.
+  9. Evitar implementar barras independientes con comportamientos diferentes.
+- **Alcance de revisión:** Agregar corte, agregar problema o solución, agregar tutorial, agregar información desde botón «+», y edición in-modal del desarrollador.
 
 ---
+
+### TAREA 1.3: Corregir el botón «Volver» en el formulario "add_corte.html" [ ]
+- **Estado detectado:** No implementada.
+- **Problema:** El botón «Volver» continúa sin funcionar. Al presionarlo no ejecuta ninguna acción y no permite regresar a la etapa anterior.
+- **Requisitos:**
+  1. Inspeccionar la navegación entre etapas de "add_corte.html".
+  2. Identificar los eventos asociados al botón «Volver».
+  3. Determinar por qué el botón no ejecuta ninguna acción y corregir la navegación.
+  4. Permitir regresar a la etapa inmediatamente anterior.
+  5. Conservar todos los datos introducidos previamente (texto, selectores, configuración de Relay, imágenes, información del modelo y corte).
+  6. Respetar ambos flujos: modelo existente y modelo nuevo.
+  7. Considerar que el registro puede haberse creado previamente en Spreadsheet y Drive al avanzar a la etapa de información adicional.
+  8. Si el usuario regresa y modifica datos, actualizar el registro correspondiente sin crear registros duplicados.
+  9. No volver a cargar ni duplicar imágenes que no hayan cambiado.
+  10. Gestionar correctamente el reemplazo o eliminación de imágenes.
+
+---
+
+### TAREA 1.4: Retirar la animación de carga de la sección «Problemas / Soluciones» [ ]
+- **Estado detectado:** Fallida. El comportamiento original continúa presente.
+- **Problema:** Al seleccionar la sección «Problemas / Soluciones», sigue apareciendo una animación de carga que no debería mostrarse.
+- **Requisitos:**
+  1. Comparar el comportamiento de esta sección con Cortes, Tutoriales y Relay.
+  2. Inspeccionar cómo se realiza la carga y renderizado de estas secciones.
+  3. Identificar la condición o función que provoca el indicador de carga en Problemas / Soluciones.
+  4. Corregir para que la sección se presente sin ese indicador, siguiendo el patrón de las demás.
+  5. No eliminar mecanismos necesarios de carga de datos, validación o manejo de errores.
+  6. No ocultar indiscriminadamente todos los indicadores de carga de la plataforma.
+
+---
+
+### TAREA 1.5: Estandarizar sombras de tarjetas, logo y título principal de GPSpedia [ ]
+- **Estado detectado:** Fallida. Los cambios solicitados no se reflejan correctamente.
+- **Problema:** Las tarjetas «Crear nuevo problema» y «Nuevo tutorial» siguen utilizando una sombra azul, diferente al estilo de sombras grises utilizado en las tarjetas del catálogo. También debe comprobarse el tratamiento visual del logo y del título principal GPSpedia.
+- **Referencia visual obligatoria:** Sombras de las tarjetas de los carruseles del catálogo.
+- **Excepción:** El carrusel de logos de marcas debe conservar su tratamiento visual propio sin alteraciones.
+- **Requisitos:**
+  1. Localizar reglas CSS de sombras de tarjetas de referencia y sombras azules actuales.
+  2. Corregir «Crear nuevo problema» y «Nuevo tutorial» aplicando sombras grises (`box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)` y en hover `0 8px 20px rgba(0, 0, 0, 0.15)`).
+  3. Revisar y estandarizar el tratamiento de sombras del logo principal y del título GPSpedia en el encabezado.
+  4. Mantener coherencia visual con el resto del catálogo sin alterar dimensiones ni funcionalidades.
+  5. Comprobar que el carrusel de marcas permanezca intacto.
+
+---
+
+### TAREA 1.6: ~~Corregir el botón de filtros rápidos durante el modo búsqueda~~ (CANCELADA Y A RETIRAR) [ ]
+- **Estado:** CANCELADA. Se ha decidido eliminar la función de filtros rápidos de búsqueda de la plataforma. La barra de búsqueda buscará elementos sin necesidad de filtros. Esta implementación debe retirarse por completo de la plataforma.
+- **Acción requerida:** Retirar el botón `#btn-toggle-filters`, la barra `#catalog-filters-bar` y sus listeners asociados en `index.html`, `navigation.js` y `style.css`.
+
+---
+
+### TAREA 1.7: Incorporar la barra de enriquecimiento de texto del Inbox [ ]
+- **Estado detectado:** Fallida. La barra de enriquecimiento continúa ausente.
+- **Problema:** El editor de mensajes del Inbox no dispone de la barra de enriquecimiento solicitada.
+- **Requisitos:**
+  Incorporar una barra de herramientas funcional para redactar y editar mensajes con:
+  - Negrita, Cursiva, Subrayado, Tachado.
+  - Selector de color de texto.
+  - Selección de fuente tipográfica.
+  - Listas ordenadas y no ordenadas.
+  - Sanitización HTML estricta contra contenido peligroso.
+  - Persistencia de formato al enviar, almacenar, recuperar y visualizar.
+
+---
+
+===================================================================
+BLOQUE 2: AUDITORÍA, CORRECCIÓN Y MEJORAS FUNCIONALES Y VISUALES ADICIONALES
+===================================================================
+
+### TAREA 2.1: Corregir el botón para eliminar mensajes del Inbox [ ]
+- **Problema:** El botón para eliminar mensajes no funciona y muestra el error "mostrarNotificacion is not defined".
+- **Requisitos:** Corregir la referencia de función/dependencia, verificar eliminación real y notificación al usuario sin eliminar visualmente si falla.
+
+### TAREA 2.2: Completar y optimizar la ficha técnica de instalación en una sola página [ ]
+- **Objetivo:** Contener toda la información del modelo (cortes, cables 1..3, apertura, notas) organizada e imprimible en una sola página Carta vertical con márgenes de 10mm.
+
+### TAREA 2.3: Aplicar estilos a todos los modales con formularios [ ]
+- **Requisitos:** Revisar y aplicar diseño uniforme y consistente a todos los modales con formularios en escritorio y móvil sin desbordamientos.
+
+### TAREA 2.4: Corregir la renderización de las tarjetas de tutoriales y Relay [ ]
+- **Problema:** Solo aparece una tarjeta en lugar de todas las disponibles.
+- **Requisitos:** Corregir el proceso de obtención y renderizado sin limitar artificialmente la cantidad de tarjetas.
+
+### TAREA 2.5: Corregir la posición del botón para limpiar la búsqueda ("X") [ ]
+- **Requisitos:** El botón "X" debe permanecer dentro de la barra de búsqueda sin solaparse con ningún otro control.
+
+### TAREA 2.6: Auditoría integral de estilos CSS y elementos HTML sin estilos [ ]
+- **Requisitos:** Fases 1 (Auditoría), 2 (Corrección) y 3 (Verificación) para identificar y corregir elementos que carecen de estilos o tienen clases inexistentes.
+
+---
+
+===================================================================
+BLOQUE 3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES
+===================================================================
+
+### TAREA 3.1: Relación entre modelos y problemas y acordeón «Posibles problemas» [ ]
+- **Requisitos:**
+  1. Relación por ID único del modelo (no por nombre visible).
+  2. Si hay 1 problema: mostrar tarjeta individual.
+  3. Si hay 2 o más: mostrar carrusel horizontal navegable.
+  4. Si no hay problemas relacionados: NO mostrar acordeón vacío.
+  5. Tarjetas de Problemas y Soluciones deben compartir el estándar visual de las tarjetas de referencia (.card, .card-img-top, .overlay).
+
+---
+
+===================================================================
+BLOQUE 4: MEJORA DEL SISTEMA DE VIN, IDENTIFICACIÓN DE VERSIONES DE EQUIPAMIENTO Y NAVEGACIÓN ENTRE GENERACIONES
+===================================================================
+
+### TAREA 4.1: Relacionar cada VIN con su versión de equipamiento y visualización en modal [ ]
+- **Requisitos:**
+  1. Normalización dinámica de separadores (",", "/", "\") en versionesAplicables sin alterar la estructura ni celdas de la Spreadsheet.
+  2. Visualización limpia en modal: "VX (1A2B) / VL (1A2C)" con tipografía reducida para los dígitos y "/" como único separador visual.
+  3. Navegación intergeneracional mediante continuidad de versiones de equipamiento, permitiendo navegar entre rangos de años aunque cambie la cantidad de versiones o VINs.
+
+---
+
+===================================================================
+BLOQUE 5: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN [X]
+===================================================================
+- **Estado:** COMPLETADA
+- **Objetivo general:** Ampliar la función existente de control e identificación de VIN mediante motor diferencial multinivel (VinDifferentialEngine.js), combinación mínima de posiciones y visualización de firmas.
+
+---
+
+===================================================================
+BLOQUE 6: MEJORAS VISUALES E INVESTIGACIÓN DE VIABILIDAD PARA LA INTEGRACIÓN DE SUBIDA DE VÍDEOS A YOUTUBE [X]
+===================================================================
+- **Estado:** COMPLETADA
+- **Objetivo general:** Parte 1 implementada con sombras grises en style.css; Partes 2, 3 y 4 investigadas y documentadas exhaustivamente en Estudio_Factibilidad_YouTube.md demostrando viabilidad a costo cero.
+
+---
+
+===================================================================
+BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF [ ]
+===================================================================
+- **Estado:** PENDIENTE
+- **Nombre de la tarea:** Ajustar la distribución de información, imágenes y elementos visuales de la ficha técnica para impresión y exportación a PDF.
+- **Contexto y problema actual:**
+  La ficha técnica ya permite visualizar correctamente las imágenes del vehículo, los cortes y los demás elementos gráficos. Sin embargo, persiste un problema importante en la distribución del contenido, especialmente en dispositivos móviles.
+  Actualmente, cuando se utiliza la función de impresión o se guarda la ficha técnica como PDF, toda la información del vehículo aparece compactada y distribuida horizontalmente en aproximadamente la mitad de una hoja.
+  Esto provoca:
+  - Concentración excesiva de información en un espacio reducido.
+  - Distribución horizontal que dificulta la lectura.
+  - Aprovechamiento deficiente del espacio disponible.
+  - Imágenes demasiado pequeñas para apreciar sus detalles.
+  - Grandes espacios vacíos en los que podría distribuirse mejor la información textual.
+  - Una presentación visual poco adecuada para una ficha técnica destinada a consulta e impresión.
+  El objetivo es conseguir una ficha técnica organizada, legible y visualmente equilibrada, tanto en dispositivos móviles como en la impresión y exportación a PDF.
+
+### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
+
+1. **Requisitos de distribución y diseño:**
+   - *1.1. Distribución vertical del contenido:*
+     * Modificar la distribución actual para que la información se organice principalmente de manera vertical y no horizontal.
+     * Evitar que toda la información del vehículo quede compactada en media hoja.
+     * Aprovechar adecuadamente el espacio vertical de la página.
+     * Distribuir las secciones de forma ordenada, utilizando el ancho disponible de manera eficiente.
+     * Evitar columnas excesivamente estrechas que provoquen texto comprimido o difícil de leer.
+     * Utilizar una distribución que permita visualizar correctamente los detalles técnicos y las imágenes.
+     * Aprovechar los espacios vacíos que actualmente existen para distribuir el texto y los elementos informativos.
+     * Evitar que la información de los cortes ocupe innecesariamente una proporción excesiva de la hoja.
+     * Mantener una jerarquía visual clara entre encabezado, información del vehículo, cortes, imágenes y demás detalles técnicos.
+     * Adaptar la distribución al contenido disponible sin imponer estructuras rígidas.
+   - *1.2. Mejorar la presentación en dispositivos móviles:*
+     * Presentar una distribución adecuada cuando se visualiza desde un teléfono móvil.
+     * Evitar que el contenido aparezca comprimido horizontalmente.
+     * Adaptar las secciones al ancho disponible.
+     * Organizar los detalles técnicos en una disposición vertical y legible.
+     * Mantener tamaños de texto apropiados y evitar desbordamientos horizontales.
+     * Mantener las imágenes completas y correctamente dimensionadas.
+     * Evitar superposiciones entre texto, imágenes y otros elementos.
+     * Distinguir entre presentación responsive en pantalla y composición de impresión.
+
+2. **Distribución y dimensiones de las imágenes:**
+   - *2.1. Imágenes que conservan sus dimensiones:*
+     * Imagen principal del modelo del vehículo.
+     * Imagen del testigo de motor (Check Engine).
+   - *2.2. Ajuste del resto de las imágenes:*
+     * Imágenes de: Ubicación de los cortes, Cables de alimentación, Apertura, Otros elementos gráficos técnicos.
+     * Aumentar el tamaño de las imágenes cuando el espacio lo permita y sea necesario para apreciar sus detalles.
+     * Evitar que las imágenes queden excesivamente pequeñas.
+     * Permitir que se acomoden según su orientación y proporciones originales (verticales y horizontales).
+     * Soportar imágenes con diferentes resoluciones y relaciones de aspecto sin ocupar espacio desproporcionado.
+   - *2.3. Preservar las imágenes completas:*
+     * No recortar imágenes para forzarlas a encajar en un contenedor.
+     * No utilizar escalados que deformen las proporciones originales.
+     * No permitir que una imagen cubra texto u otra información, ni que el texto oculte imágenes.
+     * No utilizar dimensiones rígidas que impidan visualizar imágenes verticales u horizontales.
+     * No sacrificar información visual para forzar compacidad.
+     * Uso de propiedades apropiadas ("object-fit", "object-position", dimensiones máximas, flexbox y reglas @media print).
+
+3. **Modificaciones del encabezado:**
+   - *3.1. Incorporar el logo de GPSpedia:*
+     * Ubicar el logo de GPSpedia a la derecha del título «GPSpedia».
+     * Reutilizar el recurso gráfico del logo existente en el proyecto sin imágenes externas.
+     * Mantener alineación visual correcta sin ocupar espacio excesivo.
+     * Visualización correcta en pantalla, impresión y exportación a PDF.
+   - *3.2. Simplificar los textos del encabezado:*
+     * Eliminar la frase «Listo para imprimir».
+     * Utilizar únicamente el texto «Ficha técnica» como identificación del documento.
+     * Retirar la palabra «Oficial» (prohibido que aparezca «Ficha técnica oficial»).
+
+4. **Ajustes en la información de los cortes:**
+   - Optimizar la distribución de los datos de cada corte evitando textos descriptivos desproporcionados.
+   - Mantener toda la información técnica relevante distribuida de manera equilibrada con sus imágenes.
+   - Aprovechar el espacio vertical disponible y evitar separar información de sus imágenes.
+   - *4.1. Reubicar el aviso del testigo de motor:*
+     * Ubicar «Este corte activa el testigo de motor» en la parte inferior del contenedor del corte, debajo de la imagen asociada.
+     * Reducir ligeramente la tipografía manteniendo legibilidad y jerarquía visual secundaria sin competir con el título.
+
+5. **Retirar información innecesaria de la ficha de impresión:**
+   - Eliminar exclusivamente de la ficha de impresión y exportación a PDF:
+     1. Nombres de los colaboradores.
+     2. Cantidad de «útil» o indicador equivalente de utilidad.
+     3. Reportes de error.
+   - No eliminar estos datos del sistema, de Spreadsheet ni del modal de detalles interactivo (conservar datos originales intactos).
+
+6. **Incorporar un código QR para el vídeo guía de desarme:**
+   - *6.1. Comportamiento:*
+     * El QR debe contener el enlace del vídeo de YouTube asociado a la guía de desarme del vehículo.
+     * Al escanearlo con el móvil, redirigir directamente al vídeo de YouTube correspondiente.
+   - *6.2. Condiciones de visualización:*
+     * Aparecer exclusivamente en la ficha técnica de impresión y exportación a PDF (no en el modal de detalles).
+     * Dimensiones pequeñas, sin interferir con la distribución y con suficiente resolución/contraste para escaneo en papel o PDF.
+   - *6.3. Asociación del vídeo:*
+     * Utilizar el enlace real asociado al modelo sin enlaces ficticios ni de otros modelos.
+     * Si no tiene vídeo guía de desarme, no mostrar QR ni reservar espacio vacío innecesario.
+   - *6.4. Restricción sobre enlaces URL:*
+     * Prohibido mostrar enlaces URL escritos como texto visible en la ficha técnica; el enlace debe estar contenido únicamente dentro del código QR.
+
+7. **Consideraciones técnicas de impresión y exportación a PDF:**
+   - Revisar reglas @media print separando estilos de pantalla de estilos de impresión.
+   - Evitar que el viewport móvil determine una composición de impresión horizontal errónea.
+   - Comprobar que las imágenes se carguen completamente antes de imprimir.
+   - Evitar saltos de página que separen la información de un corte de sus imágenes.
+   - Mantener el contenido dentro de los límites de página sin recortes por márgenes (10mm).
+   - Garantizar resolución adecuada del QR.
+   - Adaptar la distribución al contenido real sin imponer rígidamente una sola página si degrada la legibilidad.
+
+8. **Restricciones de implementación:**
+   - No modificar el modal de detalles para incorporar el QR.
+   - No eliminar información del modelo ni modificar su almacenamiento.
+   - No modificar Spreadsheet ni microservicios sin necesidad técnica demostrada.
+   - No duplicar lógica de recuperación de vídeos de YouTube.
+   - No deformar ni recortar imágenes originales.
+   - No modificar dimensiones de la imagen del modelo ni del Check Engine si ya cumplen su función.
+   - No alterar funcionalidades ajenas ni introducir dependencias externas innecesarias.
+
+9. **Criterios de aceptación y pruebas obligatorias:**
+   - *Distribución:* Composición vertical aprovechando el espacio, sin concentración en media hoja.
+   - *Imágenes:* Modelo y Check Engine conservados; cortes, alimentación y apertura visibles completas en orientaciones vertical y horizontal sin deformaciones ni recortes.
+   - *Encabezado:* Logo a la derecha de «GPSpedia», título «Ficha técnica» (sin «Oficial» ni «Listo para imprimir»), aviso de testigo debajo de la imagen con tipografía menor, sin nombres de colaboradores, sin útil ni reportes de error.
+   - *Código QR:* Presente solo con vídeo guía existente, exclusivo en ficha de impresión, funcional al escanear, sin URLs visibles en texto.
+   - *Compatibilidad:* Visualización y exportación a PDF en escritorio y móvil, vista previa de impresión sin desbordamientos.
+
 ---
 
 ===================================================================
@@ -1326,10 +1617,11 @@ TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE
 ---
 
 ===================================================================
-TAREA 15: BARRA DE FILTROS RÁPIDOS DE CATÁLOGO Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES [X]
+TAREA 15: ~~BARRA DE FILTROS RÁPIDOS DE CATÁLOGO~~ Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES [X]
 ===================================================================
-- **Estado:** COMPLETADA [X]
-- **Objetivo principal:** Lograr una identidad visual armónica y coherente en todos los controles interactivos de la aplicación, facilitando la filtración rápida del catálogo sin obstruir la búsqueda.
+- **Estado:** COMPLETADA [X] (FILTROS RÁPIDOS: CANCELADA Y RETIRADA)
+- **Objetivo principal:** ~~Lograr una identidad visual armónica y coherente en todos los controles interactivos de la aplicación, facilitando la filtración rápida del catálogo sin obstruir la búsqueda.~~
+- **DECISIÓN TÉCNICA OBLIGATORIA:** Se ha decidido eliminar la función de filtros rápidos de búsqueda de la plataforma. La barra de búsqueda busca elementos de forma universal sin necesidad de filtros. Esta implementación debe retirarse por completo de la plataforma.
 - **Tareas originales integradas:** 14.1, 14.2, 14.3
 - **Justificación técnica de convergencia:** Corrige la posición, superposición y comportamiento del botón desplegable del filtro de búsqueda (`#btn-toggle-filters`) y aplica un sistema unificado de diseño CSS para todos los botones de la plataforma (primarios, secundarios, flotantes, modales, iconos), garantizando consistencia visual y accesibilidad en desktop y móvil.
 - **Dependencias técnicas:** Depende de la Tarea 14 (buscador global activo) y de los estilos globales de la UI.
