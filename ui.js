@@ -5619,6 +5619,7 @@ export function openPysDetailModal(item) {
 }
 
 
+/* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */
 export function openAddTutorialModal() {
     const existing = document.getElementById("add-tutorial-modal");
     if (existing) existing.remove();

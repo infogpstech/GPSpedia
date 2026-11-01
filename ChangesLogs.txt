@@ -1193,3 +1193,9 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
   - Línea 5526: Agregado comentario identificativo /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */ en openPysDetailModal.
 - Services/feedback.js:
   - Línea 979: Agregado comentario identificativo /* TAREA 11 (12.3): ASOCIACIÓN DE VEHÍCULOS A PROBLEMAS EN HOJA PYS (COLUMNA 10) */ en handleAddVehicleToProblem.
+
+**TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIMEDIA (v2.2.0)**
+- ui.js:
+  - Línea 5622: Agregado comentario identificativo /* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */ en openAddTutorialModal.
+- main.js:
+  - Línea 401: Agregado comentario identificativo /* TAREA 12 (B04): CONTROL DEL CICLO DE VIDA DEL REPRODUCTOR DE YOUTUBE MEDIANTE MUTATIONOBSERVER */ en el bloque de observación de cierre de #modalDetalle.

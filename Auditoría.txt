@@ -474,3 +474,18 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
 5. **ui.js (Tarea 12.5: Acordeón en modal de vehículo):**
    - En `mostrarDetalleModal`, se renderiza dinámicamente el acordeón «Problemas relacionados a este vehículo» únicamente si existen problemas vinculados a ese vehículo, abriendo el detalle en contexto independiente sin mostrar cortes del vehículo ni botón '+'.
    - Todo el flujo cumple los requisitos funcionales de la Tarea 11. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIMEDIA (01/11/2026)**
+
+**Archivos involucrados:** `ui.js`, `main.js`, `Services/feedback.js`, `style.css`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **ui.js y Services/feedback.js (Tarea 6.1: Tarjeta de creación y formulario de tutoriales):**
+   - En `mostrarTutorialesGrid()`, la tarjeta de creación (`.card-create-tutorial`) se posiciona fija al inicio de la lista, con borde discontinuo azul de 120px de altura y enlace para invocar `openAddTutorialModal()`.
+   - `openAddTutorialModal()` incluye subida de imagen a Google Drive (vía Base64), validación de enlace de YouTube, descripción enriquecida y atribución del colaborador autenticado.
+   - En `Services/feedback.js`, `handleAddTutorial` escribe las filas correspondientes en la hoja `Tutorial` conservando compatibilidad e impidiendo duplicaciones.
+2. **main.js y ui.js (Tarea B04: Control del ciclo de vida multimedia de YouTube):**
+   - `mostrarDetalleTutorialModal(item)` asigna `modalDetalle.dataset.modalType = 'tutorial'` e inserta el iframe con parámetro `enablejsapi=1`.
+   - En `main.js`, un `MutationObserver` vigila `#modalDetalle`. En cuanto se remueve la clase `.visible` (por botón cerrar, tecla Escape, botón Atrás o gesto popstate), detecta el tipo 'tutorial', asigna `iframe.src = 'about:blank'` y destruye el elemento del DOM de forma inmediata.
+   - Esto silencia el audio y detiene la reproducción instantáneamente, liberando recursos en segundo plano.
+   - Todo el flujo cumple los requisitos funcionales de la Tarea 12. Se insertarán los comentarios identificativos conforme a la Regla 6.
