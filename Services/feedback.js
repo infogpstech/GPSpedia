@@ -149,6 +149,7 @@ function doPost(e) {
             case 'sendContactForm':
                 response = handleSendContactForm(payload);
                 break;
+            /* TAREA 18 (B26): LÓGICA DE BACKEND PARA FEEDBACK INBOX */
             // --- INBOX ACTIONS ---
             case 'getFeedbackItems':
                 response = handleGetFeedbackItems(payload);
@@ -205,6 +206,7 @@ function handleAssignCollaborator(payload) {
     throw new Error("Vehículo no encontrado.");
 }
 
+/* TAREA 17 (B21): GESTIÓN COLABORATIVA DE AÑOS Y ACTUALIZACIÓN TRAS 3 VOTOS */
 function handleSuggestYear(payload) {
     const { vehicleId, newYear, response, userId, userName } = payload;
     if (!vehicleId || !newYear || !userId || !userName) {

@@ -646,6 +646,7 @@ async function initializeApp() {
     }
 
 
+    /* TAREA 20 (B22): INSTALACIÓN DINÁMICA DE PROGRESSIVE WEB APP (PWA) */
     // 3. PWA installation prompt handler
     const installButton = document.getElementById('install-button');
 
@@ -778,6 +779,7 @@ async function initializeApp() {
         });
     }
 
+    /* TAREA 21 (B17): SISTEMA DE SEGURIDAD Y PROTECCIÓN ANTI-DEBUGGING */
     // --- LÓGICA DE SEGURIDAD Y BLOQUEO DE INTERACCIONES ---
     // Bloqueo de menú contextual (click derecho)
     document.addEventListener('contextmenu', event => event.preventDefault());

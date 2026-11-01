@@ -1239,3 +1239,51 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
 
 **Archivo: main.js**
 - Líneas 67-110: Ajustados los eventos del botón desplegable del filtro (#btn-toggle-filters) y del panel de filtros (#catalog-filters-bar) con preventDefault() en mousedown y stopPropagation() para evitar que la interacción cierre prematuramente el menú desplegable, cancele la búsqueda o interfiera con el campo de búsqueda. Agregado comentario identificativo de TAREA 15 (14.1).
+
+**CHANGES LOG - 01/11/2026 (TAREA 16: AJUSTES VISUALES DE ENCABEZADOS Y FOOTER DINÁMICO)**
+
+**Archivo: ui.js**
+- Línea 1475: Agregado comentario identificativo /* TAREA 16 (B13): AJUSTES VISUALES DE ENCABEZADO Y CONTRASTE */ en titleContainer del modal de detalle de vehículos.
+
+**Archivo: index.html**
+- Línea 167: Agregado comentario identificativo <!-- TAREA 16 (B19): FOOTER DINÁMICO Y SENTINEL --> sobre el elemento #footer-sentinel.
+
+**Archivo: Auditoría.txt, Tareas.txt**
+- Verificados individualmente todos los requisitos funcionales de la Tarea 16: flex-wrap en encabezados técnicos de modal para evitar scroll horizontal móvil, drop-shadow adaptativo en modo oscuro sobre logos de marcas, y footer dinámico controlado con IntersectionObserver. Marcada como completada [X].
+
+**CHANGES LOG - 01/11/2026 (TAREA 17: GESTIÓN COLABORATIVA DE AÑOS Y VALIDACIÓN COMUNITARIA)**
+
+**Archivo: ui.js**
+- Línea 934: Agregado comentario identificativo /* TAREA 17 (B21): GESTIÓN COLABORATIVA DE AÑOS Y VALIDACIÓN COMUNITARIA */ sobre la función checkValidationEligibility.
+
+**Archivo: Services/feedback.js**
+- Línea 215: Agregado comentario identificativo /* TAREA 17 (B21): GESTIÓN COLABORATIVA DE AÑOS Y ACTUALIZACIÓN TRAS 3 VOTOS */ sobre la función handleSuggestYear.
+
+**Archivo: Auditoría.txt, Tareas.txt**
+- Verificados individualmente todos los requisitos funcionales de la Tarea 17: banner interactivo de validación de años en el modal técnico, persistencia anti-redundancia en validationCache de IndexedDB y automatización en servidor para actualizar el catálogo de años tras alcanzar 3 votos positivos válidos. Marcada como completada [X].
+
+**CHANGES LOG - 01/11/2026 (TAREA 18: GESTIÓN DE USUARIOS, INBOX Y DASHBOARD)**
+
+**Archivo: ui.js**
+- Línea 2515: Agregado comentario identificativo /* TAREA 18 (B24): DASHBOARD DE DESEMPEÑO Y LOGS PARA SUPERVISORES */ sobre la función openDashboard.
+
+**Archivo: Services/feedback.js**
+- Línea 150: Agregado comentario identificativo /* TAREA 18 (B26): LÓGICA DE BACKEND PARA FEEDBACK INBOX */ sobre el bloque de ruteo de acciones de bandeja de entrada (getFeedbackItems, replyToFeedback, markAsResolved, deleteFeedbackItem).
+
+**Archivo: Auditoría.txt, Tareas.txt**
+- Verificados individualmente todos los requisitos funcionales de la Tarea 18: gestión y filtrado RBAC en users.html, funcionalidad completa de edición técnica in-modal para rol Desarrollador, backend de Feedback Inbox y dashboard de desempeño/logs de actividad para supervisores y jefes. Marcada como completada [X].
+
+**CHANGES LOG - 01/11/2026 (TAREAS 19, 20 Y 21: INTEGRIDAD BACKEND, INSTALACIÓN PWA Y CIERRE TÉCNICO)**
+
+**Archivo: index.html**
+- Línea 116: Modificado el texto del botón #install-button a "Instala la app" de forma estricta según la especificación técnica de la Tarea 20 (B22).
+
+**Archivo: main.js**
+- Línea 649: Agregado comentario identificativo /* TAREA 20 (B22): INSTALACIÓN DINÁMICA DE PROGRESSIVE WEB APP (PWA) */ sobre el manejador de instalación.
+- Línea 782: Agregado comentario identificativo /* TAREA 21 (B17): SISTEMA DE SEGURIDAD Y PROTECCIÓN ANTI-DEBUGGING */ sobre el bloqueo de eventos de depuración e inspección.
+
+**Archivo: Services/write.js**
+- Línea 105: Agregado comentario identificativo /* TAREA 3 (4.2, 4.4, B31) / TAREA 19 (9.1): REGISTRO, IDEMPOTENCIA Y VALIDACIONES DE INTEGRIDAD EN BACKEND */ sobre handleAddOrUpdateCut.
+
+**Archivo: Tareas.txt**
+- Incorporado el Informe Final Estructurado de Cierre Técnico (Secciones A a G) conforme a la especificación de la Tarea 21 (13.1). Marcadas como completadas [X] las Tareas 19, 20 y 21.

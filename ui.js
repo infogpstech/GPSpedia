@@ -930,6 +930,7 @@ export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
  * @param {object} item - El objeto de datos del vehículo actual.
  * @returns {Promise<boolean>} - Verdadero si es elegible.
  */
+/* TAREA 17 (B21): GESTIÓN COLABORATIVA DE AÑOS Y VALIDACIÓN COMUNITARIA */
 async function checkValidationEligibility(item) {
     const currentYear = new Date().getFullYear();
     const { catalogData } = getState();
@@ -1472,6 +1473,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     headerDiv.appendChild(closeBtn);
     cont.appendChild(headerDiv);
 
+    /* TAREA 16 (B13): AJUSTES VISUALES DE ENCABEZADO Y CONTRASTE */
     // Comentario: Se ajusta el layout del encabezado para cumplir con el nuevo requisito (logo a la izquierda).
     // Se añade 'flex-wrap: wrap' para evitar scroll horizontal en móviles con logos anchos.
     const titleContainer = document.createElement("div");
@@ -2510,6 +2512,7 @@ function setupModal(modalId, openFn) {
     };
 }
 
+/* TAREA 18 (B24): DASHBOARD DE DESEMPEÑO Y LOGS PARA SUPERVISORES */
 export const openDashboard = setupModal('dashboard-modal', async () => {
     const modal = document.getElementById('dashboard-modal');
     modal.style.display = 'flex';

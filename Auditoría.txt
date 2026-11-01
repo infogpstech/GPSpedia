@@ -533,3 +533,76 @@ Hallazgos de Auditoría Línea por Línea:
 3. Plan de acción:
    - Declarar en style.css la suite completa y robusta de clases para botones globales (.btn, .btn-primary, .btn-secondary, .btn-warning, .btn-danger, .btn-sm, estados hover, active, focus, disabled, loading).
    - Proteger los eventos de #btn-toggle-filters y #catalog-filters-bar en main.js para garantizar interacción sin cierres involuntarios ni solapamientos.
+
+--------------------------------------------------
+AUDITORÍA TÉCNICA - TAREA 16: AJUSTES VISUALES DE ENCABEZADOS, CONTRASTE DE MARCAS Y PIE DE PÁGINA ADAPTATIVO (01/11/2026)
+--------------------------------------------------
+Archivos auditados: ui.js, style.css, main.js, index.html.
+
+Hallazgos de Auditoría Línea por Línea:
+1. ui.js y style.css (B13: Ajustes Visuales de Header y Contraste):
+   - Línea 1478 en ui.js: titleContainer cuenta con 'flex-wrap: wrap;', 'gap: 10px;', 'justify-content: flex-start;' y 'align-items: center;', previniendo el scroll horizontal en dispositivos móviles con logotipos anchos o nombres de modelos extensos.
+   - Líneas 76, 403, 1977, 2076 en style.css: Se implementa 'filter: drop-shadow(0px 0px 5px rgba(255, 255, 255, 0.6)) !important;' sobre los logotipos de marcas (.brand-logo-item img, .brand-logo-modal) en modo oscuro (body.dark-mode), lo que garantiza contraste y visibilidad óptima de logos con trazos negros y grises sobre fondo oscuro sin alterar colores originales.
+2. index.html, main.js y style.css (B19: Refinamiento de Footer Dinámico):
+   - Línea 167 en index.html: Elemento <div id="footer-sentinel"></div> ubicado inmediatamente antes del cierre de .container.
+   - Líneas 610-630 en main.js: IntersectionObserver configurado sobre #footer-sentinel. El pie de página (.footer) se activa y añade la clase '.visible' exclusivamente cuando el usuario alcanza el final del catálogo en el viewport.
+   - Líneas 1520-1540 en style.css: .footer configurado con transiciones suaves (opacity y translateY(100%) a translateY(0)), z-index: 1000 y padding responsivo sin solapar la botonera flotante.
+3. Conclusión de auditoría:
+   - Los requisitos funcionales y visuales de la Tarea 16 ya se encuentran plenamente implementados en el código.
+   - Conforme a la Condición Obligatoria 5, se añade el comentario identificativo /* TAREA 16 (B13): AJUSTES VISUALES DE ENCABEZADO Y CONTRASTE */ en ui.js y <!-- TAREA 16 (B19): FOOTER DINÁMICO Y SENTINEL --> en index.html, se actualiza Auditoría.txt y ChangesLogs.txt, y se marca [X] en Tareas.txt.
+
+--------------------------------------------------
+AUDITORÍA TÉCNICA - TAREA 17: GESTIÓN COLABORATIVA DE AÑOS Y VALIDACIÓN COMUNITARIA DE FICHAS TÉCNICAS (01/11/2026)
+--------------------------------------------------
+Archivos auditados: ui.js, offline.js, Services/feedback.js, style.css.
+
+Hallazgos de Auditoría Línea por Línea:
+1. ui.js (Lógica de elegibilidad y banner colaborativo):
+   - Líneas 933-970: 'checkValidationEligibility(item)' evalúa que el vehículo no haya sido validado previamente en la sesión/IndexedDB ('offline.getValidationResponse(item.id)'), confirma que corresponde a la última generación registrada del modelo (previniendo colisiones de rango intergeneracional) y que el rango finalice antes del año en curso.
+   - Líneas 980-1240: Flujo interactivo inteligente de preguntas ('showStep1', 'showStepInput', 'showSuccessMessage') adaptado tanto para modelos recientes como para vehículos más antiguos ('isFromAntiguo').
+   - Líneas 1170-1235 en style.css: .validation-banner diseñado con flexbox responsivo, padding ajustado, soporte de overflow visible y prevención de truncamientos de texto.
+2. offline.js (Persistencia local en IndexedDB v3):
+   - Almacén 'validationCache' almacena las respuestas locales por vehicleId impidiendo redundancia y preguntas reiterativas al técnico en campo.
+3. Services/feedback.js (Backend y actualización de catálogo tras 3 votos positivos):
+   - Líneas 215-320: 'handleSuggestYear(payload)' valida que el año esté en rango válido, registra la sugerencia en la hoja 'Sugerencias_Ano' y audita la actividad del usuario en 'ActividadUsuario'.
+   - Filtra exclusivamente reportes positivos y contabiliza el umbral: si alcanza 3 o más votos acumulados ('voteCount >= 3'), actualiza automáticamente la columna 'anoHasta' o 'anoDesde' en la hoja 'Cortes' del catálogo sin intervención manual.
+4. Conclusión de auditoría:
+   - Todo el flujo integral de gestión colaborativa y validación comunitaria de años ya está operativo y cumple al 100% las especificaciones de la Tarea 17 (B21).
+   - Se agrega comentario identificativo en ui.js y feedback.js, se documenta en Auditoría.txt y ChangesLogs.txt, y se marca [X] en Tareas.txt.
+
+--------------------------------------------------
+AUDITORÍA TÉCNICA - TAREA 18: GESTIÓN AVANZADA DE USUARIOS, AUDITORÍA DE INBOX Y DASHBOARD DE DESEMPEÑO (01/11/2026)
+--------------------------------------------------
+Archivos auditados: users.html, Services/users.js, ui.js, main.js, Services/feedback.js, index.html.
+
+Hallazgos de Auditoría Línea por Línea:
+1. users.html y Services/users.js (Gestión de usuarios y RBAC):
+   - Jerarquía de roles RBAC estricta (Desarrollador, Jefe/Gefe, Supervisor, Técnico).
+   - Bloqueo de modificación de nombre de usuario de acceso, filtros de creación por rol y edición de nombre propio con validación de propiedad de sesión.
+   - Protección con estados de carga (.btn-loading) y animaciones de spinners en formularios.
+2. ui.js, index.html y main.js (Dashboard de Desempeño y Logs de Actividad):
+   - Líneas 2515-2545 en ui.js: 'openDashboard' inicializa el modal '#dashboard-modal' y carga de forma asíncrona los eventos desde 'getActivityLogs()'.
+   - El acceso al botón Dashboard (#dashboard-btn) en la barra de navegación lateral está restringido estrictamente a roles con privilegios ('Desarrollador', 'Gefe', 'Supervisor') en ui.js (línea 3966).
+3. ui.js y Services/feedback.js (Lógica de Backend para Feedback Inbox y Edición In-Modal):
+   - Inbox: Funciones 'handleGetFeedbackItems', 'handleReplyToFeedback', 'handleMarkAsResolved', 'handleDeleteFeedbackItem', 'handleClearActivityLogs' totalmente implementadas en Services/feedback.js con mapeo a la hoja 'Feedbacks' y 'ActividadUsuario'.
+   - In-Modal: Funcionalidad de edición técnica 'In-Modal' para rol Desarrollador en 'ui.js' (líneas 1400-1460, 2189-2280, 3470-3530) con conversión interactiva de campos a inputs/textareas editables, reemplazo de imágenes y guardado silencioso en Google Sheets ('saveFieldSilently').
+4. Conclusión de auditoría:
+   - Todo el conjunto de funcionalidades integradas en la Tarea 18 (8.1, B24, B25, B26) ya se encuentra activo, operativo y seguro en el código.
+   - Se añaden comentarios identificativos en ui.js y feedback.js, se documenta en Auditoría.txt y ChangesLogs.txt, y se marca [X] en Tareas.txt.
+
+--------------------------------------------------
+AUDITORÍA TÉCNICA - TAREAS 19, 20 Y 21: INTEGRIDAD BACKEND, INSTALACIÓN PWA Y CIERRE GLOBAL (01/11/2026)
+--------------------------------------------------
+Archivos auditados: Services/write.js, Services/admin.js, Services/feedback.js, index.html, main.js, ui.js.
+
+Hallazgos de Auditoría Línea por Línea:
+1. Tarea 19 (Validaciones en backend, integridad y pruebas):
+   - En Services/write.js (handleAddOrUpdateCut, handleAddSupplementaryInfo, handleCheckVinDuplicate, handleAddVinToVehicle), todas las validaciones de campos requeridos, disponibilidad de slots para cortes (máximo 3), cables (máximo 3) y apertura (máximo 1), exclusión de últimos 5 caracteres de VIN, concurrencia e idempotencia por opId se procesan en el servidor sin delegar ciegamente en el cliente.
+   - En Services/feedback.js (handleAddProblem, handleSuggestCutChange, handleSuggestYear), se valida la estructura estricta de las columnas de 'pys', longitudes de campos, URLs de YouTube y votos antes de modificar cualquier registro en el catálogo.
+2. Tarea 20 (Instalación dinámica de PWA):
+   - En index.html (línea 116), el botón '#install-button' tiene el texto "Instalar la App", cuando la especificación B22 exige estrictamente el texto "Instala la app".
+   - En main.js (líneas 650-740), la lógica maneja adecuadamente 'beforeinstallprompt', 'appinstalled', detección de iOS (Safari con modal '#ios-install-modal') y detección de 'standalone' para ocultar el botón si la aplicación ya está instalada.
+3. Tarea 21 (Saneamiento arquitectural, DRY, anti-debugging y cierre de auditoría):
+   - En main.js (líneas 780-820), el sistema anti-debugging y protección de integridad bloquea menú contextual, F12, Ctrl+U, Ctrl+Shift+I/J/C y zoom manual con excepción en Lightbox.
+   - En ui.js y navigation.js, el hoist de utilidades (createDetailParagraph) y saneamiento DRY eliminaron funciones huérfanas previas.
+   - Requiere consolidar el reporte final estructurado exigido por la especificación 13.1 en Tareas.txt.
