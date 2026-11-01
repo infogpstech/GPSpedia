@@ -211,7 +211,7 @@ TAREAS EN EJECUCIÓN (SESIÓN ACTUAL)
 BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O NO IMPLEMENTADAS)
 ===================================================================
 
-### TAREA 1.1: Configuración de Relay en el formulario de agregar corte del botón «+» [ ]
+### TAREA 1.1: Configuración de Relay en el formulario de agregar corte del botón «+» [X]
 - **Estado detectado:** Fallida. La implementación no corresponde a lo solicitado.
 - **Problema:** En el formulario de agregar corte que se abre desde el botón «+» del modal de detalles del modelo, el campo de configuración de Relay continúa siendo un "input text". El campo debe funcionar mediante un selector desplegable ("DropSelect") con las opciones disponibles en la configuración almacenada en Spreadsheet.
 - **Referencia obligatoria:** Selector de configuración de Relay de la etapa 2 de "add_corte.html".

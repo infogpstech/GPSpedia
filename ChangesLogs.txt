@@ -1314,3 +1314,18 @@ REGISTRO DE NUEVA TAREA: FICHA TÉCNICA DE IMPRESIÓN (BLOQUE 7)
 - Archivo Tareas.txt: Incorporada la nueva tarea en Bloque 7 con todos sus requisitos funcionales, de diseño, imágenes, encabezado, código QR y compatibilidad sin omisiones.
 - Archivo Auditoría.txt: Documentado el registro y estado pendiente de la nueva tarea conforme a Proceso de desarrollo.md.
 ===================================================================
+
+===================================================================
+FECHA: Mon Nov 2 10:30:00 2026
+TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN «+»
+- Archivo ui.js:
+  * Líneas 5075-5205:
+    - Se sustituyó el elemento input de texto plano (<input type="text" id="add-cut-relay">) por un elemento de selección (<select id="add-cut-relay" required>).
+    - Se incorporó la función populateRelayOptions y la carga asíncrona de opciones de configuración de Relay mediante precargarDropdownOptions() obtenidas desde la Spreadsheet.
+    - Se implementó la sincronización de estado syncNoRecomendadoState en el evento onchange del tipo de corte, deshabilitando y retirando el requerimiento del selector de Relay cuando se selecciona "No recomendado", y reactivándolo con validación obligatoria al seleccionar cualquier otro tipo de corte técnico.
+    - Se añadió el comentario identificativo correspondiente a la Tarea 1.1 en la primera línea de la función.
+- Archivo Auditoría.txt:
+  * Registro de auditoría inicial línea por línea, análisis de hallazgos y comprobación post-edición.
+- Archivo Tareas.txt:
+  * Actualización de estado de la Tarea 1.1 a [X] (Completada).
+===================================================================

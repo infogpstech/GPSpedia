@@ -5071,7 +5071,7 @@ export function openAddVinModal(item) {
     };
 }
 
-/* TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
+/* TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN «+» / TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
 export function openAddCutForModelModal(item) {
     const existing = document.getElementById("add-cut-for-model-modal");
     if (existing) existing.remove();
@@ -5102,7 +5102,9 @@ export function openAddCutForModelModal(item) {
             </div>
             <div class="form-group">
                 <label>Configuración Relay</label>
-                <input type="text" id="add-cut-relay" placeholder="Ej. 5 pines NC">
+                <select id="add-cut-relay" required>
+                    <option value="">Cargando opciones...</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>Ubicación y Detalles del Corte</label>
@@ -5126,6 +5128,63 @@ export function openAddCutForModelModal(item) {
 
     modal.appendChild(content);
     document.body.appendChild(modal);
+
+    const tipoSelect = content.querySelector("#add-cut-tipo");
+    const relaySelect = content.querySelector("#add-cut-relay");
+
+    const populateRelayOptions = (options, defaultValue = "Corte a ignición") => {
+        relaySelect.innerHTML = "";
+        const list = Array.isArray(options) && options.length > 0
+            ? options
+            : ["Corte a ignición", "5 pines NC", "5 pines NA", "Sin relay"];
+
+        list.forEach(opt => {
+            const el = document.createElement("option");
+            el.value = opt;
+            el.textContent = opt;
+            if (opt === defaultValue) el.selected = true;
+            relaySelect.appendChild(el);
+        });
+
+        if (!list.includes(defaultValue) && relaySelect.options.length > 0) {
+            relaySelect.options[0].selected = true;
+        }
+    };
+
+    // Cargar opciones desde la configuración de Spreadsheet
+    (async () => {
+        try {
+            const dropdowns = await precargarDropdownOptions();
+            if (dropdowns && dropdowns.configRelay) {
+                populateRelayOptions(dropdowns.configRelay, "Corte a ignición");
+            } else {
+                populateRelayOptions([]);
+            }
+        } catch (e) {
+            console.error("Error cargando opciones de relay para modal:", e);
+            populateRelayOptions([]);
+        }
+
+        // Aplicar estado según tipo inicial
+        syncNoRecomendadoState();
+    })();
+
+    function syncNoRecomendadoState() {
+        const isNoRec = isNoRecomendadoValue(tipoSelect.value);
+        if (isNoRec) {
+            relaySelect.disabled = true;
+            relaySelect.required = false;
+            relaySelect.value = "";
+        } else {
+            relaySelect.disabled = false;
+            relaySelect.required = true;
+            if (!relaySelect.value && relaySelect.options.length > 0) {
+                relaySelect.options[0].selected = true;
+            }
+        }
+    }
+
+    tipoSelect.onchange = syncNoRecomendadoState;
 
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
 
