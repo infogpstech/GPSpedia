@@ -211,6 +211,54 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
  */
 const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
 
+/* FUNCIONES DE RELACIÓN VIN - VERSIONES DE EQUIPAMIENTO */
+export function parseEquipmentVersions(rawStr) {
+    if (!rawStr) return [];
+    // Normalizar separadores admitidos: comas ",", diagonales "/" y diagonales inversas "\"
+    return String(rawStr)
+        .split(/[,/\\\\]+/)
+        .map(v => v.trim())
+        .filter(Boolean);
+}
+
+export function parseVinCollection(rawVin) {
+    if (!rawVin) return [];
+    if (Array.isArray(rawVin)) {
+        return rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    }
+    const str = String(rawVin).trim();
+    if (str.startsWith("[") && str.endsWith("]")) {
+        try {
+            const parsed = JSON.parse(str);
+            if (Array.isArray(parsed)) {
+                return parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+            }
+        } catch (e) {}
+    }
+    return str
+        .split(/[,/\\\\]+/)
+        .map(v => v.trim().toUpperCase())
+        .filter(Boolean);
+}
+
+export function mapVersionsWithVins(versionesStr, vinRaw) {
+    const versions = parseEquipmentVersions(versionesStr);
+    const vins = parseVinCollection(vinRaw);
+
+    if (versions.length === 0 && vins.length === 0) return [];
+    if (versions.length === 0) {
+        return vins.map(vin => ({ version: "", vin }));
+    }
+
+    // Cada versión se relaciona individualmente con su correspondiente VIN si existe
+    return versions.map((version, index) => {
+        return {
+            version,
+            vin: vins[index] || null
+        };
+    });
+}
+
 /**
  * Establece una imagen optimizada intentando cargarla desde el caché de IndexedDB.
  * @param {HTMLImageElement} imgElement - El elemento img a actualizar.
@@ -314,6 +362,7 @@ export function getImageUrl(fileId, size = 400) {
         return placeholder;
     }
 
+    /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES */
     // Evitar parámetros de miniaturas (=w / =s) de Google que convierten PNGs transparentes a JPEG con fondo negro
     return `https://lh3.googleusercontent.com/d/${id}`;
 }
@@ -867,6 +916,7 @@ export function regresarABusqueda() {
     }
 }
 
+/* TAREA 7 (B18): CONTEXTO 'ORIGIN' MARCA/CATEGORÍA Y RETORNO LIMPIO SIN BUCLES */
 export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
     const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
@@ -1251,6 +1301,7 @@ function showValidationBanner(item, isOldModel) {
  * @param {string} searchData.query - El texto original de la búsqueda.
  * @param {Array} searchData.results - El array de resultados (strings de marcas o objetos de modelos).
  */
+/* TAREA 7 (B06): DISTINCIÓN ENTRE BÚSQUEDA ACTIVA Y RESTAURACIÓN DEL HISTORIAL CON AUTO-OPEN */
 // --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
 export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen = true) {
     const cont = document.getElementById("contenido");
@@ -1282,7 +1333,12 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
     } else {
         // Renderizado para resultados de tipo MODELO (y por defecto).
         // Agrupar los resultados primero por Modelo único (Marca + Modelo)
-        const modelosUnicos = [...new Map(results.map(item => {
+        /* TAREA 4: Evitar que elementos de Relay, Tutoriales o PyS se colapsen indebidamente a una sola tarjeta */
+        const modelosUnicos = [...new Map(results.map((item, idx) => {
+            if (item._sectionType) {
+                const secId = item.ID || item.id || item.Tema || item.configuracion || item.Problema || idx;
+                return [`${item._sectionType}|${secId}`, item];
+            }
             const key = `${item.marca}|${item.modelo}`;
             return [key, item];
         })).values()];
@@ -1357,6 +1413,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>';
     shareBtn.className = "share-modal-btn";
     shareBtn.title = "Compartir este vehículo";
+    /* TAREA 8 (B10, B11, B23): COMPARTIR MODELO Y REDIRECCIONAMIENTO PRECISO CON DEEP LINKING */
     shareBtn.onclick = () => {
         const queryParts = [
             activeItem.marca,
@@ -1518,17 +1575,34 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     const subHeaderText = document.createElement('p');
     subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
 
-    // Tarea 5: Identificar todas las generaciones del mismo modelo
+    /* TAREA: NAVEGACIÓN ENTRE GENERACIONES BASADA EN CONTINUIDAD DE VERSIONES DE EQUIPAMIENTO */
     const allCortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
 
-    const normalizedItemVersion = normalizeVersion(activeItem.versionesAplicables);
-    const generations = allCortes.filter(c =>
-        String(c.marca).toLowerCase() === String(activeItem.marca).toLowerCase() &&
-        String(c.modelo).toLowerCase() === String(activeItem.modelo).toLowerCase() &&
-        String(c.categoria).toLowerCase() === String(activeItem.categoria).toLowerCase() &&
-        String(c.tipoEncendido).toLowerCase() === String(activeItem.tipoEncendido).toLowerCase() &&
-        normalizeVersion(c.versionesAplicables) === normalizedItemVersion
-    ).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
+    const activeItemVersions = parseEquipmentVersions(activeItem.versionesAplicables).map(v => v.toLowerCase());
+
+    const generations = allCortes.filter(c => {
+        if (String(c.marca).toLowerCase() !== String(activeItem.marca).toLowerCase() ||
+            String(c.modelo).toLowerCase() !== String(activeItem.modelo).toLowerCase() ||
+            String(c.categoria).toLowerCase() !== String(activeItem.categoria).toLowerCase()) {
+            return false;
+        }
+
+        // Si tienen tipos de encendido diferentes, no pertenecen a la misma línea
+        if (activeItem.tipoEncendido && c.tipoEncendido &&
+            String(c.tipoEncendido).toLowerCase() !== String(activeItem.tipoEncendido).toLowerCase()) {
+            return false;
+        }
+
+        // Continuidad de versiones de equipamiento:
+        // Si alguno no tiene versiones especificadas, se considera continuo
+        const cVersions = parseEquipmentVersions(c.versionesAplicables).map(v => v.toLowerCase());
+        if (activeItemVersions.length === 0 || cVersions.length === 0) {
+            return true;
+        }
+
+        // Si ambos tienen versiones, debe existir al menos una versión en común
+        return activeItemVersions.some(av => cVersions.includes(av));
+    }).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
 
     const currentIndex = generations.findIndex(g => String(g.id) === String(activeItem.id));
 
@@ -1691,8 +1765,26 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             yearRangeContainer.appendChild(yearTextSpan);
         }
 
-        const equipamiento = activeItem.versionesAplicables || activeItem.tipoEncendido || '';
-        subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | `;
+        /* TAREA: PRESENTACIÓN VISUAL DE VERSIONES Y DÍGITOS DE CHASIS CON SEPARADOR "/" */
+        const mappedVersions = mapVersionsWithVins(activeItem.versionesAplicables, activeItem.vin);
+        let equipamientoHtml = '';
+
+        if (mappedVersions.length > 0) {
+            equipamientoHtml = mappedVersions.map(mv => {
+                if (mv.version && mv.vin) {
+                    return `${mv.version} <span class="chassis-digits" style="font-size: 0.82em; font-weight: normal; opacity: 0.85;">(${mv.vin})</span>`;
+                } else if (mv.version) {
+                    return mv.version;
+                } else if (mv.vin) {
+                    return `<span class="chassis-digits" style="font-size: 0.82em; font-weight: normal; opacity: 0.85;">(${mv.vin})</span>`;
+                }
+                return '';
+            }).filter(Boolean).join(' / ');
+        } else {
+            equipamientoHtml = activeItem.tipoEncendido || '';
+        }
+
+        subHeaderText.innerHTML = `<strong>${equipamientoHtml}</strong> | `;
         subHeaderText.appendChild(yearRangeContainer);
 
         if(activeItem.categoria) {
@@ -1815,51 +1907,12 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     });
 
-    // Acordeón de Problemas relacionados a este vehículo
-    const { pysData = [] } = getState();
-    const relatedProblems = pysData.filter(p => Array.isArray(p.modelosAsociados) && p.modelosAsociados.includes(String(activeItem.id)));
-
-    if (relatedProblems.length > 0) {
-        const pysAccordionBtn = document.createElement("button");
-        pysAccordionBtn.className = "accordion-header";
-        pysAccordionBtn.style.cssText = "width: 100%; text-align: left; padding: 12px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold;";
-        pysAccordionBtn.innerHTML = `<span><i class="fa-solid fa-triangle-exclamation" style="color:#e6a23c; margin-right:6px;"></i> Problemas relacionados a este vehículo (${relatedProblems.length})</span> <i class="fa-solid fa-chevron-down"></i>`;
-
-        const pysPanel = document.createElement("div");
-        pysPanel.style.cssText = "display: none; padding: 10px; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; background: var(--card-bg); margin-bottom: 10px;";
-
-        const pysTrack = document.createElement("div");
-        pysTrack.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;";
-
-        relatedProblems.forEach(p => {
-            const pCard = document.createElement("div");
-            pCard.style.cssText = "flex: 0 0 140px; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; background: var(--bg-color); cursor: pointer;";
-            pCard.innerHTML = `
-                <img src="${p.Imagen || 'https://via.placeholder.com/150'}" style="width: 100%; height: 75px; object-fit: cover; border-radius: 6px;">
-                <div style="font-size: 0.8rem; font-weight: bold; margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.Problema}</div>
-                <span style="font-size: 0.7rem; color: ${p.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight: bold;">
-                    ${p.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}
-                </span>
-            `;
-            pCard.onclick = () => openPysDetailModal(p);
-            pysTrack.appendChild(pCard);
-        });
-
-        pysPanel.appendChild(pysTrack);
-
-        pysAccordionBtn.onclick = () => {
-            const isHidden = pysPanel.style.display === 'none';
-            pysPanel.style.display = isHidden ? 'block' : 'none';
-            pysAccordionBtn.querySelector('.fa-chevron-down, .fa-chevron-up').className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
-        };
-
-        accordionContainer.appendChild(pysAccordionBtn);
-        accordionContainer.appendChild(pysPanel);
-    }
+    /* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL ACORDEÓN «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+    renderPosiblesProblemasAccordion(accordionContainer, activeItem);
 
     const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
-        // Tarea 1.8: Reejecución de las tareas afectadas y pruebas de regresión (Botón +)
+        // TAREA 1.5 / 1.8: RECUPERACIÓN, AJUSTE Y REEJECUCIÓN DEL BOTÓN (+) EN EL MODAL DE DETALLE DEL VEHÍCULO
         const plusBtn = document.createElement("button");
         plusBtn.className = "btn-expand-plus";
         plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
@@ -2177,6 +2230,181 @@ async function insertNewVehicleFluently(item) {
         }
     }
 }
+
+/* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+function createPysCard(item) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.setAttribute("data-problem-id", item.id_problem || item.id || "");
+    card.style.animation = "none";
+    card.style.opacity = "1";
+    card.onclick = () => openPysDetailModal(item);
+
+    const img = document.createElement("img");
+    img.className = "card-img-top";
+    img.alt = item.Problema || "Problema técnico";
+    img.loading = "lazy";
+    setOptimizedImage(img, item.Imagen || "", IMG_SIZE_SMALL);
+    card.appendChild(img);
+
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+    const statusText = item.Se_soluciono === "x" ? "Solucionado" : "Sin solución";
+    const statusColor = item.Se_soluciono === "x" ? "#28a745" : "#dc3545";
+    overlay.innerHTML = `
+        <div class="overlay-text-primary" style="font-size: 0.85rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.Problema || "Problema"}</div>
+        <div class="overlay-text-secondary" style="font-size: 0.75rem; color: ${statusColor}; font-weight: bold;">${statusText}</div>
+    `;
+    card.appendChild(overlay);
+
+    return card;
+}
+
+export function renderPosiblesProblemasAccordion(container, activeItem) {
+    if (!container || !activeItem || !activeItem.id) return;
+    const vehicleIdStr = String(activeItem.id);
+
+    // Contenedor dinámico del acordeón para poder actualizarlo si se descargan datos nuevos
+    let wrapper = container.querySelector("#posibles-problemas-wrapper");
+    if (!wrapper) {
+        wrapper = document.createElement("div");
+        wrapper.id = "posibles-problemas-wrapper";
+        container.appendChild(wrapper);
+    }
+
+    const updateAccordion = (rawPysData) => {
+        wrapper.innerHTML = "";
+        const allPys = Array.isArray(rawPysData) ? rawPysData : [];
+        // Filtrar estrictamente por el identificador del modelo y de-duplicar por ID de problema
+        const seenIds = new Set();
+        const relatedProblems = [];
+
+        allPys.forEach(p => {
+            if (!p || !Array.isArray(p.modelosAsociados)) return;
+            const matches = p.modelosAsociados.some(mId => String(mId) === vehicleIdStr);
+            if (matches) {
+                const pId = p.id_problem || p.id || p.Problema;
+                if (!seenIds.has(pId)) {
+                    seenIds.add(pId);
+                    relatedProblems.push(p);
+                }
+            }
+        });
+
+        // REQUISITO: Si no existen problemas relacionados, no mostrar el acordeón vacío
+        if (relatedProblems.length === 0) {
+            return;
+        }
+
+        // Crear el botón acordeón con el título exacto requerido: «Posibles problemas»
+        const btn = document.createElement("button");
+        btn.className = "accordion-btn";
+        btn.innerHTML = `Posibles problemas <span class="accordion-arrow">▼</span>`;
+
+        const panel = document.createElement("div");
+        panel.className = "panel-desplegable";
+        panel.style.display = "none";
+        panel.style.padding = "15px 10px";
+
+        if (relatedProblems.length === 1) {
+            // REQUISITO: Si existe un solo problema, mostrar su tarjeta
+            const singleCardContainer = document.createElement("div");
+            singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; width: 100%;";
+            const singleCard = createPysCard(relatedProblems[0]);
+            singleCardContainer.appendChild(singleCard);
+            panel.appendChild(singleCardContainer);
+        } else {
+            // REQUISITO: Si existen varios problemas, mostrarlos mediante un carrusel navegable
+            const carouselContainer = document.createElement("div");
+            carouselContainer.className = "carousel-container";
+            const carouselTrack = document.createElement("div");
+            carouselTrack.className = "carousel-track";
+
+            relatedProblems.forEach(p => {
+                const card = createPysCard(p);
+                carouselTrack.appendChild(card);
+            });
+            carouselContainer.appendChild(carouselTrack);
+
+            const prevBtn = document.createElement("button");
+            prevBtn.className = "carousel-btn prev";
+            prevBtn.innerHTML = "&#10094;";
+            carouselContainer.appendChild(prevBtn);
+
+            const nextBtn = document.createElement("button");
+            nextBtn.className = "carousel-btn next";
+            nextBtn.innerHTML = "&#10095;";
+            carouselContainer.appendChild(nextBtn);
+
+            const cardWidth = 140 + 20;
+            const getVisibleCards = () => {
+                const containerWidth = carouselContainer.offsetWidth || 300;
+                return Math.floor(containerWidth / cardWidth) || 1;
+            };
+
+            const updateCarouselButtons = () => {
+                const scrollLeft = carouselTrack.scrollLeft;
+                const maxScrollLeft = carouselTrack.scrollWidth - carouselTrack.clientWidth;
+                prevBtn.style.display = scrollLeft > 2 ? "flex" : "none";
+                nextBtn.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+            };
+
+            nextBtn.addEventListener("click", () => {
+                carouselTrack.scrollBy({ left: cardWidth * getVisibleCards(), behavior: "smooth" });
+            });
+
+            prevBtn.addEventListener("click", () => {
+                carouselTrack.scrollBy({ left: -cardWidth * getVisibleCards(), behavior: "smooth" });
+            });
+
+            carouselTrack.addEventListener("scroll", () => setTimeout(updateCarouselButtons, 100));
+            window.addEventListener("resize", () => setTimeout(updateCarouselButtons, 100));
+            setTimeout(updateCarouselButtons, 200);
+
+            panel.appendChild(carouselContainer);
+        }
+
+        btn.onclick = () => {
+            const isOpening = panel.style.display === "none";
+            panel.style.display = isOpening ? "block" : "none";
+            btn.classList.toggle("active", isOpening);
+            const arrow = btn.querySelector(".accordion-arrow");
+            if (arrow) arrow.textContent = isOpening ? "▲" : "▼";
+
+            if (isOpening && relatedProblems.length > 1) {
+                const track = panel.querySelector(".carousel-track");
+                const prev = panel.querySelector(".carousel-btn.prev");
+                const next = panel.querySelector(".carousel-btn.next");
+                if (track && prev && next) {
+                    const scrollLeft = track.scrollLeft;
+                    const maxScrollLeft = track.scrollWidth - track.clientWidth;
+                    prev.style.display = scrollLeft > 2 ? "flex" : "none";
+                    next.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+                }
+            }
+        };
+
+        wrapper.appendChild(btn);
+        wrapper.appendChild(panel);
+    };
+
+    // 1. Evaluar si ya existen datos en caché en el estado
+    const cachedPys = getState().pysData;
+    if (Array.isArray(cachedPys) && cachedPys.length > 0) {
+        updateAccordion(cachedPys);
+    }
+
+    // 2. Consultar siempre de forma asíncrona para asegurar que no falten datos ni relaciones recientes
+    routeAction("getPysData").then(res => {
+        if (res && res.data && Array.isArray(res.data)) {
+            setState({ pysData: res.data });
+            updateAccordion(res.data);
+        }
+    }).catch(err => {
+        console.warn("No se pudo sincronizar pysData en detalle de vehículo:", err);
+    });
+}
+
 
 function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false, index = 0) {
     if (inEditMode) {
@@ -2559,6 +2787,7 @@ export const openInbox = setupModal('inbox-modal', async () => {
     }
 });
 
+/* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
 export const openDevTools = setupModal('dev-tools-modal', () => {
     document.getElementById('dev-tools-modal').style.display = 'flex';
     initAdminPanelListeners();
@@ -4013,6 +4242,11 @@ export function showGlobalError(message) {
     }, 7000);
 }
 
+/* TAREA 1: Alias y función unificada de notificación para Inbox y operaciones del sistema */
+export function mostrarNotificacion(message, type = 'info') {
+    return showGlobalNotification(message, type);
+}
+
 export function showGlobalNotification(message, type = 'info') {
     const toast = document.getElementById('notification-toast');
     if (!toast) {
@@ -4092,16 +4326,17 @@ export function mostrarSeccion(sectionName, isFromPopState = false) {
     }
 }
 
+/* TAREA 4: Renderizado robusto e independiente de tarjetas de Tutoriales y Relay */
 function mostrarTutorialesGrid() {
     const { catalogData } = getState();
-    const { tutoriales } = catalogData;
+    const tutoriales = (catalogData && catalogData.tutoriales) ? catalogData.tutoriales : [];
     const cont = document.getElementById('contenido-tutoriales');
+    if (!cont) return;
     cont.innerHTML = '<h4>Tutoriales</h4>';
 
     const grid = document.createElement('div');
     grid.className = 'grid';
 
-    // Tarea 1.7: Corrección de las tarjetas para agregar tutoriales y problemas
     // First card: Add Tutorial Card (+)
     const createCard = document.createElement('div');
     createCard.className = 'card card-create-tutorial';
@@ -4111,18 +4346,20 @@ function mostrarTutorialesGrid() {
     `;
     createCard.onclick = () => openAddTutorialModal();
     grid.appendChild(createCard);
-    tutoriales.forEach(item => {
+
+    tutoriales.forEach((item, index) => {
+        if (!item) return;
         const card = document.createElement("div");
         card.className = "card";
         card.onclick = () => mostrarDetalleTutorialModal(item);
         const img = document.createElement("img");
-        setOptimizedImage(img, item.Imagen, IMG_SIZE_SMALL);
-        img.alt = item.Tema;
+        setOptimizedImage(img, item.Imagen || '', IMG_SIZE_SMALL);
+        img.alt = item.Tema || `Tutorial ${index + 1}`;
         img.loading = "lazy";
         card.appendChild(img);
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.textContent = item.Tema;
+        overlay.textContent = item.Tema || `Tutorial ${index + 1}`;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -4131,24 +4368,26 @@ function mostrarTutorialesGrid() {
 
 function mostrarRelayGrid() {
     const { catalogData } = getState();
-    const { relay } = catalogData;
+    const relay = (catalogData && catalogData.relay) ? catalogData.relay : [];
     const cont = document.getElementById('contenido-relay');
+    if (!cont) return;
     cont.innerHTML = '<h4>Configuraciones de Relay</h4>';
 
     const grid = document.createElement('div');
     grid.className = 'grid';
-    relay.forEach(item => {
+    relay.forEach((item, index) => {
+        if (!item) return;
         const card = document.createElement("div");
         card.className = "card";
         card.onclick = () => mostrarDetalleRelayModal(item);
         const img = document.createElement("img");
-        setOptimizedImage(img, item.imagen, IMG_SIZE_SMALL);
-        img.alt = item.configuracion;
+        setOptimizedImage(img, item.imagen || '', IMG_SIZE_SMALL);
+        img.alt = item.configuracion || item.funcion || `Configuración Relay ${index + 1}`;
         img.loading = "lazy";
         card.appendChild(img);
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.textContent = item.configuracion;
+        overlay.textContent = item.configuracion || item.funcion || `Configuración ${index + 1}`;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -4261,7 +4500,7 @@ function mostrarDetalleRelayModal(item) {
 }
 
 
-// Tarea 2.1: Modal de reporte individual para corte específico
+/* TAREA 9 (2.1): BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE Y MODAL DE REPORTE */
 export function openReportCutModal(vehicleId, corteNum, currentCutData) {
     const existing = document.getElementById("report-cut-modal");
     if (existing) existing.remove();
@@ -4402,7 +4641,7 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
     };
 }
 
-// Tarea 2.2: Modal de sugerencia de cambios vinculada al corte
+/* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */
 export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "") {
     const existing = document.getElementById("suggest-cut-modal");
     if (existing) existing.remove();
@@ -4567,6 +4806,7 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
 }
 
 
+/* TAREA 5 (3.1): MENÚ DINÁMICO DE AMPLIACIÓN EN EL MODAL DE DETALLE Y CÁLCULO DE ESPACIOS */
 export function openExpandMenuModal(item) {
     // Tarea 3.1: Botón "+" y menú dinámico de ampliación en el modal de detalle
     const existing = document.getElementById("expand-menu-modal");
@@ -4660,6 +4900,7 @@ export function openExpandMenuModal(item) {
     if (vinBtn) vinBtn.onclick = () => { modal.remove(); openAddVinModal(item); };
 }
 
+/* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO */
 export function openAddVinModal(item) {
     const existing = document.getElementById("add-vin-modal");
     if (existing) existing.remove();
@@ -4755,6 +4996,7 @@ export function openAddVinModal(item) {
     };
 }
 
+/* TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
 export function openAddCutForModelModal(item) {
     const existing = document.getElementById("add-cut-for-model-modal");
     if (existing) existing.remove();
@@ -4861,6 +5103,7 @@ export function openAddCutForModelModal(item) {
     };
 }
 
+/* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */
 export function openAddAperturaModal(item) {
     const existing = document.getElementById("add-apertura-modal");
     if (existing) existing.remove();
@@ -4933,6 +5176,7 @@ export function openAddAperturaModal(item) {
     };
 }
 
+/* TAREA 5 (3.4): AGREGAR CABLE DE ALIMENTACIÓN DESDE EL MODAL DE DETALLE */
 export function openAddFeedModal(item) {
     const existing = document.getElementById("add-feed-modal");
     if (existing) existing.remove();
@@ -5015,6 +5259,7 @@ export function openAddFeedModal(item) {
     };
 }
 
+/* TAREA 5 (3.5): AGREGAR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */
 export function openAddVideoModal(item) {
     const existing = document.getElementById("add-video-modal");
     if (existing) existing.remove();
@@ -5091,6 +5336,7 @@ export async function renderPysSection() {
         grid.className = "grid";
 
         // Tarea 1.7: Corrección de las tarjetas para agregar tutoriales y problemas
+        /* TAREA 10 (5.2): TARJETAS DE PYS Y TARJETA DE CREACIÓN (+) EN PRIMERA POSICIÓN */
         // First card: Creation Card (+)
         const createCard = document.createElement("div");
         createCard.className = "card card-create-pys";
@@ -5105,17 +5351,7 @@ export async function renderPysSection() {
         items.reverse(); // Most recent first
 
         items.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "card";
-            card.style.cssText = "cursor: pointer; display: flex; flex-direction: column; gap: 8px; padding: 12px;";
-            card.innerHTML = `
-                <img src="${item.Imagen || 'https://via.placeholder.com/150'}" alt="${item.Problema}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;">
-                <h3 style="margin: 0; font-size: 1rem; color: var(--text-color);">${item.Problema}</h3>
-                <span style="font-size: 0.8rem; color: ${item.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight: bold;">
-                    ${item.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}
-                </span>
-            `;
-            card.onclick = () => openPysDetailModal(item);
+            const card = createPysCard(item);
             grid.appendChild(card);
         });
 
@@ -5163,6 +5399,7 @@ export async function renderPysSection() {
     }
 }
 
+/* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */
 export function openAddProblemModal() {
     const existing = document.getElementById("add-pys-modal");
     if (existing) existing.remove();
@@ -5181,6 +5418,7 @@ export function openAddProblemModal() {
         <h2><i class="fa-solid fa-triangle-exclamation"></i> Registrar Problema</h2>
 
         <form id="add-pys-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+            <!-- TAREA 11 (12.1): ALCANCE EN FORMULARIO DE PROBLEMAS (GENERAL VS ESPECÍFICO) -->
             <div class="form-group">
                 <label>Alcance del Problema</label>
                 <select id="pys-alcance" class="dev-input" style="padding: 6px;">
@@ -5414,6 +5652,7 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated)
     };
 }
 
+/* TAREA 11 (12.2): MODAL EXCLUSIVO DE CONFIRMACIÓN Y VISTA PREVIA DE VEHÍCULO PARA PYS */
 export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
     const existing = document.getElementById("confirm-vehicle-pys-modal");
     if (existing) existing.remove();
@@ -5459,6 +5698,7 @@ export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
     };
 }
 
+/* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */
 export function openPysDetailModal(item) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
@@ -5507,6 +5747,7 @@ export function openPysDetailModal(item) {
         cont.appendChild(vid);
     }
 
+    /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */
     // Carrusel de Modelos de Vehículos Relacionados
     const { catalogData } = getState();
     const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
@@ -5526,14 +5767,7 @@ export function openPysDetailModal(item) {
         modelosAsociadosIds.forEach(vId => {
             const v = cortes.find(c => String(c.id) === String(vId));
             if (!v) return;
-            const card = document.createElement("div");
-            card.style.cssText = "flex: 0 0 120px; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; background: var(--card-bg); cursor: pointer; text-align: center;";
-            card.innerHTML = `
-                <img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width: 100%; height: 70px; object-fit: cover; border-radius: 6px;">
-                <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${v.marca} ${v.modelo}</div>
-                <div style="font-size: 0.7rem; color: var(--text-disabled);">${v.anoDesde}</div>
-            `;
-            card.onclick = () => mostrarDetalleModal(v, true);
+            const card = crearCardVehiculo(v, true);
             track.appendChild(card);
         });
 
@@ -5601,6 +5835,7 @@ export function openPysDetailModal(item) {
 }
 
 
+/* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */
 export function openAddTutorialModal() {
     const existing = document.getElementById("add-tutorial-modal");
     if (existing) existing.remove();
@@ -5732,6 +5967,7 @@ export function sanitizeHtmlContent(htmlStr) {
 
 let inboxCacheData = null;
 
+/* TAREA 2: Ficha Técnica de Instalación completa y organizada para impresión exacta en 1 página */
 export function exportVehiclePrintSheet(item) {
     if (!item) return;
     const printWindow = window.open('', '_blank');
@@ -5740,73 +5976,313 @@ export function exportVehiclePrintSheet(item) {
         return;
     }
 
-    const title = `${item.marca} ${item.modelo} (${item.anoDesde}${item.anoHasta ? '-' + item.anoHasta : ''})`;
-    const cuts = [];
-    if (item.tipoCorte1) cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, colab: item.colaboradorCorte1 });
-    if (item.tipoCorte2) cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, colab: item.colaboradorCorte2 });
-    if (item.tipoCorte3) cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, colab: item.colaboradorCorte3 });
+    const title = `${item.marca || ''} ${item.modelo || ''} (${item.anoDesde || ''}${item.anoHasta ? ' - ' + item.anoHasta : ''})`;
 
-    let cutsHtml = cuts.map(c => `
-        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; border-radius: 5px;">
-            <h4 style="margin: 0 0 5px 0; color: #007bff;">Corte #${c.num}: ${c.tipo}</h4>
-            <p style="margin: 3px 0;"><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
-            <p style="margin: 3px 0;"><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
-            <p style="margin: 3px 0;"><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
-            ${c.colab ? `<p style="margin: 3px 0; font-size: 0.85em; color: #666;">Aportado por: ${cleanColaboradorName(c.colab)}</p>` : ''}
+    const cuts = [];
+    if (item.tipoCorte1 || item.ubicacionCorte1 || item.imgCorte1) {
+        cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, img: item.imgCorte1, colab: item.colaboradorCorte1 });
+    }
+    if (item.tipoCorte2 || item.ubicacionCorte2 || item.imgCorte2) {
+        cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, img: item.imgCorte2, colab: item.colaboradorCorte2 });
+    }
+    if (item.tipoCorte3 || item.ubicacionCorte3 || item.imgCorte3) {
+        cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, img: item.imgCorte3, colab: item.colaboradorCorte3 });
+    }
+
+    const feeds = [];
+    if (item.cableAlimen || item.imgCableAlimen) {
+        feeds.push({ title: 'Alimentación Principal', desc: item.cableAlimen, img: item.imgCableAlimen });
+    }
+    if (item.cableAlimen2 || item.imgCableAlimen2) {
+        feeds.push({ title: 'Alimentación Secundaria', desc: item.cableAlimen2, img: item.imgCableAlimen2 });
+    }
+    if (item.cableAlimen3 || item.imgCableAlimen3) {
+        feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
+    }
+
+    /* TAREA 5: Corregir imágenes rotas normalizando URLs con getImageUrl(..., IMG_SIZE_LARGE) */
+    const cutsHtml = cuts.map(c => {
+        const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
+        return `
+        <div class="tech-item-card">
+            <div class="tech-item-header">Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}</div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">
+                    <p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
+                    <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
+                    <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
+                    ${c.colab ? `<p class="colab-tag">Colab: ${cleanColaboradorName(c.colab)}</p>` : ''}
+                </div>
+                ${safeImg ? `<div class="tech-item-img"><img src="${safeImg}" alt="Corte #${c.num}" /></div>` : ''}
+            </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
+
+    const feedsHtml = feeds.map(f => {
+        const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
+        return `
+        <div class="tech-item-card">
+            <div class="tech-item-header">${f.title}</div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">
+                    <p>${f.desc || 'Conexión estándar'}</p>
+                </div>
+                ${safeImg ? `<div class="tech-item-img"><img src="${safeImg}" alt="${f.title}" /></div>` : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+
+    const vehiculoImgHtml = item.imagenVehiculo ? `
+        <div class="vehicle-main-img"><img src="${getImageUrl(item.imagenVehiculo, IMG_SIZE_LARGE)}" alt="${title}" /></div>
+    ` : '';
+
+    const aperturaHtml = (item.apertura || item.imgApertura) ? `
+        <div class="tech-item-card">
+            <div class="tech-item-header">Apertura de Puertas / Seguros</div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">
+                    <p>${item.apertura || 'Instrucciones registradas'}</p>
+                </div>
+                ${item.imgApertura ? `<div class="tech-item-img"><img src="${getImageUrl(item.imgApertura, IMG_SIZE_LARGE)}" alt="Apertura" /></div>` : ''}
+            </div>
+        </div>
+    ` : '';
+
+    const notasHtml = item.notaImportante ? `
+        <div class="tech-notes">
+            <strong>Nota técnica importante:</strong> ${item.notaImportante}
+        </div>
+    ` : '';
 
     printWindow.document.write(`
         <!DOCTYPE html>
-        <html>
+        <html lang="es">
         <head>
+            <meta charset="UTF-8">
             <title>Ficha Técnica GPSpedia - ${title}</title>
             <style>
-                body { font-family: Arial, sans-serif; padding: 20px; color: #333; line-height: 1.4; }
-                .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; }
-                .logo { font-size: 24px; font-weight: bold; color: #007bff; }
-                .vehicle-title { font-size: 20px; margin: 0 0 10px 0; }
-                .meta-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                .meta-table td { padding: 6px; border: 1px solid #ddd; }
-                .meta-table td.label { font-weight: bold; background: #f9f9f9; width: 30%; }
+                /* TAREA 6: Configuración obligatoria papel Carta, orientación vertical, márgenes 10mm */
+                @page {
+                    size: letter portrait;
+                    margin: 10mm;
+                }
+                * { box-sizing: border-box; }
+                body {
+                    font-family: Arial, Helvetica, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    color: #1a1a1a;
+                    font-size: 10.5px;
+                    line-height: 1.25;
+                    background: #fff;
+                }
+                .no-print-bar {
+                    background: #007bff;
+                    color: white;
+                    padding: 8px 16px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-radius: 4px;
+                    margin-bottom: 10px;
+                }
+                .header-container {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 2px solid #007bff;
+                    padding-bottom: 6px;
+                    margin-bottom: 8px;
+                }
+                .header-logo {
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #007bff;
+                    letter-spacing: 0.5px;
+                }
+                .vehicle-title {
+                    font-size: 15px;
+                    font-weight: bold;
+                    margin: 0;
+                    color: #222;
+                }
+                .top-grid {
+                    display: grid;
+                    grid-template-columns: ${item.imagenVehiculo ? '140px 1fr' : '1fr'};
+                    gap: 10px;
+                    margin-bottom: 8px;
+                }
+                .vehicle-main-img img {
+                    width: 100%;
+                    max-height: 105px;
+                    object-fit: cover;
+                    border-radius: 4px;
+                    border: 1px solid #ddd;
+                }
+                .meta-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 10.5px;
+                }
+                .meta-table td {
+                    padding: 3px 6px;
+                    border: 1px solid #e0e0e0;
+                }
+                .meta-table td.label {
+                    font-weight: bold;
+                    background: #f7f9fa;
+                    width: 25%;
+                    color: #444;
+                }
+                .section-header {
+                    font-size: 11.5px;
+                    font-weight: bold;
+                    color: #007bff;
+                    text-transform: uppercase;
+                    border-bottom: 1px solid #007bff;
+                    margin: 8px 0 4px 0;
+                    padding-bottom: 2px;
+                }
+                .tech-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                    gap: 6px;
+                }
+                .tech-item-card {
+                    border: 1px solid #dcdcdc;
+                    border-radius: 4px;
+                    background: #fafafa;
+                    padding: 5px 8px;
+                    page-break-inside: avoid;
+                }
+                .tech-item-header {
+                    font-weight: bold;
+                    color: #0056b3;
+                    font-size: 11px;
+                    margin-bottom: 3px;
+                    border-bottom: 1px dashed #e0e0e0;
+                    padding-bottom: 2px;
+                }
+                .tech-item-body {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 8px;
+                }
+                .tech-item-info {
+                    flex: 1;
+                }
+                .tech-item-info p {
+                    margin: 1.5px 0;
+                    font-size: 10.5px;
+                }
+                .tech-item-img {
+                    width: 75px;
+                    height: 55px;
+                    flex-shrink: 0;
+                }
+                .tech-item-img img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    border-radius: 3px;
+                    border: 1px solid #ccc;
+                }
+                /* TAREA 5: Ajuste exclusivo de Check Engine en la hoja de impresión */
+                img[src*="1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX"],
+                .tech-item-info img[src*="1ELXm7I"] {
+                    max-height: 20px !important;
+                    width: auto !important;
+                    display: inline-block !important;
+                    vertical-align: middle !important;
+                    margin: 2px 4px !important;
+                    float: none !important;
+                }
+                .colab-tag {
+                    font-size: 9.5px;
+                    color: #666;
+                    font-style: italic;
+                }
+                .tech-notes {
+                    background: #fff3cd;
+                    color: #856404;
+                    border: 1px solid #ffeeba;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    margin-top: 6px;
+                    font-size: 10px;
+                    page-break-inside: avoid;
+                }
+                .footer-bar {
+                    margin-top: 8px;
+                    font-size: 9.5px;
+                    color: #777;
+                    border-top: 1px solid #e0e0e0;
+                    padding-top: 3px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
                 @media print {
-                    .no-print { display: none; }
+                    .no-print { display: none !important; }
+                    body { padding: 0; }
+                    .tech-item-card { break-inside: avoid; }
                 }
             </style>
         </head>
         <body>
-            <div class="header">
-                <div class="logo">GPSpedia - Ficha Técnica de Instalación</div>
-                <button class="no-print" onclick="window.print()" style="padding: 8px 16px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer;">Imprimir / Guardar PDF</button>
+            <div class="no-print-bar no-print">
+                <span><strong>Ficha Técnica de Instalación</strong> - Lista para imprimir o guardar PDF en 1 página</span>
+                <button onclick="window.print()" style="padding: 6px 14px; background: white; color: #007bff; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">
+                    Imprimir / Guardar PDF
+                </button>
             </div>
 
-            <h2 class="vehicle-title">${title}</h2>
+            <div class="header-container">
+                <div class="header-logo">GPSpedia <span style="font-size: 13px; font-weight: normal; color: #555;">| Ficha Técnica Oficial</span></div>
+                <div class="vehicle-title">${title}</div>
+            </div>
 
-            <table class="meta-table">
-                <tr><td class="label">Marca:</td><td>${item.marca || '-'}</td></tr>
-                <tr><td class="label">Modelo:</td><td>${item.modelo || '-'}</td></tr>
-                <tr><td class="label">Categoría:</td><td>${item.categoria || '-'}</td></tr>
-                <tr><td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td></tr>
-                <tr><td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td></tr>
-                <tr><td class="label">Años:</td><td>${item.anoDesde || ''} - ${item.anoHasta || 'Presente'}</td></tr>
-                ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td>${item.vin}</td></tr>` : ''}
-            </table>
+            <div class="top-grid">
+                ${vehiculoImgHtml}
+                <table class="meta-table">
+                    <tr>
+                        <td class="label">Marca:</td><td>${item.marca || '-'}</td>
+                        <td class="label">Modelo:</td><td>${item.modelo || '-'}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Categoría:</td><td>${item.categoria || '-'}</td>
+                        <td class="label">Años:</td><td>${item.anoDesde || ''} - ${item.anoHasta || 'Presente'}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td>
+                        <td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td>
+                    </tr>
+                    ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td colspan="3">${item.vin}</td></tr>` : ''}
+                </table>
+            </div>
 
-            <h3>Puntos de Corte de Motor</h3>
-            ${cutsHtml || '<p>No hay cortes registrados para este modelo.</p>'}
+            <div class="section-header">Puntos de Corte de Motor</div>
+            <div class="tech-grid">
+                ${cutsHtml || '<div class="tech-item-card"><p>No hay cortes registrados para este modelo.</p></div>'}
+            </div>
 
-            ${item.apertura ? `
-                <h3>Apertura de Puertas</h3>
-                <p>${item.apertura}</p>
+            ${feedsHtml ? `
+                <div class="section-header">Alimentación Eléctrica</div>
+                <div class="tech-grid">${feedsHtml}</div>
             ` : ''}
 
-            ${item.cableAlimen ? `
-                <h3>Alimentación Electrónica</h3>
-                <p>${item.cableAlimen}</p>
+            ${aperturaHtml ? `
+                <div class="section-header">Apertura y Cierre Centralizado</div>
+                <div class="tech-grid">${aperturaHtml}</div>
             ` : ''}
 
-            <div style="margin-top: 30px; font-size: 0.8em; color: #777; border-top: 1px solid #ddd; padding-top: 10px; text-align: center;">
-                Documento generado automáticamente desde la plataforma técnica GPSpedia.
+            ${notasHtml}
+
+            <div class="footer-bar">
+                <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
+                <span>Uso exclusivo técnico especializado - 1 Página de Consulta Rápida</span>
             </div>
         </body>
         </html>

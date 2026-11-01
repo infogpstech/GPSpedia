@@ -89,6 +89,7 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
     }
 
+    /* TAREA 4 (11.8): INTEGRACIÓN CON LA BARRA DE BÚSQUEDA GLOBAL POR VIN */
     // --- LÓGICA DE DETECCIÓN Y BÚSQUEDA POR VIN ---
     const cleanVinSearch = busqueda.toUpperCase().replace(/[^A-Z0-9]/g, "");
     let isVinQuery = false;
@@ -170,21 +171,22 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
     let pysMatches = [];
 
     // Evaluate multi-section matches only when an active text query is present
+    /* TAREA 4: Renderizado completo e independiente de tarjetas de Tutoriales y Relay */
     if (busqueda && palabrasBusqueda.length > 0) {
         relayMatches = relay.filter(item => {
-            const t = stripHtml(`${item.nombre || ''} ${item.tipo || ''} ${item.descripcion || ''} ${item.funcion || ''} ${item.observacion || ''}`);
+            const t = stripHtml(`${item.configuracion || ''} ${item.funcion || ''} ${item.vehiculoDondeSeUtiliza || ''} ${item.observacion || ''} ${item.nombre || ''} ${item.tipo || ''}`);
             return palabrasBusqueda.every(p => t.includes(p));
-        }).map(i => ({ ...i, _sectionType: 'relay', marca: i.nombre || 'Relay', modelo: i.tipo || 'Configuración' }));
+        }).map((i, idx) => ({ ...i, _sectionType: 'relay', marca: 'Relay', modelo: i.configuracion || i.funcion || `Configuración ${i.ID || idx + 1}` }));
 
         tutorialMatches = tutoriales.filter(item => {
-            const t = stripHtml(`${item.Tema || ''} ${item.Descripcion || ''}`);
+            const t = stripHtml(`${item.Tema || ''} ${item.Descripcion || ''} ${item.comoIdentificarlo || ''} ${item.dondeEncontrarlo || ''} ${item.Detalles || ''}`);
             return palabrasBusqueda.every(p => t.includes(p));
-        }).map(i => ({ ...i, _sectionType: 'tutorial', marca: 'Tutorial', modelo: item.Tema }));
+        }).map((i, idx) => ({ ...i, _sectionType: 'tutorial', marca: 'Tutorial', modelo: i.Tema || `Tutorial ${i.ID || idx + 1}` }));
 
         pysMatches = pysItems.filter(item => {
             const t = stripHtml(`${item.Problema || ''} ${item.Descripcion || ''} ${item.Solucion || ''} ${item.Prevenir || ''}`);
             return palabrasBusqueda.every(p => t.includes(p));
-        }).map(i => ({ ...i, _sectionType: 'pys', marca: 'Problema', modelo: item.Problema }));
+        }).map((i, idx) => ({ ...i, _sectionType: 'pys', marca: 'Problema', modelo: i.Problema || `Problema ${i.id || idx + 1}` }));
     }
 
     // Combine global search results
@@ -216,6 +218,7 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
     // Actualizar el hash para Deep Linking ANTES de renderizar resultados.
     const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(textoBusqueda)}`;
 
+    /* TAREA 7 (B08, B27): REPLACESTATE EN BÚSQUEDA PARA EVITAR COLISIONES CON AUTO-APERTURA */
     if (!isRestoring) {
         if (wasAlreadySearching) {
             history.replaceState({ level: "busqueda_focused", query: textoBusqueda }, '', newUrl);
