@@ -64,18 +64,33 @@ async function initializeApp() {
         });
     }
 
+    /* TAREA 15 (14.1): CORREGIR POSICIÓN Y COMPORTAMIENTO DEL BOTÓN DESPLEGABLE DEL FILTRO DE BÚSQUEDA */
     const toggleFiltersBtn = document.getElementById('btn-toggle-filters');
     const filtersBar = document.getElementById('catalog-filters-bar');
     const chevronIcon = document.getElementById('filter-chevron-icon');
 
     if (toggleFiltersBtn && filtersBar) {
         toggleFiltersBtn.style.display = 'none'; // Oculto por defecto si la búsqueda no está activa
-        toggleFiltersBtn.addEventListener('click', () => {
+        toggleFiltersBtn.addEventListener('mousedown', (e) => {
+            // Evitar que el mousedown desenfoque searchInput o active comportamientos no deseados
+            e.preventDefault();
+        });
+        toggleFiltersBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
             const isHidden = filtersBar.style.display === 'none';
             filtersBar.style.display = isHidden ? 'flex' : 'none';
             if (chevronIcon) {
                 chevronIcon.className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
             }
+        });
+
+        // Prevenir que clics dentro de la barra de filtros la cierren o cancelen la búsqueda
+        filtersBar.addEventListener('mousedown', (e) => {
+            e.stopPropagation();
+        });
+        filtersBar.addEventListener('click', (e) => {
+            e.stopPropagation();
         });
     }
 
@@ -83,12 +98,14 @@ async function initializeApp() {
     const yearSelect = document.getElementById('filter-year-select');
 
     if (catSelect) {
-        catSelect.addEventListener('change', () => {
+        catSelect.addEventListener('change', (e) => {
+            e.stopPropagation();
             navigation.filtrarContenido(searchInput.value || '');
         });
     }
     if (yearSelect) {
-        yearSelect.addEventListener('change', () => {
+        yearSelect.addEventListener('change', (e) => {
+            e.stopPropagation();
             navigation.filtrarContenido(searchInput.value || '');
         });
     }
@@ -183,6 +200,7 @@ async function initializeApp() {
         handleViewportChange(); // Ejecución inicial
     }
 
+    /* TAREA 8 (B10, B12): ESTADO DE CONEXIÓN E INDICADOR DE RED */
     // --- LÓGICA DE ESTADO DE CONEXIÓN ---
     const connectionStatus = document.getElementById('connection-status');
     if (connectionStatus) {
@@ -199,6 +217,7 @@ async function initializeApp() {
     // Exponer handleViewportChange globalmente para lightbox.js
     window.handleViewportChange = handleViewportChange;
 
+    /* TAREA 7 (B05, B07): CIERRE DETERMINISTA DE OVERLAYS Y NAVEGACIÓN POR GESTOS EN POPSTATE */
     // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
     window.addEventListener('popstate', (event) => {
         const state = event.state || {};
@@ -396,6 +415,7 @@ async function initializeApp() {
         }
     });
 
+    /* TAREA 12 (B04): CONTROL DEL CICLO DE VIDA DEL REPRODUCTOR DE YOUTUBE MEDIANTE MUTATIONOBSERVER */
     // --- MUTATION OBSERVER PARA GESTIÓN DE REPRODUCCIÓN EN MODAL DE TUTORIALES ---
     const modalDetalle = document.getElementById('modalDetalle');
     if (modalDetalle) {

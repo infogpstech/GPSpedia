@@ -1096,3 +1096,146 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
 - Archivo: ui.js
   - Líneas 4420-4445: En `openSuggestCutModal()`, se blindó el acceso a `dropdownOptions` mediante `safeDropdowns` evaluando `(typeof dropdownOptions !== "undefined" && dropdownOptions) || (typeof window !== "undefined" && window.dropdownOptions) || (typeof getState === "function" && getState() && getState().dropdownOptions) || null`.
   - Se previenen errores en tiempo de ejecución del tipo `ReferenceError` si la función es invocada o probada en entornos modulares aislados, conservando las matrices de opciones por defecto para tipo de corte y configuración de relay.
+
+**TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DEL APP SHELL (v2.2.0)**
+- Services/admin.js:
+  - Líneas 128-147: Implementado el manejador doGet(e) con soporte de diagnósticos (?debug=true) retornando JSON estructurado con metadatos del servicio (service, version, spreadsheetId, driveFolderId, sheetsAccessed) y respuesta GET por defecto, garantizando paridad con los demás microservicios y permitiendo a checkAllServicesHealth() monitorear el estado del servicio Admin.
+  - Agregado comentario identificativo /* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */.
+- ui.js:
+  - Línea 1862: Agregado comentario identificativo de TAREA 1.5 / 1.8 en la instanciación del botón flotante (+) .btn-expand-plus dentro de mostrarDetalleModal().
+  - Línea 2562: Agregado comentario identificativo /* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */ sobre openDevTools.
+  - Línea 5167: Agregado comentario identificativo /* TAREA 1.3: RECUPERACIÓN DEL FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES */ sobre openAddProblemModal.
+
+**TAREA 2: CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL (v2.2.0)**
+- Services/users.js:
+  - Línea 240: Agregado comentario identificativo /* TAREA 2 (B16): GESTIÓN DE USUARIOS, RBAC Y SEGURIDAD */ en la función handleUpdateUser, verificando la jerarquía de roles (Desarrollador, Jefe/Gefe, Supervisor, Técnico) y restricciones de seguridad.
+- users.html:
+  - Línea 324: Agregado comentario identificativo /* TAREA 2 (B16): GESTIÓN DE USUARIOS, RBAC Y SEGURIDAD */ en el manejador DOMContentLoaded para la inicialización y filtrado de usuarios según privilegios.
+- index.html:
+  - Línea 341: Agregado comentario identificativo <!-- TAREA 2 (B03): IMPLEMENTACIÓN DEL AVISO DE ACEPTACIÓN DE CONDICIONES Y ENLACE PERMANENTE --> en #terms-modal.
+  - Línea 570: Agregado comentario identificativo <!-- TAREA 2 (B02): ACTUALIZACIÓN DE CONTENIDO Y ESTILOS DE MODALES INFORMATIVOS (SOBRE NOSOTROS Y TÉRMINOS) --> en #about-us-modal.
+
+**TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA EN CONECTIVIDAD (v2.2.0)**
+- add_cortes.html:
+  - Línea 346: Agregado comentario identificativo /* TAREA 3 (B31): PERSISTENCIA, RECUPERACIÓN E IDEMPOTENCIA CON OPID */ en checkAndRecoverPendingOperation.
+  - Línea 570: Agregado comentario identificativo /* TAREA 3 (4.2): REGISTRAR UN SEGUNDO CORTE */ en el listener de clic para btn-add-second-cut.
+  - Línea 820: Agregado comentario identificativo /* TAREA 3 (B31): REGISTRO SIN CORTES, PREVENCIÓN DE DUPLICADOS Y RESILIENCIA DE RED */ en handleStage2Submit.
+  - Línea 1027: Agregado comentario identificativo /* TAREA 3 (4.1, 4.3, 4.4): OPCIONES EN ÚLTIMA ETAPA, VÍDEO GUÍA Y DISPONIBILIDAD DINÁMICA */ en proceedToStage3.
+- Services/write.js:
+  - Línea 105: Agregado comentario identificativo /* TAREA 3 (4.2, 4.4, B31): REGISTRO Y ACTUALIZACIÓN DE CORTES E IDEMPOTENCIA CON REPARACIÓN */ en handleAddOrUpdateCut.
+  - Línea 770: Agregado comentario identificativo /* TAREA 3 (B31): COMPROBACIÓN ASÍNCRONA DE OPERACIÓN E IDEMPOTENCIA EN SERVIDOR */ en handleCheckOperation.
+
+**TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚSQUEDA POR VIN (v2.2.0)**
+- Services/write.js:
+  - Línea 919: Agregado comentario identificativo /* TAREA 4 (11.1, 11.2, 11.7, B34): EXCLUSIÓN DE ÚLTIMOS 5 CARACTERES Y PROCESAMIENTO DE VIN */ en extractVinPrefix.
+- add_cortes.html:
+  - Línea 580: Agregado comentario identificativo /* TAREA 4 (11.3, 11.5): REGISTRO Y VALIDACIÓN DE DUPLICADOS POR VIN EN FORMULARIO */ en el listener de blur de vinInput.
+- ui.js:
+  - Línea 4664: Agregado comentario identificativo /* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO */ en openAddVinModal.
+- navigation.js:
+  - Línea 92: Agregado comentario identificativo /* TAREA 4 (11.8): INTEGRACIÓN CON LA BARRA DE BÚSQUEDA GLOBAL POR VIN */ en filtrarContenido.
+
+**TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE DETALLE (BOTÓN '+') (v2.2.0)**
+- ui.js:
+  - Línea 4571: Agregado comentario identificativo /* TAREA 5 (3.1): MENÚ DINÁMICO DE AMPLIACIÓN EN EL MODAL DE DETALLE Y CÁLCULO DE ESPACIOS */ en openExpandMenuModal.
+  - Línea 4761: Agregado comentario identificativo /* TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */ en openAddCutForModelModal.
+  - Línea 4869: Agregado comentario identificativo /* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */ en openAddAperturaModal.
+  - Línea 4943: Agregado comentario identificativo /* TAREA 5 (3.4): AGREGAR CABLE DE ALIMENTACIÓN DESDE EL MODAL DE DETALLE */ en openAddFeedModal.
+  - Línea 5027: Agregado comentario identificativo /* TAREA 5 (3.5): AGREGAR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */ en openAddVideoModal.
+
+**TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y RENDERIZADO DE TRANSPARENCIAS (v2.2.0)**
+- lightbox.js:
+  - Línea 18: Agregado comentario identificativo /* TAREA 6 (B32): NAVEGACIÓN DEL CARRUSEL DE CABLES DE ALIMENTACIÓN DENTRO DEL LIGHTBOX */ sobre la función isLightboxZoomed.
+- ui.js:
+  - Línea 317: Agregado comentario identificativo /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES */ en la función getImageUrl.
+- style.css:
+  - Línea 735: Agregado comentario identificativo /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES EN MODO OSCURO */ en la regla mix-blend-mode de miniaturas.
+
+**TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE SECUENCIAL DE OVERLAYS (v2.2.0)**
+- main.js:
+  - Línea 202: Agregado comentario identificativo /* TAREA 7 (B05, B07): CIERRE DETERMINISTA DE OVERLAYS Y NAVEGACIÓN POR GESTOS EN POPSTATE */ en el listener global de popstate.
+- navigation.js:
+  - Línea 220: Agregado comentario identificativo /* TAREA 7 (B08, B27): REPLACESTATE EN BÚSQUEDA PARA EVITAR COLISIONES CON AUTO-APERTURA */ en filtrarContenido.
+- ui.js:
+  - Línea 871: Agregado comentario identificativo /* TAREA 7 (B18): CONTEXTO 'ORIGIN' MARCA/CATEGORÍA Y RETORNO LIMPIO SIN BUCLES */ en mostrarVersionesEquipamiento.
+  - Línea 1256: Agregado comentario identificativo /* TAREA 7 (B06): DISTINCIÓN ENTRE BÚSQUEDA ACTIVA Y RESTAURACIÓN DEL HISTORIAL CON AUTO-OPEN */ en mostrarResultadosDeBusqueda.
+
+**TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPARTIDOS E INDICADOR DE RED (v2.2.0)**
+- ui.js:
+  - Línea 1363: Agregado comentario identificativo /* TAREA 8 (B10, B11, B23): COMPARTIR MODELO Y REDIRECCIONAMIENTO PRECISO CON DEEP LINKING */ en el manejador shareBtn.onclick de mostrarDetalleModal.
+- main.js:
+  - Línea 186: Agregado comentario identificativo /* TAREA 8 (B10, B12): ESTADO DE CONEXIÓN E INDICADOR DE RED */ en la lógica del indicador de red.
+- style.css:
+  - Línea 141: Agregado comentario identificativo /* TAREA 8 (B09, B11): INDICADOR ULTRA-MINIMALISTA DE ESTADO DE RED */ sobre la regla de estilo #connection-status.
+
+**TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICACIÓN EN CORTES (v2.2.0)**
+- ui.js:
+  - Línea 4269: Agregado comentario identificativo /* TAREA 9 (2.1): BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE Y MODAL DE REPORTE */ en openReportCutModal.
+  - Línea 4410: Agregado comentario identificativo /* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */ en openSuggestCutModal.
+- Services/feedback.js:
+  - Línea 687: Agregado comentario identificativo /* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */ en handleSuggestCutChange.
+
+**TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIOS Y VISUALIZACIÓN (v2.2.0)**
+- index.html:
+  - Línea 156: Agregado comentario identificativo <!-- TAREA 10 (5.1): SECCIÓN PROBLEMAS Y SOLUCIONES EN LA PÁGINA PRINCIPAL --> en #btn-pys.
+- ui.js:
+  - Línea 5105: Agregado comentario identificativo /* TAREA 10 (5.2): TARJETAS DE PYS Y TARJETA DE CREACIÓN (+) EN PRIMERA POSICIÓN */ en renderPysSection.
+  - Línea 5178: Agregado comentario identificativo /* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */ en openAddProblemModal.
+  - Línea 5475: Agregado comentario identificativo /* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */ en openPysDetailModal.
+- Services/feedback.js:
+  - Línea 803: Agregado comentario identificativo /* TAREA 10 (5.4): ALMACENAMIENTO EN HOJA PYS, IDENTIFICADORES ÚNICOS ISUE-001 Y SUBIDA A DRIVE */ en handleAddProblem.
+
+**TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VEHÍCULOS (v2.2.0)**
+- ui.js:
+  - Línea 1822: Agregado comentario identificativo /* TAREA 11 (12.5): ACORDEÓN «PROBLEMAS RELACIONADOS A ESTE VEHÍCULO» EN MODAL TÉCNICO */ en mostrarDetalleModal.
+  - Línea 5197: Agregado comentario identificativo <!-- TAREA 11 (12.1): ALCANCE EN FORMULARIO DE PROBLEMAS (GENERAL VS ESPECÍFICO) --> en openAddProblemModal.
+  - Línea 5431: Agregado comentario identificativo /* TAREA 11 (12.2): MODAL EXCLUSIVO DE CONFIRMACIÓN Y VISTA PREVIA DE VEHÍCULO PARA PYS */ en openConfirmVehicleForPysModal.
+  - Línea 5526: Agregado comentario identificativo /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */ en openPysDetailModal.
+- Services/feedback.js:
+  - Línea 979: Agregado comentario identificativo /* TAREA 11 (12.3): ASOCIACIÓN DE VEHÍCULOS A PROBLEMAS EN HOJA PYS (COLUMNA 10) */ en handleAddVehicleToProblem.
+
+**TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIMEDIA (v2.2.0)**
+- ui.js:
+  - Línea 5622: Agregado comentario identificativo /* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */ en openAddTutorialModal.
+- main.js:
+  - Línea 401: Agregado comentario identificativo /* TAREA 12 (B04): CONTROL DEL CICLO DE VIDA DEL REPRODUCTOR DE YOUTUBE MEDIANTE MUTATIONOBSERVER */ en el bloque de observación de cierre de #modalDetalle.
+
+**CHANGES LOG - 01/11/2026 (TAREA 13: FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML)**
+
+**Archivo: ui.js**
+- Líneas 4800-4805: Incorporada barra de formato enriquecido con `createRichTextToolbar('add-cut-detalles')` en el formulario modal para agregar nuevo corte a un modelo existente.
+- Líneas 4895-4903: Incorporada barra de formato enriquecido con `createRichTextToolbar('add-apertura-detalles')` en el formulario modal de apertura de puertas.
+- Líneas 4970-4978: Incorporada barra de formato enriquecido con `createRichTextToolbar('add-feed-detalles')` en el formulario modal de cable de alimentación.
+- Líneas 5230-5260: Incorporada barra de formato enriquecido en los campos de detalle, solución y prevención en el formulario de Problemas y Soluciones (`openAddProblemModal`).
+- Líneas 5665-5672: Estandarizada la barra de formato en el formulario modal de tutoriales (`openAddTutorialModal`).
+- Líneas 2275-2280: Asegurada la invocación de `sanitizeHtmlContent` al renderizar la ubicación y detalles del corte en `renderCutContent`.
+- Líneas 3555-3560, 3650-3655: Aplicada `sanitizeHtmlContent` sobre las descripciones de cables de alimentación en carruseles y acordeones.
+- Líneas 5720-5845: Creada la función exportada `createRichTextToolbar(targetId)`. Implementadas las funciones `getRichTextMode()` y `setRichTextMode(mode)` vinculadas a `localStorage` ('gpsepedia_rich_text_mode'). Rediseñada la función `sanitizeHtmlContent(htmlStr)` para soportar:
+  * Modo Estricto (default): Permite exclusivamente `<b>`, `<strong>`, `<span style="color:...">`, y `<br>`, normalizando saltos de línea y sanitizando atributos inline.
+  * Modo Avanzado: Permite etiquetas adicionales (`<p>`, `<div>`, `<i>`, `<u>`, `<a>`, `<img>`, `<small>`, `<em>`, `<mark>`) y reglas CSS de texto seguras.
+  * Eliminación sistemática de scripts, iframes, estilos maliciosos y eventos `on*` / `javascript:` en ambos modos.
+- Líneas 3225-3235: Conectado selector de modo de texto enriquecido en el panel de desarrollador (`dev-rich-text-mode-select`).
+
+**Archivo: add_cortes.html**
+- Líneas 228-245: Incorporada barra de formato de texto con botones de negrita y selector de color interactivo en el campo `ubicacionCorte1`.
+- Líneas 280-335: Incorporada barra de formato en los campos descriptivos `apertura`, `cableAlimen` y `notaImportante` de la Etapa 3.
+- Líneas 1245-1275: Implementadas funciones auxiliares globales `applyRichFormat` y `applyRichColor` para manipulación de selección en textareas.
+
+**Archivo: index.html**
+- Líneas 320-330: Añadido selector interactivo `#dev-rich-text-mode-select` en el modal de herramientas del desarrollador (`#dev-tools-modal`) para alternar entre Modo Estricto y Modo Avanzado HTML/CSS.
+
+**CHANGES LOG - 01/11/2026 (TAREA 14: VERIFICACIÓN MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN)**
+
+**Archivo: navigation.js**
+- Línea 128: Agregado comentario identificativo /* TAREA 14 (10.1): MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS */ sobre el bloque de búsqueda multi-sección (Cortes, Relays, Tutoriales y PyS).
+
+**Archivo: Auditoría.txt, Tareas.txt**
+- Verificados individualmente todos los requisitos funcionales de la Tarea 14 (10.1): búsqueda en cortes, configuraciones de relay, tutoriales, problemas y soluciones, sanitización de markup en coincidencias, asignación de badges por sección y direccionamiento modal específico. Marcada como completada [X].
+
+**CHANGES LOG - 01/11/2026 (TAREA 15: FILTROS RÁPIDOS Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES)**
+
+**Archivo: style.css**
+- Líneas 844-945: Implementada suite unificada de estilos CSS para todos los botones (.btn, .btn-primary, .btn-secondary, .btn-warning, .btn-danger, .btn-sm) con radio de 8px, flexbox alineado, pesos de fuente consistentes, sombras sutiles, estados de hover, active con microinteracción scale(0.98), focus-visible accesible y soporte adaptativo para modo claro y modo oscuro.
+
+**Archivo: main.js**
+- Líneas 67-110: Ajustados los eventos del botón desplegable del filtro (#btn-toggle-filters) y del panel de filtros (#catalog-filters-bar) con preventDefault() en mousedown y stopPropagation() para evitar que la interacción cierre prematuramente el menú desplegable, cancele la búsqueda o interfiera con el campo de búsqueda. Agregado comentario identificativo de TAREA 15 (14.1).

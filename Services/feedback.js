@@ -684,7 +684,7 @@ function handleGetActivityLogs(payload) {
 }
 
 
-// Tarea 2.3: Almacenamiento y gestión independiente de sugerencias
+/* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */
 function handleSuggestCutChange(payload) {
     const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, proposedValues } = payload;
     if (!vehicleId || !corteIndex || !userId || !userName) {
@@ -800,6 +800,7 @@ function handleGetPysData() {
     return { status: "success", data: result };
 }
 
+/* TAREA 10 (5.4): ALMACENAMIENTO EN HOJA PYS, IDENTIFICADORES ÚNICOS ISUE-001 Y SUBIDA A DRIVE */
 function handleAddProblem(payload) {
     const { titulo, descripcion, sinSolucion, solucion, prevenir, videoUrl, imgBase64, userId, userName, modelosAsociados, alcance } = payload;
     if (!titulo || !descripcion) {
@@ -975,6 +976,7 @@ function handleDeleteFeedbackItem(payload) {
     }
 }
 
+/* TAREA 11 (12.3): ASOCIACIÓN DE VEHÍCULOS A PROBLEMAS EN HOJA PYS (COLUMNA 10) */
 function handleAddVehicleToProblem(payload) {
     const { problemId, vehicleId } = payload;
     if (!problemId || !vehicleId) {

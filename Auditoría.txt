@@ -292,3 +292,244 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
      - Obtener las opciones de manera segura:
        `const opts = (typeof dropdownOptions !== "undefined" && dropdownOptions) || (typeof window !== "undefined" && window.dropdownOptions) || (typeof getState === "function" && getState() && getState().dropdownOptions) || null;`
      - Usar `opts` de manera blindada para resolver `opts.tipoDeCorte` y `opts.configRelay`, cayendo a las matrices por defecto si no están presentes.
+
+**AUDITORÍA TÉCNICA - TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DEL APP SHELL (31/10/2026)**
+
+**Archivos involucrados:** `Services/admin.js`, `api-config.js`, `ui.js`, `style.css`, `index.html`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **Services/admin.js (Tarea 1.1):**
+   - El microservicio de administración carece de manejador `doGet(e)`, a diferencia de los otros microservicios (`catalog.js`, `write.js`, `feedback.js`, `users.js`).
+   - Al ejecutarse `checkAllServicesHealth()` en `api-config.js` mediante la consulta GET `?debug=true`, el servicio no responde con JSON estructurado de diagnóstico, lo cual afecta la detección de estado en el panel de salud.
+   - Solución: Incorporar `doGet(e)` estructurado respondiendo con metadatos del servicio (`GPSpedia-Admin`, versión, `spreadsheetId`, `driveFolderId`, hojas accedidas y estado) y respuesta GET por defecto, garantizando paridad arquitectural con los demás microservicios.
+2. **ui.js y style.css (Tareas 1.2 a 1.8):**
+   - Se verificó que las funciones del panel de desarrollador (`initDevToolsModal`), el botón '+' (`.btn-expand-plus`), el formulario de problemas (`openAddProblemModal`), la optimización de carga de PyS (`renderPysSection` con fast-path 0ms), la cabecera compacta del modal y las dimensiones uniformes de tarjetas de creación se encuentran operativas en el codebase.
+   - Se incorporarán los comentarios identificativos formales de las subtareas 1.1, 1.2, 1.3, 1.4, 1.5, 1.6, 1.7, 1.8 en los bloques de código correspondientes conforme al procedimiento.
+
+**AUDITORÍA TÉCNICA - TAREA 2: CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL (31/10/2026)**
+
+**Archivos involucrados:** `users.html`, `Services/users.js`, `index.html`, `ui.js`, `style.css`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **users.html y Services/users.js (B16: Gestión de Usuarios, RBAC y Seguridad):**
+   - En `Services/users.js` (función `handleUpdateUser`), se implementa una estricta jerarquía de permisos RBAC: Desarrollador > Jefe/Gefe > Supervisor > Técnico. Se prohíbe explícitamente modificar el nombre de usuario y se controla que solo roles autorizados cambien contraseñas y asignen roles subordinados.
+   - En `users.html`, se gestionan perfiles de usuario, cambios de contraseña sensibles a mayúsculas/minúsculas y filtros RBAC para asegurar que cada rol visualice y gestione únicamente las cuentas permitidas.
+   - El código cumple plenamente con los requisitos funcionales de B16.
+2. **index.html y style.css (B02: Modales Informativos y B03: Aviso de aceptación y enlace de términos):**
+   - En `index.html` (líneas 340-380), el modal `#terms-modal` presenta el aviso importante ineludible con texto justificado, logotipo centrado y enlace a Términos y Condiciones.
+   - El modal `#terms-agreement-modal` (líneas 359-568) contiene el acuerdo legal completo de 16 secciones con alineación a la izquierda, logotipo superior centrado y logo de TRACKLINK al final con separación vertical de 50px.
+   - El modal `#about-us-modal` (líneas 569-605) contiene la redacción técnica institucional sin emojis ni iconos decorativos, con texto alineado a la izquierda.
+   - Se agregarán los comentarios identificativos formales de TAREA 2 (B16, B02, B03) conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA EN CONECTIVIDAD (ADD_CORTES.HTML) (31/10/2026)**
+
+**Archivos involucrados:** `add_cortes.html`, `Services/write.js`, `Services/admin.js`, `api-config.js`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **add_cortes.html (Tareas 4.1, 4.2, 4.3, 4.4):**
+   - En la etapa 3 (`#stage-3`), el formulario ofrece acordeones para apertura, cable de alimentación (calculando hasta 3 ranuras), registro de segundo corte (`#second-cut-accordion` con botón `#btn-add-second-cut` que invoca `proceedToStage2(state.selectedVehicleId)` sin solicitar nuevamente la foto del vehículo ni duplicar la ficha base) y vídeo guía de desarme (`#video-accordion` con `#videoGuiaUrl`, el cual se oculta dinámicamente si el modelo ya dispone de un vídeo en el catálogo).
+   - El cálculo de disponibilidad es dinámico y verifica el estado de las ranuras disponibles tanto en frontend como en backend.
+2. **add_cortes.html y Services/write.js (Tarea B31: Idempotencia y Resiliencia):**
+   - El frontend genera un `opId` unívoco (`getOrGenerateOpId()`), persiste la operación en `localStorage` bajo `gpsepedia_pending_operation` ante posibles interrupciones de red, y verifica síncronamente con `checkOperation` si el registro ya existe en el servidor antes de proceder a la inserción.
+   - En `Services/write.js` (`handleCheckOperation` y `handleAddOrUpdateCut`), el servidor busca si la operación fue registrada previamente, previene duplicados, y repara campos vacíos sin duplicar filas.
+   - Si se selecciona 'No recomendado' como `tipoCorte1`, los campos técnicos se deshabilitan y pierden la obligatoriedad, permitiendo guardar el modelo sin corte técnico.
+   - Todo el flujo cumple los requisitos funcionales de la Tarea 3. Se insertarán los comentarios identificativos pertinentes.
+
+**AUDITORÍA TÉCNICA - TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚSQUEDA POR VIN (31/10/2026)**
+
+**Archivos involucrados:** `Services/write.js`, `ui.js`, `navigation.js`, `add_cortes.html`, `api-config.js`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **Services/write.js (Tareas 11.1, 11.2, 11.7, B34):**
+   - La columna `vin` está ubicada en el índice 43 de `COLS_CORTES`.
+   - `extractVinPrefix(vinStr)` elimina estrictamente los últimos 5 caracteres y limpia caracteres no alfanuméricos.
+   - `serializeVinCollection` y `parseVinCollection` gestionan arrays JSON almacenados en una única celda sin crear columnas `vin2` o `vin3`.
+   - `checkVinDuplicateInSheet` compara el prefijo procesado con todos los modelos en la base de datos para detectar duplicados sin alterar el `timestamp`.
+2. **add_cortes.html (Tareas 11.3, 11.5):**
+   - El input `vinInput` permite ingresar hasta 18 caracteres. En evento `blur` y submit se valida duplicación; si ya existe, muestra `"VIN ya está registrado para:"` con botón interactivo al modelo existente.
+3. **ui.js (Tareas 11.4, 11.5, 11.6):**
+   - En el menú (+), la opción "Agregar VIN" se muestra calculando dinámicamente el cupo disponible (1 a 3 VINs) según la cantidad de versiones en `versionesAplicables`.
+   - `openAddVinModal` valida duplicados interactivamente y agrega el nuevo VIN a la colección existente sin sobrescribir.
+4. **navigation.js (Tarea 11.8):**
+   - `filtrarContenido` detecta consultas por VIN (6 a 18 caracteres), extrae el prefijo procesado (omitiendo los últimos 5 caracteres) y realiza coincidencia exacta contra las colecciones en `item.vin`.
+   - Todo el flujo cumple los requisitos funcionales de la Tarea 4. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE DETALLE (BOTÓN '+') (31/10/2026)**
+
+**Archivos involucrados:** `ui.js`, `style.css`, `Services/write.js`, `api-config.js`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **ui.js (Tarea 3.1: Botón '+' y menú dinámico):**
+   - En `openExpandMenuModal(item)`, el cálculo de opciones disponibles es 100% dinámico:
+     * Cortes: `cutsAvailable = 3 - cutsCount` (oculta si es 0).
+     * Apertura: `!item.apertura` (oculta si ya existe).
+     * Alimentación: `feedsAvailable = 3 - feedsCount` (oculta si es 0).
+     * Vídeo: `!item.videoGuiaDesarmeUrl` (oculta si ya existe).
+     * VIN: `canAddVin = registeredVins.length < maxVinAllowed` (calculado dinámicamente de 1 a 3 según `versionesAplicables`).
+2. **ui.js (Tarea 3.2: Agregar un nuevo corte desde el modal):**
+   - En `openAddCutForModelModal(item)`, el modal incluye subida de imagen, selectores de tipo de corte y relay, detalles, color de cable, casilla de testigo de motor Check Engine y botón para agregar corte. Utiliza el nombre del colaborador autenticado y actualiza la fecha del registro al guardar el nuevo corte sin duplicar el vehículo.
+3. **ui.js (Tareas 3.3, 3.4, 3.5: Apertura, Alimentación y Vídeo guía):**
+   - `openAddAperturaModal(item)`: subida de imagen, texto enriquecido, no actualiza la fecha de registro y previene sobrescrituras accidentales.
+   - `openAddFeedModal(item)`: subida de imagen, texto enriquecido, cálculo de ranuras disponibles e integración al carrusel sin actualizar la fecha del modelo.
+   - `openAddVideoModal(item)`: valida enlace de YouTube y no actualiza fecha histórica de registro.
+   - El código cumple plenamente todos los requisitos de la Tarea 5. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y RENDERIZADO DE TRANSPARENCIAS (31/10/2026)**
+
+**Archivos involucrados:** `lightbox.js`, `ui.js`, `style.css`, `index.html`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **lightbox.js y ui.js (Tarea B32: Navegación del carrusel de cables dentro de Lightbox):**
+   - En `lightbox.js`, `abrirLightbox` admite contexto de cables (`cables`, `currentIndex`, callback `onSlideChange`).
+   - Se proporcionan botones de navegación de escritorio (`<` y `>`) y soporte de gestos táctiles horizontales (`swipe`) para móviles y PWA.
+   - `isLightboxZoomed()` detecta la escala de ampliación de la imagen o del `visualViewport` (`scale > 1.02`), bloqueando de forma determinista la navegación por deslizamiento cuando el usuario ha hecho zoom, para permitir el desplazamiento por la imagen sin saltar de diapositiva accidentalmente.
+   - `ignoreNextClick` previene que el toque final de un gesto de deslizamiento cierre el visor.
+2. **ui.js y style.css (Tarea B33: Miniaturas PNG transparentes):**
+   - En `ui.js` (`getImageUrl`), las URLs de Google Drive se construyen mediante CDN directa `https://lh3.googleusercontent.com/d/${id}` omitiendo parámetros de miniaturas `=w...` que degradan la transparencia convirtiendo PNGs a JPEG con fondo negro.
+   - En `style.css` (líneas 734-740), se aplica `mix-blend-mode: lighten` exclusivamente en `.dark-mode .card:not(.brand-logo-item) img`, `.dark-mode .card-img-top`, `.dark-mode .match-card-img` y `#imagenVehiculo_preview`, permitiendo que cualquier residuo oscuro se funda con el fondo de la tarjeta oscura, mientras que en modo claro las tarjetas conservan fondo blanco uniforme.
+   - Todo el flujo cumple los requisitos funcionales de la Tarea 6. Se insertarán los comentarios identificativos pertinentes.
+
+**AUDITORÍA TÉCNICA - TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE SECUENCIAL DE OVERLAYS (31/10/2026)**
+
+**Archivos involucrados:** `main.js`, `navigation.js`, `ui.js`, `style.css`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **main.js (Tareas B05, B07):**
+   - El listener de `popstate` implementa una jerarquía estricta: primero evalúa y cierra componentes emergentes (Overlays: `#modalDetalle`, Lightbox, menús modales, side-menu, modales secundarios) antes de restaurar o cambiar estados de búsqueda o secciones, garantizando un cierre determinista del modal al retroceder.
+   - Bloquea retrocesos si el modal ineludible `#terms-modal` está activo.
+   - Restaura dinámicamente el foco, texto y vista de búsqueda al retroceder.
+2. **navigation.js y ui.js (Tareas B06, B08, B27):**
+   - `history.replaceState` sincroniza la URL en búsquedas continuas para evitar acumular estados redundantes en el historial.
+   - La bandera `isRestoring` y `autoOpen` diferencia búsquedas activas de navegaciones del historial, evitando reaperturas involuntarias del modal al volver atrás.
+   - En resultados únicos, posterga mediante `setTimeout` la apertura del modal para permitir que la cuadrícula se renderice primero.
+3. **ui.js y style.css (Tarea B18):**
+   - La navegación propaga y persiste el atributo `origin` ('marca' o 'categoria') en `navigationState` en todos los niveles (versiones, tipos de encendido, equipamiento), garantizando que el botón '< Volver' regrese a la vista adecuada sin bucles.
+   - En `style.css`, se previene la selección accidental de texto en dispositivos móviles con `user-select: none`.
+   - Todo el flujo cumple plenamente con los requisitos funcionales de la Tarea 7. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPARTIDOS E INDICADOR DE RED (31/10/2026)**
+
+**Archivos involucrados:** `ui.js`, `main.js`, `style.css`, `index.html`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **ui.js (Tareas B10, B11, B23: Botón Compartir y URL de Deep Linking):**
+   - El botón `.share-modal-btn` en la cabecera del modal de detalle implementa `shareBtn.onclick`.
+   - La construcción de `shareQuery` y `shareData.url` concatena de forma unívoca `marca`, `modelo`, `versionesAplicables`, `tipoEncendido` y `anoDesde`.
+   - Esto previene ambigüedades intergeneracionales y garantiza que al abrir el enlace compartido (`#search=...`) se filtre la variante exacta y se auto-abra el modal técnico correspondiente.
+2. **main.js e index.html (Tareas B10, B12: Estado de Red y Restauración de Búsqueda):**
+   - En `index.html`, `#connection-status` se ubica de forma elegante en el encabezado.
+   - En `main.js`, los eventos `online` y `offline` actualizan en tiempo real la clase (`online` / `offline`) y el tooltip (`Conectado` / `Trabajando Offline`).
+   - Al cargar la aplicación, `window.location.hash` restaura automáticamente los resultados de búsqueda si existe `#search=...`.
+3. **style.css (Tareas B09, B11: Indicador de Red Ultra-minimalista):**
+   - `#connection-status` cuenta con dimensiones de 3px x 3px, radio de 50%, color verde (#28a745) en online y ámbar con animación de pulso (#ffc107) en offline.
+   - Todo el flujo cumple plenamente con los requisitos funcionales de la Tarea 8. Se insertarán los comentarios identificativos pertinentes.
+
+**AUDITORÍA TÉCNICA - TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICACIÓN EN CORTES (31/10/2026)**
+
+**Archivos involucrados:** `ui.js`, `Services/feedback.js`, `api-config.js`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **ui.js (Tarea 2.1: Botón de reporte individual por corte):**
+   - En cada corte renderizado (`renderCutDetail`), se incluye un botón interactivo `.report-btn` con `corteNum = cutData.index || index || 1`.
+   - Abre `openReportCutModal(vehicleId, corteNum, currentCutData)` permitiendo describir el error, subir imagen de evidencia opcional en Base64 y registrar el reporte sin alterar la hoja `Cortes`.
+   - Al completarse con éxito, muestra `showReportSuccessModal` con la opción interactiva «Sugerir cambio».
+2. **ui.js (Tarea 2.2: Modal de sugerencia de cambios vinculado al corte):**
+   - `openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId)` vincula la propuesta con el corte específico y el reporte de origen.
+   - Permite proponer tipo de corte, relay, ubicación, color de cable, testigo Check Engine, imagen y justificación obligatoria con acceso seguro a dropdownOptions.
+3. **Services/feedback.js (Tarea 2.3: Almacenamiento y gestión independiente):**
+   - `handleSuggestCutChange` registra la propuesta como un feedback pendiente (`Se resolvio = false`) en la hoja `Feedbacks` con todos los metadatos requeridos (`reportId`, `vehicleId`, `corteIndex`, `userId`, `userName`, `timestamp`, `imageUrl`, `proposedValues`, `details`) sin modificar el registro del vehículo en `Cortes`.
+   - Todo el flujo cumple los requisitos funcionales de la Tarea 9. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIOS Y VISUALIZACIÓN (31/10/2026)**
+
+**Archivos involucrados:** `index.html`, `ui.js`, `Services/feedback.js`, `api-config.js`, `style.css`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **index.html y style.css (Tarea 5.1: Botón de sección en página principal):**
+   - El botón `#btn-pys` ("Problemas y Soluciones") se encuentra integrado en la barra de navegación de secciones principales, manteniendo plena armonía estética con Cortes, Tutoriales y Relay.
+2. **ui.js (Tarea 5.2: Tarjetas y tarjeta de creación '+'):**
+   - En `renderPysSection()`, la primera posición de la cuadrícula está reservada permanentemente para la tarjeta de creación (`.card-create-pys`) con borde discontinuo azul, icono '+' e interacción para invocar `openAddProblemModal()`.
+   - Los problemas registrados se listan de forma cronológica inversa (del más reciente al más antiguo).
+3. **ui.js (Tarea 5.3: Formulario de registro de problemas):**
+   - En `openAddProblemModal()`, el formulario valida título (máx 15 caracteres), subida de imagen a Google Drive (vía Base64), detalle de descripción, casilla interactiva `sinSolucion` (que deshabilita/habilita y conmuta obligatoriedad de la solución), prevención opcional (máx 100 caracteres) y enlace de YouTube.
+4. **Services/feedback.js (Tarea 5.4: Almacenamiento en hoja pys e IDs únicos isue-001):**
+   - `handleAddProblem()` genera identificadores secuenciales únicos con formato `isue-001`, gestiona concurrencia con `LockService` y escribe las 9 columnas obligatorias en la hoja `pys` (`id_problem`, `Problema`, `Descripción`, `Se soluciono`, `Solucion`, `Prevenir`, `Imagen`, `Video`, `Colaborador`).
+5. **ui.js (Tarea 5.5: Modal de detalle de problemas y soluciones):**
+   - En `openPysDetailModal(item)`, se presenta la información estructurada, nombre del colaborador y botones de acción contextuales para agregar solución o agregar prevención si el registro carece de ellas.
+   - Todo el flujo cumple plenamente los requisitos funcionales de la Tarea 10. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VEHÍCULOS (31/10/2026)**
+
+**Archivos involucrados:** `ui.js`, `Services/feedback.js`, `api-config.js`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **ui.js (Tarea 12.1: Alcance en formulario de problemas):**
+   - En `openAddProblemModal`, el desplegable `#pys-alcance` ofrece `General` vs `Modelo específico`. Al seleccionar `específico`, se activa la búsqueda predictiva `#pys-search-vehicle`.
+2. **ui.js (Tarea 12.2: Modal exclusivo de confirmación de vehículo):**
+   - `openConfirmVehicleForPysModal(vehicle, onConfirm)` presenta una vista previa exclusiva con Marca, Modelo, Versión, Años, Tipo de encendido e Imagen, omitiendo rigurosamente detalles técnicos de corte o apertura.
+3. **Services/feedback.js y ui.js (Tarea 12.3: Almacenamiento relacional en columna 10):**
+   - `modelos_asociados` se persiste como un Array JSON en la columna 10 de la hoja `pys` (`handleAddProblem` y `handleAddVehicleToProblem`).
+4. **ui.js (Tarea 12.4: Carrusel de modelos en detalle de PyS):**
+   - En `openPysDetailModal(item)`, se renderiza el carrusel de vehículos vinculados con botón '+' para que usuarios autorizados vinculen más modelos.
+5. **ui.js (Tarea 12.5: Acordeón en modal de vehículo):**
+   - En `mostrarDetalleModal`, se renderiza dinámicamente el acordeón «Problemas relacionados a este vehículo» únicamente si existen problemas vinculados a ese vehículo, abriendo el detalle en contexto independiente sin mostrar cortes del vehículo ni botón '+'.
+   - Todo el flujo cumple los requisitos funcionales de la Tarea 11. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIMEDIA (01/11/2026)**
+
+**Archivos involucrados:** `ui.js`, `main.js`, `Services/feedback.js`, `style.css`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **ui.js y Services/feedback.js (Tarea 6.1: Tarjeta de creación y formulario de tutoriales):**
+   - En `mostrarTutorialesGrid()`, la tarjeta de creación (`.card-create-tutorial`) se posiciona fija al inicio de la lista, con borde discontinuo azul de 120px de altura y enlace para invocar `openAddTutorialModal()`.
+   - `openAddTutorialModal()` incluye subida de imagen a Google Drive (vía Base64), validación de enlace de YouTube, descripción enriquecida y atribución del colaborador autenticado.
+   - En `Services/feedback.js`, `handleAddTutorial` escribe las filas correspondientes en la hoja `Tutorial` conservando compatibilidad e impidiendo duplicaciones.
+2. **main.js y ui.js (Tarea B04: Control del ciclo de vida multimedia de YouTube):**
+   - `mostrarDetalleTutorialModal(item)` asigna `modalDetalle.dataset.modalType = 'tutorial'` e inserta el iframe con parámetro `enablejsapi=1`.
+   - En `main.js`, un `MutationObserver` vigila `#modalDetalle`. En cuanto se remueve la clase `.visible` (por botón cerrar, tecla Escape, botón Atrás o gesto popstate), detecta el tipo 'tutorial', asigna `iframe.src = 'about:blank'` y destruye el elemento del DOM de forma inmediata.
+   - Esto silencia el audio y detiene la reproducción instantáneamente, liberando recursos en segundo plano.
+   - Todo el flujo cumple los requisitos funcionales de la Tarea 12. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+--------------------------------------------------
+AUDITORÍA TÉCNICA - TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS (01/11/2026)
+--------------------------------------------------
+Archivos auditados: navigation.js, ui.js, state.js.
+
+Hallazgos de Auditoría Línea por Línea:
+1. navigation.js (filtrarContenido):
+   - Líneas 128-198: Implementa búsqueda concurrente multi-sección:
+     * Cortes: Evalúa marca, modelo, equipamiento, encendido, categoría, año, tipo de corte, ubicación, color y VIN.
+     * Relay: Busca en nombre, tipo, descripción, función y observación.
+     * Tutoriales: Busca en Tema y Descripción.
+     * Problemas y Soluciones (PyS): Busca en Problema, Descripción, Solución y Prevención.
+     * Emplea normalización y extracción con stripHtml para que las etiquetas markup enriquecidas no interfieran con las coincidencias.
+     * Asigna la propiedad _sectionType ('corte', 'relay', 'tutorial', 'pys').
+2. ui.js (mostrarResultadosDeBusqueda / renderizado de tarjetas):
+   - Líneas 3805-3870:
+     * Asigna badge visual en la tarjeta con el nombre de la sección correspondiente (RELAY, TUTORIAL, PYS) con estilo azul (#007bff) en mayúsculas.
+     * En el evento de clic, rutea al modal específico según la entidad:
+       - 'relay' -> mostrarDetalleRelayModal(item)
+       - 'tutorial' -> mostrarDetalleTutorialModal(item)
+       - 'pys' -> openPysDetailModal(item)
+       - 'corte' -> mostrarDetalleModal(item) o mostrarVersiones si hay variantes.
+     * El overlay presenta de forma adaptativa el título y subtítulo de cada tipo de contenido.
+3. Conclusión de auditoría:
+   - Todo el flujo de búsqueda global multi-sección ya cumple rigurosamente con los requisitos funcionales de la Tarea 14 (10.1).
+   - Conforme a la Condición Obligatoria 5, se añade comentario identificativo en navigation.js, se documenta en Auditoría.txt y ChangesLogs.txt, y se marca [X] en Tareas.txt para continuar inmediatamente con la siguiente tarea sin generar un commit exclusivamente documental.
+
+--------------------------------------------------
+AUDITORÍA TÉCNICA - TAREA 15: BARRA DE FILTROS RÁPIDOS Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES (01/11/2026)
+--------------------------------------------------
+Archivos auditados: style.css, main.js, index.html.
+
+Hallazgos de Auditoría Línea por Línea:
+1. main.js e index.html (#btn-toggle-filters y #catalog-filters-bar):
+   - El botón desplegable #btn-toggle-filters se encuentra dentro de .search-container.
+   - Al hacer clic en los controles internos de #catalog-filters-bar o en el propio botón, la propagación de eventos de blur o click podía colisionar con la barra de búsqueda y provocar cierres prematuros o interferencias con el foco de #searchInput.
+   - Se requiere asegurar un manejo limpio de eventos con preventDefault y stopPropagation para que el panel de filtros permanezca abierto mientras el usuario interactúa con los selectores de categoría y año.
+2. style.css (Estandarización de botones):
+   - Aunque se utilizaban clases .btn, .btn-primary, .btn-secondary en varios modales de ui.js y en add_cortes.html/users.html, style.css no definía un conjunto de reglas globales base para .btn, .btn-primary, .btn-secondary, .btn-warning, .btn-danger, .btn-sm.
+   - En index.html y modales emergentes, algunos botones heredaban estilos parciales del navegador en lugar de seguir la estética unificada de GPSpedia (bordes redondeados a 8px, fuentes claras, transiciones suaves de hover y active, soporte automático de modo claro y oscuro).
+3. Plan de acción:
+   - Declarar en style.css la suite completa y robusta de clases para botones globales (.btn, .btn-primary, .btn-secondary, .btn-warning, .btn-danger, .btn-sm, estados hover, active, focus, disabled, loading).
+   - Proteger los eventos de #btn-toggle-filters y #catalog-filters-bar en main.js para garantizar interacción sin cierres involuntarios ni solapamientos.

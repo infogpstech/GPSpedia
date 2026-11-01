@@ -237,6 +237,7 @@ function handleUpdateUser(payload) {
         if (String(data[i][COLS_USERS.ID - 1]) === String(userId)) {
             const userToUpdateRole = data[i][COLS_USERS.Privilegios - 1];
 
+            /* TAREA 2 (B16): GESTIÓN DE USUARIOS, RBAC Y SEGURIDAD */
             // RBAC strict enforcement
             const canUpdate = {
                 'Desarrollador': () => true,

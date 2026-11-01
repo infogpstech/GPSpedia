@@ -314,6 +314,7 @@ export function getImageUrl(fileId, size = 400) {
         return placeholder;
     }
 
+    /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES */
     // Evitar parámetros de miniaturas (=w / =s) de Google que convierten PNGs transparentes a JPEG con fondo negro
     return `https://lh3.googleusercontent.com/d/${id}`;
 }
@@ -867,6 +868,7 @@ export function regresarABusqueda() {
     }
 }
 
+/* TAREA 7 (B18): CONTEXTO 'ORIGIN' MARCA/CATEGORÍA Y RETORNO LIMPIO SIN BUCLES */
 export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
     const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
@@ -1251,6 +1253,7 @@ function showValidationBanner(item, isOldModel) {
  * @param {string} searchData.query - El texto original de la búsqueda.
  * @param {Array} searchData.results - El array de resultados (strings de marcas o objetos de modelos).
  */
+/* TAREA 7 (B06): DISTINCIÓN ENTRE BÚSQUEDA ACTIVA Y RESTAURACIÓN DEL HISTORIAL CON AUTO-OPEN */
 // --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
 export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen = true) {
     const cont = document.getElementById("contenido");
@@ -1357,6 +1360,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>';
     shareBtn.className = "share-modal-btn";
     shareBtn.title = "Compartir este vehículo";
+    /* TAREA 8 (B10, B11, B23): COMPARTIR MODELO Y REDIRECCIONAMIENTO PRECISO CON DEEP LINKING */
     shareBtn.onclick = () => {
         const queryParts = [
             activeItem.marca,
@@ -1815,6 +1819,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     });
 
+    /* TAREA 11 (12.5): ACORDEÓN «PROBLEMAS RELACIONADOS A ESTE VEHÍCULO» EN MODAL TÉCNICO */
     // Acordeón de Problemas relacionados a este vehículo
     const { pysData = [] } = getState();
     const relatedProblems = pysData.filter(p => Array.isArray(p.modelosAsociados) && p.modelosAsociados.includes(String(activeItem.id)));
@@ -1859,7 +1864,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
 
     const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
-        // Tarea 1.8: Reejecución de las tareas afectadas y pruebas de regresión (Botón +)
+        // TAREA 1.5 / 1.8: RECUPERACIÓN, AJUSTE Y REEJECUCIÓN DEL BOTÓN (+) EN EL MODAL DE DETALLE DEL VEHÍCULO
         const plusBtn = document.createElement("button");
         plusBtn.className = "btn-expand-plus";
         plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
@@ -2270,7 +2275,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
             contentP.innerHTML = `<strong>Tipo de Corte:</strong> No recomendado`;
         } else {
             contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
-                                <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
+                                <strong>Ubicación:</strong> ${sanitizeHtmlContent(cutData.ubicacion || 'No especificada')}<br>
                                 <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
         }
         container.appendChild(contentP);
@@ -2559,6 +2564,7 @@ export const openInbox = setupModal('inbox-modal', async () => {
     }
 });
 
+/* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
 export const openDevTools = setupModal('dev-tools-modal', () => {
     document.getElementById('dev-tools-modal').style.display = 'flex';
     initAdminPanelListeners();
@@ -3214,6 +3220,16 @@ ${elapsedSec}s
     if (silentCutBtn) {
         silentCutBtn.onclick = () => {
             window.location.href = 'add_cortes.html?silent=true';
+        };
+    }
+
+    // Configuración interactiva de Modo de Texto Enriquecido
+    const richTextModeSelect = document.getElementById('dev-rich-text-mode-select');
+    if (richTextModeSelect) {
+        richTextModeSelect.value = getRichTextMode();
+        richTextModeSelect.onchange = () => {
+            setRichTextMode(richTextModeSelect.value);
+            log(`[SISTEMA] Modo de texto enriquecido actualizado a: ${richTextModeSelect.value}`);
         };
     }
 
@@ -4261,7 +4277,7 @@ function mostrarDetalleRelayModal(item) {
 }
 
 
-// Tarea 2.1: Modal de reporte individual para corte específico
+/* TAREA 9 (2.1): BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE Y MODAL DE REPORTE */
 export function openReportCutModal(vehicleId, corteNum, currentCutData) {
     const existing = document.getElementById("report-cut-modal");
     if (existing) existing.remove();
@@ -4402,7 +4418,7 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
     };
 }
 
-// Tarea 2.2: Modal de sugerencia de cambios vinculada al corte
+/* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */
 export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "") {
     const existing = document.getElementById("suggest-cut-modal");
     if (existing) existing.remove();
@@ -4567,6 +4583,7 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
 }
 
 
+/* TAREA 5 (3.1): MENÚ DINÁMICO DE AMPLIACIÓN EN EL MODAL DE DETALLE Y CÁLCULO DE ESPACIOS */
 export function openExpandMenuModal(item) {
     // Tarea 3.1: Botón "+" y menú dinámico de ampliación en el modal de detalle
     const existing = document.getElementById("expand-menu-modal");
@@ -4660,6 +4677,7 @@ export function openExpandMenuModal(item) {
     if (vinBtn) vinBtn.onclick = () => { modal.remove(); openAddVinModal(item); };
 }
 
+/* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO */
 export function openAddVinModal(item) {
     const existing = document.getElementById("add-vin-modal");
     if (existing) existing.remove();
@@ -4755,6 +4773,7 @@ export function openAddVinModal(item) {
     };
 }
 
+/* TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
 export function openAddCutForModelModal(item) {
     const existing = document.getElementById("add-cut-for-model-modal");
     if (existing) existing.remove();
@@ -4788,7 +4807,10 @@ export function openAddCutForModelModal(item) {
                 <input type="text" id="add-cut-relay" placeholder="Ej. 5 pines NC">
             </div>
             <div class="form-group">
-                <label>Ubicación y Detalles del Corte</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="margin:0;">Ubicación y Detalles del Corte</label>
+                    ${createRichTextToolbar('add-cut-detalles')}
+                </div>
                 <textarea id="add-cut-detalles" rows="3" placeholder="Detalles de ubicación y conexión..." required></textarea>
             </div>
             <div class="form-group">
@@ -4861,6 +4883,7 @@ export function openAddCutForModelModal(item) {
     };
 }
 
+/* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */
 export function openAddAperturaModal(item) {
     const existing = document.getElementById("add-apertura-modal");
     if (existing) existing.remove();
@@ -4881,7 +4904,10 @@ export function openAddAperturaModal(item) {
 
         <form id="add-apertura-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
-                <label>Detalles de la Apertura</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="margin:0;">Detalles de la Apertura</label>
+                    ${createRichTextToolbar('add-apertura-detalles')}
+                </div>
                 <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
             </div>
             <div class="form-group">
@@ -4933,6 +4959,7 @@ export function openAddAperturaModal(item) {
     };
 }
 
+/* TAREA 5 (3.4): AGREGAR CABLE DE ALIMENTACIÓN DESDE EL MODAL DE DETALLE */
 export function openAddFeedModal(item) {
     const existing = document.getElementById("add-feed-modal");
     if (existing) existing.remove();
@@ -4953,7 +4980,10 @@ export function openAddFeedModal(item) {
 
         <form id="add-feed-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
-                <label>Detalles de la Alimentación</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="margin:0;">Detalles de la Alimentación</label>
+                    ${createRichTextToolbar('add-feed-detalles')}
+                </div>
                 <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
             </div>
             <div class="form-group">
@@ -5015,6 +5045,7 @@ export function openAddFeedModal(item) {
     };
 }
 
+/* TAREA 5 (3.5): AGREGAR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */
 export function openAddVideoModal(item) {
     const existing = document.getElementById("add-video-modal");
     if (existing) existing.remove();
@@ -5091,6 +5122,7 @@ export async function renderPysSection() {
         grid.className = "grid";
 
         // Tarea 1.7: Corrección de las tarjetas para agregar tutoriales y problemas
+        /* TAREA 10 (5.2): TARJETAS DE PYS Y TARJETA DE CREACIÓN (+) EN PRIMERA POSICIÓN */
         // First card: Creation Card (+)
         const createCard = document.createElement("div");
         createCard.className = "card card-create-pys";
@@ -5163,6 +5195,7 @@ export async function renderPysSection() {
     }
 }
 
+/* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */
 export function openAddProblemModal() {
     const existing = document.getElementById("add-pys-modal");
     if (existing) existing.remove();
@@ -5181,6 +5214,7 @@ export function openAddProblemModal() {
         <h2><i class="fa-solid fa-triangle-exclamation"></i> Registrar Problema</h2>
 
         <form id="add-pys-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+            <!-- TAREA 11 (12.1): ALCANCE EN FORMULARIO DE PROBLEMAS (GENERAL VS ESPECÍFICO) -->
             <div class="form-group">
                 <label>Alcance del Problema</label>
                 <select id="pys-alcance" class="dev-input" style="padding: 6px;">
@@ -5205,7 +5239,10 @@ export function openAddProblemModal() {
                 <input type="file" id="pys-img-file" accept="image/*" required>
             </div>
             <div class="form-group">
-                <label>Detalle del Problema (Máx 200 caracteres)</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="margin:0;">Detalle del Problema (Máx 200 caracteres)</label>
+                    ${createRichTextToolbar('pys-detalle')}
+                </div>
                 <textarea id="pys-detalle" maxlength="200" rows="3" required placeholder="Describe el problema..."></textarea>
             </div>
             <div class="form-group" style="display:flex; align-items:center; gap:8px;">
@@ -5213,12 +5250,18 @@ export function openAddProblemModal() {
                 <label for="pys-sin-solucion" style="margin:0;">Sin solución aún</label>
             </div>
             <div class="form-group" id="grp-solucion">
-                <label>Solución (Máx 200 caracteres)</label>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="margin:0;">Solución (Máx 200 caracteres)</label>
+                    ${createRichTextToolbar('pys-solucion')}
+                </div>
                 <textarea id="pys-solucion" maxlength="200" rows="3" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
-                <label>Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
-                <input type="text" id="pys-prevenir" maxlength="100" placeholder="Recomendación preventiva...">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                    <label style="margin:0;">Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
+                    ${createRichTextToolbar('pys-prevenir')}
+                </div>
+                <textarea id="pys-prevenir" rows="2" maxlength="100" placeholder="Recomendación preventiva..."></textarea>
             </div>
             <div class="form-group">
                 <label>Enlace de Vídeo YouTube (Opcional)</label>
@@ -5414,6 +5457,7 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated)
     };
 }
 
+/* TAREA 11 (12.2): MODAL EXCLUSIVO DE CONFIRMACIÓN Y VISTA PREVIA DE VEHÍCULO PARA PYS */
 export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
     const existing = document.getElementById("confirm-vehicle-pys-modal");
     if (existing) existing.remove();
@@ -5459,6 +5503,7 @@ export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
     };
 }
 
+/* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */
 export function openPysDetailModal(item) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
@@ -5507,6 +5552,7 @@ export function openPysDetailModal(item) {
         cont.appendChild(vid);
     }
 
+    /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */
     // Carrusel de Modelos de Vehículos Relacionados
     const { catalogData } = getState();
     const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
@@ -5601,6 +5647,7 @@ export function openPysDetailModal(item) {
 }
 
 
+/* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */
 export function openAddTutorialModal() {
     const existing = document.getElementById("add-tutorial-modal");
     if (existing) existing.remove();
@@ -5676,50 +5723,119 @@ export function openAddTutorialModal() {
     };
 }
 
+/* TAREA 13 (7.1): BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRIPTIVOS */
+export function createRichTextToolbar(targetId) {
+    const colorPickerId = `color-picker-${targetId}`;
+    return `
+        <div class="rich-editor-toolbar" style="display:inline-flex; align-items:center; gap:6px; margin-bottom:4px; padding:2px 4px; background:rgba(0,123,255,0.06); border-radius:4px; border:1px solid var(--border-color);">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('${targetId}', 'bold')" style="padding:2px 8px; font-weight:bold; font-size:0.85rem; line-height:1.2; height:26px;" title="Texto en negrita"><strong>B</strong></button>
+            <label for="${colorPickerId}" style="display:inline-flex; align-items:center; margin:0; cursor:pointer;" title="Color del texto">
+                <input type="color" id="${colorPickerId}" onchange="applyRichColor('${targetId}', this.value)" style="width:26px; height:26px; padding:0; border:none; background:transparent; cursor:pointer; vertical-align:middle;">
+            </label>
+        </div>
+    `;
+}
+
+window.createRichTextToolbar = createRichTextToolbar;
+
 window.applyRichFormat = function(targetId, format) {
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
+    const start = textarea.selectionStart || 0;
+    const end = textarea.selectionEnd || 0;
     const selected = textarea.value.substring(start, end);
-    if (!selected) return;
-    const formatted = `<b>${selected}</b>`;
+    const tagOpen = '<b>';
+    const tagClose = '</b>';
+    const formatted = selected ? `${tagOpen}${selected}${tagClose}` : `${tagOpen}texto${tagClose}`;
+    const prevScroll = textarea.scrollTop;
     textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+    textarea.focus();
+    const newCursor = start + tagOpen.length + (selected ? selected.length : 5);
+    textarea.setSelectionRange(newCursor, newCursor);
+    textarea.scrollTop = prevScroll;
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
 };
 
 window.applyRichColor = function(targetId, color) {
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
+    const start = textarea.selectionStart || 0;
+    const end = textarea.selectionEnd || 0;
     const selected = textarea.value.substring(start, end);
-    if (!selected) return;
-    const formatted = `<span style="color:${color}">${selected}</span>`;
+    const tagOpen = `<span style="color:${color}">`;
+    const tagClose = `</span>`;
+    const formatted = selected ? `${tagOpen}${selected}${tagClose}` : `${tagOpen}texto${tagClose}`;
+    const prevScroll = textarea.scrollTop;
     textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+    textarea.focus();
+    const newCursor = start + tagOpen.length + (selected ? selected.length : 5);
+    textarea.setSelectionRange(newCursor, newCursor);
+    textarea.scrollTop = prevScroll;
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
 };
 
-// TAREA ADICIONAL: PERMITIR CONTENIDO HTML ENRIQUECIDO EN CAMPOS DE TEXTO
+export function getRichTextMode() {
+    if (typeof localStorage !== 'undefined') {
+        const mode = localStorage.getItem('gpsepedia_rich_text_mode');
+        if (mode === 'advanced') return 'advanced';
+    }
+    return 'strict';
+}
+
+export function setRichTextMode(mode) {
+    if (typeof localStorage !== 'undefined') {
+        localStorage.setItem('gpsepedia_rich_text_mode', mode === 'advanced' ? 'advanced' : 'strict');
+    }
+}
+
+window.getRichTextMode = getRichTextMode;
+window.setRichTextMode = setRichTextMode;
+
+// TAREA 13 (7.1): MOTOR DE SANITIZACIÓN HTML Y CONVERGENCIA DE MODOS CONFIGURABLES
 export function sanitizeHtmlContent(htmlStr) {
     if (!htmlStr) return '';
+    let normalized = String(htmlStr).replace(/\r\n|\r|\n/g, '<br>');
     const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlStr, 'text/html');
-    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'U', 'A', 'IMG', 'SMALL', 'EM', 'MARK'];
+    const doc = parser.parseFromString(normalized, 'text/html');
+
+    const mode = getRichTextMode();
+    const allowedTags = mode === 'advanced'
+        ? ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'U', 'A', 'IMG', 'SMALL', 'EM', 'MARK']
+        : ['B', 'STRONG', 'SPAN', 'BR'];
 
     function cleanNode(node) {
         const children = Array.from(node.childNodes);
         children.forEach(child => {
             if (child.nodeType === 1) {
-                if (!allowedTags.includes(child.tagName)) {
+                // Sanitizar atributos peligrosos en todas las etiquetas antes de cualquier reemplazo
+                Array.from(child.attributes).forEach(attr => {
+                    const name = attr.name.toLowerCase();
+                    const val = attr.value.toLowerCase();
+                    if (name.startsWith('on') || val.includes('javascript:') || val.includes('data:text/html') || val.includes('vbscript:')) {
+                        child.removeAttribute(attr.name);
+                    } else if (name === 'style') {
+                        const safeStyles = attr.value
+                            .split(';')
+                            .map(s => s.trim())
+                            .filter(s => {
+                                const lower = s.toLowerCase();
+                                return lower.startsWith('color:') || lower.startsWith('font-weight:') || lower.startsWith('background-color:');
+                            })
+                            .join('; ');
+                        if (safeStyles) {
+                            child.setAttribute('style', safeStyles);
+                        } else {
+                            child.removeAttribute('style');
+                        }
+                    }
+                });
+
+                if (child.tagName === 'SCRIPT' || child.tagName === 'STYLE' || child.tagName === 'IFRAME') {
+                    child.remove();
+                } else if (!allowedTags.includes(child.tagName)) {
                     const textNode = doc.createTextNode(child.outerHTML);
                     node.replaceChild(textNode, child);
                 } else {
-                    Array.from(child.attributes).forEach(attr => {
-                        const name = attr.name.toLowerCase();
-                        const val = attr.value.toLowerCase();
-                        if (name.startsWith('on') || val.includes('javascript:') || val.includes('data:text/html')) {
-                            child.removeAttribute(attr.name);
-                        }
-                    });
                     cleanNode(child);
                 }
             }
@@ -5729,6 +5845,8 @@ export function sanitizeHtmlContent(htmlStr) {
     cleanNode(doc.body);
     return doc.body.innerHTML;
 }
+
+window.sanitizeHtmlContent = sanitizeHtmlContent;
 
 let inboxCacheData = null;
 

@@ -138,6 +138,7 @@ h1.app-title {
     gap: 15px;
 }
 
+/* TAREA 8 (B09, B11): INDICADOR ULTRA-MINIMALISTA DE ESTADO DE RED */
 #connection-status {
     width: 3px;
     height: 3px;
@@ -732,6 +733,7 @@ body.search-active .container {
     background-color: transparent;
 }
 
+/* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES EN MODO OSCURO */
 .dark-mode .card:not(.brand-logo-item) img,
 .dark-mode .card-img-top,
 .dark-mode .match-card-img,
@@ -837,6 +839,105 @@ body.search-active .container {
 
 #login-modal button:hover {
     background: #0056b3;
+}
+
+/* TAREA 15 (14.2): UNIFICACIÓN Y APLICACIÓN DE ESTILOS CSS A TODOS LOS BOTONES DE GPSPEDIA */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 16px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    line-height: 1.4;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    user-select: none;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, transform 0.1s ease, opacity 0.2s ease;
+}
+
+.btn:active:not(:disabled) {
+    transform: scale(0.98);
+}
+
+.btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.35);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+    box-shadow: none !important;
+}
+
+.btn-sm {
+    padding: 4px 10px;
+    font-size: 0.82rem;
+    border-radius: 6px;
+}
+
+.btn-primary {
+    background-color: #007bff;
+    color: #ffffff !important;
+    border-color: #007bff;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background-color: #0069d9;
+    border-color: #0062cc;
+    box-shadow: 0 2px 6px rgba(0, 123, 255, 0.3);
+}
+
+.btn-secondary {
+    background-color: var(--button-bg, #6c757d);
+    color: var(--text-color, #ffffff) !important;
+    border-color: var(--border-color, #ced4da);
+}
+
+.btn-secondary:hover:not(:disabled) {
+    background-color: var(--card-bg, #5a6268);
+    border-color: var(--accent-color, #007bff);
+}
+
+.btn-warning {
+    background-color: #ffc107;
+    color: #212529 !important;
+    border-color: #e0a800;
+}
+
+.btn-warning:hover:not(:disabled) {
+    background-color: #e0a800;
+    border-color: #d39e00;
+    box-shadow: 0 2px 6px rgba(255, 193, 7, 0.3);
+}
+
+.btn-danger {
+    background-color: #dc3545;
+    color: #ffffff !important;
+    border-color: #dc3545;
+}
+
+.btn-danger:hover:not(:disabled) {
+    background-color: #c82333;
+    border-color: #bd2130;
+    box-shadow: 0 2px 6px rgba(220, 53, 69, 0.3);
+}
+
+body.dark-mode .btn-secondary {
+    background-color: var(--button-bg, #2c2c2c);
+    color: #ffffffDE !important;
+    border-color: var(--border-color, #3a3a3a);
+}
+
+body.dark-mode .btn-secondary:hover:not(:disabled) {
+    background-color: #383838;
+    border-color: #58a6ff;
 }
 
 /* --- ANIMACIONES DE CARGA EN BOTONES --- */
