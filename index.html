@@ -113,7 +113,8 @@
               </div>
           </div>
           <div class="header-controls">
-              <button id="install-button" style="display: none;">Instalar la App</button>
+              <!-- TAREA 20: Texto exacto 'Instala la app' -->
+              <button id="install-button" style="display: none;">Instala la app</button>
               <button id="logout-button" style="display: none;">Cerrar Sesión</button>
           </div>
       </div>
@@ -121,9 +122,33 @@
       <!-- Fila 2: Búsqueda y Navegación Principal -->
       <div class="header-bottom">
           <div class="search-wrapper">
-              <div class="search-container">
-                  <input type="text" id="searchInput" placeholder="Buscar Corte...">
-                  <button id="clear-search-btn" title="Limpiar búsqueda">&times;</button>
+              <!-- TAREAS 5 y 6: Integración limpia del botón X dentro del input de búsqueda y separación del botón de filtros -->
+              <div class="search-container" style="display: flex; align-items: center; gap: 8px;">
+                  <div class="search-input-box" style="position: relative; flex: 1; display: flex; align-items: center;">
+                      <input type="text" id="searchInput" placeholder="Buscar Corte..." style="width: 100%; padding-right: 34px;">
+                      <button id="clear-search-btn" title="Limpiar búsqueda" type="button">&times;</button>
+                  </div>
+                  <button id="btn-toggle-filters" type="button" class="btn btn-secondary" title="Filtros opcionales" style="display: none; padding: 4px 8px; font-size: 0.85em; height: 36px; border-radius: 6px; align-items: center; gap: 4px; flex-shrink: 0;"><i class="fa-solid fa-filter"></i> <i class="fa-solid fa-chevron-down" id="filter-chevron-icon" style="font-size: 0.7em;"></i></button>
+              </div>
+              <!-- Barra de Filtros Rápidos por Categoría y Año (Oculta por defecto) -->
+              <div id="catalog-filters-bar" style="display: none; gap: 6px; align-items: center; margin-top: 6px; flex-wrap: wrap;">
+                  <select id="filter-category-select" class="dev-input" style="padding: 4px 8px; font-size: 0.85em; border-radius: 6px; height: 32px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color);">
+                      <option value="">Todas las Categorías</option>
+                      <option value="Autos">Autos</option>
+                      <option value="Suv">SUV / Camionetas</option>
+                      <option value="Motos">Motos</option>
+                      <option value="Pesados">Pesados / Camiones</option>
+                  </select>
+                  <select id="filter-year-select" class="dev-input" style="padding: 4px 8px; font-size: 0.85em; border-radius: 6px; height: 32px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color);">
+                      <option value="">Todos los Años</option>
+                      <option value="2026">2026</option>
+                      <option value="2025">2025</option>
+                      <option value="2024">2024</option>
+                      <option value="2023">2023</option>
+                      <option value="2022">2022</option>
+                      <option value="2021">2021</option>
+                      <option value="2020">2020</option>
+                  </select>
               </div>
               <button id="hamburger-btn"><i class="fa-solid fa-bars"></i></button>
           </div>
@@ -132,6 +157,8 @@
               <button id="btn-cortes" class="section-btn active">Cortes</button>
               <button id="btn-tutoriales" class="section-btn">Tutoriales</button>
               <button id="btn-relay" class="section-btn">Relay</button>
+              <!-- TAREA 10 (5.1): SECCIÓN PROBLEMAS Y SOLUCIONES EN LA PÁGINA PRINCIPAL -->
+              <button id="btn-pys" class="section-btn">Problemas / Soluciones</button>
           </nav>
       </div>
   </header>
@@ -139,6 +166,7 @@
   <div id="contenido" class="content-section"></div>
   <div id="contenido-tutoriales" class="content-section" style="display: none;"></div>
   <div id="contenido-relay" class="content-section" style="display: none;"></div>
+  <div id="contenido-pys" class="content-section" style="display: none;"></div>
 
   <div id="footer-sentinel"></div>
 </div>
@@ -203,6 +231,7 @@
 </div>
 
 <!-- ========= MODAL DE DESARROLLADOR ========= -->
+<!-- Tarea adicional: Estilos adaptados al tema de la plataforma para el Modal de Desarrollador -->
 <div id="dev-tools-modal" class="info-modal">
     <div class="info-modal-content" style="max-width: 1000px; width: 95%;">
         <span class="info-close-btn">&times;</span>
@@ -215,27 +244,45 @@
                     <h4 style="margin: 0;"><i class="fa-solid fa-terminal"></i> Consola de Diagnóstico en Tiempo Real</h4>
                     <button id="btn-copy-console-log" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8em; margin: 0;"><i class="fa-solid fa-copy"></i> Copiar registro</button>
                 </div>
-                <div id="dev-console-log" style="height: 320px; border: 1px solid #333; border-radius: 8px; background-color: #121212; color: #00ff66; font-family: monospace; padding: 12px; overflow-y: auto; font-size: 0.85rem; line-height: 1.4; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);">
-                    [SISTEMA] Consola inicializada. Esperando comando administrativo...
+                <div id="dev-console-log" style="height: 300px; border: 1px solid #333; border-radius: 8px; background-color: #121212; color: #00ff66; font-family: monospace; padding: 12px; overflow-y: auto; font-size: 0.85rem; line-height: 1.4; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);">
+                    [SISTEMA] Consola inicializada. Escribe comandos (dir, cd, mkdir, tree) o haz clic en los elementos.
+                </div>
+                <!-- Línea de entrada de comandos de terminal -->
+                <div style="display: flex; gap: 5px; align-items: center;">
+                    <span style="font-family: monospace; font-weight: bold; color: var(--accent-color);">&gt;</span>
+                    <input type="text" id="dev-terminal-input" placeholder="Comando (ej: dir, cd Subcarpeta, cd .., mkdir Pruebas, tree)..." class="dev-input" style="flex: 1; padding: 6px 10px; font-family: monospace; font-size: 0.85rem; height: 32px;">
+                    <button id="btn-terminal-send" class="btn btn-primary" style="padding: 4px 12px; font-size: 0.85em; height: 32px;"><i class="fa-solid fa-terminal"></i> Ejecutar</button>
                 </div>
                 <!-- Barra de Progreso -->
-                <div id="dev-progress-container" style="display: none; background-color: #333; border-radius: 8px; height: 24px; overflow: hidden; position: relative;">
-                    <div id="dev-progress-bar" style="background-color: #007bff; width: 0%; height: 100%; transition: width 0.3s ease;"></div>
-                    <span id="dev-progress-text" style="position: absolute; width: 100%; text-align: center; top: 0; left: 0; line-height: 24px; color: #fff; font-size: 0.85rem; font-weight: bold;">0%</span>
+                <div id="dev-progress-container" style="display: none; background-color: var(--button-bg); border-radius: 8px; height: 24px; overflow: hidden; position: relative; border: 1px solid var(--border-color);">
+                    <div id="dev-progress-bar" style="background-color: var(--accent-color); width: 0%; height: 100%; transition: width 0.3s ease;"></div>
+                    <span id="dev-progress-text" style="position: absolute; width: 100%; text-align: center; top: 0; left: 0; line-height: 24px; color: var(--text-color); font-size: 0.85rem; font-weight: bold;">0%</span>
                 </div>
 
                 <!-- Resultados de Respaldos -->
-                <div id="backup-results-panel" style="padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem;">
+                <div id="backup-results-panel" class="dev-card" style="padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem;">
                     <strong><i class="fa-solid fa-shield-halved"></i> Accesos Directos a Copias de Seguridad:</strong>
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                        <span>Spreadsheet ID: <input type="text" id="dev-ss-backup-id" readonly style="width: 140px; padding: 4px; display: inline-block; font-size: 0.8em; font-family: monospace;"></span>
+                        <span>Spreadsheet ID: <input type="text" id="dev-ss-backup-id" readonly class="dev-input" style="width: 140px; padding: 4px; display: inline-block; font-size: 0.8em; font-family: monospace;"></span>
                         <button id="copy-ss-backup-btn" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8em;">Copiar ID</button>
                         <button id="link-ss-backup-btn" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8em;" disabled>Enlace</button>
                     </div>
                     <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                        <span>Drive Folder ID: <input type="text" id="dev-drive-backup-id" readonly style="width: 140px; padding: 4px; display: inline-block; font-size: 0.8em; font-family: monospace;"></span>
+                        <span>Drive Folder ID: <input type="text" id="dev-drive-backup-id" readonly class="dev-input" style="width: 140px; padding: 4px; display: inline-block; font-size: 0.8em; font-family: monospace;"></span>
                         <button id="copy-drive-backup-btn" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8em;">Copiar ID</button>
                         <button id="link-drive-backup-btn" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8em;" disabled>Enlace</button>
+                    </div>
+                </div>
+
+                <!-- Panel de Monitoreo de Microservicios -->
+                <div class="dev-card" style="padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <strong><i class="fa-solid fa-server"></i> Estado y Métricas de Microservicios:</strong>
+                        <button id="btn-check-services-health" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.8em;"><i class="fa-solid fa-arrows-rotate"></i> Escanear</button>
+                    </div>
+                    <div id="services-health-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 5px;">
+                        <!-- Se llena dinámicamente -->
+                        <span style="color: var(--text-disabled); font-style: italic;">Iniciando diagnóstico...</span>
                     </div>
                 </div>
             </div>
@@ -246,38 +293,46 @@
 
                 <div style="display: flex; flex-direction: column; gap: 10px;">
                     <!-- Respaldos -->
-                    <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+                    <div class="dev-card" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px;">
                         <strong style="font-size: 0.9rem;"><i class="fa-solid fa-cloud-arrow-up"></i> Respaldos y Restauración de Seguridad</strong>
                         <div style="display: flex; gap: 5px;">
                             <button id="btn-admin-backup-db" class="btn btn-primary" style="flex: 1; font-size: 0.85em; padding: 8px;"><i class="fa-solid fa-database"></i> Respaldar DB</button>
                             <button id="btn-admin-backup-drive" class="btn btn-primary" style="flex: 1; font-size: 0.85em; padding: 8px;"><i class="fa-brands fa-google-drive"></i> Respaldar Drive</button>
                         </div>
                         <div style="display: flex; gap: 5px; align-items: center; margin-top: 5px;">
-                            <input type="text" id="restore-backup-id-input" placeholder="ID del Backup para restaurar..." style="flex: 1; padding: 6px; font-size: 0.85em; height: 34px;">
+                            <input type="text" id="restore-backup-id-input" placeholder="ID del Backup para restaurar..." class="dev-input" style="flex: 1; padding: 6px; font-size: 0.85em; height: 34px;">
                             <button id="btn-admin-restore-db" class="btn btn-warning" style="font-size: 0.8em; padding: 8px 12px; height: 34px;">Restaurar DB</button>
                             <button id="btn-admin-restore-drive" class="btn btn-warning" style="font-size: 0.8em; padding: 8px 12px; height: 34px;">Restaurar Drive</button>
                         </div>
                     </div>
 
                     <!-- Mantenimiento -->
-                    <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+                    <div class="dev-card" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px;">
                         <strong style="font-size: 0.9rem;"><i class="fa-solid fa-broom"></i> Organización y Mantenimiento</strong>
                         <button id="btn-admin-reorganize-db" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-sort-alpha-down"></i> Reorganizar base de datos alfabéticamente (por Marca)</button>
                         <button id="btn-admin-normalize-images" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-images"></i> Normalizar nomenclatura y deduplicar imágenes en base de datos</button>
                         <button id="btn-admin-reorganize-drive" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-folder-tree"></i> Reorganizar imágenes físicamente en carpetas jerárquicas</button>
                         <button id="btn-admin-restore-trash" class="btn btn-warning" style="display: none; font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-trash-arrow-up"></i> Saneamiento y recuperación exhaustiva de imágenes en papelera</button>
-                        <button id="btn-admin-add-silent-cut" class="btn btn-danger" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-eye-slash"></i> Agregar corte silenciosamente (Panel Administrativo)</button>
+                        <button id="btn-admin-clear-client-cache" class="btn btn-danger" style="font-size: 0.85em; text-align: left; padding: 8px 12px; background-color: #dc3545; color: white;"><i class="fa-solid fa-database"></i> Vaciar Caché Local de Cliente (IndexedDB/Storage) y Recargar</button>
+                        <div style="display: flex; gap: 5px; align-items: center; margin-top: 5px;">
+                            <select id="clear-logs-option-select" class="dev-input" style="flex: 1; padding: 6px; font-size: 0.85em; height: 34px;">
+                                <option value="week">Conservar registros de la última semana</option>
+                                <option value="all">Borrar todos los registros de eventos/logs</option>
+                            </select>
+                            <button id="btn-admin-clear-activity-logs" class="btn btn-danger" style="font-size: 0.8em; padding: 8px 12px; height: 34px; background-color: #dc3545; color: white;"><i class="fa-solid fa-trash-can"></i> Purgar Logs</button>
+                        </div>
+                        <button id="btn-admin-add-silent-cut" class="btn btn-danger" style="font-size: 0.85em; text-align: left; padding: 8px 12px; margin-top: 5px;"><i class="fa-solid fa-eye-slash"></i> Agregar corte silenciosamente (Panel Administrativo)</button>
                     </div>
 
                     <!-- Carga de Logotipo -->
-                    <div style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 8px;">
+                    <div class="dev-card" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px;">
                         <strong style="font-size: 0.9rem;"><i class="fa-solid fa-square-poll-horizontal"></i> Registro de Logotipo de Fabricante</strong>
                         <div style="display: flex; gap: 5px; align-items: center;">
-                            <input type="text" id="logo-brand-name-input" placeholder="Nombre de la Marca (ej. Toyota)..." style="flex: 1; padding: 6px; font-size: 0.85em;">
+                            <input type="text" id="logo-brand-name-input" placeholder="Nombre de la Marca (ej. Toyota)..." class="dev-input" style="flex: 1; padding: 6px; font-size: 0.85em;">
                             <input type="file" id="logo-file-input" accept="image/png, image/svg+xml, image/webp" style="display: none;">
                             <button onclick="document.getElementById('logo-file-input').click()" class="btn btn-secondary" style="font-size: 0.8em; padding: 6px 10px;">Seleccionar Imagen</button>
                         </div>
-                        <span id="selected-logo-file-name" style="font-size: 0.8em; color: #888; font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP</span>
+                        <span id="selected-logo-file-name" style="font-size: 0.8em; color: var(--text-disabled); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP</span>
                         <button id="btn-admin-register-logo" class="btn btn-primary" style="font-size: 0.85em; padding: 8px;"><i class="fa-solid fa-upload"></i> Subir y Registrar Logotipo</button>
                     </div>
                 </div>
@@ -288,6 +343,7 @@
 
 
 <!-- ========= MODAL DE ACEPTACIÓN DE CONDICIONES ========= -->
+<!-- TAREA 2 (B03): IMPLEMENTACIÓN DEL AVISO DE ACEPTACIÓN DE CONDICIONES Y ENLACE PERMANENTE -->
 <div id="terms-modal" class="terms-overlay" style="display: none;">
     <div class="terms-modal-content">
         <div class="terms-header">
@@ -516,6 +572,7 @@
 </div>
 
 <!-- ========= MODALES DE INFORMACIÓN ========= -->
+<!-- TAREA 2 (B02): ACTUALIZACIÓN DE CONTENIDO Y ESTILOS DE MODALES INFORMATIVOS (SOBRE NOSOTROS Y TÉRMINOS) -->
 <div id="about-us-modal" class="info-modal">
   <div class="info-modal-content">
     <span class="info-close-btn">&times;</span>
@@ -563,6 +620,11 @@
       </div>
       <div class="form-group">
         <label for="contact-message">Mensaje</label>
+        <!-- TAREA 3.5: Barra de enriquecimiento para Contáctanos -->
+        <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('contact-message', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+            <input type="color" onchange="applyRichColor('contact-message', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+        </div>
         <textarea id="contact-message" rows="4" required></textarea>
       </div>
       <button type="submit" class="btn">Enviar Mensaje</button>

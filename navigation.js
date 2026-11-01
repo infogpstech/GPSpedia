@@ -6,6 +6,7 @@
 // - Handle search functionality.
 
 import { getState, setState } from './state.js';
+import { routeAction } from './api-config.js';
 import {
     mostrarCategorias,
     mostrarResultadosDeBusqueda, // Se importa la nueva función unificada de renderizado.
@@ -46,6 +47,7 @@ export function irAPaginaPrincipal(isFromPopState = false) {
 }
 
 // Función refactorizada v2 para buscar, clasificar y mostrar resultados.
+// TAREA ADICIONAL: EXTENDER LA BÚSQUEDA PARA INCLUIR TODAS LAS SECCIONES DE GPSPEDIA
 export function filtrarContenido(textoBusqueda, isRestoring = false) {
     const { catalogData } = getState();
     const { cortes } = catalogData;
@@ -71,39 +73,124 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         return;
     }
 
-    // --- LÓGICA DE FILTRADO MEJORADA ---
-    const yearSearchMatch = busqueda.match(/\b\d{4}\b/);
-    let yearSearchTerm = yearSearchMatch ? parseInt(yearSearchMatch[0], 10) : null;
+    // Helper para interpretar colecciones de VIN
+    function parseVinCollectionNavigation(rawVin) {
+        if (!rawVin) return [];
+        const str = String(rawVin).trim();
+        if (!str) return [];
+        if (str.startsWith("[") && str.endsWith("]")) {
+            try {
+                const arr = JSON.parse(str);
+                if (Array.isArray(arr)) {
+                    return arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                }
+            } catch (e) {}
+        }
+        return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    }
 
-    // Limitar detección de años a rangos válidos (1900-2100)
+    /* TAREA 4 (11.8): INTEGRACIÓN CON LA BARRA DE BÚSQUEDA GLOBAL POR VIN */
+    // --- LÓGICA DE DETECCIÓN Y BÚSQUEDA POR VIN ---
+    const cleanVinSearch = busqueda.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    let isVinQuery = false;
+    let targetVinPrefix = "";
+    if (cleanVinSearch.length >= 6 && cleanVinSearch.length <= 18) {
+        // Excluir los últimos 5 caracteres
+        targetVinPrefix = cleanVinSearch.length > 5 ? cleanVinSearch.substring(0, cleanVinSearch.length - 5) : "";
+        if (targetVinPrefix) {
+            const vinMatchExists = cortes.some(c => {
+                const vins = parseVinCollectionNavigation(c.vin);
+                return vins.includes(targetVinPrefix);
+            });
+            if (vinMatchExists) {
+                isVinQuery = true;
+            }
+        }
+    }
+
+    // --- LÓGICA DE FILTRADO Y SELECTORES DE FILTROS RÁPIDOS ---
+    const catSelect = document.getElementById('filter-category-select');
+    const yearSelect = document.getElementById('filter-year-select');
+
+    const selectedCategory = catSelect ? catSelect.value.toLowerCase().trim() : '';
+    const selectedYearStr = yearSelect ? yearSelect.value.trim() : '';
+    const selectedYearNum = selectedYearStr ? parseInt(selectedYearStr, 10) : null;
+
+    const yearSearchMatch = busqueda.match(/\b\d{4}\b/);
+    let yearSearchTerm = yearSearchMatch ? parseInt(yearSearchMatch[0], 10) : selectedYearNum;
+
     if (yearSearchTerm && (yearSearchTerm < 1900 || yearSearchTerm > 2100)) {
         yearSearchTerm = null;
     }
 
-    // Las palabras de búsqueda se derivan de la consulta completa para no excluir números de modelo (ej. 1500)
     const palabrasBusqueda = busqueda.split(' ').filter(p => p);
 
-    datosFiltrados = cortes.filter(item => {
-        // 1. Verificación del año (si se especificó uno).
+    // --- LÓGICA DE BÚSQUEDA GLOBAL MULTI-SECCIÓN ---
+    const { relay = [], tutoriales = [] } = catalogData || {};
+    let pysItems = [];
+    try {
+        const pysState = getState().pysData;
+        if (pysState) {
+            pysItems = pysState;
+        } else {
+            routeAction('getPysData').then(res => {
+                if (res && res.data) setState({ pysData: res.data });
+            }).catch(() => {});
+        }
+    } catch(e) {}
+
+    const stripHtml = (str) => String(str || '').replace(/<[^>]*>/g, ' ').toLowerCase();
+
+    // 1. Search in Cortes
+    const cortesMatches = cortes.filter(item => {
+        if (selectedCategory) {
+            const cat = (item.categoria || '').toLowerCase().trim();
+            if (!cat.includes(selectedCategory) && !selectedCategory.includes(cat)) return false;
+        }
+        if (isVinQuery) {
+            const vins = parseVinCollectionNavigation(item.vin);
+            return vins.includes(targetVinPrefix);
+        }
         if (yearSearchTerm) {
             const anoDesde = parseInt(item.anoDesde, 10);
             const anoHasta = item.anoHasta ? parseInt(item.anoHasta, 10) : anoDesde;
-            if (yearSearchTerm < anoDesde || yearSearchTerm > anoHasta) {
-                return false; // El año no está en el rango, se descarta el item.
-            }
+            if (yearSearchTerm < anoDesde || yearSearchTerm > anoHasta) return false;
         }
-        // 2. Verificación del texto (si hay términos de búsqueda de texto).
         if (busqueda) {
-            const itemTexto = `${String(item.marca)} ${String(item.modelo)} ${String(item.versionesAplicables || '')} ${String(item.tipoEncendido || '')} ${String(item.categoria || '')} ${String(item.anoDesde || '')} ${String(item.anoHasta || '')}`.toLowerCase();
+            const itemTexto = stripHtml(`${item.marca} ${item.modelo} ${item.versionesAplicables || ''} ${item.tipoEncendido || ''} ${item.categoria || ''} ${item.anoDesde || ''} ${item.anoHasta || ''} ${item.tipoCorte1 || ''} ${item.ubicacionCorte1 || ''} ${item.colorCableCorte1 || ''} ${item.vin || ''}`);
             return palabrasBusqueda.every(palabra => {
-                // Si la palabra es exactamente el año detectado, ya se verificó con el rango.
                 if (yearSearchTerm && palabra === String(yearSearchTerm)) return true;
                 return itemTexto.includes(palabra);
             });
         }
-        // 3. Si solo se buscó un año y pasó la verificación, se incluye.
-        return !!yearSearchTerm;
-    });
+        return true;
+    }).map(i => ({ ...i, _sectionType: 'corte' }));
+
+    let relayMatches = [];
+    let tutorialMatches = [];
+    let pysMatches = [];
+
+    // Evaluate multi-section matches only when an active text query is present
+    /* TAREA 4: Renderizado completo e independiente de tarjetas de Tutoriales y Relay */
+    if (busqueda && palabrasBusqueda.length > 0) {
+        relayMatches = relay.filter(item => {
+            const t = stripHtml(`${item.configuracion || ''} ${item.funcion || ''} ${item.vehiculoDondeSeUtiliza || ''} ${item.observacion || ''} ${item.nombre || ''} ${item.tipo || ''}`);
+            return palabrasBusqueda.every(p => t.includes(p));
+        }).map((i, idx) => ({ ...i, _sectionType: 'relay', marca: 'Relay', modelo: i.configuracion || i.funcion || `Configuración ${i.ID || idx + 1}` }));
+
+        tutorialMatches = tutoriales.filter(item => {
+            const t = stripHtml(`${item.Tema || ''} ${item.Descripcion || ''} ${item.comoIdentificarlo || ''} ${item.dondeEncontrarlo || ''} ${item.Detalles || ''}`);
+            return palabrasBusqueda.every(p => t.includes(p));
+        }).map((i, idx) => ({ ...i, _sectionType: 'tutorial', marca: 'Tutorial', modelo: i.Tema || `Tutorial ${i.ID || idx + 1}` }));
+
+        pysMatches = pysItems.filter(item => {
+            const t = stripHtml(`${item.Problema || ''} ${item.Descripcion || ''} ${item.Solucion || ''} ${item.Prevenir || ''}`);
+            return palabrasBusqueda.every(p => t.includes(p));
+        }).map((i, idx) => ({ ...i, _sectionType: 'pys', marca: 'Problema', modelo: i.Problema || `Problema ${i.id || idx + 1}` }));
+    }
+
+    // Combine global search results
+    datosFiltrados = [...cortesMatches, ...relayMatches, ...tutorialMatches, ...pysMatches];
 
     if (datosFiltrados.length === 0) {
         showNoResultsMessage(textoBusqueda);
@@ -131,6 +218,7 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
     // Actualizar el hash para Deep Linking ANTES de renderizar resultados.
     const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(textoBusqueda)}`;
 
+    /* TAREA 7 (B08, B27): REPLACESTATE EN BÚSQUEDA PARA EVITAR COLISIONES CON AUTO-APERTURA */
     if (!isRestoring) {
         if (wasAlreadySearching) {
             history.replaceState({ level: "busqueda_focused", query: textoBusqueda }, '', newUrl);

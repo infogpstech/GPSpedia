@@ -4,7 +4,7 @@
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear } from './api-config.js';
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 
@@ -211,12 +211,63 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
  */
 const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
 
+/* FUNCIONES DE RELACIÓN VIN - VERSIONES DE EQUIPAMIENTO */
+export function parseEquipmentVersions(rawStr) {
+    if (!rawStr) return [];
+    // Normalizar separadores admitidos: comas ",", diagonales "/" y diagonales inversas "\"
+    return String(rawStr)
+        .split(/[,/\\\\]+/)
+        .map(v => v.trim())
+        .filter(Boolean);
+}
+
+export function parseVinCollection(rawVin) {
+    if (!rawVin) return [];
+    if (Array.isArray(rawVin)) {
+        return rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    }
+    const str = String(rawVin).trim();
+    if (str.startsWith("[") && str.endsWith("]")) {
+        try {
+            const parsed = JSON.parse(str);
+            if (Array.isArray(parsed)) {
+                return parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+            }
+        } catch (e) {}
+    }
+    return str
+        .split(/[,/\\\\]+/)
+        .map(v => v.trim().toUpperCase())
+        .filter(Boolean);
+}
+
+export function mapVersionsWithVins(versionesStr, vinRaw) {
+    const versions = parseEquipmentVersions(versionesStr);
+    const vins = parseVinCollection(vinRaw);
+
+    if (versions.length === 0 && vins.length === 0) return [];
+    if (versions.length === 0) {
+        return vins.map(vin => ({ version: "", vin }));
+    }
+
+    // Cada versión se relaciona individualmente con su correspondiente VIN si existe
+    return versions.map((version, index) => {
+        return {
+            version,
+            vin: vins[index] || null
+        };
+    });
+}
+
 /**
  * Establece una imagen optimizada intentando cargarla desde el caché de IndexedDB.
  * @param {HTMLImageElement} imgElement - El elemento img a actualizar.
  * @param {string} fileId - El ID o URL de la imagen.
  * @param {number} size - El tamaño solicitado para la imagen.
  */
+// Caché local en memoria RAM para URLs de objeto (0ms carga sincrónica)
+const memoryUrlCache = new Map();
+
 export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMALL) {
     if (!fileId) {
         imgElement.src = getImageUrl(null);
@@ -236,39 +287,43 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
         }
     };
 
-    // Phase 3.4: Priorizar siempre la red si el navegador está online para evitar degradación de calidad (transparencias, resolución)
-    const isOnline = window.navigator && window.navigator.onLine !== false;
-    const remoteUrl = getImageUrl(fileId, size);
+    const cleanId = typeof fileId === 'string' ? fileId.trim() : fileId;
 
-    if (isOnline) {
-        imgElement.src = remoteUrl;
-
-        // Intentar guardar en caché silenciosamente para uso offline futuro si es una imagen de Drive
-        if (fileId && typeof fileId === 'string' && !fileId.startsWith('blob:') && !fileId.includes('placehold.co')) {
-            offline.compressAndStoreThumbnail(remoteUrl, fileId).catch(() => {});
-        }
+    // 1. Memoria RAM sincrónica (0ms latencia)
+    if (memoryUrlCache.has(cleanId)) {
+        imgElement.src = memoryUrlCache.get(cleanId);
         return;
     }
 
-    // MODO OFFLINE: Usar caché local como fallback prioritario
+    // 2. Estrategia Local-First: Recuperar desde IndexedDB tanto online como offline
     try {
-        // 1. Intentar obtener del caché local (IndexedDB) con un timeout agresivo
-        const blob = await Promise.race([
-            offline.getThumbnail(fileId),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("DB Timeout")), 1000))
+        const cachedBlob = await Promise.race([
+            offline.getThumbnail(cleanId),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("DB Timeout")), 800))
         ]).catch(() => null);
 
-        if (blob) {
-            imgElement.src = URL.createObjectURL(blob);
+        if (cachedBlob) {
+            const objectUrl = URL.createObjectURL(cachedBlob);
+            memoryUrlCache.set(cleanId, objectUrl);
+            imgElement.src = objectUrl;
             return;
         }
-
-        // 2. Si no está en caché local, intentar red (como último recurso, aunque estemos marcados como offline)
-        imgElement.src = remoteUrl;
     } catch (e) {
-        console.warn("Error en setOptimizedImage:", e);
-        // Fallback final a la URL directa de Drive
-        imgElement.src = getImageUrl(fileId, size);
+        // Continuar a red si falla la lectura local
+    }
+
+    // 3. Cargar desde la red (Google Drive CDN) si no está presente en el caché local
+    const remoteUrl = getImageUrl(cleanId, size);
+    imgElement.src = remoteUrl;
+
+    // 4. Compresión y persistencia en segundo plano para uso offline/futuro
+    if (cleanId && typeof cleanId === 'string' && !cleanId.startsWith('blob:') && !cleanId.includes('placehold.co')) {
+        offline.compressAndStoreThumbnail(remoteUrl, cleanId).then(blob => {
+            if (blob) {
+                const objectUrl = URL.createObjectURL(blob);
+                memoryUrlCache.set(cleanId, objectUrl);
+            }
+        }).catch(() => {});
     }
 }
 
@@ -307,10 +362,9 @@ export function getImageUrl(fileId, size = 400) {
         return placeholder;
     }
 
-    // Optimización de resolución: duplicar tamaño para pantallas Retina si es pequeño
-    const finalSize = (typeof size === 'number' && size < 600) ? size * 2 : size;
-    const sizeParam = typeof finalSize === 'number' ? `w${finalSize}` : finalSize;
-    return `https://drive.google.com/thumbnail?id=${id}&sz=${sizeParam}`;
+    /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES */
+    // Evitar parámetros de miniaturas (=w / =s) de Google que convierten PNGs transparentes a JPEG con fondo negro
+    return `https://lh3.googleusercontent.com/d/${id}`;
 }
 
 export function getLogoUrlForMarca(marca, categoria) {
@@ -862,6 +916,7 @@ export function regresarABusqueda() {
     }
 }
 
+/* TAREA 7 (B18): CONTEXTO 'ORIGIN' MARCA/CATEGORÍA Y RETORNO LIMPIO SIN BUCLES */
 export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
     const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
@@ -1246,6 +1301,7 @@ function showValidationBanner(item, isOldModel) {
  * @param {string} searchData.query - El texto original de la búsqueda.
  * @param {Array} searchData.results - El array de resultados (strings de marcas o objetos de modelos).
  */
+/* TAREA 7 (B06): DISTINCIÓN ENTRE BÚSQUEDA ACTIVA Y RESTAURACIÓN DEL HISTORIAL CON AUTO-OPEN */
 // --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
 export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen = true) {
     const cont = document.getElementById("contenido");
@@ -1276,15 +1332,18 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
         });
     } else {
         // Renderizado para resultados de tipo MODELO (y por defecto).
-
-        // De-duplicar los resultados para mostrar solo una tarjeta por variante única (modelo + categoría + versión).
-        // Esto evita mostrar una tarjeta para cada año del mismo vehículo y diferencia variantes de distinta categoría.
-        const variantesUnicas = [...new Map(results.map(item => {
-            const key = `${item.marca}|${item.modelo}|${item.categoria}|${item.versionesAplicables || ''}`;
+        // Agrupar los resultados primero por Modelo único (Marca + Modelo)
+        /* TAREA 4: Evitar que elementos de Relay, Tutoriales o PyS se colapsen indebidamente a una sola tarjeta */
+        const modelosUnicos = [...new Map(results.map((item, idx) => {
+            if (item._sectionType) {
+                const secId = item.ID || item.id || item.Tema || item.configuracion || item.Problema || idx;
+                return [`${item._sectionType}|${secId}`, item];
+            }
+            const key = `${item.marca}|${item.modelo}`;
             return [key, item];
         })).values()];
 
-        variantesUnicas.forEach(ejemplo => {
+        modelosUnicos.forEach(ejemplo => {
             const card = crearCardVehiculo(ejemplo, false, results);
             grid.appendChild(card);
         });
@@ -1292,17 +1351,20 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
 
     cont.appendChild(grid);
 
-    // Caso especial: Si solo hay un resultado de modelo, se muestra directamente el modal de detalle.
-    // Phase 2.1.5: Se añade la bandera 'autoOpen' para evitar la reapertura del modal al navegar hacia atrás
-    // en el historial (popstate).
-    if (autoOpen && type === 'modelo' && results.length === 1) {
-        // Retirar el foco de la barra de búsqueda para ocultar el teclado virtual
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) searchInput.blur();
+    // Caso especial: Si solo existe 1 modelo con 1 versión aplicable y 1 solo rango de año, abrir directamente el modal de detalle.
+    if (autoOpen && type === 'modelo') {
+        const uniqueModels = [...new Set(results.map(r => `${r.marca}|${r.modelo}`))];
+        const uniqueVersions = [...new Set(results.map(r => r.versionesAplicables || ''))];
+        const uniqueYears = [...new Set(results.map(r => `${r.anoDesde}-${r.anoHasta || ''}`))];
 
-        setTimeout(() => {
-            mostrarDetalleModal(results[0]);
-        }, 150);
+        if (uniqueModels.length === 1 && uniqueVersions.length === 1 && uniqueYears.length === 1 && results.length === 1) {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.blur();
+
+            setTimeout(() => {
+                mostrarDetalleModal(results[0]);
+            }, 150);
+        }
     }
 }
 
@@ -1314,7 +1376,7 @@ export function showNoResultsMessage(textoBusqueda) {
 function createDetailParagraph(label, text) {
     if (text) {
         const p = document.createElement('p');
-        p.innerHTML = `<strong>${label}:</strong> ${text}`;
+        p.innerHTML = `<strong>${label}:</strong> ${sanitizeHtmlContent(text)}`;
         return p;
     }
     return null;
@@ -1336,8 +1398,9 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
+    // Tarea 1.6: Corrección y compactación de la cabecera del modal de detalle
     const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px; gap: 10px;";
+    headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 4px; gap: 8px;";
 
     // Indicador visual de guardado/comunicación para modo edición
     const savingIndicator = document.createElement("div");
@@ -1350,6 +1413,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>';
     shareBtn.className = "share-modal-btn";
     shareBtn.title = "Compartir este vehículo";
+    /* TAREA 8 (B10, B11, B23): COMPARTIR MODELO Y REDIRECCIONAMIENTO PRECISO CON DEEP LINKING */
     shareBtn.onclick = () => {
         const queryParts = [
             activeItem.marca,
@@ -1379,6 +1443,14 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     };
     headerDiv.appendChild(shareBtn);
+
+    // Botón Imprimir Ficha Técnica
+    const printBtn = document.createElement("button");
+    printBtn.innerHTML = '<i class="fa-solid fa-print"></i>';
+    printBtn.className = "share-modal-btn";
+    printBtn.title = "Imprimir / Exportar Ficha Técnica";
+    printBtn.onclick = () => exportVehiclePrintSheet(activeItem);
+    headerDiv.appendChild(printBtn);
 
     const sessionData = localStorage.getItem('gpsepedia_session');
     const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
@@ -1449,14 +1521,14 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     };
     closeBtn.className = "info-close-btn";
-    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 10px;";
+    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 4px;";
     headerDiv.appendChild(closeBtn);
     cont.appendChild(headerDiv);
 
     // Comentario: Se ajusta el layout del encabezado para cumplir con el nuevo requisito (logo a la izquierda).
     // Se añade 'flex-wrap: wrap' para evitar scroll horizontal en móviles con logos anchos.
     const titleContainer = document.createElement("div");
-    titleContainer.style.cssText = "border-bottom: 3px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
+    titleContainer.style.cssText = "border-bottom: 2px solid #007bff; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
 
     const logoUrl = getLogoUrlForMarca(activeItem.marca, activeItem.categoria);
     if (logoUrl) {
@@ -1503,17 +1575,34 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     const subHeaderText = document.createElement('p');
     subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
 
-    // Tarea 5: Identificar todas las generaciones del mismo modelo
+    /* TAREA: NAVEGACIÓN ENTRE GENERACIONES BASADA EN CONTINUIDAD DE VERSIONES DE EQUIPAMIENTO */
     const allCortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
 
-    const normalizedItemVersion = normalizeVersion(activeItem.versionesAplicables);
-    const generations = allCortes.filter(c =>
-        String(c.marca).toLowerCase() === String(activeItem.marca).toLowerCase() &&
-        String(c.modelo).toLowerCase() === String(activeItem.modelo).toLowerCase() &&
-        String(c.categoria).toLowerCase() === String(activeItem.categoria).toLowerCase() &&
-        String(c.tipoEncendido).toLowerCase() === String(activeItem.tipoEncendido).toLowerCase() &&
-        normalizeVersion(c.versionesAplicables) === normalizedItemVersion
-    ).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
+    const activeItemVersions = parseEquipmentVersions(activeItem.versionesAplicables).map(v => v.toLowerCase());
+
+    const generations = allCortes.filter(c => {
+        if (String(c.marca).toLowerCase() !== String(activeItem.marca).toLowerCase() ||
+            String(c.modelo).toLowerCase() !== String(activeItem.modelo).toLowerCase() ||
+            String(c.categoria).toLowerCase() !== String(activeItem.categoria).toLowerCase()) {
+            return false;
+        }
+
+        // Si tienen tipos de encendido diferentes, no pertenecen a la misma línea
+        if (activeItem.tipoEncendido && c.tipoEncendido &&
+            String(c.tipoEncendido).toLowerCase() !== String(activeItem.tipoEncendido).toLowerCase()) {
+            return false;
+        }
+
+        // Continuidad de versiones de equipamiento:
+        // Si alguno no tiene versiones especificadas, se considera continuo
+        const cVersions = parseEquipmentVersions(c.versionesAplicables).map(v => v.toLowerCase());
+        if (activeItemVersions.length === 0 || cVersions.length === 0) {
+            return true;
+        }
+
+        // Si ambos tienen versiones, debe existir al menos una versión en común
+        return activeItemVersions.some(av => cVersions.includes(av));
+    }).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
 
     const currentIndex = generations.findIndex(g => String(g.id) === String(activeItem.id));
 
@@ -1613,6 +1702,22 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             await saveFieldSilently(activeItem.id, 'categoria', catSelect.value);
         };
 
+        // 5. VIN / Chasis
+        const vinLabel = document.createElement('label');
+        vinLabel.textContent = "Colección de VINs / Chasis:";
+        vinLabel.style.fontSize = "0.85em";
+        const vinInput = document.createElement('input');
+        vinInput.type = "text";
+        vinInput.value = activeItem.vin || "";
+        vinInput.placeholder = 'ej. ["1HGCM82633A", "2HGCM82633B"]';
+        vinInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        vinInput.onblur = async () => {
+            if (vinInput.value.trim() !== editedItemBuffer.vin) {
+                editedItemBuffer.vin = vinInput.value.trim();
+                await saveFieldSilently(activeItem.id, 'vin', vinInput.value.trim());
+            }
+        };
+
         editHeaderWrapper.appendChild(versLabel);
         editHeaderWrapper.appendChild(versInput);
         editHeaderWrapper.appendChild(encLabel);
@@ -1621,6 +1726,8 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         editHeaderWrapper.appendChild(yearsWrapper);
         editHeaderWrapper.appendChild(catLabel);
         editHeaderWrapper.appendChild(catSelect);
+        editHeaderWrapper.appendChild(vinLabel);
+        editHeaderWrapper.appendChild(vinInput);
 
         subHeaderText.appendChild(editHeaderWrapper);
     } else {
@@ -1658,8 +1765,26 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             yearRangeContainer.appendChild(yearTextSpan);
         }
 
-        const equipamiento = activeItem.versionesAplicables || activeItem.tipoEncendido || '';
-        subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | `;
+        /* TAREA: PRESENTACIÓN VISUAL DE VERSIONES Y DÍGITOS DE CHASIS CON SEPARADOR "/" */
+        const mappedVersions = mapVersionsWithVins(activeItem.versionesAplicables, activeItem.vin);
+        let equipamientoHtml = '';
+
+        if (mappedVersions.length > 0) {
+            equipamientoHtml = mappedVersions.map(mv => {
+                if (mv.version && mv.vin) {
+                    return `${mv.version} <span class="chassis-digits" style="font-size: 0.82em; font-weight: normal; opacity: 0.85;">(${mv.vin})</span>`;
+                } else if (mv.version) {
+                    return mv.version;
+                } else if (mv.vin) {
+                    return `<span class="chassis-digits" style="font-size: 0.82em; font-weight: normal; opacity: 0.85;">(${mv.vin})</span>`;
+                }
+                return '';
+            }).filter(Boolean).join(' / ');
+        } else {
+            equipamientoHtml = activeItem.tipoEncendido || '';
+        }
+
+        subHeaderText.innerHTML = `<strong>${equipamientoHtml}</strong> | `;
         subHeaderText.appendChild(yearRangeContainer);
 
         if(activeItem.categoria) {
@@ -1744,7 +1869,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
         recommendedSection.appendChild(title);
         // El corte recomendado se carga de inmediato (isLazy = false)
-        renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false);
+        renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false, recommendedCut.index);
         cont.appendChild(recommendedSection);
     }
 
@@ -1754,6 +1879,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     const otherSections = [
         ...cortes.map((corte, idx) => ({
             isCorte: true,
+            corteIndex: corte.index || (idx + 2),
             title: `Corte Alternativo ${idx + 1} (Votos: ${corte.util})`,
             data: corte
         })),
@@ -1781,7 +1907,23 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     });
 
+    /* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL ACORDEÓN «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+    renderPosiblesProblemasAccordion(accordionContainer, activeItem);
+
     const modalDetalle = document.getElementById("modalDetalle");
+    if (!window.inEditMode) {
+        // TAREA 1.5 / 1.8: RECUPERACIÓN, AJUSTE Y REEJECUCIÓN DEL BOTÓN (+) EN EL MODAL DE DETALLE DEL VEHÍCULO
+        const plusBtn = document.createElement("button");
+        plusBtn.className = "btn-expand-plus";
+        plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+        plusBtn.title = "Ampliar información del modelo";
+        plusBtn.onclick = (e) => {
+            e.stopPropagation();
+            openExpandMenuModal(item);
+        };
+        cont.appendChild(plusBtn);
+    }
+
     modalDetalle.dataset.modalType = 'corte';
     modalDetalle.classList.add("visible");
     if (!isNavigation && window.history && window.history.pushState) {
@@ -2089,7 +2231,182 @@ async function insertNewVehicleFluently(item) {
     }
 }
 
-function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false) {
+/* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+function createPysCard(item) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.setAttribute("data-problem-id", item.id_problem || item.id || "");
+    card.style.animation = "none";
+    card.style.opacity = "1";
+    card.onclick = () => openPysDetailModal(item);
+
+    const img = document.createElement("img");
+    img.className = "card-img-top";
+    img.alt = item.Problema || "Problema técnico";
+    img.loading = "lazy";
+    setOptimizedImage(img, item.Imagen || "", IMG_SIZE_SMALL);
+    card.appendChild(img);
+
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+    const statusText = item.Se_soluciono === "x" ? "Solucionado" : "Sin solución";
+    const statusColor = item.Se_soluciono === "x" ? "#28a745" : "#dc3545";
+    overlay.innerHTML = `
+        <div class="overlay-text-primary" style="font-size: 0.85rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.Problema || "Problema"}</div>
+        <div class="overlay-text-secondary" style="font-size: 0.75rem; color: ${statusColor}; font-weight: bold;">${statusText}</div>
+    `;
+    card.appendChild(overlay);
+
+    return card;
+}
+
+export function renderPosiblesProblemasAccordion(container, activeItem) {
+    if (!container || !activeItem || !activeItem.id) return;
+    const vehicleIdStr = String(activeItem.id);
+
+    // Contenedor dinámico del acordeón para poder actualizarlo si se descargan datos nuevos
+    let wrapper = container.querySelector("#posibles-problemas-wrapper");
+    if (!wrapper) {
+        wrapper = document.createElement("div");
+        wrapper.id = "posibles-problemas-wrapper";
+        container.appendChild(wrapper);
+    }
+
+    const updateAccordion = (rawPysData) => {
+        wrapper.innerHTML = "";
+        const allPys = Array.isArray(rawPysData) ? rawPysData : [];
+        // Filtrar estrictamente por el identificador del modelo y de-duplicar por ID de problema
+        const seenIds = new Set();
+        const relatedProblems = [];
+
+        allPys.forEach(p => {
+            if (!p || !Array.isArray(p.modelosAsociados)) return;
+            const matches = p.modelosAsociados.some(mId => String(mId) === vehicleIdStr);
+            if (matches) {
+                const pId = p.id_problem || p.id || p.Problema;
+                if (!seenIds.has(pId)) {
+                    seenIds.add(pId);
+                    relatedProblems.push(p);
+                }
+            }
+        });
+
+        // REQUISITO: Si no existen problemas relacionados, no mostrar el acordeón vacío
+        if (relatedProblems.length === 0) {
+            return;
+        }
+
+        // Crear el botón acordeón con el título exacto requerido: «Posibles problemas»
+        const btn = document.createElement("button");
+        btn.className = "accordion-btn";
+        btn.innerHTML = `Posibles problemas <span class="accordion-arrow">▼</span>`;
+
+        const panel = document.createElement("div");
+        panel.className = "panel-desplegable";
+        panel.style.display = "none";
+        panel.style.padding = "15px 10px";
+
+        if (relatedProblems.length === 1) {
+            // REQUISITO: Si existe un solo problema, mostrar su tarjeta
+            const singleCardContainer = document.createElement("div");
+            singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; width: 100%;";
+            const singleCard = createPysCard(relatedProblems[0]);
+            singleCardContainer.appendChild(singleCard);
+            panel.appendChild(singleCardContainer);
+        } else {
+            // REQUISITO: Si existen varios problemas, mostrarlos mediante un carrusel navegable
+            const carouselContainer = document.createElement("div");
+            carouselContainer.className = "carousel-container";
+            const carouselTrack = document.createElement("div");
+            carouselTrack.className = "carousel-track";
+
+            relatedProblems.forEach(p => {
+                const card = createPysCard(p);
+                carouselTrack.appendChild(card);
+            });
+            carouselContainer.appendChild(carouselTrack);
+
+            const prevBtn = document.createElement("button");
+            prevBtn.className = "carousel-btn prev";
+            prevBtn.innerHTML = "&#10094;";
+            carouselContainer.appendChild(prevBtn);
+
+            const nextBtn = document.createElement("button");
+            nextBtn.className = "carousel-btn next";
+            nextBtn.innerHTML = "&#10095;";
+            carouselContainer.appendChild(nextBtn);
+
+            const cardWidth = 140 + 20;
+            const getVisibleCards = () => {
+                const containerWidth = carouselContainer.offsetWidth || 300;
+                return Math.floor(containerWidth / cardWidth) || 1;
+            };
+
+            const updateCarouselButtons = () => {
+                const scrollLeft = carouselTrack.scrollLeft;
+                const maxScrollLeft = carouselTrack.scrollWidth - carouselTrack.clientWidth;
+                prevBtn.style.display = scrollLeft > 2 ? "flex" : "none";
+                nextBtn.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+            };
+
+            nextBtn.addEventListener("click", () => {
+                carouselTrack.scrollBy({ left: cardWidth * getVisibleCards(), behavior: "smooth" });
+            });
+
+            prevBtn.addEventListener("click", () => {
+                carouselTrack.scrollBy({ left: -cardWidth * getVisibleCards(), behavior: "smooth" });
+            });
+
+            carouselTrack.addEventListener("scroll", () => setTimeout(updateCarouselButtons, 100));
+            window.addEventListener("resize", () => setTimeout(updateCarouselButtons, 100));
+            setTimeout(updateCarouselButtons, 200);
+
+            panel.appendChild(carouselContainer);
+        }
+
+        btn.onclick = () => {
+            const isOpening = panel.style.display === "none";
+            panel.style.display = isOpening ? "block" : "none";
+            btn.classList.toggle("active", isOpening);
+            const arrow = btn.querySelector(".accordion-arrow");
+            if (arrow) arrow.textContent = isOpening ? "▲" : "▼";
+
+            if (isOpening && relatedProblems.length > 1) {
+                const track = panel.querySelector(".carousel-track");
+                const prev = panel.querySelector(".carousel-btn.prev");
+                const next = panel.querySelector(".carousel-btn.next");
+                if (track && prev && next) {
+                    const scrollLeft = track.scrollLeft;
+                    const maxScrollLeft = track.scrollWidth - track.clientWidth;
+                    prev.style.display = scrollLeft > 2 ? "flex" : "none";
+                    next.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+                }
+            }
+        };
+
+        wrapper.appendChild(btn);
+        wrapper.appendChild(panel);
+    };
+
+    // 1. Evaluar si ya existen datos en caché en el estado
+    const cachedPys = getState().pysData;
+    if (Array.isArray(cachedPys) && cachedPys.length > 0) {
+        updateAccordion(cachedPys);
+    }
+
+    // 2. Consultar siempre de forma asíncrona para asegurar que no falten datos ni relaciones recientes
+    routeAction("getPysData").then(res => {
+        if (res && res.data && Array.isArray(res.data)) {
+            setState({ pysData: res.data });
+            updateAccordion(res.data);
+        }
+    }).catch(err => {
+        console.warn("No se pudo sincronizar pysData en detalle de vehículo:", err);
+    });
+}
+
+
+function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false, index = 0) {
     if (inEditMode) {
         const idx = cutData.index;
         const editCutsWrapper = document.createElement('div');
@@ -2222,7 +2539,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         }
         imgContainer.appendChild(img);
 
-        if (!inEditMode) {
+        if (!window.inEditMode) {
             const feedbackOverlay = document.createElement('div');
             feedbackOverlay.className = 'feedback-overlay';
 
@@ -2278,12 +2595,13 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         };
         feedbackOverlay.appendChild(utilBtn);
 
+        // Tarea 2.1: Botón de reporte individual en cada corte
+        const corteNum = cutData.index || index || 1;
         const reportBtn = document.createElement('button');
         reportBtn.className = 'feedback-btn-overlay report-btn';
         reportBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
-        reportBtn.title = 'Reportar un problema';
+        reportBtn.title = `Reportar error en Corte #${corteNum}`;
 
-        // Optimistic UI for reportProblem
         reportBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -2294,18 +2612,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
                 return;
             }
 
-            const reason = window.prompt("Describe el problema con este corte:");
-            if (reason && reason.trim()) {
-                reportBtn.classList.add('btn-loading');
-                reportProblem(vehicleId, reason, currentUser.ID, currentUser.Nombre_Completo || currentUser.Nombre_Usuario).then(() => {
-                    alert("Reporte enviado. Gracias por tu ayuda.");
-                }).catch(err => {
-                    console.error("Error reporting problem:", err);
-                    showGlobalError("Error al enviar reporte.");
-                }).finally(() => {
-                    reportBtn.classList.remove('btn-loading');
-                });
-            }
+            openReportCutModal(vehicleId, corteNum, cutData);
         };
         feedbackOverlay.appendChild(reportBtn);
 
@@ -2480,6 +2787,7 @@ export const openInbox = setupModal('inbox-modal', async () => {
     }
 });
 
+/* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
 export const openDevTools = setupModal('dev-tools-modal', () => {
     document.getElementById('dev-tools-modal').style.display = 'flex';
     initAdminPanelListeners();
@@ -2525,6 +2833,39 @@ function initAdminPanelListeners() {
     }
     window.adminListenersAttached = true;
 
+    // Escaneo de salud de todos los microservicios
+    async function runServicesHealthScan() {
+        const healthGrid = document.getElementById('services-health-grid');
+        if (healthGrid) {
+            healthGrid.innerHTML = `<span style="color: var(--text-disabled); font-style: italic; grid-column: span 2;">Escaneando microservicios...</span>`;
+        }
+        log("[SALUD] Ejecutando diagnóstico de latencia y estado en los microservicios...");
+        try {
+            const healthResults = await checkAllServicesHealth();
+            if (healthGrid) {
+                healthGrid.innerHTML = '';
+                Object.keys(healthResults).forEach(srvKey => {
+                    const item = healthResults[srvKey];
+                    const div = document.createElement('div');
+                    div.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.05); font-size: 0.8em;";
+
+                    const isOnline = item.status === 'online';
+                    const statusDot = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${isOnline ? '#28a745' : '#dc3545'}; margin-right:6px;"></span>`;
+                    div.innerHTML = `<div>${statusDot}<strong>${srvKey}</strong></div><span style="color:${isOnline ? 'var(--text-color)' : '#dc3545'}; font-family:monospace;">${isOnline ? item.latency + 'ms' : 'Error'}</span>`;
+                    healthGrid.appendChild(div);
+                });
+            }
+            log("[SALUD] Escaneo de salud completado.");
+        } catch (e) {
+            log(`[SALUD ERROR] Fallo al escanear servicios: ${e.message}`, false, true);
+        }
+    }
+
+    const scanBtn = document.getElementById('btn-check-services-health');
+    if (scanBtn) {
+        scanBtn.onclick = () => runServicesHealthScan();
+    }
+
     // Conectividad automática e inicio
     window.triggerAdminPanelPing = async function() {
         consoleLog.innerHTML = ''; // Limpiar consola al abrir
@@ -2545,6 +2886,7 @@ function initAdminPanelListeners() {
         } catch (error) {
             log("No fue posible establecer comunicación con el microservicio.", false, true);
         }
+        runServicesHealthScan();
         log("Esperando operaciones...");
     };
 
@@ -2839,6 +3181,101 @@ ${elapsedSec}s
         }
     }
 
+    // --- NAVEGACIÓN Y COMANDOS DE TERMINAL DRIVE (cd, dir, tree, mkdir, move) ---
+    let currentTerminalFolderId = null;
+    let commandHistory = [];
+    let commandHistoryIndex = -1;
+
+    async function executeTerminalCommand(inputCmd) {
+        if (!inputCmd || !inputCmd.trim()) return;
+        const rawCmd = inputCmd.trim();
+        commandHistory.push(rawCmd);
+        commandHistoryIndex = commandHistory.length;
+
+        log(`> ${rawCmd}`);
+
+        const parts = rawCmd.split(/\s+/);
+        let cmd = parts[0].toLowerCase();
+        let args = parts.slice(1).join(' ');
+
+        // Soportar cd /d D:\ o cd \ o cd ..
+        if (cmd === 'cd' && (args.startsWith('/d') || args.startsWith('/D'))) {
+            args = args.replace(/^\/[dD]\s*/, '');
+        }
+
+        try {
+            const res = await routeAction('driveCommand', {
+                command: cmd,
+                args: args,
+                currentFolderId: currentTerminalFolderId
+            });
+
+            if (res && res.status === 'success') {
+                if (res.currentFolder) {
+                    currentTerminalFolderId = res.currentFolder.id;
+                    log(`Ruta actual: [${res.currentFolder.name}] (${res.currentFolder.id})`);
+                }
+                if (res.tree) {
+                    log(`\n${res.tree}`);
+                }
+                if (res.folders || res.files) {
+                    if (res.folders.length === 0 && res.files.length === 0) {
+                        log("(Carpeta vacía)");
+                    }
+                    res.folders.forEach(f => {
+                        log(`📁 [${f.name}]  (Escribe 'cd ${f.name}' para entrar)`);
+                    });
+                    res.files.forEach(f => {
+                        log(`📄 ${f.name} (${(f.size / 1024).toFixed(1)} KB)`);
+                    });
+                }
+                if (res.message) {
+                    log(`[DRIVE] ${res.message}`);
+                }
+            } else {
+                log(`[ERROR TERMINAL] ${res ? res.message : 'Error al ejecutar comando.'}`, false, true);
+            }
+        } catch (err) {
+            log(`[ERROR TERMINAL] ${err.message}`, false, true);
+        }
+    }
+
+    const termInput = document.getElementById('dev-terminal-input');
+    const termSendBtn = document.getElementById('btn-terminal-send');
+
+    if (termInput) {
+        termInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const val = termInput.value;
+                termInput.value = '';
+                await executeTerminalCommand(val);
+            } else if (e.key === 'ArrowUp') {
+                if (commandHistory.length > 0 && commandHistoryIndex > 0) {
+                    commandHistoryIndex--;
+                    termInput.value = commandHistory[commandHistoryIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (commandHistoryIndex < commandHistory.length - 1) {
+                    commandHistoryIndex++;
+                    termInput.value = commandHistory[commandHistoryIndex];
+                } else {
+                    commandHistoryIndex = commandHistory.length;
+                    termInput.value = '';
+                }
+            }
+        });
+    }
+
+    if (termSendBtn) {
+        termSendBtn.onclick = async () => {
+            if (termInput && termInput.value) {
+                const val = termInput.value;
+                termInput.value = '';
+                await executeTerminalCommand(val);
+            }
+        };
+    }
+
     // Botón Copiar Registro de errores y advertencias críticas
     const btnCopyLog = document.getElementById('btn-copy-console-log');
     if (btnCopyLog) {
@@ -2946,6 +3383,60 @@ ${elapsedSec}s
             await runAction('restoreAllTrashedImages');
         }
     };
+
+    // Vaciar Caché Local de Cliente (IndexedDB/Storage)
+    const clearCacheBtn = document.getElementById('btn-admin-clear-client-cache');
+    if (clearCacheBtn) {
+        clearCacheBtn.onclick = async () => {
+            if (confirm("¿Deseas VACIAR la caché local de IndexedDB y localStorage del navegador?\n\nEsto forzará a la aplicación a descargar datos e imágenes frescas desde los microservicios.")) {
+                try {
+                    log("[SISTEMA] Vaciando IndexedDB y caché local...");
+                    if (window.indexedDB) {
+                        try {
+                            window.indexedDB.deleteDatabase('GPSpedia_DB');
+                        } catch (e) {}
+                    }
+                    localStorage.removeItem('gpsepedia_catalog_cache');
+                    localStorage.removeItem('gpsepedia_pending_operation');
+                    log("[EXITO] Caché local eliminada correctamente. Recargando la aplicación...");
+                    mostrarNotificacion("Caché local vaciada. Recargando...", "success");
+                    setTimeout(() => window.location.reload(), 1200);
+                } catch (e) {
+                    log(`[ERROR] Fallo al vaciar caché local: ${e.message}`, false, true);
+                }
+            }
+        };
+    }
+
+    // Purgar Logs de Actividad / Eventos
+    const clearLogsBtn = document.getElementById('btn-admin-clear-activity-logs');
+    if (clearLogsBtn) {
+        clearLogsBtn.onclick = async () => {
+            const selectEl = document.getElementById('clear-logs-option-select');
+            const keepLastWeek = selectEl ? selectEl.value === 'week' : false;
+            const promptText = keepLastWeek
+                ? "¿Estás seguro de que deseas ELIMINAR los registros de eventos con antigüedad MAYOR a una semana? (Los de los últimos 7 días se conservarán)."
+                : "¿Estás seguro de que deseas BORRAR TODOS los registros de eventos y logs de actividad?";
+
+            if (confirm(promptText)) {
+                try {
+                    clearLogsBtn.disabled = true;
+                    log(`Iniciando purga de logs de actividad (Conservar última semana: ${keepLastWeek ? 'Sí' : 'No'})...`);
+                    const res = await clearActivityLogs(keepLastWeek);
+                    if (res && res.status === 'success') {
+                        log(`[EXITO] ${res.message}`);
+                        mostrarNotificacion(res.message, 'success');
+                    } else {
+                        log(`[ERROR] No se pudo purgar los logs: ${res ? res.message : 'Error desconocido'}`, false, true);
+                    }
+                } catch (err) {
+                    log(`[EXCEPCION] Error al purgar logs: ${err.message}`, false, true);
+                } finally {
+                    clearLogsBtn.disabled = false;
+                }
+            }
+        };
+    }
 
     // Botón Agregar corte silencioso
     const silentCutBtn = document.getElementById('btn-admin-add-silent-cut');
@@ -3088,10 +3579,13 @@ function renderInboxDetail(item) {
         }
         <div class="inbox-actions">
             <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
-            <button id="inbox-reply-btn">Enviar Respuesta</button>
-            ${item.type === 'problem_report' && !item.isResolved ?
-                `<button id="inbox-resolve-btn" class="resolve-btn">Marcar como Resuelto</button>` : ''
-            }
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
+                ${item.type === 'problem_report' && !item.isResolved ?
+                    `<button id="inbox-resolve-btn" class="resolve-btn btn btn-secondary">Marcar como Resuelto</button>` : ''
+                }
+                <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+            </div>
         </div>
     `;
 
@@ -3119,11 +3613,32 @@ function renderInboxDetail(item) {
              try {
                 resolveBtn.classList.add('btn-loading');
                 await markAsResolved(item.id);
+                inboxCacheData = null;
                 openInbox();
             } catch (error) {
                 showGlobalError(`Error al resolver: ${error.message}`);
             } finally {
                 resolveBtn.classList.remove('btn-loading');
+            }
+        });
+    }
+
+    const deleteBtn = document.getElementById('inbox-delete-btn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+            if (confirm("¿Estás seguro de que deseas eliminar permanentemente este mensaje del Inbox?")) {
+                try {
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...`;
+                    await deleteFeedbackItem(item.id, item.type);
+                    inboxCacheData = null;
+                    mostrarNotificacion("Mensaje eliminado con éxito", "success");
+                    openInbox();
+                } catch (error) {
+                    showGlobalError(`Error al eliminar mensaje: ${error.message}`);
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i> Borrar Mensaje`;
+                }
             }
         });
     }
@@ -3166,7 +3681,8 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
 
     if (sec.isCorte) {
         // Los cortes dentro de acordeones son diferidos (isLazy = true)
-        renderCutContent(panel, sec.data, datosRelay, vehicleId, true);
+        const cIndex = sec.corteIndex || (sec.data && sec.data.index) || 2;
+        renderCutContent(panel, sec.data, datosRelay, vehicleId, true, cIndex);
     } else if (inEditMode && (title === 'Apertura' || title === 'Cables de Alimentación')) {
         if (title === 'Apertura') {
             const fieldName = 'apertura';
@@ -3498,21 +4014,32 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
 
     const card = document.createElement("div");
     card.className = "card";
-    card.setAttribute('data-vehicle-id', item.id);
+    card.setAttribute('data-vehicle-id', item.id || '');
     card.style.animation = 'none';
     card.style.opacity = '1';
 
-    // Badge de "Visto"
-    if (isViewed) {
+    // Badge de tipo de sección si es un resultado multi-sección
+    if (item._sectionType && item._sectionType !== 'corte') {
+        const typeBadge = document.createElement('div');
+        typeBadge.className = 'viewed-badge';
+        typeBadge.style.cssText = 'background: #007bff; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; position: absolute; top: 8px; left: 8px; z-index: 2;';
+        typeBadge.innerText = item._sectionType.toUpperCase();
+        card.appendChild(typeBadge);
+    } else if (isViewed) {
         const badge = document.createElement('div');
         badge.className = 'viewed-badge';
         badge.innerHTML = '<i class="fa-solid fa-eye"></i> Visto';
         card.appendChild(badge);
     }
 
-    // Configurar OnClick según el contexto
-    if (resultsForVariant) {
-        // Contexto: Resultados de búsqueda (Variantes)
+    // Configurar OnClick según la sección
+    if (item._sectionType === 'relay') {
+        card.onclick = () => mostrarDetalleRelayModal(item);
+    } else if (item._sectionType === 'tutorial') {
+        card.onclick = () => mostrarDetalleTutorialModal(item);
+    } else if (item._sectionType === 'pys') {
+        card.onclick = () => openPysDetailModal(item);
+    } else if (resultsForVariant) {
         card.onclick = () => {
             const filasDeVariante = resultsForVariant.filter(r =>
                 r.marca === item.marca &&
@@ -3522,14 +4049,10 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
             mostrarVersiones(filasDeVariante, item.categoria, item.marca, item.modelo);
         };
     } else if (item.anoDesde && !resultsForVariant) {
-        // Contexto: Lista de años o carruseles (Item específico)
         card.onclick = () => {
-            // Phase 2.1.5: Si se abre desde un carrusel (Vistos Recientemente), limpiar el hash de búsqueda
-            // para evitar que al retroceder se restauren resultados antiguos o contextos irrelevantes.
-            if (hideBadge) { // hideBadge es true en el carrusel de Vistos Recientemente
+            if (hideBadge) {
                 if (window.location.hash.startsWith('#search=')) {
                     history.replaceState({ level: 'categorias' }, '', window.location.pathname + window.location.search);
-                    // También limpiar el input visualmente
                     const searchInput = document.getElementById('searchInput');
                     if (searchInput) {
                         searchInput.value = '';
@@ -3545,19 +4068,18 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
 
     const img = document.createElement("img");
     img.className = 'card-img-top';
-    img.alt = `${item.marca} ${item.modelo}`;
+    img.alt = `${item.marca || ''} ${item.modelo || ''}`;
     img.loading = "lazy";
 
-    // Intentar cargar desde IndexedDB mediante la función centralizada
-    setOptimizedImage(img, item.imagenVehiculo, IMG_SIZE_SMALL);
-
+    setOptimizedImage(img, item.Imagen || item.imagenVehiculo || item.imagen, IMG_SIZE_SMALL);
     card.appendChild(img);
 
     const overlay = document.createElement("div");
     overlay.className = "overlay";
 
-    if (resultsForVariant) {
-        // UI para variantes en búsqueda
+    if (item._sectionType && item._sectionType !== 'corte') {
+        overlay.innerHTML = `<div class="overlay-text-primary">${item.marca || ''}</div><div class="overlay-text-secondary">${item.modelo || ''}</div>`;
+    } else if (resultsForVariant) {
         const version = item.versionesAplicables || '';
         const tiposEncendido = [...new Set(resultsForVariant
             .filter(r => r.marca === item.marca && r.modelo === item.modelo && r.categoria === item.categoria && r.versionesAplicables === item.versionesAplicables)
@@ -3565,7 +4087,6 @@ function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
 
         overlay.innerHTML = `<div class="overlay-text-primary">${item.marca} ${item.modelo}</div><div class="overlay-text-secondary">${item.categoria} | ${version || tiposEncendido}</div>`;
     } else {
-        // UI para items específicos
         const yearRange = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
         overlay.innerHTML = `<div class="overlay-text-primary">${item.marca} ${item.modelo}</div><div class="overlay-text-secondary">${yearRange} | ${item.tipoEncendido || ''}</div>`;
     }
@@ -3721,6 +4242,31 @@ export function showGlobalError(message) {
     }, 7000);
 }
 
+/* TAREA 1: Alias y función unificada de notificación para Inbox y operaciones del sistema */
+export function mostrarNotificacion(message, type = 'info') {
+    return showGlobalNotification(message, type);
+}
+
+export function showGlobalNotification(message, type = 'info') {
+    const toast = document.getElementById('notification-toast');
+    if (!toast) {
+        alert(message);
+        return;
+    }
+    toast.textContent = message;
+    if (type === 'success') {
+        toast.style.backgroundColor = '#28a745';
+    } else if (type === 'error') {
+        toast.style.backgroundColor = '#dc3545';
+    } else {
+        toast.style.backgroundColor = '#007bff';
+    }
+    toast.style.display = 'block';
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 5000);
+}
+
 export function openSideMenu() {
     const { currentUser } = getState();
     if (currentUser && (currentUser.Nombre_Completo || currentUser.Nombre_Usuario)) {
@@ -3774,29 +4320,46 @@ export function mostrarSeccion(sectionName, isFromPopState = false) {
         case 'relay':
             mostrarRelayGrid();
             break;
+        case 'pys':
+            renderPysSection();
+            break;
     }
 }
 
+/* TAREA 4: Renderizado robusto e independiente de tarjetas de Tutoriales y Relay */
 function mostrarTutorialesGrid() {
     const { catalogData } = getState();
-    const { tutoriales } = catalogData;
+    const tutoriales = (catalogData && catalogData.tutoriales) ? catalogData.tutoriales : [];
     const cont = document.getElementById('contenido-tutoriales');
+    if (!cont) return;
     cont.innerHTML = '<h4>Tutoriales</h4>';
 
     const grid = document.createElement('div');
     grid.className = 'grid';
-    tutoriales.forEach(item => {
+
+    // First card: Add Tutorial Card (+)
+    const createCard = document.createElement('div');
+    createCard.className = 'card card-create-tutorial';
+    createCard.innerHTML = `
+        <i class="fa-solid fa-plus" style="font-size: 2rem; color: #007bff; margin-bottom: 6px;"></i>
+        <span style="font-weight: bold; color: #007bff; font-size: 0.95rem;">Agregar Tutorial</span>
+    `;
+    createCard.onclick = () => openAddTutorialModal();
+    grid.appendChild(createCard);
+
+    tutoriales.forEach((item, index) => {
+        if (!item) return;
         const card = document.createElement("div");
         card.className = "card";
         card.onclick = () => mostrarDetalleTutorialModal(item);
         const img = document.createElement("img");
-        setOptimizedImage(img, item.Imagen, IMG_SIZE_SMALL);
-        img.alt = item.Tema;
+        setOptimizedImage(img, item.Imagen || '', IMG_SIZE_SMALL);
+        img.alt = item.Tema || `Tutorial ${index + 1}`;
         img.loading = "lazy";
         card.appendChild(img);
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.textContent = item.Tema;
+        overlay.textContent = item.Tema || `Tutorial ${index + 1}`;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -3805,24 +4368,26 @@ function mostrarTutorialesGrid() {
 
 function mostrarRelayGrid() {
     const { catalogData } = getState();
-    const { relay } = catalogData;
+    const relay = (catalogData && catalogData.relay) ? catalogData.relay : [];
     const cont = document.getElementById('contenido-relay');
+    if (!cont) return;
     cont.innerHTML = '<h4>Configuraciones de Relay</h4>';
 
     const grid = document.createElement('div');
     grid.className = 'grid';
-    relay.forEach(item => {
+    relay.forEach((item, index) => {
+        if (!item) return;
         const card = document.createElement("div");
         card.className = "card";
         card.onclick = () => mostrarDetalleRelayModal(item);
         const img = document.createElement("img");
-        setOptimizedImage(img, item.imagen, IMG_SIZE_SMALL);
-        img.alt = item.configuracion;
+        setOptimizedImage(img, item.imagen || '', IMG_SIZE_SMALL);
+        img.alt = item.configuracion || item.funcion || `Configuración Relay ${index + 1}`;
         img.loading = "lazy";
         card.appendChild(img);
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.textContent = item.configuracion;
+        overlay.textContent = item.configuracion || item.funcion || `Configuración ${index + 1}`;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -3931,5 +4496,1820 @@ function mostrarDetalleRelayModal(item) {
     modalDetalle.classList.add("visible");
     if (window.history && window.history.pushState) {
         window.history.pushState({ modalOpen: true }, '');
+    }
+}
+
+
+/* TAREA 9 (2.1): BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE Y MODAL DE REPORTE */
+export function openReportCutModal(vehicleId, corteNum, currentCutData) {
+    const existing = document.getElementById("report-cut-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "report-cut-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2500";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-triangle-exclamation" style="color: #dc3545;"></i> Reportar Problema en Corte #${corteNum}</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">
+            Corte seleccionado: <strong>${currentCutData.tipo || 'Sin tipo definido'}</strong>
+        </p>
+
+        <form id="report-cut-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Descripción del Error Detectado *</label>
+                <textarea id="rep-error" rows="3" placeholder="Describe claramente el problema o fallo detectado..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Información Incorrecta o Incompleta</label>
+                <textarea id="rep-incorrecto" rows="2" placeholder="Indica qué datos específicos considera erróneos o incompletos..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Imagen de Referencia (Opcional)</label>
+                <input type="file" id="rep-img-file" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Enviar Reporte</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeBtn = content.querySelector(".info-close-btn");
+    closeBtn.onclick = () => modal.remove();
+
+    const form = content.querySelector("#report-cut-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) {
+            showGlobalError("Debes estar conectado para reportar.");
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.classList.add("btn-loading");
+
+        const errorDesc = content.querySelector("#rep-error").value.trim();
+        const incorrectInfo = content.querySelector("#rep-incorrecto").value.trim();
+        let fullProblemText = `[Corte #${corteNum}] ${errorDesc}`;
+        if (incorrectInfo) {
+            fullProblemText += ` | Info incorrecta: ${incorrectInfo}`;
+        }
+
+        const fileInput = content.querySelector("#rep-img-file");
+        if (fileInput.files && fileInput.files[0]) {
+            fullProblemText += ` [Imagen de referencia adjunta: ${fileInput.files[0].name}]`;
+        }
+
+        try {
+            const res = await reportProblem(
+                vehicleId,
+                fullProblemText,
+                currentUser.ID,
+                currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+            );
+
+            const reportId = res && res.reportId ? res.reportId : `REP-${Date.now()}`;
+            modal.remove();
+
+            // Modal de confirmación con opción accesible de «Sugerir cambio»
+            showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId);
+        } catch (err) {
+            console.error("Error al enviar reporte de corte:", err);
+            showGlobalError("Error al enviar el reporte. Por favor inténtalo de nuevo.");
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("btn-loading");
+        }
+    };
+}
+
+// Modal de confirmación accesible posterior al reporte con opción «Sugerir cambio»
+function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
+    const existing = document.getElementById("report-success-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "report-success-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2500";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "450px";
+    content.style.textAlign = "center";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <div style="font-size: 2.5rem; color: #28a745; margin-bottom: 10px;">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h3 style="margin: 0 0 10px 0;">¡Reporte Enviado con Éxito!</h3>
+        <p style="font-size: 0.9em; color: var(--text-color); margin-bottom: 15px;">
+            Tu reporte para el Corte #${corteNum} ha sido registrado bajo el identificador <strong>${reportId}</strong>.
+        </p>
+        <p style="font-size: 0.9em; color: var(--text-color); margin-bottom: 20px;">
+            ¿Deseas proponer una sugerencia de cambio técnica para este corte ahora mismo?
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button id="btn-suggest-change-action" class="btn btn-primary" style="display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-pen-to-square"></i> Sugerir cambio
+            </button>
+            <button id="btn-close-report-success" class="btn btn-secondary">
+                Cerrar
+            </button>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const close = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = close;
+    content.querySelector("#btn-close-report-success").onclick = close;
+
+    content.querySelector("#btn-suggest-change-action").onclick = () => {
+        modal.remove();
+        openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId);
+    };
+}
+
+/* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */
+export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "") {
+    const existing = document.getElementById("suggest-cut-modal");
+    if (existing) existing.remove();
+
+    // Asegurar número de corte numérico válido
+    const validCorteNum = corteNum || currentCutData.index || 1;
+    const reportRef = reportId || `REP-${Date.now()}`;
+
+    const modal = document.createElement("div");
+    modal.id = "suggest-cut-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2500";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "520px";
+
+    // Obtención segura de opciones de menú desplegable para evitar ReferenceError
+    const safeDropdowns = (typeof dropdownOptions !== "undefined" && dropdownOptions)
+        || (typeof window !== "undefined" && window.dropdownOptions)
+        || (typeof getState === "function" && getState() && getState().dropdownOptions)
+        || null;
+
+    // Opciones para tipo de corte
+    const defaultTipos = ["Bomba de combustible", "Ignición", "Marcha / Arranque", "Fusible Principal", "Sensor CKP / CMP", "No recomendado"];
+    const tiposCorteOptions = (safeDropdowns && safeDropdowns.tipoDeCorte && safeDropdowns.tipoDeCorte.length > 0)
+        ? safeDropdowns.tipoDeCorte
+        : defaultTipos;
+
+    const tipoOptionsHtml = tiposCorteOptions.map(opt => {
+        const isSel = (currentCutData.tipo && currentCutData.tipo.toLowerCase() === opt.toLowerCase()) ? "selected" : "";
+        return `<option value="${opt}" ${isSel}>${opt}</option>`;
+    }).join("");
+
+    // Opciones para configuración de relay
+    const defaultRelays = ["Sin relay", "Relay 5 pines (Normalmente Cerrado)", "Relay 5 pines (Normalmente Abierto)", "Relay 4 pines"];
+    const relayOptions = (safeDropdowns && safeDropdowns.configRelay && safeDropdowns.configRelay.length > 0)
+        ? safeDropdowns.configRelay
+        : defaultRelays;
+
+    const relayOptionsHtml = relayOptions.map(opt => {
+        const isSel = (currentCutData.configRelay && currentCutData.configRelay.toLowerCase() === opt.toLowerCase()) ? "selected" : "";
+        return `<option value="${opt}" ${isSel}>${opt}</option>`;
+    }).join("");
+
+    // Opciones para testigo Check Engine
+    const currentCheckEngine = currentCutData.checkEngine || currentCutData.activaCheckEngine || "";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-pen-to-square"></i> Sugerir Cambio - Corte #${validCorteNum}</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
+            Vinculado al Reporte: <strong>${reportRef}</strong> | Vehículo: <strong>${vehicleId}</strong>
+        </p>
+
+        <form id="suggest-cut-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label for="sug-tipo">Tipo de Corte</label>
+                <select id="sug-tipo" class="dev-input" style="padding: 6px;">
+                    <option value="">-- Conservar / Seleccionar Tipo --</option>
+                    ${tipoOptionsHtml}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sug-relay">Configuración de Relay</label>
+                <select id="sug-relay" class="dev-input" style="padding: 6px;">
+                    <option value="">-- Conservar / Seleccionar Relay --</option>
+                    ${relayOptionsHtml}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sug-ubicacion">Ubicación / Detalles Técnicos del Corte</label>
+                <input type="text" id="sug-ubicacion" value="${currentCutData.ubicacion || ""}" placeholder="Ej. Bajo el asiento trasero, ramal principal izquierdo">
+            </div>
+            <div class="form-group">
+                <label for="sug-color">Color de Cable</label>
+                <input type="text" id="sug-color" value="${currentCutData.colorCable || ""}" placeholder="Ej. Azul / Blanco, Verde grueso">
+            </div>
+            <div class="form-group">
+                <label for="sug-check-engine">¿El corte activa el testigo de motor (Check Engine)?</label>
+                <select id="sug-check-engine" class="dev-input" style="padding: 6px;">
+                    <option value="No" ${currentCheckEngine.toLowerCase().includes('no') ? 'selected' : ''}>No activa testigo</option>
+                    <option value="Sí" ${currentCheckEngine.toLowerCase().includes('si') || currentCheckEngine.toLowerCase().includes('sí') ? 'selected' : ''}>Sí, activa testigo</option>
+                    <option value="No aplica" ${!currentCheckEngine ? 'selected' : ''}>No aplica / No especificado</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sug-img-file">Imagen de Referencia del Corte (Opcional)</label>
+                <input type="file" id="sug-img-file" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
+                <textarea id="sug-detalles" rows="3" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:8px;">Enviar Sugerencia</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeBtn = content.querySelector(".info-close-btn");
+    closeBtn.onclick = () => modal.remove();
+
+    const form = content.querySelector("#suggest-cut-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) {
+            showGlobalError("Debes estar conectado para sugerir un cambio.");
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.classList.add("btn-loading");
+        submitBtn.innerText = "Enviando...";
+
+        const fileInput = content.querySelector("#sug-img-file");
+        let imgBase64 = "";
+
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            imgBase64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (re) => resolve(re.target.result);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        const proposedValues = {
+            tipo: content.querySelector("#sug-tipo").value.trim() || currentCutData.tipo || "",
+            ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
+            colorCable: content.querySelector("#sug-color").value.trim(),
+            configRelay: content.querySelector("#sug-relay").value.trim() || currentCutData.configRelay || "",
+            activaCheckEngine: content.querySelector("#sug-check-engine").value
+        };
+
+        const payload = {
+            reportId: reportRef,
+            vehicleId,
+            corteIndex: validCorteNum,
+            userId: currentUser.ID,
+            userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
+            details: content.querySelector("#sug-detalles").value.trim(),
+            imgBase64,
+            proposedValues
+        };
+
+        try {
+            await suggestCutChange(payload);
+            modal.remove();
+            showGlobalNotification("Sugerencia enviada correctamente. Será revisada por un administrador.", "success");
+        } catch (err) {
+            console.error("Error al enviar sugerencia:", err);
+            showGlobalError("Error al guardar la sugerencia: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("btn-loading");
+            submitBtn.innerText = "Enviar Sugerencia";
+        }
+    };
+}
+
+
+/* TAREA 5 (3.1): MENÚ DINÁMICO DE AMPLIACIÓN EN EL MODAL DE DETALLE Y CÁLCULO DE ESPACIOS */
+export function openExpandMenuModal(item) {
+    // Tarea 3.1: Botón "+" y menú dinámico de ampliación en el modal de detalle
+    const existing = document.getElementById("expand-menu-modal");
+    if (existing) existing.remove();
+
+    // Calculate available slots
+    let cutsCount = 0;
+    if (item.tipoCorte1) cutsCount++;
+    if (item.tipoCorte2) cutsCount++;
+    if (item.tipoCorte3) cutsCount++;
+    const cutsAvailable = 3 - cutsCount;
+
+    let feedsCount = 0;
+    if (item.cableAlimen) feedsCount++;
+    if (item.cableAlimen2) feedsCount++;
+    if (item.cableAlimen3) feedsCount++;
+    const feedsAvailable = 3 - feedsCount;
+
+    // Lógica para determinar la cantidad de versiones y la disponibilidad del botón "Agregar VIN"
+    function countEquipmentVersionsFrontend(versionesStr) {
+        if (!versionesStr) return 1;
+        const str = String(versionesStr).trim();
+        if (!str) return 1;
+        const parts = str.split(/[,/\\;]+/).map(p => p.trim()).filter(Boolean);
+        const count = parts.length;
+        if (count <= 1) return 1;
+        if (count === 2) return 2;
+        return 3;
+    }
+
+    function parseVinCollectionFrontend(rawVin) {
+        if (!rawVin) return [];
+        const str = String(rawVin).trim();
+        if (!str) return [];
+        if (str.startsWith("[") && str.endsWith("]")) {
+            try {
+                const arr = JSON.parse(str);
+                if (Array.isArray(arr)) {
+                    return arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                }
+            } catch (e) {}
+        }
+        return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    }
+
+    const maxVinAllowed = countEquipmentVersionsFrontend(item.versionesAplicables);
+    const registeredVins = parseVinCollectionFrontend(item.vin);
+    const canAddVin = registeredVins.length < maxVinAllowed;
+
+    const modal = document.createElement("div");
+    modal.id = "expand-menu-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2100";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "400px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-circle-plus"></i> Ampliar Información</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
+
+        <div style="display:flex; flex-direction:column; gap:10px;">
+            ${cutsAvailable > 0 ? `<button id="btn-exp-cut" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-car-on"></i> Nuevo corte (${cutsAvailable} disponibles)</button>` : ""}
+            ${!item.apertura ? `<button id="btn-exp-apertura" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-door-open"></i> Apertura de puertas</button>` : ""}
+            ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
+            ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
+            ${canAddVin ? `<button id="btn-exp-vin" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-barcode"></i> Agregar VIN (${maxVinAllowed - registeredVins.length} disponible${maxVinAllowed - registeredVins.length > 1 ? 's' : ''})</button>` : ""}
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const cutBtn = content.querySelector("#btn-exp-cut");
+    if (cutBtn) cutBtn.onclick = () => { modal.remove(); openAddCutForModelModal(item); };
+
+    const apBtn = content.querySelector("#btn-exp-apertura");
+    if (apBtn) apBtn.onclick = () => { modal.remove(); openAddAperturaModal(item); };
+
+    const feedBtn = content.querySelector("#btn-exp-feed");
+    if (feedBtn) feedBtn.onclick = () => { modal.remove(); openAddFeedModal(item); };
+
+    const videoBtn = content.querySelector("#btn-exp-video");
+    if (videoBtn) videoBtn.onclick = () => { modal.remove(); openAddVideoModal(item); };
+
+    const vinBtn = content.querySelector("#btn-exp-vin");
+    if (vinBtn) vinBtn.onclick = () => { modal.remove(); openAddVinModal(item); };
+}
+
+/* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO */
+export function openAddVinModal(item) {
+    const existing = document.getElementById("add-vin-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-vin-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "450px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-barcode"></i> Agregar VIN / Chasis</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
+
+        <form id="add-vin-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label for="modal-vin-input">Número de Chasis / VIN</label>
+                <input type="text" id="modal-vin-input" placeholder="Ingresa el VIN completo del vehículo" maxlength="18" required style="text-transform: uppercase; width:100%; padding:8px;">
+                <div id="modal-vin-warning" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 5px; font-weight: bold;"></div>
+            </div>
+            <button type="submit" id="btn-save-vin" class="btn btn-primary" style="margin-top:10px;"><i class="fa-solid fa-save"></i> Guardar VIN</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-vin-form");
+    const vinInput = content.querySelector("#modal-vin-input");
+    const warningEl = content.querySelector("#modal-vin-warning");
+
+    vinInput.addEventListener('blur', async () => {
+        const vinVal = vinInput.value.trim();
+        if (!vinVal) {
+            warningEl.style.display = 'none';
+            return;
+        }
+        try {
+            const res = await routeAction('checkVinDuplicate', { vin: vinVal, currentVehicleId: item.id });
+            if (res.duplicate) {
+                warningEl.style.display = 'block';
+                warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="document.getElementById('add-vin-modal')?.remove(); window.location.href='index.html#search=${encodeURIComponent(res.modelName)}'"><strong>${res.modelName}</strong></button>`;
+            } else {
+                warningEl.style.display = 'none';
+            }
+        } catch (err) {
+            console.error('Error al validar VIN:', err);
+        }
+    });
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const vinVal = vinInput.value.trim();
+        if (!vinVal) return;
+
+        const btn = form.querySelector("#btn-save-vin");
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+
+        try {
+            const res = await routeAction('addVinToVehicle', { vehicleId: item.id, vin: vinVal });
+            if (res.status === 'success') {
+                if (res.vinCollection) {
+                    item.vin = JSON.stringify(res.vinCollection);
+                } else if (res.vinPrefix) {
+                    item.vin = res.vinPrefix;
+                }
+                modal.remove();
+                mostrarNotificacion('VIN registrado correctamente', 'success');
+                mostrarDetalleModal(item, true);
+            } else {
+                warningEl.style.display = 'block';
+                if (res.modelName) {
+                    warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="document.getElementById('add-vin-modal')?.remove(); window.location.href='index.html#search=${encodeURIComponent(res.modelName)}'"><strong>${res.modelName}</strong></button>`;
+                } else {
+                    warningEl.textContent = res.message || 'Error al guardar el VIN.';
+                }
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar VIN`;
+            }
+        } catch (err) {
+            console.error('Error guardando VIN:', err);
+            mostrarNotificacion('Error de comunicación con el servidor', 'error');
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar VIN`;
+        }
+    };
+}
+
+/* TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
+export function openAddCutForModelModal(item) {
+    const existing = document.getElementById("add-cut-for-model-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-cut-for-model-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-plus-circle"></i> Agregar Nuevo Corte</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">Modelo: ${item.marca} ${item.modelo}</p>
+
+        <form id="add-cut-model-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Tipo de Corte</label>
+                <select id="add-cut-tipo" required>
+                    <option value="Bomba de combustible">Bomba de combustible</option>
+                    <option value="Ignición">Ignición</option>
+                    <option value="Botón de encendido">Botón de encendido</option>
+                    <option value="No recomendado">No recomendado</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Configuración Relay</label>
+                <input type="text" id="add-cut-relay" placeholder="Ej. 5 pines NC">
+            </div>
+            <div class="form-group">
+                <label>Ubicación y Detalles del Corte</label>
+                <textarea id="add-cut-detalles" rows="3" placeholder="Detalles de ubicación y conexión..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Color del Cable</label>
+                <input type="text" id="add-cut-color" placeholder="Ej. Verde / Negro">
+            </div>
+            <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="add-cut-testigo" style="width:auto;">
+                <label for="add-cut-testigo" style="margin:0;">Este corte activa el testigo del motor</label>
+            </div>
+            <div class="form-group">
+                <label>Subir Imagen del Corte</label>
+                <input type="file" id="add-cut-img-file" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Corte</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-cut-model-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const fileInput = content.querySelector("#add-cut-img-file");
+        let imgBase64 = "";
+        if (fileInput.files && fileInput.files[0]) {
+            imgBase64 = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = (re) => res(re.target.result);
+                r.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        const payload = {
+            vehicleId: item.id,
+            colaborador: currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
+            cutData: {
+                tipo: content.querySelector("#add-cut-tipo").value,
+                configRelay: content.querySelector("#add-cut-relay").value,
+                ubicacion: content.querySelector("#add-cut-detalles").value,
+                colorCable: content.querySelector("#add-cut-color").value,
+                activaTestigo: content.querySelector("#add-cut-testigo").checked,
+                imgBase64
+            }
+        };
+
+        try {
+            await routeAction("addOrUpdateCut", payload);
+            alert("Corte agregado con éxito.");
+            modal.remove();
+            // Refresh catalog
+            const catRes = await routeAction("getCatalogData");
+            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+        } catch (err) {
+            console.error("Error agregando corte:", err);
+            showGlobalError("Error al agregar corte: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Corte";
+        }
+    };
+}
+
+/* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */
+export function openAddAperturaModal(item) {
+    const existing = document.getElementById("add-apertura-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-apertura-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-door-open"></i> Agregar Apertura de Puertas</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
+
+        <form id="add-apertura-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Detalles de la Apertura</label>
+                <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Subir Imagen</label>
+                <input type="file" id="add-apertura-img-file" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Apertura</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-apertura-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const fileInput = content.querySelector("#add-apertura-img-file");
+        let imgBase64 = "";
+        if (fileInput.files && fileInput.files[0]) {
+            imgBase64 = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = (re) => res(re.target.result);
+                r.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        try {
+            await routeAction("addSupplementaryInfo", {
+                vehicleId: item.id,
+                apertura: content.querySelector("#add-apertura-detalles").value,
+                imgApertura: imgBase64
+            });
+            alert("Apertura agregada con éxito.");
+            modal.remove();
+            const catRes = await routeAction("getCatalogData");
+            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+        } catch (err) {
+            console.error(err);
+            showGlobalError("Error: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Apertura";
+        }
+    };
+}
+
+/* TAREA 5 (3.4): AGREGAR CABLE DE ALIMENTACIÓN DESDE EL MODAL DE DETALLE */
+export function openAddFeedModal(item) {
+    const existing = document.getElementById("add-feed-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-feed-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-plug"></i> Agregar Cable de Alimentación</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
+
+        <form id="add-feed-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Detalles de la Alimentación</label>
+                <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Subir Imagen</label>
+                <input type="file" id="add-feed-img-file" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Alimentación</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-feed-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const fileInput = content.querySelector("#add-feed-img-file");
+        let imgBase64 = "";
+        if (fileInput.files && fileInput.files[0]) {
+            imgBase64 = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = (re) => res(re.target.result);
+                r.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        const payload = { vehicleId: item.id };
+        const details = content.querySelector("#add-feed-detalles").value;
+
+        if (!item.cableAlimen) {
+            payload.cableAlimen = details;
+            payload.imgCableAlimen = imgBase64;
+        } else if (!item.cableAlimen2) {
+            payload.cableAlimen2 = details;
+            payload.imgCableAlimen2 = imgBase64;
+        } else if (!item.cableAlimen3) {
+            payload.cableAlimen3 = details;
+            payload.imgCableAlimen3 = imgBase64;
+        }
+
+        try {
+            await routeAction("addSupplementaryInfo", payload);
+            alert("Cable de alimentación agregado con éxito.");
+            modal.remove();
+            const catRes = await routeAction("getCatalogData");
+            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+        } catch (err) {
+            console.error(err);
+            showGlobalError("Error: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Alimentación";
+        }
+    };
+}
+
+/* TAREA 5 (3.5): AGREGAR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */
+export function openAddVideoModal(item) {
+    const existing = document.getElementById("add-video-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-video-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-brands fa-youtube"></i> Agregar Enlace de Vídeo</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
+
+        <form id="add-video-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Enlace de YouTube</label>
+                <input type="url" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Vídeo</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-video-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const url = content.querySelector("#add-video-url").value.trim();
+        if (!url.includes("youtube.com") && !url.includes("youtu.be")) {
+            showGlobalError("Por favor ingresa un enlace válido de YouTube.");
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        try {
+            await routeAction("addSupplementaryInfo", {
+                vehicleId: item.id,
+                fieldName: "videoGuiaDesarmeUrl",
+                fieldValue: url
+            });
+            alert("Vídeo agregado con éxito.");
+            modal.remove();
+            const catRes = await routeAction("getCatalogData");
+            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+        } catch (err) {
+            console.error(err);
+            showGlobalError("Error: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Vídeo";
+        }
+    };
+}
+
+
+/* TAREA 1.4: CORRECCIÓN DE LAS DEMORAS DE CARGA EN LA SECCIÓN PROBLEMAS Y SOLUCIONES */
+export async function renderPysSection() {
+    const cont = document.getElementById("contenido-pys");
+    if (!cont) return;
+
+    const renderGridWithItems = (rawItems) => {
+        cont.innerHTML = "<h4>Problemas y Soluciones</h4>";
+        const grid = document.createElement("div");
+        grid.className = "grid";
+
+        // Tarea 1.7: Corrección de las tarjetas para agregar tutoriales y problemas
+        /* TAREA 10 (5.2): TARJETAS DE PYS Y TARJETA DE CREACIÓN (+) EN PRIMERA POSICIÓN */
+        // First card: Creation Card (+)
+        const createCard = document.createElement("div");
+        createCard.className = "card card-create-pys";
+        createCard.innerHTML = `
+            <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
+            <span style="font-weight: bold; color: #007bff;">Agregar Problema</span>
+        `;
+        createCard.onclick = () => openAddProblemModal();
+        grid.appendChild(createCard);
+
+        const items = [...(rawItems || [])];
+        items.reverse(); // Most recent first
+
+        items.forEach(item => {
+            const card = createPysCard(item);
+            grid.appendChild(card);
+        });
+
+        cont.appendChild(grid);
+    };
+
+    // Fast-path: Si ya existen datos en caché/estado, renderizar inmediatamente (0ms)
+    const cachedData = getState().pysData;
+    const hasCache = Array.isArray(cachedData) && cachedData.length > 0;
+    if (hasCache) {
+        renderGridWithItems(cachedData);
+    } else {
+        cont.innerHTML = `
+            <h4>Problemas y Soluciones</h4>
+            <div id="pys-loading" style="text-align: center; padding: 40px; color: var(--text-color);">
+                <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-color, #007bff); margin-bottom: 12px;"></i>
+                <p style="margin: 0;">Cargando problemas y soluciones...</p>
+            </div>
+        `;
+    }
+
+    // Sincronización en segundo plano con el backend
+    try {
+        const res = await routeAction("getPysData");
+        const freshItems = (res && res.data) ? res.data : [];
+        setState({ pysData: freshItems });
+
+        // Si no había caché o si los datos cambiaron, renderizar con datos frescos
+        const cacheHash = JSON.stringify(cachedData || []);
+        const freshHash = JSON.stringify(freshItems || []);
+        if (!hasCache || cacheHash !== freshHash) {
+            renderGridWithItems(freshItems);
+        }
+    } catch(err) {
+        console.error("Error cargando PYS:", err);
+        if (!hasCache) {
+            cont.innerHTML = `
+                <h4>Problemas y Soluciones</h4>
+                <div style="text-align: center; padding: 30px; color: #dc3545;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 8px;"></i>
+                    <p>No se pudo cargar la sección de problemas y soluciones. Verifique su conexión.</p>
+                </div>
+            `;
+        }
+    }
+}
+
+/* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */
+export function openAddProblemModal() {
+    const existing = document.getElementById("add-pys-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-pys-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2300";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "550px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-triangle-exclamation"></i> Registrar Problema</h2>
+
+        <form id="add-pys-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+            <!-- TAREA 11 (12.1): ALCANCE EN FORMULARIO DE PROBLEMAS (GENERAL VS ESPECÍFICO) -->
+            <div class="form-group">
+                <label>Alcance del Problema</label>
+                <select id="pys-alcance" class="dev-input" style="padding: 6px;">
+                    <option value="general" selected>General (Aplica a todos los vehículos)</option>
+                    <option value="especifico">Modelo específico</option>
+                </select>
+            </div>
+
+            <div id="pys-models-section" style="display: none; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.02);">
+                <label>Buscar Vehículos Relacionados</label>
+                <input type="text" id="pys-search-vehicle" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width: 100%; padding: 6px; margin-top: 4px;">
+                <div id="pys-vehicle-search-results" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-top: 6px;"></div>
+                <div id="pys-selected-models-list" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Título del Problema (Máx 15 caracteres)</label>
+                <input type="text" id="pys-titulo" maxlength="15" required placeholder="Ej. Falla relay pump">
+            </div>
+            <div class="form-group">
+                <label>Imagen del Problema</label>
+                <input type="file" id="pys-img-file" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label>Detalle del Problema (Máx 200 caracteres)</label>
+                <textarea id="pys-detalle" maxlength="200" rows="3" required placeholder="Describe el problema..."></textarea>
+            </div>
+            <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="pys-sin-solucion" style="width:auto;">
+                <label for="pys-sin-solucion" style="margin:0;">Sin solución aún</label>
+            </div>
+            <div class="form-group" id="grp-solucion">
+                <label>Solución (Máx 200 caracteres)</label>
+                <textarea id="pys-solucion" maxlength="200" rows="3" placeholder="Explica la solución..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
+                <input type="text" id="pys-prevenir" maxlength="100" placeholder="Recomendación preventiva...">
+            </div>
+            <div class="form-group">
+                <label>Enlace de Vídeo YouTube (Opcional)</label>
+                <input type="url" id="pys-video" placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const alcanceSelect = content.querySelector("#pys-alcance");
+    const modelsSection = content.querySelector("#pys-models-section");
+    const searchVehicleInput = content.querySelector("#pys-search-vehicle");
+    const searchVehicleResults = content.querySelector("#pys-vehicle-search-results");
+    const selectedModelsContainer = content.querySelector("#pys-selected-models-list");
+
+    const selectedVehicleIds = new Set();
+
+    alcanceSelect.onchange = () => {
+        modelsSection.style.display = alcanceSelect.value === 'especifico' ? 'block' : 'none';
+    };
+
+    function renderProvisionalSelectedModels() {
+        selectedModelsContainer.innerHTML = '';
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+
+        selectedVehicleIds.forEach(vId => {
+            const v = cortes.find(c => String(c.id) === String(vId));
+            if (!v) return;
+            const tag = document.createElement("div");
+            tag.style.cssText = "display: inline-flex; align-items: center; gap: 6px; background: var(--accent-color); color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8em;";
+            tag.innerHTML = `<span>${v.marca} ${v.modelo} (${v.anoDesde})</span> <i class="fa-solid fa-xmark" style="cursor: pointer;"></i>`;
+            tag.querySelector("i").onclick = () => {
+                selectedVehicleIds.delete(vId);
+                renderProvisionalSelectedModels();
+            };
+            selectedModelsContainer.appendChild(tag);
+        });
+    }
+
+    searchVehicleInput.oninput = () => {
+        const query = searchVehicleInput.value.toLowerCase().trim();
+        searchVehicleResults.innerHTML = '';
+        if (!query) return;
+
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+        const matches = cortes.filter(c =>
+            `${c.marca} ${c.modelo} ${c.versionesAplicables || ''}`.toLowerCase().includes(query)
+        ).slice(0, 8);
+
+        matches.forEach(v => {
+            const itemDiv = document.createElement("div");
+            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px;";
+            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:30px; height:30px; object-fit:cover; border-radius:4px;"> <span>${v.marca} ${v.modelo} (${v.anoDesde}${v.anoHasta ? '-' + v.anoHasta : ''})</span>`;
+            itemDiv.onclick = () => {
+                searchVehicleResults.innerHTML = '';
+                searchVehicleInput.value = '';
+                openConfirmVehicleForPysModal(v, (confirmedVehicle) => {
+                    selectedVehicleIds.add(String(confirmedVehicle.id));
+                    renderProvisionalSelectedModels();
+                });
+            };
+            searchVehicleResults.appendChild(itemDiv);
+        });
+    };
+
+    const chkSinSolucion = content.querySelector("#pys-sin-solucion");
+    const txtSolucion = content.querySelector("#pys-solucion");
+    chkSinSolucion.onchange = () => {
+        txtSolucion.disabled = chkSinSolucion.checked;
+        if (chkSinSolucion.checked) txtSolucion.value = "";
+    };
+
+    const form = content.querySelector("#add-pys-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault()
+        const pysVid = content.querySelector("#pys-video").value.trim();
+        if (pysVid && !pysVid.includes("youtube.com") && !pysVid.includes("youtu.be")) {
+            showGlobalError("Por favor ingresa una URL válida de YouTube para el vídeo.");
+            return;
+        };
+        const { currentUser } = getState();
+        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const fileInput = content.querySelector("#pys-img-file");
+        let imgBase64 = "";
+        if (fileInput.files && fileInput.files[0]) {
+            imgBase64 = await new Promise(res => {
+                const r = new FileReader();
+                r.onload = re => res(re.target.result);
+                r.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        const payload = {
+            titulo: content.querySelector("#pys-titulo").value.trim(),
+            descripcion: content.querySelector("#pys-detalle").value.trim(),
+            sinSolucion: chkSinSolucion.checked,
+            solucion: txtSolucion.value.trim(),
+            prevenir: content.querySelector("#pys-prevenir").value.trim(),
+            videoUrl: content.querySelector("#pys-video").value.trim(),
+            alcance: alcanceSelect.value,
+            modelosAsociados: Array.from(selectedVehicleIds),
+            imgBase64,
+            userId: currentUser.ID,
+            userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+        };
+
+        try {
+            await routeAction("addProblem", payload);
+            alert("Problema registrado con éxito.");
+            modal.remove();
+            renderPysSection();
+        } catch(err) {
+            console.error(err);
+            showGlobalError("Error al registrar problema: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar";
+        }
+    };
+}
+
+export function openSearchVehicleForPysAssociationModal(problemId, onAssociated) {
+    const existing = document.getElementById("pys-add-vehicle-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "pys-add-vehicle-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2400";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "450px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2>Asociar Modelo a Problema</h2>
+        <div style="margin-top:10px;">
+            <input type="text" id="assoc-search-input" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width:100%; padding:8px;">
+            <div id="assoc-search-results" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:10px;"></div>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeModal = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = closeModal;
+
+    const input = content.querySelector("#assoc-search-input");
+    const resultsContainer = content.querySelector("#assoc-search-results");
+
+    input.oninput = () => {
+        const query = input.value.toLowerCase().trim();
+        resultsContainer.innerHTML = '';
+        if (!query) return;
+
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+        const matches = cortes.filter(c => `${c.marca} ${c.modelo}`.toLowerCase().includes(query)).slice(0, 8);
+
+        matches.forEach(v => {
+            const itemDiv = document.createElement("div");
+            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px;";
+            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:35px; height:35px; object-fit:cover; border-radius:4px;"> <span>${v.marca} ${v.modelo} (${v.anoDesde})</span>`;
+            itemDiv.onclick = () => {
+                closeModal();
+                openConfirmVehicleForPysModal(v, async (confirmedVehicle) => {
+                    try {
+                        const res = await routeAction('addVehicleToProblem', { problemId, vehicleId: confirmedVehicle.id });
+                        if (res.status === 'success') {
+                            mostrarNotificacion("Vehículo vinculado correctamente", "success");
+                            if (typeof onAssociated === 'function') onAssociated(res.modelosAsociados);
+                        }
+                    } catch (e) {
+                        showGlobalError("Error al vincular vehículo: " + e.message);
+                    }
+                });
+            };
+            resultsContainer.appendChild(itemDiv);
+        });
+    };
+}
+
+/* TAREA 11 (12.2): MODAL EXCLUSIVO DE CONFIRMACIÓN Y VISTA PREVIA DE VEHÍCULO PARA PYS */
+export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
+    const existing = document.getElementById("confirm-vehicle-pys-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "confirm-vehicle-pys-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2400";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "420px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2>Confirmar Vehículo</h2>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:10px;">
+            <img src="${getImageUrl(vehicle.imagenVehiculo, IMG_SIZE_MEDIUM)}" style="width:100%; max-height:180px; object-fit:cover; border-radius:8px;">
+            <div style="width:100%; font-size:0.9rem;">
+                <p style="margin:4px 0;"><strong>Marca:</strong> ${vehicle.marca}</p>
+                <p style="margin:4px 0;"><strong>Modelo:</strong> ${vehicle.modelo}</p>
+                <p style="margin:4px 0;"><strong>Versión:</strong> ${vehicle.versionesAplicables || 'Todas'}</p>
+                <p style="margin:4px 0;"><strong>Años:</strong> ${vehicle.anoDesde}${vehicle.anoHasta ? '-' + vehicle.anoHasta : ''}</p>
+                <p style="margin:4px 0;"><strong>Encendido:</strong> ${vehicle.tipoEncendido || '-'}</p>
+            </div>
+            <div style="display:flex; gap:10px; width:100%; margin-top:10px;">
+                <button id="btn-cancel-pys-veh" class="btn btn-secondary" style="flex:1;">Regresar</button>
+                <button id="btn-accept-pys-veh" class="btn btn-primary" style="flex:1;">Aceptar</button>
+            </div>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeModal = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = closeModal;
+    content.querySelector("#btn-cancel-pys-veh").onclick = closeModal;
+
+    content.querySelector("#btn-accept-pys-veh").onclick = () => {
+        closeModal();
+        if (typeof onConfirm === 'function') onConfirm(vehicle);
+    };
+}
+
+/* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */
+export function openPysDetailModal(item) {
+    const cont = document.getElementById("detalleCompleto");
+    cont.innerHTML = "";
+
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;";
+
+    const title = document.createElement("h2");
+    title.innerText = item.Problema;
+    title.style.margin = "0";
+    headerDiv.appendChild(title);
+
+    const closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.onclick = () => document.getElementById("modalDetalle").classList.remove("visible");
+    headerDiv.appendChild(closeBtn);
+
+    cont.appendChild(headerDiv);
+
+    if (item.Imagen) {
+        const img = document.createElement("img");
+        img.src = item.Imagen;
+        img.style.cssText = "width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;";
+        cont.appendChild(img);
+    }
+
+    const desc = document.createElement("p");
+    desc.innerHTML = "<strong>Descripción:</strong> " + sanitizeHtmlContent(item.Descripcion || "");
+    cont.appendChild(desc);
+
+    if (item.Solucion) {
+        const sol = document.createElement("p");
+        sol.innerHTML = "<strong>Solución:</strong> " + sanitizeHtmlContent(item.Solucion);
+        cont.appendChild(sol);
+    }
+
+    if (item.Prevenir) {
+        const prev = document.createElement("p");
+        prev.innerHTML = "<strong>Prevención:</strong> " + sanitizeHtmlContent(item.Prevenir);
+        cont.appendChild(prev);
+    }
+
+    if (item.Video) {
+        const vid = document.createElement("p");
+        vid.innerHTML = '<strong>Vídeo:</strong> <a href="' + item.Video + '" target="_blank">Ver guía en YouTube</a>';
+        cont.appendChild(vid);
+    }
+
+    /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */
+    // Carrusel de Modelos de Vehículos Relacionados
+    const { catalogData } = getState();
+    const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+    const modelosAsociadosIds = Array.isArray(item.modelosAsociados) ? item.modelosAsociados : [];
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
+    const canEditPys = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+
+    if (modelosAsociadosIds.length > 0 || canEditPys) {
+        const carouselSection = document.createElement("div");
+        carouselSection.style.cssText = "margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;";
+        carouselSection.innerHTML = `<h4 style="margin: 0 0 10px 0; font-size: 1rem;"><i class="fa-solid fa-car"></i> Vehículos Relacionados:</h4>`;
+
+        const track = document.createElement("div");
+        track.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;";
+
+        modelosAsociadosIds.forEach(vId => {
+            const v = cortes.find(c => String(c.id) === String(vId));
+            if (!v) return;
+            const card = crearCardVehiculo(v, true);
+            track.appendChild(card);
+        });
+
+        if (canEditPys) {
+            const addCard = document.createElement("div");
+            addCard.style.cssText = "flex: 0 0 120px; border: 2px dashed var(--accent-color); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--accent-color); font-size: 0.8rem; background: rgba(0, 123, 255, 0.05);";
+            addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.5rem; margin-bottom: 4px;"></i> <span>Agregar Modelo</span>`;
+            addCard.onclick = () => {
+                openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
+                    item.modelosAsociados = updatedList;
+                    openPysDetailModal(item);
+                });
+            };
+            track.appendChild(addCard);
+        }
+
+        carouselSection.appendChild(track);
+        cont.appendChild(carouselSection);
+    }
+
+    if (item.Colaborador) {
+        const colDiv = document.createElement("div");
+        colDiv.style.cssText = "margin-top: 15px; font-size: 0.85rem; color: var(--text-disabled); text-align: right;";
+        colDiv.innerHTML = "Registrado por: <strong>" + cleanColaboradorName(item.Colaborador) + "</strong>";
+        cont.appendChild(colDiv);
+    }
+
+    if (item.Se_soluciono !== 'x') {
+        const addSolBtn = document.createElement("button");
+        addSolBtn.className = "btn btn-secondary";
+        addSolBtn.innerText = "+ Agregar Solución";
+        addSolBtn.onclick = () => {
+            const solText = window.prompt("Introduce la solución a este problema (máx 200 caracteres):");
+            if (solText && solText.trim()) {
+                routeAction("addSolution", { problemId: item.id_problem, solucion: solText.trim() }).then(() => {
+                    alert("Solución agregada con éxito.");
+                    document.getElementById("modalDetalle").classList.remove("visible");
+                    renderPysSection();
+                }).catch(e => showGlobalError("Error: " + e.message));
+            }
+        };
+        cont.appendChild(addSolBtn);
+    }
+
+    if (!item.Prevenir) {
+        const addPrevBtn = document.createElement("button");
+        addPrevBtn.className = "btn btn-secondary";
+        addPrevBtn.style.marginLeft = "10px";
+        addPrevBtn.innerText = "+ Agregar Prevención";
+        addPrevBtn.onclick = () => {
+            const prevText = window.prompt("Introduce recomendación preventiva (máx 100 caracteres):");
+            if (prevText && prevText.trim()) {
+                routeAction("addPrevention", { problemId: item.id_problem, prevenir: prevText.trim() }).then(() => {
+                    alert("Prevención agregada con éxito.");
+                    document.getElementById("modalDetalle").classList.remove("visible");
+                    renderPysSection();
+                }).catch(e => showGlobalError("Error: " + e.message));
+            }
+        };
+        cont.appendChild(addPrevBtn);
+    }
+
+    const modalDetalle = document.getElementById("modalDetalle");
+    modalDetalle.classList.add("visible");
+}
+
+
+/* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */
+export function openAddTutorialModal() {
+    const existing = document.getElementById("add-tutorial-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-tutorial-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2300";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-book-open"></i> Agregar Nuevo Tutorial</h2>
+
+        <form id="add-tutorial-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+            <div class="form-group">
+                <label>Tema / Título</label>
+                <input type="text" id="tut-tema" required placeholder="Ej. Desarme de consola frontal">
+            </div>
+            <div class="form-group">
+                <label>Enlace de Vídeo YouTube</label>
+                <input type="url" id="tut-video" required placeholder="https://www.youtube.com/watch?v=...">
+            </div>
+            <div class="form-group">
+                <label>Descripción / Detalles</label>
+                <div class="rich-editor-toolbar" style="display:flex; gap:8px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('tut-desc', 'bold')"><strong>B</strong></button>
+                    <input type="color" id="tut-color-picker" onchange="applyRichColor('tut-desc', this.value)" style="width:30px; height:30px; padding:0; border:none; cursor:pointer;" title="Color de texto">
+                </div>
+                <textarea id="tut-desc" rows="4" placeholder="Detalles del tutorial..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Tutorial</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-tutorial-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const payload = {
+            tema: content.querySelector("#tut-tema").value.trim(),
+            videoUrl: content.querySelector("#tut-video").value.trim(),
+            descripcion: content.querySelector("#tut-desc").value.trim(),
+            colaborador: currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+        };
+
+        try {
+            await addTutorial(payload);
+            alert("Tutorial registrado con éxito.");
+            modal.remove();
+            const res = await routeAction("getCatalogData");
+            if (res && res.data) setState({ catalogData: res.data });
+        } catch(err) {
+            console.error(err);
+            showGlobalError("Error al registrar tutorial: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Tutorial";
+        }
+    };
+}
+
+window.applyRichFormat = function(targetId, format) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+    if (!selected) return;
+    const formatted = `<b>${selected}</b>`;
+    textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+};
+
+window.applyRichColor = function(targetId, color) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+    if (!selected) return;
+    const formatted = `<span style="color:${color}">${selected}</span>`;
+    textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+};
+
+// TAREA ADICIONAL: PERMITIR CONTENIDO HTML ENRIQUECIDO EN CAMPOS DE TEXTO
+export function sanitizeHtmlContent(htmlStr) {
+    if (!htmlStr) return '';
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlStr, 'text/html');
+    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'U', 'A', 'IMG', 'SMALL', 'EM', 'MARK'];
+
+    function cleanNode(node) {
+        const children = Array.from(node.childNodes);
+        children.forEach(child => {
+            if (child.nodeType === 1) {
+                if (!allowedTags.includes(child.tagName)) {
+                    const textNode = doc.createTextNode(child.outerHTML);
+                    node.replaceChild(textNode, child);
+                } else {
+                    Array.from(child.attributes).forEach(attr => {
+                        const name = attr.name.toLowerCase();
+                        const val = attr.value.toLowerCase();
+                        if (name.startsWith('on') || val.includes('javascript:') || val.includes('data:text/html')) {
+                            child.removeAttribute(attr.name);
+                        }
+                    });
+                    cleanNode(child);
+                }
+            }
+        });
+    }
+
+    cleanNode(doc.body);
+    return doc.body.innerHTML;
+}
+
+let inboxCacheData = null;
+
+/* TAREA 2: Ficha Técnica de Instalación completa y organizada para impresión exacta en 1 página */
+export function exportVehiclePrintSheet(item) {
+    if (!item) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert("Por favor permite la apertura de ventanas emergentes para imprimir la ficha técnica.");
+        return;
+    }
+
+    const title = `${item.marca || ''} ${item.modelo || ''} (${item.anoDesde || ''}${item.anoHasta ? ' - ' + item.anoHasta : ''})`;
+
+    const cuts = [];
+    if (item.tipoCorte1 || item.ubicacionCorte1 || item.imgCorte1) {
+        cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, img: item.imgCorte1, colab: item.colaboradorCorte1 });
+    }
+    if (item.tipoCorte2 || item.ubicacionCorte2 || item.imgCorte2) {
+        cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, img: item.imgCorte2, colab: item.colaboradorCorte2 });
+    }
+    if (item.tipoCorte3 || item.ubicacionCorte3 || item.imgCorte3) {
+        cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, img: item.imgCorte3, colab: item.colaboradorCorte3 });
+    }
+
+    const feeds = [];
+    if (item.cableAlimen || item.imgCableAlimen) {
+        feeds.push({ title: 'Alimentación Principal', desc: item.cableAlimen, img: item.imgCableAlimen });
+    }
+    if (item.cableAlimen2 || item.imgCableAlimen2) {
+        feeds.push({ title: 'Alimentación Secundaria', desc: item.cableAlimen2, img: item.imgCableAlimen2 });
+    }
+    if (item.cableAlimen3 || item.imgCableAlimen3) {
+        feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
+    }
+
+    /* TAREA 5: Corregir imágenes rotas normalizando URLs con getImageUrl(..., IMG_SIZE_LARGE) */
+    const cutsHtml = cuts.map(c => {
+        const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
+        return `
+        <div class="tech-item-card">
+            <div class="tech-item-header">Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}</div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">
+                    <p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
+                    <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
+                    <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
+                    ${c.colab ? `<p class="colab-tag">Colab: ${cleanColaboradorName(c.colab)}</p>` : ''}
+                </div>
+                ${safeImg ? `<div class="tech-item-img"><img src="${safeImg}" alt="Corte #${c.num}" /></div>` : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+
+    const feedsHtml = feeds.map(f => {
+        const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
+        return `
+        <div class="tech-item-card">
+            <div class="tech-item-header">${f.title}</div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">
+                    <p>${f.desc || 'Conexión estándar'}</p>
+                </div>
+                ${safeImg ? `<div class="tech-item-img"><img src="${safeImg}" alt="${f.title}" /></div>` : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+
+    const vehiculoImgHtml = item.imagenVehiculo ? `
+        <div class="vehicle-main-img"><img src="${getImageUrl(item.imagenVehiculo, IMG_SIZE_LARGE)}" alt="${title}" /></div>
+    ` : '';
+
+    const aperturaHtml = (item.apertura || item.imgApertura) ? `
+        <div class="tech-item-card">
+            <div class="tech-item-header">Apertura de Puertas / Seguros</div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">
+                    <p>${item.apertura || 'Instrucciones registradas'}</p>
+                </div>
+                ${item.imgApertura ? `<div class="tech-item-img"><img src="${getImageUrl(item.imgApertura, IMG_SIZE_LARGE)}" alt="Apertura" /></div>` : ''}
+            </div>
+        </div>
+    ` : '';
+
+    const notasHtml = item.notaImportante ? `
+        <div class="tech-notes">
+            <strong>Nota técnica importante:</strong> ${item.notaImportante}
+        </div>
+    ` : '';
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Ficha Técnica GPSpedia - ${title}</title>
+            <style>
+                /* TAREA 6: Configuración obligatoria papel Carta, orientación vertical, márgenes 10mm */
+                @page {
+                    size: letter portrait;
+                    margin: 10mm;
+                }
+                * { box-sizing: border-box; }
+                body {
+                    font-family: Arial, Helvetica, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    color: #1a1a1a;
+                    font-size: 10.5px;
+                    line-height: 1.25;
+                    background: #fff;
+                }
+                .no-print-bar {
+                    background: #007bff;
+                    color: white;
+                    padding: 8px 16px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-radius: 4px;
+                    margin-bottom: 10px;
+                }
+                .header-container {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 2px solid #007bff;
+                    padding-bottom: 6px;
+                    margin-bottom: 8px;
+                }
+                .header-logo {
+                    font-size: 18px;
+                    font-weight: bold;
+                    color: #007bff;
+                    letter-spacing: 0.5px;
+                }
+                .vehicle-title {
+                    font-size: 15px;
+                    font-weight: bold;
+                    margin: 0;
+                    color: #222;
+                }
+                .top-grid {
+                    display: grid;
+                    grid-template-columns: ${item.imagenVehiculo ? '140px 1fr' : '1fr'};
+                    gap: 10px;
+                    margin-bottom: 8px;
+                }
+                .vehicle-main-img img {
+                    width: 100%;
+                    max-height: 105px;
+                    object-fit: cover;
+                    border-radius: 4px;
+                    border: 1px solid #ddd;
+                }
+                .meta-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 10.5px;
+                }
+                .meta-table td {
+                    padding: 3px 6px;
+                    border: 1px solid #e0e0e0;
+                }
+                .meta-table td.label {
+                    font-weight: bold;
+                    background: #f7f9fa;
+                    width: 25%;
+                    color: #444;
+                }
+                .section-header {
+                    font-size: 11.5px;
+                    font-weight: bold;
+                    color: #007bff;
+                    text-transform: uppercase;
+                    border-bottom: 1px solid #007bff;
+                    margin: 8px 0 4px 0;
+                    padding-bottom: 2px;
+                }
+                .tech-grid {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+                    gap: 6px;
+                }
+                .tech-item-card {
+                    border: 1px solid #dcdcdc;
+                    border-radius: 4px;
+                    background: #fafafa;
+                    padding: 5px 8px;
+                    page-break-inside: avoid;
+                }
+                .tech-item-header {
+                    font-weight: bold;
+                    color: #0056b3;
+                    font-size: 11px;
+                    margin-bottom: 3px;
+                    border-bottom: 1px dashed #e0e0e0;
+                    padding-bottom: 2px;
+                }
+                .tech-item-body {
+                    display: flex;
+                    justify-content: space-between;
+                    gap: 8px;
+                }
+                .tech-item-info {
+                    flex: 1;
+                }
+                .tech-item-info p {
+                    margin: 1.5px 0;
+                    font-size: 10.5px;
+                }
+                .tech-item-img {
+                    width: 75px;
+                    height: 55px;
+                    flex-shrink: 0;
+                }
+                .tech-item-img img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    border-radius: 3px;
+                    border: 1px solid #ccc;
+                }
+                /* TAREA 5: Ajuste exclusivo de Check Engine en la hoja de impresión */
+                img[src*="1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX"],
+                .tech-item-info img[src*="1ELXm7I"] {
+                    max-height: 20px !important;
+                    width: auto !important;
+                    display: inline-block !important;
+                    vertical-align: middle !important;
+                    margin: 2px 4px !important;
+                    float: none !important;
+                }
+                .colab-tag {
+                    font-size: 9.5px;
+                    color: #666;
+                    font-style: italic;
+                }
+                .tech-notes {
+                    background: #fff3cd;
+                    color: #856404;
+                    border: 1px solid #ffeeba;
+                    padding: 4px 8px;
+                    border-radius: 4px;
+                    margin-top: 6px;
+                    font-size: 10px;
+                    page-break-inside: avoid;
+                }
+                .footer-bar {
+                    margin-top: 8px;
+                    font-size: 9.5px;
+                    color: #777;
+                    border-top: 1px solid #e0e0e0;
+                    padding-top: 3px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                @media print {
+                    .no-print { display: none !important; }
+                    body { padding: 0; }
+                    .tech-item-card { break-inside: avoid; }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print-bar no-print">
+                <span><strong>Ficha Técnica de Instalación</strong> - Lista para imprimir o guardar PDF en 1 página</span>
+                <button onclick="window.print()" style="padding: 6px 14px; background: white; color: #007bff; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">
+                    Imprimir / Guardar PDF
+                </button>
+            </div>
+
+            <div class="header-container">
+                <div class="header-logo">GPSpedia <span style="font-size: 13px; font-weight: normal; color: #555;">| Ficha Técnica Oficial</span></div>
+                <div class="vehicle-title">${title}</div>
+            </div>
+
+            <div class="top-grid">
+                ${vehiculoImgHtml}
+                <table class="meta-table">
+                    <tr>
+                        <td class="label">Marca:</td><td>${item.marca || '-'}</td>
+                        <td class="label">Modelo:</td><td>${item.modelo || '-'}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Categoría:</td><td>${item.categoria || '-'}</td>
+                        <td class="label">Años:</td><td>${item.anoDesde || ''} - ${item.anoHasta || 'Presente'}</td>
+                    </tr>
+                    <tr>
+                        <td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td>
+                        <td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td>
+                    </tr>
+                    ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td colspan="3">${item.vin}</td></tr>` : ''}
+                </table>
+            </div>
+
+            <div class="section-header">Puntos de Corte de Motor</div>
+            <div class="tech-grid">
+                ${cutsHtml || '<div class="tech-item-card"><p>No hay cortes registrados para este modelo.</p></div>'}
+            </div>
+
+            ${feedsHtml ? `
+                <div class="section-header">Alimentación Eléctrica</div>
+                <div class="tech-grid">${feedsHtml}</div>
+            ` : ''}
+
+            ${aperturaHtml ? `
+                <div class="section-header">Apertura y Cierre Centralizado</div>
+                <div class="tech-grid">${aperturaHtml}</div>
+            ` : ''}
+
+            ${notasHtml}
+
+            <div class="footer-bar">
+                <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
+                <span>Uso exclusivo técnico especializado - 1 Página de Consulta Rápida</span>
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
+
+export async function loadAndRenderInbox() {
+    const listContainer = document.getElementById('inbox-list');
+    if (!listContainer) return;
+
+    if (inboxCacheData) {
+        renderInboxList(inboxCacheData);
+    } else {
+        listContainer.innerHTML = '<p><i class="fa-solid fa-spinner fa-spin"></i> Cargando bandeja...</p>';
+    }
+
+    try {
+        const res = await getFeedbackItems();
+        if (res && res.data) {
+            inboxCacheData = res.data;
+            renderInboxList(inboxCacheData);
+        }
+    } catch(err) {
+        console.error("Error cargando inbox:", err);
+        if (!inboxCacheData) {
+            listContainer.innerHTML = '<p class="text-danger">Error de conexión al cargar bandeja.</p>';
+        }
     }
 }
