@@ -309,7 +309,14 @@
                     <!-- Mantenimiento -->
                     <div class="dev-card" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px;">
                         <strong style="font-size: 0.9rem;"><i class="fa-solid fa-broom"></i> Organización y Mantenimiento</strong>
-                        <button id="btn-admin-reorganize-db" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-sort-alpha-down"></i> Reorganizar base de datos alfabéticamente (por Marca)</button>
+                        <div class="dev-card" style="padding: 10px; margin-bottom: 10px; border-left: 3px solid #007bff;">
+                            <h5 style="margin-top:0; margin-bottom:6px; font-size: 0.9em;"><i class="fa-solid fa-barcode"></i> Motor de Firmas Diferenciales de VIN</h5>
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                <button type="button" id="btn-recalculate-vin-signatures" class="btn btn-primary" style="padding: 6px 10px; font-size: 0.8em;"><i class="fa-solid fa-sync"></i> Recalcular Firmas</button>
+                                <button type="button" id="btn-view-vin-signatures" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.8em;"><i class="fa-solid fa-list-check"></i> Diagnóstico de Firmas</button>
+                            </div>
+                        </div>
+                        <button id="btn-admin-reorganize-db"  class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-sort-alpha-down"></i> Reorganizar base de datos alfabéticamente (por Marca)</button>
                         <button id="btn-admin-normalize-images" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-images"></i> Normalizar nomenclatura y deduplicar imágenes en base de datos</button>
                         <button id="btn-admin-reorganize-drive" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-folder-tree"></i> Reorganizar imágenes físicamente en carpetas jerárquicas</button>
                         <button id="btn-admin-restore-trash" class="btn btn-warning" style="display: none; font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-trash-arrow-up"></i> Saneamiento y recuperación exhaustiva de imágenes en papelera</button>

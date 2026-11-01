@@ -1280,3 +1280,21 @@ CIERRE DEFINITIVO DE TAREAS.TXT (TAREAS 1 A 21 Y SUB-ESPECIFICACIONES) [X]
 - Marcadas formalmente como COMPLETADA [X] en Tareas.txt conforme a la Condición 5.
 - Eliminadas todas las marcas pendientes residuales.
 ===================================================================
+
+===================================================================
+FECHA: Sun Nov 1 18:30:00 2026
+TAREA 1: IMPLEMENTACIÓN: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN
+- Creación de VinDifferentialEngine.js con análisis multinivel, matriz de posiciones y combinación mínima.
+- ui.js: Inyección de la firma diferencial de VIN en mostrarDetalleModal() y listeners de administración.
+- index.html: Incorporación de controles diagnósticos de VIN en #dev-tools-modal.
+- Auditoría.txt: Registro de auditoría técnica línea por línea.
+===================================================================
+
+===================================================================
+FECHA: Sun Nov 1 18:45:00 2026
+TAREA 2: MEJORAS VISUALES E INVESTIGACIÓN DE FACTIBILIDAD YOUTUBE
+- Archivo style.css:
+  * Líneas 1478-1502: Sustitución del sombreado azul por sombras en tonos grises del catálogo en .card-create-pys y .card-create-tutorial con transiciones suaves en hover.
+- Archivo Estudio_Factibilidad_YouTube.md:
+  * Creación del informe completo de factibilidad técnica, análisis de cuotas gratuitas, comparación de 4 alternativas arquitectónicas y plan de implementación en 4 fases.
+===================================================================

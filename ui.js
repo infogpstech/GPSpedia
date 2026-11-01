@@ -1,3 +1,4 @@
+import { vinDifferentialEngine, vinSignatureStore, getClassificationKey } from './VinDifferentialEngine.js';
 // GPSpedia UI Module | Version: 2.1.6
 // Responsibilities:
 // - Render UI components based on state.
@@ -1807,6 +1808,40 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     subHeaderDiv.appendChild(subHeaderText);
     cont.appendChild(subHeaderDiv);
 
+    /* TAREA 1: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN */
+    if (activeItem && activeItem.vin) {
+        try {
+            const catalogData = getState().catalogData;
+            if (vinDifferentialEngine.signatures.size === 0 && catalogData && catalogData.cortes) {
+                vinDifferentialEngine.calculateSignatures(catalogData.cortes);
+            }
+            const versionsList = (activeItem.versionesAplicables || '').split(/[,/\\]+/).map(v => v.trim()).filter(Boolean);
+            const mainVersion = versionsList[0] || '';
+            const classKey = getClassificationKey(activeItem, mainVersion, 5);
+            const sig = vinDifferentialEngine.signatures.get(classKey);
+
+            if (sig && sig.status !== 'insuficiente' && sig.positions && sig.positions.length > 0) {
+                const sigBox = document.createElement('div');
+                sigBox.className = 'vin-signature-badge';
+                sigBox.style.cssText = 'margin: 6px 0 10px 0; padding: 6px 12px; background: rgba(0, 123, 255, 0.08); border-left: 3px solid #007bff; border-radius: 4px; font-size: 0.82em; display: flex; flex-direction: column; gap: 2px;';
+
+                const sigTitle = document.createElement('span');
+                sigTitle.style.cssText = 'font-weight: bold; color: var(--text-color); display: flex; align-items: center; gap: 6px;';
+                sigTitle.innerHTML = `<i class="fa-solid fa-fingerprint" style="color: #007bff;"></i> Firma Diferencial de VIN: <strong>${sig.signatureString}</strong> <span style="font-size: 0.85em; opacity: 0.8; font-weight: normal;">(${sig.readableFormat})</span>`;
+
+                const sigMeta = document.createElement('span');
+                sigMeta.style.cssText = 'color: #666; font-size: 0.88em;';
+                sigMeta.textContent = `Caracteres mínimos: ${sig.charactersNeeded} | Certeza: ${sig.confidence}% (${sig.status === 'validada' ? 'Identificación validada' : 'Firma calculada'})`;
+
+                sigBox.appendChild(sigTitle);
+                sigBox.appendChild(sigMeta);
+                cont.appendChild(sigBox);
+            }
+        } catch (e) {
+            console.error('Error visualizando firma diferencial:', e);
+        }
+    }
+
 
     if (inEditMode || activeItem.imagenVehiculo) {
         const imgVehiculo = document.createElement("img");
@@ -3365,6 +3400,36 @@ ${elapsedSec}s
     };
 
     // 5. Mantenimiento y Organización
+    // Listeners para motor de firmas de VIN
+    const recalcVinBtn = document.getElementById('btn-recalculate-vin-signatures');
+    if (recalcVinBtn) {
+        recalcVinBtn.onclick = () => {
+            const catalogData = getState().catalogData;
+            if (!catalogData || !catalogData.cortes) {
+                appendLog('[VIN ENGINE] No hay registros vehiculares en memoria.', 'log-warning');
+                return;
+            }
+            appendLog('[VIN ENGINE] Iniciando análisis diferencial de VIN...', 'log-info');
+            const stats = vinDifferentialEngine.calculateSignatures(catalogData.cortes);
+            vinSignatureStore.saveSignatures(vinDifferentialEngine);
+            appendLog(`[VIN ENGINE] Concluido: ${stats.totalVinsAnalyzed} VINs analizados, ${stats.totalClassesAnalyzed} clasificaciones, ${stats.signaturesGenerated} firmas generadas (${stats.validatedCount} validadas, ${stats.pendingCount} pendientes, ${stats.insufficientCount} insuficientes). Conflictos: ${stats.conflictsCount}.`, 'log-info');
+        };
+    }
+    const viewVinBtn = document.getElementById('btn-view-vin-signatures');
+    if (viewVinBtn) {
+        viewVinBtn.onclick = () => {
+            const count = vinDifferentialEngine.signatures.size;
+            appendLog(`[VIN ENGINE] Firmas en memoria: ${count}`, 'log-info');
+            let idx = 1;
+            for (const sig of vinDifferentialEngine.signatures.values()) {
+                if (idx <= 10) {
+                    appendLog(`[FIRMA #${idx}] ${sig.marca} ${sig.modelo} (${sig.rangoAnos}) [${sig.version || 'Gral'}]: ${sig.signatureString || 'N/A'} - Estado: ${sig.status} - Certeza: ${sig.confidence}%`, 'log-info');
+                    idx++;
+                }
+            }
+        };
+    }
+
     document.getElementById('btn-admin-reorganize-db').onclick = async () => {
         if (confirm("¿Deseas reorganizar y ordenar la base de datos alfabéticamente por Marca? Se generará automáticamente un respaldo preventivo.")) {
             await runAction('reorganizeDatabase');
@@ -4976,6 +5041,16 @@ export function openAddVinModal(item) {
                 }
                 modal.remove();
                 mostrarNotificacion('VIN registrado correctamente', 'success');
+                // Recalcular y sincronizar automáticamente las firmas de VIN (Sección 10)
+                try {
+                    const catalogData = getState().catalogData;
+                    if (catalogData && catalogData.cortes) {
+                        vinDifferentialEngine.calculateSignatures(catalogData.cortes);
+                        vinSignatureStore.saveSignatures(vinDifferentialEngine);
+                    }
+                } catch(e) {
+                    console.error('Error recalculando firmas de VIN tras registro:', e);
+                }
                 mostrarDetalleModal(item, true);
             } else {
                 warningEl.style.display = 'block';
