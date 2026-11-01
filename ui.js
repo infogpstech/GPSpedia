@@ -1824,48 +1824,8 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     });
 
-    /* TAREA 11 (12.5): ACORDEÓN «PROBLEMAS RELACIONADOS A ESTE VEHÍCULO» EN MODAL TÉCNICO */
-    // Acordeón de Problemas relacionados a este vehículo
-    const { pysData = [] } = getState();
-    const relatedProblems = pysData.filter(p => Array.isArray(p.modelosAsociados) && p.modelosAsociados.includes(String(activeItem.id)));
-
-    if (relatedProblems.length > 0) {
-        const pysAccordionBtn = document.createElement("button");
-        pysAccordionBtn.className = "accordion-header";
-        pysAccordionBtn.style.cssText = "width: 100%; text-align: left; padding: 12px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold;";
-        pysAccordionBtn.innerHTML = `<span><i class="fa-solid fa-triangle-exclamation" style="color:#e6a23c; margin-right:6px;"></i> Problemas relacionados a este vehículo (${relatedProblems.length})</span> <i class="fa-solid fa-chevron-down"></i>`;
-
-        const pysPanel = document.createElement("div");
-        pysPanel.style.cssText = "display: none; padding: 10px; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; background: var(--card-bg); margin-bottom: 10px;";
-
-        const pysTrack = document.createElement("div");
-        pysTrack.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;";
-
-        relatedProblems.forEach(p => {
-            const pCard = document.createElement("div");
-            pCard.style.cssText = "flex: 0 0 140px; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; background: var(--bg-color); cursor: pointer;";
-            pCard.innerHTML = `
-                <img src="${p.Imagen || 'https://via.placeholder.com/150'}" style="width: 100%; height: 75px; object-fit: cover; border-radius: 6px;">
-                <div style="font-size: 0.8rem; font-weight: bold; margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.Problema}</div>
-                <span style="font-size: 0.7rem; color: ${p.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight: bold;">
-                    ${p.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}
-                </span>
-            `;
-            pCard.onclick = () => openPysDetailModal(p);
-            pysTrack.appendChild(pCard);
-        });
-
-        pysPanel.appendChild(pysTrack);
-
-        pysAccordionBtn.onclick = () => {
-            const isHidden = pysPanel.style.display === 'none';
-            pysPanel.style.display = isHidden ? 'block' : 'none';
-            pysAccordionBtn.querySelector('.fa-chevron-down, .fa-chevron-up').className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
-        };
-
-        accordionContainer.appendChild(pysAccordionBtn);
-        accordionContainer.appendChild(pysPanel);
-    }
+    /* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL ACORDEÓN «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+    renderPosiblesProblemasAccordion(accordionContainer, activeItem);
 
     const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
@@ -2187,6 +2147,181 @@ async function insertNewVehicleFluently(item) {
         }
     }
 }
+
+/* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+function createPysCard(item) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.setAttribute("data-problem-id", item.id_problem || item.id || "");
+    card.style.animation = "none";
+    card.style.opacity = "1";
+    card.onclick = () => openPysDetailModal(item);
+
+    const img = document.createElement("img");
+    img.className = "card-img-top";
+    img.alt = item.Problema || "Problema técnico";
+    img.loading = "lazy";
+    setOptimizedImage(img, item.Imagen || "", IMG_SIZE_SMALL);
+    card.appendChild(img);
+
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+    const statusText = item.Se_soluciono === "x" ? "Solucionado" : "Sin solución";
+    const statusColor = item.Se_soluciono === "x" ? "#28a745" : "#dc3545";
+    overlay.innerHTML = `
+        <div class="overlay-text-primary" style="font-size: 0.85rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.Problema || "Problema"}</div>
+        <div class="overlay-text-secondary" style="font-size: 0.75rem; color: ${statusColor}; font-weight: bold;">${statusText}</div>
+    `;
+    card.appendChild(overlay);
+
+    return card;
+}
+
+export function renderPosiblesProblemasAccordion(container, activeItem) {
+    if (!container || !activeItem || !activeItem.id) return;
+    const vehicleIdStr = String(activeItem.id);
+
+    // Contenedor dinámico del acordeón para poder actualizarlo si se descargan datos nuevos
+    let wrapper = container.querySelector("#posibles-problemas-wrapper");
+    if (!wrapper) {
+        wrapper = document.createElement("div");
+        wrapper.id = "posibles-problemas-wrapper";
+        container.appendChild(wrapper);
+    }
+
+    const updateAccordion = (rawPysData) => {
+        wrapper.innerHTML = "";
+        const allPys = Array.isArray(rawPysData) ? rawPysData : [];
+        // Filtrar estrictamente por el identificador del modelo y de-duplicar por ID de problema
+        const seenIds = new Set();
+        const relatedProblems = [];
+
+        allPys.forEach(p => {
+            if (!p || !Array.isArray(p.modelosAsociados)) return;
+            const matches = p.modelosAsociados.some(mId => String(mId) === vehicleIdStr);
+            if (matches) {
+                const pId = p.id_problem || p.id || p.Problema;
+                if (!seenIds.has(pId)) {
+                    seenIds.add(pId);
+                    relatedProblems.push(p);
+                }
+            }
+        });
+
+        // REQUISITO: Si no existen problemas relacionados, no mostrar el acordeón vacío
+        if (relatedProblems.length === 0) {
+            return;
+        }
+
+        // Crear el botón acordeón con el título exacto requerido: «Posibles problemas»
+        const btn = document.createElement("button");
+        btn.className = "accordion-btn";
+        btn.innerHTML = `Posibles problemas <span class="accordion-arrow">▼</span>`;
+
+        const panel = document.createElement("div");
+        panel.className = "panel-desplegable";
+        panel.style.display = "none";
+        panel.style.padding = "15px 10px";
+
+        if (relatedProblems.length === 1) {
+            // REQUISITO: Si existe un solo problema, mostrar su tarjeta
+            const singleCardContainer = document.createElement("div");
+            singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; width: 100%;";
+            const singleCard = createPysCard(relatedProblems[0]);
+            singleCardContainer.appendChild(singleCard);
+            panel.appendChild(singleCardContainer);
+        } else {
+            // REQUISITO: Si existen varios problemas, mostrarlos mediante un carrusel navegable
+            const carouselContainer = document.createElement("div");
+            carouselContainer.className = "carousel-container";
+            const carouselTrack = document.createElement("div");
+            carouselTrack.className = "carousel-track";
+
+            relatedProblems.forEach(p => {
+                const card = createPysCard(p);
+                carouselTrack.appendChild(card);
+            });
+            carouselContainer.appendChild(carouselTrack);
+
+            const prevBtn = document.createElement("button");
+            prevBtn.className = "carousel-btn prev";
+            prevBtn.innerHTML = "&#10094;";
+            carouselContainer.appendChild(prevBtn);
+
+            const nextBtn = document.createElement("button");
+            nextBtn.className = "carousel-btn next";
+            nextBtn.innerHTML = "&#10095;";
+            carouselContainer.appendChild(nextBtn);
+
+            const cardWidth = 140 + 20;
+            const getVisibleCards = () => {
+                const containerWidth = carouselContainer.offsetWidth || 300;
+                return Math.floor(containerWidth / cardWidth) || 1;
+            };
+
+            const updateCarouselButtons = () => {
+                const scrollLeft = carouselTrack.scrollLeft;
+                const maxScrollLeft = carouselTrack.scrollWidth - carouselTrack.clientWidth;
+                prevBtn.style.display = scrollLeft > 2 ? "flex" : "none";
+                nextBtn.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+            };
+
+            nextBtn.addEventListener("click", () => {
+                carouselTrack.scrollBy({ left: cardWidth * getVisibleCards(), behavior: "smooth" });
+            });
+
+            prevBtn.addEventListener("click", () => {
+                carouselTrack.scrollBy({ left: -cardWidth * getVisibleCards(), behavior: "smooth" });
+            });
+
+            carouselTrack.addEventListener("scroll", () => setTimeout(updateCarouselButtons, 100));
+            window.addEventListener("resize", () => setTimeout(updateCarouselButtons, 100));
+            setTimeout(updateCarouselButtons, 200);
+
+            panel.appendChild(carouselContainer);
+        }
+
+        btn.onclick = () => {
+            const isOpening = panel.style.display === "none";
+            panel.style.display = isOpening ? "block" : "none";
+            btn.classList.toggle("active", isOpening);
+            const arrow = btn.querySelector(".accordion-arrow");
+            if (arrow) arrow.textContent = isOpening ? "▲" : "▼";
+
+            if (isOpening && relatedProblems.length > 1) {
+                const track = panel.querySelector(".carousel-track");
+                const prev = panel.querySelector(".carousel-btn.prev");
+                const next = panel.querySelector(".carousel-btn.next");
+                if (track && prev && next) {
+                    const scrollLeft = track.scrollLeft;
+                    const maxScrollLeft = track.scrollWidth - track.clientWidth;
+                    prev.style.display = scrollLeft > 2 ? "flex" : "none";
+                    next.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+                }
+            }
+        };
+
+        wrapper.appendChild(btn);
+        wrapper.appendChild(panel);
+    };
+
+    // 1. Evaluar si ya existen datos en caché en el estado
+    const cachedPys = getState().pysData;
+    if (Array.isArray(cachedPys) && cachedPys.length > 0) {
+        updateAccordion(cachedPys);
+    }
+
+    // 2. Consultar siempre de forma asíncrona para asegurar que no falten datos ni relaciones recientes
+    routeAction("getPysData").then(res => {
+        if (res && res.data && Array.isArray(res.data)) {
+            setState({ pysData: res.data });
+            updateAccordion(res.data);
+        }
+    }).catch(err => {
+        console.warn("No se pudo sincronizar pysData en detalle de vehículo:", err);
+    });
+}
+
 
 function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false, index = 0) {
     if (inEditMode) {
@@ -5133,17 +5268,7 @@ export async function renderPysSection() {
         items.reverse(); // Most recent first
 
         items.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "card";
-            card.style.cssText = "cursor: pointer; display: flex; flex-direction: column; gap: 8px; padding: 12px;";
-            card.innerHTML = `
-                <img src="${item.Imagen || 'https://via.placeholder.com/150'}" alt="${item.Problema}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;">
-                <h3 style="margin: 0; font-size: 1rem; color: var(--text-color);">${item.Problema}</h3>
-                <span style="font-size: 0.8rem; color: ${item.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight: bold;">
-                    ${item.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}
-                </span>
-            `;
-            card.onclick = () => openPysDetailModal(item);
+            const card = createPysCard(item);
             grid.appendChild(card);
         });
 
@@ -5559,14 +5684,7 @@ export function openPysDetailModal(item) {
         modelosAsociadosIds.forEach(vId => {
             const v = cortes.find(c => String(c.id) === String(vId));
             if (!v) return;
-            const card = document.createElement("div");
-            card.style.cssText = "flex: 0 0 120px; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; background: var(--card-bg); cursor: pointer; text-align: center;";
-            card.innerHTML = `
-                <img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width: 100%; height: 70px; object-fit: cover; border-radius: 6px;">
-                <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${v.marca} ${v.modelo}</div>
-                <div style="font-size: 0.7rem; color: var(--text-disabled);">${v.anoDesde}</div>
-            `;
-            card.onclick = () => mostrarDetalleModal(v, true);
+            const card = crearCardVehiculo(v, true);
             track.appendChild(card);
         });
 

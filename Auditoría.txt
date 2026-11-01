@@ -495,3 +495,24 @@ CIERRE DE AUDITORÍA: TAREAS 1 A 8 GPSpedia 2.2.8
 Se auditaron y corrigieron todos los componentes de ui.js, style.css, index.html y navigation.js.
 Todos los requisitos funcionales y visuales fueron verificados individualmente sin regresiones.
 ===================================================================
+
+===================================================================
+AUDITORÍA: ACORDEÓN «POSIBLES PROBLEMAS» Y UNIFORMIDAD DE TARJETAS
+Fecha: $(date)
+Archivos: ui.js, style.css
+
+Hallazgos de Inspección Línea por Línea:
+1. En ui.js (línea ~1828), el acordeón actualmente se titula "Problemas relacionados a este vehículo (N)" en lugar de "Posibles problemas".
+2. Si el usuario no ha entrado antes a la sección de Problemas y Soluciones, getState().pysData es undefined o vacío, por lo que el acordeón no detectaba problemas asociados al modelo hasta que se cargaran explícitamente. Se debe invocar getPysData en segundo plano y renderizar/actualizar el acordeón dinámicamente si hay coincidencias.
+3. El filtrado de problemas debe hacerse estrictamente por identificador único del modelo: p.modelosAsociados.includes(String(activeItem.id)).
+4. Cuando hay 1 solo problema, el acordeón debe mostrar la tarjeta individual. Cuando hay 2 o más problemas, debe instanciar un carrusel navegable con .carousel-container, .carousel-track y botones .carousel-btn prev/next.
+5. Si no hay problemas relacionados para ese modelo, no debe mostrarse el botón acordeón.
+6. Uniformidad de tarjetas:
+   - Los carruseles de referencia (cortes, recién agregados, vistos recientemente, categorías) usan .card (max-width: 140px, border-radius: 12px, box-shadow: 0 4px 12px rgba(0,0,0,0.1), overflow: hidden, etc.) con .card img y .overlay.
+   - Las tarjetas de Problemas y Soluciones en el carrusel de modelos asociados usaban estilos inline (flex: 0 0 140px, padding: 8px, etc.) que diferían visualmente. Deben estandarizarse utilizando la clase .card y su estructura canónica manteniendo intactos los 4 carruseles de referencia.
+===================================================================
+
+===================================================================
+VERIFICACIÓN Y CIERRE: CARRUSEL «POSIBLES PROBLEMAS»
+Se comprobó la consulta por identificador único del modelo, la no aparición de acordeones vacíos, la integración en 1 problema (tarjeta única) y múltiples problemas (carrusel navegable), y la preservación intacta de los estilos de carruseles de referencia.
+===================================================================

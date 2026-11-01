@@ -1212,3 +1212,14 @@ TAREAS COMPLETADAS: IMPLEMENTACIÓN Y CORRECCIÓN DE FUNCIONES Y ESTILOS (1 a 8)
 7. Tarea 8: Auditoría exhaustiva de CSS y corrección de elementos sin estilos en formularios y modales.
 Archivos modificados: ui.js, style.css, index.html, navigation.js, Auditoría.txt, ChangesLogs.txt
 ===================================================================
+
+===================================================================
+FECHA: $(date)
+TAREA: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES
+1. Se implementó la función renderPosiblesProblemasAccordion en ui.js que consulta asíncronamente getPysData y filtra estrictamente por el id numérico/string del modelo activo (activeItem.id).
+2. Si no existen problemas relacionados con el modelo, no se renderiza ningún acordeón vacío.
+3. Si existe exactamente 1 problema relacionado, se muestra el acordeón titulado «Posibles problemas» con la tarjeta individual centrada.
+4. Si existen 2 o más problemas relacionados, se renderiza dentro del acordeón un carrusel navegable (.carousel-container, .carousel-track, botones .carousel-btn prev/next).
+5. Se unificó el diseño visual de todas las tarjetas de Problemas y Soluciones mediante la función createPysCard(), adoptando el estándar canónico de la plataforma (.card, .card-img-top, .overlay) de referencia (cortes, recién agregados, vistos recientemente y categorías), sin alterar las reglas CSS de los carruseles existentes ni los logos de marca.
+Archivos modificados: ui.js, Auditoría.txt, ChangesLogs.txt
+===================================================================
