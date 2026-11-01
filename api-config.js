@@ -127,6 +127,34 @@ export async function addTutorial(data) {
     return await routeAction("addTutorial", data);
 }
 
+/* TAREA 13 (7.1): MECANISMO CONFIGURABLE GLOBAL DE MODO DE TEXTO ENRIQUECIDO */
+export const RICH_TEXT_MODES = {
+    STRICT: 'strict',      // Modo Estricto / Liviano (Fase 9): <b>, <strong>, <span> con color, <br>
+    ADVANCED: 'advanced'   // Modo Avanzado HTML/CSS: Permite etiquetas adicionales semánticas (<p>, <div>, <i>, <u>, <a>, <img>, <small>, <em>, <mark>)
+};
+
+export function getRichTextMode() {
+    try {
+        const stored = localStorage.getItem('gpsepedia_rich_text_mode');
+        if (stored === RICH_TEXT_MODES.ADVANCED) return RICH_TEXT_MODES.ADVANCED;
+    } catch (e) {
+        // En caso de cuota o localStorage restringido
+    }
+    return RICH_TEXT_MODES.STRICT;
+}
+
+export function setRichTextMode(mode) {
+    try {
+        if (mode === RICH_TEXT_MODES.ADVANCED) {
+            localStorage.setItem('gpsepedia_rich_text_mode', RICH_TEXT_MODES.ADVANCED);
+        } else {
+            localStorage.setItem('gpsepedia_rich_text_mode', RICH_TEXT_MODES.STRICT);
+        }
+    } catch (e) {
+        console.error("Error al persistir modo de texto enriquecido:", e);
+    }
+}
+
 export async function checkAllServicesHealth() {
     const services = Object.keys(API_ENDPOINTS);
     const results = {};

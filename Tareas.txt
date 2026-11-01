@@ -1219,9 +1219,9 @@ TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VE
 ---
 
 ===================================================================
-TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIMEDIA [X]
+TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIMEDIA
 ===================================================================
-- **Estado:** COMPLETADA
+- **Estado:** PENDIENTE
 - **Objetivo principal:** Expandir la biblioteca de vídeo-guías técnicas garantizando que la reproducción de contenidos se interrumpa de forma limpia y automática al cerrar la vista.
 - **Tareas originales integradas:** 6.1, B04
 - **Justificación técnica de convergencia:** Converge la creación de la tarjeta y formulario para agregar nuevos tutoriales con la gestión estricta del ciclo de vida del reproductor de YouTube: destrucción garantizada del iframe y silenciamiento inmediato del audio al cerrar el modal mediante observadores de mutación, liberando memoria y evitando reproducciones en segundo plano.
@@ -1245,12 +1245,12 @@ TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIM
   - Evita registros duplicados.
   - Muestra el nombre del colaborador al final del modal de detalle, utilizando el mismo patrón de los cortes.
   Si el esquema actual no conserva la identidad del colaborador, identifica el cambio mínimo necesario para agregar esa capacidad sin romper la compatibilidad.
-- **Estado:** COMPLETADA [X]
+- **Estado:** PENDIENTE.
 
 #### Especificación Original (B04): 2. **TÍTULO: Corrección de reproducción persistente de vídeos en modales de tutoriales (v2.1.5)**
 
 2. **TÍTULO: Corrección de reproducción persistente de vídeos en modales de tutoriales (v2.1.5)**
-- **Estado:** COMPLETADA [X]
+- **Estado:** PENDIENTE.
    - **ALCANCE:** ui.js, main.js
    - **DESCRIPCIÓN DETALLADA:**
      - **Problema:** Al cerrar el modal de detalle de tutoriales por cualquier método (botón, gesto, atrás), el vídeo de YouTube continuaba reproduciéndose, el audio seguía activo y los recursos no se liberaban en segundo plano.
@@ -1261,9 +1261,9 @@ TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIM
 ---
 
 ===================================================================
-TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRIPTIVOS
+TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRIPTIVOS [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Permitir a los técnicos resaltar información crítica de instalación (colores de cable, advertencias) sin comprometer la seguridad ni sobrecargar la interfaz.
 - **Tareas originales integradas:** 7.1
 - **Justificación técnica de convergencia:** Implementa la barra de formato simple (negrita, colores de texto, saltos de línea) junto con el modo configurable de plataforma y el motor de saneamiento HTML en cliente y servidor para admitir etiquetas semánticas seguras sin riesgo de inyecciones de código (XSS).

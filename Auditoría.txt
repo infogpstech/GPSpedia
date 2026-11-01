@@ -489,3 +489,15 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
    - En `main.js`, un `MutationObserver` vigila `#modalDetalle`. En cuanto se remueve la clase `.visible` (por botón cerrar, tecla Escape, botón Atrás o gesto popstate), detecta el tipo 'tutorial', asigna `iframe.src = 'about:blank'` y destruye el elemento del DOM de forma inmediata.
    - Esto silencia el audio y detiene la reproducción instantáneamente, liberando recursos en segundo plano.
    - Todo el flujo cumple los requisitos funcionales de la Tarea 12. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+================================================================================
+AUDITORÍA PREVIA - TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRIPTIVOS
+Fecha: 01/11/2026
+Objetivo: Verificar el estado del editor de texto ligero, saneamiento HTML (sanitizeHtmlContent) y soporte en formularios descriptivos y modales de detalle.
+Hallazgos:
+1. `sanitizeHtmlContent` existe en `ui.js` (línea 5721) con soporte de etiquetas B, STRONG, SPAN, BR, P, DIV, I, U, A, IMG, SMALL, EM, MARK, eliminando scripts, on* y javascript:.
+2. Los botones globales `applyRichFormat` y `applyRichColor` existen pero solo se implementaban directamente en el formulario de Tutoriales (`openAddTutorialModal`).
+3. Los formularios de agregar corte (`openAddCutForModelModal`), sugerir corte (`openSuggestCutModal`), aperturas (`openAddAperturaModal`), alimentación (`openAddFeedModal`), problemas (`openAddProblemModal`), y edición inline de vehículo no contaban con la barra de formato ligero para facilitar la edición técnica de texto enriquecido (negrita, color, saltos de línea).
+4. El renderizado de detalles en `renderCutContent`, `createAccordionSection`, y `mostrarDetalleModal` debe asegurar la aplicación uniforme de `sanitizeHtmlContent` y compatibilidad con saltos de línea preservados (`nl2br` o soporte `<br>`) tanto para texto plano legado como HTML formateado.
+5. Se requiere un helper reusable `createRichEditorToolbar(targetTextareaId)` y configuración `gpsepedia_rich_text_mode` con modos 'strict' y 'advanced' en `api-config.js` y `ui.js`, conmutables desde Dev Tools.
+================================================================================

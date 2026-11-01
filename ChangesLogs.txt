@@ -1199,3 +1199,8 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
   - Línea 5622: Agregado comentario identificativo /* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */ en openAddTutorialModal.
 - main.js:
   - Línea 401: Agregado comentario identificativo /* TAREA 12 (B04): CONTROL DEL CICLO DE VIDA DEL REPRODUCTOR DE YOUTUBE MEDIANTE MUTATIONOBSERVER */ en el bloque de observación de cierre de #modalDetalle.
+
+- TAREA 13 COMPLETADA: Incorporación de barra de formato ligero universal y saneamiento HTML configurable.
+  * Implementado helper renderRichToolbarHtml en ui.js y conectado a campos descriptivos de tutoriales, cortes, aperturas, alimentación y problemas y soluciones.
+  * Añadida configuración global getRichTextMode y setRichTextMode con modos STRICT y ADVANCED en api-config.js y selector en Panel Dev.
+  * Saneamiento estricto contra XSS con preservación de saltos de línea de texto plano y formato HTML seguro en modales de detalle.

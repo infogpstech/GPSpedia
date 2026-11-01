@@ -4,7 +4,7 @@
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, getRichTextMode, setRichTextMode, RICH_TEXT_MODES } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 
@@ -2274,9 +2274,9 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         if (isNoRecomendadoValue(cutData.tipo)) {
             contentP.innerHTML = `<strong>Tipo de Corte:</strong> No recomendado`;
         } else {
-            contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
-                                <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
-                                <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
+            contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${sanitizeHtmlContent(cutData.tipo || 'No especificado')}<br>
+                                <strong>Ubicación:</strong> ${sanitizeHtmlContent(cutData.ubicacion || 'No especificada')}<br>
+                                <strong>Color de Cable:</strong> ${sanitizeHtmlContent(cutData.colorCable || 'No especificado')}`;
         }
         container.appendChild(contentP);
     }
@@ -3246,6 +3246,18 @@ ${elapsedSec}s
         }
     };
 
+    // TAREA 13 (7.1): Selector de modo de texto enriquecido en Panel Dev
+    const richModeSelect = document.getElementById('dev-rich-text-mode-select');
+    if (richModeSelect) {
+        richModeSelect.value = getRichTextMode();
+        richModeSelect.onchange = () => {
+            const newMode = richModeSelect.value;
+            setRichTextMode(newMode);
+            log(`[CONFIG] Modo de texto enriquecido actualizado a: ${newMode === RICH_TEXT_MODES.ADVANCED ? 'Avanzado HTML/CSS' : 'Estricto / Liviano (Fase 9)'}`);
+            mostrarNotificacion(`Modo de texto enriquecido: ${newMode.toUpperCase()}`, "info");
+        };
+    }
+
     // 7. Registrar Logotipo
     document.getElementById('btn-admin-register-logo').onclick = async () => {
         const brandName = document.getElementById('logo-brand-name-input').value.trim();
@@ -3555,7 +3567,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
         function updateSlide(index) {
             currentSlideIndex = (index + totalSlides) % totalSlides;
             const activeCable = sec.cables[currentSlideIndex];
-            slideText.innerHTML = `<strong>${activeCable.label}:</strong> ${activeCable.content || "Sin descripción"}`;
+            slideText.innerHTML = `<strong>${activeCable.label}:</strong> ${sanitizeHtmlContent(activeCable.content || "Sin descripción")}`;
 
             if (activeCable.img) {
                 slideImg.style.display = 'block';
@@ -3650,7 +3662,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
 
         if (activeContent) {
             const contentP = document.createElement('p');
-            contentP.innerHTML = activeContent;
+            contentP.innerHTML = sanitizeHtmlContent(activeContent);
             panel.appendChild(contentP);
         }
 
@@ -4501,6 +4513,7 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             </div>
             <div class="form-group">
                 <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
+                ${renderRichToolbarHtml('sug-detalles')}
                 <textarea id="sug-detalles" rows="3" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:8px;">Enviar Sugerencia</button>
@@ -4798,6 +4811,7 @@ export function openAddCutForModelModal(item) {
             </div>
             <div class="form-group">
                 <label>Ubicación y Detalles del Corte</label>
+                ${renderRichToolbarHtml('add-cut-detalles')}
                 <textarea id="add-cut-detalles" rows="3" placeholder="Detalles de ubicación y conexión..." required></textarea>
             </div>
             <div class="form-group">
@@ -4892,6 +4906,7 @@ export function openAddAperturaModal(item) {
         <form id="add-apertura-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Detalles de la Apertura</label>
+                ${renderRichToolbarHtml('add-apertura-detalles')}
                 <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
             </div>
             <div class="form-group">
@@ -4965,6 +4980,7 @@ export function openAddFeedModal(item) {
         <form id="add-feed-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Detalles de la Alimentación</label>
+                ${renderRichToolbarHtml('add-feed-detalles')}
                 <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
             </div>
             <div class="form-group">
@@ -5220,20 +5236,23 @@ export function openAddProblemModal() {
                 <input type="file" id="pys-img-file" accept="image/*" required>
             </div>
             <div class="form-group">
-                <label>Detalle del Problema (Máx 200 caracteres)</label>
-                <textarea id="pys-detalle" maxlength="200" rows="3" required placeholder="Describe el problema..."></textarea>
+                <label>Detalle del Problema</label>
+                ${renderRichToolbarHtml('pys-detalle')}
+                <textarea id="pys-detalle" rows="3" required placeholder="Describe el problema..."></textarea>
             </div>
             <div class="form-group" style="display:flex; align-items:center; gap:8px;">
                 <input type="checkbox" id="pys-sin-solucion" style="width:auto;">
                 <label for="pys-sin-solucion" style="margin:0;">Sin solución aún</label>
             </div>
             <div class="form-group" id="grp-solucion">
-                <label>Solución (Máx 200 caracteres)</label>
-                <textarea id="pys-solucion" maxlength="200" rows="3" placeholder="Explica la solución..."></textarea>
+                <label>Solución</label>
+                ${renderRichToolbarHtml('pys-solucion')}
+                <textarea id="pys-solucion" rows="3" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
-                <label>Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
-                <input type="text" id="pys-prevenir" maxlength="100" placeholder="Recomendación preventiva...">
+                <label>Cómo Prevenir (Opcional)</label>
+                ${renderRichToolbarHtml('pys-prevenir')}
+                <textarea id="pys-prevenir" rows="2" placeholder="Recomendación preventiva..."></textarea>
             </div>
             <div class="form-group">
                 <label>Enlace de Vídeo YouTube (Opcional)</label>
@@ -5648,10 +5667,7 @@ export function openAddTutorialModal() {
             </div>
             <div class="form-group">
                 <label>Descripción / Detalles</label>
-                <div class="rich-editor-toolbar" style="display:flex; gap:8px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('tut-desc', 'bold')"><strong>B</strong></button>
-                    <input type="color" id="tut-color-picker" onchange="applyRichColor('tut-desc', this.value)" style="width:30px; height:30px; padding:0; border:none; cursor:pointer;" title="Color de texto">
-                </div>
+                ${renderRichToolbarHtml('tut-desc')}
                 <textarea id="tut-desc" rows="4" placeholder="Detalles del tutorial..."></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Tutorial</button>
@@ -5695,6 +5711,7 @@ export function openAddTutorialModal() {
     };
 }
 
+/* TAREA 13 (7.1): EDITOR DE TEXTO ENRIQUECIDO LIGERO, BARRA DE FORMATO Y SANITIZACIÓN HTML */
 window.applyRichFormat = function(targetId, format) {
     const textarea = document.getElementById(targetId);
     if (!textarea) return;
@@ -5704,6 +5721,9 @@ window.applyRichFormat = function(targetId, format) {
     if (!selected) return;
     const formatted = `<b>${selected}</b>`;
     textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+    textarea.focus();
+    textarea.setSelectionRange(start, start + formatted.length);
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
 };
 
 window.applyRichColor = function(targetId, color) {
@@ -5715,28 +5735,80 @@ window.applyRichColor = function(targetId, color) {
     if (!selected) return;
     const formatted = `<span style="color:${color}">${selected}</span>`;
     textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+    textarea.focus();
+    textarea.setSelectionRange(start, start + formatted.length);
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
 };
 
-// TAREA ADICIONAL: PERMITIR CONTENIDO HTML ENRIQUECIDO EN CAMPOS DE TEXTO
+export function renderRichToolbarHtml(targetId) {
+    return `
+        <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+            <button type="button" class="btn btn-secondary btn-sm" style="padding:2px 8px; font-weight:bold; height:28px; min-height:28px; font-size:0.85rem;" onclick="applyRichFormat('${targetId}', 'bold')" title="Negrita"><strong>B</strong></button>
+            <input type="color" id="${targetId}-color-picker" onchange="applyRichColor('${targetId}', this.value)" style="width:28px; height:28px; padding:0; border:none; cursor:pointer; background:none;" title="Color de texto">
+            <span style="font-size:0.75rem; color:var(--text-disabled);">(Selecciona texto y aplica Negrita o Color)</span>
+        </div>
+    `;
+}
+
+// TAREA 13 (7.1): PERMITIR CONTENIDO HTML ENRIQUECIDO EN CAMPOS DE TEXTO CON MODO CONFIGURABLE (STRICT / ADVANCED)
 export function sanitizeHtmlContent(htmlStr) {
     if (!htmlStr) return '';
+    // Preservar saltos de línea de texto plano si no contiene ya markup HTML estructurado
+    let preparedStr = String(htmlStr);
+    if (!/<[a-z][\s\S]*>/i.test(preparedStr)) {
+        preparedStr = preparedStr.replace(/\r\n|\r|\n/g, '<br>');
+    }
+
+    const mode = (typeof getRichTextMode === 'function') ? getRichTextMode() : RICH_TEXT_MODES.STRICT;
+    const isAdvanced = mode === RICH_TEXT_MODES.ADVANCED;
+
+    // Modo Estricto/Liviano (Fase 9): B, STRONG, SPAN, BR
+    // Modo Avanzado (Tarea Adicional 1): B, STRONG, SPAN, BR, P, DIV, I, U, A, IMG, SMALL, EM, MARK
+    const allowedTags = isAdvanced
+        ? ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'U', 'A', 'IMG', 'SMALL', 'EM', 'MARK']
+        : ['B', 'STRONG', 'SPAN', 'BR'];
+
     const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlStr, 'text/html');
-    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'U', 'A', 'IMG', 'SMALL', 'EM', 'MARK'];
+    const doc = parser.parseFromString(preparedStr, 'text/html');
 
     function cleanNode(node) {
         const children = Array.from(node.childNodes);
         children.forEach(child => {
-            if (child.nodeType === 1) {
-                if (!allowedTags.includes(child.tagName)) {
+            if (child.nodeType === 1) { // Element node
+                const tagName = child.tagName.toUpperCase();
+                if (!allowedTags.includes(tagName)) {
+                    // Reemplazar etiqueta no permitida por texto plano escapado
                     const textNode = doc.createTextNode(child.outerHTML);
                     node.replaceChild(textNode, child);
                 } else {
+                    // Sanitizar atributos
                     Array.from(child.attributes).forEach(attr => {
                         const name = attr.name.toLowerCase();
                         const val = attr.value.toLowerCase();
-                        if (name.startsWith('on') || val.includes('javascript:') || val.includes('data:text/html')) {
+
+                        // Bloquear eventos on* y scripts ejecutables
+                        if (name.startsWith('on') || val.includes('javascript:') || val.includes('data:text/html') || val.includes('vbscript:')) {
                             child.removeAttribute(attr.name);
+                            return;
+                        }
+
+                        // En modo estricto, para <span> permitir únicamente atributo style de color
+                        if (!isAdvanced && tagName === 'SPAN') {
+                            if (name === 'style') {
+                                const colorMatch = attr.value.match(/color\s*:\s*([^;]+)/i);
+                                if (colorMatch) {
+                                    child.setAttribute('style', `color: ${colorMatch[1].trim()};`);
+                                } else {
+                                    child.removeAttribute('style');
+                                }
+                            } else {
+                                child.removeAttribute(attr.name);
+                            }
+                        } else if (name === 'style') {
+                            // En modo avanzado limpiar estilos peligrosos (expression, behavior)
+                            if (val.includes('expression') || val.includes('behavior')) {
+                                child.removeAttribute('style');
+                            }
                         }
                     });
                     cleanNode(child);

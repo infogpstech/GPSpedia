@@ -398,7 +398,6 @@ async function initializeApp() {
         }
     });
 
-    /* TAREA 12 (B04): CONTROL DEL CICLO DE VIDA DEL REPRODUCTOR DE YOUTUBE MEDIANTE MUTATIONOBSERVER */
     // --- MUTATION OBSERVER PARA GESTIÓN DE REPRODUCCIÓN EN MODAL DE TUTORIALES ---
     const modalDetalle = document.getElementById('modalDetalle');
     if (modalDetalle) {
