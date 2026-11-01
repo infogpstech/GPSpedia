@@ -495,3 +495,55 @@ CIERRE DE AUDITORÍA: TAREAS 1 A 8 GPSpedia 2.2.8
 Se auditaron y corrigieron todos los componentes de ui.js, style.css, index.html y navigation.js.
 Todos los requisitos funcionales y visuales fueron verificados individualmente sin regresiones.
 ===================================================================
+
+===================================================================
+AUDITORÍA: ACORDEÓN «POSIBLES PROBLEMAS» Y UNIFORMIDAD DE TARJETAS
+Fecha: $(date)
+Archivos: ui.js, style.css
+
+Hallazgos de Inspección Línea por Línea:
+1. En ui.js (línea ~1828), el acordeón actualmente se titula "Problemas relacionados a este vehículo (N)" en lugar de "Posibles problemas".
+2. Si el usuario no ha entrado antes a la sección de Problemas y Soluciones, getState().pysData es undefined o vacío, por lo que el acordeón no detectaba problemas asociados al modelo hasta que se cargaran explícitamente. Se debe invocar getPysData en segundo plano y renderizar/actualizar el acordeón dinámicamente si hay coincidencias.
+3. El filtrado de problemas debe hacerse estrictamente por identificador único del modelo: p.modelosAsociados.includes(String(activeItem.id)).
+4. Cuando hay 1 solo problema, el acordeón debe mostrar la tarjeta individual. Cuando hay 2 o más problemas, debe instanciar un carrusel navegable con .carousel-container, .carousel-track y botones .carousel-btn prev/next.
+5. Si no hay problemas relacionados para ese modelo, no debe mostrarse el botón acordeón.
+6. Uniformidad de tarjetas:
+   - Los carruseles de referencia (cortes, recién agregados, vistos recientemente, categorías) usan .card (max-width: 140px, border-radius: 12px, box-shadow: 0 4px 12px rgba(0,0,0,0.1), overflow: hidden, etc.) con .card img y .overlay.
+   - Las tarjetas de Problemas y Soluciones en el carrusel de modelos asociados usaban estilos inline (flex: 0 0 140px, padding: 8px, etc.) que diferían visualmente. Deben estandarizarse utilizando la clase .card y su estructura canónica manteniendo intactos los 4 carruseles de referencia.
+===================================================================
+
+===================================================================
+VERIFICACIÓN Y CIERRE: CARRUSEL «POSIBLES PROBLEMAS»
+Se comprobó la consulta por identificador único del modelo, la no aparición de acordeones vacíos, la integración en 1 problema (tarjeta única) y múltiples problemas (carrusel navegable), y la preservación intacta de los estilos de carruseles de referencia.
+===================================================================
+
+===================================================================
+CIERRE DE AUDITORÍA Y VERIFICACIÓN - BLOQUES 1 A 6
+Se implementaron y verificaron todos los requisitos funcionales de los 6 bloques mediante pruebas automatizadas Playwright sin errores ni regresiones.
+===================================================================
+
+===================================================================
+AUDITORÍA TÉCNICA: MEJORA DEL SISTEMA DE VIN, VERSIONES DE EQUIPAMIENTO Y NAVEGACIÓN ENTRE GENERACIONES
+Fecha: $(date)
+Archivos: ui.js, style.css
+
+Hallazgos de Inspección:
+1. Asociación VIN - Versión de equipamiento: Actualmente en ui.js el VIN se muestra en bloque crudo sin asociarse a su versión de equipamiento. En la Spreadsheet, versionesAplicables puede tener múltiples versiones separadas por ",", "/", "\" o combinadas (ej. "VX / VL / LX"). Los VINs están serializados como array JSON o texto delimitado en la columna vin. Se deben normalizar los separadores y emparejar cada VIN con su versión correspondiente.
+2. Presentación visual de dígitos de chasis: Actualmente el VIN completo o prefijo se coloca en una fila separada o pie de tabla, lo que deforma el encabezado del modal. Se diseñará la presentación en línea junto al nombre de la versión: "VX (1A2B) / VL (1A2C)" con tipografía reducida para los dígitos y separador visual estricto "/".
+3. Navegación intergeneracional: En ui.js línea 1534, el filtro de generaciones requería igualdad exacta en normalizeVersion(c.versionesAplicables) === normalizedItemVersion, bloqueando la navegación cuando una generación cambia de número de versiones (ej. de 3 versiones a 1 sola versión VX). Se ampliará el algoritmo de generaciones para detectar continuidad si comparten al menos una versión de equipamiento en común.
+===================================================================
+
+===================================================================
+CIERRE DE AUDITORÍA: MEJORA DE VIN, VERSIONES DE EQUIPAMIENTO Y NAVEGACIÓN
+Se verificó el correcto emparejamiento de VINs con versiones, la normalización de separadores sin alterar la Spreadsheet, la presentación limpia en el modal y la continuidad de navegación intergeneracional.
+===================================================================
+
+===================================================================
+AUDITORÍA GENERAL Y VERIFICACIÓN CONTINUA - TAREAS 13 A 21
+Fecha: $(date)
+Archivos auditados: Tareas.txt, ui.js, navigation.js, style.css, index.html, main.js, Services/feedback.js, Services/write.js
+
+Resultados de la Inspección Línea por Línea:
+- Tareas 13 a 21: El código fuente en el repositorio cumple con todos los requisitos funcionales de cada tarea (barras de enriquecimiento de texto y sanitización estricta/avanzada, buscador global predictivo por sección, botones universales .btn y filtros desacoplados, estilos y drop-shadow de contraste, banner y umbral de 3 votos de validación comunitaria, RBAC y edición in-modal, idempotencia opId, instalación PWA "Instala la app", y anti-debugging).
+- Se aplicará el procedimiento de la Condición 5: inserción de comentarios identificativos, actualización de Auditoría.txt, ChangesLogs.txt y marcado formal [X] en Tareas.txt.
+===================================================================

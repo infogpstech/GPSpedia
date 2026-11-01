@@ -211,6 +211,54 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
  */
 const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
 
+/* FUNCIONES DE RELACIÓN VIN - VERSIONES DE EQUIPAMIENTO */
+export function parseEquipmentVersions(rawStr) {
+    if (!rawStr) return [];
+    // Normalizar separadores admitidos: comas ",", diagonales "/" y diagonales inversas "\"
+    return String(rawStr)
+        .split(/[,/\\\\]+/)
+        .map(v => v.trim())
+        .filter(Boolean);
+}
+
+export function parseVinCollection(rawVin) {
+    if (!rawVin) return [];
+    if (Array.isArray(rawVin)) {
+        return rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    }
+    const str = String(rawVin).trim();
+    if (str.startsWith("[") && str.endsWith("]")) {
+        try {
+            const parsed = JSON.parse(str);
+            if (Array.isArray(parsed)) {
+                return parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+            }
+        } catch (e) {}
+    }
+    return str
+        .split(/[,/\\\\]+/)
+        .map(v => v.trim().toUpperCase())
+        .filter(Boolean);
+}
+
+export function mapVersionsWithVins(versionesStr, vinRaw) {
+    const versions = parseEquipmentVersions(versionesStr);
+    const vins = parseVinCollection(vinRaw);
+
+    if (versions.length === 0 && vins.length === 0) return [];
+    if (versions.length === 0) {
+        return vins.map(vin => ({ version: "", vin }));
+    }
+
+    // Cada versión se relaciona individualmente con su correspondiente VIN si existe
+    return versions.map((version, index) => {
+        return {
+            version,
+            vin: vins[index] || null
+        };
+    });
+}
+
 /**
  * Establece una imagen optimizada intentando cargarla desde el caché de IndexedDB.
  * @param {HTMLImageElement} imgElement - El elemento img a actualizar.
@@ -1527,17 +1575,34 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     const subHeaderText = document.createElement('p');
     subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
 
-    // Tarea 5: Identificar todas las generaciones del mismo modelo
+    /* TAREA: NAVEGACIÓN ENTRE GENERACIONES BASADA EN CONTINUIDAD DE VERSIONES DE EQUIPAMIENTO */
     const allCortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
 
-    const normalizedItemVersion = normalizeVersion(activeItem.versionesAplicables);
-    const generations = allCortes.filter(c =>
-        String(c.marca).toLowerCase() === String(activeItem.marca).toLowerCase() &&
-        String(c.modelo).toLowerCase() === String(activeItem.modelo).toLowerCase() &&
-        String(c.categoria).toLowerCase() === String(activeItem.categoria).toLowerCase() &&
-        String(c.tipoEncendido).toLowerCase() === String(activeItem.tipoEncendido).toLowerCase() &&
-        normalizeVersion(c.versionesAplicables) === normalizedItemVersion
-    ).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
+    const activeItemVersions = parseEquipmentVersions(activeItem.versionesAplicables).map(v => v.toLowerCase());
+
+    const generations = allCortes.filter(c => {
+        if (String(c.marca).toLowerCase() !== String(activeItem.marca).toLowerCase() ||
+            String(c.modelo).toLowerCase() !== String(activeItem.modelo).toLowerCase() ||
+            String(c.categoria).toLowerCase() !== String(activeItem.categoria).toLowerCase()) {
+            return false;
+        }
+
+        // Si tienen tipos de encendido diferentes, no pertenecen a la misma línea
+        if (activeItem.tipoEncendido && c.tipoEncendido &&
+            String(c.tipoEncendido).toLowerCase() !== String(activeItem.tipoEncendido).toLowerCase()) {
+            return false;
+        }
+
+        // Continuidad de versiones de equipamiento:
+        // Si alguno no tiene versiones especificadas, se considera continuo
+        const cVersions = parseEquipmentVersions(c.versionesAplicables).map(v => v.toLowerCase());
+        if (activeItemVersions.length === 0 || cVersions.length === 0) {
+            return true;
+        }
+
+        // Si ambos tienen versiones, debe existir al menos una versión en común
+        return activeItemVersions.some(av => cVersions.includes(av));
+    }).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
 
     const currentIndex = generations.findIndex(g => String(g.id) === String(activeItem.id));
 
@@ -1700,8 +1765,26 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             yearRangeContainer.appendChild(yearTextSpan);
         }
 
-        const equipamiento = activeItem.versionesAplicables || activeItem.tipoEncendido || '';
-        subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | `;
+        /* TAREA: PRESENTACIÓN VISUAL DE VERSIONES Y DÍGITOS DE CHASIS CON SEPARADOR "/" */
+        const mappedVersions = mapVersionsWithVins(activeItem.versionesAplicables, activeItem.vin);
+        let equipamientoHtml = '';
+
+        if (mappedVersions.length > 0) {
+            equipamientoHtml = mappedVersions.map(mv => {
+                if (mv.version && mv.vin) {
+                    return `${mv.version} <span class="chassis-digits" style="font-size: 0.82em; font-weight: normal; opacity: 0.85;">(${mv.vin})</span>`;
+                } else if (mv.version) {
+                    return mv.version;
+                } else if (mv.vin) {
+                    return `<span class="chassis-digits" style="font-size: 0.82em; font-weight: normal; opacity: 0.85;">(${mv.vin})</span>`;
+                }
+                return '';
+            }).filter(Boolean).join(' / ');
+        } else {
+            equipamientoHtml = activeItem.tipoEncendido || '';
+        }
+
+        subHeaderText.innerHTML = `<strong>${equipamientoHtml}</strong> | `;
         subHeaderText.appendChild(yearRangeContainer);
 
         if(activeItem.categoria) {
@@ -1824,48 +1907,8 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     });
 
-    /* TAREA 11 (12.5): ACORDEÓN «PROBLEMAS RELACIONADOS A ESTE VEHÍCULO» EN MODAL TÉCNICO */
-    // Acordeón de Problemas relacionados a este vehículo
-    const { pysData = [] } = getState();
-    const relatedProblems = pysData.filter(p => Array.isArray(p.modelosAsociados) && p.modelosAsociados.includes(String(activeItem.id)));
-
-    if (relatedProblems.length > 0) {
-        const pysAccordionBtn = document.createElement("button");
-        pysAccordionBtn.className = "accordion-header";
-        pysAccordionBtn.style.cssText = "width: 100%; text-align: left; padding: 12px; background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; margin-top: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold;";
-        pysAccordionBtn.innerHTML = `<span><i class="fa-solid fa-triangle-exclamation" style="color:#e6a23c; margin-right:6px;"></i> Problemas relacionados a este vehículo (${relatedProblems.length})</span> <i class="fa-solid fa-chevron-down"></i>`;
-
-        const pysPanel = document.createElement("div");
-        pysPanel.style.cssText = "display: none; padding: 10px; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 8px 8px; background: var(--card-bg); margin-bottom: 10px;";
-
-        const pysTrack = document.createElement("div");
-        pysTrack.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;";
-
-        relatedProblems.forEach(p => {
-            const pCard = document.createElement("div");
-            pCard.style.cssText = "flex: 0 0 140px; border: 1px solid var(--border-color); border-radius: 8px; padding: 8px; background: var(--bg-color); cursor: pointer;";
-            pCard.innerHTML = `
-                <img src="${p.Imagen || 'https://via.placeholder.com/150'}" style="width: 100%; height: 75px; object-fit: cover; border-radius: 6px;">
-                <div style="font-size: 0.8rem; font-weight: bold; margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${p.Problema}</div>
-                <span style="font-size: 0.7rem; color: ${p.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight: bold;">
-                    ${p.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}
-                </span>
-            `;
-            pCard.onclick = () => openPysDetailModal(p);
-            pysTrack.appendChild(pCard);
-        });
-
-        pysPanel.appendChild(pysTrack);
-
-        pysAccordionBtn.onclick = () => {
-            const isHidden = pysPanel.style.display === 'none';
-            pysPanel.style.display = isHidden ? 'block' : 'none';
-            pysAccordionBtn.querySelector('.fa-chevron-down, .fa-chevron-up').className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
-        };
-
-        accordionContainer.appendChild(pysAccordionBtn);
-        accordionContainer.appendChild(pysPanel);
-    }
+    /* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL ACORDEÓN «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+    renderPosiblesProblemasAccordion(accordionContainer, activeItem);
 
     const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
@@ -2187,6 +2230,181 @@ async function insertNewVehicleFluently(item) {
         }
     }
 }
+
+/* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+function createPysCard(item) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.setAttribute("data-problem-id", item.id_problem || item.id || "");
+    card.style.animation = "none";
+    card.style.opacity = "1";
+    card.onclick = () => openPysDetailModal(item);
+
+    const img = document.createElement("img");
+    img.className = "card-img-top";
+    img.alt = item.Problema || "Problema técnico";
+    img.loading = "lazy";
+    setOptimizedImage(img, item.Imagen || "", IMG_SIZE_SMALL);
+    card.appendChild(img);
+
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+    const statusText = item.Se_soluciono === "x" ? "Solucionado" : "Sin solución";
+    const statusColor = item.Se_soluciono === "x" ? "#28a745" : "#dc3545";
+    overlay.innerHTML = `
+        <div class="overlay-text-primary" style="font-size: 0.85rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.Problema || "Problema"}</div>
+        <div class="overlay-text-secondary" style="font-size: 0.75rem; color: ${statusColor}; font-weight: bold;">${statusText}</div>
+    `;
+    card.appendChild(overlay);
+
+    return card;
+}
+
+export function renderPosiblesProblemasAccordion(container, activeItem) {
+    if (!container || !activeItem || !activeItem.id) return;
+    const vehicleIdStr = String(activeItem.id);
+
+    // Contenedor dinámico del acordeón para poder actualizarlo si se descargan datos nuevos
+    let wrapper = container.querySelector("#posibles-problemas-wrapper");
+    if (!wrapper) {
+        wrapper = document.createElement("div");
+        wrapper.id = "posibles-problemas-wrapper";
+        container.appendChild(wrapper);
+    }
+
+    const updateAccordion = (rawPysData) => {
+        wrapper.innerHTML = "";
+        const allPys = Array.isArray(rawPysData) ? rawPysData : [];
+        // Filtrar estrictamente por el identificador del modelo y de-duplicar por ID de problema
+        const seenIds = new Set();
+        const relatedProblems = [];
+
+        allPys.forEach(p => {
+            if (!p || !Array.isArray(p.modelosAsociados)) return;
+            const matches = p.modelosAsociados.some(mId => String(mId) === vehicleIdStr);
+            if (matches) {
+                const pId = p.id_problem || p.id || p.Problema;
+                if (!seenIds.has(pId)) {
+                    seenIds.add(pId);
+                    relatedProblems.push(p);
+                }
+            }
+        });
+
+        // REQUISITO: Si no existen problemas relacionados, no mostrar el acordeón vacío
+        if (relatedProblems.length === 0) {
+            return;
+        }
+
+        // Crear el botón acordeón con el título exacto requerido: «Posibles problemas»
+        const btn = document.createElement("button");
+        btn.className = "accordion-btn";
+        btn.innerHTML = `Posibles problemas <span class="accordion-arrow">▼</span>`;
+
+        const panel = document.createElement("div");
+        panel.className = "panel-desplegable";
+        panel.style.display = "none";
+        panel.style.padding = "15px 10px";
+
+        if (relatedProblems.length === 1) {
+            // REQUISITO: Si existe un solo problema, mostrar su tarjeta
+            const singleCardContainer = document.createElement("div");
+            singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; width: 100%;";
+            const singleCard = createPysCard(relatedProblems[0]);
+            singleCardContainer.appendChild(singleCard);
+            panel.appendChild(singleCardContainer);
+        } else {
+            // REQUISITO: Si existen varios problemas, mostrarlos mediante un carrusel navegable
+            const carouselContainer = document.createElement("div");
+            carouselContainer.className = "carousel-container";
+            const carouselTrack = document.createElement("div");
+            carouselTrack.className = "carousel-track";
+
+            relatedProblems.forEach(p => {
+                const card = createPysCard(p);
+                carouselTrack.appendChild(card);
+            });
+            carouselContainer.appendChild(carouselTrack);
+
+            const prevBtn = document.createElement("button");
+            prevBtn.className = "carousel-btn prev";
+            prevBtn.innerHTML = "&#10094;";
+            carouselContainer.appendChild(prevBtn);
+
+            const nextBtn = document.createElement("button");
+            nextBtn.className = "carousel-btn next";
+            nextBtn.innerHTML = "&#10095;";
+            carouselContainer.appendChild(nextBtn);
+
+            const cardWidth = 140 + 20;
+            const getVisibleCards = () => {
+                const containerWidth = carouselContainer.offsetWidth || 300;
+                return Math.floor(containerWidth / cardWidth) || 1;
+            };
+
+            const updateCarouselButtons = () => {
+                const scrollLeft = carouselTrack.scrollLeft;
+                const maxScrollLeft = carouselTrack.scrollWidth - carouselTrack.clientWidth;
+                prevBtn.style.display = scrollLeft > 2 ? "flex" : "none";
+                nextBtn.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+            };
+
+            nextBtn.addEventListener("click", () => {
+                carouselTrack.scrollBy({ left: cardWidth * getVisibleCards(), behavior: "smooth" });
+            });
+
+            prevBtn.addEventListener("click", () => {
+                carouselTrack.scrollBy({ left: -cardWidth * getVisibleCards(), behavior: "smooth" });
+            });
+
+            carouselTrack.addEventListener("scroll", () => setTimeout(updateCarouselButtons, 100));
+            window.addEventListener("resize", () => setTimeout(updateCarouselButtons, 100));
+            setTimeout(updateCarouselButtons, 200);
+
+            panel.appendChild(carouselContainer);
+        }
+
+        btn.onclick = () => {
+            const isOpening = panel.style.display === "none";
+            panel.style.display = isOpening ? "block" : "none";
+            btn.classList.toggle("active", isOpening);
+            const arrow = btn.querySelector(".accordion-arrow");
+            if (arrow) arrow.textContent = isOpening ? "▲" : "▼";
+
+            if (isOpening && relatedProblems.length > 1) {
+                const track = panel.querySelector(".carousel-track");
+                const prev = panel.querySelector(".carousel-btn.prev");
+                const next = panel.querySelector(".carousel-btn.next");
+                if (track && prev && next) {
+                    const scrollLeft = track.scrollLeft;
+                    const maxScrollLeft = track.scrollWidth - track.clientWidth;
+                    prev.style.display = scrollLeft > 2 ? "flex" : "none";
+                    next.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+                }
+            }
+        };
+
+        wrapper.appendChild(btn);
+        wrapper.appendChild(panel);
+    };
+
+    // 1. Evaluar si ya existen datos en caché en el estado
+    const cachedPys = getState().pysData;
+    if (Array.isArray(cachedPys) && cachedPys.length > 0) {
+        updateAccordion(cachedPys);
+    }
+
+    // 2. Consultar siempre de forma asíncrona para asegurar que no falten datos ni relaciones recientes
+    routeAction("getPysData").then(res => {
+        if (res && res.data && Array.isArray(res.data)) {
+            setState({ pysData: res.data });
+            updateAccordion(res.data);
+        }
+    }).catch(err => {
+        console.warn("No se pudo sincronizar pysData en detalle de vehículo:", err);
+    });
+}
+
 
 function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false, index = 0) {
     if (inEditMode) {
@@ -5133,17 +5351,7 @@ export async function renderPysSection() {
         items.reverse(); // Most recent first
 
         items.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "card";
-            card.style.cssText = "cursor: pointer; display: flex; flex-direction: column; gap: 8px; padding: 12px;";
-            card.innerHTML = `
-                <img src="${item.Imagen || 'https://via.placeholder.com/150'}" alt="${item.Problema}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;">
-                <h3 style="margin: 0; font-size: 1rem; color: var(--text-color);">${item.Problema}</h3>
-                <span style="font-size: 0.8rem; color: ${item.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight: bold;">
-                    ${item.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}
-                </span>
-            `;
-            card.onclick = () => openPysDetailModal(item);
+            const card = createPysCard(item);
             grid.appendChild(card);
         });
 
@@ -5559,14 +5767,7 @@ export function openPysDetailModal(item) {
         modelosAsociadosIds.forEach(vId => {
             const v = cortes.find(c => String(c.id) === String(vId));
             if (!v) return;
-            const card = document.createElement("div");
-            card.style.cssText = "flex: 0 0 120px; border: 1px solid var(--border-color); border-radius: 8px; padding: 6px; background: var(--card-bg); cursor: pointer; text-align: center;";
-            card.innerHTML = `
-                <img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width: 100%; height: 70px; object-fit: cover; border-radius: 6px;">
-                <div style="font-size: 0.75rem; font-weight: bold; margin-top: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${v.marca} ${v.modelo}</div>
-                <div style="font-size: 0.7rem; color: var(--text-disabled);">${v.anoDesde}</div>
-            `;
-            card.onclick = () => mostrarDetalleModal(v, true);
+            const card = crearCardVehiculo(v, true);
             track.appendChild(card);
         });
 
@@ -5799,7 +6000,10 @@ export function exportVehiclePrintSheet(item) {
         feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
     }
 
-    const cutsHtml = cuts.map(c => `
+    /* TAREA 5: Corregir imágenes rotas normalizando URLs con getImageUrl(..., IMG_SIZE_LARGE) */
+    const cutsHtml = cuts.map(c => {
+        const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
+        return `
         <div class="tech-item-card">
             <div class="tech-item-header">Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}</div>
             <div class="tech-item-body">
@@ -5809,25 +6013,29 @@ export function exportVehiclePrintSheet(item) {
                     <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
                     ${c.colab ? `<p class="colab-tag">Colab: ${cleanColaboradorName(c.colab)}</p>` : ''}
                 </div>
-                ${c.img ? `<div class="tech-item-img"><img src="${c.img}" alt="Corte #${c.num}" /></div>` : ''}
+                ${safeImg ? `<div class="tech-item-img"><img src="${safeImg}" alt="Corte #${c.num}" /></div>` : ''}
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
-    const feedsHtml = feeds.map(f => `
+    const feedsHtml = feeds.map(f => {
+        const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
+        return `
         <div class="tech-item-card">
             <div class="tech-item-header">${f.title}</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
                     <p>${f.desc || 'Conexión estándar'}</p>
                 </div>
-                ${f.img ? `<div class="tech-item-img"><img src="${f.img}" alt="${f.title}" /></div>` : ''}
+                ${safeImg ? `<div class="tech-item-img"><img src="${safeImg}" alt="${f.title}" /></div>` : ''}
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
     const vehiculoImgHtml = item.imagenVehiculo ? `
-        <div class="vehicle-main-img"><img src="${item.imagenVehiculo}" alt="${title}" /></div>
+        <div class="vehicle-main-img"><img src="${getImageUrl(item.imagenVehiculo, IMG_SIZE_LARGE)}" alt="${title}" /></div>
     ` : '';
 
     const aperturaHtml = (item.apertura || item.imgApertura) ? `
@@ -5837,7 +6045,7 @@ export function exportVehiclePrintSheet(item) {
                 <div class="tech-item-info">
                     <p>${item.apertura || 'Instrucciones registradas'}</p>
                 </div>
-                ${item.imgApertura ? `<div class="tech-item-img"><img src="${item.imgApertura}" alt="Apertura" /></div>` : ''}
+                ${item.imgApertura ? `<div class="tech-item-img"><img src="${getImageUrl(item.imgApertura, IMG_SIZE_LARGE)}" alt="Apertura" /></div>` : ''}
             </div>
         </div>
     ` : '';
@@ -5855,9 +6063,10 @@ export function exportVehiclePrintSheet(item) {
             <meta charset="UTF-8">
             <title>Ficha Técnica GPSpedia - ${title}</title>
             <style>
+                /* TAREA 6: Configuración obligatoria papel Carta, orientación vertical, márgenes 10mm */
                 @page {
-                    size: A4 portrait;
-                    margin: 8mm 10mm;
+                    size: letter portrait;
+                    margin: 10mm;
                 }
                 * { box-sizing: border-box; }
                 body {
@@ -5865,8 +6074,8 @@ export function exportVehiclePrintSheet(item) {
                     margin: 0;
                     padding: 0;
                     color: #1a1a1a;
-                    font-size: 11px;
-                    line-height: 1.3;
+                    font-size: 10.5px;
+                    line-height: 1.25;
                     background: #fff;
                 }
                 .no-print-bar {
@@ -5979,6 +6188,16 @@ export function exportVehiclePrintSheet(item) {
                     object-fit: cover;
                     border-radius: 3px;
                     border: 1px solid #ccc;
+                }
+                /* TAREA 5: Ajuste exclusivo de Check Engine en la hoja de impresión */
+                img[src*="1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX"],
+                .tech-item-info img[src*="1ELXm7I"] {
+                    max-height: 20px !important;
+                    width: auto !important;
+                    display: inline-block !important;
+                    vertical-align: middle !important;
+                    margin: 2px 4px !important;
+                    float: none !important;
                 }
                 .colab-tag {
                     font-size: 9.5px;

@@ -1261,9 +1261,9 @@ TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIM
 ---
 
 ===================================================================
-TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRIPTIVOS
+TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRIPTIVOS [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA [X]
 - **Objetivo principal:** Permitir a los técnicos resaltar información crítica de instalación (colores de cable, advertencias) sin comprometer la seguridad ni sobrecargar la interfaz.
 - **Tareas originales integradas:** 7.1
 - **Justificación técnica de convergencia:** Implementa la barra de formato simple (negrita, colores de texto, saltos de línea) junto con el modo configurable de plataforma y el motor de saneamiento HTML en cliente y servidor para admitir etiquetas semánticas seguras sin riesgo de inyecciones de código (XSS).
@@ -1294,9 +1294,9 @@ TAREA 13: BARRA DE FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML EN CAMPOS DESCRI
 ---
 
 ===================================================================
-TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS
+TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA [X]
 - **Objetivo principal:** Centralizar el acceso a toda la base técnica de GPSpedia mediante una única barra de búsqueda predictiva y universal.
 - **Tareas originales integradas:** 10.1
 - **Justificación técnica de convergencia:** Amplía el buscador unificado para consultar de manera paralela e instantánea todas las entidades de la plataforma: Cortes de vehículos, Configuraciones de Relay, Tutoriales y Problemas y Soluciones, asociando badges visuales y redirigiendo al modal correspondiente según el tipo de entidad.
@@ -1326,9 +1326,9 @@ TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE
 ---
 
 ===================================================================
-TAREA 15: BARRA DE FILTROS RÁPIDOS DE CATÁLOGO Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES
+TAREA 15: BARRA DE FILTROS RÁPIDOS DE CATÁLOGO Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA [X]
 - **Objetivo principal:** Lograr una identidad visual armónica y coherente en todos los controles interactivos de la aplicación, facilitando la filtración rápida del catálogo sin obstruir la búsqueda.
 - **Tareas originales integradas:** 14.1, 14.2, 14.3
 - **Justificación técnica de convergencia:** Corrige la posición, superposición y comportamiento del botón desplegable del filtro de búsqueda (`#btn-toggle-filters`) y aplica un sistema unificado de diseño CSS para todos los botones de la plataforma (primarios, secundarios, flotantes, modales, iconos), garantizando consistencia visual y accesibilidad en desktop y móvil.
@@ -1422,9 +1422,9 @@ TAREA 15: BARRA DE FILTROS RÁPIDOS DE CATÁLOGO Y ESTANDARIZACIÓN UNIVERSAL DE
 ---
 
 ===================================================================
-TAREA 16: AJUSTES VISUALES DE ENCABEZADOS, CONTRASTE DE MARCAS Y PIE DE PÁGINA ADAPTATIVO
+TAREA 16: AJUSTES VISUALES DE ENCABEZADOS, CONTRASTE DE MARCAS Y PIE DE PÁGINA ADAPTATIVO [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA [X]
 - **Objetivo principal:** Optimizar la legibilidad y presentación visual general tanto en pantallas pequeñas de taller como en monitores de escritorio.
 - **Tareas originales integradas:** B13, B19
 - **Justificación técnica de convergencia:** Converge las optimizaciones estructurales del App Shell: flex-wrap en encabezados técnicos para prevenir desbordes horizontales, filtros drop-shadow en logos en modo oscuro, y reubicación del footer con IntersectionObserver para que aparezca fluidamente al alcanzar el final del contenido sin superponerse a la botonera flotante.
@@ -1457,9 +1457,9 @@ TAREA 16: AJUSTES VISUALES DE ENCABEZADOS, CONTRASTE DE MARCAS Y PIE DE PÁGINA 
 ---
 
 ===================================================================
-TAREA 17: GESTIÓN COLABORATIVA DE AÑOS Y VALIDACIÓN COMUNITARIA DE FICHAS TÉCNICAS
+TAREA 17: GESTIÓN COLABORATIVA DE AÑOS Y VALIDACIÓN COMUNITARIA DE FICHAS TÉCNICAS [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA [X]
 - **Objetivo principal:** Mantener actualizado el catálogo de años y vigencias vehiculares a partir de la confirmación directa de los instaladores en campo.
 - **Tareas originales integradas:** B21
 - **Justificación técnica de convergencia:** Implementa el banner interactivo de validación en el modal técnico, el control anti-colisión de rangos intergeneracionales, la automatización en servidor para actualizar el catálogo tras 3 votos positivos y la persistencia local de validaciones en IndexedDB.
@@ -1482,9 +1482,9 @@ TAREA 17: GESTIÓN COLABORATIVA DE AÑOS Y VALIDACIÓN COMUNITARIA DE FICHAS TÉ
 ---
 
 ===================================================================
-TAREA 18: GESTIÓN AVANZADA DE USUARIOS, AUDITORÍA DE INBOX Y DASHBOARD DE DESEMPEÑO
+TAREA 18: GESTIÓN AVANZADA DE USUARIOS, AUDITORÍA DE INBOX Y DASHBOARD DE DESEMPEÑO [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA [X]
 - **Objetivo principal:** Dotar a los líderes técnicos y administradores de visibilidad sobre la actividad del equipo y simplificar la gestión de solicitudes y cuentas de usuario.
 - **Tareas originales integradas:** 8.1, B24, B25, B26
 - **Justificación técnica de convergencia:** Consolida las herramientas de supervisión y gestión administrativa: auditoría y optimización del Inbox, panel de perfil técnico, creación y modificación de usuarios, backend de mensajería/notificaciones y dashboard analítico de desempeño para supervisores.
@@ -1521,9 +1521,9 @@ TAREA 18: GESTIÓN AVANZADA DE USUARIOS, AUDITORÍA DE INBOX Y DASHBOARD DE DESE
 ---
 
 ===================================================================
-TAREA 19: VALIDACIONES DE INTEGRIDAD EN BACKEND Y BATERÍA EXHAUSTIVA DE PRUEBAS AUTOMATIZADAS
+TAREA 19: VALIDACIONES DE INTEGRIDAD EN BACKEND Y BATERÍA EXHAUSTIVA DE PRUEBAS AUTOMATIZADAS [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA [X]
 - **Objetivo principal:** Blindar la base de datos contra inconsistencias, fallos lógicos o inyecciones indebidas mediante pruebas rigurosas y verificaciones de servidor.
 - **Tareas originales integradas:** 9.1, 9.2
 - **Justificación técnica de convergencia:** Reúne la suite de validaciones del lado del servidor (verificación estricta de payloads, integridad relacional, límites y permisos sin confiar en el cliente) y la batería completa de pruebas funcionales y de estrés (Pruebas 31 a 38) para certificar la estabilidad de todos los flujos.
@@ -1560,9 +1560,9 @@ TAREA 19: VALIDACIONES DE INTEGRIDAD EN BACKEND Y BATERÍA EXHAUSTIVA DE PRUEBAS
 ---
 
 ===================================================================
-TAREA 20: INSTALACIÓN DINÁMICA DE PROGRESSIVE WEB APP (PWA) Y COMPATIBILIDAD MULTIPLATAFORMA
+TAREA 20: INSTALACIÓN DINÁMICA DE PROGRESSIVE WEB APP (PWA) Y COMPATIBILIDAD MULTIPLATAFORMA [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA [X]
 - **Objetivo principal:** Garantizar la experiencia de instalación como aplicación nativa en dispositivos móviles y de escritorio.
 - **Tareas originales integradas:** B22
 - **Justificación técnica de convergencia:** Abarca la lógica interactiva del botón '#install-button' ('Instala la app'), la captura del evento 'beforeinstallprompt' en Android/Chromium, la guía interactiva específica para iOS/Safari ('#ios-install-modal') y la detección de modo 'standalone' para ocultar el botón cuando la app ya está instalada.
@@ -1584,9 +1584,9 @@ TAREA 20: INSTALACIÓN DINÁMICA DE PROGRESSIVE WEB APP (PWA) Y COMPATIBILIDAD M
 ---
 
 ===================================================================
-TAREA 21: SANEAMIENTO ARQUITECTURAL, CÓDIGO LIMPIO (DRY), PROTECCIÓN ANTI-DEBUGGING Y CIERRE DE AUDITORÍA GLOBAL
+TAREA 21: SANEAMIENTO ARQUITECTURAL, CÓDIGO LIMPIO (DRY), PROTECCIÓN ANTI-DEBUGGING Y CIERRE DE AUDITORÍA GLOBAL [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA [X]
 - **Objetivo principal:** Entregar una base de código limpia, mantenible, segura y plenamente documentada conforme al proceso de desarrollo y estándares de ingeniería.
 - **Tareas originales integradas:** 13.1, B01, B14, B15, B17, B20, B28, B29, B30
 - **Justificación técnica de convergencia:** Consolida las tareas de refactorización estructural y mantenimiento global del repositorio: eliminación sistemática de código muerto o duplicado (DRY hoist), protección en producción anti-debugging, auditoría técnica integral entre versiones (v1.5, v2.0, v2.1.5, v2.2.0), estabilización general de microservicios y generación de reportes técnicos definitivos.

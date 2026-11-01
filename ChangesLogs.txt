@@ -1212,3 +1212,63 @@ TAREAS COMPLETADAS: IMPLEMENTACIÓN Y CORRECCIÓN DE FUNCIONES Y ESTILOS (1 a 8)
 7. Tarea 8: Auditoría exhaustiva de CSS y corrección de elementos sin estilos en formularios y modales.
 Archivos modificados: ui.js, style.css, index.html, navigation.js, Auditoría.txt, ChangesLogs.txt
 ===================================================================
+
+===================================================================
+FECHA: $(date)
+TAREA: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES
+1. Se implementó la función renderPosiblesProblemasAccordion en ui.js que consulta asíncronamente getPysData y filtra estrictamente por el id numérico/string del modelo activo (activeItem.id).
+2. Si no existen problemas relacionados con el modelo, no se renderiza ningún acordeón vacío.
+3. Si existe exactamente 1 problema relacionado, se muestra el acordeón titulado «Posibles problemas» con la tarjeta individual centrada.
+4. Si existen 2 o más problemas relacionados, se renderiza dentro del acordeón un carrusel navegable (.carousel-container, .carousel-track, botones .carousel-btn prev/next).
+5. Se unificó el diseño visual de todas las tarjetas de Problemas y Soluciones mediante la función createPysCard(), adoptando el estándar canónico de la plataforma (.card, .card-img-top, .overlay) de referencia (cortes, recién agregados, vistos recientemente y categorías), sin alterar las reglas CSS de los carruseles existentes ni los logos de marca.
+Archivos modificados: ui.js, Auditoría.txt, ChangesLogs.txt
+===================================================================
+
+===================================================================
+FECHA: $(date)
+TAREAS: AUDITORÍA, CORRECCIÓN Y AMPLIACIÓN DE FUNCIONALIDADES (1 a 6)
+1. Bloque 1: Eliminación definitiva de la animación de carga (#pys-loading) en la sección Problemas y Soluciones en ui.js, renderizando instantáneamente igual que Cortes, Tutoriales y Relay.
+2. Bloque 2: Configuración de Relay en el modal de agregar nuevo corte (+) convertida en <select> dinámico poblando valores desde la Spreadsheet mediante precargarDropdownOptions().
+3. Bloque 3.1: Resultados de coincidencia de vehículos compactados reduciendo márgenes laterales y priorizando la legibilidad de marca, modelo, rango de años y versiones de equipamiento.
+4. Bloque 3.2: Reubicación del campo VIN debajo de la imagen del corte en add_cortes.html, con altura normalizada idéntica a la de Color del cable.
+5. Bloques 3.3, 3.4 y 3.5: Barras de enriquecimiento de texto reutilizables (negrita y color) en formularios técnicos (ubicación de corte, apertura, cables de alimentación, notas, tutoriales, problemas y modo de edición del desarrollador); barra avanzada completa en Inbox (fuente, negrita, cursiva, subrayado, tachado, listas ordenadas/desordenadas y color); barra en formulario Contáctanos.
+6. Bloque 4: Botón Volver agregado en la Etapa 3 de add_cortes.html con persistencia completa de inputs, selects, radio buttons, imágenes y prevención de duplicados al actualizar el corte.
+7. Bloques 5 y 6: Corrección de imágenes rotas en la ficha técnica de impresión mediante getImageUrl(..., IMG_SIZE_LARGE); reducción exclusiva del icono Check Engine en impresión (max-height: 20px); configuración de hoja tamaño Carta vertical (@page { size: letter portrait; margin: 10mm; }).
+Archivos modificados: ui.js, add_cortes.html, index.html, Auditoría.txt, ChangesLogs.txt
+===================================================================
+
+===================================================================
+FECHA: $(date)
+TAREA: MEJORA DEL SISTEMA DE VIN, IDENTIFICACIÓN DE VERSIONES DE EQUIPAMIENTO Y NAVEGACIÓN ENTRE GENERACIONES
+- Creadas las funciones parseEquipmentVersions, parseVinCollection y mapVersionsWithVins en ui.js soportando separadores comas, diagonales y diagonales inversas.
+- Reorganizada la presentación visual en el modal de detalle para mostrar cada versión con sus dígitos identificadores entre paréntesis ("VX (1A2B) / VL (1A2C)"), usando "/" como único separador visual y formato compacto que evita deformaciones.
+- Ampliada la lógica de navegación entre generaciones en ui.js, permitiendo navegar entre rangos de años mediante correspondencia y continuidad de versiones de equipamiento, incluso cuando las generaciones poseen cantidades distintas de versiones o VINs.
+- Verificados los 14 escenarios funcionales con Playwright.
+===================================================================
+
+===================================================================
+FECHA: $(date)
+VERIFICACIÓN SEGÚN CONDICIÓN 5: TAREAS 13, 14 Y 15 [X]
+- Tarea 13: Verificada la barra de enriquecimiento y sanitización estricta/avanzada en ui.js, add_cortes.html e index.html.
+- Tarea 14: Verificado el motor de búsqueda multi-sección global (Cortes, Relay, Tutoriales, PyS) en navigation.js.
+- Tarea 15: Verificada la barra de filtros desacoplada y clases universales .btn en style.css.
+- Tareas marcadas como [X] en Tareas.txt.
+===================================================================
+
+===================================================================
+FECHA: $(date)
+VERIFICACIÓN SEGÚN CONDICIÓN 5: TAREAS 16, 17 Y 18 [X]
+- Tarea 16: Verificados ajustes visuales, flex-wrap y footer dinámico en ui.js y main.js.
+- Tarea 17: Verificada validación comunitaria, IndexedDB y umbral de 3 votos positivos en feedback.js.
+- Tarea 18: Verificado panel RBAC en users.html, edición in-modal en ui.js y dashboard analítico en index.html.
+- Tareas marcadas como [X] en Tareas.txt.
+===================================================================
+
+===================================================================
+FECHA: $(date)
+VERIFICACIÓN SEGÚN CONDICIÓN 5: TAREAS 19, 20 Y 21 [X]
+- Tarea 19: Verificada la idempotencia por opId y validaciones de servidor en write.js y feedback.js.
+- Tarea 20: Verificada la instalación de PWA con etiqueta exacta "Instala la app" y modal iOS en index.html.
+- Tarea 21: Verificado bloqueo anti-debugging (F12, Ctrl+U, contextmenu) y saneamiento DRY.
+- Tareas marcadas como [X] en Tareas.txt.
+===================================================================

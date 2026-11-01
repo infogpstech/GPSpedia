@@ -859,6 +859,48 @@ async function initializeApp() {
     }, 0);
 }
 
+// Exponer funciones globales de enriquecimiento de texto para formularios de la app principal (ej. Contáctanos)
+window.applyRichFormat = function(targetId, format, extraVal = null) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+
+    let formatted = "";
+    if (format === 'bold') {
+        formatted = `<b>${selected || 'texto en negrita'}</b>`;
+    } else if (format === 'italic') {
+        formatted = `<i>${selected || 'texto en cursiva'}</i>`;
+    } else if (format === 'underline') {
+        formatted = `<u>${selected || 'texto subrayado'}</u>`;
+    } else if (format === 'strike') {
+        formatted = `<s>${selected || 'texto tachado'}</s>`;
+    } else if (format === 'ul') {
+        formatted = `\n<ul>\n  <li>${selected || 'Elemento 1'}</li>\n  <li>Elemento 2</li>\n</ul>\n`;
+    } else if (format === 'ol') {
+        formatted = `\n<ol>\n  <li>${selected || 'Primer paso'}</li>\n  <li>Segundo paso</li>\n</ol>\n`;
+    } else if (format === 'font' && extraVal) {
+        formatted = `<span style="font-family: ${extraVal};">${selected || 'texto'}</span>`;
+    }
+
+    if (formatted) {
+        textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+        textarea.focus();
+    }
+};
+
+window.applyRichColor = function(targetId, color) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+    const formatted = `<span style="color:${color}">${selected || 'texto'}</span>`;
+    textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+    textarea.focus();
+};
+
 // Start the application once the DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeApp);
