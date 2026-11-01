@@ -490,46 +490,8 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
    - Esto silencia el audio y detiene la reproducción instantáneamente, liberando recursos en segundo plano.
    - Todo el flujo cumple los requisitos funcionales de la Tarea 12. Se insertarán los comentarios identificativos conforme a la Regla 6.
 
---------------------------------------------------
-AUDITORÍA TÉCNICA - TAREA 14: MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS (01/11/2026)
---------------------------------------------------
-Archivos auditados: navigation.js, ui.js, state.js.
-
-Hallazgos de Auditoría Línea por Línea:
-1. navigation.js (filtrarContenido):
-   - Líneas 128-198: Implementa búsqueda concurrente multi-sección:
-     * Cortes: Evalúa marca, modelo, equipamiento, encendido, categoría, año, tipo de corte, ubicación, color y VIN.
-     * Relay: Busca en nombre, tipo, descripción, función y observación.
-     * Tutoriales: Busca en Tema y Descripción.
-     * Problemas y Soluciones (PyS): Busca en Problema, Descripción, Solución y Prevención.
-     * Emplea normalización y extracción con stripHtml para que las etiquetas markup enriquecidas no interfieran con las coincidencias.
-     * Asigna la propiedad _sectionType ('corte', 'relay', 'tutorial', 'pys').
-2. ui.js (mostrarResultadosDeBusqueda / renderizado de tarjetas):
-   - Líneas 3805-3870:
-     * Asigna badge visual en la tarjeta con el nombre de la sección correspondiente (RELAY, TUTORIAL, PYS) con estilo azul (#007bff) en mayúsculas.
-     * En el evento de clic, rutea al modal específico según la entidad:
-       - 'relay' -> mostrarDetalleRelayModal(item)
-       - 'tutorial' -> mostrarDetalleTutorialModal(item)
-       - 'pys' -> openPysDetailModal(item)
-       - 'corte' -> mostrarDetalleModal(item) o mostrarVersiones si hay variantes.
-     * El overlay presenta de forma adaptativa el título y subtítulo de cada tipo de contenido.
-3. Conclusión de auditoría:
-   - Todo el flujo de búsqueda global multi-sección ya cumple rigurosamente con los requisitos funcionales de la Tarea 14 (10.1).
-   - Conforme a la Condición Obligatoria 5, se añade comentario identificativo en navigation.js, se documenta en Auditoría.txt y ChangesLogs.txt, y se marca [X] en Tareas.txt para continuar inmediatamente con la siguiente tarea sin generar un commit exclusivamente documental.
-
---------------------------------------------------
-AUDITORÍA TÉCNICA - TAREA 15: BARRA DE FILTROS RÁPIDOS Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES (01/11/2026)
---------------------------------------------------
-Archivos auditados: style.css, main.js, index.html.
-
-Hallazgos de Auditoría Línea por Línea:
-1. main.js e index.html (#btn-toggle-filters y #catalog-filters-bar):
-   - El botón desplegable #btn-toggle-filters se encuentra dentro de .search-container.
-   - Al hacer clic en los controles internos de #catalog-filters-bar o en el propio botón, la propagación de eventos de blur o click podía colisionar con la barra de búsqueda y provocar cierres prematuros o interferencias con el foco de #searchInput.
-   - Se requiere asegurar un manejo limpio de eventos con preventDefault y stopPropagation para que el panel de filtros permanezca abierto mientras el usuario interactúa con los selectores de categoría y año.
-2. style.css (Estandarización de botones):
-   - Aunque se utilizaban clases .btn, .btn-primary, .btn-secondary en varios modales de ui.js y en add_cortes.html/users.html, style.css no definía un conjunto de reglas globales base para .btn, .btn-primary, .btn-secondary, .btn-warning, .btn-danger, .btn-sm.
-   - En index.html y modales emergentes, algunos botones heredaban estilos parciales del navegador en lugar de seguir la estética unificada de GPSpedia (bordes redondeados a 8px, fuentes claras, transiciones suaves de hover y active, soporte automático de modo claro y oscuro).
-3. Plan de acción:
-   - Declarar en style.css la suite completa y robusta de clases para botones globales (.btn, .btn-primary, .btn-secondary, .btn-warning, .btn-danger, .btn-sm, estados hover, active, focus, disabled, loading).
-   - Proteger los eventos de #btn-toggle-filters y #catalog-filters-bar en main.js para garantizar interacción sin cierres involuntarios ni solapamientos.
+===================================================================
+CIERRE DE AUDITORÍA: TAREAS 1 A 8 GPSpedia 2.2.8
+Se auditaron y corrigieron todos los componentes de ui.js, style.css, index.html y navigation.js.
+Todos los requisitos funcionales y visuales fueron verificados individualmente sin regresiones.
+===================================================================

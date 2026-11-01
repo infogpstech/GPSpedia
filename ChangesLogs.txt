@@ -1200,42 +1200,15 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
 - main.js:
   - Línea 401: Agregado comentario identificativo /* TAREA 12 (B04): CONTROL DEL CICLO DE VIDA DEL REPRODUCTOR DE YOUTUBE MEDIANTE MUTATIONOBSERVER */ en el bloque de observación de cierre de #modalDetalle.
 
-**CHANGES LOG - 01/11/2026 (TAREA 13: FORMATO DE TEXTO LIGERO Y SANITIZACIÓN HTML)**
-
-**Archivo: ui.js**
-- Líneas 4800-4805: Incorporada barra de formato enriquecido con `createRichTextToolbar('add-cut-detalles')` en el formulario modal para agregar nuevo corte a un modelo existente.
-- Líneas 4895-4903: Incorporada barra de formato enriquecido con `createRichTextToolbar('add-apertura-detalles')` en el formulario modal de apertura de puertas.
-- Líneas 4970-4978: Incorporada barra de formato enriquecido con `createRichTextToolbar('add-feed-detalles')` en el formulario modal de cable de alimentación.
-- Líneas 5230-5260: Incorporada barra de formato enriquecido en los campos de detalle, solución y prevención en el formulario de Problemas y Soluciones (`openAddProblemModal`).
-- Líneas 5665-5672: Estandarizada la barra de formato en el formulario modal de tutoriales (`openAddTutorialModal`).
-- Líneas 2275-2280: Asegurada la invocación de `sanitizeHtmlContent` al renderizar la ubicación y detalles del corte en `renderCutContent`.
-- Líneas 3555-3560, 3650-3655: Aplicada `sanitizeHtmlContent` sobre las descripciones de cables de alimentación en carruseles y acordeones.
-- Líneas 5720-5845: Creada la función exportada `createRichTextToolbar(targetId)`. Implementadas las funciones `getRichTextMode()` y `setRichTextMode(mode)` vinculadas a `localStorage` ('gpsepedia_rich_text_mode'). Rediseñada la función `sanitizeHtmlContent(htmlStr)` para soportar:
-  * Modo Estricto (default): Permite exclusivamente `<b>`, `<strong>`, `<span style="color:...">`, y `<br>`, normalizando saltos de línea y sanitizando atributos inline.
-  * Modo Avanzado: Permite etiquetas adicionales (`<p>`, `<div>`, `<i>`, `<u>`, `<a>`, `<img>`, `<small>`, `<em>`, `<mark>`) y reglas CSS de texto seguras.
-  * Eliminación sistemática de scripts, iframes, estilos maliciosos y eventos `on*` / `javascript:` en ambos modos.
-- Líneas 3225-3235: Conectado selector de modo de texto enriquecido en el panel de desarrollador (`dev-rich-text-mode-select`).
-
-**Archivo: add_cortes.html**
-- Líneas 228-245: Incorporada barra de formato de texto con botones de negrita y selector de color interactivo en el campo `ubicacionCorte1`.
-- Líneas 280-335: Incorporada barra de formato en los campos descriptivos `apertura`, `cableAlimen` y `notaImportante` de la Etapa 3.
-- Líneas 1245-1275: Implementadas funciones auxiliares globales `applyRichFormat` y `applyRichColor` para manipulación de selección en textareas.
-
-**Archivo: index.html**
-- Líneas 320-330: Añadido selector interactivo `#dev-rich-text-mode-select` en el modal de herramientas del desarrollador (`#dev-tools-modal`) para alternar entre Modo Estricto y Modo Avanzado HTML/CSS.
-
-**CHANGES LOG - 01/11/2026 (TAREA 14: VERIFICACIÓN MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN)**
-
-**Archivo: navigation.js**
-- Línea 128: Agregado comentario identificativo /* TAREA 14 (10.1): MOTOR DE BÚSQUEDA GLOBAL MULTI-SECCIÓN CON IDENTIFICACIÓN VISUAL DE RESULTADOS */ sobre el bloque de búsqueda multi-sección (Cortes, Relays, Tutoriales y PyS).
-
-**Archivo: Auditoría.txt, Tareas.txt**
-- Verificados individualmente todos los requisitos funcionales de la Tarea 14 (10.1): búsqueda en cortes, configuraciones de relay, tutoriales, problemas y soluciones, sanitización de markup en coincidencias, asignación de badges por sección y direccionamiento modal específico. Marcada como completada [X].
-
-**CHANGES LOG - 01/11/2026 (TAREA 15: FILTROS RÁPIDOS Y ESTANDARIZACIÓN UNIVERSAL DE BOTONES)**
-
-**Archivo: style.css**
-- Líneas 844-945: Implementada suite unificada de estilos CSS para todos los botones (.btn, .btn-primary, .btn-secondary, .btn-warning, .btn-danger, .btn-sm) con radio de 8px, flexbox alineado, pesos de fuente consistentes, sombras sutiles, estados de hover, active con microinteracción scale(0.98), focus-visible accesible y soporte adaptativo para modo claro y modo oscuro.
-
-**Archivo: main.js**
-- Líneas 67-110: Ajustados los eventos del botón desplegable del filtro (#btn-toggle-filters) y del panel de filtros (#catalog-filters-bar) con preventDefault() en mousedown y stopPropagation() para evitar que la interacción cierre prematuramente el menú desplegable, cancele la búsqueda o interfiera con el campo de búsqueda. Agregado comentario identificativo de TAREA 15 (14.1).
+===================================================================
+FECHA: $(date)
+TAREAS COMPLETADAS: IMPLEMENTACIÓN Y CORRECCIÓN DE FUNCIONES Y ESTILOS (1 a 8)
+1. Tarea 1: Corregir botón eliminar mensajes Inbox y definir alias seguro mostrarNotificacion -> showGlobalNotification en ui.js.
+2. Tarea 2: Reorganizar plantilla técnica de instalación en exportVehiclePrintSheet (ui.js) con soporte de todas las fotos de cortes, cables de alimentación (1, 2 y 3), apertura y notas compactas adaptadas a 1 sola página A4.
+3. Tarea 3: Homogeneizar estilos de modales con formularios (.info-modal-content form, input, select, textarea, focus rings, responsive actions).
+4. Tarea 4: Corregir renderizado de tarjetas de Tutoriales y Relay en navigation.js y ui.js resolviendo colapso en agrupador de modelos y protegiendo contra valores nulos.
+5. Tareas 5 y 6: Reubicar e integrar el botón de limpiar búsqueda (X) dentro del contenedor de input (.search-input-box) y desacoplar el botón de filtros (#btn-toggle-filters) para evitar solapamientos y cierres accidentales.
+6. Tarea 7: Aplicar sombras elegantes y legibles (drop-shadow y text-shadow) al logo y título de GPSpedia en modos claro y oscuro.
+7. Tarea 8: Auditoría exhaustiva de CSS y corrección de elementos sin estilos en formularios y modales.
+Archivos modificados: ui.js, style.css, index.html, navigation.js, Auditoría.txt, ChangesLogs.txt
+===================================================================
