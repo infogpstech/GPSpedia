@@ -1245,3 +1245,30 @@ TAREA: MEJORA DEL SISTEMA DE VIN, IDENTIFICACIÓN DE VERSIONES DE EQUIPAMIENTO Y
 - Ampliada la lógica de navegación entre generaciones en ui.js, permitiendo navegar entre rangos de años mediante correspondencia y continuidad de versiones de equipamiento, incluso cuando las generaciones poseen cantidades distintas de versiones o VINs.
 - Verificados los 14 escenarios funcionales con Playwright.
 ===================================================================
+
+===================================================================
+FECHA: $(date)
+VERIFICACIÓN SEGÚN CONDICIÓN 5: TAREAS 13, 14 Y 15 [X]
+- Tarea 13: Verificada la barra de enriquecimiento y sanitización estricta/avanzada en ui.js, add_cortes.html e index.html.
+- Tarea 14: Verificado el motor de búsqueda multi-sección global (Cortes, Relay, Tutoriales, PyS) en navigation.js.
+- Tarea 15: Verificada la barra de filtros desacoplada y clases universales .btn en style.css.
+- Tareas marcadas como [X] en Tareas.txt.
+===================================================================
+
+===================================================================
+FECHA: $(date)
+VERIFICACIÓN SEGÚN CONDICIÓN 5: TAREAS 16, 17 Y 18 [X]
+- Tarea 16: Verificados ajustes visuales, flex-wrap y footer dinámico en ui.js y main.js.
+- Tarea 17: Verificada validación comunitaria, IndexedDB y umbral de 3 votos positivos en feedback.js.
+- Tarea 18: Verificado panel RBAC en users.html, edición in-modal en ui.js y dashboard analítico en index.html.
+- Tareas marcadas como [X] en Tareas.txt.
+===================================================================
+
+===================================================================
+FECHA: $(date)
+VERIFICACIÓN SEGÚN CONDICIÓN 5: TAREAS 19, 20 Y 21 [X]
+- Tarea 19: Verificada la idempotencia por opId y validaciones de servidor en write.js y feedback.js.
+- Tarea 20: Verificada la instalación de PWA con etiqueta exacta "Instala la app" y modal iOS en index.html.
+- Tarea 21: Verificado bloqueo anti-debugging (F12, Ctrl+U, contextmenu) y saneamiento DRY.
+- Tareas marcadas como [X] en Tareas.txt.
+===================================================================
