@@ -1,4 +1,4 @@
-# GPSpedia v2.1.6 - Plataforma Técnica Vehicular
+# GPSpedia v2.2.0 - Plataforma Técnica Vehicular
 
 ## 1. Descripción General
 GPSpedia es una Aplicación Web Progresiva (PWA) de alto rendimiento diseñada específicamente para técnicos e instaladores de sistemas de seguridad y rastreo vehicular. La plataforma centraliza, estandariza y facilita el acceso a información crítica sobre puntos de corte (bomba de combustible, ignición, señal a botón de encendido), diagramas de conexión y guías de desarme de paneles plásticos para una amplia variedad de marcas y modelos de vehículos.
@@ -74,10 +74,34 @@ La plataforma utiliza una arquitectura desacoplada:
 
 ---
 
+## 5. Novedades de la Renovación Integral (v2.2.0)
+
+### Registro, Almacenamiento y Búsqueda por VIN (Número de Chasis)
+- **Identificación por VIN:** Incorporación de la columna `vin` (índice 43) en la estructura de la base de datos para almacenar y consultar el VIN o número de chasis de los vehículos.
+- **Procesamiento de Seguridad:** El sistema solicita el VIN completo de hasta 18 caracteres, pero descarta automáticamente los últimos 5 caracteres para almacenar únicamente el prefijo procesado, resguardando la privacidad de las unidades individuales.
+- **Colecciones de VINs por Equipamiento:** Soporte para guardar múltiples identificadores VIN en una misma celda como un arreglo JSON/colección cuando un vehículo posee 2 o 3 versiones de equipamiento, limitando dinámicamente la cantidad permitida según las versiones detectadas en `versionesAplicables`. La adición de un VIN no modifica la fecha de registro (`timestamp`).
+- **Validación de Duplicados:** Detección de duplicados en tiempo real tanto en el formulario `add_cortes.html` como en el modal de detalle. Muestra el mensaje *"VIN ya está registrado para:"* acompañado de un enlace/botón interactivo para navegar directamente al modelo existente.
+- **Búsqueda Global por VIN:** La barra de búsqueda detecta consultas de VIN de entre 6 y 18 caracteres, extrae el prefijo procesado y filtra el catálogo por coincidencia exacta.
+
+### Herramientas Avanzadas para el Rol de Desarrollador
+- **Panel Administrativo Adaptativo (`#dev-tools-modal`):** Estilización completa con variables CSS adaptables a modo claro y modo oscuro, manteniendo la terminal de consola (`#dev-console-log`) aislada con su estilo característico de fondo oscuro `#121212` y texto verde `#00ff66`.
+- **Terminal Interactiva y Gestión de Google Drive:** Comandos de terminal integrados en la consola (`dir`, `cd`, `cd ..`, `cd \`, `mkdir`, `tree`, `move`) navegables mediante teclado (flechas Arriba/Abajo) para explorar y administrar carpetas y archivos en Google Drive directamente sin salir de la plataforma.
+- **Gestión de Estructuras de Spreadsheet:** Comandos administrativos para crear nuevas hojas en la base de datos con fórmulas autogeneradas de ID (`=ROW()-1`) y agregar columnas dinámicas.
+- **Diagnóstico y Monitoreo de Salud de Microservicios:** Botón de escaneo e indicador en tiempo real de latencia (ms) y estado de conectividad para todos los microservicios de la arquitectura.
+- **Saneamiento y Purgado:** Opciones para vaciar la caché local de IndexedDB/localStorage del cliente y purgar registros de actividad en la base de datos (con opción de conservar los últimos 7 días o limpiar todos).
+
+### Mejoras de Experiencia de Usuario (UX) e Inbox
+- **Exportación e Impresión de Fichas Técnicas:** Botón con icono de impresora (`exportVehiclePrintSheet`) en el modal de detalle para generar e imprimir fichas técnicas limpias optimizadas para formato físico/PDF para técnicos instaladores en campo.
+- **Barra de Filtros Rápidos Colapsable:** Desplegable de filtros rápidos por Categoría y Año mediante el botón `#btn-toggle-filters`, activo únicamente cuando la búsqueda está en uso.
+- **Navegación Jerárquica Progresiva de Búsqueda:** Búsqueda agrupada por Modelo único -> Versiones de Equipamiento -> Rangos de Años -> Modal de Detalle (auto-abriendo si sólo existe 1 modelo, 1 versión y 1 rango de año).
+- **Gestión Completa del Inbox:** Opción de eliminación permanente de mensajes y reportes (`deleteFeedbackItem`) en el panel del Inbox.
+
+---
+
 ## 5. Seguridad y Exclusión de Microservicios
 Por motivos de seguridad operativa y saneamiento del código antes de producción, los archivos correspondientes a los microservicios del backend (**write.js, auth.js, catalog.js, feedback.js**) han sido retirados de este repositorio público.
 
 La lógica de estos componentes se encuentra resguardada de forma privada bajo la administración del proyecto. El repositorio actual contiene la totalidad de la interfaz de usuario y la lógica de integración necesaria para que la plataforma opere contra los endpoints autorizados definidos en la configuración.
 
 ---
-*GPSpedia v2.1.6 - 2026 todos los derechos reservados.*
+*GPSpedia v2.2.0 - 2026 todos los derechos reservados.*
