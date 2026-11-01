@@ -1329,3 +1329,22 @@ TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN 
 - Archivo Tareas.txt:
   * Actualización de estado de la Tarea 1.1 a [X] (Completada).
 ===================================================================
+
+===================================================================
+FECHA: Mon Nov 2 11:30:00 2026
+TAREA 1.2: BARRA DE ENRIQUECIMIENTO DE TEXTO EN LOS FORMULARIOS
+- Archivo ui.js:
+  * Implementación de la función auxiliar exportada `createRichTextToolbar(targetId)`.
+  * Incorporación de la barra de enriquecimiento `.rich-editor-toolbar` con botón Negrita ("B") y selector de color tipo input[type="color"] en los campos multilínea descriptivos de:
+    - Formulario agregar corte del botón «+» (`#add-cut-detalles`).
+    - Formulario agregar apertura del botón «+» (`#add-apertura-detalles`).
+    - Formulario agregar alimentación del botón «+» (`#add-feed-detalles`).
+    - Formulario de problemas y soluciones (`#pys-detalle` y `#pys-solucion`).
+    - Formulario de sugerencia de cambio de corte (`#sug-detalles`).
+    - Formulario de edición in-modal del desarrollador (`edit-apertura-${vehicleId}` y `edit-cable-${field.textKey}-${vehicleId}`).
+  * Se omitió deliberadamente la inclusión en campos cortos o de valores simples (marca, modelo, color de cable, etc.).
+- Archivo Auditoría.txt:
+  * Registro de auditoría inicial línea por línea, detección de campos y verificación post-edición.
+- Archivo Tareas.txt:
+  * Marcado formal [X] de la Tarea 1.2.
+===================================================================

@@ -228,7 +228,7 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 
 ---
 
-### TAREA 1.2: Barra de enriquecimiento de texto en los formularios [ ]
+### TAREA 1.2: Barra de enriquecimiento de texto en los formularios [X]
 - **Estado detectado:** Fallida o no implementada.
 - **Problema:** Los campos destinados a introducir información detallada o de varias líneas continúan sin mostrar la barra de enriquecimiento de texto. Los botones de negrita y selección de colores están completamente ausentes.
 - **Requisitos:**
