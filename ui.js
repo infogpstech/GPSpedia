@@ -1819,6 +1819,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     });
 
+    /* TAREA 11 (12.5): ACORDEÓN «PROBLEMAS RELACIONADOS A ESTE VEHÍCULO» EN MODAL TÉCNICO */
     // Acordeón de Problemas relacionados a este vehículo
     const { pysData = [] } = getState();
     const relatedProblems = pysData.filter(p => Array.isArray(p.modelosAsociados) && p.modelosAsociados.includes(String(activeItem.id)));
@@ -5194,6 +5195,7 @@ export function openAddProblemModal() {
         <h2><i class="fa-solid fa-triangle-exclamation"></i> Registrar Problema</h2>
 
         <form id="add-pys-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+            <!-- TAREA 11 (12.1): ALCANCE EN FORMULARIO DE PROBLEMAS (GENERAL VS ESPECÍFICO) -->
             <div class="form-group">
                 <label>Alcance del Problema</label>
                 <select id="pys-alcance" class="dev-input" style="padding: 6px;">
@@ -5427,6 +5429,7 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated)
     };
 }
 
+/* TAREA 11 (12.2): MODAL EXCLUSIVO DE CONFIRMACIÓN Y VISTA PREVIA DE VEHÍCULO PARA PYS */
 export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
     const existing = document.getElementById("confirm-vehicle-pys-modal");
     if (existing) existing.remove();
@@ -5521,6 +5524,7 @@ export function openPysDetailModal(item) {
         cont.appendChild(vid);
     }
 
+    /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */
     // Carrusel de Modelos de Vehículos Relacionados
     const { catalogData } = getState();
     const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];

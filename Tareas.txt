@@ -1160,9 +1160,9 @@ TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIO
 ---
 
 ===================================================================
-TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VEHÍCULOS
+TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VEHÍCULOS [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Contextualizar los problemas técnicos para que aparezcan automáticamente tanto en su sección general como en la ficha técnica del vehículo correspondiente.
 - **Tareas originales integradas:** 12.1, 12.2, 12.3, 12.4, 12.5
 - **Justificación técnica de convergencia:** Integra todos los requerimientos para conectar el banco de fallas con el catálogo vehicular: control desplegable de alcance (General vs Modelo específico), modal de confirmación con vista previa, persistencia relacional en la columna 10 de 'pys' (`modelos_asociados`), carrusel de modelos asociados en el modal de PyS y renderizado dinámico del acordeón de problemas relacionados en la ficha del vehículo.
@@ -1177,7 +1177,7 @@ TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VE
 - Agregar control desplegable (dropselect) en el formulario de creación y edición de problemas con opciones: `General` vs `Modelo específico` (valor predeterminado: `General`).
   - `General`: Aplica a todos los vehículos; no mostrar búsqueda ni exigir vehículos; evitar asociar modelos erróneos o borrar relaciones durante edición accidental.
   - `Modelo específico`: Muestra barra de búsqueda predictiva para buscar vehículos por marca y modelo en el catálogo existente.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (12.2): 12.2. Modal de confirmación del vehículo
 
@@ -1186,7 +1186,7 @@ TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VE
   Prohibido mostrar puntos de corte, apertura, alimentación o relays.
 - Botón «Aceptar»: Confirma el vehículo y lo agrega a la lista provisional en el formulario principal.
 - Permitir regresar a la búsqueda sin aceptar el modelo conservando la consulta previa.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (12.3): 12.3. Asociación de múltiples modelos y almacenamiento en pys
 
@@ -1194,14 +1194,14 @@ TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VE
 - Permitir asociar múltiples modelos repitiendo el flujo de búsqueda y confirmación, identificando vehículos por su ID único sin duplicados.
 - Lista provisional visible con opción de remover modelos antes de guardar.
 - Modificación de la hoja `pys`: Agregar columna al final (columna 10, `modelos_asociados`) almacenando una colección/Array JSON de IDs en una sola celda en la misma fila del problema. Compatibilidad con registros antiguos.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (12.4): 12.4. Carrusel de modelos en el modal de detalle de problemas y soluciones
 
 12.4. Carrusel de modelos en el modal de detalle de problemas y soluciones
 - En el modal de detalle de problemas, agregar un carrusel horizontal con tarjetas pequeñas de los vehículos asociados. Al seleccionar una tarjeta, abrir el detalle del vehículo sin perder el estado del problema.
 - Tarjeta final con botón «+» (para usuarios autorizados) para vincular nuevos vehículos desde el modal mediante el flujo de búsqueda y confirmación.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (12.5): 12.5. Acordeón «Problemas relacionados a este vehículo» en el modal de detalle del vehículo
 
@@ -1214,7 +1214,7 @@ TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VE
   - No mostrar información de apertura ni alimentación.
   - No mostrar el botón «+» para agregar modelos.
   - Al cerrar, regresar al modal del vehículo conservando estado y posición del carrusel.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 ---
 

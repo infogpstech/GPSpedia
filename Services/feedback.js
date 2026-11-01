@@ -976,6 +976,7 @@ function handleDeleteFeedbackItem(payload) {
     }
 }
 
+/* TAREA 11 (12.3): ASOCIACIÓN DE VEHÍCULOS A PROBLEMAS EN HOJA PYS (COLUMNA 10) */
 function handleAddVehicleToProblem(payload) {
     const { problemId, vehicleId } = payload;
     if (!problemId || !vehicleId) {

@@ -1184,3 +1184,12 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
   - Línea 5475: Agregado comentario identificativo /* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */ en openPysDetailModal.
 - Services/feedback.js:
   - Línea 803: Agregado comentario identificativo /* TAREA 10 (5.4): ALMACENAMIENTO EN HOJA PYS, IDENTIFICADORES ÚNICOS ISUE-001 Y SUBIDA A DRIVE */ en handleAddProblem.
+
+**TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VEHÍCULOS (v2.2.0)**
+- ui.js:
+  - Línea 1822: Agregado comentario identificativo /* TAREA 11 (12.5): ACORDEÓN «PROBLEMAS RELACIONADOS A ESTE VEHÍCULO» EN MODAL TÉCNICO */ en mostrarDetalleModal.
+  - Línea 5197: Agregado comentario identificativo <!-- TAREA 11 (12.1): ALCANCE EN FORMULARIO DE PROBLEMAS (GENERAL VS ESPECÍFICO) --> en openAddProblemModal.
+  - Línea 5431: Agregado comentario identificativo /* TAREA 11 (12.2): MODAL EXCLUSIVO DE CONFIRMACIÓN Y VISTA PREVIA DE VEHÍCULO PARA PYS */ en openConfirmVehicleForPysModal.
+  - Línea 5526: Agregado comentario identificativo /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */ en openPysDetailModal.
+- Services/feedback.js:
+  - Línea 979: Agregado comentario identificativo /* TAREA 11 (12.3): ASOCIACIÓN DE VEHÍCULOS A PROBLEMAS EN HOJA PYS (COLUMNA 10) */ en handleAddVehicleToProblem.
