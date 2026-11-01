@@ -602,3 +602,68 @@ Hallazgos y Acciones:
 2. Se conservaron todos los requisitos funcionales, visuales y técnicos sin resumir ni omitir detalles (distribución vertical, preservación de imágenes completas, nuevo encabezado con logo GPSpedia sin textos redundantes, reubicación del aviso Check Engine, remoción de colaboradores/útil/reportes, incorporación de código QR para vídeo guía sin URLs en texto y compatibilidad @media print).
 3. No se modificó código de la ficha ni del modal de detalles previo a la autorización explícita de inicio de desarrollo.
 ===================================================================
+
+===================================================================
+AUDITORÍA TÉCNICA - TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN «+»
+Fecha: Mon Nov 2 10:00:00 2026
+Archivos auditados: ui.js, add_cortes.html, Services/catalog.js, api-config.js
+
+Hallazgos de Inspección Línea por Línea:
+1. En ui.js (función openAddCutForModelModal, líneas 5075-5130):
+   - El campo de Configuración de Relay se encuentra actualmente implementado como un input de texto plano:
+     `<input type="text" id="add-cut-relay" placeholder="Ej. 5 pines NC">`
+   - Esto incumple la especificación funcional de la Tarea 1.1 y difiere del selector implementado en la etapa 2 de add_cortes.html.
+2. Referencia de implementación en add_cortes.html (líneas 226, 519, 539-585):
+   - En add_cortes.html, el campo es un elemento `<select id="configRelay1" required></select>`.
+   - Las opciones se obtienen dinámicamente desde Spreadsheet a través de routeAction('getDropdownData'), devolviendo dropdowns.configRelay.
+   - En add_cortes.html se pobla con populateSelect('configRelay1', dropdowns.configRelay, "Corte a ignición").
+   - Si el tipo de corte es "No recomendado" (evaluado con isNoRecomendadoValue), el selector de relay se deshabilita (disabled = true, required = false, value = '').
+   - Al restaurar un tipo de corte técnico estándar, se rehabilita (disabled = false, required = true).
+3. En ui.js:
+   - Ya existe la función precargarDropdownOptions() que invoca routeAction('getDropdownData') y almacena en caché la variable en memoria dropdownOptions.
+   - También existe getDropdownOptionsSync() o acceso directo a dropdownOptions.configRelay.
+   - openAddCutForModelModal debe ser adaptado para:
+     a) Reemplazar el input `<input type="text" id="add-cut-relay">` por un `<select id="add-cut-relay" required></select>`.
+     b) Cargar de forma reactiva y asíncrona las opciones de configRelay desde dropdownOptions o precargarDropdownOptions().
+     c) Sincronizar el comportamiento con el selector de tipo de corte: si se selecciona "No recomendado", deshabilitar el selector de relay y quitar requerimiento; si se selecciona otro tipo, habilitar y marcar como requerido.
+     d) Al enviar el formulario, capturar el valor de select#add-cut-relay y enviarlo en el payload a routeAction('addOrUpdateCut').
+4. Riesgos y dependencias:
+   - La modificación está acotada estrictamente a openAddCutForModelModal en ui.js. No altera firmas de métodos ni contratos de backend.
+===================================================================
+
+===================================================================
+AUDITORÍA TÉCNICA - TAREA 1.2: BARRA DE ENRIQUECIMIENTO DE TEXTO EN LOS FORMULARIOS
+Fecha: Mon Nov 2 11:00:00 2026
+Archivos auditados: ui.js, add_cortes.html, index.html
+
+Hallazgos de Inspección Línea por Línea:
+1. Componente existente de enriquecimiento:
+   - Ya se utiliza la clase CSS `.rich-editor-toolbar` en `add_cortes.html`, `index.html` y en `openAddTutorialModal` dentro de `ui.js`:
+     `<div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">`
+       `<button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('targetId', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>`
+       `<input type="color" onchange="applyRichColor('targetId', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">`
+     `</div>`
+   - Las funciones de manipulación `applyRichFormat(targetId, 'bold')` y `applyRichColor(targetId, color)` ya están definidas en `window` en `ui.js` y `add_cortes.html`.
+
+2. Formularios que carecen de la barra de enriquecimiento en campos descriptivos multilínea:
+   a) En `ui.js`, `openAddCutForModelModal`:
+      - `#add-cut-detalles`: Textarea de detalles de ubicación y corte. Carece de toolbar.
+   b) En `ui.js`, `openAddAperturaModal`:
+      - `#add-apertura-detalles`: Textarea de detalles de apertura. Carece de toolbar.
+   c) En `ui.js`, `openAddFeedModal`:
+      - `#add-feed-detalles`: Textarea de detalles de alimentación. Carece de toolbar.
+   d) En `ui.js`, `openAddProblemModal`:
+      - `#pys-detalle`: Textarea de descripción del problema. Carece de toolbar.
+      - `#pys-solucion`: Textarea de descripción de la solución. Carece de toolbar.
+   e) En `ui.js`, `openSuggestCutModal`:
+      - `#sug-detalles`: Textarea de justificación/explicación del cambio propuesto. Carece de toolbar.
+   f) En `ui.js`, edición in-modal del desarrollador:
+      - Renderizado editable de Apertura y Cables de alimentación (líneas 3760-3810). Actualmente generan textareas dinámicos sin toolbar.
+
+3. Campos excluidos (de valores simples o cortos):
+   - Marca, modelo, año, VIN, color de cable, título de problema, enlace de vídeo.
+
+4. Plan de mitigación:
+   - Integrar `.rich-editor-toolbar` en cada uno de los campos multilínea descriptivos identificados reutilizando `applyRichFormat` y `applyRichColor`.
+   - Garantizar que las etiquetas `<b>` y `<span style="color:...">` persistan al guardar y se visualicen con `sanitizeHtmlContent`.
+===================================================================

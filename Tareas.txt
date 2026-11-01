@@ -211,7 +211,7 @@ TAREAS EN EJECUCIÓN (SESIÓN ACTUAL)
 BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O NO IMPLEMENTADAS)
 ===================================================================
 
-### TAREA 1.1: Configuración de Relay en el formulario de agregar corte del botón «+» [ ]
+### TAREA 1.1: Configuración de Relay en el formulario de agregar corte del botón «+» [X]
 - **Estado detectado:** Fallida. La implementación no corresponde a lo solicitado.
 - **Problema:** En el formulario de agregar corte que se abre desde el botón «+» del modal de detalles del modelo, el campo de configuración de Relay continúa siendo un "input text". El campo debe funcionar mediante un selector desplegable ("DropSelect") con las opciones disponibles en la configuración almacenada en Spreadsheet.
 - **Referencia obligatoria:** Selector de configuración de Relay de la etapa 2 de "add_corte.html".
@@ -228,7 +228,7 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 
 ---
 
-### TAREA 1.2: Barra de enriquecimiento de texto en los formularios [ ]
+### TAREA 1.2: Barra de enriquecimiento de texto en los formularios [X]
 - **Estado detectado:** Fallida o no implementada.
 - **Problema:** Los campos destinados a introducir información detallada o de varias líneas continúan sin mostrar la barra de enriquecimiento de texto. Los botones de negrita y selección de colores están completamente ausentes.
 - **Requisitos:**
@@ -289,7 +289,7 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 
 ---
 
-### TAREA 1.6: ~~Corregir el botón de filtros rápidos durante el modo búsqueda~~ (CANCELADA Y A RETIRAR) [X]
+### TAREA 1.6: ~~Corregir el botón de filtros rápidos durante el modo búsqueda~~ (CANCELADA Y A RETIRAR) [ ]
 - **Estado:** CANCELADA. Se ha decidido eliminar la función de filtros rápidos de búsqueda de la plataforma. La barra de búsqueda buscará elementos sin necesidad de filtros. Esta implementación debe retirarse por completo de la plataforma.
 - **Acción requerida:** Retirar el botón `#btn-toggle-filters`, la barra `#catalog-filters-bar` y sus listeners asociados en `index.html`, `navigation.js` y `style.css`.
 
