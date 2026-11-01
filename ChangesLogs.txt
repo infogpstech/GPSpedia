@@ -1167,3 +1167,10 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
   - Línea 186: Agregado comentario identificativo /* TAREA 8 (B10, B12): ESTADO DE CONEXIÓN E INDICADOR DE RED */ en la lógica del indicador de red.
 - style.css:
   - Línea 141: Agregado comentario identificativo /* TAREA 8 (B09, B11): INDICADOR ULTRA-MINIMALISTA DE ESTADO DE RED */ sobre la regla de estilo #connection-status.
+
+**TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICACIÓN EN CORTES (v2.2.0)**
+- ui.js:
+  - Línea 4269: Agregado comentario identificativo /* TAREA 9 (2.1): BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE Y MODAL DE REPORTE */ en openReportCutModal.
+  - Línea 4410: Agregado comentario identificativo /* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */ en openSuggestCutModal.
+- Services/feedback.js:
+  - Línea 687: Agregado comentario identificativo /* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */ en handleSuggestCutChange.

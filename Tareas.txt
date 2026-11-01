@@ -946,9 +946,9 @@ TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPA
 ---
 
 ===================================================================
-TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICACIÓN EN CORTES
+TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICACIÓN EN CORTES [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Canalizar observaciones y propuestas de corrección sobre cortes técnicos directamente desde la experiencia del instalador hacia el equipo administrativo.
 - **Tareas originales integradas:** 2.1, 2.2, 2.3
 - **Justificación técnica de convergencia:** Agrupa la implementación completa del flujo de retroalimentación técnica: botón individual de reporte en cada corte del modal de detalles, modal emergente de sugerencia estructurada vinculado al identificador del reporte, y persistencia independiente en la hoja 'Feedbacks' para auditoría sin alterar el catálogo base.
@@ -975,7 +975,7 @@ TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICAC
   Reutiliza el sistema de inbox y de recepción de reportes existente siempre que sea posible.
   Después de enviar el reporte correctamente, muestra una confirmación y ofrece la opción «Sugerir cambio».
   Si el reporte no se ha enviado correctamente, no muestres una confirmación de éxito ni avances a un estado que dependa de un reporte guardado.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (2.2): 2.2. Modal de sugerencia de cambios vinculada al corte
 
@@ -996,7 +996,7 @@ TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICAC
 - **Restricción fundamental:**
   La sugerencia solo puede afectar al corte identificado en el reporte.
   Si un modelo contiene varios cortes, no deben mostrarse ni modificarse accidentalmente los campos correspondientes a los otros cortes.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (2.3): 2.3. Almacenamiento y gestión independiente de sugerencias
 
@@ -1026,7 +1026,7 @@ TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICAC
   - Las propuestas quedan vinculadas al corte correcto.
   - Los demás cortes del mismo modelo permanecen intactos.
   - Los usuarios no pueden utilizar este flujo para modificar directamente registros que requieren autorización administrativa.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 ---
 

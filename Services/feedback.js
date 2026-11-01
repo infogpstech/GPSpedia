@@ -684,7 +684,7 @@ function handleGetActivityLogs(payload) {
 }
 
 
-// Tarea 2.3: Almacenamiento y gestión independiente de sugerencias
+/* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */
 function handleSuggestCutChange(payload) {
     const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, proposedValues } = payload;
     if (!vehicleId || !corteIndex || !userId || !userName) {

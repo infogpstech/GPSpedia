@@ -4266,7 +4266,7 @@ function mostrarDetalleRelayModal(item) {
 }
 
 
-// Tarea 2.1: Modal de reporte individual para corte específico
+/* TAREA 9 (2.1): BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE Y MODAL DE REPORTE */
 export function openReportCutModal(vehicleId, corteNum, currentCutData) {
     const existing = document.getElementById("report-cut-modal");
     if (existing) existing.remove();
@@ -4407,7 +4407,7 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
     };
 }
 
-// Tarea 2.2: Modal de sugerencia de cambios vinculada al corte
+/* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */
 export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "") {
     const existing = document.getElementById("suggest-cut-modal");
     if (existing) existing.remove();
