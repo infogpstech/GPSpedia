@@ -5102,6 +5102,7 @@ export async function renderPysSection() {
         grid.className = "grid";
 
         // Tarea 1.7: Corrección de las tarjetas para agregar tutoriales y problemas
+        /* TAREA 10 (5.2): TARJETAS DE PYS Y TARJETA DE CREACIÓN (+) EN PRIMERA POSICIÓN */
         // First card: Creation Card (+)
         const createCard = document.createElement("div");
         createCard.className = "card card-create-pys";
@@ -5174,7 +5175,7 @@ export async function renderPysSection() {
     }
 }
 
-/* TAREA 1.3: RECUPERACIÓN DEL FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES */
+/* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */
 export function openAddProblemModal() {
     const existing = document.getElementById("add-pys-modal");
     if (existing) existing.remove();
@@ -5471,6 +5472,7 @@ export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
     };
 }
 
+/* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */
 export function openPysDetailModal(item) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";

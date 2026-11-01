@@ -1031,9 +1031,9 @@ TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICAC
 ---
 
 ===================================================================
-TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIOS Y VISUALIZACIÓN
+TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIOS Y VISUALIZACIÓN [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA
 - **Objetivo principal:** Crear un espacio de conocimiento colaborativo donde los técnicos documenten problemas complejos de instalación y sus respectivas soluciones y métodos de prevención.
 - **Tareas originales integradas:** 5.1, 5.2, 5.3, 5.4, 5.5
 - **Justificación técnica de convergencia:** Consolida la arquitectura e interfaz de la sección PyS: botón y vista principal, tarjetas estándar y tarjeta de creación '+', formulario de registro de incidencias técnicas con carga de evidencias a Google Drive, hoja de base de datos dedicada 'pys' con identificadores secuenciales únicos (isue-001) y modal de detalle con soporte para edición in-modal.
@@ -1053,7 +1053,7 @@ TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIO
   Soluciones
   También puedes utilizar una abreviatura comprensible, como «Problemas / Soluciones», siempre que conserve la claridad de la sección.
   No cambies el diseño de los botones existentes para resolver únicamente el problema de espacio de esta nueva sección.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (5.2): 5.2. Tarjetas de Problemas y Soluciones y tarjeta de creación
 
@@ -1080,7 +1080,7 @@ TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIO
   - Estados visuales coherentes con el resto de la interfaz.
   Al seleccionarla, abre un modal para registrar un nuevo problema.
   No utilices una imagen de relleno para simular una tarjeta de creación.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (5.3): 5.3. Formulario para registrar problemas
 
@@ -1097,7 +1097,7 @@ TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIO
   - *Prevención:* Campo opcional titulado «Cómo prevenir». Debe admitir un máximo de 100 caracteres.
   - *Vídeo:* Campo opcional para introducir un enlace de YouTube que explique la solución del problema. Si se proporciona un enlace, debe validarse antes de guardar.
   - *Botón de registro:* Agrega el botón «Agregar». Al presionarlo: Valida los campos. Comprueba los límites de caracteres. Verifica las condiciones entre «Sin solución» y «Solución». Valida el enlace de YouTube, si se ha introducido. Carga la imagen. Guarda el registro en Google Sheets. Actualiza la sección de tarjetas. Muestra una confirmación. Si ocurre un error, conserva los datos introducidos cuando sea posible y permite reintentar la operación. Evita que un doble clic genere dos registros idénticos.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (5.4): 5.4. Estructura de almacenamiento en Google Drive y Google Sheets (Hoja pys)
 
@@ -1129,7 +1129,7 @@ TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIO
 - **Validación de integridad:**
   Antes de confirmar una operación: Comprueba que los campos obligatorios estén completos. Comprueba los límites de caracteres también en el backend. Valida los enlaces de YouTube. Verifica que la imagen se haya cargado correctamente. Comprueba que el identificador no exista previamente. Evita escrituras parciales que dejen registros incoherentes. Registra los errores mediante los mecanismos de auditoría existentes.
   Si la carga de la imagen se completa, pero falla la escritura en Sheets, gestiona el archivo huérfano de forma segura y sin borrar archivos que puedan estar siendo utilizados por otros registros.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 #### Especificación Original (5.5): 5.5. Modal de detalle de Problemas y Soluciones y edición in-modal
 
@@ -1155,7 +1155,7 @@ TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIO
   Al final del modal, muestra el nombre del colaborador que registró el problema. Utiliza el mismo patrón visual y la misma fuente de datos de identidad que emplea el modal de detalle de los cortes. No confundas el nombre del colaborador con el nombre de usuario de acceso.
 - **Edición desde el modal:**
   El modal debe permitir la edición directa por parte del rol de desarrollador, siguiendo el comportamiento del sistema de edición in-modal que ya existe. Reutiliza sus controles, validaciones y mecanismos de guardado. No implementes una segunda interfaz de edición independiente si la plataforma ya tiene un componente reutilizable. La autorización debe verificarse en el backend, no únicamente ocultando los botones en el frontend. El desarrollador autorizado debe poder modificar la información correspondiente al problema sin alterar su identificador ni perder su trazabilidad. Los demás usuarios solo podrán utilizar las acciones que tengan autorizadas.
-- **Estado:** PENDIENTE.
+- **Estado:** COMPLETADA [X]
 
 ---
 

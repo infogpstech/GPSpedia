@@ -1174,3 +1174,13 @@ Descripción: Actualizadas las URLs de producción de Google Apps Script para lo
   - Línea 4410: Agregado comentario identificativo /* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */ en openSuggestCutModal.
 - Services/feedback.js:
   - Línea 687: Agregado comentario identificativo /* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */ en handleSuggestCutChange.
+
+**TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIOS Y VISUALIZACIÓN (v2.2.0)**
+- index.html:
+  - Línea 156: Agregado comentario identificativo <!-- TAREA 10 (5.1): SECCIÓN PROBLEMAS Y SOLUCIONES EN LA PÁGINA PRINCIPAL --> en #btn-pys.
+- ui.js:
+  - Línea 5105: Agregado comentario identificativo /* TAREA 10 (5.2): TARJETAS DE PYS Y TARJETA DE CREACIÓN (+) EN PRIMERA POSICIÓN */ en renderPysSection.
+  - Línea 5178: Agregado comentario identificativo /* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */ en openAddProblemModal.
+  - Línea 5475: Agregado comentario identificativo /* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */ en openPysDetailModal.
+- Services/feedback.js:
+  - Línea 803: Agregado comentario identificativo /* TAREA 10 (5.4): ALMACENAMIENTO EN HOJA PYS, IDENTIFICADORES ÚNICOS ISUE-001 Y SUBIDA A DRIVE */ en handleAddProblem.

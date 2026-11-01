@@ -800,6 +800,7 @@ function handleGetPysData() {
     return { status: "success", data: result };
 }
 
+/* TAREA 10 (5.4): ALMACENAMIENTO EN HOJA PYS, IDENTIFICADORES ÚNICOS ISUE-001 Y SUBIDA A DRIVE */
 function handleAddProblem(payload) {
     const { titulo, descripcion, sinSolucion, solucion, prevenir, videoUrl, imgBase64, userId, userName, modelosAsociados, alcance } = payload;
     if (!titulo || !descripcion) {

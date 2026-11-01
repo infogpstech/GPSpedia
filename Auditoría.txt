@@ -439,3 +439,21 @@ Se actualizaron los endpoints de producción de Google Apps Script en `api-confi
 3. **Services/feedback.js (Tarea 2.3: Almacenamiento y gestión independiente):**
    - `handleSuggestCutChange` registra la propuesta como un feedback pendiente (`Se resolvio = false`) en la hoja `Feedbacks` con todos los metadatos requeridos (`reportId`, `vehicleId`, `corteIndex`, `userId`, `userName`, `timestamp`, `imageUrl`, `proposedValues`, `details`) sin modificar el registro del vehículo en `Cortes`.
    - Todo el flujo cumple los requisitos funcionales de la Tarea 9. Se insertarán los comentarios identificativos conforme a la Regla 6.
+
+**AUDITORÍA TÉCNICA - TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIOS Y VISUALIZACIÓN (31/10/2026)**
+
+**Archivos involucrados:** `index.html`, `ui.js`, `Services/feedback.js`, `api-config.js`, `style.css`.
+
+**Hallazgos de Auditoría Línea por Línea:**
+1. **index.html y style.css (Tarea 5.1: Botón de sección en página principal):**
+   - El botón `#btn-pys` ("Problemas y Soluciones") se encuentra integrado en la barra de navegación de secciones principales, manteniendo plena armonía estética con Cortes, Tutoriales y Relay.
+2. **ui.js (Tarea 5.2: Tarjetas y tarjeta de creación '+'):**
+   - En `renderPysSection()`, la primera posición de la cuadrícula está reservada permanentemente para la tarjeta de creación (`.card-create-pys`) con borde discontinuo azul, icono '+' e interacción para invocar `openAddProblemModal()`.
+   - Los problemas registrados se listan de forma cronológica inversa (del más reciente al más antiguo).
+3. **ui.js (Tarea 5.3: Formulario de registro de problemas):**
+   - En `openAddProblemModal()`, el formulario valida título (máx 15 caracteres), subida de imagen a Google Drive (vía Base64), detalle de descripción, casilla interactiva `sinSolucion` (que deshabilita/habilita y conmuta obligatoriedad de la solución), prevención opcional (máx 100 caracteres) y enlace de YouTube.
+4. **Services/feedback.js (Tarea 5.4: Almacenamiento en hoja pys e IDs únicos isue-001):**
+   - `handleAddProblem()` genera identificadores secuenciales únicos con formato `isue-001`, gestiona concurrencia con `LockService` y escribe las 9 columnas obligatorias en la hoja `pys` (`id_problem`, `Problema`, `Descripción`, `Se soluciono`, `Solucion`, `Prevenir`, `Imagen`, `Video`, `Colaborador`).
+5. **ui.js (Tarea 5.5: Modal de detalle de problemas y soluciones):**
+   - En `openPysDetailModal(item)`, se presenta la información estructurada, nombre del colaborador y botones de acción contextuales para agregar solución o agregar prevención si el registro carece de ellas.
+   - Todo el flujo cumple plenamente los requisitos funcionales de la Tarea 10. Se insertarán los comentarios identificativos conforme a la Regla 6.
