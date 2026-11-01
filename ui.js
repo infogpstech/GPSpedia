@@ -5917,7 +5917,10 @@ export function exportVehiclePrintSheet(item) {
         feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
     }
 
-    const cutsHtml = cuts.map(c => `
+    /* TAREA 5: Corregir imágenes rotas normalizando URLs con getImageUrl(..., IMG_SIZE_LARGE) */
+    const cutsHtml = cuts.map(c => {
+        const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
+        return `
         <div class="tech-item-card">
             <div class="tech-item-header">Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}</div>
             <div class="tech-item-body">
@@ -5927,25 +5930,29 @@ export function exportVehiclePrintSheet(item) {
                     <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
                     ${c.colab ? `<p class="colab-tag">Colab: ${cleanColaboradorName(c.colab)}</p>` : ''}
                 </div>
-                ${c.img ? `<div class="tech-item-img"><img src="${c.img}" alt="Corte #${c.num}" /></div>` : ''}
+                ${safeImg ? `<div class="tech-item-img"><img src="${safeImg}" alt="Corte #${c.num}" /></div>` : ''}
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
-    const feedsHtml = feeds.map(f => `
+    const feedsHtml = feeds.map(f => {
+        const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
+        return `
         <div class="tech-item-card">
             <div class="tech-item-header">${f.title}</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
                     <p>${f.desc || 'Conexión estándar'}</p>
                 </div>
-                ${f.img ? `<div class="tech-item-img"><img src="${f.img}" alt="${f.title}" /></div>` : ''}
+                ${safeImg ? `<div class="tech-item-img"><img src="${safeImg}" alt="${f.title}" /></div>` : ''}
             </div>
         </div>
-    `).join('');
+        `;
+    }).join('');
 
     const vehiculoImgHtml = item.imagenVehiculo ? `
-        <div class="vehicle-main-img"><img src="${item.imagenVehiculo}" alt="${title}" /></div>
+        <div class="vehicle-main-img"><img src="${getImageUrl(item.imagenVehiculo, IMG_SIZE_LARGE)}" alt="${title}" /></div>
     ` : '';
 
     const aperturaHtml = (item.apertura || item.imgApertura) ? `
@@ -5955,7 +5962,7 @@ export function exportVehiclePrintSheet(item) {
                 <div class="tech-item-info">
                     <p>${item.apertura || 'Instrucciones registradas'}</p>
                 </div>
-                ${item.imgApertura ? `<div class="tech-item-img"><img src="${item.imgApertura}" alt="Apertura" /></div>` : ''}
+                ${item.imgApertura ? `<div class="tech-item-img"><img src="${getImageUrl(item.imgApertura, IMG_SIZE_LARGE)}" alt="Apertura" /></div>` : ''}
             </div>
         </div>
     ` : '';
@@ -5973,9 +5980,10 @@ export function exportVehiclePrintSheet(item) {
             <meta charset="UTF-8">
             <title>Ficha Técnica GPSpedia - ${title}</title>
             <style>
+                /* TAREA 6: Configuración obligatoria papel Carta, orientación vertical, márgenes 10mm */
                 @page {
-                    size: A4 portrait;
-                    margin: 8mm 10mm;
+                    size: letter portrait;
+                    margin: 10mm;
                 }
                 * { box-sizing: border-box; }
                 body {
@@ -5983,8 +5991,8 @@ export function exportVehiclePrintSheet(item) {
                     margin: 0;
                     padding: 0;
                     color: #1a1a1a;
-                    font-size: 11px;
-                    line-height: 1.3;
+                    font-size: 10.5px;
+                    line-height: 1.25;
                     background: #fff;
                 }
                 .no-print-bar {
@@ -6097,6 +6105,16 @@ export function exportVehiclePrintSheet(item) {
                     object-fit: cover;
                     border-radius: 3px;
                     border: 1px solid #ccc;
+                }
+                /* TAREA 5: Ajuste exclusivo de Check Engine en la hoja de impresión */
+                img[src*="1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX"],
+                .tech-item-info img[src*="1ELXm7I"] {
+                    max-height: 20px !important;
+                    width: auto !important;
+                    display: inline-block !important;
+                    vertical-align: middle !important;
+                    margin: 2px 4px !important;
+                    float: none !important;
                 }
                 .colab-tag {
                     font-size: 9.5px;

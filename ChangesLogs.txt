@@ -1223,3 +1223,16 @@ TAREA: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MOD
 5. Se unificó el diseño visual de todas las tarjetas de Problemas y Soluciones mediante la función createPysCard(), adoptando el estándar canónico de la plataforma (.card, .card-img-top, .overlay) de referencia (cortes, recién agregados, vistos recientemente y categorías), sin alterar las reglas CSS de los carruseles existentes ni los logos de marca.
 Archivos modificados: ui.js, Auditoría.txt, ChangesLogs.txt
 ===================================================================
+
+===================================================================
+FECHA: $(date)
+TAREAS: AUDITORÍA, CORRECCIÓN Y AMPLIACIÓN DE FUNCIONALIDADES (1 a 6)
+1. Bloque 1: Eliminación definitiva de la animación de carga (#pys-loading) en la sección Problemas y Soluciones en ui.js, renderizando instantáneamente igual que Cortes, Tutoriales y Relay.
+2. Bloque 2: Configuración de Relay en el modal de agregar nuevo corte (+) convertida en <select> dinámico poblando valores desde la Spreadsheet mediante precargarDropdownOptions().
+3. Bloque 3.1: Resultados de coincidencia de vehículos compactados reduciendo márgenes laterales y priorizando la legibilidad de marca, modelo, rango de años y versiones de equipamiento.
+4. Bloque 3.2: Reubicación del campo VIN debajo de la imagen del corte en add_cortes.html, con altura normalizada idéntica a la de Color del cable.
+5. Bloques 3.3, 3.4 y 3.5: Barras de enriquecimiento de texto reutilizables (negrita y color) en formularios técnicos (ubicación de corte, apertura, cables de alimentación, notas, tutoriales, problemas y modo de edición del desarrollador); barra avanzada completa en Inbox (fuente, negrita, cursiva, subrayado, tachado, listas ordenadas/desordenadas y color); barra en formulario Contáctanos.
+6. Bloque 4: Botón Volver agregado en la Etapa 3 de add_cortes.html con persistencia completa de inputs, selects, radio buttons, imágenes y prevención de duplicados al actualizar el corte.
+7. Bloques 5 y 6: Corrección de imágenes rotas en la ficha técnica de impresión mediante getImageUrl(..., IMG_SIZE_LARGE); reducción exclusiva del icono Check Engine en impresión (max-height: 20px); configuración de hoja tamaño Carta vertical (@page { size: letter portrait; margin: 10mm; }).
+Archivos modificados: ui.js, add_cortes.html, index.html, Auditoría.txt, ChangesLogs.txt
+===================================================================

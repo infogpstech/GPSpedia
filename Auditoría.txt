@@ -516,3 +516,8 @@ Hallazgos de Inspección Línea por Línea:
 VERIFICACIÓN Y CIERRE: CARRUSEL «POSIBLES PROBLEMAS»
 Se comprobó la consulta por identificador único del modelo, la no aparición de acordeones vacíos, la integración en 1 problema (tarjeta única) y múltiples problemas (carrusel navegable), y la preservación intacta de los estilos de carruseles de referencia.
 ===================================================================
+
+===================================================================
+CIERRE DE AUDITORÍA Y VERIFICACIÓN - BLOQUES 1 A 6
+Se implementaron y verificaron todos los requisitos funcionales de los 6 bloques mediante pruebas automatizadas Playwright sin errores ni regresiones.
+===================================================================

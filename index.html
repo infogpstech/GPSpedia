@@ -619,6 +619,11 @@
       </div>
       <div class="form-group">
         <label for="contact-message">Mensaje</label>
+        <!-- TAREA 3.5: Barra de enriquecimiento para Contáctanos -->
+        <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+            <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('contact-message', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+            <input type="color" onchange="applyRichColor('contact-message', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+        </div>
         <textarea id="contact-message" rows="4" required></textarea>
       </div>
       <button type="submit" class="btn">Enviar Mensaje</button>
