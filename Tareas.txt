@@ -262,7 +262,7 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 
 ---
 
-### TAREA 1.4: Retirar la animación de carga de la sección «Problemas / Soluciones» [ ]
+### TAREA 1.4: Retirar la animación de carga de la sección «Problemas / Soluciones» [X]
 - **Estado detectado:** Fallida. El comportamiento original continúa presente.
 - **Problema:** Al seleccionar la sección «Problemas / Soluciones», sigue apareciendo una animación de carga que no debería mostrarse.
 - **Requisitos:**

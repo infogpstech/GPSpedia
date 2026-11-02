@@ -244,18 +244,59 @@ export function parseVinCollection(rawVin) {
 
 export function mapVersionsWithVins(versionesStr, vinRaw) {
     const versions = parseEquipmentVersions(versionesStr);
-    const vins = parseVinCollection(vinRaw);
+    const rawVins = parseVinCollection(vinRaw);
 
-    if (versions.length === 0 && vins.length === 0) return [];
-    if (versions.length === 0) {
-        return vins.map(vin => ({ version: "", vin }));
+    // Regla de negocio: Si el modelo solo tiene una versión de equipamiento (o ninguna),
+    // no debe mostrar ningún número VIN distintivo en el modal.
+    // Solo si el modelo tiene más de 1 versión de equipamiento, se extraen 4 dígitos consecutivos distintivos.
+    if (versions.length <= 1) {
+        if (versions.length === 1) {
+            return [{ version: versions[0], vin: null }];
+        }
+        return [];
     }
+
+    // Formatear cada VIN ignorando los últimos 5 dígitos y extrayendo los 4 dígitos distintivos
+    const cleanedVins = rawVins.map(v => {
+        if (!v) return "";
+        let s = String(v).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (s.startsWith("OP")) return "";
+        // Ignorar los últimos 5 dígitos (numéricos de serie) si la longitud es mayor a 5
+        if (s.length > 5) {
+            s = s.substring(0, s.length - 5);
+        }
+        return s;
+    });
+
+    // Detectar el índice donde difieren las versiones de equipamiento
+    const nonNullVins = cleanedVins.filter(Boolean);
+    let diffIdx = -1;
+    if (nonNullVins.length >= 2) {
+        const minLen = Math.min(...nonNullVins.map(v => v.length));
+        for (let i = 0; i < minLen; i++) {
+            const setAtI = new Set(nonNullVins.map(v => v[i]));
+            if (setAtI.size > 1) {
+                diffIdx = i;
+                break;
+            }
+        }
+    }
+
+    const clean4DigitVins = cleanedVins.map(s => {
+        if (!s) return null;
+        if (s.length <= 4) return s;
+        if (diffIdx !== -1) {
+            const start = Math.max(0, Math.min(diffIdx, s.length - 4));
+            return s.substring(start, start + 4);
+        }
+        return s.slice(-4);
+    });
 
     // Cada versión se relaciona individualmente con su correspondiente VIN si existe
     return versions.map((version, index) => {
         return {
             version,
-            vin: vins[index] || null
+            vin: clean4DigitVins[index] || null
         };
     });
 }
@@ -1809,14 +1850,14 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     cont.appendChild(subHeaderDiv);
 
     /* TAREA 1: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN */
-    if (activeItem && activeItem.vin) {
+    const itemVersions = parseEquipmentVersions(activeItem ? activeItem.versionesAplicables : '');
+    if (activeItem && activeItem.vin && itemVersions.length > 1) {
         try {
             const catalogData = getState().catalogData;
             if (vinDifferentialEngine.signatures.size === 0 && catalogData && catalogData.cortes) {
                 vinDifferentialEngine.calculateSignatures(catalogData.cortes);
             }
-            const versionsList = (activeItem.versionesAplicables || '').split(/[,/\\]+/).map(v => v.trim()).filter(Boolean);
-            const mainVersion = versionsList[0] || '';
+            const mainVersion = itemVersions[0] || '';
             const classKey = getClassificationKey(activeItem, mainVersion, 5);
             const sig = vinDifferentialEngine.signatures.get(classKey);
 
@@ -5129,6 +5170,7 @@ export function openAddCutForModelModal(item) {
             <div class="form-group">
                 <label>Tipo de Corte</label>
                 <select id="add-cut-tipo" required>
+                    <option value="" selected disabled>Seleccione una opción</option>
                     <option value="Bomba de combustible">Bomba de combustible</option>
                     <option value="Ignición">Ignición</option>
                     <option value="Botón de encendido">Botón de encendido</option>
@@ -5138,7 +5180,7 @@ export function openAddCutForModelModal(item) {
             <div class="form-group">
                 <label>Configuración Relay</label>
                 <select id="add-cut-relay" required>
-                    <option value="">Cargando opciones...</option>
+                    <option value="" selected disabled>Seleccione una opción</option>
                 </select>
             </div>
             <div class="form-group">
@@ -5171,8 +5213,8 @@ export function openAddCutForModelModal(item) {
     const tipoSelect = content.querySelector("#add-cut-tipo");
     const relaySelect = content.querySelector("#add-cut-relay");
 
-    const populateRelayOptions = (options, defaultValue = "Corte a ignición") => {
-        relaySelect.innerHTML = "";
+    const populateRelayOptions = (options) => {
+        relaySelect.innerHTML = '<option value="" selected disabled>Seleccione una opción</option>';
         const list = Array.isArray(options) && options.length > 0
             ? options
             : ["Corte a ignición", "5 pines NC", "5 pines NA", "Sin relay"];
@@ -5181,12 +5223,10 @@ export function openAddCutForModelModal(item) {
             const el = document.createElement("option");
             el.value = opt;
             el.textContent = opt;
-            if (opt === defaultValue) el.selected = true;
             relaySelect.appendChild(el);
         });
-
-        if (!list.includes(defaultValue) && relaySelect.options.length > 0) {
-            relaySelect.options[0].selected = true;
+        if (!relaySelect.value) {
+            relaySelect.value = "";
         }
     };
 
@@ -5217,9 +5257,6 @@ export function openAddCutForModelModal(item) {
         } else {
             relaySelect.disabled = false;
             relaySelect.required = true;
-            if (!relaySelect.value && relaySelect.options.length > 0) {
-                relaySelect.options[0].selected = true;
-            }
         }
     }
 
@@ -5539,20 +5576,11 @@ export async function renderPysSection() {
         cont.appendChild(grid);
     };
 
-    // Fast-path: Si ya existen datos en caché/estado, renderizar inmediatamente (0ms)
+    // TAREA 1.4: Retirar la animación de carga de la sección «Problemas / Soluciones»
+    // Se presenta la sección inmediatamente con su estructura y tarjeta de creación (+) igual que Tutoriales y Relay
     const cachedData = getState().pysData;
     const hasCache = Array.isArray(cachedData) && cachedData.length > 0;
-    if (hasCache) {
-        renderGridWithItems(cachedData);
-    } else {
-        cont.innerHTML = `
-            <h4>Problemas y Soluciones</h4>
-            <div id="pys-loading" style="text-align: center; padding: 40px; color: var(--text-color);">
-                <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-color, #007bff); margin-bottom: 12px;"></i>
-                <p style="margin: 0;">Cargando problemas y soluciones...</p>
-            </div>
-        `;
-    }
+    renderGridWithItems(hasCache ? cachedData : []);
 
     // Sincronización en segundo plano con el backend
     try {
