@@ -1522,3 +1522,7 @@ Fecha: 2026-11-02
      * Optimizada la escala y distribución vertical para aprovechar la altura completa de una página de formato Carta (letter portrait) sin condensarse únicamente en la mitad superior de la página, implementando estructura `.sheet-page-wrapper` con min-height de 920px y espaciado proporcional entre encabezado, tablas, cortes, alimentaciones, notas y pie de página.
 2. Tareas.txt: Marcada como completada [X] la TAREA 3.1.
 ================================================================================
+
+2026-11-02:
+- Optimización de celdas en tabla de información del vehículo de la ficha técnica de impresión (padding 4px 8px, interlineado compacto).
+- Ampliación y maximización de las imágenes técnicas (cortes y alimentación) a 280px de ancho y 155px de alto para mejorar su legibilidad y aprovechamiento de espacio en hoja Carta de una sola página.

@@ -376,8 +376,8 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
 }
 
 export function getImageUrl(fileId, size = 400) {
-    // Si ya es una URL de Blob (caché local), devolverla directamente.
-    if (fileId && typeof fileId === 'string' && fileId.startsWith('blob:')) {
+    // Si ya es una URL de Blob o Data URL (base64/svg), devolverla directamente.
+    if (fileId && typeof fileId === 'string' && (fileId.startsWith('blob:') || fileId.startsWith('data:'))) {
         return fileId;
     }
 
@@ -6617,13 +6617,13 @@ export function exportVehiclePrintSheet(item) {
                 .top-grid {
                     display: grid;
                     grid-template-columns: ${item.imagenVehiculo ? '180px 1fr' : '1fr'}${qrHtml ? ' auto' : ''};
-                    gap: 20px;
-                    align-items: center;
-                    margin-bottom: 22px;
+                    gap: 14px;
+                    align-items: stretch;
+                    margin-bottom: 14px;
                 }
                 .vehicle-main-img img {
                     width: 100%;
-                    max-height: 145px;
+                    max-height: 120px;
                     object-fit: cover;
                     border-radius: 6px;
                     border: 1px solid #ddd;
@@ -6631,16 +6631,17 @@ export function exportVehiclePrintSheet(item) {
                 .meta-table {
                     width: 100%;
                     border-collapse: collapse;
-                    font-size: 12.5px;
+                    font-size: 12px;
+                    line-height: 1.25;
                 }
                 .meta-table td {
-                    padding: 9px 14px;
+                    padding: 4px 8px;
                     border: 1px solid #e0e0e0;
                 }
                 .meta-table td.label {
                     font-weight: bold;
                     background: #f7f9fa;
-                    width: 24%;
+                    width: 22%;
                     color: #444;
                 }
                 .qr-video-box {
@@ -6667,33 +6668,33 @@ export function exportVehiclePrintSheet(item) {
                 }
                 /* Secciones verticales fluidas (Requisito 1.1) */
                 .section-header {
-                    font-size: 14px;
+                    font-size: 13.5px;
                     font-weight: bold;
                     color: #007bff;
                     text-transform: uppercase;
                     border-bottom: 2px solid #007bff;
-                    margin: 22px 0 14px 0;
-                    padding-bottom: 6px;
+                    margin: 14px 0 10px 0;
+                    padding-bottom: 4px;
                 }
                 .tech-grid {
                     display: flex;
                     flex-direction: column;
-                    gap: 16px;
+                    gap: 12px;
                 }
                 .tech-item-card {
                     border: 1px solid #dcdcdc;
                     border-radius: 6px;
                     background: #fafafa;
-                    padding: 16px 18px;
+                    padding: 12px 16px;
                     page-break-inside: avoid;
                 }
                 .tech-item-header {
                     font-weight: bold;
                     color: #0056b3;
-                    font-size: 13.5px;
-                    margin-bottom: 10px;
+                    font-size: 13px;
+                    margin-bottom: 8px;
                     border-bottom: 1px dashed #e0e0e0;
-                    padding-bottom: 6px;
+                    padding-bottom: 4px;
                 }
                 .tech-item-body {
                     display: flex;
@@ -6705,12 +6706,13 @@ export function exportVehiclePrintSheet(item) {
                     flex: 1;
                 }
                 .tech-item-info p {
-                    margin: 6px 0;
-                    font-size: 12.5px;
+                    margin: 4px 0;
+                    font-size: 12px;
+                    line-height: 1.35;
                 }
                 .tech-item-img-wrapper {
-                    max-width: 230px;
-                    max-height: 170px;
+                    max-width: 280px;
+                    max-height: 165px;
                     flex-shrink: 0;
                     display: flex;
                     align-items: center;
@@ -6718,7 +6720,7 @@ export function exportVehiclePrintSheet(item) {
                 }
                 .tech-detail-img {
                     max-width: 100%;
-                    max-height: 160px;
+                    max-height: 155px;
                     object-fit: contain;
                     border-radius: 4px;
                     border: 1px solid #ccc;
@@ -6739,18 +6741,18 @@ export function exportVehiclePrintSheet(item) {
                     background: #fff3cd;
                     color: #856404;
                     border: 1px solid #ffeeba;
-                    padding: 14px 18px;
+                    padding: 10px 14px;
                     border-radius: 6px;
-                    margin-top: 24px;
-                    font-size: 12px;
+                    margin-top: 14px;
+                    font-size: 11.5px;
                     page-break-inside: avoid;
                 }
                 .footer-bar {
-                    margin-top: 30px;
+                    margin-top: 18px;
                     font-size: 11px;
                     color: #777;
                     border-top: 1px solid #e0e0e0;
-                    padding-top: 12px;
+                    padding-top: 8px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;

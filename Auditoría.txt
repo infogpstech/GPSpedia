@@ -930,3 +930,25 @@ Archivo intervenido: ui.js
    - 0 problemas: no mostrar acordeón vacío.
    - Tarjetas cumplen el estándar visual .card, .card-img-top, .overlay.
 ================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: OPTIMIZACIÓN TABLA Y MAXIMIZACIÓN IMÁGENES (FICHA TÉCNICA)
+Fecha: 2026-11-02
+Archivo intervenido: ui.js
+
+1. getImageUrl:
+   - Añadido soporte para Data URLs (data:image/...) y Blob URLs para que imágenes en formato base64/SVG no caigan en placeholder.
+
+2. Tabla de Metadatos (.meta-table y .top-grid):
+   - .top-grid: gap reducido a 14px y margin-bottom a 14px.
+   - .vehicle-main-img img: max-height ajustado a 120px.
+   - .meta-table: font-size a 12px, line-height 1.25.
+   - .meta-table td: padding reducido drásticamente de 9px 14px a 4px 8px para eliminar desperdicio vertical.
+   - .meta-table td.label: width 22%.
+
+3. Maximización de Imágenes Técnicas (.tech-item-img-wrapper y .tech-detail-img):
+   - .tech-item-img-wrapper: max-width ampliado a 280px, max-height a 165px.
+   - .tech-detail-img: max-height ampliado a 155px con object-fit contain.
+   - .tech-grid gap a 12px, .tech-item-card padding a 12px 16px.
+   - Garantizado que todo el documento cabe exactamente en 1 página tamaño carta vertical.
+================================================================================
