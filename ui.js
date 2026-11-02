@@ -6811,7 +6811,13 @@ export function exportVehiclePrintSheet(item) {
                                 <td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td>
                                 <td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td>
                             </tr>
-                            ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td colspan="3">${item.vin}</td></tr>` : ''}
+                            ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td colspan="3">${(function(){
+                                try {
+                                    const parsed = JSON.parse(item.vin);
+                                    if (Array.isArray(parsed)) return parsed.join(' / ');
+                                } catch(e){}
+                                return item.vin;
+                            })()}</td></tr>` : ''}
                         </table>
                         ${qrHtml}
                     </div>
