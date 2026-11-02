@@ -224,22 +224,28 @@ export function parseEquipmentVersions(rawStr) {
 
 export function parseVinCollection(rawVin) {
     if (!rawVin) return [];
+    let list = [];
     if (Array.isArray(rawVin)) {
-        return rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+        list = rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    } else {
+        const str = String(rawVin).trim();
+        if (str.startsWith("[") && str.endsWith("]")) {
+            try {
+                const parsed = JSON.parse(str);
+                if (Array.isArray(parsed)) {
+                    list = parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                }
+            } catch (e) {}
+        }
+        if (list.length === 0) {
+            list = str
+                .split(/[,/\\\\]+/)
+                .map(v => v.trim().toUpperCase())
+                .filter(Boolean);
+        }
     }
-    const str = String(rawVin).trim();
-    if (str.startsWith("[") && str.endsWith("]")) {
-        try {
-            const parsed = JSON.parse(str);
-            if (Array.isArray(parsed)) {
-                return parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
-            }
-        } catch (e) {}
-    }
-    return str
-        .split(/[,/\\\\]+/)
-        .map(v => v.trim().toUpperCase())
-        .filter(Boolean);
+    // Filtrar estrictamente cualquier ID de operación de idempotencia ("OP-...") o tokens no válidos
+    return list.filter(v => v && !v.startsWith("OP-") && !v.startsWith("OP_") && !v.includes("IDOPERACION"));
 }
 
 export function mapVersionsWithVins(versionesStr, vinRaw) {
@@ -3657,6 +3663,99 @@ function renderInboxList(items) {
     });
 }
 
+
+/* TAREA 1.7: BARRA DE ENRIQUECIMIENTO DE TEXTO COMPLETA PARA EL EDITOR DEL INBOX */
+export function createInboxRichTextToolbar(targetId) {
+    const toolbar = document.createElement("div");
+    toolbar.className = "inbox-rich-toolbar";
+    toolbar.style.cssText = "display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; padding:6px 8px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ccc); border-radius:6px;";
+
+    const applyTag = (openTag, closeTag) => {
+        const textarea = document.getElementById(targetId);
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = textarea.value.substring(start, end) || "texto";
+        const formatted = `${openTag}${selected}${closeTag}`;
+        textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+        textarea.focus();
+        textarea.setSelectionRange(start + openTag.length, start + openTag.length + selected.length);
+    };
+
+    const makeBtn = (html, title, onClick) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-secondary btn-sm";
+        btn.title = title;
+        btn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; cursor:pointer;";
+        btn.innerHTML = html;
+        btn.onclick = (e) => { e.preventDefault(); onClick(); };
+        return btn;
+    };
+
+    // 1. Negrita
+    toolbar.appendChild(makeBtn("<strong>B</strong>", "Negrita", () => applyTag("<strong>", "</strong>")));
+    // 2. Cursiva
+    toolbar.appendChild(makeBtn("<em>I</em>", "Cursiva", () => applyTag("<em>", "</em>")));
+    // 3. Subrayado
+    toolbar.appendChild(makeBtn("<u>U</u>", "Subrayado", () => applyTag("<u>", "</u>")));
+    // 4. Tachado
+    toolbar.appendChild(makeBtn("<s>S</s>", "Tachado", () => applyTag("<s>", "</s>")));
+
+    // 5. Selector de Color
+    const colorPicker = document.createElement("input");
+    colorPicker.type = "color";
+    colorPicker.title = "Color de texto";
+    colorPicker.style.cssText = "width:28px; height:28px; padding:0; border:none; cursor:pointer; border-radius:4px;";
+    colorPicker.onchange = (e) => applyTag(`<span style="color:${e.target.value}">`, "</span>");
+    toolbar.appendChild(colorPicker);
+
+    // 6. Selector de Tamaño de Fuente
+    const sizeSelect = document.createElement("select");
+    sizeSelect.title = "Tamaño de fuente";
+    sizeSelect.style.cssText = "padding:2px 4px; font-size:0.82rem; height:28px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);";
+    sizeSelect.innerHTML = `
+        <option value="" disabled selected>Tamaño</option>
+        <option value="0.85em">Pequeño</option>
+        <option value="1em">Normal</option>
+        <option value="1.2em">Grande</option>
+        <option value="1.5em">Encabezado</option>
+    `;
+    sizeSelect.onchange = (e) => {
+        if (e.target.value) {
+            applyTag(`<span style="font-size:${e.target.value}">`, "</span>");
+            e.target.value = "";
+        }
+    };
+    toolbar.appendChild(sizeSelect);
+
+    // 7. Selector de Tipo de Fuente
+    const fontSelect = document.createElement("select");
+    fontSelect.title = "Tipo de fuente";
+    fontSelect.style.cssText = "padding:2px 4px; font-size:0.82rem; height:28px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);";
+    fontSelect.innerHTML = `
+        <option value="" disabled selected>Fuente</option>
+        <option value="Arial, sans-serif">Arial</option>
+        <option value="'Segoe UI', Roboto, sans-serif">Segoe UI</option>
+        <option value="'Courier New', monospace">Monospace</option>
+        <option value="Georgia, serif">Georgia</option>
+    `;
+    fontSelect.onchange = (e) => {
+        if (e.target.value) {
+            applyTag(`<span style="font-family:${e.target.value}">`, "</span>");
+            e.target.value = "";
+        }
+    };
+    toolbar.appendChild(fontSelect);
+
+    // 8. Lista desordenada
+    toolbar.appendChild(makeBtn("<i class='fa-solid fa-list-ul'></i>", "Lista con viñetas", () => applyTag("<ul>\n  <li>", "</li>\n</ul>")));
+    // 9. Lista ordenada
+    toolbar.appendChild(makeBtn("<i class='fa-solid fa-list-ol'></i>", "Lista numerada", () => applyTag("<ol>\n  <li>", "</li>\n</ol>")));
+
+    return toolbar;
+}
+
 function renderInboxDetail(item) {
     const detailContainer = document.getElementById('inbox-detail');
     const { currentUser, catalogData } = getState();
@@ -3674,16 +3773,17 @@ function renderInboxDetail(item) {
         <h3 class="inbox-detail-title">${item.subject}</h3>
         <p class="inbox-detail-meta"><strong>De:</strong> ${item.user}</p>
         ${item.vehicleId ? `<p class="inbox-detail-meta"><strong>Vehículo:</strong> ${vehicleLabel}</p>` : ''}
-        <div class="inbox-message-content">
-            <pre>${item.content}</pre>
+        <div class="inbox-message-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
+            <div>${sanitizeHtmlContent(item.content)}</div>
         </div>
         ${item.reply ? `
-            <div class="inbox-reply-content">
+            <div class="inbox-reply-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
                 <strong>Respuesta de ${item.responder || 'Admin'}:</strong>
-                <pre>${item.reply}</pre>
+                <div style="margin-top:6px;">${sanitizeHtmlContent(item.reply)}</div>
             </div>` : ''
         }
         <div class="inbox-actions">
+            <div id="inbox-toolbar-container"></div>
             <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
                 <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
@@ -3694,6 +3794,12 @@ function renderInboxDetail(item) {
             </div>
         </div>
     `;
+
+
+    const toolbarContainer = document.getElementById('inbox-toolbar-container');
+    if (toolbarContainer) {
+        toolbarContainer.appendChild(createInboxRichTextToolbar('inbox-reply-textarea'));
+    }
 
     const replyBtn = document.getElementById('inbox-reply-btn');
     replyBtn.addEventListener('click', async () => {
@@ -4957,15 +5063,19 @@ export function openExpandMenuModal(item) {
         if (!rawVin) return [];
         const str = String(rawVin).trim();
         if (!str) return [];
+        let list = [];
         if (str.startsWith("[") && str.endsWith("]")) {
             try {
                 const arr = JSON.parse(str);
                 if (Array.isArray(arr)) {
-                    return arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                    list = arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
                 }
             } catch (e) {}
         }
-        return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+        if (list.length === 0) {
+            list = str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+        }
+        return list.filter(v => v && !v.startsWith("OP-") && !v.startsWith("OP_") && !v.includes("IDOPERACION"));
     }
 
     const maxVinAllowed = countEquipmentVersionsFrontend(item.versionesAplicables);
@@ -6155,7 +6265,7 @@ export function sanitizeHtmlContent(htmlStr) {
     if (!htmlStr) return '';
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlStr, 'text/html');
-    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'U', 'A', 'IMG', 'SMALL', 'EM', 'MARK'];
+    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'EM', 'U', 'S', 'STRIKE', 'OL', 'UL', 'LI', 'A', 'IMG', 'SMALL', 'MARK', 'FONT'];
 
     function cleanNode(node) {
         const children = Array.from(node.childNodes);
