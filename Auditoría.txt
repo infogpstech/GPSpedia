@@ -973,3 +973,16 @@ Archivos intervenidos: VinDifferentialEngine.js, navigation.js, ui.js
    - mapVersionsWithVins: asocia cada versión con a lo sumo 4 dígitos distintivos del VIN sólo si el modelo posee más de una versión.
    - En mostrarDetalleModal: renderizado en subtítulo con formato "VX (1A2B) / VL (1A2C)" con tipografía reducida (font-size: 0.82em) y separador único ' / '.
 ================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 10 Y TAREA 11 - VALIDACIÓN Y ARMONIZACIÓN DE PYS
+Fecha: 2026-11-02
+Archivos intervenidos: Services/feedback.js, ui.js
+
+1. Services/feedback.js:
+   - En handleAddProblem: Se sincronizaron las validaciones backend de longitud de caracteres para coincidir con las reglas y límites de 30 caracteres en título, 700 caracteres en descripción/detalle y 700 caracteres en solución.
+   - En handleAddSolution: Se elevó la validación de longitud de solución de 200 a 700 caracteres para permitir coherencia completa con el textarea enriquecido.
+
+2. ui.js:
+   - Se verificaron los flujos existentes de openAddProblemModal, openConfirmVehicleForPysModal, openPysDetailModal y renderPosiblesProblemasAccordion, confirmando la integración bidireccional por ID de vehículo y el aislamiento de datos no pertinentes en el modal de confirmación.
+================================================================================

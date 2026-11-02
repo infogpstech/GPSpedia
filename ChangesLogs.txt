@@ -1543,3 +1543,14 @@ Componentes: VinDifferentialEngine.js, navigation.js, ui.js
 - ui.js:
   * Modal de detalle muestra versiones formateadas como "VX (1A2B) / VL (1A2C)" con dígitos en tipografía reducida y separadas exclusivamente por " / ".
 ================================================================================
+
+================================================================================
+CHANGELOG: TAREA 10 Y TAREA 11 - ARMONIZACIÓN DE LONGITUDES Y VERIFICACIÓN INTEGRAL DE PYS
+Fecha: 2026-11-02
+Componentes: Services/feedback.js, ui.js
+
+- Services/feedback.js:
+  * Sincronizados los límites de longitud de handleAddProblem y handleAddSolution con los campos del formulario enriquecido (título: 30, descripción: 700, solución: 700).
+- Verificación integral:
+  * Confirmada la funcionalidad bidireccional de asignación de modelos vehicular específicos (Tarea 11) y la estructura de almacenamiento en hoja pys con identificadores 'isue-XXX' (Tarea 10).
+================================================================================
