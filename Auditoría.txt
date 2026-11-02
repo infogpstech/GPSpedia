@@ -745,3 +745,35 @@ Hallazgos de Inspección Línea por Línea:
      Si una celda de estas columnas contiene valores como "OP-173050...", se trata de identificadores de control de transacción de idempotencia, no de números de chasis o VINs ingresados por usuarios.
      El mapeo en `COLS_CORTES.vin = 43` debe asegurar que no interprete los `idOperacion` como VINs ni los presente en la interfaz pública.
 ===================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 1.5 Y CORRECCIÓN DE IDS DE IDEMPOTENCIA
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivo intervenido: Services/write.js, Services/admin.js, ui.js, style.css
+
+1. Diagnóstico de la falla de IDs de Idempotencia en columnas de VIN:
+   - En Services/write.js y Services/admin.js:
+     La función getOpIdColIndex(sheet, slotIndex) intentaba buscar o crear dinámicamente columnas como
+     "idOperacion1", "idOperacion2", "idOperacion3" directamente en la hoja "Cortes".
+     Al agregar nuevas columnas al final de la hoja Cortes (justo al lado o sobre la columna 43 'vin'),
+     o al haber un desajuste en el orden de columnas, valores de identificador de operación tipo "OP-..."
+     quedaban almacenados en la columna 43 o adyacentes, provocando que el catálogo y el frontend leyeran
+     la columna 43 y mostraran cadenas como "OP-174..." como si fueran números VIN de chasis.
+   - Solución arquitectónica:
+     * Separar por completo los IDs de idempotencia de la hoja "Cortes".
+     * Centralizar el registro y verificación de idempotencia en la hoja de estado "AdminState" (o "Idempotencia" / "Logs"),
+       con columnas estructuradas: [OpId, VehicleId, SlotIndex, Timestamp, Status, Details].
+     * En Services/write.js y Services/admin.js, saveOpId() y findRowByOpId() gestionarán los IDs exclusivamente
+       en la hoja dedicada, dejando intacta la hoja Cortes y garantizando que la columna 43 (vin) contenga únicamente VINs legítimos.
+     * En ui.js y catalog.js, reforzar los filtros de parseVinCollection para descartar categóricamente cualquier
+       patrón que inicie con "OP-" o que contenga tokens de operación.
+
+2. Diagnóstico de la Tarea 1.5 (Estandarización de sombras de tarjetas, logo y título):
+   - En style.css:
+     * Las tarjetas .card-create-pys y .card-create-tutorial ya cuentan con box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1)
+       y en hover 0 8px 20px rgba(0, 0, 0, 0.15) en tonos grises coincidentes con .card.
+     * En modo oscuro (.dark-mode .card), el catálogo utiliza box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5). Se asegura que
+       .dark-mode .card-create-pys y .dark-mode .card-create-tutorial mantengan la misma coherencia con borde azul punteado y sombra gris profunda.
+     * Logo principal (.app-logo) y título (h1.app-title):
+       Se normaliza y refina la sombra para que use drop-shadow y text-shadow en tonos grises elegantes y nítidos acordes a la identidad visual del catálogo, tanto en modo claro como oscuro, sin tocar el carrusel de logos de marcas (.card.brand-logo-item).
+================================================================================

@@ -275,7 +275,7 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 
 ---
 
-### TAREA 1.5: Estandarizar sombras de tarjetas, logo y título principal de GPSpedia [ ]
+### TAREA 1.5: Estandarizar sombras de tarjetas, logo y título principal de GPSpedia [X]
 - **Estado detectado:** Fallida. Los cambios solicitados no se reflejan correctamente.
 - **Problema:** Las tarjetas «Crear nuevo problema» y «Nuevo tutorial» siguen utilizando una sombra azul, diferente al estilo de sombras grises utilizado en las tarjetas del catálogo. También debe comprobarse el tratamiento visual del logo y del título principal GPSpedia.
 - **Referencia visual obligatoria:** Sombras de las tarjetas de los carruseles del catálogo.

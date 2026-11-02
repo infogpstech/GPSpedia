@@ -1386,3 +1386,24 @@ TAREA 1.4: RETIRAR LA ANIMACIÓN DE CARGA DE LA SECCIÓN «PROBLEMAS / SOLUCIONE
 - Archivo Tareas.txt:
   * Marcado formal [X] de la Tarea 1.4.
 ===================================================================
+
+================================================================================
+CAMBIOS APLICADOS: TAREA 1.5 Y DESACOPLAMIENTO DE IDS DE IDEMPOTENCIA
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. Services/write.js y Services/admin.js:
+   - Se añadió la hoja dedicada 'Idempotencia' a SHEET_NAMES.
+   - Implementadas funciones getIdempotenciaSheet() y recordOpId() para almacenar unívocamente las operaciones con estructura [opId, vehicleId, slotIndex, timestamp, status].
+   - Actualizada findRowByOpId() para consultar primero la hoja 'Idempotencia' y proteger la columna 43 (vin) de la hoja Cortes de cualquier búsqueda o sobreescritura accidental.
+   - Retirada la creación dinámica de columnas en la hoja 'Cortes' mediante getOpIdColIndex().
+
+2. ui.js:
+   - Actualizadas parseVinCollection y parseVinCollectionFrontend para descartar categóricamente tokens de operación o cadenas que inicien con 'OP-' o 'IDOPERACION', garantizando que nunca se muestren identificadores de operación en campos de VIN en el frontend.
+
+3. style.css:
+   - Normalizadas las sombras de las tarjetas de creación (.card-create-pys, .card-create-tutorial) en tonos grises consistentes tanto en modo claro (rgba(0, 0, 0, 0.1)) como en modo oscuro (rgba(0, 0, 0, 0.5)), replicando exactamente las sombras de .card del catálogo.
+   - Preservadas intactas las reglas y dimensiones del carrusel de logos de marcas.
+
+4. Tareas.txt:
+   - Marcada la TAREA 1.5 como completada [X].
+================================================================================

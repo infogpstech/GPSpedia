@@ -224,22 +224,28 @@ export function parseEquipmentVersions(rawStr) {
 
 export function parseVinCollection(rawVin) {
     if (!rawVin) return [];
+    let list = [];
     if (Array.isArray(rawVin)) {
-        return rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+        list = rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    } else {
+        const str = String(rawVin).trim();
+        if (str.startsWith("[") && str.endsWith("]")) {
+            try {
+                const parsed = JSON.parse(str);
+                if (Array.isArray(parsed)) {
+                    list = parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                }
+            } catch (e) {}
+        }
+        if (list.length === 0) {
+            list = str
+                .split(/[,/\\\\]+/)
+                .map(v => v.trim().toUpperCase())
+                .filter(Boolean);
+        }
     }
-    const str = String(rawVin).trim();
-    if (str.startsWith("[") && str.endsWith("]")) {
-        try {
-            const parsed = JSON.parse(str);
-            if (Array.isArray(parsed)) {
-                return parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
-            }
-        } catch (e) {}
-    }
-    return str
-        .split(/[,/\\\\]+/)
-        .map(v => v.trim().toUpperCase())
-        .filter(Boolean);
+    // Filtrar estrictamente cualquier ID de operación de idempotencia ("OP-...") o tokens no válidos
+    return list.filter(v => v && !v.startsWith("OP-") && !v.startsWith("OP_") && !v.includes("IDOPERACION"));
 }
 
 export function mapVersionsWithVins(versionesStr, vinRaw) {
@@ -4957,15 +4963,19 @@ export function openExpandMenuModal(item) {
         if (!rawVin) return [];
         const str = String(rawVin).trim();
         if (!str) return [];
+        let list = [];
         if (str.startsWith("[") && str.endsWith("]")) {
             try {
                 const arr = JSON.parse(str);
                 if (Array.isArray(arr)) {
-                    return arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                    list = arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
                 }
             } catch (e) {}
         }
-        return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+        if (list.length === 0) {
+            list = str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+        }
+        return list.filter(v => v && !v.startsWith("OP-") && !v.startsWith("OP_") && !v.includes("IDOPERACION"));
     }
 
     const maxVinAllowed = countEquipmentVersionsFrontend(item.versionesAplicables);
