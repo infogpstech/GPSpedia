@@ -667,3 +667,35 @@ Hallazgos de Inspección Línea por Línea:
    - Integrar `.rich-editor-toolbar` en cada uno de los campos multilínea descriptivos identificados reutilizando `applyRichFormat` y `applyRichColor`.
    - Garantizar que las etiquetas `<b>` y `<span style="color:...">` persistan al guardar y se visualicen con `sanitizeHtmlContent`.
 ===================================================================
+
+===================================================================
+AUDITORÍA TÉCNICA - TAREA 1.3: CORREGIR EL BOTÓN «VOLVER» EN EL FORMULARIO "ADD_CORTE.HTML"
+Fecha: Mon Nov 2 12:00:00 2026
+Archivos auditados: add_cortes.html, Services/write.js
+
+Hallazgos de Inspección Línea por Línea:
+1. Navegación en el botón «Volver» de la Etapa 3 hacia la Etapa 2:
+   - En `add_cortes.html`, el botón `#btn-back-to-stage2` (líneas 622-627) llama a `proceedToStage2(state.selectedVehicleId, true)`.
+   - Sin embargo, la firma y cuerpo de `proceedToStage2(vehicleId)` en la línea 848 ignora el segundo argumento `true` y ejecuta incondicionalmente:
+     `form.reset();`
+     `resetImagePreviews();`
+   - Esto provoca que al presionar «Volver» desde el Paso 3 se limpien todos los campos de texto, selectores (tipo de corte, configuración de relay), checkbox de testigo Check Engine, número de VIN y las previsualizaciones de las imágenes cargadas.
+2. Manejo de imágenes al regresar:
+   - Cuando el usuario selecciona una imagen mediante `<input type="file">`, el archivo vive en la propiedad `.files` del elemento input. Si el formulario no se resetea, el file input conserva su archivo mientras la página no se recargue.
+   - Además, al procesar las imágenes a Base64 en `handleStage2Submit`, si el usuario regresa al Paso 2 y no selecciona una imagen nueva, el sistema debe retener el base64 o referencia previa (`state.lastUploadedBase64`) para no perder la imagen ni obligar a cargarla nuevamente, evitando al mismo tiempo duplicar la carga en Drive si ya se había subido.
+3. Navegación en el botón «Volver» de la Etapa 2 hacia la Etapa 1 / 1.5:
+   - El botón en la línea 262 tiene `onclick="window.showPhase(state.matches.length > 0 ? '1-5' : 1)"`.
+   - Al regresar a la Etapa 1 o 1.5, los campos del Paso 1 deben conservar la información ingresada (marca, modelo, año, encendido, versión, categoría).
+   - Si el usuario corrige datos en el Paso 1 y vuelve a enviar el formulario de verificación, debe poder reingresar a la Etapa 2 sin conflictos.
+4. Prevención de registros duplicados en Spreadsheet:
+   - Al avanzar de la Etapa 2 a la Etapa 3, el vehículo y primer corte ya han sido creados o asignados a `state.selectedVehicleId` en Spreadsheet.
+   - Si el usuario regresa a la Etapa 2, modifica algún dato (por ejemplo, el color del cable o la configuración de relay) y vuelve a pulsar "Continuar":
+     `state.selectedVehicleId` ya tiene asignado el ID del registro.
+     Sin embargo, `handleStage2Submit` enviaba `vehicleData: state.selectedVehicleId ? null : { ... }`.
+     Al tener `state.selectedVehicleId`, `write.js` entra por la rama de vehículo existente, actualizando el corte correspondiente sin crear una nueva fila de vehículo.
+     Se debe garantizar que el sistema mantenga la trazabilidad y actualice el corte existente en lugar de intentar añadir un segundo corte en el espacio 2 accidentalmente si el usuario simplemente está corrigiendo los datos del corte 1.
+5. Plan de solución:
+   - Adaptar `proceedToStage2(vehicleId, isBackNavigation = false)` para que respete el parámetro `isBackNavigation`. Si es `true`, no invocar `form.reset()` ni `resetImagePreviews()`, preservando los valores en pantalla.
+   - Guardar temporalmente las imágenes procesadas en `state.savedFiles` para que si el input file se vacía por cualquier motivo, se mantenga la previsualización y el dato Base64.
+   - Gestionar el reemplazo o eliminación de imágenes de forma transparente.
+===================================================================

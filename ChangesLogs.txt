@@ -1348,3 +1348,24 @@ TAREA 1.2: BARRA DE ENRIQUECIMIENTO DE TEXTO EN LOS FORMULARIOS
 - Archivo Tareas.txt:
   * Marcado formal [X] de la Tarea 1.2.
 ===================================================================
+
+===================================================================
+FECHA: Mon Nov 2 12:30:00 2026
+TAREA 1.3: CORREGIR EL BOTÓN «VOLVER» EN EL FORMULARIO "ADD_CORTE.HTML"
+- Archivo add_cortes.html:
+  * Líneas 353-365:
+    - Se incorporaron las propiedades `savedFiles` e `isNewVehicleFlow` en el objeto `state`.
+  * Líneas 475-485:
+    - Se expusieron en `window` las funciones `proceedToStage2` y `proceedToStage3` para permitir navegación controlada y pruebas.
+  * Líneas 624-635:
+    - Se asoció el listener del botón `btn-back-to-stage1` para regresar a la Etapa 1.5 (si existen coincidencias) o a la Etapa 1, preservando intactos los valores introducidos.
+  * Líneas 845-915:
+    - Se extendió `proceedToStage2(vehicleId, isBackNavigation = false)` para que al navegar hacia atrás (`isBackNavigation = true`) no se ejecute `form.reset()` ni `resetImagePreviews()`, conservando todos los datos del formulario (tipo de corte, relay, ubicación, color de cable, VIN, checkbox de testigo de motor).
+    - Se implementó la restauración de las vistas previas de imágenes desde `state.savedFiles`.
+  * Líneas 965-1010:
+    - Se persistieron los archivos procesados en base64 en `state.savedFiles` para evitar tener que volver a seleccionarlos o cargarlos si el usuario regresa a etapas anteriores.
+- Archivo Auditoría.txt:
+  * Registro de auditoría inicial línea por línea, detección de fallos de reseteo y comprobación post-edición.
+- Archivo Tareas.txt:
+  * Marcado formal [X] de la Tarea 1.3.
+===================================================================
