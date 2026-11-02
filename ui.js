@@ -5,7 +5,7 @@ import { vinDifferentialEngine, vinSignatureStore, getClassificationKey } from '
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 
@@ -3650,7 +3650,7 @@ export const openTermsAgreement = setupModal('terms-agreement-modal', () => {
     document.getElementById('terms-agreement-modal').style.display = 'flex';
 });
 
-function renderInboxList(items) {
+export function renderInboxList(items) {
     const listContainer = document.getElementById('inbox-list');
     listContainer.innerHTML = '';
     if (items.length === 0) {
@@ -3668,9 +3668,17 @@ function renderInboxList(items) {
              itemDiv.classList.add('replied');
         }
 
-        const iconClass = item.type === 'problem_report' ? 'fa-triangle-exclamation' : 'fa-envelope';
+        let iconClass = 'fa-envelope';
+        let tipoLabel = 'Mensaje de contacto';
+        if (item.type === 'problem_report') {
+            iconClass = 'fa-triangle-exclamation';
+            tipoLabel = 'Reporte de problema';
+        } else if (item.type === 'video_approval') {
+            iconClass = 'fa-brands fa-youtube';
+            const statusText = item.approvalStatus === 'approved' ? 'Aprobado' : (item.approvalStatus === 'rejected' ? 'Rechazado' : 'Pendiente de aprobación');
+            tipoLabel = `Vídeo: ${statusText}`;
+        }
         const title = item.subject || `ID: ${item.id}`;
-        const tipoLabel = item.type === 'problem_report' ? 'Reporte de problema' : 'Mensaje de contacto';
 
         itemDiv.innerHTML = `
             <i class="fa-solid ${iconClass}"></i>
@@ -3781,7 +3789,7 @@ export function createInboxRichTextToolbar(targetId) {
     return toolbar;
 }
 
-function renderInboxDetail(item) {
+export function renderInboxDetail(item) {
     const detailContainer = document.getElementById('inbox-detail');
     const { currentUser, catalogData } = getState();
     const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Usuario';
@@ -3794,10 +3802,21 @@ function renderInboxDetail(item) {
         }
     }
 
+    const isVideoItem = item.type === 'video_approval';
+    const userRole = currentUser ? currentUser.Rol : '';
+    const canApprove = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+
     detailContainer.innerHTML = `
         <h3 class="inbox-detail-title">${item.subject}</h3>
         <p class="inbox-detail-meta"><strong>De:</strong> ${item.user}</p>
         ${item.vehicleId ? `<p class="inbox-detail-meta"><strong>Vehículo:</strong> ${vehicleLabel}</p>` : ''}
+        ${isVideoItem && item.videoUrl ? `
+            <div style="margin-bottom:12px; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
+                <p style="margin:0 0 6px 0;"><strong>Enlace de YouTube:</strong> <a href="${item.videoUrl}" target="_blank" rel="noopener noreferrer" style="color:#007bff; text-decoration:underline;"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Ver vídeo en YouTube</a></p>
+                <p style="margin:0 0 4px 0; font-size:0.85rem;"><strong>Estado de Aprobación:</strong> <span class="badge" style="background:${item.approvalStatus === 'approved' ? '#28a745' : (item.approvalStatus === 'rejected' ? '#dc3545' : '#ffc107')}; color:#fff; padding:2px 8px; border-radius:4px;">${item.approvalStatus || 'pending'}</span></p>
+                ${item.contentType ? `<p style="margin:0; font-size:0.85rem;"><strong>Tipo de Contenido:</strong> ${item.contentType}</p>` : ''}
+            </div>
+        ` : ''}
         <div class="inbox-message-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
             <div>${sanitizeHtmlContent(item.content)}</div>
         </div>
@@ -3807,18 +3826,78 @@ function renderInboxDetail(item) {
                 <div style="margin-top:6px;">${sanitizeHtmlContent(item.reply)}</div>
             </div>` : ''
         }
-        <div class="inbox-actions">
-            <div id="inbox-toolbar-container"></div>
-            <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
-                <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
-                ${item.type === 'problem_report' && !item.isResolved ?
-                    `<button id="inbox-resolve-btn" class="resolve-btn btn btn-secondary">Marcar como Resuelto</button>` : ''
-                }
-                <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+        ${isVideoItem ? `
+            <div class="inbox-actions" style="margin-top:12px;">
+                ${item.approvalStatus === 'pending' && canApprove ? `
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                        <button id="inbox-approve-video-btn" class="btn btn-primary" style="flex: 1; background-color:#28a745; border-color:#28a745;">
+                            <i class="fa-solid fa-check"></i> Aprobar Vídeo
+                        </button>
+                        <button id="inbox-reject-video-btn" class="btn btn-danger" style="flex: 1; background-color:#dc3545; border-color:#dc3545;">
+                            <i class="fa-solid fa-xmark"></i> Rechazar Vídeo
+                        </button>
+                    </div>
+                ` : ''}
+                <div style="display:flex; justify-content:flex-end;">
+                    <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+                </div>
             </div>
-        </div>
+        ` : `
+            <div class="inbox-actions">
+                <div id="inbox-toolbar-container"></div>
+                <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                    <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
+                    ${item.type === 'problem_report' && !item.isResolved ?
+                        `<button id="inbox-resolve-btn" class="resolve-btn btn btn-secondary">Marcar como Resuelto</button>` : ''
+                    }
+                    <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+                </div>
+            </div>
+        `}
     `;
+
+    // Listeners para aprobación/rechazo de vídeos
+    const approveVideoBtn = document.getElementById('inbox-approve-video-btn');
+    if (approveVideoBtn) {
+        approveVideoBtn.addEventListener('click', async () => {
+            if (confirm("¿Confirmas la aprobación y publicación de este vídeo en GPSpedia?")) {
+                try {
+                    approveVideoBtn.disabled = true;
+                    approveVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aprobando...`;
+                    await approveVideo(item.id, userName, userRole);
+                    inboxCacheData = null;
+                    mostrarNotificacion("Vídeo aprobado con éxito.", "success");
+                    openInbox();
+                } catch (err) {
+                    showGlobalError(`Error al aprobar vídeo: ${err.message}`);
+                    approveVideoBtn.disabled = false;
+                    approveVideoBtn.innerHTML = `<i class="fa-solid fa-check"></i> Aprobar Vídeo`;
+                }
+            }
+        });
+    }
+
+    const rejectVideoBtn = document.getElementById('inbox-reject-video-btn');
+    if (rejectVideoBtn) {
+        rejectVideoBtn.addEventListener('click', async () => {
+            const reason = prompt("Indica el motivo de rechazo del vídeo:", "No cumple los requisitos técnicos");
+            if (reason !== null) {
+                try {
+                    rejectVideoBtn.disabled = true;
+                    rejectVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rechazando...`;
+                    await rejectVideo(item.id, userName, reason, userRole);
+                    inboxCacheData = null;
+                    mostrarNotificacion("Vídeo rechazado.", "info");
+                    openInbox();
+                } catch (err) {
+                    showGlobalError(`Error al rechazar vídeo: ${err.message}`);
+                    rejectVideoBtn.disabled = false;
+                    rejectVideoBtn.innerHTML = `<i class="fa-solid fa-xmark"></i> Rechazar Vídeo`;
+                }
+            }
+        });
+    }
 
 
     const toolbarContainer = document.getElementById('inbox-toolbar-container');

@@ -1039,3 +1039,31 @@ Archivos intervenidos: style.css, ui.js
    - En `openAddFeedModal`: Botón Agregar Alimentación encapsulado y estilizado con `.btn-modal-action-compact`.
    - En `openAddVideoModal`: Botón Agregar Vídeo encapsulado y estilizado con `.btn-modal-action-compact`.
 ================================================================================
+
+================================================================================
+AUDITORÍA FINAL: TAREA 8.1 Y TAREA 8.2 (SUBIDA DE VÍDEOS Y APROBACIÓN EN INBOX)
+Fecha: 2026-11-02
+Archivos verificados: youtubeUpload.js, Services/feedback.js, api-config.js, ui.js
+
+1. youtubeUpload.js:
+   - Componente modal unificado `openYouTubeUploadModal(options)` implementado y verificado.
+   - Dos campos editables: Título y Detalle (con valores iniciales automáticos).
+   - Configuración fija de publicación (no listado, no para niños, sin IA ni remixes).
+   - Barra de progreso porcentual, cartel ineludible de advertencia, bloqueo de controles y botón de cancelar.
+   - Prevención de cargas duplicadas.
+
+2. Services/feedback.js:
+   - Handlers agregados: `handleInitYouTubeUpload`, `handleSubmitVideoForApproval`, `handleApproveVideo`, `handleRejectVideo`.
+   - Modificado `handleGetFeedbackItems` para mapear solicitudes de aprobación (`video_approval`).
+   - Verificada la integridad de la persistencia en Google Spreadsheet (`Feedbacks` y `Cortes`).
+   - Control de permisos RBAC para aprobación y rechazo en backend.
+
+3. api-config.js:
+   - Acciones registradas en `ACTION_TO_SERVICE_MAP`.
+   - Funciones helper exportadas: `approveVideo`, `rejectVideo`.
+
+4. ui.js:
+   - Adaptadas las vistas `renderInboxList` y `renderInboxDetail` para items de tipo `video_approval`.
+   - Botones «Aprobar Vídeo» y «Rechazar Vídeo» desplegados para roles autorizados.
+   - Enlace directo de YouTube incrustado.
+================================================================================

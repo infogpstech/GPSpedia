@@ -1588,3 +1588,30 @@ Componentes: style.css, ui.js
 - ui.js:
   * Aplicados estilos compactos a las opciones de `openExpandMenuModal` y a los botones de envío en los submodales de VIN (`#btn-save-vin`), Cortes, Apertura, Alimentación y Vídeo.
 ================================================================================
+
+================================================================================
+CHANGELOG: SUBIDA DIRECTA DE VÍDEOS A YOUTUBE Y SISTEMA DE APROBACIÓN EN INBOX (TAREAS 8.1 Y 8.2)
+Fecha: 2026-11-02
+Componentes intervenidos: youtubeUpload.js, Services/feedback.js, api-config.js, ui.js
+
+- youtubeUpload.js (Nuevo componente):
+  * Implementado el componente modal unificado `openYouTubeUploadModal` para carga directa de vídeos a YouTube.
+  * Dos campos editables: Título (inicializado con propuesta contextual) y Detalle/Descripción.
+  * Configuración permanente fija: No listado (`unlisted`), No contenido infantil (`selfDeclaredMadeForKids: false`), sin IA ni remixes.
+  * Barra de progreso porcentual dinámica con advertencia ineludible de no cerrar la ventana durante la transferencia.
+  * Bloqueo de controles de navegación durante la subida, botón de cancelación que aborta `XMLHttpRequest` de forma limpia y prevención de cargas duplicadas.
+
+- Services/feedback.js:
+  * Handlers implementados: `handleInitYouTubeUpload`, `handleSubmitVideoForApproval`, `handleApproveVideo` y `handleRejectVideo`.
+  * Integración con la hoja `Feedbacks` para almacenar solicitudes de aprobación con metadatos estructurados (`video_approval`).
+  * Validación estricta de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) para aprobación y rechazo de vídeos.
+  * Al aprobar un vídeo vehicular, se asocia automáticamente a la columna `videoGuiaDesarmeUrl` en `Cortes`.
+
+- api-config.js:
+  * Registradas las nuevas acciones en `ACTION_TO_SERVICE_MAP`: `initYouTubeUpload`, `submitVideoForApproval`, `approveVideo` y `rejectVideo` vinculadas al servicio `FEEDBACK`.
+  * Exportadas funciones helper `approveVideo` y `rejectVideo`.
+
+- ui.js:
+  * Actualizada la lista (`renderInboxList`) y detalle (`renderInboxDetail`) del Inbox para soportar ítems de tipo `video_approval`.
+  * Despliegue de enlace directo a YouTube, metadatos, estado de aprobación y botones de acción «Aprobar Vídeo» y «Rechazar Vídeo» para roles con permisos.
+================================================================================
