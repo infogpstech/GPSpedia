@@ -1460,3 +1460,21 @@ Fecha: $(date '+%Y-%m-%d %H:%M:%S')
 3. Tareas.txt / Auditoría.txt:
    - Verificada la trazabilidad funcional de la especificación 1.8 y actualizado el registro de auditoría.
 ================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: TAREAS 2.1, 2.2, 2.6 Y 2.3
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. Tarea 2.1:
+   - Verificada la presencia y correcta invocación de mostrarNotificacion("Mensaje eliminado con éxito", "success") en el botón de borrar mensaje del Inbox (#inbox-delete-btn).
+
+2. Tarea 2.2:
+   - Optimizada la función exportVehiclePrintSheet en ui.js para condensar de manera perfecta y organizada la información del modelo (cortes 1..3, cables 1..3, apertura de puertas, notas importantes y metadatos) en una sola página tamaño Carta vertical con márgenes de 10mm (size: letter portrait; margin: 10mm;), miniaturas compactas y prevención estricta de saltos de página dentro de tarjetas.
+
+3. Tareas 2.6 y 2.3:
+   - Auditados y estandarizados estilos CSS para todos los modales con formularios (.info-modal-content form, .form-group, inputs, selects, textareas, botones submit/cancel) en style.css.
+   - Garantizado ancho adaptativo de 95% en dispositivos móviles (@media (max-width: 600px)) con overflow-x: hidden y botones al 100%, previniendo desbordamientos y solapamientos.
+
+4. Tareas.txt:
+   - Marcadas como completadas [X] las Tareas 2.1, 2.2, 2.3, 2.4, 2.5 y 2.6.
+================================================================================

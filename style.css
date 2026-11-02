@@ -2175,3 +2175,80 @@ body.dark-mode .terms-agreement-logo {
         display: none !important;
     }
 }
+
+
+/* ==========================================================================
+   TAREA 2.6 & TAREA 2.3: ESTILOS UNIFICADOS Y RESPONSIVOS PARA TODOS LOS MODALES CON FORMULARIOS
+   ========================================================================== */
+.info-modal-content {
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    max-width: 650px;
+    width: 90%;
+    border-radius: 12px;
+}
+
+.info-modal-content form {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-modal-content .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.info-modal-content input,
+.info-modal-content select,
+.info-modal-content textarea {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+}
+
+@media (max-width: 600px) {
+    .info-modal-content {
+        width: 95% !important;
+        max-width: 95% !important;
+        padding: 16px 12px !important;
+        margin: 10px auto !important;
+    }
+    .info-modal-content form button[type="submit"],
+    .info-modal-content form .btn-primary {
+        width: 100% !important;
+    }
+}
+
+
+.info-modal-content input[type="checkbox"],
+.info-modal-content input[type="radio"] {
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0 !important;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.info-modal-content input[type="color"] {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    flex-shrink: 0;
+}
+
+.info-modal-content .form-group.checkbox-group,
+.info-modal-content .form-group[style*="align-items:center"] {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.info-modal-content .rich-editor-toolbar button {
+    width: auto !important;
+}

@@ -313,24 +313,24 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 BLOQUE 2: AUDITORÍA, CORRECCIÓN Y MEJORAS FUNCIONALES Y VISUALES ADICIONALES
 ===================================================================
 
-### TAREA 2.1: Corregir el botón para eliminar mensajes del Inbox [ ]
+### TAREA 2.1: Corregir el botón para eliminar mensajes del Inbox [X]
 - **Problema:** El botón para eliminar mensajes no funciona y muestra el error "mostrarNotificacion is not defined".
 - **Requisitos:** Corregir la referencia de función/dependencia, verificar eliminación real y notificación al usuario sin eliminar visualmente si falla.
 
-### TAREA 2.2: Completar y optimizar la ficha técnica de instalación en una sola página [ ]
+### TAREA 2.2: Completar y optimizar la ficha técnica de instalación en una sola página [X]
 - **Objetivo:** Contener toda la información del modelo (cortes, cables 1..3, apertura, notas) organizada e imprimible en una sola página Carta vertical con márgenes de 10mm.
 
-### TAREA 2.3: Aplicar estilos a todos los modales con formularios [ ]
+### TAREA 2.3: Aplicar estilos a todos los modales con formularios [X]
 - **Requisitos:** Revisar y aplicar diseño uniforme y consistente a todos los modales con formularios en escritorio y móvil sin desbordamientos.
 
-### TAREA 2.4: Corregir la renderización de las tarjetas de tutoriales y Relay [ ]
+### TAREA 2.4: Corregir la renderización de las tarjetas de tutoriales y Relay [X]
 - **Problema:** Solo aparece una tarjeta en lugar de todas las disponibles.
 - **Requisitos:** Corregir el proceso de obtención y renderizado sin limitar artificialmente la cantidad de tarjetas.
 
-### TAREA 2.5: Corregir la posición del botón para limpiar la búsqueda ("X") [ ]
+### TAREA 2.5: Corregir la posición del botón para limpiar la búsqueda ("X") [X]
 - **Requisitos:** El botón "X" debe permanecer dentro de la barra de búsqueda sin solaparse con ningún otro control.
 
-### TAREA 2.6: Auditoría integral de estilos CSS y elementos HTML sin estilos [ ]
+### TAREA 2.6: Auditoría integral de estilos CSS y elementos HTML sin estilos [X]
 - **Requisitos:** Fases 1 (Auditoría), 2 (Corrección) y 3 (Verificación) para identificar y corregir elementos que carecen de estilos o tienen clases inexistentes.
 
 ---

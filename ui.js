@@ -6416,7 +6416,7 @@ export function exportVehiclePrintSheet(item) {
             <meta charset="UTF-8">
             <title>Ficha Técnica GPSpedia - ${title}</title>
             <style>
-                /* TAREA 6: Configuración obligatoria papel Carta, orientación vertical, márgenes 10mm */
+                /* TAREA 2.2: Configuración obligatoria papel Carta, orientación vertical, márgenes 10mm optimizado para 1 página */
                 @page {
                     size: letter portrait;
                     margin: 10mm;
@@ -6427,8 +6427,8 @@ export function exportVehiclePrintSheet(item) {
                     margin: 0;
                     padding: 0;
                     color: #1a1a1a;
-                    font-size: 10.5px;
-                    line-height: 1.25;
+                    font-size: 10px;
+                    line-height: 1.2;
                     background: #fff;
                 }
                 .no-print-bar {
