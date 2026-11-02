@@ -973,3 +973,69 @@ Archivos intervenidos: VinDifferentialEngine.js, navigation.js, ui.js
    - mapVersionsWithVins: asocia cada versión con a lo sumo 4 dígitos distintivos del VIN sólo si el modelo posee más de una versión.
    - En mostrarDetalleModal: renderizado en subtítulo con formato "VX (1A2B) / VL (1A2C)" con tipografía reducida (font-size: 0.82em) y separador único ' / '.
 ================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 10 Y TAREA 11 - VALIDACIÓN Y ARMONIZACIÓN DE PYS
+Fecha: 2026-11-02
+Archivos intervenidos: Services/feedback.js, ui.js
+
+1. Services/feedback.js:
+   - En handleAddProblem: Se sincronizaron las validaciones backend de longitud de caracteres para coincidir con las reglas y límites de 30 caracteres en título, 700 caracteres en descripción/detalle y 700 caracteres en solución.
+   - En handleAddSolution: Se elevó la validación de longitud de solución de 200 a 700 caracteres para permitir coherencia completa con el textarea enriquecido.
+
+2. ui.js:
+   - Se verificaron los flujos existentes de openAddProblemModal, openConfirmVehicleForPysModal, openPysDetailModal y renderPosiblesProblemasAccordion, confirmando la integración bidireccional por ID de vehículo y el aislamiento de datos no pertinentes en el modal de confirmación.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: CORRECCIÓN DE ESPACIOS LATERALES EN RESULTADOS DE BÚSQUEDA Y CONFIRMACIÓN DE VEHÍCULOS (PYS)
+Fecha: 2026-11-02
+Archivo intervenido: ui.js
+
+1. Línea ~5960 (Resultados de búsqueda en openAddProblemModal):
+   - Se añadió 'margin: 0; min-width: 36px; max-width: 36px; flex-shrink: 0;' en la etiqueta <img> para sobrescribir la regla general '.info-modal-content img { margin: 10px auto; }' que generaba márgenes automáticos laterales excesivos (~131px).
+   - Se ajustó el elemento <span> con 'flex: 1; margin: 0; line-height: 1.2;' y el contenedor con 'width: 100%; box-sizing: border-box;' para aprovechar todo el ancho disponible sin comprimir el texto descriptivo del modelo.
+
+2. Línea ~6075 (Resultados de búsqueda en openSearchVehicleForPysAssociationModal):
+   - Misma corrección estructural: 'margin: 0; min-width: 36px; max-width: 36px; flex-shrink: 0;' en <img> y 'flex: 1;' en <span> para consistencia en ambos flujos de vinculación.
+
+3. Línea ~6110 (Modal de confirmación openConfirmVehicleForPysModal):
+   - Se reestructuró el contenedor de la imagen a 'align-items: stretch; width: 100%;' con un wrapper de previsualización que mantiene 'margin: 0; width: 100%; display: block;' en la imagen, evitando centrado con márgenes que compriman la información técnica inferior.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: ASOCIACIÓN Y CREACIÓN DE VERSIONES DE EQUIPAMIENTO AL AGREGAR VIN
+Fecha: 2026-11-02
+Archivos intervenidos: ui.js, Services/write.js
+
+1. ui.js (Función openAddVinModal):
+   - Se incorporó soporte para vincular el VIN con versiones de equipamiento existentes o crear una nueva versión en caso de no existir o cuando el modelo no tenga versiones previas.
+   - Si el modelo posee versiones registradas (`versions.length > 0`): se renderiza un selector desplegable con las versiones disponibles más la opción '+ Crear nueva versión de equipamiento...'. Al seleccionar dicha opción, se expone dinámicamente un campo de entrada para especificar el nombre de la versión.
+   - Si el modelo no posee versiones registradas (`versions.length === 0`): se presenta directamente el campo de entrada para ingresar el nombre de la nueva versión de equipamiento.
+   - En el envío del formulario: se transmite el objeto payload con `selectedTrim` y `isNewTrim`.
+   - Tras el éxito de la respuesta del backend: se actualiza reactivamente `item.versionesAplicables`, se sincroniza el catálogo en memoria (`catalogData.cortes`), se recalculan las firmas de diferenciación selectiva por VIN (`VinDifferentialEngine.indexCatalog`) y se repinta el modal de detalles del vehículo.
+
+2. Services/write.js (Función handleAddVinToVehicle):
+   - Se agregó la recepción de `trimLevel` e `isNewTrim`.
+   - Si se especifica una versión de equipamiento nueva o no presente en `COLS_CORTES.versionesAplicables`, se formatea mediante delimitador estándar ' / ', se actualiza la celda en Google Spreadsheet sin alterar la marca de tiempo original y se devuelve `versionesAplicables` y `vinCollection` actualizados en la respuesta JSON.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: ESTILOS COMPACTOS PARA BOTONES DEL MENÚ (+) Y FORMULARIOS DE DETALLES
+Fecha: 2026-11-02
+Archivos intervenidos: style.css, ui.js
+
+1. style.css:
+   - Se agregaron las clases `.btn-expand-option`, `.modal-btn-compact-container` y `.btn-modal-action-compact`.
+   - `.btn-expand-option`: Permite desplegar las opciones del menú (+) con un padding reducido (8px 14px), bordes de 6px y tipografía 0.9rem con animación de hover fluida.
+   - `.modal-btn-compact-container`: Contenedor flexible alineado al extremo derecho (`justify-content: flex-end`) con ancho del 100% para posicionar los botones de acción sin estirarlos artificialmente a lo ancho en escritorio.
+   - `.btn-modal-action-compact`: Botón estilizado con padding de 7px 18px, fuente de 0.88rem, bordes de 6px, ícono integrado y ancho automático adaptable, garantizando ajuste al 100% en pantallas móviles (max-width: 600px).
+
+2. ui.js:
+   - En `openExpandMenuModal`: Se asignó `.btn-expand-option` a cada botón de opción (cortes, apertura, cables, vídeo, VIN).
+   - En `openAddVinModal`: Botón Guardar VIN encapsulado en `.modal-btn-compact-container` y estilizado con `.btn-modal-action-compact`.
+   - En `openAddCutForModelModal`: Botón Agregar Corte encapsulado y estilizado con `.btn-modal-action-compact`.
+   - En `openAddAperturaModal`: Botón Agregar Apertura encapsulado y estilizado con `.btn-modal-action-compact`.
+   - En `openAddFeedModal`: Botón Agregar Alimentación encapsulado y estilizado con `.btn-modal-action-compact`.
+   - En `openAddVideoModal`: Botón Agregar Vídeo encapsulado y estilizado con `.btn-modal-action-compact`.
+================================================================================

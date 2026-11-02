@@ -385,7 +385,7 @@ BLOQUE 6: MEJORAS VISUALES E INVESTIGACIÓN DE VIABILIDAD PARA LA INTEGRACIÓN D
 ===================================================================
 BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA [X]
 - **Nombre de la tarea:** Ajustar la distribución de información, imágenes y elementos visuales de la ficha técnica para impresión y exportación a PDF.
 - **Contexto y problema actual:**
   La ficha técnica ya permite visualizar correctamente las imágenes del vehículo, los cortes y los demás elementos gráficos. Sin embargo, persiste un problema importante en la distribución del contenido, especialmente en dispositivos móviles.

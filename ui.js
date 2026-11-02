@@ -5113,7 +5113,8 @@ export function openExpandMenuModal(item) {
 
     const maxVinAllowed = countEquipmentVersionsFrontend(item.versionesAplicables);
     const registeredVins = parseVinCollectionFrontend(item.vin);
-    const canAddVin = registeredVins.length < maxVinAllowed;
+    // Permitir agregar VIN si aún hay cupo o para asociar una nueva versión de equipamiento (hasta un tope de 3)
+    const canAddVin = registeredVins.length < maxVinAllowed || registeredVins.length < 3;
 
     const modal = document.createElement("div");
     modal.id = "expand-menu-modal";
@@ -5129,12 +5130,12 @@ export function openExpandMenuModal(item) {
         <h2><i class="fa-solid fa-circle-plus"></i> Ampliar Información</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
 
-        <div style="display:flex; flex-direction:column; gap:10px;">
-            ${cutsAvailable > 0 ? `<button id="btn-exp-cut" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-car-on"></i> Nuevo corte (${cutsAvailable} disponibles)</button>` : ""}
-            ${!item.apertura ? `<button id="btn-exp-apertura" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-door-open"></i> Apertura de puertas</button>` : ""}
-            ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
-            ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
-            ${canAddVin ? `<button id="btn-exp-vin" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-barcode"></i> Agregar VIN (${maxVinAllowed - registeredVins.length} disponible${maxVinAllowed - registeredVins.length > 1 ? 's' : ''})</button>` : ""}
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            ${cutsAvailable > 0 ? `<button id="btn-exp-cut" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-car-on"></i> Nuevo corte (${cutsAvailable} disponibles)</button>` : ""}
+            ${!item.apertura ? `<button id="btn-exp-apertura" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-door-open"></i> Apertura de puertas</button>` : ""}
+            ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
+            ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary btn-expand-option"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
+            ${canAddVin ? `<button id="btn-exp-vin" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-barcode"></i> Agregar VIN (${maxVinAllowed - registeredVins.length} disponible${maxVinAllowed - registeredVins.length > 1 ? 's' : ''})</button>` : ""}
         </div>
     `;
 
@@ -5173,20 +5174,32 @@ export function openAddVinModal(item) {
     content.className = "info-modal-content";
     content.style.maxWidth = "450px";
 
-    // Verificar si el modelo tiene más de 1 versión de equipamiento
+    // Verificar si el modelo tiene versiones de equipamiento registradas
     const versions = parseEquipmentVersions(item.versionesAplicables);
-    const hasMultipleVersions = versions.length > 1;
 
-    let trimLevelSelectHtml = "";
-    if (hasMultipleVersions) {
+    let trimLevelSectionHtml = "";
+    if (versions.length > 0) {
         const optionsHtml = versions.map(v => `<option value="${v}">${v}</option>`).join("");
-        trimLevelSelectHtml = `
+        trimLevelSectionHtml = `
             <div class="form-group">
                 <label for="modal-vin-trim">Versión de Equipamiento (Trim Level)</label>
                 <select id="modal-vin-trim" required style="width:100%; padding:8px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);">
                     <option value="" selected disabled>Seleccionar Trim Level</option>
                     ${optionsHtml}
+                    <option value="__NEW_TRIM__">+ Crear nueva versión de equipamiento...</option>
                 </select>
+            </div>
+            <div class="form-group" id="grp-new-trim" style="display:none;">
+                <label for="modal-new-trim-input">Nombre de la Nueva Versión</label>
+                <input type="text" id="modal-new-trim-input" placeholder="Ej: Platinum, SR5, High Country" style="width:100%; padding:8px; border-radius:4px; border:1px solid var(--border-color, #ccc);">
+            </div>
+        `;
+    } else {
+        // Si el modelo no tiene ninguna versión registrada
+        trimLevelSectionHtml = `
+            <div class="form-group" id="grp-new-trim">
+                <label for="modal-new-trim-input">Versión de Equipamiento (Trim Level)</label>
+                <input type="text" id="modal-new-trim-input" required placeholder="Ej: Base, Standard, Full" style="width:100%; padding:8px; border-radius:4px; border:1px solid var(--border-color, #ccc);">
             </div>
         `;
     }
@@ -5197,13 +5210,15 @@ export function openAddVinModal(item) {
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
 
         <form id="add-vin-form" style="display:flex; flex-direction:column; gap:12px;">
-            ${trimLevelSelectHtml}
+            ${trimLevelSectionHtml}
             <div class="form-group">
                 <label for="modal-vin-input">Número de Chasis / VIN</label>
                 <input type="text" id="modal-vin-input" placeholder="Ingresa el VIN completo del vehículo" maxlength="18" required style="text-transform: uppercase; width:100%; padding:8px;">
                 <div id="modal-vin-warning" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 5px; font-weight: bold;"></div>
             </div>
-            <button type="submit" id="btn-save-vin" class="btn btn-primary" style="margin-top:10px;"><i class="fa-solid fa-save"></i> Guardar VIN</button>
+            <div class="modal-btn-compact-container">
+                <button type="submit" id="btn-save-vin" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-save"></i> Guardar VIN</button>
+            </div>
         </form>
     `;
 
@@ -5215,6 +5230,23 @@ export function openAddVinModal(item) {
     const form = content.querySelector("#add-vin-form");
     const vinInput = content.querySelector("#modal-vin-input");
     const warningEl = content.querySelector("#modal-vin-warning");
+    const trimSelect = form.querySelector("#modal-vin-trim");
+    const grpNewTrim = form.querySelector("#grp-new-trim");
+    const newTrimInput = form.querySelector("#modal-new-trim-input");
+
+    if (trimSelect && grpNewTrim && newTrimInput) {
+        trimSelect.addEventListener("change", () => {
+            if (trimSelect.value === "__NEW_TRIM__") {
+                grpNewTrim.style.display = "block";
+                newTrimInput.required = true;
+                newTrimInput.focus();
+            } else {
+                grpNewTrim.style.display = "none";
+                newTrimInput.required = false;
+                newTrimInput.value = "";
+            }
+        });
+    }
 
     vinInput.addEventListener('blur', async () => {
         const vinVal = vinInput.value.trim();
@@ -5240,13 +5272,37 @@ export function openAddVinModal(item) {
         const vinVal = vinInput.value.trim();
         if (!vinVal) return;
 
-        const trimSelect = form.querySelector("#modal-vin-trim");
-        if (trimSelect && (!trimSelect.value || trimSelect.value === "")) {
-            alert("Por favor selecciona una versión de equipamiento (Trim Level).");
-            trimSelect.focus();
-            return;
+        let selectedTrim = null;
+        let isNewTrim = false;
+
+        if (trimSelect) {
+            if (!trimSelect.value || trimSelect.value === "") {
+                alert("Por favor selecciona una versión de equipamiento (Trim Level).");
+                trimSelect.focus();
+                return;
+            }
+            if (trimSelect.value === "__NEW_TRIM__") {
+                const customTrim = newTrimInput ? newTrimInput.value.trim() : "";
+                if (!customTrim) {
+                    alert("Por favor ingresa el nombre de la nueva versión de equipamiento.");
+                    if (newTrimInput) newTrimInput.focus();
+                    return;
+                }
+                selectedTrim = customTrim;
+                isNewTrim = true;
+            } else {
+                selectedTrim = trimSelect.value.trim();
+            }
+        } else if (newTrimInput) {
+            const customTrim = newTrimInput.value.trim();
+            if (!customTrim) {
+                alert("Por favor ingresa la versión de equipamiento.");
+                newTrimInput.focus();
+                return;
+            }
+            selectedTrim = customTrim;
+            isNewTrim = true;
         }
-        const selectedTrim = trimSelect ? trimSelect.value : null;
 
         const btn = form.querySelector("#btn-save-vin");
         btn.disabled = true;
@@ -5256,7 +5312,8 @@ export function openAddVinModal(item) {
             const res = await routeAction('addVinToVehicle', {
                 vehicleId: item.id,
                 vin: vinVal,
-                trimLevel: selectedTrim
+                trimLevel: selectedTrim,
+                isNewTrim: isNewTrim
             });
             if (res.status === 'success') {
                 if (res.vinCollection) {
@@ -5264,12 +5321,26 @@ export function openAddVinModal(item) {
                 } else if (res.vinPrefix) {
                     item.vin = res.vinPrefix;
                 }
+                if (res.versionesAplicables) {
+                    item.versionesAplicables = res.versionesAplicables;
+                } else if (isNewTrim && selectedTrim) {
+                    const currentVersions = parseEquipmentVersions(item.versionesAplicables);
+                    if (!currentVersions.some(v => v.toLowerCase() === selectedTrim.toLowerCase())) {
+                        currentVersions.push(selectedTrim);
+                        item.versionesAplicables = currentVersions.join(" / ");
+                    }
+                }
                 modal.remove();
                 mostrarNotificacion('VIN registrado correctamente', 'success');
                 // Recalcular y sincronizar automáticamente las firmas de VIN (Sección 10)
                 try {
                     const catalogData = getState().catalogData;
                     if (catalogData && catalogData.cortes) {
+                        const target = catalogData.cortes.find(c => String(c.id) === String(item.id));
+                        if (target) {
+                            target.vin = item.vin;
+                            target.versionesAplicables = item.versionesAplicables;
+                        }
                         vinDifferentialEngine.calculateSignatures(catalogData.cortes);
                         vinSignatureStore.saveSignatures(vinDifferentialEngine);
                     }
@@ -5396,7 +5467,9 @@ export function openAddCutForModelModal(item) {
                 <label>Subir Imagen del Corte</label>
                 <input type="file" id="add-cut-img-file" accept="image/*">
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Corte</button>
+            <div class="modal-btn-compact-container">
+                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-plus-circle"></i> Agregar Corte</button>
+            </div>
         </form>
     `;
 
@@ -5546,7 +5619,9 @@ export function openAddAperturaModal(item) {
                 <label>Subir Imagen</label>
                 <input type="file" id="add-apertura-img-file" accept="image/*">
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Apertura</button>
+            <div class="modal-btn-compact-container">
+                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-door-open"></i> Agregar Apertura</button>
+            </div>
         </form>
     `;
 
@@ -5631,7 +5706,9 @@ export function openAddFeedModal(item) {
                 <label>Subir Imagen</label>
                 <input type="file" id="add-feed-img-file" accept="image/*">
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Alimentación</button>
+            <div class="modal-btn-compact-container">
+                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-plug"></i> Agregar Alimentación</button>
+            </div>
         </form>
     `;
 
@@ -5710,7 +5787,9 @@ export function openAddVideoModal(item) {
                 <label>Enlace de YouTube</label>
                 <input type="url" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Vídeo</button>
+            <div class="modal-btn-compact-container">
+                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-brands fa-youtube"></i> Agregar Vídeo</button>
+            </div>
         </form>
     `;
 
@@ -5957,8 +6036,8 @@ export function openAddProblemModal() {
 
         matches.forEach(v => {
             const itemDiv = document.createElement("div");
-            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px;";
-            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:30px; height:30px; object-fit:cover; border-radius:4px;"> <span>${v.marca} ${v.modelo} (${v.anoDesde}${v.anoHasta ? '-' + v.anoHasta : ''})</span>`;
+            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;";
+            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;"> <span style="flex:1; margin:0; line-height:1.2;">${v.marca} ${v.modelo} (${v.anoDesde}${v.anoHasta ? '-' + v.anoHasta : ''})</span>`;
             itemDiv.onclick = () => {
                 searchVehicleResults.innerHTML = '';
                 searchVehicleInput.value = '';
@@ -6073,8 +6152,8 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated)
 
         matches.forEach(v => {
             const itemDiv = document.createElement("div");
-            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px;";
-            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:35px; height:35px; object-fit:cover; border-radius:4px;"> <span>${v.marca} ${v.modelo} (${v.anoDesde})</span>`;
+            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;";
+            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;"> <span style="flex:1; margin:0; line-height:1.2;">${v.marca} ${v.modelo} (${v.anoDesde})</span>`;
             itemDiv.onclick = () => {
                 closeModal();
                 openConfirmVehicleForPysModal(v, async (confirmedVehicle) => {
@@ -6111,8 +6190,10 @@ export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
         <h2>Confirmar Vehículo</h2>
-        <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:10px;">
-            <img src="${getImageUrl(vehicle.imagenVehiculo, IMG_SIZE_MEDIUM)}" style="width:100%; max-height:180px; object-fit:cover; border-radius:8px;">
+        <div style="display:flex; flex-direction:column; align-items:stretch; gap:10px; margin-top:10px; width:100%;">
+            <div style="width:100%; overflow:hidden; border-radius:8px; max-height:200px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.03);">
+                <img src="${getImageUrl(vehicle.imagenVehiculo, IMG_SIZE_MEDIUM)}" style="width:100%; max-height:200px; margin:0; object-fit:cover; border-radius:8px; display:block;">
+            </div>
             <div style="width:100%; font-size:0.9rem;">
                 <p style="margin:4px 0;"><strong>Marca:</strong> ${vehicle.marca}</p>
                 <p style="margin:4px 0;"><strong>Modelo:</strong> ${vehicle.modelo}</p>

@@ -1028,7 +1028,7 @@ function handleCheckVinDuplicate(payload) {
 }
 
 function handleAddVinToVehicle(payload) {
-  const { vehicleId, vin, trimLevel, trimIndex } = payload;
+  const { vehicleId, vin, trimLevel, trimIndex, isNewTrim } = payload;
   const prefix = extractVinPrefix(vin);
   if (!vehicleId || !prefix) {
     return { status: 'error', message: 'ID de vehículo y VIN son requeridos.' };
@@ -1064,18 +1064,28 @@ function handleAddVinToVehicle(payload) {
     return { status: 'error', message: 'Vehículo no encontrado.' };
   }
 
-  const versionesStr = targetRow[COLS_CORTES.versionesAplicables - 1] || "";
-  const versions = parseEquipmentVersions(versionesStr);
-  const maxAllowed = versions.length > 0 ? versions.length : 1;
+  let versionesStr = String(targetRow[COLS_CORTES.versionesAplicables - 1] || "").trim();
+  let versions = parseEquipmentVersions(versionesStr);
 
   const existingVinRaw = targetRow[COLS_CORTES.vin - 1] || "";
   let vinCollection = parseVinCollection(existingVinRaw);
 
+  const cleanTrim = trimLevel ? String(trimLevel).trim() : "";
+
+  // Si se solicitó registrar una nueva versión o el trim especificado no existe en la lista de versiones
+  if (cleanTrim && (isNewTrim || !versions.some(v => v.toLowerCase() === cleanTrim.toLowerCase()))) {
+    versions.push(cleanTrim);
+    versionesStr = versions.join(" / ");
+    sheet.getRange(targetRowIndex, COLS_CORTES.versionesAplicables).setValue(versionesStr);
+  }
+
+  const maxAllowed = versions.length > 0 ? versions.length : 1;
+
   let targetIdx = -1;
   if (typeof trimIndex === 'number' && trimIndex >= 0 && trimIndex < maxAllowed) {
     targetIdx = trimIndex;
-  } else if (trimLevel && versions.length > 0) {
-    targetIdx = versions.findIndex(v => v.toLowerCase().trim() === String(trimLevel).toLowerCase().trim());
+  } else if (cleanTrim && versions.length > 0) {
+    targetIdx = versions.findIndex(v => v.toLowerCase() === cleanTrim.toLowerCase());
   }
 
   if (targetIdx !== -1) {
@@ -1085,7 +1095,7 @@ function handleAddVinToVehicle(payload) {
     vinCollection[targetIdx] = prefix;
   } else {
     if (vinCollection.includes(prefix)) {
-      return { status: 'success', message: 'El VIN ya está en la colección de este vehículo.', vinCollection };
+      return { status: 'success', message: 'El VIN ya está en la colección de este vehículo.', vinCollection, versionesAplicables: versionesStr };
     }
     if (vinCollection.length >= maxAllowed) {
       return { status: 'error', message: `Este vehículo solo permite un máximo de ${maxAllowed} VIN(s) según sus versiones.` };
@@ -1097,5 +1107,5 @@ function handleAddVinToVehicle(payload) {
   sheet.getRange(targetRowIndex, COLS_CORTES.vin).setValue(serialized);
 
   // NOTA OBLIGATORIA: Agregar VIN no debe actualizar la fecha de registro (timestamp)
-  return { status: 'success', message: 'VIN registrado correctamente.', vinPrefix: prefix, vinCollection };
+  return { status: 'success', message: 'VIN registrado correctamente.', vinPrefix: prefix, vinCollection, versionesAplicables: versionesStr };
 }
