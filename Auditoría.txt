@@ -882,3 +882,26 @@ Archivos intervenidos: ui.js, style.css
    - En openAddCutForModelModal, el checkbox <input type="checkbox" id="add-cut-testigo"> aparecía a la izquierda o arriba del texto "Este corte activa el testigo del motor".
    - Se modifica el orden para ubicar la etiqueta a la izquierda y el checkbox a la derecha con display: flex; justify-content: space-between; align-items: center;.
 ================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: BLOQUE 7 (REDISTRIBUCIÓN Y CONTENIDO DE LA FICHA TÉCNICA)
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivo intervenido: ui.js (función exportVehiclePrintSheet)
+
+1. Diagnóstico del estado actual y requerimientos del Bloque 7:
+   - Encabezado:
+     * Antes: Decía "GPSpedia | Ficha Técnica Oficial" y en la barra superior "Listo para imprimir".
+     * Ahora: Debe decir "GPSpedia", ubicar el logo del proyecto a la derecha de "GPSpedia", y usar exclusivamente "Ficha técnica" (eliminando "Oficial" y "Listo para imprimir").
+   - Distribución y dimensiones de imágenes:
+     * Disposición vertical del contenido en lugar de columnas comprimidas que dejaban la información en media hoja.
+     * La imagen principal del vehículo y la del testigo conservan sus dimensiones.
+     * Las imágenes técnicas (cortes, cables, apertura) se muestran ampliadas y completas (object-fit: contain; max-height: 150px) sin recortar ni deformar orientaciones verticales ni horizontales.
+   - Retiro de información innecesaria:
+     * Se suprimen exclusivamente de la ficha de impresión: nombres de colaboradores, conteo de utilidad y reportes de errores. Se conservan intactos en el sistema y Spreadsheet.
+   - Testigo de motor:
+     * El aviso "Este corte activa el testigo de motor" se ubica en la parte inferior del contenedor del corte, debajo de la imagen asociada, con tipografía secundaria.
+   - Código QR para vídeo guía de desarme:
+     * Si el modelo tiene vídeo (item.Video o item.videoGuiaDesarmeUrl), se genera un código QR (https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=...) que enlaza directamente al vídeo en YouTube.
+     * Prohibido mostrar la URL como texto visible; el enlace queda contenido exclusivamente dentro del QR.
+     * Si no tiene vídeo, no se muestra el QR ni se reserva espacio vacío.
+================================================================================

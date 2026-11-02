@@ -5234,6 +5234,11 @@ export function openAddVinModal(item) {
         if (!vinVal) return;
 
         const trimSelect = form.querySelector("#modal-vin-trim");
+        if (trimSelect && (!trimSelect.value || trimSelect.value === "")) {
+            alert("Por favor selecciona una versión de equipamiento (Trim Level).");
+            trimSelect.focus();
+            return;
+        }
         const selectedTrim = trimSelect ? trimSelect.value : null;
 
         const btn = form.querySelector("#btn-save-vin");
@@ -6405,7 +6410,7 @@ export function sanitizeHtmlContent(htmlStr) {
 
 let inboxCacheData = null;
 
-/* TAREA 2: Ficha Técnica de Instalación completa y organizada para impresión exacta en 1 página */
+/* BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF */
 export function exportVehiclePrintSheet(item) {
     if (!item) return;
     const printWindow = window.open('', '_blank');
@@ -6416,17 +6421,19 @@ export function exportVehiclePrintSheet(item) {
 
     const title = `${item.marca || ''} ${item.modelo || ''} (${item.anoDesde || ''}${item.anoHasta ? ' - ' + item.anoHasta : ''})`;
 
+    // 1. Recopilar datos de cortes (Excluyendo colaboradores y utilidad según Requisito 5)
     const cuts = [];
     if (item.tipoCorte1 || item.ubicacionCorte1 || item.imgCorte1) {
-        cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, img: item.imgCorte1, colab: item.colaboradorCorte1 });
+        cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, img: item.imgCorte1, activaTestigo: item.utilCorte1 === 'x' || String(item.tipoCorte1).toLowerCase().includes('testigo') });
     }
     if (item.tipoCorte2 || item.ubicacionCorte2 || item.imgCorte2) {
-        cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, img: item.imgCorte2, colab: item.colaboradorCorte2 });
+        cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, img: item.imgCorte2, activaTestigo: item.utilCorte2 === 'x' });
     }
     if (item.tipoCorte3 || item.ubicacionCorte3 || item.imgCorte3) {
-        cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, img: item.imgCorte3, colab: item.colaboradorCorte3 });
+        cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, img: item.imgCorte3, activaTestigo: item.utilCorte3 === 'x' });
     }
 
+    // 2. Cables de alimentación
     const feeds = [];
     if (item.cableAlimen || item.imgCableAlimen) {
         feeds.push({ title: 'Alimentación Principal', desc: item.cableAlimen, img: item.imgCableAlimen });
@@ -6438,7 +6445,7 @@ export function exportVehiclePrintSheet(item) {
         feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
     }
 
-    /* TAREA 5: Corregir imágenes rotas normalizando URLs con getImageUrl(..., IMG_SIZE_LARGE) */
+    // 3. Generación de HTML de cortes con aviso de testigo al pie y distribución vertical (Requisitos 1.1, 2.2, 4.1, 5)
     const cutsHtml = cuts.map(c => {
         const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
         return `
@@ -6449,14 +6456,21 @@ export function exportVehiclePrintSheet(item) {
                     <p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
                     <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
                     <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
-                    ${c.colab ? `<p class="colab-tag">Colab: ${cleanColaboradorName(c.colab)}</p>` : ''}
                 </div>
-                ${safeImg ? `<div class="tech-item-img"><img src="${safeImg}" alt="Corte #${c.num}" /></div>` : ''}
+                ${safeImg ? `
+                <div class="tech-item-img-wrapper">
+                    <img src="${safeImg}" alt="Corte #${c.num}" class="tech-detail-img" />
+                </div>` : ''}
             </div>
+            ${c.activaTestigo ? `
+            <div class="testigo-aviso">
+                <i class="fa-solid fa-triangle-exclamation"></i> Este corte activa el testigo de motor
+            </div>` : ''}
         </div>
         `;
     }).join('');
 
+    // 4. HTML de cables de alimentación
     const feedsHtml = feeds.map(f => {
         const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
         return `
@@ -6466,16 +6480,21 @@ export function exportVehiclePrintSheet(item) {
                 <div class="tech-item-info">
                     <p>${f.desc || 'Conexión estándar'}</p>
                 </div>
-                ${safeImg ? `<div class="tech-item-img"><img src="${safeImg}" alt="${f.title}" /></div>` : ''}
+                ${safeImg ? `
+                <div class="tech-item-img-wrapper">
+                    <img src="${safeImg}" alt="${f.title}" class="tech-detail-img" />
+                </div>` : ''}
             </div>
         </div>
         `;
     }).join('');
 
+    // 5. HTML de imagen principal del vehículo
     const vehiculoImgHtml = item.imagenVehiculo ? `
         <div class="vehicle-main-img"><img src="${getImageUrl(item.imagenVehiculo, IMG_SIZE_LARGE)}" alt="${title}" /></div>
     ` : '';
 
+    // 6. Apertura de puertas
     const aperturaHtml = (item.apertura || item.imgApertura) ? `
         <div class="tech-item-card">
             <div class="tech-item-header">Apertura de Puertas / Seguros</div>
@@ -6483,16 +6502,35 @@ export function exportVehiclePrintSheet(item) {
                 <div class="tech-item-info">
                     <p>${item.apertura || 'Instrucciones registradas'}</p>
                 </div>
-                ${item.imgApertura ? `<div class="tech-item-img"><img src="${getImageUrl(item.imgApertura, IMG_SIZE_LARGE)}" alt="Apertura" /></div>` : ''}
+                ${item.imgApertura ? `
+                <div class="tech-item-img-wrapper">
+                    <img src="${getImageUrl(item.imgApertura, IMG_SIZE_LARGE)}" alt="Apertura" class="tech-detail-img" />
+                </div>` : ''}
             </div>
         </div>
     ` : '';
 
+    // 7. Notas técnicas importantes
     const notasHtml = item.notaImportante ? `
         <div class="tech-notes">
             <strong>Nota técnica importante:</strong> ${item.notaImportante}
         </div>
     ` : '';
+
+    // 8. Código QR exclusivo para vídeo guía de desarme (Requisito 6)
+    // Prohibido mostrar la URL como texto visible, solo el QR.
+    const rawVideoUrl = item.Video || item.videoGuiaDesarmeUrl;
+    let qrHtml = '';
+    if (rawVideoUrl && typeof rawVideoUrl === 'string' && rawVideoUrl.trim()) {
+        const directVideoUrl = rawVideoUrl.trim();
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=${encodeURIComponent(directVideoUrl)}`;
+        qrHtml = `
+            <div class="qr-video-box">
+                <img src="${qrApiUrl}" alt="Código QR Vídeo Guía" class="qr-code-img" />
+                <span class="qr-label">Vídeo Guía de Desarme</span>
+            </div>
+        `;
+    }
 
     printWindow.document.write(`
         <!DOCTYPE html>
@@ -6501,7 +6539,6 @@ export function exportVehiclePrintSheet(item) {
             <meta charset="UTF-8">
             <title>Ficha Técnica GPSpedia - ${title}</title>
             <style>
-                /* TAREA 2.2: Configuración obligatoria papel Carta, orientación vertical, márgenes 10mm optimizado para 1 página */
                 @page {
                     size: letter portrait;
                     margin: 10mm;
@@ -6512,51 +6549,71 @@ export function exportVehiclePrintSheet(item) {
                     margin: 0;
                     padding: 0;
                     color: #1a1a1a;
-                    font-size: 10px;
-                    line-height: 1.2;
+                    font-size: 10.5px;
+                    line-height: 1.3;
                     background: #fff;
                 }
                 .no-print-bar {
                     background: #007bff;
                     color: white;
-                    padding: 8px 16px;
+                    padding: 10px 16px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    border-radius: 4px;
-                    margin-bottom: 10px;
+                    border-radius: 6px;
+                    margin-bottom: 12px;
                 }
+                /* Encabezado: Logo a la derecha de GPSpedia, y exclusivamente "Ficha técnica" (Requisitos 3.1 y 3.2) */
                 .header-container {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                     border-bottom: 2px solid #007bff;
                     padding-bottom: 6px;
-                    margin-bottom: 8px;
+                    margin-bottom: 10px;
                 }
-                .header-logo {
-                    font-size: 18px;
+                .header-brand-wrap {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                .header-logo-title {
+                    font-size: 20px;
                     font-weight: bold;
                     color: #007bff;
                     letter-spacing: 0.5px;
+                }
+                .header-project-logo {
+                    width: 28px;
+                    height: 28px;
+                    object-fit: contain;
+                }
+                .header-doc-type {
+                    font-size: 13px;
+                    font-weight: 600;
+                    color: #555;
+                    text-transform: capitalize;
                 }
                 .vehicle-title {
                     font-size: 15px;
                     font-weight: bold;
                     margin: 0;
                     color: #222;
+                    text-align: right;
                 }
+                /* Grid superior: Información del vehículo y QR si existe */
                 .top-grid {
                     display: grid;
-                    grid-template-columns: ${item.imagenVehiculo ? '140px 1fr' : '1fr'};
-                    gap: 10px;
-                    margin-bottom: 8px;
+                    grid-template-columns: ${item.imagenVehiculo ? '140px 1fr' : '1fr'}${qrHtml ? ' auto' : ''};
+                    gap: 12px;
+                    align-items: center;
+                    margin-bottom: 12px;
                 }
                 .vehicle-main-img img {
                     width: 100%;
-                    max-height: 105px;
+                    max-height: 110px;
                     object-fit: cover;
-                    border-radius: 4px;
+                    border-radius: 6px;
                     border: 1px solid #ddd;
                 }
                 .meta-table {
@@ -6565,99 +6622,123 @@ export function exportVehiclePrintSheet(item) {
                     font-size: 10.5px;
                 }
                 .meta-table td {
-                    padding: 3px 6px;
+                    padding: 4px 6px;
                     border: 1px solid #e0e0e0;
                 }
                 .meta-table td.label {
                     font-weight: bold;
                     background: #f7f9fa;
-                    width: 25%;
+                    width: 24%;
                     color: #444;
                 }
+                .qr-video-box {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 4px;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    background: #fafafa;
+                }
+                .qr-code-img {
+                    width: 75px;
+                    height: 75px;
+                    object-fit: contain;
+                }
+                .qr-label {
+                    font-size: 8px;
+                    font-weight: bold;
+                    color: #555;
+                    margin-top: 3px;
+                    text-align: center;
+                }
+                /* Secciones verticales fluidas (Requisito 1.1) */
                 .section-header {
                     font-size: 11.5px;
                     font-weight: bold;
                     color: #007bff;
                     text-transform: uppercase;
-                    border-bottom: 1px solid #007bff;
-                    margin: 8px 0 4px 0;
+                    border-bottom: 1.5px solid #007bff;
+                    margin: 10px 0 6px 0;
                     padding-bottom: 2px;
                 }
                 .tech-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-                    gap: 6px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
                 }
                 .tech-item-card {
                     border: 1px solid #dcdcdc;
-                    border-radius: 4px;
+                    border-radius: 6px;
                     background: #fafafa;
-                    padding: 5px 8px;
+                    padding: 8px 10px;
                     page-break-inside: avoid;
                 }
                 .tech-item-header {
                     font-weight: bold;
                     color: #0056b3;
-                    font-size: 11px;
-                    margin-bottom: 3px;
+                    font-size: 11.5px;
+                    margin-bottom: 4px;
                     border-bottom: 1px dashed #e0e0e0;
                     padding-bottom: 2px;
                 }
                 .tech-item-body {
                     display: flex;
                     justify-content: space-between;
-                    gap: 8px;
+                    align-items: flex-start;
+                    gap: 12px;
                 }
                 .tech-item-info {
                     flex: 1;
                 }
                 .tech-item-info p {
-                    margin: 1.5px 0;
+                    margin: 2px 0;
                     font-size: 10.5px;
                 }
-                .tech-item-img {
-                    width: 75px;
-                    height: 55px;
+                .tech-item-img-wrapper {
+                    max-width: 160px;
+                    max-height: 120px;
                     flex-shrink: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }
-                .tech-item-img img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    border-radius: 3px;
+                .tech-detail-img {
+                    max-width: 100%;
+                    max-height: 110px;
+                    object-fit: contain;
+                    border-radius: 4px;
                     border: 1px solid #ccc;
                 }
-                /* TAREA 5: Ajuste exclusivo de Check Engine en la hoja de impresión */
-                img[src*="1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX"],
-                .tech-item-info img[src*="1ELXm7I"] {
-                    max-height: 20px !important;
-                    width: auto !important;
-                    display: inline-block !important;
-                    vertical-align: middle !important;
-                    margin: 2px 4px !important;
-                    float: none !important;
-                }
-                .colab-tag {
+                /* Aviso de testigo al pie del corte (Requisito 4.1) */
+                .testigo-aviso {
+                    margin-top: 6px;
                     font-size: 9.5px;
-                    color: #666;
-                    font-style: italic;
+                    font-weight: bold;
+                    color: #b78103;
+                    background: #fff8e1;
+                    padding: 3px 6px;
+                    border-radius: 4px;
+                    border: 1px solid #ffe082;
+                    display: inline-block;
                 }
                 .tech-notes {
                     background: #fff3cd;
                     color: #856404;
                     border: 1px solid #ffeeba;
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                    margin-top: 6px;
+                    padding: 6px 10px;
+                    border-radius: 6px;
+                    margin-top: 8px;
                     font-size: 10px;
                     page-break-inside: avoid;
                 }
                 .footer-bar {
-                    margin-top: 8px;
+                    margin-top: 12px;
                     font-size: 9.5px;
                     color: #777;
                     border-top: 1px solid #e0e0e0;
-                    padding-top: 3px;
+                    padding-top: 4px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
@@ -6667,18 +6748,37 @@ export function exportVehiclePrintSheet(item) {
                     body { padding: 0; }
                     .tech-item-card { break-inside: avoid; }
                 }
+                @media screen and (max-width: 600px) {
+                    .top-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .tech-item-body {
+                        flex-direction: column;
+                    }
+                    .tech-item-img-wrapper {
+                        max-width: 100%;
+                        width: 100%;
+                    }
+                    .tech-detail-img {
+                        max-height: 180px;
+                    }
+                }
             </style>
         </head>
         <body>
             <div class="no-print-bar no-print">
-                <span><strong>Ficha Técnica de Instalación</strong> - Lista para imprimir o guardar PDF en 1 página</span>
+                <span><strong>Ficha Técnica</strong> - Vista previa para consulta e impresión</span>
                 <button onclick="window.print()" style="padding: 6px 14px; background: white; color: #007bff; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">
                     Imprimir / Guardar PDF
                 </button>
             </div>
 
             <div class="header-container">
-                <div class="header-logo">GPSpedia <span style="font-size: 13px; font-weight: normal; color: #555;">| Ficha Técnica Oficial</span></div>
+                <div class="header-brand-wrap">
+                    <span class="header-logo-title">GPSpedia</span>
+                    <img src="icon-v3-512x512.png" alt="GPSpedia Logo" class="header-project-logo" />
+                    <span class="header-doc-type">| Ficha técnica</span>
+                </div>
                 <div class="vehicle-title">${title}</div>
             </div>
 
@@ -6699,6 +6799,7 @@ export function exportVehiclePrintSheet(item) {
                     </tr>
                     ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td colspan="3">${item.vin}</td></tr>` : ''}
                 </table>
+                ${qrHtml}
             </div>
 
             <div class="section-header">Puntos de Corte de Motor</div>
@@ -6720,7 +6821,7 @@ export function exportVehiclePrintSheet(item) {
 
             <div class="footer-bar">
                 <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
-                <span>Uso exclusivo técnico especializado - 1 Página de Consulta Rápida</span>
+                <span>Ficha técnica de consulta técnica especializada</span>
             </div>
         </body>
         </html>

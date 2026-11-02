@@ -339,7 +339,7 @@ BLOQUE 2: AUDITORÍA, CORRECCIÓN Y MEJORAS FUNCIONALES Y VISUALES ADICIONALES
 BLOQUE 3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES
 ===================================================================
 
-### TAREA 3.1: Relación entre modelos y problemas y acordeón «Posibles problemas» [X]
+### TAREA 3.1: Relación entre modelos y problemas y acordeón «Posibles problemas» [ ]
 - **Requisitos:**
   1. Relación por ID único del modelo (no por nombre visible).
   2. Si hay 1 problema: mostrar tarjeta individual.
@@ -378,7 +378,7 @@ BLOQUE 6: MEJORAS VISUALES E INVESTIGACIÓN DE VIABILIDAD PARA LA INTEGRACIÓN D
 ---
 
 ===================================================================
-BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF [ ]
+BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF [X]
 ===================================================================
 - **Estado:** PENDIENTE
 - **Nombre de la tarea:** Ajustar la distribución de información, imágenes y elementos visuales de la ficha técnica para impresión y exportación a PDF.

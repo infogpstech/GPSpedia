@@ -1489,3 +1489,17 @@ Fecha: $(date '+%Y-%m-%d %H:%M:%S')
    - En openAddCutForModelModal, se reubicó la casilla de verificación de testigo del motor para situarse a la derecha de la frase "Este corte activa el testigo del motor".
    - En offline.js y ui.js, se corrigió la clave de mapeo y rehidratación de tutoriales y relay en la caché local para garantizar la visualización de todas las tarjetas disponibles en sus respectivas secciones.
 ================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: BLOQUE 7 (REDISTRIBUCIÓN Y CONTENIDO DE LA FICHA TÉCNICA)
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. ui.js (exportVehiclePrintSheet):
+   - Reestructurada la distribución para flujo vertical y adaptativo, evitando concentración en media hoja.
+   - Encabezado: Logo de GPSpedia (icon-v3-512x512.png) ubicado inmediatamente a la derecha de «GPSpedia» y subtítulo formalizado como «| Ficha técnica» (retiradas las palabras «Oficial» y «Listo para imprimir»).
+   - Se eliminaron exclusivamente de la ficha de impresión: nombres de colaboradores, conteo de utilidad y reportes de errores, conservando sus datos intactos en el catálogo y base de datos.
+   - En cada corte, el aviso «Este corte activa el testigo de motor» se reubicó en la parte inferior del contenedor, debajo de su imagen asociada.
+   - Si el vehículo dispone de vídeo guía de desarme, se incorporó un código QR compacto generado dinámicamente que enlaza directamente al vídeo de YouTube sin exponer la URL como texto visible.
+   - Imágenes técnicas ajustadas proporcionalmente con object-fit: contain (max-height: 110px) evitando recortes arbitrarios o deformaciones.
+   - Tareas.txt: Marcado como completado [X] el BLOQUE 7.
+================================================================================
