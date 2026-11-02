@@ -905,3 +905,28 @@ Archivo intervenido: ui.js (función exportVehiclePrintSheet)
      * Prohibido mostrar la URL como texto visible; el enlace queda contenido exclusivamente dentro del QR.
      * Si no tiene vídeo, no se muestra el QR ni se reserva espacio vacío.
 ================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 3.1 Y AJUSTES DE USUARIO (LÍMITES CARACTERES Y ALTURA FICHA)
+Fecha: 2026-11-02
+Archivo intervenido: ui.js
+
+1. Límites de caracteres solicitados por el usuario:
+   - Título: Máximo 30 caracteres (anteriormente 15 o sin límite estricto).
+     * En PyS: #pys-titulo maxlength="30" (etiqueta: "Título del Problema (Máx 30 caracteres)").
+     * En Tutoriales: #tut-tema maxlength="30" (etiqueta: "Tema / Título (Máx 30 caracteres)").
+   - Detalles / Descripción: Máximo 700 caracteres (anteriormente 200 o sin límite).
+     * En PyS: #pys-detalle maxlength="700" (etiqueta: "Detalle del Problema (Máx 700 caracteres)").
+     * En PyS: #pys-solucion maxlength="700" (etiqueta: "Solución (Máx 700 caracteres)").
+     * En Tutoriales: #tut-desc maxlength="700" (etiqueta: "Descripción / Detalles (Máx 700 caracteres)").
+
+2. Distribución y altura de la Ficha Técnica (exportVehiclePrintSheet):
+   - Se ajusta la escala vertical para que los bloques y tarjetas aprovechen de forma armónica la altura de una página Letter portrait (10mm márgenes), incrementando paddings y alturas máximas de imágenes técnicas a 180px para evitar que el contenido quede condensado en la mitad superior de la hoja.
+
+3. Tarea 3.1: Relación entre modelos y problemas y acordeón «Posibles problemas»:
+   - Relación por ID único del modelo (no por nombre visible).
+   - 1 problema: tarjeta individual.
+   - 2 o más problemas: carrusel horizontal navegable.
+   - 0 problemas: no mostrar acordeón vacío.
+   - Tarjetas cumplen el estándar visual .card, .card-img-top, .overlay.
+================================================================================

@@ -2331,7 +2331,7 @@ async function insertNewVehicleFluently(item) {
     }
 }
 
-/* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+/* TAREA 3.1: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
 function createPysCard(item) {
     const card = document.createElement("div");
     card.className = "card";
@@ -5846,15 +5846,15 @@ export function openAddProblemModal() {
             </div>
 
             <div class="form-group">
-                <label>Título del Problema (Máx 15 caracteres)</label>
-                <input type="text" id="pys-titulo" maxlength="15" required placeholder="Ej. Falla relay pump">
+                <label>Título del Problema (Máx 30 caracteres)</label>
+                <input type="text" id="pys-titulo" maxlength="30" required placeholder="Ej. Falla relay pump">
             </div>
             <div class="form-group">
                 <label>Imagen del Problema</label>
                 <input type="file" id="pys-img-file" accept="image/*" required>
             </div>
             <div class="form-group">
-                <label>Detalle del Problema (Máx 200 caracteres)</label>
+                <label>Detalle del Problema (Máx 700 caracteres)</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-detalle', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
                     <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
@@ -5867,14 +5867,14 @@ export function openAddProblemModal() {
                     <input type="color" onchange="applyRichColor('pys-detalle', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
                 </div>
                 </div>
-                <textarea id="pys-detalle" maxlength="200" rows="3" required placeholder="Describe el problema..."></textarea>
+                <textarea id="pys-detalle" maxlength="700" rows="4" required placeholder="Describe el problema..."></textarea>
             </div>
             <div class="form-group" style="display:flex; align-items:center; gap:8px;">
                 <input type="checkbox" id="pys-sin-solucion" style="width:auto;">
                 <label for="pys-sin-solucion" style="margin:0;">Sin solución aún</label>
             </div>
             <div class="form-group" id="grp-solucion">
-                <label>Solución (Máx 200 caracteres)</label>
+                <label>Solución (Máx 700 caracteres)</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-solucion', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
                     <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
@@ -5887,7 +5887,7 @@ export function openAddProblemModal() {
                     <input type="color" onchange="applyRichColor('pys-solucion', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
                 </div>
                 </div>
-                <textarea id="pys-solucion" maxlength="200" rows="3" placeholder="Explica la solución..."></textarea>
+                <textarea id="pys-solucion" maxlength="700" rows="4" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
                 <label>Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
@@ -6290,15 +6290,15 @@ export function openAddTutorialModal() {
 
         <form id="add-tutorial-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
             <div class="form-group">
-                <label>Tema / Título</label>
-                <input type="text" id="tut-tema" required placeholder="Ej. Desarme de consola frontal">
+                <label>Tema / Título (Máx 30 caracteres)</label>
+                <input type="text" id="tut-tema" maxlength="30" required placeholder="Ej. Desarme de consola frontal">
             </div>
             <div class="form-group">
                 <label>Enlace de Vídeo YouTube</label>
                 <input type="url" id="tut-video" required placeholder="https://www.youtube.com/watch?v=...">
             </div>
             <div class="form-group">
-                <label>Descripción / Detalles</label>
+                <label>Descripción / Detalles (Máx 700 caracteres)</label>
                 <div class="rich-editor-toolbar" style="display:flex; gap:8px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('tut-desc', 'bold')"><strong>B</strong></button>
                     <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
@@ -6311,7 +6311,7 @@ export function openAddTutorialModal() {
                     <input type="color" onchange="applyRichColor('tut-desc', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
                 </div>
                 </div>
-                <textarea id="tut-desc" rows="4" placeholder="Detalles del tutorial..."></textarea>
+                <textarea id="tut-desc" maxlength="700" rows="4" placeholder="Detalles del tutorial..."></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Tutorial</button>
         </form>
@@ -6549,19 +6549,31 @@ export function exportVehiclePrintSheet(item) {
                     margin: 0;
                     padding: 0;
                     color: #1a1a1a;
-                    font-size: 10.5px;
-                    line-height: 1.3;
+                    font-size: 12.5px;
+                    line-height: 1.55;
                     background: #fff;
+                }
+                .sheet-page-wrapper {
+                    min-height: 920px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                }
+                .sheet-content-main {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
                 }
                 .no-print-bar {
                     background: #007bff;
                     color: white;
-                    padding: 10px 16px;
+                    padding: 12px 18px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                     border-radius: 6px;
-                    margin-bottom: 12px;
+                    margin-bottom: 20px;
                 }
                 /* Encabezado: Logo a la derecha de GPSpedia, y exclusivamente "Ficha técnica" (Requisitos 3.1 y 3.2) */
                 .header-container {
@@ -6569,33 +6581,33 @@ export function exportVehiclePrintSheet(item) {
                     justify-content: space-between;
                     align-items: center;
                     border-bottom: 2px solid #007bff;
-                    padding-bottom: 6px;
-                    margin-bottom: 10px;
+                    padding-bottom: 12px;
+                    margin-bottom: 20px;
                 }
                 .header-brand-wrap {
                     display: flex;
                     align-items: center;
-                    gap: 8px;
+                    gap: 12px;
                 }
                 .header-logo-title {
-                    font-size: 20px;
+                    font-size: 25px;
                     font-weight: bold;
                     color: #007bff;
                     letter-spacing: 0.5px;
                 }
                 .header-project-logo {
-                    width: 28px;
-                    height: 28px;
+                    width: 34px;
+                    height: 34px;
                     object-fit: contain;
                 }
                 .header-doc-type {
-                    font-size: 13px;
+                    font-size: 15px;
                     font-weight: 600;
                     color: #555;
                     text-transform: capitalize;
                 }
                 .vehicle-title {
-                    font-size: 15px;
+                    font-size: 19px;
                     font-weight: bold;
                     margin: 0;
                     color: #222;
@@ -6604,14 +6616,14 @@ export function exportVehiclePrintSheet(item) {
                 /* Grid superior: Información del vehículo y QR si existe */
                 .top-grid {
                     display: grid;
-                    grid-template-columns: ${item.imagenVehiculo ? '140px 1fr' : '1fr'}${qrHtml ? ' auto' : ''};
-                    gap: 12px;
+                    grid-template-columns: ${item.imagenVehiculo ? '180px 1fr' : '1fr'}${qrHtml ? ' auto' : ''};
+                    gap: 20px;
                     align-items: center;
-                    margin-bottom: 12px;
+                    margin-bottom: 22px;
                 }
                 .vehicle-main-img img {
                     width: 100%;
-                    max-height: 110px;
+                    max-height: 145px;
                     object-fit: cover;
                     border-radius: 6px;
                     border: 1px solid #ddd;
@@ -6619,10 +6631,10 @@ export function exportVehiclePrintSheet(item) {
                 .meta-table {
                     width: 100%;
                     border-collapse: collapse;
-                    font-size: 10.5px;
+                    font-size: 12.5px;
                 }
                 .meta-table td {
-                    padding: 4px 6px;
+                    padding: 9px 14px;
                     border: 1px solid #e0e0e0;
                 }
                 .meta-table td.label {
@@ -6636,69 +6648,69 @@ export function exportVehiclePrintSheet(item) {
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    padding: 4px;
+                    padding: 10px;
                     border: 1px solid #ddd;
                     border-radius: 6px;
                     background: #fafafa;
                 }
                 .qr-code-img {
-                    width: 75px;
-                    height: 75px;
+                    width: 95px;
+                    height: 95px;
                     object-fit: contain;
                 }
                 .qr-label {
-                    font-size: 8px;
+                    font-size: 10px;
                     font-weight: bold;
                     color: #555;
-                    margin-top: 3px;
+                    margin-top: 6px;
                     text-align: center;
                 }
                 /* Secciones verticales fluidas (Requisito 1.1) */
                 .section-header {
-                    font-size: 11.5px;
+                    font-size: 14px;
                     font-weight: bold;
                     color: #007bff;
                     text-transform: uppercase;
-                    border-bottom: 1.5px solid #007bff;
-                    margin: 10px 0 6px 0;
-                    padding-bottom: 2px;
+                    border-bottom: 2px solid #007bff;
+                    margin: 22px 0 14px 0;
+                    padding-bottom: 6px;
                 }
                 .tech-grid {
                     display: flex;
                     flex-direction: column;
-                    gap: 8px;
+                    gap: 16px;
                 }
                 .tech-item-card {
                     border: 1px solid #dcdcdc;
                     border-radius: 6px;
                     background: #fafafa;
-                    padding: 8px 10px;
+                    padding: 16px 18px;
                     page-break-inside: avoid;
                 }
                 .tech-item-header {
                     font-weight: bold;
                     color: #0056b3;
-                    font-size: 11.5px;
-                    margin-bottom: 4px;
+                    font-size: 13.5px;
+                    margin-bottom: 10px;
                     border-bottom: 1px dashed #e0e0e0;
-                    padding-bottom: 2px;
+                    padding-bottom: 6px;
                 }
                 .tech-item-body {
                     display: flex;
                     justify-content: space-between;
                     align-items: flex-start;
-                    gap: 12px;
+                    gap: 20px;
                 }
                 .tech-item-info {
                     flex: 1;
                 }
                 .tech-item-info p {
-                    margin: 2px 0;
-                    font-size: 10.5px;
+                    margin: 6px 0;
+                    font-size: 12.5px;
                 }
                 .tech-item-img-wrapper {
-                    max-width: 160px;
-                    max-height: 120px;
+                    max-width: 230px;
+                    max-height: 170px;
                     flex-shrink: 0;
                     display: flex;
                     align-items: center;
@@ -6706,19 +6718,19 @@ export function exportVehiclePrintSheet(item) {
                 }
                 .tech-detail-img {
                     max-width: 100%;
-                    max-height: 110px;
+                    max-height: 160px;
                     object-fit: contain;
                     border-radius: 4px;
                     border: 1px solid #ccc;
                 }
                 /* Aviso de testigo al pie del corte (Requisito 4.1) */
                 .testigo-aviso {
-                    margin-top: 6px;
-                    font-size: 9.5px;
+                    margin-top: 12px;
+                    font-size: 11px;
                     font-weight: bold;
                     color: #b78103;
                     background: #fff8e1;
-                    padding: 3px 6px;
+                    padding: 6px 12px;
                     border-radius: 4px;
                     border: 1px solid #ffe082;
                     display: inline-block;
@@ -6727,18 +6739,18 @@ export function exportVehiclePrintSheet(item) {
                     background: #fff3cd;
                     color: #856404;
                     border: 1px solid #ffeeba;
-                    padding: 6px 10px;
+                    padding: 14px 18px;
                     border-radius: 6px;
-                    margin-top: 8px;
-                    font-size: 10px;
+                    margin-top: 24px;
+                    font-size: 12px;
                     page-break-inside: avoid;
                 }
                 .footer-bar {
-                    margin-top: 12px;
-                    font-size: 9.5px;
+                    margin-top: 30px;
+                    font-size: 11px;
                     color: #777;
                     border-top: 1px solid #e0e0e0;
-                    padding-top: 4px;
+                    padding-top: 12px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
@@ -6773,55 +6785,65 @@ export function exportVehiclePrintSheet(item) {
                 </button>
             </div>
 
-            <div class="header-container">
-                <div class="header-brand-wrap">
-                    <span class="header-logo-title">GPSpedia</span>
-                    <img src="icon-v3-512x512.png" alt="GPSpedia Logo" class="header-project-logo" />
-                    <span class="header-doc-type">| Ficha técnica</span>
+            <div class="sheet-page-wrapper">
+                <div class="sheet-content-main">
+                    <div class="header-container">
+                        <div class="header-brand-wrap">
+                            <span class="header-logo-title">GPSpedia</span>
+                            <img src="icon-v3-512x512.png" alt="GPSpedia Logo" class="header-project-logo" />
+                            <span class="header-doc-type">| Ficha técnica</span>
+                        </div>
+                        <div class="vehicle-title">${title}</div>
+                    </div>
+
+                    <div class="top-grid">
+                        ${vehiculoImgHtml}
+                        <table class="meta-table">
+                            <tr>
+                                <td class="label">Marca:</td><td>${item.marca || '-'}</td>
+                                <td class="label">Modelo:</td><td>${item.modelo || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Categoría:</td><td>${item.categoria || '-'}</td>
+                                <td class="label">Años:</td><td>${item.anoDesde || ''} - ${item.anoHasta || 'Presente'}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td>
+                                <td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td>
+                            </tr>
+                            ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td colspan="3">${item.vin}</td></tr>` : ''}
+                        </table>
+                        ${qrHtml}
+                    </div>
+
+                    <div>
+                        <div class="section-header">Puntos de Corte de Motor</div>
+                        <div class="tech-grid">
+                            ${cutsHtml || '<div class="tech-item-card"><p>No hay cortes registrados para este modelo.</p></div>'}
+                        </div>
+                    </div>
+
+                    ${feedsHtml ? `
+                    <div>
+                        <div class="section-header">Alimentación Eléctrica</div>
+                        <div class="tech-grid">${feedsHtml}</div>
+                    </div>
+                    ` : ''}
+
+                    ${aperturaHtml ? `
+                    <div>
+                        <div class="section-header">Apertura y Cierre Centralizado</div>
+                        <div class="tech-grid">${aperturaHtml}</div>
+                    </div>
+                    ` : ''}
+
+                    ${notasHtml}
                 </div>
-                <div class="vehicle-title">${title}</div>
-            </div>
 
-            <div class="top-grid">
-                ${vehiculoImgHtml}
-                <table class="meta-table">
-                    <tr>
-                        <td class="label">Marca:</td><td>${item.marca || '-'}</td>
-                        <td class="label">Modelo:</td><td>${item.modelo || '-'}</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Categoría:</td><td>${item.categoria || '-'}</td>
-                        <td class="label">Años:</td><td>${item.anoDesde || ''} - ${item.anoHasta || 'Presente'}</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td>
-                        <td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td>
-                    </tr>
-                    ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td colspan="3">${item.vin}</td></tr>` : ''}
-                </table>
-                ${qrHtml}
-            </div>
-
-            <div class="section-header">Puntos de Corte de Motor</div>
-            <div class="tech-grid">
-                ${cutsHtml || '<div class="tech-item-card"><p>No hay cortes registrados para este modelo.</p></div>'}
-            </div>
-
-            ${feedsHtml ? `
-                <div class="section-header">Alimentación Eléctrica</div>
-                <div class="tech-grid">${feedsHtml}</div>
-            ` : ''}
-
-            ${aperturaHtml ? `
-                <div class="section-header">Apertura y Cierre Centralizado</div>
-                <div class="tech-grid">${aperturaHtml}</div>
-            ` : ''}
-
-            ${notasHtml}
-
-            <div class="footer-bar">
-                <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
-                <span>Ficha técnica de consulta técnica especializada</span>
+                <div class="footer-bar">
+                    <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
+                    <span>Ficha técnica de consulta técnica especializada</span>
+                </div>
             </div>
         </body>
         </html>

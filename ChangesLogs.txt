@@ -1503,3 +1503,22 @@ Fecha: $(date '+%Y-%m-%d %H:%M:%S')
    - Imágenes técnicas ajustadas proporcionalmente con object-fit: contain (max-height: 110px) evitando recortes arbitrarios o deformaciones.
    - Tareas.txt: Marcado como completado [X] el BLOQUE 7.
 ================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: TAREA 3.1, LÍMITES DE CARACTERES Y OPTIMIZACIÓN VERTICAL FICHA TÉCNICA
+Fecha: 2026-11-02
+
+1. ui.js:
+   - TAREA 3.1: Verificado y documentado el cumplimiento de todos los requisitos:
+     * Relación modelo-problema por ID único.
+     * Tarjeta individual para 1 problema y carrusel horizontal para 2 o más problemas.
+     * Acordeón «Posibles problemas» no se muestra vacío si no hay problemas asociados.
+     * Estándar visual de tarjetas .card, .card-img-top, .overlay verificado.
+   - Formularios de PyS y Tutoriales:
+     * Establecido límite de 30 caracteres para el título en Problemas y Soluciones (`#pys-titulo`, maxlength="30") y Tutoriales (`#tut-tema`, maxlength="30").
+     * Establecido límite de 700 caracteres para detalles/descripciones en Problemas y Soluciones (`#pys-detalle` y `#pys-solucion`, maxlength="700") y Tutoriales (`#tut-desc`, maxlength="700").
+     * Actualizadas las etiquetas visuales informativas a "(Máx 30 caracteres)" y "(Máx 700 caracteres)".
+   - Ficha Técnica de Impresión (`exportVehiclePrintSheet`):
+     * Optimizada la escala y distribución vertical para aprovechar la altura completa de una página de formato Carta (letter portrait) sin condensarse únicamente en la mitad superior de la página, implementando estructura `.sheet-page-wrapper` con min-height de 920px y espaciado proporcional entre encabezado, tablas, cortes, alimentaciones, notas y pie de página.
+2. Tareas.txt: Marcada como completada [X] la TAREA 3.1.
+================================================================================

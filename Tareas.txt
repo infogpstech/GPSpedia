@@ -339,7 +339,7 @@ BLOQUE 2: AUDITORÍA, CORRECCIÓN Y MEJORAS FUNCIONALES Y VISUALES ADICIONALES
 BLOQUE 3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES
 ===================================================================
 
-### TAREA 3.1: Relación entre modelos y problemas y acordeón «Posibles problemas» [ ]
+### TAREA 3.1: Relación entre modelos y problemas y acordeón «Posibles problemas» [X]
 - **Requisitos:**
   1. Relación por ID único del modelo (no por nombre visible).
   2. Si hay 1 problema: mostrar tarjeta individual.
