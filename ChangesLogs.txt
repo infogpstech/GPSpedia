@@ -1348,3 +1348,41 @@ TAREA 1.2: BARRA DE ENRIQUECIMIENTO DE TEXTO EN LOS FORMULARIOS
 - Archivo Tareas.txt:
   * Marcado formal [X] de la Tarea 1.2.
 ===================================================================
+
+===================================================================
+FECHA: Mon Nov 2 12:30:00 2026
+TAREA 1.3: CORREGIR EL BOTÓN «VOLVER» EN EL FORMULARIO "ADD_CORTE.HTML"
+- Archivo add_cortes.html:
+  * Líneas 353-365:
+    - Se incorporaron las propiedades `savedFiles` e `isNewVehicleFlow` en el objeto `state`.
+  * Líneas 475-485:
+    - Se expusieron en `window` las funciones `proceedToStage2` y `proceedToStage3` para permitir navegación controlada y pruebas.
+  * Líneas 624-635:
+    - Se asoció el listener del botón `btn-back-to-stage1` para regresar a la Etapa 1.5 (si existen coincidencias) o a la Etapa 1, preservando intactos los valores introducidos.
+  * Líneas 845-915:
+    - Se extendió `proceedToStage2(vehicleId, isBackNavigation = false)` para que al navegar hacia atrás (`isBackNavigation = true`) no se ejecute `form.reset()` ni `resetImagePreviews()`, conservando todos los datos del formulario (tipo de corte, relay, ubicación, color de cable, VIN, checkbox de testigo de motor).
+    - Se implementó la restauración de las vistas previas de imágenes desde `state.savedFiles`.
+  * Líneas 965-1010:
+    - Se persistieron los archivos procesados en base64 en `state.savedFiles` para evitar tener que volver a seleccionarlos o cargarlos si el usuario regresa a etapas anteriores.
+- Archivo Auditoría.txt:
+  * Registro de auditoría inicial línea por línea, detección de fallos de reseteo y comprobación post-edición.
+- Archivo Tareas.txt:
+  * Marcado formal [X] de la Tarea 1.3.
+===================================================================
+
+===================================================================
+FECHA: Mon Nov 2 13:30:00 2026
+TAREA 1.4: RETIRAR LA ANIMACIÓN DE CARGA DE LA SECCIÓN «PROBLEMAS / SOLUCIONES» Y AJUSTES DE SELECTORES Y VIN
+- Archivo ui.js:
+  * Líneas 5539-5565: Retiro del indicador `#pys-loading` en `renderPysSection()`. La sección ahora se renderiza de forma inmediata con su cuadrícula y tarjeta de creación (+), sincronizando los datos en segundo plano sin mostrar animación de spinner de carga.
+  * Líneas 5129-5225: En el modal de agregar corte (+) `openAddCutForModelModal`, los selectores `#add-cut-tipo` y `#add-cut-relay` ahora inicializan con `<option value="" selected disabled>Seleccione una opción</option>` y validación obligatoria `required`, forzando la selección explícita del usuario.
+  * Líneas 244-290: En `mapVersionsWithVins()`, se implementó la regla estricta de visualización:
+    - Si el modelo tiene solo 1 versión de equipamiento (o ninguna), no muestra ningún número VIN en el modal de detalle completo.
+    - Si el modelo tiene más de 1 versión de equipamiento para el mismo rango de años, se ignoran los últimos 5 números de serie de cada VIN y se extraen exclusivamente los 4 dígitos consecutivos donde el chasis difiere entre versiones (ej. "VX (1A2B) / VL (1A2C)").
+    - Se filtran los prefijos `OP-...` para evitar mostrar identificadores automáticos de operación de idempotencia.
+  * Líneas 1829-1845: Se restringió la visualización de la insignia `.vin-signature-badge` para que solo se muestre cuando el modelo cuenta con múltiples versiones de equipamiento.
+- Archivo Auditoría.txt:
+  * Documentación completa del retiro del spinner, selectores con opción vacía, visualización condicional de VIN y análisis técnico de las columnas AQ (43), AR (44) y AS (45).
+- Archivo Tareas.txt:
+  * Marcado formal [X] de la Tarea 1.4.
+===================================================================
