@@ -117,11 +117,11 @@ export async function saveCatalog(newData) {
                 cortesMap.set(String(item.id), item);
             });
 
-            const tutorialesMap = new Map((existingData.tutoriales || []).map(t => [String(t.id || t.titulo), t]));
-            (newData.tutoriales || []).forEach(t => tutorialesMap.set(String(t.id || t.titulo), t));
+            const tutorialesMap = new Map((existingData.tutoriales || []).map((t, idx) => [String(t.ID || t.id || t.Tema || t.titulo || idx), t]));
+            (newData.tutoriales || []).forEach((t, idx) => tutorialesMap.set(String(t.ID || t.id || t.Tema || t.titulo || idx), t));
 
-            const relayMap = new Map((existingData.relay || []).map(r => [String(r.id || r.nombre), r]));
-            (newData.relay || []).forEach(r => relayMap.set(String(r.id || r.nombre), r));
+            const relayMap = new Map((existingData.relay || []).map((r, idx) => [String(r.ID || r.id || r.configuracion || r.nombre || idx), r]));
+            (newData.relay || []).forEach((r, idx) => relayMap.set(String(r.ID || r.id || r.configuracion || r.nombre || idx), r));
 
             finalData = {
                 ...existingData,

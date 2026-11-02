@@ -2056,6 +2056,14 @@ export async function performSilentSync(newCatalogData) {
             }
         }
 
+        // Comprobar si hay tutoriales o relay nuevos o actualizados
+        if (newCatalogData.tutoriales && (!oldCatalogData.tutoriales || newCatalogData.tutoriales.length !== oldCatalogData.tutoriales.length)) {
+            hasChanges = true;
+        }
+        if (newCatalogData.relay && (!oldCatalogData.relay || newCatalogData.relay.length !== oldCatalogData.relay.length)) {
+            hasChanges = true;
+        }
+
         if (!hasChanges) {
             console.log("Sincronización silenciosa: No se detectaron cambios.");
             return;
@@ -2156,6 +2164,16 @@ function updateFullState(catalogData) {
                 sortedCategories: sortedCategories
             }
         });
+
+        // Refrescar vistas de tutoriales o relay si están activas
+        const tutContainer = document.getElementById("contenido-tutoriales");
+        if (tutContainer && tutContainer.style.display !== "none") {
+            mostrarTutorialesGrid();
+        }
+        const relayContainer = document.getElementById("contenido-relay");
+        if (relayContainer && relayContainer.style.display !== "none") {
+            mostrarRelayGrid();
+        }
     } catch (e) {
         console.error("Error actualizando estado global tras sincronización:", e);
     }
@@ -4954,7 +4972,15 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
                 <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('sug-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <input type="color" onchange="applyRichColor('sug-detalles', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('sug-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
                 </div>
                 <textarea id="sug-detalles" rows="3" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
             </div>
@@ -5268,18 +5294,29 @@ export function createRichTextToolbar(targetId) {
     boldBtn.type = "button";
     boldBtn.className = "btn btn-secondary btn-sm";
     boldBtn.title = "Negrita";
-    boldBtn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:26px;";
+    boldBtn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:26px; min-width:26px;";
     boldBtn.innerHTML = "<strong>B</strong>";
     boldBtn.onclick = () => window.applyRichFormat(targetId, "bold");
 
-    const colorPicker = document.createElement("input");
-    colorPicker.type = "color";
-    colorPicker.title = "Color de texto";
-    colorPicker.style.cssText = "width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;";
+    // Botón cuadrado con cuadrícula de 4 colores y capa nativa transparente
+    const colorBtn = document.createElement("div");
+    colorBtn.className = "rich-color-picker-box";
+    colorBtn.title = "Color de texto";
+    colorBtn.style.cssText = "position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;";
+    colorBtn.innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+            <span style="background:#ff4d4f;"></span>
+            <span style="background:#1890ff;"></span>
+            <span style="background:#52c41a;"></span>
+            <span style="background:#faad14;"></span>
+        </div>
+        <input type="color" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+    `;
+    const colorPicker = colorBtn.querySelector("input");
     colorPicker.onchange = (e) => window.applyRichColor(targetId, e.target.value);
 
     toolbar.appendChild(boldBtn);
-    toolbar.appendChild(colorPicker);
+    toolbar.appendChild(colorBtn);
     return toolbar;
 }
 
@@ -5323,7 +5360,15 @@ export function openAddCutForModelModal(item) {
                 <label>Ubicación y Detalles del Corte</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-cut-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <input type="color" onchange="applyRichColor('add-cut-detalles', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('add-cut-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
                 </div>
                 <textarea id="add-cut-detalles" rows="3" placeholder="Detalles de ubicación y conexión..." required></textarea>
             </div>
@@ -5331,9 +5376,9 @@ export function openAddCutForModelModal(item) {
                 <label>Color del Cable</label>
                 <input type="text" id="add-cut-color" placeholder="Ej. Verde / Negro">
             </div>
-            <div class="form-group" style="display:flex; align-items:center; gap:8px;">
-                <input type="checkbox" id="add-cut-testigo" style="width:auto;">
-                <label for="add-cut-testigo" style="margin:0;">Este corte activa el testigo del motor</label>
+            <div class="form-group" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:4px 0;">
+                <label for="add-cut-testigo" style="margin:0; cursor:pointer;">Este corte activa el testigo del motor</label>
+                <input type="checkbox" id="add-cut-testigo" style="width:18px; height:18px; cursor:pointer; margin:0; flex-shrink:0;">
             </div>
             <div class="form-group">
                 <label>Subir Imagen del Corte</label>
@@ -5473,7 +5518,15 @@ export function openAddAperturaModal(item) {
                 <label>Detalles de la Apertura</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-apertura-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <input type="color" onchange="applyRichColor('add-apertura-detalles', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('add-apertura-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
                 </div>
                 <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
             </div>
@@ -5550,7 +5603,15 @@ export function openAddFeedModal(item) {
                 <label>Detalles de la Alimentación</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-feed-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <input type="color" onchange="applyRichColor('add-feed-detalles', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('add-feed-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
                 </div>
                 <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
             </div>
@@ -5791,7 +5852,15 @@ export function openAddProblemModal() {
                 <label>Detalle del Problema (Máx 200 caracteres)</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-detalle', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <input type="color" onchange="applyRichColor('pys-detalle', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('pys-detalle', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
                 </div>
                 <textarea id="pys-detalle" maxlength="200" rows="3" required placeholder="Describe el problema..."></textarea>
             </div>
@@ -5803,7 +5872,15 @@ export function openAddProblemModal() {
                 <label>Solución (Máx 200 caracteres)</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-solucion', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <input type="color" onchange="applyRichColor('pys-solucion', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('pys-solucion', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
                 </div>
                 <textarea id="pys-solucion" maxlength="200" rows="3" placeholder="Explica la solución..."></textarea>
             </div>
@@ -6219,7 +6296,15 @@ export function openAddTutorialModal() {
                 <label>Descripción / Detalles</label>
                 <div class="rich-editor-toolbar" style="display:flex; gap:8px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('tut-desc', 'bold')"><strong>B</strong></button>
-                    <input type="color" id="tut-color-picker" onchange="applyRichColor('tut-desc', this.value)" style="width:30px; height:30px; padding:0; border:none; cursor:pointer;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('tut-desc', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
                 </div>
                 <textarea id="tut-desc" rows="4" placeholder="Detalles del tutorial..."></textarea>
             </div>

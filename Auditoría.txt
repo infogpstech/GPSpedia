@@ -867,3 +867,18 @@ Archivos intervenidos: ui.js, style.css
      * En móvil (`@media (max-width: 600px)`): `.info-modal-content` tiene `width: 95% !important; padding: 18px 14px !important;` y botones al 100% para evitar desbordamientos horizontales.
      * Se refuerza `overflow-x: hidden;` y `max-height: 90vh;` en `.info-modal-content` para un comportamiento pulcro y sin desbordes.
 ================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: SELECTOR DE COLOR EN CUADRÍCULA Y CASILLA TESTIGO
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivos intervenidos: ui.js, style.css
+
+1. Diagnóstico del selector de color en barra de enriquecimiento:
+   - Los navegadores renderizan <input type="color"> con márgenes, bordes internos y aspecto horizontal alargado si no se encapsula.
+   - Solución:
+     Crear un componente estandarizado .rich-color-btn cuadrado (26x26px, igual al botón de negrita "B"), con un grid interno 2x2 que muestra 4 colores (rojo #ff4d4f, azul #1890ff, verde #52c41a, amarillo #faad14) y un input tipo color superpuesto con opacidad 0 y posición absoluta al 100%, de forma que al hacer clic se abra el selector de color nativo preservando total funcionalidad.
+
+2. Diagnóstico de la casilla de testigo del motor:
+   - En openAddCutForModelModal, el checkbox <input type="checkbox" id="add-cut-testigo"> aparecía a la izquierda o arriba del texto "Este corte activa el testigo del motor".
+   - Se modifica el orden para ubicar la etiqueta a la izquierda y el checkbox a la derecha con display: flex; justify-content: space-between; align-items: center;.
+================================================================================

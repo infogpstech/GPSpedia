@@ -339,7 +339,7 @@ BLOQUE 2: AUDITORÍA, CORRECCIÓN Y MEJORAS FUNCIONALES Y VISUALES ADICIONALES
 BLOQUE 3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES
 ===================================================================
 
-### TAREA 3.1: Relación entre modelos y problemas y acordeón «Posibles problemas» [ ]
+### TAREA 3.1: Relación entre modelos y problemas y acordeón «Posibles problemas» [X]
 - **Requisitos:**
   1. Relación por ID único del modelo (no por nombre visible).
   2. Si hay 1 problema: mostrar tarjeta individual.
@@ -353,7 +353,7 @@ BLOQUE 3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL 
 BLOQUE 4: MEJORA DEL SISTEMA DE VIN, IDENTIFICACIÓN DE VERSIONES DE EQUIPAMIENTO Y NAVEGACIÓN ENTRE GENERACIONES
 ===================================================================
 
-### TAREA 4.1: Relacionar cada VIN con su versión de equipamiento y visualización en modal [ ]
+### TAREA 4.1: Relacionar cada VIN con su versión de equipamiento y visualización en modal [X]
 - **Requisitos:**
   1. Normalización dinámica de separadores (",", "/", "\") en versionesAplicables sin alterar la estructura ni celdas de la Spreadsheet.
   2. Visualización limpia en modal: "VX (1A2B) / VL (1A2C)" con tipografía reducida para los dígitos y "/" como único separador visual.

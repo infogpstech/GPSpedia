@@ -1478,3 +1478,14 @@ Fecha: $(date '+%Y-%m-%d %H:%M:%S')
 4. Tareas.txt:
    - Marcadas como completadas [X] las Tareas 2.1, 2.2, 2.3, 2.4, 2.5 y 2.6.
 ================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: SELECTOR DE COLOR EN CUADRÍCULA, CHECKBOX Y TUTORIALES/RELAY
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. ui.js y style.css:
+   - Rediseñado el botón selector de color en forma de botón cuadrado de 26x26px idéntico en tamaño al botón de negrita "B".
+   - Renderizada una cuadrícula interna 2x2 con 4 colores vivos (rojo #ff4d4f, azul #1890ff, verde #52c41a, amarillo #faad14) con input nativo transparente superpuesto manteniendo el 100% de la funcionalidad de selección de colores.
+   - En openAddCutForModelModal, se reubicó la casilla de verificación de testigo del motor para situarse a la derecha de la frase "Este corte activa el testigo del motor".
+   - En offline.js y ui.js, se corrigió la clave de mapeo y rehidratación de tutoriales y relay en la caché local para garantizar la visualización de todas las tarjetas disponibles en sus respectivas secciones.
+================================================================================
