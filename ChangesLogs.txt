@@ -1526,3 +1526,20 @@ Fecha: 2026-11-02
 2026-11-02:
 - Optimización de celdas en tabla de información del vehículo de la ficha técnica de impresión (padding 4px 8px, interlineado compacto).
 - Ampliación y maximización de las imágenes técnicas (cortes y alimentación) a 280px de ancho y 155px de alto para mejorar su legibilidad y aprovechamiento de espacio en hoja Carta de una sola página.
+
+================================================================================
+CHANGELOG: TAREA 4.1 - DIFERENCIACIÓN SELECTIVA DE VEHÍCULOS POR VIN E INTEGRACIÓN
+Fecha: 2026-11-02
+Componentes: VinDifferentialEngine.js, navigation.js, ui.js
+
+- VinDifferentialEngine:
+  * Motor selectivo condicionado a modelos con múltiples versiones de equipamiento (>1). Modelos con una o cero versiones no son procesados para cálculo diferencial.
+  * Aislamiento contextual por marca, modelo y generación para evitar falsas comparaciones entre líneas vehiculares distintas.
+  * Regla de exclusión serial para los últimos 5 a 6 caracteres numéricos a fin de evitar firmas basadas en ruido de número consecutivo.
+  * Límite estricto a un máximo de 4 caracteres para fragmentos distintivos.
+  * Normalización dinámica de separadores (',', '/', '\') sin alterar el contenido de las hojas de cálculo.
+- navigation.js:
+  * Invocación de queryVehicle ante búsquedas por VIN con mapeo automático del modelo y versión identificada.
+- ui.js:
+  * Modal de detalle muestra versiones formateadas como "VX (1A2B) / VL (1A2C)" con dígitos en tipografía reducida y separadas exclusivamente por " / ".
+================================================================================

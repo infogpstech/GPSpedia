@@ -353,11 +353,16 @@ BLOQUE 3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL 
 BLOQUE 4: MEJORA DEL SISTEMA DE VIN, IDENTIFICACIÓN DE VERSIONES DE EQUIPAMIENTO Y NAVEGACIÓN ENTRE GENERACIONES
 ===================================================================
 
-### TAREA 4.1: Relacionar cada VIN con su versión de equipamiento y visualización en modal [X]
+### TAREA 4.1: Relacionar cada VIN con su versión de equipamiento, motor de diferenciación selectiva e integración con buscador [X]
 - **Requisitos:**
   1. Normalización dinámica de separadores (",", "/", "\") en versionesAplicables sin alterar la estructura ni celdas de la Spreadsheet.
   2. Visualización limpia en modal: "VX (1A2B) / VL (1A2C)" con tipografía reducida para los dígitos y "/" como único separador visual.
   3. Navegación intergeneracional mediante continuidad de versiones de equipamiento, permitiendo navegar entre rangos de años aunque cambie la cantidad de versiones o VINs.
+  4. Motor de diferenciación selectiva por VIN:
+     - Analizar exclusivamente modelos que tengan más de una versión de equipamiento aplicable.
+     - Delimitar comparaciones al contexto de marca, modelo y generación/rango de años.
+     - Identificar la versión exacta a partir de un VIN mediante `queryVehicle` sin imponer una longitud fija de 17 caracteres ni posiciones fijas.
+     - Integración con el buscador de GPSpedia (`filtrarContenido`) para localizar el modelo y su versión técnica exacta al buscar por VIN.
 
 ---
 

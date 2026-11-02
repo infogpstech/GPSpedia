@@ -952,3 +952,24 @@ Archivo intervenido: ui.js
    - .tech-grid gap a 12px, .tech-item-card padding a 12px 16px.
    - Garantizado que todo el documento cabe exactamente en 1 página tamaño carta vertical.
 ================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 4.1 - MOTOR DE IDENTIFICACIÓN Y DIFERENCIACIÓN POR VIN
+Fecha: 2026-11-02
+Archivos intervenidos: VinDifferentialEngine.js, navigation.js, ui.js
+
+1. VinDifferentialEngine.js:
+   - Normalización de delimitadores en parseVersionsList (soporte para ',', '/', '\') con deduplicación insensible a mayúsculas/minúsculas.
+   - En buildSampleMatrix: implementación de filtro de selectividad; únicamente se indexan y analizan configuraciones de modelos con más de 1 versión de equipamiento (versionesAplicables.length > 1).
+   - En findMinimalCombination: aislamiento contextual por marca, modelo y generación. Descarte y penalización de los últimos 5 a 6 caracteres numéricos seriales (serialCutoff). Límite de fragmento visible displayFragment a un máximo de 4 caracteres.
+   - Integración con queryVehicle permitiendo resolución unívoca de versión de equipamiento sin imponer longitud fija rígida.
+
+2. navigation.js (filtrarContenido):
+   - Integración con VinDifferentialEngine.queryVehicle ante consultas de VIN completas o parciales.
+   - Si la consulta por VIN arroja coincidencia unívoca, se preserva el modelo exacto y se anota _identifiedVersion para visualización contextual.
+
+3. ui.js:
+   - Función parseEquipmentVersions: normaliza delimitadores (',', '/', '\') sin alterar datos del backend.
+   - mapVersionsWithVins: asocia cada versión con a lo sumo 4 dígitos distintivos del VIN sólo si el modelo posee más de una versión.
+   - En mostrarDetalleModal: renderizado en subtítulo con formato "VX (1A2B) / VL (1A2C)" con tipografía reducida (font-size: 0.82em) y separador único ' / '.
+================================================================================

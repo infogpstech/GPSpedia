@@ -215,11 +215,18 @@ const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-
 /* FUNCIONES DE RELACIÓN VIN - VERSIONES DE EQUIPAMIENTO */
 export function parseEquipmentVersions(rawStr) {
     if (!rawStr) return [];
-    // Normalizar separadores admitidos: comas ",", diagonales "/" y diagonales inversas "\"
-    return String(rawStr)
-        .split(/[,/\\\\]+/)
-        .map(v => v.trim())
-        .filter(Boolean);
+    // Normalizar separadores admitidos: comas ",", diagonales "/" y diagonales inversas "\" sin duplicados
+    const parts = String(rawStr).split(/[,/\\\\]+/);
+    const seen = new Set();
+    const result = [];
+    for (const p of parts) {
+        const clean = p.trim();
+        if (clean && !seen.has(clean.toUpperCase())) {
+            seen.add(clean.toUpperCase());
+            result.push(clean);
+        }
+    }
+    return result;
 }
 
 export function parseVinCollection(rawVin) {
