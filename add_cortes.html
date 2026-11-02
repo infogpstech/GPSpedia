@@ -259,7 +259,7 @@
                     </div>
                 </div>
                 <div class="btn-container">
-                    <button type="button" class="btn btn-secondary" onclick="window.showPhase(state.matches.length > 0 ? '1-5' : 1)">Volver</button>
+                    <button type="button" id="btn-back-to-stage1" class="btn btn-secondary">Volver</button>
                     <button type="submit" class="btn btn-primary">Continuar</button>
                 </div>
             </form>
@@ -353,7 +353,12 @@
             restoredFiles: {
                 imagenVehiculo: null,
                 imgCorte1: null
-            }
+            },
+            savedFiles: {
+                imagenVehiculo: null,
+                imgCorte1: null
+            },
+            isNewVehicleFlow: false
         };
 
         function getOrGenerateOpId() {
@@ -474,6 +479,8 @@
 
         // Expose to window for inline onclicks in navigation
         window.showPhase = showPhase;
+        window.proceedToStage2 = proceedToStage2;
+        window.proceedToStage3 = proceedToStage3;
 
         async function init() {
             const sessionData = localStorage.getItem(SESSION_KEY);
@@ -619,6 +626,13 @@
         };
 
         function setupEventListeners() {
+            const btnBackToStage1 = document.getElementById('btn-back-to-stage1');
+            if (btnBackToStage1) {
+                btnBackToStage1.addEventListener('click', () => {
+                    showPhase(state.matches && state.matches.length > 0 ? '1-5' : 1);
+                });
+            }
+
             const btnBackToStage2 = document.getElementById('btn-back-to-stage2');
             if (btnBackToStage2) {
                 btnBackToStage2.addEventListener('click', () => {
@@ -680,12 +694,18 @@
             if (imVeh) {
                 imVeh.addEventListener('change', () => {
                     state.restoredFiles.imagenVehiculo = null;
+                    if (!imVeh.files || !imVeh.files[0]) {
+                        state.savedFiles.imagenVehiculo = null;
+                    }
                 });
             }
             const imCor = document.getElementById('imgCorte1');
             if (imCor) {
                 imCor.addEventListener('change', () => {
                     state.restoredFiles.imgCorte1 = null;
+                    if (!imCor.files || !imCor.files[0]) {
+                        state.savedFiles.imgCorte1 = null;
+                    }
                 });
             }
 
@@ -845,18 +865,32 @@
         }
 
         // --- STAGE 2: ADD NEW CUT ---
-        function proceedToStage2(vehicleId) {
+        /* TAREA 1.3: CORREGIR EL BOTÓN «VOLVER» EN EL FORMULARIO "ADD_CORTE.HTML" */
+        function proceedToStage2(vehicleId, isBackNavigation = false) {
             state.selectedVehicleId = vehicleId;
             const form = document.getElementById('form-stage-2');
-            form.reset();
-            resetImagePreviews();
 
-            const urlParams = new URLSearchParams(window.location.search);
-            const isSilentParam = urlParams.get('silent') === 'true';
-            if (isSilentParam) {
-                const silentCheckbox = document.getElementById('silentRegister');
-                if (silentCheckbox) {
-                    silentCheckbox.checked = true;
+            if (!isBackNavigation) {
+                form.reset();
+                resetImagePreviews();
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const isSilentParam = urlParams.get('silent') === 'true';
+                if (isSilentParam) {
+                    const silentCheckbox = document.getElementById('silentRegister');
+                    if (silentCheckbox) {
+                        silentCheckbox.checked = true;
+                    }
+                }
+            } else {
+                // Conservar y restaurar previsualizaciones de imágenes si existen
+                if (state.savedFiles && state.savedFiles.imagenVehiculo) {
+                    const prevVeh = document.getElementById('imagenVehiculo_preview');
+                    if (prevVeh) prevVeh.src = state.savedFiles.imagenVehiculo;
+                }
+                if (state.savedFiles && state.savedFiles.imgCorte1) {
+                    const prevCorte = document.getElementById('imgCorte1_preview');
+                    if (prevCorte) prevCorte.src = state.savedFiles.imgCorte1;
                 }
             }
 
@@ -865,14 +899,16 @@
             const newVehicleImageInput = document.getElementById('imagenVehiculo');
 
             if (vehicleId) {
-                const match = state.matches.find(m => m.id === vehicleId);
-                title.textContent = `Paso 2: Agregar Corte a ${match.marca} ${match.modelo}`;
-                newVehicleFields.style.display = 'none';
+                const match = state.matches ? state.matches.find(m => m.id === vehicleId) : null;
+                const matchName = match ? `${match.marca} ${match.modelo}` : (state.vehicleInfo ? `${state.vehicleInfo.marca || ''} ${state.vehicleInfo.modelo || ''}` : '');
+                title.textContent = `Paso 2: Agregar Corte a ${matchName}`;
+                newVehicleFields.style.display = (state.isNewVehicleFlow && !state.selectedVehicleId) ? 'block' : 'none';
                 newVehicleImageInput.required = false;
             } else {
+                state.isNewVehicleFlow = true;
                 title.textContent = 'Paso 2: Agregar Vehículo y Corte';
                 newVehicleFields.style.display = 'block';
-                newVehicleImageInput.required = true;
+                newVehicleImageInput.required = !state.savedFiles || !state.savedFiles.imagenVehiculo;
             }
             toggleNoRecomendado();
             showPhase(2);
@@ -945,9 +981,14 @@
             const vehFileInput = document.getElementById('imagenVehiculo');
             if (vehFileInput && vehFileInput.files[0]) {
                 base64Veh = await fileToBase64(vehFileInput.files[0]);
+                state.savedFiles.imagenVehiculo = base64Veh;
                 console.log(`[PING-PONG][3a] Imagen del vehículo procesada. Longitud: ${base64Veh.length}`);
+            } else if (state.savedFiles.imagenVehiculo) {
+                base64Veh = state.savedFiles.imagenVehiculo;
+                console.log("[PING-PONG][3a] Usando imagen de vehículo previamente guardada.");
             } else if (state.restoredFiles.imagenVehiculo) {
                 base64Veh = state.restoredFiles.imagenVehiculo;
+                state.savedFiles.imagenVehiculo = base64Veh;
                 console.log("[PING-PONG][3a] Usando imagen de vehículo restaurada.");
             }
 
@@ -957,9 +998,14 @@
                 const corteFileInput = document.getElementById('imgCorte1');
                 if (corteFileInput && corteFileInput.files[0]) {
                     base64Corte = await fileToBase64(corteFileInput.files[0]);
+                    state.savedFiles.imgCorte1 = base64Corte;
                     console.log(`[PING-PONG][3b] Imagen de corte procesada. Longitud: ${base64Corte.length}`);
+                } else if (state.savedFiles.imgCorte1) {
+                    base64Corte = state.savedFiles.imgCorte1;
+                    console.log("[PING-PONG][3b] Usando imagen de corte previamente guardada.");
                 } else if (state.restoredFiles.imgCorte1) {
                     base64Corte = state.restoredFiles.imgCorte1;
+                    state.savedFiles.imgCorte1 = base64Corte;
                     console.log("[PING-PONG][3b] Usando imagen de corte restaurada.");
                 }
             }

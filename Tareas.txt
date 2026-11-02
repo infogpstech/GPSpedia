@@ -211,7 +211,7 @@ TAREAS EN EJECUCIÓN (SESIÓN ACTUAL)
 BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O NO IMPLEMENTADAS)
 ===================================================================
 
-### TAREA 1.1: Configuración de Relay en el formulario de agregar corte del botón «+» [ ]
+### TAREA 1.1: Configuración de Relay en el formulario de agregar corte del botón «+» [X]
 - **Estado detectado:** Fallida. La implementación no corresponde a lo solicitado.
 - **Problema:** En el formulario de agregar corte que se abre desde el botón «+» del modal de detalles del modelo, el campo de configuración de Relay continúa siendo un "input text". El campo debe funcionar mediante un selector desplegable ("DropSelect") con las opciones disponibles en la configuración almacenada en Spreadsheet.
 - **Referencia obligatoria:** Selector de configuración de Relay de la etapa 2 de "add_corte.html".
@@ -228,7 +228,7 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 
 ---
 
-### TAREA 1.2: Barra de enriquecimiento de texto en los formularios [ ]
+### TAREA 1.2: Barra de enriquecimiento de texto en los formularios [X]
 - **Estado detectado:** Fallida o no implementada.
 - **Problema:** Los campos destinados a introducir información detallada o de varias líneas continúan sin mostrar la barra de enriquecimiento de texto. Los botones de negrita y selección de colores están completamente ausentes.
 - **Requisitos:**
@@ -245,7 +245,7 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 
 ---
 
-### TAREA 1.3: Corregir el botón «Volver» en el formulario "add_corte.html" [ ]
+### TAREA 1.3: Corregir el botón «Volver» en el formulario "add_corte.html" [X]
 - **Estado detectado:** No implementada.
 - **Problema:** El botón «Volver» continúa sin funcionar. Al presionarlo no ejecuta ninguna acción y no permite regresar a la etapa anterior.
 - **Requisitos:**
@@ -262,7 +262,7 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 
 ---
 
-### TAREA 1.4: Retirar la animación de carga de la sección «Problemas / Soluciones» [ ]
+### TAREA 1.4: Retirar la animación de carga de la sección «Problemas / Soluciones» [X]
 - **Estado detectado:** Fallida. El comportamiento original continúa presente.
 - **Problema:** Al seleccionar la sección «Problemas / Soluciones», sigue apareciendo una animación de carga que no debería mostrarse.
 - **Requisitos:**
@@ -275,7 +275,7 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 
 ---
 
-### TAREA 1.5: Estandarizar sombras de tarjetas, logo y título principal de GPSpedia [ ]
+### TAREA 1.5: Estandarizar sombras de tarjetas, logo y título principal de GPSpedia [X]
 - **Estado detectado:** Fallida. Los cambios solicitados no se reflejan correctamente.
 - **Problema:** Las tarjetas «Crear nuevo problema» y «Nuevo tutorial» siguen utilizando una sombra azul, diferente al estilo de sombras grises utilizado en las tarjetas del catálogo. También debe comprobarse el tratamiento visual del logo y del título principal GPSpedia.
 - **Referencia visual obligatoria:** Sombras de las tarjetas de los carruseles del catálogo.

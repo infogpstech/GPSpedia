@@ -18,7 +18,8 @@ function getSpreadsheet() {
 }
 
 const SHEET_NAMES = {
-    CORTES: "Cortes"
+    CORTES: "Cortes",
+    IDEMPOTENCIA: "Idempotencia"
 };
 
 const COLS_CORTES = {
@@ -258,8 +259,7 @@ function handleAddOrUpdateCut(payload) {
         sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${cutSlotIndex}`]).setValue(imageUrl);
         sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${cutSlotIndex}`]).setValue(colaboradorName);
         if (opId) {
-            const opIdColIndex = getOpIdColIndex(sheet, cutSlotIndex);
-            sheet.getRange(rowIndex, opIdColIndex).setValue(opId);
+            recordOpId(opId, newId || vehicleId, cutSlotIndex, formattedDate);
         }
         sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
 
@@ -339,8 +339,7 @@ function handleAddOrUpdateCut(payload) {
             }
         }
         if (opId) {
-            const opIdColIndex = getOpIdColIndex(sheet, 1);
-            sheet.getRange(rowIndex, opIdColIndex).setValue(opId);
+            recordOpId(opId, newId, 1, formattedDate);
         }
 
         // 5. Esperar a que la hoja calcule el valor del ID generado por la fórmula.
@@ -708,61 +707,111 @@ function checkFileIdValid(url) {
     }
 }
 
-function getOpIdColIndex(sheet, slotIndex) {
-    const lastCol = sheet.getLastColumn();
-    const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
-    const expectedHeader = `idOperacion${slotIndex}`;
+// ============================================================================
+// GESTIÓN DE IDEMPOTENCIA EN HOJA DEDICADA ("Idempotencia")
+// ============================================================================
 
-    for (let c = 0; c < headers.length; c++) {
-        const header = String(headers[c]).trim();
-        if (header === expectedHeader || header.toLowerCase() === `id_operacion_${slotIndex}` || header.toLowerCase() === `idoperacion${slotIndex}`) {
-            return c + 1;
-        }
+function getIdempotenciaSheet() {
+    let sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
+    if (!sheet) {
+        sheet = getSpreadsheet().insertSheet(SHEET_NAMES.IDEMPOTENCIA);
+        sheet.appendRow(["opId", "vehicleId", "slotIndex", "timestamp", "status"]);
+        sheet.setFrozenRows(1);
     }
+    return sheet;
+}
 
-    // Not found, append dynamically
-    const newColIndex = lastCol + 1;
-    sheet.getRange(1, newColIndex).setValue(expectedHeader);
-    SpreadsheetApp.flush();
-    return newColIndex;
+function recordOpId(opId, vehicleId, slotIndex, timestamp) {
+    if (!opId) return;
+    try {
+        const sheet = getIdempotenciaSheet();
+        sheet.appendRow([
+            String(opId).trim(),
+            String(vehicleId || ""),
+            String(slotIndex || 1),
+            String(timestamp || new Date().toISOString()),
+            "completed"
+        ]);
+    } catch (e) {
+        Logger.log("Error recording opId in Idempotencia sheet: " + e.message);
+    }
 }
 
 function findRowByOpId(sheet, opId) {
     if (!opId) return null;
-    const data = sheet.getDataRange().getValues();
-    if (data.length <= 1) return null;
+    const cleanOpId = String(opId).trim();
 
-    const headers = data[0];
-    const opIdCols = [];
-    for (let c = 0; c < headers.length; c++) {
-        const h = String(headers[c]).toLowerCase();
-        if (h.includes("idoperacion") || h.includes("id_operacion")) {
-            opIdCols.push(c);
+    // 1. Buscar prioritariamente en la hoja dedicada Idempotencia
+    try {
+        const idempSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
+        if (idempSheet && idempSheet.getLastRow() > 1) {
+            const idempData = idempSheet.getDataRange().getValues();
+            for (let r = 1; r < idempData.length; r++) {
+                const row = idempData[r];
+                if (String(row[0]).trim() === cleanOpId) {
+                    const savedVehicleId = String(row[1]).trim();
+                    const savedSlotIndex = parseInt(row[2]) || 1;
+                    const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+                    if (cortesSheet && savedVehicleId) {
+                        const cortesData = cortesSheet.getDataRange().getValues();
+                        for (let cr = 1; cr < cortesData.length; cr++) {
+                            if (String(cortesData[cr][COLS_CORTES.id - 1]) === savedVehicleId) {
+                                return {
+                                    rowIndex: cr + 1,
+                                    rowValues: cortesData[cr],
+                                    colIndex: COLS_CORTES[`colaboradorCorte${savedSlotIndex}`] || COLS_CORTES.colaboradorCorte1,
+                                    slotIndex: savedSlotIndex,
+                                    fromIdempotenciaSheet: true
+                                };
+                            }
+                        }
+                    }
+                }
+            }
         }
+    } catch (e) {
+        Logger.log("Error checking Idempotencia sheet: " + e.message);
     }
 
-    for (let r = 1; r < data.length; r++) {
-        const row = data[r];
-        for (let i = 0; i < opIdCols.length; i++) {
-            const idx = opIdCols[i];
-            const cellVal = row[idx];
-            if (cellVal && String(cellVal).trim() === opId.trim()) {
-                return { rowIndex: r + 1, rowValues: row, colIndex: idx + 1 };
+    // 2. Búsqueda de compatibilidad histórica en la hoja Cortes (sin contaminar la columna 43 VIN)
+    if (sheet && sheet.getLastRow() > 1) {
+        const data = sheet.getDataRange().getValues();
+        const headers = data[0];
+        const opIdCols = [];
+        for (let c = 0; c < headers.length; c++) {
+            // Excluir expresamente la columna 43 (vin)
+            if (c + 1 === COLS_CORTES.vin) continue;
+            const h = String(headers[c]).toLowerCase();
+            if (h.includes("idoperacion") || h.includes("id_operacion")) {
+                opIdCols.push(c);
+            }
+        }
+
+        for (let r = 1; r < data.length; r++) {
+            const row = data[r];
+            for (let i = 0; i < opIdCols.length; i++) {
+                const idx = opIdCols[i];
+                const cellVal = row[idx];
+                if (cellVal && String(cellVal).trim() === cleanOpId) {
+                    return { rowIndex: r + 1, rowValues: row, colIndex: idx + 1 };
+                }
+            }
+        }
+
+        // Fallback for old tagged collaborator format (excluyendo columna vin)
+        const tag = `[${cleanOpId}]`;
+        for (let r = 1; r < data.length; r++) {
+            const row = data[r];
+            for (let c = 0; c < row.length; c++) {
+                if (c + 1 === COLS_CORTES.vin) continue;
+                const cell = row[c];
+                if (cell && typeof cell === "string" && (cell.indexOf(tag) !== -1 || cell === cleanOpId)) {
+                    return { rowIndex: r + 1, rowValues: row, colIndex: c + 1 };
+                }
             }
         }
     }
 
-    // Fallback for old tagged collaborator format
-    const tag = `[${opId}]`;
-    for (let r = 1; r < data.length; r++) {
-        const row = data[r];
-        for (let c = 0; c < row.length; c++) {
-            const cell = row[c];
-            if (cell && typeof cell === 'string' && (cell.indexOf(tag) !== -1 || cell === opId)) {
-                return { rowIndex: r + 1, rowValues: row, colIndex: c + 1 };
-            }
-        }
-    }
     return null;
 }
 

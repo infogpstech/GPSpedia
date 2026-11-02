@@ -224,38 +224,85 @@ export function parseEquipmentVersions(rawStr) {
 
 export function parseVinCollection(rawVin) {
     if (!rawVin) return [];
+    let list = [];
     if (Array.isArray(rawVin)) {
-        return rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+        list = rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    } else {
+        const str = String(rawVin).trim();
+        if (str.startsWith("[") && str.endsWith("]")) {
+            try {
+                const parsed = JSON.parse(str);
+                if (Array.isArray(parsed)) {
+                    list = parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                }
+            } catch (e) {}
+        }
+        if (list.length === 0) {
+            list = str
+                .split(/[,/\\\\]+/)
+                .map(v => v.trim().toUpperCase())
+                .filter(Boolean);
+        }
     }
-    const str = String(rawVin).trim();
-    if (str.startsWith("[") && str.endsWith("]")) {
-        try {
-            const parsed = JSON.parse(str);
-            if (Array.isArray(parsed)) {
-                return parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
-            }
-        } catch (e) {}
-    }
-    return str
-        .split(/[,/\\\\]+/)
-        .map(v => v.trim().toUpperCase())
-        .filter(Boolean);
+    // Filtrar estrictamente cualquier ID de operación de idempotencia ("OP-...") o tokens no válidos
+    return list.filter(v => v && !v.startsWith("OP-") && !v.startsWith("OP_") && !v.includes("IDOPERACION"));
 }
 
 export function mapVersionsWithVins(versionesStr, vinRaw) {
     const versions = parseEquipmentVersions(versionesStr);
-    const vins = parseVinCollection(vinRaw);
+    const rawVins = parseVinCollection(vinRaw);
 
-    if (versions.length === 0 && vins.length === 0) return [];
-    if (versions.length === 0) {
-        return vins.map(vin => ({ version: "", vin }));
+    // Regla de negocio: Si el modelo solo tiene una versión de equipamiento (o ninguna),
+    // no debe mostrar ningún número VIN distintivo en el modal.
+    // Solo si el modelo tiene más de 1 versión de equipamiento, se extraen 4 dígitos consecutivos distintivos.
+    if (versions.length <= 1) {
+        if (versions.length === 1) {
+            return [{ version: versions[0], vin: null }];
+        }
+        return [];
     }
+
+    // Formatear cada VIN ignorando los últimos 5 dígitos y extrayendo los 4 dígitos distintivos
+    const cleanedVins = rawVins.map(v => {
+        if (!v) return "";
+        let s = String(v).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (s.startsWith("OP")) return "";
+        // Ignorar los últimos 5 dígitos (numéricos de serie) si la longitud es mayor a 5
+        if (s.length > 5) {
+            s = s.substring(0, s.length - 5);
+        }
+        return s;
+    });
+
+    // Detectar el índice donde difieren las versiones de equipamiento
+    const nonNullVins = cleanedVins.filter(Boolean);
+    let diffIdx = -1;
+    if (nonNullVins.length >= 2) {
+        const minLen = Math.min(...nonNullVins.map(v => v.length));
+        for (let i = 0; i < minLen; i++) {
+            const setAtI = new Set(nonNullVins.map(v => v[i]));
+            if (setAtI.size > 1) {
+                diffIdx = i;
+                break;
+            }
+        }
+    }
+
+    const clean4DigitVins = cleanedVins.map(s => {
+        if (!s) return null;
+        if (s.length <= 4) return s;
+        if (diffIdx !== -1) {
+            const start = Math.max(0, Math.min(diffIdx, s.length - 4));
+            return s.substring(start, start + 4);
+        }
+        return s.slice(-4);
+    });
 
     // Cada versión se relaciona individualmente con su correspondiente VIN si existe
     return versions.map((version, index) => {
         return {
             version,
-            vin: vins[index] || null
+            vin: clean4DigitVins[index] || null
         };
     });
 }
@@ -1809,14 +1856,14 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     cont.appendChild(subHeaderDiv);
 
     /* TAREA 1: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN */
-    if (activeItem && activeItem.vin) {
+    const itemVersions = parseEquipmentVersions(activeItem ? activeItem.versionesAplicables : '');
+    if (activeItem && activeItem.vin && itemVersions.length > 1) {
         try {
             const catalogData = getState().catalogData;
             if (vinDifferentialEngine.signatures.size === 0 && catalogData && catalogData.cortes) {
                 vinDifferentialEngine.calculateSignatures(catalogData.cortes);
             }
-            const versionsList = (activeItem.versionesAplicables || '').split(/[,/\\]+/).map(v => v.trim()).filter(Boolean);
-            const mainVersion = versionsList[0] || '';
+            const mainVersion = itemVersions[0] || '';
             const classKey = getClassificationKey(activeItem, mainVersion, 5);
             const sig = vinDifferentialEngine.signatures.get(classKey);
 
@@ -3758,7 +3805,9 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
             const label = document.createElement('label');
             label.textContent = `Detalle de ${title}:`;
             label.style.cssText = "display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85em;";
+            const aperturaTargetId = `edit-apertura-${vehicleId}`;
             const textarea = document.createElement('textarea');
+            textarea.id = aperturaTargetId;
             textarea.rows = 3;
             textarea.value = currentValue || "";
             textarea.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;";
@@ -3769,6 +3818,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
                 }
             };
             panel.appendChild(label);
+            panel.appendChild(createRichTextToolbar(aperturaTargetId));
             panel.appendChild(textarea);
 
             const imgContainer = document.createElement('div');
@@ -3793,7 +3843,9 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
                 fieldLabel.textContent = `${field.label}:`;
                 fieldLabel.style.cssText = "display: block; font-weight: bold; margin-top: 15px; margin-bottom: 5px; font-size: 0.85em;";
 
+                const cableTargetId = `edit-cable-${field.textKey}-${vehicleId}`;
                 const textarea = document.createElement('textarea');
+                textarea.id = cableTargetId;
                 textarea.rows = 2;
                 textarea.value = editedItemBuffer[field.textKey] || "";
                 textarea.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;";
@@ -3804,6 +3856,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
                     }
                 };
                 panel.appendChild(fieldLabel);
+                panel.appendChild(createRichTextToolbar(cableTargetId));
                 panel.appendChild(textarea);
 
                 const imgContainer = document.createElement('div');
@@ -4799,6 +4852,10 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             </div>
             <div class="form-group">
                 <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('sug-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <input type="color" onchange="applyRichColor('sug-detalles', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                </div>
                 <textarea id="sug-detalles" rows="3" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:8px;">Enviar Sugerencia</button>
@@ -4906,15 +4963,19 @@ export function openExpandMenuModal(item) {
         if (!rawVin) return [];
         const str = String(rawVin).trim();
         if (!str) return [];
+        let list = [];
         if (str.startsWith("[") && str.endsWith("]")) {
             try {
                 const arr = JSON.parse(str);
                 if (Array.isArray(arr)) {
-                    return arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                    list = arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
                 }
             } catch (e) {}
         }
-        return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+        if (list.length === 0) {
+            list = str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+        }
+        return list.filter(v => v && !v.startsWith("OP-") && !v.startsWith("OP_") && !v.includes("IDOPERACION"));
     }
 
     const maxVinAllowed = countEquipmentVersionsFrontend(item.versionesAplicables);
@@ -5071,7 +5132,32 @@ export function openAddVinModal(item) {
     };
 }
 
-/* TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
+/* TAREA 1.2: BARRA DE ENRIQUECIMIENTO DE TEXTO EN LOS FORMULARIOS */
+export function createRichTextToolbar(targetId) {
+    const toolbar = document.createElement("div");
+    toolbar.className = "rich-editor-toolbar";
+    toolbar.style.cssText = "display:flex; align-items:center; gap:6px; margin-bottom:4px;";
+
+    const boldBtn = document.createElement("button");
+    boldBtn.type = "button";
+    boldBtn.className = "btn btn-secondary btn-sm";
+    boldBtn.title = "Negrita";
+    boldBtn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:26px;";
+    boldBtn.innerHTML = "<strong>B</strong>";
+    boldBtn.onclick = () => window.applyRichFormat(targetId, "bold");
+
+    const colorPicker = document.createElement("input");
+    colorPicker.type = "color";
+    colorPicker.title = "Color de texto";
+    colorPicker.style.cssText = "width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;";
+    colorPicker.onchange = (e) => window.applyRichColor(targetId, e.target.value);
+
+    toolbar.appendChild(boldBtn);
+    toolbar.appendChild(colorPicker);
+    return toolbar;
+}
+
+/* TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN «+» / TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
 export function openAddCutForModelModal(item) {
     const existing = document.getElementById("add-cut-for-model-modal");
     if (existing) existing.remove();
@@ -5094,6 +5180,7 @@ export function openAddCutForModelModal(item) {
             <div class="form-group">
                 <label>Tipo de Corte</label>
                 <select id="add-cut-tipo" required>
+                    <option value="" selected disabled>Seleccione una opción</option>
                     <option value="Bomba de combustible">Bomba de combustible</option>
                     <option value="Ignición">Ignición</option>
                     <option value="Botón de encendido">Botón de encendido</option>
@@ -5102,10 +5189,16 @@ export function openAddCutForModelModal(item) {
             </div>
             <div class="form-group">
                 <label>Configuración Relay</label>
-                <input type="text" id="add-cut-relay" placeholder="Ej. 5 pines NC">
+                <select id="add-cut-relay" required>
+                    <option value="" selected disabled>Seleccione una opción</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>Ubicación y Detalles del Corte</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-cut-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <input type="color" onchange="applyRichColor('add-cut-detalles', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                </div>
                 <textarea id="add-cut-detalles" rows="3" placeholder="Detalles de ubicación y conexión..." required></textarea>
             </div>
             <div class="form-group">
@@ -5126,6 +5219,58 @@ export function openAddCutForModelModal(item) {
 
     modal.appendChild(content);
     document.body.appendChild(modal);
+
+    const tipoSelect = content.querySelector("#add-cut-tipo");
+    const relaySelect = content.querySelector("#add-cut-relay");
+
+    const populateRelayOptions = (options) => {
+        relaySelect.innerHTML = '<option value="" selected disabled>Seleccione una opción</option>';
+        const list = Array.isArray(options) && options.length > 0
+            ? options
+            : ["Corte a ignición", "5 pines NC", "5 pines NA", "Sin relay"];
+
+        list.forEach(opt => {
+            const el = document.createElement("option");
+            el.value = opt;
+            el.textContent = opt;
+            relaySelect.appendChild(el);
+        });
+        if (!relaySelect.value) {
+            relaySelect.value = "";
+        }
+    };
+
+    // Cargar opciones desde la configuración de Spreadsheet
+    (async () => {
+        try {
+            const dropdowns = await precargarDropdownOptions();
+            if (dropdowns && dropdowns.configRelay) {
+                populateRelayOptions(dropdowns.configRelay, "Corte a ignición");
+            } else {
+                populateRelayOptions([]);
+            }
+        } catch (e) {
+            console.error("Error cargando opciones de relay para modal:", e);
+            populateRelayOptions([]);
+        }
+
+        // Aplicar estado según tipo inicial
+        syncNoRecomendadoState();
+    })();
+
+    function syncNoRecomendadoState() {
+        const isNoRec = isNoRecomendadoValue(tipoSelect.value);
+        if (isNoRec) {
+            relaySelect.disabled = true;
+            relaySelect.required = false;
+            relaySelect.value = "";
+        } else {
+            relaySelect.disabled = false;
+            relaySelect.required = true;
+        }
+    }
+
+    tipoSelect.onchange = syncNoRecomendadoState;
 
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
 
@@ -5200,6 +5345,10 @@ export function openAddAperturaModal(item) {
         <form id="add-apertura-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Detalles de la Apertura</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-apertura-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <input type="color" onchange="applyRichColor('add-apertura-detalles', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                </div>
                 <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
             </div>
             <div class="form-group">
@@ -5273,6 +5422,10 @@ export function openAddFeedModal(item) {
         <form id="add-feed-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Detalles de la Alimentación</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-feed-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <input type="color" onchange="applyRichColor('add-feed-detalles', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                </div>
                 <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
             </div>
             <div class="form-group">
@@ -5433,20 +5586,11 @@ export async function renderPysSection() {
         cont.appendChild(grid);
     };
 
-    // Fast-path: Si ya existen datos en caché/estado, renderizar inmediatamente (0ms)
+    // TAREA 1.4: Retirar la animación de carga de la sección «Problemas / Soluciones»
+    // Se presenta la sección inmediatamente con su estructura y tarjeta de creación (+) igual que Tutoriales y Relay
     const cachedData = getState().pysData;
     const hasCache = Array.isArray(cachedData) && cachedData.length > 0;
-    if (hasCache) {
-        renderGridWithItems(cachedData);
-    } else {
-        cont.innerHTML = `
-            <h4>Problemas y Soluciones</h4>
-            <div id="pys-loading" style="text-align: center; padding: 40px; color: var(--text-color);">
-                <i class="fa-solid fa-spinner fa-spin" style="font-size: 2rem; color: var(--primary-color, #007bff); margin-bottom: 12px;"></i>
-                <p style="margin: 0;">Cargando problemas y soluciones...</p>
-            </div>
-        `;
-    }
+    renderGridWithItems(hasCache ? cachedData : []);
 
     // Sincronización en segundo plano con el backend
     try {
@@ -5519,6 +5663,10 @@ export function openAddProblemModal() {
             </div>
             <div class="form-group">
                 <label>Detalle del Problema (Máx 200 caracteres)</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-detalle', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <input type="color" onchange="applyRichColor('pys-detalle', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                </div>
                 <textarea id="pys-detalle" maxlength="200" rows="3" required placeholder="Describe el problema..."></textarea>
             </div>
             <div class="form-group" style="display:flex; align-items:center; gap:8px;">
@@ -5527,6 +5675,10 @@ export function openAddProblemModal() {
             </div>
             <div class="form-group" id="grp-solucion">
                 <label>Solución (Máx 200 caracteres)</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-solucion', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <input type="color" onchange="applyRichColor('pys-solucion', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                </div>
                 <textarea id="pys-solucion" maxlength="200" rows="3" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
