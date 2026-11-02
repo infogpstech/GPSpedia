@@ -90,55 +90,51 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
     }
 
-    /* TAREA 4 (11.8): INTEGRACIÓN CON LA BARRA DE BÚSQUEDA GLOBAL POR VIN */
+    /* TAREA 4.1: INTEGRACIÓN CON LA BARRA DE BÚSQUEDA GLOBAL POR VIN Y DIFERENCIACIÓN DE VERSIONES */
     // --- LÓGICA DE DETECCIÓN Y BÚSQUEDA POR VIN ---
     const cleanVinSearch = busqueda.toUpperCase().replace(/[^A-Z0-9]/g, "");
     let isVinQuery = false;
     let targetVinPrefix = "";
-    if (cleanVinSearch.length >= 6 && cleanVinSearch.length <= 18) {
-        // Excluir los últimos 5 caracteres
-        targetVinPrefix = cleanVinSearch.length > 5 ? cleanVinSearch.substring(0, cleanVinSearch.length - 5) : "";
-        if (targetVinPrefix) {
-            const vinMatchExists = cortes.some(c => {
-                const vins = parseVinCollectionNavigation(c.vin);
-                return vins.includes(targetVinPrefix);
-            });
-            if (vinMatchExists) {
-                isVinQuery = true;
-            } else {
-                // Hook motor de análisis diferencial de VIN
-                try {
-                    if (vinDifferentialEngine.signatures.size === 0 && cortes) {
-                        vinDifferentialEngine.calculateSignatures(cortes);
-                    }
-                    const diffMatch = vinDifferentialEngine.queryVehicle({ vin: cleanVinSearch });
-                    if (diffMatch && diffMatch.match && (diffMatch.identificationType === 'completa' || diffMatch.identificationType === 'parcial')) {
-                        const matchedVehicle = cortes.find(c =>
-                            c.marca.toUpperCase() === diffMatch.match.marca.toUpperCase() &&
-                            c.modelo.toUpperCase() === diffMatch.match.modelo.toUpperCase()
-                        );
-                        if (matchedVehicle) {
-                            isVinQuery = true;
-                            targetVinPrefix = matchedVehicle.vin ? (Array.isArray(matchedVehicle.vin) ? matchedVehicle.vin[0] : String(matchedVehicle.vin).replace(/[^A-Z0-9]/g, '')) : '';
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error en búsqueda de motor diferencial:', e);
+    let identifiedExactVersion = null;
+    let matchedVehicleById = null;
+
+    if (cleanVinSearch.length >= 5 && cleanVinSearch.length <= 25) {
+        // 1. Comprobación directa con VIN completo o prefijo sin serial
+        const vinExactMatch = cortes.find(c => {
+            const vins = parseVinCollectionNavigation(c.vin);
+            return vins.some(v => v === cleanVinSearch || cleanVinSearch.startsWith(v) || v.startsWith(cleanVinSearch));
+        });
+
+        if (vinExactMatch) {
+            isVinQuery = true;
+            matchedVehicleById = vinExactMatch.id;
+        }
+
+        // 2. Si no hubo coincidencia directa exacta, o para modelos con múltiples versiones, consultar el motor diferencial
+        try {
+            if (vinDifferentialEngine.signatures.size === 0 && cortes) {
+                vinDifferentialEngine.calculateSignatures(cortes);
+            }
+            const diffMatch = vinDifferentialEngine.queryVehicle({ vin: cleanVinSearch });
+            if (diffMatch && diffMatch.match && (diffMatch.identificationType === 'completa' || diffMatch.identificationType === 'parcial')) {
+                const matchedVehicle = cortes.find(c =>
+                    c.marca.toUpperCase() === diffMatch.match.marca.toUpperCase() &&
+                    c.modelo.toUpperCase() === diffMatch.match.modelo.toUpperCase()
+                );
+                if (matchedVehicle) {
+                    isVinQuery = true;
+                    matchedVehicleById = matchedVehicle.id;
+                    identifiedExactVersion = diffMatch.match.version;
                 }
             }
+        } catch (e) {
+            console.error('Error en búsqueda de motor diferencial:', e);
         }
     }
 
-    // --- LÓGICA DE FILTRADO Y SELECTORES DE FILTROS RÁPIDOS ---
-    const catSelect = document.getElementById('filter-category-select');
-    const yearSelect = document.getElementById('filter-year-select');
-
-    const selectedCategory = catSelect ? catSelect.value.toLowerCase().trim() : '';
-    const selectedYearStr = yearSelect ? yearSelect.value.trim() : '';
-    const selectedYearNum = selectedYearStr ? parseInt(selectedYearStr, 10) : null;
-
+    // --- TAREA 1.6: BÚSQUEDA DIRECTA SIN FILTROS RÁPIDOS ---
     const yearSearchMatch = busqueda.match(/\b\d{4}\b/);
-    let yearSearchTerm = yearSearchMatch ? parseInt(yearSearchMatch[0], 10) : selectedYearNum;
+    let yearSearchTerm = yearSearchMatch ? parseInt(yearSearchMatch[0], 10) : null;
 
     if (yearSearchTerm && (yearSearchTerm < 1900 || yearSearchTerm > 2100)) {
         yearSearchTerm = null;
@@ -164,13 +160,14 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
 
     // 1. Search in Cortes
     const cortesMatches = cortes.filter(item => {
-        if (selectedCategory) {
-            const cat = (item.categoria || '').toLowerCase().trim();
-            if (!cat.includes(selectedCategory) && !selectedCategory.includes(cat)) return false;
-        }
-        if (isVinQuery) {
-            const vins = parseVinCollectionNavigation(item.vin);
-            return vins.includes(targetVinPrefix);
+        // TAREA 1.6: Filtros rápidos de categoría retirados
+        if (isVinQuery && matchedVehicleById) {
+            if (item.id !== matchedVehicleById) return false;
+            if (identifiedExactVersion) {
+                // Adjuntar versión identificada para enfocar detalles técnicos
+                item._identifiedVersion = identifiedExactVersion;
+            }
+            return true;
         }
         if (yearSearchTerm) {
             const anoDesde = parseInt(item.anoDesde, 10);

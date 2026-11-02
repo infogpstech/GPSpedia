@@ -972,6 +972,64 @@ body.search-active .container {
     display: flex !important;
 }
 
+/* --- BOTONES DE AGREGAR INFORMACIÓN Y OPCIONES DEL MENÚ (+) DEL MODAL DE DETALLE --- */
+.btn-expand-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px !important;
+    font-size: 0.9rem !important;
+    border-radius: 6px !important;
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-expand-option:hover {
+    transform: translateY(-1px);
+}
+
+.modal-btn-compact-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.btn-modal-action-compact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 18px !important;
+    font-size: 0.88rem !important;
+    font-weight: 600;
+    border-radius: 6px !important;
+    cursor: pointer;
+    width: auto !important;
+    min-width: 120px;
+    margin: 0 !important;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-modal-action-compact:hover {
+    transform: translateY(-1px);
+}
+
+@media (max-width: 600px) {
+    .modal-btn-compact-container {
+        width: 100%;
+    }
+    .modal-btn-compact-container .btn-modal-action-compact {
+        width: 100% !important;
+    }
+}
+
 #detalleCompleto::-webkit-scrollbar {
     display: none;
 }
@@ -2174,4 +2232,118 @@ body.dark-mode .terms-agreement-logo {
     .cable-carousel-btn {
         display: none !important;
     }
+}
+
+
+/* ==========================================================================
+   TAREA 2.6 & TAREA 2.3: ESTILOS UNIFICADOS Y RESPONSIVOS PARA TODOS LOS MODALES CON FORMULARIOS
+   ========================================================================== */
+.info-modal-content {
+    box-sizing: border-box !important;
+    overflow-x: hidden !important;
+    max-width: 650px;
+    width: 90%;
+    border-radius: 12px;
+}
+
+.info-modal-content form {
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.info-modal-content .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.info-modal-content input,
+.info-modal-content select,
+.info-modal-content textarea {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+}
+
+@media (max-width: 600px) {
+    .info-modal-content {
+        width: 95% !important;
+        max-width: 95% !important;
+        padding: 16px 12px !important;
+        margin: 10px auto !important;
+    }
+    .info-modal-content form button[type="submit"],
+    .info-modal-content form .btn-primary {
+        width: 100% !important;
+    }
+}
+
+
+.info-modal-content input[type="checkbox"],
+.info-modal-content input[type="radio"] {
+    width: 18px !important;
+    height: 18px !important;
+    margin: 0 !important;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.info-modal-content input[type="color"] {
+    width: 28px !important;
+    height: 28px !important;
+    padding: 0 !important;
+    flex-shrink: 0;
+}
+
+.info-modal-content .form-group.checkbox-group,
+.info-modal-content .form-group[style*="align-items:center"] {
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 8px !important;
+}
+
+.info-modal-content .rich-editor-toolbar button {
+    width: auto !important;
+}
+
+
+/* Selector de color cuadrado con cuadrícula de 4 colores */
+.rich-color-picker-box {
+    width: 26px !important;
+    height: 26px !important;
+    min-width: 26px !important;
+    max-width: 26px !important;
+    border-radius: 4px;
+    border: 1px solid #ccc;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    display: inline-block;
+    vertical-align: middle;
+    box-sizing: border-box;
+}
+
+.rich-color-picker-box div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    width: 100%;
+    height: 100%;
+}
+
+.rich-color-picker-box input[type="color"] {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100% !important;
+    height: 100% !important;
+    opacity: 0 !important;
+    cursor: pointer;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
 }

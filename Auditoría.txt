@@ -777,3 +777,265 @@ Archivo intervenido: Services/write.js, Services/admin.js, ui.js, style.css
      * Logo principal (.app-logo) y título (h1.app-title):
        Se normaliza y refina la sombra para que use drop-shadow y text-shadow en tonos grises elegantes y nítidos acordes a la identidad visual del catálogo, tanto en modo claro como oscuro, sin tocar el carrusel de logos de marcas (.card.brand-logo-item).
 ================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 1.6 Y TAREA 1.7
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivos intervenidos: index.html, main.js, navigation.js, ui.js
+
+1. Diagnóstico de TAREA 1.6 (Retiro total de filtros rápidos de búsqueda):
+   - Elementos a retirar en index.html:
+     * Botón <button id="btn-toggle-filters">
+     * Contenedor <div id="catalog-filters-bar"> junto con <select id="filter-category-select"> y <select id="filter-year-select">.
+   - En main.js:
+     * Retirar variables toggleFiltersBtn, filtersBar, chevronIcon, catSelect, yearSelect y sus event listeners.
+     * En searchInput focus, retirar la manipulación de toggleFiltersBtn.style.display.
+   - En navigation.js:
+     * En filtrarContenido(), suprimir la lectura y filtrado dependiente de catSelect y yearSelect.
+     * La búsqueda por año o modelo se ejecutará limpiamente a partir de los términos ingresados por el usuario.
+
+2. Diagnóstico de TAREA 1.7 (Barra de enriquecimiento de texto del Inbox):
+   - En ui.js, función renderInboxDetail():
+     * El contenedor de respuesta tiene un <textarea id="inbox-reply-textarea"> simple.
+     * Implementar createInboxRichTextToolbar('inbox-reply-textarea') con soporte para:
+       - Negrita (strong / bold)
+       - Cursiva (em / italic)
+       - Subrayado (u / underline)
+       - Tachado (s / strike)
+       - Selector de color de texto (color picker)
+       - Selector de fuente tipográfica (font family dropdown)
+       - Listas ordenadas (<ol><li>) y no ordenadas (<ul><li>)
+     * Implementar un sanitizador HTML seguro (sanitizeHtml) que preserve las etiquetas de formato seguro (strong, em, u, s, span, ol, ul, li, br, p) y descarte scripts o atributos peligrosos (onclick, onerror, javascript:).
+     * En renderInboxDetail(), renderizar tanto el contenido del mensaje como las respuestas usando el sanitizador HTML en lugar de <pre> texto plano, garantizando persistencia y formato visual adecuado.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: RECTIFICACIÓN DEL FLUJO DE INGRESO DE VIN EN MODAL DE DETALLE (BOTÓN +)
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivo intervenido: ui.js (función openAddVinModal)
+
+1. Diagnóstico del requerimiento:
+   - En el modal de detalle del vehículo, cuando el usuario hace clic en el botón '+' y elige 'Agregar VIN':
+     * Se debe verificar si el modelo tiene registradas más de una versión de equipamiento en la misma fila (analizando item.versionesAplicables mediante parseEquipmentVersions()).
+     * Si versions.length > 1:
+       - Se debe renderizar un dropselect antes del campo de entrada del VIN con la etiqueta "Versión de Equipamiento" (o Trim Level).
+       - La opción inicial deshabilitada y seleccionada por defecto debe decir "Seleccionar Trim Level" (<option value="" selected disabled>Seleccionar Trim Level</option>).
+       - El select debe ser 'required' para obligar a asociar el VIN a la versión de equipamiento correspondiente.
+     * Si versions.length <= 1 (una sola versión o ninguna):
+       - NO debe mostrarse el dropselect de Trim Level.
+   - Restricción obligatoria:
+     * No alterar la forma en que se muestran las versiones de equipamiento ni los 4 dígitos distintivos en el modal de detalle del catálogo.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 1.8 Y RECTIFICACIÓN COMPLETA DE VINCULACIÓN VIN-TRIM
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivos intervenidos: ui.js, Services/write.js
+
+1. Diagnóstico de la Especificación Original 1.8:
+   - "1.8. Reejecución de las tareas afectadas y pruebas de regresión":
+     Identificar implementaciones afectadas, validar consistencia funcional integral (interfaz, formularios, servicios, integración y ausencia de regresiones).
+   - Se completó la vinculación de datos end-to-end para el flujo de VIN por Trim Level:
+     * En ui.js (`openAddVinModal`), `#modal-vin-trim` captura el Trim Level seleccionado (`selectedTrim`).
+     * En el listener `form.onsubmit`, se envía `{ vehicleId, vin: vinVal, trimLevel: selectedTrim }` al microservicio `addVinToVehicle`.
+     * En Services/write.js (`handleAddVinToVehicle`), se recibe `trimLevel` y se indexa el VIN en la posición exacta correspondiente a esa versión de equipamiento en la colección JSON de la celda de la columna 43 `vin`.
+     * Se preservó el filtrado de identificadores de idempotencia, y la regla de no mostrar VINs en frontend si el modelo posee 1 o 0 versiones registradas.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 2.1, TAREA 2.2 Y TAREA 2.3
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivos intervenidos: ui.js, style.css
+
+1. Diagnóstico de TAREA 2.1 (Botón para eliminar mensajes del Inbox):
+   - En ui.js (línea ~3840 en renderInboxDetail):
+     * El botón `#inbox-delete-btn` invoca `deleteFeedbackItem(item.id, item.type)` y a continuación llama a `mostrarNotificacion("Mensaje eliminado con éxito", "success")`.
+     * En la línea 4464 de ui.js está declarada la función unificada:
+       `export function mostrarNotificacion(message, type = 'info') { return showGlobalNotification(message, type); }`
+     * En caso de error, el bloque `catch (error)` atrapa la excepción, muestra `showGlobalError` y restablece el botón con su contenido e interactividad original, evitando la eliminación visual falsa.
+     * Se verifica que la función está disponible en el ámbito léxico del módulo y vinculada a `showGlobalNotification`.
+
+2. Diagnóstico de TAREA 2.2 (Ficha técnica de instalación en una sola página Carta vertical):
+   - En ui.js (`exportVehiclePrintSheet`):
+     * Contiene `@page { size: letter portrait; margin: 10mm; }`.
+     * Incorpora todos los cortes disponibles (1..3), cables de alimentación (1..3), apertura de puertas / seguros, nota técnica importante y cabecera con metadatos del vehículo e imagen normalizada con `getImageUrl(..., IMG_SIZE_LARGE)`.
+     * Se revisan tamaños de tipografía (10.5px base, 11px encabezados de tarjetas), miniaturas de imágenes (75x55px), y `page-break-inside: avoid;` en `.tech-item-card` y `.tech-notes` para evitar saltos de página accidentales y garantizar que entre en 1 hoja.
+
+3. Diagnóstico de TAREA 2.3 (Estilos uniformes en modales con formularios):
+   - En style.css:
+     * Reglas en `.info-modal-content form`, `.modal form`, labels, inputs, selects, textareas y botones de acción.
+     * En móvil (`@media (max-width: 600px)`): `.info-modal-content` tiene `width: 95% !important; padding: 18px 14px !important;` y botones al 100% para evitar desbordamientos horizontales.
+     * Se refuerza `overflow-x: hidden;` y `max-height: 90vh;` en `.info-modal-content` para un comportamiento pulcro y sin desbordes.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: SELECTOR DE COLOR EN CUADRÍCULA Y CASILLA TESTIGO
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivos intervenidos: ui.js, style.css
+
+1. Diagnóstico del selector de color en barra de enriquecimiento:
+   - Los navegadores renderizan <input type="color"> con márgenes, bordes internos y aspecto horizontal alargado si no se encapsula.
+   - Solución:
+     Crear un componente estandarizado .rich-color-btn cuadrado (26x26px, igual al botón de negrita "B"), con un grid interno 2x2 que muestra 4 colores (rojo #ff4d4f, azul #1890ff, verde #52c41a, amarillo #faad14) y un input tipo color superpuesto con opacidad 0 y posición absoluta al 100%, de forma que al hacer clic se abra el selector de color nativo preservando total funcionalidad.
+
+2. Diagnóstico de la casilla de testigo del motor:
+   - En openAddCutForModelModal, el checkbox <input type="checkbox" id="add-cut-testigo"> aparecía a la izquierda o arriba del texto "Este corte activa el testigo del motor".
+   - Se modifica el orden para ubicar la etiqueta a la izquierda y el checkbox a la derecha con display: flex; justify-content: space-between; align-items: center;.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: BLOQUE 7 (REDISTRIBUCIÓN Y CONTENIDO DE LA FICHA TÉCNICA)
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivo intervenido: ui.js (función exportVehiclePrintSheet)
+
+1. Diagnóstico del estado actual y requerimientos del Bloque 7:
+   - Encabezado:
+     * Antes: Decía "GPSpedia | Ficha Técnica Oficial" y en la barra superior "Listo para imprimir".
+     * Ahora: Debe decir "GPSpedia", ubicar el logo del proyecto a la derecha de "GPSpedia", y usar exclusivamente "Ficha técnica" (eliminando "Oficial" y "Listo para imprimir").
+   - Distribución y dimensiones de imágenes:
+     * Disposición vertical del contenido en lugar de columnas comprimidas que dejaban la información en media hoja.
+     * La imagen principal del vehículo y la del testigo conservan sus dimensiones.
+     * Las imágenes técnicas (cortes, cables, apertura) se muestran ampliadas y completas (object-fit: contain; max-height: 150px) sin recortar ni deformar orientaciones verticales ni horizontales.
+   - Retiro de información innecesaria:
+     * Se suprimen exclusivamente de la ficha de impresión: nombres de colaboradores, conteo de utilidad y reportes de errores. Se conservan intactos en el sistema y Spreadsheet.
+   - Testigo de motor:
+     * El aviso "Este corte activa el testigo de motor" se ubica en la parte inferior del contenedor del corte, debajo de la imagen asociada, con tipografía secundaria.
+   - Código QR para vídeo guía de desarme:
+     * Si el modelo tiene vídeo (item.Video o item.videoGuiaDesarmeUrl), se genera un código QR (https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=...) que enlaza directamente al vídeo en YouTube.
+     * Prohibido mostrar la URL como texto visible; el enlace queda contenido exclusivamente dentro del QR.
+     * Si no tiene vídeo, no se muestra el QR ni se reserva espacio vacío.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 3.1 Y AJUSTES DE USUARIO (LÍMITES CARACTERES Y ALTURA FICHA)
+Fecha: 2026-11-02
+Archivo intervenido: ui.js
+
+1. Límites de caracteres solicitados por el usuario:
+   - Título: Máximo 30 caracteres (anteriormente 15 o sin límite estricto).
+     * En PyS: #pys-titulo maxlength="30" (etiqueta: "Título del Problema (Máx 30 caracteres)").
+     * En Tutoriales: #tut-tema maxlength="30" (etiqueta: "Tema / Título (Máx 30 caracteres)").
+   - Detalles / Descripción: Máximo 700 caracteres (anteriormente 200 o sin límite).
+     * En PyS: #pys-detalle maxlength="700" (etiqueta: "Detalle del Problema (Máx 700 caracteres)").
+     * En PyS: #pys-solucion maxlength="700" (etiqueta: "Solución (Máx 700 caracteres)").
+     * En Tutoriales: #tut-desc maxlength="700" (etiqueta: "Descripción / Detalles (Máx 700 caracteres)").
+
+2. Distribución y altura de la Ficha Técnica (exportVehiclePrintSheet):
+   - Se ajusta la escala vertical para que los bloques y tarjetas aprovechen de forma armónica la altura de una página Letter portrait (10mm márgenes), incrementando paddings y alturas máximas de imágenes técnicas a 180px para evitar que el contenido quede condensado en la mitad superior de la hoja.
+
+3. Tarea 3.1: Relación entre modelos y problemas y acordeón «Posibles problemas»:
+   - Relación por ID único del modelo (no por nombre visible).
+   - 1 problema: tarjeta individual.
+   - 2 o más problemas: carrusel horizontal navegable.
+   - 0 problemas: no mostrar acordeón vacío.
+   - Tarjetas cumplen el estándar visual .card, .card-img-top, .overlay.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: OPTIMIZACIÓN TABLA Y MAXIMIZACIÓN IMÁGENES (FICHA TÉCNICA)
+Fecha: 2026-11-02
+Archivo intervenido: ui.js
+
+1. getImageUrl:
+   - Añadido soporte para Data URLs (data:image/...) y Blob URLs para que imágenes en formato base64/SVG no caigan en placeholder.
+
+2. Tabla de Metadatos (.meta-table y .top-grid):
+   - .top-grid: gap reducido a 14px y margin-bottom a 14px.
+   - .vehicle-main-img img: max-height ajustado a 120px.
+   - .meta-table: font-size a 12px, line-height 1.25.
+   - .meta-table td: padding reducido drásticamente de 9px 14px a 4px 8px para eliminar desperdicio vertical.
+   - .meta-table td.label: width 22%.
+
+3. Maximización de Imágenes Técnicas (.tech-item-img-wrapper y .tech-detail-img):
+   - .tech-item-img-wrapper: max-width ampliado a 280px, max-height a 165px.
+   - .tech-detail-img: max-height ampliado a 155px con object-fit contain.
+   - .tech-grid gap a 12px, .tech-item-card padding a 12px 16px.
+   - Garantizado que todo el documento cabe exactamente en 1 página tamaño carta vertical.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 4.1 - MOTOR DE IDENTIFICACIÓN Y DIFERENCIACIÓN POR VIN
+Fecha: 2026-11-02
+Archivos intervenidos: VinDifferentialEngine.js, navigation.js, ui.js
+
+1. VinDifferentialEngine.js:
+   - Normalización de delimitadores en parseVersionsList (soporte para ',', '/', '\') con deduplicación insensible a mayúsculas/minúsculas.
+   - En buildSampleMatrix: implementación de filtro de selectividad; únicamente se indexan y analizan configuraciones de modelos con más de 1 versión de equipamiento (versionesAplicables.length > 1).
+   - En findMinimalCombination: aislamiento contextual por marca, modelo y generación. Descarte y penalización de los últimos 5 a 6 caracteres numéricos seriales (serialCutoff). Límite de fragmento visible displayFragment a un máximo de 4 caracteres.
+   - Integración con queryVehicle permitiendo resolución unívoca de versión de equipamiento sin imponer longitud fija rígida.
+
+2. navigation.js (filtrarContenido):
+   - Integración con VinDifferentialEngine.queryVehicle ante consultas de VIN completas o parciales.
+   - Si la consulta por VIN arroja coincidencia unívoca, se preserva el modelo exacto y se anota _identifiedVersion para visualización contextual.
+
+3. ui.js:
+   - Función parseEquipmentVersions: normaliza delimitadores (',', '/', '\') sin alterar datos del backend.
+   - mapVersionsWithVins: asocia cada versión con a lo sumo 4 dígitos distintivos del VIN sólo si el modelo posee más de una versión.
+   - En mostrarDetalleModal: renderizado en subtítulo con formato "VX (1A2B) / VL (1A2C)" con tipografía reducida (font-size: 0.82em) y separador único ' / '.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 10 Y TAREA 11 - VALIDACIÓN Y ARMONIZACIÓN DE PYS
+Fecha: 2026-11-02
+Archivos intervenidos: Services/feedback.js, ui.js
+
+1. Services/feedback.js:
+   - En handleAddProblem: Se sincronizaron las validaciones backend de longitud de caracteres para coincidir con las reglas y límites de 30 caracteres en título, 700 caracteres en descripción/detalle y 700 caracteres en solución.
+   - En handleAddSolution: Se elevó la validación de longitud de solución de 200 a 700 caracteres para permitir coherencia completa con el textarea enriquecido.
+
+2. ui.js:
+   - Se verificaron los flujos existentes de openAddProblemModal, openConfirmVehicleForPysModal, openPysDetailModal y renderPosiblesProblemasAccordion, confirmando la integración bidireccional por ID de vehículo y el aislamiento de datos no pertinentes en el modal de confirmación.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: CORRECCIÓN DE ESPACIOS LATERALES EN RESULTADOS DE BÚSQUEDA Y CONFIRMACIÓN DE VEHÍCULOS (PYS)
+Fecha: 2026-11-02
+Archivo intervenido: ui.js
+
+1. Línea ~5960 (Resultados de búsqueda en openAddProblemModal):
+   - Se añadió 'margin: 0; min-width: 36px; max-width: 36px; flex-shrink: 0;' en la etiqueta <img> para sobrescribir la regla general '.info-modal-content img { margin: 10px auto; }' que generaba márgenes automáticos laterales excesivos (~131px).
+   - Se ajustó el elemento <span> con 'flex: 1; margin: 0; line-height: 1.2;' y el contenedor con 'width: 100%; box-sizing: border-box;' para aprovechar todo el ancho disponible sin comprimir el texto descriptivo del modelo.
+
+2. Línea ~6075 (Resultados de búsqueda en openSearchVehicleForPysAssociationModal):
+   - Misma corrección estructural: 'margin: 0; min-width: 36px; max-width: 36px; flex-shrink: 0;' en <img> y 'flex: 1;' en <span> para consistencia en ambos flujos de vinculación.
+
+3. Línea ~6110 (Modal de confirmación openConfirmVehicleForPysModal):
+   - Se reestructuró el contenedor de la imagen a 'align-items: stretch; width: 100%;' con un wrapper de previsualización que mantiene 'margin: 0; width: 100%; display: block;' en la imagen, evitando centrado con márgenes que compriman la información técnica inferior.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: ASOCIACIÓN Y CREACIÓN DE VERSIONES DE EQUIPAMIENTO AL AGREGAR VIN
+Fecha: 2026-11-02
+Archivos intervenidos: ui.js, Services/write.js
+
+1. ui.js (Función openAddVinModal):
+   - Se incorporó soporte para vincular el VIN con versiones de equipamiento existentes o crear una nueva versión en caso de no existir o cuando el modelo no tenga versiones previas.
+   - Si el modelo posee versiones registradas (`versions.length > 0`): se renderiza un selector desplegable con las versiones disponibles más la opción '+ Crear nueva versión de equipamiento...'. Al seleccionar dicha opción, se expone dinámicamente un campo de entrada para especificar el nombre de la versión.
+   - Si el modelo no posee versiones registradas (`versions.length === 0`): se presenta directamente el campo de entrada para ingresar el nombre de la nueva versión de equipamiento.
+   - En el envío del formulario: se transmite el objeto payload con `selectedTrim` y `isNewTrim`.
+   - Tras el éxito de la respuesta del backend: se actualiza reactivamente `item.versionesAplicables`, se sincroniza el catálogo en memoria (`catalogData.cortes`), se recalculan las firmas de diferenciación selectiva por VIN (`VinDifferentialEngine.indexCatalog`) y se repinta el modal de detalles del vehículo.
+
+2. Services/write.js (Función handleAddVinToVehicle):
+   - Se agregó la recepción de `trimLevel` e `isNewTrim`.
+   - Si se especifica una versión de equipamiento nueva o no presente en `COLS_CORTES.versionesAplicables`, se formatea mediante delimitador estándar ' / ', se actualiza la celda en Google Spreadsheet sin alterar la marca de tiempo original y se devuelve `versionesAplicables` y `vinCollection` actualizados en la respuesta JSON.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: ESTILOS COMPACTOS PARA BOTONES DEL MENÚ (+) Y FORMULARIOS DE DETALLES
+Fecha: 2026-11-02
+Archivos intervenidos: style.css, ui.js
+
+1. style.css:
+   - Se agregaron las clases `.btn-expand-option`, `.modal-btn-compact-container` y `.btn-modal-action-compact`.
+   - `.btn-expand-option`: Permite desplegar las opciones del menú (+) con un padding reducido (8px 14px), bordes de 6px y tipografía 0.9rem con animación de hover fluida.
+   - `.modal-btn-compact-container`: Contenedor flexible alineado al extremo derecho (`justify-content: flex-end`) con ancho del 100% para posicionar los botones de acción sin estirarlos artificialmente a lo ancho en escritorio.
+   - `.btn-modal-action-compact`: Botón estilizado con padding de 7px 18px, fuente de 0.88rem, bordes de 6px, ícono integrado y ancho automático adaptable, garantizando ajuste al 100% en pantallas móviles (max-width: 600px).
+
+2. ui.js:
+   - En `openExpandMenuModal`: Se asignó `.btn-expand-option` a cada botón de opción (cortes, apertura, cables, vídeo, VIN).
+   - En `openAddVinModal`: Botón Guardar VIN encapsulado en `.modal-btn-compact-container` y estilizado con `.btn-modal-action-compact`.
+   - En `openAddCutForModelModal`: Botón Agregar Corte encapsulado y estilizado con `.btn-modal-action-compact`.
+   - En `openAddAperturaModal`: Botón Agregar Apertura encapsulado y estilizado con `.btn-modal-action-compact`.
+   - En `openAddFeedModal`: Botón Agregar Alimentación encapsulado y estilizado con `.btn-modal-action-compact`.
+   - En `openAddVideoModal`: Botón Agregar Vídeo encapsulado y estilizado con `.btn-modal-action-compact`.
+================================================================================

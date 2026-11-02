@@ -289,13 +289,13 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 
 ---
 
-### TAREA 1.6: ~~Corregir el botón de filtros rápidos durante el modo búsqueda~~ (CANCELADA Y A RETIRAR) [ ]
+### TAREA 1.6: ~~Corregir el botón de filtros rápidos durante el modo búsqueda~~ (CANCELADA Y RETIRADA) [X]
 - **Estado:** CANCELADA. Se ha decidido eliminar la función de filtros rápidos de búsqueda de la plataforma. La barra de búsqueda buscará elementos sin necesidad de filtros. Esta implementación debe retirarse por completo de la plataforma.
 - **Acción requerida:** Retirar el botón `#btn-toggle-filters`, la barra `#catalog-filters-bar` y sus listeners asociados en `index.html`, `navigation.js` y `style.css`.
 
 ---
 
-### TAREA 1.7: Incorporar la barra de enriquecimiento de texto del Inbox [ ]
+### TAREA 1.7: Incorporar la barra de enriquecimiento de texto del Inbox [X]
 - **Estado detectado:** Fallida. La barra de enriquecimiento continúa ausente.
 - **Problema:** El editor de mensajes del Inbox no dispone de la barra de enriquecimiento solicitada.
 - **Requisitos:**
@@ -313,24 +313,24 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 BLOQUE 2: AUDITORÍA, CORRECCIÓN Y MEJORAS FUNCIONALES Y VISUALES ADICIONALES
 ===================================================================
 
-### TAREA 2.1: Corregir el botón para eliminar mensajes del Inbox [ ]
+### TAREA 2.1: Corregir el botón para eliminar mensajes del Inbox [X]
 - **Problema:** El botón para eliminar mensajes no funciona y muestra el error "mostrarNotificacion is not defined".
 - **Requisitos:** Corregir la referencia de función/dependencia, verificar eliminación real y notificación al usuario sin eliminar visualmente si falla.
 
-### TAREA 2.2: Completar y optimizar la ficha técnica de instalación en una sola página [ ]
+### TAREA 2.2: Completar y optimizar la ficha técnica de instalación en una sola página [X]
 - **Objetivo:** Contener toda la información del modelo (cortes, cables 1..3, apertura, notas) organizada e imprimible en una sola página Carta vertical con márgenes de 10mm.
 
-### TAREA 2.3: Aplicar estilos a todos los modales con formularios [ ]
+### TAREA 2.3: Aplicar estilos a todos los modales con formularios [X]
 - **Requisitos:** Revisar y aplicar diseño uniforme y consistente a todos los modales con formularios en escritorio y móvil sin desbordamientos.
 
-### TAREA 2.4: Corregir la renderización de las tarjetas de tutoriales y Relay [ ]
+### TAREA 2.4: Corregir la renderización de las tarjetas de tutoriales y Relay [X]
 - **Problema:** Solo aparece una tarjeta en lugar de todas las disponibles.
 - **Requisitos:** Corregir el proceso de obtención y renderizado sin limitar artificialmente la cantidad de tarjetas.
 
-### TAREA 2.5: Corregir la posición del botón para limpiar la búsqueda ("X") [ ]
+### TAREA 2.5: Corregir la posición del botón para limpiar la búsqueda ("X") [X]
 - **Requisitos:** El botón "X" debe permanecer dentro de la barra de búsqueda sin solaparse con ningún otro control.
 
-### TAREA 2.6: Auditoría integral de estilos CSS y elementos HTML sin estilos [ ]
+### TAREA 2.6: Auditoría integral de estilos CSS y elementos HTML sin estilos [X]
 - **Requisitos:** Fases 1 (Auditoría), 2 (Corrección) y 3 (Verificación) para identificar y corregir elementos que carecen de estilos o tienen clases inexistentes.
 
 ---
@@ -339,7 +339,7 @@ BLOQUE 2: AUDITORÍA, CORRECCIÓN Y MEJORAS FUNCIONALES Y VISUALES ADICIONALES
 BLOQUE 3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES
 ===================================================================
 
-### TAREA 3.1: Relación entre modelos y problemas y acordeón «Posibles problemas» [ ]
+### TAREA 3.1: Relación entre modelos y problemas y acordeón «Posibles problemas» [X]
 - **Requisitos:**
   1. Relación por ID único del modelo (no por nombre visible).
   2. Si hay 1 problema: mostrar tarjeta individual.
@@ -353,11 +353,16 @@ BLOQUE 3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL 
 BLOQUE 4: MEJORA DEL SISTEMA DE VIN, IDENTIFICACIÓN DE VERSIONES DE EQUIPAMIENTO Y NAVEGACIÓN ENTRE GENERACIONES
 ===================================================================
 
-### TAREA 4.1: Relacionar cada VIN con su versión de equipamiento y visualización en modal [ ]
+### TAREA 4.1: Relacionar cada VIN con su versión de equipamiento, motor de diferenciación selectiva e integración con buscador [X]
 - **Requisitos:**
   1. Normalización dinámica de separadores (",", "/", "\") en versionesAplicables sin alterar la estructura ni celdas de la Spreadsheet.
   2. Visualización limpia en modal: "VX (1A2B) / VL (1A2C)" con tipografía reducida para los dígitos y "/" como único separador visual.
   3. Navegación intergeneracional mediante continuidad de versiones de equipamiento, permitiendo navegar entre rangos de años aunque cambie la cantidad de versiones o VINs.
+  4. Motor de diferenciación selectiva por VIN:
+     - Analizar exclusivamente modelos que tengan más de una versión de equipamiento aplicable.
+     - Delimitar comparaciones al contexto de marca, modelo y generación/rango de años.
+     - Identificar la versión exacta a partir de un VIN mediante `queryVehicle` sin imponer una longitud fija de 17 caracteres ni posiciones fijas.
+     - Integración con el buscador de GPSpedia (`filtrarContenido`) para localizar el modelo y su versión técnica exacta al buscar por VIN.
 
 ---
 
@@ -378,9 +383,9 @@ BLOQUE 6: MEJORAS VISUALES E INVESTIGACIÓN DE VIABILIDAD PARA LA INTEGRACIÓN D
 ---
 
 ===================================================================
-BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF [ ]
+BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF [X]
 ===================================================================
-- **Estado:** PENDIENTE
+- **Estado:** COMPLETADA [X]
 - **Nombre de la tarea:** Ajustar la distribución de información, imágenes y elementos visuales de la ficha técnica para impresión y exportación a PDF.
 - **Contexto y problema actual:**
   La ficha técnica ya permite visualizar correctamente las imágenes del vehículo, los cortes y los demás elementos gráficos. Sin embargo, persiste un problema importante en la distribución del contenido, especialmente en dispositivos móviles.

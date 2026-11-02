@@ -215,11 +215,18 @@ const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-
 /* FUNCIONES DE RELACIÓN VIN - VERSIONES DE EQUIPAMIENTO */
 export function parseEquipmentVersions(rawStr) {
     if (!rawStr) return [];
-    // Normalizar separadores admitidos: comas ",", diagonales "/" y diagonales inversas "\"
-    return String(rawStr)
-        .split(/[,/\\\\]+/)
-        .map(v => v.trim())
-        .filter(Boolean);
+    // Normalizar separadores admitidos: comas ",", diagonales "/" y diagonales inversas "\" sin duplicados
+    const parts = String(rawStr).split(/[,/\\\\]+/);
+    const seen = new Set();
+    const result = [];
+    for (const p of parts) {
+        const clean = p.trim();
+        if (clean && !seen.has(clean.toUpperCase())) {
+            seen.add(clean.toUpperCase());
+            result.push(clean);
+        }
+    }
+    return result;
 }
 
 export function parseVinCollection(rawVin) {
@@ -376,8 +383,8 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
 }
 
 export function getImageUrl(fileId, size = 400) {
-    // Si ya es una URL de Blob (caché local), devolverla directamente.
-    if (fileId && typeof fileId === 'string' && fileId.startsWith('blob:')) {
+    // Si ya es una URL de Blob o Data URL (base64/svg), devolverla directamente.
+    if (fileId && typeof fileId === 'string' && (fileId.startsWith('blob:') || fileId.startsWith('data:'))) {
         return fileId;
     }
 
@@ -2056,6 +2063,14 @@ export async function performSilentSync(newCatalogData) {
             }
         }
 
+        // Comprobar si hay tutoriales o relay nuevos o actualizados
+        if (newCatalogData.tutoriales && (!oldCatalogData.tutoriales || newCatalogData.tutoriales.length !== oldCatalogData.tutoriales.length)) {
+            hasChanges = true;
+        }
+        if (newCatalogData.relay && (!oldCatalogData.relay || newCatalogData.relay.length !== oldCatalogData.relay.length)) {
+            hasChanges = true;
+        }
+
         if (!hasChanges) {
             console.log("Sincronización silenciosa: No se detectaron cambios.");
             return;
@@ -2156,6 +2171,16 @@ function updateFullState(catalogData) {
                 sortedCategories: sortedCategories
             }
         });
+
+        // Refrescar vistas de tutoriales o relay si están activas
+        const tutContainer = document.getElementById("contenido-tutoriales");
+        if (tutContainer && tutContainer.style.display !== "none") {
+            mostrarTutorialesGrid();
+        }
+        const relayContainer = document.getElementById("contenido-relay");
+        if (relayContainer && relayContainer.style.display !== "none") {
+            mostrarRelayGrid();
+        }
     } catch (e) {
         console.error("Error actualizando estado global tras sincronización:", e);
     }
@@ -2313,7 +2338,7 @@ async function insertNewVehicleFluently(item) {
     }
 }
 
-/* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+/* TAREA 3.1: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
 function createPysCard(item) {
     const card = document.createElement("div");
     card.className = "card";
@@ -3663,6 +3688,99 @@ function renderInboxList(items) {
     });
 }
 
+
+/* TAREA 1.7: BARRA DE ENRIQUECIMIENTO DE TEXTO COMPLETA PARA EL EDITOR DEL INBOX */
+export function createInboxRichTextToolbar(targetId) {
+    const toolbar = document.createElement("div");
+    toolbar.className = "inbox-rich-toolbar";
+    toolbar.style.cssText = "display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; padding:6px 8px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ccc); border-radius:6px;";
+
+    const applyTag = (openTag, closeTag) => {
+        const textarea = document.getElementById(targetId);
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = textarea.value.substring(start, end) || "texto";
+        const formatted = `${openTag}${selected}${closeTag}`;
+        textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+        textarea.focus();
+        textarea.setSelectionRange(start + openTag.length, start + openTag.length + selected.length);
+    };
+
+    const makeBtn = (html, title, onClick) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-secondary btn-sm";
+        btn.title = title;
+        btn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; cursor:pointer;";
+        btn.innerHTML = html;
+        btn.onclick = (e) => { e.preventDefault(); onClick(); };
+        return btn;
+    };
+
+    // 1. Negrita
+    toolbar.appendChild(makeBtn("<strong>B</strong>", "Negrita", () => applyTag("<strong>", "</strong>")));
+    // 2. Cursiva
+    toolbar.appendChild(makeBtn("<em>I</em>", "Cursiva", () => applyTag("<em>", "</em>")));
+    // 3. Subrayado
+    toolbar.appendChild(makeBtn("<u>U</u>", "Subrayado", () => applyTag("<u>", "</u>")));
+    // 4. Tachado
+    toolbar.appendChild(makeBtn("<s>S</s>", "Tachado", () => applyTag("<s>", "</s>")));
+
+    // 5. Selector de Color
+    const colorPicker = document.createElement("input");
+    colorPicker.type = "color";
+    colorPicker.title = "Color de texto";
+    colorPicker.style.cssText = "width:28px; height:28px; padding:0; border:none; cursor:pointer; border-radius:4px;";
+    colorPicker.onchange = (e) => applyTag(`<span style="color:${e.target.value}">`, "</span>");
+    toolbar.appendChild(colorPicker);
+
+    // 6. Selector de Tamaño de Fuente
+    const sizeSelect = document.createElement("select");
+    sizeSelect.title = "Tamaño de fuente";
+    sizeSelect.style.cssText = "padding:2px 4px; font-size:0.82rem; height:28px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);";
+    sizeSelect.innerHTML = `
+        <option value="" disabled selected>Tamaño</option>
+        <option value="0.85em">Pequeño</option>
+        <option value="1em">Normal</option>
+        <option value="1.2em">Grande</option>
+        <option value="1.5em">Encabezado</option>
+    `;
+    sizeSelect.onchange = (e) => {
+        if (e.target.value) {
+            applyTag(`<span style="font-size:${e.target.value}">`, "</span>");
+            e.target.value = "";
+        }
+    };
+    toolbar.appendChild(sizeSelect);
+
+    // 7. Selector de Tipo de Fuente
+    const fontSelect = document.createElement("select");
+    fontSelect.title = "Tipo de fuente";
+    fontSelect.style.cssText = "padding:2px 4px; font-size:0.82rem; height:28px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);";
+    fontSelect.innerHTML = `
+        <option value="" disabled selected>Fuente</option>
+        <option value="Arial, sans-serif">Arial</option>
+        <option value="'Segoe UI', Roboto, sans-serif">Segoe UI</option>
+        <option value="'Courier New', monospace">Monospace</option>
+        <option value="Georgia, serif">Georgia</option>
+    `;
+    fontSelect.onchange = (e) => {
+        if (e.target.value) {
+            applyTag(`<span style="font-family:${e.target.value}">`, "</span>");
+            e.target.value = "";
+        }
+    };
+    toolbar.appendChild(fontSelect);
+
+    // 8. Lista desordenada
+    toolbar.appendChild(makeBtn("<i class='fa-solid fa-list-ul'></i>", "Lista con viñetas", () => applyTag("<ul>\n  <li>", "</li>\n</ul>")));
+    // 9. Lista ordenada
+    toolbar.appendChild(makeBtn("<i class='fa-solid fa-list-ol'></i>", "Lista numerada", () => applyTag("<ol>\n  <li>", "</li>\n</ol>")));
+
+    return toolbar;
+}
+
 function renderInboxDetail(item) {
     const detailContainer = document.getElementById('inbox-detail');
     const { currentUser, catalogData } = getState();
@@ -3680,16 +3798,17 @@ function renderInboxDetail(item) {
         <h3 class="inbox-detail-title">${item.subject}</h3>
         <p class="inbox-detail-meta"><strong>De:</strong> ${item.user}</p>
         ${item.vehicleId ? `<p class="inbox-detail-meta"><strong>Vehículo:</strong> ${vehicleLabel}</p>` : ''}
-        <div class="inbox-message-content">
-            <pre>${item.content}</pre>
+        <div class="inbox-message-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
+            <div>${sanitizeHtmlContent(item.content)}</div>
         </div>
         ${item.reply ? `
-            <div class="inbox-reply-content">
+            <div class="inbox-reply-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
                 <strong>Respuesta de ${item.responder || 'Admin'}:</strong>
-                <pre>${item.reply}</pre>
+                <div style="margin-top:6px;">${sanitizeHtmlContent(item.reply)}</div>
             </div>` : ''
         }
         <div class="inbox-actions">
+            <div id="inbox-toolbar-container"></div>
             <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
             <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
                 <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
@@ -3700,6 +3819,12 @@ function renderInboxDetail(item) {
             </div>
         </div>
     `;
+
+
+    const toolbarContainer = document.getElementById('inbox-toolbar-container');
+    if (toolbarContainer) {
+        toolbarContainer.appendChild(createInboxRichTextToolbar('inbox-reply-textarea'));
+    }
 
     const replyBtn = document.getElementById('inbox-reply-btn');
     replyBtn.addEventListener('click', async () => {
@@ -4854,7 +4979,15 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
                 <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('sug-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <input type="color" onchange="applyRichColor('sug-detalles', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('sug-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
                 </div>
                 <textarea id="sug-detalles" rows="3" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
             </div>
@@ -4980,7 +5113,8 @@ export function openExpandMenuModal(item) {
 
     const maxVinAllowed = countEquipmentVersionsFrontend(item.versionesAplicables);
     const registeredVins = parseVinCollectionFrontend(item.vin);
-    const canAddVin = registeredVins.length < maxVinAllowed;
+    // Permitir agregar VIN si aún hay cupo o para asociar una nueva versión de equipamiento (hasta un tope de 3)
+    const canAddVin = registeredVins.length < maxVinAllowed || registeredVins.length < 3;
 
     const modal = document.createElement("div");
     modal.id = "expand-menu-modal";
@@ -4996,12 +5130,12 @@ export function openExpandMenuModal(item) {
         <h2><i class="fa-solid fa-circle-plus"></i> Ampliar Información</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
 
-        <div style="display:flex; flex-direction:column; gap:10px;">
-            ${cutsAvailable > 0 ? `<button id="btn-exp-cut" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-car-on"></i> Nuevo corte (${cutsAvailable} disponibles)</button>` : ""}
-            ${!item.apertura ? `<button id="btn-exp-apertura" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-door-open"></i> Apertura de puertas</button>` : ""}
-            ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
-            ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
-            ${canAddVin ? `<button id="btn-exp-vin" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-barcode"></i> Agregar VIN (${maxVinAllowed - registeredVins.length} disponible${maxVinAllowed - registeredVins.length > 1 ? 's' : ''})</button>` : ""}
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            ${cutsAvailable > 0 ? `<button id="btn-exp-cut" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-car-on"></i> Nuevo corte (${cutsAvailable} disponibles)</button>` : ""}
+            ${!item.apertura ? `<button id="btn-exp-apertura" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-door-open"></i> Apertura de puertas</button>` : ""}
+            ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
+            ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary btn-expand-option"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
+            ${canAddVin ? `<button id="btn-exp-vin" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-barcode"></i> Agregar VIN (${maxVinAllowed - registeredVins.length} disponible${maxVinAllowed - registeredVins.length > 1 ? 's' : ''})</button>` : ""}
         </div>
     `;
 
@@ -5026,7 +5160,7 @@ export function openExpandMenuModal(item) {
     if (vinBtn) vinBtn.onclick = () => { modal.remove(); openAddVinModal(item); };
 }
 
-/* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO */
+/* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO / RECTIFICACIÓN SELECTOR TRIM LEVEL */
 export function openAddVinModal(item) {
     const existing = document.getElementById("add-vin-modal");
     if (existing) existing.remove();
@@ -5040,18 +5174,51 @@ export function openAddVinModal(item) {
     content.className = "info-modal-content";
     content.style.maxWidth = "450px";
 
+    // Verificar si el modelo tiene versiones de equipamiento registradas
+    const versions = parseEquipmentVersions(item.versionesAplicables);
+
+    let trimLevelSectionHtml = "";
+    if (versions.length > 0) {
+        const optionsHtml = versions.map(v => `<option value="${v}">${v}</option>`).join("");
+        trimLevelSectionHtml = `
+            <div class="form-group">
+                <label for="modal-vin-trim">Versión de Equipamiento (Trim Level)</label>
+                <select id="modal-vin-trim" required style="width:100%; padding:8px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);">
+                    <option value="" selected disabled>Seleccionar Trim Level</option>
+                    ${optionsHtml}
+                    <option value="__NEW_TRIM__">+ Crear nueva versión de equipamiento...</option>
+                </select>
+            </div>
+            <div class="form-group" id="grp-new-trim" style="display:none;">
+                <label for="modal-new-trim-input">Nombre de la Nueva Versión</label>
+                <input type="text" id="modal-new-trim-input" placeholder="Ej: Platinum, SR5, High Country" style="width:100%; padding:8px; border-radius:4px; border:1px solid var(--border-color, #ccc);">
+            </div>
+        `;
+    } else {
+        // Si el modelo no tiene ninguna versión registrada
+        trimLevelSectionHtml = `
+            <div class="form-group" id="grp-new-trim">
+                <label for="modal-new-trim-input">Versión de Equipamiento (Trim Level)</label>
+                <input type="text" id="modal-new-trim-input" required placeholder="Ej: Base, Standard, Full" style="width:100%; padding:8px; border-radius:4px; border:1px solid var(--border-color, #ccc);">
+            </div>
+        `;
+    }
+
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
         <h2><i class="fa-solid fa-barcode"></i> Agregar VIN / Chasis</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
 
         <form id="add-vin-form" style="display:flex; flex-direction:column; gap:12px;">
+            ${trimLevelSectionHtml}
             <div class="form-group">
                 <label for="modal-vin-input">Número de Chasis / VIN</label>
                 <input type="text" id="modal-vin-input" placeholder="Ingresa el VIN completo del vehículo" maxlength="18" required style="text-transform: uppercase; width:100%; padding:8px;">
                 <div id="modal-vin-warning" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 5px; font-weight: bold;"></div>
             </div>
-            <button type="submit" id="btn-save-vin" class="btn btn-primary" style="margin-top:10px;"><i class="fa-solid fa-save"></i> Guardar VIN</button>
+            <div class="modal-btn-compact-container">
+                <button type="submit" id="btn-save-vin" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-save"></i> Guardar VIN</button>
+            </div>
         </form>
     `;
 
@@ -5063,6 +5230,23 @@ export function openAddVinModal(item) {
     const form = content.querySelector("#add-vin-form");
     const vinInput = content.querySelector("#modal-vin-input");
     const warningEl = content.querySelector("#modal-vin-warning");
+    const trimSelect = form.querySelector("#modal-vin-trim");
+    const grpNewTrim = form.querySelector("#grp-new-trim");
+    const newTrimInput = form.querySelector("#modal-new-trim-input");
+
+    if (trimSelect && grpNewTrim && newTrimInput) {
+        trimSelect.addEventListener("change", () => {
+            if (trimSelect.value === "__NEW_TRIM__") {
+                grpNewTrim.style.display = "block";
+                newTrimInput.required = true;
+                newTrimInput.focus();
+            } else {
+                grpNewTrim.style.display = "none";
+                newTrimInput.required = false;
+                newTrimInput.value = "";
+            }
+        });
+    }
 
     vinInput.addEventListener('blur', async () => {
         const vinVal = vinInput.value.trim();
@@ -5088,17 +5272,63 @@ export function openAddVinModal(item) {
         const vinVal = vinInput.value.trim();
         if (!vinVal) return;
 
+        let selectedTrim = null;
+        let isNewTrim = false;
+
+        if (trimSelect) {
+            if (!trimSelect.value || trimSelect.value === "") {
+                alert("Por favor selecciona una versión de equipamiento (Trim Level).");
+                trimSelect.focus();
+                return;
+            }
+            if (trimSelect.value === "__NEW_TRIM__") {
+                const customTrim = newTrimInput ? newTrimInput.value.trim() : "";
+                if (!customTrim) {
+                    alert("Por favor ingresa el nombre de la nueva versión de equipamiento.");
+                    if (newTrimInput) newTrimInput.focus();
+                    return;
+                }
+                selectedTrim = customTrim;
+                isNewTrim = true;
+            } else {
+                selectedTrim = trimSelect.value.trim();
+            }
+        } else if (newTrimInput) {
+            const customTrim = newTrimInput.value.trim();
+            if (!customTrim) {
+                alert("Por favor ingresa la versión de equipamiento.");
+                newTrimInput.focus();
+                return;
+            }
+            selectedTrim = customTrim;
+            isNewTrim = true;
+        }
+
         const btn = form.querySelector("#btn-save-vin");
         btn.disabled = true;
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
 
         try {
-            const res = await routeAction('addVinToVehicle', { vehicleId: item.id, vin: vinVal });
+            const res = await routeAction('addVinToVehicle', {
+                vehicleId: item.id,
+                vin: vinVal,
+                trimLevel: selectedTrim,
+                isNewTrim: isNewTrim
+            });
             if (res.status === 'success') {
                 if (res.vinCollection) {
                     item.vin = JSON.stringify(res.vinCollection);
                 } else if (res.vinPrefix) {
                     item.vin = res.vinPrefix;
+                }
+                if (res.versionesAplicables) {
+                    item.versionesAplicables = res.versionesAplicables;
+                } else if (isNewTrim && selectedTrim) {
+                    const currentVersions = parseEquipmentVersions(item.versionesAplicables);
+                    if (!currentVersions.some(v => v.toLowerCase() === selectedTrim.toLowerCase())) {
+                        currentVersions.push(selectedTrim);
+                        item.versionesAplicables = currentVersions.join(" / ");
+                    }
                 }
                 modal.remove();
                 mostrarNotificacion('VIN registrado correctamente', 'success');
@@ -5106,6 +5336,11 @@ export function openAddVinModal(item) {
                 try {
                     const catalogData = getState().catalogData;
                     if (catalogData && catalogData.cortes) {
+                        const target = catalogData.cortes.find(c => String(c.id) === String(item.id));
+                        if (target) {
+                            target.vin = item.vin;
+                            target.versionesAplicables = item.versionesAplicables;
+                        }
                         vinDifferentialEngine.calculateSignatures(catalogData.cortes);
                         vinSignatureStore.saveSignatures(vinDifferentialEngine);
                     }
@@ -5142,18 +5377,29 @@ export function createRichTextToolbar(targetId) {
     boldBtn.type = "button";
     boldBtn.className = "btn btn-secondary btn-sm";
     boldBtn.title = "Negrita";
-    boldBtn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:26px;";
+    boldBtn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:26px; min-width:26px;";
     boldBtn.innerHTML = "<strong>B</strong>";
     boldBtn.onclick = () => window.applyRichFormat(targetId, "bold");
 
-    const colorPicker = document.createElement("input");
-    colorPicker.type = "color";
-    colorPicker.title = "Color de texto";
-    colorPicker.style.cssText = "width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;";
+    // Botón cuadrado con cuadrícula de 4 colores y capa nativa transparente
+    const colorBtn = document.createElement("div");
+    colorBtn.className = "rich-color-picker-box";
+    colorBtn.title = "Color de texto";
+    colorBtn.style.cssText = "position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;";
+    colorBtn.innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+            <span style="background:#ff4d4f;"></span>
+            <span style="background:#1890ff;"></span>
+            <span style="background:#52c41a;"></span>
+            <span style="background:#faad14;"></span>
+        </div>
+        <input type="color" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+    `;
+    const colorPicker = colorBtn.querySelector("input");
     colorPicker.onchange = (e) => window.applyRichColor(targetId, e.target.value);
 
     toolbar.appendChild(boldBtn);
-    toolbar.appendChild(colorPicker);
+    toolbar.appendChild(colorBtn);
     return toolbar;
 }
 
@@ -5197,7 +5443,15 @@ export function openAddCutForModelModal(item) {
                 <label>Ubicación y Detalles del Corte</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-cut-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <input type="color" onchange="applyRichColor('add-cut-detalles', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('add-cut-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
                 </div>
                 <textarea id="add-cut-detalles" rows="3" placeholder="Detalles de ubicación y conexión..." required></textarea>
             </div>
@@ -5205,15 +5459,17 @@ export function openAddCutForModelModal(item) {
                 <label>Color del Cable</label>
                 <input type="text" id="add-cut-color" placeholder="Ej. Verde / Negro">
             </div>
-            <div class="form-group" style="display:flex; align-items:center; gap:8px;">
-                <input type="checkbox" id="add-cut-testigo" style="width:auto;">
-                <label for="add-cut-testigo" style="margin:0;">Este corte activa el testigo del motor</label>
+            <div class="form-group" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:4px 0;">
+                <label for="add-cut-testigo" style="margin:0; cursor:pointer;">Este corte activa el testigo del motor</label>
+                <input type="checkbox" id="add-cut-testigo" style="width:18px; height:18px; cursor:pointer; margin:0; flex-shrink:0;">
             </div>
             <div class="form-group">
                 <label>Subir Imagen del Corte</label>
                 <input type="file" id="add-cut-img-file" accept="image/*">
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Corte</button>
+            <div class="modal-btn-compact-container">
+                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-plus-circle"></i> Agregar Corte</button>
+            </div>
         </form>
     `;
 
@@ -5347,7 +5603,15 @@ export function openAddAperturaModal(item) {
                 <label>Detalles de la Apertura</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-apertura-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <input type="color" onchange="applyRichColor('add-apertura-detalles', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('add-apertura-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
                 </div>
                 <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
             </div>
@@ -5355,7 +5619,9 @@ export function openAddAperturaModal(item) {
                 <label>Subir Imagen</label>
                 <input type="file" id="add-apertura-img-file" accept="image/*">
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Apertura</button>
+            <div class="modal-btn-compact-container">
+                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-door-open"></i> Agregar Apertura</button>
+            </div>
         </form>
     `;
 
@@ -5424,7 +5690,15 @@ export function openAddFeedModal(item) {
                 <label>Detalles de la Alimentación</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-feed-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <input type="color" onchange="applyRichColor('add-feed-detalles', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('add-feed-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
                 </div>
                 <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
             </div>
@@ -5432,7 +5706,9 @@ export function openAddFeedModal(item) {
                 <label>Subir Imagen</label>
                 <input type="file" id="add-feed-img-file" accept="image/*">
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Alimentación</button>
+            <div class="modal-btn-compact-container">
+                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-plug"></i> Agregar Alimentación</button>
+            </div>
         </form>
     `;
 
@@ -5511,7 +5787,9 @@ export function openAddVideoModal(item) {
                 <label>Enlace de YouTube</label>
                 <input type="url" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Vídeo</button>
+            <div class="modal-btn-compact-container">
+                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-brands fa-youtube"></i> Agregar Vídeo</button>
+            </div>
         </form>
     `;
 
@@ -5654,32 +5932,48 @@ export function openAddProblemModal() {
             </div>
 
             <div class="form-group">
-                <label>Título del Problema (Máx 15 caracteres)</label>
-                <input type="text" id="pys-titulo" maxlength="15" required placeholder="Ej. Falla relay pump">
+                <label>Título del Problema (Máx 30 caracteres)</label>
+                <input type="text" id="pys-titulo" maxlength="30" required placeholder="Ej. Falla relay pump">
             </div>
             <div class="form-group">
                 <label>Imagen del Problema</label>
                 <input type="file" id="pys-img-file" accept="image/*" required>
             </div>
             <div class="form-group">
-                <label>Detalle del Problema (Máx 200 caracteres)</label>
+                <label>Detalle del Problema (Máx 700 caracteres)</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-detalle', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <input type="color" onchange="applyRichColor('pys-detalle', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('pys-detalle', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
                 </div>
-                <textarea id="pys-detalle" maxlength="200" rows="3" required placeholder="Describe el problema..."></textarea>
+                </div>
+                <textarea id="pys-detalle" maxlength="700" rows="4" required placeholder="Describe el problema..."></textarea>
             </div>
             <div class="form-group" style="display:flex; align-items:center; gap:8px;">
                 <input type="checkbox" id="pys-sin-solucion" style="width:auto;">
                 <label for="pys-sin-solucion" style="margin:0;">Sin solución aún</label>
             </div>
             <div class="form-group" id="grp-solucion">
-                <label>Solución (Máx 200 caracteres)</label>
+                <label>Solución (Máx 700 caracteres)</label>
                 <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-solucion', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <input type="color" onchange="applyRichColor('pys-solucion', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('pys-solucion', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
                 </div>
-                <textarea id="pys-solucion" maxlength="200" rows="3" placeholder="Explica la solución..."></textarea>
+                </div>
+                <textarea id="pys-solucion" maxlength="700" rows="4" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
                 <label>Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
@@ -5742,8 +6036,8 @@ export function openAddProblemModal() {
 
         matches.forEach(v => {
             const itemDiv = document.createElement("div");
-            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px;";
-            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:30px; height:30px; object-fit:cover; border-radius:4px;"> <span>${v.marca} ${v.modelo} (${v.anoDesde}${v.anoHasta ? '-' + v.anoHasta : ''})</span>`;
+            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;";
+            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;"> <span style="flex:1; margin:0; line-height:1.2;">${v.marca} ${v.modelo} (${v.anoDesde}${v.anoHasta ? '-' + v.anoHasta : ''})</span>`;
             itemDiv.onclick = () => {
                 searchVehicleResults.innerHTML = '';
                 searchVehicleInput.value = '';
@@ -5858,8 +6152,8 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated)
 
         matches.forEach(v => {
             const itemDiv = document.createElement("div");
-            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px;";
-            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:35px; height:35px; object-fit:cover; border-radius:4px;"> <span>${v.marca} ${v.modelo} (${v.anoDesde})</span>`;
+            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;";
+            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;"> <span style="flex:1; margin:0; line-height:1.2;">${v.marca} ${v.modelo} (${v.anoDesde})</span>`;
             itemDiv.onclick = () => {
                 closeModal();
                 openConfirmVehicleForPysModal(v, async (confirmedVehicle) => {
@@ -5896,8 +6190,10 @@ export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
         <h2>Confirmar Vehículo</h2>
-        <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:10px;">
-            <img src="${getImageUrl(vehicle.imagenVehiculo, IMG_SIZE_MEDIUM)}" style="width:100%; max-height:180px; object-fit:cover; border-radius:8px;">
+        <div style="display:flex; flex-direction:column; align-items:stretch; gap:10px; margin-top:10px; width:100%;">
+            <div style="width:100%; overflow:hidden; border-radius:8px; max-height:200px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.03);">
+                <img src="${getImageUrl(vehicle.imagenVehiculo, IMG_SIZE_MEDIUM)}" style="width:100%; max-height:200px; margin:0; object-fit:cover; border-radius:8px; display:block;">
+            </div>
             <div style="width:100%; font-size:0.9rem;">
                 <p style="margin:4px 0;"><strong>Marca:</strong> ${vehicle.marca}</p>
                 <p style="margin:4px 0;"><strong>Modelo:</strong> ${vehicle.modelo}</p>
@@ -6082,20 +6378,28 @@ export function openAddTutorialModal() {
 
         <form id="add-tutorial-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
             <div class="form-group">
-                <label>Tema / Título</label>
-                <input type="text" id="tut-tema" required placeholder="Ej. Desarme de consola frontal">
+                <label>Tema / Título (Máx 30 caracteres)</label>
+                <input type="text" id="tut-tema" maxlength="30" required placeholder="Ej. Desarme de consola frontal">
             </div>
             <div class="form-group">
                 <label>Enlace de Vídeo YouTube</label>
                 <input type="url" id="tut-video" required placeholder="https://www.youtube.com/watch?v=...">
             </div>
             <div class="form-group">
-                <label>Descripción / Detalles</label>
+                <label>Descripción / Detalles (Máx 700 caracteres)</label>
                 <div class="rich-editor-toolbar" style="display:flex; gap:8px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('tut-desc', 'bold')"><strong>B</strong></button>
-                    <input type="color" id="tut-color-picker" onchange="applyRichColor('tut-desc', this.value)" style="width:30px; height:30px; padding:0; border:none; cursor:pointer;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('tut-desc', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
                 </div>
-                <textarea id="tut-desc" rows="4" placeholder="Detalles del tutorial..."></textarea>
+                </div>
+                <textarea id="tut-desc" maxlength="700" rows="4" placeholder="Detalles del tutorial..."></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Tutorial</button>
         </form>
@@ -6165,7 +6469,7 @@ export function sanitizeHtmlContent(htmlStr) {
     if (!htmlStr) return '';
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlStr, 'text/html');
-    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'U', 'A', 'IMG', 'SMALL', 'EM', 'MARK'];
+    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'EM', 'U', 'S', 'STRIKE', 'OL', 'UL', 'LI', 'A', 'IMG', 'SMALL', 'MARK', 'FONT'];
 
     function cleanNode(node) {
         const children = Array.from(node.childNodes);
@@ -6194,7 +6498,7 @@ export function sanitizeHtmlContent(htmlStr) {
 
 let inboxCacheData = null;
 
-/* TAREA 2: Ficha Técnica de Instalación completa y organizada para impresión exacta en 1 página */
+/* BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF */
 export function exportVehiclePrintSheet(item) {
     if (!item) return;
     const printWindow = window.open('', '_blank');
@@ -6205,17 +6509,19 @@ export function exportVehiclePrintSheet(item) {
 
     const title = `${item.marca || ''} ${item.modelo || ''} (${item.anoDesde || ''}${item.anoHasta ? ' - ' + item.anoHasta : ''})`;
 
+    // 1. Recopilar datos de cortes (Excluyendo colaboradores y utilidad según Requisito 5)
     const cuts = [];
     if (item.tipoCorte1 || item.ubicacionCorte1 || item.imgCorte1) {
-        cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, img: item.imgCorte1, colab: item.colaboradorCorte1 });
+        cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, img: item.imgCorte1, activaTestigo: item.utilCorte1 === 'x' || String(item.tipoCorte1).toLowerCase().includes('testigo') });
     }
     if (item.tipoCorte2 || item.ubicacionCorte2 || item.imgCorte2) {
-        cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, img: item.imgCorte2, colab: item.colaboradorCorte2 });
+        cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, img: item.imgCorte2, activaTestigo: item.utilCorte2 === 'x' });
     }
     if (item.tipoCorte3 || item.ubicacionCorte3 || item.imgCorte3) {
-        cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, img: item.imgCorte3, colab: item.colaboradorCorte3 });
+        cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, img: item.imgCorte3, activaTestigo: item.utilCorte3 === 'x' });
     }
 
+    // 2. Cables de alimentación
     const feeds = [];
     if (item.cableAlimen || item.imgCableAlimen) {
         feeds.push({ title: 'Alimentación Principal', desc: item.cableAlimen, img: item.imgCableAlimen });
@@ -6227,7 +6533,7 @@ export function exportVehiclePrintSheet(item) {
         feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
     }
 
-    /* TAREA 5: Corregir imágenes rotas normalizando URLs con getImageUrl(..., IMG_SIZE_LARGE) */
+    // 3. Generación de HTML de cortes con aviso de testigo al pie y distribución vertical (Requisitos 1.1, 2.2, 4.1, 5)
     const cutsHtml = cuts.map(c => {
         const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
         return `
@@ -6238,14 +6544,21 @@ export function exportVehiclePrintSheet(item) {
                     <p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
                     <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
                     <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
-                    ${c.colab ? `<p class="colab-tag">Colab: ${cleanColaboradorName(c.colab)}</p>` : ''}
                 </div>
-                ${safeImg ? `<div class="tech-item-img"><img src="${safeImg}" alt="Corte #${c.num}" /></div>` : ''}
+                ${safeImg ? `
+                <div class="tech-item-img-wrapper">
+                    <img src="${safeImg}" alt="Corte #${c.num}" class="tech-detail-img" />
+                </div>` : ''}
             </div>
+            ${c.activaTestigo ? `
+            <div class="testigo-aviso">
+                <i class="fa-solid fa-triangle-exclamation"></i> Este corte activa el testigo de motor
+            </div>` : ''}
         </div>
         `;
     }).join('');
 
+    // 4. HTML de cables de alimentación
     const feedsHtml = feeds.map(f => {
         const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
         return `
@@ -6255,16 +6568,21 @@ export function exportVehiclePrintSheet(item) {
                 <div class="tech-item-info">
                     <p>${f.desc || 'Conexión estándar'}</p>
                 </div>
-                ${safeImg ? `<div class="tech-item-img"><img src="${safeImg}" alt="${f.title}" /></div>` : ''}
+                ${safeImg ? `
+                <div class="tech-item-img-wrapper">
+                    <img src="${safeImg}" alt="${f.title}" class="tech-detail-img" />
+                </div>` : ''}
             </div>
         </div>
         `;
     }).join('');
 
+    // 5. HTML de imagen principal del vehículo
     const vehiculoImgHtml = item.imagenVehiculo ? `
         <div class="vehicle-main-img"><img src="${getImageUrl(item.imagenVehiculo, IMG_SIZE_LARGE)}" alt="${title}" /></div>
     ` : '';
 
+    // 6. Apertura de puertas
     const aperturaHtml = (item.apertura || item.imgApertura) ? `
         <div class="tech-item-card">
             <div class="tech-item-header">Apertura de Puertas / Seguros</div>
@@ -6272,16 +6590,35 @@ export function exportVehiclePrintSheet(item) {
                 <div class="tech-item-info">
                     <p>${item.apertura || 'Instrucciones registradas'}</p>
                 </div>
-                ${item.imgApertura ? `<div class="tech-item-img"><img src="${getImageUrl(item.imgApertura, IMG_SIZE_LARGE)}" alt="Apertura" /></div>` : ''}
+                ${item.imgApertura ? `
+                <div class="tech-item-img-wrapper">
+                    <img src="${getImageUrl(item.imgApertura, IMG_SIZE_LARGE)}" alt="Apertura" class="tech-detail-img" />
+                </div>` : ''}
             </div>
         </div>
     ` : '';
 
+    // 7. Notas técnicas importantes
     const notasHtml = item.notaImportante ? `
         <div class="tech-notes">
             <strong>Nota técnica importante:</strong> ${item.notaImportante}
         </div>
     ` : '';
+
+    // 8. Código QR exclusivo para vídeo guía de desarme (Requisito 6)
+    // Prohibido mostrar la URL como texto visible, solo el QR.
+    const rawVideoUrl = item.Video || item.videoGuiaDesarmeUrl;
+    let qrHtml = '';
+    if (rawVideoUrl && typeof rawVideoUrl === 'string' && rawVideoUrl.trim()) {
+        const directVideoUrl = rawVideoUrl.trim();
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=${encodeURIComponent(directVideoUrl)}`;
+        qrHtml = `
+            <div class="qr-video-box">
+                <img src="${qrApiUrl}" alt="Código QR Vídeo Guía" class="qr-code-img" />
+                <span class="qr-label">Vídeo Guía de Desarme</span>
+            </div>
+        `;
+    }
 
     printWindow.document.write(`
         <!DOCTYPE html>
@@ -6290,7 +6627,6 @@ export function exportVehiclePrintSheet(item) {
             <meta charset="UTF-8">
             <title>Ficha Técnica GPSpedia - ${title}</title>
             <style>
-                /* TAREA 6: Configuración obligatoria papel Carta, orientación vertical, márgenes 10mm */
                 @page {
                     size: letter portrait;
                     margin: 10mm;
@@ -6301,152 +6637,210 @@ export function exportVehiclePrintSheet(item) {
                     margin: 0;
                     padding: 0;
                     color: #1a1a1a;
-                    font-size: 10.5px;
-                    line-height: 1.25;
+                    font-size: 12.5px;
+                    line-height: 1.55;
                     background: #fff;
+                }
+                .sheet-page-wrapper {
+                    min-height: 920px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                }
+                .sheet-content-main {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
                 }
                 .no-print-bar {
                     background: #007bff;
                     color: white;
-                    padding: 8px 16px;
+                    padding: 12px 18px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    border-radius: 4px;
-                    margin-bottom: 10px;
+                    border-radius: 6px;
+                    margin-bottom: 20px;
                 }
+                /* Encabezado: Logo a la derecha de GPSpedia, y exclusivamente "Ficha técnica" (Requisitos 3.1 y 3.2) */
                 .header-container {
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
                     border-bottom: 2px solid #007bff;
-                    padding-bottom: 6px;
-                    margin-bottom: 8px;
+                    padding-bottom: 12px;
+                    margin-bottom: 20px;
                 }
-                .header-logo {
-                    font-size: 18px;
+                .header-brand-wrap {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .header-logo-title {
+                    font-size: 25px;
                     font-weight: bold;
                     color: #007bff;
                     letter-spacing: 0.5px;
                 }
-                .vehicle-title {
+                .header-project-logo {
+                    width: 34px;
+                    height: 34px;
+                    object-fit: contain;
+                }
+                .header-doc-type {
                     font-size: 15px;
+                    font-weight: 600;
+                    color: #555;
+                    text-transform: capitalize;
+                }
+                .vehicle-title {
+                    font-size: 19px;
                     font-weight: bold;
                     margin: 0;
                     color: #222;
+                    text-align: right;
                 }
+                /* Grid superior: Información del vehículo y QR si existe */
                 .top-grid {
                     display: grid;
-                    grid-template-columns: ${item.imagenVehiculo ? '140px 1fr' : '1fr'};
-                    gap: 10px;
-                    margin-bottom: 8px;
+                    grid-template-columns: ${item.imagenVehiculo ? '180px 1fr' : '1fr'}${qrHtml ? ' auto' : ''};
+                    gap: 14px;
+                    align-items: stretch;
+                    margin-bottom: 14px;
                 }
                 .vehicle-main-img img {
                     width: 100%;
-                    max-height: 105px;
+                    max-height: 120px;
                     object-fit: cover;
-                    border-radius: 4px;
+                    border-radius: 6px;
                     border: 1px solid #ddd;
                 }
                 .meta-table {
                     width: 100%;
                     border-collapse: collapse;
-                    font-size: 10.5px;
+                    font-size: 12px;
+                    line-height: 1.25;
                 }
                 .meta-table td {
-                    padding: 3px 6px;
+                    padding: 4px 8px;
                     border: 1px solid #e0e0e0;
                 }
                 .meta-table td.label {
                     font-weight: bold;
                     background: #f7f9fa;
-                    width: 25%;
+                    width: 22%;
                     color: #444;
                 }
+                .qr-video-box {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    background: #fafafa;
+                }
+                .qr-code-img {
+                    width: 95px;
+                    height: 95px;
+                    object-fit: contain;
+                }
+                .qr-label {
+                    font-size: 10px;
+                    font-weight: bold;
+                    color: #555;
+                    margin-top: 6px;
+                    text-align: center;
+                }
+                /* Secciones verticales fluidas (Requisito 1.1) */
                 .section-header {
-                    font-size: 11.5px;
+                    font-size: 13.5px;
                     font-weight: bold;
                     color: #007bff;
                     text-transform: uppercase;
-                    border-bottom: 1px solid #007bff;
-                    margin: 8px 0 4px 0;
-                    padding-bottom: 2px;
+                    border-bottom: 2px solid #007bff;
+                    margin: 14px 0 10px 0;
+                    padding-bottom: 4px;
                 }
                 .tech-grid {
-                    display: grid;
-                    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-                    gap: 6px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
                 }
                 .tech-item-card {
                     border: 1px solid #dcdcdc;
-                    border-radius: 4px;
+                    border-radius: 6px;
                     background: #fafafa;
-                    padding: 5px 8px;
+                    padding: 12px 16px;
                     page-break-inside: avoid;
                 }
                 .tech-item-header {
                     font-weight: bold;
                     color: #0056b3;
-                    font-size: 11px;
-                    margin-bottom: 3px;
+                    font-size: 13px;
+                    margin-bottom: 8px;
                     border-bottom: 1px dashed #e0e0e0;
-                    padding-bottom: 2px;
+                    padding-bottom: 4px;
                 }
                 .tech-item-body {
                     display: flex;
                     justify-content: space-between;
-                    gap: 8px;
+                    align-items: flex-start;
+                    gap: 20px;
                 }
                 .tech-item-info {
                     flex: 1;
                 }
                 .tech-item-info p {
-                    margin: 1.5px 0;
-                    font-size: 10.5px;
+                    margin: 4px 0;
+                    font-size: 12px;
+                    line-height: 1.35;
                 }
-                .tech-item-img {
-                    width: 75px;
-                    height: 55px;
+                .tech-item-img-wrapper {
+                    max-width: 280px;
+                    max-height: 165px;
                     flex-shrink: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
                 }
-                .tech-item-img img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                    border-radius: 3px;
+                .tech-detail-img {
+                    max-width: 100%;
+                    max-height: 155px;
+                    object-fit: contain;
+                    border-radius: 4px;
                     border: 1px solid #ccc;
                 }
-                /* TAREA 5: Ajuste exclusivo de Check Engine en la hoja de impresión */
-                img[src*="1ELXm7I-fVF8_YqDVuQq2ZO3VW3ai4FiX"],
-                .tech-item-info img[src*="1ELXm7I"] {
-                    max-height: 20px !important;
-                    width: auto !important;
-                    display: inline-block !important;
-                    vertical-align: middle !important;
-                    margin: 2px 4px !important;
-                    float: none !important;
-                }
-                .colab-tag {
-                    font-size: 9.5px;
-                    color: #666;
-                    font-style: italic;
+                /* Aviso de testigo al pie del corte (Requisito 4.1) */
+                .testigo-aviso {
+                    margin-top: 12px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    color: #b78103;
+                    background: #fff8e1;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    border: 1px solid #ffe082;
+                    display: inline-block;
                 }
                 .tech-notes {
                     background: #fff3cd;
                     color: #856404;
                     border: 1px solid #ffeeba;
-                    padding: 4px 8px;
-                    border-radius: 4px;
-                    margin-top: 6px;
-                    font-size: 10px;
+                    padding: 10px 14px;
+                    border-radius: 6px;
+                    margin-top: 14px;
+                    font-size: 11.5px;
                     page-break-inside: avoid;
                 }
                 .footer-bar {
-                    margin-top: 8px;
-                    font-size: 9.5px;
+                    margin-top: 18px;
+                    font-size: 11px;
                     color: #777;
                     border-top: 1px solid #e0e0e0;
-                    padding-top: 3px;
+                    padding-top: 8px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
@@ -6456,60 +6850,96 @@ export function exportVehiclePrintSheet(item) {
                     body { padding: 0; }
                     .tech-item-card { break-inside: avoid; }
                 }
+                @media screen and (max-width: 600px) {
+                    .top-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .tech-item-body {
+                        flex-direction: column;
+                    }
+                    .tech-item-img-wrapper {
+                        max-width: 100%;
+                        width: 100%;
+                    }
+                    .tech-detail-img {
+                        max-height: 180px;
+                    }
+                }
             </style>
         </head>
         <body>
             <div class="no-print-bar no-print">
-                <span><strong>Ficha Técnica de Instalación</strong> - Lista para imprimir o guardar PDF en 1 página</span>
+                <span><strong>Ficha Técnica</strong> - Vista previa para consulta e impresión</span>
                 <button onclick="window.print()" style="padding: 6px 14px; background: white; color: #007bff; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">
                     Imprimir / Guardar PDF
                 </button>
             </div>
 
-            <div class="header-container">
-                <div class="header-logo">GPSpedia <span style="font-size: 13px; font-weight: normal; color: #555;">| Ficha Técnica Oficial</span></div>
-                <div class="vehicle-title">${title}</div>
-            </div>
+            <div class="sheet-page-wrapper">
+                <div class="sheet-content-main">
+                    <div class="header-container">
+                        <div class="header-brand-wrap">
+                            <span class="header-logo-title">GPSpedia</span>
+                            <img src="icon-v3-512x512.png" alt="GPSpedia Logo" class="header-project-logo" />
+                            <span class="header-doc-type">| Ficha técnica</span>
+                        </div>
+                        <div class="vehicle-title">${title}</div>
+                    </div>
 
-            <div class="top-grid">
-                ${vehiculoImgHtml}
-                <table class="meta-table">
-                    <tr>
-                        <td class="label">Marca:</td><td>${item.marca || '-'}</td>
-                        <td class="label">Modelo:</td><td>${item.modelo || '-'}</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Categoría:</td><td>${item.categoria || '-'}</td>
-                        <td class="label">Años:</td><td>${item.anoDesde || ''} - ${item.anoHasta || 'Presente'}</td>
-                    </tr>
-                    <tr>
-                        <td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td>
-                        <td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td>
-                    </tr>
-                    ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td colspan="3">${item.vin}</td></tr>` : ''}
-                </table>
-            </div>
+                    <div class="top-grid">
+                        ${vehiculoImgHtml}
+                        <table class="meta-table">
+                            <tr>
+                                <td class="label">Marca:</td><td>${item.marca || '-'}</td>
+                                <td class="label">Modelo:</td><td>${item.modelo || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Categoría:</td><td>${item.categoria || '-'}</td>
+                                <td class="label">Años:</td><td>${item.anoDesde || ''} - ${item.anoHasta || 'Presente'}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td>
+                                <td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td>
+                            </tr>
+                            ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td colspan="3">${(function(){
+                                try {
+                                    const parsed = JSON.parse(item.vin);
+                                    if (Array.isArray(parsed)) return parsed.join(' / ');
+                                } catch(e){}
+                                return item.vin;
+                            })()}</td></tr>` : ''}
+                        </table>
+                        ${qrHtml}
+                    </div>
 
-            <div class="section-header">Puntos de Corte de Motor</div>
-            <div class="tech-grid">
-                ${cutsHtml || '<div class="tech-item-card"><p>No hay cortes registrados para este modelo.</p></div>'}
-            </div>
+                    <div>
+                        <div class="section-header">Puntos de Corte de Motor</div>
+                        <div class="tech-grid">
+                            ${cutsHtml || '<div class="tech-item-card"><p>No hay cortes registrados para este modelo.</p></div>'}
+                        </div>
+                    </div>
 
-            ${feedsHtml ? `
-                <div class="section-header">Alimentación Eléctrica</div>
-                <div class="tech-grid">${feedsHtml}</div>
-            ` : ''}
+                    ${feedsHtml ? `
+                    <div>
+                        <div class="section-header">Alimentación Eléctrica</div>
+                        <div class="tech-grid">${feedsHtml}</div>
+                    </div>
+                    ` : ''}
 
-            ${aperturaHtml ? `
-                <div class="section-header">Apertura y Cierre Centralizado</div>
-                <div class="tech-grid">${aperturaHtml}</div>
-            ` : ''}
+                    ${aperturaHtml ? `
+                    <div>
+                        <div class="section-header">Apertura y Cierre Centralizado</div>
+                        <div class="tech-grid">${aperturaHtml}</div>
+                    </div>
+                    ` : ''}
 
-            ${notasHtml}
+                    ${notasHtml}
+                </div>
 
-            <div class="footer-bar">
-                <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
-                <span>Uso exclusivo técnico especializado - 1 Página de Consulta Rápida</span>
+                <div class="footer-bar">
+                    <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
+                    <span>Ficha técnica de consulta técnica especializada</span>
+                </div>
             </div>
         </body>
         </html>
