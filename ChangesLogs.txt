@@ -1430,3 +1430,33 @@ Fecha: $(date '+%Y-%m-%d %H:%M:%S')
 3. Tareas.txt:
    - Marcadas las Tareas 1.6 y 1.7 como completadas [X].
 ================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: RECTIFICACIÓN DEL FLUJO DE INGRESO DE VIN EN MODAL DE DETALLE
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. ui.js (openAddVinModal):
+   - Se incorporó la evaluación de versiones de equipamiento mediante parseEquipmentVersions(item.versionesAplicables).
+   - Si el modelo cuenta con más de 1 versión de equipamiento (hasta 4 o más separadas por coma, barra o barra invertida), el formulario de ingreso de VIN despliega automáticamente un menú desplegable (dropselect) con:
+     * Opción predeterminada vacía y deshabilitada: "Seleccionar Trim Level".
+     * Opciones para cada versión de equipamiento disponible del modelo.
+     * Atributo 'required' para garantizar la selección.
+   - Si el modelo tiene 0 o 1 versión de equipamiento, el dropselect no se muestra, manteniendo el flujo limpio y directo.
+   - Se preservó íntegra la visualización de versiones de equipamiento y los 4 dígitos distintivos de VIN en el modal de detalle del catálogo.
+================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: TAREA 1.8 Y ASOCIACIÓN POSICIONAL DE VIN POR TRIM LEVEL
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. Services/write.js:
+   - En handleAddVinToVehicle(payload), se agregó el procesamiento del parámetro 'trimLevel' / 'trimIndex'.
+   - El prefijo procesado del VIN se almacena en la posición ordinal correspondiente a la versión de equipamiento indicada, garantizando consistencia relacional 1:1 entre versión de equipamiento y VIN sin alterar la estructura de columnas de la hoja de cálculo.
+
+2. ui.js:
+   - En openAddVinModal, se captura el valor seleccionado de #modal-vin-trim y se transmite a routeAction('addVinToVehicle') como 'trimLevel'.
+   - Se mantiene la regla estricta: para modelos con >1 versión de equipamiento se despliega el dropselect obligatorio con placeholder "Seleccionar Trim Level"; para modelos con 1 o 0 versiones, no se muestra ningún dropselect.
+
+3. Tareas.txt / Auditoría.txt:
+   - Verificada la trazabilidad funcional de la especificación 1.8 y actualizado el registro de auditoría.
+================================================================================

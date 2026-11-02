@@ -5126,7 +5126,7 @@ export function openExpandMenuModal(item) {
     if (vinBtn) vinBtn.onclick = () => { modal.remove(); openAddVinModal(item); };
 }
 
-/* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO */
+/* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO / RECTIFICACIÓN SELECTOR TRIM LEVEL */
 export function openAddVinModal(item) {
     const existing = document.getElementById("add-vin-modal");
     if (existing) existing.remove();
@@ -5140,12 +5140,31 @@ export function openAddVinModal(item) {
     content.className = "info-modal-content";
     content.style.maxWidth = "450px";
 
+    // Verificar si el modelo tiene más de 1 versión de equipamiento
+    const versions = parseEquipmentVersions(item.versionesAplicables);
+    const hasMultipleVersions = versions.length > 1;
+
+    let trimLevelSelectHtml = "";
+    if (hasMultipleVersions) {
+        const optionsHtml = versions.map(v => `<option value="${v}">${v}</option>`).join("");
+        trimLevelSelectHtml = `
+            <div class="form-group">
+                <label for="modal-vin-trim">Versión de Equipamiento (Trim Level)</label>
+                <select id="modal-vin-trim" required style="width:100%; padding:8px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);">
+                    <option value="" selected disabled>Seleccionar Trim Level</option>
+                    ${optionsHtml}
+                </select>
+            </div>
+        `;
+    }
+
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
         <h2><i class="fa-solid fa-barcode"></i> Agregar VIN / Chasis</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
 
         <form id="add-vin-form" style="display:flex; flex-direction:column; gap:12px;">
+            ${trimLevelSelectHtml}
             <div class="form-group">
                 <label for="modal-vin-input">Número de Chasis / VIN</label>
                 <input type="text" id="modal-vin-input" placeholder="Ingresa el VIN completo del vehículo" maxlength="18" required style="text-transform: uppercase; width:100%; padding:8px;">
@@ -5188,12 +5207,19 @@ export function openAddVinModal(item) {
         const vinVal = vinInput.value.trim();
         if (!vinVal) return;
 
+        const trimSelect = form.querySelector("#modal-vin-trim");
+        const selectedTrim = trimSelect ? trimSelect.value : null;
+
         const btn = form.querySelector("#btn-save-vin");
         btn.disabled = true;
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
 
         try {
-            const res = await routeAction('addVinToVehicle', { vehicleId: item.id, vin: vinVal });
+            const res = await routeAction('addVinToVehicle', {
+                vehicleId: item.id,
+                vin: vinVal,
+                trimLevel: selectedTrim
+            });
             if (res.status === 'success') {
                 if (res.vinCollection) {
                     item.vin = JSON.stringify(res.vinCollection);
