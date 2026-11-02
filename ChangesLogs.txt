@@ -1565,3 +1565,26 @@ Componente: ui.js
   * Asignadas dimensiones compactas (`36x36px`, `flex-shrink: 0`, `margin: 0`) y expandido el contenedor de texto de marca/modelo/años (`flex: 1`) para evitar compresión y saltos de línea innecesarios.
   * Ajustada la distribución de la imagen del vehículo en `openConfirmVehicleForPysModal` para alinearse al ancho completo del modal sin márgenes laterales.
 ================================================================================
+
+================================================================================
+CHANGELOG: ASOCIACIÓN Y REGISTRO DE VERSIONES DE EQUIPAMIENTO AL INGRESAR VIN DESDE DETALLES
+Fecha: 2026-11-02
+Componentes: ui.js, Services/write.js
+
+- ui.js:
+  * Actualizado el modal `openAddVinModal` para permitir asociar un VIN a una versión existente o registrar una nueva versión de equipamiento cuando no exista o cuando el modelo no tenga versiones previas.
+  * Sincronización reactiva del catálogo y recálculo del motor de diferenciación de VIN (`VinDifferentialEngine`).
+- Services/write.js:
+  * Incorporado soporte en `handleAddVinToVehicle` para recibir `trimLevel` y anexar la nueva versión a la columna `COLS_CORTES.versionesAplicables` con separador ' / ', actualizando la celda en hoja de cálculo y retornando el estado normalizado.
+================================================================================
+
+================================================================================
+CHANGELOG: ESTILIZACIÓN COMPACTA DE BOTONES DE ACCIÓN EN FORMULARIOS DEL MENÚ (+)
+Fecha: 2026-11-02
+Componentes: style.css, ui.js
+
+- style.css:
+  * Definidas clases `.btn-expand-option`, `.modal-btn-compact-container` y `.btn-modal-action-compact`.
+- ui.js:
+  * Aplicados estilos compactos a las opciones de `openExpandMenuModal` y a los botones de envío en los submodales de VIN (`#btn-save-vin`), Cortes, Apertura, Alimentación y Vídeo.
+================================================================================

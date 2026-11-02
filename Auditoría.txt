@@ -1002,3 +1002,40 @@ Archivo intervenido: ui.js
 3. Línea ~6110 (Modal de confirmación openConfirmVehicleForPysModal):
    - Se reestructuró el contenedor de la imagen a 'align-items: stretch; width: 100%;' con un wrapper de previsualización que mantiene 'margin: 0; width: 100%; display: block;' en la imagen, evitando centrado con márgenes que compriman la información técnica inferior.
 ================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: ASOCIACIÓN Y CREACIÓN DE VERSIONES DE EQUIPAMIENTO AL AGREGAR VIN
+Fecha: 2026-11-02
+Archivos intervenidos: ui.js, Services/write.js
+
+1. ui.js (Función openAddVinModal):
+   - Se incorporó soporte para vincular el VIN con versiones de equipamiento existentes o crear una nueva versión en caso de no existir o cuando el modelo no tenga versiones previas.
+   - Si el modelo posee versiones registradas (`versions.length > 0`): se renderiza un selector desplegable con las versiones disponibles más la opción '+ Crear nueva versión de equipamiento...'. Al seleccionar dicha opción, se expone dinámicamente un campo de entrada para especificar el nombre de la versión.
+   - Si el modelo no posee versiones registradas (`versions.length === 0`): se presenta directamente el campo de entrada para ingresar el nombre de la nueva versión de equipamiento.
+   - En el envío del formulario: se transmite el objeto payload con `selectedTrim` y `isNewTrim`.
+   - Tras el éxito de la respuesta del backend: se actualiza reactivamente `item.versionesAplicables`, se sincroniza el catálogo en memoria (`catalogData.cortes`), se recalculan las firmas de diferenciación selectiva por VIN (`VinDifferentialEngine.indexCatalog`) y se repinta el modal de detalles del vehículo.
+
+2. Services/write.js (Función handleAddVinToVehicle):
+   - Se agregó la recepción de `trimLevel` e `isNewTrim`.
+   - Si se especifica una versión de equipamiento nueva o no presente en `COLS_CORTES.versionesAplicables`, se formatea mediante delimitador estándar ' / ', se actualiza la celda en Google Spreadsheet sin alterar la marca de tiempo original y se devuelve `versionesAplicables` y `vinCollection` actualizados en la respuesta JSON.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: ESTILOS COMPACTOS PARA BOTONES DEL MENÚ (+) Y FORMULARIOS DE DETALLES
+Fecha: 2026-11-02
+Archivos intervenidos: style.css, ui.js
+
+1. style.css:
+   - Se agregaron las clases `.btn-expand-option`, `.modal-btn-compact-container` y `.btn-modal-action-compact`.
+   - `.btn-expand-option`: Permite desplegar las opciones del menú (+) con un padding reducido (8px 14px), bordes de 6px y tipografía 0.9rem con animación de hover fluida.
+   - `.modal-btn-compact-container`: Contenedor flexible alineado al extremo derecho (`justify-content: flex-end`) con ancho del 100% para posicionar los botones de acción sin estirarlos artificialmente a lo ancho en escritorio.
+   - `.btn-modal-action-compact`: Botón estilizado con padding de 7px 18px, fuente de 0.88rem, bordes de 6px, ícono integrado y ancho automático adaptable, garantizando ajuste al 100% en pantallas móviles (max-width: 600px).
+
+2. ui.js:
+   - En `openExpandMenuModal`: Se asignó `.btn-expand-option` a cada botón de opción (cortes, apertura, cables, vídeo, VIN).
+   - En `openAddVinModal`: Botón Guardar VIN encapsulado en `.modal-btn-compact-container` y estilizado con `.btn-modal-action-compact`.
+   - En `openAddCutForModelModal`: Botón Agregar Corte encapsulado y estilizado con `.btn-modal-action-compact`.
+   - En `openAddAperturaModal`: Botón Agregar Apertura encapsulado y estilizado con `.btn-modal-action-compact`.
+   - En `openAddFeedModal`: Botón Agregar Alimentación encapsulado y estilizado con `.btn-modal-action-compact`.
+   - En `openAddVideoModal`: Botón Agregar Vídeo encapsulado y estilizado con `.btn-modal-action-compact`.
+================================================================================
