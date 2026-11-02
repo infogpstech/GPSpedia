@@ -1,3 +1,4 @@
+import { vinDifferentialEngine } from './VinDifferentialEngine.js';
 // GPSpedia Navigation Module | Version: 2.1.6
 // Responsibilities:
 // - Manage the application's view state and navigation flow.
@@ -47,6 +48,7 @@ export function irAPaginaPrincipal(isFromPopState = false) {
 }
 
 // Función refactorizada v2 para buscar, clasificar y mostrar resultados.
+// TAREA ADICIONAL: EXTENDER LA BÚSQUEDA PARA INCLUIR TODAS LAS SECCIONES DE GPSPEDIA
 export function filtrarContenido(textoBusqueda, isRestoring = false) {
     const { catalogData } = getState();
     const { cortes } = catalogData;
@@ -72,7 +74,62 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
         return;
     }
 
-    // --- LÓGICA DE FILTRADO MEJORADA ---
+    // Helper para interpretar colecciones de VIN
+    function parseVinCollectionNavigation(rawVin) {
+        if (!rawVin) return [];
+        const str = String(rawVin).trim();
+        if (!str) return [];
+        if (str.startsWith("[") && str.endsWith("]")) {
+            try {
+                const arr = JSON.parse(str);
+                if (Array.isArray(arr)) {
+                    return arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                }
+            } catch (e) {}
+        }
+        return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    }
+
+    /* TAREA 4 (11.8): INTEGRACIÓN CON LA BARRA DE BÚSQUEDA GLOBAL POR VIN */
+    // --- LÓGICA DE DETECCIÓN Y BÚSQUEDA POR VIN ---
+    const cleanVinSearch = busqueda.toUpperCase().replace(/[^A-Z0-9]/g, "");
+    let isVinQuery = false;
+    let targetVinPrefix = "";
+    if (cleanVinSearch.length >= 6 && cleanVinSearch.length <= 18) {
+        // Excluir los últimos 5 caracteres
+        targetVinPrefix = cleanVinSearch.length > 5 ? cleanVinSearch.substring(0, cleanVinSearch.length - 5) : "";
+        if (targetVinPrefix) {
+            const vinMatchExists = cortes.some(c => {
+                const vins = parseVinCollectionNavigation(c.vin);
+                return vins.includes(targetVinPrefix);
+            });
+            if (vinMatchExists) {
+                isVinQuery = true;
+            } else {
+                // Hook motor de análisis diferencial de VIN
+                try {
+                    if (vinDifferentialEngine.signatures.size === 0 && cortes) {
+                        vinDifferentialEngine.calculateSignatures(cortes);
+                    }
+                    const diffMatch = vinDifferentialEngine.queryVehicle({ vin: cleanVinSearch });
+                    if (diffMatch && diffMatch.match && (diffMatch.identificationType === 'completa' || diffMatch.identificationType === 'parcial')) {
+                        const matchedVehicle = cortes.find(c =>
+                            c.marca.toUpperCase() === diffMatch.match.marca.toUpperCase() &&
+                            c.modelo.toUpperCase() === diffMatch.match.modelo.toUpperCase()
+                        );
+                        if (matchedVehicle) {
+                            isVinQuery = true;
+                            targetVinPrefix = matchedVehicle.vin ? (Array.isArray(matchedVehicle.vin) ? matchedVehicle.vin[0] : String(matchedVehicle.vin).replace(/[^A-Z0-9]/g, '')) : '';
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error en búsqueda de motor diferencial:', e);
+                }
+            }
+        }
+    }
+
+    // --- TAREA 1.6: BÚSQUEDA DIRECTA SIN FILTROS RÁPIDOS ---
     const yearSearchMatch = busqueda.match(/\b\d{4}\b/);
     let yearSearchTerm = yearSearchMatch ? parseInt(yearSearchMatch[0], 10) : null;
 
@@ -100,13 +157,18 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
 
     // 1. Search in Cortes
     const cortesMatches = cortes.filter(item => {
+        // TAREA 1.6: Filtros rápidos de categoría retirados
+        if (isVinQuery) {
+            const vins = parseVinCollectionNavigation(item.vin);
+            return vins.includes(targetVinPrefix);
+        }
         if (yearSearchTerm) {
             const anoDesde = parseInt(item.anoDesde, 10);
             const anoHasta = item.anoHasta ? parseInt(item.anoHasta, 10) : anoDesde;
             if (yearSearchTerm < anoDesde || yearSearchTerm > anoHasta) return false;
         }
         if (busqueda) {
-            const itemTexto = stripHtml(`${item.marca} ${item.modelo} ${item.versionesAplicables || ''} ${item.tipoEncendido || ''} ${item.categoria || ''} ${item.anoDesde || ''} ${item.anoHasta || ''} ${item.tipoCorte1 || ''} ${item.ubicacionCorte1 || ''} ${item.colorCableCorte1 || ''}`);
+            const itemTexto = stripHtml(`${item.marca} ${item.modelo} ${item.versionesAplicables || ''} ${item.tipoEncendido || ''} ${item.categoria || ''} ${item.anoDesde || ''} ${item.anoHasta || ''} ${item.tipoCorte1 || ''} ${item.ubicacionCorte1 || ''} ${item.colorCableCorte1 || ''} ${item.vin || ''}`);
             return palabrasBusqueda.every(palabra => {
                 if (yearSearchTerm && palabra === String(yearSearchTerm)) return true;
                 return itemTexto.includes(palabra);
@@ -120,21 +182,22 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
     let pysMatches = [];
 
     // Evaluate multi-section matches only when an active text query is present
+    /* TAREA 4: Renderizado completo e independiente de tarjetas de Tutoriales y Relay */
     if (busqueda && palabrasBusqueda.length > 0) {
         relayMatches = relay.filter(item => {
-            const t = stripHtml(`${item.nombre || ''} ${item.tipo || ''} ${item.descripcion || ''} ${item.funcion || ''} ${item.observacion || ''}`);
+            const t = stripHtml(`${item.configuracion || ''} ${item.funcion || ''} ${item.vehiculoDondeSeUtiliza || ''} ${item.observacion || ''} ${item.nombre || ''} ${item.tipo || ''}`);
             return palabrasBusqueda.every(p => t.includes(p));
-        }).map(i => ({ ...i, _sectionType: 'relay', marca: i.nombre || 'Relay', modelo: i.tipo || 'Configuración' }));
+        }).map((i, idx) => ({ ...i, _sectionType: 'relay', marca: 'Relay', modelo: i.configuracion || i.funcion || `Configuración ${i.ID || idx + 1}` }));
 
         tutorialMatches = tutoriales.filter(item => {
-            const t = stripHtml(`${item.Tema || ''} ${item.Descripcion || ''}`);
+            const t = stripHtml(`${item.Tema || ''} ${item.Descripcion || ''} ${item.comoIdentificarlo || ''} ${item.dondeEncontrarlo || ''} ${item.Detalles || ''}`);
             return palabrasBusqueda.every(p => t.includes(p));
-        }).map(i => ({ ...i, _sectionType: 'tutorial', marca: 'Tutorial', modelo: item.Tema }));
+        }).map((i, idx) => ({ ...i, _sectionType: 'tutorial', marca: 'Tutorial', modelo: i.Tema || `Tutorial ${i.ID || idx + 1}` }));
 
         pysMatches = pysItems.filter(item => {
             const t = stripHtml(`${item.Problema || ''} ${item.Descripcion || ''} ${item.Solucion || ''} ${item.Prevenir || ''}`);
             return palabrasBusqueda.every(p => t.includes(p));
-        }).map(i => ({ ...i, _sectionType: 'pys', marca: 'Problema', modelo: item.Problema }));
+        }).map((i, idx) => ({ ...i, _sectionType: 'pys', marca: 'Problema', modelo: i.Problema || `Problema ${i.id || idx + 1}` }));
     }
 
     // Combine global search results
@@ -166,6 +229,7 @@ export function filtrarContenido(textoBusqueda, isRestoring = false) {
     // Actualizar el hash para Deep Linking ANTES de renderizar resultados.
     const newUrl = window.location.pathname + window.location.search + `#search=${encodeURIComponent(textoBusqueda)}`;
 
+    /* TAREA 7 (B08, B27): REPLACESTATE EN BÚSQUEDA PARA EVITAR COLISIONES CON AUTO-APERTURA */
     if (!isRestoring) {
         if (wasAlreadySearching) {
             history.replaceState({ level: "busqueda_focused", query: textoBusqueda }, '', newUrl);

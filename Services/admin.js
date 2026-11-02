@@ -25,7 +25,8 @@ const SHEET_NAMES = {
     LOGOS_MARCA: "LogosMarca",
     TUTORIALES: "Tutorial",
     RELAY: "Relay",
-    ADMIN_STATE: "AdminState"
+    ADMIN_STATE: "AdminState",
+    IDEMPOTENCIA: "Idempotencia"
 };
 
 const COLS_CORTES = {
@@ -37,7 +38,8 @@ const COLS_CORTES = {
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
     timestamp: 37, notaImportante: 38,
-    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42,
+    vin: 43
 };
 
 // ============================================================================
@@ -124,8 +126,26 @@ function clearAdminState(action) {
 }
 
 // ============================================================================
-// ROUTER PRINCIPAL (doPost)
+// ROUTER PRINCIPAL (doGet y doPost)
 // ============================================================================
+/* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */
+function doGet(e) {
+    if (e && e.parameter && e.parameter.debug === 'true') {
+        const serviceState = {
+            service: 'GPSpedia-Admin',
+            version: '2.6.0',
+            spreadsheetId: SPREADSHEET_ID,
+            driveFolderId: DRIVE_FOLDER_ID,
+            sheetsAccessed: [SHEET_NAMES.CORTES, SHEET_NAMES.LOGOS_MARCA, SHEET_NAMES.TUTORIALES, SHEET_NAMES.RELAY, SHEET_NAMES.ADMIN_STATE]
+        };
+        return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
+            .setMimeType(ContentService.MimeType.TEXT);
+    }
+    const defaultResponse = { status: 'success', message: 'GPSpedia Admin-SERVICE v2.6.0 is active.' };
+    return ContentService.createTextOutput(JSON.stringify(defaultResponse))
+        .setMimeType(ContentService.MimeType.TEXT);
+}
+
 function doPost(e) {
     let response;
     const logs = [];
@@ -198,6 +218,15 @@ function doPost(e) {
                 break;
             case 'addSupplementaryInfo':
                 response = handleAddSupplementaryInfo(payload, logMessage);
+                break;
+            case 'createSheet':
+                response = handleCreateSheet(payload, logMessage);
+                break;
+            case 'addColumn':
+                response = handleAddColumn(payload, logMessage);
+                break;
+            case 'driveCommand':
+                response = handleDriveCommand(payload, logMessage);
                 break;
             default:
                 throw new Error(`La acción administrativa '${action}' es desconocida o no está soportada.`);
@@ -1606,8 +1635,7 @@ function handleAddOrUpdateCut(payload, logMessage) {
         sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${cutSlotIndex}`]).setValue(imageUrl);
         sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${cutSlotIndex}`]).setValue(colaboradorName);
         if (opId) {
-            const opIdColIndex = getOpIdColIndex(sheet, cutSlotIndex);
-            sheet.getRange(rowIndex, opIdColIndex).setValue(opId);
+            recordOpId(opId, newId || vehicleId, cutSlotIndex, formattedDate);
         }
         sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
 
@@ -1680,8 +1708,7 @@ function handleAddOrUpdateCut(payload, logMessage) {
         sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
         sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
         if (opId) {
-            const opIdColIndex = getOpIdColIndex(sheet, 1);
-            sheet.getRange(rowIndex, opIdColIndex).setValue(opId);
+            recordOpId(opId, newId, 1, formattedDate);
         }
 
         // 5. Esperar a que la hoja calcule el valor del ID generado por la fórmula.
@@ -1966,61 +1993,111 @@ function checkFileIdValid(url) {
     }
 }
 
-function getOpIdColIndex(sheet, slotIndex) {
-    const lastCol = sheet.getLastColumn();
-    const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
-    const expectedHeader = `idOperacion${slotIndex}`;
+// ============================================================================
+// GESTIÓN DE IDEMPOTENCIA EN HOJA DEDICADA ("Idempotencia")
+// ============================================================================
 
-    for (let c = 0; c < headers.length; c++) {
-        const header = String(headers[c]).trim();
-        if (header === expectedHeader || header.toLowerCase() === `id_operacion_${slotIndex}` || header.toLowerCase() === `idoperacion${slotIndex}`) {
-            return c + 1;
-        }
+function getIdempotenciaSheet() {
+    let sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
+    if (!sheet) {
+        sheet = getSpreadsheet().insertSheet(SHEET_NAMES.IDEMPOTENCIA);
+        sheet.appendRow(["opId", "vehicleId", "slotIndex", "timestamp", "status"]);
+        sheet.setFrozenRows(1);
     }
+    return sheet;
+}
 
-    // Not found, append dynamically
-    const newColIndex = lastCol + 1;
-    sheet.getRange(1, newColIndex).setValue(expectedHeader);
-    SpreadsheetApp.flush();
-    return newColIndex;
+function recordOpId(opId, vehicleId, slotIndex, timestamp) {
+    if (!opId) return;
+    try {
+        const sheet = getIdempotenciaSheet();
+        sheet.appendRow([
+            String(opId).trim(),
+            String(vehicleId || ""),
+            String(slotIndex || 1),
+            String(timestamp || new Date().toISOString()),
+            "completed"
+        ]);
+    } catch (e) {
+        Logger.log("Error recording opId in Idempotencia sheet: " + e.message);
+    }
 }
 
 function findRowByOpId(sheet, opId) {
     if (!opId) return null;
-    const data = sheet.getDataRange().getValues();
-    if (data.length <= 1) return null;
+    const cleanOpId = String(opId).trim();
 
-    const headers = data[0];
-    const opIdCols = [];
-    for (let c = 0; c < headers.length; c++) {
-        const h = String(headers[c]).toLowerCase();
-        if (h.includes("idoperacion") || h.includes("id_operacion")) {
-            opIdCols.push(c);
+    // 1. Buscar prioritariamente en la hoja dedicada Idempotencia
+    try {
+        const idempSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
+        if (idempSheet && idempSheet.getLastRow() > 1) {
+            const idempData = idempSheet.getDataRange().getValues();
+            for (let r = 1; r < idempData.length; r++) {
+                const row = idempData[r];
+                if (String(row[0]).trim() === cleanOpId) {
+                    const savedVehicleId = String(row[1]).trim();
+                    const savedSlotIndex = parseInt(row[2]) || 1;
+                    const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+                    if (cortesSheet && savedVehicleId) {
+                        const cortesData = cortesSheet.getDataRange().getValues();
+                        for (let cr = 1; cr < cortesData.length; cr++) {
+                            if (String(cortesData[cr][COLS_CORTES.id - 1]) === savedVehicleId) {
+                                return {
+                                    rowIndex: cr + 1,
+                                    rowValues: cortesData[cr],
+                                    colIndex: COLS_CORTES[`colaboradorCorte${savedSlotIndex}`] || COLS_CORTES.colaboradorCorte1,
+                                    slotIndex: savedSlotIndex,
+                                    fromIdempotenciaSheet: true
+                                };
+                            }
+                        }
+                    }
+                }
+            }
         }
+    } catch (e) {
+        Logger.log("Error checking Idempotencia sheet: " + e.message);
     }
 
-    for (let r = 1; r < data.length; r++) {
-        const row = data[r];
-        for (let i = 0; i < opIdCols.length; i++) {
-            const idx = opIdCols[i];
-            const cellVal = row[idx];
-            if (cellVal && String(cellVal).trim() === opId.trim()) {
-                return { rowIndex: r + 1, rowValues: row, colIndex: idx + 1 };
+    // 2. Búsqueda de compatibilidad histórica en la hoja Cortes (sin contaminar la columna 43 VIN)
+    if (sheet && sheet.getLastRow() > 1) {
+        const data = sheet.getDataRange().getValues();
+        const headers = data[0];
+        const opIdCols = [];
+        for (let c = 0; c < headers.length; c++) {
+            // Excluir expresamente la columna 43 (vin)
+            if (c + 1 === COLS_CORTES.vin) continue;
+            const h = String(headers[c]).toLowerCase();
+            if (h.includes("idoperacion") || h.includes("id_operacion")) {
+                opIdCols.push(c);
+            }
+        }
+
+        for (let r = 1; r < data.length; r++) {
+            const row = data[r];
+            for (let i = 0; i < opIdCols.length; i++) {
+                const idx = opIdCols[i];
+                const cellVal = row[idx];
+                if (cellVal && String(cellVal).trim() === cleanOpId) {
+                    return { rowIndex: r + 1, rowValues: row, colIndex: idx + 1 };
+                }
+            }
+        }
+
+        // Fallback for old tagged collaborator format (excluyendo columna vin)
+        const tag = `[${cleanOpId}]`;
+        for (let r = 1; r < data.length; r++) {
+            const row = data[r];
+            for (let c = 0; c < row.length; c++) {
+                if (c + 1 === COLS_CORTES.vin) continue;
+                const cell = row[c];
+                if (cell && typeof cell === "string" && (cell.indexOf(tag) !== -1 || cell === cleanOpId)) {
+                    return { rowIndex: r + 1, rowValues: row, colIndex: c + 1 };
+                }
             }
         }
     }
 
-    // Fallback for old tagged collaborator format
-    const tag = `[${opId}]`;
-    for (let r = 1; r < data.length; r++) {
-        const row = data[r];
-        for (let c = 0; c < row.length; c++) {
-            const cell = row[c];
-            if (cell && typeof cell === 'string' && (cell.indexOf(tag) !== -1 || cell === opId)) {
-                return { rowIndex: r + 1, rowValues: row, colIndex: c + 1 };
-            }
-        }
-    }
     return null;
 }
 
@@ -2135,4 +2212,138 @@ function getExistingEntities(sheet) {
   }
 
   return { brands: brands, models: models, versions: versions };
+}
+
+// ============================================================================
+// FUNCIONES DE GESTIÓN AVANZADA DE SPREADSHEET Y TERMINAL DE DRIVE
+// ============================================================================
+
+function handleCreateSheet(payload, logMessage) {
+    const { sheetName, headers, idFormula } = payload;
+    if (!sheetName) throw new Error("Nombre de hoja requerido.");
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName(sheetName);
+    if (sheet) throw new Error(`La hoja '${sheetName}' ya existe en el libro.`);
+
+    sheet = ss.insertSheet(sheetName);
+    if (Array.isArray(headers) && headers.length > 0) {
+        sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
+        sheet.getRange(1, 1, 1, headers.length).setFontWeight("bold").setBackground("#f3f3f3");
+    }
+
+    if (idFormula && headers && headers.length > 0) {
+        // Asignar plantilla de fórmula de ID a la primera columna si se especificó
+        sheet.getRange(2, 1).setFormula(idFormula || '=ROW()-1');
+    }
+
+    logMessage && logMessage("Spreadsheet", `Hoja '${sheetName}' creada con exito.`);
+    return { status: 'success', message: `Hoja '${sheetName}' creada correctamente.` };
+}
+
+function handleAddColumn(payload, logMessage) {
+    const { sheetName, columnName } = payload;
+    if (!sheetName || !columnName) throw new Error("Nombre de hoja y nombre de columna requeridos.");
+    const ss = getSpreadsheet();
+    const sheet = ss.getSheetByName(sheetName);
+    if (!sheet) throw new Error(`La hoja '${sheetName}' no existe.`);
+
+    const lastCol = sheet.getLastColumn();
+    const newColIndex = lastCol + 1;
+    sheet.getRange(1, newColIndex).setValue(columnName).setFontWeight("bold").setBackground("#f3f3f3");
+
+    logMessage && logMessage("Spreadsheet", `Columna '${columnName}' agregada a '${sheetName}' en el indice ${newColIndex}.`);
+    return { status: 'success', message: `Columna '${columnName}' agregada en la posicion ${newColIndex}.`, columnIndex: newColIndex };
+}
+
+function handleDriveCommand(payload, logMessage) {
+    const { command, currentFolderId, args } = payload;
+    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    let activeFolder = currentFolderId ? DriveApp.getFolderById(currentFolderId) : rootFolder;
+
+    const cmd = (command || '').toLowerCase().trim();
+
+    if (cmd === 'dir' || cmd === 'ls') {
+        const folders = [];
+        const files = [];
+
+        const subFolders = activeFolder.getFolders();
+        while (subFolders.hasNext()) {
+            const f = subFolders.next();
+            folders.push({ id: f.getId(), name: f.getName(), type: 'folder' });
+        }
+
+        const subFiles = activeFolder.getFiles();
+        while (subFiles.hasNext()) {
+            const file = subFiles.next();
+            files.push({ id: file.getId(), name: file.getName(), size: file.getSize(), mimeType: file.getMimeType(), type: 'file' });
+        }
+
+        return {
+            status: 'success',
+            currentFolder: { id: activeFolder.getId(), name: activeFolder.getName() },
+            isRoot: activeFolder.getId() === rootFolder.getId(),
+            folders: folders,
+            files: files
+        };
+    } else if (cmd === 'cd') {
+        const target = args ? args.trim() : '';
+        if (target === '\\' || target === '/') {
+            return {
+                status: 'success',
+                currentFolder: { id: rootFolder.getId(), name: rootFolder.getName() }
+            };
+        } else if (target === '..') {
+            const parents = activeFolder.getParents();
+            if (parents.hasNext()) {
+                const parent = parents.next();
+                return {
+                    status: 'success',
+                    currentFolder: { id: parent.getId(), name: parent.getName() }
+                };
+            } else {
+                return { status: 'success', currentFolder: { id: rootFolder.getId(), name: rootFolder.getName() } };
+            }
+        } else {
+            const subFolders = activeFolder.getFoldersByName(target);
+            if (subFolders.hasNext()) {
+                const found = subFolders.next();
+                return {
+                    status: 'success',
+                    currentFolder: { id: found.getId(), name: found.getName() }
+                };
+            } else {
+                throw new Error(`Carpeta '${target}' no encontrada en '${activeFolder.getName()}'.`);
+            }
+        }
+    } else if (cmd === 'mkdir') {
+        if (!args) throw new Error("Nombre de carpeta requerido para mkdir.");
+        const newSub = activeFolder.createFolder(args.trim());
+        return { status: 'success', message: `Carpeta '${newSub.getName()}' creada con ID: ${newSub.getId()}`, folderId: newSub.getId() };
+    } else if (cmd === 'move') {
+        // args: { fileId, targetFolderId }
+        const { fileId, targetFolderId } = payload;
+        if (!fileId || !targetFolderId) throw new Error("ID de archivo y ID de carpeta destino requeridos.");
+        const file = DriveApp.getFileById(fileId);
+        const targetDir = DriveApp.getFolderById(targetFolderId);
+        file.moveTo(targetDir);
+        return { status: 'success', message: `Archivo '${file.getName()}' movido a '${targetDir.getName()}'.` };
+    } else if (cmd === 'tree') {
+        function buildTree(folder, depth = 0) {
+            if (depth > 2) return `${'  '.repeat(depth)}... (profundidad maxima)\n`;
+            let result = `${'  '.repeat(depth)}📁 [${folder.getName()}]\n`;
+            const files = folder.getFiles();
+            while (files.hasNext()) {
+                result += `${'  '.repeat(depth + 1)}📄 ${files.next().getName()}\n`;
+            }
+            const subs = folder.getFolders();
+            while (subs.hasNext()) {
+                result += buildTree(subs.next(), depth + 1);
+            }
+            return result;
+        }
+        const treeStr = buildTree(activeFolder);
+        return { status: 'success', tree: treeStr };
+    }
+
+    throw new Error(`Comando de terminal '${command}' no reconocido.`);
 }

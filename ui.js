@@ -1,10 +1,11 @@
+import { vinDifferentialEngine, vinSignatureStore, getClassificationKey } from './VinDifferentialEngine.js';
 // GPSpedia UI Module | Version: 2.1.6
 // Responsibilities:
 // - Render UI components based on state.
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 
@@ -211,6 +212,101 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
  */
 const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
 
+/* FUNCIONES DE RELACIÓN VIN - VERSIONES DE EQUIPAMIENTO */
+export function parseEquipmentVersions(rawStr) {
+    if (!rawStr) return [];
+    // Normalizar separadores admitidos: comas ",", diagonales "/" y diagonales inversas "\"
+    return String(rawStr)
+        .split(/[,/\\\\]+/)
+        .map(v => v.trim())
+        .filter(Boolean);
+}
+
+export function parseVinCollection(rawVin) {
+    if (!rawVin) return [];
+    let list = [];
+    if (Array.isArray(rawVin)) {
+        list = rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    } else {
+        const str = String(rawVin).trim();
+        if (str.startsWith("[") && str.endsWith("]")) {
+            try {
+                const parsed = JSON.parse(str);
+                if (Array.isArray(parsed)) {
+                    list = parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                }
+            } catch (e) {}
+        }
+        if (list.length === 0) {
+            list = str
+                .split(/[,/\\\\]+/)
+                .map(v => v.trim().toUpperCase())
+                .filter(Boolean);
+        }
+    }
+    // Filtrar estrictamente cualquier ID de operación de idempotencia ("OP-...") o tokens no válidos
+    return list.filter(v => v && !v.startsWith("OP-") && !v.startsWith("OP_") && !v.includes("IDOPERACION"));
+}
+
+export function mapVersionsWithVins(versionesStr, vinRaw) {
+    const versions = parseEquipmentVersions(versionesStr);
+    const rawVins = parseVinCollection(vinRaw);
+
+    // Regla de negocio: Si el modelo solo tiene una versión de equipamiento (o ninguna),
+    // no debe mostrar ningún número VIN distintivo en el modal.
+    // Solo si el modelo tiene más de 1 versión de equipamiento, se extraen 4 dígitos consecutivos distintivos.
+    if (versions.length <= 1) {
+        if (versions.length === 1) {
+            return [{ version: versions[0], vin: null }];
+        }
+        return [];
+    }
+
+    // Formatear cada VIN ignorando los últimos 5 dígitos y extrayendo los 4 dígitos distintivos
+    const cleanedVins = rawVins.map(v => {
+        if (!v) return "";
+        let s = String(v).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (s.startsWith("OP")) return "";
+        // Ignorar los últimos 5 dígitos (numéricos de serie) si la longitud es mayor a 5
+        if (s.length > 5) {
+            s = s.substring(0, s.length - 5);
+        }
+        return s;
+    });
+
+    // Detectar el índice donde difieren las versiones de equipamiento
+    const nonNullVins = cleanedVins.filter(Boolean);
+    let diffIdx = -1;
+    if (nonNullVins.length >= 2) {
+        const minLen = Math.min(...nonNullVins.map(v => v.length));
+        for (let i = 0; i < minLen; i++) {
+            const setAtI = new Set(nonNullVins.map(v => v[i]));
+            if (setAtI.size > 1) {
+                diffIdx = i;
+                break;
+            }
+        }
+    }
+
+    const clean4DigitVins = cleanedVins.map(s => {
+        if (!s) return null;
+        if (s.length <= 4) return s;
+        if (diffIdx !== -1) {
+            const start = Math.max(0, Math.min(diffIdx, s.length - 4));
+            return s.substring(start, start + 4);
+        }
+        return s.slice(-4);
+    });
+
+    // Cada versión se relaciona individualmente con su correspondiente VIN si existe
+    return versions.map((version, index) => {
+        return {
+            version,
+            vin: clean4DigitVins[index] || null
+        };
+    });
+}
+
 /**
  * Establece una imagen optimizada intentando cargarla desde el caché de IndexedDB.
  * @param {HTMLImageElement} imgElement - El elemento img a actualizar.
@@ -280,8 +376,8 @@ export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMAL
 }
 
 export function getImageUrl(fileId, size = 400) {
-    // Si ya es una URL de Blob (caché local), devolverla directamente.
-    if (fileId && typeof fileId === 'string' && fileId.startsWith('blob:')) {
+    // Si ya es una URL de Blob o Data URL (base64/svg), devolverla directamente.
+    if (fileId && typeof fileId === 'string' && (fileId.startsWith('blob:') || fileId.startsWith('data:'))) {
         return fileId;
     }
 
@@ -314,6 +410,7 @@ export function getImageUrl(fileId, size = 400) {
         return placeholder;
     }
 
+    /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES */
     // Evitar parámetros de miniaturas (=w / =s) de Google que convierten PNGs transparentes a JPEG con fondo negro
     return `https://lh3.googleusercontent.com/d/${id}`;
 }
@@ -867,6 +964,7 @@ export function regresarABusqueda() {
     }
 }
 
+/* TAREA 7 (B18): CONTEXTO 'ORIGIN' MARCA/CATEGORÍA Y RETORNO LIMPIO SIN BUCLES */
 export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
     const { catalogData, navigationState } = getState();
     const { cortes } = catalogData;
@@ -1251,6 +1349,7 @@ function showValidationBanner(item, isOldModel) {
  * @param {string} searchData.query - El texto original de la búsqueda.
  * @param {Array} searchData.results - El array de resultados (strings de marcas o objetos de modelos).
  */
+/* TAREA 7 (B06): DISTINCIÓN ENTRE BÚSQUEDA ACTIVA Y RESTAURACIÓN DEL HISTORIAL CON AUTO-OPEN */
 // --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
 export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen = true) {
     const cont = document.getElementById("contenido");
@@ -1281,15 +1380,18 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
         });
     } else {
         // Renderizado para resultados de tipo MODELO (y por defecto).
-
-        // De-duplicar los resultados para mostrar solo una tarjeta por variante única (modelo + categoría + versión).
-        // Esto evita mostrar una tarjeta para cada año del mismo vehículo y diferencia variantes de distinta categoría.
-        const variantesUnicas = [...new Map(results.map(item => {
-            const key = `${item.marca}|${item.modelo}|${item.categoria}|${item.versionesAplicables || ''}`;
+        // Agrupar los resultados primero por Modelo único (Marca + Modelo)
+        /* TAREA 4: Evitar que elementos de Relay, Tutoriales o PyS se colapsen indebidamente a una sola tarjeta */
+        const modelosUnicos = [...new Map(results.map((item, idx) => {
+            if (item._sectionType) {
+                const secId = item.ID || item.id || item.Tema || item.configuracion || item.Problema || idx;
+                return [`${item._sectionType}|${secId}`, item];
+            }
+            const key = `${item.marca}|${item.modelo}`;
             return [key, item];
         })).values()];
 
-        variantesUnicas.forEach(ejemplo => {
+        modelosUnicos.forEach(ejemplo => {
             const card = crearCardVehiculo(ejemplo, false, results);
             grid.appendChild(card);
         });
@@ -1297,17 +1399,20 @@ export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen =
 
     cont.appendChild(grid);
 
-    // Caso especial: Si solo hay un resultado de modelo, se muestra directamente el modal de detalle.
-    // Phase 2.1.5: Se añade la bandera 'autoOpen' para evitar la reapertura del modal al navegar hacia atrás
-    // en el historial (popstate).
-    if (autoOpen && type === 'modelo' && results.length === 1) {
-        // Retirar el foco de la barra de búsqueda para ocultar el teclado virtual
-        const searchInput = document.getElementById('searchInput');
-        if (searchInput) searchInput.blur();
+    // Caso especial: Si solo existe 1 modelo con 1 versión aplicable y 1 solo rango de año, abrir directamente el modal de detalle.
+    if (autoOpen && type === 'modelo') {
+        const uniqueModels = [...new Set(results.map(r => `${r.marca}|${r.modelo}`))];
+        const uniqueVersions = [...new Set(results.map(r => r.versionesAplicables || ''))];
+        const uniqueYears = [...new Set(results.map(r => `${r.anoDesde}-${r.anoHasta || ''}`))];
 
-        setTimeout(() => {
-            mostrarDetalleModal(results[0]);
-        }, 150);
+        if (uniqueModels.length === 1 && uniqueVersions.length === 1 && uniqueYears.length === 1 && results.length === 1) {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.blur();
+
+            setTimeout(() => {
+                mostrarDetalleModal(results[0]);
+            }, 150);
+        }
     }
 }
 
@@ -1341,8 +1446,9 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
+    // Tarea 1.6: Corrección y compactación de la cabecera del modal de detalle
     const headerDiv = document.createElement("div");
-    headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 10px; gap: 10px;";
+    headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 4px; gap: 8px;";
 
     // Indicador visual de guardado/comunicación para modo edición
     const savingIndicator = document.createElement("div");
@@ -1355,6 +1461,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>';
     shareBtn.className = "share-modal-btn";
     shareBtn.title = "Compartir este vehículo";
+    /* TAREA 8 (B10, B11, B23): COMPARTIR MODELO Y REDIRECCIONAMIENTO PRECISO CON DEEP LINKING */
     shareBtn.onclick = () => {
         const queryParts = [
             activeItem.marca,
@@ -1384,6 +1491,14 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     };
     headerDiv.appendChild(shareBtn);
+
+    // Botón Imprimir Ficha Técnica
+    const printBtn = document.createElement("button");
+    printBtn.innerHTML = '<i class="fa-solid fa-print"></i>';
+    printBtn.className = "share-modal-btn";
+    printBtn.title = "Imprimir / Exportar Ficha Técnica";
+    printBtn.onclick = () => exportVehiclePrintSheet(activeItem);
+    headerDiv.appendChild(printBtn);
 
     const sessionData = localStorage.getItem('gpsepedia_session');
     const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
@@ -1454,14 +1569,14 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     };
     closeBtn.className = "info-close-btn";
-    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 10px;";
+    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 4px;";
     headerDiv.appendChild(closeBtn);
     cont.appendChild(headerDiv);
 
     // Comentario: Se ajusta el layout del encabezado para cumplir con el nuevo requisito (logo a la izquierda).
     // Se añade 'flex-wrap: wrap' para evitar scroll horizontal en móviles con logos anchos.
     const titleContainer = document.createElement("div");
-    titleContainer.style.cssText = "border-bottom: 3px solid #007bff; padding-bottom: 8px; margin-bottom: 15px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
+    titleContainer.style.cssText = "border-bottom: 2px solid #007bff; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
 
     const logoUrl = getLogoUrlForMarca(activeItem.marca, activeItem.categoria);
     if (logoUrl) {
@@ -1508,17 +1623,34 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     const subHeaderText = document.createElement('p');
     subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
 
-    // Tarea 5: Identificar todas las generaciones del mismo modelo
+    /* TAREA: NAVEGACIÓN ENTRE GENERACIONES BASADA EN CONTINUIDAD DE VERSIONES DE EQUIPAMIENTO */
     const allCortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
 
-    const normalizedItemVersion = normalizeVersion(activeItem.versionesAplicables);
-    const generations = allCortes.filter(c =>
-        String(c.marca).toLowerCase() === String(activeItem.marca).toLowerCase() &&
-        String(c.modelo).toLowerCase() === String(activeItem.modelo).toLowerCase() &&
-        String(c.categoria).toLowerCase() === String(activeItem.categoria).toLowerCase() &&
-        String(c.tipoEncendido).toLowerCase() === String(activeItem.tipoEncendido).toLowerCase() &&
-        normalizeVersion(c.versionesAplicables) === normalizedItemVersion
-    ).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
+    const activeItemVersions = parseEquipmentVersions(activeItem.versionesAplicables).map(v => v.toLowerCase());
+
+    const generations = allCortes.filter(c => {
+        if (String(c.marca).toLowerCase() !== String(activeItem.marca).toLowerCase() ||
+            String(c.modelo).toLowerCase() !== String(activeItem.modelo).toLowerCase() ||
+            String(c.categoria).toLowerCase() !== String(activeItem.categoria).toLowerCase()) {
+            return false;
+        }
+
+        // Si tienen tipos de encendido diferentes, no pertenecen a la misma línea
+        if (activeItem.tipoEncendido && c.tipoEncendido &&
+            String(c.tipoEncendido).toLowerCase() !== String(activeItem.tipoEncendido).toLowerCase()) {
+            return false;
+        }
+
+        // Continuidad de versiones de equipamiento:
+        // Si alguno no tiene versiones especificadas, se considera continuo
+        const cVersions = parseEquipmentVersions(c.versionesAplicables).map(v => v.toLowerCase());
+        if (activeItemVersions.length === 0 || cVersions.length === 0) {
+            return true;
+        }
+
+        // Si ambos tienen versiones, debe existir al menos una versión en común
+        return activeItemVersions.some(av => cVersions.includes(av));
+    }).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
 
     const currentIndex = generations.findIndex(g => String(g.id) === String(activeItem.id));
 
@@ -1618,6 +1750,22 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             await saveFieldSilently(activeItem.id, 'categoria', catSelect.value);
         };
 
+        // 5. VIN / Chasis
+        const vinLabel = document.createElement('label');
+        vinLabel.textContent = "Colección de VINs / Chasis:";
+        vinLabel.style.fontSize = "0.85em";
+        const vinInput = document.createElement('input');
+        vinInput.type = "text";
+        vinInput.value = activeItem.vin || "";
+        vinInput.placeholder = 'ej. ["1HGCM82633A", "2HGCM82633B"]';
+        vinInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        vinInput.onblur = async () => {
+            if (vinInput.value.trim() !== editedItemBuffer.vin) {
+                editedItemBuffer.vin = vinInput.value.trim();
+                await saveFieldSilently(activeItem.id, 'vin', vinInput.value.trim());
+            }
+        };
+
         editHeaderWrapper.appendChild(versLabel);
         editHeaderWrapper.appendChild(versInput);
         editHeaderWrapper.appendChild(encLabel);
@@ -1626,6 +1774,8 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         editHeaderWrapper.appendChild(yearsWrapper);
         editHeaderWrapper.appendChild(catLabel);
         editHeaderWrapper.appendChild(catSelect);
+        editHeaderWrapper.appendChild(vinLabel);
+        editHeaderWrapper.appendChild(vinInput);
 
         subHeaderText.appendChild(editHeaderWrapper);
     } else {
@@ -1663,8 +1813,26 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             yearRangeContainer.appendChild(yearTextSpan);
         }
 
-        const equipamiento = activeItem.versionesAplicables || activeItem.tipoEncendido || '';
-        subHeaderText.innerHTML = `<strong>${equipamiento}</strong> | `;
+        /* TAREA: PRESENTACIÓN VISUAL DE VERSIONES Y DÍGITOS DE CHASIS CON SEPARADOR "/" */
+        const mappedVersions = mapVersionsWithVins(activeItem.versionesAplicables, activeItem.vin);
+        let equipamientoHtml = '';
+
+        if (mappedVersions.length > 0) {
+            equipamientoHtml = mappedVersions.map(mv => {
+                if (mv.version && mv.vin) {
+                    return `${mv.version} <span class="chassis-digits" style="font-size: 0.82em; font-weight: normal; opacity: 0.85;">(${mv.vin})</span>`;
+                } else if (mv.version) {
+                    return mv.version;
+                } else if (mv.vin) {
+                    return `<span class="chassis-digits" style="font-size: 0.82em; font-weight: normal; opacity: 0.85;">(${mv.vin})</span>`;
+                }
+                return '';
+            }).filter(Boolean).join(' / ');
+        } else {
+            equipamientoHtml = activeItem.tipoEncendido || '';
+        }
+
+        subHeaderText.innerHTML = `<strong>${equipamientoHtml}</strong> | `;
         subHeaderText.appendChild(yearRangeContainer);
 
         if(activeItem.categoria) {
@@ -1686,6 +1854,40 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     }
     subHeaderDiv.appendChild(subHeaderText);
     cont.appendChild(subHeaderDiv);
+
+    /* TAREA 1: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN */
+    const itemVersions = parseEquipmentVersions(activeItem ? activeItem.versionesAplicables : '');
+    if (activeItem && activeItem.vin && itemVersions.length > 1) {
+        try {
+            const catalogData = getState().catalogData;
+            if (vinDifferentialEngine.signatures.size === 0 && catalogData && catalogData.cortes) {
+                vinDifferentialEngine.calculateSignatures(catalogData.cortes);
+            }
+            const mainVersion = itemVersions[0] || '';
+            const classKey = getClassificationKey(activeItem, mainVersion, 5);
+            const sig = vinDifferentialEngine.signatures.get(classKey);
+
+            if (sig && sig.status !== 'insuficiente' && sig.positions && sig.positions.length > 0) {
+                const sigBox = document.createElement('div');
+                sigBox.className = 'vin-signature-badge';
+                sigBox.style.cssText = 'margin: 6px 0 10px 0; padding: 6px 12px; background: rgba(0, 123, 255, 0.08); border-left: 3px solid #007bff; border-radius: 4px; font-size: 0.82em; display: flex; flex-direction: column; gap: 2px;';
+
+                const sigTitle = document.createElement('span');
+                sigTitle.style.cssText = 'font-weight: bold; color: var(--text-color); display: flex; align-items: center; gap: 6px;';
+                sigTitle.innerHTML = `<i class="fa-solid fa-fingerprint" style="color: #007bff;"></i> Firma Diferencial de VIN: <strong>${sig.signatureString}</strong> <span style="font-size: 0.85em; opacity: 0.8; font-weight: normal;">(${sig.readableFormat})</span>`;
+
+                const sigMeta = document.createElement('span');
+                sigMeta.style.cssText = 'color: #666; font-size: 0.88em;';
+                sigMeta.textContent = `Caracteres mínimos: ${sig.charactersNeeded} | Certeza: ${sig.confidence}% (${sig.status === 'validada' ? 'Identificación validada' : 'Firma calculada'})`;
+
+                sigBox.appendChild(sigTitle);
+                sigBox.appendChild(sigMeta);
+                cont.appendChild(sigBox);
+            }
+        } catch (e) {
+            console.error('Error visualizando firma diferencial:', e);
+        }
+    }
 
 
     if (inEditMode || activeItem.imagenVehiculo) {
@@ -1749,7 +1951,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
         recommendedSection.appendChild(title);
         // El corte recomendado se carga de inmediato (isLazy = false)
-        renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false);
+        renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false, recommendedCut.index);
         cont.appendChild(recommendedSection);
     }
 
@@ -1759,6 +1961,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     const otherSections = [
         ...cortes.map((corte, idx) => ({
             isCorte: true,
+            corteIndex: corte.index || (idx + 2),
             title: `Corte Alternativo ${idx + 1} (Votos: ${corte.util})`,
             data: corte
         })),
@@ -1786,12 +1989,15 @@ export function mostrarDetalleModal(item, isNavigation = false) {
         }
     });
 
+    /* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL ACORDEÓN «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+    renderPosiblesProblemasAccordion(accordionContainer, activeItem);
+
     const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
+        // TAREA 1.5 / 1.8: RECUPERACIÓN, AJUSTE Y REEJECUCIÓN DEL BOTÓN (+) EN EL MODAL DE DETALLE DEL VEHÍCULO
         const plusBtn = document.createElement("button");
         plusBtn.className = "btn-expand-plus";
         plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
-        plusBtn.style.cssText = "position: fixed; bottom: 20px; right: 20px; width: 44px; height: 44px; border-radius: 50%; background-color: #007bff; color: #fff; border: none; box-shadow: 0 4px 10px rgba(0,0,0,0.3); font-size: 1.2rem; cursor: pointer; z-index: 1700; display: flex; align-items: center; justify-content: center;";
         plusBtn.title = "Ampliar información del modelo";
         plusBtn.onclick = (e) => {
             e.stopPropagation();
@@ -1848,6 +2054,14 @@ export async function performSilentSync(newCatalogData) {
                 updatedCortesList.push({ type: 'removed', id });
                 hasChanges = true;
             }
+        }
+
+        // Comprobar si hay tutoriales o relay nuevos o actualizados
+        if (newCatalogData.tutoriales && (!oldCatalogData.tutoriales || newCatalogData.tutoriales.length !== oldCatalogData.tutoriales.length)) {
+            hasChanges = true;
+        }
+        if (newCatalogData.relay && (!oldCatalogData.relay || newCatalogData.relay.length !== oldCatalogData.relay.length)) {
+            hasChanges = true;
         }
 
         if (!hasChanges) {
@@ -1950,6 +2164,16 @@ function updateFullState(catalogData) {
                 sortedCategories: sortedCategories
             }
         });
+
+        // Refrescar vistas de tutoriales o relay si están activas
+        const tutContainer = document.getElementById("contenido-tutoriales");
+        if (tutContainer && tutContainer.style.display !== "none") {
+            mostrarTutorialesGrid();
+        }
+        const relayContainer = document.getElementById("contenido-relay");
+        if (relayContainer && relayContainer.style.display !== "none") {
+            mostrarRelayGrid();
+        }
     } catch (e) {
         console.error("Error actualizando estado global tras sincronización:", e);
     }
@@ -2107,7 +2331,182 @@ async function insertNewVehicleFluently(item) {
     }
 }
 
-function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false) {
+/* TAREA 3.1: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+function createPysCard(item) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.setAttribute("data-problem-id", item.id_problem || item.id || "");
+    card.style.animation = "none";
+    card.style.opacity = "1";
+    card.onclick = () => openPysDetailModal(item);
+
+    const img = document.createElement("img");
+    img.className = "card-img-top";
+    img.alt = item.Problema || "Problema técnico";
+    img.loading = "lazy";
+    setOptimizedImage(img, item.Imagen || "", IMG_SIZE_SMALL);
+    card.appendChild(img);
+
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+    const statusText = item.Se_soluciono === "x" ? "Solucionado" : "Sin solución";
+    const statusColor = item.Se_soluciono === "x" ? "#28a745" : "#dc3545";
+    overlay.innerHTML = `
+        <div class="overlay-text-primary" style="font-size: 0.85rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.Problema || "Problema"}</div>
+        <div class="overlay-text-secondary" style="font-size: 0.75rem; color: ${statusColor}; font-weight: bold;">${statusText}</div>
+    `;
+    card.appendChild(overlay);
+
+    return card;
+}
+
+export function renderPosiblesProblemasAccordion(container, activeItem) {
+    if (!container || !activeItem || !activeItem.id) return;
+    const vehicleIdStr = String(activeItem.id);
+
+    // Contenedor dinámico del acordeón para poder actualizarlo si se descargan datos nuevos
+    let wrapper = container.querySelector("#posibles-problemas-wrapper");
+    if (!wrapper) {
+        wrapper = document.createElement("div");
+        wrapper.id = "posibles-problemas-wrapper";
+        container.appendChild(wrapper);
+    }
+
+    const updateAccordion = (rawPysData) => {
+        wrapper.innerHTML = "";
+        const allPys = Array.isArray(rawPysData) ? rawPysData : [];
+        // Filtrar estrictamente por el identificador del modelo y de-duplicar por ID de problema
+        const seenIds = new Set();
+        const relatedProblems = [];
+
+        allPys.forEach(p => {
+            if (!p || !Array.isArray(p.modelosAsociados)) return;
+            const matches = p.modelosAsociados.some(mId => String(mId) === vehicleIdStr);
+            if (matches) {
+                const pId = p.id_problem || p.id || p.Problema;
+                if (!seenIds.has(pId)) {
+                    seenIds.add(pId);
+                    relatedProblems.push(p);
+                }
+            }
+        });
+
+        // REQUISITO: Si no existen problemas relacionados, no mostrar el acordeón vacío
+        if (relatedProblems.length === 0) {
+            return;
+        }
+
+        // Crear el botón acordeón con el título exacto requerido: «Posibles problemas»
+        const btn = document.createElement("button");
+        btn.className = "accordion-btn";
+        btn.innerHTML = `Posibles problemas <span class="accordion-arrow">▼</span>`;
+
+        const panel = document.createElement("div");
+        panel.className = "panel-desplegable";
+        panel.style.display = "none";
+        panel.style.padding = "15px 10px";
+
+        if (relatedProblems.length === 1) {
+            // REQUISITO: Si existe un solo problema, mostrar su tarjeta
+            const singleCardContainer = document.createElement("div");
+            singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; width: 100%;";
+            const singleCard = createPysCard(relatedProblems[0]);
+            singleCardContainer.appendChild(singleCard);
+            panel.appendChild(singleCardContainer);
+        } else {
+            // REQUISITO: Si existen varios problemas, mostrarlos mediante un carrusel navegable
+            const carouselContainer = document.createElement("div");
+            carouselContainer.className = "carousel-container";
+            const carouselTrack = document.createElement("div");
+            carouselTrack.className = "carousel-track";
+
+            relatedProblems.forEach(p => {
+                const card = createPysCard(p);
+                carouselTrack.appendChild(card);
+            });
+            carouselContainer.appendChild(carouselTrack);
+
+            const prevBtn = document.createElement("button");
+            prevBtn.className = "carousel-btn prev";
+            prevBtn.innerHTML = "&#10094;";
+            carouselContainer.appendChild(prevBtn);
+
+            const nextBtn = document.createElement("button");
+            nextBtn.className = "carousel-btn next";
+            nextBtn.innerHTML = "&#10095;";
+            carouselContainer.appendChild(nextBtn);
+
+            const cardWidth = 140 + 20;
+            const getVisibleCards = () => {
+                const containerWidth = carouselContainer.offsetWidth || 300;
+                return Math.floor(containerWidth / cardWidth) || 1;
+            };
+
+            const updateCarouselButtons = () => {
+                const scrollLeft = carouselTrack.scrollLeft;
+                const maxScrollLeft = carouselTrack.scrollWidth - carouselTrack.clientWidth;
+                prevBtn.style.display = scrollLeft > 2 ? "flex" : "none";
+                nextBtn.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+            };
+
+            nextBtn.addEventListener("click", () => {
+                carouselTrack.scrollBy({ left: cardWidth * getVisibleCards(), behavior: "smooth" });
+            });
+
+            prevBtn.addEventListener("click", () => {
+                carouselTrack.scrollBy({ left: -cardWidth * getVisibleCards(), behavior: "smooth" });
+            });
+
+            carouselTrack.addEventListener("scroll", () => setTimeout(updateCarouselButtons, 100));
+            window.addEventListener("resize", () => setTimeout(updateCarouselButtons, 100));
+            setTimeout(updateCarouselButtons, 200);
+
+            panel.appendChild(carouselContainer);
+        }
+
+        btn.onclick = () => {
+            const isOpening = panel.style.display === "none";
+            panel.style.display = isOpening ? "block" : "none";
+            btn.classList.toggle("active", isOpening);
+            const arrow = btn.querySelector(".accordion-arrow");
+            if (arrow) arrow.textContent = isOpening ? "▲" : "▼";
+
+            if (isOpening && relatedProblems.length > 1) {
+                const track = panel.querySelector(".carousel-track");
+                const prev = panel.querySelector(".carousel-btn.prev");
+                const next = panel.querySelector(".carousel-btn.next");
+                if (track && prev && next) {
+                    const scrollLeft = track.scrollLeft;
+                    const maxScrollLeft = track.scrollWidth - track.clientWidth;
+                    prev.style.display = scrollLeft > 2 ? "flex" : "none";
+                    next.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+                }
+            }
+        };
+
+        wrapper.appendChild(btn);
+        wrapper.appendChild(panel);
+    };
+
+    // 1. Evaluar si ya existen datos en caché en el estado
+    const cachedPys = getState().pysData;
+    if (Array.isArray(cachedPys) && cachedPys.length > 0) {
+        updateAccordion(cachedPys);
+    }
+
+    // 2. Consultar siempre de forma asíncrona para asegurar que no falten datos ni relaciones recientes
+    routeAction("getPysData").then(res => {
+        if (res && res.data && Array.isArray(res.data)) {
+            setState({ pysData: res.data });
+            updateAccordion(res.data);
+        }
+    }).catch(err => {
+        console.warn("No se pudo sincronizar pysData en detalle de vehículo:", err);
+    });
+}
+
+
+function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false, index = 0) {
     if (inEditMode) {
         const idx = cutData.index;
         const editCutsWrapper = document.createElement('div');
@@ -2296,12 +2695,13 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         };
         feedbackOverlay.appendChild(utilBtn);
 
+        // Tarea 2.1: Botón de reporte individual en cada corte
+        const corteNum = cutData.index || index || 1;
         const reportBtn = document.createElement('button');
         reportBtn.className = 'feedback-btn-overlay report-btn';
         reportBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
-        reportBtn.title = 'Reportar un problema';
+        reportBtn.title = `Reportar error en Corte #${corteNum}`;
 
-        // Optimistic UI for reportProblem
         reportBtn.onclick = (e) => {
             e.preventDefault();
             e.stopPropagation();
@@ -2312,22 +2712,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
                 return;
             }
 
-            const reason = window.prompt(`Describe el problema con el Corte #${index + 1}:`);
-            if (reason && reason.trim()) {
-                reportBtn.classList.add('btn-loading');
-                reportProblem(vehicleId, `[Corte #${index + 1}] ${reason.trim()}`, currentUser.ID, currentUser.Nombre_Completo || currentUser.Nombre_Usuario).then((res) => {
-                    const reportId = res && res.reportId ? res.reportId : `REP-${Date.now()}`;
-                    const suggest = window.confirm("Reporte enviado con éxito.\n\n¿Deseas proponer una sugerencia de cambio para corregir este corte ahora mismo?");
-                    if (suggest) {
-                        openSuggestCutModal(vehicleId, index + 1, cutData, reportId);
-                    }
-                }).catch(err => {
-                    console.error("Error reporting problem:", err);
-                    showGlobalError("Error al enviar reporte.");
-                }).finally(() => {
-                    reportBtn.classList.remove('btn-loading');
-                });
-            }
+            openReportCutModal(vehicleId, corteNum, cutData);
         };
         feedbackOverlay.appendChild(reportBtn);
 
@@ -2502,6 +2887,7 @@ export const openInbox = setupModal('inbox-modal', async () => {
     }
 });
 
+/* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
 export const openDevTools = setupModal('dev-tools-modal', () => {
     document.getElementById('dev-tools-modal').style.display = 'flex';
     initAdminPanelListeners();
@@ -2547,6 +2933,39 @@ function initAdminPanelListeners() {
     }
     window.adminListenersAttached = true;
 
+    // Escaneo de salud de todos los microservicios
+    async function runServicesHealthScan() {
+        const healthGrid = document.getElementById('services-health-grid');
+        if (healthGrid) {
+            healthGrid.innerHTML = `<span style="color: var(--text-disabled); font-style: italic; grid-column: span 2;">Escaneando microservicios...</span>`;
+        }
+        log("[SALUD] Ejecutando diagnóstico de latencia y estado en los microservicios...");
+        try {
+            const healthResults = await checkAllServicesHealth();
+            if (healthGrid) {
+                healthGrid.innerHTML = '';
+                Object.keys(healthResults).forEach(srvKey => {
+                    const item = healthResults[srvKey];
+                    const div = document.createElement('div');
+                    div.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.05); font-size: 0.8em;";
+
+                    const isOnline = item.status === 'online';
+                    const statusDot = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${isOnline ? '#28a745' : '#dc3545'}; margin-right:6px;"></span>`;
+                    div.innerHTML = `<div>${statusDot}<strong>${srvKey}</strong></div><span style="color:${isOnline ? 'var(--text-color)' : '#dc3545'}; font-family:monospace;">${isOnline ? item.latency + 'ms' : 'Error'}</span>`;
+                    healthGrid.appendChild(div);
+                });
+            }
+            log("[SALUD] Escaneo de salud completado.");
+        } catch (e) {
+            log(`[SALUD ERROR] Fallo al escanear servicios: ${e.message}`, false, true);
+        }
+    }
+
+    const scanBtn = document.getElementById('btn-check-services-health');
+    if (scanBtn) {
+        scanBtn.onclick = () => runServicesHealthScan();
+    }
+
     // Conectividad automática e inicio
     window.triggerAdminPanelPing = async function() {
         consoleLog.innerHTML = ''; // Limpiar consola al abrir
@@ -2567,6 +2986,7 @@ function initAdminPanelListeners() {
         } catch (error) {
             log("No fue posible establecer comunicación con el microservicio.", false, true);
         }
+        runServicesHealthScan();
         log("Esperando operaciones...");
     };
 
@@ -2861,6 +3281,101 @@ ${elapsedSec}s
         }
     }
 
+    // --- NAVEGACIÓN Y COMANDOS DE TERMINAL DRIVE (cd, dir, tree, mkdir, move) ---
+    let currentTerminalFolderId = null;
+    let commandHistory = [];
+    let commandHistoryIndex = -1;
+
+    async function executeTerminalCommand(inputCmd) {
+        if (!inputCmd || !inputCmd.trim()) return;
+        const rawCmd = inputCmd.trim();
+        commandHistory.push(rawCmd);
+        commandHistoryIndex = commandHistory.length;
+
+        log(`> ${rawCmd}`);
+
+        const parts = rawCmd.split(/\s+/);
+        let cmd = parts[0].toLowerCase();
+        let args = parts.slice(1).join(' ');
+
+        // Soportar cd /d D:\ o cd \ o cd ..
+        if (cmd === 'cd' && (args.startsWith('/d') || args.startsWith('/D'))) {
+            args = args.replace(/^\/[dD]\s*/, '');
+        }
+
+        try {
+            const res = await routeAction('driveCommand', {
+                command: cmd,
+                args: args,
+                currentFolderId: currentTerminalFolderId
+            });
+
+            if (res && res.status === 'success') {
+                if (res.currentFolder) {
+                    currentTerminalFolderId = res.currentFolder.id;
+                    log(`Ruta actual: [${res.currentFolder.name}] (${res.currentFolder.id})`);
+                }
+                if (res.tree) {
+                    log(`\n${res.tree}`);
+                }
+                if (res.folders || res.files) {
+                    if (res.folders.length === 0 && res.files.length === 0) {
+                        log("(Carpeta vacía)");
+                    }
+                    res.folders.forEach(f => {
+                        log(`📁 [${f.name}]  (Escribe 'cd ${f.name}' para entrar)`);
+                    });
+                    res.files.forEach(f => {
+                        log(`📄 ${f.name} (${(f.size / 1024).toFixed(1)} KB)`);
+                    });
+                }
+                if (res.message) {
+                    log(`[DRIVE] ${res.message}`);
+                }
+            } else {
+                log(`[ERROR TERMINAL] ${res ? res.message : 'Error al ejecutar comando.'}`, false, true);
+            }
+        } catch (err) {
+            log(`[ERROR TERMINAL] ${err.message}`, false, true);
+        }
+    }
+
+    const termInput = document.getElementById('dev-terminal-input');
+    const termSendBtn = document.getElementById('btn-terminal-send');
+
+    if (termInput) {
+        termInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const val = termInput.value;
+                termInput.value = '';
+                await executeTerminalCommand(val);
+            } else if (e.key === 'ArrowUp') {
+                if (commandHistory.length > 0 && commandHistoryIndex > 0) {
+                    commandHistoryIndex--;
+                    termInput.value = commandHistory[commandHistoryIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (commandHistoryIndex < commandHistory.length - 1) {
+                    commandHistoryIndex++;
+                    termInput.value = commandHistory[commandHistoryIndex];
+                } else {
+                    commandHistoryIndex = commandHistory.length;
+                    termInput.value = '';
+                }
+            }
+        });
+    }
+
+    if (termSendBtn) {
+        termSendBtn.onclick = async () => {
+            if (termInput && termInput.value) {
+                const val = termInput.value;
+                termInput.value = '';
+                await executeTerminalCommand(val);
+            }
+        };
+    }
+
     // Botón Copiar Registro de errores y advertencias críticas
     const btnCopyLog = document.getElementById('btn-copy-console-log');
     if (btnCopyLog) {
@@ -2950,6 +3465,36 @@ ${elapsedSec}s
     };
 
     // 5. Mantenimiento y Organización
+    // Listeners para motor de firmas de VIN
+    const recalcVinBtn = document.getElementById('btn-recalculate-vin-signatures');
+    if (recalcVinBtn) {
+        recalcVinBtn.onclick = () => {
+            const catalogData = getState().catalogData;
+            if (!catalogData || !catalogData.cortes) {
+                appendLog('[VIN ENGINE] No hay registros vehiculares en memoria.', 'log-warning');
+                return;
+            }
+            appendLog('[VIN ENGINE] Iniciando análisis diferencial de VIN...', 'log-info');
+            const stats = vinDifferentialEngine.calculateSignatures(catalogData.cortes);
+            vinSignatureStore.saveSignatures(vinDifferentialEngine);
+            appendLog(`[VIN ENGINE] Concluido: ${stats.totalVinsAnalyzed} VINs analizados, ${stats.totalClassesAnalyzed} clasificaciones, ${stats.signaturesGenerated} firmas generadas (${stats.validatedCount} validadas, ${stats.pendingCount} pendientes, ${stats.insufficientCount} insuficientes). Conflictos: ${stats.conflictsCount}.`, 'log-info');
+        };
+    }
+    const viewVinBtn = document.getElementById('btn-view-vin-signatures');
+    if (viewVinBtn) {
+        viewVinBtn.onclick = () => {
+            const count = vinDifferentialEngine.signatures.size;
+            appendLog(`[VIN ENGINE] Firmas en memoria: ${count}`, 'log-info');
+            let idx = 1;
+            for (const sig of vinDifferentialEngine.signatures.values()) {
+                if (idx <= 10) {
+                    appendLog(`[FIRMA #${idx}] ${sig.marca} ${sig.modelo} (${sig.rangoAnos}) [${sig.version || 'Gral'}]: ${sig.signatureString || 'N/A'} - Estado: ${sig.status} - Certeza: ${sig.confidence}%`, 'log-info');
+                    idx++;
+                }
+            }
+        };
+    }
+
     document.getElementById('btn-admin-reorganize-db').onclick = async () => {
         if (confirm("¿Deseas reorganizar y ordenar la base de datos alfabéticamente por Marca? Se generará automáticamente un respaldo preventivo.")) {
             await runAction('reorganizeDatabase');
@@ -2968,6 +3513,60 @@ ${elapsedSec}s
             await runAction('restoreAllTrashedImages');
         }
     };
+
+    // Vaciar Caché Local de Cliente (IndexedDB/Storage)
+    const clearCacheBtn = document.getElementById('btn-admin-clear-client-cache');
+    if (clearCacheBtn) {
+        clearCacheBtn.onclick = async () => {
+            if (confirm("¿Deseas VACIAR la caché local de IndexedDB y localStorage del navegador?\n\nEsto forzará a la aplicación a descargar datos e imágenes frescas desde los microservicios.")) {
+                try {
+                    log("[SISTEMA] Vaciando IndexedDB y caché local...");
+                    if (window.indexedDB) {
+                        try {
+                            window.indexedDB.deleteDatabase('GPSpedia_DB');
+                        } catch (e) {}
+                    }
+                    localStorage.removeItem('gpsepedia_catalog_cache');
+                    localStorage.removeItem('gpsepedia_pending_operation');
+                    log("[EXITO] Caché local eliminada correctamente. Recargando la aplicación...");
+                    mostrarNotificacion("Caché local vaciada. Recargando...", "success");
+                    setTimeout(() => window.location.reload(), 1200);
+                } catch (e) {
+                    log(`[ERROR] Fallo al vaciar caché local: ${e.message}`, false, true);
+                }
+            }
+        };
+    }
+
+    // Purgar Logs de Actividad / Eventos
+    const clearLogsBtn = document.getElementById('btn-admin-clear-activity-logs');
+    if (clearLogsBtn) {
+        clearLogsBtn.onclick = async () => {
+            const selectEl = document.getElementById('clear-logs-option-select');
+            const keepLastWeek = selectEl ? selectEl.value === 'week' : false;
+            const promptText = keepLastWeek
+                ? "¿Estás seguro de que deseas ELIMINAR los registros de eventos con antigüedad MAYOR a una semana? (Los de los últimos 7 días se conservarán)."
+                : "¿Estás seguro de que deseas BORRAR TODOS los registros de eventos y logs de actividad?";
+
+            if (confirm(promptText)) {
+                try {
+                    clearLogsBtn.disabled = true;
+                    log(`Iniciando purga de logs de actividad (Conservar última semana: ${keepLastWeek ? 'Sí' : 'No'})...`);
+                    const res = await clearActivityLogs(keepLastWeek);
+                    if (res && res.status === 'success') {
+                        log(`[EXITO] ${res.message}`);
+                        mostrarNotificacion(res.message, 'success');
+                    } else {
+                        log(`[ERROR] No se pudo purgar los logs: ${res ? res.message : 'Error desconocido'}`, false, true);
+                    }
+                } catch (err) {
+                    log(`[EXCEPCION] Error al purgar logs: ${err.message}`, false, true);
+                } finally {
+                    clearLogsBtn.disabled = false;
+                }
+            }
+        };
+    }
 
     // Botón Agregar corte silencioso
     const silentCutBtn = document.getElementById('btn-admin-add-silent-cut');
@@ -3082,6 +3681,99 @@ function renderInboxList(items) {
     });
 }
 
+
+/* TAREA 1.7: BARRA DE ENRIQUECIMIENTO DE TEXTO COMPLETA PARA EL EDITOR DEL INBOX */
+export function createInboxRichTextToolbar(targetId) {
+    const toolbar = document.createElement("div");
+    toolbar.className = "inbox-rich-toolbar";
+    toolbar.style.cssText = "display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; padding:6px 8px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ccc); border-radius:6px;";
+
+    const applyTag = (openTag, closeTag) => {
+        const textarea = document.getElementById(targetId);
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = textarea.value.substring(start, end) || "texto";
+        const formatted = `${openTag}${selected}${closeTag}`;
+        textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+        textarea.focus();
+        textarea.setSelectionRange(start + openTag.length, start + openTag.length + selected.length);
+    };
+
+    const makeBtn = (html, title, onClick) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-secondary btn-sm";
+        btn.title = title;
+        btn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; cursor:pointer;";
+        btn.innerHTML = html;
+        btn.onclick = (e) => { e.preventDefault(); onClick(); };
+        return btn;
+    };
+
+    // 1. Negrita
+    toolbar.appendChild(makeBtn("<strong>B</strong>", "Negrita", () => applyTag("<strong>", "</strong>")));
+    // 2. Cursiva
+    toolbar.appendChild(makeBtn("<em>I</em>", "Cursiva", () => applyTag("<em>", "</em>")));
+    // 3. Subrayado
+    toolbar.appendChild(makeBtn("<u>U</u>", "Subrayado", () => applyTag("<u>", "</u>")));
+    // 4. Tachado
+    toolbar.appendChild(makeBtn("<s>S</s>", "Tachado", () => applyTag("<s>", "</s>")));
+
+    // 5. Selector de Color
+    const colorPicker = document.createElement("input");
+    colorPicker.type = "color";
+    colorPicker.title = "Color de texto";
+    colorPicker.style.cssText = "width:28px; height:28px; padding:0; border:none; cursor:pointer; border-radius:4px;";
+    colorPicker.onchange = (e) => applyTag(`<span style="color:${e.target.value}">`, "</span>");
+    toolbar.appendChild(colorPicker);
+
+    // 6. Selector de Tamaño de Fuente
+    const sizeSelect = document.createElement("select");
+    sizeSelect.title = "Tamaño de fuente";
+    sizeSelect.style.cssText = "padding:2px 4px; font-size:0.82rem; height:28px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);";
+    sizeSelect.innerHTML = `
+        <option value="" disabled selected>Tamaño</option>
+        <option value="0.85em">Pequeño</option>
+        <option value="1em">Normal</option>
+        <option value="1.2em">Grande</option>
+        <option value="1.5em">Encabezado</option>
+    `;
+    sizeSelect.onchange = (e) => {
+        if (e.target.value) {
+            applyTag(`<span style="font-size:${e.target.value}">`, "</span>");
+            e.target.value = "";
+        }
+    };
+    toolbar.appendChild(sizeSelect);
+
+    // 7. Selector de Tipo de Fuente
+    const fontSelect = document.createElement("select");
+    fontSelect.title = "Tipo de fuente";
+    fontSelect.style.cssText = "padding:2px 4px; font-size:0.82rem; height:28px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);";
+    fontSelect.innerHTML = `
+        <option value="" disabled selected>Fuente</option>
+        <option value="Arial, sans-serif">Arial</option>
+        <option value="'Segoe UI', Roboto, sans-serif">Segoe UI</option>
+        <option value="'Courier New', monospace">Monospace</option>
+        <option value="Georgia, serif">Georgia</option>
+    `;
+    fontSelect.onchange = (e) => {
+        if (e.target.value) {
+            applyTag(`<span style="font-family:${e.target.value}">`, "</span>");
+            e.target.value = "";
+        }
+    };
+    toolbar.appendChild(fontSelect);
+
+    // 8. Lista desordenada
+    toolbar.appendChild(makeBtn("<i class='fa-solid fa-list-ul'></i>", "Lista con viñetas", () => applyTag("<ul>\n  <li>", "</li>\n</ul>")));
+    // 9. Lista ordenada
+    toolbar.appendChild(makeBtn("<i class='fa-solid fa-list-ol'></i>", "Lista numerada", () => applyTag("<ol>\n  <li>", "</li>\n</ol>")));
+
+    return toolbar;
+}
+
 function renderInboxDetail(item) {
     const detailContainer = document.getElementById('inbox-detail');
     const { currentUser, catalogData } = getState();
@@ -3099,23 +3791,33 @@ function renderInboxDetail(item) {
         <h3 class="inbox-detail-title">${item.subject}</h3>
         <p class="inbox-detail-meta"><strong>De:</strong> ${item.user}</p>
         ${item.vehicleId ? `<p class="inbox-detail-meta"><strong>Vehículo:</strong> ${vehicleLabel}</p>` : ''}
-        <div class="inbox-message-content">
-            <pre>${item.content}</pre>
+        <div class="inbox-message-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
+            <div>${sanitizeHtmlContent(item.content)}</div>
         </div>
         ${item.reply ? `
-            <div class="inbox-reply-content">
+            <div class="inbox-reply-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
                 <strong>Respuesta de ${item.responder || 'Admin'}:</strong>
-                <pre>${item.reply}</pre>
+                <div style="margin-top:6px;">${sanitizeHtmlContent(item.reply)}</div>
             </div>` : ''
         }
         <div class="inbox-actions">
+            <div id="inbox-toolbar-container"></div>
             <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
-            <button id="inbox-reply-btn">Enviar Respuesta</button>
-            ${item.type === 'problem_report' && !item.isResolved ?
-                `<button id="inbox-resolve-btn" class="resolve-btn">Marcar como Resuelto</button>` : ''
-            }
+            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
+                ${item.type === 'problem_report' && !item.isResolved ?
+                    `<button id="inbox-resolve-btn" class="resolve-btn btn btn-secondary">Marcar como Resuelto</button>` : ''
+                }
+                <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+            </div>
         </div>
     `;
+
+
+    const toolbarContainer = document.getElementById('inbox-toolbar-container');
+    if (toolbarContainer) {
+        toolbarContainer.appendChild(createInboxRichTextToolbar('inbox-reply-textarea'));
+    }
 
     const replyBtn = document.getElementById('inbox-reply-btn');
     replyBtn.addEventListener('click', async () => {
@@ -3141,11 +3843,32 @@ function renderInboxDetail(item) {
              try {
                 resolveBtn.classList.add('btn-loading');
                 await markAsResolved(item.id);
+                inboxCacheData = null;
                 openInbox();
             } catch (error) {
                 showGlobalError(`Error al resolver: ${error.message}`);
             } finally {
                 resolveBtn.classList.remove('btn-loading');
+            }
+        });
+    }
+
+    const deleteBtn = document.getElementById('inbox-delete-btn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+            if (confirm("¿Estás seguro de que deseas eliminar permanentemente este mensaje del Inbox?")) {
+                try {
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...`;
+                    await deleteFeedbackItem(item.id, item.type);
+                    inboxCacheData = null;
+                    mostrarNotificacion("Mensaje eliminado con éxito", "success");
+                    openInbox();
+                } catch (error) {
+                    showGlobalError(`Error al eliminar mensaje: ${error.message}`);
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i> Borrar Mensaje`;
+                }
             }
         });
     }
@@ -3188,7 +3911,8 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
 
     if (sec.isCorte) {
         // Los cortes dentro de acordeones son diferidos (isLazy = true)
-        renderCutContent(panel, sec.data, datosRelay, vehicleId, true);
+        const cIndex = sec.corteIndex || (sec.data && sec.data.index) || 2;
+        renderCutContent(panel, sec.data, datosRelay, vehicleId, true, cIndex);
     } else if (inEditMode && (title === 'Apertura' || title === 'Cables de Alimentación')) {
         if (title === 'Apertura') {
             const fieldName = 'apertura';
@@ -3199,7 +3923,9 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
             const label = document.createElement('label');
             label.textContent = `Detalle de ${title}:`;
             label.style.cssText = "display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85em;";
+            const aperturaTargetId = `edit-apertura-${vehicleId}`;
             const textarea = document.createElement('textarea');
+            textarea.id = aperturaTargetId;
             textarea.rows = 3;
             textarea.value = currentValue || "";
             textarea.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;";
@@ -3210,6 +3936,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
                 }
             };
             panel.appendChild(label);
+            panel.appendChild(createRichTextToolbar(aperturaTargetId));
             panel.appendChild(textarea);
 
             const imgContainer = document.createElement('div');
@@ -3234,7 +3961,9 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
                 fieldLabel.textContent = `${field.label}:`;
                 fieldLabel.style.cssText = "display: block; font-weight: bold; margin-top: 15px; margin-bottom: 5px; font-size: 0.85em;";
 
+                const cableTargetId = `edit-cable-${field.textKey}-${vehicleId}`;
                 const textarea = document.createElement('textarea');
+                textarea.id = cableTargetId;
                 textarea.rows = 2;
                 textarea.value = editedItemBuffer[field.textKey] || "";
                 textarea.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;";
@@ -3245,6 +3974,7 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
                     }
                 };
                 panel.appendChild(fieldLabel);
+                panel.appendChild(createRichTextToolbar(cableTargetId));
                 panel.appendChild(textarea);
 
                 const imgContainer = document.createElement('div');
@@ -3748,6 +4478,31 @@ export function showGlobalError(message) {
     }, 7000);
 }
 
+/* TAREA 1: Alias y función unificada de notificación para Inbox y operaciones del sistema */
+export function mostrarNotificacion(message, type = 'info') {
+    return showGlobalNotification(message, type);
+}
+
+export function showGlobalNotification(message, type = 'info') {
+    const toast = document.getElementById('notification-toast');
+    if (!toast) {
+        alert(message);
+        return;
+    }
+    toast.textContent = message;
+    if (type === 'success') {
+        toast.style.backgroundColor = '#28a745';
+    } else if (type === 'error') {
+        toast.style.backgroundColor = '#dc3545';
+    } else {
+        toast.style.backgroundColor = '#007bff';
+    }
+    toast.style.display = 'block';
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 5000);
+}
+
 export function openSideMenu() {
     const { currentUser } = getState();
     if (currentUser && (currentUser.Nombre_Completo || currentUser.Nombre_Usuario)) {
@@ -3807,10 +4562,12 @@ export function mostrarSeccion(sectionName, isFromPopState = false) {
     }
 }
 
+/* TAREA 4: Renderizado robusto e independiente de tarjetas de Tutoriales y Relay */
 function mostrarTutorialesGrid() {
     const { catalogData } = getState();
-    const { tutoriales } = catalogData;
+    const tutoriales = (catalogData && catalogData.tutoriales) ? catalogData.tutoriales : [];
     const cont = document.getElementById('contenido-tutoriales');
+    if (!cont) return;
     cont.innerHTML = '<h4>Tutoriales</h4>';
 
     const grid = document.createElement('div');
@@ -3819,25 +4576,26 @@ function mostrarTutorialesGrid() {
     // First card: Add Tutorial Card (+)
     const createCard = document.createElement('div');
     createCard.className = 'card card-create-tutorial';
-    createCard.style.cssText = 'background: transparent; border: 2px dashed #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; cursor: pointer; border-radius: 12px;';
     createCard.innerHTML = `
-        <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
-        <span style="font-weight: bold; color: #007bff;">Agregar Tutorial</span>
+        <i class="fa-solid fa-plus" style="font-size: 2rem; color: #007bff; margin-bottom: 6px;"></i>
+        <span style="font-weight: bold; color: #007bff; font-size: 0.95rem;">Agregar Tutorial</span>
     `;
     createCard.onclick = () => openAddTutorialModal();
     grid.appendChild(createCard);
-    tutoriales.forEach(item => {
+
+    tutoriales.forEach((item, index) => {
+        if (!item) return;
         const card = document.createElement("div");
         card.className = "card";
         card.onclick = () => mostrarDetalleTutorialModal(item);
         const img = document.createElement("img");
-        setOptimizedImage(img, item.Imagen, IMG_SIZE_SMALL);
-        img.alt = item.Tema;
+        setOptimizedImage(img, item.Imagen || '', IMG_SIZE_SMALL);
+        img.alt = item.Tema || `Tutorial ${index + 1}`;
         img.loading = "lazy";
         card.appendChild(img);
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.textContent = item.Tema;
+        overlay.textContent = item.Tema || `Tutorial ${index + 1}`;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -3846,24 +4604,26 @@ function mostrarTutorialesGrid() {
 
 function mostrarRelayGrid() {
     const { catalogData } = getState();
-    const { relay } = catalogData;
+    const relay = (catalogData && catalogData.relay) ? catalogData.relay : [];
     const cont = document.getElementById('contenido-relay');
+    if (!cont) return;
     cont.innerHTML = '<h4>Configuraciones de Relay</h4>';
 
     const grid = document.createElement('div');
     grid.className = 'grid';
-    relay.forEach(item => {
+    relay.forEach((item, index) => {
+        if (!item) return;
         const card = document.createElement("div");
         card.className = "card";
         card.onclick = () => mostrarDetalleRelayModal(item);
         const img = document.createElement("img");
-        setOptimizedImage(img, item.imagen, IMG_SIZE_SMALL);
-        img.alt = item.configuracion;
+        setOptimizedImage(img, item.imagen || '', IMG_SIZE_SMALL);
+        img.alt = item.configuracion || item.funcion || `Configuración Relay ${index + 1}`;
         img.loading = "lazy";
         card.appendChild(img);
         const overlay = document.createElement("div");
         overlay.className = "overlay";
-        overlay.textContent = item.configuracion;
+        overlay.textContent = item.configuracion || item.funcion || `Configuración ${index + 1}`;
         card.appendChild(overlay);
         grid.appendChild(card);
     });
@@ -3976,12 +4736,13 @@ function mostrarDetalleRelayModal(item) {
 }
 
 
-export function openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId) {
-    const existing = document.getElementById("suggest-cut-modal");
+/* TAREA 9 (2.1): BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE Y MODAL DE REPORTE */
+export function openReportCutModal(vehicleId, corteNum, currentCutData) {
+    const existing = document.getElementById("report-cut-modal");
     if (existing) existing.remove();
 
     const modal = document.createElement("div");
-    modal.id = "suggest-cut-modal";
+    modal.id = "report-cut-modal";
     modal.className = "info-modal visible";
     modal.style.zIndex = "2500";
 
@@ -3991,36 +4752,239 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData, reportI
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
-        <h2><i class="fa-solid fa-pen-to-square"></i> Sugerir Cambio - Corte #${corteNum}</h2>
-        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">Vinculado al Reporte: <strong>${reportId}</strong></p>
+        <h2><i class="fa-solid fa-triangle-exclamation" style="color: #dc3545;"></i> Reportar Problema en Corte #${corteNum}</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">
+            Corte seleccionado: <strong>${currentCutData.tipo || 'Sin tipo definido'}</strong>
+        </p>
 
-        <form id="suggest-cut-form" style="display:flex; flex-direction:column; gap:12px;">
+        <form id="report-cut-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
-                <label>Tipo de Corte</label>
-                <input type="text" id="sug-tipo" value="${currentCutData.tipo || ""}" placeholder="Ej. Bomba de combustible">
+                <label>Descripción del Error Detectado *</label>
+                <textarea id="rep-error" rows="3" placeholder="Describe claramente el problema o fallo detectado..." required></textarea>
             </div>
             <div class="form-group">
-                <label>Ubicación</label>
-                <input type="text" id="sug-ubicacion" value="${currentCutData.ubicacion || ""}" placeholder="Ej. Bajo el asiento trasero">
-            </div>
-            <div class="form-group">
-                <label>Color de Cable</label>
-                <input type="text" id="sug-color" value="${currentCutData.colorCable || ""}" placeholder="Ej. Azul / Blanco">
-            </div>
-            <div class="form-group">
-                <label>Configuración Relay</label>
-                <input type="text" id="sug-relay" value="${currentCutData.configRelay || ""}" placeholder="Ej. 5 pines NC">
+                <label>Información Incorrecta o Incompleta</label>
+                <textarea id="rep-incorrecto" rows="2" placeholder="Indica qué datos específicos considera erróneos o incompletos..."></textarea>
             </div>
             <div class="form-group">
                 <label>Imagen de Referencia (Opcional)</label>
+                <input type="file" id="rep-img-file" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Enviar Reporte</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeBtn = content.querySelector(".info-close-btn");
+    closeBtn.onclick = () => modal.remove();
+
+    const form = content.querySelector("#report-cut-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) {
+            showGlobalError("Debes estar conectado para reportar.");
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.classList.add("btn-loading");
+
+        const errorDesc = content.querySelector("#rep-error").value.trim();
+        const incorrectInfo = content.querySelector("#rep-incorrecto").value.trim();
+        let fullProblemText = `[Corte #${corteNum}] ${errorDesc}`;
+        if (incorrectInfo) {
+            fullProblemText += ` | Info incorrecta: ${incorrectInfo}`;
+        }
+
+        const fileInput = content.querySelector("#rep-img-file");
+        if (fileInput.files && fileInput.files[0]) {
+            fullProblemText += ` [Imagen de referencia adjunta: ${fileInput.files[0].name}]`;
+        }
+
+        try {
+            const res = await reportProblem(
+                vehicleId,
+                fullProblemText,
+                currentUser.ID,
+                currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+            );
+
+            const reportId = res && res.reportId ? res.reportId : `REP-${Date.now()}`;
+            modal.remove();
+
+            // Modal de confirmación con opción accesible de «Sugerir cambio»
+            showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId);
+        } catch (err) {
+            console.error("Error al enviar reporte de corte:", err);
+            showGlobalError("Error al enviar el reporte. Por favor inténtalo de nuevo.");
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("btn-loading");
+        }
+    };
+}
+
+// Modal de confirmación accesible posterior al reporte con opción «Sugerir cambio»
+function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
+    const existing = document.getElementById("report-success-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "report-success-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2500";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "450px";
+    content.style.textAlign = "center";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <div style="font-size: 2.5rem; color: #28a745; margin-bottom: 10px;">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h3 style="margin: 0 0 10px 0;">¡Reporte Enviado con Éxito!</h3>
+        <p style="font-size: 0.9em; color: var(--text-color); margin-bottom: 15px;">
+            Tu reporte para el Corte #${corteNum} ha sido registrado bajo el identificador <strong>${reportId}</strong>.
+        </p>
+        <p style="font-size: 0.9em; color: var(--text-color); margin-bottom: 20px;">
+            ¿Deseas proponer una sugerencia de cambio técnica para este corte ahora mismo?
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button id="btn-suggest-change-action" class="btn btn-primary" style="display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-pen-to-square"></i> Sugerir cambio
+            </button>
+            <button id="btn-close-report-success" class="btn btn-secondary">
+                Cerrar
+            </button>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const close = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = close;
+    content.querySelector("#btn-close-report-success").onclick = close;
+
+    content.querySelector("#btn-suggest-change-action").onclick = () => {
+        modal.remove();
+        openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId);
+    };
+}
+
+/* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */
+export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "") {
+    const existing = document.getElementById("suggest-cut-modal");
+    if (existing) existing.remove();
+
+    // Asegurar número de corte numérico válido
+    const validCorteNum = corteNum || currentCutData.index || 1;
+    const reportRef = reportId || `REP-${Date.now()}`;
+
+    const modal = document.createElement("div");
+    modal.id = "suggest-cut-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2500";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "520px";
+
+    // Obtención segura de opciones de menú desplegable para evitar ReferenceError
+    const safeDropdowns = (typeof dropdownOptions !== "undefined" && dropdownOptions)
+        || (typeof window !== "undefined" && window.dropdownOptions)
+        || (typeof getState === "function" && getState() && getState().dropdownOptions)
+        || null;
+
+    // Opciones para tipo de corte
+    const defaultTipos = ["Bomba de combustible", "Ignición", "Marcha / Arranque", "Fusible Principal", "Sensor CKP / CMP", "No recomendado"];
+    const tiposCorteOptions = (safeDropdowns && safeDropdowns.tipoDeCorte && safeDropdowns.tipoDeCorte.length > 0)
+        ? safeDropdowns.tipoDeCorte
+        : defaultTipos;
+
+    const tipoOptionsHtml = tiposCorteOptions.map(opt => {
+        const isSel = (currentCutData.tipo && currentCutData.tipo.toLowerCase() === opt.toLowerCase()) ? "selected" : "";
+        return `<option value="${opt}" ${isSel}>${opt}</option>`;
+    }).join("");
+
+    // Opciones para configuración de relay
+    const defaultRelays = ["Sin relay", "Relay 5 pines (Normalmente Cerrado)", "Relay 5 pines (Normalmente Abierto)", "Relay 4 pines"];
+    const relayOptions = (safeDropdowns && safeDropdowns.configRelay && safeDropdowns.configRelay.length > 0)
+        ? safeDropdowns.configRelay
+        : defaultRelays;
+
+    const relayOptionsHtml = relayOptions.map(opt => {
+        const isSel = (currentCutData.configRelay && currentCutData.configRelay.toLowerCase() === opt.toLowerCase()) ? "selected" : "";
+        return `<option value="${opt}" ${isSel}>${opt}</option>`;
+    }).join("");
+
+    // Opciones para testigo Check Engine
+    const currentCheckEngine = currentCutData.checkEngine || currentCutData.activaCheckEngine || "";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-pen-to-square"></i> Sugerir Cambio - Corte #${validCorteNum}</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
+            Vinculado al Reporte: <strong>${reportRef}</strong> | Vehículo: <strong>${vehicleId}</strong>
+        </p>
+
+        <form id="suggest-cut-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label for="sug-tipo">Tipo de Corte</label>
+                <select id="sug-tipo" class="dev-input" style="padding: 6px;">
+                    <option value="">-- Conservar / Seleccionar Tipo --</option>
+                    ${tipoOptionsHtml}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sug-relay">Configuración de Relay</label>
+                <select id="sug-relay" class="dev-input" style="padding: 6px;">
+                    <option value="">-- Conservar / Seleccionar Relay --</option>
+                    ${relayOptionsHtml}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sug-ubicacion">Ubicación / Detalles Técnicos del Corte</label>
+                <input type="text" id="sug-ubicacion" value="${currentCutData.ubicacion || ""}" placeholder="Ej. Bajo el asiento trasero, ramal principal izquierdo">
+            </div>
+            <div class="form-group">
+                <label for="sug-color">Color de Cable</label>
+                <input type="text" id="sug-color" value="${currentCutData.colorCable || ""}" placeholder="Ej. Azul / Blanco, Verde grueso">
+            </div>
+            <div class="form-group">
+                <label for="sug-check-engine">¿El corte activa el testigo de motor (Check Engine)?</label>
+                <select id="sug-check-engine" class="dev-input" style="padding: 6px;">
+                    <option value="No" ${currentCheckEngine.toLowerCase().includes('no') ? 'selected' : ''}>No activa testigo</option>
+                    <option value="Sí" ${currentCheckEngine.toLowerCase().includes('si') || currentCheckEngine.toLowerCase().includes('sí') ? 'selected' : ''}>Sí, activa testigo</option>
+                    <option value="No aplica" ${!currentCheckEngine ? 'selected' : ''}>No aplica / No especificado</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sug-img-file">Imagen de Referencia del Corte (Opcional)</label>
                 <input type="file" id="sug-img-file" accept="image/*">
             </div>
             <div class="form-group">
-                <label>Detalles / Explicación del cambio</label>
-
-                <textarea id="sug-detalles" rows="3" placeholder="Explica brevemente los cambios propuestos..." required></textarea>
+                <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('sug-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('sug-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
+                <textarea id="sug-detalles" rows="3" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Enviar Sugerencia</button>
+            <button type="submit" class="btn btn-primary" style="margin-top:8px;">Enviar Sugerencia</button>
         </form>
     `;
 
@@ -4035,12 +4999,13 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData, reportI
         e.preventDefault();
         const { currentUser } = getState();
         if (!currentUser) {
-            showGlobalError("Debes estar autenticado.");
+            showGlobalError("Debes estar conectado para sugerir un cambio.");
             return;
         }
 
         const submitBtn = form.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
+        submitBtn.classList.add("btn-loading");
         submitBtn.innerText = "Enviando...";
 
         const fileInput = content.querySelector("#sug-img-file");
@@ -4055,37 +5020,43 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData, reportI
             });
         }
 
+        const proposedValues = {
+            tipo: content.querySelector("#sug-tipo").value.trim() || currentCutData.tipo || "",
+            ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
+            colorCable: content.querySelector("#sug-color").value.trim(),
+            configRelay: content.querySelector("#sug-relay").value.trim() || currentCutData.configRelay || "",
+            activaCheckEngine: content.querySelector("#sug-check-engine").value
+        };
+
         const payload = {
-            reportId,
+            reportId: reportRef,
             vehicleId,
-            corteIndex: corteNum,
+            corteIndex: validCorteNum,
             userId: currentUser.ID,
             userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
             details: content.querySelector("#sug-detalles").value.trim(),
             imgBase64,
-            proposedValues: {
-                tipo: content.querySelector("#sug-tipo").value.trim(),
-                ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
-                colorCable: content.querySelector("#sug-color").value.trim(),
-                configRelay: content.querySelector("#sug-relay").value.trim()
-            }
+            proposedValues
         };
 
         try {
             await suggestCutChange(payload);
-            alert("Sugerencia enviada correctamente. Será revisada por un administrador.");
             modal.remove();
+            showGlobalNotification("Sugerencia enviada correctamente. Será revisada por un administrador.", "success");
         } catch (err) {
             console.error("Error al enviar sugerencia:", err);
             showGlobalError("Error al guardar la sugerencia: " + err.message);
             submitBtn.disabled = false;
+            submitBtn.classList.remove("btn-loading");
             submitBtn.innerText = "Enviar Sugerencia";
         }
     };
 }
 
 
+/* TAREA 5 (3.1): MENÚ DINÁMICO DE AMPLIACIÓN EN EL MODAL DE DETALLE Y CÁLCULO DE ESPACIOS */
 export function openExpandMenuModal(item) {
+    // Tarea 3.1: Botón "+" y menú dinámico de ampliación en el modal de detalle
     const existing = document.getElementById("expand-menu-modal");
     if (existing) existing.remove();
 
@@ -4101,6 +5072,41 @@ export function openExpandMenuModal(item) {
     if (item.cableAlimen2) feedsCount++;
     if (item.cableAlimen3) feedsCount++;
     const feedsAvailable = 3 - feedsCount;
+
+    // Lógica para determinar la cantidad de versiones y la disponibilidad del botón "Agregar VIN"
+    function countEquipmentVersionsFrontend(versionesStr) {
+        if (!versionesStr) return 1;
+        const str = String(versionesStr).trim();
+        if (!str) return 1;
+        const parts = str.split(/[,/\\;]+/).map(p => p.trim()).filter(Boolean);
+        const count = parts.length;
+        if (count <= 1) return 1;
+        if (count === 2) return 2;
+        return 3;
+    }
+
+    function parseVinCollectionFrontend(rawVin) {
+        if (!rawVin) return [];
+        const str = String(rawVin).trim();
+        if (!str) return [];
+        let list = [];
+        if (str.startsWith("[") && str.endsWith("]")) {
+            try {
+                const arr = JSON.parse(str);
+                if (Array.isArray(arr)) {
+                    list = arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                }
+            } catch (e) {}
+        }
+        if (list.length === 0) {
+            list = str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+        }
+        return list.filter(v => v && !v.startsWith("OP-") && !v.startsWith("OP_") && !v.includes("IDOPERACION"));
+    }
+
+    const maxVinAllowed = countEquipmentVersionsFrontend(item.versionesAplicables);
+    const registeredVins = parseVinCollectionFrontend(item.vin);
+    const canAddVin = registeredVins.length < maxVinAllowed;
 
     const modal = document.createElement("div");
     modal.id = "expand-menu-modal";
@@ -4121,6 +5127,7 @@ export function openExpandMenuModal(item) {
             ${!item.apertura ? `<button id="btn-exp-apertura" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-door-open"></i> Apertura de puertas</button>` : ""}
             ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
             ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
+            ${canAddVin ? `<button id="btn-exp-vin" class="btn btn-secondary" style="text-align:left; padding:12px;"><i class="fa-solid fa-barcode"></i> Agregar VIN (${maxVinAllowed - registeredVins.length} disponible${maxVinAllowed - registeredVins.length > 1 ? 's' : ''})</button>` : ""}
         </div>
     `;
 
@@ -4140,8 +5147,185 @@ export function openExpandMenuModal(item) {
 
     const videoBtn = content.querySelector("#btn-exp-video");
     if (videoBtn) videoBtn.onclick = () => { modal.remove(); openAddVideoModal(item); };
+
+    const vinBtn = content.querySelector("#btn-exp-vin");
+    if (vinBtn) vinBtn.onclick = () => { modal.remove(); openAddVinModal(item); };
 }
 
+/* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO / RECTIFICACIÓN SELECTOR TRIM LEVEL */
+export function openAddVinModal(item) {
+    const existing = document.getElementById("add-vin-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-vin-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "450px";
+
+    // Verificar si el modelo tiene más de 1 versión de equipamiento
+    const versions = parseEquipmentVersions(item.versionesAplicables);
+    const hasMultipleVersions = versions.length > 1;
+
+    let trimLevelSelectHtml = "";
+    if (hasMultipleVersions) {
+        const optionsHtml = versions.map(v => `<option value="${v}">${v}</option>`).join("");
+        trimLevelSelectHtml = `
+            <div class="form-group">
+                <label for="modal-vin-trim">Versión de Equipamiento (Trim Level)</label>
+                <select id="modal-vin-trim" required style="width:100%; padding:8px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);">
+                    <option value="" selected disabled>Seleccionar Trim Level</option>
+                    ${optionsHtml}
+                </select>
+            </div>
+        `;
+    }
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-barcode"></i> Agregar VIN / Chasis</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
+
+        <form id="add-vin-form" style="display:flex; flex-direction:column; gap:12px;">
+            ${trimLevelSelectHtml}
+            <div class="form-group">
+                <label for="modal-vin-input">Número de Chasis / VIN</label>
+                <input type="text" id="modal-vin-input" placeholder="Ingresa el VIN completo del vehículo" maxlength="18" required style="text-transform: uppercase; width:100%; padding:8px;">
+                <div id="modal-vin-warning" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 5px; font-weight: bold;"></div>
+            </div>
+            <button type="submit" id="btn-save-vin" class="btn btn-primary" style="margin-top:10px;"><i class="fa-solid fa-save"></i> Guardar VIN</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-vin-form");
+    const vinInput = content.querySelector("#modal-vin-input");
+    const warningEl = content.querySelector("#modal-vin-warning");
+
+    vinInput.addEventListener('blur', async () => {
+        const vinVal = vinInput.value.trim();
+        if (!vinVal) {
+            warningEl.style.display = 'none';
+            return;
+        }
+        try {
+            const res = await routeAction('checkVinDuplicate', { vin: vinVal, currentVehicleId: item.id });
+            if (res.duplicate) {
+                warningEl.style.display = 'block';
+                warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="document.getElementById('add-vin-modal')?.remove(); window.location.href='index.html#search=${encodeURIComponent(res.modelName)}'"><strong>${res.modelName}</strong></button>`;
+            } else {
+                warningEl.style.display = 'none';
+            }
+        } catch (err) {
+            console.error('Error al validar VIN:', err);
+        }
+    });
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const vinVal = vinInput.value.trim();
+        if (!vinVal) return;
+
+        const trimSelect = form.querySelector("#modal-vin-trim");
+        if (trimSelect && (!trimSelect.value || trimSelect.value === "")) {
+            alert("Por favor selecciona una versión de equipamiento (Trim Level).");
+            trimSelect.focus();
+            return;
+        }
+        const selectedTrim = trimSelect ? trimSelect.value : null;
+
+        const btn = form.querySelector("#btn-save-vin");
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+
+        try {
+            const res = await routeAction('addVinToVehicle', {
+                vehicleId: item.id,
+                vin: vinVal,
+                trimLevel: selectedTrim
+            });
+            if (res.status === 'success') {
+                if (res.vinCollection) {
+                    item.vin = JSON.stringify(res.vinCollection);
+                } else if (res.vinPrefix) {
+                    item.vin = res.vinPrefix;
+                }
+                modal.remove();
+                mostrarNotificacion('VIN registrado correctamente', 'success');
+                // Recalcular y sincronizar automáticamente las firmas de VIN (Sección 10)
+                try {
+                    const catalogData = getState().catalogData;
+                    if (catalogData && catalogData.cortes) {
+                        vinDifferentialEngine.calculateSignatures(catalogData.cortes);
+                        vinSignatureStore.saveSignatures(vinDifferentialEngine);
+                    }
+                } catch(e) {
+                    console.error('Error recalculando firmas de VIN tras registro:', e);
+                }
+                mostrarDetalleModal(item, true);
+            } else {
+                warningEl.style.display = 'block';
+                if (res.modelName) {
+                    warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="document.getElementById('add-vin-modal')?.remove(); window.location.href='index.html#search=${encodeURIComponent(res.modelName)}'"><strong>${res.modelName}</strong></button>`;
+                } else {
+                    warningEl.textContent = res.message || 'Error al guardar el VIN.';
+                }
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar VIN`;
+            }
+        } catch (err) {
+            console.error('Error guardando VIN:', err);
+            mostrarNotificacion('Error de comunicación con el servidor', 'error');
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar VIN`;
+        }
+    };
+}
+
+/* TAREA 1.2: BARRA DE ENRIQUECIMIENTO DE TEXTO EN LOS FORMULARIOS */
+export function createRichTextToolbar(targetId) {
+    const toolbar = document.createElement("div");
+    toolbar.className = "rich-editor-toolbar";
+    toolbar.style.cssText = "display:flex; align-items:center; gap:6px; margin-bottom:4px;";
+
+    const boldBtn = document.createElement("button");
+    boldBtn.type = "button";
+    boldBtn.className = "btn btn-secondary btn-sm";
+    boldBtn.title = "Negrita";
+    boldBtn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:26px; min-width:26px;";
+    boldBtn.innerHTML = "<strong>B</strong>";
+    boldBtn.onclick = () => window.applyRichFormat(targetId, "bold");
+
+    // Botón cuadrado con cuadrícula de 4 colores y capa nativa transparente
+    const colorBtn = document.createElement("div");
+    colorBtn.className = "rich-color-picker-box";
+    colorBtn.title = "Color de texto";
+    colorBtn.style.cssText = "position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;";
+    colorBtn.innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+            <span style="background:#ff4d4f;"></span>
+            <span style="background:#1890ff;"></span>
+            <span style="background:#52c41a;"></span>
+            <span style="background:#faad14;"></span>
+        </div>
+        <input type="color" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+    `;
+    const colorPicker = colorBtn.querySelector("input");
+    colorPicker.onchange = (e) => window.applyRichColor(targetId, e.target.value);
+
+    toolbar.appendChild(boldBtn);
+    toolbar.appendChild(colorBtn);
+    return toolbar;
+}
+
+/* TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN «+» / TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
 export function openAddCutForModelModal(item) {
     const existing = document.getElementById("add-cut-for-model-modal");
     if (existing) existing.remove();
@@ -4164,6 +5348,7 @@ export function openAddCutForModelModal(item) {
             <div class="form-group">
                 <label>Tipo de Corte</label>
                 <select id="add-cut-tipo" required>
+                    <option value="" selected disabled>Seleccione una opción</option>
                     <option value="Bomba de combustible">Bomba de combustible</option>
                     <option value="Ignición">Ignición</option>
                     <option value="Botón de encendido">Botón de encendido</option>
@@ -4172,19 +5357,33 @@ export function openAddCutForModelModal(item) {
             </div>
             <div class="form-group">
                 <label>Configuración Relay</label>
-                <input type="text" id="add-cut-relay" placeholder="Ej. 5 pines NC">
+                <select id="add-cut-relay" required>
+                    <option value="" selected disabled>Seleccione una opción</option>
+                </select>
             </div>
             <div class="form-group">
                 <label>Ubicación y Detalles del Corte</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-cut-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('add-cut-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
                 <textarea id="add-cut-detalles" rows="3" placeholder="Detalles de ubicación y conexión..." required></textarea>
             </div>
             <div class="form-group">
                 <label>Color del Cable</label>
                 <input type="text" id="add-cut-color" placeholder="Ej. Verde / Negro">
             </div>
-            <div class="form-group" style="display:flex; align-items:center; gap:8px;">
-                <input type="checkbox" id="add-cut-testigo" style="width:auto;">
-                <label for="add-cut-testigo" style="margin:0;">Este corte activa el testigo del motor</label>
+            <div class="form-group" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:4px 0;">
+                <label for="add-cut-testigo" style="margin:0; cursor:pointer;">Este corte activa el testigo del motor</label>
+                <input type="checkbox" id="add-cut-testigo" style="width:18px; height:18px; cursor:pointer; margin:0; flex-shrink:0;">
             </div>
             <div class="form-group">
                 <label>Subir Imagen del Corte</label>
@@ -4196,6 +5395,58 @@ export function openAddCutForModelModal(item) {
 
     modal.appendChild(content);
     document.body.appendChild(modal);
+
+    const tipoSelect = content.querySelector("#add-cut-tipo");
+    const relaySelect = content.querySelector("#add-cut-relay");
+
+    const populateRelayOptions = (options) => {
+        relaySelect.innerHTML = '<option value="" selected disabled>Seleccione una opción</option>';
+        const list = Array.isArray(options) && options.length > 0
+            ? options
+            : ["Corte a ignición", "5 pines NC", "5 pines NA", "Sin relay"];
+
+        list.forEach(opt => {
+            const el = document.createElement("option");
+            el.value = opt;
+            el.textContent = opt;
+            relaySelect.appendChild(el);
+        });
+        if (!relaySelect.value) {
+            relaySelect.value = "";
+        }
+    };
+
+    // Cargar opciones desde la configuración de Spreadsheet
+    (async () => {
+        try {
+            const dropdowns = await precargarDropdownOptions();
+            if (dropdowns && dropdowns.configRelay) {
+                populateRelayOptions(dropdowns.configRelay, "Corte a ignición");
+            } else {
+                populateRelayOptions([]);
+            }
+        } catch (e) {
+            console.error("Error cargando opciones de relay para modal:", e);
+            populateRelayOptions([]);
+        }
+
+        // Aplicar estado según tipo inicial
+        syncNoRecomendadoState();
+    })();
+
+    function syncNoRecomendadoState() {
+        const isNoRec = isNoRecomendadoValue(tipoSelect.value);
+        if (isNoRec) {
+            relaySelect.disabled = true;
+            relaySelect.required = false;
+            relaySelect.value = "";
+        } else {
+            relaySelect.disabled = false;
+            relaySelect.required = true;
+        }
+    }
+
+    tipoSelect.onchange = syncNoRecomendadoState;
 
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
 
@@ -4248,6 +5499,7 @@ export function openAddCutForModelModal(item) {
     };
 }
 
+/* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */
 export function openAddAperturaModal(item) {
     const existing = document.getElementById("add-apertura-modal");
     if (existing) existing.remove();
@@ -4269,6 +5521,18 @@ export function openAddAperturaModal(item) {
         <form id="add-apertura-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Detalles de la Apertura</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-apertura-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('add-apertura-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
                 <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
             </div>
             <div class="form-group">
@@ -4320,6 +5584,7 @@ export function openAddAperturaModal(item) {
     };
 }
 
+/* TAREA 5 (3.4): AGREGAR CABLE DE ALIMENTACIÓN DESDE EL MODAL DE DETALLE */
 export function openAddFeedModal(item) {
     const existing = document.getElementById("add-feed-modal");
     if (existing) existing.remove();
@@ -4341,6 +5606,18 @@ export function openAddFeedModal(item) {
         <form id="add-feed-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Detalles de la Alimentación</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-feed-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('add-feed-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
                 <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
             </div>
             <div class="form-group">
@@ -4402,6 +5679,7 @@ export function openAddFeedModal(item) {
     };
 }
 
+/* TAREA 5 (3.5): AGREGAR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */
 export function openAddVideoModal(item) {
     const existing = document.getElementById("add-video-modal");
     if (existing) existing.remove();
@@ -4467,52 +5745,72 @@ export function openAddVideoModal(item) {
 }
 
 
+/* TAREA 1.4: CORRECCIÓN DE LAS DEMORAS DE CARGA EN LA SECCIÓN PROBLEMAS Y SOLUCIONES */
 export async function renderPysSection() {
     const cont = document.getElementById("contenido-pys");
     if (!cont) return;
-    cont.innerHTML = "<h4>Problemas y Soluciones</h4>";
 
-    const grid = document.createElement("div");
-    grid.className = "grid";
+    const renderGridWithItems = (rawItems) => {
+        cont.innerHTML = "<h4>Problemas y Soluciones</h4>";
+        const grid = document.createElement("div");
+        grid.className = "grid";
 
-    // First card: Creation Card (+)
-    const createCard = document.createElement("div");
-    createCard.className = "card card-create-pys";
-    createCard.style.cssText = "background: transparent; border: 2px dashed #007bff; box-shadow: 0 0 10px rgba(0,123,255,0.4); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 180px; cursor: pointer; border-radius: 12px;";
-    createCard.innerHTML = `
-        <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
-        <span style="font-weight: bold; color: #007bff;">Agregar Problema</span>
-    `;
-    createCard.onclick = () => openAddProblemModal();
-    grid.appendChild(createCard);
+        // Tarea 1.7: Corrección de las tarjetas para agregar tutoriales y problemas
+        /* TAREA 10 (5.2): TARJETAS DE PYS Y TARJETA DE CREACIÓN (+) EN PRIMERA POSICIÓN */
+        // First card: Creation Card (+)
+        const createCard = document.createElement("div");
+        createCard.className = "card card-create-pys";
+        createCard.innerHTML = `
+            <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
+            <span style="font-weight: bold; color: #007bff;">Agregar Problema</span>
+        `;
+        createCard.onclick = () => openAddProblemModal();
+        grid.appendChild(createCard);
 
-    try {
-        const res = await routeAction("getPysData");
-        const items = (res && res.data) ? res.data : [];
-        setState({ pysData: items });
+        const items = [...(rawItems || [])];
         items.reverse(); // Most recent first
 
         items.forEach(item => {
-            const card = document.createElement("div");
-            card.className = "card";
-            card.style.cssText = "cursor: pointer; display: flex; flex-direction: column; gap: 8px; padding: 12px;";
-            card.innerHTML = `
-                <img src="${item.Imagen || 'https://via.placeholder.com/150'}" alt="${item.Problema}" style="width: 100%; height: 120px; object-fit: cover; border-radius: 8px;">
-                <h3 style="margin: 0; font-size: 1rem; color: var(--text-color);">${item.Problema}</h3>
-                <span style="font-size: 0.8rem; color: ${item.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight: bold;">
-                    ${item.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}
-                </span>
-            `;
-            card.onclick = () => openPysDetailModal(item);
+            const card = createPysCard(item);
             grid.appendChild(card);
         });
+
+        cont.appendChild(grid);
+    };
+
+    // TAREA 1.4: Retirar la animación de carga de la sección «Problemas / Soluciones»
+    // Se presenta la sección inmediatamente con su estructura y tarjeta de creación (+) igual que Tutoriales y Relay
+    const cachedData = getState().pysData;
+    const hasCache = Array.isArray(cachedData) && cachedData.length > 0;
+    renderGridWithItems(hasCache ? cachedData : []);
+
+    // Sincronización en segundo plano con el backend
+    try {
+        const res = await routeAction("getPysData");
+        const freshItems = (res && res.data) ? res.data : [];
+        setState({ pysData: freshItems });
+
+        // Si no había caché o si los datos cambiaron, renderizar con datos frescos
+        const cacheHash = JSON.stringify(cachedData || []);
+        const freshHash = JSON.stringify(freshItems || []);
+        if (!hasCache || cacheHash !== freshHash) {
+            renderGridWithItems(freshItems);
+        }
     } catch(err) {
         console.error("Error cargando PYS:", err);
+        if (!hasCache) {
+            cont.innerHTML = `
+                <h4>Problemas y Soluciones</h4>
+                <div style="text-align: center; padding: 30px; color: #dc3545;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 8px;"></i>
+                    <p>No se pudo cargar la sección de problemas y soluciones. Verifique su conexión.</p>
+                </div>
+            `;
+        }
     }
-
-    cont.appendChild(grid);
 }
 
+/* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */
 export function openAddProblemModal() {
     const existing = document.getElementById("add-pys-modal");
     if (existing) existing.remove();
@@ -4531,25 +5829,65 @@ export function openAddProblemModal() {
         <h2><i class="fa-solid fa-triangle-exclamation"></i> Registrar Problema</h2>
 
         <form id="add-pys-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+            <!-- TAREA 11 (12.1): ALCANCE EN FORMULARIO DE PROBLEMAS (GENERAL VS ESPECÍFICO) -->
             <div class="form-group">
-                <label>Título del Problema (Máx 15 caracteres)</label>
-                <input type="text" id="pys-titulo" maxlength="15" required placeholder="Ej. Falla relay pump">
+                <label>Alcance del Problema</label>
+                <select id="pys-alcance" class="dev-input" style="padding: 6px;">
+                    <option value="general" selected>General (Aplica a todos los vehículos)</option>
+                    <option value="especifico">Modelo específico</option>
+                </select>
+            </div>
+
+            <div id="pys-models-section" style="display: none; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.02);">
+                <label>Buscar Vehículos Relacionados</label>
+                <input type="text" id="pys-search-vehicle" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width: 100%; padding: 6px; margin-top: 4px;">
+                <div id="pys-vehicle-search-results" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-top: 6px;"></div>
+                <div id="pys-selected-models-list" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Título del Problema (Máx 30 caracteres)</label>
+                <input type="text" id="pys-titulo" maxlength="30" required placeholder="Ej. Falla relay pump">
             </div>
             <div class="form-group">
                 <label>Imagen del Problema</label>
                 <input type="file" id="pys-img-file" accept="image/*" required>
             </div>
             <div class="form-group">
-                <label>Detalle del Problema (Máx 200 caracteres)</label>
-                <textarea id="pys-detalle" maxlength="200" rows="3" required placeholder="Describe el problema..."></textarea>
+                <label>Detalle del Problema (Máx 700 caracteres)</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-detalle', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('pys-detalle', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
+                <textarea id="pys-detalle" maxlength="700" rows="4" required placeholder="Describe el problema..."></textarea>
             </div>
             <div class="form-group" style="display:flex; align-items:center; gap:8px;">
                 <input type="checkbox" id="pys-sin-solucion" style="width:auto;">
                 <label for="pys-sin-solucion" style="margin:0;">Sin solución aún</label>
             </div>
             <div class="form-group" id="grp-solucion">
-                <label>Solución (Máx 200 caracteres)</label>
-                <textarea id="pys-solucion" maxlength="200" rows="3" placeholder="Explica la solución..."></textarea>
+                <label>Solución (Máx 700 caracteres)</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-solucion', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('pys-solucion', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
+                <textarea id="pys-solucion" maxlength="700" rows="4" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
                 <label>Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
@@ -4567,6 +5905,64 @@ export function openAddProblemModal() {
     document.body.appendChild(modal);
 
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const alcanceSelect = content.querySelector("#pys-alcance");
+    const modelsSection = content.querySelector("#pys-models-section");
+    const searchVehicleInput = content.querySelector("#pys-search-vehicle");
+    const searchVehicleResults = content.querySelector("#pys-vehicle-search-results");
+    const selectedModelsContainer = content.querySelector("#pys-selected-models-list");
+
+    const selectedVehicleIds = new Set();
+
+    alcanceSelect.onchange = () => {
+        modelsSection.style.display = alcanceSelect.value === 'especifico' ? 'block' : 'none';
+    };
+
+    function renderProvisionalSelectedModels() {
+        selectedModelsContainer.innerHTML = '';
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+
+        selectedVehicleIds.forEach(vId => {
+            const v = cortes.find(c => String(c.id) === String(vId));
+            if (!v) return;
+            const tag = document.createElement("div");
+            tag.style.cssText = "display: inline-flex; align-items: center; gap: 6px; background: var(--accent-color); color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8em;";
+            tag.innerHTML = `<span>${v.marca} ${v.modelo} (${v.anoDesde})</span> <i class="fa-solid fa-xmark" style="cursor: pointer;"></i>`;
+            tag.querySelector("i").onclick = () => {
+                selectedVehicleIds.delete(vId);
+                renderProvisionalSelectedModels();
+            };
+            selectedModelsContainer.appendChild(tag);
+        });
+    }
+
+    searchVehicleInput.oninput = () => {
+        const query = searchVehicleInput.value.toLowerCase().trim();
+        searchVehicleResults.innerHTML = '';
+        if (!query) return;
+
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+        const matches = cortes.filter(c =>
+            `${c.marca} ${c.modelo} ${c.versionesAplicables || ''}`.toLowerCase().includes(query)
+        ).slice(0, 8);
+
+        matches.forEach(v => {
+            const itemDiv = document.createElement("div");
+            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px;";
+            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:30px; height:30px; object-fit:cover; border-radius:4px;"> <span>${v.marca} ${v.modelo} (${v.anoDesde}${v.anoHasta ? '-' + v.anoHasta : ''})</span>`;
+            itemDiv.onclick = () => {
+                searchVehicleResults.innerHTML = '';
+                searchVehicleInput.value = '';
+                openConfirmVehicleForPysModal(v, (confirmedVehicle) => {
+                    selectedVehicleIds.add(String(confirmedVehicle.id));
+                    renderProvisionalSelectedModels();
+                });
+            };
+            searchVehicleResults.appendChild(itemDiv);
+        });
+    };
 
     const chkSinSolucion = content.querySelector("#pys-sin-solucion");
     const txtSolucion = content.querySelector("#pys-solucion");
@@ -4607,6 +6003,8 @@ export function openAddProblemModal() {
             solucion: txtSolucion.value.trim(),
             prevenir: content.querySelector("#pys-prevenir").value.trim(),
             videoUrl: content.querySelector("#pys-video").value.trim(),
+            alcance: alcanceSelect.value,
+            modelosAsociados: Array.from(selectedVehicleIds),
             imgBase64,
             userId: currentUser.ID,
             userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario
@@ -4626,6 +6024,116 @@ export function openAddProblemModal() {
     };
 }
 
+export function openSearchVehicleForPysAssociationModal(problemId, onAssociated) {
+    const existing = document.getElementById("pys-add-vehicle-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "pys-add-vehicle-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2400";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "450px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2>Asociar Modelo a Problema</h2>
+        <div style="margin-top:10px;">
+            <input type="text" id="assoc-search-input" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width:100%; padding:8px;">
+            <div id="assoc-search-results" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:10px;"></div>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeModal = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = closeModal;
+
+    const input = content.querySelector("#assoc-search-input");
+    const resultsContainer = content.querySelector("#assoc-search-results");
+
+    input.oninput = () => {
+        const query = input.value.toLowerCase().trim();
+        resultsContainer.innerHTML = '';
+        if (!query) return;
+
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+        const matches = cortes.filter(c => `${c.marca} ${c.modelo}`.toLowerCase().includes(query)).slice(0, 8);
+
+        matches.forEach(v => {
+            const itemDiv = document.createElement("div");
+            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px;";
+            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:35px; height:35px; object-fit:cover; border-radius:4px;"> <span>${v.marca} ${v.modelo} (${v.anoDesde})</span>`;
+            itemDiv.onclick = () => {
+                closeModal();
+                openConfirmVehicleForPysModal(v, async (confirmedVehicle) => {
+                    try {
+                        const res = await routeAction('addVehicleToProblem', { problemId, vehicleId: confirmedVehicle.id });
+                        if (res.status === 'success') {
+                            mostrarNotificacion("Vehículo vinculado correctamente", "success");
+                            if (typeof onAssociated === 'function') onAssociated(res.modelosAsociados);
+                        }
+                    } catch (e) {
+                        showGlobalError("Error al vincular vehículo: " + e.message);
+                    }
+                });
+            };
+            resultsContainer.appendChild(itemDiv);
+        });
+    };
+}
+
+/* TAREA 11 (12.2): MODAL EXCLUSIVO DE CONFIRMACIÓN Y VISTA PREVIA DE VEHÍCULO PARA PYS */
+export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
+    const existing = document.getElementById("confirm-vehicle-pys-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "confirm-vehicle-pys-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2400";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "420px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2>Confirmar Vehículo</h2>
+        <div style="display:flex; flex-direction:column; align-items:center; gap:10px; margin-top:10px;">
+            <img src="${getImageUrl(vehicle.imagenVehiculo, IMG_SIZE_MEDIUM)}" style="width:100%; max-height:180px; object-fit:cover; border-radius:8px;">
+            <div style="width:100%; font-size:0.9rem;">
+                <p style="margin:4px 0;"><strong>Marca:</strong> ${vehicle.marca}</p>
+                <p style="margin:4px 0;"><strong>Modelo:</strong> ${vehicle.modelo}</p>
+                <p style="margin:4px 0;"><strong>Versión:</strong> ${vehicle.versionesAplicables || 'Todas'}</p>
+                <p style="margin:4px 0;"><strong>Años:</strong> ${vehicle.anoDesde}${vehicle.anoHasta ? '-' + vehicle.anoHasta : ''}</p>
+                <p style="margin:4px 0;"><strong>Encendido:</strong> ${vehicle.tipoEncendido || '-'}</p>
+            </div>
+            <div style="display:flex; gap:10px; width:100%; margin-top:10px;">
+                <button id="btn-cancel-pys-veh" class="btn btn-secondary" style="flex:1;">Regresar</button>
+                <button id="btn-accept-pys-veh" class="btn btn-primary" style="flex:1;">Aceptar</button>
+            </div>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeModal = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = closeModal;
+    content.querySelector("#btn-cancel-pys-veh").onclick = closeModal;
+
+    content.querySelector("#btn-accept-pys-veh").onclick = () => {
+        closeModal();
+        if (typeof onConfirm === 'function') onConfirm(vehicle);
+    };
+}
+
+/* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */
 export function openPysDetailModal(item) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
@@ -4672,6 +6180,47 @@ export function openPysDetailModal(item) {
         const vid = document.createElement("p");
         vid.innerHTML = '<strong>Vídeo:</strong> <a href="' + item.Video + '" target="_blank">Ver guía en YouTube</a>';
         cont.appendChild(vid);
+    }
+
+    /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */
+    // Carrusel de Modelos de Vehículos Relacionados
+    const { catalogData } = getState();
+    const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+    const modelosAsociadosIds = Array.isArray(item.modelosAsociados) ? item.modelosAsociados : [];
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
+    const canEditPys = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+
+    if (modelosAsociadosIds.length > 0 || canEditPys) {
+        const carouselSection = document.createElement("div");
+        carouselSection.style.cssText = "margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;";
+        carouselSection.innerHTML = `<h4 style="margin: 0 0 10px 0; font-size: 1rem;"><i class="fa-solid fa-car"></i> Vehículos Relacionados:</h4>`;
+
+        const track = document.createElement("div");
+        track.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;";
+
+        modelosAsociadosIds.forEach(vId => {
+            const v = cortes.find(c => String(c.id) === String(vId));
+            if (!v) return;
+            const card = crearCardVehiculo(v, true);
+            track.appendChild(card);
+        });
+
+        if (canEditPys) {
+            const addCard = document.createElement("div");
+            addCard.style.cssText = "flex: 0 0 120px; border: 2px dashed var(--accent-color); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--accent-color); font-size: 0.8rem; background: rgba(0, 123, 255, 0.05);";
+            addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.5rem; margin-bottom: 4px;"></i> <span>Agregar Modelo</span>`;
+            addCard.onclick = () => {
+                openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
+                    item.modelosAsociados = updatedList;
+                    openPysDetailModal(item);
+                });
+            };
+            track.appendChild(addCard);
+        }
+
+        carouselSection.appendChild(track);
+        cont.appendChild(carouselSection);
     }
 
     if (item.Colaborador) {
@@ -4721,6 +6270,7 @@ export function openPysDetailModal(item) {
 }
 
 
+/* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */
 export function openAddTutorialModal() {
     const existing = document.getElementById("add-tutorial-modal");
     if (existing) existing.remove();
@@ -4740,20 +6290,28 @@ export function openAddTutorialModal() {
 
         <form id="add-tutorial-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
             <div class="form-group">
-                <label>Tema / Título</label>
-                <input type="text" id="tut-tema" required placeholder="Ej. Desarme de consola frontal">
+                <label>Tema / Título (Máx 30 caracteres)</label>
+                <input type="text" id="tut-tema" maxlength="30" required placeholder="Ej. Desarme de consola frontal">
             </div>
             <div class="form-group">
                 <label>Enlace de Vídeo YouTube</label>
                 <input type="url" id="tut-video" required placeholder="https://www.youtube.com/watch?v=...">
             </div>
             <div class="form-group">
-                <label>Descripción / Detalles</label>
+                <label>Descripción / Detalles (Máx 700 caracteres)</label>
                 <div class="rich-editor-toolbar" style="display:flex; gap:8px; margin-bottom:4px;">
                     <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('tut-desc', 'bold')"><strong>B</strong></button>
-                    <input type="color" id="tut-color-picker" onchange="applyRichColor('tut-desc', this.value)" style="width:30px; height:30px; padding:0; border:none; cursor:pointer;" title="Color de texto">
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('tut-desc', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
                 </div>
-                <textarea id="tut-desc" rows="4" placeholder="Detalles del tutorial..."></textarea>
+                </div>
+                <textarea id="tut-desc" maxlength="700" rows="4" placeholder="Detalles del tutorial..."></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Tutorial</button>
         </form>
@@ -4818,11 +6376,12 @@ window.applyRichColor = function(targetId, color) {
     textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
 };
 
+// TAREA ADICIONAL: PERMITIR CONTENIDO HTML ENRIQUECIDO EN CAMPOS DE TEXTO
 export function sanitizeHtmlContent(htmlStr) {
     if (!htmlStr) return '';
     const parser = new DOMParser();
     const doc = parser.parseFromString(htmlStr, 'text/html');
-    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'U', 'A', 'IMG', 'SMALL', 'EM', 'MARK'];
+    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'EM', 'U', 'S', 'STRIKE', 'OL', 'UL', 'LI', 'A', 'IMG', 'SMALL', 'MARK', 'FONT'];
 
     function cleanNode(node) {
         const children = Array.from(node.childNodes);
@@ -4850,6 +6409,455 @@ export function sanitizeHtmlContent(htmlStr) {
 }
 
 let inboxCacheData = null;
+
+/* BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF */
+export function exportVehiclePrintSheet(item) {
+    if (!item) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert("Por favor permite la apertura de ventanas emergentes para imprimir la ficha técnica.");
+        return;
+    }
+
+    const title = `${item.marca || ''} ${item.modelo || ''} (${item.anoDesde || ''}${item.anoHasta ? ' - ' + item.anoHasta : ''})`;
+
+    // 1. Recopilar datos de cortes (Excluyendo colaboradores y utilidad según Requisito 5)
+    const cuts = [];
+    if (item.tipoCorte1 || item.ubicacionCorte1 || item.imgCorte1) {
+        cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, img: item.imgCorte1, activaTestigo: item.utilCorte1 === 'x' || String(item.tipoCorte1).toLowerCase().includes('testigo') });
+    }
+    if (item.tipoCorte2 || item.ubicacionCorte2 || item.imgCorte2) {
+        cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, img: item.imgCorte2, activaTestigo: item.utilCorte2 === 'x' });
+    }
+    if (item.tipoCorte3 || item.ubicacionCorte3 || item.imgCorte3) {
+        cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, img: item.imgCorte3, activaTestigo: item.utilCorte3 === 'x' });
+    }
+
+    // 2. Cables de alimentación
+    const feeds = [];
+    if (item.cableAlimen || item.imgCableAlimen) {
+        feeds.push({ title: 'Alimentación Principal', desc: item.cableAlimen, img: item.imgCableAlimen });
+    }
+    if (item.cableAlimen2 || item.imgCableAlimen2) {
+        feeds.push({ title: 'Alimentación Secundaria', desc: item.cableAlimen2, img: item.imgCableAlimen2 });
+    }
+    if (item.cableAlimen3 || item.imgCableAlimen3) {
+        feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
+    }
+
+    // 3. Generación de HTML de cortes con aviso de testigo al pie y distribución vertical (Requisitos 1.1, 2.2, 4.1, 5)
+    const cutsHtml = cuts.map(c => {
+        const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
+        return `
+        <div class="tech-item-card">
+            <div class="tech-item-header">Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}</div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">
+                    <p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
+                    <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
+                    <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
+                </div>
+                ${safeImg ? `
+                <div class="tech-item-img-wrapper">
+                    <img src="${safeImg}" alt="Corte #${c.num}" class="tech-detail-img" />
+                </div>` : ''}
+            </div>
+            ${c.activaTestigo ? `
+            <div class="testigo-aviso">
+                <i class="fa-solid fa-triangle-exclamation"></i> Este corte activa el testigo de motor
+            </div>` : ''}
+        </div>
+        `;
+    }).join('');
+
+    // 4. HTML de cables de alimentación
+    const feedsHtml = feeds.map(f => {
+        const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
+        return `
+        <div class="tech-item-card">
+            <div class="tech-item-header">${f.title}</div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">
+                    <p>${f.desc || 'Conexión estándar'}</p>
+                </div>
+                ${safeImg ? `
+                <div class="tech-item-img-wrapper">
+                    <img src="${safeImg}" alt="${f.title}" class="tech-detail-img" />
+                </div>` : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+
+    // 5. HTML de imagen principal del vehículo
+    const vehiculoImgHtml = item.imagenVehiculo ? `
+        <div class="vehicle-main-img"><img src="${getImageUrl(item.imagenVehiculo, IMG_SIZE_LARGE)}" alt="${title}" /></div>
+    ` : '';
+
+    // 6. Apertura de puertas
+    const aperturaHtml = (item.apertura || item.imgApertura) ? `
+        <div class="tech-item-card">
+            <div class="tech-item-header">Apertura de Puertas / Seguros</div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">
+                    <p>${item.apertura || 'Instrucciones registradas'}</p>
+                </div>
+                ${item.imgApertura ? `
+                <div class="tech-item-img-wrapper">
+                    <img src="${getImageUrl(item.imgApertura, IMG_SIZE_LARGE)}" alt="Apertura" class="tech-detail-img" />
+                </div>` : ''}
+            </div>
+        </div>
+    ` : '';
+
+    // 7. Notas técnicas importantes
+    const notasHtml = item.notaImportante ? `
+        <div class="tech-notes">
+            <strong>Nota técnica importante:</strong> ${item.notaImportante}
+        </div>
+    ` : '';
+
+    // 8. Código QR exclusivo para vídeo guía de desarme (Requisito 6)
+    // Prohibido mostrar la URL como texto visible, solo el QR.
+    const rawVideoUrl = item.Video || item.videoGuiaDesarmeUrl;
+    let qrHtml = '';
+    if (rawVideoUrl && typeof rawVideoUrl === 'string' && rawVideoUrl.trim()) {
+        const directVideoUrl = rawVideoUrl.trim();
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=${encodeURIComponent(directVideoUrl)}`;
+        qrHtml = `
+            <div class="qr-video-box">
+                <img src="${qrApiUrl}" alt="Código QR Vídeo Guía" class="qr-code-img" />
+                <span class="qr-label">Vídeo Guía de Desarme</span>
+            </div>
+        `;
+    }
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Ficha Técnica GPSpedia - ${title}</title>
+            <style>
+                @page {
+                    size: letter portrait;
+                    margin: 10mm;
+                }
+                * { box-sizing: border-box; }
+                body {
+                    font-family: Arial, Helvetica, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    color: #1a1a1a;
+                    font-size: 12.5px;
+                    line-height: 1.55;
+                    background: #fff;
+                }
+                .sheet-page-wrapper {
+                    min-height: 920px;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                }
+                .sheet-content-main {
+                    flex: 1;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: space-between;
+                }
+                .no-print-bar {
+                    background: #007bff;
+                    color: white;
+                    padding: 12px 18px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-radius: 6px;
+                    margin-bottom: 20px;
+                }
+                /* Encabezado: Logo a la derecha de GPSpedia, y exclusivamente "Ficha técnica" (Requisitos 3.1 y 3.2) */
+                .header-container {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 2px solid #007bff;
+                    padding-bottom: 12px;
+                    margin-bottom: 20px;
+                }
+                .header-brand-wrap {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                }
+                .header-logo-title {
+                    font-size: 25px;
+                    font-weight: bold;
+                    color: #007bff;
+                    letter-spacing: 0.5px;
+                }
+                .header-project-logo {
+                    width: 34px;
+                    height: 34px;
+                    object-fit: contain;
+                }
+                .header-doc-type {
+                    font-size: 15px;
+                    font-weight: 600;
+                    color: #555;
+                    text-transform: capitalize;
+                }
+                .vehicle-title {
+                    font-size: 19px;
+                    font-weight: bold;
+                    margin: 0;
+                    color: #222;
+                    text-align: right;
+                }
+                /* Grid superior: Información del vehículo y QR si existe */
+                .top-grid {
+                    display: grid;
+                    grid-template-columns: ${item.imagenVehiculo ? '180px 1fr' : '1fr'}${qrHtml ? ' auto' : ''};
+                    gap: 14px;
+                    align-items: stretch;
+                    margin-bottom: 14px;
+                }
+                .vehicle-main-img img {
+                    width: 100%;
+                    max-height: 120px;
+                    object-fit: cover;
+                    border-radius: 6px;
+                    border: 1px solid #ddd;
+                }
+                .meta-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 12px;
+                    line-height: 1.25;
+                }
+                .meta-table td {
+                    padding: 4px 8px;
+                    border: 1px solid #e0e0e0;
+                }
+                .meta-table td.label {
+                    font-weight: bold;
+                    background: #f7f9fa;
+                    width: 22%;
+                    color: #444;
+                }
+                .qr-video-box {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 10px;
+                    border: 1px solid #ddd;
+                    border-radius: 6px;
+                    background: #fafafa;
+                }
+                .qr-code-img {
+                    width: 95px;
+                    height: 95px;
+                    object-fit: contain;
+                }
+                .qr-label {
+                    font-size: 10px;
+                    font-weight: bold;
+                    color: #555;
+                    margin-top: 6px;
+                    text-align: center;
+                }
+                /* Secciones verticales fluidas (Requisito 1.1) */
+                .section-header {
+                    font-size: 13.5px;
+                    font-weight: bold;
+                    color: #007bff;
+                    text-transform: uppercase;
+                    border-bottom: 2px solid #007bff;
+                    margin: 14px 0 10px 0;
+                    padding-bottom: 4px;
+                }
+                .tech-grid {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                }
+                .tech-item-card {
+                    border: 1px solid #dcdcdc;
+                    border-radius: 6px;
+                    background: #fafafa;
+                    padding: 12px 16px;
+                    page-break-inside: avoid;
+                }
+                .tech-item-header {
+                    font-weight: bold;
+                    color: #0056b3;
+                    font-size: 13px;
+                    margin-bottom: 8px;
+                    border-bottom: 1px dashed #e0e0e0;
+                    padding-bottom: 4px;
+                }
+                .tech-item-body {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: flex-start;
+                    gap: 20px;
+                }
+                .tech-item-info {
+                    flex: 1;
+                }
+                .tech-item-info p {
+                    margin: 4px 0;
+                    font-size: 12px;
+                    line-height: 1.35;
+                }
+                .tech-item-img-wrapper {
+                    max-width: 280px;
+                    max-height: 165px;
+                    flex-shrink: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .tech-detail-img {
+                    max-width: 100%;
+                    max-height: 155px;
+                    object-fit: contain;
+                    border-radius: 4px;
+                    border: 1px solid #ccc;
+                }
+                /* Aviso de testigo al pie del corte (Requisito 4.1) */
+                .testigo-aviso {
+                    margin-top: 12px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    color: #b78103;
+                    background: #fff8e1;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    border: 1px solid #ffe082;
+                    display: inline-block;
+                }
+                .tech-notes {
+                    background: #fff3cd;
+                    color: #856404;
+                    border: 1px solid #ffeeba;
+                    padding: 10px 14px;
+                    border-radius: 6px;
+                    margin-top: 14px;
+                    font-size: 11.5px;
+                    page-break-inside: avoid;
+                }
+                .footer-bar {
+                    margin-top: 18px;
+                    font-size: 11px;
+                    color: #777;
+                    border-top: 1px solid #e0e0e0;
+                    padding-top: 8px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                }
+                @media print {
+                    .no-print { display: none !important; }
+                    body { padding: 0; }
+                    .tech-item-card { break-inside: avoid; }
+                }
+                @media screen and (max-width: 600px) {
+                    .top-grid {
+                        grid-template-columns: 1fr;
+                    }
+                    .tech-item-body {
+                        flex-direction: column;
+                    }
+                    .tech-item-img-wrapper {
+                        max-width: 100%;
+                        width: 100%;
+                    }
+                    .tech-detail-img {
+                        max-height: 180px;
+                    }
+                }
+            </style>
+        </head>
+        <body>
+            <div class="no-print-bar no-print">
+                <span><strong>Ficha Técnica</strong> - Vista previa para consulta e impresión</span>
+                <button onclick="window.print()" style="padding: 6px 14px; background: white; color: #007bff; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">
+                    Imprimir / Guardar PDF
+                </button>
+            </div>
+
+            <div class="sheet-page-wrapper">
+                <div class="sheet-content-main">
+                    <div class="header-container">
+                        <div class="header-brand-wrap">
+                            <span class="header-logo-title">GPSpedia</span>
+                            <img src="icon-v3-512x512.png" alt="GPSpedia Logo" class="header-project-logo" />
+                            <span class="header-doc-type">| Ficha técnica</span>
+                        </div>
+                        <div class="vehicle-title">${title}</div>
+                    </div>
+
+                    <div class="top-grid">
+                        ${vehiculoImgHtml}
+                        <table class="meta-table">
+                            <tr>
+                                <td class="label">Marca:</td><td>${item.marca || '-'}</td>
+                                <td class="label">Modelo:</td><td>${item.modelo || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Categoría:</td><td>${item.categoria || '-'}</td>
+                                <td class="label">Años:</td><td>${item.anoDesde || ''} - ${item.anoHasta || 'Presente'}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td>
+                                <td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td>
+                            </tr>
+                            ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td colspan="3">${(function(){
+                                try {
+                                    const parsed = JSON.parse(item.vin);
+                                    if (Array.isArray(parsed)) return parsed.join(' / ');
+                                } catch(e){}
+                                return item.vin;
+                            })()}</td></tr>` : ''}
+                        </table>
+                        ${qrHtml}
+                    </div>
+
+                    <div>
+                        <div class="section-header">Puntos de Corte de Motor</div>
+                        <div class="tech-grid">
+                            ${cutsHtml || '<div class="tech-item-card"><p>No hay cortes registrados para este modelo.</p></div>'}
+                        </div>
+                    </div>
+
+                    ${feedsHtml ? `
+                    <div>
+                        <div class="section-header">Alimentación Eléctrica</div>
+                        <div class="tech-grid">${feedsHtml}</div>
+                    </div>
+                    ` : ''}
+
+                    ${aperturaHtml ? `
+                    <div>
+                        <div class="section-header">Apertura y Cierre Centralizado</div>
+                        <div class="tech-grid">${aperturaHtml}</div>
+                    </div>
+                    ` : ''}
+
+                    ${notasHtml}
+                </div>
+
+                <div class="footer-bar">
+                    <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
+                    <span>Ficha técnica de consulta técnica especializada</span>
+                </div>
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+}
 
 export async function loadAndRenderInbox() {
     const listContainer = document.getElementById('inbox-list');
