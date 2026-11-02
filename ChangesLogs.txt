@@ -1554,3 +1554,14 @@ Componentes: Services/feedback.js, ui.js
 - Verificación integral:
   * Confirmada la funcionalidad bidireccional de asignación de modelos vehicular específicos (Tarea 11) y la estructura de almacenamiento en hoja pys con identificadores 'isue-XXX' (Tarea 10).
 ================================================================================
+
+================================================================================
+CHANGELOG: CORRECCIÓN DE ESPACIOS BLANCOS LATERALES EN BÚSQUEDA Y CONFIRMACIÓN VEHICULAR PYS
+Fecha: 2026-11-02
+Componente: ui.js
+
+- ui.js:
+  * Eliminados los márgenes automáticos laterales excesivos en las miniaturas de vehículos generados en los resultados de búsqueda de problemas y soluciones (`openAddProblemModal` y `openSearchVehicleForPysAssociationModal`).
+  * Asignadas dimensiones compactas (`36x36px`, `flex-shrink: 0`, `margin: 0`) y expandido el contenedor de texto de marca/modelo/años (`flex: 1`) para evitar compresión y saltos de línea innecesarios.
+  * Ajustada la distribución de la imagen del vehículo en `openConfirmVehicleForPysModal` para alinearse al ancho completo del modal sin márgenes laterales.
+================================================================================

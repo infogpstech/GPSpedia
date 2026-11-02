@@ -986,3 +986,19 @@ Archivos intervenidos: Services/feedback.js, ui.js
 2. ui.js:
    - Se verificaron los flujos existentes de openAddProblemModal, openConfirmVehicleForPysModal, openPysDetailModal y renderPosiblesProblemasAccordion, confirmando la integración bidireccional por ID de vehículo y el aislamiento de datos no pertinentes en el modal de confirmación.
 ================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: CORRECCIÓN DE ESPACIOS LATERALES EN RESULTADOS DE BÚSQUEDA Y CONFIRMACIÓN DE VEHÍCULOS (PYS)
+Fecha: 2026-11-02
+Archivo intervenido: ui.js
+
+1. Línea ~5960 (Resultados de búsqueda en openAddProblemModal):
+   - Se añadió 'margin: 0; min-width: 36px; max-width: 36px; flex-shrink: 0;' en la etiqueta <img> para sobrescribir la regla general '.info-modal-content img { margin: 10px auto; }' que generaba márgenes automáticos laterales excesivos (~131px).
+   - Se ajustó el elemento <span> con 'flex: 1; margin: 0; line-height: 1.2;' y el contenedor con 'width: 100%; box-sizing: border-box;' para aprovechar todo el ancho disponible sin comprimir el texto descriptivo del modelo.
+
+2. Línea ~6075 (Resultados de búsqueda en openSearchVehicleForPysAssociationModal):
+   - Misma corrección estructural: 'margin: 0; min-width: 36px; max-width: 36px; flex-shrink: 0;' en <img> y 'flex: 1;' en <span> para consistencia en ambos flujos de vinculación.
+
+3. Línea ~6110 (Modal de confirmación openConfirmVehicleForPysModal):
+   - Se reestructuró el contenedor de la imagen a 'align-items: stretch; width: 100%;' con un wrapper de previsualización que mantiene 'margin: 0; width: 100%; display: block;' en la imagen, evitando centrado con márgenes que compriman la información técnica inferior.
+================================================================================
