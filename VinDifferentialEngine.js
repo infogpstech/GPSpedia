@@ -10,10 +10,17 @@ export function normalizeVin(vinRaw) {
 
 export function parseVersionsList(versionesStr) {
     if (!versionesStr) return [];
-    return String(versionesStr)
-        .split(/[,/\\\\]+/)
-        .map(v => v.trim())
-        .filter(Boolean);
+    const parts = String(versionesStr).split(/[,/\\\\]+/);
+    const seen = new Set();
+    const result = [];
+    for (const p of parts) {
+        const clean = p.trim();
+        if (clean && !seen.has(clean.toUpperCase())) {
+            seen.add(clean.toUpperCase());
+            result.push(clean);
+        }
+    }
+    return result;
 }
 
 export function getClassificationKey(item, version = "", level = 5) {
@@ -48,6 +55,14 @@ export class VinDifferentialEngine {
 
         (records || []).forEach(record => {
             if (!record) return;
+
+            // TAREA 4.1: ANÁLISIS SELECTIVO DE MODELOS CON MÚLTIPLES VERSIONES DE EQUIPAMIENTO
+            const versions = parseVersionsList(record.versionesAplicables);
+            if (versions.length <= 1) {
+                // Si el modelo tiene una sola versión aplicable, no requiere diferenciación diferencial
+                return;
+            }
+
             const vinRaw = record.vin;
             if (!vinRaw) return;
 
@@ -67,8 +82,6 @@ export class VinDifferentialEngine {
                     vinList = str.split(/[,/\\\\]+/);
                 }
             }
-
-            const versions = parseVersionsList(record.versionesAplicables);
 
             vinList.forEach((rawV, idx) => {
                 const cleanV = normalizeVin(rawV);
@@ -136,9 +149,12 @@ export class VinDifferentialEngine {
 
         const availablePositions = Array.from(stablePositions.keys());
 
+        // TAREA 4.1: Priorizar posiciones que NO pertenezcan a la posible sección serial (últimos 5 o 6 caracteres si la longitud > 6)
+        const serialCutoff = length > 6 ? (length - 6) : length;
+
         availablePositions.sort((a, b) => {
-            const isSerialA = a >= (length - 5);
-            const isSerialB = b >= (length - 5);
+            const isSerialA = a >= serialCutoff;
+            const isSerialB = b >= serialCutoff;
             if (isSerialA && !isSerialB) return 1;
             if (!isSerialA && isSerialB) return -1;
             return a - b;
@@ -146,6 +162,31 @@ export class VinDifferentialEngine {
 
         const maxK = Math.min(availablePositions.length, 6);
 
+        // Primero buscar combinaciones sin incluir caracteres seriales (si hay suficientes posiciones no seriales)
+        const nonSerialPositions = availablePositions.filter(p => p < serialCutoff);
+        if (nonSerialPositions.length > 0) {
+            const nonSerialMaxK = Math.min(nonSerialPositions.length, 6);
+            for (let k = 1; k <= nonSerialMaxK; k++) {
+                const combinations = this.getCombinations(nonSerialPositions, k);
+                for (const combo of combinations) {
+                    if (this.comboDifferentiatesAll(combo, targetGroup, competitorGroups)) {
+                        const positions = combo.sort((a, b) => a - b);
+                        const values = positions.map(p => stablePositions.get(p));
+                        const displayFragment = values.slice(0, 4).join("");
+                        return {
+                            positions,
+                            humanPositions: positions.map(p => p + 1),
+                            values,
+                            displayFragment,
+                            signatureString: values.join("-"),
+                            readableFormat: positions.map((p, i) => `Pos ${p + 1}: ${values[i]}`).join(" | ")
+                        };
+                    }
+                }
+            }
+        }
+
+        // Si no fue posible sin seriales, buscar en todas las posiciones pero limitando fragmento visible a máx 4
         for (let k = 1; k <= maxK; k++) {
             const combinations = this.getCombinations(availablePositions, k);
 
@@ -153,10 +194,12 @@ export class VinDifferentialEngine {
                 if (this.comboDifferentiatesAll(combo, targetGroup, competitorGroups)) {
                     const positions = combo.sort((a, b) => a - b);
                     const values = positions.map(p => stablePositions.get(p));
+                    const displayFragment = values.slice(0, 4).join("");
                     return {
                         positions,
                         humanPositions: positions.map(p => p + 1),
                         values,
+                        displayFragment,
                         signatureString: values.join("-"),
                         readableFormat: positions.map((p, i) => `Pos ${p + 1}: ${values[i]}`).join(" | ")
                     };
@@ -284,6 +327,7 @@ export class VinDifferentialEngine {
                         positions: minCombo.positions,
                         humanPositions: minCombo.humanPositions,
                         values: minCombo.values,
+                        displayFragment: minCombo.displayFragment || minCombo.values.slice(0, 4).join(""),
                         signatureString: minCombo.signatureString,
                         readableFormat: minCombo.readableFormat,
                         charactersNeeded: minCombo.positions.length,
