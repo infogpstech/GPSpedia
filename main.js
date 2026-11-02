@@ -70,41 +70,14 @@ async function initializeApp() {
         });
     }
 
-    const toggleFiltersBtn = document.getElementById('btn-toggle-filters');
-    const filtersBar = document.getElementById('catalog-filters-bar');
-    const chevronIcon = document.getElementById('filter-chevron-icon');
-
-    if (toggleFiltersBtn && filtersBar) {
-        toggleFiltersBtn.style.display = 'none'; // Oculto por defecto si la búsqueda no está activa
-        toggleFiltersBtn.addEventListener('click', () => {
-            const isHidden = filtersBar.style.display === 'none';
-            filtersBar.style.display = isHidden ? 'flex' : 'none';
-            if (chevronIcon) {
-                chevronIcon.className = isHidden ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down';
-            }
-        });
-    }
-
-    const catSelect = document.getElementById('filter-category-select');
-    const yearSelect = document.getElementById('filter-year-select');
-
-    if (catSelect) {
-        catSelect.addEventListener('change', () => {
-            navigation.filtrarContenido(searchInput.value || '');
-        });
-    }
-    if (yearSelect) {
-        yearSelect.addEventListener('change', () => {
-            navigation.filtrarContenido(searchInput.value || '');
-        });
-    }
+    // TAREA 1.6: Retirada la barra de filtros rápidos (#catalog-filters-bar y #btn-toggle-filters)
 
     // --- LÓGICA DE ANIMACIÓN DE LA BARRA DE BÚSQUEDA ---
     // Estabilización de la clase 'search-active' para evitar saltos visuales al limpiar búsqueda.
     searchInput.addEventListener('focus', () => {
         if (searchBlurTimeout) clearTimeout(searchBlurTimeout);
         document.body.classList.add('search-active');
-        if (toggleFiltersBtn) toggleFiltersBtn.style.display = 'flex';
+        // TAREA 1.6: retirado
 
         const currentQuery = searchInput.value;
         const currentState = window.history.state || {};

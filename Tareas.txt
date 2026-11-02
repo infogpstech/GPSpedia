@@ -289,13 +289,13 @@ BLOQUE 1: CORRECCIÓN DE HALLAZGOS DE REVISIÓN POST COMMIT (TAREAS FALLIDAS O N
 
 ---
 
-### TAREA 1.6: ~~Corregir el botón de filtros rápidos durante el modo búsqueda~~ (CANCELADA Y A RETIRAR) [ ]
+### TAREA 1.6: ~~Corregir el botón de filtros rápidos durante el modo búsqueda~~ (CANCELADA Y RETIRADA) [X]
 - **Estado:** CANCELADA. Se ha decidido eliminar la función de filtros rápidos de búsqueda de la plataforma. La barra de búsqueda buscará elementos sin necesidad de filtros. Esta implementación debe retirarse por completo de la plataforma.
 - **Acción requerida:** Retirar el botón `#btn-toggle-filters`, la barra `#catalog-filters-bar` y sus listeners asociados en `index.html`, `navigation.js` y `style.css`.
 
 ---
 
-### TAREA 1.7: Incorporar la barra de enriquecimiento de texto del Inbox [ ]
+### TAREA 1.7: Incorporar la barra de enriquecimiento de texto del Inbox [X]
 - **Estado detectado:** Fallida. La barra de enriquecimiento continúa ausente.
 - **Problema:** El editor de mensajes del Inbox no dispone de la barra de enriquecimiento solicitada.
 - **Requisitos:**

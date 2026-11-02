@@ -777,3 +777,34 @@ Archivo intervenido: Services/write.js, Services/admin.js, ui.js, style.css
      * Logo principal (.app-logo) y título (h1.app-title):
        Se normaliza y refina la sombra para que use drop-shadow y text-shadow en tonos grises elegantes y nítidos acordes a la identidad visual del catálogo, tanto en modo claro como oscuro, sin tocar el carrusel de logos de marcas (.card.brand-logo-item).
 ================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 1.6 Y TAREA 1.7
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivos intervenidos: index.html, main.js, navigation.js, ui.js
+
+1. Diagnóstico de TAREA 1.6 (Retiro total de filtros rápidos de búsqueda):
+   - Elementos a retirar en index.html:
+     * Botón <button id="btn-toggle-filters">
+     * Contenedor <div id="catalog-filters-bar"> junto con <select id="filter-category-select"> y <select id="filter-year-select">.
+   - En main.js:
+     * Retirar variables toggleFiltersBtn, filtersBar, chevronIcon, catSelect, yearSelect y sus event listeners.
+     * En searchInput focus, retirar la manipulación de toggleFiltersBtn.style.display.
+   - En navigation.js:
+     * En filtrarContenido(), suprimir la lectura y filtrado dependiente de catSelect y yearSelect.
+     * La búsqueda por año o modelo se ejecutará limpiamente a partir de los términos ingresados por el usuario.
+
+2. Diagnóstico de TAREA 1.7 (Barra de enriquecimiento de texto del Inbox):
+   - En ui.js, función renderInboxDetail():
+     * El contenedor de respuesta tiene un <textarea id="inbox-reply-textarea"> simple.
+     * Implementar createInboxRichTextToolbar('inbox-reply-textarea') con soporte para:
+       - Negrita (strong / bold)
+       - Cursiva (em / italic)
+       - Subrayado (u / underline)
+       - Tachado (s / strike)
+       - Selector de color de texto (color picker)
+       - Selector de fuente tipográfica (font family dropdown)
+       - Listas ordenadas (<ol><li>) y no ordenadas (<ul><li>)
+     * Implementar un sanitizador HTML seguro (sanitizeHtml) que preserve las etiquetas de formato seguro (strong, em, u, s, span, ol, ul, li, br, p) y descarte scripts o atributos peligrosos (onclick, onerror, javascript:).
+     * En renderInboxDetail(), renderizar tanto el contenido del mensaje como las respuestas usando el sanitizador HTML en lugar de <pre> texto plano, garantizando persistencia y formato visual adecuado.
+================================================================================

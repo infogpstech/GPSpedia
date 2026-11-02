@@ -1407,3 +1407,26 @@ Fecha: $(date '+%Y-%m-%d %H:%M:%S')
 4. Tareas.txt:
    - Marcada la TAREA 1.5 como completada [X].
 ================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: TAREAS 1.6 Y 1.7
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. Tarea 1.6: Retiro total de la barra de filtros rápidos y botón colapsable de búsqueda:
+   - Eliminados el botón #btn-toggle-filters y el contenedor #catalog-filters-bar con sus selectores de categoría y año de index.html.
+   - Eliminadas las variables y event listeners correspondientes en main.js y navigation.js.
+   - La búsqueda en el catálogo opera directamente sobre el término introducido, sin filtros rápidos redundantes.
+
+2. Tarea 1.7: Incorporación de la barra de enriquecimiento de texto para el Inbox:
+   - Implementada en ui.js la función createInboxRichTextToolbar(targetId) con:
+     * Negrita (<strong>), Cursiva (<em>), Subrayado (<u>), Tachado (<s>)
+     * Selector de color de texto (<input type="color">)
+     * Selector de tamaño de fuente (Pequeño, Normal, Grande, Encabezado)
+     * Selector de tipo de fuente (Arial, Segoe UI, Monospace, Georgia)
+     * Listas ordenadas (<ol><li>) y no ordenadas (<ul><li>)
+   - Actualizada sanitizeHtmlContent() para admitir y sanitizar de forma segura las nuevas etiquetas de formato (U, S, STRIKE, OL, UL, LI, FONT).
+   - En renderInboxDetail(), integrado el contenedor de la barra de enriquecimiento sobre el textarea de respuestas y renderizados el mensaje original y sus respuestas con HTML enriquecido sanitizado.
+
+3. Tareas.txt:
+   - Marcadas las Tareas 1.6 y 1.7 como completadas [X].
+================================================================================
