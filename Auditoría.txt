@@ -808,3 +808,77 @@ Archivos intervenidos: index.html, main.js, navigation.js, ui.js
      * Implementar un sanitizador HTML seguro (sanitizeHtml) que preserve las etiquetas de formato seguro (strong, em, u, s, span, ol, ul, li, br, p) y descarte scripts o atributos peligrosos (onclick, onerror, javascript:).
      * En renderInboxDetail(), renderizar tanto el contenido del mensaje como las respuestas usando el sanitizador HTML en lugar de <pre> texto plano, garantizando persistencia y formato visual adecuado.
 ================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: RECTIFICACIÓN DEL FLUJO DE INGRESO DE VIN EN MODAL DE DETALLE (BOTÓN +)
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivo intervenido: ui.js (función openAddVinModal)
+
+1. Diagnóstico del requerimiento:
+   - En el modal de detalle del vehículo, cuando el usuario hace clic en el botón '+' y elige 'Agregar VIN':
+     * Se debe verificar si el modelo tiene registradas más de una versión de equipamiento en la misma fila (analizando item.versionesAplicables mediante parseEquipmentVersions()).
+     * Si versions.length > 1:
+       - Se debe renderizar un dropselect antes del campo de entrada del VIN con la etiqueta "Versión de Equipamiento" (o Trim Level).
+       - La opción inicial deshabilitada y seleccionada por defecto debe decir "Seleccionar Trim Level" (<option value="" selected disabled>Seleccionar Trim Level</option>).
+       - El select debe ser 'required' para obligar a asociar el VIN a la versión de equipamiento correspondiente.
+     * Si versions.length <= 1 (una sola versión o ninguna):
+       - NO debe mostrarse el dropselect de Trim Level.
+   - Restricción obligatoria:
+     * No alterar la forma en que se muestran las versiones de equipamiento ni los 4 dígitos distintivos en el modal de detalle del catálogo.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 1.8 Y RECTIFICACIÓN COMPLETA DE VINCULACIÓN VIN-TRIM
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivos intervenidos: ui.js, Services/write.js
+
+1. Diagnóstico de la Especificación Original 1.8:
+   - "1.8. Reejecución de las tareas afectadas y pruebas de regresión":
+     Identificar implementaciones afectadas, validar consistencia funcional integral (interfaz, formularios, servicios, integración y ausencia de regresiones).
+   - Se completó la vinculación de datos end-to-end para el flujo de VIN por Trim Level:
+     * En ui.js (`openAddVinModal`), `#modal-vin-trim` captura el Trim Level seleccionado (`selectedTrim`).
+     * En el listener `form.onsubmit`, se envía `{ vehicleId, vin: vinVal, trimLevel: selectedTrim }` al microservicio `addVinToVehicle`.
+     * En Services/write.js (`handleAddVinToVehicle`), se recibe `trimLevel` y se indexa el VIN en la posición exacta correspondiente a esa versión de equipamiento en la colección JSON de la celda de la columna 43 `vin`.
+     * Se preservó el filtrado de identificadores de idempotencia, y la regla de no mostrar VINs en frontend si el modelo posee 1 o 0 versiones registradas.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: TAREA 2.1, TAREA 2.2 Y TAREA 2.3
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivos intervenidos: ui.js, style.css
+
+1. Diagnóstico de TAREA 2.1 (Botón para eliminar mensajes del Inbox):
+   - En ui.js (línea ~3840 en renderInboxDetail):
+     * El botón `#inbox-delete-btn` invoca `deleteFeedbackItem(item.id, item.type)` y a continuación llama a `mostrarNotificacion("Mensaje eliminado con éxito", "success")`.
+     * En la línea 4464 de ui.js está declarada la función unificada:
+       `export function mostrarNotificacion(message, type = 'info') { return showGlobalNotification(message, type); }`
+     * En caso de error, el bloque `catch (error)` atrapa la excepción, muestra `showGlobalError` y restablece el botón con su contenido e interactividad original, evitando la eliminación visual falsa.
+     * Se verifica que la función está disponible en el ámbito léxico del módulo y vinculada a `showGlobalNotification`.
+
+2. Diagnóstico de TAREA 2.2 (Ficha técnica de instalación en una sola página Carta vertical):
+   - En ui.js (`exportVehiclePrintSheet`):
+     * Contiene `@page { size: letter portrait; margin: 10mm; }`.
+     * Incorpora todos los cortes disponibles (1..3), cables de alimentación (1..3), apertura de puertas / seguros, nota técnica importante y cabecera con metadatos del vehículo e imagen normalizada con `getImageUrl(..., IMG_SIZE_LARGE)`.
+     * Se revisan tamaños de tipografía (10.5px base, 11px encabezados de tarjetas), miniaturas de imágenes (75x55px), y `page-break-inside: avoid;` en `.tech-item-card` y `.tech-notes` para evitar saltos de página accidentales y garantizar que entre en 1 hoja.
+
+3. Diagnóstico de TAREA 2.3 (Estilos uniformes en modales con formularios):
+   - En style.css:
+     * Reglas en `.info-modal-content form`, `.modal form`, labels, inputs, selects, textareas y botones de acción.
+     * En móvil (`@media (max-width: 600px)`): `.info-modal-content` tiene `width: 95% !important; padding: 18px 14px !important;` y botones al 100% para evitar desbordamientos horizontales.
+     * Se refuerza `overflow-x: hidden;` y `max-height: 90vh;` en `.info-modal-content` para un comportamiento pulcro y sin desbordes.
+================================================================================
+
+================================================================================
+AUDITORÍA LÍNEA POR LÍNEA: SELECTOR DE COLOR EN CUADRÍCULA Y CASILLA TESTIGO
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+Archivos intervenidos: ui.js, style.css
+
+1. Diagnóstico del selector de color en barra de enriquecimiento:
+   - Los navegadores renderizan <input type="color"> con márgenes, bordes internos y aspecto horizontal alargado si no se encapsula.
+   - Solución:
+     Crear un componente estandarizado .rich-color-btn cuadrado (26x26px, igual al botón de negrita "B"), con un grid interno 2x2 que muestra 4 colores (rojo #ff4d4f, azul #1890ff, verde #52c41a, amarillo #faad14) y un input tipo color superpuesto con opacidad 0 y posición absoluta al 100%, de forma que al hacer clic se abra el selector de color nativo preservando total funcionalidad.
+
+2. Diagnóstico de la casilla de testigo del motor:
+   - En openAddCutForModelModal, el checkbox <input type="checkbox" id="add-cut-testigo"> aparecía a la izquierda o arriba del texto "Este corte activa el testigo del motor".
+   - Se modifica el orden para ubicar la etiqueta a la izquierda y el checkbox a la derecha con display: flex; justify-content: space-between; align-items: center;.
+================================================================================

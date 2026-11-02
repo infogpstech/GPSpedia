@@ -1430,3 +1430,62 @@ Fecha: $(date '+%Y-%m-%d %H:%M:%S')
 3. Tareas.txt:
    - Marcadas las Tareas 1.6 y 1.7 como completadas [X].
 ================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: RECTIFICACIÓN DEL FLUJO DE INGRESO DE VIN EN MODAL DE DETALLE
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. ui.js (openAddVinModal):
+   - Se incorporó la evaluación de versiones de equipamiento mediante parseEquipmentVersions(item.versionesAplicables).
+   - Si el modelo cuenta con más de 1 versión de equipamiento (hasta 4 o más separadas por coma, barra o barra invertida), el formulario de ingreso de VIN despliega automáticamente un menú desplegable (dropselect) con:
+     * Opción predeterminada vacía y deshabilitada: "Seleccionar Trim Level".
+     * Opciones para cada versión de equipamiento disponible del modelo.
+     * Atributo 'required' para garantizar la selección.
+   - Si el modelo tiene 0 o 1 versión de equipamiento, el dropselect no se muestra, manteniendo el flujo limpio y directo.
+   - Se preservó íntegra la visualización de versiones de equipamiento y los 4 dígitos distintivos de VIN en el modal de detalle del catálogo.
+================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: TAREA 1.8 Y ASOCIACIÓN POSICIONAL DE VIN POR TRIM LEVEL
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. Services/write.js:
+   - En handleAddVinToVehicle(payload), se agregó el procesamiento del parámetro 'trimLevel' / 'trimIndex'.
+   - El prefijo procesado del VIN se almacena en la posición ordinal correspondiente a la versión de equipamiento indicada, garantizando consistencia relacional 1:1 entre versión de equipamiento y VIN sin alterar la estructura de columnas de la hoja de cálculo.
+
+2. ui.js:
+   - En openAddVinModal, se captura el valor seleccionado de #modal-vin-trim y se transmite a routeAction('addVinToVehicle') como 'trimLevel'.
+   - Se mantiene la regla estricta: para modelos con >1 versión de equipamiento se despliega el dropselect obligatorio con placeholder "Seleccionar Trim Level"; para modelos con 1 o 0 versiones, no se muestra ningún dropselect.
+
+3. Tareas.txt / Auditoría.txt:
+   - Verificada la trazabilidad funcional de la especificación 1.8 y actualizado el registro de auditoría.
+================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: TAREAS 2.1, 2.2, 2.6 Y 2.3
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. Tarea 2.1:
+   - Verificada la presencia y correcta invocación de mostrarNotificacion("Mensaje eliminado con éxito", "success") en el botón de borrar mensaje del Inbox (#inbox-delete-btn).
+
+2. Tarea 2.2:
+   - Optimizada la función exportVehiclePrintSheet en ui.js para condensar de manera perfecta y organizada la información del modelo (cortes 1..3, cables 1..3, apertura de puertas, notas importantes y metadatos) en una sola página tamaño Carta vertical con márgenes de 10mm (size: letter portrait; margin: 10mm;), miniaturas compactas y prevención estricta de saltos de página dentro de tarjetas.
+
+3. Tareas 2.6 y 2.3:
+   - Auditados y estandarizados estilos CSS para todos los modales con formularios (.info-modal-content form, .form-group, inputs, selects, textareas, botones submit/cancel) en style.css.
+   - Garantizado ancho adaptativo de 95% en dispositivos móviles (@media (max-width: 600px)) con overflow-x: hidden y botones al 100%, previniendo desbordamientos y solapamientos.
+
+4. Tareas.txt:
+   - Marcadas como completadas [X] las Tareas 2.1, 2.2, 2.3, 2.4, 2.5 y 2.6.
+================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: SELECTOR DE COLOR EN CUADRÍCULA, CHECKBOX Y TUTORIALES/RELAY
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. ui.js y style.css:
+   - Rediseñado el botón selector de color en forma de botón cuadrado de 26x26px idéntico en tamaño al botón de negrita "B".
+   - Renderizada una cuadrícula interna 2x2 con 4 colores vivos (rojo #ff4d4f, azul #1890ff, verde #52c41a, amarillo #faad14) con input nativo transparente superpuesto manteniendo el 100% de la funcionalidad de selección de colores.
+   - En openAddCutForModelModal, se reubicó la casilla de verificación de testigo del motor para situarse a la derecha de la frase "Este corte activa el testigo del motor".
+   - En offline.js y ui.js, se corrigió la clave de mapeo y rehidratación de tutoriales y relay en la caché local para garantizar la visualización de todas las tarjetas disponibles en sus respectivas secciones.
+================================================================================
