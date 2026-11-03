@@ -1985,3 +1985,97 @@ TAREA 21: SANEAMIENTO ARQUITECTURAL, CÓDIGO LIMPIO (DRY), PROTECCIÓN ANTI-DEBU
      - **Versión:** Incrementada la versión de la plataforma en index.html a v2.1.5 para el despliegue de consolidación.
 
 ---
+===================================================================
+BLOQUE 8: SISTEMA DE SUBIDA DIRECTA DE VÍDEOS A YOUTUBE DESDE GPSPEDIA CON APROBACIÓN PREVIA
+===================================================================
+
+### TAREA 8.1: Arquitectura centralizada de subida de vídeos a YouTube y modal unificado [X]
+- **Objetivo general:**
+  Implementar la capacidad de subir vídeos directamente a YouTube desde GPSpedia sin abandonar la aplicación, mediante un módulo unificado y centralizado reutilizable en todos los flujos.
+- **Requisitos obligatorios:**
+  1. Diseñar el componente modal reutilizable de subida de vídeos con únicamente dos campos editables:
+     - **Título:** Campo editable que se inicializa con la propuesta contextual automática según el contenido.
+     - **Detalle:** Campo de texto (descripción) editable inicializado con la propuesta contextual.
+     - Prohibido solicitar al usuario opciones de configuración técnica de YouTube.
+  2. Configuración obligatoria y permanente de publicación fijada automáticamente:
+     - Visibilidad: No listado (unlisted).
+     - Audiencia: No es contenido creado para niños.
+     - Promoción pagada: No.
+     - Contenido generado mediante IA o sintético: No.
+     - Colaboradores: Ninguno.
+     - Etiquetas: Ninguna.
+     - Remixes: No permitir.
+     - Categoría: Sin categoría predeterminada permitida por YouTube.
+  3. Indicador de progreso e interactividad:
+     - Barra de progreso que refleje el avance porcentual de la subida.
+     - Cartel ineludible de advertencia: «Por favor, no abandone este diálogo mientras carga el vídeo».
+     - Deshabilitar botones de navegación o cierre mientras la carga esté activa.
+     - Mantener habilitado únicamente el botón «Cancelar», gestionando la interrupción de forma limpia sin crear vídeos incompletos ni registros huérfanos.
+     - Prevención de cargas duplicadas (deshabilitar reenvíos de la misma operación).
+  4. Estados de la operación:
+     - Diferenciar claramente entre:
+       * Transferencia a YouTube en progreso.
+       * Subido a YouTube pendiente de aprobación.
+       * Error de subida / Cancelado.
+  5. Conexión segura con microservicio backend en `Services/feedback.js` o servicio dedicado para registro y seguimiento de la sesión y metadatos.
+
+---
+
+### TAREA 8.2: Sistema de solicitud, notificación y gestión de aprobación en Inbox [X]
+- **Objetivo general:**
+  Garantizar que ningún vídeo subido directamente aparezca en los modales de detalle de GPSpedia sin haber sido previamente revisado y aprobado por un usuario autorizado (Desarrollador, Gefe o Supervisor).
+- **Requisitos obligatorios:**
+  1. Notificación automática en Inbox tras subida exitosa:
+     - Creación de solicitud de aprobación en Inbox con:
+       * Título del vídeo.
+       * Descripción del vídeo.
+       * Enlace de YouTube para su revisión.
+       * Usuario que realizó la carga.
+       * Fecha y hora de envío.
+       * Tipo de contenido (Corte, Tutorial o Problema/Solución).
+       * Registro, modelo o ID de referencia del elemento asociado.
+       * Estado de aprobación: `pending` (pendiente).
+  2. Flujo de Aprobación y Rechazo en Inbox:
+     - El responsable autorizado puede consultar los datos y presionar:
+       * «Aprobar Vídeo»: cambia el estado a `approved`, asocia el enlace al registro correspondiente en la base de datos y lo habilita en GPSpedia.
+       * «Rechazar Vídeo»: cambia el estado a `rejected` y no se muestra en la plataforma.
+     - Validación estricta de permisos en backend para evitar que usuarios no autorizados aprueben contenido.
+  3. Regla obligatoria de publicación:
+     - El vídeo subido a YouTube permanece como «No listado» y no debe mostrarse en ningún modal de detalles de GPSpedia hasta recibir la aprobación correspondiente.
+     - Mantener intacto el funcionamiento de enlaces directos de YouTube introducidos manualmente.
+
+---
+
+### TAREA 8.3: Integración del flujo de subida en vehículos (add_cortes.html y modal de detalle) [X]
+- **Requisitos obligatorios:**
+  1. En la última etapa de `add_cortes.html`, incorporar opciones diferenciadas: «Agregar enlace de YouTube» y «Subir vídeo».
+  2. En el menú (+) del modal de detalles de vehículos (`openAddVideoModal`), permitir ingresar enlace existente o presionar «Subir vídeo».
+  3. Generación automática contextual del título:
+     - Formato: `[Marca] - [Modelo] [Versión] [Rango Años]` (ej. "Toyota - Hilux SRV 2026").
+     - Si no hay versión o tiene múltiples versiones no específicas, omitir la versión en el título.
+  4. Generación automática contextual de la descripción:
+     - Frase introductoria: "En este video veremos cómo se trabaja..."
+     - Si hay versión única: "...cómo se trabaja <modelo + versión + años>".
+     - Si no hay versión única o hay varias: "...cómo se trabaja <modelo + tipo de encendido + años>".
+     - Si hay varias versiones, incluir las versiones aplicables dentro de la descripción.
+
+---
+
+### TAREA 8.4: Integración del flujo de subida en Problemas y Soluciones y Tutoriales [X]
+- **Requisitos obligatorios:**
+  1. En `openAddProblemModal` (Problemas y Soluciones), permitir subir vídeo directamente a YouTube con propuesta de título basada en el nombre del problema y propuesta de descripción basada en el detalle/solución.
+  2. En `openAddTutorialModal` (Tutoriales), permitir subir vídeo directamente con propuesta de título basada en el tema del tutorial y descripción basada en el detalle.
+  3. Reutilizar el mismo componente unificado de subida, barra de progreso y sistema de aprobación en Inbox.
+===================================================================
+
+---
+
+### REVISIÓN II: Correcciones de ficha técnica para impresión, límites de caracteres y funcionamiento del modal de Problemas y Soluciones [X]
+- **Requisitos obligatorios cumplidos:**
+  1. Optimización del diseño de la ficha técnica de cortes para impresión en una sola página Carta vertical con densidad visual dinámica adaptativa según número de elementos.
+  2. Ajuste del límite de caracteres del campo «Solución» a 700 caracteres tanto en frontend como en validación de backend.
+  3. Corrección del campo «Prevención» a 700 caracteres en frontend (`<textarea maxlength="700">`) y backend (`handleAddProblem` y `handleAddPrevention`).
+  4. Reproductor embebido de YouTube en modal de problemas y soluciones y tutoriales sin desbordamientos.
+  5. Ajuste de tamaño de imagen en modal de problemas para coincidir exactamente con el tamaño del modelo del vehículo.
+  6. Comportamiento coordinado del acordeón «Posibles problemas» cerrando acordeones técnicos al abrirse y viceversa.
+  7. Supresión contextual anti-ciclos (`originModal === 'pys'`) al navegar entre problemas y vehículos.

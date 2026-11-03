@@ -5,9 +5,10 @@ import { vinDifferentialEngine, vinSignatureStore, getClassificationKey } from '
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
+import { openYouTubeUploadModal } from './youtubeUpload.js';
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
@@ -1437,7 +1438,7 @@ function createDetailParagraph(label, text) {
     return null;
 }
 
-export function mostrarDetalleModal(item, isNavigation = false) {
+export function mostrarDetalleModal(item, isNavigation = false, navOptions = {}) {
     const { catalogData } = getState();
     const activeItem = (catalogData && catalogData.cortes)
         ? catalogData.cortes.find(c => String(c.id) === String(item.id)) || item
@@ -1997,7 +1998,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     });
 
     /* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL ACORDEÓN «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
-    renderPosiblesProblemasAccordion(accordionContainer, activeItem);
+    renderPosiblesProblemasAccordion(accordionContainer, activeItem, navOptions);
 
     const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
@@ -2338,14 +2339,14 @@ async function insertNewVehicleFluently(item) {
     }
 }
 
-/* TAREA 3.1: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
-function createPysCard(item) {
+/* TAREA 3.1 & TAREA 9.3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» CON ORIGEN CONTEXTUAL */
+function createPysCard(item, originModal = null) {
     const card = document.createElement("div");
     card.className = "card";
     card.setAttribute("data-problem-id", item.id_problem || item.id || "");
     card.style.animation = "none";
     card.style.opacity = "1";
-    card.onclick = () => openPysDetailModal(item);
+    card.onclick = () => openPysDetailModal(item, { originModal: originModal || 'vehicle' });
 
     const img = document.createElement("img");
     img.className = "card-img-top";
@@ -2367,8 +2368,12 @@ function createPysCard(item) {
     return card;
 }
 
-export function renderPosiblesProblemasAccordion(container, activeItem) {
+export function renderPosiblesProblemasAccordion(container, activeItem, navOptions = {}) {
     if (!container || !activeItem || !activeItem.id) return;
+    // Tarea 9.3: Prevención de ciclos - si el modal de vehículo se abrió desde PyS, no mostrar acordeón de problemas
+    if (navOptions && navOptions.originModal === 'pys') {
+        return;
+    }
     const vehicleIdStr = String(activeItem.id);
 
     // Contenedor dinámico del acordeón para poder actualizarlo si se descargan datos nuevos
@@ -2410,16 +2415,17 @@ export function renderPosiblesProblemasAccordion(container, activeItem) {
 
         const panel = document.createElement("div");
         panel.className = "panel-desplegable";
-        panel.style.display = "none";
-        panel.style.padding = "15px 10px";
+
+        const contentWrapper = document.createElement("div");
+        contentWrapper.style.padding = "15px 10px";
 
         if (relatedProblems.length === 1) {
             // REQUISITO: Si existe un solo problema, mostrar su tarjeta
             const singleCardContainer = document.createElement("div");
             singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; width: 100%;";
-            const singleCard = createPysCard(relatedProblems[0]);
+            const singleCard = createPysCard(relatedProblems[0], 'vehicle');
             singleCardContainer.appendChild(singleCard);
-            panel.appendChild(singleCardContainer);
+            contentWrapper.appendChild(singleCardContainer);
         } else {
             // REQUISITO: Si existen varios problemas, mostrarlos mediante un carrusel navegable
             const carouselContainer = document.createElement("div");
@@ -2428,7 +2434,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem) {
             carouselTrack.className = "carousel-track";
 
             relatedProblems.forEach(p => {
-                const card = createPysCard(p);
+                const card = createPysCard(p, 'vehicle');
                 carouselTrack.appendChild(card);
             });
             carouselContainer.appendChild(carouselTrack);
@@ -2468,25 +2474,42 @@ export function renderPosiblesProblemasAccordion(container, activeItem) {
             window.addEventListener("resize", () => setTimeout(updateCarouselButtons, 100));
             setTimeout(updateCarouselButtons, 200);
 
-            panel.appendChild(carouselContainer);
+            contentWrapper.appendChild(carouselContainer);
         }
 
-        btn.onclick = () => {
-            const isOpening = panel.style.display === "none";
-            panel.style.display = isOpening ? "block" : "none";
-            btn.classList.toggle("active", isOpening);
-            const arrow = btn.querySelector(".accordion-arrow");
-            if (arrow) arrow.textContent = isOpening ? "▲" : "▼";
+        panel.appendChild(contentWrapper);
 
-            if (isOpening && relatedProblems.length > 1) {
-                const track = panel.querySelector(".carousel-track");
-                const prev = panel.querySelector(".carousel-btn.prev");
-                const next = panel.querySelector(".carousel-btn.next");
-                if (track && prev && next) {
-                    const scrollLeft = track.scrollLeft;
-                    const maxScrollLeft = track.scrollWidth - track.clientWidth;
-                    prev.style.display = scrollLeft > 2 ? "flex" : "none";
-                    next.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+        btn.onclick = () => {
+            const isActive = btn.classList.contains("active");
+
+            // Cerrar coordinadamente todos los demás acordeones del modal
+            const allModalButtons = container.querySelectorAll(".accordion-btn");
+            allModalButtons.forEach(otherBtn => {
+                otherBtn.classList.remove("active");
+                const otherArrow = otherBtn.querySelector(".accordion-arrow");
+                if (otherArrow) otherArrow.textContent = "▼";
+                const otherPanel = otherBtn.nextElementSibling;
+                if (otherPanel && otherPanel.classList.contains("panel-desplegable")) {
+                    otherPanel.style.maxHeight = null;
+                }
+            });
+
+            if (!isActive) {
+                btn.classList.add("active");
+                const arrow = btn.querySelector(".accordion-arrow");
+                if (arrow) arrow.textContent = "▲";
+                panel.style.maxHeight = panel.scrollHeight + "px";
+
+                if (relatedProblems.length > 1) {
+                    const track = panel.querySelector(".carousel-track");
+                    const prev = panel.querySelector(".carousel-btn.prev");
+                    const next = panel.querySelector(".carousel-btn.next");
+                    if (track && prev && next) {
+                        const scrollLeft = track.scrollLeft;
+                        const maxScrollLeft = track.scrollWidth - track.clientWidth;
+                        prev.style.display = scrollLeft > 2 ? "flex" : "none";
+                        next.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+                    }
                 }
             }
         };
@@ -3650,7 +3673,7 @@ export const openTermsAgreement = setupModal('terms-agreement-modal', () => {
     document.getElementById('terms-agreement-modal').style.display = 'flex';
 });
 
-function renderInboxList(items) {
+export function renderInboxList(items) {
     const listContainer = document.getElementById('inbox-list');
     listContainer.innerHTML = '';
     if (items.length === 0) {
@@ -3668,9 +3691,17 @@ function renderInboxList(items) {
              itemDiv.classList.add('replied');
         }
 
-        const iconClass = item.type === 'problem_report' ? 'fa-triangle-exclamation' : 'fa-envelope';
+        let iconClass = 'fa-envelope';
+        let tipoLabel = 'Mensaje de contacto';
+        if (item.type === 'problem_report') {
+            iconClass = 'fa-triangle-exclamation';
+            tipoLabel = 'Reporte de problema';
+        } else if (item.type === 'video_approval') {
+            iconClass = 'fa-brands fa-youtube';
+            const statusText = item.approvalStatus === 'approved' ? 'Aprobado' : (item.approvalStatus === 'rejected' ? 'Rechazado' : 'Pendiente de aprobación');
+            tipoLabel = `Vídeo: ${statusText}`;
+        }
         const title = item.subject || `ID: ${item.id}`;
-        const tipoLabel = item.type === 'problem_report' ? 'Reporte de problema' : 'Mensaje de contacto';
 
         itemDiv.innerHTML = `
             <i class="fa-solid ${iconClass}"></i>
@@ -3781,7 +3812,7 @@ export function createInboxRichTextToolbar(targetId) {
     return toolbar;
 }
 
-function renderInboxDetail(item) {
+export function renderInboxDetail(item) {
     const detailContainer = document.getElementById('inbox-detail');
     const { currentUser, catalogData } = getState();
     const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Usuario';
@@ -3794,10 +3825,21 @@ function renderInboxDetail(item) {
         }
     }
 
+    const isVideoItem = item.type === 'video_approval';
+    const userRole = currentUser ? currentUser.Rol : '';
+    const canApprove = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+
     detailContainer.innerHTML = `
         <h3 class="inbox-detail-title">${item.subject}</h3>
         <p class="inbox-detail-meta"><strong>De:</strong> ${item.user}</p>
         ${item.vehicleId ? `<p class="inbox-detail-meta"><strong>Vehículo:</strong> ${vehicleLabel}</p>` : ''}
+        ${isVideoItem && item.videoUrl ? `
+            <div style="margin-bottom:12px; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
+                <p style="margin:0 0 6px 0;"><strong>Enlace de YouTube:</strong> <a href="${item.videoUrl}" target="_blank" rel="noopener noreferrer" style="color:#007bff; text-decoration:underline;"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Ver vídeo en YouTube</a></p>
+                <p style="margin:0 0 4px 0; font-size:0.85rem;"><strong>Estado de Aprobación:</strong> <span class="badge" style="background:${item.approvalStatus === 'approved' ? '#28a745' : (item.approvalStatus === 'rejected' ? '#dc3545' : '#ffc107')}; color:#fff; padding:2px 8px; border-radius:4px;">${item.approvalStatus || 'pending'}</span></p>
+                ${item.contentType ? `<p style="margin:0; font-size:0.85rem;"><strong>Tipo de Contenido:</strong> ${item.contentType}</p>` : ''}
+            </div>
+        ` : ''}
         <div class="inbox-message-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
             <div>${sanitizeHtmlContent(item.content)}</div>
         </div>
@@ -3807,18 +3849,78 @@ function renderInboxDetail(item) {
                 <div style="margin-top:6px;">${sanitizeHtmlContent(item.reply)}</div>
             </div>` : ''
         }
-        <div class="inbox-actions">
-            <div id="inbox-toolbar-container"></div>
-            <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
-                <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
-                ${item.type === 'problem_report' && !item.isResolved ?
-                    `<button id="inbox-resolve-btn" class="resolve-btn btn btn-secondary">Marcar como Resuelto</button>` : ''
-                }
-                <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+        ${isVideoItem ? `
+            <div class="inbox-actions" style="margin-top:12px;">
+                ${item.approvalStatus === 'pending' && canApprove ? `
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                        <button id="inbox-approve-video-btn" class="btn btn-primary" style="flex: 1; background-color:#28a745; border-color:#28a745;">
+                            <i class="fa-solid fa-check"></i> Aprobar Vídeo
+                        </button>
+                        <button id="inbox-reject-video-btn" class="btn btn-danger" style="flex: 1; background-color:#dc3545; border-color:#dc3545;">
+                            <i class="fa-solid fa-xmark"></i> Rechazar Vídeo
+                        </button>
+                    </div>
+                ` : ''}
+                <div style="display:flex; justify-content:flex-end;">
+                    <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+                </div>
             </div>
-        </div>
+        ` : `
+            <div class="inbox-actions">
+                <div id="inbox-toolbar-container"></div>
+                <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                    <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
+                    ${item.type === 'problem_report' && !item.isResolved ?
+                        `<button id="inbox-resolve-btn" class="resolve-btn btn btn-secondary">Marcar como Resuelto</button>` : ''
+                    }
+                    <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+                </div>
+            </div>
+        `}
     `;
+
+    // Listeners para aprobación/rechazo de vídeos
+    const approveVideoBtn = document.getElementById('inbox-approve-video-btn');
+    if (approveVideoBtn) {
+        approveVideoBtn.addEventListener('click', async () => {
+            if (confirm("¿Confirmas la aprobación y publicación de este vídeo en GPSpedia?")) {
+                try {
+                    approveVideoBtn.disabled = true;
+                    approveVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aprobando...`;
+                    await approveVideo(item.id, userName, userRole);
+                    inboxCacheData = null;
+                    mostrarNotificacion("Vídeo aprobado con éxito.", "success");
+                    openInbox();
+                } catch (err) {
+                    showGlobalError(`Error al aprobar vídeo: ${err.message}`);
+                    approveVideoBtn.disabled = false;
+                    approveVideoBtn.innerHTML = `<i class="fa-solid fa-check"></i> Aprobar Vídeo`;
+                }
+            }
+        });
+    }
+
+    const rejectVideoBtn = document.getElementById('inbox-reject-video-btn');
+    if (rejectVideoBtn) {
+        rejectVideoBtn.addEventListener('click', async () => {
+            const reason = prompt("Indica el motivo de rechazo del vídeo:", "No cumple los requisitos técnicos");
+            if (reason !== null) {
+                try {
+                    rejectVideoBtn.disabled = true;
+                    rejectVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rechazando...`;
+                    await rejectVideo(item.id, userName, reason, userRole);
+                    inboxCacheData = null;
+                    mostrarNotificacion("Vídeo rechazado.", "info");
+                    openInbox();
+                } catch (err) {
+                    showGlobalError(`Error al rechazar vídeo: ${err.message}`);
+                    rejectVideoBtn.disabled = false;
+                    rejectVideoBtn.innerHTML = `<i class="fa-solid fa-xmark"></i> Rechazar Vídeo`;
+                }
+            }
+        });
+    }
 
 
     const toolbarContainer = document.getElementById('inbox-toolbar-container');
@@ -3908,7 +4010,7 @@ function getYouTubeEmbedUrl(url) {
     return null;
 }
 
-function createAccordionSection(container, title, sec, isOpen = false, datosRelay = [], vehicleId = null) {
+export function createAccordionSection(container, title, sec, isOpen = false, datosRelay = [], vehicleId = null) {
     const btn = document.createElement("button");
     btn.className = "accordion-btn";
     btn.innerHTML = `${title} <span class="accordion-arrow">▼</span>`;
@@ -4200,7 +4302,12 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
         const allButtons = container.querySelectorAll(".accordion-btn");
         allButtons.forEach(otherBtn => {
             otherBtn.classList.remove("active");
-            otherBtn.nextElementSibling.style.maxHeight = null;
+            const otherArrow = otherBtn.querySelector(".accordion-arrow");
+            if (otherArrow) otherArrow.textContent = "▼";
+            const otherPanel = otherBtn.nextElementSibling;
+            if (otherPanel && otherPanel.classList.contains("panel-desplegable")) {
+                otherPanel.style.maxHeight = null;
+            }
         });
 
         // Si el botón no estaba activo, ábrelo.
@@ -4584,8 +4691,8 @@ function mostrarTutorialesGrid() {
     const createCard = document.createElement('div');
     createCard.className = 'card card-create-tutorial';
     createCard.innerHTML = `
-        <i class="fa-solid fa-plus" style="font-size: 2rem; color: #007bff; margin-bottom: 6px;"></i>
-        <span style="font-weight: bold; color: #007bff; font-size: 0.95rem;">Agregar Tutorial</span>
+        <i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 6px;"></i>
+        <span style="font-size: 0.95rem;">Agregar Tutorial</span>
     `;
     createCard.onclick = () => openAddTutorialModal();
     grid.appendChild(createCard);
@@ -5136,6 +5243,7 @@ export function openExpandMenuModal(item) {
             ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
             ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary btn-expand-option"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
             ${canAddVin ? `<button id="btn-exp-vin" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-barcode"></i> Agregar VIN (${maxVinAllowed - registeredVins.length} disponible${maxVinAllowed - registeredVins.length > 1 ? 's' : ''})</button>` : ""}
+            <button id="btn-exp-pys" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-triangle-exclamation"></i> Agregar problema relacionado</button>
         </div>
     `;
 
@@ -5158,6 +5266,9 @@ export function openExpandMenuModal(item) {
 
     const vinBtn = content.querySelector("#btn-exp-vin");
     if (vinBtn) vinBtn.onclick = () => { modal.remove(); openAddVinModal(item); };
+
+    const pysBtn = content.querySelector("#btn-exp-pys");
+    if (pysBtn) pysBtn.onclick = () => { modal.remove(); openAssociateExistingProblemModal(item); };
 }
 
 /* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO / RECTIFICACIÓN SELECTOR TRIM LEVEL */
@@ -5763,7 +5874,46 @@ export function openAddFeedModal(item) {
     };
 }
 
-/* TAREA 5 (3.5): AGREGAR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */
+/* TAREA 5 (3.5) & TAREA 8.3: AGREGAR ENLACE O SUBIR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */
+export function buildVehicleVideoMetadata(item) {
+    const marca = item.marca || '';
+    const modelo = item.modelo || '';
+    const anoDesde = item.anoDesde || '';
+    const anoHasta = item.anoHasta || '';
+    const rangoAnos = anoHasta && String(anoHasta) !== String(anoDesde) ? `${anoDesde} - ${anoHasta}` : `${anoDesde}`;
+
+    const rawVersions = item.versionesAplicables ? String(item.versionesAplicables).split(/[\/,\\]/).map(s => s.trim()).filter(Boolean) : [];
+    const hasSingleVersion = rawVersions.length === 1;
+    const singleVersion = hasSingleVersion ? rawVersions[0] : '';
+
+    // Requisito 5.1: Título: Marca - Modelo [Versión si es única] [Rango Años]
+    let titleParts = [marca, '-', modelo];
+    if (hasSingleVersion && singleVersion) {
+        titleParts.push(singleVersion);
+    }
+    if (rangoAnos.trim()) {
+        titleParts.push(rangoAnos.trim());
+    }
+    const generatedTitle = titleParts.filter(Boolean).join(' ').replace(/\s+-\s+/, ' - ');
+
+    // Requisito 5.2: Descripción: "En este video veremos cómo se trabaja..."
+    let generatedDesc = '';
+    if (hasSingleVersion && singleVersion) {
+        generatedDesc = `En este video veremos cómo se trabaja ${modelo} ${singleVersion} ${rangoAnos}`.trim();
+    } else {
+        const encendido = item.tipoEncendido ? `${item.tipoEncendido}` : '';
+        generatedDesc = `En este video veremos cómo se trabaja ${modelo} ${encendido} ${rangoAnos}`.replace(/\s+/g, ' ').trim();
+        if (rawVersions.length > 1) {
+            generatedDesc += `\nVersiones aplicables: ${rawVersions.join(' / ')}`;
+        }
+    }
+
+    return {
+        title: generatedTitle,
+        description: generatedDesc
+    };
+}
+
 export function openAddVideoModal(item) {
     const existing = document.getElementById("add-video-modal");
     if (existing) existing.remove();
@@ -5779,24 +5929,58 @@ export function openAddVideoModal(item) {
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
-        <h2><i class="fa-brands fa-youtube"></i> Agregar Enlace de Vídeo</h2>
+        <h2><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Vídeo Guía de Desarme</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
 
-        <form id="add-video-form" style="display:flex; flex-direction:column; gap:12px;">
-            <div class="form-group">
-                <label>Enlace de YouTube</label>
-                <input type="url" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; gap:10px;">
+                <button type="button" id="btn-toggle-manual-link" class="btn btn-secondary" style="flex:1; font-size:0.88rem; padding:8px 10px;">
+                    <i class="fa-solid fa-link"></i> Enlace de YouTube
+                </button>
+                <button type="button" id="btn-open-yt-upload" class="btn btn-primary" style="flex:1; font-size:0.88rem; padding:8px 10px; background-color:#ff0000; border-color:#ff0000;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo
+                </button>
             </div>
-            <div class="modal-btn-compact-container">
-                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-brands fa-youtube"></i> Agregar Vídeo</button>
-            </div>
-        </form>
+
+            <form id="add-video-form" style="display:flex; flex-direction:column; gap:12px; margin-top:4px;">
+                <div class="form-group">
+                    <label>Enlace de YouTube</label>
+                    <input type="url" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
+                </div>
+                <div class="modal-btn-compact-container">
+                    <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-brands fa-youtube"></i> Guardar Enlace</button>
+                </div>
+            </form>
+        </div>
     `;
 
     modal.appendChild(content);
     document.body.appendChild(modal);
 
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    // Opción Subir Vídeo directamente a YouTube
+    content.querySelector("#btn-open-yt-upload").onclick = () => {
+        const meta = buildVehicleVideoMetadata(item);
+        modal.remove();
+        openYouTubeUploadModal({
+            initialTitle: meta.title,
+            initialDescription: meta.description,
+            contentType: 'corte',
+            referenceId: item.id,
+            metadata: {
+                marca: item.marca,
+                modelo: item.modelo,
+                versionesAplicables: item.versionesAplicables,
+                anoDesde: item.anoDesde,
+                anoHasta: item.anoHasta,
+                tipoEncendido: item.tipoEncendido
+            },
+            onSuccess: () => {
+                alert("La solicitud de vídeo ha sido enviada para aprobación interna. Aparecerá en este modelo una vez aprobada.");
+            }
+        });
+    };
 
     const form = content.querySelector("#add-video-form");
     form.onsubmit = async (e) => {
@@ -5825,7 +6009,7 @@ export function openAddVideoModal(item) {
             console.error(err);
             showGlobalError("Error: " + err.message);
             submitBtn.disabled = false;
-            submitBtn.innerText = "Agregar Vídeo";
+            submitBtn.innerText = "Guardar Enlace";
         }
     };
 }
@@ -5847,8 +6031,8 @@ export async function renderPysSection() {
         const createCard = document.createElement("div");
         createCard.className = "card card-create-pys";
         createCard.innerHTML = `
-            <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
-            <span style="font-weight: bold; color: #007bff;">Agregar Problema</span>
+            <i class="fa-solid fa-plus" style="font-size: 2.5rem; margin-bottom: 8px;"></i>
+            <span>Agregar Problema</span>
         `;
         createCard.onclick = () => openAddProblemModal();
         grid.appendChild(createCard);
@@ -5897,7 +6081,7 @@ export async function renderPysSection() {
 }
 
 /* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */
-export function openAddProblemModal() {
+export function openAddProblemModal(preAssociatedVehicle = null) {
     const existing = document.getElementById("add-pys-modal");
     if (existing) existing.remove();
 
@@ -5976,12 +6160,20 @@ export function openAddProblemModal() {
                 <textarea id="pys-solucion" maxlength="700" rows="4" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
-                <label>Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
-                <input type="text" id="pys-prevenir" maxlength="100" placeholder="Recomendación preventiva...">
+                <label>Cómo Prevenir (Opcional, Máx 700 caracteres)</label>
+                <textarea id="pys-prevenir" maxlength="700" rows="3" placeholder="Recomendación preventiva..."></textarea>
             </div>
             <div class="form-group">
-                <label>Enlace de Vídeo YouTube (Opcional)</label>
-                <input type="url" id="pys-video" placeholder="https://www.youtube.com/watch?v=...">
+                <label>Vídeo Explicativo de YouTube (Opcional)</label>
+                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                    <button type="button" id="btn-pys-upload-yt" class="btn btn-primary" style="flex:1; background-color:#ff0000; border-color:#ff0000; font-size:0.85rem; padding:6px 10px;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo a YouTube
+                    </button>
+                </div>
+                <input type="url" id="pys-video" placeholder="O ingresar enlace: https://www.youtube.com/watch?v=...">
+                <small id="pys-video-badge" style="display:none; color:#28a745; font-size:0.8rem; margin-top:2px;">
+                    <i class="fa-solid fa-check-circle"></i> Vídeo subido a YouTube (pendiente de aprobación).
+                </small>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar</button>
         </form>
@@ -6023,6 +6215,14 @@ export function openAddProblemModal() {
         });
     }
 
+    // Tarea 9.2 (Requisito 2.5): Pre-asociar vehículo si se invoca desde el modal de un modelo y renderizar su badge
+    if (preAssociatedVehicle && preAssociatedVehicle.id) {
+        alcanceSelect.value = 'especifico';
+        modelsSection.style.display = 'block';
+        selectedVehicleIds.add(String(preAssociatedVehicle.id));
+        renderProvisionalSelectedModels();
+    }
+
     searchVehicleInput.oninput = () => {
         const query = searchVehicleInput.value.toLowerCase().trim();
         searchVehicleResults.innerHTML = '';
@@ -6030,14 +6230,30 @@ export function openAddProblemModal() {
 
         const { catalogData } = getState();
         const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
-        const matches = cortes.filter(c =>
-            `${c.marca} ${c.modelo} ${c.versionesAplicables || ''}`.toLowerCase().includes(query)
-        ).slice(0, 8);
+        // Tarea 9.1: Excluir vehículos que ya están seleccionados
+        const matches = cortes.filter(c => {
+            if (selectedVehicleIds.has(String(c.id))) return false;
+            return `${c.marca} ${c.modelo} ${c.versionesAplicables || ''}`.toLowerCase().includes(query);
+        }).slice(0, 8);
 
         matches.forEach(v => {
             const itemDiv = document.createElement("div");
             itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;";
-            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;"> <span style="flex:1; margin:0; line-height:1.2;">${v.marca} ${v.modelo} (${v.anoDesde}${v.anoHasta ? '-' + v.anoHasta : ''})</span>`;
+
+            // Requisito 1: [Imagen del vehículo] [Versión de equipamiento o tipo de encendido] [Rango de años]
+            const versionOrIgnition = (v.versionesAplicables && v.versionesAplicables.trim()) ? v.versionesAplicables.trim() : (v.tipoEncendido || '-');
+            const yearRange = (v.anoHasta && String(v.anoHasta) !== String(v.anoDesde)) ? `${v.anoDesde} - ${v.anoHasta}` : `${v.anoDesde}`;
+
+            itemDiv.innerHTML = `
+                <img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;">
+                <span style="flex:1; margin:0; line-height:1.2; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                    <strong>${v.marca} ${v.modelo}</strong>
+                    <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
+                    <span style="color:var(--accent-color); font-weight:600;">${versionOrIgnition}</span>
+                    <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
+                    <span>${yearRange}</span>
+                </span>
+            `;
             itemDiv.onclick = () => {
                 searchVehicleResults.innerHTML = '';
                 searchVehicleInput.value = '';
@@ -6056,6 +6272,32 @@ export function openAddProblemModal() {
         txtSolucion.disabled = chkSinSolucion.checked;
         if (chkSinSolucion.checked) txtSolucion.value = "";
     };
+
+    // Botón Subir Vídeo a YouTube para PyS (Tarea 8.4 y Requisito 9)
+    const btnUploadPysYt = content.querySelector("#btn-pys-upload-yt");
+    if (btnUploadPysYt) {
+        btnUploadPysYt.onclick = () => {
+            const rawTitle = content.querySelector("#pys-titulo").value.trim() || 'Problema Técnico';
+            const rawDesc = content.querySelector("#pys-detalle").value.trim() || (txtSolucion ? txtSolucion.value.trim() : '');
+
+            openYouTubeUploadModal({
+                initialTitle: rawTitle,
+                initialDescription: rawDesc,
+                contentType: 'pys',
+                referenceId: null,
+                metadata: {
+                    alcance: alcanceSelect.value,
+                    modelosAsociados: Array.from(selectedVehicleIds)
+                },
+                onSuccess: (data) => {
+                    const videoInput = content.querySelector("#pys-video");
+                    if (videoInput) videoInput.value = data.videoUrl;
+                    const badge = content.querySelector("#pys-video-badge");
+                    if (badge) badge.style.display = 'block';
+                }
+            });
+        };
+    }
 
     const form = content.querySelector("#add-pys-form");
     form.onsubmit = async (e) => {
@@ -6101,6 +6343,10 @@ export function openAddProblemModal() {
             alert("Problema registrado con éxito.");
             modal.remove();
             renderPysSection();
+            if (preAssociatedVehicle && preAssociatedVehicle.id) {
+                const panel = document.getElementById("detalleCompleto");
+                if (panel) renderPosiblesProblemasAccordion(panel, preAssociatedVehicle);
+            }
         } catch(err) {
             console.error(err);
             showGlobalError("Error al registrar problema: " + err.message);
@@ -6110,7 +6356,7 @@ export function openAddProblemModal() {
     };
 }
 
-export function openSearchVehicleForPysAssociationModal(problemId, onAssociated) {
+export function openSearchVehicleForPysAssociationModal(problemId, onAssociated, alreadyAssociatedIds = []) {
     const existing = document.getElementById("pys-add-vehicle-modal");
     if (existing) existing.remove();
 
@@ -6121,13 +6367,13 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated)
 
     const content = document.createElement("div");
     content.className = "info-modal-content";
-    content.style.maxWidth = "450px";
+    content.style.maxWidth = "480px";
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
-        <h2>Asociar Modelo a Problema</h2>
+        <h2><i class="fa-solid fa-car"></i> Asociar Modelo a Problema</h2>
         <div style="margin-top:10px;">
-            <input type="text" id="assoc-search-input" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width:100%; padding:8px;">
+            <input type="text" id="assoc-search-input" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width:100%; padding:8px; box-sizing:border-box;">
             <div id="assoc-search-results" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:10px;"></div>
         </div>
     `;
@@ -6141,6 +6387,8 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated)
     const input = content.querySelector("#assoc-search-input");
     const resultsContainer = content.querySelector("#assoc-search-results");
 
+    const excludedIds = new Set((alreadyAssociatedIds || []).map(String));
+
     input.oninput = () => {
         const query = input.value.toLowerCase().trim();
         resultsContainer.innerHTML = '';
@@ -6148,12 +6396,32 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated)
 
         const { catalogData } = getState();
         const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
-        const matches = cortes.filter(c => `${c.marca} ${c.modelo}`.toLowerCase().includes(query)).slice(0, 8);
+
+        // Tarea 9.1: Excluir vehículos que ya están asociados al problema
+        const matches = cortes.filter(c => {
+            if (excludedIds.has(String(c.id))) return false;
+            return `${c.marca} ${c.modelo} ${c.versionesAplicables || ''}`.toLowerCase().includes(query);
+        }).slice(0, 8);
 
         matches.forEach(v => {
             const itemDiv = document.createElement("div");
             itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;";
-            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;"> <span style="flex:1; margin:0; line-height:1.2;">${v.marca} ${v.modelo} (${v.anoDesde})</span>`;
+
+            // Requisito 1: [Imagen del vehículo] [Versión de equipamiento o tipo de encendido] [Rango de años]
+            const versionOrIgnition = (v.versionesAplicables && v.versionesAplicables.trim()) ? v.versionesAplicables.trim() : (v.tipoEncendido || '-');
+            const yearRange = (v.anoHasta && String(v.anoHasta) !== String(v.anoDesde)) ? `${v.anoDesde} - ${v.anoHasta}` : `${v.anoDesde}`;
+
+            itemDiv.innerHTML = `
+                <img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;">
+                <span style="flex:1; margin:0; line-height:1.2; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                    <strong>${v.marca} ${v.modelo}</strong>
+                    <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
+                    <span style="color:var(--accent-color); font-weight:600;">${versionOrIgnition}</span>
+                    <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
+                    <span>${yearRange}</span>
+                </span>
+            `;
+
             itemDiv.onclick = () => {
                 closeModal();
                 openConfirmVehicleForPysModal(v, async (confirmedVehicle) => {
@@ -6222,7 +6490,7 @@ export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
 }
 
 /* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */
-export function openPysDetailModal(item) {
+export function openPysDetailModal(item, navOptions = {}) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
@@ -6243,9 +6511,23 @@ export function openPysDetailModal(item) {
 
     if (item.Imagen) {
         const img = document.createElement("img");
-        img.src = item.Imagen;
-        img.style.cssText = "width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;";
+        img.className = 'img-vehiculo-modal img-pys-modal';
+        setOptimizedImage(img, item.Imagen, IMG_SIZE_MEDIUM);
         cont.appendChild(img);
+    }
+
+    if (item.Video) {
+        const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || (item.Video.includes("embed/") ? item.Video : null);
+        if (videoEmbedUrl) {
+            const videoContainer = document.createElement('div');
+            videoContainer.style.margin = "10px 0 15px 0";
+            videoContainer.innerHTML = `<iframe width="100%" height="280" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px; border: none; display: block; max-width: 100%;"></iframe>`;
+            cont.appendChild(videoContainer);
+        } else {
+            const vid = document.createElement("p");
+            vid.innerHTML = '<strong>Vídeo:</strong> <a href="' + item.Video + '" target="_blank" rel="noopener noreferrer">Ver guía en YouTube</a>';
+            cont.appendChild(vid);
+        }
     }
 
     const desc = document.createElement("p");
@@ -6264,12 +6546,6 @@ export function openPysDetailModal(item) {
         cont.appendChild(prev);
     }
 
-    if (item.Video) {
-        const vid = document.createElement("p");
-        vid.innerHTML = '<strong>Vídeo:</strong> <a href="' + item.Video + '" target="_blank">Ver guía en YouTube</a>';
-        cont.appendChild(vid);
-    }
-
     /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */
     // Carrusel de Modelos de Vehículos Relacionados
     const { catalogData } = getState();
@@ -6279,7 +6555,9 @@ export function openPysDetailModal(item) {
     const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
     const canEditPys = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
 
-    if (modelosAsociadosIds.length > 0 || canEditPys) {
+    // Tarea 9.3 (Requisito 8.2): Si el modal del problema se abrió desde un vehículo, ocultar en ese contexto el carrusel de modelos para evitar ciclos
+    const isFromVehicle = navOptions && navOptions.originModal === 'vehicle';
+    if (!isFromVehicle && (modelosAsociadosIds.length > 0 || canEditPys)) {
         const carouselSection = document.createElement("div");
         carouselSection.style.cssText = "margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;";
         carouselSection.innerHTML = `<h4 style="margin: 0 0 10px 0; font-size: 1rem;"><i class="fa-solid fa-car"></i> Vehículos Relacionados:</h4>`;
@@ -6291,6 +6569,7 @@ export function openPysDetailModal(item) {
             const v = cortes.find(c => String(c.id) === String(vId));
             if (!v) return;
             const card = crearCardVehiculo(v, true);
+            card.onclick = () => mostrarDetalleModal(v, false, { originModal: 'pys' });
             track.appendChild(card);
         });
 
@@ -6301,8 +6580,8 @@ export function openPysDetailModal(item) {
             addCard.onclick = () => {
                 openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
                     item.modelosAsociados = updatedList;
-                    openPysDetailModal(item);
-                });
+                    openPysDetailModal(item, navOptions);
+                }, item.modelosAsociados || []);
             };
             track.appendChild(addCard);
         }
@@ -6323,7 +6602,7 @@ export function openPysDetailModal(item) {
         addSolBtn.className = "btn btn-secondary";
         addSolBtn.innerText = "+ Agregar Solución";
         addSolBtn.onclick = () => {
-            const solText = window.prompt("Introduce la solución a este problema (máx 200 caracteres):");
+            const solText = window.prompt("Introduce la solución a este problema (máx 700 caracteres):");
             if (solText && solText.trim()) {
                 routeAction("addSolution", { problemId: item.id_problem, solucion: solText.trim() }).then(() => {
                     alert("Solución agregada con éxito.");
@@ -6382,8 +6661,16 @@ export function openAddTutorialModal() {
                 <input type="text" id="tut-tema" maxlength="30" required placeholder="Ej. Desarme de consola frontal">
             </div>
             <div class="form-group">
-                <label>Enlace de Vídeo YouTube</label>
-                <input type="url" id="tut-video" required placeholder="https://www.youtube.com/watch?v=...">
+                <label>Vídeo del Tutorial</label>
+                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                    <button type="button" id="btn-tut-upload-yt" class="btn btn-primary" style="flex:1; background-color:#ff0000; border-color:#ff0000; font-size:0.85rem; padding:6px 10px;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo a YouTube
+                    </button>
+                </div>
+                <input type="url" id="tut-video" required placeholder="O ingresar enlace: https://www.youtube.com/watch?v=...">
+                <small id="tut-video-badge" style="display:none; color:#28a745; font-size:0.8rem; margin-top:2px;">
+                    <i class="fa-solid fa-check-circle"></i> Vídeo subido a YouTube (pendiente de aprobación).
+                </small>
             </div>
             <div class="form-group">
                 <label>Descripción / Detalles (Máx 700 caracteres)</label>
@@ -6409,6 +6696,31 @@ export function openAddTutorialModal() {
     document.body.appendChild(modal);
 
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    // Botón Subir Vídeo a YouTube para Tutoriales (Tarea 8.4 y Requisito 10)
+    const btnUploadTutYt = content.querySelector("#btn-tut-upload-yt");
+    if (btnUploadTutYt) {
+        btnUploadTutYt.onclick = () => {
+            const rawTitle = content.querySelector("#tut-tema").value.trim() || 'Tutorial Técnico';
+            const rawDesc = content.querySelector("#tut-desc").value.trim() || '';
+
+            openYouTubeUploadModal({
+                initialTitle: rawTitle,
+                initialDescription: rawDesc,
+                contentType: 'tutorial',
+                referenceId: null,
+                metadata: {
+                    tema: rawTitle
+                },
+                onSuccess: (data) => {
+                    const videoInput = content.querySelector("#tut-video");
+                    if (videoInput) videoInput.value = data.videoUrl;
+                    const badge = content.querySelector("#tut-video-badge");
+                    if (badge) badge.style.display = 'block';
+                }
+            });
+        };
+    }
 
     const form = content.querySelector("#add-tutorial-form");
     form.onsubmit = async (e) => {
@@ -6537,7 +6849,7 @@ export function exportVehiclePrintSheet(item) {
     const cutsHtml = cuts.map(c => {
         const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
         return `
-        <div class="tech-item-card">
+        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
             <div class="tech-item-header">Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
@@ -6562,7 +6874,7 @@ export function exportVehiclePrintSheet(item) {
     const feedsHtml = feeds.map(f => {
         const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
         return `
-        <div class="tech-item-card">
+        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
             <div class="tech-item-header">${f.title}</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
@@ -6584,7 +6896,7 @@ export function exportVehiclePrintSheet(item) {
 
     // 6. Apertura de puertas
     const aperturaHtml = (item.apertura || item.imgApertura) ? `
-        <div class="tech-item-card">
+        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
             <div class="tech-item-header">Apertura de Puertas / Seguros</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
@@ -6773,38 +7085,62 @@ export function exportVehiclePrintSheet(item) {
                     border: 1px solid #dcdcdc;
                     border-radius: 6px;
                     background: #fafafa;
-                    padding: 12px 16px;
+                    padding: 10px 14px;
                     page-break-inside: avoid;
+                }
+                .tech-item-card.card-expanded {
+                    padding: 14px 18px;
+                }
+                .tech-item-card.card-compact {
+                    padding: 6px 10px;
                 }
                 .tech-item-header {
                     font-weight: bold;
                     color: #0056b3;
                     font-size: 13px;
-                    margin-bottom: 8px;
+                    margin-bottom: 6px;
                     border-bottom: 1px dashed #e0e0e0;
-                    padding-bottom: 4px;
+                    padding-bottom: 3px;
+                }
+                .card-compact .tech-item-header {
+                    font-size: 12px;
+                    margin-bottom: 4px;
+                    padding-bottom: 2px;
                 }
                 .tech-item-body {
                     display: flex;
                     justify-content: space-between;
                     align-items: flex-start;
-                    gap: 20px;
+                    gap: 16px;
                 }
                 .tech-item-info {
                     flex: 1;
                 }
                 .tech-item-info p {
-                    margin: 4px 0;
+                    margin: 3px 0;
                     font-size: 12px;
-                    line-height: 1.35;
+                    line-height: 1.3;
+                }
+                .card-compact .tech-item-info p {
+                    margin: 2px 0;
+                    font-size: 11px;
+                    line-height: 1.2;
                 }
                 .tech-item-img-wrapper {
-                    max-width: 280px;
+                    max-width: 290px;
                     max-height: 165px;
                     flex-shrink: 0;
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                }
+                .card-expanded .tech-item-img-wrapper {
+                    max-width: 360px;
+                    max-height: 230px;
+                }
+                .card-compact .tech-item-img-wrapper {
+                    max-width: 220px;
+                    max-height: 125px;
                 }
                 .tech-detail-img {
                     max-width: 100%;
@@ -6812,6 +7148,12 @@ export function exportVehiclePrintSheet(item) {
                     object-fit: contain;
                     border-radius: 4px;
                     border: 1px solid #ccc;
+                }
+                .card-expanded .tech-detail-img {
+                    max-height: 220px;
+                }
+                .card-compact .tech-detail-img {
+                    max-height: 120px;
                 }
                 /* Aviso de testigo al pie del corte (Requisito 4.1) */
                 .testigo-aviso {
@@ -6969,4 +7311,147 @@ export async function loadAndRenderInbox() {
             listContainer.innerHTML = '<p class="text-danger">Error de conexión al cargar bandeja.</p>';
         }
     }
+}
+
+/* TAREA 9.2: MODAL PARA ASOCIAR PROBLEMAS EXISTENTES O NUEVOS DESDE EL VEHÍCULO */
+export async function openAssociateExistingProblemModal(vehicle) {
+    const existing = document.getElementById("assoc-existing-pys-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "assoc-existing-pys-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "550px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-triangle-exclamation"></i> Agregar Problema Relacionado</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">${vehicle.marca} ${vehicle.modelo} (${vehicle.anoDesde})</p>
+
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <input type="text" id="search-existing-pys-input" placeholder="Buscar" class="dev-input" style="flex:1; padding:8px; box-sizing:border-box;">
+            <button type="button" id="btn-create-new-pys-for-vehicle" class="btn btn-primary" style="white-space:nowrap; font-size:0.85rem;">
+                <i class="fa-solid fa-plus"></i> Agregar problema
+            </button>
+        </div>
+
+        <div id="existing-pys-results-container" style="max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px;">
+            <div style="text-align:center; padding:15px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Cargando problemas...</div>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeModal = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = closeModal;
+
+    // Botón para agregar un problema nuevo pre-asociado
+    content.querySelector("#btn-create-new-pys-for-vehicle").onclick = () => {
+        closeModal();
+        openAddProblemModal(vehicle);
+    };
+
+    // Obtener problemas de la sección PyS
+    let allPys = [];
+    try {
+        const res = await routeAction("getPysData");
+        allPys = (res && res.data) ? res.data : [];
+    } catch (e) {
+        console.error("Error al obtener datos PyS:", e);
+    }
+
+    const resultsContainer = content.querySelector("#existing-pys-results-container");
+    const searchInput = content.querySelector("#search-existing-pys-input");
+
+    const renderProblemsList = (query = "") => {
+        resultsContainer.innerHTML = "";
+        const vehicleIdStr = String(vehicle.id);
+
+        // Condiciones obligatorias de disponibilidad (Requisito 2.3):
+        // 1. Mostrar únicamente problemas que tengan al menos un modelo de vehículo relacionado (modelosAsociados.length > 0).
+        // 2. Excluir problemas generales (modelosAsociados vacíos).
+        // 3. Excluir problemas que ya estén relacionados con el modelo actual.
+        const filtered = allPys.filter(p => {
+            if (!p || !Array.isArray(p.modelosAsociados) || p.modelosAsociados.length === 0) {
+                return false; // Excluir generales
+            }
+            if (p.modelosAsociados.some(mId => String(mId) === vehicleIdStr)) {
+                return false; // Ya está asociado al vehículo actual
+            }
+            if (query) {
+                const q = query.toLowerCase();
+                const titulo = (p.Problema || "").toLowerCase();
+                const desc = (p.Descripcion || "").toLowerCase();
+                return titulo.includes(q) || desc.includes(q);
+            }
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            resultsContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-disabled); font-size:0.9em;">No hay problemas disponibles para asociar a este vehículo.</div>`;
+            return;
+        }
+
+        filtered.forEach(p => {
+            const itemRow = document.createElement("div");
+            itemRow.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--card-bg, #fff);";
+
+            const leftDiv = document.createElement("div");
+            leftDiv.style.cssText = "display:flex; align-items:center; gap:10px; flex:1; min-width:0;";
+
+            const img = document.createElement("img");
+            img.src = getImageUrl(p.Imagen, IMG_SIZE_SMALL);
+            img.style.cssText = "width:42px; height:42px; object-fit:cover; border-radius:4px; flex-shrink:0;";
+            leftDiv.appendChild(img);
+
+            const textDiv = document.createElement("div");
+            textDiv.style.cssText = "display:flex; flex-direction:column; min-width:0; flex:1;";
+            textDiv.innerHTML = `
+                <strong style="font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.Problema}</strong>
+                <span style="font-size:0.75rem; color:${p.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight:600;">${p.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}</span>
+            `;
+            leftDiv.appendChild(textDiv);
+
+            const addBtn = document.createElement("button");
+            addBtn.className = "btn btn-primary btn-sm";
+            addBtn.style.cssText = "padding:6px 14px; font-size:0.85rem; flex-shrink:0;";
+            addBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar`;
+
+            addBtn.onclick = async () => {
+                addBtn.disabled = true;
+                addBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+                try {
+                    const res = await routeAction("addVehicleToProblem", {
+                        problemId: p.id_problem,
+                        vehicleId: vehicle.id
+                    });
+                    if (res && res.status === "success") {
+                        mostrarNotificacion("Problema vinculado con éxito.", "success");
+                        closeModal();
+                        // Actualizar inmediatamente el modal de detalle del vehículo
+                        const panel = document.getElementById("detalleCompleto");
+                        if (panel) {
+                            renderPosiblesProblemasAccordion(panel, vehicle);
+                        }
+                    }
+                } catch (err) {
+                    showGlobalError("Error al asociar problema: " + err.message);
+                    addBtn.disabled = false;
+                    addBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar`;
+                }
+            };
+
+            itemRow.appendChild(leftDiv);
+            itemRow.appendChild(addBtn);
+            resultsContainer.appendChild(itemRow);
+        });
+    };
+
+    renderProblemsList();
+    searchInput.oninput = () => renderProblemsList(searchInput.value.trim());
 }

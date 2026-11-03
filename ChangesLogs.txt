@@ -1588,3 +1588,89 @@ Componentes: style.css, ui.js
 - ui.js:
   * Aplicados estilos compactos a las opciones de `openExpandMenuModal` y a los botones de envío en los submodales de VIN (`#btn-save-vin`), Cortes, Apertura, Alimentación y Vídeo.
 ================================================================================
+
+================================================================================
+CHANGELOG: SUBIDA DIRECTA DE VÍDEOS A YOUTUBE Y SISTEMA DE APROBACIÓN EN INBOX (TAREAS 8.1 Y 8.2)
+Fecha: 2026-11-02
+Componentes intervenidos: youtubeUpload.js, Services/feedback.js, api-config.js, ui.js
+
+- youtubeUpload.js (Nuevo componente):
+  * Implementado el componente modal unificado `openYouTubeUploadModal` para carga directa de vídeos a YouTube.
+  * Dos campos editables: Título (inicializado con propuesta contextual) y Detalle/Descripción.
+  * Configuración permanente fija: No listado (`unlisted`), No contenido infantil (`selfDeclaredMadeForKids: false`), sin IA ni remixes.
+  * Barra de progreso porcentual dinámica con advertencia ineludible de no cerrar la ventana durante la transferencia.
+  * Bloqueo de controles de navegación durante la subida, botón de cancelación que aborta `XMLHttpRequest` de forma limpia y prevención de cargas duplicadas.
+
+- Services/feedback.js:
+  * Handlers implementados: `handleInitYouTubeUpload`, `handleSubmitVideoForApproval`, `handleApproveVideo` y `handleRejectVideo`.
+  * Integración con la hoja `Feedbacks` para almacenar solicitudes de aprobación con metadatos estructurados (`video_approval`).
+  * Validación estricta de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) para aprobación y rechazo de vídeos.
+  * Al aprobar un vídeo vehicular, se asocia automáticamente a la columna `videoGuiaDesarmeUrl` en `Cortes`.
+
+- api-config.js:
+  * Registradas las nuevas acciones en `ACTION_TO_SERVICE_MAP`: `initYouTubeUpload`, `submitVideoForApproval`, `approveVideo` y `rejectVideo` vinculadas al servicio `FEEDBACK`.
+  * Exportadas funciones helper `approveVideo` y `rejectVideo`.
+
+- ui.js:
+  * Actualizada la lista (`renderInboxList`) y detalle (`renderInboxDetail`) del Inbox para soportar ítems de tipo `video_approval`.
+  * Despliegue de enlace directo a YouTube, metadatos, estado de aprobación y botones de acción «Aprobar Vídeo» y «Rechazar Vídeo» para roles con permisos.
+================================================================================
+
+================================================================================
+CHANGELOG: INTEGRACIÓN DE SUBIDA DIRECTA DE VÍDEOS EN VEHÍCULOS, PYS Y TUTORIALES (TAREAS 8.3 Y 8.4)
+Fecha: 2026-11-02
+Componentes intervenidos: add_cortes.html, ui.js, Services/feedback.js
+
+- add_cortes.html:
+  * Agregado el botón `#btn-addcorte-upload-video` en la Etapa 3 para subir vídeo directamente a YouTube con propuesta contextual de título y descripción vehicular.
+  * Preservado el campo manual `#videoGuiaUrl` para compatibilidad con URLs directas.
+  * Añadido indicador `#video-upload-status-badge` de vídeo subido pendiente de aprobación.
+
+- ui.js:
+  * Implementada la función `buildVehicleVideoMetadata(item)` para generar automáticamente títulos (`[Marca] - [Modelo] [Versión] [Rango Años]`) y descripciones contextuales con frase estándar ("En este video veremos cómo se trabaja...").
+  * Actualizado `openAddVideoModal(item)` con dos opciones: «Enlace de YouTube» y «Subir Vídeo», redirigiendo al modal unificado `openYouTubeUploadModal`.
+  * Actualizado `openAddProblemModal`: añadido botón `#btn-pys-upload-yt` con propuesta automática de título y detalle del problema para subida directa a YouTube con aprobación en Inbox.
+  * Actualizado `openAddTutorialModal`: añadido botón `#btn-tut-upload-yt` con propuesta automática de tema y descripción del tutorial para subida directa a YouTube con aprobación en Inbox.
+
+- Services/feedback.js:
+  * Endurecida la verificación de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) en `handleApproveVideo` y `handleRejectVideo` con `!userRole || !allowedRoles.includes(userRole)`.
+================================================================================
+
+================================================================================
+CHANGELOG: GESTIÓN DE RELACIONES VEHÍCULOS-PROBLEMAS Y PREVENCIÓN DE CICLOS (TAREAS 9.1, 9.2, 9.3, 9.5)
+Fecha: 2026-11-02
+Componentes intervenidos: ui.js, style.css, Services/feedback.js
+
+- ui.js:
+  * Búsqueda de vehículos mejorada (Tarea 9.1): adaptada en `openAddProblemModal` y `openSearchVehicleForPysAssociationModal` con formato `[Imagen] | [Versión o Tipo Encendido] | [Rango Años]` y exclusión estricta de vehículos ya seleccionados/asociados.
+  * Menú (+) del vehículo (Tarea 9.2): agregada la opción «Agregar problema relacionado» en `openExpandMenuModal`.
+  * Creado `openAssociateExistingProblemModal(vehicle)`: modal con buscador exclusivo de problemas que filtra únicamente problemas con vehículos asociados (excluyendo generales y ya vinculados), botón «Agregar» de vinculación inmediata y botón «Agregar problema» para registrar problemas nuevos pre-asociados.
+  * Prevención de ciclos infinitos (Tarea 9.3): soporte de `navOptions.originModal` en `openPysDetailModal`, `renderPosiblesProblemasAccordion` y `mostrarDetalleModal` para ocultar contextualmente las tarjetas que devuelven al origen sin alterar la relación en base de datos.
+  * Actualizada la llamada a `openYouTubeUploadModal` para PyS y Tutoriales con propuestas automáticas y badges de estado.
+
+- style.css (Tarea 9.5):
+  * Estandarización de `.card-create-pys` y `.card-create-tutorial`: fondo blanco, sin líneas de borde visible, sombra discreta con efecto de profundidad, texto centrado y símbolo '+' en azul suave (#4a90e2).
+
+- Services/feedback.js:
+  * Endurecida la verificación de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) en `handleApproveVideo` y `handleRejectVideo`.
+================================================================================
+
+================================================================================
+CHANGELOG: REVISIÓN II - OPTIMIZACIONES DE FICHA TÉCNICA, LÍMITES Y MODALES
+Fecha: 2026-11-03
+Componentes intervenidos: ui.js, Services/feedback.js, style.css
+
+- Services/feedback.js:
+  * `handleAddProblem`: validación de longitud de `prevenir` ampliada de 100 a 700 caracteres (`prevenir.length > 700`).
+  * `handleAddPrevention`: validación de longitud de `prevenir` ampliada de 100 a 700 caracteres (`prevenir.length > 700`).
+
+- ui.js:
+  * Formulario PyS (`openAddProblemModal`): campo `#pys-prevenir` transformado en `<textarea maxlength="700">` con etiqueta explicativa de 700 caracteres.
+  * Modal PyS (`openPysDetailModal`): imagen configurada con clase `.img-vehiculo-modal.img-pys-modal` para garantizar paridad visual exacta con la imagen de vehículo en modal de corte.
+  * Incrustación de vídeo en PyS: reemplazado enlace estático por `<iframe>` responsivo de YouTube mediante `getYouTubeEmbedUrl`.
+  * Acordeón «Posibles problemas» coordinado: exclusión mutua entre el acordeón de problemas y las secciones de cortes/apertura/alimentación en `renderPosiblesProblemasAccordion` y `createAccordionSection`.
+  * Ficha técnica de impresión (`exportVehiclePrintSheet`): densidad adaptativa basada en la cantidad total de cortes e ítems técnicos (`.card-expanded` para 1-2 ítems con imágenes de hasta 360x220px, `.card-compact` para 4+ ítems con paddings compactos), garantizando que quepa en una sola hoja Carta vertical.
+
+- style.css:
+  * Estilos de `.card-expanded` y `.card-compact` en ficha técnica.
+================================================================================

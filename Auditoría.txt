@@ -1039,3 +1039,126 @@ Archivos intervenidos: style.css, ui.js
    - En `openAddFeedModal`: Botón Agregar Alimentación encapsulado y estilizado con `.btn-modal-action-compact`.
    - En `openAddVideoModal`: Botón Agregar Vídeo encapsulado y estilizado con `.btn-modal-action-compact`.
 ================================================================================
+
+================================================================================
+AUDITORÍA FINAL: TAREA 8.1 Y TAREA 8.2 (SUBIDA DE VÍDEOS Y APROBACIÓN EN INBOX)
+Fecha: 2026-11-02
+Archivos verificados: youtubeUpload.js, Services/feedback.js, api-config.js, ui.js
+
+1. youtubeUpload.js:
+   - Componente modal unificado `openYouTubeUploadModal(options)` implementado y verificado.
+   - Dos campos editables: Título y Detalle (con valores iniciales automáticos).
+   - Configuración fija de publicación (no listado, no para niños, sin IA ni remixes).
+   - Barra de progreso porcentual, cartel ineludible de advertencia, bloqueo de controles y botón de cancelar.
+   - Prevención de cargas duplicadas.
+
+2. Services/feedback.js:
+   - Handlers agregados: `handleInitYouTubeUpload`, `handleSubmitVideoForApproval`, `handleApproveVideo`, `handleRejectVideo`.
+   - Modificado `handleGetFeedbackItems` para mapear solicitudes de aprobación (`video_approval`).
+   - Verificada la integridad de la persistencia en Google Spreadsheet (`Feedbacks` y `Cortes`).
+   - Control de permisos RBAC para aprobación y rechazo en backend.
+
+3. api-config.js:
+   - Acciones registradas en `ACTION_TO_SERVICE_MAP`.
+   - Funciones helper exportadas: `approveVideo`, `rejectVideo`.
+
+4. ui.js:
+   - Adaptadas las vistas `renderInboxList` y `renderInboxDetail` para items de tipo `video_approval`.
+   - Botones «Aprobar Vídeo» y «Rechazar Vídeo» desplegados para roles autorizados.
+   - Enlace directo de YouTube incrustado.
+================================================================================
+
+================================================================================
+AUDITORÍA INICIAL: INTEGRACIÓN DE SUBIDA DIRECTA EN VEHÍCULOS, PYS Y TUTORIALES (TAREAS 8.3 Y 8.4)
+Fecha: 2026-11-02
+Archivos auditados: add_cortes.html, ui.js, Services/feedback.js
+
+1. add_cortes.html (Etapa 3 - Información Adicional):
+   - Actualmente el acordeón `#video-accordion` tiene únicamente un campo `<input type="url" id="videoGuiaUrl" placeholder="https://www.youtube.com/watch?v=...">`.
+   - Se debe mantener el campo de URL directa pero agregar la opción «Subir vídeo» que invoque `openYouTubeUploadModal` desde `youtubeUpload.js`.
+   - Construcción automática contextual de título y descripción vehicular tomando los datos del modelo que se está registrando (`state.nuevoModelo` / `state.marca`, `state.modelo`, etc.).
+   - Al completar la subida exitosamente, se asigna la URL en `videoGuiaUrl`, se muestra aviso de estado pendiente y se prosigue con el flujo sin duplicar.
+
+2. ui.js (Modal '+' del vehículo - openAddVideoModal):
+   - Función actual `openAddVideoModal(item)` solo permite ingresar URL directa.
+   - Se ampliará con opciones: «Agregar enlace de YouTube» y «Subir vídeo a YouTube».
+   - Generación automática de título y descripción con las reglas solicitadas:
+     * Título: `[Marca] - [Modelo] [Versión] [Rango Años]` (si hay versión única o ninguna; si hay varias no específicas, omitir versión).
+     * Descripción: "En este video veremos cómo se trabaja..." con versión única o tipo de encendido y listado de versiones aplicables.
+
+3. ui.js (openAddProblemModal y openAddTutorialModal):
+   - En `openAddProblemModal`: campo de vídeo actualmente es solo input URL. Se añade botón para «Subir vídeo» proponiendo como título el título del problema y descripción basada en el detalle/solución.
+   - En `openAddTutorialModal`: campo de vídeo actualmente es solo input URL. Se añade botón para «Subir vídeo» proponiendo como título el tema del tutorial y descripción basada en el detalle.
+   - Ambos conectados a `openYouTubeUploadModal` con `contentType: 'pys'` y `'tutorial'`.
+
+4. Endurecimiento de RBAC en Services/feedback.js:
+   - Se aplicó `!userRole || !allowedRoles.includes(userRole)` en `handleApproveVideo` y `handleRejectVideo` para rechazar explícitamente cualquier petición sin rol especificado.
+================================================================================
+
+================================================================================
+AUDITORÍA FINAL: TAREAS 8.3 Y 8.4 COMPLETADAS Y VERIFICADAS
+Fecha: 2026-11-02
+Archivos verificados: add_cortes.html, ui.js, Services/feedback.js
+
+1. add_cortes.html:
+   - Verificado el botón `#btn-addcorte-upload-video` en el DOM de la Etapa 3.
+   - Preservada la opción manual `#videoGuiaUrl` sin alterar los flujos de registro.
+   - Sincronización automática de metadatos vehiculares para el modal de subida.
+
+2. ui.js:
+   - `buildVehicleVideoMetadata`: comprobada la exclusión de versión cuando hay múltiples o ninguna, y construcción precisa de descripciones con frases estándar y tipos de encendido.
+   - `openAddVideoModal`: verificada la coexistencia de subida directa a YouTube y guardado manual de enlaces.
+   - `openAddProblemModal`: verificado el botón de subida y carga de propuesta de título/detalle.
+   - `openAddTutorialModal`: verificado el botón de subida y carga de propuesta de tema/descripción.
+
+3. Services/feedback.js:
+   - Hardening de permisos completado y certificado.
+================================================================================
+
+================================================================================
+AUDITORÍA FINAL: TAREAS 9.1, 9.2, 9.3 Y 9.5 COMPLETADAS Y VERIFICADAS
+Fecha: 2026-11-02
+Archivos verificados: ui.js, style.css, Services/feedback.js
+
+1. Formato de búsqueda de vehículos y filtro anti-duplicados (Tarea 9.1):
+   - Verificado el formato: `[Imagen] | [Versión o Encendido] | [Rango Años]`.
+   - Comprobada la exclusión de vehículos seleccionados o ya relacionados en `openAddProblemModal` y `openSearchVehicleForPysAssociationModal`.
+
+2. Opción «Agregar problema relacionado» en el botón «+» (Tarea 9.2):
+   - Verificado el botón `#btn-exp-pys` en `openExpandMenuModal`.
+   - Verificado el modal `openAssociateExistingProblemModal(vehicle)` con filtrado estricto de problemas con vehículos asociados (excluyendo generales y ya asociados), buscador reactivo y botón «Agregar».
+   - Comprobada la apertura del formulario de nuevo problema pre-asociado con el vehículo actual.
+
+3. Prevención de ciclos infinitos en navegación (Tarea 9.3):
+   - Comprobada la supresión contextual del carrusel de vehículos relacionados cuando el problema se abre desde un vehículo.
+   - Comprobada la supresión contextual del acordeón de problemas cuando el vehículo se abre desde un problema.
+   - Las relaciones originales en base de datos permanecen intactas.
+
+4. Estilos visuales de tarjetas de creación (Tarea 9.5):
+   - `.card-create-pys` y `.card-create-tutorial` verificados con fondo blanco, sin borde, profundidad discreta, texto centrado y '+' en azul suave (#4a90e2).
+================================================================================
+
+================================================================================
+AUDITORÍA: REVISIÓN II - CORRECCIONES DE FICHA TÉCNICA, LÍMITES Y MODAL PYS
+Fecha: 2026-11-03
+Archivos verificados: ui.js, Services/feedback.js, style.css
+
+1. Optimización de la ficha técnica de corte para impresión (Requisito 1):
+   - Dynamic density implementado en `exportVehiclePrintSheet`: `.card-expanded` para 1-2 cortes (imágenes ampliadas hasta 360x220px) y `.card-compact` para 4 o más elementos.
+   - Todo el contenido encaja en una sola página tamaño Carta vertical con márgenes de 10mm.
+
+2. Límites de caracteres para Solución y Prevención (Requisitos 2 y 3):
+   - Backend (`Services/feedback.js`): actualizadas validaciones en `handleAddProblem` y `handleAddPrevention` a 700 caracteres.
+   - Frontend (`ui.js`): `#pys-prevenir` actualizado a `<textarea maxlength="700">`, etiquetas actualizadas a 700 caracteres, y prompt de solución sincronizado a 700 caracteres.
+
+3. Reproductor incrustado de YouTube y tamaño de imagen en modal PyS y Tutorial (Requisitos 4 y 5):
+   - `openPysDetailModal` renderiza iframe con dimensiones responsivas vía `getYouTubeEmbedUrl`.
+   - La imagen del problema (`.img-vehiculo-modal.img-pys-modal`) tiene exactamente el mismo tamaño que la imagen del modelo de vehículo en el modal de detalle del vehículo.
+   - Modal de detalle de tutoriales mantiene el reproductor embebido responsivo sin romper detalles.
+
+4. Comportamiento coordinado del acordeón de Problemas y navegación (Requisitos 6 y 7):
+   - Al abrir «Posibles problemas», se cierran automáticamente los acordeones técnicos abiertos.
+   - Al abrir cualquier acordeón técnico, se cierra automáticamente «Posibles problemas».
+   - Indicadores de flecha (▲/▼) y maxHeight se actualizan y limpian adecuadamente.
+   - Prevención de ciclos `navOptions.originModal === 'pys'` preservada.
+================================================================================
