@@ -8,6 +8,24 @@ export function normalizeVin(vinRaw) {
     return String(vinRaw).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
 }
 
+export function normalizeModelName(modelRaw) {
+    if (!modelRaw) return "";
+    return String(modelRaw).trim().toUpperCase().replace(/[-_\s./\\]+/g, "");
+}
+
+export function doYearRangesOverlap(desdeA, hastaA, desdeB, hastaB) {
+    const dA = parseInt(desdeA, 10);
+    const dB = parseInt(desdeB, 10);
+    const currentYear = new Date().getFullYear();
+    const hA = hastaA ? parseInt(hastaA, 10) : (isNaN(dA) ? currentYear : dA + 10);
+    const hB = hastaB ? parseInt(hastaB, 10) : (isNaN(dB) ? currentYear : dB + 10);
+
+    if (isNaN(dA) || isNaN(dB)) return true; // Si faltan años, permitir comparación por defecto
+    const minD = Math.max(dA, dB);
+    const maxH = Math.min(hA, hB);
+    return minD <= maxH;
+}
+
 export function parseVersionsList(versionesStr) {
     if (!versionesStr) return [];
     const parts = String(versionesStr).split(/[,/\\\\]+/);
@@ -53,13 +71,32 @@ export class VinDifferentialEngine {
     buildSampleMatrix(records) {
         const matrixByLength = new Map();
 
+        // AUDITORÍA VIN: Contar versiones por familia de marca y modelo canónico transversalmente en toda la base de datos
+        const modelFamilyVersions = new Map();
+        (records || []).forEach(r => {
+            if (!r || !r.marca || !r.modelo) return;
+            const normMarca = (r.marca || "").trim().toUpperCase();
+            const normModel = normalizeModelName(r.modelo);
+            const famKey = `${normMarca}|${normModel}`;
+            if (!modelFamilyVersions.has(famKey)) {
+                modelFamilyVersions.set(famKey, new Set());
+            }
+            const vers = parseVersionsList(r.versionesAplicables);
+            vers.forEach(v => modelFamilyVersions.get(famKey).add(v.toUpperCase()));
+        });
+
         (records || []).forEach(record => {
             if (!record) return;
 
-            // TAREA 4.1: ANÁLISIS SELECTIVO DE MODELOS CON MÚLTIPLES VERSIONES DE EQUIPAMIENTO
+            const normMarca = (record.marca || "").trim().toUpperCase();
+            const normModel = normalizeModelName(record.modelo);
+            const famKey = `${normMarca}|${normModel}`;
+            const familyTotalVersions = modelFamilyVersions.get(famKey) ? modelFamilyVersions.get(famKey).size : 0;
+
+            // Permite analizar si el modelo tiene más de una versión en su fila O transversalmente entre registros de la misma familia
             const versions = parseVersionsList(record.versionesAplicables);
-            if (versions.length <= 1) {
-                // Si el modelo tiene una sola versión aplicable, no requiere diferenciación diferencial
+            if (versions.length <= 1 && familyTotalVersions <= 1) {
+                // Si el modelo tiene una sola versión aplicable en todo el catálogo, no requiere diferenciación diferencial
                 return;
             }
 
@@ -254,15 +291,21 @@ export class VinDifferentialEngine {
                 totalVinsAnalyzed += group.samples.length;
                 const sampleCount = group.samples.length;
 
-                const competitors = allGroups.filter(g =>
-                    g.classKey !== group.classKey &&
-                    g.marca === group.marca &&
-                    g.modelo === group.modelo
-                );
+                // AUDITORÍA VIN: Seleccionar competidores que compartan marca, modelo canónico normalizado y superposición de años
+                const normGroupMarca = (group.marca || "").trim().toUpperCase();
+                const normGroupModel = normalizeModelName(group.modelo);
 
-                const extendedCompetitors = competitors.length > 0 ? competitors : allGroups.filter(g =>
-                    g.classKey !== group.classKey && g.marca === group.marca
-                );
+                const competitors = allGroups.filter(g => {
+                    if (g.classKey === group.classKey) return false;
+                    const normGMarca = (g.marca || "").trim().toUpperCase();
+                    const normGModel = normalizeModelName(g.modelo);
+                    if (normGMarca !== normGroupMarca || normGModel !== normGroupModel) return false;
+
+                    // Validar coincidencia o superposición de años de aplicación
+                    return doYearRangesOverlap(group.anoDesde, group.anoHasta, g.anoDesde, g.anoHasta);
+                });
+
+                const extendedCompetitors = competitors;
 
                 const isInsufficient = sampleCount < 1;
                 if (isInsufficient) {
