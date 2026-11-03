@@ -1114,3 +1114,26 @@ Archivos verificados: add_cortes.html, ui.js, Services/feedback.js
 3. Services/feedback.js:
    - Hardening de permisos completado y certificado.
 ================================================================================
+
+================================================================================
+AUDITORÍA FINAL: TAREAS 9.1, 9.2, 9.3 Y 9.5 COMPLETADAS Y VERIFICADAS
+Fecha: 2026-11-02
+Archivos verificados: ui.js, style.css, Services/feedback.js
+
+1. Formato de búsqueda de vehículos y filtro anti-duplicados (Tarea 9.1):
+   - Verificado el formato: `[Imagen] | [Versión o Encendido] | [Rango Años]`.
+   - Comprobada la exclusión de vehículos seleccionados o ya relacionados en `openAddProblemModal` y `openSearchVehicleForPysAssociationModal`.
+
+2. Opción «Agregar problema relacionado» en el botón «+» (Tarea 9.2):
+   - Verificado el botón `#btn-exp-pys` en `openExpandMenuModal`.
+   - Verificado el modal `openAssociateExistingProblemModal(vehicle)` con filtrado estricto de problemas con vehículos asociados (excluyendo generales y ya asociados), buscador reactivo y botón «Agregar».
+   - Comprobada la apertura del formulario de nuevo problema pre-asociado con el vehículo actual.
+
+3. Prevención de ciclos infinitos en navegación (Tarea 9.3):
+   - Comprobada la supresión contextual del carrusel de vehículos relacionados cuando el problema se abre desde un vehículo.
+   - Comprobada la supresión contextual del acordeón de problemas cuando el vehículo se abre desde un problema.
+   - Las relaciones originales en base de datos permanecen intactas.
+
+4. Estilos visuales de tarjetas de creación (Tarea 9.5):
+   - `.card-create-pys` y `.card-create-tutorial` verificados con fondo blanco, sin borde, profundidad discreta, texto centrado y '+' en azul suave (#4a90e2).
+================================================================================

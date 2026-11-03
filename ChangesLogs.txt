@@ -1635,3 +1635,22 @@ Componentes intervenidos: add_cortes.html, ui.js, Services/feedback.js
 - Services/feedback.js:
   * Endurecida la verificación de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) en `handleApproveVideo` y `handleRejectVideo` con `!userRole || !allowedRoles.includes(userRole)`.
 ================================================================================
+
+================================================================================
+CHANGELOG: GESTIÓN DE RELACIONES VEHÍCULOS-PROBLEMAS Y PREVENCIÓN DE CICLOS (TAREAS 9.1, 9.2, 9.3, 9.5)
+Fecha: 2026-11-02
+Componentes intervenidos: ui.js, style.css, Services/feedback.js
+
+- ui.js:
+  * Búsqueda de vehículos mejorada (Tarea 9.1): adaptada en `openAddProblemModal` y `openSearchVehicleForPysAssociationModal` con formato `[Imagen] | [Versión o Tipo Encendido] | [Rango Años]` y exclusión estricta de vehículos ya seleccionados/asociados.
+  * Menú (+) del vehículo (Tarea 9.2): agregada la opción «Agregar problema relacionado» en `openExpandMenuModal`.
+  * Creado `openAssociateExistingProblemModal(vehicle)`: modal con buscador exclusivo de problemas que filtra únicamente problemas con vehículos asociados (excluyendo generales y ya vinculados), botón «Agregar» de vinculación inmediata y botón «Agregar problema» para registrar problemas nuevos pre-asociados.
+  * Prevención de ciclos infinitos (Tarea 9.3): soporte de `navOptions.originModal` en `openPysDetailModal`, `renderPosiblesProblemasAccordion` y `mostrarDetalleModal` para ocultar contextualmente las tarjetas que devuelven al origen sin alterar la relación en base de datos.
+  * Actualizada la llamada a `openYouTubeUploadModal` para PyS y Tutoriales con propuestas automáticas y badges de estado.
+
+- style.css (Tarea 9.5):
+  * Estandarización de `.card-create-pys` y `.card-create-tutorial`: fondo blanco, sin líneas de borde visible, sombra discreta con efecto de profundidad, texto centrado y símbolo '+' en azul suave (#4a90e2).
+
+- Services/feedback.js:
+  * Endurecida la verificación de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) en `handleApproveVideo` y `handleRejectVideo`.
+================================================================================
