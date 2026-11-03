@@ -1778,3 +1778,17 @@ Componentes intervenidos: ui.js, index.html, Services/feedback.js, api-config.js
 - index.html:
   * Retirada la entrada de desvinculación de asociaciones de vehículos del modal de historial de cambios (v2.2.5), preservando intactas las demás novedades.
 ================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: REVISIÓN V - ESTANDARIZACIÓN VISUAL DE TARJETAS DE CREACIÓN Y VINCULACIÓN
+Fecha: 2026-11-03
+
+- style.css:
+  * `.card-create-tutorial`, `.card-create-pys`: Eliminado `border: 2px dashed #007bff;` y `background: transparent;`. Asignado `background: var(--card-bg, #ffffff); border: none;` con marco de elevación `box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);` y en hover `0 8px 20px rgba(0, 0, 0, 0.15);`.
+  * Incorporadas las clases unificadas `.card-create-vehicle-assoc` y `.card-create-pys-assoc` para carruseles de asociación dentro de modales con el mismo estándar visual sin líneas discontinuas.
+  * Añadida regla para `.dark-mode` con `border: 1px solid rgba(255, 255, 255, 0.05);` y sombra profunda `rgba(0, 0, 0, 0.5)`.
+
+- ui.js:
+  * `openPysDetailModal`: Sustituidos estilos en línea con borde discontinuo (`2px dashed var(--accent-color)`) por la clase `.card.card-create-vehicle-assoc` en la tarjeta `addCard` del carrusel de modelos asociados.
+  * `renderPosiblesProblemasAccordion`: Estandarizada la tarjeta de adición/vinculación de problemas (`.card.card-create-pys-assoc`) sin bordes discontinuos, tanto para problema único como para el carrusel de problemas relacionados.
+================================================================================

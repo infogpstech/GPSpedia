@@ -2113,6 +2113,15 @@ BLOQUE 8: SISTEMA DE SUBIDA DIRECTA DE VÍDEOS A YOUTUBE DESDE GPSPEDIA CON APRO
 
 ---
 
+### REVISIÓN V: Estandarización visual de tarjetas de adición y vinculación sin borde discontinuo [X]
+- **Requisitos obligatorios cumplidos:**
+  1. Retirada del borde discontinuo azul (`border: 2px dashed #007bff;`) en las tarjetas de agregar tutorial (`.card-create-tutorial`) y agregar problema (`.card-create-pys`).
+  2. Aplicación de fondo sólido (`var(--card-bg)`) y marco de elevación por sombras (`box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);` y en hover `0 8px 20px rgba(0, 0, 0, 0.15);`) idéntico al estándar visual de las tarjetas del catálogo de cortes.
+  3. Aplicación de la misma regla en las tarjetas de agregar/vincular vehículos en el modal de problemas (`.card-create-vehicle-assoc`) y agregar/vincular problemas en el modal de cortes (`.card-create-pys-assoc`).
+  4. Compatibilidad con el modo oscuro conservando marco sutil y profundidad de sombras del catálogo.
+
+---
+
 ### REVISIÓN III - FASE 3: Gestión de imágenes reemplazadas (Historial, Papelera y Auditoría de Google Drive) [ ]
 - **Requisitos obligatorios:**
   1. Al reemplazar imágenes desde la edición in-modal, conservar la imagen anterior y registrarla en hoja dedicada de historial de imágenes reemplazadas.

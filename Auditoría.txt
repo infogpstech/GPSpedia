@@ -1298,3 +1298,24 @@ Riesgos y mitigaciones:
 - Riesgo de romper el modo de visualización normal de PyS o Tutoriales: se preserva la estructura de lectura sin alteraciones y el modo de edición se activa únicamente al pulsar el lápiz.
 - Respaldo previo creado (.bak) para ui.js, index.html, Services/feedback.js y api-config.js.
 ================================================================================
+
+================================================================================
+AUDITORÍA: REVISIÓN V - ESTANDARIZACIÓN VISUAL DE TARJETAS DE ADICIÓN Y VINCULACIÓN SIN BORDE DISCONTINUO
+Fecha: 2026-11-03
+Archivos involucrados: style.css, ui.js
+
+Diagnóstico y Hallazgos:
+1. style.css:
+   - Las reglas `.card-create-tutorial` y `.card-create-pys` utilizaban `border: 2px dashed #007bff;` y `background: transparent;`.
+   - Se requería eliminar el borde de línea intercortada/discontinua para que tengan apariencia de tarjeta con marco delimitado mediante elevación y sombras (`box-shadow`), igual a las tarjetas de referencia del catálogo (.card).
+   - Se retiró `border: 2px dashed #007bff;` y se configuró `background: var(--card-bg, #ffffff); border: none; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);` (y en hover `0 8px 20px rgba(0, 0, 0, 0.15);`), con soporte completo para modo oscuro (.dark-mode).
+   - Se crearon las clases `.card-create-vehicle-assoc` y `.card-create-pys-assoc` compartiendo estas mismas propiedades.
+
+2. ui.js:
+   - En `openPysDetailModal`, la tarjeta `addCard` (para agregar vehículo al carrusel de modelos asociados del problema) tenía estilos en línea con `border: 2px dashed var(--accent-color); background: rgba(0, 123, 255, 0.05);`. Se sustituyó por la clase `.card.card-create-vehicle-assoc` sin bordes discontinuos.
+   - En `renderPosiblesProblemasAccordion`, se estandarizó la tarjeta para agregar/vincular problemas al vehículo utilizando la clase `.card.card-create-pys-assoc` sin bordes discontinuos, tanto para el caso de un solo problema como para el carrusel de problemas.
+
+Riesgos y mitigaciones:
+- Riesgo de inconsistencia visual en modo oscuro: mitigado asignando variables CSS nativas (`var(--card-bg)`, `var(--accent-color)` y `border: 1px solid rgba(255, 255, 255, 0.05)` en dark mode).
+- Respaldos creados: `style.css.bak` y `ui.js.bak`.
+================================================================================

@@ -2461,14 +2461,23 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
         contentWrapper.style.padding = "15px 10px";
 
         if (relatedProblems.length === 1) {
-            // REQUISITO: Si existe un solo problema, mostrar su tarjeta
+            // REQUISITO: Si existe un solo problema, mostrar su tarjeta y la tarjeta para agregar/vincular problema
             const singleCardContainer = document.createElement("div");
-            singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; width: 100%;";
+            singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; gap: 15px; width: 100%; flex-wrap: wrap;";
             const singleCard = createPysCard(relatedProblems[0], 'vehicle', activeItem, () => {
                 // Si se eliminó el único problema, refrescar acordeón
                 renderPosiblesProblemasAccordion(container, activeItem, navOptions);
             });
             singleCardContainer.appendChild(singleCard);
+
+            // Tarjeta para agregar o vincular problema sin borde discontinuo
+            const addPysCard = document.createElement("div");
+            addPysCard.className = "card card-create-pys-assoc";
+            addPysCard.style.cssText = "width: 140px; height: 180px; padding: 10px; margin: 0;";
+            addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
+            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
+            singleCardContainer.appendChild(addPysCard);
+
             contentWrapper.appendChild(singleCardContainer);
         } else {
             // REQUISITO: Si existen varios problemas, mostrarlos mediante un carrusel navegable
@@ -2483,6 +2492,15 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
                 });
                 carouselTrack.appendChild(card);
             });
+
+            // Tarjeta al final del carrusel para agregar o vincular problema
+            const addPysCard = document.createElement("div");
+            addPysCard.className = "card card-create-pys-assoc";
+            addPysCard.style.cssText = "flex: 0 0 140px; height: 180px; padding: 10px; margin-right: 20px;";
+            addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
+            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
+            carouselTrack.appendChild(addPysCard);
+
             carouselContainer.appendChild(carouselTrack);
 
             const prevBtn = document.createElement("button");
@@ -6991,10 +7009,11 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
             track.appendChild(cardWrapper);
         });
 
-        // Tarjeta «+ Agregar» al final del carrusel disponible para todos los usuarios
+        // Tarjeta «+ Agregar» al final del carrusel disponible para todos los usuarios (Estandarización visual sin bordes discontinuos)
         const addCard = document.createElement("div");
-        addCard.style.cssText = "flex: 0 0 120px; border: 2px dashed var(--accent-color); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--accent-color); font-size: 0.8rem; background: rgba(0, 123, 255, 0.05); min-height: 100px;";
-        addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.5rem; margin-bottom: 4px;"></i> <span>Agregar Modelo</span>`;
+        addCard.className = "card card-create-vehicle-assoc";
+        addCard.style.cssText = "flex: 0 0 120px; min-height: 100px; padding: 8px; margin: 0 5px;";
+        addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.5rem; margin-bottom: 6px;"></i> <span style="font-size: 0.8rem; font-weight: 600; text-align: center;">Agregar Modelo</span>`;
         addCard.onclick = () => {
             openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
                 item.modelosAsociados = updatedList;
