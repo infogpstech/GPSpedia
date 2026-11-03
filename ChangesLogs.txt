@@ -1735,3 +1735,15 @@ Componentes intervenidos: api-config.js, index.html, ui.js
 - ui.js:
   * Subsanada duplicidad de declaración de `modalDetalle` en scope de `mostrarDetalleModal`.
 ================================================================================
+
+================================================================================
+CHANGELOG: COMPARACIÓN TRANSVERSAL DE VEHÍCULOS POR VIN (VinDifferentialEngine.js)
+Fecha: 2026-11-03
+Componente intervenido: VinDifferentialEngine.js
+
+- VinDifferentialEngine.js:
+  * Agregada función `normalizeModelName` para unificar variaciones sintácticas de modelos con guiones, espacios y puntuación ("CR-V" y "CRV").
+  * Agregada función `doYearRangesOverlap` para validar matemáticamente la intersección temporal de rangos de años entre versiones.
+  * Actualizado `buildSampleMatrix`: evaluación de versiones a nivel de toda la familia de la marca y modelo canónico transversalmente en la base de datos, permitiendo comparar versiones registradas en filas independientes.
+  * Actualizado `calculateSignatures`: los competidores ahora se filtran por marca, modelo canónico normalizado y superposición de años de aplicación, garantizando que sólo compitan versiones que coincidan temporalmente.
+================================================================================

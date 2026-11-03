@@ -1240,3 +1240,27 @@ Archivos verificados: api-config.js, index.html, Tareas.txt, ChangesLogs.txt
      * v2.2.5 (Actual): Ficha técnica adaptativa para una página, lectura optimizada en PyS y desvinculación ágil de asociaciones.
    - Excluidas rigurosamente funciones exclusivas de desarrolladores y detalles internos de seguridad.
 ================================================================================
+
+================================================================================
+AUDITORÍA Y CORRECCIÓN: COMPARACIÓN Y DIFERENCIACIÓN TRANSVERSAL POR VIN
+Fecha: 2026-11-03
+Archivos verificados: VinDifferentialEngine.js
+
+1. Normalización Canónica de Modelos (`normalizeModelName`):
+   - Elimina guiones, puntos, barras y espacios, permitiendo que variantes sintácticas ("CR-V" y "CRV") sean agrupadas como el mismo modelo.
+
+2. Evaluación Transversal de Familias de Modelos:
+   - Superada la limitación de fila única: se calcula el total de versiones por familia de marca y modelo canónico en todo el catálogo (`modelFamilyVersions`).
+   - Versiones en filas individuales (`VL`, `Comfortline`, `Red-line`) son analizadas y comparadas con éxito frente a sus versiones competidoras.
+
+3. Superposición Temporal de Rangos de Años (`doYearRangesOverlap`):
+   - Dos versiones únicamente se consideran competidoras si comparten al menos un año en común ($\max(\text{desde}_1, \text{desde}_2) \le \min(\text{hasta}_1, \text{hasta}_2)$).
+   - Versiones sin coincidencia temporal (ej. generaciones disjuntas 2012-2015 vs 2022-2026) no generan comparaciones forzadas.
+
+4. Pruebas y Criterios de Aceptación:
+   - Caso 1 (TX/XL agrupadas y VL en otra fila): 3 firmas calculadas.
+   - Caso 2 (Touring, XEL y EL con rangos superpuestos y modelo CR-V / CRV): 3 firmas calculadas.
+   - Caso 3 (Comfortline y Red-line en filas independientes): 2 firmas calculadas.
+   - Caso 6 (Generaciones sin coincidencia temporal): no compiten entre sí.
+   - Verificado mediante pruebas automatizadas en Playwright y Node.js.
+================================================================================
