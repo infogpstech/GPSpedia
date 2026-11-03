@@ -1399,3 +1399,18 @@ Fecha: 2026-11-03
    - Solución implementada: Homogeneización total del flujo con búsqueda combinada, exclusión de modelos existentes/seleccionados, modal de confirmación con vista previa ampliada (openConfirmVehicleForPysModal), selección múltiple con chips removibles, y persistencia coordinada.
    - Estado: Resuelto y verificado con pruebas Playwright.
 ================================================================================
+
+================================================================================
+AUDITORÍA DE ENDPOINTS DE MICROSERVICIOS
+Fecha: 2026-11-03
+
+Endpoints actualizados y verificados en api-config.js:
+- LEGACY: https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec
+- AUTH: https://script.google.com/macros/s/AKfycbzi5ET_WsDDKWqcrAHpnhtpS0oEitbuYz8dPj_URsG6dt-PO1oFIpOwYSKQ1temcEGnDA/exec
+- CATALOG: https://script.google.com/macros/s/AKfycbxtqkdUfXAEmbPz7zfE4kZCie8sql4SM43kxkBw__5iGwXVyzzYsIFG5jpWkQc7-Ug9/exec
+- WRITE: https://script.google.com/macros/s/AKfycbwsRkcK8-q8hiOpaUNrU1e79WD2SH87MsZkfaFU3S19ayAC9ZMhxDuZUv0cx9iaW7cPlw/exec
+- USERS: https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec
+- FEEDBACK: https://script.google.com/macros/s/AKfycbxT_3TopgtXNgRHGyNroU7zi_hyixxFEU-0r-QgfiSifyOkFMjeILL5Rgeq_WLJ7Dm2SQ/exec
+- UTILITIES: https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec
+- ADMIN: https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec
+================================================================================
