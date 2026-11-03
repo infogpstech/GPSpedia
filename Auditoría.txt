@@ -1264,3 +1264,89 @@ Archivos verificados: VinDifferentialEngine.js
    - Caso 6 (Generaciones sin coincidencia temporal): no compiten entre sí.
    - Verificado mediante pruebas automatizadas en Playwright y Node.js.
 ================================================================================
+
+================================================================================
+AUDITORÍA PREVIA: REVISIÓN IV (FICHA TÉCNICA, PERMISOS DESVINCULACIÓN Y EDICIÓN IN-MODAL)
+Fecha: 2026-11-03
+Archivos a intervenir: ui.js, index.html, Services/feedback.js, api-config.js
+
+1. Optimización Ficha Técnica (exportVehiclePrintSheet en ui.js):
+   - Estado actual:
+     * Dimensiones en @page utilizan `size: letter portrait; margin: 10mm;`. La captura muestra que en pantallas y PDFs la tabla tiene excesivo espacio vacío vertical en cada celda td (padding 4px 8px, line-height 1.25), inflando la altura de las celdas de forma desproporcionada.
+     * En `.tech-item-body`, el contenedor de texto `.tech-item-info` tiene `flex: 1` y `.tech-item-img-wrapper` tiene ancho máximo fijo (290px), lo que provoca que el texto ocupe horizontalmente más espacio que la imagen.
+     * Se requiere limitar `.tech-item-info` a máximo el 25% del ancho horizontal de la hoja y permitir que la imagen ocupe el ~75% restante.
+     * Se requiere fijar @page a `size: 216mm 279mm portrait; margin: 8mm;`, y compactar la tabla con `padding: 2px 6px;` y `line-height: 1.15;`.
+
+2. Restricción de Desvinculación de Problemas y Vehículos:
+   - Estado actual:
+     * En ui.js línea 2380 y 6650: el botón de desvinculación se muestra para `['Desarrollador', 'Gefe', 'Supervisor']`.
+     * En Services/feedback.js línea 1070 (`handleRemoveVehicleFromProblem`): `allowedRoles = ['Desarrollador', 'Gefe', 'Supervisor']`.
+     * Se requiere restringir tanto en UI como en backend estrictamente a rol `Desarrollador`.
+
+3. Edición In-Modal en Tutoriales y Problemas & Soluciones:
+   - Estado actual:
+     * `mostrarDetalleTutorialModal` y `openPysDetailModal` carecen del botón de edición con icono de lápiz (`fa-pencil`).
+     * Solo `mostrarDetalleModal` de vehículos dispone de edición in-modal con lápiz, guardado y descarte.
+     * Se requiere replicar el patrón de edición in-modal con lápiz para rol Desarrollador en Tutoriales y PyS, conectando a endpoints de actualización `updateTutorialItem` y `updatePysItem` en feedback.js.
+
+4. Changelog Frontend (index.html):
+   - Estado actual:
+     * Línea 652 en index.html incluye: `<li><strong>Gestión de asociaciones de vehículos:</strong> Facilidad para desvincular modelos asociados a problemas técnicos de forma selectiva directamente desde el catálogo.</li>`.
+     * Esta funcionalidad es exclusiva del desarrollador y debe ser removida del changelog de usuario.
+
+Riesgos y mitigaciones:
+- Riesgo de romper el modo de visualización normal de PyS o Tutoriales: se preserva la estructura de lectura sin alteraciones y el modo de edición se activa únicamente al pulsar el lápiz.
+- Respaldo previo creado (.bak) para ui.js, index.html, Services/feedback.js y api-config.js.
+================================================================================
+
+================================================================================
+AUDITORÍA: REVISIÓN V - ESTANDARIZACIÓN VISUAL DE TARJETAS DE ADICIÓN Y VINCULACIÓN SIN BORDE DISCONTINUO
+Fecha: 2026-11-03
+Archivos involucrados: style.css, ui.js
+
+Diagnóstico y Hallazgos:
+1. style.css:
+   - Las reglas `.card-create-tutorial` y `.card-create-pys` utilizaban `border: 2px dashed #007bff;` y `background: transparent;`.
+   - Se requería eliminar el borde de línea intercortada/discontinua para que tengan apariencia de tarjeta con marco delimitado mediante elevación y sombras (`box-shadow`), igual a las tarjetas de referencia del catálogo (.card).
+   - Se retiró `border: 2px dashed #007bff;` y se configuró `background: var(--card-bg, #ffffff); border: none; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);` (y en hover `0 8px 20px rgba(0, 0, 0, 0.15);`), con soporte completo para modo oscuro (.dark-mode).
+   - Se crearon las clases `.card-create-vehicle-assoc` y `.card-create-pys-assoc` compartiendo estas mismas propiedades.
+
+2. ui.js:
+   - En `openPysDetailModal`, la tarjeta `addCard` (para agregar vehículo al carrusel de modelos asociados del problema) tenía estilos en línea con `border: 2px dashed var(--accent-color); background: rgba(0, 123, 255, 0.05);`. Se sustituyó por la clase `.card.card-create-vehicle-assoc` sin bordes discontinuos.
+   - En `renderPosiblesProblemasAccordion`, se estandarizó la tarjeta para agregar/vincular problemas al vehículo utilizando la clase `.card.card-create-pys-assoc` sin bordes discontinuos, tanto para el caso de un solo problema como para el carrusel de problemas.
+
+Riesgos y mitigaciones:
+- Riesgo de inconsistencia visual en modo oscuro: mitigado asignando variables CSS nativas (`var(--card-bg)`, `var(--accent-color)` y `border: 1px solid rgba(255, 255, 255, 0.05)` en dark mode).
+- Respaldos creados: `style.css.bak` y `ui.js.bak`.
+================================================================================
+
+================================================================================
+AUDITORÍA: NAVEGACIÓN ANTI-BUCLE ENTRE MODALES Y GESTIÓN DE IMÁGENES REEMPLAZADAS EN DRIVE
+Fecha: 2026-11-03
+Archivos involucrados: ui.js, main.js, Services/admin.js, api-config.js, index.html
+
+Diagnóstico y Hallazgos:
+1. Navegación Anti-Bucle entre Modales de Vehículo y PyS:
+   - Diagnóstico: Al transitar bidireccionalmente entre el carrusel de problemas en el vehículo y el carrusel de modelos en el problema, el usuario podía generar ciclos infinitos si ambos componentes se mantenían activos.
+   - Solución implementada:
+     * Se integró `modalNavStack` para registrar el origen (`vehicle` o `pys`) y el contexto completo.
+     * Al abrir un problema desde un vehículo (`originModal === 'vehicle'`), se oculta completamente el carrusel de vehículos relacionados y el botón "+ Agregar Modelo".
+     * Al abrir un vehículo desde un problema (`originModal === 'pys'`), se oculta completamente el acordeón de problemas relacionados (`renderPosiblesProblemasAccordion`).
+     * Al presionar cerrar (botón 'X', Escape o botón atrás en historial), se comprueba la pila y se retorna limpiamente al modal de origen sin bucles.
+     * En aperturas directas o búsquedas independientes, la pila se inicializa vacía y los carruseles/acordeones se muestran normalmente.
+
+2. Gestión de Imágenes Reemplazadas en Google Drive:
+   - Diagnóstico: Al editar imágenes in-modal, la imagen anterior se conservaba en Google Drive pero no existía registro histórico ni herramienta para visualizarla o recuperarla.
+   - Solución implementada:
+     * En `Services/admin.js`, se implementó `recordReplacedImage` que almacena automáticamente cada imagen reemplazada en la hoja dedicada `Imagenes_Reemplazadas` (id, fecha, tipoContenido, registroId, campo, driveId, nombreArchivo, urlAnterior, sustituidaPorUrl, estado).
+     * Se incorporaron los handlers administrativos:
+       - `handleGetReplacedImages`: Lista el repositorio histórico con metadatos.
+       - `handleRecoverReplacedImage`: Restablece la versión histórica en el catálogo `Cortes` e intercambia la versión activa anterior en el historial para permitir alternar versiones.
+       - `handleDeleteReplacedImage`: Valida estrictamente que el archivo no esté activo en ninguna fila de la Spreadsheet antes de enviarlo a la papelera de Drive.
+       - `handleAuditDriveImagesInCortes`: Exploración recursiva limitada de forma estricta al árbol de la carpeta principal `Cortes` (`DRIVE_FOLDER_ID`), clasificando archivos en En uso, Histórica, Sin uso detectado y No verificable.
+     * En `index.html` y `ui.js`, se añadieron los modales administrativos `#replaced-images-modal` y `#audit-drive-modal` integrados en `#dev-tools-modal` exclusivos para el rol Desarrollador.
+
+Riesgos y mitigaciones:
+- Riesgo de exploración descontrolada en Google Drive: mitigado restringiendo la búsqueda en código exclusivamente al ID `1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2` (carpeta "Cortes") y sus subcarpetas.
+- Respaldos creados: `ui.js.bak`, `main.js.bak`, `Services/admin.js.bak`, `api-config.js.bak`, `index.html.bak`.
+================================================================================

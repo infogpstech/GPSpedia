@@ -38,6 +38,14 @@ let originalItemBackup = null;
 let editedItemBuffer = null;
 let dropdownOptions = null;
 
+// Pila de navegación entre modales para prevención de bucles y restauración de contexto
+const modalNavStack = [];
+window.modalNavStack = modalNavStack;
+
+export function clearModalNavStack() {
+    modalNavStack.length = 0;
+}
+
 window.inEditMode = false;
 
 async function precargarDropdownOptions() {
@@ -1456,6 +1464,18 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         modalDetalle.dataset.modalType = 'corte';
     }
 
+    // Gestión contextual de pila de navegación anti-bucle
+    if (navOptions && navOptions.fromOriginModal) {
+        modalNavStack.push({
+            type: navOptions.fromOriginModal.type,
+            item: navOptions.fromOriginModal.item,
+            navOptions: navOptions.fromOriginModal.navOptions || {}
+        });
+    } else if (!isNavigation && (!navOptions || !navOptions.originModal)) {
+        // Apertura independiente desde catálogo o buscador: limpiar pila previa
+        modalNavStack.length = 0;
+    }
+
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
@@ -1567,6 +1587,15 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
         }
 
+        // Comprobar si hay un modal previo en la pila para retorno contextual
+        if (modalNavStack.length > 0) {
+            const prevContext = modalNavStack.pop();
+            if (prevContext && prevContext.type === 'pys') {
+                openPysDetailModal(prevContext.item, prevContext.navOptions || {});
+                return;
+            }
+        }
+
         // Restaurar foco a la barra de búsqueda al cerrar manualmente
         const searchInput = document.getElementById('searchInput');
         const isSearchActive = document.body.classList.contains('search-active');
@@ -1575,6 +1604,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             window.history.back();
         } else {
             document.getElementById("modalDetalle").classList.remove("visible");
+            modalNavStack.length = 0;
             // Si el historial no maneja el cierre, forzamos la restauración del foco aquí
             if (isSearchActive && searchInput) {
                 setTimeout(() => searchInput.focus(), 300);
@@ -2353,7 +2383,14 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
     card.setAttribute("data-problem-id", item.id_problem || item.id || "");
     card.style.animation = "none";
     card.style.opacity = "1";
-    card.onclick = () => openPysDetailModal(item, { originModal: originModal || 'vehicle' });
+    card.onclick = () => openPysDetailModal(item, {
+        originModal: originModal || 'vehicle',
+        fromOriginModal: vehicleToUnlink ? {
+            type: 'vehicle',
+            item: vehicleToUnlink,
+            navOptions: {}
+        } : null
+    });
 
     const img = document.createElement("img");
     img.className = "card-img-top";
@@ -2374,8 +2411,9 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
     cardWrapper.appendChild(card);
 
     const sessionData = localStorage.getItem('gpsepedia_session');
-    const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
-    const canEdit = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+    const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
+    // REVISIÓN IV: Desvinculación de problemas y vehículos restringida exclusivamente al desarrollador
+    const canEdit = userRole === 'Desarrollador';
 
     if (canEdit && vehicleToUnlink) {
         const removeBtn = document.createElement("button");
@@ -2460,14 +2498,23 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
         contentWrapper.style.padding = "15px 10px";
 
         if (relatedProblems.length === 1) {
-            // REQUISITO: Si existe un solo problema, mostrar su tarjeta
+            // REQUISITO: Si existe un solo problema, mostrar su tarjeta y la tarjeta para agregar/vincular problema
             const singleCardContainer = document.createElement("div");
-            singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; width: 100%;";
+            singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; gap: 15px; width: 100%; flex-wrap: wrap;";
             const singleCard = createPysCard(relatedProblems[0], 'vehicle', activeItem, () => {
                 // Si se eliminó el único problema, refrescar acordeón
                 renderPosiblesProblemasAccordion(container, activeItem, navOptions);
             });
             singleCardContainer.appendChild(singleCard);
+
+            // Tarjeta para agregar o vincular problema sin borde discontinuo
+            const addPysCard = document.createElement("div");
+            addPysCard.className = "card card-create-pys-assoc";
+            addPysCard.style.cssText = "width: 140px; height: 180px; padding: 10px; margin: 0;";
+            addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
+            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
+            singleCardContainer.appendChild(addPysCard);
+
             contentWrapper.appendChild(singleCardContainer);
         } else {
             // REQUISITO: Si existen varios problemas, mostrarlos mediante un carrusel navegable
@@ -2482,6 +2529,15 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
                 });
                 carouselTrack.appendChild(card);
             });
+
+            // Tarjeta al final del carrusel para agregar o vincular problema
+            const addPysCard = document.createElement("div");
+            addPysCard.className = "card card-create-pys-assoc";
+            addPysCard.style.cssText = "flex: 0 0 140px; height: 180px; padding: 10px; margin-right: 20px;";
+            addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
+            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
+            carouselTrack.appendChild(addPysCard);
+
             carouselContainer.appendChild(carouselTrack);
 
             const prevBtn = document.createElement("button");
@@ -3696,6 +3752,212 @@ ${elapsedSec}s
             selectedLogoFilename = null;
         }
     };
+
+    // 8. TAREA 2: Repositorio Histórico de Imágenes Reemplazadas y Auditoría de Google Drive
+    const viewReplacedBtn = document.getElementById('btn-admin-view-replaced-images');
+    if (viewReplacedBtn) {
+        viewReplacedBtn.onclick = () => openReplacedImagesModal();
+    }
+
+    const auditDriveBtn = document.getElementById('btn-admin-audit-drive-images');
+    if (auditDriveBtn) {
+        auditDriveBtn.onclick = () => openAuditDriveModal();
+    }
+}
+
+/**
+ * TAREA 2: Modal de Gestión y Recuperación de Imágenes Reemplazadas
+ */
+export async function openReplacedImagesModal() {
+    const modal = document.getElementById('replaced-images-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    const closeBtn = document.getElementById('close-replaced-images-modal');
+    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
+
+    const listContainer = document.getElementById('replaced-images-list-container');
+    const filterInput = document.getElementById('filter-replaced-images-input');
+    const refreshBtn = document.getElementById('btn-refresh-replaced-images');
+
+    let cachedReplaced = [];
+
+    const loadData = async () => {
+        listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Consultando imágenes históricas en Drive...</div>';
+        try {
+            const res = await routeAction('getReplacedImages');
+            cachedReplaced = (res && res.data) ? res.data : [];
+            renderList(filterInput ? filterInput.value : '');
+        } catch (err) {
+            listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error al cargar repositorio histórico: ${err.message}</div>`;
+        }
+    };
+
+    const renderList = (filterText = '') => {
+        listContainer.innerHTML = '';
+        const q = filterText.toLowerCase().trim();
+        const filtered = cachedReplaced.filter(item => {
+            if (!q) return true;
+            return (item.nombre_archivo || '').toLowerCase().includes(q) ||
+                   (item.referencia_texto || '').toLowerCase().includes(q) ||
+                   (item.campo || '').toLowerCase().includes(q) ||
+                   (item.archivo_drive_id || '').toLowerCase().includes(q) ||
+                   String(item.registro_id || '').toLowerCase().includes(q);
+        });
+
+        if (filtered.length === 0) {
+            listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron imágenes históricas reemplazadas.</div>';
+            return;
+        }
+
+        filtered.forEach(rep => {
+            const card = document.createElement('div');
+            card.style.cssText = "display: flex; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg);";
+
+            const img = document.createElement('img');
+            img.src = getImageUrl(rep.url_anterior, IMG_SIZE_SMALL);
+            img.style.cssText = "width: 70px; height: 70px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0; background: #fff;";
+
+            const info = document.createElement('div');
+            info.style.cssText = "flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem;";
+            info.innerHTML = `
+                <div style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rep.referencia_texto || 'Registro ' + rep.registro_id}</div>
+                <div style="font-size: 0.8rem; color: var(--text-disabled);"><strong>Archivo:</strong> ${rep.nombre_archivo} | <strong>Campo:</strong> ${rep.campo}</div>
+                <div style="font-size: 0.75rem; color: var(--text-disabled);"><strong>ID Drive:</strong> <code>${rep.archivo_drive_id}</code> | <strong>Fecha:</strong> ${rep.fecha_reemplazo}</div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : (rep.estado === 'eliminada' ? '#dc3545' : '#007bff')};">Estado: ${rep.estado}</div>
+            `;
+
+            const btnContainer = document.createElement('div');
+            btnContainer.style.cssText = "display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;";
+
+            if (rep.estado !== 'eliminada') {
+                const recoverBtn = document.createElement('button');
+                recoverBtn.className = "btn btn-primary";
+                recoverBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; white-space: nowrap;";
+                recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
+                recoverBtn.onclick = async () => {
+                    if (!confirm(`¿Restablecer esta imagen histórica como activa para ${rep.referencia_texto || rep.registro_id}? La versión actual pasará al historial.`)) return;
+                    recoverBtn.disabled = true;
+                    recoverBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    try {
+                        const recRes = await routeAction('recoverReplacedImage', { id_reemplazo: rep.id_reemplazo });
+                        if (recRes && recRes.status === 'success') {
+                            mostrarNotificacion("Imagen histórica restablecida con éxito.", "success");
+                            loadData();
+                        }
+                    } catch (e) {
+                        alert("Error al recuperar imagen: " + e.message);
+                        recoverBtn.disabled = false;
+                        recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
+                    }
+                };
+                btnContainer.appendChild(recoverBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = "btn btn-danger";
+                deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
+                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
+                deleteBtn.onclick = async () => {
+                    if (!confirm(`¿Estás seguro de que deseas ELIMINAR permanentemente esta imagen histórica de Google Drive? Esta acción no se puede deshacer.`)) return;
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    try {
+                        const delRes = await routeAction('deleteReplacedImage', { id_reemplazo: rep.id_reemplazo });
+                        if (delRes && delRes.status === 'success') {
+                            mostrarNotificacion("Imagen eliminada de forma segura.", "success");
+                            loadData();
+                        }
+                    } catch (e) {
+                        alert("Eliminación bloqueada: " + e.message);
+                        deleteBtn.disabled = false;
+                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
+                    }
+                };
+                btnContainer.appendChild(deleteBtn);
+            }
+
+            card.appendChild(img);
+            card.appendChild(info);
+            card.appendChild(btnContainer);
+            listContainer.appendChild(card);
+        });
+    };
+
+    if (filterInput) filterInput.oninput = () => renderList(filterInput.value);
+    if (refreshBtn) refreshBtn.onclick = () => loadData();
+
+    loadData();
+}
+
+/**
+ * TAREA 2: Modal de Auditoría de Imágenes en Google Drive (Árbol 'Cortes')
+ */
+export async function openAuditDriveModal() {
+    const modal = document.getElementById('audit-drive-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    const closeBtn = document.getElementById('close-audit-drive-modal');
+    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
+
+    const summaryEl = document.getElementById('audit-drive-summary');
+    const container = document.getElementById('audit-drive-results-container');
+
+    summaryEl.innerHTML = 'Iniciando exploración recursiva del árbol «Cortes»...';
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol en Google Drive...</div>';
+
+    try {
+        const res = await routeAction('auditDriveImagesInCortes');
+        if (res && res.status === 'success') {
+            const files = res.files || [];
+            const inUseCount = files.filter(f => f.classification === 'En uso').length;
+            const histCount = files.filter(f => f.classification === 'Histórica').length;
+            const unusedCount = files.filter(f => f.classification === 'Sin uso detectado').length;
+            const unverifiedCount = files.filter(f => f.classification === 'No verificable').length;
+
+            summaryEl.innerHTML = `
+                <div style="background: var(--card-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; gap: 15px; flex-wrap: wrap;">
+                    <span>📁 <strong>Carpeta Raíz:</strong> ${res.rootFolderName} (<code>${res.rootFolderId}</code>)</span>
+                    <span>📊 <strong>Total Analizados:</strong> ${res.totalAnalyzed}</span>
+                    <span style="color:#28a745;">✅ <strong>En uso:</strong> ${inUseCount}</span>
+                    <span style="color:#007bff;">🕒 <strong>Históricas:</strong> ${histCount}</span>
+                    <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> ${unusedCount}</span>
+                    <span style="color:#dc3545;">❓ <strong>No verificables:</strong> ${unverifiedCount}</span>
+                </div>
+            `;
+
+            container.innerHTML = '';
+            if (files.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron archivos en la carpeta analizada.</div>';
+                return;
+            }
+
+            files.forEach(f => {
+                const row = document.createElement('div');
+                row.style.cssText = "display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.8rem; background: var(--card-bg);";
+
+                let badgeColor = "#28a745";
+                if (f.classification === 'Histórica') badgeColor = "#007bff";
+                else if (f.classification === 'Sin uso detectado') badgeColor = "#e0a800";
+                else if (f.classification === 'No verificable') badgeColor = "#dc3545";
+
+                row.innerHTML = `
+                    <div style="min-width:0; flex:1;">
+                        <div style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${f.fileName}</div>
+                        <div style="font-size:0.75rem; color:var(--text-disabled);">${f.folderPath} | ${(f.size / 1024).toFixed(1)} KB | ${f.lastUpdated}</div>
+                    </div>
+                    <span style="background:${badgeColor}; color:white; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;">
+                        ${f.classification}
+                    </span>
+                `;
+                container.appendChild(row);
+            });
+        } else {
+            container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error: ${res ? res.message : 'Error desconocido'}</div>`;
+        }
+    } catch (err) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Excepción en auditoría: ${err.message}</div>`;
+    }
 }
 
 export const openAboutUs = setupModal('about-us-modal', () => {
@@ -4789,16 +5051,60 @@ function mostrarRelayGrid() {
     cont.appendChild(grid);
 }
 
-function mostrarDetalleTutorialModal(item) {
+export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
+    const isDeveloper = userRole === 'Desarrollador';
+
     const headerDiv = document.createElement("div");
     headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+
+    const titleContainer = document.createElement("div");
+    titleContainer.style.cssText = "display: flex; align-items: center; gap: 8px; flex: 1;";
+
     const title = document.createElement("h2");
     title.textContent = item.Tema;
     title.style.color = "#007bff";
-    headerDiv.appendChild(title);
+    title.style.margin = "0";
+    titleContainer.appendChild(title);
+    headerDiv.appendChild(titleContainer);
+
+    const controlsContainer = document.createElement("div");
+    controlsContainer.style.cssText = "display: flex; align-items: center; gap: 8px;";
+
+    if (isDeveloper) {
+        if (inEditModeTutorial) {
+            // Botón Descartar (↩️)
+            const resetBtn = document.createElement("button");
+            resetBtn.innerHTML = '↩️';
+            resetBtn.className = "share-modal-btn";
+            resetBtn.title = "Descartar cambios";
+            resetBtn.style.fontSize = "1.2em";
+            resetBtn.onclick = () => mostrarDetalleTutorialModal(item, false);
+            controlsContainer.appendChild(resetBtn);
+
+            // Botón Guardar (✅)
+            const saveBtn = document.createElement("button");
+            saveBtn.innerHTML = '✅';
+            saveBtn.className = "share-modal-btn";
+            saveBtn.title = "Guardar cambios";
+            saveBtn.style.fontSize = "1.2em";
+            saveBtn.id = "btn-save-tutorial-edit";
+            controlsContainer.appendChild(saveBtn);
+        } else {
+            // Botón de lápiz de Edición
+            const editBtn = document.createElement("button");
+            editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+            editBtn.className = "share-modal-btn";
+            editBtn.title = "Activar modo edición";
+            editBtn.onclick = () => mostrarDetalleTutorialModal(item, true);
+            controlsContainer.appendChild(editBtn);
+        }
+    }
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar";
     closeBtn.onclick = () => {
@@ -4810,31 +5116,114 @@ function mostrarDetalleTutorialModal(item) {
     };
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
-    headerDiv.appendChild(closeBtn);
+    controlsContainer.appendChild(closeBtn);
+    headerDiv.appendChild(controlsContainer);
     cont.appendChild(headerDiv);
 
-    // Comentario: Se refactoriza para usar appendChild y evitar `innerHTML +=` que es propenso a errores.
-    if (item.Video) {
-        const videoContainer = document.createElement('div');
-        const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || item.Video.replace("watch?v=", "embed/");
-        videoContainer.innerHTML = `<iframe width="100%" height="315" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px;"></iframe>`;
-        cont.appendChild(videoContainer);
+    if (inEditModeTutorial) {
+        // Formulario in-modal de edición de tutorial
+        const form = document.createElement("div");
+        form.style.cssText = "display: flex; flex-direction: column; gap: 12px; margin-top: 10px;";
+
+        const temaLabel = document.createElement("label");
+        temaLabel.style.fontWeight = "bold";
+        temaLabel.textContent = "Tema / Título (máx 30 caracteres):";
+        const temaInput = document.createElement("input");
+        temaInput.type = "text";
+        temaInput.maxLength = 30;
+        temaInput.value = item.Tema || "";
+        temaInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const videoLabel = document.createElement("label");
+        videoLabel.style.fontWeight = "bold";
+        videoLabel.textContent = "Enlace de Vídeo de YouTube:";
+        const videoInput = document.createElement("input");
+        videoInput.type = "url";
+        videoInput.value = item.Video || "";
+        videoInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const descLabel = document.createElement("label");
+        descLabel.style.fontWeight = "bold";
+        descLabel.textContent = "Descripción / Detalles (máx 700 caracteres):";
+        const descInput = document.createElement("textarea");
+        descInput.id = "edit-tutorial-desc-textarea";
+        descInput.maxLength = 700;
+        descInput.rows = 4;
+        descInput.value = item.Detalles || item.Descripcion || "";
+        descInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        form.appendChild(temaLabel);
+        form.appendChild(temaInput);
+        form.appendChild(videoLabel);
+        form.appendChild(videoInput);
+        form.appendChild(descLabel);
+        form.appendChild(createRichTextToolbar("edit-tutorial-desc-textarea"));
+        form.appendChild(descInput);
+        cont.appendChild(form);
+
+        const saveBtn = controlsContainer.querySelector("#btn-save-tutorial-edit");
+        if (saveBtn) {
+            saveBtn.onclick = async () => {
+                const newTema = temaInput.value.trim();
+                const newVideo = videoInput.value.trim();
+                const newDesc = descInput.value.trim();
+                if (!newTema) {
+                    mostrarNotificacion("El tema no puede estar vacío.", "error");
+                    return;
+                }
+                saveBtn.disabled = true;
+                showSavingIndicator("saving", "Guardando cambios...");
+                try {
+                    const res = await routeAction('updateTutorialItem', {
+                        originalTema: item.Tema,
+                        tema: newTema,
+                        videoUrl: newVideo,
+                        descripcion: newDesc,
+                        userRole
+                    });
+                    if (res && res.status === 'success') {
+                        item.Tema = newTema;
+                        item.Video = newVideo;
+                        item.Detalles = newDesc;
+                        item.Descripcion = newDesc;
+                        showSavingIndicator("success", "Tutorial guardado");
+                        mostrarNotificacion("Tutorial actualizado con éxito.", "success");
+                        mostrarDetalleTutorialModal(item, false);
+                    } else {
+                        throw new Error((res && res.message) || "Error al actualizar");
+                    }
+                } catch (err) {
+                    console.error("Error guardando tutorial:", err);
+                    showSavingIndicator("error", "Error al guardar");
+                    mostrarNotificacion(err.message || "Error al guardar el tutorial", "error");
+                    saveBtn.disabled = false;
+                }
+            };
+        }
+    } else {
+        // Visualización normal del tutorial
+        if (item.Video) {
+            const videoContainer = document.createElement('div');
+            const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || item.Video.replace("watch?v=", "embed/");
+            videoContainer.innerHTML = `<iframe width="100%" height="315" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px;"></iframe>`;
+            cont.appendChild(videoContainer);
+        }
+
+        const details = [
+            createDetailParagraph('Cómo Identificarlo', item.comoIdentificarlo),
+            createDetailParagraph('Dónde Encontrarlo', item.dondeEncontrarlo),
+            createDetailParagraph('Detalles', item.Detalles || item.Descripcion)
+        ];
+
+        details.forEach(detail => {
+            if (detail) cont.appendChild(detail);
+        });
     }
-
-    const details = [
-        createDetailParagraph('Cómo Identificarlo', item.comoIdentificarlo),
-        createDetailParagraph('Dónde Encontrarlo', item.dondeEncontrarlo),
-        createDetailParagraph('Detalles', item.Detalles)
-    ];
-
-    details.forEach(detail => {
-        if (detail) cont.appendChild(detail);
-    });
 
     const modalDetalle = document.getElementById("modalDetalle");
     modalDetalle.dataset.modalType = 'tutorial';
     modalDetalle.classList.add("visible");
-    if (window.history && window.history.pushState) {
+    if (!inEditModeTutorial && window.history && window.history.pushState) {
         window.history.pushState({ modalOpen: true }, '');
     }
 }
@@ -6535,17 +6924,76 @@ export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
 }
 
 /* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */
-export function openPysDetailModal(item, navOptions = {}) {
+export function openPysDetailModal(item, navOptions = {}, inEditModePys = false) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
+
+    const modalDetalle = document.getElementById("modalDetalle");
+    if (modalDetalle) {
+        modalDetalle.dataset.modalType = 'pys';
+        modalDetalle.classList.add("visible");
+    }
+
+    // Gestión contextual de pila de navegación anti-bucle
+    if (navOptions && navOptions.fromOriginModal) {
+        modalNavStack.push({
+            type: navOptions.fromOriginModal.type,
+            item: navOptions.fromOriginModal.item,
+            navOptions: navOptions.fromOriginModal.navOptions || {}
+        });
+    } else if (!inEditModePys && (!navOptions || !navOptions.originModal)) {
+        // Apertura independiente: limpiar pila previa
+        modalNavStack.length = 0;
+    }
+
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
+    const isDeveloper = userRole === 'Desarrollador';
 
     const headerDiv = document.createElement("div");
     headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;";
 
+    const titleContainer = document.createElement("div");
+    titleContainer.style.cssText = "display: flex; align-items: center; gap: 8px; flex: 1;";
+
     const title = document.createElement("h2");
     title.innerText = item.Problema;
     title.style.cssText = "margin: 0; font-size: 1.5rem; font-weight: bold; color: var(--text-color, #222);";
-    headerDiv.appendChild(title);
+    titleContainer.appendChild(title);
+    headerDiv.appendChild(titleContainer);
+
+    const controlsContainer = document.createElement("div");
+    controlsContainer.style.cssText = "display: flex; align-items: center; gap: 8px;";
+
+    if (isDeveloper) {
+        if (inEditModePys) {
+            // Botón Descartar (↩️)
+            const resetBtn = document.createElement("button");
+            resetBtn.innerHTML = '↩️';
+            resetBtn.className = "share-modal-btn";
+            resetBtn.title = "Descartar cambios";
+            resetBtn.style.fontSize = "1.2em";
+            resetBtn.onclick = () => openPysDetailModal(item, navOptions, false);
+            controlsContainer.appendChild(resetBtn);
+
+            // Botón Guardar (✅)
+            const saveBtn = document.createElement("button");
+            saveBtn.innerHTML = '✅';
+            saveBtn.className = "share-modal-btn";
+            saveBtn.title = "Guardar cambios";
+            saveBtn.style.fontSize = "1.2em";
+            saveBtn.id = "btn-save-pys-edit";
+            controlsContainer.appendChild(saveBtn);
+        } else {
+            // Botón de lápiz de Edición
+            const editBtn = document.createElement("button");
+            editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+            editBtn.className = "share-modal-btn";
+            editBtn.title = "Activar modo edición";
+            editBtn.onclick = () => openPysDetailModal(item, navOptions, true);
+            controlsContainer.appendChild(editBtn);
+        }
+    }
 
     const closePysModal = () => {
         // Detener reproducción y limpiar reproductor de video de PyS al cerrar
@@ -6560,10 +7008,20 @@ export function openPysDetailModal(item, navOptions = {}) {
             iframe.remove();
         });
 
+        // Comprobar si hay un modal previo en la pila para retorno contextual
+        if (modalNavStack.length > 0) {
+            const prevContext = modalNavStack.pop();
+            if (prevContext && prevContext.type === 'vehicle') {
+                mostrarDetalleModal(prevContext.item, false, prevContext.navOptions || {});
+                return;
+            }
+        }
+
         if (window.history && window.history.state && window.history.state.modalOpen) {
             window.history.back();
         } else {
             document.getElementById("modalDetalle").classList.remove("visible");
+            modalNavStack.length = 0;
         }
     };
 
@@ -6572,9 +7030,130 @@ export function openPysDetailModal(item, navOptions = {}) {
     closeBtn.className = "info-close-btn";
     closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 4px;";
     closeBtn.onclick = closePysModal;
-    headerDiv.appendChild(closeBtn);
+    controlsContainer.appendChild(closeBtn);
 
+    headerDiv.appendChild(controlsContainer);
     cont.appendChild(headerDiv);
+
+    if (inEditModePys) {
+        // Formulario in-modal de edición de Problemas y Soluciones
+        const form = document.createElement("div");
+        form.style.cssText = "display: flex; flex-direction: column; gap: 12px; margin-top: 10px;";
+
+        const titleLabel = document.createElement("label");
+        titleLabel.style.fontWeight = "bold";
+        titleLabel.textContent = "Título del Problema (máx 30 caracteres):";
+        const titleInput = document.createElement("input");
+        titleInput.type = "text";
+        titleInput.maxLength = 30;
+        titleInput.value = item.Problema || "";
+        titleInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const descLabel = document.createElement("label");
+        descLabel.style.fontWeight = "bold";
+        descLabel.textContent = "Descripción (máx 700 caracteres):";
+        const descInput = document.createElement("textarea");
+        descInput.id = "edit-pys-desc-textarea";
+        descInput.maxLength = 700;
+        descInput.rows = 4;
+        descInput.value = item.Descripcion || "";
+        descInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const solLabel = document.createElement("label");
+        solLabel.style.fontWeight = "bold";
+        solLabel.textContent = "Solución (máx 700 caracteres):";
+        const solInput = document.createElement("textarea");
+        solInput.id = "edit-pys-sol-textarea";
+        solInput.maxLength = 700;
+        solInput.rows = 4;
+        solInput.value = item.Solucion || "";
+        solInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const prevLabel = document.createElement("label");
+        prevLabel.style.fontWeight = "bold";
+        prevLabel.textContent = "Cómo evitarlo / Prevención (máx 700 caracteres):";
+        const prevInput = document.createElement("textarea");
+        prevInput.id = "edit-pys-prev-textarea";
+        prevInput.maxLength = 700;
+        prevInput.rows = 3;
+        prevInput.value = item.Prevenir || "";
+        prevInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const videoLabel = document.createElement("label");
+        videoLabel.style.fontWeight = "bold";
+        videoLabel.textContent = "Enlace de Vídeo de YouTube:";
+        const videoInput = document.createElement("input");
+        videoInput.type = "url";
+        videoInput.value = item.Video || "";
+        videoInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        form.appendChild(titleLabel);
+        form.appendChild(titleInput);
+
+        form.appendChild(descLabel);
+        form.appendChild(createRichTextToolbar("edit-pys-desc-textarea"));
+        form.appendChild(descInput);
+
+        form.appendChild(solLabel);
+        form.appendChild(createRichTextToolbar("edit-pys-sol-textarea"));
+        form.appendChild(solInput);
+
+        form.appendChild(prevLabel);
+        form.appendChild(createRichTextToolbar("edit-pys-prev-textarea"));
+        form.appendChild(prevInput);
+
+        form.appendChild(videoLabel);
+        form.appendChild(videoInput);
+        cont.appendChild(form);
+
+        const saveBtn = controlsContainer.querySelector("#btn-save-pys-edit");
+        if (saveBtn) {
+            saveBtn.onclick = async () => {
+                const newTitle = titleInput.value.trim();
+                const newDesc = descInput.value.trim();
+                const newSol = solInput.value.trim();
+                const newPrev = prevInput.value.trim();
+                const newVideo = videoInput.value.trim();
+
+                if (!newTitle) {
+                    mostrarNotificacion("El título no puede estar vacío.", "error");
+                    return;
+                }
+                saveBtn.disabled = true;
+                showSavingIndicator("saving", "Guardando cambios...");
+                try {
+                    const res = await routeAction('updatePysItem', {
+                        problemId: item.id_problem || item.id,
+                        titulo: newTitle,
+                        descripcion: newDesc,
+                        solucion: newSol,
+                        prevenir: newPrev,
+                        videoUrl: newVideo,
+                        userRole
+                    });
+                    if (res && res.status === 'success') {
+                        item.Problema = newTitle;
+                        item.Descripcion = newDesc;
+                        item.Solucion = newSol;
+                        item.Prevenir = newPrev;
+                        item.Video = newVideo;
+                        item.Se_soluciono = newSol ? "x" : "";
+                        showSavingIndicator("success", "Problema guardado");
+                        mostrarNotificacion("Problema actualizado con éxito.", "success");
+                        openPysDetailModal(item, navOptions, false);
+                    } else {
+                        throw new Error((res && res.message) || "Error al actualizar");
+                    }
+                } catch (err) {
+                    console.error("Error guardando problema:", err);
+                    showSavingIndicator("error", "Error al guardar");
+                    mostrarNotificacion(err.message || "Error al guardar el problema", "error");
+                    saveBtn.disabled = false;
+                }
+            };
+        }
+        return;
+    }
 
     // 2. Imagen del problema (inmediatamente después del título)
     if (item.Imagen) {
@@ -6645,13 +7224,13 @@ export function openPysDetailModal(item, navOptions = {}) {
     const { catalogData } = getState();
     const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
     const modelosAsociadosIds = Array.isArray(item.modelosAsociados) ? item.modelosAsociados : [];
-    const sessionData = localStorage.getItem('gpsepedia_session');
-    const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
-    const canEditPys = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+    // REVISIÓN IV: Desvinculación y gestión de modelos en problemas restringida exclusivamente al desarrollador
+    const canEditPys = userRole === 'Desarrollador';
 
     // Tarea 9.3 (Requisito 8.2): Si el modal del problema se abrió desde un vehículo, ocultar en ese contexto el carrusel de modelos para evitar ciclos
+    // REVISIÓN IV ANEXO: El carrusel de vehículos relacionados y la tarjeta de agregar (+) deben estar disponibles para todos los usuarios
     const isFromVehicle = navOptions && navOptions.originModal === 'vehicle';
-    if (!isFromVehicle && (modelosAsociadosIds.length > 0 || canEditPys)) {
+    if (!isFromVehicle) {
         const carouselSection = document.createElement("div");
         carouselSection.style.cssText = "margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;";
         carouselSection.innerHTML = `<h4 style="margin: 0 0 10px 0; font-size: 1rem;"><i class="fa-solid fa-car"></i> Vehículos Relacionados:</h4>`;
@@ -6667,7 +7246,14 @@ export function openPysDetailModal(item, navOptions = {}) {
             cardWrapper.style.cssText = "position: relative; display: inline-block;";
 
             const card = crearCardVehiculo(v, true);
-            card.onclick = () => mostrarDetalleModal(v, false, { originModal: 'pys' });
+            card.onclick = () => mostrarDetalleModal(v, false, {
+                originModal: 'pys',
+                fromOriginModal: {
+                    type: 'pys',
+                    item: item,
+                    navOptions: navOptions || {}
+                }
+            });
             cardWrapper.appendChild(card);
 
             if (canEditPys) {
@@ -6701,18 +7287,18 @@ export function openPysDetailModal(item, navOptions = {}) {
             track.appendChild(cardWrapper);
         });
 
-        if (canEditPys) {
-            const addCard = document.createElement("div");
-            addCard.style.cssText = "flex: 0 0 120px; border: 2px dashed var(--accent-color); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--accent-color); font-size: 0.8rem; background: rgba(0, 123, 255, 0.05);";
-            addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.5rem; margin-bottom: 4px;"></i> <span>Agregar Modelo</span>`;
-            addCard.onclick = () => {
-                openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
-                    item.modelosAsociados = updatedList;
-                    openPysDetailModal(item, navOptions);
-                }, item.modelosAsociados || []);
-            };
-            track.appendChild(addCard);
-        }
+        // Tarjeta «+ Agregar» al final del carrusel disponible para todos los usuarios (Estandarización visual sin bordes discontinuos)
+        const addCard = document.createElement("div");
+        addCard.className = "card card-create-vehicle-assoc";
+        addCard.style.cssText = "flex: 0 0 120px; min-height: 100px; padding: 8px; margin: 0 5px;";
+        addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.5rem; margin-bottom: 6px;"></i> <span style="font-size: 0.8rem; font-weight: 600; text-align: center;">Agregar Modelo</span>`;
+        addCard.onclick = () => {
+            openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
+                item.modelosAsociados = updatedList;
+                openPysDetailModal(item, navOptions);
+            }, item.modelosAsociados || []);
+        };
+        track.appendChild(addCard);
 
         carouselSection.appendChild(track);
         cont.appendChild(carouselSection);
@@ -6760,9 +7346,10 @@ export function openPysDetailModal(item, navOptions = {}) {
         cont.appendChild(addPrevBtn);
     }
 
-    const modalDetalle = document.getElementById("modalDetalle");
-    modalDetalle.dataset.modalType = 'pys';
-    modalDetalle.classList.add("visible");
+    if (modalDetalle) {
+        modalDetalle.dataset.modalType = 'pys';
+        modalDetalle.classList.add("visible");
+    }
     if (window.history && window.history.pushState) {
         window.history.pushState({ modalOpen: true }, '');
     }
@@ -7077,8 +7664,8 @@ export function exportVehiclePrintSheet(item) {
             <title>Ficha Técnica GPSpedia - ${title}</title>
             <style>
                 @page {
-                    size: letter portrait;
-                    margin: 10mm;
+                    size: 216mm 279mm portrait;
+                    margin: 8mm;
                 }
                 * { box-sizing: border-box; }
                 body {
@@ -7086,12 +7673,12 @@ export function exportVehiclePrintSheet(item) {
                     margin: 0;
                     padding: 0;
                     color: #1a1a1a;
-                    font-size: 12.5px;
-                    line-height: 1.55;
+                    font-size: 11.5px;
+                    line-height: 1.35;
                     background: #fff;
                 }
                 .sheet-page-wrapper {
-                    min-height: 920px;
+                    min-height: 940px;
                     display: flex;
                     flex-direction: column;
                     justify-content: space-between;
@@ -7105,12 +7692,12 @@ export function exportVehiclePrintSheet(item) {
                 .no-print-bar {
                     background: #007bff;
                     color: white;
-                    padding: 12px 18px;
+                    padding: 8px 14px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    border-radius: 6px;
-                    margin-bottom: 20px;
+                    border-radius: 4px;
+                    margin-bottom: 12px;
                 }
                 /* Encabezado: Logo a la derecha de GPSpedia, y exclusivamente "Ficha técnica" (Requisitos 3.1 y 3.2) */
                 .header-container {
@@ -7118,33 +7705,33 @@ export function exportVehiclePrintSheet(item) {
                     justify-content: space-between;
                     align-items: center;
                     border-bottom: 2px solid #007bff;
-                    padding-bottom: 12px;
-                    margin-bottom: 20px;
+                    padding-bottom: 6px;
+                    margin-bottom: 10px;
                 }
                 .header-brand-wrap {
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 8px;
                 }
                 .header-logo-title {
-                    font-size: 25px;
+                    font-size: 22px;
                     font-weight: bold;
                     color: #007bff;
                     letter-spacing: 0.5px;
                 }
                 .header-project-logo {
-                    width: 34px;
-                    height: 34px;
+                    width: 28px;
+                    height: 28px;
                     object-fit: contain;
                 }
                 .header-doc-type {
-                    font-size: 15px;
+                    font-size: 13.5px;
                     font-weight: 600;
                     color: #555;
                     text-transform: capitalize;
                 }
                 .vehicle-title {
-                    font-size: 19px;
+                    font-size: 17px;
                     font-weight: bold;
                     margin: 0;
                     color: #222;
@@ -7153,32 +7740,33 @@ export function exportVehiclePrintSheet(item) {
                 /* Grid superior: Información del vehículo y QR si existe */
                 .top-grid {
                     display: grid;
-                    grid-template-columns: ${item.imagenVehiculo ? '180px 1fr' : '1fr'}${qrHtml ? ' auto' : ''};
-                    gap: 14px;
+                    grid-template-columns: ${item.imagenVehiculo ? '150px 1fr' : '1fr'}${qrHtml ? ' auto' : ''};
+                    gap: 10px;
                     align-items: stretch;
-                    margin-bottom: 14px;
+                    margin-bottom: 10px;
                 }
                 .vehicle-main-img img {
                     width: 100%;
-                    max-height: 120px;
+                    max-height: 105px;
                     object-fit: cover;
-                    border-radius: 6px;
+                    border-radius: 4px;
                     border: 1px solid #ddd;
                 }
                 .meta-table {
                     width: 100%;
                     border-collapse: collapse;
-                    font-size: 12px;
-                    line-height: 1.25;
+                    font-size: 11px;
+                    line-height: 1.15;
                 }
                 .meta-table td {
-                    padding: 4px 8px;
+                    padding: 2px 6px;
                     border: 1px solid #e0e0e0;
+                    vertical-align: middle;
                 }
                 .meta-table td.label {
                     font-weight: bold;
                     background: #f7f9fa;
-                    width: 22%;
+                    width: 18%;
                     color: #444;
                 }
                 .qr-video-box {
@@ -7186,111 +7774,114 @@ export function exportVehiclePrintSheet(item) {
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    padding: 10px;
+                    padding: 6px;
                     border: 1px solid #ddd;
-                    border-radius: 6px;
+                    border-radius: 4px;
                     background: #fafafa;
                 }
                 .qr-code-img {
-                    width: 95px;
-                    height: 95px;
+                    width: 80px;
+                    height: 80px;
                     object-fit: contain;
                 }
                 .qr-label {
-                    font-size: 10px;
+                    font-size: 9px;
                     font-weight: bold;
                     color: #555;
-                    margin-top: 6px;
+                    margin-top: 4px;
                     text-align: center;
                 }
                 /* Secciones verticales fluidas (Requisito 1.1) */
                 .section-header {
-                    font-size: 13.5px;
+                    font-size: 12.5px;
                     font-weight: bold;
                     color: #007bff;
                     text-transform: uppercase;
-                    border-bottom: 2px solid #007bff;
-                    margin: 14px 0 10px 0;
-                    padding-bottom: 4px;
+                    border-bottom: 1.5px solid #007bff;
+                    margin: 8px 0 6px 0;
+                    padding-bottom: 2px;
                 }
                 .tech-grid {
                     display: flex;
                     flex-direction: column;
-                    gap: 12px;
+                    gap: 8px;
                 }
                 .tech-item-card {
                     border: 1px solid #dcdcdc;
-                    border-radius: 6px;
+                    border-radius: 4px;
                     background: #fafafa;
-                    padding: 10px 14px;
+                    padding: 6px 10px;
                     page-break-inside: avoid;
                 }
                 .tech-item-card.card-expanded {
-                    padding: 14px 18px;
+                    padding: 8px 12px;
                 }
                 .tech-item-card.card-compact {
-                    padding: 6px 10px;
+                    padding: 4px 8px;
                 }
                 .tech-item-header {
                     font-weight: bold;
                     color: #0056b3;
-                    font-size: 13px;
-                    margin-bottom: 6px;
-                    border-bottom: 1px dashed #e0e0e0;
-                    padding-bottom: 3px;
-                }
-                .card-compact .tech-item-header {
                     font-size: 12px;
                     margin-bottom: 4px;
+                    border-bottom: 1px dashed #e0e0e0;
                     padding-bottom: 2px;
+                }
+                .card-compact .tech-item-header {
+                    font-size: 11.5px;
+                    margin-bottom: 3px;
+                    padding-bottom: 1px;
                 }
                 .tech-item-body {
                     display: flex;
                     justify-content: space-between;
-                    align-items: flex-start;
-                    gap: 16px;
+                    align-items: center;
+                    gap: 12px;
                 }
+                /* REVISIÓN IV: Ajustar el contenedor de texto para que no supere a la imagen, máximo un 25% del ancho de la hoja */
                 .tech-item-info {
-                    flex: 1;
+                    flex: 0 0 25%;
+                    max-width: 25%;
+                    width: 25%;
+                    overflow-wrap: break-word;
+                    word-break: break-word;
                 }
                 .tech-item-info p {
-                    margin: 3px 0;
-                    font-size: 12px;
-                    line-height: 1.3;
-                }
-                .card-compact .tech-item-info p {
                     margin: 2px 0;
                     font-size: 11px;
-                    line-height: 1.2;
+                    line-height: 1.25;
+                }
+                .card-compact .tech-item-info p {
+                    margin: 1px 0;
+                    font-size: 10.5px;
+                    line-height: 1.15;
                 }
                 .tech-item-img-wrapper {
-                    max-width: 290px;
-                    max-height: 165px;
-                    flex-shrink: 0;
+                    flex: 1 1 75%;
+                    max-width: 75%;
+                    max-height: 170px;
                     display: flex;
                     align-items: center;
-                    justify-content: center;
+                    justify-content: flex-end;
                 }
                 .card-expanded .tech-item-img-wrapper {
-                    max-width: 360px;
-                    max-height: 230px;
+                    max-height: 220px;
                 }
                 .card-compact .tech-item-img-wrapper {
-                    max-width: 220px;
-                    max-height: 125px;
+                    max-height: 130px;
                 }
                 .tech-detail-img {
                     max-width: 100%;
-                    max-height: 155px;
+                    max-height: 160px;
                     object-fit: contain;
                     border-radius: 4px;
                     border: 1px solid #ccc;
                 }
                 .card-expanded .tech-detail-img {
-                    max-height: 220px;
+                    max-height: 210px;
                 }
                 .card-compact .tech-detail-img {
-                    max-height: 120px;
+                    max-height: 125px;
                 }
                 /* Aviso de testigo al pie del corte (Requisito 4.1) */
                 .testigo-aviso {

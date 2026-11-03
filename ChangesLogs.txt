@@ -1747,3 +1747,75 @@ Componente intervenido: VinDifferentialEngine.js
   * Actualizado `buildSampleMatrix`: evaluación de versiones a nivel de toda la familia de la marca y modelo canónico transversalmente en la base de datos, permitiendo comparar versiones registradas en filas independientes.
   * Actualizado `calculateSignatures`: los competidores ahora se filtran por marca, modelo canónico normalizado y superposición de años de aplicación, garantizando que sólo compitan versiones que coincidan temporalmente.
 ================================================================================
+
+================================================================================
+CHANGELOG: REVISIÓN IV (FICHA TÉCNICA, PERMISOS DESVINCULACIÓN Y EDICIÓN IN-MODAL)
+Fecha: 2026-11-03
+Componentes intervenidos: ui.js, index.html, Services/feedback.js, api-config.js
+
+- ui.js:
+  * `exportVehiclePrintSheet`:
+    - Ajustado `@page` a `size: 216mm 279mm portrait; margin: 8mm;` para correspondencia exacta con papel Carta (216 × 279 mm) y márgenes estrechos.
+    - Compactada la tabla meta (`.meta-table td`): padding reducido a `2px 6px;` y `line-height: 1.15;`, eliminando la altura vacía interna excesiva.
+    - Rediseñada la proporción en `.tech-item-body`: contenedor de información textual (`.tech-item-info`) restringido a `flex: 0 0 25%; max-width: 25%; width: 25%; overflow-wrap: break-word; word-break: break-word;` para que no supere a la imagen y ocupe máximo el 25% del ancho de la hoja, permitiendo que la imagen técnica (`.tech-item-img-wrapper`) domine con el 75% del espacio disponible.
+  * Desvinculación de problemas y vehículos:
+    - Restringido el botón de eliminar relación en la tarjeta del problema (`vehicleToUnlink`) y en el carrusel de modelos asociados de PyS exclusivamente al rol `Desarrollador` (`userRole === 'Desarrollador'`).
+  * Edición in-modal en Tutoriales y Problemas & Soluciones:
+    - `mostrarDetalleTutorialModal`: Incorporado icono de lápiz para desarrolladores que activa el formulario in-modal (Tema máx 30, Video URL, Detalles/Descripción máx 700 con barra enriquecida) con botones guardar (✅) y descartar (↩️), actualizando la vista inmediatamente sin recargar la página.
+    - `openPysDetailModal`: Incorporado icono de lápiz para desarrolladores que activa el modo edición in-modal (Título máx 30, Descripción máx 700 con toolbar, Solución máx 700 con toolbar, Prevención máx 700 con toolbar, Video URL) con botones guardar (✅) y descartar (↩️).
+  * Carrusel de vehículos relacionados en PyS:
+    - Renderizado para todos los usuarios siempre que el modal no haya sido abierto desde un vehículo (anti-ciclos).
+    - Tarjeta «+ Agregar» habilitada para todos los usuarios para vincular modelos mediante el buscador predictivo y modal de confirmación.
+
+- Services/feedback.js:
+  * `handleRemoveVehicleFromProblem`: Restringidos los roles permitidos en backend estrictamente a `['Desarrollador']`.
+  * `handleUpdatePysItem`: Implementado handler de actualización in-modal de incidencias en la hoja `pys` validando permisos de `Desarrollador` y límites de 30/700 caracteres.
+  * `handleUpdateTutorialItem`: Implementado handler de actualización in-modal de tutoriales en la hoja `Tutoriales` validando permisos de `Desarrollador` y límites de caracteres.
+
+- api-config.js:
+  * Mapeadas las nuevas acciones `updatePysItem` y `updateTutorialItem` hacia el microservicio FEEDBACK.
+
+- index.html:
+  * Retirada la entrada de desvinculación de asociaciones de vehículos del modal de historial de cambios (v2.2.5), preservando intactas las demás novedades.
+================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: REVISIÓN V - ESTANDARIZACIÓN VISUAL DE TARJETAS DE CREACIÓN Y VINCULACIÓN
+Fecha: 2026-11-03
+
+- style.css:
+  * `.card-create-tutorial`, `.card-create-pys`: Eliminado `border: 2px dashed #007bff;` y `background: transparent;`. Asignado `background: var(--card-bg, #ffffff); border: none;` con marco de elevación `box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);` y en hover `0 8px 20px rgba(0, 0, 0, 0.15);`.
+  * Incorporadas las clases unificadas `.card-create-vehicle-assoc` y `.card-create-pys-assoc` para carruseles de asociación dentro de modales con el mismo estándar visual sin líneas discontinuas.
+  * Añadida regla para `.dark-mode` con `border: 1px solid rgba(255, 255, 255, 0.05);` y sombra profunda `rgba(0, 0, 0, 0.5)`.
+
+- ui.js:
+  * `openPysDetailModal`: Sustituidos estilos en línea con borde discontinuo (`2px dashed var(--accent-color)`) por la clase `.card.card-create-vehicle-assoc` en la tarjeta `addCard` del carrusel de modelos asociados.
+  * `renderPosiblesProblemasAccordion`: Estandarizada la tarjeta de adición/vinculación de problemas (`.card.card-create-pys-assoc`) sin bordes discontinuos, tanto para problema único como para el carrusel de problemas relacionados.
+================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: NAVEGACIÓN ANTI-BUCLE Y GESTIÓN DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-03
+
+- ui.js:
+  * Integrada `modalNavStack` para registrar el contexto previo entre modales (`mostrarDetalleModal` y `openPysDetailModal`).
+  * En `mostrarDetalleModal`, si se proviene de PyS (`originModal: 'pys'`), se omite completamente el renderizado del acordeón `renderPosiblesProblemasAccordion`. Al cerrar, se retorna automáticamente al problema de origen si existe en la pila.
+  * En `openPysDetailModal`, si se proviene de un vehículo (`originModal: 'vehicle'`), se omite completamente el carrusel de vehículos relacionados y el botón "+ Agregar Modelo". Al cerrar, se retorna automáticamente al vehículo de origen.
+  * En aperturas directas o independientes, se reinicia la pila y se muestran todas las relaciones normalmente.
+  * Desarrolladas las funciones administrativas `openReplacedImagesModal` y `openAuditDriveModal` con renderizado de listas, filtros, vista previa, restablecimiento y auditoría.
+
+- main.js:
+  * En el listener de `popstate` para el modal de detalles, se comprueba `window.modalNavStack` para retornar al modal de origen antes de cerrar completamente el contenedor si existe contexto previo.
+
+- Services/admin.js:
+  * Incorporada la constante `SHEET_NAMES.IMAGENES_REEMPLAZADAS = "Imagenes_Reemplazadas"`.
+  * En `handleUploadAdminImage`, se agrega invocación a `recordReplacedImage` para archivar la imagen previa automáticamente en la hoja dedicada antes de escribir la nueva URL.
+  * Implementados los handlers `handleGetReplacedImages`, `handleRecoverReplacedImage`, `handleDeleteReplacedImage` y `handleAuditDriveImagesInCortes`.
+  * La auditoría física de Drive queda acotada de forma recursiva y exclusiva al árbol de `DRIVE_FOLDER_ID` ('Cortes').
+
+- api-config.js:
+  * Mapeadas las nuevas acciones administrativas `getReplacedImages`, `recoverReplacedImage`, `deleteReplacedImage` y `auditDriveImagesInCortes` hacia el microservicio `ADMIN`.
+
+- index.html:
+  * Incorporados los botones y modales `#replaced-images-modal` y `#audit-drive-modal` dentro de `#dev-tools-modal`.
+================================================================================
