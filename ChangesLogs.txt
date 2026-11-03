@@ -1615,3 +1615,23 @@ Componentes intervenidos: youtubeUpload.js, Services/feedback.js, api-config.js,
   * Actualizada la lista (`renderInboxList`) y detalle (`renderInboxDetail`) del Inbox para soportar ítems de tipo `video_approval`.
   * Despliegue de enlace directo a YouTube, metadatos, estado de aprobación y botones de acción «Aprobar Vídeo» y «Rechazar Vídeo» para roles con permisos.
 ================================================================================
+
+================================================================================
+CHANGELOG: INTEGRACIÓN DE SUBIDA DIRECTA DE VÍDEOS EN VEHÍCULOS, PYS Y TUTORIALES (TAREAS 8.3 Y 8.4)
+Fecha: 2026-11-02
+Componentes intervenidos: add_cortes.html, ui.js, Services/feedback.js
+
+- add_cortes.html:
+  * Agregado el botón `#btn-addcorte-upload-video` en la Etapa 3 para subir vídeo directamente a YouTube con propuesta contextual de título y descripción vehicular.
+  * Preservado el campo manual `#videoGuiaUrl` para compatibilidad con URLs directas.
+  * Añadido indicador `#video-upload-status-badge` de vídeo subido pendiente de aprobación.
+
+- ui.js:
+  * Implementada la función `buildVehicleVideoMetadata(item)` para generar automáticamente títulos (`[Marca] - [Modelo] [Versión] [Rango Años]`) y descripciones contextuales con frase estándar ("En este video veremos cómo se trabaja...").
+  * Actualizado `openAddVideoModal(item)` con dos opciones: «Enlace de YouTube» y «Subir Vídeo», redirigiendo al modal unificado `openYouTubeUploadModal`.
+  * Actualizado `openAddProblemModal`: añadido botón `#btn-pys-upload-yt` con propuesta automática de título y detalle del problema para subida directa a YouTube con aprobación en Inbox.
+  * Actualizado `openAddTutorialModal`: añadido botón `#btn-tut-upload-yt` con propuesta automática de tema y descripción del tutorial para subida directa a YouTube con aprobación en Inbox.
+
+- Services/feedback.js:
+  * Endurecida la verificación de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) en `handleApproveVideo` y `handleRejectVideo` con `!userRole || !allowedRoles.includes(userRole)`.
+================================================================================

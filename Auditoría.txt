@@ -1067,3 +1067,50 @@ Archivos verificados: youtubeUpload.js, Services/feedback.js, api-config.js, ui.
    - Botones «Aprobar Vídeo» y «Rechazar Vídeo» desplegados para roles autorizados.
    - Enlace directo de YouTube incrustado.
 ================================================================================
+
+================================================================================
+AUDITORÍA INICIAL: INTEGRACIÓN DE SUBIDA DIRECTA EN VEHÍCULOS, PYS Y TUTORIALES (TAREAS 8.3 Y 8.4)
+Fecha: 2026-11-02
+Archivos auditados: add_cortes.html, ui.js, Services/feedback.js
+
+1. add_cortes.html (Etapa 3 - Información Adicional):
+   - Actualmente el acordeón `#video-accordion` tiene únicamente un campo `<input type="url" id="videoGuiaUrl" placeholder="https://www.youtube.com/watch?v=...">`.
+   - Se debe mantener el campo de URL directa pero agregar la opción «Subir vídeo» que invoque `openYouTubeUploadModal` desde `youtubeUpload.js`.
+   - Construcción automática contextual de título y descripción vehicular tomando los datos del modelo que se está registrando (`state.nuevoModelo` / `state.marca`, `state.modelo`, etc.).
+   - Al completar la subida exitosamente, se asigna la URL en `videoGuiaUrl`, se muestra aviso de estado pendiente y se prosigue con el flujo sin duplicar.
+
+2. ui.js (Modal '+' del vehículo - openAddVideoModal):
+   - Función actual `openAddVideoModal(item)` solo permite ingresar URL directa.
+   - Se ampliará con opciones: «Agregar enlace de YouTube» y «Subir vídeo a YouTube».
+   - Generación automática de título y descripción con las reglas solicitadas:
+     * Título: `[Marca] - [Modelo] [Versión] [Rango Años]` (si hay versión única o ninguna; si hay varias no específicas, omitir versión).
+     * Descripción: "En este video veremos cómo se trabaja..." con versión única o tipo de encendido y listado de versiones aplicables.
+
+3. ui.js (openAddProblemModal y openAddTutorialModal):
+   - En `openAddProblemModal`: campo de vídeo actualmente es solo input URL. Se añade botón para «Subir vídeo» proponiendo como título el título del problema y descripción basada en el detalle/solución.
+   - En `openAddTutorialModal`: campo de vídeo actualmente es solo input URL. Se añade botón para «Subir vídeo» proponiendo como título el tema del tutorial y descripción basada en el detalle.
+   - Ambos conectados a `openYouTubeUploadModal` con `contentType: 'pys'` y `'tutorial'`.
+
+4. Endurecimiento de RBAC en Services/feedback.js:
+   - Se aplicó `!userRole || !allowedRoles.includes(userRole)` en `handleApproveVideo` y `handleRejectVideo` para rechazar explícitamente cualquier petición sin rol especificado.
+================================================================================
+
+================================================================================
+AUDITORÍA FINAL: TAREAS 8.3 Y 8.4 COMPLETADAS Y VERIFICADAS
+Fecha: 2026-11-02
+Archivos verificados: add_cortes.html, ui.js, Services/feedback.js
+
+1. add_cortes.html:
+   - Verificado el botón `#btn-addcorte-upload-video` en el DOM de la Etapa 3.
+   - Preservada la opción manual `#videoGuiaUrl` sin alterar los flujos de registro.
+   - Sincronización automática de metadatos vehiculares para el modal de subida.
+
+2. ui.js:
+   - `buildVehicleVideoMetadata`: comprobada la exclusión de versión cuando hay múltiples o ninguna, y construcción precisa de descripciones con frases estándar y tipos de encendido.
+   - `openAddVideoModal`: verificada la coexistencia de subida directa a YouTube y guardado manual de enlaces.
+   - `openAddProblemModal`: verificado el botón de subida y carga de propuesta de título/detalle.
+   - `openAddTutorialModal`: verificado el botón de subida y carga de propuesta de tema/descripción.
+
+3. Services/feedback.js:
+   - Hardening de permisos completado y certificado.
+================================================================================

@@ -2046,7 +2046,7 @@ BLOQUE 8: SISTEMA DE SUBIDA DIRECTA DE VÍDEOS A YOUTUBE DESDE GPSPEDIA CON APRO
 
 ---
 
-### TAREA 8.3: Integración del flujo de subida en vehículos (add_cortes.html y modal de detalle) [ ]
+### TAREA 8.3: Integración del flujo de subida en vehículos (add_cortes.html y modal de detalle) [X]
 - **Requisitos obligatorios:**
   1. En la última etapa de `add_cortes.html`, incorporar opciones diferenciadas: «Agregar enlace de YouTube» y «Subir vídeo».
   2. En el menú (+) del modal de detalles de vehículos (`openAddVideoModal`), permitir ingresar enlace existente o presionar «Subir vídeo».
@@ -2061,7 +2061,7 @@ BLOQUE 8: SISTEMA DE SUBIDA DIRECTA DE VÍDEOS A YOUTUBE DESDE GPSPEDIA CON APRO
 
 ---
 
-### TAREA 8.4: Integración del flujo de subida en Problemas y Soluciones y Tutoriales [ ]
+### TAREA 8.4: Integración del flujo de subida en Problemas y Soluciones y Tutoriales [X]
 - **Requisitos obligatorios:**
   1. En `openAddProblemModal` (Problemas y Soluciones), permitir subir vídeo directamente a YouTube con propuesta de título basada en el nombre del problema y propuesta de descripción basada en el detalle/solución.
   2. En `openAddTutorialModal` (Tutoriales), permitir subir vídeo directamente con propuesta de título basada en el tema del tutorial y descripción basada en el detalle.

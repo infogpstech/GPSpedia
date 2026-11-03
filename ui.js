@@ -8,6 +8,7 @@ import { vinDifferentialEngine, vinSignatureStore, getClassificationKey } from '
 import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
+import { openYouTubeUploadModal } from './youtubeUpload.js';
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
@@ -5842,7 +5843,46 @@ export function openAddFeedModal(item) {
     };
 }
 
-/* TAREA 5 (3.5): AGREGAR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */
+/* TAREA 5 (3.5) & TAREA 8.3: AGREGAR ENLACE O SUBIR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */
+export function buildVehicleVideoMetadata(item) {
+    const marca = item.marca || '';
+    const modelo = item.modelo || '';
+    const anoDesde = item.anoDesde || '';
+    const anoHasta = item.anoHasta || '';
+    const rangoAnos = anoHasta && String(anoHasta) !== String(anoDesde) ? `${anoDesde} - ${anoHasta}` : `${anoDesde}`;
+
+    const rawVersions = item.versionesAplicables ? String(item.versionesAplicables).split(/[\/,\\]/).map(s => s.trim()).filter(Boolean) : [];
+    const hasSingleVersion = rawVersions.length === 1;
+    const singleVersion = hasSingleVersion ? rawVersions[0] : '';
+
+    // Requisito 5.1: Título: Marca - Modelo [Versión si es única] [Rango Años]
+    let titleParts = [marca, '-', modelo];
+    if (hasSingleVersion && singleVersion) {
+        titleParts.push(singleVersion);
+    }
+    if (rangoAnos.trim()) {
+        titleParts.push(rangoAnos.trim());
+    }
+    const generatedTitle = titleParts.filter(Boolean).join(' ').replace(/\s+-\s+/, ' - ');
+
+    // Requisito 5.2: Descripción: "En este video veremos cómo se trabaja..."
+    let generatedDesc = '';
+    if (hasSingleVersion && singleVersion) {
+        generatedDesc = `En este video veremos cómo se trabaja ${modelo} ${singleVersion} ${rangoAnos}`.trim();
+    } else {
+        const encendido = item.tipoEncendido ? `${item.tipoEncendido}` : '';
+        generatedDesc = `En este video veremos cómo se trabaja ${modelo} ${encendido} ${rangoAnos}`.replace(/\s+/g, ' ').trim();
+        if (rawVersions.length > 1) {
+            generatedDesc += `\nVersiones aplicables: ${rawVersions.join(' / ')}`;
+        }
+    }
+
+    return {
+        title: generatedTitle,
+        description: generatedDesc
+    };
+}
+
 export function openAddVideoModal(item) {
     const existing = document.getElementById("add-video-modal");
     if (existing) existing.remove();
@@ -5858,24 +5898,58 @@ export function openAddVideoModal(item) {
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
-        <h2><i class="fa-brands fa-youtube"></i> Agregar Enlace de Vídeo</h2>
+        <h2><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Vídeo Guía de Desarme</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
 
-        <form id="add-video-form" style="display:flex; flex-direction:column; gap:12px;">
-            <div class="form-group">
-                <label>Enlace de YouTube</label>
-                <input type="url" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; gap:10px;">
+                <button type="button" id="btn-toggle-manual-link" class="btn btn-secondary" style="flex:1; font-size:0.88rem; padding:8px 10px;">
+                    <i class="fa-solid fa-link"></i> Enlace de YouTube
+                </button>
+                <button type="button" id="btn-open-yt-upload" class="btn btn-primary" style="flex:1; font-size:0.88rem; padding:8px 10px; background-color:#ff0000; border-color:#ff0000;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo
+                </button>
             </div>
-            <div class="modal-btn-compact-container">
-                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-brands fa-youtube"></i> Agregar Vídeo</button>
-            </div>
-        </form>
+
+            <form id="add-video-form" style="display:flex; flex-direction:column; gap:12px; margin-top:4px;">
+                <div class="form-group">
+                    <label>Enlace de YouTube</label>
+                    <input type="url" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
+                </div>
+                <div class="modal-btn-compact-container">
+                    <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-brands fa-youtube"></i> Guardar Enlace</button>
+                </div>
+            </form>
+        </div>
     `;
 
     modal.appendChild(content);
     document.body.appendChild(modal);
 
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    // Opción Subir Vídeo directamente a YouTube
+    content.querySelector("#btn-open-yt-upload").onclick = () => {
+        const meta = buildVehicleVideoMetadata(item);
+        modal.remove();
+        openYouTubeUploadModal({
+            initialTitle: meta.title,
+            initialDescription: meta.description,
+            contentType: 'corte',
+            referenceId: item.id,
+            metadata: {
+                marca: item.marca,
+                modelo: item.modelo,
+                versionesAplicables: item.versionesAplicables,
+                anoDesde: item.anoDesde,
+                anoHasta: item.anoHasta,
+                tipoEncendido: item.tipoEncendido
+            },
+            onSuccess: () => {
+                alert("La solicitud de vídeo ha sido enviada para aprobación interna. Aparecerá en este modelo una vez aprobada.");
+            }
+        });
+    };
 
     const form = content.querySelector("#add-video-form");
     form.onsubmit = async (e) => {
@@ -5904,7 +5978,7 @@ export function openAddVideoModal(item) {
             console.error(err);
             showGlobalError("Error: " + err.message);
             submitBtn.disabled = false;
-            submitBtn.innerText = "Agregar Vídeo";
+            submitBtn.innerText = "Guardar Enlace";
         }
     };
 }
@@ -6059,8 +6133,16 @@ export function openAddProblemModal() {
                 <input type="text" id="pys-prevenir" maxlength="100" placeholder="Recomendación preventiva...">
             </div>
             <div class="form-group">
-                <label>Enlace de Vídeo YouTube (Opcional)</label>
-                <input type="url" id="pys-video" placeholder="https://www.youtube.com/watch?v=...">
+                <label>Vídeo Explicativo de YouTube (Opcional)</label>
+                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                    <button type="button" id="btn-pys-upload-yt" class="btn btn-primary" style="flex:1; background-color:#ff0000; border-color:#ff0000; font-size:0.85rem; padding:6px 10px;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo a YouTube
+                    </button>
+                </div>
+                <input type="url" id="pys-video" placeholder="O ingresar enlace: https://www.youtube.com/watch?v=...">
+                <small id="pys-video-badge" style="display:none; color:#28a745; font-size:0.8rem; margin-top:2px;">
+                    <i class="fa-solid fa-check-circle"></i> Vídeo subido a YouTube (pendiente de aprobación).
+                </small>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar</button>
         </form>
@@ -6135,6 +6217,32 @@ export function openAddProblemModal() {
         txtSolucion.disabled = chkSinSolucion.checked;
         if (chkSinSolucion.checked) txtSolucion.value = "";
     };
+
+    // Botón Subir Vídeo a YouTube para PyS (Tarea 8.4 y Requisito 9)
+    const btnUploadPysYt = content.querySelector("#btn-pys-upload-yt");
+    if (btnUploadPysYt) {
+        btnUploadPysYt.onclick = () => {
+            const rawTitle = content.querySelector("#pys-titulo").value.trim() || 'Problema Técnico';
+            const rawDesc = content.querySelector("#pys-detalle").value.trim() || (txtSolucion ? txtSolucion.value.trim() : '');
+
+            openYouTubeUploadModal({
+                initialTitle: rawTitle,
+                initialDescription: rawDesc,
+                contentType: 'pys',
+                referenceId: null,
+                metadata: {
+                    alcance: alcanceSelect.value,
+                    modelosAsociados: Array.from(selectedVehicleIds)
+                },
+                onSuccess: (data) => {
+                    const videoInput = content.querySelector("#pys-video");
+                    if (videoInput) videoInput.value = data.videoUrl;
+                    const badge = content.querySelector("#pys-video-badge");
+                    if (badge) badge.style.display = 'block';
+                }
+            });
+        };
+    }
 
     const form = content.querySelector("#add-pys-form");
     form.onsubmit = async (e) => {
@@ -6461,8 +6569,16 @@ export function openAddTutorialModal() {
                 <input type="text" id="tut-tema" maxlength="30" required placeholder="Ej. Desarme de consola frontal">
             </div>
             <div class="form-group">
-                <label>Enlace de Vídeo YouTube</label>
-                <input type="url" id="tut-video" required placeholder="https://www.youtube.com/watch?v=...">
+                <label>Vídeo del Tutorial</label>
+                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                    <button type="button" id="btn-tut-upload-yt" class="btn btn-primary" style="flex:1; background-color:#ff0000; border-color:#ff0000; font-size:0.85rem; padding:6px 10px;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo a YouTube
+                    </button>
+                </div>
+                <input type="url" id="tut-video" required placeholder="O ingresar enlace: https://www.youtube.com/watch?v=...">
+                <small id="tut-video-badge" style="display:none; color:#28a745; font-size:0.8rem; margin-top:2px;">
+                    <i class="fa-solid fa-check-circle"></i> Vídeo subido a YouTube (pendiente de aprobación).
+                </small>
             </div>
             <div class="form-group">
                 <label>Descripción / Detalles (Máx 700 caracteres)</label>
@@ -6488,6 +6604,31 @@ export function openAddTutorialModal() {
     document.body.appendChild(modal);
 
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    // Botón Subir Vídeo a YouTube para Tutoriales (Tarea 8.4 y Requisito 10)
+    const btnUploadTutYt = content.querySelector("#btn-tut-upload-yt");
+    if (btnUploadTutYt) {
+        btnUploadTutYt.onclick = () => {
+            const rawTitle = content.querySelector("#tut-tema").value.trim() || 'Tutorial Técnico';
+            const rawDesc = content.querySelector("#tut-desc").value.trim() || '';
+
+            openYouTubeUploadModal({
+                initialTitle: rawTitle,
+                initialDescription: rawDesc,
+                contentType: 'tutorial',
+                referenceId: null,
+                metadata: {
+                    tema: rawTitle
+                },
+                onSuccess: (data) => {
+                    const videoInput = content.querySelector("#tut-video");
+                    if (videoInput) videoInput.value = data.videoUrl;
+                    const badge = content.querySelector("#tut-video-badge");
+                    if (badge) badge.style.display = 'block';
+                }
+            });
+        };
+    }
 
     const form = content.querySelector("#add-tutorial-form");
     form.onsubmit = async (e) => {

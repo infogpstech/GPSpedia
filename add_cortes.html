@@ -310,9 +310,17 @@
                     <div class="accordion-item" id="video-accordion">
                         <div class="accordion-header"><span>Video Guia de Desarme</span><i class="fas fa-chevron-down"></i></div>
                         <div class="accordion-content form-grid">
+                            <div class="form-group full-width" style="display:flex; gap:10px; margin-bottom:8px;">
+                                <button type="button" id="btn-addcorte-upload-video" class="btn btn-primary" style="flex:1; background-color:#ff0000; border-color:#ff0000; font-size:0.88rem; padding:8px 12px;">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo a YouTube
+                                </button>
+                            </div>
                             <div class="form-group full-width">
-                                <label for="videoGuiaUrl">Enlace de YouTube</label>
+                                <label for="videoGuiaUrl">O ingresar enlace de YouTube directamente</label>
                                 <input type="url" id="videoGuiaUrl" placeholder="https://www.youtube.com/watch?v=...">
+                            </div>
+                            <div id="video-upload-status-badge" class="full-width" style="display:none; font-size:0.85rem; color:#28a745; background:#e8f5e9; padding:8px; border-radius:4px;">
+                                <i class="fa-solid fa-check-circle"></i> Vídeo subido a YouTube. Quedará asociado y visible una vez aprobado.
                             </div>
                         </div>
                     </div>
@@ -342,6 +350,7 @@
         // COMPONENT VERSION: 2.1.6
         import { routeAction } from './api-config.js';
         import './lightbox.js';
+        import { openYouTubeUploadModal } from './youtubeUpload.js';
         const SESSION_KEY = 'gpsepedia_session';
         const state = {
             vehicleInfo: {},
@@ -1221,6 +1230,62 @@
 
             document.getElementById('form-stage-3').reset();
             resetImagePreviews();
+
+            // Configurar botón de subida directa a YouTube en Etapa 3
+            const uploadYtBtn = document.getElementById('btn-addcorte-upload-video');
+            if (uploadYtBtn) {
+                uploadYtBtn.onclick = () => {
+                    // Datos del vehículo desde state.vehicleInfo o match
+                    const vInfo = state.vehicleInfo || {};
+                    const marca = vInfo.marca || (match ? match.marca : '');
+                    const modelo = vInfo.modelo || (match ? match.modelo : '');
+                    const anoDesde = vInfo.anoDesde || (match ? match.anoDesde : '');
+                    const anoHasta = vInfo.anoHasta || (match ? match.anoHasta : '');
+                    const rangoAnos = anoHasta && String(anoHasta) !== String(anoDesde) ? `${anoDesde} - ${anoHasta}` : `${anoDesde}`;
+
+                    const rawVers = vInfo.versionesAplicables || (match ? match.versionesAplicables : '');
+                    const versionsList = rawVers ? String(rawVers).split(/[\/,\\]/).map(s => s.trim()).filter(Boolean) : [];
+                    const hasSingle = versionsList.length === 1;
+                    const singleTrim = hasSingle ? versionsList[0] : '';
+
+                    let titleParts = [marca, '-', modelo];
+                    if (hasSingle && singleTrim) titleParts.push(singleTrim);
+                    if (rangoAnos) titleParts.push(rangoAnos);
+                    const initTitle = titleParts.filter(Boolean).join(' ').replace(/\s+-\s+/, ' - ');
+
+                    let initDesc = '';
+                    if (hasSingle && singleTrim) {
+                        initDesc = `En este video veremos cómo se trabaja ${modelo} ${singleTrim} ${rangoAnos}`.trim();
+                    } else {
+                        const enc = vInfo.tipoEncendido || (match ? match.tipoEncendido : '') || '';
+                        initDesc = `En este video veremos cómo se trabaja ${modelo} ${enc} ${rangoAnos}`.replace(/\s+/g, ' ').trim();
+                        if (versionsList.length > 1) {
+                            initDesc += `\nVersiones aplicables: ${versionsList.join(' / ')}`;
+                        }
+                    }
+
+                    openYouTubeUploadModal({
+                        initialTitle: initTitle,
+                        initialDescription: initDesc,
+                        contentType: 'corte',
+                        referenceId: state.selectedVehicleId,
+                        metadata: {
+                            marca,
+                            modelo,
+                            anoDesde,
+                            anoHasta,
+                            tipoEncendido: vInfo.tipoEncendido || (match ? match.tipoEncendido : '')
+                        },
+                        onSuccess: (data) => {
+                            const urlInput = document.getElementById('videoGuiaUrl');
+                            if (urlInput) urlInput.value = data.videoUrl;
+                            const badge = document.getElementById('video-upload-status-badge');
+                            if (badge) badge.style.display = 'block';
+                        }
+                    });
+                };
+            }
+
             showPhase(3);
         }
 

@@ -1231,7 +1231,7 @@ function handleApproveVideo(payload) {
 
     // Validación estricta de permisos de rol (Desarrollador, Gefe, Supervisor)
     const allowedRoles = ['Desarrollador', 'Gefe', 'Supervisor'];
-    if (userRole && !allowedRoles.includes(userRole)) {
+    if (!userRole || !allowedRoles.includes(userRole)) {
         throw new Error("No tienes permisos suficientes para aprobar vídeos.");
     }
 
@@ -1294,7 +1294,7 @@ function handleRejectVideo(payload) {
     if (!itemId) throw new Error("ID de la solicitud requerido.");
 
     const allowedRoles = ['Desarrollador', 'Gefe', 'Supervisor'];
-    if (userRole && !allowedRoles.includes(userRole)) {
+    if (!userRole || !allowedRoles.includes(userRole)) {
         throw new Error("No tienes permisos suficientes para rechazar vídeos.");
     }
 
