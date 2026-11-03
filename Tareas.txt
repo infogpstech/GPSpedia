@@ -2079,3 +2079,32 @@ BLOQUE 8: SISTEMA DE SUBIDA DIRECTA DE VÍDEOS A YOUTUBE DESDE GPSPEDIA CON APRO
   5. Ajuste de tamaño de imagen en modal de problemas para coincidir exactamente con el tamaño del modelo del vehículo.
   6. Comportamiento coordinado del acordeón «Posibles problemas» cerrando acordeones técnicos al abrirse y viceversa.
   7. Supresión contextual anti-ciclos (`originModal === 'pys'`) al navegar entre problemas y vehículos.
+
+---
+
+
+---
+
+### REVISIÓN III - FASE 1: Correcciones de modal de Problemas y Soluciones, generación de fichas técnicas y desvinculación de relaciones [X]
+- **Requisitos obligatorios cumplidos:**
+  1. Detención completa de reproducción y liberación de recursos de video al cerrar el modal de detalle de Problemas y Soluciones (vía botón cerrar y popstate con asignación explícita de `dataset.modalType = 'pys'`). Modal de tutoriales preservado intacto.
+  2. Reorganización estricta de elementos en modal PyS: 1. Título, 2. Imagen, 3. Descripción, 4. Solución, 5. Cómo evitarlo (Prevención), 6. Video del problema.
+  3. Solución al fallo de generación de fichas técnicas (`exportVehiclePrintSheet`): resolución del ReferenceError de densidad de página (`isSingleOrLowDensity`), evitando que se quede en `about:blank`.
+  4. Desvinculación bidireccional de relaciones problema-vehículo: control para eliminar relaciones desde el modal de problema y desde el acordeón del vehículo en modo desarrollador sin borrar registros.
+  5. Jerarquía visual de títulos y apartados en PyS con azul institucional, líneas divisorias y título principal unificado con el modal de vehículo.
+
+---
+
+### REVISIÓN III - FASE 2: Edición in-modal para desarrolladores en Problemas y Soluciones y Tutoriales [ ]
+- **Requisitos obligatorios:**
+  1. Incorporar icono/control de edición in-modal en el modal de detalle de Tutoriales y modal de detalle de Problemas y Soluciones exclusivo para rol Desarrollador.
+  2. Permitir modificar directamente título, imagen, descripción, solución, prevención y video con guardado y cancelación en el modal.
+  3. Validar permisos de Desarrollador en backend y actualizar la interfaz sin recargar la página.
+
+---
+
+### REVISIÓN III - FASE 3: Gestión de imágenes reemplazadas (Historial, Papelera y Auditoría de Google Drive) [ ]
+- **Requisitos obligatorios:**
+  1. Al reemplazar imágenes desde la edición in-modal, conservar la imagen anterior y registrarla en hoja dedicada de historial de imágenes reemplazadas.
+  2. Interfaz administrativa en modo desarrollador para consultar historial, restaurar imágenes o eliminarlas definitivamente.
+  3. Herramienta de auditoría para explorar Google Drive y clasificar imágenes en uso, históricas, sin uso detectado y no verificadas con eliminación segura.

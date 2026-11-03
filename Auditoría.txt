@@ -1184,3 +1184,27 @@ Archivos verificados: api-config.js, Services/Auth.js, README.md
      * Ficha técnica de impresión con densidad adaptativa a una sola página.
      * Sincronización de límites a 700 caracteres y reproductor embebido de YouTube.
 ================================================================================
+
+================================================================================
+AUDITORÍA: REVISIÓN III - CORRECCIONES DE MODAL PYS, FICHA TÉCNICA Y RELACIONES
+Fecha: 2026-11-03
+Archivos verificados: ui.js, main.js, Services/feedback.js, api-config.js
+
+1. Detención completa de reproducción de video en PyS (Requisito 1):
+   - Al cerrar el modal (`closePysModal` en `ui.js` y `main.js` popstate): envío de `stopVideo`, limpieza del `src` y desvinculación física de todos los `iframe` del contenedor.
+   - Modal de tutoriales mantiene intacto su reproductor.
+
+2. Reorganización de elementos en PyS (Requisito 2):
+   - Orden estricto garantizado: 1. Título, 2. Imagen, 3. Descripción, 4. Solución, 5. Cómo evitarlo (Prevención), 6. Video guía al final.
+
+3. Corrección de fallo de ficha técnica (Requisito 3):
+   - Definidos `totalItems`, `isSingleOrLowDensity` e `isHighDensity` en `exportVehiclePrintSheet`.
+   - Error `ReferenceError: isSingleOrLowDensity is not defined` subsanado; contenido HTML se transfiere y visualiza sin quedar en `about:blank`.
+
+4. Eliminación de relaciones problema-vehículo (Requisito 6):
+   - Backend: endpoint `removeVehicleFromProblem` en `Services/feedback.js` con verificación de rol (`Desarrollador`, `Gefe`, `Supervisor`) que actualiza la columna 10 sin borrar problemas ni vehículos.
+   - Frontend: botón discreto de desvinculación en cada tarjeta de vehículo relacionado en PyS.
+
+5. Jerarquía visual mejorada (Requisito 7):
+   - Encabezados estructurados con azul institucional (`#007bff`), borde inferior y texto transformado. Título principal homogeneizado con el modal de corte.
+================================================================================

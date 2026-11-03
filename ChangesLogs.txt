@@ -1691,3 +1691,25 @@ Componentes intervenidos: api-config.js, Services/Auth.js, README.md
   * Elevada la versión global del producto a GPSpedia v2.2.5.
   * Añadida la sección 6 con las funciones y mejoras desarrolladas desde el fork (subida a YouTube y aprobación en Inbox, módulo PyS ampliado, ficha técnica dinámica para impresión en una sola página y sincronización de límites a 700 caracteres).
 ================================================================================
+
+================================================================================
+CHANGELOG: REVISIÓN III (FASE 1 - PYS MODAL, FICHA TÉCNICA Y RELACIONES)
+Fecha: 2026-11-03
+Componentes intervenidos: ui.js, main.js, Services/feedback.js, api-config.js
+
+- ui.js:
+  * Modal PyS (`openPysDetailModal`): reorganizada la estructura de elementos (Título -> Imagen -> Descripción -> Solución -> Cómo evitarlo -> Video).
+  * Video PyS: agregada limpieza física de `iframe` y envío de evento `stopVideo` en `closePysModal` para detener el audio/video al cerrar.
+  * Jerarquía visual en PyS: encabezados destacados en color azul institucional (`#007bff`) con bordes inferiores y separación clara del contenido.
+  * Ficha técnica (`exportVehiclePrintSheet`): declaradas variables de densidad de página `totalItems`, `isSingleOrLowDensity` e `isHighDensity` solucionando el fallo de ventana vacía `about:blank`.
+  * Relaciones PyS: agregado botón para desvincular vehículos asociados en modo desarrollador/supervisor.
+
+- main.js:
+  * Manejo de evento popstate/retroceso: detección de modal PyS (`dataset.modalType === 'pys'`) para limpieza completa y detención de vídeo al retroceder.
+
+- Services/feedback.js:
+  * Agregado handler `handleRemoveVehicleFromProblem` para remover de forma segura asociaciones de modelos de vehículos en la hoja `pys` validando roles autorizados.
+
+- api-config.js:
+  * Mapeada la acción `removeVehicleFromProblem` hacia el microservicio FEEDBACK.
+================================================================================

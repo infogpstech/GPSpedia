@@ -229,10 +229,23 @@ async function initializeApp() {
             } else {
                 modalDetalle.classList.remove('visible');
             }
-            // Detener videos al cerrar via back button
-            const iframe = modalDetalle.querySelector('iframe');
-            if (iframe && iframe.contentWindow) {
-                iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+            // Detener y limpiar videos de Problemas y Soluciones al cerrar via back button
+            if (modalDetalle.dataset.modalType === 'pys') {
+                const iframes = modalDetalle.querySelectorAll('iframe');
+                iframes.forEach(iframe => {
+                    try {
+                        if (iframe.contentWindow) {
+                            iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+                        }
+                    } catch(e) {}
+                    iframe.src = "";
+                    iframe.remove();
+                });
+            } else {
+                const iframe = modalDetalle.querySelector('iframe');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+                }
             }
 
             // Restaurar foco a la barra de búsqueda si estamos en modo búsqueda
