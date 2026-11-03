@@ -1162,3 +1162,25 @@ Archivos verificados: ui.js, Services/feedback.js, style.css
    - Indicadores de flecha (▲/▼) y maxHeight se actualizan y limpian adecuadamente.
    - Prevención de ciclos `navOptions.originModal === 'pys'` preservada.
 ================================================================================
+
+================================================================================
+AUDITORÍA: ACTUALIZACIÓN DE ENDPOINT FEEDBACK, VERSIÓN GLOBAL 2.2.5 Y README
+Fecha: 2026-11-03
+Archivos verificados: api-config.js, Services/Auth.js, README.md
+
+1. Nuevo endpoint de Feedback:
+   - Configurado en `api-config.js`: `https://script.google.com/macros/s/AKfycbwg-JDtqiVXYUzlZBD-_qd2eypSLxFmVfDTF1-Z_mfhGl_4b9SCudHI_NBlj-XGoCVmeQ/exec`.
+
+2. Incremento de versión global a 2.2.5:
+   - Sincronizada cabecera de `api-config.js` (`Version: 2.2.5`).
+   - Sincronizada versión en `Services/Auth.js` (`version: '2.2.5'` y `COMPONENT VERSION: 2.2.5`).
+   - Sincronizado encabezado y pie de `README.md` a `GPSpedia v2.2.5`.
+
+3. Actualización de documentación en README.md:
+   - Incorporada la sección 6 con las novedades de v2.2.5:
+     * Carga directa de vídeos a YouTube (Resumable Upload) y flujo de aprobación en Inbox.
+     * Módulo PyS ampliado con vinculación bidireccional y buscador de vehículos adaptado.
+     * Prevención de ciclos infinitos en modales.
+     * Ficha técnica de impresión con densidad adaptativa a una sola página.
+     * Sincronización de límites a 700 caracteres y reproductor embebido de YouTube.
+================================================================================

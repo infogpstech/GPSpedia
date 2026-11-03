@@ -1,4 +1,4 @@
-// GPSpedia Unified API Module | Version: 2.1.6
+// GPSpedia Unified API Module | Version: 2.2.5
 // ============================================================================
 // ÚNICA FUENTE DE VERDAD PARA LA CONFIGURACIÓN Y LÓGICA DE LA API
 // ============================================================================
@@ -10,7 +10,7 @@ export const API_ENDPOINTS = {
     CATALOG:  "https://script.google.com/macros/s/AKfycbxtqkdUfXAEmbPz7zfE4kZCie8sql4SM43kxkBw__5iGwXVyzzYsIFG5jpWkQc7-Ug9/exec",
     WRITE:    "https://script.google.com/macros/s/AKfycbwhp6i-yaB63Frpp2wFvM1jWFtHSrN7MJmzMpJ2B7YaWKyagxsZ79ghhGKUO7UJp8sy-g/exec",
     USERS:    "https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbzWAH2GEW0i7JM0wTvPmd69rOouuxZcNT7iU_em3WxrTEqldg_4CYS-1Uq4IHhkENPdww/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbwg-JDtqiVXYUzlZBD-_qd2eypSLxFmVfDTF1-Z_mfhGl_4b9SCudHI_NBlj-XGoCVmeQ/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec",
     ADMIN: "https://script.google.com/macros/s/AKfycbxLOwWXYmNXXG8X0FoRSs3Q3baKxDE66a7NGJ9KMqjt-SIh9oFBU9dZEo-MAPsVtZLKcA/exec"
 };

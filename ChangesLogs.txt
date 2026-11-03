@@ -1674,3 +1674,20 @@ Componentes intervenidos: ui.js, Services/feedback.js, style.css
 - style.css:
   * Estilos de `.card-expanded` y `.card-compact` en ficha técnica.
 ================================================================================
+
+================================================================================
+CHANGELOG: ENDPOINT FEEDBACK ACTUALIZADO, VERSIÓN GLOBAL 2.2.5 Y DOCUMENTACIÓN README
+Fecha: 2026-11-03
+Componentes intervenidos: api-config.js, Services/Auth.js, README.md
+
+- api-config.js:
+  * Actualizado endpoint del microservicio FEEDBACK a: `https://script.google.com/macros/s/AKfycbwg-JDtqiVXYUzlZBD-_qd2eypSLxFmVfDTF1-Z_mfhGl_4b9SCudHI_NBlj-XGoCVmeQ/exec`.
+  * Elevada versión del módulo a 2.2.5.
+
+- Services/Auth.js:
+  * Elevada versión del componente a 2.2.5.
+
+- README.md:
+  * Elevada la versión global del producto a GPSpedia v2.2.5.
+  * Añadida la sección 6 con las funciones y mejoras desarrolladas desde el fork (subida a YouTube y aprobación en Inbox, módulo PyS ampliado, ficha técnica dinámica para impresión en una sola página y sincronización de límites a 700 caracteres).
+================================================================================
