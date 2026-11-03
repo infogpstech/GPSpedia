@@ -1350,3 +1350,67 @@ Riesgos y mitigaciones:
 - Riesgo de exploración descontrolada en Google Drive: mitigado restringiendo la búsqueda en código exclusivamente al ID `1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2` (carpeta "Cortes") y sus subcarpetas.
 - Respaldos creados: `ui.js.bak`, `main.js.bak`, `Services/admin.js.bak`, `api-config.js.bak`, `index.html.bak`.
 ================================================================================
+
+================================================================================
+AUDITORÍA INICIAL: CARRUSEL EN MODAL PYS, FICHA TÉCNICA Y VINCULACIÓN DE MODELOS
+Fecha: Tue Nov  3 21:07:49 UTC 2026
+Archivos a intervenir: ui.js, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
+
+1. Diagnóstico del Carrusel en el Modal de Detalle de Problemas (openPysDetailModal):
+   - Causa Raíz Identificada:
+     a) En openPysDetailModal (líneas 7223-7306), el carrusel de modelos asociados dependía de getState().catalogData.cortes. Si el usuario entraba directamente a la sección de Problemas y Soluciones o a través del buscador global antes de navegar por el catálogo de marcas/cortes, catalogData.cortes estaba vacío ([]). Al hacer cortes.find(c => String(c.id) === String(vId)), no se encontraba ningún vehículo y no se renderizaba ninguna tarjeta de vehículo asociado.
+     b) Además, en navOptions, si navOptions.originModal === 'vehicle', el carrusel se ocultaba por la regla anti-ciclos. Pero incluso cuando no provenía de un vehículo, si item.modelosAsociados no estaba poblado o requería consulta reactiva con getPysData, el carrusel no aparecía.
+     c) Solución:
+        - Si catalogData.cortes no está disponible en memoria, cargar o consultar el catálogo (routeAction('getCatalogData')) y actualizar reactivamente el carrusel.
+        - Asegurar que la sección del carrusel y la tarjeta «Agregar Modelo» (.card-create-vehicle-assoc) se rendericen de forma garantizada y visible.
+
+2. Diagnóstico de la Ficha Técnica para Impresión (exportVehiclePrintSheet):
+   - De acuerdo a la captura de pantalla adjunta (Screenshot_20261103_054559_com_android_chrome_SameTaskWebApkActivity.jpg):
+     a) El contenedor de texto (.tech-item-info) estaba limitado a un 25% rígido con párrafos que tenían márgenes verticales excesivos, y la imagen (.tech-detail-img) a la derecha quedaba limitada en altura (max-height: 160px / 125px) dentro de un wrapper horizontal, lo que dejaba un enorme espacio inferior vacío en la hoja de impresión.
+     b) La hoja (@page) tenía márgenes de 8mm, pero dentro de los divs y tablas (.top-grid, .meta-table, .tech-item-card) había padding y márgenes laterales que comprimían el contenido horizontalmente.
+     c) Para resolver esto:
+        - Reducir los espacios y márgenes dentro de los párrafos y celdas de la tabla (.meta-table td { padding: 1.5px 5px; }, .tech-item-info p { margin: 1px 0; line-height: 1.15; }).
+        - Reducir los márgenes laterales que comprimen el contenido.
+        - Reorganizar o ampliar la visualización de la imagen técnica para que no se vea comprimida como si fuera una miniatura pequeña horizontal: permitir que la imagen técnica (.tech-detail-img) se expanda verticalmente aprovechando el espacio inferior disponible (aumentando max-height de las imágenes a 220px-260px en cortes de densidad normal o baja), garantizando que el técnico pueda ver en detalle el punto de corte sin desperdiciar la hoja.
+
+3. Diagnóstico del Flujo de Vinculación de Modelos desde PyS:
+   - En openSearchVehicleForPysAssociationModal:
+     a) Actualmente permitía buscar pero al hacer clic abría inmediatamente la confirmación de un solo vehículo y lo vinculaba, difiriendo del flujo del formulario de creación de problemas (openAddProblemModal).
+     b) En openAddProblemModal, el instalador puede buscar vehículos con formato [Imagen] | [Versión o Tipo Encendido] | [Rango Años], seleccionar modelos que se agregan como chips/tags provisionales removibles, confirmar con vista previa y guardar de forma estructurada.
+     c) Se actualizará openSearchVehicleForPysAssociationModal para adoptar la misma lógica intuitiva y consistente: selección ágil, chips provisionales con opción de eliminar, confirmación y persistencia inmediata en addVehicleToProblem actualizando el modal de PyS.
+================================================================================
+
+================================================================================
+AUDITORÍA DE IMPLEMENTACIÓN Y VERIFICACIÓN
+Fecha: 2026-11-03
+
+1. CARRUSEL EN EL MODAL DE DETALLE DE PROBLEMAS (ui.js):
+   - Causa raíz identificada: openPysDetailModal dependía exclusivamente del estado síncrono catalogData.cortes. Al abrir problemas desde la pestaña PyS sin haber cargado la vista principal del catálogo, catalogData.cortes estaba vacío, lo que provocaba que la búsqueda de cortes fallara en silencio sin renderizar los vehículos relacionados.
+   - Solución implementada: Se extrajo la función renderTrackVehicles y se agregó la carga asíncrona de cortes mediante routeAction('getCatalogData') cuando currentCortes.length === 0, repoblando el track inmediatamente al resolver la promesa.
+   - Estado: Resuelto y verificado.
+
+2. OPTIMIZACIÓN DE FICHA TÉCNICA PARA IMPRIMIR (ui.js):
+   - Causa raíz identificada: Márgenes excesivos en @page (8mm), párrafos y celdas con espaciado amplio, y un límite de altura restrictivo (160px) en tech-detail-img, lo cual dejaba más del 50% de la hoja Carta vertical completamente vacío y limitaba la visibilidad de los detalles del corte.
+   - Solución implementada: Reducción de márgenes a 4mm 6mm, compactación de celdas meta-table td (1.5px 5px) y párrafos tech-item-info p (1px 0), y aumento de altura máxima de imágenes de corte a 240px (normal) y 310px (expandido) con object-fit: contain.
+   - Estado: Resuelto y verificado visualmente en captura de pantalla.
+
+3. FLUJO DE VINCULACIÓN DE MODELOS DE VEHÍCULO EN PYS (ui.js):
+   - Causa raíz identificada: openSearchVehicleForPysAssociationModal utilizaba un flujo simplificado sin confirmación ni chips provisionales, lo cual no ofrecía coherencia con openAddProblemModal.
+   - Solución implementada: Homogeneización total del flujo con búsqueda combinada, exclusión de modelos existentes/seleccionados, modal de confirmación con vista previa ampliada (openConfirmVehicleForPysModal), selección múltiple con chips removibles, y persistencia coordinada.
+   - Estado: Resuelto y verificado con pruebas Playwright.
+================================================================================
+
+================================================================================
+AUDITORÍA DE ENDPOINTS DE MICROSERVICIOS
+Fecha: 2026-11-03
+
+Endpoints actualizados y verificados en api-config.js:
+- LEGACY: https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec
+- AUTH: https://script.google.com/macros/s/AKfycbzi5ET_WsDDKWqcrAHpnhtpS0oEitbuYz8dPj_URsG6dt-PO1oFIpOwYSKQ1temcEGnDA/exec
+- CATALOG: https://script.google.com/macros/s/AKfycbxtqkdUfXAEmbPz7zfE4kZCie8sql4SM43kxkBw__5iGwXVyzzYsIFG5jpWkQc7-Ug9/exec
+- WRITE: https://script.google.com/macros/s/AKfycbwsRkcK8-q8hiOpaUNrU1e79WD2SH87MsZkfaFU3S19ayAC9ZMhxDuZUv0cx9iaW7cPlw/exec
+- USERS: https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec
+- FEEDBACK: https://script.google.com/macros/s/AKfycbxT_3TopgtXNgRHGyNroU7zi_hyixxFEU-0r-QgfiSifyOkFMjeILL5Rgeq_WLJ7Dm2SQ/exec
+- UTILITIES: https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec
+- ADMIN: https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec
+================================================================================

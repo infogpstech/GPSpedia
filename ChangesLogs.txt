@@ -1819,3 +1819,24 @@ Fecha: 2026-11-03
 - index.html:
   * Incorporados los botones y modales `#replaced-images-modal` y `#audit-drive-modal` dentro de `#dev-tools-modal`.
 ================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: VISIBILIDAD DE CARRUSEL PYS, FICHA TÉCNICA Y VINCULACIÓN DE MODELOS
+Fecha: 2026-11-03
+
+- ui.js:
+  * openPysDetailModal: Solucionado el problema de visibilidad del carrusel de modelos asociados al modularizar el renderizado en renderTrackVehicles y asegurar la recarga reactiva de cortes vía getCatalogData si el catálogo no estaba precargado al abrir el problema directamente o por búsqueda.
+  * openSearchVehicleForPysAssociationModal: Actualizado el flujo de vinculación desde el modal de detalle del problema para replicar la lógica unificada de openAddProblemModal, permitiendo búsqueda dinámica (Marca, Modelo, Versión o Encendido, Años), confirmación previa con openConfirmVehicleForPysModal, selección múltiple mediante chips provisionales con eliminación y guardado por lotes sin recargas bruscas.
+  * exportVehiclePrintSheet: Ajustada la hoja de impresión técnica para formato Carta vertical. Reducidos márgenes de página (@page margin: 4mm 6mm), compactados rellenos de celdas de metadatos (.meta-table td) y márgenes de párrafos de texto (.tech-item-info p), y aumentada la altura máxima de diagramas de corte (.tech-detail-img hasta 240px-310px) para aprovechar plenamente el espacio vertical disponible, evitando que se desperdicie el área inferior de la hoja y permitiendo a los técnicos visualizar los puntos de corte en detalle.
+================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: ACTUALIZACIÓN DE ENDPOINTS DE MICROSERVICIOS
+Fecha: 2026-11-03
+
+- api-config.js:
+  * Actualizados los endpoints de microservicios en `API_ENDPOINTS`:
+    - FEEDBACK: https://script.google.com/macros/s/AKfycbxT_3TopgtXNgRHGyNroU7zi_hyixxFEU-0r-QgfiSifyOkFMjeILL5Rgeq_WLJ7Dm2SQ/exec
+    - ADMIN: https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec
+  * Se mantienen sincronizados LEGACY, AUTH, CATALOG, WRITE, USERS y UTILITIES.
+================================================================================

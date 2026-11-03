@@ -2136,3 +2136,29 @@ BLOQUE 8: SISTEMA DE SUBIDA DIRECTA DE VÍDEOS A YOUTUBE DESDE GPSPEDIA CON APRO
   2. Ocultamiento total del acordeón de problemas relacionados al abrir un vehículo desde el modal de un problema, permitiendo su visualización normal en aperturas independientes.
   3. Pila de navegación contextual (modalNavStack) para retornar automáticamente al modal y estado de origen al cerrar sin ciclos infinitos.
   4. Limpieza determinista de la pila al cerrar completamente todos los modales.
+
+================================================================================
+TAREA: CORRECCIÓN DE CARRUSEL PYS, OPTIMIZACIÓN DE FICHA TÉCNICA Y VINCULACIÓN DE VEHÍCULOS
+Fecha: 2026-11-03
+Requerimientos:
+1. Verificar y solucionar causa por la cual no se ve el carrusel en el modal de detalle de problemas (openPysDetailModal).
+2. Revisar y optimizar ficha técnica para imprimir (exportVehiclePrintSheet), reduciendo espacios vacíos y márgenes laterales, compactando celdas/párrafos y aumentando el tamaño de los diagramas de corte para no desperdiciar el espacio inferior de la hoja Carta.
+3. Actualizar el flujo para vincular un modelo de vehículo desde el modal de detalle del problema unificándolo con la lógica del formulario de creación de problemas (búsqueda, previsualización/confirmación, chips provisionales y guardado).
+Estado: COMPLETADO Y VERIFICADO.
+================================================================================
+
+================================================================================
+TAREA: ACTUALIZACIÓN DE MICROSERVICIOS
+Fecha: 2026-11-03
+Requerimientos:
+1. Actualizar los endpoints de microservicios en api-config.js conforme a los nuevos despliegues de Apps Script proporcionados por el usuario:
+   - LEGACY: https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec
+   - AUTH: https://script.google.com/macros/s/AKfycbzi5ET_WsDDKWqcrAHpnhtpS0oEitbuYz8dPj_URsG6dt-PO1oFIpOwYSKQ1temcEGnDA/exec
+   - CATALOG: https://script.google.com/macros/s/AKfycbxtqkdUfXAEmbPz7zfE4kZCie8sql4SM43kxkBw__5iGwXVyzzYsIFG5jpWkQc7-Ug9/exec
+   - WRITE: https://script.google.com/macros/s/AKfycbwsRkcK8-q8hiOpaUNrU1e79WD2SH87MsZkfaFU3S19ayAC9ZMhxDuZUv0cx9iaW7cPlw/exec
+   - USERS: https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec
+   - FEEDBACK: https://script.google.com/macros/s/AKfycbxT_3TopgtXNgRHGyNroU7zi_hyixxFEU-0r-QgfiSifyOkFMjeILL5Rgeq_WLJ7Dm2SQ/exec
+   - UTILITIES: https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec
+   - ADMIN: https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec
+Estado: COMPLETADO Y VERIFICADO.
+================================================================================
