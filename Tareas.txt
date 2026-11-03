@@ -2136,3 +2136,13 @@ BLOQUE 8: SISTEMA DE SUBIDA DIRECTA DE VÍDEOS A YOUTUBE DESDE GPSPEDIA CON APRO
   2. Ocultamiento total del acordeón de problemas relacionados al abrir un vehículo desde el modal de un problema, permitiendo su visualización normal en aperturas independientes.
   3. Pila de navegación contextual (modalNavStack) para retornar automáticamente al modal y estado de origen al cerrar sin ciclos infinitos.
   4. Limpieza determinista de la pila al cerrar completamente todos los modales.
+
+================================================================================
+TAREA: CORRECCIÓN DE CARRUSEL PYS, OPTIMIZACIÓN DE FICHA TÉCNICA Y VINCULACIÓN DE VEHÍCULOS
+Fecha: 2026-11-03
+Requerimientos:
+1. Verificar y solucionar causa por la cual no se ve el carrusel en el modal de detalle de problemas (openPysDetailModal).
+2. Revisar y optimizar ficha técnica para imprimir (exportVehiclePrintSheet), reduciendo espacios vacíos y márgenes laterales, compactando celdas/párrafos y aumentando el tamaño de los diagramas de corte para no desperdiciar el espacio inferior de la hoja Carta.
+3. Actualizar el flujo para vincular un modelo de vehículo desde el modal de detalle del problema unificándolo con la lógica del formulario de creación de problemas (búsqueda, previsualización/confirmación, chips provisionales y guardado).
+Estado: COMPLETADO Y VERIFICADO.
+================================================================================
