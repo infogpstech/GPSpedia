@@ -2005,7 +2005,6 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     /* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL ACORDEÓN «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
     renderPosiblesProblemasAccordion(accordionContainer, activeItem, navOptions);
 
-    const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
         // TAREA 1.5 / 1.8: RECUPERACIÓN, AJUSTE Y REEJECUCIÓN DEL BOTÓN (+) EN EL MODAL DE DETALLE DEL VEHÍCULO
         const plusBtn = document.createElement("button");

@@ -1713,3 +1713,25 @@ Componentes intervenidos: ui.js, main.js, Services/feedback.js, api-config.js
 - api-config.js:
   * Mapeada la acción `removeVehicleFromProblem` hacia el microservicio FEEDBACK.
 ================================================================================
+
+================================================================================
+CHANGELOG: NUEVOS ENDPOINTS MICROSERVICIOS Y CHANGELOG FRONTEND V2.2.5
+Fecha: 2026-11-03
+Componentes intervenidos: api-config.js, index.html, ui.js
+
+- api-config.js:
+  * Actualizados endpoints en producción para AUTH, FEEDBACK y WRITE.
+
+- index.html:
+  * Desplegado el historial cronológico y equilibrado de versiones desde agosto 2026 en el modal de Registro de Cambios:
+    - v2.2.0: Búsqueda y registro por número de chasis (VIN).
+    - v2.2.1: Menú de ampliación técnica (+) en la ficha de detalle.
+    - v2.2.2: Secciones de Problemas y Soluciones y Tutoriales interactivos.
+    - v2.2.3: Vinculación bidireccional de incidencias y modelos vehiculares.
+    - v2.2.4: Subida de vídeos al canal oficial y flujo de revisión previa.
+    - v2.2.5 (Actual): Ficha técnica adaptativa a una página y mejoras de visualización.
+  * Omitidas herramientas exclusivas de desarrolladores y detalles internos de implementación.
+
+- ui.js:
+  * Subsanada duplicidad de declaración de `modalDetalle` en scope de `mostrarDetalleModal`.
+================================================================================
