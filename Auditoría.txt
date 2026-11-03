@@ -1264,3 +1264,37 @@ Archivos verificados: VinDifferentialEngine.js
    - Caso 6 (Generaciones sin coincidencia temporal): no compiten entre sí.
    - Verificado mediante pruebas automatizadas en Playwright y Node.js.
 ================================================================================
+
+================================================================================
+AUDITORÍA PREVIA: REVISIÓN IV (FICHA TÉCNICA, PERMISOS DESVINCULACIÓN Y EDICIÓN IN-MODAL)
+Fecha: 2026-11-03
+Archivos a intervenir: ui.js, index.html, Services/feedback.js, api-config.js
+
+1. Optimización Ficha Técnica (exportVehiclePrintSheet en ui.js):
+   - Estado actual:
+     * Dimensiones en @page utilizan `size: letter portrait; margin: 10mm;`. La captura muestra que en pantallas y PDFs la tabla tiene excesivo espacio vacío vertical en cada celda td (padding 4px 8px, line-height 1.25), inflando la altura de las celdas de forma desproporcionada.
+     * En `.tech-item-body`, el contenedor de texto `.tech-item-info` tiene `flex: 1` y `.tech-item-img-wrapper` tiene ancho máximo fijo (290px), lo que provoca que el texto ocupe horizontalmente más espacio que la imagen.
+     * Se requiere limitar `.tech-item-info` a máximo el 25% del ancho horizontal de la hoja y permitir que la imagen ocupe el ~75% restante.
+     * Se requiere fijar @page a `size: 216mm 279mm portrait; margin: 8mm;`, y compactar la tabla con `padding: 2px 6px;` y `line-height: 1.15;`.
+
+2. Restricción de Desvinculación de Problemas y Vehículos:
+   - Estado actual:
+     * En ui.js línea 2380 y 6650: el botón de desvinculación se muestra para `['Desarrollador', 'Gefe', 'Supervisor']`.
+     * En Services/feedback.js línea 1070 (`handleRemoveVehicleFromProblem`): `allowedRoles = ['Desarrollador', 'Gefe', 'Supervisor']`.
+     * Se requiere restringir tanto en UI como en backend estrictamente a rol `Desarrollador`.
+
+3. Edición In-Modal en Tutoriales y Problemas & Soluciones:
+   - Estado actual:
+     * `mostrarDetalleTutorialModal` y `openPysDetailModal` carecen del botón de edición con icono de lápiz (`fa-pencil`).
+     * Solo `mostrarDetalleModal` de vehículos dispone de edición in-modal con lápiz, guardado y descarte.
+     * Se requiere replicar el patrón de edición in-modal con lápiz para rol Desarrollador en Tutoriales y PyS, conectando a endpoints de actualización `updateTutorialItem` y `updatePysItem` en feedback.js.
+
+4. Changelog Frontend (index.html):
+   - Estado actual:
+     * Línea 652 en index.html incluye: `<li><strong>Gestión de asociaciones de vehículos:</strong> Facilidad para desvincular modelos asociados a problemas técnicos de forma selectiva directamente desde el catálogo.</li>`.
+     * Esta funcionalidad es exclusiva del desarrollador y debe ser removida del changelog de usuario.
+
+Riesgos y mitigaciones:
+- Riesgo de romper el modo de visualización normal de PyS o Tutoriales: se preserva la estructura de lectura sin alteraciones y el modo de edición se activa únicamente al pulsar el lápiz.
+- Respaldo previo creado (.bak) para ui.js, index.html, Services/feedback.js y api-config.js.
+================================================================================

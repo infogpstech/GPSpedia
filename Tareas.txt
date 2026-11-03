@@ -2095,11 +2095,21 @@ BLOQUE 8: SISTEMA DE SUBIDA DIRECTA DE VÍDEOS A YOUTUBE DESDE GPSPEDIA CON APRO
 
 ---
 
-### REVISIÓN III - FASE 2: Edición in-modal para desarrolladores en Problemas y Soluciones y Tutoriales [ ]
-- **Requisitos obligatorios:**
+### REVISIÓN III - FASE 2: Edición in-modal para desarrolladores en Problemas y Soluciones y Tutoriales [X]
+- **Requisitos obligatorios cumplidos:**
   1. Incorporar icono/control de edición in-modal en el modal de detalle de Tutoriales y modal de detalle de Problemas y Soluciones exclusivo para rol Desarrollador.
   2. Permitir modificar directamente título, imagen, descripción, solución, prevención y video con guardado y cancelación en el modal.
   3. Validar permisos de Desarrollador en backend y actualizar la interfaz sin recargar la página.
+
+---
+
+### REVISIÓN IV: Correcciones de ficha técnica, permisos de gestión y edición de modales [X]
+- **Requisitos obligatorios cumplidos:**
+  1. Optimización de ficha técnica para impresión en una hoja Carta (216 × 279 mm) con márgenes de 8mm, altura de celdas meta compacta (`padding: 2px 6px;`, `line-height: 1.15;`) y texto de cortes restringido a un máximo de 25% del ancho de la hoja con la imagen dominando el 75% restante.
+  2. Desvinculación de problemas y vehículos restringida exclusivamente al desarrollador tanto en la interfaz (`ui.js`) como en la validación del microservicio (`Services/feedback.js`).
+  3. Edición in-modal completa en tutoriales y Problemas y Soluciones para rol Desarrollador, con guardado y descarte.
+  4. Retirada de la novedad de desvinculación en el changelog v2.2.5 visible a los usuarios en `index.html`.
+  5. Carrusel de vehículos relacionados en modal de problemas restaurado para todos los usuarios, con tarjeta de agregar (+) abierta a la comunidad para asociar modelos existentes mediante buscador predictivo sin duplicar.
 
 ---
 

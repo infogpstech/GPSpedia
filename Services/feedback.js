@@ -137,6 +137,12 @@ function doPost(e) {
             case 'removeVehicleFromProblem':
                 response = handleRemoveVehicleFromProblem(payload);
                 break;
+            case 'updatePysItem':
+                response = handleUpdatePysItem(payload);
+                break;
+            case 'updateTutorialItem':
+                response = handleUpdateTutorialItem(payload);
+                break;
             case 'suggestCutChange':
                 response = handleSuggestCutChange(payload);
                 break;
@@ -1067,7 +1073,8 @@ function handleRemoveVehicleFromProblem(payload) {
         throw new Error("Se requieren problemId y vehicleId.");
     }
 
-    const allowedRoles = ['Desarrollador', 'Gefe', 'Supervisor'];
+    // REVISIÓN IV: Desvinculación de problemas y vehículos restringida exclusivamente al Desarrollador
+    const allowedRoles = ['Desarrollador'];
     if (!userRole || !allowedRoles.includes(userRole)) {
         throw new Error("No tienes permisos suficientes para eliminar relaciones.");
     }
@@ -1376,4 +1383,95 @@ function handleRejectVideo(payload) {
 
     SpreadsheetApp.flush();
     return { status: 'success', message: 'Vídeo rechazado.', statusState: 'rejected' };
+}
+
+/* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN PROBLEMAS Y SOLUCIONES */
+function handleUpdatePysItem(payload) {
+    const { problemId, titulo, descripcion, solucion, prevenir, videoUrl, userRole } = payload;
+    if (!problemId) throw new Error("problemId es obligatorio.");
+
+    const allowedRoles = ['Desarrollador'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos de Desarrollador para editar este problema.");
+    }
+
+    if (titulo && titulo.length > 30) throw new Error("El título no puede exceder 30 caracteres.");
+    if (descripcion && descripcion.length > 700) throw new Error("La descripción no puede exceder 700 caracteres.");
+    if (solucion && solucion.length > 700) throw new Error("La solución no puede exceder 700 caracteres.");
+    if (prevenir && prevenir.length > 700) throw new Error("La prevención no puede exceder 700 caracteres.");
+
+    const sheet = getSafeSheet("pys");
+    if (!sheet) throw new Error("Hoja pys no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+
+    const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+    const index = ids.findIndex(id => String(id) === String(problemId));
+    if (index === -1) throw new Error("Problema no encontrado.");
+
+    const rowIndex = index + 2;
+    if (titulo !== undefined) sheet.getRange(rowIndex, 2).setValue(titulo);
+    if (descripcion !== undefined) sheet.getRange(rowIndex, 3).setValue(descripcion);
+    if (solucion !== undefined) {
+        sheet.getRange(rowIndex, 5).setValue(solucion);
+        sheet.getRange(rowIndex, 4).setValue(solucion ? "x" : "");
+    }
+    if (prevenir !== undefined) sheet.getRange(rowIndex, 6).setValue(prevenir);
+    if (videoUrl !== undefined) sheet.getRange(rowIndex, 8).setValue(videoUrl);
+
+    SpreadsheetApp.flush();
+    return {
+        status: "success",
+        message: "Problema actualizado exitosamente in-modal.",
+        updated: { problemId, titulo, descripcion, solucion, prevenir, videoUrl }
+    };
+}
+
+/* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN TUTORIALES */
+function handleUpdateTutorialItem(payload) {
+    const { originalTema, tema, descripcion, videoUrl, userRole } = payload;
+    if (!originalTema && !tema) throw new Error("Se requiere el tema del tutorial a editar.");
+
+    const allowedRoles = ['Desarrollador'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos de Desarrollador para editar este tutorial.");
+    }
+
+    if (tema && tema.length > 30) throw new Error("El tema no puede exceder 30 caracteres.");
+    if (descripcion && descripcion.length > 700) throw new Error("La descripción no puede exceder 700 caracteres.");
+
+    const sheet = getSafeSheet("Tutoriales") || getSafeSheet("Tutorial");
+    if (!sheet) throw new Error("Hoja de tutoriales no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay tutoriales registrados.");
+
+    const searchKey = originalTema || tema;
+    const values = sheet.getRange(2, 1, lastRow - 1, Math.max(5, sheet.getLastColumn())).getValues();
+    let rowIndex = -1;
+
+    for (let i = 0; i < values.length; i++) {
+        if (String(values[i][0]) === String(searchKey) || String(values[i][1]) === String(searchKey)) {
+            rowIndex = i + 2;
+            break;
+        }
+    }
+
+    if (rowIndex === -1) throw new Error("Tutorial no encontrado.");
+
+    if (tema !== undefined) sheet.getRange(rowIndex, 1).setValue(tema);
+    if (videoUrl !== undefined) {
+        sheet.getRange(rowIndex, 3).setValue(videoUrl);
+        const ytid = extractYouTubeId(videoUrl);
+        if (ytid) {
+            sheet.getRange(rowIndex, 2).setValue(`https://img.youtube.com/vi/${ytid}/hqdefault.jpg`);
+        }
+    }
+    if (descripcion !== undefined) sheet.getRange(rowIndex, 4).setValue(descripcion);
+
+    SpreadsheetApp.flush();
+    return {
+        status: "success",
+        message: "Tutorial actualizado exitosamente in-modal.",
+        updated: { tema: tema || originalTema, descripcion, videoUrl }
+    };
 }
