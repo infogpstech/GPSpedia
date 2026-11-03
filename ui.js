@@ -1451,6 +1451,11 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
 
     const { relay: datosRelay } = catalogData;
 
+    const modalDetalle = document.getElementById("modalDetalle");
+    if (modalDetalle) {
+        modalDetalle.dataset.modalType = 'corte';
+    }
+
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
@@ -2000,7 +2005,6 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
     /* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL ACORDEÓN «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
     renderPosiblesProblemasAccordion(accordionContainer, activeItem, navOptions);
 
-    const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
         // TAREA 1.5 / 1.8: RECUPERACIÓN, AJUSTE Y REEJECUCIÓN DEL BOTÓN (+) EN EL MODAL DE DETALLE DEL VEHÍCULO
         const plusBtn = document.createElement("button");
@@ -2340,7 +2344,10 @@ async function insertNewVehicleFluently(item) {
 }
 
 /* TAREA 3.1 & TAREA 9.3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» CON ORIGEN CONTEXTUAL */
-function createPysCard(item, originModal = null) {
+function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlinkSuccess = null) {
+    const cardWrapper = document.createElement("div");
+    cardWrapper.style.cssText = "position: relative; display: inline-block;";
+
     const card = document.createElement("div");
     card.className = "card";
     card.setAttribute("data-problem-id", item.id_problem || item.id || "");
@@ -2364,8 +2371,41 @@ function createPysCard(item, originModal = null) {
         <div class="overlay-text-secondary" style="font-size: 0.75rem; color: ${statusColor}; font-weight: bold;">${statusText}</div>
     `;
     card.appendChild(overlay);
+    cardWrapper.appendChild(card);
 
-    return card;
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
+    const canEdit = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+
+    if (canEdit && vehicleToUnlink) {
+        const removeBtn = document.createElement("button");
+        removeBtn.title = "Eliminar relación con este problema";
+        removeBtn.innerHTML = "&times;";
+        removeBtn.style.cssText = "position: absolute; top: 4px; right: 4px; background: rgba(220, 53, 69, 0.9); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.3);";
+        removeBtn.onclick = async (e) => {
+            e.stopPropagation();
+            if (!confirm(`¿Deseas desvincular el problema "${item.Problema}" de este vehículo?`)) return;
+            removeBtn.disabled = true;
+            try {
+                const res = await routeAction('removeVehicleFromProblem', {
+                    problemId: item.id_problem || item.id,
+                    vehicleId: vehicleToUnlink.id,
+                    userRole
+                });
+                if (res && res.status === 'success') {
+                    cardWrapper.remove();
+                    mostrarNotificacion("Problema desvinculado del vehículo.", "success");
+                    if (typeof onUnlinkSuccess === 'function') onUnlinkSuccess();
+                }
+            } catch(err) {
+                showGlobalError("Error al retirar relación: " + err.message);
+                removeBtn.disabled = false;
+            }
+        };
+        cardWrapper.appendChild(removeBtn);
+    }
+
+    return cardWrapper;
 }
 
 export function renderPosiblesProblemasAccordion(container, activeItem, navOptions = {}) {
@@ -2423,7 +2463,10 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             // REQUISITO: Si existe un solo problema, mostrar su tarjeta
             const singleCardContainer = document.createElement("div");
             singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; width: 100%;";
-            const singleCard = createPysCard(relatedProblems[0], 'vehicle');
+            const singleCard = createPysCard(relatedProblems[0], 'vehicle', activeItem, () => {
+                // Si se eliminó el único problema, refrescar acordeón
+                renderPosiblesProblemasAccordion(container, activeItem, navOptions);
+            });
             singleCardContainer.appendChild(singleCard);
             contentWrapper.appendChild(singleCardContainer);
         } else {
@@ -2434,7 +2477,9 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             carouselTrack.className = "carousel-track";
 
             relatedProblems.forEach(p => {
-                const card = createPysCard(p, 'vehicle');
+                const card = createPysCard(p, 'vehicle', activeItem, () => {
+                    renderPosiblesProblemasAccordion(container, activeItem, navOptions);
+                });
                 carouselTrack.appendChild(card);
             });
             carouselContainer.appendChild(carouselTrack);
@@ -6499,16 +6544,39 @@ export function openPysDetailModal(item, navOptions = {}) {
 
     const title = document.createElement("h2");
     title.innerText = item.Problema;
-    title.style.margin = "0";
+    title.style.cssText = "margin: 0; font-size: 1.5rem; font-weight: bold; color: var(--text-color, #222);";
     headerDiv.appendChild(title);
+
+    const closePysModal = () => {
+        // Detener reproducción y limpiar reproductor de video de PyS al cerrar
+        const iframes = cont.querySelectorAll('iframe');
+        iframes.forEach(iframe => {
+            try {
+                if (iframe.contentWindow) {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+                }
+            } catch (e) {}
+            iframe.src = "";
+            iframe.remove();
+        });
+
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+        }
+    };
 
     const closeBtn = document.createElement("button");
     closeBtn.innerHTML = "&times;";
-    closeBtn.onclick = () => document.getElementById("modalDetalle").classList.remove("visible");
+    closeBtn.className = "info-close-btn";
+    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 4px;";
+    closeBtn.onclick = closePysModal;
     headerDiv.appendChild(closeBtn);
 
     cont.appendChild(headerDiv);
 
+    // 2. Imagen del problema (inmediatamente después del título)
     if (item.Imagen) {
         const img = document.createElement("img");
         img.className = 'img-vehiculo-modal img-pys-modal';
@@ -6516,34 +6584,60 @@ export function openPysDetailModal(item, navOptions = {}) {
         cont.appendChild(img);
     }
 
+    // Función auxiliar para renderizar encabezados estilizados con azul institucional
+    const createPysSectionBlock = (sectionTitle, textContent) => {
+        if (!textContent || !String(textContent).trim()) return null;
+        const block = document.createElement("div");
+        block.style.cssText = "margin-top: 14px;";
+
+        const secHeader = document.createElement("div");
+        secHeader.style.cssText = "font-size: 0.95rem; font-weight: bold; color: #007bff; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #007bff; padding-bottom: 4px; margin-bottom: 8px;";
+        secHeader.textContent = sectionTitle;
+        block.appendChild(secHeader);
+
+        const secContent = document.createElement("div");
+        secContent.style.cssText = "font-size: 0.95rem; line-height: 1.5; color: var(--text-color, #333);";
+        secContent.innerHTML = sanitizeHtmlContent(textContent);
+        block.appendChild(secContent);
+
+        return block;
+    };
+
+    // 3. Descripción del problema
+    const descBlock = createPysSectionBlock("Descripción", item.Descripcion);
+    if (descBlock) cont.appendChild(descBlock);
+
+    // 4. Solución del problema
+    const solBlock = createPysSectionBlock("Solución", item.Solucion);
+    if (solBlock) cont.appendChild(solBlock);
+
+    // 5. Cómo evitarlo (Prevención)
+    const prevBlock = createPysSectionBlock("Cómo evitarlo", item.Prevenir);
+    if (prevBlock) cont.appendChild(prevBlock);
+
+    // 6. Video del problema (al final del contenido)
     if (item.Video) {
         const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || (item.Video.includes("embed/") ? item.Video : null);
+        const videoBlock = document.createElement("div");
+        videoBlock.style.cssText = "margin-top: 16px;";
+
+        const videoHeader = document.createElement("div");
+        videoHeader.style.cssText = "font-size: 0.95rem; font-weight: bold; color: #007bff; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #007bff; padding-bottom: 4px; margin-bottom: 8px;";
+        videoHeader.textContent = "Video Guía";
+        videoBlock.appendChild(videoHeader);
+
         if (videoEmbedUrl) {
             const videoContainer = document.createElement('div');
-            videoContainer.style.margin = "10px 0 15px 0";
+            videoContainer.style.margin = "8px 0 12px 0";
             videoContainer.innerHTML = `<iframe width="100%" height="280" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px; border: none; display: block; max-width: 100%;"></iframe>`;
-            cont.appendChild(videoContainer);
+            videoBlock.appendChild(videoContainer);
         } else {
             const vid = document.createElement("p");
-            vid.innerHTML = '<strong>Vídeo:</strong> <a href="' + item.Video + '" target="_blank" rel="noopener noreferrer">Ver guía en YouTube</a>';
-            cont.appendChild(vid);
+            vid.style.margin = "6px 0";
+            vid.innerHTML = '<a href="' + item.Video + '" target="_blank" rel="noopener noreferrer" style="color:#007bff; font-weight:600; text-decoration:underline;">Ver guía en YouTube</a>';
+            videoBlock.appendChild(vid);
         }
-    }
-
-    const desc = document.createElement("p");
-    desc.innerHTML = "<strong>Descripción:</strong> " + sanitizeHtmlContent(item.Descripcion || "");
-    cont.appendChild(desc);
-
-    if (item.Solucion) {
-        const sol = document.createElement("p");
-        sol.innerHTML = "<strong>Solución:</strong> " + sanitizeHtmlContent(item.Solucion);
-        cont.appendChild(sol);
-    }
-
-    if (item.Prevenir) {
-        const prev = document.createElement("p");
-        prev.innerHTML = "<strong>Prevención:</strong> " + sanitizeHtmlContent(item.Prevenir);
-        cont.appendChild(prev);
+        cont.appendChild(videoBlock);
     }
 
     /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */
@@ -6568,9 +6662,43 @@ export function openPysDetailModal(item, navOptions = {}) {
         modelosAsociadosIds.forEach(vId => {
             const v = cortes.find(c => String(c.id) === String(vId));
             if (!v) return;
+
+            const cardWrapper = document.createElement("div");
+            cardWrapper.style.cssText = "position: relative; display: inline-block;";
+
             const card = crearCardVehiculo(v, true);
             card.onclick = () => mostrarDetalleModal(v, false, { originModal: 'pys' });
-            track.appendChild(card);
+            cardWrapper.appendChild(card);
+
+            if (canEditPys) {
+                const removeBtn = document.createElement("button");
+                removeBtn.title = "Eliminar relación con este modelo";
+                removeBtn.innerHTML = "&times;";
+                removeBtn.style.cssText = "position: absolute; top: 4px; right: 4px; background: rgba(220, 53, 69, 0.9); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.3);";
+                removeBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    if (!confirm(`¿Deseas desvincular el modelo "${v.marca} ${v.modelo}" de este problema?`)) return;
+                    removeBtn.disabled = true;
+                    try {
+                        const res = await routeAction('removeVehicleFromProblem', {
+                            problemId: item.id_problem,
+                            vehicleId: v.id,
+                            userRole
+                        });
+                        if (res && res.status === 'success') {
+                            item.modelosAsociados = res.modelosAsociados || item.modelosAsociados.filter(id => String(id) !== String(v.id));
+                            cardWrapper.remove();
+                            mostrarNotificacion("Relación retirada correctamente.", "success");
+                        }
+                    } catch(err) {
+                        showGlobalError("Error al retirar relación: " + err.message);
+                        removeBtn.disabled = false;
+                    }
+                };
+                cardWrapper.appendChild(removeBtn);
+            }
+
+            track.appendChild(cardWrapper);
         });
 
         if (canEditPys) {
@@ -6633,7 +6761,11 @@ export function openPysDetailModal(item, navOptions = {}) {
     }
 
     const modalDetalle = document.getElementById("modalDetalle");
+    modalDetalle.dataset.modalType = 'pys';
     modalDetalle.classList.add("visible");
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
 }
 
 
@@ -6844,6 +6976,11 @@ export function exportVehiclePrintSheet(item) {
     if (item.cableAlimen3 || item.imgCableAlimen3) {
         feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
     }
+
+    // Calcular densidad de contenido para ajuste dinámico de página
+    const totalItems = cuts.length + feeds.length + (item.apertura || item.imgApertura ? 1 : 0);
+    const isSingleOrLowDensity = totalItems <= 2;
+    const isHighDensity = totalItems >= 4;
 
     // 3. Generación de HTML de cortes con aviso de testigo al pie y distribución vertical (Requisitos 1.1, 2.2, 4.1, 5)
     const cutsHtml = cuts.map(c => {

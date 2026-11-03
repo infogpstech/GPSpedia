@@ -1674,3 +1674,64 @@ Componentes intervenidos: ui.js, Services/feedback.js, style.css
 - style.css:
   * Estilos de `.card-expanded` y `.card-compact` en ficha técnica.
 ================================================================================
+
+================================================================================
+CHANGELOG: ENDPOINT FEEDBACK ACTUALIZADO, VERSIÓN GLOBAL 2.2.5 Y DOCUMENTACIÓN README
+Fecha: 2026-11-03
+Componentes intervenidos: api-config.js, Services/Auth.js, README.md
+
+- api-config.js:
+  * Actualizado endpoint del microservicio FEEDBACK a: `https://script.google.com/macros/s/AKfycbwg-JDtqiVXYUzlZBD-_qd2eypSLxFmVfDTF1-Z_mfhGl_4b9SCudHI_NBlj-XGoCVmeQ/exec`.
+  * Elevada versión del módulo a 2.2.5.
+
+- Services/Auth.js:
+  * Elevada versión del componente a 2.2.5.
+
+- README.md:
+  * Elevada la versión global del producto a GPSpedia v2.2.5.
+  * Añadida la sección 6 con las funciones y mejoras desarrolladas desde el fork (subida a YouTube y aprobación en Inbox, módulo PyS ampliado, ficha técnica dinámica para impresión en una sola página y sincronización de límites a 700 caracteres).
+================================================================================
+
+================================================================================
+CHANGELOG: REVISIÓN III (FASE 1 - PYS MODAL, FICHA TÉCNICA Y RELACIONES)
+Fecha: 2026-11-03
+Componentes intervenidos: ui.js, main.js, Services/feedback.js, api-config.js
+
+- ui.js:
+  * Modal PyS (`openPysDetailModal`): reorganizada la estructura de elementos (Título -> Imagen -> Descripción -> Solución -> Cómo evitarlo -> Video).
+  * Video PyS: agregada limpieza física de `iframe` y envío de evento `stopVideo` en `closePysModal` para detener el audio/video al cerrar.
+  * Jerarquía visual en PyS: encabezados destacados en color azul institucional (`#007bff`) con bordes inferiores y separación clara del contenido.
+  * Ficha técnica (`exportVehiclePrintSheet`): declaradas variables de densidad de página `totalItems`, `isSingleOrLowDensity` e `isHighDensity` solucionando el fallo de ventana vacía `about:blank`.
+  * Relaciones PyS: agregado botón para desvincular vehículos asociados en modo desarrollador/supervisor.
+
+- main.js:
+  * Manejo de evento popstate/retroceso: detección de modal PyS (`dataset.modalType === 'pys'`) para limpieza completa y detención de vídeo al retroceder.
+
+- Services/feedback.js:
+  * Agregado handler `handleRemoveVehicleFromProblem` para remover de forma segura asociaciones de modelos de vehículos en la hoja `pys` validando roles autorizados.
+
+- api-config.js:
+  * Mapeada la acción `removeVehicleFromProblem` hacia el microservicio FEEDBACK.
+================================================================================
+
+================================================================================
+CHANGELOG: NUEVOS ENDPOINTS MICROSERVICIOS Y CHANGELOG FRONTEND V2.2.5
+Fecha: 2026-11-03
+Componentes intervenidos: api-config.js, index.html, ui.js
+
+- api-config.js:
+  * Actualizados endpoints en producción para AUTH, FEEDBACK y WRITE.
+
+- index.html:
+  * Desplegado el historial cronológico y equilibrado de versiones desde agosto 2026 en el modal de Registro de Cambios:
+    - v2.2.0: Búsqueda y registro por número de chasis (VIN).
+    - v2.2.1: Menú de ampliación técnica (+) en la ficha de detalle.
+    - v2.2.2: Secciones de Problemas y Soluciones y Tutoriales interactivos.
+    - v2.2.3: Vinculación bidireccional de incidencias y modelos vehiculares.
+    - v2.2.4: Subida de vídeos al canal oficial y flujo de revisión previa.
+    - v2.2.5 (Actual): Ficha técnica adaptativa a una página y mejoras de visualización.
+  * Omitidas herramientas exclusivas de desarrolladores y detalles internos de implementación.
+
+- ui.js:
+  * Subsanada duplicidad de declaración de `modalDetalle` en scope de `mostrarDetalleModal`.
+================================================================================

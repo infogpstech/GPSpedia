@@ -134,6 +134,9 @@ function doPost(e) {
             case 'addVehicleToProblem':
                 response = handleAddVehicleToProblem(payload);
                 break;
+            case 'removeVehicleFromProblem':
+                response = handleRemoveVehicleFromProblem(payload);
+                break;
             case 'suggestCutChange':
                 response = handleSuggestCutChange(payload);
                 break;
@@ -1055,6 +1058,46 @@ function handleAddVehicleToProblem(payload) {
     }
 
     return { status: 'success', message: 'Vehículo asociado al problema correctamente.', modelosAsociados: currentList };
+}
+
+/* TAREA 6: ELIMINAR RELACIÓN ENTRE PROBLEMA Y MODELO DE VEHÍCULO */
+function handleRemoveVehicleFromProblem(payload) {
+    const { problemId, vehicleId, userRole } = payload;
+    if (!problemId || !vehicleId) {
+        throw new Error("Se requieren problemId y vehicleId.");
+    }
+
+    const allowedRoles = ['Desarrollador', 'Gefe', 'Supervisor'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos suficientes para eliminar relaciones.");
+    }
+
+    const sheet = getSafeSheet("pys");
+    if (!sheet) throw new Error("Hoja pys no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+
+    const data = sheet.getRange(2, 1, lastRow - 1, Math.max(10, sheet.getLastColumn())).getValues();
+    let rowIndex = -1;
+    let currentRaw = "";
+
+    for (let i = 0; i < data.length; i++) {
+        if (String(data[i][0]) === String(problemId)) {
+            rowIndex = i + 2;
+            currentRaw = data[i][9] || "";
+            break;
+        }
+    }
+
+    if (rowIndex === -1) throw new Error("Problema no encontrado.");
+
+    let currentList = parseModelosAsociados(currentRaw);
+    currentList = currentList.filter(id => String(id) !== String(vehicleId));
+
+    sheet.getRange(rowIndex, 10).setValue(currentList.length > 0 ? JSON.stringify(currentList) : "");
+    SpreadsheetApp.flush();
+
+    return { status: 'success', message: 'Relación retirada con éxito.', modelosAsociados: currentList };
 }
 
 function handleClearActivityLogs(payload) {
