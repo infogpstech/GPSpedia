@@ -38,6 +38,14 @@ let originalItemBackup = null;
 let editedItemBuffer = null;
 let dropdownOptions = null;
 
+// Pila de navegación entre modales para prevención de bucles y restauración de contexto
+const modalNavStack = [];
+window.modalNavStack = modalNavStack;
+
+export function clearModalNavStack() {
+    modalNavStack.length = 0;
+}
+
 window.inEditMode = false;
 
 async function precargarDropdownOptions() {
@@ -1456,6 +1464,18 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         modalDetalle.dataset.modalType = 'corte';
     }
 
+    // Gestión contextual de pila de navegación anti-bucle
+    if (navOptions && navOptions.fromOriginModal) {
+        modalNavStack.push({
+            type: navOptions.fromOriginModal.type,
+            item: navOptions.fromOriginModal.item,
+            navOptions: navOptions.fromOriginModal.navOptions || {}
+        });
+    } else if (!isNavigation && (!navOptions || !navOptions.originModal)) {
+        // Apertura independiente desde catálogo o buscador: limpiar pila previa
+        modalNavStack.length = 0;
+    }
+
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
@@ -1567,6 +1587,15 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
         }
 
+        // Comprobar si hay un modal previo en la pila para retorno contextual
+        if (modalNavStack.length > 0) {
+            const prevContext = modalNavStack.pop();
+            if (prevContext && prevContext.type === 'pys') {
+                openPysDetailModal(prevContext.item, prevContext.navOptions || {});
+                return;
+            }
+        }
+
         // Restaurar foco a la barra de búsqueda al cerrar manualmente
         const searchInput = document.getElementById('searchInput');
         const isSearchActive = document.body.classList.contains('search-active');
@@ -1575,6 +1604,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             window.history.back();
         } else {
             document.getElementById("modalDetalle").classList.remove("visible");
+            modalNavStack.length = 0;
             // Si el historial no maneja el cierre, forzamos la restauración del foco aquí
             if (isSearchActive && searchInput) {
                 setTimeout(() => searchInput.focus(), 300);
@@ -2353,7 +2383,14 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
     card.setAttribute("data-problem-id", item.id_problem || item.id || "");
     card.style.animation = "none";
     card.style.opacity = "1";
-    card.onclick = () => openPysDetailModal(item, { originModal: originModal || 'vehicle' });
+    card.onclick = () => openPysDetailModal(item, {
+        originModal: originModal || 'vehicle',
+        fromOriginModal: vehicleToUnlink ? {
+            type: 'vehicle',
+            item: vehicleToUnlink,
+            navOptions: {}
+        } : null
+    });
 
     const img = document.createElement("img");
     img.className = "card-img-top";
@@ -3715,6 +3752,212 @@ ${elapsedSec}s
             selectedLogoFilename = null;
         }
     };
+
+    // 8. TAREA 2: Repositorio Histórico de Imágenes Reemplazadas y Auditoría de Google Drive
+    const viewReplacedBtn = document.getElementById('btn-admin-view-replaced-images');
+    if (viewReplacedBtn) {
+        viewReplacedBtn.onclick = () => openReplacedImagesModal();
+    }
+
+    const auditDriveBtn = document.getElementById('btn-admin-audit-drive-images');
+    if (auditDriveBtn) {
+        auditDriveBtn.onclick = () => openAuditDriveModal();
+    }
+}
+
+/**
+ * TAREA 2: Modal de Gestión y Recuperación de Imágenes Reemplazadas
+ */
+export async function openReplacedImagesModal() {
+    const modal = document.getElementById('replaced-images-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    const closeBtn = document.getElementById('close-replaced-images-modal');
+    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
+
+    const listContainer = document.getElementById('replaced-images-list-container');
+    const filterInput = document.getElementById('filter-replaced-images-input');
+    const refreshBtn = document.getElementById('btn-refresh-replaced-images');
+
+    let cachedReplaced = [];
+
+    const loadData = async () => {
+        listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Consultando imágenes históricas en Drive...</div>';
+        try {
+            const res = await routeAction('getReplacedImages');
+            cachedReplaced = (res && res.data) ? res.data : [];
+            renderList(filterInput ? filterInput.value : '');
+        } catch (err) {
+            listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error al cargar repositorio histórico: ${err.message}</div>`;
+        }
+    };
+
+    const renderList = (filterText = '') => {
+        listContainer.innerHTML = '';
+        const q = filterText.toLowerCase().trim();
+        const filtered = cachedReplaced.filter(item => {
+            if (!q) return true;
+            return (item.nombre_archivo || '').toLowerCase().includes(q) ||
+                   (item.referencia_texto || '').toLowerCase().includes(q) ||
+                   (item.campo || '').toLowerCase().includes(q) ||
+                   (item.archivo_drive_id || '').toLowerCase().includes(q) ||
+                   String(item.registro_id || '').toLowerCase().includes(q);
+        });
+
+        if (filtered.length === 0) {
+            listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron imágenes históricas reemplazadas.</div>';
+            return;
+        }
+
+        filtered.forEach(rep => {
+            const card = document.createElement('div');
+            card.style.cssText = "display: flex; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg);";
+
+            const img = document.createElement('img');
+            img.src = getImageUrl(rep.url_anterior, IMG_SIZE_SMALL);
+            img.style.cssText = "width: 70px; height: 70px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0; background: #fff;";
+
+            const info = document.createElement('div');
+            info.style.cssText = "flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem;";
+            info.innerHTML = `
+                <div style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rep.referencia_texto || 'Registro ' + rep.registro_id}</div>
+                <div style="font-size: 0.8rem; color: var(--text-disabled);"><strong>Archivo:</strong> ${rep.nombre_archivo} | <strong>Campo:</strong> ${rep.campo}</div>
+                <div style="font-size: 0.75rem; color: var(--text-disabled);"><strong>ID Drive:</strong> <code>${rep.archivo_drive_id}</code> | <strong>Fecha:</strong> ${rep.fecha_reemplazo}</div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : (rep.estado === 'eliminada' ? '#dc3545' : '#007bff')};">Estado: ${rep.estado}</div>
+            `;
+
+            const btnContainer = document.createElement('div');
+            btnContainer.style.cssText = "display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;";
+
+            if (rep.estado !== 'eliminada') {
+                const recoverBtn = document.createElement('button');
+                recoverBtn.className = "btn btn-primary";
+                recoverBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; white-space: nowrap;";
+                recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
+                recoverBtn.onclick = async () => {
+                    if (!confirm(`¿Restablecer esta imagen histórica como activa para ${rep.referencia_texto || rep.registro_id}? La versión actual pasará al historial.`)) return;
+                    recoverBtn.disabled = true;
+                    recoverBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    try {
+                        const recRes = await routeAction('recoverReplacedImage', { id_reemplazo: rep.id_reemplazo });
+                        if (recRes && recRes.status === 'success') {
+                            mostrarNotificacion("Imagen histórica restablecida con éxito.", "success");
+                            loadData();
+                        }
+                    } catch (e) {
+                        alert("Error al recuperar imagen: " + e.message);
+                        recoverBtn.disabled = false;
+                        recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
+                    }
+                };
+                btnContainer.appendChild(recoverBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = "btn btn-danger";
+                deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
+                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
+                deleteBtn.onclick = async () => {
+                    if (!confirm(`¿Estás seguro de que deseas ELIMINAR permanentemente esta imagen histórica de Google Drive? Esta acción no se puede deshacer.`)) return;
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    try {
+                        const delRes = await routeAction('deleteReplacedImage', { id_reemplazo: rep.id_reemplazo });
+                        if (delRes && delRes.status === 'success') {
+                            mostrarNotificacion("Imagen eliminada de forma segura.", "success");
+                            loadData();
+                        }
+                    } catch (e) {
+                        alert("Eliminación bloqueada: " + e.message);
+                        deleteBtn.disabled = false;
+                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
+                    }
+                };
+                btnContainer.appendChild(deleteBtn);
+            }
+
+            card.appendChild(img);
+            card.appendChild(info);
+            card.appendChild(btnContainer);
+            listContainer.appendChild(card);
+        });
+    };
+
+    if (filterInput) filterInput.oninput = () => renderList(filterInput.value);
+    if (refreshBtn) refreshBtn.onclick = () => loadData();
+
+    loadData();
+}
+
+/**
+ * TAREA 2: Modal de Auditoría de Imágenes en Google Drive (Árbol 'Cortes')
+ */
+export async function openAuditDriveModal() {
+    const modal = document.getElementById('audit-drive-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    const closeBtn = document.getElementById('close-audit-drive-modal');
+    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
+
+    const summaryEl = document.getElementById('audit-drive-summary');
+    const container = document.getElementById('audit-drive-results-container');
+
+    summaryEl.innerHTML = 'Iniciando exploración recursiva del árbol «Cortes»...';
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol en Google Drive...</div>';
+
+    try {
+        const res = await routeAction('auditDriveImagesInCortes');
+        if (res && res.status === 'success') {
+            const files = res.files || [];
+            const inUseCount = files.filter(f => f.classification === 'En uso').length;
+            const histCount = files.filter(f => f.classification === 'Histórica').length;
+            const unusedCount = files.filter(f => f.classification === 'Sin uso detectado').length;
+            const unverifiedCount = files.filter(f => f.classification === 'No verificable').length;
+
+            summaryEl.innerHTML = `
+                <div style="background: var(--card-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; gap: 15px; flex-wrap: wrap;">
+                    <span>📁 <strong>Carpeta Raíz:</strong> ${res.rootFolderName} (<code>${res.rootFolderId}</code>)</span>
+                    <span>📊 <strong>Total Analizados:</strong> ${res.totalAnalyzed}</span>
+                    <span style="color:#28a745;">✅ <strong>En uso:</strong> ${inUseCount}</span>
+                    <span style="color:#007bff;">🕒 <strong>Históricas:</strong> ${histCount}</span>
+                    <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> ${unusedCount}</span>
+                    <span style="color:#dc3545;">❓ <strong>No verificables:</strong> ${unverifiedCount}</span>
+                </div>
+            `;
+
+            container.innerHTML = '';
+            if (files.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron archivos en la carpeta analizada.</div>';
+                return;
+            }
+
+            files.forEach(f => {
+                const row = document.createElement('div');
+                row.style.cssText = "display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.8rem; background: var(--card-bg);";
+
+                let badgeColor = "#28a745";
+                if (f.classification === 'Histórica') badgeColor = "#007bff";
+                else if (f.classification === 'Sin uso detectado') badgeColor = "#e0a800";
+                else if (f.classification === 'No verificable') badgeColor = "#dc3545";
+
+                row.innerHTML = `
+                    <div style="min-width:0; flex:1;">
+                        <div style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${f.fileName}</div>
+                        <div style="font-size:0.75rem; color:var(--text-disabled);">${f.folderPath} | ${(f.size / 1024).toFixed(1)} KB | ${f.lastUpdated}</div>
+                    </div>
+                    <span style="background:${badgeColor}; color:white; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;">
+                        ${f.classification}
+                    </span>
+                `;
+                container.appendChild(row);
+            });
+        } else {
+            container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error: ${res ? res.message : 'Error desconocido'}</div>`;
+        }
+    } catch (err) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Excepción en auditoría: ${err.message}</div>`;
+    }
 }
 
 export const openAboutUs = setupModal('about-us-modal', () => {
@@ -6685,6 +6928,24 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
+    const modalDetalle = document.getElementById("modalDetalle");
+    if (modalDetalle) {
+        modalDetalle.dataset.modalType = 'pys';
+        modalDetalle.classList.add("visible");
+    }
+
+    // Gestión contextual de pila de navegación anti-bucle
+    if (navOptions && navOptions.fromOriginModal) {
+        modalNavStack.push({
+            type: navOptions.fromOriginModal.type,
+            item: navOptions.fromOriginModal.item,
+            navOptions: navOptions.fromOriginModal.navOptions || {}
+        });
+    } else if (!inEditModePys && (!navOptions || !navOptions.originModal)) {
+        // Apertura independiente: limpiar pila previa
+        modalNavStack.length = 0;
+    }
+
     const sessionData = localStorage.getItem('gpsepedia_session');
     const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
     const isDeveloper = userRole === 'Desarrollador';
@@ -6747,10 +7008,20 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
             iframe.remove();
         });
 
+        // Comprobar si hay un modal previo en la pila para retorno contextual
+        if (modalNavStack.length > 0) {
+            const prevContext = modalNavStack.pop();
+            if (prevContext && prevContext.type === 'vehicle') {
+                mostrarDetalleModal(prevContext.item, false, prevContext.navOptions || {});
+                return;
+            }
+        }
+
         if (window.history && window.history.state && window.history.state.modalOpen) {
             window.history.back();
         } else {
             document.getElementById("modalDetalle").classList.remove("visible");
+            modalNavStack.length = 0;
         }
     };
 
@@ -6975,7 +7246,14 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
             cardWrapper.style.cssText = "position: relative; display: inline-block;";
 
             const card = crearCardVehiculo(v, true);
-            card.onclick = () => mostrarDetalleModal(v, false, { originModal: 'pys' });
+            card.onclick = () => mostrarDetalleModal(v, false, {
+                originModal: 'pys',
+                fromOriginModal: {
+                    type: 'pys',
+                    item: item,
+                    navOptions: navOptions || {}
+                }
+            });
             cardWrapper.appendChild(card);
 
             if (canEditPys) {
@@ -7068,9 +7346,10 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
         cont.appendChild(addPrevBtn);
     }
 
-    const modalDetalle = document.getElementById("modalDetalle");
-    modalDetalle.dataset.modalType = 'pys';
-    modalDetalle.classList.add("visible");
+    if (modalDetalle) {
+        modalDetalle.dataset.modalType = 'pys';
+        modalDetalle.classList.add("visible");
+    }
     if (window.history && window.history.pushState) {
         window.history.pushState({ modalOpen: true }, '');
     }

@@ -1792,3 +1792,30 @@ Fecha: 2026-11-03
   * `openPysDetailModal`: Sustituidos estilos en línea con borde discontinuo (`2px dashed var(--accent-color)`) por la clase `.card.card-create-vehicle-assoc` en la tarjeta `addCard` del carrusel de modelos asociados.
   * `renderPosiblesProblemasAccordion`: Estandarizada la tarjeta de adición/vinculación de problemas (`.card.card-create-pys-assoc`) sin bordes discontinuos, tanto para problema único como para el carrusel de problemas relacionados.
 ================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: NAVEGACIÓN ANTI-BUCLE Y GESTIÓN DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-03
+
+- ui.js:
+  * Integrada `modalNavStack` para registrar el contexto previo entre modales (`mostrarDetalleModal` y `openPysDetailModal`).
+  * En `mostrarDetalleModal`, si se proviene de PyS (`originModal: 'pys'`), se omite completamente el renderizado del acordeón `renderPosiblesProblemasAccordion`. Al cerrar, se retorna automáticamente al problema de origen si existe en la pila.
+  * En `openPysDetailModal`, si se proviene de un vehículo (`originModal: 'vehicle'`), se omite completamente el carrusel de vehículos relacionados y el botón "+ Agregar Modelo". Al cerrar, se retorna automáticamente al vehículo de origen.
+  * En aperturas directas o independientes, se reinicia la pila y se muestran todas las relaciones normalmente.
+  * Desarrolladas las funciones administrativas `openReplacedImagesModal` y `openAuditDriveModal` con renderizado de listas, filtros, vista previa, restablecimiento y auditoría.
+
+- main.js:
+  * En el listener de `popstate` para el modal de detalles, se comprueba `window.modalNavStack` para retornar al modal de origen antes de cerrar completamente el contenedor si existe contexto previo.
+
+- Services/admin.js:
+  * Incorporada la constante `SHEET_NAMES.IMAGENES_REEMPLAZADAS = "Imagenes_Reemplazadas"`.
+  * En `handleUploadAdminImage`, se agrega invocación a `recordReplacedImage` para archivar la imagen previa automáticamente en la hoja dedicada antes de escribir la nueva URL.
+  * Implementados los handlers `handleGetReplacedImages`, `handleRecoverReplacedImage`, `handleDeleteReplacedImage` y `handleAuditDriveImagesInCortes`.
+  * La auditoría física de Drive queda acotada de forma recursiva y exclusiva al árbol de `DRIVE_FOLDER_ID` ('Cortes').
+
+- api-config.js:
+  * Mapeadas las nuevas acciones administrativas `getReplacedImages`, `recoverReplacedImage`, `deleteReplacedImage` y `auditDriveImagesInCortes` hacia el microservicio `ADMIN`.
+
+- index.html:
+  * Incorporados los botones y modales `#replaced-images-modal` y `#audit-drive-modal` dentro de `#dev-tools-modal`.
+================================================================================

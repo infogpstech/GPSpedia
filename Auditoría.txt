@@ -1319,3 +1319,34 @@ Riesgos y mitigaciones:
 - Riesgo de inconsistencia visual en modo oscuro: mitigado asignando variables CSS nativas (`var(--card-bg)`, `var(--accent-color)` y `border: 1px solid rgba(255, 255, 255, 0.05)` en dark mode).
 - Respaldos creados: `style.css.bak` y `ui.js.bak`.
 ================================================================================
+
+================================================================================
+AUDITORÍA: NAVEGACIÓN ANTI-BUCLE ENTRE MODALES Y GESTIÓN DE IMÁGENES REEMPLAZADAS EN DRIVE
+Fecha: 2026-11-03
+Archivos involucrados: ui.js, main.js, Services/admin.js, api-config.js, index.html
+
+Diagnóstico y Hallazgos:
+1. Navegación Anti-Bucle entre Modales de Vehículo y PyS:
+   - Diagnóstico: Al transitar bidireccionalmente entre el carrusel de problemas en el vehículo y el carrusel de modelos en el problema, el usuario podía generar ciclos infinitos si ambos componentes se mantenían activos.
+   - Solución implementada:
+     * Se integró `modalNavStack` para registrar el origen (`vehicle` o `pys`) y el contexto completo.
+     * Al abrir un problema desde un vehículo (`originModal === 'vehicle'`), se oculta completamente el carrusel de vehículos relacionados y el botón "+ Agregar Modelo".
+     * Al abrir un vehículo desde un problema (`originModal === 'pys'`), se oculta completamente el acordeón de problemas relacionados (`renderPosiblesProblemasAccordion`).
+     * Al presionar cerrar (botón 'X', Escape o botón atrás en historial), se comprueba la pila y se retorna limpiamente al modal de origen sin bucles.
+     * En aperturas directas o búsquedas independientes, la pila se inicializa vacía y los carruseles/acordeones se muestran normalmente.
+
+2. Gestión de Imágenes Reemplazadas en Google Drive:
+   - Diagnóstico: Al editar imágenes in-modal, la imagen anterior se conservaba en Google Drive pero no existía registro histórico ni herramienta para visualizarla o recuperarla.
+   - Solución implementada:
+     * En `Services/admin.js`, se implementó `recordReplacedImage` que almacena automáticamente cada imagen reemplazada en la hoja dedicada `Imagenes_Reemplazadas` (id, fecha, tipoContenido, registroId, campo, driveId, nombreArchivo, urlAnterior, sustituidaPorUrl, estado).
+     * Se incorporaron los handlers administrativos:
+       - `handleGetReplacedImages`: Lista el repositorio histórico con metadatos.
+       - `handleRecoverReplacedImage`: Restablece la versión histórica en el catálogo `Cortes` e intercambia la versión activa anterior en el historial para permitir alternar versiones.
+       - `handleDeleteReplacedImage`: Valida estrictamente que el archivo no esté activo en ninguna fila de la Spreadsheet antes de enviarlo a la papelera de Drive.
+       - `handleAuditDriveImagesInCortes`: Exploración recursiva limitada de forma estricta al árbol de la carpeta principal `Cortes` (`DRIVE_FOLDER_ID`), clasificando archivos en En uso, Histórica, Sin uso detectado y No verificable.
+     * En `index.html` y `ui.js`, se añadieron los modales administrativos `#replaced-images-modal` y `#audit-drive-modal` integrados en `#dev-tools-modal` exclusivos para el rol Desarrollador.
+
+Riesgos y mitigaciones:
+- Riesgo de exploración descontrolada en Google Drive: mitigado restringiendo la búsqueda en código exclusivamente al ID `1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2` (carpeta "Cortes") y sus subcarpetas.
+- Respaldos creados: `ui.js.bak`, `main.js.bak`, `Services/admin.js.bak`, `api-config.js.bak`, `index.html.bak`.
+================================================================================

@@ -2122,8 +2122,17 @@ BLOQUE 8: SISTEMA DE SUBIDA DIRECTA DE VÍDEOS A YOUTUBE DESDE GPSPEDIA CON APRO
 
 ---
 
-### REVISIÓN III - FASE 3: Gestión de imágenes reemplazadas (Historial, Papelera y Auditoría de Google Drive) [ ]
-- **Requisitos obligatorios:**
-  1. Al reemplazar imágenes desde la edición in-modal, conservar la imagen anterior y registrarla en hoja dedicada de historial de imágenes reemplazadas.
-  2. Interfaz administrativa en modo desarrollador para consultar historial, restaurar imágenes o eliminarlas definitivamente.
-  3. Herramienta de auditoría para explorar Google Drive y clasificar imágenes en uso, históricas, sin uso detectado y no verificadas con eliminación segura.
+### REVISIÓN III - FASE 3: Gestión de imágenes reemplazadas (Historial, Papelera y Auditoría de Google Drive) [X]
+- **Requisitos obligatorios cumplidos:**
+  1. Al reemplazar imágenes desde la edición in-modal, conservar la imagen anterior y registrarla en la hoja dedicada de la spreadsheet ('Imagenes_Reemplazadas').
+  2. Interfaz administrativa en modo desarrollador (#replaced-images-modal) para consultar historial, previsualizar, restaurar imágenes intercambiando versión activa o eliminarlas definitivamente con validación de no-uso.
+  3. Herramienta de auditoría para explorar Google Drive (#audit-drive-modal) restringida estrictamente al árbol de la carpeta «Cortes» y clasificar imágenes en: En uso, Histórica, Sin uso detectado y No verificable.
+
+---
+
+### REVISIÓN VI: Corrección de navegación entre modales para evitar bucles infinitos y retorno contextual [X]
+- **Requisitos obligatorios cumplidos:**
+  1. Ocultamiento total del carrusel de vehículos relacionados al abrir un problema desde el modal de un vehículo.
+  2. Ocultamiento total del acordeón de problemas relacionados al abrir un vehículo desde el modal de un problema, permitiendo su visualización normal en aperturas independientes.
+  3. Pila de navegación contextual (modalNavStack) para retornar automáticamente al modal y estado de origen al cerrar sin ciclos infinitos.
+  4. Limpieza determinista de la pila al cerrar completamente todos los modales.

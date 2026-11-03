@@ -321,8 +321,52 @@
                         <span id="selected-logo-file-name" style="font-size: 0.8em; color: var(--text-disabled); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP</span>
                         <button id="btn-admin-register-logo" class="btn btn-primary" style="font-size: 0.85em; padding: 8px;"><i class="fa-solid fa-upload"></i> Subir y Registrar Logotipo</button>
                     </div>
+
+                    <!-- Tarea 2: Gestión y Recuperación de Imágenes Reemplazadas y Auditoría de Google Drive -->
+                    <div class="dev-card" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px;">
+                        <strong style="font-size: 0.9rem;"><i class="fa-solid fa-clock-rotate-left"></i> Imágenes Reemplazadas y Auditoría Drive</strong>
+                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                            <button type="button" id="btn-admin-view-replaced-images" class="btn btn-primary" style="flex: 1; font-size: 0.8em; padding: 8px;"><i class="fa-solid fa-images"></i> Consultar Repositorio Histórico</button>
+                            <button type="button" id="btn-admin-audit-drive-images" class="btn btn-secondary" style="flex: 1; font-size: 0.8em; padding: 8px;"><i class="fa-brands fa-google-drive"></i> Auditar Árbol «Cortes»</button>
+                        </div>
+                    </div>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE GESTIÓN Y RECUPERACIÓN DE IMÁGENES REEMPLAZADAS (TAREA 2) -->
+<div id="replaced-images-modal" class="info-modal" style="display: none; z-index: 2600;">
+    <div class="info-modal-content" style="max-width: 900px; width: 95%;">
+        <span class="info-close-btn" id="close-replaced-images-modal">&times;</span>
+        <h2><i class="fa-solid fa-clock-rotate-left"></i> Repositorio Histórico de Imágenes Reemplazadas</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
+            Consulta, visualiza, recupera o elimina permanentemente versiones anteriores de imágenes sustituidas en Google Drive.
+        </p>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
+            <input type="text" id="filter-replaced-images-input" placeholder="Filtrar por vehículo, ID o archivo..." class="dev-input" style="flex: 1; min-width: 200px; padding: 6px 10px;">
+            <button id="btn-refresh-replaced-images" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85em;"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
+        </div>
+
+        <div id="replaced-images-list-container" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
+            <div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Cargando imágenes históricas...</div>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL DE AUDITORÍA DE ARCHIVOS EN CARPETA CORTES (TAREA 2) -->
+<div id="audit-drive-modal" class="info-modal" style="display: none; z-index: 2600;">
+    <div class="info-modal-content" style="max-width: 900px; width: 95%;">
+        <span class="info-close-btn" id="close-audit-drive-modal">&times;</span>
+        <h2><i class="fa-brands fa-google-drive"></i> Auditoría de Imágenes en Carpeta «Cortes»</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
+            Exploración recursiva limitada estrictamente al árbol de la carpeta principal «Cortes».
+        </p>
+        <div id="audit-drive-summary" style="margin-bottom: 10px; font-size: 0.85rem; font-weight: 600;"></div>
+        <div id="audit-drive-results-container" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px;">
+            <div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol de Drive...</div>
         </div>
     </div>
 </div>
