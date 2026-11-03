@@ -10,9 +10,9 @@ export const API_ENDPOINTS = {
     CATALOG:  "https://script.google.com/macros/s/AKfycbxtqkdUfXAEmbPz7zfE4kZCie8sql4SM43kxkBw__5iGwXVyzzYsIFG5jpWkQc7-Ug9/exec",
     WRITE:    "https://script.google.com/macros/s/AKfycbwsRkcK8-q8hiOpaUNrU1e79WD2SH87MsZkfaFU3S19ayAC9ZMhxDuZUv0cx9iaW7cPlw/exec",
     USERS:    "https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbyUubPzGG2SW8oKHS3Q4vHj3zUx9_FtSmtkCM08LYk8UvBj1BiCw69fJ4X3FE7A80uZjA/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbxT_3TopgtXNgRHGyNroU7zi_hyixxFEU-0r-QgfiSifyOkFMjeILL5Rgeq_WLJ7Dm2SQ/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec",
-    ADMIN: "https://script.google.com/macros/s/AKfycbxLOwWXYmNXXG8X0FoRSs3Q3baKxDE66a7NGJ9KMqjt-SIh9oFBU9dZEo-MAPsVtZLKcA/exec"
+    ADMIN: "https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec"
 };
 
 export const ACTION_TO_SERVICE_MAP = {
