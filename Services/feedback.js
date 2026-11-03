@@ -855,7 +855,7 @@ function handleAddProblem(payload) {
     if (descripcion.length > 700) throw new Error("La descripcion no puede superar 700 caracteres.");
     if (!sinSolucion && !solucion) throw new Error("Debe proporcionar una solucion si no marca 'Sin solucion'.");
     if (solucion && solucion.length > 700) throw new Error("La solucion no puede superar 700 caracteres.");
-    if (prevenir && prevenir.length > 100) throw new Error("La prevencion no puede superar 100 caracteres.");
+    if (prevenir && prevenir.length > 700) throw new Error("La prevencion no puede superar 700 caracteres.");
     if (videoUrl && !videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be")) {
         throw new Error("El enlace del vídeo debe ser una URL válida de YouTube.");
     }
@@ -938,7 +938,7 @@ function handleAddSolution(payload) {
 function handleAddPrevention(payload) {
     const { problemId, prevenir } = payload;
     if (!problemId || !prevenir) throw new Error("problemId y prevenir son requeridos.");
-    if (prevenir.length > 100) throw new Error("La prevencion no puede superar 100 caracteres.");
+    if (prevenir.length > 700) throw new Error("La prevencion no puede superar 700 caracteres.");
 
     const sheet = getSafeSheet("pys");
     if (!sheet) throw new Error("Hoja pys no encontrada.");

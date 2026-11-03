@@ -2067,3 +2067,15 @@ BLOQUE 8: SISTEMA DE SUBIDA DIRECTA DE VÍDEOS A YOUTUBE DESDE GPSPEDIA CON APRO
   2. En `openAddTutorialModal` (Tutoriales), permitir subir vídeo directamente con propuesta de título basada en el tema del tutorial y descripción basada en el detalle.
   3. Reutilizar el mismo componente unificado de subida, barra de progreso y sistema de aprobación en Inbox.
 ===================================================================
+
+---
+
+### REVISIÓN II: Correcciones de ficha técnica para impresión, límites de caracteres y funcionamiento del modal de Problemas y Soluciones [X]
+- **Requisitos obligatorios cumplidos:**
+  1. Optimización del diseño de la ficha técnica de cortes para impresión en una sola página Carta vertical con densidad visual dinámica adaptativa según número de elementos.
+  2. Ajuste del límite de caracteres del campo «Solución» a 700 caracteres tanto en frontend como en validación de backend.
+  3. Corrección del campo «Prevención» a 700 caracteres en frontend (`<textarea maxlength="700">`) y backend (`handleAddProblem` y `handleAddPrevention`).
+  4. Reproductor embebido de YouTube en modal de problemas y soluciones y tutoriales sin desbordamientos.
+  5. Ajuste de tamaño de imagen en modal de problemas para coincidir exactamente con el tamaño del modelo del vehículo.
+  6. Comportamiento coordinado del acordeón «Posibles problemas» cerrando acordeones técnicos al abrirse y viceversa.
+  7. Supresión contextual anti-ciclos (`originModal === 'pys'`) al navegar entre problemas y vehículos.

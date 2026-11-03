@@ -2415,8 +2415,9 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
 
         const panel = document.createElement("div");
         panel.className = "panel-desplegable";
-        panel.style.display = "none";
-        panel.style.padding = "15px 10px";
+
+        const contentWrapper = document.createElement("div");
+        contentWrapper.style.padding = "15px 10px";
 
         if (relatedProblems.length === 1) {
             // REQUISITO: Si existe un solo problema, mostrar su tarjeta
@@ -2424,7 +2425,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; width: 100%;";
             const singleCard = createPysCard(relatedProblems[0], 'vehicle');
             singleCardContainer.appendChild(singleCard);
-            panel.appendChild(singleCardContainer);
+            contentWrapper.appendChild(singleCardContainer);
         } else {
             // REQUISITO: Si existen varios problemas, mostrarlos mediante un carrusel navegable
             const carouselContainer = document.createElement("div");
@@ -2473,25 +2474,42 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             window.addEventListener("resize", () => setTimeout(updateCarouselButtons, 100));
             setTimeout(updateCarouselButtons, 200);
 
-            panel.appendChild(carouselContainer);
+            contentWrapper.appendChild(carouselContainer);
         }
 
-        btn.onclick = () => {
-            const isOpening = panel.style.display === "none";
-            panel.style.display = isOpening ? "block" : "none";
-            btn.classList.toggle("active", isOpening);
-            const arrow = btn.querySelector(".accordion-arrow");
-            if (arrow) arrow.textContent = isOpening ? "▲" : "▼";
+        panel.appendChild(contentWrapper);
 
-            if (isOpening && relatedProblems.length > 1) {
-                const track = panel.querySelector(".carousel-track");
-                const prev = panel.querySelector(".carousel-btn.prev");
-                const next = panel.querySelector(".carousel-btn.next");
-                if (track && prev && next) {
-                    const scrollLeft = track.scrollLeft;
-                    const maxScrollLeft = track.scrollWidth - track.clientWidth;
-                    prev.style.display = scrollLeft > 2 ? "flex" : "none";
-                    next.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+        btn.onclick = () => {
+            const isActive = btn.classList.contains("active");
+
+            // Cerrar coordinadamente todos los demás acordeones del modal
+            const allModalButtons = container.querySelectorAll(".accordion-btn");
+            allModalButtons.forEach(otherBtn => {
+                otherBtn.classList.remove("active");
+                const otherArrow = otherBtn.querySelector(".accordion-arrow");
+                if (otherArrow) otherArrow.textContent = "▼";
+                const otherPanel = otherBtn.nextElementSibling;
+                if (otherPanel && otherPanel.classList.contains("panel-desplegable")) {
+                    otherPanel.style.maxHeight = null;
+                }
+            });
+
+            if (!isActive) {
+                btn.classList.add("active");
+                const arrow = btn.querySelector(".accordion-arrow");
+                if (arrow) arrow.textContent = "▲";
+                panel.style.maxHeight = panel.scrollHeight + "px";
+
+                if (relatedProblems.length > 1) {
+                    const track = panel.querySelector(".carousel-track");
+                    const prev = panel.querySelector(".carousel-btn.prev");
+                    const next = panel.querySelector(".carousel-btn.next");
+                    if (track && prev && next) {
+                        const scrollLeft = track.scrollLeft;
+                        const maxScrollLeft = track.scrollWidth - track.clientWidth;
+                        prev.style.display = scrollLeft > 2 ? "flex" : "none";
+                        next.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+                    }
                 }
             }
         };
@@ -3992,7 +4010,7 @@ function getYouTubeEmbedUrl(url) {
     return null;
 }
 
-function createAccordionSection(container, title, sec, isOpen = false, datosRelay = [], vehicleId = null) {
+export function createAccordionSection(container, title, sec, isOpen = false, datosRelay = [], vehicleId = null) {
     const btn = document.createElement("button");
     btn.className = "accordion-btn";
     btn.innerHTML = `${title} <span class="accordion-arrow">▼</span>`;
@@ -4284,7 +4302,12 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
         const allButtons = container.querySelectorAll(".accordion-btn");
         allButtons.forEach(otherBtn => {
             otherBtn.classList.remove("active");
-            otherBtn.nextElementSibling.style.maxHeight = null;
+            const otherArrow = otherBtn.querySelector(".accordion-arrow");
+            if (otherArrow) otherArrow.textContent = "▼";
+            const otherPanel = otherBtn.nextElementSibling;
+            if (otherPanel && otherPanel.classList.contains("panel-desplegable")) {
+                otherPanel.style.maxHeight = null;
+            }
         });
 
         // Si el botón no estaba activo, ábrelo.
@@ -6137,8 +6160,8 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
                 <textarea id="pys-solucion" maxlength="700" rows="4" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
-                <label>Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
-                <input type="text" id="pys-prevenir" maxlength="100" placeholder="Recomendación preventiva...">
+                <label>Cómo Prevenir (Opcional, Máx 700 caracteres)</label>
+                <textarea id="pys-prevenir" maxlength="700" rows="3" placeholder="Recomendación preventiva..."></textarea>
             </div>
             <div class="form-group">
                 <label>Vídeo Explicativo de YouTube (Opcional)</label>
@@ -6488,9 +6511,23 @@ export function openPysDetailModal(item, navOptions = {}) {
 
     if (item.Imagen) {
         const img = document.createElement("img");
-        img.src = item.Imagen;
-        img.style.cssText = "width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;";
+        img.className = 'img-vehiculo-modal img-pys-modal';
+        setOptimizedImage(img, item.Imagen, IMG_SIZE_MEDIUM);
         cont.appendChild(img);
+    }
+
+    if (item.Video) {
+        const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || (item.Video.includes("embed/") ? item.Video : null);
+        if (videoEmbedUrl) {
+            const videoContainer = document.createElement('div');
+            videoContainer.style.margin = "10px 0 15px 0";
+            videoContainer.innerHTML = `<iframe width="100%" height="280" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px; border: none; display: block; max-width: 100%;"></iframe>`;
+            cont.appendChild(videoContainer);
+        } else {
+            const vid = document.createElement("p");
+            vid.innerHTML = '<strong>Vídeo:</strong> <a href="' + item.Video + '" target="_blank" rel="noopener noreferrer">Ver guía en YouTube</a>';
+            cont.appendChild(vid);
+        }
     }
 
     const desc = document.createElement("p");
@@ -6507,12 +6544,6 @@ export function openPysDetailModal(item, navOptions = {}) {
         const prev = document.createElement("p");
         prev.innerHTML = "<strong>Prevención:</strong> " + sanitizeHtmlContent(item.Prevenir);
         cont.appendChild(prev);
-    }
-
-    if (item.Video) {
-        const vid = document.createElement("p");
-        vid.innerHTML = '<strong>Vídeo:</strong> <a href="' + item.Video + '" target="_blank">Ver guía en YouTube</a>';
-        cont.appendChild(vid);
     }
 
     /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */
@@ -6571,7 +6602,7 @@ export function openPysDetailModal(item, navOptions = {}) {
         addSolBtn.className = "btn btn-secondary";
         addSolBtn.innerText = "+ Agregar Solución";
         addSolBtn.onclick = () => {
-            const solText = window.prompt("Introduce la solución a este problema (máx 200 caracteres):");
+            const solText = window.prompt("Introduce la solución a este problema (máx 700 caracteres):");
             if (solText && solText.trim()) {
                 routeAction("addSolution", { problemId: item.id_problem, solucion: solText.trim() }).then(() => {
                     alert("Solución agregada con éxito.");
@@ -6818,7 +6849,7 @@ export function exportVehiclePrintSheet(item) {
     const cutsHtml = cuts.map(c => {
         const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
         return `
-        <div class="tech-item-card">
+        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
             <div class="tech-item-header">Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
@@ -6843,7 +6874,7 @@ export function exportVehiclePrintSheet(item) {
     const feedsHtml = feeds.map(f => {
         const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
         return `
-        <div class="tech-item-card">
+        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
             <div class="tech-item-header">${f.title}</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
@@ -6865,7 +6896,7 @@ export function exportVehiclePrintSheet(item) {
 
     // 6. Apertura de puertas
     const aperturaHtml = (item.apertura || item.imgApertura) ? `
-        <div class="tech-item-card">
+        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
             <div class="tech-item-header">Apertura de Puertas / Seguros</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
@@ -7054,38 +7085,62 @@ export function exportVehiclePrintSheet(item) {
                     border: 1px solid #dcdcdc;
                     border-radius: 6px;
                     background: #fafafa;
-                    padding: 12px 16px;
+                    padding: 10px 14px;
                     page-break-inside: avoid;
+                }
+                .tech-item-card.card-expanded {
+                    padding: 14px 18px;
+                }
+                .tech-item-card.card-compact {
+                    padding: 6px 10px;
                 }
                 .tech-item-header {
                     font-weight: bold;
                     color: #0056b3;
                     font-size: 13px;
-                    margin-bottom: 8px;
+                    margin-bottom: 6px;
                     border-bottom: 1px dashed #e0e0e0;
-                    padding-bottom: 4px;
+                    padding-bottom: 3px;
+                }
+                .card-compact .tech-item-header {
+                    font-size: 12px;
+                    margin-bottom: 4px;
+                    padding-bottom: 2px;
                 }
                 .tech-item-body {
                     display: flex;
                     justify-content: space-between;
                     align-items: flex-start;
-                    gap: 20px;
+                    gap: 16px;
                 }
                 .tech-item-info {
                     flex: 1;
                 }
                 .tech-item-info p {
-                    margin: 4px 0;
+                    margin: 3px 0;
                     font-size: 12px;
-                    line-height: 1.35;
+                    line-height: 1.3;
+                }
+                .card-compact .tech-item-info p {
+                    margin: 2px 0;
+                    font-size: 11px;
+                    line-height: 1.2;
                 }
                 .tech-item-img-wrapper {
-                    max-width: 280px;
+                    max-width: 290px;
                     max-height: 165px;
                     flex-shrink: 0;
                     display: flex;
                     align-items: center;
                     justify-content: center;
+                }
+                .card-expanded .tech-item-img-wrapper {
+                    max-width: 360px;
+                    max-height: 230px;
+                }
+                .card-compact .tech-item-img-wrapper {
+                    max-width: 220px;
+                    max-height: 125px;
                 }
                 .tech-detail-img {
                     max-width: 100%;
@@ -7093,6 +7148,12 @@ export function exportVehiclePrintSheet(item) {
                     object-fit: contain;
                     border-radius: 4px;
                     border: 1px solid #ccc;
+                }
+                .card-expanded .tech-detail-img {
+                    max-height: 220px;
+                }
+                .card-compact .tech-detail-img {
+                    max-height: 120px;
                 }
                 /* Aviso de testigo al pie del corte (Requisito 4.1) */
                 .testigo-aviso {

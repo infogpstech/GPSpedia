@@ -1137,3 +1137,28 @@ Archivos verificados: ui.js, style.css, Services/feedback.js
 4. Estilos visuales de tarjetas de creación (Tarea 9.5):
    - `.card-create-pys` y `.card-create-tutorial` verificados con fondo blanco, sin borde, profundidad discreta, texto centrado y '+' en azul suave (#4a90e2).
 ================================================================================
+
+================================================================================
+AUDITORÍA: REVISIÓN II - CORRECCIONES DE FICHA TÉCNICA, LÍMITES Y MODAL PYS
+Fecha: 2026-11-03
+Archivos verificados: ui.js, Services/feedback.js, style.css
+
+1. Optimización de la ficha técnica de corte para impresión (Requisito 1):
+   - Dynamic density implementado en `exportVehiclePrintSheet`: `.card-expanded` para 1-2 cortes (imágenes ampliadas hasta 360x220px) y `.card-compact` para 4 o más elementos.
+   - Todo el contenido encaja en una sola página tamaño Carta vertical con márgenes de 10mm.
+
+2. Límites de caracteres para Solución y Prevención (Requisitos 2 y 3):
+   - Backend (`Services/feedback.js`): actualizadas validaciones en `handleAddProblem` y `handleAddPrevention` a 700 caracteres.
+   - Frontend (`ui.js`): `#pys-prevenir` actualizado a `<textarea maxlength="700">`, etiquetas actualizadas a 700 caracteres, y prompt de solución sincronizado a 700 caracteres.
+
+3. Reproductor incrustado de YouTube y tamaño de imagen en modal PyS y Tutorial (Requisitos 4 y 5):
+   - `openPysDetailModal` renderiza iframe con dimensiones responsivas vía `getYouTubeEmbedUrl`.
+   - La imagen del problema (`.img-vehiculo-modal.img-pys-modal`) tiene exactamente el mismo tamaño que la imagen del modelo de vehículo en el modal de detalle del vehículo.
+   - Modal de detalle de tutoriales mantiene el reproductor embebido responsivo sin romper detalles.
+
+4. Comportamiento coordinado del acordeón de Problemas y navegación (Requisitos 6 y 7):
+   - Al abrir «Posibles problemas», se cierran automáticamente los acordeones técnicos abiertos.
+   - Al abrir cualquier acordeón técnico, se cierra automáticamente «Posibles problemas».
+   - Indicadores de flecha (▲/▼) y maxHeight se actualizan y limpian adecuadamente.
+   - Prevención de ciclos `navOptions.originModal === 'pys'` preservada.
+================================================================================

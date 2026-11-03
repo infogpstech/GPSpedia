@@ -1654,3 +1654,23 @@ Componentes intervenidos: ui.js, style.css, Services/feedback.js
 - Services/feedback.js:
   * Endurecida la verificación de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) en `handleApproveVideo` y `handleRejectVideo`.
 ================================================================================
+
+================================================================================
+CHANGELOG: REVISIÓN II - OPTIMIZACIONES DE FICHA TÉCNICA, LÍMITES Y MODALES
+Fecha: 2026-11-03
+Componentes intervenidos: ui.js, Services/feedback.js, style.css
+
+- Services/feedback.js:
+  * `handleAddProblem`: validación de longitud de `prevenir` ampliada de 100 a 700 caracteres (`prevenir.length > 700`).
+  * `handleAddPrevention`: validación de longitud de `prevenir` ampliada de 100 a 700 caracteres (`prevenir.length > 700`).
+
+- ui.js:
+  * Formulario PyS (`openAddProblemModal`): campo `#pys-prevenir` transformado en `<textarea maxlength="700">` con etiqueta explicativa de 700 caracteres.
+  * Modal PyS (`openPysDetailModal`): imagen configurada con clase `.img-vehiculo-modal.img-pys-modal` para garantizar paridad visual exacta con la imagen de vehículo en modal de corte.
+  * Incrustación de vídeo en PyS: reemplazado enlace estático por `<iframe>` responsivo de YouTube mediante `getYouTubeEmbedUrl`.
+  * Acordeón «Posibles problemas» coordinado: exclusión mutua entre el acordeón de problemas y las secciones de cortes/apertura/alimentación en `renderPosiblesProblemasAccordion` y `createAccordionSection`.
+  * Ficha técnica de impresión (`exportVehiclePrintSheet`): densidad adaptativa basada en la cantidad total de cortes e ítems técnicos (`.card-expanded` para 1-2 ítems con imágenes de hasta 360x220px, `.card-compact` para 4+ ítems con paddings compactos), garantizando que quepa en una sola hoja Carta vertical.
+
+- style.css:
+  * Estilos de `.card-expanded` y `.card-compact` en ficha técnica.
+================================================================================
