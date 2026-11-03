@@ -1,4 +1,4 @@
-# GPSpedia v2.2.0 - Plataforma Técnica Vehicular
+# GPSpedia v2.2.5 - Plataforma Técnica Vehicular
 
 ## 1. Descripción General
 GPSpedia es una Aplicación Web Progresiva (PWA) de alto rendimiento diseñada específicamente para técnicos e instaladores de sistemas de seguridad y rastreo vehicular. La plataforma centraliza, estandariza y facilita el acceso a información crítica sobre puntos de corte (bomba de combustible, ignición, señal a botón de encendido), diagramas de conexión y guías de desarme de paneles plásticos para una amplia variedad de marcas y modelos de vehículos.
@@ -104,4 +104,25 @@ Por motivos de seguridad operativa y saneamiento del código antes de producció
 La lógica de estos componentes se encuentra resguardada de forma privada bajo la administración del proyecto. El repositorio actual contiene la totalidad de la interfaz de usuario y la lógica de integración necesaria para que la plataforma opere contra los endpoints autorizados definidos en la configuración.
 
 ---
-*GPSpedia v2.2.0 - 2026 todos los derechos reservados.*
+## 6. Novedades y Actualizaciones (v2.2.5)
+
+### Sistema de Subida Directa de Vídeos a YouTube y Flujo de Aprobación
+- **Subida Reanudable (Resumable Upload Directo):** Basado en el estudio técnico de factibilidad (`Estudio_Factibilidad_YouTube.md`), la transferencia de vídeo se realiza directamente desde el navegador a la sesión reanudable de YouTube Data API v3 (`videos.insert`), evitando timeouts y el límite de 50 MB de Google Apps Script.
+- **Configuración Permanente de Publicación:** Visibilidad estricta como *No listado* (`unlisted`), audiencia definida como *No contenido para niños*, sin etiquetas avanzadas arbitrarias ni remixes.
+- **Generación Contextual Inteligente:** Propuesta automática de título y descripción basada en marca, modelo, versión de equipamiento y años del vehículo, o bien en el tema/problema para tutoriales y PyS.
+- **Flujo de Aprobación Interna en Inbox:** Cada vídeo cargado entra en estado pendiente y se somete a revisión en el Inbox del equipo supervisor (`Desarrollador`, `Gefe`, `Supervisor`), asociándose al vehículo o tutorial únicamente tras su aprobación.
+
+### Módulo Extendido de Problemas y Soluciones (PyS)
+- **Vinculación Bidireccional de Vehículos:** Capacidad de asociar modelos de vehículos a problemas específicos desde el buscador de PyS y desde el menú contextual (+) del modal de detalle del vehículo.
+- **Buscador de Vehículos Unificado:** Formato adaptado `[Imagen] | [Versión o Encendido] | [Rango Años]` con exclusión reactiva de vehículos ya asociados o en selección.
+- **Prevención de Ciclos Infinitos de Navegación:** Parámetro contextual `originModal` que suprime carruseles recursivos entre vehículos y problemas sin alterar las relaciones en la base de datos.
+- **Reproductor de Vídeo Embebido:** Reproducción fluida y responsiva de guías de YouTube mediante `<iframe>` en el modal de detalle del problema y tutoriales.
+- **Estandarización de Imagen:** La imagen del problema adopta exactamente las mismas proporciones y estilos que la imagen del modelo de vehículo (`.img-vehiculo-modal`).
+
+### Optimización de Ficha Técnica para Impresión y Límites de Contenido
+- **Densidad Visual Adaptativa en Ficha de Impresión:** Ajuste inteligente de densidad (`.card-expanded` y `.card-compact`) para garantizar que la ficha técnica vehicular encaje perfectamente en una sola página Carta vertical con márgenes de 10mm.
+- **Ampliación Sincronizada a 700 Caracteres:** Límites de caracteres extendidos y validados tanto en el frontend como en los microservicios backend para los campos de solución y prevención.
+- **Coordinación de Acordeones:** Exclusión mutua entre el acordeón de posibles problemas y las secciones de cortes/apertura/alimentación en el modal de detalle.
+
+---
+*GPSpedia v2.2.5 - 2026 todos los derechos reservados.*

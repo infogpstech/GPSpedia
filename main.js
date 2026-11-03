@@ -224,15 +224,48 @@ async function initializeApp() {
         // 4. Cerrar Modal de Detalles
         const modalDetalle = document.getElementById('modalDetalle');
         if (modalDetalle && modalDetalle.classList.contains('visible')) {
+            // Detener y limpiar videos antes de cerrar o restaurar modal previo
+            if (modalDetalle.dataset.modalType === 'pys') {
+                const iframes = modalDetalle.querySelectorAll('iframe');
+                iframes.forEach(iframe => {
+                    try {
+                        if (iframe.contentWindow) {
+                            iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+                        }
+                    } catch(e) {}
+                    iframe.src = "";
+                    iframe.remove();
+                });
+            } else {
+                const iframe = modalDetalle.querySelector('iframe');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+                }
+            }
+
+            // Comprobar pila de navegación modal para retorno contextual
+            const navStack = window.modalNavStack || [];
+            if (navStack.length > 0) {
+                const prevContext = navStack.pop();
+                if (prevContext) {
+                    if (prevContext.type === 'vehicle' && window.ui && window.ui.mostrarDetalleModal) {
+                        window.ui.mostrarDetalleModal(prevContext.item, false, prevContext.navOptions || {});
+                        return;
+                    } else if (prevContext.type === 'pys' && window.ui && window.ui.openPysDetailModal) {
+                        window.ui.openPysDetailModal(prevContext.item, prevContext.navOptions || {});
+                        return;
+                    }
+                }
+            }
+
             if (window.inEditMode) {
                 window.ui.exitModalEditMode(false, null, true);
             } else {
                 modalDetalle.classList.remove('visible');
             }
-            // Detener videos al cerrar via back button
-            const iframe = modalDetalle.querySelector('iframe');
-            if (iframe && iframe.contentWindow) {
-                iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+
+            if (window.modalNavStack) {
+                window.modalNavStack.length = 0;
             }
 
             // Restaurar foco a la barra de búsqueda si estamos en modo búsqueda

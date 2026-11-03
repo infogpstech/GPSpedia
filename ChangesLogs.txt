@@ -1588,3 +1588,234 @@ Componentes: style.css, ui.js
 - ui.js:
   * Aplicados estilos compactos a las opciones de `openExpandMenuModal` y a los botones de envío en los submodales de VIN (`#btn-save-vin`), Cortes, Apertura, Alimentación y Vídeo.
 ================================================================================
+
+================================================================================
+CHANGELOG: SUBIDA DIRECTA DE VÍDEOS A YOUTUBE Y SISTEMA DE APROBACIÓN EN INBOX (TAREAS 8.1 Y 8.2)
+Fecha: 2026-11-02
+Componentes intervenidos: youtubeUpload.js, Services/feedback.js, api-config.js, ui.js
+
+- youtubeUpload.js (Nuevo componente):
+  * Implementado el componente modal unificado `openYouTubeUploadModal` para carga directa de vídeos a YouTube.
+  * Dos campos editables: Título (inicializado con propuesta contextual) y Detalle/Descripción.
+  * Configuración permanente fija: No listado (`unlisted`), No contenido infantil (`selfDeclaredMadeForKids: false`), sin IA ni remixes.
+  * Barra de progreso porcentual dinámica con advertencia ineludible de no cerrar la ventana durante la transferencia.
+  * Bloqueo de controles de navegación durante la subida, botón de cancelación que aborta `XMLHttpRequest` de forma limpia y prevención de cargas duplicadas.
+
+- Services/feedback.js:
+  * Handlers implementados: `handleInitYouTubeUpload`, `handleSubmitVideoForApproval`, `handleApproveVideo` y `handleRejectVideo`.
+  * Integración con la hoja `Feedbacks` para almacenar solicitudes de aprobación con metadatos estructurados (`video_approval`).
+  * Validación estricta de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) para aprobación y rechazo de vídeos.
+  * Al aprobar un vídeo vehicular, se asocia automáticamente a la columna `videoGuiaDesarmeUrl` en `Cortes`.
+
+- api-config.js:
+  * Registradas las nuevas acciones en `ACTION_TO_SERVICE_MAP`: `initYouTubeUpload`, `submitVideoForApproval`, `approveVideo` y `rejectVideo` vinculadas al servicio `FEEDBACK`.
+  * Exportadas funciones helper `approveVideo` y `rejectVideo`.
+
+- ui.js:
+  * Actualizada la lista (`renderInboxList`) y detalle (`renderInboxDetail`) del Inbox para soportar ítems de tipo `video_approval`.
+  * Despliegue de enlace directo a YouTube, metadatos, estado de aprobación y botones de acción «Aprobar Vídeo» y «Rechazar Vídeo» para roles con permisos.
+================================================================================
+
+================================================================================
+CHANGELOG: INTEGRACIÓN DE SUBIDA DIRECTA DE VÍDEOS EN VEHÍCULOS, PYS Y TUTORIALES (TAREAS 8.3 Y 8.4)
+Fecha: 2026-11-02
+Componentes intervenidos: add_cortes.html, ui.js, Services/feedback.js
+
+- add_cortes.html:
+  * Agregado el botón `#btn-addcorte-upload-video` en la Etapa 3 para subir vídeo directamente a YouTube con propuesta contextual de título y descripción vehicular.
+  * Preservado el campo manual `#videoGuiaUrl` para compatibilidad con URLs directas.
+  * Añadido indicador `#video-upload-status-badge` de vídeo subido pendiente de aprobación.
+
+- ui.js:
+  * Implementada la función `buildVehicleVideoMetadata(item)` para generar automáticamente títulos (`[Marca] - [Modelo] [Versión] [Rango Años]`) y descripciones contextuales con frase estándar ("En este video veremos cómo se trabaja...").
+  * Actualizado `openAddVideoModal(item)` con dos opciones: «Enlace de YouTube» y «Subir Vídeo», redirigiendo al modal unificado `openYouTubeUploadModal`.
+  * Actualizado `openAddProblemModal`: añadido botón `#btn-pys-upload-yt` con propuesta automática de título y detalle del problema para subida directa a YouTube con aprobación en Inbox.
+  * Actualizado `openAddTutorialModal`: añadido botón `#btn-tut-upload-yt` con propuesta automática de tema y descripción del tutorial para subida directa a YouTube con aprobación en Inbox.
+
+- Services/feedback.js:
+  * Endurecida la verificación de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) en `handleApproveVideo` y `handleRejectVideo` con `!userRole || !allowedRoles.includes(userRole)`.
+================================================================================
+
+================================================================================
+CHANGELOG: GESTIÓN DE RELACIONES VEHÍCULOS-PROBLEMAS Y PREVENCIÓN DE CICLOS (TAREAS 9.1, 9.2, 9.3, 9.5)
+Fecha: 2026-11-02
+Componentes intervenidos: ui.js, style.css, Services/feedback.js
+
+- ui.js:
+  * Búsqueda de vehículos mejorada (Tarea 9.1): adaptada en `openAddProblemModal` y `openSearchVehicleForPysAssociationModal` con formato `[Imagen] | [Versión o Tipo Encendido] | [Rango Años]` y exclusión estricta de vehículos ya seleccionados/asociados.
+  * Menú (+) del vehículo (Tarea 9.2): agregada la opción «Agregar problema relacionado» en `openExpandMenuModal`.
+  * Creado `openAssociateExistingProblemModal(vehicle)`: modal con buscador exclusivo de problemas que filtra únicamente problemas con vehículos asociados (excluyendo generales y ya vinculados), botón «Agregar» de vinculación inmediata y botón «Agregar problema» para registrar problemas nuevos pre-asociados.
+  * Prevención de ciclos infinitos (Tarea 9.3): soporte de `navOptions.originModal` en `openPysDetailModal`, `renderPosiblesProblemasAccordion` y `mostrarDetalleModal` para ocultar contextualmente las tarjetas que devuelven al origen sin alterar la relación en base de datos.
+  * Actualizada la llamada a `openYouTubeUploadModal` para PyS y Tutoriales con propuestas automáticas y badges de estado.
+
+- style.css (Tarea 9.5):
+  * Estandarización de `.card-create-pys` y `.card-create-tutorial`: fondo blanco, sin líneas de borde visible, sombra discreta con efecto de profundidad, texto centrado y símbolo '+' en azul suave (#4a90e2).
+
+- Services/feedback.js:
+  * Endurecida la verificación de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) en `handleApproveVideo` y `handleRejectVideo`.
+================================================================================
+
+================================================================================
+CHANGELOG: REVISIÓN II - OPTIMIZACIONES DE FICHA TÉCNICA, LÍMITES Y MODALES
+Fecha: 2026-11-03
+Componentes intervenidos: ui.js, Services/feedback.js, style.css
+
+- Services/feedback.js:
+  * `handleAddProblem`: validación de longitud de `prevenir` ampliada de 100 a 700 caracteres (`prevenir.length > 700`).
+  * `handleAddPrevention`: validación de longitud de `prevenir` ampliada de 100 a 700 caracteres (`prevenir.length > 700`).
+
+- ui.js:
+  * Formulario PyS (`openAddProblemModal`): campo `#pys-prevenir` transformado en `<textarea maxlength="700">` con etiqueta explicativa de 700 caracteres.
+  * Modal PyS (`openPysDetailModal`): imagen configurada con clase `.img-vehiculo-modal.img-pys-modal` para garantizar paridad visual exacta con la imagen de vehículo en modal de corte.
+  * Incrustación de vídeo en PyS: reemplazado enlace estático por `<iframe>` responsivo de YouTube mediante `getYouTubeEmbedUrl`.
+  * Acordeón «Posibles problemas» coordinado: exclusión mutua entre el acordeón de problemas y las secciones de cortes/apertura/alimentación en `renderPosiblesProblemasAccordion` y `createAccordionSection`.
+  * Ficha técnica de impresión (`exportVehiclePrintSheet`): densidad adaptativa basada en la cantidad total de cortes e ítems técnicos (`.card-expanded` para 1-2 ítems con imágenes de hasta 360x220px, `.card-compact` para 4+ ítems con paddings compactos), garantizando que quepa en una sola hoja Carta vertical.
+
+- style.css:
+  * Estilos de `.card-expanded` y `.card-compact` en ficha técnica.
+================================================================================
+
+================================================================================
+CHANGELOG: ENDPOINT FEEDBACK ACTUALIZADO, VERSIÓN GLOBAL 2.2.5 Y DOCUMENTACIÓN README
+Fecha: 2026-11-03
+Componentes intervenidos: api-config.js, Services/Auth.js, README.md
+
+- api-config.js:
+  * Actualizado endpoint del microservicio FEEDBACK a: `https://script.google.com/macros/s/AKfycbwg-JDtqiVXYUzlZBD-_qd2eypSLxFmVfDTF1-Z_mfhGl_4b9SCudHI_NBlj-XGoCVmeQ/exec`.
+  * Elevada versión del módulo a 2.2.5.
+
+- Services/Auth.js:
+  * Elevada versión del componente a 2.2.5.
+
+- README.md:
+  * Elevada la versión global del producto a GPSpedia v2.2.5.
+  * Añadida la sección 6 con las funciones y mejoras desarrolladas desde el fork (subida a YouTube y aprobación en Inbox, módulo PyS ampliado, ficha técnica dinámica para impresión en una sola página y sincronización de límites a 700 caracteres).
+================================================================================
+
+================================================================================
+CHANGELOG: REVISIÓN III (FASE 1 - PYS MODAL, FICHA TÉCNICA Y RELACIONES)
+Fecha: 2026-11-03
+Componentes intervenidos: ui.js, main.js, Services/feedback.js, api-config.js
+
+- ui.js:
+  * Modal PyS (`openPysDetailModal`): reorganizada la estructura de elementos (Título -> Imagen -> Descripción -> Solución -> Cómo evitarlo -> Video).
+  * Video PyS: agregada limpieza física de `iframe` y envío de evento `stopVideo` en `closePysModal` para detener el audio/video al cerrar.
+  * Jerarquía visual en PyS: encabezados destacados en color azul institucional (`#007bff`) con bordes inferiores y separación clara del contenido.
+  * Ficha técnica (`exportVehiclePrintSheet`): declaradas variables de densidad de página `totalItems`, `isSingleOrLowDensity` e `isHighDensity` solucionando el fallo de ventana vacía `about:blank`.
+  * Relaciones PyS: agregado botón para desvincular vehículos asociados en modo desarrollador/supervisor.
+
+- main.js:
+  * Manejo de evento popstate/retroceso: detección de modal PyS (`dataset.modalType === 'pys'`) para limpieza completa y detención de vídeo al retroceder.
+
+- Services/feedback.js:
+  * Agregado handler `handleRemoveVehicleFromProblem` para remover de forma segura asociaciones de modelos de vehículos en la hoja `pys` validando roles autorizados.
+
+- api-config.js:
+  * Mapeada la acción `removeVehicleFromProblem` hacia el microservicio FEEDBACK.
+================================================================================
+
+================================================================================
+CHANGELOG: NUEVOS ENDPOINTS MICROSERVICIOS Y CHANGELOG FRONTEND V2.2.5
+Fecha: 2026-11-03
+Componentes intervenidos: api-config.js, index.html, ui.js
+
+- api-config.js:
+  * Actualizados endpoints en producción para AUTH, FEEDBACK y WRITE.
+
+- index.html:
+  * Desplegado el historial cronológico y equilibrado de versiones desde agosto 2026 en el modal de Registro de Cambios:
+    - v2.2.0: Búsqueda y registro por número de chasis (VIN).
+    - v2.2.1: Menú de ampliación técnica (+) en la ficha de detalle.
+    - v2.2.2: Secciones de Problemas y Soluciones y Tutoriales interactivos.
+    - v2.2.3: Vinculación bidireccional de incidencias y modelos vehiculares.
+    - v2.2.4: Subida de vídeos al canal oficial y flujo de revisión previa.
+    - v2.2.5 (Actual): Ficha técnica adaptativa a una página y mejoras de visualización.
+  * Omitidas herramientas exclusivas de desarrolladores y detalles internos de implementación.
+
+- ui.js:
+  * Subsanada duplicidad de declaración de `modalDetalle` en scope de `mostrarDetalleModal`.
+================================================================================
+
+================================================================================
+CHANGELOG: COMPARACIÓN TRANSVERSAL DE VEHÍCULOS POR VIN (VinDifferentialEngine.js)
+Fecha: 2026-11-03
+Componente intervenido: VinDifferentialEngine.js
+
+- VinDifferentialEngine.js:
+  * Agregada función `normalizeModelName` para unificar variaciones sintácticas de modelos con guiones, espacios y puntuación ("CR-V" y "CRV").
+  * Agregada función `doYearRangesOverlap` para validar matemáticamente la intersección temporal de rangos de años entre versiones.
+  * Actualizado `buildSampleMatrix`: evaluación de versiones a nivel de toda la familia de la marca y modelo canónico transversalmente en la base de datos, permitiendo comparar versiones registradas en filas independientes.
+  * Actualizado `calculateSignatures`: los competidores ahora se filtran por marca, modelo canónico normalizado y superposición de años de aplicación, garantizando que sólo compitan versiones que coincidan temporalmente.
+================================================================================
+
+================================================================================
+CHANGELOG: REVISIÓN IV (FICHA TÉCNICA, PERMISOS DESVINCULACIÓN Y EDICIÓN IN-MODAL)
+Fecha: 2026-11-03
+Componentes intervenidos: ui.js, index.html, Services/feedback.js, api-config.js
+
+- ui.js:
+  * `exportVehiclePrintSheet`:
+    - Ajustado `@page` a `size: 216mm 279mm portrait; margin: 8mm;` para correspondencia exacta con papel Carta (216 × 279 mm) y márgenes estrechos.
+    - Compactada la tabla meta (`.meta-table td`): padding reducido a `2px 6px;` y `line-height: 1.15;`, eliminando la altura vacía interna excesiva.
+    - Rediseñada la proporción en `.tech-item-body`: contenedor de información textual (`.tech-item-info`) restringido a `flex: 0 0 25%; max-width: 25%; width: 25%; overflow-wrap: break-word; word-break: break-word;` para que no supere a la imagen y ocupe máximo el 25% del ancho de la hoja, permitiendo que la imagen técnica (`.tech-item-img-wrapper`) domine con el 75% del espacio disponible.
+  * Desvinculación de problemas y vehículos:
+    - Restringido el botón de eliminar relación en la tarjeta del problema (`vehicleToUnlink`) y en el carrusel de modelos asociados de PyS exclusivamente al rol `Desarrollador` (`userRole === 'Desarrollador'`).
+  * Edición in-modal en Tutoriales y Problemas & Soluciones:
+    - `mostrarDetalleTutorialModal`: Incorporado icono de lápiz para desarrolladores que activa el formulario in-modal (Tema máx 30, Video URL, Detalles/Descripción máx 700 con barra enriquecida) con botones guardar (✅) y descartar (↩️), actualizando la vista inmediatamente sin recargar la página.
+    - `openPysDetailModal`: Incorporado icono de lápiz para desarrolladores que activa el modo edición in-modal (Título máx 30, Descripción máx 700 con toolbar, Solución máx 700 con toolbar, Prevención máx 700 con toolbar, Video URL) con botones guardar (✅) y descartar (↩️).
+  * Carrusel de vehículos relacionados en PyS:
+    - Renderizado para todos los usuarios siempre que el modal no haya sido abierto desde un vehículo (anti-ciclos).
+    - Tarjeta «+ Agregar» habilitada para todos los usuarios para vincular modelos mediante el buscador predictivo y modal de confirmación.
+
+- Services/feedback.js:
+  * `handleRemoveVehicleFromProblem`: Restringidos los roles permitidos en backend estrictamente a `['Desarrollador']`.
+  * `handleUpdatePysItem`: Implementado handler de actualización in-modal de incidencias en la hoja `pys` validando permisos de `Desarrollador` y límites de 30/700 caracteres.
+  * `handleUpdateTutorialItem`: Implementado handler de actualización in-modal de tutoriales en la hoja `Tutoriales` validando permisos de `Desarrollador` y límites de caracteres.
+
+- api-config.js:
+  * Mapeadas las nuevas acciones `updatePysItem` y `updateTutorialItem` hacia el microservicio FEEDBACK.
+
+- index.html:
+  * Retirada la entrada de desvinculación de asociaciones de vehículos del modal de historial de cambios (v2.2.5), preservando intactas las demás novedades.
+================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: REVISIÓN V - ESTANDARIZACIÓN VISUAL DE TARJETAS DE CREACIÓN Y VINCULACIÓN
+Fecha: 2026-11-03
+
+- style.css:
+  * `.card-create-tutorial`, `.card-create-pys`: Eliminado `border: 2px dashed #007bff;` y `background: transparent;`. Asignado `background: var(--card-bg, #ffffff); border: none;` con marco de elevación `box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);` y en hover `0 8px 20px rgba(0, 0, 0, 0.15);`.
+  * Incorporadas las clases unificadas `.card-create-vehicle-assoc` y `.card-create-pys-assoc` para carruseles de asociación dentro de modales con el mismo estándar visual sin líneas discontinuas.
+  * Añadida regla para `.dark-mode` con `border: 1px solid rgba(255, 255, 255, 0.05);` y sombra profunda `rgba(0, 0, 0, 0.5)`.
+
+- ui.js:
+  * `openPysDetailModal`: Sustituidos estilos en línea con borde discontinuo (`2px dashed var(--accent-color)`) por la clase `.card.card-create-vehicle-assoc` en la tarjeta `addCard` del carrusel de modelos asociados.
+  * `renderPosiblesProblemasAccordion`: Estandarizada la tarjeta de adición/vinculación de problemas (`.card.card-create-pys-assoc`) sin bordes discontinuos, tanto para problema único como para el carrusel de problemas relacionados.
+================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: NAVEGACIÓN ANTI-BUCLE Y GESTIÓN DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-03
+
+- ui.js:
+  * Integrada `modalNavStack` para registrar el contexto previo entre modales (`mostrarDetalleModal` y `openPysDetailModal`).
+  * En `mostrarDetalleModal`, si se proviene de PyS (`originModal: 'pys'`), se omite completamente el renderizado del acordeón `renderPosiblesProblemasAccordion`. Al cerrar, se retorna automáticamente al problema de origen si existe en la pila.
+  * En `openPysDetailModal`, si se proviene de un vehículo (`originModal: 'vehicle'`), se omite completamente el carrusel de vehículos relacionados y el botón "+ Agregar Modelo". Al cerrar, se retorna automáticamente al vehículo de origen.
+  * En aperturas directas o independientes, se reinicia la pila y se muestran todas las relaciones normalmente.
+  * Desarrolladas las funciones administrativas `openReplacedImagesModal` y `openAuditDriveModal` con renderizado de listas, filtros, vista previa, restablecimiento y auditoría.
+
+- main.js:
+  * En el listener de `popstate` para el modal de detalles, se comprueba `window.modalNavStack` para retornar al modal de origen antes de cerrar completamente el contenedor si existe contexto previo.
+
+- Services/admin.js:
+  * Incorporada la constante `SHEET_NAMES.IMAGENES_REEMPLAZADAS = "Imagenes_Reemplazadas"`.
+  * En `handleUploadAdminImage`, se agrega invocación a `recordReplacedImage` para archivar la imagen previa automáticamente en la hoja dedicada antes de escribir la nueva URL.
+  * Implementados los handlers `handleGetReplacedImages`, `handleRecoverReplacedImage`, `handleDeleteReplacedImage` y `handleAuditDriveImagesInCortes`.
+  * La auditoría física de Drive queda acotada de forma recursiva y exclusiva al árbol de `DRIVE_FOLDER_ID` ('Cortes').
+
+- api-config.js:
+  * Mapeadas las nuevas acciones administrativas `getReplacedImages`, `recoverReplacedImage`, `deleteReplacedImage` y `auditDriveImagesInCortes` hacia el microservicio `ADMIN`.
+
+- index.html:
+  * Incorporados los botones y modales `#replaced-images-modal` y `#audit-drive-modal` dentro de `#dev-tools-modal`.
+================================================================================

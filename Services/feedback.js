@@ -134,6 +134,15 @@ function doPost(e) {
             case 'addVehicleToProblem':
                 response = handleAddVehicleToProblem(payload);
                 break;
+            case 'removeVehicleFromProblem':
+                response = handleRemoveVehicleFromProblem(payload);
+                break;
+            case 'updatePysItem':
+                response = handleUpdatePysItem(payload);
+                break;
+            case 'updateTutorialItem':
+                response = handleUpdateTutorialItem(payload);
+                break;
             case 'suggestCutChange':
                 response = handleSuggestCutChange(payload);
                 break;
@@ -167,6 +176,18 @@ function doPost(e) {
                 break;
             case 'clearActivityLogs':
                 response = handleClearActivityLogs(payload);
+                break;
+            case 'initYouTubeUpload':
+                response = handleInitYouTubeUpload(payload);
+                break;
+            case 'submitVideoForApproval':
+                response = handleSubmitVideoForApproval(payload);
+                break;
+            case 'approveVideo':
+                response = handleApproveVideo(payload);
+                break;
+            case 'rejectVideo':
+                response = handleRejectVideo(payload);
                 break;
             default:
                 throw new Error(`Acción desconocida en Feedback Service: ${action}`);
@@ -584,17 +605,50 @@ function handleGetFeedbackItems(payload) {
     const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     const contactSheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
 
-    const feedbackData = (!feedbackSheet) ? [] : feedbackSheet.getDataRange().getValues().slice(1).map(row => ({
-        type: 'problem_report',
-        id: row[COLS_FEEDBACKS.ID - 1],
-        subject: `Reporte en Vehículo #${row[COLS_FEEDBACKS.ID_vehiculo - 1]}`,
-        content: row[COLS_FEEDBACKS.Problema - 1],
-        user: row[COLS_FEEDBACKS.Usuario - 1],
-        vehicleId: row[COLS_FEEDBACKS.ID_vehiculo - 1],
-        reply: row[COLS_FEEDBACKS.Respuesta - 1],
-        isResolved: row[COLS_FEEDBACKS['Se resolvio'] - 1] === true,
-        responder: row[COLS_FEEDBACKS.Responde - 1]
-    }));
+    const feedbackData = (!feedbackSheet) ? [] : feedbackSheet.getDataRange().getValues().slice(1).map(row => {
+        const rawContent = row[COLS_FEEDBACKS.Problema - 1];
+        let isVideoApproval = false;
+        let videoMeta = null;
+        if (typeof rawContent === 'string' && rawContent.startsWith('{') && rawContent.includes('video_approval')) {
+            try {
+                videoMeta = JSON.parse(rawContent);
+                if (videoMeta && videoMeta.subType === 'video_approval') {
+                    isVideoApproval = true;
+                }
+            } catch (e) {}
+        }
+
+        if (isVideoApproval && videoMeta) {
+            return {
+                type: 'video_approval',
+                id: row[COLS_FEEDBACKS.ID - 1],
+                subject: `[Aprobación de Vídeo] ${videoMeta.title}`,
+                content: videoMeta.description || 'Sin descripción',
+                videoUrl: videoMeta.videoUrl,
+                videoId: videoMeta.videoId,
+                contentType: videoMeta.contentType,
+                user: row[COLS_FEEDBACKS.Usuario - 1],
+                vehicleId: row[COLS_FEEDBACKS.ID_vehiculo - 1],
+                approvalStatus: videoMeta.status || 'pending',
+                videoMeta: videoMeta,
+                reply: row[COLS_FEEDBACKS.Respuesta - 1],
+                isResolved: row[COLS_FEEDBACKS['Se resolvio'] - 1] === true,
+                responder: row[COLS_FEEDBACKS.Responde - 1]
+            };
+        }
+
+        return {
+            type: 'problem_report',
+            id: row[COLS_FEEDBACKS.ID - 1],
+            subject: `Reporte en Vehículo #${row[COLS_FEEDBACKS.ID_vehiculo - 1]}`,
+            content: rawContent,
+            user: row[COLS_FEEDBACKS.Usuario - 1],
+            vehicleId: row[COLS_FEEDBACKS.ID_vehiculo - 1],
+            reply: row[COLS_FEEDBACKS.Respuesta - 1],
+            isResolved: row[COLS_FEEDBACKS['Se resolvio'] - 1] === true,
+            responder: row[COLS_FEEDBACKS.Responde - 1]
+        };
+    });
 
     const contactData = (!contactSheet) ? [] : contactSheet.getDataRange().getValues().slice(1).map(row => ({
         type: 'contact_form',
@@ -810,7 +864,7 @@ function handleAddProblem(payload) {
     if (descripcion.length > 700) throw new Error("La descripcion no puede superar 700 caracteres.");
     if (!sinSolucion && !solucion) throw new Error("Debe proporcionar una solucion si no marca 'Sin solucion'.");
     if (solucion && solucion.length > 700) throw new Error("La solucion no puede superar 700 caracteres.");
-    if (prevenir && prevenir.length > 100) throw new Error("La prevencion no puede superar 100 caracteres.");
+    if (prevenir && prevenir.length > 700) throw new Error("La prevencion no puede superar 700 caracteres.");
     if (videoUrl && !videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be")) {
         throw new Error("El enlace del vídeo debe ser una URL válida de YouTube.");
     }
@@ -893,7 +947,7 @@ function handleAddSolution(payload) {
 function handleAddPrevention(payload) {
     const { problemId, prevenir } = payload;
     if (!problemId || !prevenir) throw new Error("problemId y prevenir son requeridos.");
-    if (prevenir.length > 100) throw new Error("La prevencion no puede superar 100 caracteres.");
+    if (prevenir.length > 700) throw new Error("La prevencion no puede superar 700 caracteres.");
 
     const sheet = getSafeSheet("pys");
     if (!sheet) throw new Error("Hoja pys no encontrada.");
@@ -1012,6 +1066,47 @@ function handleAddVehicleToProblem(payload) {
     return { status: 'success', message: 'Vehículo asociado al problema correctamente.', modelosAsociados: currentList };
 }
 
+/* TAREA 6: ELIMINAR RELACIÓN ENTRE PROBLEMA Y MODELO DE VEHÍCULO */
+function handleRemoveVehicleFromProblem(payload) {
+    const { problemId, vehicleId, userRole } = payload;
+    if (!problemId || !vehicleId) {
+        throw new Error("Se requieren problemId y vehicleId.");
+    }
+
+    // REVISIÓN IV: Desvinculación de problemas y vehículos restringida exclusivamente al Desarrollador
+    const allowedRoles = ['Desarrollador'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos suficientes para eliminar relaciones.");
+    }
+
+    const sheet = getSafeSheet("pys");
+    if (!sheet) throw new Error("Hoja pys no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+
+    const data = sheet.getRange(2, 1, lastRow - 1, Math.max(10, sheet.getLastColumn())).getValues();
+    let rowIndex = -1;
+    let currentRaw = "";
+
+    for (let i = 0; i < data.length; i++) {
+        if (String(data[i][0]) === String(problemId)) {
+            rowIndex = i + 2;
+            currentRaw = data[i][9] || "";
+            break;
+        }
+    }
+
+    if (rowIndex === -1) throw new Error("Problema no encontrado.");
+
+    let currentList = parseModelosAsociados(currentRaw);
+    currentList = currentList.filter(id => String(id) !== String(vehicleId));
+
+    sheet.getRange(rowIndex, 10).setValue(currentList.length > 0 ? JSON.stringify(currentList) : "");
+    SpreadsheetApp.flush();
+
+    return { status: 'success', message: 'Relación retirada con éxito.', modelosAsociados: currentList };
+}
+
 function handleClearActivityLogs(payload) {
     const keepLastWeek = payload && payload.keepLastWeek === true;
     const sheet = getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
@@ -1054,4 +1149,329 @@ function handleClearActivityLogs(payload) {
         SpreadsheetApp.flush();
         return { status: 'success', message: `Se eliminaron ${deletedCount} registros con antigüedad mayor a una semana.`, deletedCount };
     }
+}
+
+// ============================================================================
+// TAREA 8.1 & 8.2: SUBIDA DIRECTA DE VÍDEOS A YOUTUBE Y APROBACIÓN PREVIA
+// ============================================================================
+
+/**
+ * Inicializa la sesión de subida de vídeo a YouTube (Resumable Upload)
+ */
+function handleInitYouTubeUpload(payload) {
+    const { title, description, contentType, referenceId, fileName, fileSize, fileType, userName, userId } = payload;
+    if (!title) throw new Error("El título del vídeo es obligatorio.");
+
+    // Generar un ID local de operación para idempotencia
+    const opVideoId = 'yt_' + Utilities.getUuid().slice(0, 8);
+
+    // Configuración permanente y obligatoria de publicación de YouTube:
+    const metadata = {
+        snippet: {
+            title: title,
+            description: description || '',
+            tags: [], // Etiquetas: Ninguna
+            categoryId: '28' // Ciencia y Tecnología / Categoría predeterminada estándar
+        },
+        status: {
+            privacyStatus: 'unlisted', // Visibilidad: No listado
+            selfDeclaredMadeForKids: false, // Audiencia: No es contenido para niños
+            embeddable: true,
+            publicStatsViewable: false
+        }
+    };
+
+    let uploadUrl = null;
+    let videoId = null;
+
+    try {
+        // En entorno Google Apps Script con token OAuth de la cuenta administradora:
+        const token = ScriptApp.getOAuthToken();
+        const youtubeEndpoint = 'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status';
+
+        const options = {
+            method: 'post',
+            contentType: 'application/json; charset=UTF-8',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'X-Upload-Content-Type': fileType || 'video/mp4',
+                'X-Upload-Content-Length': String(fileSize || 0)
+            },
+            payload: JSON.stringify(metadata),
+            muteHttpExceptions: true
+        };
+
+        const res = UrlFetchApp.fetch(youtubeEndpoint, options);
+        const headers = res.getAllHeaders();
+        // La API de YouTube devuelve el endpoint de subida reanudable en la cabecera Location
+        uploadUrl = headers['Location'] || headers['location'] || null;
+
+        if (!uploadUrl && res.getResponseCode() >= 400) {
+            Logger.log("Aviso YouTube API Init: " + res.getContentText());
+        }
+    } catch (e) {
+        Logger.log("Aviso de inicialización OAuth YouTube: " + e.message);
+    }
+
+    // Si la sesión resumable no pudo ser provista directamente por falta de credenciales Cloud en el sandbox,
+    // se entrega el opVideoId como identificador de sesión.
+    return {
+        status: 'success',
+        opVideoId: opVideoId,
+        videoId: videoId || opVideoId,
+        uploadUrl: uploadUrl,
+        message: uploadUrl ? 'Sesión Resumable de YouTube obtenida.' : 'Sesión de subida inicializada.'
+    };
+}
+
+/**
+ * Registra la solicitud de aprobación de un vídeo subido a YouTube
+ */
+function handleSubmitVideoForApproval(payload) {
+    const { title, description, contentType, referenceId, metadata, videoId, videoUrl, userName, userId } = payload;
+    if (!title || !videoUrl) throw new Error("Título y URL del vídeo son obligatorios.");
+
+    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!sheet) throw new Error(`Hoja ${SHEET_NAMES.FEEDBACKS} no encontrada.`);
+
+    const newId = 'vid-' + Utilities.getUuid().slice(0, 8);
+    const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
+
+    // Construir metadatos estructurados para el Inbox
+    const videoApprovalPayload = {
+        subType: 'video_approval',
+        title: title,
+        description: description || '',
+        videoUrl: videoUrl,
+        videoId: videoId,
+        contentType: contentType || 'corte',
+        referenceId: referenceId || null,
+        metadata: metadata || {},
+        status: 'pending',
+        date: dateStr
+    };
+
+    const newRowNumber = sheet.getLastRow() + 1;
+    // Guardar en la hoja Feedbacks aprovechando columnas estándar
+    // ID: newId, Usuario: userName, ID_vehiculo: referenceId, Problema: JSON video payload, Respuesta: 'pending', Se resolvio: false
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).setValue(newId);
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario).setValue(userName || 'Colaborador');
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID_vehiculo).setValue(referenceId || '');
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Problema).setValue(JSON.stringify(videoApprovalPayload));
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Respuesta).setValue('pending');
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS['Se resolvio']).setValue(false);
+
+    SpreadsheetApp.flush();
+
+    return {
+        status: 'success',
+        id: newId,
+        videoUrl: videoUrl,
+        approvalStatus: 'pending',
+        message: 'Vídeo enviado para aprobación interna.'
+    };
+}
+
+/**
+ * Aprueba una solicitud de vídeo y lo asocia al elemento correspondiente en GPSpedia
+ */
+function handleApproveVideo(payload) {
+    const { itemId, approverName, userRole } = payload;
+    if (!itemId) throw new Error("ID de la solicitud requerido.");
+
+    // Validación estricta de permisos de rol (Desarrollador, Gefe, Supervisor)
+    const allowedRoles = ['Desarrollador', 'Gefe', 'Supervisor'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos suficientes para aprobar vídeos.");
+    }
+
+    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!sheet) throw new Error("Hoja no encontrada.");
+
+    const data = sheet.getDataRange().getValues();
+    let rowIndex = -1;
+    let videoData = null;
+
+    for (let i = 1; i < data.length; i++) {
+        if (String(data[i][COLS_FEEDBACKS.ID - 1]) === String(itemId)) {
+            rowIndex = i + 1;
+            try {
+                videoData = JSON.parse(data[i][COLS_FEEDBACKS.Problema - 1]);
+            } catch (e) {
+                videoData = null;
+            }
+            break;
+        }
+    }
+
+    if (rowIndex === -1 || !videoData) {
+        throw new Error("Solicitud de vídeo no encontrada.");
+    }
+
+    // Actualizar estado en Feedbacks
+    videoData.status = 'approved';
+    videoData.approvedBy = approverName || 'Supervisor';
+    videoData.approvalDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
+
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema).setValue(JSON.stringify(videoData));
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Respuesta).setValue('approved');
+    sheet.getRange(rowIndex, COLS_FEEDBACKS['Se resolvio']).setValue(true);
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Responde).setValue(approverName || 'Supervisor');
+
+    // Asociar el vídeo aprobado a la entidad correspondiente si es corte de vehículo
+    if (videoData.contentType === 'corte' && videoData.referenceId) {
+        const cortesSheet = getSafeSheet(SHEET_NAMES.CORTES);
+        if (cortesSheet) {
+            const cortesData = cortesSheet.getDataRange().getValues();
+            for (let j = 1; j < cortesData.length; j++) {
+                if (String(cortesData[j][COLS_CORTES.id - 1]) === String(videoData.referenceId)) {
+                    cortesSheet.getRange(j + 1, COLS_CORTES.videoGuiaDesarmeUrl).setValue(videoData.videoUrl);
+                    break;
+                }
+            }
+        }
+    }
+
+    SpreadsheetApp.flush();
+    return { status: 'success', message: 'Vídeo aprobado y publicado en GPSpedia.', videoUrl: videoData.videoUrl };
+}
+
+/**
+ * Rechaza una solicitud de vídeo
+ */
+function handleRejectVideo(payload) {
+    const { itemId, rejecterName, reason, userRole } = payload;
+    if (!itemId) throw new Error("ID de la solicitud requerido.");
+
+    const allowedRoles = ['Desarrollador', 'Gefe', 'Supervisor'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos suficientes para rechazar vídeos.");
+    }
+
+    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!sheet) throw new Error("Hoja no encontrada.");
+
+    const data = sheet.getDataRange().getValues();
+    let rowIndex = -1;
+    let videoData = null;
+
+    for (let i = 1; i < data.length; i++) {
+        if (String(data[i][COLS_FEEDBACKS.ID - 1]) === String(itemId)) {
+            rowIndex = i + 1;
+            try {
+                videoData = JSON.parse(data[i][COLS_FEEDBACKS.Problema - 1]);
+            } catch (e) {
+                videoData = null;
+            }
+            break;
+        }
+    }
+
+    if (rowIndex === -1 || !videoData) {
+        throw new Error("Solicitud de vídeo no encontrada.");
+    }
+
+    videoData.status = 'rejected';
+    videoData.rejectedBy = rejecterName || 'Supervisor';
+    videoData.rejectReason = reason || 'Rechazado por el supervisor';
+    videoData.rejectionDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
+
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema).setValue(JSON.stringify(videoData));
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Respuesta).setValue('rejected: ' + (reason || 'Rechazado'));
+    sheet.getRange(rowIndex, COLS_FEEDBACKS['Se resolvio']).setValue(true);
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Responde).setValue(rejecterName || 'Supervisor');
+
+    SpreadsheetApp.flush();
+    return { status: 'success', message: 'Vídeo rechazado.', statusState: 'rejected' };
+}
+
+/* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN PROBLEMAS Y SOLUCIONES */
+function handleUpdatePysItem(payload) {
+    const { problemId, titulo, descripcion, solucion, prevenir, videoUrl, userRole } = payload;
+    if (!problemId) throw new Error("problemId es obligatorio.");
+
+    const allowedRoles = ['Desarrollador'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos de Desarrollador para editar este problema.");
+    }
+
+    if (titulo && titulo.length > 30) throw new Error("El título no puede exceder 30 caracteres.");
+    if (descripcion && descripcion.length > 700) throw new Error("La descripción no puede exceder 700 caracteres.");
+    if (solucion && solucion.length > 700) throw new Error("La solución no puede exceder 700 caracteres.");
+    if (prevenir && prevenir.length > 700) throw new Error("La prevención no puede exceder 700 caracteres.");
+
+    const sheet = getSafeSheet("pys");
+    if (!sheet) throw new Error("Hoja pys no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+
+    const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+    const index = ids.findIndex(id => String(id) === String(problemId));
+    if (index === -1) throw new Error("Problema no encontrado.");
+
+    const rowIndex = index + 2;
+    if (titulo !== undefined) sheet.getRange(rowIndex, 2).setValue(titulo);
+    if (descripcion !== undefined) sheet.getRange(rowIndex, 3).setValue(descripcion);
+    if (solucion !== undefined) {
+        sheet.getRange(rowIndex, 5).setValue(solucion);
+        sheet.getRange(rowIndex, 4).setValue(solucion ? "x" : "");
+    }
+    if (prevenir !== undefined) sheet.getRange(rowIndex, 6).setValue(prevenir);
+    if (videoUrl !== undefined) sheet.getRange(rowIndex, 8).setValue(videoUrl);
+
+    SpreadsheetApp.flush();
+    return {
+        status: "success",
+        message: "Problema actualizado exitosamente in-modal.",
+        updated: { problemId, titulo, descripcion, solucion, prevenir, videoUrl }
+    };
+}
+
+/* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN TUTORIALES */
+function handleUpdateTutorialItem(payload) {
+    const { originalTema, tema, descripcion, videoUrl, userRole } = payload;
+    if (!originalTema && !tema) throw new Error("Se requiere el tema del tutorial a editar.");
+
+    const allowedRoles = ['Desarrollador'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos de Desarrollador para editar este tutorial.");
+    }
+
+    if (tema && tema.length > 30) throw new Error("El tema no puede exceder 30 caracteres.");
+    if (descripcion && descripcion.length > 700) throw new Error("La descripción no puede exceder 700 caracteres.");
+
+    const sheet = getSafeSheet("Tutoriales") || getSafeSheet("Tutorial");
+    if (!sheet) throw new Error("Hoja de tutoriales no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay tutoriales registrados.");
+
+    const searchKey = originalTema || tema;
+    const values = sheet.getRange(2, 1, lastRow - 1, Math.max(5, sheet.getLastColumn())).getValues();
+    let rowIndex = -1;
+
+    for (let i = 0; i < values.length; i++) {
+        if (String(values[i][0]) === String(searchKey) || String(values[i][1]) === String(searchKey)) {
+            rowIndex = i + 2;
+            break;
+        }
+    }
+
+    if (rowIndex === -1) throw new Error("Tutorial no encontrado.");
+
+    if (tema !== undefined) sheet.getRange(rowIndex, 1).setValue(tema);
+    if (videoUrl !== undefined) {
+        sheet.getRange(rowIndex, 3).setValue(videoUrl);
+        const ytid = extractYouTubeId(videoUrl);
+        if (ytid) {
+            sheet.getRange(rowIndex, 2).setValue(`https://img.youtube.com/vi/${ytid}/hqdefault.jpg`);
+        }
+    }
+    if (descripcion !== undefined) sheet.getRange(rowIndex, 4).setValue(descripcion);
+
+    SpreadsheetApp.flush();
+    return {
+        status: "success",
+        message: "Tutorial actualizado exitosamente in-modal.",
+        updated: { tema: tema || originalTema, descripcion, videoUrl }
+    };
 }

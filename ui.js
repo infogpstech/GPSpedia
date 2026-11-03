@@ -5,9 +5,10 @@ import { vinDifferentialEngine, vinSignatureStore, getClassificationKey } from '
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange } from './api-config.js';
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
+import { openYouTubeUploadModal } from './youtubeUpload.js';
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 
@@ -36,6 +37,14 @@ let inEditMode = false;
 let originalItemBackup = null;
 let editedItemBuffer = null;
 let dropdownOptions = null;
+
+// Pila de navegación entre modales para prevención de bucles y restauración de contexto
+const modalNavStack = [];
+window.modalNavStack = modalNavStack;
+
+export function clearModalNavStack() {
+    modalNavStack.length = 0;
+}
 
 window.inEditMode = false;
 
@@ -1437,7 +1446,7 @@ function createDetailParagraph(label, text) {
     return null;
 }
 
-export function mostrarDetalleModal(item, isNavigation = false) {
+export function mostrarDetalleModal(item, isNavigation = false, navOptions = {}) {
     const { catalogData } = getState();
     const activeItem = (catalogData && catalogData.cortes)
         ? catalogData.cortes.find(c => String(c.id) === String(item.id)) || item
@@ -1449,6 +1458,23 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     });
 
     const { relay: datosRelay } = catalogData;
+
+    const modalDetalle = document.getElementById("modalDetalle");
+    if (modalDetalle) {
+        modalDetalle.dataset.modalType = 'corte';
+    }
+
+    // Gestión contextual de pila de navegación anti-bucle
+    if (navOptions && navOptions.fromOriginModal) {
+        modalNavStack.push({
+            type: navOptions.fromOriginModal.type,
+            item: navOptions.fromOriginModal.item,
+            navOptions: navOptions.fromOriginModal.navOptions || {}
+        });
+    } else if (!isNavigation && (!navOptions || !navOptions.originModal)) {
+        // Apertura independiente desde catálogo o buscador: limpiar pila previa
+        modalNavStack.length = 0;
+    }
 
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
@@ -1561,6 +1587,15 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
         }
 
+        // Comprobar si hay un modal previo en la pila para retorno contextual
+        if (modalNavStack.length > 0) {
+            const prevContext = modalNavStack.pop();
+            if (prevContext && prevContext.type === 'pys') {
+                openPysDetailModal(prevContext.item, prevContext.navOptions || {});
+                return;
+            }
+        }
+
         // Restaurar foco a la barra de búsqueda al cerrar manualmente
         const searchInput = document.getElementById('searchInput');
         const isSearchActive = document.body.classList.contains('search-active');
@@ -1569,6 +1604,7 @@ export function mostrarDetalleModal(item, isNavigation = false) {
             window.history.back();
         } else {
             document.getElementById("modalDetalle").classList.remove("visible");
+            modalNavStack.length = 0;
             // Si el historial no maneja el cierre, forzamos la restauración del foco aquí
             if (isSearchActive && searchInput) {
                 setTimeout(() => searchInput.focus(), 300);
@@ -1997,9 +2033,8 @@ export function mostrarDetalleModal(item, isNavigation = false) {
     });
 
     /* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL ACORDEÓN «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
-    renderPosiblesProblemasAccordion(accordionContainer, activeItem);
+    renderPosiblesProblemasAccordion(accordionContainer, activeItem, navOptions);
 
-    const modalDetalle = document.getElementById("modalDetalle");
     if (!window.inEditMode) {
         // TAREA 1.5 / 1.8: RECUPERACIÓN, AJUSTE Y REEJECUCIÓN DEL BOTÓN (+) EN EL MODAL DE DETALLE DEL VEHÍCULO
         const plusBtn = document.createElement("button");
@@ -2338,14 +2373,24 @@ async function insertNewVehicleFluently(item) {
     }
 }
 
-/* TAREA 3.1: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
-function createPysCard(item) {
+/* TAREA 3.1 & TAREA 9.3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» CON ORIGEN CONTEXTUAL */
+function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlinkSuccess = null) {
+    const cardWrapper = document.createElement("div");
+    cardWrapper.style.cssText = "position: relative; display: inline-block;";
+
     const card = document.createElement("div");
     card.className = "card";
     card.setAttribute("data-problem-id", item.id_problem || item.id || "");
     card.style.animation = "none";
     card.style.opacity = "1";
-    card.onclick = () => openPysDetailModal(item);
+    card.onclick = () => openPysDetailModal(item, {
+        originModal: originModal || 'vehicle',
+        fromOriginModal: vehicleToUnlink ? {
+            type: 'vehicle',
+            item: vehicleToUnlink,
+            navOptions: {}
+        } : null
+    });
 
     const img = document.createElement("img");
     img.className = "card-img-top";
@@ -2363,12 +2408,50 @@ function createPysCard(item) {
         <div class="overlay-text-secondary" style="font-size: 0.75rem; color: ${statusColor}; font-weight: bold;">${statusText}</div>
     `;
     card.appendChild(overlay);
+    cardWrapper.appendChild(card);
 
-    return card;
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
+    // REVISIÓN IV: Desvinculación de problemas y vehículos restringida exclusivamente al desarrollador
+    const canEdit = userRole === 'Desarrollador';
+
+    if (canEdit && vehicleToUnlink) {
+        const removeBtn = document.createElement("button");
+        removeBtn.title = "Eliminar relación con este problema";
+        removeBtn.innerHTML = "&times;";
+        removeBtn.style.cssText = "position: absolute; top: 4px; right: 4px; background: rgba(220, 53, 69, 0.9); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.3);";
+        removeBtn.onclick = async (e) => {
+            e.stopPropagation();
+            if (!confirm(`¿Deseas desvincular el problema "${item.Problema}" de este vehículo?`)) return;
+            removeBtn.disabled = true;
+            try {
+                const res = await routeAction('removeVehicleFromProblem', {
+                    problemId: item.id_problem || item.id,
+                    vehicleId: vehicleToUnlink.id,
+                    userRole
+                });
+                if (res && res.status === 'success') {
+                    cardWrapper.remove();
+                    mostrarNotificacion("Problema desvinculado del vehículo.", "success");
+                    if (typeof onUnlinkSuccess === 'function') onUnlinkSuccess();
+                }
+            } catch(err) {
+                showGlobalError("Error al retirar relación: " + err.message);
+                removeBtn.disabled = false;
+            }
+        };
+        cardWrapper.appendChild(removeBtn);
+    }
+
+    return cardWrapper;
 }
 
-export function renderPosiblesProblemasAccordion(container, activeItem) {
+export function renderPosiblesProblemasAccordion(container, activeItem, navOptions = {}) {
     if (!container || !activeItem || !activeItem.id) return;
+    // Tarea 9.3: Prevención de ciclos - si el modal de vehículo se abrió desde PyS, no mostrar acordeón de problemas
+    if (navOptions && navOptions.originModal === 'pys') {
+        return;
+    }
     const vehicleIdStr = String(activeItem.id);
 
     // Contenedor dinámico del acordeón para poder actualizarlo si se descargan datos nuevos
@@ -2410,16 +2493,29 @@ export function renderPosiblesProblemasAccordion(container, activeItem) {
 
         const panel = document.createElement("div");
         panel.className = "panel-desplegable";
-        panel.style.display = "none";
-        panel.style.padding = "15px 10px";
+
+        const contentWrapper = document.createElement("div");
+        contentWrapper.style.padding = "15px 10px";
 
         if (relatedProblems.length === 1) {
-            // REQUISITO: Si existe un solo problema, mostrar su tarjeta
+            // REQUISITO: Si existe un solo problema, mostrar su tarjeta y la tarjeta para agregar/vincular problema
             const singleCardContainer = document.createElement("div");
-            singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; width: 100%;";
-            const singleCard = createPysCard(relatedProblems[0]);
+            singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; gap: 15px; width: 100%; flex-wrap: wrap;";
+            const singleCard = createPysCard(relatedProblems[0], 'vehicle', activeItem, () => {
+                // Si se eliminó el único problema, refrescar acordeón
+                renderPosiblesProblemasAccordion(container, activeItem, navOptions);
+            });
             singleCardContainer.appendChild(singleCard);
-            panel.appendChild(singleCardContainer);
+
+            // Tarjeta para agregar o vincular problema sin borde discontinuo
+            const addPysCard = document.createElement("div");
+            addPysCard.className = "card card-create-pys-assoc";
+            addPysCard.style.cssText = "width: 140px; height: 180px; padding: 10px; margin: 0;";
+            addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
+            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
+            singleCardContainer.appendChild(addPysCard);
+
+            contentWrapper.appendChild(singleCardContainer);
         } else {
             // REQUISITO: Si existen varios problemas, mostrarlos mediante un carrusel navegable
             const carouselContainer = document.createElement("div");
@@ -2428,9 +2524,20 @@ export function renderPosiblesProblemasAccordion(container, activeItem) {
             carouselTrack.className = "carousel-track";
 
             relatedProblems.forEach(p => {
-                const card = createPysCard(p);
+                const card = createPysCard(p, 'vehicle', activeItem, () => {
+                    renderPosiblesProblemasAccordion(container, activeItem, navOptions);
+                });
                 carouselTrack.appendChild(card);
             });
+
+            // Tarjeta al final del carrusel para agregar o vincular problema
+            const addPysCard = document.createElement("div");
+            addPysCard.className = "card card-create-pys-assoc";
+            addPysCard.style.cssText = "flex: 0 0 140px; height: 180px; padding: 10px; margin-right: 20px;";
+            addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
+            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
+            carouselTrack.appendChild(addPysCard);
+
             carouselContainer.appendChild(carouselTrack);
 
             const prevBtn = document.createElement("button");
@@ -2468,25 +2575,42 @@ export function renderPosiblesProblemasAccordion(container, activeItem) {
             window.addEventListener("resize", () => setTimeout(updateCarouselButtons, 100));
             setTimeout(updateCarouselButtons, 200);
 
-            panel.appendChild(carouselContainer);
+            contentWrapper.appendChild(carouselContainer);
         }
 
-        btn.onclick = () => {
-            const isOpening = panel.style.display === "none";
-            panel.style.display = isOpening ? "block" : "none";
-            btn.classList.toggle("active", isOpening);
-            const arrow = btn.querySelector(".accordion-arrow");
-            if (arrow) arrow.textContent = isOpening ? "▲" : "▼";
+        panel.appendChild(contentWrapper);
 
-            if (isOpening && relatedProblems.length > 1) {
-                const track = panel.querySelector(".carousel-track");
-                const prev = panel.querySelector(".carousel-btn.prev");
-                const next = panel.querySelector(".carousel-btn.next");
-                if (track && prev && next) {
-                    const scrollLeft = track.scrollLeft;
-                    const maxScrollLeft = track.scrollWidth - track.clientWidth;
-                    prev.style.display = scrollLeft > 2 ? "flex" : "none";
-                    next.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+        btn.onclick = () => {
+            const isActive = btn.classList.contains("active");
+
+            // Cerrar coordinadamente todos los demás acordeones del modal
+            const allModalButtons = container.querySelectorAll(".accordion-btn");
+            allModalButtons.forEach(otherBtn => {
+                otherBtn.classList.remove("active");
+                const otherArrow = otherBtn.querySelector(".accordion-arrow");
+                if (otherArrow) otherArrow.textContent = "▼";
+                const otherPanel = otherBtn.nextElementSibling;
+                if (otherPanel && otherPanel.classList.contains("panel-desplegable")) {
+                    otherPanel.style.maxHeight = null;
+                }
+            });
+
+            if (!isActive) {
+                btn.classList.add("active");
+                const arrow = btn.querySelector(".accordion-arrow");
+                if (arrow) arrow.textContent = "▲";
+                panel.style.maxHeight = panel.scrollHeight + "px";
+
+                if (relatedProblems.length > 1) {
+                    const track = panel.querySelector(".carousel-track");
+                    const prev = panel.querySelector(".carousel-btn.prev");
+                    const next = panel.querySelector(".carousel-btn.next");
+                    if (track && prev && next) {
+                        const scrollLeft = track.scrollLeft;
+                        const maxScrollLeft = track.scrollWidth - track.clientWidth;
+                        prev.style.display = scrollLeft > 2 ? "flex" : "none";
+                        next.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+                    }
                 }
             }
         };
@@ -3628,6 +3752,212 @@ ${elapsedSec}s
             selectedLogoFilename = null;
         }
     };
+
+    // 8. TAREA 2: Repositorio Histórico de Imágenes Reemplazadas y Auditoría de Google Drive
+    const viewReplacedBtn = document.getElementById('btn-admin-view-replaced-images');
+    if (viewReplacedBtn) {
+        viewReplacedBtn.onclick = () => openReplacedImagesModal();
+    }
+
+    const auditDriveBtn = document.getElementById('btn-admin-audit-drive-images');
+    if (auditDriveBtn) {
+        auditDriveBtn.onclick = () => openAuditDriveModal();
+    }
+}
+
+/**
+ * TAREA 2: Modal de Gestión y Recuperación de Imágenes Reemplazadas
+ */
+export async function openReplacedImagesModal() {
+    const modal = document.getElementById('replaced-images-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    const closeBtn = document.getElementById('close-replaced-images-modal');
+    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
+
+    const listContainer = document.getElementById('replaced-images-list-container');
+    const filterInput = document.getElementById('filter-replaced-images-input');
+    const refreshBtn = document.getElementById('btn-refresh-replaced-images');
+
+    let cachedReplaced = [];
+
+    const loadData = async () => {
+        listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Consultando imágenes históricas en Drive...</div>';
+        try {
+            const res = await routeAction('getReplacedImages');
+            cachedReplaced = (res && res.data) ? res.data : [];
+            renderList(filterInput ? filterInput.value : '');
+        } catch (err) {
+            listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error al cargar repositorio histórico: ${err.message}</div>`;
+        }
+    };
+
+    const renderList = (filterText = '') => {
+        listContainer.innerHTML = '';
+        const q = filterText.toLowerCase().trim();
+        const filtered = cachedReplaced.filter(item => {
+            if (!q) return true;
+            return (item.nombre_archivo || '').toLowerCase().includes(q) ||
+                   (item.referencia_texto || '').toLowerCase().includes(q) ||
+                   (item.campo || '').toLowerCase().includes(q) ||
+                   (item.archivo_drive_id || '').toLowerCase().includes(q) ||
+                   String(item.registro_id || '').toLowerCase().includes(q);
+        });
+
+        if (filtered.length === 0) {
+            listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron imágenes históricas reemplazadas.</div>';
+            return;
+        }
+
+        filtered.forEach(rep => {
+            const card = document.createElement('div');
+            card.style.cssText = "display: flex; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg);";
+
+            const img = document.createElement('img');
+            img.src = getImageUrl(rep.url_anterior, IMG_SIZE_SMALL);
+            img.style.cssText = "width: 70px; height: 70px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0; background: #fff;";
+
+            const info = document.createElement('div');
+            info.style.cssText = "flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem;";
+            info.innerHTML = `
+                <div style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rep.referencia_texto || 'Registro ' + rep.registro_id}</div>
+                <div style="font-size: 0.8rem; color: var(--text-disabled);"><strong>Archivo:</strong> ${rep.nombre_archivo} | <strong>Campo:</strong> ${rep.campo}</div>
+                <div style="font-size: 0.75rem; color: var(--text-disabled);"><strong>ID Drive:</strong> <code>${rep.archivo_drive_id}</code> | <strong>Fecha:</strong> ${rep.fecha_reemplazo}</div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : (rep.estado === 'eliminada' ? '#dc3545' : '#007bff')};">Estado: ${rep.estado}</div>
+            `;
+
+            const btnContainer = document.createElement('div');
+            btnContainer.style.cssText = "display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;";
+
+            if (rep.estado !== 'eliminada') {
+                const recoverBtn = document.createElement('button');
+                recoverBtn.className = "btn btn-primary";
+                recoverBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; white-space: nowrap;";
+                recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
+                recoverBtn.onclick = async () => {
+                    if (!confirm(`¿Restablecer esta imagen histórica como activa para ${rep.referencia_texto || rep.registro_id}? La versión actual pasará al historial.`)) return;
+                    recoverBtn.disabled = true;
+                    recoverBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    try {
+                        const recRes = await routeAction('recoverReplacedImage', { id_reemplazo: rep.id_reemplazo });
+                        if (recRes && recRes.status === 'success') {
+                            mostrarNotificacion("Imagen histórica restablecida con éxito.", "success");
+                            loadData();
+                        }
+                    } catch (e) {
+                        alert("Error al recuperar imagen: " + e.message);
+                        recoverBtn.disabled = false;
+                        recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
+                    }
+                };
+                btnContainer.appendChild(recoverBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = "btn btn-danger";
+                deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
+                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
+                deleteBtn.onclick = async () => {
+                    if (!confirm(`¿Estás seguro de que deseas ELIMINAR permanentemente esta imagen histórica de Google Drive? Esta acción no se puede deshacer.`)) return;
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    try {
+                        const delRes = await routeAction('deleteReplacedImage', { id_reemplazo: rep.id_reemplazo });
+                        if (delRes && delRes.status === 'success') {
+                            mostrarNotificacion("Imagen eliminada de forma segura.", "success");
+                            loadData();
+                        }
+                    } catch (e) {
+                        alert("Eliminación bloqueada: " + e.message);
+                        deleteBtn.disabled = false;
+                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
+                    }
+                };
+                btnContainer.appendChild(deleteBtn);
+            }
+
+            card.appendChild(img);
+            card.appendChild(info);
+            card.appendChild(btnContainer);
+            listContainer.appendChild(card);
+        });
+    };
+
+    if (filterInput) filterInput.oninput = () => renderList(filterInput.value);
+    if (refreshBtn) refreshBtn.onclick = () => loadData();
+
+    loadData();
+}
+
+/**
+ * TAREA 2: Modal de Auditoría de Imágenes en Google Drive (Árbol 'Cortes')
+ */
+export async function openAuditDriveModal() {
+    const modal = document.getElementById('audit-drive-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    const closeBtn = document.getElementById('close-audit-drive-modal');
+    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
+
+    const summaryEl = document.getElementById('audit-drive-summary');
+    const container = document.getElementById('audit-drive-results-container');
+
+    summaryEl.innerHTML = 'Iniciando exploración recursiva del árbol «Cortes»...';
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol en Google Drive...</div>';
+
+    try {
+        const res = await routeAction('auditDriveImagesInCortes');
+        if (res && res.status === 'success') {
+            const files = res.files || [];
+            const inUseCount = files.filter(f => f.classification === 'En uso').length;
+            const histCount = files.filter(f => f.classification === 'Histórica').length;
+            const unusedCount = files.filter(f => f.classification === 'Sin uso detectado').length;
+            const unverifiedCount = files.filter(f => f.classification === 'No verificable').length;
+
+            summaryEl.innerHTML = `
+                <div style="background: var(--card-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; gap: 15px; flex-wrap: wrap;">
+                    <span>📁 <strong>Carpeta Raíz:</strong> ${res.rootFolderName} (<code>${res.rootFolderId}</code>)</span>
+                    <span>📊 <strong>Total Analizados:</strong> ${res.totalAnalyzed}</span>
+                    <span style="color:#28a745;">✅ <strong>En uso:</strong> ${inUseCount}</span>
+                    <span style="color:#007bff;">🕒 <strong>Históricas:</strong> ${histCount}</span>
+                    <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> ${unusedCount}</span>
+                    <span style="color:#dc3545;">❓ <strong>No verificables:</strong> ${unverifiedCount}</span>
+                </div>
+            `;
+
+            container.innerHTML = '';
+            if (files.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron archivos en la carpeta analizada.</div>';
+                return;
+            }
+
+            files.forEach(f => {
+                const row = document.createElement('div');
+                row.style.cssText = "display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.8rem; background: var(--card-bg);";
+
+                let badgeColor = "#28a745";
+                if (f.classification === 'Histórica') badgeColor = "#007bff";
+                else if (f.classification === 'Sin uso detectado') badgeColor = "#e0a800";
+                else if (f.classification === 'No verificable') badgeColor = "#dc3545";
+
+                row.innerHTML = `
+                    <div style="min-width:0; flex:1;">
+                        <div style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${f.fileName}</div>
+                        <div style="font-size:0.75rem; color:var(--text-disabled);">${f.folderPath} | ${(f.size / 1024).toFixed(1)} KB | ${f.lastUpdated}</div>
+                    </div>
+                    <span style="background:${badgeColor}; color:white; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;">
+                        ${f.classification}
+                    </span>
+                `;
+                container.appendChild(row);
+            });
+        } else {
+            container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error: ${res ? res.message : 'Error desconocido'}</div>`;
+        }
+    } catch (err) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Excepción en auditoría: ${err.message}</div>`;
+    }
 }
 
 export const openAboutUs = setupModal('about-us-modal', () => {
@@ -3650,7 +3980,7 @@ export const openTermsAgreement = setupModal('terms-agreement-modal', () => {
     document.getElementById('terms-agreement-modal').style.display = 'flex';
 });
 
-function renderInboxList(items) {
+export function renderInboxList(items) {
     const listContainer = document.getElementById('inbox-list');
     listContainer.innerHTML = '';
     if (items.length === 0) {
@@ -3668,9 +3998,17 @@ function renderInboxList(items) {
              itemDiv.classList.add('replied');
         }
 
-        const iconClass = item.type === 'problem_report' ? 'fa-triangle-exclamation' : 'fa-envelope';
+        let iconClass = 'fa-envelope';
+        let tipoLabel = 'Mensaje de contacto';
+        if (item.type === 'problem_report') {
+            iconClass = 'fa-triangle-exclamation';
+            tipoLabel = 'Reporte de problema';
+        } else if (item.type === 'video_approval') {
+            iconClass = 'fa-brands fa-youtube';
+            const statusText = item.approvalStatus === 'approved' ? 'Aprobado' : (item.approvalStatus === 'rejected' ? 'Rechazado' : 'Pendiente de aprobación');
+            tipoLabel = `Vídeo: ${statusText}`;
+        }
         const title = item.subject || `ID: ${item.id}`;
-        const tipoLabel = item.type === 'problem_report' ? 'Reporte de problema' : 'Mensaje de contacto';
 
         itemDiv.innerHTML = `
             <i class="fa-solid ${iconClass}"></i>
@@ -3781,7 +4119,7 @@ export function createInboxRichTextToolbar(targetId) {
     return toolbar;
 }
 
-function renderInboxDetail(item) {
+export function renderInboxDetail(item) {
     const detailContainer = document.getElementById('inbox-detail');
     const { currentUser, catalogData } = getState();
     const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Usuario';
@@ -3794,10 +4132,21 @@ function renderInboxDetail(item) {
         }
     }
 
+    const isVideoItem = item.type === 'video_approval';
+    const userRole = currentUser ? currentUser.Rol : '';
+    const canApprove = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+
     detailContainer.innerHTML = `
         <h3 class="inbox-detail-title">${item.subject}</h3>
         <p class="inbox-detail-meta"><strong>De:</strong> ${item.user}</p>
         ${item.vehicleId ? `<p class="inbox-detail-meta"><strong>Vehículo:</strong> ${vehicleLabel}</p>` : ''}
+        ${isVideoItem && item.videoUrl ? `
+            <div style="margin-bottom:12px; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
+                <p style="margin:0 0 6px 0;"><strong>Enlace de YouTube:</strong> <a href="${item.videoUrl}" target="_blank" rel="noopener noreferrer" style="color:#007bff; text-decoration:underline;"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Ver vídeo en YouTube</a></p>
+                <p style="margin:0 0 4px 0; font-size:0.85rem;"><strong>Estado de Aprobación:</strong> <span class="badge" style="background:${item.approvalStatus === 'approved' ? '#28a745' : (item.approvalStatus === 'rejected' ? '#dc3545' : '#ffc107')}; color:#fff; padding:2px 8px; border-radius:4px;">${item.approvalStatus || 'pending'}</span></p>
+                ${item.contentType ? `<p style="margin:0; font-size:0.85rem;"><strong>Tipo de Contenido:</strong> ${item.contentType}</p>` : ''}
+            </div>
+        ` : ''}
         <div class="inbox-message-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
             <div>${sanitizeHtmlContent(item.content)}</div>
         </div>
@@ -3807,18 +4156,78 @@ function renderInboxDetail(item) {
                 <div style="margin-top:6px;">${sanitizeHtmlContent(item.reply)}</div>
             </div>` : ''
         }
-        <div class="inbox-actions">
-            <div id="inbox-toolbar-container"></div>
-            <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
-            <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
-                <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
-                ${item.type === 'problem_report' && !item.isResolved ?
-                    `<button id="inbox-resolve-btn" class="resolve-btn btn btn-secondary">Marcar como Resuelto</button>` : ''
-                }
-                <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+        ${isVideoItem ? `
+            <div class="inbox-actions" style="margin-top:12px;">
+                ${item.approvalStatus === 'pending' && canApprove ? `
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                        <button id="inbox-approve-video-btn" class="btn btn-primary" style="flex: 1; background-color:#28a745; border-color:#28a745;">
+                            <i class="fa-solid fa-check"></i> Aprobar Vídeo
+                        </button>
+                        <button id="inbox-reject-video-btn" class="btn btn-danger" style="flex: 1; background-color:#dc3545; border-color:#dc3545;">
+                            <i class="fa-solid fa-xmark"></i> Rechazar Vídeo
+                        </button>
+                    </div>
+                ` : ''}
+                <div style="display:flex; justify-content:flex-end;">
+                    <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+                </div>
             </div>
-        </div>
+        ` : `
+            <div class="inbox-actions">
+                <div id="inbox-toolbar-container"></div>
+                <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                    <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
+                    ${item.type === 'problem_report' && !item.isResolved ?
+                        `<button id="inbox-resolve-btn" class="resolve-btn btn btn-secondary">Marcar como Resuelto</button>` : ''
+                    }
+                    <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+                </div>
+            </div>
+        `}
     `;
+
+    // Listeners para aprobación/rechazo de vídeos
+    const approveVideoBtn = document.getElementById('inbox-approve-video-btn');
+    if (approveVideoBtn) {
+        approveVideoBtn.addEventListener('click', async () => {
+            if (confirm("¿Confirmas la aprobación y publicación de este vídeo en GPSpedia?")) {
+                try {
+                    approveVideoBtn.disabled = true;
+                    approveVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aprobando...`;
+                    await approveVideo(item.id, userName, userRole);
+                    inboxCacheData = null;
+                    mostrarNotificacion("Vídeo aprobado con éxito.", "success");
+                    openInbox();
+                } catch (err) {
+                    showGlobalError(`Error al aprobar vídeo: ${err.message}`);
+                    approveVideoBtn.disabled = false;
+                    approveVideoBtn.innerHTML = `<i class="fa-solid fa-check"></i> Aprobar Vídeo`;
+                }
+            }
+        });
+    }
+
+    const rejectVideoBtn = document.getElementById('inbox-reject-video-btn');
+    if (rejectVideoBtn) {
+        rejectVideoBtn.addEventListener('click', async () => {
+            const reason = prompt("Indica el motivo de rechazo del vídeo:", "No cumple los requisitos técnicos");
+            if (reason !== null) {
+                try {
+                    rejectVideoBtn.disabled = true;
+                    rejectVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rechazando...`;
+                    await rejectVideo(item.id, userName, reason, userRole);
+                    inboxCacheData = null;
+                    mostrarNotificacion("Vídeo rechazado.", "info");
+                    openInbox();
+                } catch (err) {
+                    showGlobalError(`Error al rechazar vídeo: ${err.message}`);
+                    rejectVideoBtn.disabled = false;
+                    rejectVideoBtn.innerHTML = `<i class="fa-solid fa-xmark"></i> Rechazar Vídeo`;
+                }
+            }
+        });
+    }
 
 
     const toolbarContainer = document.getElementById('inbox-toolbar-container');
@@ -3908,7 +4317,7 @@ function getYouTubeEmbedUrl(url) {
     return null;
 }
 
-function createAccordionSection(container, title, sec, isOpen = false, datosRelay = [], vehicleId = null) {
+export function createAccordionSection(container, title, sec, isOpen = false, datosRelay = [], vehicleId = null) {
     const btn = document.createElement("button");
     btn.className = "accordion-btn";
     btn.innerHTML = `${title} <span class="accordion-arrow">▼</span>`;
@@ -4200,7 +4609,12 @@ function createAccordionSection(container, title, sec, isOpen = false, datosRela
         const allButtons = container.querySelectorAll(".accordion-btn");
         allButtons.forEach(otherBtn => {
             otherBtn.classList.remove("active");
-            otherBtn.nextElementSibling.style.maxHeight = null;
+            const otherArrow = otherBtn.querySelector(".accordion-arrow");
+            if (otherArrow) otherArrow.textContent = "▼";
+            const otherPanel = otherBtn.nextElementSibling;
+            if (otherPanel && otherPanel.classList.contains("panel-desplegable")) {
+                otherPanel.style.maxHeight = null;
+            }
         });
 
         // Si el botón no estaba activo, ábrelo.
@@ -4584,8 +4998,8 @@ function mostrarTutorialesGrid() {
     const createCard = document.createElement('div');
     createCard.className = 'card card-create-tutorial';
     createCard.innerHTML = `
-        <i class="fa-solid fa-plus" style="font-size: 2rem; color: #007bff; margin-bottom: 6px;"></i>
-        <span style="font-weight: bold; color: #007bff; font-size: 0.95rem;">Agregar Tutorial</span>
+        <i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 6px;"></i>
+        <span style="font-size: 0.95rem;">Agregar Tutorial</span>
     `;
     createCard.onclick = () => openAddTutorialModal();
     grid.appendChild(createCard);
@@ -4637,16 +5051,60 @@ function mostrarRelayGrid() {
     cont.appendChild(grid);
 }
 
-function mostrarDetalleTutorialModal(item) {
+export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
 
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
+    const isDeveloper = userRole === 'Desarrollador';
+
     const headerDiv = document.createElement("div");
     headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+
+    const titleContainer = document.createElement("div");
+    titleContainer.style.cssText = "display: flex; align-items: center; gap: 8px; flex: 1;";
+
     const title = document.createElement("h2");
     title.textContent = item.Tema;
     title.style.color = "#007bff";
-    headerDiv.appendChild(title);
+    title.style.margin = "0";
+    titleContainer.appendChild(title);
+    headerDiv.appendChild(titleContainer);
+
+    const controlsContainer = document.createElement("div");
+    controlsContainer.style.cssText = "display: flex; align-items: center; gap: 8px;";
+
+    if (isDeveloper) {
+        if (inEditModeTutorial) {
+            // Botón Descartar (↩️)
+            const resetBtn = document.createElement("button");
+            resetBtn.innerHTML = '↩️';
+            resetBtn.className = "share-modal-btn";
+            resetBtn.title = "Descartar cambios";
+            resetBtn.style.fontSize = "1.2em";
+            resetBtn.onclick = () => mostrarDetalleTutorialModal(item, false);
+            controlsContainer.appendChild(resetBtn);
+
+            // Botón Guardar (✅)
+            const saveBtn = document.createElement("button");
+            saveBtn.innerHTML = '✅';
+            saveBtn.className = "share-modal-btn";
+            saveBtn.title = "Guardar cambios";
+            saveBtn.style.fontSize = "1.2em";
+            saveBtn.id = "btn-save-tutorial-edit";
+            controlsContainer.appendChild(saveBtn);
+        } else {
+            // Botón de lápiz de Edición
+            const editBtn = document.createElement("button");
+            editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+            editBtn.className = "share-modal-btn";
+            editBtn.title = "Activar modo edición";
+            editBtn.onclick = () => mostrarDetalleTutorialModal(item, true);
+            controlsContainer.appendChild(editBtn);
+        }
+    }
+
     const closeBtn = document.createElement("button");
     closeBtn.textContent = "Cerrar";
     closeBtn.onclick = () => {
@@ -4658,31 +5116,114 @@ function mostrarDetalleTutorialModal(item) {
     };
     closeBtn.className = "backBtn";
     closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
-    headerDiv.appendChild(closeBtn);
+    controlsContainer.appendChild(closeBtn);
+    headerDiv.appendChild(controlsContainer);
     cont.appendChild(headerDiv);
 
-    // Comentario: Se refactoriza para usar appendChild y evitar `innerHTML +=` que es propenso a errores.
-    if (item.Video) {
-        const videoContainer = document.createElement('div');
-        const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || item.Video.replace("watch?v=", "embed/");
-        videoContainer.innerHTML = `<iframe width="100%" height="315" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px;"></iframe>`;
-        cont.appendChild(videoContainer);
+    if (inEditModeTutorial) {
+        // Formulario in-modal de edición de tutorial
+        const form = document.createElement("div");
+        form.style.cssText = "display: flex; flex-direction: column; gap: 12px; margin-top: 10px;";
+
+        const temaLabel = document.createElement("label");
+        temaLabel.style.fontWeight = "bold";
+        temaLabel.textContent = "Tema / Título (máx 30 caracteres):";
+        const temaInput = document.createElement("input");
+        temaInput.type = "text";
+        temaInput.maxLength = 30;
+        temaInput.value = item.Tema || "";
+        temaInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const videoLabel = document.createElement("label");
+        videoLabel.style.fontWeight = "bold";
+        videoLabel.textContent = "Enlace de Vídeo de YouTube:";
+        const videoInput = document.createElement("input");
+        videoInput.type = "url";
+        videoInput.value = item.Video || "";
+        videoInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const descLabel = document.createElement("label");
+        descLabel.style.fontWeight = "bold";
+        descLabel.textContent = "Descripción / Detalles (máx 700 caracteres):";
+        const descInput = document.createElement("textarea");
+        descInput.id = "edit-tutorial-desc-textarea";
+        descInput.maxLength = 700;
+        descInput.rows = 4;
+        descInput.value = item.Detalles || item.Descripcion || "";
+        descInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        form.appendChild(temaLabel);
+        form.appendChild(temaInput);
+        form.appendChild(videoLabel);
+        form.appendChild(videoInput);
+        form.appendChild(descLabel);
+        form.appendChild(createRichTextToolbar("edit-tutorial-desc-textarea"));
+        form.appendChild(descInput);
+        cont.appendChild(form);
+
+        const saveBtn = controlsContainer.querySelector("#btn-save-tutorial-edit");
+        if (saveBtn) {
+            saveBtn.onclick = async () => {
+                const newTema = temaInput.value.trim();
+                const newVideo = videoInput.value.trim();
+                const newDesc = descInput.value.trim();
+                if (!newTema) {
+                    mostrarNotificacion("El tema no puede estar vacío.", "error");
+                    return;
+                }
+                saveBtn.disabled = true;
+                showSavingIndicator("saving", "Guardando cambios...");
+                try {
+                    const res = await routeAction('updateTutorialItem', {
+                        originalTema: item.Tema,
+                        tema: newTema,
+                        videoUrl: newVideo,
+                        descripcion: newDesc,
+                        userRole
+                    });
+                    if (res && res.status === 'success') {
+                        item.Tema = newTema;
+                        item.Video = newVideo;
+                        item.Detalles = newDesc;
+                        item.Descripcion = newDesc;
+                        showSavingIndicator("success", "Tutorial guardado");
+                        mostrarNotificacion("Tutorial actualizado con éxito.", "success");
+                        mostrarDetalleTutorialModal(item, false);
+                    } else {
+                        throw new Error((res && res.message) || "Error al actualizar");
+                    }
+                } catch (err) {
+                    console.error("Error guardando tutorial:", err);
+                    showSavingIndicator("error", "Error al guardar");
+                    mostrarNotificacion(err.message || "Error al guardar el tutorial", "error");
+                    saveBtn.disabled = false;
+                }
+            };
+        }
+    } else {
+        // Visualización normal del tutorial
+        if (item.Video) {
+            const videoContainer = document.createElement('div');
+            const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || item.Video.replace("watch?v=", "embed/");
+            videoContainer.innerHTML = `<iframe width="100%" height="315" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px;"></iframe>`;
+            cont.appendChild(videoContainer);
+        }
+
+        const details = [
+            createDetailParagraph('Cómo Identificarlo', item.comoIdentificarlo),
+            createDetailParagraph('Dónde Encontrarlo', item.dondeEncontrarlo),
+            createDetailParagraph('Detalles', item.Detalles || item.Descripcion)
+        ];
+
+        details.forEach(detail => {
+            if (detail) cont.appendChild(detail);
+        });
     }
-
-    const details = [
-        createDetailParagraph('Cómo Identificarlo', item.comoIdentificarlo),
-        createDetailParagraph('Dónde Encontrarlo', item.dondeEncontrarlo),
-        createDetailParagraph('Detalles', item.Detalles)
-    ];
-
-    details.forEach(detail => {
-        if (detail) cont.appendChild(detail);
-    });
 
     const modalDetalle = document.getElementById("modalDetalle");
     modalDetalle.dataset.modalType = 'tutorial';
     modalDetalle.classList.add("visible");
-    if (window.history && window.history.pushState) {
+    if (!inEditModeTutorial && window.history && window.history.pushState) {
         window.history.pushState({ modalOpen: true }, '');
     }
 }
@@ -5136,6 +5677,7 @@ export function openExpandMenuModal(item) {
             ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
             ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary btn-expand-option"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
             ${canAddVin ? `<button id="btn-exp-vin" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-barcode"></i> Agregar VIN (${maxVinAllowed - registeredVins.length} disponible${maxVinAllowed - registeredVins.length > 1 ? 's' : ''})</button>` : ""}
+            <button id="btn-exp-pys" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-triangle-exclamation"></i> Agregar problema relacionado</button>
         </div>
     `;
 
@@ -5158,6 +5700,9 @@ export function openExpandMenuModal(item) {
 
     const vinBtn = content.querySelector("#btn-exp-vin");
     if (vinBtn) vinBtn.onclick = () => { modal.remove(); openAddVinModal(item); };
+
+    const pysBtn = content.querySelector("#btn-exp-pys");
+    if (pysBtn) pysBtn.onclick = () => { modal.remove(); openAssociateExistingProblemModal(item); };
 }
 
 /* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO / RECTIFICACIÓN SELECTOR TRIM LEVEL */
@@ -5763,7 +6308,46 @@ export function openAddFeedModal(item) {
     };
 }
 
-/* TAREA 5 (3.5): AGREGAR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */
+/* TAREA 5 (3.5) & TAREA 8.3: AGREGAR ENLACE O SUBIR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */
+export function buildVehicleVideoMetadata(item) {
+    const marca = item.marca || '';
+    const modelo = item.modelo || '';
+    const anoDesde = item.anoDesde || '';
+    const anoHasta = item.anoHasta || '';
+    const rangoAnos = anoHasta && String(anoHasta) !== String(anoDesde) ? `${anoDesde} - ${anoHasta}` : `${anoDesde}`;
+
+    const rawVersions = item.versionesAplicables ? String(item.versionesAplicables).split(/[\/,\\]/).map(s => s.trim()).filter(Boolean) : [];
+    const hasSingleVersion = rawVersions.length === 1;
+    const singleVersion = hasSingleVersion ? rawVersions[0] : '';
+
+    // Requisito 5.1: Título: Marca - Modelo [Versión si es única] [Rango Años]
+    let titleParts = [marca, '-', modelo];
+    if (hasSingleVersion && singleVersion) {
+        titleParts.push(singleVersion);
+    }
+    if (rangoAnos.trim()) {
+        titleParts.push(rangoAnos.trim());
+    }
+    const generatedTitle = titleParts.filter(Boolean).join(' ').replace(/\s+-\s+/, ' - ');
+
+    // Requisito 5.2: Descripción: "En este video veremos cómo se trabaja..."
+    let generatedDesc = '';
+    if (hasSingleVersion && singleVersion) {
+        generatedDesc = `En este video veremos cómo se trabaja ${modelo} ${singleVersion} ${rangoAnos}`.trim();
+    } else {
+        const encendido = item.tipoEncendido ? `${item.tipoEncendido}` : '';
+        generatedDesc = `En este video veremos cómo se trabaja ${modelo} ${encendido} ${rangoAnos}`.replace(/\s+/g, ' ').trim();
+        if (rawVersions.length > 1) {
+            generatedDesc += `\nVersiones aplicables: ${rawVersions.join(' / ')}`;
+        }
+    }
+
+    return {
+        title: generatedTitle,
+        description: generatedDesc
+    };
+}
+
 export function openAddVideoModal(item) {
     const existing = document.getElementById("add-video-modal");
     if (existing) existing.remove();
@@ -5779,24 +6363,58 @@ export function openAddVideoModal(item) {
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
-        <h2><i class="fa-brands fa-youtube"></i> Agregar Enlace de Vídeo</h2>
+        <h2><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Vídeo Guía de Desarme</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
 
-        <form id="add-video-form" style="display:flex; flex-direction:column; gap:12px;">
-            <div class="form-group">
-                <label>Enlace de YouTube</label>
-                <input type="url" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
+        <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; gap:10px;">
+                <button type="button" id="btn-toggle-manual-link" class="btn btn-secondary" style="flex:1; font-size:0.88rem; padding:8px 10px;">
+                    <i class="fa-solid fa-link"></i> Enlace de YouTube
+                </button>
+                <button type="button" id="btn-open-yt-upload" class="btn btn-primary" style="flex:1; font-size:0.88rem; padding:8px 10px; background-color:#ff0000; border-color:#ff0000;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo
+                </button>
             </div>
-            <div class="modal-btn-compact-container">
-                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-brands fa-youtube"></i> Agregar Vídeo</button>
-            </div>
-        </form>
+
+            <form id="add-video-form" style="display:flex; flex-direction:column; gap:12px; margin-top:4px;">
+                <div class="form-group">
+                    <label>Enlace de YouTube</label>
+                    <input type="url" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
+                </div>
+                <div class="modal-btn-compact-container">
+                    <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-brands fa-youtube"></i> Guardar Enlace</button>
+                </div>
+            </form>
+        </div>
     `;
 
     modal.appendChild(content);
     document.body.appendChild(modal);
 
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    // Opción Subir Vídeo directamente a YouTube
+    content.querySelector("#btn-open-yt-upload").onclick = () => {
+        const meta = buildVehicleVideoMetadata(item);
+        modal.remove();
+        openYouTubeUploadModal({
+            initialTitle: meta.title,
+            initialDescription: meta.description,
+            contentType: 'corte',
+            referenceId: item.id,
+            metadata: {
+                marca: item.marca,
+                modelo: item.modelo,
+                versionesAplicables: item.versionesAplicables,
+                anoDesde: item.anoDesde,
+                anoHasta: item.anoHasta,
+                tipoEncendido: item.tipoEncendido
+            },
+            onSuccess: () => {
+                alert("La solicitud de vídeo ha sido enviada para aprobación interna. Aparecerá en este modelo una vez aprobada.");
+            }
+        });
+    };
 
     const form = content.querySelector("#add-video-form");
     form.onsubmit = async (e) => {
@@ -5825,7 +6443,7 @@ export function openAddVideoModal(item) {
             console.error(err);
             showGlobalError("Error: " + err.message);
             submitBtn.disabled = false;
-            submitBtn.innerText = "Agregar Vídeo";
+            submitBtn.innerText = "Guardar Enlace";
         }
     };
 }
@@ -5847,8 +6465,8 @@ export async function renderPysSection() {
         const createCard = document.createElement("div");
         createCard.className = "card card-create-pys";
         createCard.innerHTML = `
-            <i class="fa-solid fa-plus" style="font-size: 2.5rem; color: #007bff; margin-bottom: 8px;"></i>
-            <span style="font-weight: bold; color: #007bff;">Agregar Problema</span>
+            <i class="fa-solid fa-plus" style="font-size: 2.5rem; margin-bottom: 8px;"></i>
+            <span>Agregar Problema</span>
         `;
         createCard.onclick = () => openAddProblemModal();
         grid.appendChild(createCard);
@@ -5897,7 +6515,7 @@ export async function renderPysSection() {
 }
 
 /* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */
-export function openAddProblemModal() {
+export function openAddProblemModal(preAssociatedVehicle = null) {
     const existing = document.getElementById("add-pys-modal");
     if (existing) existing.remove();
 
@@ -5976,12 +6594,20 @@ export function openAddProblemModal() {
                 <textarea id="pys-solucion" maxlength="700" rows="4" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
-                <label>Cómo Prevenir (Opcional, Máx 100 caracteres)</label>
-                <input type="text" id="pys-prevenir" maxlength="100" placeholder="Recomendación preventiva...">
+                <label>Cómo Prevenir (Opcional, Máx 700 caracteres)</label>
+                <textarea id="pys-prevenir" maxlength="700" rows="3" placeholder="Recomendación preventiva..."></textarea>
             </div>
             <div class="form-group">
-                <label>Enlace de Vídeo YouTube (Opcional)</label>
-                <input type="url" id="pys-video" placeholder="https://www.youtube.com/watch?v=...">
+                <label>Vídeo Explicativo de YouTube (Opcional)</label>
+                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                    <button type="button" id="btn-pys-upload-yt" class="btn btn-primary" style="flex:1; background-color:#ff0000; border-color:#ff0000; font-size:0.85rem; padding:6px 10px;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo a YouTube
+                    </button>
+                </div>
+                <input type="url" id="pys-video" placeholder="O ingresar enlace: https://www.youtube.com/watch?v=...">
+                <small id="pys-video-badge" style="display:none; color:#28a745; font-size:0.8rem; margin-top:2px;">
+                    <i class="fa-solid fa-check-circle"></i> Vídeo subido a YouTube (pendiente de aprobación).
+                </small>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar</button>
         </form>
@@ -6023,6 +6649,14 @@ export function openAddProblemModal() {
         });
     }
 
+    // Tarea 9.2 (Requisito 2.5): Pre-asociar vehículo si se invoca desde el modal de un modelo y renderizar su badge
+    if (preAssociatedVehicle && preAssociatedVehicle.id) {
+        alcanceSelect.value = 'especifico';
+        modelsSection.style.display = 'block';
+        selectedVehicleIds.add(String(preAssociatedVehicle.id));
+        renderProvisionalSelectedModels();
+    }
+
     searchVehicleInput.oninput = () => {
         const query = searchVehicleInput.value.toLowerCase().trim();
         searchVehicleResults.innerHTML = '';
@@ -6030,14 +6664,30 @@ export function openAddProblemModal() {
 
         const { catalogData } = getState();
         const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
-        const matches = cortes.filter(c =>
-            `${c.marca} ${c.modelo} ${c.versionesAplicables || ''}`.toLowerCase().includes(query)
-        ).slice(0, 8);
+        // Tarea 9.1: Excluir vehículos que ya están seleccionados
+        const matches = cortes.filter(c => {
+            if (selectedVehicleIds.has(String(c.id))) return false;
+            return `${c.marca} ${c.modelo} ${c.versionesAplicables || ''}`.toLowerCase().includes(query);
+        }).slice(0, 8);
 
         matches.forEach(v => {
             const itemDiv = document.createElement("div");
             itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;";
-            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;"> <span style="flex:1; margin:0; line-height:1.2;">${v.marca} ${v.modelo} (${v.anoDesde}${v.anoHasta ? '-' + v.anoHasta : ''})</span>`;
+
+            // Requisito 1: [Imagen del vehículo] [Versión de equipamiento o tipo de encendido] [Rango de años]
+            const versionOrIgnition = (v.versionesAplicables && v.versionesAplicables.trim()) ? v.versionesAplicables.trim() : (v.tipoEncendido || '-');
+            const yearRange = (v.anoHasta && String(v.anoHasta) !== String(v.anoDesde)) ? `${v.anoDesde} - ${v.anoHasta}` : `${v.anoDesde}`;
+
+            itemDiv.innerHTML = `
+                <img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;">
+                <span style="flex:1; margin:0; line-height:1.2; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                    <strong>${v.marca} ${v.modelo}</strong>
+                    <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
+                    <span style="color:var(--accent-color); font-weight:600;">${versionOrIgnition}</span>
+                    <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
+                    <span>${yearRange}</span>
+                </span>
+            `;
             itemDiv.onclick = () => {
                 searchVehicleResults.innerHTML = '';
                 searchVehicleInput.value = '';
@@ -6056,6 +6706,32 @@ export function openAddProblemModal() {
         txtSolucion.disabled = chkSinSolucion.checked;
         if (chkSinSolucion.checked) txtSolucion.value = "";
     };
+
+    // Botón Subir Vídeo a YouTube para PyS (Tarea 8.4 y Requisito 9)
+    const btnUploadPysYt = content.querySelector("#btn-pys-upload-yt");
+    if (btnUploadPysYt) {
+        btnUploadPysYt.onclick = () => {
+            const rawTitle = content.querySelector("#pys-titulo").value.trim() || 'Problema Técnico';
+            const rawDesc = content.querySelector("#pys-detalle").value.trim() || (txtSolucion ? txtSolucion.value.trim() : '');
+
+            openYouTubeUploadModal({
+                initialTitle: rawTitle,
+                initialDescription: rawDesc,
+                contentType: 'pys',
+                referenceId: null,
+                metadata: {
+                    alcance: alcanceSelect.value,
+                    modelosAsociados: Array.from(selectedVehicleIds)
+                },
+                onSuccess: (data) => {
+                    const videoInput = content.querySelector("#pys-video");
+                    if (videoInput) videoInput.value = data.videoUrl;
+                    const badge = content.querySelector("#pys-video-badge");
+                    if (badge) badge.style.display = 'block';
+                }
+            });
+        };
+    }
 
     const form = content.querySelector("#add-pys-form");
     form.onsubmit = async (e) => {
@@ -6101,6 +6777,10 @@ export function openAddProblemModal() {
             alert("Problema registrado con éxito.");
             modal.remove();
             renderPysSection();
+            if (preAssociatedVehicle && preAssociatedVehicle.id) {
+                const panel = document.getElementById("detalleCompleto");
+                if (panel) renderPosiblesProblemasAccordion(panel, preAssociatedVehicle);
+            }
         } catch(err) {
             console.error(err);
             showGlobalError("Error al registrar problema: " + err.message);
@@ -6110,7 +6790,7 @@ export function openAddProblemModal() {
     };
 }
 
-export function openSearchVehicleForPysAssociationModal(problemId, onAssociated) {
+export function openSearchVehicleForPysAssociationModal(problemId, onAssociated, alreadyAssociatedIds = []) {
     const existing = document.getElementById("pys-add-vehicle-modal");
     if (existing) existing.remove();
 
@@ -6121,13 +6801,13 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated)
 
     const content = document.createElement("div");
     content.className = "info-modal-content";
-    content.style.maxWidth = "450px";
+    content.style.maxWidth = "480px";
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
-        <h2>Asociar Modelo a Problema</h2>
+        <h2><i class="fa-solid fa-car"></i> Asociar Modelo a Problema</h2>
         <div style="margin-top:10px;">
-            <input type="text" id="assoc-search-input" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width:100%; padding:8px;">
+            <input type="text" id="assoc-search-input" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width:100%; padding:8px; box-sizing:border-box;">
             <div id="assoc-search-results" style="max-height:220px; overflow-y:auto; display:flex; flex-direction:column; gap:6px; margin-top:10px;"></div>
         </div>
     `;
@@ -6141,6 +6821,8 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated)
     const input = content.querySelector("#assoc-search-input");
     const resultsContainer = content.querySelector("#assoc-search-results");
 
+    const excludedIds = new Set((alreadyAssociatedIds || []).map(String));
+
     input.oninput = () => {
         const query = input.value.toLowerCase().trim();
         resultsContainer.innerHTML = '';
@@ -6148,12 +6830,32 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated)
 
         const { catalogData } = getState();
         const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
-        const matches = cortes.filter(c => `${c.marca} ${c.modelo}`.toLowerCase().includes(query)).slice(0, 8);
+
+        // Tarea 9.1: Excluir vehículos que ya están asociados al problema
+        const matches = cortes.filter(c => {
+            if (excludedIds.has(String(c.id))) return false;
+            return `${c.marca} ${c.modelo} ${c.versionesAplicables || ''}`.toLowerCase().includes(query);
+        }).slice(0, 8);
 
         matches.forEach(v => {
             const itemDiv = document.createElement("div");
             itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;";
-            itemDiv.innerHTML = `<img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;"> <span style="flex:1; margin:0; line-height:1.2;">${v.marca} ${v.modelo} (${v.anoDesde})</span>`;
+
+            // Requisito 1: [Imagen del vehículo] [Versión de equipamiento o tipo de encendido] [Rango de años]
+            const versionOrIgnition = (v.versionesAplicables && v.versionesAplicables.trim()) ? v.versionesAplicables.trim() : (v.tipoEncendido || '-');
+            const yearRange = (v.anoHasta && String(v.anoHasta) !== String(v.anoDesde)) ? `${v.anoDesde} - ${v.anoHasta}` : `${v.anoDesde}`;
+
+            itemDiv.innerHTML = `
+                <img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;">
+                <span style="flex:1; margin:0; line-height:1.2; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                    <strong>${v.marca} ${v.modelo}</strong>
+                    <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
+                    <span style="color:var(--accent-color); font-weight:600;">${versionOrIgnition}</span>
+                    <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
+                    <span>${yearRange}</span>
+                </span>
+            `;
+
             itemDiv.onclick = () => {
                 closeModal();
                 openConfirmVehicleForPysModal(v, async (confirmedVehicle) => {
@@ -6222,52 +6924,299 @@ export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
 }
 
 /* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */
-export function openPysDetailModal(item) {
+export function openPysDetailModal(item, navOptions = {}, inEditModePys = false) {
     const cont = document.getElementById("detalleCompleto");
     cont.innerHTML = "";
+
+    const modalDetalle = document.getElementById("modalDetalle");
+    if (modalDetalle) {
+        modalDetalle.dataset.modalType = 'pys';
+        modalDetalle.classList.add("visible");
+    }
+
+    // Gestión contextual de pila de navegación anti-bucle
+    if (navOptions && navOptions.fromOriginModal) {
+        modalNavStack.push({
+            type: navOptions.fromOriginModal.type,
+            item: navOptions.fromOriginModal.item,
+            navOptions: navOptions.fromOriginModal.navOptions || {}
+        });
+    } else if (!inEditModePys && (!navOptions || !navOptions.originModal)) {
+        // Apertura independiente: limpiar pila previa
+        modalNavStack.length = 0;
+    }
+
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
+    const isDeveloper = userRole === 'Desarrollador';
 
     const headerDiv = document.createElement("div");
     headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;";
 
+    const titleContainer = document.createElement("div");
+    titleContainer.style.cssText = "display: flex; align-items: center; gap: 8px; flex: 1;";
+
     const title = document.createElement("h2");
     title.innerText = item.Problema;
-    title.style.margin = "0";
-    headerDiv.appendChild(title);
+    title.style.cssText = "margin: 0; font-size: 1.5rem; font-weight: bold; color: var(--text-color, #222);";
+    titleContainer.appendChild(title);
+    headerDiv.appendChild(titleContainer);
+
+    const controlsContainer = document.createElement("div");
+    controlsContainer.style.cssText = "display: flex; align-items: center; gap: 8px;";
+
+    if (isDeveloper) {
+        if (inEditModePys) {
+            // Botón Descartar (↩️)
+            const resetBtn = document.createElement("button");
+            resetBtn.innerHTML = '↩️';
+            resetBtn.className = "share-modal-btn";
+            resetBtn.title = "Descartar cambios";
+            resetBtn.style.fontSize = "1.2em";
+            resetBtn.onclick = () => openPysDetailModal(item, navOptions, false);
+            controlsContainer.appendChild(resetBtn);
+
+            // Botón Guardar (✅)
+            const saveBtn = document.createElement("button");
+            saveBtn.innerHTML = '✅';
+            saveBtn.className = "share-modal-btn";
+            saveBtn.title = "Guardar cambios";
+            saveBtn.style.fontSize = "1.2em";
+            saveBtn.id = "btn-save-pys-edit";
+            controlsContainer.appendChild(saveBtn);
+        } else {
+            // Botón de lápiz de Edición
+            const editBtn = document.createElement("button");
+            editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+            editBtn.className = "share-modal-btn";
+            editBtn.title = "Activar modo edición";
+            editBtn.onclick = () => openPysDetailModal(item, navOptions, true);
+            controlsContainer.appendChild(editBtn);
+        }
+    }
+
+    const closePysModal = () => {
+        // Detener reproducción y limpiar reproductor de video de PyS al cerrar
+        const iframes = cont.querySelectorAll('iframe');
+        iframes.forEach(iframe => {
+            try {
+                if (iframe.contentWindow) {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+                }
+            } catch (e) {}
+            iframe.src = "";
+            iframe.remove();
+        });
+
+        // Comprobar si hay un modal previo en la pila para retorno contextual
+        if (modalNavStack.length > 0) {
+            const prevContext = modalNavStack.pop();
+            if (prevContext && prevContext.type === 'vehicle') {
+                mostrarDetalleModal(prevContext.item, false, prevContext.navOptions || {});
+                return;
+            }
+        }
+
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+            modalNavStack.length = 0;
+        }
+    };
 
     const closeBtn = document.createElement("button");
     closeBtn.innerHTML = "&times;";
-    closeBtn.onclick = () => document.getElementById("modalDetalle").classList.remove("visible");
-    headerDiv.appendChild(closeBtn);
+    closeBtn.className = "info-close-btn";
+    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 4px;";
+    closeBtn.onclick = closePysModal;
+    controlsContainer.appendChild(closeBtn);
 
+    headerDiv.appendChild(controlsContainer);
     cont.appendChild(headerDiv);
 
+    if (inEditModePys) {
+        // Formulario in-modal de edición de Problemas y Soluciones
+        const form = document.createElement("div");
+        form.style.cssText = "display: flex; flex-direction: column; gap: 12px; margin-top: 10px;";
+
+        const titleLabel = document.createElement("label");
+        titleLabel.style.fontWeight = "bold";
+        titleLabel.textContent = "Título del Problema (máx 30 caracteres):";
+        const titleInput = document.createElement("input");
+        titleInput.type = "text";
+        titleInput.maxLength = 30;
+        titleInput.value = item.Problema || "";
+        titleInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const descLabel = document.createElement("label");
+        descLabel.style.fontWeight = "bold";
+        descLabel.textContent = "Descripción (máx 700 caracteres):";
+        const descInput = document.createElement("textarea");
+        descInput.id = "edit-pys-desc-textarea";
+        descInput.maxLength = 700;
+        descInput.rows = 4;
+        descInput.value = item.Descripcion || "";
+        descInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const solLabel = document.createElement("label");
+        solLabel.style.fontWeight = "bold";
+        solLabel.textContent = "Solución (máx 700 caracteres):";
+        const solInput = document.createElement("textarea");
+        solInput.id = "edit-pys-sol-textarea";
+        solInput.maxLength = 700;
+        solInput.rows = 4;
+        solInput.value = item.Solucion || "";
+        solInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const prevLabel = document.createElement("label");
+        prevLabel.style.fontWeight = "bold";
+        prevLabel.textContent = "Cómo evitarlo / Prevención (máx 700 caracteres):";
+        const prevInput = document.createElement("textarea");
+        prevInput.id = "edit-pys-prev-textarea";
+        prevInput.maxLength = 700;
+        prevInput.rows = 3;
+        prevInput.value = item.Prevenir || "";
+        prevInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const videoLabel = document.createElement("label");
+        videoLabel.style.fontWeight = "bold";
+        videoLabel.textContent = "Enlace de Vídeo de YouTube:";
+        const videoInput = document.createElement("input");
+        videoInput.type = "url";
+        videoInput.value = item.Video || "";
+        videoInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        form.appendChild(titleLabel);
+        form.appendChild(titleInput);
+
+        form.appendChild(descLabel);
+        form.appendChild(createRichTextToolbar("edit-pys-desc-textarea"));
+        form.appendChild(descInput);
+
+        form.appendChild(solLabel);
+        form.appendChild(createRichTextToolbar("edit-pys-sol-textarea"));
+        form.appendChild(solInput);
+
+        form.appendChild(prevLabel);
+        form.appendChild(createRichTextToolbar("edit-pys-prev-textarea"));
+        form.appendChild(prevInput);
+
+        form.appendChild(videoLabel);
+        form.appendChild(videoInput);
+        cont.appendChild(form);
+
+        const saveBtn = controlsContainer.querySelector("#btn-save-pys-edit");
+        if (saveBtn) {
+            saveBtn.onclick = async () => {
+                const newTitle = titleInput.value.trim();
+                const newDesc = descInput.value.trim();
+                const newSol = solInput.value.trim();
+                const newPrev = prevInput.value.trim();
+                const newVideo = videoInput.value.trim();
+
+                if (!newTitle) {
+                    mostrarNotificacion("El título no puede estar vacío.", "error");
+                    return;
+                }
+                saveBtn.disabled = true;
+                showSavingIndicator("saving", "Guardando cambios...");
+                try {
+                    const res = await routeAction('updatePysItem', {
+                        problemId: item.id_problem || item.id,
+                        titulo: newTitle,
+                        descripcion: newDesc,
+                        solucion: newSol,
+                        prevenir: newPrev,
+                        videoUrl: newVideo,
+                        userRole
+                    });
+                    if (res && res.status === 'success') {
+                        item.Problema = newTitle;
+                        item.Descripcion = newDesc;
+                        item.Solucion = newSol;
+                        item.Prevenir = newPrev;
+                        item.Video = newVideo;
+                        item.Se_soluciono = newSol ? "x" : "";
+                        showSavingIndicator("success", "Problema guardado");
+                        mostrarNotificacion("Problema actualizado con éxito.", "success");
+                        openPysDetailModal(item, navOptions, false);
+                    } else {
+                        throw new Error((res && res.message) || "Error al actualizar");
+                    }
+                } catch (err) {
+                    console.error("Error guardando problema:", err);
+                    showSavingIndicator("error", "Error al guardar");
+                    mostrarNotificacion(err.message || "Error al guardar el problema", "error");
+                    saveBtn.disabled = false;
+                }
+            };
+        }
+        return;
+    }
+
+    // 2. Imagen del problema (inmediatamente después del título)
     if (item.Imagen) {
         const img = document.createElement("img");
-        img.src = item.Imagen;
-        img.style.cssText = "width: 100%; max-height: 250px; object-fit: cover; border-radius: 8px; margin-bottom: 15px;";
+        img.className = 'img-vehiculo-modal img-pys-modal';
+        setOptimizedImage(img, item.Imagen, IMG_SIZE_MEDIUM);
         cont.appendChild(img);
     }
 
-    const desc = document.createElement("p");
-    desc.innerHTML = "<strong>Descripción:</strong> " + sanitizeHtmlContent(item.Descripcion || "");
-    cont.appendChild(desc);
+    // Función auxiliar para renderizar encabezados estilizados con azul institucional
+    const createPysSectionBlock = (sectionTitle, textContent) => {
+        if (!textContent || !String(textContent).trim()) return null;
+        const block = document.createElement("div");
+        block.style.cssText = "margin-top: 14px;";
 
-    if (item.Solucion) {
-        const sol = document.createElement("p");
-        sol.innerHTML = "<strong>Solución:</strong> " + sanitizeHtmlContent(item.Solucion);
-        cont.appendChild(sol);
-    }
+        const secHeader = document.createElement("div");
+        secHeader.style.cssText = "font-size: 0.95rem; font-weight: bold; color: #007bff; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #007bff; padding-bottom: 4px; margin-bottom: 8px;";
+        secHeader.textContent = sectionTitle;
+        block.appendChild(secHeader);
 
-    if (item.Prevenir) {
-        const prev = document.createElement("p");
-        prev.innerHTML = "<strong>Prevención:</strong> " + sanitizeHtmlContent(item.Prevenir);
-        cont.appendChild(prev);
-    }
+        const secContent = document.createElement("div");
+        secContent.style.cssText = "font-size: 0.95rem; line-height: 1.5; color: var(--text-color, #333);";
+        secContent.innerHTML = sanitizeHtmlContent(textContent);
+        block.appendChild(secContent);
 
+        return block;
+    };
+
+    // 3. Descripción del problema
+    const descBlock = createPysSectionBlock("Descripción", item.Descripcion);
+    if (descBlock) cont.appendChild(descBlock);
+
+    // 4. Solución del problema
+    const solBlock = createPysSectionBlock("Solución", item.Solucion);
+    if (solBlock) cont.appendChild(solBlock);
+
+    // 5. Cómo evitarlo (Prevención)
+    const prevBlock = createPysSectionBlock("Cómo evitarlo", item.Prevenir);
+    if (prevBlock) cont.appendChild(prevBlock);
+
+    // 6. Video del problema (al final del contenido)
     if (item.Video) {
-        const vid = document.createElement("p");
-        vid.innerHTML = '<strong>Vídeo:</strong> <a href="' + item.Video + '" target="_blank">Ver guía en YouTube</a>';
-        cont.appendChild(vid);
+        const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || (item.Video.includes("embed/") ? item.Video : null);
+        const videoBlock = document.createElement("div");
+        videoBlock.style.cssText = "margin-top: 16px;";
+
+        const videoHeader = document.createElement("div");
+        videoHeader.style.cssText = "font-size: 0.95rem; font-weight: bold; color: #007bff; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #007bff; padding-bottom: 4px; margin-bottom: 8px;";
+        videoHeader.textContent = "Video Guía";
+        videoBlock.appendChild(videoHeader);
+
+        if (videoEmbedUrl) {
+            const videoContainer = document.createElement('div');
+            videoContainer.style.margin = "8px 0 12px 0";
+            videoContainer.innerHTML = `<iframe width="100%" height="280" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px; border: none; display: block; max-width: 100%;"></iframe>`;
+            videoBlock.appendChild(videoContainer);
+        } else {
+            const vid = document.createElement("p");
+            vid.style.margin = "6px 0";
+            vid.innerHTML = '<a href="' + item.Video + '" target="_blank" rel="noopener noreferrer" style="color:#007bff; font-weight:600; text-decoration:underline;">Ver guía en YouTube</a>';
+            videoBlock.appendChild(vid);
+        }
+        cont.appendChild(videoBlock);
     }
 
     /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */
@@ -6275,11 +7224,13 @@ export function openPysDetailModal(item) {
     const { catalogData } = getState();
     const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
     const modelosAsociadosIds = Array.isArray(item.modelosAsociados) ? item.modelosAsociados : [];
-    const sessionData = localStorage.getItem('gpsepedia_session');
-    const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
-    const canEditPys = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+    // REVISIÓN IV: Desvinculación y gestión de modelos en problemas restringida exclusivamente al desarrollador
+    const canEditPys = userRole === 'Desarrollador';
 
-    if (modelosAsociadosIds.length > 0 || canEditPys) {
+    // Tarea 9.3 (Requisito 8.2): Si el modal del problema se abrió desde un vehículo, ocultar en ese contexto el carrusel de modelos para evitar ciclos
+    // REVISIÓN IV ANEXO: El carrusel de vehículos relacionados y la tarjeta de agregar (+) deben estar disponibles para todos los usuarios
+    const isFromVehicle = navOptions && navOptions.originModal === 'vehicle';
+    if (!isFromVehicle) {
         const carouselSection = document.createElement("div");
         carouselSection.style.cssText = "margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;";
         carouselSection.innerHTML = `<h4 style="margin: 0 0 10px 0; font-size: 1rem;"><i class="fa-solid fa-car"></i> Vehículos Relacionados:</h4>`;
@@ -6290,22 +7241,64 @@ export function openPysDetailModal(item) {
         modelosAsociadosIds.forEach(vId => {
             const v = cortes.find(c => String(c.id) === String(vId));
             if (!v) return;
+
+            const cardWrapper = document.createElement("div");
+            cardWrapper.style.cssText = "position: relative; display: inline-block;";
+
             const card = crearCardVehiculo(v, true);
-            track.appendChild(card);
+            card.onclick = () => mostrarDetalleModal(v, false, {
+                originModal: 'pys',
+                fromOriginModal: {
+                    type: 'pys',
+                    item: item,
+                    navOptions: navOptions || {}
+                }
+            });
+            cardWrapper.appendChild(card);
+
+            if (canEditPys) {
+                const removeBtn = document.createElement("button");
+                removeBtn.title = "Eliminar relación con este modelo";
+                removeBtn.innerHTML = "&times;";
+                removeBtn.style.cssText = "position: absolute; top: 4px; right: 4px; background: rgba(220, 53, 69, 0.9); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.3);";
+                removeBtn.onclick = async (e) => {
+                    e.stopPropagation();
+                    if (!confirm(`¿Deseas desvincular el modelo "${v.marca} ${v.modelo}" de este problema?`)) return;
+                    removeBtn.disabled = true;
+                    try {
+                        const res = await routeAction('removeVehicleFromProblem', {
+                            problemId: item.id_problem,
+                            vehicleId: v.id,
+                            userRole
+                        });
+                        if (res && res.status === 'success') {
+                            item.modelosAsociados = res.modelosAsociados || item.modelosAsociados.filter(id => String(id) !== String(v.id));
+                            cardWrapper.remove();
+                            mostrarNotificacion("Relación retirada correctamente.", "success");
+                        }
+                    } catch(err) {
+                        showGlobalError("Error al retirar relación: " + err.message);
+                        removeBtn.disabled = false;
+                    }
+                };
+                cardWrapper.appendChild(removeBtn);
+            }
+
+            track.appendChild(cardWrapper);
         });
 
-        if (canEditPys) {
-            const addCard = document.createElement("div");
-            addCard.style.cssText = "flex: 0 0 120px; border: 2px dashed var(--accent-color); border-radius: 8px; padding: 6px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; color: var(--accent-color); font-size: 0.8rem; background: rgba(0, 123, 255, 0.05);";
-            addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.5rem; margin-bottom: 4px;"></i> <span>Agregar Modelo</span>`;
-            addCard.onclick = () => {
-                openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
-                    item.modelosAsociados = updatedList;
-                    openPysDetailModal(item);
-                });
-            };
-            track.appendChild(addCard);
-        }
+        // Tarjeta «+ Agregar» al final del carrusel disponible para todos los usuarios (Estandarización visual sin bordes discontinuos)
+        const addCard = document.createElement("div");
+        addCard.className = "card card-create-vehicle-assoc";
+        addCard.style.cssText = "flex: 0 0 120px; min-height: 100px; padding: 8px; margin: 0 5px;";
+        addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.5rem; margin-bottom: 6px;"></i> <span style="font-size: 0.8rem; font-weight: 600; text-align: center;">Agregar Modelo</span>`;
+        addCard.onclick = () => {
+            openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
+                item.modelosAsociados = updatedList;
+                openPysDetailModal(item, navOptions);
+            }, item.modelosAsociados || []);
+        };
+        track.appendChild(addCard);
 
         carouselSection.appendChild(track);
         cont.appendChild(carouselSection);
@@ -6323,7 +7316,7 @@ export function openPysDetailModal(item) {
         addSolBtn.className = "btn btn-secondary";
         addSolBtn.innerText = "+ Agregar Solución";
         addSolBtn.onclick = () => {
-            const solText = window.prompt("Introduce la solución a este problema (máx 200 caracteres):");
+            const solText = window.prompt("Introduce la solución a este problema (máx 700 caracteres):");
             if (solText && solText.trim()) {
                 routeAction("addSolution", { problemId: item.id_problem, solucion: solText.trim() }).then(() => {
                     alert("Solución agregada con éxito.");
@@ -6353,8 +7346,13 @@ export function openPysDetailModal(item) {
         cont.appendChild(addPrevBtn);
     }
 
-    const modalDetalle = document.getElementById("modalDetalle");
-    modalDetalle.classList.add("visible");
+    if (modalDetalle) {
+        modalDetalle.dataset.modalType = 'pys';
+        modalDetalle.classList.add("visible");
+    }
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
 }
 
 
@@ -6382,8 +7380,16 @@ export function openAddTutorialModal() {
                 <input type="text" id="tut-tema" maxlength="30" required placeholder="Ej. Desarme de consola frontal">
             </div>
             <div class="form-group">
-                <label>Enlace de Vídeo YouTube</label>
-                <input type="url" id="tut-video" required placeholder="https://www.youtube.com/watch?v=...">
+                <label>Vídeo del Tutorial</label>
+                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                    <button type="button" id="btn-tut-upload-yt" class="btn btn-primary" style="flex:1; background-color:#ff0000; border-color:#ff0000; font-size:0.85rem; padding:6px 10px;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo a YouTube
+                    </button>
+                </div>
+                <input type="url" id="tut-video" required placeholder="O ingresar enlace: https://www.youtube.com/watch?v=...">
+                <small id="tut-video-badge" style="display:none; color:#28a745; font-size:0.8rem; margin-top:2px;">
+                    <i class="fa-solid fa-check-circle"></i> Vídeo subido a YouTube (pendiente de aprobación).
+                </small>
             </div>
             <div class="form-group">
                 <label>Descripción / Detalles (Máx 700 caracteres)</label>
@@ -6409,6 +7415,31 @@ export function openAddTutorialModal() {
     document.body.appendChild(modal);
 
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    // Botón Subir Vídeo a YouTube para Tutoriales (Tarea 8.4 y Requisito 10)
+    const btnUploadTutYt = content.querySelector("#btn-tut-upload-yt");
+    if (btnUploadTutYt) {
+        btnUploadTutYt.onclick = () => {
+            const rawTitle = content.querySelector("#tut-tema").value.trim() || 'Tutorial Técnico';
+            const rawDesc = content.querySelector("#tut-desc").value.trim() || '';
+
+            openYouTubeUploadModal({
+                initialTitle: rawTitle,
+                initialDescription: rawDesc,
+                contentType: 'tutorial',
+                referenceId: null,
+                metadata: {
+                    tema: rawTitle
+                },
+                onSuccess: (data) => {
+                    const videoInput = content.querySelector("#tut-video");
+                    if (videoInput) videoInput.value = data.videoUrl;
+                    const badge = content.querySelector("#tut-video-badge");
+                    if (badge) badge.style.display = 'block';
+                }
+            });
+        };
+    }
 
     const form = content.querySelector("#add-tutorial-form");
     form.onsubmit = async (e) => {
@@ -6533,11 +7564,16 @@ export function exportVehiclePrintSheet(item) {
         feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
     }
 
+    // Calcular densidad de contenido para ajuste dinámico de página
+    const totalItems = cuts.length + feeds.length + (item.apertura || item.imgApertura ? 1 : 0);
+    const isSingleOrLowDensity = totalItems <= 2;
+    const isHighDensity = totalItems >= 4;
+
     // 3. Generación de HTML de cortes con aviso de testigo al pie y distribución vertical (Requisitos 1.1, 2.2, 4.1, 5)
     const cutsHtml = cuts.map(c => {
         const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
         return `
-        <div class="tech-item-card">
+        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
             <div class="tech-item-header">Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
@@ -6562,7 +7598,7 @@ export function exportVehiclePrintSheet(item) {
     const feedsHtml = feeds.map(f => {
         const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
         return `
-        <div class="tech-item-card">
+        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
             <div class="tech-item-header">${f.title}</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
@@ -6584,7 +7620,7 @@ export function exportVehiclePrintSheet(item) {
 
     // 6. Apertura de puertas
     const aperturaHtml = (item.apertura || item.imgApertura) ? `
-        <div class="tech-item-card">
+        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
             <div class="tech-item-header">Apertura de Puertas / Seguros</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
@@ -6628,8 +7664,8 @@ export function exportVehiclePrintSheet(item) {
             <title>Ficha Técnica GPSpedia - ${title}</title>
             <style>
                 @page {
-                    size: letter portrait;
-                    margin: 10mm;
+                    size: 216mm 279mm portrait;
+                    margin: 8mm;
                 }
                 * { box-sizing: border-box; }
                 body {
@@ -6637,12 +7673,12 @@ export function exportVehiclePrintSheet(item) {
                     margin: 0;
                     padding: 0;
                     color: #1a1a1a;
-                    font-size: 12.5px;
-                    line-height: 1.55;
+                    font-size: 11.5px;
+                    line-height: 1.35;
                     background: #fff;
                 }
                 .sheet-page-wrapper {
-                    min-height: 920px;
+                    min-height: 940px;
                     display: flex;
                     flex-direction: column;
                     justify-content: space-between;
@@ -6656,12 +7692,12 @@ export function exportVehiclePrintSheet(item) {
                 .no-print-bar {
                     background: #007bff;
                     color: white;
-                    padding: 12px 18px;
+                    padding: 8px 14px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
-                    border-radius: 6px;
-                    margin-bottom: 20px;
+                    border-radius: 4px;
+                    margin-bottom: 12px;
                 }
                 /* Encabezado: Logo a la derecha de GPSpedia, y exclusivamente "Ficha técnica" (Requisitos 3.1 y 3.2) */
                 .header-container {
@@ -6669,33 +7705,33 @@ export function exportVehiclePrintSheet(item) {
                     justify-content: space-between;
                     align-items: center;
                     border-bottom: 2px solid #007bff;
-                    padding-bottom: 12px;
-                    margin-bottom: 20px;
+                    padding-bottom: 6px;
+                    margin-bottom: 10px;
                 }
                 .header-brand-wrap {
                     display: flex;
                     align-items: center;
-                    gap: 12px;
+                    gap: 8px;
                 }
                 .header-logo-title {
-                    font-size: 25px;
+                    font-size: 22px;
                     font-weight: bold;
                     color: #007bff;
                     letter-spacing: 0.5px;
                 }
                 .header-project-logo {
-                    width: 34px;
-                    height: 34px;
+                    width: 28px;
+                    height: 28px;
                     object-fit: contain;
                 }
                 .header-doc-type {
-                    font-size: 15px;
+                    font-size: 13.5px;
                     font-weight: 600;
                     color: #555;
                     text-transform: capitalize;
                 }
                 .vehicle-title {
-                    font-size: 19px;
+                    font-size: 17px;
                     font-weight: bold;
                     margin: 0;
                     color: #222;
@@ -6704,32 +7740,33 @@ export function exportVehiclePrintSheet(item) {
                 /* Grid superior: Información del vehículo y QR si existe */
                 .top-grid {
                     display: grid;
-                    grid-template-columns: ${item.imagenVehiculo ? '180px 1fr' : '1fr'}${qrHtml ? ' auto' : ''};
-                    gap: 14px;
+                    grid-template-columns: ${item.imagenVehiculo ? '150px 1fr' : '1fr'}${qrHtml ? ' auto' : ''};
+                    gap: 10px;
                     align-items: stretch;
-                    margin-bottom: 14px;
+                    margin-bottom: 10px;
                 }
                 .vehicle-main-img img {
                     width: 100%;
-                    max-height: 120px;
+                    max-height: 105px;
                     object-fit: cover;
-                    border-radius: 6px;
+                    border-radius: 4px;
                     border: 1px solid #ddd;
                 }
                 .meta-table {
                     width: 100%;
                     border-collapse: collapse;
-                    font-size: 12px;
-                    line-height: 1.25;
+                    font-size: 11px;
+                    line-height: 1.15;
                 }
                 .meta-table td {
-                    padding: 4px 8px;
+                    padding: 2px 6px;
                     border: 1px solid #e0e0e0;
+                    vertical-align: middle;
                 }
                 .meta-table td.label {
                     font-weight: bold;
                     background: #f7f9fa;
-                    width: 22%;
+                    width: 18%;
                     color: #444;
                 }
                 .qr-video-box {
@@ -6737,81 +7774,114 @@ export function exportVehiclePrintSheet(item) {
                     flex-direction: column;
                     align-items: center;
                     justify-content: center;
-                    padding: 10px;
+                    padding: 6px;
                     border: 1px solid #ddd;
-                    border-radius: 6px;
+                    border-radius: 4px;
                     background: #fafafa;
                 }
                 .qr-code-img {
-                    width: 95px;
-                    height: 95px;
+                    width: 80px;
+                    height: 80px;
                     object-fit: contain;
                 }
                 .qr-label {
-                    font-size: 10px;
+                    font-size: 9px;
                     font-weight: bold;
                     color: #555;
-                    margin-top: 6px;
+                    margin-top: 4px;
                     text-align: center;
                 }
                 /* Secciones verticales fluidas (Requisito 1.1) */
                 .section-header {
-                    font-size: 13.5px;
+                    font-size: 12.5px;
                     font-weight: bold;
                     color: #007bff;
                     text-transform: uppercase;
-                    border-bottom: 2px solid #007bff;
-                    margin: 14px 0 10px 0;
-                    padding-bottom: 4px;
+                    border-bottom: 1.5px solid #007bff;
+                    margin: 8px 0 6px 0;
+                    padding-bottom: 2px;
                 }
                 .tech-grid {
                     display: flex;
                     flex-direction: column;
-                    gap: 12px;
+                    gap: 8px;
                 }
                 .tech-item-card {
                     border: 1px solid #dcdcdc;
-                    border-radius: 6px;
+                    border-radius: 4px;
                     background: #fafafa;
-                    padding: 12px 16px;
+                    padding: 6px 10px;
                     page-break-inside: avoid;
+                }
+                .tech-item-card.card-expanded {
+                    padding: 8px 12px;
+                }
+                .tech-item-card.card-compact {
+                    padding: 4px 8px;
                 }
                 .tech-item-header {
                     font-weight: bold;
                     color: #0056b3;
-                    font-size: 13px;
-                    margin-bottom: 8px;
+                    font-size: 12px;
+                    margin-bottom: 4px;
                     border-bottom: 1px dashed #e0e0e0;
-                    padding-bottom: 4px;
+                    padding-bottom: 2px;
+                }
+                .card-compact .tech-item-header {
+                    font-size: 11.5px;
+                    margin-bottom: 3px;
+                    padding-bottom: 1px;
                 }
                 .tech-item-body {
                     display: flex;
                     justify-content: space-between;
-                    align-items: flex-start;
-                    gap: 20px;
+                    align-items: center;
+                    gap: 12px;
                 }
+                /* REVISIÓN IV: Ajustar el contenedor de texto para que no supere a la imagen, máximo un 25% del ancho de la hoja */
                 .tech-item-info {
-                    flex: 1;
+                    flex: 0 0 25%;
+                    max-width: 25%;
+                    width: 25%;
+                    overflow-wrap: break-word;
+                    word-break: break-word;
                 }
                 .tech-item-info p {
-                    margin: 4px 0;
-                    font-size: 12px;
-                    line-height: 1.35;
+                    margin: 2px 0;
+                    font-size: 11px;
+                    line-height: 1.25;
+                }
+                .card-compact .tech-item-info p {
+                    margin: 1px 0;
+                    font-size: 10.5px;
+                    line-height: 1.15;
                 }
                 .tech-item-img-wrapper {
-                    max-width: 280px;
-                    max-height: 165px;
-                    flex-shrink: 0;
+                    flex: 1 1 75%;
+                    max-width: 75%;
+                    max-height: 170px;
                     display: flex;
                     align-items: center;
-                    justify-content: center;
+                    justify-content: flex-end;
+                }
+                .card-expanded .tech-item-img-wrapper {
+                    max-height: 220px;
+                }
+                .card-compact .tech-item-img-wrapper {
+                    max-height: 130px;
                 }
                 .tech-detail-img {
                     max-width: 100%;
-                    max-height: 155px;
+                    max-height: 160px;
                     object-fit: contain;
                     border-radius: 4px;
                     border: 1px solid #ccc;
+                }
+                .card-expanded .tech-detail-img {
+                    max-height: 210px;
+                }
+                .card-compact .tech-detail-img {
+                    max-height: 125px;
                 }
                 /* Aviso de testigo al pie del corte (Requisito 4.1) */
                 .testigo-aviso {
@@ -6969,4 +8039,147 @@ export async function loadAndRenderInbox() {
             listContainer.innerHTML = '<p class="text-danger">Error de conexión al cargar bandeja.</p>';
         }
     }
+}
+
+/* TAREA 9.2: MODAL PARA ASOCIAR PROBLEMAS EXISTENTES O NUEVOS DESDE EL VEHÍCULO */
+export async function openAssociateExistingProblemModal(vehicle) {
+    const existing = document.getElementById("assoc-existing-pys-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "assoc-existing-pys-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "550px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-triangle-exclamation"></i> Agregar Problema Relacionado</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">${vehicle.marca} ${vehicle.modelo} (${vehicle.anoDesde})</p>
+
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <input type="text" id="search-existing-pys-input" placeholder="Buscar" class="dev-input" style="flex:1; padding:8px; box-sizing:border-box;">
+            <button type="button" id="btn-create-new-pys-for-vehicle" class="btn btn-primary" style="white-space:nowrap; font-size:0.85rem;">
+                <i class="fa-solid fa-plus"></i> Agregar problema
+            </button>
+        </div>
+
+        <div id="existing-pys-results-container" style="max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px;">
+            <div style="text-align:center; padding:15px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Cargando problemas...</div>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeModal = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = closeModal;
+
+    // Botón para agregar un problema nuevo pre-asociado
+    content.querySelector("#btn-create-new-pys-for-vehicle").onclick = () => {
+        closeModal();
+        openAddProblemModal(vehicle);
+    };
+
+    // Obtener problemas de la sección PyS
+    let allPys = [];
+    try {
+        const res = await routeAction("getPysData");
+        allPys = (res && res.data) ? res.data : [];
+    } catch (e) {
+        console.error("Error al obtener datos PyS:", e);
+    }
+
+    const resultsContainer = content.querySelector("#existing-pys-results-container");
+    const searchInput = content.querySelector("#search-existing-pys-input");
+
+    const renderProblemsList = (query = "") => {
+        resultsContainer.innerHTML = "";
+        const vehicleIdStr = String(vehicle.id);
+
+        // Condiciones obligatorias de disponibilidad (Requisito 2.3):
+        // 1. Mostrar únicamente problemas que tengan al menos un modelo de vehículo relacionado (modelosAsociados.length > 0).
+        // 2. Excluir problemas generales (modelosAsociados vacíos).
+        // 3. Excluir problemas que ya estén relacionados con el modelo actual.
+        const filtered = allPys.filter(p => {
+            if (!p || !Array.isArray(p.modelosAsociados) || p.modelosAsociados.length === 0) {
+                return false; // Excluir generales
+            }
+            if (p.modelosAsociados.some(mId => String(mId) === vehicleIdStr)) {
+                return false; // Ya está asociado al vehículo actual
+            }
+            if (query) {
+                const q = query.toLowerCase();
+                const titulo = (p.Problema || "").toLowerCase();
+                const desc = (p.Descripcion || "").toLowerCase();
+                return titulo.includes(q) || desc.includes(q);
+            }
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            resultsContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-disabled); font-size:0.9em;">No hay problemas disponibles para asociar a este vehículo.</div>`;
+            return;
+        }
+
+        filtered.forEach(p => {
+            const itemRow = document.createElement("div");
+            itemRow.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--card-bg, #fff);";
+
+            const leftDiv = document.createElement("div");
+            leftDiv.style.cssText = "display:flex; align-items:center; gap:10px; flex:1; min-width:0;";
+
+            const img = document.createElement("img");
+            img.src = getImageUrl(p.Imagen, IMG_SIZE_SMALL);
+            img.style.cssText = "width:42px; height:42px; object-fit:cover; border-radius:4px; flex-shrink:0;";
+            leftDiv.appendChild(img);
+
+            const textDiv = document.createElement("div");
+            textDiv.style.cssText = "display:flex; flex-direction:column; min-width:0; flex:1;";
+            textDiv.innerHTML = `
+                <strong style="font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.Problema}</strong>
+                <span style="font-size:0.75rem; color:${p.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight:600;">${p.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}</span>
+            `;
+            leftDiv.appendChild(textDiv);
+
+            const addBtn = document.createElement("button");
+            addBtn.className = "btn btn-primary btn-sm";
+            addBtn.style.cssText = "padding:6px 14px; font-size:0.85rem; flex-shrink:0;";
+            addBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar`;
+
+            addBtn.onclick = async () => {
+                addBtn.disabled = true;
+                addBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+                try {
+                    const res = await routeAction("addVehicleToProblem", {
+                        problemId: p.id_problem,
+                        vehicleId: vehicle.id
+                    });
+                    if (res && res.status === "success") {
+                        mostrarNotificacion("Problema vinculado con éxito.", "success");
+                        closeModal();
+                        // Actualizar inmediatamente el modal de detalle del vehículo
+                        const panel = document.getElementById("detalleCompleto");
+                        if (panel) {
+                            renderPosiblesProblemasAccordion(panel, vehicle);
+                        }
+                    }
+                } catch (err) {
+                    showGlobalError("Error al asociar problema: " + err.message);
+                    addBtn.disabled = false;
+                    addBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar`;
+                }
+            };
+
+            itemRow.appendChild(leftDiv);
+            itemRow.appendChild(addBtn);
+            resultsContainer.appendChild(itemRow);
+        });
+    };
+
+    renderProblemsList();
+    searchInput.oninput = () => renderProblemsList(searchInput.value.trim());
 }
