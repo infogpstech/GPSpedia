@@ -2027,3 +2027,13 @@ CORRECCIÓN 2026-11-04 — EVITAR RECORTE DE TEXTO POR ALTURA FIJA DE PÁGINA
 - No se modificaron el selector de distribución, el orden de tarjetas, la prioridad del corte recomendado, el contenido técnico ni la tabla de metadatos.
 - Validación estática pendiente de cierre en esta revisión; no se ha probado la impresión real ni el ajuste de saltos de página en navegador/PDF. La paginación continúa basada en grupos de imágenes y no en la medición real de altura de cada tarjeta.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE VERSIÓN — GPSpedia 2.2.5
+Fecha: 2026-11-04
+- En index.html se sustituyeron las seis apariciones de la versión 2.1.6 por 2.2.5.
+- Ubicaciones actualizadas: comentario de versión del componente, título del documento, etiqueta de versión del encabezado, pie de página y dos referencias en la sección/modal de versión.
+- No se modificó lógica funcional ni otros archivos de interfaz.
+- Verificación estática posterior: index.html no contiene 2.1.6 y las seis ubicaciones actualizadas muestran 2.2.5. No se ejecutó una prueba visual en navegador.
+================================================================================
