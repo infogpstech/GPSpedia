@@ -2579,3 +2579,20 @@ Estado: CAMBIO DE CONFIGURACIÓN IMPLEMENTADO; VERIFICACIÓN DE CONECTIVIDAD PEN
 - La disponibilidad del endpoint debe comprobarse desde el entorno de la aplicación; no se realizó una llamada real durante esta tarea.
 - La publicación de código de Apps Script no forma parte de este cambio de configuración.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE TAREA — ACCESO AL MODAL DE DESARROLLADOR NO VISIBLE
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Referencia: PR #128.
+Estado: CORRECCIÓN IMPLEMENTADA Y REVISADA EN CÓDIGO; VALIDACIÓN VISUAL PENDIENTE.
+
+Hallazgo: showApp(user) solo consultaba Privilegios para mostrar el enlace dev-tools-btn, mientras que los controles de edición inspeccionados aceptan Privilegios o Rol.
+
+Corrección: showApp(user) utiliza ahora Rol como alternativa cuando Privilegios no contiene un valor. Se mantiene la condición de acceso exclusivo para el rol Desarrollador y la normalización existente.
+
+Verificación realizada: comparación contra respaldo y pruebas simuladas de los casos Desarrollador por ambas propiedades, rol alternativo vacío, Supervisor, Usuario y ausencia de rol.
+
+Pendiente: publicar la versión web que contiene ui.js y comprobar con la cuenta afectada que el enlace aparece, abre el modal y continúa oculto para perfiles no desarrolladores. No se modificó el servicio Apps Script para esta corrección.
+================================================================================
