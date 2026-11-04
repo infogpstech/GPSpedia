@@ -1973,3 +1973,16 @@ CAMBIO 2026-11-03 — PAGINACIÓN EXPLÍCITA DE FICHA TÉCNICA CON CUADRÍCULA 2
   * Las notas técnicas se conservan en la última página.
 - Verificación: revisión estática del cambio de código. No se ejecutó navegador real ni se generó un PDF; la paginación, altura efectiva de tarjetas y posición del pie de página permanecen pendientes de validación visual.
 ================================================================================
+
+
+================================================================================
+CAMBIO 2026-11-04 — SELECTOR FUNCIONAL Y PLANTILLAS PARA FICHA IMPRIMIBLE
+Archivo: ui.js, función exportVehiclePrintSheet y estilos/controles internos.
+- El selector ya no depende de un cambio aislado de atributo: al cambiar de opción se ejecuta nuevamente la distribución de tarjetas y se reconstruyen las páginas.
+- Imagen a la derecha aplica texto e imagen en columnas dentro de cada tarjeta; Imagen debajo del texto conserva una sola columna; Imagen ampliada permite hasta 620 px de altura para las imágenes.
+- Se añadieron plantillas CSS para tarjeta individual, pares de imágenes verticales, pares horizontales apilados, tríos verticales y mosaicos mixtos.
+- La selección de grupos toma en cuenta las relaciones de aspecto observadas para favorecer tres imágenes verticales en una fila y dos horizontales apiladas; otros grupos se distribuyen en composiciones mixtas de hasta cuatro tarjetas con imagen.
+- Las tarjetas mantienen el contenido de imagen, título, descripción y avisos en el mismo .tech-item-card. Se mantiene el orden técnico con prioridad del corte prioritario.
+- Se cambió la presentación de la foto principal para conservar proporción con object-fit: contain; el QR mantiene proporción cuadrada y limita su ancho al contenedor.
+- Verificación realizada: comprobaciones estáticas de presencia del listener, reglas CSS, plantillas y eliminación del agrupamiento fijo anterior de cuatro. No se ejecutó parser externo, navegador real ni generación de PDF; el resultado visual, el ajuste del QR y los saltos de página permanecen pendientes de validación real.
+================================================================================
