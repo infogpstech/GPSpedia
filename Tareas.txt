@@ -2311,3 +2311,13 @@ TAREA COMPLEMENTARIA 2026-11-04 — TEXTO INCOMPLETO EN TARJETAS IMPRIMIBLES
 - [ ] Revisar saltos de página y ubicación del pie cuando una página crece por contenido extenso.
 Estado: CORRECCIÓN ESTÁTICA IMPLEMENTADA; validación visual y de impresión pendiente.
 ================================================================================
+
+
+================================================================================
+TAREA 2026-11-04 — ACTUALIZAR VERSIÓN VISIBLE EN index.html
+- [x] Sustituir todas las apariciones de 2.1.6 por 2.2.5.
+- [x] Actualizar título, encabezado, pie de página y sección/modal de versión.
+- [x] Comprobar que no quedan apariciones de la versión anterior en index.html.
+- [ ] Validar visualmente en navegador el modal de inicio de sesión y el pie de página.
+Estado: CAMBIO ESTÁTICO COMPLETADO; validación visual pendiente.
+================================================================================
