@@ -79,23 +79,48 @@ function collectActiveDriveReferences() {
 
     getSpreadsheet().getSheets().forEach(sheet => {
         if (excludedSheets.has(sheet.getName())) return;
-        const data = sheet.getDataRange().getDisplayValues();
-        for (let r = 0; r < data.length; r++) {
-            for (let c = 0; c < data[r].length; c++) {
-                const value = String(data[r][c] || "");
-                if (!value) continue;
-                const ids = extractDriveFileIds(value);
-                if (ids.length) {
-                    ids.forEach(id => {
-                        if (!references.has(id)) references.set(id, []);
-                        references.get(id).push({ sheet: sheet.getName(), row: r + 1, column: c + 1 });
+        const range = sheet.getDataRange();
+        const values = range.getDisplayValues();
+        const formulas = range.getFormulas();
+        const richTextValues = range.getRichTextValues();
+
+        for (let r = 0; r < values.length; r++) {
+            for (let c = 0; c < values[r].length; c++) {
+                const candidates = [
+                    String(values[r][c] || ""),
+                    String((formulas[r] && formulas[r][c]) || "")
+                ];
+                const richText = richTextValues[r] && richTextValues[r][c];
+                if (richText) {
+                    const wholeCellLink = richText.getLinkUrl();
+                    if (wholeCellLink) candidates.push(wholeCellLink);
+                    const runs = richText.getRuns ? richText.getRuns() : [];
+                    runs.forEach(run => {
+                        const runLink = run.getLinkUrl();
+                        if (runLink) candidates.push(runLink);
                     });
-                } else if (/drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(value)) {
-                    unverifiableReferenceCount++;
                 }
+
+                const cellIds = new Set();
+                let cellHasUnverifiableDriveLink = false;
+                candidates.forEach(candidate => {
+                    if (!candidate) return;
+                    const ids = extractDriveFileIds(candidate);
+                    ids.forEach(id => cellIds.add(id));
+                    if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) {
+                        cellHasUnverifiableDriveLink = true;
+                    }
+                });
+
+                cellIds.forEach(id => {
+                    if (!references.has(id)) references.set(id, []);
+                    references.get(id).push({ sheet: sheet.getName(), row: r + 1, column: c + 1 });
+                });
+                if (cellHasUnverifiableDriveLink) unverifiableReferenceCount++;
             }
         }
     });
+
     return { references, unverifiableReferenceCount };
 }
 
@@ -1524,7 +1549,13 @@ function handleUploadAdminImage(payload, logMessage) {
         if (originalUrl) {
             const originalFile = DriveApp.getFileById(extractDriveFileId(originalUrl));
             const parents = originalFile.getParents();
-            if (parents.hasNext()) genFolder = parents.next();
+            while (parents.hasNext()) {
+                const candidateFolder = parents.next();
+                if (isFolderInsideCortes(candidateFolder, DRIVE_FOLDER_ID)) {
+                    genFolder = candidateFolder;
+                    break;
+                }
+            }
         }
 
         if (!genFolder) {
@@ -2548,12 +2579,22 @@ function recordReplacedImage(data) {
     const formattedDate = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
     const rowIndex = sheet.getLastRow() + 1;
 
-    sheet.getRange(rowIndex, 1, 1, 11).setValues([[
-        newId, formattedDate, data.tipoContenido || "vehiculo", data.registroId || "",
-        data.campo || "", driveId, fileName, data.imagenAnteriorUrl || "",
-        data.sustituidaPorUrl || "", data.nombreVehiculo || "", "historica"
-    ]]);
-    SpreadsheetApp.flush();
+    try {
+        sheet.getRange(rowIndex, 1, 1, 11).setValues([[
+            newId, formattedDate, data.tipoContenido || "vehiculo", data.registroId || "",
+            data.campo || "", driveId, fileName, data.imagenAnteriorUrl || "",
+            data.sustituidaPorUrl || "", data.nombreVehiculo || "", "historica"
+        ]]);
+        SpreadsheetApp.flush();
+    } catch (writeError) {
+        try {
+            if (String(sheet.getRange(rowIndex, 1).getValue()) === newId) {
+                sheet.getRange(rowIndex, 11).setValue("requiere_revision");
+                SpreadsheetApp.flush();
+            }
+        } catch (statusError) {}
+        throw new Error(`No se pudo confirmar el registro de la imagen anterior: ${writeError.message}`);
+    }
     return { id: newId, rowIndex: rowIndex, driveId: driveId };
 }
 
