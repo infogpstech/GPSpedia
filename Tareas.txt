@@ -2226,3 +2226,15 @@ Requisitos:
 Estado: CAMBIOS DE MARCADO Y CSS IMPLEMENTADOS; PENDIENTE VALIDACIÓN VISUAL EN GITHUB PAGES Y PDF REAL.
 Verificación estática: compilación sintáctica de exportVehiclePrintSheet y comparación de CSS de .meta-table con GPSpedia2.2.7. No se ha probado la paginación real.
 ================================================================================
+
+
+================================================================================
+TAREA COMPLEMENTARIA: APROVECHAR MEJOR EL ESPACIO DISPONIBLE PARA FOTOGRAFÍAS
+Fecha: 2026-11-04
+Requisitos:
+1. Aumentar la prioridad visual de las imágenes aprovechando el espacio libre lateral y vertical dentro de las tarjetas.
+2. Mantener descripción y avisos a ancho completo antes de la imagen.
+3. Centrar las fotografías y conservar sus proporciones, sin imponer una anchura que agrande imágenes de baja resolución.
+4. Preservar metadatos, orden de tarjetas y bloque QR/video.
+Estado: LÍMITE MÁXIMO DE ALTURA AUMENTADO A 560px; PENDIENTE VALIDACIÓN VISUAL EN GITHUB PAGES Y PDF REAL.
+================================================================================
