@@ -1761,3 +1761,73 @@ Fecha: 2026-11-03
 - Riesgo de paginación: la altura de tarjetas y descripciones depende de su contenido. Aunque se limita la altura de imagen según la cantidad de imágenes de la página, la paginación debe validarse en navegador y PDF para detectar desbordamientos o contenido que no quepa en la altura útil.
 - Verificación de esta fase: cambio implementado por actualización de archivo en GitHub. La prueba visual en navegador y la generación real de PDF no se han ejecutado.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA INICIAL: REDISEÑO GEOMÉTRICO ADAPTATIVO DE FICHA TÉCNICA IMPRIMIBLE
+Fecha: 2026-11-04
+Rama: fix/pys-carousel-card-sizing-print-images
+PR: #124 (abierto, en borrador, sin integrar)
+Alcance solicitado: distribución adaptativa de 1–7 imágenes técnicas, tarjetas de información vinculadas, metadatos compactos, QR adaptativo, orientación vertical/horizontal y paginación según espacio real.
+Respaldos exactos previos a esta entrada y a la implementación:
+- ui.js: d48828d45f7911356fb1ddcad70528711d53468f
+- Auditoría.txt: a0ab981238a10a7493805f727d71659106196219
+- ChangesLogs.txt: 9cea79d194f66a906f2ec96c08e3f9ea0db1e1b5
+- Tareas.txt: 06f4473c02198549d77e5a585bc9f8c5af92c9de
+Los respaldos se conservaron como blobs exactos de Git; al ser idénticos a los blobs originales, Git devolvió los mismos SHA.
+
+1. INSTRUCCIONES Y ESTADO DEL PR
+- Se leyó íntegramente Proceso de desarollo.md. El procedimiento exige auditoría previa, registro antes de cambios de código, respaldo exacto, cambios mínimos, comparación posterior, verificación de dependencias y actualización de ChangesLogs.txt y Tareas.txt.
+- Instrucciones.txt no existe en esta rama (respuesta 404). No se creó ni se sustituyó por otro archivo.
+- PR #124 está abierto, en borrador, no integrado; base GPSpedia2.2.7 y head fix/pys-carousel-card-sizing-print-images. No se modificará la rama base ni se hará merge.
+- Los estilos de impresión relevantes están definidos dentro de la plantilla HTML de exportVehiclePrintSheet en ui.js; style.css no contiene las clases de impresión auditadas. Por ello, el archivo de código directamente involucrado es ui.js.
+
+2. FLUJO Y DEPENDENCIAS DE exportVehiclePrintSheet (ui.js, líneas actuales 7662–8390)
+- La función abre una ventana emergente y construye la ficha a partir de item; utiliza getImageUrl, IMG_SIZE_LARGE e isNoRecomendadoValue, además de APIs del navegador (window.open, document.write, eventos de imagen e impresión).
+- Los cortes se recopilan desde tipoCorteN, ubicacionCorteN e imgCorteN, con datos asociados de colorCableCorteN, configRelayN y utilCorteN. La prioridad se determina por votos utilCorteN y la regla existente de No recomendado.
+- Los elementos técnicos se ordenan como cortes, alimentaciones y apertura de puertas. Cada tarjeta contiene título, información, aviso de testigo e imagen dentro de un mismo .tech-item-card; entry.extraHtml se encuentra dentro de .tech-item-info. La asociación semántica imagen-información ya está preservada en el HTML y debe mantenerse.
+- El selector de distribución cambia body.dataset.printLayout. Las reglas CSS actuales fuerzan una sola columna para .tech-item-body en Automática, Horizontal, Vertical e Imagen ampliada; por tanto, no existe una diferencia geométrica real entre varios de esos modos.
+- arrangeTechnicalCards espera la carga/error de las imágenes técnicas y también se ejecuta en beforeprint. No espera expresamente la carga del QR ni de la fotografía principal para calcular dimensiones.
+- La paginación actual agrupa imágenes estrictamente de cuatro en cuatro. El agrupamiento no usa dimensiones naturales para elegir composición o cantidad por página.
+- getDimensions obtiene naturalWidth/naturalHeight, relación de aspecto y resolución, pero esos valores se guardan en data-* después de que las páginas y sus grupos ya fueron creados; actualmente no influyen en la decisión de diseño.
+- Las tarjetas sin imagen se separan de las tarjetas con imagen. La tarjeta de texto prioritaria puede colocarse al inicio de la primera página y las demás tarjetas sin imagen se agregan al final de la última; esto puede alterar el orden técnico global y debe revisarse para conservar las unidades y el orden acordado.
+- Las imágenes fallidas siguen teniendo un elemento img y se cuentan como tarjetas con imagen, aunque sus dimensiones naturales sean cero. El valor de relación de aspecto de respaldo 1.33 no representa una dimensión observada y no debe tratarse como dato real.
+- La función de composición no mide la altura disponible ni la altura renderizada de cada tarjeta. No evalúa las dimensiones variables de primera página, páginas intermedias o última página con notas.
+
+3. PAGINACIÓN Y ESTILOS ACTUALES
+- @page está fijado a 216 mm × 279 mm en orientación vertical, con margen de 5 mm.
+- .sheet-page-wrapper tiene altura/min-height/max-height de 269 mm y overflow:hidden. El cálculo presupone tamaño Carta vertical y no contempla páginas horizontales.
+- .sheet-content-main es una columna flex con gap de 6px; .footer-bar tiene min-height de 48px y margin-top:auto. El contenido principal no se mide antes de asignar tarjetas; el overflow:hidden puede ocultar contenido que supere el espacio útil.
+- .tech-grid mantiene dos columnas iguales y gap de 8px. No se generan columnas ponderadas por relación de aspecto ni filas específicas a partir de combinaciones.
+- Los límites de altura de .tech-detail-img dependen únicamente de la cantidad de imágenes por página: 560px para una, 390px para dos y 270px para tres o cuatro. La imagen conserva width/height automáticos y object-fit:contain, pero el límite por cantidad no garantiza el mejor tamaño según relación de aspecto o espacio real.
+- .tech-item-card tiene padding vertical/horizontal de 6px/10px y break-inside:avoid. El título y los párrafos usan márgenes compactos; la tarjeta no declara una altura fija, pero el grid con align-items:stretch puede igualar alturas de tarjetas dentro de una misma fila. El diseño actual mantiene información antes de imagen, a ancho completo.
+- .tech-item-info, .tech-item-img-wrapper y .tech-detail-img son parte del mismo bloque. No deben separarse al reubicar tarjetas. Las descripciones extensas, avisos y títulos pueden aumentar la altura real y deben participar en el cálculo.
+- La regla de pantalla estrecha reduce la altura de imagen a 180px; la vista previa puede no representar el diseño de impresión.
+- El pie se clona por página y las notas se agregan a la última; no se verifica que la nota quepa junto con las tarjetas ni que el pie permanezca dentro del área imprimible sin recorte.
+
+4. METADATOS, FOTOGRAFÍA DEL VEHÍCULO Y QR
+- .top-grid utiliza columnas fijas/condicionales: 150px para fotografía cuando existe, 1fr para metadatos y auto para QR cuando existe. No existe variante específica para orientación horizontal.
+- La tabla .meta-table ya utiliza altura natural (sin height/min-height por fila), border-collapse y padding de 1.5px 5px. No se encontraron alturas de fila explícitas. El texto puede envolver según el ancho disponible.
+- Los campos Marca/Modelo, Categoría/Años, Encendido/Versiones y VIN se generan con la estructura actual. VIN ocupa colspan=3 cuando existe.
+- La fotografía del vehículo tiene max-height:105px y object-fit:cover, lo que puede recortar contenido de la imagen. Este comportamiento debe revisarse únicamente dentro del alcance de adaptación visual, sin alterar su fuente ni los datos.
+- El QR tiene width/height fijos de 80px; el contenedor QR es una columna con padding 6px. No se calcula su tamaño respecto de la altura renderizada de la fotografía del vehículo ni se reserva una altura compartida dinámica. La etiqueta permanece debajo del QR en el HTML.
+- La tabla, la fotografía principal y el QR/video se incluyen solo en la primera página. La nueva medición deberá considerar el alto real del bloque completo y no duplicarlo en páginas posteriores.
+
+5. HALLAZGOS Y RIESGOS FUNCIONALES
+- El agrupamiento fijo de cuatro contradice la regla acordada de que 2×2 es un límite general flexible, no una composición obligatoria.
+- La orientación física está fijada a vertical; cambiar solo una clase no cambia el tamaño/orientación de la página impresa. La solución debe considerar la compatibilidad real de @page/orientación por página y documentar límites del motor de impresión.
+- La página no considera alturas reales de metadatos, tarjetas, textos, notas, encabezado ni pie antes de paginar. El uso de overflow:hidden crea riesgo de recorte.
+- Las dimensiones naturales se recopilan, pero no se usan para comparar composiciones. No se evalúan tamaños mínimos útiles, legibilidad, resolución disponible ni aprovechamiento del espacio.
+- Las tarjetas text-only se separan del orden original y se desplazan de página; debe preservarse la asociación y el orden técnico sin que una tarjeta se convierta en unidad independiente de su información.
+- Las imágenes rotas o sin dimensiones requieren tratamiento explícito y no deben bloquear la composición ni ser consideradas como imágenes con proporción conocida.
+- La espera de imágenes no tiene límite de tiempo; se deberá evaluar que los eventos load/error y beforeprint no produzcan estados inconsistentes. No introducir APIs externas ni dependencias nuevas sin necesidad.
+- No se ejecutó navegador real ni generación de PDF durante esta auditoría; la validación de orientación, paginación física, footer y desbordamiento queda pendiente de una ejecución real.
+
+6. ALCANCE DE IMPLEMENTACIÓN
+- Modificar ui.js únicamente en exportVehiclePrintSheet y sus estilos internos necesarios para la ficha imprimible.
+- Actualizar Auditoría.txt, ChangesLogs.txt y Tareas.txt conforme al procedimiento.
+- No modificar style.css, index.html, servicios, microservicios, contratos, esquemas de datos, campos de item ni flujos de navegación.
+- Mantener la prioridad de corte existente, orden técnico, contenido de todas las tarjetas, notas, QR/video, avisos, logos y recursos.
+- La tarjeta de información y su imagen constituyen una unidad indivisible para distribución y paginación.
+- Incorporar una matriz geométrica representativa para 1–7 imágenes, con relaciones de aspecto vertical/cuadrada/horizontal/panorámica, mezclas, texto extenso, tarjeta sin imagen, imagen fallida, primera página con/sin foto y QR, VIN presente/ausente y notas en última página.
+================================================================================
