@@ -2108,3 +2108,15 @@ VERIFICACIÓN
 
 No se modificó la rama base GPSpedia2.2.5. No se realizó merge.
 ================================================================================
+
+
+================================================================================
+CAMBIO DE CONFIGURACIÓN — ACTUALIZACIÓN DEL ENDPOINT ADMIN
+Fecha: 2026-11-04
+- Archivo: api-config.js.
+- Se reemplazó únicamente el valor de API_ENDPOINTS.ADMIN por la URL de Apps Script proporcionada por el usuario.
+- No se modificaron los endpoints LEGACY, AUTH, CATALOG, WRITE, USERS, FEEDBACK ni UTILITIES.
+- No se modificó ACTION_TO_SERVICE_MAP ni la lógica de routeAction.
+- Verificación estática: la URL nueva aparece una vez en ADMIN y la URL anterior dejó de aparecer en el archivo.
+- No se ejecutó una solicitud al endpoint ni se verificó su disponibilidad o respuesta en producción.
+================================================================================
