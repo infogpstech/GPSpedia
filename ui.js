@@ -3869,7 +3869,7 @@ export async function openReplacedImagesModal() {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = "btn btn-danger";
                 deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
-                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
+                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
                 deleteBtn.onclick = async () => {
                     if (!confirm("¿Enviar esta imagen histórica a la papelera de Google Drive? Podrá restaurarse desde la papelera mientras permanezca allí.")) return;
                     deleteBtn.disabled = true;
