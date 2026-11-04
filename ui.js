@@ -4874,12 +4874,12 @@ export function showApp(user) {
     }
 
     const inboxBtn = document.getElementById('inbox-btn');
-    if (inboxBtn && ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole)) {
+    if (inboxBtn && ['desarrollador', 'gefe', 'supervisor'].includes(userRole)) {
         inboxBtn.style.display = 'flex';
     }
 
     const dashboardBtn = document.getElementById('dashboard-btn');
-    if (dashboardBtn && ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole)) {
+    if (dashboardBtn && ['desarrollador', 'gefe', 'supervisor'].includes(userRole)) {
         dashboardBtn.style.display = 'flex';
     }
 
