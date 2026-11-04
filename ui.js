@@ -3826,14 +3826,25 @@ export async function openReplacedImagesModal() {
                 <div style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rep.referencia_texto || 'Registro ' + rep.registro_id}</div>
                 <div style="font-size: 0.8rem; color: var(--text-disabled);"><strong>Archivo:</strong> ${rep.nombre_archivo} | <strong>Campo:</strong> ${rep.campo}</div>
                 <div style="font-size: 0.75rem; color: var(--text-disabled);"><strong>ID Drive:</strong> <code>${rep.archivo_drive_id}</code> | <strong>Fecha:</strong> ${rep.fecha_reemplazo}</div>
-                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : (rep.estado === 'eliminada' ? '#dc3545' : '#007bff')};">Estado: ${rep.estado}</div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : ((rep.estado === 'eliminada' || rep.estado === 'en_papelera') ? '#dc3545' : '#007bff')};">Estado: ${rep.estado}</div>
             `;
 
             const btnContainer = document.createElement('div');
             btnContainer.style.cssText = "display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;";
 
-            if (rep.estado !== 'eliminada') {
-                const recoverBtn = document.createElement('button');
+            const statusLabels = {
+                historica: "Histórica",
+                pendiente: "Pendiente de confirmación",
+                fallida: "Operación fallida",
+                restablecida: "Restablecida",
+                en_papelera: "En papelera",
+                eliminada: "En papelera (registro anterior)"
+            };
+            const statusLabel = statusLabels[rep.estado] || rep.estado || "Sin estado";
+            const statusElement = info.querySelector('div:last-child');
+            if (statusElement) statusElement.textContent = `Estado: ${statusLabel}`;
+
+            const recoverBtn = document.createElement('button');
                 recoverBtn.className = "btn btn-primary";
                 recoverBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; white-space: nowrap;";
                 recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
@@ -3858,25 +3869,24 @@ export async function openReplacedImagesModal() {
                 const deleteBtn = document.createElement('button');
                 deleteBtn.className = "btn btn-danger";
                 deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
-                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
+                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
                 deleteBtn.onclick = async () => {
-                    if (!confirm(`¿Estás seguro de que deseas ELIMINAR permanentemente esta imagen histórica de Google Drive? Esta acción no se puede deshacer.`)) return;
+                    if (!confirm("¿Enviar esta imagen histórica a la papelera de Google Drive? Podrá restaurarse desde la papelera mientras permanezca allí.")) return;
                     deleteBtn.disabled = true;
                     deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                     try {
                         const delRes = await routeAction('deleteReplacedImage', { id_reemplazo: rep.id_reemplazo });
                         if (delRes && delRes.status === 'success') {
-                            mostrarNotificacion("Imagen eliminada de forma segura.", "success");
+                            mostrarNotificacion("Imagen enviada a la papelera de Google Drive.", "success");
                             loadData();
                         }
                     } catch (e) {
                         alert("Eliminación bloqueada: " + e.message);
                         deleteBtn.disabled = false;
-                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
+                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
                     }
                 };
                 btnContainer.appendChild(deleteBtn);
-            }
 
             card.appendChild(img);
             card.appendChild(info);
@@ -3904,60 +3914,78 @@ export async function openAuditDriveModal() {
 
     const summaryEl = document.getElementById('audit-drive-summary');
     const container = document.getElementById('audit-drive-results-container');
-
-    summaryEl.innerHTML = 'Iniciando exploración recursiva del árbol «Cortes»...';
-    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol en Google Drive...</div>';
+    summaryEl.textContent = 'Iniciando exploración paginada del árbol «Cortes»...';
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol de Google Drive...</div>';
 
     try {
-        const res = await routeAction('auditDriveImagesInCortes');
-        if (res && res.status === 'success') {
-            const files = res.files || [];
-            const inUseCount = files.filter(f => f.classification === 'En uso').length;
-            const histCount = files.filter(f => f.classification === 'Histórica').length;
-            const unusedCount = files.filter(f => f.classification === 'Sin uso detectado').length;
-            const unverifiedCount = files.filter(f => f.classification === 'No verificable').length;
+        const files = [];
+        let offset = 0;
+        let finalPage = null;
+        let pageNumber = 0;
 
-            summaryEl.innerHTML = `
-                <div style="background: var(--card-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; gap: 15px; flex-wrap: wrap;">
-                    <span>📁 <strong>Carpeta Raíz:</strong> ${res.rootFolderName} (<code>${res.rootFolderId}</code>)</span>
-                    <span>📊 <strong>Total Analizados:</strong> ${res.totalAnalyzed}</span>
-                    <span style="color:#28a745;">✅ <strong>En uso:</strong> ${inUseCount}</span>
-                    <span style="color:#007bff;">🕒 <strong>Históricas:</strong> ${histCount}</span>
-                    <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> ${unusedCount}</span>
-                    <span style="color:#dc3545;">❓ <strong>No verificables:</strong> ${unverifiedCount}</span>
-                </div>
-            `;
-
-            container.innerHTML = '';
-            if (files.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron archivos en la carpeta analizada.</div>';
-                return;
+        while (true) {
+            pageNumber++;
+            summaryEl.textContent = `Analizando lote ${pageNumber}. Archivos recopilados: ${files.length}...`;
+            const page = await routeAction('auditDriveImagesInCortes', { offset: offset, limit: 250 });
+            if (!page || page.status !== 'success') {
+                throw new Error(page && page.message ? page.message : 'Respuesta no válida del servicio de auditoría.');
             }
+            if (!Array.isArray(page.files)) throw new Error('El servicio devolvió un lote sin una lista válida de archivos.');
+            files.push(...page.files);
+            finalPage = page;
 
-            files.forEach(f => {
-                const row = document.createElement('div');
-                row.style.cssText = "display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.8rem; background: var(--card-bg);";
-
-                let badgeColor = "#28a745";
-                if (f.classification === 'Histórica') badgeColor = "#007bff";
-                else if (f.classification === 'Sin uso detectado') badgeColor = "#e0a800";
-                else if (f.classification === 'No verificable') badgeColor = "#dc3545";
-
-                row.innerHTML = `
-                    <div style="min-width:0; flex:1;">
-                        <div style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${f.fileName}</div>
-                        <div style="font-size:0.75rem; color:var(--text-disabled);">${f.folderPath} | ${(f.size / 1024).toFixed(1)} KB | ${f.lastUpdated}</div>
-                    </div>
-                    <span style="background:${badgeColor}; color:white; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;">
-                        ${f.classification}
-                    </span>
-                `;
-                container.appendChild(row);
-            });
-        } else {
-            container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error: ${res ? res.message : 'Error desconocido'}</div>`;
+            if (page.isComplete === true) break;
+            const nextOffset = Number(page.nextOffset);
+            if (!Number.isFinite(nextOffset) || nextOffset <= offset) {
+                throw new Error('La paginación no avanzó; se detuvo el proceso para evitar un ciclo.');
+            }
+            offset = nextOffset;
         }
+
+        const inUseCount = files.filter(f => f.classification === 'En uso').length;
+        const histCount = files.filter(f => f.classification === 'Histórica').length;
+        const unusedCount = files.filter(f => f.classification === 'Sin uso detectado').length;
+        const unverifiedCount = files.filter(f => f.classification === 'No verificable').length;
+        const unresolvedCount = Number(finalPage.unresolvedReferenceCount || 0);
+
+        summaryEl.innerHTML = `
+            <div style="background: var(--card-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; gap: 15px; flex-wrap: wrap;">
+                <span>📁 <strong>Carpeta raíz:</strong> ${finalPage.rootFolderName} (<code>${finalPage.rootFolderId}</code>)</span>
+                <span>📊 <strong>Total analizados:</strong> ${files.length}</span>
+                <span style="color:#28a745;">✅ <strong>En uso:</strong> ${inUseCount}</span>
+                <span style="color:#007bff;">🕒 <strong>Históricas:</strong> ${histCount}</span>
+                <span style="color:#ffc107;">⚠️ <strong>Sin uso detectado:</strong> ${unusedCount}</span>
+                <span style="color:#dc3545;">❓ <strong>No verificables:</strong> ${unverifiedCount}</span>
+                <span><strong>Referencias no interpretables:</strong> ${unresolvedCount}</span>
+            </div>
+            ${unresolvedCount > 0 ? '<p style="color:#dc3545; margin-top:8px;">Advertencia: se detectaron referencias de Drive cuyo formato no pudo interpretarse. Los archivos sin coincidencia se clasifican conservadoramente como «No verificable».</p>' : ''}
+            <p style="margin-top:6px; color:var(--text-disabled);">Recorrido completo: sí. Resultados obtenidos en ${pageNumber} lote(s).</p>
+        `;
+
+        container.innerHTML = '';
+        if (files.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron archivos en la carpeta analizada.</div>';
+            return;
+        }
+
+        files.forEach(f => {
+            const row = document.createElement('div');
+            row.style.cssText = "display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.8rem; background: var(--card-bg);";
+            let badgeColor = "#28a745";
+            if (f.classification === 'Histórica') badgeColor = "#007bff";
+            else if (f.classification === 'Sin uso detectado') badgeColor = "#e0a800";
+            else if (f.classification === 'No verificable') badgeColor = "#dc3545";
+            row.innerHTML = `
+                <div style="min-width:0; flex:1;">
+                    <div style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${f.fileName}</div>
+                    <div style="font-size:0.75rem; color:var(--text-disabled);">${f.folderPath} | ${(f.size / 1024).toFixed(1)} KB | ${f.lastUpdated}</div>
+                </div>
+                <span style="background:${badgeColor}; color:white; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;">${f.classification}</span>
+            `;
+            container.appendChild(row);
+        });
     } catch (err) {
+        summaryEl.textContent = 'La auditoría no pudo completarse.';
         container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Excepción en auditoría: ${err.message}</div>`;
     }
 }
