@@ -2321,3 +2321,16 @@ TAREA 2026-11-04 — ACTUALIZAR VERSIÓN VISIBLE EN index.html
 - [ ] Validar visualmente en navegador el modal de inicio de sesión y el pie de página.
 Estado: CAMBIO ESTÁTICO COMPLETADO; validación visual pendiente.
 ================================================================================
+
+
+================================================================================
+TAREA 2026-11-04 — DIMENSIONAMIENTO ADAPTATIVO DE IMÁGENES EN FICHAS IMPRIMIBLES
+- [x] Mantener la estructura de páginas, el orden técnico, la prioridad del corte recomendado y los cuatro modos de distribución.
+- [x] Retirar los límites de altura rígidos basados únicamente en la cantidad de imágenes.
+- [x] Calcular el espacio vertical disponible por página después del contenido principal y el pie, y repartirlo entre las filas de imágenes.
+- [x] Conservar proporciones, evitar recorte y no forzar el ancho completo en imágenes de menor tamaño natural.
+- [x] Mantener la reconstrucción al cambiar el selector, tras la carga/error de imágenes y antes de imprimir.
+- [ ] Validar en navegador y PDF reales: una imagen vertical, una horizontal, dos verticales, dos horizontales, orientación mixta, tres imágenes verticales, cuatro o más imágenes, metadatos/notas extensos, imágenes de baja resolución o fallidas y modo Imagen ampliada.
+- [ ] Confirmar número de páginas, tamaño visible de las imágenes, ausencia de recortes y ubicación del pie.
+Estado: IMPLEMENTACIÓN ESTÁTICA REALIZADA; VALIDACIÓN VISUAL Y DE IMPRESIÓN PENDIENTE.
+================================================================================
