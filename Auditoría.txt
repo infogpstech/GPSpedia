@@ -1831,3 +1831,30 @@ Los respaldos se conservaron como blobs exactos de Git; al ser idénticos a los 
 - La tarjeta de información y su imagen constituyen una unidad indivisible para distribución y paginación.
 - Incorporar una matriz geométrica representativa para 1–7 imágenes, con relaciones de aspecto vertical/cuadrada/horizontal/panorámica, mezclas, texto extenso, tarjeta sin imagen, imagen fallida, primera página con/sin foto y QR, VIN presente/ausente y notas en última página.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA COMPLEMENTARIA — SELECTOR DE DISTRIBUCIÓN Y PLANTILLAS ADAPTATIVAS
+Fecha: 2026-11-04
+
+Hallazgos:
+- #print-layout-mode solo modifica body.dataset.printLayout; no vuelve a ejecutar arrangeTechnicalCards ni la paginación.
+- Los estilos actuales de horizontal/vertical/imagen ampliada comparten reglas de una sola columna y ancho completo, por lo que algunas opciones no cambian realmente la geometría.
+- arrangeTechnicalCards agrupa de cuatro en cuatro sin optimizar relación de aspecto ni medir el espacio real disponible, lo que puede reducir las imágenes y dejar espacio vacío.
+- La primera página consume espacio variable con metadatos, fotografía principal y QR; las notas afectan el espacio de la última página. El agrupamiento actual no mide estas diferencias.
+- Las tarjetas técnicas completas mantienen información e imagen dentro de .tech-item-card, pero el algoritmo separa tarjetas sin imagen y puede cambiar su orden relativo. Debe preservarse el orden técnico, manteniendo la prioridad existente del corte recomendado.
+- @page y .sheet-page-wrapper siguen fijados a orientación vertical y 269 mm; la orientación física dinámica no debe prometerse sin prueba en navegador/PDF.
+
+Alcance autorizado:
+- ui.js: exportVehiclePrintSheet y sus estilos/controles internos únicamente.
+- Auditoría.txt, ChangesLogs.txt y Tareas.txt para trazabilidad.
+- El selector tendrá comportamiento real: Automática (composición candidata y paginación), Imagen a la derecha (texto e imagen en columnas), Imagen debajo del texto (texto encima e imagen debajo) e Imagen ampliada (imagen centrada con mayor espacio, manteniendo su información asociada).
+- Añadir plantillas candidatas para 1–7 imágenes, comparando proporciones y espacio, sin imponer una cuadrícula fija; respetar prioridad, orden, proporción y unidad tarjeta-información-imagen.
+- No alterar campos de datos ni funciones ajenas. No declarar pruebas de navegador/PDF si no se ejecutan.
+
+Respaldos exactos creados antes de modificar código:
+- ui.js: d48828d45f7911356fb1ddcad70528711d53468f
+- Auditoría.txt: 3cb8f44e28ddb3c79586d20abc532e2c04a334bb
+- ChangesLogs.txt: 9cea79d194f66a906f2ec96c08e3f9ea0db1e1b5
+- Tareas.txt: 06f4473c02198549d77e5a585bc9f8c5af92c9de
+================================================================================
