@@ -1518,11 +1518,29 @@ function handleUploadAdminImage(payload, logMessage) {
         sheet.getRange(actualRow, colIndex).setValue(imageUrl);
         SpreadsheetApp.flush();
     } catch (updateError) {
-        if (historyRecord) {
-            try { getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS).getRange(historyRecord.rowIndex, 11).setValue("fallida"); } catch (statusError) {}
+        let rollbackSucceeded = false;
+        try {
+            sheet.getRange(actualRow, colIndex).setValue(originalUrl || "");
+            SpreadsheetApp.flush();
+            rollbackSucceeded = true;
+        } catch (rollbackError) {
+            logMessage("Edición In-Modal", `No se pudo confirmar la restauración de la referencia anterior: ${rollbackError.message}`, 0, 0, true);
         }
-        try { file.setTrashed(true); } catch (cleanupError) {}
-        throw new Error(`No se actualizó la referencia activa; la imagen anterior se conservó. Detalle: ${updateError.message}`);
+        if (historyRecord) {
+            try {
+                getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS)
+                    .getRange(historyRecord.rowIndex, 11).setValue(rollbackSucceeded ? "fallida" : "pendiente");
+            } catch (statusError) {}
+        }
+        if (rollbackSucceeded) {
+            try { file.setTrashed(true); } catch (cleanupError) {
+                logMessage("Edición In-Modal", `No se pudo enviar a papelera la imagen nueva: ${cleanupError.message}`, 0, 0, true);
+            }
+        }
+        const detail = rollbackSucceeded
+            ? "La referencia anterior fue restaurada."
+            : "No se pudo confirmar la reversión; la imagen nueva se conservó para evitar romper una posible referencia activa.";
+        throw new Error(`No se pudo confirmar la actualización de la imagen. ${detail} Detalle: ${updateError.message}`);
     }
 
     if (historyRecord) {
@@ -2572,9 +2590,22 @@ function handleRecoverReplacedImage(payload, logMessage) {
         cortesSheet.getRange(actualRow, COLS_CORTES[campo]).setValue(urlHistorica);
         SpreadsheetApp.flush();
     } catch (updateError) {
-        if (swapRecord) { try { sheetRep.getRange(swapRecord.rowIndex, 11).setValue("fallida"); } catch (statusError) {} }
-        if (wasTrashed) { try { file.setTrashed(true); } catch (rollbackError) {} }
-        throw new Error(`No se pudo actualizar la referencia activa. Detalle: ${updateError.message}`);
+        let rollbackSucceeded = false;
+        try {
+            cortesSheet.getRange(actualRow, COLS_CORTES[campo]).setValue(currentActiveUrl);
+            SpreadsheetApp.flush();
+            rollbackSucceeded = true;
+        } catch (rollbackError) {
+            logMessage && logMessage("Imágenes Reemplazadas", `No se pudo confirmar la restauración de la referencia activa anterior: ${rollbackError.message}`, 0, 0, true);
+        }
+        if (swapRecord) {
+            try { sheetRep.getRange(swapRecord.rowIndex, 11).setValue(rollbackSucceeded ? "fallida" : "pendiente"); } catch (statusError) {}
+        }
+        if (wasTrashed && rollbackSucceeded) { try { file.setTrashed(true); } catch (rollbackError) {} }
+        const detail = rollbackSucceeded
+            ? "La referencia activa anterior fue restaurada."
+            : "No se pudo confirmar la reversión; el archivo restaurado se mantiene disponible para evitar una referencia rota.";
+        throw new Error(`No se pudo confirmar la actualización de la referencia activa. ${detail} Detalle: ${updateError.message}`);
     }
 
     try {
