@@ -2153,3 +2153,24 @@ Fecha: 2026-11-04
 - Verificación estática: 38 IDs originales preservados, sin duplicados; HTML balanceado; CSS con llaves balanceadas.
 - La comprobación visual y funcional en el entorno live queda pendiente.
 ================================================================================
+
+
+================================================================================
+AJUSTE RESPONSIVE Y ESTILO DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- index.html, bloque #dev-tools-modal: se añadieron aria-label y title a las cinco opciones de navegación (Diagnóstico, Respaldos, Base de datos, Imágenes y Drive, y Sistema), conservando IDs, radio buttons, paneles y relaciones for.
+- style.css, bloque final «PANEL DE DESARROLLADOR — ACABADO VISUAL Y NAVEGACIÓN MÓVIL»: se incorporó una presentación translúcida con bordes suaves, sombras grises discretas y estilos refinados para navegación, tarjetas, campos y botones.
+- style.css, reglas responsive de #dev-tools-modal: en pantallas de hasta 760px, la navegación muestra cinco iconos en una cuadrícula sin scroll horizontal y oculta visualmente los nombres sin retirarlos del árbol de accesibilidad.
+- style.css, .dev-console-output: se estableció fondo negro, texto blanco/claro y fuente Roboto con alternativas sans-serif.
+
+VERIFICACIÓN ESTÁTICA
+- index.html coincide con el respaldo salvo por los cinco pares aria-label/title previstos.
+- style.css conserva el contenido del respaldo y agrega únicamente el bloque de estilos de esta tarea.
+- Cinco radio buttons, cinco enlaces y cinco paneles presentes; no se detectaron IDs duplicados.
+- Llaves CSS balanceadas.
+- ui.js no fue modificado.
+- No se ejecutó navegador real; la validación visual en escritorio, móvil y PWA queda pendiente.
+================================================================================
