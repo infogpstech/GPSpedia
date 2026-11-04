@@ -1583,3 +1583,18 @@ Respaldos exactos previos a la implementación: ui.js 2ccce255d32d4db3c4721f74e1
    - No modificar la tabla de metadatos, el modal de detalle del vehículo, los microservicios, los esquemas de almacenamiento ni las estructuras de datos.
    - La verificación inicial es estática. La validación real de impresión/PDF deberá registrarse únicamente si se ejecuta.
 ================================================================================
+
+
+================================================================================
+REINICIO DE AUDITORÍA POR REVISIÓN POST-IMPLEMENTACIÓN: SELECCIÓN Y DISTRIBUCIÓN
+Fecha: 2026-11-03
+PR: #124
+Observaciones identificadas:
+1. El modal de detalle solo considera cortes que tengan tipoCorteN; la ficha imprimible también puede recoger un registro que solo tenga ubicación o imagen. Para no inventar una designación de recomendado, la selección del recomendado debe basarse únicamente en los cortes elegibles según la estructura existente en el detalle.
+2. La distribución genérica asignaba cinco de doce columnas a una única imagen vertical, dejando espacio horizontal innecesario. Una composición con una sola imagen debe disponer del ancho completo del contenedor, sin forzar el escalado de la fotografía.
+Decisión:
+- Mantener la lógica de prioridad por votos de utilCorteN para los cortes con tipo registrado y respetar la excepción "No recomendado".
+- Si no hay un corte recomendado elegible, mantener el primer elemento de imagen según el orden actual de la ficha.
+- Ajustar únicamente la asignación de columnas para una sola imagen.
+Respaldos exactos previos a esta corrección: ui.js ea4dafb8053d9db5dfb85b97707678b1ad2dfdd6; Auditoría.txt 1e0cd437ff8e31a4df503bbd340099e29a77a483; ChangesLogs.txt 8795e7cf294baa1b73d3b07195fe304ffd9bae47; Tareas.txt 09cdff0a5103c1937460cd8251a5c28fea02e571.
+================================================================================
