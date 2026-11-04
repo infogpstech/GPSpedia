@@ -2409,3 +2409,44 @@ ARCHIVOS IDENTIFICADOS PARA AUDITORÍA POSTERIOR
 Cualquier archivo adicional deberá justificarse según las dependencias que se confirmen durante la auditoría inicial.
 
 ================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — INVESTIGAR POR QUÉ NO APARECE LA INTERFAZ DE GESTIÓN DEL HISTORIAL DE IMÁGENES REEMPLAZADAS
+Fecha de registro: 2026-11-04
+Rama base de referencia: fix/pys-carousel-card-sizing-print-images
+Estado: PENDIENTE DE AUDITORÍA Y DIAGNÓSTICO.
+Restricción: esta tarea inicia con diagnóstico solamente. No modificar código hasta completar la auditoría inicial, registrar los hallazgos y seguir el procedimiento obligatorio de Proceso de desarollo.md.
+
+PROBLEMA REPORTADO
+Desde la plataforma, el usuario no puede ver la opción para consultar o gestionar las imágenes reemplazadas que deberían almacenarse en el historial. La existencia de los modales y handlers en el código fuente no explica por sí sola por qué la opción no aparece o no funciona en la interfaz disponible.
+
+OBJETIVO
+Determinar la causa concreta por la que el usuario no puede acceder a la gestión de imágenes reemplazadas desde la plataforma, diferenciando problemas de visibilidad, permisos, conexión entre interfaz y eventos, errores de comunicación con el backend, ausencia de registros y diferencias entre la rama inspeccionada y el despliegue accesible.
+
+PLAN DE DIAGNÓSTICO
+1. Revisar en index.html dónde se define la entrada a las herramientas de desarrollador y qué condiciones controlan su visibilidad.
+2. Revisar en ui.js la inicialización de la interfaz, los eventos de apertura de #replaced-images-modal, las dependencias del DOM y posibles errores que interrumpan el registro de eventos.
+3. Revisar la lógica de autenticación, roles y permisos que permite o impide mostrar las herramientas administrativas. Confirmar qué rol necesita el usuario para verlas.
+4. Seguir el flujo desde el botón hasta la apertura del modal, la carga de registros y las llamadas a getReplacedImages.
+5. Revisar api-config.js y Services/admin.js para comprobar el contrato de petición/respuesta y los errores que puedan impedir que se muestren los registros.
+6. Identificar si la causa es una opción oculta por permisos, un botón ausente, un evento no enlazado, un modal que no abre, una petición fallida, una respuesta vacía o una diferencia entre el código de la rama y la versión desplegada.
+7. Registrar evidencia concreta, archivos, funciones y líneas aproximadas en una nueva entrada de Auditoría.txt, sin borrar entradas anteriores.
+8. Al terminar el diagnóstico, actualizar esta tarea con la causa confirmada o las hipótesis que permanezcan sin verificar y definir el alcance de la corrección.
+
+RESTRICCIONES DE IMPLEMENTACIÓN
+- No modificar código durante el diagnóstico.
+- No modificar ni eliminar registros históricos de documentación.
+- No asumir que el despliegue de GitHub Pages refleja automáticamente el estado de la rama.
+- No afirmar que la causa está confirmada sin evidencia.
+- Si se requiere modificar código, crear primero una rama de trabajo nueva basada en fix/pys-carousel-card-sizing-print-images; no editar código directamente en la rama base.
+- Tras completar la implementación y las pruebas, preparar un Pull Request hacia fix/pys-carousel-card-sizing-print-images. No hacer merge hasta revisar el resultado desplegado con el usuario.
+
+CRITERIOS DE ACEPTACIÓN
+- La causa de que la opción no aparezca o no sea accesible está documentada con evidencia verificable.
+- Se identifica el rol o condición de acceso requerido, si aplica.
+- Se confirma el recorrido entre interfaz, modal, petición al backend y respuesta, o se documentan los puntos que no pudieron verificarse.
+- Se distingue entre código presente, registros históricos existentes y comportamiento real del despliegue.
+- Si procede una corrección, se implementa en una rama nueva después de completar la auditoría y el procedimiento obligatorio.
+
+================================================================================
