@@ -1986,3 +1986,14 @@ Archivo: ui.js, función exportVehiclePrintSheet y estilos/controles internos.
 - Se cambió la presentación de la foto principal para conservar proporción con object-fit: contain; el QR mantiene proporción cuadrada y limita su ancho al contenedor.
 - Verificación realizada: comprobaciones estáticas de presencia del listener, reglas CSS, plantillas y eliminación del agrupamiento fijo anterior de cuatro. No se ejecutó parser externo, navegador real ni generación de PDF; el resultado visual, el ajuste del QR y los saltos de página permanecen pendientes de validación real.
 ================================================================================
+
+
+================================================================================
+CAMBIO 2026-11-04 — NOTA BAJO METADATOS Y CONTENEDORES ADAPTATIVOS
+- La nota técnica importante se coloca inmediatamente después del bloque de metadatos del vehículo en la primera página y deja de duplicarse en la última página.
+- Se redujeron padding de tarjetas, gap entre tarjetas y separación interna entre texto e imagen.
+- Las tarjetas y wrappers pasan a dimensionarse según su contenido en lugar de ocupar siempre el ancho completo; las imágenes mantienen proporción natural y tienen un límite máximo de seguridad, no recorte.
+- Se retiraron las reglas de la media query móvil que anulaban el modo seleccionado al forzar una columna y una altura de imagen de 180px.
+- El modo Imagen a la derecha ahora usa una cuadrícula de dos columnas a nivel de ficha y dos columnas dentro de cada tarjeta; los modos verticales mantienen la imagen debajo del texto y el modo ampliado permite una imagen mayor.
+- Se mantiene la orientación física vertical. No se ejecutó prueba real en navegador/PDF; sigue pendiente comprobar el aspecto final, el desbordamiento y los saltos de página.
+================================================================================
