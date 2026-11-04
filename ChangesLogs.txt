@@ -1840,3 +1840,17 @@ Fecha: 2026-11-03
     - ADMIN: https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec
   * Se mantienen sincronizados LEGACY, AUTH, CATALOG, WRITE, USERS y UTILITIES.
 ================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: RESTAURACIÓN DE CARRUSEL PYS Y OPTIMIZACIÓN DE CARGA A 0MS
+Fecha: 2026-11-03
+
+- ui.js:
+  * createPysCard: Corregida la asignación por defecto de originModal en las tarjetas de problemas y soluciones. Anteriormente asignaba por defecto 'vehicle' a cualquier apertura sin origen explícito, provocando que la regla anti-bucles ocultara erróneamente el carrusel de modelos asociados al abrir el problema desde la sección principal. Ahora evalúa estrictamente `originModal || (vehicleToUnlink ? 'vehicle' : 'pys')`.
+  * renderPysSection: Envío explícito de `originModal: 'pys'` al invocar `createPysCard(item, 'pys')`.
+  * renderPysSection: Soporte de rehidratación inmediata desde `localStorage` ('gpsepedia_pys_cache') para renderizar instantáneamente todas las tarjetas existentes al ingresar a la sección, eliminando la percepción de demora sin bloquear con peticiones de red.
+
+- auth.js:
+  * loadInitialData: Incorporada precarga asíncrona de `routeAction('getPysData')` en segundo plano junto con la sincronización del catálogo, persistiendo los resultados en `localStorage` ('gpsepedia_pys_cache') e hidratando `state.pysData`.
+  * checkSession: Rehidratación síncrona al arrancar la sesión de `pysData` desde la caché local para disponibilidad inmediata a 0ms.
+================================================================================

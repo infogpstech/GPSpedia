@@ -1414,3 +1414,21 @@ Endpoints actualizados y verificados en api-config.js:
 - UTILITIES: https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec
 - ADMIN: https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec
 ================================================================================
+
+================================================================================
+AUDITORÍA DE CARRUSEL PYS Y RENDIMIENTO DE LA SECCIÓN
+Fecha: 2026-11-03
+
+1. RESTAURACIÓN DEL CARRUSEL EN EL MODAL DE DETALLE DE PROBLEMAS:
+   - Diagnóstico: Se identificó que `createPysCard` forzaba `originModal || 'vehicle'`. En consecuencia, al hacer clic sobre una tarjeta desde la sección Problemas / Soluciones, el modal recibía `originModal = 'vehicle'`, activando erróneamente la restricción anti-bucles (`isFromVehicle = true`) y suprimiendo el carrusel de modelos relacionados.
+   - Solución: Se corrigió la asignación a `originModal || (vehicleToUnlink ? 'vehicle' : 'pys')`, y se especificó explícitamente `'pys'` en `renderPysSection`.
+   - Verificación automatizada con Playwright:
+     * Apertura desde sección PyS: `pys-models-carousel-section` visible con 16 tarjetas (15 modelos de vehículos asociados + tarjeta 'Agregar Modelo').
+     * Apertura anidada desde acordeón de vehículo: `pys-models-carousel-section` suprimido (`cs_exists = false`) para evitar bucles.
+
+2. OPTIMIZACIÓN DE CARGA INMEDIATA (0MS) DE LA SECCIÓN PYS:
+   - Diagnóstico: Al no precargarse `pysData` durante la inicialización de la aplicación (`loadInitialData`), la primera entrada a la sección requería una llamada síncrona a la red (`routeAction('getPysData')`) de 1.7s a 2.5s, mostrando inicialmente sólo la tarjeta '+' y demorando la aparición del resto de problemas.
+   - Solución:
+     a) En `auth.js` (`loadInitialData`), se ejecuta la precarga asíncrona de `getPysData` y se guarda en `localStorage` ('gpsepedia_pys_cache').
+     b) En `auth.js` (`checkSession`) y en `ui.js` (`renderPysSection`), se rehidrata inmediatamente la caché local para dibujar instantáneamente todas las tarjetas de problemas antes de la respuesta de red.
+================================================================================

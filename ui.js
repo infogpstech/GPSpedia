@@ -2378,13 +2378,15 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
     const cardWrapper = document.createElement("div");
     cardWrapper.style.cssText = "position: relative; display: inline-block;";
 
+    const resolvedOrigin = originModal || (vehicleToUnlink ? 'vehicle' : 'pys');
+
     const card = document.createElement("div");
     card.className = "card";
     card.setAttribute("data-problem-id", item.id_problem || item.id || "");
     card.style.animation = "none";
     card.style.opacity = "1";
     card.onclick = () => openPysDetailModal(item, {
-        originModal: originModal || 'vehicle',
+        originModal: resolvedOrigin,
         fromOriginModal: vehicleToUnlink ? {
             type: 'vehicle',
             item: vehicleToUnlink,
@@ -6475,7 +6477,7 @@ export async function renderPysSection() {
         items.reverse(); // Most recent first
 
         items.forEach(item => {
-            const card = createPysCard(item);
+            const card = createPysCard(item, 'pys');
             grid.appendChild(card);
         });
 
@@ -6484,7 +6486,19 @@ export async function renderPysSection() {
 
     // TAREA 1.4: Retirar la animación de carga de la sección «Problemas / Soluciones»
     // Se presenta la sección inmediatamente con su estructura y tarjeta de creación (+) igual que Tutoriales y Relay
-    const cachedData = getState().pysData;
+    let cachedData = getState().pysData;
+    if ((!cachedData || cachedData.length === 0)) {
+        try {
+            const rawStored = localStorage.getItem('gpsepedia_pys_cache');
+            if (rawStored) {
+                const parsed = JSON.parse(rawStored);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    cachedData = parsed;
+                    setState({ pysData: parsed });
+                }
+            }
+        } catch(e) {}
+    }
     const hasCache = Array.isArray(cachedData) && cachedData.length > 0;
     renderGridWithItems(hasCache ? cachedData : []);
 
@@ -6493,6 +6507,9 @@ export async function renderPysSection() {
         const res = await routeAction("getPysData");
         const freshItems = (res && res.data) ? res.data : [];
         setState({ pysData: freshItems });
+        try {
+            localStorage.setItem('gpsepedia_pys_cache', JSON.stringify(freshItems));
+        } catch(e) {}
 
         // Si no había caché o si los datos cambiaron, renderizar con datos frescos
         const cacheHash = JSON.stringify(cachedData || []);

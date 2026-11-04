@@ -2162,3 +2162,14 @@ Requerimientos:
    - ADMIN: https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec
 Estado: COMPLETADO Y VERIFICADO.
 ================================================================================
+
+================================================================================
+TAREA: CORRECCIÓN DE ORIGEN EN CARRUSEL PYS Y OPTIMIZACIÓN A 0MS DE CARGA
+Fecha: 2026-11-03
+Requerimientos:
+1. Corregir condición de carrera y asignación errónea de origen en createPysCard que forzaba originModal='vehicle', impidiendo mostrar el carrusel de modelos asociados al abrir problemas desde la sección principal.
+2. Garantizar que el carrusel aparezca al final del modal después del video guía con la tarjeta de adición de modelo.
+3. Asegurar la regla anti-bucles bidireccional (ocultar carrusel de modelos si se abre desde el vehículo; ocultar problemas relacionados si se abre desde el problema).
+4. Resolver la lentitud de carga al ingresar a la sección Problemas / Soluciones mediante precarga en segundo plano y caché local a 0ms.
+Estado: COMPLETADO Y VERIFICADO.
+================================================================================
