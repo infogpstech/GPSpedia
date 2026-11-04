@@ -2203,3 +2203,28 @@ La interfaz, los modales y sus listeners existen y están conectados estáticame
 
 No se modificó código ni se alteraron registros anteriores.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DE SEGURIDAD — EXPOSICIÓN DE CONTRASEÑAS EN REGISTROS DEL SERVICIO AUTH
+Fecha: 2026-11-04
+Rama: fix/pys-carousel-card-sizing-print-images
+Alcance: inspección estática de Services/Auth.js y su relación con la tarea «CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL». No se ejecutaron solicitudes ni se consultaron hojas de cálculo reales.
+
+HALLAZGO AUD-SEC-01 — CRÍTICO: EL SERVICIO AUTH REGISTRA CONTRASEÑAS EN TEXTO CLARO
+Evidencia:
+1. Services/Auth.js, doPost, inmediatamente después de analizar la petición, registra el objeto request.payload completo mediante logToSheet('DEBUG', ..., { payload: request.payload }). En la acción login, ese payload contiene username y password.
+2. Services/Auth.js, handleLogin, registra además una comparación de contraseña mediante logToSheet('DEBUG', 'Password comparison', { fromSheet: sheetPassword, fromClient: password }). Esto incluye explícitamente la contraseña almacenada y la enviada.
+3. logToSheet escribe details como JSON en la hoja Logs de la Spreadsheet.
+
+Impacto:
+Las credenciales quedan copiadas en registros de diagnóstico accesibles a quienes tengan acceso a esa hoja o a sus respaldos. La exposición no se limita a la contraseña que el usuario introduce: el primer registro también almacena el payload de autenticación completo. Esto contradice el objetivo de seguridad de sesión y protección de credenciales documentado en TAREA 2.
+
+ALCANCE Y LIMITACIONES:
+La escritura de esos datos en la hoja Logs está demostrada por el código. No se inspeccionó el contenido real de Logs ni los permisos de acceso de la Spreadsheet; por tanto, no se afirma quién ha consultado esos registros ni si hubo acceso indebido.
+
+ACCIÓN REQUERIDA:
+Eliminar el registro de contraseñas y evitar registrar payloads de autenticación completos. Revisar el historial de Logs ya generado y definir un procedimiento autorizado para tratar las credenciales expuestas, sin borrar evidencia ni registros históricos durante esta auditoría. La corrección requiere su propio ciclo de auditoría, respaldo, pruebas y documentación.
+
+No se modificó código ni se alteraron registros anteriores.
+================================================================================
