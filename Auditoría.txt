@@ -2228,3 +2228,29 @@ Eliminar el registro de contraseñas y evitar registrar payloads de autenticaci�
 
 No se modificó código ni se alteraron registros anteriores.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DE INTEGRIDAD — ATRIBUCIÓN DEL COLABORADOR EN EL SERVICIO WRITE
+Fecha: 2026-11-04
+Rama: fix/pys-carousel-card-sizing-print-images
+Alcance: inspección estática de Services/write.js y del requisito de atribución de colaborador incluido en las tareas de registro de cortes. No se ejecutaron solicitudes ni se escribieron datos en Spreadsheet.
+
+HALLAZGO AUD-SEC-02 — ALTO: EL BACKEND ACEPTA EL NOMBRE DEL COLABORADOR ENVIADO POR EL CLIENTE
+Evidencia:
+- Services/write.js, handleAddOrUpdateCut (aprox. líneas 108-135): obtiene colaborador directamente desde payload y lo asigna a colaboradorName; no extrae ni verifica un sessionToken en el handler.
+- En la misma función, el valor se escribe en colaboradorCorte1..3 tanto en el flujo de reparación como al agregar un corte a un vehículo existente o nuevo.
+- Services/write.js, doPost (aprox. líneas 48-90): despacha addOrUpdateCut directamente a handleAddOrUpdateCut sin una validación de identidad o rol previa visible en ese router.
+- El requisito de Tareas.txt para el registro desde modal establece que el nombre debe proceder del perfil autenticado y que el usuario no debe poder atribuir la operación a otro colaborador.
+
+Riesgo:
+Una llamada directa al endpoint puede proporcionar otro nombre en colaborador, haciendo que la hoja registre una atribución no verificada. La interfaz puede enviar el nombre correcto en el flujo habitual, pero eso no garantiza la integridad del dato en el servidor.
+
+ALCANCE Y LIMITACIONES:
+La aceptación directa del valor por el handler está confirmada estáticamente. No se inspeccionó el despliegue de Apps Script ni se ejecutó una petición manipulada. La conclusión se limita a que este punto de entrada no demuestra validar la identidad del colaborador.
+
+ACCIÓN REQUERIDA:
+Validar sesión en el backend y obtener el nombre del perfil asociado al token; no confiar en el nombre enviado por el cliente. Mantener los casos de usuarios autorizados y los flujos idempotentes compatibles. Realizar pruebas de sesión ausente, inválida y válida, incluyendo intento de suplantación.
+
+No se modificó código ni se alteraron registros anteriores.
+================================================================================
