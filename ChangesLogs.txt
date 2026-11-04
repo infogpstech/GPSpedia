@@ -2131,3 +2131,13 @@ Fecha: 2026-11-04
 - No se modificaron las funciones de edición, la autenticación ni el backend.
 - Verificación estática por comparación: el único cambio de código en ui.js corresponde a la lectura alternativa del rol. Se realizaron pruebas simuladas de los valores Privilegios y Rol; no se ejecutó navegador real ni se verificó la cuenta desplegada.
 ================================================================================
+
+================================================================================
+CORRECCIÓN — VISIBILIDAD DEL ACCESO AL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+- Archivo modificado: ui.js, función showApp(user).
+- La lectura del rol para mostrar dev-tools-btn utiliza únicamente user.Privilegios, propiedad que Services/Auth.js obtiene de la columna Privilegios de la hoja Users.
+- Se corrigió la expresión regular de normalización Unicode: se eliminó el doble escape que alteraba el texto del rol antes de compararlo con 'desarrollador'.
+- Se conservaron la eliminación de espacios exteriores, la conversión a minúsculas y la restricción de acceso al rol Desarrollador.
+- No se modificaron los controles de edición, Services/Auth.js, la autenticación, los endpoints ni otros elementos del menú.
+================================================================================
