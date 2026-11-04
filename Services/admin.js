@@ -2563,15 +2563,26 @@ function handleRecoverReplacedImage(payload, logMessage) {
                 nombreVehiculo: repData[9] || ""
             });
         }
+    } catch (historyError) {
+        if (wasTrashed) { try { file.setTrashed(true); } catch (rollbackError) {} }
+        throw new Error(`No se pudo registrar la imagen activa que será sustituida. La referencia del catálogo no se modificó. Detalle: ${historyError.message}`);
+    }
+
+    try {
         cortesSheet.getRange(actualRow, COLS_CORTES[campo]).setValue(urlHistorica);
         SpreadsheetApp.flush();
+    } catch (updateError) {
+        if (swapRecord) { try { sheetRep.getRange(swapRecord.rowIndex, 11).setValue("fallida"); } catch (statusError) {} }
+        if (wasTrashed) { try { file.setTrashed(true); } catch (rollbackError) {} }
+        throw new Error(`No se pudo actualizar la referencia activa. Detalle: ${updateError.message}`);
+    }
+
+    try {
         if (swapRecord) sheetRep.getRange(swapRecord.rowIndex, 11).setValue("historica");
         sheetRep.getRange(repRowIndex, 11).setValue("restablecida");
         SpreadsheetApp.flush();
-    } catch (error) {
-        if (swapRecord) { try { sheetRep.getRange(swapRecord.rowIndex, 11).setValue("fallida"); } catch (statusError) {} }
-        if (wasTrashed) { try { file.setTrashed(true); } catch (rollbackError) {} }
-        throw new Error(`No se pudo completar la restauración. Detalle: ${error.message}`);
+    } catch (statusError) {
+        logMessage && logMessage("Imágenes Reemplazadas", `La imagen se restauró, pero no se pudo actualizar uno de los estados del historial: ${statusError.message}`, 0, 0, true);
     }
     logMessage && logMessage("Imágenes Reemplazadas", `Imagen histórica restablecida para el campo '${campo}' del vehículo '${registroId}'.`);
     return { status: "success", message: "La imagen histórica fue restablecida como activa y la versión anterior quedó guardada en el historial.", restoredUrl: urlHistorica };
