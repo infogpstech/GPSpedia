@@ -1432,3 +1432,36 @@ Fecha: 2026-11-03
      a) En `auth.js` (`loadInitialData`), se ejecuta la precarga asíncrona de `getPysData` y se guarda en `localStorage` ('gpsepedia_pys_cache').
      b) En `auth.js` (`checkSession`) y en `ui.js` (`renderPysSection`), se rehidrata inmediatamente la caché local para dibujar instantáneamente todas las tarjetas de problemas antes de la respuesta de red.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA INICIAL: CARRUSEL PYS, DIMENSIONES DE TARJETAS Y DISTRIBUCIÓN DE IMÁGENES EN FICHA TÉCNICA
+Fecha: 2026-11-03
+Rama de trabajo: fix/pys-carousel-card-sizing-print-images
+Base de comparación y respaldo: GPSpedia2.2.7
+Blobs de respaldo exacto de los archivos auditados generados antes de las modificaciones: ui.js fa812a0f31353a9e2c627a71fc31252c8f02299e; style.css 782dae61e857177786431253c4439e41b70730f1; Auditoría.txt e3aff54a1df6122d70a94e608e67cabd0371a861; Tareas.txt 49ab4202fe4a2aeb2af539ad8bf136dd37002dcc; ChangesLogs.txt 87cf93ec516f859a74a30b194f093710d9c72a52.
+
+1. CARRUSEL DE VEHÍCULOS RELACIONADOS EN EL MODAL DE PROBLEMAS Y SOLUCIONES (ui.js):
+   - La sección se agrega cuando navOptions.originModal no es 'vehicle', conforme a la regla anti-bucles.
+   - El renderizado busca los identificadores en item.modelosAsociados y los resuelve contra getState().catalogData.cortes.
+   - Si catalogData.cortes está vacío, se consulta getCatalogData y el renderizado depende de que la respuesta incluya res.data.cortes como arreglo.
+   - El carrusel incluye la tarjeta de agregar modelo y permite retirar relaciones al rol Desarrollador.
+   - Los registros anteriores documentan una corrección de origen contextual y una verificación previa; el estado actual se audita nuevamente para no asumir que esa evidencia previa confirma el comportamiento de esta rama.
+
+2. DIMENSIONES DE TARJETAS DE ADICIÓN:
+   - La tarjeta de agregar tutorial tiene height/min-height de 120px.
+   - La tarjeta de agregar problema en la cuadrícula PyS tiene height: 100% y min-height de 140px.
+   - Las tarjetas de agregar modelo y agregar problema en modales de relación utilizan dimensiones en línea de 140px de ancho y 180px de alto.
+   - Las dimensiones se encuentran repartidas entre CSS y estilos en línea, lo que permite que las tarjetas de adición queden con tamaños distintos de las tarjetas regulares o entre sí.
+
+3. FICHA TÉCNICA PARA IMPRESIÓN (exportVehiclePrintSheet en ui.js):
+   - La distribución actual calcula densidad a partir del número total de cortes, alimentaciones y apertura.
+   - Las clases card-expanded y card-compact cambian la altura máxima de las imágenes según densidad, llegando a reducirlas a 165px cuando hay cuatro o más elementos.
+   - La información de cada elemento reserva siempre 25% del ancho y el contenedor de imagen 75%, aunque el elemento no tenga imagen.
+   - Esta combinación limita las imágenes por cantidad total de elementos y mantiene espacio reservado incluso cuando no existe imagen. Se evaluará una distribución por elemento con imagen y una altura de imagen consistente, permitiendo que los elementos continúen en páginas adicionales cuando sea necesario.
+
+4. ALCANCE:
+   - Se revisarán únicamente ui.js, style.css y los registros obligatorios Auditoría.txt, ChangesLogs.txt y Tareas.txt.
+   - No se modificarán microservicios ni la estructura de datos.
+   - La rama de trabajo fue creada desde GPSpedia2.2.7; la rama base no se modificará.
+================================================================================
