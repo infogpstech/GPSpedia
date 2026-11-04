@@ -2019,3 +2019,11 @@ CORRECCIÓN 2026-11-04 — ANCHO DE IMÁGENES Y NOTA COMO FILA DE METADATOS
 ================================================================================
 
 - Ajuste adicional: el cuerpo de cada tarjeta usa una columna flexible minmax(0, 1fr) para que el ancho intrínseco del texto no limite el wrapper de imagen; el modo Imagen a la derecha conserva explícitamente sus dos columnas.
+
+================================================================================
+CORRECCIÓN 2026-11-04 — EVITAR RECORTE DE TEXTO POR ALTURA FIJA DE PÁGINA
+- Se identificó que .sheet-page-wrapper fijaba altura, altura mínima y máxima en 269 mm y usaba overflow:hidden, lo que podía ocultar contenido técnico cuando una tarjeta o el bloque de metadatos superaba el espacio disponible.
+- Se cambió la altura de la página a auto, se conservó 269 mm como altura mínima, se retiró la altura máxima fija y se estableció overflow:visible tanto en la regla general como en impresión.
+- No se modificaron el selector de distribución, el orden de tarjetas, la prioridad del corte recomendado, el contenido técnico ni la tabla de metadatos.
+- Validación estática pendiente de cierre en esta revisión; no se ha probado la impresión real ni el ajuste de saltos de página en navegador/PDF. La paginación continúa basada en grupos de imágenes y no en la medición real de altura de cada tarjeta.
+================================================================================
