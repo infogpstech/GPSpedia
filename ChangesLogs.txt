@@ -2049,3 +2049,17 @@ CAMBIO 2026-11-04 — DIMENSIONAMIENTO ADAPTATIVO DE IMÁGENES EN FICHAS IMPRIMI
 - No se modificaron la agrupación de páginas, la prioridad del corte recomendado, el orden técnico, el selector de distribución, los metadatos ni el bloque QR/video.
 - Verificación estática: eliminadas las reglas CSS de altura por cantidad y presente la función fitImagesToAvailablePageSpace(). No se ejecutó navegador real ni se generó PDF.
 ================================================================================
+
+
+================================================================================
+CAMBIO DOCUMENTAL — CONTEXTO DE TRABAJO Y TAREA DE DIAGNÓSTICO DE HISTORIAL DE IMÁGENES
+Fecha: 2026-11-04
+Rama: fix/pys-carousel-card-sizing-print-images
+
+- Archivo nuevo: Contexto de trabajo.md. Contiene reglas operativas de repositorio y ramas, preservación de registros, cumplimiento de Proceso de desarollo.md y alcance del diagnóstico del historial de imágenes reemplazadas.
+- Archivo modificado: Tareas.txt. Se agregó la tarea pendiente «INVESTIGAR POR QUÉ NO APARECE LA INTERFAZ DE GESTIÓN DEL HISTORIAL DE IMÁGENES REEMPLAZADAS», con plan de diagnóstico, restricciones y criterios de aceptación.
+- Archivo modificado: Auditoría.txt. Se agregó el registro de alcance y limitaciones del diagnóstico pendiente, incluyendo las áreas que deben inspeccionarse.
+- No se modificó código de la aplicación.
+- No se eliminaron ni sobrescribieron registros anteriores.
+- No se realizaron pruebas funcionales ni se verificó el despliegue.
+================================================================================
