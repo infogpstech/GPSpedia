@@ -1598,3 +1598,12 @@ Decisión:
 - Ajustar únicamente la asignación de columnas para una sola imagen.
 Respaldos exactos previos a esta corrección: ui.js ea4dafb8053d9db5dfb85b97707678b1ad2dfdd6; Auditoría.txt 1e0cd437ff8e31a4df503bbd340099e29a77a483; ChangesLogs.txt 8795e7cf294baa1b73d3b07195fe304ffd9bae47; Tareas.txt 09cdff0a5103c1937460cd8251a5c28fea02e571.
 ================================================================================
+
+
+================================================================================
+REVISIÓN ADICIONAL DEL ALGORITMO ADAPTATIVO
+Fecha: 2026-11-03
+Observación: la asignación inicial de anchos por tramos discretos de una rejilla de doce columnas utiliza la relación de aspecto para clasificar y ordenar, pero no expresa suficientemente la proporción relativa de las imágenes en las filas generales.
+Decisión: utilizar filas con columnas ponderadas por la relación de aspecto real de las fotografías y composiciones específicas para los casos de una imagen vertical con dos horizontales, y dos verticales con una horizontal. Se mantendrá la imagen prioritaria como primera imagen y se conservarán las tarjetas técnicas completas.
+Respaldos exactos previos a esta revisión: ui.js 6176d599a965138c1563a9aa094709fd7c881a49; Auditoría.txt 135489a1af2dd78b9ea18c91209e98a5bec2c0fd; ChangesLogs.txt 8795e7cf294baa1b73d3b07195fe304ffd9bae47; Tareas.txt 09cdff0a5103c1937460cd8251a5c28fea02e571.
+================================================================================
