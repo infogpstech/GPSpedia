@@ -1950,3 +1950,13 @@ Fecha: 2026-11-04
   * No se modificaron el algoritmo adaptativo de tarjetas, la tabla .meta-table, el QR/video ni las notas técnicas.
 - Verificación estática: se confirmó que los tres límites de altura relevantes quedaron en 560px. Pendiente prueba real de impresión/PDF y revisión de saltos de página.
 ================================================================================
+
+
+CAMBIO 2026-11-04 — REGLAS ADAPTATIVAS PARA 1–7 IMÁGENES EN FICHA IMPRIMIBLE
+Archivo: ui.js, función exportVehiclePrintSheet, bloque arrangeTechnicalCards y estilos de filas adaptativas.
+- La primera imagen prioritaria conserva la primera posición; las demás conservan el orden técnico original.
+- Una imagen se centra en una fila limitada al 50% del ancho de composición.
+- Dos o tres imágenes horizontales se apilan en filas centradas limitadas al 80% del ancho.
+- Tres imágenes verticales/horizontales mantienen composiciones específicas existentes; las demás mezclas y conjuntos de 3–7 imágenes usan filas adaptativas según relación de aspecto, evitando mezclar imágenes verticales y horizontales en la misma fila.
+- Filas generales limitadas a tres imágenes, con panorámicas en filas independientes. Se mantienen proporciones de columnas calculadas a partir de la relación de aspecto.
+- No se modificaron la tabla de metadatos, el bloque QR/video ni las notas técnicas. Pendiente validación real de impresión/PDF y paginación.
