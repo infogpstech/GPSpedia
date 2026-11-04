@@ -46,7 +46,7 @@ function assertDeveloperSession(payload) {
     if (!userRow) throw new Error("Acceso denegado: el usuario de la sesión no existe.");
 
     const storedToken = String(userRow[7] || "").trim();
-    if (storedToken && storedToken !== String(sessionToken).trim()) {
+    if (!storedToken || storedToken !== String(sessionToken).trim()) {
         throw new Error("Acceso denegado: la sesión ya no corresponde al token vigente del usuario.");
     }
 
@@ -1595,7 +1595,7 @@ function handleUploadAdminImage(payload, logMessage) {
             }
         }
 
-        if (activeCell && originalUrl && newImageUrl) {
+        if (activeCell && newImageUrl) {
             try {
                 if (String(activeCell.getValue()) === String(newImageUrl)) {
                     activeCell.setValue(originalUrl);
@@ -2667,7 +2667,7 @@ function handleRecoverReplacedImage(payload, logMessage) {
                 try { sheetRep.getRange(swappedRecord.rowIndex, 11).setValue("cancelada"); } catch (statusError) {}
             }
             try {
-                if (String(activeCell.getValue()) === urlHistorica && currentActiveUrl) {
+                if (String(activeCell.getValue()) === urlHistorica) {
                     activeCell.setValue(currentActiveUrl);
                     SpreadsheetApp.flush();
                 }
@@ -2771,7 +2771,7 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
     } else {
         stack = [{
             folderId: DRIVE_FOLDER_ID, path: rootFolder.getName(),
-            fileToken: null, folderToken: null, filesDone: false
+            fileToken: null, folderToken: null, filesDone: false, foldersDone: false
         }];
     }
 
@@ -2833,6 +2833,11 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
             current.filesDone = true;
         }
 
+        if (current.foldersDone) {
+            stack.pop();
+            continue;
+        }
+
         const subFolders = current.folderToken
             ? DriveApp.continueFolderIterator(current.folderToken)
             : folder.getFolders();
@@ -2841,15 +2846,21 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
             if (!isFolderInsideCortes(childFolder, DRIVE_FOLDER_ID)) {
                 throw new Error("Se detectó una subcarpeta fuera del árbol «Cortes».");
             }
-            current.folderToken = subFolders.getContinuationToken();
+            if (subFolders.hasNext()) {
+                current.folderToken = subFolders.getContinuationToken();
+            } else {
+                current.folderToken = null;
+                current.foldersDone = true;
+            }
             stack.push({
                 folderId: childFolder.getId(),
                 path: `${current.path}/${childFolder.getName()}`,
-                fileToken: null, folderToken: null, filesDone: false
+                fileToken: null, folderToken: null, filesDone: false, foldersDone: false
             });
             batchFolders++;
             foldersVisited++;
         } else {
+            current.foldersDone = true;
             stack.pop();
         }
     }
