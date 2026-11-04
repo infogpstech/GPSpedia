@@ -8010,16 +8010,16 @@ export function exportVehiclePrintSheet(item) {
                     padding-bottom: 1px;
                 }
                 .tech-item-body {
-                    display: flex;
-                    flex-direction: column;
-                    align-items: stretch;
-                    gap: 5px;
+                    display: grid;
+                    grid-template-columns: minmax(0, 1fr) minmax(120px, 42%);
+                    align-items: start;
+                    gap: 8px;
                     min-width: 0;
                 }
                 .tech-item-info {
                     flex: 1 1 auto;
-                    max-width: 100%;
-                    width: 100%;
+                    max-width: none;
+                    width: auto;
                     min-width: 0;
                     overflow-wrap: break-word;
                     word-break: break-word;
@@ -8056,11 +8056,11 @@ export function exportVehiclePrintSheet(item) {
                     width: 100%;
                 }
                 body[data-print-layout="horizontal"] .tech-item-body {
-                    flex-direction: row;
+                    grid-template-columns: minmax(0, 1fr) minmax(120px, 42%);
                 }
                 body[data-print-layout="vertical"] .tech-item-body,
                 body[data-print-layout="image-focus"] .tech-item-body {
-                    flex-direction: column;
+                    grid-template-columns: minmax(0, 1fr);
                     align-items: stretch;
                 }
                 body[data-print-layout="vertical"] .tech-item-info,
@@ -8124,7 +8124,7 @@ export function exportVehiclePrintSheet(item) {
                         grid-template-columns: 1fr;
                     }
                     .tech-item-body {
-                        flex-direction: column;
+                        grid-template-columns: minmax(0, 1fr);
                     }
                     .tech-item-img-wrapper {
                         max-width: 100%;
