@@ -1935,3 +1935,24 @@ Fecha: 2026-11-04
 - Comprobación estática: agrupación anterior de hasta cuatro eliminada; regla de máximo dos y excepción vertical presentes; reglas de altura por cantidad de imágenes presentes; listener del selector y colocación de notas debajo de metadatos conservados.
 - Limitación: la hoja conserva altura fija y overflow:hidden. Los límites CSS reducen el riesgo de corte, pero no garantizan que una primera página con texto largo, metadatos y notas quepa en todos los casos. Es imprescindible validar navegador/PDF y ajustar si aparecen desbordamientos.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA PREVIA — ANCHO DE IMÁGENES Y NOTA EN METADATOS
+Fecha: 2026-11-04
+Archivos revisados: ui.js, Auditoría.txt, ChangesLogs.txt y Tareas.txt.
+Referencias inmutables exactas previas a este cambio (SHA de contenido/versión en la rama):
+- ui.js: 5d2a5fff2b2e78152198014f8ad1529ee8f4f0d4
+- Auditoría.txt: 5da8ac01749425b56e0afd93880bb114db161e01
+- ChangesLogs.txt: 5bf8737c020337a603de2b28b2d77d822b9b1ca7
+- Tareas.txt: ad3196c80267de07228a3985798285433a58d6cd
+Hallazgos:
+1. .tech-item-card conserva width:fit-content y varias plantillas usan max-content, por lo que el texto puede determinar el ancho de la tarjeta antes que la imagen.
+2. .tech-item-img-wrapper usa width:fit-content y .tech-detail-img usa width:auto; aunque la cuadrícula tenga columnas disponibles, la imagen no necesariamente ocupa el ancho de su contenedor.
+3. notasHtml se genera como un div independiente después de la sección técnica; durante la paginación, notesTemplate se clona después de top-grid, pero queda como bloque separado, no como fila de la tabla de metadatos.
+Cambio previsto:
+- Hacer que las tarjetas y wrappers de imagen utilicen el ancho de la columna disponible, y que la imagen pueda llenar ese ancho conservando proporción y límites de altura.
+- Integrar la nota importante dentro de meta-table como una fila con celda colspan=4.
+- Evitar que la nota se clone como bloque independiente, manteniéndola con la tabla de metadatos en la primera página.
+- Mantener selector, prioridad de tarjetas y lógica de agrupación actual.
+================================================================================
