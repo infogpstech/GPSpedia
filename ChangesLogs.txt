@@ -1908,3 +1908,17 @@ Fecha: 2026-11-03
   * No se modificó el HTML ni el CSS de la tabla .meta-table ni el bloque de QR/video.
 - Verificación documentada: compilación sintáctica de la función y pruebas simuladas de las composiciones descritas. No se ejecutaron pruebas de navegador ni generación real de PDF.
 ================================================================================
+
+
+================================================================================
+CAMBIO: DISTRIBUCIÓN HORIZONTAL DEL TEXTO Y LA IMAGEN EN TARJETAS DE IMPRESIÓN
+Fecha: 2026-11-04
+
+- ui.js (exportVehiclePrintSheet, estilos internos de impresión alrededor de las líneas 8000-8100):
+  * Se cambió .tech-item-body a una cuadrícula de dos columnas en el modo automático, para colocar la información y la fotografía lado a lado cuando la tarjeta tiene imagen.
+  * Se ajustó .tech-item-info para que no fuerce un ancho del 100% dentro de la distribución en columnas.
+  * Se actualizó el modo horizontal para usar la misma distribución explícita en cuadrícula.
+  * Se conservaron las distribuciones de una columna para los modos vertical e imagen ampliada, y para ventanas estrechas.
+  * No se modificaron el HTML de las tarjetas, la lógica de prioridad de imágenes, la tabla .meta-table ni el bloque QR/video.
+- Verificación realizada: compilación sintáctica de exportVehiclePrintSheet y revisión estática del bloque CSS modificado. No se ejecutó navegador real ni se generó PDF.
+================================================================================
