@@ -3838,13 +3838,13 @@ export async function openReplacedImagesModal() {
                 <div style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rep.referencia_texto || 'Registro ' + rep.registro_id}</div>
                 <div style="font-size: 0.8rem; color: var(--text-disabled);"><strong>Archivo:</strong> ${rep.nombre_archivo} | <strong>Campo:</strong> ${rep.campo}</div>
                 <div style="font-size: 0.75rem; color: var(--text-disabled);"><strong>ID Drive:</strong> <code>${rep.archivo_drive_id}</code> | <strong>Fecha:</strong> ${rep.fecha_reemplazo}</div>
-                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : (rep.estado === 'eliminada' ? '#dc3545' : '#007bff')};">Estado: ${rep.estado}</div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : (['eliminada', 'en_papelera'].includes(rep.estado) ? '#dc3545' : (rep.estado === 'cancelada' ? '#6c757d' : '#007bff'))};">Estado: ${rep.estado}</div>
             `;
 
             const btnContainer = document.createElement('div');
             btnContainer.style.cssText = "display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;";
 
-            if (rep.estado !== 'eliminada') {
+            if (rep.estado !== 'cancelada') {
                 const recoverBtn = document.createElement('button');
                 recoverBtn.className = "btn btn-primary";
                 recoverBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; white-space: nowrap;";
@@ -3867,27 +3867,29 @@ export async function openReplacedImagesModal() {
                 };
                 btnContainer.appendChild(recoverBtn);
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = "btn btn-danger";
-                deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
-                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
-                deleteBtn.onclick = async () => {
-                    if (!confirm(`¿Enviar esta imagen histórica a la papelera de Google Drive? Podrá recuperarse desde la papelera de Drive.`)) return;
-                    deleteBtn.disabled = true;
-                    deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                    try {
-                        const delRes = await routeAction('deleteReplacedImage', { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo });
-                        if (delRes && delRes.status === 'success') {
-                            mostrarNotificacion("Imagen enviada a la papelera de Google Drive.", "success");
-                            loadData();
+                if (rep.estado !== 'en_papelera' && rep.estado !== 'eliminada') {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = "btn btn-danger";
+                    deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
+                    deleteBtn.onclick = async () => {
+                        if (!confirm(`¿Enviar esta imagen histórica a la papelera de Google Drive? Podrá recuperarse desde la papelera de Drive.`)) return;
+                        deleteBtn.disabled = true;
+                        deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                        try {
+                            const delRes = await routeAction('deleteReplacedImage', { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo });
+                            if (delRes && delRes.status === 'success') {
+                                mostrarNotificacion("Imagen enviada a la papelera de Google Drive.", "success");
+                                loadData();
+                            }
+                        } catch (e) {
+                            alert("No se pudo enviar la imagen a la papelera: " + e.message);
+                            deleteBtn.disabled = false;
+                            deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
                         }
-                    } catch (e) {
-                        alert("Eliminación bloqueada: " + e.message);
-                        deleteBtn.disabled = false;
-                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
-                    }
-                };
-                btnContainer.appendChild(deleteBtn);
+                    };
+                    btnContainer.appendChild(deleteBtn);
+                }
             }
 
             card.appendChild(img);
@@ -3920,6 +3922,7 @@ export async function openAuditDriveModal() {
     const allFiles = [];
     let cursor = null;
     let complete = false;
+    let unverifiableReferences = 0;
 
     summaryEl.textContent = 'Iniciando auditoría por lotes del árbol «Cortes»...';
     container.innerHTML = '';
@@ -3976,6 +3979,7 @@ export async function openAuditDriveModal() {
             appendFiles(res.files);
             complete = res.complete === true;
             cursor = res.cursor || null;
+            unverifiableReferences = Math.max(unverifiableReferences, Number(res.unverifiableReferenceCount) || 0);
 
             summaryEl.textContent = `Auditoría en progreso: ${allFiles.length} archivos analizados en lotes. Estado: ${complete ? 'completa' : 'parcial, continuando'}.`;
 
@@ -3989,7 +3993,7 @@ export async function openAuditDriveModal() {
         const unusedCount = allFiles.filter(file => file.classification === 'Sin uso detectado').length;
         const unverifiedCount = allFiles.filter(file => file.classification === 'No verificable').length;
 
-        summaryEl.textContent = `Auditoría COMPLETA del árbol «Cortes». Total: ${allFiles.length}. En uso: ${inUseCount}. Históricas: ${histCount}. Sin uso detectado: ${unusedCount}. No verificables: ${unverifiedCount}.`;
+        summaryEl.textContent = `Auditoría COMPLETA del árbol «Cortes». Total: ${allFiles.length}. En uso: ${inUseCount}. Históricas: ${histCount}. Sin uso detectado: ${unusedCount}. No verificables: ${unverifiedCount}. Referencias de URL no interpretables: ${unverifiableReferences}.`;
         if (allFiles.length === 0) {
             container.textContent = 'No se encontraron archivos en la carpeta analizada.';
         }
