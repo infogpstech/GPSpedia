@@ -2259,7 +2259,7 @@ No se modificó código ni se alteraron registros anteriores.
 ================================================================================
 VERIFICACIÓN E IMPLEMENTACIÓN PROPUESTA — AUD-IMG-01 A AUD-IMG-07
 Fecha: 2026-11-04
-Rama de trabajo: fix/audit-img-01-07-history-security-integrity
+Rama de trabajo: fix/audit-img-01-07-history-security
 Rama base/PR: fix/pys-carousel-card-sizing-print-images
 Alcance: correcciones de seguridad e integridad para el repositorio histórico y auditoría de imágenes de Drive. No incluye AUD-IMG-08 ni hallazgos posteriores.
 
