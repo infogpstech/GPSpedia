@@ -2175,3 +2175,31 @@ Inspeccionar el control de visibilidad de las herramientas administrativas, rol/
 Limitación:
 La causa todavía no está confirmada. La presencia de elementos y funciones en el código fuente no permite concluir que estén accesibles desde la interfaz desplegada. Esta entrada no declara resuelta la tarea.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA COMPLEMENTARIA — CONTROL DE VISIBILIDAD DEL ACCESO AL HISTORIAL DE IMÁGENES
+Fecha: 2026-11-04
+Rama: fix/pys-carousel-card-sizing-print-images
+Tipo: inspección estática de interfaz, inicialización de sesión y eventos. No se ejecutó navegador ni se consultó el despliegue activo.
+
+ARCHIVOS Y EVIDENCIA
+- index.html, líneas 46 y 325-331: el enlace #dev-tools-btn inicia con style="display: none". Los botones #btn-admin-view-replaced-images y #btn-admin-audit-drive-images están dentro del panel #dev-tools-modal.
+- ui.js, líneas 4824-4828: showApp(user) muestra #dev-tools-btn únicamente cuando user.Privilegios === 'Desarrollador'. No se contempla en esta condición una propiedad alternativa como user.Rol.
+- ui.js, líneas 3023-3030: openDevTools abre el modal administrativo e inicializa sus listeners.
+- main.js, líneas 633-641: el listener del enlace abre ui.openDevTools().
+- ui.js, líneas 3758-3767: initAdminPanelListeners enlaza los botones de consulta del historial y auditoría con sus respectivos modales.
+- ui.js, líneas 3773-3795: openReplacedImagesModal abre el modal y solicita getReplacedImages.
+- auth.js, líneas 14-17 y 223-228: el flujo de login almacena result.user en localStorage, actualiza el estado y llama showApp(user).
+
+HALLAZGO AUD-IMG-08 — ACCESO AL PANEL ADMINISTRATIVO RESTRINGIDO POR EL VALOR EXACTO DEL ROL
+La opción no es un acceso general del catálogo: está subordinada a que la sesión contenga la propiedad Privilegios con el valor exacto 'Desarrollador'. Cualquier otro rol, un valor diferente o la ausencia de esa propiedad deja el enlace oculto. Por ello, que un usuario con rol distinto no vea el historial coincide con la condición actual del frontend.
+
+LÍMITE DE CONFIRMACIÓN
+No se dispone en esta revisión de la sesión del usuario que reportó el problema ni de la respuesta real del login en su cuenta. No puede afirmarse todavía si su cuenta tiene rol distinto, si el objeto de sesión desplegado difiere del contrato esperado o si GitHub Pages está sirviendo una revisión distinta. La condición del código fuente sí queda confirmada.
+
+RESULTADO
+La interfaz, los modales y sus listeners existen y están conectados estáticamente. La hipótesis prioritaria para el caso reportado es el control de visibilidad por rol. Debe verificarse el valor real de user.Privilegios en la sesión del usuario y compararse el commit desplegado con esta rama antes de atribuir la causa definitiva.
+
+No se modificó código ni se alteraron registros anteriores.
+================================================================================
