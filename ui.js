@@ -8000,6 +8000,31 @@ export function exportVehiclePrintSheet(item) {
                     border-radius: 4px;
                     border: 1px solid #ccc;
                 }
+                body[data-print-layout="horizontal"] .tech-item-body {
+                    flex-direction: row;
+                }
+                body[data-print-layout="vertical"] .tech-item-body,
+                body[data-print-layout="image-focus"] .tech-item-body {
+                    flex-direction: column;
+                    align-items: stretch;
+                }
+                body[data-print-layout="vertical"] .tech-item-info,
+                body[data-print-layout="image-focus"] .tech-item-info {
+                    flex: 1 1 100%;
+                    max-width: 100%;
+                    width: 100%;
+                }
+                body[data-print-layout="vertical"] .tech-item-img-wrapper,
+                body[data-print-layout="image-focus"] .tech-item-img-wrapper {
+                    flex: 1 1 auto;
+                    max-width: 100%;
+                    width: 100%;
+                    max-height: none;
+                    justify-content: center;
+                }
+                body[data-print-layout="image-focus"] .tech-detail-img {
+                    max-height: 380px;
+                }
                 /* Aviso de testigo al pie del corte (Requisito 4.1) */
                 .testigo-aviso {
                     margin-top: 12px;
@@ -8054,9 +8079,16 @@ export function exportVehiclePrintSheet(item) {
                 }
             </style>
         </head>
-        <body>
+        <body data-print-layout="auto">
             <div class="no-print-bar no-print">
                 <span><strong>Ficha Técnica</strong> - Vista previa para consulta e impresión</span>
+                <label for="print-layout-mode" style="font-size: 11px; font-weight: 600;">Distribución:</label>
+                <select id="print-layout-mode" aria-label="Distribución de imágenes" onchange="document.body.dataset.printLayout = this.value" style="max-width: 180px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: white; color: #222;">
+                    <option value="auto">Automática</option>
+                    <option value="horizontal">Imagen a la derecha</option>
+                    <option value="vertical">Imagen debajo del texto</option>
+                    <option value="image-focus">Imagen ampliada</option>
+                </select>
                 <button onclick="window.print()" style="padding: 6px 14px; background: white; color: #007bff; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">
                     Imprimir / Guardar PDF
                 </button>
