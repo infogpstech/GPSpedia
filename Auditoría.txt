@@ -2022,3 +2022,15 @@ Plan:
 - Actualizar index.html sustituyendo únicamente la cadena exacta "2.1.6" por "2.2.5".
 - Verificar que el archivo no conserve ninguna aparición de 2.1.6 y que las seis ubicaciones esperadas indiquen 2.2.5.
 ================================================================================
+
+
+================================================================================
+VERIFICACIÓN POSTCAMBIO — VERSIÓN 2.2.5 EN index.html
+Fecha: 2026-11-04
+- index.html actualizado en commit c4ddbd3d97cf4629befcfd70b2a8524d3b2c2c25.
+- Se comprobaron las ubicaciones del comentario de versión, título HTML, etiqueta del encabezado, pie de página y sección/modal de versión.
+- La cadena 2.1.6 ya no aparece en index.html.
+- Las seis apariciones anteriores se sustituyeron por 2.2.5; las referencias adicionales de 2.2.5 ya presentes en el historial/registro de versiones se conservaron.
+- Resultado de comprobaciones estáticas: TODAS CORRECTAS.
+- No se ejecutó navegador real; queda pendiente confirmar visualmente el modal de inicio de sesión y el pie de página.
+================================================================================
