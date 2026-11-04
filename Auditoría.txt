@@ -1890,3 +1890,15 @@ Alcance de esta corrección:
 - Antes de modificar código, crear respaldos exactos actualizados de ui.js y los archivos de trazabilidad que se editarán.
 - No declarar pruebas de navegador/PDF no ejecutadas.
 ================================================================================
+
+
+================================================================================
+REVISIÓN POSTCAMBIO — NOTA Y CONTENEDORES
+Fecha: 2026-11-04
+- ui.js se modificó tras respaldar la versión exacta anterior (blob SHA 5874e0da48568bc4289ae72cf93c7ff8a0e407d1).
+- La nota .tech-notes se clona justo después de .top-grid solo en la primera página; se eliminó su inserción en la última página.
+- La media query móvil ya no fuerza .tech-item-body a una columna ni fija .tech-detail-img a 180px, por lo que no anula los modos seleccionados.
+- Se redujeron paddings/gaps y se modificaron las reglas de ancho para que tarjetas y wrappers no se estiren automáticamente a todo el ancho disponible.
+- Imagen a la derecha aplica dos columnas a nivel de cuadrícula y dentro de cada tarjeta; los modos verticales mantienen información e imagen apiladas; imagen ampliada permite un máximo de 620px.
+- Comprobación estática pendiente de ejecutar tras recuperar el archivo actualizado. No se ha ejecutado navegador real ni PDF; el ajuste visual y la paginación no se consideran validados.
+================================================================================
