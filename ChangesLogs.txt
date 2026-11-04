@@ -1880,3 +1880,15 @@ Fecha: 2026-11-03
 - ui.js (bloque de normalización de modelos asociados en openPysDetailModal):
   * Se escapó la barra diagonal en la expresión regular que separa identificadores para evitar que interfiera con el delimitador de la expresión regular.
 ================================================================================
+
+
+================================================================================
+REGISTRO DE CAMBIO POST-CODE REVIEW: DIMENSIONES DE TARJETAS
+Fecha: 2026-11-03
+
+- ui.js (líneas aproximadas 2515, 2538 y 7407):
+  * Las tres tarjetas de adición insertadas en modales de relación se ajustan a 120px de alto.
+- style.css (líneas aproximadas 1539-1600):
+  * Las tarjetas de agregar tutorial y agregar problema en la cuadrícula PyS se ajustan a 120px de alto.
+  * Las tarjetas de agregar modelo y agregar problema relacionado utilizan 140px de ancho y 120px de alto.
+================================================================================
