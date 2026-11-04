@@ -3844,8 +3844,7 @@ export async function openReplacedImagesModal() {
             const statusElement = info.querySelector('div:last-child');
             if (statusElement) statusElement.textContent = `Estado: ${statusLabel}`;
 
-            if (true) {
-                const recoverBtn = document.createElement('button');
+            const recoverBtn = document.createElement('button');
                 recoverBtn.className = "btn btn-primary";
                 recoverBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; white-space: nowrap;";
                 recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
@@ -3888,7 +3887,6 @@ export async function openReplacedImagesModal() {
                     }
                 };
                 btnContainer.appendChild(deleteBtn);
-            }
 
             card.appendChild(img);
             card.appendChild(info);
