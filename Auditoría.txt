@@ -1507,3 +1507,16 @@ Observación: En la nueva normalización de item.modelosAsociados, la expresión
 Acción requerida: volver a auditar el bloque de normalización, generar respaldo exacto del estado previo a la corrección y modificar únicamente la expresión que separa identificadores.
 Respaldos exactos previos a la corrección: ui.js 3a772d9b74a9c5b9f88c4be0bba691ae386c4932; style.css ae454f96f47a31503c339e77e62cb4e4960cff4d; Auditoría.txt 483083a624d5495d3fbe83b9e040bcad2d06c0e7; ChangesLogs.txt 944b9a4ee119183a1a98bd769b2fbf14143ff230; Tareas.txt 09cdff0a5103c1937460cd8251a5c28fea02e571.
 ================================================================================
+
+
+================================================================================
+RESULTADO DEL CODE REVIEW: CORRECCIÓN DE SEPARADOR DE IDENTIFICADORES
+Fecha: 2026-11-03
+PR: #124
+
+- Observación: la expresión regular de separación de modelos asociados no escapaba la barra diagonal utilizada como delimitador de la expresión regular.
+- Acción: se modificó la expresión a /[,\/\\;]+/ para reconocer coma, barra diagonal, barra inversa y punto y coma.
+- Verificación puntual: Node.js evaluó la expresión y separó correctamente una cadena de identificadores que contenía los cuatro separadores.
+- Alcance de la corrección: exclusivamente la expresión de separación dentro de openPysDetailModal; no se modificaron los datos ni el contrato del microservicio.
+- Pendiente: no se ejecutó la aplicación completa en navegador ni se validó la impresión de extremo a extremo.
+================================================================================
