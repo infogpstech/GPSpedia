@@ -2512,7 +2512,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             // Tarjeta para agregar o vincular problema sin borde discontinuo
             const addPysCard = document.createElement("div");
             addPysCard.className = "card card-create-pys-assoc";
-            addPysCard.style.cssText = "width: 140px; height: 180px; padding: 10px; margin: 0;";
+            addPysCard.style.cssText = "width: 140px; height: 188px; padding: 10px; margin: 0;";
             addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
             addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
             singleCardContainer.appendChild(addPysCard);
@@ -2535,7 +2535,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             // Tarjeta al final del carrusel para agregar o vincular problema
             const addPysCard = document.createElement("div");
             addPysCard.className = "card card-create-pys-assoc";
-            addPysCard.style.cssText = "flex: 0 0 140px; height: 180px; padding: 10px; margin-right: 20px;";
+            addPysCard.style.cssText = "flex: 0 0 140px; height: 188px; padding: 10px; margin-right: 20px;";
             addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
             addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
             carouselTrack.appendChild(addPysCard);
@@ -7337,7 +7337,19 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
         const renderTrackVehicles = (cortesList) => {
             track.innerHTML = "";
             const cortes = Array.isArray(cortesList) ? cortesList : [];
-            const modelosAsociadosIds = Array.isArray(item.modelosAsociados) ? item.modelosAsociados : [];
+            let modelosAsociadosIds = [];
+            if (Array.isArray(item.modelosAsociados)) {
+                modelosAsociadosIds = item.modelosAsociados;
+            } else if (typeof item.modelosAsociados === 'string' && item.modelosAsociados.trim()) {
+                const rawModelos = item.modelosAsociados.trim();
+                try {
+                    const parsedModelos = JSON.parse(rawModelos);
+                    if (Array.isArray(parsedModelos)) modelosAsociadosIds = parsedModelos;
+                } catch (e) {}
+                if (modelosAsociadosIds.length === 0) {
+                    modelosAsociadosIds = rawModelos.split(/[,/\\;]+/).map(id => id.trim()).filter(Boolean);
+                }
+            }
             const canEditPys = userRole === 'Desarrollador';
 
             modelosAsociadosIds.forEach(vId => {
@@ -7392,7 +7404,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
             // Tarjeta «+ Agregar» al final del carrusel disponible para todos los usuarios (Estandarización visual sin bordes discontinuos)
             const addCard = document.createElement("div");
             addCard.className = "card card-create-vehicle-assoc";
-            addCard.style.cssText = "flex: 0 0 140px; height: 180px; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: var(--card-bg, #fff); flex-shrink: 0;";
+            addCard.style.cssText = "flex: 0 0 140px; height: 188px; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: var(--card-bg, #fff); flex-shrink: 0;";
             addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.8rem; margin-bottom: 8px; color: var(--accent-color, #007bff);"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Modelo</span>`;
             addCard.onclick = () => {
                 openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
@@ -7681,16 +7693,12 @@ export function exportVehiclePrintSheet(item) {
         feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
     }
 
-    // Calcular densidad de contenido para ajuste dinámico de página
-    const totalItems = cuts.length + feeds.length + (item.apertura || item.imgApertura ? 1 : 0);
-    const isSingleOrLowDensity = totalItems <= 2;
-    const isHighDensity = totalItems >= 4;
-
+    // La distribución de cada elemento se determina por la presencia de imagen, no por la cantidad total de elementos.
     // 3. Generación de HTML de cortes con aviso de testigo al pie y distribución vertical (Requisitos 1.1, 2.2, 4.1, 5)
     const cutsHtml = cuts.map(c => {
         const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
         return `
-        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
+        <div class="tech-item-card ${safeImg ? 'has-image' : 'text-only'}">
             <div class="tech-item-header">Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
@@ -7715,7 +7723,7 @@ export function exportVehiclePrintSheet(item) {
     const feedsHtml = feeds.map(f => {
         const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
         return `
-        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
+        <div class="tech-item-card ${safeImg ? 'has-image' : 'text-only'}">
             <div class="tech-item-header">${f.title}</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
@@ -7737,7 +7745,7 @@ export function exportVehiclePrintSheet(item) {
 
     // 6. Apertura de puertas
     const aperturaHtml = (item.apertura || item.imgApertura) ? `
-        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
+        <div class="tech-item-card ${item.imgApertura ? 'has-image' : 'text-only'}">
             <div class="tech-item-header">Apertura de Puertas / Seguros</div>
             <div class="tech-item-body">
                 <div class="tech-item-info">
@@ -7931,11 +7939,11 @@ export function exportVehiclePrintSheet(item) {
                     padding: 4px 8px;
                     page-break-inside: avoid;
                 }
-                .tech-item-card.card-expanded {
+                .tech-item-card.has-image {
                     padding: 6px 10px;
                 }
-                .tech-item-card.card-compact {
-                    padding: 3px 6px;
+                .tech-item-card.text-only {
+                    padding: 6px 10px;
                 }
                 .tech-item-header {
                     font-weight: bold;
@@ -7966,43 +7974,31 @@ export function exportVehiclePrintSheet(item) {
                     flex-direction: column;
                     justify-content: center;
                 }
+                .tech-item-card.text-only .tech-item-info {
+                    flex: 1 1 100%;
+                    max-width: 100%;
+                    width: 100%;
+                }
                 .tech-item-info p {
                     margin: 1px 0;
                     font-size: 10.5px;
                     line-height: 1.2;
                 }
-                .card-compact .tech-item-info p {
-                    margin: 0.5px 0;
-                    font-size: 10px;
-                    line-height: 1.15;
-                }
                 .tech-item-img-wrapper {
                     flex: 1 1 75%;
                     max-width: 75%;
-                    max-height: 250px;
+                    max-height: 320px;
                     display: flex;
                     align-items: center;
                     justify-content: flex-end;
                 }
-                .card-expanded .tech-item-img-wrapper {
-                    max-height: 320px;
-                }
-                .card-compact .tech-item-img-wrapper {
-                    max-height: 170px;
-                }
                 .tech-detail-img {
                     max-width: 100%;
-                    max-height: 240px;
+                    max-height: 310px;
                     width: auto;
                     object-fit: contain;
                     border-radius: 4px;
                     border: 1px solid #ccc;
-                }
-                .card-expanded .tech-detail-img {
-                    max-height: 310px;
-                }
-                .card-compact .tech-detail-img {
-                    max-height: 165px;
                 }
                 /* Aviso de testigo al pie del corte (Requisito 4.1) */
                 .testigo-aviso {
