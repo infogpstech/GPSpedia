@@ -8043,7 +8043,7 @@ export function exportVehiclePrintSheet(item) {
                 .tech-detail-img {
                     display: block;
                     max-width: 100%;
-                    max-height: 380px;
+                    max-height: 560px;
                     width: auto;
                     height: auto;
                     object-fit: contain;
@@ -8078,7 +8078,7 @@ export function exportVehiclePrintSheet(item) {
                     justify-content: center;
                 }
                 body[data-print-layout="image-focus"] .tech-detail-img {
-                    max-height: 380px;
+                    max-height: 560px;
                 }
                 /* Aviso de testigo al pie del corte (Requisito 4.1) */
                 .testigo-aviso {
@@ -8117,7 +8117,7 @@ export function exportVehiclePrintSheet(item) {
                     body { padding: 0; }
                     .tech-item-card { break-inside: avoid; page-break-inside: avoid; }
                     .adaptive-tech-grid { break-inside: auto; }
-                    .tech-detail-img { max-height: 380px; }
+                    .tech-detail-img { max-height: 560px; }
                 }
                 @media screen and (max-width: 600px) {
                     .top-grid {
