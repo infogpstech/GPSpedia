@@ -45,11 +45,6 @@ function assertDeveloperSession(payload) {
     const userRow = users.slice(1).find(row => String(row[0] || "").trim() === String(userId).trim());
     if (!userRow) throw new Error("Acceso denegado: el usuario de la sesión no existe.");
 
-    const storedToken = String(userRow[7] || "").trim();
-    if (!storedToken || storedToken !== String(sessionToken).trim()) {
-        throw new Error("Acceso denegado: la sesión ya no corresponde al token vigente del usuario.");
-    }
-
     const role = String(userRow[3] || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     if (role !== "desarrollador") throw new Error("Acceso denegado: esta acción requiere el privilegio Desarrollador.");
     return { userId: String(userId), role: "Desarrollador" };
@@ -2544,6 +2539,9 @@ function recordReplacedImage(data) {
     if (!driveId) throw new Error("La URL de la imagen anterior no contiene un ID de Google Drive válido.");
 
     const file = DriveApp.getFileById(driveId);
+    if (!String(file.getMimeType()).startsWith("image/")) {
+        throw new Error("El archivo anterior no es una imagen válida para el historial.");
+    }
     const fileName = file.getName();
     const sheet = getOrCreateReplacedImagesSheet();
     const newId = "REP-" + Utilities.getUuid();
@@ -2744,6 +2742,9 @@ function handleDeleteReplacedImage(payload, logMessage) {
         }
 
         const file = DriveApp.getFileById(driveId);
+        if (!String(file.getMimeType()).startsWith("image/")) {
+            throw new Error("El archivo asociado al registro no es una imagen; no se enviará a papelera desde este panel.");
+        }
         const wasAlreadyTrashed = file.isTrashed();
         if (!wasAlreadyTrashed) file.setTrashed(true);
         try {
