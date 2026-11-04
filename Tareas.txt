@@ -2524,7 +2524,7 @@ Restricciones: no modificar código durante la auditoría. La implementación de
 ================================================================================
 SEGUIMIENTO DE IMPLEMENTACIÓN — AUD-IMG-01 A AUD-IMG-07
 Fecha: 2026-11-04
-Rama de trabajo: fix/audit-img-01-07-history-security-integrity
+Rama de trabajo: fix/audit-img-01-07-history-security
 PR de destino: fix/pys-carousel-card-sizing-print-images
 Estado: IMPLEMENTACIÓN ESTÁTICA EN RAMA; PENDIENTE DE PRUEBAS DE INTEGRACIÓN Y DESPLIEGUE.
 Referencia: Auditoría.txt, «VERIFICACIÓN E IMPLEMENTACIÓN PROPUESTA — AUD-IMG-01 A AUD-IMG-07».
