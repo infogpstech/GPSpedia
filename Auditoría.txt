@@ -1700,3 +1700,7 @@ AJUSTE:
 
 PENDIENTE: verificar en navegador y PDF real que las imágenes aprovechen el espacio disponible y que no se produzcan cortes de página o desbordamientos.
 ================================================================================
+
+
+AUDITORÍA 2026-11-04 — ALGORITMO ADAPTATIVO DE IMPRESIÓN (1–7 IMÁGENES)
+El algoritmo anterior solo tenía composiciones especiales para algunas combinaciones de tres imágenes y ordenaba imágenes secundarias por relación de aspecto, alterando el orden técnico. Se requiere cubrir de una a siete imágenes, usar dimensiones naturales, mantener la primera imagen prioritaria y no recortar/deformar. La página disponible no se mide exactamente por el algoritmo; la paginación real debe comprobarse en navegador/PDF. Metadatos, QR/video y notas técnicas quedan fuera del alcance.
