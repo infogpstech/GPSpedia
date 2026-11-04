@@ -8347,7 +8347,13 @@ export function exportVehiclePrintSheet(item) {
                 orderedImageCards.forEach(card => {
                     const aspect = getDimensions(card).aspect;
                     const isPanoramic = aspect >= 2.2;
-                    if (currentRow.length && (isPanoramic || currentAspectSum + aspect > 3.0 || currentRow.length >= 4)) {
+                    const shape = aspect < 0.85 ? 'vertical' : (aspect <= 1.2 ? 'cuadrada' : 'horizontal');
+                    const currentHasVertical = currentRow.some(rowCard => getDimensions(rowCard).aspect < 0.85);
+                    const currentHasHorizontal = currentRow.some(rowCard => getDimensions(rowCard).aspect > 1.2);
+                    const mixedOrientation = (shape === 'vertical' && currentHasHorizontal)
+                        || (shape === 'horizontal' && currentHasVertical);
+                    if (currentRow.length && (isPanoramic || currentRow.some(rowCard => getDimensions(rowCard).aspect >= 2.2)
+                        || mixedOrientation || currentAspectSum + aspect > 3.0 || currentRow.length >= 3)) {
                         flushRow();
                     }
                     if (isPanoramic) {
@@ -8356,7 +8362,7 @@ export function exportVehiclePrintSheet(item) {
                     }
                     currentRow.push(card);
                     currentAspectSum += Math.max(aspect, 0.35);
-                    if (currentAspectSum >= 2.6 || currentRow.length >= 4) flushRow();
+                    if (currentAspectSum >= 2.7 || currentRow.length >= 3) flushRow();
                 });
                 flushRow();
                 rows.forEach(row => newLayoutChildren.push(createImageRow(row)));
