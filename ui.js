@@ -7953,11 +7953,6 @@ export function exportVehiclePrintSheet(item) {
                     border-bottom: 1px dashed #e0e0e0;
                     padding-bottom: 1px;
                 }
-                .card-compact .tech-item-header {
-                    font-size: 11px;
-                    margin-bottom: 2px;
-                    padding-bottom: 1px;
-                }
                 .tech-item-body {
                     display: flex;
                     justify-content: space-between;
