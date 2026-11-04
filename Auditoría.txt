@@ -1991,3 +1991,15 @@ Corrección prevista:
 - No modificar el selector de distribución, el orden/prioridad del corte recomendado, el contenido de las tarjetas ni la tabla de metadatos.
 - Registrar que la paginación automática por altura real y la validación visual siguen pendientes.
 ================================================================================
+
+
+================================================================================
+VERIFICACIÓN ESTÁTICA POSTCAMBIO — TEXTO INCOMPLETO EN TARJETAS
+Fecha: 2026-11-04
+- ui.js actualizado en commit 46b079ae9ecba222298a8c9167e92b877ad9cc3e.
+- Se comprobó que la regla general y la regla @media print de .sheet-page-wrapper permiten crecimiento automático, conservan min-height:269mm, no fijan max-height y usan overflow:visible.
+- Se comprobó que no queda una regla directa de .sheet-page-wrapper con max-height:269mm u overflow:hidden.
+- Se verificó estáticamente la presencia del listener del selector, la función de agrupación por imágenes y la prioridad del corte recomendado.
+- Resultado de las comprobaciones estáticas: TODAS CORRECTAS.
+- No se ejecutó navegador real ni se generó PDF. Permitir que el contenedor crezca evita el recorte CSS directo, pero no garantiza que la paginación física y el pie queden bien distribuidos cuando el contenido supera una hoja; esto debe comprobarse visualmente.
+================================================================================
