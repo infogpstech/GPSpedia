@@ -2186,3 +2186,18 @@ Requerimientos:
 Estado: IMPLEMENTADO; PENDIENTE DE REVISIÓN FUNCIONAL EN PULL REQUEST.
 Observación de verificación: la revisión realizada en esta sesión fue estática; queda pendiente comprobar visualmente los modos de impresión y los saltos de página en navegador.
 ================================================================================
+
+
+================================================================================
+TAREA: DISTRIBUCIÓN ADAPTATIVA DE IMÁGENES EN LA FICHA TÉCNICA IMPRIMIBLE
+Fecha: 2026-11-03
+Requisitos principales:
+1. Mantener el corte recomendado como primera imagen visual según el criterio existente de GPSpedia.
+2. Calcular composición y pesos de columnas a partir de las dimensiones naturales y relación de aspecto de las fotografías.
+3. Permitir composiciones vertical/horizontal mixtas, incluida una vertical junto a dos horizontales y dos verticales sobre una horizontal.
+4. Mantener las tarjetas técnicas, descripciones e imágenes asociadas, sin deformación, recorte ni ampliación forzada.
+5. No modificar la tabla de metadatos ni la adaptación actual del QR/video.
+Estado: IMPLEMENTACIÓN ESTÁTICA REALIZADA; PENDIENTE VALIDACIÓN FUNCIONAL EN NAVEGADOR Y PDF.
+Pruebas realizadas: compilación sintáctica de exportVehiclePrintSheet y simulación del algoritmo para seis combinaciones de dimensiones/orientaciones.
+Pendiente: revisar la paginación real, las imágenes de baja resolución o fallidas, la cantidad alta de imágenes y el comportamiento de la tabla de metadatos cuando existe video y QR.
+================================================================================
