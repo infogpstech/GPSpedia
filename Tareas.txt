@@ -2596,3 +2596,28 @@ Verificación realizada: comparación contra respaldo y pruebas simuladas de los
 
 Pendiente: publicar la versión web que contiene ui.js y comprobar con la cuenta afectada que el enlace aparece, abre el modal y continúa oculto para perfiles no desarrolladores. No se modificó el servicio Apps Script para esta corrección.
 ================================================================================
+
+================================================================================
+ACTUALIZACIÓN DE TAREA — ACCESO AL PANEL DE DESARROLLADOR NO VISIBLE
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Referencia: PR #128 (borrador; sin merge).
+Estado: CORRECCIÓN DE CÓDIGO IMPLEMENTADA Y REVISADA; VALIDACIÓN VISUAL EN LIVE PENDIENTE.
+
+Causa identificada:
+La expresión regular de ui.js, showApp(user), estaba doblemente escapada. Al normalizar el valor 'Desarrollador' recibido en user.Privilegios, alteraba el texto y provocaba que la comparación con 'desarrollador' fallara. Los controles de edición seguían apareciendo porque comparan directamente el valor Privilegios de la sesión.
+
+Corrección:
+1. La validación del enlace dev-tools-btn utiliza exclusivamente user.Privilegios, que Services/Auth.js obtiene de la columna Privilegios de la hoja Users.
+2. Se corrigió la expresión regular para eliminar únicamente las marcas diacríticas Unicode.
+3. Se mantuvieron trim(), toLowerCase() y el acceso exclusivo para el rol Desarrollador.
+4. No se modificó el servicio Apps Script ni la estructura de la spreadsheet.
+
+Verificación realizada:
+- Comparación exacta de ui.js contra el respaldo: únicamente cambió el bloque previsto.
+- Pruebas de normalización con Desarrollador, variaciones de mayúsculas/espacios, una variante acentuada, Supervisor, Usuario, vacío y null.
+- Revisión de los flujos de login y rehidratación que invocan showApp(user).
+
+Pendiente:
+Comprobar en el entorno live, con la cuenta del usuario, que el enlace Desarrollador aparece en el menú y abre el panel. Confirmar también que el enlace permanece oculto para cuentas con otros roles. No fusionar el PR #128 hasta recibir la confirmación del usuario.
+================================================================================
