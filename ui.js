@@ -2512,7 +2512,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             // Tarjeta para agregar o vincular problema sin borde discontinuo
             const addPysCard = document.createElement("div");
             addPysCard.className = "card card-create-pys-assoc";
-            addPysCard.style.cssText = "width: 140px; height: 188px; padding: 10px; margin: 0;";
+            addPysCard.style.cssText = "width: 140px; height: 120px; padding: 10px; margin: 0;";
             addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
             addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
             singleCardContainer.appendChild(addPysCard);
