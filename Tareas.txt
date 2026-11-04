@@ -2243,3 +2243,16 @@ Estado: LÍMITE MÁXIMO DE ALTURA AUMENTADO A 560px; PENDIENTE VALIDACIÓN VISUA
 TAREA 2026-11-04 — REGLAS DE DISTRIBUCIÓN PARA 1–7 IMÁGENES EN FICHA IMPRIMIBLE
 Requisitos: primera imagen prioritaria; mantener el orden técnico restante; usar relación de aspecto natural; no recortar ni deformar; limitar una imagen al 50% del ancho disponible; apilar composiciones horizontales compactas al 80%; cubrir combinaciones de hasta siete imágenes con filas adaptativas y panorámicas independientes.
 Estado: IMPLEMENTACIÓN INICIAL REALIZADA; PENDIENTE VALIDACIÓN VISUAL EN GITHUB PAGES, PDF REAL, SALTOS DE PÁGINA Y ESCENARIOS DE BAJA RESOLUCIÓN/ERROR DE CARGA.
+
+================================================================================
+TAREA COMPLEMENTARIA 2026-11-03 — PÁGINAS DE IMPRESIÓN 2×2, ENCABEZADO Y PIE FIJO
+Requisitos:
+1. Limitar las imágenes técnicas a un máximo de dos columnas y dos filas por hoja.
+2. Crear páginas adicionales cuando existan más de cuatro imágenes técnicas.
+3. Usar márgenes de 5 mm en los cuatro lados.
+4. Repetir el encabezado de GPSpedia y el pie al final de cada hoja.
+5. Colocar el logo TRACKLINK centrado en el pie, reutilizando tracklink_logo.png y una altura de referencia de 45 px.
+6. Mostrar la tabla de metadatos, imagen principal del vehículo y QR/video solo en la primera hoja.
+7. Conservar prioridad y orden técnico, proporciones de imagen, descripciones y avisos asociados.
+Estado: CAMBIOS ESTÁTICOS IMPLEMENTADOS; PENDIENTE VALIDACIÓN VISUAL EN NAVEGADOR Y PDF REAL, INCLUYENDO DESBORDAMIENTOS Y UBICACIÓN DEL PIE.
+================================================================================
