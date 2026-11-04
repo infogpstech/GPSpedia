@@ -7787,9 +7787,11 @@ export function exportVehiclePrintSheet(item) {
 
     // 7. Notas técnicas importantes
     const notasHtml = item.notaImportante ? `
-        <div class="tech-notes">
-            <strong>Nota técnica importante:</strong> ${item.notaImportante}
-        </div>
+        <tr class="meta-note-row">
+            <td colspan="4">
+                <div class="tech-notes"><strong>Nota técnica importante:</strong> ${item.notaImportante}</div>
+            </td>
+        </tr>
     ` : '';
 
     // 8. Código QR exclusivo para vídeo guía de desarme (Requisito 6)
@@ -8191,6 +8193,14 @@ export function exportVehiclePrintSheet(item) {
                     max-width: 100%;
                     min-width: 0;
                     box-sizing: border-box;
+                    justify-self: stretch;
+                    align-self: stretch;
+                }
+                .sheet-page-wrapper .tech-item-body {
+                    width: 100%;
+                    max-width: 100%;
+                    min-width: 0;
+                    box-sizing: border-box;
                 }
                 .sheet-page-wrapper .tech-item-img-wrapper {
                     width: 100%;
@@ -8199,11 +8209,24 @@ export function exportVehiclePrintSheet(item) {
                     box-sizing: border-box;
                 }
                 .sheet-page-wrapper .tech-detail-img {
-                    width: auto;
+                    display: block;
+                    width: 100%;
                     height: auto;
                     max-width: 100%;
                     max-height: 250px;
                     object-fit: contain;
+                }
+                .meta-note-row > td {
+                    padding: 4px 6px;
+                    border-top: 1px solid #ffeeba;
+                }
+                .meta-note-row .tech-notes {
+                    margin: 0;
+                    padding: 4px 6px;
+                    border: 0;
+                    border-radius: 0;
+                    font-size: 11px;
+                    line-height: 1.25;
                 }
                 .sheet-page-wrapper[data-image-count="1"] .tech-detail-img {
                     max-height: 390px;
@@ -8352,6 +8375,7 @@ export function exportVehiclePrintSheet(item) {
                                 } catch(e){}
                                 return item.vin;
                             })()}</td></tr>` : ''}
+                            ${notasHtml}
                         </table>
                         ${qrHtml}
                     </div>
@@ -8362,8 +8386,6 @@ export function exportVehiclePrintSheet(item) {
                             ${techItemsHtml || '<div class="tech-item-card text-only"><div class="tech-item-header">Puntos de Corte de Motor</div><p>No hay información técnica registrada para este modelo.</p></div>'}
                         </div>
                     </div>
-
-                    ${notasHtml}
                 </div>
 
                 <div class="footer-bar">
@@ -8388,7 +8410,6 @@ export function exportVehiclePrintSheet(item) {
         const headerTemplate = firstPageTemplate.querySelector('.header-container');
         const metadataTemplate = firstPageTemplate.querySelector('.top-grid');
         const sectionHeaderTemplate = firstPageTemplate.querySelector('.section-header');
-        const notesTemplate = firstPageTemplate.querySelector('.tech-notes');
         const footerTemplate = firstPageTemplate.querySelector('.footer-bar');
 
         const getImage = card => card.querySelector('.tech-detail-img');
@@ -8462,7 +8483,6 @@ export function exportVehiclePrintSheet(item) {
                 if (headerTemplate) main.appendChild(headerTemplate.cloneNode(true));
                 if (pageIndex === 0 && metadataTemplate) {
                     main.appendChild(metadataTemplate.cloneNode(true));
-                    if (notesTemplate) main.appendChild(notesTemplate.cloneNode(true));
                 }
                 if (sectionHeaderTemplate) main.appendChild(sectionHeaderTemplate.cloneNode(true));
                 const grid = printDocument.createElement('div');
