@@ -8215,6 +8215,7 @@ export function exportVehiclePrintSheet(item) {
                     box-sizing: border-box;
                     justify-content: center;
                 }
+                /* La altura máxima se calcula por página en arrangeTechnicalCards(), según el espacio restante. */
                 .sheet-page-wrapper .tech-detail-img {
                     display: block;
                     width: auto;
@@ -8235,7 +8236,6 @@ export function exportVehiclePrintSheet(item) {
                     font-size: 11px;
                     line-height: 1.25;
                 }
-                /* La altura máxima se calcula por página en arrangeTechnicalCards(), según el espacio restante. */
                 .top-grid { align-items: start; }
                 .vehicle-main-img img { height: auto; max-height: 105px; object-fit: contain; }
                 .qr-video-box { min-width: 0; align-self: start; }
