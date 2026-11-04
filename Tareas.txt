@@ -2519,3 +2519,25 @@ Requisitos:
 
 Restricciones: no modificar código durante la auditoría. La implementación debe realizarse en una rama nueva basada en fix/pys-carousel-card-sizing-print-images, con el procedimiento obligatorio, respaldo, pruebas y Pull Request hacia la rama base.
 ================================================================================
+
+
+================================================================================
+SEGUIMIENTO DE IMPLEMENTACIÓN — AUD-IMG-01 A AUD-IMG-07
+Fecha: 2026-11-04
+Rama de trabajo: fix/audit-img-01-07-history-security-integrity
+PR de destino: fix/pys-carousel-card-sizing-print-images
+Estado: IMPLEMENTACIÓN ESTÁTICA EN RAMA; PENDIENTE DE PRUEBAS DE INTEGRACIÓN Y DESPLIEGUE.
+Referencia: Auditoría.txt, «VERIFICACIÓN E IMPLEMENTACIÓN PROPUESTA — AUD-IMG-01 A AUD-IMG-07».
+
+Se incorporaron cambios propuestos para los siete hallazgos. Las tareas originales se conservan sin eliminar ni reescribir sus requisitos. Antes de considerar AUD-IMG-01 a AUD-IMG-07 completadas, realizar las siguientes pruebas:
+1. Autorización: ejecutar las cuatro acciones históricas y uploadAdminImage sin token, con token inválido, con rol no autorizado y con rol Desarrollador.
+2. Historial: simular fallo de creación de hoja/fila, fallo al escribir la referencia activa y fallo al actualizar el estado histórico; comprobar que no se pierda la URL anterior ni quede una referencia activa rota.
+3. Eliminación: comprobar que una referencia activa en cada hoja bloquea el envío a papelera y que una referencia no interpretable también lo bloquea.
+4. Papelera: confirmar en Drive el estado real del archivo y comprobar los textos/estados en la interfaz, incluida la restauración desde papelera.
+5. Paginación: probar árboles con menos de 250, exactamente 250 y más de 250 archivos, incluidos varios niveles de subcarpetas; comprobar que no haya duplicados ni omisiones.
+6. Clasificación: probar todos los formatos de URL reales, IDs históricos, referencias desconocidas y datos incompletos.
+7. Restauración: probar tipo de contenido vehiculo y tipos no admitidos, campos válidos/no válidos, archivo inaccesible/en papelera y vehículo inexistente.
+8. Desplegar la rama de PR en un entorno controlado y repetir pruebas de extremo a extremo antes de aprobar el merge.
+
+Restricciones: no ejecutar pruebas destructivas en datos de producción sin respaldo y autorización. No considerar completadas las tareas hasta adjuntar evidencia de estas pruebas.
+================================================================================
