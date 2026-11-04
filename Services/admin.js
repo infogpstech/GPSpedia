@@ -1421,10 +1421,10 @@ function handleUploadAdminImage(payload, logMessage) {
     const originalUrl = rowValues[COLS_CORTES[fieldName] - 1];
     let genFolder = null;
     if (originalUrl && typeof originalUrl === "string" && originalUrl.startsWith("http")) {
-        const match = originalUrl.match(/id=([a-zA-Z0-9_-]+)/);
-        if (match) {
+        const originalDriveId = extractDriveFileId(originalUrl);
+        if (originalDriveId) {
             try {
-                const originalFile = DriveApp.getFileById(match[1]);
+                const originalFile = DriveApp.getFileById(originalDriveId);
                 const parents = originalFile.getParents();
                 if (parents.hasNext()) {
                     genFolder = parents.next();
@@ -2596,7 +2596,7 @@ function handleDeleteReplacedImage(payload, logMessage) {
     let repRowIndex = -1, driveId = "";
     for (let r = 1; r < rowsRep.length; r++) {
         if (String(rowsRep[r][0]) === String(id_reemplazo)) {
-            repRowIndex = r + 1; driveId = String(rowsRep[r][5] || ""); break;
+            repRowIndex = r + 1; driveId = extractDriveFileId(rowsRep[r][5]) || extractDriveFileId(rowsRep[r][7]); break;
         }
     }
     if (repRowIndex < 0 || !driveId) throw new Error("Registro no encontrado o sin ID de Drive.");
