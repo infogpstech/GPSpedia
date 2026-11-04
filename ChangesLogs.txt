@@ -1892,3 +1892,19 @@ Fecha: 2026-11-03
   * Las tarjetas de agregar tutorial y agregar problema en la cuadrícula PyS se ajustan a 120px de alto.
   * Las tarjetas de agregar modelo y agregar problema relacionado utilizan 140px de ancho y 120px de alto.
 ================================================================================
+
+
+================================================================================
+CAMBIOS: DISTRIBUCIÓN ADAPTATIVA DE IMÁGENES EN FICHA TÉCNICA
+Fecha: 2026-11-03
+
+- ui.js (exportVehiclePrintSheet, aproximadamente líneas 7674-8380):
+  * Se replica el criterio existente de selección del corte recomendado a partir de los cortes con tipo registrado y utilCorteN, manteniendo el orden original cuando no hay recomendado elegible.
+  * Se unifican las tarjetas de cortes, alimentación y apertura dentro de una sección técnica común para permitir reorganización visual sin separar los datos de sus imágenes.
+  * Se consulta la dimensión natural de cada imagen para calcular su relación de aspecto y resolución disponible.
+  * Se crean filas con columnas ponderadas por la relación de aspecto real, una composición específica de vertical más dos horizontales y otra de dos verticales más una horizontal.
+  * Se mantienen las fotografías sin recorte ni deformación, con límites de tamaño que no fuerzan la ampliación de imágenes pequeñas.
+  * Se mantienen las tarjetas completas junto a sus descripciones mediante reglas de salto de página.
+  * No se modificó el HTML ni el CSS de la tabla .meta-table ni el bloque de QR/video.
+- Verificación documentada: compilación sintáctica de la función y pruebas simuladas de las composiciones descritas. No se ejecutaron pruebas de navegador ni generación real de PDF.
+================================================================================
