@@ -7964,24 +7964,29 @@ export function exportVehiclePrintSheet(item) {
                 }
                 .tech-grid {
                     display: grid;
-                    grid-template-columns: repeat(2, minmax(0, 1fr));
-                    grid-auto-rows: minmax(0, auto);
-                    align-items: stretch;
-                    gap: 8px;
+                    grid-template-columns: repeat(2, max-content);
+                    grid-auto-rows: max-content;
+                    align-items: start;
+                    justify-content: start;
+                    gap: 4px;
                     min-width: 0;
+                }
+                .adaptive-tech-grid.layout-single,
+                .adaptive-tech-grid.layout-pair-portrait,
+                .adaptive-tech-grid.layout-pair-landscape,
+                .adaptive-tech-grid.layout-triple-portrait,
+                .adaptive-tech-grid.layout-mosaic {
+                    grid-template-columns: repeat(2, max-content);
+                    justify-content: start;
+                    align-items: start;
+                    grid-auto-rows: max-content;
+                    gap: 4px;
                 }
                 .adaptive-tech-grid > .tech-item-card.text-only {
                     grid-column: 1 / -1;
                 }
-                .sheet-page-wrapper[data-image-count="1"] .tech-detail-img {
-                    max-height: 560px;
-                }
-                .sheet-page-wrapper[data-image-count="2"] .tech-detail-img {
-                    max-height: 390px;
-                }
-                .sheet-page-wrapper[data-image-count="3"] .tech-detail-img,
-                .sheet-page-wrapper[data-image-count="4"] .tech-detail-img {
-                    max-height: 270px;
+                .sheet-page-wrapper .tech-detail-img {
+                    max-height: 520px;
                 }
                 .adaptive-image-row,
                 .adaptive-image-mosaic {
@@ -8009,15 +8014,19 @@ export function exportVehiclePrintSheet(item) {
                 }
                 .tech-item-card {
                     min-width: 0;
+                    width: fit-content;
+                    max-width: 100%;
                     border: 1px solid #dcdcdc;
-                    border-radius: 4px;
+                    border-radius: 3px;
                     background: #fafafa;
-                    padding: 6px 10px;
+                    padding: 3px 4px;
                     page-break-inside: avoid;
                     break-inside: avoid;
+                    justify-self: start;
+                    align-self: start;
                 }
                 .tech-item-card.has-image {
-                    padding: 6px 10px;
+                    padding: 3px 4px;
                 }
                 .recommended-cut-label {
                     display: inline-block;
@@ -8030,11 +8039,9 @@ export function exportVehiclePrintSheet(item) {
                     text-transform: uppercase;
                     letter-spacing: 0.2px;
                 }
-                .tech-item-card.has-image {
-                    padding: 6px 10px;
-                }
+                .tech-item-card.has-image,
                 .tech-item-card.text-only {
-                    padding: 6px 10px;
+                    padding: 3px 4px;
                 }
                 .tech-item-header {
                     font-weight: bold;
@@ -8046,9 +8053,11 @@ export function exportVehiclePrintSheet(item) {
                 }
                 .tech-item-body {
                     display: grid;
-                    grid-template-columns: minmax(0, 1fr);
+                    grid-template-columns: max-content;
+                    grid-auto-rows: max-content;
                     align-items: start;
-                    gap: 8px;
+                    justify-items: start;
+                    gap: 3px;
                     min-width: 0;
                 }
                 .tech-item-info {
@@ -8069,23 +8078,25 @@ export function exportVehiclePrintSheet(item) {
                 }
                 .tech-item-img-wrapper {
                     display: flex;
-                    align-items: center;
-                    justify-content: center;
+                    align-items: flex-start;
+                    justify-content: flex-start;
                     min-width: 0;
+                    width: fit-content;
                     max-width: 100%;
-                    width: 100%;
                     max-height: none;
+                    margin: 0;
                 }
                 .tech-detail-img {
                     display: block;
-                    max-width: 100%;
-                    max-height: 560px;
                     width: auto;
                     height: auto;
+                    max-width: 100%;
+                    max-height: 520px;
                     object-fit: contain;
                     object-position: center;
-                    border-radius: 4px;
+                    border-radius: 2px;
                     border: 1px solid #ccc;
+                    margin: 0;
                 }
                 .adaptive-tech-grid > .tech-item-card.text-only {
                     width: 100%;
@@ -8124,18 +8135,14 @@ export function exportVehiclePrintSheet(item) {
                 body[data-print-layout="image-focus"] .tech-detail-img {
                     max-height: 620px;
                 }
-                .adaptive-tech-grid.layout-single { grid-template-columns: minmax(0, 1fr); }
-                .adaptive-tech-grid.layout-single > .tech-item-card { width: 100%; max-width: 100%; }
-                .adaptive-tech-grid.layout-single .tech-item-img-wrapper { width: 50%; max-width: 50%; margin-left: auto; margin-right: auto; }
-                body[data-print-layout="image-focus"] .adaptive-tech-grid.layout-single .tech-item-img-wrapper { width: 100%; max-width: 100%; }
-                .adaptive-tech-grid.layout-pair-portrait { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-                .adaptive-tech-grid.layout-pair-landscape { grid-template-columns: minmax(0, 1fr); align-items: start; }
-                .adaptive-tech-grid.layout-triple-portrait { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 4px; }
-                .adaptive-tech-grid.layout-mosaic { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
-                .adaptive-tech-grid.layout-pair-landscape .tech-detail-img { max-height: 245px; }
-                .adaptive-tech-grid.layout-pair-portrait .tech-detail-img { max-height: 360px; }
-                .adaptive-tech-grid.layout-triple-portrait .tech-detail-img { max-height: 300px; }
-                .adaptive-tech-grid.layout-mosaic .tech-detail-img { max-height: 300px; }
+                .adaptive-tech-grid.layout-single { grid-template-columns: max-content; }
+                .adaptive-tech-grid.layout-single > .tech-item-card { width: fit-content; max-width: 100%; }
+                .adaptive-tech-grid.layout-single .tech-item-img-wrapper { width: fit-content; max-width: 100%; margin: 0 auto; }
+                body[data-print-layout="image-focus"] .adaptive-tech-grid.layout-single .tech-item-img-wrapper { width: fit-content; max-width: 100%; }
+                .adaptive-tech-grid.layout-pair-portrait { grid-template-columns: repeat(2, max-content); align-items: start; }
+                .adaptive-tech-grid.layout-pair-landscape { grid-template-columns: max-content; align-items: start; }
+                .adaptive-tech-grid.layout-triple-portrait { grid-template-columns: repeat(3, max-content); align-items: start; gap: 3px; }
+                .adaptive-tech-grid.layout-mosaic { grid-template-columns: repeat(2, max-content); align-items: start; }
                 body[data-print-layout="image-focus"] .adaptive-tech-grid .tech-detail-img { max-height: 620px; }
                 .top-grid { align-items: start; }
                 .vehicle-main-img img { height: auto; max-height: 105px; object-fit: contain; }
@@ -8211,18 +8218,9 @@ export function exportVehiclePrintSheet(item) {
                 }
                 @media screen and (max-width: 600px) {
                     .top-grid {
-                        grid-template-columns: 1fr;
-                    }
-                    .tech-item-body {
                         grid-template-columns: minmax(0, 1fr);
                     }
-                    .tech-item-img-wrapper {
-                        max-width: 100%;
-                        width: 100%;
-                    }
-                    .tech-detail-img {
-                        max-height: 180px;
-                    }
+                    /* Los modos del selector prevalecen también en la vista previa móvil. */
                 }
             </style>
         </head>
@@ -8384,7 +8382,10 @@ export function exportVehiclePrintSheet(item) {
                 const main = printDocument.createElement('div');
                 main.className = 'sheet-content-main';
                 if (headerTemplate) main.appendChild(headerTemplate.cloneNode(true));
-                if (pageIndex === 0 && metadataTemplate) main.appendChild(metadataTemplate.cloneNode(true));
+                if (pageIndex === 0 && metadataTemplate) {
+                    main.appendChild(metadataTemplate.cloneNode(true));
+                    if (notesTemplate) main.appendChild(notesTemplate.cloneNode(true));
+                }
                 if (sectionHeaderTemplate) main.appendChild(sectionHeaderTemplate.cloneNode(true));
                 const grid = printDocument.createElement('div');
                 grid.className = 'tech-grid adaptive-tech-grid';
@@ -8394,7 +8395,7 @@ export function exportVehiclePrintSheet(item) {
                     card.style.gridColumn = '1 / -1'; card.style.width = '100%'; card.style.maxWidth = '100%'; grid.appendChild(card);
                 });
                 main.appendChild(grid);
-                if (pageIndex === pageCount - 1 && notesTemplate) main.appendChild(notesTemplate.cloneNode(true));
+
                 page.appendChild(main);
                 if (footerTemplate) page.appendChild(footerTemplate.cloneNode(true));
                 return page;
