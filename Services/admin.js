@@ -95,7 +95,7 @@ function collectActiveDriveReferences() {
                         if (!references.has(id)) references.set(id, []);
                         references.get(id).push({ sheet: sheet.getName(), row: r + 1, column: c + 1 });
                     });
-                } else if (/drive\.google\.com|googleusercontent\.com/i.test(value)) {
+                } else if (/drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(value)) {
                     unverifiableReferenceCount++;
                 }
             }
@@ -2695,44 +2695,52 @@ function handleDeleteReplacedImage(payload, logMessage) {
     const idReemplazo = payload && payload.id_reemplazo;
     if (!idReemplazo) throw new Error("ID de reemplazo requerido.");
 
-    const sheetRep = getOrCreateReplacedImagesSheet();
-    const rowsRep = sheetRep.getDataRange().getValues();
-    let repRowIndex = -1;
-    let repData = null;
-    for (let r = 1; r < rowsRep.length; r++) {
-        if (String(rowsRep[r][0]) === String(idReemplazo)) {
-            repRowIndex = r + 1;
-            repData = rowsRep[r];
-            break;
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); }
+    catch (e) { throw new Error("No se pudo bloquear la validación de uso de la imagen. Intenta nuevamente."); }
+
+    try {
+        const sheetRep = getOrCreateReplacedImagesSheet();
+        const rowsRep = sheetRep.getDataRange().getValues();
+        let repRowIndex = -1;
+        let repData = null;
+        for (let r = 1; r < rowsRep.length; r++) {
+            if (String(rowsRep[r][0]) === String(idReemplazo)) {
+                repRowIndex = r + 1;
+                repData = rowsRep[r];
+                break;
+            }
         }
+        if (!repData) throw new Error("Registro histórico no encontrado.");
+
+        const driveId = extractDriveFileId(repData[5]) || extractDriveFileId(repData[7]);
+        if (!driveId) throw new Error("El registro histórico no contiene un ID de Drive válido.");
+
+        const referenceSnapshot = collectActiveDriveReferences();
+        const activeReferences = referenceSnapshot.references.get(driveId) || [];
+        if (activeReferences.length) {
+            const locations = activeReferences.slice(0, 5)
+                .map(ref => `${ref.sheet}, fila ${ref.row}, columna ${ref.column}`)
+                .join("; ");
+            throw new Error(`Operación bloqueada: la imagen mantiene referencias en uso en la Spreadsheet: ${locations}.`);
+        }
+        if (referenceSnapshot.unverifiableReferenceCount > 0) {
+            throw new Error(`Operación bloqueada: existen ${referenceSnapshot.unverifiableReferenceCount} referencias de Drive que no pudieron interpretarse. No es posible confirmar que el archivo esté sin uso.`);
+        }
+
+        const file = DriveApp.getFileById(driveId);
+        if (!file.isTrashed()) file.setTrashed(true);
+        sheetRep.getRange(repRowIndex, 11).setValue("en_papelera");
+        SpreadsheetApp.flush();
+
+        logMessage && logMessage("Imágenes Reemplazadas", `La imagen histórica '${driveId}' fue enviada a la papelera de Google Drive.`);
+        return {
+            status: "success",
+            message: "La imagen histórica fue enviada a la papelera de Google Drive. Esta acción no equivale a una eliminación irreversible."
+        };
+    } finally {
+        lock.releaseLock();
     }
-    if (!repData) throw new Error("Registro histórico no encontrado.");
-
-    const driveId = extractDriveFileId(repData[5]) || extractDriveFileId(repData[7]);
-    if (!driveId) throw new Error("El registro histórico no contiene un ID de Drive válido.");
-
-    const referenceSnapshot = collectActiveDriveReferences();
-    const activeReferences = referenceSnapshot.references.get(driveId) || [];
-    if (activeReferences.length) {
-        const locations = activeReferences.slice(0, 5)
-            .map(ref => `${ref.sheet}, fila ${ref.row}, columna ${ref.column}`)
-            .join("; ");
-        throw new Error(`Operación bloqueada: la imagen mantiene referencias en uso en la Spreadsheet: ${locations}.`);
-    }
-    if (referenceSnapshot.unverifiableReferenceCount > 0) {
-        throw new Error(`Operación bloqueada: existen ${referenceSnapshot.unverifiableReferenceCount} referencias de Drive que no pudieron interpretarse. No es posible confirmar que el archivo esté sin uso.`);
-    }
-
-    const file = DriveApp.getFileById(driveId);
-    if (!file.isTrashed()) file.setTrashed(true);
-    sheetRep.getRange(repRowIndex, 11).setValue("en_papelera");
-    SpreadsheetApp.flush();
-
-    logMessage && logMessage("Imágenes Reemplazadas", `La imagen histórica '${driveId}' fue enviada a la papelera de Google Drive.`);
-    return {
-        status: "success",
-        message: "La imagen histórica fue enviada a la papelera de Google Drive. Esta acción no equivale a una eliminación irreversible."
-    };
 }
 
 /**
