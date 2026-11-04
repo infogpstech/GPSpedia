@@ -1643,3 +1643,23 @@ Archivo de implementación: ui.js.
    - Implementación y pruebas estáticas/simuladas realizadas.
    - Pendiente la verificación visual en navegador y en PDF, especialmente con muchas imágenes, imágenes fallidas o de baja resolución, filas que cruzan el límite de página y modelos con video/QR.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA COMPLEMENTARIA: DISTRIBUCIÓN INTERNA DE TARJETAS EN FICHA IMPRIMIBLE
+Fecha: 2026-11-04
+Rama: fix/pys-carousel-card-sizing-print-images
+PR: #124
+
+HALLAZGO REPORTADO EN VALIDACIÓN VISUAL DE GITHUB PAGES:
+- En la vista de impresión, la descripción ocupa todo el ancho de la tarjeta y la imagen queda debajo, incluso cuando existe espacio horizontal disponible.
+- La causa está en las reglas CSS internas de exportVehiclePrintSheet: .tech-item-body establece flex-direction: column; .tech-item-info y .tech-item-img-wrapper declaran width: 100% y max-width: 100%.
+- El selector del modo horizontal cambia únicamente flex-direction, por lo que las dimensiones al 100% de los hijos pueden competir por el espacio disponible y no definen una proporción estable entre descripción e imagen.
+- La regla responsive también fuerza dirección vertical para ventanas estrechas; debe conservarse un comportamiento apilado en pantallas estrechas y en el modo vertical seleccionado.
+- La tarjeta contiene .tech-item-header, .tech-item-info, .tech-item-img-wrapper y contenido adicional .testigo-aviso. La corrección debe mantener el contenido adicional en el flujo de la tarjeta y no modificar el bloque de metadatos, QR/video ni el algoritmo de ordenamiento de tarjetas.
+
+RIESGOS Y ALCANCE:
+- Cambiar únicamente la distribución interna de tarjetas con imagen dentro del HTML de impresión generado por exportVehiclePrintSheet.
+- No modificar el algoritmo de prioridad de imágenes, el orden de las tarjetas, las fuentes de datos, ni la tabla .meta-table.
+- La comprobación en navegador y PDF real sigue siendo necesaria para confirmar el resultado de impresión y los saltos de página.
+================================================================================
