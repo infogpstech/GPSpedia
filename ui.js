@@ -8090,32 +8090,55 @@ export function exportVehiclePrintSheet(item) {
                 .adaptive-tech-grid > .tech-item-card.text-only {
                     width: 100%;
                 }
-                body[data-print-layout="horizontal"] .tech-item-body,
-                body[data-print-layout="vertical"] .tech-item-body,
-                body[data-print-layout="image-focus"] .tech-item-body {
-                    grid-template-columns: minmax(0, 1fr);
+                body[data-print-layout="horizontal"] .tech-item-body {
+                    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+                    align-items: start;
+                    column-gap: 10px;
+                }
+                body[data-print-layout="horizontal"] .tech-item-info {
+                    width: auto;
+                    max-width: none;
+                }
+                body[data-print-layout="horizontal"] .tech-item-img-wrapper {
+                    width: 100%;
+                    max-width: 100%;
+                    align-self: center;
                 }
                 body[data-print-layout="vertical"] .tech-item-body,
                 body[data-print-layout="image-focus"] .tech-item-body {
+                    grid-template-columns: minmax(0, 1fr);
                     align-items: stretch;
                 }
                 body[data-print-layout="vertical"] .tech-item-info,
                 body[data-print-layout="image-focus"] .tech-item-info {
-                    flex: 1 1 100%;
-                    max-width: 100%;
                     width: 100%;
+                    max-width: 100%;
                 }
                 body[data-print-layout="vertical"] .tech-item-img-wrapper,
                 body[data-print-layout="image-focus"] .tech-item-img-wrapper {
-                    flex: 1 1 auto;
-                    max-width: 100%;
                     width: 100%;
+                    max-width: 100%;
                     max-height: none;
                     justify-content: center;
                 }
                 body[data-print-layout="image-focus"] .tech-detail-img {
-                    max-height: 560px;
+                    max-height: 620px;
                 }
+                .adaptive-tech-grid.layout-single { grid-template-columns: minmax(0, 1fr); }
+                .adaptive-tech-grid.layout-single > .tech-item-card { width: 100%; max-width: 100%; }
+                .adaptive-tech-grid.layout-pair-portrait { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+                .adaptive-tech-grid.layout-pair-landscape { grid-template-columns: minmax(0, 1fr); align-items: start; }
+                .adaptive-tech-grid.layout-triple-portrait { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 4px; }
+                .adaptive-tech-grid.layout-mosaic { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
+                .adaptive-tech-grid.layout-pair-landscape .tech-detail-img { max-height: 245px; }
+                .adaptive-tech-grid.layout-pair-portrait .tech-detail-img { max-height: 360px; }
+                .adaptive-tech-grid.layout-triple-portrait .tech-detail-img { max-height: 300px; }
+                .adaptive-tech-grid.layout-mosaic .tech-detail-img { max-height: 300px; }
+                body[data-print-layout="image-focus"] .adaptive-tech-grid .tech-detail-img { max-height: 620px; }
+                .top-grid { align-items: start; }
+                .vehicle-main-img img { height: auto; max-height: 105px; object-fit: contain; }
+                .qr-video-box { min-width: 0; align-self: start; }
+                .qr-code-img { width: 80px; max-width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: contain; }
                 /* Aviso de testigo al pie del corte (Requisito 4.1) */
                 .testigo-aviso {
                     margin-top: 6px;
@@ -8205,7 +8228,7 @@ export function exportVehiclePrintSheet(item) {
             <div class="no-print-bar no-print">
                 <span><strong>Ficha Técnica</strong> - Vista previa para consulta e impresión</span>
                 <label for="print-layout-mode" style="font-size: 11px; font-weight: 600;">Distribución:</label>
-                <select id="print-layout-mode" aria-label="Distribución de imágenes" onchange="document.body.dataset.printLayout = this.value" style="max-width: 180px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: white; color: #222;">
+                <select id="print-layout-mode" aria-label="Distribución de imágenes"  style="max-width: 180px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: white; color: #222;">
                     <option value="auto">Automática</option>
                     <option value="horizontal">Imagen a la derecha</option>
                     <option value="vertical">Imagen debajo del texto</option>
@@ -8303,72 +8326,80 @@ export function exportVehiclePrintSheet(item) {
         };
         const originalOrder = card => Number(card.dataset.originalOrder || 0);
 
-        const arrangeTechnicalCards = () => {
-            const imageCards = allTechnicalCards.filter(card => getImage(card));
-            const textCards = allTechnicalCards.filter(card => !getImage(card)).sort((a, b) => originalOrder(a) - originalOrder(b));
-            const priorityTextCard = textCards.find(card => card.dataset.priorityCut === 'true') || null;
+        const getAspect = card => {
+            const dimensions = getDimensions(card);
+            return dimensions.width > 0 && dimensions.height > 0 ? dimensions.aspect : 1;
+        };
 
-            // Se mantiene la prioridad del corte recomendado; las demás imágenes conservan el orden técnico original.
-            const priorityCard = imageCards.find(card => card.dataset.priorityCut === 'true')
-                || [...imageCards].sort((a, b) => originalOrder(a) - originalOrder(b))[0]
-                || null;
-            const remainingCards = imageCards.filter(card => card !== priorityCard).sort((a, b) => originalOrder(a) - originalOrder(b));
-            const orderedImageCards = priorityCard ? [priorityCard, ...remainingCards] : [];
-            const pageGroups = [];
-            if (orderedImageCards.length === 0) {
-                pageGroups.push([]);
-            } else {
-                for (let i = 0; i < orderedImageCards.length; i += 4) {
-                    pageGroups.push(orderedImageCards.slice(i, i + 4));
-                }
+        const choosePageGroups = cards => {
+            const groups = [];
+            let cursor = 0;
+            while (cursor < cards.length) {
+                const remaining = cards.length - cursor;
+                const a = getAspect(cards[cursor]);
+                const b = remaining > 1 ? getAspect(cards[cursor + 1]) : 0;
+                const c = remaining > 2 ? getAspect(cards[cursor + 2]) : 0;
+                let count = Math.min(4, remaining);
+                if (remaining >= 3 && a < 0.82 && b < 0.82 && c < 0.82) count = 3;
+                else if (remaining >= 2 && a > 1.45 && b > 1.45) count = 2;
+                else if (remaining === 3) count = 3;
+                groups.push(cards.slice(cursor, cursor + count));
+                cursor += count;
             }
+            return groups.length ? groups : [[]];
+        };
+
+        const applyPageTemplate = (grid, pageCards) => {
+            grid.classList.remove('layout-single', 'layout-pair-portrait', 'layout-pair-landscape', 'layout-triple-portrait', 'layout-mosaic');
+            const aspects = pageCards.map(getAspect);
+            if (pageCards.length <= 1) grid.classList.add('layout-single');
+            else if (pageCards.length === 2 && aspects.every(aspect => aspect > 1.25)) grid.classList.add('layout-pair-landscape');
+            else if (pageCards.length === 2 && aspects.every(aspect => aspect < 0.9)) grid.classList.add('layout-pair-portrait');
+            else if (pageCards.length === 3 && aspects.every(aspect => aspect < 0.9)) grid.classList.add('layout-triple-portrait');
+            else grid.classList.add('layout-mosaic');
+            pageCards.forEach((card, index) => {
+                card.style.gridColumn = ''; card.style.gridRow = ''; card.style.width = ''; card.style.maxWidth = '';
+                card.style.marginLeft = ''; card.style.marginRight = '';
+                if (grid.classList.contains('layout-mosaic') && pageCards.length === 3 && index === 2) {
+                    card.style.gridColumn = '1 / -1';
+                    if (aspects[index] > 1.25) { card.style.width = '80%'; card.style.maxWidth = '80%'; card.style.marginLeft = 'auto'; card.style.marginRight = 'auto'; }
+                }
+            });
+        };
+
+        const arrangeTechnicalCards = () => {
+            const orderedCards = [...allTechnicalCards].sort((a, b) => originalOrder(a) - originalOrder(b));
+            const priorityCard = orderedCards.find(card => card.dataset.priorityCut === 'true') || null;
+            const orderedTechnicalCards = priorityCard ? [priorityCard, ...orderedCards.filter(card => card !== priorityCard)] : orderedCards;
+            const imageCards = orderedTechnicalCards.filter(card => getImage(card));
+            const textCards = orderedTechnicalCards.filter(card => !getImage(card));
+            const pageGroups = choosePageGroups(imageCards);
 
             const createPage = (pageIndex, pageCards, pageCount) => {
                 const page = printDocument.createElement('div');
                 page.className = 'sheet-page-wrapper';
                 page.dataset.imageCount = String(pageCards.length);
-
                 const main = printDocument.createElement('div');
                 main.className = 'sheet-content-main';
                 if (headerTemplate) main.appendChild(headerTemplate.cloneNode(true));
-
-                // La información del vehículo, su fotografía principal y el QR/video solo se incluyen en la primera hoja.
                 if (pageIndex === 0 && metadataTemplate) main.appendChild(metadataTemplate.cloneNode(true));
                 if (sectionHeaderTemplate) main.appendChild(sectionHeaderTemplate.cloneNode(true));
-
                 const grid = printDocument.createElement('div');
                 grid.className = 'tech-grid adaptive-tech-grid';
-                if (pageIndex === 0 && priorityTextCard) grid.appendChild(priorityTextCard);
-                pageCards.forEach(card => {
-                    card.style.gridColumn = '';
-                    card.style.gridRow = '';
-                    card.style.width = '';
-                    card.style.maxWidth = '';
-                    grid.appendChild(card);
+                applyPageTemplate(grid, pageCards);
+                pageCards.forEach(card => grid.appendChild(card));
+                if (pageIndex === pageCount - 1) textCards.forEach(card => {
+                    card.style.gridColumn = '1 / -1'; card.style.width = '100%'; card.style.maxWidth = '100%'; grid.appendChild(card);
                 });
-
-                // Las tarjetas técnicas sin fotografía se conservan después de las imágenes, sin contarlas como imágenes.
-                if (pageIndex === pageCount - 1) {
-                    textCards.filter(card => card !== priorityTextCard).forEach(card => {
-                        card.style.gridColumn = '';
-                        card.style.gridRow = '';
-                        grid.appendChild(card);
-                    });
-                }
                 main.appendChild(grid);
-
-                if (pageIndex === pageCount - 1 && notesTemplate) {
-                    main.appendChild(notesTemplate.cloneNode(true));
-                }
+                if (pageIndex === pageCount - 1 && notesTemplate) main.appendChild(notesTemplate.cloneNode(true));
                 page.appendChild(main);
                 if (footerTemplate) page.appendChild(footerTemplate.cloneNode(true));
                 return page;
             };
-
             const pages = pageGroups.map((pageCards, pageIndex) => createPage(pageIndex, pageCards, pageGroups.length));
             printPages.replaceChildren(...pages);
-
-            orderedImageCards.forEach(card => {
+            orderedTechnicalCards.forEach(card => {
                 const dimensions = getDimensions(card);
                 card.dataset.naturalWidth = String(dimensions.width);
                 card.dataset.naturalHeight = String(dimensions.height);
@@ -8376,6 +8407,12 @@ export function exportVehiclePrintSheet(item) {
                 card.dataset.imageResolution = String(dimensions.resolution);
             });
         };
+
+        const layoutSelector = printDocument.getElementById('print-layout-mode');
+        if (layoutSelector) layoutSelector.addEventListener('change', () => {
+            printDocument.body.dataset.printLayout = layoutSelector.value;
+            arrangeTechnicalCards();
+        });
 
         const printImages = allTechnicalCards.map(getImage).filter(Boolean);
         Promise.all(printImages.map(img => {
