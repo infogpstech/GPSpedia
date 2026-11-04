@@ -2034,3 +2034,34 @@ Fecha: 2026-11-04
 - Resultado de comprobaciones estáticas: TODAS CORRECTAS.
 - No se ejecutó navegador real; queda pendiente confirmar visualmente el modal de inicio de sesión y el pie de página.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA PREVIA — APROVECHAMIENTO DEL ESPACIO EN FICHAS IMPRIMIBLES
+Fecha: 2026-11-04
+Rama: fix/pys-carousel-card-sizing-print-images
+Alcance: ui.js, función exportVehiclePrintSheet(), CSS embebido de impresión y lógica arrangeTechnicalCards()/choosePageGroups(); documentación Auditoría.txt, ChangesLogs.txt y Tareas.txt.
+Respaldos exactos previos a la edición (blobs inmutables de GitHub):
+- ui.js: 0838d0bc3fd24561059fdc78d2ea0a9ff142bb85
+- Auditoría.txt: 63a0d5e9c3d6822bac7b1484d895a208136392ae
+- ChangesLogs.txt: a87e6ba92249233ede4714ee0c3c30f795d8ea6a
+- Tareas.txt: 17449e78292ed03357c09fb5857987e448316c87
+
+Hallazgos de la revisión estática:
+1. La exportación de la ficha imprimible se inicia desde el botón de impresión del modal de detalle y se concentra en exportVehiclePrintSheet(item) dentro de ui.js. La función genera una ventana independiente con plantilla HTML/CSS propia; por ello, style.css global no controla directamente los tamaños de imagen de la ficha exportada.
+2. La plantilla aplica primero un max-height general de 520 px (620 px en modo Imagen ampliada), pero reglas posteriores de .sheet-page-wrapper[data-image-count] limitan las imágenes a 390 px para una, 230 px para dos y 170 px para tres. En Imagen ampliada, los límites para dos y tres imágenes siguen siendo 230 px y 170 px. Estos límites por cantidad pueden impedir ampliar imágenes aunque la tarjeta tenga espacio adicional.
+3. El dimensionamiento de la imagen se basa en width:100%, height:auto, max-width:100% y object-fit:contain, con lo cual la proporción se conserva. No se observa una regla object-fit:cover en el bloque auditado.
+4. choosePageGroups() agrupa por cantidad y proporción, usando normalmente dos imágenes por página y una excepción de tres imágenes verticales. No mide la altura real restante de la hoja ni calcula cuánto espacio ocupan el encabezado, los metadatos, los textos y las imágenes en cada página.
+5. arrangeTechnicalCards() conserva el orden original de las tarjetas, prioriza la tarjeta marcada como corte recomendado, clona encabezado y sección en las páginas generadas, clona los metadatos solo en la primera página y añade las tarjetas sin imagen a la última página. Estos comportamientos son dependencias que deben preservarse en esta tarea.
+6. El contenedor .sheet-page-wrapper permite crecimiento automático, conserva min-height:269mm y utiliza overflow:visible. No se debe reintroducir una altura máxima rígida ni overflow:hidden, porque podría ocultar contenido cuando los metadatos o textos superen el espacio previsto.
+7. La distribución se reconstruye cuando cambia el selector y al cargar o fallar la carga de las imágenes técnicas, además de ejecutarse en beforeprint. La solución debe mantener estos disparadores y tolerar imágenes cuya dimensión natural no esté disponible.
+8. Las reglas de impresión están dentro de una plantilla escrita por document.write(). Las pruebas de sintaxis del módulo por sí solas no validan el ajuste físico de página, la legibilidad ni la ubicación del pie.
+9. No se ha ejecutado navegador real ni generado PDF en esta auditoría. Por tanto, no se puede afirmar todavía que una modificación estática elimine el espacio desaprovechado o garantice paginación correcta.
+
+Plan de implementación propuesto:
+- Aplicar únicamente una mejora conservadora de Fase 1: mantener la estructura de páginas, el orden/prioridad de tarjetas, los metadatos y los cuatro modos existentes.
+- Revisar y sustituir los límites de altura rígidos por cantidad de imágenes por reglas adaptadas al espacio y a la composición disponible, sin deformar ni recortar las imágenes.
+- No modificar la agrupación avanzada de páginas en esta fase ni introducir una nueva dependencia.
+- Mantener el crecimiento automático de las páginas y overflow:visible.
+- Registrar en ChangesLogs.txt únicamente los cambios realmente realizados y en Tareas.txt dejar explícita cualquier validación visual que no haya podido ejecutarse.
+================================================================================
