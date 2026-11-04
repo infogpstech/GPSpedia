@@ -1704,3 +1704,48 @@ PENDIENTE: verificar en navegador y PDF real que las imágenes aprovechen el esp
 
 AUDITORÍA 2026-11-04 — ALGORITMO ADAPTATIVO DE IMPRESIÓN (1–7 IMÁGENES)
 El algoritmo anterior solo tenía composiciones especiales para algunas combinaciones de tres imágenes y ordenaba imágenes secundarias por relación de aspecto, alterando el orden técnico. Se requiere cubrir de una a siete imágenes, usar dimensiones naturales, mantener la primera imagen prioritaria y no recortar/deformar. La página disponible no se mide exactamente por el algoritmo; la paginación real debe comprobarse en navegador/PDF. Metadatos, QR/video y notas técnicas quedan fuera del alcance.
+
+
+================================================================================
+AUDITORÍA COMPLEMENTARIA: PAGINACIÓN EXPLÍCITA, ENCABEZADO/PIE Y DISTRIBUCIÓN 2×2
+Fecha: 2026-11-03
+Rama: fix/pys-carousel-card-sizing-print-images
+Alcance: ui.js, función exportVehiclePrintSheet; recurso del logo TRACKLINK en index.html y reglas visuales relacionadas en style.css; documentación de auditoría, cambios y tareas.
+
+1. ESTADO ACTUAL DE exportVehiclePrintSheet EN ui.js:
+- La función genera un único .sheet-page-wrapper con un encabezado, una tabla .meta-table, la cuadrícula #adaptive-tech-grid, notas técnicas y un único .footer-bar.
+- La hoja de impresión usa @page con tamaño 216 mm × 279 mm y márgenes de 4 mm verticales y 6 mm horizontales, no los 5 mm solicitados.
+- .sheet-page-wrapper utiliza min-height: 980px y flexbox para separar contenido y pie. Este contenedor único no crea páginas físicas independientes ni garantiza por sí mismo que el encabezado se repita en cada página impresa.
+- .footer-bar está dentro del flujo normal del único contenedor. Al crecer el contenido y producir paginación automática del navegador, no existe una estructura explícita que garantice un pie al final de cada hoja.
+- La tabla de metadatos se genera una sola vez en .top-grid, actualmente al inicio de la ficha. La futura separación explícita por páginas deberá conservarla solo en la primera página.
+- arrangeTechnicalCards identifica tarjetas con imagen y tarjetas solo de texto, mantiene la imagen prioritaria primero y conserva el orden técnico restante. El algoritmo actual agrupa filas según relación de aspecto, permite hasta tres tarjetas en algunas filas y no limita el conjunto a dos filas ni crea nuevas páginas según la cantidad de imágenes.
+- Las filas y tarjetas usan break-inside/page-break-inside: avoid, pero estas reglas evitan ciertos cortes internos y no constituyen paginación explícita de un máximo de cuatro imágenes por hoja.
+- La distribución se ejecuta después de la carga de imágenes y también en beforeprint. Los cambios de paginación deberán preservar este comportamiento para dimensiones naturales disponibles y tolerar imágenes que fallen al cargar.
+- Las tarjetas técnicas contienen encabezado, descripción/avisos e imagen asociada. La reorganización debe mantener cada tarjeta y su información unidas, sin alterar el orden prioritario existente.
+
+2. RECURSOS DE MARCA:
+- El encabezado de impresión ya usa icon-v3-512x512.png como logo de GPSpedia, con .header-project-logo de 28 × 28 px.
+- index.html incluye el logo TRACKLINK mediante tracklink_logo.png al final de #terms-agreement-modal, con las clases .terms-agreement-logo y .tracklink-logo.
+- style.css define .terms-agreement-logo como bloque centrado, ancho automático y altura de 45 px. La regla específica del logo TRACKLINK añade margin-top: 50px. El pie impreso deberá reutilizar el mismo recurso tracklink_logo.png y la referencia de tamaño de 45 px de altura; el margen superior propio del modal no debe trasladarse automáticamente al pie impreso, porque el pie tiene una ubicación y función diferentes.
+
+3. REQUISITOS NUEVOS APLICABLES:
+- Cada hoja física debe reservar márgenes de 5 mm en los cuatro lados.
+- Cada hoja debe incluir el encabezado con el logo de GPSpedia y el pie de página al final de esa hoja.
+- El pie de página debe permanecer al final de cada página, no en medio del contenido ni en la zona del encabezado.
+- El logo TRACKLINK debe aparecer centrado en el pie de cada hoja, reutilizando tracklink_logo.png y el tamaño de referencia del modal de términos y condiciones.
+- La tabla de metadatos del vehículo (marca, modelo, categoría, años, encendido, versiones y VIN cuando exista) debe aparecer únicamente en la primera hoja.
+- El área técnica debe admitir como máximo dos columnas y dos filas de imágenes por hoja. Las combinaciones de imágenes cuadradas, verticales y horizontales deben adaptarse a ese límite; al superar cuatro imágenes, se deberá continuar en una nueva hoja.
+- Deben conservarse las proporciones naturales de las imágenes, sin recorte ni deformación, el orden técnico, la prioridad de la primera imagen y la asociación entre imagen, descripción y avisos.
+- La paginación debe considerar el espacio útil de la primera hoja, reducido por el encabezado, los metadatos y cualquier bloque inicial, y el espacio de las hojas posteriores sin la tabla de metadatos.
+
+4. RIESGOS Y VERIFICACIONES PENDIENTES:
+- La impresión física depende del motor de paginación del navegador; min-height en píxeles y break-inside por sí solos no garantizan una ubicación fija del pie de página.
+- Debe auditarse y probarse la estrategia elegida para crear páginas explícitas o usar mecanismos de impresión que repitan encabezado/pie sin duplicar metadatos.
+- Deben comprobarse conjuntos de 1, 2, 3, 4, 5 o más imágenes y las combinaciones cuadrada/vertical/horizontal, incluida una imagen panorámica, tarjetas sin imagen, imágenes fallidas y el QR/video cuando exista.
+- La validación estática o simulada no equivale a una prueba visual real en navegador ni a una verificación del PDF generado. No se debe declarar validada la paginación real sin ejecutar dichas comprobaciones.
+
+5. LÍMITES DE ALCANCE:
+- No alterar la tabla .meta-table en su estructura o estilos salvo el control de que aparezca solo en la primera página.
+- No alterar el contenido ni la lógica del QR/video, las notas técnicas, los datos del vehículo, la selección del corte recomendado ni el orden técnico fuera de lo necesario para la paginación solicitada.
+- No modificar el pie de página global de la aplicación ni otras áreas de index.html/style.css. El logo de TRACKLINK se reutiliza desde el modal de términos únicamente para el pie de las hojas imprimibles.
+================================================================================
