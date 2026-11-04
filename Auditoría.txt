@@ -2423,3 +2423,30 @@ RESPALDOS Y COMPARACIÓN
 
 No se realizó merge ni se modificó GPSpedia2.2.5.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA PREVIA — ACTUALIZACIÓN DEL ENDPOINT ADMIN
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Alcance: api-config.js y documentación necesaria para registrar el cambio de configuración.
+
+ESTADO ACTUAL
+- api-config.js centraliza los endpoints de los microservicios en el objeto API_ENDPOINTS.
+- La propiedad ADMIN contiene la URL actualmente utilizada por todas las acciones que ACTION_TO_SERVICE_MAP enruta al servicio ADMIN.
+- Las acciones de gestión del historial de imágenes (uploadAdminImage, getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes) están asignadas a ADMIN.
+- routeAction obtiene API_ENDPOINTS[service] y envía las solicitudes al endpoint correspondiente; no se identificó otra URL ADMIN duplicada dentro de api-config.js.
+
+DEPENDENCIAS Y RIESGOS
+- La modificación de ADMIN afecta a todas las acciones asignadas a ese servicio, no únicamente al historial de imágenes.
+- No se modificarán el mapeo de acciones, la lógica de routeAction ni los demás endpoints.
+- No se puede confirmar mediante inspección estática que la URL nueva esté publicada, accesible o configurada con los permisos requeridos.
+
+CAMBIO PROPUESTO
+Sustituir únicamente el valor de API_ENDPOINTS.ADMIN por la URL proporcionada por el usuario. Registrar el cambio en ChangesLogs.txt y Tareas.txt, conservar el historial y verificar mediante comparación que no existan modificaciones ajenas.
+
+PRUEBAS PREVISTAS Y LIMITACIONES
+- Comprobar estáticamente que ADMIN contiene exactamente la URL proporcionada.
+- Comprobar que las acciones ADMIN continúan asignadas a ADMIN y que los demás endpoints no cambian.
+- No se ejecutará una petición real al servicio ni se inferirá disponibilidad del despliegue a partir del formato de la URL.
+================================================================================
