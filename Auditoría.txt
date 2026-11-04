@@ -1902,3 +1902,25 @@ Fecha: 2026-11-04
 - Imagen a la derecha aplica dos columnas a nivel de cuadrícula y dentro de cada tarjeta; los modos verticales mantienen información e imagen apiladas; imagen ampliada permite un máximo de 620px.
 - Comprobación estática pendiente de ejecutar tras recuperar el archivo actualizado. No se ha ejecutado navegador real ni PDF; el ajuste visual y la paginación no se consideran validados.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA PREVIA — PAGINACIÓN Y DESBORDAMIENTO DE IMÁGENES
+Fecha: 2026-11-04
+Archivos revisados: ui.js, Auditoría.txt, ChangesLogs.txt, Tareas.txt.
+Respaldos exactos previos a edición (blobs inmutables actuales de GitHub):
+- ui.js: fae23e2c4ea8701f383b396ebee71befd59223ae
+- Auditoría.txt: 44e216778ad6dbbc4f6f5fe1fb612373895d3aad
+- ChangesLogs.txt: 26a1587a3e4de9d379edd5c2f11b70ee136270f0
+- Tareas.txt: a39c1d99a1bedc4d765d046d09c5eedc62493494
+Hallazgos:
+1. choosePageGroups permite grupos de hasta cuatro imágenes y permite grupos de tres imágenes no necesariamente verticales; la paginación depende del número, no de la altura combinada de las tarjetas.
+2. La hoja fija 269 mm de alto y mantiene overflow:hidden tanto en pantalla como al imprimir, por lo que el contenido que exceda la altura útil queda recortado.
+3. Las imágenes tienen límites CSS de 520 px y el modo Imagen ampliada llega a 620 px; estos límites no se adaptan al número de imágenes de la página.
+4. La plantilla usa columnas max-content en varias distribuciones, lo que no garantiza que el conjunto quede dentro del ancho imprimible.
+Alcance previsto:
+- Limitar grupos a dos imágenes, salvo tres imágenes consecutivas claramente verticales.
+- Reducir la altura máxima según cantidad de imágenes de la página y limitar el ancho al área disponible.
+- Mantener dimensiones fijas de página y encabezado/pie, por lo que la paginación se resolverá con grupos más compactos; no se cambiará el selector.
+- Registrar el cambio como revisión estática; navegador y PDF reales siguen pendientes.
+================================================================================
