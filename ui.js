@@ -3826,7 +3826,7 @@ export async function openReplacedImagesModal() {
                 <div style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rep.referencia_texto || 'Registro ' + rep.registro_id}</div>
                 <div style="font-size: 0.8rem; color: var(--text-disabled);"><strong>Archivo:</strong> ${rep.nombre_archivo} | <strong>Campo:</strong> ${rep.campo}</div>
                 <div style="font-size: 0.75rem; color: var(--text-disabled);"><strong>ID Drive:</strong> <code>${rep.archivo_drive_id}</code> | <strong>Fecha:</strong> ${rep.fecha_reemplazo}</div>
-                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : (rep.estado === 'eliminada' ? '#dc3545' : '#007bff')};">Estado: ${rep.estado}</div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : ((rep.estado === 'eliminada' || rep.estado === 'en_papelera') ? '#dc3545' : '#007bff')};">Estado: ${rep.estado}</div>
             `;
 
             const btnContainer = document.createElement('div');
@@ -3838,7 +3838,7 @@ export async function openReplacedImagesModal() {
                 fallida: "Operación fallida",
                 restablecida: "Restablecida",
                 en_papelera: "En papelera",
-                eliminada: "Estado antiguo: eliminada"
+                eliminada: "En papelera (registro anterior)"
             };
             const statusLabel = statusLabels[rep.estado] || rep.estado || "Sin estado";
             const statusElement = info.querySelector('div:last-child');
@@ -3883,7 +3883,7 @@ export async function openReplacedImagesModal() {
                     } catch (e) {
                         alert("Eliminación bloqueada: " + e.message);
                         deleteBtn.disabled = false;
-                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
+                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
                     }
                 };
                 btnContainer.appendChild(deleteBtn);
