@@ -2003,3 +2003,22 @@ Fecha: 2026-11-04
 - Resultado de las comprobaciones estáticas: TODAS CORRECTAS.
 - No se ejecutó navegador real ni se generó PDF. Permitir que el contenedor crezca evita el recorte CSS directo, pero no garantiza que la paginación física y el pie queden bien distribuidos cuando el contenido supera una hoja; esto debe comprobarse visualmente.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA PREVIA — ACTUALIZACIÓN DE VERSIÓN EN index.html
+Fecha: 2026-11-04
+Archivos revisados antes de modificar:
+- index.html: 6a618d2906ddecdcfc921ef4b7e3c6b839ce237c
+- Auditoría.txt: 90f4c034d5e7146cf134a3c1f0a3a9bb5cd7442a
+- ChangesLogs.txt: f574a6451570f5d144450d67ebb61a3f7d9619b0
+- Tareas.txt: 6457d2b517c2ff7a70bae36721245a589338bd9c
+
+Hallazgos:
+- La cadena exacta "2.1.6" aparece seis veces en index.html.
+- Las apariciones están en el comentario de versión del componente, el título del documento, la etiqueta de versión del encabezado, el pie de página y dos líneas de la sección/modal de versión.
+- El cambio solicitado es sustituir todas las apariciones exactas de 2.1.6 por 2.2.5 sin modificar otros textos ni archivos funcionales.
+Plan:
+- Actualizar index.html sustituyendo únicamente la cadena exacta "2.1.6" por "2.2.5".
+- Verificar que el archivo no conserve ninguna aparición de 2.1.6 y que las seis ubicaciones esperadas indiquen 2.2.5.
+================================================================================
