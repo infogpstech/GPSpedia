@@ -2440,11 +2440,11 @@ body.dark-mode .terms-agreement-logo {
     background: var(--button-bg);
 }
 
-#dev-tools-modal .dev-tab-radio:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
-#dev-tools-modal .dev-tab-radio:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-backups"],
-#dev-tools-modal .dev-tab-radio:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
-#dev-tools-modal .dev-tab-radio:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
-#dev-tools-modal .dev-tab-radio:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
+#dev-tools-modal #dev-tab-diagnostics:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
+#dev-tools-modal #dev-tab-backups:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-backups"],
+#dev-tools-modal #dev-tab-database:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
+#dev-tools-modal #dev-tab-images:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
+#dev-tools-modal #dev-tab-system:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
     outline: 2px solid var(--accent-color);
     outline-offset: 2px;
 }
