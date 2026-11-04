@@ -1854,3 +1854,20 @@ Fecha: 2026-11-03
   * loadInitialData: Incorporada precarga asíncrona de `routeAction('getPysData')` en segundo plano junto con la sincronización del catálogo, persistiendo los resultados en `localStorage` ('gpsepedia_pys_cache') e hidratando `state.pysData`.
   * checkSession: Rehidratación síncrona al arrancar la sesión de `pysData` desde la caché local para disponibilidad inmediata a 0ms.
 ================================================================================
+
+
+================================================================================
+REGISTRO DE CAMBIOS: CARRUSEL PYS, DIMENSIONES DE TARJETAS Y DISTRIBUCIÓN DE IMPRESIÓN
+Fecha: 2026-11-03
+
+- ui.js (líneas aproximadas 2515, 2544, 7340-7353, 7407, 7698-8090):
+  * Las tarjetas de agregar problema y agregar modelo en los modales de relación se ajustan a 188px de altura.
+  * La lectura de modelos asociados acepta arreglos, cadenas JSON con arreglo y listas de identificadores separadas por coma, barra, barra inversa o punto y coma.
+  * La ficha técnica asigna clases por elemento según la presencia de imagen, en lugar de aplicar clases de altura según la cantidad total de elementos.
+  * Se incorpora el selector de distribución de imágenes con los modos Automática, Imagen a la derecha, Imagen debajo del texto e Imagen ampliada.
+  * El modo Imagen ampliada permite una altura máxima de imagen de 380px; los demás modos mantienen un máximo de 310px.
+
+- style.css (líneas aproximadas 1539-1600):
+  * Se normalizan las tarjetas de agregar tutorial y agregar problema de la cuadrícula PyS a 188px de altura.
+  * Se establece un tamaño común de 140px de ancho por 188px de alto para las tarjetas de agregar modelo y agregar problema en los modales de relación.
+================================================================================
