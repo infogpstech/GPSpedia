@@ -1869,3 +1869,24 @@ Fecha: 2026-11-04
 - No se ejecutó un parser externo, navegador real ni generación de PDF. No se declara validada la geometría impresa, el desbordamiento, el QR ni los saltos de página.
 - Riesgo pendiente: la paginación usa principalmente cantidad y relación de aspecto; todavía no optimiza usando mediciones de altura renderizada de todas las tarjetas. @page sigue en orientación vertical.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA COMPLEMENTARIA — NOTA BAJO METADATOS Y AJUSTE DE CONTENEDORES
+Fecha: 2026-11-04
+
+Hallazgos derivados de la revisión del comportamiento informado:
+1. La nota técnica se genera como .tech-notes fuera de .top-grid y arrangeTechnicalCards la coloca únicamente en la última página. Esto contradice el nuevo requisito de ubicarla inmediatamente debajo de los metadatos del vehículo en la primera página.
+2. El listener del selector existe, pero los estilos de @media screen and (max-width: 600px) vuelven a forzar .tech-item-body a una columna y limitan .tech-detail-img a 180px. En una vista previa móvil, estas reglas pueden anular el modo Imagen a la derecha y las plantillas adaptativas, haciendo que las opciones parezcan no tener efecto.
+3. La tarjeta y el cuerpo tienen paddings de 6px 10px, varias reglas duplicadas y gaps de 8px. El contenedor de imagen ocupa ancho completo por defecto, incluso cuando la imagen individual debería determinar el ancho de su wrapper.
+4. La imagen técnica mantiene límites por número de imágenes y por clase de plantilla; esos topes pueden restringir el tamaño aunque exista espacio disponible. El rediseño debe reducir padding/gap y permitir que el contenido determine las dimensiones, conservando object-fit:contain y límites de seguridad.
+5. El QR mantiene tamaño fijo de 80px; la foto principal tiene max-height de 105px. Se revisará su adaptabilidad visual dentro del alcance sin modificar URLs ni datos.
+
+Alcance de esta corrección:
+- ui.js: plantilla HTML/CSS y arrangeTechnicalCards de exportVehiclePrintSheet.
+- Ubicar .tech-notes debajo de .top-grid solo en primera página; no repetirla en la última.
+- Hacer que el selector tenga efecto observable en vista previa de escritorio y móvil; no permitir que la media query móvil anule los modos seleccionados.
+- Reducir paddings/gaps de tarjetas y wrappers; mantener la proporción de imágenes y permitir contenedores de altura natural.
+- Antes de modificar código, crear respaldos exactos actualizados de ui.js y los archivos de trazabilidad que se editarán.
+- No declarar pruebas de navegador/PDF no ejecutadas.
+================================================================================
