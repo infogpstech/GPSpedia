@@ -2120,3 +2120,14 @@ Fecha: 2026-11-04
 - Verificación estática: la URL nueva aparece una vez en ADMIN y la URL anterior dejó de aparecer en el archivo.
 - No se ejecutó una solicitud al endpoint ni se verificó su disponibilidad o respuesta en producción.
 ================================================================================
+
+
+================================================================================
+CORRECCIÓN — VISIBILIDAD DEL ACCESO AL MODAL DE DESARROLLADOR
+Fecha: 2026-11-04
+- Archivo: ui.js, función showApp(user), aproximadamente líneas 4908-4910.
+- La obtención del rol para mostrar dev-tools-btn ahora consulta user.Privilegios y utiliza user.Rol como alternativa cuando Privilegios no contiene un valor.
+- Se conserva la normalización existente del rol y la condición que limita la visibilidad al perfil Desarrollador.
+- No se modificaron las funciones de edición, la autenticación ni el backend.
+- Verificación estática por comparación: el único cambio de código en ui.js corresponde a la lectura alternativa del rol. Se realizaron pruebas simuladas de los valores Privilegios y Rol; no se ejecutó navegador real ni se verificó la cuenta desplegada.
+================================================================================
