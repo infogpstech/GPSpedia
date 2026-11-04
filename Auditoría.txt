@@ -1924,3 +1924,14 @@ Alcance previsto:
 - Mantener dimensiones fijas de página y encabezado/pie, por lo que la paginación se resolverá con grupos más compactos; no se cambiará el selector.
 - Registrar el cambio como revisión estática; navegador y PDF reales siguen pendientes.
 ================================================================================
+
+
+================================================================================
+REVISIÓN ESTÁTICA POSTCAMBIO — PAGINACIÓN Y DESBORDAMIENTO
+Fecha: 2026-11-04
+- ui.js actualizado en commit 473287b13424835561455e7f81065b67788b2106.
+- La agrupación normal limita los grupos a dos imágenes; la excepción de tres requiere que las tres relaciones de aspecto sean menores que 0.82.
+- Se añadieron límites de altura diferenciados por cantidad de imágenes y restricciones de ancho en cuadrículas, tarjetas y wrappers.
+- Comprobación estática: agrupación anterior de hasta cuatro eliminada; regla de máximo dos y excepción vertical presentes; reglas de altura por cantidad de imágenes presentes; listener del selector y colocación de notas debajo de metadatos conservados.
+- Limitación: la hoja conserva altura fija y overflow:hidden. Los límites CSS reducen el riesgo de corte, pero no garantizan que una primera página con texto largo, metadatos y notas quepa en todos los casos. Es imprescindible validar navegador/PDF y ajustar si aparecen desbordamientos.
+================================================================================
