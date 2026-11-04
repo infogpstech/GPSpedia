@@ -1607,3 +1607,39 @@ Observación: la asignación inicial de anchos por tramos discretos de una rejil
 Decisión: utilizar filas con columnas ponderadas por la relación de aspecto real de las fotografías y composiciones específicas para los casos de una imagen vertical con dos horizontales, y dos verticales con una horizontal. Se mantendrá la imagen prioritaria como primera imagen y se conservarán las tarjetas técnicas completas.
 Respaldos exactos previos a esta revisión: ui.js 6176d599a965138c1563a9aa094709fd7c881a49; Auditoría.txt 135489a1af2dd78b9ea18c91209e98a5bec2c0fd; ChangesLogs.txt 8795e7cf294baa1b73d3b07195fe304ffd9bae47; Tareas.txt 09cdff0a5103c1937460cd8251a5c28fea02e571.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA POST-IMPLEMENTACIÓN: DISTRIBUCIÓN ADAPTATIVA DE IMÁGENES
+Fecha: 2026-11-03
+PR: #124
+Archivo de implementación: ui.js.
+
+1. PRIORIDAD DEL CORTE:
+   - La ficha toma como candidatos de corte recomendado únicamente los registros que tienen tipoCorteN, igual que la vista de detalle.
+   - Los candidatos se ordenan con el criterio existente de utilCorteN. Si el primer registro de ese orden tiene el tipo "No recomendado", no se le asigna una designación de recomendado y se conserva el orden técnico original.
+   - Cuando existe un corte recomendado con fotografía, su tarjeta se mantiene como primera imagen visual. Si no existe un candidato elegible, se conserva como prioridad la primera imagen según el orden original de la ficha.
+   - La tarjeta incluye el distintivo "Corte recomendado" sin alterar los datos de item.
+
+2. DISTRIBUCIÓN ADAPTATIVA:
+   - Las tarjetas técnicas de cortes, alimentación y apertura se generan como unidades completas con sus datos, descripción, imagen y aviso de testigo cuando corresponde.
+   - El algoritmo consulta naturalWidth y naturalHeight una vez cargadas las imágenes, calcula relación de aspecto y resolución disponible, mantiene la tarjeta prioritaria y ordena las demás fotografías por características visuales.
+   - Las filas generales calculan sus columnas con pesos derivados de la relación de aspecto real de cada fotografía; las panorámicas se colocan en filas independientes.
+   - Para una fotografía vertical prioritaria y dos horizontales, se crea una composición con la vertical a la izquierda ocupando dos filas y las horizontales apiladas a la derecha, con proporción de columnas calculada a partir de sus relaciones de aspecto.
+   - Para dos fotografías verticales y una horizontal, se agrupan las verticales en una fila y la horizontal en una fila inferior; si la horizontal es el corte recomendado, se mantiene primero a ancho completo y las verticales se colocan después.
+   - Las fotografías mantienen proporción mediante width/height automáticos, max-width/max-height y object-fit: contain; no se aplica recorte ni ampliación forzada de fotografías pequeñas.
+   - Las tarjetas sin imagen conservan sus datos y se muestran fuera de las filas fotográficas. Si el corte prioritario no tiene imagen, su información se mantiene primero y la primera fotografía disponible sigue el orden original de la ficha.
+
+3. TABLA DE METADATOS:
+   - Se compararon el bloque HTML de .meta-table y sus reglas CSS con GPSpedia2.2.7; ambos bloques coinciden exactamente. No se modificaron su estructura, columnas, estilos ni el bloque de QR/video.
+
+4. VERIFICACIÓN ESTÁTICA Y SIMULADA:
+   - La función exportVehiclePrintSheet se compiló mediante el runtime JavaScript para comprobar sintaxis.
+   - Se ejecutó el algoritmo de distribución sobre nodos simulados con dimensiones representativas: vertical recomendada + dos horizontales; horizontal recomendada + dos verticales; dos verticales + una horizontal con recomendada vertical; combinación con panorámica; ausencia de recomendado; y una sola imagen.
+   - En esos escenarios simulados, se mantuvo la primera imagen prioritaria y se conservaron todas las tarjetas/imágenes en el resultado.
+   - No se ejecutó GPSpedia en navegador real ni se generó un PDF físico. La paginación sigue dependiendo del motor de impresión del navegador y de las reglas break-inside/page-break-inside; se debe verificar la distribución cuando una fila no cabe en el espacio restante de una página.
+
+5. ESTADO:
+   - Implementación y pruebas estáticas/simuladas realizadas.
+   - Pendiente la verificación visual en navegador y en PDF, especialmente con muchas imágenes, imágenes fallidas o de baja resolución, filas que cruzan el límite de página y modelos con video/QR.
+================================================================================
