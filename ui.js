@@ -8126,6 +8126,8 @@ export function exportVehiclePrintSheet(item) {
                 }
                 .adaptive-tech-grid.layout-single { grid-template-columns: minmax(0, 1fr); }
                 .adaptive-tech-grid.layout-single > .tech-item-card { width: 100%; max-width: 100%; }
+                .adaptive-tech-grid.layout-single .tech-item-img-wrapper { width: 50%; max-width: 50%; margin-left: auto; margin-right: auto; }
+                body[data-print-layout="image-focus"] .adaptive-tech-grid.layout-single .tech-item-img-wrapper { width: 100%; max-width: 100%; }
                 .adaptive-tech-grid.layout-pair-portrait { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
                 .adaptive-tech-grid.layout-pair-landscape { grid-template-columns: minmax(0, 1fr); align-items: start; }
                 .adaptive-tech-grid.layout-triple-portrait { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; gap: 4px; }
