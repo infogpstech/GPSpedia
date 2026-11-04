@@ -969,3 +969,1007 @@ Archivo: ui.js
 
 **Archivo: style.css**
 - **Líneas 721-729:** Asignada la propiedad `background-color: var(--card-bg)` en `.card img` y agregada la regla `mix-blend-mode: lighten` en modo oscuro (`body.dark-mode`) exclusivamente para miniaturas de modelos de vehículos (`.card:not(.brand-logo-item) img`, `.card-img-top`, `.match-card-img`, `#imagenVehiculo_preview`), excluyendo intencionalmente el modal de detalles (`.img-vehiculo-modal`).
+
+--------------------------------------------------
+**CHANGES LOG - 30/10/2026 (RENOVACIÓN INTEGRAL GPSpedia - VERSIÓN 2.2.0)**
+
+**Archivo: ui.js**
+- Incorporadas funciones openSuggestCutModal, openExpandMenuModal, openAddCutForModelModal, openAddAperturaModal, openAddFeedModal, openAddVideoModal, openAddProblemModal, openPysDetailModal, openAddTutorialModal, renderPysSection y sanitizeHtmlContent.
+- Agregados botones e indicadores visuales de ampliación de modelo (+) y navegación de la sección Problemas y Soluciones.
+
+**Archivo: navigation.js**
+- Ampliada la función filtrarContenido para consultar de forma unificada Cortes, Relays, Tutoriales y PYS asignando etiquetas visuales _sectionType.
+
+**Archivo: main.js**
+- Registrados eventos de navegación para el selector de secciónProblemas / Soluciones (#btn-pys).
+
+**Archivo: index.html**
+- Agregados el botón #btn-pys en la barra de navegación principal y el contenedor #contenido-pys.
+
+**Archivo: add_cortes.html**
+- Incorporadas las opciones de registro para segundo corte y enlace de vídeo guía de desarme en la etapa 3 del formulario.
+
+**Archivo: api-config.js**
+- Mapeadas las acciones getPysData, addProblem, addSolution, addPrevention, suggestCutChange y addTutorial hacia el servicio FEEDBACK.
+
+**Archivo: Services/feedback.js**
+- Implementados los manejadores handleSuggestCutChange, handleGetPysData, handleAddProblem, handleAddSolution, handleAddPrevention y handleAddTutorial con hoja pys de 9 columnas, LockService e IDs isue-001.
+
+--------------------------------------------------
+**CHANGES LOG - 30/10/2026 (ESTILOS MODAL DESARROLLADOR - VERSIÓN 2.2.0)**
+
+**Archivo: index.html**
+- Líneas 208-285: Aplicadas las clases `.dev-card` y `.dev-input` a los contenedores, barras de progreso y campos de entrada dentro del modal `#dev-tools-modal`. Reemplazados colores rígidos inline por variables CSS (`var(--card-bg)`, `var(--text-color)`, `var(--button-bg)`, `var(--border-color)`), conservando intacta la apariencia de terminal de comandos en `#dev-console-log`.
+
+**Archivo: style.css**
+- Líneas 52, 69: Definida la variable `--border-color` (#e0e0e0 en tema claro, #3a3a3a en tema oscuro).
+- Líneas 1282-1301: Creadas las clases CSS `.dev-card` y `.dev-input` con transiciones de color de tema claro y oscuro para el modal de herramientas del desarrollador.
+
+--------------------------------------------------
+**CHANGES LOG - 30/10/2026 (SISTEMA DE IDENTIFICACIÓN Y REGISTRO POR VIN - VERSIÓN 2.2.0)**
+
+**Archivo: Services/write.js**
+- Agregado `vin: 43` en la constante `COLS_CORTES`.
+- Implementadas las funciones `countEquipmentVersions(versionesStr)`, `parseVinCollection(rawVin)`, `serializeVinCollection(vinArray)` y `extractVinPrefix(vinStr)`.
+- Creados los manejadores de backend `handleCheckVinDuplicate(payload)` y `handleAddVinToVehicle(payload)` para la validación y persistencia de colecciones VIN sin alterar la fecha de registro (`timestamp`).
+- Actualizado `handleAddOrUpdateCut` / `addCorte` para procesar y escribir el VIN en la columna 43.
+
+**Archivo: Services/catalog.js, Services/admin.js, Services/feedback.js**
+- Agregado `vin: 43` en las definiciones `COLS_CORTES` de cada microservicio.
+
+**Archivo: api-config.js**
+- Mapeadas las acciones `checkVinDuplicate` y `addVinToVehicle` hacia el servicio `WRITE` en `ACTION_TO_SERVICE_MAP`.
+
+**Archivo: add_cortes.html**
+- Incorporado el campo de entrada opcional `#vinInput` (límite 18 caracteres) en la etapa de foto del vehículo.
+- Implementado evento `blur` y validación pre-submit en `handleStage2Submit` que verifica duplicados en tiempo real y muestra `"VIN ya está registrado para:"` con botón interactivo de búsqueda.
+
+**Archivo: ui.js**
+- Actualizado `openExpandMenuModal` para habilitar "Agregar VIN" según la cantidad de versiones de equipamiento detectadas (máximo 3).
+- Creado el modal `openAddVinModal` para agregar un nuevo VIN a la colección existente del modelo sin sobrescribir identificadores anteriores.
+- Agregada la edición del campo `vin` en la interfaz de edición in-modal para desarrolladores.
+
+**Archivo: navigation.js**
+- Actualizado `filtrarContenido` para parsear colecciones de VINs e identificar búsquedas exactas por prefijo procesado.
+
+Archivo: style.css / ui.js / Auditoría.txt
+Líneas: Auditoría completa de capas z-index (1600 - 4001)
+Descripción: Verificación y documentación de la jerarquía de capas de modales (modalDetalle: 1600, plusBtn: 1700, info-modal: 2100, lightbox: 2200, side-menu: 2500, terms-modal: 3100, terms-agreement-modal: 3200, toasts: 4000+).
+
+Archivo: api-config.js
+Líneas: 10-15
+Descripción: Actualizadas las URLs de producción de Google Apps Script para los microservicios Admin, Catalog, Feedback y Write en API_ENDPOINTS.
+- ui.js:
+  - Líneas 4877-4958: En renderPysSection(), se implementó la estrategia de renderizado inmediato (fast-path) recuperando los datos en memoria de getState().pysData (0ms de latencia percibida al acceder a la sección) y sincronizando en segundo plano con routeAction('getPysData') para refrescar las tarjetas si los datos difieren, evitando bloqueos síncronos de red. Se añadió el comentario identificativo /* TAREA 1.4: CORRECCIÓN DE LAS DEMORAS DE CARGA EN LA SECCIÓN PROBLEMAS Y SOLUCIONES */.
+
+**TAREA 1.6: CORRECCIÓN DE LA CABECERA DEL MODAL DE DETALLE**
+- Archivo: ui.js
+  - Línea 1345: Agregado comentario identificativo de la Tarea 1.6.
+  - Línea 1347: Reducido el margen inferior de `headerDiv` a 4px y unificado el espaciado con `gap: 8px`.
+  - Línea 1395: Removido el margen derecho asimétrico (`marginRight: 5px`) del botón de imprimir ficha técnica (`printBtn`).
+  - Línea 1467: Ajustado el padding del botón de cerrar modal (`closeBtn`) a `padding: 0 4px`.
+  - Línea 1474: Compactado el contenedor del título (`titleContainer`) con borde inferior de 2px, `padding-bottom: 6px` y `margin-bottom: 10px`.
+- Archivo: style.css
+  - Líneas 952-962: Ajustada la altura máxima de `.brand-logo-modal` a 48px en escritorio y 38px en pantallas móviles (<= 600px), garantizando proporciones compactas y evitando que el logotipo desplace o comprima el nombre del modelo.
+
+**TAREA 1.7: CORRECCIÓN DE LAS TARJETAS PARA AGREGAR TUTORIALES Y PROBLEMAS**
+- Archivo: style.css
+  - Líneas 1289-1311: Agregadas reglas CSS unificadas para `.card-create-tutorial` y `.card-create-pys` con borde discontinuo, borde redondeado y flexbox. Para `.card-create-tutorial` se estableció `height: 120px; min-height: 120px;` coincidente con las tarjetas estándar de tutoriales. Para `.card-create-pys` se estableció `height: 100%; min-height: 140px;` asegurando adaptabilidad a la rejilla.
+- Archivo: ui.js
+  - Línea 4096: Agregado comentario identificativo de la Tarea 1.7 en `mostrarTutorialesGrid()`.
+  - Líneas 4097-4103: Eliminado estilo en línea fijo `min-height: 180px;` en `.card-create-tutorial` delegando el dimensionamiento a `style.css`.
+  - Línea 4887: Agregado comentario identificativo de la Tarea 1.7 en `renderPysSection()`.
+  - Líneas 4888-4896: Eliminado estilo en línea fijo `min-height: 180px;` en `.card-create-pys` delegando el dimensionamiento a `style.css`.
+
+**TAREA 1.8: REEJECUCIÓN DE LAS TAREAS AFECTADAS Y PRUEBAS DE REGRESIÓN**
+- Archivo: style.css
+  - Líneas 906-950: Consolidado el contenedor `#detalleCompleto` con `position: relative; display: flex; flex-direction: column;` y estandarizado el botón `.btn-expand-plus` con `position: sticky; bottom: 12px; margin-left: auto; width: 40px; height: 40px; border-radius: 50%; font-size: 1.08rem; z-index: 1700;`.
+  - Agregada la regla `.info-modal.visible { display: flex !important; }` para garantizar la apertura confiable de sub-modales.
+- Archivo: ui.js
+  - Líneas 1860-1875: Agregado comentario identificativo de la Tarea 1.8 en `mostrarDetalleModal()`, eliminando estilos en línea innecesarios en `.btn-expand-plus` y delegando su control a `style.css`.
+  - Verificada la ejecución de pruebas automatizadas integrales de extremo a extremo sin regresiones en modales, carruseles, catálogos ni formularios.
+
+**TAREA 2.1: BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE**
+- Archivo: Services/feedback.js
+  - Líneas 535-545: En `handleReportProblem()`, se genera y retorna el identificador único `reportId` (`REP-...`) tras registrar el problema en la hoja 'Feedbacks' para posibilitar la vinculación con las sugerencias de cambios posteriores.
+- Archivo: ui.js
+  - Líneas 2367-2388: En `renderCutContent()`, el botón `reportBtn` (`.report-btn`) invoca el modal de reporte individual `openReportCutModal(vehicleId, corteNum, cutData)`. Se garantiza el cálculo robusto de `corteNum` (`cutData.index || (index + 1)`).
+  - Líneas 4240-4380: Se implementó `openReportCutModal()` con formulario estructurado (descripción del error, información incorrecta o incompleta, y adjunto opcional de imagen de referencia). Tras el envío exitoso, muestra el diálogo accesible `showReportSuccessModal()` confirmando el identificador del reporte y ofreciendo la opción interactiva «Sugerir cambio» que abre `openSuggestCutModal()`. Si el reporte falla, se cancela la confirmación y se presenta un mensaje de error sin avanzar.
+
+**TAREA 2.2: MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE**
+- Archivo: ui.js
+  - Líneas 4383-4530: En `openSuggestCutModal()`, se reconstruyó el formulario modal de sugerencias de cambios vinculadas a un corte específico. Se agregaron selectores dinámicos para Tipo de Corte y Configuración de Relay (utilizando las opciones homologadas del catálogo), campo de selección para testigo de motor Check Engine ("Sí, activa testigo", "No activa testigo", "No aplica"), inputs para ubicación y color de cable, carga opcional de imagen en Base64, y textarea obligatorio para la justificación del cambio. Se garantizó el aislamiento estricto del corte seleccionado (`validCorteNum = corteNum || currentCutData.index || 1`) y la vinculación con el `reportId` de origen.
+
+**TAREA 2.3: ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS**
+- Archivo: Services/feedback.js
+  - Líneas 685-760: En `handleSuggestCutChange()`, se estructura la propuesta de cambio para almacenarla como un registro independiente en la hoja 'Feedbacks' sin sobrescribir ni modificar la hoja 'Cortes' del catálogo. Se conservan inequívocamente: `reportId` (reporte de origen), `vehicleId`, `corteIndex`, `userId`, `userName`, marca temporal de creación ISO (`createdAt`), `imageUrl` en Google Drive, `details`, `proposedValues` estructurados y el estado de revisión (`Se resolvio = false`). Se registra la auditoría en `ActividadUsuario` y se retorna confirmación explícita con `suggestionData`.
+
+**TAREA: CORREGIR EL RECORTE DE TEXTO EN LAS NOTIFICACIONES DE CONSULTA DE VEHÍCULOS DE AÑOS ANTERIORES**
+- Archivo: style.css
+  - Líneas 1170-1235:
+    * Se corrigió el recorte de texto en `.validation-banner` modificando `overflow: hidden;` por `overflow: visible;`, asegurando `box-sizing: border-box; width: 100%;` y ajustando padding a 14px.
+    * En `.validation-message`, se añadió `line-height: 1.45; word-break: normal; overflow-wrap: break-word; white-space: normal; margin: 0;` para que el texto de consulta de modelos de años anteriores se visualice íntegro y sin truncamientos.
+    * En `.validation-actions`, se configuró `width: 100%; box-sizing: border-box; align-items: center; flex-wrap: wrap; gap: 8px;` evitando que los botones de respuesta se solapen o desborden el contenedor.
+    * Se añadieron reglas responsivas `@media (max-width: 480px)` para ajustar paddings y tamaños de botones en dispositivos móviles y resoluciones reducidas (hasta 320px).
+
+**RESOLUCIÓN DE BLOCKING ISSUE: ALCANCE SEGURO DE DROPDOWNOPTIONS EN OPENSUGGESTCUTMODAL**
+- Archivo: ui.js
+  - Líneas 4420-4445: En `openSuggestCutModal()`, se blindó el acceso a `dropdownOptions` mediante `safeDropdowns` evaluando `(typeof dropdownOptions !== "undefined" && dropdownOptions) || (typeof window !== "undefined" && window.dropdownOptions) || (typeof getState === "function" && getState() && getState().dropdownOptions) || null`.
+  - Se previenen errores en tiempo de ejecución del tipo `ReferenceError` si la función es invocada o probada en entornos modulares aislados, conservando las matrices de opciones por defecto para tipo de corte y configuración de relay.
+
+**TAREA 1: RECUPERACIÓN FUNCIONAL, CORRECCIÓN DE REGRESIONES Y ESTABILIZACIÓN DEL APP SHELL (v2.2.0)**
+- Services/admin.js:
+  - Líneas 128-147: Implementado el manejador doGet(e) con soporte de diagnósticos (?debug=true) retornando JSON estructurado con metadatos del servicio (service, version, spreadsheetId, driveFolderId, sheetsAccessed) y respuesta GET por defecto, garantizando paridad con los demás microservicios y permitiendo a checkAllServicesHealth() monitorear el estado del servicio Admin.
+  - Agregado comentario identificativo /* TAREA 1.1: RECUPERACIÓN DE LA COMUNICACIÓN CON EL MICROSERVICIO DE ADMINISTRACIÓN */.
+- ui.js:
+  - Línea 1862: Agregado comentario identificativo de TAREA 1.5 / 1.8 en la instanciación del botón flotante (+) .btn-expand-plus dentro de mostrarDetalleModal().
+  - Línea 2562: Agregado comentario identificativo /* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */ sobre openDevTools.
+  - Línea 5167: Agregado comentario identificativo /* TAREA 1.3: RECUPERACIÓN DEL FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES */ sobre openAddProblemModal.
+
+**TAREA 2: CONTROL DE ACCESO (RBAC), SEGURIDAD DE SESIÓN Y CUMPLIMIENTO LEGAL (v2.2.0)**
+- Services/users.js:
+  - Línea 240: Agregado comentario identificativo /* TAREA 2 (B16): GESTIÓN DE USUARIOS, RBAC Y SEGURIDAD */ en la función handleUpdateUser, verificando la jerarquía de roles (Desarrollador, Jefe/Gefe, Supervisor, Técnico) y restricciones de seguridad.
+- users.html:
+  - Línea 324: Agregado comentario identificativo /* TAREA 2 (B16): GESTIÓN DE USUARIOS, RBAC Y SEGURIDAD */ en el manejador DOMContentLoaded para la inicialización y filtrado de usuarios según privilegios.
+- index.html:
+  - Línea 341: Agregado comentario identificativo <!-- TAREA 2 (B03): IMPLEMENTACIÓN DEL AVISO DE ACEPTACIÓN DE CONDICIONES Y ENLACE PERMANENTE --> en #terms-modal.
+  - Línea 570: Agregado comentario identificativo <!-- TAREA 2 (B02): ACTUALIZACIÓN DE CONTENIDO Y ESTILOS DE MODALES INFORMATIVOS (SOBRE NOSOTROS Y TÉRMINOS) --> en #about-us-modal.
+
+**TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA EN CONECTIVIDAD (v2.2.0)**
+- add_cortes.html:
+  - Línea 346: Agregado comentario identificativo /* TAREA 3 (B31): PERSISTENCIA, RECUPERACIÓN E IDEMPOTENCIA CON OPID */ en checkAndRecoverPendingOperation.
+  - Línea 570: Agregado comentario identificativo /* TAREA 3 (4.2): REGISTRAR UN SEGUNDO CORTE */ en el listener de clic para btn-add-second-cut.
+  - Línea 820: Agregado comentario identificativo /* TAREA 3 (B31): REGISTRO SIN CORTES, PREVENCIÓN DE DUPLICADOS Y RESILIENCIA DE RED */ en handleStage2Submit.
+  - Línea 1027: Agregado comentario identificativo /* TAREA 3 (4.1, 4.3, 4.4): OPCIONES EN ÚLTIMA ETAPA, VÍDEO GUÍA Y DISPONIBILIDAD DINÁMICA */ en proceedToStage3.
+- Services/write.js:
+  - Línea 105: Agregado comentario identificativo /* TAREA 3 (4.2, 4.4, B31): REGISTRO Y ACTUALIZACIÓN DE CORTES E IDEMPOTENCIA CON REPARACIÓN */ en handleAddOrUpdateCut.
+  - Línea 770: Agregado comentario identificativo /* TAREA 3 (B31): COMPROBACIÓN ASÍNCRONA DE OPERACIÓN E IDEMPOTENCIA EN SERVIDOR */ en handleCheckOperation.
+
+**TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚSQUEDA POR VIN (v2.2.0)**
+- Services/write.js:
+  - Línea 919: Agregado comentario identificativo /* TAREA 4 (11.1, 11.2, 11.7, B34): EXCLUSIÓN DE ÚLTIMOS 5 CARACTERES Y PROCESAMIENTO DE VIN */ en extractVinPrefix.
+- add_cortes.html:
+  - Línea 580: Agregado comentario identificativo /* TAREA 4 (11.3, 11.5): REGISTRO Y VALIDACIÓN DE DUPLICADOS POR VIN EN FORMULARIO */ en el listener de blur de vinInput.
+- ui.js:
+  - Línea 4664: Agregado comentario identificativo /* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO */ en openAddVinModal.
+- navigation.js:
+  - Línea 92: Agregado comentario identificativo /* TAREA 4 (11.8): INTEGRACIÓN CON LA BARRA DE BÚSQUEDA GLOBAL POR VIN */ en filtrarContenido.
+
+**TAREA 5: AMPLIACIÓN DINÁMICA DE INFORMACIÓN DEL VEHÍCULO DESDE EL MODAL DE DETALLE (BOTÓN '+') (v2.2.0)**
+- ui.js:
+  - Línea 4571: Agregado comentario identificativo /* TAREA 5 (3.1): MENÚ DINÁMICO DE AMPLIACIÓN EN EL MODAL DE DETALLE Y CÁLCULO DE ESPACIOS */ en openExpandMenuModal.
+  - Línea 4761: Agregado comentario identificativo /* TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */ en openAddCutForModelModal.
+  - Línea 4869: Agregado comentario identificativo /* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */ en openAddAperturaModal.
+  - Línea 4943: Agregado comentario identificativo /* TAREA 5 (3.4): AGREGAR CABLE DE ALIMENTACIÓN DESDE EL MODAL DE DETALLE */ en openAddFeedModal.
+  - Línea 5027: Agregado comentario identificativo /* TAREA 5 (3.5): AGREGAR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */ en openAddVideoModal.
+
+**TAREA 6: VISUALIZACIÓN TÉCNICA AVANZADA, LIGHTBOX CON CARRUSEL DE CABLES Y RENDERIZADO DE TRANSPARENCIAS (v2.2.0)**
+- lightbox.js:
+  - Línea 18: Agregado comentario identificativo /* TAREA 6 (B32): NAVEGACIÓN DEL CARRUSEL DE CABLES DE ALIMENTACIÓN DENTRO DEL LIGHTBOX */ sobre la función isLightboxZoomed.
+- ui.js:
+  - Línea 317: Agregado comentario identificativo /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES */ en la función getImageUrl.
+- style.css:
+  - Línea 735: Agregado comentario identificativo /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES EN MODO OSCURO */ en la regla mix-blend-mode de miniaturas.
+
+**TAREA 7: ARQUITECTURA DE NAVEGACIÓN, GESTIÓN DE HISTORIAL (POPSTATE) Y CIERRE SECUENCIAL DE OVERLAYS (v2.2.0)**
+- main.js:
+  - Línea 202: Agregado comentario identificativo /* TAREA 7 (B05, B07): CIERRE DETERMINISTA DE OVERLAYS Y NAVEGACIÓN POR GESTOS EN POPSTATE */ en el listener global de popstate.
+- navigation.js:
+  - Línea 220: Agregado comentario identificativo /* TAREA 7 (B08, B27): REPLACESTATE EN BÚSQUEDA PARA EVITAR COLISIONES CON AUTO-APERTURA */ en filtrarContenido.
+- ui.js:
+  - Línea 871: Agregado comentario identificativo /* TAREA 7 (B18): CONTEXTO 'ORIGIN' MARCA/CATEGORÍA Y RETORNO LIMPIO SIN BUCLES */ en mostrarVersionesEquipamiento.
+  - Línea 1256: Agregado comentario identificativo /* TAREA 7 (B06): DISTINCIÓN ENTRE BÚSQUEDA ACTIVA Y RESTAURACIÓN DEL HISTORIAL CON AUTO-OPEN */ en mostrarResultadosDeBusqueda.
+
+**TAREA 8: ENLACES PROFUNDOS (DEEP LINKING), REDIRECCIÓN PRECISA DE ENLACES COMPARTIDOS E INDICADOR DE RED (v2.2.0)**
+- ui.js:
+  - Línea 1363: Agregado comentario identificativo /* TAREA 8 (B10, B11, B23): COMPARTIR MODELO Y REDIRECCIONAMIENTO PRECISO CON DEEP LINKING */ en el manejador shareBtn.onclick de mostrarDetalleModal.
+- main.js:
+  - Línea 186: Agregado comentario identificativo /* TAREA 8 (B10, B12): ESTADO DE CONEXIÓN E INDICADOR DE RED */ en la lógica del indicador de red.
+- style.css:
+  - Línea 141: Agregado comentario identificativo /* TAREA 8 (B09, B11): INDICADOR ULTRA-MINIMALISTA DE ESTADO DE RED */ sobre la regla de estilo #connection-status.
+
+**TAREA 9: SISTEMA DE REPORTES DE ERRORES Y SUGERENCIAS ESTRUCTURADAS DE MODIFICACIÓN EN CORTES (v2.2.0)**
+- ui.js:
+  - Línea 4269: Agregado comentario identificativo /* TAREA 9 (2.1): BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE Y MODAL DE REPORTE */ en openReportCutModal.
+  - Línea 4410: Agregado comentario identificativo /* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */ en openSuggestCutModal.
+- Services/feedback.js:
+  - Línea 687: Agregado comentario identificativo /* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */ en handleSuggestCutChange.
+
+**TAREA 10: MÓDULO «PROBLEMAS Y SOLUCIONES» (PYS) - INFRAESTRUCTURA, FORMULARIOS Y VISUALIZACIÓN (v2.2.0)**
+- index.html:
+  - Línea 156: Agregado comentario identificativo <!-- TAREA 10 (5.1): SECCIÓN PROBLEMAS Y SOLUCIONES EN LA PÁGINA PRINCIPAL --> en #btn-pys.
+- ui.js:
+  - Línea 5105: Agregado comentario identificativo /* TAREA 10 (5.2): TARJETAS DE PYS Y TARJETA DE CREACIÓN (+) EN PRIMERA POSICIÓN */ en renderPysSection.
+  - Línea 5178: Agregado comentario identificativo /* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */ en openAddProblemModal.
+  - Línea 5475: Agregado comentario identificativo /* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */ en openPysDetailModal.
+- Services/feedback.js:
+  - Línea 803: Agregado comentario identificativo /* TAREA 10 (5.4): ALMACENAMIENTO EN HOJA PYS, IDENTIFICADORES ÚNICOS ISUE-001 Y SUBIDA A DRIVE */ en handleAddProblem.
+
+**TAREA 11: VINCULACIÓN BIDIRECCIONAL DE PROBLEMAS Y SOLUCIONES CON MODELOS DE VEHÍCULOS (v2.2.0)**
+- ui.js:
+  - Línea 1822: Agregado comentario identificativo /* TAREA 11 (12.5): ACORDEÓN «PROBLEMAS RELACIONADOS A ESTE VEHÍCULO» EN MODAL TÉCNICO */ en mostrarDetalleModal.
+  - Línea 5197: Agregado comentario identificativo <!-- TAREA 11 (12.1): ALCANCE EN FORMULARIO DE PROBLEMAS (GENERAL VS ESPECÍFICO) --> en openAddProblemModal.
+  - Línea 5431: Agregado comentario identificativo /* TAREA 11 (12.2): MODAL EXCLUSIVO DE CONFIRMACIÓN Y VISTA PREVIA DE VEHÍCULO PARA PYS */ en openConfirmVehicleForPysModal.
+  - Línea 5526: Agregado comentario identificativo /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */ en openPysDetailModal.
+- Services/feedback.js:
+  - Línea 979: Agregado comentario identificativo /* TAREA 11 (12.3): ASOCIACIÓN DE VEHÍCULOS A PROBLEMAS EN HOJA PYS (COLUMNA 10) */ en handleAddVehicleToProblem.
+
+**TAREA 12: AMPLIACIÓN DE TUTORIALES TÉCNICOS Y CONTROL DEL CICLO DE VIDA MULTIMEDIA (v2.2.0)**
+- ui.js:
+  - Línea 5622: Agregado comentario identificativo /* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */ en openAddTutorialModal.
+- main.js:
+  - Línea 401: Agregado comentario identificativo /* TAREA 12 (B04): CONTROL DEL CICLO DE VIDA DEL REPRODUCTOR DE YOUTUBE MEDIANTE MUTATIONOBSERVER */ en el bloque de observación de cierre de #modalDetalle.
+
+===================================================================
+FECHA: $(date)
+TAREAS COMPLETADAS: IMPLEMENTACIÓN Y CORRECCIÓN DE FUNCIONES Y ESTILOS (1 a 8)
+1. Tarea 1: Corregir botón eliminar mensajes Inbox y definir alias seguro mostrarNotificacion -> showGlobalNotification en ui.js.
+2. Tarea 2: Reorganizar plantilla técnica de instalación en exportVehiclePrintSheet (ui.js) con soporte de todas las fotos de cortes, cables de alimentación (1, 2 y 3), apertura y notas compactas adaptadas a 1 sola página A4.
+3. Tarea 3: Homogeneizar estilos de modales con formularios (.info-modal-content form, input, select, textarea, focus rings, responsive actions).
+4. Tarea 4: Corregir renderizado de tarjetas de Tutoriales y Relay en navigation.js y ui.js resolviendo colapso en agrupador de modelos y protegiendo contra valores nulos.
+5. Tareas 5 y 6: Reubicar e integrar el botón de limpiar búsqueda (X) dentro del contenedor de input (.search-input-box) y desacoplar el botón de filtros (#btn-toggle-filters) para evitar solapamientos y cierres accidentales.
+6. Tarea 7: Aplicar sombras elegantes y legibles (drop-shadow y text-shadow) al logo y título de GPSpedia en modos claro y oscuro.
+7. Tarea 8: Auditoría exhaustiva de CSS y corrección de elementos sin estilos en formularios y modales.
+Archivos modificados: ui.js, style.css, index.html, navigation.js, Auditoría.txt, ChangesLogs.txt
+===================================================================
+
+===================================================================
+FECHA: $(date)
+TAREA: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES
+1. Se implementó la función renderPosiblesProblemasAccordion en ui.js que consulta asíncronamente getPysData y filtra estrictamente por el id numérico/string del modelo activo (activeItem.id).
+2. Si no existen problemas relacionados con el modelo, no se renderiza ningún acordeón vacío.
+3. Si existe exactamente 1 problema relacionado, se muestra el acordeón titulado «Posibles problemas» con la tarjeta individual centrada.
+4. Si existen 2 o más problemas relacionados, se renderiza dentro del acordeón un carrusel navegable (.carousel-container, .carousel-track, botones .carousel-btn prev/next).
+5. Se unificó el diseño visual de todas las tarjetas de Problemas y Soluciones mediante la función createPysCard(), adoptando el estándar canónico de la plataforma (.card, .card-img-top, .overlay) de referencia (cortes, recién agregados, vistos recientemente y categorías), sin alterar las reglas CSS de los carruseles existentes ni los logos de marca.
+Archivos modificados: ui.js, Auditoría.txt, ChangesLogs.txt
+===================================================================
+
+===================================================================
+FECHA: $(date)
+TAREAS: AUDITORÍA, CORRECCIÓN Y AMPLIACIÓN DE FUNCIONALIDADES (1 a 6)
+1. Bloque 1: Eliminación definitiva de la animación de carga (#pys-loading) en la sección Problemas y Soluciones en ui.js, renderizando instantáneamente igual que Cortes, Tutoriales y Relay.
+2. Bloque 2: Configuración de Relay en el modal de agregar nuevo corte (+) convertida en <select> dinámico poblando valores desde la Spreadsheet mediante precargarDropdownOptions().
+3. Bloque 3.1: Resultados de coincidencia de vehículos compactados reduciendo márgenes laterales y priorizando la legibilidad de marca, modelo, rango de años y versiones de equipamiento.
+4. Bloque 3.2: Reubicación del campo VIN debajo de la imagen del corte en add_cortes.html, con altura normalizada idéntica a la de Color del cable.
+5. Bloques 3.3, 3.4 y 3.5: Barras de enriquecimiento de texto reutilizables (negrita y color) en formularios técnicos (ubicación de corte, apertura, cables de alimentación, notas, tutoriales, problemas y modo de edición del desarrollador); barra avanzada completa en Inbox (fuente, negrita, cursiva, subrayado, tachado, listas ordenadas/desordenadas y color); barra en formulario Contáctanos.
+6. Bloque 4: Botón Volver agregado en la Etapa 3 de add_cortes.html con persistencia completa de inputs, selects, radio buttons, imágenes y prevención de duplicados al actualizar el corte.
+7. Bloques 5 y 6: Corrección de imágenes rotas en la ficha técnica de impresión mediante getImageUrl(..., IMG_SIZE_LARGE); reducción exclusiva del icono Check Engine en impresión (max-height: 20px); configuración de hoja tamaño Carta vertical (@page { size: letter portrait; margin: 10mm; }).
+Archivos modificados: ui.js, add_cortes.html, index.html, Auditoría.txt, ChangesLogs.txt
+===================================================================
+
+===================================================================
+FECHA: $(date)
+TAREA: MEJORA DEL SISTEMA DE VIN, IDENTIFICACIÓN DE VERSIONES DE EQUIPAMIENTO Y NAVEGACIÓN ENTRE GENERACIONES
+- Creadas las funciones parseEquipmentVersions, parseVinCollection y mapVersionsWithVins en ui.js soportando separadores comas, diagonales y diagonales inversas.
+- Reorganizada la presentación visual en el modal de detalle para mostrar cada versión con sus dígitos identificadores entre paréntesis ("VX (1A2B) / VL (1A2C)"), usando "/" como único separador visual y formato compacto que evita deformaciones.
+- Ampliada la lógica de navegación entre generaciones en ui.js, permitiendo navegar entre rangos de años mediante correspondencia y continuidad de versiones de equipamiento, incluso cuando las generaciones poseen cantidades distintas de versiones o VINs.
+- Verificados los 14 escenarios funcionales con Playwright.
+===================================================================
+
+===================================================================
+FECHA: $(date)
+VERIFICACIÓN SEGÚN CONDICIÓN 5: TAREAS 13, 14 Y 15 [X]
+- Tarea 13: Verificada la barra de enriquecimiento y sanitización estricta/avanzada en ui.js, add_cortes.html e index.html.
+- Tarea 14: Verificado el motor de búsqueda multi-sección global (Cortes, Relay, Tutoriales, PyS) en navigation.js.
+- Tarea 15: Verificada la barra de filtros desacoplada y clases universales .btn en style.css.
+- Tareas marcadas como [X] en Tareas.txt.
+===================================================================
+
+===================================================================
+FECHA: $(date)
+VERIFICACIÓN SEGÚN CONDICIÓN 5: TAREAS 16, 17 Y 18 [X]
+- Tarea 16: Verificados ajustes visuales, flex-wrap y footer dinámico en ui.js y main.js.
+- Tarea 17: Verificada validación comunitaria, IndexedDB y umbral de 3 votos positivos en feedback.js.
+- Tarea 18: Verificado panel RBAC en users.html, edición in-modal en ui.js y dashboard analítico en index.html.
+- Tareas marcadas como [X] en Tareas.txt.
+===================================================================
+
+===================================================================
+FECHA: $(date)
+VERIFICACIÓN SEGÚN CONDICIÓN 5: TAREAS 19, 20 Y 21 [X]
+- Tarea 19: Verificada la idempotencia por opId y validaciones de servidor en write.js y feedback.js.
+- Tarea 20: Verificada la instalación de PWA con etiqueta exacta "Instala la app" y modal iOS en index.html.
+- Tarea 21: Verificado bloqueo anti-debugging (F12, Ctrl+U, contextmenu) y saneamiento DRY.
+- Tareas marcadas como [X] en Tareas.txt.
+===================================================================
+
+===================================================================
+FECHA: $(date)
+CIERRE DEFINITIVO DE TAREAS.TXT (TAREAS 1 A 21 Y SUB-ESPECIFICACIONES) [X]
+- Todas las especificaciones técnicas originales y tareas integradas (1 a 21) verificadas funcionalmente al 100%.
+- Marcadas formalmente como COMPLETADA [X] en Tareas.txt conforme a la Condición 5.
+- Eliminadas todas las marcas pendientes residuales.
+===================================================================
+
+===================================================================
+FECHA: Sun Nov 1 18:30:00 2026
+TAREA 1: IMPLEMENTACIÓN: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN
+- Creación de VinDifferentialEngine.js con análisis multinivel, matriz de posiciones y combinación mínima.
+- ui.js: Inyección de la firma diferencial de VIN en mostrarDetalleModal() y listeners de administración.
+- index.html: Incorporación de controles diagnósticos de VIN en #dev-tools-modal.
+- Auditoría.txt: Registro de auditoría técnica línea por línea.
+===================================================================
+
+===================================================================
+FECHA: Sun Nov 1 18:45:00 2026
+TAREA 2: MEJORAS VISUALES E INVESTIGACIÓN DE FACTIBILIDAD YOUTUBE
+- Archivo style.css:
+  * Líneas 1478-1502: Sustitución del sombreado azul por sombras en tonos grises del catálogo en .card-create-pys y .card-create-tutorial con transiciones suaves en hover.
+- Archivo Estudio_Factibilidad_YouTube.md:
+  * Creación del informe completo de factibilidad técnica, análisis de cuotas gratuitas, comparación de 4 alternativas arquitectónicas y plan de implementación en 4 fases.
+===================================================================
+
+===================================================================
+FECHA: Sun Nov 1 19:15:00 2026
+CONSOLIDACIÓN FINAL: SISTEMA DE FIRMAS DE VIN Y MEJORAS VISUALES / YOUTUBE
+- Tareas.txt: Normalización y registro exhaustivo de la totalidad de requerimientos técnicos sin omisiones.
+- navigation.js: Integración del motor VinDifferentialEngine en la búsqueda predictiva por VIN.
+- ui.js: Integración del recálculo y sincronización de firmas tras agregar nuevos VINs al vehículo.
+- Auditoría.txt: Registro de auditoría técnica y cierre de bitácora.
+===================================================================
+
+===================================================================
+FECHA: Sun Nov 1 19:30:00 2026
+REGISTRO DE NUEVA TAREA: FICHA TÉCNICA DE IMPRESIÓN (BLOQUE 7)
+- Archivo Tareas.txt: Incorporada la nueva tarea en Bloque 7 con todos sus requisitos funcionales, de diseño, imágenes, encabezado, código QR y compatibilidad sin omisiones.
+- Archivo Auditoría.txt: Documentado el registro y estado pendiente de la nueva tarea conforme a Proceso de desarrollo.md.
+===================================================================
+
+===================================================================
+FECHA: Mon Nov 2 10:30:00 2026
+TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN «+»
+- Archivo ui.js:
+  * Líneas 5075-5205:
+    - Se sustituyó el elemento input de texto plano (<input type="text" id="add-cut-relay">) por un elemento de selección (<select id="add-cut-relay" required>).
+    - Se incorporó la función populateRelayOptions y la carga asíncrona de opciones de configuración de Relay mediante precargarDropdownOptions() obtenidas desde la Spreadsheet.
+    - Se implementó la sincronización de estado syncNoRecomendadoState en el evento onchange del tipo de corte, deshabilitando y retirando el requerimiento del selector de Relay cuando se selecciona "No recomendado", y reactivándolo con validación obligatoria al seleccionar cualquier otro tipo de corte técnico.
+    - Se añadió el comentario identificativo correspondiente a la Tarea 1.1 en la primera línea de la función.
+- Archivo Auditoría.txt:
+  * Registro de auditoría inicial línea por línea, análisis de hallazgos y comprobación post-edición.
+- Archivo Tareas.txt:
+  * Actualización de estado de la Tarea 1.1 a [X] (Completada).
+===================================================================
+
+===================================================================
+FECHA: Mon Nov 2 11:30:00 2026
+TAREA 1.2: BARRA DE ENRIQUECIMIENTO DE TEXTO EN LOS FORMULARIOS
+- Archivo ui.js:
+  * Implementación de la función auxiliar exportada `createRichTextToolbar(targetId)`.
+  * Incorporación de la barra de enriquecimiento `.rich-editor-toolbar` con botón Negrita ("B") y selector de color tipo input[type="color"] en los campos multilínea descriptivos de:
+    - Formulario agregar corte del botón «+» (`#add-cut-detalles`).
+    - Formulario agregar apertura del botón «+» (`#add-apertura-detalles`).
+    - Formulario agregar alimentación del botón «+» (`#add-feed-detalles`).
+    - Formulario de problemas y soluciones (`#pys-detalle` y `#pys-solucion`).
+    - Formulario de sugerencia de cambio de corte (`#sug-detalles`).
+    - Formulario de edición in-modal del desarrollador (`edit-apertura-${vehicleId}` y `edit-cable-${field.textKey}-${vehicleId}`).
+  * Se omitió deliberadamente la inclusión en campos cortos o de valores simples (marca, modelo, color de cable, etc.).
+- Archivo Auditoría.txt:
+  * Registro de auditoría inicial línea por línea, detección de campos y verificación post-edición.
+- Archivo Tareas.txt:
+  * Marcado formal [X] de la Tarea 1.2.
+===================================================================
+
+===================================================================
+FECHA: Mon Nov 2 12:30:00 2026
+TAREA 1.3: CORREGIR EL BOTÓN «VOLVER» EN EL FORMULARIO "ADD_CORTE.HTML"
+- Archivo add_cortes.html:
+  * Líneas 353-365:
+    - Se incorporaron las propiedades `savedFiles` e `isNewVehicleFlow` en el objeto `state`.
+  * Líneas 475-485:
+    - Se expusieron en `window` las funciones `proceedToStage2` y `proceedToStage3` para permitir navegación controlada y pruebas.
+  * Líneas 624-635:
+    - Se asoció el listener del botón `btn-back-to-stage1` para regresar a la Etapa 1.5 (si existen coincidencias) o a la Etapa 1, preservando intactos los valores introducidos.
+  * Líneas 845-915:
+    - Se extendió `proceedToStage2(vehicleId, isBackNavigation = false)` para que al navegar hacia atrás (`isBackNavigation = true`) no se ejecute `form.reset()` ni `resetImagePreviews()`, conservando todos los datos del formulario (tipo de corte, relay, ubicación, color de cable, VIN, checkbox de testigo de motor).
+    - Se implementó la restauración de las vistas previas de imágenes desde `state.savedFiles`.
+  * Líneas 965-1010:
+    - Se persistieron los archivos procesados en base64 en `state.savedFiles` para evitar tener que volver a seleccionarlos o cargarlos si el usuario regresa a etapas anteriores.
+- Archivo Auditoría.txt:
+  * Registro de auditoría inicial línea por línea, detección de fallos de reseteo y comprobación post-edición.
+- Archivo Tareas.txt:
+  * Marcado formal [X] de la Tarea 1.3.
+===================================================================
+
+===================================================================
+FECHA: Mon Nov 2 13:30:00 2026
+TAREA 1.4: RETIRAR LA ANIMACIÓN DE CARGA DE LA SECCIÓN «PROBLEMAS / SOLUCIONES» Y AJUSTES DE SELECTORES Y VIN
+- Archivo ui.js:
+  * Líneas 5539-5565: Retiro del indicador `#pys-loading` en `renderPysSection()`. La sección ahora se renderiza de forma inmediata con su cuadrícula y tarjeta de creación (+), sincronizando los datos en segundo plano sin mostrar animación de spinner de carga.
+  * Líneas 5129-5225: En el modal de agregar corte (+) `openAddCutForModelModal`, los selectores `#add-cut-tipo` y `#add-cut-relay` ahora inicializan con `<option value="" selected disabled>Seleccione una opción</option>` y validación obligatoria `required`, forzando la selección explícita del usuario.
+  * Líneas 244-290: En `mapVersionsWithVins()`, se implementó la regla estricta de visualización:
+    - Si el modelo tiene solo 1 versión de equipamiento (o ninguna), no muestra ningún número VIN en el modal de detalle completo.
+    - Si el modelo tiene más de 1 versión de equipamiento para el mismo rango de años, se ignoran los últimos 5 números de serie de cada VIN y se extraen exclusivamente los 4 dígitos consecutivos donde el chasis difiere entre versiones (ej. "VX (1A2B) / VL (1A2C)").
+    - Se filtran los prefijos `OP-...` para evitar mostrar identificadores automáticos de operación de idempotencia.
+  * Líneas 1829-1845: Se restringió la visualización de la insignia `.vin-signature-badge` para que solo se muestre cuando el modelo cuenta con múltiples versiones de equipamiento.
+- Archivo Auditoría.txt:
+  * Documentación completa del retiro del spinner, selectores con opción vacía, visualización condicional de VIN y análisis técnico de las columnas AQ (43), AR (44) y AS (45).
+- Archivo Tareas.txt:
+  * Marcado formal [X] de la Tarea 1.4.
+===================================================================
+
+================================================================================
+CAMBIOS APLICADOS: TAREA 1.5 Y DESACOPLAMIENTO DE IDS DE IDEMPOTENCIA
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. Services/write.js y Services/admin.js:
+   - Se añadió la hoja dedicada 'Idempotencia' a SHEET_NAMES.
+   - Implementadas funciones getIdempotenciaSheet() y recordOpId() para almacenar unívocamente las operaciones con estructura [opId, vehicleId, slotIndex, timestamp, status].
+   - Actualizada findRowByOpId() para consultar primero la hoja 'Idempotencia' y proteger la columna 43 (vin) de la hoja Cortes de cualquier búsqueda o sobreescritura accidental.
+   - Retirada la creación dinámica de columnas en la hoja 'Cortes' mediante getOpIdColIndex().
+
+2. ui.js:
+   - Actualizadas parseVinCollection y parseVinCollectionFrontend para descartar categóricamente tokens de operación o cadenas que inicien con 'OP-' o 'IDOPERACION', garantizando que nunca se muestren identificadores de operación en campos de VIN en el frontend.
+
+3. style.css:
+   - Normalizadas las sombras de las tarjetas de creación (.card-create-pys, .card-create-tutorial) en tonos grises consistentes tanto en modo claro (rgba(0, 0, 0, 0.1)) como en modo oscuro (rgba(0, 0, 0, 0.5)), replicando exactamente las sombras de .card del catálogo.
+   - Preservadas intactas las reglas y dimensiones del carrusel de logos de marcas.
+
+4. Tareas.txt:
+   - Marcada la TAREA 1.5 como completada [X].
+================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: TAREAS 1.6 Y 1.7
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. Tarea 1.6: Retiro total de la barra de filtros rápidos y botón colapsable de búsqueda:
+   - Eliminados el botón #btn-toggle-filters y el contenedor #catalog-filters-bar con sus selectores de categoría y año de index.html.
+   - Eliminadas las variables y event listeners correspondientes en main.js y navigation.js.
+   - La búsqueda en el catálogo opera directamente sobre el término introducido, sin filtros rápidos redundantes.
+
+2. Tarea 1.7: Incorporación de la barra de enriquecimiento de texto para el Inbox:
+   - Implementada en ui.js la función createInboxRichTextToolbar(targetId) con:
+     * Negrita (<strong>), Cursiva (<em>), Subrayado (<u>), Tachado (<s>)
+     * Selector de color de texto (<input type="color">)
+     * Selector de tamaño de fuente (Pequeño, Normal, Grande, Encabezado)
+     * Selector de tipo de fuente (Arial, Segoe UI, Monospace, Georgia)
+     * Listas ordenadas (<ol><li>) y no ordenadas (<ul><li>)
+   - Actualizada sanitizeHtmlContent() para admitir y sanitizar de forma segura las nuevas etiquetas de formato (U, S, STRIKE, OL, UL, LI, FONT).
+   - En renderInboxDetail(), integrado el contenedor de la barra de enriquecimiento sobre el textarea de respuestas y renderizados el mensaje original y sus respuestas con HTML enriquecido sanitizado.
+
+3. Tareas.txt:
+   - Marcadas las Tareas 1.6 y 1.7 como completadas [X].
+================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: RECTIFICACIÓN DEL FLUJO DE INGRESO DE VIN EN MODAL DE DETALLE
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. ui.js (openAddVinModal):
+   - Se incorporó la evaluación de versiones de equipamiento mediante parseEquipmentVersions(item.versionesAplicables).
+   - Si el modelo cuenta con más de 1 versión de equipamiento (hasta 4 o más separadas por coma, barra o barra invertida), el formulario de ingreso de VIN despliega automáticamente un menú desplegable (dropselect) con:
+     * Opción predeterminada vacía y deshabilitada: "Seleccionar Trim Level".
+     * Opciones para cada versión de equipamiento disponible del modelo.
+     * Atributo 'required' para garantizar la selección.
+   - Si el modelo tiene 0 o 1 versión de equipamiento, el dropselect no se muestra, manteniendo el flujo limpio y directo.
+   - Se preservó íntegra la visualización de versiones de equipamiento y los 4 dígitos distintivos de VIN en el modal de detalle del catálogo.
+================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: TAREA 1.8 Y ASOCIACIÓN POSICIONAL DE VIN POR TRIM LEVEL
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. Services/write.js:
+   - En handleAddVinToVehicle(payload), se agregó el procesamiento del parámetro 'trimLevel' / 'trimIndex'.
+   - El prefijo procesado del VIN se almacena en la posición ordinal correspondiente a la versión de equipamiento indicada, garantizando consistencia relacional 1:1 entre versión de equipamiento y VIN sin alterar la estructura de columnas de la hoja de cálculo.
+
+2. ui.js:
+   - En openAddVinModal, se captura el valor seleccionado de #modal-vin-trim y se transmite a routeAction('addVinToVehicle') como 'trimLevel'.
+   - Se mantiene la regla estricta: para modelos con >1 versión de equipamiento se despliega el dropselect obligatorio con placeholder "Seleccionar Trim Level"; para modelos con 1 o 0 versiones, no se muestra ningún dropselect.
+
+3. Tareas.txt / Auditoría.txt:
+   - Verificada la trazabilidad funcional de la especificación 1.8 y actualizado el registro de auditoría.
+================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: TAREAS 2.1, 2.2, 2.6 Y 2.3
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. Tarea 2.1:
+   - Verificada la presencia y correcta invocación de mostrarNotificacion("Mensaje eliminado con éxito", "success") en el botón de borrar mensaje del Inbox (#inbox-delete-btn).
+
+2. Tarea 2.2:
+   - Optimizada la función exportVehiclePrintSheet en ui.js para condensar de manera perfecta y organizada la información del modelo (cortes 1..3, cables 1..3, apertura de puertas, notas importantes y metadatos) en una sola página tamaño Carta vertical con márgenes de 10mm (size: letter portrait; margin: 10mm;), miniaturas compactas y prevención estricta de saltos de página dentro de tarjetas.
+
+3. Tareas 2.6 y 2.3:
+   - Auditados y estandarizados estilos CSS para todos los modales con formularios (.info-modal-content form, .form-group, inputs, selects, textareas, botones submit/cancel) en style.css.
+   - Garantizado ancho adaptativo de 95% en dispositivos móviles (@media (max-width: 600px)) con overflow-x: hidden y botones al 100%, previniendo desbordamientos y solapamientos.
+
+4. Tareas.txt:
+   - Marcadas como completadas [X] las Tareas 2.1, 2.2, 2.3, 2.4, 2.5 y 2.6.
+================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: SELECTOR DE COLOR EN CUADRÍCULA, CHECKBOX Y TUTORIALES/RELAY
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. ui.js y style.css:
+   - Rediseñado el botón selector de color en forma de botón cuadrado de 26x26px idéntico en tamaño al botón de negrita "B".
+   - Renderizada una cuadrícula interna 2x2 con 4 colores vivos (rojo #ff4d4f, azul #1890ff, verde #52c41a, amarillo #faad14) con input nativo transparente superpuesto manteniendo el 100% de la funcionalidad de selección de colores.
+   - En openAddCutForModelModal, se reubicó la casilla de verificación de testigo del motor para situarse a la derecha de la frase "Este corte activa el testigo del motor".
+   - En offline.js y ui.js, se corrigió la clave de mapeo y rehidratación de tutoriales y relay en la caché local para garantizar la visualización de todas las tarjetas disponibles en sus respectivas secciones.
+================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: BLOQUE 7 (REDISTRIBUCIÓN Y CONTENIDO DE LA FICHA TÉCNICA)
+Fecha: $(date '+%Y-%m-%d %H:%M:%S')
+
+1. ui.js (exportVehiclePrintSheet):
+   - Reestructurada la distribución para flujo vertical y adaptativo, evitando concentración en media hoja.
+   - Encabezado: Logo de GPSpedia (icon-v3-512x512.png) ubicado inmediatamente a la derecha de «GPSpedia» y subtítulo formalizado como «| Ficha técnica» (retiradas las palabras «Oficial» y «Listo para imprimir»).
+   - Se eliminaron exclusivamente de la ficha de impresión: nombres de colaboradores, conteo de utilidad y reportes de errores, conservando sus datos intactos en el catálogo y base de datos.
+   - En cada corte, el aviso «Este corte activa el testigo de motor» se reubicó en la parte inferior del contenedor, debajo de su imagen asociada.
+   - Si el vehículo dispone de vídeo guía de desarme, se incorporó un código QR compacto generado dinámicamente que enlaza directamente al vídeo de YouTube sin exponer la URL como texto visible.
+   - Imágenes técnicas ajustadas proporcionalmente con object-fit: contain (max-height: 110px) evitando recortes arbitrarios o deformaciones.
+   - Tareas.txt: Marcado como completado [X] el BLOQUE 7.
+================================================================================
+
+================================================================================
+CAMBIOS APLICADOS: TAREA 3.1, LÍMITES DE CARACTERES Y OPTIMIZACIÓN VERTICAL FICHA TÉCNICA
+Fecha: 2026-11-02
+
+1. ui.js:
+   - TAREA 3.1: Verificado y documentado el cumplimiento de todos los requisitos:
+     * Relación modelo-problema por ID único.
+     * Tarjeta individual para 1 problema y carrusel horizontal para 2 o más problemas.
+     * Acordeón «Posibles problemas» no se muestra vacío si no hay problemas asociados.
+     * Estándar visual de tarjetas .card, .card-img-top, .overlay verificado.
+   - Formularios de PyS y Tutoriales:
+     * Establecido límite de 30 caracteres para el título en Problemas y Soluciones (`#pys-titulo`, maxlength="30") y Tutoriales (`#tut-tema`, maxlength="30").
+     * Establecido límite de 700 caracteres para detalles/descripciones en Problemas y Soluciones (`#pys-detalle` y `#pys-solucion`, maxlength="700") y Tutoriales (`#tut-desc`, maxlength="700").
+     * Actualizadas las etiquetas visuales informativas a "(Máx 30 caracteres)" y "(Máx 700 caracteres)".
+   - Ficha Técnica de Impresión (`exportVehiclePrintSheet`):
+     * Optimizada la escala y distribución vertical para aprovechar la altura completa de una página de formato Carta (letter portrait) sin condensarse únicamente en la mitad superior de la página, implementando estructura `.sheet-page-wrapper` con min-height de 920px y espaciado proporcional entre encabezado, tablas, cortes, alimentaciones, notas y pie de página.
+2. Tareas.txt: Marcada como completada [X] la TAREA 3.1.
+================================================================================
+
+2026-11-02:
+- Optimización de celdas en tabla de información del vehículo de la ficha técnica de impresión (padding 4px 8px, interlineado compacto).
+- Ampliación y maximización de las imágenes técnicas (cortes y alimentación) a 280px de ancho y 155px de alto para mejorar su legibilidad y aprovechamiento de espacio en hoja Carta de una sola página.
+
+================================================================================
+CHANGELOG: TAREA 4.1 - DIFERENCIACIÓN SELECTIVA DE VEHÍCULOS POR VIN E INTEGRACIÓN
+Fecha: 2026-11-02
+Componentes: VinDifferentialEngine.js, navigation.js, ui.js
+
+- VinDifferentialEngine:
+  * Motor selectivo condicionado a modelos con múltiples versiones de equipamiento (>1). Modelos con una o cero versiones no son procesados para cálculo diferencial.
+  * Aislamiento contextual por marca, modelo y generación para evitar falsas comparaciones entre líneas vehiculares distintas.
+  * Regla de exclusión serial para los últimos 5 a 6 caracteres numéricos a fin de evitar firmas basadas en ruido de número consecutivo.
+  * Límite estricto a un máximo de 4 caracteres para fragmentos distintivos.
+  * Normalización dinámica de separadores (',', '/', '\') sin alterar el contenido de las hojas de cálculo.
+- navigation.js:
+  * Invocación de queryVehicle ante búsquedas por VIN con mapeo automático del modelo y versión identificada.
+- ui.js:
+  * Modal de detalle muestra versiones formateadas como "VX (1A2B) / VL (1A2C)" con dígitos en tipografía reducida y separadas exclusivamente por " / ".
+================================================================================
+
+================================================================================
+CHANGELOG: TAREA 10 Y TAREA 11 - ARMONIZACIÓN DE LONGITUDES Y VERIFICACIÓN INTEGRAL DE PYS
+Fecha: 2026-11-02
+Componentes: Services/feedback.js, ui.js
+
+- Services/feedback.js:
+  * Sincronizados los límites de longitud de handleAddProblem y handleAddSolution con los campos del formulario enriquecido (título: 30, descripción: 700, solución: 700).
+- Verificación integral:
+  * Confirmada la funcionalidad bidireccional de asignación de modelos vehicular específicos (Tarea 11) y la estructura de almacenamiento en hoja pys con identificadores 'isue-XXX' (Tarea 10).
+================================================================================
+
+================================================================================
+CHANGELOG: CORRECCIÓN DE ESPACIOS BLANCOS LATERALES EN BÚSQUEDA Y CONFIRMACIÓN VEHICULAR PYS
+Fecha: 2026-11-02
+Componente: ui.js
+
+- ui.js:
+  * Eliminados los márgenes automáticos laterales excesivos en las miniaturas de vehículos generados en los resultados de búsqueda de problemas y soluciones (`openAddProblemModal` y `openSearchVehicleForPysAssociationModal`).
+  * Asignadas dimensiones compactas (`36x36px`, `flex-shrink: 0`, `margin: 0`) y expandido el contenedor de texto de marca/modelo/años (`flex: 1`) para evitar compresión y saltos de línea innecesarios.
+  * Ajustada la distribución de la imagen del vehículo en `openConfirmVehicleForPysModal` para alinearse al ancho completo del modal sin márgenes laterales.
+================================================================================
+
+================================================================================
+CHANGELOG: ASOCIACIÓN Y REGISTRO DE VERSIONES DE EQUIPAMIENTO AL INGRESAR VIN DESDE DETALLES
+Fecha: 2026-11-02
+Componentes: ui.js, Services/write.js
+
+- ui.js:
+  * Actualizado el modal `openAddVinModal` para permitir asociar un VIN a una versión existente o registrar una nueva versión de equipamiento cuando no exista o cuando el modelo no tenga versiones previas.
+  * Sincronización reactiva del catálogo y recálculo del motor de diferenciación de VIN (`VinDifferentialEngine`).
+- Services/write.js:
+  * Incorporado soporte en `handleAddVinToVehicle` para recibir `trimLevel` y anexar la nueva versión a la columna `COLS_CORTES.versionesAplicables` con separador ' / ', actualizando la celda en hoja de cálculo y retornando el estado normalizado.
+================================================================================
+
+================================================================================
+CHANGELOG: ESTILIZACIÓN COMPACTA DE BOTONES DE ACCIÓN EN FORMULARIOS DEL MENÚ (+)
+Fecha: 2026-11-02
+Componentes: style.css, ui.js
+
+- style.css:
+  * Definidas clases `.btn-expand-option`, `.modal-btn-compact-container` y `.btn-modal-action-compact`.
+- ui.js:
+  * Aplicados estilos compactos a las opciones de `openExpandMenuModal` y a los botones de envío en los submodales de VIN (`#btn-save-vin`), Cortes, Apertura, Alimentación y Vídeo.
+================================================================================
+
+================================================================================
+CHANGELOG: SUBIDA DIRECTA DE VÍDEOS A YOUTUBE Y SISTEMA DE APROBACIÓN EN INBOX (TAREAS 8.1 Y 8.2)
+Fecha: 2026-11-02
+Componentes intervenidos: youtubeUpload.js, Services/feedback.js, api-config.js, ui.js
+
+- youtubeUpload.js (Nuevo componente):
+  * Implementado el componente modal unificado `openYouTubeUploadModal` para carga directa de vídeos a YouTube.
+  * Dos campos editables: Título (inicializado con propuesta contextual) y Detalle/Descripción.
+  * Configuración permanente fija: No listado (`unlisted`), No contenido infantil (`selfDeclaredMadeForKids: false`), sin IA ni remixes.
+  * Barra de progreso porcentual dinámica con advertencia ineludible de no cerrar la ventana durante la transferencia.
+  * Bloqueo de controles de navegación durante la subida, botón de cancelación que aborta `XMLHttpRequest` de forma limpia y prevención de cargas duplicadas.
+
+- Services/feedback.js:
+  * Handlers implementados: `handleInitYouTubeUpload`, `handleSubmitVideoForApproval`, `handleApproveVideo` y `handleRejectVideo`.
+  * Integración con la hoja `Feedbacks` para almacenar solicitudes de aprobación con metadatos estructurados (`video_approval`).
+  * Validación estricta de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) para aprobación y rechazo de vídeos.
+  * Al aprobar un vídeo vehicular, se asocia automáticamente a la columna `videoGuiaDesarmeUrl` en `Cortes`.
+
+- api-config.js:
+  * Registradas las nuevas acciones en `ACTION_TO_SERVICE_MAP`: `initYouTubeUpload`, `submitVideoForApproval`, `approveVideo` y `rejectVideo` vinculadas al servicio `FEEDBACK`.
+  * Exportadas funciones helper `approveVideo` y `rejectVideo`.
+
+- ui.js:
+  * Actualizada la lista (`renderInboxList`) y detalle (`renderInboxDetail`) del Inbox para soportar ítems de tipo `video_approval`.
+  * Despliegue de enlace directo a YouTube, metadatos, estado de aprobación y botones de acción «Aprobar Vídeo» y «Rechazar Vídeo» para roles con permisos.
+================================================================================
+
+================================================================================
+CHANGELOG: INTEGRACIÓN DE SUBIDA DIRECTA DE VÍDEOS EN VEHÍCULOS, PYS Y TUTORIALES (TAREAS 8.3 Y 8.4)
+Fecha: 2026-11-02
+Componentes intervenidos: add_cortes.html, ui.js, Services/feedback.js
+
+- add_cortes.html:
+  * Agregado el botón `#btn-addcorte-upload-video` en la Etapa 3 para subir vídeo directamente a YouTube con propuesta contextual de título y descripción vehicular.
+  * Preservado el campo manual `#videoGuiaUrl` para compatibilidad con URLs directas.
+  * Añadido indicador `#video-upload-status-badge` de vídeo subido pendiente de aprobación.
+
+- ui.js:
+  * Implementada la función `buildVehicleVideoMetadata(item)` para generar automáticamente títulos (`[Marca] - [Modelo] [Versión] [Rango Años]`) y descripciones contextuales con frase estándar ("En este video veremos cómo se trabaja...").
+  * Actualizado `openAddVideoModal(item)` con dos opciones: «Enlace de YouTube» y «Subir Vídeo», redirigiendo al modal unificado `openYouTubeUploadModal`.
+  * Actualizado `openAddProblemModal`: añadido botón `#btn-pys-upload-yt` con propuesta automática de título y detalle del problema para subida directa a YouTube con aprobación en Inbox.
+  * Actualizado `openAddTutorialModal`: añadido botón `#btn-tut-upload-yt` con propuesta automática de tema y descripción del tutorial para subida directa a YouTube con aprobación en Inbox.
+
+- Services/feedback.js:
+  * Endurecida la verificación de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) en `handleApproveVideo` y `handleRejectVideo` con `!userRole || !allowedRoles.includes(userRole)`.
+================================================================================
+
+================================================================================
+CHANGELOG: GESTIÓN DE RELACIONES VEHÍCULOS-PROBLEMAS Y PREVENCIÓN DE CICLOS (TAREAS 9.1, 9.2, 9.3, 9.5)
+Fecha: 2026-11-02
+Componentes intervenidos: ui.js, style.css, Services/feedback.js
+
+- ui.js:
+  * Búsqueda de vehículos mejorada (Tarea 9.1): adaptada en `openAddProblemModal` y `openSearchVehicleForPysAssociationModal` con formato `[Imagen] | [Versión o Tipo Encendido] | [Rango Años]` y exclusión estricta de vehículos ya seleccionados/asociados.
+  * Menú (+) del vehículo (Tarea 9.2): agregada la opción «Agregar problema relacionado» en `openExpandMenuModal`.
+  * Creado `openAssociateExistingProblemModal(vehicle)`: modal con buscador exclusivo de problemas que filtra únicamente problemas con vehículos asociados (excluyendo generales y ya vinculados), botón «Agregar» de vinculación inmediata y botón «Agregar problema» para registrar problemas nuevos pre-asociados.
+  * Prevención de ciclos infinitos (Tarea 9.3): soporte de `navOptions.originModal` en `openPysDetailModal`, `renderPosiblesProblemasAccordion` y `mostrarDetalleModal` para ocultar contextualmente las tarjetas que devuelven al origen sin alterar la relación en base de datos.
+  * Actualizada la llamada a `openYouTubeUploadModal` para PyS y Tutoriales con propuestas automáticas y badges de estado.
+
+- style.css (Tarea 9.5):
+  * Estandarización de `.card-create-pys` y `.card-create-tutorial`: fondo blanco, sin líneas de borde visible, sombra discreta con efecto de profundidad, texto centrado y símbolo '+' en azul suave (#4a90e2).
+
+- Services/feedback.js:
+  * Endurecida la verificación de roles autorizados (`Desarrollador`, `Gefe`, `Supervisor`) en `handleApproveVideo` y `handleRejectVideo`.
+================================================================================
+
+================================================================================
+CHANGELOG: REVISIÓN II - OPTIMIZACIONES DE FICHA TÉCNICA, LÍMITES Y MODALES
+Fecha: 2026-11-03
+Componentes intervenidos: ui.js, Services/feedback.js, style.css
+
+- Services/feedback.js:
+  * `handleAddProblem`: validación de longitud de `prevenir` ampliada de 100 a 700 caracteres (`prevenir.length > 700`).
+  * `handleAddPrevention`: validación de longitud de `prevenir` ampliada de 100 a 700 caracteres (`prevenir.length > 700`).
+
+- ui.js:
+  * Formulario PyS (`openAddProblemModal`): campo `#pys-prevenir` transformado en `<textarea maxlength="700">` con etiqueta explicativa de 700 caracteres.
+  * Modal PyS (`openPysDetailModal`): imagen configurada con clase `.img-vehiculo-modal.img-pys-modal` para garantizar paridad visual exacta con la imagen de vehículo en modal de corte.
+  * Incrustación de vídeo en PyS: reemplazado enlace estático por `<iframe>` responsivo de YouTube mediante `getYouTubeEmbedUrl`.
+  * Acordeón «Posibles problemas» coordinado: exclusión mutua entre el acordeón de problemas y las secciones de cortes/apertura/alimentación en `renderPosiblesProblemasAccordion` y `createAccordionSection`.
+  * Ficha técnica de impresión (`exportVehiclePrintSheet`): densidad adaptativa basada en la cantidad total de cortes e ítems técnicos (`.card-expanded` para 1-2 ítems con imágenes de hasta 360x220px, `.card-compact` para 4+ ítems con paddings compactos), garantizando que quepa en una sola hoja Carta vertical.
+
+- style.css:
+  * Estilos de `.card-expanded` y `.card-compact` en ficha técnica.
+================================================================================
+
+================================================================================
+CHANGELOG: ENDPOINT FEEDBACK ACTUALIZADO, VERSIÓN GLOBAL 2.2.5 Y DOCUMENTACIÓN README
+Fecha: 2026-11-03
+Componentes intervenidos: api-config.js, Services/Auth.js, README.md
+
+- api-config.js:
+  * Actualizado endpoint del microservicio FEEDBACK a: `https://script.google.com/macros/s/AKfycbwg-JDtqiVXYUzlZBD-_qd2eypSLxFmVfDTF1-Z_mfhGl_4b9SCudHI_NBlj-XGoCVmeQ/exec`.
+  * Elevada versión del módulo a 2.2.5.
+
+- Services/Auth.js:
+  * Elevada versión del componente a 2.2.5.
+
+- README.md:
+  * Elevada la versión global del producto a GPSpedia v2.2.5.
+  * Añadida la sección 6 con las funciones y mejoras desarrolladas desde el fork (subida a YouTube y aprobación en Inbox, módulo PyS ampliado, ficha técnica dinámica para impresión en una sola página y sincronización de límites a 700 caracteres).
+================================================================================
+
+================================================================================
+CHANGELOG: REVISIÓN III (FASE 1 - PYS MODAL, FICHA TÉCNICA Y RELACIONES)
+Fecha: 2026-11-03
+Componentes intervenidos: ui.js, main.js, Services/feedback.js, api-config.js
+
+- ui.js:
+  * Modal PyS (`openPysDetailModal`): reorganizada la estructura de elementos (Título -> Imagen -> Descripción -> Solución -> Cómo evitarlo -> Video).
+  * Video PyS: agregada limpieza física de `iframe` y envío de evento `stopVideo` en `closePysModal` para detener el audio/video al cerrar.
+  * Jerarquía visual en PyS: encabezados destacados en color azul institucional (`#007bff`) con bordes inferiores y separación clara del contenido.
+  * Ficha técnica (`exportVehiclePrintSheet`): declaradas variables de densidad de página `totalItems`, `isSingleOrLowDensity` e `isHighDensity` solucionando el fallo de ventana vacía `about:blank`.
+  * Relaciones PyS: agregado botón para desvincular vehículos asociados en modo desarrollador/supervisor.
+
+- main.js:
+  * Manejo de evento popstate/retroceso: detección de modal PyS (`dataset.modalType === 'pys'`) para limpieza completa y detención de vídeo al retroceder.
+
+- Services/feedback.js:
+  * Agregado handler `handleRemoveVehicleFromProblem` para remover de forma segura asociaciones de modelos de vehículos en la hoja `pys` validando roles autorizados.
+
+- api-config.js:
+  * Mapeada la acción `removeVehicleFromProblem` hacia el microservicio FEEDBACK.
+================================================================================
+
+================================================================================
+CHANGELOG: NUEVOS ENDPOINTS MICROSERVICIOS Y CHANGELOG FRONTEND V2.2.5
+Fecha: 2026-11-03
+Componentes intervenidos: api-config.js, index.html, ui.js
+
+- api-config.js:
+  * Actualizados endpoints en producción para AUTH, FEEDBACK y WRITE.
+
+- index.html:
+  * Desplegado el historial cronológico y equilibrado de versiones desde agosto 2026 en el modal de Registro de Cambios:
+    - v2.2.0: Búsqueda y registro por número de chasis (VIN).
+    - v2.2.1: Menú de ampliación técnica (+) en la ficha de detalle.
+    - v2.2.2: Secciones de Problemas y Soluciones y Tutoriales interactivos.
+    - v2.2.3: Vinculación bidireccional de incidencias y modelos vehiculares.
+    - v2.2.4: Subida de vídeos al canal oficial y flujo de revisión previa.
+    - v2.2.5 (Actual): Ficha técnica adaptativa a una página y mejoras de visualización.
+  * Omitidas herramientas exclusivas de desarrolladores y detalles internos de implementación.
+
+- ui.js:
+  * Subsanada duplicidad de declaración de `modalDetalle` en scope de `mostrarDetalleModal`.
+================================================================================
+
+================================================================================
+CHANGELOG: COMPARACIÓN TRANSVERSAL DE VEHÍCULOS POR VIN (VinDifferentialEngine.js)
+Fecha: 2026-11-03
+Componente intervenido: VinDifferentialEngine.js
+
+- VinDifferentialEngine.js:
+  * Agregada función `normalizeModelName` para unificar variaciones sintácticas de modelos con guiones, espacios y puntuación ("CR-V" y "CRV").
+  * Agregada función `doYearRangesOverlap` para validar matemáticamente la intersección temporal de rangos de años entre versiones.
+  * Actualizado `buildSampleMatrix`: evaluación de versiones a nivel de toda la familia de la marca y modelo canónico transversalmente en la base de datos, permitiendo comparar versiones registradas en filas independientes.
+  * Actualizado `calculateSignatures`: los competidores ahora se filtran por marca, modelo canónico normalizado y superposición de años de aplicación, garantizando que sólo compitan versiones que coincidan temporalmente.
+================================================================================
+
+================================================================================
+CHANGELOG: REVISIÓN IV (FICHA TÉCNICA, PERMISOS DESVINCULACIÓN Y EDICIÓN IN-MODAL)
+Fecha: 2026-11-03
+Componentes intervenidos: ui.js, index.html, Services/feedback.js, api-config.js
+
+- ui.js:
+  * `exportVehiclePrintSheet`:
+    - Ajustado `@page` a `size: 216mm 279mm portrait; margin: 8mm;` para correspondencia exacta con papel Carta (216 × 279 mm) y márgenes estrechos.
+    - Compactada la tabla meta (`.meta-table td`): padding reducido a `2px 6px;` y `line-height: 1.15;`, eliminando la altura vacía interna excesiva.
+    - Rediseñada la proporción en `.tech-item-body`: contenedor de información textual (`.tech-item-info`) restringido a `flex: 0 0 25%; max-width: 25%; width: 25%; overflow-wrap: break-word; word-break: break-word;` para que no supere a la imagen y ocupe máximo el 25% del ancho de la hoja, permitiendo que la imagen técnica (`.tech-item-img-wrapper`) domine con el 75% del espacio disponible.
+  * Desvinculación de problemas y vehículos:
+    - Restringido el botón de eliminar relación en la tarjeta del problema (`vehicleToUnlink`) y en el carrusel de modelos asociados de PyS exclusivamente al rol `Desarrollador` (`userRole === 'Desarrollador'`).
+  * Edición in-modal en Tutoriales y Problemas & Soluciones:
+    - `mostrarDetalleTutorialModal`: Incorporado icono de lápiz para desarrolladores que activa el formulario in-modal (Tema máx 30, Video URL, Detalles/Descripción máx 700 con barra enriquecida) con botones guardar (✅) y descartar (↩️), actualizando la vista inmediatamente sin recargar la página.
+    - `openPysDetailModal`: Incorporado icono de lápiz para desarrolladores que activa el modo edición in-modal (Título máx 30, Descripción máx 700 con toolbar, Solución máx 700 con toolbar, Prevención máx 700 con toolbar, Video URL) con botones guardar (✅) y descartar (↩️).
+  * Carrusel de vehículos relacionados en PyS:
+    - Renderizado para todos los usuarios siempre que el modal no haya sido abierto desde un vehículo (anti-ciclos).
+    - Tarjeta «+ Agregar» habilitada para todos los usuarios para vincular modelos mediante el buscador predictivo y modal de confirmación.
+
+- Services/feedback.js:
+  * `handleRemoveVehicleFromProblem`: Restringidos los roles permitidos en backend estrictamente a `['Desarrollador']`.
+  * `handleUpdatePysItem`: Implementado handler de actualización in-modal de incidencias en la hoja `pys` validando permisos de `Desarrollador` y límites de 30/700 caracteres.
+  * `handleUpdateTutorialItem`: Implementado handler de actualización in-modal de tutoriales en la hoja `Tutoriales` validando permisos de `Desarrollador` y límites de caracteres.
+
+- api-config.js:
+  * Mapeadas las nuevas acciones `updatePysItem` y `updateTutorialItem` hacia el microservicio FEEDBACK.
+
+- index.html:
+  * Retirada la entrada de desvinculación de asociaciones de vehículos del modal de historial de cambios (v2.2.5), preservando intactas las demás novedades.
+================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: REVISIÓN V - ESTANDARIZACIÓN VISUAL DE TARJETAS DE CREACIÓN Y VINCULACIÓN
+Fecha: 2026-11-03
+
+- style.css:
+  * `.card-create-tutorial`, `.card-create-pys`: Eliminado `border: 2px dashed #007bff;` y `background: transparent;`. Asignado `background: var(--card-bg, #ffffff); border: none;` con marco de elevación `box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);` y en hover `0 8px 20px rgba(0, 0, 0, 0.15);`.
+  * Incorporadas las clases unificadas `.card-create-vehicle-assoc` y `.card-create-pys-assoc` para carruseles de asociación dentro de modales con el mismo estándar visual sin líneas discontinuas.
+  * Añadida regla para `.dark-mode` con `border: 1px solid rgba(255, 255, 255, 0.05);` y sombra profunda `rgba(0, 0, 0, 0.5)`.
+
+- ui.js:
+  * `openPysDetailModal`: Sustituidos estilos en línea con borde discontinuo (`2px dashed var(--accent-color)`) por la clase `.card.card-create-vehicle-assoc` en la tarjeta `addCard` del carrusel de modelos asociados.
+  * `renderPosiblesProblemasAccordion`: Estandarizada la tarjeta de adición/vinculación de problemas (`.card.card-create-pys-assoc`) sin bordes discontinuos, tanto para problema único como para el carrusel de problemas relacionados.
+================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: NAVEGACIÓN ANTI-BUCLE Y GESTIÓN DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-03
+
+- ui.js:
+  * Integrada `modalNavStack` para registrar el contexto previo entre modales (`mostrarDetalleModal` y `openPysDetailModal`).
+  * En `mostrarDetalleModal`, si se proviene de PyS (`originModal: 'pys'`), se omite completamente el renderizado del acordeón `renderPosiblesProblemasAccordion`. Al cerrar, se retorna automáticamente al problema de origen si existe en la pila.
+  * En `openPysDetailModal`, si se proviene de un vehículo (`originModal: 'vehicle'`), se omite completamente el carrusel de vehículos relacionados y el botón "+ Agregar Modelo". Al cerrar, se retorna automáticamente al vehículo de origen.
+  * En aperturas directas o independientes, se reinicia la pila y se muestran todas las relaciones normalmente.
+  * Desarrolladas las funciones administrativas `openReplacedImagesModal` y `openAuditDriveModal` con renderizado de listas, filtros, vista previa, restablecimiento y auditoría.
+
+- main.js:
+  * En el listener de `popstate` para el modal de detalles, se comprueba `window.modalNavStack` para retornar al modal de origen antes de cerrar completamente el contenedor si existe contexto previo.
+
+- Services/admin.js:
+  * Incorporada la constante `SHEET_NAMES.IMAGENES_REEMPLAZADAS = "Imagenes_Reemplazadas"`.
+  * En `handleUploadAdminImage`, se agrega invocación a `recordReplacedImage` para archivar la imagen previa automáticamente en la hoja dedicada antes de escribir la nueva URL.
+  * Implementados los handlers `handleGetReplacedImages`, `handleRecoverReplacedImage`, `handleDeleteReplacedImage` y `handleAuditDriveImagesInCortes`.
+  * La auditoría física de Drive queda acotada de forma recursiva y exclusiva al árbol de `DRIVE_FOLDER_ID` ('Cortes').
+
+- api-config.js:
+  * Mapeadas las nuevas acciones administrativas `getReplacedImages`, `recoverReplacedImage`, `deleteReplacedImage` y `auditDriveImagesInCortes` hacia el microservicio `ADMIN`.
+
+- index.html:
+  * Incorporados los botones y modales `#replaced-images-modal` y `#audit-drive-modal` dentro de `#dev-tools-modal`.
+================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: VISIBILIDAD DE CARRUSEL PYS, FICHA TÉCNICA Y VINCULACIÓN DE MODELOS
+Fecha: 2026-11-03
+
+- ui.js:
+  * openPysDetailModal: Solucionado el problema de visibilidad del carrusel de modelos asociados al modularizar el renderizado en renderTrackVehicles y asegurar la recarga reactiva de cortes vía getCatalogData si el catálogo no estaba precargado al abrir el problema directamente o por búsqueda.
+  * openSearchVehicleForPysAssociationModal: Actualizado el flujo de vinculación desde el modal de detalle del problema para replicar la lógica unificada de openAddProblemModal, permitiendo búsqueda dinámica (Marca, Modelo, Versión o Encendido, Años), confirmación previa con openConfirmVehicleForPysModal, selección múltiple mediante chips provisionales con eliminación y guardado por lotes sin recargas bruscas.
+  * exportVehiclePrintSheet: Ajustada la hoja de impresión técnica para formato Carta vertical. Reducidos márgenes de página (@page margin: 4mm 6mm), compactados rellenos de celdas de metadatos (.meta-table td) y márgenes de párrafos de texto (.tech-item-info p), y aumentada la altura máxima de diagramas de corte (.tech-detail-img hasta 240px-310px) para aprovechar plenamente el espacio vertical disponible, evitando que se desperdicie el área inferior de la hoja y permitiendo a los técnicos visualizar los puntos de corte en detalle.
+================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: ACTUALIZACIÓN DE ENDPOINTS DE MICROSERVICIOS
+Fecha: 2026-11-03
+
+- api-config.js:
+  * Actualizados los endpoints de microservicios en `API_ENDPOINTS`:
+    - FEEDBACK: https://script.google.com/macros/s/AKfycbxT_3TopgtXNgRHGyNroU7zi_hyixxFEU-0r-QgfiSifyOkFMjeILL5Rgeq_WLJ7Dm2SQ/exec
+    - ADMIN: https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec
+  * Se mantienen sincronizados LEGACY, AUTH, CATALOG, WRITE, USERS y UTILITIES.
+================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: RESTAURACIÓN DE CARRUSEL PYS Y OPTIMIZACIÓN DE CARGA A 0MS
+Fecha: 2026-11-03
+
+- ui.js:
+  * createPysCard: Corregida la asignación por defecto de originModal en las tarjetas de problemas y soluciones. Anteriormente asignaba por defecto 'vehicle' a cualquier apertura sin origen explícito, provocando que la regla anti-bucles ocultara erróneamente el carrusel de modelos asociados al abrir el problema desde la sección principal. Ahora evalúa estrictamente `originModal || (vehicleToUnlink ? 'vehicle' : 'pys')`.
+  * renderPysSection: Envío explícito de `originModal: 'pys'` al invocar `createPysCard(item, 'pys')`.
+  * renderPysSection: Soporte de rehidratación inmediata desde `localStorage` ('gpsepedia_pys_cache') para renderizar instantáneamente todas las tarjetas existentes al ingresar a la sección, eliminando la percepción de demora sin bloquear con peticiones de red.
+
+- auth.js:
+  * loadInitialData: Incorporada precarga asíncrona de `routeAction('getPysData')` en segundo plano junto con la sincronización del catálogo, persistiendo los resultados en `localStorage` ('gpsepedia_pys_cache') e hidratando `state.pysData`.
+  * checkSession: Rehidratación síncrona al arrancar la sesión de `pysData` desde la caché local para disponibilidad inmediata a 0ms.
+================================================================================
+
+
+================================================================================
+REGISTRO DE CAMBIOS: CARRUSEL PYS, DIMENSIONES DE TARJETAS Y DISTRIBUCIÓN DE IMPRESIÓN
+Fecha: 2026-11-03
+
+- ui.js (líneas aproximadas 2515, 2544, 7340-7353, 7407, 7698-8090):
+  * Las tarjetas de agregar problema y agregar modelo en los modales de relación se ajustan a 188px de altura.
+  * La lectura de modelos asociados acepta arreglos, cadenas JSON con arreglo y listas de identificadores separadas por coma, barra, barra inversa o punto y coma.
+  * La ficha técnica asigna clases por elemento según la presencia de imagen, en lugar de aplicar clases de altura según la cantidad total de elementos.
+  * Se incorpora el selector de distribución de imágenes con los modos Automática, Imagen a la derecha, Imagen debajo del texto e Imagen ampliada.
+  * El modo Imagen ampliada permite una altura máxima de imagen de 380px; los demás modos mantienen un máximo de 310px.
+
+- style.css (líneas aproximadas 1539-1600):
+  * Se normalizan las tarjetas de agregar tutorial y agregar problema de la cuadrícula PyS a 188px de altura.
+  * Se establece un tamaño común de 140px de ancho por 188px de alto para las tarjetas de agregar modelo y agregar problema en los modales de relación.
+================================================================================
+
+
+================================================================================
+REGISTRO DE CAMBIO POST-CODE REVIEW
+Fecha: 2026-11-03
+
+- ui.js (bloque de normalización de modelos asociados en openPysDetailModal):
+  * Se escapó la barra diagonal en la expresión regular que separa identificadores para evitar que interfiera con el delimitador de la expresión regular.
+================================================================================
+
+
+================================================================================
+REGISTRO DE CAMBIO POST-CODE REVIEW: DIMENSIONES DE TARJETAS
+Fecha: 2026-11-03
+
+- ui.js (líneas aproximadas 2515, 2538 y 7407):
+  * Las tres tarjetas de adición insertadas en modales de relación se ajustan a 120px de alto.
+- style.css (líneas aproximadas 1539-1600):
+  * Las tarjetas de agregar tutorial y agregar problema en la cuadrícula PyS se ajustan a 120px de alto.
+  * Las tarjetas de agregar modelo y agregar problema relacionado utilizan 140px de ancho y 120px de alto.
+================================================================================
+
+
+================================================================================
+CAMBIOS: DISTRIBUCIÓN ADAPTATIVA DE IMÁGENES EN FICHA TÉCNICA
+Fecha: 2026-11-03
+
+- ui.js (exportVehiclePrintSheet, aproximadamente líneas 7674-8380):
+  * Se replica el criterio existente de selección del corte recomendado a partir de los cortes con tipo registrado y utilCorteN, manteniendo el orden original cuando no hay recomendado elegible.
+  * Se unifican las tarjetas de cortes, alimentación y apertura dentro de una sección técnica común para permitir reorganización visual sin separar los datos de sus imágenes.
+  * Se consulta la dimensión natural de cada imagen para calcular su relación de aspecto y resolución disponible.
+  * Se crean filas con columnas ponderadas por la relación de aspecto real, una composición específica de vertical más dos horizontales y otra de dos verticales más una horizontal.
+  * Se mantienen las fotografías sin recorte ni deformación, con límites de tamaño que no fuerzan la ampliación de imágenes pequeñas.
+  * Se mantienen las tarjetas completas junto a sus descripciones mediante reglas de salto de página.
+  * No se modificó el HTML ni el CSS de la tabla .meta-table ni el bloque de QR/video.
+- Verificación documentada: compilación sintáctica de la función y pruebas simuladas de las composiciones descritas. No se ejecutaron pruebas de navegador ni generación real de PDF.
+================================================================================
+
+
+================================================================================
+CAMBIO: DISTRIBUCIÓN HORIZONTAL DEL TEXTO Y LA IMAGEN EN TARJETAS DE IMPRESIÓN
+Fecha: 2026-11-04
+
+- ui.js (exportVehiclePrintSheet, estilos internos de impresión alrededor de las líneas 8000-8100):
+  * Se cambió .tech-item-body a una cuadrícula de dos columnas en el modo automático, para colocar la información y la fotografía lado a lado cuando la tarjeta tiene imagen.
+  * Se ajustó .tech-item-info para que no fuerce un ancho del 100% dentro de la distribución en columnas.
+  * Se actualizó el modo horizontal para usar la misma distribución explícita en cuadrícula.
+  * Se conservaron las distribuciones de una columna para los modos vertical e imagen ampliada, y para ventanas estrechas.
+  * No se modificaron el HTML de las tarjetas, la lógica de prioridad de imágenes, la tabla .meta-table ni el bloque QR/video.
+- Verificación realizada: compilación sintáctica de exportVehiclePrintSheet y revisión estática del bloque CSS modificado. No se ejecutó navegador real ni se generó PDF.
+================================================================================
+
+
+================================================================================
+CAMBIO: DESCRIPCIÓN Y AVISOS A ANCHO COMPLETO SOBRE LA IMAGEN EN FICHA IMPRIMIBLE
+Fecha: 2026-11-04
+
+- ui.js (exportVehiclePrintSheet, marcado de tarjetas y estilos internos de impresión):
+  * Se cambió .tech-item-body a una sola columna para evitar que la descripción aparezca al lado de la fotografía.
+  * Se mantuvo .tech-item-info a ancho completo y antes del contenedor de imagen.
+  * Se movió entry.extraHtml dentro de .tech-item-info para que el aviso de testigo aparezca junto a la descripción y antes de la fotografía.
+  * Se incrementó el límite de altura de .tech-detail-img de 320px a 380px, manteniendo ancho y alto automáticos, object-fit: contain y centrado.
+  * Se aplicó el orden texto-antes-de-imagen a los modos automático, horizontal, vertical e imagen ampliada; en consecuencia, el selector "Imagen a la derecha" ya no coloca la descripción en una columna lateral.
+  * No se modificaron la tabla .meta-table, la lógica de prioridad de imágenes ni el bloque QR/video.
+- Verificación estática: compilación sintáctica de exportVehiclePrintSheet y comparación de las reglas CSS de .meta-table con GPSpedia2.2.7; sin diferencias en dicho bloque. No se generó PDF ni se validó visualmente en navegador.
+================================================================================
+
+
+================================================================================
+CAMBIO: MAYOR ESPACIO VISUAL PARA LAS IMÁGENES EN LA FICHA IMPRIMIBLE
+Fecha: 2026-11-04
+
+- ui.js (exportVehiclePrintSheet, estilos .tech-detail-img):
+  * Se aumentó el límite máximo de altura de 380px a 560px en la vista general, impresión y modo de imagen ampliada.
+  * Se conservaron max-width: 100%, width/height automáticos, object-fit: contain y object-position: center; no se fijó un ancho que fuerce la ampliación de imágenes de baja resolución.
+  * Se mantiene la estructura de texto y avisos encima de la fotografía, con imagen centrada debajo.
+  * No se modificaron el algoritmo adaptativo de tarjetas, la tabla .meta-table, el QR/video ni las notas técnicas.
+- Verificación estática: se confirmó que los tres límites de altura relevantes quedaron en 560px. Pendiente prueba real de impresión/PDF y revisión de saltos de página.
+================================================================================
+
+
+CAMBIO 2026-11-04 — REGLAS ADAPTATIVAS PARA 1–7 IMÁGENES EN FICHA IMPRIMIBLE
+Archivo: ui.js, función exportVehiclePrintSheet, bloque arrangeTechnicalCards y estilos de filas adaptativas.
+- La primera imagen prioritaria conserva la primera posición; las demás conservan el orden técnico original.
+- Una imagen se centra en una fila limitada al 50% del ancho de composición.
+- Dos o tres imágenes horizontales se apilan en filas centradas limitadas al 80% del ancho.
+- Tres imágenes verticales/horizontales mantienen composiciones específicas existentes; las demás mezclas y conjuntos de 3–7 imágenes usan filas adaptativas según relación de aspecto, evitando mezclar imágenes verticales y horizontales en la misma fila.
+- Filas generales limitadas a tres imágenes, con panorámicas en filas independientes. Se mantienen proporciones de columnas calculadas a partir de la relación de aspecto.
+- No se modificaron la tabla de metadatos, el bloque QR/video ni las notas técnicas. Pendiente validación real de impresión/PDF y paginación.
+
+================================================================================
+CAMBIO 2026-11-03 — PAGINACIÓN EXPLÍCITA DE FICHA TÉCNICA CON CUADRÍCULA 2×2
+- ui.js (exportVehiclePrintSheet, estilos internos de impresión y arrangeTechnicalCards):
+  * Se cambió el margen de impresión a 5 mm por lado.
+  * Se sustituyó la distribución ilimitada de imágenes por páginas explícitas con cuadrícula de hasta dos columnas y dos filas, limitando cada página a cuatro tarjetas con imagen.
+  * Se conserva la prioridad de la primera imagen y el orden técnico de las restantes; los grupos que exceden cuatro imágenes continúan en páginas posteriores.
+  * Se replica el encabezado y el pie de página en cada página creada.
+  * La tabla de metadatos, imagen principal del vehículo y QR/video se conservan únicamente en la primera página.
+  * Se añadió tracklink_logo.png centrado en el pie, con altura de 45 px.
+  * Las notas técnicas se conservan en la última página.
+- Verificación: revisión estática del cambio de código. No se ejecutó navegador real ni se generó un PDF; la paginación, altura efectiva de tarjetas y posición del pie de página permanecen pendientes de validación visual.
+================================================================================

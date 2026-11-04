@@ -49,26 +49,35 @@ async function initializeApp() {
     const searchInput = document.getElementById('searchInput');
     const clearSearchBtn = document.getElementById('clear-search-btn');
 
+    const updateSearchHasText = (hasText) => {
+        searchInput.parentElement.classList.toggle('has-text', hasText);
+        const container = searchInput.closest('.search-container');
+        if (container) container.classList.toggle('has-text', hasText);
+    };
+
     searchInput.addEventListener('input', () => {
         navigation.filtrarContenido(searchInput.value);
         // Toggle de la clase has-text para mostrar/ocultar el botón X
-        searchInput.parentElement.classList.toggle('has-text', searchInput.value.length > 0);
+        updateSearchHasText(searchInput.value.length > 0);
     });
 
     if (clearSearchBtn) {
         clearSearchBtn.addEventListener('click', () => {
             searchInput.value = '';
-            searchInput.parentElement.classList.remove('has-text');
+            updateSearchHasText(false);
             navigation.filtrarContenido('');
             searchInput.focus();
         });
     }
+
+    // TAREA 1.6: Retirada la barra de filtros rápidos (#catalog-filters-bar y #btn-toggle-filters)
 
     // --- LÓGICA DE ANIMACIÓN DE LA BARRA DE BÚSQUEDA ---
     // Estabilización de la clase 'search-active' para evitar saltos visuales al limpiar búsqueda.
     searchInput.addEventListener('focus', () => {
         if (searchBlurTimeout) clearTimeout(searchBlurTimeout);
         document.body.classList.add('search-active');
+        // TAREA 1.6: retirado
 
         const currentQuery = searchInput.value;
         const currentState = window.history.state || {};
@@ -105,6 +114,10 @@ async function initializeApp() {
             // No quitar la clase 'search-active' si el modal está visible para mantener la animación del header
             if (!isModalVisible) {
                 document.body.classList.remove('search-active');
+                if (toggleFiltersBtn && !searchInput.value) {
+                    toggleFiltersBtn.style.display = 'none';
+                    if (filtersBar) filtersBar.style.display = 'none';
+                }
             }
         }, 250);
     });
@@ -149,6 +162,7 @@ async function initializeApp() {
         handleViewportChange(); // Ejecución inicial
     }
 
+    /* TAREA 8 (B10, B12): ESTADO DE CONEXIÓN E INDICADOR DE RED */
     // --- LÓGICA DE ESTADO DE CONEXIÓN ---
     const connectionStatus = document.getElementById('connection-status');
     if (connectionStatus) {
@@ -165,6 +179,7 @@ async function initializeApp() {
     // Exponer handleViewportChange globalmente para lightbox.js
     window.handleViewportChange = handleViewportChange;
 
+    /* TAREA 7 (B05, B07): CIERRE DETERMINISTA DE OVERLAYS Y NAVEGACIÓN POR GESTOS EN POPSTATE */
     // --- LÓGICA DE NAVEGACIÓN (BOTÓN ATRÁS / GESTOS) ---
     window.addEventListener('popstate', (event) => {
         const state = event.state || {};
@@ -209,15 +224,48 @@ async function initializeApp() {
         // 4. Cerrar Modal de Detalles
         const modalDetalle = document.getElementById('modalDetalle');
         if (modalDetalle && modalDetalle.classList.contains('visible')) {
+            // Detener y limpiar videos antes de cerrar o restaurar modal previo
+            if (modalDetalle.dataset.modalType === 'pys') {
+                const iframes = modalDetalle.querySelectorAll('iframe');
+                iframes.forEach(iframe => {
+                    try {
+                        if (iframe.contentWindow) {
+                            iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+                        }
+                    } catch(e) {}
+                    iframe.src = "";
+                    iframe.remove();
+                });
+            } else {
+                const iframe = modalDetalle.querySelector('iframe');
+                if (iframe && iframe.contentWindow) {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+                }
+            }
+
+            // Comprobar pila de navegación modal para retorno contextual
+            const navStack = window.modalNavStack || [];
+            if (navStack.length > 0) {
+                const prevContext = navStack.pop();
+                if (prevContext) {
+                    if (prevContext.type === 'vehicle' && window.ui && window.ui.mostrarDetalleModal) {
+                        window.ui.mostrarDetalleModal(prevContext.item, false, prevContext.navOptions || {});
+                        return;
+                    } else if (prevContext.type === 'pys' && window.ui && window.ui.openPysDetailModal) {
+                        window.ui.openPysDetailModal(prevContext.item, prevContext.navOptions || {});
+                        return;
+                    }
+                }
+            }
+
             if (window.inEditMode) {
                 window.ui.exitModalEditMode(false, null, true);
             } else {
                 modalDetalle.classList.remove('visible');
             }
-            // Detener videos al cerrar via back button
-            const iframe = modalDetalle.querySelector('iframe');
-            if (iframe && iframe.contentWindow) {
-                iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+
+            if (window.modalNavStack) {
+                window.modalNavStack.length = 0;
             }
 
             // Restaurar foco a la barra de búsqueda si estamos en modo búsqueda
@@ -362,6 +410,7 @@ async function initializeApp() {
         }
     });
 
+    /* TAREA 12 (B04): CONTROL DEL CICLO DE VIDA DEL REPRODUCTOR DE YOUTUBE MEDIANTE MUTATIONOBSERVER */
     // --- MUTATION OBSERVER PARA GESTIÓN DE REPRODUCCIÓN EN MODAL DE TUTORIALES ---
     const modalDetalle = document.getElementById('modalDetalle');
     if (modalDetalle) {
@@ -399,7 +448,7 @@ async function initializeApp() {
 
     // Navigation links in side menu - Unified Handlers
     // Restauración de funciones para Cortes, Tutoriales y Relay
-    ['cortes', 'tutoriales', 'relay'].forEach(section => {
+    ['cortes', 'tutoriales', 'relay', 'pys'].forEach(section => {
         const btn = document.getElementById(`menu-${section}`);
         if (btn) {
             btn.addEventListener('click', (e) => {
@@ -815,6 +864,48 @@ async function initializeApp() {
         }
     }, 0);
 }
+
+// Exponer funciones globales de enriquecimiento de texto para formularios de la app principal (ej. Contáctanos)
+window.applyRichFormat = function(targetId, format, extraVal = null) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+
+    let formatted = "";
+    if (format === 'bold') {
+        formatted = `<b>${selected || 'texto en negrita'}</b>`;
+    } else if (format === 'italic') {
+        formatted = `<i>${selected || 'texto en cursiva'}</i>`;
+    } else if (format === 'underline') {
+        formatted = `<u>${selected || 'texto subrayado'}</u>`;
+    } else if (format === 'strike') {
+        formatted = `<s>${selected || 'texto tachado'}</s>`;
+    } else if (format === 'ul') {
+        formatted = `\n<ul>\n  <li>${selected || 'Elemento 1'}</li>\n  <li>Elemento 2</li>\n</ul>\n`;
+    } else if (format === 'ol') {
+        formatted = `\n<ol>\n  <li>${selected || 'Primer paso'}</li>\n  <li>Segundo paso</li>\n</ol>\n`;
+    } else if (format === 'font' && extraVal) {
+        formatted = `<span style="font-family: ${extraVal};">${selected || 'texto'}</span>`;
+    }
+
+    if (formatted) {
+        textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+        textarea.focus();
+    }
+};
+
+window.applyRichColor = function(targetId, color) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+    const formatted = `<span style="color:${color}">${selected || 'texto'}</span>`;
+    textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+    textarea.focus();
+};
 
 // Start the application once the DOM is ready
 if (document.readyState === 'loading') {

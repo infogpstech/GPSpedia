@@ -1,4 +1,4 @@
-// GPSpedia Unified API Module | Version: 2.1.6
+// GPSpedia Unified API Module | Version: 2.2.5
 // ============================================================================
 // ÚNICA FUENTE DE VERDAD PARA LA CONFIGURACIÓN Y LÓGICA DE LA API
 // ============================================================================
@@ -6,27 +6,30 @@
 // 1. CONFIGURACIÓN
 export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
-    AUTH:     "https://script.google.com/macros/s/AKfycbwATstMSSnuYZMeGEjI7Q5cznO6kA8rqLo7zNZLmu_f29qwcyt4Fucn5VIBdB9tMoRg/exec",
-    CATALOG:  "https://script.google.com/macros/s/AKfycbzZ3dBoUuYquNYxYjAZJgPhj11g9r1chLFEJna9_6V9Y2-QZ0_3NsINtHvIYe29LHcZyQ/exec",
-    WRITE:    "https://script.google.com/macros/s/AKfycbzPY2hPB6zxWm91NTeiVckJmn9H-Fcm21iRYUiieXA_r3GxkYOop4XKUpB2fSsVFaKJ/exec",
+    AUTH:     "https://script.google.com/macros/s/AKfycbzi5ET_WsDDKWqcrAHpnhtpS0oEitbuYz8dPj_URsG6dt-PO1oFIpOwYSKQ1temcEGnDA/exec",
+    CATALOG:  "https://script.google.com/macros/s/AKfycbxtqkdUfXAEmbPz7zfE4kZCie8sql4SM43kxkBw__5iGwXVyzzYsIFG5jpWkQc7-Ug9/exec",
+    WRITE:    "https://script.google.com/macros/s/AKfycbwsRkcK8-q8hiOpaUNrU1e79WD2SH87MsZkfaFU3S19ayAC9ZMhxDuZUv0cx9iaW7cPlw/exec",
     USERS:    "https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbyL5vgD0atgXM1Mdf5k9wqhGLpuBjDXBXv_a7BUeitw_Fu9h8UWZOuDpZUCCsCAXXux/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbxT_3TopgtXNgRHGyNroU7zi_hyixxFEU-0r-QgfiSifyOkFMjeILL5Rgeq_WLJ7Dm2SQ/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec",
-    ADMIN: "https://script.google.com/macros/s/AKfycby5WAIH8prr6GYb36CntPT4FYg3a7VGT3SpVWIKIokQyVoHo-ufhTWSjx2L4MwOEv5b/exec"
+    ADMIN: "https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec"
 };
 
 export const ACTION_TO_SERVICE_MAP = {
     'login': 'AUTH', 'validateSession': 'AUTH',
     'getNavigationData': 'CATALOG', 'getCatalogData': 'CATALOG', 'getDropdownData': 'CATALOG',
-    'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'addCorte': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE',
+    'getSuggestion': 'WRITE', 'checkVehicle': 'WRITE', 'addCorte': 'WRITE', 'checkOperation': 'WRITE', 'addOrUpdateCut': 'WRITE', 'addSupplementaryInfo': 'WRITE', 'checkVinDuplicate': 'WRITE', 'addVinToVehicle': 'WRITE',
     'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'USERS', 'deleteUser': 'USERS', 'changePassword': 'USERS', 'updateProfile': 'USERS',
-    'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'suggestYear': 'FEEDBACK',
-    'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK',
+    'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
+    'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK',
+    'initYouTubeUpload': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
+    'removeVehicleFromProblem': 'FEEDBACK', 'updatePysItem': 'FEEDBACK', 'updateTutorialItem': 'FEEDBACK',
     'migrateYearRanges': 'UTILITIES', 'migrateTimestamps': 'UTILITIES',
     'ping': 'ADMIN',
     'backupDatabase': 'ADMIN', 'backupDrive': 'ADMIN', 'restoreDatabase': 'ADMIN', 'restoreDrive': 'ADMIN',
-    'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'reorganizeImagesInDrive': 'ADMIN', 'addLogo': 'ADMIN',
+    'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'reorganizeImagesInDrive': 'ADMIN', 'restoreAllTrashedImages': 'ADMIN', 'addLogo': 'ADMIN', 'createSheet': 'ADMIN', 'addColumn': 'ADMIN', 'driveCommand': 'ADMIN',
     'updateVehicleField': 'ADMIN', 'uploadAdminImage': 'ADMIN',
+    'getReplacedImages': 'ADMIN', 'recoverReplacedImage': 'ADMIN', 'deleteReplacedImage': 'ADMIN', 'auditDriveImagesInCortes': 'ADMIN',
     'logFrontend': 'LEGACY'
 };
 
@@ -91,6 +94,14 @@ export async function markAsResolved(itemId) {
     return await routeAction('markAsResolved', { itemId });
 }
 
+export async function deleteFeedbackItem(id, type) {
+    return await routeAction('deleteFeedbackItem', { id, type });
+}
+
+export async function clearActivityLogs(keepLastWeek = false) {
+    return await routeAction('clearActivityLogs', { keepLastWeek });
+}
+
 export async function getActivityLogs() {
     return await routeAction('getActivityLogs');
 }
@@ -109,4 +120,46 @@ export async function suggestYear(vehicleId, newYear, responseText, userId, user
 
 export async function sendContactForm(formData) {
     return await routeAction('sendContactForm', formData);
+}
+
+export async function suggestCutChange(data) {
+    return await routeAction("suggestCutChange", data);
+}
+
+export async function addTutorial(data) {
+    return await routeAction("addTutorial", data);
+}
+
+export async function checkAllServicesHealth() {
+    const services = Object.keys(API_ENDPOINTS);
+    const results = {};
+
+    await Promise.all(services.map(async (srvKey) => {
+        const url = API_ENDPOINTS[srvKey];
+        const start = Date.now();
+        try {
+            const res = await fetch(`${url}?debug=true`, {
+                method: 'GET',
+                redirect: 'follow'
+            });
+            const duration = Date.now() - start;
+            if (res.ok) {
+                results[srvKey] = { status: 'online', latency: duration };
+            } else {
+                results[srvKey] = { status: 'error', latency: duration, code: res.status };
+            }
+        } catch (err) {
+            results[srvKey] = { status: 'offline', latency: Date.now() - start, error: err.message };
+        }
+    }));
+
+    return results;
+}
+
+export async function approveVideo(itemId, approverName, userRole) {
+    return await routeAction("approveVideo", { itemId, approverName, userRole });
+}
+
+export async function rejectVideo(itemId, rejecterName, reason, userRole) {
+    return await routeAction("rejectVideo", { itemId, rejecterName, reason, userRole });
 }

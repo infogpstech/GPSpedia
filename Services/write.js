@@ -18,7 +18,8 @@ function getSpreadsheet() {
 }
 
 const SHEET_NAMES = {
-    CORTES: "Cortes"
+    CORTES: "Cortes",
+    IDEMPOTENCIA: "Idempotencia"
 };
 
 const COLS_CORTES = {
@@ -30,7 +31,8 @@ const COLS_CORTES = {
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
     timestamp: 37, notaImportante: 38,
-    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42,
+    vin: 43
 };
 
 
@@ -79,6 +81,12 @@ function doPost(e) {
             case 'addSupplementaryInfo':
                 response = handleAddSupplementaryInfo(request.payload);
                 break;
+            case 'checkVinDuplicate':
+                response = handleCheckVinDuplicate(request.payload);
+                break;
+            case 'addVinToVehicle':
+                response = handleAddVinToVehicle(request.payload);
+                break;
             default:
                 throw new Error(`La acción '${request.action}' es desconocida.`);
         }
@@ -95,6 +103,7 @@ function doPost(e) {
 // HANDLERS DE ACCIONES
 // ============================================================================
 
+/* TAREA 3 (4.2, 4.4, B31): REGISTRO Y ACTUALIZACIÓN DE CORTES E IDEMPOTENCIA CON REPARACIÓN */
 function handleAddOrUpdateCut(payload) {
     const { vehicleData, cutData, vehicleId, colaborador } = payload;
     if (!cutData || !colaborador) {
@@ -250,8 +259,7 @@ function handleAddOrUpdateCut(payload) {
         sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${cutSlotIndex}`]).setValue(imageUrl);
         sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${cutSlotIndex}`]).setValue(colaboradorName);
         if (opId) {
-            const opIdColIndex = getOpIdColIndex(sheet, cutSlotIndex);
-            sheet.getRange(rowIndex, opIdColIndex).setValue(opId);
+            recordOpId(opId, newId || vehicleId, cutSlotIndex, formattedDate);
         }
         sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
 
@@ -324,9 +332,14 @@ function handleAddOrUpdateCut(payload) {
         sheet.getRange(rowIndex, COLS_CORTES.configRelay1).setValue(cutData.configRelay1);
         sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
         sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
+        if (cutData.vin) {
+            const vinPrefix = extractVinPrefix(cutData.vin);
+            if (vinPrefix) {
+                sheet.getRange(rowIndex, COLS_CORTES.vin).setValue(vinPrefix);
+            }
+        }
         if (opId) {
-            const opIdColIndex = getOpIdColIndex(sheet, 1);
-            sheet.getRange(rowIndex, opIdColIndex).setValue(opId);
+            recordOpId(opId, newId, 1, formattedDate);
         }
 
         // 5. Esperar a que la hoja calcule el valor del ID generado por la fórmula.
@@ -694,64 +707,115 @@ function checkFileIdValid(url) {
     }
 }
 
-function getOpIdColIndex(sheet, slotIndex) {
-    const lastCol = sheet.getLastColumn();
-    const headers = sheet.getRange(1, 1, 1, lastCol).getValues()[0];
-    const expectedHeader = `idOperacion${slotIndex}`;
+// ============================================================================
+// GESTIÓN DE IDEMPOTENCIA EN HOJA DEDICADA ("Idempotencia")
+// ============================================================================
 
-    for (let c = 0; c < headers.length; c++) {
-        const header = String(headers[c]).trim();
-        if (header === expectedHeader || header.toLowerCase() === `id_operacion_${slotIndex}` || header.toLowerCase() === `idoperacion${slotIndex}`) {
-            return c + 1;
-        }
+function getIdempotenciaSheet() {
+    let sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
+    if (!sheet) {
+        sheet = getSpreadsheet().insertSheet(SHEET_NAMES.IDEMPOTENCIA);
+        sheet.appendRow(["opId", "vehicleId", "slotIndex", "timestamp", "status"]);
+        sheet.setFrozenRows(1);
     }
+    return sheet;
+}
 
-    // Not found, append dynamically
-    const newColIndex = lastCol + 1;
-    sheet.getRange(1, newColIndex).setValue(expectedHeader);
-    SpreadsheetApp.flush();
-    return newColIndex;
+function recordOpId(opId, vehicleId, slotIndex, timestamp) {
+    if (!opId) return;
+    try {
+        const sheet = getIdempotenciaSheet();
+        sheet.appendRow([
+            String(opId).trim(),
+            String(vehicleId || ""),
+            String(slotIndex || 1),
+            String(timestamp || new Date().toISOString()),
+            "completed"
+        ]);
+    } catch (e) {
+        Logger.log("Error recording opId in Idempotencia sheet: " + e.message);
+    }
 }
 
 function findRowByOpId(sheet, opId) {
     if (!opId) return null;
-    const data = sheet.getDataRange().getValues();
-    if (data.length <= 1) return null;
+    const cleanOpId = String(opId).trim();
 
-    const headers = data[0];
-    const opIdCols = [];
-    for (let c = 0; c < headers.length; c++) {
-        const h = String(headers[c]).toLowerCase();
-        if (h.includes("idoperacion") || h.includes("id_operacion")) {
-            opIdCols.push(c);
+    // 1. Buscar prioritariamente en la hoja dedicada Idempotencia
+    try {
+        const idempSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
+        if (idempSheet && idempSheet.getLastRow() > 1) {
+            const idempData = idempSheet.getDataRange().getValues();
+            for (let r = 1; r < idempData.length; r++) {
+                const row = idempData[r];
+                if (String(row[0]).trim() === cleanOpId) {
+                    const savedVehicleId = String(row[1]).trim();
+                    const savedSlotIndex = parseInt(row[2]) || 1;
+                    const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+                    if (cortesSheet && savedVehicleId) {
+                        const cortesData = cortesSheet.getDataRange().getValues();
+                        for (let cr = 1; cr < cortesData.length; cr++) {
+                            if (String(cortesData[cr][COLS_CORTES.id - 1]) === savedVehicleId) {
+                                return {
+                                    rowIndex: cr + 1,
+                                    rowValues: cortesData[cr],
+                                    colIndex: COLS_CORTES[`colaboradorCorte${savedSlotIndex}`] || COLS_CORTES.colaboradorCorte1,
+                                    slotIndex: savedSlotIndex,
+                                    fromIdempotenciaSheet: true
+                                };
+                            }
+                        }
+                    }
+                }
+            }
         }
+    } catch (e) {
+        Logger.log("Error checking Idempotencia sheet: " + e.message);
     }
 
-    for (let r = 1; r < data.length; r++) {
-        const row = data[r];
-        for (let i = 0; i < opIdCols.length; i++) {
-            const idx = opIdCols[i];
-            const cellVal = row[idx];
-            if (cellVal && String(cellVal).trim() === opId.trim()) {
-                return { rowIndex: r + 1, rowValues: row, colIndex: idx + 1 };
+    // 2. Búsqueda de compatibilidad histórica en la hoja Cortes (sin contaminar la columna 43 VIN)
+    if (sheet && sheet.getLastRow() > 1) {
+        const data = sheet.getDataRange().getValues();
+        const headers = data[0];
+        const opIdCols = [];
+        for (let c = 0; c < headers.length; c++) {
+            // Excluir expresamente la columna 43 (vin)
+            if (c + 1 === COLS_CORTES.vin) continue;
+            const h = String(headers[c]).toLowerCase();
+            if (h.includes("idoperacion") || h.includes("id_operacion")) {
+                opIdCols.push(c);
+            }
+        }
+
+        for (let r = 1; r < data.length; r++) {
+            const row = data[r];
+            for (let i = 0; i < opIdCols.length; i++) {
+                const idx = opIdCols[i];
+                const cellVal = row[idx];
+                if (cellVal && String(cellVal).trim() === cleanOpId) {
+                    return { rowIndex: r + 1, rowValues: row, colIndex: idx + 1 };
+                }
+            }
+        }
+
+        // Fallback for old tagged collaborator format (excluyendo columna vin)
+        const tag = `[${cleanOpId}]`;
+        for (let r = 1; r < data.length; r++) {
+            const row = data[r];
+            for (let c = 0; c < row.length; c++) {
+                if (c + 1 === COLS_CORTES.vin) continue;
+                const cell = row[c];
+                if (cell && typeof cell === "string" && (cell.indexOf(tag) !== -1 || cell === cleanOpId)) {
+                    return { rowIndex: r + 1, rowValues: row, colIndex: c + 1 };
+                }
             }
         }
     }
 
-    // Fallback for old tagged collaborator format
-    const tag = `[${opId}]`;
-    for (let r = 1; r < data.length; r++) {
-        const row = data[r];
-        for (let c = 0; c < row.length; c++) {
-            const cell = row[c];
-            if (cell && typeof cell === 'string' && (cell.indexOf(tag) !== -1 || cell === opId)) {
-                return { rowIndex: r + 1, rowValues: row, colIndex: c + 1 };
-            }
-        }
-    }
     return null;
 }
 
+/* TAREA 3 (B31): COMPROBACIÓN ASÍNCRONA DE OPERACIÓN E IDEMPOTENCIA EN SERVIDOR */
 function handleCheckOperation(payload) {
     const { opId } = payload;
     if (!opId) throw new Error("ID de operación requerido.");
@@ -863,4 +927,185 @@ function getExistingEntities(sheet) {
   }
 
   return { brands: brands, models: models, versions: versions };
+}
+
+// ============================================================================
+// LÓGICA Y HANDLERS DE VIN (Vehicle Identification Number)
+// ============================================================================
+
+function parseEquipmentVersions(rawStr) {
+  if (!rawStr) return [];
+  return String(rawStr).split(/[,/\\;]+/).map(v => v.trim()).filter(Boolean);
+}
+
+function countEquipmentVersions(versionesStr) {
+  if (!versionesStr) return 1;
+  const str = String(versionesStr).trim();
+  if (!str) return 1;
+  const parts = str.split(/[,/\\;]+/).map(p => p.trim()).filter(Boolean);
+  const count = parts.length;
+  if (count <= 1) return 1;
+  if (count === 2) return 2;
+  return 3; // Máximo 3
+}
+
+function parseVinCollection(rawVin) {
+  if (!rawVin) return [];
+  const str = String(rawVin).trim();
+  if (!str) return [];
+  if (str.startsWith("[") && str.endsWith("]")) {
+    try {
+      const arr = JSON.parse(str);
+      if (Array.isArray(arr)) {
+        return arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+      }
+    } catch (e) {}
+  }
+  return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+}
+
+function serializeVinCollection(vinArray) {
+  if (!vinArray || vinArray.length === 0) return "";
+  const unique = Array.from(new Set(vinArray.map(v => String(v).trim().toUpperCase()).filter(Boolean)));
+  return JSON.stringify(unique);
+}
+
+/* TAREA 4 (11.1, 11.2, 11.7, B34): EXCLUSIÓN DE ÚLTIMOS 5 CARACTERES Y PROCESAMIENTO DE VIN */
+function extractVinPrefix(vinStr) {
+  if (!vinStr) return "";
+  const cleaned = String(vinStr).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (cleaned.length <= 5) return "";
+  return cleaned.substring(0, cleaned.length - 5);
+}
+
+function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId) {
+  if (!vinPrefix) return null;
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) return null;
+
+  const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  for (let i = 0; i < data.length; i++) {
+    const row = data[i];
+    const rowId = row[COLS_CORTES.id - 1];
+    if (currentVehicleId && String(rowId) === String(currentVehicleId)) continue;
+
+    const rowVinRaw = row[COLS_CORTES.vin - 1];
+    const vinList = parseVinCollection(rowVinRaw);
+    if (vinList.includes(vinPrefix)) {
+      const marca = row[COLS_CORTES.marca - 1] || "";
+      const modelo = row[COLS_CORTES.modelo - 1] || "";
+      const anoDesde = row[COLS_CORTES.anoDesde - 1] || "";
+      const anoHasta = row[COLS_CORTES.anoHasta - 1] || "";
+      const modelName = `${marca} ${modelo} (${anoDesde}${anoHasta ? '-' + anoHasta : ''})`.trim();
+      return {
+        vehicleId: rowId,
+        modelName: modelName,
+        vinPrefix: vinPrefix
+      };
+    }
+  }
+  return null;
+}
+
+function handleCheckVinDuplicate(payload) {
+  const { vin, currentVehicleId } = payload;
+  const prefix = extractVinPrefix(vin);
+  if (!prefix) {
+    return { status: 'success', duplicate: false };
+  }
+  const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+  const match = checkVinDuplicateInSheet(sheet, prefix, currentVehicleId);
+  if (match) {
+    return {
+      status: 'duplicate',
+      duplicate: true,
+      vehicleId: match.vehicleId,
+      modelName: match.modelName,
+      vinPrefix: match.vinPrefix
+    };
+  }
+  return { status: 'success', duplicate: false, vinPrefix: prefix };
+}
+
+function handleAddVinToVehicle(payload) {
+  const { vehicleId, vin, trimLevel, trimIndex, isNewTrim } = payload;
+  const prefix = extractVinPrefix(vin);
+  if (!vehicleId || !prefix) {
+    return { status: 'error', message: 'ID de vehículo y VIN son requeridos.' };
+  }
+  const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+  const match = checkVinDuplicateInSheet(sheet, prefix, vehicleId);
+  if (match) {
+    return {
+      status: 'duplicate',
+      message: `El VIN ya está registrado para: ${match.modelName}`,
+      vehicleId: match.vehicleId,
+      modelName: match.modelName
+    };
+  }
+
+  const lastRow = sheet.getLastRow();
+  if (lastRow < 2) {
+    return { status: 'error', message: 'No se encontraron vehículos registrados.' };
+  }
+
+  const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+  let targetRowIndex = -1;
+  let targetRow = null;
+  for (let i = 0; i < data.length; i++) {
+    if (String(data[i][COLS_CORTES.id - 1]) === String(vehicleId)) {
+      targetRowIndex = i + 2;
+      targetRow = data[i];
+      break;
+    }
+  }
+
+  if (targetRowIndex === -1 || !targetRow) {
+    return { status: 'error', message: 'Vehículo no encontrado.' };
+  }
+
+  let versionesStr = String(targetRow[COLS_CORTES.versionesAplicables - 1] || "").trim();
+  let versions = parseEquipmentVersions(versionesStr);
+
+  const existingVinRaw = targetRow[COLS_CORTES.vin - 1] || "";
+  let vinCollection = parseVinCollection(existingVinRaw);
+
+  const cleanTrim = trimLevel ? String(trimLevel).trim() : "";
+
+  // Si se solicitó registrar una nueva versión o el trim especificado no existe en la lista de versiones
+  if (cleanTrim && (isNewTrim || !versions.some(v => v.toLowerCase() === cleanTrim.toLowerCase()))) {
+    versions.push(cleanTrim);
+    versionesStr = versions.join(" / ");
+    sheet.getRange(targetRowIndex, COLS_CORTES.versionesAplicables).setValue(versionesStr);
+  }
+
+  const maxAllowed = versions.length > 0 ? versions.length : 1;
+
+  let targetIdx = -1;
+  if (typeof trimIndex === 'number' && trimIndex >= 0 && trimIndex < maxAllowed) {
+    targetIdx = trimIndex;
+  } else if (cleanTrim && versions.length > 0) {
+    targetIdx = versions.findIndex(v => v.toLowerCase() === cleanTrim.toLowerCase());
+  }
+
+  if (targetIdx !== -1) {
+    while (vinCollection.length <= targetIdx) {
+      vinCollection.push("");
+    }
+    vinCollection[targetIdx] = prefix;
+  } else {
+    if (vinCollection.includes(prefix)) {
+      return { status: 'success', message: 'El VIN ya está en la colección de este vehículo.', vinCollection, versionesAplicables: versionesStr };
+    }
+    if (vinCollection.length >= maxAllowed) {
+      return { status: 'error', message: `Este vehículo solo permite un máximo de ${maxAllowed} VIN(s) según sus versiones.` };
+    }
+    vinCollection.push(prefix);
+  }
+
+  const serialized = JSON.stringify(vinCollection);
+  sheet.getRange(targetRowIndex, COLS_CORTES.vin).setValue(serialized);
+
+  // NOTA OBLIGATORIA: Agregar VIN no debe actualizar la fecha de registro (timestamp)
+  return { status: 'success', message: 'VIN registrado correctamente.', vinPrefix: prefix, vinCollection, versionesAplicables: versionesStr };
 }

@@ -15,6 +15,7 @@ let isZoomedOnStart = false;
 let ignoreNextClick = false;
 let lightboxInitialized = false;
 
+/* TAREA 6 (B32): NAVEGACIÓN DEL CARRUSEL DE CABLES DE ALIMENTACIÓN DENTRO DEL LIGHTBOX */
 /**
  * Determina el estado real de zoom en el lightbox.
  * Retorna true si la escala del visualViewport o la imagen es superior a la escala predeterminada.

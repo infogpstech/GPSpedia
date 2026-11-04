@@ -47,7 +47,8 @@ const COLS_CORTES = {
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
     timestamp: 37, notaImportante: 38,
-    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42,
+    vin: 43
 };
 
 // Mapa de columnas para la hoja "Feedbacks" (v2.0)
@@ -118,11 +119,41 @@ function doPost(e) {
             case 'reportProblem':
                 response = handleReportProblem(payload);
                 break;
+            case 'getPysData':
+                response = handleGetPysData();
+                break;
+            case 'addProblem':
+                response = handleAddProblem(payload);
+                break;
+            case 'addSolution':
+                response = handleAddSolution(payload);
+                break;
+            case 'addPrevention':
+                response = handleAddPrevention(payload);
+                break;
+            case 'addVehicleToProblem':
+                response = handleAddVehicleToProblem(payload);
+                break;
+            case 'removeVehicleFromProblem':
+                response = handleRemoveVehicleFromProblem(payload);
+                break;
+            case 'updatePysItem':
+                response = handleUpdatePysItem(payload);
+                break;
+            case 'updateTutorialItem':
+                response = handleUpdateTutorialItem(payload);
+                break;
+            case 'suggestCutChange':
+                response = handleSuggestCutChange(payload);
+                break;
             case 'assignCollaborator':
                 response = handleAssignCollaborator(payload);
                 break;
             case 'suggestYear':
                 response = handleSuggestYear(payload);
+                break;
+            case 'addTutorial':
+                response = handleAddTutorial(payload);
                 break;
             case 'sendContactForm':
                 response = handleSendContactForm(payload);
@@ -139,6 +170,24 @@ function doPost(e) {
                 break;
             case 'getActivityLogs':
                 response = handleGetActivityLogs(payload);
+                break;
+            case 'deleteFeedbackItem':
+                response = handleDeleteFeedbackItem(payload);
+                break;
+            case 'clearActivityLogs':
+                response = handleClearActivityLogs(payload);
+                break;
+            case 'initYouTubeUpload':
+                response = handleInitYouTubeUpload(payload);
+                break;
+            case 'submitVideoForApproval':
+                response = handleSubmitVideoForApproval(payload);
+                break;
+            case 'approveVideo':
+                response = handleApproveVideo(payload);
+                break;
+            case 'rejectVideo':
+                response = handleRejectVideo(payload);
                 break;
             default:
                 throw new Error(`Acción desconocida en Feedback Service: ${action}`);
@@ -504,8 +553,15 @@ function handleReportProblem(payload) {
 
     SpreadsheetApp.flush();
 
+    // Tarea 2.1: Retornar identificador único del reporte para vinculación con sugerencias
+    let generatedReportId = `REP-${Date.now()}`;
+    try {
+        const idVal = sheet.getRange(newRowNumber, 1).getValue();
+        if (idVal) generatedReportId = `REP-${idVal}`;
+    } catch(e) {}
+
     logUserActivity(userId, userName, 'report_problem', vehicleId, problemText);
-    return { status: 'success', message: 'Problema reportado.' };
+    return { status: 'success', message: 'Problema reportado.', reportId: generatedReportId };
 }
 
 function handleSendContactForm(payload) {
@@ -549,17 +605,50 @@ function handleGetFeedbackItems(payload) {
     const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     const contactSheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
 
-    const feedbackData = (!feedbackSheet) ? [] : feedbackSheet.getDataRange().getValues().slice(1).map(row => ({
-        type: 'problem_report',
-        id: row[COLS_FEEDBACKS.ID - 1],
-        subject: `Reporte en Vehículo #${row[COLS_FEEDBACKS.ID_vehiculo - 1]}`,
-        content: row[COLS_FEEDBACKS.Problema - 1],
-        user: row[COLS_FEEDBACKS.Usuario - 1],
-        vehicleId: row[COLS_FEEDBACKS.ID_vehiculo - 1],
-        reply: row[COLS_FEEDBACKS.Respuesta - 1],
-        isResolved: row[COLS_FEEDBACKS['Se resolvio'] - 1] === true,
-        responder: row[COLS_FEEDBACKS.Responde - 1]
-    }));
+    const feedbackData = (!feedbackSheet) ? [] : feedbackSheet.getDataRange().getValues().slice(1).map(row => {
+        const rawContent = row[COLS_FEEDBACKS.Problema - 1];
+        let isVideoApproval = false;
+        let videoMeta = null;
+        if (typeof rawContent === 'string' && rawContent.startsWith('{') && rawContent.includes('video_approval')) {
+            try {
+                videoMeta = JSON.parse(rawContent);
+                if (videoMeta && videoMeta.subType === 'video_approval') {
+                    isVideoApproval = true;
+                }
+            } catch (e) {}
+        }
+
+        if (isVideoApproval && videoMeta) {
+            return {
+                type: 'video_approval',
+                id: row[COLS_FEEDBACKS.ID - 1],
+                subject: `[Aprobación de Vídeo] ${videoMeta.title}`,
+                content: videoMeta.description || 'Sin descripción',
+                videoUrl: videoMeta.videoUrl,
+                videoId: videoMeta.videoId,
+                contentType: videoMeta.contentType,
+                user: row[COLS_FEEDBACKS.Usuario - 1],
+                vehicleId: row[COLS_FEEDBACKS.ID_vehiculo - 1],
+                approvalStatus: videoMeta.status || 'pending',
+                videoMeta: videoMeta,
+                reply: row[COLS_FEEDBACKS.Respuesta - 1],
+                isResolved: row[COLS_FEEDBACKS['Se resolvio'] - 1] === true,
+                responder: row[COLS_FEEDBACKS.Responde - 1]
+            };
+        }
+
+        return {
+            type: 'problem_report',
+            id: row[COLS_FEEDBACKS.ID - 1],
+            subject: `Reporte en Vehículo #${row[COLS_FEEDBACKS.ID_vehiculo - 1]}`,
+            content: rawContent,
+            user: row[COLS_FEEDBACKS.Usuario - 1],
+            vehicleId: row[COLS_FEEDBACKS.ID_vehiculo - 1],
+            reply: row[COLS_FEEDBACKS.Respuesta - 1],
+            isResolved: row[COLS_FEEDBACKS['Se resolvio'] - 1] === true,
+            responder: row[COLS_FEEDBACKS.Responde - 1]
+        };
+    });
 
     const contactData = (!contactSheet) ? [] : contactSheet.getDataRange().getValues().slice(1).map(row => ({
         type: 'contact_form',
@@ -646,4 +735,743 @@ function handleGetActivityLogs(payload) {
     })).reverse().slice(0, 100);
 
     return { status: 'success', data: logs };
+}
+
+
+/* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */
+function handleSuggestCutChange(payload) {
+    const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, proposedValues } = payload;
+    if (!vehicleId || !corteIndex || !userId || !userName) {
+        throw new Error("Faltan datos para sugerir cambio (vehicleId, corteIndex, userId, userName).");
+    }
+
+    const createdAt = new Date().toISOString();
+
+    let imageUrl = "";
+    if (imgBase64) {
+        try {
+            const folderName = "SugerenciasCortes";
+            const folders = DriveApp.getFoldersByName(folderName);
+            let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+            const blob = Utilities.newBlob(Utilities.base64Decode(imgBase64.replace(/^data:image\/[a-z]+;base64,/, "")), "image/jpeg", `sug_${vehicleId}_corte${corteIndex}_${Date.now()}.jpg`);
+            const file = folder.createFile(blob);
+            file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+            imageUrl = file.getUrl();
+        } catch(e) {
+            console.error("Error subiendo imagen de sugerencia:", e);
+        }
+    }
+
+    // Almacenamiento independiente en la hoja Feedbacks como propuesta pendiente de revisión
+    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    const lastRow = sheet.getLastRow();
+    const newRowNumber = lastRow + 1;
+    const FORMULA_ROW = 2;
+    const lastCol = sheet.getLastColumn() || 8;
+
+    if (lastRow >= FORMULA_ROW) {
+        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
+        const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
+        formulaRange.copyTo(newRowRange);
+        if (lastCol > 1) {
+            sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
+        }
+    }
+
+    // Registro estructurado conservando: reportId, vehículo, corte, fecha, usuario, imagen y valores propuestos
+    const suggestionRecord = {
+        tipo: 'sugerencia_corte',
+        reportId: reportId || 'N/A',
+        vehicleId: String(vehicleId),
+        corteIndex: parseInt(corteIndex, 10) || 1,
+        userId: String(userId),
+        userName: String(userName),
+        createdAt: createdAt,
+        imageUrl: imageUrl || '',
+        details: details || '',
+        proposedValues: proposedValues || {},
+        status: 'pendiente_revision'
+    };
+
+    const problemDesc = `[SUGERENCIA CORTE #${corteIndex}] (Reporte Origen: ${reportId || 'N/A'}) (Fecha: ${createdAt}) ${details || ""} | Propuestos: ${JSON.stringify(proposedValues || {})} ${imageUrl ? " | Img: " + imageUrl : ""}`;
+    const values = [[
+        userName,
+        vehicleId,
+        problemDesc
+    ]];
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
+
+    // Estado explícito: Pendiente de revisión (Se resolvio = false)
+    if (COLS_FEEDBACKS['Se resolvio']) {
+        sheet.getRange(newRowNumber, COLS_FEEDBACKS['Se resolvio']).setValue(false);
+    }
+
+    SpreadsheetApp.flush();
+    logUserActivity(userId, userName, "suggest_cut_change", vehicleId, problemDesc);
+
+    // Retornar confirmación completa sin alterar el catálogo
+    return {
+        status: "success",
+        message: "Sugerencia de cambio registrada correctamente como propuesta independiente.",
+        reportId: reportId || ("FB-" + newRowNumber),
+        suggestionData: suggestionRecord
+    };
+}
+
+function parseModelosAsociados(rawVal) {
+    if (!rawVal) return [];
+    const str = String(rawVal).trim();
+    if (!str) return [];
+    if (str.startsWith("[") && str.endsWith("]")) {
+        try {
+            const arr = JSON.parse(str);
+            if (Array.isArray(arr)) return arr.map(String).filter(Boolean);
+        } catch (e) {}
+    }
+    return str.split(/[,/\\;]+/).map(s => s.trim()).filter(Boolean);
+}
+
+function handleGetPysData() {
+    const sheet = getSafeSheet("pys");
+    if (!sheet) return { status: "success", data: [] };
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { status: "success", data: [] };
+
+    const lastCol = Math.max(10, sheet.getLastColumn());
+    const data = sheet.getRange(2, 1, lastRow - 1, lastCol).getValues();
+    const result = data.map(row => ({
+        id_problem: row[0],
+        Problema: row[1],
+        Descripcion: row[2],
+        Se_soluciono: row[3],
+        Solucion: row[4],
+        Prevenir: row[5],
+        Imagen: row[6],
+        Video: row[7],
+        Colaborador: row[8] || "",
+        modelosAsociados: parseModelosAsociados(row[9] || "")
+    }));
+    return { status: "success", data: result };
+}
+
+/* TAREA 10 (5.4): ALMACENAMIENTO EN HOJA PYS, IDENTIFICADORES ÚNICOS ISUE-001 Y SUBIDA A DRIVE */
+function handleAddProblem(payload) {
+    const { titulo, descripcion, sinSolucion, solucion, prevenir, videoUrl, imgBase64, userId, userName, modelosAsociados, alcance } = payload;
+    if (!titulo || !descripcion) {
+        throw new Error("Titulo y descripcion son obligatorios.");
+    }
+    if (titulo.length > 30) throw new Error("El titulo no puede superar 30 caracteres.");
+    if (descripcion.length > 700) throw new Error("La descripcion no puede superar 700 caracteres.");
+    if (!sinSolucion && !solucion) throw new Error("Debe proporcionar una solucion si no marca 'Sin solucion'.");
+    if (solucion && solucion.length > 700) throw new Error("La solucion no puede superar 700 caracteres.");
+    if (prevenir && prevenir.length > 700) throw new Error("La prevencion no puede superar 700 caracteres.");
+    if (videoUrl && !videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be")) {
+        throw new Error("El enlace del vídeo debe ser una URL válida de YouTube.");
+    }
+
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+
+    try {
+        const sheet = getSafeSheet("pys") || getSpreadsheet().insertSheet("pys");
+        if (sheet.getLastRow() === 0) {
+            sheet.getRange(1, 1, 1, 10).setValues([["id_problem", "Problema", "Descripción", "Se soluciono", "Solucion", "Prevenir", "Imagen", "Video", "Colaborador", "modelos_asociados"]]);
+        }
+
+        const lastRow = sheet.getLastRow();
+        const nextIdNum = lastRow > 1 ? lastRow : 1;
+        const problemId = "isue-" + String(nextIdNum).padStart(3, "0");
+
+        let imageUrl = "";
+        if (imgBase64) {
+            try {
+                const folderName = "Problemas y Soluciones";
+                const folders = DriveApp.getFoldersByName(folderName);
+                let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
+                const blob = Utilities.newBlob(Utilities.base64Decode(imgBase64.replace(/^data:image\/[a-z]+;base64,/, "")), "image/jpeg", `${problemId}_${Date.now()}.jpg`);
+                const file = folder.createFile(blob);
+                file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+                imageUrl = file.getUrl();
+            } catch(e) { console.error("Error guardando imagen PYS:", e); }
+        }
+
+        let modelosArr = [];
+        if (alcance === 'especifico' && Array.isArray(modelosAsociados)) {
+            modelosArr = Array.from(new Set(modelosAsociados.map(String).filter(Boolean)));
+        }
+
+        const newRow = [
+            problemId,
+            titulo,
+            descripcion,
+            sinSolucion ? "" : "x",
+            sinSolucion ? "" : (solucion || ""),
+            prevenir || "",
+            imageUrl,
+            videoUrl || "",
+            userName || "",
+            modelosArr.length > 0 ? JSON.stringify(modelosArr) : ""
+        ];
+
+        sheet.appendRow(newRow);
+        SpreadsheetApp.flush();
+        if (userId && userName) logUserActivity(userId, userName, "add_problem", problemId, titulo);
+
+        return { status: "success", message: "Problema registrado correctamente.", problemId };
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+function handleAddSolution(payload) {
+    const { problemId, solucion } = payload;
+    if (!problemId || !solucion) throw new Error("problemId y solucion son requeridos.");
+    if (solucion.length > 700) throw new Error("La solucion no puede superar 700 caracteres.");
+
+    const sheet = getSafeSheet("pys");
+    if (!sheet) throw new Error("Hoja pys no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+    const data = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+    const index = data.findIndex(id => id.toString() === problemId.toString());
+    if (index === -1) throw new Error("Problema no encontrado.");
+
+    const row = index + 2;
+    sheet.getRange(row, 4).setValue("x"); // Se soluciono
+    sheet.getRange(row, 5).setValue(solucion); // Solucion
+    SpreadsheetApp.flush();
+
+    return { status: "success", message: "Solucion agregada con exito." };
+}
+
+function handleAddPrevention(payload) {
+    const { problemId, prevenir } = payload;
+    if (!problemId || !prevenir) throw new Error("problemId y prevenir son requeridos.");
+    if (prevenir.length > 700) throw new Error("La prevencion no puede superar 700 caracteres.");
+
+    const sheet = getSafeSheet("pys");
+    if (!sheet) throw new Error("Hoja pys no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+    const data = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+    const index = data.findIndex(id => id.toString() === problemId.toString());
+    if (index === -1) throw new Error("Problema no encontrado.");
+
+    const row = index + 2;
+    sheet.getRange(row, 6).setValue(prevenir); // Prevenir
+    SpreadsheetApp.flush();
+
+    return { status: "success", message: "Prevencion agregada con exito." };
+}
+
+function handleAddTutorial(payload) {
+    const { tema, videoUrl, descripcion, colaborador } = payload;
+    if (!tema || !videoUrl) throw new Error("Tema y enlace de vídeo son obligatorios.");
+    if (!videoUrl.includes("youtube.com") && !videoUrl.includes("youtu.be")) {
+        throw new Error("El enlace del vídeo debe ser una URL válida de YouTube.");
+    }
+
+    const sheet = getSafeSheet("Tutoriales") || getSpreadsheet().insertSheet("Tutoriales");
+    if (sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, 5).setValues([["Tema", "Imagen", "Video", "Descripción", "Colaborador"]]);
+    }
+
+    const newRow = [
+        tema,
+        `https://img.youtube.com/vi/${extractYouTubeId(videoUrl)}/hqdefault.jpg`,
+        videoUrl,
+        descripcion || "",
+        colaborador || ""
+    ];
+
+    sheet.appendRow(newRow);
+    SpreadsheetApp.flush();
+    return { status: "success", message: "Tutorial registrado con éxito." };
+}
+
+function extractYouTubeId(url) {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : "";
+}
+
+function handleDeleteFeedbackItem(payload) {
+    const { id, type } = payload;
+    if (!id || !type) {
+        throw new Error("Se requieren ID y Tipo de mensaje para eliminar.");
+    }
+
+    if (type === 'problem_report') {
+        const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+        if (!sheet) throw new Error("No se encontró la hoja de Feedbacks.");
+        const data = sheet.getDataRange().getValues();
+        for (let i = 1; i < data.length; i++) {
+            if (String(data[i][COLS_FEEDBACKS.ID - 1]) === String(id)) {
+                sheet.deleteRow(i + 1);
+                SpreadsheetApp.flush();
+                return { status: 'success', message: 'Reporte de problema eliminado correctamente.' };
+            }
+        }
+        throw new Error("No se encontró el reporte especificado.");
+    } else if (type === 'contact_form') {
+        const sheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
+        if (!sheet) throw new Error("No se encontró la hoja de Contactanos.");
+        const data = sheet.getDataRange().getValues();
+        for (let i = 1; i < data.length; i++) {
+            if (String(data[i][COLS_CONTACTANOS.Contacto_ID - 1]) === String(id)) {
+                sheet.deleteRow(i + 1);
+                SpreadsheetApp.flush();
+                return { status: 'success', message: 'Mensaje de contacto eliminado correctamente.' };
+            }
+        }
+        throw new Error("No se encontró el mensaje de contacto especificado.");
+    } else {
+        throw new Error("Tipo de mensaje desconocido.");
+    }
+}
+
+/* TAREA 11 (12.3): ASOCIACIÓN DE VEHÍCULOS A PROBLEMAS EN HOJA PYS (COLUMNA 10) */
+function handleAddVehicleToProblem(payload) {
+    const { problemId, vehicleId } = payload;
+    if (!problemId || !vehicleId) {
+        throw new Error("Se requieren problemId y vehicleId.");
+    }
+
+    const sheet = getSafeSheet("pys");
+    if (!sheet) throw new Error("Hoja pys no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+
+    const data = sheet.getRange(2, 1, lastRow - 1, Math.max(10, sheet.getLastColumn())).getValues();
+    let rowIndex = -1;
+    let currentRaw = "";
+
+    for (let i = 0; i < data.length; i++) {
+        if (String(data[i][0]) === String(problemId)) {
+            rowIndex = i + 2;
+            currentRaw = data[i][9] || "";
+            break;
+        }
+    }
+
+    if (rowIndex === -1) throw new Error("Problema no encontrado.");
+
+    const currentList = parseModelosAsociados(currentRaw);
+    if (!currentList.includes(String(vehicleId))) {
+        currentList.push(String(vehicleId));
+        sheet.getRange(rowIndex, 10).setValue(JSON.stringify(currentList));
+        SpreadsheetApp.flush();
+    }
+
+    return { status: 'success', message: 'Vehículo asociado al problema correctamente.', modelosAsociados: currentList };
+}
+
+/* TAREA 6: ELIMINAR RELACIÓN ENTRE PROBLEMA Y MODELO DE VEHÍCULO */
+function handleRemoveVehicleFromProblem(payload) {
+    const { problemId, vehicleId, userRole } = payload;
+    if (!problemId || !vehicleId) {
+        throw new Error("Se requieren problemId y vehicleId.");
+    }
+
+    // REVISIÓN IV: Desvinculación de problemas y vehículos restringida exclusivamente al Desarrollador
+    const allowedRoles = ['Desarrollador'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos suficientes para eliminar relaciones.");
+    }
+
+    const sheet = getSafeSheet("pys");
+    if (!sheet) throw new Error("Hoja pys no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+
+    const data = sheet.getRange(2, 1, lastRow - 1, Math.max(10, sheet.getLastColumn())).getValues();
+    let rowIndex = -1;
+    let currentRaw = "";
+
+    for (let i = 0; i < data.length; i++) {
+        if (String(data[i][0]) === String(problemId)) {
+            rowIndex = i + 2;
+            currentRaw = data[i][9] || "";
+            break;
+        }
+    }
+
+    if (rowIndex === -1) throw new Error("Problema no encontrado.");
+
+    let currentList = parseModelosAsociados(currentRaw);
+    currentList = currentList.filter(id => String(id) !== String(vehicleId));
+
+    sheet.getRange(rowIndex, 10).setValue(currentList.length > 0 ? JSON.stringify(currentList) : "");
+    SpreadsheetApp.flush();
+
+    return { status: 'success', message: 'Relación retirada con éxito.', modelosAsociados: currentList };
+}
+
+function handleClearActivityLogs(payload) {
+    const keepLastWeek = payload && payload.keepLastWeek === true;
+    const sheet = getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
+    if (!sheet) {
+        return { status: 'success', message: 'Hoja de actividad no encontrada, nada que limpiar.', deletedCount: 0 };
+    }
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+        return { status: 'success', message: 'No hay registros de actividad para eliminar.', deletedCount: 0 };
+    }
+
+    if (!keepLastWeek) {
+        // Borrar todos los registros excepto el encabezado
+        sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).clearContent();
+        SpreadsheetApp.flush();
+        return { status: 'success', message: 'Todos los registros de actividad han sido eliminados.', deletedCount: lastRow - 1 };
+    } else {
+        // Borrar registros con antigüedad mayor a 7 días
+        const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+        const now = new Date().getTime();
+        const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+        let deletedCount = 0;
+
+        // Recorrer de abajo hacia arriba para poder borrar filas sin desfasar índices
+        for (let i = data.length - 1; i >= 0; i--) {
+            const rawTimestamp = data[i][COLS_ACTIVIDAD_USUARIO.timestamp - 1];
+            let entryTime = 0;
+            if (rawTimestamp instanceof Date) {
+                entryTime = rawTimestamp.getTime();
+            } else if (rawTimestamp) {
+                entryTime = new Date(rawTimestamp).getTime();
+            }
+
+            if (entryTime > 0 && (now - entryTime) > sevenDaysMs) {
+                sheet.deleteRow(i + 2);
+                deletedCount++;
+            }
+        }
+        SpreadsheetApp.flush();
+        return { status: 'success', message: `Se eliminaron ${deletedCount} registros con antigüedad mayor a una semana.`, deletedCount };
+    }
+}
+
+// ============================================================================
+// TAREA 8.1 & 8.2: SUBIDA DIRECTA DE VÍDEOS A YOUTUBE Y APROBACIÓN PREVIA
+// ============================================================================
+
+/**
+ * Inicializa la sesión de subida de vídeo a YouTube (Resumable Upload)
+ */
+function handleInitYouTubeUpload(payload) {
+    const { title, description, contentType, referenceId, fileName, fileSize, fileType, userName, userId } = payload;
+    if (!title) throw new Error("El título del vídeo es obligatorio.");
+
+    // Generar un ID local de operación para idempotencia
+    const opVideoId = 'yt_' + Utilities.getUuid().slice(0, 8);
+
+    // Configuración permanente y obligatoria de publicación de YouTube:
+    const metadata = {
+        snippet: {
+            title: title,
+            description: description || '',
+            tags: [], // Etiquetas: Ninguna
+            categoryId: '28' // Ciencia y Tecnología / Categoría predeterminada estándar
+        },
+        status: {
+            privacyStatus: 'unlisted', // Visibilidad: No listado
+            selfDeclaredMadeForKids: false, // Audiencia: No es contenido para niños
+            embeddable: true,
+            publicStatsViewable: false
+        }
+    };
+
+    let uploadUrl = null;
+    let videoId = null;
+
+    try {
+        // En entorno Google Apps Script con token OAuth de la cuenta administradora:
+        const token = ScriptApp.getOAuthToken();
+        const youtubeEndpoint = 'https://www.googleapis.com/upload/youtube/v3/videos?uploadType=resumable&part=snippet,status';
+
+        const options = {
+            method: 'post',
+            contentType: 'application/json; charset=UTF-8',
+            headers: {
+                'Authorization': 'Bearer ' + token,
+                'X-Upload-Content-Type': fileType || 'video/mp4',
+                'X-Upload-Content-Length': String(fileSize || 0)
+            },
+            payload: JSON.stringify(metadata),
+            muteHttpExceptions: true
+        };
+
+        const res = UrlFetchApp.fetch(youtubeEndpoint, options);
+        const headers = res.getAllHeaders();
+        // La API de YouTube devuelve el endpoint de subida reanudable en la cabecera Location
+        uploadUrl = headers['Location'] || headers['location'] || null;
+
+        if (!uploadUrl && res.getResponseCode() >= 400) {
+            Logger.log("Aviso YouTube API Init: " + res.getContentText());
+        }
+    } catch (e) {
+        Logger.log("Aviso de inicialización OAuth YouTube: " + e.message);
+    }
+
+    // Si la sesión resumable no pudo ser provista directamente por falta de credenciales Cloud en el sandbox,
+    // se entrega el opVideoId como identificador de sesión.
+    return {
+        status: 'success',
+        opVideoId: opVideoId,
+        videoId: videoId || opVideoId,
+        uploadUrl: uploadUrl,
+        message: uploadUrl ? 'Sesión Resumable de YouTube obtenida.' : 'Sesión de subida inicializada.'
+    };
+}
+
+/**
+ * Registra la solicitud de aprobación de un vídeo subido a YouTube
+ */
+function handleSubmitVideoForApproval(payload) {
+    const { title, description, contentType, referenceId, metadata, videoId, videoUrl, userName, userId } = payload;
+    if (!title || !videoUrl) throw new Error("Título y URL del vídeo son obligatorios.");
+
+    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!sheet) throw new Error(`Hoja ${SHEET_NAMES.FEEDBACKS} no encontrada.`);
+
+    const newId = 'vid-' + Utilities.getUuid().slice(0, 8);
+    const dateStr = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
+
+    // Construir metadatos estructurados para el Inbox
+    const videoApprovalPayload = {
+        subType: 'video_approval',
+        title: title,
+        description: description || '',
+        videoUrl: videoUrl,
+        videoId: videoId,
+        contentType: contentType || 'corte',
+        referenceId: referenceId || null,
+        metadata: metadata || {},
+        status: 'pending',
+        date: dateStr
+    };
+
+    const newRowNumber = sheet.getLastRow() + 1;
+    // Guardar en la hoja Feedbacks aprovechando columnas estándar
+    // ID: newId, Usuario: userName, ID_vehiculo: referenceId, Problema: JSON video payload, Respuesta: 'pending', Se resolvio: false
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).setValue(newId);
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario).setValue(userName || 'Colaborador');
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID_vehiculo).setValue(referenceId || '');
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Problema).setValue(JSON.stringify(videoApprovalPayload));
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Respuesta).setValue('pending');
+    sheet.getRange(newRowNumber, COLS_FEEDBACKS['Se resolvio']).setValue(false);
+
+    SpreadsheetApp.flush();
+
+    return {
+        status: 'success',
+        id: newId,
+        videoUrl: videoUrl,
+        approvalStatus: 'pending',
+        message: 'Vídeo enviado para aprobación interna.'
+    };
+}
+
+/**
+ * Aprueba una solicitud de vídeo y lo asocia al elemento correspondiente en GPSpedia
+ */
+function handleApproveVideo(payload) {
+    const { itemId, approverName, userRole } = payload;
+    if (!itemId) throw new Error("ID de la solicitud requerido.");
+
+    // Validación estricta de permisos de rol (Desarrollador, Gefe, Supervisor)
+    const allowedRoles = ['Desarrollador', 'Gefe', 'Supervisor'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos suficientes para aprobar vídeos.");
+    }
+
+    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!sheet) throw new Error("Hoja no encontrada.");
+
+    const data = sheet.getDataRange().getValues();
+    let rowIndex = -1;
+    let videoData = null;
+
+    for (let i = 1; i < data.length; i++) {
+        if (String(data[i][COLS_FEEDBACKS.ID - 1]) === String(itemId)) {
+            rowIndex = i + 1;
+            try {
+                videoData = JSON.parse(data[i][COLS_FEEDBACKS.Problema - 1]);
+            } catch (e) {
+                videoData = null;
+            }
+            break;
+        }
+    }
+
+    if (rowIndex === -1 || !videoData) {
+        throw new Error("Solicitud de vídeo no encontrada.");
+    }
+
+    // Actualizar estado en Feedbacks
+    videoData.status = 'approved';
+    videoData.approvedBy = approverName || 'Supervisor';
+    videoData.approvalDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
+
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema).setValue(JSON.stringify(videoData));
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Respuesta).setValue('approved');
+    sheet.getRange(rowIndex, COLS_FEEDBACKS['Se resolvio']).setValue(true);
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Responde).setValue(approverName || 'Supervisor');
+
+    // Asociar el vídeo aprobado a la entidad correspondiente si es corte de vehículo
+    if (videoData.contentType === 'corte' && videoData.referenceId) {
+        const cortesSheet = getSafeSheet(SHEET_NAMES.CORTES);
+        if (cortesSheet) {
+            const cortesData = cortesSheet.getDataRange().getValues();
+            for (let j = 1; j < cortesData.length; j++) {
+                if (String(cortesData[j][COLS_CORTES.id - 1]) === String(videoData.referenceId)) {
+                    cortesSheet.getRange(j + 1, COLS_CORTES.videoGuiaDesarmeUrl).setValue(videoData.videoUrl);
+                    break;
+                }
+            }
+        }
+    }
+
+    SpreadsheetApp.flush();
+    return { status: 'success', message: 'Vídeo aprobado y publicado en GPSpedia.', videoUrl: videoData.videoUrl };
+}
+
+/**
+ * Rechaza una solicitud de vídeo
+ */
+function handleRejectVideo(payload) {
+    const { itemId, rejecterName, reason, userRole } = payload;
+    if (!itemId) throw new Error("ID de la solicitud requerido.");
+
+    const allowedRoles = ['Desarrollador', 'Gefe', 'Supervisor'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos suficientes para rechazar vídeos.");
+    }
+
+    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+    if (!sheet) throw new Error("Hoja no encontrada.");
+
+    const data = sheet.getDataRange().getValues();
+    let rowIndex = -1;
+    let videoData = null;
+
+    for (let i = 1; i < data.length; i++) {
+        if (String(data[i][COLS_FEEDBACKS.ID - 1]) === String(itemId)) {
+            rowIndex = i + 1;
+            try {
+                videoData = JSON.parse(data[i][COLS_FEEDBACKS.Problema - 1]);
+            } catch (e) {
+                videoData = null;
+            }
+            break;
+        }
+    }
+
+    if (rowIndex === -1 || !videoData) {
+        throw new Error("Solicitud de vídeo no encontrada.");
+    }
+
+    videoData.status = 'rejected';
+    videoData.rejectedBy = rejecterName || 'Supervisor';
+    videoData.rejectReason = reason || 'Rechazado por el supervisor';
+    videoData.rejectionDate = Utilities.formatDate(new Date(), Session.getScriptTimeZone() || "GMT-5", "yyyy-MM-dd HH:mm:ss");
+
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Problema).setValue(JSON.stringify(videoData));
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Respuesta).setValue('rejected: ' + (reason || 'Rechazado'));
+    sheet.getRange(rowIndex, COLS_FEEDBACKS['Se resolvio']).setValue(true);
+    sheet.getRange(rowIndex, COLS_FEEDBACKS.Responde).setValue(rejecterName || 'Supervisor');
+
+    SpreadsheetApp.flush();
+    return { status: 'success', message: 'Vídeo rechazado.', statusState: 'rejected' };
+}
+
+/* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN PROBLEMAS Y SOLUCIONES */
+function handleUpdatePysItem(payload) {
+    const { problemId, titulo, descripcion, solucion, prevenir, videoUrl, userRole } = payload;
+    if (!problemId) throw new Error("problemId es obligatorio.");
+
+    const allowedRoles = ['Desarrollador'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos de Desarrollador para editar este problema.");
+    }
+
+    if (titulo && titulo.length > 30) throw new Error("El título no puede exceder 30 caracteres.");
+    if (descripcion && descripcion.length > 700) throw new Error("La descripción no puede exceder 700 caracteres.");
+    if (solucion && solucion.length > 700) throw new Error("La solución no puede exceder 700 caracteres.");
+    if (prevenir && prevenir.length > 700) throw new Error("La prevención no puede exceder 700 caracteres.");
+
+    const sheet = getSafeSheet("pys");
+    if (!sheet) throw new Error("Hoja pys no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay problemas registrados.");
+
+    const ids = sheet.getRange(2, 1, lastRow - 1, 1).getValues().flat();
+    const index = ids.findIndex(id => String(id) === String(problemId));
+    if (index === -1) throw new Error("Problema no encontrado.");
+
+    const rowIndex = index + 2;
+    if (titulo !== undefined) sheet.getRange(rowIndex, 2).setValue(titulo);
+    if (descripcion !== undefined) sheet.getRange(rowIndex, 3).setValue(descripcion);
+    if (solucion !== undefined) {
+        sheet.getRange(rowIndex, 5).setValue(solucion);
+        sheet.getRange(rowIndex, 4).setValue(solucion ? "x" : "");
+    }
+    if (prevenir !== undefined) sheet.getRange(rowIndex, 6).setValue(prevenir);
+    if (videoUrl !== undefined) sheet.getRange(rowIndex, 8).setValue(videoUrl);
+
+    SpreadsheetApp.flush();
+    return {
+        status: "success",
+        message: "Problema actualizado exitosamente in-modal.",
+        updated: { problemId, titulo, descripcion, solucion, prevenir, videoUrl }
+    };
+}
+
+/* REVISIÓN IV: EDICIÓN IN-MODAL PARA DESARROLLADORES EN TUTORIALES */
+function handleUpdateTutorialItem(payload) {
+    const { originalTema, tema, descripcion, videoUrl, userRole } = payload;
+    if (!originalTema && !tema) throw new Error("Se requiere el tema del tutorial a editar.");
+
+    const allowedRoles = ['Desarrollador'];
+    if (!userRole || !allowedRoles.includes(userRole)) {
+        throw new Error("No tienes permisos de Desarrollador para editar este tutorial.");
+    }
+
+    if (tema && tema.length > 30) throw new Error("El tema no puede exceder 30 caracteres.");
+    if (descripcion && descripcion.length > 700) throw new Error("La descripción no puede exceder 700 caracteres.");
+
+    const sheet = getSafeSheet("Tutoriales") || getSafeSheet("Tutorial");
+    if (!sheet) throw new Error("Hoja de tutoriales no encontrada.");
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) throw new Error("No hay tutoriales registrados.");
+
+    const searchKey = originalTema || tema;
+    const values = sheet.getRange(2, 1, lastRow - 1, Math.max(5, sheet.getLastColumn())).getValues();
+    let rowIndex = -1;
+
+    for (let i = 0; i < values.length; i++) {
+        if (String(values[i][0]) === String(searchKey) || String(values[i][1]) === String(searchKey)) {
+            rowIndex = i + 2;
+            break;
+        }
+    }
+
+    if (rowIndex === -1) throw new Error("Tutorial no encontrado.");
+
+    if (tema !== undefined) sheet.getRange(rowIndex, 1).setValue(tema);
+    if (videoUrl !== undefined) {
+        sheet.getRange(rowIndex, 3).setValue(videoUrl);
+        const ytid = extractYouTubeId(videoUrl);
+        if (ytid) {
+            sheet.getRange(rowIndex, 2).setValue(`https://img.youtube.com/vi/${ytid}/hqdefault.jpg`);
+        }
+    }
+    if (descripcion !== undefined) sheet.getRange(rowIndex, 4).setValue(descripcion);
+
+    SpreadsheetApp.flush();
+    return {
+        status: "success",
+        message: "Tutorial actualizado exitosamente in-modal.",
+        updated: { tema: tema || originalTema, descripcion, videoUrl }
+    };
 }
