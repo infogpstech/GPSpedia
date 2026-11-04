@@ -1956,3 +1956,15 @@ Cambio previsto:
 - Evitar que la nota se clone como bloque independiente, manteniéndola con la tabla de metadatos en la primera página.
 - Mantener selector, prioridad de tarjetas y lógica de agrupación actual.
 ================================================================================
+
+
+================================================================================
+REVISIÓN ESTÁTICA POSTCAMBIO — ANCHO DE IMAGEN Y NOTA EN TABLA
+Fecha: 2026-11-04
+- ui.js actualizado en commit 96d338ea17715fd5d001624dbdf4de19eb3d5b25.
+- La nota importante se representa como <tr class="meta-note-row"> con <td colspan="4"> dentro de meta-table.
+- Se eliminó la generación de la nota como bloque separado después de la sección técnica y se quitó la clonación independiente de notesTemplate.
+- Tarjetas, cuerpo, wrapper e imagen usan el ancho de la columna disponible; la imagen conserva height:auto, object-fit:contain y los límites de altura existentes.
+- Comprobaciones estáticas realizadas: nota en tabla, sin duplicación como bloque independiente, listener del selector presente, agrupación de imágenes conservada y bloque de metadatos clonado solo en primera página.
+- No se ejecutó navegador real ni generación de PDF; la apariencia final y el encaje en impresión siguen pendientes de validación visual.
+================================================================================
