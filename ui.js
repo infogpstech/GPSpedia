@@ -4906,7 +4906,7 @@ export function showApp(user) {
     }
 
     const devToolsBtn = document.getElementById('dev-tools-btn');
-    const userRole = String(user && user.Privilegios != null ? user.Privilegios : '')
+    const userRole = String((user && (user.Privilegios || user.Rol)) || '')
         .normalize('NFD')
         .replace(/[\\u0300-\\u036f]/g, '')
         .trim()
