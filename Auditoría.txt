@@ -1858,3 +1858,14 @@ Respaldos exactos creados antes de modificar código:
 - ChangesLogs.txt: 9cea79d194f66a906f2ec96c08e3f9ea0db1e1b5
 - Tareas.txt: 06f4473c02198549d77e5a585bc9f8c5af92c9de
 ================================================================================
+
+
+================================================================================
+REVISIÓN POSTIMPLEMENTACIÓN — SELECTOR Y PLANTILLAS
+Fecha: 2026-11-04
+- Se verificó estáticamente la existencia del listener de cambio de #print-layout-mode, la eliminación del handler inline anterior y la reconstrucción de las páginas al cambiar de modo.
+- Se verificó que hay plantillas para tarjeta individual, pares verticales, pares horizontales apilados, tríos verticales y mosaicos mixtos; ya no existe el bucle anterior que agrupaba siempre de cuatro en cuatro.
+- Se verificó en el código que cada tarjeta conserva su nodo completo y que metadatos, notas y pie se clonan en las páginas previstas.
+- No se ejecutó un parser externo, navegador real ni generación de PDF. No se declara validada la geometría impresa, el desbordamiento, el QR ni los saltos de página.
+- Riesgo pendiente: la paginación usa principalmente cantidad y relación de aspecto; todavía no optimiza usando mediciones de altura renderizada de todas las tarjetas. @page sigue en orientación vertical.
+================================================================================
