@@ -2289,3 +2289,14 @@ TAREA COMPLEMENTARIA 2026-11-04 — CONTENCIÓN DE DESBORDAMIENTO EN FICHA IMPRI
 - [ ] Validar en navegador y PDF reales con distintas relaciones de aspecto, descripciones extensas y primera página con metadatos/notas.
 Estado: CAMBIO ESTÁTICO IMPLEMENTADO; validación visual real pendiente.
 ================================================================================
+
+
+================================================================================
+TAREA 2026-11-04 — ANCHO DISPONIBLE PARA IMÁGENES Y NOTA EN METADATOS
+- [x] Hacer que tarjetas y wrappers utilicen el ancho de la columna disponible, no el ancho intrínseco del texto.
+- [x] Hacer que la imagen aproveche el ancho del wrapper manteniendo proporción y límites de altura.
+- [x] Integrar la nota técnica importante como fila de la tabla de metadatos con colspan=4.
+- [x] Evitar que la nota se agregue de nuevo como bloque separado en la sección técnica.
+- [ ] Validar en navegador y PDF reales con imágenes verticales, horizontales y mixtas; confirmar que la nota queda bajo los metadatos y que el ancho de imagen se ve adecuado en cada modo.
+Estado: CAMBIO ESTÁTICO IMPLEMENTADO; validación visual real pendiente.
+================================================================================
