@@ -2063,3 +2063,48 @@ Rama: fix/pys-carousel-card-sizing-print-images
 - No se eliminaron ni sobrescribieron registros anteriores.
 - No se realizaron pruebas funcionales ni se verificó el despliegue.
 ================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN — GESTIÓN DE IMÁGENES REEMPLAZADAS DESDE EL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+Pull Request: #128 (borrador; sin merge).
+
+ARCHIVOS MODIFICADOS
+
+1. index.html
+- Línea 345: se corrigió la descripción del modal para indicar que las imágenes históricas se envían a la papelera de Google Drive y no se eliminan irreversiblemente.
+
+2. ui.js
+- Líneas 193-203: se añadió el contexto de sesión autenticada a la acción uploadAdminImage.
+- Líneas 3771-3781: se incorporó getDeveloperSessionPayload() para enviar ID y SessionToken de la sesión actual.
+- Líneas 3785-3927: se conectaron las acciones del historial a la sesión del desarrollador; se habilitó la recuperación de registros históricos enviados a papelera; se cambió la acción de eliminación por «Enviar a papelera»; se actualizaron estados y mensajes; se renderizaron los metadatos mediante textContent para evitar interpretar nombres o datos del historial como HTML.
+- Líneas 3928-4027: se sustituyó la auditoría de una sola petición por un recorrido por lotes con cursor de continuación; se conserva el resumen visual, se informa el progreso y se distingue el resultado completo del parcial.
+- Líneas 4908-4922: se normalizó el privilegio antes de mostrar el acceso al modal de desarrollador y se restablece su visibilidad explícitamente para sesiones no autorizadas. Las comprobaciones de los accesos de bandeja y panel se ajustaron a la misma normalización.
+
+3. Services/admin.js
+- Líneas 27-146: se añadieron validación de sesión/privilegio, extracción de IDs Drive, detección de referencias activas desde valores, fórmulas e hipervínculos enriquecidos, y comprobación de pertenencia al árbol Cortes.
+- Líneas 307-316: se protegieron en el servidor las acciones uploadAdminImage, getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes.
+- Líneas 1508-1630 aprox.: se validaron los campos de imagen y el tipo MIME; se serializó el reemplazo; se exige conservar el historial antes de cambiar la referencia activa; ante fallos se intenta revertir el campo y enviar el archivo nuevo a papelera, marcando requiere_revision cuando no se confirma la reversión. La carpeta destino se mantiene dentro de Cortes.
+- Líneas 2576-2615 aprox.: recordReplacedImage valida el ID y el tipo de archivo, registra el historial y marca requiere_revision si detecta una fila parcialmente escrita después de un error de escritura/flush.
+- Líneas 2646-2755 aprox.: la restauración valida tipo de contenido vehiculo, registro, campo permitido y archivo de imagen; restaura archivos de papelera e intercambia las referencias manteniendo trazabilidad.
+- Líneas 2756-2824 aprox.: la acción de papelera comprueba referencias activas en las hojas de datos, bloquea ante referencias no interpretables, actualiza el estado en_papelera y revierte el movimiento si falla el registro del estado.
+- Líneas 2825-2973: la auditoría del árbol Cortes usa lotes y cursores de continuación; valida que las carpetas y archivos pertenezcan al árbol; no impone un límite total fijo de 250 archivos; diferencia En uso, Histórica, Sin uso detectado y No verificable.
+
+DOCUMENTACIÓN
+- Auditoría.txt: se añadieron los resultados de auditoría inicial, hallazgos de Code Review, resoluciones y pruebas simuladas. Se conservaron todas las entradas anteriores.
+- Tareas.txt: se agregó una actualización del estado de las tareas relacionadas, sin borrar ni sobrescribir los registros originales.
+- Se conservaron copias exactas previas de los archivos modificados hasta concluir la revisión.
+
+VERIFICACIÓN
+- Sintaxis de ui.js y Services/admin.js: correcta en comprobación estática.
+- Paginación simulada: 100, 250 y 360 archivos completados; 120 niveles de profundidad completados.
+- Autorización simulada: sesión activa válida aceptada; token inválido y rol no desarrollador rechazados.
+- Referencias simuladas: detectadas desde HYPERLINK y RichTextValue; enlaces Drive no interpretables contabilizados.
+- No se ejecutaron pruebas con Google Sheets/Drive reales, navegador ni microservicio ADMIN desplegado.
+- No se actualizó el despliegue de Apps Script; este cambio de código no entra en producción hasta desplegar Services/admin.js en el proyecto ADMIN y verificar el endpoint.
+
+No se modificó la rama base GPSpedia2.2.5. No se realizó merge.
+================================================================================
