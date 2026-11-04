@@ -2450,3 +2450,24 @@ CRITERIOS DE ACEPTACIÓN
 - Si procede una corrección, se implementa en una rama nueva después de completar la auditoría y el procedimiento obligatorio.
 
 ================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — VERIFICAR ROL Y ACCESO AL PANEL DE HISTORIAL DE IMÁGENES
+Fecha: 2026-11-04
+Referencia: Auditoría.txt, hallazgo AUD-IMG-08.
+Rama de referencia: fix/pys-carousel-card-sizing-print-images
+Estado: PENDIENTE DE VERIFICACIÓN CON LA SESIÓN REAL Y EL DESPLIEGUE.
+
+Objetivo: confirmar por qué la cuenta que reporta el problema no ve la opción del historial y comprobar el acceso de extremo a extremo con una cuenta autorizada.
+
+Comprobaciones:
+1. Confirmar el valor de user.Privilegios recibido durante el login, sin compartir credenciales ni valores de sesión.
+2. Verificar si el valor es exactamente «Desarrollador» y si la propiedad existe en el objeto de sesión.
+3. Si el rol es distinto, confirmar si la restricción actual es la esperada o si el requisito funcional debe permitir otros roles.
+4. Comparar el commit publicado en GitHub Pages con la rama fix/pys-carousel-card-sizing-print-images.
+5. Con una cuenta autorizada, comprobar la visibilidad del enlace, la apertura del panel y la respuesta real de getReplacedImages.
+6. Separar errores del servicio, ausencia de registros y diferencias de despliegue.
+
+Restricciones: diagnóstico sin cambios de código; no compartir credenciales ni valores de sesión; no ampliar permisos sin autorización. Si se requiere implementar cambios, crear una rama nueva basada en fix/pys-carousel-card-sizing-print-images y preparar un Pull Request hacia esa rama.
+================================================================================
