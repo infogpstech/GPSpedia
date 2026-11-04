@@ -2300,3 +2300,14 @@ TAREA 2026-11-04 — ANCHO DISPONIBLE PARA IMÁGENES Y NOTA EN METADATOS
 - [ ] Validar en navegador y PDF reales con imágenes verticales, horizontales y mixtas; confirmar que la nota queda bajo los metadatos y que el ancho de imagen se ve adecuado en cada modo.
 Estado: CAMBIO ESTÁTICO IMPLEMENTADO; validación visual real pendiente.
 ================================================================================
+
+================================================================================
+TAREA COMPLEMENTARIA 2026-11-04 — TEXTO INCOMPLETO EN TARJETAS IMPRIMIBLES
+- [x] Identificar la regla que ocultaba contenido cuando la página excedía 269 mm.
+- [x] Permitir que el contenedor de página crezca según el contenido en lugar de recortar el excedente.
+- [x] Conservar la altura mínima de página y el selector de distribución existente.
+- [x] Mantener intactos los metadatos, la nota técnica, el orden y la prioridad del corte recomendado.
+- [ ] Validar con descripciones largas, múltiples tarjetas sin imagen y primera página con metadatos/notas en navegador y PDF real.
+- [ ] Revisar saltos de página y ubicación del pie cuando una página crece por contenido extenso.
+Estado: CORRECCIÓN ESTÁTICA IMPLEMENTADA; validación visual y de impresión pendiente.
+================================================================================
