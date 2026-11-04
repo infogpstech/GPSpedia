@@ -2254,3 +2254,83 @@ Validar sesión en el backend y obtener el nombre del perfil asociado al token; 
 
 No se modificó código ni se alteraron registros anteriores.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DE IMPLEMENTACIÓN — GESTIÓN DE IMÁGENES REEMPLAZADAS DESDE EL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+Tipo: auditoría estática previa a implementación. No se ejecutaron pruebas en navegador, Spreadsheet real, Google Drive ni microservicios desplegados.
+
+ALCANCE Y ARCHIVOS INSPECCIONADOS
+- index.html: enlace del menú de desarrollador, panel #dev-tools-modal, botones de historial/auditoría y modales relacionados.
+- main.js: inicialización y listener de #dev-tools-btn.
+- ui.js: showApp, openDevTools, initAdminPanelListeners, openReplacedImagesModal, openAuditDriveModal y flujo de uploadAdminImage.
+- api-config.js: mapeo de acciones administrativas al endpoint ADMIN y contrato de routeAction.
+- Services/admin.js: doPost, autorización, handleUploadAdminImage, registro histórico, recuperación, eliminación y auditoría recursiva.
+- auth.js y state.js: almacenamiento y disponibilidad de ID, SessionToken y Privilegios de la sesión.
+- Services/Auth.js: esquema de Users y ActiveSessions utilizado por el login y validación de sesión.
+- Proceso de desarollo.md: procedimiento obligatorio.
+
+HALLAZGOS CONFIRMADOS EN EL CÓDIGO DE LA RAMA BASE
+
+1. ACCESO AL MODAL DE DESARROLLADOR
+- index.html contiene #dev-tools-btn inicialmente oculto y los botones #btn-admin-view-replaced-images y #btn-admin-audit-drive-images dentro de #dev-tools-modal.
+- main.js enlaza #dev-tools-btn con ui.openDevTools().
+- ui.js enlaza los dos botones administrativos al abrir sus modales cuando se ejecuta initAdminPanelListeners().
+- ui.js, showApp(user), muestra el acceso únicamente si user.Privilegios === 'Desarrollador'. La comparación no normaliza espacios ni diferencias de mayúsculas/minúsculas y no restablece explícitamente el estado oculto para sesiones posteriores.
+- auth.js guarda result.user, incluyendo ID, SessionToken y Privilegios, en gpsepedia_session y en state.currentUser.
+Conclusión estática: los componentes y enlaces existen en el código; el acceso depende del valor exacto de Privilegios. No se puede confirmar el rol real de la cuenta del usuario ni el commit servido por el despliegue sin consultar la sesión y el sitio en ejecución.
+
+2. AUTORIZACIÓN DEL BACKEND
+- Services/admin.js, doPost, despacha getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes sin validar ID de usuario, SessionToken ni rol.
+- api-config.js enruta correctamente esas acciones al endpoint ADMIN, pero routeAction no agrega contexto de sesión.
+- uploadAdminImage también ejecuta la sustitución de imágenes y no tiene autorización visible en el router.
+Riesgo: la restricción del menú no protege las acciones ante llamadas directas al endpoint.
+
+3. CONSISTENCIA DEL REEMPLAZO
+- handleUploadAdminImage crea el archivo nuevo; intenta registrar la imagen anterior, pero captura el error y continúa; después actualiza el campo activo y devuelve éxito.
+- recordReplacedImage extrae el ID únicamente con el patrón id=..., por lo que no reconoce de forma general los formatos /d/ID y googleusercontent.
+Riesgo: una sustitución puede completarse sin historial y perder trazabilidad; algunos enlaces válidos pueden registrarse sin ID de Drive.
+
+4. VALIDACIÓN ANTES DE ENVIAR A PAPELERA
+- handleDeleteReplacedImage inspecciona únicamente la hoja Cortes.
+- El handler utiliza file.setTrashed(true), no una eliminación irreversible.
+- La interfaz solicita confirmación de eliminación permanente, informa que la imagen fue eliminada y utiliza el estado «eliminada».
+Riesgo: puede enviarse a papelera un archivo referenciado en otra hoja y la interfaz describe una operación distinta de la ejecutada.
+
+5. AUDITORÍA DEL ÁRBOL CORTES
+- handleAuditDriveImagesInCortes limita el recorrido a 250 archivos y no devuelve indicador de truncamiento ni cursor de continuación.
+- La extracción de IDs activos solo reconoce id=... y /d/....
+- Una imagen con referencia no reconocida puede terminar como «Sin uso detectado» porque no se registra la incertidumbre de la extracción.
+- openAuditDriveModal realiza una sola petición y no puede continuar una auditoría parcial.
+Riesgo: resultados incompletos o inciertos pueden presentarse como una auditoría terminada.
+
+6. RESTAURACIÓN
+- handleRecoverReplacedImage escribe únicamente en la hoja Cortes mediante COLS_CORTES[campo].
+- No valida de forma explícita que tipo_contenido sea vehiculo ni que campo pertenezca a una lista exclusiva de columnas de imagen.
+- El flujo actual intercambia la referencia activa y agrega un registro histórico, pero no implementa recuperación consistente si falla una de las escrituras.
+Alcance que se confirma en esta implementación: el único flujo de reemplazo localizado en handleUploadAdminImage corresponde a imágenes de vehículos dentro de Cortes. La restauración deberá limitarse y validarse explícitamente para ese tipo de contenido hasta que exista un flujo documentado para otros módulos.
+
+7. PRUEBAS Y DESPLIEGUE
+- No hay evidencia de ejecución en navegador, llamadas a los endpoints desplegados, consulta de la Spreadsheet real ni exploración de Drive.
+- Los cambios en GitHub no actualizan por sí solos el despliegue de Apps Script ADMIN ni AUTH.
+- La rama de trabajo no debe considerarse desplegada ni la funcionalidad verificada en producción hasta ejecutar esas comprobaciones.
+
+PLAN DE IMPLEMENTACIÓN DERIVADO
+- Normalizar la visibilidad del enlace de desarrollador y mantener el acceso restringido al rol Desarrollador.
+- Enviar ID y SessionToken desde la sesión cliente en las acciones de historial/auditoría y en uploadAdminImage.
+- Validar en Services/admin.js la sesión activa y el rol real consultando Users y ActiveSessions en la Spreadsheet antes de ejecutar acciones sensibles.
+- Hacer que el reemplazo falle de forma segura si no puede conservarse el historial; conservar la referencia anterior y revertir/aislar el archivo nuevo cuando falle una etapa.
+- Validar referencias de Drive en las hojas de datos pertinentes antes de enviar una imagen histórica a papelera; excluir la propia hoja histórica de la comprobación de referencias activas.
+- Reflejar en la interfaz que la acción mueve el archivo a papelera y no lo elimina irreversiblemente.
+- Implementar auditoría por lotes con cursor de continuación y marcar explícitamente los resultados parciales/no verificables.
+- Validar tipo de contenido, registro, campo y archivo al restaurar; documentar el alcance soportado como vehiculo/Cortes.
+- Ejecutar pruebas estáticas y de integración disponibles; las pruebas reales de Apps Script, Google Drive y navegador deberán quedar identificadas como pendientes si no se dispone del entorno de despliegue.
+
+RESPALDO PREVIO
+Se crearon copias exactas de ui.js, Services/admin.js, Auditoría.txt, ChangesLogs.txt y Tareas.txt en _temporary_backups/GPSpedia2.2.5_work/ antes de editar esos archivos.
+
+No se modificó código durante esta auditoría.
+================================================================================
