@@ -8289,7 +8289,25 @@ export function exportVehiclePrintSheet(item) {
                 return row;
             };
 
-            if (portraitLandscapePortraitStack) {
+            const imageCount = orderedImageCards.length;
+            const allHorizontal = orderedImageCards.every(card => getDimensions(card).aspect > 1.2);
+            if (imageCount === 1) {
+                const row = createImageRow(orderedImageCards);
+                row.classList.add('adaptive-single-image-row');
+                newLayoutChildren.push(row);
+            } else if (imageCount === 2 && allHorizontal) {
+                orderedImageCards.forEach(card => {
+                    const row = createImageRow([card]);
+                    row.classList.add('adaptive-compact-image-row');
+                    newLayoutChildren.push(row);
+                });
+            } else if (imageCount === 3 && allHorizontal) {
+                orderedImageCards.forEach(card => {
+                    const row = createImageRow([card]);
+                    row.classList.add('adaptive-compact-image-row');
+                    newLayoutChildren.push(row);
+                });
+            } else if (portraitLandscapePortraitStack) {
                 const landscapeCards = orderedImageCards.filter(card => card !== priorityCard);
                 const portraitAspect = getDimensions(priorityCard).aspect;
                 const averageLandscapeAspect = landscapeCards.reduce((sum, card) => sum + getDimensions(card).aspect, 0) / landscapeCards.length;
