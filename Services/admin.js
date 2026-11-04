@@ -2533,7 +2533,7 @@ function handleRecoverReplacedImage(payload, logMessage) {
     const tipoContenido = String(repData[2] || "");
     const registroId = repData[3];
     const campo = String(repData[4] || "");
-    const driveId = String(repData[5] || "");
+    const driveId = extractDriveFileId(repData[5]) || extractDriveFileId(repData[7]);
     const urlHistorica = String(repData[7] || "");
     const imageFields = ["imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3", "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"];
     if (tipoContenido !== "vehiculo") throw new Error(`Tipo de contenido '${tipoContenido}' no compatible. Solo se admite el catálogo Cortes.`);
