@@ -8213,13 +8213,14 @@ export function exportVehiclePrintSheet(item) {
                     max-width: 100%;
                     min-width: 0;
                     box-sizing: border-box;
+                    justify-content: center;
                 }
                 .sheet-page-wrapper .tech-detail-img {
                     display: block;
-                    width: 100%;
+                    width: auto;
                     height: auto;
                     max-width: 100%;
-                    max-height: 250px;
+                    max-height: 520px;
                     object-fit: contain;
                 }
                 .meta-note-row > td {
@@ -8234,24 +8235,7 @@ export function exportVehiclePrintSheet(item) {
                     font-size: 11px;
                     line-height: 1.25;
                 }
-                .sheet-page-wrapper[data-image-count="1"] .tech-detail-img {
-                    max-height: 390px;
-                }
-                .sheet-page-wrapper[data-image-count="2"] .tech-detail-img {
-                    max-height: 230px;
-                }
-                .sheet-page-wrapper[data-image-count="3"] .tech-detail-img {
-                    max-height: 170px;
-                }
-                body[data-print-layout="image-focus"] .sheet-page-wrapper[data-image-count="1"] .tech-detail-img {
-                    max-height: 450px;
-                }
-                body[data-print-layout="image-focus"] .sheet-page-wrapper[data-image-count="2"] .tech-detail-img {
-                    max-height: 230px;
-                }
-                body[data-print-layout="image-focus"] .sheet-page-wrapper[data-image-count="3"] .tech-detail-img {
-                    max-height: 170px;
-                }
+                /* La altura máxima se calcula por página en arrangeTechnicalCards(), según el espacio restante. */
                 .top-grid { align-items: start; }
                 .vehicle-main-img img { height: auto; max-height: 105px; object-fit: contain; }
                 .qr-video-box { min-width: 0; align-self: start; }
@@ -8506,6 +8490,50 @@ export function exportVehiclePrintSheet(item) {
             };
             const pages = pageGroups.map((pageCards, pageIndex) => createPage(pageIndex, pageCards, pageGroups.length));
             printPages.replaceChildren(...pages);
+
+            // Dimensionar imágenes con el espacio vertical que queda en cada página.
+            // Se colapsan temporalmente para medir encabezado, metadatos, textos, tarjetas y pie;
+            // después se reparte el espacio libre entre las filas de imágenes de esa página.
+            const fitImagesToAvailablePageSpace = pageElements => {
+                pageElements.forEach(page => {
+                    const pageCards = Array.from(page.querySelectorAll('.tech-item-card.has-image'));
+                    const images = pageCards.map(getImage).filter(Boolean);
+                    if (!images.length) return;
+
+                    images.forEach(img => { img.style.maxHeight = '0px'; });
+
+                    const pageHeight = page.getBoundingClientRect().height || page.clientHeight;
+                    const main = page.querySelector('.sheet-content-main');
+                    const footer = page.querySelector('.footer-bar');
+                    const mainChildren = main ? Array.from(main.children) : [];
+                    const mainStyle = main && printDocument.defaultView
+                        ? printDocument.defaultView.getComputedStyle(main)
+                        : null;
+                    const mainGap = mainStyle
+                        ? (parseFloat(mainStyle.rowGap || mainStyle.gap || '0') || 0)
+                        : 6;
+                    const mainContentHeight = mainChildren.reduce(
+                        (total, child) => total + child.getBoundingClientRect().height,
+                        0
+                    ) + Math.max(0, mainChildren.length - 1) * mainGap;
+                    const footerHeight = footer ? footer.getBoundingClientRect().height : 0;
+                    const availableHeight = Math.max(0, pageHeight - footerHeight - mainContentHeight);
+
+                    const rowTops = [];
+                    pageCards.forEach(card => {
+                        const top = card.getBoundingClientRect().top;
+                        if (!rowTops.some(rowTop => Math.abs(rowTop - top) <= 2)) rowTops.push(top);
+                    });
+
+                    const rowCount = Math.max(1, rowTops.length);
+                    const modeMaxHeight = printDocument.body.dataset.printLayout === 'image-focus' ? 620 : 520;
+                    const rowMaxHeight = Math.max(80, Math.min(modeMaxHeight, (availableHeight / rowCount) - 4));
+                    images.forEach(img => { img.style.maxHeight = `${rowMaxHeight}px`; });
+                });
+            };
+
+            fitImagesToAvailablePageSpace(pages);
+
             orderedTechnicalCards.forEach(card => {
                 const dimensions = getDimensions(card);
                 card.dataset.naturalWidth = String(dimensions.width);
