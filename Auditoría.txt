@@ -2450,3 +2450,33 @@ PRUEBAS PREVISTAS Y LIMITACIONES
 - Comprobar que las acciones ADMIN continúan asignadas a ADMIN y que los demás endpoints no cambian.
 - No se ejecutará una petición real al servicio ni se inferirá disponibilidad del despliegue a partir del formato de la URL.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA PREVIA — VISIBILIDAD DEL ACCESO AL MODAL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Alcance: ui.js, flujo de autenticación que invoca showApp(user) y controles de rol que habilitan edición.
+
+ESTADO ACTUAL Y HALLAZGOS
+1. index.html declara dev-tools-btn con display:none como estado inicial.
+2. ui.js, función showApp(user), es responsable de mostrar u ocultar dev-tools-btn. La condición actual obtiene el rol exclusivamente desde user.Privilegios.
+3. auth.js guarda el objeto de usuario recibido en gpsepedia_session, lo asigna a currentUser y lo entrega a showApp(user), tanto al iniciar sesión como al rehidratar una sesión.
+4. En ui.js existen controles de edición que determinan el rol usando Privilegios o, como alternativa, Rol. Por tanto, la interfaz de edición puede reconocer el perfil como desarrollador mientras showApp no reconoce el mismo perfil si el dato disponible está bajo Rol.
+5. Services/Auth.js construye el objeto de sesión con la propiedad Privilegios procedente de la hoja Users. No se modificará el servicio de autenticación en esta tarea.
+6. main.js conecta el clic de dev-tools-btn con openDevTools(); el modal no tiene otro acceso visible identificado en el flujo inspeccionado.
+
+CAUSA PROBABLE
+La condición de visibilidad del enlace no replica la compatibilidad de nombres de propiedad usada por los controles de edición: showApp solo consulta Privilegios, mientras otros controles aceptan Rol como alternativa. Esto explica el síntoma cuando el objeto de sesión expone el rol en Rol y no en Privilegios.
+
+ALCANCE DE CORRECCIÓN
+Ajustar únicamente la obtención del rol en showApp(user) para utilizar la misma alternativa Privilegios || Rol antes de aplicar la normalización existente. No se cambiarán los permisos de edición, la autenticación, los endpoints ni la validación del backend.
+
+RIESGOS Y DEPENDENCIAS
+- El enlace de desarrollador debe continuar oculto para cualquier rol distinto de Desarrollador.
+- Deben conservarse las reglas existentes de Inbox y Dashboard.
+- Deben verificarse tanto inicio de sesión como rehidratación de sesión, porque ambos invocan showApp(user).
+- La comprobación estática no permite inspeccionar el objeto de sesión real de la cuenta del usuario ni el DOM del navegador desplegado.
+
+No se modificó código durante esta auditoría.
+================================================================================
