@@ -2480,3 +2480,30 @@ RIESGOS Y DEPENDENCIAS
 
 No se modificó código durante esta auditoría.
 ================================================================================
+
+
+================================================================================
+CODE REVIEW — CORRECCIÓN DE VISIBILIDAD DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+CAMBIO REVISADO
+- En ui.js, showApp(user) obtiene ahora el rol desde user.Privilegios o, si no está disponible, desde user.Rol.
+- Se conserva la normalización de acentos, espacios y mayúsculas/minúsculas existente.
+- No se modificaron las condiciones de edición, la autenticación, los endpoints, el evento de apertura del modal ni las reglas de Inbox y Dashboard.
+
+SAFETY & SIDE EFFECTS
+- El enlace continúa mostrándose únicamente cuando el rol normalizado es desarrollador.
+- Si Privilegios contiene un valor, este conserva prioridad sobre Rol, reproduciendo el orden de precedencia utilizado por los controles de edición inspeccionados.
+- No se amplían permisos de edición ni se altera la autorización del backend.
+- showApp(user) es invocada tanto tras el login como al rehidratar la sesión; el cambio aplica a ambos flujos.
+
+VERIFICACIÓN
+1. Comparación contra el respaldo: el único cambio en ui.js es la incorporación de Rol como alternativa para obtener el rol.
+2. Pruebas de lógica simuladas: Privilegios=Desarrollador, Rol=Desarrollador, Privilegios vacío con Rol=Desarrollador, Supervisor, Usuario y rol ausente. Todos los resultados coincidieron con el comportamiento esperado.
+3. Precedencia: cuando Privilegios=Supervisor y Rol=Desarrollador, el resultado permanece Supervisor y no muestra el acceso de desarrollador.
+4. No se ejecutó una prueba en navegador ni se inspeccionó el objeto de sesión real de la cuenta afectada; la validación visual en el entorno publicado queda pendiente.
+
+RESULTADO
+La discrepancia de lectura del rol que podía ocultar el enlace aunque los controles de edición reconocieran la propiedad Rol queda corregida en esta rama. No se declara validación en producción.
+================================================================================
