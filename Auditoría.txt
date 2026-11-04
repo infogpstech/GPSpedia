@@ -1663,3 +1663,21 @@ RIESGOS Y ALCANCE:
 - No modificar el algoritmo de prioridad de imágenes, el orden de las tarjetas, las fuentes de datos, ni la tabla .meta-table.
 - La comprobación en navegador y PDF real sigue siendo necesaria para confirmar el resultado de impresión y los saltos de página.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA COMPLEMENTARIA: TARJETA DE IMPRESIÓN CON DESCRIPCIÓN ENCIMA DE LA FOTOGRAFÍA
+Fecha: 2026-11-04
+
+HALLAZGO:
+- La modificación anterior definió dos columnas en .tech-item-body para el modo automático y horizontal; esto ubica .tech-item-info a un lado de .tech-item-img-wrapper, contrario al diseño aclarado por el usuario.
+- El aviso .testigo-aviso se genera mediante entry.extraHtml fuera de .tech-item-info y después de .tech-item-body, por lo que aparece debajo de la fotografía en lugar de permanecer junto a la descripción.
+- .tech-detail-img mantiene max-height: 320px también en impresión, limitando el espacio vertical disponible para la fotografía.
+
+CORRECCIÓN REQUERIDA:
+- Mantener la información y los avisos dentro de un bloque de ancho completo antes del contenedor de imagen.
+- Colocar la imagen en una fila separada debajo del texto, centrada y limitada por su relación de aspecto y ancho disponible.
+- Aplicar el mismo orden en modo automático y horizontal; el modo vertical y de imagen ampliada también deben conservar texto antes de imagen.
+- No modificar la tabla de metadatos, el QR/video, el algoritmo de prioridad ni la organización adaptativa de tarjetas entre sí.
+- Revisar de forma estática la función y dejar documentada la necesidad de validar la vista real de impresión/PDF.
+================================================================================
