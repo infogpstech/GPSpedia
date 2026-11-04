@@ -7347,7 +7347,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
                     if (Array.isArray(parsedModelos)) modelosAsociadosIds = parsedModelos;
                 } catch (e) {}
                 if (modelosAsociadosIds.length === 0) {
-                    modelosAsociadosIds = rawModelos.split(/[,/\\;]+/).map(id => id.trim()).filter(Boolean);
+                    modelosAsociadosIds = rawModelos.split(/[,\/\\;]+/).map(id => id.trim()).filter(Boolean);
                 }
             }
             const canEditPys = userRole === 'Desarrollador';
