@@ -2383,3 +2383,43 @@ Se crearon copias exactas de Auditoría.txt y Services/admin.js en _temporary_ba
 
 No se modificó código durante esta revisión.
 ================================================================================
+
+
+================================================================================
+CODE REVIEW FINAL — GESTIÓN DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+PR de revisión: #128 hacia GPSpedia2.2.5
+
+RESOLUCIÓN DE HALLAZGOS DE CODE REVIEW
+- CR-IMG-01: collectActiveDriveReferences ahora inspecciona valores mostrados, fórmulas y enlaces RichTextValue, incluidos los enlaces de texto enriquecido. Las referencias Drive reconocibles se registran; los enlaces de archivo no interpretables se contabilizan como incertidumbre.
+- CR-IMG-02: handleUploadAdminImage solo reutiliza una carpeta padre si pertenece al árbol Cortes. Si no pertenece, utiliza la estructura jerárquica bajo DRIVE_FOLDER_ID.
+- CR-IMG-03: recordReplacedImage comprueba si una fila alcanzó a escribirse cuando falla la escritura/flush y la marca como requiere_revision cuando puede identificarla.
+- CR-IMG-04: isFolderInsideCortes comprueba la ascendencia mediante recorrido de padres con detección de ciclos, sin límite fijo de profundidad. La validación del cursor ya no impone un máximo fijo de 100 carpetas.
+
+VERIFICACIONES ESTÁTICAS Y SIMULADAS
+1. Sintaxis: Services/admin.js y ui.js se analizaron mediante compilación sintáctica; ambos archivos no presentaron errores de sintaxis.
+2. Paginación del árbol: pruebas simuladas con 100, 250 y 360 archivos. Los tres recorridos terminaron con complete=true, total exacto de archivos y sin IDs duplicados; se completaron en 1, 2 y 3 lotes, respectivamente.
+3. Profundidad: prueba simulada con una jerarquía de 120 niveles y un archivo al final. El recorrido terminó correctamente en 2 lotes.
+4. Autorización: prueba simulada de sesión activa válida, token inválido y rol Supervisor. La sesión activa fue aceptada; el token inválido y el rol no desarrollador fueron rechazados. También se comprobó que una sesión todavía activa no se rechaza únicamente porque Users contenga otro token más reciente.
+5. Referencias: prueba simulada de una URL en fórmula HYPERLINK, enlace RichTextValue y URL Drive no interpretable. Se detectó el ID activo y se contabilizó la referencia no interpretable.
+6. Extracción de IDs: pruebas simuladas para URL uc?id=, formato /file/d/, URL googleusercontent /d/ y un ID directo.
+
+RESULTADO DE LA REVISIÓN
+La comparación entre GPSpedia2.2.5 y GPSpedia2.2.5_work identifica modificaciones en index.html, ui.js, Services/admin.js y documentación asociada; los demás archivos de código del repositorio no fueron modificados. Los cambios de código revisados corresponden al alcance de la gestión de imágenes reemplazadas, sus controles de acceso, su restauración y la auditoría del árbol Cortes.
+
+LIMITACIONES DE VALIDACIÓN
+- Las pruebas anteriores son estáticas o simuladas; no sustituyen una prueba real de Apps Script.
+- No se ejecutaron operaciones sobre la Spreadsheet real ni sobre archivos reales de Google Drive.
+- No se probó la interfaz en navegador ni la cuenta real del usuario.
+- No se actualizó el despliegue real del microservicio ADMIN. La versión modificada de Services/admin.js debe publicarse en Apps Script para que la autorización del servidor y los cambios del backend surtan efecto.
+- No se verificó el despliegue de GitHub Pages ni la versión que sirve actualmente a los usuarios.
+- Por lo anterior, la implementación de código queda preparada para revisión/despliegue, pero no se declara validada en producción.
+
+RESPALDOS Y COMPARACIÓN
+- Se verificó que las copias iniciales de ui.js, Services/admin.js, index.html, Auditoría.txt, ChangesLogs.txt y Tareas.txt coinciden exactamente con sus archivos originales en GPSpedia2.2.5.
+- Se revisó el diff de la rama de trabajo contra GPSpedia2.2.5.
+- Los respaldos temporales se conservaron durante los ciclos de revisión y se eliminarán después de esta revisión final.
+
+No se realizó merge ni se modificó GPSpedia2.2.5.
+================================================================================
