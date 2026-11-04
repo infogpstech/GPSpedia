@@ -2007,3 +2007,13 @@ CORRECCIÓN 2026-11-04 — PAGINACIÓN Y LÍMITES DE IMÁGENES
 - El selector de distribución y su listener se mantienen.
 - Validación realizada: revisión estática de sustituciones y estructura CSS/lógica. No se ejecutó navegador real ni generación de PDF; el ajuste final de altura disponible, especialmente en la primera página con metadatos y notas, sigue pendiente de comprobación visual.
 ================================================================================
+
+
+================================================================================
+CORRECCIÓN 2026-11-04 — ANCHO DE IMÁGENES Y NOTA COMO FILA DE METADATOS
+- Las tarjetas de la cuadrícula se estiran al ancho de la columna disponible; el cuerpo, wrapper e imagen usan el ancho disponible sin superar el contenedor.
+- Las imágenes usan width:100% y height:auto con object-fit:contain, manteniendo proporción y los límites de altura por cantidad de imágenes establecidos en la corrección anterior.
+- La nota técnica importante ahora se genera como una fila de meta-table con una celda colspan=4, y deja de añadirse como bloque independiente bajo la sección técnica.
+- La paginación clona el bloque de metadatos completo solo en la primera página, por lo que la nota permanece junto a la tabla y no se repite como un bloque separado.
+- Validación estática: confirmadas la fila de nota, su ubicación dentro de la tabla, la eliminación de notesTemplate independiente, las reglas de ancho y la presencia del listener del selector. No se ejecutó navegador real ni generación de PDF.
+================================================================================
