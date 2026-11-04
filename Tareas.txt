@@ -2277,3 +2277,15 @@ TAREA 2026-11-04 — CORRECCIÓN DE NOTA Y DIMENSIONADO ADAPTATIVO
 - [ ] Verificar desbordamientos, metadatos, QR, notas y pie de página en todas las páginas.
 Estado: correcciones de código aplicadas; validación visual real pendiente.
 ================================================================================
+
+
+================================================================================
+TAREA COMPLEMENTARIA 2026-11-04 — CONTENCIÓN DE DESBORDAMIENTO EN FICHA IMPRIMIBLE
+- [x] Reducir grupos de imágenes a dos por página como regla general.
+- [x] Conservar la excepción de tres imágenes cuando las tres sean verticales.
+- [x] Restringir cuadrículas, tarjetas y wrappers al ancho disponible.
+- [x] Aplicar límites de altura de imagen según la cantidad de imágenes por página y mantener la proporción natural.
+- [x] Mantener operativo el selector de distribución existente.
+- [ ] Validar en navegador y PDF reales con distintas relaciones de aspecto, descripciones extensas y primera página con metadatos/notas.
+Estado: CAMBIO ESTÁTICO IMPLEMENTADO; validación visual real pendiente.
+================================================================================
