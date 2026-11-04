@@ -1,4 +1,4 @@
-// GPSpedia Unified API Module | Version: 2.1.6
+// GPSpedia Unified API Module | Version: 2.2.5
 // ============================================================================
 // ÚNICA FUENTE DE VERDAD PARA LA CONFIGURACIÓN Y LÓGICA DE LA API
 // ============================================================================
@@ -6,13 +6,13 @@
 // 1. CONFIGURACIÓN
 export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
-    AUTH:     "https://script.google.com/macros/s/AKfycbwATstMSSnuYZMeGEjI7Q5cznO6kA8rqLo7zNZLmu_f29qwcyt4Fucn5VIBdB9tMoRg/exec",
+    AUTH:     "https://script.google.com/macros/s/AKfycbzi5ET_WsDDKWqcrAHpnhtpS0oEitbuYz8dPj_URsG6dt-PO1oFIpOwYSKQ1temcEGnDA/exec",
     CATALOG:  "https://script.google.com/macros/s/AKfycbxtqkdUfXAEmbPz7zfE4kZCie8sql4SM43kxkBw__5iGwXVyzzYsIFG5jpWkQc7-Ug9/exec",
-    WRITE:    "https://script.google.com/macros/s/AKfycbwhp6i-yaB63Frpp2wFvM1jWFtHSrN7MJmzMpJ2B7YaWKyagxsZ79ghhGKUO7UJp8sy-g/exec",
+    WRITE:    "https://script.google.com/macros/s/AKfycbwsRkcK8-q8hiOpaUNrU1e79WD2SH87MsZkfaFU3S19ayAC9ZMhxDuZUv0cx9iaW7cPlw/exec",
     USERS:    "https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec",
-    FEEDBACK: "https://script.google.com/macros/s/AKfycbzWAH2GEW0i7JM0wTvPmd69rOouuxZcNT7iU_em3WxrTEqldg_4CYS-1Uq4IHhkENPdww/exec",
+    FEEDBACK: "https://script.google.com/macros/s/AKfycbxT_3TopgtXNgRHGyNroU7zi_hyixxFEU-0r-QgfiSifyOkFMjeILL5Rgeq_WLJ7Dm2SQ/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec",
-    ADMIN: "https://script.google.com/macros/s/AKfycbxLOwWXYmNXXG8X0FoRSs3Q3baKxDE66a7NGJ9KMqjt-SIh9oFBU9dZEo-MAPsVtZLKcA/exec"
+    ADMIN: "https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec"
 };
 
 export const ACTION_TO_SERVICE_MAP = {
@@ -22,11 +22,14 @@ export const ACTION_TO_SERVICE_MAP = {
     'getUsers': 'USERS', 'createUser': 'USERS', 'updateUser': 'USERS', 'deleteUser': 'USERS', 'changePassword': 'USERS', 'updateProfile': 'USERS',
     'recordLike': 'FEEDBACK', 'reportProblem': 'FEEDBACK', 'sendContactForm': 'FEEDBACK', 'addTutorial': 'FEEDBACK', 'suggestYear': 'FEEDBACK', 'suggestCutChange': 'FEEDBACK', 'getPysData': 'FEEDBACK', 'addProblem': 'FEEDBACK', 'addSolution': 'FEEDBACK', 'addPrevention': 'FEEDBACK', 'addVehicleToProblem': 'FEEDBACK',
     'getFeedbackItems': 'FEEDBACK', 'replyToFeedback': 'FEEDBACK', 'markAsResolved': 'FEEDBACK', 'getActivityLogs': 'FEEDBACK', 'deleteFeedbackItem': 'FEEDBACK', 'clearActivityLogs': 'FEEDBACK',
+    'initYouTubeUpload': 'FEEDBACK', 'submitVideoForApproval': 'FEEDBACK', 'approveVideo': 'FEEDBACK', 'rejectVideo': 'FEEDBACK',
+    'removeVehicleFromProblem': 'FEEDBACK', 'updatePysItem': 'FEEDBACK', 'updateTutorialItem': 'FEEDBACK',
     'migrateYearRanges': 'UTILITIES', 'migrateTimestamps': 'UTILITIES',
     'ping': 'ADMIN',
     'backupDatabase': 'ADMIN', 'backupDrive': 'ADMIN', 'restoreDatabase': 'ADMIN', 'restoreDrive': 'ADMIN',
     'reorganizeDatabase': 'ADMIN', 'normalizeImages': 'ADMIN', 'reorganizeImagesInDrive': 'ADMIN', 'restoreAllTrashedImages': 'ADMIN', 'addLogo': 'ADMIN', 'createSheet': 'ADMIN', 'addColumn': 'ADMIN', 'driveCommand': 'ADMIN',
     'updateVehicleField': 'ADMIN', 'uploadAdminImage': 'ADMIN',
+    'getReplacedImages': 'ADMIN', 'recoverReplacedImage': 'ADMIN', 'deleteReplacedImage': 'ADMIN', 'auditDriveImagesInCortes': 'ADMIN',
     'logFrontend': 'LEGACY'
 };
 
@@ -151,4 +154,12 @@ export async function checkAllServicesHealth() {
     }));
 
     return results;
+}
+
+export async function approveVideo(itemId, approverName, userRole) {
+    return await routeAction("approveVideo", { itemId, approverName, userRole });
+}
+
+export async function rejectVideo(itemId, rejecterName, reason, userRole) {
+    return await routeAction("rejectVideo", { itemId, rejecterName, reason, userRole });
 }

@@ -1,7 +1,7 @@
 // ============================================================================
 // GPSPEDIA-AUTH SERVICE (COMPATIBLE WITH DB V2.0)
 // ============================================================================
-// COMPONENT VERSION: 2.2.1
+// COMPONENT VERSION: 2.2.5
 
 // ============================================================================
 // CONFIGURACIÓN GLOBAL
@@ -62,7 +62,7 @@ function doGet(e) {
     if (e.parameter.debug === 'true') {
         const serviceState = {
             service: 'GPSpedia-Auth',
-            version: '2.2.2', // Mantener sincronizado con la versión del componente
+            version: '2.2.5', // Mantener sincronizado con la versión del componente
             spreadsheetId: SPREADSHEET_ID,
             sheetsAccessed: [SHEET_NAMES.USERS, SHEET_NAMES.ACTIVE_SESSIONS, SHEET_NAMES.LOGS]
         };

@@ -972,6 +972,64 @@ body.search-active .container {
     display: flex !important;
 }
 
+/* --- BOTONES DE AGREGAR INFORMACIÓN Y OPCIONES DEL MENÚ (+) DEL MODAL DE DETALLE --- */
+.btn-expand-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 14px !important;
+    font-size: 0.9rem !important;
+    border-radius: 6px !important;
+    text-align: left;
+    width: 100%;
+    box-sizing: border-box;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-expand-option:hover {
+    transform: translateY(-1px);
+}
+
+.modal-btn-compact-container {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.btn-modal-action-compact {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 18px !important;
+    font-size: 0.88rem !important;
+    font-weight: 600;
+    border-radius: 6px !important;
+    cursor: pointer;
+    width: auto !important;
+    min-width: 120px;
+    margin: 0 !important;
+    box-sizing: border-box;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-modal-action-compact:hover {
+    transform: translateY(-1px);
+}
+
+@media (max-width: 600px) {
+    .modal-btn-compact-container {
+        width: 100%;
+    }
+    .modal-btn-compact-container .btn-modal-action-compact {
+        width: 100% !important;
+    }
+}
+
 #detalleCompleto::-webkit-scrollbar {
     display: none;
 }
@@ -1475,12 +1533,13 @@ body.dark-mode .modal form textarea:disabled {
     }
 }
 
-/* Tarjetas para agregar Tutorial y Problema (Tarea 1.7) */
-/* Tarjetas para agregar Tutorial y Problema (Tarea 1.7 / Tarea 2: Unificación de sombras en tonos grises del catálogo) */
+/* Tarjetas para agregar Tutorial y Problema (Estandarización visual sin borde discontinuo con marco/sombras de catálogo) */
 .card-create-tutorial,
-.card-create-pys {
-    background: transparent;
-    border: 2px dashed #007bff;
+.card-create-pys,
+.card-create-vehicle-assoc,
+.card-create-pys-assoc {
+    background: var(--card-bg, #ffffff);
+    border: none;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     transition: transform 0.3s ease, box-shadow 0.3s ease;
     display: flex;
@@ -1490,10 +1549,13 @@ body.dark-mode .modal form textarea:disabled {
     cursor: pointer;
     border-radius: 12px;
     box-sizing: border-box;
+    color: var(--accent-color, #007bff);
 }
 
 .card-create-tutorial:hover,
-.card-create-pys:hover {
+.card-create-pys:hover,
+.card-create-vehicle-assoc:hover,
+.card-create-pys-assoc:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
 }
@@ -1504,15 +1566,20 @@ body.dark-mode .modal form textarea:disabled {
 }
 
 .dark-mode .card-create-tutorial,
-.dark-mode .card-create-pys {
+.dark-mode .card-create-pys,
+.dark-mode .card-create-vehicle-assoc,
+.dark-mode .card-create-pys-assoc {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.05);
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
 }
 
 .dark-mode .card-create-tutorial:hover,
-.dark-mode .card-create-pys:hover {
+.dark-mode .card-create-pys:hover,
+.dark-mode .card-create-vehicle-assoc:hover,
+.dark-mode .card-create-pys-assoc:hover {
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.65);
 }
-
 
 .card-create-pys {
     height: 100%;

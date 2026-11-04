@@ -55,6 +55,18 @@ async function loadInitialData() {
         }
         catalogLoaded = true;
 
+        // Precarga en segundo plano de Problemas y Soluciones para respuesta inmediata (0ms)
+        try {
+            routeAction('getPysData').then(res => {
+                if (res && res.data && Array.isArray(res.data)) {
+                    setState({ pysData: res.data });
+                    try {
+                        localStorage.setItem('gpsepedia_pys_cache', JSON.stringify(res.data));
+                    } catch(e) {}
+                }
+            }).catch(e => console.warn("Error precargando PyS en segundo plano:", e));
+        } catch(e) {}
+
     } catch (error) {
         console.warn("Fallo al cargar catálogo desde red:", error);
 
@@ -115,6 +127,17 @@ export async function checkSession() {
     try {
         const historyPromise = offline.getSearchHistory();
         const viewedPromise = offline.getViewedItems();
+
+        // Rehidratar inmediatamente pysData desde la caché local para 0ms de retardo
+        try {
+            const cachedPysRaw = localStorage.getItem('gpsepedia_pys_cache');
+            if (cachedPysRaw) {
+                const parsedPys = JSON.parse(cachedPysRaw);
+                if (Array.isArray(parsedPys) && parsedPys.length > 0) {
+                    setState({ pysData: parsedPys });
+                }
+            }
+        } catch(e) {}
 
         // No bloqueamos el arranque si estas operaciones fallan o tardan mucho
         Promise.all([historyPromise, viewedPromise]).then(([history, viewed]) => {
