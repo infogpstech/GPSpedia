@@ -1,0 +1,8729 @@
+import { vinDifferentialEngine, vinSignatureStore, getClassificationKey } from './VinDifferentialEngine.js';
+// GPSpedia UI Module | Version: 2.1.6
+// Responsibilities:
+// - Render UI components based on state.
+// - Contain all functions that directly manipulate the DOM.
+// - Use document.createElement, not HTML strings.
+
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
+import { getState, setState, subscribe } from './state.js';
+import * as offline from './offline.js';
+import { openYouTubeUploadModal } from './youtubeUpload.js';
+
+const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+
+export function cleanColaboradorName(name) {
+    if (!name || typeof name !== 'string') return name || '';
+    return name.replace(/\s*\[OP-[a-zA-Z0-9_-]+\]/gi, '').trim();
+}
+
+export function isNoRecomendadoValue(val) {
+    if (!val) return false;
+    const clean = val.toLowerCase()
+                     .normalize("NFD")
+                     .replace(/[\u0300-\u036f]/g, "")
+                     .replace(/[-_]/g, ' ')
+                     .trim();
+    return clean === 'no recomendado';
+}
+
+// Constants for optimized image loading
+export const IMG_SIZE_SMALL = 300;   // Cards and thumbnails
+export const IMG_SIZE_MEDIUM = 800;  // Modal details
+export const IMG_SIZE_LARGE = 1600;  // Lightbox / High Resolution
+
+// Variables de control para el Modo Edición In-Modal
+let inEditMode = false;
+let originalItemBackup = null;
+let editedItemBuffer = null;
+let dropdownOptions = null;
+
+// Pila de navegación entre modales para prevención de bucles y restauración de contexto
+const modalNavStack = [];
+window.modalNavStack = modalNavStack;
+
+export function clearModalNavStack() {
+    modalNavStack.length = 0;
+}
+
+window.inEditMode = false;
+
+async function precargarDropdownOptions() {
+    if (dropdownOptions) return dropdownOptions;
+    try {
+        const res = await routeAction('getDropdownData');
+        if (res && res.dropdowns) {
+            dropdownOptions = res.dropdowns;
+        }
+    } catch (e) {
+        console.error("Error precargando dropdowns para edición:", e);
+    }
+    return dropdownOptions;
+}
+
+export function showSavingIndicator(status, message = "") {
+    const indicator = document.getElementById("modal-saving-indicator");
+    if (!indicator) return;
+
+    indicator.innerHTML = "";
+    indicator.style.opacity = "1";
+
+    if (status === "saving") {
+        indicator.style.color = "var(--accent-color, #007bff)";
+        indicator.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>${message || 'Guardando...'}</span>`;
+    } else if (status === "processing") {
+        indicator.style.color = "var(--accent-color, #007bff)";
+        indicator.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>${message || 'Procesando...'}</span>`;
+    } else if (status === "success") {
+        indicator.style.color = "#28a745";
+        indicator.innerHTML = `<i class="fa-solid fa-circle-check"></i> <span>${message || 'Guardado correctamente'}</span>`;
+        setTimeout(() => {
+            if (indicator.innerHTML.includes("fa-circle-check")) {
+                indicator.style.opacity = "0";
+            }
+        }, 2000);
+    } else if (status === "error") {
+        indicator.style.color = "#dc3545";
+        indicator.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>${message || 'Error al guardar'}</span>`;
+        setTimeout(() => {
+            if (indicator.innerHTML.includes("fa-circle-exclamation")) {
+                indicator.style.opacity = "0";
+            }
+        }, 3000);
+    } else {
+        indicator.style.opacity = "0";
+    }
+}
+
+async function saveFieldSilently(vehicleId, fieldName, value) {
+    showSavingIndicator("saving", "Guardando...");
+    try {
+        await routeAction('updateVehicleField', { vehicleId, fieldName, value });
+        showSavingIndicator("success", "Guardado correctamente");
+    } catch (e) {
+        console.error(`Error guardando silenciosamente el campo ${fieldName}:`, e);
+        showSavingIndicator("error", "Error al guardar");
+    }
+}
+
+async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false) {
+    if (!vehicleId) {
+        vehicleId = editedItemBuffer?.id || originalItemBackup?.id;
+    }
+
+    // Si no tenemos backup local en memoria, intentar recuperarlo desde localStorage
+    if (!originalItemBackup) {
+        const storedBackup = localStorage.getItem('gpsepedia_edit_backup');
+        if (storedBackup) {
+            originalItemBackup = JSON.parse(storedBackup);
+        }
+    }
+
+    if (!saveChanges && originalItemBackup) {
+        // Revertir todos los cambios realizados silenciosamente
+        const fieldsToRestore = Object.keys(originalItemBackup).filter(key => {
+            return JSON.stringify(originalItemBackup[key]) !== JSON.stringify(editedItemBuffer[key]);
+        });
+
+        if (fieldsToRestore.length > 0) {
+            for (const field of fieldsToRestore) {
+                await saveFieldSilently(vehicleId, field, originalItemBackup[field]);
+            }
+        }
+
+        inEditMode = false;
+        window.inEditMode = false;
+        const restoredItem = { ...originalItemBackup };
+        originalItemBackup = null;
+        editedItemBuffer = null;
+        localStorage.removeItem('gpsepedia_edit_backup');
+
+        if (!skipReopen) {
+            mostrarDetalleModal(restoredItem);
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+        }
+    } else {
+        inEditMode = false;
+        window.inEditMode = false;
+        originalItemBackup = null;
+        editedItemBuffer = null;
+        localStorage.removeItem('gpsepedia_edit_backup');
+
+        if (!skipReopen) {
+            // Forzar sincronización silenciosa para refrescar el catálogo
+            routeAction('getCatalogData').then(res => {
+                if (res && res.data) {
+                    setState({ catalogData: res.data });
+                    const updatedItem = res.data.cortes.find(c => String(c.id) === String(vehicleId));
+                    if (updatedItem) mostrarDetalleModal(updatedItem);
+                }
+            });
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+            routeAction('getCatalogData').then(res => {
+                if (res && res.data) {
+                    setState({ catalogData: res.data });
+                }
+            });
+        }
+    }
+}
+
+function convertImageToEditable(imgElement, vehicleId, fieldName) {
+    imgElement.style.cursor = "pointer";
+    imgElement.style.border = "2px dashed #007bff";
+    imgElement.title = "Haga clic para reemplazar esta imagen";
+    imgElement.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const fileInput = document.createElement("input");
+        fileInput.type = "file";
+        fileInput.accept = "image/*";
+        fileInput.onchange = async () => {
+            const file = fileInput.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = async (event) => {
+                    imgElement.src = event.target.result;
+                    const base64Data = event.target.result;
+                    showSavingIndicator("processing", "Subiendo imagen...");
+                    try {
+                        const res = await routeAction('uploadAdminImage', {
+                            vehicleId: vehicleId,
+                            fileData: base64Data,
+                            filename: file.name || `${fieldName}_${Date.now()}.png`,
+                            mimeType: file.type || "image/png",
+                            fieldName: fieldName
+                        });
+                        if (res && res.imageUrl) {
+                            editedItemBuffer[fieldName] = res.imageUrl;
+                            showSavingIndicator("success", "Imagen guardada");
+                        } else {
+                            showSavingIndicator("error", "Error al subir");
+                        }
+                    } catch (err) {
+                        console.error("Error al subir imagen editada:", err);
+                        showSavingIndicator("error", "Error al subir");
+                    }
+                };
+                reader.readAsDataURL(file);
+            }
+        };
+        fileInput.click();
+    };
+}
+
+/**
+ * Helper para normalizar versiones (ej. "SR / TRD" -> "sr trd")
+ * Se utiliza para agrupar generaciones y validar colisiones.
+ */
+const normalizeVersion = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+
+/* FUNCIONES DE RELACIÓN VIN - VERSIONES DE EQUIPAMIENTO */
+export function parseEquipmentVersions(rawStr) {
+    if (!rawStr) return [];
+    // Normalizar separadores admitidos: comas ",", diagonales "/" y diagonales inversas "\" sin duplicados
+    const parts = String(rawStr).split(/[,/\\\\]+/);
+    const seen = new Set();
+    const result = [];
+    for (const p of parts) {
+        const clean = p.trim();
+        if (clean && !seen.has(clean.toUpperCase())) {
+            seen.add(clean.toUpperCase());
+            result.push(clean);
+        }
+    }
+    return result;
+}
+
+export function parseVinCollection(rawVin) {
+    if (!rawVin) return [];
+    let list = [];
+    if (Array.isArray(rawVin)) {
+        list = rawVin.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+    } else {
+        const str = String(rawVin).trim();
+        if (str.startsWith("[") && str.endsWith("]")) {
+            try {
+                const parsed = JSON.parse(str);
+                if (Array.isArray(parsed)) {
+                    list = parsed.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                }
+            } catch (e) {}
+        }
+        if (list.length === 0) {
+            list = str
+                .split(/[,/\\\\]+/)
+                .map(v => v.trim().toUpperCase())
+                .filter(Boolean);
+        }
+    }
+    // Filtrar estrictamente cualquier ID de operación de idempotencia ("OP-...") o tokens no válidos
+    return list.filter(v => v && !v.startsWith("OP-") && !v.startsWith("OP_") && !v.includes("IDOPERACION"));
+}
+
+export function mapVersionsWithVins(versionesStr, vinRaw) {
+    const versions = parseEquipmentVersions(versionesStr);
+    const rawVins = parseVinCollection(vinRaw);
+
+    // Regla de negocio: Si el modelo solo tiene una versión de equipamiento (o ninguna),
+    // no debe mostrar ningún número VIN distintivo en el modal.
+    // Solo si el modelo tiene más de 1 versión de equipamiento, se extraen 4 dígitos consecutivos distintivos.
+    if (versions.length <= 1) {
+        if (versions.length === 1) {
+            return [{ version: versions[0], vin: null }];
+        }
+        return [];
+    }
+
+    // Formatear cada VIN ignorando los últimos 5 dígitos y extrayendo los 4 dígitos distintivos
+    const cleanedVins = rawVins.map(v => {
+        if (!v) return "";
+        let s = String(v).trim().toUpperCase().replace(/[^A-Z0-9]/g, "");
+        if (s.startsWith("OP")) return "";
+        // Ignorar los últimos 5 dígitos (numéricos de serie) si la longitud es mayor a 5
+        if (s.length > 5) {
+            s = s.substring(0, s.length - 5);
+        }
+        return s;
+    });
+
+    // Detectar el índice donde difieren las versiones de equipamiento
+    const nonNullVins = cleanedVins.filter(Boolean);
+    let diffIdx = -1;
+    if (nonNullVins.length >= 2) {
+        const minLen = Math.min(...nonNullVins.map(v => v.length));
+        for (let i = 0; i < minLen; i++) {
+            const setAtI = new Set(nonNullVins.map(v => v[i]));
+            if (setAtI.size > 1) {
+                diffIdx = i;
+                break;
+            }
+        }
+    }
+
+    const clean4DigitVins = cleanedVins.map(s => {
+        if (!s) return null;
+        if (s.length <= 4) return s;
+        if (diffIdx !== -1) {
+            const start = Math.max(0, Math.min(diffIdx, s.length - 4));
+            return s.substring(start, start + 4);
+        }
+        return s.slice(-4);
+    });
+
+    // Cada versión se relaciona individualmente con su correspondiente VIN si existe
+    return versions.map((version, index) => {
+        return {
+            version,
+            vin: clean4DigitVins[index] || null
+        };
+    });
+}
+
+/**
+ * Establece una imagen optimizada intentando cargarla desde el caché de IndexedDB.
+ * @param {HTMLImageElement} imgElement - El elemento img a actualizar.
+ * @param {string} fileId - El ID o URL de la imagen.
+ * @param {number} size - El tamaño solicitado para la imagen.
+ */
+// Caché local en memoria RAM para URLs de objeto (0ms carga sincrónica)
+const memoryUrlCache = new Map();
+
+export async function setOptimizedImage(imgElement, fileId, size = IMG_SIZE_SMALL) {
+    if (!fileId) {
+        imgElement.src = getImageUrl(null);
+        return;
+    }
+
+    // Si la imagen falla al cargar, podría estar en la papelera o eliminada de Drive.
+    // Detectamos la falla y habilitamos/mostramos automáticamente el botón de restauración de papelera.
+    const originalOnError = imgElement.onerror;
+    imgElement.onerror = (e) => {
+        const restoreBtn = document.getElementById('btn-admin-restore-trash');
+        if (restoreBtn) {
+            restoreBtn.style.display = 'block';
+        }
+        if (typeof originalOnError === 'function') {
+            originalOnError(e);
+        }
+    };
+
+    const cleanId = typeof fileId === 'string' ? fileId.trim() : fileId;
+
+    // 1. Memoria RAM sincrónica (0ms latencia)
+    if (memoryUrlCache.has(cleanId)) {
+        imgElement.src = memoryUrlCache.get(cleanId);
+        return;
+    }
+
+    // 2. Estrategia Local-First: Recuperar desde IndexedDB tanto online como offline
+    try {
+        const cachedBlob = await Promise.race([
+            offline.getThumbnail(cleanId),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("DB Timeout")), 800))
+        ]).catch(() => null);
+
+        if (cachedBlob) {
+            const objectUrl = URL.createObjectURL(cachedBlob);
+            memoryUrlCache.set(cleanId, objectUrl);
+            imgElement.src = objectUrl;
+            return;
+        }
+    } catch (e) {
+        // Continuar a red si falla la lectura local
+    }
+
+    // 3. Cargar desde la red (Google Drive CDN) si no está presente en el caché local
+    const remoteUrl = getImageUrl(cleanId, size);
+    imgElement.src = remoteUrl;
+
+    // 4. Compresión y persistencia en segundo plano para uso offline/futuro
+    if (cleanId && typeof cleanId === 'string' && !cleanId.startsWith('blob:') && !cleanId.includes('placehold.co')) {
+        offline.compressAndStoreThumbnail(remoteUrl, cleanId).then(blob => {
+            if (blob) {
+                const objectUrl = URL.createObjectURL(blob);
+                memoryUrlCache.set(cleanId, objectUrl);
+            }
+        }).catch(() => {});
+    }
+}
+
+export function getImageUrl(fileId, size = 400) {
+    // Si ya es una URL de Blob o Data URL (base64/svg), devolverla directamente.
+    if (fileId && typeof fileId === 'string' && (fileId.startsWith('blob:') || fileId.startsWith('data:'))) {
+        return fileId;
+    }
+
+    const placeholder = "https://placehold.co/400x300/cccccc/333333?text=Sin+Imagen";
+
+    if (!fileId || typeof fileId !== 'string' || fileId.trim() === '') {
+        return placeholder;
+    }
+
+    let id = fileId.trim();
+
+    // Si es una URL de Google Drive, extraer el ID.
+    if (id.startsWith('http')) {
+        if (id.includes('drive.google.com')) {
+            const match = id.match(/[\/&]id=([a-zA-Z0-9_-]+)/) || id.match(/file\/d\/([a-zA-Z0-9_-]+)/);
+            if (match && match[1]) {
+                id = match[1];
+            } else {
+                // Si es una URL de Google pero no podemos extraer el ID, es mejor no mostrar nada.
+                return placeholder;
+            }
+        } else {
+            // Si es otra URL (ej. de wikimedia), la devolvemos directamente.
+            return id;
+        }
+    }
+
+    // Si después del procesamiento no tenemos un ID válido, devolver el placeholder.
+    if (!id.match(/^[a-zA-Z0-9_-]+$/)) {
+        return placeholder;
+    }
+
+    /* TAREA 6 (B33): VISUALIZACIÓN DE MINIATURAS PNG TRANSPARENTES */
+    // Evitar parámetros de miniaturas (=w / =s) de Google que convierten PNGs transparentes a JPEG con fondo negro
+    return `https://lh3.googleusercontent.com/d/${id}`;
+}
+
+export function getLogoUrlForMarca(marca, categoria) {
+    const { catalogData } = getState();
+    const { logos } = catalogData;
+
+    if (!logos || !logos.length || !marca) {
+        return null;
+    }
+
+    const normalize = (str) => str ? String(str).toLowerCase().replace(/[^a-z0-9]/g, '') : '';
+    const normalizedMarca = normalize(marca);
+    const normalizedCategoria = normalize(categoria);
+
+    const potentialMatches = logos.filter(logo => {
+        const normalizedLogoMarca = normalize(logo.nombreMarca);
+        return normalizedLogoMarca.startsWith(normalizedMarca);
+    });
+
+    if (potentialMatches.length === 0) return null;
+    if (potentialMatches.length === 1) return potentialMatches[0].urlLogo;
+
+    let bestMatch = null;
+    if (normalizedCategoria) {
+        const catSynonyms = (normalizedCategoria === 'motos' || normalizedCategoria === 'motocicletas')
+            ? ['motos', 'motocicletas']
+            : [normalizedCategoria];
+
+        for (const synonym of catSynonyms) {
+            bestMatch = potentialMatches.find(logo => normalize(logo.nombreMarca).includes(synonym));
+            if (bestMatch) break;
+        }
+    }
+
+    if (!bestMatch) {
+        bestMatch = potentialMatches.find(logo => normalize(logo.nombreMarca) === normalizedMarca);
+    }
+
+    if (!bestMatch) {
+        bestMatch = potentialMatches.reduce((prev, current) =>
+            (prev.nombreMarca.length < current.nombreMarca.length) ? prev : current
+        );
+    }
+
+    return bestMatch ? bestMatch.urlLogo : (potentialMatches.length > 0 ? potentialMatches[0].urlLogo : null);
+}
+
+function crearCarrusel(titulo, items, cardGenerator) {
+    const cont = document.getElementById("contenido");
+    if (!items || items.length === 0 || !cont) return;
+
+    const section = document.createElement('div');
+    const title = document.createElement('h4');
+    title.textContent = titulo;
+    title.style.marginTop = '40px';
+    section.appendChild(title);
+
+    const carouselContainer = document.createElement('div');
+    carouselContainer.className = 'carousel-container';
+    const carouselTrack = document.createElement('div');
+    carouselTrack.className = 'carousel-track';
+
+    items.forEach(item => {
+        const card = cardGenerator(item);
+        carouselTrack.appendChild(card);
+    });
+    carouselContainer.appendChild(carouselTrack);
+
+    const getVisibleCards = () => {
+        const containerWidth = carouselContainer.offsetWidth;
+        const cardWidth = 140 + 20; // Ancho de la tarjeta + margen
+        return Math.floor(containerWidth / cardWidth) || 1;
+    };
+
+    if (items.length > getVisibleCards()) {
+        const prevBtn = document.createElement('button');
+        prevBtn.className = 'carousel-btn prev';
+        prevBtn.innerHTML = '&#10094;';
+        carouselContainer.appendChild(prevBtn);
+
+        const nextBtn = document.createElement('button');
+        nextBtn.className = 'carousel-btn next';
+        nextBtn.innerHTML = '&#10095;';
+        carouselContainer.appendChild(nextBtn);
+
+        const cardWidth = 140 + 20;
+
+        const updateCarouselButtons = () => {
+            const scrollLeft = carouselTrack.scrollLeft;
+            const maxScrollLeft = carouselTrack.scrollWidth - carouselTrack.clientWidth;
+            prevBtn.style.display = scrollLeft > 0 ? 'flex' : 'none';
+            nextBtn.style.display = scrollLeft < maxScrollLeft - 1 ? 'flex' : 'none';
+        };
+
+        nextBtn.addEventListener('click', () => {
+            carouselTrack.scrollBy({ left: cardWidth * getVisibleCards(), behavior: 'smooth' });
+        });
+
+        prevBtn.addEventListener('click', () => {
+            carouselTrack.scrollBy({ left: -cardWidth * getVisibleCards(), behavior: 'smooth' });
+        });
+
+        carouselTrack.addEventListener('scroll', () => setTimeout(updateCarouselButtons, 150));
+        window.addEventListener('resize', () => setTimeout(updateCarouselButtons, 150));
+        setTimeout(updateCarouselButtons, 150);
+    }
+
+    section.appendChild(carouselContainer);
+    cont.appendChild(section);
+}
+
+export function mostrarCategorias() {
+    const { catalogData, searchHistory, viewedItems } = getState();
+    const { cortes, sortedCategories } = catalogData;
+
+    if (document.getElementById("searchInput").value.trim()) return;
+
+    const cont = document.getElementById("contenido");
+    cont.innerHTML = "";
+
+    // 1. Mostrar Historial de Búsqueda (si existe)
+    if (searchHistory && searchHistory.length > 0) {
+        const historySection = document.createElement('div');
+        historySection.className = 'search-history-section';
+        historySection.innerHTML = '<h4 style="margin-top:20px;">Búsquedas Recientes</h4>';
+        const historyContainer = document.createElement('div');
+        historyContainer.className = 'search-history-container';
+
+        searchHistory.forEach(item => {
+            const tag = document.createElement('span');
+            tag.className = 'search-tag';
+            tag.textContent = item.term;
+            tag.onclick = () => {
+                const input = document.getElementById('searchInput');
+                input.value = item.term;
+                // Forzar visualización de botón X y filtrado
+                input.parentElement.classList.add('has-text');
+                window.navigation.filtrarContenido(item.term);
+            };
+            historyContainer.appendChild(tag);
+        });
+        historySection.appendChild(historyContainer);
+        cont.appendChild(historySection);
+    }
+
+    // 2. Mostrar Vistos Recientemente
+    if (viewedItems && viewedItems.length > 0) {
+        const viewedCortes = viewedItems.map(v => v.data);
+        crearCarrusel('Vistos Recientemente', viewedCortes, item => {
+            return crearCardVehiculo(item, true); // true para no mostrar badge en esta sección
+        });
+    }
+
+    mostrarUltimosAgregados();
+
+    // Comentario: Se implementa el ordenamiento de categorías por población.
+    const categoriasPorPoblacion = [...new Set(cortes.map(c => String(c.categoria)).filter(Boolean))]
+        .map(cat => ({
+            nombre: cat,
+            poblacion: cortes.filter(c => String(c.categoria) === cat).length
+        }))
+        .sort((a, b) => b.poblacion - a.poblacion)
+        .map(c => c.nombre);
+
+    crearCarrusel('Categorías Populares', categoriasPorPoblacion, cat => {
+        const ejemplo = cortes.find(item => item.categoria === cat && item.imagenVehiculo);
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => mostrarMarcas(cat);
+        const img = document.createElement("img");
+        setOptimizedImage(img, ejemplo?.imagenVehiculo, IMG_SIZE_SMALL);
+        img.alt = `Categoría ${cat}`;
+        img.loading = "lazy";
+        card.appendChild(img);
+        const overlay = document.createElement("div");
+        overlay.className = "overlay";
+        overlay.innerHTML = `<div class="overlay-text-primary">${cat}</div>`;
+        card.appendChild(overlay);
+        return card;
+    });
+
+    const marcasVehiculos = [...new Set(cortes
+        .filter(item => item.categoria && !['motocicletas', 'motos'].includes(String(item.categoria).toLowerCase()))
+        .map(item => item.marca))]
+        .filter(Boolean).sort();
+
+    // Comentario: Se corrige el título y el flujo de navegación para cumplir con el README.
+    crearCarrusel('Búsqueda por Marca de Vehículos', marcasVehiculos, marca => {
+        const logoUrl = getLogoUrlForMarca(marca, null);
+        const card = document.createElement("div");
+        card.className = "card brand-logo-item";
+        // Cambio Crítico: Corregir el flujo de navegación para que vaya de Marca -> Modelos.
+        card.onclick = () => mostrarModelosPorMarca(marca);
+        const img = document.createElement("img");
+        setOptimizedImage(img, logoUrl, IMG_SIZE_SMALL);
+        img.alt = `Marca ${marca}`;
+        img.loading = "lazy";
+        card.appendChild(img);
+        return card;
+    });
+
+    const marcasMotos = [...new Set(cortes
+        .filter(item => item.categoria && ['motocicletas', 'motos'].includes(String(item.categoria).toLowerCase()))
+        .map(item => item.marca))]
+        .filter(Boolean).sort();
+
+    // Comentario: Título ajustado para consistencia.
+    crearCarrusel('Búsqueda por Marca de Motocicletas', marcasMotos, marca => {
+        const logoUrl = getLogoUrlForMarca(marca, 'Motocicletas');
+        const card = document.createElement("div");
+        card.className = "card brand-logo-item";
+        card.onclick = () => mostrarModelos('Motocicletas', marca);
+        const img = document.createElement("img");
+        setOptimizedImage(img, logoUrl, IMG_SIZE_SMALL);
+        img.alt = `Marca ${marca}`;
+        img.loading = "lazy";
+        card.appendChild(img);
+        return card;
+    });
+}
+
+export function mostrarMarcas(categoria) {
+    const { catalogData } = getState();
+    const { cortes } = catalogData;
+
+    setState({ navigationState: { level: "marcas", categoria: categoria, origin: "categoria" } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "marcas")) {
+        window.history.pushState({ level: "marcas", categoria: categoria, origin: "categoria" }, '', window.location.pathname + window.location.search);
+    }
+    const cont = document.getElementById("contenido");
+    cont.innerHTML = `<span class="backBtn" onclick="window.navigation.irAPaginaPrincipal()">${backSvg} Volver</span><h4>Marcas de ${categoria}</h4>`;
+    const itemsInCategory = cortes.filter(item => item.categoria === categoria);
+    const marcas = [...new Set(itemsInCategory.map(item => item.marca))].filter(m => m).sort();
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(120px, 1fr))";
+    grid.style.gap = "30px";
+
+    marcas.forEach(m => {
+        const logoUrl = getLogoUrlForMarca(m, categoria);
+        const logoContainer = document.createElement("div");
+        logoContainer.className = "card brand-logo-item";
+        logoContainer.onclick = () => mostrarModelos(categoria, m);
+
+        const img = document.createElement("img");
+        setOptimizedImage(img, logoUrl, IMG_SIZE_SMALL); // 'https://placehold.co/120x80/cccccc/333333?text=Sin+Logo';
+        img.alt = `Marca ${m}`;
+        img.loading = "lazy";
+
+        logoContainer.appendChild(img);
+        grid.appendChild(logoContainer);
+    });
+    cont.appendChild(grid);
+}
+
+/**
+ * Nueva función para implementar el flujo de navegación lineal: Marca -> Modelos.
+ * Reemplaza la función redundante y circular mostrarCategoriasPorMarca.
+ * @param {string} marca - La marca de vehículos para la cual mostrar los modelos.
+ */
+export function mostrarModelosPorMarca(marca) {
+    const { catalogData } = getState();
+    const { cortes } = catalogData;
+
+    // Se establece el estado de navegación actual capturando el estado previo.
+    const previousState = getState().navigationState || {};
+    setState({ navigationState: { level: "modelosPorMarca", marca: marca, origin: "marca", previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "modelosPorMarca")) {
+        window.history.pushState({ level: "modelosPorMarca", marca: marca, origin: "marca" }, '', window.location.pathname + window.location.search);
+    }
+    const cont = document.getElementById("contenido");
+
+    // Lógica dinámica para el botón "Volver": regresa a búsqueda si ese era el origen.
+    const backAction = previousState.level === 'busqueda'
+        ? 'window.ui.regresarABusqueda()'
+        : 'window.navigation.irAPaginaPrincipal()';
+
+    // Se limpia el contenido y se añade el botón de regreso dinámico.
+    cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Modelos de ${marca}</h4>`;
+
+    // Se filtran los cortes para obtener todos los modelos de la marca seleccionada, excluyendo motocicletas
+    const modelosFiltrados = cortes.filter(item => item.marca === marca && item.categoria && !['motocicletas', 'motos'].includes(String(item.categoria).toLowerCase()));
+
+    // De-duplicación inteligente: Considera modelo y categoría para no ocultar variantes (ej. Yaris Sedan vs Hatchback)
+    const variantesUnicas = [...new Map(modelosFiltrados.map(item => {
+        const key = `${item.modelo}|${item.categoria}`;
+        return [key, item];
+    })).values()].sort((a,b) => String(a.modelo).localeCompare(String(b.modelo)));
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    variantesUnicas.forEach(ejemplo => {
+        const card = document.createElement("div");
+        card.className = "card";
+        // Al hacer clic, pasamos la categoría para asegurar que el filtrado posterior sea preciso
+        card.onclick = () => navegarADetallesDeModelo(ejemplo.categoria, marca, ejemplo.modelo);
+        const img = document.createElement("img");
+        setOptimizedImage(img, ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
+        img.alt = `Modelo ${ejemplo.modelo}`;
+        img.loading = "lazy";
+        card.appendChild(img);
+
+        const overlay = document.createElement("div");
+        overlay.className = "overlay";
+        // Si hay múltiples categorías para el mismo nombre de modelo, mostramos la categoría para diferenciar
+        const tieneDuplicados = variantesUnicas.filter(v => v.modelo === ejemplo.modelo).length > 1;
+        const textoDiferenciador = tieneDuplicados ? `<div class="overlay-text-secondary">${ejemplo.categoria}</div>` : '';
+
+        overlay.innerHTML = `<div class="overlay-text-primary">${ejemplo.modelo}</div>${textoDiferenciador}`;
+        card.appendChild(overlay);
+        grid.appendChild(card);
+    });
+    cont.appendChild(grid);
+}
+
+/**
+ * Función "Hub" para decidir el siguiente paso en la navegación después de seleccionar un modelo.
+ * Verifica si existen versiones de equipamiento para un modelo y dirige al usuario a la pantalla
+ * correspondiente (selección de versión o selección de tipo de encendido).
+ * @param {string} categoria - La categoría del vehículo.
+ * @param {string} marca - La marca del vehículo.
+ * @param {string} modelo - El modelo del vehículo.
+ */
+function navegarADetallesDeModelo(categoria, marca, modelo) {
+    const { catalogData, navigationState } = getState();
+    const { cortes } = catalogData;
+    const origin = (navigationState && navigationState.origin) || "categoria";
+
+    // Comentario: Lógica de navegación refactorizada para omitir pantallas de selección con una sola opción.
+    // 1. Obtener todos los cortes para el modelo específico.
+    let vehiculosFiltrados = cortes.filter(item =>
+        item.categoria === categoria &&
+        item.marca === marca &&
+        item.modelo === modelo
+    );
+
+    // 2. Analizar Versiones de Equipamiento.
+    const versionesDeEquipamiento = [...new Set(vehiculosFiltrados.map(v => v.versionesAplicables).filter(Boolean))];
+
+    if (versionesDeEquipamiento.length === 1) {
+        // Omitir pantalla: Si hay una sola versión, se filtra el conjunto de datos y se continúa el análisis.
+        vehiculosFiltrados = vehiculosFiltrados.filter(v => v.versionesAplicables === versionesDeEquipamiento[0]);
+    } else if (versionesDeEquipamiento.length > 1) {
+        // Detener: Si hay múltiples versiones, se muestra la pantalla de selección y termina el flujo.
+        mostrarVersionesEquipamiento(categoria, marca, modelo);
+        return;
+    }
+    // Si hay 0 versiones, se continúa con el conjunto de datos original.
+
+    // 3. Analizar Tipos de Encendido sobre el conjunto de datos ya (potencialmente) filtrado.
+    const tiposEncendido = [...new Set(vehiculosFiltrados.map(v => v.tipoEncendido).filter(Boolean))];
+
+    if (tiposEncendido.length === 1) {
+        // Omitir pantalla: Si hay un solo tipo de encendido, se filtra y se navega directamente a la pantalla de Años.
+        vehiculosFiltrados = vehiculosFiltrados.filter(v => v.tipoEncendido === tiposEncendido[0]);
+        mostrarVersiones(vehiculosFiltrados, categoria, marca, modelo);
+        return;
+    } else if (tiposEncendido.length > 1) {
+        // Detener: Si hay múltiples tipos, se muestra la pantalla de selección y termina el flujo.
+        const versionEquipamiento = versionesDeEquipamiento.length === 1 ? versionesDeEquipamiento[0] : null;
+        mostrarTiposEncendido(categoria, marca, versionEquipamiento, modelo);
+        return;
+    }
+
+    // 4. Fallback: Si no hay ni versiones ni tipos de encendido, pero sí hay datos, se muestra la pantalla de Años.
+    if (vehiculosFiltrados.length > 0) {
+        mostrarVersiones(vehiculosFiltrados, categoria, marca, modelo);
+    } else {
+        // Caso de seguridad: no debería ocurrir si se hizo clic en un modelo existente.
+        showNoResultsMessage(`Datos para ${marca} ${modelo}`);
+    }
+}
+
+export function mostrarModelos(categoria, marca, versionEquipamiento = null) {
+    const { catalogData, navigationState } = getState();
+    const { cortes } = catalogData;
+
+    const previousState = navigationState || {};
+    const origin = previousState.origin || "categoria";
+    setState({ navigationState: { level: "modelos", categoria, marca, versionEquipamiento, origin, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "modelos")) {
+        window.history.pushState({ level: "modelos", categoria, marca, versionEquipamiento, origin }, '', window.location.pathname + window.location.search);
+    }
+    const cont = document.getElementById("contenido");
+
+    // Lógica dinámica para el botón "Volver"
+    let backAction;
+    if (versionEquipamiento) {
+        backAction = `window.ui.mostrarVersionesEquipamiento('${categoria}', '${marca}')`;
+    } else if (origin === 'marca' || previousState.level === 'modelosPorMarca') {
+        backAction = `window.ui.mostrarModelosPorMarca('${marca}')`;
+    } else {
+        backAction = `window.ui.mostrarMarcas('${categoria}')`;
+    }
+
+    cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Modelos de ${marca} ${versionEquipamiento || ''}</h4>`;
+
+    let modelosFiltrados = cortes.filter(item => item.categoria === categoria && item.marca === marca);
+    if (versionEquipamiento) {
+        modelosFiltrados = modelosFiltrados.filter(item => item.versionesAplicables === versionEquipamiento);
+    }
+
+    // De-duplicación inteligente también aquí
+    const variantesUnicas = [...new Map(modelosFiltrados.map(item => {
+        const key = `${item.modelo}|${item.categoria}`;
+        return [key, item];
+    })).values()].sort((a,b) => String(a.modelo).localeCompare(String(b.modelo)));
+
+    const grid = document.createElement("div"); grid.className = "grid";
+    variantesUnicas.forEach(ejemplo => {
+        const card = document.createElement("div"); card.className = "card";
+        card.onclick = () => navegarADetallesDeModelo(ejemplo.categoria, marca, ejemplo.modelo);
+        const img = document.createElement("img");
+        setOptimizedImage(img, ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
+        img.alt = `Modelo ${ejemplo.modelo}`;
+        img.loading = "lazy";
+        card.appendChild(img);
+
+        const overlay = document.createElement("div"); overlay.className = "overlay";
+        const tieneDuplicados = variantesUnicas.filter(v => v.modelo === ejemplo.modelo).length > 1;
+        const textoDiferenciador = tieneDuplicados ? `<div class="overlay-text-secondary">${ejemplo.categoria}</div>` : '';
+
+        overlay.innerHTML = `<div class="overlay-text-primary">${ejemplo.modelo}</div>${textoDiferenciador}`;
+        card.appendChild(overlay);
+        grid.appendChild(card);
+    });
+    cont.appendChild(grid);
+}
+
+export function mostrarTiposEncendido(categoria, marca, versionEquipamiento, modelo) {
+     const { catalogData, navigationState } = getState();
+    const { cortes } = catalogData;
+    const previousState = navigationState || {};
+    const origin = previousState.origin || "categoria";
+    setState({ navigationState: { level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, origin, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "tiposEncendido")) {
+        window.history.pushState({ level: "tiposEncendido", categoria, marca, versionEquipamiento, modelo, origin }, '', window.location.pathname + window.location.search);
+    }
+
+    const cont = document.getElementById("contenido");
+
+    // Comentario: Lógica dinámica para el botón "Volver".
+    // Regresa a `mostrarVersionesEquipamiento` si ese fue el paso anterior, si no, a `mostrarModelos`.
+    // Se añade soporte para el flujo de navegación por marca (modelosPorMarca).
+    let backAction;
+    if (previousState.level === 'versionesEquipamiento') {
+        backAction = `window.ui.mostrarVersionesEquipamiento('${categoria}', '${marca}', '${modelo}')`;
+    } else if (origin === 'marca' || previousState.level === 'modelosPorMarca') {
+        backAction = `window.ui.mostrarModelosPorMarca('${marca}')`;
+    } else {
+        backAction = `window.ui.mostrarModelos('${categoria}', '${marca}')`;
+    }
+
+    cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Tipos de Encendido para ${modelo} ${versionEquipamiento || ''}</h4>`;
+
+    let vehiculos = cortes.filter(item =>
+        item.categoria === categoria &&
+        item.marca === marca &&
+        item.modelo === modelo &&
+        (!versionEquipamiento || item.versionesAplicables === versionEquipamiento)
+    );
+
+    const tiposEncendido = [...new Set(vehiculos.map(v => v.tipoEncendido).filter(Boolean))];
+
+    // Comentario: Se elimina el bloque condicional `if (tiposEncendido.length === 1)` que causaba el bug.
+    // Al forzar siempre la visualización de esta pantalla, se asegura que la función `mostrarVersiones`
+    // reciba siempre un conjunto de datos correctamente filtrado por tipo de encendido,
+    // manteniendo la consistencia del flujo de navegación.
+
+    const grid = document.createElement("div"); grid.className = "grid";
+    tiposEncendido.forEach(tipo => {
+        const ejemplo = vehiculos.find(v => v.tipoEncendido === tipo);
+        const card = document.createElement("div"); card.className = "card";
+        card.onclick = () => mostrarVersiones(vehiculos.filter(v => v.tipoEncendido === tipo), categoria, marca, modelo);
+
+        const img = document.createElement("img");
+        setOptimizedImage(img, ejemplo.imagenVehiculo, IMG_SIZE_SMALL);
+        img.alt = tipo;
+        img.loading = "lazy";
+        card.appendChild(img);
+
+        const overlay = document.createElement("div");
+        overlay.className = "overlay";
+        overlay.innerHTML = `<div class="overlay-text-primary">${tipo}</div>`;
+        card.appendChild(overlay);
+        grid.appendChild(card);
+    });
+    cont.appendChild(grid);
+}
+
+export function mostrarVersiones(filas, categoria, marca, modelo) {
+    const { navigationState } = getState();
+    const previousState = navigationState || {};
+    const origin = previousState.origin || "categoria";
+    setState({ navigationState: { level: "versiones", categoria, marca, modelo, origin, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "versiones")) {
+        window.history.pushState({ level: "versiones", categoria, marca, modelo, origin }, '', window.location.pathname + window.location.search);
+    }
+    const cont = document.getElementById("contenido");
+
+    // Comentario: Lógica dinámica MEJORADA para el botón "Volver".
+    // Determina si el paso anterior fue una búsqueda, selección de tipo de encendido o de versión de equipamiento.
+    let backAction;
+    if (previousState.level === 'busqueda' || previousState.level === 'busqueda_focused') {
+        // Si venimos de una búsqueda, el botón debe regresar a los resultados de esa búsqueda.
+        backAction = `window.ui.regresarABusqueda()`;
+    } else if (previousState.level === 'tiposEncendido') {
+        // Comentario: Se corrige el bug que pasaba 'null' como string.
+        // Se asegura que si no hay versión de equipamiento, se pase el valor literal `null`.
+        const veq = previousState.versionEquipamiento ? `'${previousState.versionEquipamiento}'` : null;
+        backAction = `window.ui.mostrarTiposEncendido('${categoria}', '${marca}', ${veq}, '${modelo}')`;
+    } else if (previousState.level === 'versionesEquipamiento') {
+        backAction = `window.ui.mostrarVersionesEquipamiento('${categoria}', '${marca}', '${modelo}')`;
+    } else if (origin === 'marca' || previousState.level === 'modelosPorMarca') {
+        // Soporte para el flujo de navegación por marca (modelosPorMarca).
+        backAction = `window.ui.mostrarModelosPorMarca('${marca}')`;
+    } else {
+        // Fallback seguro, regresa a la lista de modelos.
+        backAction = `window.ui.mostrarModelos('${categoria}', '${marca}')`;
+    }
+
+    cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Años de ${modelo}</h4>`;
+    const grid = document.createElement("div"); grid.className = "grid";
+    filas.forEach(item => {
+        const card = crearCardVehiculo(item);
+        grid.appendChild(card);
+    });
+    cont.appendChild(grid);
+}
+
+/**
+ * Nueva función para reconstruir la vista de resultados de búsqueda.
+ * Utiliza el `query` guardado en el estado de navegación.
+ */
+export function regresarABusqueda() {
+    const { navigationState } = getState();
+    // CORRECCIÓN DEFINITIVA: La lógica ahora inspecciona el `previousState` anidado.
+    // Cuando se llama a esta función, el estado actual es 'versiones', pero el estado
+    // que contiene la información de la búsqueda es el 'previousState'.
+    const prevState = navigationState ? navigationState.previousState : null;
+
+    if (prevState && (prevState.level === 'busqueda' || prevState.level === 'busqueda_focused') && prevState.query) {
+        // Vuelve a ejecutar la función de filtrado con el término de búsqueda guardado en el estado anterior.
+        window.navigation.filtrarContenido(prevState.query);
+    } else {
+        // Si el estado anterior no es de búsqueda, regresa a la página principal como fallback seguro.
+        window.navigation.irAPaginaPrincipal();
+    }
+}
+
+/* TAREA 7 (B18): CONTEXTO 'ORIGIN' MARCA/CATEGORÍA Y RETORNO LIMPIO SIN BUCLES */
+export function mostrarVersionesEquipamiento(categoria, marca, modelo) {
+    const { catalogData, navigationState } = getState();
+    const { cortes } = catalogData;
+
+    const previousState = navigationState || {};
+    const origin = previousState.origin || "categoria";
+    setState({ navigationState: { level: "versionesEquipamiento", categoria, marca, modelo, origin, previousState } });
+    if (window.history && window.history.pushState && (!window.history.state || window.history.state.level !== "versionesEquipamiento")) {
+        window.history.pushState({ level: "versionesEquipamiento", categoria, marca, modelo, origin }, '', window.location.pathname + window.location.search);
+    }
+    const cont = document.getElementById("contenido");
+
+    // Comentario: Lógica dinámica para el botón "Volver".
+    // Se añade soporte para el flujo de navegación por marca (modelosPorMarca).
+    const backAction = origin === 'marca' || previousState.level === 'modelosPorMarca'
+        ? `window.ui.mostrarModelosPorMarca('${marca}')`
+        : `window.ui.mostrarModelos('${categoria}', '${marca}')`;
+
+    cont.innerHTML = `<span class="backBtn" onclick="${backAction}">${backSvg} Volver</span><h4>Versiones de ${modelo}</h4>`;
+
+    // Comentario: Se filtra por modelo específico para mostrar solo las versiones relevantes.
+    const vehiculosDelModelo = cortes.filter(item => item.categoria === categoria && item.marca === marca && item.modelo === modelo);
+    const versiones = [...new Set(vehiculosDelModelo.map(item => item.versionesAplicables).filter(v => v))];
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+
+    versiones.forEach(version => {
+        const vehiculosDeVersion = vehiculosDelModelo.filter(v => v.versionesAplicables === version);
+        const tiposDeEncendidoEnVersion = [...new Set(vehiculosDeVersion.map(v => v.tipoEncendido).filter(Boolean))].join(' / ');
+
+        const ejemplo = vehiculosDeVersion.find(item => item.imagenVehiculo);
+        const card = document.createElement("div");
+        card.className = "card";
+
+        // Comentario CORREGIDO: Al hacer clic, se filtran los vehículos de esta versión y se avanza a la pantalla de Años.
+        card.onclick = () => mostrarVersiones(vehiculosDeVersion, categoria, marca, modelo);
+
+        const img = document.createElement("img");
+        setOptimizedImage(img, ejemplo?.imagenVehiculo, IMG_SIZE_SMALL);
+        img.alt = `Versión ${version}`;
+        img.loading = "lazy";
+        card.appendChild(img);
+
+        const overlay = document.createElement("div");
+        overlay.className = "overlay";
+        // Comentario: La tarjeta ahora muestra el nombre de la versión y los tipos de encendido asociados.
+        overlay.innerHTML = `<div class="overlay-text-primary">${version}</div><div class="overlay-text-secondary">${tiposDeEncendidoEnVersion}</div>`;
+        card.appendChild(overlay);
+        grid.appendChild(card);
+    });
+
+    cont.appendChild(grid);
+}
+
+
+/**
+ * Determina si un vehículo es elegible para la validación colaborativa de años.
+ * @param {object} item - El objeto de datos del vehículo actual.
+ * @returns {Promise<boolean>} - Verdadero si es elegible.
+ */
+async function checkValidationEligibility(item) {
+    const currentYear = new Date().getFullYear();
+    const { catalogData } = getState();
+    const { cortes } = catalogData;
+
+    // 1. Verificar si el usuario ya respondió anteriormente para este mismo registro (ID)
+    const cachedResponse = await offline.getValidationResponse(item.id);
+    if (cachedResponse) return { eligible: false };
+
+    const normalizedItemVersion = normalizeVersion(item.versionesAplicables);
+
+    // 2. Identificar todos los registros del mismo modelo/marca/categoría/encendido
+    // Se incluye versionesAplicables normalizado en el agrupamiento para mayor robustez
+    const sameModelGenerations = cortes.filter(c =>
+        String(c.marca).toLowerCase() === String(item.marca).toLowerCase() &&
+        String(c.modelo).toLowerCase() === String(item.modelo).toLowerCase() &&
+        String(c.categoria).toLowerCase() === String(item.categoria).toLowerCase() &&
+        String(c.tipoEncendido).toLowerCase() === String(item.tipoEncendido).toLowerCase() &&
+        normalizeVersion(c.versionesAplicables) === normalizedItemVersion
+    );
+
+    // 3. Condición: El vehículo debe pertenecer a la generación más reciente registrada.
+    // Si existe una generación posterior registrada para el mismo vehículo (mismo modelo/marca/categoría/encendido/versión), la notificación no deberá mostrarse.
+    const hasPosteriorGeneration = sameModelGenerations.some(c => {
+        const yearC = parseInt(c.anoDesde) || 0;
+        const yearItem = parseInt(item.anoDesde) || 0;
+        return yearC > yearItem;
+    });
+
+    if (hasPosteriorGeneration) return { eligible: false };
+
+    // 5. Condición: El rango de años debe finalizar antes del año actual.
+    const anoHasta = item.anoHasta ? parseInt(item.anoHasta) : (parseInt(item.anoDesde) || 0);
+    if (anoHasta >= currentYear) return { eligible: false };
+
+    // Identificar si es un "modelo muy antiguo" (ej. > 10 años de antigüedad)
+    const isOldModel = anoHasta < (currentYear - 10);
+
+    return { eligible: true, isOldModel };
+}
+
+/**
+ * Muestra el banner de validación colaborativa en el modal de detalles.
+ * @param {object} item - El vehículo actual.
+ * @param {boolean} isOldModel - Si sigue el flujo de modelos antiguos.
+ */
+function showValidationBanner(item, isOldModel) {
+    const detailContainer = document.getElementById('detalleCompleto');
+    if (!detailContainer) return;
+
+    // Phase 2.1.5: Prevenir duplicados - Verificar si el banner ya existe antes de crearlo
+    if (document.getElementById('validation-banner')) {
+        return;
+    }
+
+    // Buscar la ubicación: Debajo de la imagen del vehículo o después del subheader
+    const imgVehiculo = detailContainer.querySelector('.img-vehiculo-modal');
+    const anchor = imgVehiculo || detailContainer.querySelector('div[style*="margin-bottom: 5px"]');
+
+    const banner = document.createElement('div');
+    banner.className = 'validation-banner';
+    banner.id = 'validation-banner';
+
+    const currentYear = new Date().getFullYear();
+    const { currentUser } = getState();
+    const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Anónimo';
+    const userId = currentUser ? currentUser.ID : '0';
+
+    const renderStep = (content) => {
+        banner.innerHTML = '';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'validation-content';
+        wrapper.appendChild(content);
+        banner.appendChild(wrapper);
+    };
+
+    const registerAndClose = (response, suggestedYear = null) => {
+        // Registro silencioso en backend y luego caché
+        suggestYear(item.id, suggestedYear || currentYear, response, userId, userName).catch(console.error);
+        offline.saveValidationResponse(item.id, response);
+
+        const thanks = document.createElement('div');
+        thanks.className = 'validation-message';
+        thanks.textContent = 'Gracias por tu aporte.';
+        renderStep(thanks);
+
+        setTimeout(() => {
+            banner.style.maxHeight = '0';
+            banner.style.margin = '0';
+            banner.style.padding = '0';
+            banner.style.opacity = '0';
+            banner.style.border = 'none';
+            setTimeout(() => banner.remove(), 400);
+        }, 1500);
+    };
+
+    const showStep1 = () => {
+        const msg = document.createElement('div');
+        msg.className = 'validation-message';
+        msg.textContent = isOldModel
+            ? '¿Estás trabajando una versión más reciente de este vehículo?'
+            : 'Este vehículo corresponde a un año anterior. ¿Estás trabajando un modelo más reciente?';
+
+        const actions = document.createElement('div');
+        actions.className = 'validation-actions';
+
+        const btnSi = document.createElement('button');
+        btnSi.className = 'validation-btn';
+        btnSi.textContent = 'Sí';
+        btnSi.onclick = () => isOldModel ? showStep2Old() : showStep2();
+
+        const btnNo = document.createElement('button');
+        btnNo.className = 'validation-btn secondary';
+        btnNo.textContent = 'No';
+        btnNo.onclick = () => registerAndClose('No');
+
+        actions.appendChild(btnSi);
+
+        const btnAntiguo = document.createElement('button');
+        btnAntiguo.className = 'validation-btn secondary';
+        btnAntiguo.textContent = 'Es más antiguo';
+        btnAntiguo.onclick = () => showStepInput(true);
+        actions.appendChild(btnAntiguo);
+
+        actions.appendChild(btnNo);
+
+        const content = document.createDocumentFragment();
+        content.appendChild(msg);
+        content.appendChild(actions);
+        renderStep(content);
+    };
+
+    // FLUJO REGULAR
+    const showStep2 = () => {
+        const msg = document.createElement('div');
+        msg.className = 'validation-message';
+        msg.textContent = `¿Este corte funciona correctamente para el modelo del año ${currentYear}?`;
+
+        const actions = document.createElement('div');
+        actions.className = 'validation-actions';
+
+        const btnOk = document.createElement('button');
+        btnOk.className = 'validation-btn';
+        btnOk.textContent = '✅';
+        btnOk.onclick = () => registerAndClose('Sí (Funciona)', currentYear);
+
+        const btnFail = document.createElement('button');
+        btnFail.className = 'validation-btn secondary';
+        btnFail.textContent = '❌';
+        btnFail.onclick = () => {
+            // No registrar todavía, esperar a showStep3Fail
+            showStep3Fail();
+        };
+
+        const btnOther = document.createElement('button');
+        btnOther.className = 'validation-btn secondary';
+        btnOther.textContent = 'Otro año';
+        btnOther.onclick = () => showStepInput();
+
+        actions.appendChild(btnOk);
+        actions.appendChild(btnFail);
+        actions.appendChild(btnOther);
+
+        const content = document.createDocumentFragment();
+        content.appendChild(msg);
+        content.appendChild(actions);
+        renderStep(content);
+    };
+
+    const showStep3Fail = (isFromOld = false) => {
+        const msg = document.createElement('div');
+        msg.className = 'validation-message';
+        msg.innerHTML = `Muchas gracias por confirmarlo.<br>Recuerda que puedes agregar el nuevo corte de este modelo <a href="add_cortes.html" style="color: var(--accent-color); font-weight: bold;">aquí</a>.`;
+
+        const actions = document.createElement('div');
+        actions.className = 'validation-actions';
+        const btnAceptar = document.createElement('button');
+        btnAceptar.className = 'validation-btn';
+        btnAceptar.textContent = 'Aceptar';
+        btnAceptar.onclick = () => {
+            if (isFromOld) {
+                registerAndClose('No útil (Viejo)');
+            } else {
+                registerAndClose('No funciona', currentYear);
+            }
+        };
+        actions.appendChild(btnAceptar);
+
+        const content = document.createDocumentFragment();
+        content.appendChild(msg);
+        content.appendChild(actions);
+        renderStep(content);
+    };
+
+    const showStepInput = (isFromAntiguo = false) => {
+        const msg = document.createElement('div');
+        msg.className = 'validation-message';
+        msg.textContent = isFromAntiguo
+            ? '¿Para qué año es este vehículo más antiguo?'
+            : '¿Para qué año funciona correctamente este corte?';
+
+        const inputGroup = document.createElement('div');
+        inputGroup.className = 'validation-input-group';
+
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.inputMode = 'numeric';
+        input.className = 'validation-input';
+        input.placeholder = 'Ingrese el año';
+        input.maxLength = 4;
+        input.addEventListener('input', () => {
+            input.style.borderColor = '';
+        });
+
+        const btnSend = document.createElement('button');
+        btnSend.className = 'validation-btn';
+        btnSend.textContent = 'Enviar';
+        btnSend.onclick = () => {
+            const rawValue = input.value.trim();
+            if (!/^\d{4}$/.test(rawValue)) {
+                input.style.borderColor = 'red';
+                return;
+            }
+
+            const yearVal = parseInt(rawValue, 10);
+            if (isNaN(yearVal) || yearVal < 1980 || yearVal > (currentYear + 2)) {
+                input.style.borderColor = 'red';
+                return;
+            }
+
+            // Validar colisión con otras generaciones registradas
+            const { catalogData } = getState();
+            const normalizedItemVersion = normalizeVersion(item.versionesAplicables);
+            const collision = catalogData.cortes.find(c =>
+                String(c.marca).toLowerCase() === String(item.marca).toLowerCase() &&
+                String(c.modelo).toLowerCase() === String(item.modelo).toLowerCase() &&
+                String(c.categoria).toLowerCase() === String(item.categoria).toLowerCase() &&
+                String(c.tipoEncendido).toLowerCase() === String(item.tipoEncendido).toLowerCase() &&
+                normalizeVersion(c.versionesAplicables) === normalizedItemVersion &&
+                yearVal >= (parseInt(c.anoDesde) || 0) &&
+                yearVal <= (parseInt(c.anoHasta) || parseInt(c.anoDesde) || 0)
+            );
+
+            if (collision && String(collision.id) !== String(item.id)) {
+                input.style.borderColor = 'red';
+                if (!banner.querySelector('.validation-error')) {
+                    const err = document.createElement('div');
+                    err.className = 'validation-error';
+                    err.style.cssText = "color: #dc3545; font-size: 0.8em; margin-top: 5px;";
+                    err.textContent = `El año ${yearVal} ya está registrado.`;
+                    inputGroup.after(err);
+                    setTimeout(() => err.remove(), 3000);
+                }
+                return;
+            }
+
+            if (isFromAntiguo) {
+                registerAndClose('Es más antiguo', yearVal);
+            } else {
+                registerAndClose(`Otro año: ${yearVal}`, yearVal);
+            }
+        };
+
+        inputGroup.appendChild(input);
+        inputGroup.appendChild(btnSend);
+
+        const content = document.createDocumentFragment();
+        content.appendChild(msg);
+        content.appendChild(inputGroup);
+        renderStep(content);
+    };
+
+    // FLUJO ANTIGUO
+    const showStep2Old = () => {
+        const msg = document.createElement('div');
+        msg.className = 'validation-message';
+        msg.textContent = '¿Esta información te fue útil?';
+
+        const actions = document.createElement('div');
+        actions.className = 'validation-actions';
+
+        const btnSi = document.createElement('button');
+        btnSi.className = 'validation-btn';
+        btnSi.textContent = 'Sí';
+        btnSi.onclick = () => {
+            // Primero registrar que se trata de una generación más reciente
+            suggestYear(item.id, currentYear, 'Modelo confirmado', userId, userName).catch(console.error);
+            showStepInput();
+        };
+
+        const btnNo = document.createElement('button');
+        btnNo.className = 'validation-btn secondary';
+        btnNo.textContent = 'No';
+        btnNo.onclick = () => {
+            // Mostrar mensaje para agregar nuevo corte antes de cerrar y registrar
+            showStep3Fail(true);
+        };
+
+        actions.appendChild(btnSi);
+        actions.appendChild(btnNo);
+
+        const content = document.createDocumentFragment();
+        content.appendChild(msg);
+        content.appendChild(actions);
+        renderStep(content);
+    };
+
+    showStep1();
+
+    if (anchor) {
+        anchor.after(banner);
+    } else {
+        detailContainer.appendChild(banner);
+    }
+}
+
+/**
+ * Renderiza los resultados de una búsqueda de forma dinámica.
+ * @param {object} searchData - Un objeto que contiene el tipo, la consulta y los resultados.
+ * @param {string} searchData.type - El tipo de resultado ('marca' o 'modelo').
+ * @param {string} searchData.query - El texto original de la búsqueda.
+ * @param {Array} searchData.results - El array de resultados (strings de marcas o objetos de modelos).
+ */
+/* TAREA 7 (B06): DISTINCIÓN ENTRE BÚSQUEDA ACTIVA Y RESTAURACIÓN DEL HISTORIAL CON AUTO-OPEN */
+// --- NUEVA FUNCIÓN UNIFICADA PARA RENDERIZAR RESULTADOS DE BÚSQUEDA ---
+export function mostrarResultadosDeBusqueda({ type, query, results }, autoOpen = true) {
+    const cont = document.getElementById("contenido");
+    // CORRECCIÓN: Se elimina el botón "Volver" de esta vista. La página de resultados
+    // es el nivel superior del flujo de búsqueda y no debe tener un botón para regresar.
+    cont.innerHTML = `<h4>Resultados para: "${query}"</h4>`;
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+
+    if (type === 'marca') {
+        // Renderizado para resultados de tipo MARCA.
+        grid.style.gridTemplateColumns = "repeat(auto-fill, minmax(120px, 1fr))";
+        grid.style.gap = "30px";
+        results.forEach(marca => {
+            const logoUrl = getLogoUrlForMarca(marca, null);
+            const card = document.createElement("div");
+            card.className = "card brand-logo-item";
+            // El onclick ahora usa el flujo de navegación estándar.
+            card.onclick = () => mostrarModelosPorMarca(marca);
+
+            const img = document.createElement("img");
+            setOptimizedImage(img, logoUrl, IMG_SIZE_SMALL);
+            img.alt = `Marca ${marca}`;
+            img.loading = "lazy";
+            card.appendChild(img);
+            grid.appendChild(card);
+        });
+    } else {
+        // Renderizado para resultados de tipo MODELO (y por defecto).
+        // Agrupar los resultados primero por Modelo único (Marca + Modelo)
+        /* TAREA 4: Evitar que elementos de Relay, Tutoriales o PyS se colapsen indebidamente a una sola tarjeta */
+        const modelosUnicos = [...new Map(results.map((item, idx) => {
+            if (item._sectionType) {
+                const secId = item.ID || item.id || item.Tema || item.configuracion || item.Problema || idx;
+                return [`${item._sectionType}|${secId}`, item];
+            }
+            const key = `${item.marca}|${item.modelo}`;
+            return [key, item];
+        })).values()];
+
+        modelosUnicos.forEach(ejemplo => {
+            const card = crearCardVehiculo(ejemplo, false, results);
+            grid.appendChild(card);
+        });
+    }
+
+    cont.appendChild(grid);
+
+    // Caso especial: Si solo existe 1 modelo con 1 versión aplicable y 1 solo rango de año, abrir directamente el modal de detalle.
+    if (autoOpen && type === 'modelo') {
+        const uniqueModels = [...new Set(results.map(r => `${r.marca}|${r.modelo}`))];
+        const uniqueVersions = [...new Set(results.map(r => r.versionesAplicables || ''))];
+        const uniqueYears = [...new Set(results.map(r => `${r.anoDesde}-${r.anoHasta || ''}`))];
+
+        if (uniqueModels.length === 1 && uniqueVersions.length === 1 && uniqueYears.length === 1 && results.length === 1) {
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.blur();
+
+            setTimeout(() => {
+                mostrarDetalleModal(results[0]);
+            }, 150);
+        }
+    }
+}
+
+export function showNoResultsMessage(textoBusqueda) {
+    document.getElementById("contenido").innerHTML = `<p style="text-align:center; padding: 20px;">No se encontraron resultados para "${textoBusqueda}".</p>`;
+}
+
+// Helper utilitario para crear párrafos de detalle compartidos en modales (Hoisted)
+function createDetailParagraph(label, text) {
+    if (text) {
+        const p = document.createElement('p');
+        p.innerHTML = `<strong>${label}:</strong> ${sanitizeHtmlContent(text)}`;
+        return p;
+    }
+    return null;
+}
+
+export function mostrarDetalleModal(item, isNavigation = false, navOptions = {}) {
+    const { catalogData } = getState();
+    const activeItem = (catalogData && catalogData.cortes)
+        ? catalogData.cortes.find(c => String(c.id) === String(item.id)) || item
+        : item;
+
+    // Registrar como item visto (offline)
+    offline.saveViewedItem(activeItem).then(() => {
+        offline.getViewedItems().then(viewed => setState({ viewedItems: viewed }));
+    });
+
+    const { relay: datosRelay } = catalogData;
+
+    const modalDetalle = document.getElementById("modalDetalle");
+    if (modalDetalle) {
+        modalDetalle.dataset.modalType = 'corte';
+    }
+
+    // Gestión contextual de pila de navegación anti-bucle
+    if (navOptions && navOptions.fromOriginModal) {
+        modalNavStack.push({
+            type: navOptions.fromOriginModal.type,
+            item: navOptions.fromOriginModal.item,
+            navOptions: navOptions.fromOriginModal.navOptions || {}
+        });
+    } else if (!isNavigation && (!navOptions || !navOptions.originModal)) {
+        // Apertura independiente desde catálogo o buscador: limpiar pila previa
+        modalNavStack.length = 0;
+    }
+
+    const cont = document.getElementById("detalleCompleto");
+    cont.innerHTML = "";
+
+    // Tarea 1.6: Corrección y compactación de la cabecera del modal de detalle
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: flex-end; align-items: center; margin-bottom: 4px; gap: 8px;";
+
+    // Indicador visual de guardado/comunicación para modo edición
+    const savingIndicator = document.createElement("div");
+    savingIndicator.id = "modal-saving-indicator";
+    savingIndicator.style.cssText = "margin-right: auto; font-size: 0.85em; font-weight: bold; display: flex; align-items: center; gap: 6px; transition: opacity 0.3s; opacity: 0; color: #007bffd0;";
+    headerDiv.appendChild(savingIndicator);
+
+    // Botón Compartir
+    const shareBtn = document.createElement("button");
+    shareBtn.innerHTML = '<i class="fa-solid fa-share-nodes"></i>';
+    shareBtn.className = "share-modal-btn";
+    shareBtn.title = "Compartir este vehículo";
+    /* TAREA 8 (B10, B11, B23): COMPARTIR MODELO Y REDIRECCIONAMIENTO PRECISO CON DEEP LINKING */
+    shareBtn.onclick = () => {
+        const queryParts = [
+            activeItem.marca,
+            activeItem.modelo,
+            activeItem.versionesAplicables,
+            activeItem.tipoEncendido,
+            activeItem.anoDesde
+        ].filter(part => part && String(part).trim() !== "");
+
+        const shareQuery = queryParts.join(' ');
+
+        const shareData = {
+            title: `GPSpedia - ${activeItem.marca} ${activeItem.modelo}`,
+            text: `Mira la información técnica del ${activeItem.marca} ${activeItem.modelo} (${activeItem.anoDesde}) en GPSpedia.`,
+            url: window.location.origin + window.location.pathname + `#search=${encodeURIComponent(shareQuery)}`
+        };
+
+        if (navigator.share) {
+            navigator.share(shareData).catch(console.error);
+        } else {
+            // Fallback: copiar al portapapeles
+            navigator.clipboard.writeText(shareData.url).then(() => {
+                alert("Enlace copiado al portapapeles");
+            }).catch(err => {
+                console.error("Error al copiar enlace:", err);
+            });
+        }
+    };
+    headerDiv.appendChild(shareBtn);
+
+    // Botón Imprimir Ficha Técnica
+    const printBtn = document.createElement("button");
+    printBtn.innerHTML = '<i class="fa-solid fa-print"></i>';
+    printBtn.className = "share-modal-btn";
+    printBtn.title = "Imprimir / Exportar Ficha Técnica";
+    printBtn.onclick = () => exportVehiclePrintSheet(activeItem);
+    headerDiv.appendChild(printBtn);
+
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? JSON.parse(sessionData).Privilegios : null;
+
+    if (userRole === 'Desarrollador') {
+        if (inEditMode) {
+            // Botón Restablecer (↩️)
+            const resetBtn = document.createElement("button");
+            resetBtn.innerHTML = '↩️';
+            resetBtn.className = "share-modal-btn";
+            resetBtn.title = "Descartar cambios";
+            resetBtn.style.fontSize = "1.2em";
+            resetBtn.onclick = () => exitModalEditMode(false, activeItem.id);
+            headerDiv.appendChild(resetBtn);
+
+            // Botón Guardar (✅)
+            const saveBtn = document.createElement("button");
+            saveBtn.innerHTML = '✅';
+            saveBtn.className = "share-modal-btn";
+            saveBtn.title = "Guardar cambios y finalizar";
+            saveBtn.style.fontSize = "1.2em";
+            saveBtn.onclick = () => exitModalEditMode(true, activeItem.id);
+            headerDiv.appendChild(saveBtn);
+        } else {
+            // Botón de lápiz de Edición
+            const editBtn = document.createElement("button");
+            editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+            editBtn.className = "share-modal-btn";
+            editBtn.title = "Activar modo edición";
+            editBtn.onclick = async () => {
+                inEditMode = true;
+                window.inEditMode = true;
+                originalItemBackup = JSON.parse(JSON.stringify(activeItem));
+                localStorage.setItem('gpsepedia_edit_backup', JSON.stringify(originalItemBackup));
+                editedItemBuffer = { ...activeItem };
+                await precargarDropdownOptions();
+                mostrarDetalleModal(editedItemBuffer);
+            };
+            headerDiv.appendChild(editBtn);
+        }
+    }
+
+    const closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.onclick = () => {
+        if (inEditMode) {
+            exitModalEditMode(false, activeItem.id);
+        }
+
+        // Detener cualquier video de YouTube que se esté reproduciendo en el modal
+        const iframe = cont.querySelector('iframe');
+        if (iframe && iframe.contentWindow) {
+            iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+        }
+
+        // Comprobar si hay un modal previo en la pila para retorno contextual
+        if (modalNavStack.length > 0) {
+            const prevContext = modalNavStack.pop();
+            if (prevContext && prevContext.type === 'pys') {
+                openPysDetailModal(prevContext.item, prevContext.navOptions || {});
+                return;
+            }
+        }
+
+        // Restaurar foco a la barra de búsqueda al cerrar manualmente
+        const searchInput = document.getElementById('searchInput');
+        const isSearchActive = document.body.classList.contains('search-active');
+
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+            modalNavStack.length = 0;
+            // Si el historial no maneja el cierre, forzamos la restauración del foco aquí
+            if (isSearchActive && searchInput) {
+                setTimeout(() => searchInput.focus(), 300);
+            }
+        }
+    };
+    closeBtn.className = "info-close-btn";
+    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 4px;";
+    headerDiv.appendChild(closeBtn);
+    cont.appendChild(headerDiv);
+
+    // Comentario: Se ajusta el layout del encabezado para cumplir con el nuevo requisito (logo a la izquierda).
+    // Se añade 'flex-wrap: wrap' para evitar scroll horizontal en móviles con logos anchos.
+    const titleContainer = document.createElement("div");
+    titleContainer.style.cssText = "border-bottom: 2px solid #007bff; padding-bottom: 6px; margin-bottom: 10px; display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap;";
+
+    const logoUrl = getLogoUrlForMarca(activeItem.marca, activeItem.categoria);
+    if (logoUrl) {
+        const logoImg = document.createElement("img");
+        setOptimizedImage(logoImg, logoUrl, IMG_SIZE_SMALL);
+        logoImg.alt = `Logo ${activeItem.marca}`;
+        logoImg.className = 'brand-logo-modal';
+        logoImg.style.cursor = 'pointer';
+        logoImg.onclick = () => {
+            document.getElementById("modalDetalle").classList.remove("visible");
+            setState({ navigationState: { level: "modelosPorMarca", marca: activeItem.marca, origin: "marca", previousState: {} } });
+            if (window.history && window.history.replaceState) {
+                window.history.replaceState({ level: "modelosPorMarca", marca: activeItem.marca, origin: "marca" }, '', window.location.pathname + window.location.search);
+            }
+            mostrarModelosPorMarca(activeItem.marca);
+        };
+        // El tamaño se controla ahora desde style.css para mantener la consistencia.
+        titleContainer.appendChild(logoImg);
+    }
+
+    const title = document.createElement("h2");
+    if (inEditMode) {
+        const input = document.createElement("input");
+        input.type = "text";
+        input.value = activeItem.modelo;
+        input.style.cssText = "font-size: 1.1em; width: 100%; border: 1px solid #007bff; border-radius: 4px; padding: 5px; background: var(--bg-color); color: var(--text-color);";
+        input.onblur = async () => {
+            if (input.value.trim() && input.value.trim() !== editedItemBuffer.modelo) {
+                editedItemBuffer.modelo = input.value.trim();
+                await saveFieldSilently(activeItem.id, 'modelo', input.value.trim());
+            }
+        };
+        titleContainer.appendChild(input);
+    } else {
+        title.textContent = `${activeItem.modelo}`;
+        title.style.cssText = "color: var(--accent-color); margin: 0; padding: 0; font-size: 1.8em;";
+        titleContainer.appendChild(title);
+    }
+
+    cont.appendChild(titleContainer);
+
+    const subHeaderDiv = document.createElement('div');
+    subHeaderDiv.style.marginBottom = '5px';
+    const subHeaderText = document.createElement('p');
+    subHeaderText.style.cssText = "margin: 0; padding: 0; color: var(--text-medium); font-size: 1.1em;";
+
+    /* TAREA: NAVEGACIÓN ENTRE GENERACIONES BASADA EN CONTINUIDAD DE VERSIONES DE EQUIPAMIENTO */
+    const allCortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+
+    const activeItemVersions = parseEquipmentVersions(activeItem.versionesAplicables).map(v => v.toLowerCase());
+
+    const generations = allCortes.filter(c => {
+        if (String(c.marca).toLowerCase() !== String(activeItem.marca).toLowerCase() ||
+            String(c.modelo).toLowerCase() !== String(activeItem.modelo).toLowerCase() ||
+            String(c.categoria).toLowerCase() !== String(activeItem.categoria).toLowerCase()) {
+            return false;
+        }
+
+        // Si tienen tipos de encendido diferentes, no pertenecen a la misma línea
+        if (activeItem.tipoEncendido && c.tipoEncendido &&
+            String(c.tipoEncendido).toLowerCase() !== String(activeItem.tipoEncendido).toLowerCase()) {
+            return false;
+        }
+
+        // Continuidad de versiones de equipamiento:
+        // Si alguno no tiene versiones especificadas, se considera continuo
+        const cVersions = parseEquipmentVersions(c.versionesAplicables).map(v => v.toLowerCase());
+        if (activeItemVersions.length === 0 || cVersions.length === 0) {
+            return true;
+        }
+
+        // Si ambos tienen versiones, debe existir al menos una versión en común
+        return activeItemVersions.some(av => cVersions.includes(av));
+    }).sort((a, b) => (parseInt(a.anoDesde) || 0) - (parseInt(b.anoDesde) || 0));
+
+    const currentIndex = generations.findIndex(g => String(g.id) === String(activeItem.id));
+
+    if (inEditMode) {
+        // En modo edición mostramos controles de input
+        const editHeaderWrapper = document.createElement('div');
+        editHeaderWrapper.style.cssText = "display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px;";
+
+        // 1. Versión de Equipamiento
+        const versLabel = document.createElement('label');
+        versLabel.textContent = "Versiones aplicables:";
+        versLabel.style.fontSize = "0.85em";
+        const versInput = document.createElement('input');
+        versInput.type = "text";
+        versInput.value = activeItem.versionesAplicables || "";
+        versInput.placeholder = "Equipamiento / Versiones";
+        versInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        versInput.onblur = async () => {
+            if (versInput.value.trim() !== editedItemBuffer.versionesAplicables) {
+                editedItemBuffer.versionesAplicables = versInput.value.trim();
+                await saveFieldSilently(activeItem.id, 'versionesAplicables', versInput.value.trim());
+            }
+        };
+
+        // 2. Tipo de Encendido
+        const encLabel = document.createElement('label');
+        encLabel.textContent = "Tipo de Encendido:";
+        encLabel.style.fontSize = "0.85em";
+        const encSelect = document.createElement('select');
+        encSelect.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        if (dropdownOptions && dropdownOptions.tipoDeEncendido) {
+            dropdownOptions.tipoDeEncendido.forEach(itemOpt => {
+                const opt = document.createElement('option');
+                opt.value = itemOpt;
+                opt.textContent = itemOpt;
+                if (itemOpt === activeItem.tipoEncendido) opt.selected = true;
+                encSelect.appendChild(opt);
+            });
+        }
+        encSelect.onchange = async () => {
+            editedItemBuffer.tipoEncendido = encSelect.value;
+            await saveFieldSilently(activeItem.id, 'tipoEncendido', encSelect.value);
+        };
+
+        // 3. Rango de Años
+        const yearLabel = document.createElement('label');
+        yearLabel.textContent = "Rango de Años (Desde - Hasta):";
+        yearLabel.style.fontSize = "0.85em";
+        const yearsWrapper = document.createElement('div');
+        yearsWrapper.style.cssText = "display: flex; gap: 5px; align-items: center;";
+        const inputDesde = document.createElement('input');
+        inputDesde.type = "number";
+        inputDesde.value = activeItem.anoDesde;
+        inputDesde.style.cssText = "width: 70px; padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        inputDesde.onblur = async () => {
+            const val = parseInt(inputDesde.value, 10);
+            if (val >= 1980 && val <= 2027 && val !== editedItemBuffer.anoDesde) {
+                editedItemBuffer.anoDesde = val;
+                await saveFieldSilently(activeItem.id, 'anoDesde', val);
+            }
+        };
+
+        const dash = document.createTextNode(" - ");
+
+        const inputHasta = document.createElement('input');
+        inputHasta.type = "number";
+        inputHasta.value = activeItem.anoHasta || activeItem.anoDesde;
+        inputHasta.style.cssText = "width: 70px; padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        inputHasta.onblur = async () => {
+            const val = parseInt(inputHasta.value, 10);
+            if (val >= 1980 && val <= 2027 && val !== editedItemBuffer.anoHasta) {
+                editedItemBuffer.anoHasta = val;
+                await saveFieldSilently(activeItem.id, 'anoHasta', val);
+            }
+        };
+        yearsWrapper.appendChild(inputDesde);
+        yearsWrapper.appendChild(dash);
+        yearsWrapper.appendChild(inputHasta);
+
+        // 4. Categoría
+        const catLabel = document.createElement('label');
+        catLabel.textContent = "Categoría:";
+        catLabel.style.fontSize = "0.85em";
+        const catSelect = document.createElement('select');
+        catSelect.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        if (dropdownOptions && dropdownOptions.categoria) {
+            dropdownOptions.categoria.forEach(itemOpt => {
+                const opt = document.createElement('option');
+                opt.value = itemOpt;
+                opt.textContent = itemOpt;
+                if (itemOpt === activeItem.categoria) opt.selected = true;
+                catSelect.appendChild(opt);
+            });
+        }
+        catSelect.onchange = async () => {
+            editedItemBuffer.categoria = catSelect.value;
+            await saveFieldSilently(activeItem.id, 'categoria', catSelect.value);
+        };
+
+        // 5. VIN / Chasis
+        const vinLabel = document.createElement('label');
+        vinLabel.textContent = "Colección de VINs / Chasis:";
+        vinLabel.style.fontSize = "0.85em";
+        const vinInput = document.createElement('input');
+        vinInput.type = "text";
+        vinInput.value = activeItem.vin || "";
+        vinInput.placeholder = 'ej. ["1HGCM82633A", "2HGCM82633B"]';
+        vinInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        vinInput.onblur = async () => {
+            if (vinInput.value.trim() !== editedItemBuffer.vin) {
+                editedItemBuffer.vin = vinInput.value.trim();
+                await saveFieldSilently(activeItem.id, 'vin', vinInput.value.trim());
+            }
+        };
+
+        editHeaderWrapper.appendChild(versLabel);
+        editHeaderWrapper.appendChild(versInput);
+        editHeaderWrapper.appendChild(encLabel);
+        editHeaderWrapper.appendChild(encSelect);
+        editHeaderWrapper.appendChild(yearLabel);
+        editHeaderWrapper.appendChild(yearsWrapper);
+        editHeaderWrapper.appendChild(catLabel);
+        editHeaderWrapper.appendChild(catSelect);
+        editHeaderWrapper.appendChild(vinLabel);
+        editHeaderWrapper.appendChild(vinInput);
+
+        subHeaderText.appendChild(editHeaderWrapper);
+    } else {
+        const yearRangeText = activeItem.anoHasta ? `${activeItem.anoDesde} – ${activeItem.anoHasta}` : activeItem.anoDesde;
+        const yearRangeContainer = document.createElement('span');
+        yearRangeContainer.style.cssText = "display: inline-flex; align-items: center; gap: 8px;";
+
+        if (generations.length > 1) {
+            if (currentIndex > 0) {
+                const leftArrow = document.createElement('span');
+                leftArrow.innerHTML = '&lt;';
+                leftArrow.style.cssText = "cursor: pointer; font-weight: bold; padding: 0 5px; color: var(--accent-color); user-select: none;";
+                leftArrow.onclick = () => {
+                    mostrarDetalleModal(generations[currentIndex - 1], true);
+                };
+                yearRangeContainer.appendChild(leftArrow);
+            }
+
+            const yearTextSpan = document.createElement('span');
+            yearTextSpan.textContent = yearRangeText;
+            yearRangeContainer.appendChild(yearTextSpan);
+
+            if (currentIndex < generations.length - 1 && currentIndex !== -1) {
+                const rightArrow = document.createElement('span');
+                rightArrow.innerHTML = '&gt;';
+                rightArrow.style.cssText = "cursor: pointer; font-weight: bold; padding: 0 5px; color: var(--accent-color); user-select: none;";
+                rightArrow.onclick = () => {
+                    mostrarDetalleModal(generations[currentIndex + 1], true);
+                };
+                yearRangeContainer.appendChild(rightArrow);
+            }
+        } else {
+            const yearTextSpan = document.createElement('span');
+            yearTextSpan.textContent = yearRangeText;
+            yearRangeContainer.appendChild(yearTextSpan);
+        }
+
+        /* TAREA: PRESENTACIÓN VISUAL DE VERSIONES Y DÍGITOS DE CHASIS CON SEPARADOR "/" */
+        const mappedVersions = mapVersionsWithVins(activeItem.versionesAplicables, activeItem.vin);
+        let equipamientoHtml = '';
+
+        if (mappedVersions.length > 0) {
+            equipamientoHtml = mappedVersions.map(mv => {
+                if (mv.version && mv.vin) {
+                    return `${mv.version} <span class="chassis-digits" style="font-size: 0.82em; font-weight: normal; opacity: 0.85;">(${mv.vin})</span>`;
+                } else if (mv.version) {
+                    return mv.version;
+                } else if (mv.vin) {
+                    return `<span class="chassis-digits" style="font-size: 0.82em; font-weight: normal; opacity: 0.85;">(${mv.vin})</span>`;
+                }
+                return '';
+            }).filter(Boolean).join(' / ');
+        } else {
+            equipamientoHtml = activeItem.tipoEncendido || '';
+        }
+
+        subHeaderText.innerHTML = `<strong>${equipamientoHtml}</strong> | `;
+        subHeaderText.appendChild(yearRangeContainer);
+
+        if(activeItem.categoria) {
+             subHeaderText.appendChild(document.createElement("br"));
+             const catSpan = document.createElement("span");
+             catSpan.className = "category-nav-link";
+             catSpan.style.cssText = "font-size: 0.9em; color: #777; cursor: pointer; text-decoration: underline;";
+             catSpan.textContent = activeItem.categoria;
+             catSpan.onclick = () => {
+                 document.getElementById("modalDetalle").classList.remove("visible");
+                 setState({ navigationState: { level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria", previousState: {} } });
+                 if (window.history && window.history.replaceState) {
+                     window.history.replaceState({ level: "modelos", categoria: activeItem.categoria, marca: activeItem.marca, origin: "categoria" }, '', window.location.pathname + window.location.search);
+                 }
+                 mostrarModelos(activeItem.categoria, activeItem.marca);
+             };
+             subHeaderText.appendChild(catSpan);
+        }
+    }
+    subHeaderDiv.appendChild(subHeaderText);
+    cont.appendChild(subHeaderDiv);
+
+    /* TAREA 1: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN */
+    const itemVersions = parseEquipmentVersions(activeItem ? activeItem.versionesAplicables : '');
+    if (activeItem && activeItem.vin && itemVersions.length > 1) {
+        try {
+            const catalogData = getState().catalogData;
+            if (vinDifferentialEngine.signatures.size === 0 && catalogData && catalogData.cortes) {
+                vinDifferentialEngine.calculateSignatures(catalogData.cortes);
+            }
+            const mainVersion = itemVersions[0] || '';
+            const classKey = getClassificationKey(activeItem, mainVersion, 5);
+            const sig = vinDifferentialEngine.signatures.get(classKey);
+
+            if (sig && sig.status !== 'insuficiente' && sig.positions && sig.positions.length > 0) {
+                const sigBox = document.createElement('div');
+                sigBox.className = 'vin-signature-badge';
+                sigBox.style.cssText = 'margin: 6px 0 10px 0; padding: 6px 12px; background: rgba(0, 123, 255, 0.08); border-left: 3px solid #007bff; border-radius: 4px; font-size: 0.82em; display: flex; flex-direction: column; gap: 2px;';
+
+                const sigTitle = document.createElement('span');
+                sigTitle.style.cssText = 'font-weight: bold; color: var(--text-color); display: flex; align-items: center; gap: 6px;';
+                sigTitle.innerHTML = `<i class="fa-solid fa-fingerprint" style="color: #007bff;"></i> Firma Diferencial de VIN: <strong>${sig.signatureString}</strong> <span style="font-size: 0.85em; opacity: 0.8; font-weight: normal;">(${sig.readableFormat})</span>`;
+
+                const sigMeta = document.createElement('span');
+                sigMeta.style.cssText = 'color: #666; font-size: 0.88em;';
+                sigMeta.textContent = `Caracteres mínimos: ${sig.charactersNeeded} | Certeza: ${sig.confidence}% (${sig.status === 'validada' ? 'Identificación validada' : 'Firma calculada'})`;
+
+                sigBox.appendChild(sigTitle);
+                sigBox.appendChild(sigMeta);
+                cont.appendChild(sigBox);
+            }
+        } catch (e) {
+            console.error('Error visualizando firma diferencial:', e);
+        }
+    }
+
+
+    if (inEditMode || activeItem.imagenVehiculo) {
+        const imgVehiculo = document.createElement("img");
+        setOptimizedImage(imgVehiculo, activeItem.imagenVehiculo || null, IMG_SIZE_MEDIUM);
+        imgVehiculo.className = 'img-vehiculo-modal';
+        if (inEditMode) {
+            convertImageToEditable(imgVehiculo, activeItem.id, 'imagenVehiculo');
+        }
+        cont.appendChild(imgVehiculo);
+    }
+
+    if (inEditMode) {
+        const notaLabel = document.createElement('label');
+        notaLabel.textContent = "Nota Importante / Descripción:";
+        notaLabel.style.cssText = "display: block; font-weight: bold; margin-top: 10px; font-size: 0.85em;";
+        const notaInput = document.createElement("textarea");
+        notaInput.rows = 2;
+        notaInput.value = activeItem.notaImportante || "";
+        notaInput.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); margin-bottom: 10px; box-sizing: border-box;";
+        notaInput.onblur = async () => {
+            if (notaInput.value.trim() !== editedItemBuffer.notaImportante) {
+                editedItemBuffer.notaImportante = notaInput.value.trim();
+                await saveFieldSilently(activeItem.id, 'notaImportante', notaInput.value.trim());
+            }
+        };
+        cont.appendChild(notaLabel);
+        cont.appendChild(notaInput);
+    } else if (activeItem.notaImportante) {
+        const p = document.createElement("p");
+        p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 5px 0;";
+        p.textContent = `⚠️ ${activeItem.notaImportante}`;
+        cont.appendChild(p);
+    }
+
+    const cortes = [];
+    for (let i = 1; i <= 3; i++) {
+        if (activeItem[`tipoCorte${i}`]) {
+            cortes.push({
+                index: i,
+                tipo: activeItem[`tipoCorte${i}`],
+                ubicacion: activeItem[`ubicacionCorte${i}`],
+                colorCable: activeItem[`colorCableCorte${i}`],
+                configRelay: activeItem[`configRelay${i}`],
+                img: activeItem[`imgCorte${i}`],
+                util: parseInt(activeItem[`utilCorte${i}`] || 0),
+                colaborador: activeItem[`colaboradorCorte${i}`]
+            });
+        }
+    }
+    cortes.sort((a, b) => b.util - a.util);
+
+    const recommendedCut = cortes.shift();
+    if (recommendedCut) {
+        const recommendedSection = document.createElement('div');
+        const title = document.createElement('h4');
+        if (isNoRecomendadoValue(recommendedCut.tipo)) {
+            title.innerHTML = `Tipo de Corte`;
+        } else {
+            title.innerHTML = `Corte Recomendado <span style="font-weight:normal; color: var(--text-medium);">(Votos: ${recommendedCut.util})</span>`;
+        }
+        recommendedSection.appendChild(title);
+        // El corte recomendado se carga de inmediato (isLazy = false)
+        renderCutContent(recommendedSection, recommendedCut, datosRelay, activeItem.id, false, recommendedCut.index);
+        cont.appendChild(recommendedSection);
+    }
+
+    const accordionContainer = document.createElement('div');
+    cont.appendChild(accordionContainer);
+
+    const otherSections = [
+        ...cortes.map((corte, idx) => ({
+            isCorte: true,
+            corteIndex: corte.index || (idx + 2),
+            title: `Corte Alternativo ${idx + 1} (Votos: ${corte.util})`,
+            data: corte
+        })),
+        { title: 'Apertura', content: activeItem.apertura, img: activeItem.imgApertura, colaborador: activeItem.colaboradorApertura },
+        {
+            title: 'Cables de Alimentación',
+            isCarousel: true,
+            cables: [
+                { label: 'Cable 1', content: activeItem.cableAlimen, img: activeItem.imgCableAlimen },
+                { label: 'Cable 2', content: activeItem.cableAlimen2, img: activeItem.imgCableAlimen2 },
+                { label: 'Cable 3', content: activeItem.cableAlimen3, img: activeItem.imgCableAlimen3 }
+            ].filter(c => c.content || c.img),
+            content: activeItem.cableAlimen,
+            img: activeItem.imgCableAlimen,
+            colaborador: activeItem.colaboradorAlimen
+        },
+        { title: 'Vídeo Guía de Desarme', Video: activeItem.Video }
+    ];
+
+    otherSections.forEach(sec => {
+        const isSupplementary = sec.title === 'Apertura' || sec.title === 'Cables de Alimentación';
+        const hasContent = sec.isCorte || sec.content || sec.img || sec.Video || (sec.isCarousel && sec.cables && sec.cables.length > 0) || (inEditMode && isSupplementary);
+        if (hasContent && sec.title) {
+            createAccordionSection(accordionContainer, sec.title, sec, false, datosRelay, activeItem.id);
+        }
+    });
+
+    /* TAREA: VERIFICACIÓN Y CORRECCIÓN DEL ACORDEÓN «POSIBLES PROBLEMAS» EN EL MODAL DE DETALLE DE CORTES */
+    renderPosiblesProblemasAccordion(accordionContainer, activeItem, navOptions);
+
+    if (!window.inEditMode) {
+        // TAREA 1.5 / 1.8: RECUPERACIÓN, AJUSTE Y REEJECUCIÓN DEL BOTÓN (+) EN EL MODAL DE DETALLE DEL VEHÍCULO
+        const plusBtn = document.createElement("button");
+        plusBtn.className = "btn-expand-plus";
+        plusBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+        plusBtn.title = "Ampliar información del modelo";
+        plusBtn.onclick = (e) => {
+            e.stopPropagation();
+            openExpandMenuModal(item);
+        };
+        cont.appendChild(plusBtn);
+    }
+
+    modalDetalle.dataset.modalType = 'corte';
+    modalDetalle.classList.add("visible");
+    if (!isNavigation && window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
+}
+
+/**
+ * Realiza una sincronización silenciosa (Silent Background Synchronization)
+ * comparando los datos nuevos con los existentes y actualizando únicamente
+ * los elementos modificados en el DOM sin recargar la interfaz ni perder el estado.
+ */
+export async function performSilentSync(newCatalogData) {
+    try {
+        const { catalogData: oldCatalogData } = getState();
+        if (!oldCatalogData || !oldCatalogData.cortes) {
+            // Fallback si no hay catálogo anterior cargado
+            updateFullState(newCatalogData);
+            return;
+        }
+
+        // Crear mapas por ID para fácil comparación de cortes
+        const oldCortesMap = new Map(oldCatalogData.cortes.map(c => [String(c.id), c]));
+        const newCortesMap = new Map(newCatalogData.cortes.map(c => [String(c.id), c]));
+
+        const updatedCortesList = [];
+        let hasChanges = false;
+
+        // 1. Detectar cortes modificados o nuevos
+        for (const [id, newCorte] of newCortesMap) {
+            const oldCorte = oldCortesMap.get(id);
+            if (!oldCorte) {
+                // Registro nuevo
+                updatedCortesList.push({ type: 'added', item: newCorte });
+                hasChanges = true;
+            } else if (JSON.stringify(oldCorte) !== JSON.stringify(newCorte)) {
+                // Registro modificado
+                updatedCortesList.push({ type: 'modified', oldItem: oldCorte, newItem: newCorte });
+                hasChanges = true;
+            }
+        }
+
+        // 2. Detectar eliminados
+        for (const id of oldCortesMap.keys()) {
+            if (!newCortesMap.has(id)) {
+                updatedCortesList.push({ type: 'removed', id });
+                hasChanges = true;
+            }
+        }
+
+        // Comprobar si hay tutoriales o relay nuevos o actualizados
+        if (newCatalogData.tutoriales && (!oldCatalogData.tutoriales || newCatalogData.tutoriales.length !== oldCatalogData.tutoriales.length)) {
+            hasChanges = true;
+        }
+        if (newCatalogData.relay && (!oldCatalogData.relay || newCatalogData.relay.length !== oldCatalogData.relay.length)) {
+            hasChanges = true;
+        }
+
+        if (!hasChanges) {
+            console.log("Sincronización silenciosa: No se detectaron cambios.");
+            return;
+        }
+
+        console.log(`Sincronización silenciosa: Detectados ${updatedCortesList.length} cambios.`);
+
+        // 3. Procesar las modificaciones en el DOM de forma 100% silenciosa
+        for (const change of updatedCortesList) {
+            if (change.type === 'modified') {
+                await updateCardInPlace(change.newItem);
+                updateOpenModalIfActive(change.newItem);
+            } else if (change.type === 'added') {
+                // Insertar de manera fluida utilizando el carrusel de agregados recientemente si corresponde
+                await insertNewVehicleFluently(change.item);
+            } else if (change.type === 'removed') {
+                removeVehicleSilently(change.id);
+            }
+        }
+
+        // 4. Actualizar el estado global con los nuevos datos consolidados
+        updateFullState(newCatalogData);
+
+    } catch (e) {
+        console.error("Error en performSilentSync:", e);
+    }
+}
+
+function updateFullState(catalogData) {
+    try {
+        // Normalizar los datos del catálogo antes de actualizar el estado global
+        if (catalogData && Array.isArray(catalogData.cortes)) {
+            const brandCasingMap = new Map();
+            const modelCasingMap = new Map();
+            const categoryCasingMap = new Map();
+
+            catalogData.cortes.forEach(item => {
+                if (item.marca) {
+                    const trimmed = String(item.marca).trim();
+                    const lower = trimmed.toLowerCase();
+                    if (!brandCasingMap.has(lower) || (trimmed !== lower && trimmed !== trimmed.toUpperCase())) {
+                        brandCasingMap.set(lower, trimmed);
+                    }
+                }
+                if (item.categoria) {
+                    const trimmed = String(item.categoria).trim();
+                    const lower = trimmed.toLowerCase();
+                    if (!categoryCasingMap.has(lower) || (trimmed !== lower && trimmed !== trimmed.toUpperCase())) {
+                        categoryCasingMap.set(lower, trimmed);
+                    }
+                }
+            });
+
+            catalogData.cortes.forEach(item => {
+                if (item.marca) {
+                    const trimmed = String(item.marca).trim();
+                    const lower = trimmed.toLowerCase();
+                    item.marca = brandCasingMap.get(lower) || trimmed;
+                }
+                if (item.categoria) {
+                    const trimmed = String(item.categoria).trim();
+                    const lower = trimmed.toLowerCase();
+                    item.categoria = categoryCasingMap.get(lower) || trimmed;
+                }
+
+                if (item.modelo && item.marca) {
+                    const trimmed = String(item.modelo).trim();
+                    const lower = trimmed.toLowerCase();
+                    const key = `${item.marca.toLowerCase()}|${lower}`;
+                    if (!modelCasingMap.has(key) || (trimmed !== lower && trimmed !== trimmed.toUpperCase())) {
+                        modelCasingMap.set(key, trimmed);
+                    }
+                }
+            });
+
+            catalogData.cortes.forEach(item => {
+                if (item.modelo && item.marca) {
+                    const trimmed = String(item.modelo).trim();
+                    const lower = trimmed.toLowerCase();
+                    const key = `${item.marca.toLowerCase()}|${lower}`;
+                    item.modelo = modelCasingMap.get(key) || trimmed;
+                }
+            });
+        }
+
+        const categoryCounts = catalogData.cortes.reduce((acc, item) => {
+            if (item.categoria) {
+                acc[item.categoria] = (acc[item.categoria] || 0) + 1;
+            }
+            return acc;
+        }, {});
+
+        const sortedCategories = Object.keys(categoryCounts).sort((a, b) => categoryCounts[b] - categoryCounts[a]);
+
+        setState({
+            catalogData: {
+                ...catalogData,
+                sortedCategories: sortedCategories
+            }
+        });
+
+        // Refrescar vistas de tutoriales o relay si están activas
+        const tutContainer = document.getElementById("contenido-tutoriales");
+        if (tutContainer && tutContainer.style.display !== "none") {
+            mostrarTutorialesGrid();
+        }
+        const relayContainer = document.getElementById("contenido-relay");
+        if (relayContainer && relayContainer.style.display !== "none") {
+            mostrarRelayGrid();
+        }
+    } catch (e) {
+        console.error("Error actualizando estado global tras sincronización:", e);
+    }
+}
+
+/**
+ * Sustituye de manera silenciosa una tarjeta en el catálogo sin parpadeos ni reconstrucciones completas.
+ */
+async function updateCardInPlace(newItem) {
+    const cards = document.querySelectorAll(`.card[data-vehicle-id="${newItem.id}"]`);
+    if (cards.length === 0) return;
+
+    // Pre-cargar la imagen en segundo plano para evitar parpadeos
+    if (newItem.imagenVehiculo) {
+        await preloadImageSilently(newItem.imagenVehiculo);
+    }
+
+    cards.forEach(card => {
+        // Encontrar la imagen
+        const img = card.querySelector('img');
+        if (img && newItem.imagenVehiculo) {
+            setOptimizedImage(img, newItem.imagenVehiculo, IMG_SIZE_SMALL);
+        }
+
+        // Encontrar el texto o sobrecapa y actualizarlo
+        const overlay = card.querySelector('.overlay');
+        if (overlay) {
+            const hasResultsForVariant = card.onclick && card.onclick.toString().includes('resultsForVariant');
+            if (hasResultsForVariant) {
+                const version = newItem.versionesAplicables || '';
+                overlay.innerHTML = `<div class="overlay-text-primary">${newItem.marca} ${newItem.modelo}</div><div class="overlay-text-secondary">${newItem.categoria} | ${version}</div>`;
+            } else {
+                const yearRange = newItem.anoHasta ? `${newItem.anoDesde} - ${newItem.anoHasta}` : newItem.anoDesde;
+                overlay.innerHTML = `<div class="overlay-text-primary">${newItem.marca} ${newItem.modelo}</div><div class="overlay-text-secondary">${yearRange} | ${newItem.tipoEncendido || ''}</div>`;
+            }
+        }
+    });
+}
+
+/**
+ * Actualiza el modal abierto actualmente si coincide con el vehículo sincronizado.
+ */
+function updateOpenModalIfActive(newItem) {
+    const modalDetalle = document.getElementById('modalDetalle');
+    if (!modalDetalle || !modalDetalle.classList.contains('visible')) return;
+
+    // Podemos verificar si el detalle abierto corresponde al ID modificado.
+    // Una manera limpia es volver a almacenar el item modificado en el historial de vistos sin alterar la visualización actual,
+    // y dejar que la siguiente apertura muestre la nueva versión.
+    // Sin embargo, para cumplir 100% que la siguiente apertura muestre automáticamente la versión actualizada y el caché esté listo:
+    offline.saveViewedItem(newItem).catch(err => console.warn("Error guardando item visto actualizado:", err));
+}
+
+/**
+ * Pre-carga una imagen en segundo plano y resuelve la promesa cuando está completamente disponible.
+ */
+function preloadImageSilently(fileId) {
+    return new Promise((resolve) => {
+        if (!fileId) return resolve();
+        const img = new Image();
+        img.onload = () => resolve();
+        img.onerror = () => resolve();
+        img.src = getImageUrl(fileId, IMG_SIZE_MEDIUM);
+    });
+}
+
+/**
+ * Remueve un vehículo del DOM de forma silenciosa.
+ */
+function removeVehicleSilently(id) {
+    const cards = document.querySelectorAll(`.card[data-vehicle-id="${id}"]`);
+    cards.forEach(card => {
+        card.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.8)';
+        setTimeout(() => card.remove(), 300);
+    });
+}
+
+/**
+ * Incorpora un nuevo vehículo fluido utilizando la transición del carrusel o del grid de manera consistente.
+ */
+async function insertNewVehicleFluently(item) {
+    const cont = document.getElementById("contenido");
+    if (!cont) return;
+
+    // Pre-cargar imagen de vehículo nuevo
+    if (item.imagenVehiculo) {
+        await preloadImageSilently(item.imagenVehiculo);
+    }
+
+    const currentNav = getState().navigationState || {};
+    const isMainLevel = currentNav.level === 'categorias';
+
+    if (isMainLevel) {
+        // 2. Insertar en el carrusel de "Últimos Agregados"
+        const tracks = document.querySelectorAll('.carousel-track');
+        let ultimosAgregadosTrack = null;
+
+        tracks.forEach(track => {
+            const titleSibling = track.parentElement.previousElementSibling;
+            if (titleSibling && titleSibling.textContent.includes('Últimos Agregados')) {
+                ultimosAgregadosTrack = track;
+            }
+        });
+
+        if (ultimosAgregadosTrack) {
+            const newCard = crearCardVehiculo(item);
+            newCard.style.opacity = '0';
+            newCard.style.transform = 'scale(0.8) translateX(50px)';
+            newCard.style.transition = 'opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
+
+            // Insertar al inicio de la lista de agregados recientemente
+            ultimosAgregadosTrack.insertBefore(newCard, ultimosAgregadosTrack.firstChild);
+
+            // Disparar animación fluida
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    newCard.style.opacity = '1';
+                    newCard.style.transform = 'scale(1) translateX(0)';
+                }, 50);
+            });
+        }
+    } else {
+        // Insertar en la vista de cuadrícula si la navegación actual coincide con el elemento recién insertado
+        const activeGrid = document.querySelector('#contenido .grid');
+        if (activeGrid) {
+            let isRelevant = false;
+            if (currentNav.level === 'modelosPorMarca' && currentNav.marca === item.marca) {
+                isRelevant = true;
+            } else if (currentNav.level === 'modelos' && currentNav.categoria === item.categoria && currentNav.marca === item.marca) {
+                isRelevant = true;
+            } else if (currentNav.level === 'versiones' && currentNav.categoria === item.categoria && currentNav.marca === item.marca && currentNav.modelo === item.modelo) {
+                isRelevant = true;
+            } else if (currentNav.level === 'versionesEquipamiento' && currentNav.categoria === item.categoria && currentNav.marca === item.marca && currentNav.modelo === item.modelo) {
+                isRelevant = true;
+            } else if (currentNav.level === 'tiposEncendido' && currentNav.categoria === item.categoria && currentNav.marca === item.marca && currentNav.modelo === item.modelo) {
+                isRelevant = true;
+            }
+
+            if (isRelevant) {
+                const newCard = crearCardVehiculo(item);
+                newCard.style.opacity = '0';
+                newCard.style.transform = 'scale(0.8)';
+                newCard.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                activeGrid.appendChild(newCard);
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        newCard.style.opacity = '1';
+                        newCard.style.transform = 'scale(1)';
+                    }, 50);
+                });
+            }
+        }
+    }
+}
+
+/* TAREA 3.1 & TAREA 9.3: VERIFICACIÓN Y CORRECCIÓN DEL CARRUSEL «POSIBLES PROBLEMAS» CON ORIGEN CONTEXTUAL */
+function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlinkSuccess = null) {
+    const cardWrapper = document.createElement("div");
+    cardWrapper.style.cssText = "position: relative; display: inline-block;";
+
+    const resolvedOrigin = originModal || (vehicleToUnlink ? 'vehicle' : 'pys');
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.setAttribute("data-problem-id", item.id_problem || item.id || "");
+    card.style.animation = "none";
+    card.style.opacity = "1";
+    card.onclick = () => openPysDetailModal(item, {
+        originModal: resolvedOrigin,
+        fromOriginModal: vehicleToUnlink ? {
+            type: 'vehicle',
+            item: vehicleToUnlink,
+            navOptions: {}
+        } : null
+    });
+
+    const img = document.createElement("img");
+    img.className = "card-img-top";
+    img.alt = item.Problema || "Problema técnico";
+    img.loading = "lazy";
+    setOptimizedImage(img, item.Imagen || "", IMG_SIZE_SMALL);
+    card.appendChild(img);
+
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+    const statusText = item.Se_soluciono === "x" ? "Solucionado" : "Sin solución";
+    const statusColor = item.Se_soluciono === "x" ? "#28a745" : "#dc3545";
+    overlay.innerHTML = `
+        <div class="overlay-text-primary" style="font-size: 0.85rem; font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${item.Problema || "Problema"}</div>
+        <div class="overlay-text-secondary" style="font-size: 0.75rem; color: ${statusColor}; font-weight: bold;">${statusText}</div>
+    `;
+    card.appendChild(overlay);
+    cardWrapper.appendChild(card);
+
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
+    // REVISIÓN IV: Desvinculación de problemas y vehículos restringida exclusivamente al desarrollador
+    const canEdit = userRole === 'Desarrollador';
+
+    if (canEdit && vehicleToUnlink) {
+        const removeBtn = document.createElement("button");
+        removeBtn.title = "Eliminar relación con este problema";
+        removeBtn.innerHTML = "&times;";
+        removeBtn.style.cssText = "position: absolute; top: 4px; right: 4px; background: rgba(220, 53, 69, 0.9); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.3);";
+        removeBtn.onclick = async (e) => {
+            e.stopPropagation();
+            if (!confirm(`¿Deseas desvincular el problema "${item.Problema}" de este vehículo?`)) return;
+            removeBtn.disabled = true;
+            try {
+                const res = await routeAction('removeVehicleFromProblem', {
+                    problemId: item.id_problem || item.id,
+                    vehicleId: vehicleToUnlink.id,
+                    userRole
+                });
+                if (res && res.status === 'success') {
+                    cardWrapper.remove();
+                    mostrarNotificacion("Problema desvinculado del vehículo.", "success");
+                    if (typeof onUnlinkSuccess === 'function') onUnlinkSuccess();
+                }
+            } catch(err) {
+                showGlobalError("Error al retirar relación: " + err.message);
+                removeBtn.disabled = false;
+            }
+        };
+        cardWrapper.appendChild(removeBtn);
+    }
+
+    return cardWrapper;
+}
+
+export function renderPosiblesProblemasAccordion(container, activeItem, navOptions = {}) {
+    if (!container || !activeItem || !activeItem.id) return;
+    // Tarea 9.3: Prevención de ciclos - si el modal de vehículo se abrió desde PyS, no mostrar acordeón de problemas
+    if (navOptions && navOptions.originModal === 'pys') {
+        return;
+    }
+    const vehicleIdStr = String(activeItem.id);
+
+    // Contenedor dinámico del acordeón para poder actualizarlo si se descargan datos nuevos
+    let wrapper = container.querySelector("#posibles-problemas-wrapper");
+    if (!wrapper) {
+        wrapper = document.createElement("div");
+        wrapper.id = "posibles-problemas-wrapper";
+        container.appendChild(wrapper);
+    }
+
+    const updateAccordion = (rawPysData) => {
+        wrapper.innerHTML = "";
+        const allPys = Array.isArray(rawPysData) ? rawPysData : [];
+        // Filtrar estrictamente por el identificador del modelo y de-duplicar por ID de problema
+        const seenIds = new Set();
+        const relatedProblems = [];
+
+        allPys.forEach(p => {
+            if (!p || !Array.isArray(p.modelosAsociados)) return;
+            const matches = p.modelosAsociados.some(mId => String(mId) === vehicleIdStr);
+            if (matches) {
+                const pId = p.id_problem || p.id || p.Problema;
+                if (!seenIds.has(pId)) {
+                    seenIds.add(pId);
+                    relatedProblems.push(p);
+                }
+            }
+        });
+
+        // REQUISITO: Si no existen problemas relacionados, no mostrar el acordeón vacío
+        if (relatedProblems.length === 0) {
+            return;
+        }
+
+        // Crear el botón acordeón con el título exacto requerido: «Posibles problemas»
+        const btn = document.createElement("button");
+        btn.className = "accordion-btn";
+        btn.innerHTML = `Posibles problemas <span class="accordion-arrow">▼</span>`;
+
+        const panel = document.createElement("div");
+        panel.className = "panel-desplegable";
+
+        const contentWrapper = document.createElement("div");
+        contentWrapper.style.padding = "15px 10px";
+
+        if (relatedProblems.length === 1) {
+            // REQUISITO: Si existe un solo problema, mostrar su tarjeta y la tarjeta para agregar/vincular problema
+            const singleCardContainer = document.createElement("div");
+            singleCardContainer.style.cssText = "display: flex; justify-content: center; align-items: center; gap: 15px; width: 100%; flex-wrap: wrap;";
+            const singleCard = createPysCard(relatedProblems[0], 'vehicle', activeItem, () => {
+                // Si se eliminó el único problema, refrescar acordeón
+                renderPosiblesProblemasAccordion(container, activeItem, navOptions);
+            });
+            singleCardContainer.appendChild(singleCard);
+
+            // Tarjeta para agregar o vincular problema sin borde discontinuo
+            const addPysCard = document.createElement("div");
+            addPysCard.className = "card card-create-pys-assoc";
+            addPysCard.style.cssText = "width: 140px; height: 120px; padding: 10px; margin: 0;";
+            addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
+            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
+            singleCardContainer.appendChild(addPysCard);
+
+            contentWrapper.appendChild(singleCardContainer);
+        } else {
+            // REQUISITO: Si existen varios problemas, mostrarlos mediante un carrusel navegable
+            const carouselContainer = document.createElement("div");
+            carouselContainer.className = "carousel-container";
+            const carouselTrack = document.createElement("div");
+            carouselTrack.className = "carousel-track";
+
+            relatedProblems.forEach(p => {
+                const card = createPysCard(p, 'vehicle', activeItem, () => {
+                    renderPosiblesProblemasAccordion(container, activeItem, navOptions);
+                });
+                carouselTrack.appendChild(card);
+            });
+
+            // Tarjeta al final del carrusel para agregar o vincular problema
+            const addPysCard = document.createElement("div");
+            addPysCard.className = "card card-create-pys-assoc";
+            addPysCard.style.cssText = "flex: 0 0 140px; height: 120px; padding: 10px; margin-right: 20px;";
+            addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
+            addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
+            carouselTrack.appendChild(addPysCard);
+
+            carouselContainer.appendChild(carouselTrack);
+
+            const prevBtn = document.createElement("button");
+            prevBtn.className = "carousel-btn prev";
+            prevBtn.innerHTML = "&#10094;";
+            carouselContainer.appendChild(prevBtn);
+
+            const nextBtn = document.createElement("button");
+            nextBtn.className = "carousel-btn next";
+            nextBtn.innerHTML = "&#10095;";
+            carouselContainer.appendChild(nextBtn);
+
+            const cardWidth = 140 + 20;
+            const getVisibleCards = () => {
+                const containerWidth = carouselContainer.offsetWidth || 300;
+                return Math.floor(containerWidth / cardWidth) || 1;
+            };
+
+            const updateCarouselButtons = () => {
+                const scrollLeft = carouselTrack.scrollLeft;
+                const maxScrollLeft = carouselTrack.scrollWidth - carouselTrack.clientWidth;
+                prevBtn.style.display = scrollLeft > 2 ? "flex" : "none";
+                nextBtn.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+            };
+
+            nextBtn.addEventListener("click", () => {
+                carouselTrack.scrollBy({ left: cardWidth * getVisibleCards(), behavior: "smooth" });
+            });
+
+            prevBtn.addEventListener("click", () => {
+                carouselTrack.scrollBy({ left: -cardWidth * getVisibleCards(), behavior: "smooth" });
+            });
+
+            carouselTrack.addEventListener("scroll", () => setTimeout(updateCarouselButtons, 100));
+            window.addEventListener("resize", () => setTimeout(updateCarouselButtons, 100));
+            setTimeout(updateCarouselButtons, 200);
+
+            contentWrapper.appendChild(carouselContainer);
+        }
+
+        panel.appendChild(contentWrapper);
+
+        btn.onclick = () => {
+            const isActive = btn.classList.contains("active");
+
+            // Cerrar coordinadamente todos los demás acordeones del modal
+            const allModalButtons = container.querySelectorAll(".accordion-btn");
+            allModalButtons.forEach(otherBtn => {
+                otherBtn.classList.remove("active");
+                const otherArrow = otherBtn.querySelector(".accordion-arrow");
+                if (otherArrow) otherArrow.textContent = "▼";
+                const otherPanel = otherBtn.nextElementSibling;
+                if (otherPanel && otherPanel.classList.contains("panel-desplegable")) {
+                    otherPanel.style.maxHeight = null;
+                }
+            });
+
+            if (!isActive) {
+                btn.classList.add("active");
+                const arrow = btn.querySelector(".accordion-arrow");
+                if (arrow) arrow.textContent = "▲";
+                panel.style.maxHeight = panel.scrollHeight + "px";
+
+                if (relatedProblems.length > 1) {
+                    const track = panel.querySelector(".carousel-track");
+                    const prev = panel.querySelector(".carousel-btn.prev");
+                    const next = panel.querySelector(".carousel-btn.next");
+                    if (track && prev && next) {
+                        const scrollLeft = track.scrollLeft;
+                        const maxScrollLeft = track.scrollWidth - track.clientWidth;
+                        prev.style.display = scrollLeft > 2 ? "flex" : "none";
+                        next.style.display = scrollLeft < maxScrollLeft - 2 ? "flex" : "none";
+                    }
+                }
+            }
+        };
+
+        wrapper.appendChild(btn);
+        wrapper.appendChild(panel);
+    };
+
+    // 1. Evaluar si ya existen datos en caché en el estado
+    const cachedPys = getState().pysData;
+    if (Array.isArray(cachedPys) && cachedPys.length > 0) {
+        updateAccordion(cachedPys);
+    }
+
+    // 2. Consultar siempre de forma asíncrona para asegurar que no falten datos ni relaciones recientes
+    routeAction("getPysData").then(res => {
+        if (res && res.data && Array.isArray(res.data)) {
+            setState({ pysData: res.data });
+            updateAccordion(res.data);
+        }
+    }).catch(err => {
+        console.warn("No se pudo sincronizar pysData en detalle de vehículo:", err);
+    });
+}
+
+
+function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = false, index = 0) {
+    if (inEditMode) {
+        const idx = cutData.index;
+        const editCutsWrapper = document.createElement('div');
+        editCutsWrapper.style.cssText = "display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; padding: 10px; border: 1px solid #007bffd0; border-radius: 6px; background: rgba(0, 123, 255, 0.03);";
+
+        // 1. Tipo de Corte
+        const typeLabel = document.createElement('label');
+        typeLabel.textContent = `Tipo de Corte ${idx}:`;
+        typeLabel.style.fontSize = "0.85em";
+        const typeSelect = document.createElement('select');
+        typeSelect.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        if (dropdownOptions && dropdownOptions.tipoDeCorte) {
+            dropdownOptions.tipoDeCorte.forEach(optVal => {
+                const opt = document.createElement('option');
+                opt.value = optVal;
+                opt.textContent = optVal;
+                if (optVal === cutData.tipo) opt.selected = true;
+                typeSelect.appendChild(opt);
+            });
+        }
+        typeSelect.onchange = async () => {
+            editedItemBuffer[`tipoCorte${idx}`] = typeSelect.value;
+            await saveFieldSilently(vehicleId, `tipoCorte${idx}`, typeSelect.value);
+        };
+
+        // 2. Configuración de Relay
+        const configLabel = document.createElement('label');
+        configLabel.textContent = `Configuración de Relay ${idx}:`;
+        configLabel.style.fontSize = "0.85em";
+        const configSelect = document.createElement('select');
+        configSelect.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px;";
+        if (dropdownOptions && dropdownOptions.configRelay) {
+            dropdownOptions.configRelay.forEach(optVal => {
+                const opt = document.createElement('option');
+                opt.value = optVal;
+                opt.textContent = optVal;
+                if (optVal === cutData.configRelay) opt.selected = true;
+                configSelect.appendChild(opt);
+            });
+        }
+        configSelect.onchange = async () => {
+            editedItemBuffer[`configRelay${idx}`] = configSelect.value;
+            await saveFieldSilently(vehicleId, `configRelay${idx}`, configSelect.value);
+        };
+
+        // 3. Ubicación del Corte
+        const locLabel = document.createElement('label');
+        locLabel.textContent = `Ubicación del Corte ${idx}:`;
+        locLabel.style.fontSize = "0.85em";
+        const locInput = document.createElement('textarea');
+        locInput.rows = 2;
+        locInput.value = cutData.ubicacion || "";
+        locInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box; width: 100%;";
+        locInput.onblur = async () => {
+            if (locInput.value.trim() !== editedItemBuffer[`ubicacionCorte${idx}`]) {
+                editedItemBuffer[`ubicacionCorte${idx}`] = locInput.value.trim();
+                await saveFieldSilently(vehicleId, `ubicacionCorte${idx}`, locInput.value.trim());
+            }
+        };
+
+        // 4. Color de Cable
+        const colorLabel = document.createElement('label');
+        colorLabel.textContent = `Color de Cable ${idx}:`;
+        colorLabel.style.fontSize = "0.85em";
+        const colorInput = document.createElement('input');
+        colorInput.type = "text";
+        colorInput.value = cutData.colorCable || "";
+        colorInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box; width: 100%;";
+        colorInput.onblur = async () => {
+            if (colorInput.value.trim() !== editedItemBuffer[`colorCableCorte${idx}`]) {
+                editedItemBuffer[`colorCableCorte${idx}`] = colorInput.value.trim();
+                await saveFieldSilently(vehicleId, `colorCableCorte${idx}`, colorInput.value.trim());
+            }
+        };
+
+        editCutsWrapper.appendChild(typeLabel);
+        editCutsWrapper.appendChild(typeSelect);
+        editCutsWrapper.appendChild(configLabel);
+        editCutsWrapper.appendChild(configSelect);
+        editCutsWrapper.appendChild(locLabel);
+        editCutsWrapper.appendChild(locInput);
+        editCutsWrapper.appendChild(colorLabel);
+        editCutsWrapper.appendChild(colorInput);
+
+        container.appendChild(editCutsWrapper);
+    } else {
+        const contentP = document.createElement('p');
+        if (isNoRecomendadoValue(cutData.tipo)) {
+            contentP.innerHTML = `<strong>Tipo de Corte:</strong> No recomendado`;
+        } else {
+            contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
+                                <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
+                                <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
+        }
+        container.appendChild(contentP);
+    }
+
+    if (inEditMode || (cutData.img && !isNoRecomendadoValue(cutData.tipo))) {
+        const imgContainer = document.createElement('div');
+        imgContainer.className = 'image-container-with-feedback';
+
+        const img = document.createElement("img");
+
+        if (isLazy) {
+            img.dataset.src = getImageUrl(cutData.img, IMG_SIZE_MEDIUM);
+        } else {
+            // Phase Collaborative Update: Trigger validation banner after primary cut image loads
+            // Attachment happens before setOptimizedImage to ensure we catch the onload event.
+            const { catalogData } = getState();
+            const currentItem = catalogData.cortes.find(c => String(c.id) === String(vehicleId));
+            if (currentItem && !inEditMode) {
+                img.onload = async () => {
+                    const { eligible, isOldModel } = await checkValidationEligibility(currentItem);
+                    if (eligible) {
+                        showValidationBanner(currentItem, isOldModel);
+                    }
+                };
+            }
+            setOptimizedImage(img, cutData.img || null, IMG_SIZE_MEDIUM);
+        }
+
+        img.className = 'img-corte image-with-container';
+        if (inEditMode) {
+            convertImageToEditable(img, vehicleId, `imgCorte${cutData.index}`);
+        } else {
+            img.onclick = () => {
+                const highResImgUrl = getImageUrl(cutData.img, IMG_SIZE_LARGE);
+                window.abrirLightbox(highResImgUrl, 'lightboxImg');
+            };
+        }
+        imgContainer.appendChild(img);
+
+        if (!window.inEditMode) {
+            const feedbackOverlay = document.createElement('div');
+            feedbackOverlay.className = 'feedback-overlay';
+
+        const utilBtn = document.createElement('button');
+        utilBtn.className = 'feedback-btn-overlay util-btn';
+        utilBtn.innerHTML = '<i class="fa-solid fa-thumbs-up"></i>';
+        utilBtn.title = 'Marcar como útil';
+
+        // Optimistic UI for recordLike
+        // Check if already liked in this session
+        const { likedCortes, catalogData: catData } = getState();
+        const likeKey = `${vehicleId}-${cutData.index}`;
+        if (likedCortes && likedCortes.includes(likeKey)) {
+            utilBtn.classList.add('liked');
+            utilBtn.style.backgroundColor = '#28a745';
+        }
+
+        utilBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            if (utilBtn.classList.contains('liked')) return;
+
+            const { currentUser } = getState();
+            if (!currentUser) {
+                showGlobalError("Debes estar conectado para votar.");
+                return;
+            }
+
+            // UI Optimista
+            utilBtn.classList.add('liked');
+            utilBtn.style.backgroundColor = '#28a745';
+
+            recordLike(vehicleId, cutData.index, currentUser.ID, currentUser.Nombre_Completo || currentUser.Nombre_Usuario).then(() => {
+                // Persistir en el estado local de la sesión
+                const currentState = getState();
+                const newLiked = [...(currentState.likedCortes || []), likeKey];
+
+                // Actualizar contador localmente para respuesta inmediata en la UI
+                const newCatalog = { ...currentState.catalogData };
+                const vehicle = newCatalog.cortes.find(c => String(c.id) === String(vehicleId));
+                if (vehicle) {
+                    const countKey = `utilCorte${cutData.index}`;
+                    vehicle[countKey] = (parseInt(vehicle[countKey]) || 0) + 1;
+                }
+
+                setState({ likedCortes: newLiked, catalogData: newCatalog });
+            }).catch(err => {
+                console.error("Error reporting like:", err);
+                utilBtn.classList.remove('liked');
+                utilBtn.style.backgroundColor = '';
+                showGlobalError("No se pudo registrar tu reacción. Reintenta.");
+            });
+        };
+        feedbackOverlay.appendChild(utilBtn);
+
+        // Tarea 2.1: Botón de reporte individual en cada corte
+        const corteNum = cutData.index || index || 1;
+        const reportBtn = document.createElement('button');
+        reportBtn.className = 'feedback-btn-overlay report-btn';
+        reportBtn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i>';
+        reportBtn.title = `Reportar error en Corte #${corteNum}`;
+
+        reportBtn.onclick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const { currentUser } = getState();
+            if (!currentUser) {
+                showGlobalError("Debes estar conectado para reportar.");
+                return;
+            }
+
+            openReportCutModal(vehicleId, corteNum, cutData);
+        };
+        feedbackOverlay.appendChild(reportBtn);
+
+        imgContainer.appendChild(feedbackOverlay);
+        }
+        container.appendChild(imgContainer);
+    }
+
+    if (inEditMode || !isNoRecomendadoValue(cutData.tipo)) {
+        const relayContainer = document.createElement('p');
+        const configRelay = cutData.configRelay;
+
+        if (!configRelay || String(configRelay).toLowerCase() === 'sin relay') {
+            relayContainer.innerHTML = `<strong>Configuración de Relay:</strong> Sin Relay`;
+        } else {
+            relayContainer.innerHTML = `<strong>Configuración de Relay: </strong>`;
+            const relayButton = document.createElement('button');
+            relayButton.textContent = configRelay;
+            relayButton.className = 'btn-link';
+            relayButton.onclick = () => {
+                if (inEditMode) return; // Bloquear en modo edición In-Modal
+                const relayInfo = datosRelay.find(r => r.configuracion === configRelay);
+                if (relayInfo) {
+                    renderRelayInfoModal(relayInfo);
+                } else {
+                    alert('No se encontraron detalles para esta configuración de relay.');
+                }
+            };
+            relayContainer.appendChild(relayButton);
+        }
+        container.appendChild(relayContainer);
+
+        if (cutData.colaborador && !inEditMode) {
+            const colabP = document.createElement('p');
+            // Comentario: Se añade una clase para un estilo dedicado y robusto desde style.css
+            colabP.className = "colaborador-info";
+            colabP.innerHTML = `Aportado por: <strong>${cleanColaboradorName(cutData.colaborador)}</strong>`;
+            container.appendChild(colabP);
+        }
+    }
+}
+
+function renderRelayInfoModal(relayInfo) {
+    let modal = document.getElementById('relay-info-modal');
+    if (modal) {
+        modal.remove();
+    }
+
+    modal = document.createElement('div');
+    modal.id = 'relay-info-modal';
+    modal.className = 'info-modal';
+    modal.style.display = 'flex';
+
+    const content = document.createElement('div');
+    content.className = 'info-modal-content';
+
+    const closeBtn = document.createElement('span');
+    closeBtn.className = 'info-close-btn';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.onclick = () => {
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            modal.style.display = 'none';
+        }
+    };
+    content.appendChild(closeBtn);
+
+    const title = document.createElement('h3');
+    title.textContent = relayInfo.configuracion;
+    content.appendChild(title);
+
+    const img = document.createElement('img');
+    setOptimizedImage(img, relayInfo.imagen, IMG_SIZE_MEDIUM);
+    img.style.width = '100%';
+    img.onclick = () => {
+        const highResImgUrl = getImageUrl(relayInfo.imagen, IMG_SIZE_LARGE);
+        window.abrirLightbox(highResImgUrl, 'lightboxImg');
+    };
+    content.appendChild(img);
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
+}
+
+function setupModal(modalId, openFn) {
+    return async (...args) => {
+        const modal = document.getElementById(modalId);
+        if (!modal) {
+            console.error(`Modal no encontrado: ${modalId}`);
+            return;
+        }
+
+        const closeBtn = modal.querySelector('.info-close-btn');
+        if (closeBtn && !closeBtn.dataset.listenerSet) {
+            closeBtn.addEventListener('click', () => {
+                const termsModal = document.getElementById('terms-modal');
+                const isTermsModalActive = termsModal && termsModal.style.display === 'flex';
+
+                if (!isTermsModalActive && window.history && window.history.state && window.history.state.modalOpen) {
+                    window.history.back();
+                } else {
+                    modal.style.display = 'none';
+                }
+            });
+            closeBtn.dataset.listenerSet = 'true';
+        }
+
+        if (window.history && window.history.pushState) {
+            window.history.pushState({ modalOpen: true }, '');
+        }
+
+        return await openFn(...args);
+    };
+}
+
+export const openDashboard = setupModal('dashboard-modal', async () => {
+    const modal = document.getElementById('dashboard-modal');
+    modal.style.display = 'flex';
+    const logContainer = document.getElementById('activity-logs');
+    logContainer.innerHTML = '<tr><td colspan="4">Cargando actividad...</td></tr>';
+
+    try {
+        const result = await getActivityLogs();
+        if (result.status === 'success') {
+            logContainer.innerHTML = '';
+            result.data.forEach(log => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${new Date(log.timestamp).toLocaleString()}</td>
+                    <td>${log.nombreUsuario}</td>
+                    <td>${log.tipoActividad}</td>
+                    <td>${log.detalle || ''}</td>
+                `;
+                logContainer.appendChild(tr);
+            });
+        }
+    } catch (error) {
+        logContainer.innerHTML = '<tr><td colspan="4" style="color:red;">Error al cargar actividad</td></tr>';
+    }
+});
+
+export const openInbox = setupModal('inbox-modal', async () => {
+    const modal = document.getElementById('inbox-modal');
+    modal.style.display = 'flex';
+    const listContainer = document.getElementById('inbox-list');
+    const detailContainer = document.getElementById('inbox-detail');
+    listContainer.innerHTML = '<p>Cargando mensajes...</p>';
+    detailContainer.innerHTML = '<p>Selecciona un item para ver los detalles.</p>';
+
+    try {
+        const result = await getFeedbackItems();
+
+        if (result.status === 'success') {
+            const data = result.data || result.messages || result.items || [];
+
+            if (Array.isArray(data)) {
+                renderInboxList(data);
+            } else {
+                listContainer.innerHTML = `<p style="color:red;">Error: El formato de los datos es incorrecto.</p>`;
+            }
+        } else {
+            listContainer.innerHTML = `<p style="color:red;">Error: ${result.message || 'No se pudieron cargar los mensajes.'}</p>`;
+        }
+    } catch (error) {
+        console.error("Error fetching feedback items:", error);
+        listContainer.innerHTML = `<p style="color:red;">Error de conexión al cargar mensajes.</p>`;
+    }
+});
+
+/* TAREA 1.2: RECUPERACIÓN DE LAS FUNCIONES DEL PANEL DE DESARROLLADOR */
+export const openDevTools = setupModal('dev-tools-modal', () => {
+    document.getElementById('dev-tools-modal').style.display = 'flex';
+    initAdminPanelListeners();
+    if (window.triggerAdminPanelPing) {
+        window.triggerAdminPanelPing();
+    }
+});
+
+function initAdminPanelListeners() {
+    const consoleLog = document.getElementById('dev-console-log');
+    if (!consoleLog) return; // Evitar inicializaciones duplicadas si no está en el DOM
+
+    // Helper para formatear tiempo MM:SS
+    function formatTimeMMSS(ms) {
+        const totalSeconds = Math.floor(ms / 1000);
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    // Helper para logs
+    function log(msg, isWarning = false, isError = false) {
+        const time = new Date().toLocaleTimeString();
+        const p = document.createElement('div');
+        p.style.marginBottom = "4px";
+        if (isWarning) {
+            p.style.color = "#ffcc00";
+            p.className = "log-warning";
+        } else if (isError) {
+            p.style.color = "#ff3333";
+            p.className = "log-error";
+        } else {
+            p.className = "log-info";
+        }
+        p.textContent = `[${time}] ${msg}`;
+        consoleLog.appendChild(p);
+        consoleLog.scrollTop = consoleLog.scrollHeight;
+    }
+
+    // Prevenir re-registro de listeners
+    if (window.adminListenersAttached) {
+        return;
+    }
+    window.adminListenersAttached = true;
+
+    // Escaneo de salud de todos los microservicios
+    async function runServicesHealthScan() {
+        const healthGrid = document.getElementById('services-health-grid');
+        if (healthGrid) {
+            healthGrid.innerHTML = `<span style="color: var(--text-disabled); font-style: italic; grid-column: span 2;">Escaneando microservicios...</span>`;
+        }
+        log("[SALUD] Ejecutando diagnóstico de latencia y estado en los microservicios...");
+        try {
+            const healthResults = await checkAllServicesHealth();
+            if (healthGrid) {
+                healthGrid.innerHTML = '';
+                Object.keys(healthResults).forEach(srvKey => {
+                    const item = healthResults[srvKey];
+                    const div = document.createElement('div');
+                    div.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.05); font-size: 0.8em;";
+
+                    const isOnline = item.status === 'online';
+                    const statusDot = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${isOnline ? '#28a745' : '#dc3545'}; margin-right:6px;"></span>`;
+                    div.innerHTML = `<div>${statusDot}<strong>${srvKey}</strong></div><span style="color:${isOnline ? 'var(--text-color)' : '#dc3545'}; font-family:monospace;">${isOnline ? item.latency + 'ms' : 'Error'}</span>`;
+                    healthGrid.appendChild(div);
+                });
+            }
+            log("[SALUD] Escaneo de salud completado.");
+        } catch (e) {
+            log(`[SALUD ERROR] Fallo al escanear servicios: ${e.message}`, false, true);
+        }
+    }
+
+    const scanBtn = document.getElementById('btn-check-services-health');
+    if (scanBtn) {
+        scanBtn.onclick = () => runServicesHealthScan();
+    }
+
+    // Conectividad automática e inicio
+    window.triggerAdminPanelPing = async function() {
+        consoleLog.innerHTML = ''; // Limpiar consola al abrir
+        log("Sistema administrativo iniciado correctamente.");
+        log("Comprobando disponibilidad del microservicio...");
+
+        const pingStartTime = Date.now();
+        try {
+            const res = await routeAction('ping');
+            const latency = Date.now() - pingStartTime;
+            if (res && res.status === 'success') {
+                log("Microservicio activo.");
+                log("Comunicación establecida.");
+                log(`Tiempo de respuesta: ${latency} ms.`);
+            } else {
+                log("No fue posible establecer comunicación con el microservicio.", false, true);
+            }
+        } catch (error) {
+            log("No fue posible establecer comunicación con el microservicio.", false, true);
+        }
+        runServicesHealthScan();
+        log("Esperando operaciones...");
+    };
+
+    // Helper para progreso
+    function setProgress(percent) {
+        const container = document.getElementById('dev-progress-container');
+        const bar = document.getElementById('dev-progress-bar');
+        const text = document.getElementById('dev-progress-text');
+        if (container && bar && text) {
+            container.style.display = 'block';
+            bar.style.width = `${percent}%`;
+            text.textContent = `${percent}%`;
+            if (percent >= 100) {
+                setTimeout(() => { container.style.display = 'none'; }, 2000);
+            }
+        }
+    }
+
+    // Reproducir logs progresivamente para emular tiempo real
+    async function playLogs(logs) {
+        if (!logs || logs.length === 0) return;
+        for (const item of logs) {
+            log(item.message, item.isWarning, item.isError);
+            if (item.percentage !== undefined) {
+                setProgress(item.percentage);
+            }
+            await new Promise(resolve => setTimeout(resolve, 80)); // Pausa para animación fluida
+        }
+    }
+
+    // Función genérica para disparar tareas con soporte para lotes automáticos, ETA y estadísticas en tiempo real
+    async function runAction(action, payload = {}) {
+        const isBatch = (action === 'normalizeImages' || action === 'reorganizeImagesInDrive');
+        const startTime = Date.now();
+
+        let lastResource = "N/A";
+        let lastFila = "N/A";
+
+        if (!isBatch) {
+            log(`Enviando comando administrativo '${action}' al servidor...`);
+            setProgress(5);
+            try {
+                const res = await routeAction(action, payload);
+                setProgress(50);
+                if (res.status === 'success') {
+                    if (res.logs) {
+                        await playLogs(res.logs);
+                    }
+                    setProgress(100);
+                    log(`[SISTEMA] Acción '${action}' finalizada con éxito.`);
+                    return res;
+                } else {
+                    setProgress(0);
+                    log(`[ERROR] Acción fallida: ${res.message}`, false, true);
+                    if (res.logs) await playLogs(res.logs);
+                }
+            } catch (error) {
+                setProgress(0);
+                const elapsedMs = Date.now() - startTime;
+                const elapsedSec = (elapsedMs / 1000).toFixed(1);
+                const detailedErrorMsg = `
+========================================
+🚨 ERROR DETECTADO
+
+Operación:
+${action}
+
+Etapa:
+Ejecución de acción individual
+
+Recurso:
+N/A
+
+Fila:
+N/A
+
+Lote:
+N/A
+
+Función:
+routeAction
+
+Código HTTP:
+500
+
+Mensaje:
+${error.message || 'Error de conexión / Servidor no disponible'}
+
+Excepción:
+${error.stack || error.toString()}
+
+Tiempo transcurrido:
+${elapsedSec}s
+========================================
+`;
+                log(detailedErrorMsg, false, true);
+            }
+            return;
+        }
+
+        // --- PROCESAMIENTO SECUENCIAL POR LOTES ---
+        log(`[LOTE] Iniciando procesamiento por lotes para '${action}'...`);
+        const limit = 10;
+        let finished = false;
+        let processId = "P-" + Date.now();
+        let loopCount = 0;
+        let errorCount = 0;
+
+        // Variables acumuladoras de estadísticas
+        let totalCarpetasVerificadas = 0;
+        let totalCarpetasCreadas = 0;
+        let totalCarpetasRenombradas = 0;
+        let totalCarpetasEliminadas = 0;
+        let totalImagenesMovidas = 0;
+        let totalImagenesRenombradas = 0;
+
+        while (!finished) {
+            loopCount++;
+            log(`[LOTE] Ejecutando lote ${loopCount}...`);
+            try {
+                const res = await routeAction(action, { limit, reset: payload.reset, processId });
+                if (res.status === 'success') {
+                    if (res.logs) {
+                        await playLogs(res.logs);
+                    }
+
+                    const nextIndex = res.nextIndex;
+                    const totalVehicles = res.totalVehicles;
+                    const percentage = totalVehicles > 0 ? Math.round((nextIndex / totalVehicles) * 100) : 100;
+
+                    setProgress(percentage);
+
+                    // Calcular tiempos y estadísticas
+                    const elapsedMs = Date.now() - startTime;
+                    const elapsedSec = (elapsedMs / 1000).toFixed(1);
+                    let etaStr = "Calculando...";
+                    if (nextIndex > 0 && nextIndex < totalVehicles) {
+                        const msPerItem = elapsedMs / nextIndex;
+                        const remainingItems = totalVehicles - nextIndex;
+                        const etaMs = msPerItem * remainingItems;
+                        const etaSec = Math.round(etaMs / 1000);
+                        etaStr = `${etaSec}s`;
+                    } else if (nextIndex >= totalVehicles) {
+                        etaStr = "0s";
+                    }
+
+                    log(`[ESTADO] Lote ${loopCount} completado. Registro actual: ${nextIndex}/${totalVehicles} (${percentage}%).`);
+                    log(`[TIEMPO] Transcurrido: ${elapsedSec}s | Restante estimado: ${etaStr}`);
+
+                    // Acumular estadísticas devueltas por el servidor
+                    if (res.foldersChecked !== undefined) totalCarpetasVerificadas += res.foldersChecked;
+                    if (res.foldersCreated !== undefined) totalCarpetasCreadas += res.foldersCreated;
+                    if (res.foldersRenamed !== undefined) totalCarpetasRenombradas += res.foldersRenamed;
+                    if (res.foldersDeleted !== undefined) totalCarpetasEliminadas += res.foldersDeleted;
+                    if (res.movedFiles !== undefined) totalImagenesMovidas += res.movedFiles;
+                    if (res.imagesRenamed !== undefined) totalImagenesRenombradas += res.imagesRenamed;
+
+                    // Extraer último archivo y carpeta procesada de los registros recibidos
+                    let lastFile = "Ninguno";
+                    let lastFolder = "Ninguna";
+                    if (res.logs && res.logs.length > 0) {
+                        for (let k = res.logs.length - 1; k >= 0; k--) {
+                            const msg = res.logs[k].message;
+                            const fileMatch = msg.match(/'([^']+)'/);
+                            if (fileMatch) {
+                                lastFile = fileMatch[1];
+                            }
+                            const folderMatch = msg.match(/(carpeta|subcarpeta)\s+'([^']+)'/i);
+                            if (folderMatch) {
+                                lastFolder = folderMatch[2];
+                            } else {
+                                const genFolderMatch = msg.match(/carpeta\s+([^:\s]+)/i);
+                                if (genFolderMatch && lastFolder === "Ninguna") lastFolder = genFolderMatch[1];
+                            }
+                        }
+                    }
+
+                    lastResource = lastFile !== "Ninguno" ? lastFile : (lastFolder !== "Ninguna" ? lastFolder : "N/A");
+                    lastFila = res.ultimaFilaProcesada || (res.filaInicial + res.processedCount - 1);
+
+                    // Registro continuo detallado
+                    log(`
+--------------------------------------------------
+[PROGRESO CONTINUO]
+Carpeta actual: ${lastFolder}
+Archivo actual: ${lastFile}
+Fila actual: ${lastFila}
+Lote actual: ${loopCount}
+Porcentaje: ${percentage}%
+Tiempo transcurrido: ${elapsedSec}s
+Cantidad procesada en lote: ${res.processedCount} (Total acumulado: ${nextIndex}/${totalVehicles})
+--------------------------------------------------
+`);
+
+                    if (res.processedCount === 0 || nextIndex >= totalVehicles || res.estado === 'completado') {
+                        finished = true;
+                        setProgress(100);
+                        const totalTimeStr = formatTimeMMSS(Date.now() - startTime);
+                        log(`
+==================================================
+Proceso finalizado con éxito 🎉
+
+Carpetas verificadas:
+${totalCarpetasVerificadas}
+
+Carpetas creadas:
+${totalCarpetasCreadas}
+
+Carpetas renombradas:
+${totalCarpetasRenombradas}
+
+Carpetas eliminadas:
+${totalCarpetasEliminadas}
+
+Imágenes movidas:
+${totalImagenesMovidas}
+
+Imágenes renombradas:
+${totalImagenesRenombradas}
+
+Errores:
+${errorCount}
+
+Tiempo total:
+${totalTimeStr}
+==================================================
+`);
+                    }
+
+                    // Asegurar que subsiguientes llamadas continúen sin volver a resetear
+                    payload.reset = false;
+                } else {
+                    errorCount++;
+                    log(`[ERROR] Lote ${loopCount} falló: ${res.message}`, false, true);
+                    if (res.logs) await playLogs(res.logs);
+
+                    if (errorCount > 3) {
+                        log(`[INTERRUPCIÓN] Demasiados errores consecutivos. Operación interrumpida.`, false, true);
+                        finished = true;
+                    }
+                }
+            } catch (error) {
+                errorCount++;
+                const elapsedMs = Date.now() - startTime;
+                const elapsedSec = (elapsedMs / 1000).toFixed(1);
+
+                // Registro detallado de errores y excepciones
+                const detailedErrorMsg = `
+========================================
+🚨 ERROR DETECTADO
+
+Operación:
+${action === 'normalizeImages' ? 'Normalización de imágenes' : (action === 'reorganizeImagesInDrive' ? 'Organización de carpetas' : action)}
+
+Etapa:
+${action === 'reorganizeImagesInDrive' ? 'Movimiento de imágenes / Creación de carpetas' : 'Procesamiento de imágenes'}
+
+Recurso:
+${lastResource || 'N/A'}
+
+Fila:
+${lastFila || 'N/A'}
+
+Lote:
+${loopCount}
+
+Función:
+routeAction
+
+Código HTTP:
+${error.message.includes('500') ? '500' : '500'}
+
+Mensaje:
+${error.message || 'Error de comunicación con el servidor'}
+
+Excepción:
+${error.stack || error.toString()}
+
+Tiempo transcurrido:
+${elapsedSec}s
+========================================
+`;
+                log(detailedErrorMsg, false, true);
+
+                log(`[INTERRUPCIÓN] Conexión interrumpida o fallo de tiempo de ejecución. El progreso se ha guardado en el servidor. Podrás reanudar desde el registro actual en la próxima ejecución.`, true, false);
+                finished = true;
+            }
+
+            if (!finished) {
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+        }
+    }
+
+    // --- NAVEGACIÓN Y COMANDOS DE TERMINAL DRIVE (cd, dir, tree, mkdir, move) ---
+    let currentTerminalFolderId = null;
+    let commandHistory = [];
+    let commandHistoryIndex = -1;
+
+    async function executeTerminalCommand(inputCmd) {
+        if (!inputCmd || !inputCmd.trim()) return;
+        const rawCmd = inputCmd.trim();
+        commandHistory.push(rawCmd);
+        commandHistoryIndex = commandHistory.length;
+
+        log(`> ${rawCmd}`);
+
+        const parts = rawCmd.split(/\s+/);
+        let cmd = parts[0].toLowerCase();
+        let args = parts.slice(1).join(' ');
+
+        // Soportar cd /d D:\ o cd \ o cd ..
+        if (cmd === 'cd' && (args.startsWith('/d') || args.startsWith('/D'))) {
+            args = args.replace(/^\/[dD]\s*/, '');
+        }
+
+        try {
+            const res = await routeAction('driveCommand', {
+                command: cmd,
+                args: args,
+                currentFolderId: currentTerminalFolderId
+            });
+
+            if (res && res.status === 'success') {
+                if (res.currentFolder) {
+                    currentTerminalFolderId = res.currentFolder.id;
+                    log(`Ruta actual: [${res.currentFolder.name}] (${res.currentFolder.id})`);
+                }
+                if (res.tree) {
+                    log(`\n${res.tree}`);
+                }
+                if (res.folders || res.files) {
+                    if (res.folders.length === 0 && res.files.length === 0) {
+                        log("(Carpeta vacía)");
+                    }
+                    res.folders.forEach(f => {
+                        log(`📁 [${f.name}]  (Escribe 'cd ${f.name}' para entrar)`);
+                    });
+                    res.files.forEach(f => {
+                        log(`📄 ${f.name} (${(f.size / 1024).toFixed(1)} KB)`);
+                    });
+                }
+                if (res.message) {
+                    log(`[DRIVE] ${res.message}`);
+                }
+            } else {
+                log(`[ERROR TERMINAL] ${res ? res.message : 'Error al ejecutar comando.'}`, false, true);
+            }
+        } catch (err) {
+            log(`[ERROR TERMINAL] ${err.message}`, false, true);
+        }
+    }
+
+    const termInput = document.getElementById('dev-terminal-input');
+    const termSendBtn = document.getElementById('btn-terminal-send');
+
+    if (termInput) {
+        termInput.addEventListener('keydown', async (e) => {
+            if (e.key === 'Enter') {
+                const val = termInput.value;
+                termInput.value = '';
+                await executeTerminalCommand(val);
+            } else if (e.key === 'ArrowUp') {
+                if (commandHistory.length > 0 && commandHistoryIndex > 0) {
+                    commandHistoryIndex--;
+                    termInput.value = commandHistory[commandHistoryIndex];
+                }
+            } else if (e.key === 'ArrowDown') {
+                if (commandHistoryIndex < commandHistory.length - 1) {
+                    commandHistoryIndex++;
+                    termInput.value = commandHistory[commandHistoryIndex];
+                } else {
+                    commandHistoryIndex = commandHistory.length;
+                    termInput.value = '';
+                }
+            }
+        });
+    }
+
+    if (termSendBtn) {
+        termSendBtn.onclick = async () => {
+            if (termInput && termInput.value) {
+                const val = termInput.value;
+                termInput.value = '';
+                await executeTerminalCommand(val);
+            }
+        };
+    }
+
+    // Botón Copiar Registro de errores y advertencias críticas
+    const btnCopyLog = document.getElementById('btn-copy-console-log');
+    if (btnCopyLog) {
+        btnCopyLog.onclick = () => {
+            const divs = consoleLog.querySelectorAll('div');
+            const filteredTexts = [];
+            divs.forEach(div => {
+                const text = div.textContent || div.innerText;
+                const isErr = div.classList.contains('log-error') || div.classList.contains('log-warning');
+                const hasPatterns = /🚨|error|advertencia|falla|excepción|exception|stack|trace|fallo/i.test(text);
+                const isExcluded = /sistema administrativo iniciado|comprobando disponibilidad|microservicio activo|comunicación establecida|tiempo de respuesta/i.test(text);
+                if ((isErr || hasPatterns) && !isExcluded) {
+                    filteredTexts.push(text);
+                }
+            });
+
+            if (filteredTexts.length === 0) {
+                alert("No se encontraron errores ni advertencias críticas para copiar.");
+                return;
+            }
+
+            const rawText = filteredTexts.join('\n');
+            navigator.clipboard.writeText(rawText).then(() => {
+                log("[SISTEMA] Registro filtrado de errores copiado al portapapeles.");
+            }).catch(err => {
+                alert("No se pudo copiar el registro: " + err);
+            });
+        };
+    }
+
+    // 1. Botón Respaldar DB
+    document.getElementById('btn-admin-backup-db').onclick = async () => {
+        const res = await runAction('backupDatabase');
+        if (res && res.backupId) {
+            document.getElementById('dev-ss-backup-id').value = res.backupId;
+            const linkBtn = document.getElementById('link-ss-backup-btn');
+            linkBtn.disabled = false;
+            linkBtn.onclick = () => window.open(res.backupUrl || `https://docs.google.com/spreadsheets/d/${res.backupId}`, '_blank');
+        }
+    };
+
+    // 2. Botón Respaldar Drive
+    document.getElementById('btn-admin-backup-drive').onclick = async () => {
+        const res = await runAction('backupDrive');
+        if (res && res.backupId) {
+            document.getElementById('dev-drive-backup-id').value = res.backupId;
+            const linkBtn = document.getElementById('link-drive-backup-btn');
+            linkBtn.disabled = false;
+            linkBtn.onclick = () => window.open(res.backupUrl || `https://drive.google.com/drive/folders/${res.backupId}`, '_blank');
+        }
+    };
+
+    // 3. Copiado de IDs
+    document.getElementById('copy-ss-backup-btn').onclick = () => {
+        const idVal = document.getElementById('dev-ss-backup-id').value;
+        if (idVal) {
+            navigator.clipboard.writeText(idVal).then(() => log("ID de Spreadsheet copiado al portapapeles."));
+        }
+    };
+    document.getElementById('copy-drive-backup-btn').onclick = () => {
+        const idVal = document.getElementById('dev-drive-backup-id').value;
+        if (idVal) {
+            navigator.clipboard.writeText(idVal).then(() => log("ID de carpeta de Drive copiado al portapapeles."));
+        }
+    };
+
+    // 4. Restauración
+    document.getElementById('btn-admin-restore-db').onclick = async () => {
+        const backupId = document.getElementById('restore-backup-id-input').value.trim();
+        if (!backupId) {
+            log("[ADVERTENCIA] Por favor introduce un ID de Backup válido para restaurar.", true);
+            return;
+        }
+        if (confirm("¿Estás seguro de que deseas RESTAURAR la base de datos completa? Esto sobreescribirá la información actual de producción.")) {
+            await runAction('restoreDatabase', { backupId });
+        }
+    };
+    document.getElementById('btn-admin-restore-drive').onclick = async () => {
+        const backupId = document.getElementById('restore-backup-id-input').value.trim();
+        if (!backupId) {
+            log("[ADVERTENCIA] Por favor introduce un ID de Backup válido para restaurar.", true);
+            return;
+        }
+        if (confirm("¿Estás seguro de que deseas RESTAURAR toda la estructura de Drive? Esto limpiará y sobreescribirá las imágenes actuales en producción.")) {
+            await runAction('restoreDrive', { backupId });
+        }
+    };
+
+    // 5. Mantenimiento y Organización
+    // Listeners para motor de firmas de VIN
+    const recalcVinBtn = document.getElementById('btn-recalculate-vin-signatures');
+    if (recalcVinBtn) {
+        recalcVinBtn.onclick = () => {
+            const catalogData = getState().catalogData;
+            if (!catalogData || !catalogData.cortes) {
+                appendLog('[VIN ENGINE] No hay registros vehiculares en memoria.', 'log-warning');
+                return;
+            }
+            appendLog('[VIN ENGINE] Iniciando análisis diferencial de VIN...', 'log-info');
+            const stats = vinDifferentialEngine.calculateSignatures(catalogData.cortes);
+            vinSignatureStore.saveSignatures(vinDifferentialEngine);
+            appendLog(`[VIN ENGINE] Concluido: ${stats.totalVinsAnalyzed} VINs analizados, ${stats.totalClassesAnalyzed} clasificaciones, ${stats.signaturesGenerated} firmas generadas (${stats.validatedCount} validadas, ${stats.pendingCount} pendientes, ${stats.insufficientCount} insuficientes). Conflictos: ${stats.conflictsCount}.`, 'log-info');
+        };
+    }
+    const viewVinBtn = document.getElementById('btn-view-vin-signatures');
+    if (viewVinBtn) {
+        viewVinBtn.onclick = () => {
+            const count = vinDifferentialEngine.signatures.size;
+            appendLog(`[VIN ENGINE] Firmas en memoria: ${count}`, 'log-info');
+            let idx = 1;
+            for (const sig of vinDifferentialEngine.signatures.values()) {
+                if (idx <= 10) {
+                    appendLog(`[FIRMA #${idx}] ${sig.marca} ${sig.modelo} (${sig.rangoAnos}) [${sig.version || 'Gral'}]: ${sig.signatureString || 'N/A'} - Estado: ${sig.status} - Certeza: ${sig.confidence}%`, 'log-info');
+                    idx++;
+                }
+            }
+        };
+    }
+
+    document.getElementById('btn-admin-reorganize-db').onclick = async () => {
+        if (confirm("¿Deseas reorganizar y ordenar la base de datos alfabéticamente por Marca? Se generará automáticamente un respaldo preventivo.")) {
+            await runAction('reorganizeDatabase');
+        }
+    };
+    document.getElementById('btn-admin-normalize-images').onclick = async () => {
+        const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
+        await runAction('normalizeImages', { reset: !continueSaved });
+    };
+    document.getElementById('btn-admin-reorganize-drive').onclick = async () => {
+        const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
+        await runAction('reorganizeImagesInDrive', { reset: !continueSaved });
+    };
+    document.getElementById('btn-admin-restore-trash').onclick = async () => {
+        if (confirm("¿Deseas INICIAR el saneamiento y recuperación exhaustiva de imágenes en la papelera?\n\nEsta operación analizará todas las hojas del Spreadsheet, identificará enlaces rotos de Drive y restaurará de la papelera cualquier imagen eliminada. Puede tomar unos minutos.")) {
+            await runAction('restoreAllTrashedImages');
+        }
+    };
+
+    // Vaciar Caché Local de Cliente (IndexedDB/Storage)
+    const clearCacheBtn = document.getElementById('btn-admin-clear-client-cache');
+    if (clearCacheBtn) {
+        clearCacheBtn.onclick = async () => {
+            if (confirm("¿Deseas VACIAR la caché local de IndexedDB y localStorage del navegador?\n\nEsto forzará a la aplicación a descargar datos e imágenes frescas desde los microservicios.")) {
+                try {
+                    log("[SISTEMA] Vaciando IndexedDB y caché local...");
+                    if (window.indexedDB) {
+                        try {
+                            window.indexedDB.deleteDatabase('GPSpedia_DB');
+                        } catch (e) {}
+                    }
+                    localStorage.removeItem('gpsepedia_catalog_cache');
+                    localStorage.removeItem('gpsepedia_pending_operation');
+                    log("[EXITO] Caché local eliminada correctamente. Recargando la aplicación...");
+                    mostrarNotificacion("Caché local vaciada. Recargando...", "success");
+                    setTimeout(() => window.location.reload(), 1200);
+                } catch (e) {
+                    log(`[ERROR] Fallo al vaciar caché local: ${e.message}`, false, true);
+                }
+            }
+        };
+    }
+
+    // Purgar Logs de Actividad / Eventos
+    const clearLogsBtn = document.getElementById('btn-admin-clear-activity-logs');
+    if (clearLogsBtn) {
+        clearLogsBtn.onclick = async () => {
+            const selectEl = document.getElementById('clear-logs-option-select');
+            const keepLastWeek = selectEl ? selectEl.value === 'week' : false;
+            const promptText = keepLastWeek
+                ? "¿Estás seguro de que deseas ELIMINAR los registros de eventos con antigüedad MAYOR a una semana? (Los de los últimos 7 días se conservarán)."
+                : "¿Estás seguro de que deseas BORRAR TODOS los registros de eventos y logs de actividad?";
+
+            if (confirm(promptText)) {
+                try {
+                    clearLogsBtn.disabled = true;
+                    log(`Iniciando purga de logs de actividad (Conservar última semana: ${keepLastWeek ? 'Sí' : 'No'})...`);
+                    const res = await clearActivityLogs(keepLastWeek);
+                    if (res && res.status === 'success') {
+                        log(`[EXITO] ${res.message}`);
+                        mostrarNotificacion(res.message, 'success');
+                    } else {
+                        log(`[ERROR] No se pudo purgar los logs: ${res ? res.message : 'Error desconocido'}`, false, true);
+                    }
+                } catch (err) {
+                    log(`[EXCEPCION] Error al purgar logs: ${err.message}`, false, true);
+                } finally {
+                    clearLogsBtn.disabled = false;
+                }
+            }
+        };
+    }
+
+    // Botón Agregar corte silencioso
+    const silentCutBtn = document.getElementById('btn-admin-add-silent-cut');
+    if (silentCutBtn) {
+        silentCutBtn.onclick = () => {
+            window.location.href = 'add_cortes.html?silent=true';
+        };
+    }
+
+    // 6. Selección de archivo para Logotipo
+    const fileInput = document.getElementById('logo-file-input');
+    const fileSpan = document.getElementById('selected-logo-file-name');
+    let selectedLogoBase64 = null;
+    let selectedLogoFilename = null;
+
+    fileInput.onchange = () => {
+        const file = fileInput.files[0];
+        if (file) {
+            selectedLogoFilename = file.name;
+            fileSpan.textContent = `Seleccionado: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                selectedLogoBase64 = e.target.result.split(',')[1]; // Solo la parte de datos base64
+            };
+            reader.readAsDataURL(file);
+        } else {
+            selectedLogoBase64 = null;
+            selectedLogoFilename = null;
+            fileSpan.textContent = "Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP";
+        }
+    };
+
+    // 7. Registrar Logotipo
+    document.getElementById('btn-admin-register-logo').onclick = async () => {
+        const brandName = document.getElementById('logo-brand-name-input').value.trim();
+        if (!brandName || !selectedLogoBase64) {
+            log("[ADVERTENCIA] Por favor completa el nombre del fabricante y selecciona un archivo de imagen.", true);
+            return;
+        }
+        const file = fileInput.files[0];
+        const res = await runAction('addLogo', {
+            nombreMarca: brandName,
+            fileData: selectedLogoBase64,
+            filename: selectedLogoFilename,
+            mimeType: file.type || "image/png"
+        });
+        if (res && res.status === 'success') {
+            document.getElementById('logo-brand-name-input').value = "";
+            fileInput.value = "";
+            fileSpan.textContent = "Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP";
+            selectedLogoBase64 = null;
+            selectedLogoFilename = null;
+        }
+    };
+
+    // 8. TAREA 2: Repositorio Histórico de Imágenes Reemplazadas y Auditoría de Google Drive
+    const viewReplacedBtn = document.getElementById('btn-admin-view-replaced-images');
+    if (viewReplacedBtn) {
+        viewReplacedBtn.onclick = () => openReplacedImagesModal();
+    }
+
+    const auditDriveBtn = document.getElementById('btn-admin-audit-drive-images');
+    if (auditDriveBtn) {
+        auditDriveBtn.onclick = () => openAuditDriveModal();
+    }
+}
+
+/**
+ * TAREA 2: Modal de Gestión y Recuperación de Imágenes Reemplazadas
+ */
+export async function openReplacedImagesModal() {
+    const modal = document.getElementById('replaced-images-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    const closeBtn = document.getElementById('close-replaced-images-modal');
+    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
+
+    const listContainer = document.getElementById('replaced-images-list-container');
+    const filterInput = document.getElementById('filter-replaced-images-input');
+    const refreshBtn = document.getElementById('btn-refresh-replaced-images');
+
+    let cachedReplaced = [];
+
+    const loadData = async () => {
+        listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Consultando imágenes históricas en Drive...</div>';
+        try {
+            const res = await routeAction('getReplacedImages');
+            cachedReplaced = (res && res.data) ? res.data : [];
+            renderList(filterInput ? filterInput.value : '');
+        } catch (err) {
+            listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error al cargar repositorio histórico: ${err.message}</div>`;
+        }
+    };
+
+    const renderList = (filterText = '') => {
+        listContainer.innerHTML = '';
+        const q = filterText.toLowerCase().trim();
+        const filtered = cachedReplaced.filter(item => {
+            if (!q) return true;
+            return (item.nombre_archivo || '').toLowerCase().includes(q) ||
+                   (item.referencia_texto || '').toLowerCase().includes(q) ||
+                   (item.campo || '').toLowerCase().includes(q) ||
+                   (item.archivo_drive_id || '').toLowerCase().includes(q) ||
+                   String(item.registro_id || '').toLowerCase().includes(q);
+        });
+
+        if (filtered.length === 0) {
+            listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron imágenes históricas reemplazadas.</div>';
+            return;
+        }
+
+        filtered.forEach(rep => {
+            const card = document.createElement('div');
+            card.style.cssText = "display: flex; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg);";
+
+            const img = document.createElement('img');
+            img.src = getImageUrl(rep.url_anterior, IMG_SIZE_SMALL);
+            img.style.cssText = "width: 70px; height: 70px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0; background: #fff;";
+
+            const info = document.createElement('div');
+            info.style.cssText = "flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem;";
+            info.innerHTML = `
+                <div style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rep.referencia_texto || 'Registro ' + rep.registro_id}</div>
+                <div style="font-size: 0.8rem; color: var(--text-disabled);"><strong>Archivo:</strong> ${rep.nombre_archivo} | <strong>Campo:</strong> ${rep.campo}</div>
+                <div style="font-size: 0.75rem; color: var(--text-disabled);"><strong>ID Drive:</strong> <code>${rep.archivo_drive_id}</code> | <strong>Fecha:</strong> ${rep.fecha_reemplazo}</div>
+                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : (rep.estado === 'eliminada' ? '#dc3545' : '#007bff')};">Estado: ${rep.estado}</div>
+            `;
+
+            const btnContainer = document.createElement('div');
+            btnContainer.style.cssText = "display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;";
+
+            if (rep.estado !== 'eliminada') {
+                const recoverBtn = document.createElement('button');
+                recoverBtn.className = "btn btn-primary";
+                recoverBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; white-space: nowrap;";
+                recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
+                recoverBtn.onclick = async () => {
+                    if (!confirm(`¿Restablecer esta imagen histórica como activa para ${rep.referencia_texto || rep.registro_id}? La versión actual pasará al historial.`)) return;
+                    recoverBtn.disabled = true;
+                    recoverBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    try {
+                        const recRes = await routeAction('recoverReplacedImage', { id_reemplazo: rep.id_reemplazo });
+                        if (recRes && recRes.status === 'success') {
+                            mostrarNotificacion("Imagen histórica restablecida con éxito.", "success");
+                            loadData();
+                        }
+                    } catch (e) {
+                        alert("Error al recuperar imagen: " + e.message);
+                        recoverBtn.disabled = false;
+                        recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
+                    }
+                };
+                btnContainer.appendChild(recoverBtn);
+
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = "btn btn-danger";
+                deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
+                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
+                deleteBtn.onclick = async () => {
+                    if (!confirm(`¿Estás seguro de que deseas ELIMINAR permanentemente esta imagen histórica de Google Drive? Esta acción no se puede deshacer.`)) return;
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    try {
+                        const delRes = await routeAction('deleteReplacedImage', { id_reemplazo: rep.id_reemplazo });
+                        if (delRes && delRes.status === 'success') {
+                            mostrarNotificacion("Imagen eliminada de forma segura.", "success");
+                            loadData();
+                        }
+                    } catch (e) {
+                        alert("Eliminación bloqueada: " + e.message);
+                        deleteBtn.disabled = false;
+                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
+                    }
+                };
+                btnContainer.appendChild(deleteBtn);
+            }
+
+            card.appendChild(img);
+            card.appendChild(info);
+            card.appendChild(btnContainer);
+            listContainer.appendChild(card);
+        });
+    };
+
+    if (filterInput) filterInput.oninput = () => renderList(filterInput.value);
+    if (refreshBtn) refreshBtn.onclick = () => loadData();
+
+    loadData();
+}
+
+/**
+ * TAREA 2: Modal de Auditoría de Imágenes en Google Drive (Árbol 'Cortes')
+ */
+export async function openAuditDriveModal() {
+    const modal = document.getElementById('audit-drive-modal');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    const closeBtn = document.getElementById('close-audit-drive-modal');
+    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
+
+    const summaryEl = document.getElementById('audit-drive-summary');
+    const container = document.getElementById('audit-drive-results-container');
+
+    summaryEl.innerHTML = 'Iniciando exploración recursiva del árbol «Cortes»...';
+    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol en Google Drive...</div>';
+
+    try {
+        const res = await routeAction('auditDriveImagesInCortes');
+        if (res && res.status === 'success') {
+            const files = res.files || [];
+            const inUseCount = files.filter(f => f.classification === 'En uso').length;
+            const histCount = files.filter(f => f.classification === 'Histórica').length;
+            const unusedCount = files.filter(f => f.classification === 'Sin uso detectado').length;
+            const unverifiedCount = files.filter(f => f.classification === 'No verificable').length;
+
+            summaryEl.innerHTML = `
+                <div style="background: var(--card-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; gap: 15px; flex-wrap: wrap;">
+                    <span>📁 <strong>Carpeta Raíz:</strong> ${res.rootFolderName} (<code>${res.rootFolderId}</code>)</span>
+                    <span>📊 <strong>Total Analizados:</strong> ${res.totalAnalyzed}</span>
+                    <span style="color:#28a745;">✅ <strong>En uso:</strong> ${inUseCount}</span>
+                    <span style="color:#007bff;">🕒 <strong>Históricas:</strong> ${histCount}</span>
+                    <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> ${unusedCount}</span>
+                    <span style="color:#dc3545;">❓ <strong>No verificables:</strong> ${unverifiedCount}</span>
+                </div>
+            `;
+
+            container.innerHTML = '';
+            if (files.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron archivos en la carpeta analizada.</div>';
+                return;
+            }
+
+            files.forEach(f => {
+                const row = document.createElement('div');
+                row.style.cssText = "display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.8rem; background: var(--card-bg);";
+
+                let badgeColor = "#28a745";
+                if (f.classification === 'Histórica') badgeColor = "#007bff";
+                else if (f.classification === 'Sin uso detectado') badgeColor = "#e0a800";
+                else if (f.classification === 'No verificable') badgeColor = "#dc3545";
+
+                row.innerHTML = `
+                    <div style="min-width:0; flex:1;">
+                        <div style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${f.fileName}</div>
+                        <div style="font-size:0.75rem; color:var(--text-disabled);">${f.folderPath} | ${(f.size / 1024).toFixed(1)} KB | ${f.lastUpdated}</div>
+                    </div>
+                    <span style="background:${badgeColor}; color:white; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;">
+                        ${f.classification}
+                    </span>
+                `;
+                container.appendChild(row);
+            });
+        } else {
+            container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error: ${res ? res.message : 'Error desconocido'}</div>`;
+        }
+    } catch (err) {
+        container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Excepción en auditoría: ${err.message}</div>`;
+    }
+}
+
+export const openAboutUs = setupModal('about-us-modal', () => {
+    document.getElementById('about-us-modal').style.display = 'flex';
+});
+
+export const openChangeLog = setupModal('changelog-modal', () => {
+    document.getElementById('changelog-modal').style.display = 'flex';
+});
+
+export const openContact = setupModal('contact-modal', () => {
+    document.getElementById('contact-modal').style.display = 'flex';
+});
+
+export const openFAQ = setupModal('faq-modal', () => {
+    document.getElementById('faq-modal').style.display = 'flex';
+});
+
+export const openTermsAgreement = setupModal('terms-agreement-modal', () => {
+    document.getElementById('terms-agreement-modal').style.display = 'flex';
+});
+
+export function renderInboxList(items) {
+    const listContainer = document.getElementById('inbox-list');
+    listContainer.innerHTML = '';
+    if (items.length === 0) {
+        listContainer.innerHTML = '<p>No hay mensajes.</p>';
+        return;
+    }
+
+    items.forEach(item => {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'inbox-item';
+        if (item.isResolved) {
+            itemDiv.classList.add('resolved');
+        }
+        if (item.reply) {
+             itemDiv.classList.add('replied');
+        }
+
+        let iconClass = 'fa-envelope';
+        let tipoLabel = 'Mensaje de contacto';
+        if (item.type === 'problem_report') {
+            iconClass = 'fa-triangle-exclamation';
+            tipoLabel = 'Reporte de problema';
+        } else if (item.type === 'video_approval') {
+            iconClass = 'fa-brands fa-youtube';
+            const statusText = item.approvalStatus === 'approved' ? 'Aprobado' : (item.approvalStatus === 'rejected' ? 'Rechazado' : 'Pendiente de aprobación');
+            tipoLabel = `Vídeo: ${statusText}`;
+        }
+        const title = item.subject || `ID: ${item.id}`;
+
+        itemDiv.innerHTML = `
+            <i class="fa-solid ${iconClass}"></i>
+            <div class="inbox-item-content">
+                <strong class="inbox-item-title">${title}</strong>
+                <p class="inbox-item-type">${tipoLabel}</p>
+            </div>
+        `;
+        itemDiv.addEventListener('click', () => {
+            document.querySelectorAll('.inbox-item.active').forEach(el => el.classList.remove('active'));
+            itemDiv.classList.add('active');
+            renderInboxDetail(item);
+        });
+        listContainer.appendChild(itemDiv);
+    });
+}
+
+
+/* TAREA 1.7: BARRA DE ENRIQUECIMIENTO DE TEXTO COMPLETA PARA EL EDITOR DEL INBOX */
+export function createInboxRichTextToolbar(targetId) {
+    const toolbar = document.createElement("div");
+    toolbar.className = "inbox-rich-toolbar";
+    toolbar.style.cssText = "display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; padding:6px 8px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ccc); border-radius:6px;";
+
+    const applyTag = (openTag, closeTag) => {
+        const textarea = document.getElementById(targetId);
+        if (!textarea) return;
+        const start = textarea.selectionStart;
+        const end = textarea.selectionEnd;
+        const selected = textarea.value.substring(start, end) || "texto";
+        const formatted = `${openTag}${selected}${closeTag}`;
+        textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+        textarea.focus();
+        textarea.setSelectionRange(start + openTag.length, start + openTag.length + selected.length);
+    };
+
+    const makeBtn = (html, title, onClick) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn btn-secondary btn-sm";
+        btn.title = title;
+        btn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; cursor:pointer;";
+        btn.innerHTML = html;
+        btn.onclick = (e) => { e.preventDefault(); onClick(); };
+        return btn;
+    };
+
+    // 1. Negrita
+    toolbar.appendChild(makeBtn("<strong>B</strong>", "Negrita", () => applyTag("<strong>", "</strong>")));
+    // 2. Cursiva
+    toolbar.appendChild(makeBtn("<em>I</em>", "Cursiva", () => applyTag("<em>", "</em>")));
+    // 3. Subrayado
+    toolbar.appendChild(makeBtn("<u>U</u>", "Subrayado", () => applyTag("<u>", "</u>")));
+    // 4. Tachado
+    toolbar.appendChild(makeBtn("<s>S</s>", "Tachado", () => applyTag("<s>", "</s>")));
+
+    // 5. Selector de Color
+    const colorPicker = document.createElement("input");
+    colorPicker.type = "color";
+    colorPicker.title = "Color de texto";
+    colorPicker.style.cssText = "width:28px; height:28px; padding:0; border:none; cursor:pointer; border-radius:4px;";
+    colorPicker.onchange = (e) => applyTag(`<span style="color:${e.target.value}">`, "</span>");
+    toolbar.appendChild(colorPicker);
+
+    // 6. Selector de Tamaño de Fuente
+    const sizeSelect = document.createElement("select");
+    sizeSelect.title = "Tamaño de fuente";
+    sizeSelect.style.cssText = "padding:2px 4px; font-size:0.82rem; height:28px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);";
+    sizeSelect.innerHTML = `
+        <option value="" disabled selected>Tamaño</option>
+        <option value="0.85em">Pequeño</option>
+        <option value="1em">Normal</option>
+        <option value="1.2em">Grande</option>
+        <option value="1.5em">Encabezado</option>
+    `;
+    sizeSelect.onchange = (e) => {
+        if (e.target.value) {
+            applyTag(`<span style="font-size:${e.target.value}">`, "</span>");
+            e.target.value = "";
+        }
+    };
+    toolbar.appendChild(sizeSelect);
+
+    // 7. Selector de Tipo de Fuente
+    const fontSelect = document.createElement("select");
+    fontSelect.title = "Tipo de fuente";
+    fontSelect.style.cssText = "padding:2px 4px; font-size:0.82rem; height:28px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);";
+    fontSelect.innerHTML = `
+        <option value="" disabled selected>Fuente</option>
+        <option value="Arial, sans-serif">Arial</option>
+        <option value="'Segoe UI', Roboto, sans-serif">Segoe UI</option>
+        <option value="'Courier New', monospace">Monospace</option>
+        <option value="Georgia, serif">Georgia</option>
+    `;
+    fontSelect.onchange = (e) => {
+        if (e.target.value) {
+            applyTag(`<span style="font-family:${e.target.value}">`, "</span>");
+            e.target.value = "";
+        }
+    };
+    toolbar.appendChild(fontSelect);
+
+    // 8. Lista desordenada
+    toolbar.appendChild(makeBtn("<i class='fa-solid fa-list-ul'></i>", "Lista con viñetas", () => applyTag("<ul>\n  <li>", "</li>\n</ul>")));
+    // 9. Lista ordenada
+    toolbar.appendChild(makeBtn("<i class='fa-solid fa-list-ol'></i>", "Lista numerada", () => applyTag("<ol>\n  <li>", "</li>\n</ol>")));
+
+    return toolbar;
+}
+
+export function renderInboxDetail(item) {
+    const detailContainer = document.getElementById('inbox-detail');
+    const { currentUser, catalogData } = getState();
+    const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Usuario';
+
+    let vehicleLabel = item.vehicleId ? `ID: ${item.vehicleId}` : '';
+    if (item.vehicleId && catalogData && catalogData.cortes) {
+        const vehicle = catalogData.cortes.find(c => String(c.id) === String(item.vehicleId));
+        if (vehicle) {
+            vehicleLabel = `${vehicle.marca} ${vehicle.modelo} (${vehicle.anoDesde})`;
+        }
+    }
+
+    const isVideoItem = item.type === 'video_approval';
+    const userRole = currentUser ? currentUser.Rol : '';
+    const canApprove = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+
+    detailContainer.innerHTML = `
+        <h3 class="inbox-detail-title">${item.subject}</h3>
+        <p class="inbox-detail-meta"><strong>De:</strong> ${item.user}</p>
+        ${item.vehicleId ? `<p class="inbox-detail-meta"><strong>Vehículo:</strong> ${vehicleLabel}</p>` : ''}
+        ${isVideoItem && item.videoUrl ? `
+            <div style="margin-bottom:12px; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
+                <p style="margin:0 0 6px 0;"><strong>Enlace de YouTube:</strong> <a href="${item.videoUrl}" target="_blank" rel="noopener noreferrer" style="color:#007bff; text-decoration:underline;"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Ver vídeo en YouTube</a></p>
+                <p style="margin:0 0 4px 0; font-size:0.85rem;"><strong>Estado de Aprobación:</strong> <span class="badge" style="background:${item.approvalStatus === 'approved' ? '#28a745' : (item.approvalStatus === 'rejected' ? '#dc3545' : '#ffc107')}; color:#fff; padding:2px 8px; border-radius:4px;">${item.approvalStatus || 'pending'}</span></p>
+                ${item.contentType ? `<p style="margin:0; font-size:0.85rem;"><strong>Tipo de Contenido:</strong> ${item.contentType}</p>` : ''}
+            </div>
+        ` : ''}
+        <div class="inbox-message-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
+            <div>${sanitizeHtmlContent(item.content)}</div>
+        </div>
+        ${item.reply ? `
+            <div class="inbox-reply-content" style="background:var(--card-bg, #fdfdfd); padding:10px; border-radius:6px; border:1px solid var(--border-color, #eee); margin-bottom:12px;">
+                <strong>Respuesta de ${item.responder || 'Admin'}:</strong>
+                <div style="margin-top:6px;">${sanitizeHtmlContent(item.reply)}</div>
+            </div>` : ''
+        }
+        ${isVideoItem ? `
+            <div class="inbox-actions" style="margin-top:12px;">
+                ${item.approvalStatus === 'pending' && canApprove ? `
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px;">
+                        <button id="inbox-approve-video-btn" class="btn btn-primary" style="flex: 1; background-color:#28a745; border-color:#28a745;">
+                            <i class="fa-solid fa-check"></i> Aprobar Vídeo
+                        </button>
+                        <button id="inbox-reject-video-btn" class="btn btn-danger" style="flex: 1; background-color:#dc3545; border-color:#dc3545;">
+                            <i class="fa-solid fa-xmark"></i> Rechazar Vídeo
+                        </button>
+                    </div>
+                ` : ''}
+                <div style="display:flex; justify-content:flex-end;">
+                    <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+                </div>
+            </div>
+        ` : `
+            <div class="inbox-actions">
+                <div id="inbox-toolbar-container"></div>
+                <textarea id="inbox-reply-textarea" placeholder="Escribe tu respuesta aquí..."></textarea>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px;">
+                    <button id="inbox-reply-btn" class="btn btn-primary" style="flex: 1;">Enviar Respuesta</button>
+                    ${item.type === 'problem_report' && !item.isResolved ?
+                        `<button id="inbox-resolve-btn" class="resolve-btn btn btn-secondary">Marcar como Resuelto</button>` : ''
+                    }
+                    <button id="inbox-delete-btn" class="btn btn-danger" style="background-color: #dc3545; color: white;"><i class="fa-solid fa-trash"></i> Borrar Mensaje</button>
+                </div>
+            </div>
+        `}
+    `;
+
+    // Listeners para aprobación/rechazo de vídeos
+    const approveVideoBtn = document.getElementById('inbox-approve-video-btn');
+    if (approveVideoBtn) {
+        approveVideoBtn.addEventListener('click', async () => {
+            if (confirm("¿Confirmas la aprobación y publicación de este vídeo en GPSpedia?")) {
+                try {
+                    approveVideoBtn.disabled = true;
+                    approveVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aprobando...`;
+                    await approveVideo(item.id, userName, userRole);
+                    inboxCacheData = null;
+                    mostrarNotificacion("Vídeo aprobado con éxito.", "success");
+                    openInbox();
+                } catch (err) {
+                    showGlobalError(`Error al aprobar vídeo: ${err.message}`);
+                    approveVideoBtn.disabled = false;
+                    approveVideoBtn.innerHTML = `<i class="fa-solid fa-check"></i> Aprobar Vídeo`;
+                }
+            }
+        });
+    }
+
+    const rejectVideoBtn = document.getElementById('inbox-reject-video-btn');
+    if (rejectVideoBtn) {
+        rejectVideoBtn.addEventListener('click', async () => {
+            const reason = prompt("Indica el motivo de rechazo del vídeo:", "No cumple los requisitos técnicos");
+            if (reason !== null) {
+                try {
+                    rejectVideoBtn.disabled = true;
+                    rejectVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rechazando...`;
+                    await rejectVideo(item.id, userName, reason, userRole);
+                    inboxCacheData = null;
+                    mostrarNotificacion("Vídeo rechazado.", "info");
+                    openInbox();
+                } catch (err) {
+                    showGlobalError(`Error al rechazar vídeo: ${err.message}`);
+                    rejectVideoBtn.disabled = false;
+                    rejectVideoBtn.innerHTML = `<i class="fa-solid fa-xmark"></i> Rechazar Vídeo`;
+                }
+            }
+        });
+    }
+
+
+    const toolbarContainer = document.getElementById('inbox-toolbar-container');
+    if (toolbarContainer) {
+        toolbarContainer.appendChild(createInboxRichTextToolbar('inbox-reply-textarea'));
+    }
+
+    const replyBtn = document.getElementById('inbox-reply-btn');
+    replyBtn.addEventListener('click', async () => {
+        const replyText = document.getElementById('inbox-reply-textarea').value;
+        if (!replyText.trim()) {
+            showGlobalError("La respuesta no puede estar vacía.");
+            return;
+        }
+        try {
+            replyBtn.classList.add('btn-loading');
+            await replyToFeedback(item.id, item.type, replyText, userName);
+            openInbox();
+        } catch (error) {
+            showGlobalError(`Error al enviar respuesta: ${error.message}`);
+        } finally {
+            replyBtn.classList.remove('btn-loading');
+        }
+    });
+
+    const resolveBtn = document.getElementById('inbox-resolve-btn');
+    if (resolveBtn) {
+        resolveBtn.addEventListener('click', async () => {
+             try {
+                resolveBtn.classList.add('btn-loading');
+                await markAsResolved(item.id);
+                inboxCacheData = null;
+                openInbox();
+            } catch (error) {
+                showGlobalError(`Error al resolver: ${error.message}`);
+            } finally {
+                resolveBtn.classList.remove('btn-loading');
+            }
+        });
+    }
+
+    const deleteBtn = document.getElementById('inbox-delete-btn');
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', async () => {
+            if (confirm("¿Estás seguro de que deseas eliminar permanentemente este mensaje del Inbox?")) {
+                try {
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...`;
+                    await deleteFeedbackItem(item.id, item.type);
+                    inboxCacheData = null;
+                    mostrarNotificacion("Mensaje eliminado con éxito", "success");
+                    openInbox();
+                } catch (error) {
+                    showGlobalError(`Error al eliminar mensaje: ${error.message}`);
+                    deleteBtn.disabled = false;
+                    deleteBtn.innerHTML = `<i class="fa-solid fa-trash"></i> Borrar Mensaje`;
+                }
+            }
+        });
+    }
+}
+
+function getYouTubeEmbedUrl(url) {
+    if (!url) return null;
+    const trimmed = url.trim();
+    if (!trimmed) return null;
+
+    // Si ya es un ID de 11 caracteres (ej. dQw4w9WgXcQ)
+    if (trimmed.length === 11 && !trimmed.includes('/') && !trimmed.includes(':')) {
+        return `https://www.youtube.com/embed/${trimmed}?enablejsapi=1`;
+    }
+
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = trimmed.match(regExp);
+
+    const id = (match && match[2].length === 11) ? match[2] : null;
+
+    if (id) {
+        return `https://www.youtube.com/embed/${id}?enablejsapi=1`;
+    }
+
+    // Fallback para casos donde el ID es pasado directamente pero no cumplió la primera condición
+    if (!trimmed.includes('/') && !trimmed.includes(':') && trimmed.length > 5) {
+        return `https://www.youtube.com/embed/${trimmed}?enablejsapi=1`;
+    }
+
+    return null;
+}
+
+export function createAccordionSection(container, title, sec, isOpen = false, datosRelay = [], vehicleId = null) {
+    const btn = document.createElement("button");
+    btn.className = "accordion-btn";
+    btn.innerHTML = `${title} <span class="accordion-arrow">▼</span>`;
+
+    const panel = document.createElement("div");
+    panel.className = "panel-desplegable";
+
+    if (sec.isCorte) {
+        // Los cortes dentro de acordeones son diferidos (isLazy = true)
+        const cIndex = sec.corteIndex || (sec.data && sec.data.index) || 2;
+        renderCutContent(panel, sec.data, datosRelay, vehicleId, true, cIndex);
+    } else if (inEditMode && (title === 'Apertura' || title === 'Cables de Alimentación')) {
+        if (title === 'Apertura') {
+            const fieldName = 'apertura';
+            const imgFieldName = 'imgApertura';
+            const currentValue = editedItemBuffer.apertura;
+            const currentImg = editedItemBuffer.imgApertura;
+
+            const label = document.createElement('label');
+            label.textContent = `Detalle de ${title}:`;
+            label.style.cssText = "display: block; font-weight: bold; margin-bottom: 5px; font-size: 0.85em;";
+            const aperturaTargetId = `edit-apertura-${vehicleId}`;
+            const textarea = document.createElement('textarea');
+            textarea.id = aperturaTargetId;
+            textarea.rows = 3;
+            textarea.value = currentValue || "";
+            textarea.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;";
+            textarea.onblur = async () => {
+                if (textarea.value.trim() !== editedItemBuffer[fieldName]) {
+                    editedItemBuffer[fieldName] = textarea.value.trim();
+                    await saveFieldSilently(vehicleId, fieldName, textarea.value.trim());
+                }
+            };
+            panel.appendChild(label);
+            panel.appendChild(createRichTextToolbar(aperturaTargetId));
+            panel.appendChild(textarea);
+
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'image-container-with-feedback';
+            imgContainer.style.marginTop = "10px";
+            const img = document.createElement("img");
+            setOptimizedImage(img, currentImg || null, IMG_SIZE_MEDIUM);
+            img.className = 'img-corte image-with-container';
+            convertImageToEditable(img, vehicleId, imgFieldName);
+            imgContainer.appendChild(img);
+            panel.appendChild(imgContainer);
+        } else {
+            // Cables de Alimentación: Mostrar las 3 posiciones
+            const cableFields = [
+                { label: 'Cable de Alimentación 1', textKey: 'cableAlimen', imgKey: 'imgCableAlimen' },
+                { label: 'Cable de Alimentación 2', textKey: 'cableAlimen2', imgKey: 'imgCableAlimen2' },
+                { label: 'Cable de Alimentación 3', textKey: 'cableAlimen3', imgKey: 'imgCableAlimen3' }
+            ];
+
+            cableFields.forEach(field => {
+                const fieldLabel = document.createElement('label');
+                fieldLabel.textContent = `${field.label}:`;
+                fieldLabel.style.cssText = "display: block; font-weight: bold; margin-top: 15px; margin-bottom: 5px; font-size: 0.85em;";
+
+                const cableTargetId = `edit-cable-${field.textKey}-${vehicleId}`;
+                const textarea = document.createElement('textarea');
+                textarea.id = cableTargetId;
+                textarea.rows = 2;
+                textarea.value = editedItemBuffer[field.textKey] || "";
+                textarea.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box;";
+                textarea.onblur = async () => {
+                    if (textarea.value.trim() !== editedItemBuffer[field.textKey]) {
+                        editedItemBuffer[field.textKey] = textarea.value.trim();
+                        await saveFieldSilently(vehicleId, field.textKey, textarea.value.trim());
+                    }
+                };
+                panel.appendChild(fieldLabel);
+                panel.appendChild(createRichTextToolbar(cableTargetId));
+                panel.appendChild(textarea);
+
+                const imgContainer = document.createElement('div');
+                imgContainer.className = 'image-container-with-feedback';
+                imgContainer.style.marginTop = "5px";
+                imgContainer.style.marginBottom = "10px";
+                const img = document.createElement("img");
+                setOptimizedImage(img, editedItemBuffer[field.imgKey] || null, IMG_SIZE_MEDIUM);
+                img.className = 'img-corte image-with-container';
+                convertImageToEditable(img, vehicleId, field.imgKey);
+                imgContainer.appendChild(img);
+                panel.appendChild(imgContainer);
+            });
+        }
+    } else if (sec.isCarousel && sec.cables && sec.cables.length > 1) {
+        // Renderizar un carrusel responsivo para múltiples cables de alimentación
+        const carouselContainer = document.createElement('div');
+        carouselContainer.className = 'cable-carousel-container';
+        carouselContainer.style.cssText = "position: relative; width: 100%; min-height: 100px;";
+
+        const slideText = document.createElement('p');
+        slideText.className = 'cable-carousel-text';
+        slideText.style.cssText = "margin-bottom: 10px; font-weight: 500;";
+
+        const imgContainer = document.createElement('div');
+        imgContainer.className = 'image-container-with-feedback';
+        const slideImg = document.createElement('img');
+        slideImg.className = 'img-corte image-with-container';
+        imgContainer.appendChild(slideImg);
+
+        carouselContainer.appendChild(slideText);
+        carouselContainer.appendChild(imgContainer);
+
+        let currentSlideIndex = 0;
+        const totalSlides = sec.cables.length;
+
+        function updateSlide(index) {
+            currentSlideIndex = (index + totalSlides) % totalSlides;
+            const activeCable = sec.cables[currentSlideIndex];
+            slideText.innerHTML = `<strong>${activeCable.label}:</strong> ${activeCable.content || "Sin descripción"}`;
+
+            if (activeCable.img) {
+                slideImg.style.display = 'block';
+                const fileId = activeCable.img.includes('id=') ? activeCable.img.split('id=')[1].split('&')[0] : activeCable.img;
+                setOptimizedImage(slideImg, fileId, IMG_SIZE_MEDIUM);
+                slideImg.onclick = () => {
+                    const validCableImages = sec.cables.filter(c => c.img).map(c => ({
+                        img: c.img,
+                        url: getImageUrl(c.img, IMG_SIZE_LARGE),
+                        label: c.label,
+                        content: c.content
+                    }));
+                    const initialIndex = validCableImages.findIndex(c => c.img === activeCable.img);
+                    const highResImgUrl = getImageUrl(activeCable.img, IMG_SIZE_LARGE);
+
+                    window.abrirLightbox(highResImgUrl, 'lightboxImg', {
+                        cables: validCableImages,
+                        currentIndex: initialIndex >= 0 ? initialIndex : 0,
+                        onSlideChange: (newIndex) => {
+                            const targetCable = validCableImages[newIndex];
+                            if (targetCable) {
+                                const targetSlideIndex = sec.cables.findIndex(c => c.img === targetCable.img);
+                                if (targetSlideIndex >= 0) {
+                                    updateSlide(targetSlideIndex);
+                                }
+                            }
+                        }
+                    });
+                };
+            } else {
+                slideImg.style.display = 'none';
+            }
+        }
+
+        function adjustPanelHeight() {
+            if (btn.classList.contains('active')) {
+                setTimeout(() => {
+                    panel.style.maxHeight = panel.scrollHeight + "px";
+                }, 50);
+            }
+        }
+
+        // Botones de navegación para escritorio
+        const prevBtn = document.createElement('button');
+        prevBtn.type = 'button';
+        prevBtn.className = 'cable-carousel-btn prev';
+        prevBtn.innerHTML = '<i class="fas fa-chevron-left"></i>';
+        prevBtn.onclick = (e) => {
+            e.stopPropagation();
+            updateSlide(currentSlideIndex - 1);
+            adjustPanelHeight();
+        };
+
+        const nextBtn = document.createElement('button');
+        nextBtn.type = 'button';
+        nextBtn.className = 'cable-carousel-btn next';
+        nextBtn.innerHTML = '<i class="fas fa-chevron-right"></i>';
+        nextBtn.onclick = (e) => {
+            e.stopPropagation();
+            updateSlide(currentSlideIndex + 1);
+            adjustPanelHeight();
+        };
+
+        carouselContainer.appendChild(prevBtn);
+        carouselContainer.appendChild(nextBtn);
+        panel.appendChild(carouselContainer);
+
+        // Soporte de gestos táctiles (swipe) para móvil y PWA
+        let touchStartX = 0;
+        let touchEndX = 0;
+
+        carouselContainer.addEventListener('touchstart', (e) => {
+            touchStartX = e.changedTouches[0].screenX;
+        }, { passive: true });
+
+        carouselContainer.addEventListener('touchend', (e) => {
+            touchEndX = e.changedTouches[0].screenX;
+            const threshold = 50;
+            if (touchEndX < touchStartX - threshold) {
+                updateSlide(currentSlideIndex + 1);
+                adjustPanelHeight();
+            } else if (touchEndX > touchStartX + threshold) {
+                updateSlide(currentSlideIndex - 1);
+                adjustPanelHeight();
+            }
+        }, { passive: true });
+
+        updateSlide(0);
+    } else {
+        const activeContent = (sec.isCarousel && sec.cables && sec.cables.length === 1) ? sec.cables[0].content : sec.content;
+        const activeImg = (sec.isCarousel && sec.cables && sec.cables.length === 1) ? sec.cables[0].img : sec.img;
+
+        if (activeContent) {
+            const contentP = document.createElement('p');
+            contentP.innerHTML = activeContent;
+            panel.appendChild(contentP);
+        }
+
+        if (activeImg) {
+            const imgContainer = document.createElement('div');
+            imgContainer.className = 'image-container-with-feedback';
+            const img = document.createElement("img");
+            img.dataset.src = getImageUrl(activeImg, IMG_SIZE_MEDIUM);
+            img.className = 'img-corte image-with-container';
+            img.onclick = () => {
+                const highResImgUrl = getImageUrl(activeImg, IMG_SIZE_LARGE);
+                const validCableImages = (sec.isCarousel && sec.cables) ? sec.cables.filter(c => c.img).map(c => ({
+                    img: c.img,
+                    url: getImageUrl(c.img, IMG_SIZE_LARGE),
+                    label: c.label,
+                    content: c.content
+                })) : null;
+
+                const context = (validCableImages && validCableImages.length > 0) ? {
+                    cables: validCableImages,
+                    currentIndex: 0
+                } : null;
+
+                window.abrirLightbox(highResImgUrl, 'lightboxImg', context);
+            };
+            imgContainer.appendChild(img);
+            panel.appendChild(imgContainer);
+        }
+    }
+
+    if (sec.colaborador && !inEditMode) {
+        const colabDiv = document.createElement('div');
+        const colabP = document.createElement('p');
+        colabP.style.cssText = "font-style: italic; color: var(--text-disabled); margin-top: 10px; text-align: left;";
+        colabP.innerHTML = `Aportado por: <strong>${cleanColaboradorName(sec.colaborador)}</strong>`;
+        colabDiv.appendChild(colabP);
+        panel.appendChild(colabDiv);
+    }
+
+    if (sec.Video) {
+        const videoEmbedUrl = getYouTubeEmbedUrl(sec.Video);
+        if (videoEmbedUrl) {
+            const videoContainer = document.createElement('div');
+            const iframeId = `video-${Date.now()}`;
+            videoContainer.innerHTML = `<iframe id="${iframeId}" width="100%" height="315" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px; margin-top: 10px;"></iframe>`;
+            panel.appendChild(videoContainer);
+            btn.dataset.iframeId = iframeId;
+        }
+    }
+
+    container.appendChild(btn);
+    container.appendChild(panel);
+
+    const loadAccordionImages = () => {
+        const imgs = panel.querySelectorAll('img[data-src]');
+        imgs.forEach(img => {
+            if (!img.src) {
+                img.onload = () => {
+                    // Actualizar maxHeight si el panel sigue abierto
+                    if (btn.classList.contains('active')) {
+                        panel.style.maxHeight = panel.scrollHeight + "px";
+                    }
+                };
+                // Phase 3: Usar setOptimizedImage para cargar desde caché o Drive
+                const fileId = img.dataset.src.includes('id=') ? img.dataset.src.split('id=')[1].split('&')[0] : img.dataset.src;
+                setOptimizedImage(img, fileId, IMG_SIZE_MEDIUM);
+            }
+        });
+    };
+
+    if (isOpen) {
+        btn.classList.add("active");
+        loadAccordionImages();
+        panel.style.maxHeight = panel.scrollHeight + "px";
+    }
+
+    btn.addEventListener("click", function() {
+        const isActive = this.classList.contains("active");
+
+        // Cerrar todos los paneles antes de abrir el nuevo
+        const allButtons = container.querySelectorAll(".accordion-btn");
+        allButtons.forEach(otherBtn => {
+            otherBtn.classList.remove("active");
+            const otherArrow = otherBtn.querySelector(".accordion-arrow");
+            if (otherArrow) otherArrow.textContent = "▼";
+            const otherPanel = otherBtn.nextElementSibling;
+            if (otherPanel && otherPanel.classList.contains("panel-desplegable")) {
+                otherPanel.style.maxHeight = null;
+            }
+        });
+
+        // Si el botón no estaba activo, ábrelo.
+        if (!isActive) {
+            this.classList.add("active");
+            loadAccordionImages();
+            // Esperar un ciclo de renderizado para asegurar que el iframe exista
+            setTimeout(() => {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+            }, 0);
+        }
+    });
+
+    // Listener para pausar el video CUANDO la animación de cierre TERMINA
+    panel.addEventListener('transitionend', () => {
+        if (!panel.style.maxHeight) { // Si el panel está cerrado
+            const iframeId = btn.dataset.iframeId;
+            const iframe = iframeId ? document.getElementById(iframeId) : null;
+            if (iframe && iframe.contentWindow) {
+                iframe.contentWindow.postMessage('{"event":"command","func":"pauseVideo","args":""}', '*');
+            }
+        }
+    });
+}
+
+function mostrarUltimosAgregados() {
+    const { catalogData } = getState();
+    const { cortes } = catalogData;
+
+    if (!cortes || cortes.length === 0) return;
+
+    const ultimosCortes = [...cortes]
+        .sort((a, b) => {
+            const dateA = a.timestamp ? new Date(a.timestamp) : new Date(0);
+            const dateB = b.timestamp ? new Date(b.timestamp) : new Date(0);
+            if (dateB - dateA !== 0) return dateB - dateA;
+            return b.id - a.id;
+        })
+        .slice(0, 6);
+
+    if (ultimosCortes.length === 0) return;
+
+    crearCarrusel('Últimos Agregados', ultimosCortes, item => {
+        return crearCardVehiculo(item);
+    });
+}
+
+/**
+ * Función unificada para crear tarjetas de vehículos con soporte para caché local y badge de "Visto".
+ */
+function crearCardVehiculo(item, hideBadge = false, resultsForVariant = null) {
+    const { viewedItems } = getState();
+    const isViewed = !hideBadge && viewedItems.some(v => String(v.id) === String(item.id));
+
+    const card = document.createElement("div");
+    card.className = "card";
+    card.setAttribute('data-vehicle-id', item.id || '');
+    card.style.animation = 'none';
+    card.style.opacity = '1';
+
+    // Badge de tipo de sección si es un resultado multi-sección
+    if (item._sectionType && item._sectionType !== 'corte') {
+        const typeBadge = document.createElement('div');
+        typeBadge.className = 'viewed-badge';
+        typeBadge.style.cssText = 'background: #007bff; color: white; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; position: absolute; top: 8px; left: 8px; z-index: 2;';
+        typeBadge.innerText = item._sectionType.toUpperCase();
+        card.appendChild(typeBadge);
+    } else if (isViewed) {
+        const badge = document.createElement('div');
+        badge.className = 'viewed-badge';
+        badge.innerHTML = '<i class="fa-solid fa-eye"></i> Visto';
+        card.appendChild(badge);
+    }
+
+    // Configurar OnClick según la sección
+    if (item._sectionType === 'relay') {
+        card.onclick = () => mostrarDetalleRelayModal(item);
+    } else if (item._sectionType === 'tutorial') {
+        card.onclick = () => mostrarDetalleTutorialModal(item);
+    } else if (item._sectionType === 'pys') {
+        card.onclick = () => openPysDetailModal(item);
+    } else if (resultsForVariant) {
+        card.onclick = () => {
+            const filasDeVariante = resultsForVariant.filter(r =>
+                r.marca === item.marca &&
+                r.modelo === item.modelo &&
+                r.versionesAplicables === item.versionesAplicables
+            );
+            mostrarVersiones(filasDeVariante, item.categoria, item.marca, item.modelo);
+        };
+    } else if (item.anoDesde && !resultsForVariant) {
+        card.onclick = () => {
+            if (hideBadge) {
+                if (window.location.hash.startsWith('#search=')) {
+                    history.replaceState({ level: 'categorias' }, '', window.location.pathname + window.location.search);
+                    const searchInput = document.getElementById('searchInput');
+                    if (searchInput) {
+                        searchInput.value = '';
+                        searchInput.parentElement.classList.remove('has-text');
+                        searchInput.blur();
+                    }
+                    document.body.classList.remove('search-active');
+                }
+            }
+            mostrarDetalleModal(item);
+        };
+    }
+
+    const img = document.createElement("img");
+    img.className = 'card-img-top';
+    img.alt = `${item.marca || ''} ${item.modelo || ''}`;
+    img.loading = "lazy";
+
+    setOptimizedImage(img, item.Imagen || item.imagenVehiculo || item.imagen, IMG_SIZE_SMALL);
+    card.appendChild(img);
+
+    const overlay = document.createElement("div");
+    overlay.className = "overlay";
+
+    if (item._sectionType && item._sectionType !== 'corte') {
+        overlay.innerHTML = `<div class="overlay-text-primary">${item.marca || ''}</div><div class="overlay-text-secondary">${item.modelo || ''}</div>`;
+    } else if (resultsForVariant) {
+        const version = item.versionesAplicables || '';
+        const tiposEncendido = [...new Set(resultsForVariant
+            .filter(r => r.marca === item.marca && r.modelo === item.modelo && r.categoria === item.categoria && r.versionesAplicables === item.versionesAplicables)
+            .map(r => r.tipoEncendido).filter(Boolean))].join(' / ');
+
+        overlay.innerHTML = `<div class="overlay-text-primary">${item.marca} ${item.modelo}</div><div class="overlay-text-secondary">${item.categoria} | ${version || tiposEncendido}</div>`;
+    } else {
+        const yearRange = item.anoHasta ? `${item.anoDesde} - ${item.anoHasta}` : item.anoDesde;
+        overlay.innerHTML = `<div class="overlay-text-primary">${item.marca} ${item.modelo}</div><div class="overlay-text-secondary">${yearRange} | ${item.tipoEncendido || ''}</div>`;
+    }
+
+    card.appendChild(overlay);
+    return card;
+}
+
+export function showLoginScreen(reason = null) {
+    document.getElementById('splash-screen').style.display = 'none';
+    document.querySelector('.container').style.display = 'none';
+    document.querySelector('.footer').style.display = 'none';
+    document.getElementById('welcome-message').style.display = 'none';
+    document.getElementById('login-modal').style.display = 'flex';
+
+    const loginError = document.getElementById('login-error');
+    if (reason) {
+        loginError.textContent = reason;
+        loginError.style.display = 'block';
+    } else {
+        loginError.style.display = 'none';
+    }
+
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+}
+
+export function showApp(user) {
+    const splash = document.getElementById('splash-screen');
+    splash.style.opacity = '0';
+    setTimeout(() => {
+        splash.style.display = 'none';
+    }, 500);
+
+    document.getElementById('login-modal').style.display = 'none';
+
+    // Comprobación de aceptación del aviso de condiciones
+    const termsAccepted = localStorage.getItem('gpsepedia_terms_accepted') === 'true';
+    const termsModal = document.getElementById('terms-modal');
+
+    if (!termsAccepted && termsModal) {
+        // Bloquear acceso mostrando solo el modal de términos
+        document.querySelector('.container').style.display = 'none';
+        document.querySelector('.footer').style.display = 'none';
+        termsModal.style.display = 'flex';
+
+        // Manejar el evento del botón
+        const acceptBtn = document.getElementById('btn-accept-terms');
+        if (acceptBtn) {
+            acceptBtn.onclick = () => {
+                localStorage.setItem('gpsepedia_terms_accepted', 'true');
+                termsModal.style.display = 'none';
+                document.querySelector('.container').style.display = 'block';
+                document.querySelector('.footer').style.display = 'flex';
+            };
+        }
+    } else {
+        if (termsModal) {
+            termsModal.style.display = 'none';
+        }
+        document.querySelector('.container').style.display = 'block';
+        document.querySelector('.footer').style.display = 'flex';
+    }
+
+    if (user && (user.Nombre_Completo || user.Nombre_Usuario)) {
+        document.getElementById('menu-username').textContent = user.Nombre_Completo || user.Nombre_Usuario;
+
+        // Mostrar mensaje de bienvenida en el nuevo header si existe
+        const welcomeMsg = document.getElementById('welcome-message');
+        if (welcomeMsg) {
+            welcomeMsg.textContent = `Hola, ${user.Nombre_Completo || user.Nombre_Usuario}`;
+            welcomeMsg.style.display = 'block';
+        }
+    }
+
+    const devToolsBtn = document.getElementById('dev-tools-btn');
+    const userRole = user ? user.Privilegios : '';
+    if (devToolsBtn && userRole === 'Desarrollador') {
+        devToolsBtn.style.display = 'flex';
+    }
+
+    const inboxBtn = document.getElementById('inbox-btn');
+    if (inboxBtn && ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole)) {
+        inboxBtn.style.display = 'flex';
+    }
+
+    const dashboardBtn = document.getElementById('dashboard-btn');
+    if (dashboardBtn && ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole)) {
+        dashboardBtn.style.display = 'flex';
+    }
+
+    // Protección de renderizado: No mostrar el catálogo si los datos no están listos.
+    const { catalogData } = getState();
+    if (catalogData && Array.isArray(catalogData.cortes) && catalogData.cortes.length > 0) {
+        mostrarCategorias();
+    } else {
+        // Mostrar estado de carga si los datos aún no están listos
+        const cont = document.getElementById("contenido");
+        if (cont) {
+            cont.innerHTML = `
+                <div class="loading-data-container" style="text-align: center; padding: 50px 20px;">
+                    <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 2rem; color: var(--accent-color); margin-bottom: 15px;"></i>
+                    <p>Cargando catálogo...</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// Variable local para rastrear el estado previo de los carruseles de actividad y evitar bucles
+let lastHistoryCount = 0;
+let lastViewedCount = 0;
+
+// Suscribirse a cambios de estado para renderizar el catálogo cuando los datos lleguen
+subscribe((state) => {
+    const splash = document.getElementById('splash-screen');
+    // Consideramos que la app es visible si el splash no está presente o su opacidad es 0
+    const isAppVisible = !splash || splash.style.display === 'none' || splash.style.opacity === '0';
+
+    if (isAppVisible && state.catalogData && Array.isArray(state.catalogData.cortes) && state.catalogData.cortes.length > 0) {
+        const cont = document.getElementById("contenido");
+        const isMainLevel = state.navigationState.level === 'categorias';
+
+        if (!isMainLevel || !cont) return;
+
+        // Detectar si el historial o los vistos han cambiado para forzar refresco del catálogo
+        const historyChanged = (state.searchHistory?.length || 0) !== lastHistoryCount;
+        const viewedChanged = (state.viewedItems?.length || 0) !== lastViewedCount;
+
+        if (historyChanged || viewedChanged) {
+            lastHistoryCount = state.searchHistory?.length || 0;
+            lastViewedCount = state.viewedItems?.length || 0;
+            mostrarCategorias();
+            return;
+        }
+
+        // Solo renderizar si el contenedor tiene el mensaje de carga o está vacío o contiene errores previos
+        if (cont.querySelector('.loading-data-container') || cont.innerHTML.trim() === "" || cont.querySelector('.error-message')) {
+             mostrarCategorias();
+        }
+    }
+});
+
+export function showGlobalError(message) {
+    const toast = document.getElementById('error-toast');
+    if (!toast) return;
+
+    toast.textContent = message;
+    toast.style.display = 'block';
+
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 7000);
+}
+
+/* TAREA 1: Alias y función unificada de notificación para Inbox y operaciones del sistema */
+export function mostrarNotificacion(message, type = 'info') {
+    return showGlobalNotification(message, type);
+}
+
+export function showGlobalNotification(message, type = 'info') {
+    const toast = document.getElementById('notification-toast');
+    if (!toast) {
+        alert(message);
+        return;
+    }
+    toast.textContent = message;
+    if (type === 'success') {
+        toast.style.backgroundColor = '#28a745';
+    } else if (type === 'error') {
+        toast.style.backgroundColor = '#dc3545';
+    } else {
+        toast.style.backgroundColor = '#007bff';
+    }
+    toast.style.display = 'block';
+    setTimeout(() => {
+        toast.style.display = 'none';
+    }, 5000);
+}
+
+export function openSideMenu() {
+    const { currentUser } = getState();
+    if (currentUser && (currentUser.Nombre_Completo || currentUser.Nombre_Usuario)) {
+        document.getElementById('menu-username').textContent = currentUser.Nombre_Completo || currentUser.Nombre_Usuario;
+    }
+    document.getElementById('side-menu').classList.add('open');
+    document.getElementById('menu-overlay').classList.add('open');
+
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ sideMenuOpen: true }, '');
+    }
+}
+
+export function closeSideMenu(isFromPopState = false) {
+    document.getElementById('side-menu').classList.remove('open');
+    document.getElementById('menu-overlay').classList.remove('open');
+
+    if (!isFromPopState && window.history && window.history.state && window.history.state.sideMenuOpen) {
+        window.history.back();
+    }
+}
+
+export function mostrarSeccion(sectionName, isFromPopState = false) {
+    document.querySelectorAll('.content-section').forEach(section => {
+        section.style.display = 'none';
+    });
+    document.querySelectorAll('.section-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+
+    const sectionId = sectionName === 'cortes' ? 'contenido' : `contenido-${sectionName}`;
+    const sectionElement = document.getElementById(sectionId);
+    const buttonElement = document.getElementById(`btn-${sectionName}`);
+
+    if (sectionElement) sectionElement.style.display = 'block';
+    if (buttonElement) buttonElement.classList.add('active');
+
+    // Registrar en el historial si no viene de un popstate
+    if (!isFromPopState && window.history && window.history.pushState) {
+        const hash = sectionName === 'cortes' ? '' : `#${sectionName}`;
+        window.history.pushState({ section: sectionName }, '', window.location.pathname + window.location.search + hash);
+    }
+
+    switch (sectionName) {
+        case 'cortes':
+            mostrarCategorias();
+            break;
+        case 'tutoriales':
+            mostrarTutorialesGrid();
+            break;
+        case 'relay':
+            mostrarRelayGrid();
+            break;
+        case 'pys':
+            renderPysSection();
+            break;
+    }
+}
+
+/* TAREA 4: Renderizado robusto e independiente de tarjetas de Tutoriales y Relay */
+function mostrarTutorialesGrid() {
+    const { catalogData } = getState();
+    const tutoriales = (catalogData && catalogData.tutoriales) ? catalogData.tutoriales : [];
+    const cont = document.getElementById('contenido-tutoriales');
+    if (!cont) return;
+    cont.innerHTML = '<h4>Tutoriales</h4>';
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+
+    // First card: Add Tutorial Card (+)
+    const createCard = document.createElement('div');
+    createCard.className = 'card card-create-tutorial';
+    createCard.innerHTML = `
+        <i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 6px;"></i>
+        <span style="font-size: 0.95rem;">Agregar Tutorial</span>
+    `;
+    createCard.onclick = () => openAddTutorialModal();
+    grid.appendChild(createCard);
+
+    tutoriales.forEach((item, index) => {
+        if (!item) return;
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => mostrarDetalleTutorialModal(item);
+        const img = document.createElement("img");
+        setOptimizedImage(img, item.Imagen || '', IMG_SIZE_SMALL);
+        img.alt = item.Tema || `Tutorial ${index + 1}`;
+        img.loading = "lazy";
+        card.appendChild(img);
+        const overlay = document.createElement("div");
+        overlay.className = "overlay";
+        overlay.textContent = item.Tema || `Tutorial ${index + 1}`;
+        card.appendChild(overlay);
+        grid.appendChild(card);
+    });
+    cont.appendChild(grid);
+}
+
+function mostrarRelayGrid() {
+    const { catalogData } = getState();
+    const relay = (catalogData && catalogData.relay) ? catalogData.relay : [];
+    const cont = document.getElementById('contenido-relay');
+    if (!cont) return;
+    cont.innerHTML = '<h4>Configuraciones de Relay</h4>';
+
+    const grid = document.createElement('div');
+    grid.className = 'grid';
+    relay.forEach((item, index) => {
+        if (!item) return;
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => mostrarDetalleRelayModal(item);
+        const img = document.createElement("img");
+        setOptimizedImage(img, item.imagen || '', IMG_SIZE_SMALL);
+        img.alt = item.configuracion || item.funcion || `Configuración Relay ${index + 1}`;
+        img.loading = "lazy";
+        card.appendChild(img);
+        const overlay = document.createElement("div");
+        overlay.className = "overlay";
+        overlay.textContent = item.configuracion || item.funcion || `Configuración ${index + 1}`;
+        card.appendChild(overlay);
+        grid.appendChild(card);
+    });
+    cont.appendChild(grid);
+}
+
+export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
+    const cont = document.getElementById("detalleCompleto");
+    cont.innerHTML = "";
+
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
+    const isDeveloper = userRole === 'Desarrollador';
+
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+
+    const titleContainer = document.createElement("div");
+    titleContainer.style.cssText = "display: flex; align-items: center; gap: 8px; flex: 1;";
+
+    const title = document.createElement("h2");
+    title.textContent = item.Tema;
+    title.style.color = "#007bff";
+    title.style.margin = "0";
+    titleContainer.appendChild(title);
+    headerDiv.appendChild(titleContainer);
+
+    const controlsContainer = document.createElement("div");
+    controlsContainer.style.cssText = "display: flex; align-items: center; gap: 8px;";
+
+    if (isDeveloper) {
+        if (inEditModeTutorial) {
+            // Botón Descartar (↩️)
+            const resetBtn = document.createElement("button");
+            resetBtn.innerHTML = '↩️';
+            resetBtn.className = "share-modal-btn";
+            resetBtn.title = "Descartar cambios";
+            resetBtn.style.fontSize = "1.2em";
+            resetBtn.onclick = () => mostrarDetalleTutorialModal(item, false);
+            controlsContainer.appendChild(resetBtn);
+
+            // Botón Guardar (✅)
+            const saveBtn = document.createElement("button");
+            saveBtn.innerHTML = '✅';
+            saveBtn.className = "share-modal-btn";
+            saveBtn.title = "Guardar cambios";
+            saveBtn.style.fontSize = "1.2em";
+            saveBtn.id = "btn-save-tutorial-edit";
+            controlsContainer.appendChild(saveBtn);
+        } else {
+            // Botón de lápiz de Edición
+            const editBtn = document.createElement("button");
+            editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+            editBtn.className = "share-modal-btn";
+            editBtn.title = "Activar modo edición";
+            editBtn.onclick = () => mostrarDetalleTutorialModal(item, true);
+            controlsContainer.appendChild(editBtn);
+        }
+    }
+
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "Cerrar";
+    closeBtn.onclick = () => {
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+        }
+    };
+    closeBtn.className = "backBtn";
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
+    controlsContainer.appendChild(closeBtn);
+    headerDiv.appendChild(controlsContainer);
+    cont.appendChild(headerDiv);
+
+    if (inEditModeTutorial) {
+        // Formulario in-modal de edición de tutorial
+        const form = document.createElement("div");
+        form.style.cssText = "display: flex; flex-direction: column; gap: 12px; margin-top: 10px;";
+
+        const temaLabel = document.createElement("label");
+        temaLabel.style.fontWeight = "bold";
+        temaLabel.textContent = "Tema / Título (máx 30 caracteres):";
+        const temaInput = document.createElement("input");
+        temaInput.type = "text";
+        temaInput.maxLength = 30;
+        temaInput.value = item.Tema || "";
+        temaInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const videoLabel = document.createElement("label");
+        videoLabel.style.fontWeight = "bold";
+        videoLabel.textContent = "Enlace de Vídeo de YouTube:";
+        const videoInput = document.createElement("input");
+        videoInput.type = "url";
+        videoInput.value = item.Video || "";
+        videoInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const descLabel = document.createElement("label");
+        descLabel.style.fontWeight = "bold";
+        descLabel.textContent = "Descripción / Detalles (máx 700 caracteres):";
+        const descInput = document.createElement("textarea");
+        descInput.id = "edit-tutorial-desc-textarea";
+        descInput.maxLength = 700;
+        descInput.rows = 4;
+        descInput.value = item.Detalles || item.Descripcion || "";
+        descInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        form.appendChild(temaLabel);
+        form.appendChild(temaInput);
+        form.appendChild(videoLabel);
+        form.appendChild(videoInput);
+        form.appendChild(descLabel);
+        form.appendChild(createRichTextToolbar("edit-tutorial-desc-textarea"));
+        form.appendChild(descInput);
+        cont.appendChild(form);
+
+        const saveBtn = controlsContainer.querySelector("#btn-save-tutorial-edit");
+        if (saveBtn) {
+            saveBtn.onclick = async () => {
+                const newTema = temaInput.value.trim();
+                const newVideo = videoInput.value.trim();
+                const newDesc = descInput.value.trim();
+                if (!newTema) {
+                    mostrarNotificacion("El tema no puede estar vacío.", "error");
+                    return;
+                }
+                saveBtn.disabled = true;
+                showSavingIndicator("saving", "Guardando cambios...");
+                try {
+                    const res = await routeAction('updateTutorialItem', {
+                        originalTema: item.Tema,
+                        tema: newTema,
+                        videoUrl: newVideo,
+                        descripcion: newDesc,
+                        userRole
+                    });
+                    if (res && res.status === 'success') {
+                        item.Tema = newTema;
+                        item.Video = newVideo;
+                        item.Detalles = newDesc;
+                        item.Descripcion = newDesc;
+                        showSavingIndicator("success", "Tutorial guardado");
+                        mostrarNotificacion("Tutorial actualizado con éxito.", "success");
+                        mostrarDetalleTutorialModal(item, false);
+                    } else {
+                        throw new Error((res && res.message) || "Error al actualizar");
+                    }
+                } catch (err) {
+                    console.error("Error guardando tutorial:", err);
+                    showSavingIndicator("error", "Error al guardar");
+                    mostrarNotificacion(err.message || "Error al guardar el tutorial", "error");
+                    saveBtn.disabled = false;
+                }
+            };
+        }
+    } else {
+        // Visualización normal del tutorial
+        if (item.Video) {
+            const videoContainer = document.createElement('div');
+            const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || item.Video.replace("watch?v=", "embed/");
+            videoContainer.innerHTML = `<iframe width="100%" height="315" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px;"></iframe>`;
+            cont.appendChild(videoContainer);
+        }
+
+        const details = [
+            createDetailParagraph('Cómo Identificarlo', item.comoIdentificarlo),
+            createDetailParagraph('Dónde Encontrarlo', item.dondeEncontrarlo),
+            createDetailParagraph('Detalles', item.Detalles || item.Descripcion)
+        ];
+
+        details.forEach(detail => {
+            if (detail) cont.appendChild(detail);
+        });
+    }
+
+    const modalDetalle = document.getElementById("modalDetalle");
+    modalDetalle.dataset.modalType = 'tutorial';
+    modalDetalle.classList.add("visible");
+    if (!inEditModeTutorial && window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
+}
+
+function mostrarDetalleRelayModal(item) {
+    const cont = document.getElementById("detalleCompleto");
+    cont.innerHTML = "";
+
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;";
+    const title = document.createElement("h2");
+    title.textContent = item.configuracion;
+    title.style.color = "#007bff";
+    headerDiv.appendChild(title);
+    const closeBtn = document.createElement("button");
+    closeBtn.textContent = "Cerrar";
+    closeBtn.onclick = () => {
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+        }
+    };
+    closeBtn.className = "backBtn";
+    closeBtn.style.cssText = "color:white; background:#dc3545; border:none; margin:0;";
+    headerDiv.appendChild(closeBtn);
+    cont.appendChild(headerDiv);
+
+    // Comentario: Se refactoriza para usar appendChild y evitar `innerHTML +=` que es propenso a errores.
+    if (item.imagen) {
+        const img = document.createElement("img");
+        setOptimizedImage(img, item.imagen, IMG_SIZE_MEDIUM);
+        img.style.width = "100%";
+        img.style.borderRadius = "8px";
+        img.onclick = () => {
+            const highResImgUrl = getImageUrl(item.imagen, IMG_SIZE_LARGE);
+            window.abrirLightbox(highResImgUrl, 'lightboxImg');
+        };
+        cont.appendChild(img);
+    }
+
+    const details = [
+        createDetailParagraph('Función', item.funcion),
+        createDetailParagraph('Vehículos Comunes', item.vehiculoDondeSeUtiliza),
+        createDetailParagraph('Observación', item.observacion)
+    ];
+
+    details.forEach(detail => {
+        if (detail) cont.appendChild(detail);
+    });
+
+    const modalDetalle = document.getElementById("modalDetalle");
+    modalDetalle.dataset.modalType = 'relay';
+    modalDetalle.classList.add("visible");
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
+}
+
+
+/* TAREA 9 (2.1): BOTÓN DE REPORTE INDIVIDUAL EN CADA CORTE Y MODAL DE REPORTE */
+export function openReportCutModal(vehicleId, corteNum, currentCutData) {
+    const existing = document.getElementById("report-cut-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "report-cut-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2500";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-triangle-exclamation" style="color: #dc3545;"></i> Reportar Problema en Corte #${corteNum}</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">
+            Corte seleccionado: <strong>${currentCutData.tipo || 'Sin tipo definido'}</strong>
+        </p>
+
+        <form id="report-cut-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Descripción del Error Detectado *</label>
+                <textarea id="rep-error" rows="3" placeholder="Describe claramente el problema o fallo detectado..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Información Incorrecta o Incompleta</label>
+                <textarea id="rep-incorrecto" rows="2" placeholder="Indica qué datos específicos considera erróneos o incompletos..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Imagen de Referencia (Opcional)</label>
+                <input type="file" id="rep-img-file" accept="image/*">
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Enviar Reporte</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeBtn = content.querySelector(".info-close-btn");
+    closeBtn.onclick = () => modal.remove();
+
+    const form = content.querySelector("#report-cut-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) {
+            showGlobalError("Debes estar conectado para reportar.");
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.classList.add("btn-loading");
+
+        const errorDesc = content.querySelector("#rep-error").value.trim();
+        const incorrectInfo = content.querySelector("#rep-incorrecto").value.trim();
+        let fullProblemText = `[Corte #${corteNum}] ${errorDesc}`;
+        if (incorrectInfo) {
+            fullProblemText += ` | Info incorrecta: ${incorrectInfo}`;
+        }
+
+        const fileInput = content.querySelector("#rep-img-file");
+        if (fileInput.files && fileInput.files[0]) {
+            fullProblemText += ` [Imagen de referencia adjunta: ${fileInput.files[0].name}]`;
+        }
+
+        try {
+            const res = await reportProblem(
+                vehicleId,
+                fullProblemText,
+                currentUser.ID,
+                currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+            );
+
+            const reportId = res && res.reportId ? res.reportId : `REP-${Date.now()}`;
+            modal.remove();
+
+            // Modal de confirmación con opción accesible de «Sugerir cambio»
+            showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId);
+        } catch (err) {
+            console.error("Error al enviar reporte de corte:", err);
+            showGlobalError("Error al enviar el reporte. Por favor inténtalo de nuevo.");
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("btn-loading");
+        }
+    };
+}
+
+// Modal de confirmación accesible posterior al reporte con opción «Sugerir cambio»
+function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
+    const existing = document.getElementById("report-success-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "report-success-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2500";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "450px";
+    content.style.textAlign = "center";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <div style="font-size: 2.5rem; color: #28a745; margin-bottom: 10px;">
+            <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <h3 style="margin: 0 0 10px 0;">¡Reporte Enviado con Éxito!</h3>
+        <p style="font-size: 0.9em; color: var(--text-color); margin-bottom: 15px;">
+            Tu reporte para el Corte #${corteNum} ha sido registrado bajo el identificador <strong>${reportId}</strong>.
+        </p>
+        <p style="font-size: 0.9em; color: var(--text-color); margin-bottom: 20px;">
+            ¿Deseas proponer una sugerencia de cambio técnica para este corte ahora mismo?
+        </p>
+        <div style="display: flex; gap: 10px; justify-content: center; flex-wrap: wrap;">
+            <button id="btn-suggest-change-action" class="btn btn-primary" style="display: flex; align-items: center; gap: 6px;">
+                <i class="fa-solid fa-pen-to-square"></i> Sugerir cambio
+            </button>
+            <button id="btn-close-report-success" class="btn btn-secondary">
+                Cerrar
+            </button>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const close = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = close;
+    content.querySelector("#btn-close-report-success").onclick = close;
+
+    content.querySelector("#btn-suggest-change-action").onclick = () => {
+        modal.remove();
+        openSuggestCutModal(vehicleId, corteNum, currentCutData, reportId);
+    };
+}
+
+/* TAREA 9 (2.2): MODAL DE SUGERENCIA DE CAMBIOS VINCULADA AL CORTE Y ACCESO SEGURO */
+export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, reportId = "") {
+    const existing = document.getElementById("suggest-cut-modal");
+    if (existing) existing.remove();
+
+    // Asegurar número de corte numérico válido
+    const validCorteNum = corteNum || currentCutData.index || 1;
+    const reportRef = reportId || `REP-${Date.now()}`;
+
+    const modal = document.createElement("div");
+    modal.id = "suggest-cut-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2500";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "520px";
+
+    // Obtención segura de opciones de menú desplegable para evitar ReferenceError
+    const safeDropdowns = (typeof dropdownOptions !== "undefined" && dropdownOptions)
+        || (typeof window !== "undefined" && window.dropdownOptions)
+        || (typeof getState === "function" && getState() && getState().dropdownOptions)
+        || null;
+
+    // Opciones para tipo de corte
+    const defaultTipos = ["Bomba de combustible", "Ignición", "Marcha / Arranque", "Fusible Principal", "Sensor CKP / CMP", "No recomendado"];
+    const tiposCorteOptions = (safeDropdowns && safeDropdowns.tipoDeCorte && safeDropdowns.tipoDeCorte.length > 0)
+        ? safeDropdowns.tipoDeCorte
+        : defaultTipos;
+
+    const tipoOptionsHtml = tiposCorteOptions.map(opt => {
+        const isSel = (currentCutData.tipo && currentCutData.tipo.toLowerCase() === opt.toLowerCase()) ? "selected" : "";
+        return `<option value="${opt}" ${isSel}>${opt}</option>`;
+    }).join("");
+
+    // Opciones para configuración de relay
+    const defaultRelays = ["Sin relay", "Relay 5 pines (Normalmente Cerrado)", "Relay 5 pines (Normalmente Abierto)", "Relay 4 pines"];
+    const relayOptions = (safeDropdowns && safeDropdowns.configRelay && safeDropdowns.configRelay.length > 0)
+        ? safeDropdowns.configRelay
+        : defaultRelays;
+
+    const relayOptionsHtml = relayOptions.map(opt => {
+        const isSel = (currentCutData.configRelay && currentCutData.configRelay.toLowerCase() === opt.toLowerCase()) ? "selected" : "";
+        return `<option value="${opt}" ${isSel}>${opt}</option>`;
+    }).join("");
+
+    // Opciones para testigo Check Engine
+    const currentCheckEngine = currentCutData.checkEngine || currentCutData.activaCheckEngine || "";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-pen-to-square"></i> Sugerir Cambio - Corte #${validCorteNum}</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
+            Vinculado al Reporte: <strong>${reportRef}</strong> | Vehículo: <strong>${vehicleId}</strong>
+        </p>
+
+        <form id="suggest-cut-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label for="sug-tipo">Tipo de Corte</label>
+                <select id="sug-tipo" class="dev-input" style="padding: 6px;">
+                    <option value="">-- Conservar / Seleccionar Tipo --</option>
+                    ${tipoOptionsHtml}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sug-relay">Configuración de Relay</label>
+                <select id="sug-relay" class="dev-input" style="padding: 6px;">
+                    <option value="">-- Conservar / Seleccionar Relay --</option>
+                    ${relayOptionsHtml}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sug-ubicacion">Ubicación / Detalles Técnicos del Corte</label>
+                <input type="text" id="sug-ubicacion" value="${currentCutData.ubicacion || ""}" placeholder="Ej. Bajo el asiento trasero, ramal principal izquierdo">
+            </div>
+            <div class="form-group">
+                <label for="sug-color">Color de Cable</label>
+                <input type="text" id="sug-color" value="${currentCutData.colorCable || ""}" placeholder="Ej. Azul / Blanco, Verde grueso">
+            </div>
+            <div class="form-group">
+                <label for="sug-check-engine">¿El corte activa el testigo de motor (Check Engine)?</label>
+                <select id="sug-check-engine" class="dev-input" style="padding: 6px;">
+                    <option value="No" ${currentCheckEngine.toLowerCase().includes('no') ? 'selected' : ''}>No activa testigo</option>
+                    <option value="Sí" ${currentCheckEngine.toLowerCase().includes('si') || currentCheckEngine.toLowerCase().includes('sí') ? 'selected' : ''}>Sí, activa testigo</option>
+                    <option value="No aplica" ${!currentCheckEngine ? 'selected' : ''}>No aplica / No especificado</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="sug-img-file">Imagen de Referencia del Corte (Opcional)</label>
+                <input type="file" id="sug-img-file" accept="image/*">
+            </div>
+            <div class="form-group">
+                <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('sug-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('sug-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
+                <textarea id="sug-detalles" rows="3" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:8px;">Enviar Sugerencia</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeBtn = content.querySelector(".info-close-btn");
+    closeBtn.onclick = () => modal.remove();
+
+    const form = content.querySelector("#suggest-cut-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) {
+            showGlobalError("Debes estar conectado para sugerir un cambio.");
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.classList.add("btn-loading");
+        submitBtn.innerText = "Enviando...";
+
+        const fileInput = content.querySelector("#sug-img-file");
+        let imgBase64 = "";
+
+        if (fileInput.files && fileInput.files[0]) {
+            const file = fileInput.files[0];
+            imgBase64 = await new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = (re) => resolve(re.target.result);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        const proposedValues = {
+            tipo: content.querySelector("#sug-tipo").value.trim() || currentCutData.tipo || "",
+            ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
+            colorCable: content.querySelector("#sug-color").value.trim(),
+            configRelay: content.querySelector("#sug-relay").value.trim() || currentCutData.configRelay || "",
+            activaCheckEngine: content.querySelector("#sug-check-engine").value
+        };
+
+        const payload = {
+            reportId: reportRef,
+            vehicleId,
+            corteIndex: validCorteNum,
+            userId: currentUser.ID,
+            userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
+            details: content.querySelector("#sug-detalles").value.trim(),
+            imgBase64,
+            proposedValues
+        };
+
+        try {
+            await suggestCutChange(payload);
+            modal.remove();
+            showGlobalNotification("Sugerencia enviada correctamente. Será revisada por un administrador.", "success");
+        } catch (err) {
+            console.error("Error al enviar sugerencia:", err);
+            showGlobalError("Error al guardar la sugerencia: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.classList.remove("btn-loading");
+            submitBtn.innerText = "Enviar Sugerencia";
+        }
+    };
+}
+
+
+/* TAREA 5 (3.1): MENÚ DINÁMICO DE AMPLIACIÓN EN EL MODAL DE DETALLE Y CÁLCULO DE ESPACIOS */
+export function openExpandMenuModal(item) {
+    // Tarea 3.1: Botón "+" y menú dinámico de ampliación en el modal de detalle
+    const existing = document.getElementById("expand-menu-modal");
+    if (existing) existing.remove();
+
+    // Calculate available slots
+    let cutsCount = 0;
+    if (item.tipoCorte1) cutsCount++;
+    if (item.tipoCorte2) cutsCount++;
+    if (item.tipoCorte3) cutsCount++;
+    const cutsAvailable = 3 - cutsCount;
+
+    let feedsCount = 0;
+    if (item.cableAlimen) feedsCount++;
+    if (item.cableAlimen2) feedsCount++;
+    if (item.cableAlimen3) feedsCount++;
+    const feedsAvailable = 3 - feedsCount;
+
+    // Lógica para determinar la cantidad de versiones y la disponibilidad del botón "Agregar VIN"
+    function countEquipmentVersionsFrontend(versionesStr) {
+        if (!versionesStr) return 1;
+        const str = String(versionesStr).trim();
+        if (!str) return 1;
+        const parts = str.split(/[,/\\;]+/).map(p => p.trim()).filter(Boolean);
+        const count = parts.length;
+        if (count <= 1) return 1;
+        if (count === 2) return 2;
+        return 3;
+    }
+
+    function parseVinCollectionFrontend(rawVin) {
+        if (!rawVin) return [];
+        const str = String(rawVin).trim();
+        if (!str) return [];
+        let list = [];
+        if (str.startsWith("[") && str.endsWith("]")) {
+            try {
+                const arr = JSON.parse(str);
+                if (Array.isArray(arr)) {
+                    list = arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
+                }
+            } catch (e) {}
+        }
+        if (list.length === 0) {
+            list = str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+        }
+        return list.filter(v => v && !v.startsWith("OP-") && !v.startsWith("OP_") && !v.includes("IDOPERACION"));
+    }
+
+    const maxVinAllowed = countEquipmentVersionsFrontend(item.versionesAplicables);
+    const registeredVins = parseVinCollectionFrontend(item.vin);
+    // Permitir agregar VIN si aún hay cupo o para asociar una nueva versión de equipamiento (hasta un tope de 3)
+    const canAddVin = registeredVins.length < maxVinAllowed || registeredVins.length < 3;
+
+    const modal = document.createElement("div");
+    modal.id = "expand-menu-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2100";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "400px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-circle-plus"></i> Ampliar Información</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
+
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            ${cutsAvailable > 0 ? `<button id="btn-exp-cut" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-car-on"></i> Nuevo corte (${cutsAvailable} disponibles)</button>` : ""}
+            ${!item.apertura ? `<button id="btn-exp-apertura" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-door-open"></i> Apertura de puertas</button>` : ""}
+            ${feedsAvailable > 0 ? `<button id="btn-exp-feed" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-plug"></i> Cable de alimentación (${feedsAvailable} disponibles)</button>` : ""}
+            ${!item.videoGuiaDesarmeUrl ? `<button id="btn-exp-video" class="btn btn-secondary btn-expand-option"><i class="fa-brands fa-youtube"></i> Agregar enlace de vídeo</button>` : ""}
+            ${canAddVin ? `<button id="btn-exp-vin" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-barcode"></i> Agregar VIN (${maxVinAllowed - registeredVins.length} disponible${maxVinAllowed - registeredVins.length > 1 ? 's' : ''})</button>` : ""}
+            <button id="btn-exp-pys" class="btn btn-secondary btn-expand-option"><i class="fa-solid fa-triangle-exclamation"></i> Agregar problema relacionado</button>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const cutBtn = content.querySelector("#btn-exp-cut");
+    if (cutBtn) cutBtn.onclick = () => { modal.remove(); openAddCutForModelModal(item); };
+
+    const apBtn = content.querySelector("#btn-exp-apertura");
+    if (apBtn) apBtn.onclick = () => { modal.remove(); openAddAperturaModal(item); };
+
+    const feedBtn = content.querySelector("#btn-exp-feed");
+    if (feedBtn) feedBtn.onclick = () => { modal.remove(); openAddFeedModal(item); };
+
+    const videoBtn = content.querySelector("#btn-exp-video");
+    if (videoBtn) videoBtn.onclick = () => { modal.remove(); openAddVideoModal(item); };
+
+    const vinBtn = content.querySelector("#btn-exp-vin");
+    if (vinBtn) vinBtn.onclick = () => { modal.remove(); openAddVinModal(item); };
+
+    const pysBtn = content.querySelector("#btn-exp-pys");
+    if (pysBtn) pysBtn.onclick = () => { modal.remove(); openAssociateExistingProblemModal(item); };
+}
+
+/* TAREA 4 (11.4, 11.5, 11.6): AMPLIACIÓN DE DETALLES CON VIN Y GESTIÓN SEGÚN EQUIPAMIENTO / RECTIFICACIÓN SELECTOR TRIM LEVEL */
+export function openAddVinModal(item) {
+    const existing = document.getElementById("add-vin-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-vin-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "450px";
+
+    // Verificar si el modelo tiene versiones de equipamiento registradas
+    const versions = parseEquipmentVersions(item.versionesAplicables);
+
+    let trimLevelSectionHtml = "";
+    if (versions.length > 0) {
+        const optionsHtml = versions.map(v => `<option value="${v}">${v}</option>`).join("");
+        trimLevelSectionHtml = `
+            <div class="form-group">
+                <label for="modal-vin-trim">Versión de Equipamiento (Trim Level)</label>
+                <select id="modal-vin-trim" required style="width:100%; padding:8px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);">
+                    <option value="" selected disabled>Seleccionar Trim Level</option>
+                    ${optionsHtml}
+                    <option value="__NEW_TRIM__">+ Crear nueva versión de equipamiento...</option>
+                </select>
+            </div>
+            <div class="form-group" id="grp-new-trim" style="display:none;">
+                <label for="modal-new-trim-input">Nombre de la Nueva Versión</label>
+                <input type="text" id="modal-new-trim-input" placeholder="Ej: Platinum, SR5, High Country" style="width:100%; padding:8px; border-radius:4px; border:1px solid var(--border-color, #ccc);">
+            </div>
+        `;
+    } else {
+        // Si el modelo no tiene ninguna versión registrada
+        trimLevelSectionHtml = `
+            <div class="form-group" id="grp-new-trim">
+                <label for="modal-new-trim-input">Versión de Equipamiento (Trim Level)</label>
+                <input type="text" id="modal-new-trim-input" required placeholder="Ej: Base, Standard, Full" style="width:100%; padding:8px; border-radius:4px; border:1px solid var(--border-color, #ccc);">
+            </div>
+        `;
+    }
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-barcode"></i> Agregar VIN / Chasis</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo} (${item.anoDesde}-${item.anoHasta})</p>
+
+        <form id="add-vin-form" style="display:flex; flex-direction:column; gap:12px;">
+            ${trimLevelSectionHtml}
+            <div class="form-group">
+                <label for="modal-vin-input">Número de Chasis / VIN</label>
+                <input type="text" id="modal-vin-input" placeholder="Ingresa el VIN completo del vehículo" maxlength="18" required style="text-transform: uppercase; width:100%; padding:8px;">
+                <div id="modal-vin-warning" style="display: none; color: #dc3545; font-size: 0.85em; margin-top: 5px; font-weight: bold;"></div>
+            </div>
+            <div class="modal-btn-compact-container">
+                <button type="submit" id="btn-save-vin" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-save"></i> Guardar VIN</button>
+            </div>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-vin-form");
+    const vinInput = content.querySelector("#modal-vin-input");
+    const warningEl = content.querySelector("#modal-vin-warning");
+    const trimSelect = form.querySelector("#modal-vin-trim");
+    const grpNewTrim = form.querySelector("#grp-new-trim");
+    const newTrimInput = form.querySelector("#modal-new-trim-input");
+
+    if (trimSelect && grpNewTrim && newTrimInput) {
+        trimSelect.addEventListener("change", () => {
+            if (trimSelect.value === "__NEW_TRIM__") {
+                grpNewTrim.style.display = "block";
+                newTrimInput.required = true;
+                newTrimInput.focus();
+            } else {
+                grpNewTrim.style.display = "none";
+                newTrimInput.required = false;
+                newTrimInput.value = "";
+            }
+        });
+    }
+
+    vinInput.addEventListener('blur', async () => {
+        const vinVal = vinInput.value.trim();
+        if (!vinVal) {
+            warningEl.style.display = 'none';
+            return;
+        }
+        try {
+            const res = await routeAction('checkVinDuplicate', { vin: vinVal, currentVehicleId: item.id });
+            if (res.duplicate) {
+                warningEl.style.display = 'block';
+                warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="document.getElementById('add-vin-modal')?.remove(); window.location.href='index.html#search=${encodeURIComponent(res.modelName)}'"><strong>${res.modelName}</strong></button>`;
+            } else {
+                warningEl.style.display = 'none';
+            }
+        } catch (err) {
+            console.error('Error al validar VIN:', err);
+        }
+    });
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const vinVal = vinInput.value.trim();
+        if (!vinVal) return;
+
+        let selectedTrim = null;
+        let isNewTrim = false;
+
+        if (trimSelect) {
+            if (!trimSelect.value || trimSelect.value === "") {
+                alert("Por favor selecciona una versión de equipamiento (Trim Level).");
+                trimSelect.focus();
+                return;
+            }
+            if (trimSelect.value === "__NEW_TRIM__") {
+                const customTrim = newTrimInput ? newTrimInput.value.trim() : "";
+                if (!customTrim) {
+                    alert("Por favor ingresa el nombre de la nueva versión de equipamiento.");
+                    if (newTrimInput) newTrimInput.focus();
+                    return;
+                }
+                selectedTrim = customTrim;
+                isNewTrim = true;
+            } else {
+                selectedTrim = trimSelect.value.trim();
+            }
+        } else if (newTrimInput) {
+            const customTrim = newTrimInput.value.trim();
+            if (!customTrim) {
+                alert("Por favor ingresa la versión de equipamiento.");
+                newTrimInput.focus();
+                return;
+            }
+            selectedTrim = customTrim;
+            isNewTrim = true;
+        }
+
+        const btn = form.querySelector("#btn-save-vin");
+        btn.disabled = true;
+        btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
+
+        try {
+            const res = await routeAction('addVinToVehicle', {
+                vehicleId: item.id,
+                vin: vinVal,
+                trimLevel: selectedTrim,
+                isNewTrim: isNewTrim
+            });
+            if (res.status === 'success') {
+                if (res.vinCollection) {
+                    item.vin = JSON.stringify(res.vinCollection);
+                } else if (res.vinPrefix) {
+                    item.vin = res.vinPrefix;
+                }
+                if (res.versionesAplicables) {
+                    item.versionesAplicables = res.versionesAplicables;
+                } else if (isNewTrim && selectedTrim) {
+                    const currentVersions = parseEquipmentVersions(item.versionesAplicables);
+                    if (!currentVersions.some(v => v.toLowerCase() === selectedTrim.toLowerCase())) {
+                        currentVersions.push(selectedTrim);
+                        item.versionesAplicables = currentVersions.join(" / ");
+                    }
+                }
+                modal.remove();
+                mostrarNotificacion('VIN registrado correctamente', 'success');
+                // Recalcular y sincronizar automáticamente las firmas de VIN (Sección 10)
+                try {
+                    const catalogData = getState().catalogData;
+                    if (catalogData && catalogData.cortes) {
+                        const target = catalogData.cortes.find(c => String(c.id) === String(item.id));
+                        if (target) {
+                            target.vin = item.vin;
+                            target.versionesAplicables = item.versionesAplicables;
+                        }
+                        vinDifferentialEngine.calculateSignatures(catalogData.cortes);
+                        vinSignatureStore.saveSignatures(vinDifferentialEngine);
+                    }
+                } catch(e) {
+                    console.error('Error recalculando firmas de VIN tras registro:', e);
+                }
+                mostrarDetalleModal(item, true);
+            } else {
+                warningEl.style.display = 'block';
+                if (res.modelName) {
+                    warningEl.innerHTML = `VIN ya está registrado para: <button type="button" class="btn btn-secondary" style="padding: 2px 8px; font-size: 0.85em; margin-left: 5px;" onclick="document.getElementById('add-vin-modal')?.remove(); window.location.href='index.html#search=${encodeURIComponent(res.modelName)}'"><strong>${res.modelName}</strong></button>`;
+                } else {
+                    warningEl.textContent = res.message || 'Error al guardar el VIN.';
+                }
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar VIN`;
+            }
+        } catch (err) {
+            console.error('Error guardando VIN:', err);
+            mostrarNotificacion('Error de comunicación con el servidor', 'error');
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-save"></i> Guardar VIN`;
+        }
+    };
+}
+
+/* TAREA 1.2: BARRA DE ENRIQUECIMIENTO DE TEXTO EN LOS FORMULARIOS */
+export function createRichTextToolbar(targetId) {
+    const toolbar = document.createElement("div");
+    toolbar.className = "rich-editor-toolbar";
+    toolbar.style.cssText = "display:flex; align-items:center; gap:6px; margin-bottom:4px;";
+
+    const boldBtn = document.createElement("button");
+    boldBtn.type = "button";
+    boldBtn.className = "btn btn-secondary btn-sm";
+    boldBtn.title = "Negrita";
+    boldBtn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:26px; min-width:26px;";
+    boldBtn.innerHTML = "<strong>B</strong>";
+    boldBtn.onclick = () => window.applyRichFormat(targetId, "bold");
+
+    // Botón cuadrado con cuadrícula de 4 colores y capa nativa transparente
+    const colorBtn = document.createElement("div");
+    colorBtn.className = "rich-color-picker-box";
+    colorBtn.title = "Color de texto";
+    colorBtn.style.cssText = "position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;";
+    colorBtn.innerHTML = `
+        <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+            <span style="background:#ff4d4f;"></span>
+            <span style="background:#1890ff;"></span>
+            <span style="background:#52c41a;"></span>
+            <span style="background:#faad14;"></span>
+        </div>
+        <input type="color" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+    `;
+    const colorPicker = colorBtn.querySelector("input");
+    colorPicker.onchange = (e) => window.applyRichColor(targetId, e.target.value);
+
+    toolbar.appendChild(boldBtn);
+    toolbar.appendChild(colorBtn);
+    return toolbar;
+}
+
+/* TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN «+» / TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
+export function openAddCutForModelModal(item) {
+    const existing = document.getElementById("add-cut-for-model-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-cut-for-model-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-plus-circle"></i> Agregar Nuevo Corte</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">Modelo: ${item.marca} ${item.modelo}</p>
+
+        <form id="add-cut-model-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Tipo de Corte</label>
+                <select id="add-cut-tipo" required>
+                    <option value="" selected disabled>Seleccione una opción</option>
+                    <option value="Bomba de combustible">Bomba de combustible</option>
+                    <option value="Ignición">Ignición</option>
+                    <option value="Botón de encendido">Botón de encendido</option>
+                    <option value="No recomendado">No recomendado</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Configuración Relay</label>
+                <select id="add-cut-relay" required>
+                    <option value="" selected disabled>Seleccione una opción</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Ubicación y Detalles del Corte</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-cut-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('add-cut-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
+                <textarea id="add-cut-detalles" rows="3" placeholder="Detalles de ubicación y conexión..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Color del Cable</label>
+                <input type="text" id="add-cut-color" placeholder="Ej. Verde / Negro">
+            </div>
+            <div class="form-group" style="display:flex; align-items:center; justify-content:space-between; gap:12px; padding:4px 0;">
+                <label for="add-cut-testigo" style="margin:0; cursor:pointer;">Este corte activa el testigo del motor</label>
+                <input type="checkbox" id="add-cut-testigo" style="width:18px; height:18px; cursor:pointer; margin:0; flex-shrink:0;">
+            </div>
+            <div class="form-group">
+                <label>Subir Imagen del Corte</label>
+                <input type="file" id="add-cut-img-file" accept="image/*">
+            </div>
+            <div class="modal-btn-compact-container">
+                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-plus-circle"></i> Agregar Corte</button>
+            </div>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const tipoSelect = content.querySelector("#add-cut-tipo");
+    const relaySelect = content.querySelector("#add-cut-relay");
+
+    const populateRelayOptions = (options) => {
+        relaySelect.innerHTML = '<option value="" selected disabled>Seleccione una opción</option>';
+        const list = Array.isArray(options) && options.length > 0
+            ? options
+            : ["Corte a ignición", "5 pines NC", "5 pines NA", "Sin relay"];
+
+        list.forEach(opt => {
+            const el = document.createElement("option");
+            el.value = opt;
+            el.textContent = opt;
+            relaySelect.appendChild(el);
+        });
+        if (!relaySelect.value) {
+            relaySelect.value = "";
+        }
+    };
+
+    // Cargar opciones desde la configuración de Spreadsheet
+    (async () => {
+        try {
+            const dropdowns = await precargarDropdownOptions();
+            if (dropdowns && dropdowns.configRelay) {
+                populateRelayOptions(dropdowns.configRelay, "Corte a ignición");
+            } else {
+                populateRelayOptions([]);
+            }
+        } catch (e) {
+            console.error("Error cargando opciones de relay para modal:", e);
+            populateRelayOptions([]);
+        }
+
+        // Aplicar estado según tipo inicial
+        syncNoRecomendadoState();
+    })();
+
+    function syncNoRecomendadoState() {
+        const isNoRec = isNoRecomendadoValue(tipoSelect.value);
+        if (isNoRec) {
+            relaySelect.disabled = true;
+            relaySelect.required = false;
+            relaySelect.value = "";
+        } else {
+            relaySelect.disabled = false;
+            relaySelect.required = true;
+        }
+    }
+
+    tipoSelect.onchange = syncNoRecomendadoState;
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-cut-model-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const fileInput = content.querySelector("#add-cut-img-file");
+        let imgBase64 = "";
+        if (fileInput.files && fileInput.files[0]) {
+            imgBase64 = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = (re) => res(re.target.result);
+                r.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        const payload = {
+            vehicleId: item.id,
+            colaborador: currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
+            cutData: {
+                tipo: content.querySelector("#add-cut-tipo").value,
+                configRelay: content.querySelector("#add-cut-relay").value,
+                ubicacion: content.querySelector("#add-cut-detalles").value,
+                colorCable: content.querySelector("#add-cut-color").value,
+                activaTestigo: content.querySelector("#add-cut-testigo").checked,
+                imgBase64
+            }
+        };
+
+        try {
+            await routeAction("addOrUpdateCut", payload);
+            alert("Corte agregado con éxito.");
+            modal.remove();
+            // Refresh catalog
+            const catRes = await routeAction("getCatalogData");
+            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+        } catch (err) {
+            console.error("Error agregando corte:", err);
+            showGlobalError("Error al agregar corte: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Corte";
+        }
+    };
+}
+
+/* TAREA 5 (3.3): AGREGAR APERTURA DESDE EL MODAL DE DETALLE */
+export function openAddAperturaModal(item) {
+    const existing = document.getElementById("add-apertura-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-apertura-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-door-open"></i> Agregar Apertura de Puertas</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
+
+        <form id="add-apertura-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Detalles de la Apertura</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-apertura-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('add-apertura-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
+                <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Subir Imagen</label>
+                <input type="file" id="add-apertura-img-file" accept="image/*">
+            </div>
+            <div class="modal-btn-compact-container">
+                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-door-open"></i> Agregar Apertura</button>
+            </div>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-apertura-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const fileInput = content.querySelector("#add-apertura-img-file");
+        let imgBase64 = "";
+        if (fileInput.files && fileInput.files[0]) {
+            imgBase64 = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = (re) => res(re.target.result);
+                r.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        try {
+            await routeAction("addSupplementaryInfo", {
+                vehicleId: item.id,
+                apertura: content.querySelector("#add-apertura-detalles").value,
+                imgApertura: imgBase64
+            });
+            alert("Apertura agregada con éxito.");
+            modal.remove();
+            const catRes = await routeAction("getCatalogData");
+            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+        } catch (err) {
+            console.error(err);
+            showGlobalError("Error: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Apertura";
+        }
+    };
+}
+
+/* TAREA 5 (3.4): AGREGAR CABLE DE ALIMENTACIÓN DESDE EL MODAL DE DETALLE */
+export function openAddFeedModal(item) {
+    const existing = document.getElementById("add-feed-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-feed-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-plug"></i> Agregar Cable de Alimentación</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
+
+        <form id="add-feed-form" style="display:flex; flex-direction:column; gap:12px;">
+            <div class="form-group">
+                <label>Detalles de la Alimentación</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-feed-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('add-feed-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
+                <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Subir Imagen</label>
+                <input type="file" id="add-feed-img-file" accept="image/*">
+            </div>
+            <div class="modal-btn-compact-container">
+                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-plug"></i> Agregar Alimentación</button>
+            </div>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const form = content.querySelector("#add-feed-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const fileInput = content.querySelector("#add-feed-img-file");
+        let imgBase64 = "";
+        if (fileInput.files && fileInput.files[0]) {
+            imgBase64 = await new Promise((res) => {
+                const r = new FileReader();
+                r.onload = (re) => res(re.target.result);
+                r.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        const payload = { vehicleId: item.id };
+        const details = content.querySelector("#add-feed-detalles").value;
+
+        if (!item.cableAlimen) {
+            payload.cableAlimen = details;
+            payload.imgCableAlimen = imgBase64;
+        } else if (!item.cableAlimen2) {
+            payload.cableAlimen2 = details;
+            payload.imgCableAlimen2 = imgBase64;
+        } else if (!item.cableAlimen3) {
+            payload.cableAlimen3 = details;
+            payload.imgCableAlimen3 = imgBase64;
+        }
+
+        try {
+            await routeAction("addSupplementaryInfo", payload);
+            alert("Cable de alimentación agregado con éxito.");
+            modal.remove();
+            const catRes = await routeAction("getCatalogData");
+            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+        } catch (err) {
+            console.error(err);
+            showGlobalError("Error: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Alimentación";
+        }
+    };
+}
+
+/* TAREA 5 (3.5) & TAREA 8.3: AGREGAR ENLACE O SUBIR VÍDEO GUÍA DE DESARME DESDE EL MODAL DE DETALLE */
+export function buildVehicleVideoMetadata(item) {
+    const marca = item.marca || '';
+    const modelo = item.modelo || '';
+    const anoDesde = item.anoDesde || '';
+    const anoHasta = item.anoHasta || '';
+    const rangoAnos = anoHasta && String(anoHasta) !== String(anoDesde) ? `${anoDesde} - ${anoHasta}` : `${anoDesde}`;
+
+    const rawVersions = item.versionesAplicables ? String(item.versionesAplicables).split(/[\/,\\]/).map(s => s.trim()).filter(Boolean) : [];
+    const hasSingleVersion = rawVersions.length === 1;
+    const singleVersion = hasSingleVersion ? rawVersions[0] : '';
+
+    // Requisito 5.1: Título: Marca - Modelo [Versión si es única] [Rango Años]
+    let titleParts = [marca, '-', modelo];
+    if (hasSingleVersion && singleVersion) {
+        titleParts.push(singleVersion);
+    }
+    if (rangoAnos.trim()) {
+        titleParts.push(rangoAnos.trim());
+    }
+    const generatedTitle = titleParts.filter(Boolean).join(' ').replace(/\s+-\s+/, ' - ');
+
+    // Requisito 5.2: Descripción: "En este video veremos cómo se trabaja..."
+    let generatedDesc = '';
+    if (hasSingleVersion && singleVersion) {
+        generatedDesc = `En este video veremos cómo se trabaja ${modelo} ${singleVersion} ${rangoAnos}`.trim();
+    } else {
+        const encendido = item.tipoEncendido ? `${item.tipoEncendido}` : '';
+        generatedDesc = `En este video veremos cómo se trabaja ${modelo} ${encendido} ${rangoAnos}`.replace(/\s+/g, ' ').trim();
+        if (rawVersions.length > 1) {
+            generatedDesc += `\nVersiones aplicables: ${rawVersions.join(' / ')}`;
+        }
+    }
+
+    return {
+        title: generatedTitle,
+        description: generatedDesc
+    };
+}
+
+export function openAddVideoModal(item) {
+    const existing = document.getElementById("add-video-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-video-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Vídeo Guía de Desarme</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">${item.marca} ${item.modelo}</p>
+
+        <div style="display:flex; flex-direction:column; gap:14px;">
+            <div style="display:flex; gap:10px;">
+                <button type="button" id="btn-toggle-manual-link" class="btn btn-secondary" style="flex:1; font-size:0.88rem; padding:8px 10px;">
+                    <i class="fa-solid fa-link"></i> Enlace de YouTube
+                </button>
+                <button type="button" id="btn-open-yt-upload" class="btn btn-primary" style="flex:1; font-size:0.88rem; padding:8px 10px; background-color:#ff0000; border-color:#ff0000;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo
+                </button>
+            </div>
+
+            <form id="add-video-form" style="display:flex; flex-direction:column; gap:12px; margin-top:4px;">
+                <div class="form-group">
+                    <label>Enlace de YouTube</label>
+                    <input type="url" id="add-video-url" placeholder="https://www.youtube.com/watch?v=..." required>
+                </div>
+                <div class="modal-btn-compact-container">
+                    <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-brands fa-youtube"></i> Guardar Enlace</button>
+                </div>
+            </form>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    // Opción Subir Vídeo directamente a YouTube
+    content.querySelector("#btn-open-yt-upload").onclick = () => {
+        const meta = buildVehicleVideoMetadata(item);
+        modal.remove();
+        openYouTubeUploadModal({
+            initialTitle: meta.title,
+            initialDescription: meta.description,
+            contentType: 'corte',
+            referenceId: item.id,
+            metadata: {
+                marca: item.marca,
+                modelo: item.modelo,
+                versionesAplicables: item.versionesAplicables,
+                anoDesde: item.anoDesde,
+                anoHasta: item.anoHasta,
+                tipoEncendido: item.tipoEncendido
+            },
+            onSuccess: () => {
+                alert("La solicitud de vídeo ha sido enviada para aprobación interna. Aparecerá en este modelo una vez aprobada.");
+            }
+        });
+    };
+
+    const form = content.querySelector("#add-video-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const url = content.querySelector("#add-video-url").value.trim();
+        if (!url.includes("youtube.com") && !url.includes("youtu.be")) {
+            showGlobalError("Por favor ingresa un enlace válido de YouTube.");
+            return;
+        }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        try {
+            await routeAction("addSupplementaryInfo", {
+                vehicleId: item.id,
+                fieldName: "videoGuiaDesarmeUrl",
+                fieldValue: url
+            });
+            alert("Vídeo agregado con éxito.");
+            modal.remove();
+            const catRes = await routeAction("getCatalogData");
+            if (catRes && catRes.data) setState({ catalogData: catRes.data });
+        } catch (err) {
+            console.error(err);
+            showGlobalError("Error: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Guardar Enlace";
+        }
+    };
+}
+
+
+/* TAREA 1.4: CORRECCIÓN DE LAS DEMORAS DE CARGA EN LA SECCIÓN PROBLEMAS Y SOLUCIONES */
+export async function renderPysSection() {
+    const cont = document.getElementById("contenido-pys");
+    if (!cont) return;
+
+    const renderGridWithItems = (rawItems) => {
+        cont.innerHTML = "<h4>Problemas y Soluciones</h4>";
+        const grid = document.createElement("div");
+        grid.className = "grid";
+
+        // Tarea 1.7: Corrección de las tarjetas para agregar tutoriales y problemas
+        /* TAREA 10 (5.2): TARJETAS DE PYS Y TARJETA DE CREACIÓN (+) EN PRIMERA POSICIÓN */
+        // First card: Creation Card (+)
+        const createCard = document.createElement("div");
+        createCard.className = "card card-create-pys";
+        createCard.innerHTML = `
+            <i class="fa-solid fa-plus" style="font-size: 2.5rem; margin-bottom: 8px;"></i>
+            <span>Agregar Problema</span>
+        `;
+        createCard.onclick = () => openAddProblemModal();
+        grid.appendChild(createCard);
+
+        const items = [...(rawItems || [])];
+        items.reverse(); // Most recent first
+
+        items.forEach(item => {
+            const card = createPysCard(item, 'pys');
+            grid.appendChild(card);
+        });
+
+        cont.appendChild(grid);
+    };
+
+    // TAREA 1.4: Retirar la animación de carga de la sección «Problemas / Soluciones»
+    // Se presenta la sección inmediatamente con su estructura y tarjeta de creación (+) igual que Tutoriales y Relay
+    let cachedData = getState().pysData;
+    if ((!cachedData || cachedData.length === 0)) {
+        try {
+            const rawStored = localStorage.getItem('gpsepedia_pys_cache');
+            if (rawStored) {
+                const parsed = JSON.parse(rawStored);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    cachedData = parsed;
+                    setState({ pysData: parsed });
+                }
+            }
+        } catch(e) {}
+    }
+    const hasCache = Array.isArray(cachedData) && cachedData.length > 0;
+    renderGridWithItems(hasCache ? cachedData : []);
+
+    // Sincronización en segundo plano con el backend
+    try {
+        const res = await routeAction("getPysData");
+        const freshItems = (res && res.data) ? res.data : [];
+        setState({ pysData: freshItems });
+        try {
+            localStorage.setItem('gpsepedia_pys_cache', JSON.stringify(freshItems));
+        } catch(e) {}
+
+        // Si no había caché o si los datos cambiaron, renderizar con datos frescos
+        const cacheHash = JSON.stringify(cachedData || []);
+        const freshHash = JSON.stringify(freshItems || []);
+        if (!hasCache || cacheHash !== freshHash) {
+            renderGridWithItems(freshItems);
+        }
+    } catch(err) {
+        console.error("Error cargando PYS:", err);
+        if (!hasCache) {
+            cont.innerHTML = `
+                <h4>Problemas y Soluciones</h4>
+                <div style="text-align: center; padding: 30px; color: #dc3545;">
+                    <i class="fa-solid fa-triangle-exclamation" style="font-size: 2rem; margin-bottom: 8px;"></i>
+                    <p>No se pudo cargar la sección de problemas y soluciones. Verifique su conexión.</p>
+                </div>
+            `;
+        }
+    }
+}
+
+/* TAREA 1.3 / TAREA 10 (5.3): FORMULARIO DE REGISTRO DE PROBLEMAS Y SOLUCIONES CON VALIDACIONES */
+export function openAddProblemModal(preAssociatedVehicle = null) {
+    const existing = document.getElementById("add-pys-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-pys-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2300";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "550px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-triangle-exclamation"></i> Registrar Problema</h2>
+
+        <form id="add-pys-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+            <!-- TAREA 11 (12.1): ALCANCE EN FORMULARIO DE PROBLEMAS (GENERAL VS ESPECÍFICO) -->
+            <div class="form-group">
+                <label>Alcance del Problema</label>
+                <select id="pys-alcance" class="dev-input" style="padding: 6px;">
+                    <option value="general" selected>General (Aplica a todos los vehículos)</option>
+                    <option value="especifico">Modelo específico</option>
+                </select>
+            </div>
+
+            <div id="pys-models-section" style="display: none; border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.02);">
+                <label>Buscar Vehículos Relacionados</label>
+                <input type="text" id="pys-search-vehicle" placeholder="Buscar por Marca o Modelo..." class="dev-input" style="width: 100%; padding: 6px; margin-top: 4px;">
+                <div id="pys-vehicle-search-results" style="max-height: 150px; overflow-y: auto; display: flex; flex-direction: column; gap: 4px; margin-top: 6px;"></div>
+                <div id="pys-selected-models-list" style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px;"></div>
+            </div>
+
+            <div class="form-group">
+                <label>Título del Problema (Máx 30 caracteres)</label>
+                <input type="text" id="pys-titulo" maxlength="30" required placeholder="Ej. Falla relay pump">
+            </div>
+            <div class="form-group">
+                <label>Imagen del Problema</label>
+                <input type="file" id="pys-img-file" accept="image/*" required>
+            </div>
+            <div class="form-group">
+                <label>Detalle del Problema (Máx 700 caracteres)</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-detalle', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('pys-detalle', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
+                <textarea id="pys-detalle" maxlength="700" rows="4" required placeholder="Describe el problema..."></textarea>
+            </div>
+            <div class="form-group" style="display:flex; align-items:center; gap:8px;">
+                <input type="checkbox" id="pys-sin-solucion" style="width:auto;">
+                <label for="pys-sin-solucion" style="margin:0;">Sin solución aún</label>
+            </div>
+            <div class="form-group" id="grp-solucion">
+                <label>Solución (Máx 700 caracteres)</label>
+                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-solucion', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('pys-solucion', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
+                <textarea id="pys-solucion" maxlength="700" rows="4" placeholder="Explica la solución..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Cómo Prevenir (Opcional, Máx 700 caracteres)</label>
+                <textarea id="pys-prevenir" maxlength="700" rows="3" placeholder="Recomendación preventiva..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Vídeo Explicativo de YouTube (Opcional)</label>
+                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                    <button type="button" id="btn-pys-upload-yt" class="btn btn-primary" style="flex:1; background-color:#ff0000; border-color:#ff0000; font-size:0.85rem; padding:6px 10px;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo a YouTube
+                    </button>
+                </div>
+                <input type="url" id="pys-video" placeholder="O ingresar enlace: https://www.youtube.com/watch?v=...">
+                <small id="pys-video-badge" style="display:none; color:#28a745; font-size:0.8rem; margin-top:2px;">
+                    <i class="fa-solid fa-check-circle"></i> Vídeo subido a YouTube (pendiente de aprobación).
+                </small>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    const alcanceSelect = content.querySelector("#pys-alcance");
+    const modelsSection = content.querySelector("#pys-models-section");
+    const searchVehicleInput = content.querySelector("#pys-search-vehicle");
+    const searchVehicleResults = content.querySelector("#pys-vehicle-search-results");
+    const selectedModelsContainer = content.querySelector("#pys-selected-models-list");
+
+    const selectedVehicleIds = new Set();
+
+    alcanceSelect.onchange = () => {
+        modelsSection.style.display = alcanceSelect.value === 'especifico' ? 'block' : 'none';
+    };
+
+    function renderProvisionalSelectedModels() {
+        selectedModelsContainer.innerHTML = '';
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+
+        selectedVehicleIds.forEach(vId => {
+            const v = cortes.find(c => String(c.id) === String(vId));
+            if (!v) return;
+            const tag = document.createElement("div");
+            tag.style.cssText = "display: inline-flex; align-items: center; gap: 6px; background: var(--accent-color); color: white; padding: 4px 8px; border-radius: 12px; font-size: 0.8em;";
+            tag.innerHTML = `<span>${v.marca} ${v.modelo} (${v.anoDesde})</span> <i class="fa-solid fa-xmark" style="cursor: pointer;"></i>`;
+            tag.querySelector("i").onclick = () => {
+                selectedVehicleIds.delete(vId);
+                renderProvisionalSelectedModels();
+            };
+            selectedModelsContainer.appendChild(tag);
+        });
+    }
+
+    // Tarea 9.2 (Requisito 2.5): Pre-asociar vehículo si se invoca desde el modal de un modelo y renderizar su badge
+    if (preAssociatedVehicle && preAssociatedVehicle.id) {
+        alcanceSelect.value = 'especifico';
+        modelsSection.style.display = 'block';
+        selectedVehicleIds.add(String(preAssociatedVehicle.id));
+        renderProvisionalSelectedModels();
+    }
+
+    searchVehicleInput.oninput = () => {
+        const query = searchVehicleInput.value.toLowerCase().trim();
+        searchVehicleResults.innerHTML = '';
+        if (!query) return;
+
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+        // Tarea 9.1: Excluir vehículos que ya están seleccionados
+        const matches = cortes.filter(c => {
+            if (selectedVehicleIds.has(String(c.id))) return false;
+            return `${c.marca} ${c.modelo} ${c.versionesAplicables || ''}`.toLowerCase().includes(query);
+        }).slice(0, 8);
+
+        matches.forEach(v => {
+            const itemDiv = document.createElement("div");
+            itemDiv.style.cssText = "padding: 6px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box;";
+
+            // Requisito 1: [Imagen del vehículo] [Versión de equipamiento o tipo de encendido] [Rango de años]
+            const versionOrIgnition = (v.versionesAplicables && v.versionesAplicables.trim()) ? v.versionesAplicables.trim() : (v.tipoEncendido || '-');
+            const yearRange = (v.anoHasta && String(v.anoHasta) !== String(v.anoDesde)) ? `${v.anoDesde} - ${v.anoHasta}` : `${v.anoDesde}`;
+
+            itemDiv.innerHTML = `
+                <img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;">
+                <span style="flex:1; margin:0; line-height:1.2; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                    <strong>${v.marca} ${v.modelo}</strong>
+                    <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
+                    <span style="color:var(--accent-color); font-weight:600;">${versionOrIgnition}</span>
+                    <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
+                    <span>${yearRange}</span>
+                </span>
+            `;
+            itemDiv.onclick = () => {
+                searchVehicleResults.innerHTML = '';
+                searchVehicleInput.value = '';
+                openConfirmVehicleForPysModal(v, (confirmedVehicle) => {
+                    selectedVehicleIds.add(String(confirmedVehicle.id));
+                    renderProvisionalSelectedModels();
+                });
+            };
+            searchVehicleResults.appendChild(itemDiv);
+        });
+    };
+
+    const chkSinSolucion = content.querySelector("#pys-sin-solucion");
+    const txtSolucion = content.querySelector("#pys-solucion");
+    chkSinSolucion.onchange = () => {
+        txtSolucion.disabled = chkSinSolucion.checked;
+        if (chkSinSolucion.checked) txtSolucion.value = "";
+    };
+
+    // Botón Subir Vídeo a YouTube para PyS (Tarea 8.4 y Requisito 9)
+    const btnUploadPysYt = content.querySelector("#btn-pys-upload-yt");
+    if (btnUploadPysYt) {
+        btnUploadPysYt.onclick = () => {
+            const rawTitle = content.querySelector("#pys-titulo").value.trim() || 'Problema Técnico';
+            const rawDesc = content.querySelector("#pys-detalle").value.trim() || (txtSolucion ? txtSolucion.value.trim() : '');
+
+            openYouTubeUploadModal({
+                initialTitle: rawTitle,
+                initialDescription: rawDesc,
+                contentType: 'pys',
+                referenceId: null,
+                metadata: {
+                    alcance: alcanceSelect.value,
+                    modelosAsociados: Array.from(selectedVehicleIds)
+                },
+                onSuccess: (data) => {
+                    const videoInput = content.querySelector("#pys-video");
+                    if (videoInput) videoInput.value = data.videoUrl;
+                    const badge = content.querySelector("#pys-video-badge");
+                    if (badge) badge.style.display = 'block';
+                }
+            });
+        };
+    }
+
+    const form = content.querySelector("#add-pys-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault()
+        const pysVid = content.querySelector("#pys-video").value.trim();
+        if (pysVid && !pysVid.includes("youtube.com") && !pysVid.includes("youtu.be")) {
+            showGlobalError("Por favor ingresa una URL válida de YouTube para el vídeo.");
+            return;
+        };
+        const { currentUser } = getState();
+        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const fileInput = content.querySelector("#pys-img-file");
+        let imgBase64 = "";
+        if (fileInput.files && fileInput.files[0]) {
+            imgBase64 = await new Promise(res => {
+                const r = new FileReader();
+                r.onload = re => res(re.target.result);
+                r.readAsDataURL(fileInput.files[0]);
+            });
+        }
+
+        const payload = {
+            titulo: content.querySelector("#pys-titulo").value.trim(),
+            descripcion: content.querySelector("#pys-detalle").value.trim(),
+            sinSolucion: chkSinSolucion.checked,
+            solucion: txtSolucion.value.trim(),
+            prevenir: content.querySelector("#pys-prevenir").value.trim(),
+            videoUrl: content.querySelector("#pys-video").value.trim(),
+            alcance: alcanceSelect.value,
+            modelosAsociados: Array.from(selectedVehicleIds),
+            imgBase64,
+            userId: currentUser.ID,
+            userName: currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+        };
+
+        try {
+            await routeAction("addProblem", payload);
+            alert("Problema registrado con éxito.");
+            modal.remove();
+            renderPysSection();
+            if (preAssociatedVehicle && preAssociatedVehicle.id) {
+                const panel = document.getElementById("detalleCompleto");
+                if (panel) renderPosiblesProblemasAccordion(panel, preAssociatedVehicle);
+            }
+        } catch(err) {
+            console.error(err);
+            showGlobalError("Error al registrar problema: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar";
+        }
+    };
+}
+
+export function openSearchVehicleForPysAssociationModal(problemId, onAssociated, alreadyAssociatedIds = []) {
+    const existing = document.getElementById("pys-add-vehicle-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "pys-add-vehicle-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2400";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "520px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-car"></i> Asociar Modelos de Vehículos</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
+            Busca y selecciona uno o más vehículos para relacionarlos con este problema.
+        </p>
+
+        <!-- Modelos provisionalmente seleccionados -->
+        <div id="assoc-selected-models-container" style="display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; min-height: 28px;"></div>
+
+        <div style="margin-top: 6px;">
+            <input type="text" id="assoc-search-input" placeholder="Buscar por Marca, Modelo o Versión..." class="dev-input" style="width: 100%; padding: 8px; box-sizing: border-box;">
+            <div id="assoc-search-results" style="max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; margin-top: 10px;"></div>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px; border-top: 1px solid var(--border-color); padding-top: 12px;">
+            <button id="btn-close-assoc" class="btn btn-secondary">Cancelar</button>
+            <button id="btn-save-assoc" class="btn btn-primary" disabled><i class="fa-solid fa-link"></i> Vincular Seleccionados</button>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeModal = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = closeModal;
+    content.querySelector("#btn-close-assoc").onclick = closeModal;
+
+    const input = content.querySelector("#assoc-search-input");
+    const resultsContainer = content.querySelector("#assoc-search-results");
+    const selectedContainer = content.querySelector("#assoc-selected-models-container");
+    const saveBtn = content.querySelector("#btn-save-assoc");
+
+    const alreadySet = new Set((alreadyAssociatedIds || []).map(String));
+    const newlySelectedIds = new Set();
+
+    function renderSelectedChips() {
+        selectedContainer.innerHTML = '';
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+
+        newlySelectedIds.forEach(vId => {
+            const v = cortes.find(c => String(c.id) === String(vId));
+            if (!v) return;
+            const tag = document.createElement("div");
+            tag.style.cssText = "display: inline-flex; align-items: center; gap: 6px; background: var(--accent-color, #007bff); color: white; padding: 4px 10px; border-radius: 14px; font-size: 0.82em; font-weight: 500;";
+            const yearStr = v.anoHasta ? `${v.anoDesde}-${v.anoHasta}` : `${v.anoDesde}`;
+            tag.innerHTML = `<span>${v.marca} ${v.modelo} (${yearStr})</span> <i class="fa-solid fa-xmark" style="cursor: pointer; padding: 2px;"></i>`;
+            tag.querySelector("i").onclick = () => {
+                newlySelectedIds.delete(String(vId));
+                renderSelectedChips();
+            };
+            selectedContainer.appendChild(tag);
+        });
+
+        saveBtn.disabled = newlySelectedIds.size === 0;
+        saveBtn.innerText = newlySelectedIds.size > 0 ? `Vincular (${newlySelectedIds.size})` : "Vincular Seleccionados";
+    }
+
+    // Asegurar que el catálogo esté disponible para búsqueda
+    const ensureCatalogData = async () => {
+        const { catalogData } = getState();
+        if (!catalogData || !Array.isArray(catalogData.cortes) || catalogData.cortes.length === 0) {
+            try {
+                const res = await routeAction('getCatalogData');
+                if (res && res.data) setState({ catalogData: res.data });
+            } catch (err) {
+                console.warn("Error cargando catálogo para asociación:", err);
+            }
+        }
+    };
+    ensureCatalogData();
+
+    input.oninput = () => {
+        const query = input.value.toLowerCase().trim();
+        resultsContainer.innerHTML = '';
+        if (!query) return;
+
+        const { catalogData } = getState();
+        const cortes = (catalogData && catalogData.cortes) ? catalogData.cortes : [];
+
+        // Excluir vehículos ya asociados previamente y los que ya estén seleccionados en esta tanda
+        const matches = cortes.filter(c => {
+            const cId = String(c.id);
+            if (alreadySet.has(cId) || newlySelectedIds.has(cId)) return false;
+            return `${c.marca} ${c.modelo} ${c.versionesAplicables || ''} ${c.tipoEncendido || ''}`.toLowerCase().includes(query);
+        }).slice(0, 10);
+
+        if (matches.length === 0) {
+            resultsContainer.innerHTML = '<div style="padding: 10px; color: var(--text-disabled); font-size: 0.85em; text-align: center;">No se encontraron vehículos disponibles.</div>';
+            return;
+        }
+
+        matches.forEach(v => {
+            const itemDiv = document.createElement("div");
+            itemDiv.style.cssText = "padding: 6px 8px; border-bottom: 1px solid var(--border-color); cursor: pointer; font-size: 0.85em; display: flex; align-items: center; gap: 8px; width: 100%; box-sizing: border-box; border-radius: 4px; transition: background 0.15s ease;";
+            itemDiv.onmouseenter = () => itemDiv.style.background = "rgba(0, 123, 255, 0.08)";
+            itemDiv.onmouseleave = () => itemDiv.style.background = "transparent";
+
+            const versionOrIgnition = (v.versionesAplicables && v.versionesAplicables.trim()) ? v.versionesAplicables.trim() : (v.tipoEncendido || '-');
+            const yearRange = (v.anoHasta && String(v.anoHasta) !== String(v.anoDesde)) ? `${v.anoDesde} - ${v.anoHasta}` : `${v.anoDesde}`;
+
+            itemDiv.innerHTML = `
+                <img src="${getImageUrl(v.imagenVehiculo, IMG_SIZE_SMALL)}" style="width:36px; height:36px; min-width:36px; max-width:36px; margin:0; object-fit:cover; border-radius:4px; flex-shrink:0;">
+                <span style="flex:1; margin:0; line-height:1.2; display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                    <strong>${v.marca} ${v.modelo}</strong>
+                    <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
+                    <span style="color:var(--accent-color, #007bff); font-weight:600;">${versionOrIgnition}</span>
+                    <span style="color:var(--text-disabled); font-size:0.9em;">|</span>
+                    <span>${yearRange}</span>
+                </span>
+                <i class="fa-solid fa-plus-circle" style="color: var(--accent-color, #007bff); font-size: 1.1rem;"></i>
+            `;
+
+            itemDiv.onclick = () => {
+                // Abrir confirmación previa (idéntico al flujo de creación de problemas)
+                openConfirmVehicleForPysModal(v, (confirmedVehicle) => {
+                    newlySelectedIds.add(String(confirmedVehicle.id));
+                    input.value = '';
+                    resultsContainer.innerHTML = '';
+                    renderSelectedChips();
+                });
+            };
+            resultsContainer.appendChild(itemDiv);
+        });
+    };
+
+    saveBtn.onclick = async () => {
+        if (newlySelectedIds.size === 0) return;
+        saveBtn.disabled = true;
+        saveBtn.innerText = "Guardando...";
+
+        try {
+            let lastUpdatedList = [...alreadyAssociatedIds];
+            for (const vId of newlySelectedIds) {
+                const res = await routeAction('addVehicleToProblem', { problemId, vehicleId: vId });
+                if (res && res.status === 'success' && res.modelosAsociados) {
+                    lastUpdatedList = res.modelosAsociados;
+                } else {
+                    if (!lastUpdatedList.includes(String(vId))) lastUpdatedList.push(String(vId));
+                }
+            }
+            mostrarNotificacion("Modelos vinculados correctamente al problema.", "success");
+            closeModal();
+            if (typeof onAssociated === 'function') {
+                onAssociated(lastUpdatedList);
+            }
+        } catch (err) {
+            console.error("Error al vincular modelos:", err);
+            showGlobalError("Error al vincular modelos: " + err.message);
+            saveBtn.disabled = false;
+            saveBtn.innerText = "Vincular Seleccionados";
+        }
+    };
+}
+
+/* TAREA 11 (12.2): MODAL EXCLUSIVO DE CONFIRMACIÓN Y VISTA PREVIA DE VEHÍCULO PARA PYS */
+export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
+    const existing = document.getElementById("confirm-vehicle-pys-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "confirm-vehicle-pys-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2400";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "420px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2>Confirmar Vehículo</h2>
+        <div style="display:flex; flex-direction:column; align-items:stretch; gap:10px; margin-top:10px; width:100%;">
+            <div style="width:100%; overflow:hidden; border-radius:8px; max-height:200px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.03);">
+                <img src="${getImageUrl(vehicle.imagenVehiculo, IMG_SIZE_MEDIUM)}" style="width:100%; max-height:200px; margin:0; object-fit:cover; border-radius:8px; display:block;">
+            </div>
+            <div style="width:100%; font-size:0.9rem;">
+                <p style="margin:4px 0;"><strong>Marca:</strong> ${vehicle.marca}</p>
+                <p style="margin:4px 0;"><strong>Modelo:</strong> ${vehicle.modelo}</p>
+                <p style="margin:4px 0;"><strong>Versión:</strong> ${vehicle.versionesAplicables || 'Todas'}</p>
+                <p style="margin:4px 0;"><strong>Años:</strong> ${vehicle.anoDesde}${vehicle.anoHasta ? '-' + vehicle.anoHasta : ''}</p>
+                <p style="margin:4px 0;"><strong>Encendido:</strong> ${vehicle.tipoEncendido || '-'}</p>
+            </div>
+            <div style="display:flex; gap:10px; width:100%; margin-top:10px;">
+                <button id="btn-cancel-pys-veh" class="btn btn-secondary" style="flex:1;">Regresar</button>
+                <button id="btn-accept-pys-veh" class="btn btn-primary" style="flex:1;">Aceptar</button>
+            </div>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeModal = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = closeModal;
+    content.querySelector("#btn-cancel-pys-veh").onclick = closeModal;
+
+    content.querySelector("#btn-accept-pys-veh").onclick = () => {
+        closeModal();
+        if (typeof onConfirm === 'function') onConfirm(vehicle);
+    };
+}
+
+/* TAREA 10 (5.5): MODAL DE DETALLE DE PROBLEMAS Y SOLUCIONES, AGREGAR SOLUCIÓN Y PREVENCIÓN */
+export function openPysDetailModal(item, navOptions = {}, inEditModePys = false) {
+    const cont = document.getElementById("detalleCompleto");
+    cont.innerHTML = "";
+
+    const modalDetalle = document.getElementById("modalDetalle");
+    if (modalDetalle) {
+        modalDetalle.dataset.modalType = 'pys';
+        modalDetalle.classList.add("visible");
+    }
+
+    // Gestión contextual de pila de navegación anti-bucle
+    if (navOptions && navOptions.fromOriginModal) {
+        modalNavStack.push({
+            type: navOptions.fromOriginModal.type,
+            item: navOptions.fromOriginModal.item,
+            navOptions: navOptions.fromOriginModal.navOptions || {}
+        });
+    } else if (!inEditModePys && (!navOptions || !navOptions.originModal)) {
+        // Apertura independiente: limpiar pila previa
+        modalNavStack.length = 0;
+    }
+
+    const sessionData = localStorage.getItem('gpsepedia_session');
+    const userRole = sessionData ? (JSON.parse(sessionData).Privilegios || JSON.parse(sessionData).Rol) : null;
+    const isDeveloper = userRole === 'Desarrollador';
+
+    const headerDiv = document.createElement("div");
+    headerDiv.style.cssText = "display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;";
+
+    const titleContainer = document.createElement("div");
+    titleContainer.style.cssText = "display: flex; align-items: center; gap: 8px; flex: 1;";
+
+    const title = document.createElement("h2");
+    title.innerText = item.Problema;
+    title.style.cssText = "margin: 0; font-size: 1.5rem; font-weight: bold; color: var(--text-color, #222);";
+    titleContainer.appendChild(title);
+    headerDiv.appendChild(titleContainer);
+
+    const controlsContainer = document.createElement("div");
+    controlsContainer.style.cssText = "display: flex; align-items: center; gap: 8px;";
+
+    if (isDeveloper) {
+        if (inEditModePys) {
+            // Botón Descartar (↩️)
+            const resetBtn = document.createElement("button");
+            resetBtn.innerHTML = '↩️';
+            resetBtn.className = "share-modal-btn";
+            resetBtn.title = "Descartar cambios";
+            resetBtn.style.fontSize = "1.2em";
+            resetBtn.onclick = () => openPysDetailModal(item, navOptions, false);
+            controlsContainer.appendChild(resetBtn);
+
+            // Botón Guardar (✅)
+            const saveBtn = document.createElement("button");
+            saveBtn.innerHTML = '✅';
+            saveBtn.className = "share-modal-btn";
+            saveBtn.title = "Guardar cambios";
+            saveBtn.style.fontSize = "1.2em";
+            saveBtn.id = "btn-save-pys-edit";
+            controlsContainer.appendChild(saveBtn);
+        } else {
+            // Botón de lápiz de Edición
+            const editBtn = document.createElement("button");
+            editBtn.innerHTML = '<i class="fa-solid fa-pencil"></i>';
+            editBtn.className = "share-modal-btn";
+            editBtn.title = "Activar modo edición";
+            editBtn.onclick = () => openPysDetailModal(item, navOptions, true);
+            controlsContainer.appendChild(editBtn);
+        }
+    }
+
+    const closePysModal = () => {
+        // Detener reproducción y limpiar reproductor de video de PyS al cerrar
+        const iframes = cont.querySelectorAll('iframe');
+        iframes.forEach(iframe => {
+            try {
+                if (iframe.contentWindow) {
+                    iframe.contentWindow.postMessage('{"event":"command","func":"stopVideo","args":""}', '*');
+                }
+            } catch (e) {}
+            iframe.src = "";
+            iframe.remove();
+        });
+
+        // Comprobar si hay un modal previo en la pila para retorno contextual
+        if (modalNavStack.length > 0) {
+            const prevContext = modalNavStack.pop();
+            if (prevContext && prevContext.type === 'vehicle') {
+                mostrarDetalleModal(prevContext.item, false, prevContext.navOptions || {});
+                return;
+            }
+        }
+
+        if (window.history && window.history.state && window.history.state.modalOpen) {
+            window.history.back();
+        } else {
+            document.getElementById("modalDetalle").classList.remove("visible");
+            modalNavStack.length = 0;
+        }
+    };
+
+    const closeBtn = document.createElement("button");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.className = "info-close-btn";
+    closeBtn.style.cssText = "position: static; font-size: 1.8em; padding: 0 4px;";
+    closeBtn.onclick = closePysModal;
+    controlsContainer.appendChild(closeBtn);
+
+    headerDiv.appendChild(controlsContainer);
+    cont.appendChild(headerDiv);
+
+    if (inEditModePys) {
+        // Formulario in-modal de edición de Problemas y Soluciones
+        const form = document.createElement("div");
+        form.style.cssText = "display: flex; flex-direction: column; gap: 12px; margin-top: 10px;";
+
+        const titleLabel = document.createElement("label");
+        titleLabel.style.fontWeight = "bold";
+        titleLabel.textContent = "Título del Problema (máx 30 caracteres):";
+        const titleInput = document.createElement("input");
+        titleInput.type = "text";
+        titleInput.maxLength = 30;
+        titleInput.value = item.Problema || "";
+        titleInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const descLabel = document.createElement("label");
+        descLabel.style.fontWeight = "bold";
+        descLabel.textContent = "Descripción (máx 700 caracteres):";
+        const descInput = document.createElement("textarea");
+        descInput.id = "edit-pys-desc-textarea";
+        descInput.maxLength = 700;
+        descInput.rows = 4;
+        descInput.value = item.Descripcion || "";
+        descInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const solLabel = document.createElement("label");
+        solLabel.style.fontWeight = "bold";
+        solLabel.textContent = "Solución (máx 700 caracteres):";
+        const solInput = document.createElement("textarea");
+        solInput.id = "edit-pys-sol-textarea";
+        solInput.maxLength = 700;
+        solInput.rows = 4;
+        solInput.value = item.Solucion || "";
+        solInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const prevLabel = document.createElement("label");
+        prevLabel.style.fontWeight = "bold";
+        prevLabel.textContent = "Cómo evitarlo / Prevención (máx 700 caracteres):";
+        const prevInput = document.createElement("textarea");
+        prevInput.id = "edit-pys-prev-textarea";
+        prevInput.maxLength = 700;
+        prevInput.rows = 3;
+        prevInput.value = item.Prevenir || "";
+        prevInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        const videoLabel = document.createElement("label");
+        videoLabel.style.fontWeight = "bold";
+        videoLabel.textContent = "Enlace de Vídeo de YouTube:";
+        const videoInput = document.createElement("input");
+        videoInput.type = "url";
+        videoInput.value = item.Video || "";
+        videoInput.style.cssText = "padding: 6px; border: 1px solid #007bff; border-radius: 4px; width: 100%; box-sizing: border-box;";
+
+        form.appendChild(titleLabel);
+        form.appendChild(titleInput);
+
+        form.appendChild(descLabel);
+        form.appendChild(createRichTextToolbar("edit-pys-desc-textarea"));
+        form.appendChild(descInput);
+
+        form.appendChild(solLabel);
+        form.appendChild(createRichTextToolbar("edit-pys-sol-textarea"));
+        form.appendChild(solInput);
+
+        form.appendChild(prevLabel);
+        form.appendChild(createRichTextToolbar("edit-pys-prev-textarea"));
+        form.appendChild(prevInput);
+
+        form.appendChild(videoLabel);
+        form.appendChild(videoInput);
+        cont.appendChild(form);
+
+        const saveBtn = controlsContainer.querySelector("#btn-save-pys-edit");
+        if (saveBtn) {
+            saveBtn.onclick = async () => {
+                const newTitle = titleInput.value.trim();
+                const newDesc = descInput.value.trim();
+                const newSol = solInput.value.trim();
+                const newPrev = prevInput.value.trim();
+                const newVideo = videoInput.value.trim();
+
+                if (!newTitle) {
+                    mostrarNotificacion("El título no puede estar vacío.", "error");
+                    return;
+                }
+                saveBtn.disabled = true;
+                showSavingIndicator("saving", "Guardando cambios...");
+                try {
+                    const res = await routeAction('updatePysItem', {
+                        problemId: item.id_problem || item.id,
+                        titulo: newTitle,
+                        descripcion: newDesc,
+                        solucion: newSol,
+                        prevenir: newPrev,
+                        videoUrl: newVideo,
+                        userRole
+                    });
+                    if (res && res.status === 'success') {
+                        item.Problema = newTitle;
+                        item.Descripcion = newDesc;
+                        item.Solucion = newSol;
+                        item.Prevenir = newPrev;
+                        item.Video = newVideo;
+                        item.Se_soluciono = newSol ? "x" : "";
+                        showSavingIndicator("success", "Problema guardado");
+                        mostrarNotificacion("Problema actualizado con éxito.", "success");
+                        openPysDetailModal(item, navOptions, false);
+                    } else {
+                        throw new Error((res && res.message) || "Error al actualizar");
+                    }
+                } catch (err) {
+                    console.error("Error guardando problema:", err);
+                    showSavingIndicator("error", "Error al guardar");
+                    mostrarNotificacion(err.message || "Error al guardar el problema", "error");
+                    saveBtn.disabled = false;
+                }
+            };
+        }
+        return;
+    }
+
+    // 2. Imagen del problema (inmediatamente después del título)
+    if (item.Imagen) {
+        const img = document.createElement("img");
+        img.className = 'img-vehiculo-modal img-pys-modal';
+        setOptimizedImage(img, item.Imagen, IMG_SIZE_MEDIUM);
+        cont.appendChild(img);
+    }
+
+    // Función auxiliar para renderizar encabezados estilizados con azul institucional
+    const createPysSectionBlock = (sectionTitle, textContent) => {
+        if (!textContent || !String(textContent).trim()) return null;
+        const block = document.createElement("div");
+        block.style.cssText = "margin-top: 14px;";
+
+        const secHeader = document.createElement("div");
+        secHeader.style.cssText = "font-size: 0.95rem; font-weight: bold; color: #007bff; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #007bff; padding-bottom: 4px; margin-bottom: 8px;";
+        secHeader.textContent = sectionTitle;
+        block.appendChild(secHeader);
+
+        const secContent = document.createElement("div");
+        secContent.style.cssText = "font-size: 0.95rem; line-height: 1.5; color: var(--text-color, #333);";
+        secContent.innerHTML = sanitizeHtmlContent(textContent);
+        block.appendChild(secContent);
+
+        return block;
+    };
+
+    // 3. Descripción del problema
+    const descBlock = createPysSectionBlock("Descripción", item.Descripcion);
+    if (descBlock) cont.appendChild(descBlock);
+
+    // 4. Solución del problema
+    const solBlock = createPysSectionBlock("Solución", item.Solucion);
+    if (solBlock) cont.appendChild(solBlock);
+
+    // 5. Cómo evitarlo (Prevención)
+    const prevBlock = createPysSectionBlock("Cómo evitarlo", item.Prevenir);
+    if (prevBlock) cont.appendChild(prevBlock);
+
+    // 6. Video del problema (al final del contenido)
+    if (item.Video) {
+        const videoEmbedUrl = getYouTubeEmbedUrl(item.Video) || (item.Video.includes("embed/") ? item.Video : null);
+        const videoBlock = document.createElement("div");
+        videoBlock.style.cssText = "margin-top: 16px;";
+
+        const videoHeader = document.createElement("div");
+        videoHeader.style.cssText = "font-size: 0.95rem; font-weight: bold; color: #007bff; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 2px solid #007bff; padding-bottom: 4px; margin-bottom: 8px;";
+        videoHeader.textContent = "Video Guía";
+        videoBlock.appendChild(videoHeader);
+
+        if (videoEmbedUrl) {
+            const videoContainer = document.createElement('div');
+            videoContainer.style.margin = "8px 0 12px 0";
+            videoContainer.innerHTML = `<iframe width="100%" height="280" src="${videoEmbedUrl}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="border-radius: 8px; border: none; display: block; max-width: 100%;"></iframe>`;
+            videoBlock.appendChild(videoContainer);
+        } else {
+            const vid = document.createElement("p");
+            vid.style.margin = "6px 0";
+            vid.innerHTML = '<a href="' + item.Video + '" target="_blank" rel="noopener noreferrer" style="color:#007bff; font-weight:600; text-decoration:underline;">Ver guía en YouTube</a>';
+            videoBlock.appendChild(vid);
+        }
+        cont.appendChild(videoBlock);
+    }
+
+    /* TAREA 11 (12.4): CARRUSEL DE MODELOS EN DETALLE DE PROBLEMAS Y SOLUCIONES */
+    // Carrusel de Modelos de Vehículos Relacionados
+    // Tarea 9.3 (Requisito 8.2): Si el modal del problema se abrió desde un vehículo, ocultar en ese contexto el carrusel de modelos para evitar ciclos
+    const isFromVehicle = navOptions && navOptions.originModal === 'vehicle';
+    if (!isFromVehicle) {
+        const carouselSection = document.createElement("div");
+        carouselSection.id = "pys-models-carousel-section";
+        carouselSection.style.cssText = "margin-top: 20px; border-top: 1px solid var(--border-color); padding-top: 15px;";
+        carouselSection.innerHTML = `<h4 style="margin: 0 0 10px 0; font-size: 1rem;"><i class="fa-solid fa-car"></i> Vehículos Relacionados:</h4>`;
+
+        const track = document.createElement("div");
+        track.className = "pys-models-track";
+        track.style.cssText = "display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; scrollbar-width: none;";
+
+        const renderTrackVehicles = (cortesList) => {
+            track.innerHTML = "";
+            const cortes = Array.isArray(cortesList) ? cortesList : [];
+            let modelosAsociadosIds = [];
+            if (Array.isArray(item.modelosAsociados)) {
+                modelosAsociadosIds = item.modelosAsociados;
+            } else if (typeof item.modelosAsociados === 'string' && item.modelosAsociados.trim()) {
+                const rawModelos = item.modelosAsociados.trim();
+                try {
+                    const parsedModelos = JSON.parse(rawModelos);
+                    if (Array.isArray(parsedModelos)) modelosAsociadosIds = parsedModelos;
+                } catch (e) {}
+                if (modelosAsociadosIds.length === 0) {
+                    modelosAsociadosIds = rawModelos.split(/[,\/\\;]+/).map(id => id.trim()).filter(Boolean);
+                }
+            }
+            const canEditPys = userRole === 'Desarrollador';
+
+            modelosAsociadosIds.forEach(vId => {
+                const v = cortes.find(c => String(c.id) === String(vId));
+                if (!v) return;
+
+                const cardWrapper = document.createElement("div");
+                cardWrapper.style.cssText = "position: relative; display: inline-block; flex-shrink: 0;";
+
+                const card = crearCardVehiculo(v, true);
+                card.onclick = () => mostrarDetalleModal(v, false, {
+                    originModal: 'pys',
+                    fromOriginModal: {
+                        type: 'pys',
+                        item: item,
+                        navOptions: navOptions || {}
+                    }
+                });
+                cardWrapper.appendChild(card);
+
+                if (canEditPys) {
+                    const removeBtn = document.createElement("button");
+                    removeBtn.title = "Eliminar relación con este modelo";
+                    removeBtn.innerHTML = "&times;";
+                    removeBtn.style.cssText = "position: absolute; top: 4px; right: 4px; background: rgba(220, 53, 69, 0.9); color: white; border: none; border-radius: 50%; width: 22px; height: 22px; font-size: 14px; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.3);";
+                    removeBtn.onclick = async (e) => {
+                        e.stopPropagation();
+                        if (!confirm(`¿Deseas desvincular el modelo "${v.marca} ${v.modelo}" de este problema?`)) return;
+                        removeBtn.disabled = true;
+                        try {
+                            const res = await routeAction('removeVehicleFromProblem', {
+                                problemId: item.id_problem,
+                                vehicleId: v.id,
+                                userRole
+                            });
+                            if (res && res.status === 'success') {
+                                item.modelosAsociados = res.modelosAsociados || item.modelosAsociados.filter(id => String(id) !== String(v.id));
+                                cardWrapper.remove();
+                                mostrarNotificacion("Relación retirada correctamente.", "success");
+                            }
+                        } catch(err) {
+                            showGlobalError("Error al retirar relación: " + err.message);
+                            removeBtn.disabled = false;
+                        }
+                    };
+                    cardWrapper.appendChild(removeBtn);
+                }
+
+                track.appendChild(cardWrapper);
+            });
+
+            // Tarjeta «+ Agregar» al final del carrusel disponible para todos los usuarios (Estandarización visual sin bordes discontinuos)
+            const addCard = document.createElement("div");
+            addCard.className = "card card-create-vehicle-assoc";
+            addCard.style.cssText = "flex: 0 0 140px; height: 120px; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: var(--card-bg, #fff); flex-shrink: 0;";
+            addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.8rem; margin-bottom: 8px; color: var(--accent-color, #007bff);"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Modelo</span>`;
+            addCard.onclick = () => {
+                openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
+                    item.modelosAsociados = updatedList;
+                    openPysDetailModal(item, navOptions);
+                }, item.modelosAsociados || []);
+            };
+            track.appendChild(addCard);
+        };
+
+        const { catalogData } = getState();
+        const currentCortes = (catalogData && Array.isArray(catalogData.cortes) && catalogData.cortes.length > 0) ? catalogData.cortes : [];
+        renderTrackVehicles(currentCortes);
+
+        // Si los cortes no están precargados en el estado, consultar en segundo plano y repoblar reactivamente
+        if (currentCortes.length === 0) {
+            routeAction('getCatalogData').then(catRes => {
+                if (catRes && catRes.data && Array.isArray(catRes.data.cortes)) {
+                    setState({ catalogData: catRes.data });
+                    renderTrackVehicles(catRes.data.cortes);
+                }
+            }).catch(e => console.warn("Error precargando cortes para carrusel PyS:", e));
+        }
+
+        carouselSection.appendChild(track);
+        cont.appendChild(carouselSection);
+    }
+
+    if (item.Colaborador) {
+        const colDiv = document.createElement("div");
+        colDiv.style.cssText = "margin-top: 15px; font-size: 0.85rem; color: var(--text-disabled); text-align: right;";
+        colDiv.innerHTML = "Registrado por: <strong>" + cleanColaboradorName(item.Colaborador) + "</strong>";
+        cont.appendChild(colDiv);
+    }
+
+    if (item.Se_soluciono !== 'x') {
+        const addSolBtn = document.createElement("button");
+        addSolBtn.className = "btn btn-secondary";
+        addSolBtn.innerText = "+ Agregar Solución";
+        addSolBtn.onclick = () => {
+            const solText = window.prompt("Introduce la solución a este problema (máx 700 caracteres):");
+            if (solText && solText.trim()) {
+                routeAction("addSolution", { problemId: item.id_problem, solucion: solText.trim() }).then(() => {
+                    alert("Solución agregada con éxito.");
+                    document.getElementById("modalDetalle").classList.remove("visible");
+                    renderPysSection();
+                }).catch(e => showGlobalError("Error: " + e.message));
+            }
+        };
+        cont.appendChild(addSolBtn);
+    }
+
+    if (!item.Prevenir) {
+        const addPrevBtn = document.createElement("button");
+        addPrevBtn.className = "btn btn-secondary";
+        addPrevBtn.style.marginLeft = "10px";
+        addPrevBtn.innerText = "+ Agregar Prevención";
+        addPrevBtn.onclick = () => {
+            const prevText = window.prompt("Introduce recomendación preventiva (máx 100 caracteres):");
+            if (prevText && prevText.trim()) {
+                routeAction("addPrevention", { problemId: item.id_problem, prevenir: prevText.trim() }).then(() => {
+                    alert("Prevención agregada con éxito.");
+                    document.getElementById("modalDetalle").classList.remove("visible");
+                    renderPysSection();
+                }).catch(e => showGlobalError("Error: " + e.message));
+            }
+        };
+        cont.appendChild(addPrevBtn);
+    }
+
+    if (modalDetalle) {
+        modalDetalle.dataset.modalType = 'pys';
+        modalDetalle.classList.add("visible");
+    }
+    if (window.history && window.history.pushState) {
+        window.history.pushState({ modalOpen: true }, '');
+    }
+}
+
+
+/* TAREA 12 (6.1): TARJETA DE CREACIÓN Y FORMULARIO DE TUTORIALES */
+export function openAddTutorialModal() {
+    const existing = document.getElementById("add-tutorial-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "add-tutorial-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2300";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "500px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-book-open"></i> Agregar Nuevo Tutorial</h2>
+
+        <form id="add-tutorial-form" style="display:flex; flex-direction:column; gap:12px; margin-top:15px;">
+            <div class="form-group">
+                <label>Tema / Título (Máx 30 caracteres)</label>
+                <input type="text" id="tut-tema" maxlength="30" required placeholder="Ej. Desarme de consola frontal">
+            </div>
+            <div class="form-group">
+                <label>Vídeo del Tutorial</label>
+                <div style="display:flex; gap:6px; margin-bottom:6px;">
+                    <button type="button" id="btn-tut-upload-yt" class="btn btn-primary" style="flex:1; background-color:#ff0000; border-color:#ff0000; font-size:0.85rem; padding:6px 10px;">
+                        <i class="fa-solid fa-cloud-arrow-up"></i> Subir Vídeo a YouTube
+                    </button>
+                </div>
+                <input type="url" id="tut-video" required placeholder="O ingresar enlace: https://www.youtube.com/watch?v=...">
+                <small id="tut-video-badge" style="display:none; color:#28a745; font-size:0.8rem; margin-top:2px;">
+                    <i class="fa-solid fa-check-circle"></i> Vídeo subido a YouTube (pendiente de aprobación).
+                </small>
+            </div>
+            <div class="form-group">
+                <label>Descripción / Detalles (Máx 700 caracteres)</label>
+                <div class="rich-editor-toolbar" style="display:flex; gap:8px; margin-bottom:4px;">
+                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('tut-desc', 'bold')"><strong>B</strong></button>
+                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
+                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
+                        <span style="background:#ff4d4f;"></span>
+                        <span style="background:#1890ff;"></span>
+                        <span style="background:#52c41a;"></span>
+                        <span style="background:#faad14;"></span>
+                    </div>
+                    <input type="color" onchange="applyRichColor('tut-desc', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
+                </div>
+                </div>
+                <textarea id="tut-desc" maxlength="700" rows="4" placeholder="Detalles del tutorial..."></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Tutorial</button>
+        </form>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    // Botón Subir Vídeo a YouTube para Tutoriales (Tarea 8.4 y Requisito 10)
+    const btnUploadTutYt = content.querySelector("#btn-tut-upload-yt");
+    if (btnUploadTutYt) {
+        btnUploadTutYt.onclick = () => {
+            const rawTitle = content.querySelector("#tut-tema").value.trim() || 'Tutorial Técnico';
+            const rawDesc = content.querySelector("#tut-desc").value.trim() || '';
+
+            openYouTubeUploadModal({
+                initialTitle: rawTitle,
+                initialDescription: rawDesc,
+                contentType: 'tutorial',
+                referenceId: null,
+                metadata: {
+                    tema: rawTitle
+                },
+                onSuccess: (data) => {
+                    const videoInput = content.querySelector("#tut-video");
+                    if (videoInput) videoInput.value = data.videoUrl;
+                    const badge = content.querySelector("#tut-video-badge");
+                    if (badge) badge.style.display = 'block';
+                }
+            });
+        };
+    }
+
+    const form = content.querySelector("#add-tutorial-form");
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const { currentUser } = getState();
+        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
+
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerText = "Guardando...";
+
+        const payload = {
+            tema: content.querySelector("#tut-tema").value.trim(),
+            videoUrl: content.querySelector("#tut-video").value.trim(),
+            descripcion: content.querySelector("#tut-desc").value.trim(),
+            colaborador: currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+        };
+
+        try {
+            await addTutorial(payload);
+            alert("Tutorial registrado con éxito.");
+            modal.remove();
+            const res = await routeAction("getCatalogData");
+            if (res && res.data) setState({ catalogData: res.data });
+        } catch(err) {
+            console.error(err);
+            showGlobalError("Error al registrar tutorial: " + err.message);
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Tutorial";
+        }
+    };
+}
+
+window.applyRichFormat = function(targetId, format) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+    if (!selected) return;
+    const formatted = `<b>${selected}</b>`;
+    textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+};
+
+window.applyRichColor = function(targetId, color) {
+    const textarea = document.getElementById(targetId);
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = textarea.value.substring(start, end);
+    if (!selected) return;
+    const formatted = `<span style="color:${color}">${selected}</span>`;
+    textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
+};
+
+// TAREA ADICIONAL: PERMITIR CONTENIDO HTML ENRIQUECIDO EN CAMPOS DE TEXTO
+export function sanitizeHtmlContent(htmlStr) {
+    if (!htmlStr) return '';
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(htmlStr, 'text/html');
+    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'EM', 'U', 'S', 'STRIKE', 'OL', 'UL', 'LI', 'A', 'IMG', 'SMALL', 'MARK', 'FONT'];
+
+    function cleanNode(node) {
+        const children = Array.from(node.childNodes);
+        children.forEach(child => {
+            if (child.nodeType === 1) {
+                if (!allowedTags.includes(child.tagName)) {
+                    const textNode = doc.createTextNode(child.outerHTML);
+                    node.replaceChild(textNode, child);
+                } else {
+                    Array.from(child.attributes).forEach(attr => {
+                        const name = attr.name.toLowerCase();
+                        const val = attr.value.toLowerCase();
+                        if (name.startsWith('on') || val.includes('javascript:') || val.includes('data:text/html')) {
+                            child.removeAttribute(attr.name);
+                        }
+                    });
+                    cleanNode(child);
+                }
+            }
+        });
+    }
+
+    cleanNode(doc.body);
+    return doc.body.innerHTML;
+}
+
+let inboxCacheData = null;
+
+/* BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF */
+export function exportVehiclePrintSheet(item) {
+    if (!item) return;
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert("Por favor permite la apertura de ventanas emergentes para imprimir la ficha técnica.");
+        return;
+    }
+
+    const title = `${item.marca || ''} ${item.modelo || ''} (${item.anoDesde || ''}${item.anoHasta ? ' - ' + item.anoHasta : ''})`;
+
+    // 1. Recopilar los cortes conservando sus datos originales y el criterio de prioridad de la vista de detalle.
+    const cuts = [];
+    for (let i = 1; i <= 3; i++) {
+        if (item[`tipoCorte${i}`] || item[`ubicacionCorte${i}`] || item[`imgCorte${i}`]) {
+            cuts.push({
+                num: i,
+                tipo: item[`tipoCorte${i}`],
+                ub: item[`ubicacionCorte${i}`],
+                color: item[`colorCableCorte${i}`],
+                relay: item[`configRelay${i}`],
+                img: item[`imgCorte${i}`],
+                util: parseInt(item[`utilCorte${i}`] || 0),
+                activaTestigo: item[`utilCorte${i}`] === 'x' || String(item[`tipoCorte${i}`] || '').toLowerCase().includes('testigo')
+            });
+        }
+    }
+
+    // El detalle existente ordena los cortes por votos y toma el primero como recomendado.
+    // Si ese primer corte está marcado explícitamente como "No recomendado", se conserva el orden técnico original.
+    const rankedCuts = cuts.filter(c => c.tipo).sort((a, b) => b.util - a.util);
+    const rankedFirstCut = rankedCuts[0] || null;
+    const recommendedCut = rankedFirstCut && !isNoRecomendadoValue(rankedFirstCut.tipo) ? rankedFirstCut : null;
+    const cutsForPrint = recommendedCut
+        ? [recommendedCut, ...cuts.filter(c => c !== recommendedCut)]
+        : cuts;
+
+    // 2. Cables de alimentación
+    const feeds = [];
+    if (item.cableAlimen || item.imgCableAlimen) {
+        feeds.push({ title: 'Alimentación Principal', desc: item.cableAlimen, img: item.imgCableAlimen });
+    }
+    if (item.cableAlimen2 || item.imgCableAlimen2) {
+        feeds.push({ title: 'Alimentación Secundaria', desc: item.cableAlimen2, img: item.imgCableAlimen2 });
+    }
+    if (item.cableAlimen3 || item.imgCableAlimen3) {
+        feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
+    }
+
+    // 5. HTML de imagen principal del vehículo
+    const vehiculoImgHtml = item.imagenVehiculo ? `
+        <div class="vehicle-main-img"><img src="${getImageUrl(item.imagenVehiculo, IMG_SIZE_LARGE)}" alt="${title}" /></div>
+    ` : '';
+
+    // 6. Apertura de puertas
+    const aperturaItem = (item.apertura || item.imgApertura) ? {
+        title: 'Apertura de Puertas / Seguros',
+        desc: item.apertura || 'Instrucciones registradas',
+        img: item.imgApertura,
+        kind: 'apertura'
+    } : null;
+
+    // 7. Preparar tarjetas técnicas como unidades indivisibles para permitir su reorganización visual.
+    const techItems = [];
+    cutsForPrint.forEach(c => {
+        techItems.push({
+            kind: 'cut',
+            num: c.num,
+            title: `Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}`,
+            infoHtml: `<p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
+                       <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
+                       <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>`,
+            img: c.img,
+            alt: `Corte #${c.num}`,
+            extraHtml: c.activaTestigo ? `
+                <div class="testigo-aviso">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Este corte activa el testigo de motor
+                </div>` : '',
+            isRecommended: c === recommendedCut
+        });
+    });
+    feeds.forEach(f => {
+        techItems.push({
+            kind: 'feed',
+            title: f.title,
+            infoHtml: `<p>${f.desc || 'Conexión estándar'}</p>`,
+            img: f.img,
+            alt: f.title,
+            extraHtml: '',
+            isRecommended: false
+        });
+    });
+    if (aperturaItem) {
+        techItems.push({
+            kind: aperturaItem.kind,
+            title: aperturaItem.title,
+            infoHtml: `<p>${aperturaItem.desc}</p>`,
+            img: aperturaItem.img,
+            alt: aperturaItem.title,
+            extraHtml: '',
+            isRecommended: false
+        });
+    }
+
+    const techItemsHtml = techItems.map((entry, index) => {
+        const safeImg = entry.img ? getImageUrl(entry.img, IMG_SIZE_LARGE) : '';
+        return `
+        <div class="tech-item-card ${safeImg ? 'has-image' : 'text-only'}"
+             data-tech-kind="${entry.kind}"
+             data-priority-cut="${entry.kind === 'cut' && (entry.isRecommended || (!recommendedCut && entry.num === 1)) ? 'true' : 'false'}"
+             data-recommended-cut="${entry.isRecommended ? 'true' : 'false'}"
+             data-original-order="${index}">
+            <div class="tech-item-header">
+                ${entry.isRecommended ? '<span class="recommended-cut-label">Corte recomendado</span>' : ''}
+                ${entry.title}
+            </div>
+            <div class="tech-item-body">
+                <div class="tech-item-info">${entry.infoHtml}${entry.extraHtml || ''} </div>
+                ${safeImg ? `
+                <div class="tech-item-img-wrapper">
+                    <img src="${safeImg}" alt="${entry.alt}" class="tech-detail-img" />
+                </div>` : ''}
+            </div>
+        </div>
+        `;
+    }).join('');
+
+    // 7. Notas técnicas importantes
+    const notasHtml = item.notaImportante ? `
+        <tr class="meta-note-row">
+            <td colspan="4">
+                <div class="tech-notes"><strong>Nota técnica importante:</strong> ${item.notaImportante}</div>
+            </td>
+        </tr>
+    ` : '';
+
+    // 8. Código QR exclusivo para vídeo guía de desarme (Requisito 6)
+    // Prohibido mostrar la URL como texto visible, solo el QR.
+    const rawVideoUrl = item.Video || item.videoGuiaDesarmeUrl;
+    let qrHtml = '';
+    if (rawVideoUrl && typeof rawVideoUrl === 'string' && rawVideoUrl.trim()) {
+        const directVideoUrl = rawVideoUrl.trim();
+        const qrApiUrl = `https://api.qrserver.com/v1/create-qr-code/?size=85x85&data=${encodeURIComponent(directVideoUrl)}`;
+        qrHtml = `
+            <div class="qr-video-box">
+                <img src="${qrApiUrl}" alt="Código QR Vídeo Guía" class="qr-code-img" />
+                <span class="qr-label">Vídeo Guía de Desarme</span>
+            </div>
+        `;
+    }
+
+    printWindow.document.write(`
+        <!DOCTYPE html>
+        <html lang="es">
+        <head>
+            <meta charset="UTF-8">
+            <title>Ficha Técnica GPSpedia - ${title}</title>
+            <style>
+                @page {
+                    size: 216mm 279mm portrait;
+                    margin: 5mm;
+                }
+                * { box-sizing: border-box; }
+                body {
+                    font-family: Arial, Helvetica, sans-serif;
+                    margin: 0;
+                    padding: 0;
+                    color: #1a1a1a;
+                    font-size: 11px;
+                    line-height: 1.25;
+                    background: #fff;
+                }
+                .sheet-page-wrapper {
+                    height: auto;
+                    min-height: 269mm;
+                    max-height: none;
+                    display: flex;
+                    flex-direction: column;
+                    break-after: page;
+                    page-break-after: always;
+                    overflow: visible;
+                }
+                .sheet-page-wrapper:last-child {
+                    break-after: auto;
+                    page-break-after: auto;
+                }
+                .sheet-content-main {
+                    flex: 1 1 auto;
+                    min-height: 0;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-start;
+                    gap: 6px;
+                }
+                .no-print-bar {
+                    background: #007bff;
+                    color: white;
+                    padding: 8px 14px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-radius: 4px;
+                    margin-bottom: 12px;
+                }
+                /* Encabezado: Logo a la derecha de GPSpedia, y exclusivamente "Ficha técnica" (Requisitos 3.1 y 3.2) */
+                .header-container {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 2px solid #007bff;
+                    padding-bottom: 6px;
+                    margin-bottom: 10px;
+                }
+                .header-brand-wrap {
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                }
+                .header-logo-title {
+                    font-size: 22px;
+                    font-weight: bold;
+                    color: #007bff;
+                    letter-spacing: 0.5px;
+                }
+                .header-project-logo {
+                    width: 28px;
+                    height: 28px;
+                    object-fit: contain;
+                }
+                .header-doc-type {
+                    font-size: 13.5px;
+                    font-weight: 600;
+                    color: #555;
+                    text-transform: capitalize;
+                }
+                .vehicle-title {
+                    font-size: 17px;
+                    font-weight: bold;
+                    margin: 0;
+                    color: #222;
+                    text-align: right;
+                }
+                /* Grid superior: Información del vehículo y QR si existe */
+                .top-grid {
+                    display: grid;
+                    grid-template-columns: ${item.imagenVehiculo ? '150px 1fr' : '1fr'}${qrHtml ? ' auto' : ''};
+                    gap: 10px;
+                    align-items: stretch;
+                    margin-bottom: 10px;
+                }
+                .vehicle-main-img img {
+                    width: 100%;
+                    max-height: 105px;
+                    object-fit: cover;
+                    border-radius: 4px;
+                    border: 1px solid #ddd;
+                }
+                .meta-table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    font-size: 11px;
+                    line-height: 1.15;
+                }
+                .meta-table td {
+                    padding: 1.5px 5px;
+                    border: 1px solid #e0e0e0;
+                    vertical-align: middle;
+                }
+                .meta-table td.label {
+                    font-weight: bold;
+                    background: #f7f9fa;
+                    width: 18%;
+                    color: #444;
+                }
+                .qr-video-box {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    padding: 6px;
+                    border: 1px solid #ddd;
+                    border-radius: 4px;
+                    background: #fafafa;
+                }
+                .qr-code-img {
+                    width: 80px;
+                    height: 80px;
+                    object-fit: contain;
+                }
+                .qr-label {
+                    font-size: 9px;
+                    font-weight: bold;
+                    color: #555;
+                    margin-top: 4px;
+                    text-align: center;
+                }
+                /* Secciones verticales fluidas (Requisito 1.1) */
+                .section-header {
+                    font-size: 11.5px;
+                    font-weight: bold;
+                    color: #007bff;
+                    text-transform: uppercase;
+                    border-bottom: 1.5px solid #007bff;
+                    margin: 5px 0 4px 0;
+                    padding-bottom: 2px;
+                }
+                .tech-grid {
+                    display: grid;
+                    grid-template-columns: repeat(2, max-content);
+                    grid-auto-rows: max-content;
+                    align-items: start;
+                    justify-content: start;
+                    gap: 4px;
+                    min-width: 0;
+                }
+                .adaptive-tech-grid.layout-single,
+                .adaptive-tech-grid.layout-pair-portrait,
+                .adaptive-tech-grid.layout-pair-landscape,
+                .adaptive-tech-grid.layout-triple-portrait,
+                .adaptive-tech-grid.layout-mosaic {
+                    grid-template-columns: repeat(2, max-content);
+                    justify-content: start;
+                    align-items: start;
+                    grid-auto-rows: max-content;
+                    gap: 4px;
+                }
+                .adaptive-tech-grid > .tech-item-card.text-only {
+                    grid-column: 1 / -1;
+                }
+                .sheet-page-wrapper .tech-detail-img {
+                    max-height: 520px;
+                }
+                .adaptive-image-row,
+                .adaptive-image-mosaic {
+                    display: grid;
+                    align-items: stretch;
+                    gap: 8px;
+                    min-width: 0;
+                    break-inside: avoid;
+                    page-break-inside: avoid;
+                }
+                .adaptive-image-row {
+                    grid-template-columns: minmax(0, 1fr);
+                }
+                .adaptive-single-image-row {
+                    width: 50%;
+                    max-width: 50%;
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+                .adaptive-compact-image-row {
+                    width: 80%;
+                    max-width: 80%;
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+                .tech-item-card {
+                    min-width: 0;
+                    width: fit-content;
+                    max-width: 100%;
+                    border: 1px solid #dcdcdc;
+                    border-radius: 3px;
+                    background: #fafafa;
+                    padding: 3px 4px;
+                    page-break-inside: avoid;
+                    break-inside: avoid;
+                    justify-self: start;
+                    align-self: start;
+                }
+                .tech-item-card.has-image {
+                    padding: 3px 4px;
+                }
+                .recommended-cut-label {
+                    display: inline-block;
+                    margin-right: 6px;
+                    padding: 2px 5px;
+                    border-radius: 3px;
+                    background: #e7f1ff;
+                    color: #0056b3;
+                    font-size: 9px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.2px;
+                }
+                .tech-item-card.has-image,
+                .tech-item-card.text-only {
+                    padding: 3px 4px;
+                }
+                .tech-item-header {
+                    font-weight: bold;
+                    color: #0056b3;
+                    font-size: 11.5px;
+                    margin-bottom: 2px;
+                    border-bottom: 1px dashed #e0e0e0;
+                    padding-bottom: 1px;
+                }
+                .tech-item-body {
+                    display: grid;
+                    grid-template-columns: max-content;
+                    grid-auto-rows: max-content;
+                    align-items: start;
+                    justify-items: start;
+                    gap: 3px;
+                    min-width: 0;
+                }
+                .tech-item-info {
+                    flex: 1 1 auto;
+                    max-width: 100%;
+                    width: 100%;
+                    min-width: 0;
+                    overflow-wrap: break-word;
+                    word-break: break-word;
+                    display: flex;
+                    flex-direction: column;
+                    justify-content: flex-start;
+                }
+                .tech-item-info p {
+                    margin: 1px 0;
+                    font-size: 10.5px;
+                    line-height: 1.2;
+                }
+                .tech-item-img-wrapper {
+                    display: flex;
+                    align-items: flex-start;
+                    justify-content: flex-start;
+                    min-width: 0;
+                    width: fit-content;
+                    max-width: 100%;
+                    max-height: none;
+                    margin: 0;
+                }
+                .tech-detail-img {
+                    display: block;
+                    width: auto;
+                    height: auto;
+                    max-width: 100%;
+                    max-height: 520px;
+                    object-fit: contain;
+                    object-position: center;
+                    border-radius: 2px;
+                    border: 1px solid #ccc;
+                    margin: 0;
+                }
+                .adaptive-tech-grid > .tech-item-card.text-only {
+                    width: 100%;
+                }
+                body[data-print-layout="horizontal"] .adaptive-tech-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    justify-content: stretch;
+                    gap: 4px;
+                }
+                body[data-print-layout="horizontal"] .adaptive-tech-grid > .tech-item-card {
+                    width: 100%;
+                    max-width: 100%;
+                }
+                body[data-print-layout="horizontal"] .tech-item-body {
+                    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+                    align-items: start;
+                    column-gap: 4px;
+                }
+                body[data-print-layout="horizontal"] .tech-item-info {
+                    width: auto;
+                    max-width: none;
+                }
+                body[data-print-layout="horizontal"] .tech-item-img-wrapper {
+                    width: 100%;
+                    max-width: 100%;
+                    align-self: center;
+                }
+                body[data-print-layout="vertical"] .adaptive-tech-grid,
+                body[data-print-layout="image-focus"] .adaptive-tech-grid {
+                    grid-template-columns: max-content;
+                    justify-content: start;
+                    gap: 4px;
+                }
+                body[data-print-layout="vertical"] .tech-item-body,
+                body[data-print-layout="image-focus"] .tech-item-body {
+                    grid-template-columns: minmax(0, 1fr);
+                    align-items: stretch;
+                }
+                body[data-print-layout="vertical"] .tech-item-card,
+                body[data-print-layout="image-focus"] .tech-item-card {
+                    width: fit-content;
+                    max-width: 100%;
+                }
+                body[data-print-layout="vertical"] .tech-item-info,
+                body[data-print-layout="image-focus"] .tech-item-info {
+                    width: 100%;
+                    max-width: 100%;
+                }
+                body[data-print-layout="vertical"] .tech-item-img-wrapper,
+                body[data-print-layout="image-focus"] .tech-item-img-wrapper {
+                    width: 100%;
+                    max-width: 100%;
+                    max-height: none;
+                    justify-content: center;
+                }
+                body[data-print-layout="image-focus"] .tech-detail-img {
+                    max-height: 620px;
+                }
+                .adaptive-tech-grid.layout-single { grid-template-columns: max-content; }
+                .adaptive-tech-grid.layout-single > .tech-item-card { width: fit-content; max-width: 100%; }
+                .adaptive-tech-grid.layout-single .tech-item-img-wrapper { width: fit-content; max-width: 100%; margin: 0 auto; }
+                body[data-print-layout="image-focus"] .adaptive-tech-grid.layout-single .tech-item-img-wrapper { width: fit-content; max-width: 100%; }
+                .adaptive-tech-grid.layout-pair-portrait { grid-template-columns: repeat(2, max-content); align-items: start; }
+                .adaptive-tech-grid.layout-pair-landscape { grid-template-columns: max-content; align-items: start; }
+                .adaptive-tech-grid.layout-triple-portrait { grid-template-columns: repeat(3, max-content); align-items: start; gap: 3px; }
+                .adaptive-tech-grid.layout-mosaic { grid-template-columns: repeat(2, max-content); align-items: start; }
+                body[data-print-layout="image-focus"] .adaptive-tech-grid .tech-detail-img { max-height: 620px; }
+
+                /* Límites finales para que cada grupo permanezca dentro del área imprimible. */
+                .sheet-page-wrapper .adaptive-tech-grid {
+                    width: 100%;
+                    max-width: 100%;
+                    grid-template-columns: minmax(0, 1fr);
+                    justify-content: stretch;
+                }
+                .sheet-page-wrapper .adaptive-tech-grid.layout-single {
+                    grid-template-columns: minmax(0, 1fr);
+                }
+                .sheet-page-wrapper .adaptive-tech-grid.layout-pair-portrait,
+                .sheet-page-wrapper .adaptive-tech-grid.layout-mosaic {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+                .sheet-page-wrapper .adaptive-tech-grid.layout-pair-landscape {
+                    grid-template-columns: minmax(0, 1fr);
+                }
+                .sheet-page-wrapper .adaptive-tech-grid.layout-triple-portrait {
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                }
+                .sheet-page-wrapper .adaptive-tech-grid > .tech-item-card,
+                .sheet-page-wrapper .adaptive-tech-grid > .tech-item-card.text-only {
+                    width: 100%;
+                    max-width: 100%;
+                    min-width: 0;
+                    box-sizing: border-box;
+                    justify-self: stretch;
+                    align-self: stretch;
+                }
+                .sheet-page-wrapper .tech-item-body {
+                    width: 100%;
+                    max-width: 100%;
+                    min-width: 0;
+                    box-sizing: border-box;
+                    grid-template-columns: minmax(0, 1fr);
+                    justify-items: stretch;
+                }
+                body[data-print-layout="horizontal"] .sheet-page-wrapper .tech-item-body {
+                    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+                    justify-items: stretch;
+                }
+                .sheet-page-wrapper .tech-item-img-wrapper {
+                    width: 100%;
+                    max-width: 100%;
+                    min-width: 0;
+                    box-sizing: border-box;
+                    justify-content: center;
+                }
+                /* La altura máxima se calcula por página en arrangeTechnicalCards(), según el espacio restante. */
+                .sheet-page-wrapper .tech-detail-img {
+                    display: block;
+                    width: auto;
+                    height: auto;
+                    max-width: 100%;
+                    max-height: 520px;
+                    object-fit: contain;
+                }
+                .meta-note-row > td {
+                    padding: 4px 6px;
+                    border-top: 1px solid #ffeeba;
+                }
+                .meta-note-row .tech-notes {
+                    margin: 0;
+                    padding: 4px 6px;
+                    border: 0;
+                    border-radius: 0;
+                    font-size: 11px;
+                    line-height: 1.25;
+                }
+                .top-grid { align-items: start; }
+                .vehicle-main-img img { height: auto; max-height: 105px; object-fit: contain; }
+                .qr-video-box { min-width: 0; align-self: start; }
+                .qr-code-img { width: 80px; max-width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: contain; }
+                /* Aviso de testigo al pie del corte (Requisito 4.1) */
+                .testigo-aviso {
+                    margin-top: 6px;
+                    font-size: 11px;
+                    font-weight: bold;
+                    color: #b78103;
+                    background: #fff8e1;
+                    padding: 6px 12px;
+                    border-radius: 4px;
+                    border: 1px solid #ffe082;
+                    display: inline-block;
+                }
+                .tech-notes {
+                    background: #fff3cd;
+                    color: #856404;
+                    border: 1px solid #ffeeba;
+                    padding: 10px 14px;
+                    border-radius: 6px;
+                    margin-top: 14px;
+                    font-size: 11.5px;
+                    page-break-inside: avoid;
+                }
+                .footer-bar {
+                    flex: 0 0 auto;
+                    min-height: 48px;
+                    margin-top: auto;
+                    font-size: 10px;
+                    color: #777;
+                    border-top: 1px solid #e0e0e0;
+                    padding-top: 5px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    gap: 8px;
+                    text-align: center;
+                }
+                .footer-bar > span {
+                    flex: 1 1 0;
+                    min-width: 0;
+                }
+                .print-tracklink-logo {
+                    display: block;
+                    flex: 0 0 auto;
+                    height: 45px;
+                    width: auto;
+                    max-width: 90px;
+                    object-fit: contain;
+                    object-position: center;
+                }
+                @media print {
+                    .no-print { display: none !important; }
+                    body { padding: 0; }
+                    #print-pages { display: block; }
+                    .sheet-page-wrapper {
+                        height: auto;
+                        min-height: 269mm;
+                        max-height: none;
+                        break-after: page;
+                        page-break-after: always;
+                        overflow: visible;
+                    }
+                    .sheet-page-wrapper:last-child {
+                        break-after: auto;
+                        page-break-after: auto;
+                    }
+                    .tech-item-card { break-inside: avoid; page-break-inside: avoid; }
+                    .adaptive-tech-grid { break-inside: auto; }
+                }
+                @media screen and (max-width: 600px) {
+                    .top-grid {
+                        grid-template-columns: minmax(0, 1fr);
+                    }
+                    /* Los modos del selector prevalecen también en la vista previa móvil. */
+                }
+            </style>
+        </head>
+        <body data-print-layout="auto">
+            <div class="no-print-bar no-print">
+                <span><strong>Ficha Técnica</strong> - Vista previa para consulta e impresión</span>
+                <label for="print-layout-mode" style="font-size: 11px; font-weight: 600;">Distribución:</label>
+                <select id="print-layout-mode" aria-label="Distribución de imágenes"  style="max-width: 180px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: white; color: #222;">
+                    <option value="auto">Automática</option>
+                    <option value="horizontal">Imagen a la derecha</option>
+                    <option value="vertical">Imagen debajo del texto</option>
+                    <option value="image-focus">Imagen ampliada</option>
+                </select>
+                <button onclick="window.print()" style="padding: 6px 14px; background: white; color: #007bff; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">
+                    Imprimir / Guardar PDF
+                </button>
+            </div>
+
+            <div id="print-pages">
+            <div class="sheet-page-wrapper" data-image-count="0">
+                <div class="sheet-content-main">
+                    <div class="header-container">
+                        <div class="header-brand-wrap">
+                            <span class="header-logo-title">GPSpedia</span>
+                            <img src="icon-v3-512x512.png" alt="GPSpedia Logo" class="header-project-logo" />
+                            <span class="header-doc-type">| Ficha técnica</span>
+                        </div>
+                        <div class="vehicle-title">${title}</div>
+                    </div>
+
+                    <div class="top-grid">
+                        ${vehiculoImgHtml}
+                        <table class="meta-table">
+                            <tr>
+                                <td class="label">Marca:</td><td>${item.marca || '-'}</td>
+                                <td class="label">Modelo:</td><td>${item.modelo || '-'}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Categoría:</td><td>${item.categoria || '-'}</td>
+                                <td class="label">Años:</td><td>${item.anoDesde || ''} - ${item.anoHasta || 'Presente'}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Encendido:</td><td>${item.tipoEncendido || '-'}</td>
+                                <td class="label">Versiones:</td><td>${item.versionesAplicables || 'Todas'}</td>
+                            </tr>
+                            ${item.vin ? `<tr><td class="label">VIN / Chasis:</td><td colspan="3">${(function(){
+                                try {
+                                    const parsed = JSON.parse(item.vin);
+                                    if (Array.isArray(parsed)) return parsed.join(' / ');
+                                } catch(e){}
+                                return item.vin;
+                            })()}</td></tr>` : ''}
+                            ${notasHtml}
+                        </table>
+                        ${qrHtml}
+                    </div>
+
+                    <div>
+                        <div class="section-header">Información Técnica e Imágenes</div>
+                        <div class="tech-grid adaptive-tech-grid" id="adaptive-tech-grid">
+                            ${techItemsHtml || '<div class="tech-item-card text-only"><div class="tech-item-header">Puntos de Corte de Motor</div><p>No hay información técnica registrada para este modelo.</p></div>'}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="footer-bar">
+                    <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
+                    <img src="tracklink_logo.png" alt="Logo de TRACKLINK" class="print-tracklink-logo" />
+                    <span>Ficha técnica de consulta técnica especializada</span>
+                </div>
+            </div>
+            </div>
+        </body>
+        </html>
+    `);
+    printWindow.document.close();
+
+    // Distribución y paginación explícita: hasta cuatro imágenes técnicas (2 columnas × 2 filas) por hoja.
+    const printDocument = printWindow.document;
+    const printPages = printDocument.getElementById('print-pages');
+    const firstPageTemplate = printPages && printPages.querySelector('.sheet-page-wrapper');
+    const adaptiveGrid = firstPageTemplate && firstPageTemplate.querySelector('#adaptive-tech-grid');
+    if (printPages && firstPageTemplate && adaptiveGrid) {
+        const allTechnicalCards = Array.from(adaptiveGrid.querySelectorAll('.tech-item-card'));
+        const headerTemplate = firstPageTemplate.querySelector('.header-container');
+        const metadataTemplate = firstPageTemplate.querySelector('.top-grid');
+        const sectionHeaderTemplate = firstPageTemplate.querySelector('.section-header');
+        const footerTemplate = firstPageTemplate.querySelector('.footer-bar');
+
+        const getImage = card => card.querySelector('.tech-detail-img');
+        const getDimensions = card => {
+            const img = getImage(card);
+            const width = img && img.naturalWidth > 0 ? img.naturalWidth : 0;
+            const height = img && img.naturalHeight > 0 ? img.naturalHeight : 0;
+            return {
+                width,
+                height,
+                aspect: width > 0 && height > 0 ? width / height : 1.33,
+                resolution: width * height
+            };
+        };
+        const originalOrder = card => Number(card.dataset.originalOrder || 0);
+
+        const getAspect = card => {
+            const dimensions = getDimensions(card);
+            return dimensions.width > 0 && dimensions.height > 0 ? dimensions.aspect : 1;
+        };
+
+        const choosePageGroups = cards => {
+            const groups = [];
+            let cursor = 0;
+            while (cursor < cards.length) {
+                const remaining = cards.length - cursor;
+                const a = getAspect(cards[cursor]);
+                const b = remaining > 1 ? getAspect(cards[cursor + 1]) : 0;
+                const c = remaining > 2 ? getAspect(cards[cursor + 2]) : 0;
+                // Dos imágenes por página como regla segura; tres solo si las tres son verticales.
+                let count = Math.min(2, remaining);
+                if (remaining >= 3 && a < 0.82 && b < 0.82 && c < 0.82) count = 3;
+                groups.push(cards.slice(cursor, cursor + count));
+                cursor += count;
+            }
+            return groups.length ? groups : [[]];
+        };
+
+        const applyPageTemplate = (grid, pageCards) => {
+            grid.classList.remove('layout-single', 'layout-pair-portrait', 'layout-pair-landscape', 'layout-triple-portrait', 'layout-mosaic');
+            const aspects = pageCards.map(getAspect);
+            if (pageCards.length <= 1) grid.classList.add('layout-single');
+            else if (pageCards.length === 2 && aspects.every(aspect => aspect > 1.25)) grid.classList.add('layout-pair-landscape');
+            else if (pageCards.length === 2 && aspects.every(aspect => aspect < 0.9)) grid.classList.add('layout-pair-portrait');
+            else if (pageCards.length === 3 && aspects.every(aspect => aspect < 0.9)) grid.classList.add('layout-triple-portrait');
+            else grid.classList.add('layout-mosaic');
+            pageCards.forEach((card, index) => {
+                card.style.gridColumn = ''; card.style.gridRow = ''; card.style.width = ''; card.style.maxWidth = '';
+                card.style.marginLeft = ''; card.style.marginRight = '';
+                if (grid.classList.contains('layout-mosaic') && pageCards.length === 3 && index === 2) {
+                    card.style.gridColumn = '1 / -1';
+                    if (aspects[index] > 1.25) { card.style.width = '80%'; card.style.maxWidth = '80%'; card.style.marginLeft = 'auto'; card.style.marginRight = 'auto'; }
+                }
+            });
+        };
+
+        const arrangeTechnicalCards = () => {
+            const orderedCards = [...allTechnicalCards].sort((a, b) => originalOrder(a) - originalOrder(b));
+            const priorityCard = orderedCards.find(card => card.dataset.priorityCut === 'true') || null;
+            const orderedTechnicalCards = priorityCard ? [priorityCard, ...orderedCards.filter(card => card !== priorityCard)] : orderedCards;
+            const imageCards = orderedTechnicalCards.filter(card => getImage(card));
+            const textCards = orderedTechnicalCards.filter(card => !getImage(card));
+            const pageGroups = choosePageGroups(imageCards);
+
+            const createPage = (pageIndex, pageCards, pageCount) => {
+                const page = printDocument.createElement('div');
+                page.className = 'sheet-page-wrapper';
+                page.dataset.imageCount = String(pageCards.length);
+                const main = printDocument.createElement('div');
+                main.className = 'sheet-content-main';
+                if (headerTemplate) main.appendChild(headerTemplate.cloneNode(true));
+                if (pageIndex === 0 && metadataTemplate) {
+                    main.appendChild(metadataTemplate.cloneNode(true));
+                }
+                if (sectionHeaderTemplate) main.appendChild(sectionHeaderTemplate.cloneNode(true));
+                const grid = printDocument.createElement('div');
+                grid.className = 'tech-grid adaptive-tech-grid';
+                applyPageTemplate(grid, pageCards);
+                pageCards.forEach(card => grid.appendChild(card));
+                if (pageIndex === pageCount - 1) textCards.forEach(card => {
+                    card.style.gridColumn = '1 / -1'; card.style.width = '100%'; card.style.maxWidth = '100%'; grid.appendChild(card);
+                });
+                main.appendChild(grid);
+
+                page.appendChild(main);
+                if (footerTemplate) page.appendChild(footerTemplate.cloneNode(true));
+                return page;
+            };
+            const pages = pageGroups.map((pageCards, pageIndex) => createPage(pageIndex, pageCards, pageGroups.length));
+            printPages.replaceChildren(...pages);
+
+            // Dimensionar imágenes con el espacio vertical que queda en cada página.
+            // Se colapsan temporalmente para medir encabezado, metadatos, textos, tarjetas y pie;
+            // después se reparte el espacio libre entre las filas de imágenes de esa página.
+            const fitImagesToAvailablePageSpace = pageElements => {
+                pageElements.forEach(page => {
+                    const pageCards = Array.from(page.querySelectorAll('.tech-item-card.has-image'));
+                    const images = pageCards.map(getImage).filter(Boolean);
+                    if (!images.length) return;
+
+                    images.forEach(img => { img.style.maxHeight = '0px'; });
+
+                    const pageHeight = page.getBoundingClientRect().height || page.clientHeight;
+                    const main = page.querySelector('.sheet-content-main');
+                    const footer = page.querySelector('.footer-bar');
+                    const mainChildren = main ? Array.from(main.children) : [];
+                    const mainStyle = main && printDocument.defaultView
+                        ? printDocument.defaultView.getComputedStyle(main)
+                        : null;
+                    const mainGap = mainStyle
+                        ? (parseFloat(mainStyle.rowGap || mainStyle.gap || '0') || 0)
+                        : 6;
+                    const mainContentHeight = mainChildren.reduce(
+                        (total, child) => total + child.getBoundingClientRect().height,
+                        0
+                    ) + Math.max(0, mainChildren.length - 1) * mainGap;
+                    const footerHeight = footer ? footer.getBoundingClientRect().height : 0;
+                    const availableHeight = Math.max(0, pageHeight - footerHeight - mainContentHeight);
+
+                    const rowTops = [];
+                    pageCards.forEach(card => {
+                        const top = card.getBoundingClientRect().top;
+                        if (!rowTops.some(rowTop => Math.abs(rowTop - top) <= 2)) rowTops.push(top);
+                    });
+
+                    const rowCount = Math.max(1, rowTops.length);
+                    const modeMaxHeight = printDocument.body.dataset.printLayout === 'image-focus' ? 620 : 520;
+                    const rowMaxHeight = Math.max(80, Math.min(modeMaxHeight, (availableHeight / rowCount) - 4));
+                    images.forEach(img => { img.style.maxHeight = `${rowMaxHeight}px`; });
+                });
+            };
+
+            fitImagesToAvailablePageSpace(pages);
+
+            orderedTechnicalCards.forEach(card => {
+                const dimensions = getDimensions(card);
+                card.dataset.naturalWidth = String(dimensions.width);
+                card.dataset.naturalHeight = String(dimensions.height);
+                card.dataset.imageAspectRatio = String(dimensions.aspect);
+                card.dataset.imageResolution = String(dimensions.resolution);
+            });
+        };
+
+        const layoutSelector = printDocument.getElementById('print-layout-mode');
+        if (layoutSelector) layoutSelector.addEventListener('change', () => {
+            printDocument.body.dataset.printLayout = layoutSelector.value;
+            arrangeTechnicalCards();
+        });
+
+        const printImages = allTechnicalCards.map(getImage).filter(Boolean);
+        Promise.all(printImages.map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => {
+                img.addEventListener('load', resolve, { once: true });
+                img.addEventListener('error', resolve, { once: true });
+            });
+        })).then(arrangeTechnicalCards);
+        printWindow.addEventListener('beforeprint', arrangeTechnicalCards);
+    }
+}
+
+export async function loadAndRenderInbox() {
+    const listContainer = document.getElementById('inbox-list');
+    if (!listContainer) return;
+
+    if (inboxCacheData) {
+        renderInboxList(inboxCacheData);
+    } else {
+        listContainer.innerHTML = '<p><i class="fa-solid fa-spinner fa-spin"></i> Cargando bandeja...</p>';
+    }
+
+    try {
+        const res = await getFeedbackItems();
+        if (res && res.data) {
+            inboxCacheData = res.data;
+            renderInboxList(inboxCacheData);
+        }
+    } catch(err) {
+        console.error("Error cargando inbox:", err);
+        if (!inboxCacheData) {
+            listContainer.innerHTML = '<p class="text-danger">Error de conexión al cargar bandeja.</p>';
+        }
+    }
+}
+
+/* TAREA 9.2: MODAL PARA ASOCIAR PROBLEMAS EXISTENTES O NUEVOS DESDE EL VEHÍCULO */
+export async function openAssociateExistingProblemModal(vehicle) {
+    const existing = document.getElementById("assoc-existing-pys-modal");
+    if (existing) existing.remove();
+
+    const modal = document.createElement("div");
+    modal.id = "assoc-existing-pys-modal";
+    modal.className = "info-modal visible";
+    modal.style.zIndex = "2200";
+
+    const content = document.createElement("div");
+    content.className = "info-modal-content";
+    content.style.maxWidth = "550px";
+
+    content.innerHTML = `
+        <span class="info-close-btn">&times;</span>
+        <h2><i class="fa-solid fa-triangle-exclamation"></i> Agregar Problema Relacionado</h2>
+        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">${vehicle.marca} ${vehicle.modelo} (${vehicle.anoDesde})</p>
+
+        <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <input type="text" id="search-existing-pys-input" placeholder="Buscar" class="dev-input" style="flex:1; padding:8px; box-sizing:border-box;">
+            <button type="button" id="btn-create-new-pys-for-vehicle" class="btn btn-primary" style="white-space:nowrap; font-size:0.85rem;">
+                <i class="fa-solid fa-plus"></i> Agregar problema
+            </button>
+        </div>
+
+        <div id="existing-pys-results-container" style="max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; padding-right:4px;">
+            <div style="text-align:center; padding:15px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Cargando problemas...</div>
+        </div>
+    `;
+
+    modal.appendChild(content);
+    document.body.appendChild(modal);
+
+    const closeModal = () => modal.remove();
+    content.querySelector(".info-close-btn").onclick = closeModal;
+
+    // Botón para agregar un problema nuevo pre-asociado
+    content.querySelector("#btn-create-new-pys-for-vehicle").onclick = () => {
+        closeModal();
+        openAddProblemModal(vehicle);
+    };
+
+    // Obtener problemas de la sección PyS
+    let allPys = [];
+    try {
+        const res = await routeAction("getPysData");
+        allPys = (res && res.data) ? res.data : [];
+    } catch (e) {
+        console.error("Error al obtener datos PyS:", e);
+    }
+
+    const resultsContainer = content.querySelector("#existing-pys-results-container");
+    const searchInput = content.querySelector("#search-existing-pys-input");
+
+    const renderProblemsList = (query = "") => {
+        resultsContainer.innerHTML = "";
+        const vehicleIdStr = String(vehicle.id);
+
+        // Condiciones obligatorias de disponibilidad (Requisito 2.3):
+        // 1. Mostrar únicamente problemas que tengan al menos un modelo de vehículo relacionado (modelosAsociados.length > 0).
+        // 2. Excluir problemas generales (modelosAsociados vacíos).
+        // 3. Excluir problemas que ya estén relacionados con el modelo actual.
+        const filtered = allPys.filter(p => {
+            if (!p || !Array.isArray(p.modelosAsociados) || p.modelosAsociados.length === 0) {
+                return false; // Excluir generales
+            }
+            if (p.modelosAsociados.some(mId => String(mId) === vehicleIdStr)) {
+                return false; // Ya está asociado al vehículo actual
+            }
+            if (query) {
+                const q = query.toLowerCase();
+                const titulo = (p.Problema || "").toLowerCase();
+                const desc = (p.Descripcion || "").toLowerCase();
+                return titulo.includes(q) || desc.includes(q);
+            }
+            return true;
+        });
+
+        if (filtered.length === 0) {
+            resultsContainer.innerHTML = `<div style="text-align:center; padding:20px; color:var(--text-disabled); font-size:0.9em;">No hay problemas disponibles para asociar a este vehículo.</div>`;
+            return;
+        }
+
+        filtered.forEach(p => {
+            const itemRow = document.createElement("div");
+            itemRow.style.cssText = "display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px; border:1px solid var(--border-color); border-radius:6px; background:var(--card-bg, #fff);";
+
+            const leftDiv = document.createElement("div");
+            leftDiv.style.cssText = "display:flex; align-items:center; gap:10px; flex:1; min-width:0;";
+
+            const img = document.createElement("img");
+            img.src = getImageUrl(p.Imagen, IMG_SIZE_SMALL);
+            img.style.cssText = "width:42px; height:42px; object-fit:cover; border-radius:4px; flex-shrink:0;";
+            leftDiv.appendChild(img);
+
+            const textDiv = document.createElement("div");
+            textDiv.style.cssText = "display:flex; flex-direction:column; min-width:0; flex:1;";
+            textDiv.innerHTML = `
+                <strong style="font-size:0.9rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${p.Problema}</strong>
+                <span style="font-size:0.75rem; color:${p.Se_soluciono === 'x' ? '#28a745' : '#dc3545'}; font-weight:600;">${p.Se_soluciono === 'x' ? 'Solucionado' : 'Sin solución'}</span>
+            `;
+            leftDiv.appendChild(textDiv);
+
+            const addBtn = document.createElement("button");
+            addBtn.className = "btn btn-primary btn-sm";
+            addBtn.style.cssText = "padding:6px 14px; font-size:0.85rem; flex-shrink:0;";
+            addBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar`;
+
+            addBtn.onclick = async () => {
+                addBtn.disabled = true;
+                addBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i>`;
+                try {
+                    const res = await routeAction("addVehicleToProblem", {
+                        problemId: p.id_problem,
+                        vehicleId: vehicle.id
+                    });
+                    if (res && res.status === "success") {
+                        mostrarNotificacion("Problema vinculado con éxito.", "success");
+                        closeModal();
+                        // Actualizar inmediatamente el modal de detalle del vehículo
+                        const panel = document.getElementById("detalleCompleto");
+                        if (panel) {
+                            renderPosiblesProblemasAccordion(panel, vehicle);
+                        }
+                    }
+                } catch (err) {
+                    showGlobalError("Error al asociar problema: " + err.message);
+                    addBtn.disabled = false;
+                    addBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Agregar`;
+                }
+            };
+
+            itemRow.appendChild(leftDiv);
+            itemRow.appendChild(addBtn);
+            resultsContainer.appendChild(itemRow);
+        });
+    };
+
+    renderProblemsList();
+    searchInput.oninput = () => renderProblemsList(searchInput.value.trim());
+}
