@@ -1749,3 +1749,15 @@ Alcance: ui.js, función exportVehiclePrintSheet; recurso del logo TRACKLINK en 
 - No alterar el contenido ni la lógica del QR/video, las notas técnicas, los datos del vehículo, la selección del corte recomendado ni el orden técnico fuera de lo necesario para la paginación solicitada.
 - No modificar el pie de página global de la aplicación ni otras áreas de index.html/style.css. El logo de TRACKLINK se reutiliza desde el modal de términos únicamente para el pie de las hojas imprimibles.
 ================================================================================
+
+================================================================================
+AUDITORÍA DE IMPLEMENTACIÓN: PAGINACIÓN DE FICHA TÉCNICA EN PÁGINAS 2×2
+Fecha: 2026-11-03
+- ui.js: se sustituyó la distribución adaptativa ilimitada por grupos explícitos de hasta cuatro tarjetas con imagen, conservando prioridad de la primera imagen y orden técnico de las restantes.
+- ui.js: se generó un contenedor de páginas explícitas; cada página clona el encabezado y el pie. La tabla de metadatos, fotografía principal y QR/video se clonan únicamente en la primera página; las notas técnicas se conservan al final de la última.
+- ui.js: la cuadrícula de cada página usa dos columnas y limita cada grupo a un máximo de cuatro imágenes técnicas, permitiendo que conjuntos superiores continúen en páginas adicionales.
+- ui.js: se ajustó @page a márgenes de 5 mm y se configuró cada página a 269 mm de alto útil para tamaño Carta, con salto explícito entre páginas.
+- ui.js: se añadió tracklink_logo.png centrado en el pie de página, con altura de 45 px según la referencia base .terms-agreement-logo.
+- Riesgo de paginación: la altura de tarjetas y descripciones depende de su contenido. Aunque se limita la altura de imagen según la cantidad de imágenes de la página, la paginación debe validarse en navegador y PDF para detectar desbordamientos o contenido que no quepa en la altura útil.
+- Verificación de esta fase: cambio implementado por actualización de archivo en GitHub. La prueba visual en navegador y la generación real de PDF no se han ejecutado.
+================================================================================
