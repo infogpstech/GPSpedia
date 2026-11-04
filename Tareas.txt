@@ -2496,3 +2496,26 @@ ALCANCE MÍNIMO
 RESTRICCIONES
 No ejecutar cambios durante esta auditoría. Para implementar, crear una rama nueva basada en fix/pys-carousel-card-sizing-print-images, cumplir íntegramente Proceso de desarollo.md, generar respaldo previo, verificar el cambio y preparar Pull Request hacia la rama base. No incluir contraseñas ni tokens en capturas, informes o pruebas.
 ================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — VALIDAR LA IDENTIDAD DEL COLABORADOR EN EL BACKEND WRITE
+Fecha: 2026-11-04
+Referencia: Auditoría.txt, hallazgo AUD-SEC-02.
+Rama de referencia: fix/pys-carousel-card-sizing-print-images
+Prioridad: ALTA.
+Estado: PENDIENTE DE CORRECCIÓN Y PRUEBAS.
+
+Objetivo: asegurar que el colaborador registrado en cada corte corresponda al usuario autenticado y no a un nombre arbitrario enviado por el navegador.
+
+Requisitos:
+1. Revisar Services/write.js, doPost y handleAddOrUpdateCut, incluidos los flujos de alta nueva, alta en vehículo existente y recuperación idempotente.
+2. Exigir y validar el token de sesión mediante la fuente de autenticación existente.
+3. Obtener en servidor el nombre personal del perfil asociado a la sesión validada.
+4. Ignorar o rechazar cualquier nombre de colaborador que el cliente intente imponer.
+5. Mantener consistencia de la atribución en colaboradorCorte1, colaboradorCorte2 y colaboradorCorte3.
+6. Probar sesión ausente, inválida, expirada y válida; intentar enviar el nombre de otra persona y confirmar que no se almacena.
+7. Verificar compatibilidad con operaciones idempotentes y con el flujo actual de registro.
+
+Restricciones: no modificar código durante la auditoría. La implementación debe realizarse en una rama nueva basada en fix/pys-carousel-card-sizing-print-images, con el procedimiento obligatorio, respaldo, pruebas y Pull Request hacia la rama base.
+================================================================================
