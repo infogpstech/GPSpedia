@@ -2201,3 +2201,15 @@ Estado: IMPLEMENTACIÓN ESTÁTICA REALIZADA; PENDIENTE VALIDACIÓN FUNCIONAL EN 
 Pruebas realizadas: compilación sintáctica de exportVehiclePrintSheet y simulación del algoritmo para seis combinaciones de dimensiones/orientaciones.
 Pendiente: revisar la paginación real, las imágenes de baja resolución o fallidas, la cantidad alta de imágenes y el comportamiento de la tabla de metadatos cuando existe video y QR.
 ================================================================================
+
+
+================================================================================
+TAREA COMPLEMENTARIA: CORREGIR DISTRIBUCIÓN INTERNA DE TARJETAS EN FICHA IMPRIMIBLE
+Fecha: 2026-11-04
+Requerimientos:
+1. Evitar que la descripción ocupe todo el ancho y desplace la imagen debajo cuando existe espacio horizontal.
+2. Mantener texto e imagen dentro de la misma tarjeta, sin modificar el orden de prioridad ni los datos técnicos.
+3. Conservar el modo vertical y el comportamiento apilado en pantallas estrechas.
+Estado: AJUSTE CSS IMPLEMENTADO; PENDIENTE VALIDACIÓN VISUAL EN GITHUB PAGES Y GENERACIÓN REAL DE PDF.
+Verificación realizada: compilación sintáctica de exportVehiclePrintSheet y revisión estática del bloque CSS. No se considera validada la paginación hasta probarla en navegador/PDF.
+================================================================================
