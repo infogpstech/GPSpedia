@@ -1960,3 +1960,16 @@ Archivo: ui.js, función exportVehiclePrintSheet, bloque arrangeTechnicalCards y
 - Tres imágenes verticales/horizontales mantienen composiciones específicas existentes; las demás mezclas y conjuntos de 3–7 imágenes usan filas adaptativas según relación de aspecto, evitando mezclar imágenes verticales y horizontales en la misma fila.
 - Filas generales limitadas a tres imágenes, con panorámicas en filas independientes. Se mantienen proporciones de columnas calculadas a partir de la relación de aspecto.
 - No se modificaron la tabla de metadatos, el bloque QR/video ni las notas técnicas. Pendiente validación real de impresión/PDF y paginación.
+
+================================================================================
+CAMBIO 2026-11-03 — PAGINACIÓN EXPLÍCITA DE FICHA TÉCNICA CON CUADRÍCULA 2×2
+- ui.js (exportVehiclePrintSheet, estilos internos de impresión y arrangeTechnicalCards):
+  * Se cambió el margen de impresión a 5 mm por lado.
+  * Se sustituyó la distribución ilimitada de imágenes por páginas explícitas con cuadrícula de hasta dos columnas y dos filas, limitando cada página a cuatro tarjetas con imagen.
+  * Se conserva la prioridad de la primera imagen y el orden técnico de las restantes; los grupos que exceden cuatro imágenes continúan en páginas posteriores.
+  * Se replica el encabezado y el pie de página en cada página creada.
+  * La tabla de metadatos, imagen principal del vehículo y QR/video se conservan únicamente en la primera página.
+  * Se añadió tracklink_logo.png centrado en el pie, con altura de 45 px.
+  * Las notas técnicas se conservan en la última página.
+- Verificación: revisión estática del cambio de código. No se ejecutó navegador real ni se generó un PDF; la paginación, altura efectiva de tarjetas y posición del pie de página permanecen pendientes de validación visual.
+================================================================================
