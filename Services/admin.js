@@ -125,15 +125,23 @@ function collectActiveDriveReferences() {
 }
 
 function isFolderInsideCortes(folder, rootFolderId) {
-    let current = folder;
-    let depth = 0;
-    while (current && depth < 100) {
-        if (current.getId() === rootFolderId) return true;
+    const pending = [folder];
+    const visited = new Set();
+    let index = 0;
+
+    while (index < pending.length) {
+        const current = pending[index++];
+        if (!current) continue;
+
+        const currentId = current.getId();
+        if (currentId === rootFolderId) return true;
+        if (visited.has(currentId)) continue;
+        visited.add(currentId);
+
         const parents = current.getParents();
-        if (!parents.hasNext()) return false;
-        current = parents.next();
-        depth++;
+        while (parents.hasNext()) pending.push(parents.next());
     }
+
     return false;
 }
 
@@ -2835,7 +2843,7 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
     let totalAnalyzed = 0;
     let foldersVisited = 0;
     if (cursor) {
-        if (!Array.isArray(cursor.stack) || cursor.stack.length > 100) throw new Error("Cursor de auditoría inválido.");
+        if (!Array.isArray(cursor.stack)) throw new Error("Cursor de auditoría inválido.");
         stack = cursor.stack;
         totalAnalyzed = Math.max(0, Number(cursor.totalAnalyzed) || 0);
         foldersVisited = Math.max(0, Number(cursor.foldersVisited) || 0);
