@@ -1922,3 +1922,18 @@ Fecha: 2026-11-04
   * No se modificaron el HTML de las tarjetas, la lógica de prioridad de imágenes, la tabla .meta-table ni el bloque QR/video.
 - Verificación realizada: compilación sintáctica de exportVehiclePrintSheet y revisión estática del bloque CSS modificado. No se ejecutó navegador real ni se generó PDF.
 ================================================================================
+
+
+================================================================================
+CAMBIO: DESCRIPCIÓN Y AVISOS A ANCHO COMPLETO SOBRE LA IMAGEN EN FICHA IMPRIMIBLE
+Fecha: 2026-11-04
+
+- ui.js (exportVehiclePrintSheet, marcado de tarjetas y estilos internos de impresión):
+  * Se cambió .tech-item-body a una sola columna para evitar que la descripción aparezca al lado de la fotografía.
+  * Se mantuvo .tech-item-info a ancho completo y antes del contenedor de imagen.
+  * Se movió entry.extraHtml dentro de .tech-item-info para que el aviso de testigo aparezca junto a la descripción y antes de la fotografía.
+  * Se incrementó el límite de altura de .tech-detail-img de 320px a 380px, manteniendo ancho y alto automáticos, object-fit: contain y centrado.
+  * Se aplicó el orden texto-antes-de-imagen a los modos automático, horizontal, vertical e imagen ampliada; en consecuencia, el selector "Imagen a la derecha" ya no coloca la descripción en una columna lateral.
+  * No se modificaron la tabla .meta-table, la lógica de prioridad de imágenes ni el bloque QR/video.
+- Verificación estática: compilación sintáctica de exportVehiclePrintSheet y comparación de las reglas CSS de .meta-table con GPSpedia2.2.7; sin diferencias en dicho bloque. No se generó PDF ni se validó visualmente en navegador.
+================================================================================
