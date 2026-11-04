@@ -2507,3 +2507,35 @@ VERIFICACIÓN
 RESULTADO
 La discrepancia de lectura del rol que podía ocultar el enlace aunque los controles de edición reconocieran la propiedad Rol queda corregida en esta rama. No se declara validación en producción.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA PREVIA — CORRECCIÓN DE VALIDACIÓN DEL ROL PARA EL ACCESO AL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Alcance: ui.js (showApp), origen del rol en Services/Auth.js y controles de edición que utilizan el mismo dato de sesión.
+
+ESTADO ACTUAL Y HALLAZGOS
+1. Services/Auth.js obtiene el valor de la columna Privilegios de la hoja Users mediante COLS_USERS.Privilegios (columna 4) y lo devuelve como user.Privilegios en la respuesta de login. Este es el dato de rol proveniente de la spreadsheet.
+2. Los controles de edición del catálogo consultan gpsepedia_session.Privilegios y comparan el valor con 'Desarrollador'. Por ello pueden mostrarse cuando la sesión contiene ese valor.
+3. ui.js, en showApp(user), normaliza el rol antes de decidir la visibilidad de dev-tools-btn.
+4. La expresión regular actual contiene dos barras invertidas antes de la secuencia Unicode: /[\\\\u0300-\\\\u036f]/g. La expresión se interpreta como un patrón distinto del rango Unicode de marcas diacríticas y elimina caracteres ASCII del texto del rol. En la prueba local con el literal 'Desarrollador', la normalización actual produce 'esarrollador', por lo que la comparación exacta con 'desarrollador' falla y el enlace permanece oculto.
+5. Esta discrepancia explica que los controles de edición aparezcan —comparan el valor de sesión directamente— mientras el acceso al panel no aparece —la normalización altera el valor—.
+6. La alternativa user.Rol no corresponde al campo que Services/Auth.js entrega desde la spreadsheet. Mantenerla no es necesario para validar el rol definido en la columna Privilegios.
+
+CAUSA IDENTIFICADA
+La expresión regular de showApp(user) está doblemente escapada y altera el texto 'Desarrollador' al normalizarlo. El origen del rol en la autenticación ya está conectado a la columna Privilegios de la hoja Users; no se requiere cambiar la estructura de la spreadsheet ni el servicio de autenticación para corregir este defecto.
+
+CAMBIO PROPUESTO
+1. Leer exclusivamente user.Privilegios para la condición del acceso de desarrollador, manteniendo como origen el valor entregado por la autenticación desde la spreadsheet.
+2. Corregir la expresión regular para eliminar únicamente las marcas diacríticas Unicode: /[\\u0300-\\u036f]/g (una sola barra invertida antes de cada u en el código fuente).
+3. Mantener trim, conversión a minúsculas y comparación exclusiva con 'desarrollador'. No modificar permisos de edición ni otras opciones del menú.
+
+RIESGOS Y DEPENDENCIAS
+- Un rol distinto de Desarrollador debe continuar sin acceso al enlace.
+- La corrección afecta la visibilidad del enlace en login y rehidratación, ya que ambos flujos invocan showApp(user).
+- La sesión persistida se originó en la respuesta de login; la validación de sesión del servicio actualmente comprueba token activo, pero no vuelve a consultar el rol. No se modificará ese comportamiento en esta corrección porque el defecto reproducido se encuentra en la normalización del frontend y la solicitud actual se limita a resolver el acceso visual.
+- No se dispone de acceso de ejecución al navegador ni a la spreadsheet real desde esta auditoría. La verificación con la cuenta del usuario queda pendiente.
+
+No se modificó código durante esta auditoría.
+================================================================================
