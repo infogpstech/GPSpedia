@@ -2238,3 +2238,8 @@ Requisitos:
 4. Preservar metadatos, orden de tarjetas y bloque QR/video.
 Estado: LÍMITE MÁXIMO DE ALTURA AUMENTADO A 560px; PENDIENTE VALIDACIÓN VISUAL EN GITHUB PAGES Y PDF REAL.
 ================================================================================
+
+
+TAREA 2026-11-04 — REGLAS DE DISTRIBUCIÓN PARA 1–7 IMÁGENES EN FICHA IMPRIMIBLE
+Requisitos: primera imagen prioritaria; mantener el orden técnico restante; usar relación de aspecto natural; no recortar ni deformar; limitar una imagen al 50% del ancho disponible; apilar composiciones horizontales compactas al 80%; cubrir combinaciones de hasta siete imágenes con filas adaptativas y panorámicas independientes.
+Estado: IMPLEMENTACIÓN INICIAL REALIZADA; PENDIENTE VALIDACIÓN VISUAL EN GITHUB PAGES, PDF REAL, SALTOS DE PÁGINA Y ESCENARIOS DE BAJA RESOLUCIÓN/ERROR DE CARGA.
