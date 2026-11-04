@@ -42,10 +42,29 @@ export async function routeAction(action, payload = {}, serviceOverride = null) 
     if (!targetUrl) targetUrl = API_ENDPOINTS.LEGACY;
 
     try {
+        const requestPayload = { ...(payload || {}) };
+        const protectedAdminActions = [
+            'uploadAdminImage',
+            'getReplacedImages',
+            'recoverReplacedImage',
+            'deleteReplacedImage',
+            'auditDriveImagesInCortes'
+        ];
+        if (protectedAdminActions.includes(action)) {
+            try {
+                const session = typeof localStorage !== 'undefined'
+                    ? JSON.parse(localStorage.getItem('gpsepedia_session') || 'null')
+                    : null;
+                requestPayload.sessionToken = session && session.SessionToken ? session.SessionToken : '';
+            } catch (sessionError) {
+                requestPayload.sessionToken = '';
+            }
+        }
+
         const response = await fetch(targetUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'text/plain' },
-            body: JSON.stringify({ action, payload }),
+            body: JSON.stringify({ action, payload: requestPayload }),
             redirect: 'follow'
         });
 
