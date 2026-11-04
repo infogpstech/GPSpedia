@@ -8239,7 +8239,7 @@ export function exportVehiclePrintSheet(item) {
             // se prioriza la primera imagen según el orden técnico original de la ficha.
             const priorityCard = imageCards.find(card => card.dataset.priorityCut === 'true')
                 || [...imageCards].sort((a, b) => originalOrder(a) - originalOrder(b))[0];
-            const remainingCards = imageCards.filter(card => card !== priorityCard);
+            const remainingCards = imageCards.filter(card => card !== priorityCard).sort((a, b) => originalOrder(a) - originalOrder(b));
             const initialDimensions = imageCards.map(card => ({ card, ...getDimensions(card) }));
             const portraitCount = initialDimensions.filter(entry => entry.aspect < 0.85).length;
             const landscapeCount = initialDimensions.filter(entry => entry.aspect > 1.2).length;
