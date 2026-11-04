@@ -1968,3 +1968,26 @@ Fecha: 2026-11-04
 - Comprobaciones estáticas realizadas: nota en tabla, sin duplicación como bloque independiente, listener del selector presente, agrupación de imágenes conservada y bloque de metadatos clonado solo en primera página.
 - No se ejecutó navegador real ni generación de PDF; la apariencia final y el encaje en impresión siguen pendientes de validación visual.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA PREVIA — TEXTO INCOMPLETO EN TARJETAS DE FICHA IMPRIMIBLE
+Fecha: 2026-11-04
+Archivos revisados antes de modificar:
+- ui.js: c4265bf584aab93952fd54a448541f48b3e45130
+- Auditoría.txt: 4bcb4d3b815373ba937b6661d2b60dcd687b3e35
+- ChangesLogs.txt: 6ce982041036cd0b5763865fcaa0184839ead663
+- Tareas.txt: d3fc7c352c21e8a415ec43593f49ab5ee1c061b2
+
+Hallazgos:
+1. Las tarjetas técnicas no tienen una regla propia que recorte el texto; .tech-item-info permite ajuste de palabras y mantiene el flujo vertical.
+2. Cada .sheet-page-wrapper tiene altura, altura mínima y máxima fijas de 269 mm, además de overflow:hidden. Si la suma de encabezado, metadatos/notas, descripciones, imágenes y pie excede el área disponible, el contenido que sobresale puede quedar oculto.
+3. La paginación actual agrupa principalmente por cantidad y relación de aspecto de las imágenes, no por altura real del texto. Además, las tarjetas sin imagen se añaden en bloque a la última página, por lo que textos largos pueden superar la altura fija.
+4. No se ha ejecutado una impresión real en navegador/PDF en esta revisión; el diagnóstico se basa en inspección estática.
+
+Corrección prevista:
+- Evitar que el contenedor de página oculte contenido técnico que exceda la altura mínima.
+- Conservar una altura mínima equivalente al área actual, permitiendo que la página crezca si el contenido no cabe.
+- No modificar el selector de distribución, el orden/prioridad del corte recomendado, el contenido de las tarjetas ni la tabla de metadatos.
+- Registrar que la paginación automática por altura real y la validación visual siguen pendientes.
+================================================================================
