@@ -2703,3 +2703,48 @@ LIMITACIONES DE VALIDACIÓN
 - La revisión fue estática desde el contenido de la rama. No se ejecutó navegador real ni dispositivo móvil/PWA.
 - Queda pendiente validar visualmente el diseño y la interacción en móvil y escritorio desde el entorno live.
 ================================================================================
+
+================================================================================
+AUDITORÍA DOCUMENTAL — FACTIBILIDAD DEL CENTRO DE ADMINISTRACIÓN DEL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Alcance: revisión documental y técnica para registrar tareas futuras en Tareas.txt. No se implementaron funciones.
+
+ARCHIVOS Y COMPONENTES INSPECCIONADOS
+- Proceso de desarollo.md: flujo obligatorio, registro de hallazgos, zonas seguras y requisitos de revisión.
+- Tareas.txt: estructura histórica, bloques existentes y estado de las tareas recientes.
+- api-config.js: endpoints, ACTION_TO_SERVICE_MAP, funciones de conveniencia y checkAllServicesHealth().
+- Services/Auth.js: hojas Users, ActiveSessions y Logs; logToSheet(), autenticación y validación de sesión.
+- Services/admin.js: assertDeveloperSession(), router doPost(), acciones administrativas, respaldos, restauración, operaciones de Sheets/Drive, estado de procesos y operaciones por lotes.
+- Referencias de interfaz y servicio USERS localizadas mediante búsqueda del repositorio: users.html y acciones getUsers/createUser/updateUser/deleteUser/changePassword/updateProfile.
+
+HALLAZGOS
+1. Existen capacidades que pueden reutilizarse: administración de usuarios en USERS, consulta de actividad en FEEDBACK, comprobación de salud en api-config.js, respaldos/restauración y herramientas de mantenimiento en ADMIN, y registros en AUTH.
+2. checkAllServicesHealth() mide disponibilidad y latencia de endpoints desde el cliente; no constituye medición de CPU, RAM, capacidad interna de Sheets/Drive ni cantidad exacta de sesiones.
+3. Services/admin.js tiene assertDeveloperSession(), pero el arreglo protectedActions de doPost() solo incluye las cinco acciones de gestión/auditoría de imágenes. Acciones como backupDatabase, backupDrive, restoreDatabase, restoreDrive, reorganizeDatabase, createSheet, addColumn y driveCommand no aparecen en esa lista y no pasan por esa validación común del router. Se registra como riesgo bloqueante para ampliar la superficie administrativa.
+4. Services/Auth.js, línea aproximada 138, registra sheetPassword y password en el evento DEBUG de comparación de credenciales. Esto puede exponer contraseñas en Logs y requiere remediación de seguridad antes de ampliar el sistema de auditoría o administración de usuarios.
+5. Las acciones de usuario están mapeadas al servicio USERS, pero esta revisión no confirma el código completo ni la autorización backend de dicho servicio. Su implementación deberá auditarse antes de reutilizarla.
+6. El registro de AUTH, los logs de respuesta de ADMIN y getActivityLogs de FEEDBACK son fuentes distintas. No se confirmó un contrato unificado de auditoría persistente.
+7. La configuración de endpoints y varias constantes administrativas residen en código. No se identificó un administrador general de configuración dinámica.
+8. Las versiones declaradas de frontend y servicios no demuestran por sí mismas qué versión está desplegada en cada endpoint.
+9. Las operaciones extensas de ADMIN ya utilizan en algunos casos lotes, estado de proceso y cursores; toda ampliación debe respetar cuotas y límites vigentes de Apps Script.
+10. La gestión de usuarios y permisos está declarada zona segura en el procedimiento del proyecto.
+
+RIESGOS Y EFECTOS COLATERALES
+- Exponer funciones en la interfaz sin autorización backend permitiría invocaciones directas al endpoint.
+- Unificar logs sin sanitización podría replicar contraseñas, SessionToken u otros datos privados.
+- Las consultas completas de hojas o árboles de Drive pueden exceder tiempo de ejecución y cuotas.
+- Las restauraciones y operaciones masivas pueden sobrescribir o mover datos; requieren respaldo verificable, dry-run, bloqueo, confirmación y reversión.
+- Un indicador de estado basado solo en HTTP puede dar una falsa impresión de que todas las dependencias funcionan.
+- Cambios en users.html o el servicio USERS afectan una zona segura y requieren autorización específica.
+
+DECISIÓN DE FACTIBILIDAD
+Las diez áreas recomendadas y el resumen general son viables de forma incremental, pero varias requieren primero endurecimiento de seguridad y normalización de contratos. Se priorizan observabilidad y diagnósticos de solo lectura antes de operaciones de modificación. La administración dinámica de configuración y la verificación exacta de despliegues tienen factibilidad condicionada a definir fuentes de datos adicionales.
+
+VERIFICACIÓN
+- Revisión estática del código y documentación disponible en la rama.
+- No se realizaron solicitudes a endpoints desplegados.
+- No se accedió ni modificó Google Sheets o Google Drive.
+- No se ejecutaron pruebas funcionales, de cuotas, de permisos ni de restauración.
+- No se modificó código de la aplicación.
+================================================================================
