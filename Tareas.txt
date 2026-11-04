@@ -2621,3 +2621,17 @@ Verificación realizada:
 Pendiente:
 Comprobar en el entorno live, con la cuenta del usuario, que el enlace Desarrollador aparece en el menú y abre el panel. Confirmar también que el enlace permanece oculto para cuentas con otros roles. No fusionar el PR #128 hasta recibir la confirmación del usuario.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE TAREA — ORGANIZACIÓN DEL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work | Referencia: PR #128 (abierto; sin merge).
+Estado: IMPLEMENTADO Y REVISADO ESTÁTICAMENTE; VALIDACIÓN LIVE PENDIENTE.
+
+- El panel se dividió en Diagnóstico, Respaldos, Base de datos, Imágenes y Drive, y Sistema.
+- Se incorporó menú lateral en escritorio y navegación horizontal en pantallas pequeñas.
+- Se conservaron los IDs de los controles y no se modificó ui.js ni la lógica administrativa.
+- Pendiente: comprobar navegación y operación de controles en el entorno live, escritorio y móvil/PWA.
+- No fusionar el PR #128 hasta recibir confirmación del usuario.
+================================================================================
