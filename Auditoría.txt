@@ -2334,3 +2334,31 @@ Se crearon copias exactas de ui.js, Services/admin.js, Auditoría.txt, ChangesLo
 
 No se modificó código durante esta auditoría.
 ================================================================================
+
+
+================================================================================
+REVISIÓN DE CODE REVIEW — HALLAZGOS ADICIONALES SOBRE REFERENCIAS Y TRAZABILIDAD
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Ciclo: revisión posterior a la primera implementación estática.
+
+HALLAZGO CR-IMG-01 — La búsqueda de referencias debe contemplar fórmulas e hipervínculos enriquecidos.
+Evidencia: collectActiveDriveReferences utiliza getDisplayValues() como única fuente. Una celda que muestre texto mediante HYPERLINK(), IMAGE() o un enlace aplicado como RichTextValue puede no exponer la URL en el valor mostrado.
+Riesgo: una referencia activa podría no detectarse y una imagen podría clasificarse incorrectamente o enviarse a papelera.
+Acción: inspeccionar valores mostrados, fórmulas y enlaces de RichTextValue; mantener la regla de bloqueo ante referencias no interpretables.
+
+HALLAZGO CR-IMG-02 — La carpeta de destino del reemplazo debe permanecer dentro del árbol auditado.
+Evidencia: handleUploadAdminImage reutiliza el primer padre de la imagen anterior sin comprobar que pertenezca a DRIVE_FOLDER_ID.
+Riesgo: si una imagen antigua está fuera de Cortes, la nueva versión también puede almacenarse fuera del árbol que la herramienta de auditoría debe cubrir.
+Acción: reutilizar el padre únicamente si está dentro del árbol Cortes; de lo contrario, utilizar la estructura jerárquica bajo DRIVE_FOLDER_ID.
+
+HALLAZGO CR-IMG-03 — El registro histórico requiere tratamiento de error durante flush.
+Evidencia: recordReplacedImage escribe la fila y ejecuta SpreadsheetApp.flush() antes de devolver el identificador/índice de fila. Si flush falla después de que la fila haya sido escrita, el llamador puede no recibir el índice para marcar el registro como cancelado o pendiente de revisión.
+Riesgo: podría quedar una fila histórica parcialmente confirmada aunque el reemplazo activo no se haya realizado.
+Acción: ante error de escritura/flush, comprobar si la fila contiene el ID recién generado y marcarla como requiere_revision cuando sea posible, sin ocultar el error original.
+
+RESPALDO DEL SEGUNDO CICLO
+Se crearon copias exactas de Auditoría.txt y Services/admin.js en _temporary_backups/review_cycle_2/ antes de modificar estos archivos en este ciclo.
+
+No se modificó código durante esta revisión.
+================================================================================
