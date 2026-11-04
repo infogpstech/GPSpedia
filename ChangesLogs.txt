@@ -1840,3 +1840,14 @@ Fecha: 2026-11-03
     - ADMIN: https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec
   * Se mantienen sincronizados LEGACY, AUTH, CATALOG, WRITE, USERS y UTILITIES.
 ================================================================================
+
+================================================================================
+REGISTRO DE CAMBIOS: SINCRONIZACIÓN DE VERSIÓN V2.2.5 EN FRONTEND Y DOCUMENTACIÓN
+Fecha: 2026-11-03
+
+- index.html:
+  * Actualizado `<title>` a `GPSpedia v2.2.5`.
+  * Sincronizada versión visible en el modal de inicio de sesión (`#login-modal`) a `v2.2.5`.
+  * Sincronizada versión en el pie de página (`footer.footer`) a `GPSpedia v2.2.5 © 2026 todos los derechos reservados.`.
+  * Sincronizado comentario de cabecera a `Version: 2.2.5`.
+================================================================================

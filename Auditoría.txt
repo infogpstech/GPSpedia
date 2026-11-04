@@ -1414,3 +1414,17 @@ Endpoints actualizados y verificados en api-config.js:
 - UTILITIES: https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec
 - ADMIN: https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec
 ================================================================================
+
+================================================================================
+AUDITORÍA: SINCRONIZACIÓN DE VERSIÓN V2.2.5 EN FRONTEND
+Fecha: 2026-11-03
+
+1. Actualización en index.html:
+   - Título de la página actualizado de v2.1.6 a `GPSpedia v2.2.5`.
+   - Indicador de versión en el modal de inicio de sesión (`#login-modal`) sincronizado a `v2.2.5`.
+   - Texto de derechos y versión en el pie de página (`footer.footer`) actualizado a `GPSpedia v2.2.5 © 2026 todos los derechos reservados.`.
+   - Cabecera HTML comment sincronizada a `Version: 2.2.5`.
+2. Verificación de documentación y changelog:
+   - La documentación para el usuario en `README.md` ya se encuentra sincronizada con la versión 2.2.5 y sus novedades.
+   - Estado: Verificado e implementado exitosamente.
+================================================================================
