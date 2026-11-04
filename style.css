@@ -1552,6 +1552,17 @@ body.dark-mode .modal form textarea:disabled {
     color: var(--accent-color, #007bff);
 }
 
+.card-create-vehicle-assoc,
+.card-create-pys-assoc {
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
+    height: 188px;
+    min-height: 188px;
+    flex: 0 0 140px;
+    flex-shrink: 0;
+}
+
 .card-create-tutorial:hover,
 .card-create-pys:hover,
 .card-create-vehicle-assoc:hover,
@@ -1561,8 +1572,8 @@ body.dark-mode .modal form textarea:disabled {
 }
 
 .card-create-tutorial {
-    height: 120px;
-    min-height: 120px;
+    height: 188px;
+    min-height: 188px;
 }
 
 .dark-mode .card-create-tutorial,
@@ -1582,8 +1593,8 @@ body.dark-mode .modal form textarea:disabled {
 }
 
 .card-create-pys {
-    height: 100%;
-    min-height: 140px;
+    height: 188px;
+    min-height: 188px;
 }
 
 /* Tarea adicional: Estilos para el Modal del Desarrollador (#dev-tools-modal) */
