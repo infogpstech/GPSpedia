@@ -2642,3 +2642,37 @@ VERIFICACIONES
 LIMITACIÓN
 No se ejecutó navegador real. La prueba visual y funcional en escritorio, móvil y PWA queda pendiente; no se declara validación en producción.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA INICIAL — AJUSTE RESPONSIVE Y ESTILO DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Alcance: index.html y style.css. Se revisaron además los puntos de apertura y listeners de ui.js para identificar dependencias; ui.js no requiere modificación.
+
+HALLAZGOS
+1. index.html, bloque #dev-tools-modal: las cinco opciones de navegación ya contienen iconos Font Awesome y texto dentro de <span>. Los iconos disponibles corresponden a Diagnóstico, Respaldos, Base de datos, Imágenes y Drive, y Sistema. Esto permite una presentación compacta en móvil sin introducir controles ni dependencias nuevas.
+2. style.css, reglas #dev-tools-modal desde aproximadamente línea 2375: en pantallas de hasta 760px la barra lateral se transforma en una fila horizontal con overflow-x:auto; los enlaces conservan texto y ancho automático, provocando desplazamiento horizontal.
+3. style.css, reglas de terminal: .dev-console-output usa fondo #121212, texto verde brillante y fuente monospace. No coincide con el requisito de terminal negra con texto blanco tipo Roboto.
+4. style.css, reglas del panel: existen tarjetas y controles básicos, pero la presentación no aplica de forma consistente transparencias, bordes suaves, jerarquía visual ni sombreado neutro inspirado en Windows 11.
+5. ui.js, openDevTools() e initAdminPanelListeners(): la apertura muestra el modal y registra listeners sobre IDs existentes. El terminal utiliza #dev-terminal-input y #btn-terminal-send. La modificación visual no requiere alterar esta lógica.
+
+DEPENDENCIAS Y RESTRICCIONES
+- Conservar los cinco radio buttons, sus IDs, el nombre del grupo y la relación for de cada opción.
+- Conservar todos los IDs y controles administrativos existentes dentro de los paneles.
+- Mantener navegación por teclado y nombres accesibles para cada opción aunque el texto deje de mostrarse visualmente en móvil.
+- No modificar ui.js, servicios, endpoints, permisos, acciones ni reglas de negocio.
+- Limitar los nuevos estilos a #dev-tools-modal para evitar efectos sobre otros modales o componentes.
+- Mantener los colores de la plataforma; sombras únicamente en tonos grises/neutros, sin resplandores de colores.
+
+IMPLEMENTACIÓN PROPUESTA
+1. Añadir etiquetas accesibles y títulos descriptivos a las cinco opciones existentes, sin cambiar sus IDs ni destinos.
+2. En móvil, convertir la navegación en una fila compacta de iconos centrados, sin texto visible ni scroll horizontal; conservar los nombres para tecnologías de asistencia y los tooltips nativos.
+3. Refinar el modal, navegación, tarjetas, campos y botones con transparencias discretas, bordes suaves y sombras grises de baja intensidad, respetando las variables de color de GPSpedia.
+4. Cambiar únicamente la presentación de la terminal a fondo negro y texto blanco, con fuente Roboto y alternativa sans-serif.
+
+VERIFICACIÓN PREVIA
+- Se inspeccionó el bloque completo del modal y las reglas CSS específicas de sus cinco secciones y breakpoints.
+- Se inspeccionaron los puntos de apertura del modal y registro de listeners en ui.js.
+- No se modificó código durante esta auditoría.
+================================================================================
