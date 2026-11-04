@@ -2174,3 +2174,20 @@ VERIFICACIÓN ESTÁTICA
 - ui.js no fue modificado.
 - No se ejecutó navegador real; la validación visual en escritorio, móvil y PWA queda pendiente.
 ================================================================================
+
+================================================================================
+DOCUMENTACIÓN — ESTUDIO DE FACTIBILIDAD DEL CENTRO DE ADMINISTRACIÓN
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+- Archivo modificado: Tareas.txt.
+- Se agregó un bloque de estudio de factibilidad y planificación para el panel de desarrollador.
+- Se documentaron los hallazgos existentes en api-config.js, Services/Auth.js y Services/admin.js.
+- Se registraron requisitos transversales de seguridad, autorización backend, auditoría, límites de Apps Script, procesamiento por lotes, reversibilidad y validación.
+- Se añadieron tareas futuras para: endurecimiento de seguridad; administración de usuarios y permisos; monitor del sistema; registro de actividad y auditoría; integridad de base de datos; respaldos y restauración; administrador de errores; configuración; archivos y recursos de Drive; mantenimiento; versiones y despliegues; y resumen general.
+- Cada tarea incluye factibilidad, capacidades existentes, requisitos, plan de trabajo y criterios de aceptación.
+- Se estableció una hoja de ruta por fases y referencias oficiales de Google Apps Script.
+- No se modificaron index.html, style.css, ui.js, api-config.js ni servicios Apps Script.
+- No se crearon hojas, columnas, propiedades, activadores o carpetas en Google; no se cambiaron permisos ni despliegues.
+- No se implementó ninguna de las funciones planificadas.
+================================================================================
