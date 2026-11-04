@@ -2173,3 +2173,16 @@ Requerimientos:
 4. Resolver la lentitud de carga al ingresar a la sección Problemas / Soluciones mediante precarga en segundo plano y caché local a 0ms.
 Estado: COMPLETADO Y VERIFICADO.
 ================================================================================
+
+
+================================================================================
+TAREA: NORMALIZACIÓN DE TARJETAS Y DISTRIBUCIONES CONFIGURABLES DE IMPRESIÓN
+Fecha: 2026-11-03
+Requerimientos:
+1. Reforzar el renderizado de vehículos relacionados en el detalle de Problemas y Soluciones para normalizar identificadores de modelos asociados cuando lleguen como arreglo o cadena.
+2. Unificar la altura de las tarjetas para agregar tutorial, agregar problema, agregar modelo en detalle PyS y agregar problema desde el detalle de vehículo.
+3. Permitir seleccionar una distribución para las imágenes de la ficha técnica y evitar reducir automáticamente las imágenes solo por la cantidad total de elementos.
+4. Ajustar el ancho de los elementos sin imagen para no reservar un espacio vacío para una imagen inexistente.
+Estado: IMPLEMENTADO; PENDIENTE DE REVISIÓN FUNCIONAL EN PULL REQUEST.
+Observación de verificación: la revisión realizada en esta sesión fue estática; queda pendiente comprobar visualmente los modos de impresión y los saltos de página en navegador.
+================================================================================
