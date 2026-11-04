@@ -7688,7 +7688,7 @@ export function exportVehiclePrintSheet(item) {
 
     // El detalle existente ordena los cortes por votos y toma el primero como recomendado.
     // Si ese primer corte está marcado explícitamente como "No recomendado", se conserva el orden técnico original.
-    const rankedCuts = [...cuts].sort((a, b) => b.util - a.util);
+    const rankedCuts = cuts.filter(c => c.tipo).sort((a, b) => b.util - a.util);
     const rankedFirstCut = rankedCuts[0] || null;
     const recommendedCut = rankedFirstCut && !isNoRecomendadoValue(rankedFirstCut.tipo) ? rankedFirstCut : null;
     const cutsForPrint = recommendedCut
@@ -8264,7 +8264,9 @@ export function exportVehiclePrintSheet(item) {
                 const { card, aspect } = entry;
                 card.style.gridRow = 'span 1';
                 let span;
-                if (portraitLandscapePortraitStack) {
+                if (orderedImageCards.length === 1) {
+                    span = 12;
+                } else if (portraitLandscapePortraitStack) {
                     if (card === priorityCard) {
                         span = 4;
                         card.style.gridRow = 'span 2';
