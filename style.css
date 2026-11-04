@@ -1557,8 +1557,8 @@ body.dark-mode .modal form textarea:disabled {
     width: 140px;
     min-width: 140px;
     max-width: 140px;
-    height: 188px;
-    min-height: 188px;
+    height: 120px;
+    min-height: 120px;
     flex: 0 0 140px;
     flex-shrink: 0;
 }
@@ -1572,8 +1572,8 @@ body.dark-mode .modal form textarea:disabled {
 }
 
 .card-create-tutorial {
-    height: 188px;
-    min-height: 188px;
+    height: 120px;
+    min-height: 120px;
 }
 
 .dark-mode .card-create-tutorial,
@@ -1593,8 +1593,8 @@ body.dark-mode .modal form textarea:disabled {
 }
 
 .card-create-pys {
-    height: 188px;
-    min-height: 188px;
+    height: 120px;
+    min-height: 120px;
 }
 
 /* Tarea adicional: Estilos para el Modal del Desarrollador (#dev-tools-modal) */
