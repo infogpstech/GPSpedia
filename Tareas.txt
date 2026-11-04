@@ -2334,3 +2334,78 @@ TAREA 2026-11-04 — DIMENSIONAMIENTO ADAPTATIVO DE IMÁGENES EN FICHAS IMPRIMIB
 - [ ] Confirmar número de páginas, tamaño visible de las imágenes, ausencia de recortes y ubicación del pie.
 Estado: IMPLEMENTACIÓN ESTÁTICA REALIZADA; VALIDACIÓN VISUAL Y DE IMPRESIÓN PENDIENTE.
 ================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — CORREGIR HALLAZGOS DE AUDITORÍA DE GESTIÓN DE IMÁGENES REEMPLAZADAS
+Fecha de registro: 2026-11-04
+Referencia: Auditoría.txt, entrada «AUDITORÍA TÉCNICA: VERIFICACIÓN REAL DE GESTIÓN DE IMÁGENES REEMPLAZADAS».
+Rama auditada: fix/pys-carousel-card-sizing-print-images
+Estado: PENDIENTE DE REVISIÓN Y RESOLUCIÓN.
+Restricción: no modificar ni eliminar registros históricos de documentación. Esta tarea no autoriza cambios en código hasta iniciar el procedimiento obligatorio de auditoría y respaldo indicado en Proceso de desarollo.md.
+
+OBJETIVO
+Resolver las discrepancias encontradas entre los requisitos documentados para la gestión de imágenes reemplazadas y el comportamiento visible en el código. La funcionalidad base existe, pero no se considera completamente verificada hasta resolver los hallazgos y ejecutar pruebas funcionales.
+
+HALLAZGOS A RESOLVER
+
+1. AUD-IMG-01 — Autorización del lado servidor para acciones administrativas.
+   - Revisar el punto de entrada de Services/admin.js y las acciones getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes.
+   - Validar identidad, sesión y rol autorizado en el backend antes de ejecutar acciones sensibles; no depender únicamente de controles de interfaz.
+   - Verificar la configuración de acceso del despliegue real del microservicio ADMIN.
+   - Pruebas: llamada sin sesión, sesión inválida, rol no autorizado y rol autorizado.
+
+2. AUD-IMG-02 — Consistencia al guardar el historial durante el reemplazo.
+   - Evitar que una sustitución se confirme como exitosa si falla el registro de la imagen anterior en Imagenes_Reemplazadas, o implementar una estrategia de recuperación explícita que garantice la trazabilidad.
+   - Mantener la referencia anterior disponible hasta confirmar que la operación quedó consistente.
+   - Pruebas: fallo al crear/acceder a la hoja histórica, error al registrar la fila y error al actualizar el campo activo.
+
+3. AUD-IMG-03 — Validación global antes de eliminar una imagen histórica.
+   - Ampliar la comprobación para identificar referencias activas en todas las hojas/campos pertinentes de la Spreadsheet, no únicamente en Cortes.
+   - Normalizar la extracción de IDs de Drive para los formatos de URL admitidos.
+   - Bloquear la eliminación cuando exista una referencia activa en cualquier módulo cubierto.
+   - Pruebas: imagen referenciada en Cortes, en otra hoja, en historial y sin referencias activas.
+
+4. AUD-IMG-04 — Correspondencia entre eliminación anunciada y operación real.
+   - La interfaz anuncia eliminación permanente, mientras el backend utiliza file.setTrashed(true).
+   - Definir y documentar el comportamiento correcto. Si se mantiene el envío a papelera, ajustar mensajes y estados para no presentarlo como eliminación irreversible. Si se requiere eliminación definitiva, implementarla únicamente con autorización, validación de uso y confirmación adecuadas.
+   - Pruebas: estado de Drive, estado histórico y mensajes mostrados al usuario.
+
+5. AUD-IMG-05 — Auditoría completa o indicación de resultados parciales.
+   - Resolver el límite fijo de 250 archivos en la exploración recursiva o informar de forma inequívoca cuando se alcance.
+   - Implementar lotes/paginación o un mecanismo seguro para continuar la auditoría hasta cubrir el árbol de Cortes sin exceder límites de ejecución.
+   - Pruebas: menos de 250 archivos, exactamente 250 y más de 250 archivos distribuidos en varias subcarpetas.
+
+6. AUD-IMG-06 — Clasificación fiable de imágenes no verificables.
+   - Diferenciar «sin uso detectado» de los casos en que no fue posible verificar una referencia o interpretar su URL.
+   - Revisar los formatos de URL admitidos para extraer IDs y evitar clasificar como sin uso los archivos cuyo uso no pudo determinarse.
+   - Informar las limitaciones o errores parciales de la auditoría.
+   - Pruebas: formatos de URL admitidos, formato desconocido, referencias históricas, activas y datos incompletos.
+
+7. AUD-IMG-07 — Alcance y validación de restauración.
+   - Confirmar si la restauración está limitada deliberadamente a imágenes de vehículos/campos de Cortes.
+   - Validar tipo de contenido, registro y campo antes de restaurar.
+   - Si el requisito incluye imágenes de otros módulos, definir e implementar una ruta de restauración por tipo de contenido; si no, documentar explícitamente el alcance admitido.
+   - Pruebas: registro válido, campo inválido, registro inexistente, archivo en papelera, archivo inaccesible y registro de otro tipo de contenido.
+
+CRITERIOS DE ACEPTACIÓN
+- Las acciones administrativas sensibles quedan protegidas en el servidor, independientemente de la interfaz.
+- Un reemplazo no pierde la trazabilidad de la imagen anterior cuando falla el registro histórico.
+- La validación de uso previo a eliminación cubre todas las referencias activas contempladas por el sistema.
+- La interfaz describe con exactitud si el archivo se envía a papelera o se elimina definitivamente.
+- La auditoría informa si el resultado está completo o parcial y no presenta incertidumbre como ausencia confirmada de uso.
+- La restauración valida el tipo de contenido y el destino de la referencia activa.
+- Se prueban los casos positivos, negativos, límites, errores de red/permisos y efectos colaterales.
+- Se registran los cambios posteriores en ChangesLogs.txt conforme al procedimiento, sin eliminar ni sobrescribir entradas anteriores.
+- Se comparan los archivos modificados con sus respaldos y se verifica que los cambios correspondan exclusivamente a esta tarea.
+
+ARCHIVOS IDENTIFICADOS PARA AUDITORÍA POSTERIOR
+- Services/admin.js
+- ui.js
+- api-config.js
+- index.html
+- Auditoría.txt
+- Tareas.txt
+Cualquier archivo adicional deberá justificarse según las dependencias que se confirmen durante la auditoría inicial.
+
+================================================================================
