@@ -7775,13 +7775,12 @@ export function exportVehiclePrintSheet(item) {
                 ${entry.title}
             </div>
             <div class="tech-item-body">
-                <div class="tech-item-info">${entry.infoHtml}</div>
+                <div class="tech-item-info">${entry.infoHtml}${entry.extraHtml || ''} </div>
                 ${safeImg ? `
                 <div class="tech-item-img-wrapper">
                     <img src="${safeImg}" alt="${entry.alt}" class="tech-detail-img" />
                 </div>` : ''}
             </div>
-            ${entry.extraHtml || ''}
         </div>
         `;
     }).join('');
@@ -8011,15 +8010,15 @@ export function exportVehiclePrintSheet(item) {
                 }
                 .tech-item-body {
                     display: grid;
-                    grid-template-columns: minmax(0, 1fr) minmax(120px, 42%);
+                    grid-template-columns: minmax(0, 1fr);
                     align-items: start;
                     gap: 8px;
                     min-width: 0;
                 }
                 .tech-item-info {
                     flex: 1 1 auto;
-                    max-width: none;
-                    width: auto;
+                    max-width: 100%;
+                    width: 100%;
                     min-width: 0;
                     overflow-wrap: break-word;
                     word-break: break-word;
@@ -8044,7 +8043,7 @@ export function exportVehiclePrintSheet(item) {
                 .tech-detail-img {
                     display: block;
                     max-width: 100%;
-                    max-height: 320px;
+                    max-height: 380px;
                     width: auto;
                     height: auto;
                     object-fit: contain;
@@ -8055,12 +8054,13 @@ export function exportVehiclePrintSheet(item) {
                 .adaptive-tech-grid > .tech-item-card.text-only {
                     width: 100%;
                 }
-                body[data-print-layout="horizontal"] .tech-item-body {
-                    grid-template-columns: minmax(0, 1fr) minmax(120px, 42%);
-                }
+                body[data-print-layout="horizontal"] .tech-item-body,
                 body[data-print-layout="vertical"] .tech-item-body,
                 body[data-print-layout="image-focus"] .tech-item-body {
                     grid-template-columns: minmax(0, 1fr);
+                }
+                body[data-print-layout="vertical"] .tech-item-body,
+                body[data-print-layout="image-focus"] .tech-item-body {
                     align-items: stretch;
                 }
                 body[data-print-layout="vertical"] .tech-item-info,
@@ -8082,7 +8082,7 @@ export function exportVehiclePrintSheet(item) {
                 }
                 /* Aviso de testigo al pie del corte (Requisito 4.1) */
                 .testigo-aviso {
-                    margin-top: 12px;
+                    margin-top: 6px;
                     font-size: 11px;
                     font-weight: bold;
                     color: #b78103;
@@ -8117,7 +8117,7 @@ export function exportVehiclePrintSheet(item) {
                     body { padding: 0; }
                     .tech-item-card { break-inside: avoid; page-break-inside: avoid; }
                     .adaptive-tech-grid { break-inside: auto; }
-                    .tech-detail-img { max-height: 320px; }
+                    .tech-detail-img { max-height: 380px; }
                 }
                 @media screen and (max-width: 600px) {
                     .top-grid {
