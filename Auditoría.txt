@@ -2539,3 +2539,33 @@ RIESGOS Y DEPENDENCIAS
 
 No se modificó código durante esta auditoría.
 ================================================================================
+
+
+================================================================================
+CODE REVIEW — CORRECCIÓN DE NORMALIZACIÓN DEL ROL PARA EL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+CAMBIO REVISADO
+- ui.js, función showApp(user): la validación de visibilidad utiliza exclusivamente user.Privilegios, que Services/Auth.js construye a partir de la columna Privilegios de la hoja Users.
+- Se corrigió la expresión regular para que el rango Unicode de marcas diacríticas tenga una sola barra invertida en el código fuente.
+- Se conservaron trim(), toLowerCase() y la comparación exacta con 'desarrollador'.
+- No se modificaron Services/Auth.js, permisos de edición, autenticación, endpoints, eventos del botón ni otros accesos del menú.
+
+SAFETY & SIDE EFFECTS
+- La decisión de mostrar el enlace se basa en el mismo campo de rol entregado por el servicio de autenticación desde la spreadsheet.
+- El rol Desarrollador se reconoce correctamente sin distinguir mayúsculas/minúsculas, espacios exteriores ni marcas diacríticas.
+- Supervisor, Usuario, valor vacío y rol ausente no cumplen la condición de acceso.
+- La alternativa user.Rol fue retirada de esta validación para no utilizar una propiedad distinta de la que el servicio de autenticación entrega desde la columna Privilegios.
+- El cambio se limita a la visibilidad de dev-tools-btn; no concede permisos nuevos ni modifica las funciones de edición.
+
+VERIFICACIÓN
+1. Comparación contra el respaldo: ui.js coincide exactamente con el respaldo salvo por el bloque de obtención/normalización del rol que corresponde a esta tarea.
+2. Pruebas de normalización: 'Desarrollador', ' DESARROLLADOR ', 'Desarrolladór', 'Supervisor', 'Usuario', cadena vacía y null. Todos los resultados coincidieron con lo esperado.
+3. Reproducción de la causa anterior: el patrón doblemente escapado alteraba 'Desarrollador' y provocaba que la condición de visibilidad fallara; el patrón corregido conserva el texto y permite que la comparación resulte verdadera.
+4. Inspección del flujo: tanto el login como la rehidratación llaman showApp(user); el objeto de login contiene Privilegios obtenido de la hoja Users.
+5. No se ejecutó navegador real ni se consultó la spreadsheet o la cuenta del usuario durante esta revisión. La comprobación visual en el entorno live queda pendiente.
+
+RESULTADO
+La causa de código que impedía reconocer el texto 'Desarrollador' durante la normalización queda corregida en la rama de trabajo. No se declara validación visual en el entorno live.
+================================================================================
