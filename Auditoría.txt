@@ -1681,3 +1681,22 @@ CORRECCIÓN REQUERIDA:
 - No modificar la tabla de metadatos, el QR/video, el algoritmo de prioridad ni la organización adaptativa de tarjetas entre sí.
 - Revisar de forma estática la función y dejar documentada la necesidad de validar la vista real de impresión/PDF.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA COMPLEMENTARIA: APROVECHAMIENTO DEL ESPACIO VISUAL DE LAS FOTOGRAFÍAS
+Fecha: 2026-11-04
+
+HALLAZGO VISUAL REPORTADO:
+- La ficha mantiene espacios vacíos apreciables a los lados y debajo de las fotografías, especialmente en imágenes verticales.
+- El límite CSS de 380px de altura restringe el tamaño máximo de la imagen aunque la página disponga de espacio adicional antes del pie de página.
+- La imagen utiliza width/height automáticos y object-fit: contain; mantener estas reglas evita deformación y permite que el límite de altura sea el principal factor de reducción en imágenes verticales.
+
+AJUSTE:
+- Aumentar el límite máximo de altura de las imágenes de 380px a 560px en la vista general, impresión y modo de imagen ampliada.
+- Mantener ancho/alto automáticos, max-width: 100%, object-fit: contain y centrado.
+- No establecer una anchura fija ni forzar escalado de imágenes de baja resolución; el cambio amplía el límite disponible, no obliga a agrandar todas las imágenes.
+- No alterar el orden adaptativo de tarjetas ni la distribución texto-antes-de-imagen, metadatos, QR/video o notas técnicas.
+
+PENDIENTE: verificar en navegador y PDF real que las imágenes aprovechen el espacio disponible y que no se produzcan cortes de página o desbordamientos.
+================================================================================
