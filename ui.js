@@ -7816,7 +7816,7 @@ export function exportVehiclePrintSheet(item) {
             <style>
                 @page {
                     size: 216mm 279mm portrait;
-                    margin: 4mm 6mm;
+                    margin: 5mm;
                 }
                 * { box-sizing: border-box; }
                 body {
@@ -7829,13 +7829,22 @@ export function exportVehiclePrintSheet(item) {
                     background: #fff;
                 }
                 .sheet-page-wrapper {
-                    min-height: 980px;
+                    height: 269mm;
+                    min-height: 269mm;
+                    max-height: 269mm;
                     display: flex;
                     flex-direction: column;
-                    justify-content: space-between;
+                    break-after: page;
+                    page-break-after: always;
+                    overflow: hidden;
+                }
+                .sheet-page-wrapper:last-child {
+                    break-after: auto;
+                    page-break-after: auto;
                 }
                 .sheet-content-main {
-                    flex: 1;
+                    flex: 1 1 auto;
+                    min-height: 0;
                     display: flex;
                     flex-direction: column;
                     justify-content: flex-start;
@@ -7954,10 +7963,25 @@ export function exportVehiclePrintSheet(item) {
                     padding-bottom: 2px;
                 }
                 .tech-grid {
-                    display: flex;
-                    flex-direction: column;
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    grid-auto-rows: minmax(0, auto);
                     align-items: stretch;
                     gap: 8px;
+                    min-width: 0;
+                }
+                .adaptive-tech-grid > .tech-item-card.text-only {
+                    grid-column: 1 / -1;
+                }
+                .sheet-page-wrapper[data-image-count="1"] .tech-detail-img {
+                    max-height: 560px;
+                }
+                .sheet-page-wrapper[data-image-count="2"] .tech-detail-img {
+                    max-height: 390px;
+                }
+                .sheet-page-wrapper[data-image-count="3"] .tech-detail-img,
+                .sheet-page-wrapper[data-image-count="4"] .tech-detail-img {
+                    max-height: 270px;
                 }
                 .adaptive-image-row,
                 .adaptive-image-mosaic {
@@ -8115,21 +8139,50 @@ export function exportVehiclePrintSheet(item) {
                     page-break-inside: avoid;
                 }
                 .footer-bar {
-                    margin-top: 18px;
-                    font-size: 11px;
+                    flex: 0 0 auto;
+                    min-height: 48px;
+                    margin-top: auto;
+                    font-size: 10px;
                     color: #777;
                     border-top: 1px solid #e0e0e0;
-                    padding-top: 8px;
+                    padding-top: 5px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                    gap: 8px;
+                    text-align: center;
+                }
+                .footer-bar > span {
+                    flex: 1 1 0;
+                    min-width: 0;
+                }
+                .print-tracklink-logo {
+                    display: block;
+                    flex: 0 0 auto;
+                    height: 45px;
+                    width: auto;
+                    max-width: 90px;
+                    object-fit: contain;
+                    object-position: center;
                 }
                 @media print {
                     .no-print { display: none !important; }
                     body { padding: 0; }
+                    #print-pages { display: block; }
+                    .sheet-page-wrapper {
+                        height: 269mm;
+                        min-height: 269mm;
+                        max-height: 269mm;
+                        break-after: page;
+                        page-break-after: always;
+                        overflow: hidden;
+                    }
+                    .sheet-page-wrapper:last-child {
+                        break-after: auto;
+                        page-break-after: auto;
+                    }
                     .tech-item-card { break-inside: avoid; page-break-inside: avoid; }
                     .adaptive-tech-grid { break-inside: auto; }
-                    .tech-detail-img { max-height: 560px; }
                 }
                 @media screen and (max-width: 600px) {
                     .top-grid {
@@ -8163,7 +8216,8 @@ export function exportVehiclePrintSheet(item) {
                 </button>
             </div>
 
-            <div class="sheet-page-wrapper">
+            <div id="print-pages">
+            <div class="sheet-page-wrapper" data-image-count="0">
                 <div class="sheet-content-main">
                     <div class="header-container">
                         <div class="header-brand-wrap">
@@ -8212,174 +8266,118 @@ export function exportVehiclePrintSheet(item) {
 
                 <div class="footer-bar">
                     <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
+                    <img src="tracklink_logo.png" alt="Logo de TRACKLINK" class="print-tracklink-logo" />
                     <span>Ficha técnica de consulta técnica especializada</span>
                 </div>
+            </div>
             </div>
         </body>
         </html>
     `);
     printWindow.document.close();
 
-    // Distribución adaptativa posterior a la carga: se conservan juntas la imagen y su información.
+    // Distribución y paginación explícita: hasta cuatro imágenes técnicas (2 columnas × 2 filas) por hoja.
     const printDocument = printWindow.document;
-    const adaptiveGrid = printDocument.getElementById('adaptive-tech-grid');
-    if (adaptiveGrid) {
-        const arrangeTechnicalCards = () => {
-            const cards = Array.from(adaptiveGrid.querySelectorAll('.tech-item-card'));
-            const getImage = card => card.querySelector('.tech-detail-img');
-            const getDimensions = card => {
-                const img = getImage(card);
-                const width = img && img.naturalWidth > 0 ? img.naturalWidth : 0;
-                const height = img && img.naturalHeight > 0 ? img.naturalHeight : 0;
-                return {
-                    width,
-                    height,
-                    aspect: width > 0 && height > 0 ? width / height : 1.33,
-                    resolution: width * height
-                };
+    const printPages = printDocument.getElementById('print-pages');
+    const firstPageTemplate = printPages && printPages.querySelector('.sheet-page-wrapper');
+    const adaptiveGrid = firstPageTemplate && firstPageTemplate.querySelector('#adaptive-tech-grid');
+    if (printPages && firstPageTemplate && adaptiveGrid) {
+        const allTechnicalCards = Array.from(adaptiveGrid.querySelectorAll('.tech-item-card'));
+        const headerTemplate = firstPageTemplate.querySelector('.header-container');
+        const metadataTemplate = firstPageTemplate.querySelector('.top-grid');
+        const sectionHeaderTemplate = firstPageTemplate.querySelector('.section-header');
+        const notesTemplate = firstPageTemplate.querySelector('.tech-notes');
+        const footerTemplate = firstPageTemplate.querySelector('.footer-bar');
+
+        const getImage = card => card.querySelector('.tech-detail-img');
+        const getDimensions = card => {
+            const img = getImage(card);
+            const width = img && img.naturalWidth > 0 ? img.naturalWidth : 0;
+            const height = img && img.naturalHeight > 0 ? img.naturalHeight : 0;
+            return {
+                width,
+                height,
+                aspect: width > 0 && height > 0 ? width / height : 1.33,
+                resolution: width * height
             };
-            const originalOrder = card => Number(card.dataset.originalOrder || 0);
-            const imageCards = cards.filter(card => getImage(card));
-            const textCards = cards.filter(card => !getImage(card)).sort((a, b) => originalOrder(a) - originalOrder(b));
+        };
+        const originalOrder = card => Number(card.dataset.originalOrder || 0);
+
+        const arrangeTechnicalCards = () => {
+            const imageCards = allTechnicalCards.filter(card => getImage(card));
+            const textCards = allTechnicalCards.filter(card => !getImage(card)).sort((a, b) => originalOrder(a) - originalOrder(b));
             const priorityTextCard = textCards.find(card => card.dataset.priorityCut === 'true') || null;
-            if (imageCards.length === 0) {
-                adaptiveGrid.replaceChildren(...(priorityTextCard ? [priorityTextCard] : []), ...textCards.filter(card => card !== priorityTextCard));
-                return;
+
+            // Se mantiene la prioridad del corte recomendado; las demás imágenes conservan el orden técnico original.
+            const priorityCard = imageCards.find(card => card.dataset.priorityCut === 'true')
+                || [...imageCards].sort((a, b) => originalOrder(a) - originalOrder(b))[0]
+                || null;
+            const remainingCards = imageCards.filter(card => card !== priorityCard).sort((a, b) => originalOrder(a) - originalOrder(b));
+            const orderedImageCards = priorityCard ? [priorityCard, ...remainingCards] : [];
+            const pageGroups = [];
+            if (orderedImageCards.length === 0) {
+                pageGroups.push([]);
+            } else {
+                for (let i = 0; i < orderedImageCards.length; i += 4) {
+                    pageGroups.push(orderedImageCards.slice(i, i + 4));
+                }
             }
 
-            // El corte recomendado conserva la primera posición visual. Si no tiene imagen o no hay recomendado,
-            // se prioriza la primera imagen según el orden técnico original de la ficha.
-            const priorityCard = imageCards.find(card => card.dataset.priorityCut === 'true')
-                || [...imageCards].sort((a, b) => originalOrder(a) - originalOrder(b))[0];
-            const remainingCards = imageCards.filter(card => card !== priorityCard).sort((a, b) => originalOrder(a) - originalOrder(b));
-            const initialDimensions = imageCards.map(card => ({ card, ...getDimensions(card) }));
-            const portraitCount = initialDimensions.filter(entry => entry.aspect < 0.85).length;
-            const landscapeCount = initialDimensions.filter(entry => entry.aspect > 1.2).length;
-            const twoPortraitsAndLandscape = imageCards.length === 3 && portraitCount === 2 && landscapeCount === 1;
+            const createPage = (pageIndex, pageCards, pageCount) => {
+                const page = printDocument.createElement('div');
+                page.className = 'sheet-page-wrapper';
+                page.dataset.imageCount = String(pageCards.length);
 
-            const orderedImageCards = [priorityCard, ...remainingCards];
-            const orderedDimensions = orderedImageCards.map(card => ({ card, ...getDimensions(card) }));
-            const orderedPortraitCount = orderedDimensions.filter(entry => entry.aspect < 0.85).length;
-            const orderedLandscapeCount = orderedDimensions.filter(entry => entry.aspect > 1.2).length;
-            const portraitLandscapePortraitStack = orderedImageCards.length === 3
-                && orderedPortraitCount === 1
-                && orderedLandscapeCount === 2
-                && getDimensions(priorityCard).aspect < 0.85;
-            const exactTwoPortraitsOneLandscape = orderedImageCards.length === 3
-                && orderedPortraitCount === 2
-                && orderedLandscapeCount === 1;
-            const newLayoutChildren = [];
+                const main = printDocument.createElement('div');
+                main.className = 'sheet-content-main';
+                if (headerTemplate) main.appendChild(headerTemplate.cloneNode(true));
 
-            const createImageRow = rowCards => {
-                const row = printDocument.createElement('div');
-                row.className = 'adaptive-image-row';
-                const weights = rowCards.map(card => {
-                    const aspect = getDimensions(card).aspect;
-                    return Math.max(0.35, Math.min(aspect, 3.5));
-                });
-                row.style.gridTemplateColumns = weights.map(weight => `${weight.toFixed(3)}fr`).join(' ');
-                rowCards.forEach(card => {
+                // La información del vehículo, su fotografía principal y el QR/video solo se incluyen en la primera hoja.
+                if (pageIndex === 0 && metadataTemplate) main.appendChild(metadataTemplate.cloneNode(true));
+                if (sectionHeaderTemplate) main.appendChild(sectionHeaderTemplate.cloneNode(true));
+
+                const grid = printDocument.createElement('div');
+                grid.className = 'tech-grid adaptive-tech-grid';
+                if (pageIndex === 0 && priorityTextCard) grid.appendChild(priorityTextCard);
+                pageCards.forEach(card => {
                     card.style.gridColumn = '';
                     card.style.gridRow = '';
-                    row.appendChild(card);
+                    card.style.width = '';
+                    card.style.maxWidth = '';
+                    grid.appendChild(card);
                 });
-                return row;
+
+                // Las tarjetas técnicas sin fotografía se conservan después de las imágenes, sin contarlas como imágenes.
+                if (pageIndex === pageCount - 1) {
+                    textCards.filter(card => card !== priorityTextCard).forEach(card => {
+                        card.style.gridColumn = '';
+                        card.style.gridRow = '';
+                        grid.appendChild(card);
+                    });
+                }
+                main.appendChild(grid);
+
+                if (pageIndex === pageCount - 1 && notesTemplate) {
+                    main.appendChild(notesTemplate.cloneNode(true));
+                }
+                page.appendChild(main);
+                if (footerTemplate) page.appendChild(footerTemplate.cloneNode(true));
+                return page;
             };
 
-            const imageCount = orderedImageCards.length;
-            const allHorizontal = orderedImageCards.every(card => getDimensions(card).aspect > 1.2);
-            if (imageCount === 1) {
-                const row = createImageRow(orderedImageCards);
-                row.classList.add('adaptive-single-image-row');
-                newLayoutChildren.push(row);
-            } else if (imageCount === 2 && allHorizontal) {
-                orderedImageCards.forEach(card => {
-                    const row = createImageRow([card]);
-                    row.classList.add('adaptive-compact-image-row');
-                    newLayoutChildren.push(row);
-                });
-            } else if (imageCount === 3 && allHorizontal) {
-                orderedImageCards.forEach(card => {
-                    const row = createImageRow([card]);
-                    row.classList.add('adaptive-compact-image-row');
-                    newLayoutChildren.push(row);
-                });
-            } else if (portraitLandscapePortraitStack) {
-                const landscapeCards = orderedImageCards.filter(card => card !== priorityCard);
-                const portraitAspect = getDimensions(priorityCard).aspect;
-                const averageLandscapeAspect = landscapeCards.reduce((sum, card) => sum + getDimensions(card).aspect, 0) / landscapeCards.length;
-                const leftWeight = Math.max(0.5, portraitAspect * 2);
-                const rightWeight = Math.max(0.5, averageLandscapeAspect);
-                const mosaic = printDocument.createElement('div');
-                mosaic.className = 'adaptive-image-mosaic portrait-with-landscape-stack';
-                mosaic.style.gridTemplateColumns = `${leftWeight.toFixed(3)}fr ${rightWeight.toFixed(3)}fr`;
-                mosaic.style.gridTemplateRows = 'minmax(min-content, auto) minmax(min-content, auto)';
-                priorityCard.style.gridColumn = '1';
-                priorityCard.style.gridRow = '1 / span 2';
-                landscapeCards[0].style.gridColumn = '2';
-                landscapeCards[0].style.gridRow = '1';
-                landscapeCards[1].style.gridColumn = '2';
-                landscapeCards[1].style.gridRow = '2';
-                mosaic.appendChild(priorityCard);
-                mosaic.appendChild(landscapeCards[0]);
-                mosaic.appendChild(landscapeCards[1]);
-                newLayoutChildren.push(mosaic);
-            } else if (exactTwoPortraitsOneLandscape) {
-                if (getDimensions(priorityCard).aspect < 0.85) {
-                    const portraitCards = orderedImageCards.filter(card => getDimensions(card).aspect < 0.85);
-                    const landscapeCard = orderedImageCards.find(card => getDimensions(card).aspect > 1.2);
-                    newLayoutChildren.push(createImageRow(portraitCards));
-                    if (landscapeCard) newLayoutChildren.push(createImageRow([landscapeCard]));
-                } else {
-                    newLayoutChildren.push(createImageRow([priorityCard]));
-                    newLayoutChildren.push(createImageRow(remainingCards));
-                }
-            } else {
-                const rows = [];
-                let currentRow = [];
-                let currentAspectSum = 0;
-                const flushRow = () => {
-                    if (currentRow.length) rows.push(currentRow);
-                    currentRow = [];
-                    currentAspectSum = 0;
-                };
+            const pages = pageGroups.map((pageCards, pageIndex) => createPage(pageIndex, pageCards, pageGroups.length));
+            printPages.replaceChildren(...pages);
 
-                orderedImageCards.forEach(card => {
-                    const aspect = getDimensions(card).aspect;
-                    const isPanoramic = aspect >= 2.2;
-                    const shape = aspect < 0.85 ? 'vertical' : (aspect <= 1.2 ? 'cuadrada' : 'horizontal');
-                    const currentHasVertical = currentRow.some(rowCard => getDimensions(rowCard).aspect < 0.85);
-                    const currentHasHorizontal = currentRow.some(rowCard => getDimensions(rowCard).aspect > 1.2);
-                    const mixedOrientation = (shape === 'vertical' && currentHasHorizontal)
-                        || (shape === 'horizontal' && currentHasVertical);
-                    if (currentRow.length && (isPanoramic || currentRow.some(rowCard => getDimensions(rowCard).aspect >= 2.2)
-                        || mixedOrientation || currentAspectSum + aspect > 3.0 || currentRow.length >= 3)) {
-                        flushRow();
-                    }
-                    if (isPanoramic) {
-                        rows.push([card]);
-                        return;
-                    }
-                    currentRow.push(card);
-                    currentAspectSum += Math.max(aspect, 0.35);
-                    if (currentAspectSum >= 2.7 || currentRow.length >= 3) flushRow();
-                });
-                flushRow();
-                rows.forEach(row => newLayoutChildren.push(createImageRow(row)));
-            }
-
-            if (priorityTextCard) newLayoutChildren.unshift(priorityTextCard);
-            newLayoutChildren.push(...textCards.filter(card => card !== priorityTextCard));
-            adaptiveGrid.replaceChildren(...newLayoutChildren);
-            orderedDimensions.forEach(entry => {
-                entry.card.dataset.naturalWidth = String(entry.width);
-                entry.card.dataset.naturalHeight = String(entry.height);
-                entry.card.dataset.imageAspectRatio = String(entry.aspect);
-                entry.card.dataset.imageResolution = String(entry.resolution);
+            orderedImageCards.forEach(card => {
+                const dimensions = getDimensions(card);
+                card.dataset.naturalWidth = String(dimensions.width);
+                card.dataset.naturalHeight = String(dimensions.height);
+                card.dataset.imageAspectRatio = String(dimensions.aspect);
+                card.dataset.imageResolution = String(dimensions.resolution);
             });
         };
 
-        const printImages = Array.from(adaptiveGrid.querySelectorAll('.tech-detail-img'));
+        const printImages = allTechnicalCards.map(getImage).filter(Boolean);
         Promise.all(printImages.map(img => {
             if (img.complete) return Promise.resolve();
             return new Promise(resolve => {
