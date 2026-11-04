@@ -7669,17 +7669,31 @@ export function exportVehiclePrintSheet(item) {
 
     const title = `${item.marca || ''} ${item.modelo || ''} (${item.anoDesde || ''}${item.anoHasta ? ' - ' + item.anoHasta : ''})`;
 
-    // 1. Recopilar datos de cortes (Excluyendo colaboradores y utilidad según Requisito 5)
+    // 1. Recopilar los cortes conservando sus datos originales y el criterio de prioridad de la vista de detalle.
     const cuts = [];
-    if (item.tipoCorte1 || item.ubicacionCorte1 || item.imgCorte1) {
-        cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, img: item.imgCorte1, activaTestigo: item.utilCorte1 === 'x' || String(item.tipoCorte1).toLowerCase().includes('testigo') });
+    for (let i = 1; i <= 3; i++) {
+        if (item[`tipoCorte${i}`] || item[`ubicacionCorte${i}`] || item[`imgCorte${i}`]) {
+            cuts.push({
+                num: i,
+                tipo: item[`tipoCorte${i}`],
+                ub: item[`ubicacionCorte${i}`],
+                color: item[`colorCableCorte${i}`],
+                relay: item[`configRelay${i}`],
+                img: item[`imgCorte${i}`],
+                util: parseInt(item[`utilCorte${i}`] || 0),
+                activaTestigo: item[`utilCorte${i}`] === 'x' || String(item[`tipoCorte${i}`] || '').toLowerCase().includes('testigo')
+            });
+        }
     }
-    if (item.tipoCorte2 || item.ubicacionCorte2 || item.imgCorte2) {
-        cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, img: item.imgCorte2, activaTestigo: item.utilCorte2 === 'x' });
-    }
-    if (item.tipoCorte3 || item.ubicacionCorte3 || item.imgCorte3) {
-        cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, img: item.imgCorte3, activaTestigo: item.utilCorte3 === 'x' });
-    }
+
+    // El detalle existente ordena los cortes por votos y toma el primero como recomendado.
+    // Si ese primer corte está marcado explícitamente como "No recomendado", se conserva el orden técnico original.
+    const rankedCuts = [...cuts].sort((a, b) => b.util - a.util);
+    const rankedFirstCut = rankedCuts[0] || null;
+    const recommendedCut = rankedFirstCut && !isNoRecomendadoValue(rankedFirstCut.tipo) ? rankedFirstCut : null;
+    const cutsForPrint = recommendedCut
+        ? [recommendedCut, ...cuts.filter(c => c !== recommendedCut)]
+        : cuts;
 
     // 2. Cables de alimentación
     const feeds = [];
@@ -7693,71 +7707,84 @@ export function exportVehiclePrintSheet(item) {
         feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
     }
 
-    // La distribución de cada elemento se determina por la presencia de imagen, no por la cantidad total de elementos.
-    // 3. Generación de HTML de cortes con aviso de testigo al pie y distribución vertical (Requisitos 1.1, 2.2, 4.1, 5)
-    const cutsHtml = cuts.map(c => {
-        const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
-        return `
-        <div class="tech-item-card ${safeImg ? 'has-image' : 'text-only'}">
-            <div class="tech-item-header">Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}</div>
-            <div class="tech-item-body">
-                <div class="tech-item-info">
-                    <p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
-                    <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
-                    <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
-                </div>
-                ${safeImg ? `
-                <div class="tech-item-img-wrapper">
-                    <img src="${safeImg}" alt="Corte #${c.num}" class="tech-detail-img" />
-                </div>` : ''}
-            </div>
-            ${c.activaTestigo ? `
-            <div class="testigo-aviso">
-                <i class="fa-solid fa-triangle-exclamation"></i> Este corte activa el testigo de motor
-            </div>` : ''}
-        </div>
-        `;
-    }).join('');
-
-    // 4. HTML de cables de alimentación
-    const feedsHtml = feeds.map(f => {
-        const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
-        return `
-        <div class="tech-item-card ${safeImg ? 'has-image' : 'text-only'}">
-            <div class="tech-item-header">${f.title}</div>
-            <div class="tech-item-body">
-                <div class="tech-item-info">
-                    <p>${f.desc || 'Conexión estándar'}</p>
-                </div>
-                ${safeImg ? `
-                <div class="tech-item-img-wrapper">
-                    <img src="${safeImg}" alt="${f.title}" class="tech-detail-img" />
-                </div>` : ''}
-            </div>
-        </div>
-        `;
-    }).join('');
-
     // 5. HTML de imagen principal del vehículo
     const vehiculoImgHtml = item.imagenVehiculo ? `
         <div class="vehicle-main-img"><img src="${getImageUrl(item.imagenVehiculo, IMG_SIZE_LARGE)}" alt="${title}" /></div>
     ` : '';
 
     // 6. Apertura de puertas
-    const aperturaHtml = (item.apertura || item.imgApertura) ? `
-        <div class="tech-item-card ${item.imgApertura ? 'has-image' : 'text-only'}">
-            <div class="tech-item-header">Apertura de Puertas / Seguros</div>
+    const aperturaItem = (item.apertura || item.imgApertura) ? {
+        title: 'Apertura de Puertas / Seguros',
+        desc: item.apertura || 'Instrucciones registradas',
+        img: item.imgApertura,
+        kind: 'apertura'
+    } : null;
+
+    // 7. Preparar tarjetas técnicas como unidades indivisibles para permitir su reorganización visual.
+    const techItems = [];
+    cutsForPrint.forEach(c => {
+        techItems.push({
+            kind: 'cut',
+            num: c.num,
+            title: `Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}`,
+            infoHtml: `<p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
+                       <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
+                       <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>`,
+            img: c.img,
+            alt: `Corte #${c.num}`,
+            extraHtml: c.activaTestigo ? `
+                <div class="testigo-aviso">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Este corte activa el testigo de motor
+                </div>` : '',
+            isRecommended: c === recommendedCut
+        });
+    });
+    feeds.forEach(f => {
+        techItems.push({
+            kind: 'feed',
+            title: f.title,
+            infoHtml: `<p>${f.desc || 'Conexión estándar'}</p>`,
+            img: f.img,
+            alt: f.title,
+            extraHtml: '',
+            isRecommended: false
+        });
+    });
+    if (aperturaItem) {
+        techItems.push({
+            kind: aperturaItem.kind,
+            title: aperturaItem.title,
+            infoHtml: `<p>${aperturaItem.desc}</p>`,
+            img: aperturaItem.img,
+            alt: aperturaItem.title,
+            extraHtml: '',
+            isRecommended: false
+        });
+    }
+
+    const techItemsHtml = techItems.map((entry, index) => {
+        const safeImg = entry.img ? getImageUrl(entry.img, IMG_SIZE_LARGE) : '';
+        return `
+        <div class="tech-item-card ${safeImg ? 'has-image' : 'text-only'}"
+             data-tech-kind="${entry.kind}"
+             data-priority-cut="${entry.kind === 'cut' && (entry.isRecommended || (!recommendedCut && entry.num === 1)) ? 'true' : 'false'}"
+             data-recommended-cut="${entry.isRecommended ? 'true' : 'false'}"
+             data-original-order="${index}">
+            <div class="tech-item-header">
+                ${entry.isRecommended ? '<span class="recommended-cut-label">Corte recomendado</span>' : ''}
+                ${entry.title}
+            </div>
             <div class="tech-item-body">
-                <div class="tech-item-info">
-                    <p>${item.apertura || 'Instrucciones registradas'}</p>
-                </div>
-                ${item.imgApertura ? `
+                <div class="tech-item-info">${entry.infoHtml}</div>
+                ${safeImg ? `
                 <div class="tech-item-img-wrapper">
-                    <img src="${getImageUrl(item.imgApertura, IMG_SIZE_LARGE)}" alt="Apertura" class="tech-detail-img" />
+                    <img src="${safeImg}" alt="${entry.alt}" class="tech-detail-img" />
                 </div>` : ''}
             </div>
+            ${entry.extraHtml || ''}
         </div>
-    ` : '';
+        `;
+    }).join('');
 
     // 7. Notas técnicas importantes
     const notasHtml = item.notaImportante ? `
@@ -7928,16 +7955,37 @@ export function exportVehiclePrintSheet(item) {
                     padding-bottom: 2px;
                 }
                 .tech-grid {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 6px;
+                    display: grid;
+                    grid-template-columns: repeat(12, minmax(0, 1fr));
+                    align-items: start;
+                    gap: 8px;
+                }
+                .adaptive-tech-grid {
+                    grid-auto-flow: row dense;
                 }
                 .tech-item-card {
+                    min-width: 0;
+                    grid-column: 1 / -1;
                     border: 1px solid #dcdcdc;
                     border-radius: 4px;
                     background: #fafafa;
-                    padding: 4px 8px;
+                    padding: 6px 10px;
                     page-break-inside: avoid;
+                    break-inside: avoid;
+                }
+                .tech-item-card.has-image {
+                    padding: 6px 10px;
+                }
+                .recommended-cut-label {
+                    display: inline-block;
+                    margin-right: 6px;
+                    padding: 2px 5px;
+                    border-radius: 3px;
+                    background: #e7f1ff;
+                    color: #0056b3;
+                    font-size: 9px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.2px;
                 }
                 .tech-item-card.has-image {
                     padding: 6px 10px;
@@ -7955,24 +8003,21 @@ export function exportVehiclePrintSheet(item) {
                 }
                 .tech-item-body {
                     display: flex;
-                    justify-content: space-between;
+                    flex-direction: column;
                     align-items: stretch;
-                    gap: 10px;
+                    gap: 5px;
+                    min-width: 0;
                 }
                 .tech-item-info {
-                    flex: 0 0 25%;
-                    max-width: 25%;
-                    width: 25%;
+                    flex: 1 1 auto;
+                    max-width: 100%;
+                    width: 100%;
+                    min-width: 0;
                     overflow-wrap: break-word;
                     word-break: break-word;
                     display: flex;
                     flex-direction: column;
-                    justify-content: center;
-                }
-                .tech-item-card.text-only .tech-item-info {
-                    flex: 1 1 100%;
-                    max-width: 100%;
-                    width: 100%;
+                    justify-content: flex-start;
                 }
                 .tech-item-info p {
                     margin: 1px 0;
@@ -7980,20 +8025,27 @@ export function exportVehiclePrintSheet(item) {
                     line-height: 1.2;
                 }
                 .tech-item-img-wrapper {
-                    flex: 1 1 75%;
-                    max-width: 75%;
-                    max-height: 320px;
                     display: flex;
                     align-items: center;
-                    justify-content: flex-end;
+                    justify-content: center;
+                    min-width: 0;
+                    max-width: 100%;
+                    width: 100%;
+                    max-height: none;
                 }
                 .tech-detail-img {
+                    display: block;
                     max-width: 100%;
-                    max-height: 310px;
+                    max-height: 320px;
                     width: auto;
+                    height: auto;
                     object-fit: contain;
+                    object-position: center;
                     border-radius: 4px;
                     border: 1px solid #ccc;
+                }
+                .adaptive-tech-grid .tech-item-card.text-only {
+                    grid-column: 1 / -1;
                 }
                 body[data-print-layout="horizontal"] .tech-item-body {
                     flex-direction: row;
@@ -8055,7 +8107,9 @@ export function exportVehiclePrintSheet(item) {
                 @media print {
                     .no-print { display: none !important; }
                     body { padding: 0; }
-                    .tech-item-card { break-inside: avoid; }
+                    .tech-item-card { break-inside: avoid; page-break-inside: avoid; }
+                    .adaptive-tech-grid { break-inside: auto; }
+                    .tech-detail-img { max-height: 320px; }
                 }
                 @media screen and (max-width: 600px) {
                     .top-grid {
@@ -8127,25 +8181,11 @@ export function exportVehiclePrintSheet(item) {
                     </div>
 
                     <div>
-                        <div class="section-header">Puntos de Corte de Motor</div>
-                        <div class="tech-grid">
-                            ${cutsHtml || '<div class="tech-item-card"><p>No hay cortes registrados para este modelo.</p></div>'}
+                        <div class="section-header">Información Técnica e Imágenes</div>
+                        <div class="tech-grid adaptive-tech-grid" id="adaptive-tech-grid">
+                            ${techItemsHtml || '<div class="tech-item-card text-only"><div class="tech-item-header">Puntos de Corte de Motor</div><p>No hay información técnica registrada para este modelo.</p></div>'}
                         </div>
                     </div>
-
-                    ${feedsHtml ? `
-                    <div>
-                        <div class="section-header">Alimentación Eléctrica</div>
-                        <div class="tech-grid">${feedsHtml}</div>
-                    </div>
-                    ` : ''}
-
-                    ${aperturaHtml ? `
-                    <div>
-                        <div class="section-header">Apertura y Cierre Centralizado</div>
-                        <div class="tech-grid">${aperturaHtml}</div>
-                    </div>
-                    ` : ''}
 
                     ${notasHtml}
                 </div>
@@ -8159,6 +8199,111 @@ export function exportVehiclePrintSheet(item) {
         </html>
     `);
     printWindow.document.close();
+
+    // Distribución adaptativa posterior a la carga: se conservan juntas la imagen y su información.
+    const printDocument = printWindow.document;
+    const adaptiveGrid = printDocument.getElementById('adaptive-tech-grid');
+    if (adaptiveGrid) {
+        const arrangeTechnicalCards = () => {
+            const cards = Array.from(adaptiveGrid.querySelectorAll(':scope > .tech-item-card'));
+            const getImage = card => card.querySelector('.tech-detail-img');
+            const getDimensions = card => {
+                const img = getImage(card);
+                const width = img && img.naturalWidth > 0 ? img.naturalWidth : 0;
+                const height = img && img.naturalHeight > 0 ? img.naturalHeight : 0;
+                return {
+                    width,
+                    height,
+                    aspect: width > 0 && height > 0 ? width / height : 1.33,
+                    resolution: width * height
+                };
+            };
+            const imageCards = cards.filter(card => getImage(card));
+            const textCards = cards.filter(card => !getImage(card));
+            if (imageCards.length === 0) {
+                adaptiveGrid.replaceChildren(...cards);
+                return;
+            }
+
+            // Mantener como primera imagen el corte recomendado; si no existe, respetar el primer elemento de imagen actual.
+            const priorityCard = imageCards.find(card => card.dataset.priorityCut === 'true') || imageCards[0];
+            const remainingCards = imageCards.filter(card => card !== priorityCard);
+            const initialDimensions = imageCards.map(card => ({ card, ...getDimensions(card) }));
+            const portraitCount = initialDimensions.filter(entry => entry.aspect < 0.85).length;
+            const landscapeCount = initialDimensions.filter(entry => entry.aspect > 1.2).length;
+            const isThreeWithTwoPortraits = imageCards.length === 3 && portraitCount === 2 && landscapeCount === 1;
+
+            if (isThreeWithTwoPortraits && getDimensions(priorityCard).aspect < 0.85) {
+                remainingCards.sort((a, b) => {
+                    const aPortrait = getDimensions(a).aspect < 0.85;
+                    const bPortrait = getDimensions(b).aspect < 0.85;
+                    if (aPortrait !== bPortrait) return aPortrait ? -1 : 1;
+                    return getDimensions(b).resolution - getDimensions(a).resolution;
+                });
+            } else {
+                remainingCards.sort((a, b) => {
+                    const aDimensions = getDimensions(a);
+                    const bDimensions = getDimensions(b);
+                    return bDimensions.aspect - aDimensions.aspect || bDimensions.resolution - aDimensions.resolution;
+                });
+            }
+
+            const orderedImageCards = [priorityCard, ...remainingCards];
+            const orderedDimensions = orderedImageCards.map(card => ({ card, ...getDimensions(card) }));
+            const orderedPortraitCount = orderedDimensions.filter(entry => entry.aspect < 0.85).length;
+            const orderedLandscapeCount = orderedDimensions.filter(entry => entry.aspect > 1.2).length;
+            const portraitLandscapePortraitStack = orderedImageCards.length === 3
+                && orderedPortraitCount === 1
+                && orderedLandscapeCount === 2
+                && getDimensions(priorityCard).aspect < 0.85;
+            const twoPortraitsAndLandscape = orderedImageCards.length === 3
+                && orderedPortraitCount === 2
+                && orderedLandscapeCount === 1;
+
+            orderedDimensions.forEach(entry => {
+                const { card, aspect } = entry;
+                card.style.gridRow = 'span 1';
+                let span;
+                if (portraitLandscapePortraitStack) {
+                    if (card === priorityCard) {
+                        span = 4;
+                        card.style.gridRow = 'span 2';
+                    } else {
+                        span = 8;
+                    }
+                } else if (twoPortraitsAndLandscape) {
+                    span = aspect < 0.85 ? 6 : 12;
+                } else if (aspect >= 2.2) {
+                    span = 12;
+                } else if (aspect < 0.75) {
+                    span = orderedImageCards.length >= 3 ? 4 : 5;
+                } else {
+                    span = 6;
+                }
+                card.style.gridColumn = `span ${span}`;
+                card.dataset.naturalWidth = String(entry.width);
+                card.dataset.naturalHeight = String(entry.height);
+                card.dataset.imageAspectRatio = String(entry.aspect);
+                card.dataset.imageResolution = String(entry.resolution);
+            });
+
+            textCards.forEach(card => {
+                card.style.gridColumn = '1 / -1';
+                card.style.gridRow = 'span 1';
+            });
+            adaptiveGrid.replaceChildren(...orderedImageCards, ...textCards);
+        };
+
+        const printImages = Array.from(adaptiveGrid.querySelectorAll('.tech-detail-img'));
+        Promise.all(printImages.map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => {
+                img.addEventListener('load', resolve, { once: true });
+                img.addEventListener('error', resolve, { once: true });
+            });
+        })).then(arrangeTechnicalCards);
+        printWindow.addEventListener('beforeprint', arrangeTechnicalCards);
+    }
 }
 
 export async function loadAndRenderInbox() {
