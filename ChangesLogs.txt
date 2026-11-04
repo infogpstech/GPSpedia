@@ -2037,3 +2037,15 @@ Fecha: 2026-11-04
 - No se modificó lógica funcional ni otros archivos de interfaz.
 - Verificación estática posterior: index.html no contiene 2.1.6 y las seis ubicaciones actualizadas muestran 2.2.5. No se ejecutó una prueba visual en navegador.
 ================================================================================
+
+
+================================================================================
+CAMBIO 2026-11-04 — DIMENSIONAMIENTO ADAPTATIVO DE IMÁGENES EN FICHAS IMPRIMIBLES
+- Archivo: ui.js, plantilla CSS de exportVehiclePrintSheet() y arrangeTechnicalCards() (aproximadamente líneas 8211-8238 y 8497-8545).
+- Se eliminaron los límites fijos de altura por cantidad de imágenes (390 px, 230 px y 170 px), incluidas las variantes de Imagen ampliada.
+- Se aumentó el límite CSS general a 520 px y se incorporó un cálculo de altura máxima por página a partir del espacio libre después del contenido principal y el pie, distribuyendo ese espacio entre las filas de tarjetas con imagen.
+- Imagen ampliada conserva un límite superior de 620 px; los modos restantes usan 520 px como límite superior. La altura calculada tiene un mínimo de 80 px por fila.
+- Las imágenes mantienen proporción con object-fit:contain, max-width:100% y height:auto; width:auto evita forzar el ancho completo en imágenes de menor tamaño natural. Los wrappers centran las imágenes.
+- No se modificaron la agrupación de páginas, la prioridad del corte recomendado, el orden técnico, el selector de distribución, los metadatos ni el bloque QR/video.
+- Verificación estática: eliminadas las reglas CSS de altura por cantidad y presente la función fitImagesToAvailablePageSpace(). No se ejecutó navegador real ni se generó PDF.
+================================================================================
