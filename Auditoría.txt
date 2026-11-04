@@ -2254,3 +2254,69 @@ Validar sesión en el backend y obtener el nombre del perfil asociado al token; 
 
 No se modificó código ni se alteraron registros anteriores.
 ================================================================================
+
+
+================================================================================
+VERIFICACIÓN E IMPLEMENTACIÓN PROPUESTA — AUD-IMG-01 A AUD-IMG-07
+Fecha: 2026-11-04
+Rama de trabajo: fix/audit-img-01-07-history-security-integrity
+Rama base/PR: fix/pys-carousel-card-sizing-print-images
+Alcance: correcciones de seguridad e integridad para el repositorio histórico y auditoría de imágenes de Drive. No incluye AUD-IMG-08 ni hallazgos posteriores.
+
+RESULTADO POR HALLAZGO
+
+AUD-IMG-01 — AUTORIZACIÓN DEL LADO SERVIDOR
+- Services/admin.js incorpora getVerifiedAdminSession(), que valida el token contra ActiveSessions, obtiene el usuario en Users y exige el rol exacto «Desarrollador».
+- La validación se ejecuta en el router antes de uploadAdminImage, getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes.
+- api-config.js adjunta el SessionToken guardado en gpsepedia_session para esas acciones.
+- Verificación estática: columnas y nombres de hojas coinciden con Services/users.js (ID de usuario en columna 1, privilegios en columna 4 y token de sesión activa en columna 3).
+- Pendiente: probar solicitudes reales sin token, con token inválido, con rol no autorizado y con rol Desarrollador en el despliegue.
+
+AUD-IMG-02 — CONSISTENCIA DEL HISTORIAL AL REEMPLAZAR
+- Services/admin.js registra primero la imagen anterior con estado «pendiente» antes de actualizar la referencia activa.
+- Si falla el registro histórico, se intenta enviar a papelera el archivo nuevo y se aborta el reemplazo, conservando la referencia anterior.
+- Si falla la actualización de la referencia activa, se intenta restaurar el valor anterior; el estado histórico se marca «fallida» si la reversión se confirma o permanece «pendiente» si no se puede confirmar.
+- Después de actualizar la referencia activa, el registro pasa a «historica». Un fallo al actualizar únicamente el estado queda advertido en los logs y no elimina el registro de trazabilidad.
+- Pendiente: pruebas controladas de errores de Spreadsheet, Drive y permisos.
+
+AUD-IMG-03 — VALIDACIÓN GLOBAL ANTES DE ENVIAR A PAPELERA
+- handleDeleteReplacedImage() ahora recorre todas las hojas de la Spreadsheet, excluyendo Imagenes_Reemplazadas porque conserva deliberadamente URLs históricas.
+- Compara IDs extraídos de las referencias y bloquea la operación si encuentra una referencia activa o una URL de Drive cuyo formato no pueda interpretar.
+- Pendiente: validar con datos reales que todas las hojas que almacenan referencias estén dentro de la misma Spreadsheet y probar referencias activas en hojas distintas de Cortes.
+
+AUD-IMG-04 — DESCRIPCIÓN CORRECTA DE LA ELIMINACIÓN
+- El backend mantiene la operación reversible file.setTrashed(true), pero el estado del registro ahora es «en_papelera».
+- ui.js e index.html indican que la acción envía el archivo a la papelera, no que lo elimina definitivamente. El botón y la confirmación utilizan la misma descripción.
+- Los registros antiguos con estado «eliminada» se presentan como registros enviados a papelera; la restauración desde el historial continúa disponible.
+
+AUD-IMG-05 — AUDITORÍA PAGINADA
+- handleAuditDriveImagesInCortes() admite offset y limit, limita cada lote a 250 archivos y devuelve nextOffset, hasMore e isComplete.
+- ui.js solicita lotes sucesivos hasta recibir isComplete=true y muestra el total final y el número de lotes.
+- Limitación técnica: cada lote vuelve a recorrer el árbol desde la raíz para saltar los archivos anteriores; no se mantiene una instantánea entre solicitudes. En árboles muy grandes, el tiempo de cada lote puede aumentar con el offset. Esto debe medirse en el Drive real.
+
+AUD-IMG-06 — CLASIFICACIÓN DE REFERENCIAS NO VERIFICABLES
+- Se centralizó la extracción de IDs para formatos query id=, /d/, /file/d/ y lh3.googleusercontent.com, además de IDs almacenados directamente.
+- La auditoría excluye la hoja histórica del conjunto de referencias activas y clasifica sus IDs por separado como «Histórica».
+- Si encuentra referencias de Drive que no puede interpretar, devuelve el conteo y las hojas afectadas; los archivos sin coincidencia se clasifican conservadoramente como «No verificable», no como «Sin uso detectado».
+- Pendiente: contrastar con los formatos reales de URL almacenados en la Spreadsheet.
+
+AUD-IMG-07 — ALCANCE Y VALIDACIÓN DE RESTAURACIÓN
+- handleRecoverReplacedImage() valida primero tipo_contenido «vehiculo», el campo dentro de la lista permitida de campos de imagen de Cortes, el ID de Drive y la coincidencia entre ID y URL.
+- Comprueba que el vehículo y el campo existan antes de restaurar el archivo desde papelera.
+- El alcance admitido queda explícitamente limitado al catálogo Cortes; registros de otros módulos se rechazan sin modificar su contenido.
+- Si falla la actualización del catálogo, se intenta restaurar la referencia anterior y se revierte el estado del archivo cuando la reversión queda confirmada.
+
+CODE REVIEW Y VALIDACIONES ESTÁTICAS
+- Se revisaron las funciones modificadas y sus puntos de conexión en Services/admin.js, api-config.js, ui.js e index.html.
+- La compilación sintáctica estática de Services/admin.js, api-config.js y ui.js no reportó errores.
+- Se probaron estáticamente ejemplos de extracción de ID para uc?id=, open?id=, /file/d/, lh3.googleusercontent.com y un ID directo; una URL Drive no reconocida no produjo ID.
+- No se ejecutaron pruebas dentro de Google Apps Script, no se consultó la Spreadsheet/Drive real, no se enviaron peticiones a los endpoints desplegados y no se probó la interfaz en navegador. Por tanto, la integración funcional y los permisos reales siguen pendientes.
+
+ARCHIVOS MODIFICADOS EN LA RAMA
+- Services/admin.js
+- api-config.js
+- ui.js
+- index.html
+
+No se modificaron AUD-IMG-08 ni los hallazgos posteriores. Tampoco se modificaron Services/Auth.js ni Services/write.js. No se alteraron datos reales de Spreadsheet o Drive.
+================================================================================
