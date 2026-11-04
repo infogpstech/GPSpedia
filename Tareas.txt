@@ -2565,3 +2565,17 @@ RESTRICCIONES
 - No fusionar el Pull Request #128 sin revisión del usuario.
 - No declarar la tarea completada en producción hasta superar las validaciones reales anteriores.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE TAREA — ENDPOINT DEL SERVICIO ADMIN
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Estado: CAMBIO DE CONFIGURACIÓN IMPLEMENTADO; VERIFICACIÓN DE CONECTIVIDAD PENDIENTE.
+
+- Se actualizó API_ENDPOINTS.ADMIN en api-config.js con la URL nueva proporcionada por el usuario.
+- El cambio afecta a las acciones que ACTION_TO_SERVICE_MAP enruta al servicio ADMIN.
+- No se modificaron otros endpoints ni el enrutamiento de acciones.
+- La disponibilidad del endpoint debe comprobarse desde el entorno de la aplicación; no se realizó una llamada real durante esta tarea.
+- La publicación de código de Apps Script no forma parte de este cambio de configuración.
+================================================================================
