@@ -8164,6 +8164,65 @@ export function exportVehiclePrintSheet(item) {
                 .adaptive-tech-grid.layout-triple-portrait { grid-template-columns: repeat(3, max-content); align-items: start; gap: 3px; }
                 .adaptive-tech-grid.layout-mosaic { grid-template-columns: repeat(2, max-content); align-items: start; }
                 body[data-print-layout="image-focus"] .adaptive-tech-grid .tech-detail-img { max-height: 620px; }
+
+                /* Límites finales para que cada grupo permanezca dentro del área imprimible. */
+                .sheet-page-wrapper .adaptive-tech-grid {
+                    width: 100%;
+                    max-width: 100%;
+                    grid-template-columns: minmax(0, 1fr);
+                    justify-content: stretch;
+                }
+                .sheet-page-wrapper .adaptive-tech-grid.layout-single {
+                    grid-template-columns: minmax(0, 1fr);
+                }
+                .sheet-page-wrapper .adaptive-tech-grid.layout-pair-portrait,
+                .sheet-page-wrapper .adaptive-tech-grid.layout-mosaic {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+                .sheet-page-wrapper .adaptive-tech-grid.layout-pair-landscape {
+                    grid-template-columns: minmax(0, 1fr);
+                }
+                .sheet-page-wrapper .adaptive-tech-grid.layout-triple-portrait {
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                }
+                .sheet-page-wrapper .adaptive-tech-grid > .tech-item-card,
+                .sheet-page-wrapper .adaptive-tech-grid > .tech-item-card.text-only {
+                    width: 100%;
+                    max-width: 100%;
+                    min-width: 0;
+                    box-sizing: border-box;
+                }
+                .sheet-page-wrapper .tech-item-img-wrapper {
+                    width: 100%;
+                    max-width: 100%;
+                    min-width: 0;
+                    box-sizing: border-box;
+                }
+                .sheet-page-wrapper .tech-detail-img {
+                    width: auto;
+                    height: auto;
+                    max-width: 100%;
+                    max-height: 250px;
+                    object-fit: contain;
+                }
+                .sheet-page-wrapper[data-image-count="1"] .tech-detail-img {
+                    max-height: 390px;
+                }
+                .sheet-page-wrapper[data-image-count="2"] .tech-detail-img {
+                    max-height: 230px;
+                }
+                .sheet-page-wrapper[data-image-count="3"] .tech-detail-img {
+                    max-height: 170px;
+                }
+                body[data-print-layout="image-focus"] .sheet-page-wrapper[data-image-count="1"] .tech-detail-img {
+                    max-height: 450px;
+                }
+                body[data-print-layout="image-focus"] .sheet-page-wrapper[data-image-count="2"] .tech-detail-img {
+                    max-height: 230px;
+                }
+                body[data-print-layout="image-focus"] .sheet-page-wrapper[data-image-count="3"] .tech-detail-img {
+                    max-height: 170px;
+                }
                 .top-grid { align-items: start; }
                 .vehicle-main-img img { height: auto; max-height: 105px; object-fit: contain; }
                 .qr-video-box { min-width: 0; align-self: start; }
@@ -8359,10 +8418,9 @@ export function exportVehiclePrintSheet(item) {
                 const a = getAspect(cards[cursor]);
                 const b = remaining > 1 ? getAspect(cards[cursor + 1]) : 0;
                 const c = remaining > 2 ? getAspect(cards[cursor + 2]) : 0;
-                let count = Math.min(4, remaining);
+                // Dos imágenes por página como regla segura; tres solo si las tres son verticales.
+                let count = Math.min(2, remaining);
                 if (remaining >= 3 && a < 0.82 && b < 0.82 && c < 0.82) count = 3;
-                else if (remaining >= 2 && a > 1.45 && b > 1.45) count = 2;
-                else if (remaining === 3) count = 3;
                 groups.push(cards.slice(cursor, cursor + count));
                 cursor += count;
             }
