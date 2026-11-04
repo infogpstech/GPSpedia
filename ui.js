@@ -7955,17 +7955,25 @@ export function exportVehiclePrintSheet(item) {
                     padding-bottom: 2px;
                 }
                 .tech-grid {
-                    display: grid;
-                    grid-template-columns: repeat(12, minmax(0, 1fr));
-                    align-items: start;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: stretch;
                     gap: 8px;
                 }
-                .adaptive-tech-grid {
-                    grid-auto-flow: row dense;
+                .adaptive-image-row,
+                .adaptive-image-mosaic {
+                    display: grid;
+                    align-items: stretch;
+                    gap: 8px;
+                    min-width: 0;
+                    break-inside: avoid;
+                    page-break-inside: avoid;
+                }
+                .adaptive-image-row {
+                    grid-template-columns: minmax(0, 1fr);
                 }
                 .tech-item-card {
                     min-width: 0;
-                    grid-column: 1 / -1;
                     border: 1px solid #dcdcdc;
                     border-radius: 4px;
                     background: #fafafa;
@@ -8044,8 +8052,8 @@ export function exportVehiclePrintSheet(item) {
                     border-radius: 4px;
                     border: 1px solid #ccc;
                 }
-                .adaptive-tech-grid .tech-item-card.text-only {
-                    grid-column: 1 / -1;
+                .adaptive-tech-grid > .tech-item-card.text-only {
+                    width: 100%;
                 }
                 body[data-print-layout="horizontal"] .tech-item-body {
                     flex-direction: row;
@@ -8205,7 +8213,7 @@ export function exportVehiclePrintSheet(item) {
     const adaptiveGrid = printDocument.getElementById('adaptive-tech-grid');
     if (adaptiveGrid) {
         const arrangeTechnicalCards = () => {
-            const cards = Array.from(adaptiveGrid.querySelectorAll(':scope > .tech-item-card'));
+            const cards = Array.from(adaptiveGrid.querySelectorAll('.tech-item-card'));
             const getImage = card => card.querySelector('.tech-detail-img');
             const getDimensions = card => {
                 const img = getImage(card);
@@ -8218,22 +8226,26 @@ export function exportVehiclePrintSheet(item) {
                     resolution: width * height
                 };
             };
+            const originalOrder = card => Number(card.dataset.originalOrder || 0);
             const imageCards = cards.filter(card => getImage(card));
-            const textCards = cards.filter(card => !getImage(card));
+            const textCards = cards.filter(card => !getImage(card)).sort((a, b) => originalOrder(a) - originalOrder(b));
+            const priorityTextCard = textCards.find(card => card.dataset.priorityCut === 'true') || null;
             if (imageCards.length === 0) {
-                adaptiveGrid.replaceChildren(...cards);
+                adaptiveGrid.replaceChildren(...(priorityTextCard ? [priorityTextCard] : []), ...textCards.filter(card => card !== priorityTextCard));
                 return;
             }
 
-            // Mantener como primera imagen el corte recomendado; si no existe, respetar el primer elemento de imagen actual.
-            const priorityCard = imageCards.find(card => card.dataset.priorityCut === 'true') || imageCards[0];
+            // El corte recomendado conserva la primera posición visual. Si no tiene imagen o no hay recomendado,
+            // se prioriza la primera imagen según el orden técnico original de la ficha.
+            const priorityCard = imageCards.find(card => card.dataset.priorityCut === 'true')
+                || [...imageCards].sort((a, b) => originalOrder(a) - originalOrder(b))[0];
             const remainingCards = imageCards.filter(card => card !== priorityCard);
             const initialDimensions = imageCards.map(card => ({ card, ...getDimensions(card) }));
             const portraitCount = initialDimensions.filter(entry => entry.aspect < 0.85).length;
             const landscapeCount = initialDimensions.filter(entry => entry.aspect > 1.2).length;
-            const isThreeWithTwoPortraits = imageCards.length === 3 && portraitCount === 2 && landscapeCount === 1;
+            const twoPortraitsAndLandscape = imageCards.length === 3 && portraitCount === 2 && landscapeCount === 1;
 
-            if (isThreeWithTwoPortraits && getDimensions(priorityCard).aspect < 0.85) {
+            if (twoPortraitsAndLandscape && getDimensions(priorityCard).aspect < 0.85) {
                 remainingCards.sort((a, b) => {
                     const aPortrait = getDimensions(a).aspect < 0.85;
                     const bPortrait = getDimensions(b).aspect < 0.85;
@@ -8256,44 +8268,94 @@ export function exportVehiclePrintSheet(item) {
                 && orderedPortraitCount === 1
                 && orderedLandscapeCount === 2
                 && getDimensions(priorityCard).aspect < 0.85;
-            const twoPortraitsAndLandscape = orderedImageCards.length === 3
+            const exactTwoPortraitsOneLandscape = orderedImageCards.length === 3
                 && orderedPortraitCount === 2
                 && orderedLandscapeCount === 1;
+            const newLayoutChildren = [];
 
-            orderedDimensions.forEach(entry => {
-                const { card, aspect } = entry;
-                card.style.gridRow = 'span 1';
-                let span;
-                if (orderedImageCards.length === 1) {
-                    span = 12;
-                } else if (portraitLandscapePortraitStack) {
-                    if (card === priorityCard) {
-                        span = 4;
-                        card.style.gridRow = 'span 2';
-                    } else {
-                        span = 8;
-                    }
-                } else if (twoPortraitsAndLandscape) {
-                    span = aspect < 0.85 ? 6 : 12;
-                } else if (aspect >= 2.2) {
-                    span = 12;
-                } else if (aspect < 0.75) {
-                    span = orderedImageCards.length >= 3 ? 4 : 5;
+            const createImageRow = rowCards => {
+                const row = printDocument.createElement('div');
+                row.className = 'adaptive-image-row';
+                const weights = rowCards.map(card => {
+                    const aspect = getDimensions(card).aspect;
+                    return Math.max(0.35, Math.min(aspect, 3.5));
+                });
+                row.style.gridTemplateColumns = weights.map(weight => `${weight.toFixed(3)}fr`).join(' ');
+                rowCards.forEach(card => {
+                    card.style.gridColumn = '';
+                    card.style.gridRow = '';
+                    row.appendChild(card);
+                });
+                return row;
+            };
+
+            if (portraitLandscapePortraitStack) {
+                const landscapeCards = orderedImageCards.filter(card => card !== priorityCard);
+                const portraitAspect = getDimensions(priorityCard).aspect;
+                const averageLandscapeAspect = landscapeCards.reduce((sum, card) => sum + getDimensions(card).aspect, 0) / landscapeCards.length;
+                const leftWeight = Math.max(0.5, portraitAspect * 2);
+                const rightWeight = Math.max(0.5, averageLandscapeAspect);
+                const mosaic = printDocument.createElement('div');
+                mosaic.className = 'adaptive-image-mosaic portrait-with-landscape-stack';
+                mosaic.style.gridTemplateColumns = `${leftWeight.toFixed(3)}fr ${rightWeight.toFixed(3)}fr`;
+                mosaic.style.gridTemplateRows = 'minmax(min-content, auto) minmax(min-content, auto)';
+                priorityCard.style.gridColumn = '1';
+                priorityCard.style.gridRow = '1 / span 2';
+                landscapeCards[0].style.gridColumn = '2';
+                landscapeCards[0].style.gridRow = '1';
+                landscapeCards[1].style.gridColumn = '2';
+                landscapeCards[1].style.gridRow = '2';
+                mosaic.appendChild(priorityCard);
+                mosaic.appendChild(landscapeCards[0]);
+                mosaic.appendChild(landscapeCards[1]);
+                newLayoutChildren.push(mosaic);
+            } else if (exactTwoPortraitsOneLandscape) {
+                if (getDimensions(priorityCard).aspect < 0.85) {
+                    const portraitCards = orderedImageCards.filter(card => getDimensions(card).aspect < 0.85);
+                    const landscapeCard = orderedImageCards.find(card => getDimensions(card).aspect > 1.2);
+                    newLayoutChildren.push(createImageRow(portraitCards));
+                    if (landscapeCard) newLayoutChildren.push(createImageRow([landscapeCard]));
                 } else {
-                    span = 6;
+                    newLayoutChildren.push(createImageRow([priorityCard]));
+                    newLayoutChildren.push(createImageRow(remainingCards));
                 }
-                card.style.gridColumn = `span ${span}`;
-                card.dataset.naturalWidth = String(entry.width);
-                card.dataset.naturalHeight = String(entry.height);
-                card.dataset.imageAspectRatio = String(entry.aspect);
-                card.dataset.imageResolution = String(entry.resolution);
-            });
+            } else {
+                const rows = [];
+                let currentRow = [];
+                let currentAspectSum = 0;
+                const flushRow = () => {
+                    if (currentRow.length) rows.push(currentRow);
+                    currentRow = [];
+                    currentAspectSum = 0;
+                };
 
-            textCards.forEach(card => {
-                card.style.gridColumn = '1 / -1';
-                card.style.gridRow = 'span 1';
+                orderedImageCards.forEach(card => {
+                    const aspect = getDimensions(card).aspect;
+                    const isPanoramic = aspect >= 2.2;
+                    if (currentRow.length && (isPanoramic || currentAspectSum + aspect > 3.0 || currentRow.length >= 4)) {
+                        flushRow();
+                    }
+                    if (isPanoramic) {
+                        rows.push([card]);
+                        return;
+                    }
+                    currentRow.push(card);
+                    currentAspectSum += Math.max(aspect, 0.35);
+                    if (currentAspectSum >= 2.6 || currentRow.length >= 4) flushRow();
+                });
+                flushRow();
+                rows.forEach(row => newLayoutChildren.push(createImageRow(row)));
+            }
+
+            if (priorityTextCard) newLayoutChildren.unshift(priorityTextCard);
+            newLayoutChildren.push(...textCards.filter(card => card !== priorityTextCard));
+            adaptiveGrid.replaceChildren(...newLayoutChildren);
+            orderedDimensions.forEach(entry => {
+                entry.card.dataset.naturalWidth = String(entry.width);
+                entry.card.dataset.naturalHeight = String(entry.height);
+                entry.card.dataset.imageAspectRatio = String(entry.aspect);
+                entry.card.dataset.imageResolution = String(entry.resolution);
             });
-            adaptiveGrid.replaceChildren(...orderedImageCards, ...textCards);
         };
 
         const printImages = Array.from(adaptiveGrid.querySelectorAll('.tech-detail-img'));
