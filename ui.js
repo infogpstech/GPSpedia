@@ -8101,10 +8101,19 @@ export function exportVehiclePrintSheet(item) {
                 .adaptive-tech-grid > .tech-item-card.text-only {
                     width: 100%;
                 }
+                body[data-print-layout="horizontal"] .adaptive-tech-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    justify-content: stretch;
+                    gap: 4px;
+                }
+                body[data-print-layout="horizontal"] .adaptive-tech-grid > .tech-item-card {
+                    width: 100%;
+                    max-width: 100%;
+                }
                 body[data-print-layout="horizontal"] .tech-item-body {
                     grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
                     align-items: start;
-                    column-gap: 10px;
+                    column-gap: 4px;
                 }
                 body[data-print-layout="horizontal"] .tech-item-info {
                     width: auto;
@@ -8115,10 +8124,21 @@ export function exportVehiclePrintSheet(item) {
                     max-width: 100%;
                     align-self: center;
                 }
+                body[data-print-layout="vertical"] .adaptive-tech-grid,
+                body[data-print-layout="image-focus"] .adaptive-tech-grid {
+                    grid-template-columns: max-content;
+                    justify-content: start;
+                    gap: 4px;
+                }
                 body[data-print-layout="vertical"] .tech-item-body,
                 body[data-print-layout="image-focus"] .tech-item-body {
                     grid-template-columns: minmax(0, 1fr);
                     align-items: stretch;
+                }
+                body[data-print-layout="vertical"] .tech-item-card,
+                body[data-print-layout="image-focus"] .tech-item-card {
+                    width: fit-content;
+                    max-width: 100%;
                 }
                 body[data-print-layout="vertical"] .tech-item-info,
                 body[data-print-layout="image-focus"] .tech-item-info {
