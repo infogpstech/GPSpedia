@@ -3844,7 +3844,7 @@ export async function openReplacedImagesModal() {
             const statusElement = info.querySelector('div:last-child');
             if (statusElement) statusElement.textContent = `Estado: ${statusLabel}`;
 
-            if (rep.estado !== 'eliminada' && rep.estado !== 'en_papelera') {
+            if (true) {
                 const recoverBtn = document.createElement('button');
                 recoverBtn.className = "btn btn-primary";
                 recoverBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; white-space: nowrap;";
