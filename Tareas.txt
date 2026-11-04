@@ -2263,3 +2263,17 @@ TAREA 2026-11-04 — SELECTOR Y PLANTILLAS ADAPTATIVAS
 Requisitos: activar Automática, Imagen a la derecha, Imagen debajo del texto e Imagen ampliada; añadir plantillas por relación de aspecto; conservar cada tarjeta completa, prioridad del corte recomendado y orden técnico; evitar el agrupamiento fijo en todos los casos.
 Estado: CAMBIOS INICIALES IMPLEMENTADOS EN ui.js. Verificación estática de selector, CSS y lógica de agrupamiento realizada. Pendiente validación con herramienta de sintaxis del proyecto, navegador real y PDF; revisar espacio útil, QR, contenido extenso y saltos de página.
 ================================================================================
+
+
+================================================================================
+TAREA 2026-11-04 — CORRECCIÓN DE NOTA Y DIMENSIONADO ADAPTATIVO
+- [x] Colocar la nota técnica inmediatamente debajo de los metadatos en primera página.
+- [x] Evitar que la nota se duplique al final del documento.
+- [x] Reducir paddings y gaps de las tarjetas y wrappers.
+- [x] Evitar que la media query móvil anule los modos de distribución.
+- [x] Dar comportamiento geométrico explícito al modo Imagen a la derecha.
+- [x] Conservar proporción de imágenes y altura natural de los textos.
+- [ ] Validar en navegador real y PDF con imágenes verticales, cuadradas, horizontales, panorámicas y descripciones largas.
+- [ ] Verificar desbordamientos, metadatos, QR, notas y pie de página en todas las páginas.
+Estado: correcciones de código aplicadas; validación visual real pendiente.
+================================================================================
