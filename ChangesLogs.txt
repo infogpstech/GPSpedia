@@ -1871,3 +1871,12 @@ Fecha: 2026-11-03
   * Se normalizan las tarjetas de agregar tutorial y agregar problema de la cuadrícula PyS a 188px de altura.
   * Se establece un tamaño común de 140px de ancho por 188px de alto para las tarjetas de agregar modelo y agregar problema en los modales de relación.
 ================================================================================
+
+
+================================================================================
+REGISTRO DE CAMBIO POST-CODE REVIEW
+Fecha: 2026-11-03
+
+- ui.js (bloque de normalización de modelos asociados en openPysDetailModal):
+  * Se escapó la barra diagonal en la expresión regular que separa identificadores para evitar que interfiera con el delimitador de la expresión regular.
+================================================================================
