@@ -2017,3 +2017,5 @@ CORRECCIÓN 2026-11-04 — ANCHO DE IMÁGENES Y NOTA COMO FILA DE METADATOS
 - La paginación clona el bloque de metadatos completo solo en la primera página, por lo que la nota permanece junto a la tabla y no se repite como un bloque separado.
 - Validación estática: confirmadas la fila de nota, su ubicación dentro de la tabla, la eliminación de notesTemplate independiente, las reglas de ancho y la presencia del listener del selector. No se ejecutó navegador real ni generación de PDF.
 ================================================================================
+
+- Ajuste adicional: el cuerpo de cada tarjeta usa una columna flexible minmax(0, 1fr) para que el ancho intrínseco del texto no limite el wrapper de imagen; el modo Imagen a la derecha conserva explícitamente sus dos columnas.
