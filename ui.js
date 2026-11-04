@@ -8257,21 +8257,6 @@ export function exportVehiclePrintSheet(item) {
             const landscapeCount = initialDimensions.filter(entry => entry.aspect > 1.2).length;
             const twoPortraitsAndLandscape = imageCards.length === 3 && portraitCount === 2 && landscapeCount === 1;
 
-            if (twoPortraitsAndLandscape && getDimensions(priorityCard).aspect < 0.85) {
-                remainingCards.sort((a, b) => {
-                    const aPortrait = getDimensions(a).aspect < 0.85;
-                    const bPortrait = getDimensions(b).aspect < 0.85;
-                    if (aPortrait !== bPortrait) return aPortrait ? -1 : 1;
-                    return getDimensions(b).resolution - getDimensions(a).resolution;
-                });
-            } else {
-                remainingCards.sort((a, b) => {
-                    const aDimensions = getDimensions(a);
-                    const bDimensions = getDimensions(b);
-                    return bDimensions.aspect - aDimensions.aspect || bDimensions.resolution - aDimensions.resolution;
-                });
-            }
-
             const orderedImageCards = [priorityCard, ...remainingCards];
             const orderedDimensions = orderedImageCards.map(card => ({ card, ...getDimensions(card) }));
             const orderedPortraitCount = orderedDimensions.filter(entry => entry.aspect < 0.85).length;
