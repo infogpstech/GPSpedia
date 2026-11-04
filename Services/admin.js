@@ -1586,14 +1586,7 @@ function handleUploadAdminImage(payload, logMessage) {
         return { status: "success", imageUrl: newImageUrl, message: `La imagen del campo '${fieldName}' se actualizó en Drive y Sheets.` };
     } catch (error) {
         let rollbackMessage = "";
-        if (historyRecord) {
-            try {
-                const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
-                if (historySheet) historySheet.getRange(historyRecord.rowIndex, 11).setValue("cancelada");
-            } catch (historyError) {
-                rollbackMessage += ` No se pudo marcar el registro histórico como cancelado: ${historyError.message}.`;
-            }
-        }
+        let rollbackFailed = false;
 
         if (activeCell && newImageUrl) {
             try {
@@ -1602,13 +1595,26 @@ function handleUploadAdminImage(payload, logMessage) {
                     SpreadsheetApp.flush();
                 }
             } catch (cellError) {
+                rollbackFailed = true;
                 rollbackMessage += ` No se pudo confirmar la reversión de la referencia activa: ${cellError.message}.`;
             }
         }
 
         if (newFile) {
             try { newFile.setTrashed(true); }
-            catch (fileError) { rollbackMessage += ` No se pudo enviar el archivo nuevo a papelera: ${fileError.message}.`; }
+            catch (fileError) {
+                rollbackFailed = true;
+                rollbackMessage += ` No se pudo enviar el archivo nuevo a papelera: ${fileError.message}.`;
+            }
+        }
+
+        if (historyRecord) {
+            try {
+                const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
+                if (historySheet) historySheet.getRange(historyRecord.rowIndex, 11).setValue(rollbackFailed ? "requiere_revision" : "cancelada");
+            } catch (historyError) {
+                rollbackMessage += ` No se pudo actualizar el estado del registro histórico: ${historyError.message}.`;
+            }
         }
 
         logMessage("Edición In-Modal", `Reemplazo cancelado para conservar la referencia anterior. Motivo: ${error.message}.${rollbackMessage}`, 0, 0, true, true);
@@ -2663,16 +2669,25 @@ function handleRecoverReplacedImage(payload, logMessage) {
             sheetRep.getRange(repRowIndex, 11).setValue("restablecida");
             SpreadsheetApp.flush();
         } catch (operationError) {
-            if (swappedRecord) {
-                try { sheetRep.getRange(swappedRecord.rowIndex, 11).setValue("cancelada"); } catch (statusError) {}
-            }
+            let rollbackFailed = false;
+            let rollbackErrorMessage = "";
             try {
                 if (String(activeCell.getValue()) === urlHistorica) {
                     activeCell.setValue(currentActiveUrl);
                     SpreadsheetApp.flush();
                 }
             } catch (rollbackError) {
-                throw new Error(`Falló la restauración y también la reversión de la referencia activa: ${operationError.message}; ${rollbackError.message}`);
+                rollbackFailed = true;
+                rollbackErrorMessage = rollbackError.message;
+            }
+
+            if (swappedRecord) {
+                try {
+                    sheetRep.getRange(swappedRecord.rowIndex, 11).setValue(rollbackFailed ? "requiere_revision" : "cancelada");
+                } catch (statusError) {}
+            }
+            if (rollbackFailed) {
+                throw new Error(`Falló la restauración y también la reversión de la referencia activa: ${operationError.message}; ${rollbackErrorMessage}`);
             }
             throw operationError;
         }
@@ -2729,9 +2744,20 @@ function handleDeleteReplacedImage(payload, logMessage) {
         }
 
         const file = DriveApp.getFileById(driveId);
-        if (!file.isTrashed()) file.setTrashed(true);
-        sheetRep.getRange(repRowIndex, 11).setValue("en_papelera");
-        SpreadsheetApp.flush();
+        const wasAlreadyTrashed = file.isTrashed();
+        if (!wasAlreadyTrashed) file.setTrashed(true);
+        try {
+            sheetRep.getRange(repRowIndex, 11).setValue("en_papelera");
+            SpreadsheetApp.flush();
+        } catch (historyError) {
+            if (!wasAlreadyTrashed) {
+                try { file.setTrashed(false); }
+                catch (restoreError) {
+                    throw new Error(`El archivo fue enviado a papelera, falló la actualización del historial y no pudo revertirse: ${historyError.message}; ${restoreError.message}`);
+                }
+            }
+            throw new Error(`No se pudo actualizar el estado histórico; la operación fue revertida: ${historyError.message}`);
+        }
 
         logMessage && logMessage("Imágenes Reemplazadas", `La imagen histórica '${driveId}' fue enviada a la papelera de Google Drive.`);
         return {
