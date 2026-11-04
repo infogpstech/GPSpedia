@@ -2471,3 +2471,28 @@ Comprobaciones:
 
 Restricciones: diagnóstico sin cambios de código; no compartir credenciales ni valores de sesión; no ampliar permisos sin autorización. Si se requiere implementar cambios, crear una rama nueva basada en fix/pys-carousel-card-sizing-print-images y preparar un Pull Request hacia esa rama.
 ================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — ELIMINAR EL REGISTRO DE CONTRASEÑAS EN EL SERVICIO AUTH
+Fecha de registro: 2026-11-04
+Referencia: Auditoría.txt, hallazgo AUD-SEC-01.
+Rama de referencia: fix/pys-carousel-card-sizing-print-images
+Prioridad: CRÍTICA.
+Estado: PENDIENTE DE CORRECCIÓN Y REVISIÓN DE EXPOSICIÓN HISTÓRICA.
+
+OBJETIVO
+Evitar que las contraseñas enviadas o almacenadas se copien a la hoja Logs o a cualquier otro registro de diagnóstico.
+
+ALCANCE MÍNIMO
+1. Revisar Services/Auth.js, especialmente doPost, handleLogin y logToSheet.
+2. No registrar request.payload completo en acciones de autenticación.
+3. Eliminar el registro de fromSheet y fromClient de la comparación de contraseñas.
+4. Revisar todos los demás mensajes de depuración para descartar exposición de contraseñas, tokens de sesión u otros secretos.
+5. Mantener trazabilidad mediante datos no sensibles (acción, resultado, marca temporal e identificador no secreto cuando corresponda).
+6. Evaluar con autorización el tratamiento de los registros históricos que ya pudieron contener credenciales; no eliminar ni modificar Logs sin un procedimiento aprobado.
+7. Probar login correcto/incorrecto y confirmar que Logs no almacena contraseñas ni secretos.
+
+RESTRICCIONES
+No ejecutar cambios durante esta auditoría. Para implementar, crear una rama nueva basada en fix/pys-carousel-card-sizing-print-images, cumplir íntegramente Proceso de desarollo.md, generar respaldo previo, verificar el cambio y preparar Pull Request hacia la rama base. No incluir contraseñas ni tokens en capturas, informes o pruebas.
+================================================================================
