@@ -2569,3 +2569,48 @@ VERIFICACIÓN
 RESULTADO
 La causa de código que impedía reconocer el texto 'Desarrollador' durante la normalización queda corregida en la rama de trabajo. No se declara validación visual en el entorno live.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA INICIAL — REORGANIZACIÓN VISUAL DEL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Alcance: index.html y style.css. Se evalúa una navegación lateral por secciones dentro del modal existente.
+
+ARCHIVOS Y COMPONENTES REVISADOS
+1. index.html, líneas 212-340 aprox.: estructura completa de #dev-tools-modal y sus controles administrativos.
+2. ui.js, líneas 3025 en adelante: openDevTools() e initAdminPanelListeners(), revisados para identificar dependencias con el DOM.
+3. style.css, líneas 1600-1617 y reglas globales de .info-modal / .info-modal-content, incluidos los ajustes responsive para pantallas pequeñas.
+4. Proceso de desarollo.md: flujo obligatorio de auditoría, registro, respaldo, implementación, comparación, revisión y documentación.
+
+ESTADO ACTUAL
+- El modal concentra consola, terminal, progreso, accesos a respaldos, estado de microservicios y acciones administrativas en dos columnas flexibles.
+- Los controles están distribuidos en bloques extensos y no existe navegación interna por categorías.
+- La estructura visual depende de estilos inline; el CSS solo aporta reglas generales para .dev-card y .dev-input.
+- El modal utiliza #dev-tools-modal y conserva un cierre estándar .info-close-btn.
+
+DEPENDENCIAS FUNCIONALES IDENTIFICADAS
+- openDevTools() muestra el modal y ejecuta initAdminPanelListeners() y window.triggerAdminPanelPing cuando está disponible.
+- initAdminPanelListeners() localiza los controles por sus identificadores DOM y registra sus eventos. Por ello, los identificadores existentes deben conservarse sin cambios.
+- La consola, el escaneo de microservicios, el terminal, la barra de progreso, los controles de respaldo/restauración, mantenimiento, firmas VIN, registro de logotipos, historial de imágenes y auditoría Drive tienen dependencias funcionales ya conectadas.
+- La apertura de los modales secundarios de imágenes reemplazadas y auditoría Drive ocurre desde controles existentes y no debe alterarse.
+
+ORGANIZACIÓN PROPUESTA
+1. Diagnóstico: consola, terminal, progreso y estado de microservicios.
+2. Respaldos: accesos directos a IDs, generación y restauración de copias.
+3. Base de datos: herramientas VIN, reorganización de registros, purga de logs y corte silencioso.
+4. Imágenes y Drive: normalización, organización de archivos, recuperación, logotipos, historial y auditoría.
+5. Sistema: limpieza de caché local.
+
+RIESGOS Y RESTRICCIONES
+- No cambiar IDs, atributos funcionales, acciones, lógica de negocio, endpoints ni permisos.
+- La navegación debe limitarse a mostrar/ocultar paneles visuales; no debe recrear controles ni duplicar identificadores.
+- La vista debe adaptarse a escritorio y móvil, conservando acceso a todas las secciones.
+- Se evita modificar ui.js implementando la navegación con controles radio y CSS, para no intervenir el registro actual de eventos.
+- Los modales secundarios permanecen fuera de #dev-tools-modal y no deben moverse dentro de los paneles.
+
+VERIFICACIÓN PREVIA
+- Se inspeccionaron los bloques de controles y sus identificadores; no se detectó necesidad de modificar servicios ni lógica administrativa.
+- Se confirmó que el código de inicialización utiliza los identificadores existentes, por lo que el rediseño conservará esos elementos.
+- No se modificó código durante esta auditoría.
+================================================================================
