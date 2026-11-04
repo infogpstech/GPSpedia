@@ -2362,3 +2362,24 @@ Se crearon copias exactas de Auditoría.txt y Services/admin.js en _temporary_ba
 
 No se modificó código durante esta revisión.
 ================================================================================
+
+
+================================================================================
+REVISIÓN DE CODE REVIEW — ELIMINACIÓN DE LÍMITES DE PROFUNDIDAD DEL ÁRBOL
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+HALLAZGO CR-IMG-04 — Los controles de profundidad de 100 niveles podían detener una auditoría de un árbol Cortes válido.
+Evidencia:
+- isFolderInsideCortes limitaba el recorrido de padres a 100 niveles.
+- handleAuditDriveImagesInCortes rechazaba cursores cuya pila superara 100 carpetas.
+Riesgo:
+Una jerarquía válida con más de 100 niveles podía impedir la validación de pertenencia o detener la auditoría antes de completar el árbol, pese a que la paginación estuviera activa.
+Acción:
+Eliminar los límites fijos de profundidad y pila. Detectar ciclos mediante IDs de carpeta visitados durante la comprobación de ascendencia, manteniendo la validación de que cada carpeta/archivo pertenece al árbol Cortes.
+
+RESPALDO DEL TERCER CICLO
+Se crearon copias exactas de Auditoría.txt y Services/admin.js en _temporary_backups/review_cycle_3/ antes de modificar estos archivos en este ciclo.
+
+No se modificó código durante esta revisión.
+================================================================================
