@@ -2065,3 +2065,17 @@ Plan de implementación propuesto:
 - Mantener el crecimiento automático de las páginas y overflow:visible.
 - Registrar en ChangesLogs.txt únicamente los cambios realmente realizados y en Tareas.txt dejar explícita cualquier validación visual que no haya podido ejecutarse.
 ================================================================================
+
+
+================================================================================
+REVISIÓN ESTÁTICA POSTCAMBIO — DIMENSIONAMIENTO ADAPTATIVO DE IMÁGENES
+Fecha: 2026-11-04
+Archivos de implementación: ui.js, función exportVehiclePrintSheet() y su función interna arrangeTechnicalCards().
+- Se sustituyeron los límites de altura por cantidad de imágenes (390/230/170 px y variantes de Imagen ampliada) por un cálculo por página basado en el espacio vertical restante.
+- La medición se realiza temporalmente con las imágenes colapsadas; se descuenta la altura del pie y el contenido de la sección principal, incluidos encabezado, metadatos, textos, tarjetas y separaciones.
+- El espacio resultante se reparte entre las filas de tarjetas con imagen. Se conserva un límite superior de 520 px en los modos normales y 620 px en Imagen ampliada, además de un mínimo de 80 px por fila.
+- Las imágenes usan width:auto, max-width:100%, height:auto y object-fit:contain; el wrapper centra la imagen. Esto evita imponer el ancho completo cuando la imagen original es más pequeña que el contenedor y mantiene la proporción.
+- Se conserva choosePageGroups(), el orden original, la prioridad del corte recomendado, los cuatro modos, la reconstrucción al cambiar el selector, la espera de carga/error de imágenes, la ejecución en beforeprint, los metadatos solo en la primera página y las tarjetas sin imagen en la última página.
+- La revisión estática confirmó la eliminación de las seis reglas CSS que fijaban la altura por cantidad de imágenes y la presencia de la función de cálculo dinámico. No se modificó style.css ni se añadieron dependencias.
+- Limitaciones: no se ejecutó una prueba de sintaxis del proyecto, navegador real ni generación de PDF. No se validaron visualmente combinaciones verticales/horizontales, textos extensos, imágenes fallidas, espacio disponible ni ubicación del pie. La regla mínima de 80 px puede requerir ajuste si una página no dispone de espacio suficiente; debe verificarse en PDF.
+================================================================================
