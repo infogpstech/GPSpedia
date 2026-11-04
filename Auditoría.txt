@@ -1465,3 +1465,35 @@ Blobs de respaldo exacto de los archivos auditados generados antes de las modifi
    - No se modificarán microservicios ni la estructura de datos.
    - La rama de trabajo fue creada desde GPSpedia2.2.7; la rama base no se modificará.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA POST-IMPLEMENTACIÓN: CARRUSEL PYS, DIMENSIONES Y DISTRIBUCIÓN DE IMPRESIÓN
+Fecha: 2026-11-03
+Rama: fix/pys-carousel-card-sizing-print-images
+
+1. CARRUSEL PYS (ui.js, líneas aproximadas 7340-7353):
+   - Se mantiene la condición contextual anti-bucle existente.
+   - Se amplió la lectura de modelos asociados para aceptar el arreglo habitual y, si el valor recibido fuera una cadena, intentar interpretarlo como arreglo JSON o como lista separada por coma, barra, barra inversa o punto y coma.
+   - Los identificadores normalizados continúan resolviéndose contra los identificadores de los vehículos del catálogo usando comparación de cadenas. No se modificó el contrato del microservicio ni el esquema de almacenamiento.
+
+2. TARJETAS DE ADICIÓN (style.css y ui.js):
+   - Se fijó la altura de las tarjetas de agregar tutorial y agregar problema de la cuadrícula PyS en 188px.
+   - Las tarjetas de agregar modelo y agregar problema en los modales de relación mantienen 140px de ancho y se ajustan a 188px de alto.
+   - Se actualizaron los estilos en línea de las tres instancias de tarjetas de relación para que no sobrescriban la altura común.
+
+3. DISTRIBUCIÓN DE IMÁGENES EN FICHA TÉCNICA (ui.js, función exportVehiclePrintSheet, líneas aproximadas 7698-8090):
+   - Se eliminó el cálculo de densidad global que aplicaba tamaños de imagen reducidos cuando había cuatro o más elementos.
+   - Cada elemento recibe la clase has-image o text-only según tenga imagen; los elementos sin imagen utilizan el ancho disponible para la información.
+   - La altura máxima de imagen se mantiene en 310px para las distribuciones normales, y el modo Imagen ampliada permite hasta 380px.
+   - Se agregó un selector de distribución con los modos Automática, Imagen a la derecha, Imagen debajo del texto e Imagen ampliada. La selección modifica la distribución de los elementos en la vista previa y al imprimir.
+
+4. REVISIÓN ESTÁTICA:
+   - La comparación de la rama contra GPSpedia2.2.7 identifica modificaciones en ui.js, style.css y Auditoría.txt; Tareas.txt y ChangesLogs.txt se incorporan a continuación.
+   - Se comprobó que no quedan referencias a las variables de densidad eliminadas ni a las clases card-expanded/card-compact dentro de ui.js.
+   - No se ejecutaron pruebas funcionales en navegador ni impresión física/PDF desde esta sesión. La revisión visual final deberá realizarse en la vista previa de impresión con ejemplos de baja y alta cantidad de imágenes.
+
+5. RIESGO / SEGUIMIENTO:
+   - Verificar visualmente los cuatro modos de distribución, el salto de página de las tarjetas y las dimensiones de las tarjetas de adición en cuadrícula y carruseles.
+   - Mantener la revisión de esta tarea en el Pull Request antes de integrar cambios a GPSpedia2.2.7.
+================================================================================
