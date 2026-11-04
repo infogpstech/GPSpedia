@@ -2067,7 +2067,7 @@ Rama: fix/pys-carousel-card-sizing-print-images
 
 ================================================================================
 CAMBIOS 2026-11-04 — VERIFICACIÓN E IMPLEMENTACIÓN AUD-IMG-01 A AUD-IMG-07
-Rama: fix/audit-img-01-07-history-security-integrity
+Rama: fix/audit-img-01-07-history-security
 Destino del Pull Request: fix/pys-carousel-card-sizing-print-images
 
 - Services/admin.js, aproximadamente líneas 152-180: se agregó validación de sesión y rol para acciones del historial de imágenes y subida administrativa. Se añadió extracción normalizada de IDs de Drive, registro histórico previo al reemplazo, control de fallos y reversión de referencias, validación global antes de enviar archivos a papelera, restauración limitada a campos de imagen del catálogo Cortes y auditoría paginada con indicadores de continuidad.
