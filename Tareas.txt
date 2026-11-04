@@ -2653,3 +2653,487 @@ Estado: IMPLEMENTADO Y REVISADO ESTÁTICAMENTE; VALIDACIÓN VISUAL EN LIVE PENDI
 - Pendiente: validar visualmente en el entorno live, en escritorio, móvil y PWA; revisar navegación, tooltips, accesibilidad e interacción de todos los controles.
 - No fusionar ni modificar la rama base GPSpedia2.2.5.
 ================================================================================
+
+================================================================================
+NUEVO BLOQUE — ESTUDIO DE FACTIBILIDAD Y PLAN DE IMPLEMENTACIÓN DEL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+Estado: INVESTIGACIÓN DOCUMENTAL Y PLANIFICACIÓN. NO IMPLEMENTAR.
+Alcance: Las diez áreas administrativas recomendadas para GPSpedia y una vista de resumen general.
+
+OBJETIVO
+Evaluar la viabilidad técnica de incorporar las funciones al panel de desarrollador, identificar las capacidades ya existentes, definir requisitos, dependencias, riesgos, plan por etapas y criterios de aceptación. Este bloque registra trabajo futuro; no autoriza modificar código, servicios, hojas de cálculo, permisos ni despliegues.
+
+RESULTADO GENERAL DEL ESTUDIO PRELIMINAR
+- La integración es técnicamente viable con la arquitectura actual basada en frontend web, servicios independientes de Google Apps Script, Google Sheets y Google Drive.
+- No todas las funciones requieren desarrollo desde cero. Existen acciones administrativas en Services/admin.js, acciones de usuarios en el servicio USERS, comprobación de servicios en api-config.js, registro de eventos en el servicio AUTH y herramientas de actividad en FEEDBACK.
+- La prioridad inicial debe ser seguridad y observabilidad. No se deben exponer nuevas operaciones administrativas antes de revisar la autorización del backend.
+- La viabilidad se considera preliminar: antes de cada implementación se deberán auditar los servicios completos, sus despliegues reales, los encabezados de las hojas, permisos de Apps Script, cuotas vigentes y flujos de la interfaz.
+
+HALLAZGOS TÉCNICOS DEL REPOSITORIO
+1. api-config.js ya enruta getUsers, createUser, updateUser, deleteUser, changePassword y updateProfile al servicio USERS.
+2. api-config.js ya enruta getActivityLogs y clearActivityLogs al servicio FEEDBACK, y contiene checkAllServicesHealth(), que consulta los endpoints mediante GET ?debug=true y mide disponibilidad/latencia desde el navegador.
+3. Services/Auth.js utiliza las hojas Users, ActiveSessions y Logs. logToSheet() escribe eventos en Logs. En handleLogin(), aproximadamente línea 138, existe un registro DEBUG que incluye fromSheet: sheetPassword y fromClient: password. Este registro expone credenciales en claro y constituye un hallazgo de seguridad que debe resolverse antes de ampliar auditoría, administración de usuarios o registros de errores.
+4. Services/admin.js contiene acciones para ping, backupDatabase, backupDrive, restoreDatabase, restoreDrive, reorganizeDatabase, normalizeImages, reorganizeImagesInDrive, restoreAllTrashedImages, createSheet, addColumn, driveCommand y gestión/auditoría del historial de imágenes reemplazadas. También utiliza AdminState, Idempotencia, procesamiento por lotes y LockService en operaciones específicas.
+5. Services/admin.js contiene assertDeveloperSession(), que valida la sesión activa y el privilegio Desarrollador desde Users y ActiveSessions. Sin embargo, en doPost(), aproximadamente líneas 307-312, la lista protectedActions solo incluye uploadAdminImage, getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes. Las demás acciones administrativas del mismo router no pasan por esa validación común. Antes de ampliar el panel se debe auditar y cerrar esta brecha, aplicando autorización en servidor a cada acción sensible.
+6. La interfaz y los servicios están desacoplados por endpoints independientes. El estado de una URL o respuesta de diagnóstico no demuestra por sí solo que todas las operaciones internas de Sheets o Drive funcionen correctamente.
+7. La gestión de usuarios y permisos se considera zona segura según Proceso de desarollo.md. Cualquier intervención futura en users.html, services/users/users.js o su backend deberá respetar esa protección y contar con autorización específica.
+
+REQUISITOS TRANSVERSALES OBLIGATORIOS
+- La autorización debe comprobarse en el servidor para cada acción sensible. Ocultar controles en el frontend no constituye seguridad.
+- La sesión debe validarse con userId y SessionToken vigentes; el rol debe recuperarse de la fuente de datos del servidor, no confiarse al valor enviado por el navegador.
+- Registrar el actor, fecha, acción, recurso afectado, resultado e identificador de correlación. No registrar contraseñas, tokens, claves, contenido privado ni datos sensibles innecesarios.
+- Aplicar mínimo privilegio, validación de parámetros, listas permitidas de recursos y confirmación reforzada para operaciones destructivas.
+- Las consultas grandes deberán utilizar lotes, cursores/paginación y límites de ejecución compatibles con Apps Script. Evitar cargar hojas o árboles completos de Drive en una sola petición.
+- Las operaciones de escritura deberán evaluar LockService, idempotencia, reversión y consistencia ante fallos parciales.
+- Las funciones de diagnóstico deberán diferenciar claramente entre estado comprobado, estado desconocido y error; nunca mostrar métricas que la plataforma no puede medir.
+- Las operaciones que puedan modificar o eliminar información deberán ofrecer vista previa/dry-run, resumen del impacto, confirmación y registro de auditoría. Para restauraciones y cambios masivos se exigirá respaldo previo verificable.
+- La interfaz debe ser responsive, accesible por teclado, coherente con el diseño actual y mostrar estados de carga, vacío, error, resultado parcial y éxito.
+- No duplicar servicios o acciones existentes: primero evaluar si se puede reutilizar el servicio correspondiente de manera segura.
+- La implementación futura deberá probarse en un entorno controlado antes de producción y no deberá fusionarse a la rama base sin autorización del usuario.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 0 — ENDURECIMIENTO DE SEGURIDAD Y CONTRATOS DE SERVICIO (BLOQUEANTE)
+Factibilidad: ALTA para la validación de sesión y privilegios; requiere auditoría de todos los servicios y puede implicar cambios coordinados en backend.
+Prioridad: P0 — requisito previo para habilitar nuevas funciones administrativas.
+
+ESTADO ACTUAL
+- Services/admin.js ya dispone de assertDeveloperSession(), pero el router no aplica la validación a todas las acciones administrativas.
+- Services/Auth.js registra actualmente valores de contraseña en el log de depuración de handleLogin().
+- Las acciones de usuarios se enrutan a un servicio separado; se debe inspeccionar su autorización real antes de reutilizarlas.
+
+REQUISITOS
+1. Auditar cada acción expuesta por ADMIN y clasificarla como lectura, escritura, destructiva o de mantenimiento.
+2. Exigir sesión válida y privilegio Desarrollador en servidor para todas las acciones administrativas sensibles.
+3. Verificar autorización también en servicios USERS, FEEDBACK y cualquier servicio que permita operaciones privilegiadas.
+4. Eliminar el registro de contraseñas en claro y revisar los registros históricos para determinar exposición y política de retención. No copiar ni mostrar valores sensibles durante la migración.
+5. Revisar el mecanismo de almacenamiento y comparación de contraseñas; definir una migración segura si el sistema actual almacena credenciales en texto claro. No cambiar el esquema sin plan de compatibilidad.
+6. Validar parámetros, limitar recursos permitidos, evitar ejecución de acciones por suplantación de rol y proteger contra repetición de operaciones.
+7. Definir respuestas de autorización uniformes sin filtrar información interna.
+
+PLAN
+- Inventariar acciones, endpoints, roles y puntos de entrada.
+- Documentar matriz acción/rol/permisos.
+- Corregir y probar la autorización backend antes de conectar nuevas opciones de interfaz.
+- Ejecutar pruebas negativas con sesión ausente, token inválido, usuario inexistente y rol no autorizado.
+- Revisar los registros y la migración de credenciales de forma controlada.
+
+ACEPTACIÓN
+- Ninguna acción administrativa sensible puede ejecutarse sin sesión válida y privilegio autorizado.
+- Los valores de contraseña y tokens no aparecen en logs ni respuestas.
+- Las operaciones existentes continúan funcionando con el rol permitido.
+- Se dispone de pruebas documentadas de autorización positiva y negativa.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 1 — ADMINISTRACIÓN DE USUARIOS Y PERMISOS
+Factibilidad: ALTA CONDICIONADA.
+Prioridad: P1, después de TAREA ADMIN 0.
+
+CAPACIDADES EXISTENTES
+api-config.js ya enruta getUsers, createUser, updateUser, deleteUser, changePassword y updateProfile al servicio USERS. Existe users.html como interfaz de administración. No se considera verificada en este estudio la implementación interna completa ni su matriz real de permisos.
+
+REQUISITOS
+1. Reutilizar el servicio USERS y sus contratos existentes; no crear una segunda fuente de usuarios.
+2. Consultar, crear, editar, desactivar/reactivar y eliminar usuarios, definiendo primero qué operaciones están realmente soportadas y cuál es la política de baja.
+3. Mostrar nombre de usuario, nombre completo, privilegio, estado, fecha de creación/último acceso si existe una fuente fiable y sesiones activas cuando se puedan consultar.
+4. Gestionar roles y permisos mediante una matriz explícita. No permitir que un desarrollador modifique su propio privilegio de forma que pierda o eleve permisos sin un flujo controlado.
+5. Permitir restablecimiento de contraseña sin mostrar ni recuperar la contraseña anterior.
+6. Invalidar sesiones al desactivar una cuenta, cambiar credenciales o modificar privilegios cuando corresponda.
+7. Proteger la cuenta del último administrador/desarrollador autorizado frente a eliminación o degradación accidental.
+8. Mantener intactas las restricciones de edición de perfil propio y cambio de username establecidas en la zona segura.
+9. Registrar cada cambio en auditoría con el actor y el resultado, sin incluir credenciales.
+
+PLAN
+- Auditar users.html, servicio USERS y estructura real de Users/ActiveSessions.
+- Documentar operaciones disponibles y permisos actuales.
+- Diseñar matriz RBAC y reglas de protección de cuentas.
+- Reutilizar los endpoints existentes o extenderlos solo cuando falte una operación aprobada.
+- Integrar una sección del panel con tabla, búsqueda, filtros y confirmaciones.
+- Probar todos los roles y estados de sesión antes de habilitarla.
+
+ACEPTACIÓN
+- Solo un desarrollador autorizado puede administrar cuentas desde el panel.
+- Los permisos se aplican en backend, no solo en la interfaz.
+- Las acciones actualizan la fuente de datos existente sin duplicar usuarios.
+- Las sesiones y registros de auditoría quedan consistentes.
+- Se superan pruebas de acceso permitido, denegado y protección de la última cuenta privilegiada.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 2 — MONITOR DEL SISTEMA Y ESTADO DE SERVICIOS
+Factibilidad: ALTA para disponibilidad y latencia de endpoints; LIMITADA para métricas internas de infraestructura.
+Prioridad: P1.
+
+CAPACIDADES EXISTENTES
+api-config.js contiene checkAllServicesHealth(), que consulta los endpoints configurados con GET ?debug=true y mide tiempo de respuesta. Services/admin.js dispone de la acción ping. Algunos servicios exponen información de depuración, pero se debe comprobar la uniformidad de respuestas.
+
+REQUISITOS
+1. Mostrar estado de cada servicio configurado: AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES, ADMIN y LEGACY.
+2. Mostrar latencia medida desde el navegador, hora de última comprobación y resultado de la última solicitud.
+3. Diferenciar disponible, lento, no disponible y estado desconocido.
+4. Añadir comprobaciones funcionales mínimas de acceso a Sheets y Drive únicamente cuando el servicio pueda probarlas sin modificar datos.
+5. Mostrar última sincronización o ejecución solo si el backend proporciona un dato real y verificable.
+6. No mostrar CPU, RAM, uso de disco ni cantidad exacta de usuarios conectados si Apps Script no ofrece una fuente fiable para medirlos.
+7. Evitar comprobaciones concurrentes excesivas y permitir actualización manual; cualquier actualización periódica deberá tener intervalo configurable y límites.
+8. No exponer IDs sensibles, estructura interna ni mensajes de excepción completos a usuarios sin autorización.
+
+PLAN
+- Inventariar endpoints y formatos GET/debug actuales.
+- Definir contrato de salud uniforme por servicio.
+- Reutilizar checkAllServicesHealth() donde sea compatible.
+- Incorporar comprobaciones específicas y de solo lectura para dependencias.
+- Construir tarjetas de estado e historial corto de comprobaciones.
+- Probar servicios online, respuesta lenta, error HTTP, JSON inválido y timeout.
+
+ACEPTACIÓN
+- Cada indicador corresponde a una comprobación real y tiene hora de actualización.
+- Se distingue un endpoint disponible de una dependencia interna no verificada.
+- No se generan escrituras ni operaciones destructivas durante el monitoreo.
+- El panel funciona si uno o varios servicios no responden.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 3 — REGISTRO DE ACTIVIDAD Y AUDITORÍA
+Factibilidad: MEDIA-ALTA.
+Prioridad: P1.
+
+CAPACIDADES EXISTENTES
+Services/Auth.js escribe eventos en la hoja Logs mediante logToSheet(). api-config.js enruta getActivityLogs y clearActivityLogs al servicio FEEDBACK. El servicio ADMIN también devuelve logs de ejecución en la respuesta de cada operación, pero ese arreglo de logs no equivale a un historial persistente unificado.
+
+REQUISITOS
+1. Auditar los esquemas reales de Logs, registros de actividad de FEEDBACK y logs devueltos por ADMIN.
+2. Definir un esquema común: fecha/hora, actor, acción, módulo, recurso o ID afectado, resultado, severidad e identificador de correlación.
+3. Obtener actor y privilegio desde la sesión validada en backend; no confiar en nombres enviados por el navegador.
+4. Registrar operaciones de creación, edición, eliminación, restauración, cambios de permisos, respaldos y mantenimiento.
+5. Añadir filtros por fecha, usuario, módulo, acción, resultado y severidad; incluir paginación y exportación controlada.
+6. Definir retención, archivado y límites de consulta para no superar cuotas ni hacer crecer indefinidamente las hojas.
+7. Impedir que la interfaz permita alterar o borrar auditorías protegidas. La limpieza, si se autoriza, deberá aplicar una política explícita de retención.
+8. Excluir contraseñas, SessionToken, claves, datos privados y contenido sensible.
+
+PLAN
+- Mapear las fuentes actuales y sus encabezados.
+- Definir contrato de evento y política de retención.
+- Centralizar la escritura mediante backend y correlacionar operaciones de varios servicios.
+- Crear consultas paginadas y filtros.
+- Integrar la vista de auditoría en el panel.
+- Probar eventos correctos, fallidos, parciales y concurrentes.
+
+ACEPTACIÓN
+- Cada operación sensible deja un evento persistente y atribuible.
+- Los filtros y la paginación no duplican ni omiten eventos.
+- No se almacenan credenciales ni tokens.
+- La auditoría no puede modificarse desde la interfaz ordinaria.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 4 — ADMINISTRACIÓN E INTEGRIDAD DE BASE DE DATOS
+Factibilidad: ALTA para inspección de solo lectura; MEDIA para correcciones automáticas.
+Prioridad: P2.
+
+CAPACIDADES EXISTENTES
+Services/admin.js ya accede a la Spreadsheet principal, conoce hojas y columnas de Cortes, y contiene acciones de reorganización, normalización, creación de hojas y columnas. También dispone de AdminState y procesamiento por lotes en operaciones extensas.
+
+REQUISITOS
+1. Inventariar hojas, encabezados, cantidad de filas y última actualización disponible.
+2. Detectar duplicados según claves reales y reglas específicas de cada hoja; no asumir que el nombre visible identifica de forma única un registro.
+3. Detectar campos obligatorios vacíos, IDs duplicados, referencias huérfanas y valores fuera de catálogo.
+4. Validar relaciones entre Cortes y otras hojas usando los identificadores reales.
+5. Revisar enlaces e imágenes referenciadas sin modificar las celdas ni archivos durante el diagnóstico.
+6. Mostrar resultados con hoja, fila, columna, ID y tipo de inconsistencia; permitir exportar el informe.
+7. Separar diagnóstico de reparación. Toda corrección deberá tener vista previa, respaldo, confirmación, bitácora y estrategia de reversión.
+8. Procesar por lotes y con cursores cuando el volumen pueda exceder el tiempo máximo de ejecución.
+9. No modificar encabezados, orden, fórmulas ni estructura existente sin una tarea y autorización específicas.
+
+PLAN
+- Documentar esquema y claves de cada hoja.
+- Crear reglas de validación por entidad.
+- Implementar primero escaneo de solo lectura y reporte.
+- Validar resultados con copias de datos conocidas.
+- Diseñar acciones de reparación independientes y opcionales.
+- Probar con registros válidos, duplicados, incompletos y referencias rotas.
+
+ACEPTACIÓN
+- El diagnóstico no modifica datos.
+- Los hallazgos identifican con precisión hoja/fila/campo.
+- Los lotes pueden reanudarse sin duplicar resultados.
+- Las reparaciones no se habilitan hasta disponer de respaldo y reversión probados.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 5 — RESPALDOS Y RESTAURACIÓN
+Factibilidad: ALTA para integración de acciones existentes; MEDIA-ALTA para verificación y recuperación segura.
+Prioridad: P1/P2.
+
+CAPACIDADES EXISTENTES
+Services/admin.js ya implementa backupDatabase, backupDrive, restoreDatabase y restoreDrive. También utiliza estado administrativo para procesos extensos. La presencia de estas acciones no demuestra por sí sola que cada respaldo sea íntegro ni que la restauración se haya probado en el entorno real.
+
+REQUISITOS
+1. Auditar el flujo actual de creación y restauración, permisos, carpetas destino, nombres, límites, errores parciales y consistencia.
+2. Mostrar historial con fecha, tipo, archivo/carpeta, tamaño y resultado, siempre que esos metadatos estén disponibles.
+3. Verificar que el archivo de respaldo exista, sea accesible y pueda abrirse antes de marcarlo como válido.
+4. Definir alcance: Spreadsheet, archivos de Drive o ambos; no presentar una copia parcial como respaldo completo.
+5. Exigir respaldo previo antes de restaurar o sobrescribir datos.
+6. Mostrar vista previa del alcance de restauración y advertir sobre datos que serán reemplazados.
+7. Proteger la restauración con autorización de servidor, confirmación reforzada, bloqueo de concurrencia y registro de auditoría.
+8. Probar primero en una copia aislada; documentar qué elementos no se restauran (permisos, historial de versiones, enlaces u otros metadatos, si aplica).
+9. Definir retención y limpieza sin eliminar el último respaldo válido.
+
+PLAN
+- Auditar las cuatro acciones existentes y sus formatos de respuesta.
+- Crear una verificación de integridad posterior al respaldo.
+- Diseñar listado y detalle de respaldos.
+- Incorporar flujo de restauración con previsualización y confirmación.
+- Ejecutar simulacros de recuperación sobre copias de prueba.
+- Documentar alcance y limitaciones de cada tipo de respaldo.
+
+ACEPTACIÓN
+- Los respaldos se pueden identificar y verificar antes de restaurar.
+- La restauración exige autorización, respaldo previo y confirmación.
+- Los escenarios de éxito y fallo parcial quedan registrados.
+- Se demuestra recuperación en una copia de prueba sin afectar producción.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 6 — ADMINISTRADOR DE ERRORES
+Factibilidad: MEDIA-ALTA.
+Prioridad: P1.
+
+CAPACIDADES EXISTENTES
+Services/Auth.js dispone de logToSheet() para escribir en Logs. Services/admin.js genera logs de ejecución y devuelve detalles de error en la respuesta. No se ha verificado un repositorio persistente, unificado y consultable de errores de todos los servicios.
+
+REQUISITOS
+1. Inventariar cómo cada servicio registra errores y qué información devuelve.
+2. Definir niveles y categorías: crítico, error, advertencia e información.
+3. Registrar fecha, servicio, acción, etapa, código, mensaje sanitizado, correlación y resultado.
+4. Evitar almacenar stack traces o payloads que contengan contraseñas, tokens, datos personales o contenido privado.
+5. Agrupar errores repetidos para evitar saturación y permitir identificar frecuencia.
+6. Permitir filtros, detalle técnico limitado al desarrollador y exportación.
+7. Distinguir errores activos, revisados y resueltos sin afirmar que un error fue corregido solo por marcarlo.
+8. Definir retención, límites y tratamiento de errores cuando la propia hoja Logs no esté disponible.
+
+PLAN
+- Auditar el manejo de errores en cada servicio.
+- Definir formato de error común y sanitización.
+- Centralizar persistencia y correlación sin bloquear la respuesta principal si falla el registro.
+- Crear vista de consulta y agrupación.
+- Probar errores de red, validación, permisos, Sheets, Drive y fallos parciales.
+
+ACEPTACIÓN
+- Los errores se consultan desde una fuente persistente y coherente.
+- Los registros no contienen secretos.
+- Se pueden filtrar y agrupar sin perder trazabilidad.
+- La indisponibilidad del sistema de logs no oculta el error original.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 7 — ADMINISTRADOR DE CONFIGURACIÓN
+Factibilidad: MEDIA; requiere diseñar una fuente de configuración que actualmente no está identificada como sistema general.
+Prioridad: P3, después de definir seguridad y esquema.
+
+CAPACIDADES EXISTENTES
+api-config.js mantiene endpoints y mapeo de acciones en código. Services/admin.js contiene constantes de IDs, nombres de hojas y carpetas. No se identificó una interfaz general ni un registro dinámico validado para configuración de toda la plataforma.
+
+REQUISITOS
+1. Clasificar parámetros editables y parámetros técnicos que deben permanecer en código.
+2. Definir una fuente de configuración con esquema, valores predeterminados, versión y validación.
+3. Mantener secretos, tokens, credenciales e IDs privados fuera de la interfaz y de respuestas públicas.
+4. Utilizar listas permitidas, tipos y rangos para cada parámetro.
+5. Registrar quién modificó cada valor, el valor anterior de forma segura, el nuevo valor permitido y la fecha.
+6. Incorporar vista previa, confirmación, reversión y validación antes de aplicar cambios.
+7. Definir caché e invalidación para que todos los servicios utilicen valores consistentes.
+8. Evitar permitir cambios de endpoints o parámetros que puedan redirigir operaciones a servicios no autorizados.
+
+PLAN
+- Inventariar constantes y parámetros actuales.
+- Clasificar cuáles pueden ser dinámicos sin comprometer seguridad.
+- Diseñar esquema, almacenamiento y validación.
+- Implementar primero consulta de solo lectura.
+- Incorporar edición únicamente para parámetros aprobados.
+- Probar valores inválidos, reversión y propagación entre servicios.
+
+ACEPTACIÓN
+- Solo parámetros autorizados pueden modificarse.
+- Los valores inválidos se rechazan en backend.
+- Los cambios quedan auditados y pueden revertirse.
+- Ningún secreto aparece en la interfaz ni en logs.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 8 — ADMINISTRADOR DE ARCHIVOS Y RECURSOS DE DRIVE
+Factibilidad: ALTA para recursos del árbol autorizado; MEDIA para administración general de Drive.
+Prioridad: P2.
+
+CAPACIDADES EXISTENTES
+Services/admin.js ya utiliza DriveApp, DRIVE_FOLDER_ID, driveCommand(), auditoría recursiva de imágenes de Cortes e historial de imágenes reemplazadas. La implementación actual delimita parte de las operaciones al árbol Cortes; no debe asumirse que existe un administrador universal de todo Drive.
+
+REQUISITOS
+1. Definir claramente el alcance inicial: carpeta Cortes y recursos utilizados por GPSpedia. No permitir navegación arbitraria por todo Drive.
+2. Mostrar nombre, tipo, tamaño, fecha, ubicación e ID solo cuando sea necesario para el desarrollador.
+3. Detectar archivos sin referencias, referencias rotas, duplicados y enlaces no verificables.
+4. Distinguir archivo activo, histórico, sin uso detectado y no verificable.
+5. Consultar permisos de acceso y detectar recursos que no puedan abrirse desde el contexto de la aplicación.
+6. Permitir operaciones autorizadas de mover, renombrar o enviar a papelera solo después de verificar referencias.
+7. Usar papelera y recuperación como comportamiento preferido; evitar eliminación permanente desde el panel.
+8. Implementar paginación/cursor para carpetas grandes y evitar cargar todo el árbol de una vez.
+9. Registrar cada cambio y validar pertenencia del recurso al árbol permitido en backend.
+
+PLAN
+- Auditar driveCommand() y los flujos de imágenes existentes.
+- Definir modelo de recurso y alcance permitido.
+- Integrar primero un explorador de solo lectura y búsqueda.
+- Incorporar diagnóstico de referencias.
+- Añadir operaciones controladas solo después de probar reversión y permisos.
+
+ACEPTACIÓN
+- No se puede acceder ni modificar fuera del alcance autorizado.
+- Los recursos se muestran con metadatos verificables.
+- Los archivos en uso o con referencias no verificables no se envían a papelera.
+- Las operaciones son paginadas, auditadas y recuperables cuando corresponda.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 9 — HERRAMIENTAS DE MANTENIMIENTO
+Factibilidad: ALTA para integrar acciones existentes con controles; MEDIA para nuevas rutinas automáticas.
+Prioridad: P2/P3.
+
+CAPACIDADES EXISTENTES
+Services/admin.js ya contiene reorganizeDatabase, normalizeImages, reorganizeImagesInDrive, restoreAllTrashedImages, createSheet y addColumn. Algunas operaciones utilizan lotes, estado de proceso y pausas; deben auditarse individualmente antes de exponerlas.
+
+REQUISITOS
+1. Crear un catálogo de tareas de mantenimiento con descripción, alcance, impacto y permisos.
+2. Separar diagnósticos de operaciones que modifican información.
+3. Mostrar dry-run o resumen previo cuando sea técnicamente posible.
+4. Exigir respaldo previo para operaciones masivas o potencialmente destructivas.
+5. Permitir progreso, cancelación segura y reanudación cuando el proceso use lotes.
+6. Registrar inicio, actor, parámetros no sensibles, progreso, resultado y fallos.
+7. Evitar ejecuciones simultáneas incompatibles mediante LockService o mecanismo equivalente.
+8. Definir idempotencia y recuperación ante interrupciones.
+9. No crear activadores automáticos ni programaciones recurrentes sin una tarea separada que defina frecuencia, propietario, cuotas y mecanismo de desactivación.
+
+PLAN
+- Inventariar acciones actuales y sus efectos sobre Sheets/Drive.
+- Clasificar por riesgo y reversibilidad.
+- Incorporar primero diagnósticos y operaciones de bajo riesgo.
+- Integrar las acciones existentes con confirmaciones, progreso y bitácora.
+- Probar interrupción, reanudación, concurrencia y fallos parciales.
+
+ACEPTACIÓN
+- Cada herramienta informa su alcance antes de ejecutarse.
+- Las operaciones masivas tienen protección, progreso y registro.
+- No se ejecutan dos procesos incompatibles simultáneamente.
+- La reanudación no duplica cambios ni corrompe datos.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 10 — INFORMACIÓN TÉCNICA, VERSIONES Y DESPLIEGUES
+Factibilidad: ALTA para mostrar versiones declaradas; MEDIA para verificar la versión realmente desplegada.
+Prioridad: P2.
+
+CAPACIDADES EXISTENTES
+El frontend declara la versión GPSpedia 2.2.5. Services/Auth.js devuelve versión 2.2.5 en su respuesta debug. Services/admin.js declara versión de componente 2.6.0. Los servicios se despliegan por separado y api-config.js contiene sus endpoints.
+
+REQUISITOS
+1. Definir un formato uniforme de metadatos: nombre del servicio, versión declarada, fecha/build, entorno y estado del endpoint.
+2. Mostrar por separado versión declarada en código y versión confirmada por el endpoint desplegado.
+3. No afirmar que una versión está desplegada basándose únicamente en el número que aparece en el repositorio.
+4. Añadir metadatos debug consistentes a cada servicio cuando sea seguro.
+5. Mostrar historial de cambios utilizando ChangesLogs.txt o una fuente estructurada, sin confundir commits de la rama de trabajo con despliegues productivos.
+6. Identificar servicios con versión desconocida o metadatos desactualizados.
+7. No exponer URLs con credenciales, tokens ni datos privados.
+8. Diferenciar rama, commit, versión de aplicación y versión de despliegue.
+
+PLAN
+- Inventariar versión declarada y respuesta debug de cada servicio.
+- Definir contrato de metadatos.
+- Integrar consulta desde el panel.
+- Contrastar el resultado con el despliegue real de cada Apps Script.
+- Mostrar advertencias cuando no se pueda confirmar el despliegue.
+
+ACEPTACIÓN
+- Se identifica cada servicio y su versión declarada.
+- La versión desplegada solo se marca como confirmada cuando el endpoint real la informa.
+- Se distingue claramente código de rama, versión de aplicación y despliegue.
+- Los servicios sin metadatos aparecen como desconocidos, no como actualizados.
+
+--------------------------------------------------------------------------------
+TAREA ADMIN 11 — RESUMEN GENERAL DEL CENTRO DE ADMINISTRACIÓN
+Factibilidad: ALTA después de disponer de fuentes verificables de las tareas ADMIN 1 a 10.
+Prioridad: P2, integrar progresivamente.
+
+OBJETIVO
+Crear la página inicial del panel con un resumen compacto de estado, alertas y actividad, sin duplicar las herramientas de cada sección.
+
+REQUISITOS
+1. Mostrar disponibilidad de servicios y hora de última comprobación.
+2. Mostrar alertas críticas y advertencias recientes.
+3. Mostrar últimas operaciones administrativas y sus resultados.
+4. Mostrar estado de respaldos y último respaldo verificado cuando exista esa información.
+5. Mostrar incidencias de integridad pendientes y procesos de mantenimiento en curso.
+6. Mostrar versión declarada y estado de despliegue por servicio.
+7. Cada tarjeta debe enlazar a la sección que contiene el detalle.
+8. No calcular indicadores a partir de datos incompletos ni mostrar métricas no verificables.
+
+PLAN
+- Definir fuentes y contratos de datos de cada indicador.
+- Diseñar un resumen sin duplicar consultas costosas.
+- Implementar carga parcial para que un servicio caído no bloquee todo el dashboard.
+- Validar estados vacíos, errores y datos parciales.
+
+ACEPTACIÓN
+- Los indicadores tienen fuente y fecha de actualización.
+- El fallo de una sección no impide consultar las demás.
+- Los accesos llevan a la herramienta correspondiente.
+- No aparecen métricas ficticias ni datos obsoletos presentados como actuales.
+
+--------------------------------------------------------------------------------
+PLAN GENERAL DE IMPLEMENTACIÓN PROPUESTO
+
+FASE 0 — SEGURIDAD Y AUDITORÍA
+- Ejecutar TAREA ADMIN 0.
+- Auditar los servicios USERS, FEEDBACK, AUTH y ADMIN.
+- Resolver la exposición de credenciales en logs y comprobar la autorización backend de cada acción sensible.
+- No habilitar nuevas operaciones administrativas hasta cerrar los riesgos críticos.
+
+FASE 1 — OBSERVABILIDAD
+- TAREA ADMIN 2: monitor del sistema.
+- TAREA ADMIN 3: registro de actividad y auditoría.
+- TAREA ADMIN 6: administrador de errores.
+- TAREA ADMIN 10: información técnica y versiones.
+- TAREA ADMIN 11: resumen general inicial, limitado a datos ya verificables.
+
+FASE 2 — PROTECCIÓN Y ADMINISTRACIÓN DE DATOS
+- TAREA ADMIN 5: respaldos y restauración.
+- TAREA ADMIN 4: diagnóstico de integridad de base de datos en modo solo lectura.
+- TAREA ADMIN 8: administrador de archivos en modo solo lectura y alcance limitado.
+
+FASE 3 — CONTROL ADMINISTRATIVO
+- TAREA ADMIN 1: administración de usuarios y permisos, respetando la zona segura.
+- TAREA ADMIN 7: configuración general.
+- TAREA ADMIN 9: mantenimiento con dry-run, autorización y recuperación.
+
+FASE 4 — VALIDACIÓN Y LIBERACIÓN
+- Pruebas unitarias/simuladas y de integración para cada servicio.
+- Pruebas con copias de Spreadsheet y carpetas de Drive.
+- Pruebas de roles, sesiones inválidas, permisos y operaciones concurrentes.
+- Validación responsive en escritorio, móvil y PWA.
+- Verificación de cuotas y tiempos reales de ejecución de Apps Script.
+- Revisión de Code Review y Safety & Side Effects.
+- Despliegue controlado de cada servicio y validación en live.
+- No realizar merge a GPSpedia2.2.5 sin autorización expresa.
+
+CRITERIOS PARA PRIORIZAR
+- Seguridad y protección de datos: bloqueante.
+- Reutilización de capacidades existentes: preferente frente a duplicación.
+- Diagnóstico de solo lectura: preferente antes de permitir modificaciones.
+- Reversibilidad y respaldo: obligatorios para operaciones destructivas.
+- Métricas reales y trazables: obligatorias para indicadores del dashboard.
+
+DEPENDENCIAS Y DOCUMENTACIÓN TÉCNICA DE REFERENCIA
+La implementación deberá confirmar las cuotas y límites vigentes antes de diseñar lotes, concurrencia y automatizaciones. Referencias oficiales:
+- Apps Script — Cuotas y límites: https://developers.google.com/apps-script/guides/services/quotas
+- Apps Script — Buenas prácticas: https://developers.google.com/apps-script/guides/support/best-practices
+- Spreadsheet Service: https://developers.google.com/apps-script/reference/spreadsheet
+- Drive Service: https://developers.google.com/apps-script/reference/drive
+- Lock Service: https://developers.google.com/apps-script/reference/lock
+- Properties Service: https://developers.google.com/apps-script/reference/properties
+- Triggers instalables: https://developers.google.com/apps-script/guides/triggers/installable
+
+RESTRICCIONES DE ESTA ETAPA
+- No implementar ninguna de las funciones descritas.
+- No modificar index.html, style.css, ui.js, api-config.js ni servicios Apps Script.
+- No crear hojas, columnas, propiedades, activadores ni carpetas en Google.
+- No cambiar permisos, credenciales, endpoints ni despliegues.
+- Este bloque es únicamente estudio, requisitos y planificación. Cada tarea requerirá auditoría y autorización independiente antes de su implementación.
+================================================================================
