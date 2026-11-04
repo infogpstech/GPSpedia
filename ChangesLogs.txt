@@ -1997,3 +1997,13 @@ CAMBIO 2026-11-04 — NOTA BAJO METADATOS Y CONTENEDORES ADAPTATIVOS
 - El modo Imagen a la derecha ahora usa una cuadrícula de dos columnas a nivel de ficha y dos columnas dentro de cada tarjeta; los modos verticales mantienen la imagen debajo del texto y el modo ampliado permite una imagen mayor.
 - Se mantiene la orientación física vertical. No se ejecutó prueba real en navegador/PDF; sigue pendiente comprobar el aspecto final, el desbordamiento y los saltos de página.
 ================================================================================
+
+
+================================================================================
+CORRECCIÓN 2026-11-04 — PAGINACIÓN Y LÍMITES DE IMÁGENES
+- Se limita el agrupamiento normal a dos imágenes por página; se conservan grupos de tres únicamente cuando las tres imágenes consecutivas son verticales según sus relaciones de aspecto.
+- Se añaden límites CSS por cantidad de imágenes: una imagen puede alcanzar 390 px (450 px en Imagen ampliada), dos imágenes hasta 230 px cada una y tres imágenes verticales hasta 170 px cada una.
+- Las cuadrículas, tarjetas y wrappers quedan restringidos al ancho disponible mediante columnas minmax(0, 1fr), max-width y box-sizing, manteniendo object-fit: contain y las proporciones.
+- El selector de distribución y su listener se mantienen.
+- Validación realizada: revisión estática de sustituciones y estructura CSS/lógica. No se ejecutó navegador real ni generación de PDF; el ajuste final de altura disponible, especialmente en la primera página con metadatos y notas, sigue pendiente de comprobación visual.
+================================================================================
