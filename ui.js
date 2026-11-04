@@ -7971,6 +7971,18 @@ export function exportVehiclePrintSheet(item) {
                 .adaptive-image-row {
                     grid-template-columns: minmax(0, 1fr);
                 }
+                .adaptive-single-image-row {
+                    width: 50%;
+                    max-width: 50%;
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+                .adaptive-compact-image-row {
+                    width: 80%;
+                    max-width: 80%;
+                    margin-left: auto;
+                    margin-right: auto;
+                }
                 .tech-item-card {
                     min-width: 0;
                     border: 1px solid #dcdcdc;
