@@ -3803,7 +3803,7 @@ export async function openReplacedImagesModal() {
             cachedReplaced = (res && res.data) ? res.data : [];
             renderList(filterInput ? filterInput.value : '');
         } catch (err) {
-            listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error al cargar repositorio histórico: ${err.message}</div>`;
+            listContainer.textContent = `Error al cargar repositorio histórico: ${err.message}`;
         }
     };
 
@@ -3834,12 +3834,29 @@ export async function openReplacedImagesModal() {
 
             const info = document.createElement('div');
             info.style.cssText = "flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem;";
-            info.innerHTML = `
-                <div style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rep.referencia_texto || 'Registro ' + rep.registro_id}</div>
-                <div style="font-size: 0.8rem; color: var(--text-disabled);"><strong>Archivo:</strong> ${rep.nombre_archivo} | <strong>Campo:</strong> ${rep.campo}</div>
-                <div style="font-size: 0.75rem; color: var(--text-disabled);"><strong>ID Drive:</strong> <code>${rep.archivo_drive_id}</code> | <strong>Fecha:</strong> ${rep.fecha_reemplazo}</div>
-                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : (['eliminada', 'en_papelera'].includes(rep.estado) ? '#dc3545' : (rep.estado === 'cancelada' ? '#6c757d' : '#007bff'))};">Estado: ${rep.estado}</div>
-            `;
+            const title = document.createElement('div');
+            title.style.cssText = "font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
+            title.textContent = rep.referencia_texto || `Registro ${rep.registro_id}`;
+
+            const fileDetails = document.createElement('div');
+            fileDetails.style.cssText = "font-size:0.8rem; color:var(--text-disabled);";
+            fileDetails.textContent = `Archivo: ${rep.nombre_archivo || ''} | Campo: ${rep.campo || ''}`;
+
+            const driveDetails = document.createElement('div');
+            driveDetails.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
+            driveDetails.textContent = `ID Drive: ${rep.archivo_drive_id || ''} | Fecha: ${rep.fecha_reemplazo || ''}`;
+
+            const statusDetails = document.createElement('div');
+            statusDetails.style.cssText = "font-size:0.75rem; font-weight:600;";
+            statusDetails.style.color = rep.estado === 'restablecida' ? '#28a745' :
+                (['eliminada', 'en_papelera'].includes(rep.estado) ? '#dc3545' :
+                (rep.estado === 'cancelada' ? '#6c757d' : '#007bff'));
+            statusDetails.textContent = `Estado: ${rep.estado || 'historica'}`;
+
+            info.appendChild(title);
+            info.appendChild(fileDetails);
+            info.appendChild(driveDetails);
+            info.appendChild(statusDetails);
 
             const btnContainer = document.createElement('div');
             btnContainer.style.cssText = "display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;";
@@ -3924,8 +3941,23 @@ export async function openAuditDriveModal() {
     let complete = false;
     let unverifiableReferences = 0;
 
-    summaryEl.textContent = 'Iniciando auditoría por lotes del árbol «Cortes»...';
+    summaryEl.innerHTML = `
+        <div style="background:var(--card-bg); padding:10px; border-radius:6px; border:1px solid var(--border-color); display:flex; gap:15px; flex-wrap:wrap;">
+            <span>📁 <strong>Carpeta raíz:</strong> <span id="audit-root-name">Cortes</span> (<code id="audit-root-id"></code>)</span>
+            <span>📊 <strong>Total analizados:</strong> <span id="audit-total-count">0</span></span>
+            <span style="color:#28a745;">✅ <strong>En uso:</strong> <span id="audit-in-use-count">0</span></span>
+            <span style="color:#007bff;">🕒 <strong>Históricas:</strong> <span id="audit-historical-count">0</span></span>
+            <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> <span id="audit-unused-count">0</span></span>
+            <span style="color:#dc3545;">❓ <strong>No verificables:</strong> <span id="audit-unverified-count">0</span></span>
+            <span><strong>Referencias no interpretables:</strong> <span id="audit-unknown-references">0</span></span>
+            <span id="audit-status" style="font-weight:600;">Iniciando auditoría por lotes...</span>
+        </div>
+    `;
     container.innerHTML = '';
+    const auditStatusEl = document.getElementById('audit-status');
+    const auditTotalEl = document.getElementById('audit-total-count');
+    const auditRootNameEl = document.getElementById('audit-root-name');
+    const auditRootIdEl = document.getElementById('audit-root-id');
     if (auditButton) auditButton.disabled = true;
 
     const appendFiles = (files) => {
@@ -3981,7 +4013,10 @@ export async function openAuditDriveModal() {
             cursor = res.cursor || null;
             unverifiableReferences = Math.max(unverifiableReferences, Number(res.unverifiableReferenceCount) || 0);
 
-            summaryEl.textContent = `Auditoría en progreso: ${allFiles.length} archivos analizados en lotes. Estado: ${complete ? 'completa' : 'parcial, continuando'}.`;
+            auditTotalEl.textContent = String(allFiles.length);
+            auditStatusEl.textContent = `Auditoría en progreso: ${allFiles.length} archivos analizados. Estado: ${complete ? 'completa' : 'parcial, continuando'}.`;
+            if (res.rootFolderName) auditRootNameEl.textContent = res.rootFolderName;
+            if (res.rootFolderId) auditRootIdEl.textContent = res.rootFolderId;
 
             if (!complete && !cursor) {
                 throw new Error('El servicio devolvió un resultado parcial sin cursor de continuación.');
@@ -3993,12 +4028,19 @@ export async function openAuditDriveModal() {
         const unusedCount = allFiles.filter(file => file.classification === 'Sin uso detectado').length;
         const unverifiedCount = allFiles.filter(file => file.classification === 'No verificable').length;
 
-        summaryEl.textContent = `Auditoría COMPLETA del árbol «Cortes». Total: ${allFiles.length}. En uso: ${inUseCount}. Históricas: ${histCount}. Sin uso detectado: ${unusedCount}. No verificables: ${unverifiedCount}. Referencias de URL no interpretables: ${unverifiableReferences}.`;
+        auditTotalEl.textContent = String(allFiles.length);
+        document.getElementById('audit-in-use-count').textContent = String(inUseCount);
+        document.getElementById('audit-historical-count').textContent = String(histCount);
+        document.getElementById('audit-unused-count').textContent = String(unusedCount);
+        document.getElementById('audit-unverified-count').textContent = String(unverifiedCount);
+        document.getElementById('audit-unknown-references').textContent = String(unverifiableReferences);
+        auditStatusEl.textContent = 'Auditoría COMPLETA del árbol «Cortes».';
         if (allFiles.length === 0) {
             container.textContent = 'No se encontraron archivos en la carpeta analizada.';
         }
     } catch (err) {
-        summaryEl.textContent = `AUDITORÍA PARCIAL: se alcanzaron a analizar ${allFiles.length} archivos, pero no se pudo confirmar la cobertura completa. Ejecuta nuevamente la auditoría para iniciar un recorrido nuevo. Detalle: ${err.message}`;
+        auditTotalEl.textContent = String(allFiles.length);
+        auditStatusEl.textContent = `AUDITORÍA PARCIAL: se analizaron ${allFiles.length} archivos, pero no se confirmó la cobertura completa. Ejecuta nuevamente la auditoría para iniciar un recorrido nuevo. Detalle: ${err.message}`;
     } finally {
         if (auditButton) auditButton.disabled = false;
     }
