@@ -8201,6 +8201,12 @@ export function exportVehiclePrintSheet(item) {
                     max-width: 100%;
                     min-width: 0;
                     box-sizing: border-box;
+                    grid-template-columns: minmax(0, 1fr);
+                    justify-items: stretch;
+                }
+                body[data-print-layout="horizontal"] .sheet-page-wrapper .tech-item-body {
+                    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+                    justify-items: stretch;
                 }
                 .sheet-page-wrapper .tech-item-img-wrapper {
                     width: 100%;
