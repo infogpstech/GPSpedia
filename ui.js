@@ -7831,14 +7831,14 @@ export function exportVehiclePrintSheet(item) {
                     background: #fff;
                 }
                 .sheet-page-wrapper {
-                    height: 269mm;
+                    height: auto;
                     min-height: 269mm;
-                    max-height: 269mm;
+                    max-height: none;
                     display: flex;
                     flex-direction: column;
                     break-after: page;
                     page-break-after: always;
-                    overflow: hidden;
+                    overflow: visible;
                 }
                 .sheet-page-wrapper:last-child {
                     break-after: auto;
@@ -8310,12 +8310,12 @@ export function exportVehiclePrintSheet(item) {
                     body { padding: 0; }
                     #print-pages { display: block; }
                     .sheet-page-wrapper {
-                        height: 269mm;
+                        height: auto;
                         min-height: 269mm;
-                        max-height: 269mm;
+                        max-height: none;
                         break-after: page;
                         page-break-after: always;
-                        overflow: hidden;
+                        overflow: visible;
                     }
                     .sheet-page-wrapper:last-child {
                         break-after: auto;
