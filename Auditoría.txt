@@ -1497,3 +1497,13 @@ Rama: fix/pys-carousel-card-sizing-print-images
    - Verificar visualmente los cuatro modos de distribución, el salto de página de las tarjetas y las dimensiones de las tarjetas de adición en cuadrícula y carruseles.
    - Mantener la revisión de esta tarea en el Pull Request antes de integrar cambios a GPSpedia2.2.7.
 ================================================================================
+
+
+================================================================================
+REINICIO DE AUDITORÍA POR OBSERVACIÓN DE CODE REVIEW
+Fecha: 2026-11-03
+PR: #124
+Observación: En la nueva normalización de item.modelosAsociados, la expresión regular que separa identificadores contiene una barra diagonal dentro de una clase de caracteres. Se revisará la sintaxis de la expresión antes de continuar, porque una expresión regular inválida impediría cargar ui.js y afectaría la interfaz completa.
+Acción requerida: volver a auditar el bloque de normalización, generar respaldo exacto del estado previo a la corrección y modificar únicamente la expresión que separa identificadores.
+Respaldos exactos previos a la corrección: ui.js 3a772d9b74a9c5b9f88c4be0bba691ae386c4932; style.css ae454f96f47a31503c339e77e62cb4e4960cff4d; Auditoría.txt 483083a624d5495d3fbe83b9e040bcad2d06c0e7; ChangesLogs.txt 944b9a4ee119183a1a98bd769b2fbf14143ff230; Tareas.txt 09cdff0a5103c1937460cd8251a5c28fea02e571.
+================================================================================
