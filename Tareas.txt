@@ -2213,3 +2213,16 @@ Requerimientos:
 Estado: AJUSTE CSS IMPLEMENTADO; PENDIENTE VALIDACIÓN VISUAL EN GITHUB PAGES Y GENERACIÓN REAL DE PDF.
 Verificación realizada: compilación sintáctica de exportVehiclePrintSheet y revisión estática del bloque CSS. No se considera validada la paginación hasta probarla en navegador/PDF.
 ================================================================================
+
+
+================================================================================
+TAREA COMPLEMENTARIA: TEXTO Y AVISOS ENCIMA DE LA FOTOGRAFÍA EN FICHA IMPRIMIBLE
+Fecha: 2026-11-04
+Requisitos:
+1. Presentar descripción y avisos en un bloque independiente de ancho completo antes de la fotografía.
+2. Mostrar la fotografía debajo del texto, centrada y conservando sus proporciones.
+3. No colocar texto en una columna lateral ni superponerlo sobre la imagen.
+4. Mantener intactos metadatos, prioridad de imágenes y bloque QR/video.
+Estado: CAMBIOS DE MARCADO Y CSS IMPLEMENTADOS; PENDIENTE VALIDACIÓN VISUAL EN GITHUB PAGES Y PDF REAL.
+Verificación estática: compilación sintáctica de exportVehiclePrintSheet y comparación de CSS de .meta-table con GPSpedia2.2.7. No se ha probado la paginación real.
+================================================================================
