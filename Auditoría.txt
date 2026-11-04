@@ -2079,3 +2079,77 @@ Archivos de implementación: ui.js, función exportVehiclePrintSheet() y su func
 - La revisión estática confirmó la eliminación de las seis reglas CSS que fijaban la altura por cantidad de imágenes y la presencia de la función de cálculo dinámico. No se modificó style.css ni se añadieron dependencias.
 - Limitaciones: no se ejecutó una prueba de sintaxis del proyecto, navegador real ni generación de PDF. No se validaron visualmente combinaciones verticales/horizontales, textos extensos, imágenes fallidas, espacio disponible ni ubicación del pie. La regla mínima de 80 px puede requerir ajuste si una página no dispone de espacio suficiente; debe verificarse en PDF.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA: VERIFICACIÓN REAL DE GESTIÓN DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-04
+Rama: fix/pys-carousel-card-sizing-print-images
+Tipo de revisión: Inspección estática del código y sus dependencias. No se ejecutaron pruebas en navegador, Spreadsheet real, Google Drive ni microservicios desplegados.
+Archivos revisados:
+- ui.js (blob SHA: 1b1e4561f46f53406c1e1629304363f5edf0f114), especialmente líneas 3758-3962.
+- Services/admin.js (blob SHA: 5f0bee6e99a4f298f1d5083b1a44b140a005b922), especialmente líneas 150-246, 1366-1500 y 2380-2714.
+- index.html (blob SHA: 1d9cb4824054768aafda9be83153eb482cdcded4), especialmente líneas 340-376.
+- api-config.js (blob SHA: f70f4703945caf225fd2e5952f479950e4297f36), especialmente líneas 31-32.
+- Tareas.txt, entrada «REVISIÓN III - FASE 3: Gestión de imágenes reemplazadas», registrada como completada.
+- Proceso de desarollo.md, procedimiento obligatorio de auditoría y registro.
+No se modificó ningún archivo de código. Esta entrada se agrega sin alterar ni eliminar registros anteriores.
+
+RESULTADO GENERAL
+La funcionalidad sí cuenta con implementación en el código fuente: existen el registro histórico en la hoja Imagenes_Reemplazadas, la interfaz administrativa de consulta/recuperación/eliminación y la auditoría del árbol de Drive «Cortes». Sin embargo, la inspección estática detectó discrepancias funcionales y de seguridad que impiden considerar la tarea completamente verificada. El estado [X] en Tareas.txt no acredita por sí mismo el funcionamiento actual ni la validación en servicios desplegados.
+
+HALLAZGOS
+
+AUD-IMG-01 — CRÍTICO: Las acciones administrativas no muestran validación de sesión/rol en el punto de entrada del microservicio.
+Evidencia: Services/admin.js, doPost (líneas aproximadas 150-246) analiza la acción recibida y despacha directamente a handlers como getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes. En ese flujo no se observa una comprobación de identidad, sesión o rol antes de ejecutar las acciones. api-config.js enruta estas acciones al servicio ADMIN y los controles de interfaz están en el cliente; ocultar botones en el frontend no protege el endpoint frente a llamadas directas.
+Riesgo: si el despliegue permite invocar el endpoint a usuarios no autorizados, podrían consultar registros, restaurar imágenes, enviar archivos a la papelera o explorar Drive.
+Alcance de la conclusión: hallazgo basado en el flujo visible de este archivo; debe confirmarse la configuración real de acceso del despliegue, pero no se encontró autorización en el handler inspeccionado.
+Acción: exigir validación del lado servidor para las acciones administrativas sensibles y probar llamadas sin sesión, con sesión inválida y con roles distintos.
+
+AUD-IMG-02 — ALTO: Un fallo al registrar el historial no impide sustituir la imagen activa.
+Evidencia: Services/admin.js, handleUploadAdminImage (aprox. líneas 1469-1494). recordReplacedImage está dentro de un try/catch que solo registra una advertencia; después, el flujo actualiza el campo de Cortes con la URL nueva y devuelve éxito.
+Riesgo: si la escritura en Imagenes_Reemplazadas falla, la referencia activa cambia de todas formas y la imagen anterior puede quedar sin registro histórico, incumpliendo el requisito de conservar trazabilidad.
+Acción: definir una operación consistente ante el fallo del historial: no confirmar el reemplazo como exitoso sin registro, o implementar una recuperación explícita y verificable que no pierda la referencia anterior.
+
+AUD-IMG-03 — ALTO: La validación previa a eliminar solo inspecciona la hoja Cortes, no todas las hojas de la Spreadsheet.
+Evidencia: Services/admin.js, handleDeleteReplacedImage (aprox. líneas 2586-2600) obtiene SHEET_NAMES.CORTES y recorre únicamente sus celdas para buscar el ID de Drive. El comentario y la auditoría histórica describen una validación más amplia («ninguna fila de la Spreadsheet» / «otros módulos»), pero el código revisado no realiza esa búsqueda global.
+Riesgo: una imagen referenciada en otra hoja puede considerarse sin uso y enviarse a la papelera.
+Acción: validar todas las hojas/campos que puedan contener referencias activas, con normalización consistente de URLs e identificadores, antes de permitir la eliminación.
+
+AUD-IMG-04 — ALTO: La interfaz anuncia eliminación permanente, pero el backend solo mueve el archivo a la papelera.
+Evidencia: ui.js, líneas aproximadas 3862-3875, solicita confirmación con el texto «ELIMINAR permanentemente» y notifica que la imagen fue eliminada. Services/admin.js, handleDeleteReplacedImage, utiliza file.setTrashed(true), que envía el archivo a la papelera, y marca el registro como «eliminada».
+Riesgo: la interfaz comunica una acción irreversible que no coincide con la operación ejecutada; el archivo no se elimina definitivamente en este flujo.
+Acción: ajustar el texto/estado para reflejar que se envía a la papelera, o implementar una eliminación definitiva con autorización explícita, validación de uso y controles de seguridad adecuados.
+
+AUD-IMG-05 — MEDIO: La auditoría de Drive tiene un límite fijo de 250 archivos sin indicar si el resultado está truncado.
+Evidencia: Services/admin.js, handleAuditDriveImagesInCortes (aprox. líneas 2617-2714), define maxFilesLimit = 250 y detiene la recursión al alcanzar ese límite. La respuesta devuelve totalAnalyzed, pero no informa si quedaron archivos pendientes ni incluye paginación.
+Riesgo: el usuario puede interpretar el resultado parcial como una auditoría completa del árbol «Cortes».
+Acción: indicar explícitamente cuando se alcanza el límite y continuar por lotes/paginación o usar un mecanismo que permita completar el recorrido sin exceder los límites de ejecución.
+
+AUD-IMG-06 — MEDIO: La categoría «No verificable» no representa de forma general los casos en que no se puede determinar el uso de una imagen.
+Evidencia: Services/admin.js, handleAuditDriveImagesInCortes, clasifica como «No verificable» los archivos cuyo MIME no empieza por image/. Las imágenes se clasifican como «En uso», «Histórica» o «Sin uso detectado» según las referencias recopiladas; no se observa una clasificación específica para referencias con formato no reconocido o verificaciones incompletas. Además, los IDs activos se extraen solo con patrones id=... o /d/....
+Riesgo: un archivo puede aparecer como «Sin uso detectado» aunque la referencia no haya podido reconocerse, y el usuario puede confundir ausencia de coincidencias con una comprobación completa.
+Acción: separar «sin referencia encontrada» de «no verificable», documentar los formatos de URL admitidos y reflejar las limitaciones del análisis en el resultado.
+
+AUD-IMG-07 — MEDIO: La restauración solo actualiza el catálogo Cortes y depende de que el registro histórico corresponda a un campo válido de COLS_CORTES.
+Evidencia: Services/admin.js, handleRecoverReplacedImage (aprox. líneas 2483-2562) busca el registro histórico y escribe la URL restaurada únicamente en la hoja Cortes usando COLS_CORTES[campo]. El flujo de subida inspeccionado también registra imágenes de vehículos/campos del catálogo Cortes.
+Riesgo/alcance: la restauración no es genérica para otros tipos de contenido. Si el historial contiene registros de otro módulo o un campo no reconocido, no podrá restaurarse mediante este handler. No se confirma que actualmente se estén registrando imágenes de otros módulos; debe aclararse el alcance esperado.
+Acción: documentar y validar el alcance de restauración, o implementar resolución específica por tipo de contenido si el requisito incluye otros módulos.
+
+FUNCIONALIDADES EXISTENTES CONFIRMADAS ESTÁTICAMENTE
+1. index.html contiene los modales #replaced-images-modal y #audit-drive-modal y botones en la sección de herramientas de desarrollador (aprox. líneas 340-376).
+2. ui.js conecta los botones y contiene la interfaz para listar/filtrar registros históricos, previsualizar la URL anterior, solicitar recuperación y eliminación, y mostrar resultados de auditoría (aprox. líneas 3758-3962).
+3. Services/admin.js contiene getOrCreateReplacedImagesSheet, recordReplacedImage, handleGetReplacedImages, handleRecoverReplacedImage, handleDeleteReplacedImage y handleAuditDriveImagesInCortes.
+4. api-config.js enruta getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes al servicio ADMIN.
+5. handleUploadAdminImage intenta registrar la imagen anterior antes de actualizar el campo activo, aunque el fallo de ese registro no bloquea la sustitución (AUD-IMG-02).
+
+VERIFICACIÓN PENDIENTE
+- No se consultó ni modificó la Spreadsheet real.
+- No se ejecutaron acciones contra Google Drive ni contra los endpoints desplegados.
+- No se probó la interfaz en navegador.
+- No se comprobó la política de acceso configurada en el despliegue del microservicio ADMIN.
+- No se verificó el comportamiento con más de 250 archivos, URLs con formatos alternativos, imágenes ya enviadas a papelera o registros históricos incompletos.
+
+TRAZABILIDAD
+Los hallazgos AUD-IMG-01 a AUD-IMG-07 deben convertirse en una tarea pendiente en Tareas.txt y resolverse en una sesión posterior, siguiendo el procedimiento de Proceso de desarollo.md. No se corrigió código durante esta auditoría.
+================================================================================
