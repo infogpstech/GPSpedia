@@ -2519,3 +2519,49 @@ Requisitos:
 
 Restricciones: no modificar código durante la auditoría. La implementación debe realizarse en una rama nueva basada en fix/pys-carousel-card-sizing-print-images, con el procedimiento obligatorio, respaldo, pruebas y Pull Request hacia la rama base.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — GESTIÓN DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-04
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+Referencia de revisión: Pull Request #128 (borrador; no fusionado).
+Tareas relacionadas:
+- CORREGIR HALLAZGOS DE AUDITORÍA DE GESTIÓN DE IMÁGENES REEMPLAZADAS.
+- INVESTIGAR POR QUÉ NO APARECE LA INTERFAZ DE GESTIÓN DEL HISTORIAL DE IMÁGENES REEMPLAZADAS.
+- VERIFICAR ROL Y ACCESO AL PANEL DE HISTORIAL DE IMÁGENES.
+
+ESTADO
+IMPLEMENTACIÓN DE CÓDIGO REALIZADA EN LA RAMA DE TRABAJO. VALIDACIÓN EN EL ENTORNO REAL Y DESPLIEGUE PENDIENTES.
+
+CAMBIOS IMPLEMENTADOS EN LA RAMA
+1. Acceso al modal de desarrollador con normalización del privilegio Desarrollador.
+2. Validación de sesión activa y privilegio real en el backend para consulta, restauración, envío a papelera, auditoría y reemplazo de imágenes.
+3. Registro histórico obligatorio antes de confirmar el cambio de la imagen activa; manejo de reversión y estado requiere_revision ante fallos.
+4. Validación de referencias de Drive en hojas de datos, fórmulas e hipervínculos enriquecidos.
+5. Bloqueo de envío a papelera si existe referencia activa o alguna referencia de Drive no puede verificarse.
+6. Mensajes y estados de interfaz alineados con la operación real de envío a papelera; se conserva la posibilidad de restaurar registros enviados a papelera.
+7. Restauración validada para contenido vehiculo en Cortes, con lista permitida de campos de imagen y validación del archivo.
+8. Auditoría recursiva por lotes con cursor de continuación, sin límite total fijo de 250 archivos y con control de pertenencia al árbol Cortes.
+9. Distinción entre En uso, Histórica, Sin uso detectado y No verificable.
+10. Renderizado de metadatos del historial mediante textContent para no interpretar nombres o valores como HTML.
+
+ALCANCE DE RESTAURACIÓN
+La implementación soporta explícitamente imágenes de vehículos y campos de imagen de la hoja Cortes. No se implementaron rutas de restauración para otros módulos porque el flujo de reemplazo identificado en esta rama corresponde a Cortes. Este alcance queda documentado y validado en el backend.
+
+VALIDACIÓN PENDIENTE PARA CERRAR LA TAREA
+1. Publicar la versión modificada de Services/admin.js en el proyecto/despliegue real del microservicio ADMIN.
+2. Confirmar que el endpoint ADMIN desplegado utiliza esa versión y que sus permisos de ejecución permiten leer Users, ActiveSessions, Spreadsheet y Drive.
+3. Ingresar a la plataforma con una cuenta cuyo privilegio real sea Desarrollador y comprobar la visibilidad del enlace y apertura del modal.
+4. Comprobar de extremo a extremo consulta, previsualización, reemplazo, restauración y envío a papelera con imágenes de prueba.
+5. Ejecutar la auditoría real con menos de 250 archivos, exactamente 250 y más de 250, incluyendo subcarpetas; confirmar cobertura completa y resultados parciales ante fallos.
+6. Verificar referencias activas en Cortes y otras hojas, fórmulas HYPERLINK, enlaces enriquecidos, URLs no interpretables y registros históricos.
+7. Revisar el estado real de archivos en Google Drive y la consistencia de Imagenes_Reemplazadas después de operaciones correctas y fallidas.
+8. Revisar el resultado desplegado con el usuario antes de fusionar el Pull Request.
+
+RESTRICCIONES
+- No modificar ni eliminar entradas históricas de documentación.
+- No fusionar el Pull Request #128 sin revisión del usuario.
+- No declarar la tarea completada en producción hasta superar las validaciones reales anteriores.
+================================================================================
