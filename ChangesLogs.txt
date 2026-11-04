@@ -2141,3 +2141,15 @@ Fecha: 2026-11-04
 - Se conservaron la eliminación de espacios exteriores, la conversión a minúsculas y la restricción de acceso al rol Desarrollador.
 - No se modificaron los controles de edición, Services/Auth.js, la autenticación, los endpoints ni otros elementos del menú.
 ================================================================================
+
+
+================================================================================
+REORGANIZACIÓN VISUAL DEL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+- index.html, líneas 212-408 aprox.: se reorganizó #dev-tools-modal en cinco secciones: Diagnóstico, Respaldos, Base de datos, Imágenes y Drive, y Sistema.
+- Se conservaron los identificadores de los controles existentes; se añadieron cinco selectores radio para navegar entre secciones.
+- style.css, desde línea 2373: estilos de menú lateral, paneles, estados activos, foco de teclado y adaptación responsive.
+- ui.js no fue modificado. No se alteraron acciones, servicios, endpoints, permisos ni lógica administrativa.
+- Verificación estática: 38 IDs originales preservados, sin duplicados; HTML balanceado; CSS con llaves balanceadas.
+- La comprobación visual y funcional en el entorno live queda pendiente.
+================================================================================
