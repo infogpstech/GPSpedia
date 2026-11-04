@@ -2153,3 +2153,25 @@ VERIFICACIÓN PENDIENTE
 TRAZABILIDAD
 Los hallazgos AUD-IMG-01 a AUD-IMG-07 deben convertirse en una tarea pendiente en Tareas.txt y resolverse en una sesión posterior, siguiendo el procedimiento de Proceso de desarollo.md. No se corrigió código durante esta auditoría.
 ================================================================================
+
+
+================================================================================
+REGISTRO DE ALCANCE PARA DIAGNÓSTICO DE ACCESO AL HISTORIAL DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-04
+Rama: fix/pys-carousel-card-sizing-print-images
+Estado: diagnóstico pendiente; no se realizaron cambios de código.
+
+Motivo:
+El usuario informa que no puede ver desde la plataforma la opción para consultar o gestionar las imágenes reemplazadas almacenadas en el historial. Una revisión estática previa encontró referencias a los modales #replaced-images-modal y #audit-drive-modal en index.html, lógica de interfaz en ui.js y handlers en Services/admin.js, pero esa evidencia no confirma que la opción esté visible para el usuario ni que funcione en el despliegue.
+
+Acciones documentales realizadas:
+- Se creó «Contexto de trabajo.md» con las reglas de ramas, protección del historial documental y procedimiento de trabajo.
+- Se agregó en Tareas.txt la tarea pendiente «INVESTIGAR POR QUÉ NO APARECE LA INTERFAZ DE GESTIÓN DEL HISTORIAL DE IMÁGENES REEMPLAZADAS».
+- No se modificó código ni se probó el despliegue real.
+
+Siguiente auditoría requerida:
+Inspeccionar el control de visibilidad de las herramientas administrativas, rol/permisos, inicialización y eventos del modal, flujo de carga de registros, llamada a getReplacedImages, configuración de api-config.js y respuesta del servicio en Services/admin.js. Determinar si la opción está oculta, si falta un enlace entre botón y modal, si la petición falla, si no hay registros o si el despliegue no contiene el código de esta rama.
+
+Limitación:
+La causa todavía no está confirmada. La presencia de elementos y funciones en el código fuente no permite concluir que estén accesibles desde la interfaz desplegada. Esta entrada no declara resuelta la tarea.
+================================================================================
