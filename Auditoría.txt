@@ -1530,3 +1530,16 @@ Observación: la implementación anterior fijó las tarjetas de adición en 188p
 Acción requerida: corregir las dimensiones de las tarjetas de adición a 140px de ancho por 120px de alto, mantener la coherencia de las instancias en línea y actualizar el registro de cambios sin eliminar el historial de la decisión anterior.
 Respaldos exactos previos a esta corrección: ui.js 825872b3b18114f43927e6da5718226c0dc9bbcd; style.css ae454f96f47a31503c339e77e62cb4e4960cff4d; Auditoría.txt ed913a13d4aa092680a0d351e2e412b0eec650ec; ChangesLogs.txt 36301893e5cd1010b558dec279e2cd2a4e699151; Tareas.txt 09cdff0a5103c1937460cd8251a5c28fea02e571.
 ================================================================================
+
+
+================================================================================
+RESULTADO DEL SEGUNDO CODE REVIEW: DIMENSIONES REALES DE TARJETAS
+Fecha: 2026-11-03
+PR: #124
+
+- Observación: la altura de 188px provenía del esqueleto de carga, no de una altura fija de la tarjeta regular generada por crearCardVehiculo.
+- Acción: se ajustaron las tarjetas de agregar tutorial, agregar problema, agregar modelo y agregar problema relacionado a 120px de alto. Las tarjetas de relación conservan un ancho fijo de 140px; las tarjetas de cuadrícula mantienen el ancho máximo definido por .card.
+- Se actualizaron los tres estilos en línea de las tarjetas de relación para que coincidan con la altura de 120px definida en CSS.
+- Verificación estática: el bloque de crearCardVehiculo utiliza una imagen de 120px y un overlay absoluto; no se encontró una altura fija de 188px en la tarjeta final. Se comprobó que ya no quedan estilos en línea con height: 188px en las instancias modificadas.
+- Se conserva el registro previo de 188px como historial; esta entrada documenta la corrección aplicada después de la revisión.
+================================================================================
