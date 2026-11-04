@@ -1543,3 +1543,43 @@ PR: #124
 - Verificación estática: el bloque de crearCardVehiculo utiliza una imagen de 120px y un overlay absoluto; no se encontró una altura fija de 188px en la tarjeta final. Se comprobó que ya no quedan estilos en línea con height: 188px en las instancias modificadas.
 - Se conserva el registro previo de 188px como historial; esta entrada documenta la corrección aplicada después de la revisión.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA INICIAL: DISTRIBUCIÓN ADAPTATIVA DE IMÁGENES EN FICHA TÉCNICA IMPRIMIBLE
+Fecha: 2026-11-03
+Rama de trabajo: fix/pys-carousel-card-sizing-print-images
+PR de revisión: #124
+Archivos revisados: ui.js, Proceso de desarollo.md, Auditoría.txt, ChangesLogs.txt, Tareas.txt.
+Respaldos exactos previos a la implementación: ui.js 2ccce255d32d4db3c4721f74e1902a718686ab10; Auditoría.txt da6d1fc278b7a4868e32b4b8db06eec855679e40; ChangesLogs.txt 8795e7cf294baa1b73d3b07195fe304ffd9bae47; Tareas.txt 09cdff0a5103c1937460cd8251a5c28fea02e571.
+
+1. FLUJO ACTUAL DE EXPORTACIÓN (ui.js, exportVehiclePrintSheet):
+   - Los cortes se construyen secuencialmente en el orden 1, 2 y 3.
+   - Los cables de alimentación y apertura se construyen en secciones separadas, después de los cortes.
+   - La ficha usa tarjetas .tech-item-card y el contenedor .tech-grid en columna; cada tarjeta evita romperse entre páginas mediante page-break-inside/break-inside.
+   - Las imágenes se cargan con getImageUrl(..., IMG_SIZE_LARGE). La composición actual no consulta naturalWidth/naturalHeight, orientación o relación de aspecto.
+   - La ficha tiene una distribución seleccionable de modos introducida previamente, pero estos modos aplican un flex-direction común; no evalúan las dimensiones reales ni reorganizan los elementos según las imágenes.
+
+2. CRITERIO EXISTENTE PARA IDENTIFICAR EL CORTE RECOMENDADO:
+   - En la vista de detalle, los registros de corte se obtienen de tipoCorte1..3 y los campos asociados.
+   - La función de detalle ordena el arreglo de cortes por el valor numérico de utilCorteN, de mayor a menor, y extrae el primer elemento como recommendedCut.
+   - exportVehiclePrintSheet no aplica actualmente ese orden y no marca ni prioriza el corte recomendado.
+   - La implementación de impresión debe reutilizar el criterio existente de utilCorteN, conservar todos los campos de cada corte y no modificar item ni su estructura.
+   - Si los valores no permiten distinguir una prioridad (por ejemplo, empate o valores no numéricos), se conservará el orden numérico de los cortes, como respaldo estable.
+
+3. TABLA DE METADATOS Y CÓDIGO QR:
+   - La tabla .meta-table se genera dentro de .top-grid con sus celdas y estilos definidos directamente en la plantilla de exportación.
+   - La presencia del QR se calcula antes de escribir la plantilla y agrega una columna adicional a .top-grid.
+   - No se identificó dependencia necesaria entre la tabla de metadatos y la composición de tarjetas técnicas. No se modificarán su HTML, estilos, columnas ni condiciones de QR.
+
+4. RIESGOS Y RESTRICCIONES:
+   - La reordenación debe mover unidades completas (título, datos, imagen y aviso de testigo) para evitar asociaciones incorrectas.
+   - La composición depende de que las imágenes carguen y expongan sus dimensiones naturales; imágenes fallidas o sin dimensiones deben recibir un tratamiento de respaldo sin bloquear la ficha.
+   - La paginación de impresión no puede garantizarse únicamente con una altura fija de página, por lo que se mantendrá break-inside: avoid en cada tarjeta y se evitarán reducciones automáticas agresivas.
+   - La ficha actual se escribe en una ventana emergente independiente. El algoritmo de distribución deberá ejecutarse dentro de esa ventana una vez disponibles las dimensiones de las imágenes, sin cambiar el modal de detalle ni las funciones de backend.
+
+5. ALCANCE:
+   - Modificar exclusivamente la lógica y los estilos internos de la ficha imprimible dentro de ui.js, además de actualizar los registros obligatorios.
+   - No modificar la tabla de metadatos, el modal de detalle del vehículo, los microservicios, los esquemas de almacenamiento ni las estructuras de datos.
+   - La verificación inicial es estática. La validación real de impresión/PDF deberá registrarse únicamente si se ejecuta.
+================================================================================
