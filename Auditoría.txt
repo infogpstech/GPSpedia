@@ -3147,3 +3147,43 @@ RESULTADO DE AUDITORÍA
 - No se accedió a la Spreadsheet productiva, no se inspeccionó Logs real, no se ejecutó Apps Script ni se verificó el rendimiento de una KDF.
 - ADMIN 0 permanece abierta. La siguiente etapa requiere seleccionar/validar la KDF, confirmar normalización, disponer de una copia de prueba y autorizar expresamente la implementación.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — INCIDENCIA DE AUTORIZACIÓN EN backupDatabase
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+
+ALCANCE
+- Analizar el rechazo reportado al ejecutar backupDatabase desde el panel de desarrollador.
+- Revisar el listener del botón, runAction(), routeAction(), el mapeo ADMIN y la validación de sesión del servicio.
+- No modificar código durante esta auditoría.
+
+RESPALDOS GIT PREVIOS A CUALQUIER CORRECCIÓN
+- api-config.js: b74270ffad51665db67d00befa4a517f810d33d0
+- ui.js: 9aa55d35ea3ad2f55991d2b28ce259a9d481f45d
+- Services/admin.js: f0b3f6f3ef28b52d8c2f9d5dccd3597b852dd3d9
+- Auditoría.txt: 2fe5e20a93c1d61c352b1c2d915acd217ea30fcb
+
+HALLAZGOS
+1. api-config.js, ACTION_TO_SERVICE_MAP: backupDatabase está asignada al servicio ADMIN.
+2. api-config.js, routeAction(): envía al endpoint el cuerpo JSON con action y payload. No obtiene ni agrega automáticamente la sesión.
+3. ui.js, runAction(action, payload = {}): llama routeAction(action, payload), por lo que una llamada sin segundo argumento transmite un objeto vacío.
+4. ui.js, listener de btn-admin-backup-db: ejecuta runAction('backupDatabase') sin invocar getDeveloperSessionPayload() ni suministrar userId/sessionToken.
+5. Services/admin.js, doPost(): ejecuta assertDeveloperSession(payload) para toda acción distinta de ping.
+6. Services/admin.js, assertDeveloperSession(): exige userId y sessionToken, verifica que la sesión esté en ActiveSessions y confirma en Users que el privilegio corresponda a Desarrollador. Si falta cualquiera de los datos o la validación falla, devuelve «Acceso denegado: sesión no autorizada».
+7. Services/admin.js, handleBackupDatabase(): la operación de copia se ejecuta después de la validación general de sesión en doPost(); el error reportado ocurre antes de entrar al handler de respaldo.
+
+CONCLUSIÓN TÉCNICA
+La omisión de userId/sessionToken en el listener del botón explica el rechazo reportado: el router transmite payload vacío y el backend lo rechaza antes de ejecutar handleBackupDatabase(). La evidencia estática no confirma si existen otros problemas posteriores en Drive/Spreadsheet ni el estado del deployment ADMIN activo.
+
+ALCANCE RECOMENDADO PARA LA CORRECCIÓN
+- Pasar getDeveloperSessionPayload() a runAction() para backupDatabase.
+- Auditar todas las llamadas de runAction() asociadas a acciones ADMIN protegidas, pues comparten la misma validación en backend.
+- Mantener intacta la autorización del servidor; no convertir backupDatabase en una excepción ni permitir acceso sin sesión.
+- Validar con sesión válida de Desarrollador y con sesiones ausente/inválida y roles no autorizados.
+
+LIMITACIONES
+- No se ejecutó Apps Script, no se hizo una nueva llamada HTTP y no se comprobó el deployment activo.
+- No se generó ningún respaldo ni se modificaron datos de Google Drive o Google Sheets.
+- No se modificó código ni se realizó despliegue o merge.
+================================================================================
