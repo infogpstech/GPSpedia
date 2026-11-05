@@ -3559,3 +3559,32 @@ HEAD auditado: a0a63469e9d8793c480f026902f8c20582838747
 - La prueba de rechazo de duplicados queda pendiente hasta actualizar y probar el deployment USERS-TEST.
 - La auditoría fue estática; no se ejecutó Apps Script ni se modificó Spreadsheet durante esta fase.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — REFUERZO DE CONTROL DE COMMITS Y CHECKPOINTS
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_auth-users-test
+HEAD auditado: 8d2a279ea18f3496df6075a890ebe22566056976
+
+ARCHIVOS AUDITADOS
+- Proceso de desarollo.md: revisión de checkpoints, flujo obligatorio, Code Review y control de commits.
+- checkpoint.md: revisión del historial de continuidad y de los registros existentes.
+- ChangesLogs.txt: revisión del formato de registro de cambios.
+- Tareas.txt: revisión de las reglas y el registro de tareas.
+- Auditoría.txt: revisión del historial para preservar entradas existentes.
+
+HALLAZGOS
+1. El procedimiento ya establecía un único commit por tarea, pero no prohibía expresamente las operaciones de Contents API que generan un commit por archivo.
+2. El procedimiento ya exigía checkpoint al inicio y al cierre, pero no lo convertía en una puerta de bloqueo explícita ni prohibía comenzar la auditoría antes de preparar el checkpoint inicial.
+3. El checkpoint contiene historial de tareas anteriores con referencias históricas de ramas y HEAD. Se conserva el contenido existente y se añade una sección fechada para la tarea actual.
+4. La rama confirmada antes de preparar los cambios es GPSpedia2.2.5_auth-users-test, HEAD 8d2a279ea18f3496df6075a890ebe22566056976.
+
+DECISIÓN Y ALCANCE
+- Reforzar el procedimiento con una regla de bloqueo: exactamente un commit por tarea, todos los archivos agrupados, prohibición de operaciones individuales que generen commits por archivo.
+- Reforzar checkpoints como requisito de entrada y salida, incluyendo la obligación de detener el proceso si no se pueden preparar/verificar.
+- Actualizar el checkpoint y los registros documentales de esta misma tarea.
+- No modificar código de aplicación, endpoints, deployments, hojas de cálculo ni ramas fuera del alcance autorizado.
+- Los cinco archivos originales se conservan mediante sus blobs Git originales; cualquier diferencia se limita a la documentación solicitada.
+================================================================================

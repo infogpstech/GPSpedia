@@ -3482,3 +3482,13 @@ Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; PRUEBA FUNCIONAL DEL RECHAZO PENDI
 - Pendiente: actualizar el deployment USERS-TEST con esta versión y probar que un duplicado se rechaza, que no se agrega ninguna fila y que un nombre disponible sigue creando la cuenta correctamente.
 - No se modificaron endpoints ni se desplegó Apps Script desde GitHub. No se hizo merge ni se modificaron otras ramas.
 ================================================================================
+
+
+================================================================================
+TAREA DOCUMENTAL — REFORZAR CONTROL DE COMMITS Y CHECKPOINTS
+Estado: COMPLETADA TRAS VERIFICACIÓN DEL COMMIT
+- Reforzar Proceso de desarollo.md para exigir exactamente un commit por tarea y prohibir commits automáticos por archivo.
+- Establecer los checkpoints inicial y final como puertas obligatorias; detener el trabajo si no pueden verificarse.
+- Incorporar todos los cambios documentales de esta tarea en un solo commit.
+- No modificar ramas protegidas ni ramas ajenas a la autorización.
+================================================================================

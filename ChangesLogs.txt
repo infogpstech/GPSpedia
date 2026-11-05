@@ -2583,3 +2583,15 @@ COMPARACIÓN Y REVISIÓN
 - Se comprobó sintaxis JavaScript y se revisaron casos estáticos de nombre duplicado, variante de mayúsculas, nombre disponible y nombre similar con sufijo distinto.
 - No se ejecutó Apps Script ni se probó el deployment actualizado; la validación funcional del rechazo de duplicados queda pendiente.
 ================================================================================
+
+
+================================================================================
+CHANGE LOG — REFUERZO DE COMMITS ÚNICOS Y CHECKPOINTS
+Fecha: 2026-11-05
+- Proceso de desarollo.md: agregado un bloque de bloqueo operativo que prohíbe commits por archivo y exige agrupar todos los cambios de una tarea en un único commit.
+- Proceso de desarollo.md: reforzado el control de checkpoints iniciales y finales como condiciones obligatorias para iniciar y cerrar una tarea.
+- Proceso de desarollo.md: actualizado CONTROL DE COMMITS POR TAREA para prohibir operaciones individuales que generen commits automáticos.
+- checkpoint.md: agregado el checkpoint inicial y el cierre de esta actualización documental, conservando los registros históricos existentes.
+- Auditoría.txt: documentados los hallazgos, riesgos y decisiones de esta actualización.
+- Tareas.txt: registrada la actualización del procedimiento como tarea documental.
+================================================================================

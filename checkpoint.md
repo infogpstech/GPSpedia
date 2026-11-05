@@ -1243,3 +1243,53 @@ ALCANCE DE RAMAS
 SIGUIENTE ACCIÓN
 - Actualizar el deployment USERS-TEST con Services/Test/users.js de esta rama y probar un nombre duplicado y uno disponible. No cambiar endpoints.
 ================================================================================
+
+
+---
+
+# CHECKPOINT DE TAREA — REFORZAR REGLAS DE COMMITS Y CHECKPOINTS
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama autorizada:** GPSpedia2.2.5_auth-users-test
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD confirmado al inicio:** 8d2a279ea18f3496df6075a890ebe22566056976
+
+## Alcance
+Reforzar el procedimiento para impedir commits por archivo y convertir los checkpoints inicial/final en controles obligatorios de entrada y salida.
+
+## Archivos auditados y previstos para modificación
+- Proceso de desarollo.md
+- checkpoint.md
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+
+## Hallazgos iniciales
+- El procedimiento ya contenía una sección de un commit por tarea y otra de checkpoints; sin embargo, no prohibía de forma explícita el uso de operaciones GitHub que crean un commit por cada archivo ni definía un bloqueo de publicación cuando faltara el checkpoint.
+- El checkpoint existente conserva registros históricos de tareas anteriores y contiene encabezados antiguos de ramas/HEAD. Se conserva ese historial y se añade un registro explícito de esta tarea.
+- La rama confirmada es la rama aislada de pruebas. No se modifica la rama de trabajo original ni la rama base protegida.
+
+## Fase inicial
+Checkpoint inicial preparado. Auditoría documental completada; respaldo exacto de los cinco archivos conservado mediante sus blobs originales en Git. Preparación de cambios documentales en curso.
+
+## Cierre de esta tarea documental
+
+**Estado:** COMPLETADA. EL ÚNICO COMMIT FUE PUBLICADO Y VERIFICADO.
+
+### Cambios preparados
+- El procedimiento establece una puerta de bloqueo explícita para commits únicos por tarea.
+- Se prohíben las operaciones individuales que creen commits por archivo.
+- El checkpoint inicial y el final se definen como requisitos de entrada y salida; el checkpoint final queda como último cambio documental antes del commit.
+- Se actualizaron los registros de auditoría, cambios y tareas.
+
+### Verificaciones
+- Se conservaron los contenidos originales de los cinco archivos en sus blobs Git.
+- Se confirmó que la rama seguía en HEAD 8d2a279ea18f3496df6075a890ebe22566056976 antes de preparar la publicación.
+- No se modificó código de aplicación, endpoints, deployments ni datos externos.
+- GitHub confirmó el commit único de esta tarea y el HEAD de la rama coincide con ese commit.
+- El commit incluye exactamente los cinco archivos documentales previstos; no se crearon commits por archivo.
+- El commit tiene como padre el HEAD confirmado al inicio de la tarea.
+
+### Siguiente acción
+Continuar con la siguiente tarea solicitada, iniciando primero un nuevo checkpoint.

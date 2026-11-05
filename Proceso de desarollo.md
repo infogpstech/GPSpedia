@@ -19,6 +19,42 @@ Cada fase constituye un requisito indispensable para garantizar:
 
 El incumplimiento de cualquiera de los pasos descritos en este documento invalida el proceso completo.
 
+
+# BLOQUEO OPERATIVO OBLIGATORIO — CHECKPOINTS Y COMMITS
+
+Estas reglas son controles de ejecución, no recomendaciones. Prevalecen sobre cualquier flujo de trabajo, herramienta o conveniencia técnica que pudiera generar commits por archivo.
+
+## A. Un único commit por tarea (regla inviolable)
+
+1. Una tarea completa debe producir **exactamente un commit**, aunque incluya uno o decenas de archivos.
+2. Está **PROHIBIDO** crear, actualizar o eliminar archivos mediante operaciones individuales que generen un commit automático por archivo (por ejemplo, una llamada de Contents API por archivo).
+3. Todos los cambios de código, configuración y documentación pertenecientes a la tarea se prepararán primero como un conjunto. Después de verificar el conjunto completo, se incorporarán mediante **un solo commit** que incluya todos los archivos modificados.
+4. No se permite crear commits intermedios, commits de respaldo, commits de auditoría, commits de logs ni commits exclusivos para guardar checkpoints.
+5. Si una herramienta disponible solo permite generar un commit por archivo, **NO se utilizará**. Se deberá utilizar un flujo que permita preparar los blobs y un único árbol Git, crear un solo commit y actualizar la rama una sola vez.
+6. Antes de publicar, verificar que el commit tenga como padre el HEAD confirmado al inicio de la tarea y que incluya todos los cambios previstos. Después, verificar el HEAD de la rama y la lista de archivos del commit.
+7. Si se detecta que se generó más de un commit para una misma tarea, la tarea no se considerará conforme con este procedimiento. No se ocultará ni se corregirá mediante reescritura de historial sin autorización expresa.
+
+## B. Checkpoint obligatorio como puerta de entrada y de salida
+
+1. **ANTES DE AUDITAR O MODIFICAR** cualquier archivo, leer el checkpoint existente y actualizar checkpoint.md con un checkpoint inicial que refleje el estado real: repositorio, rama, HEAD, alcance, archivos afectados, riesgos, fase y siguiente acción.
+2. No se iniciará la auditoría ni se editará código mientras el checkpoint inicial no esté preparado y revisado.
+3. Durante la tarea, mantener el checkpoint coherente con la fase real. Si cambia el alcance, aparece un bloqueo o se reinicia la auditoría por Code Review, actualizarlo antes de continuar.
+4. Al terminar implementación, pruebas, comparación, revisión y registros, actualizar checkpoint.md con el resultado real, archivos, verificaciones, limitaciones, pendientes y siguiente acción.
+5. La actualización final del checkpoint será **el último cambio documental antes del único commit**. No se permitirá editar otros archivos después de cerrar el checkpoint, salvo que se reabra el ciclo y se actualice de nuevo.
+6. El checkpoint inicial, las actualizaciones intermedias necesarias y el checkpoint final se incorporarán en el mismo commit de la tarea. Nunca se generará un commit separado para el checkpoint.
+7. Si no se puede completar o verificar el checkpoint, detener el cierre de la tarea: no declararla completada ni generar el commit.
+
+## C. Verificación obligatoria antes del commit
+
+Antes de crear el único commit, comprobar en conjunto:
+- que todos los archivos de la tarea están incluidos;
+- que no hay archivos temporales ni cambios ajenos;
+- que Auditoría.txt, ChangesLogs.txt y Tareas.txt están actualizados cuando corresponda;
+- que checkpoint.md contiene el cierre final;
+- que se está trabajando en la rama autorizada y sobre el HEAD esperado.
+
+**REGLA DE BLOQUEO:** si cualquiera de estos puntos falla, no se crea ningún commit.
+
 ---
 
 ## 0. CHECKPOINT OBLIGATORIO DE INICIO Y CIERRE DE TAREA
@@ -503,14 +539,21 @@ Este comentario deberá advertir que el bloque pertenece a una Zona Segura y que
 
 ---
 
-# CONTROL DE COMMITS POR TAREA
+# CONTROL DE COMMITS POR TAREA — REGLA INVIOLABLE
+
+**EXACTAMENTE UN COMMIT POR TAREA. NO UN COMMIT POR ARCHIVO.**
 
 Cada tarea deberá generar **un único commit**, independientemente de la cantidad de archivos que sea necesario modificar.
 
 Cuando una tarea requiera editar varios archivos:
+- reunir todos los cambios de código y documentación de esa tarea;
+- preparar y revisar el conjunto completo antes de publicarlo;
+- generar un solo árbol Git y un solo commit con todos los archivos modificados;
+- actualizar la referencia de la rama una sola vez;
+- comprobar que el commit contiene todos los archivos esperados.
 
-- todos los cambios correspondientes a esa misma tarea deberán agruparse;
-- se deberá generar un solo commit que incluya todos los archivos modificados;
-- está prohibido crear un commit independiente cada vez que se edite o actualice un archivo.
+Está **PROHIBIDO** utilizar operaciones individuales de creación/actualización de archivos que generen un commit automático por cada archivo. También están prohibidos los commits intermedios, de respaldo, de logs o exclusivos para checkpoints.
 
-No se deberá dividir una misma tarea en varios commits únicamente por haber trabajado en archivos diferentes. El commit se realizará cuando estén terminadas las modificaciones de la tarea y se hayan completado las verificaciones y registros obligatorios del procedimiento.
+Si la herramienta disponible no permite agrupar los archivos en un solo commit, se deberá detener la publicación y utilizar otro método compatible. **Nunca dividir una tarea para adaptarse a una limitación de la herramienta.**
+
+El commit se realizará únicamente después de completar la implementación, las verificaciones, la revisión de código, los registros y el checkpoint final. Si se necesita corregir algo después de preparar el checkpoint final, se reabre el procedimiento, se actualiza el checkpoint y se vuelve a preparar el mismo commit único.
