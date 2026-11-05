@@ -1120,3 +1120,82 @@ Estado: PREPARACIÓN DE CÓDIGO COMPLETADA; VALIDACIÓN FUNCIONAL BLOQUEADA HAST
 
 ## Siguiente acción
 Crear un único commit con los cinco archivos, cuyo padre debe ser da0affc4e52b533644a94f1876e08ca0e137533f. Verificar el nuevo HEAD y la lista de archivos del commit. No crear commits individuales por archivo.
+
+
+---
+
+# CHECKPOINT INICIAL — ACTUALIZAR ENDPOINT USERS
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD inicial confirmado:** b441a5be9a04770b2d535490eb73bc9478375e9b
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## Tarea y alcance
+Sustituir exclusivamente el endpoint USERS en API_ENDPOINTS.USERS de api-config.js por la URL de deployment proporcionada por el usuario. Mantener intactos AUTH, los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction(), los consumidores, los servicios Apps Script y la rama protegida.
+
+## Estado real al inicio
+- La rama de trabajo coincide con b441a5be9a04770b2d535490eb73bc9478375e9b.
+- La rama protegida coincide con d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- api-config.js tiene 170 líneas y contiene el endpoint USERS anterior una vez, en la propiedad API_ENDPOINTS.USERS.
+- El usuario proporcionó una URL nueva de deployment USERS, distinta de la configurada.
+- No se ha probado HTTP el nuevo deployment desde este entorno.
+- La tarea anterior de rechazo de nombres duplicados ya está incorporada en el commit b441a5be9a04770b2d535490eb73bc9478375e9b.
+
+## Archivos y funcionalidades involucrados
+- api-config.js: configuración API_ENDPOINTS.USERS, mapa de acciones y routeAction().
+- Consumidores revisados: main.js, auth.js, ui.js, navigation.js, users.html y youtubeUpload.js.
+- Registros: Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+
+## Riesgos, dependencias y restricciones
+- Las acciones getUsers, createUser, updateUser, deleteUser, changePassword, updateProfile y resetUserSessions dependen del endpoint USERS a través de routeAction().
+- No modificar AUTH ni las demás propiedades de API_ENDPOINTS.
+- No desplegar Apps Script, modificar hojas ni ejecutar operaciones de escritura.
+- El commit debe incluir todos los archivos de la tarea en un único commit; actualizar únicamente GPSpedia2.2.5_work mediante expected_sha. No hacer merge.
+
+## Fase al crear este checkpoint
+Estado inicial documentado antes de completar la auditoría formal. No se ha modificado ningún archivo del repositorio ni se ha movido ninguna referencia Git.
+
+
+---
+
+# CHECKPOINT DE CIERRE — ACTUALIZAR ENDPOINT USERS
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD anterior a la tarea:** b441a5be9a04770b2d535490eb73bc9478375e9b
+
+## Resultado
+- api-config.js: sustituido únicamente el valor de API_ENDPOINTS.USERS por la URL proporcionada por el usuario.
+- Se mantienen sin cambios AUTH, los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction(), helpers y consumidores.
+- Auditoría, ChangesLogs y Tareas actualizados dentro del mismo cambio.
+
+## Verificaciones estáticas
+- api-config.js conserva 170 líneas.
+- La comparación del contenido anterior y posterior identifica exclusivamente la sustitución del endpoint en la línea 12.
+- URL anterior: 0 coincidencias; URL nueva: 1 coincidencia.
+- Las acciones USERS continúan asignadas a USERS y los consumidores utilizan el enrutador central.
+- No se desplegó Apps Script ni se modificaron hojas o datos.
+
+## Validaciones pendientes
+- No se ejecutó una solicitud HTTP al nuevo deployment.
+- No se probaron login, sesión ni operaciones funcionales de USERS desde la plataforma.
+- La disponibilidad y configuración interna del deployment no se verificaron independientemente.
+
+## Estado
+**CAMBIO ESTÁTICO Y DOCUMENTACIÓN PREPARADOS; PENDIENTE DE PUBLICAR Y VERIFICAR EL COMMIT ÚNICO.**
+
+## Archivos incluidos en el único commit
+- api-config.js
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+## Continuidad
+- El commit de esta tarea deberá tener como padre b441a5be9a04770b2d535490eb73bc9478375e9b y quedar identificado en el historial de GPSpedia2.2.5_work.
+- Siguiente acción: crear un único árbol con los cinco archivos, crear un único commit y actualizar la referencia de la rama con expected_sha. Después, verificar el commit y realizar pruebas HTTP/funcionales autorizadas del deployment USERS.

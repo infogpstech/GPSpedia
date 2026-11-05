@@ -3534,3 +3534,40 @@ HEAD inicial: da0affc4e52b533644a94f1876e08ca0e137533f
 - Eliminar generateUniqueUsername().
 - Mantener intactos los segmentos restantes de Services/users.js. Se verifica la igualdad exacta de los segmentos anteriores, intermedios y posteriores a las dos modificaciones.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — ACTUALIZAR ENDPOINT DEL SERVICIO USERS
+Fecha: 2026-11-05 | Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: b441a5be9a04770b2d535490eb73bc9478375e9b
+
+1. ARCHIVO Y RESPALDO
+- api-config.js: 170 líneas; blob original de respaldo: f7aca3504f19ac50c47e2cfe0a6a5651bb97743e.
+- Se conservó el contenido original completo para comparación; la URL anterior de USERS aparece exactamente una vez.
+- La URL nueva fue proporcionada directamente por el usuario.
+
+2. CONFIGURACIÓN Y RUTEO
+- API_ENDPOINTS.USERS contiene el endpoint que routeAction() selecciona para las acciones asignadas al servicio USERS.
+- ACTION_TO_SERVICE_MAP dirige getUsers, createUser, updateUser, deleteUser, changePassword, updateProfile y resetUserSessions a USERS.
+- routeAction() obtiene API_ENDPOINTS[service], envía POST con { action, payload }, sigue redirecciones y procesa la respuesta JSON; no requiere cambios para sustituir la URL.
+- AUTH y los demás endpoints permanecen en propiedades independientes de API_ENDPOINTS.
+
+3. CONSUMIDORES Y DEPENDENCIAS
+- Se revisaron main.js, auth.js, ui.js, navigation.js, users.html y youtubeUpload.js.
+- Las llamadas de los consumidores utilizan routeAction() o helpers exportados por api-config.js; no se encontraron referencias directas a la URL anterior de USERS en esos archivos.
+- users.html envía las acciones de gestión de usuarios mediante postToAction(), que utiliza routeAction().
+- No se identificó necesidad de modificar ACTION_TO_SERVICE_MAP, routeAction(), AUTH, otros endpoints ni los consumidores.
+
+4. CAMBIO AUTORIZADO Y COMPARACIÓN
+- Sustituir únicamente el valor de API_ENDPOINTS.USERS en la línea 12.
+- La comparación estática antes/después conserva 170 líneas y detecta una única línea modificada.
+- URL anterior: 0 coincidencias en el archivo resultante.
+- URL nueva: 1 coincidencia en el archivo resultante.
+- El resto del contenido de api-config.js permanece idéntico.
+
+5. RIESGOS Y VALIDACIONES PENDIENTES
+- No se verificó independientemente el deployment de Apps Script ni su configuración interna; la URL se utiliza conforme a la proporcionada por el usuario.
+- No se ejecutó una solicitud HTTP ni una prueba funcional de las acciones USERS.
+- No se desplegó Apps Script, no se modificaron hojas o datos y no se ejecutaron operaciones de escritura.
+- Después de publicar el commit, queda pendiente comprobar disponibilidad del endpoint y probar las operaciones de USERS con una sesión autorizada.
+================================================================================

@@ -2556,3 +2556,16 @@ ARCHIVO MODIFICADO: Services/users.js
 - Se conservan el SPREADSHEET_ID original, LockService, verificación de sesión, permisos, columnas y demás handlers.
 - No se modificaron users.html, api-config.js, AUTH ni otros archivos de código.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ENDPOINT — SERVICIO USERS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+ARCHIVO MODIFICADO: api-config.js
+- Línea 12: se sustituyó únicamente el valor de API_ENDPOINTS.USERS por la nueva URL de deployment proporcionada por el usuario.
+- Se conservaron API_ENDPOINTS.AUTH, los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() y las funciones auxiliares.
+- El archivo conserva 170 líneas; la comparación estática identifica una sola línea modificada.
+- La URL anterior aparece 0 veces y la URL nueva 1 vez en el archivo resultante.
+- No se modificaron consumidores, servicios Apps Script, hojas ni deployments.
+- No se realizaron solicitudes HTTP ni pruebas funcionales del nuevo endpoint.
+================================================================================

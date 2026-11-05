@@ -3467,3 +3467,16 @@ Estado: IMPLEMENTACIÓN PREPARADA; PENDIENTE DE COMMIT ÚNICO Y VERIFICACIÓN FI
 - No modificar AUTH, users.html, api-config.js, otros servicios, endpoints ni deployments.
 - No se ha desplegado Apps Script ni se han ejecutado escrituras en Sheets.
 ================================================================================
+
+
+================================================================================
+TAREA — ACTUALIZAR ENDPOINT DEL SERVICIO USERS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+Estado: CAMBIO ESTÁTICO PREPARADO; PENDIENTE DE COMMIT ÚNICO.
+- Sustituir en api-config.js, línea 12, únicamente el valor de API_ENDPOINTS.USERS por la nueva URL proporcionada por el usuario.
+- Mantener intactos AUTH, los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction(), los consumidores y los servicios Apps Script.
+- La comparación estática conserva 170 líneas y muestra una única línea modificada.
+- Pendiente: publicar un único commit en GPSpedia2.2.5_work y verificar el nuevo HEAD.
+- Pendiente después del commit: comprobar HTTP y realizar pruebas funcionales del deployment USERS.
+- No desplegar Apps Script, modificar hojas, ejecutar escrituras ni hacer merge.
+================================================================================
