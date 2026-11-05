@@ -2748,3 +2748,76 @@ VERIFICACIÓN
 - No se ejecutaron pruebas funcionales, de cuotas, de permisos ni de restauración.
 - No se modificó código de la aplicación.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA INICIAL — TAREA ADMIN 0: ENDURECIMIENTO DE SEGURIDAD
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Base: GPSpedia2.2.5
+Alcance: autorización de acciones ADMIN, manejo de credenciales en AUTH, permisos de USERS y acciones privilegiadas de FEEDBACK; puntos de llamada de interfaz relacionados.
+
+ARCHIVOS INSPECCIONADOS
+- Proceso de desarollo.md: procedimiento obligatorio, zonas seguras y regla de un commit por tarea.
+- Tareas.txt: tareas ADMIN 0 a ADMIN 11, fases y restricciones del estudio.
+- api-config.js: endpoints, mapeo de acciones y helpers de FEEDBACK.
+- Services/Auth.js: doGet, doPost, logToSheet, login y validación de sesión.
+- Services/admin.js: assertDeveloperSession, doGet, doPost y mapa completo de acciones administrativas.
+- Services/users.js: doPost, getVerifiedSession y handlers de consulta/creación/edición/eliminación/cambio de contraseña/perfil.
+- Services/feedback.js: doGet, doPost, Inbox, actividad, edición de PYS/tutoriales, aprobación de vídeos y subida a YouTube.
+- ui.js: llamadas de administración, Inbox, auditoría y edición relacionadas.
+- youtubeUpload.js: inicialización, transferencia y envío de solicitudes de vídeo.
+
+HALLAZGOS
+1. ADMIN: assertDeveloperSession() valida sesión activa y privilegio consultado desde Users, pero el router solo protegía uploadAdminImage, getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes. Las demás acciones del servicio podían invocarse sin pasar por esa validación común. El conjunto incluye respaldos, restauraciones, reorganización, normalización, creación de hojas/columnas, comandos Drive y cambios de datos.
+2. AUTH: doPost registraba el payload completo recibido; en login incluía contraseña. handleLogin también escribía explícitamente la contraseña almacenada y la recibida en el evento «Password comparison». Por tanto, el código permitía registrar credenciales en claro en Logs.
+3. AUTH y servicios: los endpoints debug de AUTH, ADMIN y FEEDBACK devolvían Spreadsheet ID y/o estructura de hojas. Esos metadatos no son necesarios para una comprobación básica de disponibilidad.
+4. USERS: las acciones getUsers, createUser, updateUser, deleteUser, changePassword y updateProfile llaman a getVerifiedSession() y obtienen el privilegio desde Users; las restricciones se aplican en backend. Se identificaron pendientes para ADMIN 1: protección de la última cuenta privilegiada, invalidación de sesiones tras cambios de privilegios/credenciales y control de edición de privilegios propios. Las contraseñas continúan almacenándose y comparándose en texto claro; no se modifica el esquema sin diseñar una migración compatible.
+5. FEEDBACK: el router no aplicaba autorización común a Inbox, actividad ni acciones administrativas. updatePysItem, updateTutorialItem, removeVehicleFromProblem, approveVideo y rejectVideo comprobaban userRole recibido del cliente, por lo que el valor podía suplantarse. getFeedbackItems, replyToFeedback, markAsResolved, deleteFeedbackItem, getActivityLogs y clearActivityLogs no tenían verificación de sesión en el backend.
+6. FEEDBACK/YouTube: initYouTubeUpload y submitVideoForApproval podían invocarse sin validar una sesión. La inicialización usa el token OAuth del servicio para solicitar una sesión de subida. La interfaz enviaba currentUser.id, aunque el objeto de autenticación utiliza ID.
+7. UI: las acciones del modal ADMIN enviaban payload sin userId/sessionToken en el flujo genérico; driveCommand y updateVehicleField también tenían llamadas directas sin esos datos. Las llamadas del Inbox y las acciones privilegiadas de FEEDBACK tampoco transmitían un token de sesión.
+8. Historial: el código demuestra que se intentaban registrar contraseñas, pero no se consultó la hoja Logs desplegada. No se puede determinar desde el repositorio cuántos registros históricos contienen credenciales ni su periodo de retención.
+9. Migración de contraseñas: AUTH y USERS comparan/guardan contraseñas en texto claro. No existe un formato versionado ni una estrategia de hash/salt en el código revisado. Se requiere diseñar y probar un mecanismo de derivación de clave adecuado para Apps Script antes de modificar el contenido de la columna Password.
+
+CLASIFICACIÓN DE ACCIONES ADMIN
+- Lectura/diagnóstico: ping, checkOperation, getReplacedImages, auditDriveImagesInCortes.
+- Escritura/gestión de archivos y datos: addLogo, updateVehicleField, uploadAdminImage, addOrUpdateCut, addSupplementaryInfo, driveCommand, recoverReplacedImage, deleteReplacedImage.
+- Operaciones de estructura o mantenimiento: createSheet, addColumn, reorganizeDatabase, normalizeImages, reorganizeImagesInDrive, restoreAllTrashedImages.
+- Respaldo/restauración: backupDatabase, backupDrive, restoreDatabase, restoreDrive.
+- Todas las acciones anteriores, excepto ping, deben requerir sesión válida y privilegio Desarrollador; las operaciones de lectura también exponen información administrativa.
+
+DEPENDENCIAS Y EFECTOS COLATERALES
+- ADMIN, AUTH, USERS y FEEDBACK son despliegues Apps Script separados; los cambios del repositorio no actualizan los endpoints desplegados.
+- La interfaz debe transmitir el token de sesión en cada operación protegida; la autorización no puede depender del menú ni de userRole.
+- USERS se encuentra en zona segura; no se modificó su lógica en esta tarea.
+- La política de permisos del Inbox se conserva para Desarrollador, Gefe/Jefe y Supervisor; las acciones de edición in-modal y desvinculación permanecen exclusivas de Desarrollador.
+- La subida a YouTube se limita a usuarios con sesión válida; el actor se obtiene desde Users en backend.
+- No se accedió a Spreadsheet ni Drive; no se revisaron ni alteraron registros históricos.
+
+VERIFICACIÓN PREVIA
+- Se inspeccionaron los puntos de entrada y handlers indicados, así como los puntos de llamada de interfaz.
+- No se modificó código durante la auditoría inicial.
+================================================================================
+
+
+================================================================================
+CODE REVIEW — TAREA ADMIN 0, PRIMERA IMPLEMENTACIÓN
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+SAFETY & SIDE EFFECTS
+1. El contrato de error del servicio ADMIN debía conservar la propiedad message porque routeAction() utiliza result.message para construir el error de cliente. La retirada de stack traces era correcta, pero la respuesta sin message podía generar un error sin descripción. Se corrigió agregando message y conservando mensaje por compatibilidad, sin volver a exponer stack ni detalles internos.
+2. El botón Dashboard se muestra actualmente a Desarrollador, Gefe y Supervisor. La consulta getActivityLogs() debía mantener acceso backend para esos mismos roles; limitarla a Desarrollador habría roto el panel de actividad existente. Se ajustó la lista permitida a esos tres roles. clearActivityLogs continúa restringida a Desarrollador.
+3. Se reauditaron los puntos modificados en Services/admin.js, Services/feedback.js y sus contratos de respuesta/consulta. No se detectaron otros cambios fuera del alcance de estas correcciones.
+
+DECISIONES Y ACCIONES
+- Se conservó la autorización de servidor basada en sesión y privilegio almacenado en Users.
+- Se mantuvo la eliminación de stack traces de la respuesta ADMIN.
+- Se mantuvo la política de acceso del Dashboard que ya expresa ui.js.
+- No se modificaron las reglas de usuarios ni el almacenamiento de contraseñas.
+
+VERIFICACIÓN
+- Revisión estática del contrato message/mensaje de ADMIN.
+- Revisión estática de la lista de roles para getActivityLogs y clearActivityLogs.
+- No se ejecutaron pruebas en navegador ni contra endpoints Apps Script desplegados.
+================================================================================
