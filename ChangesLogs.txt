@@ -2595,3 +2595,13 @@ Fecha: 2026-11-05
 - Auditoría.txt: documentados los hallazgos, riesgos y decisiones de esta actualización.
 - Tareas.txt: registrada la actualización del procedimiento como tarea documental.
 ================================================================================
+
+
+================================================================================
+CHANGE LOG — AUDITORÍA COMPARATIVA AUTH/USERS
+Fecha: 2026-11-05
+- Se compararon Services/Test/Auth.js y Services/Auth.js: la única diferencia corresponde al SPREADSHEET_ID de la copia aislada.
+- Se compararon Services/Test/users.js y Services/users.js: se identificaron diferencias en SPREADSHEET_ID, handleCreateUser() y la eliminación de generateUniqueUsername().
+- No se modificó código de aplicación en esta tarea.
+- Se actualizaron checkpoint.md, Auditoría.txt, ChangesLogs.txt y Tareas.txt para registrar resultados y propuesta de integración.
+================================================================================

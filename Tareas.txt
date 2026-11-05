@@ -3492,3 +3492,17 @@ Estado: COMPLETADA TRAS VERIFICACIÓN DEL COMMIT
 - Incorporar todos los cambios documentales de esta tarea en un solo commit.
 - No modificar ramas protegidas ni ramas ajenas a la autorización.
 ================================================================================
+
+
+================================================================================
+TAREA COMPLETADA — COMPARAR AUTH/USERS DE PRUEBA CONTRA SERVICIOS ORIGINALES
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_auth-users-test
+Estado: AUDITORÍA COMPARATIVA COMPLETADA; INTEGRACIÓN PENDIENTE DE AUTORIZACIÓN.
+
+- AUTH: los 14 métodos coinciden con el original. La única diferencia entre archivos es SPREADSHEET_ID. No se requiere traslado funcional.
+- USERS: las 15 funciones compartidas, excepto handleCreateUser(), son idénticas. La versión de prueba rechaza nombres duplicados ignorando mayúsculas/minúsculas y recortando espacios externos.
+- La versión de prueba ya no utiliza generateUniqueUsername(); el original sí.
+- Se confirmó que el rechazo de duplicados funciona en el entorno de prueba, según las pruebas reportadas por el usuario.
+- Propuesta pendiente: trasladar exclusivamente la validación de duplicados a Services/users.js en GPSpedia2.2.5_work, conservar su ID de Spreadsheet original y eliminar generateUniqueUsername().
+- No se modificó código de aplicación, no se modificó GPSpedia2.2.5_work, no se hizo merge y no se modificó la rama base protegida.
+================================================================================

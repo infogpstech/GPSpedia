@@ -3588,3 +3588,60 @@ DECISIÓN Y ALCANCE
 - No modificar código de aplicación, endpoints, deployments, hojas de cálculo ni ramas fuera del alcance autorizado.
 - Los cinco archivos originales se conservan mediante sus blobs Git originales; cualquier diferencia se limita a la documentación solicitada.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA COMPARATIVA — AUTH/USERS DE PRUEBA CONTRA SERVICIOS ORIGINALES
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama de comparación: GPSpedia2.2.5_auth-users-test
+Rama fuente original: GPSpedia2.2.5_work
+HEAD de la rama de comparación: bdc01dc8da43328d34b4e0416b3a46ced588c86f
+HEAD de GPSpedia2.2.5_work verificado: da0affc4e52b533644a94f1876e08ca0e137533f
+HEAD de GPSpedia2.2.5 verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ARCHIVOS COMPARADOS Y RESPALDOS
+- Services/Test/Auth.js — blob bb540e9aa247a07efae2487b99a64d8afff473e0
+- Services/Auth.js — blob be99654d7a41ee77dbeb8534976ca94c8c376068
+- Services/Test/users.js — blob 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- Services/users.js — blob aa8960e188e71c46fa481829283d5c0c189b7ed8
+
+1. AUTH — RESULTADO DE COMPARACIÓN
+- Ambos archivos tienen 375 líneas.
+- La única diferencia es la constante SPREADSHEET_ID de la línea 9: Services/Auth.js apunta a la base original y Services/Test/Auth.js apunta a la Spreadsheet aislada de pruebas.
+- Tras normalizar exclusivamente esa constante, ambos archivos son idénticos byte por byte.
+- Se compararon las 14 funciones: beginLoginAttempt, constantTimeEquals, createPasswordHash, digestToHex, doGet, doPost, getLoginAttemptCacheKey, handleLogin, handleValidateSession, logToSheet, normalizePassword, resetLoginAttempts, rollbackLoginAttempt y verifyStoredPassword. Todas son idénticas.
+- CONCLUSIÓN: no hay cambios funcionales de AUTH que trasladar. La lógica de hash, compatibilidad legacy, migración oportunista, sesiones y límite de intentos ya existe en Services/Auth.js de la rama fuente.
+
+2. USERS — RESULTADO DE COMPARACIÓN
+- Services/users.js original tiene 495 líneas y Services/Test/users.js tiene 492.
+- Diferencias:
+  a) Línea 9: SPREADSHEET_ID cambia únicamente para dirigir la copia de prueba a la Spreadsheet aislada.
+  b) handleCreateUser(), desde la línea 269 en ambos archivos: la versión original genera el hash antes de validar el nombre; la versión de prueba primero normaliza con trim() el nombre y comprueba la existencia bajo el LockService que ya protege la operación.
+  c) La comparación de nombres en la versión de prueba recorta espacios externos y compara sin distinguir mayúsculas/minúsculas.
+  d) Si el nombre ya existe, la versión de prueba devuelve el error de negocio «Ese nombre de usuario no está disponible» antes de generar el hash o escribir una fila.
+  e) Si el nombre está disponible, conserva el nombre ingresado después de trim() y continúa con el hash y la escritura existentes.
+  f) La función generateUniqueUsername(), ubicada en la línea 483 del original, fue eliminada de la versión de prueba porque ya no se utiliza. En el original transformaba el nombre a minúsculas, sustituía espacios por puntos y añadía sufijos numéricos.
+- Las otras 15 funciones compartidas son idénticas: constantTimeEquals, createPasswordHash, digestToHex, doGet, doPost, getSpreadsheet, getVerifiedSession, handleChangePassword, handleDeleteUser, handleGetUsers, handleResetUserSessions, handleUpdateProfile, handleUpdateUser, normalizePassword y verifyStoredPassword.
+- El flujo de alta conserva el LockService y la validación de permisos del backend. El retorno de error ejecuta el finally y libera el bloqueo.
+- El historial de auditoría existente ya documenta que api-config.js propaga el error de negocio y users.html muestra el mensaje recibido; no se identificó necesidad de modificar frontend ni enrutamiento para este cambio.
+- El usuario confirmó funcionalmente que el sistema rechaza un nombre duplicado y que permite crear usuarios nuevos. Esta confirmación corresponde a la versión de prueba.
+
+3. DIFERENCIA FUNCIONAL QUE REQUIERE TRASLADO
+- Único cambio funcional identificado para integración: sustituir la generación automática de nombres alternativos en Services/users.js por la validación de duplicados de handleCreateUser() probada en Services/Test/users.js, y retirar generateUniqueUsername() al quedar sin referencias.
+- No trasladar el SPREADSHEET_ID de pruebas.
+- No copiar Services/Test/Auth.js sobre Services/Auth.js; no existe diferencia funcional que lo justifique.
+- No trasladar endpoints de prueba ni referencias a la Spreadsheet de pruebas.
+
+4. RIESGOS Y DECISIÓN
+- El cambio de USERS altera deliberadamente el comportamiento de nombres: en vez de crear automáticamente una variante con sufijo, rechaza el duplicado. Mantiene el texto del nombre ingresado (recortando espacios externos) y evita duplicados que solo difieran en mayúsculas/minúsculas.
+- La comprobación se realiza dentro del LockService existente, cubriendo la ventana entre validación y escritura dentro del mismo proyecto Apps Script.
+- La prueba funcional de rechazo de duplicados fue confirmada por el usuario en el entorno de prueba.
+- Esta tarea es exclusivamente de comparación. No se modifica código fuente original, no se hace despliegue y no se realiza merge.
+
+5. PROPUESTA DE INTEGRACIÓN
+- Preparar una tarea independiente para aplicar únicamente el cambio de handleCreateUser() y retirar generateUniqueUsername() en Services/users.js de GPSpedia2.2.5_work.
+- Mantener Services/Auth.js sin cambios.
+- La integración debe conservar el SPREADSHEET_ID original, los controles de sesión/rol, el hash, la estructura de filas y el resto de handlers.
+- Repetir auditoría, respaldo, pruebas y revisión completa en la rama autorizada antes de un único commit.
+================================================================================

@@ -1293,3 +1293,56 @@ Checkpoint inicial preparado. Auditoría documental completada; respaldo exacto 
 
 ### Siguiente acción
 Continuar con la siguiente tarea solicitada, iniciando primero un nuevo checkpoint.
+
+
+---
+
+# CHECKPOINT DE INICIO — COMPARACIÓN AUTH Y USERS DE PRUEBA CONTRA SERVICIOS ORIGINALES
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo autorizada:** GPSpedia2.2.5_auth-users-test
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD confirmado al inicio:** bdc01dc8da43328d34b4e0416b3a46ced588c86f
+
+## Tarea y alcance
+Comparar íntegramente los servicios aislados de prueba con sus fuentes originales para identificar las diferencias implementadas y determinar qué cambios deben trasladarse posteriormente a la rama de trabajo. Esta fase es de auditoría y diagnóstico; no se modifica código de aplicación ni se realiza integración.
+
+## Archivos involucrados
+- Services/Test/Auth.js frente a Services/Auth.js
+- Services/Test/users.js frente a Services/users.js
+- Documentación: checkpoint.md, Auditoría.txt, ChangesLogs.txt y Tareas.txt.
+
+## Estado y antecedentes conocidos
+- El usuario confirmó las pruebas funcionales de AUTH y USERS: login, migración legacy a hash, alta de usuario, rechazo de duplicados, cambio y actualización administrativa de contraseñas, mínimo de ocho caracteres, bloqueo por cinco intentos, expiración y restablecimiento del contador.
+- Las implementaciones aisladas contienen endpoints de prueba; no se debe asumir que los originales ya incorporan todos los cambios funcionales de USERS.
+- No se autoriza modificar GPSpedia2.2.5_work, hacer merge ni modificar GPSpedia2.2.5.
+
+## Riesgos y restricciones
+- AUTH y USERS son servicios sensibles de autenticación y administración de cuentas; la comparación debe conservar diferencias originales no relacionadas.
+- No revelar contraseñas, hashes, tokens ni valores sensibles.
+- No desplegar Apps Script ni ejecutar escrituras en hojas.
+- Cualquier traslado posterior requiere una tarea de implementación separada y autorización expresa.
+
+## Fase al inicio
+Checkpoint inicial preparado antes de la auditoría comparativa. Se respaldaron los seis archivos mediante sus blobs Git. Próxima acción: documentar las diferencias y la propuesta de integración.
+
+
+## Cierre de la auditoría comparativa
+
+**Estado:** AUDITORÍA COMPLETADA. INTEGRACIÓN PENDIENTE DE AUTORIZACIÓN.
+
+### Resultado
+- AUTH: los 14 métodos son idénticos; solo cambia el ID de la Spreadsheet de prueba.
+- USERS: el único cambio funcional está en handleCreateUser() y la eliminación de generateUniqueUsername(); las otras 15 funciones compartidas son idénticas.
+- El cambio de USERS probado consiste en rechazar nombres duplicados, ignorando mayúsculas/minúsculas y recortando espacios externos.
+- La propuesta es trasladar únicamente ese comportamiento a Services/users.js en GPSpedia2.2.5_work. AUTH no requiere cambios.
+
+### Verificaciones y límites
+- Se compararon los cuatro archivos completos y se extrajeron las funciones para verificar coincidencias.
+- Se confirmaron los HEAD de las tres ramas: GPSpedia2.2.5_auth-users-test bdc01dc8da43328d34b4e0416b3a46ced588c86f; GPSpedia2.2.5_work da0affc4e52b533644a94f1876e08ca0e137533f; GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- No se modificó código, no se ejecutó Apps Script, no se desplegó ningún servicio y no se modificaron hojas.
+- La validación funcional se limita a las pruebas confirmadas por el usuario en el entorno aislado.
+
+### Siguiente acción
+Solicitar autorización para aplicar el cambio de rechazo de duplicados únicamente en Services/users.js de GPSpedia2.2.5_work, siguiendo el procedimiento completo y un solo commit. No modificar AUTH ni realizar merge.
