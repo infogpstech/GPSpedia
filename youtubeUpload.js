@@ -151,6 +151,15 @@ export function openYouTubeUploadModal(options = {}) {
         }
 
         const description = descInput.value.trim();
+        const { currentUser } = getState();
+        if (!currentUser || !currentUser.ID || !currentUser.SessionToken) {
+            alert("Debes iniciar sesión para subir un vídeo.");
+            return;
+        }
+        const sessionPayload = {
+            userId: currentUser.ID,
+            sessionToken: currentUser.SessionToken
+        };
 
         // Bloquear controles durante la operación
         isUploading = true;
@@ -163,9 +172,8 @@ export function openYouTubeUploadModal(options = {}) {
         closeBtn.style.display = 'none'; // Deshabilitar cierre accidental
         progressContainer.style.display = 'flex';
 
-        const { currentUser } = getState();
-        const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Usuario';
-        const userId = currentUser ? currentUser.id : null;
+        const userName = currentUser.Nombre_Completo || currentUser.Nombre_Usuario;
+        const userId = currentUser.ID;
 
         try {
             // FASE 1: Inicialización de la sesión de subida / Registro de operación
@@ -184,7 +192,8 @@ export function openYouTubeUploadModal(options = {}) {
                 fileSize: file.size,
                 fileType: file.type,
                 userName,
-                userId
+                userId,
+                ...sessionPayload
             });
 
             if (uploadCancelled) return;
@@ -252,7 +261,8 @@ export function openYouTubeUploadModal(options = {}) {
                 videoId: finalVideoId || ('yt_' + Date.now()),
                 videoUrl: finalVideoId ? `https://www.youtube.com/watch?v=${finalVideoId}` : `https://youtu.be/pending_${Date.now()}`,
                 userName,
-                userId
+                userId,
+                ...sessionPayload
             });
 
             progressBar.style.width = "100%";

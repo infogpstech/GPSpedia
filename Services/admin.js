@@ -27,26 +27,26 @@ function getSpreadsheet() {
 function assertDeveloperSession(payload) {
     const userId = payload && payload.userId;
     const sessionToken = payload && payload.sessionToken;
-    if (!userId || !sessionToken) throw new Error("Acceso denegado: se requiere una sesión autenticada.");
+    if (!userId || !sessionToken) throw new Error("Acceso denegado: sesión no autorizada.");
 
     const ss = getSpreadsheet();
     const sessionsSheet = ss.getSheetByName("ActiveSessions");
     const usersSheet = ss.getSheetByName("Users");
-    if (!sessionsSheet || !usersSheet) throw new Error("No fue posible verificar la sesión y los privilegios en el servidor.");
+    if (!sessionsSheet || !usersSheet) throw new Error("Acceso denegado: sesión no autorizada.");
 
     const sessions = sessionsSheet.getDataRange().getValues();
     const activeSession = sessions.slice(1).some(row =>
         String(row[0] || "").trim() === String(userId).trim() &&
         String(row[2] || "").trim() === String(sessionToken).trim()
     );
-    if (!activeSession) throw new Error("Acceso denegado: la sesión no es válida o ha expirado.");
+    if (!activeSession) throw new Error("Acceso denegado: sesión no autorizada.");
 
     const users = usersSheet.getDataRange().getValues();
     const userRow = users.slice(1).find(row => String(row[0] || "").trim() === String(userId).trim());
-    if (!userRow) throw new Error("Acceso denegado: el usuario de la sesión no existe.");
+    if (!userRow) throw new Error("Acceso denegado: sesión no autorizada.");
 
     const role = String(userRow[3] || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
-    if (role !== "desarrollador") throw new Error("Acceso denegado: esta acción requiere el privilegio Desarrollador.");
+    if (role !== "desarrollador") throw new Error("Acceso denegado: sesión no autorizada.");
     return { userId: String(userId), role: "Desarrollador" };
 }
 
@@ -268,9 +268,7 @@ function doGet(e) {
         const serviceState = {
             service: 'GPSpedia-Admin',
             version: '2.6.0',
-            spreadsheetId: SPREADSHEET_ID,
-            driveFolderId: DRIVE_FOLDER_ID,
-            sheetsAccessed: [SHEET_NAMES.CORTES, SHEET_NAMES.LOGOS_MARCA, SHEET_NAMES.TUTORIALES, SHEET_NAMES.RELAY, SHEET_NAMES.ADMIN_STATE]
+            status: 'available'
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
             .setMimeType(ContentService.MimeType.TEXT);
@@ -304,14 +302,7 @@ function doPost(e) {
         const request = JSON.parse(e.postData.contents);
         const { action, payload } = request;
 
-        const protectedActions = [
-            'uploadAdminImage',
-            'getReplacedImages',
-            'recoverReplacedImage',
-            'deleteReplacedImage',
-            'auditDriveImagesInCortes'
-        ];
-        if (protectedActions.includes(action)) assertDeveloperSession(payload);
+        if (action !== 'ping') assertDeveloperSession(payload);
 
         logMessage("Inicio", `Iniciando acción administrativa: ${action}`);
 
@@ -404,15 +395,9 @@ function doPost(e) {
         response = {
             status: 'error',
             estado: 'error',
-            etapa: currentStage,
-            lote: currentLote,
-            fila: currentFila,
-            recurso: currentRecurso,
-            mensaje: `Falla en el microservicio administrativo: ${error.message}`,
-            excepcion: error.stack || error.toString(),
+            mensaje: error.message,
             tiempoTranscurrido: `${durationSec}s`,
-            logs: logs,
-            details: { errorMessage: error.message, stack: error.stack }
+            logs: logs
         };
     }
 

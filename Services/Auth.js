@@ -62,9 +62,8 @@ function doGet(e) {
     if (e.parameter.debug === 'true') {
         const serviceState = {
             service: 'GPSpedia-Auth',
-            version: '2.2.5', // Mantener sincronizado con la versión del componente
-            spreadsheetId: SPREADSHEET_ID,
-            sheetsAccessed: [SHEET_NAMES.USERS, SHEET_NAMES.ACTIVE_SESSIONS, SHEET_NAMES.LOGS]
+            version: '2.2.5',
+            status: 'available'
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
             .setMimeType(ContentService.MimeType.TEXT);
@@ -83,7 +82,7 @@ function doPost(e) {
     try {
         logToSheet('INFO', 'doPost received a request.');
         const request = JSON.parse(e.postData.contents);
-        logToSheet('DEBUG', `Request parsed. Action: ${request.action}`, { payload: request.payload });
+        logToSheet('DEBUG', `Request parsed. Action: ${request.action}`);
 
         switch (request.action) {
             case 'login':
@@ -135,7 +134,6 @@ function handleLogin(payload) {
         }
 
         const sheetPassword = foundUserRow[COLS_USERS.Password - 1];
-        logToSheet('DEBUG', 'Password comparison', { fromSheet: sheetPassword, fromClient: password });
         const isPasswordMatch = String(sheetPassword).trim() === String(password).trim();
 
         if (!isPasswordMatch) {

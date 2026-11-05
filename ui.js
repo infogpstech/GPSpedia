@@ -98,7 +98,7 @@ export function showSavingIndicator(status, message = "") {
 async function saveFieldSilently(vehicleId, fieldName, value) {
     showSavingIndicator("saving", "Guardando...");
     try {
-        await routeAction('updateVehicleField', { vehicleId, fieldName, value });
+        await routeAction('updateVehicleField', { vehicleId, fieldName, value, ...getDeveloperSessionPayload() });
         showSavingIndicator("success", "Guardado correctamente");
     } catch (e) {
         console.error(`Error guardando silenciosamente el campo ${fieldName}:`, e);
@@ -2431,7 +2431,7 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
                 const res = await routeAction('removeVehicleFromProblem', {
                     problemId: item.id_problem || item.id,
                     vehicleId: vehicleToUnlink.id,
-                    userRole
+                    ...getCurrentSessionPayload()
                 });
                 if (res && res.status === 'success') {
                     cardWrapper.remove();
@@ -2974,7 +2974,7 @@ export const openDashboard = setupModal('dashboard-modal', async () => {
     logContainer.innerHTML = '<tr><td colspan="4">Cargando actividad...</td></tr>';
 
     try {
-        const result = await getActivityLogs();
+        const result = await getActivityLogs(getCurrentSessionPayload());
         if (result.status === 'success') {
             logContainer.innerHTML = '';
             result.data.forEach(log => {
@@ -3002,7 +3002,7 @@ export const openInbox = setupModal('inbox-modal', async () => {
     detailContainer.innerHTML = '<p>Selecciona un item para ver los detalles.</p>';
 
     try {
-        const result = await getFeedbackItems();
+        const result = await getFeedbackItems(getCurrentSessionPayload());
 
         if (result.status === 'success') {
             const data = result.data || result.messages || result.items || [];
@@ -3163,7 +3163,7 @@ function initAdminPanelListeners() {
             log(`Enviando comando administrativo '${action}' al servidor...`);
             setProgress(5);
             try {
-                const res = await routeAction(action, payload);
+                const res = await routeAction(action, { ...payload, ...getDeveloperSessionPayload() });
                 setProgress(50);
                 if (res.status === 'success') {
                     if (res.logs) {
@@ -3241,7 +3241,7 @@ ${elapsedSec}s
             loopCount++;
             log(`[LOTE] Ejecutando lote ${loopCount}...`);
             try {
-                const res = await routeAction(action, { limit, reset: payload.reset, processId });
+                const res = await routeAction(action, { limit, reset: payload.reset, processId, ...getDeveloperSessionPayload() });
                 if (res.status === 'success') {
                     if (res.logs) {
                         await playLogs(res.logs);
@@ -3441,7 +3441,8 @@ ${elapsedSec}s
             const res = await routeAction('driveCommand', {
                 command: cmd,
                 args: args,
-                currentFolderId: currentTerminalFolderId
+                currentFolderId: currentTerminalFolderId,
+                ...getDeveloperSessionPayload()
             });
 
             if (res && res.status === 'success') {
@@ -3686,7 +3687,7 @@ ${elapsedSec}s
                 try {
                     clearLogsBtn.disabled = true;
                     log(`Iniciando purga de logs de actividad (Conservar última semana: ${keepLastWeek ? 'Sí' : 'No'})...`);
-                    const res = await clearActivityLogs(keepLastWeek);
+                    const res = await clearActivityLogs(keepLastWeek, getCurrentSessionPayload());
                     if (res && res.status === 'success') {
                         log(`[EXITO] ${res.message}`);
                         mostrarNotificacion(res.message, 'success');
@@ -3768,7 +3769,7 @@ ${elapsedSec}s
     }
 }
 
-function getDeveloperSessionPayload() {
+function getCurrentSessionPayload() {
     const currentUser = getState().currentUser;
     if (!currentUser || !currentUser.ID || !currentUser.SessionToken) {
         throw new Error("No se encontró una sesión autenticada válida. Vuelve a iniciar sesión.");
@@ -3777,6 +3778,10 @@ function getDeveloperSessionPayload() {
         userId: currentUser.ID,
         sessionToken: currentUser.SessionToken
     };
+}
+
+function getDeveloperSessionPayload() {
+    return getCurrentSessionPayload();
 }
 
 /**
@@ -4281,7 +4286,7 @@ export function renderInboxDetail(item) {
                 try {
                     approveVideoBtn.disabled = true;
                     approveVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aprobando...`;
-                    await approveVideo(item.id, userName, userRole);
+                    await approveVideo(item.id, userName, userRole, getCurrentSessionPayload());
                     inboxCacheData = null;
                     mostrarNotificacion("Vídeo aprobado con éxito.", "success");
                     openInbox();
@@ -4302,7 +4307,7 @@ export function renderInboxDetail(item) {
                 try {
                     rejectVideoBtn.disabled = true;
                     rejectVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rechazando...`;
-                    await rejectVideo(item.id, userName, reason, userRole);
+                    await rejectVideo(item.id, userName, reason, userRole, getCurrentSessionPayload());
                     inboxCacheData = null;
                     mostrarNotificacion("Vídeo rechazado.", "info");
                     openInbox();
@@ -4330,7 +4335,7 @@ export function renderInboxDetail(item) {
         }
         try {
             replyBtn.classList.add('btn-loading');
-            await replyToFeedback(item.id, item.type, replyText, userName);
+            await replyToFeedback(item.id, item.type, replyText, userName, getCurrentSessionPayload());
             openInbox();
         } catch (error) {
             showGlobalError(`Error al enviar respuesta: ${error.message}`);
@@ -4344,7 +4349,7 @@ export function renderInboxDetail(item) {
         resolveBtn.addEventListener('click', async () => {
              try {
                 resolveBtn.classList.add('btn-loading');
-                await markAsResolved(item.id);
+                await markAsResolved(item.id, getCurrentSessionPayload());
                 inboxCacheData = null;
                 openInbox();
             } catch (error) {
@@ -4362,7 +4367,7 @@ export function renderInboxDetail(item) {
                 try {
                     deleteBtn.disabled = true;
                     deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...`;
-                    await deleteFeedbackItem(item.id, item.type);
+                    await deleteFeedbackItem(item.id, item.type, getCurrentSessionPayload());
                     inboxCacheData = null;
                     mostrarNotificacion("Mensaje eliminado con éxito", "success");
                     openInbox();
@@ -5269,7 +5274,7 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
                         tema: newTema,
                         videoUrl: newVideo,
                         descripcion: newDesc,
-                        userRole
+                        ...getCurrentSessionPayload()
                     });
                     if (res && res.status === 'success') {
                         item.Tema = newTema;
@@ -7043,7 +7048,7 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
         try {
             let lastUpdatedList = [...alreadyAssociatedIds];
             for (const vId of newlySelectedIds) {
-                const res = await routeAction('addVehicleToProblem', { problemId, vehicleId: vId });
+                const res = await routeAction('addVehicleToProblem', { problemId, vehicleId: vId, ...getCurrentSessionPayload() });
                 if (res && res.status === 'success' && res.modelosAsociados) {
                     lastUpdatedList = res.modelosAsociados;
                 } else {
@@ -7318,7 +7323,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
                         solucion: newSol,
                         prevenir: newPrev,
                         videoUrl: newVideo,
-                        userRole
+                        ...getCurrentSessionPayload()
                     });
                     if (res && res.status === 'success') {
                         item.Problema = newTitle;
@@ -7471,7 +7476,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
                             const res = await routeAction('removeVehicleFromProblem', {
                                 problemId: item.id_problem,
                                 vehicleId: v.id,
-                                userRole
+                                ...getCurrentSessionPayload()
                             });
                             if (res && res.status === 'success') {
                                 item.modelosAsociados = res.modelosAsociados || item.modelosAsociados.filter(id => String(id) !== String(v.id));
@@ -8660,7 +8665,7 @@ export async function loadAndRenderInbox() {
     }
 
     try {
-        const res = await getFeedbackItems();
+        const res = await getFeedbackItems(getCurrentSessionPayload());
         if (res && res.data) {
             inboxCacheData = res.data;
             renderInboxList(inboxCacheData);
@@ -8788,7 +8793,8 @@ export async function openAssociateExistingProblemModal(vehicle) {
                 try {
                     const res = await routeAction("addVehicleToProblem", {
                         problemId: p.id_problem,
-                        vehicleId: vehicle.id
+                        vehicleId: vehicle.id,
+                        ...getCurrentSessionPayload()
                     });
                     if (res && res.status === "success") {
                         mostrarNotificacion("Problema vinculado con éxito.", "success");

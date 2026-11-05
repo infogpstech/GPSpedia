@@ -2191,3 +2191,29 @@ Rama: GPSpedia2.2.5_work
 - No se crearon hojas, columnas, propiedades, activadores o carpetas en Google; no se cambiaron permisos ni despliegues.
 - No se implementó ninguna de las funciones planificadas.
 ================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN INICIAL — TAREA ADMIN 0: AUTORIZACIÓN BACKEND Y PROTECCIÓN DE CREDENCIALES
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- Services/Auth.js: se retiró el registro del payload completo y el evento que escribía contraseñas; la respuesta debug ya no expone Spreadsheet ID ni nombres de hojas.
+- Services/admin.js: todas las acciones excepto ping requieren sesión válida y privilegio Desarrollador; se unificaron los mensajes de rechazo; la respuesta debug ya no expone IDs ni nombres de hojas; se retiraron stack traces y detalles internos de la respuesta al cliente.
+- Services/feedback.js: se añadió validación backend de sesión/privilegio para Inbox, actividad, edición de PYS/tutoriales, aprobación de vídeos y subida a YouTube; el actor se obtiene de Users; la respuesta debug ya no expone IDs ni nombres de hojas.
+- api-config.js: los helpers de Inbox, actividad y aprobación/rechazo aceptan y transmiten contexto de sesión.
+- ui.js: las acciones del modal ADMIN, updateVehicleField, driveCommand, Inbox y operaciones privilegiadas de FEEDBACK transmiten userId/sessionToken.
+- youtubeUpload.js: se exige sesión para iniciar la carga; se transmite el contexto de sesión y se usa currentUser.ID.
+
+DOCUMENTACIÓN
+- Auditoría.txt: nueva auditoría inicial de ADMIN 0 con clasificación de acciones, hallazgos y limitaciones.
+- Tareas.txt: ADMIN 0 queda en implementación; se registra la autorización del plan ADMIN 0–11.
+- ChangesLogs.txt: registro objetivo de los cambios anteriores.
+
+PENDIENTES
+- No se consultó la hoja Logs desplegada; el alcance histórico de la exposición no está determinado.
+- No se modificó el almacenamiento de contraseñas; la migración compatible desde texto claro requiere diseño y pruebas.
+- No se probaron los endpoints Apps Script desplegados ni se actualizaron despliegues.
+- No se realizó merge a GPSpedia2.2.5.
+================================================================================

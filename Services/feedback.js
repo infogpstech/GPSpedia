@@ -29,6 +29,49 @@ function getSafeSheet(name) {
   return sheet;
 }
 
+
+/**
+ * Verifica la sesión contra ActiveSessions y obtiene el privilegio desde Users.
+ * No utiliza el rol, nombre ni ID de actor enviados como datos de autorización por el navegador.
+ */
+function normalizeFeedbackRole(role) {
+    return String(role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+}
+
+function assertFeedbackSession(payload, allowedRoles) {
+    const userId = payload && payload.userId;
+    const sessionToken = payload && payload.sessionToken;
+    if (!userId || !sessionToken) throw new Error("Acceso denegado: sesión no autorizada.");
+
+    const ss = getSpreadsheet();
+    const sessionsSheet = ss.getSheetByName("ActiveSessions");
+    const usersSheet = ss.getSheetByName("Users");
+    if (!sessionsSheet || !usersSheet) throw new Error("Acceso denegado: sesión no autorizada.");
+
+    const sessions = sessionsSheet.getDataRange().getValues().slice(1);
+    const activeSession = sessions.some(row =>
+        String(row[0] || "").trim() === String(userId).trim() &&
+        String(row[2] || "").trim() === String(sessionToken).trim()
+    );
+    if (!activeSession) throw new Error("Acceso denegado: sesión no autorizada.");
+
+    const users = usersSheet.getDataRange().getValues().slice(1);
+    const userRow = users.find(row => String(row[0] || "").trim() === String(userId).trim());
+    if (!userRow) throw new Error("Acceso denegado: sesión no autorizada.");
+
+    const role = String(userRow[3] || "").trim();
+    if (Array.isArray(allowedRoles) &&
+        !allowedRoles.some(allowed => normalizeFeedbackRole(allowed) === normalizeFeedbackRole(role))) {
+        throw new Error("Acceso denegado: sesión no autorizada.");
+    }
+
+    return {
+        userId: String(userId),
+        role,
+        userName: String(userRow[6] || userRow[1] || "Usuario")
+    };
+}
+
 const SHEET_NAMES = {
     CORTES: "Cortes",
     FEEDBACKS: "Feedbacks",
@@ -91,8 +134,7 @@ function doGet(e) {
         const serviceState = {
             service: 'GPSpedia-Feedback',
             version: '1.2.1',
-            spreadsheetId: SPREADSHEET_ID,
-            sheetsAccessed: [SHEET_NAMES.CORTES, SHEET_NAMES.FEEDBACKS]
+            status: 'available'
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
             .setMimeType(ContentService.MimeType.TEXT);
@@ -110,7 +152,37 @@ function doPost(e) {
     try {
         const request = JSON.parse(e.postData.contents);
         const action = request.action;
-        const payload = request.payload || {};
+        let payload = request.payload || {};
+
+        const actionPermissions = {
+            getFeedbackItems: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+            replyToFeedback: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+            markAsResolved: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+            deleteFeedbackItem: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+            getActivityLogs: ["Desarrollador"],
+            clearActivityLogs: ["Desarrollador"],
+            approveVideo: ["Desarrollador", "Gefe", "Supervisor"],
+            rejectVideo: ["Desarrollador", "Gefe", "Supervisor"],
+            removeVehicleFromProblem: ["Desarrollador"],
+            updatePysItem: ["Desarrollador"],
+            updateTutorialItem: ["Desarrollador"],
+            initYouTubeUpload: null,
+            submitVideoForApproval: null,
+            addVehicleToProblem: null
+        };
+
+        if (Object.prototype.hasOwnProperty.call(actionPermissions, action)) {
+            const actor = assertFeedbackSession(payload, actionPermissions[action]);
+            payload = {
+                ...payload,
+                userId: actor.userId,
+                userName: actor.userName,
+                userRole: actor.role
+            };
+            if (action === "replyToFeedback") payload.responderName = actor.userName;
+            if (action === "approveVideo") payload.approverName = actor.userName;
+            if (action === "rejectVideo") payload.rejecterName = actor.userName;
+        }
 
         switch (action) {
             case 'recordLike':

@@ -2725,6 +2725,12 @@ ACEPTACIÓN
 - Las operaciones existentes continúan funcionando con el rol permitido.
 - Se dispone de pruebas documentadas de autorización positiva y negativa.
 
+ESTADO DE IMPLEMENTACIÓN — 2026-11-04
+- Autorizada la ejecución del plan ADMIN 0–11 por solicitud expresa del usuario.
+- ADMIN 0: auditoría inicial realizada; primera implementación de controles backend y transmisión de sesión en curso.
+- Pendiente para cerrar ADMIN 0: revisar la hoja Logs del entorno desplegado, definir/validar la migración de contraseñas en texto claro y ejecutar pruebas con sesiones y roles reales.
+- No iniciar las tareas ADMIN 1–11 hasta cerrar los bloqueantes de seguridad de ADMIN 0.
+
 --------------------------------------------------------------------------------
 TAREA ADMIN 1 — ADMINISTRACIÓN DE USUARIOS Y PERMISOS
 Factibilidad: ALTA CONDICIONADA.
@@ -3136,4 +3142,11 @@ RESTRICCIONES DE ESTA ETAPA
 - No crear hojas, columnas, propiedades, activadores ni carpetas en Google.
 - No cambiar permisos, credenciales, endpoints ni despliegues.
 - Este bloque es únicamente estudio, requisitos y planificación. Cada tarea requerirá auditoría y autorización independiente antes de su implementación.
+================================================================================
+
+
+================================================================================
+AUTORIZACIÓN DE IMPLEMENTACIÓN — PLAN ADMIN 0–11
+Fecha: 2026-11-04
+La restricción del estudio que prohibía implementar las funciones ADMIN queda levantada por solicitud expresa del usuario. La autorización se limita al plan de doce tareas ADMIN 0–11 y no sustituye el procedimiento obligatorio: cada tarea requiere auditoría, respaldo, implementación, verificación, Code Review, documentación y un único commit por tarea.
 ================================================================================
