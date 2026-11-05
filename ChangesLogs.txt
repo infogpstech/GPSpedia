@@ -2382,3 +2382,13 @@ CAMBIOS DE CÓDIGO
 - No se seleccionó ni implementó una KDF. La compatibilidad y el rendimiento de cualquier implementación siguen pendientes de prueba en Apps Script V8.
 - No se desplegó Apps Script.
 ================================================================================
+
+
+================================================================================
+DOCUMENTACIÓN — INCIDENCIA backupDatabase / AUTORIZACIÓN DE SESIÓN
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+- Tareas.txt: se añadió la incidencia reportada al ejecutar backupDatabase, el hallazgo de omisión de userId/sessionToken, la acción correctiva pendiente y las restricciones de validación.
+- Auditoría.txt: se añadió el análisis de ACTION_TO_SERVICE_MAP, routeAction(), runAction(), el listener btn-admin-backup-db, doPost() y assertDeveloperSession() en Services/admin.js.
+- No se modificaron archivos de código ni datos de Google Sheets/Drive.
+- No se ejecutó ni desplegó Apps Script; no se realizó merge.
+================================================================================
