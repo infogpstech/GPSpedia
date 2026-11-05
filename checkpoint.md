@@ -521,3 +521,84 @@ CONTINUIDAD
 - Siguiente acción: ejecutar el diagnóstico KDF en AUTH y USERS y confirmar una Spreadsheet independiente de prueba. Después seleccionar la KDF, implementar la verificación dual y los escritores hash, probar la migración sobre la copia y coordinar despliegues con AUTH primero.
 - El commit único que incorpora esta documentación quedará identificado en el historial de GPSpedia2.2.5_work.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — HASH SHA-256 Y LÍMITE DE INTENTOS (ADMIN 0)
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: b70c9c95e9f751d6ef6261f800d778b2a4e356ac
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Diferencia inicial: 130 commits ahead, 0 behind.
+
+TAREA Y ALCANCE
+- Sustituir la evaluación PBKDF2/KDF de ADMIN 0 por SHA-256 con salt individual y control de cinco intentos fallidos con bloqueo de 15 minutos.
+- Actualizar AUTH y los tres escritores de contraseña en USERS.
+- Mantener compatibilidad con registros legacy mediante conversión gradual después de un login correcto.
+- No desplegar Apps Script, modificar datos productivos ni hacer merge.
+
+ESTADO REAL AL INICIO
+- No se habían realizado cambios de código para esta tarea.
+- AUTH comparaba Users.Password en texto claro.
+- USERS guardaba texto claro al crear usuarios, actualizar administrativamente la contraseña y cambiar la contraseña propia.
+- AUTH y USERS son proyectos Apps Script independientes que comparten Users.Password.
+- El usuario ya confirmó la política trim() en ambos extremos, espacios internos conservados, comparación case-sensitive y mínimo de ocho caracteres para contraseñas nuevas.
+- La prueba PBKDF2 anterior fue descartada por decisión del usuario; sus resultados permanecen como antecedente histórico, no como requisito vigente.
+- No se confirmó una copia independiente de Spreadsheet para pruebas.
+
+ARCHIVOS Y FUNCIONALIDADES
+- Services/Auth.js: login, formato hash, migración legacy y contador de intentos.
+- Services/users.js: alta, actualización administrativa y cambio propio de contraseña.
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+
+RESPALDOS Y RIESGOS
+- Services/Auth.js original: blob f47dcf75f01320eb3ce759ff5d57adeeaae122ad.
+- Services/users.js original: blob 8a1148704175d114389d082d80f675a9718f13e8.
+- No se modificarán otras funciones de sesión, RBAC, endpoints ni estructura de Spreadsheet.
+- CacheService ofrece bloqueo temporal de mejor esfuerzo y puede desalojar entradas; el bloqueo por cuenta también puede ser provocado por intentos de terceros.
+- El despliegue deberá ser coordinado: AUTH primero y USERS después.
+
+FASE AL CREAR EL CHECKPOINT
+- Inicio documentado; auditoría y respaldo de los archivos involucrados registrados antes de implementar.
+
+================================================================================
+CIERRE DE TAREA — HASH SHA-256 Y LÍMITE DE INTENTOS (ADMIN 0)
+Estado: IMPLEMENTACIÓN EN CÓDIGO Y REVISIÓN ESTÁTICA COMPLETADAS; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PENDIENTE.
+
+RESULTADO
+- Services/Auth.js verifica contraseñas legacy y hashes SHA-256 con salt individual en formato sha256$<salt>$<digest>.
+- Las contraseñas legacy se convierten a hash después de un login correcto, sin exigir retroactivamente ocho caracteres.
+- AUTH limita a cinco intentos consecutivos por nombre de usuario y establece bloqueo de 15 minutos; el login correcto restablece el contador.
+- Los errores internos revierten el intento reservado para no contar una falla del servicio como contraseña incorrecta.
+- Services/users.js almacena hash al crear usuario, actualizar administrativamente la contraseña y cambiar la contraseña propia; la verificación de contraseña actual acepta legacy y hash.
+- Se mantiene trim() en ambos extremos, espacios internos y comparación sensible a mayúsculas/minúsculas. Las contraseñas nuevas requieren ocho caracteres después de normalizar.
+
+ARCHIVOS MODIFICADOS
+- Services/Auth.js
+- Services/users.js
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+VERIFICACIONES
+- Compilación estática JavaScript: AUTH PASS; USERS PASS.
+- Pruebas de lógica aislada con dobles de Apps Script: formato hash, verificación positiva/negativa, sensibilidad a mayúsculas, salts distintos, compatibilidad legacy, bloqueo en el sexto intento, reinicio y reversión de intento: PASS.
+- Verificación SHA-256 UTF-8 y formato hexadecimal de 64 caracteres: PASS.
+- Comparación de archivos contra los respaldos Git: cambios limitados a las funciones y registros descritos.
+- No se ejecutó Apps Script real ni se validó el acceso a Spreadsheet; pruebas de integración y live pendientes.
+
+LIMITACIONES Y PENDIENTES
+- CacheService puede desalojar entradas antes de los 15 minutos; el límite no es persistente garantizado.
+- SHA-256 con salt es rápido y no ofrece la resistencia offline de una KDF especializada; se implementa por decisión expresa del usuario.
+- Probar en AUTH y USERS: login legacy, login hash, contraseña incorrecta, bloqueo tras cinco fallos, expiración, reinicio al login correcto, alta, actualización administrativa, cambio propio y rechazo de contraseñas nuevas menores de ocho caracteres.
+- Desplegar AUTH primero y USERS después, únicamente con autorización expresa.
+- No se realizó migración masiva, no se accedió ni modificó la Spreadsheet productiva, no se desplegó Apps Script y no se hizo merge.
+
+CONTINUIDAD
+- HEAD anterior a la tarea: b70c9c95e9f751d6ef6261f800d778b2a4e356ac.
+- El único commit de la tarea incluirá código y documentación; su SHA será el HEAD resultante de GPSpedia2.2.5_work en el historial de Git.
+- Siguiente acción: ejecutar pruebas controladas en ambos proyectos Apps Script antes de autorizar los despliegues.
+================================================================================

@@ -42,6 +42,118 @@ const SESSION_LIMITS = {
 };
 
 // ============================================================================
+// CONTRASEÑAS Y CONTROL DE INTENTOS DE INICIO DE SESIÓN
+// ============================================================================
+const PASSWORD_HASH_PREFIX = 'sha256$';
+const LOGIN_MAX_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_SECONDS = 15 * 60;
+
+function normalizePassword(password) {
+    return String(password === null || password === undefined ? '' : password).trim();
+}
+
+function digestToHex(bytes) {
+    return bytes.map(byte => ((byte + 256) % 256).toString(16).padStart(2, '0')).join('');
+}
+
+function createPasswordHash(password, enforceMinimumLength = true) {
+    const normalizedPassword = normalizePassword(password);
+    if (enforceMinimumLength && normalizedPassword.length < 8) {
+        throw new Error('La contraseña debe tener al menos 8 caracteres después de quitar espacios al inicio y al final.');
+    }
+    const salt = Utilities.getUuid().replace(/-/g, '');
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + ':' + normalizedPassword, Utilities.Charset.UTF_8);
+    return PASSWORD_HASH_PREFIX + salt + '$' + digestToHex(digest);
+}
+
+function constantTimeEquals(left, right) {
+    if (left.length !== right.length) return false;
+    let difference = 0;
+    for (let i = 0; i < left.length; i++) difference |= left.charCodeAt(i) ^ right.charCodeAt(i);
+    return difference === 0;
+}
+
+function verifyStoredPassword(storedPassword, providedPassword) {
+    const stored = String(storedPassword === null || storedPassword === undefined ? '' : storedPassword);
+    const normalizedPassword = normalizePassword(providedPassword);
+    if (stored.indexOf(PASSWORD_HASH_PREFIX) === 0) {
+        const parts = stored.split('$');
+        if (parts.length !== 3 || !parts[1] || !/^[0-9a-f]{64}$/i.test(parts[2])) return { matches: false, legacy: false };
+        const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, parts[1] + ':' + normalizedPassword, Utilities.Charset.UTF_8);
+        return { matches: constantTimeEquals(digestToHex(digest), parts[2].toLowerCase()), legacy: false };
+    }
+    return { matches: normalizePassword(stored) === normalizedPassword, legacy: true };
+}
+
+function getLoginAttemptCacheKey(username) {
+    const normalizedUsername = String(username || '').trim().toLowerCase();
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, normalizedUsername, Utilities.Charset.UTF_8);
+    return 'login_attempts_' + digestToHex(digest);
+}
+
+function beginLoginAttempt(username) {
+    const cache = CacheService.getScriptCache();
+    const key = getLoginAttemptCacheKey(username);
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+        const rawState = cache.get(key);
+        let state = { attempts: 0 };
+        if (rawState) {
+            try { state = JSON.parse(rawState) || { attempts: 0 }; }
+            catch (e) { state = { attempts: 0 }; }
+        }
+        if (!state || typeof state !== 'object' || Array.isArray(state)) state = { attempts: 0 };
+        const now = Date.now();
+        if (state.lockedUntil && now < state.lockedUntil) {
+            throw new Error('Se alcanzó el máximo de intentos. Intenta nuevamente en 15 minutos.');
+        }
+        if (state.lockedUntil && now >= state.lockedUntil) state = { attempts: 0 };
+        state.attempts = Number(state.attempts) || 0;
+        if (state.attempts >= LOGIN_MAX_ATTEMPTS) {
+            state.lockedUntil = now + LOGIN_LOCKOUT_SECONDS * 1000;
+            cache.put(key, JSON.stringify(state), LOGIN_LOCKOUT_SECONDS);
+            throw new Error('Se alcanzó el máximo de intentos. Intenta nuevamente en 15 minutos.');
+        }
+        state.attempts++;
+        if (state.attempts >= LOGIN_MAX_ATTEMPTS) state.lockedUntil = now + LOGIN_LOCKOUT_SECONDS * 1000;
+        cache.put(key, JSON.stringify(state), LOGIN_LOCKOUT_SECONDS);
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+function resetLoginAttempts(username) {
+    const cache = CacheService.getScriptCache();
+    const key = getLoginAttemptCacheKey(username);
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try { cache.remove(key); }
+    finally { lock.releaseLock(); }
+}
+
+function rollbackLoginAttempt(username) {
+    const cache = CacheService.getScriptCache();
+    const key = getLoginAttemptCacheKey(username);
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    try {
+        const rawState = cache.get(key);
+        if (!rawState) return;
+        let state;
+        try { state = JSON.parse(rawState); }
+        catch (e) { cache.remove(key); return; }
+        if (!state || typeof state !== 'object' || Array.isArray(state)) { cache.remove(key); return; }
+        state.attempts = Math.max(0, (Number(state.attempts) || 0) - 1);
+        if (state.attempts === 0) { cache.remove(key); return; }
+        if (state.attempts < LOGIN_MAX_ATTEMPTS) delete state.lockedUntil;
+        cache.put(key, JSON.stringify(state), LOGIN_LOCKOUT_SECONDS);
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+// ============================================================================
 // MÓDULO DE DEPURACIÓN
 // ============================================================================
 function logToSheet(level, message, details = {}) {
@@ -116,24 +228,29 @@ function doPost(e) {
 // LÓGICA DE AUTENTICACIÓN
 // ============================================================================
 function handleLogin(payload) {
+    let normalizedUsername = '';
+    let attemptReserved = false;
+    let invalidCredentials = false;
     try {
-        const { username, password } = payload;
+        const { username, password } = payload || {};
         logToSheet('INFO', 'handleLogin started.');
 
-        if (!username || !password) {
-            throw new Error("Usuario y contraseña son requeridos.");
-        }
+        normalizedUsername = String(username || '').trim();
+        const normalizedPassword = normalizePassword(password);
+        if (!normalizedUsername || !normalizedPassword) throw new Error("Usuario y contraseña son requeridos.");
+
+        beginLoginAttempt(normalizedUsername);
+        attemptReserved = true;
 
         const userSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.USERS);
         const data = userSheet.getDataRange().getValues();
-        data.shift(); // Remove headers
+        data.shift();
 
         let foundUserRow = null;
         let foundUserIndex = -1;
-
         for (let i = 0; i < data.length; i++) {
             const sheetUsername = (data[i][COLS_USERS.Nombre_Usuario - 1] || '').toString();
-            if (sheetUsername.trim().toLowerCase() === username.trim().toLowerCase()) {
+            if (sheetUsername.trim().toLowerCase() === normalizedUsername.toLowerCase()) {
                 foundUserRow = data[i];
                 foundUserIndex = i;
                 break;
@@ -141,15 +258,23 @@ function handleLogin(payload) {
         }
 
         if (!foundUserRow) {
+            invalidCredentials = true;
             throw new Error("Credenciales inválidas.");
         }
 
         const sheetPassword = foundUserRow[COLS_USERS.Password - 1];
-        const isPasswordMatch = String(sheetPassword).trim() === String(password).trim();
-
-        if (!isPasswordMatch) {
+        const passwordCheck = verifyStoredPassword(sheetPassword, normalizedPassword);
+        if (!passwordCheck.matches) {
+            invalidCredentials = true;
             throw new Error("Credenciales inválidas.");
         }
+
+        if (passwordCheck.legacy) {
+            userSheet.getRange(foundUserIndex + 2, COLS_USERS.Password)
+                .setValue(createPasswordHash(normalizedPassword, false));
+        }
+        resetLoginAttempts(normalizedUsername);
+        attemptReserved = false;
 
         const userRole = (foundUserRow[COLS_USERS.Privilegios - 1] || '').toString().toLowerCase().trim();
         const userId = foundUserRow[COLS_USERS.ID - 1];
@@ -214,6 +339,10 @@ function handleLogin(payload) {
         return { status: 'success', user: user };
 
     } catch (error) {
+        if (attemptReserved && !invalidCredentials) {
+            try { rollbackLoginAttempt(normalizedUsername); }
+            catch (rollbackError) { console.error('No se pudo revertir el intento reservado:', rollbackError.message); }
+        }
         logToSheet('ERROR', `Error in handleLogin: ${error.message}`, { stack: error.stack });
         return { status: 'error', message: error.message };
     }

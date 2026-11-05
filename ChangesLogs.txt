@@ -2421,3 +2421,27 @@ Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
 - No se modificó código fuente ni datos de Google Sheets.
 - No se seleccionó ni implementó una KDF, no se ejecutó Apps Script, no se desplegó ningún servicio y no se realizó merge.
 ================================================================================
+
+ 
+================================================================================
+ADMIN 0 — HASH SHA-256 CON SALT Y LÍMITE DE INTENTOS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+Archivo: Services/Auth.js
+- Líneas 47-155: añadidas funciones de normalización, hash SHA-256 con salt, verificación de formato versionado y control de intentos con CacheService/LockService.
+- Líneas 230-349: handleLogin() verifica registros legacy/hash, migra registros legacy al primer login correcto, cuenta credenciales incorrectas y restablece el contador.
+
+Archivo: Services/users.js
+- Líneas 46-84: añadidas funciones compartidas de normalización, generación y verificación de hash.
+- Líneas 269-330: handleCreateUser() valida longitud y almacena hash; libera el bloqueo con finally.
+- Línea 378: handleUpdateUser() almacena hash al actualizar la contraseña administrativamente.
+- Líneas 445-478: handleChangePassword() verifica contraseña legacy/hash y almacena hash para la nueva contraseña.
+
+Archivos de documentación
+- Auditoría.txt, líneas 3264-3314: auditoría de alcance, hallazgos, decisión y limitaciones.
+- Tareas.txt, líneas 3362-3385: sustitución de la tarea de evaluación KDF por la implementación aprobada.
+- checkpoint.md, líneas 526-605: registro inicial y cierre de ADMIN 0.
+- ChangesLogs.txt, líneas 2426-fin del archivo: registro de modificaciones de esta tarea.
+
+No se modificaron hojas de cálculo, datos productivos, endpoints, interfaz de usuario ni deployments. No se realizó merge.
+================================================================================

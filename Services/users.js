@@ -41,6 +41,48 @@ const COLS_ACTIVE_SESSIONS = {
 };
 
 // ============================================================================
+// HASH DE CONTRASEÑAS (FORMATO COMPARTIDO CON AUTH)
+// ============================================================================
+const PASSWORD_HASH_PREFIX = 'sha256$';
+
+function normalizePassword(password) {
+    return String(password === null || password === undefined ? '' : password).trim();
+}
+
+function digestToHex(bytes) {
+    return bytes.map(byte => ((byte + 256) % 256).toString(16).padStart(2, '0')).join('');
+}
+
+function createPasswordHash(password) {
+    const normalizedPassword = normalizePassword(password);
+    if (normalizedPassword.length < 8) {
+        throw new Error('La contraseña debe tener al menos 8 caracteres después de quitar espacios al inicio y al final.');
+    }
+    const salt = Utilities.getUuid().replace(/-/g, '');
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, salt + ':' + normalizedPassword, Utilities.Charset.UTF_8);
+    return PASSWORD_HASH_PREFIX + salt + '$' + digestToHex(digest);
+}
+
+function constantTimeEquals(left, right) {
+    if (left.length !== right.length) return false;
+    let difference = 0;
+    for (let i = 0; i < left.length; i++) difference |= left.charCodeAt(i) ^ right.charCodeAt(i);
+    return difference === 0;
+}
+
+function verifyStoredPassword(storedPassword, providedPassword) {
+    const stored = String(storedPassword === null || storedPassword === undefined ? '' : storedPassword);
+    const normalizedPassword = normalizePassword(providedPassword);
+    if (stored.indexOf(PASSWORD_HASH_PREFIX) === 0) {
+        const parts = stored.split('$');
+        if (parts.length !== 3 || !parts[1] || !/^[0-9a-f]{64}$/i.test(parts[2])) return { matches: false, legacy: false };
+        const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, parts[1] + ':' + normalizedPassword, Utilities.Charset.UTF_8);
+        return { matches: constantTimeEquals(digestToHex(digest), parts[2].toLowerCase()), legacy: false };
+    }
+    return { matches: normalizePassword(stored) === normalizedPassword, legacy: true };
+}
+
+// ============================================================================
 // ROUTER PRINCIPAL (doGet y doPost)
 // ============================================================================
 
@@ -225,65 +267,68 @@ function handleResetUserSessions(payload) {
 }
 
 function handleCreateUser(payload) {
+    const { newUser, sessionToken } = payload || {};
+    if (!newUser || !sessionToken) {
+        throw new Error("Datos insuficientes para crear el usuario. Se requiere sessionToken.");
+    }
+
     const lock = LockService.getScriptLock();
+    let lockAcquired = false;
     try {
-        lock.waitLock(30000); // 30 seconds lock
+        lock.waitLock(30000);
+        lockAcquired = true;
     } catch (e) {
         throw new Error("El servidor está ocupado. Por favor intenta de nuevo en unos momentos.");
     }
 
-    const { newUser, sessionToken } = payload;
-    if (!newUser || !sessionToken) {
-        lock.releaseLock();
-        throw new Error("Datos insuficientes para crear el usuario. Se requiere sessionToken.");
+    try {
+        const { role: creatorRole } = getVerifiedSession(sessionToken);
+        const passwordHash = createPasswordHash(newUser.Password);
+        const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
+
+        const allowedRoles = {
+            'Desarrollador': ['Desarrollador', 'Gefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'],
+            'Gefe': ['Supervisor', 'Tecnico'],
+            'Jefe': ['Supervisor', 'Tecnico'],
+            'Supervisor': ['Tecnico']
+        };
+        if (!allowedRoles[creatorRole] || !allowedRoles[creatorRole].includes(newUser.Privilegios)) {
+            throw new Error(`El rol '${creatorRole}' no tiene permisos para crear usuarios de tipo '${newUser.Privilegios}'.`);
+        }
+
+        const newUsername = generateUniqueUsername(userSheet, newUser.Nombre_Usuario);
+        const lastRow = userSheet.getLastRow();
+        const newRowNumber = lastRow + 1;
+        const lastColumn = userSheet.getLastColumn();
+
+        // 1. Copiar la fila anterior para heredar TODAS las validaciones, formatos y FÓRMULAS (incluyendo ID).
+        if (lastRow > 0) {
+            const previousRowRange = userSheet.getRange(lastRow, 1, 1, lastColumn);
+            const newRowRange = userSheet.getRange(newRowNumber, 1, 1, lastColumn);
+            previousRowRange.copyTo(newRowRange);
+        }
+
+        // 2. Preparar los datos que se van a escribir, EXCLUYENDO la columna de ID.
+        const dataToWrite = [
+            newUsername,
+            passwordHash,
+            newUser.Privilegios,
+            newUser.Telefono || '',
+            newUser.Correo_Electronico || '',
+            newUser.Nombre_Completo || '',
+            '' // SessionToken se deja vacío
+        ];
+
+        // 3. Obtener el rango SOLO para las celdas de datos y escribirlos.
+        // Esto deja la columna 1 (ID) intacta, conservando la fórmula heredada.
+        const dataRange = userSheet.getRange(newRowNumber, COLS_USERS.Nombre_Usuario, 1, dataToWrite.length);
+        dataRange.setValues([dataToWrite]);
+
+        return { status: 'success', message: `Usuario '${newUsername}' creado.` };
+    } finally {
+        if (lockAcquired) lock.releaseLock();
     }
-
-    const { role: creatorRole } = getVerifiedSession(sessionToken);
-    const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
-
-    const allowedRoles = {
-        'Desarrollador': ['Desarrollador', 'Gefe', 'Supervisor', 'Tecnico', 'Tecnico_exterior'],
-        'Gefe': ['Supervisor', 'Tecnico'],
-        'Jefe': ['Supervisor', 'Tecnico'],
-        'Supervisor': ['Tecnico']
-    };
-    if (!allowedRoles[creatorRole] || !allowedRoles[creatorRole].includes(newUser.Privilegios)) {
-        lock.releaseLock();
-        throw new Error(`El rol '${creatorRole}' no tiene permisos para crear usuarios de tipo '${newUser.Privilegios}'.`);
-    }
-
-    const newUsername = generateUniqueUsername(userSheet, newUser.Nombre_Usuario);
-    const lastRow = userSheet.getLastRow();
-    const newRowNumber = lastRow + 1;
-    const lastColumn = userSheet.getLastColumn();
-
-    // 1. Copiar la fila anterior para heredar TODAS las validaciones, formatos y FÓRMULAS (incluyendo ID).
-    if (lastRow > 0) {
-        const previousRowRange = userSheet.getRange(lastRow, 1, 1, lastColumn);
-        const newRowRange = userSheet.getRange(newRowNumber, 1, 1, lastColumn);
-        previousRowRange.copyTo(newRowRange);
-    }
-
-    // 2. Preparar los datos que se van a escribir, EXCLUYENDO la columna de ID.
-    const dataToWrite = [
-        newUsername,
-        newUser.Password,
-        newUser.Privilegios,
-        newUser.Telefono || '',
-        newUser.Correo_Electronico || '',
-        newUser.Nombre_Completo || '',
-        '' // SessionToken se deja vacío
-    ];
-
-    // 3. Obtener el rango SOLO para las celdas de datos y escribirlos.
-    // Esto deja la columna 1 (ID) intacta, conservando la fórmula heredada.
-    const dataRange = userSheet.getRange(newRowNumber, COLS_USERS.Nombre_Usuario, 1, dataToWrite.length);
-    dataRange.setValues([dataToWrite]);
-
-    lock.releaseLock();
-    return { status: 'success', message: `Usuario '${newUsername}' creado.` };
 }
-
 function handleUpdateUser(payload) {
     const { userId, updates, sessionToken } = payload;
     if (!userId || !updates || !sessionToken) throw new Error("Datos insuficientes para actualizar. Se requiere sessionToken.");
@@ -331,7 +376,7 @@ function handleUpdateUser(payload) {
                 }
             }
             if (updates.Password) {
-                userSheet.getRange(i + 2, COLS_USERS.Password).setValue(updates.Password);
+                userSheet.getRange(i + 2, COLS_USERS.Password).setValue(createPasswordHash(updates.Password));
             }
 
             return { status: 'success', message: 'Usuario actualizado.' };
@@ -416,14 +461,15 @@ function handleChangePassword(payload) {
     for (let i = 0; i < data.length; i++) {
         // Comparación flexible del ID (soporta string o number)
         if (String(data[i][COLS_USERS.ID - 1]) === String(userId)) {
-            const storedPassword = String(data[i][COLS_USERS.Password - 1]);
+            const storedPassword = data[i][COLS_USERS.Password - 1];
+            const currentPasswordCheck = verifyStoredPassword(storedPassword, currentPassword);
 
-            // FIX: Comparación case-sensitive para contraseñas.
-            if (storedPassword !== currentPassword) {
+            if (!currentPasswordCheck.matches) {
                 throw new Error("La contraseña actual es incorrecta.");
             }
 
-            userSheet.getRange(i + 2, COLS_USERS.Password).setValue(newPassword);
+            const newPasswordHash = createPasswordHash(newPassword);
+            userSheet.getRange(i + 2, COLS_USERS.Password).setValue(newPasswordHash);
             return { status: 'success', message: 'Contraseña actualizada correctamente.' };
         }
     }

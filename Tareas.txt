@@ -3360,12 +3360,26 @@ Estado: CORRECCIÓN ESTÁTICA IMPLEMENTADA; VALIDACIÓN LIVE PENDIENTE.
 
 
 ================================================================================
-ADMIN 0 — VALIDAR KDF EN APPS SCRIPT V8 Y PREPARAR ENTORNO DE PRUEBA
-Fecha: 2026-11-05 | Estado: PENDIENTE
-- Ejecutar diagnóstico de disponibilidad de Web Crypto/crypto.subtle en los proyectos AUTH y USERS.
-- Medir el tiempo de derivación/verificación de una KDF candidata en el runtime real de Apps Script V8; seleccionar algoritmo y parámetros solo si cumplen seguridad y rendimiento aceptables.
-- Si Web Crypto no está disponible, evaluar una implementación PBKDF2 revisada y optimizada con medición real; no sustituirla por SHA-256 simple ni por un hash rápido sin salt.
-- Confirmar que el respaldo puede restaurarse o duplicarse como una Spreadsheet independiente para pruebas sin afectar la hoja productiva.
-- Después de validar KDF y entorno, diseñar e implementar el formato versionado, verificación dual AUTH, escrituras hash en USERS y migración reanudable sobre la copia.
-- Mantener despliegue coordinado: AUTH con verificación dual antes de activar escritores hash en USERS. No desplegar ni migrar datos productivos sin autorización expresa.
+ADMIN 0 — IMPLEMENTAR HASH SHA-256 CON SALT Y LÍMITE DE INTENTOS
+Fecha: 2026-11-05 | Estado: IMPLEMENTADA EN CÓDIGO; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PENDIENTE.
+
+ALCANCE APROBADO
+1. Almacenar contraseñas nuevas con SHA-256 y salt individual en formato sha256$<salt>$<digest>.
+2. Mantener compatibilidad temporal con contraseñas legacy y migrarlas al hash al iniciar sesión correctamente.
+3. Actualizar las tres rutas de escritura de USERS: creación, actualización administrativa y cambio de contraseña propia.
+4. Aplicar trim() al inicio y al final; conservar espacios internos y comparación sensible a mayúsculas/minúsculas.
+5. Exigir mínimo de ocho caracteres normalizados para contraseñas nuevas.
+6. Permitir cinco intentos consecutivos de inicio de sesión por nombre de usuario y bloquear durante 15 minutos. Reiniciar el contador al autenticar correctamente.
+7. No ejecutar migración masiva ni desplegar servicios sin autorización expresa.
+
+IMPLEMENTACIÓN EN CÓDIGO
+- Services/Auth.js: verificación dual legacy/hash, migración progresiva, contador de intentos y bloqueo temporal en CacheService.
+- Services/users.js: hash en creación, actualización administrativa y cambio propio; verificación legacy/hash para contraseña actual.
+- Se mantiene la estructura de la hoja Users y la columna Password existente.
+
+LIMITACIONES Y VALIDACIONES PENDIENTES
+- CacheService puede desalojar entradas antes de los 15 minutos; el bloqueo es temporal y de mejor esfuerzo.
+- SHA-256 con salt es una solución rápida y no equivale a una KDF especializada.
+- Sintaxis JavaScript comprobada estáticamente; pendiente ejecutar pruebas reales en AUTH y USERS, probar login legacy/hash, alta, actualización, cambio de contraseña, cinco fallos, bloqueo, expiración y restablecimiento por login correcto.
+- Despliegue coordinado requerido: AUTH primero; USERS después. No desplegar, modificar datos productivos ni hacer merge.
 ================================================================================

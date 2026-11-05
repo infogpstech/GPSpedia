@@ -3259,3 +3259,55 @@ DECISIÓN TÉCNICA DE ESTA FASE
 - No modificar todavía Services/Auth.js ni Services/users.js hasta completar la prueba del runtime y seleccionar una implementación segura.
 - No migrar datos productivos, no desplegar Apps Script y no hacer merge.
 ================================================================================
+
+
+================================================================================
+ADMIN 0 — AUDITORÍA E IMPLEMENTACIÓN DE HASH SHA-256 Y LÍMITE DE INTENTOS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work | HEAD inicial: b70c9c95e9f751d6ef6261f800d778b2a4e356ac
+
+CHECKPOINT Y RESPALDOS
+- El checkpoint inicial de esta tarea registra el estado de la rama y los archivos originales antes de la auditoría complementaria.
+- Respaldos exactos identificados por blob Git: Services/Auth.js f47dcf75f01320eb3ce759ff5d57adeeaae122ad; Services/users.js 8a1148704175d114389d082d80f675a9718f13e8.
+- No se modificaron archivos de código durante la auditoría.
+
+ARCHIVOS Y RUTAS REVISADAS
+1. Services/Auth.js: doPost(), handleLogin(), lectura de Users.Password, generación de sesión y registro de errores.
+2. Services/users.js: handleCreateUser(), handleUpdateUser(), handleChangePassword(), getVerifiedSession() y router doPost().
+3. auth.js y api-config.js: envío de credenciales al servicio AUTH; no almacenan la contraseña en localStorage.
+4. users.html: formularios de alta/edición y cambio de contraseña; la validación visual no sustituye la validación backend.
+5. Services/admin.js, catalog.js, feedback.js y write.js: búsqueda de usos adicionales de Password/contraseña; no se identificaron otros escritores de Users.Password en esos servicios.
+6. Proceso de desarollo.md, checkpoint.md, Auditoría.txt, ChangesLogs.txt y Tareas.txt: revisión de procedimiento, estado e historial.
+
+HALLAZGOS CONFIRMADOS
+- AUTH comparaba la contraseña de Users.Password en texto claro y aplicaba trim() a ambos valores.
+- USERS escribía texto claro en tres rutas: creación de usuario, actualización administrativa y cambio de contraseña propia.
+- USERS comparaba la contraseña actual sin normalización, a diferencia del login.
+- AUTH y USERS son proyectos Apps Script separados que comparten la misma columna Users.Password; ambos deben implementar el mismo formato.
+- El flujo revisado de auth.js no guarda la contraseña en localStorage.
+- No se encontraron otros escritores de la columna Password en los demás servicios revisados.
+
+DECISIÓN ACTUAL DEL USUARIO — SUSTITUYE EL DISEÑO KDF/PBKDF2 ANTERIOR
+- Utilizar SHA-256 con salt individual por cuenta, sin PBKDF2 ni servicios externos.
+- Formato almacenado: sha256$<salt>$<digest>.
+- Derivación: SHA-256 de salt + separador + contraseña normalizada.
+- Aplicar trim() al inicio y al final; conservar espacios internos y distinguir mayúsculas/minúsculas.
+- Exigir ocho caracteres como mínimo, después de normalizar, al crear o cambiar contraseñas nuevas.
+- Permitir la autenticación de contraseñas legacy existentes; tras un login correcto, convertir esa contraseña a hash sin exigir retroactivamente la longitud mínima.
+- Limitar a cinco intentos consecutivos por nombre de usuario y bloquear durante 15 minutos. Un login correcto restablece el contador.
+- El contador se gestiona en CacheService del proyecto AUTH y las operaciones se serializan con LockService. La caché puede desalojar entradas antes de su expiración; por tanto, el bloqueo es temporal y de mejor esfuerzo, no un registro persistente.
+- No ejecutar migración masiva. Las cuentas legacy se convierten gradualmente al iniciar sesión correctamente; las nuevas escrituras de USERS almacenan hash desde el principio.
+
+RIESGOS Y LIMITACIONES
+- SHA-256 con salt es deliberadamente una solución simple y rápida; no tiene el coste de una KDF especializada frente a ataques offline.
+- Un bloqueo por nombre de usuario puede ser provocado por terceros que intenten fallar repetidamente con esa cuenta.
+- CacheService puede desalojar entradas y no garantiza persistencia absoluta durante los 15 minutos.
+- La activación requiere desplegar AUTH primero para que pueda verificar registros legacy y hash; después desplegar USERS para que los nuevos escritores guarden hashes.
+- No se confirmó una copia independiente de Spreadsheet y no se debe ejecutar ninguna migración masiva sobre producción.
+
+RESULTADO DE LA IMPLEMENTACIÓN
+- Services/Auth.js: se incorpora el verificador de registros legacy/hash, migración al primer login correcto y límite de cinco intentos con bloqueo de 15 minutos.
+- Services/users.js: las rutas de creación, actualización administrativa y cambio propio escriben hash; el cambio propio verifica tanto contraseñas legacy como hash.
+- No se modificaron auth.js, users.html, api-config.js, el esquema de Spreadsheet ni los deployments.
+- La sintaxis de ambos archivos se comprobó mediante compilación estática JavaScript; las pruebas de Apps Script, la integración con Spreadsheet y la validación en live quedan pendientes.
+- No se accedió ni modificó la Spreadsheet, no se desplegó Apps Script y no se realizó merge.
+================================================================================
