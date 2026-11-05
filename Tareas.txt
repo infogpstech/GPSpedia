@@ -3383,3 +3383,16 @@ LIMITACIONES Y VALIDACIONES PENDIENTES
 - Sintaxis JavaScript comprobada estáticamente; pendiente ejecutar pruebas reales en AUTH y USERS, probar login legacy/hash, alta, actualización, cambio de contraseña, cinco fallos, bloqueo, expiración y restablecimiento por login correcto.
 - Despliegue coordinado requerido: AUTH primero; USERS después. No desplegar, modificar datos productivos ni hacer merge.
 ================================================================================
+
+
+================================================================================
+TAREA COMPLETADA — ACTUALIZAR URL DE LOS SERVICIOS AUTH Y USERS
+Fecha: 2026-11-05
+Estado: CAMBIOS ESTÁTICOS IMPLEMENTADOS; VALIDACIÓN DE DEPLOYMENTS PENDIENTE.
+
+- api-config.js: reemplazado el URL de API_ENDPOINTS.AUTH por el endpoint proporcionado.
+- api-config.js: reemplazado el URL de API_ENDPOINTS.USERS por el endpoint proporcionado.
+- Se conservaron todos los demás endpoints, el mapa de acciones y las funciones existentes.
+- Pendiente: comprobar disponibilidad y funcionamiento de AUTH y USERS mediante pruebas funcionales en los deployments correspondientes.
+- No se desplegó Apps Script, no se modificaron datos productivos y no se realizó merge.
+================================================================================

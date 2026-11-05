@@ -3311,3 +3311,29 @@ RESULTADO DE LA IMPLEMENTACIÓN
 - La sintaxis de ambos archivos se comprobó mediante compilación estática JavaScript; las pruebas de Apps Script, la integración con Spreadsheet y la validación en live quedan pendientes.
 - No se accedió ni modificó la Spreadsheet, no se desplegó Apps Script y no se realizó merge.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — ACTUALIZACIÓN DE URL AUTH Y USERS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+HEAD inicial: 2e0bbcf78db6b7d775f59a0eef396084a690059c
+
+ARCHIVO AUDITADO
+- api-config.js (170 líneas): revisión de la configuración API_ENDPOINTS, ACTION_TO_SERVICE_MAP, routeAction() y helpers relacionados con autenticación y usuarios.
+
+HALLAZGOS
+1. API_ENDPOINTS es la fuente central de URL para los servicios.
+2. AUTH estaba declarado en la línea 9 y USERS en la línea 12.
+3. ACTION_TO_SERVICE_MAP dirige login y validateSession a AUTH; getUsers, createUser, updateUser, deleteUser, changePassword, updateProfile y resetUserSessions se dirigen a USERS.
+4. routeAction() selecciona el URL a partir del nombre del servicio y envía la acción/payload al endpoint seleccionado.
+5. No se encontró necesidad funcional de modificar el mapa de acciones, routeAction(), helpers, auth.js, users.html ni otros endpoints.
+
+RESPALDO
+- Se conserva el archivo original mediante su blob Git: b74270ffad51665db67d00befa4a517f810d33d0.
+- La comparación posterior se limita a las dos líneas de URL indicadas.
+
+ALCANCE Y RIESGOS
+- Cambiar únicamente los valores AUTH y USERS por los URL entregados por el usuario.
+- La revisión estática no confirma disponibilidad ni comportamiento de los deployments de Apps Script.
+- No desplegar Apps Script, no modificar hojas de cálculo, no alterar otros servicios y no hacer merge.
+================================================================================

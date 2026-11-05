@@ -602,3 +602,74 @@ CONTINUIDAD
 - El único commit de la tarea incluirá código y documentación; su SHA será el HEAD resultante de GPSpedia2.2.5_work en el historial de Git.
 - Siguiente acción: ejecutar pruebas controladas en ambos proyectos Apps Script antes de autorizar los despliegues.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — ACTUALIZACIÓN DE URL AUTH Y USERS
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 2e0bbcf78db6b7d775f59a0eef396084a690059c
+
+TAREA Y ALCANCE
+- Sustituir exclusivamente los valores API_ENDPOINTS.AUTH y API_ENDPOINTS.USERS en api-config.js por los dos URL proporcionados por el usuario.
+- Mantener intactos los demás endpoints, el mapa de acciones, las funciones y el resto del código.
+- Actualizar los registros obligatorios y generar un único commit que incluya todos los cambios y este checkpoint.
+
+ESTADO REAL AL INICIO
+- api-config.js declara API_ENDPOINTS como fuente central de los endpoints.
+- AUTH se encontraba en la línea 9 y USERS en la línea 12.
+- ACTION_TO_SERVICE_MAP enruta login/validateSession a AUTH y las operaciones de usuarios a USERS.
+- La función routeAction() consume API_ENDPOINTS según el servicio asignado.
+- No se identificaron motivos para modificar auth.js, users.html ni otros archivos de código.
+
+ARCHIVOS Y FUNCIONALIDADES INVOLUCRADOS
+- api-config.js: dos valores URL de API_ENDPOINTS.
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md: registros del procedimiento.
+
+RESPALDO Y RIESGOS
+- Respaldo exacto previo de api-config.js: blob Git b74270ffad51665db67d00befa4a517f810d33d0.
+- No se modificará la rama base, no se hará merge ni se desplegarán proyectos Apps Script.
+- La actualización de URL no valida por sí sola la disponibilidad, permisos ni compatibilidad de los deployments de destino.
+
+FASE AL CREAR EL CHECKPOINT
+- Inicio documentado antes de la auditoría y de la implementación.
+================================================================================
+
+
+================================================================================
+CIERRE DE TAREA — ACTUALIZACIÓN DE URL AUTH Y USERS
+Fecha: 2026-11-05
+Estado: CAMBIO ESTÁTICO COMPLETADO; VALIDACIÓN FUNCIONAL DE DEPLOYMENTS PENDIENTE.
+
+RESULTADO
+- api-config.js: API_ENDPOINTS.AUTH ahora contiene el URL nuevo proporcionado por el usuario.
+- api-config.js: API_ENDPOINTS.USERS ahora contiene el URL nuevo proporcionado por el usuario.
+- No se modificaron los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() ni funciones auxiliares.
+
+ARCHIVOS MODIFICADOS
+- api-config.js
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+VERIFICACIONES REALIZADAS
+- Se confirmó una coincidencia exacta para cada URL anterior antes de sustituirlo.
+- La comparación del archivo antes/después detectó exactamente dos líneas diferentes: línea 9 (AUTH) y línea 12 (USERS).
+- Se verificó que no hubo cambios estructurales ni alteraciones en otras líneas de api-config.js.
+- Se revisó que los registros de auditoría, cambios, tareas y checkpoint describan únicamente esta tarea.
+
+VALIDACIONES PENDIENTES Y LIMITACIONES
+- No se realizaron solicitudes HTTP a los nuevos endpoints.
+- No se comprobó el login, validación de sesión, carga de usuarios ni operaciones CRUD contra los deployments.
+- No se ejecutó ni desplegó Apps Script.
+- No se modificaron hojas de cálculo ni datos productivos.
+- No se realizó merge.
+
+CONTINUIDAD
+- HEAD anterior a la tarea: 2e0bbcf78db6b7d775f59a0eef396084a690059c.
+- El commit único de esta tarea incluye el cambio y los registros documentales, incluido este checkpoint.
+- Siguiente acción: validar los servicios AUTH y USERS en la plataforma live. Si alguno falla, diagnosticar el endpoint correspondiente sin modificar otros servicios fuera del alcance.
+================================================================================

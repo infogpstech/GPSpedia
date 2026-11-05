@@ -2445,3 +2445,23 @@ Archivos de documentación
 
 No se modificaron hojas de cálculo, datos productivos, endpoints, interfaz de usuario ni deployments. No se realizó merge.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE URL — SERVICIOS AUTH Y USERS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVO MODIFICADO: api-config.js
+- Línea 9: se sustituyó únicamente el URL de API_ENDPOINTS.AUTH por el endpoint proporcionado para AUTH.
+- Línea 12: se sustituyó únicamente el URL de API_ENDPOINTS.USERS por el endpoint proporcionado para USERS.
+
+COMPARACIÓN
+- Se identificaron exactamente dos líneas modificadas.
+- No se modificaron los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() ni las funciones auxiliares.
+- No se modificaron archivos de interfaz ni servicios Apps Script.
+
+VALIDACIÓN Y ALCANCE
+- Se verificó estáticamente que cada URL anterior aparecía una vez y fue reemplazado por el URL indicado.
+- No se ejecutaron solicitudes HTTP ni pruebas funcionales contra los deployments.
+- No se desplegó Apps Script, no se modificaron datos y no se realizó merge.
+================================================================================
