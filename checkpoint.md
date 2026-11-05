@@ -1,14 +1,14 @@
 # CHECKPOINT — GPSpedia
 
 **Última actualización:** 2026-11-04  
-**Estado:** ADMIN 0 en curso; se auditó AUTH/USERS y se aplicó la corrección de registros sensibles en AUTH. No se considera cerrada.
+**Estado:** corrección de autorización y purga selectiva de Logs implementada en GPSpedia2.2.5_work. Pendientes pruebas reales y despliegue FEEDBACK; ADMIN 0 continúa abierta.
 
 ## 1. Repositorio y reglas
 
 - Repositorio: `infogpstech/GPSpedia`
 - Rama de trabajo autorizada: `GPSpedia2.2.5_work`
 - Rama base protegida: `GPSpedia2.2.5`
-- HEAD antes de esta iteración: `e53a38847daab99d73034b527a35a5768b7e404c`
+- HEAD al inicio de esta tarea: `d9430ee8b401d0c9f34e081696bb6e171b4c32e5`
 - Modificar únicamente la rama de trabajo. No realizar merge ni despliegues sin autorización expresa.
 - Leer `Proceso de desarollo.md` antes de cada tarea.
 - Un único commit por tarea, agrupando código y documentación.
@@ -69,3 +69,36 @@ Definir y validar la migración de contraseñas para AUTH y USERS con una copia 
 - Commit previo a esta iteración: `e53a38847daab99d73034b527a35a5768b7e404c`.
 - PR #128: abierto, en borrador, sin merge.
 - No se modificó la rama base `GPSpedia2.2.5`.
+
+
+## 7. Tarea actual — autorización y purga selectiva de Logs
+
+### Registro inicial
+- Repositorio: `infogpstech/GPSpedia`
+- Rama de trabajo: `GPSpedia2.2.5_work`
+- Rama base protegida: `GPSpedia2.2.5`
+- HEAD inicial verificado: `d9430ee8b401d0c9f34e081696bb6e171b4c32e5`
+- Alcance autorizado: actualizar URL AUTH; enviar userId/sessionToken para clearActivityLogs; crear una operación protegida que retire de Logs únicamente los registros confidenciales.
+- Archivos auditados: api-config.js, ui.js, Services/feedback.js y el esquema de escritura de Logs en Services/Auth.js.
+- No se modificó código durante la fase de auditoría.
+- Los blobs originales de los siete archivos se conservaron como respaldos Git, identificados en Auditoría.txt.
+
+### Resultado de implementación
+- api-config.js: URL AUTH actualizada; clearActivityLogs transmite keepLastWeek y contexto de sesión; clearSensitiveLogs se enruta a FEEDBACK.
+- ui.js: el botón obtiene userId/sessionToken desde getDeveloperSessionPayload() y ejecuta ambas operaciones.
+- Services/feedback.js: clearSensitiveLogs exige sesión válida y rol Desarrollador; elimina únicamente filas de Logs cuyos detalles contienen campos de credenciales, el evento Password comparison o los registros handleLogin started con username.
+- La fila de encabezados y los registros no coincidentes se conservan. La opción de última semana continúa aplicándose solo a ActividadUsuario.
+- No se modificó la rama base, no se realizó merge y no se desplegaron servicios.
+
+### Verificaciones y limitaciones
+- Se verificaron estáticamente las rutas, el mapa de acciones, los helpers, la sesión enviada por UI, el permiso backend y el alcance de la operación sobre Logs.
+- No se ejecutó el código en Apps Script ni se accedió a la Spreadsheet real.
+- No se confirmó el número de registros históricos que cumplen los criterios.
+- No se validó el nuevo endpoint AUTH en el navegador ni el despliegue FEEDBACK.
+- La implementación queda pendiente de pruebas en una copia de Spreadsheet y validación de roles/sesiones en entorno controlado.
+
+### Próxima acción concreta
+Desplegar Services/feedback.js en el proyecto FEEDBACK correspondiente y validar la purga primero sobre una copia de la Spreadsheet; después comprobar el botón en live y el nuevo endpoint AUTH. No realizar merge ni otros despliegues sin autorización expresa.
+
+### Commit
+El commit que incorpora este checkpoint y todos los archivos de la tarea se identifica en el historial de `GPSpedia2.2.5_work`; no se generan commits separados para el checkpoint.

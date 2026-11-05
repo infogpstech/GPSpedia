@@ -5,7 +5,7 @@ import { vinDifferentialEngine, vinSignatureStore, getClassificationKey } from '
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
@@ -3679,22 +3679,22 @@ ${elapsedSec}s
             const selectEl = document.getElementById('clear-logs-option-select');
             const keepLastWeek = selectEl ? selectEl.value === 'week' : false;
             const promptText = keepLastWeek
-                ? "¿Estás seguro de que deseas ELIMINAR los registros de eventos con antigüedad MAYOR a una semana? (Los de los últimos 7 días se conservarán)."
-                : "¿Estás seguro de que deseas BORRAR TODOS los registros de eventos y logs de actividad?";
+                ? "¿Estás seguro de que deseas eliminar de ActividadUsuario los registros con más de una semana y retirar de Logs los registros que contienen credenciales? Los registros recientes de ActividadUsuario se conservarán."
+                : "¿Estás seguro de que deseas eliminar los registros de ActividadUsuario y retirar de Logs los registros que contienen credenciales?";
 
             if (confirm(promptText)) {
                 try {
                     clearLogsBtn.disabled = true;
-                    log(`Iniciando purga de logs de actividad (Conservar última semana: ${keepLastWeek ? 'Sí' : 'No'})...`);
-                    const res = await clearActivityLogs(keepLastWeek);
-                    if (res && res.status === 'success') {
-                        log(`[EXITO] ${res.message}`);
-                        mostrarNotificacion(res.message, 'success');
-                    } else {
-                        log(`[ERROR] No se pudo purgar los logs: ${res ? res.message : 'Error desconocido'}`, false, true);
-                    }
+                    log(`Iniciando purga de actividad y registros confidenciales (Conservar última semana en ActividadUsuario: ${keepLastWeek ? 'Sí' : 'No'})...`);
+                    const sessionPayload = getDeveloperSessionPayload();
+                    const activityResult = await clearActivityLogs(keepLastWeek, sessionPayload);
+                    log(`[EXITO] ${activityResult.message}`);
+                    const sensitiveLogsResult = await clearSensitiveLogs(sessionPayload);
+                    log(`[EXITO] ${sensitiveLogsResult.message}`);
+                    const resultMessage = `${activityResult.message} ${sensitiveLogsResult.message}`;
+                    mostrarNotificacion(resultMessage, 'success');
                 } catch (err) {
-                    log(`[EXCEPCION] Error al purgar logs: ${err.message}`, false, true);
+                    log(`[EXCEPCION] Error al purgar registros: ${err.message}`, false, true);
                 } finally {
                     clearLogsBtn.disabled = false;
                 }

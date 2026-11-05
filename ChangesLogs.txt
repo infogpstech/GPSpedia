@@ -2261,3 +2261,29 @@ Rama: GPSpedia2.2.5_work
 - No se modificaron Services/users.js, el esquema de Users, la comparación de contraseñas, los tokens ni la lógica de sesiones.
 - No se accedió a la Spreadsheet, no se inspeccionó la hoja Logs y no se actualizaron despliegues Apps Script.
 ================================================================================
+
+
+================================================================================
+CORRECCIÓN DE AUTORIZACIÓN Y ALCANCE DE PURGA DE LOGS
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- api-config.js, línea 9: se actualizó API_ENDPOINTS.AUTH con la URL proporcionada.
+- api-config.js, línea 24: se registró clearSensitiveLogs en ACTION_TO_SERVICE_MAP como acción del servicio FEEDBACK.
+- api-config.js, líneas 101–108: clearActivityLogs transmite keepLastWeek, userId y sessionToken; se añadió el helper clearSensitiveLogs.
+- ui.js, línea 8: se importó clearSensitiveLogs.
+- ui.js, bloque btn-admin-clear-activity-logs (desde línea 3681): se obtiene la sesión con getDeveloperSessionPayload() y se envía a las dos operaciones; la confirmación aclara el alcance de cada hoja.
+- Services/feedback.js, línea 80: se añadió la referencia a la hoja Logs.
+- Services/feedback.js, líneas 165 y 254: se protegió la acción con el rol Desarrollador y se conectó al router.
+- Services/feedback.js, desde la línea 1232: se añadió la operación que localiza únicamente registros confidenciales en Logs, elimina filas desde abajo hacia arriba y conserva encabezados y registros no coincidentes.
+- checkpoint.md: se actualizó el estado de continuidad, alcance, validaciones pendientes y siguiente acción.
+- Auditoría.txt: se añadió la auditoría de esta tarea y sus dependencias.
+- Tareas.txt: se registró el resultado de implementación y las validaciones pendientes.
+- ChangesLogs.txt: se documentaron los archivos y bloques modificados.
+
+RESTRICCIONES CONSERVADAS
+- No se modificó la rama base.
+- No se desplegó ningún servicio Apps Script.
+- No se realizó merge.
+================================================================================

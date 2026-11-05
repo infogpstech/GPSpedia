@@ -77,6 +77,7 @@ const SHEET_NAMES = {
     FEEDBACKS: "Feedbacks",
     CONTACTANOS: "Contactanos",
     ACTIVIDAD_USUARIO: "ActividadUsuario",
+    LOGS: "Logs",
     SUGERENCIAS_ANO: "Feedbacks"
 };
 
@@ -161,6 +162,7 @@ function doPost(e) {
             deleteFeedbackItem: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
             getActivityLogs: ["Desarrollador", "Gefe", "Supervisor"],
             clearActivityLogs: ["Desarrollador"],
+            clearSensitiveLogs: ["Desarrollador"],
             approveVideo: ["Desarrollador", "Gefe", "Supervisor"],
             rejectVideo: ["Desarrollador", "Gefe", "Supervisor"],
             removeVehicleFromProblem: ["Desarrollador"],
@@ -248,6 +250,9 @@ function doPost(e) {
                 break;
             case 'clearActivityLogs':
                 response = handleClearActivityLogs(payload);
+                break;
+            case 'clearSensitiveLogs':
+                response = handleClearSensitiveLogs();
                 break;
             case 'initYouTubeUpload':
                 response = handleInitYouTubeUpload(payload);
@@ -1221,6 +1226,44 @@ function handleClearActivityLogs(payload) {
         SpreadsheetApp.flush();
         return { status: 'success', message: `Se eliminaron ${deletedCount} registros con antigüedad mayor a una semana.`, deletedCount };
     }
+}
+
+
+function handleClearSensitiveLogs() {
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.LOGS);
+    if (!sheet) throw new Error("Hoja Logs no encontrada.");
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+        return { status: 'success', message: 'No hay registros en Logs para revisar.', deletedCount: 0 };
+    }
+
+    const lastColumn = Math.max(sheet.getLastColumn(), 4);
+    const data = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+    const rowsToDelete = [];
+
+    for (let i = 0; i < data.length; i++) {
+        const message = String(data[i][2] || "").trim();
+        const details = String(data[i][3] || "");
+        const containsCredentialFields = /"(?:password|sheetPassword|currentPassword|newPassword|fromSheet|fromClient)"\s*:/i.test(details);
+        const containsLoginUsername = message === "handleLogin started." && /"username"\s*:/i.test(details);
+        const isPasswordComparison = message === "Password comparison";
+
+        if (containsCredentialFields || containsLoginUsername || isPasswordComparison) {
+            rowsToDelete.push(i + 2);
+        }
+    }
+
+    for (let i = rowsToDelete.length - 1; i >= 0; i--) {
+        sheet.deleteRow(rowsToDelete[i]);
+    }
+
+    SpreadsheetApp.flush();
+    return {
+        status: 'success',
+        message: `Se eliminaron ${rowsToDelete.length} registros confidenciales de Logs. Se conservaron los encabezados y los demás registros.`,
+        deletedCount: rowsToDelete.length
+    };
 }
 
 // ============================================================================

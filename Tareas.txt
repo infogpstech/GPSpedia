@@ -3183,3 +3183,36 @@ Fecha: 2026-11-04
 - La revisión de la hoja Logs desplegada, las pruebas reales de sesión/roles y la validación de despliegues siguen pendientes por falta de acceso a esos recursos desde esta sesión.
 - ADMIN 0 permanece ABIERTA; no iniciar ADMIN 1–11.
 ================================================================================
+
+
+================================================================================
+TAREA — CORREGIR AUTORIZACIÓN Y ALCANCE DE PURGA DE LOGS
+Fecha: 2026-11-04
+Estado: IMPLEMENTADA EN CÓDIGO; VALIDACIÓN DE DESPLIEGUE PENDIENTE.
+
+REQUISITOS IMPLEMENTADOS
+1. Enviar userId y sessionToken junto con keepLastWeek al ejecutar clearActivityLogs.
+2. Reutilizar getDeveloperSessionPayload() para obtener la identidad y el token de la sesión autenticada.
+3. Crear la acción clearSensitiveLogs en FEEDBACK, restringida al rol Desarrollador.
+4. Identificar en Logs los registros históricos que contienen claves de contraseña, los valores de comparación de contraseña y el username registrado al iniciar sesión.
+5. Eliminar únicamente las filas confidenciales identificadas, sin borrar la fila de encabezados ni los demás registros de Logs.
+6. Mantener separada la purga temporal de ActividadUsuario: keepLastWeek solo afecta esa hoja.
+7. Actualizar API_ENDPOINTS.AUTH con la URL nueva proporcionada.
+
+ARCHIVOS
+- api-config.js
+- ui.js
+- Services/feedback.js
+- checkpoint.md
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+
+PENDIENTES DE VALIDACIÓN
+- Publicar Services/feedback.js en el despliegue FEEDBACK configurado.
+- Probar autorización con sesión válida de Desarrollador y rechazo con sesión inválida o rol distinto.
+- Ejecutar primero sobre una copia de la Spreadsheet y verificar el número y contenido de las filas seleccionadas.
+- Confirmar que Logs conserva encabezados y registros no confidenciales y que ActividadUsuario respeta keepLastWeek.
+- Verificar el nuevo endpoint AUTH en el entorno live.
+- No realizar merge a GPSpedia2.2.5 ni despliegues sin autorización expresa.
+================================================================================

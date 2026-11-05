@@ -2892,3 +2892,45 @@ VERIFICACIONES
 - Pendiente: comprobación sintáctica con runtime V8 de Apps Script y pruebas reales del endpoint AUTH después de desplegar.
 - Pendiente: inspeccionar Logs y diseñar/probar migración de contraseñas.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — CORRECCIÓN DE PURGA DE ACTIVIDAD Y REGISTROS CONFIDENCIALES
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+HEAD al inicio: d9430ee8b401d0c9f34e081696bb6e171b4c32e5
+Alcance: actualizar endpoint AUTH; corregir autenticación del botón de purga; incorporar una operación backend exclusiva para retirar de Logs los registros históricos que contienen credenciales.
+
+ESTADO Y HALLAZGOS
+1. api-config.js: API_ENDPOINTS.AUTH todavía apuntaba al despliegue anterior. El usuario proporcionó una nueva URL para AUTH.
+2. ui.js: el botón btn-admin-clear-activity-logs llamaba clearActivityLogs(keepLastWeek) sin userId ni sessionToken. getDeveloperSessionPayload() ya existía y devuelve ambos campos desde la sesión autenticada.
+3. api-config.js: clearActivityLogs() enviaba únicamente keepLastWeek. La acción se enruta al servicio FEEDBACK.
+4. Services/feedback.js: assertFeedbackSession() exige userId y sessionToken y valida el token contra ActiveSessions y el rol contra Users. clearActivityLogs está restringida al rol Desarrollador.
+5. Services/feedback.js: handleClearActivityLogs() opera sobre ActividadUsuario, no sobre Logs.
+6. Services/Auth.js: Logs es el nombre de la hoja y logToSheet() registra cuatro columnas en este orden: timestamp, level, message y details.
+7. El código anterior a la remediación ADMIN 0 registraba el payload completo de login en «Request parsed. Action: login», el username en «handleLogin started.» y las contraseñas almacenada/recibida en «Password comparison». El diff del commit 6a226c185637b5ec8f97c00b360aeee37f511041 confirma esos campos y eventos.
+8. La purga histórica debe distinguir las filas confidenciales de los demás registros, conservar la fila de encabezados y actuar exclusivamente sobre Logs.
+
+RIESGOS Y DEPENDENCIAS
+- AUTH y FEEDBACK son despliegues independientes. Actualizar el endpoint AUTH en el frontend no publica código de Apps Script.
+- La nueva operación debe publicarse en el despliegue FEEDBACK configurado en api-config.js para que esté disponible en el entorno live.
+- No se dispone de acceso directo a la Spreadsheet ni al runtime de Apps Script desde esta sesión; no se puede confirmar el número de filas que se eliminarán ni ejecutar la purga real.
+- El borrado de filas se limita a Logs y a registros que coinciden con los campos/eventos históricos conocidos: claves password/sheetPassword/currentPassword/newPassword/fromSheet/fromClient, el evento Password comparison y el evento handleLogin started con username.
+- El selector de última semana afecta únicamente ActividadUsuario; los registros confidenciales identificados en Logs se eliminan independientemente de su antigüedad.
+
+RESPALDOS
+- api-config.js: 8af3f3eae21bff670ef7dbbef9d3b134b5ec854a
+- ui.js: 7b0eef40a0223a09f2085d3676f159e41b19b037
+- Services/feedback.js: 555dfa8b4d3e1a1de91978b1b285c53f1d440f48
+- checkpoint.md: 97247f86213bbfdda80a0df7ce8df44d54dec9fa
+- Auditoría.txt: 1b60de2d2c5b70975f67790b371370bf109b1e58
+- ChangesLogs.txt: 2fa709bfa3d2ee19cfaf34860dc1a308a010a388
+- Tareas.txt: 6833d8197822bd6095367b8fd1a8d87aed03ef14
+Los blobs originales permanecen disponibles en Git y no se añadieron archivos temporales al árbol.
+
+VERIFICACIONES DE AUDITORÍA
+- Se revisaron los contratos de ruteo y helpers de api-config.js, el import y el handler del botón en ui.js, el control de permisos/router y handleClearActivityLogs() en Services/feedback.js.
+- Se comprobó el esquema de escritura de Logs en Services/Auth.js y el diff histórico del commit de remediación AUTH.
+- Se confirmó que el botón puede reutilizar getDeveloperSessionPayload() sin introducir otro mecanismo de sesión.
+- Pendiente: pruebas reales de sesión/rol, ejecución en copia de Spreadsheet, validación de filas seleccionadas y pruebas en el despliegue FEEDBACK.
+================================================================================
