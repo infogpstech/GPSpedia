@@ -297,3 +297,35 @@ RESULTADO FINAL
 SIGUIENTE ACCIÓN
 - Probar Inbox y Dashboard en GPSpedia live con sesión válida. Si falla, capturar la respuesta HTTP y los registros del deployment FEEDBACK para distinguir sesión, permisos, CORS o acceso a Spreadsheet.
 ================================================================================
+
+
+================================================================================
+TAREA — AUDITORÍA Y DISEÑO DE MIGRACIÓN DE CONTRASEÑAS (ADMIN 0)
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+REGISTRO INICIAL
+- Repositorio: infogpstech/GPSpedia.
+- Rama de trabajo: GPSpedia2.2.5_work; rama base protegida: GPSpedia2.2.5.
+- HEAD inicial: 27760cf7542028773a0b87e3a48139dc8bda9ff7.
+- El usuario confirmó que Inbox y Dashboard funcionan tras el commit anterior.
+- Alcance: auditar flujos de login, creación, actualización y cambio de contraseña; diseñar migración compatible entre AUTH y USERS. No modificar datos reales ni desplegar Apps Script.
+- Archivos auditados: Services/Auth.js, Services/users.js, auth.js, api-config.js y users.html. Documentación: checkpoint.md, Auditoría.txt, ChangesLogs.txt y Tareas.txt.
+- Bloqueos conocidos: sin acceso confirmado a Spreadsheet productiva, Logs reales o entorno de prueba; AUTH y USERS tienen deployments independientes.
+- Estado inicial: auditoría estática pendiente; código funcional sin modificar.
+
+RESULTADO FINAL
+- Estado: AUDITORÍA COMPLETADA; DISEÑO DOCUMENTADO; IMPLEMENTACIÓN BLOQUEADA POR VALIDACIONES Y DECISIONES PENDIENTES.
+- Se confirmó texto claro en AUTH (comparación de login) y en tres escrituras de USERS: crear usuario, actualización administrativa y cambio de contraseña.
+- Se detectó diferencia de normalización: login aplica trim() a ambos valores; changePassword compara exactamente.
+- Se identificó que el frontend exige ocho caracteres al cambiar contraseña, pero el backend no aplica esa misma validación.
+- Se documentó una estrategia propuesta: formato versionado en Password; KDF resistente con salt y parámetros almacenados; verificación dual temporal en AUTH; actualización de todos los escritores en USERS; migración por lotes de cuentas restantes sobre copia de Spreadsheet; despliegue coordinado AUTH antes que USERS.
+- No se seleccionó ni implementó KDF porque falta validar biblioteca/compatibilidad Apps Script V8 y rendimiento. No se migraron cuentas ni se modificó la hoja.
+- Se registró fuera de alcance la discrepancia SESSION_LIMITS para el rol Gefe; requiere confirmar el límite esperado.
+- Archivos modificados: únicamente documentación (checkpoint.md, Auditoría.txt, ChangesLogs.txt y Tareas.txt). No se modificaron Services/Auth.js, Services/users.js, auth.js, api-config.js ni users.html.
+- No se ejecutó Apps Script, no se inspeccionó Logs real, no se accedió a la Spreadsheet y no se desplegó ningún servicio.
+- ADMIN 0 permanece abierta.
+- HEAD anterior a la tarea: 27760cf7542028773a0b87e3a48139dc8bda9ff7. El commit único que incorpora esta auditoría documental quedará identificado en el historial de la rama.
+
+SIGUIENTE ACCIÓN
+- Confirmar política de espacios en contraseñas y habilitar una copia de prueba de la Spreadsheet. Después validar una implementación KDF compatible con Apps Script V8, con vectores de prueba y medición de rendimiento antes de modificar AUTH/USERS.
+================================================================================

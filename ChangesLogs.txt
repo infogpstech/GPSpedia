@@ -2364,3 +2364,21 @@ CAMBIOS DE SEGURIDAD
 - Services/feedback.js y sus controles assertFeedbackSession/actionPermissions no se modificaron.
 - No se modificaron roles, endpoints, mapa de acciones ni despliegues.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA Y DISEÑO — ADMIN 0: MIGRACIÓN DE CONTRASEÑAS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+REGISTRO DOCUMENTAL
+- Se auditó Services/Auth.js, Services/users.js, auth.js, api-config.js y los flujos de contraseña de users.html.
+- Se documentaron las tres rutas de escritura de contraseñas en USERS y la comparación en texto claro de AUTH.
+- Se documentó la diferencia de normalización entre login y cambio de contraseña.
+- Se añadió un diseño de migración versionada compatible con los proyectos AUTH y USERS, incluyendo verificación dual transitoria, escritura de hashes, migración de cuentas inactivas por lotes y despliegue coordinado.
+- Se registró la discrepancia SESSION_LIMITS para el rol Gefe como tarea separada.
+
+CAMBIOS DE CÓDIGO
+- No se modificaron archivos de código ni datos de Google Sheets.
+- No se seleccionó ni implementó una KDF. La compatibilidad y el rendimiento de cualquier implementación siguen pendientes de prueba en Apps Script V8.
+- No se desplegó Apps Script.
+================================================================================

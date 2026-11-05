@@ -3093,3 +3093,57 @@ LIMITACIONES
 - No se realizaron llamadas HTTP funcionales ni se verificó el código actualmente desplegado en Apps Script.
 - La causa se confirma estáticamente en el contrato entre frontend y backend; la validación live queda pendiente.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — ADMIN 0: ALMACENAMIENTO Y MIGRACIÓN DE CONTRASEÑAS
+Fecha: 2026-11-05 | Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 27760cf7542028773a0b87e3a48139dc8bda9ff7
+
+ALCANCE Y RESPALDOS
+- Se revisó íntegramente Services/Auth.js (246 líneas), Services/users.js (449 líneas) y auth.js (módulo frontend de autenticación).
+- Se revisaron los bloques de users.html que crean/actualizan usuarios y cambian contraseñas, además del enrutamiento de login en api-config.js.
+- SHA originales: Services/Auth.js f47dcf75f01320eb3ce759ff5d57adeeaae122ad; Services/users.js 8a1148704175d114389d082d80f675a9718f13e8; users.html e41f402675677a4d2783493614737021ec2eade5; auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86.
+- Documentos originales: checkpoint.md cc63ab140a3314563691c8963a1472a229d60eb3; Auditoría.txt 68d66f03020ff4d1d3a6e67020acd8475997eee0; ChangesLogs.txt 30c6370596669792209f6bfb80836994c05e91aa; Tareas.txt 5164255933e596f8b1ac029167f9d97321065e9e.
+- Los blobs originales de Git sirven como respaldo exacto; no se alteraron los archivos de código durante esta auditoría.
+
+HALLAZGOS CONFIRMADOS
+1. AUTH — Services/Auth.js, líneas 147–148: handleLogin compara directamente el valor de Users.Password con la contraseña recibida; ambos valores se convierten a texto y se aplica trim(). No existe identificación de formato ni verificación de hash.
+2. USERS — Services/users.js, líneas 267–281: handleCreateUser escribe newUser.Password directamente en la columna Password.
+3. USERS — Services/users.js, líneas 333–335: handleUpdateUser escribe updates.Password directamente en la misma columna cuando el valor es truthy.
+4. USERS — Services/users.js, líneas 400–430: handleChangePassword compara el valor almacenado directamente con currentPassword y escribe newPassword sin transformación.
+5. USERS — la validación de longitud mínima de ocho caracteres existe en users.html (líneas 617–620), pero no se repite en el backend. Las validaciones del navegador no sustituyen controles del servidor.
+6. Existe una diferencia de normalización: login aplica trim() a ambos valores; changePassword compara el valor exacto. La migración debe definir una única política compatible y probar contraseñas con espacios iniciales/finales.
+7. Los servicios AUTH y USERS son proyectos Apps Script separados que comparten la hoja Users. La actualización de uno no actualiza automáticamente el otro; una migración que escriba hashes antes de que AUTH pueda verificarlos bloquearía el acceso.
+8. auth.js conserva el flujo de contraseña hacia apiLogin y guarda en localStorage el objeto de usuario devuelto; no se observó que guarde la contraseña en el objeto de sesión.
+9. handleGetUsers no incluye la columna Password en los objetos devueltos al frontend.
+10. En la versión actual de Auth.js revisada, los registros de login no serializan el payload ni los valores de contraseña. Sí registran eventos operativos, identificador de usuario y stack de errores. Esto no demuestra que los registros históricos de Logs estén limpios.
+11. El historial de ADMIN 0 indica que existe una operación de purga selectiva de registros confidenciales en FEEDBACK, pero su ejecución sobre la Spreadsheet real/copia y la conservación de registros no confidenciales siguen sin validarse desde esta sesión.
+
+RIESGOS Y DEPENDENCIAS
+- Un hash rápido sin salt, por ejemplo SHA-256 aplicado una sola vez, no constituye almacenamiento seguro de contraseñas y no debe utilizarse como sustituto.
+- No se debe escoger una función KDF ni parámetros de costo sin verificar que exista una implementación adecuada para Apps Script V8 y medir su tiempo de ejecución con el volumen real de cuentas.
+- El formato almacenado debe identificar versión, algoritmo, parámetros, salt y resultado, de forma que AUTH pueda reconocer hashes y mantener compatibilidad transitoria con registros heredados.
+- El mismo contrato de hash/verificación debe estar implementado y probado en AUTH y USERS. Deben evitarse implementaciones divergentes entre proyectos.
+- No se debe migrar la hoja productiva hasta validar una copia y contar con respaldo restaurable.
+
+DISEÑO PROPUESTO PARA LA SIGUIENTE ETAPA (NO IMPLEMENTADO)
+A. Mantener la columna Users.Password para evitar un cambio de esquema inicial y almacenar un formato versionado que identifique algoritmo, costo, salt y hash.
+B. Seleccionar una KDF de contraseñas resistente a ataques offline (preferencia por Argon2id si hay una implementación compatible y verificable; alternativamente PBKDF2-HMAC-SHA-256 con implementación revisada y parámetros medidos). No usar SHA-256 simple ni una iteración de hash.
+C. Crear una única especificación de formato y vectores de prueba compartidos por AUTH y USERS. La generación de salt debe usar un generador criptográficamente seguro.
+D. Desplegar primero AUTH con verificación dual: aceptar temporalmente el formato heredado y el formato versionado. Cuando un login heredado sea correcto, migrar esa cuenta a hash de forma segura y sin registrar el secreto.
+E. Después de validar AUTH, actualizar USERS para que creación, actualización administrativa y cambio de contraseña escriban exclusivamente el formato versionado; el cambio de contraseña debe verificar tanto registros heredados como versionados durante la transición.
+F. Para completar cuentas que no vuelvan a iniciar sesión, evaluar una migración por lotes sobre una copia de Spreadsheet. Debe ser reanudable, idempotente, limitada por lotes, protegida por LockService y sin mostrar ni exportar contraseñas. Solo después de aprobar la prueba se planificará la ejecución productiva.
+G. Definir antes de implementar la política de espacios en contraseñas. La compatibilidad de login actual equivale a comparar valores recortados; changePassword actualmente no recorta. Se propone unificar la normalización de manera compatible, pero requiere confirmación y pruebas específicas.
+H. Aplicar en backend las reglas de longitud y validación que se acuerden; no depender exclusivamente de users.html.
+I. Despliegue coordinado: AUTH compatible primero; después USERS con escritura de hashes; por último, migración por lotes de cuentas restantes si se autoriza. Probar login correcto/incorrecto, creación, actualización administrativa, cambio de contraseña, sesiones existentes y recuperación ante error.
+
+HALLAZGO FUERA DEL ALCANCE — NUEVA TAREA REGISTRADA
+- SESSION_LIMITS en Services/Auth.js declara la clave 'jefe', mientras que los privilegios visibles en el proyecto incluyen 'Gefe'. handleLogin convierte el rol a minúsculas y usa SESSION_LIMITS[userRole] || 1; por ello 'Gefe' cae al límite predeterminado de una sesión. No se modifica en esta tarea porque el límite previsto para ese rol no está confirmado. Se registra para revisión independiente en Tareas.txt.
+
+RESULTADO DE AUDITORÍA
+- Se confirma almacenamiento y comparación de contraseñas en texto claro en AUTH/USERS.
+- La migración no se implementó. No se modificaron Services/Auth.js, Services/users.js, auth.js, users.html ni api-config.js.
+- No se accedió a la Spreadsheet productiva, no se inspeccionó Logs real, no se ejecutó Apps Script ni se verificó el rendimiento de una KDF.
+- ADMIN 0 permanece abierta. La siguiente etapa requiere seleccionar/validar la KDF, confirmar normalización, disponer de una copia de prueba y autorizar expresamente la implementación.
+================================================================================

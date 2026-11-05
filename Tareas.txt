@@ -3291,3 +3291,21 @@ Estado: CORRECCIÓN ESTÁTICA IMPLEMENTADA; VALIDACIÓN LIVE PENDIENTE.
 - Pendiente: validar en live con sesión válida y roles permitidos; comprobar errores HTTP/Apps Script si persisten. No se inspeccionó Network/Console del navegador desde esta sesión.
 - No se desplegó Apps Script, no se modificó GPSpedia2.2.5 y no se realizó merge.
 ================================================================================
+
+
+================================================================================
+ADMIN 0 — AUDITORÍA Y DISEÑO DE MIGRACIÓN DE CONTRASEÑAS
+Fecha: 2026-11-05
+Estado: AUDITORÍA COMPLETADA; MIGRACIÓN NO IMPLEMENTADA.
+
+- Confirmado: AUTH compara Users.Password en texto claro.
+- Confirmado: USERS almacena contraseñas en texto claro al crear usuarios, actualizar administrativamente la contraseña y cambiar la contraseña propia.
+- Confirmado: login aplica trim() a ambos valores; changePassword compara sin trim(). Debe definirse una política compatible.
+- Diseño propuesto: formato versionado en la columna Password, KDF resistente con salt, verificación dual temporal en AUTH, actualización de todos los escritores en USERS y migración por lotes de cuentas restantes después de validar una copia.
+- No usar SHA-256 simple ni migrar la hoja productiva sin prueba, respaldo y autorización.
+- Bloqueos: seleccionar y probar KDF compatible con Apps Script V8; medir rendimiento; obtener copia de prueba; confirmar normalización de espacios; verificar Logs históricos reales.
+- No se modificó código, hoja de cálculo ni despliegues.
+
+TAREA INDEPENDIENTE REGISTRADA — REVISAR LÍMITE DE SESIONES DEL ROL GEFE
+- SESSION_LIMITS usa la clave 'jefe', pero handleLogin normaliza el rol 'Gefe' a 'gefe'. Actualmente ese rol utiliza el valor predeterminado de una sesión. Confirmar el límite esperado antes de corregirlo; fuera del alcance de la auditoría de contraseñas.
+================================================================================
