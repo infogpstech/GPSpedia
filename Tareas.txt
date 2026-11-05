@@ -3171,3 +3171,15 @@ Fecha: 2026-11-04
 - La tarea documental queda registrada en Auditoría.txt y ChangesLogs.txt.
 - ADMIN 0 continúa parcial y pendiente de las validaciones descritas en checkpoint.md.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE TAREA — ADMIN 0: REGISTROS DE CREDENCIALES EN AUTH
+Fecha: 2026-11-04
+- Auditoría del estado real de Services/Auth.js y Services/users.js realizada sobre GPSpedia2.2.5_work.
+- Se confirmó que AUTH registraba el payload completo de login y las contraseñas almacenada/recibida; también exponía Spreadsheet ID y nombres de hojas en debug.
+- Se preparó la corrección de esos registros y metadatos en AUTH. La autenticación, comparación, tokens y sesiones no se modifican.
+- Se confirmó que USERS y AUTH todavía guardan/comparan contraseñas en texto claro. La migración permanece pendiente de diseño y pruebas; no se altera la columna Password.
+- La revisión de la hoja Logs desplegada, las pruebas reales de sesión/roles y la validación de despliegues siguen pendientes por falta de acceso a esos recursos desde esta sesión.
+- ADMIN 0 permanece ABIERTA; no iniciar ADMIN 1–11.
+================================================================================

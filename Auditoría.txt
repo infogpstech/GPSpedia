@@ -2856,3 +2856,39 @@ Rama: GPSpedia2.2.5_work
 - Se estableció que el checkpoint final debe actualizarse después de las verificaciones y registros, como último paso de documentación antes del único commit de la tarea.
 - La modificación es documental; no requiere cambios en código de aplicación ni altera servicios o despliegues.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DE CONTINUIDAD — ADMIN 0: AUTH Y USERS
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Commit auditado: e53a38847daab99d73034b527a35a5768b7e404c
+Alcance: comprobar el estado real de Services/Auth.js y Services/users.js y remediar únicamente la exposición de credenciales mediante registros en AUTH.
+
+ESTADO REAL Y EVIDENCIA
+1. Services/Auth.js, doPost(): registraba request.payload completo junto con la acción. En login el payload contiene username y password, por lo que el registro podía persistir la contraseña recibida en Logs.
+2. Services/Auth.js, handleLogin(): registraba sheetPassword y password en el evento «Password comparison», exponiendo ambos valores en claro.
+3. Services/Auth.js, handleLogin(): registraba también el nombre de usuario; se elimina ese dato del evento de inicio por ser información personal innecesaria en Logs.
+4. Services/Auth.js, doGet(debug=true): exponía SPREADSHEET_ID y nombres de hojas, metadatos no necesarios para indicar disponibilidad.
+5. Services/users.js: la columna Password (3) sigue guardando directamente newUser.Password, updates.Password y newPassword. handleChangePassword compara storedPassword con currentPassword directamente. AUTH también compara el valor de la columna con la contraseña recibida mediante String(...).trim(). La persistencia y comparación continúan en texto claro.
+6. El diff del commit ed92f3a9b383c8d92f53f0ecf0fb146a37bba868 no incluye Services/Auth.js, aunque la documentación de ese commit afirmaba que había sido modificado. El contenido actual confirma que esa remediación no estaba aplicada.
+7. No se dispone desde esta conexión de acceso directo a la Spreadsheet desplegada ni a la hoja Logs. No es posible determinar si existen filas históricas con credenciales ni su periodo de retención.
+
+RIESGOS Y DEPENDENCIAS
+- Las contraseñas ya registradas en Logs, si existen, no se eliminan ni se modifican mediante esta iteración.
+- La migración de Users requiere un mecanismo de derivación de clave adecuado, formato versionado compatible con AUTH y USERS, estrategia para cuentas existentes, pruebas de rendimiento en Apps Script y plan de reversión. No se cambia la columna Password en esta iteración.
+- AUTH y USERS son despliegues independientes; cambiar el repositorio no publica automáticamente ninguno de ellos.
+- No se realizaron pruebas con cuentas reales, Spreadsheet ni endpoints desplegados.
+
+DECISIÓN DE ALCANCE
+Se corrige en AUTH el registro del payload completo, el evento que escribía contraseñas y la exposición de Spreadsheet ID/nombres de hojas en debug. No se altera la autenticación, comparación, generación de tokens, límites de sesión ni estructura de Users. El almacenamiento en texto claro permanece como bloqueo pendiente.
+
+RESPALDOS
+Se crearon blobs Git exactos previos a la edición de Services/Auth.js y de los archivos documentales que se actualizarán. No se añadieron respaldos como archivos al árbol de trabajo.
+
+VERIFICACIONES
+- Inspección estática de Services/Auth.js (237 líneas) y Services/users.js (aprox. 370 líneas), incluyendo login, creación, actualización y cambio de contraseña.
+- Se confirmó la presencia previa de los registros explícitos de contraseñas y del registro de payload.
+- Pendiente: comprobación sintáctica con runtime V8 de Apps Script y pruebas reales del endpoint AUTH después de desplegar.
+- Pendiente: inspeccionar Logs y diseñar/probar migración de contraseñas.
+================================================================================

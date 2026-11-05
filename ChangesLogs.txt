@@ -2249,3 +2249,15 @@ Rama: GPSpedia2.2.5_work
 - Archivo modificado: Tareas.txt. Se registró la incorporación de la regla y el checkpoint de continuidad.
 - No se modificó código de la aplicación, lógica funcional, endpoints ni despliegues.
 ================================================================================
+
+
+================================================================================
+ADMIN 0 — REMEDIACIÓN DE REGISTROS SENSIBLES EN AUTH
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+- Services/Auth.js, doGet(): la respuesta debug deja de devolver Spreadsheet ID y nombres de hojas; informa únicamente estado disponible.
+- Services/Auth.js, doPost(): el registro de la solicitud conserva la acción, pero deja de serializar request.payload, que contiene la contraseña durante login.
+- Services/Auth.js, handleLogin(): se elimina el registro del nombre de usuario y el evento que escribía la contraseña almacenada y la recibida en claro.
+- No se modificaron Services/users.js, el esquema de Users, la comparación de contraseñas, los tokens ni la lógica de sesiones.
+- No se accedió a la Spreadsheet, no se inspeccionó la hoja Logs y no se actualizaron despliegues Apps Script.
+================================================================================
