@@ -1,7 +1,7 @@
 # CHECKPOINT — GPSpedia
 
 **Última actualización:** 2026-11-04  
-**Estado:** corrección de purga, orden de Logs y cierre remoto de sesiones implementada en código sobre GPSpedia2.2.5_work. Pendientes despliegues AUTH/USERS y pruebas reales; ADMIN 0 continúa abierta.
+**Estado:** endpoints AUTH/USERS configurados en la rama de trabajo; USERS fue actualizado nuevamente y redeplegado manualmente por el usuario tras reportarse «Failed to fetch» al cargar usuarios. La corrección está pendiente de validación funcional. ADMIN 0 continúa abierta.
 
 ## 1. Repositorio y reglas
 
@@ -220,3 +220,51 @@ Actualizar AUTH y USERS en sus proyectos Apps Script correspondientes y ejecutar
 
 ### Estado
 Configuración actualizada en la rama de trabajo; validación funcional y confirmación de los deployments AUTH/USERS pendientes. El único commit de esta tarea queda identificado en el historial de GPSpedia2.2.5_work.
+
+
+
+## 11. Incidencia — error al cargar usuarios y nueva actualización de USERS
+
+### Estado de Git al iniciar este checkpoint
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama autorizada: `GPSpedia2.2.5_work`.
+- Rama base protegida: `GPSpedia2.2.5`.
+- HEAD verificado: `62c5b68ce5f7195f97f84851cd4c989d64e27521`.
+- Commit anterior de actualización conjunta AUTH/USERS: `4e480cb751880d1a07bcc9f48218e6911cafa5d0`.
+- El commit `62c5b68` es hijo directo de `4e480cb` y modifica únicamente `api-config.js`, actualizando nuevamente el endpoint USERS. Este commit ya existía antes de crear este checkpoint.
+- No se modificó la rama base ni se realizó merge.
+
+### Última tarea realizada y resultados
+1. Se actualizaron los endpoints AUTH y USERS en `api-config.js` en un único commit (`4e480cb`), manteniendo el mapa de acciones y los demás endpoints.
+2. Después, al intentar cargar la información de usuarios desde GPSpedia, apareció el error «Failed to fetch».
+3. El usuario comprobó que la URL de Apps Script que había pegado en el chat daba error al abrirse directamente, pero que la URL generada/mostrada por Apps Script sí funcionaba al abrirla.
+4. El usuario actualizó nuevamente el endpoint USERS, volvió a desplegar manualmente el proyecto Apps Script y actualizó el valor configurado en `api-config.js`.
+5. El nuevo endpoint quedó registrado en el commit `62c5b68ce5f7195f97f84851cd4c989d64e27521` (`Update USERS API endpoint URL`). La URL operativa completa se consulta en `api-config.js`; no se transcribe aquí.
+
+### Estado de la incidencia
+- El usuario espera comprobar si el nuevo despliegue y endpoint resuelven el problema.
+- Aún no existe confirmación de que la pantalla de usuarios cargue correctamente.
+- Abrir el endpoint en el navegador no demuestra que la solicitud POST de `getUsers` funcione desde la aplicación.
+- No se ejecutó desde esta sesión una prueba funcional ni se inspeccionó la respuesta real del deployment.
+- No atribuir «Failed to fetch» a una causa concreta sin revisar la solicitud y su respuesta; deben considerarse red, redirecciones y CORS como hipótesis por verificar.
+
+### Contexto técnico relacionado
+- En `api-config.js`, `getUsers` se enruta mediante `ACTION_TO_SERVICE_MAP` hacia `API_ENDPOINTS.USERS`.
+- `routeAction()` realiza POST con cuerpo JSON `{ action, payload }`, encabezado `Content-Type: text/plain` y `redirect: 'follow'`.
+- `resetUserSessions` también está enrutada hacia USERS.
+- En una tarea previa, `Services/users.js` fue modificado para permitir que un Desarrollador cierre las sesiones de otro usuario, con validación de sesión y rol.
+- `Services/Auth.js` fue modificado para insertar los registros nuevos de Logs en la fila 2; esta funcionalidad depende de su propio deployment AUTH.
+- Actualizar la URL en el frontend y desplegar el código de Apps Script son operaciones distintas.
+
+### Siguiente paso concreto
+1. Esperar el resultado de la prueba del usuario: volver a cargar la sección de usuarios desde GPSpedia en `GPSpedia2.2.5_work` después del redeployment manual de USERS.
+2. Si funciona, registrar la validación como resultado reportado por el usuario y no cambiar más endpoints innecesariamente.
+3. Si persiste «Failed to fetch», auditar la ruta `getUsers`: inspeccionar la solicitud POST real desde `routeAction()`, la URL efectiva después de redirecciones, la respuesta HTTP y los registros/errores del deployment USERS. Comparar la URL generada por Apps Script con la configurada, sin inferir ni construir una URL alternativa.
+4. Confirmar que el deployment activo de USERS contiene la versión requerida de `Services/users.js` y que las acciones existentes siguen enrutándose correctamente.
+5. No desplegar Apps Script, modificar otros endpoints ni hacer merge sin autorización expresa.
+
+### Reglas para continuar
+- Leer `Proceso de desarollo.md` y este checkpoint antes de iniciar la siguiente tarea.
+- Trabajar únicamente en `GPSpedia2.2.5_work`; mantener protegida `GPSpedia2.2.5`.
+- Un único commit por tarea. No crear commits vacíos ni commits intermedios; agrupar todos los cambios de la tarea en un solo commit tras completar verificaciones y registros.
+- Este checkpoint refleja el estado observado y no declara resuelta la incidencia.
