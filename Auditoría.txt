@@ -3387,3 +3387,13 @@ ALCANCE Y RIESGOS
 - No ejecutar acciones administrativas ni restauraciones; no modificar datos de Sheets/Drive.
 - No desplegar Apps Script, no modificar otros servicios y no hacer merge.
 ================================================================================
+
+
+================================================================================
+VALIDACIÓN LIVE — restoreDatabase CON ENLACE COMPLETO
+Fecha: 2026-11-05
+- El usuario confirmó que la restauración funciona al proporcionar el enlace completo de Google Sheets.
+- Se registra como validación reportada por el usuario; no se reprodujo independientemente desde este entorno.
+- La normalización en ui.js y Services/admin.js y el destino fijo SPREADSHEET_ID permanecen sin cambios.
+- No se ejecutó otra restauración ni se modificaron datos.
+================================================================================

@@ -824,3 +824,78 @@ CONTINUIDAD
 - El commit único que incorpora código y documentación quedará identificado en el historial de GPSpedia2.2.5_work.
 - Siguiente acción: comprobar la disponibilidad del endpoint ADMIN y desplegar Services/admin.js por el flujo autorizado; después validar una acción no destructiva y preparar una prueba de restoreDatabase sin sobrescribir producción.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — VALIDACIÓN LIVE DE restoreDatabase CON ENLACE COMPLETO
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 800275ccb45c3de66439b098d3ce2567d52fa11a
+HEAD de rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA Y ALCANCE
+- Registrar la confirmación del usuario de que restoreDatabase funciona al proporcionar el enlace completo de Google Sheets.
+- Cerrar la validación pendiente de aceptación del enlace completo, manteniendo diferenciada la evidencia reportada por el usuario de las verificaciones ejecutadas directamente.
+- Actualizar Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md; un único commit documental en la rama de trabajo.
+- No modificar código, endpoints, deployments ni datos.
+
+ESTADO REAL AL INICIO
+- La rama de trabajo ya contiene la normalización del enlace en ui.js y Services/admin.js, y el URL ADMIN actualizado en api-config.js.
+- El checkpoint anterior dejaba pendiente el despliegue/validación live de restoreDatabase con enlace completo.
+- El usuario acaba de confirmar: «Restaura desde enlace completo funciona».
+- La confirmación funcional procede del usuario; no se dispone de acceso directo al runtime Apps Script para reproducirla independientemente.
+- No se confirmó una copia independiente de Spreadsheet para pruebas.
+
+ARCHIVOS Y FUNCIONALIDADES INVOLUCRADOS
+- Auditoría.txt: registrar la evidencia y alcance de la validación reportada.
+- ChangesLogs.txt: registrar el cambio de estado documental.
+- Tareas.txt: cerrar la tarea de aceptar enlace completo.
+- checkpoint.md: conservar historial y actualizar continuidad.
+
+RESPALDOS Y RIESGOS
+- Blobs originales previos a esta actualización: checkpoint.md f7e8da3e5d2d9a03962f155ff00b26b6122f5f68; Auditoría.txt d07dfc89d5e7172acd97a4193c0124a7eea46385; ChangesLogs.txt 4194607ff67d5e5c37795ba7a72a76ef083edcd4; Tareas.txt 7306c5564d160e80cc23ab6e493246a81b297efc.
+- No ejecutar otra restauración; no modificar datos de Sheets/Drive.
+- No desplegar Apps Script, no alterar código y no hacer merge.
+
+FASE AL CREAR ESTE CHECKPOINT
+- Inicio documentado antes de auditar y actualizar los registros de validación.
+================================================================================
+
+
+================================================================================
+CIERRE DE TAREA — VALIDACIÓN LIVE DE restoreDatabase CON ENLACE COMPLETO
+Fecha: 2026-11-05
+Estado: IMPLEMENTACIÓN Y VALIDACIÓN LIVE CONFIRMADAS POR EL USUARIO; REGISTROS ACTUALIZADOS.
+
+RESULTADO
+- El usuario confirmó que restoreDatabase funciona al ingresar el enlace completo de Google Sheets.
+- Se cierra el pendiente de validación live tras la normalización de ui.js y Services/admin.js.
+- SPREADSHEET_ID continúa siendo el destino fijo; el enlace completo corresponde al respaldo de origen.
+- La confirmación se atribuye al usuario. No se reprodujo la restauración independientemente desde este entorno.
+
+ARCHIVOS MODIFICADOS
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+VERIFICACIONES Y REVISIÓN
+- Se revisó la entrada pendiente de Tareas.txt y se sustituyó por el estado confirmado.
+- Code Review documental: causa, solución, destino, fuente de validación y límites se mantienen coherentes.
+- No se modificó código ni configuración.
+- No se ejecutó otra restauración ni se alteraron datos de Sheets/Drive.
+
+VALIDACIONES Y LIMITACIONES
+- El funcionamiento live del enlace completo fue confirmado expresamente por el usuario.
+- No se obtuvo registro técnico independiente de la ejecución desde este entorno.
+- No se confirmó una copia independiente de Spreadsheet para pruebas; no se debe asumir que existe.
+- No se realizó despliegue adicional en esta actualización documental.
+- No se realizó merge; la rama base protegida permanece intacta.
+
+CONTINUIDAD
+- HEAD anterior a esta tarea: 800275ccb45c3de66439b098d3ce2567d52fa11a.
+- El commit único de esta actualización documental queda identificado en el historial de GPSpedia2.2.5_work.
+- Siguiente acción: continuar con la siguiente tarea pendiente de GPSpedia, sin repetir la corrección ni la prueba del enlace completo salvo que aparezca una nueva incidencia.
+================================================================================

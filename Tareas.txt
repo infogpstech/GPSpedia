@@ -3399,14 +3399,15 @@ Estado: CAMBIOS ESTÁTICOS IMPLEMENTADOS; VALIDACIÓN DE DEPLOYMENTS PENDIENTE.
 
 
 ================================================================================
-TAREA — ACEPTAR ENLACE COMPLETO DE GOOGLE SHEETS EN RESTORE DATABASE
-Fecha: 2026-11-05 | Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; PRUEBA LIVE DEL ENLACE PENDIENTE.
+TAREA COMPLETADA — ACEPTAR ENLACE COMPLETO DE GOOGLE SHEETS EN restoreDatabase
+Fecha: 2026-11-05 | Estado: IMPLEMENTACIÓN Y VALIDACIÓN LIVE CONFIRMADAS POR EL USUARIO.
 
 - Causa: ui.js enviaba la URL completa como backupId y handleRestoreDatabase() la pasaba sin normalizar a DriveApp.getFileById().
-- Se implementó normalización en frontend y backend. La restauración de base de datos acepta ID limpio o enlace completo de Google Sheets.
-- El destino sigue siendo el configurado mediante SPREADSHEET_ID en Services/admin.js.
-- La prueba anterior con ID limpio confirmó la creación y restauración del respaldo.
-- Pendiente: desplegar Services/admin.js con autorización y probar enlace completo en live. No se desplegó ni se ejecutó restauración durante esta tarea.
+- Se implementó normalización en frontend y backend. La restauración acepta ID limpio o enlace completo de Google Sheets.
+- El destino continúa siendo el configurado mediante SPREADSHEET_ID en Services/admin.js.
+- El usuario confirmó que la restauración funciona al proporcionar el enlace completo en la plataforma live.
+- La validación live se registra como confirmación del usuario; no se reprodujo independientemente desde este entorno.
+- No se ejecutó otra restauración durante esta actualización documental ni se modificaron datos.
 ================================================================================
 
 

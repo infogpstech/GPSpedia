@@ -2501,3 +2501,13 @@ VALIDACIÓN Y ALCANCE
 - No se ejecutaron solicitudes HTTP ni pruebas funcionales contra el deployment.
 - No se desplegó Apps Script, no se modificaron datos productivos y no se realizó merge.
 ================================================================================
+
+
+================================================================================
+VALIDACIÓN LIVE — RESTORE DATABASE CON ENLACE COMPLETO
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+- Tareas.txt: se actualiza la entrada de restoreDatabase porque el usuario confirmó que funciona al ingresar el enlace completo de Google Sheets.
+- checkpoint.md: se actualiza el estado y la continuidad, atribuyendo la confirmación al usuario.
+- Auditoría.txt: se registra el resultado y el alcance de la validación.
+- No se modificó código fuente ni configuración; no se ejecutó otra restauración, no se alteraron datos ni se realizó despliegue adicional.
+================================================================================
