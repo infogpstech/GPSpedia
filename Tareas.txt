@@ -3408,3 +3408,15 @@ Fecha: 2026-11-05 | Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; PRUEBA LIVE DE
 - La prueba anterior con ID limpio confirmó la creación y restauración del respaldo.
 - Pendiente: desplegar Services/admin.js con autorización y probar enlace completo en live. No se desplegó ni se ejecutó restauración durante esta tarea.
 ================================================================================
+
+
+================================================================================
+TAREA COMPLETADA — ACTUALIZAR URL DEL SERVICIO ADMIN
+Fecha: 2026-11-05
+Estado: CONFIGURACIÓN ESTÁTICA ACTUALIZADA; VALIDACIÓN DEL DEPLOYMENT PENDIENTE.
+
+- api-config.js: reemplazado exclusivamente el valor de API_ENDPOINTS.ADMIN por el URL proporcionado.
+- Se conservaron los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() y las funciones existentes.
+- Pendiente: comprobar disponibilidad del endpoint y validar las acciones ADMIN en la plataforma live; confirmar por separado que el deployment contiene la versión actual de Services/admin.js.
+- No se desplegó Apps Script, no se ejecutaron acciones de respaldo/restauración, no se modificaron datos productivos y no se realizó merge.
+================================================================================

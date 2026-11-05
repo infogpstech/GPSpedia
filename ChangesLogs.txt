@@ -2482,3 +2482,22 @@ ARCHIVO: Services/admin.js
 
 No se modificaron restoreDrive, api-config.js, endpoints, hojas de cálculo ni deployments.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE URL — SERVICIO ADMIN
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVO MODIFICADO: api-config.js
+- Línea 15: se sustituyó únicamente el URL de API_ENDPOINTS.ADMIN por el endpoint completo proporcionado por el usuario.
+
+COMPARACIÓN
+- La comparación antes/después detectó exactamente una línea modificada: 15.
+- No se modificaron los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() ni las funciones auxiliares.
+
+VALIDACIÓN Y ALCANCE
+- Se comprobó que el URL nuevo aparece exactamente una vez y que el URL anterior fue sustituido.
+- La revisión estática confirma que las acciones ADMIN continúan enrutándose al servicio ADMIN.
+- No se ejecutaron solicitudes HTTP ni pruebas funcionales contra el deployment.
+- No se desplegó Apps Script, no se modificaron datos productivos y no se realizó merge.
+================================================================================

@@ -749,3 +749,78 @@ CONTINUIDAD
 - El commit único de esta tarea incluye código y documentación.
 - Siguiente acción: desplegar Services/admin.js según el flujo habitual, con autorización del usuario, y probar el enlace completo en restoreDatabase.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — ACTUALIZACIÓN DE URL ADMIN
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: e5c49b1d320c84545f516cc82484fdb2da9c99e8
+HEAD de rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA Y ALCANCE
+- Sustituir exclusivamente API_ENDPOINTS.ADMIN en api-config.js por el URL nuevo proporcionado por el usuario.
+- Mantener intactos los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() y funciones auxiliares.
+- Actualizar Auditoría.txt, ChangesLogs.txt, Tareas.txt y este checkpoint.
+- Agrupar todos los cambios en un único commit sobre GPSpedia2.2.5_work; no modificar la rama base ni hacer merge.
+
+ESTADO REAL AL INICIO
+- api-config.js centraliza los endpoints en API_ENDPOINTS.
+- ADMIN está declarado una sola vez y sus acciones administrativas se enrutan mediante ACTION_TO_SERVICE_MAP.
+- La corrección reciente de restoreDatabase en Services/admin.js está en la rama de trabajo, pero su validación live requiere el deployment ADMIN actualizado.
+- No se confirmó una copia independiente de la Spreadsheet para pruebas.
+- No se ha desplegado Apps Script ni se han modificado datos productivos en esta tarea.
+
+ARCHIVOS Y FUNCIONALIDADES INVOLUCRADOS
+- api-config.js: valor API_ENDPOINTS.ADMIN.
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md: registros obligatorios.
+
+RESPALDO Y RIESGOS
+- Respaldo exacto previo de api-config.js: blob Git b5f0d5eaf2353dd9c593b0864e9416efbcb996d5.
+- La actualización de URL no despliega el proyecto Apps Script ni valida por sí sola su disponibilidad.
+- No se ejecutarán operaciones administrativas, no se alterarán hojas de cálculo y no se realizará merge.
+
+FASE AL CREAR EL CHECKPOINT
+- Estado inicial documentado antes de la auditoría y de la edición.
+================================================================================
+
+
+================================================================================
+CIERRE DE TAREA — ACTUALIZACIÓN DE URL ADMIN
+Fecha: 2026-11-05
+Estado: CAMBIO ESTÁTICO COMPLETADO; VALIDACIÓN LIVE Y DESPLIEGUE ADMIN PENDIENTES.
+
+RESULTADO
+- api-config.js: API_ENDPOINTS.ADMIN contiene ahora el URL completo proporcionado por el usuario.
+- Las acciones administrativas continúan asignadas al servicio ADMIN mediante ACTION_TO_SERVICE_MAP.
+- No se modificaron otros endpoints, el mapa de acciones, routeAction() ni funciones auxiliares.
+
+ARCHIVOS MODIFICADOS
+- api-config.js
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+VERIFICACIONES REALIZADAS
+- Auditoría completa estática de api-config.js, incluyendo configuración, mapa de acciones, router y helpers.
+- Se confirmó una coincidencia única para el valor anterior y se sustituyó por el URL nuevo.
+- Comparación post-edición: exactamente una línea modificada en api-config.js (línea 15).
+- Se comprobó que las acciones ADMIN siguen mapeadas al servicio ADMIN.
+- Revisión de documentación: entradas de auditoría, cambios, tareas y checkpoint limitadas al alcance solicitado.
+
+VALIDACIONES PENDIENTES Y LIMITACIONES
+- No se ejecutaron solicitudes HTTP ni pruebas funcionales contra el endpoint.
+- No se desplegó Services/admin.js ni se confirmó que el deployment ADMIN activo contenga la corrección de restoreDatabase.
+- No se ejecutaron acciones administrativas, respaldos ni restauraciones.
+- No se modificaron datos de Google Sheets/Drive.
+- No se confirmó una copia independiente de Spreadsheet para pruebas.
+- No se realizó merge; la rama base protegida permanece intacta.
+
+CONTINUIDAD
+- HEAD anterior a esta tarea: e5c49b1d320c84545f516cc82484fdb2da9c99e8.
+- El commit único que incorpora código y documentación quedará identificado en el historial de GPSpedia2.2.5_work.
+- Siguiente acción: comprobar la disponibilidad del endpoint ADMIN y desplegar Services/admin.js por el flujo autorizado; después validar una acción no destructiva y preparar una prueba de restoreDatabase sin sobrescribir producción.
+================================================================================

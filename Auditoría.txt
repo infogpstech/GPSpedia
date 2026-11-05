@@ -3362,3 +3362,28 @@ RIESGOS Y DECISIÓN
 - La prueba live anterior confirmó ID limpio; la URL completa requiere despliegue y validación posterior.
 - No se confirmó una Spreadsheet independiente de pruebas.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — ACTUALIZACIÓN DE URL ADMIN
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work | HEAD inicial: e5c49b1d320c84545f516cc82484fdb2da9c99e8
+
+ARCHIVO AUDITADO
+- api-config.js (170 líneas): revisión completa de API_ENDPOINTS, ACTION_TO_SERVICE_MAP, routeAction() y helpers exportados.
+
+HALLAZGOS
+1. API_ENDPOINTS es la fuente central de los URL de servicios; ADMIN aparece una sola vez en la configuración (línea 15).
+2. ACTION_TO_SERVICE_MAP dirige ping y las acciones administrativas (incluida backupDatabase, restoreDatabase, backupDrive y las demás acciones ADMIN) al servicio ADMIN (líneas 28 y 29, respectivamente).
+3. routeAction() obtiene targetUrl desde API_ENDPOINTS[service], envía la acción y el payload mediante POST y no contiene un URL ADMIN independiente.
+4. No se requiere modificar el mapa de acciones, routeAction(), helpers ni otros endpoints.
+5. El cambio del URL de frontend no despliega el proyecto Apps Script ni garantiza que el deployment destino contenga la versión más reciente de Services/admin.js.
+
+RESPALDO
+- Archivo original conservado como blob Git: b5f0d5eaf2353dd9c593b0864e9416efbcb996d5.
+- La comparación post-edición se limitará al valor API_ENDPOINTS.ADMIN.
+
+ALCANCE Y RIESGOS
+- Sustituir exclusivamente API_ENDPOINTS.ADMIN por el URL proporcionado.
+- No ejecutar acciones administrativas ni restauraciones; no modificar datos de Sheets/Drive.
+- No desplegar Apps Script, no modificar otros servicios y no hacer merge.
+================================================================================
