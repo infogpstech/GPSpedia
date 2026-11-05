@@ -1080,3 +1080,43 @@ Estado: PREPARACIÓN DE CÓDIGO COMPLETADA; VALIDACIÓN FUNCIONAL BLOQUEADA HAST
 - HEAD anterior a la tarea: 8a9c9811bc954785f36966997bc1564a1fb3feac.
 - El commit único que incorpora las fuentes y la documentación queda identificado en el historial de GPSpedia2.2.5_work.
 ================================================================================
+
+
+---
+
+# CHECKPOINT DE CIERRE — INTEGRAR RECHAZO DE NOMBRES DUPLICADOS EN USERS
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama:** GPSpedia2.2.5_work
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD inicial de la tarea:** da0affc4e52b533644a94f1876e08ca0e137533f
+
+## Resultado de implementación
+- Services/users.js: sustituido handleCreateUser() por la versión funcionalmente probada en Services/Test/users.js.
+- Eliminada generateUniqueUsername(), que quedó sin referencias.
+- No se modificó SPREADSHEET_ID ni ningún otro handler.
+- No se modificaron users.html, api-config.js, AUTH ni otros servicios.
+
+## Verificaciones estáticas
+- La función integrada handleCreateUser() coincide exactamente con la versión probada.
+- Las otras 15 funciones compartidas de USERS permanecen idénticas.
+- Los segmentos del archivo original anteriores, intermedios y posteriores a las dos modificaciones se conservaron exactamente.
+- La respuesta de duplicado se emite antes de generar hash o escribir datos.
+- LockService permanece activo durante la validación y la escritura.
+- Se conserva el ID original de Spreadsheet.
+- api-config.js maneja status:'error' del backend convirtiéndolo en error de aplicación; no requiere cambios.
+- No se ejecutó Apps Script, no se desplegó y no se modificaron datos de Sheets.
+
+## Estado
+**IMPLEMENTACIÓN Y REVISIÓN ESTÁTICA COMPLETADAS; COMMIT ÚNICO PENDIENTE DE PUBLICACIÓN.**
+
+## Archivos previstos en el único commit
+- Services/users.js
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+## Siguiente acción
+Crear un único commit con los cinco archivos, cuyo padre debe ser da0affc4e52b533644a94f1876e08ca0e137533f. Verificar el nuevo HEAD y la lista de archivos del commit. No crear commits individuales por archivo.

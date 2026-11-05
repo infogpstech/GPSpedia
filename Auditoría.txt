@@ -3492,3 +3492,45 @@ HEAD auditado: 8a9c9811bc954785f36966997bc1564a1fb3feac
 - Confirmar que todos los cambios de las pruebas permanecen en la Spreadsheet de pruebas.
 - No se realizó ninguna llamada HTTP, despliegue Apps Script ni escritura en Sheets durante esta auditoría.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — INTEGRAR RECHAZO DE NOMBRES DE USUARIO DUPLICADOS EN USERS
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD inicial: da0affc4e52b533644a94f1876e08ca0e137533f
+
+1. ARCHIVOS Y RESPALDOS
+- Services/users.js: 495 líneas; blob original de respaldo: aa8960e188e71c46fa481829283d5c0c189b7ed8.
+- Services/Test/users.js en GPSpedia2.2.5_auth-users-test: blob de referencia: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6.
+- users.html: 715 líneas; blob original de respaldo: e41f402675677a4d2783493614737021ec2eade5.
+- api-config.js: 170 líneas; blob original de respaldo: f7aca3504f19ac50c47e2cfe0a6a5651bb97743e.
+- Se revisaron los archivos completos, las funciones compartidas y la ruta de creación en frontend/enrutador.
+
+2. HALLAZGOS
+- La función original handleCreateUser() generaba el hash y llamaba a generateUniqueUsername(), que transformaba nombres a minúsculas, reemplazaba espacios por puntos y agregaba sufijos numéricos.
+- La versión de prueba normaliza el nuevo nombre con trim(), consulta nombres existentes desde la fila 2 y compara ambos valores después de trim().toLowerCase().
+- Si hay coincidencia, devuelve status:'error' con «Ese nombre de usuario no está disponible» antes de generar el hash o escribir una fila.
+- Si no hay coincidencia, conserva el nombre ingresado tras trim() y mantiene la escritura existente.
+- La versión de prueba elimina generateUniqueUsername() por quedar sin referencias.
+- El usuario confirmó funcionalmente en el entorno de prueba el rechazo de duplicados y la creación de nombres disponibles.
+
+3. DEPENDENCIAS Y EFECTOS
+- LockService continúa envolviendo validación, lectura de duplicados y escritura, evitando que dos altas concurrentes del mismo proyecto pasen simultáneamente la comprobación.
+- Se mantienen getVerifiedSession(), validación de permisos, createPasswordHash(), columnas, copia de fila, fórmula/ID heredado y respuesta de éxito.
+- api-config.js convierte status:'error' en Error de aplicación. No requiere modificación.
+- users.html conserva el flujo postToAction() de alta. No requiere modificación.
+- No se identificaron referencias restantes a generateUniqueUsername().
+
+4. ALCANCE Y RIESGOS
+- Comparación de nombres no sensible a mayúsculas/minúsculas y tolerante a espacios externos.
+- No se agregan validaciones nuevas para nombres vacíos ni reglas de caracteres.
+- Se conserva SPREADSHEET_ID original. No modificar AUTH, frontend, endpoints, otros handlers ni esquema.
+- No se despliega Apps Script ni se ejecutan escrituras en Sheets.
+
+5. DECISIÓN
+- Integrar exactamente handleCreateUser() de la versión de prueba.
+- Eliminar generateUniqueUsername().
+- Mantener intactos los segmentos restantes de Services/users.js. Se verifica la igualdad exacta de los segmentos anteriores, intermedios y posteriores a las dos modificaciones.
+================================================================================

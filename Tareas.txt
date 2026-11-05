@@ -3453,3 +3453,17 @@ Estado: FUENTES AISLADAS PREPARADAS; DEPLOYMENTS Y VALIDACIÓN FUNCIONAL PENDIEN
 - Pendiente: crear los proyectos/deployments aislados AUTH-TEST y USERS-TEST, verificar que ambos utilizan el ID de pruebas y proporcionar sus URLs para ejecutar la matriz funcional de ADMIN 0.
 - No se ejecutó Apps Script, no se modificaron datos de ninguna Spreadsheet, no se desplegó ningún servicio y no se realizó merge.
 ================================================================================
+
+
+================================================================================
+TAREA — INTEGRAR RECHAZO DE NOMBRES DE USUARIO DUPLICADOS EN USERS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN PREPARADA; PENDIENTE DE COMMIT ÚNICO Y VERIFICACIÓN FINAL.
+- Integrar en Services/users.js el comportamiento de handleCreateUser() validado en Services/Test/users.js.
+- Rechazar nombres existentes ignorando mayúsculas/minúsculas y espacios externos, antes de generar hash o escribir una fila.
+- Conservar el nombre ingresado tras trim() cuando esté disponible.
+- Eliminar generateUniqueUsername() por quedar sin referencias.
+- Mantener el ID original de Spreadsheet, LockService, sesión, permisos, hash, estructura de fila y demás handlers.
+- No modificar AUTH, users.html, api-config.js, otros servicios, endpoints ni deployments.
+- No se ha desplegado Apps Script ni se han ejecutado escrituras en Sheets.
+================================================================================

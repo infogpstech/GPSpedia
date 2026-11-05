@@ -283,7 +283,6 @@ function handleCreateUser(payload) {
 
     try {
         const { role: creatorRole } = getVerifiedSession(sessionToken);
-        const passwordHash = createPasswordHash(newUser.Password);
         const userSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
 
         const allowedRoles = {
@@ -296,8 +295,19 @@ function handleCreateUser(payload) {
             throw new Error(`El rol '${creatorRole}' no tiene permisos para crear usuarios de tipo '${newUser.Privilegios}'.`);
         }
 
-        const newUsername = generateUniqueUsername(userSheet, newUser.Nombre_Usuario);
+        const newUsername = String(newUser.Nombre_Usuario || '').trim();
         const lastRow = userSheet.getLastRow();
+        const existingUsernames = lastRow > 1
+            ? userSheet.getRange(2, COLS_USERS.Nombre_Usuario, lastRow - 1, 1).getValues().flat()
+            : [];
+        const usernameExists = existingUsernames.some(username =>
+            String(username || '').trim().toLowerCase() === newUsername.toLowerCase()
+        );
+        if (usernameExists) {
+            return { status: 'error', message: 'Ese nombre de usuario no está disponible' };
+        }
+
+        const passwordHash = createPasswordHash(newUser.Password);
         const newRowNumber = lastRow + 1;
         const lastColumn = userSheet.getLastColumn();
 
@@ -480,15 +490,4 @@ function handleChangePassword(payload) {
 // FUNCIONES AUXILIARES
 // ============================================================================
 
-function generateUniqueUsername(sheet, fullname) {
-    let username = String(fullname).trim().toLowerCase().replace(/\s+/g, '.');
-    let finalUsername = username;
-    let counter = 1;
-    const usernames = sheet.getRange(2, COLS_USERS.Nombre_Usuario, sheet.getLastRow() -1, 1).getValues().flat();
 
-    while (usernames.includes(finalUsername)) {
-        finalUsername = `${username}${counter}`;
-        counter++;
-    }
-    return finalUsername;
-}

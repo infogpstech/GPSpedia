@@ -2543,3 +2543,16 @@ CONFIGURACIÓN QUE PERMANECE SIN CAMBIOS
 - api-config.js y los endpoints actualmente utilizados por la plataforma.
 - No se modificaron hojas, datos ni deployments Apps Script.
 ================================================================================
+
+
+================================================================================
+CHANGE LOG — RECHAZAR NOMBRES DE USUARIO DUPLICADOS EN USERS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+ARCHIVO MODIFICADO: Services/users.js
+- handleCreateUser(): normaliza Nombre_Usuario con trim() y consulta los nombres existentes antes de generar el hash o escribir una fila.
+- La comparación recorta espacios externos y convierte ambos nombres a minúsculas; una coincidencia devuelve status:'error' con el mensaje «Ese nombre de usuario no está disponible».
+- Cuando el nombre está disponible, conserva el nombre ingresado tras trim() y mantiene el flujo de hash, copia de fila y escritura.
+- Se eliminó generateUniqueUsername(), que quedó sin referencias.
+- Se conservan el SPREADSHEET_ID original, LockService, verificación de sesión, permisos, columnas y demás handlers.
+- No se modificaron users.html, api-config.js, AUTH ni otros archivos de código.
+================================================================================
