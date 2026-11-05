@@ -98,7 +98,7 @@ export function showSavingIndicator(status, message = "") {
 async function saveFieldSilently(vehicleId, fieldName, value) {
     showSavingIndicator("saving", "Guardando...");
     try {
-        await routeAction('updateVehicleField', { vehicleId, fieldName, value });
+        await routeAction('updateVehicleField', { vehicleId, fieldName, value, ...getDeveloperSessionPayload() });
         showSavingIndicator("success", "Guardado correctamente");
     } catch (e) {
         console.error(`Error guardando silenciosamente el campo ${fieldName}:`, e);
@@ -191,6 +191,7 @@ function convertImageToEditable(imgElement, vehicleId, fieldName) {
                     showSavingIndicator("processing", "Subiendo imagen...");
                     try {
                         const res = await routeAction('uploadAdminImage', {
+                            ...getDeveloperSessionPayload(),
                             vehicleId: vehicleId,
                             fileData: base64Data,
                             filename: file.name || `${fieldName}_${Date.now()}.png`,
@@ -2430,7 +2431,7 @@ function createPysCard(item, originModal = null, vehicleToUnlink = null, onUnlin
                 const res = await routeAction('removeVehicleFromProblem', {
                     problemId: item.id_problem || item.id,
                     vehicleId: vehicleToUnlink.id,
-                    userRole
+                    ...getCurrentSessionPayload()
                 });
                 if (res && res.status === 'success') {
                     cardWrapper.remove();
@@ -2512,7 +2513,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             // Tarjeta para agregar o vincular problema sin borde discontinuo
             const addPysCard = document.createElement("div");
             addPysCard.className = "card card-create-pys-assoc";
-            addPysCard.style.cssText = "width: 140px; height: 180px; padding: 10px; margin: 0;";
+            addPysCard.style.cssText = "width: 140px; height: 120px; padding: 10px; margin: 0;";
             addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
             addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
             singleCardContainer.appendChild(addPysCard);
@@ -2535,7 +2536,7 @@ export function renderPosiblesProblemasAccordion(container, activeItem, navOptio
             // Tarjeta al final del carrusel para agregar o vincular problema
             const addPysCard = document.createElement("div");
             addPysCard.className = "card card-create-pys-assoc";
-            addPysCard.style.cssText = "flex: 0 0 140px; height: 180px; padding: 10px; margin-right: 20px;";
+            addPysCard.style.cssText = "flex: 0 0 140px; height: 120px; padding: 10px; margin-right: 20px;";
             addPysCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 2rem; margin-bottom: 8px;"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Problema</span>`;
             addPysCard.onclick = () => openAssociateExistingProblemModal(activeItem);
             carouselTrack.appendChild(addPysCard);
@@ -2973,7 +2974,7 @@ export const openDashboard = setupModal('dashboard-modal', async () => {
     logContainer.innerHTML = '<tr><td colspan="4">Cargando actividad...</td></tr>';
 
     try {
-        const result = await getActivityLogs();
+        const result = await getActivityLogs(getCurrentSessionPayload());
         if (result.status === 'success') {
             logContainer.innerHTML = '';
             result.data.forEach(log => {
@@ -3001,7 +3002,7 @@ export const openInbox = setupModal('inbox-modal', async () => {
     detailContainer.innerHTML = '<p>Selecciona un item para ver los detalles.</p>';
 
     try {
-        const result = await getFeedbackItems();
+        const result = await getFeedbackItems(getCurrentSessionPayload());
 
         if (result.status === 'success') {
             const data = result.data || result.messages || result.items || [];
@@ -3162,7 +3163,7 @@ function initAdminPanelListeners() {
             log(`Enviando comando administrativo '${action}' al servidor...`);
             setProgress(5);
             try {
-                const res = await routeAction(action, payload);
+                const res = await routeAction(action, { ...payload, ...getDeveloperSessionPayload() });
                 setProgress(50);
                 if (res.status === 'success') {
                     if (res.logs) {
@@ -3240,7 +3241,7 @@ ${elapsedSec}s
             loopCount++;
             log(`[LOTE] Ejecutando lote ${loopCount}...`);
             try {
-                const res = await routeAction(action, { limit, reset: payload.reset, processId });
+                const res = await routeAction(action, { limit, reset: payload.reset, processId, ...getDeveloperSessionPayload() });
                 if (res.status === 'success') {
                     if (res.logs) {
                         await playLogs(res.logs);
@@ -3440,7 +3441,8 @@ ${elapsedSec}s
             const res = await routeAction('driveCommand', {
                 command: cmd,
                 args: args,
-                currentFolderId: currentTerminalFolderId
+                currentFolderId: currentTerminalFolderId,
+                ...getDeveloperSessionPayload()
             });
 
             if (res && res.status === 'success') {
@@ -3685,7 +3687,7 @@ ${elapsedSec}s
                 try {
                     clearLogsBtn.disabled = true;
                     log(`Iniciando purga de logs de actividad (Conservar última semana: ${keepLastWeek ? 'Sí' : 'No'})...`);
-                    const res = await clearActivityLogs(keepLastWeek);
+                    const res = await clearActivityLogs(keepLastWeek, getCurrentSessionPayload());
                     if (res && res.status === 'success') {
                         log(`[EXITO] ${res.message}`);
                         mostrarNotificacion(res.message, 'success');
@@ -3767,6 +3769,21 @@ ${elapsedSec}s
     }
 }
 
+function getCurrentSessionPayload() {
+    const currentUser = getState().currentUser;
+    if (!currentUser || !currentUser.ID || !currentUser.SessionToken) {
+        throw new Error("No se encontró una sesión autenticada válida. Vuelve a iniciar sesión.");
+    }
+    return {
+        userId: currentUser.ID,
+        sessionToken: currentUser.SessionToken
+    };
+}
+
+function getDeveloperSessionPayload() {
+    return getCurrentSessionPayload();
+}
+
 /**
  * TAREA 2: Modal de Gestión y Recuperación de Imágenes Reemplazadas
  */
@@ -3787,11 +3804,11 @@ export async function openReplacedImagesModal() {
     const loadData = async () => {
         listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Consultando imágenes históricas en Drive...</div>';
         try {
-            const res = await routeAction('getReplacedImages');
+            const res = await routeAction('getReplacedImages', getDeveloperSessionPayload());
             cachedReplaced = (res && res.data) ? res.data : [];
             renderList(filterInput ? filterInput.value : '');
         } catch (err) {
-            listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error al cargar repositorio histórico: ${err.message}</div>`;
+            listContainer.textContent = `Error al cargar repositorio histórico: ${err.message}`;
         }
     };
 
@@ -3822,17 +3839,34 @@ export async function openReplacedImagesModal() {
 
             const info = document.createElement('div');
             info.style.cssText = "flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem;";
-            info.innerHTML = `
-                <div style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rep.referencia_texto || 'Registro ' + rep.registro_id}</div>
-                <div style="font-size: 0.8rem; color: var(--text-disabled);"><strong>Archivo:</strong> ${rep.nombre_archivo} | <strong>Campo:</strong> ${rep.campo}</div>
-                <div style="font-size: 0.75rem; color: var(--text-disabled);"><strong>ID Drive:</strong> <code>${rep.archivo_drive_id}</code> | <strong>Fecha:</strong> ${rep.fecha_reemplazo}</div>
-                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : (rep.estado === 'eliminada' ? '#dc3545' : '#007bff')};">Estado: ${rep.estado}</div>
-            `;
+            const title = document.createElement('div');
+            title.style.cssText = "font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
+            title.textContent = rep.referencia_texto || `Registro ${rep.registro_id}`;
+
+            const fileDetails = document.createElement('div');
+            fileDetails.style.cssText = "font-size:0.8rem; color:var(--text-disabled);";
+            fileDetails.textContent = `Archivo: ${rep.nombre_archivo || ''} | Campo: ${rep.campo || ''}`;
+
+            const driveDetails = document.createElement('div');
+            driveDetails.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
+            driveDetails.textContent = `ID Drive: ${rep.archivo_drive_id || ''} | Fecha: ${rep.fecha_reemplazo || ''}`;
+
+            const statusDetails = document.createElement('div');
+            statusDetails.style.cssText = "font-size:0.75rem; font-weight:600;";
+            statusDetails.style.color = rep.estado === 'restablecida' ? '#28a745' :
+                (['eliminada', 'en_papelera'].includes(rep.estado) ? '#dc3545' :
+                (rep.estado === 'cancelada' ? '#6c757d' : '#007bff'));
+            statusDetails.textContent = `Estado: ${rep.estado || 'historica'}`;
+
+            info.appendChild(title);
+            info.appendChild(fileDetails);
+            info.appendChild(driveDetails);
+            info.appendChild(statusDetails);
 
             const btnContainer = document.createElement('div');
             btnContainer.style.cssText = "display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;";
 
-            if (rep.estado !== 'eliminada') {
+            if (rep.estado !== 'cancelada') {
                 const recoverBtn = document.createElement('button');
                 recoverBtn.className = "btn btn-primary";
                 recoverBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; white-space: nowrap;";
@@ -3842,7 +3876,7 @@ export async function openReplacedImagesModal() {
                     recoverBtn.disabled = true;
                     recoverBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
                     try {
-                        const recRes = await routeAction('recoverReplacedImage', { id_reemplazo: rep.id_reemplazo });
+                        const recRes = await routeAction('recoverReplacedImage', { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo });
                         if (recRes && recRes.status === 'success') {
                             mostrarNotificacion("Imagen histórica restablecida con éxito.", "success");
                             loadData();
@@ -3855,27 +3889,29 @@ export async function openReplacedImagesModal() {
                 };
                 btnContainer.appendChild(recoverBtn);
 
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = "btn btn-danger";
-                deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
-                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
-                deleteBtn.onclick = async () => {
-                    if (!confirm(`¿Estás seguro de que deseas ELIMINAR permanentemente esta imagen histórica de Google Drive? Esta acción no se puede deshacer.`)) return;
-                    deleteBtn.disabled = true;
-                    deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                    try {
-                        const delRes = await routeAction('deleteReplacedImage', { id_reemplazo: rep.id_reemplazo });
-                        if (delRes && delRes.status === 'success') {
-                            mostrarNotificacion("Imagen eliminada de forma segura.", "success");
-                            loadData();
+                if (rep.estado !== 'en_papelera' && rep.estado !== 'eliminada') {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.className = "btn btn-danger";
+                    deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
+                    deleteBtn.onclick = async () => {
+                        if (!confirm(`¿Enviar esta imagen histórica a la papelera de Google Drive? Podrá recuperarse desde la papelera de Drive.`)) return;
+                        deleteBtn.disabled = true;
+                        deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                        try {
+                            const delRes = await routeAction('deleteReplacedImage', { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo });
+                            if (delRes && delRes.status === 'success') {
+                                mostrarNotificacion("Imagen enviada a la papelera de Google Drive.", "success");
+                                loadData();
+                            }
+                        } catch (e) {
+                            alert("No se pudo enviar la imagen a la papelera: " + e.message);
+                            deleteBtn.disabled = false;
+                            deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
                         }
-                    } catch (e) {
-                        alert("Eliminación bloqueada: " + e.message);
-                        deleteBtn.disabled = false;
-                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
-                    }
-                };
-                btnContainer.appendChild(deleteBtn);
+                    };
+                    btnContainer.appendChild(deleteBtn);
+                }
             }
 
             card.appendChild(img);
@@ -3904,61 +3940,114 @@ export async function openAuditDriveModal() {
 
     const summaryEl = document.getElementById('audit-drive-summary');
     const container = document.getElementById('audit-drive-results-container');
+    const auditButton = document.getElementById('btn-admin-audit-drive-images');
+    const allFiles = [];
+    let cursor = null;
+    let complete = false;
+    let unverifiableReferences = 0;
 
-    summaryEl.innerHTML = 'Iniciando exploración recursiva del árbol «Cortes»...';
-    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol en Google Drive...</div>';
+    summaryEl.innerHTML = `
+        <div style="background:var(--card-bg); padding:10px; border-radius:6px; border:1px solid var(--border-color); display:flex; gap:15px; flex-wrap:wrap;">
+            <span>📁 <strong>Carpeta raíz:</strong> <span id="audit-root-name">Cortes</span> (<code id="audit-root-id"></code>)</span>
+            <span>📊 <strong>Total analizados:</strong> <span id="audit-total-count">0</span></span>
+            <span style="color:#28a745;">✅ <strong>En uso:</strong> <span id="audit-in-use-count">0</span></span>
+            <span style="color:#007bff;">🕒 <strong>Históricas:</strong> <span id="audit-historical-count">0</span></span>
+            <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> <span id="audit-unused-count">0</span></span>
+            <span style="color:#dc3545;">❓ <strong>No verificables:</strong> <span id="audit-unverified-count">0</span></span>
+            <span><strong>Referencias no interpretables:</strong> <span id="audit-unknown-references">0</span></span>
+            <span id="audit-status" style="font-weight:600;">Iniciando auditoría por lotes...</span>
+        </div>
+    `;
+    container.innerHTML = '';
+    const auditStatusEl = document.getElementById('audit-status');
+    const auditTotalEl = document.getElementById('audit-total-count');
+    const auditRootNameEl = document.getElementById('audit-root-name');
+    const auditRootIdEl = document.getElementById('audit-root-id');
+    if (auditButton) auditButton.disabled = true;
+
+    const appendFiles = (files) => {
+        files.forEach(file => {
+            const row = document.createElement('div');
+            row.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px; border:1px solid var(--border-color); border-radius:6px; font-size:0.8rem; background:var(--card-bg);";
+
+            const info = document.createElement('div');
+            info.style.cssText = "min-width:0; flex:1;";
+            const name = document.createElement('div');
+            name.style.cssText = "font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
+            name.textContent = file.fileName || 'Archivo sin nombre';
+
+            const details = document.createElement('div');
+            details.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
+            details.textContent = `${file.folderPath || ''} | ${((Number(file.size) || 0) / 1024).toFixed(1)} KB | ${file.lastUpdated || 'Fecha no disponible'}`;
+
+            info.appendChild(name);
+            info.appendChild(details);
+
+            const badge = document.createElement('span');
+            badge.style.cssText = "padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;";
+            const badgeColors = {
+                'En uso': '#28a745',
+                'Histórica': '#007bff',
+                'Sin uso detectado': '#e0a800',
+                'No verificable': '#dc3545'
+            };
+            badge.style.backgroundColor = badgeColors[file.classification] || '#6c757d';
+            badge.style.color = '#fff';
+            badge.textContent = file.classification || 'No verificable';
+
+            row.appendChild(info);
+            row.appendChild(badge);
+            container.appendChild(row);
+        });
+    };
 
     try {
-        const res = await routeAction('auditDriveImagesInCortes');
-        if (res && res.status === 'success') {
-            const files = res.files || [];
-            const inUseCount = files.filter(f => f.classification === 'En uso').length;
-            const histCount = files.filter(f => f.classification === 'Histórica').length;
-            const unusedCount = files.filter(f => f.classification === 'Sin uso detectado').length;
-            const unverifiedCount = files.filter(f => f.classification === 'No verificable').length;
+        do {
+            const res = await routeAction('auditDriveImagesInCortes', {
+                ...getDeveloperSessionPayload(),
+                cursor: cursor
+            });
 
-            summaryEl.innerHTML = `
-                <div style="background: var(--card-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; gap: 15px; flex-wrap: wrap;">
-                    <span>📁 <strong>Carpeta Raíz:</strong> ${res.rootFolderName} (<code>${res.rootFolderId}</code>)</span>
-                    <span>📊 <strong>Total Analizados:</strong> ${res.totalAnalyzed}</span>
-                    <span style="color:#28a745;">✅ <strong>En uso:</strong> ${inUseCount}</span>
-                    <span style="color:#007bff;">🕒 <strong>Históricas:</strong> ${histCount}</span>
-                    <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> ${unusedCount}</span>
-                    <span style="color:#dc3545;">❓ <strong>No verificables:</strong> ${unverifiedCount}</span>
-                </div>
-            `;
-
-            container.innerHTML = '';
-            if (files.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron archivos en la carpeta analizada.</div>';
-                return;
+            if (!res || res.status !== 'success' || !Array.isArray(res.files)) {
+                throw new Error(res && res.message ? res.message : 'Respuesta inválida del servicio de auditoría.');
             }
 
-            files.forEach(f => {
-                const row = document.createElement('div');
-                row.style.cssText = "display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.8rem; background: var(--card-bg);";
+            allFiles.push(...res.files);
+            appendFiles(res.files);
+            complete = res.complete === true;
+            cursor = res.cursor || null;
+            unverifiableReferences = Math.max(unverifiableReferences, Number(res.unverifiableReferenceCount) || 0);
 
-                let badgeColor = "#28a745";
-                if (f.classification === 'Histórica') badgeColor = "#007bff";
-                else if (f.classification === 'Sin uso detectado') badgeColor = "#e0a800";
-                else if (f.classification === 'No verificable') badgeColor = "#dc3545";
+            auditTotalEl.textContent = String(allFiles.length);
+            auditStatusEl.textContent = `Auditoría en progreso: ${allFiles.length} archivos analizados. Estado: ${complete ? 'completa' : 'parcial, continuando'}.`;
+            if (res.rootFolderName) auditRootNameEl.textContent = res.rootFolderName;
+            if (res.rootFolderId) auditRootIdEl.textContent = res.rootFolderId;
 
-                row.innerHTML = `
-                    <div style="min-width:0; flex:1;">
-                        <div style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${f.fileName}</div>
-                        <div style="font-size:0.75rem; color:var(--text-disabled);">${f.folderPath} | ${(f.size / 1024).toFixed(1)} KB | ${f.lastUpdated}</div>
-                    </div>
-                    <span style="background:${badgeColor}; color:white; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;">
-                        ${f.classification}
-                    </span>
-                `;
-                container.appendChild(row);
-            });
-        } else {
-            container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error: ${res ? res.message : 'Error desconocido'}</div>`;
+            if (!complete && !cursor) {
+                throw new Error('El servicio devolvió un resultado parcial sin cursor de continuación.');
+            }
+        } while (!complete);
+
+        const inUseCount = allFiles.filter(file => file.classification === 'En uso').length;
+        const histCount = allFiles.filter(file => file.classification === 'Histórica').length;
+        const unusedCount = allFiles.filter(file => file.classification === 'Sin uso detectado').length;
+        const unverifiedCount = allFiles.filter(file => file.classification === 'No verificable').length;
+
+        auditTotalEl.textContent = String(allFiles.length);
+        document.getElementById('audit-in-use-count').textContent = String(inUseCount);
+        document.getElementById('audit-historical-count').textContent = String(histCount);
+        document.getElementById('audit-unused-count').textContent = String(unusedCount);
+        document.getElementById('audit-unverified-count').textContent = String(unverifiedCount);
+        document.getElementById('audit-unknown-references').textContent = String(unverifiableReferences);
+        auditStatusEl.textContent = 'Auditoría COMPLETA del árbol «Cortes».';
+        if (allFiles.length === 0) {
+            container.textContent = 'No se encontraron archivos en la carpeta analizada.';
         }
     } catch (err) {
-        container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Excepción en auditoría: ${err.message}</div>`;
+        auditTotalEl.textContent = String(allFiles.length);
+        auditStatusEl.textContent = `AUDITORÍA PARCIAL: se analizaron ${allFiles.length} archivos, pero no se confirmó la cobertura completa. Ejecuta nuevamente la auditoría para iniciar un recorrido nuevo. Detalle: ${err.message}`;
+    } finally {
+        if (auditButton) auditButton.disabled = false;
     }
 }
 
@@ -4197,7 +4286,7 @@ export function renderInboxDetail(item) {
                 try {
                     approveVideoBtn.disabled = true;
                     approveVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aprobando...`;
-                    await approveVideo(item.id, userName, userRole);
+                    await approveVideo(item.id, userName, userRole, getCurrentSessionPayload());
                     inboxCacheData = null;
                     mostrarNotificacion("Vídeo aprobado con éxito.", "success");
                     openInbox();
@@ -4218,7 +4307,7 @@ export function renderInboxDetail(item) {
                 try {
                     rejectVideoBtn.disabled = true;
                     rejectVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rechazando...`;
-                    await rejectVideo(item.id, userName, reason, userRole);
+                    await rejectVideo(item.id, userName, reason, userRole, getCurrentSessionPayload());
                     inboxCacheData = null;
                     mostrarNotificacion("Vídeo rechazado.", "info");
                     openInbox();
@@ -4246,7 +4335,7 @@ export function renderInboxDetail(item) {
         }
         try {
             replyBtn.classList.add('btn-loading');
-            await replyToFeedback(item.id, item.type, replyText, userName);
+            await replyToFeedback(item.id, item.type, replyText, userName, getCurrentSessionPayload());
             openInbox();
         } catch (error) {
             showGlobalError(`Error al enviar respuesta: ${error.message}`);
@@ -4260,7 +4349,7 @@ export function renderInboxDetail(item) {
         resolveBtn.addEventListener('click', async () => {
              try {
                 resolveBtn.classList.add('btn-loading');
-                await markAsResolved(item.id);
+                await markAsResolved(item.id, getCurrentSessionPayload());
                 inboxCacheData = null;
                 openInbox();
             } catch (error) {
@@ -4278,7 +4367,7 @@ export function renderInboxDetail(item) {
                 try {
                     deleteBtn.disabled = true;
                     deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...`;
-                    await deleteFeedbackItem(item.id, item.type);
+                    await deleteFeedbackItem(item.id, item.type, getCurrentSessionPayload());
                     inboxCacheData = null;
                     mostrarNotificacion("Mensaje eliminado con éxito", "success");
                     openInbox();
@@ -4822,18 +4911,22 @@ export function showApp(user) {
     }
 
     const devToolsBtn = document.getElementById('dev-tools-btn');
-    const userRole = user ? user.Privilegios : '';
-    if (devToolsBtn && userRole === 'Desarrollador') {
-        devToolsBtn.style.display = 'flex';
+    const userRole = String((user && user.Privilegios) || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .toLowerCase();
+    if (devToolsBtn) {
+        devToolsBtn.style.display = userRole === 'desarrollador' ? 'flex' : 'none';
     }
 
     const inboxBtn = document.getElementById('inbox-btn');
-    if (inboxBtn && ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole)) {
+    if (inboxBtn && ['desarrollador', 'gefe', 'supervisor'].includes(userRole)) {
         inboxBtn.style.display = 'flex';
     }
 
     const dashboardBtn = document.getElementById('dashboard-btn');
-    if (dashboardBtn && ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole)) {
+    if (dashboardBtn && ['desarrollador', 'gefe', 'supervisor'].includes(userRole)) {
         dashboardBtn.style.display = 'flex';
     }
 
@@ -5181,7 +5274,7 @@ export function mostrarDetalleTutorialModal(item, inEditModeTutorial = false) {
                         tema: newTema,
                         videoUrl: newVideo,
                         descripcion: newDesc,
-                        userRole
+                        ...getCurrentSessionPayload()
                     });
                     if (res && res.status === 'success') {
                         item.Tema = newTema;
@@ -6955,7 +7048,7 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
         try {
             let lastUpdatedList = [...alreadyAssociatedIds];
             for (const vId of newlySelectedIds) {
-                const res = await routeAction('addVehicleToProblem', { problemId, vehicleId: vId });
+                const res = await routeAction('addVehicleToProblem', { problemId, vehicleId: vId, ...getCurrentSessionPayload() });
                 if (res && res.status === 'success' && res.modelosAsociados) {
                     lastUpdatedList = res.modelosAsociados;
                 } else {
@@ -7230,7 +7323,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
                         solucion: newSol,
                         prevenir: newPrev,
                         videoUrl: newVideo,
-                        userRole
+                        ...getCurrentSessionPayload()
                     });
                     if (res && res.status === 'success') {
                         item.Problema = newTitle;
@@ -7337,7 +7430,19 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
         const renderTrackVehicles = (cortesList) => {
             track.innerHTML = "";
             const cortes = Array.isArray(cortesList) ? cortesList : [];
-            const modelosAsociadosIds = Array.isArray(item.modelosAsociados) ? item.modelosAsociados : [];
+            let modelosAsociadosIds = [];
+            if (Array.isArray(item.modelosAsociados)) {
+                modelosAsociadosIds = item.modelosAsociados;
+            } else if (typeof item.modelosAsociados === 'string' && item.modelosAsociados.trim()) {
+                const rawModelos = item.modelosAsociados.trim();
+                try {
+                    const parsedModelos = JSON.parse(rawModelos);
+                    if (Array.isArray(parsedModelos)) modelosAsociadosIds = parsedModelos;
+                } catch (e) {}
+                if (modelosAsociadosIds.length === 0) {
+                    modelosAsociadosIds = rawModelos.split(/[,\/\\;]+/).map(id => id.trim()).filter(Boolean);
+                }
+            }
             const canEditPys = userRole === 'Desarrollador';
 
             modelosAsociadosIds.forEach(vId => {
@@ -7371,7 +7476,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
                             const res = await routeAction('removeVehicleFromProblem', {
                                 problemId: item.id_problem,
                                 vehicleId: v.id,
-                                userRole
+                                ...getCurrentSessionPayload()
                             });
                             if (res && res.status === 'success') {
                                 item.modelosAsociados = res.modelosAsociados || item.modelosAsociados.filter(id => String(id) !== String(v.id));
@@ -7392,7 +7497,7 @@ export function openPysDetailModal(item, navOptions = {}, inEditModePys = false)
             // Tarjeta «+ Agregar» al final del carrusel disponible para todos los usuarios (Estandarización visual sin bordes discontinuos)
             const addCard = document.createElement("div");
             addCard.className = "card card-create-vehicle-assoc";
-            addCard.style.cssText = "flex: 0 0 140px; height: 180px; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: var(--card-bg, #fff); flex-shrink: 0;";
+            addCard.style.cssText = "flex: 0 0 140px; height: 120px; padding: 10px; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); background: var(--card-bg, #fff); flex-shrink: 0;";
             addCard.innerHTML = `<i class="fa-solid fa-plus" style="font-size: 1.8rem; margin-bottom: 8px; color: var(--accent-color, #007bff);"></i> <span style="font-size: 0.85rem; font-weight: 600; text-align: center;">Agregar Modelo</span>`;
             addCard.onclick = () => {
                 openSearchVehicleForPysAssociationModal(item.id_problem, (updatedList) => {
@@ -7657,17 +7762,31 @@ export function exportVehiclePrintSheet(item) {
 
     const title = `${item.marca || ''} ${item.modelo || ''} (${item.anoDesde || ''}${item.anoHasta ? ' - ' + item.anoHasta : ''})`;
 
-    // 1. Recopilar datos de cortes (Excluyendo colaboradores y utilidad según Requisito 5)
+    // 1. Recopilar los cortes conservando sus datos originales y el criterio de prioridad de la vista de detalle.
     const cuts = [];
-    if (item.tipoCorte1 || item.ubicacionCorte1 || item.imgCorte1) {
-        cuts.push({ num: 1, tipo: item.tipoCorte1, ub: item.ubicacionCorte1, color: item.colorCableCorte1, relay: item.configRelay1, img: item.imgCorte1, activaTestigo: item.utilCorte1 === 'x' || String(item.tipoCorte1).toLowerCase().includes('testigo') });
+    for (let i = 1; i <= 3; i++) {
+        if (item[`tipoCorte${i}`] || item[`ubicacionCorte${i}`] || item[`imgCorte${i}`]) {
+            cuts.push({
+                num: i,
+                tipo: item[`tipoCorte${i}`],
+                ub: item[`ubicacionCorte${i}`],
+                color: item[`colorCableCorte${i}`],
+                relay: item[`configRelay${i}`],
+                img: item[`imgCorte${i}`],
+                util: parseInt(item[`utilCorte${i}`] || 0),
+                activaTestigo: item[`utilCorte${i}`] === 'x' || String(item[`tipoCorte${i}`] || '').toLowerCase().includes('testigo')
+            });
+        }
     }
-    if (item.tipoCorte2 || item.ubicacionCorte2 || item.imgCorte2) {
-        cuts.push({ num: 2, tipo: item.tipoCorte2, ub: item.ubicacionCorte2, color: item.colorCableCorte2, relay: item.configRelay2, img: item.imgCorte2, activaTestigo: item.utilCorte2 === 'x' });
-    }
-    if (item.tipoCorte3 || item.ubicacionCorte3 || item.imgCorte3) {
-        cuts.push({ num: 3, tipo: item.tipoCorte3, ub: item.ubicacionCorte3, color: item.colorCableCorte3, relay: item.configRelay3, img: item.imgCorte3, activaTestigo: item.utilCorte3 === 'x' });
-    }
+
+    // El detalle existente ordena los cortes por votos y toma el primero como recomendado.
+    // Si ese primer corte está marcado explícitamente como "No recomendado", se conserva el orden técnico original.
+    const rankedCuts = cuts.filter(c => c.tipo).sort((a, b) => b.util - a.util);
+    const rankedFirstCut = rankedCuts[0] || null;
+    const recommendedCut = rankedFirstCut && !isNoRecomendadoValue(rankedFirstCut.tipo) ? rankedFirstCut : null;
+    const cutsForPrint = recommendedCut
+        ? [recommendedCut, ...cuts.filter(c => c !== recommendedCut)]
+        : cuts;
 
     // 2. Cables de alimentación
     const feeds = [];
@@ -7681,81 +7800,91 @@ export function exportVehiclePrintSheet(item) {
         feeds.push({ title: 'Alimentación Auxiliar', desc: item.cableAlimen3, img: item.imgCableAlimen3 });
     }
 
-    // Calcular densidad de contenido para ajuste dinámico de página
-    const totalItems = cuts.length + feeds.length + (item.apertura || item.imgApertura ? 1 : 0);
-    const isSingleOrLowDensity = totalItems <= 2;
-    const isHighDensity = totalItems >= 4;
-
-    // 3. Generación de HTML de cortes con aviso de testigo al pie y distribución vertical (Requisitos 1.1, 2.2, 4.1, 5)
-    const cutsHtml = cuts.map(c => {
-        const safeImg = c.img ? getImageUrl(c.img, IMG_SIZE_LARGE) : '';
-        return `
-        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
-            <div class="tech-item-header">Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}</div>
-            <div class="tech-item-body">
-                <div class="tech-item-info">
-                    <p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
-                    <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
-                    <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>
-                </div>
-                ${safeImg ? `
-                <div class="tech-item-img-wrapper">
-                    <img src="${safeImg}" alt="Corte #${c.num}" class="tech-detail-img" />
-                </div>` : ''}
-            </div>
-            ${c.activaTestigo ? `
-            <div class="testigo-aviso">
-                <i class="fa-solid fa-triangle-exclamation"></i> Este corte activa el testigo de motor
-            </div>` : ''}
-        </div>
-        `;
-    }).join('');
-
-    // 4. HTML de cables de alimentación
-    const feedsHtml = feeds.map(f => {
-        const safeImg = f.img ? getImageUrl(f.img, IMG_SIZE_LARGE) : '';
-        return `
-        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
-            <div class="tech-item-header">${f.title}</div>
-            <div class="tech-item-body">
-                <div class="tech-item-info">
-                    <p>${f.desc || 'Conexión estándar'}</p>
-                </div>
-                ${safeImg ? `
-                <div class="tech-item-img-wrapper">
-                    <img src="${safeImg}" alt="${f.title}" class="tech-detail-img" />
-                </div>` : ''}
-            </div>
-        </div>
-        `;
-    }).join('');
-
     // 5. HTML de imagen principal del vehículo
     const vehiculoImgHtml = item.imagenVehiculo ? `
         <div class="vehicle-main-img"><img src="${getImageUrl(item.imagenVehiculo, IMG_SIZE_LARGE)}" alt="${title}" /></div>
     ` : '';
 
     // 6. Apertura de puertas
-    const aperturaHtml = (item.apertura || item.imgApertura) ? `
-        <div class="tech-item-card ${isSingleOrLowDensity ? 'card-expanded' : (isHighDensity ? 'card-compact' : '')}">
-            <div class="tech-item-header">Apertura de Puertas / Seguros</div>
+    const aperturaItem = (item.apertura || item.imgApertura) ? {
+        title: 'Apertura de Puertas / Seguros',
+        desc: item.apertura || 'Instrucciones registradas',
+        img: item.imgApertura,
+        kind: 'apertura'
+    } : null;
+
+    // 7. Preparar tarjetas técnicas como unidades indivisibles para permitir su reorganización visual.
+    const techItems = [];
+    cutsForPrint.forEach(c => {
+        techItems.push({
+            kind: 'cut',
+            num: c.num,
+            title: `Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}`,
+            infoHtml: `<p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
+                       <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
+                       <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>`,
+            img: c.img,
+            alt: `Corte #${c.num}`,
+            extraHtml: c.activaTestigo ? `
+                <div class="testigo-aviso">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Este corte activa el testigo de motor
+                </div>` : '',
+            isRecommended: c === recommendedCut
+        });
+    });
+    feeds.forEach(f => {
+        techItems.push({
+            kind: 'feed',
+            title: f.title,
+            infoHtml: `<p>${f.desc || 'Conexión estándar'}</p>`,
+            img: f.img,
+            alt: f.title,
+            extraHtml: '',
+            isRecommended: false
+        });
+    });
+    if (aperturaItem) {
+        techItems.push({
+            kind: aperturaItem.kind,
+            title: aperturaItem.title,
+            infoHtml: `<p>${aperturaItem.desc}</p>`,
+            img: aperturaItem.img,
+            alt: aperturaItem.title,
+            extraHtml: '',
+            isRecommended: false
+        });
+    }
+
+    const techItemsHtml = techItems.map((entry, index) => {
+        const safeImg = entry.img ? getImageUrl(entry.img, IMG_SIZE_LARGE) : '';
+        return `
+        <div class="tech-item-card ${safeImg ? 'has-image' : 'text-only'}"
+             data-tech-kind="${entry.kind}"
+             data-priority-cut="${entry.kind === 'cut' && (entry.isRecommended || (!recommendedCut && entry.num === 1)) ? 'true' : 'false'}"
+             data-recommended-cut="${entry.isRecommended ? 'true' : 'false'}"
+             data-original-order="${index}">
+            <div class="tech-item-header">
+                ${entry.isRecommended ? '<span class="recommended-cut-label">Corte recomendado</span>' : ''}
+                ${entry.title}
+            </div>
             <div class="tech-item-body">
-                <div class="tech-item-info">
-                    <p>${item.apertura || 'Instrucciones registradas'}</p>
-                </div>
-                ${item.imgApertura ? `
+                <div class="tech-item-info">${entry.infoHtml}${entry.extraHtml || ''} </div>
+                ${safeImg ? `
                 <div class="tech-item-img-wrapper">
-                    <img src="${getImageUrl(item.imgApertura, IMG_SIZE_LARGE)}" alt="Apertura" class="tech-detail-img" />
+                    <img src="${safeImg}" alt="${entry.alt}" class="tech-detail-img" />
                 </div>` : ''}
             </div>
         </div>
-    ` : '';
+        `;
+    }).join('');
 
     // 7. Notas técnicas importantes
     const notasHtml = item.notaImportante ? `
-        <div class="tech-notes">
-            <strong>Nota técnica importante:</strong> ${item.notaImportante}
-        </div>
+        <tr class="meta-note-row">
+            <td colspan="4">
+                <div class="tech-notes"><strong>Nota técnica importante:</strong> ${item.notaImportante}</div>
+            </td>
+        </tr>
     ` : '';
 
     // 8. Código QR exclusivo para vídeo guía de desarme (Requisito 6)
@@ -7782,7 +7911,7 @@ export function exportVehiclePrintSheet(item) {
             <style>
                 @page {
                     size: 216mm 279mm portrait;
-                    margin: 4mm 6mm;
+                    margin: 5mm;
                 }
                 * { box-sizing: border-box; }
                 body {
@@ -7795,13 +7924,22 @@ export function exportVehiclePrintSheet(item) {
                     background: #fff;
                 }
                 .sheet-page-wrapper {
-                    min-height: 980px;
+                    height: auto;
+                    min-height: 269mm;
+                    max-height: none;
                     display: flex;
                     flex-direction: column;
-                    justify-content: space-between;
+                    break-after: page;
+                    page-break-after: always;
+                    overflow: visible;
+                }
+                .sheet-page-wrapper:last-child {
+                    break-after: auto;
+                    page-break-after: auto;
                 }
                 .sheet-content-main {
-                    flex: 1;
+                    flex: 1 1 auto;
+                    min-height: 0;
                     display: flex;
                     flex-direction: column;
                     justify-content: flex-start;
@@ -7920,22 +8058,85 @@ export function exportVehiclePrintSheet(item) {
                     padding-bottom: 2px;
                 }
                 .tech-grid {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 6px;
+                    display: grid;
+                    grid-template-columns: repeat(2, max-content);
+                    grid-auto-rows: max-content;
+                    align-items: start;
+                    justify-content: start;
+                    gap: 4px;
+                    min-width: 0;
                 }
-                .tech-item-card {
-                    border: 1px solid #dcdcdc;
-                    border-radius: 4px;
-                    background: #fafafa;
-                    padding: 4px 8px;
+                .adaptive-tech-grid.layout-single,
+                .adaptive-tech-grid.layout-pair-portrait,
+                .adaptive-tech-grid.layout-pair-landscape,
+                .adaptive-tech-grid.layout-triple-portrait,
+                .adaptive-tech-grid.layout-mosaic {
+                    grid-template-columns: repeat(2, max-content);
+                    justify-content: start;
+                    align-items: start;
+                    grid-auto-rows: max-content;
+                    gap: 4px;
+                }
+                .adaptive-tech-grid > .tech-item-card.text-only {
+                    grid-column: 1 / -1;
+                }
+                .sheet-page-wrapper .tech-detail-img {
+                    max-height: 520px;
+                }
+                .adaptive-image-row,
+                .adaptive-image-mosaic {
+                    display: grid;
+                    align-items: stretch;
+                    gap: 8px;
+                    min-width: 0;
+                    break-inside: avoid;
                     page-break-inside: avoid;
                 }
-                .tech-item-card.card-expanded {
-                    padding: 6px 10px;
+                .adaptive-image-row {
+                    grid-template-columns: minmax(0, 1fr);
                 }
-                .tech-item-card.card-compact {
-                    padding: 3px 6px;
+                .adaptive-single-image-row {
+                    width: 50%;
+                    max-width: 50%;
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+                .adaptive-compact-image-row {
+                    width: 80%;
+                    max-width: 80%;
+                    margin-left: auto;
+                    margin-right: auto;
+                }
+                .tech-item-card {
+                    min-width: 0;
+                    width: fit-content;
+                    max-width: 100%;
+                    border: 1px solid #dcdcdc;
+                    border-radius: 3px;
+                    background: #fafafa;
+                    padding: 3px 4px;
+                    page-break-inside: avoid;
+                    break-inside: avoid;
+                    justify-self: start;
+                    align-self: start;
+                }
+                .tech-item-card.has-image {
+                    padding: 3px 4px;
+                }
+                .recommended-cut-label {
+                    display: inline-block;
+                    margin-right: 6px;
+                    padding: 2px 5px;
+                    border-radius: 3px;
+                    background: #e7f1ff;
+                    color: #0056b3;
+                    font-size: 9px;
+                    text-transform: uppercase;
+                    letter-spacing: 0.2px;
+                }
+                .tech-item-card.has-image,
+                .tech-item-card.text-only {
+                    padding: 3px 4px;
                 }
                 .tech-item-header {
                     font-weight: bold;
@@ -7945,68 +8146,196 @@ export function exportVehiclePrintSheet(item) {
                     border-bottom: 1px dashed #e0e0e0;
                     padding-bottom: 1px;
                 }
-                .card-compact .tech-item-header {
-                    font-size: 11px;
-                    margin-bottom: 2px;
-                    padding-bottom: 1px;
-                }
                 .tech-item-body {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: stretch;
-                    gap: 10px;
+                    display: grid;
+                    grid-template-columns: max-content;
+                    grid-auto-rows: max-content;
+                    align-items: start;
+                    justify-items: start;
+                    gap: 3px;
+                    min-width: 0;
                 }
                 .tech-item-info {
-                    flex: 0 0 25%;
-                    max-width: 25%;
-                    width: 25%;
+                    flex: 1 1 auto;
+                    max-width: 100%;
+                    width: 100%;
+                    min-width: 0;
                     overflow-wrap: break-word;
                     word-break: break-word;
                     display: flex;
                     flex-direction: column;
-                    justify-content: center;
+                    justify-content: flex-start;
                 }
                 .tech-item-info p {
                     margin: 1px 0;
                     font-size: 10.5px;
                     line-height: 1.2;
                 }
-                .card-compact .tech-item-info p {
-                    margin: 0.5px 0;
-                    font-size: 10px;
-                    line-height: 1.15;
-                }
                 .tech-item-img-wrapper {
-                    flex: 1 1 75%;
-                    max-width: 75%;
-                    max-height: 250px;
                     display: flex;
-                    align-items: center;
-                    justify-content: flex-end;
-                }
-                .card-expanded .tech-item-img-wrapper {
-                    max-height: 320px;
-                }
-                .card-compact .tech-item-img-wrapper {
-                    max-height: 170px;
+                    align-items: flex-start;
+                    justify-content: flex-start;
+                    min-width: 0;
+                    width: fit-content;
+                    max-width: 100%;
+                    max-height: none;
+                    margin: 0;
                 }
                 .tech-detail-img {
-                    max-width: 100%;
-                    max-height: 240px;
+                    display: block;
                     width: auto;
+                    height: auto;
+                    max-width: 100%;
+                    max-height: 520px;
                     object-fit: contain;
-                    border-radius: 4px;
+                    object-position: center;
+                    border-radius: 2px;
                     border: 1px solid #ccc;
+                    margin: 0;
                 }
-                .card-expanded .tech-detail-img {
-                    max-height: 310px;
+                .adaptive-tech-grid > .tech-item-card.text-only {
+                    width: 100%;
                 }
-                .card-compact .tech-detail-img {
-                    max-height: 165px;
+                body[data-print-layout="horizontal"] .adaptive-tech-grid {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    justify-content: stretch;
+                    gap: 4px;
                 }
+                body[data-print-layout="horizontal"] .adaptive-tech-grid > .tech-item-card {
+                    width: 100%;
+                    max-width: 100%;
+                }
+                body[data-print-layout="horizontal"] .tech-item-body {
+                    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+                    align-items: start;
+                    column-gap: 4px;
+                }
+                body[data-print-layout="horizontal"] .tech-item-info {
+                    width: auto;
+                    max-width: none;
+                }
+                body[data-print-layout="horizontal"] .tech-item-img-wrapper {
+                    width: 100%;
+                    max-width: 100%;
+                    align-self: center;
+                }
+                body[data-print-layout="vertical"] .adaptive-tech-grid,
+                body[data-print-layout="image-focus"] .adaptive-tech-grid {
+                    grid-template-columns: max-content;
+                    justify-content: start;
+                    gap: 4px;
+                }
+                body[data-print-layout="vertical"] .tech-item-body,
+                body[data-print-layout="image-focus"] .tech-item-body {
+                    grid-template-columns: minmax(0, 1fr);
+                    align-items: stretch;
+                }
+                body[data-print-layout="vertical"] .tech-item-card,
+                body[data-print-layout="image-focus"] .tech-item-card {
+                    width: fit-content;
+                    max-width: 100%;
+                }
+                body[data-print-layout="vertical"] .tech-item-info,
+                body[data-print-layout="image-focus"] .tech-item-info {
+                    width: 100%;
+                    max-width: 100%;
+                }
+                body[data-print-layout="vertical"] .tech-item-img-wrapper,
+                body[data-print-layout="image-focus"] .tech-item-img-wrapper {
+                    width: 100%;
+                    max-width: 100%;
+                    max-height: none;
+                    justify-content: center;
+                }
+                body[data-print-layout="image-focus"] .tech-detail-img {
+                    max-height: 620px;
+                }
+                .adaptive-tech-grid.layout-single { grid-template-columns: max-content; }
+                .adaptive-tech-grid.layout-single > .tech-item-card { width: fit-content; max-width: 100%; }
+                .adaptive-tech-grid.layout-single .tech-item-img-wrapper { width: fit-content; max-width: 100%; margin: 0 auto; }
+                body[data-print-layout="image-focus"] .adaptive-tech-grid.layout-single .tech-item-img-wrapper { width: fit-content; max-width: 100%; }
+                .adaptive-tech-grid.layout-pair-portrait { grid-template-columns: repeat(2, max-content); align-items: start; }
+                .adaptive-tech-grid.layout-pair-landscape { grid-template-columns: max-content; align-items: start; }
+                .adaptive-tech-grid.layout-triple-portrait { grid-template-columns: repeat(3, max-content); align-items: start; gap: 3px; }
+                .adaptive-tech-grid.layout-mosaic { grid-template-columns: repeat(2, max-content); align-items: start; }
+                body[data-print-layout="image-focus"] .adaptive-tech-grid .tech-detail-img { max-height: 620px; }
+
+                /* Límites finales para que cada grupo permanezca dentro del área imprimible. */
+                .sheet-page-wrapper .adaptive-tech-grid {
+                    width: 100%;
+                    max-width: 100%;
+                    grid-template-columns: minmax(0, 1fr);
+                    justify-content: stretch;
+                }
+                .sheet-page-wrapper .adaptive-tech-grid.layout-single {
+                    grid-template-columns: minmax(0, 1fr);
+                }
+                .sheet-page-wrapper .adaptive-tech-grid.layout-pair-portrait,
+                .sheet-page-wrapper .adaptive-tech-grid.layout-mosaic {
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                }
+                .sheet-page-wrapper .adaptive-tech-grid.layout-pair-landscape {
+                    grid-template-columns: minmax(0, 1fr);
+                }
+                .sheet-page-wrapper .adaptive-tech-grid.layout-triple-portrait {
+                    grid-template-columns: repeat(3, minmax(0, 1fr));
+                }
+                .sheet-page-wrapper .adaptive-tech-grid > .tech-item-card,
+                .sheet-page-wrapper .adaptive-tech-grid > .tech-item-card.text-only {
+                    width: 100%;
+                    max-width: 100%;
+                    min-width: 0;
+                    box-sizing: border-box;
+                    justify-self: stretch;
+                    align-self: stretch;
+                }
+                .sheet-page-wrapper .tech-item-body {
+                    width: 100%;
+                    max-width: 100%;
+                    min-width: 0;
+                    box-sizing: border-box;
+                    grid-template-columns: minmax(0, 1fr);
+                    justify-items: stretch;
+                }
+                body[data-print-layout="horizontal"] .sheet-page-wrapper .tech-item-body {
+                    grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
+                    justify-items: stretch;
+                }
+                .sheet-page-wrapper .tech-item-img-wrapper {
+                    width: 100%;
+                    max-width: 100%;
+                    min-width: 0;
+                    box-sizing: border-box;
+                    justify-content: center;
+                }
+                /* La altura máxima se calcula por página en arrangeTechnicalCards(), según el espacio restante. */
+                .sheet-page-wrapper .tech-detail-img {
+                    display: block;
+                    width: auto;
+                    height: auto;
+                    max-width: 100%;
+                    max-height: 520px;
+                    object-fit: contain;
+                }
+                .meta-note-row > td {
+                    padding: 4px 6px;
+                    border-top: 1px solid #ffeeba;
+                }
+                .meta-note-row .tech-notes {
+                    margin: 0;
+                    padding: 4px 6px;
+                    border: 0;
+                    border-radius: 0;
+                    font-size: 11px;
+                    line-height: 1.25;
+                }
+                .top-grid { align-items: start; }
+                .vehicle-main-img img { height: auto; max-height: 105px; object-fit: contain; }
+                .qr-video-box { min-width: 0; align-self: start; }
+                .qr-code-img { width: 80px; max-width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: contain; }
                 /* Aviso de testigo al pie del corte (Requisito 4.1) */
                 .testigo-aviso {
-                    margin-top: 12px;
+                    margin-top: 6px;
                     font-size: 11px;
                     font-weight: bold;
                     color: #b78103;
@@ -8027,46 +8356,76 @@ export function exportVehiclePrintSheet(item) {
                     page-break-inside: avoid;
                 }
                 .footer-bar {
-                    margin-top: 18px;
-                    font-size: 11px;
+                    flex: 0 0 auto;
+                    min-height: 48px;
+                    margin-top: auto;
+                    font-size: 10px;
                     color: #777;
                     border-top: 1px solid #e0e0e0;
-                    padding-top: 8px;
+                    padding-top: 5px;
                     display: flex;
                     justify-content: space-between;
                     align-items: center;
+                    gap: 8px;
+                    text-align: center;
+                }
+                .footer-bar > span {
+                    flex: 1 1 0;
+                    min-width: 0;
+                }
+                .print-tracklink-logo {
+                    display: block;
+                    flex: 0 0 auto;
+                    height: 45px;
+                    width: auto;
+                    max-width: 90px;
+                    object-fit: contain;
+                    object-position: center;
                 }
                 @media print {
                     .no-print { display: none !important; }
                     body { padding: 0; }
-                    .tech-item-card { break-inside: avoid; }
+                    #print-pages { display: block; }
+                    .sheet-page-wrapper {
+                        height: auto;
+                        min-height: 269mm;
+                        max-height: none;
+                        break-after: page;
+                        page-break-after: always;
+                        overflow: visible;
+                    }
+                    .sheet-page-wrapper:last-child {
+                        break-after: auto;
+                        page-break-after: auto;
+                    }
+                    .tech-item-card { break-inside: avoid; page-break-inside: avoid; }
+                    .adaptive-tech-grid { break-inside: auto; }
                 }
                 @media screen and (max-width: 600px) {
                     .top-grid {
-                        grid-template-columns: 1fr;
+                        grid-template-columns: minmax(0, 1fr);
                     }
-                    .tech-item-body {
-                        flex-direction: column;
-                    }
-                    .tech-item-img-wrapper {
-                        max-width: 100%;
-                        width: 100%;
-                    }
-                    .tech-detail-img {
-                        max-height: 180px;
-                    }
+                    /* Los modos del selector prevalecen también en la vista previa móvil. */
                 }
             </style>
         </head>
-        <body>
+        <body data-print-layout="auto">
             <div class="no-print-bar no-print">
                 <span><strong>Ficha Técnica</strong> - Vista previa para consulta e impresión</span>
+                <label for="print-layout-mode" style="font-size: 11px; font-weight: 600;">Distribución:</label>
+                <select id="print-layout-mode" aria-label="Distribución de imágenes"  style="max-width: 180px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; background: white; color: #222;">
+                    <option value="auto">Automática</option>
+                    <option value="horizontal">Imagen a la derecha</option>
+                    <option value="vertical">Imagen debajo del texto</option>
+                    <option value="image-focus">Imagen ampliada</option>
+                </select>
                 <button onclick="window.print()" style="padding: 6px 14px; background: white; color: #007bff; border: none; font-weight: bold; border-radius: 4px; cursor: pointer;">
                     Imprimir / Guardar PDF
                 </button>
             </div>
 
-            <div class="sheet-page-wrapper">
+            <div id="print-pages">
+            <div class="sheet-page-wrapper" data-image-count="0">
                 <div class="sheet-content-main">
                     <div class="header-container">
                         <div class="header-brand-wrap">
@@ -8099,43 +8458,200 @@ export function exportVehiclePrintSheet(item) {
                                 } catch(e){}
                                 return item.vin;
                             })()}</td></tr>` : ''}
+                            ${notasHtml}
                         </table>
                         ${qrHtml}
                     </div>
 
                     <div>
-                        <div class="section-header">Puntos de Corte de Motor</div>
-                        <div class="tech-grid">
-                            ${cutsHtml || '<div class="tech-item-card"><p>No hay cortes registrados para este modelo.</p></div>'}
+                        <div class="section-header">Información Técnica e Imágenes</div>
+                        <div class="tech-grid adaptive-tech-grid" id="adaptive-tech-grid">
+                            ${techItemsHtml || '<div class="tech-item-card text-only"><div class="tech-item-header">Puntos de Corte de Motor</div><p>No hay información técnica registrada para este modelo.</p></div>'}
                         </div>
                     </div>
-
-                    ${feedsHtml ? `
-                    <div>
-                        <div class="section-header">Alimentación Eléctrica</div>
-                        <div class="tech-grid">${feedsHtml}</div>
-                    </div>
-                    ` : ''}
-
-                    ${aperturaHtml ? `
-                    <div>
-                        <div class="section-header">Apertura y Cierre Centralizado</div>
-                        <div class="tech-grid">${aperturaHtml}</div>
-                    </div>
-                    ` : ''}
-
-                    ${notasHtml}
                 </div>
 
                 <div class="footer-bar">
                     <span>Generado desde GPSpedia &copy; ${new Date().getFullYear()}</span>
+                    <img src="tracklink_logo.png" alt="Logo de TRACKLINK" class="print-tracklink-logo" />
                     <span>Ficha técnica de consulta técnica especializada</span>
                 </div>
+            </div>
             </div>
         </body>
         </html>
     `);
     printWindow.document.close();
+
+    // Distribución y paginación explícita: hasta cuatro imágenes técnicas (2 columnas × 2 filas) por hoja.
+    const printDocument = printWindow.document;
+    const printPages = printDocument.getElementById('print-pages');
+    const firstPageTemplate = printPages && printPages.querySelector('.sheet-page-wrapper');
+    const adaptiveGrid = firstPageTemplate && firstPageTemplate.querySelector('#adaptive-tech-grid');
+    if (printPages && firstPageTemplate && adaptiveGrid) {
+        const allTechnicalCards = Array.from(adaptiveGrid.querySelectorAll('.tech-item-card'));
+        const headerTemplate = firstPageTemplate.querySelector('.header-container');
+        const metadataTemplate = firstPageTemplate.querySelector('.top-grid');
+        const sectionHeaderTemplate = firstPageTemplate.querySelector('.section-header');
+        const footerTemplate = firstPageTemplate.querySelector('.footer-bar');
+
+        const getImage = card => card.querySelector('.tech-detail-img');
+        const getDimensions = card => {
+            const img = getImage(card);
+            const width = img && img.naturalWidth > 0 ? img.naturalWidth : 0;
+            const height = img && img.naturalHeight > 0 ? img.naturalHeight : 0;
+            return {
+                width,
+                height,
+                aspect: width > 0 && height > 0 ? width / height : 1.33,
+                resolution: width * height
+            };
+        };
+        const originalOrder = card => Number(card.dataset.originalOrder || 0);
+
+        const getAspect = card => {
+            const dimensions = getDimensions(card);
+            return dimensions.width > 0 && dimensions.height > 0 ? dimensions.aspect : 1;
+        };
+
+        const choosePageGroups = cards => {
+            const groups = [];
+            let cursor = 0;
+            while (cursor < cards.length) {
+                const remaining = cards.length - cursor;
+                const a = getAspect(cards[cursor]);
+                const b = remaining > 1 ? getAspect(cards[cursor + 1]) : 0;
+                const c = remaining > 2 ? getAspect(cards[cursor + 2]) : 0;
+                // Dos imágenes por página como regla segura; tres solo si las tres son verticales.
+                let count = Math.min(2, remaining);
+                if (remaining >= 3 && a < 0.82 && b < 0.82 && c < 0.82) count = 3;
+                groups.push(cards.slice(cursor, cursor + count));
+                cursor += count;
+            }
+            return groups.length ? groups : [[]];
+        };
+
+        const applyPageTemplate = (grid, pageCards) => {
+            grid.classList.remove('layout-single', 'layout-pair-portrait', 'layout-pair-landscape', 'layout-triple-portrait', 'layout-mosaic');
+            const aspects = pageCards.map(getAspect);
+            if (pageCards.length <= 1) grid.classList.add('layout-single');
+            else if (pageCards.length === 2 && aspects.every(aspect => aspect > 1.25)) grid.classList.add('layout-pair-landscape');
+            else if (pageCards.length === 2 && aspects.every(aspect => aspect < 0.9)) grid.classList.add('layout-pair-portrait');
+            else if (pageCards.length === 3 && aspects.every(aspect => aspect < 0.9)) grid.classList.add('layout-triple-portrait');
+            else grid.classList.add('layout-mosaic');
+            pageCards.forEach((card, index) => {
+                card.style.gridColumn = ''; card.style.gridRow = ''; card.style.width = ''; card.style.maxWidth = '';
+                card.style.marginLeft = ''; card.style.marginRight = '';
+                if (grid.classList.contains('layout-mosaic') && pageCards.length === 3 && index === 2) {
+                    card.style.gridColumn = '1 / -1';
+                    if (aspects[index] > 1.25) { card.style.width = '80%'; card.style.maxWidth = '80%'; card.style.marginLeft = 'auto'; card.style.marginRight = 'auto'; }
+                }
+            });
+        };
+
+        const arrangeTechnicalCards = () => {
+            const orderedCards = [...allTechnicalCards].sort((a, b) => originalOrder(a) - originalOrder(b));
+            const priorityCard = orderedCards.find(card => card.dataset.priorityCut === 'true') || null;
+            const orderedTechnicalCards = priorityCard ? [priorityCard, ...orderedCards.filter(card => card !== priorityCard)] : orderedCards;
+            const imageCards = orderedTechnicalCards.filter(card => getImage(card));
+            const textCards = orderedTechnicalCards.filter(card => !getImage(card));
+            const pageGroups = choosePageGroups(imageCards);
+
+            const createPage = (pageIndex, pageCards, pageCount) => {
+                const page = printDocument.createElement('div');
+                page.className = 'sheet-page-wrapper';
+                page.dataset.imageCount = String(pageCards.length);
+                const main = printDocument.createElement('div');
+                main.className = 'sheet-content-main';
+                if (headerTemplate) main.appendChild(headerTemplate.cloneNode(true));
+                if (pageIndex === 0 && metadataTemplate) {
+                    main.appendChild(metadataTemplate.cloneNode(true));
+                }
+                if (sectionHeaderTemplate) main.appendChild(sectionHeaderTemplate.cloneNode(true));
+                const grid = printDocument.createElement('div');
+                grid.className = 'tech-grid adaptive-tech-grid';
+                applyPageTemplate(grid, pageCards);
+                pageCards.forEach(card => grid.appendChild(card));
+                if (pageIndex === pageCount - 1) textCards.forEach(card => {
+                    card.style.gridColumn = '1 / -1'; card.style.width = '100%'; card.style.maxWidth = '100%'; grid.appendChild(card);
+                });
+                main.appendChild(grid);
+
+                page.appendChild(main);
+                if (footerTemplate) page.appendChild(footerTemplate.cloneNode(true));
+                return page;
+            };
+            const pages = pageGroups.map((pageCards, pageIndex) => createPage(pageIndex, pageCards, pageGroups.length));
+            printPages.replaceChildren(...pages);
+
+            // Dimensionar imágenes con el espacio vertical que queda en cada página.
+            // Se colapsan temporalmente para medir encabezado, metadatos, textos, tarjetas y pie;
+            // después se reparte el espacio libre entre las filas de imágenes de esa página.
+            const fitImagesToAvailablePageSpace = pageElements => {
+                pageElements.forEach(page => {
+                    const pageCards = Array.from(page.querySelectorAll('.tech-item-card.has-image'));
+                    const images = pageCards.map(getImage).filter(Boolean);
+                    if (!images.length) return;
+
+                    images.forEach(img => { img.style.maxHeight = '0px'; });
+
+                    const pageHeight = page.getBoundingClientRect().height || page.clientHeight;
+                    const main = page.querySelector('.sheet-content-main');
+                    const footer = page.querySelector('.footer-bar');
+                    const mainChildren = main ? Array.from(main.children) : [];
+                    const mainStyle = main && printDocument.defaultView
+                        ? printDocument.defaultView.getComputedStyle(main)
+                        : null;
+                    const mainGap = mainStyle
+                        ? (parseFloat(mainStyle.rowGap || mainStyle.gap || '0') || 0)
+                        : 6;
+                    const mainContentHeight = mainChildren.reduce(
+                        (total, child) => total + child.getBoundingClientRect().height,
+                        0
+                    ) + Math.max(0, mainChildren.length - 1) * mainGap;
+                    const footerHeight = footer ? footer.getBoundingClientRect().height : 0;
+                    const availableHeight = Math.max(0, pageHeight - footerHeight - mainContentHeight);
+
+                    const rowTops = [];
+                    pageCards.forEach(card => {
+                        const top = card.getBoundingClientRect().top;
+                        if (!rowTops.some(rowTop => Math.abs(rowTop - top) <= 2)) rowTops.push(top);
+                    });
+
+                    const rowCount = Math.max(1, rowTops.length);
+                    const modeMaxHeight = printDocument.body.dataset.printLayout === 'image-focus' ? 620 : 520;
+                    const rowMaxHeight = Math.max(80, Math.min(modeMaxHeight, (availableHeight / rowCount) - 4));
+                    images.forEach(img => { img.style.maxHeight = `${rowMaxHeight}px`; });
+                });
+            };
+
+            fitImagesToAvailablePageSpace(pages);
+
+            orderedTechnicalCards.forEach(card => {
+                const dimensions = getDimensions(card);
+                card.dataset.naturalWidth = String(dimensions.width);
+                card.dataset.naturalHeight = String(dimensions.height);
+                card.dataset.imageAspectRatio = String(dimensions.aspect);
+                card.dataset.imageResolution = String(dimensions.resolution);
+            });
+        };
+
+        const layoutSelector = printDocument.getElementById('print-layout-mode');
+        if (layoutSelector) layoutSelector.addEventListener('change', () => {
+            printDocument.body.dataset.printLayout = layoutSelector.value;
+            arrangeTechnicalCards();
+        });
+
+        const printImages = allTechnicalCards.map(getImage).filter(Boolean);
+        Promise.all(printImages.map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => {
+                img.addEventListener('load', resolve, { once: true });
+                img.addEventListener('error', resolve, { once: true });
+            });
+        })).then(arrangeTechnicalCards);
+        printWindow.addEventListener('beforeprint', arrangeTechnicalCards);
+    }
 }
 
 export async function loadAndRenderInbox() {
@@ -8149,7 +8665,7 @@ export async function loadAndRenderInbox() {
     }
 
     try {
-        const res = await getFeedbackItems();
+        const res = await getFeedbackItems(getCurrentSessionPayload());
         if (res && res.data) {
             inboxCacheData = res.data;
             renderInboxList(inboxCacheData);
@@ -8277,7 +8793,8 @@ export async function openAssociateExistingProblemModal(vehicle) {
                 try {
                     const res = await routeAction("addVehicleToProblem", {
                         problemId: p.id_problem,
-                        vehicleId: vehicle.id
+                        vehicleId: vehicle.id,
+                        ...getCurrentSessionPayload()
                     });
                     if (res && res.status === "success") {
                         mostrarNotificacion("Problema vinculado con éxito.", "success");

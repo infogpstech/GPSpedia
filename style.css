@@ -1552,6 +1552,17 @@ body.dark-mode .modal form textarea:disabled {
     color: var(--accent-color, #007bff);
 }
 
+.card-create-vehicle-assoc,
+.card-create-pys-assoc {
+    width: 140px;
+    min-width: 140px;
+    max-width: 140px;
+    height: 120px;
+    min-height: 120px;
+    flex: 0 0 140px;
+    flex-shrink: 0;
+}
+
 .card-create-tutorial:hover,
 .card-create-pys:hover,
 .card-create-vehicle-assoc:hover,
@@ -1582,8 +1593,8 @@ body.dark-mode .modal form textarea:disabled {
 }
 
 .card-create-pys {
-    height: 100%;
-    min-height: 140px;
+    height: 120px;
+    min-height: 120px;
 }
 
 /* Tarea adicional: Estilos para el Modal del Desarrollador (#dev-tools-modal) */
@@ -2355,4 +2366,516 @@ body.dark-mode .terms-agreement-logo {
     border: none !important;
     padding: 0 !important;
     margin: 0 !important;
+}
+
+
+/* ==========================================================================
+   PANEL DE DESARROLLADOR — NAVEGACIÓN POR SECCIONES
+   ========================================================================== */
+#dev-tools-modal .dev-tools-modal-content {
+    display: flex;
+    flex-direction: column;
+    width: 96%;
+    max-width: 1200px;
+    max-height: 90vh;
+    overflow: hidden;
+}
+
+#dev-tools-modal .dev-tools-title {
+    flex-shrink: 0;
+    margin: 0 0 16px;
+    padding-right: 34px;
+}
+
+#dev-tools-modal .dev-tools-tabs {
+    display: flex;
+    flex: 1;
+    min-height: 0;
+}
+
+#dev-tools-modal .dev-tab-radio {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+#dev-tools-modal .dev-tools-layout {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    gap: 18px;
+    width: 100%;
+    min-height: 0;
+}
+
+#dev-tools-modal .dev-tools-sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-self: start;
+    padding: 8px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+}
+
+#dev-tools-modal .dev-tab-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    color: var(--text-color);
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+#dev-tools-modal .dev-tab-link:hover {
+    background: var(--button-bg);
+}
+
+#dev-tools-modal #dev-tab-diagnostics:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
+#dev-tools-modal #dev-tab-backups:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-backups"],
+#dev-tools-modal #dev-tab-database:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
+#dev-tools-modal #dev-tab-images:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
+#dev-tools-modal #dev-tab-system:focus-visible ~ .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+#dev-tools-modal .dev-tab-panel {
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+    max-height: 68vh;
+    min-width: 0;
+    padding: 2px 8px 4px 2px;
+    overflow-y: auto;
+}
+
+#dev-tools-modal #dev-tab-diagnostics:checked ~ .dev-tools-layout .dev-panel-diagnostics,
+#dev-tools-modal #dev-tab-backups:checked ~ .dev-tools-layout .dev-panel-backups,
+#dev-tools-modal #dev-tab-database:checked ~ .dev-tools-layout .dev-panel-database,
+#dev-tools-modal #dev-tab-images:checked ~ .dev-tools-layout .dev-panel-images,
+#dev-tools-modal #dev-tab-system:checked ~ .dev-tools-layout .dev-panel-system {
+    display: flex;
+}
+
+#dev-tools-modal #dev-tab-diagnostics:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
+#dev-tools-modal #dev-tab-backups:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-backups"],
+#dev-tools-modal #dev-tab-database:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
+#dev-tools-modal #dev-tab-images:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
+#dev-tools-modal #dev-tab-system:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
+    background: var(--accent-color);
+    color: #fff;
+}
+
+#dev-tools-modal .dev-panel-heading {
+    margin-bottom: 2px;
+}
+
+#dev-tools-modal .dev-panel-heading h3 {
+    margin: 0 0 5px;
+    color: var(--text-color);
+    font-size: 1.15rem;
+}
+
+#dev-tools-modal .dev-panel-heading p {
+    margin: 0;
+    color: var(--text-disabled);
+    font-size: 0.88rem;
+}
+
+#dev-tools-modal .dev-tools-card {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px;
+}
+
+#dev-tools-modal .dev-card-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+#dev-tools-modal .dev-card-heading h4 {
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+#dev-tools-modal .dev-card-heading button {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    font-size: 0.82rem;
+}
+
+#dev-tools-modal .dev-console-output {
+    height: 260px;
+    min-height: 180px;
+    padding: 12px;
+    overflow-y: auto;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background: #121212;
+    color: #00ff66;
+    font-family: monospace;
+    font-size: 0.85rem;
+    line-height: 1.4;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+#dev-tools-modal .dev-terminal-row,
+#dev-tools-modal .dev-action-row,
+#dev-tools-modal .dev-backup-id-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+#dev-tools-modal .dev-terminal-prompt {
+    color: var(--accent-color);
+    font-family: monospace;
+    font-weight: bold;
+}
+
+#dev-tools-modal .dev-terminal-row .dev-input,
+#dev-tools-modal .dev-action-row .dev-input,
+#dev-tools-modal .dev-backup-id-row .dev-input {
+    flex: 1 1 180px;
+    width: auto !important;
+    min-width: 0;
+    max-width: none !important;
+    padding: 8px;
+}
+
+#dev-tools-modal .dev-action-row button {
+    flex: 1 1 auto;
+}
+
+#dev-tools-modal .dev-action-full {
+    width: 100%;
+    text-align: left;
+    padding: 9px 12px;
+}
+
+#dev-tools-modal .dev-backup-id-row label {
+    flex: 0 0 115px;
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+#dev-tools-modal .dev-backup-id-row .dev-input {
+    flex: 1 1 150px;
+    font-family: monospace;
+    font-size: 0.8rem;
+}
+
+#dev-tools-modal .dev-progress-container {
+    display: none;
+    position: relative;
+    height: 24px;
+    overflow: hidden;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--button-bg);
+}
+
+#dev-tools-modal .dev-progress-bar {
+    width: 0%;
+    height: 100%;
+    background: var(--accent-color);
+    transition: width 0.3s ease;
+}
+
+#dev-tools-modal .dev-progress-text {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    color: var(--text-color);
+    font-size: 0.85rem;
+    font-weight: bold;
+    line-height: 24px;
+    text-align: center;
+}
+
+#dev-tools-modal .dev-services-health-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: 5px;
+}
+
+#dev-tools-modal .dev-empty-state {
+    color: var(--text-disabled);
+    font-size: 0.82rem;
+    font-style: italic;
+    overflow-wrap: anywhere;
+}
+
+#dev-tools-modal .dev-warning-copy {
+    margin: 0;
+    color: var(--text-disabled);
+    font-size: 0.88rem;
+}
+
+@media (max-width: 760px) {
+    #dev-tools-modal .dev-tools-modal-content {
+        width: 96%;
+        max-height: 94vh;
+    }
+
+    #dev-tools-modal .dev-tools-layout {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        gap: 10px;
+    }
+
+    #dev-tools-modal .dev-tools-sidebar {
+        flex-direction: row;
+        align-self: stretch;
+        overflow-x: auto;
+        padding: 6px;
+    }
+
+    #dev-tools-modal .dev-tab-link {
+        flex: 0 0 auto;
+        padding: 10px 12px;
+        white-space: nowrap;
+    }
+
+    #dev-tools-modal .dev-tab-panel {
+        max-height: 62vh;
+        padding-right: 3px;
+    }
+}
+
+@media (max-width: 520px) {
+    #dev-tools-modal .dev-tools-title {
+        font-size: 1.15rem;
+    }
+
+    #dev-tools-modal .dev-tab-link {
+        gap: 7px;
+        padding: 9px 10px;
+        font-size: 0.82rem;
+    }
+
+    #dev-tools-modal .dev-card-heading {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    #dev-tools-modal .dev-terminal-row,
+    #dev-tools-modal .dev-action-row,
+    #dev-tools-modal .dev-backup-id-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    #dev-tools-modal .dev-backup-id-row label {
+        flex-basis: auto;
+    }
+
+    #dev-tools-modal .dev-terminal-row .dev-input,
+    #dev-tools-modal .dev-action-row .dev-input,
+    #dev-tools-modal .dev-backup-id-row .dev-input {
+        width: 100% !important;
+        flex-basis: auto;
+    }
+
+    #dev-tools-modal .dev-action-row button,
+    #dev-tools-modal .dev-backup-id-row button {
+        width: 100%;
+    }
+
+    #dev-tools-modal .dev-services-health-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+
+/* ==========================================================================
+   PANEL DE DESARROLLADOR — ACABADO VISUAL Y NAVEGACIÓN MÓVIL
+   ========================================================================== */
+#dev-tools-modal .dev-tools-modal-content {
+    background: rgba(255, 255, 255, 0.94);
+    border: 1px solid rgba(128, 128, 128, 0.22);
+    border-radius: 16px;
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22), 0 2px 8px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+body.dark-mode #dev-tools-modal .dev-tools-modal-content {
+    background: rgba(36, 36, 36, 0.94);
+    border-color: rgba(255, 255, 255, 0.10);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, 0.48), 0 2px 8px rgba(0, 0, 0, 0.24);
+}
+
+#dev-tools-modal .dev-tools-title {
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border-color);
+    letter-spacing: -0.02em;
+}
+
+#dev-tools-modal .dev-tools-sidebar {
+    background: rgba(128, 128, 128, 0.055);
+    border-color: rgba(128, 128, 128, 0.20);
+    border-radius: 12px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.16), 0 3px 10px rgba(0, 0, 0, 0.045);
+}
+
+body.dark-mode #dev-tools-modal .dev-tools-sidebar {
+    background: rgba(255, 255, 255, 0.035);
+    border-color: rgba(255, 255, 255, 0.09);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.035), 0 3px 10px rgba(0, 0, 0, 0.18);
+}
+
+#dev-tools-modal .dev-tab-link {
+    min-height: 42px;
+    border: 1px solid transparent;
+    border-radius: 9px;
+    transition: background-color 0.18s ease, border-color 0.18s ease, color 0.18s ease, transform 0.18s ease;
+}
+
+#dev-tools-modal .dev-tab-link:hover {
+    background: rgba(128, 128, 128, 0.11);
+    border-color: rgba(128, 128, 128, 0.16);
+}
+
+#dev-tools-modal #dev-tab-diagnostics:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-diagnostics"],
+#dev-tools-modal #dev-tab-backups:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-backups"],
+#dev-tools-modal #dev-tab-database:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-database"],
+#dev-tools-modal #dev-tab-images:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-images"],
+#dev-tools-modal #dev-tab-system:checked ~ .dev-tools-layout .dev-tab-link[for="dev-tab-system"] {
+    background: var(--button-bg);
+    color: var(--text-color);
+    border-color: rgba(128, 128, 128, 0.24);
+    box-shadow: inset 3px 0 0 var(--accent-color), 0 2px 6px rgba(0, 0, 0, 0.055);
+}
+
+#dev-tools-modal .dev-tools-card {
+    background: rgba(128, 128, 128, 0.045);
+    border-color: rgba(128, 128, 128, 0.20);
+    border-radius: 12px;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.045);
+}
+
+body.dark-mode #dev-tools-modal .dev-tools-card {
+    background: rgba(255, 255, 255, 0.025);
+    border-color: rgba(255, 255, 255, 0.09);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.18);
+}
+
+#dev-tools-modal .dev-input {
+    min-height: 38px;
+    border-radius: 8px;
+    border-color: rgba(128, 128, 128, 0.32);
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.035);
+}
+
+#dev-tools-modal .dev-tools-card button {
+    min-height: 36px;
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(128, 128, 128, 0.22);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.055);
+    font-weight: 600;
+    transition: filter 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+#dev-tools-modal .dev-tools-card button:hover {
+    filter: brightness(0.97);
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.10);
+}
+
+#dev-tools-modal .dev-tools-card button:active {
+    transform: translateY(1px);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+}
+
+#dev-tools-modal .dev-console-output {
+    background: #050505;
+    color: #f5f5f5;
+    border: 1px solid #303030;
+    border-radius: 10px;
+    font-family: Roboto, "Segoe UI", Arial, sans-serif;
+    font-size: 0.84rem;
+    line-height: 1.5;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.72), 0 2px 6px rgba(0, 0, 0, 0.10);
+}
+
+#dev-tools-modal .dev-terminal-prompt {
+    color: var(--text-medium);
+    font-family: Roboto, "Segoe UI", Arial, sans-serif;
+}
+
+@media (max-width: 760px) {
+    #dev-tools-modal .dev-tools-sidebar {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 5px;
+        overflow: visible;
+        padding: 6px;
+    }
+
+    #dev-tools-modal .dev-tab-link {
+        justify-content: center;
+        min-width: 0;
+        min-height: 42px;
+        padding: 8px 4px;
+        white-space: normal;
+    }
+
+    #dev-tools-modal .dev-tab-link span {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+    }
+
+    #dev-tools-modal .dev-tab-link i {
+        margin: 0;
+        font-size: 1.08rem;
+    }
+}
+
+@media (max-width: 520px) {
+    #dev-tools-modal .dev-tools-modal-content {
+        border-radius: 14px;
+        padding: 16px;
+    }
+
+    #dev-tools-modal .dev-tools-sidebar {
+        gap: 4px;
+    }
+
+    #dev-tools-modal .dev-tab-link {
+        min-height: 40px;
+        padding: 7px 3px;
+        border-radius: 8px;
+    }
+
+    #dev-tools-modal .dev-tab-link i {
+        font-size: 1rem;
+    }
+
+    #dev-tools-modal .dev-tab-panel {
+        max-height: 60vh;
+    }
 }

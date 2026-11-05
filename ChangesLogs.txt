@@ -1854,3 +1854,366 @@ Fecha: 2026-11-03
   * loadInitialData: Incorporada precarga asíncrona de `routeAction('getPysData')` en segundo plano junto con la sincronización del catálogo, persistiendo los resultados en `localStorage` ('gpsepedia_pys_cache') e hidratando `state.pysData`.
   * checkSession: Rehidratación síncrona al arrancar la sesión de `pysData` desde la caché local para disponibilidad inmediata a 0ms.
 ================================================================================
+
+
+================================================================================
+REGISTRO DE CAMBIOS: CARRUSEL PYS, DIMENSIONES DE TARJETAS Y DISTRIBUCIÓN DE IMPRESIÓN
+Fecha: 2026-11-03
+
+- ui.js (líneas aproximadas 2515, 2544, 7340-7353, 7407, 7698-8090):
+  * Las tarjetas de agregar problema y agregar modelo en los modales de relación se ajustan a 188px de altura.
+  * La lectura de modelos asociados acepta arreglos, cadenas JSON con arreglo y listas de identificadores separadas por coma, barra, barra inversa o punto y coma.
+  * La ficha técnica asigna clases por elemento según la presencia de imagen, en lugar de aplicar clases de altura según la cantidad total de elementos.
+  * Se incorpora el selector de distribución de imágenes con los modos Automática, Imagen a la derecha, Imagen debajo del texto e Imagen ampliada.
+  * El modo Imagen ampliada permite una altura máxima de imagen de 380px; los demás modos mantienen un máximo de 310px.
+
+- style.css (líneas aproximadas 1539-1600):
+  * Se normalizan las tarjetas de agregar tutorial y agregar problema de la cuadrícula PyS a 188px de altura.
+  * Se establece un tamaño común de 140px de ancho por 188px de alto para las tarjetas de agregar modelo y agregar problema en los modales de relación.
+================================================================================
+
+
+================================================================================
+REGISTRO DE CAMBIO POST-CODE REVIEW
+Fecha: 2026-11-03
+
+- ui.js (bloque de normalización de modelos asociados en openPysDetailModal):
+  * Se escapó la barra diagonal en la expresión regular que separa identificadores para evitar que interfiera con el delimitador de la expresión regular.
+================================================================================
+
+
+================================================================================
+REGISTRO DE CAMBIO POST-CODE REVIEW: DIMENSIONES DE TARJETAS
+Fecha: 2026-11-03
+
+- ui.js (líneas aproximadas 2515, 2538 y 7407):
+  * Las tres tarjetas de adición insertadas en modales de relación se ajustan a 120px de alto.
+- style.css (líneas aproximadas 1539-1600):
+  * Las tarjetas de agregar tutorial y agregar problema en la cuadrícula PyS se ajustan a 120px de alto.
+  * Las tarjetas de agregar modelo y agregar problema relacionado utilizan 140px de ancho y 120px de alto.
+================================================================================
+
+
+================================================================================
+CAMBIOS: DISTRIBUCIÓN ADAPTATIVA DE IMÁGENES EN FICHA TÉCNICA
+Fecha: 2026-11-03
+
+- ui.js (exportVehiclePrintSheet, aproximadamente líneas 7674-8380):
+  * Se replica el criterio existente de selección del corte recomendado a partir de los cortes con tipo registrado y utilCorteN, manteniendo el orden original cuando no hay recomendado elegible.
+  * Se unifican las tarjetas de cortes, alimentación y apertura dentro de una sección técnica común para permitir reorganización visual sin separar los datos de sus imágenes.
+  * Se consulta la dimensión natural de cada imagen para calcular su relación de aspecto y resolución disponible.
+  * Se crean filas con columnas ponderadas por la relación de aspecto real, una composición específica de vertical más dos horizontales y otra de dos verticales más una horizontal.
+  * Se mantienen las fotografías sin recorte ni deformación, con límites de tamaño que no fuerzan la ampliación de imágenes pequeñas.
+  * Se mantienen las tarjetas completas junto a sus descripciones mediante reglas de salto de página.
+  * No se modificó el HTML ni el CSS de la tabla .meta-table ni el bloque de QR/video.
+- Verificación documentada: compilación sintáctica de la función y pruebas simuladas de las composiciones descritas. No se ejecutaron pruebas de navegador ni generación real de PDF.
+================================================================================
+
+
+================================================================================
+CAMBIO: DISTRIBUCIÓN HORIZONTAL DEL TEXTO Y LA IMAGEN EN TARJETAS DE IMPRESIÓN
+Fecha: 2026-11-04
+
+- ui.js (exportVehiclePrintSheet, estilos internos de impresión alrededor de las líneas 8000-8100):
+  * Se cambió .tech-item-body a una cuadrícula de dos columnas en el modo automático, para colocar la información y la fotografía lado a lado cuando la tarjeta tiene imagen.
+  * Se ajustó .tech-item-info para que no fuerce un ancho del 100% dentro de la distribución en columnas.
+  * Se actualizó el modo horizontal para usar la misma distribución explícita en cuadrícula.
+  * Se conservaron las distribuciones de una columna para los modos vertical e imagen ampliada, y para ventanas estrechas.
+  * No se modificaron el HTML de las tarjetas, la lógica de prioridad de imágenes, la tabla .meta-table ni el bloque QR/video.
+- Verificación realizada: compilación sintáctica de exportVehiclePrintSheet y revisión estática del bloque CSS modificado. No se ejecutó navegador real ni se generó PDF.
+================================================================================
+
+
+================================================================================
+CAMBIO: DESCRIPCIÓN Y AVISOS A ANCHO COMPLETO SOBRE LA IMAGEN EN FICHA IMPRIMIBLE
+Fecha: 2026-11-04
+
+- ui.js (exportVehiclePrintSheet, marcado de tarjetas y estilos internos de impresión):
+  * Se cambió .tech-item-body a una sola columna para evitar que la descripción aparezca al lado de la fotografía.
+  * Se mantuvo .tech-item-info a ancho completo y antes del contenedor de imagen.
+  * Se movió entry.extraHtml dentro de .tech-item-info para que el aviso de testigo aparezca junto a la descripción y antes de la fotografía.
+  * Se incrementó el límite de altura de .tech-detail-img de 320px a 380px, manteniendo ancho y alto automáticos, object-fit: contain y centrado.
+  * Se aplicó el orden texto-antes-de-imagen a los modos automático, horizontal, vertical e imagen ampliada; en consecuencia, el selector "Imagen a la derecha" ya no coloca la descripción en una columna lateral.
+  * No se modificaron la tabla .meta-table, la lógica de prioridad de imágenes ni el bloque QR/video.
+- Verificación estática: compilación sintáctica de exportVehiclePrintSheet y comparación de las reglas CSS de .meta-table con GPSpedia2.2.7; sin diferencias en dicho bloque. No se generó PDF ni se validó visualmente en navegador.
+================================================================================
+
+
+================================================================================
+CAMBIO: MAYOR ESPACIO VISUAL PARA LAS IMÁGENES EN LA FICHA IMPRIMIBLE
+Fecha: 2026-11-04
+
+- ui.js (exportVehiclePrintSheet, estilos .tech-detail-img):
+  * Se aumentó el límite máximo de altura de 380px a 560px en la vista general, impresión y modo de imagen ampliada.
+  * Se conservaron max-width: 100%, width/height automáticos, object-fit: contain y object-position: center; no se fijó un ancho que fuerce la ampliación de imágenes de baja resolución.
+  * Se mantiene la estructura de texto y avisos encima de la fotografía, con imagen centrada debajo.
+  * No se modificaron el algoritmo adaptativo de tarjetas, la tabla .meta-table, el QR/video ni las notas técnicas.
+- Verificación estática: se confirmó que los tres límites de altura relevantes quedaron en 560px. Pendiente prueba real de impresión/PDF y revisión de saltos de página.
+================================================================================
+
+
+CAMBIO 2026-11-04 — REGLAS ADAPTATIVAS PARA 1–7 IMÁGENES EN FICHA IMPRIMIBLE
+Archivo: ui.js, función exportVehiclePrintSheet, bloque arrangeTechnicalCards y estilos de filas adaptativas.
+- La primera imagen prioritaria conserva la primera posición; las demás conservan el orden técnico original.
+- Una imagen se centra en una fila limitada al 50% del ancho de composición.
+- Dos o tres imágenes horizontales se apilan en filas centradas limitadas al 80% del ancho.
+- Tres imágenes verticales/horizontales mantienen composiciones específicas existentes; las demás mezclas y conjuntos de 3–7 imágenes usan filas adaptativas según relación de aspecto, evitando mezclar imágenes verticales y horizontales en la misma fila.
+- Filas generales limitadas a tres imágenes, con panorámicas en filas independientes. Se mantienen proporciones de columnas calculadas a partir de la relación de aspecto.
+- No se modificaron la tabla de metadatos, el bloque QR/video ni las notas técnicas. Pendiente validación real de impresión/PDF y paginación.
+
+================================================================================
+CAMBIO 2026-11-03 — PAGINACIÓN EXPLÍCITA DE FICHA TÉCNICA CON CUADRÍCULA 2×2
+- ui.js (exportVehiclePrintSheet, estilos internos de impresión y arrangeTechnicalCards):
+  * Se cambió el margen de impresión a 5 mm por lado.
+  * Se sustituyó la distribución ilimitada de imágenes por páginas explícitas con cuadrícula de hasta dos columnas y dos filas, limitando cada página a cuatro tarjetas con imagen.
+  * Se conserva la prioridad de la primera imagen y el orden técnico de las restantes; los grupos que exceden cuatro imágenes continúan en páginas posteriores.
+  * Se replica el encabezado y el pie de página en cada página creada.
+  * La tabla de metadatos, imagen principal del vehículo y QR/video se conservan únicamente en la primera página.
+  * Se añadió tracklink_logo.png centrado en el pie, con altura de 45 px.
+  * Las notas técnicas se conservan en la última página.
+- Verificación: revisión estática del cambio de código. No se ejecutó navegador real ni se generó un PDF; la paginación, altura efectiva de tarjetas y posición del pie de página permanecen pendientes de validación visual.
+================================================================================
+
+
+================================================================================
+CAMBIO 2026-11-04 — SELECTOR FUNCIONAL Y PLANTILLAS PARA FICHA IMPRIMIBLE
+Archivo: ui.js, función exportVehiclePrintSheet y estilos/controles internos.
+- El selector ya no depende de un cambio aislado de atributo: al cambiar de opción se ejecuta nuevamente la distribución de tarjetas y se reconstruyen las páginas.
+- Imagen a la derecha aplica texto e imagen en columnas dentro de cada tarjeta; Imagen debajo del texto conserva una sola columna; Imagen ampliada permite hasta 620 px de altura para las imágenes.
+- Se añadieron plantillas CSS para tarjeta individual, pares de imágenes verticales, pares horizontales apilados, tríos verticales y mosaicos mixtos.
+- La selección de grupos toma en cuenta las relaciones de aspecto observadas para favorecer tres imágenes verticales en una fila y dos horizontales apiladas; otros grupos se distribuyen en composiciones mixtas de hasta cuatro tarjetas con imagen.
+- Las tarjetas mantienen el contenido de imagen, título, descripción y avisos en el mismo .tech-item-card. Se mantiene el orden técnico con prioridad del corte prioritario.
+- Se cambió la presentación de la foto principal para conservar proporción con object-fit: contain; el QR mantiene proporción cuadrada y limita su ancho al contenedor.
+- Verificación realizada: comprobaciones estáticas de presencia del listener, reglas CSS, plantillas y eliminación del agrupamiento fijo anterior de cuatro. No se ejecutó parser externo, navegador real ni generación de PDF; el resultado visual, el ajuste del QR y los saltos de página permanecen pendientes de validación real.
+================================================================================
+
+
+================================================================================
+CAMBIO 2026-11-04 — NOTA BAJO METADATOS Y CONTENEDORES ADAPTATIVOS
+- La nota técnica importante se coloca inmediatamente después del bloque de metadatos del vehículo en la primera página y deja de duplicarse en la última página.
+- Se redujeron padding de tarjetas, gap entre tarjetas y separación interna entre texto e imagen.
+- Las tarjetas y wrappers pasan a dimensionarse según su contenido en lugar de ocupar siempre el ancho completo; las imágenes mantienen proporción natural y tienen un límite máximo de seguridad, no recorte.
+- Se retiraron las reglas de la media query móvil que anulaban el modo seleccionado al forzar una columna y una altura de imagen de 180px.
+- El modo Imagen a la derecha ahora usa una cuadrícula de dos columnas a nivel de ficha y dos columnas dentro de cada tarjeta; los modos verticales mantienen la imagen debajo del texto y el modo ampliado permite una imagen mayor.
+- Se mantiene la orientación física vertical. No se ejecutó prueba real en navegador/PDF; sigue pendiente comprobar el aspecto final, el desbordamiento y los saltos de página.
+================================================================================
+
+
+================================================================================
+CORRECCIÓN 2026-11-04 — PAGINACIÓN Y LÍMITES DE IMÁGENES
+- Se limita el agrupamiento normal a dos imágenes por página; se conservan grupos de tres únicamente cuando las tres imágenes consecutivas son verticales según sus relaciones de aspecto.
+- Se añaden límites CSS por cantidad de imágenes: una imagen puede alcanzar 390 px (450 px en Imagen ampliada), dos imágenes hasta 230 px cada una y tres imágenes verticales hasta 170 px cada una.
+- Las cuadrículas, tarjetas y wrappers quedan restringidos al ancho disponible mediante columnas minmax(0, 1fr), max-width y box-sizing, manteniendo object-fit: contain y las proporciones.
+- El selector de distribución y su listener se mantienen.
+- Validación realizada: revisión estática de sustituciones y estructura CSS/lógica. No se ejecutó navegador real ni generación de PDF; el ajuste final de altura disponible, especialmente en la primera página con metadatos y notas, sigue pendiente de comprobación visual.
+================================================================================
+
+
+================================================================================
+CORRECCIÓN 2026-11-04 — ANCHO DE IMÁGENES Y NOTA COMO FILA DE METADATOS
+- Las tarjetas de la cuadrícula se estiran al ancho de la columna disponible; el cuerpo, wrapper e imagen usan el ancho disponible sin superar el contenedor.
+- Las imágenes usan width:100% y height:auto con object-fit:contain, manteniendo proporción y los límites de altura por cantidad de imágenes establecidos en la corrección anterior.
+- La nota técnica importante ahora se genera como una fila de meta-table con una celda colspan=4, y deja de añadirse como bloque independiente bajo la sección técnica.
+- La paginación clona el bloque de metadatos completo solo en la primera página, por lo que la nota permanece junto a la tabla y no se repite como un bloque separado.
+- Validación estática: confirmadas la fila de nota, su ubicación dentro de la tabla, la eliminación de notesTemplate independiente, las reglas de ancho y la presencia del listener del selector. No se ejecutó navegador real ni generación de PDF.
+================================================================================
+
+- Ajuste adicional: el cuerpo de cada tarjeta usa una columna flexible minmax(0, 1fr) para que el ancho intrínseco del texto no limite el wrapper de imagen; el modo Imagen a la derecha conserva explícitamente sus dos columnas.
+
+================================================================================
+CORRECCIÓN 2026-11-04 — EVITAR RECORTE DE TEXTO POR ALTURA FIJA DE PÁGINA
+- Se identificó que .sheet-page-wrapper fijaba altura, altura mínima y máxima en 269 mm y usaba overflow:hidden, lo que podía ocultar contenido técnico cuando una tarjeta o el bloque de metadatos superaba el espacio disponible.
+- Se cambió la altura de la página a auto, se conservó 269 mm como altura mínima, se retiró la altura máxima fija y se estableció overflow:visible tanto en la regla general como en impresión.
+- No se modificaron el selector de distribución, el orden de tarjetas, la prioridad del corte recomendado, el contenido técnico ni la tabla de metadatos.
+- Validación estática pendiente de cierre en esta revisión; no se ha probado la impresión real ni el ajuste de saltos de página en navegador/PDF. La paginación continúa basada en grupos de imágenes y no en la medición real de altura de cada tarjeta.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE VERSIÓN — GPSpedia 2.2.5
+Fecha: 2026-11-04
+- En index.html se sustituyeron las seis apariciones de la versión 2.1.6 por 2.2.5.
+- Ubicaciones actualizadas: comentario de versión del componente, título del documento, etiqueta de versión del encabezado, pie de página y dos referencias en la sección/modal de versión.
+- No se modificó lógica funcional ni otros archivos de interfaz.
+- Verificación estática posterior: index.html no contiene 2.1.6 y las seis ubicaciones actualizadas muestran 2.2.5. No se ejecutó una prueba visual en navegador.
+================================================================================
+
+
+================================================================================
+CAMBIO 2026-11-04 — DIMENSIONAMIENTO ADAPTATIVO DE IMÁGENES EN FICHAS IMPRIMIBLES
+- Archivo: ui.js, plantilla CSS de exportVehiclePrintSheet() y arrangeTechnicalCards() (aproximadamente líneas 8211-8238 y 8497-8545).
+- Se eliminaron los límites fijos de altura por cantidad de imágenes (390 px, 230 px y 170 px), incluidas las variantes de Imagen ampliada.
+- Se aumentó el límite CSS general a 520 px y se incorporó un cálculo de altura máxima por página a partir del espacio libre después del contenido principal y el pie, distribuyendo ese espacio entre las filas de tarjetas con imagen.
+- Imagen ampliada conserva un límite superior de 620 px; los modos restantes usan 520 px como límite superior. La altura calculada tiene un mínimo de 80 px por fila.
+- Las imágenes mantienen proporción con object-fit:contain, max-width:100% y height:auto; width:auto evita forzar el ancho completo en imágenes de menor tamaño natural. Los wrappers centran las imágenes.
+- No se modificaron la agrupación de páginas, la prioridad del corte recomendado, el orden técnico, el selector de distribución, los metadatos ni el bloque QR/video.
+- Verificación estática: eliminadas las reglas CSS de altura por cantidad y presente la función fitImagesToAvailablePageSpace(). No se ejecutó navegador real ni se generó PDF.
+================================================================================
+
+
+================================================================================
+CAMBIO DOCUMENTAL — CONTEXTO DE TRABAJO Y TAREA DE DIAGNÓSTICO DE HISTORIAL DE IMÁGENES
+Fecha: 2026-11-04
+Rama: fix/pys-carousel-card-sizing-print-images
+
+- Archivo nuevo: Contexto de trabajo.md. Contiene reglas operativas de repositorio y ramas, preservación de registros, cumplimiento de Proceso de desarollo.md y alcance del diagnóstico del historial de imágenes reemplazadas.
+- Archivo modificado: Tareas.txt. Se agregó la tarea pendiente «INVESTIGAR POR QUÉ NO APARECE LA INTERFAZ DE GESTIÓN DEL HISTORIAL DE IMÁGENES REEMPLAZADAS», con plan de diagnóstico, restricciones y criterios de aceptación.
+- Archivo modificado: Auditoría.txt. Se agregó el registro de alcance y limitaciones del diagnóstico pendiente, incluyendo las áreas que deben inspeccionarse.
+- No se modificó código de la aplicación.
+- No se eliminaron ni sobrescribieron registros anteriores.
+- No se realizaron pruebas funcionales ni se verificó el despliegue.
+================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN — GESTIÓN DE IMÁGENES REEMPLAZADAS DESDE EL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+Pull Request: #128 (borrador; sin merge).
+
+ARCHIVOS MODIFICADOS
+
+1. index.html
+- Línea 345: se corrigió la descripción del modal para indicar que las imágenes históricas se envían a la papelera de Google Drive y no se eliminan irreversiblemente.
+
+2. ui.js
+- Líneas 193-203: se añadió el contexto de sesión autenticada a la acción uploadAdminImage.
+- Líneas 3771-3781: se incorporó getDeveloperSessionPayload() para enviar ID y SessionToken de la sesión actual.
+- Líneas 3785-3927: se conectaron las acciones del historial a la sesión del desarrollador; se habilitó la recuperación de registros históricos enviados a papelera; se cambió la acción de eliminación por «Enviar a papelera»; se actualizaron estados y mensajes; se renderizaron los metadatos mediante textContent para evitar interpretar nombres o datos del historial como HTML.
+- Líneas 3928-4027: se sustituyó la auditoría de una sola petición por un recorrido por lotes con cursor de continuación; se conserva el resumen visual, se informa el progreso y se distingue el resultado completo del parcial.
+- Líneas 4908-4922: se normalizó el privilegio antes de mostrar el acceso al modal de desarrollador y se restablece su visibilidad explícitamente para sesiones no autorizadas. Las comprobaciones de los accesos de bandeja y panel se ajustaron a la misma normalización.
+
+3. Services/admin.js
+- Líneas 27-146: se añadieron validación de sesión/privilegio, extracción de IDs Drive, detección de referencias activas desde valores, fórmulas e hipervínculos enriquecidos, y comprobación de pertenencia al árbol Cortes.
+- Líneas 307-316: se protegieron en el servidor las acciones uploadAdminImage, getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes.
+- Líneas 1508-1630 aprox.: se validaron los campos de imagen y el tipo MIME; se serializó el reemplazo; se exige conservar el historial antes de cambiar la referencia activa; ante fallos se intenta revertir el campo y enviar el archivo nuevo a papelera, marcando requiere_revision cuando no se confirma la reversión. La carpeta destino se mantiene dentro de Cortes.
+- Líneas 2576-2615 aprox.: recordReplacedImage valida el ID y el tipo de archivo, registra el historial y marca requiere_revision si detecta una fila parcialmente escrita después de un error de escritura/flush.
+- Líneas 2646-2755 aprox.: la restauración valida tipo de contenido vehiculo, registro, campo permitido y archivo de imagen; restaura archivos de papelera e intercambia las referencias manteniendo trazabilidad.
+- Líneas 2756-2824 aprox.: la acción de papelera comprueba referencias activas en las hojas de datos, bloquea ante referencias no interpretables, actualiza el estado en_papelera y revierte el movimiento si falla el registro del estado.
+- Líneas 2825-2973: la auditoría del árbol Cortes usa lotes y cursores de continuación; valida que las carpetas y archivos pertenezcan al árbol; no impone un límite total fijo de 250 archivos; diferencia En uso, Histórica, Sin uso detectado y No verificable.
+
+DOCUMENTACIÓN
+- Auditoría.txt: se añadieron los resultados de auditoría inicial, hallazgos de Code Review, resoluciones y pruebas simuladas. Se conservaron todas las entradas anteriores.
+- Tareas.txt: se agregó una actualización del estado de las tareas relacionadas, sin borrar ni sobrescribir los registros originales.
+- Se conservaron copias exactas previas de los archivos modificados hasta concluir la revisión.
+
+VERIFICACIÓN
+- Sintaxis de ui.js y Services/admin.js: correcta en comprobación estática.
+- Paginación simulada: 100, 250 y 360 archivos completados; 120 niveles de profundidad completados.
+- Autorización simulada: sesión activa válida aceptada; token inválido y rol no desarrollador rechazados.
+- Referencias simuladas: detectadas desde HYPERLINK y RichTextValue; enlaces Drive no interpretables contabilizados.
+- No se ejecutaron pruebas con Google Sheets/Drive reales, navegador ni microservicio ADMIN desplegado.
+- No se actualizó el despliegue de Apps Script; este cambio de código no entra en producción hasta desplegar Services/admin.js en el proyecto ADMIN y verificar el endpoint.
+
+No se modificó la rama base GPSpedia2.2.5. No se realizó merge.
+================================================================================
+
+
+================================================================================
+CAMBIO DE CONFIGURACIÓN — ACTUALIZACIÓN DEL ENDPOINT ADMIN
+Fecha: 2026-11-04
+- Archivo: api-config.js.
+- Se reemplazó únicamente el valor de API_ENDPOINTS.ADMIN por la URL de Apps Script proporcionada por el usuario.
+- No se modificaron los endpoints LEGACY, AUTH, CATALOG, WRITE, USERS, FEEDBACK ni UTILITIES.
+- No se modificó ACTION_TO_SERVICE_MAP ni la lógica de routeAction.
+- Verificación estática: la URL nueva aparece una vez en ADMIN y la URL anterior dejó de aparecer en el archivo.
+- No se ejecutó una solicitud al endpoint ni se verificó su disponibilidad o respuesta en producción.
+================================================================================
+
+
+================================================================================
+CORRECCIÓN — VISIBILIDAD DEL ACCESO AL MODAL DE DESARROLLADOR
+Fecha: 2026-11-04
+- Archivo: ui.js, función showApp(user), aproximadamente líneas 4908-4910.
+- La obtención del rol para mostrar dev-tools-btn ahora consulta user.Privilegios y utiliza user.Rol como alternativa cuando Privilegios no contiene un valor.
+- Se conserva la normalización existente del rol y la condición que limita la visibilidad al perfil Desarrollador.
+- No se modificaron las funciones de edición, la autenticación ni el backend.
+- Verificación estática por comparación: el único cambio de código en ui.js corresponde a la lectura alternativa del rol. Se realizaron pruebas simuladas de los valores Privilegios y Rol; no se ejecutó navegador real ni se verificó la cuenta desplegada.
+================================================================================
+
+================================================================================
+CORRECCIÓN — VISIBILIDAD DEL ACCESO AL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+- Archivo modificado: ui.js, función showApp(user).
+- La lectura del rol para mostrar dev-tools-btn utiliza únicamente user.Privilegios, propiedad que Services/Auth.js obtiene de la columna Privilegios de la hoja Users.
+- Se corrigió la expresión regular de normalización Unicode: se eliminó el doble escape que alteraba el texto del rol antes de compararlo con 'desarrollador'.
+- Se conservaron la eliminación de espacios exteriores, la conversión a minúsculas y la restricción de acceso al rol Desarrollador.
+- No se modificaron los controles de edición, Services/Auth.js, la autenticación, los endpoints ni otros elementos del menú.
+================================================================================
+
+
+================================================================================
+REORGANIZACIÓN VISUAL DEL PANEL DE DESARROLLADOR
+Fecha: 2026-11-04
+- index.html, líneas 212-408 aprox.: se reorganizó #dev-tools-modal en cinco secciones: Diagnóstico, Respaldos, Base de datos, Imágenes y Drive, y Sistema.
+- Se conservaron los identificadores de los controles existentes; se añadieron cinco selectores radio para navegar entre secciones.
+- style.css, desde línea 2373: estilos de menú lateral, paneles, estados activos, foco de teclado y adaptación responsive.
+- ui.js no fue modificado. No se alteraron acciones, servicios, endpoints, permisos ni lógica administrativa.
+- Verificación estática: 38 IDs originales preservados, sin duplicados; HTML balanceado; CSS con llaves balanceadas.
+- La comprobación visual y funcional en el entorno live queda pendiente.
+================================================================================
+
+
+================================================================================
+AJUSTE RESPONSIVE Y ESTILO DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- index.html, bloque #dev-tools-modal: se añadieron aria-label y title a las cinco opciones de navegación (Diagnóstico, Respaldos, Base de datos, Imágenes y Drive, y Sistema), conservando IDs, radio buttons, paneles y relaciones for.
+- style.css, bloque final «PANEL DE DESARROLLADOR — ACABADO VISUAL Y NAVEGACIÓN MÓVIL»: se incorporó una presentación translúcida con bordes suaves, sombras grises discretas y estilos refinados para navegación, tarjetas, campos y botones.
+- style.css, reglas responsive de #dev-tools-modal: en pantallas de hasta 760px, la navegación muestra cinco iconos en una cuadrícula sin scroll horizontal y oculta visualmente los nombres sin retirarlos del árbol de accesibilidad.
+- style.css, .dev-console-output: se estableció fondo negro, texto blanco/claro y fuente Roboto con alternativas sans-serif.
+
+VERIFICACIÓN ESTÁTICA
+- index.html coincide con el respaldo salvo por los cinco pares aria-label/title previstos.
+- style.css conserva el contenido del respaldo y agrega únicamente el bloque de estilos de esta tarea.
+- Cinco radio buttons, cinco enlaces y cinco paneles presentes; no se detectaron IDs duplicados.
+- Llaves CSS balanceadas.
+- ui.js no fue modificado.
+- No se ejecutó navegador real; la validación visual en escritorio, móvil y PWA queda pendiente.
+================================================================================
+
+================================================================================
+DOCUMENTACIÓN — ESTUDIO DE FACTIBILIDAD DEL CENTRO DE ADMINISTRACIÓN
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+- Archivo modificado: Tareas.txt.
+- Se agregó un bloque de estudio de factibilidad y planificación para el panel de desarrollador.
+- Se documentaron los hallazgos existentes en api-config.js, Services/Auth.js y Services/admin.js.
+- Se registraron requisitos transversales de seguridad, autorización backend, auditoría, límites de Apps Script, procesamiento por lotes, reversibilidad y validación.
+- Se añadieron tareas futuras para: endurecimiento de seguridad; administración de usuarios y permisos; monitor del sistema; registro de actividad y auditoría; integridad de base de datos; respaldos y restauración; administrador de errores; configuración; archivos y recursos de Drive; mantenimiento; versiones y despliegues; y resumen general.
+- Cada tarea incluye factibilidad, capacidades existentes, requisitos, plan de trabajo y criterios de aceptación.
+- Se estableció una hoja de ruta por fases y referencias oficiales de Google Apps Script.
+- No se modificaron index.html, style.css, ui.js, api-config.js ni servicios Apps Script.
+- No se crearon hojas, columnas, propiedades, activadores o carpetas en Google; no se cambiaron permisos ni despliegues.
+- No se implementó ninguna de las funciones planificadas.
+================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN INICIAL — TAREA ADMIN 0: AUTORIZACIÓN BACKEND Y PROTECCIÓN DE CREDENCIALES
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- Services/Auth.js: se retiró el registro del payload completo y el evento que escribía contraseñas; la respuesta debug ya no expone Spreadsheet ID ni nombres de hojas.
+- Services/admin.js: todas las acciones excepto ping requieren sesión válida y privilegio Desarrollador; se unificaron los mensajes de rechazo; la respuesta debug ya no expone IDs ni nombres de hojas; se retiraron stack traces y detalles internos de la respuesta al cliente.
+- Services/feedback.js: se añadió validación backend de sesión/privilegio para Inbox, actividad, edición de PYS/tutoriales, aprobación de vídeos y subida a YouTube; el actor se obtiene de Users; la respuesta debug ya no expone IDs ni nombres de hojas.
+- api-config.js: los helpers de Inbox, actividad y aprobación/rechazo aceptan y transmiten contexto de sesión.
+- ui.js: las acciones del modal ADMIN, updateVehicleField, driveCommand, Inbox y operaciones privilegiadas de FEEDBACK transmiten userId/sessionToken.
+- youtubeUpload.js: se exige sesión para iniciar la carga; se transmite el contexto de sesión y se usa currentUser.ID.
+
+DOCUMENTACIÓN
+- Auditoría.txt: nueva auditoría inicial de ADMIN 0 con clasificación de acciones, hallazgos y limitaciones.
+- Tareas.txt: ADMIN 0 queda en implementación; se registra la autorización del plan ADMIN 0–11.
+- ChangesLogs.txt: registro objetivo de los cambios anteriores.
+
+PENDIENTES
+- No se consultó la hoja Logs desplegada; el alcance histórico de la exposición no está determinado.
+- No se modificó el almacenamiento de contraseñas; la migración compatible desde texto claro requiere diseño y pruebas.
+- No se probaron los endpoints Apps Script desplegados ni se actualizaron despliegues.
+- No se realizó merge a GPSpedia2.2.5.
+================================================================================

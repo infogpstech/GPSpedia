@@ -12,7 +12,7 @@ export const API_ENDPOINTS = {
     USERS:    "https://script.google.com/macros/s/AKfycbz6KfY_E2d-efAYBXir_UGjUUPIggDJkJGUboqedO4eWFF9y3vr4IQzveeg563FLjs/exec",
     FEEDBACK: "https://script.google.com/macros/s/AKfycbxT_3TopgtXNgRHGyNroU7zi_hyixxFEU-0r-QgfiSifyOkFMjeILL5Rgeq_WLJ7Dm2SQ/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec",
-    ADMIN: "https://script.google.com/macros/s/AKfycbwuSqeHuf8huAh3WH_A0OlK_NP2eeN3rSqEVcC2erRRt2BooHyqAGBuY4dIGZH0OqUywA/exec"
+    ADMIN: "https://script.google.com/macros/s/AKfycbyiQS4114eMk1iV2dVjgtMe-TNTK311NdrZ1ZD30l15XZ7srM9SkNCaW8wzOOpk3qCaXw/exec"
 };
 
 export const ACTION_TO_SERVICE_MAP = {
@@ -82,28 +82,28 @@ export async function fetchCatalogData() {
     return await routeAction('getCatalogData');
 }
 
-export async function getFeedbackItems() {
-    return await routeAction('getFeedbackItems');
+export async function getFeedbackItems(sessionPayload = {}) {
+    return await routeAction('getFeedbackItems', sessionPayload);
 }
 
-export async function replyToFeedback(itemId, itemType, replyText, responderName) {
-    return await routeAction('replyToFeedback', { itemId, itemType, replyText, responderName });
+export async function replyToFeedback(itemId, itemType, replyText, responderName, sessionPayload = {}) {
+    return await routeAction('replyToFeedback', { itemId, itemType, replyText, responderName, ...sessionPayload });
 }
 
-export async function markAsResolved(itemId) {
-    return await routeAction('markAsResolved', { itemId });
+export async function markAsResolved(itemId, sessionPayload = {}) {
+    return await routeAction('markAsResolved', { itemId, ...sessionPayload });
 }
 
-export async function deleteFeedbackItem(id, type) {
-    return await routeAction('deleteFeedbackItem', { id, type });
+export async function deleteFeedbackItem(id, type, sessionPayload = {}) {
+    return await routeAction('deleteFeedbackItem', { id, type, ...sessionPayload });
 }
 
-export async function clearActivityLogs(keepLastWeek = false) {
-    return await routeAction('clearActivityLogs', { keepLastWeek });
+export async function clearActivityLogs(keepLastWeek = false, sessionPayload = {}) {
+    return await routeAction('clearActivityLogs', { keepLastWeek, ...sessionPayload });
 }
 
-export async function getActivityLogs() {
-    return await routeAction('getActivityLogs');
+export async function getActivityLogs(sessionPayload = {}) {
+    return await routeAction('getActivityLogs', sessionPayload);
 }
 
 export async function recordLike(vehicleId, corteIndex, userId, userName) {
@@ -156,10 +156,10 @@ export async function checkAllServicesHealth() {
     return results;
 }
 
-export async function approveVideo(itemId, approverName, userRole) {
-    return await routeAction("approveVideo", { itemId, approverName, userRole });
+export async function approveVideo(itemId, approverName, userRole, sessionPayload = {}) {
+    return await routeAction("approveVideo", { itemId, approverName, userRole, ...sessionPayload });
 }
 
-export async function rejectVideo(itemId, rejecterName, reason, userRole) {
-    return await routeAction("rejectVideo", { itemId, rejecterName, reason, userRole });
+export async function rejectVideo(itemId, rejecterName, reason, userRole, sessionPayload = {}) {
+    return await routeAction("rejectVideo", { itemId, rejecterName, reason, userRole, ...sessionPayload });
 }
