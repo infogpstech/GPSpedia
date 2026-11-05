@@ -69,7 +69,7 @@ function extractDriveFileId(value) {
     return extractDriveFileIds(value)[0] || "";
 }
 
-function collectActiveDriveReferences() {
+function collectActiveDriveReferences(includeLocations = true) {
     const excludedSheets = new Set([
         SHEET_NAMES.IMAGENES_REEMPLAZADAS, "Logs", "ActiveSessions", "Users",
         SHEET_NAMES.ADMIN_STATE, SHEET_NAMES.IDEMPOTENCIA
@@ -113,8 +113,12 @@ function collectActiveDriveReferences() {
                 });
 
                 cellIds.forEach(id => {
-                    if (!references.has(id)) references.set(id, []);
-                    references.get(id).push({ sheet: sheet.getName(), row: r + 1, column: c + 1 });
+                    if (includeLocations) {
+                        if (!references.has(id)) references.set(id, []);
+                        references.get(id).push({ sheet: sheet.getName(), row: r + 1, column: c + 1 });
+                    } else {
+                        references.set(id, true);
+                    }
                 });
                 if (cellHasUnverifiableDriveLink) unverifiableReferenceCount++;
             }
@@ -142,14 +146,6 @@ function isFolderInsideCortes(folder, rootFolderId) {
         while (parents.hasNext()) pending.push(parents.next());
     }
 
-    return false;
-}
-
-function isFileInsideCortes(file, rootFolderId) {
-    const parents = file.getParents();
-    while (parents.hasNext()) {
-        if (isFolderInsideCortes(parents.next(), rootFolderId)) return true;
-    }
     return false;
 }
 
@@ -2808,28 +2804,130 @@ function handleDeleteReplacedImage(payload, logMessage) {
 /**
  * Handler: Auditoría de imágenes en Google Drive limitada estrictamente a la carpeta "Cortes"
  */
+function storeAuditDriveReferenceSnapshot(auditId, snapshot) {
+    const cache = CacheService.getScriptCache();
+    const cachePrefix = `gp_audit_refs_${auditId}`;
+    const serialized = JSON.stringify(snapshot);
+    const compressed = Utilities.gzip(Utilities.newBlob(serialized, "application/json"));
+    const encoded = Utilities.base64Encode(compressed.getBytes());
+    const chunkSize = 75000;
+    const maxEncodedSize = 750000;
+
+    if (encoded.length > maxEncodedSize) {
+        throw new Error("El conjunto de referencias supera la capacidad temporal disponible. No se clasificaron archivos; reduce el volumen de datos o solicita una auditoría por etapas.");
+    }
+
+    const chunkCount = Math.ceil(encoded.length / chunkSize);
+    const cacheKeys = [];
+    try {
+        for (let i = 0; i < chunkCount; i++) {
+            const key = `${cachePrefix}_${i}`;
+            const chunk = encoded.slice(i * chunkSize, (i + 1) * chunkSize);
+            cache.put(key, chunk, 21600);
+            cacheKeys.push(key);
+        }
+
+        const manifestKey = `${cachePrefix}_manifest`;
+        cache.put(manifestKey, JSON.stringify({ chunkCount: chunkCount }), 21600);
+        cacheKeys.push(manifestKey);
+
+        cacheKeys.forEach((key, index) => {
+            if (cache.get(key) === null) {
+                throw new Error("Google Apps Script no conservó todos los bloques del estado temporal.");
+            }
+        });
+    } catch (error) {
+        cache.removeAll(cacheKeys);
+        throw new Error(`No se pudo conservar el estado temporal de la auditoría: ${error.message}`);
+    }
+}
+
+function loadAuditDriveReferenceSnapshot(auditId) {
+    const cache = CacheService.getScriptCache();
+    const cachePrefix = `gp_audit_refs_${auditId}`;
+    const manifestText = cache.get(`${cachePrefix}_manifest`);
+    if (!manifestText) {
+        throw new Error("El estado temporal de la auditoría expiró o dejó de estar disponible. Inicia una auditoría nueva.");
+    }
+
+    const manifest = JSON.parse(manifestText);
+    if (!Number.isInteger(manifest.chunkCount) || manifest.chunkCount < 1) {
+        throw new Error("El estado temporal de la auditoría está incompleto. Inicia una auditoría nueva.");
+    }
+
+    let encoded = "";
+    for (let i = 0; i < manifest.chunkCount; i++) {
+        const chunk = cache.get(`${cachePrefix}_${i}`);
+        if (chunk === null) {
+            throw new Error("Falta un bloque del estado temporal de la auditoría. Inicia una auditoría nueva.");
+        }
+        encoded += chunk;
+    }
+
+    const compressed = Utilities.newBlob(Utilities.base64Decode(encoded));
+    return JSON.parse(Utilities.ungzip(compressed).getDataAsString());
+}
+
+function clearAuditDriveReferenceSnapshot(auditId) {
+    const cache = CacheService.getScriptCache();
+    const cachePrefix = `gp_audit_refs_${auditId}`;
+    const manifestText = cache.get(`${cachePrefix}_manifest`);
+    if (!manifestText) return;
+
+    const manifest = JSON.parse(manifestText);
+    const keys = [`${cachePrefix}_manifest`];
+    for (let i = 0; i < manifest.chunkCount; i++) {
+        keys.push(`${cachePrefix}_${i}`);
+    }
+    cache.removeAll(keys);
+}
+
+/**
+ * Handler: Auditoría de imágenes en Google Drive limitada estrictamente a la carpeta "Cortes"
+ */
 function handleAuditDriveImagesInCortes(payload, logMessage) {
     const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
     if (!rootFolder) throw new Error("No se pudo acceder a la carpeta principal 'Cortes'.");
 
-    const referenceSnapshot = collectActiveDriveReferences();
-    const activeDriveIds = new Set(Array.from(referenceSnapshot.references.keys()));
-    const historicalDriveIds = new Set();
-    const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
-    if (historySheet) {
-        const historyRows = historySheet.getDataRange().getValues();
-        for (let r = 1; r < historyRows.length; r++) {
-            const id = extractDriveFileId(historyRows[r][5]) || extractDriveFileId(historyRows[r][7]);
-            if (id) historicalDriveIds.add(id);
+    const cursor = payload && payload.cursor ? payload.cursor : null;
+    let auditId;
+    let referenceSnapshot;
+
+    if (cursor) {
+        if (!Array.isArray(cursor.stack) || !/^[0-9a-f-]{36}$/i.test(String(cursor.referenceCacheId || ""))) {
+            throw new Error("Cursor de auditoría inválido.");
         }
+        auditId = String(cursor.referenceCacheId);
+        referenceSnapshot = loadAuditDriveReferenceSnapshot(auditId);
+    } else {
+        auditId = Utilities.getUuid();
+        const references = collectActiveDriveReferences(false);
+        const historicalDriveIds = new Set();
+        const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
+        if (historySheet) {
+            const historyRows = historySheet.getDataRange().getValues();
+            for (let r = 1; r < historyRows.length; r++) {
+                const id = extractDriveFileId(historyRows[r][5]) || extractDriveFileId(historyRows[r][7]);
+                if (id) historicalDriveIds.add(id);
+            }
+        }
+
+        referenceSnapshot = {
+            activeDriveIds: Array.from(references.references.keys()),
+            historicalDriveIds: Array.from(historicalDriveIds),
+            unverifiableReferenceCount: references.unverifiableReferenceCount
+        };
+        storeAuditDriveReferenceSnapshot(auditId, referenceSnapshot);
+        logMessage && logMessage("Referencias", `Snapshot preparado: ${referenceSnapshot.activeDriveIds.length} referencias activas y ${referenceSnapshot.historicalDriveIds.length} históricas.`);
     }
 
-    const cursor = payload && payload.cursor ? payload.cursor : null;
+    const activeDriveIds = new Set(referenceSnapshot.activeDriveIds);
+    const historicalDriveIds = new Set(referenceSnapshot.historicalDriveIds);
     let stack;
     let totalAnalyzed = 0;
     let foldersVisited = 0;
+
     if (cursor) {
-        if (!Array.isArray(cursor.stack)) throw new Error("Cursor de auditoría inválido.");
         stack = cursor.stack;
         totalAnalyzed = Math.max(0, Number(cursor.totalAnalyzed) || 0);
         foldersVisited = Math.max(0, Number(cursor.foldersVisited) || 0);
@@ -2845,8 +2943,8 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
         }];
     }
 
-    const batchFilesLimit = 150;
-    const batchFoldersLimit = 100;
+    const batchFilesLimit = 25;
+    const batchFoldersLimit = 20;
     let batchFiles = 0;
     let batchFolders = 0;
     const auditResults = [];
@@ -2854,18 +2952,15 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
     while (stack.length && batchFiles < batchFilesLimit && batchFolders < batchFoldersLimit) {
         const current = stack[stack.length - 1];
         const folder = DriveApp.getFolderById(current.folderId);
-        if (!isFolderInsideCortes(folder, DRIVE_FOLDER_ID)) {
-            throw new Error("Se detectó una carpeta fuera del árbol «Cortes». La auditoría se detuvo.");
-        }
 
         if (!current.filesDone) {
+            // folder está dentro de Cortes: es la raíz fija o una carpeta validada en el cursor,
+            // o fue obtenida directamente mediante el iterador de subcarpetas de otra carpeta validada.
             const files = current.fileToken ? DriveApp.continueFileIterator(current.fileToken) : folder.getFiles();
             while (files.hasNext() && batchFiles < batchFilesLimit) {
                 const file = files.next();
-                if (!isFileInsideCortes(file, DRIVE_FOLDER_ID)) {
-                    throw new Error("La iteración devolvió un archivo fuera del árbol «Cortes».");
-                }
-
+                // getFiles() devuelve archivos contenidos en la carpeta ya validada; no es necesario
+                // recorrer nuevamente todos los padres del archivo para cada elemento.
                 let fileName = "Archivo no verificable";
                 let mimeType = "";
                 let size = 0;
@@ -2913,6 +3008,7 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
             : folder.getFolders();
         if (subFolders.hasNext()) {
             const childFolder = subFolders.next();
+            // Mantener una validación de pertenencia por cada subcarpeta descubierta.
             if (!isFolderInsideCortes(childFolder, DRIVE_FOLDER_ID)) {
                 throw new Error("Se detectó una subcarpeta fuera del árbol «Cortes».");
             }
@@ -2937,9 +3033,14 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
 
     const complete = stack.length === 0;
     const nextCursor = complete ? null : {
-        stack: stack, totalAnalyzed: totalAnalyzed, foldersVisited: foldersVisited
+        stack: stack,
+        totalAnalyzed: totalAnalyzed,
+        foldersVisited: foldersVisited,
+        referenceCacheId: auditId
     };
     logMessage && logMessage("Auditoría Drive", `Lote analizado: ${batchFiles} archivos. Total acumulado: ${totalAnalyzed}. Estado: ${complete ? "completo" : "parcial"}.`);
+
+    if (complete) clearAuditDriveReferenceSnapshot(auditId);
 
     return {
         status: "success",
@@ -2955,4 +3056,3 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
         cursor: nextCursor
     };
 }
-

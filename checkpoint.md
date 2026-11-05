@@ -1387,3 +1387,106 @@ Solicitar confirmación de si la cuenta muestra el enlace Desarrollador. Si no a
 ## 7. PUBLICACIÓN
 Todos los documentos de esta tarea se agruparán en un único commit en GPSpedia2.2.5_work, mediante el procedimiento Git Database API autorizado. El HEAD previo será el único padre y expected_sha; la rama protegida no se actualizará.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — DIAGNÓSTICO DEL TIEMPO DE ESPERA EN AUDITORÍA DE INVENTARIO DE IMÁGENES
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD inicial confirmado:** 842b129486969e5056cc1648dff6bd7375e48db5
+**Árbol del HEAD inicial:** 88522ad66d5c0b6feb12cdb24ea4c9b1f9c96d3f
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## 1. TAREA Y ALCANCE
+Investigar por qué la herramienta de gestión del inventario de imágenes permanece en «Iniciando auditoría por lotes...» con todos los contadores en cero y la ejecución de Google Apps Script termina por tiempo de espera. Determinar la operación que consume el tiempo y, si la evidencia lo justifica, implementar una corrección estrictamente limitada que permita completar la auditoría por lotes sin alterar su clasificación ni sus datos.
+
+## 2. ESTADO REAL AL INICIO
+- El usuario confirmó que la ejecución de Apps Script muestra «tiempo de espera».
+- La rama de trabajo apunta a 842b129486969e5056cc1648dff6bd7375e48db5; la rama protegida apunta a d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- El síntoma reportado corresponde a la acción auditDriveImagesInCortes.
+- La revisión preliminar previa identificó como posibles operaciones costosas collectActiveDriveReferences(), la lectura de hojas completas y las comprobaciones repetidas de carpetas padre. Estos son indicios que deben verificarse mediante auditoría completa; todavía no se atribuye causa definitiva.
+- El checkpoint final de la tarea anterior está conservado. Esta entrada documenta el inicio de la tarea actual antes de continuar la auditoría.
+- No se ha modificado código, no se han ejecutado peticiones contra servicios, ni se han alterado archivos de Drive o datos de Sheets durante esta tarea.
+
+## 3. ARCHIVOS Y FUNCIONES PREVISTOS PARA AUDITORÍA
+- ui.js: openAuditDriveModal(), manejo de cursor, procesamiento de lotes, actualización de contadores y errores.
+- api-config.js: ACTION_TO_SERVICE_MAP y routeAction(), solo en la medida en que formen parte del contrato.
+- Services/admin.js: doPost(), handleAuditDriveImagesInCortes(), collectActiveDriveReferences(), isFolderInsideCortes(), isFileInsideCortes() y funciones auxiliares relacionadas.
+- index.html u otros archivos solo si las referencias del flujo demuestran que forman parte del problema.
+- Documentación obligatoria: Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+
+## 4. RIESGOS Y RESTRICCIONES
+- No eliminar ni debilitar controles de sesión, permisos, validación de referencias o clasificación de imágenes.
+- No modificar, mover, renombrar, eliminar ni restaurar imágenes o carpetas de Drive.
+- No escribir ni modificar datos de Google Sheets.
+- No desplegar Apps Script ni cambiar endpoints sin autorización expresa.
+- No asumir que una respuesta incompleta es equivalente a auditoría completada.
+- Todo cambio de código deberá preservar el contrato de respuesta y la continuidad del cursor entre lotes.
+- Si la corrección no puede verificarse estática y funcionalmente con los medios disponibles, registrar la limitación y dejarla pendiente.
+
+## 5. FASE
+Checkpoint inicial creado como blob documental, sin commit ni movimiento de rama. La auditoría formal continúa ahora; no se ha modificado código.
+
+## 6. SIGUIENTE ACCIÓN
+Auditar íntegramente las funciones y dependencias del recorrido frontend/backend, documentar los hallazgos y cuantificar las operaciones repetidas antes de decidir si procede editar.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — OPTIMIZACIÓN ESTÁTICA DE AUDITORÍA DEL INVENTARIO DE IMÁGENES
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD previo a la tarea:** 842b129486969e5056cc1648dff6bd7375e48db5
+**Árbol previo:** 88522ad66d5c0b6feb12cdb24ea4c9b1f9c96d3f
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## 1. ESTADO FINAL
+OPTIMIZACIÓN ESTÁTICA PREPARADA. VALIDACIÓN FUNCIONAL EN EL DEPLOYMENT ADMIN PENDIENTE. No se declara resuelto el tiempo de espera hasta ejecutar una auditoría real y verificar el resultado.
+
+## 2. ARCHIVOS INCLUIDOS EN LA TAREA
+- Services/admin.js: optimización del snapshot de referencias, reutilización temporal entre lotes, reducción de tamaño de lote y eliminación de comprobaciones repetitivas de ancestros por archivo.
+- Auditoría.txt: auditoría inicial, hallazgos, cambios y revisión post-edición.
+- ChangesLogs.txt: registro objetivo de modificaciones.
+- Tareas.txt: resultado, validaciones y pendientes.
+- checkpoint.md: registro inicial y cierre de la tarea.
+- ui.js y api-config.js no se modificaron.
+
+## 3. RESULTADO TÉCNICO
+- La auditoría genera una instantánea de IDs activos e históricos al inicio y la conserva comprimida en CacheService, dividida en bloques, con TTL de 21,600 segundos.
+- Las peticiones de continuación recuperan la misma instantánea mediante referenceCacheId, evitando repetir la lectura de todas las hojas en cada lote.
+- Se redujo el límite a 25 archivos y 20 carpetas por petición.
+- Se eliminó la comprobación repetitiva de ancestros por cada archivo. Se mantiene la validación de carpetas recibidas en el cursor y de cada subcarpeta descubierta.
+- collectActiveDriveReferences() conserva su comportamiento predeterminado con ubicaciones detalladas para handleDeleteReplacedImage(); el modo ligero se utiliza únicamente en la auditoría.
+- Se mantienen el orden y las condiciones de clasificación y el contrato de respuesta del servicio.
+
+## 4. VERIFICACIONES EJECUTADAS
+- Lectura de Proceso de desarollo.md, checkpoint.md, ChangesLogs.txt, Tareas.txt, Auditoría.txt y contexto_personal.md.
+- Confirmación de rama de trabajo, HEAD inicial, árbol y HEAD de rama protegida.
+- Auditoría estática de ui.js, api-config.js, Services/admin.js y dependencias del servicio.
+- Búsqueda en los ocho archivos de servicio; no se encontraron otros consumidores de isFileInsideCortes().
+- Comprobación de sintaxis JavaScript de Services/admin.js.
+- Reconstrucción inversa del archivo modificado: el contenido reconstruido coincide exactamente con el respaldo original.
+- Comparación de handleDeleteReplacedImage(): permanece idéntica al original.
+- Verificación estática de que se conservan las condiciones de clasificación, validación de cursor/subcarpetas y contrato de respuesta.
+
+## 5. VALIDACIONES PENDIENTES Y RIESGOS
+- No se ejecutó Google Apps Script ni se actualizó el deployment ADMIN.
+- No se midió la duración real del escaneo inicial ni de los lotes.
+- CacheService puede desalojar entradas; si falta el estado, el handler detiene la auditoría con un mensaje explícito y requiere iniciar una nueva.
+- Si el snapshot supera 750,000 caracteres codificados, la auditoría se detiene sin clasificar archivos.
+- La recopilación inicial de referencias sigue siendo una operación completa en la primera petición. Si esa operación por sí sola excede el tiempo máximo, deberá dividirse en etapas por hoja/fila en una tarea posterior.
+- No se realizaron escrituras en Sheets ni modificaciones de archivos/carpetas de Drive.
+- No se modificó ni publicó la rama protegida.
+
+## 6. SIGUIENTE ACCIÓN CONCRETA
+Publicar manualmente Services/admin.js en el deployment ADMIN correspondiente a GPSpedia2.2.5_work y ejecutar una auditoría nueva. Comprobar que la primera respuesta actualiza los contadores, que las continuaciones mantienen el snapshot y avanzan hasta complete:true, y que las clasificaciones son correctas. Si vuelve a agotarse el tiempo en la primera petición, registrar el error y dividir la recopilación inicial de referencias por etapas; no ampliar el lote ni omitir verificaciones.
+
+## 7. PUBLICACIÓN
+Todos los archivos de esta tarea se agruparán en exactamente un commit en GPSpedia2.2.5_work mediante el procedimiento Git Database API autorizado. El commit tendrá como único padre el HEAD previo confirmado. El SHA final se identificará en el historial después de la publicación. La rama protegida deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

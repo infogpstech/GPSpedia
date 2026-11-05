@@ -3513,3 +3513,19 @@ Estado: DIAGNÓSTICO ESTÁTICO COMPLETADO; PENDIENTE CONFIRMACIÓN CON LA SESIÓ
 - Siguiente comprobación: confirmar si aparece el enlace Desarrollador; verificar el rol de la sesión sin compartir identificadores ni tokens; si el modal abre pero falla la carga, obtener el mensaje de error y contrastar commit web/deployment ADMIN.
 - No modificar código ni ampliar permisos hasta confirmar la causa y recibir autorización.
 ================================================================================
+
+
+================================================================================
+TAREA — CORREGIR EL TIEMPO DE ESPERA EN LA AUDITORÍA DEL INVENTARIO DE IMÁGENES
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+Estado: OPTIMIZACIÓN ESTÁTICA PREPARADA; VALIDACIÓN FUNCIONAL EN EL DEPLOYMENT ADMIN PENDIENTE.
+
+- Se identificó que la primera respuesta espera a que el backend termine de recopilar referencias de todas las hojas, leer el historial y recorrer el lote de Drive; por eso los contadores permanecen en cero hasta recibir la primera respuesta válida.
+- Services/admin.js conserva ahora el snapshot de IDs activos e históricos en CacheService y lo reutiliza entre peticiones, evitando volver a escanear todas las hojas en cada lote.
+- Se redujo el lote máximo a 25 archivos y 20 carpetas, y se eliminaron comprobaciones repetidas de ancestros por archivo. Se conserva la validación de carpetas del cursor y de cada subcarpeta descubierta.
+- Se mantiene el comportamiento detallado de collectActiveDriveReferences() para handleDeleteReplacedImage(), junto con las reglas de clasificación y el contrato de respuesta.
+- Validaciones estáticas: sintaxis JavaScript correcta; reconstrucción inversa del archivo igual al respaldo original fuera de los cambios previstos; handleDeleteReplacedImage() idéntica; búsqueda en archivos de servicio sin otros consumidores de isFileInsideCortes().
+- Pendiente: actualizar manualmente el deployment ADMIN con la versión de trabajo y ejecutar la auditoría completa. Verificar que los contadores avancen, que el cursor continúe hasta complete:true y que las clasificaciones coincidan con referencias activas/históricas.
+- Si la primera petición vuelve a agotar el tiempo, medir y dividir en etapas la recopilación inicial de referencias por hoja/fila; no asumir que el problema quedó resuelto.
+- No se desplegó Apps Script desde esta tarea, no se realizaron escrituras en Sheets ni modificaciones en Drive y no se alteró la rama protegida.
+================================================================================

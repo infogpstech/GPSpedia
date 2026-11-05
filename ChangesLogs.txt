@@ -2606,3 +2606,21 @@ RESULTADO OBJETIVO
 - No se alteraron datos ni la rama protegida.
 - El diagnóstico no confirma el rol de la cuenta del usuario ni el commit/deployment servido por la plataforma.
 ================================================================================
+
+
+================================================================================
+OPTIMIZACIÓN ESTÁTICA — AUDITORÍA DEL INVENTARIO DE IMÁGENES
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+ARCHIVO MODIFICADO: Services/admin.js
+- collectActiveDriveReferences(): se añadió el parámetro opcional includeLocations. Su valor predeterminado conserva las ubicaciones detalladas; la auditoría puede solicitar únicamente los IDs para reducir memoria.
+- Se añadieron storeAuditDriveReferenceSnapshot(), loadAuditDriveReferenceSnapshot() y clearAuditDriveReferenceSnapshot() para conservar el snapshot comprimido de IDs activos e históricos en CacheService entre lotes.
+- handleAuditDriveImagesInCortes(): ahora crea el snapshot al inicio y lo reutiliza mediante referenceCacheId en las peticiones de continuación; elimina el nuevo escaneo completo de hojas en cada lote.
+- El estado temporal se almacena en bloques de 75,000 caracteres, con límite codificado de 750,000 caracteres y expiración de 21,600 segundos. Si falta el estado, expira o excede la capacidad, la auditoría se detiene con error explícito.
+- Se redujo el límite de lote de 150 a 25 archivos y de 100 a 20 carpetas.
+- Se retiró la consulta repetitiva de ancestros por archivo y la función isFileInsideCortes(), sin consumidores adicionales en los archivos de servicio. Se mantiene la validación de carpetas del cursor y de cada subcarpeta descubierta.
+- handleDeleteReplacedImage() conserva el uso predeterminado del helper y sus ubicaciones de referencia.
+- Se mantuvieron las reglas de clasificación, la raíz Cortes, los iteradores y el contrato de respuesta.
+- No se modificaron ui.js, api-config.js, endpoints, servicios desplegados, hojas ni archivos de Drive.
+- La sintaxis JavaScript pasó la comprobación estática y la reconstrucción inversa confirmó que no hay cambios ajenos al alcance.
+- La validación funcional en Apps Script y la medición del tiempo real permanecen pendientes.
+================================================================================

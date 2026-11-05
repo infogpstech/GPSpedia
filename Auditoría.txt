@@ -3671,3 +3671,97 @@ Estas diferencias impiden asumir que la combinación de frontend y servicio acti
 SIGUIENTE PASO
 Solicitar al usuario que confirme si su cuenta tiene el privilegio Desarrollador y si el enlace Desarrollador aparece en el menú. Si aparece, comprobar la pestaña Imágenes y Drive y el resultado visible al abrir el repositorio. Después identificar el commit web y el deployment ADMIN activos antes de autorizar cualquier corrección.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — TIEMPO DE ESPERA EN AUDITORÍA DEL INVENTARIO DE IMÁGENES
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: 842b129486969e5056cc1648dff6bd7375e48db5
+Tipo: auditoría estática de frontend, enrutamiento y backend. Sin ejecución de Apps Script ni acceso/escritura a datos reales.
+
+1. ARCHIVOS Y RESPALDOS EXACTOS
+- ui.js: 8838 líneas; blob original de respaldo: 57f1830ce519f00d2e6bbfad554cee83c52b5a9a.
+- Services/admin.js: 2959 líneas; blob original de respaldo: 1718d6cb99a7738a9b425772aeda64e9cc05a37f.
+- api-config.js: 170 líneas; blob de referencia: 3d44b4ebaa69bcbf157276b172ae407cb9984a35. No se identifica necesidad inicial de modificarlo.
+- Los blobs anteriores conservan el contenido exacto de los archivos obtenidos del HEAD auditado y se utilizarán para la comparación posterior.
+
+2. RECORRIDO FRONTEND Y CONTRATO
+- ui.js, líneas 3948-4067: openAuditDriveModal() abre el modal, inicializa todos los contadores en cero y muestra «Iniciando auditoría por lotes...».
+- La función ejecuta secuencialmente routeAction('auditDriveImagesInCortes', ...) y solo actualiza contadores/estado después de recibir status:'success' y files como arreglo.
+- Si la primera solicitud no responde antes del tiempo máximo de Apps Script, la interfaz permanece con todos los contadores en cero; esto concuerda con el síntoma reportado.
+- ui.js, líneas 3785-3788: el botón abre el modal. getDeveloperSessionPayload(), líneas 3791-3800, exige ID y SessionToken y entrega userId/sessionToken.
+- api-config.js, líneas 18-34: auditDriveImagesInCortes está asignada a ADMIN. routeAction(), líneas 37-70, envía POST JSON, procesa la respuesta y convierte status:'error' en excepción. No se detectó una inconsistencia estática del contrato.
+- El frontend no establece un timeout propio ni muestra progreso intermedio durante la ejecución del primer lote.
+
+3. RECORRIDO BACKEND Y OPERACIONES COSTOSAS
+- Services/admin.js, líneas 281-405: doPost() valida sesión Desarrollador antes de enrutar auditDriveImagesInCortes a handleAuditDriveImagesInCortes().
+- Services/admin.js, líneas 72-125: collectActiveDriveReferences() recorre todas las hojas no excluidas; por cada hoja lee getDataRange().getDisplayValues(), getFormulas() y getRichTextValues(), y analiza cada celda, incluidos enlaces enriquecidos y fórmulas.
+- Services/admin.js, línea 2815: handleAuditDriveImagesInCortes() ejecuta collectActiveDriveReferences() antes de analizar el primer archivo.
+- La misma recopilación vuelve a ejecutarse en cada petición de continuación, aunque la referencia activa no cambia necesariamente entre lotes.
+- Services/admin.js, líneas 2818-2825: la hoja Imagenes_Reemplazadas también se lee completa y se vuelve a procesar en cada petición.
+- Services/admin.js, líneas 2836-2839: cada carpeta presente en el cursor se valida recorriendo sus padres.
+- Services/admin.js, líneas 2854-2936: el lote permite hasta 150 archivos y 100 carpetas. Para cada archivo llama isFileInsideCortes(), que consulta sus padres y vuelve a recorrer la cadena de carpetas con isFolderInsideCortes(). También se comprueba repetidamente la carpeta actual y cada subcarpeta obtenida del iterador.
+- isFileInsideCortes() solo se utiliza en el recorrido auditado; folder.getFiles() obtiene los archivos contenidos en la carpeta validada. isFolderInsideCortes() también tiene otros usos fuera de esta auditoría y no debe eliminarse globalmente.
+- collectActiveDriveReferences() también es utilizado por handleDeleteReplacedImage(), líneas 2742-2805, donde sí se necesitan las ubicaciones de referencia para bloquear eliminaciones. Cualquier optimización deberá conservar el comportamiento predeterminado y los detalles de ubicación de esa operación.
+
+4. HALLAZGOS Y CONCLUSIÓN
+- La demora anterior a la primera respuesta puede provenir de la recopilación completa de referencias, del procesamiento de hasta 150 archivos y de las comprobaciones repetidas de ancestros; no hay mediciones de ejecución que permitan atribuir el timeout a una única llamada.
+- El procesamiento por lotes actual limita archivos/carpetas, pero no limita ni divide el trabajo previo de recopilación de referencias.
+- La repetición de la lectura de referencias e historial en cada lote aumenta el coste total de la auditoría.
+- La comprobación de pertenencia de cada archivo y de cada subcarpeta repite consultas de ancestros que pueden deducirse de los iteradores de una carpeta ya validada. La validación de las carpetas incluidas en un cursor recibido del cliente debe conservarse.
+- La clasificación actual depende de IDs activos, IDs históricos, MIME type y el contador de referencias no interpretables. Una corrección debe preservar exactamente esas reglas.
+- No se encontró una falla estática en el enrutamiento frontend/API que explique por sí sola el tiempo de espera.
+
+5. CAMBIOS PROPUESTOS PARA ESTA TAREA
+- Separar la recopilación de IDs de referencia que necesita la auditoría de las ubicaciones detalladas que necesita handleDeleteReplacedImage(), sin alterar el comportamiento predeterminado del helper compartido.
+- Conservar el snapshot de IDs activos e históricos entre lotes mediante estado temporal de servidor con identificador opaco, expiración y validación de disponibilidad; no volver a recorrer todas las hojas en cada continuación.
+- Reducir el trabajo de Drive por petición y eliminar únicamente verificaciones de ancestros redundantes cuya seguridad se mantiene por la validación de la carpeta raíz, el cursor y los iteradores de carpetas.
+- Mantener el contrato de respuesta, la clasificación, la cobertura del árbol Cortes y el bloqueo de eliminación por referencias activas/no interpretables.
+- Si el estado temporal no está disponible o expira, detener la auditoría con un mensaje explícito; nunca continuar con una clasificación incompleta.
+
+6. VALIDACIONES Y LÍMITES
+- Se realizó inspección estática de las funciones y dependencias indicadas, incluida la segunda utilización de collectActiveDriveReferences().
+- No se ejecutó Apps Script, no se midieron tiempos reales, no se consultaron las hojas ni se accedió a Drive.
+- No se modificó código durante esta auditoría; los respaldos exactos están identificados en el apartado 1.
+================================================================================
+
+
+================================================================================
+REVISIÓN POST-EDICIÓN — OPTIMIZAR AUDITORÍA DEL INVENTARIO DE IMÁGENES
+Fecha: 2026-11-05
+Rama: GPSpedia2.2.5_work
+Código revisado: Services/admin.js
+Blob original: 1718d6cb99a7738a9b425772aeda64e9cc05a37f
+Blob candidato: 18ab493f5528df20d3e1f901468c5777429d3e07
+
+1. CAMBIOS REALIZADOS
+- collectActiveDriveReferences(includeLocations = true): se añadió un modo que conserva únicamente los IDs cuando includeLocations es false. El valor predeterminado continúa generando las ubicaciones sheet/fila/columna.
+- handleAuditDriveImagesInCortes(): recopila IDs activos e históricos una sola vez al iniciar la auditoría, serializa el snapshot y lo conserva temporalmente en CacheService mediante bloques comprimidos. Las peticiones de continuación recuperan el mismo snapshot mediante referenceCacheId, en lugar de volver a recorrer todas las hojas y la hoja histórica.
+- El snapshot temporal usa bloques de 75,000 caracteres, límite total codificado de 750,000 caracteres y TTL de 21,600 segundos. Si excede la capacidad, falta un bloque o el estado expira, la función detiene la auditoría con un error explícito; no clasifica usando referencias incompletas.
+- Se redujo el máximo por petición de 150 a 25 archivos y de 100 a 20 carpetas.
+- Se retiró la comprobación de ancestros repetida por cada archivo. Los archivos proceden de getFiles() de una carpeta ya validada. Se mantiene la validación de todas las carpetas del cursor y la validación de cada subcarpeta descubierta.
+- Se eliminó isFileInsideCortes() después de comprobar que no tiene otros consumidores en los archivos de servicio del repositorio.
+- handleDeleteReplacedImage() conserva su llamada predeterminada a collectActiveDriveReferences(), por lo que sigue recibiendo las ubicaciones detalladas y mantiene el bloqueo por referencias activas/no interpretables.
+
+2. REVISIÓN DE INTEGRIDAD Y EFECTOS COLATERALES
+- La clasificación conserva el mismo orden y condiciones: En uso, Histórica, No verificable para MIME no imagen, No verificable ante referencias no interpretables y Sin uso detectado.
+- Se conserva el alcance de la carpeta raíz Cortes, la validación de las carpetas incluidas en el cursor, los iteradores de continuación, los metadatos mostrados y el contrato de respuesta status/files/complete/cursor.
+- El snapshot fija las referencias al inicio de la auditoría; las continuaciones utilizan la misma instantánea para mantener consistencia entre lotes.
+- Se comprobó que handleDeleteReplacedImage() permanece idéntica al contenido original.
+- Se reconstruyó el archivo original sustituyendo únicamente los bloques modificados/eliminados y se obtuvo igualdad exacta con el blob de respaldo. No se detectaron cambios ajenos en Services/admin.js.
+- Se buscó en los ocho archivos de servicio del repositorio: isFileInsideCortes() no tenía consumidores fuera del handler auditado; collectActiveDriveReferences() solo tenía el consumidor de auditoría y el de eliminación histórica.
+- El archivo Services/admin.js pasó la comprobación estática de sintaxis JavaScript.
+
+3. VALIDACIONES PENDIENTES Y RIESGOS
+- No se ejecutó el código en Google Apps Script; no se verificaron CacheService, Utilities.gzip/ungzip ni los límites reales de ejecución del deployment.
+- No se realizó una auditoría funcional contra Drive/Sheets y no se midió la duración real de cada etapa.
+- La recopilación completa de referencias continúa ejecutándose en la primera petición; si por sí sola excede el tiempo máximo, será necesario dividir también esa lectura en etapas por hoja/fila.
+- CacheService puede desalojar entradas antes de su TTL; la función detecta la falta de estado y detiene el recorrido para evitar resultados incompletos.
+- Si el snapshot comprimido supera 750,000 caracteres, la auditoría se detiene explícitamente y no inicia la clasificación.
+- No se modificaron imágenes, carpetas, hojas, datos, endpoints ni deployments.
+
+4. RESULTADO
+CAMBIO ESTÁTICO PREPARADO. La validación funcional del deployment ADMIN permanece pendiente. No se declara resuelto el tiempo de espera hasta completar una ejecución real y revisar sus resultados.
+================================================================================
