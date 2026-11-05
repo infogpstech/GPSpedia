@@ -409,6 +409,15 @@ function renderUserTable() {
         deleteButton.addEventListener('click', (e) => deleteUser(user.ID, e.currentTarget));
         actionsCell.appendChild(deleteButton);
 
+        const isDeveloper = String(currentUser.Privilegios || '').trim().toLowerCase() === 'desarrollador';
+        if (isDeveloper && String(user.ID) !== String(currentUser.ID)) {
+            const resetSessionsButton = document.createElement('button');
+            resetSessionsButton.className = 'btn btn-danger btn-sm';
+            resetSessionsButton.textContent = 'Cerrar sesiones';
+            resetSessionsButton.addEventListener('click', (e) => resetUserSessions(user.ID, user.Nombre_Usuario, e.currentTarget));
+            actionsCell.appendChild(resetSessionsButton);
+        }
+
         row.appendChild(actionsCell);
         tbody.appendChild(row);
     });
@@ -564,6 +573,29 @@ async function deleteUser(userId, btnElement) {
                 btnElement.classList.remove('btn-loading');
                 btnElement.disabled = false;
             }
+        }
+    }
+}
+
+async function resetUserSessions(userId, username, btnElement) {
+    if (btnElement && btnElement.classList.contains('btn-loading')) return;
+    if (!confirm(`¿Cerrar todas las sesiones activas de "${username}"? El usuario tendrá que iniciar sesión nuevamente en sus dispositivos.`)) return;
+    try {
+        if (btnElement) {
+            btnElement.classList.add('btn-loading');
+            btnElement.disabled = true;
+        }
+        const result = await postToAction('resetUserSessions', {
+            targetUserId: userId,
+            sessionToken: currentUser.SessionToken
+        });
+        alert(result.message || 'La operación de cierre de sesiones terminó.');
+    } catch (error) {
+        // Error handled in postToAction
+    } finally {
+        if (btnElement) {
+            btnElement.classList.remove('btn-loading');
+            btnElement.disabled = false;
         }
     }
 }

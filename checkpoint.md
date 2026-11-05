@@ -1,7 +1,7 @@
 # CHECKPOINT — GPSpedia
 
 **Última actualización:** 2026-11-04  
-**Estado:** corrección de autorización y purga selectiva de Logs implementada en GPSpedia2.2.5_work. Pendientes pruebas reales y despliegue FEEDBACK; ADMIN 0 continúa abierta.
+**Estado:** corrección de purga, orden de Logs y cierre remoto de sesiones implementada en código sobre GPSpedia2.2.5_work. Pendientes despliegues AUTH/USERS y pruebas reales; ADMIN 0 continúa abierta.
 
 ## 1. Repositorio y reglas
 
@@ -133,3 +133,54 @@ El commit que incorpora este checkpoint y todos los archivos de la tarea se iden
 - Code Review estático: el cambio de código se limita al valor FEEDBACK; sin alteración del mapa de acciones ni del router.
 - HEAD anterior: `babf5ce494fdcf6b32f519d37acbc85d25adf2c7`; el commit que incorpora esta tarea y el checkpoint queda registrado en el historial de Git.
 - Siguiente acción: verificar el nuevo endpoint y confirmar la publicación de `clearSensitiveLogs` en FEEDBACK, sin desplegar ni hacer merge sin autorización.
+
+
+## 9. Tarea — corrección de purga, orden de Logs y control remoto de sesiones
+
+### Registro inicial
+- HEAD inicial verificado: `58f58b0e65b0f243ae140efc0532710170fc0472`.
+- Se registró el alcance antes de completar la auditoría y realizar modificaciones.
+- El usuario confirmó el despliegue FEEDBACK, las pruebas manuales de login válido/no válido y que el endpoint AUTH ya fue actualizado en un commit anterior.
+
+### Resultado de implementación
+- Se separaron los botones de purga: ActividadUsuario y registros confidenciales de Logs. Ninguno ejecuta la operación del otro.
+- Services/Auth.js: logToSheet() inserta cada registro nuevo en la fila 2 mediante insertRowBefore(2), escribe las cuatro columnas y conserva los encabezados. Se usa LockService dentro del proyecto AUTH.
+- Services/users.js: se agregó resetUserSessions, protegida por sesión válida y rol Desarrollador; elimina todas las filas ActiveSessions del usuario objetivo y limpia Users.SessionToken. No permite cerrar la sesión del propio administrador.
+- api-config.js: resetUserSessions se enruta a USERS.
+- users.html: se añadió «Cerrar sesiones» para usuarios distintos del administrador y solo para el rol Desarrollador.
+- index.html y ui.js: controles y handlers independientes para ambas purgas.
+
+### Archivos modificados
+- Services/Auth.js
+- Services/users.js
+- api-config.js
+- users.html
+- index.html
+- ui.js
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+### Verificaciones
+- Sintaxis estática: Services/Auth.js, Services/users.js, ui.js y módulo inline de users.html sin errores.
+- Aserciones de ruta, separación de operaciones y autorización: todas superadas.
+- Simulación de inserción: el registro nuevo queda en fila 2, después del encabezado.
+- Simulación de eliminación de sesiones: se eliminan todas las filas del usuario objetivo y se conservan las de otros usuarios.
+- FEEDBACK desplegado y pruebas de login válido/no válido: confirmados por el usuario, no reproducidos desde esta sesión.
+
+### Limitaciones y pendientes
+- No se ejecutó el código en Apps Script ni se accedió a la Spreadsheet real.
+- Services/Auth.js requiere actualización del despliegue AUTH para activar la inserción en fila 2.
+- Services/users.js requiere actualización del despliegue USERS para activar resetUserSessions.
+- Pendiente probar purga selectiva de Logs sobre copia de Spreadsheet, confirmando que ActividadUsuario permanece intacta.
+- Pendiente probar cierre de sesiones con varios tokens, token inválido, rol no Desarrollador y sesión del administrador.
+- ADMIN 0 permanece abierta por la migración de contraseñas almacenadas en texto claro y la revisión de registros históricos reales.
+
+### Restricciones conservadas
+- No se modificó GPSpedia2.2.5.
+- No se realizó merge ni despliegue de Apps Script.
+- HEAD anterior: `58f58b0e65b0f243ae140efc0532710170fc0472`. El commit único que incorpora esta tarea y el checkpoint quedará identificado en el historial de GPSpedia2.2.5_work.
+
+### Siguiente acción
+Actualizar AUTH y USERS en sus proyectos Apps Script correspondientes y ejecutar las pruebas reales descritas antes de considerar cerrada ADMIN 0.

@@ -3228,3 +3228,36 @@ Estado: CONFIGURACIÓN ACTUALIZADA EN CÓDIGO; VALIDACIÓN DEL DEPLOYMENT PENDIE
 - Pendiente: comprobar el endpoint y confirmar que el deployment contiene clearSensitiveLogs.
 - No se desplegó Apps Script ni se realizó merge.
 ================================================================================
+
+
+================================================================================
+ADMIN 0 — CORRECCIÓN DE PURGA, ORDEN DE LOGS Y CIERRE REMOTO DE SESIONES
+Fecha: 2026-11-04
+Estado: IMPLEMENTACIÓN EN CÓDIGO; PENDIENTE DESPLIEGUE Y VALIDACIÓN REAL.
+
+IMPLEMENTADO
+1. Separación de la purga de ActividadUsuario y la purga selectiva de registros confidenciales en Logs. Cada botón ejecuta únicamente su operación.
+2. Inserción de nuevos registros AUTH en la fila 2 de Logs, preservando encabezados y serializando inserciones mediante LockService.
+3. Acción resetUserSessions en USERS, exclusiva de Desarrollador, que elimina todas las sesiones ActiveSessions del usuario seleccionado y limpia Users.SessionToken.
+4. Control «Cerrar sesiones» en users.html, visible únicamente para Desarrollador y no disponible para la cuenta propia.
+
+PRUEBAS COMUNICADAS POR EL USUARIO
+- FEEDBACK desplegado y actualizado.
+- Inicio de sesión con usuario válido: correcto.
+- Inicio de sesión con usuario no válido: devuelve «Credenciales inválidas».
+- Endpoint AUTH actualizado y registrado previamente en un commit.
+
+VERIFICACIONES ESTÁTICAS
+- Sintaxis de Services/Auth.js, Services/users.js, ui.js y módulo de users.html comprobada.
+- Aserciones de separación de purga, mapeo de USERS y controles de autorización superadas.
+- Simulaciones de inserción en fila 2 y eliminación de varias sesiones por usuario superadas.
+
+PENDIENTES
+- Actualizar/desplegar Services/Auth.js en el proyecto AUTH para activar el nuevo orden de escritura.
+- Actualizar/desplegar Services/users.js en el proyecto USERS para habilitar resetUserSessions.
+- Probar la purga selectiva de Logs sobre una copia de Spreadsheet y confirmar que ActividadUsuario no cambia al ejecutar esa operación.
+- Probar cierre remoto con varias sesiones, token inválido y roles distintos de Desarrollador; verificar que la sesión del administrador permanece activa.
+- Verificar en Apps Script la inserción en fila 2 y conservación de encabezados.
+- ADMIN 0 sigue abierta por la migración pendiente de contraseñas en texto claro y la revisión de registros históricos reales.
+- No realizar merge ni despliegues desde esta tarea sin autorización expresa.
+================================================================================

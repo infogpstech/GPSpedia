@@ -45,13 +45,24 @@ const SESSION_LIMITS = {
 // MÓDULO DE DEPURACIÓN
 // ============================================================================
 function logToSheet(level, message, details = {}) {
+    const lock = LockService.getScriptLock();
+    let lockAcquired = false;
     try {
+        lock.waitLock(10000);
+        lockAcquired = true;
         const logSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.LOGS);
+        if (!logSheet) throw new Error("Hoja Logs no encontrada.");
+        if (logSheet.getLastRow() < 1) throw new Error("La hoja Logs no contiene una fila de encabezados.");
         const timestamp = new Date().toISOString();
         const detailsString = Object.keys(details).length > 0 ? JSON.stringify(details) : '';
-        logSheet.appendRow([timestamp, level, message, detailsString]);
+        // La fila 1 conserva los encabezados; cada registro nuevo se inserta en la fila 2.
+        logSheet.insertRowBefore(2);
+        logSheet.getRange(2, 1, 1, 4).setValues([[timestamp, level, message, detailsString]]);
+        SpreadsheetApp.flush();
     } catch (e) {
         console.error("Fallo al escribir en la hoja de logs:", e.message);
+    } finally {
+        if (lockAcquired) lock.releaseLock();
     }
 }
 

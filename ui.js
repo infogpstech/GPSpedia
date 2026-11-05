@@ -3672,32 +3672,43 @@ ${elapsedSec}s
         };
     }
 
-    // Purgar Logs de Actividad / Eventos
-    const clearLogsBtn = document.getElementById('btn-admin-clear-activity-logs');
-    if (clearLogsBtn) {
-        clearLogsBtn.onclick = async () => {
+    // Purgar exclusivamente la hoja ActividadUsuario.
+    const clearActivityBtn = document.getElementById('btn-admin-clear-activity-logs');
+    if (clearActivityBtn) {
+        clearActivityBtn.onclick = async () => {
             const selectEl = document.getElementById('clear-logs-option-select');
             const keepLastWeek = selectEl ? selectEl.value === 'week' : false;
             const promptText = keepLastWeek
-                ? "¿Estás seguro de que deseas eliminar de ActividadUsuario los registros con más de una semana y retirar de Logs los registros que contienen credenciales? Los registros recientes de ActividadUsuario se conservarán."
-                : "¿Estás seguro de que deseas eliminar los registros de ActividadUsuario y retirar de Logs los registros que contienen credenciales?";
+                ? "¿Eliminar de ActividadUsuario los registros con más de una semana? Los registros recientes se conservarán."
+                : "¿Eliminar todos los registros de ActividadUsuario? La fila de encabezados se conservará.";
+            if (!confirm(promptText)) return;
+            try {
+                clearActivityBtn.disabled = true;
+                const result = await clearActivityLogs(keepLastWeek, getDeveloperSessionPayload());
+                log(`[EXITO] ${result.message}`);
+                mostrarNotificacion(result.message, 'success');
+            } catch (err) {
+                log(`[EXCEPCION] Error al purgar ActividadUsuario: ${err.message}`, false, true);
+            } finally {
+                clearActivityBtn.disabled = false;
+            }
+        };
+    }
 
-            if (confirm(promptText)) {
-                try {
-                    clearLogsBtn.disabled = true;
-                    log(`Iniciando purga de actividad y registros confidenciales (Conservar última semana en ActividadUsuario: ${keepLastWeek ? 'Sí' : 'No'})...`);
-                    const sessionPayload = getDeveloperSessionPayload();
-                    const activityResult = await clearActivityLogs(keepLastWeek, sessionPayload);
-                    log(`[EXITO] ${activityResult.message}`);
-                    const sensitiveLogsResult = await clearSensitiveLogs(sessionPayload);
-                    log(`[EXITO] ${sensitiveLogsResult.message}`);
-                    const resultMessage = `${activityResult.message} ${sensitiveLogsResult.message}`;
-                    mostrarNotificacion(resultMessage, 'success');
-                } catch (err) {
-                    log(`[EXCEPCION] Error al purgar registros: ${err.message}`, false, true);
-                } finally {
-                    clearLogsBtn.disabled = false;
-                }
+    // Purgar únicamente los registros confidenciales de la hoja Logs.
+    const clearSensitiveLogsBtn = document.getElementById('btn-admin-clear-sensitive-logs');
+    if (clearSensitiveLogsBtn) {
+        clearSensitiveLogsBtn.onclick = async () => {
+            if (!confirm("¿Retirar de la hoja Logs únicamente los registros históricos que contienen datos confidenciales? Los demás registros y los encabezados se conservarán.")) return;
+            try {
+                clearSensitiveLogsBtn.disabled = true;
+                const result = await clearSensitiveLogs(getDeveloperSessionPayload());
+                log(`[EXITO] ${result.message}`);
+                mostrarNotificacion(result.message, 'success');
+            } catch (err) {
+                log(`[EXCEPCION] Error al purgar Logs: ${err.message}`, false, true);
+            } finally {
+                clearSensitiveLogsBtn.disabled = false;
             }
         };
     }

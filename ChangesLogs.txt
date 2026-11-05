@@ -2304,3 +2304,23 @@ RESTRICCIONES CONSERVADAS
 - Todos los archivos de la tarea se agrupan en un único commit.
 - No se modificó la rama base, no se realizó merge y no se desplegó Apps Script.
 ================================================================================
+
+
+================================================================================
+CORRECCIÓN DE PURGA, ORDEN DE LOGS Y CIERRE REMOTO DE SESIONES
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- Services/Auth.js, logToSheet(), línea 47: reemplaza appendRow() por inserción antes de la fila 2, escritura de las cuatro columnas y bloqueo LockService.
+- Services/users.js, doPost(), línea 76, y handleResetUserSessions(), línea 170: incorpora cierre de todas las sesiones del usuario objetivo, exclusivo de Desarrollador; elimina filas ActiveSessions en orden descendente y limpia Users.SessionToken.
+- api-config.js, ACTION_TO_SERVICE_MAP, línea 22: asigna resetUserSessions a USERS.
+- users.html, renderUserTable(), línea 412, y resetUserSessions(), línea 580: añade «Cerrar sesiones» solo para Desarrollador y excluye la cuenta propia.
+- index.html, controles de purga, línea 340: separa ActividadUsuario y Logs.
+- ui.js, listeners de purga, línea 3675: cada botón ejecuta solo su operación.
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md: documentación de auditoría, cambios, estado y continuidad.
+
+RESTRICCIONES
+- No se modificó GPSpedia2.2.5.
+- No se realizó merge ni despliegue Apps Script.
+- FEEDBACK no requirió cambios de código; su despliegue actualizado fue confirmado por el usuario.
+================================================================================

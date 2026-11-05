@@ -2964,3 +2964,57 @@ RIESGOS Y LIMITACIONES
 DECISIÓN DE ALCANCE
 Sustituir únicamente API_ENDPOINTS.FEEDBACK y actualizar los registros de continuidad y trazabilidad. No modificar otros endpoints, el mapa de acciones ni el router.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — SEPARACIÓN DE PURGA DE LOGS, ORDEN DE REGISTRO Y CIERRE REMOTO DE SESIONES
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work | HEAD inicial: 58f58b0e65b0f243ae140efc0532710170fc0472
+
+ALCANCE
+Separar la purga de ActividadUsuario y Logs; insertar nuevos registros AUTH en la fila 2; incorporar cierre remoto de todas las sesiones de un usuario, exclusivo de Desarrollador.
+
+HALLAZGOS
+1. ui.js ejecutaba clearActivityLogs() y después clearSensitiveLogs() desde el mismo botón. clearActivityLogs() opera sobre ActividadUsuario; clearSensitiveLogs() ya apunta a SHEET_NAMES.LOGS. La eliminación observada se debía a que la interfaz invocaba ambas operaciones.
+2. index.html agrupaba ambas acciones bajo el rótulo «Purgar Logs», aunque la primera eliminaba actividad.
+3. Services/Auth.js, logToSheet(), utilizaba appendRow(), agregando registros al final de la hoja Logs.
+4. ActiveSessions contiene una fila por token activo; Users.SessionToken conserva un token de referencia. Cerrar todas las sesiones requiere eliminar todas las filas del usuario en ActiveSessions y limpiar su token en Users.
+5. Services/users.js ya valida sesión mediante getVerifiedSession() y obtiene el rol desde Users, por lo que la autorización puede aplicarse en backend sin confiar en datos de rol enviados por el navegador.
+6. users.html permite gestión de usuarios a varios roles; la nueva acción necesita control backend independiente y exclusivo de Desarrollador.
+
+RESPALDOS GIT PREVIOS
+- Services/Auth.js: 4220899cb89ed519b95741fb97d45f41bcf539b0
+- Services/users.js: 66dcb928c23c85f94a9373a0f5c6092abb143511
+- api-config.js: 9ee631106919acaaa8e8325eedbfaf96efc7820d
+- users.html: 3636e823ec8063907f88b3310ebfd6cb5f03c1c4
+- index.html: 69e64862c767cbc1b0e75922ff169a98180e56eb
+- ui.js: 7c8848ba03a07d2d9aaf35257c5061528cd9cc6d
+- Auditoría.txt: 319f72f71c9b6ebc9d1fffbf64d899a8b6342d2e
+- ChangesLogs.txt: 33381a147d0b6be986fe474b6d64cea459582020
+- Tareas.txt: 66df116d6ff01dbfe5a2076fd998fc13c8a23577
+- checkpoint.md: 2602b006ba4bb3c87dea4ded21115729e8df6331
+Los respaldos son blobs originales de Git; no se agregaron temporales al árbol.
+
+DECISIONES E IMPLEMENTACIÓN
+- Se separaron los controles de purga: ActividadUsuario y registros confidenciales de Logs. Cada botón ejecuta únicamente su acción.
+- La purga de Logs mantiene el alcance selectivo de credenciales; no elimina registros normales. FEEDBACK ya estaba desplegado según confirmación del usuario y no requirió cambios en esta tarea.
+- logToSheet() adquiere LockService, inserta una fila antes de la fila 2 y escribe las cuatro columnas. La fila 1 se conserva como encabezado.
+- USERS incorpora resetUserSessions: valida la sesión del solicitante, exige rol Desarrollador, comprueba que exista el usuario objetivo, impide el cierre de la propia sesión, elimina todas las filas ActiveSessions del usuario desde abajo hacia arriba y limpia Users.SessionToken.
+- users.html presenta el control solo a Desarrollador y lo oculta para la cuenta propia; backend mantiene la autorización efectiva.
+- api-config.js enruta resetUserSessions a USERS.
+
+RIESGOS Y LIMITACIONES
+- Services/Auth.js y Services/users.js requieren despliegues independientes AUTH y USERS; los cambios de GitHub no los publican.
+- No se ejecutó código en Apps Script ni se accedió a la Spreadsheet real.
+- La purga selectiva debe probarse en una copia para verificar filas eliminadas y registros conservados.
+- ScriptLock serializa inserciones dentro del proyecto AUTH, pero no coordina bloqueos con otros proyectos Apps Script que accedan a la misma hoja.
+- El cierre remoto requiere pruebas reales con varios tokens, token inválido y roles no autorizados.
+- Las pruebas de login válido/no válido y el despliegue FEEDBACK fueron comunicados por el usuario; no se reprodujeron desde esta sesión.
+- ADMIN 0 continúa abierta por la migración pendiente de contraseñas en texto claro y la revisión de Logs históricos reales.
+
+VERIFICACIONES
+- Sintaxis comprobada: Services/Auth.js, Services/users.js, ui.js (tras retirar imports/exports para parseo) y módulo inline de users.html (tras retirar import).
+- Aserciones estáticas de inserción fila 2, separación de botones, ruteo a USERS y autorización exclusiva de Desarrollador: aprobadas.
+- Simulación de inserción: registro nuevo en fila 2, después del encabezado y antes de registros previos.
+- Simulación de eliminación: se retiraron las sesiones de un usuario y se conservaron las de otro.
+- No se realizaron pruebas reales en Apps Script, Spreadsheet, navegador ni endpoint USERS.
+================================================================================
