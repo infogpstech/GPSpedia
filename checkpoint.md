@@ -1,3 +1,40 @@
+# CIERRE DE TAREA — INCIDENCIA backupDatabase Y PLAN DE MIGRACIÓN ADMIN 0
+
+**Fecha:** 2026-11-04  
+**Estado:** INCIDENCIA REGISTRADA; CAUSA ESTÁTICA IDENTIFICADA; CORRECCIÓN PENDIENTE.
+
+## Resultado
+- Se agregó a `Tareas.txt` la incidencia de `backupDatabase` reportada por el usuario.
+- Se documentó en `Auditoría.txt` que el listener de `btn-admin-backup-db` llama `runAction('backupDatabase')` sin payload de sesión.
+- `routeAction()` transmite el payload vacío; `Services/admin.js` exige `userId` y `sessionToken` en `assertDeveloperSession()` para todas las acciones salvo `ping`.
+- El rechazo sucede antes de ejecutar `handleBackupDatabase()`; no se ha demostrado que el handler de copia tenga otros fallos.
+- Se registró en `ChangesLogs.txt` el alcance documental.
+- No se modificó código, no se ejecutó Apps Script, no se generó respaldo y no se modificaron datos de Google Sheets/Drive.
+
+## Migración de contraseñas — decisión y dependencia
+- El usuario confirmó continuar con la estrategia gradual documentada: AUTH primero con verificación dual y migración oportunista al iniciar sesión; después USERS escribirá únicamente hashes; por último se evaluará la migración por lotes de cuentas restantes.
+- No hay copia de prueba disponible. La incidencia de `backupDatabase` impide obtenerla desde la herramienta de respaldo de la plataforma.
+- Antes de tocar AUTH/USERS o la columna Password, se debe corregir y validar la transmisión de sesión en las acciones ADMIN; luego generar y comprobar un respaldo/copia de prueba.
+- Después se seleccionará y medirá una KDF compatible con Apps Script V8, con vectores de prueba sintéticos y un entorno aislado. No migrar datos productivos hasta superar esas validaciones y contar con autorización expresa.
+
+## Archivos documentales
+- `checkpoint.md`
+- `Tareas.txt`
+- `Auditoría.txt`
+- `ChangesLogs.txt`
+
+## Commits generados durante el registro
+- Checkpoint inicial: `753bb69d5bf4a22b53b6c2628767997342ceab31`
+- Registro en Tareas.txt: `98a9308ea694b02827381af83999104261d0f948`
+- Auditoría: `faa4664b5c2801d94fe4e880b2cbf648e3939dba`
+- ChangesLogs.txt: `e3000429bd49e42f9938ab15ae397a71ba4a97c3`
+- El presente cierre actualiza el checkpoint como último registro documental. La secuencia de commits no respetó el requisito de un único commit por tarea; se deja expresamente registrado como desviación del procedimiento para no ocultarla.
+
+## Próxima acción concreta
+Corregir la propagación de `getDeveloperSessionPayload()` en `backupDatabase` y auditar las demás llamadas ADMIN a `runAction()` para detectar omisiones equivalentes. Mantener la validación backend intacta. No desplegar Apps Script sin autorización.
+
+---
+
 # TAREA EN CURSO — REGISTRO DEL ERROR backupDatabase Y CONTINUIDAD DE ADMIN 0
 
 **Registro inicial — 2026-11-04**
