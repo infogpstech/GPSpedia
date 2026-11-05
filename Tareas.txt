@@ -3453,3 +3453,17 @@ Estado: FUENTES AISLADAS PREPARADAS; DEPLOYMENTS Y VALIDACIÓN FUNCIONAL PENDIEN
 - Pendiente: crear los proyectos/deployments aislados AUTH-TEST y USERS-TEST, verificar que ambos utilizan el ID de pruebas y proporcionar sus URLs para ejecutar la matriz funcional de ADMIN 0.
 - No se ejecutó Apps Script, no se modificaron datos de ninguna Spreadsheet, no se desplegó ningún servicio y no se realizó merge.
 ================================================================================
+
+
+================================================================================
+TAREA COMPLETADA — CREAR RAMA AISLADA Y CONFIGURAR ENDPOINTS AUTH/USERS DE PRUEBA
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_auth-users-test
+Estado: CONFIGURACIÓN ESTÁTICA ACTUALIZADA; VALIDACIÓN FUNCIONAL DE DEPLOYMENTS PENDIENTE.
+
+- Se creó GPSpedia2.2.5_auth-users-test desde el HEAD de GPSpedia2.2.5_work (da0affc4e52b533644a94f1876e08ca0e137533f).
+- api-config.js: API_ENDPOINTS.AUTH y API_ENDPOINTS.USERS apuntan ahora a los endpoints de prueba proporcionados por el usuario.
+- Se conservaron los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() y las funciones existentes.
+- La rama GPSpedia2.2.5_work y la rama base GPSpedia2.2.5 permanecen sin modificaciones.
+- Pendiente: comprobar disponibilidad y compatibilidad de ambos deployments y ejecutar la matriz funcional de ADMIN 0 sobre la Spreadsheet independiente.
+- No se ejecutaron llamadas HTTP, no se desplegó Apps Script, no se modificaron datos productivos y no se realizó merge.
+================================================================================

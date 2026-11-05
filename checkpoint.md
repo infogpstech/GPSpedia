@@ -1080,3 +1080,76 @@ Estado: PREPARACIÓN DE CÓDIGO COMPLETADA; VALIDACIÓN FUNCIONAL BLOQUEADA HAST
 - HEAD anterior a la tarea: 8a9c9811bc954785f36966997bc1564a1fb3feac.
 - El commit único que incorpora las fuentes y la documentación queda identificado en el historial de GPSpedia2.2.5_work.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — CREAR RAMA AISLADA Y CONFIGURAR ENDPOINTS AUTH/USERS DE PRUEBA
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo nueva: GPSpedia2.2.5_auth-users-test
+Rama de origen: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: da0affc4e52b533644a94f1876e08ca0e137533f
+
+TAREA Y ALCANCE
+- Crear una rama nueva a partir del estado actual de GPSpedia2.2.5_work.
+- Cambiar únicamente API_ENDPOINTS.AUTH y API_ENDPOINTS.USERS en api-config.js por los endpoints de prueba proporcionados por el usuario.
+- Registrar auditoría, cambios, tarea y checkpoint en un único commit.
+- No modificar GPSpedia2.2.5_work ni GPSpedia2.2.5; no hacer merge.
+
+ESTADO REAL AL INICIO
+- api-config.js contiene endpoints centrales y enruta login/validateSession a AUTH y operaciones de usuarios a USERS.
+- Los endpoints recibidos son deployments de prueba; su disponibilidad y destino efectivo aún no están verificados desde GitHub.
+- Services/Test/Auth.js y Services/Test/users.js ya existen y apuntan al ID de Spreadsheet de pruebas documentado en el checkpoint anterior.
+- La validación funcional de ADMIN 0 permanece pendiente.
+
+ARCHIVOS INVOLUCRADOS
+- api-config.js.
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+
+RESPALDO Y RIESGOS
+- Blob original de api-config.js: f7aca3504f19ac50c47e2cfe0a6a5651bb97743e.
+- Blobs originales de Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md: 2ff95fbf46fa95a208bcb6e92b8a2cbd6610d46c, 46f9e3d92f1e0c9312117319030f9c1d2dc6a224, eed74269fd7cb942d163d2682a815b5cc7fa4ec1 y 7ce5abcdc277833baa93b3a04f79241b18331399.
+- El cambio de endpoints dirige las operaciones de autenticación y usuarios desde esta rama a los servicios de prueba.
+- No se realizarán solicitudes HTTP ni operaciones de escritura durante la actualización estática.
+
+FASE AL CREAR ESTE CHECKPOINT
+- Rama nueva creada desde el HEAD confirmado de GPSpedia2.2.5_work. Auditoría estática de api-config.js completada; implementación aún no aplicada.
+================================================================================
+
+
+================================================================================
+CIERRE DE TAREA — CREAR RAMA AISLADA Y CONFIGURAR ENDPOINTS AUTH/USERS DE PRUEBA
+Fecha: 2026-11-05
+Estado: CAMBIO ESTÁTICO COMPLETADO; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+RESULTADO
+- Se creó GPSpedia2.2.5_auth-users-test desde GPSpedia2.2.5_work, conservando como punto de partida el HEAD da0affc4e52b533644a94f1876e08ca0e137533f.
+- api-config.js: API_ENDPOINTS.AUTH y API_ENDPOINTS.USERS contienen los endpoints de prueba entregados por el usuario.
+- Los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() y funciones auxiliares permanecen sin cambios.
+- La rama de trabajo original y la rama base protegida no fueron modificadas; no se realizó merge.
+
+ARCHIVOS MODIFICADOS
+- api-config.js
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+VERIFICACIONES REALIZADAS
+- Se confirmó que cada endpoint anterior aparecía exactamente una vez antes de la sustitución.
+- Se verificó que los dos endpoints nuevos están presentes en api-config.js.
+- La comparación del contenido confirma que el único cambio funcional de api-config.js son los dos valores URL.
+- Se revisaron los registros documentales para limitar sus afirmaciones a los cambios estáticos realizados.
+
+VALIDACIONES PENDIENTES Y LIMITACIONES
+- No se ejecutaron solicitudes HTTP ni pruebas de login, sesión o CRUD.
+- No se verificó desde Apps Script que los deployments estén activos o apunten a la Spreadsheet independiente.
+- No se desplegó Apps Script ni se modificaron hojas de cálculo.
+- La validación funcional de ADMIN 0 continúa pendiente.
+
+CONTINUIDAD
+- HEAD anterior a la tarea: da0affc4e52b533644a94f1876e08ca0e137533f.
+- Este checkpoint y todos los registros se incluyen en el único commit de la tarea, que será el HEAD de GPSpedia2.2.5_auth-users-test.
+- Siguiente acción: probar disponibilidad y funcionamiento de AUTH-TEST y USERS-TEST desde esta rama, utilizando únicamente la Spreadsheet independiente.
+================================================================================

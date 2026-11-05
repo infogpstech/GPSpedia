@@ -2543,3 +2543,25 @@ CONFIGURACIÓN QUE PERMANECE SIN CAMBIOS
 - api-config.js y los endpoints actualmente utilizados por la plataforma.
 - No se modificaron hojas, datos ni deployments Apps Script.
 ================================================================================
+
+
+================================================================================
+CONFIGURAR ENDPOINTS DE PRUEBA AUTH Y USERS EN RAMA AISLADA
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_auth-users-test
+
+ARCHIVO MODIFICADO: api-config.js
+- Línea 9: API_ENDPOINTS.AUTH ahora utiliza el endpoint de pruebas proporcionado por el usuario.
+- Línea 12: API_ENDPOINTS.USERS ahora utiliza el endpoint de pruebas proporcionado por el usuario.
+- No se modificaron los demás endpoints, ACTION_TO_SERVICE_MAP, routeAction() ni las funciones auxiliares.
+- El cambio se realizó únicamente en la nueva rama GPSpedia2.2.5_auth-users-test.
+
+COMPARACIÓN
+- Se sustituyó una coincidencia exacta del endpoint AUTH anterior y una coincidencia exacta del endpoint USERS anterior.
+- No se añadieron ni eliminaron líneas; únicamente cambiaron los dos valores de URL.
+- No se modificaron servicios Apps Script, interfaz ni datos de Spreadsheet.
+
+VALIDACIÓN Y ALCANCE
+- Verificación estática de presencia de ambos endpoints nuevos y sustitución de los dos valores anteriores.
+- No se ejecutaron solicitudes HTTP ni pruebas funcionales.
+- No se desplegó Apps Script, no se modificaron datos y no se realizó merge.
+================================================================================

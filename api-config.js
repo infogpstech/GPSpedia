@@ -6,10 +6,10 @@
 // 1. CONFIGURACIÓN
 export const API_ENDPOINTS = {
     LEGACY: "https://script.google.com/macros/s/AKfycbwpIFH1nX2BZEjAKbpq9HJpEGNlo_0LqD1CwxWsWFo5J0AJDdbfMrKpcsAV4ZFJzFWd/exec",
-    AUTH:     "https://script.google.com/macros/s/AKfycby1-ncfuo3PV38ZqvTkdHv2uoD2mNkgS3WNo_2_ycBvcxocA0H5QsNiZoqSadR19P7SiQ/exec",
+    AUTH:     "https://script.google.com/macros/s/AKfycby4oL9D9zaBB6UH9rVJCtKR25J1dyh-jy5wY72Fhf9dFLBnnUtGoZA_xWb1J1JwNCotvw/exec",
     CATALOG:  "https://script.google.com/macros/s/AKfycbxtqkdUfXAEmbPz7zfE4kZCie8sql4SM43kxkBw__5iGwXVyzzYsIFG5jpWkQc7-Ug9/exec",
     WRITE:    "https://script.google.com/macros/s/AKfycbwsRkcK8-q8hiOpaUNrU1e79WD2SH87MsZkfaFU3S19ayAC9ZMhxDuZUv0cx9iaW7cPlw/exec",
-    USERS:    "https://script.google.com/macros/s/AKfycbxPzOJ3vrbN_DDAXGrBMROfrZkF5_hXZSrG7V6WFyA8KkxkkGfddYn_Z-_B32SaYi5fDg/exec",
+    USERS:    "https://script.google.com/macros/s/AKfycbwk4RaRqNqaP1hxV8cKVWX7-jKdYdcG05J0cDkdlsgc6kXW-ln7jdygFJ19ppJOctdm/exec",
     FEEDBACK: "https://script.google.com/macros/s/AKfycbxVBSXNh6xG4_jyIfsc19a4dmlSBwwBUTBlFoDjHiDqlYx_dIQ5NZxUduui4DO8AyXSRg/exec",
     UTILITIES: "https://script.google.com/macros/s/AKfycbzkGXk_kSm3rN7K5PM0RntiPAn7DlH78RkH66a2vuwZwU8KgwDufkOiPjXoUKzuHAgG/exec",
     ADMIN: "https://script.google.com/macros/s/AKfycbzDGGOhD_KdQAk_NlQjqXdZVso3BYXODFHF-1LWlq3ybHINrO9pvDpvpai17pBy6PeRfQ/exec"

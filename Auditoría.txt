@@ -3492,3 +3492,31 @@ HEAD auditado: 8a9c9811bc954785f36966997bc1564a1fb3feac
 - Confirmar que todos los cambios de las pruebas permanecen en la Spreadsheet de pruebas.
 - No se realizó ninguna llamada HTTP, despliegue Apps Script ni escritura en Sheets durante esta auditoría.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — CONFIGURAR ENDPOINTS DE PRUEBA AUTH Y USERS EN RAMA AISLADA
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_auth-users-test
+HEAD auditado: da0affc4e52b533644a94f1876e08ca0e137533f
+
+1. ARCHIVO api-config.js
+- Se revisó el archivo completo (configuración de endpoints, ACTION_TO_SERVICE_MAP, routeAction() y funciones auxiliares).
+- API_ENDPOINTS.AUTH estaba definido una sola vez con el endpoint operativo anterior.
+- API_ENDPOINTS.USERS estaba definido una sola vez con el endpoint operativo anterior.
+- ACTION_TO_SERVICE_MAP enruta login y validateSession a AUTH; getUsers, createUser, updateUser, deleteUser, changePassword, updateProfile y resetUserSessions se enrutan a USERS.
+- routeAction() obtiene API_ENDPOINTS[service] y envía la acción y payload al endpoint asignado.
+- No existe selector de entorno ni fallback específico para AUTH/USERS de prueba; la configuración es centralizada.
+
+2. ALCANCE Y CAMBIO
+- Se reemplazan exclusivamente API_ENDPOINTS.AUTH y API_ENDPOINTS.USERS por los dos endpoints de prueba entregados por el usuario.
+- Se mantienen intactos los endpoints LEGACY, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN.
+- Se mantienen intactos ACTION_TO_SERVICE_MAP, routeAction(), helpers y el resto del archivo.
+- El cambio se realiza únicamente en la rama GPSpedia2.2.5_auth-users-test, creada desde GPSpedia2.2.5_work.
+- La rama GPSpedia2.2.5_work y la rama base GPSpedia2.2.5 no se modifican.
+
+3. RIESGOS Y LIMITACIONES
+- Al seleccionar estos endpoints en api-config.js, login/sesión y operaciones de usuarios desde esta rama se dirigirán a los deployments de prueba.
+- La sustitución estática no demuestra que los deployments estén disponibles, que acepten las solicitudes ni que apunten efectivamente a la Spreadsheet independiente.
+- No se ejecutaron llamadas HTTP, login, CRUD de usuarios ni escrituras en Sheets durante esta tarea.
+- No se desplegó Apps Script ni se modificaron los proyectos o servicios productivos.
+================================================================================
