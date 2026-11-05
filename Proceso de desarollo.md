@@ -461,3 +461,17 @@ Toda modificación sobre una Zona Segura requerirá:
 Cuando una sección sea declarada como Zona Segura deberá agregarse al inicio del bloque de código un comentario visible dirigido al desarrollador.
 
 Este comentario deberá advertir que el bloque pertenece a una Zona Segura y que cualquier modificación requiere seguir estrictamente el procedimiento descrito en este documento.
+
+---
+
+# CONTROL DE COMMITS POR TAREA
+
+Cada tarea deberá generar **un único commit**, independientemente de la cantidad de archivos que sea necesario modificar.
+
+Cuando una tarea requiera editar varios archivos:
+
+- todos los cambios correspondientes a esa misma tarea deberán agruparse;
+- se deberá generar un solo commit que incluya todos los archivos modificados;
+- está prohibido crear un commit independiente cada vez que se edite o actualice un archivo.
+
+No se deberá dividir una misma tarea en varios commits únicamente por haber trabajado en archivos diferentes. El commit se realizará cuando estén terminadas las modificaciones de la tarea y se hayan completado las verificaciones y registros obligatorios del procedimiento.
