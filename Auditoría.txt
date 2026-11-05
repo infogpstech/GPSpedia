@@ -3520,3 +3520,42 @@ HEAD auditado: da0affc4e52b533644a94f1876e08ca0e137533f
 - No se ejecutaron llamadas HTTP, login, CRUD de usuarios ni escrituras en Sheets durante esta tarea.
 - No se desplegó Apps Script ni se modificaron los proyectos o servicios productivos.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — RECHAZO DE NOMBRES DE USUARIO DUPLICADOS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_auth-users-test
+HEAD auditado: a0a63469e9d8793c480f026902f8c20582838747
+
+1. SERVICES/TEST/USERS.JS
+- Se revisaron las 495 líneas del archivo y sus 17 funciones, además de las referencias internas.
+- handleCreateUser() adquiere LockService antes de validar la sesión, comprobar permisos y escribir en la hoja Users.
+- En la línea 299, handleCreateUser() llama a generateUniqueUsername(userSheet, newUser.Nombre_Usuario).
+- generateUniqueUsername() normaliza el nombre y, si ya existe, concatena 1, 2, 3... hasta encontrar un valor libre. Es la causa directa del comportamiento observado por el usuario.
+- La función generateUniqueUsername() solo tiene una llamada, desde handleCreateUser(); puede retirarse sin afectar otros handlers.
+- doPost() devuelve la respuesta producida por handleCreateUser(). Su catch general transforma excepciones en un mensaje genérico con details.errorMessage.
+- El alta calcula el hash con createPasswordHash(), copia la fila anterior para conservar formato/fórmula del ID y escribe las columnas desde Nombre_Usuario. La nueva validación debe ejecutarse antes de copiar/escribir la fila y conservar intacto ese flujo cuando el nombre esté disponible.
+- El LockService existente cubre la comprobación y la escritura, evitando que dos altas concurrentes superen la validación simultáneamente dentro del mismo proyecto Apps Script.
+
+2. USERS.HTML Y API-CONFIG.JS
+- users.html: postToAction() llama routeAction() y muestra alert('Error: ' + error.message); handleUserFormSubmit() captura el error sin cerrar el modal ni mostrar un segundo aviso.
+- api-config.js: routeAction() detecta result.status === 'error' y lanza una excepción con result.message cuando no existe details. Por tanto, un error de negocio devuelto directamente por USERS puede mostrar el aviso específico sin cambiar el frontend ni el manejo general de errores.
+- El frontend y el enrutamiento no requieren modificación para esta tarea.
+
+3. DECISIÓN DE IMPLEMENTACIÓN Y RIESGOS
+- Reemplazar la generación automática por una comprobación de existencia bajo el LockService existente.
+- Si el nombre ya existe, devolver {status:'error', message:'Ese nombre de usuario no está disponible'} antes de generar hash o escribir en Users.
+- Si está disponible, conservar el nombre ingresado (recortando espacios externos) y mantener sin cambios permisos, hash, copia de fila, escritura y respuesta de éxito.
+- Comparar nombres ignorando diferencias de mayúsculas/minúsculas para evitar variantes visualmente duplicadas; conservar los espacios internos del nombre ingresado.
+- Eliminar generateUniqueUsername() al quedar sin referencias.
+- No se identificaron cambios necesarios en AUTH, api-config.js ni users.html.
+
+4. RESPALDO
+- Services/Test/users.js original conservado como blob Git: 0a8e416ae5283184c29360ff6a8348a65385b310.
+- users.html y api-config.js auditados sin modificación.
+
+5. VALIDACIONES
+- Confirmación funcional proporcionada por el usuario: creación de usuario, almacenamiento de contraseña como hash e inicio de sesión del usuario creado funcionan.
+- La prueba de rechazo de duplicados queda pendiente hasta actualizar y probar el deployment USERS-TEST.
+- La auditoría fue estática; no se ejecutó Apps Script ni se modificó Spreadsheet durante esta fase.
+================================================================================

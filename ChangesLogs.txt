@@ -2565,3 +2565,21 @@ VALIDACIÓN Y ALCANCE
 - No se ejecutaron solicitudes HTTP ni pruebas funcionales.
 - No se desplegó Apps Script, no se modificaron datos y no se realizó merge.
 ================================================================================
+
+
+================================================================================
+RECHAZAR NOMBRES DE USUARIO DUPLICADOS — GPSpedia2.2.5_auth-users-test
+Fecha: 2026-11-05
+
+ARCHIVO MODIFICADO: Services/Test/users.js
+- Líneas 298-309: se valida si Nombre_Usuario ya existe en la hoja Users, comparando sin distinguir mayúsculas/minúsculas y recortando espacios externos.
+- Líneas 306-308: cuando existe, se devuelve el mensaje «Ese nombre de usuario no está disponible» antes de generar el hash o escribir una nueva fila.
+- La creación conserva el nombre ingresado (sin espacios externos) y mantiene el flujo existente de hash y escritura cuando está disponible.
+- Se eliminó generateUniqueUsername(), que agregaba sufijos numéricos y quedó sin referencias.
+
+COMPARACIÓN Y REVISIÓN
+- El cambio funcional se limita a handleCreateUser() y la eliminación de la función auxiliar que generaba nombres alternativos.
+- No se modificaron users.html, api-config.js, AUTH, endpoints ni otras operaciones de USERS.
+- Se comprobó sintaxis JavaScript y se revisaron casos estáticos de nombre duplicado, variante de mayúsculas, nombre disponible y nombre similar con sufijo distinto.
+- No se ejecutó Apps Script ni se probó el deployment actualizado; la validación funcional del rechazo de duplicados queda pendiente.
+================================================================================

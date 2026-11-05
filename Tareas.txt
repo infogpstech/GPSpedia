@@ -3467,3 +3467,18 @@ Estado: CONFIGURACIÓN ESTÁTICA ACTUALIZADA; VALIDACIÓN FUNCIONAL DE DEPLOYMEN
 - Pendiente: comprobar disponibilidad y compatibilidad de ambos deployments y ejecutar la matriz funcional de ADMIN 0 sobre la Spreadsheet independiente.
 - No se ejecutaron llamadas HTTP, no se desplegó Apps Script, no se modificaron datos productivos y no se realizó merge.
 ================================================================================
+
+
+================================================================================
+TAREA — RECHAZAR NOMBRES DE USUARIO DUPLICADOS EN USERS-TEST
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_auth-users-test
+Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; PRUEBA FUNCIONAL DEL RECHAZO PENDIENTE.
+
+- El usuario confirmó que el alta de usuario, el almacenamiento de la contraseña como hash y el inicio de sesión del nuevo usuario funcionan. Esta prueba se considera completada.
+- Se detectó que generateUniqueUsername() agregaba sufijos numéricos al intentar registrar un nombre existente.
+- Services/Test/users.js ahora comprueba el nombre antes de generar el hash y escribir la fila. Si ya existe, devuelve «Ese nombre de usuario no está disponible» y no crea otra cuenta.
+- Se conserva el nombre ingresado, sin espacios externos, y la comparación no distingue mayúsculas/minúsculas.
+- Se eliminó generateUniqueUsername(); el flujo de alta válida y el hash permanecen.
+- Pendiente: actualizar el deployment USERS-TEST con esta versión y probar que un duplicado se rechaza, que no se agrega ninguna fila y que un nombre disponible sigue creando la cuenta correctamente.
+- No se modificaron endpoints ni se desplegó Apps Script desde GitHub. No se hizo merge ni se modificaron otras ramas.
+================================================================================

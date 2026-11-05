@@ -1153,3 +1153,93 @@ CONTINUIDAD
 - Este checkpoint y todos los registros se incluyen en el único commit de la tarea, que será el HEAD de GPSpedia2.2.5_auth-users-test.
 - Siguiente acción: probar disponibilidad y funcionamiento de AUTH-TEST y USERS-TEST desde esta rama, utilizando únicamente la Spreadsheet independiente.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — RECHAZAR NOMBRES DE USUARIO DUPLICADOS
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo activa: GPSpedia2.2.5_auth-users-test
+Rama de origen: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: a0a63469e9d8793c480f026902f8c20582838747
+
+TAREA Y ALCANCE
+- Corregir el alta de usuarios para que no genere automáticamente sufijos numéricos cuando el nombre de usuario ya existe.
+- Rechazar el alta duplicada con el mensaje «Ese nombre de usuario no está disponible».
+- Registrar como validada por el usuario la prueba de creación de usuario, almacenamiento de contraseña como hash e inicio de sesión exitoso.
+- Mantener intactos los endpoints de prueba, AUTH, el algoritmo de hash y las demás operaciones de usuarios.
+
+ESTADO REAL AL INICIO
+- El usuario confirmó que crear un usuario funciona, que su contraseña se almacena como hash y que el nuevo usuario puede iniciar sesión.
+- El usuario detectó que al intentar registrar un nombre existente, USERS genera un nombre alternativo agregando un número.
+- La inspección inicial localizó la causa en generateUniqueUsername(), llamada desde handleCreateUser().
+- La rama activa y su HEAD se verificaron mediante GitHub. No se han realizado cambios.
+
+ARCHIVOS Y FUNCIONES INVOLUCRADOS
+- Services/Test/users.js: doPost(), handleCreateUser() y generateUniqueUsername().
+- users.html: handleUserFormSubmit() y postToAction(), para verificar la presentación del mensaje de error.
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+
+RIESGOS Y DEPENDENCIAS
+- La validación debe ejecutarse en el backend bajo el LockService ya existente para impedir altas duplicadas concurrentes.
+- La respuesta debe llegar al frontend como error de negocio específico, sin alterar el manejo general de errores del servicio.
+- El alta válida debe conservar el flujo actual de hash, permisos, copia de fila y escritura.
+- No modificar ni desplegar Apps Script desde este cambio; la validación funcional posterior requiere que el usuario pruebe el endpoint de prueba actualizado.
+- No modificar otras ramas, no hacer merge y no tocar la rama base.
+
+RESPALDO
+- Services/Test/users.js original: blob 0a8e416ae5283184c29360ff6a8348a65385b310.
+- users.html original auditado sin modificación: blob e41f402675677a4d2783493614737021ec2eade5.
+
+FASE
+- Checkpoint inicial registrado; auditoría detallada en curso. Ningún archivo fuente ha sido modificado.
+================================================================================
+
+
+================================================================================
+CIERRE DE TAREA — RECHAZAR NOMBRES DE USUARIO DUPLICADOS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_auth-users-test
+Estado: IMPLEMENTACIÓN Y VERIFICACIÓN ESTÁTICA COMPLETADAS; VALIDACIÓN EN DEPLOYMENT PENDIENTE.
+
+RESULTADO
+- Services/Test/users.js: handleCreateUser() comprueba si el nombre ingresado ya existe en Users antes de calcular el hash o escribir una nueva fila.
+- Si existe, devuelve status=error y el mensaje exacto «Ese nombre de usuario no está disponible»; no genera una variante con número.
+- La comparación recorta espacios externos y no distingue mayúsculas/minúsculas. Si está disponible, conserva el nombre ingresado y continúa con el hash y el proceso de alta existente.
+- Se eliminó generateUniqueUsername(), que quedó sin referencias.
+- No fue necesario modificar users.html ni api-config.js: el flujo existente propaga el mensaje de error específico hasta alert().
+
+ARCHIVOS MODIFICADOS
+- Services/Test/users.js.
+- Auditoría.txt.
+- ChangesLogs.txt.
+- Tareas.txt.
+- checkpoint.md.
+
+RESPALDO Y COMPARACIÓN
+- Respaldo exacto de Services/Test/users.js: blob anterior 0a8e416ae5283184c29360ff6a8348a65385b310.
+- La comparación limitó los cambios a handleCreateUser() y la eliminación de generateUniqueUsername(); no se modificaron otros handlers ni el flujo de hash.
+- No se agregaron archivos temporales al repositorio.
+
+VERIFICACIONES REALIZADAS
+- Sintaxis JavaScript del archivo completo: correcta mediante compilación estática.
+- Prueba aislada de handleCreateUser() con mocks: nombre duplicado devuelve el mensaje esperado, no calcula hash, no copia ni escribe una fila y libera el lock.
+- Prueba aislada con nombre disponible: mantiene el alta exitosa, calcula el hash, copia la fila y escribe los datos.
+- Se comprobaron los casos exacto duplicado, variante de mayúsculas, nombre disponible y nombre con sufijo distinto.
+- Revisión manual final del cambio y de sus dependencias frontend/backend: sin observaciones bloqueantes identificadas.
+- El usuario confirmó que crear usuario, guardar contraseña como hash e iniciar sesión con el usuario creado funciona. Esta prueba queda registrada como completada por confirmación del usuario.
+
+VALIDACIONES PENDIENTES
+- No se ejecutó Apps Script ni se desplegó esta versión en USERS-TEST desde GitHub.
+- Falta que el usuario pruebe el deployment y confirme que el aviso aparece y que no se agrega una fila duplicada.
+- La validación funcional de alta y login con hash ya fue confirmada por el usuario; no se repitió en esta tarea.
+
+ALCANCE DE RAMAS
+- Solo se actualizará GPSpedia2.2.5_auth-users-test.
+- GPSpedia2.2.5_work y GPSpedia2.2.5 no se modifican; no se realiza merge.
+- HEAD anterior a esta tarea: a0a63469e9d8793c480f026902f8c20582838747.
+- El commit único que incorpora el código y la documentación será el siguiente HEAD de esta rama y quedará identificado en el historial Git.
+
+SIGUIENTE ACCIÓN
+- Actualizar el deployment USERS-TEST con Services/Test/users.js de esta rama y probar un nombre duplicado y uno disponible. No cambiar endpoints.
+================================================================================
