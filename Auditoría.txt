@@ -2821,3 +2821,26 @@ VERIFICACIÓN
 - Revisión estática de la lista de roles para getActivityLogs y clearActivityLogs.
 - No se ejecutaron pruebas en navegador ni contra endpoints Apps Script desplegados.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — ACTUALIZACIÓN DE ENDPOINTS ADMIN Y FEEDBACK
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+Archivo de implementación: api-config.js
+
+ALCANCE REVISADO
+- Se leyó íntegramente api-config.js, incluida la declaración API_ENDPOINTS, ACTION_TO_SERVICE_MAP, routeAction(), los helpers de conveniencia y checkAllServicesHealth().
+- Se comprobó que las acciones administrativas se enrutan mediante la clave ADMIN y que las acciones de actividad, Inbox y YouTube se enrutan mediante FEEDBACK.
+- Se verificó que routeAction() obtiene el endpoint desde API_ENDPOINTS[service], por lo que sustituir las dos constantes actualiza el destino central sin modificar el mapa de acciones ni los consumidores.
+
+HALLAZGOS Y RIESGOS
+- ADMIN y FEEDBACK tenían URLs de despliegue anteriores.
+- La modificación solicitada no requiere alterar los nombres de servicio, las acciones, los payloads, los métodos HTTP ni el mecanismo de redirección.
+- La actualización del repositorio no publica por sí misma los proyectos Apps Script ni confirma que los nuevos despliegues estén operativos.
+- checkAllServicesHealth() consulta los endpoints configurados mediante GET ?debug=true; el resultado depende de que cada despliegue responda a esa ruta.
+
+RESPALDO
+- Se conservaron copias completas de api-config.js, Auditoría.txt, ChangesLogs.txt y Tareas.txt antes de editar.
+- No se agregaron archivos de respaldo al repositorio.
+================================================================================

@@ -2226,3 +2226,15 @@ Fecha: 2026-11-04
 - Services/feedback.js: getActivityLogs autoriza Desarrollador, Gefe y Supervisor, en concordancia con los roles a los que ui.js muestra el botón Dashboard. clearActivityLogs permanece limitada a Desarrollador.
 - Auditoría.txt: se documentaron las observaciones de Safety & Side Effects, la reauditoría y las correcciones.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ENDPOINTS — ADMIN Y FEEDBACK
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+ARCHIVO MODIFICADO: api-config.js
+- API_ENDPOINTS.ADMIN: se sustituyó la URL del servicio ADMIN por la URL de despliegue proporcionada.
+- API_ENDPOINTS.FEEDBACK: se sustituyó la URL del servicio FEEDBACK por la URL de despliegue proporcionada.
+- No se modificaron ACTION_TO_SERVICE_MAP, routeAction(), helpers ni otros endpoints.
+================================================================================

@@ -3156,3 +3156,9 @@ ACTUALIZACIÓN CODE REVIEW — ADMIN 0
 - Se corrigió el contrato de error de ADMIN para conservar message sin exponer stack traces.
 - Se ajustó la autorización de consulta de actividad para mantener compatibilidad con Dashboard (Desarrollador, Gefe y Supervisor); la purga permanece exclusiva de Desarrollador.
 - ADMIN 0 continúa pendiente de revisión de registros históricos, diseño de migración de contraseñas y pruebas reales de sesión/roles.
+
+
+ACTUALIZACIÓN DE CONFIGURACIÓN — ENDPOINTS
+Fecha: 2026-11-04
+- Se actualizaron las URLs centrales de los servicios ADMIN y FEEDBACK en api-config.js según las direcciones proporcionadas.
+- La actualización del código no implica publicación ni verificación de los despliegues Apps Script.
