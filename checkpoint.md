@@ -1279,3 +1279,111 @@ Incorporar como único procedimiento autorizado para commits el flujo Git Databa
 
 ## Continuidad
 El commit deberá tener como único padre 11a22438735d689bbb45f7e0775fa95adf3b1c12 y actualizar exclusivamente GPSpedia2.2.5_work mediante update_ref con expected_sha igual a ese HEAD. Si cualquier operación falla o el HEAD cambia, detenerse sin crear un commit alternativo ni utilizar otro método.
+
+
+================================================================================
+# CHECKPOINT INICIAL — DIAGNÓSTICO DE LA INTERFAZ DEL HISTORIAL DE IMÁGENES REEMPLAZADAS
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD inicial confirmado:** a80d7e894b6195d7530dffa1477405e06b8f0ea4
+**Árbol del HEAD:** 2678c47129d66c26e2600773b68ba8ac1650c211
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## 1. TAREA Y ALCANCE
+Investigar por qué no aparece o no es accesible desde la plataforma la interfaz de gestión del historial de imágenes reemplazadas.
+
+Alcance exclusivamente diagnóstico: rastrear la entrada desde la interfaz, navegación, modal o componente, listeners, llamada al servicio ADMIN, validaciones de permisos y funciones backend relacionadas.
+
+Durante esta fase no se modificarán archivos de código, endpoints, despliegues de Apps Script, hojas de cálculo, datos ni archivos de Drive. Cualquier corrección se tratará como una tarea posterior, con autorización expresa.
+
+## 2. ESTADO AL INICIO
+- Se confirmó mediante GitHub API que la rama de trabajo apunta a a80d7e894b6195d7530dffa1477405e06b8f0ea4.
+- Se confirmó que la rama protegida apunta a d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- El HEAD de trabajo tiene como árbol 2678c47129d66c26e2600773b68ba8ac1650c211.
+- No se ha iniciado la auditoría de código de esta nueva tarea.
+- No se ha modificado código ni se han realizado llamadas a servicios externos o escrituras de datos.
+
+## 3. ARCHIVOS Y COMPONENTES A INVESTIGAR
+- index.html: punto de entrada, estructura de interfaz y referencias a componentes.
+- ui.js: navegación, apertura del modal o vista, listeners y eventos.
+- api-config.js: enrutamiento de acciones hacia el servicio ADMIN.
+- Services/admin.js: acciones backend, permisos, respuesta y gestión del historial de imágenes.
+- Otros archivos solo si las referencias encontradas demuestran que forman parte de esta ruta.
+
+## 4. RIESGOS Y DEPENDENCIAS CONOCIDOS
+- La función puede estar implementada pero no enlazada a la navegación.
+- El modal o vista puede depender de un listener que no se registra o de un selector/ID que no coincide.
+- La acción ADMIN puede no estar mapeada, puede usar un nombre distinto o estar bloqueada por permisos.
+- El backend puede responder con error o requerir condiciones previas.
+- No se asumirá ninguna de estas posibilidades sin evidencia en el código.
+
+## 5. RESTRICCIONES DE PROCEDIMIENTO
+- Seguir íntegramente Proceso de desarollo.md.
+- Leer checkpoint.md, ChangesLogs.txt, Tareas.txt, Auditoría.txt y contexto_personal.md antes de la auditoría.
+- Auditar archivo por archivo, línea por línea y función por función, sin modificar código durante la auditoría.
+- Registrar hallazgos en Auditoría.txt. Los problemas fuera del alcance deberán registrarse en Tareas.txt y referenciarse desde Auditoría.txt.
+- Al tratarse de una tarea diagnóstica sin cambios de código, no se tocarán servicios, despliegues ni datos.
+- Si se requieren cambios documentales de cierre, todos se agruparán en un único commit mediante create_blob → un create_tree → create_commit → update_ref con force:false y expected_sha igual al HEAD confirmado.
+- checkpoint.md será el último documento actualizado antes del único commit.
+- Si falla una operación Git o no se puede verificar el estado, detenerse sin usar métodos alternativos.
+
+## 6. SIGUIENTE ACCIÓN
+Completar la lectura de los documentos obligatorios y comenzar la auditoría estática de la ruta de interfaz al backend, sin alterar archivos.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — DIAGNÓSTICO DE ACCESO AL HISTORIAL DE IMÁGENES REEMPLAZADAS
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD previo a la tarea:** a80d7e894b6195d7530dffa1477405e06b8f0ea4
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD de rama base previo a la tarea:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## 1. ESTADO FINAL
+DIAGNÓSTICO ESTÁTICO COMPLETADO. CAUSA DEL CASO REAL PENDIENTE DE CONFIRMACIÓN CON LA SESIÓN Y EL DESPLIEGUE ACTIVOS.
+
+## 2. ARCHIVOS MODIFICADOS
+- Auditoría.txt: se añadió el diagnóstico complementario del recorrido de interfaz, control de rol, sesión, listeners, modal, contrato frontend/backend y diferencias entre ramas.
+- Tareas.txt: se añadió el resultado del diagnóstico y las comprobaciones que siguen pendientes.
+- ChangesLogs.txt: se documentaron los cambios exclusivamente documentales.
+- checkpoint.md: se conservó el historial y se registraron el inicio y cierre de esta tarea.
+- No se modificó código funcional, endpoints, archivos de configuración, servicios Apps Script, deployments ni datos.
+
+## 3. HALLAZGOS CONFIRMADOS
+- La interfaz existe en index.html y está enlazada desde ui.js.
+- La ruta de acceso es Menú lateral > Desarrollador > Imágenes y Drive > Consultar Repositorio Histórico.
+- El enlace Desarrollador se muestra únicamente para sesiones cuyo user.Privilegios normalizado sea "desarrollador".
+- La pestaña inicial del panel es Diagnóstico; Imágenes y Drive debe seleccionarse manualmente.
+- Los identificadores principales de la interfaz existen una sola vez en index.html; no se encontraron referencias DOM faltantes en initAdminPanelListeners().
+- Services/Auth.js devuelve Privilegios, ID y SessionToken.
+- En GPSpedia2.2.5_work, el frontend envía userId y sessionToken a getReplacedImages y Services/admin.js valida sesión activa y rol Desarrollador.
+- Las ramas GPSpedia2.2.5 y GPSpedia2.2.5_work presentan diferencias en index.html, ui.js, api-config.js, style.css, Services/admin.js y Services/Auth.js. No se confirmó cuál versión está desplegada.
+
+## 4. VALIDACIONES EJECUTADAS
+- Lectura del procedimiento y registros obligatorios.
+- Confirmación del HEAD de la rama de trabajo y de la rama protegida.
+- Inspección estática de los archivos y funciones que intervienen en el acceso.
+- Comparación de identificadores del DOM con referencias del inicializador administrativo.
+- Verificación estática del campo de rol devuelto por AUTH.
+- Verificación estática del payload enviado por frontend y la validación aplicada por ADMIN.
+- Comparación de blobs entre GPSpedia2.2.5_work y GPSpedia2.2.5.
+
+## 5. VALIDACIONES NO REALIZADAS
+- No se inspeccionó el valor Privilegios de la sesión real del usuario.
+- No se confirmó el commit servido por la plataforma ni la rama de publicación web.
+- No se consultó el deployment ADMIN activo ni se realizó una petición HTTP.
+- No se probó el flujo en navegador.
+- No se inspeccionaron registros reales de Imagenes_Reemplazadas ni permisos de Sheets/Drive.
+
+## 6. SIGUIENTE ACCIÓN
+Solicitar confirmación de si la cuenta muestra el enlace Desarrollador. Si no aparece, comprobar el privilegio de la sesión actual sin compartir ID ni token y renovar la sesión si procede. Si aparece pero falla la consulta, obtener el mensaje visible y contrastar el commit web con el deployment ADMIN. No modificar código ni ampliar permisos hasta confirmar la causa y recibir autorización.
+
+## 7. PUBLICACIÓN
+Todos los documentos de esta tarea se agruparán en un único commit en GPSpedia2.2.5_work, mediante el procedimiento Git Database API autorizado. El HEAD previo será el único padre y expected_sha; la rama protegida no se actualizará.
+================================================================================

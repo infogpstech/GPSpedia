@@ -3495,3 +3495,21 @@ Estado: DOCUMENTACIÓN PREPARADA; PENDIENTE DE COMMIT ÚNICO Y VERIFICACIÓN.
 - No modificar código funcional, servicios, deployments, datos ni la rama protegida.
 - Publicar todos los archivos mediante un único commit en GPSpedia2.2.5_work y verificar padre, archivos, HEAD y rama protegida.
 ================================================================================
+
+
+================================================================================
+RESULTADO DE DIAGNÓSTICO — ACCESO AL HISTORIAL DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-05
+Rama auditada: GPSpedia2.2.5_work
+Estado: DIAGNÓSTICO ESTÁTICO COMPLETADO; PENDIENTE CONFIRMACIÓN CON LA SESIÓN Y EL DESPLIEGUE REALES.
+
+- La interfaz está implementada y conectada estáticamente. Ruta: Menú lateral > Desarrollador > Imágenes y Drive > Consultar Repositorio Histórico.
+- El enlace Desarrollador solo se muestra si user.Privilegios corresponde al rol Desarrollador. La pestaña inicial del panel es Diagnóstico; se debe seleccionar Imágenes y Drive para localizar el botón.
+- AUTH devuelve la propiedad Privilegios en el código auditado. Una sesión local antigua o un objeto sin esa propiedad puede mantener oculto el enlace.
+- En GPSpedia2.2.5_work, el frontend envía userId y sessionToken a getReplacedImages y el backend valida sesión activa y rol Desarrollador.
+- Los identificadores de los controles están presentes una sola vez y no se detectaron referencias DOM faltantes en la inicialización del panel.
+- GPSpedia2.2.5 y GPSpedia2.2.5_work tienen diferencias en los archivos de interfaz, configuración API y servicios ADMIN/AUTH. No se confirmó cuál versión está publicada.
+- No se pudo determinar si la cuenta del usuario tiene el rol esperado ni si el deployment ADMIN activo corresponde al frontend.
+- Siguiente comprobación: confirmar si aparece el enlace Desarrollador; verificar el rol de la sesión sin compartir identificadores ni tokens; si el modal abre pero falla la carga, obtener el mensaje de error y contrastar commit web/deployment ADMIN.
+- No modificar código ni ampliar permisos hasta confirmar la causa y recibir autorización.
+================================================================================

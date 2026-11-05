@@ -3602,3 +3602,72 @@ HEAD auditado: 11a22438735d689bbb45f7e0775fa95adf3b1c12
 - Cambios documentales exclusivamente. No modificar código funcional, configuraciones, servicios, deployments, datos ni ramas protegidas.
 - Todos los documentos y registros de esta tarea deberán quedar incluidos en un único commit.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA COMPLEMENTARIA — DIAGNÓSTICO DE ACCESO AL HISTORIAL DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: a80d7e894b6195d7530dffa1477405e06b8f0ea4
+Tipo: auditoría estática del recorrido frontend/backend. Sin cambios de código ni pruebas contra despliegues o datos reales.
+
+1. RECORRIDO DE INTERFAZ
+- index.html, línea 46: #dev-tools-btn inicia con display:none; no es una opción visible en el menú general.
+- ui.js, líneas 4928-4936: showApp(user) normaliza user.Privilegios (acentos, espacios y mayúsculas/minúsculas) y muestra el enlace únicamente si el resultado es "desarrollador".
+- main.js, líneas 634-641: el listener del enlace llama ui.openDevTools() y cierra el menú lateral.
+- ui.js, líneas 3024-3030: openDevTools() abre #dev-tools-modal e inicializa initAdminPanelListeners().
+- index.html, líneas 218-240 y 380-391: la pestaña Imágenes y Drive se encuentra dentro del panel; contiene #btn-admin-view-replaced-images. La pestaña inicial seleccionada es Diagnóstico, por lo que el usuario debe seleccionar Imágenes y Drive para ver el botón.
+- ui.js, líneas 3779-3787: initAdminPanelListeners() enlaza el botón de consulta con openReplacedImagesModal().
+- ui.js, líneas 3805-3943: openReplacedImagesModal() muestra #replaced-images-modal, configura cierre, filtro y actualización, y carga los datos.
+- index.html, líneas 414-430: el modal y sus controles están definidos en el DOM.
+
+2. VALIDACIÓN ESTÁTICA DEL DOM Y EVENTOS
+- Se comprobaron los nueve identificadores principales del acceso, pestaña, botón y modal: cada uno aparece exactamente una vez en index.html.
+- Se compararon las referencias getElementById() de initAdminPanelListeners() con los identificadores declarados en index.html: no se encontraron referencias a elementos inexistentes.
+- El contenedor de consola requerido por initAdminPanelListeners() existe en index.html; no se identificó una interrupción estática por esa condición.
+- setupModal() comprueba la existencia del modal y registra el cierre del panel administrativo; el modal histórico configura su propio botón de cierre.
+- No se encontró evidencia estática de un enlace ausente entre el botón y el modal.
+
+3. ROL Y SESIÓN
+- Services/Auth.js, líneas 329-339: el objeto user devuelto por el login incluye ID, Privilegios y SessionToken.
+- auth.js, líneas 14-17 y 223-228: la sesión recibida se guarda en localStorage, se establece en el estado y se entrega a showApp().
+- auth.js, líneas 178-220: al restaurar una sesión local, checkSession() vuelve a llamar handleLoginSuccess(user); por ello, un objeto local antiguo puede conservar un esquema de propiedades anterior hasta que se renueve la sesión.
+- En esta rama, showApp() solo consulta user.Privilegios para mostrar el enlace. Si la sesión local carece de esa propiedad, aunque tenga otra propiedad de rol, el enlace permanece oculto.
+- Services/admin.js, líneas 27-50: assertDeveloperSession() exige userId y sessionToken, comprueba la sesión activa y obtiene el rol desde la hoja Users; normaliza el rol y exige "desarrollador".
+- Services/admin.js, líneas 281-373: doPost() aplica assertDeveloperSession() a todas las acciones salvo ping y enruta getReplacedImages al handler correspondiente.
+
+4. CONTRATO DE LA PETICIÓN
+- api-config.js, líneas 18-32: getReplacedImages está asignada al servicio ADMIN.
+- ui.js, línea 3822: la rama auditada envía getDeveloperSessionPayload(), que contiene userId y sessionToken.
+- Services/admin.js, líneas 365-367: la acción getReplacedImages llama handleGetReplacedImages(payload, logMessage).
+- El contrato estáticamente observado entre frontend y backend de GPSpedia2.2.5_work es coherente: el frontend envía los datos de sesión que el backend exige.
+- handleGetReplacedImages(), líneas 2598-2626, obtiene la hoja Imagenes_Reemplazadas y devuelve los registros en data; si no existen filas de datos, devuelve una lista vacía. La carga vacía no impide abrir el modal.
+
+5. DIFERENCIAS ENTRE RAMAS
+Se compararon los blobs de los archivos relevantes en GPSpedia2.2.5_work y GPSpedia2.2.5. index.html, ui.js, api-config.js, style.css, Services/admin.js y Services/Auth.js presentan contenidos distintos entre ambas ramas; main.js, auth.js y service-worker.js coinciden.
+- En GPSpedia2.2.5, showApp() compara user.Privilegios directamente con "Desarrollador", sin normalización.
+- En GPSpedia2.2.5, openReplacedImagesModal() llama getReplacedImages sin enviar payload de sesión.
+- En GPSpedia2.2.5, el doPost() de Services/admin.js no contiene la validación assertDeveloperSession() presente en GPSpedia2.2.5_work.
+- Las configuraciones api-config.js de ambas ramas contienen endpoints ADMIN diferentes.
+Estas diferencias impiden asumir que la combinación de frontend y servicio activa corresponde a la rama auditada. No se confirmó qué commit sirve la plataforma ni qué versión está publicada en cada deployment de Apps Script.
+
+6. HALLAZGOS Y CONCLUSIÓN
+- La interfaz no está ausente del código de GPSpedia2.2.5_work. Está ubicada en Menú lateral > Desarrollador > Imágenes y Drive > Consultar Repositorio Histórico.
+- El acceso está restringido al rol Desarrollador. Para mostrar el enlace, la sesión del navegador debe incluir la propiedad Privilegios con ese rol.
+- La rama auditada incluye el payload de sesión requerido por su backend ADMIN y la ruta de acción está registrada.
+- Si el usuario no ve el enlace, la primera comprobación necesaria es el valor de Privilegios del objeto de sesión actual, sin compartir ID ni token. Si ve el enlace y abre el modal pero falla la consulta, se debe revisar el mensaje mostrado en el contenedor y verificar que frontend y deployment ADMIN pertenezcan a versiones compatibles.
+- Una sesión local antigua sin Privilegios puede mantener oculto el enlace; cerrar sesión y volver a autenticarse renovaría el objeto a partir de la respuesta actual de AUTH, si ese deployment devuelve el contrato inspeccionado.
+- No se atribuye una causa definitiva a la cuenta del usuario porque no se inspeccionó su sesión real.
+
+7. VALIDACIONES PENDIENTES / LÍMITES
+- No se consultó el valor real de Privilegios de la cuenta que reportó el problema.
+- No se verificó el commit servido por la plataforma ni la configuración del despliegue web.
+- No se realizó una petición HTTP al endpoint ADMIN ni se verificó su versión desplegada.
+- No se inspeccionaron hojas reales, registros históricos ni permisos de Drive/Spreadsheet.
+- No se ejecutó el flujo en navegador; el diagnóstico es estático.
+- No se modificó código, endpoints, servicios, despliegues, hojas, datos ni Drive.
+
+SIGUIENTE PASO
+Solicitar al usuario que confirme si su cuenta tiene el privilegio Desarrollador y si el enlace Desarrollador aparece en el menú. Si aparece, comprobar la pestaña Imágenes y Drive y el resultado visible al abrir el repositorio. Después identificar el commit web y el deployment ADMIN activos antes de autorizar cualquier corrección.
+================================================================================

@@ -2588,3 +2588,21 @@ PRESERVACIÓN
 - No se modificaron archivos de código, configuraciones, servicios Apps Script, deployments, datos ni la rama protegida.
 - Todos los archivos de esta tarea se agruparán en un único commit.
 ================================================================================
+
+
+================================================================================
+DIAGNÓSTICO ESTÁTICO — ACCESO AL HISTORIAL DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-05
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: se agregó una auditoría complementaria del recorrido de acceso, visibilidad por rol, inicialización de eventos, modal, contrato getReplacedImages, validación de sesión en ADMIN y diferencias entre GPSpedia2.2.5_work y GPSpedia2.2.5.
+- Tareas.txt: se agregó el resultado del diagnóstico estático, sus límites y las comprobaciones pendientes con la sesión real y el despliegue.
+
+RESULTADO OBJETIVO
+- No se modificaron archivos de código, configuraciones ni endpoints.
+- No se modificaron servicios Apps Script ni deployments.
+- No se realizaron solicitudes HTTP a servicios externos ni escrituras en Sheets o Drive.
+- No se alteraron datos ni la rama protegida.
+- El diagnóstico no confirma el rol de la cuenta del usuario ni el commit/deployment servido por la plataforma.
+================================================================================
