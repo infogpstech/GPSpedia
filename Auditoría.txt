@@ -3055,3 +3055,41 @@ RESTRICCIONES
 - Un único commit agrupa código y documentación.
 - No se modifica GPSpedia2.2.5, no se hace merge y no se despliega Apps Script.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — TRANSMISIÓN DE SESIÓN EN INBOX Y DASHBOARD
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+
+ALCANCE AUDITADO
+- ui.js: apertura de Dashboard e Inbox, recarga de Inbox y acciones de aprobación/rechazo de vídeo, respuesta, resolución y eliminación.
+- api-config.js: wrappers de las siete acciones FEEDBACK implicadas.
+- Services/feedback.js: doPost(), actionPermissions, assertFeedbackSession() y despacho de handlers.
+
+HALLAZGOS
+1. openDashboard llamaba getActivityLogs() sin userId/sessionToken.
+2. openInbox y loadAndRenderInbox llamaban getFeedbackItems() sin userId/sessionToken.
+3. Las acciones replyToFeedback, markAsResolved, deleteFeedbackItem, approveVideo y rejectVideo tampoco enviaban contexto de sesión.
+4. Los wrappers correspondientes en api-config.js no aceptaban ni propagaban un payload de sesión.
+5. Services/feedback.js valida la sesión consultando ActiveSessions y Users, y aplica permisos por acción. getActivityLogs permite Desarrollador, Gefe y Supervisor; las acciones de Inbox tienen sus roles definidos en actionPermissions. El backend reemplaza los datos de actor por los valores obtenidos de la sesión validada.
+6. El chequeo de salud GET ?debug=true no ejecuta las acciones POST protegidas y, por sí solo, no acredita que Inbox/Dashboard puedan leer sus datos.
+
+RIESGO Y DECISIÓN
+- La ausencia de userId/sessionToken provoca rechazo de autorización en el backend para las acciones protegidas, aunque el endpoint responda al chequeo de disponibilidad.
+- La corrección se limita a transmitir getDeveloperSessionPayload() desde ui.js y propagarlo en api-config.js. Se conservan íntegramente las validaciones y permisos de Services/feedback.js.
+- No se cambia el mapa de acciones, las URLs, los roles ni los endpoints.
+
+RESPALDOS GIT PREVIOS A EDICIÓN
+- ui.js: 100a1e11664c4cc7561c039fc26983ac7c1dacbe
+- api-config.js: 92ca1c39820de06fba337eb150e9c50b6dd85588
+- Services/feedback.js (auditado, sin cambios): 4e50ae70884c20a22b66c857e1f9d83df294e027
+- checkpoint.md: 3405eba14573f756da803580bdb14a22167329d3
+- Auditoría.txt: e36a8dd572afb004bd395a3f9de599021956cb9b
+- ChangesLogs.txt: 0cf8e4fc377b49d8af0967405c08a676d7be6ade
+- Tareas.txt: fdc84720cc2cec065684cf377a01d6df53436076
+
+LIMITACIONES
+- No se dispone de la sesión del navegador ni de sus registros Network/Console.
+- No se realizaron llamadas HTTP funcionales ni se verificó el código actualmente desplegado en Apps Script.
+- La causa se confirma estáticamente en el contrato entre frontend y backend; la validación live queda pendiente.
+================================================================================

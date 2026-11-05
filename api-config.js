@@ -82,20 +82,20 @@ export async function fetchCatalogData() {
     return await routeAction('getCatalogData');
 }
 
-export async function getFeedbackItems() {
-    return await routeAction('getFeedbackItems');
+export async function getFeedbackItems(sessionPayload = {}) {
+    return await routeAction('getFeedbackItems', sessionPayload);
 }
 
-export async function replyToFeedback(itemId, itemType, replyText, responderName) {
-    return await routeAction('replyToFeedback', { itemId, itemType, replyText, responderName });
+export async function replyToFeedback(itemId, itemType, replyText, responderName, sessionPayload = {}) {
+    return await routeAction('replyToFeedback', { itemId, itemType, replyText, responderName, ...sessionPayload });
 }
 
-export async function markAsResolved(itemId) {
-    return await routeAction('markAsResolved', { itemId });
+export async function markAsResolved(itemId, sessionPayload = {}) {
+    return await routeAction('markAsResolved', { itemId, ...sessionPayload });
 }
 
-export async function deleteFeedbackItem(id, type) {
-    return await routeAction('deleteFeedbackItem', { id, type });
+export async function deleteFeedbackItem(id, type, sessionPayload = {}) {
+    return await routeAction('deleteFeedbackItem', { id, type, ...sessionPayload });
 }
 
 export async function clearActivityLogs(keepLastWeek = false, sessionPayload = {}) {
@@ -106,8 +106,8 @@ export async function clearSensitiveLogs(sessionPayload = {}) {
     return await routeAction('clearSensitiveLogs', sessionPayload);
 }
 
-export async function getActivityLogs() {
-    return await routeAction('getActivityLogs');
+export async function getActivityLogs(sessionPayload = {}) {
+    return await routeAction('getActivityLogs', sessionPayload);
 }
 
 export async function recordLike(vehicleId, corteIndex, userId, userName) {
@@ -160,10 +160,10 @@ export async function checkAllServicesHealth() {
     return results;
 }
 
-export async function approveVideo(itemId, approverName, userRole) {
-    return await routeAction("approveVideo", { itemId, approverName, userRole });
+export async function approveVideo(itemId, approverName, userRole, sessionPayload = {}) {
+    return await routeAction("approveVideo", { itemId, approverName, userRole, ...sessionPayload });
 }
 
-export async function rejectVideo(itemId, rejecterName, reason, userRole) {
-    return await routeAction("rejectVideo", { itemId, rejecterName, reason, userRole });
+export async function rejectVideo(itemId, rejecterName, reason, userRole, sessionPayload = {}) {
+    return await routeAction("rejectVideo", { itemId, rejecterName, reason, userRole, ...sessionPayload });
 }

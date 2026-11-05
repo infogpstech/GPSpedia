@@ -3276,3 +3276,18 @@ Estado: CONFIGURACIÓN ACTUALIZADA EN CÓDIGO; VALIDACIÓN DE DEPLOYMENTS PENDIE
 - No se modificó la rama base, no se realizó merge ni despliegue.
 - Todo el cambio de esta tarea se agrupa en un único commit.
 ================================================================================
+
+
+================================================================================
+TAREA — CORREGIR CARGA DE INBOX Y DASHBOARD DE ACTIVIDADES
+Fecha: 2026-11-04
+Estado: CORRECCIÓN ESTÁTICA IMPLEMENTADA; VALIDACIÓN LIVE PENDIENTE.
+
+- Se identificó que las solicitudes protegidas de Inbox y Dashboard omitían userId/sessionToken.
+- ui.js ahora obtiene el contexto de sesión autenticada mediante getDeveloperSessionPayload() para las cargas, recargas y acciones del Inbox, así como para la consulta del Dashboard.
+- api-config.js ahora propaga el payload de sesión en los siete wrappers FEEDBACK correspondientes.
+- Se conservan sin cambios los controles de sesión y permisos de Services/feedback.js.
+- Verificaciones estáticas de las llamadas y wrappers completadas en el cambio: 1 consulta Dashboard, 2 rutas de carga Inbox y 5 acciones de Inbox.
+- Pendiente: validar en live con sesión válida y roles permitidos; comprobar errores HTTP/Apps Script si persisten. No se inspeccionó Network/Console del navegador desde esta sesión.
+- No se desplegó Apps Script, no se modificó GPSpedia2.2.5 y no se realizó merge.
+================================================================================

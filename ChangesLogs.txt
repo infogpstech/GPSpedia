@@ -2347,3 +2347,20 @@ CONTROL DE VERSIONES
 Todos los cambios de esta tarea, incluidos los archivos documentales, se agrupan en un único commit. No se crean commits intermedios ni commits exclusivos para documentación.
 No se modificó la rama base, no se realizó merge ni despliegue.
 ================================================================================
+
+
+================================================================================
+CORRECCIÓN DE TRANSMISIÓN DE SESIÓN — INBOX Y DASHBOARD
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- ui.js: llamadas de openDashboard, openInbox y loadAndRenderInbox; acciones approveVideo, rejectVideo, replyToFeedback, markAsResolved y deleteFeedbackItem. Se añade getDeveloperSessionPayload() a cada solicitud protegida.
+- api-config.js: wrappers getFeedbackItems, getActivityLogs, replyToFeedback, markAsResolved, deleteFeedbackItem, approveVideo y rejectVideo aceptan sessionPayload y lo incorporan al payload enviado mediante routeAction().
+- checkpoint.md: se registra el estado inicial, el resultado, las verificaciones y las limitaciones de validación.
+- Auditoría.txt: se documentan el diagnóstico, los permisos backend, los respaldos y las limitaciones.
+- Tareas.txt: se registra el resultado de la corrección y las pruebas pendientes.
+
+CAMBIOS DE SEGURIDAD
+- Services/feedback.js y sus controles assertFeedbackSession/actionPermissions no se modificaron.
+- No se modificaron roles, endpoints, mapa de acciones ni despliegues.
+================================================================================

@@ -268,3 +268,32 @@ Configuración actualizada en la rama de trabajo; validación funcional y confir
 - Trabajar únicamente en `GPSpedia2.2.5_work`; mantener protegida `GPSpedia2.2.5`.
 - Un único commit por tarea. No crear commits vacíos ni commits intermedios; agrupar todos los cambios de la tarea en un solo commit tras completar verificaciones y registros.
 - Este checkpoint refleja el estado observado y no declara resuelta la incidencia.
+
+
+================================================================================
+TAREA — CORREGIR TRANSMISIÓN DE SESIÓN EN INBOX Y DASHBOARD
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+
+REGISTRO INICIAL
+- HEAD inicial verificado: 15809d8f7d4dcf6839f83fb6422b3e62ec8a08f6.
+- Alcance: corregir la transmisión de userId/sessionToken desde ui.js y api-config.js para operaciones protegidas de FEEDBACK.
+- Archivos previstos: ui.js, api-config.js, checkpoint.md, Auditoría.txt, ChangesLogs.txt y Tareas.txt. Services/feedback.js se auditó y no se modificó.
+- Hallazgo: las cargas de Inbox/Dashboard y las acciones del Inbox omitían el payload de sesión; el backend ya exige sesión válida y permisos por rol.
+- Estado inicial: código funcional sin modificar; no se desplegó Apps Script ni se realizó commit.
+
+RESULTADO FINAL
+- Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; VALIDACIÓN FUNCIONAL LIVE PENDIENTE.
+- HEAD anterior a la tarea: 15809d8f7d4dcf6839f83fb6422b3e62ec8a08f6.
+- Archivos modificados: ui.js, api-config.js, checkpoint.md, Auditoría.txt, ChangesLogs.txt y Tareas.txt.
+- ui.js transmite getDeveloperSessionPayload() en la consulta del Dashboard, las dos rutas de carga de Inbox y las acciones de aprobar/rechazar vídeo, responder, resolver y eliminar.
+- api-config.js propaga sessionPayload en getFeedbackItems, getActivityLogs, replyToFeedback, markAsResolved, deleteFeedbackItem, approveVideo y rejectVideo.
+- Services/feedback.js permanece sin cambios; se conservan assertFeedbackSession y actionPermissions.
+- Verificación estática: se comprobaron una llamada Dashboard, dos llamadas de carga Inbox, cinco acciones de Inbox y los siete wrappers; todas las aserciones fueron satisfactorias.
+- Comparación: las sustituciones se limitaron a las llamadas y wrappers relacionados con la transmisión de sesión; la documentación registra el alcance.
+- No se ejecutaron pruebas HTTP reales, no se inspeccionó Network/Console y no se verificó el deployment Apps Script. La validación live queda pendiente.
+- No se modificó la rama base, no se hizo merge y no se desplegó Apps Script.
+- El commit de esta tarea se identificará en el historial de Git una vez creado.
+
+SIGUIENTE ACCIÓN
+- Probar Inbox y Dashboard en GPSpedia live con sesión válida. Si falla, capturar la respuesta HTTP y los registros del deployment FEEDBACK para distinguir sesión, permisos, CORS o acceso a Spreadsheet.
+================================================================================

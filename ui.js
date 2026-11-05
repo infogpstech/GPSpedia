@@ -2974,7 +2974,7 @@ export const openDashboard = setupModal('dashboard-modal', async () => {
     logContainer.innerHTML = '<tr><td colspan="4">Cargando actividad...</td></tr>';
 
     try {
-        const result = await getActivityLogs();
+        const result = await getActivityLogs(getDeveloperSessionPayload());
         if (result.status === 'success') {
             logContainer.innerHTML = '';
             result.data.forEach(log => {
@@ -3002,7 +3002,7 @@ export const openInbox = setupModal('inbox-modal', async () => {
     detailContainer.innerHTML = '<p>Selecciona un item para ver los detalles.</p>';
 
     try {
-        const result = await getFeedbackItems();
+        const result = await getFeedbackItems(getDeveloperSessionPayload());
 
         if (result.status === 'success') {
             const data = result.data || result.messages || result.items || [];
@@ -4292,7 +4292,7 @@ export function renderInboxDetail(item) {
                 try {
                     approveVideoBtn.disabled = true;
                     approveVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aprobando...`;
-                    await approveVideo(item.id, userName, userRole);
+                    await approveVideo(item.id, userName, userRole, getDeveloperSessionPayload());
                     inboxCacheData = null;
                     mostrarNotificacion("Vídeo aprobado con éxito.", "success");
                     openInbox();
@@ -4313,7 +4313,7 @@ export function renderInboxDetail(item) {
                 try {
                     rejectVideoBtn.disabled = true;
                     rejectVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rechazando...`;
-                    await rejectVideo(item.id, userName, reason, userRole);
+                    await rejectVideo(item.id, userName, reason, userRole, getDeveloperSessionPayload());
                     inboxCacheData = null;
                     mostrarNotificacion("Vídeo rechazado.", "info");
                     openInbox();
@@ -4341,7 +4341,7 @@ export function renderInboxDetail(item) {
         }
         try {
             replyBtn.classList.add('btn-loading');
-            await replyToFeedback(item.id, item.type, replyText, userName);
+            await replyToFeedback(item.id, item.type, replyText, userName, getDeveloperSessionPayload());
             openInbox();
         } catch (error) {
             showGlobalError(`Error al enviar respuesta: ${error.message}`);
@@ -4355,7 +4355,7 @@ export function renderInboxDetail(item) {
         resolveBtn.addEventListener('click', async () => {
              try {
                 resolveBtn.classList.add('btn-loading');
-                await markAsResolved(item.id);
+                await markAsResolved(item.id, getDeveloperSessionPayload());
                 inboxCacheData = null;
                 openInbox();
             } catch (error) {
@@ -4373,7 +4373,7 @@ export function renderInboxDetail(item) {
                 try {
                     deleteBtn.disabled = true;
                     deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...`;
-                    await deleteFeedbackItem(item.id, item.type);
+                    await deleteFeedbackItem(item.id, item.type, getDeveloperSessionPayload());
                     inboxCacheData = null;
                     mostrarNotificacion("Mensaje eliminado con éxito", "success");
                     openInbox();
@@ -8671,7 +8671,7 @@ export async function loadAndRenderInbox() {
     }
 
     try {
-        const res = await getFeedbackItems();
+        const res = await getFeedbackItems(getDeveloperSessionPayload());
         if (res && res.data) {
             inboxCacheData = res.data;
             renderInboxList(inboxCacheData);
