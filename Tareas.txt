@@ -3309,3 +3309,36 @@ Estado: AUDITORÍA COMPLETADA; MIGRACIÓN NO IMPLEMENTADA.
 TAREA INDEPENDIENTE REGISTRADA — REVISAR LÍMITE DE SESIONES DEL ROL GEFE
 - SESSION_LIMITS usa la clave 'jefe', pero handleLogin normaliza el rol 'Gefe' a 'gefe'. Actualmente ese rol utiliza el valor predeterminado de una sesión. Confirmar el límite esperado antes de corregirlo; fuera del alcance de la auditoría de contraseñas.
 ================================================================================
+
+
+================================================================================
+INCIDENCIA PENDIENTE — backupDatabase RECHAZA LA SESIÓN
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+Estado: CAUSA ESTÁTICA IDENTIFICADA; CORRECCIÓN PENDIENTE.
+
+REPORTE DEL USUARIO
+- Operación: backupDatabase.
+- Etapa: Ejecución de acción individual.
+- Función: routeAction.
+- Código HTTP reportado: 500.
+- Mensaje: «Acceso denegado: sesión no autorizada».
+- Referencias del reporte: api-config.js:64, ui.js:3166 y ui.js:3545.
+
+HALLAZGO DE AUDITORÍA
+- ui.js, listener de btn-admin-backup-db: ejecuta runAction('backupDatabase') sin proporcionar payload de sesión.
+- runAction(action, payload = {}) transmite el payload recibido a routeAction(); en esta llamada permanece vacío.
+- api-config.js, ACTION_TO_SERVICE_MAP: backupDatabase se enruta al servicio ADMIN.
+- Services/admin.js, doPost(): exige assertDeveloperSession(payload) para todas las acciones excepto ping.
+- assertDeveloperSession() rechaza la solicitud cuando faltan userId o sessionToken.
+
+ACCIÓN PENDIENTE
+- Corregir la transmisión de getDeveloperSessionPayload() a la ejecución de backupDatabase, conservando la validación backend.
+- Auditar también el resto de acciones del panel ADMIN que utilizan runAction() para detectar llamadas protegidas que omitan el contexto de sesión; limitar cualquier corrección a las llamadas afectadas.
+- Probar con sesión válida de Desarrollador y comprobar rechazo con sesión ausente, inválida y rol no autorizado.
+- No debilitar ni retirar assertDeveloperSession() como solución.
+
+RESTRICCIONES
+- No se modificó código ni se ejecutó la operación de respaldo.
+- No se verificó el deployment ADMIN activo ni se realizó una nueva solicitud HTTP desde esta sesión.
+- No se desplegó Apps Script ni se realizó merge.
+================================================================================
