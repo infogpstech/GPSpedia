@@ -2522,3 +2522,24 @@ Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
 - No se modificaron Services/Auth.js, Services/users.js, api-config.js ni users.html.
 - No se desplegaron servicios, no se ejecutó Apps Script, no se modificaron datos de Sheets ni se hizo merge.
 ================================================================================
+
+
+================================================================================
+PREPARACIÓN DE SERVICIOS AISLADOS AUTH Y USERS — ADMIN 0
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS NUEVOS
+- Services/Test/Auth.js: copia de Services/Auth.js. Único cambio respecto al original: línea 9, SPREADSHEET_ID sustituido por el ID de la copia de pruebas (1TyfehJHUeyUMGM4AW12_Rkq-Y8G_6MvF-Wd9rrB87_k).
+- Services/Test/users.js: copia de Services/users.js. Único cambio respecto al original: línea 9, SPREADSHEET_ID sustituido por el mismo ID de la copia de pruebas.
+- Services/Test/README.md: instrucciones para instalar cada servicio en un proyecto Apps Script independiente y crear deployments de prueba separados.
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: se añadió la auditoría de la discrepancia de IDs, el enrutamiento y los riesgos de escritura.
+- Tareas.txt: se registra la preparación de fuentes y los deployments funcionales aún pendientes.
+- checkpoint.md: se registra el inicio y el cierre de esta tarea.
+
+CONFIGURACIÓN QUE PERMANECE SIN CAMBIOS
+- Services/Auth.js, Services/users.js y Services/admin.js.
+- api-config.js y los endpoints actualmente utilizados por la plataforma.
+- No se modificaron hojas, datos ni deployments Apps Script.
+================================================================================

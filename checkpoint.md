@@ -1,3 +1,46 @@
+# CHECKPOINT INICIAL — PREPARAR AUTH Y USERS PARA PRUEBAS AISLADAS (ADMIN 0)
+
+**Fecha:** 2026-11-05  
+**Repositorio:** infogpstech/GPSpedia  
+**Rama de trabajo:** GPSpedia2.2.5_work  
+**Rama base protegida:** GPSpedia2.2.5  
+**HEAD inicial confirmado:** 8a9c9811bc954785f36966997bc1564a1fb3feac  
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Comparación inicial:** 136 commits adelante, 0 atrás.
+
+## Tarea y alcance
+Preparar copias fuente aisladas de AUTH y USERS que utilicen la Spreadsheet de pruebas confirmada por el usuario, sin modificar los servicios actuales, los endpoints live ni los datos de ninguna hoja. Dejar documentado cómo crear deployments separados para poder ejecutar la matriz funcional de ADMIN 0.
+
+## Estado real al inicio
+- El usuario proporcionó la copia independiente de Spreadsheet con ID `1TyfehJHUeyUMGM4AW12_Rkq-Y8G_6MvF-Wd9rrB87_k`.
+- `Services/Auth.js`, `Services/users.js` y `Services/admin.js` tienen configurado el ID distinto `1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs`.
+- `api-config.js` contiene los endpoints actuales de AUTH y USERS, pero no configura endpoints de prueba.
+- El repositorio no contiene archivos de manifiesto ni metadatos de proyectos/deployments Apps Script que permitan verificar desde GitHub a qué Spreadsheet apunta cada deployment.
+- La documentación del proyecto indica que los microservicios se despliegan de forma independiente.
+- El usuario autorizó continuar con la preparación del entorno de prueba; no se ha autorizado desplegar Apps Script ni modificar hojas.
+- Reconocimiento preliminar: `api-config.js` se había leído durante la recuperación del contexto. Para respetar el flujo, la auditoría formal de los servicios se reinicia después de este checkpoint; no se había realizado ninguna modificación.
+
+## Archivos y funcionalidades involucrados
+- `Services/Auth.js` y `Services/users.js`: fuentes originales auditadas y copias aisladas nuevas bajo `Services/Test/`.
+- `api-config.js`: verificación de enrutamiento actual; no se modificará.
+- `Services/admin.js`: verificación de su ID configurado, fuera del alcance de esta preparación.
+- `README.md` de pruebas, `Auditoría.txt`, `ChangesLogs.txt`, `Tareas.txt` y `checkpoint.md`.
+
+## Riesgos y dependencias
+- AUTH puede migrar contraseñas legacy, escribir tokens/sesiones y registrar eventos; USERS puede crear, modificar o eliminar usuarios y sesiones. Ambas copias deben apuntar exclusivamente a la Spreadsheet de pruebas.
+- Los proyectos y deployments de prueba deben ser distintos de los operativos. No sustituir las URLs de `api-config.js`.
+- Las pruebas funcionales requieren confirmar en Apps Script los dos nuevos deployments y comprobar el ID configurado en cada uno.
+- No ejecutar operaciones contra los endpoints live, no desplegar, no modificar datos y no hacer merge.
+
+## Respaldos
+- Fuentes originales conservadas sin cambios como blobs Git:
+  - `Services/Auth.js`: `be99654d7a41ee77dbeb8534976ca94c8c376068`
+  - `Services/users.js`: `aa8960e188e71c46fa481829283d5c0c189b7ed8`
+- Los archivos documentales originales se conservarán en el historial Git y se actualizarán dentro del commit único de esta tarea.
+
+**Fase al crear el checkpoint:** inicio documentado; auditoría formal en curso.
+
+
 # CHECKPOINT INICIAL — CORRECCIÓN DE AUTORIZACIÓN EN ACCIONES ADMIN
 
 **Fecha:** 2026-11-05
@@ -990,4 +1033,50 @@ CONTINUIDAD
 - HEAD anterior a la tarea: 6119ab8600ce96aff08570e8118be55e0d88aebd.
 - El commit único de esta auditoría y sus registros quedará identificado en el historial de GPSpedia2.2.5_work.
 - Siguiente acción concreta: identificar el Spreadsheet ID de la copia independiente y confirmar que los deployments de prueba AUTH y USERS apuntan a ella; después ejecutar la matriz de pruebas documentada, sin tocar la hoja productiva.
+================================================================================
+
+
+================================================================================
+CIERRE DE TAREA — PREPARAR FUENTES AISLADAS AUTH Y USERS PARA ADMIN 0
+Fecha: 2026-11-05
+Estado: PREPARACIÓN DE CÓDIGO COMPLETADA; VALIDACIÓN FUNCIONAL BLOQUEADA HASTA CREAR DEPLOYMENTS DE PRUEBA.
+
+## Resultado
+- Se crearon copias independientes de AUTH y USERS en Services/Test.
+- Ambas copias apuntan al ID de Spreadsheet de pruebas 1TyfehJHUeyUMGM4AW12_Rkq-Y8G_6MvF-Wd9rrB87_k.
+- Se añadió README con pasos para instalar cada servicio en un proyecto Apps Script distinto y desplegarlo sin reemplazar los servicios actuales.
+- No se cambió la configuración live ni la lógica funcional de autenticación/usuarios.
+
+## Archivos nuevos
+- Services/Test/Auth.js
+- Services/Test/users.js
+- Services/Test/README.md
+
+## Archivos documentales modificados
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+## Verificaciones realizadas
+- Se auditó la totalidad de Services/Auth.js (375 líneas) y Services/users.js (495 líneas), además de las rutas relevantes de api-config.js, Services/admin.js y README.md.
+- Se comprobó que el ID de la copia suministrada por el usuario difiere del ID fijo en AUTH, USERS y ADMIN.
+- Cada copia de prueba conserva el número de líneas del original y solo cambia la línea 9 de SPREADSHEET_ID.
+- La comparación inversa, al restaurar el ID original, reprodujo exactamente ambos archivos fuente.
+- Code Review: las copias conservan los handlers y dependencias de los originales; la única variación funcional es el destino de Spreadsheet. AUTH y USERS deben instalarse en proyectos distintos por sus routers y constantes globales.
+- api-config.js conserva sus URLs actuales; no se ha conectado la plataforma live a los servicios de prueba.
+
+## Validaciones no realizadas
+- No se creó ni desplegó ningún proyecto Apps Script.
+- No se confirmó desde Apps Script el destino efectivo de los deployments existentes ni la estructura interna de la copia.
+- No se ejecutaron llamadas HTTP ni pruebas de login/usuarios.
+- No se escribieron datos en la copia ni en otra Spreadsheet.
+- No se realizó despliegue, no se hizo merge y la rama base permaneció intacta.
+
+## Continuidad
+- ID de Spreadsheet de pruebas: 1TyfehJHUeyUMGM4AW12_Rkq-Y8G_6MvF-Wd9rrB87_k.
+- Los proyectos/deployments AUTH-TEST y USERS-TEST deben crearse de forma independiente. Después se deben proporcionar sus URLs para verificar los endpoints y ejecutar la matriz de ADMIN 0.
+- La matriz pendiente incluye login legacy/hash, migración de contraseña legacy, alta/actualización/cambio de contraseña, cinco fallos y bloqueo, expiración y restablecimiento por login correcto.
+- HEAD anterior a la tarea: 8a9c9811bc954785f36966997bc1564a1fb3feac.
+- El commit único que incorpora las fuentes y la documentación queda identificado en el historial de GPSpedia2.2.5_work.
 ================================================================================

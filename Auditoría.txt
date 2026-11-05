@@ -3440,3 +3440,55 @@ Archivos auditados: Services/Auth.js, Services/users.js, api-config.js y users.h
 - Pendiente probar en la copia independiente: login con cuenta legacy y migración de su celda Password; login con hash correcto e incorrecto; alta de usuario; actualización administrativa de contraseña; cambio de contraseña propia; rechazo de nuevas contraseñas con menos de ocho caracteres después de trim(); compatibilidad de espacios iniciales/finales y sensibilidad a mayúsculas; cinco fallos consecutivos y bloqueo de solicitudes posteriores; reinicio tras login correcto; expiración del bloqueo; ausencia de contraseñas, hashes y tokens en Logs.
 - El despliegue coordinado descrito en Tareas.txt requiere AUTH primero y USERS después. No se realizó ni se autoriza implícitamente por esta auditoría.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — PREPARACIÓN DE AUTH Y USERS PARA PRUEBAS AISLADAS (ADMIN 0)
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+HEAD auditado: 8a9c9811bc954785f36966997bc1564a1fb3feac
+
+1. COPIA INDEPENDIENTE DE SPREADSHEET
+- El usuario proporcionó el ID de la copia de pruebas: 1TyfehJHUeyUMGM4AW12_Rkq-Y8G_6MvF-Wd9rrB87_k.
+- El ID fijo que aparece actualmente en los tres servicios auditados es 1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs; por tanto, no coincide con el ID de la copia.
+- La existencia de la copia se registra por confirmación y enlace proporcionados por el usuario. No se abrió ni verificó su estructura desde este entorno.
+
+2. SERVICES/AUTH.JS
+- Línea 9: SPREADSHEET_ID contiene el ID distinto al de pruebas.
+- Funciones auditadas: normalización y hash de contraseñas, verificación legacy/hash, contador de intentos, logging, doGet/doPost, handleLogin y handleValidateSession.
+- Las operaciones de login consultan Users; una autenticación legacy correcta escribe un hash en Users.Password; el login modifica Users.SessionToken y ActiveSessions; logToSheet() escribe en Logs.
+- Las llamadas a SpreadsheetApp.openById() utilizan la constante SPREADSHEET_ID, por lo que cambiar esa constante en una copia separada dirige las operaciones de esa copia al ID de pruebas.
+- CacheService y LockService son servicios del proyecto Apps Script; los contadores y bloqueos no se almacenan en la Spreadsheet.
+
+3. SERVICES/USERS.JS
+- Línea 9: SPREADSHEET_ID contiene el mismo ID distinto al de pruebas.
+- Funciones auditadas: conexión a Spreadsheet, hash/verificación, doGet/doPost, getVerifiedSession y handlers getUsers, resetUserSessions, createUser, updateUser, deleteUser, updateProfile y changePassword, además de generateUniqueUsername.
+- Las rutas de escritura modifican Users y/o ActiveSessions a través de getSpreadsheet(), que abre la Spreadsheet indicada por SPREADSHEET_ID.
+- La lógica de hash de USERS conserva el mismo formato y fórmula revisados en la auditoría ADMIN 0 anterior.
+
+4. CONFIGURACIÓN Y DEPLOYMENTS
+- api-config.js conserva un único endpoint configurado para AUTH y otro para USERS; login/validateSession se enrutan a AUTH y las acciones de usuarios a USERS.
+- No se encontraron endpoints de prueba ni configuración de selección de entorno en api-config.js.
+- README.md describe el backend como microservicios desplegados de forma independiente.
+- No se encontraron manifiestos ni metadatos de Apps Script en la raíz ni en Services que permitan identificar los proyectos o deployments asociados a las URLs.
+- Services/admin.js también contiene el ID 1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs; se mantiene fuera del alcance. No se incluye un ADMIN de pruebas en esta preparación.
+
+5. DECISIÓN DE ALCANCE Y RIESGOS
+- Crear copias fuente independientes en Services/Test/Auth.js y Services/Test/users.js, cambiando exclusivamente SPREADSHEET_ID al ID de pruebas.
+- Mantener intactos Services/Auth.js, Services/users.js, Services/admin.js y api-config.js.
+- Documentar que cada copia debe instalarse en un proyecto Apps Script independiente; ambos archivos no deben combinarse en un mismo proyecto porque contienen doGet/doPost y constantes globales propias.
+- No es posible confirmar desde GitHub que un deployment existente apunte a la copia; se requieren dos proyectos/deployments nuevos y sus URLs de prueba.
+- No ejecutar operaciones de escritura ni solicitar login contra los endpoints actuales.
+
+6. RESPALDOS
+- Services/Auth.js original: blob be99654d7a41ee77dbeb8534976ca94c8c376068.
+- Services/users.js original: blob aa8960e188e71c46fa481829283d5c0c189b7ed8.
+- api-config.js original, auditado sin modificación: blob f7aca3504f19ac50c47e2cfe0a6a5651bb97743e.
+- Services/admin.js original, auditado sin modificación: blob 1718d6cb99a7738a9b425772aeda64e9cc05a37f.
+
+7. VALIDACIONES PENDIENTES
+- Confirmar que la copia contiene Users, ActiveSessions y Logs con estructura compatible.
+- Crear y verificar los deployments aislados AUTH-TEST y USERS-TEST.
+- Ejecutar la matriz funcional de login legacy/hash, migración oportunista, alta/actualización/cambio de contraseña, cinco intentos fallidos, bloqueo, expiración y restablecimiento del contador.
+- Confirmar que todos los cambios de las pruebas permanecen en la Spreadsheet de pruebas.
+- No se realizó ninguna llamada HTTP, despliegue Apps Script ni escritura en Sheets durante esta auditoría.
+================================================================================

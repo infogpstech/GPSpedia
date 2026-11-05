@@ -3438,3 +3438,18 @@ Estado: AUDITORÍA ESTÁTICA COMPLETADA; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PE
 - No se modificó código, no se desplegaron servicios, no se ejecutó migración ni se alteraron datos.
 - ADMIN 0 permanece abierta hasta completar pruebas funcionales de AUTH y USERS en la copia independiente.
 ================================================================================
+
+
+================================================================================
+ADMIN 0 — PREPARAR AUTH Y USERS PARA PRUEBAS EN SPREADSHEET INDEPENDIENTE
+Fecha: 2026-11-05
+Estado: FUENTES AISLADAS PREPARADAS; DEPLOYMENTS Y VALIDACIÓN FUNCIONAL PENDIENTES.
+
+- El usuario proporcionó el ID de la copia independiente: 1TyfehJHUeyUMGM4AW12_Rkq-Y8G_6MvF-Wd9rrB87_k.
+- Se crearon Services/Test/Auth.js y Services/Test/users.js. Cada archivo conserva el código del servicio original y cambia únicamente la constante SPREADSHEET_ID para apuntar a la copia de pruebas.
+- Se añadió Services/Test/README.md con instrucciones para crear dos proyectos Apps Script separados y deployments nuevos.
+- Services/Auth.js, Services/users.js, Services/admin.js y api-config.js permanecen sin cambios.
+- Los endpoints live no se sustituyeron ni se añadieron endpoints de prueba a la plataforma.
+- Pendiente: crear los proyectos/deployments aislados AUTH-TEST y USERS-TEST, verificar que ambos utilizan el ID de pruebas y proporcionar sus URLs para ejecutar la matriz funcional de ADMIN 0.
+- No se ejecutó Apps Script, no se modificaron datos de ninguna Spreadsheet, no se desplegó ningún servicio y no se realizó merge.
+================================================================================
