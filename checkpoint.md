@@ -1,3 +1,77 @@
+# CHECKPOINT INICIAL — CORRECCIÓN DE AUTORIZACIÓN EN ACCIONES ADMIN
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD inicial confirmado:** de45e5165644af10836da3d306a7336725de7644
+
+## Tarea y alcance
+Corregir la propagación del payload de sesión en las acciones administrativas que utilizan runAction(), en su ruta individual y por lotes, además de las llamadas directas protegidas driveCommand y updateVehicleField. Mantener intacta la validación de sesión del backend.
+
+## Estado real al inicio
+- La incidencia de backupDatabase está registrada en Tareas.txt y Auditoría.txt.
+- La rama de trabajo aún contiene ui.js sin la propagación de sesión en los flujos auditados.
+- getDeveloperSessionPayload() existe en ui.js y obtiene ID/SessionToken de currentUser.
+- Services/admin.js exige userId/sessionToken y verifica sesión activa y privilegio Desarrollador antes de ejecutar acciones, excepto ping.
+- No hay copia de prueba de la Spreadsheet.
+- No se ha autorizado desplegar Apps Script, alterar datos productivos ni hacer merge.
+
+## Archivos y funcionalidades involucrados
+- ui.js: runAction(), procesamiento por lotes, executeTerminalCommand() y saveFieldSilently().
+- api-config.js: ACTION_TO_SERVICE_MAP y routeAction().
+- Services/admin.js: assertDeveloperSession() y doPost().
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+
+## Riesgos y dependencias
+- Mantener la sesión como dato de autorización validado por servidor; no confiar en rol del cliente ni eliminar controles backend.
+- No ejecutar operaciones de backup/restore ni comandos de Drive durante la implementación.
+- Agrupar código y documentación en un único commit de tarea.
+
+**Fase al crear este checkpoint:** inicio documentado; auditoría y respaldo de los archivos involucrados en curso.
+
+---
+
+# CIERRE DE TAREA — CORRECCIÓN ESTÁTICA DE SESIÓN EN ACCIONES ADMIN
+
+**Estado:** IMPLEMENTACIÓN Y REVISIÓN ESTÁTICA COMPLETADAS; VALIDACIÓN LIVE PENDIENTE.
+
+## Resultado
+- runAction() incorpora getDeveloperSessionPayload() en solicitudes individuales y por lotes.
+- executeTerminalCommand() incorpora getDeveloperSessionPayload() a driveCommand.
+- saveFieldSilently() incorpora getDeveloperSessionPayload() a updateVehicleField.
+- Se cubren las acciones ADMIN invocadas mediante runAction(): backupDatabase, backupDrive, restoreDatabase, restoreDrive, reorganizeDatabase, normalizeImages, reorganizeImagesInDrive, restoreAllTrashedImages y addLogo.
+- api-config.js y Services/admin.js no se modificaron. La validación de sesión y rol Desarrollador permanece intacta.
+
+## Archivos modificados
+- ui.js
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+## Verificaciones realizadas
+- Se comprobó que las cuatro sustituciones de ui.js tienen una coincidencia exacta cada una.
+- Se revirtieron las cuatro sustituciones en memoria y se obtuvo una coincidencia exacta con el ui.js original.
+- Se revisaron las llamadas directas ADMIN restantes; las ya protegidas transmitían el contexto de sesión y ping está exento en backend.
+- Se verificó que getDeveloperSessionPayload() exige usuario autenticado con ID y SessionToken.
+- Se revisó assertDeveloperSession() y doPost(); no se modificó la validación backend.
+
+## Validaciones pendientes y limitaciones
+- No se ejecutó JavaScript en navegador ni se realizó una llamada HTTP.
+- No se comprobó el deployment ADMIN ni se ejecutó Apps Script.
+- Debe probarse backupDatabase en live con sesión válida, así como el rechazo con sesión ausente/inválida y rol no autorizado.
+- Deben probarse backupDrive, terminal, updateVehicleField y procesamiento por lotes en condiciones controladas.
+- No se generó respaldo ni se modificaron datos de Google Sheets/Drive.
+- No se desplegó Apps Script, no se realizó merge y la rama base permanece intacta.
+
+## Continuidad
+- HEAD anterior a la tarea: de45e5165644af10836da3d306a7336725de7644.
+- El commit único de esta tarea incluirá código y documentación y quedará identificado en el historial de GPSpedia2.2.5_work.
+- Próxima acción: validar backupDatabase en live. Si funciona, generar y verificar copia de prueba antes de retomar la migración ADMIN 0. No iniciar migración productiva sin pruebas y autorización.
+
+---
+
 # CIERRE DE TAREA — INCIDENCIA backupDatabase Y PLAN DE MIGRACIÓN ADMIN 0
 
 **Fecha:** 2026-11-04  

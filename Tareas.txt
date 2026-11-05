@@ -3342,3 +3342,18 @@ RESTRICCIONES
 - No se verificó el deployment ADMIN activo ni se realizó una nueva solicitud HTTP desde esta sesión.
 - No se desplegó Apps Script ni se realizó merge.
 ================================================================================
+
+
+================================================================================
+TAREA — CORREGIR SESIÓN EN ACCIONES ADMIN
+Fecha: 2026-11-05
+Estado: CORRECCIÓN ESTÁTICA IMPLEMENTADA; VALIDACIÓN LIVE PENDIENTE.
+
+- runAction() agrega getDeveloperSessionPayload() a las solicitudes individuales y a cada solicitud por lotes.
+- executeTerminalCommand() agrega getDeveloperSessionPayload() a driveCommand.
+- saveFieldSilently() agrega getDeveloperSessionPayload() a updateVehicleField.
+- Se cubren las acciones ADMIN ejecutadas mediante runAction(): backupDatabase, backupDrive, restoreDatabase, restoreDrive, reorganizeDatabase, normalizeImages, reorganizeImagesInDrive, restoreAllTrashedImages y addLogo.
+- Se conserva sin cambios assertDeveloperSession() y la validación de rol Desarrollador en Services/admin.js.
+- Pendiente de prueba live: respaldo DB con sesión válida; rechazo de sesión ausente/inválida y rol no autorizado; validación de respaldo Drive, comandos terminal, actualización silenciosa y procesamiento por lotes.
+- No se ejecutó Apps Script, no se generó respaldo, no se modificaron datos de Drive/Sheets, no se desplegó ni se hizo merge.
+================================================================================

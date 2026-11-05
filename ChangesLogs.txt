@@ -2392,3 +2392,21 @@ Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
 - No se modificaron archivos de código ni datos de Google Sheets/Drive.
 - No se ejecutó ni desplegó Apps Script; no se realizó merge.
 ================================================================================
+
+
+================================================================================
+CAMBIOS — PROPAGACIÓN DE SESIÓN EN ACCIONES ADMIN
+Fecha: 2026-11-05
+
+ARCHIVO MODIFICADO: ui.js
+- saveFieldSilently(), línea 101: se agrega getDeveloperSessionPayload() al payload de updateVehicleField.
+- runAction(), línea 3166: se agrega getDeveloperSessionPayload() al payload de acciones individuales.
+- runAction(), línea 3244: se agrega getDeveloperSessionPayload() al payload de cada solicitud de procesamiento por lotes.
+- executeTerminalCommand(), línea 3441: se agrega getDeveloperSessionPayload() al payload de driveCommand.
+
+ARCHIVOS AUDITADOS SIN MODIFICACIÓN
+- api-config.js: no se modificó routeAction() ni ACTION_TO_SERVICE_MAP.
+- Services/admin.js: no se modificó doPost() ni assertDeveloperSession().
+
+No se modificaron permisos, roles, endpoints ni lógica de respaldo. La validación funcional en live queda pendiente. No se desplegó Apps Script ni se realizó merge.
+================================================================================

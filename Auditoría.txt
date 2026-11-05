@@ -3187,3 +3187,39 @@ LIMITACIONES
 - No se generó ningún respaldo ni se modificaron datos de Google Drive o Google Sheets.
 - No se modificó código ni se realizó despliegue o merge.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — PROPAGACIÓN DE SESIÓN EN ACCIONES ADMIN
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+RESPALDOS PREVIOS A LA EDICIÓN
+- ui.js: 9aa55d35ea3ad2f55991d2b28ce259a9d481f45d
+- api-config.js: b74270ffad51665db67d00befa4a517f810d33d0
+- Services/admin.js: f0b3f6f3ef28b52d8c2f9d5dccd3597b852dd3d9
+- Auditoría.txt: a5a0f145584693ff3d37f98498d2944922bf2554
+- ChangesLogs.txt: ce85d97a8a094520d036dac4ca1bf2377397514c
+- Tareas.txt: 5bfb3d46ef5c79f4363083ef7fdff1fc7473aa93
+- checkpoint.md: a1adc6f3b4e0d9b56295e1ae524465fa650b5aaa
+
+HALLAZGOS
+1. api-config.js asigna backupDatabase, backupDrive, restoreDatabase, restoreDrive, reorganizeDatabase, normalizeImages, reorganizeImagesInDrive, restoreAllTrashedImages y addLogo al servicio ADMIN.
+2. ui.js, runAction(): las acciones individuales enviaban payload sin userId/sessionToken; el backend ADMIN exige ambos valores antes de ejecutar la acción.
+3. ui.js, runAction(): las solicitudes de procesamiento por lotes construían otro payload dentro del bucle y también omitían userId/sessionToken.
+4. ui.js, executeTerminalCommand(): driveCommand se enviaba sin el payload de sesión.
+5. ui.js, saveFieldSilently(): updateVehicleField se enviaba sin el payload de sesión.
+6. getDeveloperSessionPayload() ya existe y obtiene ID y SessionToken del usuario autenticado. Si no hay sesión, lanza un error antes de enviar la solicitud.
+7. Services/admin.js, doPost() valida assertDeveloperSession(payload) para todas las acciones excepto ping. assertDeveloperSession() comprueba presencia de userId/sessionToken, sesión activa en ActiveSessions y rol Desarrollador en Users. El rol no se confía al navegador.
+8. Las demás llamadas directas ADMIN identificadas (uploadAdminImage, getReplacedImages, recoverReplacedImage, deleteReplacedImage y auditDriveImagesInCortes) ya adjuntan getDeveloperSessionPayload(). ping está exento de validación en backend.
+9. routeAction() serializa el payload recibido y no agrega automáticamente el contexto de sesión.
+
+CONCLUSIÓN
+El error de backupDatabase es consistente con la omisión de userId/sessionToken en la ruta de runAction(). El mismo defecto afectaba otras acciones individuales, los lotes, driveCommand y updateVehicleField. No se encontró fundamento para cambiar el backend ni el mapa de acciones.
+
+RIESGOS Y DECISIÓN
+- La sesión se adjuntará en la interfaz utilizando el helper existente.
+- El spread de getDeveloperSessionPayload() se coloca al final para impedir que los campos del payload funcional sobrescriban userId/sessionToken.
+- Se conserva sin cambios la autorización del backend.
+- No ejecutar restauraciones, comandos de Drive ni operaciones de backup durante esta tarea.
+
+================================================================================

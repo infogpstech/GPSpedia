@@ -98,7 +98,7 @@ export function showSavingIndicator(status, message = "") {
 async function saveFieldSilently(vehicleId, fieldName, value) {
     showSavingIndicator("saving", "Guardando...");
     try {
-        await routeAction('updateVehicleField', { vehicleId, fieldName, value });
+        await routeAction('updateVehicleField', { vehicleId, fieldName, value, ...getDeveloperSessionPayload() });
         showSavingIndicator("success", "Guardado correctamente");
     } catch (e) {
         console.error(`Error guardando silenciosamente el campo ${fieldName}:`, e);
@@ -3163,7 +3163,7 @@ function initAdminPanelListeners() {
             log(`Enviando comando administrativo '${action}' al servidor...`);
             setProgress(5);
             try {
-                const res = await routeAction(action, payload);
+                const res = await routeAction(action, { ...payload, ...getDeveloperSessionPayload() });
                 setProgress(50);
                 if (res.status === 'success') {
                     if (res.logs) {
@@ -3241,7 +3241,7 @@ ${elapsedSec}s
             loopCount++;
             log(`[LOTE] Ejecutando lote ${loopCount}...`);
             try {
-                const res = await routeAction(action, { limit, reset: payload.reset, processId });
+                const res = await routeAction(action, { limit, reset: payload.reset, processId, ...getDeveloperSessionPayload() });
                 if (res.status === 'success') {
                     if (res.logs) {
                         await playLogs(res.logs);
@@ -3441,7 +3441,8 @@ ${elapsedSec}s
             const res = await routeAction('driveCommand', {
                 command: cmd,
                 args: args,
-                currentFolderId: currentTerminalFolderId
+                currentFolderId: currentTerminalFolderId,
+                ...getDeveloperSessionPayload()
             });
 
             if (res && res.status === 'success') {
