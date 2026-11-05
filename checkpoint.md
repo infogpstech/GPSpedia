@@ -673,3 +673,79 @@ CONTINUIDAD
 - El commit único de esta tarea incluye el cambio y los registros documentales, incluido este checkpoint.
 - Siguiente acción: validar los servicios AUTH y USERS en la plataforma live. Si alguno falla, diagnosticar el endpoint correspondiente sin modificar otros servicios fuera del alcance.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — NORMALIZAR ENLACE DE RESPALDO EN restoreDatabase
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 975440c23d10fcb292c5e5266bc5c1ec9b1ec65a
+Diferencia con rama base: 132 commits adelante, 0 atrás.
+
+TAREA Y ALCANCE
+- Aceptar ID limpio o enlace completo de Google Sheets como origen de restoreDatabase.
+- Limpiar el enlace en ui.js y normalizarlo nuevamente en Services/admin.js.
+- Mantener SPREADSHEET_ID como destino fijo. No cambiar restauración de Drive ni otros flujos.
+
+ESTADO REAL AL INICIO
+- El usuario confirmó que backupDatabase crea el respaldo y restoreDatabase restaura correctamente usando ID limpio.
+- Con enlace completo, el HTTP 500 confirma que handleRestoreDatabase() pasa la URL sin normalizar a DriveApp.getFileById().
+- Services/admin.js ya contiene extractDriveFileId(), que reconoce ID limpio y enlaces /d/ o ?id=; handleRestoreDatabase() no lo invoca.
+- ui.js aplica trim() y envía directamente el valor como backupId.
+- No se confirmó una Spreadsheet independiente para pruebas.
+
+ARCHIVOS Y FUNCIONES
+- ui.js: evento btn-admin-restore-db.
+- Services/admin.js: extractDriveFileId() y handleRestoreDatabase().
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+
+RIESGOS Y RESPALDOS
+- La restauración sobrescribe la Spreadsheet fija SPREADSHEET_ID; no alterar el destino.
+- No ejecutar restauración ni desplegar Apps Script durante esta corrección estática.
+- Blobs originales: ui.js d4a4a248a505cc549136f21f0b9211d1476c88e5; Services/admin.js f0b3f6f3ef28b52d8c2f9d5dccd3597b852dd3d9.
+
+FASE
+- Checkpoint inicial documentado; auditoría de los puntos involucrados completada antes de implementación.
+================================================================================
+
+
+================================================================================
+CIERRE DE TAREA — NORMALIZAR ENLACE DE RESPALDO EN restoreDatabase
+Fecha: 2026-11-05
+Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; VALIDACIÓN LIVE DEL ENLACE COMPLETO PENDIENTE.
+
+RESULTADO
+- ui.js extrae el ID desde enlaces de Google Sheets con /d/ o ?id= y conserva los IDs limpios.
+- Services/admin.js vuelve a normalizar backupId mediante extractDriveFileId() antes de utilizar DriveApp y SpreadsheetApp.
+- SPREADSHEET_ID sigue determinando el destino; el ID extraído es únicamente el respaldo de origen.
+- No se modificó restoreDrive, api-config.js ni otros flujos.
+
+ARCHIVOS MODIFICADOS
+- ui.js
+- Services/admin.js
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+VERIFICACIONES
+- Las sustituciones se aplicaron sobre bloques únicos y exactos.
+- Pruebas aisladas: ID limpio, URL /spreadsheets/d/ y URL con ?id= producen el mismo ID esperado; URL inválida rechazada por ambos normalizadores: PASS.
+- Revisión estática confirmó que DriveApp.getFileById() y SpreadsheetApp.openById() reciben backupId normalizado.
+- Comparación con blobs originales: cambios limitados al evento btn-admin-restore-db, handleRestoreDatabase() y documentación.
+- La restauración live con ID limpio fue confirmada por el usuario antes de esta tarea.
+
+VALIDACIONES PENDIENTES
+- No se ejecutó ni desplegó Apps Script.
+- La aceptación del enlace completo en live requiere despliegue autorizado y prueba controlada.
+- No se ejecutó restauración ni se modificaron datos de Sheets/Drive durante esta tarea.
+- No se confirmó una Spreadsheet independiente de pruebas.
+- No se realizó merge; la rama base permanece intacta.
+
+CONTINUIDAD
+- HEAD anterior: 975440c23d10fcb292c5e5266bc5c1ec9b1ec65a.
+- El commit único de esta tarea incluye código y documentación.
+- Siguiente acción: desplegar Services/admin.js según el flujo habitual, con autorización del usuario, y probar el enlace completo en restoreDatabase.
+================================================================================

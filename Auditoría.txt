@@ -3337,3 +3337,28 @@ ALCANCE Y RIESGOS
 - La revisión estática no confirma disponibilidad ni comportamiento de los deployments de Apps Script.
 - No desplegar Apps Script, no modificar hojas de cálculo, no alterar otros servicios y no hacer merge.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — NORMALIZACIÓN DEL ENLACE DE RESPALDO EN restoreDatabase
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work | HEAD: 975440c23d10fcb292c5e5266bc5c1ec9b1ec65a
+
+ARCHIVOS AUDITADOS
+- ui.js: runAction() y evento btn-admin-restore-db; lectura del campo y construcción del payload.
+- Services/admin.js: extractDriveFileIds(), extractDriveFileId(), handleRestoreDatabase() y llamadas DriveApp/SpreadsheetApp.
+- api-config.js: routeAction() y envío del payload ADMIN; no requiere modificación.
+
+HALLAZGOS
+1. ui.js solo aplicaba trim() y enviaba la URL completa como backupId.
+2. Services/admin.js ya dispone de extractDriveFileId(), compatible con ID limpio y enlaces /d/ o ?id=.
+3. handleRestoreDatabase() pasaba backupId directamente a DriveApp.getFileById() y SpreadsheetApp.openById(), sin usar el helper. Esto explica el HTTP 500.
+4. SPREADSHEET_ID continúa siendo el destino fijo; el valor ingresado identifica solo el respaldo de origen.
+5. La confirmación advierte que se sobrescribirá producción. No se requiere cambiarla ni alterar routeAction().
+
+RIESGOS Y DECISIÓN
+- No ejecutar la acción destructiva durante esta corrección estática.
+- Normalizar en ui.js y volver a normalizar en handleRestoreDatabase() usando el helper existente.
+- No modificar handleRestoreDrive(), SPREADSHEET_ID ni la lógica de copiado de hojas.
+- La prueba live anterior confirmó ID limpio; la URL completa requiere despliegue y validación posterior.
+- No se confirmó una Spreadsheet independiente de pruebas.
+================================================================================

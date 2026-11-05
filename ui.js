@@ -3578,10 +3578,18 @@ ${elapsedSec}s
     };
 
     // 4. Restauración
+    function normalizeSpreadsheetBackupId(value) {
+        const input = String(value || "").trim();
+        if (/^[a-zA-Z0-9_-]{20,}$/.test(input)) return input;
+        const match = input.match(/(?:\/d\/|[?&]id=)([a-zA-Z0-9_-]{20,})/);
+        return match ? match[1] : "";
+    }
+
     document.getElementById('btn-admin-restore-db').onclick = async () => {
-        const backupId = document.getElementById('restore-backup-id-input').value.trim();
+        const backupInput = document.getElementById('restore-backup-id-input').value;
+        const backupId = normalizeSpreadsheetBackupId(backupInput);
         if (!backupId) {
-            log("[ADVERTENCIA] Por favor introduce un ID de Backup válido para restaurar.", true);
+            log("[ADVERTENCIA] Introduce un ID o enlace válido de Google Sheets para restaurar.", true);
             return;
         }
         if (confirm("¿Estás seguro de que deseas RESTAURAR la base de datos completa? Esto sobreescribirá la información actual de producción.")) {

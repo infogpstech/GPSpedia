@@ -2465,3 +2465,20 @@ VALIDACIÓN Y ALCANCE
 - No se ejecutaron solicitudes HTTP ni pruebas funcionales contra los deployments.
 - No se desplegó Apps Script, no se modificaron datos y no se realizó merge.
 ================================================================================
+
+
+================================================================================
+NORMALIZACIÓN DE ENLACE DE RESPALDO EN RESTORE DATABASE
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVO: ui.js
+- Se añadió normalizeSpreadsheetBackupId() junto al flujo de restauración de base de datos.
+- btn-admin-restore-db acepta ID limpio o enlace Google Sheets con /d/ o ?id= y envía únicamente el ID extraído.
+- Se actualizó el mensaje de validación para indicar que acepta ID o enlace.
+
+ARCHIVO: Services/admin.js
+- handleRestoreDatabase() normaliza payload.backupId mediante extractDriveFileId() antes de llamar a DriveApp y SpreadsheetApp.
+- El registro de inicio utiliza el ID limpio. SPREADSHEET_ID continúa siendo el destino fijo.
+
+No se modificaron restoreDrive, api-config.js, endpoints, hojas de cálculo ni deployments.
+================================================================================

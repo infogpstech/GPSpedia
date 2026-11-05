@@ -515,8 +515,8 @@ function attemptRestoreImage(fileId, expectedBaseName, brandFolder, logMessage) 
  * Restaurar la base de datos completa a partir de un ID de copia
  */
 function handleRestoreDatabase(payload, logMessage) {
-    const { backupId } = payload;
-    if (!backupId) throw new Error("ID de respaldo no proporcionado.");
+    const backupId = extractDriveFileId(payload && payload.backupId);
+    if (!backupId) throw new Error("ID o enlace de respaldo de Google Sheets no válido o no proporcionado.");
 
     logMessage("Restauración DB", `Iniciando restauración de base de datos a partir de ID: ${backupId}`);
 
