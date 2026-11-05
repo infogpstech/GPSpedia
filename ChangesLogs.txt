@@ -2324,3 +2324,26 @@ RESTRICCIONES
 - No se realizó merge ni despliegue Apps Script.
 - FEEDBACK no requirió cambios de código; su despliegue actualizado fue confirmado por el usuario.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ENDPOINTS AUTH Y USERS
+Fecha: 2026-11-04 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- api-config.js: se sustituyeron exclusivamente API_ENDPOINTS.AUTH y API_ENDPOINTS.USERS por las nuevas URLs proporcionadas.
+- checkpoint.md: se registraron el estado inicial, el alcance, el resultado y las validaciones pendientes.
+- Auditoría.txt: se documentaron los hallazgos, los respaldos Git y las verificaciones.
+- ChangesLogs.txt: se registró esta actualización dentro del historial acumulado.
+- Tareas.txt: se añadió el resultado y los pendientes de validación.
+
+VERIFICACIÓN
+- Cada endpoint anterior aparecía una sola vez antes del cambio.
+- Cada endpoint nuevo aparece una sola vez después del cambio.
+- El mapa de acciones y los demás endpoints permanecen sin cambios.
+- No se verificaron los deployments Apps Script ni se realizaron llamadas funcionales.
+
+CONTROL DE VERSIONES
+Todos los cambios de esta tarea, incluidos los archivos documentales, se agrupan en un único commit. No se crean commits intermedios ni commits exclusivos para documentación.
+No se modificó la rama base, no se realizó merge ni despliegue.
+================================================================================

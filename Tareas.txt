@@ -3261,3 +3261,18 @@ PENDIENTES
 - ADMIN 0 sigue abierta por la migración pendiente de contraseñas en texto claro y la revisión de registros históricos reales.
 - No realizar merge ni despliegues desde esta tarea sin autorización expresa.
 ================================================================================
+
+
+================================================================================
+TAREA — ACTUALIZAR ENDPOINTS AUTH Y USERS
+Fecha: 2026-11-04
+Estado: CONFIGURACIÓN ACTUALIZADA EN CÓDIGO; VALIDACIÓN DE DEPLOYMENTS PENDIENTE.
+
+- Se actualizaron exclusivamente API_ENDPOINTS.AUTH y API_ENDPOINTS.USERS en api-config.js con las nuevas URLs proporcionadas.
+- Se conservaron el mapa de acciones, el router y los demás endpoints.
+- Se documentaron la auditoría, los respaldos, las verificaciones y el estado en checkpoint.md.
+- Validación estática: cada URL nueva aparece una sola vez; las anteriores fueron sustituidas; las acciones login/validateSession continúan en AUTH y las acciones de usuarios, incluido resetUserSessions, continúan en USERS.
+- Pendiente: comprobar los endpoints funcionalmente y confirmar que los deployments AUTH y USERS contienen las versiones de código requeridas.
+- No se modificó la rama base, no se realizó merge ni despliegue.
+- Todo el cambio de esta tarea se agrupa en un único commit.
+================================================================================

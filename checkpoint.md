@@ -184,3 +184,39 @@ El commit que incorpora este checkpoint y todos los archivos de la tarea se iden
 
 ### Siguiente acción
 Actualizar AUTH y USERS en sus proyectos Apps Script correspondientes y ejecutar las pruebas reales descritas antes de considerar cerrada ADMIN 0.
+
+
+## 10. Tarea — actualización de endpoints AUTH y USERS
+
+### Registro inicial
+- Fecha: 2026-11-04.
+- Repositorio: infogpstech/GPSpedia.
+- Rama autorizada: GPSpedia2.2.5_work.
+- HEAD inicial verificado: 2678ee0242a4b78be61d6c799f6a53d6ce8d0715.
+- Rama base protegida: GPSpedia2.2.5; su referencia se mantuvo sin cambios.
+- Alcance: sustituir únicamente las URLs AUTH y USERS en API_ENDPOINTS de api-config.js y documentar la tarea.
+- Se leyó Proceso de desarollo.md. Se confirmó la regla de un único commit por tarea, incluyendo código y documentación.
+
+### Resultado
+- api-config.js: se actualizaron exclusivamente API_ENDPOINTS.AUTH y API_ENDPOINTS.USERS con las direcciones proporcionadas.
+- ACTION_TO_SERVICE_MAP conserva login/validateSession hacia AUTH y las acciones de usuarios, incluido resetUserSessions, hacia USERS.
+- No se modificaron otros endpoints, el router ni los helpers.
+- Se agruparon los cambios de código y documentación en un único commit.
+
+### Verificaciones y limitaciones
+- Antes del cambio, cada URL anterior aparecía exactamente una vez y las nuevas no estaban presentes.
+- Después del cambio, cada URL nueva aparece exactamente una vez y las anteriores ya no aparecen.
+- Se comprobó que el mapa de acciones mantiene el enrutamiento AUTH/USERS y que los endpoints LEGACY, CATALOG, WRITE, FEEDBACK, UTILITIES y ADMIN no se modificaron.
+- No se ejecutaron pruebas funcionales contra Apps Script ni se verificó el contenido publicado de los deployments.
+- La actualización de api-config.js no publica código Apps Script. La activación de los cambios de Services/Auth.js y Services/users.js continúa dependiendo de que los proyectos AUTH y USERS tengan sus versiones correspondientes desplegadas.
+- No se realizó merge, no se modificó la rama base y no se efectuó ningún despliegue.
+
+### Archivos incluidos
+- api-config.js
+- checkpoint.md
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+
+### Estado
+Configuración actualizada en la rama de trabajo; validación funcional y confirmación de los deployments AUTH/USERS pendientes. El único commit de esta tarea queda identificado en el historial de GPSpedia2.2.5_work.

@@ -3018,3 +3018,40 @@ VERIFICACIONES
 - Simulación de eliminación: se retiraron las sesiones de un usuario y se conservaron las de otro.
 - No se realizaron pruebas reales en Apps Script, Spreadsheet, navegador ni endpoint USERS.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — ACTUALIZACIÓN DE ENDPOINTS AUTH Y USERS
+Fecha: 2026-11-04 | Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 2678ee0242a4b78be61d6c799f6a53d6ce8d0715
+
+ALCANCE
+Sustituir únicamente los valores API_ENDPOINTS.AUTH y API_ENDPOINTS.USERS de api-config.js por las dos URLs proporcionadas. Incluir la trazabilidad documental en el mismo commit.
+
+HALLAZGOS
+1. api-config.js declara API_ENDPOINTS.AUTH y API_ENDPOINTS.USERS una sola vez cada uno.
+2. ACTION_TO_SERVICE_MAP asigna login y validateSession a AUTH.
+3. ACTION_TO_SERVICE_MAP asigna las acciones de administración de usuarios, incluido resetUserSessions, a USERS.
+4. routeAction() obtiene el endpoint desde API_ENDPOINTS mediante el mapa central; no se encontró un destino alternativo para estas acciones en el archivo auditado.
+5. No es necesario modificar ACTION_TO_SERVICE_MAP, routeAction(), helpers ni los demás endpoints.
+
+RESPALDOS GIT PREVIOS A LA EDICIÓN
+- api-config.js: f0321d56a1dacabadf03a62981842b1f2fb2ea68
+- checkpoint.md: 9896a942caa0671ee0f19382c2940ed0bb7cb2ed
+- Auditoría.txt: defa1e7d5d0c7168987f229181c08998cadc4301
+- ChangesLogs.txt: 5897c27073c2bc2e1ef68e14765d35a1412a57e3
+- Tareas.txt: 115df89cc20cf7466da0d9573d1d799b5461369d
+Los respaldos son los blobs originales de Git y permanecen disponibles en el historial del repositorio.
+
+DECISIÓN Y VERIFICACIONES
+- Se sustituyó una sola aparición del endpoint AUTH anterior por la URL AUTH proporcionada.
+- Se sustituyó una sola aparición del endpoint USERS anterior por la URL USERS proporcionada.
+- Se verificó que cada URL nueva aparece una sola vez y que las anteriores ya no aparecen.
+- Se verificó que los seis endpoints restantes y el mapa de acciones permanecen sin cambios.
+- El cambio no publica ni actualiza deployments de Apps Script. No se ejecutaron pruebas funcionales contra los endpoints.
+
+RESTRICCIONES
+- Solo se modifica GPSpedia2.2.5_work.
+- Un único commit agrupa código y documentación.
+- No se modifica GPSpedia2.2.5, no se hace merge y no se despliega Apps Script.
+================================================================================
