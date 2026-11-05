@@ -2287,3 +2287,20 @@ RESTRICCIONES CONSERVADAS
 - No se desplegó ningún servicio Apps Script.
 - No se realizó merge.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DEL ENDPOINT FEEDBACK
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS
+- api-config.js, línea 10: se sustituyó el valor de API_ENDPOINTS.FEEDBACK por la nueva URL proporcionada. No se modificaron ACTION_TO_SERVICE_MAP, routeAction(), helpers ni otros endpoints.
+- checkpoint.md: se registraron el estado inicial, el alcance, el resultado, las verificaciones y la validación pendiente del deployment.
+- Auditoría.txt: se documentaron los hallazgos, respaldos y limitaciones de la actualización.
+- Tareas.txt: se registró la actualización de configuración y su validación pendiente.
+
+RESTRICCIONES CONSERVADAS
+- Todos los archivos de la tarea se agrupan en un único commit.
+- No se modificó la rama base, no se realizó merge y no se desplegó Apps Script.
+================================================================================

@@ -102,3 +102,34 @@ Desplegar Services/feedback.js en el proyecto FEEDBACK correspondiente y validar
 
 ### Commit
 El commit que incorpora este checkpoint y todos los archivos de la tarea se identifica en el historial de `GPSpedia2.2.5_work`; no se generan commits separados para el checkpoint.
+
+
+## 8. Tarea — actualización del endpoint FEEDBACK
+
+### Registro inicial
+- Repositorio: `infogpstech/GPSpedia`
+- Rama de trabajo: `GPSpedia2.2.5_work`
+- Rama base protegida: `GPSpedia2.2.5`
+- HEAD inicial verificado: `babf5ce494fdcf6b32f519d37acbc85d25adf2c7`
+- Alcance: sustituir únicamente la URL de `API_ENDPOINTS.FEEDBACK` en `api-config.js` por la dirección nueva proporcionada y documentar la tarea.
+- Archivos auditados: `api-config.js`, `checkpoint.md`, `Auditoría.txt`, `ChangesLogs.txt` y `Tareas.txt`; se leyó `Proceso de desarollo.md`.
+- Se confirmó que las acciones de FEEDBACK, incluidas `clearActivityLogs` y `clearSensitiveLogs`, usan el enrutamiento central.
+- Los blobs originales se conservan en Git y se referencian en `Auditoría.txt` como respaldo previo a la edición.
+
+### Resultado
+- `api-config.js`: se reemplazó exclusivamente el valor de `API_ENDPOINTS.FEEDBACK`.
+- Se agruparon el código y los registros documentales de esta tarea en un único commit.
+
+### Verificaciones y limitaciones
+- Se comprobó que la URL anterior aparecía una sola vez antes del cambio.
+- Se comprobó estáticamente que las acciones FEEDBACK se resuelven mediante `API_ENDPOINTS[service]` y que no existe un destino FEEDBACK alternativo en el archivo auditado.
+- No se realizó una solicitud funcional al nuevo endpoint ni se inspeccionó el deployment Apps Script.
+- Sigue pendiente confirmar que el deployment FEEDBACK contiene la operación `clearSensitiveLogs` antes de usar la purga en live.
+- No se desplegó Apps Script, no se hizo merge y no se modificó la rama base.
+
+### Estado final
+- Estado: commit creado en la rama de trabajo; validación del deployment pendiente.
+- Archivos modificados: `api-config.js`, `checkpoint.md`, `Auditoría.txt`, `ChangesLogs.txt`, `Tareas.txt`.
+- Code Review estático: el cambio de código se limita al valor FEEDBACK; sin alteración del mapa de acciones ni del router.
+- HEAD anterior: `babf5ce494fdcf6b32f519d37acbc85d25adf2c7`; el commit que incorpora esta tarea y el checkpoint queda registrado en el historial de Git.
+- Siguiente acción: verificar el nuevo endpoint y confirmar la publicación de `clearSensitiveLogs` en FEEDBACK, sin desplegar ni hacer merge sin autorización.

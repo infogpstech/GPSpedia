@@ -3216,3 +3216,15 @@ PENDIENTES DE VALIDACIÓN
 - Verificar el nuevo endpoint AUTH en el entorno live.
 - No realizar merge a GPSpedia2.2.5 ni despliegues sin autorización expresa.
 ================================================================================
+
+
+================================================================================
+TAREA — ACTUALIZAR ENDPOINT FEEDBACK
+Fecha: 2026-11-04
+Estado: CONFIGURACIÓN ACTUALIZADA EN CÓDIGO; VALIDACIÓN DEL DEPLOYMENT PENDIENTE.
+
+- Se sustituyó únicamente API_ENDPOINTS.FEEDBACK en api-config.js por la nueva URL proporcionada.
+- Se conservó el enrutamiento central de las acciones FEEDBACK.
+- Pendiente: comprobar el endpoint y confirmar que el deployment contiene clearSensitiveLogs.
+- No se desplegó Apps Script ni se realizó merge.
+================================================================================

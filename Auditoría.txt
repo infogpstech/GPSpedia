@@ -2934,3 +2934,33 @@ VERIFICACIONES DE AUDITORÍA
 - Se confirmó que el botón puede reutilizar getDeveloperSessionPayload() sin introducir otro mecanismo de sesión.
 - Pendiente: pruebas reales de sesión/rol, ejecución en copia de Spreadsheet, validación de filas seleccionadas y pruebas en el despliegue FEEDBACK.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — ACTUALIZACIÓN DEL ENDPOINT FEEDBACK
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+HEAD al inicio: babf5ce494fdcf6b32f519d37acbc85d25adf2c7
+
+ESTADO Y HALLAZGOS
+1. api-config.js declara API_ENDPOINTS.FEEDBACK una sola vez; el valor existente corresponde a la dirección anterior.
+2. ACTION_TO_SERVICE_MAP asigna las acciones de feedback, incluida clearActivityLogs y clearSensitiveLogs, al servicio FEEDBACK.
+3. routeAction() obtiene el destino desde API_ENDPOINTS[service]; no se encontró un destino alternativo para FEEDBACK en api-config.js.
+4. El cambio solicitado puede limitarse al valor de API_ENDPOINTS.FEEDBACK; no requiere modificar el mapa de acciones ni routeAction().
+5. El endpoint nuevo no se ha verificado mediante una solicitud funcional desde esta sesión. Tampoco se ha inspeccionado el código desplegado de Apps Script.
+
+RESPALDOS PREVIOS A LA EDICIÓN
+- api-config.js: cc5bd42489c52cbe50485ad532894de9f211d108
+- checkpoint.md: 58b7ce6979afb4aeff43fe82804d6ecfd8aa9d98
+- Auditoría.txt: 49b7b940418504b1f1432ea3cef565d256b11e7a
+- ChangesLogs.txt: 6bdde3e37af051fe0a8f38414ce99e5aad58cf65
+- Tareas.txt: 75554f2f4f7bddac4daae46d63831e6820445223
+
+RIESGOS Y LIMITACIONES
+- Actualizar el endpoint del frontend no publica código Apps Script.
+- La acción clearSensitiveLogs solo estará disponible si el deployment FEEDBACK indicado contiene esa implementación.
+- No se ejecutaron pruebas live ni se modificó el deployment.
+
+DECISIÓN DE ALCANCE
+Sustituir únicamente API_ENDPOINTS.FEEDBACK y actualizar los registros de continuidad y trazabilidad. No modificar otros endpoints, el mapa de acciones ni el router.
+================================================================================
