@@ -3162,3 +3162,12 @@ ACTUALIZACIÓN DE CONFIGURACIÓN — ENDPOINTS
 Fecha: 2026-11-04
 - Se actualizaron las URLs centrales de los servicios ADMIN y FEEDBACK en api-config.js según las direcciones proporcionadas.
 - La actualización del código no implica publicación ni verificación de los despliegues Apps Script.
+
+================================================================================
+ACTUALIZACIÓN DOCUMENTAL — CHECKPOINT OBLIGATORIO
+Fecha: 2026-11-04
+- Se creó checkpoint.md con el estado de continuidad del proyecto y el siguiente punto de trabajo.
+- Se modificó Proceso de desarollo.md para exigir un checkpoint al inicio de cada tarea y su actualización final como último paso de documentación antes del único commit.
+- La tarea documental queda registrada en Auditoría.txt y ChangesLogs.txt.
+- ADMIN 0 continúa parcial y pendiente de las validaciones descritas en checkpoint.md.
+================================================================================

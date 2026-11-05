@@ -21,6 +21,45 @@ El incumplimiento de cualquiera de los pasos descritos en este documento invalid
 
 ---
 
+## 0. CHECKPOINT OBLIGATORIO DE INICIO Y CIERRE DE TAREA
+
+El archivo **checkpoint.md** es el registro de continuidad del desarrollo y deberá mantenerse actualizado durante cada tarea.
+
+### Al inicio de cada tarea
+Antes de iniciar la auditoría y antes de modificar cualquier archivo, se deberá crear o actualizar `checkpoint.md` para registrar el estado existente del proyecto. Como mínimo deberá incluir:
+
+- repositorio y rama de trabajo;
+- rama base protegida;
+- último commit conocido;
+- tarea que se va a realizar y su alcance;
+- estado de la tarea y fase del procedimiento en la que se encuentra;
+- archivos y funcionalidades involucrados;
+- hallazgos, riesgos y dependencias conocidos;
+- cambios ya implementados y verificaciones realizadas;
+- pendientes, bloqueos y siguiente acción concreta.
+
+El checkpoint inicial deberá describir el estado real observado, sin asumir que tareas o validaciones están completadas. Si existe un checkpoint previo, se deberá conservar su historial relevante y actualizarlo sin borrar información necesaria para la continuidad.
+
+### Al finalizar cada tarea
+Una vez terminadas la implementación, las verificaciones, la revisión de código y los registros obligatorios, la **actualización final de `checkpoint.md` será el último paso de documentación de la tarea, inmediatamente antes de generar su único commit**.
+
+La actualización deberá reflejar el resultado real de la tarea e indicar:
+
+- estado final (completada, parcial, pendiente o bloqueada);
+- archivos modificados;
+- resumen de cambios realizados;
+- verificaciones ejecutadas y sus resultados;
+- validaciones que no pudieron realizarse;
+- riesgos o pendientes que continúan abiertos;
+- último commit conocido antes de la tarea y referencia al commit que incorpora el checkpoint, identificable en el historial de Git;
+- siguiente tarea o acción concreta para retomar el trabajo.
+
+No se deberá marcar como completada una tarea si quedan validaciones obligatorias pendientes. Si una observación de Code Review obliga a reiniciar el procedimiento, `checkpoint.md` deberá reflejar ese reinicio y la fase actual.
+
+El checkpoint no sustituye a `Auditoría.txt`, `ChangesLogs.txt` ni `Tareas.txt`; cada archivo deberá seguir cumpliendo su función. La creación inicial y la actualización final del checkpoint forman parte de la misma tarea y deberán incluirse en su único commit. Está prohibido generar commits adicionales únicamente para guardar el checkpoint.
+
+---
+
 # FLUJO PRINCIPAL DE TRABAJO
 
 ## 1. Auditoría inicial del archivo

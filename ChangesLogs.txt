@@ -2238,3 +2238,14 @@ ARCHIVO MODIFICADO: api-config.js
 - API_ENDPOINTS.FEEDBACK: se sustituyó la URL del servicio FEEDBACK por la URL de despliegue proporcionada.
 - No se modificaron ACTION_TO_SERVICE_MAP, routeAction(), helpers ni otros endpoints.
 ================================================================================
+
+================================================================================
+DOCUMENTACIÓN — CREACIÓN DE CHECKPOINT Y REGLA DE CONTINUIDAD
+Fecha: 2026-11-04
+Rama: GPSpedia2.2.5_work
+- Archivo nuevo: checkpoint.md. Se documentó el estado conocido del repositorio, reglas de trabajo, historial de cambios, estado parcial de ADMIN 0, endpoints configurados y siguiente punto de continuación.
+- Archivo modificado: Proceso de desarollo.md. Se incorporó la obligación de crear/actualizar checkpoint.md antes de iniciar la auditoría de cada tarea y de actualizar su estado final como último paso de documentación, inmediatamente antes del único commit.
+- Archivo modificado: Auditoría.txt. Se registró la revisión y el alcance del cambio documental.
+- Archivo modificado: Tareas.txt. Se registró la incorporación de la regla y el checkpoint de continuidad.
+- No se modificó código de la aplicación, lógica funcional, endpoints ni despliegues.
+================================================================================
