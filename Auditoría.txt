@@ -3571,3 +3571,34 @@ HEAD auditado: b441a5be9a04770b2d535490eb73bc9478375e9b
 - No se desplegó Apps Script, no se modificaron hojas o datos y no se ejecutaron operaciones de escritura.
 - Después de publicar el commit, queda pendiente comprobar disponibilidad del endpoint y probar las operaciones de USERS con una sesión autorizada.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DOCUMENTAL — ESTABLECER EL PROCEDIMIENTO ÚNICO AUTORIZADO PARA COMMITS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+HEAD auditado: 11a22438735d689bbb45f7e0775fa95adf3b1c12
+
+1. DOCUMENTOS LOCALIZADOS Y ESTADO
+- Proceso de desarollo.md: existe en la raíz de GPSpedia2.2.5_work, con 517 líneas. Su sección CONTROL DE COMMITS POR TAREA ya exige un único commit, pero no define un mecanismo técnico exclusivo para crearlo y publicarlo.
+- contexto_personal.md: no existe en la raíz de la rama de trabajo ni en las ramas GPSpedia2.2.5 y GPSpedia2.2.5_auth-users-test. Tampoco se encontró en la biblioteca de archivos consultada. Se creará como documento nuevo, sin sobrescribir contenido existente.
+- La búsqueda del repositorio identificó Proceso de desarollo.md como el documento formal de procedimiento. Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md son registros del flujo, no documentos adicionales de procedimiento general.
+
+2. PROCEDIMIENTO AUTORIZADO CONFIRMADO
+- Verificar rama de trabajo, HEAD actual y HEAD de la rama protegida.
+- Crear un blob por archivo con create_blob, sin generar commits.
+- Crear un único árbol con create_tree basado en el árbol del HEAD confirmado.
+- Crear exactamente un commit con create_commit, usando el HEAD confirmado como parent_sha.
+- Actualizar únicamente la rama de trabajo mediante update_ref, con force:false y expected_sha igual al HEAD confirmado.
+- Verificar commit, padre, archivos incluidos, nuevo HEAD y que la rama protegida permanezca intacta.
+
+3. RESTRICCIONES Y CONDICIONES DE DETENCIÓN
+- No usar GitHub Contents API que genere commits por archivo, interfaz web, Git local ni otro método alternativo.
+- No crear commits parciales, intermedios o separados para documentación/checkpoint.
+- No forzar actualizaciones ni cambiar expected_sha para eludir una discrepancia.
+- Si falla una operación o la verificación no es concluyente, detenerse e informar; no improvisar otro método.
+- Se conservarán todas las reglas existentes; la nueva sección se añadirá al final de Proceso de desarollo.md y contexto_personal.md será un archivo nuevo.
+
+4. ALCANCE
+- Cambios documentales exclusivamente. No modificar código funcional, configuraciones, servicios, deployments, datos ni ramas protegidas.
+- Todos los documentos y registros de esta tarea deberán quedar incluidos en un único commit.
+================================================================================

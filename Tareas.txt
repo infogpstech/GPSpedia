@@ -3480,3 +3480,18 @@ Estado: CAMBIO ESTÁTICO PREPARADO; PENDIENTE DE COMMIT ÚNICO.
 - Pendiente después del commit: comprobar HTTP y realizar pruebas funcionales del deployment USERS.
 - No desplegar Apps Script, modificar hojas, ejecutar escrituras ni hacer merge.
 ================================================================================
+
+
+================================================================================
+TAREA — ESTABLECER EL PROCEDIMIENTO ÚNICO AUTORIZADO PARA COMMITS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+Estado: DOCUMENTACIÓN PREPARADA; PENDIENTE DE COMMIT ÚNICO Y VERIFICACIÓN.
+
+- Añadir al final de Proceso de desarollo.md el único método autorizado para generar y publicar commits: create_blob por cada archivo, un único create_tree, un único create_commit con parent_sha igual al HEAD confirmado y update_ref de la rama autorizada con force:false y expected_sha igual al HEAD previo.
+- Crear contexto_personal.md como documento nuevo, ya que no existe en las ramas revisadas ni en la biblioteca consultada; incluir la misma secuencia, prohibiciones y condiciones de detención.
+- Prohibir métodos alternativos de commit, commits por archivo, commits intermedios, GitHub Contents API que cree commits automáticamente, Git local y actualizaciones forzadas.
+- Mantener todas las reglas previas. No borrar ni reemplazar contenido existente.
+- Actualizar Auditoría.txt, ChangesLogs.txt y checkpoint.md como parte de la misma tarea.
+- No modificar código funcional, servicios, deployments, datos ni la rama protegida.
+- Publicar todos los archivos mediante un único commit en GPSpedia2.2.5_work y verificar padre, archivos, HEAD y rama protegida.
+================================================================================

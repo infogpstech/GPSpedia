@@ -1199,3 +1199,83 @@ Estado inicial documentado antes de completar la auditoría formal. No se ha mod
 ## Continuidad
 - El commit de esta tarea deberá tener como padre b441a5be9a04770b2d535490eb73bc9478375e9b y quedar identificado en el historial de GPSpedia2.2.5_work.
 - Siguiente acción: crear un único árbol con los cinco archivos, crear un único commit y actualizar la referencia de la rama con expected_sha. Después, verificar el commit y realizar pruebas HTTP/funcionales autorizadas del deployment USERS.
+
+
+---
+
+# CHECKPOINT INICIAL — ESTANDARIZAR EL PROCEDIMIENTO ÚNICO DE COMMITS
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD inicial confirmado:** 11a22438735d689bbb45f7e0775fa95adf3b1c12
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## Tarea y alcance
+Incorporar como único procedimiento autorizado para commits el flujo Git Database API utilizado y verificado en la tarea anterior: crear blobs de los archivos, construir un único árbol, crear un único commit con el HEAD anterior como padre y actualizar exclusivamente la rama de trabajo mediante expected_sha. Añadir la regla a Proceso de desarollo.md y a contexto_personal.md. No eliminar ni modificar ninguna regla existente.
+
+## Estado real al inicio
+- GPSpedia2.2.5_work apunta a 11a22438735d689bbb45f7e0775fa95adf3b1c12.
+- GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Proceso de desarollo.md existe en la raíz de GPSpedia2.2.5_work, con 517 líneas. Su sección final CONTROL DE COMMITS POR TAREA ya exige un único commit, pero no especifica el método Git autorizado.
+- contexto_personal.md no existe en la raíz de GPSpedia2.2.5_work ni en las ramas GPSpedia2.2.5 y GPSpedia2.2.5_auth-users-test; tampoco se localizó en la biblioteca de archivos consultada. Se preparará como archivo nuevo en la raíz, sin sobrescribir contenido previo.
+- La búsqueda del repositorio identificó Proceso de desarollo.md como el documento formal de procedimiento; Tareas.txt y checkpoint.md son registros de tareas/continuidad, no documentos adicionales de procedimiento general.
+- La documentación de checkpoint, Auditoría.txt, ChangesLogs.txt y Tareas.txt fue revisada para preservar su historial.
+
+## Archivos previstos
+- Proceso de desarollo.md: añadir una sección que establezca el único método autorizado de commit.
+- contexto_personal.md: crear un documento nuevo que contenga la misma regla operativa.
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md: registrar esta tarea según el procedimiento existente.
+
+## Restricciones
+- No borrar, reemplazar, reordenar ni debilitar reglas existentes.
+- No modificar código funcional ni otras ramas.
+- Agrupar todos los archivos de esta tarea en un único commit.
+- No hacer merge ni modificar GPSpedia2.2.5.
+
+**Fase al crear el checkpoint:** estado inicial documentado; revisión de documentos y alcance en curso.
+
+
+---
+
+# CHECKPOINT DE CIERRE — PROCEDIMIENTO ÚNICO AUTORIZADO PARA COMMITS
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD anterior a la tarea:** 11a22438735d689bbb45f7e0775fa95adf3b1c12
+
+## Resultado documental
+- Proceso de desarollo.md: se añadió al final el procedimiento técnico exclusivo de commits, sin reemplazar ni borrar el contenido previo.
+- contexto_personal.md: se creó como archivo nuevo en la raíz porque no existía en las ramas revisadas ni en la biblioteca consultada. Contiene la misma secuencia operativa y restricciones.
+- Auditoría.txt, ChangesLogs.txt y Tareas.txt: se añadieron registros de esta tarea sin sobrescribir entradas anteriores.
+
+## Procedimiento que queda establecido
+- Verificar el HEAD de la rama de trabajo y el HEAD de la rama protegida.
+- Crear un blob por cada archivo mediante create_blob.
+- Crear un único árbol mediante create_tree, basado en el árbol del HEAD confirmado.
+- Crear exactamente un commit mediante create_commit, con parent_sha igual al HEAD confirmado.
+- Actualizar únicamente la rama de trabajo mediante update_ref, con force:false y expected_sha igual al HEAD confirmado.
+- Verificar commit, padre, archivos, HEAD final y rama protegida.
+- No utilizar métodos alternativos ni generar commits parciales/intermedios. Ante fallos o discrepancias, detenerse e informar.
+
+## Preservación y alcance
+- No se eliminó ni modificó ninguna regla anterior de Proceso de desarollo.md.
+- contexto_personal.md se incorpora como archivo nuevo; no se sobrescribió ningún archivo previo.
+- No se modificaron código funcional, configuraciones, servicios Apps Script, deployments, datos ni la rama protegida.
+
+## Estado
+**DOCUMENTACIÓN PREPARADA; PENDIENTE DE PUBLICAR Y VERIFICAR EL ÚNICO COMMIT.**
+
+## Archivos que se incluirán en el único commit
+- Proceso de desarollo.md
+- contexto_personal.md (nuevo)
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+## Continuidad
+El commit deberá tener como único padre 11a22438735d689bbb45f7e0775fa95adf3b1c12 y actualizar exclusivamente GPSpedia2.2.5_work mediante update_ref con expected_sha igual a ese HEAD. Si cualquier operación falla o el HEAD cambia, detenerse sin crear un commit alternativo ni utilizar otro método.

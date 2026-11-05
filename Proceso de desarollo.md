@@ -514,3 +514,44 @@ Cuando una tarea requiera editar varios archivos:
 - está prohibido crear un commit independiente cada vez que se edite o actualice un archivo.
 
 No se deberá dividir una misma tarea en varios commits únicamente por haber trabajado en archivos diferentes. El commit se realizará cuando estén terminadas las modificaciones de la tarea y se hayan completado las verificaciones y registros obligatorios del procedimiento.
+
+ 
+---
+
+# PROCEDIMIENTO ÚNICO AUTORIZADO PARA GENERAR Y PUBLICAR COMMITS
+
+Esta sección desarrolla y hace obligatorio el control de commits por tarea establecido anteriormente. No reemplaza, elimina, reduce ni modifica ninguna otra regla de este documento. En caso de que una instrucción anterior establezca un único commit por tarea, ambas reglas se aplican conjuntamente: se generará exactamente un commit mediante el procedimiento descrito aquí.
+
+## 1. Método exclusivo
+
+El único método autorizado para generar y publicar commits en este proyecto es el flujo Git Database API de GitHub, en el siguiente orden:
+
+1. **Confirmar el estado de Git antes de escribir:** verificar el repositorio, la rama de trabajo autorizada, su HEAD actual y el HEAD de la rama base protegida. El HEAD de la rama de trabajo será el expected_sha y el padre del nuevo commit. Si la rama, el HEAD o el estado esperado no coinciden con lo documentado, detenerse y volver a auditar; no continuar con valores supuestos.
+2. **Crear un blob por cada archivo que deba incluirse:** utilizar create_blob para almacenar el contenido completo de cada archivo modificado o nuevo. La creación de blobs no debe generar commits ni mover referencias.
+3. **Crear un único árbol Git:** utilizar create_tree una sola vez para agrupar todos los blobs de la tarea, tomando como base_tree_sha el árbol del HEAD confirmado. El árbol debe conservar los archivos no involucrados y contener todos los cambios de la tarea.
+4. **Crear un único commit:** utilizar create_commit una sola vez, con el árbol recién creado y con parent_sha igual al HEAD confirmado en el paso 1. El mensaje debe describir objetivamente la tarea. No se crearán commits separados por archivo, por registro documental ni por etapa.
+5. **Actualizar exclusivamente la referencia autorizada:** utilizar update_ref para mover únicamente la rama de trabajo autorizada al SHA del commit recién creado, con force:false y expected_sha igual al HEAD confirmado en el paso 1. Esta operación debe funcionar como actualización condicionada: si la rama ya no apunta al SHA esperado, la actualización debe rechazarse.
+6. **Verificar el resultado:** consultar el commit creado y comparar el HEAD anterior con la rama de trabajo. Confirmar que la rama apunta al nuevo commit, que el commit tiene como único padre el HEAD anterior, que incluye todos y únicamente los archivos previstos y que la rama base protegida no cambió.
+
+## 2. Restricciones absolutas
+
+- El flujo anterior es el único procedimiento autorizado para crear y publicar commits. No se permite sustituirlo por otro método.
+- Está prohibido utilizar operaciones de GitHub Contents API que creen commits automáticamente por archivo.
+- Está prohibido utilizar la interfaz web de GitHub, Git local, comandos git commit/git push, automatizaciones externas o cualquier otro mecanismo alternativo para generar o publicar el commit de la tarea.
+- Está prohibido crear más de un commit para una misma tarea, incluidos commits de checkpoint, auditoría, ChangesLogs o Tareas separados del commit principal.
+- Todos los archivos de código y documentación pertenecientes a la tarea deberán quedar incluidos en el mismo árbol y en el mismo commit.
+- No se utilizará force:true; no se sobrescribirá ni se reescribirá el historial.
+- No se actualizará la rama base protegida, no se hará merge y no se moverán referencias distintas de la rama de trabajo expresamente autorizada.
+- La actualización de checkpoint.md deberá ser el último paso documental antes de crear el único commit, de acuerdo con la regla existente.
+
+## 3. Condiciones de detención
+
+Si falla la creación de un blob, la creación del árbol o la creación del commit, se detendrá el procedimiento. No se deberá crear un commit parcial ni utilizar un método alternativo.
+
+Si update_ref falla, se deberá consultar el estado real de la rama antes de cualquier otra acción. No se creará otro commit ni se cambiará el expected_sha para forzar la publicación. Si la rama no apunta al commit esperado o el estado no puede determinarse con certeza, se detendrá la tarea y se informará el bloqueo.
+
+Si la verificación final detecta archivos inesperados, un padre distinto, una rama incorrecta o cualquier cambio en la rama protegida, la tarea no se declarará completada. Se documentará el resultado y se detendrá cualquier operación adicional hasta contar con una nueva autorización expresa.
+
+## 4. Regla de cumplimiento
+
+Este flujo se aplica a todas las tareas y a todos los cambios del proyecto, independientemente del número de archivos. Ningún procedimiento alternativo queda autorizado por conveniencia, limitación de herramientas o urgencia. La única salida permitida ante un bloqueo es detenerse, conservar el estado verificable e informar al usuario; no improvisar otro método de commit.

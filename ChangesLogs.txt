@@ -2569,3 +2569,22 @@ ARCHIVO MODIFICADO: api-config.js
 - No se modificaron consumidores, servicios Apps Script, hojas ni deployments.
 - No se realizaron solicitudes HTTP ni pruebas funcionales del nuevo endpoint.
 ================================================================================
+
+
+================================================================================
+DOCUMENTACIÓN — PROCEDIMIENTO ÚNICO AUTORIZADO PARA COMMITS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS MODIFICADOS / CREADOS
+- Proceso de desarollo.md: se añadió al final la sección PROCEDIMIENTO ÚNICO AUTORIZADO PARA GENERAR Y PUBLICAR COMMITS. Se especifica la secuencia create_blob por archivo, un create_tree, un create_commit y update_ref con force:false y expected_sha.
+- contexto_personal.md: se creó un nuevo documento en la raíz con la misma regla operativa, prohibiciones y condiciones de detención.
+- Auditoría.txt: se documentó la localización de los documentos, el procedimiento confirmado y el alcance.
+- Tareas.txt: se registró la tarea documental y su estado.
+- checkpoint.md: se registran el inicio y cierre de la tarea.
+
+PRESERVACIÓN
+- No se eliminó ni reemplazó contenido de Proceso de desarollo.md; la nueva sección se agregó después de la última regla existente.
+- contexto_personal.md no existía en las ramas consultadas; se creó como archivo nuevo.
+- No se modificaron archivos de código, configuraciones, servicios Apps Script, deployments, datos ni la rama protegida.
+- Todos los archivos de esta tarea se agruparán en un único commit.
+================================================================================
