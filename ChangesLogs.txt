@@ -2511,3 +2511,14 @@ Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
 - Auditoría.txt: se registra el resultado y el alcance de la validación.
 - No se modificó código fuente ni configuración; no se ejecutó otra restauración, no se alteraron datos ni se realizó despliegue adicional.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — HASH DE CONTRASEÑAS Y LÍMITE DE INTENTOS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+- Auditoría.txt: se añadió la revisión de AUTH, USERS y sus dependencias frontend, con riesgos y validaciones pendientes.
+- Tareas.txt: se añadió actualización del estado de ADMIN 0; la validación funcional continúa pendiente.
+- checkpoint.md: se añadió checkpoint inicial y cierre de la auditoría.
+- No se modificaron Services/Auth.js, Services/users.js, api-config.js ni users.html.
+- No se desplegaron servicios, no se ejecutó Apps Script, no se modificaron datos de Sheets ni se hizo merge.
+================================================================================

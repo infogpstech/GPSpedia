@@ -3421,3 +3421,20 @@ Estado: CONFIGURACIÓN ESTÁTICA ACTUALIZADA; VALIDACIÓN DEL DEPLOYMENT PENDIEN
 - Pendiente: comprobar disponibilidad del endpoint y validar las acciones ADMIN en la plataforma live; confirmar por separado que el deployment contiene la versión actual de Services/admin.js.
 - No se desplegó Apps Script, no se ejecutaron acciones de respaldo/restauración, no se modificaron datos productivos y no se realizó merge.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — ADMIN 0: AUDITORÍA DE HASH Y LÍMITE DE INTENTOS
+Fecha: 2026-11-05
+Estado: AUDITORÍA ESTÁTICA COMPLETADA; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PENDIENTE.
+
+- Se revisaron Services/Auth.js, Services/users.js, api-config.js y users.html.
+- Se confirmó que AUTH y USERS comparten el mismo formato sha256$<salt>$<digest> y la misma fórmula SHA-256.
+- Se verificaron las tres rutas de escritura de USERS: creación, actualización administrativa y cambio de contraseña propia.
+- AUTH verifica contraseñas legacy y hash; las cuentas legacy se migran al hash después de un login correcto.
+- Se confirmó el mínimo de ocho caracteres normalizados para nuevas contraseñas y el contador de cinco intentos con bloqueo nominal de quince minutos.
+- Límites documentados: SHA-256 con salt no es una KDF especializada y CacheService puede desalojar el contador antes del TTL.
+- El usuario confirmó que existe una copia independiente de Spreadsheet. Antes de pruebas de escritura debe verificarse que los deployments de prueba apunten a esa copia; el ID de la copia no está identificado en el código auditado.
+- No se modificó código, no se desplegaron servicios, no se ejecutó migración ni se alteraron datos.
+- ADMIN 0 permanece abierta hasta completar pruebas funcionales de AUTH y USERS en la copia independiente.
+================================================================================

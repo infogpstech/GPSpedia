@@ -3397,3 +3397,46 @@ Fecha: 2026-11-05
 - La normalización en ui.js y Services/admin.js y el destino fijo SPREADSHEET_ID permanecen sin cambios.
 - No se ejecutó otra restauración ni se modificaron datos.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — HASH DE CONTRASEÑAS Y LÍMITE DE INTENTOS (ADMIN 0)
+Fecha: 2026-11-05
+Rama: GPSpedia2.2.5_work
+Archivos auditados: Services/Auth.js, Services/users.js, api-config.js y users.html.
+
+1. SERVICES/AUTH.JS
+- normalizePassword() aplica String() y trim() antes de verificar credenciales.
+- createPasswordHash() genera un salt UUID sin guiones, calcula SHA-256 sobre salt + ':' + contraseña normalizada y almacena el formato sha256$<salt>$<digest>.
+- verifyStoredPassword() reconoce el formato hash, valida estructura y longitud hexadecimal del digest y compara el resultado; para valores legacy compara después de normalizar.
+- handleLogin() verifica ambos formatos y, si la contraseña legacy coincide, reemplaza la celda Password por el hash sin exigir el mínimo de ocho caracteres a la contraseña histórica. Esto conserva la compatibilidad de cuentas existentes.
+- LOGIN_MAX_ATTEMPTS está fijado en cinco y LOGIN_LOCKOUT_SECONDS en 900 segundos. La clave de CacheService se deriva del nombre de usuario normalizado y convertido a minúsculas. LockService serializa la lectura/escritura del contador.
+- Un login correcto elimina el contador; los errores operativos posteriores a reservar un intento intentan revertirlo. Las credenciales incorrectas conservan el incremento.
+- Los registros revisados muestran la acción y mensajes de error, pero no registran el valor de la contraseña, el hash almacenado ni el token de sesión.
+
+2. SERVICES/USERS.JS
+- La implementación de normalizePassword(), digestToHex(), verifyStoredPassword() y constantTimeEquals() utiliza el mismo formato y cálculo que AUTH.
+- handleCreateUser() genera el hash antes de escribir la fila.
+- handleUpdateUser() genera un hash cuando se recibe una contraseña nueva; un campo Password vacío no reemplaza la contraseña existente.
+- handleChangePassword() verifica la contraseña actual con compatibilidad legacy/hash y guarda un hash para la nueva contraseña.
+- Las operaciones protegidas obtienen el usuario y rol desde la sesión activa en backend; no se detectó dependencia del rol enviado por el navegador para estas rutas.
+- USERS no registra contraseñas ni hashes en los registros revisados.
+
+3. API-CONFIG.JS Y USERS.HTML
+- login y validateSession continúan enrutados a AUTH; las operaciones de usuarios continúan enrutadas a USERS.
+- El formulario envía las credenciales a través de routeAction(); la validación de ocho caracteres en el navegador es auxiliar. La validación obligatoria está en createPasswordHash() del backend.
+- El formulario de cambio de contraseña compara los dos valores nuevos y envía currentPassword, newPassword, userId y sessionToken. La sesión se valida nuevamente en backend.
+
+4. HALLAZGOS, RIESGOS Y LÍMITES
+- La fórmula y el formato de hash coinciden entre AUTH y USERS; no se encontró una discrepancia estática entre los dos servicios.
+- SHA-256 con salt individual es una solución rápida, pero no tiene el costo computacional de una KDF especializada. Se conserva porque corresponde a la decisión aprobada; no se presenta como protección equivalente a bcrypt, scrypt o Argon2.
+- CacheService no garantiza conservar una entrada durante todo el TTL. Por ello, el bloqueo de quince minutos es de mejor esfuerzo y puede finalizar antes si Google desaloja la entrada.
+- El quinto intento puede autenticarse correctamente y limpiar el contador; si el quinto intento falla, las solicitudes siguientes quedan bloqueadas. El código no bloquea antes de verificar el quinto intento.
+- Los servicios usan un SPREADSHEET_ID fijo. La existencia de una copia independiente fue confirmada por el usuario, pero no se identificó en el código auditado qué ID corresponde a esa copia ni si los deployments de prueba apuntan a ella. No ejecutar pruebas de escritura hasta verificar ese destino.
+- Se observó nuevamente la diferencia entre la clave 'jefe' de SESSION_LIMITS y el rol 'Gefe' normalizado como 'gefe'. Esta incidencia ya está registrada como tarea independiente en Tareas.txt; permanece fuera del alcance actual y no se modifica.
+
+5. VALIDACIONES PENDIENTES
+- No se desplegaron AUTH ni USERS y no se ejecutó Apps Script desde esta auditoría.
+- Pendiente probar en la copia independiente: login con cuenta legacy y migración de su celda Password; login con hash correcto e incorrecto; alta de usuario; actualización administrativa de contraseña; cambio de contraseña propia; rechazo de nuevas contraseñas con menos de ocho caracteres después de trim(); compatibilidad de espacios iniciales/finales y sensibilidad a mayúsculas; cinco fallos consecutivos y bloqueo de solicitudes posteriores; reinicio tras login correcto; expiración del bloqueo; ausencia de contraseñas, hashes y tokens en Logs.
+- El despliegue coordinado descrito en Tareas.txt requiere AUTH primero y USERS después. No se realizó ni se autoriza implícitamente por esta auditoría.
+================================================================================

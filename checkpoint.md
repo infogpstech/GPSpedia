@@ -899,3 +899,95 @@ CONTINUIDAD
 - El commit único de esta actualización documental queda identificado en el historial de GPSpedia2.2.5_work.
 - Siguiente acción: continuar con la siguiente tarea pendiente de GPSpedia, sin repetir la corrección ni la prueba del enlace completo salvo que aparezca una nueva incidencia.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUDITORÍA DE HASH DE CONTRASEÑAS Y CONTROL DE INTENTOS (ADMIN 0)
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 6119ab8600ce96aff08570e8118be55e0d88aebd
+HEAD de rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA Y ALCANCE
+- Auditar Services/Auth.js y Services/users.js para verificar la implementación de hash SHA-256 con salt, compatibilidad temporal con contraseñas legacy, migración progresiva y límite de intentos.
+- Revisar sus dependencias de enrutamiento y formulario en api-config.js y users.html, sin ampliar la implementación.
+- Documentar hallazgos y dejar definido el protocolo de validación funcional sobre la copia independiente de Spreadsheet.
+- No repetir las pruebas live ya confirmadas por el usuario: login, carga de usuarios, Dashboard, Inbox y backup/restore.
+- La copia independiente de Spreadsheet para pruebas está disponible según confirmación del usuario.
+
+ESTADO REAL AL INICIO
+- ADMIN 0 permanece abierta; la implementación de hash y bloqueo está en la rama de trabajo, pero Tareas.txt mantiene pendiente la validación funcional en Apps Script.
+- AUTH y USERS ya incluyen funciones de creación/verificación de hash; AUTH conserva verificación legacy y migración al iniciar sesión.
+- Las tres rutas de escritura de USERS están previstas para guardar hashes.
+- No se ha autorizado desplegar Apps Script ni ejecutar pruebas que escriban en hojas.
+- No se modificará la rama base ni se hará merge.
+
+ARCHIVOS Y FUNCIONALIDADES INVOLUCRADOS
+- Services/Auth.js: normalización, hash/verificación, login, migración legacy y control de intentos.
+- Services/users.js: creación de usuario, actualización administrativa y cambio de contraseña propia.
+- api-config.js y users.html: enrutamiento y envío de las operaciones de credenciales.
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md: trazabilidad del trabajo.
+
+RIESGOS Y DEPENDENCIAS
+- SHA-256 con salt no es una KDF especializada.
+- CacheService puede desalojar entradas antes del tiempo de expiración; el bloqueo es de mejor esfuerzo.
+- Los servicios contienen un SPREADSHEET_ID fijo. Antes de cualquier prueba de escritura debe verificarse que los deployments de prueba apunten a la copia independiente y no a la hoja productiva.
+- No registrar ni mostrar contraseñas, hashes ni tokens. No ejecutar migración masiva.
+
+RESPALDOS
+- Auditoría.txt: blob original 24b3110f921c759c910197923212453be52401d0.
+- ChangesLogs.txt: blob original f59a647142bb3796b5fbb95b527b43ff2b81cbe9.
+- Tareas.txt: blob original 83495af9bbf6287e36948c4c494cfc76f6d8fa67.
+- checkpoint.md: blob original b417d13cc19ec557a1479e300bbd7a0b49fed716.
+- Los archivos funcionales se auditan sin modificarlos; no requieren respaldo de edición.
+
+FASE AL CREAR EL CHECKPOINT
+- Estado inicial documentado antes de concluir la auditoría y registrar hallazgos.
+================================================================================
+
+
+================================================================================
+CIERRE DE TAREA — AUDITORÍA ESTÁTICA DE HASH Y CONTROL DE INTENTOS (ADMIN 0)
+Fecha: 2026-11-05
+Estado: AUDITORÍA Y REVISIÓN ESTÁTICA COMPLETADAS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+RESULTADO
+- AUTH y USERS comparten el formato y la fórmula de hash SHA-256 con salt.
+- Las tres rutas de escritura de USERS generan hashes; AUTH admite contraseñas legacy y las migra al autenticar correctamente.
+- Se documentaron el mínimo de ocho caracteres, el contador de cinco intentos, el bloqueo nominal de quince minutos y sus limitaciones.
+- No se identificaron discrepancias estáticas entre las implementaciones de hash de AUTH y USERS.
+
+ARCHIVOS MODIFICADOS
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+ARCHIVOS FUNCIONALES AUDITADOS, SIN MODIFICAR
+- Services/Auth.js
+- Services/users.js
+- api-config.js
+- users.html
+
+VERIFICACIONES Y REVISIÓN
+- Lectura completa de los dos servicios y revisión de los formularios y rutas de enrutamiento relacionados.
+- Se comprobó por inspección que los escritores de contraseñas usan createPasswordHash() y que la verificación dual se encuentra en AUTH y USERS.
+- Code Review estático: el quinto intento puede autenticarse y limpiar el contador; un quinto fallo deja el bloqueo para solicitudes siguientes.
+- Se verificó que los registros revisados no incluyen valores de contraseña, hashes ni tokens.
+- Se mantuvo fuera de alcance la incidencia previamente registrada del límite de sesiones del rol Gefe.
+
+VALIDACIONES PENDIENTES Y LIMITACIONES
+- No se ejecutó Apps Script ni se desplegaron AUTH o USERS.
+- No se verificó desde este entorno el ID de la copia independiente ni el destino de los deployments de prueba.
+- Pendiente validar las operaciones de credenciales y el bloqueo en la copia independiente. No ejecutar pruebas de escritura hasta confirmar que AUTH y USERS apuntan a esa copia.
+- SHA-256 con salt no es una KDF especializada.
+- CacheService puede desalojar entradas antes del TTL; el bloqueo es de mejor esfuerzo.
+- No se modificaron datos productivos, no se realizó migración masiva ni se hizo merge.
+
+CONTINUIDAD
+- HEAD anterior a la tarea: 6119ab8600ce96aff08570e8118be55e0d88aebd.
+- El commit único de esta auditoría y sus registros quedará identificado en el historial de GPSpedia2.2.5_work.
+- Siguiente acción concreta: identificar el Spreadsheet ID de la copia independiente y confirmar que los deployments de prueba AUTH y USERS apuntan a ella; después ejecutar la matriz de pruebas documentada, sin tocar la hoja productiva.
+================================================================================
