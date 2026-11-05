@@ -458,3 +458,66 @@ RESULTADO FINAL
 SIGUIENTE ACCIÓN
 - Confirmar política de espacios en contraseñas y habilitar una copia de prueba de la Spreadsheet. Después validar una implementación KDF compatible con Apps Script V8, con vectores de prueba y medición de rendimiento antes de modificar AUTH/USERS.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — VIABILIDAD KDF Y NORMALIZACIÓN (ADMIN 0)
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 971bd34447157a73c152f73710997a9e5fcf69ea
+
+TAREA Y ALCANCE
+- Confirmar política de normalización de contraseñas y validar compatibilidad/rendimiento de una KDF en Apps Script V8 antes de modificar AUTH/USERS.
+- Política confirmada: trim() en ambos extremos; espacios internos preservados; comparación sensible a mayúsculas/minúsculas; mínimo de ocho caracteres validado en backend después de normalizar.
+- No modificar datos reales, no desplegar Apps Script y no hacer merge.
+
+ESTADO Y DEPENDENCIAS CONOCIDAS
+- El usuario confirmó que backupDatabase generó un respaldo accesible.
+- AUTH y USERS son proyectos Apps Script separados que comparten Users.Password.
+- AUTH compara actualmente contraseñas legacy con trim(); USERS tiene tres rutas de escritura que almacenan texto sin hash y changePassword compara sin trim().
+- La compatibilidad de Web Crypto/crypto.subtle y el rendimiento de PBKDF2 no están verificados en el runtime Apps Script V8.
+- No se confirmó todavía una Spreadsheet independiente restaurada/duplicada para pruebas.
+
+ARCHIVOS Y FUNCIONALIDADES AUDITADOS
+- Services/Auth.js: handleLogin() y lectura/escritura de sesión.
+- Services/users.js: handleCreateUser(), handleUpdateUser() y handleChangePassword().
+- auth.js: envío de credenciales y persistencia de sesión local.
+- users.html: formularios y validación frontend de cambio de contraseña.
+- api-config.js: enrutamiento AUTH/USERS.
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+
+FASE AL CREAR EL CHECKPOINT
+- Política de normalización confirmada; auditoría técnica en curso.
+- Los blobs originales de los archivos documentales se conservan como referencias de respaldo en Git antes de su actualización.
+================================================================================
+
+================================================================================
+CIERRE DE FASE — VIABILIDAD KDF Y NORMALIZACIÓN (ADMIN 0)
+Estado: AUDITORÍA COMPLEMENTARIA COMPLETADA; IMPLEMENTACIÓN BLOQUEADA POR PRUEBA DE RUNTIME.
+
+RESULTADO
+- Se documentó la política de normalización acordada y los cuatro flujos afectados.
+- Se confirmó que la verificación actual de AUTH es compatible con trim() y que USERS tiene una comparación distinta en cambio de contraseña.
+- Se confirmó que los tres escritores de USERS guardan actualmente texto sin hash.
+- No se eligió una KDF porque no se ha probado Web Crypto ni el rendimiento de una alternativa PBKDF2 en Apps Script V8.
+- No se modificó código fuente ni datos de Google Sheets; no se ejecutó Apps Script ni se desplegó.
+
+ARCHIVOS MODIFICADOS
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+VERIFICACIONES Y LIMITACIONES
+- Revisión estática de Services/Auth.js, Services/users.js, auth.js, users.html y api-config.js.
+- No se ejecutaron vectores criptográficos ni benchmark en Apps Script V8.
+- No se comprobó una copia de Spreadsheet restaurada/duplicada; el respaldo generado y accesible no se considera automáticamente un entorno de prueba.
+- No se modificó GPSpedia2.2.5, no se hizo merge y no se desplegó Apps Script.
+
+CONTINUIDAD
+- HEAD anterior a esta fase: 971bd34447157a73c152f73710997a9e5fcf69ea.
+- Siguiente acción: ejecutar el diagnóstico KDF en AUTH y USERS y confirmar una Spreadsheet independiente de prueba. Después seleccionar la KDF, implementar la verificación dual y los escritores hash, probar la migración sobre la copia y coordinar despliegues con AUTH primero.
+- El commit único que incorpora esta documentación quedará identificado en el historial de GPSpedia2.2.5_work.
+================================================================================

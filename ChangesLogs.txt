@@ -2410,3 +2410,14 @@ ARCHIVOS AUDITADOS SIN MODIFICACIÓN
 
 No se modificaron permisos, roles, endpoints ni lógica de respaldo. La validación funcional en live queda pendiente. No se desplegó Apps Script ni se realizó merge.
 ================================================================================
+
+
+================================================================================
+DOCUMENTACIÓN — POLÍTICA DE NORMALIZACIÓN Y VIABILIDAD KDF (ADMIN 0)
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+- Auditoría.txt: se documentan los cuatro flujos de contraseña, la política de normalización confirmada y los riesgos de compatibilidad/rendimiento entre los proyectos AUTH y USERS.
+- Tareas.txt: se registra la validación pendiente del runtime Apps Script V8 y la preparación de una copia independiente de Spreadsheet.
+- checkpoint.md: se registra el inicio y el cierre de esta fase de viabilidad.
+- No se modificó código fuente ni datos de Google Sheets.
+- No se seleccionó ni implementó una KDF, no se ejecutó Apps Script, no se desplegó ningún servicio y no se realizó merge.
+================================================================================

@@ -3357,3 +3357,15 @@ Estado: CORRECCIÓN ESTÁTICA IMPLEMENTADA; VALIDACIÓN LIVE PENDIENTE.
 - Pendiente de prueba live: respaldo DB con sesión válida; rechazo de sesión ausente/inválida y rol no autorizado; validación de respaldo Drive, comandos terminal, actualización silenciosa y procesamiento por lotes.
 - No se ejecutó Apps Script, no se generó respaldo, no se modificaron datos de Drive/Sheets, no se desplegó ni se hizo merge.
 ================================================================================
+
+
+================================================================================
+ADMIN 0 — VALIDAR KDF EN APPS SCRIPT V8 Y PREPARAR ENTORNO DE PRUEBA
+Fecha: 2026-11-05 | Estado: PENDIENTE
+- Ejecutar diagnóstico de disponibilidad de Web Crypto/crypto.subtle en los proyectos AUTH y USERS.
+- Medir el tiempo de derivación/verificación de una KDF candidata en el runtime real de Apps Script V8; seleccionar algoritmo y parámetros solo si cumplen seguridad y rendimiento aceptables.
+- Si Web Crypto no está disponible, evaluar una implementación PBKDF2 revisada y optimizada con medición real; no sustituirla por SHA-256 simple ni por un hash rápido sin salt.
+- Confirmar que el respaldo puede restaurarse o duplicarse como una Spreadsheet independiente para pruebas sin afectar la hoja productiva.
+- Después de validar KDF y entorno, diseñar e implementar el formato versionado, verificación dual AUTH, escrituras hash en USERS y migración reanudable sobre la copia.
+- Mantener despliegue coordinado: AUTH con verificación dual antes de activar escritores hash en USERS. No desplegar ni migrar datos productivos sin autorización expresa.
+================================================================================

@@ -3223,3 +3223,39 @@ RIESGOS Y DECISIÓN
 - No ejecutar restauraciones, comandos de Drive ni operaciones de backup durante esta tarea.
 
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — FASE DE VIABILIDAD KDF Y NORMALIZACIÓN DE CONTRASEÑAS (ADMIN 0)
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work | HEAD inicial: 971bd34447157a73c152f73710997a9e5fcf69ea
+
+DECISIÓN CONFIRMADA POR EL USUARIO
+- Aplicar trim() al inicio y al final de las contraseñas recibidas y almacenadas antes de verificar o generar el hash.
+- Conservar los espacios internos.
+- Mantener comparación sensible a mayúsculas y minúsculas.
+- Aplicar la longitud mínima de ocho caracteres en backend después de normalizar.
+
+HALLAZGOS COMPLEMENTARIOS
+1. Services/Auth.js: handleLogin() compara actualmente String(valor).trim() con String(password).trim(); esta es la semántica legacy que debe conservarse durante la transición.
+2. Services/users.js: handleChangePassword() compara el valor almacenado sin trim() y escribe newPassword directamente. La comparación no coincide con la semántica de login.
+3. Services/users.js: handleCreateUser() escribe newUser.Password directamente en la columna Password; no valida en backend la longitud mínima ni normaliza espacios.
+4. Services/users.js: handleUpdateUser() escribe updates.Password directamente cuando el campo es truthy; tampoco normaliza ni aplica validación de longitud en backend.
+5. users.html: el formulario de cambio de contraseña valida ocho caracteres en frontend usando la longitud sin normalizar. El formulario de alta/edición de usuario no impone una validación equivalente de contraseña en el marcado revisado. La validación de frontend no sustituye a la validación backend.
+6. auth.js: la sesión local guarda el objeto de usuario devuelto por AUTH; en el flujo revisado no se guarda la contraseña en localStorage.
+7. AUTH y USERS son proyectos Apps Script separados que comparten la columna Users.Password; el cambio de formato debe coordinarse entre ambos deployments.
+8. El código auditado utiliza servicios Utilities de Apps Script, pero no se ha ejecutado en los proyectos V8 para confirmar disponibilidad de Web Crypto/crypto.subtle ni medir el rendimiento real de PBKDF2.
+9. Una implementación PBKDF2 basada en llamadas repetidas a Utilities.computeHmacSha256Signature podría tener un coste elevado por la cantidad de iteraciones. No se debe fijar el algoritmo ni los parámetros sin una prueba en el runtime real.
+10. No se encontró en los archivos auditados una KDF existente que pueda reutilizarse. SHA-256 simple o un hash rápido sin salt no es una alternativa aceptable para almacenar contraseñas.
+
+RIESGOS Y DEPENDENCIAS
+- Desplegar escritores que almacenen hashes antes de que AUTH pueda verificarlos bloquearía los inicios de sesión.
+- La verificación dual debe reconocer exclusivamente el formato versionado acordado y tratar los registros legacy de forma explícita; no debe interpretar cualquier valor como hash.
+- La migración masiva debe probarse en una copia independiente de la Spreadsheet, ser reanudable e idempotente, utilizar LockService y no registrar contraseñas, salts ni hashes completos en Logs.
+- El usuario confirmó que el respaldo de la plataforma se generó y que puede acceder al archivo; no se ha confirmado todavía que exista una copia de Spreadsheet restaurada/duplicada para pruebas.
+
+DECISIÓN TÉCNICA DE ESTA FASE
+- Política de normalización aprobada: trim() en ambos extremos; espacios internos preservados; comparación case-sensitive.
+- KDF y parámetros: PENDIENTES de prueba de compatibilidad y rendimiento en Apps Script V8.
+- No modificar todavía Services/Auth.js ni Services/users.js hasta completar la prueba del runtime y seleccionar una implementación segura.
+- No migrar datos productivos, no desplegar Apps Script y no hacer merge.
+================================================================================
