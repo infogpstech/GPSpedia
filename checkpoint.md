@@ -1,3 +1,21 @@
+# TAREA EN CURSO — REGISTRO DEL ERROR backupDatabase Y CONTINUIDAD DE ADMIN 0
+
+**Registro inicial — 2026-11-04**
+- Repositorio: `infogpstech/GPSpedia`.
+- Rama de trabajo autorizada: `GPSpedia2.2.5_work`.
+- Rama base protegida: `GPSpedia2.2.5`.
+- Último commit conocido al iniciar: `133a9df0ec43059520af87152c4a7bd663ac3e0c`.
+- Alcance inmediato: documentar en Tareas.txt el error de autorización reportado al ejecutar `backupDatabase`; registrar evidencia y limitaciones en Auditoría.txt; mantener el checkpoint actualizado.
+- Alcance aprobado para la migración: seguir el esquema gradual ya documentado (AUTH con verificación dual y migración al login; después USERS escribe hashes; luego evaluar migración por lotes de cuentas restantes).
+- No se dispone de copia de prueba de la Spreadsheet. Por ello, esta tarea no modificará código de AUTH/USERS, contraseñas ni datos de Google Sheets; tampoco se desplegarán servicios.
+- Incidencia reportada: HTTP 500 en `backupDatabase`, etapa «Ejecución de acción individual», función `routeAction`, mensaje «Acceso denegado: sesión no autorizada», con referencia a `api-config.js:64`, `ui.js:3166` y `ui.js:3545`.
+- El mensaje recibido es evidencia del rechazo, pero todavía no determina si la causa es ausencia de sesión en el payload, sesión caducada, validación de rol o contrato de autorización del servicio.
+- Archivos previstos para esta tarea documental: `checkpoint.md`, `Tareas.txt`, `Auditoría.txt`, `ChangesLogs.txt`.
+- Estado inicial: documentación por actualizar; auditoría específica de la ruta backupDatabase pendiente.
+- Siguiente acción: auditar el flujo de respaldo y autorización para registrar con precisión el alcance de la incidencia; mantener la migración de contraseñas como tarea separada.
+
+---
+
 # CHECKPOINT — GPSpedia
 
 **Última actualización:** 2026-11-04  
