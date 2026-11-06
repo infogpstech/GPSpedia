@@ -4640,3 +4640,63 @@ La configuración de publicación de GitHub Pages y el código realmente servido
 La ruta completa existe estáticamente en GPSpedia2.2.5_work. Los dos puntos de interfaz que pueden explicar que el usuario no encuentre la opción son: (a) el enlace de desarrollador permanece oculto cuando la sesión no expone Privilegios con valor Desarrollador; y (b) el botón de inventario está dentro de la pestaña «Imágenes y Drive», no en la pestaña inicial. Si el botón se ve y se pulsa, los errores de sesión, endpoint o red deberían presentarse dentro del modal, mientras que una hoja sin filas produce una lista vacía.
 No es posible confirmar cuál de estos casos afecta a la cuenta real sin inspeccionar, con autorización, la propiedad Privilegios de la sesión vigente, el navegador/console y la respuesta HTTP del endpoint ADMIN. Tampoco se confirmó la fuente de publicación activa. No se modificó código, no se hicieron llamadas HTTP a Apps Script, no se consultaron ni alteraron hojas reales o archivos de Drive y no se desplegó ningún servicio.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — PERSISTENCIA Y REANUDACIÓN DEL INVENTARIO DE DRIVE
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: 0d4c0d01ce7cb04550d80de79733214675e79e76
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. ALCANCE Y RESPALDOS EXACTOS
+- Se auditó la continuidad del inventario de Drive desde la interfaz hasta IndexedDB y los handlers ADMIN.
+- ui.js: getDeveloperSessionPayload(), initAdminPanelListeners(), openReplacedImagesModal() y openAuditDriveModal(), incluidos los listeners de apertura/cierre, consulta, renderizado, paginación y persistencia.
+- offline.js: initDB(), onupgradeneeded, performOp(), stores existentes y funciones de persistencia de catálogo, búsquedas, validaciones, elementos vistos y miniaturas.
+- index.html: controles de inventario e historial, modal de auditoría, resumen y contenedor de resultados.
+- style.css: estilos de las vistas de inventario e historial y estructura del modal de auditoría.
+- api-config.js: ACTION_TO_SERVICE_MAP, API_ENDPOINTS.ADMIN y routeAction().
+- Services/admin.js: assertDeveloperSession(), doPost(), collectActiveDriveReferences(), isFolderInsideCortes(), storeAuditDriveReferenceSnapshot(), loadAuditDriveReferenceSnapshot(), clearAuditDriveReferenceSnapshot(), handleAuditDriveImagesInCortes() y handleSaveUnusedImagesInventory().
+- Respaldos exactos previos a cualquier edición (blob SHA):
+  - ui.js: 5b159ebf275fe4328050e570db9511eabc1fb89f
+  - offline.js: 207d3cde37448cc20c5523b2e231e09039aee9b3
+  - index.html: 1fe4e09430709e21cec57a81ba7fc84cf5911cf8
+  - style.css: c0ef889a1af30b0e63a3e259a56033448af63717
+  - api-config.js: 7f997f9a0e9f3cbc90c259a736153bc446a04a24
+  - Services/admin.js: cf2e887fd7ff5399064cbda86d0c3992d7f7b49d
+  - Auditoría.txt: b28cf7caffb7f0db271620d18c26578753b68dee
+  - Tareas.txt: 9c1a7f13610348bc59a56d240d3e4b1590de86a4
+  - ChangesLogs.txt: dffed2460df6edc0d5d6a3190593187fea0cf835
+  - checkpoint.md: a3e0eee34f53fea0268c4e67aa07b8374d992d6a
+
+2. HALLAZGOS CONFIRMADOS
+- offline.js utiliza IndexedDB GPSpedia_DB en DB_VERSION 3. Los object stores existentes son catalog, searchHistory, viewedItems, thumbnails y validationCache. No existe un store para el estado de auditoría administrativa ni para la preferencia de vista del inventario.
+- initDB() crea stores faltantes durante onupgradeneeded y no elimina los stores ni los datos existentes. El aumento de versión permite una ampliación aditiva; onblocked y el timeout de cinco segundos ya forman parte del comportamiento actual.
+- performOp() centraliza operaciones IndexedDB y devuelve null ante errores. Los nuevos métodos deberán comprobar ese resultado para no presentar como persistida una operación fallida.
+- openAuditDriveModal() inicia cada apertura con allFiles vacío, cursor null, complete false y contadores locales en cero. Ejecuta el ciclo de peticiones hasta complete:true, pero no guarda resultados, cursor ni contadores en IndexedDB.
+- El cierre del modal únicamente oculta el elemento. Si la aplicación se cierra o la ejecución se interrumpe, el progreso recibido no queda recuperable desde el cliente. Al volver a abrir, el recorrido comienza desde cursor null.
+- El frontend no verifica la coherencia entre allFiles.length y res.totalAnalyzed, no comprueba batchAnalyzed y no detecta un cursor repetido sin avance. Tampoco presenta foldersVisited ni el tamaño de la pila de continuación.
+- openReplacedImagesModal() inicializa currentView en grid en cada apertura. La preferencia lista/cuadrícula no se conserva al cerrar el modal ni al reiniciar la aplicación.
+- index.html contiene el modal de auditoría con cierre, resumen y resultados, pero no dispone de controles internos para continuar un recorrido guardado o iniciar explícitamente uno nuevo cuando ya existe un resultado.
+- api-config.js enruta auditDriveImagesInCortes y saveUnusedImagesInventory a ADMIN. routeAction() transmite el payload y convierte las respuestas de error en excepciones. No se requiere modificar el mapa para la persistencia local.
+- ADMIN devuelve batchAnalyzed, totalAnalyzed, foldersVisited, complete, partial, files y cursor. El cursor contiene la pila de carpetas, tokens de iteradores, contadores y referenceCacheId.
+- El snapshot de referencias se almacena temporalmente en CacheService por 21,600 segundos. Si falta o expira, loadAuditDriveReferenceSnapshot() lanza un error explícito. Por tanto, persistir el cursor en IndexedDB no garantiza que el servidor aún pueda reanudarlo.
+- handleAuditDriveImagesInCortes() no contiene un límite total de 14 archivos. El límite por petición es 25 archivos y 20 subcarpetas descubiertas. La causa del resultado repetido de 14 archivos continúa sin determinar y no debe atribuirse a esta tarea.
+- La escritura de imágenes sin uso en Spreadsheet solo ocurre después de recibir complete:true; el frontend envía únicamente fileId y folderId y el backend vuelve a validar referencias, MIME, identidad y pertenencia al árbol Cortes.
+
+3. DECISIÓN DE IMPLEMENTACIÓN ACOTADA
+- Ampliar IndexedDB de forma aditiva con un object store para estado local administrativo, sin borrar ni migrar los stores existentes.
+- Persistir el último inventario, clasificación, cursor, estado completo/parcial, contadores, información de la raíz, resultado de guardado y marca temporal después de cada lote.
+- Incorporar controles para continuar el cursor guardado o iniciar una auditoría nueva. Si el cursor ya no está disponible en CacheService, conservar los resultados parciales, marcar la continuación como no disponible y permitir iniciar un recorrido nuevo.
+- Comprobar la coherencia entre el total acumulado del frontend y totalAnalyzed del backend, contrastar batchAnalyzed con el tamaño del lote y detener una continuación cuando el cursor se repita sin avance.
+- Persistir la preferencia de vista lista/cuadrícula del modal de inventario en IndexedDB.
+- No almacenar userId, SessionToken, credenciales ni datos de autenticación en el estado local.
+- No modificar Services/admin.js, algoritmos de iteradores, límites de lote, permisos, datos de Spreadsheet o archivos de Drive dentro de esta tarea.
+
+4. RIESGOS Y LÍMITES
+- El cursor de Drive puede expirar aunque el estado local permanezca disponible. La interfaz deberá conservar los resultados parciales y no afirmar que puede continuar si ADMIN rechaza el snapshot temporal.
+- IndexedDB puede no estar disponible, estar bloqueada por otra pestaña o agotar cuota. El cliente deberá informar si no puede persistir el progreso y no afirmar que quedó guardado.
+- El estado local puede contener metadatos antiguos de Drive; no habilita acciones administrativas. Las operaciones de movimiento, papelera y descarga continúan revalidándose en ADMIN.
+- No se ejecutó Apps Script, no se llamó al deployment ADMIN, no se consultó ni modificó Google Sheets/Drive y no se confirmó la causa real del conjunto de 14 archivos.
+================================================================================

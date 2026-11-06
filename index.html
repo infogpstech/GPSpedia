@@ -460,8 +460,12 @@
         <span class="info-close-btn" id="close-audit-drive-modal">&times;</span>
         <h2><i class="fa-brands fa-google-drive"></i> Auditoría de Imágenes en Carpeta «Cortes»</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
-            Exploración recursiva limitada estrictamente al árbol de la carpeta principal «Cortes».
+            Exploración recursiva limitada estrictamente al árbol de la carpeta principal «Cortes». El progreso y los resultados parciales se conservan localmente.
         </p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+            <button type="button" id="btn-audit-drive-start" class="btn btn-primary"><i class="fa-solid fa-rotate"></i> Iniciar nueva auditoría</button>
+            <button type="button" id="btn-audit-drive-resume" class="btn btn-secondary" hidden disabled><i class="fa-solid fa-play"></i> Continuar auditoría</button>
+        </div>
         <div id="audit-drive-summary" style="margin-bottom: 10px; font-size: 0.85rem; font-weight: 600;"></div>
         <div id="audit-drive-results-container" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px;">
             <div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol de Drive...</div>

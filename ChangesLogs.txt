@@ -2915,3 +2915,41 @@ DESCRIPCIÓN OBJETIVA
 - No se modificaron archivos de aplicación, endpoints, servicios Apps Script, configuraciones, hojas de cálculo ni archivos de Drive.
 - No se ejecutaron pruebas de navegador ni solicitudes HTTP al servicio ADMIN.
 ================================================================================
+
+
+================================================================================
+CAMBIO — PERSISTENCIA Y REANUDACIÓN DEL INVENTARIO DE DRIVE
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DE CÓDIGO
+- offline.js: DB_VERSION aumenta de 3 a 4; se crea el object store adminLocalState sin eliminar stores existentes. Se añade performAdminStateOp(), que espera el cierre de la transacción, y métodos saveDriveAuditState(), getDriveAuditState(), saveReplacedImagesView() y getReplacedImagesView().
+- ui.js: openAuditDriveModal() restaura el último inventario, conserva el progreso tras cada lote, habilita continuar/iniciar nueva auditoría, contrasta los contadores de ADMIN, detecta cursores repetidos sin avance y conserva resultados cuando el cursor temporal expiró. El registro pendiente de imágenes sin uso se reintenta idempotentemente al recuperar una auditoría completa.
+- ui.js: openReplacedImagesModal() recupera y persiste la preferencia de vista lista/cuadrícula.
+- index.html: se añadieron los controles «Iniciar nueva auditoría» y «Continuar auditoría» al modal de auditoría Drive.
+- No se modificaron Services/admin.js, api-config.js, style.css, service-worker.js, endpoints ni los servicios de Apps Script.
+
+RESPALDOS ORIGINALES (BLOB SHA)
+- ui.js: 5b159ebf275fe4328050e570db9511eabc1fb89f
+- offline.js: 207d3cde37448cc20c5523b2e231e09039aee9b3
+- index.html: 1fe4e09430709e21cec57a81ba7fc84cf5911cf8
+- style.css: c0ef889a1af30b0e63a3e259a56033448af63717
+- api-config.js: 7f997f9a0e9f3cbc90c259a736153bc446a04a24
+- Services/admin.js: cf2e887fd7ff5399064cbda86d0c3992d7f7b49d
+- Auditoría.txt: b28cf7caffb7f0db271620d18c26578753b68dee
+- Tareas.txt: 9c1a7f13610348bc59a56d240d3e4b1590de86a4
+- ChangesLogs.txt: dffed2460df6edc0d5d6a3190593187fea0cf835
+- checkpoint.md: a3e0eee34f53fea0268c4e67aa07b8374d992d6a
+
+VERIFICACIONES
+- Parseo estático de ui.js/offline.js correcto.
+- IDs añadidos al modal existen exactamente una vez.
+- Simulación IndexedDB confirma que el upgrade conserva los stores previos, guarda y recupera cursor/resultados y persiste la preferencia de vista.
+- Simulación de interfaz confirma auditoría nueva, reanudación, conservación ante expiración de cursor, recuperación de auditoría completa y reintento idempotente del registro de inventario.
+- No se ejecutaron pruebas funcionales en navegador/Apps Script real ni operaciones sobre Spreadsheet/Drive.
+
+DOCUMENTACIÓN
+- Auditoría.txt: se añadió el alcance, hallazgos, respaldos, decisión técnica y límites.
+- Tareas.txt: se registró el cierre estático de la subtarea y la validación funcional posterior.
+- ChangesLogs.txt: se registró el detalle objetivo de archivos y cambios.
+- checkpoint.md: se añadirán checkpoint inicial y final inmediatamente antes del único commit de esta tarea.
+================================================================================

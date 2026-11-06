@@ -2581,3 +2581,82 @@ Los registros documentales de esta tarea se incorporan en un único commit media
 SIGUIENTE ACCIÓN
 Realizar la verificación real de sesión, pestaña, rama/commit desplegado y respuesta ADMIN con la cuenta afectada. Solo después decidir si corresponde una corrección acotada de frontend, configuración o despliegue.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — PERSISTENCIA Y REANUDACIÓN DEL INVENTARIO DE DRIVE
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: 0d4c0d01ce7cb04550d80de79733214675e79e76
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA
+Implementar persistencia local de resultados y cursor del inventario de Drive, reanudación desde el último lote confirmado y persistencia de la preferencia lista/cuadrícula del modal de inventario e historial.
+
+ALCANCE PREVISTO
+- Auditar ui.js, offline.js, index.html, style.css, api-config.js y Services/admin.js, además de los documentos de trazabilidad.
+- Ampliar IndexedDB de forma aditiva, conservando los stores y datos existentes.
+- Persistir resultados, clasificación, cursor, estado, contadores y resultado del registro en Spreadsheet después de cada lote.
+- Incorporar controles para reanudar o iniciar una auditoría nueva y detectar discrepancias de contadores/cursor sin avance.
+- No guardar credenciales ni tokens de sesión.
+- No alterar el algoritmo de Drive, límites de lote, permisos, endpoints ni datos reales.
+
+RESTRICCIONES
+- Una sola tarea y un solo commit.
+- No desplegar servicios Apps Script ni publicar frontend durante esta etapa.
+- No ejecutar pruebas funcionales reales hasta completar todas las implementaciones y realizar el despliegue conjunto acordado.
+- La causa del resultado repetido de 14 archivos permanece sin determinar; no cambiar el algoritmo por inferencia.
+
+ESTADO INICIAL
+- Se confirmó el HEAD de trabajo y el HEAD de la rama base antes de comenzar.
+- No se han iniciado cambios de código al momento de este checkpoint inicial.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — PERSISTENCIA Y REANUDACIÓN DEL INVENTARIO DE DRIVE
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD base de la tarea: 0d4c0d01ce7cb04550d80de79733214675e79e76
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base verificado antes del commit: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+Implementación estática completada y pruebas aisladas satisfactorias. La validación funcional real queda pendiente para la etapa consolidada posterior a todas las implementaciones y al despliegue conjunto.
+
+ARCHIVOS MODIFICADOS
+- offline.js: DB_VERSION 4, nuevo object store adminLocalState, operaciones transaccionales y métodos de persistencia del estado de auditoría y de la vista del inventario.
+- ui.js: restauración y guardado por lote, controles de nueva auditoría/reanudación, validación de contadores, detección de cursor repetido, conservación ante expiración, reintento idempotente del registro de inventario y persistencia de la vista lista/cuadrícula.
+- index.html: controles internos de continuar/iniciar auditoría.
+- Auditoría.txt: hallazgos, alcance, decisiones, respaldos y límites.
+- Tareas.txt: cierre de la subtarea y pruebas funcionales pendientes.
+- ChangesLogs.txt: detalle objetivo de archivos y modificaciones.
+- checkpoint.md: checkpoint inicial y final.
+
+RESPALDOS EXACTOS DE CÓDIGO
+- ui.js original: 5b159ebf275fe4328050e570db9511eabc1fb89f
+- offline.js original: 207d3cde37448cc20c5523b2e231e09039aee9b3
+- index.html original: 1fe4e09430709e21cec57a81ba7fc84cf5911cf8
+
+VERIFICACIONES
+- Parseo estático de ui.js y offline.js correcto.
+- Reconstrucción inversa de los cambios confirma que ui.js, offline.js e index.html contienen únicamente las modificaciones previstas.
+- La ampliación IndexedDB conserva los stores anteriores y sus datos en la simulación de migración.
+- Guardado/lectura simulados de resultados, cursor y preferencia de vista correctos; no se almacena SessionToken.
+- Simulación de interfaz: recorrido de dos lotes, recuperación sin reiniciar, continuación desde cursor, expiración del cursor con conservación de resultados, reintento del registro pendiente y no repetición cuando el inventario ya está confirmado.
+- Se verificó que los IDs HTML nuevos aparecen una sola vez.
+- No se ejecutó navegador real, Apps Script, HTTP al deployment, Spreadsheet o Drive.
+
+LÍMITES Y PENDIENTES
+- No se desplegó ningún servicio ni se publicó frontend.
+- No se realizaron operaciones sobre datos reales.
+- La causa raíz del resultado de 14 archivos continúa no determinada.
+- La matriz funcional real se ejecutará después de completar las demás implementaciones.
+- La revisión de integridad y los trabajos de revisión posteriores se mantienen para después de la etapa de pruebas funcionales, según la secuencia indicada por el usuario.
+
+PUBLICACIÓN
+Este checkpoint es el último paso documental previo al commit único de la tarea. El commit se generará mediante Git Database API con el HEAD inicial como único padre, un solo árbol que incluya todos los blobs finales y actualización condicionada exclusiva de GPSpedia2.2.5_work usando force:false y expected_sha igual al HEAD inicial. La rama base GPSpedia2.2.5 debe permanecer sin cambios.
+================================================================================

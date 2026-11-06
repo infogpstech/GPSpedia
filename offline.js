@@ -5,7 +5,7 @@
 // - Provide a clean API for offline data access.
 
 const DB_NAME = 'GPSpedia_DB';
-const DB_VERSION = 3; // Incremented for Phase 2 robustness and Validation Cache
+const DB_VERSION = 4; // Añade persistencia local del inventario administrativo.
 
 let dbPromise = null;
 
@@ -70,6 +70,11 @@ export async function initDB() {
             if (!dbInstance.objectStoreNames.contains('validationCache')) {
                 dbInstance.createObjectStore('validationCache', { keyPath: 'vehicleId' });
             }
+
+            // Administrative local state: resumable Drive audit and inventory view preference.
+            if (!dbInstance.objectStoreNames.contains('adminLocalState')) {
+                dbInstance.createObjectStore('adminLocalState', { keyPath: 'key' });
+            }
         };
     });
     return dbPromise;
@@ -100,6 +105,83 @@ async function performOp(storeName, mode, callback) {
         console.error(`Database operation failed on ${storeName}:`, err);
         return null;
     }
+}
+
+// --- ADMINISTRATIVE LOCAL STATE ---
+
+const ADMIN_LOCAL_STATE_STORE = 'adminLocalState';
+const DRIVE_AUDIT_STATE_KEY = 'driveAudit:last';
+const REPLACED_IMAGES_VIEW_KEY = 'replacedImages:view';
+
+async function performAdminStateOp(mode, callback) {
+    try {
+        const database = await initDB();
+        if (!database) throw new Error("Could not initialize IndexedDB");
+
+        return await new Promise((resolve, reject) => {
+            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], mode);
+            const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
+            let requestResult;
+
+            transaction.oncomplete = () => resolve(requestResult);
+            transaction.onerror = () => reject(transaction.error || new Error("IndexedDB transaction failed"));
+            transaction.onabort = () => reject(transaction.error || new Error("IndexedDB transaction aborted"));
+
+            const request = callback(store);
+            request.onsuccess = () => { requestResult = request.result; };
+            request.onerror = () => reject(request.error || new Error("IndexedDB request failed"));
+        });
+    } catch (error) {
+        console.error("Administrative IndexedDB operation failed:", error);
+        return null;
+    }
+}
+
+/**
+ * Guarda el último estado de auditoría sin incluir credenciales ni tokens de sesión.
+ * El cursor de Drive puede expirar en el servidor; la copia local conserva los resultados.
+ */
+export async function saveDriveAuditState(state) {
+    if (!state || typeof state !== 'object' || !Array.isArray(state.files)) return null;
+    const entry = {
+        key: DRIVE_AUDIT_STATE_KEY,
+        files: state.files,
+        cursor: state.cursor || null,
+        complete: state.complete === true,
+        status: String(state.status || 'partial'),
+        totalAnalyzed: Math.max(0, Number(state.totalAnalyzed) || 0),
+        foldersVisited: Math.max(0, Number(state.foldersVisited) || 0),
+        batches: Math.max(0, Number(state.batches) || 0),
+        lastBatchAnalyzed: Math.max(0, Number(state.lastBatchAnalyzed) || 0),
+        unverifiableReferences: Math.max(0, Number(state.unverifiableReferences) || 0),
+        rootFolderName: String(state.rootFolderName || ''),
+        rootFolderId: String(state.rootFolderId || ''),
+        resumeUnavailable: state.resumeUnavailable === true,
+        inventoryStatus: String(state.inventoryStatus || ''),
+        inventoryMessage: String(state.inventoryMessage || ''),
+        lastError: String(state.lastError || ''),
+        updatedAt: Date.now()
+    };
+    const result = await performAdminStateOp('readwrite', store => store.put(entry));
+    return result === null ? null : DRIVE_AUDIT_STATE_KEY;
+}
+
+export async function getDriveAuditState() {
+    const entry = await performAdminStateOp('readonly', store => store.get(DRIVE_AUDIT_STATE_KEY));
+    if (!entry || entry.key !== DRIVE_AUDIT_STATE_KEY || !Array.isArray(entry.files)) return null;
+    return entry;
+}
+
+export async function saveReplacedImagesView(view) {
+    if (view !== 'grid' && view !== 'list') return null;
+    const entry = { key: REPLACED_IMAGES_VIEW_KEY, value: view, updatedAt: Date.now() };
+    const result = await performAdminStateOp('readwrite', store => store.put(entry));
+    return result === null ? null : view;
+}
+
+export async function getReplacedImagesView() {
+    const entry = await performAdminStateOp('readonly', store => store.get(REPLACED_IMAGES_VIEW_KEY));
+    return entry && (entry.value === 'grid' || entry.value === 'list') ? entry.value : 'grid';
 }
 
 // --- CATALOG PERSISTENCE ---

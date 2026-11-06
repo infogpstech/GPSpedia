@@ -34,6 +34,7 @@ export const IMG_SIZE_LARGE = 1600;  // Lightbox / High Resolution
 
 // Variables de control para el Modo Edición In-Modal
 let inEditMode = false;
+let isDriveAuditRunning = false;
 let originalItemBackup = null;
 let editedItemBuffer = null;
 let dropdownOptions = null;
@@ -3835,7 +3836,8 @@ export async function openReplacedImagesModal() {
     const lightboxClose = document.getElementById('replaced-image-lightbox-close');
 
     let cachedReplaced = [];
-    let currentView = 'grid';
+    let currentView = await offline.getReplacedImagesView();
+    currentView = currentView === 'list' ? 'list' : 'grid';
     let folders = [];
     let lightboxKeyHandler = null;
 
@@ -4098,10 +4100,11 @@ export async function openReplacedImagesModal() {
         });
     };
 
-    const setView = (view) => {
+    const setView = async (view) => {
         currentView = view;
         if (listViewBtn) listViewBtn.setAttribute('aria-pressed', String(view === 'list'));
         if (gridViewBtn) gridViewBtn.setAttribute('aria-pressed', String(view === 'grid'));
+        await offline.saveReplacedImagesView(view);
         renderList(filterInput ? filterInput.value : '');
     };
 
@@ -4133,7 +4136,7 @@ export async function openReplacedImagesModal() {
     };
 
     if (lightbox) lightbox.style.display = 'none';
-    setView(currentView);
+    await setView(currentView);
     await loadFolders();
     await loadData();
 }
@@ -4147,53 +4150,69 @@ export async function openAuditDriveModal() {
     modal.style.display = 'flex';
 
     const closeBtn = document.getElementById('close-audit-drive-modal');
-    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
-
     const summaryEl = document.getElementById('audit-drive-summary');
     const container = document.getElementById('audit-drive-results-container');
     const auditButton = document.getElementById('btn-admin-audit-drive-images');
-    const allFiles = [];
-    let cursor = null;
-    let complete = false;
-    let unverifiableReferences = 0;
+    const startButton = document.getElementById('btn-audit-drive-start');
+    const resumeButton = document.getElementById('btn-audit-drive-resume');
+    if (!summaryEl || !container) return;
+    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
 
     summaryEl.innerHTML = `
         <div style="background:var(--card-bg); padding:10px; border-radius:6px; border:1px solid var(--border-color); display:flex; gap:15px; flex-wrap:wrap;">
             <span>📁 <strong>Carpeta raíz:</strong> <span id="audit-root-name">Cortes</span> (<code id="audit-root-id"></code>)</span>
             <span>📊 <strong>Total analizados:</strong> <span id="audit-total-count">0</span></span>
+            <span>📂 <strong>Carpetas recorridas:</strong> <span id="audit-folder-count">0</span></span>
+            <span>🔁 <strong>Lotes recibidos:</strong> <span id="audit-batch-count">0</span></span>
+            <span>⏳ <strong>Carpetas en pila de continuación:</strong> <span id="audit-pending-folder-count">0</span></span>
             <span style="color:#28a745;">✅ <strong>En uso:</strong> <span id="audit-in-use-count">0</span></span>
             <span style="color:#007bff;">🕒 <strong>Históricas:</strong> <span id="audit-historical-count">0</span></span>
             <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> <span id="audit-unused-count">0</span></span>
             <span style="color:#dc3545;">❓ <strong>No verificables:</strong> <span id="audit-unverified-count">0</span></span>
             <span><strong>Referencias no interpretables:</strong> <span id="audit-unknown-references">0</span></span>
-            <span id="audit-status" style="font-weight:600;">Iniciando auditoría por lotes...</span>
+            <span id="audit-status" style="font-weight:600;">Recuperando el estado local...</span>
         </div>
     `;
-    container.innerHTML = '';
+
     const auditStatusEl = document.getElementById('audit-status');
     const auditTotalEl = document.getElementById('audit-total-count');
     const auditRootNameEl = document.getElementById('audit-root-name');
     const auditRootIdEl = document.getElementById('audit-root-id');
-    if (auditButton) auditButton.disabled = true;
+    const auditFolderCountEl = document.getElementById('audit-folder-count');
+    const auditBatchCountEl = document.getElementById('audit-batch-count');
+    const auditPendingFolderCountEl = document.getElementById('audit-pending-folder-count');
+    const allFiles = [];
+    let cursor = null;
+    let complete = false;
+    let totalAnalyzed = 0;
+    let foldersVisited = 0;
+    let batches = 0;
+    let lastBatchAnalyzed = 0;
+    let unverifiableReferences = 0;
+    let rootFolderName = 'Cortes';
+    let rootFolderId = '';
+    let resumeUnavailable = false;
+    let inventoryStatus = '';
+    let inventoryMessage = '';
+    let savedState = null;
+    let isRunning = false;
 
     const appendFiles = (files) => {
         files.forEach(file => {
             const row = document.createElement('div');
             row.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px; border:1px solid var(--border-color); border-radius:6px; font-size:0.8rem; background:var(--card-bg);";
-
             const info = document.createElement('div');
             info.style.cssText = "min-width:0; flex:1;";
             const name = document.createElement('div');
             name.style.cssText = "font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
             name.textContent = file.fileName || 'Archivo sin nombre';
-
             const details = document.createElement('div');
             details.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
-            details.textContent = `${file.folderPath || ''} | ${((Number(file.size) || 0) / 1024).toFixed(1)} KB | ${file.lastUpdated || 'Fecha no disponible'}`;
-
+            details.textContent = (file.folderPath || '') + ' | ' +
+                ((Number(file.size) || 0) / 1024).toFixed(1) + ' KB | ' +
+                (file.lastUpdated || 'Fecha no disponible');
             info.appendChild(name);
             info.appendChild(details);
-
             const badge = document.createElement('span');
             badge.style.cssText = "padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;";
             const badgeColors = {
@@ -4205,56 +4224,86 @@ export async function openAuditDriveModal() {
             badge.style.backgroundColor = badgeColors[file.classification] || '#6c757d';
             badge.style.color = '#fff';
             badge.textContent = file.classification || 'No verificable';
-
             row.appendChild(info);
             row.appendChild(badge);
             container.appendChild(row);
         });
     };
 
-    try {
-        do {
-            const res = await routeAction('auditDriveImagesInCortes', {
-                ...getDeveloperSessionPayload(),
-                cursor: cursor
-            });
+    const updateSummary = (statusText) => {
+        const counts = {
+            inUse: allFiles.filter(file => file.classification === 'En uso').length,
+            historical: allFiles.filter(file => file.classification === 'Histórica').length,
+            unused: allFiles.filter(file => file.classification === 'Sin uso detectado').length,
+            unverified: allFiles.filter(file => file.classification === 'No verificable').length
+        };
+        if (auditTotalEl) auditTotalEl.textContent = String(totalAnalyzed);
+        if (auditFolderCountEl) auditFolderCountEl.textContent = String(foldersVisited);
+        if (auditBatchCountEl) auditBatchCountEl.textContent = String(batches);
+        if (auditPendingFolderCountEl) {
+            auditPendingFolderCountEl.textContent = String(cursor && Array.isArray(cursor.stack) ? cursor.stack.length : 0);
+        }
+        if (auditRootNameEl) auditRootNameEl.textContent = rootFolderName;
+        if (auditRootIdEl) auditRootIdEl.textContent = rootFolderId;
+        const setText = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = String(value);
+        };
+        setText('audit-in-use-count', counts.inUse);
+        setText('audit-historical-count', counts.historical);
+        setText('audit-unused-count', counts.unused);
+        setText('audit-unverified-count', counts.unverified);
+        setText('audit-unknown-references', unverifiableReferences);
+        if (auditStatusEl) auditStatusEl.textContent = statusText || '';
+    };
 
-            if (!res || res.status !== 'success' || !Array.isArray(res.files)) {
-                throw new Error(res && res.message ? res.message : 'Respuesta inválida del servicio de auditoría.');
-            }
+    const persistState = async (status, extra = {}) => {
+        const state = {
+            files: allFiles,
+            cursor: cursor,
+            complete: complete,
+            status: status,
+            totalAnalyzed: totalAnalyzed,
+            foldersVisited: foldersVisited,
+            batches: batches,
+            lastBatchAnalyzed: lastBatchAnalyzed,
+            unverifiableReferences: unverifiableReferences,
+            rootFolderName: rootFolderName,
+            rootFolderId: rootFolderId,
+            resumeUnavailable: resumeUnavailable,
+            inventoryStatus: inventoryStatus,
+            inventoryMessage: inventoryMessage,
+            lastError: ''
+        };
+        Object.assign(state, extra);
+        const saved = await offline.saveDriveAuditState(state);
+        if (!saved) throw new Error('IndexedDB no confirmó la persistencia del progreso de auditoría.');
+    };
 
-            allFiles.push(...res.files);
-            appendFiles(res.files);
-            complete = res.complete === true;
-            cursor = res.cursor || null;
-            unverifiableReferences = Math.max(unverifiableReferences, Number(res.unverifiableReferenceCount) || 0);
+    const saveUnusedInventory = async (alreadyRunning = false) => {
+        if (inventoryStatus === 'saved') return;
+        if (isDriveAuditRunning && !alreadyRunning) return;
 
-            auditTotalEl.textContent = String(allFiles.length);
-            auditStatusEl.textContent = `Auditoría en progreso: ${allFiles.length} archivos analizados. Estado: ${complete ? 'completa' : 'parcial, continuando'}.`;
-            if (res.rootFolderName) auditRootNameEl.textContent = res.rootFolderName;
-            if (res.rootFolderId) auditRootIdEl.textContent = res.rootFolderId;
+        const ownsRun = !alreadyRunning;
+        if (ownsRun) {
+            isRunning = true;
+            isDriveAuditRunning = true;
+            updateControls();
+        }
 
-            if (!complete && !cursor) {
-                throw new Error('El servicio devolvió un resultado parcial sin cursor de continuación.');
-            }
-        } while (!complete);
+        inventoryStatus = 'pending';
+        inventoryMessage = 'Auditoría completa. Registrando las imágenes sin uso en la Spreadsheet...';
+        let localPersistenceWarning = '';
+        try {
+            await persistState('complete');
+        } catch (storageError) {
+            localPersistenceWarning = ' No se pudo guardar localmente el estado previo al registro: ' + storageError.message;
+        }
 
-        const inUseCount = allFiles.filter(file => file.classification === 'En uso').length;
-        const histCount = allFiles.filter(file => file.classification === 'Histórica').length;
-        const unusedCount = allFiles.filter(file => file.classification === 'Sin uso detectado').length;
-        const unverifiedCount = allFiles.filter(file => file.classification === 'No verificable').length;
-
-        auditTotalEl.textContent = String(allFiles.length);
-        document.getElementById('audit-in-use-count').textContent = String(inUseCount);
-        document.getElementById('audit-historical-count').textContent = String(histCount);
-        document.getElementById('audit-unused-count').textContent = String(unusedCount);
-        document.getElementById('audit-unverified-count').textContent = String(unverifiedCount);
-        document.getElementById('audit-unknown-references').textContent = String(unverifiableReferences);
-        auditStatusEl.textContent = 'Auditoría COMPLETA del árbol «Cortes».';
         const unusedFiles = allFiles
             .filter(file => file.classification === 'Sin uso detectado')
             .map(file => ({ fileId: file.fileId, folderId: file.folderId }));
-        auditStatusEl.textContent = `Auditoría completa. Registrando ${unusedFiles.length} imágenes sin uso en la Spreadsheet...`;
+
         try {
             const inventoryResult = await routeAction('saveUnusedImagesInventory', {
                 ...getDeveloperSessionPayload(),
@@ -4265,18 +4314,212 @@ export async function openAuditDriveModal() {
                     ? inventoryResult.message
                     : 'El servicio no confirmó la actualización del inventario.');
             }
-            auditStatusEl.textContent = `Auditoría COMPLETA. ${inventoryResult.savedCount} imágenes sin uso quedaron registradas en la Spreadsheet.`;
+            inventoryStatus = 'saved';
+            inventoryMessage = 'Auditoría COMPLETA. ' + inventoryResult.savedCount +
+                ' imágenes sin uso quedaron registradas en la Spreadsheet.';
         } catch (inventoryError) {
-            auditStatusEl.textContent = `Auditoría COMPLETA, pero no se pudo actualizar el inventario de la Spreadsheet: ${inventoryError.message}`;
+            inventoryStatus = 'error';
+            inventoryMessage = 'Auditoría COMPLETA, pero no se pudo actualizar el inventario de la Spreadsheet: ' +
+                inventoryError.message;
         }
-        if (allFiles.length === 0) {
-            container.textContent = 'No se encontraron archivos en la carpeta analizada.';
+
+        try {
+            await persistState('complete');
+        } catch (storageError) {
+            localPersistenceWarning += ' No se pudo confirmar el guardado local del resultado de inventario: ' +
+                storageError.message;
         }
-    } catch (err) {
-        auditTotalEl.textContent = String(allFiles.length);
-        auditStatusEl.textContent = `AUDITORÍA PARCIAL: se analizaron ${allFiles.length} archivos, pero no se confirmó la cobertura completa. Ejecuta nuevamente la auditoría para iniciar un recorrido nuevo. Detalle: ${err.message}`;
-    } finally {
-        if (auditButton) auditButton.disabled = false;
+        updateSummary(inventoryMessage + localPersistenceWarning);
+
+        if (ownsRun) {
+            isRunning = false;
+            isDriveAuditRunning = false;
+            updateControls();
+        }
+    };
+
+    const updateControls = () => {
+        const hasResumableCursor = !complete && !!cursor && !resumeUnavailable;
+        if (startButton) startButton.disabled = isRunning || isDriveAuditRunning;
+        if (resumeButton) {
+            resumeButton.hidden = !hasResumableCursor;
+            resumeButton.disabled = isRunning || isDriveAuditRunning || !hasResumableCursor;
+        }
+        if (auditButton) auditButton.disabled = isRunning || isDriveAuditRunning;
+    };
+
+    const restoreState = (state) => {
+        allFiles.length = 0;
+        if (Array.isArray(state.files)) allFiles.push(...state.files);
+        cursor = state.cursor || null;
+        complete = state.complete === true;
+        totalAnalyzed = Math.max(0, Number(state.totalAnalyzed) || allFiles.length);
+        foldersVisited = Math.max(0, Number(state.foldersVisited) || 0);
+        batches = Math.max(0, Number(state.batches) || 0);
+        lastBatchAnalyzed = Math.max(0, Number(state.lastBatchAnalyzed) || 0);
+        unverifiableReferences = Math.max(0, Number(state.unverifiableReferences) || 0);
+        rootFolderName = state.rootFolderName || 'Cortes';
+        rootFolderId = state.rootFolderId || '';
+        resumeUnavailable = state.resumeUnavailable === true;
+        inventoryStatus = state.inventoryStatus || '';
+        inventoryMessage = state.inventoryMessage || '';
+        savedState = state;
+        container.innerHTML = '';
+        appendFiles(allFiles);
+        const previousError = state.lastError ? ' Último error: ' + state.lastError : '';
+        updateSummary(
+            complete
+                ? (inventoryMessage || 'Auditoría completa recuperada desde el almacenamiento local.')
+                : (resumeUnavailable
+                    ? 'Se conservaron los resultados parciales, pero el cursor ya no está disponible. Inicia una auditoría nueva para completar el recorrido.' + previousError
+                    : (cursor
+                        ? 'Auditoría parcial recuperada. Puedes continuar desde el cursor guardado.' + previousError
+                        : 'Hay resultados parciales guardados, pero no existe un cursor para continuarlos. Inicia una auditoría nueva.' + previousError))
+        );
+    };
+
+    const runAudit = async (resume) => {
+        if (isRunning || isDriveAuditRunning) return;
+        isRunning = true;
+        isDriveAuditRunning = true;
+        updateControls();
+
+        try {
+            if (resume) {
+                if (!cursor || resumeUnavailable) throw new Error('No existe un cursor disponible para reanudar la auditoría.');
+                complete = false;
+            } else {
+                allFiles.length = 0;
+                container.innerHTML = '';
+                cursor = null;
+                complete = false;
+                totalAnalyzed = 0;
+                foldersVisited = 0;
+                batches = 0;
+                lastBatchAnalyzed = 0;
+                unverifiableReferences = 0;
+                rootFolderName = 'Cortes';
+                rootFolderId = '';
+                resumeUnavailable = false;
+                inventoryStatus = '';
+                inventoryMessage = '';
+                savedState = null;
+                updateSummary('Preparando una auditoría nueva...');
+                await persistState('running');
+            }
+
+            const seenCursorSignatures = new Set();
+            if (cursor) seenCursorSignatures.add(JSON.stringify(cursor));
+
+            while (!complete) {
+                const previousTotal = totalAnalyzed;
+                const previousFolders = foldersVisited;
+                const response = await routeAction('auditDriveImagesInCortes', {
+                    ...getDeveloperSessionPayload(),
+                    cursor: cursor
+                });
+
+                if (!response || response.status !== 'success' || !Array.isArray(response.files)) {
+                    throw new Error(response && response.message ? response.message : 'Respuesta inválida del servicio de auditoría.');
+                }
+
+                const batchSize = response.files.length;
+                const expectedTotal = allFiles.length + batchSize;
+                const reportedBatch = Number(response.batchAnalyzed);
+                const reportedTotal = Number(response.totalAnalyzed);
+                if (Number.isFinite(reportedBatch) && reportedBatch !== batchSize) {
+                    throw new Error('El contador batchAnalyzed no coincide con la cantidad de archivos recibidos.');
+                }
+                if (!Number.isFinite(reportedTotal) || reportedTotal !== expectedTotal) {
+                    throw new Error('El total acumulado informado por ADMIN (' + response.totalAnalyzed +
+                        ') no coincide con los resultados recibidos (' + expectedTotal + ').');
+                }
+
+                allFiles.push(...response.files);
+                batches++;
+                lastBatchAnalyzed = batchSize;
+                totalAnalyzed = reportedTotal;
+                foldersVisited = Math.max(0, Number(response.foldersVisited) || 0);
+                unverifiableReferences = Math.max(unverifiableReferences, Number(response.unverifiableReferenceCount) || 0);
+                if (response.rootFolderName) rootFolderName = response.rootFolderName;
+                if (response.rootFolderId) rootFolderId = response.rootFolderId;
+                complete = response.complete === true;
+                cursor = response.cursor || null;
+
+                if (complete && cursor) {
+                    throw new Error('ADMIN marcó la auditoría como completa, pero también devolvió un cursor pendiente.');
+                }
+                if (!complete && !cursor) {
+                    throw new Error('El servicio devolvió un resultado parcial sin cursor de continuación.');
+                }
+                if (!complete) {
+                    const signature = JSON.stringify(cursor);
+                    if (seenCursorSignatures.has(signature) &&
+                        totalAnalyzed === previousTotal && foldersVisited <= previousFolders) {
+                        throw new Error('El cursor de Drive se repitió sin aumentar los archivos analizados ni las carpetas recorridas.');
+                    }
+                    seenCursorSignatures.add(signature);
+                }
+
+                appendFiles(response.files);
+                updateSummary(complete
+                    ? 'Recorrido del árbol finalizado. Verificando el inventario...'
+                    : 'Auditoría en progreso: ' + totalAnalyzed + ' archivos analizados; lote actual: ' + batchSize + '.');
+
+                await persistState(complete ? 'complete' : 'running');
+            }
+
+            if (allFiles.length === 0) {
+                container.textContent = 'No se encontraron archivos en la carpeta analizada.';
+            }
+            await saveUnusedInventory(true);
+        } catch (error) {
+            const errorMessage = error && error.message ? error.message : String(error);
+            const cursorExpired = !complete &&
+                /estado temporal.*(expir|disponible)|falta un bloque|estado temporal.*incompleto|inicia una auditoría nueva/i.test(errorMessage);
+            resumeUnavailable = cursorExpired;
+            let statusMessage = complete
+                ? 'AUDITORÍA COMPLETA: se conservaron ' + allFiles.length +
+                    ' resultados, pero ocurrió un error al guardar el estado local. Detalle: ' + errorMessage
+                : (cursorExpired
+                    ? 'AUDITORÍA PARCIAL: el cursor temporal de ADMIN expiró o dejó de estar disponible. Se conservaron los resultados locales; inicia una auditoría nueva para completar el árbol. Detalle: ' + errorMessage
+                    : 'AUDITORÍA PARCIAL: se conservaron ' + allFiles.length + ' resultados. ' +
+                        (cursor ? 'Puedes intentar continuar con el cursor guardado. ' : 'No hay cursor de continuación disponible. ') +
+                        'Detalle: ' + errorMessage);
+            try {
+                await persistState(complete ? 'complete' : 'partial', { lastError: errorMessage });
+            } catch (persistenceError) {
+                statusMessage += ' Además, no se pudo guardar el último estado local: ' + persistenceError.message;
+            }
+            updateSummary(statusMessage);
+        } finally {
+            isRunning = false;
+            isDriveAuditRunning = false;
+            updateControls();
+        }
+    };
+
+    if (startButton) startButton.onclick = () => runAudit(false);
+    if (resumeButton) resumeButton.onclick = () => runAudit(true);
+
+    try {
+        savedState = await offline.getDriveAuditState();
+    } catch (storageError) {
+        savedState = null;
+    }
+
+    if (savedState) {
+        restoreState(savedState);
+        updateControls();
+        if (isDriveAuditRunning) {
+            updateSummary('La auditoría continúa ejecutándose en esta sesión; no inicies otra solicitud.');
+        } else if (complete && inventoryStatus !== 'saved') {
+            await saveUnusedInventory(false);
+        }
+    } else {
+        container.innerHTML = '';
+        updateSummary('No existe un inventario local guardado. Iniciando auditoría nueva...');
+        await runAudit(false);
     }
 }
 

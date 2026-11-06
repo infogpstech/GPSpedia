@@ -4138,3 +4138,38 @@ Estado: DIAGNÓSTICO ESTÁTICO COMPLETADO; CAUSA REAL DE LA CUENTA Y DEL DESPLIE
 SIGUIENTE ACCIÓN PENDIENTE
 Verificar con la cuenta afectada, sin compartir credenciales ni tokens: el valor/propiedad Privilegios en la sesión vigente; que se seleccione «Imágenes y Drive» después de abrir el panel; la rama/commit realmente publicado; y el resultado de la petición getReplacedImages. Con esos datos se podrá distinguir entre sesión local antigua, rol no autorizado, panel/pestaña no localizada, endpoint/despliegue desactualizado, error de petición o inventario vacío. No ampliar permisos ni modificar la autenticación/backend por inferencia.
 ================================================================================
+
+
+================================================================================
+CIERRE DE SUBTAREA — PERSISTENCIA Y REANUDACIÓN DEL INVENTARIO DE DRIVE
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FUNCIONAL CONSOLIDADA POSTERIOR AL DESPLIEGUE PENDIENTE.
+
+ALCANCE IMPLEMENTADO
+- IndexedDB se amplió de DB_VERSION 3 a 4 mediante la creación aditiva del object store adminLocalState. No se eliminan ni recrean los stores existentes.
+- Se añadieron métodos de lectura/escritura para conservar el último inventario de Drive, resultados por archivo, clasificación, cursor, contadores, estado completo/parcial, información de la raíz y resultado del registro en Spreadsheet.
+- La interfaz guarda el estado después de cada lote y permite recuperar resultados parciales al volver a abrir el modal.
+- Se añadieron controles para iniciar una auditoría nueva o continuar desde el cursor almacenado.
+- Se valida que batchAnalyzed coincida con el lote recibido y que totalAnalyzed coincida con el acumulado del frontend.
+- Se detecta un cursor repetido cuando no aumentan los archivos analizados ni las carpetas recorridas.
+- Si ADMIN informa que el snapshot temporal expiró o dejó de estar disponible, se conservan los resultados locales, se deshabilita la continuación y se permite iniciar una auditoría nueva.
+- Si la auditoría quedó completa pero el registro en Spreadsheet no se confirmó, el estado local conserva esa condición y el modal vuelve a intentar el registro idempotente al recuperar el resultado.
+- La preferencia de vista lista/cuadrícula del modal de inventario e historial se conserva en IndexedDB.
+
+SEGURIDAD Y LÍMITES
+- El estado local no almacena userId, SessionToken ni credenciales.
+- Los resultados locales son informativos; no autorizan movimientos, descargas ni operaciones de papelera. ADMIN mantiene las validaciones de sesión, referencias y pertenencia al árbol Cortes.
+- No se modificaron Services/admin.js, algoritmos de iteradores, límites de lote, endpoints, permisos, datos de Spreadsheet ni archivos de Drive.
+- La causa real del resultado repetido de 14 archivos continúa sin determinar; esta tarea mejora persistencia y diagnóstico, no afirma haber resuelto ese resultado.
+
+VERIFICACIONES AISLADAS
+- Parseo estático de ui.js y offline.js: correcto.
+- Migración simulada de IndexedDB: se creó adminLocalState y se conservaron los cinco stores anteriores y sus datos.
+- Prueba simulada de guardado/recuperación de resultados, cursor y clasificación; se verificó que SessionToken no se persiste.
+- Prueba de persistencia de vista lista/cuadrícula y rechazo de valores no admitidos.
+- Pruebas de interfaz simulada: recorrido nuevo de dos lotes, restauración sin volver a auditar, continuación desde cursor guardado, cursor expirado con conservación de resultados, reintento del registro pendiente en Spreadsheet y ausencia de reintento cuando ya se confirmó el guardado.
+- No se ejecutó navegador real ni Apps Script; no se consultaron ni modificaron Spreadsheet/Drive y no se desplegó ningún servicio.
+
+SIGUIENTE ETAPA
+Continuar con las demás implementaciones pendientes. La matriz de pruebas funcionales reales se ejecutará después de terminar todas las implementaciones y realizar el despliegue conjunto acordado.
+================================================================================
