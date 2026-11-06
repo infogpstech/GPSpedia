@@ -4567,3 +4567,76 @@ HEAD auditado: 4bc9ac19b81dd0a9cc38a21e2806973ba3bc5fb3
 - Se revisó estáticamente el código y sus llamadas; no se ejecutó Apps Script, no se inspeccionó ni modificó la Spreadsheet real y no se desplegaron servicios.
 - Las pruebas funcionales de creación idempotente de columnas, alta por WRITE/ADMIN, recuperación por opId, ordenamiento y visualización quedan pendientes del despliegue conjunto.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA COMPLEMENTARIA — ACCESO A INVENTARIO E HISTORIAL DE IMÁGENES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: d98011fac3201b3d46ed35f9b7c60ef01d3f6103
+Tipo: auditoría estática de interfaz, sesión, eventos, enrutamiento y handlers ADMIN. Sin despliegue, navegador ni solicitudes a Apps Script.
+
+1. ARCHIVOS Y FUNCIONES REVISADOS
+- index.html: #dev-tools-btn, estructura de #dev-tools-modal, radios de pestañas, sección #dev-tab-images, botón #btn-admin-view-replaced-images y #replaced-images-modal.
+- style.css: reglas de visibilidad de .dev-tab-panel según el radio seleccionado y reglas de navegación de pestañas.
+- ui.js: setupModal(), openDevTools(), initAdminPanelListeners(), getDeveloperSessionPayload(), openReplacedImagesModal(), showApp().
+- auth.js: handleLoginSuccess(), checkSession() y login().
+- Services/Auth.js: construcción del objeto user retornado por handleLogin().
+- main.js: listener de #dev-tools-btn.
+- api-config.js: API_ENDPOINTS.ADMIN, ACTION_TO_SERVICE_MAP y routeAction().
+- Services/admin.js: assertDeveloperSession(), doPost(), acción getReplacedImages y handleGetReplacedImages().
+- Se revisaron los registros previos relacionados con AUD-IMG-08, el diagnóstico de acceso y las modificaciones de inventario e historial.
+
+2. EVIDENCIA DE VISIBILIDAD Y NAVEGACIÓN
+- index.html, línea 46: #dev-tools-btn inicia con style="display: none".
+- ui.js, líneas 5142-5149: showApp(user) obtiene únicamente user.Privilegios, normaliza acentos, espacios y mayúsculas/minúsculas y muestra el enlace solo cuando el valor normalizado es "desarrollador". En esta versión no utiliza user.Rol como alternativa.
+- Services/Auth.js, líneas 356-364: el objeto user devuelto por login incluye explícitamente la propiedad Privilegios tomada de la fila Users, además de ID y SessionToken.
+- auth.js, líneas 14-17 y 223-228: handleLoginSuccess() guarda el objeto recibido, lo asigna a currentUser y llama showApp(). En checkSession(), líneas 174-190, se rehidrata directamente el objeto guardado en localStorage y se llama showApp() antes de completar la validación de sesión en segundo plano. La respuesta de validateSession no reemplaza ni actualiza el objeto de usuario almacenado.
+- Consecuencia verificable en código: si la sesión local persistida no contiene Privilegios, o contiene un valor diferente de Desarrollador, el enlace permanece oculto aunque exista otra propiedad de rol. Un login nuevo recibe Privilegios desde AUTH; una sesión antigua rehidratada conserva sus propiedades hasta que se renueve.
+- main.js, líneas 634-641: el listener del enlace llama ui.openDevTools().
+- ui.js, líneas 3035-3042: openDevTools() abre #dev-tools-modal e invoca initAdminPanelListeners().
+- ui.js, líneas 3789-3795: initAdminPanelListeners() enlaza #btn-admin-view-replaced-images con openReplacedImagesModal(). La función retorna anticipadamente si no existe #dev-console-log; el ID sí está declarado exactamente una vez en index.html.
+- index.html: #dev-tools-modal contiene cinco pestañas. dev-tab-diagnostics aparece checked inicialmente; #btn-admin-view-replaced-images está dentro de .dev-panel-images, accesible al seleccionar la pestaña «Imágenes y Drive», no en la vista inicial de Diagnóstico.
+- style.css, líneas 2452-2466: los paneles se ocultan por defecto y se muestra el panel asociado al radio checked. Por tanto, abrir el panel de desarrollador sin seleccionar «Imágenes y Drive» no muestra el botón de historial.
+- Verificación estática de DOM: cada uno de los IDs dev-tools-btn, dev-tools-modal, dev-console-log, dev-tab-images, btn-admin-view-replaced-images, replaced-images-modal, close-replaced-images-modal y replaced-images-list-container aparece exactamente una vez en index.html.
+
+3. EVIDENCIA DEL EVENTO Y APERTURA DEL MODAL
+- ui.js, líneas 3816 en adelante: openReplacedImagesModal() obtiene #replaced-images-modal y establece display:flex antes de iniciar las consultas.
+- La función carga carpetas mediante getCortesImageFolders y registros mediante getReplacedImages. Ambas consultas están dentro de bloques try/catch independientes; los errores se escriben en los estados visibles del modal.
+- ui.js, líneas 3802-3810: getDeveloperSessionPayload() obtiene ID y SessionToken desde currentUser y lanza un error si falta cualquiera de ellos.
+- La carga vacía no impide abrir el modal: el renderizador muestra «No se encontraron imágenes registradas». Un fallo de red o autorización tampoco debería ocultar el botón ni impedir que se intente abrir el modal; se presenta como error dentro del contenido.
+- index.html declara el modal y sus controles. Los identificadores usados por la función fueron contrastados con el DOM y no se encontraron IDs inexistentes en los elementos principales auditados.
+
+4. EVIDENCIA DE API Y AUTORIZACIÓN
+- api-config.js, líneas 10-15 y 32: API_ENDPOINTS.ADMIN contiene el endpoint configurado para esta rama y getReplacedImages está asignada al servicio ADMIN.
+- routeAction() envía POST con JSON { action, payload }, comprueba response.ok, analiza JSON y convierte status:error en excepción.
+- ui.js adjunta userId y sessionToken mediante getDeveloperSessionPayload() al solicitar getReplacedImages.
+- Services/admin.js, líneas 27-54: assertDeveloperSession() exige userId y sessionToken, comprueba coincidencia con ActiveSessions, obtiene el rol desde Users y exige Desarrollador.
+- Services/admin.js, router doPost(): aplica assertDeveloperSession() a todas las acciones salvo ping y enruta getReplacedImages hacia handleGetReplacedImages().
+- handleGetReplacedImages(), aproximadamente líneas 2755-2818: consulta o crea la hoja Imagenes_Reemplazadas, prepara las columnas de inventario y devuelve data:[] si la hoja no contiene filas de datos. La respuesta vacía no impide abrir el modal.
+- No se realizó una petición al endpoint configurado; por tanto, no se confirma su disponibilidad, permisos efectivos, versión desplegada, contenido de Spreadsheet ni existencia de registros.
+
+5. DIFERENCIA ENTRE RAMA DE TRABAJO Y RAMA BASE
+Se compararon los blobs actuales de GPSpedia2.2.5_work y GPSpedia2.2.5:
+- index.html: distinto.
+- ui.js: distinto.
+- auth.js: distinto.
+- api-config.js: distinto.
+- Services/admin.js: distinto.
+- main.js: igual.
+En la rama base, showApp() compara user.Privilegios directamente con "Desarrollador" sin normalización; openReplacedImagesModal() solicita getReplacedImages sin adjuntar userId/sessionToken; api-config.js apunta a otro endpoint ADMIN; y Services/admin.js no contiene el mismo control assertDeveloperSession() presente en la rama de trabajo.
+La configuración de publicación de GitHub Pages y el código realmente servido al usuario no pudieron verificarse mediante esta auditoría. No se asume que el despliegue corresponda a la rama de trabajo ni a la base.
+
+6. DIAGNÓSTICO Y CLASIFICACIÓN DE CAUSAS
+- Opción oculta por rol: mecanismo confirmado en código. El enlace solo aparece si user.Privilegios normalizado es "desarrollador". Falta comprobar el valor de la sesión real del usuario.
+- Opción no localizada dentro del panel: mecanismo confirmado en código. El botón está en la pestaña «Imágenes y Drive»; el panel abre inicialmente en «Diagnóstico».
+- Evento no conectado o modal inexistente: no se encontró evidencia estática de esta condición. Los IDs existen una vez y el listener está registrado en el flujo de apertura del panel.
+- Error de petición/servicio: posible, pero no comprobado. El modal se abre antes de consultar y debe mostrar el error en su contenido.
+- Respuesta vacía: posible, pero no comprobada. handleGetReplacedImages() devuelve un arreglo vacío cuando no hay registros; eso no explica que falte el botón.
+- Diferencia de despliegue: riesgo material confirmado entre los blobs de la rama de trabajo y la rama base; no se conoce cuál de ellas está sirviendo la plataforma.
+
+7. CONCLUSIÓN Y LÍMITES
+La ruta completa existe estáticamente en GPSpedia2.2.5_work. Los dos puntos de interfaz que pueden explicar que el usuario no encuentre la opción son: (a) el enlace de desarrollador permanece oculto cuando la sesión no expone Privilegios con valor Desarrollador; y (b) el botón de inventario está dentro de la pestaña «Imágenes y Drive», no en la pestaña inicial. Si el botón se ve y se pulsa, los errores de sesión, endpoint o red deberían presentarse dentro del modal, mientras que una hoja sin filas produce una lista vacía.
+No es posible confirmar cuál de estos casos afecta a la cuenta real sin inspeccionar, con autorización, la propiedad Privilegios de la sesión vigente, el navegador/console y la respuesta HTTP del endpoint ADMIN. Tampoco se confirmó la fuente de publicación activa. No se modificó código, no se hicieron llamadas HTTP a Apps Script, no se consultaron ni alteraron hojas reales o archivos de Drive y no se desplegó ningún servicio.
+================================================================================

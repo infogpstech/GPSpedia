@@ -4118,3 +4118,23 @@ Estado: IMPLEMENTACIÓN ESTÁTICA INTEGRADA; PRUEBAS FUNCIONALES PENDIENTES DEL 
 - Pendiente: verificar en Spreadsheet de prueba la creación de columnas faltantes y la no duplicación; probar altas de vehículo existente/nuevo por WRITE y ADMIN, recuperación por opId, ordenamiento de cortes y visualización/impresión.
 - No se ejecutó Apps Script, no se hicieron escrituras reales y no se desplegó ningún servicio.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — DIAGNÓSTICO DE ACCESO AL INVENTARIO E HISTORIAL DE IMÁGENES
+Fecha: 2026-11-06 | Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: d98011fac3201b3d46ed35f9b7c60ef01d3f6103
+Estado: DIAGNÓSTICO ESTÁTICO COMPLETADO; CAUSA REAL DE LA CUENTA Y DEL DESPLIEGUE PENDIENTE DE VERIFICACIÓN.
+
+- Se confirmó que el enlace #dev-tools-btn permanece oculto salvo que user.Privilegios, normalizado, sea "desarrollador".
+- Services/Auth.js devuelve Privilegios en el objeto user de un login nuevo. auth.js también rehidrata la sesión guardada en localStorage y no sustituye el objeto por datos nuevos cuando validateSession responde válido; una sesión antigua sin Privilegios puede conservar el acceso oculto.
+- El panel de desarrollador abre inicialmente en Diagnóstico. El botón #btn-admin-view-replaced-images está dentro de la pestaña «Imágenes y Drive».
+- Se confirmó la conexión estática del enlace, apertura del panel, listener del botón y modal. Los IDs principales revisados existen una sola vez en index.html y #dev-console-log existe, por lo que no se observó una interrupción estática por el guard de inicialización.
+- openReplacedImagesModal() abre el modal antes de consultar. Errores de sesión/red/servicio se presentan dentro del modal; una hoja sin filas produce una lista vacía. Estos casos no explican por sí mismos la ausencia del botón.
+- getReplacedImages se enruta a ADMIN, envía userId/sessionToken y el backend valida sesión activa y rol Desarrollador.
+- Los archivos relevantes de GPSpedia2.2.5_work difieren de GPSpedia2.2.5. La rama base usa una condición de rol más estricta, otro endpoint ADMIN y un contrato frontend/backend anterior. No se confirmó qué rama o revisión está desplegada.
+- No se modificó código ni se realizaron peticiones a Apps Script, pruebas en navegador, consultas a Spreadsheet o cambios en Drive.
+
+SIGUIENTE ACCIÓN PENDIENTE
+Verificar con la cuenta afectada, sin compartir credenciales ni tokens: el valor/propiedad Privilegios en la sesión vigente; que se seleccione «Imágenes y Drive» después de abrir el panel; la rama/commit realmente publicado; y el resultado de la petición getReplacedImages. Con esos datos se podrá distinguir entre sesión local antigua, rol no autorizado, panel/pestaña no localizada, endpoint/despliegue desactualizado, error de petición o inventario vacío. No ampliar permisos ni modificar la autenticación/backend por inferencia.
+================================================================================

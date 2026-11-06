@@ -2893,3 +2893,25 @@ DESCRIPCIÓN OBJETIVA
 - No se modificaron los encabezados ni las posiciones de las columnas preexistentes.
 - No se desplegaron servicios ni se ejecutaron pruebas funcionales externas.
 ================================================================================
+
+
+================================================================================
+CAMBIO DOCUMENTAL — DIAGNÓSTICO DE ACCESO AL INVENTARIO E HISTORIAL DE IMÁGENES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: se agregó una auditoría complementaria del acceso al panel, visibilidad por rol, navegación de pestañas, listeners, modal, sesión, enrutamiento ADMIN y diferencias con GPSpedia2.2.5.
+- Tareas.txt: se agregó el resultado del diagnóstico estático y la verificación real que continúa pendiente.
+- checkpoint.md: se registraron el checkpoint inicial y el checkpoint final de esta tarea.
+
+RESPALDOS DE LOS DOCUMENTOS ANTES DE EDITAR (BLOB SHA)
+- Auditoría.txt: 73cd5077723c2bc8323cde2c89fe077c704dfd4e
+- Tareas.txt: 24919b29043629a2357f37aa7b709aee39f38be4
+- ChangesLogs.txt: 94976e07688d5fdbed7cfc3e5a0b83c4115b0be9
+- checkpoint.md: e8e949a2cbe53575332294cefdae386eb8c71905
+
+DESCRIPCIÓN OBJETIVA
+- Se añadieron registros al final de los documentos históricos; no se eliminaron ni reemplazaron entradas previas.
+- No se modificaron archivos de aplicación, endpoints, servicios Apps Script, configuraciones, hojas de cálculo ni archivos de Drive.
+- No se ejecutaron pruebas de navegador ni solicitudes HTTP al servicio ADMIN.
+================================================================================

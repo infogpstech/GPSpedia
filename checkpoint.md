@@ -2486,3 +2486,98 @@ Un solo commit mediante Git Database API, con el HEAD inicial como único padre,
 SIGUIENTE TAREA
 Continuar con la siguiente implementación pendiente de GPSpedia. Mantener el despliegue conjunto de servicios para después de completar todas las implementaciones; ejecutar la matriz funcional tras ese despliegue y realizar los trabajos de revisión después de las pruebas funcionales.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — DIAGNÓSTICO DEL HISTORIAL DE IMÁGENES REEMPLAZADAS
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo vigente: GPSpedia2.2.5_work
+HEAD inicial confirmado: d98011fac3201b3d46ed35f9b7c60ef01d3f6103
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA Y ALCANCE
+Investigar por qué la opción para consultar y gestionar las imágenes reemplazadas no aparece o no es accesible desde la interfaz.
+La fase actual es exclusivamente diagnóstica: revisar visibilidad del acceso, rol/permisos, apertura del modal, eventos, llamadas al endpoint, respuestas del servicio y errores de carga.
+No modificar código durante la auditoría. Registrar evidencias en Auditoría.txt y actualizar Tareas.txt.
+
+ARCHIVOS/FUNCIONALIDADES PREVISTOS PARA REVISIÓN
+- index.html y style.css: controles, visibilidad, permisos y estructura del modal de desarrollador.
+- ui.js, main.js y navigation.js: renderizado, apertura del modal, eventos y rutas de interfaz.
+- Services/admin.js: endpoints administrativos relacionados con auditoría e historial de imágenes.
+- Services/read.txt y README.md: contratos/configuración documentados cuando sean pertinentes.
+- Auditoría.txt, Tareas.txt y ChangesLogs.txt: historial de hallazgos y estado previo.
+- checkpoint.md: continuidad de la tarea.
+
+ESTADO INICIAL OBSERVADO
+- La rama GPSpedia2.2.5_work se encuentra en d98011fac3201b3d46ed35f9b7c60ef01d3f6103.
+- La rama base GPSpedia2.2.5 se encuentra en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- La implementación previa relacionada con inventario de imágenes no se considera validada por su mera presencia; se inspeccionará el código actual.
+- No se ha iniciado auditoría de código en esta tarea.
+- No se ha desplegado ningún servicio ni se realizarán llamadas que modifiquen Drive/Spreadsheet.
+
+RESTRICCIONES Y RIESGOS
+- No realizar cambios de código durante la fase diagnóstica.
+- No ejecutar comandos de gestión que creen, muevan, eliminen o alteren archivos de Drive.
+- Distinguir explícitamente: acceso oculto por rol, control no conectado, petición fallida, respuesta vacía, error de renderizado y diferencia entre rama y despliegue.
+- El contexto de trabajo contiene una referencia de rama base anterior que no coincide con el flujo Git Database API y la rama activa ya verificados. Se conserva el flujo vigente GPSpedia2.2.5_work; no se crea ni modifica otra rama.
+- La auditoría y documentación se integrarán en un único commit al terminar la tarea.
+
+SIGUIENTE ACCIÓN
+Completar auditoría estática de las funciones y dependencias involucradas, sin modificar código.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — DIAGNÓSTICO DE ACCESO AL INVENTARIO E HISTORIAL DE IMÁGENES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD anterior a la tarea: d98011fac3201b3d46ed35f9b7c60ef01d3f6103
+Rama base protegida: GPSpedia2.2.5
+HEAD de la rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+Diagnóstico estático completado. La causa concreta que afecta a la cuenta y al despliegue sigue pendiente de verificación real; por ello la tarea queda parcialmente completada, no funcionalmente cerrada.
+
+ARCHIVOS MODIFICADOS
+- Auditoría.txt
+- Tareas.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+RESULTADO
+- Se confirmó que la visibilidad de #dev-tools-btn depende de user.Privilegios normalizado igual a "desarrollador".
+- Se confirmó que el panel inicia en Diagnóstico y que el botón del historial está dentro de «Imágenes y Drive».
+- Se confirmó estáticamente el enlace de eventos, la apertura del modal, la carga de carpetas y registros, el payload de sesión y la validación de rol en ADMIN.
+- Se distinguieron los efectos de una sesión local antigua, rol distinto, pestaña no seleccionada, error de petición, lista vacía y despliegue desde una rama diferente.
+- Se compararon los archivos relevantes entre GPSpedia2.2.5_work y GPSpedia2.2.5 y se documentaron las diferencias.
+
+VERIFICACIONES REALIZADAS
+- Los ocho IDs principales revisados aparecen exactamente una vez en index.html.
+- #dev-console-log existe, por lo que el guard de initAdminPanelListeners() no se activa por ausencia de ese elemento en el DOM actual.
+- auth.js conserva la sesión local y la rehidrata antes de validar el token; Services/Auth.js incluye Privilegios en el objeto de login nuevo.
+- getReplacedImages está mapeada a ADMIN y el frontend adjunta userId/sessionToken.
+- handleGetReplacedImages() devuelve data vacía si no existen registros; openReplacedImagesModal() muestra errores dentro del modal sin ocultar el botón.
+- No se encontró un ID de DOM faltante en la ruta estática revisada.
+
+VALIDACIONES PENDIENTES
+- Confirmar con la cuenta afectada la propiedad Privilegios de la sesión actual, sin compartir credenciales ni tokens.
+- Confirmar que el usuario abre «Imágenes y Drive» dentro del panel.
+- Confirmar qué rama/commit alimenta el frontend desplegado y qué revisión de ADMIN está publicada.
+- Obtener el resultado real de getReplacedImages para distinguir error de autorización/red de una respuesta vacía.
+- No se ejecutaron pruebas de navegador, peticiones HTTP, pruebas Apps Script ni operaciones sobre Spreadsheet/Drive.
+
+RIESGOS Y DECISIÓN
+- No se modificó código ni se ampliaron permisos: la respuesta AUTH ya devuelve Privilegios en un login nuevo y ADMIN valida el rol de forma independiente.
+- Cambiar el control de rol o la autenticación sin comprobar la sesión real podría ampliar o alterar acceso administrativo sin evidencia.
+- Los cambios de frontend, api-config.js y ADMIN difieren entre la rama de trabajo y la base. La fuente de publicación real no quedó identificada.
+- No se desplegó ningún servicio y no se hicieron cambios en hojas o archivos de Drive.
+
+PUBLICACIÓN
+Los registros documentales de esta tarea se incorporan en un único commit mediante Git Database API, con el HEAD anterior como único padre, una sola creación de árbol y actualización condicionada de GPSpedia2.2.5_work mediante force:false y expected_sha igual al HEAD anterior. La rama base permanece intacta. El commit que contiene este checkpoint quedará identificable en el historial de Git.
+
+SIGUIENTE ACCIÓN
+Realizar la verificación real de sesión, pestaña, rama/commit desplegado y respuesta ADMIN con la cuenta afectada. Solo después decidir si corresponde una corrección acotada de frontend, configuración o despliegue.
+================================================================================
