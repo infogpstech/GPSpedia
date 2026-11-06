@@ -2313,3 +2313,86 @@ PENDIENTE
 ESTADO
 Implementación estática preparada para un único commit con todos los archivos de la tarea, padre igual al HEAD inicial y actualización condicionada exclusiva de GPSpedia2.2.5_work. La rama base no debe cambiar.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — SERIALIZACIÓN DEL CONTROL DE SESIONES AUTH
+
+**Fecha:** 2026-11-06
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD inicial confirmado:** 0666c1d189136dbad66c5c6523f8419b8d447002
+**Rama base:** GPSpedia2.2.5
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## Alcance
+Auditar y corregir la concurrencia del bloque de gestión de sesiones de AUTH en las fuentes productiva y de prueba. No desplegar Apps Script ni ejecutar pruebas funcionales externas; esas pruebas se realizarán después del despliegue conjunto autorizado.
+
+## Estado inicial observado
+- Services/Auth.js y Services/Test/Auth.js contienen los límites de sesiones confirmados y eliminan como máximo una sesión antigua.
+- La lectura de ActiveSessions, selección de fila, eliminación, actualización de Users.SessionToken y appendRow() no están dentro de una sección crítica común.
+- Dos solicitudes simultáneas pueden leer el mismo estado y superar temporalmente el límite.
+- beginLoginAttempt(), resetLoginAttempts(), rollbackLoginAttempt() y logToSheet() utilizan LockService.getScriptLock().
+- logToSheet() adquiere el mismo bloqueo; llamarlo dentro de la sección crítica produciría espera reentrante y posible timeout.
+- Las fuentes AUTH productiva y de prueba coinciden funcionalmente al normalizar SPREADSHEET_ID.
+
+## Riesgos y restricciones
+- Serializar únicamente el bloque de lectura/modificación/escritura de sesiones.
+- No llamar logToSheet() mientras el bloqueo esté adquirido.
+- Conservar los límites, IDs de Spreadsheet, esquema, endpoints y demás comportamiento existente.
+- No modificar USERS, frontend, ADMIN, datos reales ni deployments.
+- Mantener un solo commit mediante Git Database API.
+
+## Fase
+Checkpoint inicial registrado en el historial documental de esta tarea. Auditoría estática completada antes de la edición.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — SERIALIZACIÓN DEL CONTROL DE SESIONES AUTH
+
+**Fecha:** 2026-11-06
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD antes de la tarea:** 0666c1d189136dbad66c5c6523f8419b8d447002
+**Rama base:** GPSpedia2.2.5
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## Estado final
+**Implementación estática completada en AUTH productivo y de prueba. Pruebas funcionales pendientes del despliegue conjunto.**
+
+## Archivos incluidos
+- Services/Auth.js
+- Services/Test/Auth.js
+- Auditoría.txt
+- Tareas.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+## Implementación
+- La sección crítica cubre lectura y conteo de ActiveSessions, selección/eliminación de la sesión antigua, actualización de Users.SessionToken y appendRow() de la nueva sesión.
+- Se reutiliza ScriptLock, compartido con los contadores de intentos y logToSheet().
+- Todas las llamadas a logToSheet() relacionadas con el bloque se ejecutan fuera del bloqueo.
+- finally libera el bloqueo cuando se adquiere, incluso ante errores.
+- El error de deleteRow() impide crear la nueva sesión.
+- Se mantienen los IDs de Spreadsheet y la lógica de roles de cada proyecto.
+
+## Verificaciones estáticas
+- Las dos fuentes se compararon completas después de normalizar SPREADSHEET_ID y coinciden.
+- El bloque de sesión se reemplazó de forma equivalente en ambas fuentes.
+- Se verificó que logToSheet() no se invoque dentro de la sección protegida.
+- Se verificó la presencia de finally para liberar el bloqueo.
+- No se ejecutó Apps Script, HTTP, navegador ni operaciones reales de Sheets.
+
+## Pendientes y límites
+- Prueba funcional de dos o más logins concurrentes del mismo usuario.
+- Pruebas de cada límite por rol, cierre único de sesión y fallo de deleteRow().
+- Confirmar que usuarios distintos no se bloqueen por más tiempo del necesario.
+- La atomicidad de Spreadsheet no está garantizada ante fallos parciales de escritura; el bloqueo serializa ejecuciones concurrentes del mismo proyecto, pero no convierte varias operaciones de Sheets en una transacción.
+
+## Publicación
+Un solo commit con los seis archivos de esta tarea. Actualizar exclusivamente GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD confirmado. Verificar padre, tree, archivos y que GPSpedia2.2.5 conserve d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+## Siguiente tarea
+Auditar y corregir el contrato cutData entre ui.js openAddCutModal() y los handlers addOrUpdateCut() de WRITE/ADMIN.
+================================================================================

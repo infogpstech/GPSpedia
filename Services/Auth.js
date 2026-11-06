@@ -281,46 +281,76 @@ function handleLogin(payload) {
         const userId = foundUserRow[COLS_USERS.ID - 1];
         const sessionLimit = SESSION_LIMITS[userRole] ?? 1;
 
-        // Manage sessions
-        const activeSessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
-        const sessionsData = activeSessionsSheet.getDataRange().getValues();
-        sessionsData.shift(); // Remove header
+        // Manage sessions atomically. The script lock is shared with login-attempt and log operations.
+        // Do not invoke logToSheet() while this lock is held.
+        const sessionLock = LockService.getScriptLock();
+        let sessionLockAcquired = false;
+        let oldestSession = null;
+        let sessionCount = 0;
+        let sessionToken = '';
+        let sessionOperationError = null;
+        let sessionDeleteFailed = false;
 
-        const userSessionRows = sessionsData
-            .map((row, index) => ({
-                userId: row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1],
-                rowIndex: index + 2 // +2 because sheet is 1-indexed and we removed the header
-            }))
-            .filter(session => String(session.userId).trim() == String(userId).trim());
+        try {
+            sessionLock.waitLock(10000);
+            sessionLockAcquired = true;
 
-        logToSheet('DEBUG', `Found ${userSessionRows.length} sessions for user ${userId}. Limit is ${sessionLimit}.`);
+            const activeSessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+            if (!activeSessionsSheet) throw new Error("Hoja ActiveSessions no encontrada.");
 
-        if (userSessionRows.length >= sessionLimit) {
-            // La fila con menor rowIndex corresponde a la sesión más antigua registrada.
-            userSessionRows.sort((a, b) => a.rowIndex - b.rowIndex);
-            const oldestSession = userSessionRows[0];
+            const sessionsData = activeSessionsSheet.getDataRange().getValues();
+            sessionsData.shift(); // Remove header
 
-            logToSheet('INFO', `Session limit reached. Removing the oldest session.`, { oldestSession });
+            const userSessionRows = sessionsData
+                .map((row, index) => ({
+                    userId: row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1],
+                    rowIndex: index + 2
+                }))
+                .filter(session => String(session.userId).trim() == String(userId).trim());
 
-            try {
-                activeSessionsSheet.deleteRow(oldestSession.rowIndex);
-            } catch (e) {
-                logToSheet('ERROR', `Failed to delete oldest session at row ${oldestSession.rowIndex}`, { error: e.message });
-                throw new Error('No fue posible cerrar la sesión más antigua. No se creará una sesión nueva.');
+            sessionCount = userSessionRows.length;
+
+            if (sessionCount >= sessionLimit) {
+                userSessionRows.sort((left, right) => left.rowIndex - right.rowIndex);
+                oldestSession = userSessionRows[0];
+
+                try {
+                    activeSessionsSheet.deleteRow(oldestSession.rowIndex);
+                } catch (deleteError) {
+                    sessionDeleteFailed = true;
+                    throw deleteError;
+                }
             }
+
+            sessionToken = Utilities.getUuid();
+            userSheet.getRange(foundUserIndex + 2, COLS_USERS.SessionToken).setValue(sessionToken);
+
+            const newSessionRow = [];
+            newSessionRow[COLS_ACTIVE_SESSIONS.ID_Usuario - 1] = userId;
+            newSessionRow[COLS_ACTIVE_SESSIONS.Usuario - 1] = username;
+            newSessionRow[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] = sessionToken;
+            newSessionRow[COLS_ACTIVE_SESSIONS.date - 1] = new Date().toISOString();
+            activeSessionsSheet.appendRow(newSessionRow);
+        } catch (sessionError) {
+            sessionOperationError = sessionError;
+        } finally {
+            if (sessionLockAcquired) sessionLock.releaseLock();
         }
 
-        // Always generate a new token for a new session. This implicitly invalidates the old one.
-        const sessionToken = Utilities.getUuid();
-        userSheet.getRange(foundUserIndex + 2, COLS_USERS.SessionToken).setValue(sessionToken);
+        // Logging happens after release so logToSheet() can acquire the same ScriptLock.
+        if (sessionOperationError) {
+            if (sessionDeleteFailed && oldestSession) {
+                logToSheet('ERROR', `Failed to delete oldest session at row ${oldestSession.rowIndex}`, { error: sessionOperationError.message });
+                throw new Error('No fue posible cerrar la sesión más antigua. No se creará una sesión nueva.');
+            }
+            logToSheet('ERROR', 'Failed to manage active sessions.', { error: sessionOperationError.message });
+            throw sessionOperationError;
+        }
 
-        // Escribir en la hoja de sesiones activas usando el nuevo schema
-        const newSessionRow = [];
-        newSessionRow[COLS_ACTIVE_SESSIONS.ID_Usuario - 1] = userId;
-        newSessionRow[COLS_ACTIVE_SESSIONS.Usuario - 1] = username;
-        newSessionRow[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] = sessionToken;
-        newSessionRow[COLS_ACTIVE_SESSIONS.date - 1] = new Date().toISOString();
-        activeSessionsSheet.appendRow(newSessionRow);
+        logToSheet('DEBUG', `Found ${sessionCount} sessions for user ${userId}. Limit is ${sessionLimit}.`);
+        if (oldestSession) {
+            logToSheet('INFO', 'Session limit reached. Removed the oldest session.', { oldestSession });
+        }
 
         const user = {
             ID: userId,

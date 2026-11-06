@@ -2846,3 +2846,14 @@ Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
 - Services/Test/Auth.js: misma lógica; se conserva el ID de Spreadsheet de pruebas.
 - Sin cambios a USERS, endpoints, api-config.js, esquema o IDs.
 ================================================================================
+
+
+================================================================================
+CAMBIO — SERIALIZACIÓN DE SESIONES AUTH
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+- Services/Auth.js: se protege con LockService.getScriptLock() la secuencia de lectura, conteo, eliminación, actualización de token y appendRow() de ActiveSessions.
+- Services/Auth.js: se difiere el registro de resultados y errores hasta después de liberar el bloqueo para evitar reentrada de logToSheet().
+- Services/Test/Auth.js: se replica la misma sección crítica conservando el ID de Spreadsheet de pruebas.
+- Se conserva el comportamiento de límites y selección de la sesión antigua por menor rowIndex.
+- No se modifican endpoints, USERS, frontend, esquema ni deployments.
+================================================================================

@@ -4086,3 +4086,17 @@ Estado: PENDIENTE DE AUDITORÍA.
 - Revisar LockService y posibles bloqueos reentrantes por logToSheet().
 - Evaluar si la antigüedad debe basarse en date o en el orden físico de filas.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — SERIALIZACIÓN DEL CONTROL DE SESIONES AUTH
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA INTEGRADA; PRUEBAS FUNCIONALES POST-DESPLIEGUE PENDIENTES.
+- Services/Auth.js y Services/Test/Auth.js: LockService.getScriptLock() protege la lectura de ActiveSessions, conteo por usuario, eliminación de la sesión más antigua, actualización de Users.SessionToken y appendRow() de la nueva sesión.
+- El bloqueo se libera en finally ante éxito o error.
+- Las llamadas a logToSheet() se ejecutan después de liberar el bloqueo para evitar espera reentrante sobre el mismo ScriptLock.
+- Si falla deleteRow(), el flujo registra el error después de liberar el bloqueo y no crea la nueva sesión.
+- Se conservan los límites por rol, el criterio de antigüedad por menor rowIndex, IDs de Spreadsheet y esquema.
+- No se desplegó Apps Script ni se ejecutaron pruebas funcionales externas.
+- Pendiente: comprobar concurrencia real, límites por rol, fallo de eliminación y ausencia de sesiones excedentes en el entorno de prueba después del despliegue único de AUTH.
+================================================================================

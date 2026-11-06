@@ -4500,3 +4500,34 @@ ALCANCE:
 - Solo Services/Auth.js y Services/Test/Auth.js más documentación obligatoria.
 - Sin cambios a USERS, endpoints, api-config.js, IDs, columnas, esquema, hojas reales ni despliegues.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — CONCURRENCIA EN LA GESTIÓN DE SESIONES AUTH
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+HEAD auditado: 0666c1d189136dbad66c5c6523f8419b8d447002
+
+1. ARCHIVOS Y FUNCIONES REVISADOS
+- Services/Auth.js y Services/Test/Auth.js: configuración de roles y límites, beginLoginAttempt(), resetLoginAttempts(), rollbackLoginAttempt(), logToSheet(), handleLogin() y handleValidateSession().
+- Se revisaron las llamadas a LockService, waitLock(), releaseLock(), getDataRange(), deleteRow(), setValue() y appendRow().
+
+2. HALLAZGOS
+- El bloque de sesiones de handleLogin() consultaba ActiveSessions y calculaba las sesiones del usuario sin un bloqueo que cubriera toda la secuencia.
+- La eliminación de la sesión antigua, actualización de Users.SessionToken y appendRow() tampoco estaban serializadas entre solicitudes de login.
+- Dos solicitudes concurrentes podían leer el mismo conteo y ambas crear sesiones, excediendo el límite.
+- beginLoginAttempt(), resetLoginAttempts(), rollbackLoginAttempt() y logToSheet() utilizan LockService.getScriptLock().
+- logToSheet() espera el mismo bloqueo y lo libera al terminar. Invocarlo dentro del nuevo bloque protegido provocaría una espera por el bloqueo ya retenido.
+- Las fuentes productiva y de prueba coinciden en la lógica auditada; su diferencia de configuración se limita al ID de Spreadsheet.
+- El criterio existente de antigüedad por menor rowIndex se conserva; no se sustituye por el valor de date.
+
+3. DECISIÓN TÉCNICA
+- Reutilizar LockService.getScriptLock() para proteger lectura, selección, eliminación, actualización del token y anexado de la nueva sesión.
+- Mantener fuera de la sección crítica todas las llamadas a logToSheet().
+- Liberar el bloqueo mediante finally, incluso si falla la lectura o alguna escritura.
+- Si falla deleteRow(), no continuar con la creación de una sesión nueva.
+- Aplicar la misma lógica a AUTH productivo y AUTH de prueba, preservando sus IDs.
+
+4. LÍMITES
+- Auditoría estática únicamente; no se ejecutó Apps Script ni se simularon solicitudes concurrentes contra Google Sheets.
+- La prueba funcional de concurrencia y límites queda pendiente para después del despliegue conjunto.
+================================================================================
