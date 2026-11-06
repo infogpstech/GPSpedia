@@ -3102,3 +3102,100 @@ El único commit de esta tarea se generará mediante Git Database API:
 SIGUIENTE TAREA
 Continuar con «Limpieza de registros — selectores y acción única» (sección 4 de la ampliación del modal). No desplegar ni iniciar la matriz funcional consolidada hasta completar todas las implementaciones pendientes.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — LIMPIEZA DE REGISTROS: SELECTORES Y ACCIÓN ÚNICA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: abc7102fc7a64c7c20ba687fb94d773f00bbbfe0
+Rama base protegida: GPSpedia2.2.5
+HEAD de la rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA Y ALCANCE
+Sustituir los controles independientes de limpieza por casillas para «Actividad de usuarios» y «Registro de Logs», con un único botón que ejecute exclusivamente las operaciones seleccionadas.
+
+ESTADO OBSERVADO
+- index.html presenta dos tarjetas y botones independientes. Actividad de usuarios conserva el selector clear-logs-option-select con las políticas week y all; Logs ofrece la purga selectiva de registros confidenciales.
+- ui.js importa clearActivityLogs y clearSensitiveLogs y asigna handlers onclick separados.
+- api-config.js enruta ambas acciones a FEEDBACK y dispone de wrappers que transmiten payloads de sesión.
+- Services/feedback.js valida sesión y privilegio Desarrollador y conserva handlers independientes para ambas fuentes.
+- No se ha desplegado frontend ni servicios y no se han ejecutado limpiezas reales.
+- La tarea anterior quedó en el commit abc7102; la rama base continúa en d9acc68.
+
+ARCHIVOS PREVISTOS
+- index.html, ui.js y style.css para la interfaz.
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md para trazabilidad.
+- api-config.js y Services/feedback.js se auditan como dependencias; no se modificarán sin necesidad demostrable.
+
+RIESGOS Y DEPENDENCIAS
+- ActividadUsuario mantiene la política de conservar 7 días o limpiar todos los registros sin borrar encabezados.
+- Logs mantiene la política de eliminar solo filas que coincidan con patrones confidenciales.
+- Ambas acciones deben permanecer separadas en backend y ejecutarse solo cuando se seleccione su casilla.
+- La validación de sesión/rol del servidor no debe sustituirse por controles de interfaz.
+- No ejecutar operaciones reales sobre Google Sheets ni desplegar.
+
+FASE
+Inicio documentado antes de la auditoría detallada. El reconocimiento de requisitos y controles se realizó sin modificar archivos.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — LIMPIEZA DE REGISTROS: SELECTORES Y ACCIÓN ÚNICA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial de la tarea: abc7102fc7a64c7c20ba687fb94d773f00bbbfe0
+Rama base protegida: GPSpedia2.2.5
+HEAD de la rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+Implementación estática completada. La validación funcional real en navegador, Apps Script y Google Sheets queda pendiente de la fase consolidada posterior a las demás implementaciones y al despliegue conjunto autorizado. No se declara verificada ninguna limpieza real.
+
+ARCHIVOS DE CÓDIGO MODIFICADOS
+- index.html: una tarjeta con dos casillas, selector de retención y un único botón.
+- ui.js: un handler único, validación de selección, confirmación contextual, ejecución secuencial y resultados independientes.
+- style.css: estilos específicos y adaptación responsive.
+
+ARCHIVOS DOCUMENTALES MODIFICADOS
+- Auditoría.txt: auditoría inicial y Code Review.
+- ChangesLogs.txt: descripción objetiva de cambios.
+- Tareas.txt: registro de implementación y validaciones pendientes.
+- checkpoint.md: checkpoint inicial y este cierre.
+
+ARCHIVOS AUDITADOS SIN MODIFICAR
+- api-config.js: wrappers y enrutamiento FEEDBACK conservados.
+- Services/feedback.js: validación de sesión, permisos Desarrollador y handlers independientes conservados.
+
+VERIFICACIONES EJECUTADAS
+- Reconstrucción inversa exacta de index.html, ui.js y style.css al revertir únicamente los bloques intervenidos.
+- IDs HTML únicos; un único botón de ejecución y dos casillas identificables; botones anteriores retirados.
+- Verificación estática de que las acciones clearActivityLogs y clearSensitiveLogs se invocan solo dentro del handler único y según sus casillas.
+- Confirmación de que una selección vacía no produce llamadas al backend.
+- Sintaxis JavaScript de ui.js comprobada mediante parseo aislado.
+- Balance de llaves CSS comprobado.
+- api-config.js y Services/feedback.js auditados y sin cambios.
+
+VALIDACIONES NO REALIZADAS
+- No se ejecutó navegador real, PWA ni validación visual móvil/escritorio.
+- No se ejecutó Apps Script ni se realizaron llamadas HTTP al servicio FEEDBACK.
+- No se modificó ni limpió ninguna Spreadsheet real.
+- No se verificó concurrencia entre sesiones/dispositivos.
+- No se desplegó frontend ni servicios.
+
+RIESGOS Y PENDIENTES
+- El bloqueo contra doble ejecución solo opera desde esta interfaz; no incorpora exclusión mutua backend.
+- Los handlers actuales no llaman directamente a logUserActivity(); no se añadió una nueva escritura de auditoría porque la subtarea se limita a la unificación de interfaz.
+- Las políticas de ActividadUsuario y Logs permanecen separadas y sin ampliación.
+- La validación funcional real se realizará en la fase consolidada con autorización de despliegue.
+
+PUBLICACIÓN
+- Único commit por Git Database API, con parent_sha igual al HEAD inicial abc7102fc7a64c7c20ba687fb94d773f00bbbfe0.
+- Actualización exclusiva de GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD inicial.
+- GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- El SHA final quedará identificado en el historial Git después de su creación.
+
+SIGUIENTE TAREA
+Continuar con «Acciones de firmas VIN» (sección 5 de la ampliación del modal). No desplegar ni iniciar la matriz funcional consolidada hasta completar las implementaciones pendientes.
+================================================================================

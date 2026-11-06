@@ -3999,43 +3999,88 @@ ${elapsedSec}s
         };
     }
 
-    // Purgar exclusivamente la hoja ActividadUsuario.
-    const clearActivityBtn = document.getElementById('btn-admin-clear-activity-logs');
-    if (clearActivityBtn) {
-        clearActivityBtn.onclick = async () => {
-            const selectEl = document.getElementById('clear-logs-option-select');
-            const keepLastWeek = selectEl ? selectEl.value === 'week' : false;
-            const promptText = keepLastWeek
-                ? "¿Eliminar de ActividadUsuario los registros con más de una semana? Los registros recientes se conservarán."
-                : "¿Eliminar todos los registros de ActividadUsuario? La fila de encabezados se conservará.";
-            if (!confirm(promptText)) return;
-            try {
-                clearActivityBtn.disabled = true;
-                const result = await clearActivityLogs(keepLastWeek, getDeveloperSessionPayload());
-                log(`[EXITO] ${result.message}`);
-                mostrarNotificacion(result.message, 'success');
-            } catch (err) {
-                log(`[EXCEPCION] Error al purgar ActividadUsuario: ${err.message}`, false, true);
-            } finally {
-                clearActivityBtn.disabled = false;
-            }
-        };
-    }
+    // Ejecutar únicamente las limpiezas seleccionadas, manteniendo separados sus servicios.
+    const clearSelectedLogsBtn = document.getElementById('btn-admin-clear-selected-logs');
+    if (clearSelectedLogsBtn) {
+        clearSelectedLogsBtn.onclick = async () => {
+            const clearActivityCheckbox = document.getElementById('clear-activity-logs-checkbox');
+            const clearSensitiveCheckbox = document.getElementById('clear-sensitive-logs-checkbox');
+            const retentionSelect = document.getElementById('clear-logs-option-select');
+            const statusElement = document.getElementById('clear-selected-logs-status');
+            const clearActivitySelected = Boolean(clearActivityCheckbox && clearActivityCheckbox.checked);
+            const clearSensitiveSelected = Boolean(clearSensitiveCheckbox && clearSensitiveCheckbox.checked);
 
-    // Purgar únicamente los registros confidenciales de la hoja Logs.
-    const clearSensitiveLogsBtn = document.getElementById('btn-admin-clear-sensitive-logs');
-    if (clearSensitiveLogsBtn) {
-        clearSensitiveLogsBtn.onclick = async () => {
-            if (!confirm("¿Retirar de la hoja Logs únicamente los registros históricos que contienen datos confidenciales? Los demás registros y los encabezados se conservarán.")) return;
+            if (!clearActivitySelected && !clearSensitiveSelected) {
+                const message = "Selecciona al menos una fuente para ejecutar la limpieza.";
+                if (statusElement) statusElement.textContent = message;
+                log(`[ADVERTENCIA] ${message}`, true);
+                mostrarNotificacion(message, 'warning');
+                return;
+            }
+
+            const keepLastWeek = retentionSelect ? retentionSelect.value === 'week' : true;
+            const confirmationDetails = [];
+            if (clearActivitySelected) {
+                confirmationDetails.push(keepLastWeek
+                    ? "• Actividad de usuarios: eliminar únicamente registros con más de 7 días y conservar los últimos 7 días y los encabezados."
+                    : "• Actividad de usuarios: limpiar todos los registros de ActividadUsuario y conservar los encabezados.");
+            }
+            if (clearSensitiveSelected) {
+                confirmationDetails.push("• Registro de Logs: eliminar únicamente las filas que coincidan con los patrones de datos confidenciales definidos; conservar encabezados y demás registros.");
+            }
+
+            const confirmation = "Se ejecutarán exclusivamente estas operaciones:\n\n" +
+                confirmationDetails.join("\n") +
+                "\n\nCada fuente se procesará por separado. ¿Deseas continuar?";
+            if (!confirm(confirmation)) return;
+
+            const controls = [clearActivityCheckbox, clearSensitiveCheckbox, retentionSelect].filter(Boolean);
+            clearSelectedLogsBtn.disabled = true;
+            controls.forEach(control => { control.disabled = true; });
+
+            const outcomes = [];
             try {
-                clearSensitiveLogsBtn.disabled = true;
-                const result = await clearSensitiveLogs(getDeveloperSessionPayload());
-                log(`[EXITO] ${result.message}`);
-                mostrarNotificacion(result.message, 'success');
-            } catch (err) {
-                log(`[EXCEPCION] Error al purgar Logs: ${err.message}`, false, true);
+                if (clearActivitySelected) {
+                    try {
+                        const result = await clearActivityLogs(keepLastWeek, getDeveloperSessionPayload());
+                        if (result && result.status && result.status !== 'success') {
+                            throw new Error(result.message || "La operación no terminó correctamente.");
+                        }
+                        const message = result && result.message ? result.message : "Operación finalizada.";
+                        outcomes.push({ label: "Actividad de usuarios", success: true, message });
+                        log(`[EXITO] Actividad de usuarios: ${message}`);
+                    } catch (error) {
+                        outcomes.push({ label: "Actividad de usuarios", success: false, message: error.message });
+                        log(`[EXCEPCION] Error al limpiar ActividadUsuario: ${error.message}`, false, true);
+                    }
+                }
+
+                if (clearSensitiveSelected) {
+                    try {
+                        const result = await clearSensitiveLogs(getDeveloperSessionPayload());
+                        if (result && result.status && result.status !== 'success') {
+                            throw new Error(result.message || "La operación no terminó correctamente.");
+                        }
+                        const message = result && result.message ? result.message : "Operación finalizada.";
+                        outcomes.push({ label: "Registro de Logs", success: true, message });
+                        log(`[EXITO] Registro de Logs: ${message}`);
+                    } catch (error) {
+                        outcomes.push({ label: "Registro de Logs", success: false, message: error.message });
+                        log(`[EXCEPCION] Error al limpiar Logs: ${error.message}`, false, true);
+                    }
+                }
+
+                const succeeded = outcomes.filter(item => item.success).length;
+                const failed = outcomes.length - succeeded;
+                const summary = outcomes.map(item =>
+                    `${item.success ? "Correcto" : "Error"} — ${item.label}: ${item.message}`
+                ).join(" | ");
+                if (statusElement) statusElement.textContent = summary;
+                const notificationType = failed === 0 ? 'success' : (succeeded > 0 ? 'warning' : 'error');
+                mostrarNotificacion(summary, notificationType);
             } finally {
-                clearSensitiveLogsBtn.disabled = false;
+                clearSelectedLogsBtn.disabled = false;
+                controls.forEach(control => { control.disabled = false; });
             }
         };
     }

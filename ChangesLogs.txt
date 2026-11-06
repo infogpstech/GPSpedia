@@ -3097,3 +3097,13 @@ Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
 - Tareas.txt: se añadió el cierre estático de la subtarea y la siguiente acción.
 - checkpoint.md: se añadieron checkpoint inicial y final de la subtarea.
 ================================================================================
+
+
+================================================================================
+2026-11-06 — LIMPIEZA DE REGISTROS: SELECTORES Y ACCIÓN ÚNICA
+================================================================================
+- index.html (líneas aproximadas 331–361): se sustituyeron las dos tarjetas independientes por una tarjeta con casillas clear-activity-logs-checkbox y clear-sensitive-logs-checkbox, selector clear-logs-option-select y botón único btn-admin-clear-selected-logs. Se añadió clear-selected-logs-status para mostrar el resultado.
+- ui.js (bloque aproximado 4002–4090): se reemplazaron los dos handlers independientes por un único handler. Se agregó validación de selección, confirmación contextual, bloqueo temporal de controles, ejecución secuencial de clearActivityLogs y clearSensitiveLogs solo cuando corresponda y presentación individual de resultados/errores.
+- style.css (bloques aproximados 2611 y 2625–2680): se añadieron reglas limitadas a #dev-tools-modal para las opciones de limpieza y el selector de retención, incluida la adaptación móvil.
+- api-config.js y Services/feedback.js: sin modificaciones.
+================================================================================

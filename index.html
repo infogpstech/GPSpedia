@@ -326,19 +326,35 @@
                         </div>
 
                         <div class="dev-card dev-tools-card">
-                            <strong><i class="fa-solid fa-clock-rotate-left"></i> Actividad de usuarios</strong>
-                            <div class="dev-action-row dev-restore-row">
-                                <select id="clear-logs-option-select" class="dev-input">
-                                    <option value="week">Conservar registros de la última semana</option>
-                                    <option value="all">Borrar todos los registros de ActividadUsuario</option>
-                                </select>
-                                <button id="btn-admin-clear-activity-logs" class="btn btn-danger"><i class="fa-solid fa-trash-can"></i> Purgar Actividad</button>
+                            <strong><i class="fa-solid fa-broom"></i> Limpieza de registros</strong>
+                            <p>Selecciona una o ambas fuentes. Solo se ejecutarán las opciones marcadas.</p>
+                            <div class="dev-maintenance-options">
+                                <label class="dev-maintenance-option" for="clear-activity-logs-checkbox">
+                                    <input type="checkbox" id="clear-activity-logs-checkbox">
+                                    <span class="dev-maintenance-option-copy">
+                                        <strong>Actividad de usuarios</strong>
+                                        <span>Limpiar registros de la hoja ActividadUsuario.</span>
+                                    </span>
+                                </label>
+                                <div class="dev-maintenance-retention">
+                                    <label for="clear-logs-option-select">Alcance de ActividadUsuario</label>
+                                    <select id="clear-logs-option-select" class="dev-input">
+                                        <option value="week">Conservar los últimos 7 días</option>
+                                        <option value="all">Limpiar todos los registros (conservar encabezados)</option>
+                                    </select>
+                                </div>
+                                <label class="dev-maintenance-option" for="clear-sensitive-logs-checkbox">
+                                    <input type="checkbox" id="clear-sensitive-logs-checkbox">
+                                    <span class="dev-maintenance-option-copy">
+                                        <strong>Registro de Logs</strong>
+                                        <span>Retirar únicamente los registros que contienen datos confidenciales; conservar los demás registros y encabezados.</span>
+                                    </span>
+                                </label>
                             </div>
-                        </div>
-                        <div class="dev-card dev-tools-card">
-                            <strong><i class="fa-solid fa-file-lines"></i> Logs del sistema</strong>
-                            <p>Retira únicamente los registros históricos que contienen datos confidenciales. Los demás registros de Logs se conservan.</p>
-                            <button id="btn-admin-clear-sensitive-logs" class="btn btn-danger dev-action-full"><i class="fa-solid fa-shield-halved"></i> Purgar registros confidenciales de Logs</button>
+                            <button type="button" id="btn-admin-clear-selected-logs" class="btn btn-danger dev-action-full">
+                                <i class="fa-solid fa-trash-can"></i> Ejecutar limpieza seleccionada
+                            </button>
+                            <p id="clear-selected-logs-status" class="dev-empty-state" role="status" aria-live="polite">No se ha ejecutado ninguna limpieza en esta sesión.</p>
                         </div>
 
                         <div class="dev-card dev-tools-card">

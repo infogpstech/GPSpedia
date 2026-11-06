@@ -3797,6 +3797,14 @@ Ampliar el rediseño existente del modal de desarrollador con una presentación 
 4.4. Mantener las operaciones backend y sus políticas separadas cuando sus fuentes, permisos o reglas de retención sean diferentes. La unificación solicitada es de interfaz y punto de ejecución, no una autorización para mezclar hojas, borrar encabezados o ampliar el alcance de las purgas.
 4.5. Conservar la protección de sesión y privilegio Desarrollador, el registro de auditoría y las reglas ya implementadas para ActividadUsuario y Logs. Verificar la compatibilidad con clearActivityLogs y clearSensitiveLogs antes de definir el contrato final.
 
+**Registro de implementación — 2026-11-06**
+- Estado: interfaz implementada y verificada estáticamente; pruebas reales de navegador, Apps Script y Spreadsheet pendientes de la fase funcional consolidada.
+- index.html: las tarjetas y botones independientes se sustituyeron por casillas de selección, selector de retención de ActividadUsuario y un único botón.
+- ui.js: un único handler ejecuta solo las casillas marcadas, confirma el alcance de cada fuente, procesa las operaciones secuencialmente e informa resultados independientes. Los payloads de sesión existentes se conservan.
+- style.css: estilos acotados para las opciones y su presentación responsive.
+- api-config.js y Services/feedback.js: auditados y sin cambios; ambas acciones y políticas backend permanecen separadas.
+- No se ejecutaron limpiezas reales ni se desplegó ningún servicio.
+
 5. ACCIONES DE FIRMAS VIN
 5.1. Aplicar la misma reorganización visual a las acciones «Recalcular firmas» y «Diagnóstico de firmas»: presentarlas como opciones seleccionables mediante casillas y utilizar un único botón para ejecutar las acciones seleccionadas.
 5.2. Si se selecciona una sola opción, ejecutar únicamente esa acción. Si se seleccionan ambas, ejecutar cada proceso de forma identificable y conservar sus resultados, errores y estados por separado.

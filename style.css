@@ -2628,6 +2628,66 @@ body.dark-mode .terms-agreement-logo {
     font-size: 0.88rem;
 }
 
+#dev-tools-modal .dev-maintenance-options {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+#dev-tools-modal .dev-maintenance-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+#dev-tools-modal .dev-maintenance-option input[type="checkbox"] {
+    flex: 0 0 auto;
+    width: 18px;
+    height: 18px;
+    margin: 2px 0 0;
+    accent-color: var(--accent-color);
+}
+
+#dev-tools-modal .dev-maintenance-option-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+}
+
+#dev-tools-modal .dev-maintenance-option-copy strong {
+    color: var(--text-color);
+    font-size: 0.9rem;
+}
+
+#dev-tools-modal .dev-maintenance-option-copy span {
+    color: var(--text-disabled);
+    font-size: 0.82rem;
+}
+
+#dev-tools-modal .dev-maintenance-retention {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    padding-left: 38px;
+}
+
+#dev-tools-modal .dev-maintenance-retention label {
+    color: var(--text-disabled);
+    font-size: 0.82rem;
+    font-weight: 600;
+}
+
+#dev-tools-modal .dev-maintenance-retention .dev-input {
+    flex: 1 1 200px;
+    min-width: 0;
+}
+
 @media (max-width: 760px) {
     #dev-tools-modal .dev-tools-modal-content {
         width: 96%;
@@ -2700,6 +2760,16 @@ body.dark-mode .terms-agreement-logo {
 
     #dev-tools-modal .dev-services-health-grid {
         grid-template-columns: minmax(0, 1fr);
+    }
+
+    #dev-tools-modal .dev-maintenance-retention {
+        align-items: stretch;
+        flex-direction: column;
+        padding-left: 0;
+    }
+
+    #dev-tools-modal .dev-maintenance-retention .dev-input {
+        width: 100%;
     }
 }
 

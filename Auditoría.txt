@@ -5075,3 +5075,55 @@ VALIDACIONES NO REALIZADAS
 RESULTADO
 Implementación estática y pruebas aisladas completadas. La validación funcional real permanece pendiente. No se abrió una tarea fuera de alcance: los riesgos remanentes se registran como límites de esta subtarea y deben considerarse en la fase funcional consolidada.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA INICIAL — LIMPIEZA DE REGISTROS: SELECTORES Y ACCIÓN ÚNICA
+Fecha: 2026-11-06
+Rama: GPSpedia2.2.5_work
+HEAD auditado: abc7102fc7a64c7c20ba687fb94d773f00bbbfe0
+
+1. index.html
+- Líneas aproximadas 331–352: se encuentran dos tarjetas independientes dentro de la sección Base de datos.
+- Actividad de usuarios contiene el selector clear-logs-option-select (week/all) y el botón btn-admin-clear-activity-logs.
+- Logs del sistema contiene el botón btn-admin-clear-sensitive-logs y el texto que limita la operación a registros confidenciales.
+- Los IDs de ambos botones se consumen en el bloque de inicialización de ui.js; no se detectó otro consumidor que requiera conservar botones separados.
+
+2. ui.js
+- Líneas aproximadas 4002–4042: existen dos handlers onclick independientes.
+- El handler de ActividadUsuario lee clear-logs-option-select; week envía keepLastWeek=true y all envía false. La confirmación cambia según el alcance.
+- El handler de Logs confirma por separado y llama clearSensitiveLogs.
+- Ambos handlers utilizan getDeveloperSessionPayload(), bloquean solo su botón durante la operación y registran éxito/error en la consola.
+- Las funciones clearActivityLogs y clearSensitiveLogs ya están importadas. La asignación onclick reemplaza el handler si la inicialización se repite, sin acumular listeners.
+- getDeveloperSessionPayload() exige currentUser.ID y currentUser.SessionToken; debe conservarse.
+
+3. api-config.js
+- Línea aproximada 24: ACTION_TO_SERVICE_MAP dirige ambas acciones al servicio FEEDBACK.
+- Línea aproximada 148: clearActivityLogs(keepLastWeek, sessionPayload) transmite el parámetro de retención y el payload de sesión; clearSensitiveLogs(sessionPayload) transmite el payload de sesión.
+- routeAction ejecuta cada acción como solicitud independiente y convierte respuestas status='error' en excepciones.
+- No se requiere modificar los wrappers ni el enrutamiento para unificar la interfaz.
+
+4. Services/feedback.js
+- Línea aproximada 41: assertFeedbackSession valida userId/sessionToken contra ActiveSessions y obtiene el rol desde Users.
+- Línea aproximada 164: ambas operaciones están limitadas al rol Desarrollador.
+- El router mantiene acciones separadas: clearActivityLogs invoca handleClearActivityLogs(payload) y clearSensitiveLogs invoca handleClearSensitiveLogs().
+- Línea aproximada 1187: handleClearActivityLogs conserva dos políticas. week elimina registros con antigüedad mayor a siete días; all limpia el contenido de todas las filas de datos sin borrar el encabezado.
+- Línea aproximada 1232: handleClearSensitiveLogs elimina únicamente filas con campos de credenciales definidos, username en el evento handleLogin started. o el mensaje Password comparison. Conserva encabezados y demás filas.
+- Los handlers y políticas son diferentes; no deben fusionarse en backend.
+- Los handlers de limpieza no invocan directamente logUserActivity(). La autorización de sesión se valida en doPost. No se añadirá un nuevo registro backend en esta tarea porque excede la unificación de interfaz y alteraría los efectos actuales.
+
+5. style.css
+- Las reglas existentes de #dev-tools-modal .dev-tools-card, .dev-action-row y .dev-input permiten reutilizar el diseño y comportamiento responsive del modal.
+- No hay estilos dedicados para casillas de selección de mantenimiento. Se requieren reglas acotadas al modal, sin modificar estilos globales.
+
+6. ALCANCE Y RIESGOS
+- La limpieza de ActividadUsuario con all limpia contenido de filas y conserva encabezados; no elimina filas completas.
+- La limpieza de Logs no es una purga total, sino una selección por patrones confidenciales.
+- Si ambas fuentes se seleccionan, una puede fallar y la otra tener éxito. El handler único deberá procesarlas secuencialmente y mostrar resultados independientes.
+- Deshabilitar controles evita doble ejecución desde esta interfaz, pero no controla solicitudes concurrentes desde otros clientes.
+- La consola global, acciones de firmas VIN, respaldos/restauración, reorganización de base de datos y caché local están fuera del alcance.
+- No se realizaron llamadas HTTP, ejecución Apps Script, modificaciones de Spreadsheet ni pruebas de navegador.
+
+RESULTADO
+La modificación puede limitarse a index.html, ui.js y style.css. api-config.js y Services/feedback.js se mantienen como dependencias auditadas sin cambios. No se identificaron hallazgos externos que requieran abrir otra tarea.
+================================================================================
