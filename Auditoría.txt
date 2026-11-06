@@ -5531,3 +5531,40 @@ Obtener una copia aislada de la Spreadsheet y confirmar en ella: fórmulas reale
 REVISIÓN DE CÓDIGO
 La revisión confirmó que los hallazgos están respaldados por las rutas citadas y que no se introdujeron cambios de código ni correcciones fuera de alcance. La tarea queda parcial/bloqueada, no completada.
 ================================================================================
+
+================================================================================
+AUDITORÍA — INVENTARIO DE ESTRUCTURA DE SPREADSHEET
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: bd673afc298c3f62da00c6842e0f9222d02eee06
+
+1. ALCANCE
+- Fuente: copia del archivo GPSpedia_DB_v2.0.xlsx adjuntada por el usuario.
+- Destino documental: Spreadsheet/GPSpedia_DB_columnas.md.
+- Se inspeccionaron los nombres de las hojas y la fila de encabezados; no se incluyeron valores de registros.
+
+2. RESULTADO DEL INVENTARIO
+- Se identificaron 13 hojas; en todas, los encabezados se encuentran en la fila 1.
+- Se documentaron los encabezados exactos, su número de columna y su letra de Excel.
+- La hoja Cortes contiene 45 columnas con encabezado. Las columnas 43, 44 y 45 aparecen como idOperacion1, idOperacion2 e idOperacion3, respectivamente.
+- La observación anterior describe exclusivamente la copia recibida; no decide el uso funcional futuro de esas columnas ni reemplaza Tareas.txt.
+
+3. CONTROLES DE EXCLUSIÓN
+- El Markdown contiene nombres de hojas y encabezados, no valores de filas.
+- No se incorporaron credenciales, nombres de usuarios almacenados, VIN reales, identificadores de registros ni URLs.
+- No se editó ni se reescribió el archivo XLSX.
+- El destino documental no existía en el HEAD auditado.
+
+4. RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- checkpoint.md — 8b3222b42c77d3f9724a3f496f71a322f6c1eea0
+- Auditoría.txt — 6c07076b021661708a7e65497eb99df6c8a330b2
+- ChangesLogs.txt — 2faf0f17d1607e4d9cf0aa92dea13ca7ac16c461
+- Tareas.txt — dfbe11e770bb298b83244ce37f29ebe51e0c6aaa
+Los SHA anteriores corresponden a blobs creados desde el contenido exacto existente antes de las modificaciones.
+
+5. VERIFICACIONES Y LIMITACIONES
+- Validación estática del inventario: 13 hojas, encabezados en fila 1 y 45 encabezados en Cortes.
+- No se ejecutaron pruebas funcionales de Google Sheets ni Apps Script; no forman parte del alcance de esta tarea documental.
+- No se modificó la Spreadsheet, no se desplegaron servicios y no se tocó la rama base.
+================================================================================

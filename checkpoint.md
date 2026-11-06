@@ -3716,3 +3716,82 @@ Obtener una copia aislada de Spreadsheet, verificar los datos y formatos de la c
 PUBLICACIÓN
 Un único commit documental en GPSpedia2.2.5_work mediante Git Database API. No modificar GPSpedia2.2.5, no hacer merge ni desplegar.
 ================================================================================
+
+================================================================================
+# CHECKPOINT INICIAL — INVENTARIO DE ESTRUCTURA DE SPREADSHEET
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: bd673afc298c3f62da00c6842e0f9222d02eee06
+HEAD de rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ALCANCE
+Incorporar al repositorio un Markdown con los nombres exactos de las hojas y los encabezados de columnas de la copia GPSpedia_DB_v2.0.xlsx proporcionada por el usuario. El documento no debe incluir valores de registros ni modificar la Spreadsheet.
+
+ESTADO INICIAL
+- El archivo de destino Spreadsheet/GPSpedia_DB_columnas.md no existe en el HEAD inicial.
+- La copia XLSX proporcionada está disponible en el entorno de trabajo; se generó un inventario de 13 hojas con encabezados en la fila 1.
+- La hoja Cortes presenta 45 encabezados; las posiciones 43–45 se registran tal como aparecen en la copia, sin inferir su destino funcional.
+- No se modificarán código, servicios, hojas de cálculo ni deployments.
+
+ARCHIVOS DOCUMENTALES INVOLUCRADOS
+- Nuevo: Spreadsheet/GPSpedia_DB_columnas.md.
+- Actualización de trazabilidad: Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+
+RIESGOS Y RESTRICCIONES
+- No incorporar datos de filas, VIN reales, credenciales, identificadores ni URLs almacenadas.
+- No alterar el XLSX original ni los encabezados físicos.
+- Publicar todos los cambios de la tarea mediante un único commit Git Database API en la rama de trabajo; no tocar la rama base.
+
+FASE
+Checkpoint inicial registrado; auditoría documental y respaldos en curso.
+================================================================================
+
+================================================================================
+# CIERRE DE TAREA — INVENTARIO DE ESTRUCTURA DE SPREADSHEET
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD anterior a la tarea: bd673afc298c3f62da00c6842e0f9222d02eee06
+HEAD de la rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+COMPLETADA — INVENTARIO DOCUMENTAL GENERADO; PUBLICACIÓN INCLUIDA EN EL ÚNICO COMMIT DE ESTA TAREA.
+
+ARCHIVOS INCLUIDOS
+- Spreadsheet/GPSpedia_DB_columnas.md (nuevo).
+- Auditoría.txt.
+- ChangesLogs.txt.
+- Tareas.txt.
+- checkpoint.md.
+
+RESULTADO
+- Documentadas 13 hojas y sus encabezados exactos.
+- Registradas las posiciones y letras de columna.
+- No se incorporaron datos de registros ni se modificó la copia XLSX.
+- Las columnas 43–45 de Cortes se describen según sus encabezados físicos actuales, sin redefinir su uso funcional.
+
+VERIFICACIONES
+- Comprobado el número de hojas y encabezados del documento.
+- Revisada la exclusión de valores de registros.
+- Confirmada la ausencia previa del archivo de destino.
+- Respaldos Git de los cuatro documentos preexistentes registrados en Auditoría.txt.
+- Revisión estática de los bloques documentales añadidos.
+
+VALIDACIONES NO REALIZADAS
+- No se ejecutaron pruebas funcionales de Apps Script o Google Sheets porque no se modificaron código, servicios ni datos.
+- No se realizó despliegue ni se modificó la Spreadsheet.
+
+RIESGOS Y PENDIENTES
+- El inventario representa la estructura de la copia adjuntada; si la Spreadsheet cambia, el documento deberá actualizarse mediante una tarea independiente.
+- La asignación funcional de las columnas 43–45 se rige por los requisitos vigentes y no se modifica mediante este inventario.
+
+CONTINUIDAD
+- Siguiente acción: consultar Spreadsheet/GPSpedia_DB_columnas.md como referencia documental para la revisión del esquema y continuar las pruebas funcionales pendientes de la tarea VIN por separado.
+- El commit que contiene este checkpoint es el único commit de la tarea y puede identificarse inmediatamente después del HEAD anterior en el historial de GPSpedia2.2.5_work.
+
+PUBLICACIÓN
+Un único commit mediante create_blob → create_tree → create_commit → update_ref, con expected_sha igual al HEAD anterior. La rama base GPSpedia2.2.5 no se modifica.
+================================================================================

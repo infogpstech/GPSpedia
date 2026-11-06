@@ -3267,3 +3267,28 @@ ALCANCE
 - Cambios exclusivamente documentales.
 - Sin modificaciones en código, Spreadsheet, fórmulas, valores, formatos, deployments ni rama base.
 ================================================================================
+
+================================================================================
+DOCUMENTACIÓN — INVENTARIO DE ESTRUCTURA DE SPREADSHEET
+Fecha: 2026-11-06
+
+Spreadsheet/GPSpedia_DB_columnas.md (nuevo; 284 líneas)
+- Añadido el inventario de 13 hojas con el número y la letra de cada columna y su encabezado exacto.
+- Se documentan únicamente nombres de hojas y encabezados; no se incluyen valores de registros.
+
+Auditoría.txt (líneas 5535–5571)
+- Añadido el alcance, resultado, controles de exclusión, respaldos y limitaciones de la auditoría documental.
+
+Tareas.txt (líneas 4375–4398)
+- Añadido el registro de la tarea documental y sus verificaciones.
+
+checkpoint.md
+- Añadidos el checkpoint inicial y el cierre de la tarea documental.
+
+ChangesLogs.txt
+- Añadido este registro de los archivos y bloques documentales incorporados.
+
+ALCANCE
+- Solo documentación del repositorio.
+- Sin cambios en código, XLSX, datos de Google Sheets, servicios, deployments o rama base.
+================================================================================

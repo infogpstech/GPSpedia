@@ -4371,3 +4371,27 @@ Estado: IMPLEMENTACIÓN ESTÁTICA REALIZADA; VALIDACIÓN FUNCIONAL PENDIENTE.
 - Pendiente: pruebas controladas de alta nueva, vehículo existente, reintento, recuperación y modo silencioso.
 - Sin despliegues, publicación frontend, cambios en hojas productivas ni merge.
 ================================================================================
+
+================================================================================
+TAREA DOCUMENTAL — INVENTARIO DE ESTRUCTURA DE GPSpedia_DB_v2.0
+Fecha: 2026-11-06
+Estado: COMPLETADA — DOCUMENTACIÓN GENERADA Y PREPARADA PARA PUBLICACIÓN.
+
+OBJETIVO
+Incorporar al repositorio un inventario de los nombres exactos de las hojas y encabezados de columnas de la copia de Spreadsheet proporcionada, sin incluir datos almacenados.
+
+RESULTADO
+- Añadido Spreadsheet/GPSpedia_DB_columnas.md con el inventario de 13 hojas.
+- Cada encabezado incluye su posición numérica y letra de columna.
+- Se conserva la denominación física encontrada en Cortes para las columnas 43–45, sin alterar ni reinterpretar el esquema.
+- No se modificó el archivo XLSX ni se ejecutaron cambios sobre datos o deployments.
+
+VERIFICACIÓN
+- Revisión estática del contenido Markdown y de la estructura de tablas.
+- Confirmados 13 apartados de hoja y 45 encabezados en Cortes.
+- No se incorporaron valores de registros.
+- No se realizaron pruebas funcionales porque la tarea es exclusivamente documental.
+
+PUBLICACIÓN
+Todos los archivos documentales de esta tarea se agrupan en un único commit de GPSpedia2.2.5_work mediante Git Database API. La rama base GPSpedia2.2.5 permanece intacta.
+================================================================================
