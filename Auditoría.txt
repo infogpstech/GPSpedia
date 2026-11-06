@@ -5278,3 +5278,77 @@ LIMITACIONES Y RIESGOS PENDIENTES
 RESULTADO DE REVISIÓN
 No se identificaron cambios ajenos a la solicitud en los archivos de aplicación revisados. Las operaciones destructivas siguen protegidas por sesión Desarrollador, ScriptLock, validación de referencia y confirmación en UI. La implementación estática queda lista para un único commit en GPSpedia2.2.5_work; las validaciones externas quedan explícitamente pendientes y no se declara completada la publicación.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — CONTRATO DE AGREGADO DE CORTES, ESQUEMA DE PRODUCCIÓN E IDEMPOTENCIA
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work | HEAD: 91f75de3ca1e8d7b64801f00fa0c98adea2809e9
+Rama base protegida: GPSpedia2.2.5 (HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1).
+Esquema de producción comunicado: 45 columnas; las columnas 43–45 son idOperacion1, idOperacion2 e idOperacion3.
+
+ARCHIVOS AUDITADOS
+- ui.js: openAddCutForModelModal() y payload de addOrUpdateCut.
+- add_cortes.html: handleStage2Submit(), persistencia local y recuperación de operaciones.
+- api-config.js: ACTION_TO_SERVICE_MAP y routeAction().
+- Services/write.js: mapa de columnas, alta de cortes, VIN, Idempotencia y búsqueda histórica de opId.
+- Services/admin.js: mapa de columnas, alta silenciosa y recuperación idempotente.
+- Services/catalog.js: mapa de columnas y construcción de datos del catálogo.
+- Services/feedback.js: mapa de columnas.
+- Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md.
+
+HALLAZGOS
+1. Contrato del payload:
+- La afirmación previa en Tareas.txt de que el modal enviaba cutData.tipo/configRelay/ubicacion/colorCable/activaTestigo/imgBase64 no corresponde al código actual.
+- openAddCutForModelModal() en ui.js y handleStage2Submit() en add_cortes.html envían tipoCorte1, configRelay1, ubicacionCorte1, colorCableCorte1, activaTestigo1 e imgCorte1.
+- WRITE y ADMIN consumen esos mismos nombres. api-config.js enruta addOrUpdateCut a WRITE; el modo silencioso puede seleccionar ADMIN.
+- No se modificó el contrato porque ya coincide.
+
+2. Esquema productivo:
+- WRITE, ADMIN, CATALOG y FEEDBACK tenían vin: 43 en COLS_CORTES.
+- En producción, la columna 43 es idOperacion1, no vin.
+- WRITE usaba COLS_CORTES.vin para leer y escribir VIN; handleAddVinToVehicle podía sobrescribir idOperacion1.
+- CATALOG exponía la columna 43 como vin.
+- WRITE y ADMIN excluían por posición la columna 43 de findRowByOpId(), lo que impedía buscar ahí un identificador histórico.
+- ensureTestigoColumns() agrega sus tres campos por encabezado al final de la hoja si no existen; no se modificó.
+
+3. Idempotencia:
+- recordOpId() almacena opId en la hoja dedicada Idempotencia, no en idOperacion1..3.
+- En el alta de vehículo nuevo, WRITE y ADMIN llamaban recordOpId() antes de calcular newId. Esto podía crear una entrada con vehicleId vacío.
+- findRowByOpId() necesita vehicleId para recuperar la fila desde Idempotencia.
+- En vehículo existente, el ID ya se proporciona y el flujo es distinto.
+
+CAMBIOS REALIZADOS
+- Retirada la posición fija vin: 43 de los cuatro mapas COLS_CORTES.
+- WRITE resuelve VIN por encabezado real «vin»; si no existe, rechaza la operación VIN y no utiliza una columna idOperacion.
+- CATALOG agrega la propiedad vin solo si encuentra ese encabezado.
+- WRITE y ADMIN excluyen de la búsqueda histórica únicamente una columna cuyo encabezado sea «vin», cuando exista; idOperacion1 en la columna 43 vuelve a ser elegible.
+- WRITE y ADMIN registran opId de vehículos nuevos en Idempotencia después de obtener newId y solo si el ID tiene valor.
+- No se escriben ni se limpian idOperacion1..3.
+- No se modificaron ui.js, add_cortes.html ni api-config.js.
+
+RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/write.js: blob original 0014ac3ceabccb6561c0cea7410685cccf9ad2ea.
+- Services/admin.js: blob original 7c84ad1a84ea6534c5db1f26e30c2b43ff366a4f.
+- Services/catalog.js: blob original ee982d05449c0614fefca8efc5bbb196ad1fcb49.
+- Services/feedback.js: blob original 4e50ae70884c20a22b66c857e1f9d83df294e027.
+- Tareas.txt: blob original d49deca2db8fd1a7eddbef6c886d396f2a17cdf0.
+- Auditoría.txt: blob original 26c7d3e130757f1e933cd10425e607e4e6df973c.
+- ChangesLogs.txt: blob original 47e855c10c306697a706e2eb0e8db98e6a448f39.
+- checkpoint.md: blob original ba5fcf7afd0aed3a06027c1e14f1d669a5ea8111.
+
+VERIFICACIONES ESTÁTICAS Y AISLADAS
+- Compilación sintáctica aislada de los cuatro servicios: correcta.
+- No quedan vin: 43 ni referencias COLS_CORTES.vin.
+- getVinColumnIndex() distingue idOperacion1 de un encabezado vin real.
+- findRowByOpId() encuentra un opId histórico en idOperacion1, columna 43.
+- getCortesColumnMap() no expone idOperacion1 como VIN y sí mapea vin cuando el encabezado existe.
+- En WRITE y ADMIN, el registro de idempotencia de alta nueva quedó después de obtener newId.
+- Se verificó el alcance de las sustituciones exactas; no se alteraron los demás bloques.
+
+LIMITACIONES Y VALIDACIONES PENDIENTES
+- No se ejecutó Apps Script ni se conectó a la Spreadsheet productiva.
+- No se verificaron los registros actuales de la hoja Idempotencia.
+- Pendiente probar alta nueva, alta en vehículo existente, reintento, recuperación y modo silencioso.
+- El esquema productivo comunicado no incluye columna vin. Las operaciones VIN ahora fallan de forma controlada en backend; la interfaz VIN requiere alineación posterior o una decisión del usuario sobre agregar una columna independiente.
+- No se desplegó WRITE ni ADMIN, no se publicó frontend y no se modificaron datos productivos.
+================================================================================

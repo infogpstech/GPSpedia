@@ -3164,3 +3164,37 @@ ADENDA DE REVISIÓN — AJUSTES FINALES DEL MONITOR Y RETIRO DE COMENTARIO OBSOL
 - index.html: se aclaró que la cuota de cuenta puede compartirse con otros servicios de Google, diferenciándola del uso específico de Drive.
 - ui.js: el formateo del monitor trata null/undefined como «No disponible» y no los presenta como 0 B o 0.00%.
 ================================================================================
+
+
+================================================================================
+CHANGES LOG — CONTRATO DE AGREGADO DE CORTES E IDEMPOTENCIA
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+Services/write.js
+- COLS_CORTES: retirada la posición fija vin: 43.
+- Añadido getVinColumnIndex(sheet) para resolver VIN mediante el encabezado real.
+- handleAddOrUpdateCut(): valida la columna VIN antes de escribir y registra opId después de obtener el ID del vehículo nuevo.
+- findRowByOpId(): excluye VIN por encabezado, no por posición.
+- checkVinDuplicateInSheet() y handleAddVinToVehicle(): usan la posición dinámica de VIN y rechazan operaciones si no existe el encabezado.
+
+Services/admin.js
+- COLS_CORTES: retirada la posición fija vin: 43.
+- findRowByOpId(): excluye VIN por encabezado y permite buscar idOperacion1 en la columna 43.
+- handleAddOrUpdateCut(): registra opId en Idempotencia después de obtener el ID del vehículo nuevo.
+
+Services/catalog.js
+- COLS_CORTES: retirada la posición fija vin: 43.
+- getCortesColumnMap(): incorpora vin únicamente cuando existe el encabezado «vin».
+
+Services/feedback.js
+- COLS_CORTES: retirada la posición fija vin: 43.
+
+Auditoría.txt
+- Añadida auditoría del contrato UI/WRITE/ADMIN, esquema productivo e idempotencia, con respaldos, verificaciones y limitaciones.
+
+Tareas.txt
+- Añadida rectificación del supuesto desajuste de payload, estado de implementación y validaciones pendientes.
+
+checkpoint.md
+- Añadidos checkpoint inicial y cierre de la tarea, conservando el historial.
+================================================================================

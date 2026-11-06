@@ -3396,3 +3396,105 @@ PUBLICACIÓN
 - No actualizar GPSpedia2.2.5 ni realizar merge.
 - No publicar el administrador en Apps Script hasta completar las validaciones externas y recibir autorización.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — CONTRATO DE AGREGADO DE CORTES E IDEMPOTENCIA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD inicial: 91f75de3ca1e8d7b64801f00fa0c98adea2809e9
+Rama base protegida: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Diferencia confirmada: 167 commits adelante, 0 atrás.
+
+ALCANCE
+Auditar addOrUpdateCut, alinear la lectura de columnas con el esquema productivo y corregir el registro idempotente de altas nuevas. Preservar idOperacion1..3. No modificar rama base, hacer merge ni desplegar.
+
+ESQUEMA DE PRODUCCIÓN
+45 columnas. Las posiciones 43–45 son idOperacion1, idOperacion2 e idOperacion3. El listado comunicado no contiene vin.
+
+ESTADO OBSERVADO
+- UI/formulario y handlers WRITE/ADMIN envían/reciben los mismos nombres de campos de corte.
+- WRITE, ADMIN, CATALOG y FEEDBACK tenían vin: 43.
+- WRITE/ADMIN excluían la columna 43 de la búsqueda histórica de opId.
+- WRITE/ADMIN registraban opId de alta nueva antes de obtener newId.
+- WRITE usaba la posición fija 43 para VIN, con riesgo de sobrescribir idOperacion1.
+- No se consultó la Spreadsheet productiva ni se ejecutó Apps Script.
+
+ARCHIVOS INVOLUCRADOS
+Services/write.js, Services/admin.js, Services/catalog.js, Services/feedback.js; auditoría de ui.js, add_cortes.html y api-config.js; Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+
+RESPALDOS EXACTOS
+- Services/write.js: blob original 0014ac3ceabccb6561c0cea7410685cccf9ad2ea.
+- Services/admin.js: blob original 7c84ad1a84ea6534c5db1f26e30c2b43ff366a4f.
+- Services/catalog.js: blob original ee982d05449c0614fefca8efc5bbb196ad1fcb49.
+- Services/feedback.js: blob original 4e50ae70884c20a22b66c857e1f9d83df294e027.
+- Tareas.txt: blob original d49deca2db8fd1a7eddbef6c886d396f2a17cdf0.
+- Auditoría.txt: blob original 26c7d3e130757f1e933cd10425e607e4e6df973c.
+- ChangesLogs.txt: blob original 47e855c10c306697a706e2eb0e8db98e6a448f39.
+- checkpoint.md: blob original ba5fcf7afd0aed3a06027c1e14f1d669a5ea8111.
+
+RIESGOS
+- No sobrescribir ni limpiar idOperacion1..3.
+- Mantener Idempotencia como almacenamiento principal de opId.
+- Resolver VIN por encabezado; si no existe, no reutilizar una columna de operación.
+- La interfaz VIN puede requerir alineación porque el esquema no incluye vin.
+- El mecanismo de fórmula de ID queda fuera del alcance.
+
+NOTA DE PROCEDIMIENTO
+La inspección preliminar de contexto y código comenzó antes de incorporar este checkpoint al registro remoto. No se había modificado código. La desviación queda documentada; todos los cambios se agrupan en un único commit.
+
+FASE
+Auditoría estática concluida; respaldos confirmados.
+================================================================================
+
+================================================================================
+# CHECKPOINT FINAL — CONTRATO DE AGREGADO DE CORTES E IDEMPOTENCIA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD anterior: 91f75de3ca1e8d7b64801f00fa0c98adea2809e9
+Rama base protegida GPSpedia2.2.5: sin modificaciones.
+
+ESTADO
+IMPLEMENTACIÓN ESTÁTICA COMPLETADA; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+ARCHIVOS MODIFICADOS
+- Services/write.js
+- Services/admin.js
+- Services/catalog.js
+- Services/feedback.js
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+RESUMEN
+- El payload actual se conserva porque los nombres ya coinciden.
+- VIN se resuelve por encabezado real, no por posición fija.
+- idOperacion1..3 se conservan sin escritura ni limpieza.
+- La búsqueda histórica de opId puede revisar idOperacion1 en columna 43.
+- WRITE/ADMIN registran opId de altas nuevas después de obtener newId.
+
+VERIFICACIONES
+- Compilación sintáctica aislada de cuatro servicios: correcta.
+- Helper VIN con esquema idOperacion1..3 y con encabezado vin: correcto.
+- Búsqueda histórica de opId en columna 43: correcta.
+- Mapa de catálogo sin VIN y con VIN: correcto.
+- Orden recordOpId/newId en WRITE y ADMIN: correcto.
+- Comparación de cambios: sustituciones limitadas a los bloques auditados.
+
+PENDIENTES
+- Pruebas funcionales reales con copia controlada de Spreadsheet.
+- Alta nueva, vehículo existente, modo silencioso, pérdida de conexión, reintento y recuperación.
+- Confirmar que columnas 43–45 permanecen intactas.
+- Definir comportamiento de interfaz VIN dado que producción no incluye vin.
+- No se ejecutó Apps Script ni se modificaron datos productivos; no se desplegaron servicios.
+
+SIGUIENTE ACCIÓN
+Validar WRITE/ADMIN en entorno controlado y resolver el alcance de VIN antes de publicación.
+
+PUBLICACIÓN
+Un único commit en GPSpedia2.2.5_work; no modificar GPSpedia2.2.5, no hacer merge ni desplegar sin autorización.
+================================================================================

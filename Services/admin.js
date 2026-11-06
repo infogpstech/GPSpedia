@@ -272,8 +272,7 @@ const COLS_CORTES = {
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
     timestamp: 37, notaImportante: 38,
-    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42,
-    vin: 43
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
 };
 
 /**
@@ -1871,10 +1870,6 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         sheet.getRange(rowIndex, COLS_CORTES.activaTestigo1).setValue(cutData.activaTestigo1 === true);
         sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
         sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
-        if (opId) {
-            recordOpId(opId, newId, 1, formattedDate);
-        }
-
         // 5. Esperar a que la hoja calcule el valor del ID generado por la fórmula.
         SpreadsheetApp.flush();
         Utilities.sleep(1500); // Espera para asegurar que la fórmula se calcule.
@@ -1899,6 +1894,9 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         SpreadsheetApp.flush();
         Utilities.sleep(500);
         newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
+        if (opId && newId) {
+            recordOpId(opId, newId, 1, formattedDate);
+        }
     }
 
     logMessage("Registro Administrativo", `Corte administrativo guardado exitosamente. ID asignado: ${newId}`);
@@ -2227,10 +2225,11 @@ function findRowByOpId(sheet, opId) {
     if (sheet && sheet.getLastRow() > 1) {
         const data = sheet.getDataRange().getValues();
         const headers = data[0];
+        const vinColumnIndex = headers.findIndex(header => String(header || "").trim().toLowerCase() === "vin") + 1;
         const opIdCols = [];
         for (let c = 0; c < headers.length; c++) {
-            // Excluir expresamente la columna 43 (vin)
-            if (c + 1 === COLS_CORTES.vin) continue;
+            // Excluir «vin» solo cuando exista ese encabezado; no excluir idOperacion1 en la columna 43.
+            if (vinColumnIndex > 0 && c + 1 === vinColumnIndex) continue;
             const h = String(headers[c]).toLowerCase();
             if (h.includes("idoperacion") || h.includes("id_operacion")) {
                 opIdCols.push(c);
@@ -2253,7 +2252,7 @@ function findRowByOpId(sheet, opId) {
         for (let r = 1; r < data.length; r++) {
             const row = data[r];
             for (let c = 0; c < row.length; c++) {
-                if (c + 1 === COLS_CORTES.vin) continue;
+                if (vinColumnIndex > 0 && c + 1 === vinColumnIndex) continue;
                 const cell = row[c];
                 if (cell && typeof cell === "string" && (cell.indexOf(tag) !== -1 || cell === cleanOpId)) {
                     return { rowIndex: r + 1, rowValues: row, colIndex: c + 1 };

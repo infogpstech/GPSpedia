@@ -33,9 +33,22 @@ const COLS_CORTES = {
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
     timestamp: 37, notaImportante: 38,
-    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42,
-    vin: 43
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
 };
+
+/**
+ * Devuelve la posición real de la columna «vin» según el encabezado.
+ * Retorna 0 cuando la hoja no dispone de esa columna.
+ */
+function getVinColumnIndex(sheet) {
+    if (!sheet) return 0;
+    const lastColumn = sheet.getLastColumn();
+    if (lastColumn < 1) return 0;
+    const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+    const index = headers.findIndex(value => String(value || "").trim().toLowerCase() === "vin");
+    return index >= 0 ? index + 1 : 0;
+}
+
 
 /**
  * Comprueba y agrega al final de «Cortes» las columnas de activación del testigo.
@@ -212,6 +225,10 @@ function handleAddOrUpdateCut(payload) {
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     ensureTestigoColumns(sheet);
+    const vinColumnIndex = getVinColumnIndex(sheet);
+    if (cutData.vin && !vinColumnIndex) {
+        throw new Error("La hoja «Cortes» no contiene una columna «vin»; no se puede guardar el VIN sin alterar otras columnas.");
+    }
 
     if (opId) {
         const match = findRowByOpId(sheet, opId);
@@ -432,11 +449,8 @@ function handleAddOrUpdateCut(payload) {
         if (cutData.vin) {
             const vinPrefix = extractVinPrefix(cutData.vin);
             if (vinPrefix) {
-                sheet.getRange(rowIndex, COLS_CORTES.vin).setValue(vinPrefix);
+                sheet.getRange(rowIndex, vinColumnIndex).setValue(vinPrefix);
             }
-        }
-        if (opId) {
-            recordOpId(opId, newId, 1, formattedDate);
         }
 
         // 5. Esperar a que la hoja calcule el valor del ID generado por la fórmula.
@@ -464,6 +478,9 @@ function handleAddOrUpdateCut(payload) {
         SpreadsheetApp.flush();
         Utilities.sleep(500);
         newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
+        if (opId && newId) {
+            recordOpId(opId, newId, 1, formattedDate);
+        }
     }
 
     return { status: 'success', message: `Corte agregado exitosamente.`, vehicleId: newId, timestamp: formattedDate };
@@ -874,10 +891,11 @@ function findRowByOpId(sheet, opId) {
     if (sheet && sheet.getLastRow() > 1) {
         const data = sheet.getDataRange().getValues();
         const headers = data[0];
+        const vinColumnIndex = headers.findIndex(header => String(header || "").trim().toLowerCase() === "vin") + 1;
         const opIdCols = [];
         for (let c = 0; c < headers.length; c++) {
-            // Excluir expresamente la columna 43 (vin)
-            if (c + 1 === COLS_CORTES.vin) continue;
+            // Excluir «vin» solo cuando exista ese encabezado; no excluir idOperacion1 en la columna 43.
+            if (vinColumnIndex > 0 && c + 1 === vinColumnIndex) continue;
             const h = String(headers[c]).toLowerCase();
             if (h.includes("idoperacion") || h.includes("id_operacion")) {
                 opIdCols.push(c);
@@ -900,7 +918,7 @@ function findRowByOpId(sheet, opId) {
         for (let r = 1; r < data.length; r++) {
             const row = data[r];
             for (let c = 0; c < row.length; c++) {
-                if (c + 1 === COLS_CORTES.vin) continue;
+                if (vinColumnIndex > 0 && c + 1 === vinColumnIndex) continue;
                 const cell = row[c];
                 if (cell && typeof cell === "string" && (cell.indexOf(tag) !== -1 || cell === cleanOpId)) {
                     return { rowIndex: r + 1, rowValues: row, colIndex: c + 1 };
@@ -1077,6 +1095,10 @@ function extractVinPrefix(vinStr) {
 
 function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId) {
   if (!vinPrefix) return null;
+  const vinColumnIndex = getVinColumnIndex(sheet);
+  if (!vinColumnIndex) {
+    throw new Error("La hoja «Cortes» no contiene una columna «vin»; no es posible validar duplicados.");
+  }
   const lastRow = sheet.getLastRow();
   if (lastRow < 2) return null;
 
@@ -1086,7 +1108,7 @@ function checkVinDuplicateInSheet(sheet, vinPrefix, currentVehicleId) {
     const rowId = row[COLS_CORTES.id - 1];
     if (currentVehicleId && String(rowId) === String(currentVehicleId)) continue;
 
-    const rowVinRaw = row[COLS_CORTES.vin - 1];
+    const rowVinRaw = row[vinColumnIndex - 1];
     const vinList = parseVinCollection(rowVinRaw);
     if (vinList.includes(vinPrefix)) {
       const marca = row[COLS_CORTES.marca - 1] || "";
@@ -1131,6 +1153,10 @@ function handleAddVinToVehicle(payload) {
     return { status: 'error', message: 'ID de vehículo y VIN son requeridos.' };
   }
   const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+  const vinColumnIndex = getVinColumnIndex(sheet);
+  if (!vinColumnIndex) {
+    return { status: 'error', message: 'La hoja «Cortes» no contiene una columna «vin».' };
+  }
   const match = checkVinDuplicateInSheet(sheet, prefix, vehicleId);
   if (match) {
     return {
@@ -1164,7 +1190,7 @@ function handleAddVinToVehicle(payload) {
   let versionesStr = String(targetRow[COLS_CORTES.versionesAplicables - 1] || "").trim();
   let versions = parseEquipmentVersions(versionesStr);
 
-  const existingVinRaw = targetRow[COLS_CORTES.vin - 1] || "";
+  const existingVinRaw = targetRow[vinColumnIndex - 1] || "";
   let vinCollection = parseVinCollection(existingVinRaw);
 
   const cleanTrim = trimLevel ? String(trimLevel).trim() : "";
@@ -1201,7 +1227,7 @@ function handleAddVinToVehicle(payload) {
   }
 
   const serialized = JSON.stringify(vinCollection);
-  sheet.getRange(targetRowIndex, COLS_CORTES.vin).setValue(serialized);
+  sheet.getRange(targetRowIndex, vinColumnIndex).setValue(serialized);
 
   // NOTA OBLIGATORIA: Agregar VIN no debe actualizar la fecha de registro (timestamp)
   return { status: 'success', message: 'VIN registrado correctamente.', vinPrefix: prefix, vinCollection, versionesAplicables: versionesStr };

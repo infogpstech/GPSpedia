@@ -4323,3 +4323,20 @@ Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FU
 SIGUIENTE TAREA
 Continuar con «Reorganización de imágenes de modelo en Drive» (sección 6). Mantener intactos los flujos de guardado/renombramiento de add_corte.html y edición in-modal, según las restricciones de esa tarea.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — CONTRATO DE AGREGADO DE CORTES Y ALINEACIÓN CON PRODUCCIÓN
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work | HEAD de partida: 91f75de3ca1e8d7b64801f00fa0c98adea2809e9
+Estado: IMPLEMENTACIÓN ESTÁTICA REALIZADA; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+- Se rectifica la descripción anterior del supuesto contrato incompatible: el consumidor actual openAddCutForModelModal() de ui.js y handleStage2Submit() de add_cortes.html envían los mismos campos que reciben los handlers WRITE/ADMIN. No se modificó ese contrato.
+- VIN se resuelve por encabezado real; se retiró la suposición de que ocupa siempre la columna 43.
+- Se preservan idOperacion1, idOperacion2 e idOperacion3 en las posiciones 43–45; no se escriben ni se limpian.
+- findRowByOpId() ya no excluye la columna 43 por posición.
+- WRITE y ADMIN registran opId de vehículo nuevo en Idempotencia después de obtener newId.
+- Si no existe encabezado vin, las operaciones VIN no reutilizan idOperacion1. La interfaz VIN queda pendiente de alineación.
+- Pendiente: pruebas controladas de alta nueva, vehículo existente, reintento, recuperación, modo silencioso y conservación de columnas 43–45.
+- Pendiente separado: decidir si se incorpora una columna vin a producción o si se deshabilita/retira el flujo VIN de la interfaz.
+- Sin despliegues, publicación frontend, cambios en hojas productivas ni merge.
+================================================================================
