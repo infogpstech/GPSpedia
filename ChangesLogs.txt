@@ -2857,3 +2857,39 @@ Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
 - Se conserva el comportamiento de límites y selección de la sesión antigua por menor rowIndex.
 - No se modifican endpoints, USERS, frontend, esquema ni deployments.
 ================================================================================
+
+
+================================================================================
+CAMBIO — INDICADOR DE TESTIGO Y ALINEACIÓN DEL ALTA DE CORTES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DE CÓDIGO
+- Services/write.js: se añadió ensureTestigoColumns() para comprobar los encabezados activaTestigo1/2/3 y agregar al final únicamente los ausentes. La comprobación usa ScriptLock. handleAddOrUpdateCut() actualiza los índices dinámicos y guarda el indicador en el slot seleccionado, también en la ruta de recuperación por opId.
+- Services/admin.js: se añadió ensureTestigoColumns() y se invoca desde handleAddOrUpdateCut() aprovechando el ScriptLock ya adquirido por el handler. Se guarda el indicador para altas existentes, nuevas y recuperadas.
+- Services/catalog.js: se añadió getCortesColumnMap() para localizar las columnas nuevas por sus encabezados; handleGetCatalogData() incorpora el indicador y lo desplaza junto con cada corte durante el ordenamiento por votos.
+- ui.js: openAddCutForModelModal() envía las propiedades que esperan WRITE y ADMIN, incluyendo imgCorte1 y activaTestigo1. La construcción del detalle y exportVehiclePrintSheet() leen el campo nuevo y muestran el aviso.
+- add_cortes.html: el envío de addOrUpdateCut incluye el valor de testigoMotor almacenado en la operación pendiente.
+
+DOCUMENTACIÓN
+- Auditoría.txt: se añadió la auditoría del contrato, rutas WRITE/ADMIN, lectura CATALOG, persistencia local y reordenamiento de cortes.
+- Tareas.txt: se registró la implementación estática y las pruebas pendientes del despliegue conjunto.
+- checkpoint.md: se registraron checkpoint inicial y final de esta tarea.
+
+RESPALDOS ORIGINALES (BLOB SHA)
+- ui.js: ff5e0aaead741e4bb85f417a0c7c3bcb615f856b
+- add_cortes.html: ca47133bad51565d9f3a9cdf8e44f5b3bef2bfa8
+- Services/write.js: c5f87b4f3ca383b4f95f6d83625f313a44ec677e
+- Services/admin.js: 5457610252b32e0779eb7a2930534c166d8dc14e
+- Services/catalog.js: 3bb9ddf73b8aebdca9b1b5c331718f5b417213ff
+- Auditoría.txt: 02c6c6e6813fdd58f87d3bc1cce15ab30ca8ea48
+- Tareas.txt: b07989157a4f484e68f4b8b12f8001c3eb37e45f
+- ChangesLogs.txt: ce82a3e790802d8f59546bf8c14f25ece417e9ab
+- checkpoint.md: 3b79faa3319669a44ede3f277c4dd9fd3d270426
+
+DESCRIPCIÓN OBJETIVA
+- Se añadieron tres encabezados dinámicos a los mapas de columnas y se agregaron operaciones de lectura/escritura del indicador.
+- Se modificaron los nombres de propiedades enviados por los formularios para alinearlos con los handlers existentes.
+- Se añadieron rutas de propagación del checkbox del formulario inicial y del modal de detalle.
+- No se modificaron los encabezados ni las posiciones de las columnas preexistentes.
+- No se desplegaron servicios ni se ejecutaron pruebas funcionales externas.
+================================================================================

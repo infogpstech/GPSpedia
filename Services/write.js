@@ -37,7 +37,42 @@ const COLS_CORTES = {
     vin: 43
 };
 
-
+/**
+ * Comprueba y agrega al final de «Cortes» las columnas de activación del testigo.
+ * Los índices se resuelven desde los encabezados para conservar columnas adicionales existentes.
+ */
+function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
+    if (!sheet) throw new Error('No se encontró la hoja «Cortes».');
+    const lock = lockAlreadyHeld ? null : LockService.getScriptLock();
+    let lockAcquired = false;
+    try {
+        if (lock) {
+            lock.waitLock(30000);
+            lockAcquired = true;
+        }
+        let lastColumn = sheet.getLastColumn();
+        if (lastColumn < 1) throw new Error('La hoja «Cortes» no contiene encabezados.');
+        const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+        ['activaTestigo1', 'activaTestigo2', 'activaTestigo3'].forEach(headerName => {
+            let headerIndex = headers.findIndex(value => String(value || '').trim() === headerName);
+            if (headerIndex === -1) {
+                sheet.insertColumnAfter(lastColumn);
+                lastColumn++;
+                sheet.getRange(1, lastColumn).setValue(headerName);
+                headers.push(headerName);
+                headerIndex = lastColumn - 1;
+            }
+            COLS_CORTES[headerName] = headerIndex + 1;
+        });
+        return {
+            activaTestigo1: COLS_CORTES.activaTestigo1,
+            activaTestigo2: COLS_CORTES.activaTestigo2,
+            activaTestigo3: COLS_CORTES.activaTestigo3
+        };
+    } finally {
+        if (lockAcquired) lock.releaseLock();
+    }
+}
 
 const COLS_USERS = {
     ID: 1,
@@ -176,6 +211,7 @@ function handleAddOrUpdateCut(payload) {
     }
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    ensureTestigoColumns(sheet);
 
     if (opId) {
         const match = findRowByOpId(sheet, opId);
@@ -259,6 +295,10 @@ function handleAddOrUpdateCut(payload) {
                 if (!rowObj[`configRelay${slotIndex}`] && cutData.configRelay1) {
                     sheet.getRange(rowIndex, COLS_CORTES[`configRelay${slotIndex}`]).setValue(cutData.configRelay1 || "");
                 }
+                const testigoKey = `activaTestigo${slotIndex}`;
+                if ((rowObj[testigoKey] === "" || rowObj[testigoKey] === null || rowObj[testigoKey] === undefined) && typeof cutData.activaTestigo1 === "boolean") {
+                    sheet.getRange(rowIndex, COLS_CORTES[testigoKey]).setValue(cutData.activaTestigo1);
+                }
                 if (!rowObj[`colaboradorCorte${slotIndex}`] && colaboradorName) {
                     sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${slotIndex}`]).setValue(colaboradorName || "");
                 }
@@ -311,6 +351,7 @@ function handleAddOrUpdateCut(payload) {
         sheet.getRange(rowIndex, COLS_CORTES[`ubicacionCorte${cutSlotIndex}`]).setValue(cutData.ubicacionCorte1);
         sheet.getRange(rowIndex, COLS_CORTES[`colorCableCorte${cutSlotIndex}`]).setValue(cutData.colorCableCorte1);
         sheet.getRange(rowIndex, COLS_CORTES[`configRelay${cutSlotIndex}`]).setValue(cutData.configRelay1);
+        sheet.getRange(rowIndex, COLS_CORTES[`activaTestigo${cutSlotIndex}`]).setValue(cutData.activaTestigo1 === true);
         sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${cutSlotIndex}`]).setValue(imageUrl);
         sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${cutSlotIndex}`]).setValue(colaboradorName);
         if (opId) {
@@ -385,6 +426,7 @@ function handleAddOrUpdateCut(payload) {
         sheet.getRange(rowIndex, COLS_CORTES.ubicacionCorte1).setValue(cutData.ubicacionCorte1);
         sheet.getRange(rowIndex, COLS_CORTES.colorCableCorte1).setValue(cutData.colorCableCorte1);
         sheet.getRange(rowIndex, COLS_CORTES.configRelay1).setValue(cutData.configRelay1);
+        sheet.getRange(rowIndex, COLS_CORTES.activaTestigo1).setValue(cutData.activaTestigo1 === true);
         sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
         sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
         if (cutData.vin) {

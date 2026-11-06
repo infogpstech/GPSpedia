@@ -2396,3 +2396,93 @@ Un solo commit con los seis archivos de esta tarea. Actualizar exclusivamente GP
 ## Siguiente tarea
 Auditar y corregir el contrato cutData entre ui.js openAddCutModal() y los handlers addOrUpdateCut() de WRITE/ADMIN.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — COLUMNAS DEL INDICADOR DE TESTIGO Y CONTRATO DE ALTA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: 4bc9ac19b81dd0a9cc38a21e2806973ba3bc5fb3
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ALCANCE
+- Corregir el contrato de cutData entre ui.js y los handlers addOrUpdateCut de WRITE/ADMIN.
+- Crear desde Apps Script las columnas activaTestigo1, activaTestigo2 y activaTestigo3 únicamente cuando falten.
+- Propagar, almacenar, leer y conservar el indicador al reordenar cortes.
+- Actualizar Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md.
+- No desplegar servicios ni ejecutar pruebas funcionales externas hasta la consolidación de implementaciones.
+
+ESTADO INICIAL OBSERVADO
+- El modal de detalle enviaba claves que no coinciden con las consumidas por WRITE/ADMIN.
+- La hoja Cortes se representa con un esquema base de 43 columnas en los mapas existentes; no hay campos propios para el indicador.
+- El formulario add_cortes.html guarda testigoMotor en su operación pendiente, pero no lo incluye en cutData.
+- CATALOG reordena los datos del corte por votos y requiere mover el nuevo indicador con el mismo corte.
+- La rama de trabajo está en 4bc9ac19b81dd0a9cc38a21e2806973ba3bc5fb3; la base permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+RIESGOS Y DEPENDENCIAS
+- WRITE y ADMIN son servicios Apps Script separados; ambos deben poder crear las columnas cuando falten.
+- ADMIN ya mantiene ScriptLock en su handler; no se debe adquirir de nuevo el mismo bloqueo dentro de la operación.
+- La hoja puede contener columnas adicionales no representadas por los mapas base; CATALOG debe localizar los campos por encabezado.
+- utilCorte1/2/3 son contadores de votos y no deben reutilizarse.
+- La creación de columnas y la persistencia real requieren pruebas en Spreadsheet de prueba después del despliegue conjunto.
+
+FASE
+Checkpoint inicial registrado antes de la auditoría e implementación. Auditoría estática completada; sin cambios en servicios publicados ni hojas externas.
+================================================================================
+
+================================================================================
+# CHECKPOINT FINAL — COLUMNAS DEL INDICADOR DE TESTIGO Y CONTRATO DE ALTA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD antes de la tarea: 4bc9ac19b81dd0a9cc38a21e2806973ba3bc5fb3
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+Implementación estática integrada. La validación funcional de Apps Script/Spreadsheet queda pendiente del despliegue conjunto; no se marca como funcionalmente completada.
+
+ARCHIVOS MODIFICADOS
+- ui.js
+- add_cortes.html
+- Services/write.js
+- Services/admin.js
+- Services/catalog.js
+- Auditoría.txt
+- Tareas.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+CAMBIOS
+- WRITE y ADMIN comprueban los encabezados activaTestigo1/2/3 y agregan al final solo los que falten.
+- WRITE serializa la comprobación/inserción mediante ScriptLock; ADMIN reutiliza el bloqueo que ya mantiene su handler.
+- El modal de detalle envía propiedades compatibles con addOrUpdateCut, incluida la imagen como imgCorte1.
+- El formulario add_cortes.html propaga testigoMotor mediante activaTestigo1.
+- WRITE/ADMIN guardan el indicador en el slot asignado y contemplan la recuperación idempotente.
+- CATALOG mapea las columnas por encabezado y conserva el indicador al reordenar los cortes por votos.
+- El detalle y la ficha de impresión consumen el indicador y muestran el aviso, manteniendo compatibilidad con los marcadores heredados.
+
+VERIFICACIONES ESTÁTICAS
+- Cada reemplazo de código se aplicó solo tras comprobar que el bloque de origen aparecía exactamente una vez.
+- Se comprobó que las propiedades de cutData enviadas por ambos formularios coinciden con las propiedades leídas por los handlers.
+- Se comprobó que la inserción de columnas busca encabezados exactos y no cambia las posiciones existentes.
+- Se comprobó que el indicador se incorpora al bloque temporal y al bloque reordenado de cada corte en CATALOG.
+- Se comprobó que utilCorte1/2/3 permanecen reservados para votos.
+- Se verificó el alcance de cambios frente a los blobs originales indicados en ChangesLogs.txt.
+
+VALIDACIONES PENDIENTES
+- Ejecutar WRITE y ADMIN en Spreadsheet de prueba para comprobar creación de columnas, creación parcial cuando falte una o dos, y no duplicación al repetir.
+- Probar altas en vehículo existente y nuevo, incluyendo checkbox activado/desactivado.
+- Probar recuperación por opId y selección de slot 1/2/3.
+- Verificar que CATALOG devuelve el indicador correcto después de reordenar por votos.
+- Verificar visualización del detalle y ficha de impresión.
+- No se ejecutó Apps Script, navegador, HTTP ni escrituras reales; no se desplegó ningún servicio.
+
+PUBLICACIÓN
+Un solo commit mediante Git Database API, con el HEAD inicial como único padre, una sola creación de árbol y actualización condicionada exclusiva de GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD inicial. La rama base debe permanecer intacta.
+
+SIGUIENTE TAREA
+Continuar con la siguiente implementación pendiente de GPSpedia. Mantener el despliegue conjunto de servicios para después de completar todas las implementaciones; ejecutar la matriz funcional tras ese despliegue y realizar los trabajos de revisión después de las pruebas funcionales.
+================================================================================

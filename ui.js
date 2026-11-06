@@ -1978,6 +1978,10 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                 configRelay: activeItem[`configRelay${i}`],
                 img: activeItem[`imgCorte${i}`],
                 util: parseInt(activeItem[`utilCorte${i}`] || 0),
+                activaTestigo: activeItem[`activaTestigo${i}`] === true ||
+                    String(activeItem[`activaTestigo${i}`] || '').toLowerCase() === 'true' ||
+                    activeItem[`utilCorte${i}`] === 'x' ||
+                    String(activeItem[`tipoCorte${i}`] || '').toLowerCase().includes('testigo'),
                 colaborador: activeItem[`colaboradorCorte${i}`]
             });
         }
@@ -2736,6 +2740,13 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
                                 <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
         }
         container.appendChild(contentP);
+    }
+
+    if (cutData.activaTestigo && !inEditMode) {
+        const testigoNotice = document.createElement('p');
+        testigoNotice.style.cssText = "color:#b45309; font-weight:bold; background:rgba(245,158,11,0.10); padding:8px; border-left:3px solid #d97706; border-radius:4px; margin:6px 0;";
+        testigoNotice.textContent = "⚠️ Este corte activa el testigo de motor";
+        container.appendChild(testigoNotice);
     }
 
     if (inEditMode || (cutData.img && !isNoRecomendadoValue(cutData.tipo))) {
@@ -6417,12 +6428,12 @@ export function openAddCutForModelModal(item) {
             sessionToken: currentUser.SessionToken,
             vehicleId: item.id,
             cutData: {
-                tipo: content.querySelector("#add-cut-tipo").value,
-                configRelay: content.querySelector("#add-cut-relay").value,
-                ubicacion: content.querySelector("#add-cut-detalles").value,
-                colorCable: content.querySelector("#add-cut-color").value,
-                activaTestigo: content.querySelector("#add-cut-testigo").checked,
-                imgBase64
+                tipoCorte1: content.querySelector("#add-cut-tipo").value,
+                configRelay1: content.querySelector("#add-cut-relay").value,
+                ubicacionCorte1: content.querySelector("#add-cut-detalles").value,
+                colorCableCorte1: content.querySelector("#add-cut-color").value,
+                activaTestigo1: content.querySelector("#add-cut-testigo").checked,
+                imgCorte1: imgBase64
             }
         };
 
@@ -7997,7 +8008,10 @@ export function exportVehiclePrintSheet(item) {
                 relay: item[`configRelay${i}`],
                 img: item[`imgCorte${i}`],
                 util: parseInt(item[`utilCorte${i}`] || 0),
-                activaTestigo: item[`utilCorte${i}`] === 'x' || String(item[`tipoCorte${i}`] || '').toLowerCase().includes('testigo')
+                activaTestigo: item[`activaTestigo${i}`] === true ||
+                    String(item[`activaTestigo${i}`] || '').toLowerCase() === 'true' ||
+                    item[`utilCorte${i}`] === 'x' ||
+                    String(item[`tipoCorte${i}`] || '').toLowerCase().includes('testigo')
             });
         }
     }

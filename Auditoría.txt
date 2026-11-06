@@ -4531,3 +4531,39 @@ HEAD auditado: 0666c1d189136dbad66c5c6523f8419b8d447002
 - Auditoría estática únicamente; no se ejecutó Apps Script ni se simularon solicitudes concurrentes contra Google Sheets.
 - La prueba funcional de concurrencia y límites queda pendiente para después del despliegue conjunto.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — INDICADOR DE TESTIGO EN EL ALTA DE CORTES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+HEAD auditado: 4bc9ac19b81dd0a9cc38a21e2806973ba3bc5fb3
+
+1. ARCHIVOS Y FUNCIONES REVISADOS
+- ui.js: renderCutContent(), construcción de cortes en mostrarDetalleModal(), openAddCutForModelModal() y exportVehiclePrintSheet().
+- add_cortes.html: captura y persistencia local de testigoMotor, restauración de operación pendiente y envío de addOrUpdateCut.
+- Services/write.js: doPost(), COLS_CORTES, handleAddOrUpdateCut(), mapRowToObject() y flujo de alta para vehículo existente/nuevo y recuperación por opId.
+- Services/admin.js: router doPost(), COLS_CORTES y handleAddOrUpdateCut() administrativo, que se ejecuta para registros silenciosos y mantiene ScriptLock.
+- Services/catalog.js: COLS_CORTES, mapRowToObject() y handleGetCatalogData(), incluido el reordenamiento de cortes por votos.
+- Se revisó el uso de addOrUpdateCut en los dos formularios y las rutas WRITE/ADMIN.
+
+2. HALLAZGOS
+- openAddCutForModelModal() enviaba tipo, configRelay, ubicacion, colorCable, activaTestigo e imgBase64, pero WRITE y ADMIN esperan tipoCorte1, configRelay1, ubicacionCorte1, colorCableCorte1 e imgCorte1.
+- El contrato incorrecto impedía que los datos del modal coincidieran con los campos consumidos por ambos handlers.
+- La hoja Cortes tiene un esquema base de 43 columnas en los mapas de WRITE, ADMIN y CATALOG. No hay columnas dedicadas para el indicador de testigo.
+- El formulario add_cortes.html ya conserva testigoMotor en formData, pero no lo transmitía al servicio.
+- CATALOG mapea por índices y reordena los campos del corte según utilCorteN; el indicador debe reordenarse en el mismo bloque para evitar asociarlo a otro corte.
+- exportVehiclePrintSheet() reconoce actualmente el testigo mediante el valor heredado 'x' en utilCorteN o la palabra «testigo» en tipoCorteN.
+- utilCorte1/2/3 se usan para votos; no son campos seguros para almacenar el indicador porque el sistema incrementa esos valores como contadores.
+
+3. RIESGOS Y DECISIONES
+- Agregar exactamente las columnas activaTestigo1, activaTestigo2 y activaTestigo3, sin modificar encabezados ni posiciones preexistentes.
+- La búsqueda de encabezados será por nombre exacto; solo se insertarán las columnas ausentes al final de la hoja.
+- WRITE deberá proteger la comprobación/inserción con ScriptLock para evitar columnas duplicadas por solicitudes simultáneas.
+- ADMIN ya mantiene ScriptLock durante handleAddOrUpdateCut(); su helper no deberá adquirir el mismo bloqueo de forma reentrante.
+- CATALOG resolverá los índices por encabezado, no supondrá que las nuevas columnas son necesariamente 44–46 si la hoja contiene otras columnas adicionales.
+- Mantener compatibilidad de lectura con registros históricos que usan 'x' o el texto «testigo».
+
+4. LÍMITES DE AUDITORÍA
+- Se revisó estáticamente el código y sus llamadas; no se ejecutó Apps Script, no se inspeccionó ni modificó la Spreadsheet real y no se desplegaron servicios.
+- Las pruebas funcionales de creación idempotente de columnas, alta por WRITE/ADMIN, recuperación por opId, ordenamiento y visualización quedan pendientes del despliegue conjunto.
+================================================================================

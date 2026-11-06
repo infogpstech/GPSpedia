@@ -4100,3 +4100,21 @@ Estado: IMPLEMENTACIÓN ESTÁTICA INTEGRADA; PRUEBAS FUNCIONALES POST-DESPLIEGUE
 - No se desplegó Apps Script ni se ejecutaron pruebas funcionales externas.
 - Pendiente: comprobar concurrencia real, límites por rol, fallo de eliminación y ausencia de sesiones excedentes en el entorno de prueba después del despliegue único de AUTH.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — COLUMNAS Y CONTRATO DEL INDICADOR DE TESTIGO
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA INTEGRADA; PRUEBAS FUNCIONALES PENDIENTES DEL DESPLIEGUE CONJUNTO.
+
+- Se incorporó la comprobación idempotente de los encabezados activaTestigo1, activaTestigo2 y activaTestigo3 en WRITE y ADMIN. Cada servicio agrega al final únicamente los encabezados que falten.
+- WRITE protege la comprobación/inserción con ScriptLock. ADMIN reutiliza el bloqueo que ya mantiene handleAddOrUpdateCut().
+- Se alineó el payload de openAddCutForModelModal() con el contrato consumido por los handlers: tipoCorte1, configRelay1, ubicacionCorte1, colorCableCorte1, imgCorte1 y activaTestigo1.
+- Se conectó el checkbox testigoMotor del formulario add_cortes.html con activaTestigo1.
+- WRITE y ADMIN almacenan el indicador en el slot de corte que corresponda, incluyendo recuperación de operaciones idempotentes.
+- CATALOG localiza las columnas por encabezado y conserva el indicador al reordenar cortes por votos.
+- El detalle y la ficha de impresión leen el campo nuevo, conservando compatibilidad con los marcadores históricos.
+- No se modificaron utilCorte1/2/3 ni se alteraron columnas existentes.
+- Pendiente: verificar en Spreadsheet de prueba la creación de columnas faltantes y la no duplicación; probar altas de vehículo existente/nuevo por WRITE y ADMIN, recuperación por opId, ordenamiento de cortes y visualización/impresión.
+- No se ejecutó Apps Script, no se hicieron escrituras reales y no se desplegó ningún servicio.
+================================================================================
