@@ -270,40 +270,16 @@
                         </div>
                     </section>
 
-                    <!-- Respaldos -->
+                    <!-- Respaldos: acceso secundario a las herramientas ubicadas en Base de datos -->
                     <section class="dev-tab-panel dev-panel-backups" role="tabpanel" aria-labelledby="dev-tab-backups">
                         <div class="dev-panel-heading">
                             <h3><i class="fa-solid fa-shield-halved"></i> Respaldos y restauración</h3>
-                            <p>Genera copias de seguridad, restaura información y consulta sus identificadores.</p>
+                            <p>Las operaciones de respaldo y restauración se administran desde «Base de datos» mediante un único campo compartido.</p>
                         </div>
-
-                        <div id="backup-results-panel" class="dev-card dev-tools-card">
-                            <strong><i class="fa-solid fa-folder-open"></i> Accesos directos a copias de seguridad</strong>
-                            <div class="dev-backup-id-row">
-                                <label for="dev-ss-backup-id">Spreadsheet ID</label>
-                                <input type="text" id="dev-ss-backup-id" readonly class="dev-input">
-                                <button id="copy-ss-backup-btn" class="btn btn-secondary">Copiar ID</button>
-                                <button id="link-ss-backup-btn" class="btn btn-primary" disabled>Enlace</button>
-                            </div>
-                            <div class="dev-backup-id-row">
-                                <label for="dev-drive-backup-id">Drive Folder ID</label>
-                                <input type="text" id="dev-drive-backup-id" readonly class="dev-input">
-                                <button id="copy-drive-backup-btn" class="btn btn-secondary">Copiar ID</button>
-                                <button id="link-drive-backup-btn" class="btn btn-primary" disabled>Enlace</button>
-                            </div>
-                        </div>
-
                         <div class="dev-card dev-tools-card">
-                            <strong><i class="fa-solid fa-cloud-arrow-up"></i> Crear o restaurar copias</strong>
-                            <div class="dev-action-row">
-                                <button id="btn-admin-backup-db" class="btn btn-primary"><i class="fa-solid fa-database"></i> Respaldar DB</button>
-                                <button id="btn-admin-backup-drive" class="btn btn-primary"><i class="fa-brands fa-google-drive"></i> Respaldar Drive</button>
-                            </div>
-                            <div class="dev-action-row dev-restore-row">
-                                <input type="text" id="restore-backup-id-input" placeholder="ID del Backup para restaurar..." class="dev-input">
-                                <button id="btn-admin-restore-db" class="btn btn-warning">Restaurar DB</button>
-                                <button id="btn-admin-restore-drive" class="btn btn-warning">Restaurar Drive</button>
-                            </div>
+                            <strong><i class="fa-solid fa-database"></i> Herramientas centralizadas</strong>
+                            <p>Para crear un respaldo o restaurar una Spreadsheet o carpeta de Drive, abre la sección «Base de datos». Allí encontrarás las cuatro operaciones y el campo compartido para los enlaces.</p>
+                            <label class="btn btn-primary dev-action-full" for="dev-tab-database"><i class="fa-solid fa-arrow-right-to-bracket"></i> Ir a Base de datos</label>
                         </div>
                     </section>
 
@@ -312,6 +288,28 @@
                         <div class="dev-panel-heading">
                             <h3><i class="fa-solid fa-database"></i> Base de datos</h3>
                             <p>Herramientas de organización, diagnóstico y mantenimiento de registros.</p>
+                        </div>
+
+                        <div id="backup-management-panel" class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-shield-halved"></i> Respaldos y restauración</strong>
+                            <p>Utiliza este mismo campo para consultar el enlace del último respaldo o introducir el enlace completo que deseas restaurar.</p>
+                            <div class="dev-backup-resource-field">
+                                <label for="backup-resource-input">Enlace completo del respaldo</label>
+                                <input type="text" id="backup-resource-input" class="dev-input" placeholder="Enlace de Spreadsheet o carpeta de Drive" autocomplete="off" spellcheck="false" aria-describedby="backup-resource-hint">
+                                <p id="backup-resource-hint" class="dev-empty-state" aria-live="polite">Selecciona una operación. El campo acepta enlaces completos de Spreadsheet o de carpetas de Drive.</p>
+                            </div>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-backup-db" class="btn btn-primary"><i class="fa-solid fa-database"></i> Crear respaldo de Spreadsheet</button>
+                                <button type="button" id="btn-admin-backup-drive" class="btn btn-primary"><i class="fa-brands fa-google-drive"></i> Crear respaldo de Drive</button>
+                            </div>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-restore-db" class="btn btn-warning"><i class="fa-solid fa-table"></i> Restaurar Spreadsheet</button>
+                                <button type="button" id="btn-admin-restore-drive" class="btn btn-warning"><i class="fa-solid fa-folder-closed"></i> Restaurar carpeta de Drive</button>
+                            </div>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-copy-backup-resource-link" class="btn btn-secondary"><i class="fa-solid fa-copy"></i> Copiar enlace</button>
+                                <button type="button" id="btn-open-backup-resource-link" class="btn btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir enlace</button>
+                            </div>
                         </div>
 
                         <div class="dev-card dev-tools-card">

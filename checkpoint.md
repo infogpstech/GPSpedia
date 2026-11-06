@@ -2988,3 +2988,117 @@ VERIFICACIONES
 SIGUIENTE ACCIÓN
 Crear un único commit con los cuatro archivos de código y cuatro documentos. Antes de escribir, verificar que GPSpedia2.2.5_work sigue en 06c3b3228844721fe5359c372ebb105ce497ef33 y GPSpedia2.2.5 sigue en d9acc68d889985c2e2f42fe3a02e502efc86ead1. Crear un solo árbol, un commit con el HEAD inicial como único padre y actualizar solo la rama de trabajo con force:false/expected_sha. Después verificar commit, archivos modificados y rama base intacta. No desplegar ni iniciar pruebas funcionales todavía.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — CAMPO COMPARTIDO PARA RESPALDOS Y RESTAURACIÓN
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial verificado: 726727b653dc18177bac0ee3cb9ea7f33e83b2d1
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA
+Auditar e implementar el subalcance «Respaldos y restauración — campo único compartido» del modal «Opciones de desarrollador».
+
+ALCANCE
+- Auditar las cuatro acciones existentes: backupDatabase, backupDrive, restoreDatabase y restoreDrive.
+- Identificar los contratos reales de entrada/salida, normalización de enlaces, validaciones de recurso, autorización y confirmaciones.
+- Reorganizar la interfaz para utilizar un solo campo compartido de enlaces dentro de «Base de datos», con indicación contextual según la operación.
+- Mostrar en el mismo campo el enlace completo del recurso respaldado únicamente después de verificar que el recurso existe y que el enlace corresponde al recurso generado.
+- Mantener la compatibilidad de acciones, IDs/listeners necesarios, permisos, confirmaciones, auditoría e integridad de respaldo/restauración.
+- Auditar si la pestaña «Respaldos» se conserva como navegación secundaria o se integra visualmente, sin retirar controles ni cambiar IDs antes de conocer sus dependencias.
+
+ESTADO INICIAL
+- La rama de trabajo está en 726727b653dc18177bac0ee3cb9ea7f33e83b2d1.
+- La rama base protegida está en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- index.html contiene una pestaña «Respaldos» separada de «Base de datos», dos campos de ID de salida y un campo independiente para restauración.
+- ui.js enlaza los cuatro botones con las acciones ADMIN; el respaldo presenta IDs y botones de enlace, y las restauraciones reciben backupId.
+- api-config.js enruta las cuatro acciones a ADMIN.
+- Services/admin.js valida sesión de desarrollador en el router; los handlers existentes de respaldo y restauración tienen contratos y efectos que deben auditarse completos antes de proponer cambios.
+- No se ha iniciado modificación de código ni se han ejecutado operaciones productivas.
+
+ARCHIVOS Y DEPENDENCIAS PREVISTOS PARA AUDITORÍA
+- index.html, style.css, ui.js, api-config.js y Services/admin.js.
+- Funciones auxiliares de extracción/validación de IDs, acceso a Drive/Spreadsheet, runAction y registro de actividad.
+- Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md para trazabilidad.
+
+RIESGOS Y RESTRICCIONES
+- La restauración de Spreadsheet elimina las hojas del destino antes de copiar las del respaldo.
+- La restauración de Drive limpia el contenido del árbol de destino antes de copiar el respaldo.
+- No ejecutar respaldos ni restauraciones reales durante la auditoría.
+- No alterar permisos, IDs de Spreadsheet/Drive, acciones, contratos ni políticas de restauración sin evidencia y justificación directa.
+- No desplegar servicios Apps Script ni publicar frontend durante esta tarea.
+- Un solo commit por tarea mediante el flujo Git Database API autorizado; la rama base no se modifica.
+
+FASE
+Checkpoint inicial registrado antes de la auditoría. No se han editado archivos de código ni ejecutado operaciones externas.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — CAMPO COMPARTIDO PARA RESPALDOS Y RESTAURACIÓN
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial de la tarea: 726727b653dc18177bac0ee3cb9ea7f33e83b2d1
+Rama base protegida: GPSpedia2.2.5
+HEAD de la rama base verificado antes del commit: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+Implementación estática completada y pruebas aisladas con mocks satisfactorias. La validación funcional real de navegador, Apps Script, Drive y Spreadsheet queda pendiente de la fase consolidada posterior a las demás implementaciones y al despliegue conjunto. No se declara validada la operación real de respaldo/restauración.
+
+ARCHIVOS DE CÓDIGO MODIFICADOS
+- index.html: original 33ac39d5c0ffe27f15a0cb3a3c6dec810f8f8b32; final 33c3e6acd43901f350c73654a2796c11f9d82043.
+- style.css: original e100e73d7cacddb3b84bfce23966d44ad0c90896; final a734d412b6054e54d2c8d7afc5f94d435caba192.
+- ui.js: original 3181a4a5109dbd5145a1373986c3fa520d094d3d; final 2456788ef2c0009fa92d37e9085c3258ecd30fbb.
+- Services/admin.js: original 9d9809f9cd3741f4147e9f5eaa57f3bad4eb75ff; final 2dbd044f4b42a786a623d0c1599335e7d62b62ad.
+- api-config.js: sin cambios; blob original 1e7f237c6a5467b91dcc05a69ecf650089d83e93.
+
+ARCHIVOS DOCUMENTALES MODIFICADOS
+- Auditoría.txt: final 978611214047f6944405567bcba93cc4c918f23e.
+- Tareas.txt: final f0a71c67a9e238a260b8b8a3640ab1af1b7fa3b8.
+- ChangesLogs.txt: final 3418cf6838536ccb7335cb22a4b49e29a2fe2a42.
+- checkpoint.md: contiene el checkpoint inicial de esta tarea y este checkpoint final; su blob final se incorpora al único commit.
+
+RESUMEN DE IMPLEMENTACIÓN
+- Se trasladaron las cuatro operaciones backupDatabase, backupDrive, restoreDatabase y restoreDrive a un solo panel dentro de «Base de datos».
+- Se sustituyeron los campos separados de IDs y restauración por backup-resource-input, único campo compartido de entrada/salida.
+- La pestaña «Respaldos» se conserva como navegación secundaria hacia «Base de datos», sin controles duplicados.
+- La interfaz muestra el enlace completo devuelto por ADMIN únicamente cuando el ID y el tipo de URL coinciden; conserva acciones de copiar/abrir, confirmaciones y estados de operación.
+- Se añadieron normalizadores diferenciados para enlaces de Spreadsheet y carpeta de Drive.
+- ADMIN vuelve a obtener y valida los recursos creados, su identidad, tipo/nombre, ubicación en raíz y correspondencia de URL.
+- Antes de restaurar, ADMIN valida tipo, identidad, nombre, ubicación y estado del recurso; bloquea el propio Spreadsheet/carpeta productiva como origen.
+- extractDriveFileIds()/extractDriveFileId() globales permanecen intactos para no alterar los consumidores de imágenes e historial.
+- Se conservan el envío del payload de sesión, la autorización Desarrollador en ADMIN y el mapeo de acciones.
+
+VERIFICACIONES EJECUTADAS
+- Parseo sintáctico aislado de ui.js y Services/admin.js correcto.
+- CSS con llaves balanceadas.
+- IDs HTML únicos; un solo campo compartido; controles anteriores ausentes.
+- Comparación inversa: index.html, ui.js y Services/admin.js reconstruyen exactamente sus originales al revertir únicamente los bloques intervenidos; style.css conserva su contenido original íntegro como prefijo.
+- api-config.js permanece sin cambios.
+- Simulaciones de extracción de URL de carpeta, normalización frontend, validación del enlace de salida, verificación de backupDatabase/backupDrive y bloqueo de restoreDatabase/restoreDrive antes de operaciones destructivas: satisfactorias con mocks.
+- Simulación de isDirectChildOfDriveRoot() y límites exactos de URL: satisfactoria.
+- No se ejecutó navegador real, Apps Script, HTTP, Drive ni Spreadsheet. No se crearon respaldos ni se restauraron datos reales.
+
+RIESGOS Y PENDIENTES
+- La verificación confirma el recurso y la URL, no la integridad exhaustiva de cada elemento copiado.
+- La copia recursiva de Drive puede dejar una carpeta parcial si falla; no se añadió limpieza automática.
+- restoreDrive conserva la secuencia existente de limpiar el destino y luego copiar; no dispone de rollback si la copia falla a mitad del proceso.
+- Las comprobaciones de acceso corresponden al entorno de ejecución Apps Script; no se modificaron permisos de compartición ni se comprobó el acceso de cada usuario final.
+- La matriz funcional real de respaldos/restauración queda pendiente de la fase consolidada.
+- No se desplegó frontend ni Apps Script y no se realizaron operaciones sobre datos reales.
+
+PUBLICACIÓN
+El único commit de esta tarea se generará mediante Git Database API:
+- parent_sha: 726727b653dc18177bac0ee3cb9ea7f33e83b2d1.
+- base_tree_sha: b95bd8b871a87c34212937355a52fba1e62df29c.
+- Actualización exclusiva de GPSpedia2.2.5_work con force:false y expected_sha igual a 726727b653dc18177bac0ee3cb9ea7f33e83b2d1.
+- La rama protegida GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- El SHA del commit que incorpora este checkpoint quedará identificable en el historial Git después de su creación.
+
+SIGUIENTE TAREA
+Continuar con «Limpieza de registros — selectores y acción única» (sección 4 de la ampliación del modal). No desplegar ni iniciar la matriz funcional consolidada hasta completar todas las implementaciones pendientes.
+================================================================================

@@ -3082,3 +3082,18 @@ PENDIENTE
 - Confirmar conectividad/latencia de servicios en el deployment consolidado.
 - No publicar ni desplegar en esta fase.
 ================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN — CAMPO COMPARTIDO DE RESPALDOS Y RESTAURACIÓN
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+- index.html (líneas 273-285 y 293-315): se sustituyó el contenido operativo de la pestaña «Respaldos» por un acceso secundario a «Base de datos»; se añadió dentro de «Base de datos» un panel con un único campo de enlace, indicación contextual, cuatro botones de operación y controles únicos para copiar/abrir el enlace. Se retiraron los campos independientes de ID y restauración.
+- ui.js (líneas 3775-3927): se reemplazaron los listeners de campos separados por la gestión del campo compartido; se añadieron validación de la respuesta de respaldo, normalización separada de enlaces Spreadsheet/carpeta, estado de carga, mensajes de resultado, y acciones de copiar/abrir. Se conservaron las confirmaciones de restauración y el uso de runAction().
+- Services/admin.js (líneas 78-100, 524-601 y 655-737): se añadieron helpers para extraer el ID de carpeta de respaldo, comprobar ubicación directa en la raíz y validar correspondencia de URL. Los handlers de respaldo verifican el recurso generado; los handlers de restauración verifican tipo, identidad, nombre, estado y ubicación antes de modificar el destino.
+- style.css (líneas 3321-3344): se añadieron estilos para el campo compartido y su texto auxiliar.
+- api-config.js: sin modificaciones; se conserva el mapeo de las cuatro acciones a ADMIN.
+- Auditoría.txt: se añadió la revisión post-implementación, Code Review, pruebas aisladas, límites y validaciones pendientes.
+- Tareas.txt: se añadió el cierre estático de la subtarea y la siguiente acción.
+- checkpoint.md: se añadieron checkpoint inicial y final de la subtarea.
+================================================================================

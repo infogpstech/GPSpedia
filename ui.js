@@ -3772,70 +3772,157 @@ ${elapsedSec}s
         };
     }
 
-    // 1. Botón Respaldar DB
-    document.getElementById('btn-admin-backup-db').onclick = async () => {
-        const res = await runAction('backupDatabase');
-        if (res && res.backupId) {
-            document.getElementById('dev-ss-backup-id').value = res.backupId;
-            const linkBtn = document.getElementById('link-ss-backup-btn');
-            linkBtn.disabled = false;
-            linkBtn.onclick = () => window.open(res.backupUrl || `https://docs.google.com/spreadsheets/d/${res.backupId}`, '_blank');
-        }
-    };
+    // Respaldos y restauración: un único campo compartido para entrada y salida de enlaces.
+    const backupResourceInput = document.getElementById('backup-resource-input');
+    const backupResourceHint = document.getElementById('backup-resource-hint');
 
-    // 2. Botón Respaldar Drive
-    document.getElementById('btn-admin-backup-drive').onclick = async () => {
-        const res = await runAction('backupDrive');
-        if (res && res.backupId) {
-            document.getElementById('dev-drive-backup-id').value = res.backupId;
-            const linkBtn = document.getElementById('link-drive-backup-btn');
-            linkBtn.disabled = false;
-            linkBtn.onclick = () => window.open(res.backupUrl || `https://drive.google.com/drive/folders/${res.backupId}`, '_blank');
+    function setBackupResourceHint(message, isError = false) {
+        if (backupResourceHint) {
+            backupResourceHint.textContent = message;
+            backupResourceHint.dataset.state = isError ? 'error' : 'info';
         }
-    };
-
-    // 3. Copiado de IDs
-    document.getElementById('copy-ss-backup-btn').onclick = () => {
-        const idVal = document.getElementById('dev-ss-backup-id').value;
-        if (idVal) {
-            navigator.clipboard.writeText(idVal).then(() => log("ID de Spreadsheet copiado al portapapeles."));
-        }
-    };
-    document.getElementById('copy-drive-backup-btn').onclick = () => {
-        const idVal = document.getElementById('dev-drive-backup-id').value;
-        if (idVal) {
-            navigator.clipboard.writeText(idVal).then(() => log("ID de carpeta de Drive copiado al portapapeles."));
-        }
-    };
-
-    // 4. Restauración
-    function normalizeSpreadsheetBackupId(value) {
-        const input = String(value || "").trim();
-        if (/^[a-zA-Z0-9_-]{20,}$/.test(input)) return input;
-        const match = input.match(/(?:\/d\/|[?&]id=)([a-zA-Z0-9_-]{20,})/);
-        return match ? match[1] : "";
     }
 
-    document.getElementById('btn-admin-restore-db').onclick = async () => {
-        const backupInput = document.getElementById('restore-backup-id-input').value;
-        const backupId = normalizeSpreadsheetBackupId(backupInput);
-        if (!backupId) {
-            log("[ADVERTENCIA] Introduce un ID o enlace válido de Google Sheets para restaurar.", true);
-            return;
+    function setBackupButtonBusy(button, busy) {
+        if (!button) return;
+        button.disabled = busy;
+        button.setAttribute('aria-busy', String(busy));
+    }
+
+    function isVerifiedBackupResponse(response, resourceType) {
+        const backupId = String(response && response.backupId || '').trim();
+        const backupUrl = String(response && response.backupUrl || '').trim();
+        if (!backupId || !backupUrl) return false;
+        const expectedPrefix = resourceType === 'spreadsheet'
+            ? `https://docs.google.com/spreadsheets/d/${backupId}`
+            : `https://drive.google.com/drive/folders/${backupId}`;
+        return backupUrl === expectedPrefix || backupUrl.startsWith(expectedPrefix + '/') || backupUrl.startsWith(expectedPrefix + '?');
+    }
+
+    async function createBackup(action, resourceType, button) {
+        const description = resourceType === 'spreadsheet'
+            ? 'Creando y verificando el respaldo de la Spreadsheet...'
+            : 'Creando y verificando el respaldo de la carpeta de Drive...';
+        setBackupResourceHint(description);
+        setBackupButtonBusy(button, true);
+        try {
+            const response = await runAction(action);
+            if (!response) {
+                setBackupResourceHint('No se confirmó la creación del respaldo. Consulta la consola para revisar el resultado.', true);
+                return;
+            }
+            if (!isVerifiedBackupResponse(response, resourceType)) {
+                log('[ERROR] ADMIN no devolvió un enlace completo verificable para el recurso de respaldo.', false, true);
+                setBackupResourceHint('El servidor no confirmó la identidad y el enlace completo del respaldo. No se mostrará como válido.', true);
+                return;
+            }
+            backupResourceInput.value = response.backupUrl;
+            setBackupResourceHint(resourceType === 'spreadsheet'
+                ? 'Respaldo de Spreadsheet verificado. El enlace completo quedó disponible en este campo.'
+                : 'Respaldo de Drive verificado. El enlace completo quedó disponible en este campo.');
+        } finally {
+            setBackupButtonBusy(button, false);
         }
-        if (confirm("¿Estás seguro de que deseas RESTAURAR la base de datos completa? Esto sobreescribirá la información actual de producción.")) {
-            await runAction('restoreDatabase', { backupId });
-        }
+    }
+
+    document.getElementById('btn-admin-backup-db').onclick = async (event) => {
+        await createBackup('backupDatabase', 'spreadsheet', event.currentTarget);
     };
-    document.getElementById('btn-admin-restore-drive').onclick = async () => {
-        const backupId = document.getElementById('restore-backup-id-input').value.trim();
+
+    document.getElementById('btn-admin-backup-drive').onclick = async (event) => {
+        await createBackup('backupDrive', 'drive', event.currentTarget);
+    };
+
+    function normalizeSpreadsheetBackupId(value) {
+        const input = String(value || '').trim();
+        if (/^[a-zA-Z0-9_-]{20,}$/.test(input)) return input;
+        const match = input.match(/(?:\/d\/|[?&]id=)([a-zA-Z0-9_-]{20,})/);
+        return match ? match[1] : '';
+    }
+
+    function normalizeDriveBackupId(value) {
+        const input = String(value || '').trim();
+        if (/^[a-zA-Z0-9_-]{20,}$/.test(input)) return input;
+        const match = input.match(/(?:\/folders\/|[?&]id=)([a-zA-Z0-9_-]{20,})/);
+        return match ? match[1] : '';
+    }
+
+    async function restoreBackup(action, resourceType, button) {
+        const inputValue = backupResourceInput ? backupResourceInput.value.trim() : '';
+        const backupId = resourceType === 'spreadsheet'
+            ? normalizeSpreadsheetBackupId(inputValue)
+            : normalizeDriveBackupId(inputValue);
         if (!backupId) {
-            log("[ADVERTENCIA] Por favor introduce un ID de Backup válido para restaurar.", true);
+            const expected = resourceType === 'spreadsheet'
+                ? 'Introduce un ID o enlace válido de Google Sheets.'
+                : 'Introduce un ID o enlace válido de una carpeta de Google Drive.';
+            log(`[ADVERTENCIA] ${expected}`, true);
+            setBackupResourceHint(expected, true);
             return;
         }
-        if (confirm("¿Estás seguro de que deseas RESTAURAR toda la estructura de Drive? Esto limpiará y sobreescribirá las imágenes actuales en producción.")) {
-            await runAction('restoreDrive', { backupId });
+
+        const confirmation = resourceType === 'spreadsheet'
+            ? '¿Estás seguro de que deseas RESTAURAR la base de datos completa? Esto sobreescribirá la información actual de producción.'
+            : '¿Estás seguro de que deseas RESTAURAR toda la estructura de Drive? Esto limpiará y sobreescribirá las imágenes actuales en producción.';
+        if (!confirm(confirmation)) return;
+
+        setBackupResourceHint(resourceType === 'spreadsheet'
+            ? 'Validando el respaldo de Spreadsheet antes de restaurar...'
+            : 'Validando el respaldo de Drive antes de restaurar...');
+        setBackupButtonBusy(button, true);
+        try {
+            const response = await runAction(action, { backupId });
+            if (response && response.status === 'success') {
+                setBackupResourceHint(resourceType === 'spreadsheet'
+                    ? 'La restauración de Spreadsheet finalizó. El enlace utilizado se conserva en el campo.'
+                    : 'La restauración de Drive finalizó. El enlace utilizado se conserva en el campo.');
+            } else {
+                setBackupResourceHint('La restauración no fue confirmada. Consulta la consola antes de volver a intentarlo.', true);
+            }
+        } finally {
+            setBackupButtonBusy(button, false);
         }
+    }
+
+    document.getElementById('btn-admin-restore-db').onclick = async (event) => {
+        setBackupResourceHint('Para restaurar la base de datos, introduce el enlace completo de una Spreadsheet de respaldo.');
+        await restoreBackup('restoreDatabase', 'spreadsheet', event.currentTarget);
+    };
+
+    document.getElementById('btn-admin-restore-drive').onclick = async (event) => {
+        setBackupResourceHint('Para restaurar Drive, introduce el enlace completo de una carpeta de respaldo.');
+        await restoreBackup('restoreDrive', 'drive', event.currentTarget);
+    };
+
+    const copyBackupResourceLinkButton = document.getElementById('btn-copy-backup-resource-link');
+    if (copyBackupResourceLinkButton) {
+        copyBackupResourceLinkButton.onclick = async () => {
+            const link = backupResourceInput ? backupResourceInput.value.trim() : '';
+            if (!link) {
+                log('[ADVERTENCIA] No hay ningún enlace para copiar.', true);
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(link);
+                log('[SISTEMA] Enlace del respaldo copiado al portapapeles.');
+            } catch (error) {
+                log(`[ERROR] No se pudo copiar el enlace: ${error.message}`, false, true);
+            }
+        };
+    }
+
+    const openBackupResourceLinkButton = document.getElementById('btn-open-backup-resource-link');
+    if (openBackupResourceLinkButton) {
+        openBackupResourceLinkButton.onclick = () => {
+            const link = backupResourceInput ? backupResourceInput.value.trim() : '';
+            const isSpreadsheetLink = /^https:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z0-9_-]{20,}/.test(link);
+            const isDriveFolderLink = /^https:\/\/drive\.google\.com\/drive\/folders\/[a-zA-Z0-9_-]{20,}/.test(link);
+            if (!isSpreadsheetLink && !isDriveFolderLink) {
+                log('[ADVERTENCIA] Introduce un enlace completo y válido de Spreadsheet o carpeta de Drive.', true);
+                return;
+            }
+            window.open(link, '_blank', 'noopener,noreferrer');
+        };
     };
 
     // 5. Mantenimiento y Organización

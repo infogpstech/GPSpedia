@@ -4946,3 +4946,132 @@ LÍMITES QUE DEBEN CONSERVARSE
 - El máximo de 600 eventos puede truncar eventos más antiguos si se supera ese límite dentro de la ventana de 15 minutos.
 - La validación visual y de conectividad real queda pendiente para la fase de pruebas funcionales consolidada.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA INICIAL — CAMPO COMPARTIDO PARA RESPALDOS Y RESTAURACIÓN
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: 726727b653dc18177bac0ee3cb9ea7f33e83b2d1
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ALCANCE
+Auditoría estática de index.html, style.css, ui.js, api-config.js y Services/admin.js para la reorganización de backupDatabase, backupDrive, restoreDatabase y restoreDrive en un único campo compartido ubicado en «Base de datos». No se ejecutaron operaciones de Drive/Spreadsheet ni se modificó código durante esta fase.
+
+RESPALDOS GIT DE LOS ARCHIVOS AUDITADOS
+- index.html: 33ac39d5c0ffe27f15a0cb3a3c6dec810f8f8b32
+- style.css: e100e73d7cacddb3b84bfce23966d44ad0c90896
+- ui.js: 3181a4a5109dbd5145a1373986c3fa520d094d3d
+- api-config.js: 1e7f237c6a5467b91dcc05a69ecf650089d83e93
+- Services/admin.js: 9d9809f9cd3741f4147e9f5eaa57f3bad4eb75ff
+Los SHA anteriores identifican los blobs exactos existentes en el HEAD auditado y se conservan como referencia inmutable para la comparación posterior.
+
+HALLAZGOS — index.html
+1. El modal conserva cinco pestañas mediante radios: Diagnóstico, Respaldos, Base de datos, Imágenes y Drive, y Sistema (aprox. líneas 219-239).
+2. La sección «Respaldos» (aprox. líneas 274-309) contiene exclusivamente la presentación de dos IDs de salida, botones para copiar/abrir cada recurso, los dos botones de creación de respaldo y un campo independiente de entrada para restauración.
+3. La sección «Base de datos» (aprox. líneas 311-351) contiene las acciones de firmas VIN, organización de registros, purga de actividad, purga de Logs y administración de cortes. No contiene actualmente acciones de respaldo/restauración.
+4. Los IDs de los controles actuales son consumidos por ui.js. No se encontró en el HTML otro campo compartido para las cuatro operaciones.
+5. La pestaña «Respaldos» no debe eliminarse durante la reorganización sin una decisión explícita. La revisión de referencias permite considerar su conservación como navegación secundaria, sin duplicar las acciones que se trasladarían a «Base de datos».
+
+HALLAZGOS — ui.js
+1. runAction(action, payload) ejecuta las acciones individuales mediante routeAction() y agrega getDeveloperSessionPayload() al payload enviado (aprox. líneas 3386-3420). El resultado se devuelve al listener cuando res.status === 'success'; en caso contrario se registra el error y se devuelve undefined.
+2. Los listeners backupDatabase y backupDrive (aprox. líneas 3776-3796) escriben backupId en campos de salida separados. Los botones secundarios habilitan la apertura de backupUrl, pero también construyen una URL alternativa a partir de backupId si backupUrl no existe.
+3. Los listeners copy-ss-backup-btn y copy-drive-backup-btn (aprox. líneas 3798-3810) copian identificadores, no enlaces completos.
+4. normalizeSpreadsheetBackupId() acepta ID, ruta /d/ o parámetro id= (aprox. líneas 3812-3817). No valida el tipo real del recurso; esa validación debe permanecer en el backend.
+5. restoreDatabase envía el ID normalizado en backupId. restoreDrive envía el texto introducido sin normalización de URL (aprox. líneas 3819-3840). Por tanto, la interfaz actual no trata de forma equivalente los enlaces completos de Spreadsheet y carpeta.
+6. Las dos restauraciones conservan confirmaciones explícitas antes de llamar a runAction(). La confirmación de DB advierte que se sobrescribirá la base de datos productiva; la de Drive advierte que se limpiará y sobrescribirá la estructura actual.
+7. La referencia de los IDs de salida, botones secundarios y campo de restauración en ui.js se limita a los listeners anteriores. No se identificaron consumidores adicionales en ui.js.
+8. El payload de sesión se adjunta actualmente en runAction(); el defecto histórico de omisión de userId/sessionToken documentado en Auditoría.txt no se reproduce en el HEAD auditado.
+
+HALLAZGOS — api-config.js
+1. ACTION_TO_SERVICE_MAP dirige backupDatabase, backupDrive, restoreDatabase y restoreDrive a ADMIN (aprox. línea 29).
+2. routeAction() serializa action y payload y envía el POST al endpoint configurado para ADMIN. No se requiere modificar el mapa de acciones para reorganizar el campo.
+3. El módulo mantiene métricas locales de solicitudes iniciadas desde el navegador; no se identificó dependencia de dichas métricas con el flujo de respaldos que justifique modificarlas.
+
+HALLAZGOS — Services/admin.js
+1. doPost() llama assertDeveloperSession(payload) para toda acción distinta de ping antes de entrar al switch de handlers (aprox. líneas 360-390). La validación comprueba userId, sessionToken, sesión activa y privilegio Desarrollador en las hojas del servidor. No se debe alterar ni debilitar esta protección.
+2. handleBackupDatabase() copia el Spreadsheet configurado a la raíz de Drive con nombre GPSpedia_DB_BACKUP_<timestamp> y devuelve backupId y backupUrl mediante getId()/getUrl() (aprox. líneas 501-520). No vuelve a recuperar el recurso creado ni verifica explícitamente su MIME/identidad antes de devolver éxito.
+3. handleBackupDrive() crea en la raíz una carpeta GPSpedia_Drive_BACKUP_<timestamp>, copia recursivamente el árbol configurado y devuelve backupId y backupUrl mediante getId()/getUrl() (aprox. líneas 525-545). No vuelve a recuperar la carpeta ni verifica explícitamente que el enlace devuelto corresponda al recurso creado.
+4. handleRestoreDatabase() usa extractDriveFileId() para aceptar ID o enlaces que el helper reconozca; obtiene el archivo y abre el Spreadsheet de respaldo antes de eliminar las hojas del destino (aprox. líneas 602-640). El helper compartido reconoce IDs, rutas /d/ y parámetros id=, pero no se debe ampliar sin análisis porque también se utiliza en funciones de imágenes e historial (líneas 59-75 y referencias posteriores).
+5. handleRestoreDatabase() no comprueba explícitamente que el archivo sea un respaldo de GPSpedia ni que su ID sea distinto de SPREADSHEET_ID antes de iniciar la sustitución. Si se proporciona el ID del Spreadsheet de destino, backupSS y targetSS pueden referirse al mismo recurso y la secuencia de eliminación/copia puede afectar la propia fuente de restauración. Este es un riesgo bloqueante que debe cerrarse antes de habilitar la acción con un campo compartido.
+6. handleRestoreDrive() recibe backupId y usa DriveApp.getFolderById(); después obtiene el destino DRIVE_FOLDER_ID, limpia el contenido del destino y copia el contenido de la carpeta indicada (aprox. líneas 644-660). No comprueba que la carpeta indicada tenga el nombre/prefijo de respaldo esperado, que esté fuera del árbol de destino ni que sea distinta del destino antes de limpiar este último.
+7. Si se introduce como respaldo la propia carpeta DRIVE_FOLDER_ID, el handler puede limpiar la carpeta que también actúa como fuente antes de copiarla. La validación de identidad y alcance debe ocurrir antes de clearFolderContents().
+8. extractDriveFileIds()/extractDriveFileId() es un helper compartido por varias operaciones de imágenes e historial (referencias aproximadas en líneas 114, 1617, 1629, 2717, 2867, 2883, 3029, 3197, 3343, 3531 y 3704). No modificar globalmente sus patrones para aceptar enlaces /folders/ sin evaluar el impacto sobre esos consumidores. La normalización específica de respaldos debe aislarse.
+9. Los handlers de restauración no registran una verificación previa del tipo/nombre/alcance del respaldo. El handler de Drive puede eliminar el contenido de destino antes de conocer si la copia posterior terminará correctamente; no se ejecutó una prueba destructiva para comprobar su comportamiento real.
+
+HALLAZGOS — style.css
+1. Los estilos actuales de .dev-action-row, .dev-backup-id-row y .dev-input permiten reutilizar el layout flexible del modal (aprox. líneas 2536-2577).
+2. El modo móvil apila filas y campos y adapta botones a ancho completo en el breakpoint de 520 px (aprox. líneas 2679-2696).
+3. No se identificó una regla de estilo exclusiva de la pestaña Respaldos que obligue a mantener sus controles en ese panel. La reorganización visual puede resolverse con estilos acotados al nuevo bloque dentro de Base de datos.
+
+DECISIONES Y LÍMITES DE AUDITORÍA
+- Las cuatro acciones permanecen en ADMIN y conservan sus nombres/contratos de acción.
+- La autorización de servidor y las confirmaciones actuales son requisitos obligatorios.
+- El campo compartido debe aceptar enlace de Spreadsheet o carpeta de Drive según la operación. La validación real del recurso debe ejecutarse en el backend antes de cualquier operación destructiva.
+- El enlace de respaldo solo se mostrará como resultado válido si el backend verifica el recurso creado y devuelve el enlace completo correspondiente; no se debe fabricar una URL de éxito en el frontend cuando falte backupUrl.
+- La pestaña «Respaldos» se conservará provisionalmente como navegación secundaria informativa hacia «Base de datos», sin duplicar botones ni campos. Sus radios/labels se mantendrán para no alterar la navegación general del modal.
+- El helper extractDriveFileId() global no se modificará en esta tarea; cualquier extracción de URL de carpeta para restauración se aislará al flujo de respaldos.
+- No se modificarán IDs de Spreadsheet/Drive, permisos, endpoints ni lógica de copia recursiva salvo necesidad demostrada por la validación de identidad del recurso.
+- No se ejecutaron llamadas HTTP, Apps Script, operaciones de Drive/Spreadsheet, ni pruebas de navegador. No se creó ni restauró ningún respaldo real.
+
+RESULTADO DE LA FASE
+Auditoría estática inicial completada. Los riesgos de restauración DB/Drive y de verificación de enlaces de respaldo quedan dentro del alcance de la implementación. No se identificaron hallazgos externos que requieran abrir una tarea separada en Tareas.txt.
+================================================================================
+
+
+================================================================================
+REVISIÓN POST-IMPLEMENTACIÓN Y CODE REVIEW — CAMPO COMPARTIDO DE RESPALDOS
+Fecha: 2026-11-06
+Rama: GPSpedia2.2.5_work
+HEAD base de la tarea: 726727b653dc18177bac0ee3cb9ea7f33e83b2d1
+
+CAMBIOS REVISADOS
+- index.html: la pestaña «Respaldos» conserva su radio y navegación, pero pasa a ser un acceso secundario a «Base de datos». Las cuatro operaciones se agrupan en un único panel dentro de «Base de datos», con un solo campo de enlace, indicación contextual, botones de creación/restauración y acciones únicas para copiar/abrir el enlace.
+- ui.js: se sustituyeron los listeners asociados a los campos separados por un flujo compartido. La creación coloca en el campo el enlace completo solo si la respuesta contiene un ID y una URL que corresponden al tipo de recurso esperado. La restauración normaliza enlaces de Spreadsheet y de carpeta de Drive por separado, mantiene las confirmaciones existentes, muestra estados y bloquea doble ejecución del botón mientras la acción está en curso.
+- Services/admin.js: se añadieron extractBackupFolderId() e isDirectChildOfDriveRoot(), sin modificar extractDriveFileIds()/extractDriveFileId() compartidos. Los handlers de respaldo vuelven a obtener el recurso creado y comprueban identidad, tipo/nombre, ubicación en la raíz y correspondencia del enlace. Los handlers de restauración validan tipo/nombre, estado no enviado a papelera, ubicación autorizada e identidad distinta del destino antes de iniciar la sustitución.
+- style.css: se añadieron reglas limitadas al campo compartido. Los botones reutilizan las reglas flexibles y responsive existentes.
+- api-config.js: sin modificaciones; las cuatro acciones continúan enrutadas a ADMIN.
+
+REVISIÓN DE INTEGRIDAD Y COMPARACIÓN
+- index.html: al revertir la sustitución del panel secundario y retirar el bloque nuevo de Base de datos, se reconstruye exactamente el contenido original.
+- ui.js: al revertir únicamente el bloque de listeners de respaldos/restauración, se reconstruye exactamente el contenido original.
+- Services/admin.js: al revertir los dos helpers añadidos y los cuatro handlers intervenidos, se reconstruye exactamente el contenido original.
+- style.css: el contenido original permanece íntegro como prefijo; únicamente se añadió el bloque de estilos del campo compartido.
+- api-config.js: el blob original se conserva sin cambios.
+- Los IDs del HTML no presentan duplicados. El campo backup-resource-input aparece una sola vez y los campos antiguos de salida/restauración ya no aparecen en el HTML ni en los listeners sustituidos.
+- Se conservaron el mapeo de las cuatro acciones, el envío de getDeveloperSessionPayload() desde runAction() y la validación assertDeveloperSession() del router ADMIN.
+- Parseo sintáctico de ui.js (tras retirar import/export de la comprobación aislada) y Services/admin.js: correcto. CSS: llaves balanceadas.
+
+PRUEBAS AISLADAS Y SIMULACIONES CON MOCKS
+- Extracción de ID: se probaron ID directo, URL estándar de carpeta, URL con /drive/u/0/folders/, URL open?id= y rechazo de URL de Spreadsheet en el parser de carpeta.
+- Normalización frontend: URL de Spreadsheet y URL de carpeta se reconocen por separado; se rechaza un tipo de URL incorrecto para la acción seleccionada.
+- Enlace de salida: se acepta el enlace del tipo y el ID esperados; se rechaza un enlace de otro tipo, host externo o ID con sufijo no delimitado.
+- backupDatabase: mock de relectura del recurso, MIME de Google Sheets, nombre, ubicación raíz, identidad y URL; respuesta simulada con enlace completo. Se rechazó un MIME incorrecto.
+- backupDrive: mock de relectura de carpeta, nombre, ubicación raíz, identidad y URL; respuesta simulada con enlace completo. Se rechazó una URL que no correspondía al ID de carpeta creada.
+- restoreDatabase: se bloqueó el ID del Spreadsheet productivo antes de abrirlo; se bloqueó MIME incorrecto antes de abrir o mutar; el flujo con respaldo válido pasó en mock.
+- restoreDrive: se bloqueó el ID de la carpeta productiva y una carpeta sin prefijo de respaldo antes de limpiar el destino; el flujo con URL válida de respaldo pasó en mock.
+- isDirectChildOfDriveRoot(): mock positivo para hijo directo de la raíz y negativo para carpeta anidada.
+- isBackupUrlForResource(): mock positivo para URL exacta, sufijo de ruta o query y negativo para ID con sufijo no delimitado/host externo.
+
+CODE REVIEW — SAFETY & SIDE EFFECTS
+- No se encontraron cambios fuera del alcance en la reconstrucción inversa de los archivos.
+- No se modificó el helper global de extracción de IDs utilizado por funciones de imágenes e historial.
+- No se cambiaron permisos, endpoints, IDs de Spreadsheet/Drive, políticas de compartición, algoritmo de copia recursiva ni acciones de mantenimiento ajenas a la tarea.
+- Las restauraciones continúan siendo operaciones destructivas. Las nuevas validaciones impiden usar el propio destino y restringen los respaldos por tipo, nombre y ubicación; sin embargo, el flujo existente de restoreDrive limpia el destino antes de copiar y no implementa rollback si la copia falla a mitad del proceso. Este riesgo permanece fuera del cambio realizado y requiere validación funcional específica.
+- Si una copia recursiva falla o un recurso creado no supera la verificación posterior, puede permanecer un artefacto parcial en la raíz de Drive. No se agregó una política de limpieza automática.
+- Las comprobaciones DriveApp/SpreadsheetApp verifican acceso del entorno de ejecución de Apps Script; no se cambiaron ACL ni se confirmó que cada usuario final tenga permisos independientes para abrir los enlaces.
+- La validación del recurso creado comprueba su existencia, tipo/identidad y URL, pero no realiza una auditoría integral del contenido de cada copia.
+
+VALIDACIONES NO REALIZADAS
+- No se ejecutó Apps Script ni se desplegó ADMIN.
+- No se realizaron solicitudes HTTP a endpoints reales.
+- No se generaron respaldos ni se restauraron recursos de Drive/Spreadsheet.
+- No se ejecutó navegador real, PWA ni validación visual en móvil/escritorio.
+- No se verificaron permisos de usuario final ni integridad de todos los elementos copiados en un respaldo Drive.
+- La matriz funcional se mantiene pendiente hasta terminar las demás implementaciones y realizar el despliegue conjunto autorizado.
+
+RESULTADO
+Implementación estática y pruebas aisladas completadas. La validación funcional real permanece pendiente. No se abrió una tarea fuera de alcance: los riesgos remanentes se registran como límites de esta subtarea y deben considerarse en la fase funcional consolidada.
+================================================================================

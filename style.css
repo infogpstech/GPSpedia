@@ -3316,3 +3316,29 @@ body.dark-mode #dev-tools-modal .dev-tools-card {
     #dev-tools-modal .dev-service-detail,
     #dev-tools-modal .dev-service-traffic-panel { padding:9px; }
 }
+
+
+/* Campo compartido para respaldos y restauración del panel de desarrollador */
+#dev-tools-modal .dev-backup-resource-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 10px 0;
+}
+
+#dev-tools-modal .dev-backup-resource-field label {
+    font-size: 0.84rem;
+    font-weight: 600;
+}
+
+#dev-tools-modal .dev-backup-resource-field .dev-input {
+    width: 100%;
+    max-width: none;
+    font-family: monospace;
+    font-size: 0.84rem;
+}
+
+#dev-tools-modal .dev-backup-resource-field .dev-empty-state {
+    margin: 0;
+    font-size: 0.8rem;
+}

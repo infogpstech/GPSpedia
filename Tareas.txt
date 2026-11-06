@@ -4256,3 +4256,44 @@ Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FU
 - Pendiente: verificación en navegador real y conectividad real durante la fase consolidada de pruebas funcionales. No desplegar Apps Script hasta terminar todas las implementaciones.
 
 ================================================================================
+
+
+================================================================================
+SUBTAREA — CAMPO ÚNICO COMPARTIDO PARA RESPALDOS Y RESTAURACIÓN
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FUNCIONAL REAL PENDIENTE.
+
+ALCANCE IMPLEMENTADO
+- Se ubicaron backupDatabase, backupDrive, restoreDatabase y restoreDrive dentro de «Base de datos».
+- Se sustituyeron los campos separados de ID de Spreadsheet, ID de carpeta y entrada de restauración por un único campo compartido para entrada/salida de enlaces.
+- El campo muestra el enlace completo devuelto por ADMIN después de verificar el ID, tipo, ubicación e identidad del recurso creado y la correspondencia de su URL.
+- La interfaz presenta indicaciones contextuales para restaurar Spreadsheet o carpeta de Drive, mantiene las confirmaciones existentes y ofrece acciones únicas para copiar y abrir el enlace.
+- La pestaña «Respaldos» se conserva como navegación secundaria hacia «Base de datos» sin duplicar campos ni operaciones.
+- El frontend normaliza por separado enlaces de Spreadsheet y de carpeta. ADMIN valida nuevamente el recurso antes de iniciar una restauración.
+- Se conserva la autorización de sesión Desarrollador en el router ADMIN y el mapeo actual de las cuatro acciones.
+
+ARCHIVOS DE CÓDIGO MODIFICADOS
+- index.html: reorganización de la pestaña Respaldos y nuevo panel dentro de Base de datos.
+- ui.js: listeners de respaldo/restauración, normalización de enlaces, estados de operación y acciones de copiar/abrir.
+- Services/admin.js: validación de recursos creados y de los respaldos recibidos antes de restaurar; helper específico para enlaces de carpeta.
+- style.css: reglas del campo compartido.
+- api-config.js: sin cambios.
+
+VERIFICACIONES
+- Parseo sintáctico de ui.js y Services/admin.js correcto.
+- IDs HTML únicos; un solo campo compartido; controles antiguos ausentes.
+- Mapeo ADMIN, payload de sesión y autorización backend conservados.
+- Comparación inversa: index.html, ui.js y Services/admin.js reconstruyen exactamente sus versiones originales al revertir únicamente los bloques intervenidos; style.css conserva íntegro su contenido original como prefijo.
+- Simulaciones con mocks de los cuatro handlers, validación de URL, tipo MIME, nombre, ubicación, identidad y bloqueos previos a operaciones destructivas satisfactorias.
+- No se ejecutó navegador real, Apps Script, HTTP, Drive ni Spreadsheet.
+
+LIMITACIONES Y PENDIENTES
+- No se ha desplegado frontend ni ADMIN; la prueba funcional real queda para la fase consolidada.
+- No se ha probado la integridad de todos los archivos de un respaldo Drive ni el comportamiento ante fallo parcial real.
+- restoreDrive mantiene su secuencia previa de limpiar destino y luego copiar; no se incorporó rollback en esta subtarea.
+- No se cambiaron permisos de compartición ni se comprobó el acceso de usuarios finales a los enlaces.
+- No se generaron ni restauraron respaldos reales.
+
+SIGUIENTE TAREA
+Continuar con «Limpieza de registros — selectores y acción única» (sección 4 de la ampliación del modal). Mantener la regla de no desplegar hasta completar todas las implementaciones pendientes.
+================================================================================

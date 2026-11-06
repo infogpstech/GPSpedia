@@ -75,6 +75,29 @@ function extractDriveFileId(value) {
     return extractDriveFileIds(value)[0] || "";
 }
 
+function extractBackupFolderId(value) {
+    const text = String(value || "").trim();
+    if (/^[a-zA-Z0-9_-]{20,}$/.test(text)) return text;
+    const folderUrlMatch = text.match(/^https:\/\/drive\.google\.com\/(?:drive\/(?:u\/\d+\/)?folders|folders)\/([a-zA-Z0-9_-]{20,})(?:[/?#].*)?$/i);
+    const queryUrlMatch = text.match(/^https:\/\/drive\.google\.com\/(?:drive\/(?:u\/\d+\/)?(?:open|folderview)|open)\?(?:[^#]*&)?id=([a-zA-Z0-9_-]{20,})(?:&|#|$)/i);
+    return (folderUrlMatch && folderUrlMatch[1]) || (queryUrlMatch && queryUrlMatch[1]) || "";
+}
+
+function isDirectChildOfDriveRoot(resource) {
+    const rootFolderId = DriveApp.getRootFolder().getId();
+    const parents = resource.getParents();
+    while (parents.hasNext()) {
+        if (parents.next().getId() === rootFolderId) return true;
+    }
+    return false;
+}
+
+function isBackupUrlForResource(backupUrl, expectedPrefix) {
+    return backupUrl === expectedPrefix ||
+        backupUrl.startsWith(expectedPrefix + "/") ||
+        backupUrl.startsWith(expectedPrefix + "?");
+}
+
 function collectActiveDriveReferences(includeLocations = true) {
     const excludedSheets = new Set([
         SHEET_NAMES.IMAGENES_REEMPLAZADAS, "Logs", "ActividadUsuario", "ActiveSessions", "Users",
@@ -502,20 +525,38 @@ function handleBackupDatabase(payload, logMessage) {
     logMessage("Respaldo", "Generando respaldo completo de la hoja de cálculo de la base de datos...");
 
     const ss = getSpreadsheet();
-    const folder = DriveApp.getRootFolder(); // Crear carpeta raíz o usar DriveApp para respaldos
+    const folder = DriveApp.getRootFolder();
     const timestamp = Utilities.formatDate(new Date(), "GMT-6", "yyyyMMdd_HHmmss");
     const backupName = `GPSpedia_DB_BACKUP_${timestamp}`;
 
     logMessage("Respaldo", `Copiando archivo Spreadsheet '${ss.getName()}' con el nombre '${backupName}'...`);
-    const backupFile = DriveApp.getFileById(ss.getId()).makeCopy(backupName, folder);
+    const createdBackupFile = DriveApp.getFileById(ss.getId()).makeCopy(backupName, folder);
+    const backupId = createdBackupFile.getId();
+    const backupFile = DriveApp.getFileById(backupId);
+    const backupUrl = backupFile.getUrl();
 
-    logMessage("Respaldo", `Respaldo de base de datos generado con éxito. ID: ${backupFile.getId()}`);
+    if (backupFile.getId() !== backupId ||
+        backupId === ss.getId() ||
+        backupFile.isTrashed() ||
+        backupFile.getName() !== backupName ||
+        backupFile.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
+        !isDirectChildOfDriveRoot(backupFile) ||
+        !isBackupUrlForResource(backupUrl, `https://docs.google.com/spreadsheets/d/${backupId}`)) {
+        throw new Error("El recurso creado no pudo verificarse como un respaldo de Spreadsheet válido.");
+    }
+
+    const verifiedSpreadsheet = SpreadsheetApp.openById(backupId);
+    if (verifiedSpreadsheet.getId() !== backupId) {
+        throw new Error("La Spreadsheet creada no coincide con el identificador del respaldo.");
+    }
+
+    logMessage("Respaldo", `Recurso de respaldo de base de datos creado y verificado. ID: ${backupId}`);
     return {
         status: 'success',
-        backupId: backupFile.getId(),
-        backupUrl: backupFile.getUrl(),
+        backupId: backupId,
+        backupUrl: backupUrl,
         timestamp: timestamp,
-        message: "Copia íntegra de la base de datos generada correctamente."
+        message: "Recurso de respaldo de base de datos creado y verificado correctamente."
     };
 }
 
@@ -531,18 +572,30 @@ function handleBackupDrive(payload, logMessage) {
     const backupFolderName = `GPSpedia_Drive_BACKUP_${timestamp}`;
 
     logMessage("Respaldo Drive", `Creando carpeta contenedora de respaldo '${backupFolderName}' en la raíz...`);
-    const backupFolder = parentFolder.createFolder(backupFolderName);
+    const createdBackupFolder = parentFolder.createFolder(backupFolderName);
 
     logMessage("Respaldo Drive", "Copiando de forma jerárquica las carpetas y archivos de imágenes...");
-    copyFolderRecursively(rootFolder, backupFolder, logMessage);
+    copyFolderRecursively(rootFolder, createdBackupFolder, logMessage);
 
-    logMessage("Respaldo Drive", `Respaldo de Drive completado. ID de carpeta: ${backupFolder.getId()}`);
+    const backupId = createdBackupFolder.getId();
+    const backupFolder = DriveApp.getFolderById(backupId);
+    const backupUrl = backupFolder.getUrl();
+    if (backupFolder.getId() !== backupId ||
+        backupId === DRIVE_FOLDER_ID ||
+        backupFolder.isTrashed() ||
+        backupFolder.getName() !== backupFolderName ||
+        !isDirectChildOfDriveRoot(backupFolder) ||
+        !isBackupUrlForResource(backupUrl, `https://drive.google.com/drive/folders/${backupId}`)) {
+        throw new Error("La carpeta creada no pudo verificarse como un respaldo de Drive válido.");
+    }
+
+    logMessage("Respaldo Drive", `Carpeta de respaldo de Drive creada y recurso verificado. ID: ${backupId}`);
     return {
         status: 'success',
-        backupId: backupFolder.getId(),
-        backupUrl: backupFolder.getUrl(),
+        backupId: backupId,
+        backupUrl: backupUrl,
         timestamp: timestamp,
-        message: "Copia íntegra de los archivos e imágenes de Drive generada correctamente."
+        message: "Carpeta de respaldo de Drive creada y recurso verificado correctamente."
     };
 }
 
@@ -602,14 +655,23 @@ function attemptRestoreImage(fileId, expectedBaseName, brandFolder, logMessage) 
 function handleRestoreDatabase(payload, logMessage) {
     const backupId = extractDriveFileId(payload && payload.backupId);
     if (!backupId) throw new Error("ID o enlace de respaldo de Google Sheets no válido o no proporcionado.");
-
-    logMessage("Restauración DB", `Iniciando restauración de base de datos a partir de ID: ${backupId}`);
+    if (backupId === SPREADSHEET_ID) throw new Error("El Spreadsheet productivo no puede utilizarse como origen de su propia restauración.");
 
     const backupFile = DriveApp.getFileById(backupId);
-    const targetFile = DriveApp.getFileById(SPREADSHEET_ID);
+    if (backupFile.getId() !== backupId ||
+        backupFile.isTrashed() ||
+        backupFile.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
+        !backupFile.getName().startsWith("GPSpedia_DB_BACKUP_") ||
+        !isDirectChildOfDriveRoot(backupFile)) {
+        throw new Error("El recurso indicado no es un respaldo de Spreadsheet válido dentro de la ubicación autorizada.");
+    }
 
-    // Abrir respaldo y destino
+    logMessage("Restauración DB", `Respaldo de Spreadsheet validado. Iniciando restauración desde ID: ${backupId}`);
+
     const backupSS = SpreadsheetApp.openById(backupId);
+    if (backupSS.getId() !== backupId || backupSS.getSheets().length === 0) {
+        throw new Error("No se pudo verificar la identidad o el contenido de la Spreadsheet de respaldo.");
+    }
     const targetSS = SpreadsheetApp.openById(SPREADSHEET_ID);
 
     logMessage("Restauración DB", "Limpiando hojas del Spreadsheet actual...");
@@ -642,14 +704,24 @@ function handleRestoreDatabase(payload, logMessage) {
  * Restaurar carpeta de Drive a partir de un ID de respaldo
  */
 function handleRestoreDrive(payload, logMessage) {
-    const { backupId } = payload;
-    if (!backupId) throw new Error("ID de respaldo de Drive no proporcionado.");
-
-    logMessage("Restauración Drive", `Iniciando restauración de archivos de Drive a partir del ID de respaldo: ${backupId}`);
+    const backupId = extractBackupFolderId(payload && payload.backupId);
+    if (!backupId) throw new Error("ID o enlace de carpeta de respaldo de Drive no válido o no proporcionado.");
+    if (backupId === DRIVE_FOLDER_ID) throw new Error("La carpeta productiva no puede utilizarse como origen de su propia restauración.");
 
     const backupFolder = DriveApp.getFolderById(backupId);
-    const targetFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    if (backupFolder.getId() !== backupId ||
+        backupFolder.isTrashed() ||
+        !backupFolder.getName().startsWith("GPSpedia_Drive_BACKUP_") ||
+        !isDirectChildOfDriveRoot(backupFolder)) {
+        throw new Error("La carpeta indicada no es un respaldo de Drive válido dentro de la ubicación autorizada.");
+    }
 
+    const targetFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    if (backupFolder.getId() === targetFolder.getId()) {
+        throw new Error("La carpeta de respaldo debe ser distinta de la carpeta productiva.");
+    }
+
+    logMessage("Restauración Drive", `Respaldo de Drive validado. Iniciando restauración desde ID: ${backupId}`);
     logMessage("Restauración Drive", "Limpiando archivos de la carpeta de destino actual de forma segura...");
     clearFolderContents(targetFolder);
 
