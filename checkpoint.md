@@ -1802,3 +1802,70 @@ Corregir exclusivamente la reconstrucción del Blob comprimido del snapshot de r
 - No se ejecutó Apps Script ni se desplegó ADMIN. No se modificaron datos de Drive/Sheets.
 - Pendiente: desplegar manualmente una nueva versión ADMIN y verificar varios lotes hasta `complete:true` y cobertura del árbol esperado.
 - El commit único incluirá `Services/admin.js`, `Auditoría.txt`, `ChangesLogs.txt`, `Tareas.txt` y `checkpoint.md`; padre previsto: HEAD confirmado al inicio de esta tarea.
+
+
+================================================================================
+# CHECKPOINT INICIAL Y CIERRE — PERSISTENCIA DEL INVENTARIO DE IMÁGENES SIN USO
+
+**Fecha:** 2026-11-06
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**Rama protegida:** GPSpedia2.2.5
+**HEAD de trabajo al inicio:** 436b28151631f834feb5e645d8499aacbccfc36e
+**Árbol del HEAD inicial:** cd1e409376243b184f6752bbecfe7a7c6a778165
+**Único padre del HEAD inicial:** d305b1ab38462f9f0846d04cb807f939858df7e2
+**HEAD de rama protegida al inicio:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## 1. OBJETIVO Y ALCANCE
+Persistir en la hoja Imagenes_Reemplazadas las imágenes que una auditoría completa clasifique como «Sin uso detectado», para que el panel pueda consultarlas desde Spreadsheet sin iniciar una auditoría nueva cada vez. Mantener separadas las imágenes históricas de reemplazo y las referencias no verificables. No guardar el inventario en almacenamiento local del navegador.
+
+## 2. ESTADO CONFIRMADO AL INICIO
+- El usuario confirmó que la corrección anterior del tipo MIME gzip permitió que la auditoría de Drive funcionara.
+- El HEAD de trabajo confirmado es 436b28151631f834feb5e645d8499aacbccfc36e; su padre único es d305b1ab38462f9f0846d04cb807f939858df7e2.
+- La rama protegida se encuentra en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- La especificación integral de inventario y gestión de imágenes sin uso ya existía en Tareas.txt. Esta tarea implementa la fase de persistencia y consulta, no todos los requisitos de administración avanzada.
+
+## 3. ARCHIVOS AUDITADOS Y RESPALDOS
+- Services/admin.js — respaldo exacto fd53b207d27570c9109e48e7f95abab1a440e2d4.
+- ui.js — respaldo exacto 57f1830ce519f00d2e6bbfad554cee83c52b5a9a.
+- index.html — respaldo exacto b950bec0d212e3bd2c7d7a4a23f848b9a6d500eb.
+- api-config.js — respaldo exacto 885b74412784ceb15351396a23bf6120e3ee763a.
+- style.css, add_cortes.html y Services/write.js se conservaron sin cambios.
+
+## 4. IMPLEMENTACIÓN ESTÁTICA PREPARADA
+- Services/admin.js: blob final 8878bf38d375e16e609fc91ec609c0c605fbb182.
+- ui.js: blob final 224249882edf86c86889dcaa17fc0f203d2c11ad.
+- index.html: blob final 31df5e60af5e80eab3e60de6a4ded5cf6f81ee9f.
+- api-config.js: blob final de3df6cfab8a7768b197b3afd2b9da9227ca8d94.
+- Auditoría.txt: blob documental 83b9c3a8ac53acd3115d7e00955b7504bcd3e396.
+- Tareas.txt: blob documental 30214a4bf50ad0be74e7748a350b1edbc2d9f851.
+- ChangesLogs.txt: blob documental 537246f7573420b379b48d80fee54b5873b2c04f.
+
+## 5. RESULTADOS DE AUDITORÍA Y PRUEBAS
+- La auditoría devuelve folderId junto con cada archivo y el backend valida que siga siendo hijo directo de una carpeta dentro del árbol Cortes.
+- Se preservan las once columnas originales de Imagenes_Reemplazadas; las ocho columnas nuevas se agregan al final después de validar que el esquema base sea exactamente el esperado.
+- Los registros de auditoría se identifican con origen_registro = auditoria_drive y se actualizan por ID de Drive, evitando duplicados.
+- La siguiente auditoría excluye el inventario de auditoría del conjunto de imágenes históricas.
+- Los registros que no vuelven a confirmarse quedan con estado no_confirmada_en_ultima_auditoria y no se pueden enviar a papelera desde el panel.
+- La restauración queda bloqueada para registros de auditoría; el envío a papelera solo está disponible para registros todavía confirmados como sin uso y vuelve a validar referencias en el servidor.
+- La consulta del panel lee la Spreadsheet al abrirse; no se utiliza localStorage, sessionStorage ni IndexedDB para persistir el inventario.
+- Sintaxis V8 de Services/admin.js, ui.js y api-config.js: correcta.
+- Pruebas aisladas simuladas: inserción, actualización sin duplicados, marcado de registro no confirmado, bloqueo por referencia activa, bloqueo de restauración y bloqueo de papelera para registros no confirmados. El helper de ruta rechazó carpetas externas y reconstruyó rutas dentro de Cortes.
+
+## 6. LÍMITES Y ESTADO FINAL
+**Estado:** implementación y auditoría estática completadas; validación funcional en deployment pendiente.
+- No se ejecutó Apps Script, no se actualizó el deployment ADMIN, no se publicó el frontend y no se consultó ni modificó la Spreadsheet real.
+- No se consultaron, movieron, enviaron a papelera ni modificaron archivos de Drive. No se cambiaron permisos de acceso.
+- La URL de visualización se registra, pero la previsualización depende de los permisos actuales del archivo.
+- El handler valida las once cabeceras base de Imagenes_Reemplazadas y se detiene sin escribir si la estructura real no coincide. La hoja productiva no se leyó en esta sesión.
+- La especificación integral de gestión de imágenes sin uso sigue abierta para las funciones avanzadas no incluidas en esta fase.
+
+## 7. SIGUIENTE ACCIÓN
+Actualizar el deployment ADMIN y publicar el frontend de esta rama. Ejecutar una auditoría completa; comprobar que las imágenes «Sin uso detectado» se inserten o actualicen en Imagenes_Reemplazadas, que una segunda ejecución no duplique filas y que el panel «Consultar Inventario e Historial» recupere los registros directamente desde Spreadsheet sin iniciar una auditoría nueva.
+
+## 8. PUBLICACIÓN CONTROLADA
+- Incluir todos los archivos de código y documentación de esta tarea en exactamente un commit.
+- El único padre del commit será el HEAD inicial confirmado 436b28151631f834feb5e645d8499aacbccfc36e.
+- Actualizar exclusivamente GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD inicial.
+- No modificar GPSpedia2.2.5 ni realizar merge.
+================================================================================

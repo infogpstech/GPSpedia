@@ -3973,3 +3973,53 @@ HEAD auditado: 3d74ca1dd7eebe6a802f87efe85dc7b929fb894a
 - Mantener sin cambios la codificación Base64, fragmentación, claves, manifiesto, expiración, serialización, tokens, límites y algoritmo de recorrido.
 - No modificar otros hallazgos de ADMIN ni las limitaciones de telemetría del frontend dentro de esta tarea.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — PERSISTENCIA DEL INVENTARIO DE IMÁGENES SIN USO EN SPREADSHEET
+Fecha: 2026-11-06 | Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: 436b28151631f834feb5e645d8499aacbccfc36e
+HEAD de rama protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. ALCANCE Y RESPALDOS
+- Se revisó el flujo de auditoría y consulta del inventario, desde la respuesta paginada de ADMIN hasta la presentación de registros en la interfaz.
+- Se inspeccionaron Services/admin.js (3,059 líneas originales), ui.js (8,838 líneas originales), index.html (941 líneas), api-config.js (170 líneas) y style.css; también se revisaron los puntos de integración de add_cortes.html y Services/write.js para comprobar que no se modificara su flujo de imágenes.
+- Se revisaron doPost(), handleAuditDriveImagesInCortes(), collectActiveDriveReferences(), isFolderInsideCortes(), getOrCreateReplacedImagesSheet(), recordReplacedImage(), handleGetReplacedImages(), handleRecoverReplacedImage() y handleDeleteReplacedImage(), además de openAuditDriveModal(), openReplacedImagesModal(), el mapa ACTION_TO_SERVICE_MAP y el marcado del modal en index.html.
+- Respaldos exactos previos a la edición: Services/admin.js fd53b207d27570c9109e48e7f95abab1a440e2d4; ui.js 57f1830ce519f00d2e6bbfad554cee83c52b5a9a; index.html b950bec0d212e3bd2c7d7a4a23f848b9a6d500eb; api-config.js 885b74412784ceb15351396a23bf6120e3ee763a.
+
+2. HALLAZGOS DEL CÓDIGO ORIGINAL
+- handleAuditDriveImagesInCortes() devolvía los archivos de cada lote al frontend, pero no persistía en Google Sheets los clasificados como «Sin uso detectado».
+- La hoja existente Imagenes_Reemplazadas contiene once columnas base, usadas por posición por los procesos de registro, consulta, restauración y envío a papelera.
+- handleGetReplacedImages() ya permitía consultar los registros guardados en la hoja. openReplacedImagesModal() solicitaba los datos al backend al abrirse, por lo que es el punto existente para mostrar inventario persistente sin iniciar otra auditoría.
+- La auditoría original incorporaba como históricas todas las imágenes cuyos IDs aparecían en Imagenes_Reemplazadas. Guardar allí imágenes sin uso sin distinguir su origen habría provocado que la siguiente auditoría las reclasificara como «Histórica».
+- La interfaz ofrecía «Recuperar» a todos los registros salvo cancelados, aunque las imágenes detectadas sin uso no representan reemplazos y no tienen una relación vehículo/campo que permita restaurarlas.
+- handleDeleteReplacedImage() ya vuelve a comprobar referencias activas y referencias no interpretables antes de enviar un archivo a la papelera de Drive. Esa validación se conserva y se reutiliza.
+- La clasificación «Sin uso detectado» es distinta de «Histórica» y «No verificable». Esta implementación persiste únicamente «Sin uso detectado»; las imágenes históricas continúan tratándose como registros de reemplazo y las no verificables no se declaran sin uso.
+
+3. CAMBIOS IMPLEMENTADOS EN LOS BLOBS PREPARADOS
+- Services/admin.js (blob final 8878bf38d375e16e609fc91ec609c0c605fbb182): se añadió la acción saveUnusedImagesInventory y el handler handleSaveUnusedImagesInventory(). Se revalidan en servidor las referencias activas, referencias no interpretables, pertenencia al historial, MIME image/*, estado de papelera y ubicación dentro del árbol Cortes. También se comprueba que el archivo siga siendo hijo directo de la carpeta informada por el resultado de auditoría.
+- Se añadió folderId a cada elemento devuelto por la auditoría y getFolderPathInsideCortes() para reconstruir la ruta en servidor, sin confiar en una ruta enviada por el navegador.
+- Se añadió ensureReplacedImagesInventoryColumns(). Valida que las once cabeceras base coincidan exactamente con el esquema esperado antes de escribir; después agrega, sin desplazar columnas existentes, origen_registro, tipo_mime, ubicacion_original, fecha_creacion_drive, fecha_deteccion, url_visualizacion, ubicacion_actual y ultima_auditoria_id.
+- Los registros de auditoría se distinguen mediante origen_registro = auditoria_drive y tipo_contenido = inventario_sin_uso. El ID de Drive es la clave de actualización para evitar duplicados. Las filas que ya no vuelven a confirmarse como sin uso pasan a no_confirmada_en_ultima_auditoria y no pueden enviarse a papelera desde el panel hasta una nueva confirmación.
+- El cálculo de IDs históricos excluye explícitamente los registros cuyo origen es auditoria_drive, evitando que el inventario se clasifique a sí mismo como histórico en auditorías posteriores.
+- handleGetReplacedImages() devuelve los campos adicionales. handleRecoverReplacedImage() rechaza los registros de auditoría; handleDeleteReplacedImage() solo permite enviar a papelera los inventarios cuyo estado siga siendo sin_uso_detectado y conserva la comprobación de referencias activas.
+- ui.js (blob final 224249882edf86c86889dcaa17fc0f203d2c11ad): al completar la auditoría, envía únicamente los IDs y folderId de los archivos clasificados «Sin uso detectado» al nuevo handler. El resultado informa por separado si la auditoría terminó pero el guardado del inventario falló.
+- openReplacedImagesModal() consulta getReplacedImages desde Spreadsheet al abrirse; diferencia inventario de auditoría e historial de reemplazos, muestra ubicación/MIME/fecha de detección, oculta la restauración para inventario y solo presenta la acción de papelera para registros todavía confirmados como sin uso.
+- index.html (blob final 31df5e60af5e80eab3e60de6a4ded5cf6f81ee9f): se actualizaron los textos para identificar «Inventario e Historial» y explicar que la consulta lee los datos de Spreadsheet sin volver a ejecutar la auditoría.
+- api-config.js (blob final de esta tarea de código de referencia de acción: de3df6cfab8a7768b197b3afd2b9da9227ca8d94): se registró saveUnusedImagesInventory en el servicio ADMIN.
+- style.css, add_cortes.html y Services/write.js no fueron modificados.
+
+4. COMPROBACIONES ESTÁTICAS Y PRUEBAS AISLADAS
+- La sintaxis de Services/admin.js, ui.js y api-config.js pasó la compilación estática en V8 mediante new Function(), sin errores.
+- Se probó getFolderPathInsideCortes() con una jerarquía simulada: devolvió Cortes/Sub para una carpeta interna y rechazó una carpeta externa.
+- Prueba aislada del handler con servicios simulados: primera ejecución insertó un registro; segunda ejecución actualizó el mismo ID sin duplicar filas; una auditoría posterior sin ese archivo cambió el estado a no_confirmada_en_ultima_auditoria.
+- La consulta simulada devolvió origen_registro = auditoria_drive; la restauración fue rechazada para ese origen; el envío a papelera fue bloqueado cuando el estado ya no estaba confirmado; y una referencia activa detectada en la Spreadsheet bloqueó el guardado como imagen sin uso.
+- La consulta del modal no utiliza localStorage, sessionStorage ni IndexedDB para persistir el inventario; la fuente persistente es la hoja de cálculo.
+
+5. LÍMITES Y VALIDACIÓN PENDIENTE
+- No se ejecutó Apps Script ni se llamó al deployment ADMIN. No se leyó ni escribió la Spreadsheet real, no se consultaron ni modificaron archivos de Drive y no se alteraron permisos o niveles de acceso.
+- La validación de cabeceras se realiza en el código, pero la estructura real de la hoja productiva no fue consultada en esta sesión. Si las once cabeceras base no coinciden exactamente, el handler se detendrá sin modificar el inventario.
+- La URL de visualización se registra, pero no se cambian permisos de Drive. La capacidad de previsualizar cada archivo dependerá de los permisos que ya tenga.
+- La subtarea de persistencia y consulta queda implementada estáticamente. Falta desplegar ADMIN y publicar el frontend, ejecutar una auditoría completa y confirmar que los registros aparezcan en Imagenes_Reemplazadas y se consulten sin volver a auditar.
+- La especificación integral de administración de imágenes sin uso conserva pendientes adicionales (vistas avanzadas, organización y demás acciones no incluidas en esta subtarea); no se declara completada en su totalidad.
+================================================================================

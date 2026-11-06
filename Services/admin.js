@@ -149,6 +149,37 @@ function isFolderInsideCortes(folder, rootFolderId) {
     return false;
 }
 
+function getFolderPathInsideCortes(folder, rootFolderId) {
+    const segments = [];
+    const visited = new Set();
+    let current = folder;
+
+    while (current) {
+        const currentId = current.getId();
+        if (visited.has(currentId)) throw new Error("Se detectó un ciclo en la jerarquía de carpetas de Drive.");
+        visited.add(currentId);
+        segments.push(current.getName());
+
+        if (currentId === rootFolderId) return segments.reverse().join("/");
+
+        const parents = current.getParents();
+        let parentInsideCortes = null;
+        while (parents.hasNext()) {
+            const parent = parents.next();
+            if (isFolderInsideCortes(parent, rootFolderId)) {
+                parentInsideCortes = parent;
+                break;
+            }
+        }
+        if (!parentInsideCortes) {
+            throw new Error("No se pudo reconstruir la ubicación de la carpeta dentro de «Cortes».");
+        }
+        current = parentInsideCortes;
+    }
+
+    throw new Error("No se pudo reconstruir la ubicación de la carpeta dentro de «Cortes».");
+}
+
 const SHEET_NAMES = {
     CORTES: "Cortes",
     LOGOS_MARCA: "LogosMarca",
@@ -369,6 +400,9 @@ function doPost(e) {
                 break;
             case 'auditDriveImagesInCortes':
                 response = handleAuditDriveImagesInCortes(payload, logMessage);
+                break;
+            case 'saveUnusedImagesInventory':
+                response = handleSaveUnusedImagesInventory(payload, logMessage);
                 break;
             default:
                 throw new Error(`La acción administrativa '${action}' es desconocida o no está soportada.`);
@@ -2553,6 +2587,46 @@ function getOrCreateReplacedImagesSheet() {
 }
 
 /**
+ * Añade columnas de inventario sin alterar ni desplazar las once columnas históricas existentes.
+ */
+function ensureReplacedImagesInventoryColumns(sheet) {
+    const baseHeaders = [
+        "id_reemplazo", "fecha_reemplazo", "tipo_contenido", "registro_id", "campo",
+        "archivo_drive_id", "nombre_archivo", "url_anterior", "sustituida_por_url",
+        "referencia_texto", "estado"
+    ];
+    const actualBaseHeaders = sheet.getRange(1, 1, 1, baseHeaders.length).getDisplayValues()[0]
+        .map(value => String(value || "").trim());
+    if (baseHeaders.some((header, index) => actualBaseHeaders[index] !== header)) {
+        throw new Error("La estructura base de la hoja «Imagenes_Reemplazadas» no coincide con el esquema esperado. No se modificó el inventario.");
+    }
+
+    const requiredHeaders = [
+        "origen_registro",
+        "tipo_mime",
+        "ubicacion_original",
+        "fecha_creacion_drive",
+        "fecha_deteccion",
+        "url_visualizacion",
+        "ubicacion_actual",
+        "ultima_auditoria_id"
+    ];
+    const lastColumn = Math.max(sheet.getLastColumn(), baseHeaders.length);
+    const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0]
+        .map(value => String(value || "").trim());
+
+    requiredHeaders.forEach(header => {
+        if (!headers.includes(header)) {
+            const newColumn = sheet.getLastColumn() + 1;
+            sheet.getRange(1, newColumn).setValue(header)
+                .setFontWeight("bold").setBackground("#f0f4f8");
+            headers.push(header);
+        }
+    });
+    return headers;
+}
+
+/**
  * Registra una imagen reemplazada en la hoja dedicada
  */
 function recordReplacedImage(data) {
@@ -2593,12 +2667,17 @@ function recordReplacedImage(data) {
  */
 function handleGetReplacedImages(payload, logMessage) {
     const sheet = getOrCreateReplacedImagesSheet();
+    const headers = ensureReplacedImagesInventoryColumns(sheet);
     const rows = sheet.getDataRange().getValues();
     if (rows.length <= 1) {
         return { status: 'success', data: [] };
     }
 
-    const headers = rows[0];
+    const columnIndex = name => headers.indexOf(name);
+    const valueAt = (row, name) => {
+        const index = columnIndex(name);
+        return index >= 0 ? row[index] : "";
+    };
     const result = [];
     for (let r = 1; r < rows.length; r++) {
         const row = rows[r];
@@ -2614,11 +2693,19 @@ function handleGetReplacedImages(payload, logMessage) {
             url_anterior: row[7],
             sustituida_por_url: row[8],
             referencia_texto: row[9],
-            estado: row[10] || "historica"
+            estado: row[10] || "historica",
+            origen_registro: valueAt(row, "origen_registro") || "reemplazo",
+            tipo_mime: valueAt(row, "tipo_mime"),
+            ubicacion_original: valueAt(row, "ubicacion_original"),
+            fecha_creacion_drive: valueAt(row, "fecha_creacion_drive"),
+            fecha_deteccion: valueAt(row, "fecha_deteccion"),
+            url_visualizacion: valueAt(row, "url_visualizacion"),
+            ubicacion_actual: valueAt(row, "ubicacion_actual"),
+            ultima_auditoria_id: valueAt(row, "ultima_auditoria_id")
         });
     }
 
-    logMessage && logMessage("Imágenes Reemplazadas", `Se consultaron ${result.length} registros del repositorio histórico.`);
+    logMessage && logMessage("Repositorio de imágenes", `Se consultaron ${result.length} registros de imágenes.`);
     return { status: 'success', data: result.reverse() };
 }
 
@@ -2635,6 +2722,7 @@ function handleRecoverReplacedImage(payload, logMessage) {
 
     try {
         const sheetRep = getOrCreateReplacedImagesSheet();
+        const inventoryHeaders = ensureReplacedImagesInventoryColumns(sheetRep);
         const rowsRep = sheetRep.getDataRange().getValues();
         let repRowIndex = -1;
         let repData = null;
@@ -2646,6 +2734,11 @@ function handleRecoverReplacedImage(payload, logMessage) {
             }
         }
         if (!repData) throw new Error("Registro de imagen reemplazada no encontrado.");
+
+        const originIndex = inventoryHeaders.indexOf("origen_registro");
+        if (originIndex >= 0 && String(repData[originIndex] || "") === "auditoria_drive") {
+            throw new Error("Esta imagen fue detectada por la auditoría y no tiene una relación de reemplazo que permita restaurarla.");
+        }
 
         const tipoContenido = String(repData[2] || "").trim().toLowerCase();
         if (tipoContenido !== "vehiculo") {
@@ -2745,6 +2838,7 @@ function handleDeleteReplacedImage(payload, logMessage) {
 
     try {
         const sheetRep = getOrCreateReplacedImagesSheet();
+        const inventoryHeaders = ensureReplacedImagesInventoryColumns(sheetRep);
         const rowsRep = sheetRep.getDataRange().getValues();
         let repRowIndex = -1;
         let repData = null;
@@ -2756,6 +2850,12 @@ function handleDeleteReplacedImage(payload, logMessage) {
             }
         }
         if (!repData) throw new Error("Registro histórico no encontrado.");
+
+        const originIndex = inventoryHeaders.indexOf("origen_registro");
+        const origin = originIndex >= 0 ? String(repData[originIndex] || "") : "";
+        if (origin === "auditoria_drive" && String(repData[10] || "") !== "sin_uso_detectado") {
+            throw new Error("La imagen ya no está confirmada como sin uso en la última auditoría y no puede enviarse a papelera desde este registro.");
+        }
 
         const driveId = extractDriveFileId(repData[5]) || extractDriveFileId(repData[7]);
         if (!driveId) throw new Error("El registro histórico no contiene un ID de Drive válido.");
@@ -2883,6 +2983,189 @@ function clearAuditDriveReferenceSnapshot(auditId) {
 }
 
 /**
+ * Registra de forma idempotente en Imagenes_Reemplazadas las imágenes sin uso
+ * confirmadas por una auditoría completa. Cada archivo se vuelve a validar en servidor.
+ */
+function handleSaveUnusedImagesInventory(payload, logMessage) {
+    const submittedFiles = Array.isArray(payload && payload.files) ? payload.files : [];
+    const uniqueFiles = [];
+    const seenIds = new Set();
+
+    submittedFiles.forEach(item => {
+        const fileId = String(item && item.fileId || "").trim();
+        if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) {
+            throw new Error("El inventario contiene un ID de Drive inválido.");
+        }
+        if (seenIds.has(fileId)) return;
+        seenIds.add(fileId);
+        const folderId = String(item.folderId || "").trim();
+        if (!/^[a-zA-Z0-9_-]{20,}$/.test(folderId)) {
+            throw new Error("El inventario contiene un ID de carpeta inválido.");
+        }
+        uniqueFiles.push({ fileId: fileId, folderId: folderId });
+    });
+
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); }
+    catch (e) { throw new Error("No se pudo bloquear la actualización del inventario. Intenta nuevamente."); }
+
+    try {
+        const references = collectActiveDriveReferences(false);
+        if (references.unverifiableReferenceCount > 0) {
+            throw new Error("No se actualizó el inventario porque existen referencias de Drive que no pudieron verificarse.");
+        }
+
+        const sheet = getOrCreateReplacedImagesSheet();
+        const headers = ensureReplacedImagesInventoryColumns(sheet);
+        const column = name => headers.indexOf(name) + 1;
+        const rows = sheet.getDataRange().getValues();
+        const existingInventoryRows = new Map();
+        const historicalDriveIds = new Set();
+
+        for (let r = 1; r < rows.length; r++) {
+            const row = rows[r];
+            const originIndex = column("origen_registro") - 1;
+            const origin = String(row[originIndex] || "");
+            const driveId = extractDriveFileId(row[5]) || extractDriveFileId(row[7]);
+            if (!driveId) continue;
+
+            if (origin === "auditoria_drive") {
+                if (!existingInventoryRows.has(driveId)) existingInventoryRows.set(driveId, r + 1);
+            } else {
+                historicalDriveIds.add(driveId);
+            }
+        }
+
+        const validatedFiles = [];
+        const folderPathCache = new Map();
+        uniqueFiles.forEach(item => {
+            const fileId = item.fileId;
+            if (references.references.has(fileId)) {
+                throw new Error(`La imagen ${fileId} ahora tiene referencias activas; no se registrará como imagen sin uso.`);
+            }
+            if (historicalDriveIds.has(fileId)) {
+                throw new Error(`La imagen ${fileId} ya pertenece al historial de reemplazos y no se registrará como imagen sin uso.`);
+            }
+
+            const file = DriveApp.getFileById(fileId);
+            if (file.isTrashed()) throw new Error(`La imagen ${fileId} está en la papelera y no se registrará como inventario activo.`);
+            const mimeType = String(file.getMimeType() || "");
+            if (!mimeType.startsWith("image/")) throw new Error(`El archivo ${fileId} ya no es una imagen.`);
+
+            let folderPath = folderPathCache.get(item.folderId);
+            if (!folderPath) {
+                const folder = DriveApp.getFolderById(item.folderId);
+                if (!isFolderInsideCortes(folder, DRIVE_FOLDER_ID)) {
+                    throw new Error(`La carpeta ${item.folderId} ya no pertenece al árbol autorizado «Cortes».`);
+                }
+                folderPath = getFolderPathInsideCortes(folder, DRIVE_FOLDER_ID);
+                folderPathCache.set(item.folderId, folderPath);
+            }
+
+            let isDirectChild = false;
+            const parents = file.getParents();
+            while (parents.hasNext()) {
+                if (parents.next().getId() === item.folderId) {
+                    isDirectChild = true;
+                    break;
+                }
+            }
+            if (!isDirectChild) {
+                throw new Error(`La imagen ${fileId} ya no está ubicada en la carpeta indicada por la auditoría.`);
+            }
+
+            let createdAt = "";
+            try {
+                const createdDate = file.getDateCreated();
+                if (createdDate) createdAt = Utilities.formatDate(createdDate, "GMT-6", "yyyy-MM-dd HH:mm:ss");
+            } catch (dateError) {}
+
+            validatedFiles.push({
+                fileId: fileId,
+                fileName: file.getName(),
+                mimeType: mimeType,
+                sourceUrl: file.getUrl(),
+                folderPath: folderPath,
+                createdAt: createdAt
+            });
+        });
+
+        const auditId = Utilities.getUuid();
+        const detectedAt = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
+        const currentIds = new Set(validatedFiles.map(item => item.fileId));
+        let insertedCount = 0;
+        let updatedCount = 0;
+        let staleCount = 0;
+        const newRows = [];
+        const columnCount = headers.length;
+
+        existingInventoryRows.forEach((rowNumber, fileId) => {
+            if (currentIds.has(fileId)) return;
+            const oldRow = rows[rowNumber - 1] || [];
+            const oldStatus = String(oldRow[10] || "");
+            if (["en_papelera", "eliminada"].includes(oldStatus)) return;
+            sheet.getRange(rowNumber, column("estado")).setValue("no_confirmada_en_ultima_auditoria");
+            sheet.getRange(rowNumber, column("ultima_auditoria_id")).setValue(auditId);
+            staleCount++;
+        });
+
+        validatedFiles.forEach(item => {
+            const rowNumber = existingInventoryRows.get(item.fileId);
+            const row = rowNumber
+                ? (rows[rowNumber - 1] || []).slice(0, columnCount)
+                : Array(columnCount).fill("");
+            while (row.length < columnCount) row.push("");
+
+            const setField = (name, value) => { row[column(name) - 1] = value; };
+            if (!rowNumber) setField("id_reemplazo", `INV-${item.fileId}`);
+            setField("fecha_reemplazo", "");
+            setField("tipo_contenido", "inventario_sin_uso");
+            setField("registro_id", "");
+            setField("campo", "");
+            setField("archivo_drive_id", item.fileId);
+            setField("nombre_archivo", item.fileName);
+            setField("url_anterior", item.sourceUrl);
+            setField("sustituida_por_url", "");
+            setField("referencia_texto", item.folderPath || "Cortes");
+            setField("estado", "sin_uso_detectado");
+            setField("origen_registro", "auditoria_drive");
+            setField("tipo_mime", item.mimeType);
+            setField("ubicacion_original", item.folderPath || "Cortes");
+            setField("fecha_creacion_drive", item.createdAt);
+            setField("fecha_deteccion", detectedAt);
+            setField("url_visualizacion", `https://lh3.googleusercontent.com/d/${item.fileId}`);
+            setField("ubicacion_actual", item.folderPath || "Cortes");
+            setField("ultima_auditoria_id", auditId);
+
+            if (rowNumber) {
+                sheet.getRange(rowNumber, 1, 1, columnCount).setValues([row]);
+                updatedCount++;
+            } else {
+                newRows.push(row);
+                insertedCount++;
+            }
+        });
+
+        if (newRows.length) {
+            sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, columnCount).setValues(newRows);
+        }
+        SpreadsheetApp.flush();
+
+        logMessage && logMessage("Inventario de imágenes", `Se registraron ${insertedCount} imágenes nuevas, se actualizaron ${updatedCount} y ${staleCount} dejaron de estar confirmadas como imágenes sin uso.`);
+        return {
+            status: "success",
+            savedCount: validatedFiles.length,
+            insertedCount: insertedCount,
+            updatedCount: updatedCount,
+            noLongerConfirmedCount: staleCount,
+            auditId: auditId
+        };
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+/**
  * Handler: Auditoría de imágenes en Google Drive limitada estrictamente a la carpeta "Cortes"
  */
 function handleAuditDriveImagesInCortes(payload, logMessage) {
@@ -2906,7 +3189,12 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
         const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
         if (historySheet) {
             const historyRows = historySheet.getDataRange().getValues();
+            const historyHeaders = historyRows.length
+                ? historyRows[0].map(value => String(value || "").trim())
+                : [];
+            const originIndex = historyHeaders.indexOf("origen_registro");
             for (let r = 1; r < historyRows.length; r++) {
+                if (originIndex >= 0 && String(historyRows[r][originIndex] || "") === "auditoria_drive") continue;
                 const id = extractDriveFileId(historyRows[r][5]) || extractDriveFileId(historyRows[r][7]);
                 if (id) historicalDriveIds.add(id);
             }
@@ -2982,7 +3270,7 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
                 }
 
                 auditResults.push({
-                    fileId: fileId, fileName: fileName, folderPath: current.path,
+                    fileId: fileId, fileName: fileName, folderId: current.folderId, folderPath: current.path,
                     mimeType: mimeType, size: size, lastUpdated: lastUpdated,
                     classification: classification
                 });

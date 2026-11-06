@@ -384,9 +384,9 @@
                         </div>
 
                         <div class="dev-card dev-tools-card">
-                            <strong><i class="fa-solid fa-clock-rotate-left"></i> Imágenes reemplazadas y auditoría Drive</strong>
+                            <strong><i class="fa-solid fa-clock-rotate-left"></i> Inventario e historial de imágenes</strong>
                             <div class="dev-action-row">
-                                <button type="button" id="btn-admin-view-replaced-images" class="btn btn-primary"><i class="fa-solid fa-images"></i> Consultar Repositorio Histórico</button>
+                                <button type="button" id="btn-admin-view-replaced-images" class="btn btn-primary"><i class="fa-solid fa-images"></i> Consultar Inventario e Historial</button>
                                 <button type="button" id="btn-admin-audit-drive-images" class="btn btn-secondary"><i class="fa-brands fa-google-drive"></i> Auditar Árbol «Cortes»</button>
                             </div>
                         </div>
@@ -415,18 +415,18 @@
 <div id="replaced-images-modal" class="info-modal" style="display: none; z-index: 2600;">
     <div class="info-modal-content" style="max-width: 900px; width: 95%;">
         <span class="info-close-btn" id="close-replaced-images-modal">&times;</span>
-        <h2><i class="fa-solid fa-clock-rotate-left"></i> Repositorio Histórico de Imágenes Reemplazadas</h2>
+        <h2><i class="fa-solid fa-images"></i> Inventario e Historial de Imágenes</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
-            Consulta, visualiza y recupera versiones anteriores; las imágenes sin referencias activas pueden enviarse a la papelera de Google Drive.
+            Consulta las imágenes sin uso detectadas por la auditoría y el historial de imágenes reemplazadas. Los registros se leen desde la Spreadsheet; no necesitas ejecutar una auditoría para consultar el inventario guardado.
         </p>
 
         <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
-            <input type="text" id="filter-replaced-images-input" placeholder="Filtrar por vehículo, ID o archivo..." class="dev-input" style="flex: 1; min-width: 200px; padding: 6px 10px;">
+            <input type="text" id="filter-replaced-images-input" placeholder="Filtrar por archivo, ubicación o ID..." class="dev-input" style="flex: 1; min-width: 200px; padding: 6px 10px;">
             <button id="btn-refresh-replaced-images" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85em;"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
         </div>
 
         <div id="replaced-images-list-container" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
-            <div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Cargando imágenes históricas...</div>
+            <div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Cargando inventario e historial...</div>
         </div>
     </div>
 </div>

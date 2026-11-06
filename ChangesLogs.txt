@@ -2688,3 +2688,34 @@ ARCHIVO MODIFICADO: Services/admin.js
 - La sintaxis JavaScript fue comprobada mediante compilación estática en V8 y no reportó errores.
 - No se ejecutó Apps Script, no se desplegó ADMIN ni se consultaron o modificaron datos de Google Sheets/Drive. La validación funcional de varios lotes hasta complete:true permanece pendiente.
 ================================================================================
+
+
+================================================================================
+CAMBIO — PERSISTENCIA DEL INVENTARIO DE IMÁGENES SIN USO EN SPREADSHEET
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DE CÓDIGO PREPARADOS
+- Services/admin.js: nueva acción saveUnusedImagesInventory; validación backend; alta/actualización idempotente por ID de Drive; metadatos en columnas nuevas; filtro del origen auditoria_drive para no reclasificar el inventario como histórico.
+- ui.js: envío del inventario únicamente después de complete:true; consulta persistente desde getReplacedImages; distinción de registros de auditoría e historial; restauración deshabilitada para imágenes sin uso y papelera limitada a registros confirmados.
+- index.html: textos del panel y modal actualizados para «Inventario e Historial».
+- api-config.js: nueva acción saveUnusedImagesInventory asignada al endpoint ADMIN.
+- style.css, add_cortes.html y Services/write.js permanecen sin cambios.
+
+RESPALDOS EXACTOS PREVIOS
+- Services/admin.js: fd53b207d27570c9109e48e7f95abab1a440e2d4
+- ui.js: 57f1830ce519f00d2e6bbfad554cee83c52b5a9a
+- index.html: b950bec0d212e3bd2c7d7a4a23f848b9a6d500eb
+- api-config.js: 885b74412784ceb15351396a23bf6120e3ee763a
+
+BLOBS FINALES DE CÓDIGO
+- Services/admin.js: 8878bf38d375e16e609fc91ec609c0c605fbb182
+- ui.js: 224249882edf86c86889dcaa17fc0f203d2c11ad
+- index.html: 31df5e60af5e80eab3e60de6a4ded5cf6f81ee9f
+- api-config.js: de3df6cfab8a7768b197b3afd2b9da9227ca8d94
+
+VERIFICACIÓN
+- Sintaxis V8 de los tres archivos JavaScript: correcta.
+- Pruebas aisladas con servicios simulados: inserción inicial, actualización sin duplicados, marcado de registros no confirmados, bloqueo por referencia activa y rechazo de restauración/papelera en estados no permitidos.
+- No se desplegó Apps Script, no se publicaron archivos frontend, no se consultó ni modificó la Spreadsheet real y no se alteraron permisos de Drive.
+- Pendiente validación funcional tras despliegue.
+================================================================================

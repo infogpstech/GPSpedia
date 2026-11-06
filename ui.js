@@ -3800,7 +3800,7 @@ function getDeveloperSessionPayload() {
 }
 
 /**
- * TAREA 2: Modal de Gestión y Recuperación de Imágenes Reemplazadas
+ * TAREA 2: Modal de Gestión y Consulta del Inventario e Historial de Imágenes
  */
 export async function openReplacedImagesModal() {
     const modal = document.getElementById('replaced-images-modal');
@@ -3817,13 +3817,13 @@ export async function openReplacedImagesModal() {
     let cachedReplaced = [];
 
     const loadData = async () => {
-        listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Consultando imágenes históricas en Drive...</div>';
+        listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Consultando inventario e historial en Spreadsheet...</div>';
         try {
             const res = await routeAction('getReplacedImages', getDeveloperSessionPayload());
             cachedReplaced = (res && res.data) ? res.data : [];
             renderList(filterInput ? filterInput.value : '');
         } catch (err) {
-            listContainer.textContent = `Error al cargar repositorio histórico: ${err.message}`;
+            listContainer.textContent = `Error al cargar el inventario e historial: ${err.message}`;
         }
     };
 
@@ -3836,42 +3836,56 @@ export async function openReplacedImagesModal() {
                    (item.referencia_texto || '').toLowerCase().includes(q) ||
                    (item.campo || '').toLowerCase().includes(q) ||
                    (item.archivo_drive_id || '').toLowerCase().includes(q) ||
-                   String(item.registro_id || '').toLowerCase().includes(q);
+                   String(item.registro_id || '').toLowerCase().includes(q) ||
+                   (item.ubicacion_actual || '').toLowerCase().includes(q) ||
+                   (item.origen_registro || '').toLowerCase().includes(q);
         });
 
         if (filtered.length === 0) {
-            listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron imágenes históricas reemplazadas.</div>';
+            listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron imágenes registradas.</div>';
             return;
         }
 
         filtered.forEach(rep => {
+            const isInventoryRecord = rep.origen_registro === 'auditoria_drive';
             const card = document.createElement('div');
             card.style.cssText = "display: flex; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg);";
 
             const img = document.createElement('img');
-            img.src = getImageUrl(rep.url_anterior, IMG_SIZE_SMALL);
+            img.src = getImageUrl(rep.url_visualizacion || rep.url_anterior, IMG_SIZE_SMALL);
             img.style.cssText = "width: 70px; height: 70px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0; background: #fff;";
 
             const info = document.createElement('div');
             info.style.cssText = "flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem;";
             const title = document.createElement('div');
             title.style.cssText = "font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
-            title.textContent = rep.referencia_texto || `Registro ${rep.registro_id}`;
+            title.textContent = isInventoryRecord
+                ? (rep.nombre_archivo || 'Imagen sin uso detectado')
+                : (rep.referencia_texto || `Registro ${rep.registro_id}`);
 
             const fileDetails = document.createElement('div');
             fileDetails.style.cssText = "font-size:0.8rem; color:var(--text-disabled);";
-            fileDetails.textContent = `Archivo: ${rep.nombre_archivo || ''} | Campo: ${rep.campo || ''}`;
+            fileDetails.textContent = isInventoryRecord
+                ? `Archivo: ${rep.nombre_archivo || ''} | Tipo: ${rep.tipo_mime || 'No disponible'}`
+                : `Archivo: ${rep.nombre_archivo || ''} | Campo: ${rep.campo || ''}`;
 
             const driveDetails = document.createElement('div');
             driveDetails.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
-            driveDetails.textContent = `ID Drive: ${rep.archivo_drive_id || ''} | Fecha: ${rep.fecha_reemplazo || ''}`;
+            driveDetails.textContent = isInventoryRecord
+                ? `ID Drive: ${rep.archivo_drive_id || ''} | Detectada: ${rep.fecha_deteccion || 'Fecha no disponible'} | Ubicación: ${rep.ubicacion_actual || rep.ubicacion_original || 'No disponible'}`
+                : `ID Drive: ${rep.archivo_drive_id || ''} | Fecha: ${rep.fecha_reemplazo || ''}`;
 
             const statusDetails = document.createElement('div');
             statusDetails.style.cssText = "font-size:0.75rem; font-weight:600;";
-            statusDetails.style.color = rep.estado === 'restablecida' ? '#28a745' :
-                (['eliminada', 'en_papelera'].includes(rep.estado) ? '#dc3545' :
-                (rep.estado === 'cancelada' ? '#6c757d' : '#007bff'));
-            statusDetails.textContent = `Estado: ${rep.estado || 'historica'}`;
+            const statusLabel = isInventoryRecord
+                ? (rep.estado === 'sin_uso_detectado' ? 'Sin uso detectado' : String(rep.estado || '').replace(/_/g, ' '))
+                : (rep.estado || 'historica');
+            statusDetails.style.color = isInventoryRecord
+                ? (rep.estado === 'sin_uso_detectado' ? '#e0a800' : '#6c757d')
+                : (rep.estado === 'restablecida' ? '#28a745' :
+                    (['eliminada', 'en_papelera'].includes(rep.estado) ? '#dc3545' :
+                    (rep.estado === 'cancelada' ? '#6c757d' : '#007bff')));
+            statusDetails.textContent = `Estado: ${statusLabel}`;
 
             info.appendChild(title);
             info.appendChild(fileDetails);
@@ -3881,7 +3895,7 @@ export async function openReplacedImagesModal() {
             const btnContainer = document.createElement('div');
             btnContainer.style.cssText = "display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;";
 
-            if (rep.estado !== 'cancelada') {
+            if (!isInventoryRecord && rep.estado !== 'cancelada') {
                 const recoverBtn = document.createElement('button');
                 recoverBtn.className = "btn btn-primary";
                 recoverBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; white-space: nowrap;";
@@ -3903,30 +3917,36 @@ export async function openReplacedImagesModal() {
                     }
                 };
                 btnContainer.appendChild(recoverBtn);
+            }
 
-                if (rep.estado !== 'en_papelera' && rep.estado !== 'eliminada') {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.className = "btn btn-danger";
-                    deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
-                    deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
-                    deleteBtn.onclick = async () => {
-                        if (!confirm(`¿Enviar esta imagen histórica a la papelera de Google Drive? Podrá recuperarse desde la papelera de Drive.`)) return;
-                        deleteBtn.disabled = true;
-                        deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                        try {
-                            const delRes = await routeAction('deleteReplacedImage', { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo });
-                            if (delRes && delRes.status === 'success') {
-                                mostrarNotificacion("Imagen enviada a la papelera de Google Drive.", "success");
-                                loadData();
-                            }
-                        } catch (e) {
-                            alert("No se pudo enviar la imagen a la papelera: " + e.message);
-                            deleteBtn.disabled = false;
-                            deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
+            const canSendToTrash = isInventoryRecord
+                ? rep.estado === 'sin_uso_detectado'
+                : !['cancelada', 'en_papelera', 'eliminada'].includes(rep.estado);
+            if (canSendToTrash) {
+                const deleteBtn = document.createElement('button');
+                deleteBtn.className = "btn btn-danger";
+                deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
+                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
+                deleteBtn.onclick = async () => {
+                    const confirmation = isInventoryRecord
+                        ? "¿Enviar esta imagen sin uso a la papelera de Google Drive? El servidor volverá a comprobar que no tenga referencias activas."
+                        : "¿Enviar esta imagen histórica a la papelera de Google Drive? Podrá recuperarse desde la papelera de Drive.";
+                    if (!confirm(confirmation)) return;
+                    deleteBtn.disabled = true;
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+                    try {
+                        const delRes = await routeAction('deleteReplacedImage', { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo });
+                        if (delRes && delRes.status === 'success') {
+                            mostrarNotificacion("Imagen enviada a la papelera de Google Drive.", "success");
+                            loadData();
                         }
-                    };
-                    btnContainer.appendChild(deleteBtn);
-                }
+                    } catch (e) {
+                        alert("No se pudo enviar la imagen a la papelera: " + e.message);
+                        deleteBtn.disabled = false;
+                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
+                    }
+                };
+                btnContainer.appendChild(deleteBtn);
             }
 
             card.appendChild(img);
@@ -4055,6 +4075,24 @@ export async function openAuditDriveModal() {
         document.getElementById('audit-unverified-count').textContent = String(unverifiedCount);
         document.getElementById('audit-unknown-references').textContent = String(unverifiableReferences);
         auditStatusEl.textContent = 'Auditoría COMPLETA del árbol «Cortes».';
+        const unusedFiles = allFiles
+            .filter(file => file.classification === 'Sin uso detectado')
+            .map(file => ({ fileId: file.fileId, folderId: file.folderId }));
+        auditStatusEl.textContent = `Auditoría completa. Registrando ${unusedFiles.length} imágenes sin uso en la Spreadsheet...`;
+        try {
+            const inventoryResult = await routeAction('saveUnusedImagesInventory', {
+                ...getDeveloperSessionPayload(),
+                files: unusedFiles
+            });
+            if (!inventoryResult || inventoryResult.status !== 'success') {
+                throw new Error(inventoryResult && inventoryResult.message
+                    ? inventoryResult.message
+                    : 'El servicio no confirmó la actualización del inventario.');
+            }
+            auditStatusEl.textContent = `Auditoría COMPLETA. ${inventoryResult.savedCount} imágenes sin uso quedaron registradas en la Spreadsheet.`;
+        } catch (inventoryError) {
+            auditStatusEl.textContent = `Auditoría COMPLETA, pero no se pudo actualizar el inventario de la Spreadsheet: ${inventoryError.message}`;
+        }
         if (allFiles.length === 0) {
             container.textContent = 'No se encontraron archivos en la carpeta analizada.';
         }

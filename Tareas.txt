@@ -3902,3 +3902,34 @@ ESTADO: CORRECCIÓN DE CÓDIGO Y REVISIÓN ESTÁTICA COMPLETADAS; VALIDACIÓN FU
 - Pendiente: actualizar manualmente el deployment ADMIN a una versión nueva y ejecutar la auditoría real desde la interfaz. Debe comprobarse la continuidad entre varias peticiones y la respuesta final complete:true, con cobertura del árbol esperado. Hasta entonces no se declara resuelta la incidencia funcional.
 - No se desplegó Apps Script, no se modificaron datos/archivos de Drive o Sheets y no se tocó la rama protegida.
 ================================================================================
+
+
+================================================================================
+SUBTAREA — PERSISTIR Y CONSULTAR IMÁGENES SIN USO DESDE SPREADSHEET
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; VALIDACIÓN EN DEPLOYMENT PENDIENTE.
+
+OBJETIVO
+Guardar en la hoja existente Imagenes_Reemplazadas todas las imágenes que una auditoría completa clasifique como «Sin uso detectado», para poder consultarlas y gestionarlas desde el panel administrativo sin ejecutar una auditoría nueva cada vez.
+
+ALCANCE IMPLEMENTADO
+- Persistencia en Spreadsheet, no en almacenamiento local del navegador.
+- Registro idempotente por ID de Drive y distinción explícita del origen auditoria_drive.
+- Conservación de las once columnas históricas y adición de metadatos en columnas nuevas, sin desplazar las existentes.
+- Exclusión de los registros de inventario del cálculo de imágenes históricas.
+- Consulta desde «Consultar Inventario e Historial», que lee la hoja al abrirse.
+- Protección para no restaurar como reemplazo una imagen sin uso y para no enviar a papelera un registro que ya no esté confirmado.
+- Revalidación backend de referencias, tipo MIME, estado de papelera y pertenencia al árbol Cortes.
+
+CRITERIO DE CLASIFICACIÓN
+- Se guardan únicamente archivos con clasificación «Sin uso detectado».
+- «Histórica» sigue representando imágenes de reemplazo y no se mezcla con el inventario de imágenes sin uso.
+- «No verificable» nunca se registra como sin uso.
+- Si un registro de inventario no vuelve a confirmarse en una auditoría completa posterior, su estado cambia a no_confirmada_en_ultima_auditoria y la acción de papelera queda bloqueada hasta que vuelva a confirmarse.
+
+VALIDACIÓN PENDIENTE
+- Actualizar el deployment ADMIN y publicar la versión frontend que incluya la nueva acción saveUnusedImagesInventory.
+- Ejecutar una auditoría completa, comprobar la creación/actualización idempotente de filas y consultar el inventario desde el panel sin ejecutar otra auditoría.
+- Probar que una imagen activa, histórica, fuera del árbol o con referencias no interpretables no se registre como sin uso.
+- La especificación integral de gestión de imágenes sin uso continúa abierta para las funciones adicionales que no forman parte de esta subtarea.
+================================================================================
