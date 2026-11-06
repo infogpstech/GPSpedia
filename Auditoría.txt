@@ -5352,3 +5352,41 @@ LIMITACIONES Y VALIDACIONES PENDIENTES
 - El esquema productivo comunicado no incluye columna vin. Las operaciones VIN ahora fallan de forma controlada en backend; la interfaz VIN requiere alineación posterior o una decisión del usuario sobre agregar una columna independiente.
 - No se desplegó WRITE ni ADMIN, no se publicó frontend y no se modificaron datos productivos.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DOCUMENTAL — RECTIFICACIÓN DEL REQUERIMIENTO VIN E IDEMPOTENCIA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: 6cb4a3cb57165b80c06d0c0d5d3e7e125439f051
+
+ALCANCE AUDITADO
+- Tareas.txt: tarea VIN consolidada, especificaciones 11.1, 11.6, 11.7, 11.8, descripción B34 y pendientes del último cambio.
+- README.md: sección «Registro, Almacenamiento y Búsqueda por VIN».
+- checkpoint.md y ChangesLogs.txt: estado y antecedentes de la modificación anterior.
+- Proceso de desarollo.md y contexto_personal.md: checkpoint, auditoría, respaldo y procedimiento exclusivo de commit.
+
+HALLAZGOS
+1. Tareas.txt 11.1 indicaba agregar vin en índice 43, pero no contemplaba trasladar idOperacion1..3.
+2. Tareas.txt 11.7 exigía una colección JSON en una celda y prohibía vin2/vin3, sin explicar que la prohibición busca impedir la creación automática de columnas por VIN o versión.
+3. El resumen VIN y B34 mantenían la referencia a columna 43 sin describir la migración de los tres campos de operación.
+4. README.md describía vin como columna 43 sin explicar la migración previa de idOperacion1..3.
+5. El checkpoint y el último cambio backend registran idOperacion1..3 en columnas 43–45 y que el código no las escribe ni limpia. Existe referencia documental a una hoja Idempotencia, pero no se inspeccionó su esquema real.
+6. El usuario especificó trasladar los tres identificadores a una hoja dedicada; usar la columna 43 para VIN; dejar 44 y 45 disponibles; y mantener una única columna con colección JSON, sin expansión automática del esquema.
+
+RIESGOS Y DEPENDENCIAS
+- Antes de implementar, inspeccionar encabezados, claves y datos de la hoja Idempotencia. Reutilizarla solo si conserva los tres identificadores y su relación con el registro original; de lo contrario, crear hoja dedicada.
+- La migración debe preservar íntegramente los valores y su vínculo con cada registro.
+- Esta tarea es documental. No se auditó línea por línea el código de los servicios ni se ejecutó Apps Script; no se inspeccionó ni modificó la Spreadsheet productiva.
+
+RESPALDOS PREVIOS A EDICIÓN
+- Tareas.txt: blob bb6bc3105bc875ac0e370df90a8b16b7d19790e0.
+- README.md: blob c05a220816873f214f2c5801cc8febc686919209.
+- Auditoría.txt: blob 76d1ec5090b4f3c03ecd6538a861edde5b0cacf4.
+- ChangesLogs.txt: blob 1ce6ac79179a4041e65a1a509dcb320c82eab2b3.
+- checkpoint.md: blob fc2fcbf897648eae49ce5cc49555c225dc593e27.
+
+RESULTADO
+Se actualiza 11.1 para migrar idOperacion1..3 y utilizar columna 43 para VIN, reservando 44 y 45. Se aclara 11.7: no crear vin2/vin3 ni columnas por versión significa impedir la expansión automática del esquema, no limitar el arreglo JSON de una sola celda. Implementación y migración pendientes.
+================================================================================

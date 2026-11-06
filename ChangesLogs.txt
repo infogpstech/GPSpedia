@@ -3198,3 +3198,30 @@ Tareas.txt
 checkpoint.md
 - Añadidos checkpoint inicial y cierre de la tarea, conservando el historial.
 ================================================================================
+
+
+================================================================================
+CAMBIO DOCUMENTAL — RECTIFICACIÓN DE REQUERIMIENTO VIN E IDEMPOTENCIA
+Fecha: 2026-11-06
+Rama: GPSpedia2.2.5_work
+
+Tareas.txt
+- Actualizada 11.1: trasladar idOperacion1..3 a una hoja dedicada de idempotencia; auditar y reutilizar Idempotencia solo si conserva los valores y su relación con el registro.
+- Definida la columna 43 como única columna vin; columnas 44 y 45 quedan reservadas.
+- Actualizada 11.7: todos los VIN de las versiones de equipamiento de una fila se almacenan como colección JSON en una celda. La prohibición de vin2/vin3 impide expansión automática del esquema.
+- Actualizados el resumen VIN, B34 y los pendientes para reflejar que el ajuste de esquema requiere implementación.
+
+README.md
+- Sustituida la descripción anterior de vin índice 43 por el esquema objetivo de migración de idOperacion1..3, uso de la columna 43 y reserva de las columnas 44–45.
+- Aclarado que una única columna almacena la colección JSON de VIN por versiones de equipamiento.
+
+Auditoría.txt
+- Añadidos hallazgos documentales, respaldos por SHA, riesgos y límites de verificación.
+
+checkpoint.md
+- Añadidos checkpoint inicial y cierre de esta tarea documental.
+
+ALCANCE
+- Solo documentación; sin cambios en código, Spreadsheet, deployments ni rama base.
+- La inspección de Idempotencia y la migración de datos quedan pendientes para la tarea de implementación.
+================================================================================

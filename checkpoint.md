@@ -3498,3 +3498,79 @@ Validar WRITE/ADMIN en entorno controlado y resolver el alcance de VIN antes de 
 PUBLICACIÓN
 Un único commit en GPSpedia2.2.5_work; no modificar GPSpedia2.2.5, no hacer merge ni desplegar sin autorización.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — RECTIFICACIÓN DEL REQUERIMIENTO VIN E IDEMPOTENCIA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 6cb4a3cb57165b80c06d0c0d5d3e7e125439f051
+HEAD de la rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## Tarea y alcance
+Actualizar la especificación documental para trasladar idOperacion1, idOperacion2 e idOperacion3 fuera de Cortes a una hoja dedicada de idempotencia; utilizar la columna 43 para la colección de VIN por fila y reservar las columnas 44 y 45.
+
+## Estado real al inicio
+- El esquema comunicado ubica idOperacion1..3 en las columnas 43–45 de Cortes.
+- El commit actual protege esos campos y no resuelve VIN por posición fija.
+- Tareas.txt y README.md mantenían la referencia anterior a VIN en índice 43 sin contemplar la migración de idOperacion.
+- La hoja Idempotencia aparece en el historial documental, pero su esquema y datos reales no se han inspeccionado.
+- La aclaración del usuario determina que la regla de no crear columnas adicionales impide la expansión automática por VIN o versión; varios VIN deben seguir dentro de una única celda.
+- La inspección documental preliminar comenzó antes de incorporar este checkpoint. Se registra esta desviación; no se había modificado ningún archivo.
+
+## Archivos involucrados
+Tareas.txt, README.md, Auditoría.txt, ChangesLogs.txt y checkpoint.md.
+
+## Riesgos y dependencias
+Preservar cada valor idOperacion1..3 y su asociación al registro original. Auditar Idempotencia antes de reutilizarla; crear una hoja dedicada solo si su estructura no es adecuada. No modificar código, Spreadsheet, deployments, endpoints ni la rama base.
+
+## Fase
+Checkpoint inicial registrado; auditoría documental concluida antes de editar.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — RECTIFICACIÓN DOCUMENTAL DEL REQUERIMIENTO VIN E IDEMPOTENCIA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD anterior: 6cb4a3cb57165b80c06d0c0d5d3e7e125439f051
+Rama base protegida GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+
+ESTADO
+DOCUMENTACIÓN ACTUALIZADA; IMPLEMENTACIÓN Y MIGRACIÓN DE DATOS PENDIENTES.
+
+ARCHIVOS MODIFICADOS
+- Tareas.txt
+- README.md
+- Auditoría.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+RESUMEN
+- 11.1 ordena trasladar idOperacion1..3 a una hoja dedicada de idempotencia y utilizar la columna 43 liberada como campo fijo vin.
+- Las columnas 44 y 45 quedan disponibles para futuras implementaciones.
+- 11.7 establece que todos los VIN de las versiones de equipamiento de una fila se almacenan como colección JSON en una sola celda.
+- Se aclara que no crear vin2/vin3 ni columnas por versión impide la expansión automática del esquema.
+- README.md queda alineado con el diseño objetivo.
+
+VERIFICACIONES
+- Se validaron las coincidencias exactas de los bloques originales antes de reemplazarlos.
+- Los SHA de los cinco archivos originales quedaron registrados en Auditoría.txt.
+- HEAD de la rama base confirmado antes de la edición; no se modificó.
+
+LIMITACIONES Y PENDIENTES
+- No se modificó código, Spreadsheet ni Apps Script.
+- No se inspeccionó la estructura real ni los datos de la hoja Idempotencia.
+- La siguiente implementación deberá auditar esa hoja, migrar idOperacion1..3 sin pérdida y verificar su asociación con cada registro antes de reutilizar la columna 43.
+- Después de la migración, la columna 43 almacenará VIN y las columnas 44 y 45 permanecerán libres.
+- Implementación de VIN, migración y pruebas funcionales pendientes.
+
+SIGUIENTE ACCIÓN
+Iniciar una tarea de implementación con checkpoint propio y auditoría línea por línea de WRITE, ADMIN, CATALOG y de los flujos frontend que registran, consultan y buscan VIN; inspeccionar la hoja Idempotencia antes de diseñar la migración.
+
+PUBLICACIÓN
+Un único commit en GPSpedia2.2.5_work mediante Git Database API; no modificar GPSpedia2.2.5, no hacer merge ni desplegar.
+================================================================================
