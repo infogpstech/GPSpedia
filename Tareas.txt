@@ -4193,3 +4193,29 @@ VERIFICACIONES AISLADAS
 - Simulación DOM en cuadrícula: se conserva la miniatura y los seis elementos informativos originales.
 - No se ejecutó navegador real ni se desplegó frontend. La validación visual en móvil y escritorio queda para la etapa funcional consolidada.
 ================================================================================
+
+
+================================================================================
+SUBTAREA — TÍTULO Y CONSOLA GLOBAL DEL MODAL «OPCIONES DE DESARROLLADOR»
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y REVISIÓN DE INTEGRIDAD COMPLETADAS; VALIDACIÓN VISUAL FUNCIONAL PENDIENTE.
+
+- Se actualizó el título principal a «Opciones de desarrollador».
+- Se trasladó la única consola fuera de los paneles individuales y se mantuvo visible desde las cinco secciones.
+- El encabezado de consola quedó como «>_Consola».
+- Se conservaron salida, botón de copia, terminal, progreso, IDs y consumidores JavaScript.
+- Se ajustó el layout responsive para que los paneles y la consola tengan áreas de desplazamiento independientes.
+- Se mantuvo intacta la protección de listeners duplicados y el comportamiento actual de inicialización/ping.
+- ui.js y main.js no se modificaron.
+- La ampliación general del modal continúa pendiente: diagnóstico ampliado, campo compartido de respaldos/restauración, limpieza unificada, acciones de firmas VIN, reordenamiento de imágenes y revisión de IDs permanecen como subalcances independientes.
+
+VERIFICACIONES AISLADAS
+- IDs de consola únicos; cinco paneles únicos; sin IDs duplicados en index.html.
+- Consola fuera de los paneles y visible estructuralmente al cambiar de pestaña.
+- Título y encabezado exactos; denominaciones anteriores ausentes.
+- Estructura del modal balanceada; CSS con llaves balanceadas y media queries responsive.
+- Comparación inversa de index.html exacta; CSS original conservado íntegramente con un bloque de reglas añadido.
+- Sin cambios en ui.js, main.js, endpoints, permisos, servicios Apps Script ni datos.
+- No se ejecutó navegador real, no se publicó frontend y no se desplegó Apps Script.
+- La validación visual en escritorio, móvil y PWA queda para la matriz funcional consolidada después de completar las implementaciones restantes.
+================================================================================

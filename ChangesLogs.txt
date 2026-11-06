@@ -2979,3 +2979,33 @@ PRUEBAS AISLADAS
 - Verificación inversa de cambios y balance de llaves CSS satisfactorios.
 - Validación real de navegador móvil/escritorio pendiente para la etapa de pruebas funcionales consolidada.
 ================================================================================
+
+
+================================================================================
+CAMBIO — TÍTULO Y CONSOLA GLOBAL DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+- index.html: el título de #dev-tools-modal cambia a «Opciones de desarrollador».
+- index.html: el bloque único de consola (salida, copia, terminal y progreso) se mueve fuera de los cinco paneles y queda como elemento persistente común. El encabezado visible es «>_Consola».
+- index.html: se mantienen los IDs existentes y se añaden atributos de accesibilidad al área de registro y al campo de comandos. La descripción del panel Diagnóstico se actualiza para reflejar que la consola ahora es global.
+- style.css: se agregan reglas específicas para el reparto vertical entre navegación/paneles y consola, con ajustes para escritorio, tablet y móvil.
+- ui.js y main.js: sin cambios; se conservan los consumidores y listeners existentes.
+- No se modifican endpoints, permisos, payloads, servicios Apps Script, autenticación ni datos de Drive/Spreadsheet.
+
+RESPALDOS ORIGINALES
+- index.html: 3571826a122bd80e07e41fe497d0ebca598b9f83
+- style.css: 8c3d17041cc8e9505c0e7d6ccf5ebb94b11300c4
+- ui.js: 8500f354704f685b7ef8b051469769f01cd99d52
+- main.js: e03a2293738abf78a1deb6c293ea96c6a8e0479a
+
+ARCHIVOS FINALES
+- index.html: e478dfd54a1fb0efb05bacf7abdbbaa1c81f7f8b
+- style.css: f418138019c1edb8608d816a057e7ee10604c619
+
+PRUEBAS AISLADAS
+- Textos exactos verificados; una sola instancia de cada ID de consola; cinco secciones presentes una sola vez.
+- Consola comprobada fuera del contenedor de paneles; listeners JS siguen apuntando a los mismos IDs.
+- Estructura del modal balanceada; CSS con llaves balanceadas.
+- index.html reconstruido desde el original con las transformaciones previstas; style.css original conservado como prefijo.
+- No se ejecutó navegador real ni se publicó frontend.
+================================================================================

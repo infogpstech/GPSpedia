@@ -3184,3 +3184,77 @@ body.dark-mode #dev-tools-modal .dev-tools-card {
         flex: 1 1 auto;
     }
 }
+
+
+/* ==========================================================================
+   PANEL DE DESARROLLADOR — CONSOLA GLOBAL COMPARTIDA
+   ========================================================================== */
+#dev-tools-modal .dev-tools-tabs {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    gap: 12px;
+}
+
+#dev-tools-modal .dev-tools-layout {
+    display: grid;
+    grid-template-columns: 210px minmax(0, 1fr);
+    flex: 1 1 auto;
+    min-height: 0;
+}
+
+#dev-tools-modal .dev-tools-panels {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+}
+
+#dev-tools-modal .dev-tab-panel {
+    flex: 1 1 auto;
+    height: 100%;
+    max-height: none;
+    min-height: 0;
+}
+
+#dev-tools-modal .dev-console-shared {
+    flex: 0 0 auto;
+    min-height: 0;
+}
+
+#dev-tools-modal .dev-console-shared .dev-console-output {
+    height: 104px;
+    min-height: 72px;
+}
+
+@media (max-width: 760px) {
+    #dev-tools-modal .dev-tools-layout {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: auto minmax(0, 1fr);
+        flex: 1 1 auto;
+        min-height: 0;
+    }
+
+    #dev-tools-modal .dev-tools-panels {
+        min-height: 0;
+    }
+
+    #dev-tools-modal .dev-tab-panel {
+        max-height: none;
+        min-height: 0;
+    }
+
+    #dev-tools-modal .dev-console-shared .dev-console-output {
+        height: 82px;
+        min-height: 64px;
+    }
+}
+
+@media (max-width: 520px) {
+    #dev-tools-modal .dev-console-shared .dev-console-output {
+        height: 64px;
+        min-height: 52px;
+    }
+}

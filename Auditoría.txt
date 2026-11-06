@@ -4745,3 +4745,99 @@ HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
 - La tarea no cambia las acciones ni sus validaciones.
 - La validación visual en navegador móvil/escritorio se mantiene para la etapa funcional consolidada posterior a todas las implementaciones.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — TÍTULO Y CONSOLA GLOBAL DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-06
+Rama: GPSpedia2.2.5_work
+HEAD auditado: ef993ce361dd96151a4b89a9d4125568c18672cc
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. ALCANCE Y RESPALDOS EXACTOS
+- Se revisó la estructura completa de #dev-tools-modal en index.html, incluyendo navegación, las cinco secciones, el contenedor de paneles, el bloque de consola y sus controles.
+- Se revisaron en style.css la geometría de .dev-tools-modal-content, .dev-tools-tabs, .dev-tools-layout, .dev-tab-panel, navegación lateral, salida de consola, terminal, progreso y reglas responsive de 760px y 520px.
+- Se revisaron en ui.js setupModal(), openDevTools(), initAdminPanelListeners(), la inicialización protegida por window.adminListenersAttached, triggerAdminPanelPing(), la escritura de salida, el terminal, el progreso y el botón de copiar registro.
+- Se revisó en main.js el listener único de #dev-tools-btn y la apertura del modal.
+- Respaldos exactos de archivos fuente:
+  - index.html: 3571826a122bd80e07e41fe497d0ebca598b9f83
+  - style.css: 8c3d17041cc8e9505c0e7d6ccf5ebb94b11300c4
+  - ui.js: 8500f354704f685b7ef8b051469769f01cd99d52
+  - main.js: e03a2293738abf78a1deb6c293ea96c6a8e0479a
+- Respaldos documentales iniciales:
+  - Auditoría.txt: a7ee5521022287864303ddc178fc3b9ad244f690
+  - Tareas.txt: fcd55868cca92df220ae52f2fcdc0c6b4cb80d24
+  - ChangesLogs.txt: 0aef041367e4e0053539c30f13400737ebb818b6
+  - checkpoint.md: baba088b70794d0a050f2ade59c732b4caafb4ea
+
+2. HALLAZGOS CONFIRMADOS
+- El encabezado actual de #dev-tools-modal muestra «Panel Administrativo y Diagnóstico»; no cumple el texto exacto requerido «Opciones de desarrollador».
+- El encabezado actual de la consola muestra «Consola de diagnóstico en tiempo real»; no cumple el texto exacto «>_Consola».
+- #dev-console-log, #btn-copy-console-log, #dev-terminal-input, #btn-terminal-send, #dev-progress-container, #dev-progress-bar y #dev-progress-text aparecen exactamente una vez en index.html.
+- El bloque de consola completo está actualmente dentro de section.dev-panel-diagnostics. Los otros cuatro paneles se muestran/ocultan mediante los radio buttons dev-tab-* y reglas CSS; por eso la consola desaparece al cambiar de sección.
+- La consola puede convertirse en un bloque compartido sin duplicar nodos: sus consumidores de ui.js acceden por IDs globales mediante getElementById/querySelectorAll y no dependen de que el bloque sea descendiente de .dev-panel-diagnostics.
+- El botón de copia, terminal, progreso y salida pertenecen al mismo bloque funcional. Mover el bloque completo conserva una sola instancia y evita separar controles de la salida que administran.
+- initAdminPanelListeners() utiliza window.adminListenersAttached para evitar volver a registrar listeners. El listener de cierre se registra una sola vez mediante closeBtn.dataset.listenerSet en setupModal(). No se detectó necesidad de modificar main.js ni los contratos de eventos.
+- openDevTools() ejecuta triggerAdminPanelPing() al abrir; dicha función limpia la salida de consola antes de escribir el estado de conexión. Este comportamiento preexistente se conserva dentro de esta subtarea.
+- Existe un elemento independiente #debug-console fuera del modal. No utiliza #dev-console-log ni los controles de terminal y no debe confundirse ni fusionarse con la consola administrativa.
+- La distribución actual utiliza una cuadrícula de dos columnas para navegación y paneles. .dev-tools-panels no tiene reglas propias y cada .dev-tab-panel limita su altura a 68vh (62vh/60vh en responsive). Al extraer la consola a un área persistente será necesario definir explícitamente el reparto vertical para que el panel activo conserve su scroll y la consola permanezca visible en escritorio y móvil.
+- Los cinco IDs de pestaña y los cinco paneles existen una sola vez. No se detectó una segunda instancia de consola ni un selector JS que requiera cambiar el nombre de los IDs.
+
+3. DECISIÓN DE IMPLEMENTACIÓN ACOTADA
+- Cambiar únicamente el texto visible del encabezado a «Opciones de desarrollador».
+- Extraer el bloque único de consola (título, botón de copia, salida, terminal y progreso) de Diagnóstico y ubicarlo como hermano persistente del layout de navegación/paneles, dentro de .dev-tools-tabs.
+- Utilizar el encabezado visible exacto «>_Consola». La misma consola quedará visible en las cinco secciones.
+- Ajustar el layout y sus reglas responsive para que la navegación/panel activo use el espacio flexible y la consola conserve un área visible propia, con scroll interno de salida.
+- Mantener sin cambios los IDs existentes, la salida, los comandos, los listeners, el ping, el escaneo, el progreso y el comportamiento de copia.
+- No modificar main.js, endpoints, servicios Apps Script, permisos ni otras secciones del modal en esta subtarea.
+
+4. RIESGOS Y LÍMITES
+- La consola compartida reduce el espacio vertical disponible para el panel activo; se debe comprobar que su scroll interno y el scroll de consola no se interfieran.
+- El diseño móvil requiere conservar accesibles las cinco pestañas y la consola sin desbordamiento del modal.
+- No se modificará el comportamiento preexistente que limpia la salida al abrir el modal.
+- No se implementan en esta subtarea las métricas ampliadas, respaldos, limpieza, acciones VIN, reordenamiento de Drive ni IDs; quedan como subalcances independientes de la ampliación general.
+- No se ejecutó navegador real ni se modificó código durante la auditoría.
+================================================================================
+
+
+================================================================================
+REVISIÓN POST-IMPLEMENTACIÓN — TÍTULO Y CONSOLA GLOBAL DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-06
+Tarea: subalcance 1 de la ampliación funcional del modal.
+
+CAMBIOS VERIFICADOS
+- index.html: título principal exacto «Opciones de desarrollador».
+- index.html: se trasladó el bloque único de consola fuera de los cinco paneles y se ubicó como bloque persistente dentro del contenedor general de pestañas. Su encabezado visible es «>_Consola».
+- index.html: se conservaron los IDs de salida, copia, terminal y progreso; se añadieron atributos accesibles al registro y al campo de comandos. La descripción de Diagnóstico se ajustó para no afirmar que la consola está dentro de esa sección.
+- style.css: se añadió el reparto vertical entre paneles y consola, con scroll independiente y ajustes para anchos de 760px y 520px.
+- ui.js y main.js: sin modificaciones.
+
+COMPARACIÓN CONTRA RESPALDOS
+- index.html original: 3571826a122bd80e07e41fe497d0ebca598b9f83.
+- index.html final: e478dfd54a1fb0efb05bacf7abdbbaa1c81f7f8b.
+- style.css original: 8c3d17041cc8e9505c0e7d6ccf5ebb94b11300c4.
+- style.css final: f418138019c1edb8608d816a057e7ee10604c619.
+- ui.js se conserva en 8500f354704f685b7ef8b051469769f01cd99d52.
+- main.js se conserva en e03a2293738abf78a1deb6c293ea96c6a8e0479a.
+- La reconstrucción determinista del HTML desde el original reproduce exactamente el blob final.
+- La hoja CSS original permanece íntegra como prefijo del archivo final; únicamente se añadió el bloque acotado de estilos de consola global.
+
+VERIFICACIONES ESTÁTICAS
+- Título principal y encabezado de consola coinciden con los textos requeridos; no permanecen las denominaciones anteriores.
+- Se conservan exactamente una instancia de cada ID de consola y una instancia de cada una de las cinco secciones.
+- La consola queda fuera de .dev-tools-layout y de los paneles individuales; el selector de pestañas no la oculta.
+- El bloque completo mantiene juntos salida, botón de copia, terminal y progreso.
+- No hay IDs duplicados en index.html.
+- Estructura del modal: 38 div de apertura/cierre balanceados, cinco section balanceadas y un nav balanceado.
+- CSS: llaves balanceadas; reglas responsive específicas para 760px y 520px presentes.
+- Los consumidores JS continúan buscando los mismos IDs; no se modificaron ui.js ni main.js.
+- La protección existente contra listeners duplicados (window.adminListenersAttached) y el registro único del botón de cierre permanecen intactos.
+
+REVISIÓN DE SEGURIDAD Y EFECTOS COLATERALES
+- El cambio solo afecta la estructura y estilos del modal de desarrollador.
+- No cambia autenticación, autorización, endpoints, payloads, comandos, acciones de Drive, servicios Apps Script ni datos persistentes.
+- El elemento #debug-console permanece independiente.
+- El comportamiento existente de limpiar la consola al abrir el modal se conserva.
+- La consola reduce el espacio vertical de los paneles; estos mantienen scroll propio. La validación visual real en escritorio, móvil y PWA queda pendiente de la etapa funcional consolidada.
+- No se desplegó frontend ni Apps Script; no se ejecutaron operaciones administrativas reales.
+================================================================================

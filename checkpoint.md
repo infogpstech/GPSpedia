@@ -2728,3 +2728,92 @@ VERIFICACIONES
 PUBLICACIÓN
 Este checkpoint es el último paso documental previo al commit único. Crear un único árbol basado en el tree del HEAD inicial, un commit con ese HEAD como único padre y actualizar solo GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD inicial. La rama base GPSpedia2.2.5 debe permanecer intacta.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — IDENTIDAD Y CONSOLA GLOBAL DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: ef993ce361dd96151a4b89a9d4125568c18672cc
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA
+Implementar el primer subalcance de la ampliación «Rediseño funcional del modal Opciones de desarrollador»: título exacto y consola única compartida, visible/accesible desde las cinco secciones existentes.
+
+ARCHIVOS Y FUNCIONALIDADES A AUDITAR
+- index.html: estructura del modal, encabezados, cinco secciones, contenedor y ubicación de la consola.
+- style.css: visibilidad, posicionamiento, responsive, scroll, foco y estilos de las pestañas/consola.
+- ui.js y main.js: inicialización del modal, navegación de pestañas, listeners, renderizado y salida de consola.
+- Servicios/acciones que escriben en la consola: identificar consumidores y contratos sin modificarlos salvo necesidad directa demostrada.
+
+RESTRICCIONES
+- No duplicar la consola, IDs, listeners, comandos ni historial.
+- No alterar la salida, eventos ni operaciones existentes de consola.
+- No implementar métricas, cambios de servicios, respaldos, limpieza, VIN, reordenamiento de Drive ni IDs dentro de esta subtarea.
+- No modificar flujos de guardado/renombramiento de add_cortes.html ni edición in-modal.
+- No publicar frontend ni desplegar Apps Script. La validación funcional real queda para la etapa consolidada.
+- Un único commit para esta subtarea mediante Git Database API autorizado.
+
+ESTADO INICIAL
+- HEAD de trabajo y HEAD de rama base verificados antes de iniciar.
+- La ampliación completa está documentada en Tareas.txt; este subalcance se separa para mantener cambios acotados y revisables.
+- No se han modificado archivos de código durante esta subtarea.
+
+SIGUIENTE PASO
+Completar auditoría línea por línea de la estructura, estilos, listeners y productores de consola; registrar hallazgos y respaldos antes de editar.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — IDENTIDAD Y CONSOLA GLOBAL DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial de la tarea: ef993ce361dd96151a4b89a9d4125568c18672cc
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+Implementación estática completada y revisión de integridad satisfactoria. Validación visual real en navegador, móvil y PWA pendiente para la etapa funcional consolidada. La ampliación general del modal de desarrollador continúa abierta.
+
+ARCHIVOS MODIFICADOS
+- index.html: título exacto «Opciones de desarrollador»; consola única trasladada fuera de los cinco paneles y presentada de forma persistente; encabezado «>_Consola»; atributos accesibles y descripción de Diagnóstico actualizada.
+- style.css: layout vertical de paneles/consola y ajustes responsive a 760px y 520px.
+- Auditoría.txt: auditoría inicial, hallazgos, respaldos, revisión post-implementación y efectos colaterales.
+- ChangesLogs.txt: detalle objetivo de los cambios y respaldos.
+- Tareas.txt: cierre de esta subtarea y pendientes de validación.
+- checkpoint.md: checkpoint inicial y final de la subtarea.
+- ui.js y main.js no se modificaron.
+
+RESPALDOS Y ARCHIVOS FINALES
+- index.html original: 3571826a122bd80e07e41fe497d0ebca598b9f83
+- index.html final: e478dfd54a1fb0efb05bacf7abdbbaa1c81f7f8b
+- style.css original: 8c3d17041cc8e9505c0e7d6ccf5ebb94b11300c4
+- style.css final: f418138019c1edb8608d816a057e7ee10604c619
+- ui.js sin cambios: 8500f354704f685b7ef8b051469769f01cd99d52
+- main.js sin cambios: e03a2293738abf78a1deb6c293ea96c6a8e0479a
+
+VERIFICACIONES
+- Textos exactos comprobados; denominaciones anteriores ausentes.
+- Una sola instancia de cada ID de consola y cinco paneles únicos.
+- Consola estructuralmente fuera de los paneles individuales y visible al cambiar de pestaña.
+- Salida, copia, terminal y progreso permanecen juntos; los consumidores JavaScript mantienen sus IDs.
+- No hay IDs duplicados en index.html.
+- Estructura del modal balanceada: 38 div, cinco section y un nav con aperturas/cierres coincidentes.
+- CSS con llaves balanceadas y reglas responsive presentes.
+- La reconstrucción determinista del HTML desde el respaldo reproduce exactamente el archivo final; style.css conserva el contenido original como prefijo y solo añade el bloque acotado de estilos.
+- No se ejecutó navegador real ni se publicaron cambios frontend/Apps Script.
+
+SEGURIDAD Y PENDIENTES
+- No se alteraron autenticación, autorización, endpoints, payloads, comandos, listeners, servicios Apps Script ni datos reales.
+- Se conserva window.adminListenersAttached y el listener único del botón de cierre.
+- Se conserva el comportamiento existente de limpiar la consola al abrir el modal.
+- La consola global ocupa espacio vertical adicional; verificar visualmente scroll y distribución en escritorio, móvil y PWA.
+- Continúan pendientes los demás subalcances: diagnóstico ampliado de servicios, campo único de respaldos/restauración, limpieza unificada, acciones de firmas VIN, reordenamiento de imágenes de modelo y auditoría de generación de IDs.
+- No iniciar la matriz funcional consolidada hasta terminar todas las implementaciones y realizar el despliegue conjunto acordado.
+
+COMMIT
+Este checkpoint es el último paso documental de la subtarea antes del único commit. El commit se creará con parent_sha igual a ef993ce361dd96151a4b89a9d4125568c18672cc, mediante un único árbol Git Database API y actualización condicionada exclusiva de GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD inicial. La referencia de commit que incorpora este checkpoint quedará identificada en el historial Git. La rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

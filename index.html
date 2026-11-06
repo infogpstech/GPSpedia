@@ -213,7 +213,7 @@
 <div id="dev-tools-modal" class="info-modal">
     <div class="info-modal-content dev-tools-modal-content">
         <span class="info-close-btn">&times;</span>
-        <h2 class="dev-tools-title"><i class="fa-solid fa-screwdriver-wrench"></i> Panel Administrativo y Diagnóstico</h2>
+        <h2 class="dev-tools-title"><i class="fa-solid fa-screwdriver-wrench"></i> Opciones de desarrollador</h2>
 
         <div class="dev-tools-tabs">
             <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-diagnostics" checked>
@@ -246,26 +246,7 @@
                     <section class="dev-tab-panel dev-panel-diagnostics" role="tabpanel" aria-labelledby="dev-tab-diagnostics">
                         <div class="dev-panel-heading">
                             <h3><i class="fa-solid fa-stethoscope"></i> Diagnóstico</h3>
-                            <p>Consola, terminal y estado de los servicios conectados.</p>
-                        </div>
-
-                        <div class="dev-card dev-tools-card">
-                            <div class="dev-card-heading">
-                                <h4><i class="fa-solid fa-terminal"></i> Consola de diagnóstico en tiempo real</h4>
-                                <button id="btn-copy-console-log" class="btn btn-secondary"><i class="fa-solid fa-copy"></i> Copiar registro</button>
-                            </div>
-                            <div id="dev-console-log" class="dev-console-output">
-                                [SISTEMA] Consola inicializada. Escribe comandos (dir, cd, mkdir, tree) o haz clic en los elementos.
-                            </div>
-                            <div class="dev-terminal-row">
-                                <span class="dev-terminal-prompt">&gt;</span>
-                                <input type="text" id="dev-terminal-input" placeholder="Comando (ej: dir, cd Subcarpeta, cd .., mkdir Pruebas, tree)..." class="dev-input">
-                                <button id="btn-terminal-send" class="btn btn-primary"><i class="fa-solid fa-terminal"></i> Ejecutar</button>
-                            </div>
-                            <div id="dev-progress-container" class="dev-progress-container">
-                                <div id="dev-progress-bar" class="dev-progress-bar"></div>
-                                <span id="dev-progress-text" class="dev-progress-text">0%</span>
-                            </div>
+                            <p>Estado y diagnóstico de los servicios conectados.</p>
                         </div>
 
                         <div class="dev-card dev-tools-card">
@@ -405,6 +386,25 @@
                             <button id="btn-admin-clear-client-cache" class="btn btn-danger dev-action-full"><i class="fa-solid fa-database"></i> Vaciar Caché Local de Cliente (IndexedDB/Storage) y Recargar</button>
                         </div>
                     </section>
+                </div>
+            </div>
+
+            <div class="dev-card dev-tools-card dev-console-shared" aria-label="Consola global del panel de desarrollador">
+                <div class="dev-card-heading">
+                    <h4><i class="fa-solid fa-terminal"></i> &gt;_Consola</h4>
+                    <button id="btn-copy-console-log" class="btn btn-secondary"><i class="fa-solid fa-copy"></i> Copiar registro</button>
+                </div>
+                <div id="dev-console-log" class="dev-console-output" role="log" aria-live="polite" aria-relevant="additions text">
+                    [SISTEMA] Consola inicializada. Escribe comandos (dir, cd, mkdir, tree) o haz clic en los elementos.
+                </div>
+                <div class="dev-terminal-row">
+                    <span class="dev-terminal-prompt">&gt;</span>
+                    <input type="text" id="dev-terminal-input" placeholder="Comando (ej: dir, cd Subcarpeta, cd .., mkdir Pruebas, tree)..." class="dev-input" aria-label="Comando de terminal">
+                    <button id="btn-terminal-send" class="btn btn-primary"><i class="fa-solid fa-terminal"></i> Ejecutar</button>
+                </div>
+                <div id="dev-progress-container" class="dev-progress-container">
+                    <div id="dev-progress-bar" class="dev-progress-bar"></div>
+                    <span id="dev-progress-text" class="dev-progress-text">0%</span>
                 </div>
             </div>
         </div>
