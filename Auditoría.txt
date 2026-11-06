@@ -3765,3 +3765,44 @@ Blob candidato: 18ab493f5528df20d3e1f901468c5777429d3e07
 4. RESULTADO
 CAMBIO ESTÁTICO PREPARADO. La validación funcional del deployment ADMIN permanece pendiente. No se declara resuelto el tiempo de espera hasta completar una ejecución real y revisar sus resultados.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DOCUMENTAL — NUEVA ESPECIFICACIÓN DEL INVENTARIO Y ADMINISTRACIÓN DE IMÁGENES SIN USO
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD documental de referencia: 346b471beb7f40dad538a65c45213d9dc8633be7
+Tipo: auditoría de alcance y documentación. No se auditó código funcional ni se ejecutaron operaciones de Drive/Sheets.
+
+1. CONTEXTO DOCUMENTAL
+- Tareas.txt ya contiene la Revisión III - Fase 3 sobre imágenes reemplazadas, una tarea pendiente para resolver AUD-IMG-01 a AUD-IMG-07 y una tarea pendiente para diagnosticar el acceso a la interfaz del historial.
+- También contiene la tarea de optimización estática del tiempo de espera de la auditoría del inventario.
+- Se conserva íntegramente el contenido anterior. La nueva especificación se agrega como una tarea complementaria independiente, vinculada a esos antecedentes.
+
+2. REPORTE DEL USUARIO
+- El usuario informa que, tras actualizar el servicio ADMIN, la herramienta continúa examinando los mismos 14 archivos.
+- Se requiere que el sistema detecte todas las imágenes de la carpeta raíz Cortes y sus subcarpetas, no solo ese conjunto.
+- La cifra 14 es un síntoma reportado por el usuario; esta revisión documental no determina si se debe a un límite, cursor, iterador, filtro, caché, estado persistido o versión desplegada.
+
+3. REQUISITOS INCORPORADOS
+- Descubrimiento recursivo completo y paginado de imágenes en Cortes.
+- Estados visibles En uso, Sin uso, Histórica/reemplazada y No verificable.
+- Vistas configurables de cuadrícula con miniaturas y lista compacta de nombres.
+- Persistencia de resultados y estado al cerrar el modal o la aplicación.
+- Registro idempotente de imágenes sin uso en Imagenes_Reemplazadas, con URL público y distinción frente a reemplazos reales.
+- Reutilización de la transformación de URL existente para mostrar imágenes de Google en tarjetas GPSpedia.
+- Organización de imágenes sin uso en una subcarpeta dedicada dentro de Cortes.
+- Lightbox con ampliación y zoom; acciones de descarga, borrado, movimiento y restauración condicionada a una relación real de reemplazo.
+- Controles de seguridad, trazabilidad, pruebas y criterios de aceptación.
+
+4. LÍMITES Y PRECAUCIONES DOCUMENTADAS
+- No se examinó el esquema real de Imagenes_Reemplazadas ni sus consumidores en esta tarea documental.
+- No se localizó ni verificó aquí la función de transformación de URL; su localización y reutilización quedan como requisito de la futura auditoría técnica.
+- No se verificó la cantidad real de imágenes en Drive ni se reprodujo la cifra de 14.
+- No se modificó código, endpoints, despliegues, permisos, datos de Sheets ni archivos de Drive.
+- No se autorizó hacer públicos archivos, moverlos, borrarlos o restaurarlos durante esta tarea.
+
+5. RESULTADO
+La nueva especificación queda registrada en Tareas.txt como pendiente de auditoría e implementación. No se declara implementada ni validada ninguna de las funciones descritas.
+================================================================================

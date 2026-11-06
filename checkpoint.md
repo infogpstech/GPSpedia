@@ -1490,3 +1490,93 @@ Publicar manualmente Services/admin.js en el deployment ADMIN correspondiente a 
 ## 7. PUBLICACIÓN
 Todos los archivos de esta tarea se agruparán en exactamente un commit en GPSpedia2.2.5_work mediante el procedimiento Git Database API autorizado. El commit tendrá como único padre el HEAD previo confirmado. El SHA final se identificará en el historial después de la publicación. La rama protegida deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+
+================================================================================
+# CHECKPOINT INICIAL — ESPECIFICACIÓN FUNCIONAL COMPLETA DEL ADMINISTRADOR DE IMÁGENES SIN USO
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD inicial confirmado:** 346b471beb7f40dad538a65c45213d9dc8633be7
+**Árbol del HEAD inicial:** 74f1b7e44dbaef4e3fd4f01146989e693b74dda8
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## 1. TAREA Y ALCANCE
+Añadir a Tareas.txt una especificación detallada y pendiente para completar el sistema de auditoría y administración de imágenes de Google Drive. El alcance solicitado comprende descubrimiento integral de imágenes dentro de Cortes, presentación en cuadrícula/lista, clasificación visible, persistencia, registro de URLs de imágenes sin uso en Imagenes_Reemplazadas, organización en carpetas, compatibilidad con URLs públicas y el mecanismo de transformación de imágenes de Google usado por las tarjetas, lightbox con zoom y acciones de gestión/restauración.
+
+## 2. ESTADO REAL AL INICIO
+- El usuario informó que, después de actualizar el servicio ADMIN, la auditoría únicamente examina los mismos 14 archivos.
+- El inventario debe detectar todas las imágenes correspondientes dentro de la carpeta raíz Cortes y no limitarse a esos 14 resultados.
+- En Tareas.txt ya existen requisitos anteriores sobre imágenes reemplazadas, historial, papelera y auditoría de Drive, además de tareas pendientes para corregir hallazgos y diagnosticar la interfaz. Se conservarán íntegramente; la nueva especificación se añadirá como tarea diferenciada y relacionada.
+- La rama de trabajo apunta a 346b471beb7f40dad538a65c45213d9dc8633be7, cuyo único padre es 7a4539f1151100d314c07f7a2960e68f56780d9b. La rama protegida apunta a d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- No se ha auditado ni modificado código funcional en esta tarea. No se han ejecutado operaciones en Drive o Sheets.
+
+## 3. ARCHIVOS PREVISTOS
+- Tareas.txt: añadir la nueva especificación funcional detallada.
+- Auditoría.txt: registrar el alcance documental, las dependencias y la limitación reportada de 14 archivos, sin atribuir causa no comprobada.
+- ChangesLogs.txt: registrar objetivamente la adición documental.
+- checkpoint.md: registrar inicio y cierre de la tarea.
+- No modificar código, endpoints, despliegues, carpetas, imágenes ni datos de hojas.
+
+## 4. RESTRICCIONES
+- Conservar todos los registros existentes de Tareas.txt y demás documentación.
+- No convertir los requisitos en implementación ni marcar la tarea como completada.
+- No asumir por qué el recorrido devuelve 14 archivos; queda como requisito de diagnóstico y validación para la futura implementación.
+- No definir un esquema de columnas nuevo para Imagenes_Reemplazadas sin auditar primero el esquema real y sus consumidores.
+- La futura migración de archivos deberá impedir mover imágenes activas o históricas que deban conservarse; cualquier operación destructiva deberá tener validaciones y trazabilidad.
+- No desplegar Apps Script, no modificar datos reales de Drive/Sheets y no alterar la rama protegida.
+
+## 5. FASE
+Checkpoint inicial creado como blob documental, sin commit ni movimiento de rama. La auditoría documental de Tareas.txt y los registros relacionados continúa antes de preparar los cambios finales.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — ESPECIFICACIÓN DEL INVENTARIO Y GESTIÓN INTEGRAL DE IMÁGENES SIN USO
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD previo a la tarea:** 346b471beb7f40dad538a65c45213d9dc8633be7
+**Árbol previo:** 74f1b7e44dbaef4e3fd4f01146989e693b74dda8
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## 1. ESTADO FINAL
+TAREA DOCUMENTAL COMPLETADA. La especificación funcional fue añadida a Tareas.txt como tarea pendiente. No se implementó código ni se ejecutaron operaciones de Drive/Sheets.
+
+## 2. ARCHIVOS INCLUIDOS
+- Tareas.txt: nueva tarea integral de inventario y administración de imágenes sin uso.
+- Auditoría.txt: auditoría documental de alcance, antecedentes, reporte de los 14 archivos y límites de verificación.
+- ChangesLogs.txt: registro objetivo de las modificaciones documentales.
+- checkpoint.md: checkpoint inicial y cierre de la tarea.
+- No se modificaron archivos funcionales ni endpoints.
+
+## 3. CONTENIDO REGISTRADO
+- Descubrimiento completo de imágenes en raíz Cortes y subcarpetas, sin limitar el total a 14 archivos.
+- Clasificación visible En uso, Sin uso, Histórica/reemplazada y No verificable.
+- Vistas configurables de cuadrícula con miniaturas y lista compacta con nombres/estado.
+- Persistencia de resultados y selección de vista al cerrar modal o aplicación.
+- Registro idempotente de imágenes sin uso en Imagenes_Reemplazadas, sin confundirlas con reemplazos reales.
+- URL público y reutilización del mecanismo de transformación de imágenes de Google usado por las tarjetas GPSpedia.
+- Traslado a una subcarpeta dedicada dentro de Cortes.
+- Lightbox, zoom in/zoom out y acciones de descargar, borrar, mover y restaurar cuando exista una relación válida de reemplazo.
+- Seguridad, trazabilidad, pruebas funcionales, criterios de aceptación y dependencias con AUD-IMG-01 a AUD-IMG-07.
+
+## 4. PRESERVACIÓN Y VALIDACIÓN
+- Se leyeron los documentos obligatorios del procedimiento y se revisaron las secciones relacionadas de Tareas.txt.
+- Se conservaron los registros previos; la nueva especificación se agregó al final.
+- La cifra de 14 se documentó únicamente como reporte del usuario, sin afirmar una causa técnica.
+- No se inspeccionó el esquema real de Imagenes_Reemplazadas ni la función de transformación de URL; ambos quedan como puntos obligatorios de la futura auditoría técnica.
+- No se modificó código, endpoints, despliegues, permisos, hojas, imágenes o carpetas.
+- La rama protegida no se modificará.
+
+## 5. SIGUIENTE ACCIÓN
+Iniciar una tarea de implementación independiente siguiendo el procedimiento obligatorio. Auditar el recorrido real de Drive para explicar por qué solo aparecen 14 archivos, el esquema y consumidores de Imagenes_Reemplazadas, la función existente de transformación de URLs y la persistencia de la aplicación. No mover ni hacer públicos archivos reales hasta completar esa auditoría y autorizar la ejecución correspondiente.
+
+## 6. PUBLICACIÓN
+Los cambios documentales de esta tarea se agruparán en exactamente un commit de GPSpedia2.2.5_work mediante el procedimiento Git Database API autorizado, con parent_sha igual al HEAD previo confirmado. La rama protegida deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

@@ -3529,3 +3529,217 @@ Estado: OPTIMIZACIÓN ESTÁTICA PREPARADA; VALIDACIÓN FUNCIONAL EN EL DEPLOYMEN
 - Si la primera petición vuelve a agotar el tiempo, medir y dividir en etapas la recopilación inicial de referencias por hoja/fila; no asumir que el problema quedó resuelto.
 - No se desplegó Apps Script desde esta tarea, no se realizaron escrituras en Sheets ni modificaciones en Drive y no se alteró la rama protegida.
 ================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — COMPLETAR EL INVENTARIO Y LA GESTIÓN INTEGRAL DE IMÁGENES SIN USO EN GOOGLE DRIVE
+Fecha de registro: 2026-11-05
+Rama de referencia: GPSpedia2.2.5_work
+Estado: PENDIENTE DE AUDITORÍA TÉCNICA, DISEÑO, IMPLEMENTACIÓN Y VALIDACIÓN FUNCIONAL.
+Referencia relacionada:
+- REVISIÓN III - FASE 3: Gestión de imágenes reemplazadas (Historial, Papelera y Auditoría de Google Drive).
+- TAREA PENDIENTE — CORREGIR HALLAZGOS DE AUDITORÍA DE GESTIÓN DE IMÁGENES REEMPLAZADAS.
+- TAREA PENDIENTE — INVESTIGAR POR QUÉ NO APARECE LA INTERFAZ DE GESTIÓN DEL HISTORIAL DE IMÁGENES REEMPLAZADAS.
+- TAREA — CORREGIR EL TIEMPO DE ESPERA EN LA AUDITORÍA DEL INVENTARIO DE IMÁGENES.
+
+OBJETIVO GENERAL
+Completar la herramienta de auditoría para que funcione como un inventario integral y una interfaz de administración de imágenes del árbol de Google Drive cuya raíz es «Cortes». El sistema debe descubrir todas las imágenes existentes dentro de la carpeta raíz y sus subcarpetas, determinar su estado de uso, mostrar el inventario de forma visual y permitir administrar de forma segura las imágenes clasificadas como sin uso, incluidas las que no tienen un registro de reemplazo o una fecha histórica disponible.
+
+PROBLEMA REPORTADO Y RESULTADO ESPERADO
+- Después de actualizar el servicio ADMIN, el usuario informó que la auditoría únicamente examina los mismos 14 archivos.
+- El inventario final no debe quedar limitado a esos 14 archivos ni a un número fijo de elementos. Debe recorrer la carpeta raíz Cortes y todas sus subcarpetas, hasta completar la cobertura del árbol.
+- La cifra 14 se registra como resultado observado por el usuario; todavía no se atribuye su causa a una función, filtro, límite, cursor o deployment específico. La futura auditoría deberá identificar por qué se repite ese conjunto y demostrar que el recorrido incluye el universo completo de archivos.
+- No se considerará terminada la auditoría si existen carpetas pendientes, lotes omitidos, iteradores interrumpidos o resultados parciales presentados como completos.
+
+REQUISITOS FUNCIONALES
+
+1. DESCUBRIMIENTO COMPLETO DEL ÁRBOL «CORTES»
+   1.1. Recorrer la carpeta raíz Cortes y todas sus subcarpetas de forma recursiva, incluyendo los archivos ubicados directamente en la raíz.
+   1.2. Detectar todas las imágenes admitidas por Google Drive, utilizando metadatos de archivo y tipo MIME, sin depender únicamente de los 14 resultados observados ni de una lista fija de IDs.
+   1.3. Mantener continuidad entre lotes y páginas hasta procesar todos los archivos y subcarpetas. Los límites de ejecución deberán controlar el tamaño de cada petición, no limitar el total del inventario.
+   1.4. Conservar cursores/iteradores de forma verificable. Si una continuación falla, expira o pierde su estado, informar el resultado parcial y permitir reanudar o reiniciar sin presentar los elementos pendientes como examinados.
+   1.5. Evitar duplicados cuando una auditoría se reanude, cuando se vuelva a ejecutar o cuando existan imágenes ya trasladadas a la carpeta de administración.
+   1.6. Incluir la carpeta de administración dentro del ámbito del inventario sin volver a importar o duplicar sus propios registros. La implementación deberá definir una regla explícita para reconocerla y evitar ciclos de movimiento o doble conteo.
+   1.7. Diferenciar el total descubierto, total analizado, pendientes, errores y resultados parciales. El estado «completo» solo podrá mostrarse cuando se hayan recorrido todas las carpetas y todos los iteradores hayan finalizado correctamente.
+
+2. CLASIFICACIÓN Y ETIQUETAS DE ESTADO
+   2.1. Cada imagen deberá mostrar una etiqueta visible con su estado, como mínimo:
+       - En uso.
+       - Sin uso.
+   2.2. Conservar y mostrar también los estados especiales que ya contempla la auditoría cuando corresponda:
+       - Histórica/reemplazada.
+       - No verificable.
+   2.3. «Sin uso» solo podrá asignarse cuando la comprobación de referencias haya finalizado correctamente y no existan referencias activas identificadas. Un error de lectura, URL no interpretable, hoja inaccesible o resultado incompleto no equivale a ausencia de uso.
+   2.4. La interfaz deberá permitir distinguir visualmente cada estado sin depender únicamente del nombre del archivo.
+   2.5. Las operaciones de mover o borrar deberán estar disponibles únicamente cuando la clasificación y las validaciones de seguridad permitan ejecutarlas. Las imágenes En uso o No verificables no podrán tratarse automáticamente como imágenes sin uso.
+
+3. VISTAS CONFIGURABLES DEL INVENTARIO
+   3.1. Incorporar un selector de presentación con dos modos:
+       - Imágenes en cuadrícula.
+       - Imágenes en lista.
+   3.2. Vista de cuadrícula:
+       - Mostrar miniaturas de las imágenes.
+       - Mantener una composición ordenada y adaptable al ancho disponible.
+       - Mostrar el nombre del archivo y la etiqueta de estado en la tarjeta.
+       - Mostrar las acciones disponibles en el pie de cada imagen.
+   3.3. Vista de lista:
+       - Mostrar únicamente los nombres de los archivos como contenido principal de cada fila, junto con la etiqueta de estado requerida.
+       - No mostrar miniaturas ni descripciones o metadatos adicionales que conviertan la lista en una segunda cuadrícula.
+       - Mantener accesibles las acciones de administración mediante controles asociados a cada fila, sin alterar la presentación compacta solicitada.
+   3.4. Cambiar entre cuadrícula y lista no deberá iniciar una auditoría nueva ni perder los resultados ya cargados.
+   3.5. La selección de vista deberá conservarse al cerrar y volver a abrir el modal y al reiniciar la aplicación.
+
+4. PERSISTENCIA DE LA AUDITORÍA Y DEL ESTADO DE INTERFAZ
+   4.1. El inventario podrá conservar su estado cuando el usuario cierre el modal, navegue a otra sección o cierre completamente la aplicación.
+   4.2. Al regresar, recuperar los resultados ya obtenidos y el estado de la auditoría, evitando obligar al usuario a comenzar de cero cuando exista información válida.
+   4.3. Persistir como mínimo la última auditoría, los archivos ya examinados, su clasificación, el estado de finalización/parcialidad, el modo de vista seleccionado y el contexto necesario para continuar o consultar el inventario.
+   4.4. La persistencia de interfaz no deberá depender exclusivamente de una caché temporal de Apps Script que pueda expirar. La implementación deberá auditar los mecanismos de persistencia existentes y seleccionar un almacenamiento compatible con la arquitectura de GPSpedia.
+   4.5. No almacenar credenciales, tokens de sesión ni información sensible dentro del estado persistente del inventario.
+   4.6. Antes de ejecutar una acción sobre una imagen recuperada desde un estado persistido, verificar que el archivo siga existiendo, conserve su identidad y mantenga un estado compatible con la operación.
+   4.7. Si un cursor de servidor expiró, conservar los resultados previamente obtenidos, indicar que la continuación ya no está disponible y permitir iniciar una nueva auditoría sin duplicar registros.
+
+5. REGISTRO DE IMÁGENES SIN USO EN «Imagenes_Reemplazadas»
+   5.1. Registrar las imágenes clasificadas como Sin uso en la misma hoja de Google Sheets denominada «Imagenes_Reemplazadas», que actualmente almacena el historial de imágenes reemplazadas.
+   5.2. Cada archivo sin uso deberá tener un registro identificable y vinculado de forma inequívoca al archivo de Drive. El registro deberá conservar el ID de Drive y el URL público de visualización.
+   5.3. Distinguir explícitamente los registros creados por detección de imágenes sin uso de los registros de imágenes que realmente fueron reemplazadas desde el modal de detalle. No presentar una imagen detectada como sin uso como si hubiera sido reemplazada.
+   5.4. Antes de diseñar las columnas o escribir registros, auditar la estructura real de Imagenes_Reemplazadas y todos sus consumidores. Reutilizar los campos compatibles y definir una ampliación compatible únicamente si resulta necesaria; no sobrescribir, reinterpretar ni eliminar filas históricas existentes.
+   5.5. Evitar duplicados por ID de Drive. Una nueva ejecución deberá actualizar o reconciliar el registro correspondiente de forma idempotente, sin crear una fila repetida por cada auditoría.
+   5.6. Registrar, cuando estén disponibles, nombre, ID de Drive, URL público, tipo MIME, ubicación original, fecha de creación/subida informada por Drive, fecha de detección y estado de administración. Los datos no disponibles deberán permanecer como no disponibles; no inventar fechas ni datos históricos.
+   5.7. Si una imagen no tiene registro de reemplazo ni fecha de reemplazo, deberá seguir siendo administrable. La ausencia de esos datos no podrá impedir su descarga, traslado o eliminación cuando las validaciones de seguridad lo permitan.
+   5.8. Si Drive no proporciona una fecha de creación/subida verificable, mostrar el dato como no disponible, sin impedir las acciones permitidas.
+   5.9. El registro deberá reflejar los cambios de ubicación y estado después de mover, restaurar o eliminar un archivo, conservando la trazabilidad de su ID y URL.
+
+6. URL PÚBLICO Y COMPATIBILIDAD CON LAS TARJETAS DE GPSpedia
+   6.1. Obtener y registrar el URL público de visualización de cada imagen sin uso conforme al mecanismo de acceso definido para los archivos administrados.
+   6.2. Comprobar que el enlace corresponde al archivo correcto y que la imagen puede visualizarse desde el contexto de la plataforma.
+   6.3. Reutilizar la función existente en GPSpedia que transforma/adapta los enlaces de imágenes almacenadas en Google Drive para que puedan visualizarse correctamente en las tarjetas del catálogo.
+   6.4. No crear una segunda función de transformación ni duplicar formatos de URL si ya existe un mecanismo compartido. La auditoría de implementación deberá localizar la función real y comprobar sus formatos admitidos.
+   6.5. Conservar el ID original de Drive y el URL fuente, además del URL transformado utilizado para visualización, cuando la arquitectura actual permita separar ambos valores.
+   6.6. La habilitación de visualización pública deberá limitarse a cada archivo que corresponda y respetar el modelo de permisos existente. No cambiar permisos de la carpeta raíz ni ampliar acceso a archivos En uso, No verificables u otros documentos por efecto secundario.
+   6.7. Verificar la accesibilidad del URL y el renderizado real de la imagen en las tarjetas, incluyendo enlaces inválidos, archivos eliminados, permisos insuficientes y errores de carga.
+
+7. ORGANIZACIÓN AUTOMÁTICA DE IMÁGENES SIN USO
+   7.1. Detectar las imágenes clasificadas de forma concluyente como Sin uso y trasladarlas a una subcarpeta dedicada dentro de la carpeta raíz Cortes.
+   7.2. Utilizar una única carpeta de destino administrada por la herramienta, identificándola de manera estable y reutilizándola en auditorías posteriores. Nombre funcional propuesto: «Imagenes_Sin_Uso».
+   7.3. Crear la carpeta si no existe; si ya existe, verificar que pertenece realmente al árbol Cortes y que corresponde al destino autorizado antes de mover archivos.
+   7.4. No mover imágenes En uso, Históricas que deban conservarse para restauración, ni imágenes No verificables. No mover archivos cuya identidad, pertenencia a Cortes o clasificación no pueda validarse.
+   7.5. Conservar la ubicación original en el registro antes del traslado y actualizar la ubicación actual después de confirmar que el movimiento terminó correctamente.
+   7.6. La operación deberá ser idempotente: una imagen ya ubicada en la carpeta de administración no deberá moverse repetidamente ni generar registros duplicados.
+   7.7. Si el movimiento falla, conservar el registro del error y la ubicación real; no marcar el archivo como trasladado cuando Drive no confirme la operación.
+   7.8. La carpeta de destino no deberá provocar que la siguiente auditoría vuelva a clasificar los mismos archivos como nuevos ni genere movimientos recursivos.
+
+8. VISUALIZACIÓN AMPLIADA — LIGHTBOX
+   8.1. Al hacer clic en una miniatura de la cuadrícula, abrir una visualización ampliada tipo lightbox, siguiendo el patrón visual y de interacción utilizado por los modales de detalle de corte de GPSpedia.
+   8.2. Mostrar la imagen en tamaño ampliado, centrada y conservando su relación de aspecto, sin deformación ni recorte innecesario.
+   8.3. Permitir acercar la imagen (zoom in) para inspeccionar detalles.
+   8.4. Permitir volver al tamaño ajustado automáticamente (zoom out) al volver a hacer clic sobre la imagen o al salir del estado ampliado, conforme al comportamiento de interacción definido durante la implementación.
+   8.5. Al cerrar el lightbox o hacer clic fuera de la imagen, restablecer el estado de zoom y devolver al usuario al inventario en la misma posición y vista.
+   8.6. Evitar que el lightbox abra varias instancias, que el clic sobre los controles de gestión se propague y que el cierre accidental provoque acciones sobre el archivo.
+   8.7. Mantener controles de cierre y comportamiento usable en escritorio y dispositivos móviles.
+
+9. ACCIONES DISPONIBLES EN CADA IMAGEN
+   9.1. En la vista de cuadrícula, mostrar en el pie de cada tarjeta las acciones permitidas para el archivo:
+       - Descargar.
+       - Borrar.
+       - Mover.
+       - Restaurar, únicamente cuando exista una relación válida con una imagen reemplazada desde el modal de detalle.
+   9.2. En la vista de lista, conservar esas acciones mediante controles asociados a la fila, sin añadir miniaturas ni metadatos que contradigan el modo de lista.
+   9.3. Descargar:
+       - Permitir descargar el archivo desde la interfaz con su contenido original.
+       - Conservar el nombre y extensión del archivo cuando estén disponibles.
+       - La ausencia de registro de reemplazo o de fecha de subida no deberá bloquear la descarga.
+   9.4. Borrar:
+       - Permitir borrar una imagen sin uso únicamente después de volver a verificar que no tenga referencias activas y que no sea necesaria para una restauración histórica.
+       - Solicitar confirmación antes de ejecutar la acción.
+       - Mantener coherencia entre el texto de interfaz y la operación real de Drive (papelera o eliminación definitiva), resolviendo primero el hallazgo AUD-IMG-04.
+       - Registrar el resultado y no presentar como borrado un archivo cuya operación haya fallado.
+   9.5. Mover:
+       - Permitir mover la imagen sin uso a la carpeta de administración y, cuando corresponda, a otra ubicación autorizada dentro de Cortes.
+       - Validar la carpeta de destino, la pertenencia al árbol Cortes y la identidad del archivo.
+       - Actualizar la ubicación y el registro en Imagenes_Reemplazadas solo después de confirmar el movimiento.
+   9.6. Restaurar:
+       - Mostrar esta acción únicamente para imágenes cuyo registro demuestre que fueron reemplazadas por una imagen nueva desde el modal de detalle.
+       - Reutilizar el flujo de restauración existente, validando el registro, el campo de destino, el archivo histórico y la imagen actualmente activa.
+       - Restaurar la imagen anterior al campo correspondiente y conservar la imagen que estaba activa mediante el intercambio/historial previsto por GPSpedia.
+       - No ofrecer «Restaurar» a imágenes que solo fueron detectadas como Sin uso y que nunca tuvieron una relación de reemplazo.
+   9.7. Los errores de permisos, archivo inexistente, registro inconsistente, URL inválido o cambio concurrente deberán comunicarse de forma clara y no dejar el inventario en un estado falso.
+
+10. SEGURIDAD, INTEGRIDAD Y TRAZABILIDAD
+   10.1. Todas las acciones sensibles deberán validarse en el backend con sesión y privilegio Desarrollador; ocultar controles en la interfaz no sustituye la autorización del servidor.
+   10.2. Antes de mover o borrar, volver a comprobar el estado de uso para evitar actuar sobre una imagen que haya sido referenciada después de la auditoría.
+   10.3. No borrar ni mover imágenes activas o no verificables. Ante incertidumbre, bloquear la acción y explicar el motivo.
+   10.4. No eliminar ni alterar registros históricos de reemplazos existentes. Cada nuevo registro de inventario deberá conservar su tipo y trazabilidad.
+   10.5. Evitar que fallos parciales de Drive y Sheets produzcan registros contradictorios. Definir un orden de operaciones y una estrategia de recuperación cuando una acción en Drive se complete pero falle la actualización de la hoja, o viceversa.
+   10.6. Registrar quién ejecutó la acción, cuándo, qué archivo fue afectado, su ubicación anterior y posterior y el resultado, utilizando los mecanismos de auditoría existentes.
+   10.7. No exponer tokens, credenciales ni enlaces administrativos en la interfaz o en registros de diagnóstico.
+   10.8. Mantener la restricción de alcance: la herramienta administra imágenes del árbol Cortes y no debe operar sobre archivos ajenos a esa raíz.
+
+11. PRUEBAS Y CRITERIOS DE ACEPTACIÓN
+   A. Cobertura del inventario:
+      - Archivos en la raíz Cortes.
+      - Imágenes en uno y varios niveles de subcarpetas.
+      - Más de 14 imágenes.
+      - Más de 250 archivos y varios lotes.
+      - Carpetas vacías, carpeta de administración y archivos ya trasladados.
+      - Interrupción, reanudación, expiración de cursor y nueva auditoría.
+      - Confirmar que cada imagen se contabiliza una sola vez y que el estado completo solo aparece al finalizar el árbol.
+   B. Clasificación:
+      - Imagen En uso.
+      - Imagen Sin uso.
+      - Imagen Histórica/reemplazada.
+      - Imagen No verificable.
+      - URL en formatos admitidos, URL inválido, referencia en otra hoja y error de lectura.
+      - Confirmar que los casos no verificables nunca se etiquetan como Sin uso.
+   C. Persistencia:
+      - Cerrar y volver a abrir el modal.
+      - Navegar a otra sección y regresar.
+      - Cerrar y reiniciar la aplicación.
+      - Recuperar la última auditoría y la vista seleccionada.
+      - Reanudar cuando el cursor siga vigente y conservar resultados parciales cuando haya expirado.
+   D. Presentación:
+      - Cambiar repetidamente entre cuadrícula y lista.
+      - Ver miniaturas, nombres y etiquetas.
+      - Abrir/cerrar lightbox, aplicar zoom in y zoom out.
+      - Comprobar que las acciones no abren accidentalmente el lightbox.
+      - Validar escritorio y móvil.
+   E. Registro y URL:
+      - Imagen con historial de reemplazo.
+      - Imagen sin registro de reemplazo.
+      - Imagen sin fecha de subida disponible.
+      - URL público accesible y URL no accesible.
+      - Confirmar que la transformación existente permite visualizar la imagen en una tarjeta GPSpedia.
+      - Repetir auditoría y comprobar que no se duplican filas.
+   F. Administración:
+      - Descargar imagen con y sin historial/fecha.
+      - Mover imagen a la carpeta dedicada.
+      - Borrar con confirmación y validar el estado real en Drive.
+      - Restaurar imagen previamente reemplazada desde el modal de detalle.
+      - Rechazar mover/borrar imágenes En uso o No verificables.
+      - Simular fallos de permisos, Drive, Sheets y operaciones concurrentes.
+   G. Integridad:
+      - Confirmar que no se alteran los registros históricos anteriores.
+      - Confirmar que no se modifican imágenes activas ni archivos fuera de Cortes.
+      - Confirmar consistencia entre Drive, Imagenes_Reemplazadas y el inventario persistido.
+      - Ejecutar pruebas de regresión de reemplazo, historial, recuperación y eliminación existentes.
+
+12. DEPENDENCIAS Y ORDEN DE IMPLEMENTACIÓN
+   - Resolver o integrar los hallazgos AUD-IMG-01 a AUD-IMG-07 relacionados con permisos, consistencia del historial, validación global, semántica de borrado, auditoría completa, clasificación y restauración.
+   - Auditar primero el esquema real de Imagenes_Reemplazadas y sus consumidores.
+   - Localizar y reutilizar la función real de transformación de URL de imágenes de Google ya utilizada por las tarjetas de GPSpedia.
+   - Auditar el estado actual del recorrido de Drive y explicar por qué el usuario recibe repetidamente los mismos 14 archivos antes de modificarlo.
+   - Auditar los mecanismos de persistencia existentes y seleccionar uno compatible con el ciclo de vida de la aplicación.
+   - Cualquier archivo adicional deberá justificarse por dependencias comprobadas durante la auditoría inicial.
+
+RESTRICCIONES
+- Esta entrada es una especificación pendiente; no autoriza por sí sola a modificar código, datos, hojas, imágenes, permisos ni deployments.
+- No asumir que los 14 archivos observados son el total real de imágenes.
+- No inventar fechas de reemplazo o subida ni presentar registros de imágenes sin uso como reemplazos reales.
+- No modificar ni eliminar registros históricos existentes de Imagenes_Reemplazadas.
+- No hacer públicas carpetas completas ni archivos fuera del alcance autorizado.
+- No mover, borrar o restaurar imágenes sin validar referencias, identidad, permisos y estado actual.
+- Antes de implementar, seguir íntegramente Proceso de desarollo.md: checkpoint inicial, auditoría archivo por archivo/línea por línea/función por función, respaldos exactos, revisión de efectos colaterales, pruebas, Code Review, registros y un único commit mediante el procedimiento Git Database API autorizado.
+- No desplegar servicios ni realizar operaciones productivas de Drive/Sheets sin autorización expresa.
+
+RESULTADO FINAL ESPERADO
+Una herramienta única de inventario y administración que descubre todas las imágenes del árbol Cortes, clasifica de forma confiable su estado, conserva los resultados al cerrar la aplicación, registra las imágenes sin uso en Imagenes_Reemplazadas, organiza esas imágenes en una subcarpeta dedicada, permite visualizarlas en cuadrícula o lista, abrirlas en lightbox y ejecutar las acciones Descargar, Borrar, Mover y Restaurar cuando corresponda. La herramienta no deberá limitarse a los 14 archivos observados ni confundir ausencia de datos históricos con imposibilidad de administrar una imagen.
+================================================================================

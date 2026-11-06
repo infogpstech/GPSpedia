@@ -2624,3 +2624,21 @@ ARCHIVO MODIFICADO: Services/admin.js
 - La sintaxis JavaScript pasó la comprobación estática y la reconstrucción inversa confirmó que no hay cambios ajenos al alcance.
 - La validación funcional en Apps Script y la medición del tiempo real permanecen pendientes.
 ================================================================================
+
+
+================================================================================
+DOCUMENTACIÓN — ESPECIFICACIÓN INTEGRAL DEL INVENTARIO Y GESTIÓN DE IMÁGENES SIN USO
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DOCUMENTALES MODIFICADOS
+- Tareas.txt: se añadió una nueva tarea pendiente con requisitos funcionales detallados para descubrimiento completo de imágenes en Cortes, clasificación, vistas de cuadrícula/lista, persistencia, registro en Imagenes_Reemplazadas, URLs públicos, transformación de imágenes de Google, organización en subcarpeta, lightbox, zoom y acciones de descarga/borrado/movimiento/restauración.
+- Auditoría.txt: se documentó el alcance solicitado, la existencia de tareas previas relacionadas y la limitación reportada de 14 archivos, sin atribuir una causa no verificada.
+- checkpoint.md: se registra el estado inicial y el cierre documental de esta tarea.
+
+PRESERVACIÓN Y LÍMITES
+- Se conservaron íntegramente los registros anteriores de Tareas.txt y los demás documentos.
+- No se modificó código funcional, configuración, endpoints ni servicios Apps Script.
+- No se modificaron hojas, registros, permisos, imágenes ni carpetas de Drive.
+- No se desplegó ningún servicio ni se realizó merge.
+- La nueva tarea permanece pendiente de auditoría técnica, implementación y validación funcional.
+================================================================================
