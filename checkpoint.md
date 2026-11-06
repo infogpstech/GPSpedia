@@ -3303,3 +3303,96 @@ PUBLICACIÓN
 SIGUIENTE TAREA
 Continuar con «Reorganización de imágenes de modelo en Drive» (sección 6). Respetar la prohibición expresa de modificar los flujos de guardado/renombramiento de add_corte.html y de la edición in-modal del desarrollador. No desplegar hasta completar todas las implementaciones pendientes.
 ================================================================================
+
+
+================================================================================
+# ACLARACIÓN DE ALCANCE Y AUDITORÍA INICIAL — GESTOR DE IMÁGENES SIN USO
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+Se descarta la reorganización física de imágenes de modelo. Las imágenes referenciadas en los campos de imagen de la hoja «Cortes» son protegidas. Al reemplazar una imagen desde el editor in-modal, se conserva su archivo en su ubicación de Drive y se registra la URL completa anterior en «Imagenes_Reemplazadas».
+
+El gestor debe escanear recursivamente «Cortes» y sus subcarpetas, comparar contra los campos de imagen de la hoja «Cortes» y registrar únicamente archivos de imagen sin uso confirmado, con URL completa. El escaneo no mueve ni elimina archivos. La interfaz solo presenta registros sin uso confirmado y permite acciones explícitas de descarga, movimiento y papelera con revalidación backend. Se mantiene lista/cuadrícula, miniaturas, lightbox y creación de carpetas.
+
+Se añade como requisito obligatorio un monitor de almacenamiento global de Google Drive (cuenta/usuario del servicio), no el tamaño de la carpeta «Cortes». Uso, cuota y espacio restante deben proceder de datos reales. Cuota ilimitada/no disponible y errores se muestran sin inventar cifras.
+
+AUDITORÍA INICIAL
+- Services/admin.js, ui.js, api-config.js, index.html y punto de integración protegido de add_cortes.html fueron revisados. Hallazgos detallados y respaldos constan en Auditoría.txt.
+- Se confirmó que recordReplacedImage() ya guarda la URL anterior completa y handleUploadAdminImage() no mueve el archivo antiguo.
+- Se detectó que el backend devuelve todos los registros al gestor sin excluir imágenes que vuelvan a estar en uso.
+- Se detectó que el colector de referencias actual recorre todas las hojas, no solo los campos de imagen de «Cortes».
+- El snapshot de auditoría utiliza Blob/gzip; el código asigna MIME explícito, por lo que el error histórico no se pudo reproducir estáticamente. Se planifica reemplazar este mecanismo por JSON textual en bloques de CacheService.
+- No existe monitor de almacenamiento global ni handler/API correspondiente.
+- El botón y handler de reorganización física siguen expuestos; se retirarán de la interfaz y del router.
+
+RESPALDOS DE CÓDIGO
+Services/admin.js 2dbd044f4b42a786a623d0c1599335e7d62b62ad; ui.js bf196d4197e12620a76407c27f422d76588b508c; api-config.js 1e7f237c6a5467b91dcc05a69ecf650089d83e93; index.html 1e189df627a95e44adf40e7f50749397fa051a97.
+
+No se ejecutaron operaciones sobre Drive/Spreadsheet productivos ni se desplegó Apps Script.
+================================================================================
+
+
+
+================================================================================
+# CHECKPOINT FINAL — GESTOR DE IMÁGENES SIN USO Y MONITOR GLOBAL DE DRIVE
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial de la tarea: 6fe77e232463918a113c999b89cad8ba115dc2f4
+Árbol base inicial: f201af5e932d46372a47b4295ed4d6f67716c823
+Rama base protegida: GPSpedia2.2.5
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ALCANCE CONFIRMADO
+- Las imágenes referenciadas por los campos de imagen de «Cortes» son protegidas.
+- Al reemplazar desde el editor in-modal, registrar la URL completa anterior en «Imagenes_Reemplazadas» sin mover físicamente el archivo anterior.
+- Escanear «Cortes» y todas sus subcarpetas, registrar solo imágenes sin uso con URL completa y no mostrar las imágenes activas en el gestor.
+- Mantener lista/cuadrícula, lightbox, descarga, movimiento, papelera y creación de carpetas para imágenes sin uso.
+- Añadir monitor global de almacenamiento de Google Drive, no del tamaño de la carpeta «Cortes».
+
+ARCHIVOS DE CÓDIGO MODIFICADOS
+- Services/admin.js: colector específico de referencias de Cortes; filtrado del inventario; URL completa para reemplazos; snapshot JSON textual sin Blob/gzip; revalidación para acciones de Drive; monitor global de almacenamiento; retiro del proceso de reorganización física.
+- ui.js: monitor de almacenamiento, filtrado de imágenes activas/no verificables y retiro de la acción de reorganización física.
+- api-config.js: getDriveStorage mapeado a ADMIN; reorganizeImagesInDrive retirado.
+- index.html: monitor global, eliminación del botón de reorganización y actualización del gestor.
+
+ARCHIVOS DOCUMENTALES MODIFICADOS
+- Tareas.txt: requisitos vigentes y estado de implementación estática.
+- Auditoría.txt: auditoría inicial, Code Review, Safety & Side Effects, pruebas y limitaciones.
+- ChangesLogs.txt: registro de archivos y bloques modificados.
+- checkpoint.md: aclaración, auditoría y este checkpoint final.
+
+RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/admin.js: 2dbd044f4b42a786a623d0c1599335e7d62b62ad.
+- ui.js: bf196d4197e12620a76407c27f422d76588b508c.
+- api-config.js: 1e7f237c6a5467b91dcc05a69ecf650089d83e93.
+- index.html: 1e189df627a95e44adf40e7f50749397fa051a97.
+- Tareas.txt: e19e79ef7f1f9511d9331665e2214969a62ca2c7.
+- checkpoint.md: ac07b739ac0d7de9a3fa044d2b84df30bc570c26.
+- Auditoría.txt: 32fbc8a6974e0ef3c4a49dfbb2c173d6dc08f586.
+- ChangesLogs.txt: cadf7eebd103f26b125c02f8c942b5a9df74b86d.
+
+VERIFICACIONES ESTÁTICAS Y AISLADAS
+- Parseo de Services/admin.js, ui.js y api-config.js correcto.
+- IDs de index.html únicos.
+- Colector de referencias validado con mocks sobre las ocho columnas de imagen; no confunde enlaces en otras columnas.
+- Snapshot JSON por bloques: ida/vuelta con 4,200 IDs sin pérdida.
+- Gestor simulado: excluye imágenes activas, registros cancelados y estados no confirmados; incluye imágenes sin uso.
+- Registro de reemplazo simulado: ID sin URL convertido en URL completa.
+- Monitor simulado: cuota disponible, cuota sin límite reportado y error de cuota con fallback de uso global de Drive.
+- No queda ruta, acción, botón, listener ni handler de reorganización física.
+- add_cortes.html, style.css, handleAddOrUpdateCut(), uploadImageToDrive() y getOrCreateSubFolder() permanecen sin cambios.
+
+VALIDACIONES PENDIENTES
+- Ejecutar auditoría real completa en Apps Script con timeout de cinco minutos y confirmar el recorrido de todas las subcarpetas.
+- Verificar escritura/actualización real en «Imagenes_Reemplazadas» y URLs completas en Spreadsheet.
+- Verificar en Drive que el reemplazo no mueva físicamente el archivo anterior.
+- Probar descarga, movimiento y envío a papelera con imágenes sin uso; probar bloqueo cuando vuelva a existir referencia activa.
+- Verificar el endpoint Drive API about.storageQuota, scopes efectivos y datos de cuota en la cuenta de despliegue. Si no hay cuota disponible, comprobar el fallback DriveApp y el mensaje de estado.
+- Validación visual y funcional en navegador escritorio, móvil y PWA.
+- No se ejecutó ni se desplegó Apps Script; no se alteraron archivos reales de Drive/Spreadsheet.
+
+PUBLICACIÓN
+- Crear exactamente un commit para esta tarea en GPSpedia2.2.5_work.
+- No actualizar GPSpedia2.2.5 ni realizar merge.
+- No publicar el administrador en Apps Script hasta completar las validaciones externas y recibir autorización.
+================================================================================

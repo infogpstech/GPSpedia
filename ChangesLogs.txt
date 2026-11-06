@@ -3120,3 +3120,47 @@ Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
 - Respaldos exactos de código antes de editar (blob SHA): index.html 742df240dd7014ab51b1ccab1a6b69dd39dabf09; ui.js 2d39f6828055b1f01a34dae7c6fd3f41993c9cda.
 - Blobs finales de código: index.html 1e189df627a95e44adf40e7f50749397fa051a97; ui.js bf196d4197e12620a76407c27f422d76588b508c.
 ================================================================================
+
+
+================================================================================
+2026-11-06 — AUDITORÍA INICIAL DEL GESTOR DE IMÁGENES SIN USO Y MONITOR GLOBAL DE DRIVE
+================================================================================
+- Se auditaron Services/admin.js, ui.js, api-config.js, index.html y el punto de integración protegido de add_cortes.html.
+- Se generaron respaldos exactos previos a edición: Services/admin.js 2dbd044f4b42a786a623d0c1599335e7d62b62ad; ui.js bf196d4197e12620a76407c27f422d76588b508c; api-config.js 1e7f237c6a5467b91dcc05a69ecf650089d83e93; index.html 1e189df627a95e44adf40e7f50749397fa051a97.
+- Hallazgos y restricciones detallados en Auditoría.txt.
+- No se modificó código de aplicación ni se realizaron operaciones en Drive/Spreadsheet.
+================================================================================
+
+
+
+================================================================================
+2026-11-06 — GESTOR DE IMÁGENES SIN USO Y MONITOR GLOBAL DE DRIVE
+================================================================================
+- Services/admin.js, líneas aproximadas 160–191: se añadió collectCortesImageReferences(), limitado a las ocho columnas de imagen de la hoja «Cortes», incluyendo valores, fórmulas y enlaces enriquecidos.
+- Services/admin.js, router doPost línea aproximada 502: se añadió getDriveStorage como acción ADMIN y se retiró la ruta reorganizeImagesInDrive.
+- Services/admin.js, línea aproximada 2611: recordReplacedImage() conserva el enlace completo anterior; cuando recibe solo un ID, registra file.getUrl(). No mueve físicamente el archivo reemplazado.
+- Services/admin.js, líneas aproximadas 2653–2687: se añadió handleGetDriveStorage() y se cambió handleGetReplacedImages() para devolver solo registros sin referencias activas y con estados válidos.
+- Services/admin.js, líneas aproximadas 3291–3358: el snapshot de auditoría ahora almacena JSON textual en bloques CacheService, con manifiesto y validación de longitud; se retiró Blob/gzip del snapshot para evitar el error de MIME en ese recorrido.
+- Services/admin.js, líneas aproximadas 3360–3552: el guardado de inventario y la auditoría utilizan referencias de imagen de «Cortes»; los registros cancelados/no confirmados ya no se excluyen como históricos.
+- Services/admin.js, líneas aproximadas 3553–3733: se conserva el recorrido recursivo por lotes y cursores; el handler de reorganización física fue retirado.
+- Services/admin.js, handlers de movimiento, descarga y papelera: se revalidan referencias de la hoja «Cortes» antes de operar.
+- ui.js, línea aproximada 3387: el runner por lotes ya no reconoce reorganizeImagesInDrive.
+- ui.js, líneas aproximadas 4246–4290: se añadió el monitor global con consulta inicial, refresco manual, formateo de bytes y presentación segura de valores no disponibles.
+- ui.js, líneas aproximadas 4304–4600: el gestor filtra los registros para mostrar únicamente imágenes sin uso; se conserva lista/cuadrícula, lightbox, descarga, movimiento, papelera y creación de carpetas.
+- ui.js, líneas aproximadas 4699 en adelante: la lista de auditoría no muestra imágenes en uso ni elementos no verificables; los contadores de auditoría se mantienen.
+- api-config.js, línea aproximada 32: se retiró reorganizeImagesInDrive y se añadió getDriveStorage al mapa ADMIN.
+- index.html, líneas aproximadas 396–408: se añadió el monitor global y se retiró el botón de reorganización física.
+- index.html, líneas aproximadas 476–488: se actualizó el título/descripción del gestor.
+- No se modificaron add_cortes.html, style.css ni los flujos handleAddOrUpdateCut(), uploadImageToDrive() y getOrCreateSubFolder().
+- Respaldos exactos previos a edición: Services/admin.js 2dbd044f4b42a786a623d0c1599335e7d62b62ad; ui.js bf196d4197e12620a76407c27f422d76588b508c; api-config.js 1e7f237c6a5467b91dcc05a69ecf650089d83e93; index.html 1e189df627a95e44adf40e7f50749397fa051a97; Tareas.txt e19e79ef7f1f9511d9331665e2214969a62ca2c7; checkpoint.md ac07b739ac0d7de9a3fa044d2b84df30bc570c26; Auditoría.txt 32fbc8a6974e0ef3c4a49dfbb2c173d6dc08f586; ChangesLogs.txt cadf7eebd103f26b125c02f8c942b5a9df74b86d.
+- No se desplegó Apps Script ni se modificaron archivos reales de Drive/Spreadsheet durante pruebas.
+================================================================================
+
+
+================================================================================
+ADENDA DE REVISIÓN — AJUSTES FINALES DEL MONITOR Y RETIRO DE COMENTARIO OBSOLETO
+================================================================================
+- Services/admin.js: se retiró el comentario de documentación que describía la reorganización física ya eliminada; se conservaron los contadores/helpers compartidos que siguen siendo utilizados por la creación de carpetas.
+- index.html: se aclaró que la cuota de cuenta puede compartirse con otros servicios de Google, diferenciándola del uso específico de Drive.
+- ui.js: el formateo del monitor trata null/undefined como «No disponible» y no los presenta como 0 B o 0.00%.
+================================================================================

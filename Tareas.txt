@@ -3811,26 +3811,20 @@ Ampliar el rediseño existente del modal de desarrollador con una presentación 
 5.3. No fusionar los algoritmos ni alterar la lógica del motor VinDifferentialEngine.js. Auditar primero los botones, funciones, contratos y efectos actuales de cada operación.
 5.4. Mostrar progreso, resultado y errores de cada acción. Evitar ejecuciones duplicadas o concurrentes incompatibles.
 
-6. REORGANIZACIÓN DE IMÁGENES DE MODELO EN DRIVE
-6.1. Corregir exclusivamente la lógica de reordenamiento de imágenes que actualmente puede colocar la imagen del modelo en la carpeta equivocada.
-6.2. Regla de ubicación: la imagen del modelo debe quedar en la misma carpeta donde se encuentra la imagen del corte correspondiente a ese mismo modelo.
-6.3. Excepción para imágenes compartidas: cuando varios modelos compartan legítimamente una misma imagen de modelo, el archivo debe ubicarse en la carpeta propia del modelo, respetando la jerarquía de carpetas y evitando asignarlo a una versión/rango de años que no represente a todos los modelos relacionados.
-6.4. La jerarquía de referencia del árbol Cortes es:
-Cortes/
-  Categoría (SUV, Sedan, Pickup, etc.)/
-    Marca (Audi, BMW, Toyota, etc.)/
-      Modelo (A1, X5, Hilux, etc.)/
-        Versión de equipamiento o tipo de encendido/
-          Rango de años (2020 - 2025)/
-            modelo.png
-            corte1.jpg
-            corte2.jpg
-            Alimentación.jpg
-            apertura.jpg
-6.5. Determinar mediante auditoría la relación real entre modelo, marca, versión, rango de años, imagen del modelo e imágenes de cortes. No deducir relaciones únicamente a partir de nombres de archivos o coincidencias parciales.
-6.6. Resolver los casos de imagen exclusiva, imagen compartida por varios modelos, varias versiones, varios rangos de años, duplicados, archivo ya existente en destino y movimiento parcial. Evitar duplicar, sobrescribir o perder referencias.
-6.7. RESTRICCIÓN ABSOLUTA: no modificar la lógica de guardado ni renombramiento de imágenes de add_corte.html ni la lógica de guardado/renombramiento del modo de edición in-modal del desarrollador. La corrección debe limitarse al proceso de reordenamiento de imágenes en Drive. Si se detecta que el reordenamiento depende de esos flujos, documentar la dependencia y no modificarlos dentro de esta tarea.
-6.8. Antes de mover archivos, generar una vista previa de origen/destino y validar referencias. Toda operación debe ser idempotente, trazable y recuperable ante errores.
+6. GESTOR DE IMÁGENES SIN USO Y CONTROL DE ESPACIO EN DRIVE
+Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA. Pendiente validación funcional real de Drive/Spreadsheet, navegador/PWA y monitor de cuota en el entorno Apps Script.
+6.1. Las imágenes referenciadas por las columnas de imagen de la hoja «Cortes» se consideran protegidas/en uso. El gestor de limpieza no debe mostrarlas.
+6.2. Al reemplazar una imagen desde el editor in-modal del desarrollador, registrar en «Imagenes_Reemplazadas» el enlace completo anterior (URL completa, no solo el ID). No mover, renombrar ni eliminar físicamente el archivo reemplazado. El archivo permanece en su carpeta actual hasta una acción posterior y explícita del usuario.
+6.3. Escanear recursivamente la carpeta raíz «Cortes» y todas sus subcarpetas. Comparar los IDs de archivos encontrados con las referencias vigentes de las columnas de imagen de la hoja «Cortes», no con coincidencias de nombre. Registrar en «Imagenes_Reemplazadas» únicamente las imágenes que no estén referenciadas, guardando su URL completa de Drive.
+6.4. El escaneo no mueve, renombra ni elimina archivos. Debe ser idempotente, evitar filas duplicadas y actualizar la última auditoría/estado de registros ya existentes. Si un archivo vuelve a estar referenciado en «Cortes», debe quedar protegido y desaparecer del inventario visible de imágenes sin uso.
+6.5. El gestor debe mostrar exclusivamente imágenes sin uso confirmado. Mantener vistas de lista y cuadrícula, miniaturas, lightbox y las acciones explícitas de descargar, mover a carpeta y enviar a papelera/eliminar. Antes de mover o eliminar, volver a validar en servidor que el archivo sigue sin referencias activas en «Cortes». Las acciones de Drive requieren confirmación y resultado verificable.
+6.6. Mantener creación de carpetas desde el modal del desarrollador. Limitar los destinos al árbol autorizado «Cortes». Preservar la URL completa almacenada; el ID se utiliza únicamente para operaciones internas de Drive.
+6.7. MONITOR GLOBAL DE ALMACENAMIENTO: incorporar al modal del desarrollador un monitor del espacio total de Google Drive de la cuenta/usuario que ejecuta el servicio, no del tamaño de la carpeta «Cortes». Mostrar uso global y, cuando la API lo proporcione, cuota total, espacio restante y porcentaje. Distinguir cuota ilimitada o no disponible de errores de consulta. No sumar archivos de una carpeta para simular el total ni mostrar cifras estimadas como datos reales.
+6.8. No reorganizar físicamente las imágenes de modelo por versión/rango ni alterar la ubicación de imágenes protegidas. Mantener intactos los flujos de guardado/subida/renombramiento de add_cortes.html y del editor in-modal, salvo la integración mínima necesaria para registrar la URL anterior.
+6.9. Pruebas: referencias en distintas filas/campos, imágenes compartidas, enlaces completos en formatos Drive admitidos, subcarpetas profundas, referencias no interpretables, duplicados, imagen que vuelve a estar en uso, errores parciales de auditoría, permisos, movimiento/descarga/papelera, y monitor global con cuota disponible/ilimitada/no disponible.
+
+### REQUISITO OBLIGATORIO — MONITOR GLOBAL DE ALMACENAMIENTO DE DRIVE
+El modal del desarrollador debe contabilizar el almacenamiento total de Google Drive de la cuenta/usuario del servicio. No es válido mostrar el tamaño de «Cortes» como si fuera el total del Drive. Mostrar cuota, restante y porcentaje solo cuando la fuente oficial los proporcione; manejar cuota ilimitada/no disponible y errores sin inventar valores.
 
 7. GENERACIÓN Y FORMATO DE IDENTIFICADORES DE CORTES
 7.1. Investigar el mecanismo actual: al crear una fila, el sistema copia la fórmula de la fila anterior y esa fórmula genera automáticamente el ID.

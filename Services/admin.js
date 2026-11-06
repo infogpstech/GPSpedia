@@ -157,6 +157,50 @@ function collectActiveDriveReferences(includeLocations = true) {
     return { references, unverifiableReferenceCount };
 }
 
+function collectCortesImageReferences(includeLocations = true) {
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!sheet) throw new Error("No se encontró la hoja «Cortes» para verificar las referencias de imágenes.");
+    const imageFields = ["imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3", "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"];
+    const imageColumns = imageFields.map(field => ({ field: field, column: COLS_CORTES[field] })).filter(item => Number.isInteger(item.column) && item.column > 0);
+    const references = new Map();
+    let unverifiableReferenceCount = 0;
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { references: references, unverifiableReferenceCount: 0 };
+    const range = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
+    const values = range.getDisplayValues();
+    const formulas = range.getFormulas();
+    const richTextValues = range.getRichTextValues();
+    for (let r = 0; r < values.length; r++) {
+        imageColumns.forEach(item => {
+            const c = item.column - 1;
+            const candidates = [String(values[r][c] || ""), String((formulas[r] && formulas[r][c]) || "")];
+            const richText = richTextValues[r] && richTextValues[r][c];
+            if (richText) {
+                const wholeCellLink = richText.getLinkUrl();
+                if (wholeCellLink) candidates.push(wholeCellLink);
+                const runs = richText.getRuns ? richText.getRuns() : [];
+                runs.forEach(run => { const runLink = run.getLinkUrl(); if (runLink) candidates.push(runLink); });
+            }
+            const cellIds = new Set();
+            let hasUnverifiableDriveLink = false;
+            candidates.forEach(candidate => {
+                if (!candidate) return;
+                const ids = extractDriveFileIds(candidate);
+                ids.forEach(id => cellIds.add(id));
+                if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) hasUnverifiableDriveLink = true;
+            });
+            cellIds.forEach(id => {
+                if (includeLocations) {
+                    if (!references.has(id)) references.set(id, []);
+                    references.get(id).push({ sheet: SHEET_NAMES.CORTES, row: r + 2, column: item.column, field: item.field });
+                } else references.set(id, true);
+            });
+            if (hasUnverifiableDriveLink) unverifiableReferenceCount++;
+        });
+    }
+    return { references: references, unverifiableReferenceCount: unverifiableReferenceCount };
+}
+
 function isFolderInsideCortes(folder, rootFolderId) {
     const pending = [folder];
     const visited = new Set();
@@ -421,9 +465,6 @@ function doPost(e) {
             case 'normalizeImages':
                 response = handleNormalizeImages(payload, logMessage);
                 break;
-            case 'reorganizeImagesInDrive':
-                response = handleReorganizeImagesInDrive(payload, logMessage);
-                break;
             case 'restoreAllTrashedImages':
                 validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage);
                 response = { status: 'success', message: 'Saneamiento exhaustivo de papelera completado exitosamente.' };
@@ -457,6 +498,9 @@ function doPost(e) {
                 break;
             case 'getReplacedImages':
                 response = handleGetReplacedImages(payload, logMessage);
+                break;
+            case 'getDriveStorage':
+                response = handleGetDriveStorage(payload, logMessage);
                 break;
             case 'recoverReplacedImage':
                 response = handleRecoverReplacedImage(payload, logMessage);
@@ -993,230 +1037,6 @@ function sanitizeForNomenclature(text) {
         .replace(/[^a-z0-9_.-]/g, '_') // Limpiar cualquier carácter extraño
         .replace(/__+/g, '_') // Eliminar guiones bajos múltiples
         .replace(/^_+|_+$/g, ''); // Limpiar extremos
-}
-
-/**
- * 5. Reorganización automática de imágenes en carpetas de Drive según la estructura jerárquica oficial
- */
-function handleReorganizeImagesInDrive(payload, logMessage) {
-    currentStage = "Reorganización de Imágenes en Drive";
-    const { limit = 10, reset = false } = payload || {};
-
-    // Inicializar contadores de rendimiento para este lote
-    foldersCheckedCount = 0;
-    foldersCreatedCount = 0;
-    foldersRenamedCount = 0;
-    foldersDeletedCount = 0;
-
-    let startIndex = 0;
-    let lote = 1;
-    let filaInicial = 2;
-    let processId = payload?.processId || ("P-" + Date.now());
-
-    if (reset) {
-        clearAdminState('reorganizeImagesInDrive');
-    } else {
-        const savedState = getAdminState('reorganizeImagesInDrive');
-        if (savedState) {
-            startIndex = savedState.lastIndex;
-            lote = (savedState.lote || 0) + 1;
-            filaInicial = savedState.ultimaFilaProcesada + 1;
-        }
-    }
-
-    currentLote = lote;
-
-    // --- OPTIMIZACIÓN DE RENDIMIENTO: VALIDACIÓN DE PAPELERA DESACOPLADA ---
-    // Se ha eliminado el escaneo exhaustivo inicial para evitar el timeout de 6 minutos de Google Apps Script.
-    // La recuperación de archivos en la papelera de Drive se realiza de manera segura "al vuelo"
-    // dentro del bucle de procesamiento principal para los archivos correspondientes a este lote.
-
-    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-    const data = sheet.getDataRange().getValues();
-    data.shift(); // Quitar cabecera
-
-    const totalVehicles = data.length;
-
-    // Comprobar si realmente existen registros pendientes
-    if (startIndex >= totalVehicles) {
-        logMessage("Reorganización Drive", `No hay registros pendientes para procesar. Reorganización finalizada.`);
-        clearAdminState('reorganizeImagesInDrive');
-        return {
-            status: 'success',
-            processedCount: 0,
-            totalVehicles: totalVehicles,
-            movedFiles: 0,
-            foldersChecked: 0,
-            foldersCreated: 0,
-            foldersRenamed: 0,
-            foldersDeleted: 0,
-            nextIndex: startIndex,
-            lote: lote,
-            filaInicial: filaInicial,
-            ultimaFilaProcesada: filaInicial - 1,
-            estado: "completado"
-        };
-    }
-
-    logMessage("Reorganización Drive", `Iniciando reorganización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
-    let movedFiles = 0;
-
-    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
-    const imgFields = ['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen', 'imgCableAlimen2', 'imgCableAlimen3'];
-
-    const batchData = data.slice(startIndex, startIndex + limit);
-
-    batchData.forEach((row, index) => {
-        const rowNum = startIndex + index + 2;
-
-        // --- HIGIENE CRÍTICA: EVITAR POPULAR CARPETAS VACÍAS EN DRIVE ---
-        // Verificar si la fila realmente tiene al menos una imagen antes de crear cualquier estructura de carpetas
-        let hasValidImages = false;
-        imgFields.forEach(field => {
-            const colIndex = COLS_CORTES[field] - 1;
-            const imgUrl = row[colIndex];
-            if (imgUrl && typeof imgUrl === 'string' && imgUrl.startsWith('http')) {
-                const idMatch = imgUrl.match(/id=([a-zA-Z0-9_-]+)/) || imgUrl.match(/file\/d\/([a-zA-Z0-9_-]+)/);
-                if (idMatch) {
-                    hasValidImages = true;
-                }
-            }
-        });
-
-        if (!hasValidImages) {
-            logMessage("Reorganización Drive", `Fila ${rowNum}: No tiene imágenes asociadas. Omitiendo creación de carpetas.`);
-            return;
-        }
-
-        // Datos reales para las carpetas
-        const categoria = sanitizeForFolderDisplay(row[COLS_CORTES.categoria - 1] || 'Sin_Categoria');
-        const marca = sanitizeForFolderDisplay(row[COLS_CORTES.marca - 1] || 'Sin_Marca');
-        const modelo = sanitizeForFolderDisplay(row[COLS_CORTES.modelo - 1] || 'Sin_Modelo');
-
-        // Versión de equipamiento / Tipo de encendido unificado
-        const rawVersion = (row[COLS_CORTES.versionesAplicables - 1] || "").toString().trim();
-        const rawEncendido = (row[COLS_CORTES.tipoEncendido - 1] || "").toString().trim();
-        const folderVersionName = rawVersion ? `${rawVersion} / ${rawEncendido}` : rawEncendido;
-        const versionEncendido = sanitizeForFolderDisplay(folderVersionName);
-
-        const rawDesde = (row[COLS_CORTES.anoDesde - 1] || "").toString().trim();
-        const rawHasta = (row[COLS_CORTES.anoHasta - 1] || "").toString().trim();
-        const folderGeneracion = (rawDesde && rawHasta && rawDesde !== rawHasta) ? `${rawDesde}_${rawHasta}` : (rawDesde || 'Sin_Ano');
-        const generacion = sanitizeForFolderDisplay(folderGeneracion);
-
-        // Construir jerarquía de carpetas real
-        const catFolder = getOrCreateSubFolder(rootFolder, categoria);
-        const marFolder = getOrCreateSubFolder(catFolder, marca);
-        const modFolder = getOrCreateSubFolder(marFolder, modelo);
-        const verFolder = getOrCreateSubFolder(modFolder, versionEncendido);
-        const genFolder = getOrCreateSubFolder(verFolder, generacion);
-
-        const nameModelo = sanitizeForNomenclature(modelo);
-        const nameVersion = sanitizeForNomenclature(rawVersion ? rawVersion : rawEncendido);
-        const nameAnio = sanitizeForNomenclature(rawDesde || "XXXX");
-
-        const baseName = `${nameModelo}_${nameVersion}_${nameAnio}`.toLowerCase();
-
-        imgFields.forEach(field => {
-            const colIndex = COLS_CORTES[field] - 1;
-            const imgUrl = row[colIndex];
-            if (imgUrl && typeof imgUrl === 'string' && imgUrl.startsWith('http')) {
-                const idMatch = imgUrl.match(/id=([a-zA-Z0-9_-]+)/) || imgUrl.match(/file\/d\/([a-zA-Z0-9_-]+)/);
-                if (idMatch) {
-                    const id = idMatch[1];
-
-                    // Actualizar variables de diagnóstico para el seguimiento en caliente de errores
-                    currentFila = rowNum;
-                    currentRecurso = `Imagen ID: ${id} (${field})`;
-
-                    try {
-                        let typeFuncion = "";
-                        if (field === "imagenVehiculo") typeFuncion = "";
-                        else if (field === "imgCorte1") typeFuncion = "_corte1";
-                        else if (field === "imgCorte2") typeFuncion = "_corte2";
-                        else if (field === "imgCorte3") typeFuncion = "_corte3";
-                        else if (field === "imgApertura") typeFuncion = "_apert";
-                        else if (field === "imgCableAlimen") typeFuncion = "_alimen";
-                        else if (field === "imgCableAlimen2") typeFuncion = "_alimen2";
-                        else if (field === "imgCableAlimen3") typeFuncion = "_alimen3";
-
-                        const expectedBaseName = `${baseName}${typeFuncion}`;
-
-                        // Intentar obtener y restaurar/recuperar la imagen
-                        const file = attemptRestoreImage(id, expectedBaseName, marFolder, logMessage);
-                        if (!file) {
-                            throw new Error(`Archivo no existe físicamente en Drive ni se pudo recuperar.`);
-                        }
-
-                        // Si el archivo recuperado es diferente (ej. un duplicado o respaldo de otra ubicación),
-                        // actualizar la URL en la hoja de cálculo
-                        const newUrl = `https://drive.google.com/uc?export=view&id=${file.getId()}`;
-                        if (id !== file.getId()) {
-                            sheet.getRange(rowNum, colIndex + 1).setValue(newUrl);
-                            logMessage("Reorganización Drive", `Fila ${rowNum}: Imagen restaurada con equivalente ID '${file.getId()}'. URL actualizada en Spreadsheet.`);
-                        }
-
-                        const currentParents = file.getParents();
-                        let alreadyInPlace = false;
-
-                        while (currentParents.hasNext()) {
-                            const parent = currentParents.next();
-                            if (parent.getId() === genFolder.getId() && parent.getName() === generacion) {
-                                alreadyInPlace = true;
-                                break;
-                            }
-                        }
-
-                        // --- OPTIMIZACIÓN: EVITAR MOVER IMÁGENES QUE YA ESTÁN CORRECTAMENTE UBICADAS ---
-                        if (alreadyInPlace) {
-                            logMessage("Reorganización Drive", `Fila ${rowNum}: Imagen '${file.getName()}' ya está en su ubicación jerárquica correcta.`);
-                        } else {
-                            logMessage("Reorganización Drive", `Fila ${rowNum}: Moviendo '${file.getName()}' a carpeta jerárquica...`);
-
-                            // --- RESOLUCIÓN DE COPIAS BUGGY: USAR MOVETO EN LUGAR DE ADDFILE/REMOVEFILE ---
-                            // moveTo() es el estándar oficial de Google que previene la duplicación de padres
-                            file.moveTo(genFolder);
-                            movedFiles++;
-                        }
-                    } catch (e) {
-                        logMessage("Reorganización Drive", `Advertencia: Falla con archivo ID '${id}' (Fila ${rowNum}, Campo ${field}). Causa: ${e.message}`, 0, 0, true);
-                    }
-                }
-            }
-        });
-    });
-
-    const nextIndex = startIndex + batchData.length;
-    const ultimaFilaProcesada = startIndex + batchData.length + 1;
-    const percentage = totalVehicles > 0 ? Math.round((nextIndex / totalVehicles) * 100) : 100;
-    const estado = nextIndex >= totalVehicles ? "completado" : "pendiente";
-
-    // Limpieza recursiva de carpetas vacías y eliminación inteligente de duplicados.
-    // OPTIMIZACIÓN CRÍTICA: Se omite de forma sincrónica durante el flujo normal por lotes para evitar timeouts del Apps Script.
-    // En su lugar, finaliza limpiamente, guarda el estado completado y responde de inmediato para evitar bloqueos.
-    if (nextIndex >= totalVehicles) {
-        logMessage("Reorganización Drive", "Lote final alcanzado con éxito. Procesamiento de organización completado.");
-        clearAdminState('reorganizeImagesInDrive');
-    } else {
-        saveAdminState('reorganizeImagesInDrive', nextIndex, totalVehicles, percentage, processId, lote, filaInicial, ultimaFilaProcesada, estado);
-    }
-
-    logMessage("Reorganización Drive", `Lote ${lote} finalizado. Filas del ${filaInicial} al ${ultimaFilaProcesada} procesadas. Archivos movidos: ${movedFiles}. Carpetas creadas: ${foldersCreatedCount}, renombradas: ${foldersRenamedCount}, eliminadas: ${foldersDeletedCount}`);
-    return {
-        status: 'success',
-        processedCount: batchData.length,
-        totalVehicles: totalVehicles,
-        movedFiles: movedFiles,
-        foldersChecked: foldersCheckedCount,
-        foldersCreated: foldersCreatedCount,
-        foldersRenamed: foldersRenamedCount,
-        foldersDeleted: foldersDeletedCount,
-        nextIndex: nextIndex,
-        lote: lote,
-        filaInicial: filaInicial,
-        ultimaFilaProcesada: ultimaFilaProcesada,
-        estado: estado
-    };
 }
 
 // Contadores de rendimiento para el lote actual
@@ -2794,6 +2614,8 @@ function recordReplacedImage(data) {
         throw new Error("El archivo anterior no es una imagen válida para el historial.");
     }
     const fileName = file.getName();
+    const originalUrl = String(data.imagenAnteriorUrl || "").trim();
+    const completeOriginalUrl = /^https?:\/\//i.test(originalUrl) ? originalUrl : file.getUrl();
     const sheet = getOrCreateReplacedImagesSheet();
     const inventoryHeaders = ensureReplacedImagesInventoryColumns(sheet);
     const newId = "REP-" + Utilities.getUuid();
@@ -2803,7 +2625,7 @@ function recordReplacedImage(data) {
     try {
         sheet.getRange(rowIndex, 1, 1, 11).setValues([[
             newId, formattedDate, data.tipoContenido || "vehiculo", data.registroId || "",
-            data.campo || "", driveId, fileName, data.imagenAnteriorUrl || "",
+            data.campo || "", driveId, fileName, completeOriginalUrl,
             data.sustituidaPorUrl || "", data.nombreVehiculo || "", "historica"
         ]]);
         sheet.getRange(rowIndex, inventoryHeaders.indexOf("origen_registro") + 1).setValue("reemplazo");
@@ -2824,51 +2646,78 @@ function recordReplacedImage(data) {
 /**
  * Handler: Consultar imágenes reemplazadas
  */
+
+function handleGetDriveStorage(payload, logMessage) {
+    let quota = null, quotaWarning = "", driveUsedBytes = null, accountUsedBytes = null, limitBytes = null;
+    let driveUsageSource = "", quotaSource = "";
+    try {
+        if (typeof DriveApp.getStorageUsed === "function") {
+            const used = Number(DriveApp.getStorageUsed());
+            if (Number.isFinite(used) && used >= 0) { driveUsedBytes = used; driveUsageSource = "DriveApp.getStorageUsed"; }
+        }
+    } catch (error) { quotaWarning = "DriveApp no pudo consultar el uso global: " + error.message; }
+    try {
+        const response = UrlFetchApp.fetch("https://www.googleapis.com/drive/v3/about?fields=storageQuota", {
+            method: "get", headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() }, muteHttpExceptions: true
+        });
+        const code = response.getResponseCode();
+        if (code < 200 || code >= 300) throw new Error("Drive API respondió HTTP " + code + ".");
+        const body = JSON.parse(response.getContentText() || "{}");
+        quota = body && body.storageQuota ? body.storageQuota : null;
+        if (!quota) throw new Error("Drive API no devolvió storageQuota.");
+        const driveUsage = Number(quota.usageInDrive), accountUsage = Number(quota.usage), limit = Number(quota.limit);
+        if (Number.isFinite(driveUsage) && driveUsage >= 0) { driveUsedBytes = driveUsage; driveUsageSource = "Google Drive API usageInDrive"; }
+        if (Number.isFinite(accountUsage) && accountUsage >= 0) accountUsedBytes = accountUsage;
+        if (Number.isFinite(limit) && limit > 0) limitBytes = limit;
+        quotaSource = "Google Drive API storageQuota";
+    } catch (error) { quotaWarning = [quotaWarning, "No se pudo consultar la cuota de Drive: " + error.message].filter(Boolean).join(" "); }
+    if (driveUsedBytes === null) throw new Error("No se pudo obtener el uso global de Google Drive. " + quotaWarning);
+    const remainingBytes = limitBytes !== null && accountUsedBytes !== null ? Math.max(0, limitBytes - accountUsedBytes) : null;
+    const usagePercent = limitBytes !== null && accountUsedBytes !== null ? Math.min(100, Math.max(0, accountUsedBytes / limitBytes * 100)) : null;
+    const quotaStatus = limitBytes !== null ? "available" : (quota ? "unlimited_or_not_reported" : "unavailable");
+    logMessage && logMessage("Almacenamiento global de Drive", "Uso de Drive consultado: " + driveUsedBytes + " bytes; cuota: " +
+        (limitBytes === null ? "sin límite reportado/no disponible" : limitBytes + " bytes") + ".");
+    const source = [driveUsageSource, quotaSource].filter(Boolean).join(" + ");
+    return { status: "success", driveUsedBytes, accountUsedBytes, limitBytes, remainingBytes, usagePercent,
+        quotaStatus, source, warning: quotaWarning, capturedAt: new Date().toISOString() };
+}
+
 function handleGetReplacedImages(payload, logMessage) {
+    const references = collectCortesImageReferences(false);
+    if (references.unverifiableReferenceCount > 0) {
+        throw new Error("No se puede confirmar qué imágenes están sin uso porque hay " + references.unverifiableReferenceCount +
+            " referencias de Drive no interpretables en los campos de imagen de «Cortes». Corrige esas referencias y vuelve a consultar.");
+    }
     const sheet = getOrCreateReplacedImagesSheet();
     const headers = ensureReplacedImagesInventoryColumns(sheet);
     const rows = sheet.getDataRange().getValues();
-    if (rows.length <= 1) {
-        return { status: 'success', data: [] };
-    }
-
+    if (rows.length <= 1) return { status: "success", data: [] };
     const columnIndex = name => headers.indexOf(name);
-    const valueAt = (row, name) => {
-        const index = columnIndex(name);
-        return index >= 0 ? row[index] : "";
-    };
+    const valueAt = (row, name) => { const index = columnIndex(name); return index >= 0 ? row[index] : ""; };
     const result = [];
     for (let r = 1; r < rows.length; r++) {
         const row = rows[r];
         if (!row[0]) continue;
+        let type;
+        try { type = getReplacedImageRecordType(row, headers); } catch (classificationError) { continue; }
+        const status = String(row[10] || (type === "sin_uso_detectado" ? "sin_uso_detectado" : "historica"));
+        if (type === "sin_uso_detectado" && status !== "sin_uso_detectado") continue;
+        if (type === "reemplazada" && !["historica", "restablecida"].includes(status)) continue;
+        const driveId = extractDriveFileId(row[5]) || extractDriveFileId(row[7]);
+        if (!driveId || references.references.has(driveId)) continue;
         result.push({
-            id_reemplazo: row[0],
-            fecha_reemplazo: row[1],
-            tipo_contenido: row[2],
-            registro_id: row[3],
-            campo: row[4],
-            archivo_drive_id: row[5],
-            nombre_archivo: row[6],
-            url_anterior: row[7],
-            sustituida_por_url: row[8],
-            referencia_texto: row[9],
-            estado: row[10] || "historica",
-            origen_registro: valueAt(row, "origen_registro") || "reemplazo",
-            tipo_registro: valueAt(row, "tipo_registro") || (String(valueAt(row, "origen_registro") || "") === "auditoria_drive" ? "sin_uso_detectado" : "reemplazada"),
-            tipo_mime: valueAt(row, "tipo_mime"),
-            ubicacion_original: valueAt(row, "ubicacion_original"),
-            fecha_creacion_drive: valueAt(row, "fecha_creacion_drive"),
-            fecha_deteccion: valueAt(row, "fecha_deteccion"),
-            url_visualizacion: valueAt(row, "url_visualizacion"),
-            ubicacion_actual: valueAt(row, "ubicacion_actual"),
+            id_reemplazo: row[0], fecha_reemplazo: row[1], tipo_contenido: row[2], registro_id: row[3], campo: row[4],
+            archivo_drive_id: row[5], nombre_archivo: row[6], url_anterior: row[7], sustituida_por_url: row[8],
+            referencia_texto: row[9], estado: status, origen_registro: valueAt(row, "origen_registro") || "reemplazo",
+            tipo_registro: type, tipo_mime: valueAt(row, "tipo_mime"), ubicacion_original: valueAt(row, "ubicacion_original"),
+            fecha_creacion_drive: valueAt(row, "fecha_creacion_drive"), fecha_deteccion: valueAt(row, "fecha_deteccion"),
+            url_visualizacion: valueAt(row, "url_visualizacion"), ubicacion_actual: valueAt(row, "ubicacion_actual"),
             ultima_auditoria_id: valueAt(row, "ultima_auditoria_id")
         });
     }
-
-    logMessage && logMessage("Repositorio de imágenes", `Se consultaron ${result.length} registros de imágenes.`);
-    return { status: 'success', data: result.reverse() };
+    logMessage && logMessage("Gestor de imágenes sin uso", `Se consultaron ${result.length} imágenes sin referencias activas en «Cortes».`);
+    return { status: "success", data: result.reverse() };
 }
-
 function getReplacedImageRecordType(row, headers) {
     const typeIndex = headers.indexOf("tipo_registro");
     const originIndex = headers.indexOf("origen_registro");
@@ -3101,7 +2950,7 @@ function handleDeleteReplacedImage(payload, logMessage, developerContext) {
         const driveId = extractDriveFileId(repData[5]) || extractDriveFileId(repData[7]);
         if (!driveId) throw new Error("El registro no contiene un ID de Drive válido.");
 
-        const referenceSnapshot = collectActiveDriveReferences();
+        const referenceSnapshot = collectCortesImageReferences();
         const activeReferences = referenceSnapshot.references.get(driveId) || [];
         if (activeReferences.length) {
             const locations = activeReferences.slice(0, 5)
@@ -3268,7 +3117,7 @@ function handleMoveReplacedImage(payload, logMessage, developerContext) {
 
         const driveId = extractDriveFileId(row[5]) || extractDriveFileId(row[7]);
         if (!driveId) throw new Error("El registro no contiene un ID de Drive válido.");
-        const referenceSnapshot = collectActiveDriveReferences();
+        const referenceSnapshot = collectCortesImageReferences();
         if (referenceSnapshot.references.has(driveId)) {
             throw new Error("Operación bloqueada: la imagen tiene referencias activas en la Spreadsheet.");
         }
@@ -3414,6 +3263,10 @@ function handleGetReplacedImageDownloadUrl(payload, logMessage, developerContext
 
     const driveId = extractDriveFileId(row[5]) || extractDriveFileId(row[7]);
     if (!driveId) throw new Error("El registro no contiene un ID de Drive válido.");
+    const references = collectCortesImageReferences(false);
+    if (references.unverifiableReferenceCount > 0 || references.references.has(driveId)) {
+        throw new Error("La descarga está bloqueada porque no se pudo confirmar que la imagen siga sin uso en la hoja «Cortes».");
+    }
     const file = DriveApp.getFileById(driveId);
     if (file.isTrashed()) throw new Error("La imagen está en la papelera de Google Drive.");
     if (!String(file.getMimeType()).startsWith("image/")) throw new Error("El archivo asociado al registro ya no es una imagen.");
@@ -3431,117 +3284,58 @@ function handleGetReplacedImageDownloadUrl(payload, logMessage, developerContext
 /**
  * Handler: Auditoría de imágenes en Google Drive limitada estrictamente a la carpeta "Cortes"
  */
+
 function storeAuditDriveReferenceSnapshot(auditId, snapshot) {
     const cache = CacheService.getScriptCache();
     const cachePrefix = `gp_audit_refs_${auditId}`;
     const cacheKeys = [];
-    let stage = "serialización JSON";
-
+    const chunkSize = 75000;
+    const maxSnapshotLength = 750000;
     try {
         const serialized = JSON.stringify(snapshot);
-        stage = "creación del Blob JSON";
-        const sourceBlob = Utilities.newBlob(serialized, "application/json", "audit-reference-snapshot.json");
-        sourceBlob.setContentType("application/json");
-
-        stage = "compresión gzip";
-        const compressed = Utilities.gzip(sourceBlob);
-        compressed.setContentType("application/x-gzip");
-
-        stage = "codificación Base64";
-        const encoded = Utilities.base64Encode(compressed.getBytes());
-        const chunkSize = 75000;
-        const maxEncodedSize = 750000;
-
-        if (encoded.length > maxEncodedSize) {
-            throw new Error("El conjunto de referencias supera la capacidad temporal disponible. No se clasificaron archivos; reduce el volumen de datos o solicita una auditoría por etapas.");
-        }
-
-        const chunkCount = Math.ceil(encoded.length / chunkSize);
-        stage = "escritura de bloques en CacheService";
+        if (!serialized || serialized.length > maxSnapshotLength) throw new Error("El conjunto de referencias supera la capacidad temporal disponible. No se clasificaron archivos.");
+        const chunkCount = Math.ceil(serialized.length / chunkSize);
         for (let i = 0; i < chunkCount; i++) {
             const key = `${cachePrefix}_${i}`;
-            const chunk = encoded.slice(i * chunkSize, (i + 1) * chunkSize);
             cacheKeys.push(key);
-            cache.put(key, chunk, 21600);
+            cache.put(key, serialized.slice(i * chunkSize, (i + 1) * chunkSize), 21600);
         }
-
         const manifestKey = `${cachePrefix}_manifest`;
-        stage = "escritura del manifiesto en CacheService";
         cacheKeys.push(manifestKey);
-        cache.put(manifestKey, JSON.stringify({ chunkCount: chunkCount }), 21600);
-
-        stage = "verificación del estado temporal";
-        cacheKeys.forEach(key => {
-            if (cache.get(key) === null) {
-                throw new Error("Google Apps Script no conservó todos los bloques del estado temporal.");
-            }
-        });
+        cache.put(manifestKey, JSON.stringify({ chunkCount: chunkCount, length: serialized.length, encoding: "json" }), 21600);
+        cacheKeys.forEach(key => { if (cache.get(key) === null) throw new Error("Google Apps Script no conservó todos los bloques del estado temporal."); });
     } catch (error) {
-        try {
-            if (cacheKeys.length) cache.removeAll(cacheKeys);
-        } catch (cleanupError) {
-            console.error("No se pudieron retirar todos los bloques temporales de auditoría:", cleanupError);
-        }
-        throw new Error(`No se pudo conservar el estado temporal de la auditoría durante ${stage}: ${error.message}`);
+        try { if (cacheKeys.length) cache.removeAll(cacheKeys); } catch (cleanupError) { console.error("No se pudieron retirar todos los bloques temporales de auditoría:", cleanupError); }
+        throw new Error("No se pudo conservar el estado temporal de la auditoría: " + error.message);
     }
 }
 
 function loadAuditDriveReferenceSnapshot(auditId) {
     const cache = CacheService.getScriptCache();
     const cachePrefix = `gp_audit_refs_${auditId}`;
-    let stage = "lectura del manifiesto";
-
     try {
         const manifestText = cache.get(`${cachePrefix}_manifest`);
-        if (!manifestText) {
-            throw new Error("El manifiesto expiró o dejó de estar disponible.");
-        }
-
+        if (!manifestText) throw new Error("El manifiesto expiró o dejó de estar disponible.");
         const manifest = JSON.parse(manifestText);
-        if (!Number.isInteger(manifest.chunkCount) || manifest.chunkCount < 1) {
+        if (!Number.isInteger(manifest.chunkCount) || manifest.chunkCount < 1 || !Number.isInteger(manifest.length) || manifest.length < 1 || manifest.encoding !== "json") {
             throw new Error("El manifiesto del estado temporal está incompleto.");
         }
-
-        stage = "lectura de bloques";
-        let encoded = "";
+        let serialized = "";
         for (let i = 0; i < manifest.chunkCount; i++) {
             const chunk = cache.get(`${cachePrefix}_${i}`);
-            if (chunk === null) {
-                throw new Error(`Falta el bloque temporal ${i}.`);
-            }
-            encoded += chunk;
+            if (chunk === null) throw new Error(`Falta el bloque temporal ${i}.`);
+            serialized += chunk;
         }
-
-        stage = "decodificación Base64";
-        const compressedBytes = Utilities.base64Decode(encoded);
-
-        stage = "creación del Blob comprimido";
-        const compressed = Utilities.newBlob(
-            compressedBytes,
-            "application/x-gzip",
-            "audit-reference-snapshot.json.gz"
-        );
-        compressed.setContentType("application/x-gzip");
-
-        stage = "descompresión gzip";
-        const restored = Utilities.ungzip(compressed);
-        restored.setContentType("application/json");
-
-        stage = "lectura y validación del JSON";
-        const snapshot = JSON.parse(restored.getDataAsString("UTF-8"));
-        if (!snapshot || !Array.isArray(snapshot.activeDriveIds) ||
-            !Array.isArray(snapshot.historicalDriveIds) ||
-            !Number.isFinite(Number(snapshot.unverifiableReferenceCount))) {
+        if (serialized.length !== manifest.length) throw new Error("La longitud del estado temporal no coincide con el manifiesto.");
+        const snapshot = JSON.parse(serialized);
+        if (!snapshot || !Array.isArray(snapshot.activeDriveIds) || !Array.isArray(snapshot.historicalDriveIds) || !Number.isFinite(Number(snapshot.unverifiableReferenceCount))) {
             throw new Error("El contenido recuperado no cumple la estructura del snapshot de referencias.");
         }
         return snapshot;
     } catch (error) {
-        throw new Error(
-            `El estado temporal de la auditoría dejó de estar disponible durante ${stage}: ${error.message}. Inicia una auditoría nueva.`
-        );
+        throw new Error("El estado temporal de la auditoría dejó de estar disponible: " + error.message + ". Inicia una auditoría nueva.");
     }
 }
-
 function clearAuditDriveReferenceSnapshot(auditId) {
     const cache = CacheService.getScriptCache();
     const cachePrefix = `gp_audit_refs_${auditId}`;
@@ -3584,7 +3378,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
     catch (e) { throw new Error("No se pudo bloquear la actualización del inventario. Intenta nuevamente."); }
 
     try {
-        const references = collectActiveDriveReferences(false);
+        const references = collectCortesImageReferences(false);
         if (references.unverifiableReferenceCount > 0) {
             throw new Error("No se actualizó el inventario porque existen referencias de Drive que no pudieron verificarse.");
         }
@@ -3606,7 +3400,14 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
             if (origin === "auditoria_drive") {
                 if (!existingInventoryRows.has(driveId)) existingInventoryRows.set(driveId, r + 1);
             } else {
-                historicalDriveIds.add(driveId);
+                const status = String(row[10] || "historica");
+                const typeIndex = headers.indexOf("tipo_registro");
+                const recordType = typeIndex >= 0
+                    ? String(row[typeIndex] || "reemplazada")
+                    : "reemplazada";
+                if (recordType === "reemplazada" && ["historica", "restablecida"].includes(status)) {
+                    historicalDriveIds.add(driveId);
+                }
             }
         }
 
@@ -3762,7 +3563,7 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
         referenceSnapshot = loadAuditDriveReferenceSnapshot(auditId);
     } else {
         auditId = Utilities.getUuid();
-        const references = collectActiveDriveReferences(false);
+        const references = collectCortesImageReferences(false);
         const historicalDriveIds = new Set();
         const historySheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IMAGENES_REEMPLAZADAS);
         if (historySheet) {
@@ -3773,6 +3574,10 @@ function handleAuditDriveImagesInCortes(payload, logMessage) {
             const originIndex = historyHeaders.indexOf("origen_registro");
             for (let r = 1; r < historyRows.length; r++) {
                 if (originIndex >= 0 && String(historyRows[r][originIndex] || "") === "auditoria_drive") continue;
+                const status = String(historyRows[r][10] || "historica");
+                const typeIndex = historyHeaders.indexOf("tipo_registro");
+                const recordType = typeIndex >= 0 ? String(historyRows[r][typeIndex] || "reemplazada") : "reemplazada";
+                if (recordType !== "reemplazada" || !["historica", "restablecida"].includes(status)) continue;
                 const id = extractDriveFileId(historyRows[r][5]) || extractDriveFileId(historyRows[r][7]);
                 if (id) historicalDriveIds.add(id);
             }

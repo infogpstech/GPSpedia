@@ -3384,7 +3384,7 @@ function initAdminPanelListeners() {
 
     // Función genérica para disparar tareas con soporte para lotes automáticos, ETA y estadísticas en tiempo real
     async function runAction(action, payload = {}) {
-        const isBatch = (action === 'normalizeImages' || action === 'reorganizeImagesInDrive');
+        const isBatch = action === 'normalizeImages';
         const startTime = Date.now();
 
         let lastResource = "N/A";
@@ -3604,10 +3604,10 @@ ${totalTimeStr}
 🚨 ERROR DETECTADO
 
 Operación:
-${action === 'normalizeImages' ? 'Normalización de imágenes' : (action === 'reorganizeImagesInDrive' ? 'Organización de carpetas' : action)}
+${action === 'normalizeImages' ? 'Normalización de imágenes' : action}
 
 Etapa:
-${action === 'reorganizeImagesInDrive' ? 'Movimiento de imágenes / Creación de carpetas' : 'Procesamiento de imágenes'}
+Procesamiento de imágenes
 
 Recurso:
 ${lastResource || 'N/A'}
@@ -4064,10 +4064,6 @@ ${elapsedSec}s
         const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
         await runAction('normalizeImages', { reset: !continueSaved });
     };
-    document.getElementById('btn-admin-reorganize-drive').onclick = async () => {
-        const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
-        await runAction('reorganizeImagesInDrive', { reset: !continueSaved });
-    };
     document.getElementById('btn-admin-restore-trash').onclick = async () => {
         if (confirm("¿Deseas INICIAR el saneamiento y recuperación exhaustiva de imágenes en la papelera?\n\nEsta operación analizará todas las hojas del Spreadsheet, identificará enlaces rotos de Drive y restaurará de la papelera cualquier imagen eliminada. Puede tomar unos minutos.")) {
             await runAction('restoreAllTrashedImages');
@@ -4245,9 +4241,50 @@ ${elapsedSec}s
     }
 
     const auditDriveBtn = document.getElementById('btn-admin-audit-drive-images');
-    if (auditDriveBtn) {
-        auditDriveBtn.onclick = () => openAuditDriveModal();
-    }
+    if (auditDriveBtn) auditDriveBtn.onclick = () => openAuditDriveModal();
+
+    const driveStorageRefreshBtn = document.getElementById('btn-admin-refresh-drive-storage');
+    const driveStorageStatus = document.getElementById('drive-storage-monitor-status');
+    const driveStorageUsed = document.getElementById('drive-storage-used');
+    const driveStorageAccountUsed = document.getElementById('drive-storage-account-used');
+    const driveStorageLimit = document.getElementById('drive-storage-limit');
+    const driveStorageRemaining = document.getElementById('drive-storage-remaining');
+    const driveStoragePercent = document.getElementById('drive-storage-percent');
+    const formatStorageBytes = (value) => {
+        if (value === null || value === undefined || value === '') return 'No disponible';
+        const bytes = Number(value);
+        if (!Number.isFinite(bytes) || bytes < 0) return 'No disponible';
+        if (bytes === 0) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+        const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+        return (bytes / Math.pow(1024, index)).toFixed(index >= 3 ? 2 : 1) + ' ' + units[index];
+    };
+    const refreshDriveStorage = async () => {
+        if (driveStorageRefreshBtn) driveStorageRefreshBtn.disabled = true;
+        if (driveStorageStatus) driveStorageStatus.textContent = 'Consultando el almacenamiento global de Google Drive...';
+        try {
+            const response = await routeAction('getDriveStorage', getDeveloperSessionPayload());
+            if (!response || response.status !== 'success') throw new Error(response && response.message ? response.message : 'Respuesta no válida del monitor.');
+            if (driveStorageUsed) driveStorageUsed.textContent = formatStorageBytes(response.driveUsedBytes);
+            if (driveStorageAccountUsed) driveStorageAccountUsed.textContent = formatStorageBytes(response.accountUsedBytes);
+            if (driveStorageLimit) driveStorageLimit.textContent = response.quotaStatus === 'available'
+                ? formatStorageBytes(response.limitBytes)
+                : (response.quotaStatus === 'unlimited_or_not_reported' ? 'Sin límite reportado (posible cuota ilimitada)' : 'No disponible');
+            if (driveStorageRemaining) driveStorageRemaining.textContent = formatStorageBytes(response.remainingBytes);
+            if (driveStoragePercent) driveStoragePercent.textContent =
+                response.usagePercent !== null && response.usagePercent !== undefined && Number.isFinite(Number(response.usagePercent))
+                    ? Number(response.usagePercent).toFixed(2) + '%' : 'No disponible';
+            if (driveStorageStatus) driveStorageStatus.textContent = 'Actualizado: ' +
+                new Date(response.capturedAt || Date.now()).toLocaleString() + '. Fuente: ' +
+                (response.source || 'Google Drive') + '.' + (response.warning ? ' ' + response.warning : '');
+        } catch (error) {
+            if (driveStorageStatus) driveStorageStatus.textContent = 'No se pudo consultar el almacenamiento global: ' + error.message;
+        } finally {
+            if (driveStorageRefreshBtn) driveStorageRefreshBtn.disabled = false;
+        }
+    };
+    if (driveStorageRefreshBtn) driveStorageRefreshBtn.onclick = refreshDriveStorage;
+    refreshDriveStorage();
 }
 
 function getDeveloperSessionPayload() {
@@ -4354,7 +4391,15 @@ export async function openReplacedImagesModal() {
         }
         try {
             const response = await routeAction('getReplacedImages', getDeveloperSessionPayload());
-            cachedReplaced = response && Array.isArray(response.data) ? response.data : [];
+            cachedReplaced = response && Array.isArray(response.data)
+                ? response.data.filter((item) => {
+                    const type = item.tipo_registro || (item.origen_registro === 'auditoria_drive' ? 'sin_uso_detectado' : 'reemplazada');
+                    const status = String(item.estado || (type === 'sin_uso_detectado' ? 'sin_uso_detectado' : 'historica'));
+                    return type === 'sin_uso_detectado'
+                        ? status === 'sin_uso_detectado'
+                        : type === 'reemplazada' && ['historica', 'restablecida'].includes(status);
+                })
+                : [];
             renderList(filterInput ? filterInput.value : '');
         } catch (error) {
             if (listContainer) listContainer.textContent = 'Error al cargar el inventario e historial: ' + error.message;
@@ -4401,7 +4446,7 @@ export async function openReplacedImagesModal() {
         });
 
         if (!filtered.length) {
-            listContainer.innerHTML = '<div class="replaced-images-empty">No se encontraron imágenes registradas.</div>';
+            listContainer.innerHTML = '<div class="replaced-images-empty">No hay imágenes sin uso confirmadas en el inventario.</div>';
             return;
         }
 
@@ -4652,7 +4697,8 @@ export async function openAuditDriveModal() {
     let isRunning = false;
 
     const appendFiles = (files) => {
-        files.forEach(file => {
+        files.filter(file => file.classification === 'Histórica' || file.classification === 'Sin uso detectado')
+            .forEach(file => {
             const row = document.createElement('div');
             row.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px; border:1px solid var(--border-color); border-radius:6px; font-size:0.8rem; background:var(--card-bg);";
             const info = document.createElement('div');
@@ -4926,8 +4972,8 @@ export async function openAuditDriveModal() {
                 await persistState(complete ? 'complete' : 'running');
             }
 
-            if (allFiles.length === 0) {
-                container.textContent = 'No se encontraron archivos en la carpeta analizada.';
+            if (!allFiles.some(file => file.classification === 'Histórica' || file.classification === 'Sin uso detectado')) {
+                container.textContent = 'No se encontraron imágenes sin uso confirmadas en el árbol «Cortes».';
             }
             await saveUnusedInventory(true);
         } catch (error) {

@@ -391,10 +391,23 @@
                             <p>Organiza archivos, administra logotipos y revisa el historial de imágenes.</p>
                         </div>
 
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-brands fa-google-drive"></i> Monitor global de almacenamiento de Google Drive</strong>
+                            <p id="drive-storage-monitor-status" aria-live="polite">Consulta pendiente. El uso corresponde a todo Drive, no a la carpeta «Cortes». La cuota puede compartirse con otros servicios de Google.</p>
+                            <div class="dev-action-row">
+                                <span>Usado en Drive: <strong id="drive-storage-used">No disponible</strong></span>
+                                <span>Uso total de la cuota: <strong id="drive-storage-account-used">No disponible</strong></span>
+                                <span>Cuota de la cuenta: <strong id="drive-storage-limit">Consultando...</strong></span>
+                                <span>Disponible en la cuota: <strong id="drive-storage-remaining">No disponible</strong></span>
+                                <span>Porcentaje utilizado: <strong id="drive-storage-percent">No disponible</strong></span>
+                            </div>
+                            <button type="button" id="btn-admin-refresh-drive-storage" class="btn btn-secondary dev-action-full"><i class="fa-solid fa-arrows-rotate"></i> Actualizar almacenamiento global</button>
+                        </div>
+
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-images"></i> Organización de imágenes</strong>
                             <button id="btn-admin-normalize-images" class="btn btn-warning dev-action-full"><i class="fa-solid fa-images"></i> Normalizar nomenclatura y deduplicar imágenes en base de datos</button>
-                            <button id="btn-admin-reorganize-drive" class="btn btn-warning dev-action-full"><i class="fa-solid fa-folder-tree"></i> Reorganizar imágenes físicamente en carpetas jerárquicas</button>
                             <button id="btn-admin-restore-trash" class="btn btn-warning dev-action-full" style="display: none;"><i class="fa-solid fa-trash-arrow-up"></i> Saneamiento y recuperación exhaustiva de imágenes en papelera</button>
                         </div>
 
@@ -460,9 +473,9 @@
 <div id="replaced-images-modal" class="info-modal" style="display: none; z-index: 2600;">
     <div class="info-modal-content replaced-images-modal-content">
         <span class="info-close-btn" id="close-replaced-images-modal">&times;</span>
-        <h2><i class="fa-solid fa-images"></i> Inventario e Historial de Imágenes</h2>
+        <h2><i class="fa-solid fa-images"></i> Gestor de Imágenes sin Uso</h2>
         <p class="replaced-images-description">
-            Administra imágenes sin uso detectadas y archivos reemplazados. La información se consulta desde Spreadsheet y las operaciones de Drive se limitan al árbol «Cortes».
+            Administra únicamente imágenes que ya no están referenciadas por los campos de imagen de la hoja «Cortes». El escaneo conserva los archivos en su ubicación; mover o enviar a papelera requiere una acción explícita.
         </p>
 
         <div class="replaced-images-toolbar">

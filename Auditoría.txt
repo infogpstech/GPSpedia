@@ -5180,3 +5180,101 @@ LIMITACIONES
 - No se verificó la latencia del cálculo con el catálogo productivo.
 - No se desplegó frontend ni Apps Script.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA INICIAL — GESTOR DE IMÁGENES SIN USO Y MONITOR GLOBAL DE DRIVE
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work | HEAD auditado: 6fe77e232463918a113c999b89cad8ba115dc2f4
+
+ARCHIVOS AUDITADOS Y HALLAZGOS
+1. Services/admin.js
+- El router doPost aún expone «reorganizeImagesInDrive» y llama handleReorganizeImagesInDrive(), que ejecuta file.moveTo(genFolder). Es un proceso físico distinto del inventario; debe dejar de estar disponible desde la interfaz/API para evitar que se ejecute la reorganización descartada.
+- COLS_CORTES define las columnas de imagen: imagenVehiculo (9), imgCorte1 (16), imgCorte2 (23), imgCorte3 (30), imgApertura (34), imgCableAlimen (36), imgCableAlimen2 (40), imgCableAlimen3 (42). La hoja se identifica como SHEET_NAMES.CORTES = «Cortes».
+- collectActiveDriveReferences() recorre todas las hojas excepto una lista de exclusión. El escaneo de imágenes y las acciones de mover/eliminar reutilizan esta función; el alcance no coincide exactamente con la nueva regla, que identifica uso en los campos de imagen de «Cortes». Se requiere un colector específico de referencias de imagen de Cortes, sin alterar el colector global compartido por otros procesos.
+- handleAuditDriveImagesInCortes() ya recorre recursivamente DRIVE_FOLDER_ID y sus subcarpetas con cursores y límites por lote. Clasifica archivos como «En uso», «Histórica», «Sin uso detectado» o «No verificable». Devuelve también elementos en uso/históricos al cliente del modal de auditoría; el inventario final solo recibe «Sin uso detectado».
+- handleSaveUnusedImagesInventory() valida en servidor los archivos, su MIME, carpeta y referencias. Guarda file.getUrl() en url_anterior, que es una URL completa, y usa INV-<ID> para evitar duplicados. No mueve ni elimina archivos durante el escaneo.
+- recordReplacedImage() guarda data.imagenAnteriorUrl completa en url_anterior y extrae el ID por separado. handleUploadAdminImage() llama este helper antes de sustituir la celda; el archivo anterior no se mueve físicamente. Este comportamiento ya coincide con la aclaración del usuario y debe conservarse.
+- handleGetReplacedImages() devuelve todos los registros sin filtrar por referencias activas. El modal puede mostrar registros que hayan vuelto a estar en uso; se debe filtrar en backend para presentar solo registros confirmados sin uso.
+- handleDeleteReplacedImage() y handleMoveReplacedImage() vuelven a validar referencias, pero usan el colector global de todas las hojas. Se deben vincular a las referencias específicas de imágenes de Cortes y bloquear ante referencias no interpretables.
+- storeAuditDriveReferenceSnapshot()/loadAuditDriveReferenceSnapshot() serializan y deserializan el snapshot mediante Utilities.newBlob(), Utilities.gzip()/ungzip() y setContentType(). El tipo MIME se asigna explícitamente en el código auditado; no se pudo reproducir el error de Blob nulo solo mediante inspección estática. Se eliminará la dependencia de Blob/gzip en el snapshot, almacenando JSON como texto en bloques CacheService, para evitar ese punto de fallo y reducir complejidad.
+- No existe handler getDriveStorage, ni acción en el router/API para cuota global. No se encontró uso de getStorageUsed(), storageQuota ni Drive.About en Services/admin.js.
+- getOrCreateSubFolder() es compartido por procesos de subida/guardado y edición. No modificar este helper ni los flujos protegidos.
+2. ui.js
+- openReplacedImagesModal() carga todos los registros devueltos por getReplacedImages() y renderiza tanto inventario como historial; no filtra los que tienen referencias activas.
+- La UI ya implementa lista/cuadrícula, miniaturas, lightbox, descarga, movimiento, envío a papelera y creación de carpetas. Estas acciones se conservarán para registros sin uso confirmado.
+- runAction() contempla normalizeImages y reorganizeImagesInDrive como procesos por lotes; el botón de reorganización y el listener siguen activos.
+- openDevTools() llama initAdminPanelListeners() al abrir el modal. Esto permite cargar el monitor global en la apertura y añadir un control de actualización sin temporizadores.
+3. api-config.js
+- Las acciones de inventario/auditoría/movimiento/descarga están mapeadas a ADMIN. No existe acción getDriveStorage.
+- reorganizeImagesInDrive está mapeada a ADMIN y debe retirarse junto con el handler del router.
+4. index.html
+- La pestaña de imágenes incluye un botón «Reorganizar imágenes físicamente en carpetas jerárquicas», contrario al alcance confirmado; debe retirarse.
+- Existe modal de inventario e historial con filtro, lista/cuadrícula, movimiento y creación de carpetas. No existe panel de almacenamiento global.
+5. add_cortes.html
+- Se auditó el punto de llamada de addOrUpdateCut/handleStage3Submit como dependencia protegida. No se modificará este archivo ni sus flujos de subida/guardado.
+
+RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/admin.js: 2dbd044f4b42a786a623d0c1599335e7d62b62ad.
+- ui.js: bf196d4197e12620a76407c27f422d76588b508c.
+- api-config.js: 1e7f237c6a5467b91dcc05a69ecf650089d83e93.
+- index.html: 1e189df627a95e44adf40e7f50749397fa051a97.
+
+LIMITACIONES DE AUDITORÍA
+- No se consultó la Spreadsheet productiva ni se inspeccionó su contenido real; la auditoría de referencias se basa en los contratos/índices de código.
+- No se ejecutaron llamadas de Drive, operaciones sobre archivos, escritura de inventario ni pruebas de cuota en la cuenta real.
+- No existe appsscript.json en el árbol de la rama; no se pudo auditar ni modificar desde el repositorio la lista explícita de scopes del deployment.
+- El error histórico de Blob con MIME nulo no se reprodujo; el código estático asigna MIME explícito a los blobs. La sustitución del snapshot por JSON textual eliminará el uso de Blob en ese flujo, pero la validación funcional deberá realizarse en el deployment autorizado.
+
+RESTRICCIONES
+- No modificar add_cortes.html, handleAddOrUpdateCut(), uploadImageToDrive() ni getOrCreateSubFolder() salvo que una dependencia imprescindible sea demostrada; no está prevista ninguna modificación.
+- No mover, renombrar ni eliminar archivos reales durante el escaneo/inventario.
+- No publicar Apps Script durante esta tarea.
+================================================================================
+
+
+
+================================================================================
+CODE REVIEW — GESTOR DE IMÁGENES SIN USO Y MONITOR GLOBAL DE DRIVE
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: REVISIÓN ESTÁTICA APROBADA CON VALIDACIONES FUNCIONALES EXTERNAS PENDIENTES.
+
+CAMBIOS REVISADOS
+- Services/admin.js: colector dedicado de referencias en los ocho campos de imagen de «Cortes»; snapshot de auditoría JSON por bloques CacheService sin Blob/gzip; registro de URL completa para imágenes reemplazadas; inventario sin duplicados; filtrado backend de registros activos; revalidación de referencias antes de descarga/movimiento/papelera; handler de almacenamiento global; retiro del handler de reorganización física y de su ruta.
+- ui.js: el gestor solo presenta imágenes clasificadas como sin uso o históricas y excluye las que están en uso/no verificables; auditoría oculta de la lista visual los archivos en uso/no verificables; monitor de almacenamiento con refresco manual e inicial, manejo de valores nulos y estados de cuota.
+- api-config.js: retirada de reorganizeImagesInDrive y registro de getDriveStorage como ADMIN.
+- index.html: retirada del botón de reorganización física; inclusión del monitor global; título y descripción del gestor actualizados.
+- Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md: requisitos, hallazgos, cambios, pruebas y límites documentados.
+
+SAFETY & SIDE EFFECTS
+- El reemplazo in-modal registra el enlace completo anterior en «Imagenes_Reemplazadas». La función recordReplacedImage() conserva el URL completo original o usa file.getUrl() si el dato almacenado no era URL; no mueve ni elimina el archivo anterior.
+- El escaneo recursivo solo lee archivos/carpetas de DRIVE_FOLDER_ID, compara contra las ocho columnas de imagen de «Cortes» y registra URLs completas. No mueve, renombra ni elimina archivos durante auditoría/inventario.
+- El gestor oculta referencias activas. Las operaciones de descargar/mover/enviar a papelera revalidan en backend las referencias actuales de «Cortes» y bloquean si existen referencias activas o enlaces no interpretables.
+- La operación «eliminar» continúa siendo envío a papelera de Google Drive, no borrado irreversible; el mensaje de UI conserva esa distinción.
+- Se retiró el acceso por interfaz y router al proceso de reorganización física que usaba file.moveTo(). No queda la acción reorganizeImagesInDrive en api-config.js ni en el switch doPost.
+- No se modificaron add_cortes.html, handleAddOrUpdateCut(), uploadImageToDrive(), getOrCreateSubFolder() ni style.css. El proceso de subida/guardado del formulario y el editor in-modal queda preservado, excepto la garantía de URL completa dentro del helper de historial.
+- El monitor consulta DriveApp.getStorageUsed() y Drive API about.storageQuota. Distingue uso en Drive del uso total de la cuota de cuenta; el restante se calcula con el uso total de cuota, no restando únicamente el uso de Drive. Si la API de cuota no responde, se conserva el uso de Drive cuando DriveApp lo entrega y se indica que la cuota no está disponible.
+
+PRUEBAS ESTÁTICAS Y AISLADAS EJECUTADAS
+- Parseo sintáctico de Services/admin.js, ui.js y api-config.js: PASS.
+- IDs de index.html: sin duplicados.
+- Retiro del botón, listener, acción API, ruta doPost y función backend de reorganización física: PASS.
+- Colector de referencias con datos simulados: identificó referencias en imagenVehiculo, imgCorte1 e imgApertura; ignoró un enlace situado en la columna de video: PASS.
+- Snapshot de referencias con 4,200 IDs: escritura por bloques y recuperación JSON idéntica: PASS.
+- Snapshot ya no invoca Utilities.newBlob(), Utilities.gzip(), Utilities.ungzip() ni setContentType(): PASS.
+- Gestor simulado: excluyó una imagen activa, un registro cancelado y un inventario no confirmado; incluyó dos imágenes sin uso: PASS.
+- Registro de reemplazo simulado con ID sin URL: guardó el URL completo devuelto por DriveApp.getFileById().getUrl(): PASS.
+- Monitor simulado: cuota disponible (uso Drive 2,048 bytes, uso de cuenta 4,096, límite 8,192, restante 4,096, 50%); cuota sin límite reportado; error HTTP 403 con fallback de uso Drive: PASS.
+- Comprobación estática: handleUploadAdminImage() no mueve el archivo anterior; el registro se realiza antes de actualizar la celda y la lógica de rollback existente permanece.
+
+LIMITACIONES Y RIESGOS PENDIENTES
+- No se ejecutó navegador real, móvil ni PWA; la UI solo pasó parseo y comprobaciones estáticas/mocks.
+- No se ejecutó Apps Script ni se consultó la Spreadsheet/Drive productivos; no se verificó el número real de imágenes ni el inventario resultante.
+- No se reprodujo el error MIME nulo en el deployment. Se retiró Blob/gzip exclusivamente del snapshot de referencias, eliminando ese uso del recorrido de auditoría; la validación definitiva requiere ejecutar una auditoría real.
+- No se verificó en el proyecto de Google Cloud que Drive API v3 esté habilitada ni qué scopes efectivos tiene el deployment. Si about.storageQuota devuelve error/permisos, el monitor puede mostrar el uso global de Drive mediante DriveApp, pero la cuota/restante quedarán como no disponibles.
+- No se comprobó en vivo la disponibilidad exacta de DriveApp.getStorageUsed() en el deployment ni la cuota real del usuario que ejecuta el servicio.
+- No se probó el timeout de cinco minutos ni el recorrido completo del árbol real; se conserva el procesamiento por lotes y cursores existente.
+- No se desplegó ni publicó el administrador en Apps Script.
+
+RESULTADO DE REVISIÓN
+No se identificaron cambios ajenos a la solicitud en los archivos de aplicación revisados. Las operaciones destructivas siguen protegidas por sesión Desarrollador, ScriptLock, validación de referencia y confirmación en UI. La implementación estática queda lista para un único commit en GPSpedia2.2.5_work; las validaciones externas quedan explícitamente pendientes y no se declara completada la publicación.
+================================================================================
