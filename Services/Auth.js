@@ -34,10 +34,11 @@ const COLS_ACTIVE_SESSIONS = {
 };
 
 const SESSION_LIMITS = {
-    'desarrollador': 999, // Unlimited
-    'jefe': 3,
-    'supervisor': 2,
-    'tecnico': 1,
+    'desarrollador': Infinity,
+    'gefe': 10,
+    'jefe': 3, // Alias de compatibilidad con USERS
+    'supervisor': 3,
+    'tecnico': 2,
     'tecnico_exterior': 1
 };
 
@@ -278,7 +279,7 @@ function handleLogin(payload) {
 
         const userRole = (foundUserRow[COLS_USERS.Privilegios - 1] || '').toString().toLowerCase().trim();
         const userId = foundUserRow[COLS_USERS.ID - 1];
-        const sessionLimit = SESSION_LIMITS[userRole] || 1;
+        const sessionLimit = SESSION_LIMITS[userRole] ?? 1;
 
         // Manage sessions
         const activeSessionsSheet = SpreadsheetApp.openById(SPREADSHEET_ID).getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
@@ -295,23 +296,18 @@ function handleLogin(payload) {
         logToSheet('DEBUG', `Found ${userSessionRows.length} sessions for user ${userId}. Limit is ${sessionLimit}.`);
 
         if (userSessionRows.length >= sessionLimit) {
-            // Sort sessions by rowIndex to find the oldest ones (smallest rowIndex)
+            // La fila con menor rowIndex corresponde a la sesión más antigua registrada.
             userSessionRows.sort((a, b) => a.rowIndex - b.rowIndex);
+            const oldestSession = userSessionRows[0];
 
-            // Determine how many sessions to remove to make space for the new one
-            const sessionsToRemoveCount = userSessionRows.length - sessionLimit + 1;
-            const sessionsToRemove = userSessionRows.slice(0, sessionsToRemoveCount);
+            logToSheet('INFO', `Session limit reached. Removing the oldest session.`, { oldestSession });
 
-            logToSheet('INFO', `Session limit reached. Removing ${sessionsToRemove.length} oldest session(s).`, { sessionsToRemove });
-
-            // Delete rows from the bottom up (highest rowIndex first) to avoid shifting issues
-            sessionsToRemove.sort((a, b) => b.rowIndex - a.rowIndex).forEach(session => {
-                try {
-                   activeSessionsSheet.deleteRow(session.rowIndex);
-                } catch(e) {
-                   logToSheet('ERROR', `Failed to delete row ${session.rowIndex}`, { error: e.message });
-                }
-            });
+            try {
+                activeSessionsSheet.deleteRow(oldestSession.rowIndex);
+            } catch (e) {
+                logToSheet('ERROR', `Failed to delete oldest session at row ${oldestSession.rowIndex}`, { error: e.message });
+                throw new Error('No fue posible cerrar la sesión más antigua. No se creará una sesión nueva.');
+            }
         }
 
         // Always generate a new token for a new session. This implicitly invalidates the old one.

@@ -4469,3 +4469,34 @@ La secuencia se registrará como comprobada únicamente si el commit final conti
 5. ALCANCE
 No se modificó código de aplicación, no se desplegaron servicios, no se realizaron llamadas HTTP a Apps Script ni escrituras en hojas reales.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — LÍMITES DE SESIONES AUTH Y CIERRE DE LA SESIÓN MÁS ANTIGUA
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+HEAD inicial: 1ed47e46626964e9d3a55e5446b12e6f394aecb8
+RESPALDOS EXACTOS (BLOB SHA):
+- Services/Auth.js: be99654d7a41ee77dbeb8534976ca94c8c376068
+- Services/Test/Auth.js: bb540e9aa247a07efae2487b99a64d8afff473e0
+- Auditoría.txt: 7ac15fa90c136438461985da1bd55a34bffc0874
+- Tareas.txt: dcf04609b493aafeed2431e862a3adcbcf1c8101
+- ChangesLogs.txt: 17b65ae3e80b0d978f93b09963624d9b1bfad572
+- checkpoint.md: 406aa6a6dd150e23ce5a8394ee89f58e973a43b6
+
+HALLAZGOS:
+- handleLogin normaliza Privilegios con toLowerCase().trim(); «Gefe» pasa a «gefe», clave ausente en SESSION_LIMITS, y recibía el fallback de una sesión.
+- El cálculo userSessionRows.length - sessionLimit + 1 podía eliminar varias sesiones.
+- La antigüedad se decide por rowIndex ascendente; las sesiones nuevas se anexan mediante appendRow().
+- El catch de deleteRow registraba el error y continuaba con el login, aunque no se hubiera eliminado una sesión.
+- Services/Test/Auth.js coincide en lógica con Services/Auth.js; la diferencia previa está en la línea SPREADSHEET_ID y su comentario.
+- Se revisaron ambos archivos completos, incluidas configuración, router, autenticación, manejo de intentos, logging y validación de sesión.
+
+RIESGOS:
+- La lectura/eliminación/anexado no está protegida como sección atómica ante logins concurrentes; dos solicitudes simultáneas podrían exceder temporalmente el límite. Se registra como tarea separada.
+- La antigüedad se conserva por orden físico de filas, no se calcula desde la columna date.
+- Si falla el borrado de la sesión más antigua, el login debe detenerse antes de crear otra sesión.
+
+ALCANCE:
+- Solo Services/Auth.js y Services/Test/Auth.js más documentación obligatoria.
+- Sin cambios a USERS, endpoints, api-config.js, IDs, columnas, esquema, hojas reales ni despliegues.
+================================================================================

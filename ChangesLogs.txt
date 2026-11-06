@@ -2835,3 +2835,14 @@ Sección: PROCEDIMIENTO ÚNICO AUTORIZADO PARA GENERAR Y PUBLICAR COMMITS, apart
 
 Se añadió la estructura requerida para cada elemento de tree_elements (path, mode, type y sha), se especificó type="blob" y el modo habitual 100644 para archivos regulares, y se aclaró que debe crearse un único árbol después de completar todos los blobs, usando como base el árbol del HEAD confirmado.
 ================================================================================
+
+
+================================================================================
+CAMBIO — LÍMITES DE SESIONES Y CIERRE ÚNICO DE LA SESIÓN MÁS ANTIGUA
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+- Services/Auth.js: límites actualizados a Desarrollador Infinity, Gefe 10, Jefe 3, Supervisor 3, Técnico 2 y Técnico exterior 1; fallback explícito con ??.
+- Services/Auth.js: se reemplaza el cálculo de múltiples eliminaciones por la selección de oldestSession (menor rowIndex) y una sola llamada deleteRow.
+- Services/Auth.js: si deleteRow falla, se registra el error y se interrumpe el login antes de generar o anexar otra sesión.
+- Services/Test/Auth.js: misma lógica; se conserva el ID de Spreadsheet de pruebas.
+- Sin cambios a USERS, endpoints, api-config.js, esquema o IDs.
+================================================================================

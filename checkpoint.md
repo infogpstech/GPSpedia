@@ -2274,3 +2274,42 @@ Un único commit con los cinco archivos indicados, padre igual al HEAD confirmad
 - Si la actualización condicionada y las verificaciones concluyen correctamente, el procedimiento queda probado y registrado en el historial del repositorio.
 - El siguiente trabajo funcional pendiente de AUTH deberá realizarse como tarea independiente y usar este mismo procedimiento, sin commits parciales ni árboles intermedios.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT — IMPLEMENTACIÓN DE LÍMITES DE SESIONES AUTH
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial: 1ed47e46626964e9d3a55e5446b12e6f394aecb8
+Rama base: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ALCANCE
+- Código: Services/Auth.js y Services/Test/Auth.js.
+- Trazabilidad: Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md.
+- No modificar USERS, endpoints, configuración, IDs de Spreadsheet, esquema, datos externos ni deployments.
+
+RESPALDOS EXACTOS PREVIOS (BLOB SHA)
+- Services/Auth.js: be99654d7a41ee77dbeb8534976ca94c8c376068
+- Services/Test/Auth.js: bb540e9aa247a07efae2487b99a64d8afff473e0
+- Auditoría.txt: 7ac15fa90c136438461985da1bd55a34bffc0874
+- Tareas.txt: dcf04609b493aafeed2431e862a3adcbcf1c8101
+- ChangesLogs.txt: 17b65ae3e80b0d978f93b09963624d9b1bfad572
+- checkpoint.md: 406aa6a6dd150e23ce5a8394ee89f58e973a43b6
+
+IMPLEMENTACIÓN Y REVISIÓN ESTÁTICA
+- Se actualizaron los límites de ambos AUTH y se conservaron sus respectivos IDs de Spreadsheet.
+- Se reemplazó la eliminación múltiple por el cierre de una sola sesión: menor rowIndex.
+- El login se detiene si falla el borrado.
+- Las fuentes productiva y de prueba coinciden al normalizar la línea SPREADSHEET_ID.
+- Se verificó una sola llamada deleteRow en el bloque y ausencia de sessionsToRemoveCount/sessionsToRemove.
+
+PENDIENTE
+- Pruebas funcionales de cada rol, límite, cierre único y fallo de deleteRow en copia de prueba.
+- No se ejecutó Apps Script, HTTP ni escrituras reales; no se desplegó AUTH.
+- La concurrencia del bloque de sesiones se registra como tarea separada.
+
+ESTADO
+Implementación estática preparada para un único commit con todos los archivos de la tarea, padre igual al HEAD inicial y actualización condicionada exclusiva de GPSpedia2.2.5_work. La rama base no debe cambiar.
+================================================================================

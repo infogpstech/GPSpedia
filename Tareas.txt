@@ -4066,3 +4066,23 @@ Estado: IMPLEMENTACIÓN DOCUMENTAL PREPARADA; VALIDACIÓN FINAL SUJETA A LA ACTU
 - Actualizar exclusivamente GPSpedia2.2.5_work mediante force:false y expected_sha igual al HEAD inicial.
 - Verificar el commit, el árbol, el padre, los archivos incluidos y que GPSpedia2.2.5 no cambie.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — LÍMITES DE SESIONES AUTH
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA INTEGRADA; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PENDIENTE.
+- Matriz aplicada en ambos AUTH: Desarrollador sin límite (Infinity), Gefe 10, Jefe 3 como alias, Supervisor 3, Técnico 2 y Técnico exterior 1.
+- Al alcanzar un límite finito, se elimina únicamente la sesión con menor rowIndex.
+- Si falla deleteRow, el login se interrumpe antes de crear otra sesión.
+- Se conservan los IDs de Spreadsheet productivo y de prueba.
+- Se cierra la tarea pendiente de confirmar el límite de Gefe, ya definido por instrucción expresa.
+- Pendiente: probar cada límite, cierre único y fallo de deleteRow en la copia de prueba; despliegue AUTH único y matriz consolidada cuando se autoricen.
+- No se desplegó Apps Script ni se modificaron hojas reales.
+
+TAREA SEPARADA — SERIALIZAR EL CONTROL DE SESIONES CONCURRENTES
+Estado: PENDIENTE DE AUDITORÍA.
+- Evaluar cómo serializar lectura, selección, eliminación y anexado de sesiones en handleLogin.
+- Revisar LockService y posibles bloqueos reentrantes por logToSheet().
+- Evaluar si la antigüedad debe basarse en date o en el orden físico de filas.
+================================================================================
