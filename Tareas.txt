@@ -3743,3 +3743,129 @@ RESTRICCIONES
 RESULTADO FINAL ESPERADO
 Una herramienta única de inventario y administración que descubre todas las imágenes del árbol Cortes, clasifica de forma confiable su estado, conserva los resultados al cerrar la aplicación, registra las imágenes sin uso en Imagenes_Reemplazadas, organiza esas imágenes en una subcarpeta dedicada, permite visualizarlas en cuadrícula o lista, abrirlas en lightbox y ejecutar las acciones Descargar, Borrar, Mover y Restaurar cuando corresponda. La herramienta no deberá limitarse a los 14 archivos observados ni confundir ausencia de datos históricos con imposibilidad de administrar una imagen.
 ================================================================================
+
+
+================================================================================
+AMPLIACIÓN DE REQUISITOS — REDISEÑO FUNCIONAL DEL MODAL «OPCIONES DE DESARROLLADOR»
+Fecha: 2026-11-05
+Rama de trabajo: GPSpedia2.2.5_work
+Estado: REQUISITOS DOCUMENTADOS; AUDITORÍA TÉCNICA E IMPLEMENTACIÓN PENDIENTES.
+Referencias relacionadas:
+- ACTUALIZACIÓN DE TAREA — ORGANIZACIÓN DEL PANEL DE DESARROLLADOR.
+- ACTUALIZACIÓN DE TAREA — REDISEÑO RESPONSIVE DEL MODAL DE DESARROLLADOR.
+- TAREAS ADMIN 2, 3, 4, 5, 8, 9 y 10.
+- BLOQUE 5: SISTEMA AUTOMÁTICO DE DIFERENCIACIÓN E IDENTIFICACIÓN VEHICULAR MEDIANTE FIRMAS DE VIN.
+
+OBJETIVO
+Ampliar el rediseño existente del modal de desarrollador con una presentación más compacta y profesional, consola compartida entre secciones, diagnóstico detallado de servicios, controles de respaldo y base de datos agrupados, acciones de limpieza y firmas simplificadas, corrección de la lógica de reordenamiento de imágenes y revisión del mecanismo de generación de IDs.
+
+1. IDENTIDAD DEL MODAL Y CONSOLA GLOBAL
+1.1. El título principal del modal debe ser exactamente «Opciones de desarrollador». No utilizar «Panel administrativo y diagnóstico» ni títulos alternativos.
+1.2. La consola debe permanecer visible y accesible desde todas las secciones del modal, no únicamente desde Diagnóstico. Debe existir una única consola compartida; no duplicar instancias ni identificadores.
+1.3. En Diagnóstico, el título de la consola debe ser exactamente «>_Consola». Eliminar la denominación «Consola en tiempo real».
+1.4. Mantener la salida, los eventos y las operaciones de la consola existentes. La reorganización visual no debe romper listeners, comandos, historial ni el comportamiento de desplazamiento.
+
+2. DIAGNÓSTICO Y MONITOREO DE SERVICIOS
+2.1. Presentar cada servicio como una tarjeta miniatura independiente, con información resumida y jerarquía visual consistente. La tarjeta debe mostrar únicamente métricas disponibles y verificables, como nombre del servicio, estado, última comprobación y velocidad/latencia de respuesta.
+2.2. Al seleccionar una tarjeta, mostrar una vista de detalle con todos los parámetros que el servicio realmente pueda proporcionar o que el cliente pueda medir. Incluir, cuando exista una fuente verificable:
+- tráfico y volumen de solicitudes en tiempo real o durante el intervalo medido;
+- velocidad/tiempo de respuesta;
+- número de ejecuciones;
+- lista de funciones ejecutadas, con fecha/hora y resultado cuando esos datos estén disponibles;
+- estado de dependencias y última actualización.
+2.3. Diferenciar claramente métricas medidas desde el navegador de métricas generadas por el backend. No presentar como métricas internas de Apps Script valores que el servicio no puede medir.
+2.4. Añadir un gráfico de líneas que permita observar el tráfico de cada servicio a lo largo del tiempo. La serie, unidad, ventana temporal, frecuencia de actualización y origen de datos deben quedar definidos mediante auditoría; no representar datos simulados ni interpolar valores inexistentes como si fueran mediciones reales.
+2.5. El monitoreo debe tolerar que un servicio no responda sin bloquear el resto del panel. Indicar datos desconocidos, desactualizados, parciales o fallidos; no convertir ausencia de información en cero.
+2.6. Auditar qué servicios registran ejecuciones y funciones ejecutadas, qué métricas pueden medirse desde el navegador y qué instrumentación adicional sería necesaria. Evitar aumentar innecesariamente las llamadas, superar cuotas o exponer información sensible.
+
+3. RESPALDOS Y RESTAURACIÓN — CAMPO ÚNICO COMPARTIDO
+3.1. Utilizar un único campo de texto compartido por todas las opciones de respaldo y restauración. No crear un campo independiente para cada operación.
+3.2. El campo debe aceptar el enlace completo de la carpeta de Drive o el enlace completo de la Spreadsheet, según la operación seleccionada. La interfaz debe indicar de forma contextual qué tipo de enlace espera la acción elegida.
+3.3. Al finalizar un respaldo de Spreadsheet, colocar en ese mismo campo el enlace completo de la Spreadsheet respaldada. Al finalizar un respaldo de Drive, colocar en el mismo campo el enlace completo de la carpeta respaldada.
+3.4. El enlace devuelto debe ser el enlace completo y utilizable, no únicamente el ID. Antes de mostrarlo como resultado correcto, verificar que el recurso creado exista y que el enlace corresponda al archivo/carpeta realmente generado.
+3.5. Mantener el mismo campo como entrada para las operaciones de restauración que necesiten la ubicación del respaldo. Validar el tipo de recurso, su identidad, permisos y alcance antes de ejecutar.
+3.6. Reorganizar los botones de respaldo/restauración con iconografía coherente, nombres explícitos, agrupación por tipo de operación, jerarquía visual y estados de carga/resultado. Ubicar estas opciones dentro de la pestaña «Base de datos», como solicita el usuario, sin duplicar controles ni eliminar acciones existentes.
+3.7. Auditar si la pestaña «Respaldos» debe integrarse visualmente o conservarse como navegación secundaria. No retirar una sección ni cambiar IDs/listeners hasta conocer todas sus dependencias.
+3.8. Conservar autorización backend, confirmaciones, integridad del respaldo, controles de restauración, registro de auditoría y compatibilidad con las acciones existentes backupDatabase, backupDrive, restoreDatabase y restoreDrive.
+
+4. LIMPIEZA DE REGISTROS — SELECTORES Y ACCIÓN ÚNICA
+4.1. Sustituir la presentación de botones independientes de borrado por casillas de selección para:
+- «Actividad de usuarios»;
+- «Registro de Logs».
+4.2. Presentar un solo botón de ejecución/borrado para las dos opciones. El botón debe actuar exclusivamente sobre las casillas seleccionadas; una casilla no seleccionada nunca debe implicar borrado.
+4.3. Antes de ejecutar, mostrar una confirmación que identifique exactamente qué fuentes se limpiarán y el alcance de cada operación.
+4.4. Mantener las operaciones backend y sus políticas separadas cuando sus fuentes, permisos o reglas de retención sean diferentes. La unificación solicitada es de interfaz y punto de ejecución, no una autorización para mezclar hojas, borrar encabezados o ampliar el alcance de las purgas.
+4.5. Conservar la protección de sesión y privilegio Desarrollador, el registro de auditoría y las reglas ya implementadas para ActividadUsuario y Logs. Verificar la compatibilidad con clearActivityLogs y clearSensitiveLogs antes de definir el contrato final.
+
+5. ACCIONES DE FIRMAS VIN
+5.1. Aplicar la misma reorganización visual a las acciones «Recalcular firmas» y «Diagnóstico de firmas»: presentarlas como opciones seleccionables mediante casillas y utilizar un único botón para ejecutar las acciones seleccionadas.
+5.2. Si se selecciona una sola opción, ejecutar únicamente esa acción. Si se seleccionan ambas, ejecutar cada proceso de forma identificable y conservar sus resultados, errores y estados por separado.
+5.3. No fusionar los algoritmos ni alterar la lógica del motor VinDifferentialEngine.js. Auditar primero los botones, funciones, contratos y efectos actuales de cada operación.
+5.4. Mostrar progreso, resultado y errores de cada acción. Evitar ejecuciones duplicadas o concurrentes incompatibles.
+
+6. REORGANIZACIÓN DE IMÁGENES DE MODELO EN DRIVE
+6.1. Corregir exclusivamente la lógica de reordenamiento de imágenes que actualmente puede colocar la imagen del modelo en la carpeta equivocada.
+6.2. Regla de ubicación: la imagen del modelo debe quedar en la misma carpeta donde se encuentra la imagen del corte correspondiente a ese mismo modelo.
+6.3. Excepción para imágenes compartidas: cuando varios modelos compartan legítimamente una misma imagen de modelo, el archivo debe ubicarse en la carpeta propia del modelo, respetando la jerarquía de carpetas y evitando asignarlo a una versión/rango de años que no represente a todos los modelos relacionados.
+6.4. La jerarquía de referencia del árbol Cortes es:
+Cortes/
+  Categoría (SUV, Sedan, Pickup, etc.)/
+    Marca (Audi, BMW, Toyota, etc.)/
+      Modelo (A1, X5, Hilux, etc.)/
+        Versión de equipamiento o tipo de encendido/
+          Rango de años (2020 - 2025)/
+            modelo.png
+            corte1.jpg
+            corte2.jpg
+            Alimentación.jpg
+            apertura.jpg
+6.5. Determinar mediante auditoría la relación real entre modelo, marca, versión, rango de años, imagen del modelo e imágenes de cortes. No deducir relaciones únicamente a partir de nombres de archivos o coincidencias parciales.
+6.6. Resolver los casos de imagen exclusiva, imagen compartida por varios modelos, varias versiones, varios rangos de años, duplicados, archivo ya existente en destino y movimiento parcial. Evitar duplicar, sobrescribir o perder referencias.
+6.7. RESTRICCIÓN ABSOLUTA: no modificar la lógica de guardado ni renombramiento de imágenes de add_corte.html ni la lógica de guardado/renombramiento del modo de edición in-modal del desarrollador. La corrección debe limitarse al proceso de reordenamiento de imágenes en Drive. Si se detecta que el reordenamiento depende de esos flujos, documentar la dependencia y no modificarlos dentro de esta tarea.
+6.8. Antes de mover archivos, generar una vista previa de origen/destino y validar referencias. Toda operación debe ser idempotente, trazable y recuperable ante errores.
+
+7. GENERACIÓN Y FORMATO DE IDENTIFICADORES DE CORTES
+7.1. Investigar el mecanismo actual: al crear una fila, el sistema copia la fórmula de la fila anterior y esa fórmula genera automáticamente el ID.
+7.2. Buscar una alternativa para retirar esa fórmula heredada de las filas nuevas sin cambiar el ID ya asignado a la fila registrada.
+7.3. Preservar todos los IDs existentes, sus valores numéricos, prefijo, ceros a la izquierda y representación actual «V-001». No renumerar registros ni cambiar referencias históricas.
+7.4. Evaluar si el ID generado por fórmula puede convertirse en un valor estático conservando exactamente el resultado visible y el formato de celda, y definir un mecanismo seguro para generar los IDs futuros sin depender de copiar la fórmula de la fila anterior.
+7.5. Verificar si es viable ampliar en un dígito la capacidad del identificador, por ejemplo evaluando el formato de mayor longitud que corresponda, sin asumir que la modificación es compatible. Auditar límites, fórmulas, validaciones, ordenamientos, búsquedas, enlaces, consumidores frontend/backend, referencias en otras hojas y posibles colisiones.
+7.6. No cambiar el formato actual ni introducir IDs de longitud mixta hasta documentar la compatibilidad y el plan de transición. Cualquier cambio de formato debe preservar la identidad de los registros y contar con estrategia de compatibilidad y reversión.
+7.7. Probar en una copia de Spreadsheet: IDs existentes, alta de filas consecutivas, concurrencia, filas vacías/intermedias, fórmula ausente, valores duplicados, máximo actual y capacidad ampliada. No ejecutar migraciones sobre la hoja productiva durante la auditoría.
+
+8. DISEÑO, RESPONSIVE Y COMPATIBILIDAD
+8.1. Mantener el modal profesional, compacto y ordenado en escritorio, móvil y PWA, aprovechando el espacio sin ocultar controles necesarios.
+8.2. Utilizar iconografía consistente y etiquetas claras en los botones; no depender exclusivamente del color o del icono para comunicar la acción.
+8.3. Conservar accesibilidad por teclado, etiquetas accesibles, estados de foco, tooltips cuando correspondan y tamaños táctiles adecuados.
+8.4. Conservar los IDs, acciones, contratos y listeners existentes salvo que una auditoría justifique un cambio imprescindible y este quede documentado.
+8.5. La consola global debe seguir siendo una sola instancia y no provocar duplicación de listeners al cambiar de pestaña o reabrir el modal.
+
+9. AUDITORÍA, PRUEBAS Y CRITERIOS DE ACEPTACIÓN
+- Auditar index.html, style.css, ui.js, api-config.js, Services/admin.js, servicios de logs/actividad y las funciones de firmas que realmente intervengan. Para imágenes, auditar el proceso de reorganización y sus dependencias; para IDs, auditar los escritores, fórmulas, esquema y todos los consumidores.
+- Crear respaldos exactos antes de cualquier modificación de código y respetar el procedimiento obligatorio.
+- Comprobar el título exacto del modal y el título exacto «>_Consola».
+- Comprobar que la misma consola se mantiene visible en las cinco secciones existentes sin duplicarse.
+- Comprobar tarjetas de servicios, apertura de detalle, métricas, lista de funciones y gráfico de líneas con datos reales; probar servicios caídos, lentos, desconocidos y respuestas parciales.
+- Comprobar el único campo compartido para enlaces de Spreadsheet/carpeta, entrada de restauración y salida de enlaces completos tras respaldos.
+- Comprobar que el borrado ejecuta únicamente las casillas seleccionadas y que las fuentes no seleccionadas permanecen intactas.
+- Comprobar las acciones de firmas por separado y en conjunto, sin duplicación ni alteración de VinDifferentialEngine.js.
+- Probar reordenamiento de imágenes exclusivas y compartidas, múltiples versiones/rangos, destino existente y fallos parciales; verificar que add_corte.html y la edición in-modal mantienen intactos sus flujos de guardado y renombramiento.
+- Probar IDs actuales y futuros, preservación exacta de V-001, eliminación segura de fórmula y posible ampliación de capacidad, primero en una copia aislada.
+- Validar escritorio, móvil y PWA; revisar consola, navegación, accesibilidad y ausencia de regresiones.
+
+DEPENDENCIAS Y LÍMITES
+- La monitorización ampliada depende de fuentes reales de telemetría y de definir qué puede medir cada servicio; no se deben inventar métricas.
+- La vista unificada de limpieza depende de auditar las dos acciones backend existentes y sus políticas, manteniendo sus límites.
+- El campo compartido de respaldo depende de confirmar los formatos de enlace que aceptan las cuatro acciones actuales y los resultados que devuelven.
+- La reorganización de imágenes depende de reconstruir las relaciones de carpetas y registros reales en Cortes.
+- La ampliación de IDs depende de auditar la hoja y todos sus consumidores; no se autoriza cambiar IDs productivos en esta etapa.
+- Esta ampliación no modifica ni reemplaza las tareas ADMIN existentes; las complementa y deberá coordinarse con ellas para evitar duplicar controles o acciones.
+
+RESTRICCIONES GENERALES
+- No modificar la rama protegida ni realizar merge sin autorización expresa.
+- No modificar la lógica de guardado ni renombramiento de imágenes en add_corte.html ni en el modo de edición in-modal del desarrollador.
+- No mover, renombrar, borrar ni sobrescribir imágenes reales durante la auditoría.
+- No modificar IDs ni fórmulas en la Spreadsheet productiva durante la auditoría.
+- No mostrar métricas ficticias ni enlaces incompletos.
+- No debilitar autorización backend, confirmaciones, auditoría ni mecanismos de respaldo.
+================================================================================

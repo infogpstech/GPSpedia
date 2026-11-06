@@ -3806,3 +3806,54 @@ Tipo: auditoría de alcance y documentación. No se auditó código funcional ni
 5. RESULTADO
 La nueva especificación queda registrada en Tareas.txt como pendiente de auditoría e implementación. No se declara implementada ni validada ninguna de las funciones descritas.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DOCUMENTAL — AMPLIACIÓN DEL REDISEÑO FUNCIONAL DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD de referencia: 9a78b7a244fe7f5548d419cb823a7a506350868d
+Tipo: auditoría documental de alcance. No se realizó auditoría de código ni ejecución funcional.
+
+1. ANTECEDENTES LOCALIZADOS
+- Tareas.txt ya documenta la organización del panel en cinco secciones: Diagnóstico, Respaldos, Base de datos, Imágenes y Drive, y Sistema.
+- El rediseño responsive del modal está registrado como implementado y revisado estáticamente, con validación visual en live pendiente.
+- La auditoría inicial del panel identifica dependencias de index.html, style.css y ui.js; indica conservar IDs/listeners y mantener los modales secundarios fuera del modal principal.
+- TAREA ADMIN 2 cubre disponibilidad y latencia de servicios, y prohíbe presentar métricas de infraestructura sin fuente fiable.
+- TAREA ADMIN 3 cubre Logs y actividad, incluyendo protección de auditorías y exclusión de credenciales.
+- TAREAS ADMIN 4 y 5 cubren integridad de datos, respaldos y restauración.
+- TAREA ADMIN 9 incluye reorganizeImagesInDrive y otras rutinas de mantenimiento que requieren auditoría individual.
+- El BLOQUE 5 de Tareas.txt registra el sistema automático de firmas VIN como completado; no se encontró en la documentación consultada una especificación detallada de la presentación conjunta de «Recalcular firmas» y «Diagnóstico de firmas».
+- Se localizaron antecedentes de autorización backend de ADMIN y de separación entre clearActivityLogs y clearSensitiveLogs. La nueva interfaz no debe fusionar los alcances de borrado ni debilitar sus permisos.
+
+2. REQUISITOS NUEVOS INCORPORADOS
+- Título del modal «Opciones de desarrollador».
+- Consola única visible en todas las secciones y título «>_Consola» en Diagnóstico.
+- Tarjetas miniatura por servicio, detalle ampliado de parámetros y métricas verificables, lista de funciones ejecutadas y gráfica de líneas para tráfico.
+- Un solo campo de texto compartido para enlaces de Spreadsheet/carpeta en respaldo/restauración y para mostrar el enlace completo del respaldo generado.
+- Reorganización de los controles de respaldo/restauración en Base de datos, con iconografía y nombres claros.
+- Casillas para Actividad de usuarios y Registro de Logs con un único botón de ejecución, limitado a las opciones seleccionadas.
+- Agrupación equivalente para Recalcular firmas y Diagnóstico de firmas, conservando la ejecución y resultados diferenciados.
+- Regla de ubicación de imágenes de modelo junto a la imagen de corte del mismo modelo, con tratamiento especial de imágenes compartidas y respeto de la jerarquía Cortes/Categoría/Marca/Modelo/Versión o tipo de encendido/Rango de años.
+- Prohibición expresa de cambiar la lógica de guardado y renombramiento de imágenes en add_corte.html y en el modo de edición in-modal.
+- Auditoría para retirar la fórmula heredada de generación de IDs sin cambiar valores existentes «V-001» y evaluar la ampliación de un dígito.
+
+3. ASPECTOS TÉCNICOS NO VERIFICADOS
+- No se inspeccionaron los archivos actuales index.html, style.css, ui.js, api-config.js ni Services/admin.js para esta ampliación.
+- No se identificó la fuente real de telemetría histórica/tiempo real, número de ejecuciones o lista de funciones ejecutadas para cada servicio.
+- No se verificó el contrato exacto de enlaces de backupDatabase, backupDrive, restoreDatabase y restoreDrive.
+- No se inspeccionaron los botones y handlers reales de limpieza y firmas ni sus contratos actuales.
+- No se auditó el algoritmo actual de reorganizeImagesInDrive, las relaciones de carpetas, los archivos modelo.png ni los casos de imágenes compartidas.
+- No se inspeccionó la fórmula de ID, la hoja productiva, sus formatos ni los consumidores del identificador. El formato V-001 se registra como requisito comunicado por el usuario, no como resultado de una inspección de la Spreadsheet.
+
+4. PRESERVACIÓN Y LÍMITES
+- La ampliación se documenta como requisitos pendientes y complementarios a las tareas ADMIN existentes; no se marca como implementada.
+- No se modificó código, endpoints, deployments, hojas, registros, IDs, fórmulas, imágenes ni carpetas de Drive.
+- No se ejecutaron respaldos, restauraciones, purgas, diagnósticos, recalculaciones ni reorganizaciones.
+- Se conserva la prohibición de modificar los flujos de guardado/renombramiento de add_corte.html y de la edición in-modal.
+- La rama de trabajo se mantiene separada de la rama protegida.
+
+5. SIGUIENTE ACCIÓN
+Iniciar una tarea técnica independiente para auditar primero el modal y sus contratos actuales, y dividir la implementación por dependencias verificadas. Priorizar el diagnóstico real de telemetría, el campo compartido de respaldos y la agrupación segura de acciones; auditar por separado la reorganización de imágenes y la generación de IDs antes de modificar Drive o Sheets.
+================================================================================

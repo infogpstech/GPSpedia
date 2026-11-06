@@ -2642,3 +2642,20 @@ PRESERVACIÓN Y LÍMITES
 - No se desplegó ningún servicio ni se realizó merge.
 - La nueva tarea permanece pendiente de auditoría técnica, implementación y validación funcional.
 ================================================================================
+
+
+================================================================================
+DOCUMENTACIÓN — AMPLIACIÓN DE REQUISITOS DEL MODAL DE DESARROLLADOR
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Tareas.txt: se añadió una ampliación detallada del rediseño funcional del modal «Opciones de desarrollador», incluyendo consola global, diagnóstico de servicios, gráfica de tráfico, campo compartido para respaldos, limpieza de registros, acciones de firmas, reordenamiento de imágenes y generación de IDs.
+- Auditoría.txt: se registraron los antecedentes documentales, tareas ADMIN relacionadas, dependencias y aspectos técnicos que no fueron inspeccionados en esta fase.
+- checkpoint.md: se registran el inicio y el cierre de la tarea documental.
+
+RESTRICCIONES REGISTRADAS
+- No se modificó código, endpoints, deployments, hojas, registros, fórmulas, IDs, imágenes ni carpetas de Drive.
+- Se mantiene intacta la lógica de guardado y renombramiento de imágenes de add_corte.html y de la edición in-modal del desarrollador.
+- La retirada de fórmulas de ID, la ampliación de capacidad y la reorganización de imágenes quedan pendientes de auditoría técnica; no se ejecutaron cambios productivos.
+- La nueva especificación complementa las tareas ADMIN existentes y no las reemplaza.
+================================================================================

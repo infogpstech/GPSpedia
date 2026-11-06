@@ -1580,3 +1580,93 @@ Iniciar una tarea de implementación independiente siguiendo el procedimiento ob
 ## 6. PUBLICACIÓN
 Los cambios documentales de esta tarea se agruparán en exactamente un commit de GPSpedia2.2.5_work mediante el procedimiento Git Database API autorizado, con parent_sha igual al HEAD previo confirmado. La rama protegida deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — AMPLIACIÓN DE REQUISITOS PARA MEJORAR EL MODAL DE DESARROLLADOR
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD inicial confirmado:** 9a78b7a244fe7f5548d419cb823a7a506350868d
+**Árbol del HEAD inicial:** 7c2a88470413eac0cc8fd77b5909fd9b210db9bb
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## 1. TAREA Y ALCANCE
+Incorporar y precisar nuevos requisitos del usuario para la tarea existente de mejora del modal de desarrollador. El alcance documental comprende el título y la disponibilidad global de la consola, el diagnóstico y detalle de métricas por servicio, una gráfica de tráfico, la reorganización visual de las opciones de respaldo y base de datos, el borrado agrupado de registros, las acciones de firmas, la lógica de reordenamiento de imágenes y la investigación del mecanismo de generación de IDs.
+
+## 2. ESTADO REAL AL INICIO
+- La rama de trabajo fue consultada directamente y apunta a 9a78b7a244fe7f5548d419cb823a7a506350868d.
+- La rama protegida fue consultada directamente y apunta a d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- El HEAD de trabajo corresponde al commit documental anterior de especificación integral del inventario y gestión de imágenes sin uso.
+- Tareas.txt contiene un plan de doce tareas ADMIN y documentación previa sobre respaldos, registros, firmas, administración y acceso al modal de desarrollador. La tarea exacta de mejora del modal debe localizarse y conciliarse antes de añadir los nuevos requisitos.
+- No se ha auditado código para esta nueva tarea ni se han modificado funcionalidades.
+- Los requisitos sobre imágenes prohíben expresamente cambiar la lógica de guardado y renombramiento de imágenes en add_corte.html y en el modo de edición in-modal del desarrollador.
+- La regla de IDs exige preservar los identificadores existentes con formato V-001 y determinar mediante auditoría si puede retirarse la fórmula heredada sin alterar valores, formatos ni registros.
+
+## 3. ARCHIVOS PREVISTOS
+- Tareas.txt: ampliar la tarea existente de mejora del modal de desarrollador, conservando el contenido previo y detallando los requisitos nuevos.
+- Auditoría.txt: registrar el alcance documental, antecedentes localizados, restricciones y aspectos técnicos que requieren auditoría posterior.
+- ChangesLogs.txt: describir objetivamente las adiciones documentales.
+- checkpoint.md: registrar inicio y cierre de esta tarea documental.
+- No se prevé modificar código, endpoints, hojas, datos, carpetas ni imágenes en esta fase.
+
+## 4. RESTRICCIONES Y RIESGOS CONOCIDOS
+- No cambiar la lógica de guardado ni renombramiento de imágenes de add_corte.html ni del modo de edición in-modal del desarrollador.
+- La regla de ubicación de modelo.png deberá respetar la jerarquía Cortes/Categoría/Marca/Modelo/Versión o tipo de encendido/Rango de años y la excepción de modelos que comparten imagen; la ubicación debe determinarse con auditoría de relaciones reales, sin mover archivos en esta fase.
+- La retirada de fórmulas de ID no puede modificar IDs ya asignados, su representación V-001 ni sus formatos. La viabilidad de ampliar un dígito debe evaluarse con compatibilidad de consumidores y datos existentes.
+- No se cambiarán hojas ni registros productivos ni se ejecutarán operaciones de Drive.
+- No se implementará nada durante esta ampliación documental.
+
+## 5. FASE ACTUAL
+Checkpoint inicial registrado como blob Git, sin commit ni movimiento de referencias. Continúa la auditoría documental de Tareas.txt y los antecedentes relacionados para integrar los requisitos sin duplicar ni contradecir tareas existentes.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — AMPLIACIÓN DE REQUISITOS DEL MODAL DE DESARROLLADOR
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD previo a la tarea:** 9a78b7a244fe7f5548d419cb823a7a506350868d
+**Árbol previo:** 7c2a88470413eac0cc8fd77b5909fd9b210db9bb
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## 1. ESTADO FINAL
+TAREA DOCUMENTAL COMPLETADA. Se incorporaron los nuevos requisitos a Tareas.txt y se registraron antecedentes, dependencias y límites en Auditoría.txt. No se implementó código ni se ejecutaron operaciones productivas.
+
+## 2. ARCHIVOS INCLUIDOS
+- Tareas.txt: ampliación funcional del modal «Opciones de desarrollador».
+- Auditoría.txt: auditoría documental de los antecedentes y puntos técnicos no verificados.
+- ChangesLogs.txt: registro objetivo de los cambios documentales.
+- checkpoint.md: checkpoint inicial y final.
+- No se modificaron archivos de código, endpoints ni servicios.
+
+## 3. REQUISITOS DOCUMENTADOS
+- Título exacto «Opciones de desarrollador» y consola compartida visible en todas las secciones, con título «>_Consola».
+- Tarjetas miniatura por servicio, detalle de parámetros, métricas verificables, lista de funciones ejecutadas y gráfico de líneas del tráfico.
+- Campo único compartido para enlaces completos de Spreadsheet/carpeta en respaldo y restauración; salida del enlace completo del recurso respaldado.
+- Controles de respaldo/restauración agrupados en Base de datos con iconografía y nombres claros.
+- Casillas Actividad de usuarios y Registro de Logs con un único botón que actúe solo sobre las opciones seleccionadas.
+- Agrupación equivalente para Recalcular firmas y Diagnóstico de firmas, manteniendo procesos independientes.
+- Reglas para ubicar imágenes de modelo junto a la imagen de corte correspondiente, con excepción para imágenes compartidas y respeto de la jerarquía de carpetas.
+- Prohibición de modificar guardado/renombramiento de imágenes en add_corte.html y en la edición in-modal.
+- Auditoría para retirar la fórmula heredada de ID sin cambiar IDs existentes «V-001» y evaluar la ampliación de un dígito.
+
+## 4. VALIDACIONES Y LÍMITES
+- Se revisaron los documentos obligatorios y las secciones relacionadas de Tareas.txt y Auditoría.txt.
+- Se conservaron los registros previos; las nuevas entradas se agregaron al final.
+- No se inspeccionó código funcional para esta ampliación; no se verificaron métricas reales, handlers, algoritmo de reorganización de Drive, fórmulas productivas ni consumidores de IDs.
+- No se modificaron código, endpoints, deployments, hojas, registros, fórmulas, IDs, imágenes o carpetas.
+- La lógica de guardado/renombramiento de add_corte.html y de la edición in-modal queda expresamente protegida.
+- La rama protegida permanece sin cambios.
+
+## 5. SIGUIENTE ACCIÓN
+Iniciar una tarea técnica independiente con auditoría de los archivos y servicios implicados. Verificar primero las fuentes de telemetría y contratos de respaldo; auditar las acciones de purga y firmas; estudiar por separado el algoritmo de reorganización de imágenes y el mecanismo de IDs antes de realizar cualquier modificación en Drive o Sheets.
+
+## 6. PUBLICACIÓN
+Los cuatro archivos documentales se agruparán en exactamente un commit de GPSpedia2.2.5_work mediante el procedimiento Git Database API autorizado. El commit tendrá como único padre el HEAD previo confirmado. La rama protegida deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================
