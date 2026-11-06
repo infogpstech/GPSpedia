@@ -5127,3 +5127,56 @@ HEAD auditado: abc7102fc7a64c7c20ba687fb94d773f00bbbfe0
 RESULTADO
 La modificación puede limitarse a index.html, ui.js y style.css. api-config.js y Services/feedback.js se mantienen como dependencias auditadas sin cambios. No se identificaron hallazgos externos que requieran abrir otra tarea.
 ================================================================================
+
+
+================================================================================
+ADENDA DE AUDITORÍA — RESOLUCIÓN DE LOGGER DE LAS ACCIONES VIN
+Fecha: 2026-11-06
+- Durante la comprobación del ámbito de initAdminPanelListeners() se confirmó que el helper disponible es log(msg, isWarning, isError), declarado localmente dentro de la función.
+- Los dos handlers VIN existentes invocan appendLog(), identificador que no está declarado en ui.js. Esas llamadas pueden producir ReferenceError al ejecutar las acciones, impidiendo mostrar sus resultados en la consola. Se sustituirán por el helper local log() dentro del handler unificado.
+- El cambio corrige únicamente el mecanismo de registro de estas dos acciones y no afecta a otros consumidores ni al motor.
+================================================================================
+
+
+================================================================================
+CODE REVIEW — ACCIONES DE FIRMAS VIN: SELECTORES Y ACCIÓN ÚNICA
+Fecha: 2026-11-06
+Rama: GPSpedia2.2.5_work
+
+CAMBIOS REVISADOS
+- index.html, líneas 316–344: tarjeta VIN con dos casillas, descripciones, botón único, estado general y estados independientes para recálculo y diagnóstico.
+- ui.js, líneas 3929–4057: handler asíncrono único, selección de acciones, progreso por etapas, ejecución secuencial, validación de catálogo, persistencia comprobada, resumen de diagnóstico y manejo independiente de errores.
+- style.css: sin cambios; se reutilizan las clases existentes dev-maintenance-options, dev-maintenance-option, dev-maintenance-option-copy y dev-empty-state.
+- VinDifferentialEngine.js: sin cambios; calculateSignatures(), queryVehicle(), las reglas de clasificación y las estructuras del Map permanecen intactas.
+- api-config.js y Services/admin.js: sin cambios; no se agregaron llamadas remotas.
+
+SAFETY & SIDE EFFECTS
+- La selección vacía no invoca el motor ni el almacenamiento.
+- El recálculo solo acepta catalogData.cortes como arreglo y mantiene la llamada existente calculateSignatures(catalogData.cortes).
+- saveSignatures() se evalúa por su retorno booleano; un false se presenta como cálculo completado con persistencia no confirmada, no como éxito total.
+- Cuando se seleccionan ambas acciones, el diagnóstico se ejecuta después del recálculo y observa el Map resultante.
+- Cada operación tiene estado y captura de error independientes. Un error en el recálculo no impide intentar el diagnóstico seleccionado; el estado del diagnóstico advierte que inspecciona el Map actual tras el error.
+- El botón y las casillas se deshabilitan durante la ejecución y se restauran en finally. El handler también rechaza una invocación mientras el botón está deshabilitado.
+- Se conserva el límite anterior de diez firmas detalladas. El resumen agrega conteos por estado sin alterar los objetos.
+- El helper correcto es log(), local a initAdminPanelListeners(). Se eliminaron las referencias appendLog() no declaradas que existían en los dos handlers anteriores.
+- La operación permanece local al navegador; la única persistencia es la llamada ya existente a VinSignatureStore.saveSignatures() en localStorage.
+- No se agregaron temporizadores, workers, endpoints, permisos ni escrituras en Sheets/Drive.
+- Riesgo conservado: calculateSignatures() es síncrona y no expone progreso interno. La interfaz informa etapas, pero no porcentaje de avance del algoritmo.
+- Riesgo conservado: saveSignatures() puede escribir la lista y fallar al escribir metadatos; el false se informa como persistencia no confirmada, sin rollback de la primera escritura.
+- Si el algoritmo lanza una excepción después de limpiar el Map, el diagnóstico opcional posterior puede observar un Map parcial; la interfaz identifica esta condición.
+
+VERIFICACIONES AISLADAS
+- Parseo sintáctico de ui.js: correcto.
+- Reconstrucción inversa exacta de index.html y ui.js al revertir exclusivamente los bloques sustituidos.
+- IDs HTML únicos; cada nuevo control aparece exactamente una vez; botones independientes retirados.
+- CSS reutilizado disponible y sin modificaciones; llaves balanceadas.
+- VinDifferentialEngine.js conserva el SHA auditado.
+- Simulaciones con mocks: selección vacía; solo recálculo; solo diagnóstico; ambas acciones; fallo de persistencia; excepción de recálculo con diagnóstico posterior; catálogo ausente; doble invocación mientras la primera ejecución espera el siguiente frame.
+- Resultados simulados: no hubo llamadas para selección vacía o catálogo ausente; el recálculo llamó calculateSignatures y saveSignatures una vez; el diagnóstico no recalculó; ambas acciones se ejecutaron en orden; persistencia false se informó como advertencia; el error del recálculo quedó separado y el diagnóstico se ejecutó con advertencia contextual; el segundo clic se rechazó mientras el botón estaba deshabilitado; los controles se restauraron al finalizar.
+
+LIMITACIONES
+- No se ejecutó navegador real ni se validó visualmente el modal en escritorio/móvil/PWA.
+- No se ejecutó el motor contra catalogData real ni se modificó localStorage real.
+- No se verificó la latencia del cálculo con el catálogo productivo.
+- No se desplegó frontend ni Apps Script.
+================================================================================

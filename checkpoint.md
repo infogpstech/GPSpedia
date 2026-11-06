@@ -3199,3 +3199,107 @@ PUBLICACIÓN
 SIGUIENTE TAREA
 Continuar con «Acciones de firmas VIN» (sección 5 de la ampliación del modal). No desplegar ni iniciar la matriz funcional consolidada hasta completar las implementaciones pendientes.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — ACCIONES DE FIRMAS VIN: SELECTORES Y ACCIÓN ÚNICA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: 0a0c5e8edbcb758930986f69bb8cce53e3094a8c
+Rama base protegida: GPSpedia2.2.5
+HEAD de la rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA Y ALCANCE
+Aplicar a «Recalcular firmas» y «Diagnóstico de firmas» el patrón de selección por casillas y un único botón de ejecución. Si se marca una opción, ejecutar solo esa; si se marcan ambas, ejecutar cada proceso por separado y conservar sus estados, resultados y errores identificables. Prevenir dobles ejecuciones y concurrencia incompatible. No fusionar ni alterar algoritmos del motor VinDifferentialEngine.js.
+
+ESTADO OBSERVADO ANTES DE LA AUDITORÍA DETALLADA
+- index.html presenta dos botones independientes: btn-recalculate-vin-signatures y btn-view-vin-signatures, dentro de la tarjeta «Motor de firmas diferenciales de VIN».
+- ui.js asigna handlers onclick separados: el recálculo consulta catalogData.cortes, ejecuta vinDifferentialEngine.calculateSignatures(), persiste mediante vinSignatureStore.saveSignatures() y escribe estadísticas en la consola; el diagnóstico recorre las firmas en memoria, informa el total y muestra como máximo diez entradas.
+- ui.js importa vinDifferentialEngine, vinSignatureStore y getClassificationKey desde VinDifferentialEngine.js.
+- api-config.js y Services/admin.js no muestran, en el reconocimiento inicial, rutas de servicio remoto para estas dos acciones; la ejecución observada es local en el navegador. Esto se confirmará durante la auditoría detallada.
+- La tarjeta está en la sección Base de datos del modal de desarrollador.
+- No se ha modificado código para esta tarea, no se han recalculado firmas reales y no se ha desplegado frontend ni servicios.
+
+ARCHIVOS Y DEPENDENCIAS PREVISTAS PARA AUDITAR
+- index.html, ui.js y style.css.
+- VinDifferentialEngine.js, en particular calculateSignatures(), VinSignatureStore y saveSignatures().
+- state.js/offline.js y cualquier consumidor o inicializador que restaure las firmas.
+- api-config.js y Services/admin.js se revisarán para descartar dependencias remotas o acciones con el mismo contrato.
+- Auditoría.txt, Tareas.txt y ChangesLogs.txt para trazabilidad.
+
+RIESGOS INICIALES
+- calculateSignatures() es una operación síncrona; debe determinarse su costo y si admite informar progreso sin alterar el motor.
+- El diagnóstico actual solo inspecciona firmas que están en memoria y limita la salida a diez registros.
+- Si ambas acciones se seleccionan, deben permanecer distinguibles y procesarse sin superposición.
+- La persistencia local debe conservar su contrato actual.
+- No ejecutar operaciones contra servicios ni modificar datos externos.
+
+FASE
+Checkpoint inicial registrado antes de la auditoría detallada. No se ha editado código de aplicación.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — ACCIONES DE FIRMAS VIN: SELECTORES Y ACCIÓN ÚNICA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial de la tarea: 0a0c5e8edbcb758930986f69bb8cce53e3094a8c
+Rama base protegida: GPSpedia2.2.5
+HEAD de la rama base verificado antes de publicar: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+Implementación estática y pruebas aisladas completadas. La validación funcional real en navegador, PWA y catálogo/localStorage productivos queda pendiente de la fase consolidada. No se desplegó frontend ni Apps Script.
+
+ARCHIVOS DE CÓDIGO MODIFICADOS
+- index.html: reemplazo de dos botones independientes por dos casillas seleccionables, un botón único, un estado general y estados independientes.
+- ui.js: handler único y secuencial, validación de selección y catálogo, progreso por etapas, persistencia comprobada, resumen de diagnóstico, manejo separado de errores y bloqueo temporal contra dobles ejecuciones.
+- style.css: sin cambios; se reutilizan clases existentes.
+- VinDifferentialEngine.js: sin cambios.
+- api-config.js y Services/admin.js: sin cambios.
+
+ARCHIVOS DOCUMENTALES MODIFICADOS
+- Auditoría.txt: auditoría inicial, adenda del helper de log y Code Review con Safety & Side Effects, pruebas y limitaciones.
+- ChangesLogs.txt: registro objetivo de los dos archivos modificados, líneas afectadas y respaldos.
+- Tareas.txt: cierre estático de la subtarea y siguiente tarea.
+- checkpoint.md: checkpoint inicial y este checkpoint final.
+
+RESPALDOS EXACTOS PREVIOS A LA EDICIÓN
+- index.html: 742df240dd7014ab51b1ccab1a6b69dd39dabf09.
+- ui.js: 2d39f6828055b1f01a34dae7c6fd3f41993c9cda.
+
+VERIFICACIONES EJECUTADAS
+- Parseo sintáctico de ui.js correcto.
+- Reconstrucción inversa exacta de index.html y ui.js al revertir únicamente los bloques intervenidos.
+- IDs HTML únicos; los controles nuevos existen una sola vez; los botones antiguos fueron retirados.
+- style.css sin cambios; clases reutilizadas presentes y llaves balanceadas.
+- VinDifferentialEngine.js conserva el SHA auditado 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4.
+- api-config.js y Services/admin.js sin cambios.
+- Simulaciones con mocks: selección vacía; solo recálculo; solo diagnóstico; ambas operaciones; persistencia fallida; excepción de recálculo con diagnóstico posterior; catálogo ausente; doble invocación mientras la primera espera el siguiente frame.
+- Las simulaciones confirmaron ejecución condicional, orden recálculo→diagnóstico, resultados separados, advertencia de persistencia, advertencia contextual tras error y restauración de controles al finalizar.
+
+VALIDACIONES NO REALIZADAS
+- No se ejecutó navegador real ni validación visual en escritorio, móvil o PWA.
+- No se ejecutó VinDifferentialEngine contra el catálogo productivo.
+- No se modificó localStorage real ni se verificó la recuperación de firmas en una sesión nueva.
+- No se midió el tiempo de cálculo con el volumen real del catálogo.
+- No se desplegó frontend ni Apps Script.
+
+RIESGOS Y PENDIENTES
+- calculateSignatures() sigue siendo síncrona; la interfaz comunica etapas, no porcentaje interno.
+- requestAnimationFrame puede esperar cuando el navegador suspende la pestaña en segundo plano.
+- saveSignatures() puede haber escrito la lista antes de fallar al guardar metadatos; el fallo se reporta, pero no existe rollback en el store actual.
+- Si el cálculo lanza una excepción tras limpiar el Map, el diagnóstico opcional puede inspeccionar un estado parcial; el estado del diagnóstico lo advierte.
+- loadSignatures() no fue integrado a la inicialización porque está fuera del alcance de esta tarea.
+
+PUBLICACIÓN
+- Se generará exactamente un commit mediante Git Database API.
+- parent_sha: 0a0c5e8edbcb758930986f69bb8cce53e3094a8c.
+- base_tree_sha: 44d7a14ff4af0f3e90ccb87e7038437afbc7b3e1.
+- Actualización exclusiva de GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD inicial.
+- No se actualizará GPSpedia2.2.5. El SHA final se identificará en el historial después de crear y verificar el commit.
+
+SIGUIENTE TAREA
+Continuar con «Reorganización de imágenes de modelo en Drive» (sección 6). Respetar la prohibición expresa de modificar los flujos de guardado/renombramiento de add_corte.html y de la edición in-modal del desarrollador. No desplegar hasta completar todas las implementaciones pendientes.
+================================================================================

@@ -3926,32 +3926,131 @@ ${elapsedSec}s
     };
 
     // 5. Mantenimiento y Organización
-    // Listeners para motor de firmas de VIN
-    const recalcVinBtn = document.getElementById('btn-recalculate-vin-signatures');
-    if (recalcVinBtn) {
-        recalcVinBtn.onclick = () => {
-            const catalogData = getState().catalogData;
-            if (!catalogData || !catalogData.cortes) {
-                appendLog('[VIN ENGINE] No hay registros vehiculares en memoria.', 'log-warning');
+    // Ejecutar las acciones VIN seleccionadas mediante un único handler.
+    const runVinActionsBtn = document.getElementById('btn-admin-run-vin-actions');
+    if (runVinActionsBtn) {
+        const recalculateVinCheckbox = document.getElementById('recalculate-vin-signatures-checkbox');
+        const diagnoseVinCheckbox = document.getElementById('diagnose-vin-signatures-checkbox');
+        const vinActionsProgress = document.getElementById('vin-actions-progress');
+        const recalculateVinStatus = document.getElementById('vin-recalculate-status');
+        const diagnoseVinStatus = document.getElementById('vin-diagnostic-status');
+
+        const setVinStatus = (element, message) => {
+            if (element) element.textContent = message;
+        };
+        const yieldVinUi = () => new Promise(resolve => window.requestAnimationFrame(resolve));
+
+        runVinActionsBtn.onclick = async () => {
+            if (runVinActionsBtn.disabled) return;
+
+            const recalculateSelected = Boolean(recalculateVinCheckbox && recalculateVinCheckbox.checked);
+            const diagnoseSelected = Boolean(diagnoseVinCheckbox && diagnoseVinCheckbox.checked);
+
+            if (!recalculateSelected && !diagnoseSelected) {
+                const message = 'Selecciona al menos una operación de firmas VIN.';
+                setVinStatus(vinActionsProgress, message);
+                log('[VIN ENGINE] ' + message, true);
                 return;
             }
-            appendLog('[VIN ENGINE] Iniciando análisis diferencial de VIN...', 'log-info');
-            const stats = vinDifferentialEngine.calculateSignatures(catalogData.cortes);
-            vinSignatureStore.saveSignatures(vinDifferentialEngine);
-            appendLog(`[VIN ENGINE] Concluido: ${stats.totalVinsAnalyzed} VINs analizados, ${stats.totalClassesAnalyzed} clasificaciones, ${stats.signaturesGenerated} firmas generadas (${stats.validatedCount} validadas, ${stats.pendingCount} pendientes, ${stats.insufficientCount} insuficientes). Conflictos: ${stats.conflictsCount}.`, 'log-info');
-        };
-    }
-    const viewVinBtn = document.getElementById('btn-view-vin-signatures');
-    if (viewVinBtn) {
-        viewVinBtn.onclick = () => {
-            const count = vinDifferentialEngine.signatures.size;
-            appendLog(`[VIN ENGINE] Firmas en memoria: ${count}`, 'log-info');
-            let idx = 1;
-            for (const sig of vinDifferentialEngine.signatures.values()) {
-                if (idx <= 10) {
-                    appendLog(`[FIRMA #${idx}] ${sig.marca} ${sig.modelo} (${sig.rangoAnos}) [${sig.version || 'Gral'}]: ${sig.signatureString || 'N/A'} - Estado: ${sig.status} - Certeza: ${sig.confidence}%`, 'log-info');
-                    idx++;
+
+            const controls = [recalculateVinCheckbox, diagnoseVinCheckbox].filter(Boolean);
+            runVinActionsBtn.disabled = true;
+            controls.forEach(control => { control.disabled = true; });
+
+            setVinStatus(vinActionsProgress, 'Preparando las operaciones seleccionadas...');
+            setVinStatus(recalculateVinStatus, recalculateSelected ? 'En espera.' : 'No seleccionada en esta ejecución.');
+            setVinStatus(diagnoseVinStatus, diagnoseSelected ? 'En espera.' : 'No seleccionada en esta ejecución.');
+
+            let recalculateFailed = false;
+            try {
+                if (recalculateSelected) {
+                    try {
+                        setVinStatus(recalculateVinStatus, 'En curso: validando los datos del catálogo.');
+                        setVinStatus(vinActionsProgress, 'Recalculando firmas VIN...');
+                        log('[VIN ENGINE] Iniciando recálculo de firmas diferenciales.');
+                        await yieldVinUi();
+
+                        const catalogData = getState().catalogData;
+                        if (!catalogData || !Array.isArray(catalogData.cortes)) {
+                            throw new Error('No hay registros vehiculares válidos en memoria para recalcular las firmas.');
+                        }
+
+                        const stats = vinDifferentialEngine.calculateSignatures(catalogData.cortes);
+                        setVinStatus(recalculateVinStatus, 'Cálculo completado. Guardando las firmas en el almacenamiento local...');
+                        setVinStatus(vinActionsProgress, 'Cálculo terminado; guardando resultados...');
+                        await yieldVinUi();
+
+                        const persisted = vinSignatureStore.saveSignatures(vinDifferentialEngine);
+                        const summary = 'VIN analizados: ' + stats.totalVinsAnalyzed +
+                            '; clasificaciones: ' + stats.totalClassesAnalyzed +
+                            '; firmas generadas: ' + stats.signaturesGenerated +
+                            '; validadas: ' + stats.validatedCount +
+                            '; pendientes: ' + stats.pendingCount +
+                            '; insuficientes: ' + stats.insufficientCount +
+                            '; conflictos: ' + stats.conflictsCount + '.';
+
+                        if (persisted) {
+                            setVinStatus(recalculateVinStatus, 'Completado. ' + summary + ' Persistencia local confirmada.');
+                            log('[VIN ENGINE] Recálculo completado. ' + summary + ' Firmas guardadas en almacenamiento local.');
+                        } else {
+                            setVinStatus(recalculateVinStatus, 'Cálculo completado, pero falló la persistencia local. ' + summary);
+                            log('[VIN ENGINE] El cálculo terminó, pero saveSignatures() no confirmó la persistencia. ' + summary, true);
+                        }
+                    } catch (error) {
+                        recalculateFailed = true;
+                        setVinStatus(recalculateVinStatus, 'Error: ' + (error && error.message ? error.message : String(error)));
+                        log('[VIN ENGINE] Error al recalcular firmas: ' + (error && error.message ? error.message : String(error)), false, true);
+                    }
                 }
+
+                if (diagnoseSelected) {
+                    try {
+                        const diagnosticContext = recalculateFailed ? ' El recálculo anterior falló; se inspeccionará el estado actual del mapa en memoria.' : '';
+                        setVinStatus(diagnoseVinStatus, 'En curso: inspeccionando las firmas disponibles en memoria.' + diagnosticContext);
+                        setVinStatus(vinActionsProgress, 'Ejecutando diagnóstico de firmas VIN...');
+                        log('[VIN ENGINE] Iniciando diagnóstico de las firmas disponibles en memoria.' + diagnosticContext, recalculateFailed);
+                        await yieldVinUi();
+
+                        const signatures = Array.from(vinDifferentialEngine.signatures.values());
+                        const statusCounts = signatures.reduce((counts, signature) => {
+                            const status = signature && signature.status ? signature.status : 'sin_estado';
+                            counts[status] = (counts[status] || 0) + 1;
+                            return counts;
+                        }, {});
+                        const count = signatures.length;
+                        const summary = 'Firmas en memoria: ' + count +
+                            '; validadas: ' + (statusCounts.validada || 0) +
+                            '; calculadas: ' + (statusCounts.calculada || 0) +
+                            '; pendientes de revisión: ' + (statusCounts.pendiente_revision || 0) +
+                            '; insuficientes: ' + (statusCounts.insuficiente || 0) +
+                            '; sin estado: ' + (statusCounts.sin_estado || 0) + '.';
+
+                        log('[VIN ENGINE] ' + summary);
+                        signatures.slice(0, 10).forEach((signature, index) => {
+                            log('[FIRMA #' + (index + 1) + '] ' + signature.marca + ' ' + signature.modelo +
+                                ' (' + (signature.rangoAnos || 'Rango no disponible') + ') [' +
+                                (signature.version || 'Gral') + ']: ' + (signature.signatureString || 'N/A') +
+                                ' - Estado: ' + (signature.status || 'sin_estado') +
+                                ' - Certeza: ' + (signature.confidence ?? 'N/D') + '%');
+                        });
+
+                        const displayed = Math.min(count, 10);
+                        setVinStatus(diagnoseVinStatus, 'Completado. ' + summary + ' Se muestran ' + displayed + ' de ' + count + ' firmas.' + (recalculateFailed ? ' El resultado corresponde al estado en memoria después del error de recálculo.' : ''));
+                        if (count === 0) {
+                            log('[VIN ENGINE] No hay firmas disponibles en memoria para diagnosticar.', true);
+                        }
+                    } catch (error) {
+                        setVinStatus(diagnoseVinStatus, 'Error: ' + (error && error.message ? error.message : String(error)));
+                        log('[VIN ENGINE] Error durante el diagnóstico: ' + (error && error.message ? error.message : String(error)), false, true);
+                    }
+                }
+
+                const recalculateResult = recalculateVinStatus ? recalculateVinStatus.textContent : 'No seleccionada.';
+                const diagnoseResult = diagnoseVinStatus ? diagnoseVinStatus.textContent : 'No seleccionada.';
+                setVinStatus(vinActionsProgress, 'Operaciones finalizadas. Recalcular: ' + recalculateResult + ' Diagnóstico: ' + diagnoseResult);
+            } finally {
+                runVinActionsBtn.disabled = false;
+                controls.forEach(control => { control.disabled = false; });
             }
         };
     }

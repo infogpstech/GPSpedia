@@ -314,9 +314,30 @@
 
                         <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-barcode"></i> Motor de firmas diferenciales de VIN</strong>
-                            <div class="dev-action-row">
-                                <button type="button" id="btn-recalculate-vin-signatures" class="btn btn-primary"><i class="fa-solid fa-sync"></i> Recalcular Firmas</button>
-                                <button type="button" id="btn-view-vin-signatures" class="btn btn-secondary"><i class="fa-solid fa-list-check"></i> Diagnóstico de Firmas</button>
+                            <p>Selecciona una o ambas operaciones. Si seleccionas las dos, se ejecutarán por separado y en orden.</p>
+                            <div class="dev-maintenance-options">
+                                <label class="dev-maintenance-option" for="recalculate-vin-signatures-checkbox">
+                                    <input type="checkbox" id="recalculate-vin-signatures-checkbox">
+                                    <span class="dev-maintenance-option-copy">
+                                        <strong>Recalcular firmas</strong>
+                                        <span>Analizar los VIN del catálogo en memoria y guardar las firmas calculadas en el almacenamiento local.</span>
+                                    </span>
+                                </label>
+                                <label class="dev-maintenance-option" for="diagnose-vin-signatures-checkbox">
+                                    <input type="checkbox" id="diagnose-vin-signatures-checkbox">
+                                    <span class="dev-maintenance-option-copy">
+                                        <strong>Diagnóstico de firmas</strong>
+                                        <span>Consultar las firmas disponibles en memoria y mostrar su distribución por estado.</span>
+                                    </span>
+                                </label>
+                            </div>
+                            <button type="button" id="btn-admin-run-vin-actions" class="btn btn-primary dev-action-full">
+                                <i class="fa-solid fa-play"></i> Ejecutar acciones seleccionadas
+                            </button>
+                            <p id="vin-actions-progress" class="dev-empty-state" role="status" aria-live="polite">No se ha ejecutado ninguna acción en esta sesión.</p>
+                            <div class="dev-vin-action-status">
+                                <p id="vin-recalculate-status" role="status" aria-live="polite">Recalcular firmas: pendiente.</p>
+                                <p id="vin-diagnostic-status" role="status" aria-live="polite">Diagnóstico de firmas: pendiente.</p>
                             </div>
                         </div>
 

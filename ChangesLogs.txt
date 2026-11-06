@@ -3107,3 +3107,16 @@ Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
 - style.css (bloques aproximados 2611 y 2625–2680): se añadieron reglas limitadas a #dev-tools-modal para las opciones de limpieza y el selector de retención, incluida la adaptación móvil.
 - api-config.js y Services/feedback.js: sin modificaciones.
 ================================================================================
+
+
+================================================================================
+2026-11-06 — ACCIONES DE FIRMAS VIN: SELECTORES Y ACCIÓN ÚNICA
+================================================================================
+- index.html, líneas 316–344: se reemplazaron los botones btn-recalculate-vin-signatures y btn-view-vin-signatures por las casillas recalculate-vin-signatures-checkbox y diagnose-vin-signatures-checkbox, un botón btn-admin-run-vin-actions y elementos de estado vin-actions-progress, vin-recalculate-status y vin-diagnostic-status.
+- ui.js, líneas 3929–4057: se sustituyeron los handlers onclick independientes por un único handler asíncrono. Se incorporaron validación de selección, validación de catalogData.cortes, actualización de estados por etapa, cesión de frame antes de los procesos síncronos, persistencia comprobada, diagnóstico con conteos por estado, límite de diez detalles, captura independiente de errores y bloqueo temporal de controles.
+- ui.js, bloque VIN: se sustituyeron las llamadas appendLog() por el helper local log().
+- style.css: sin cambios; se reutilizaron las clases existentes del panel de mantenimiento.
+- VinDifferentialEngine.js, api-config.js y Services/admin.js: sin modificaciones.
+- Respaldos exactos de código antes de editar (blob SHA): index.html 742df240dd7014ab51b1ccab1a6b69dd39dabf09; ui.js 2d39f6828055b1f01a34dae7c6fd3f41993c9cda.
+- Blobs finales de código: index.html 1e189df627a95e44adf40e7f50749397fa051a97; ui.js bf196d4197e12620a76407c27f422d76588b508c.
+================================================================================

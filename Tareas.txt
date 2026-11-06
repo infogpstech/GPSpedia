@@ -4305,3 +4305,27 @@ LIMITACIONES Y PENDIENTES
 SIGUIENTE TAREA
 Continuar con «Limpieza de registros — selectores y acción única» (sección 4 de la ampliación del modal). Mantener la regla de no desplegar hasta completar todas las implementaciones pendientes.
 ================================================================================
+
+
+**Adenda de auditoría — 2026-11-06**
+- Se detectó que los handlers VIN llaman appendLog(), pero initAdminPanelListeners() declara el helper local log(). No existe una declaración appendLog en ui.js. El handler unificado utilizará log() para registrar estados y resultados.
+
+
+================================================================================
+SUBTAREA — ACCIONES DE FIRMAS VIN: SELECTORES Y ACCIÓN ÚNICA
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FUNCIONAL REAL PENDIENTE.
+
+- index.html: se sustituyeron los botones independientes por casillas «Recalcular firmas» y «Diagnóstico de firmas», un botón de ejecución, estado general y estados separados.
+- ui.js: un único handler ejecuta solo las opciones marcadas. Si se marcan ambas, recalcula y persiste primero; después diagnostica el Map en memoria. Los resultados y errores se muestran por operación.
+- Se bloquean el botón y las casillas durante la ejecución y se liberan en finally. La selección vacía no ejecuta acciones.
+- Se comprueba el resultado booleano de saveSignatures(); la persistencia no confirmada se informa como advertencia.
+- Se corrigió el uso de appendLog() no declarado en los handlers anteriores y se utiliza el helper local log().
+- style.css no cambió; se reutilizaron clases existentes.
+- VinDifferentialEngine.js, api-config.js y Services/admin.js no cambiaron.
+- Pruebas aisladas con mocks: selección vacía, cada acción individual, ambas, persistencia fallida, excepción de recálculo, catálogo ausente y doble invocación.
+- Validación real en navegador, PWA y catálogo/localStorage productivos pendiente de la fase funcional consolidada. No se desplegó frontend ni Apps Script.
+
+SIGUIENTE TAREA
+Continuar con «Reorganización de imágenes de modelo en Drive» (sección 6). Mantener intactos los flujos de guardado/renombramiento de add_corte.html y edición in-modal, según las restricciones de esa tarea.
+================================================================================
