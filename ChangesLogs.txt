@@ -2805,3 +2805,23 @@ VERIFICACIONES
 - No se ejecutaron pruebas funcionales ni despliegues.
 - Se conservaron los registros históricos y se añadieron entradas al final de los documentos de trazabilidad.
 ================================================================================
+
+
+================================================================================
+CAMBIO — CONSOLIDACIÓN DE FUENTE DE PRUEBAS AUTH/USERS
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+ARCHIVO DE CÓDIGO
+- Services/Test/users.js: sincronizado con la versión validada de la rama GPSpedia2.2.5_auth-users-test. Conserva el ID de Spreadsheet de pruebas y rechaza nombres de usuario duplicados después de trim() y sin distinguir mayúsculas/minúsculas, antes de generar el hash o escribir la fila. Se elimina la lógica de generación automática de sufijos.
+
+ESTADO DE LOS SERVICIOS PRODUCTIVOS
+- Services/Auth.js y Services/users.js ya contienen las implementaciones de hash, compatibilidad legacy, migración progresiva, límite de intentos, rutas de escritura hash y rechazo de duplicados. No se modificaron en esta tarea.
+- api-config.js y los endpoints live permanecen intactos.
+
+VERIFICACIÓN Y LÍMITES
+- Comparación estática de los servicios productivos con sus fuentes de prueba: la lógica funcional de AUTH coincide; la lógica funcional de USERS coincide después de normalizar el ID de Spreadsheet.
+- La fuente de prueba de USERS queda alineada con el código validado en la rama hija.
+- Las pruebas de alta, hash, inicio de sesión y rechazo de duplicados constan como confirmadas por el usuario en el historial de la rama hija.
+- No se ejecutó Apps Script, no se desplegaron AUTH/USERS, no se realizaron solicitudes HTTP ni se modificaron hojas reales.
+- La matriz funcional consolidada posterior a los despliegues continúa pendiente.
+================================================================================

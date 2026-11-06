@@ -4389,3 +4389,53 @@ Implementación estática registrada:
 - Se detectó que GitHub no reporta branch protection activa para la rama base. Debe configurarse mediante una tarea administrativa separada.
 - Esta auditoría fue estática y documental. No se modificó código, servicios, hojas, Drive ni deployments.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DE CONSOLIDACIÓN — ETAPA 1 AUTH Y USERS
+Fecha: 2026-11-06
+Rama de trabajo: GPSpedia2.2.5_work
+Rama hija de pruebas: GPSpedia2.2.5_auth-users-test
+HEAD de trabajo al inicio: 82fc81e035b26d23c8d723f586fde61c7b252352
+HEAD de la rama hija consultada: 047dc76c773956b3f356146d9ba0857b9502a0b6
+
+1. ALCANCE Y PROCEDENCIA
+- Por instrucción del usuario, no se repitió la auditoría de AUTH/USERS realizada en la rama hija y reportada como exitosa.
+- Se consultó el historial y la documentación de GPSpedia2.2.5_auth-users-test para identificar los cambios validados y su relación con la rama de trabajo.
+- La rama hija está divergida respecto de GPSpedia2.2.5_work; no se fusionó ni se utilizó como nueva base. Sus resultados se tomaron como referencia puntual.
+- La documentación de la rama hija registra confirmación del usuario de que el alta de usuario, almacenamiento hash, inicio de sesión y rechazo de nombres duplicados funcionan en el entorno de prueba.
+
+2. ESTADO DE AUTH EN LA RAMA DE TRABAJO
+- Services/Auth.js ya contiene el formato sha256$<salt>$<digest>, verificación de hash y compatibilidad con contraseñas legacy.
+- La migración de una contraseña legacy ocurre después de un inicio de sesión correcto.
+- Se conserva la normalización trim() al inicio y final, el mínimo de ocho caracteres para contraseñas nuevas, el contador de cinco intentos y el bloqueo nominal de quince minutos mediante CacheService.
+- Los nuevos registros de Logs se insertan en la fila 2, preservando la fila de encabezados.
+- La comparación de Services/Auth.js con Services/Test/Auth.js de la rama hija confirma que el código funcional coincide; la única diferencia es el comentario de la línea SPREADSHEET_ID que identifica la copia de prueba.
+- No fue necesario modificar Services/Auth.js en esta tarea.
+
+3. ESTADO DE USERS EN LA RAMA DE TRABAJO
+- Services/users.js ya almacena contraseñas hash en las rutas de creación, actualización administrativa y cambio de contraseña propia.
+- Se conserva la verificación compatible con contraseñas legacy/hash para el cambio de contraseña.
+- Se conserva resetUserSessions con autorización de Desarrollador.
+- Services/users.js ya contiene el rechazo de nombres duplicados mediante comparación trim() y case-insensitive, antes de generar el hash y escribir una fila.
+- La comparación con Services/Test/users.js de la rama hija confirma que la lógica funcional coincide; las diferencias son el comentario del SPREADSHEET_ID y líneas en blanco finales.
+- No fue necesario modificar Services/users.js en esta tarea.
+
+4. SINCRONIZACIÓN DE LA FUENTE DE PRUEBAS
+- Services/Test/users.js en GPSpedia2.2.5_work todavía utilizaba generateUniqueUsername(), comportamiento que añadía sufijos en lugar de rechazar duplicados.
+- Se sustituye esa copia de prueba por la versión validada en GPSpedia2.2.5_auth-users-test, que conserva el ID de Spreadsheet independiente 1TyfehJHUeyUMGM4AW12_Rkq-Y8G_6MvF-Wd9rrB87_k y rechaza nombres duplicados antes de generar hash o escribir.
+- La sincronización no cambia el servicio productivo ni el endpoint live; evita que la fuente de prueba de la rama de trabajo quede desfasada respecto de USERS.
+
+5. PENDIENTE CONOCIDO — LÍMITE DE SESIONES DEL ROL GEFE
+- Services/Auth.js normaliza el rol con toLowerCase(); el rol «Gefe» se convierte en «gefe».
+- SESSION_LIMITS contiene la clave «jefe», no «gefe», por lo que el rol «Gefe» cae actualmente en el límite predeterminado de una sesión.
+- El registro previo de Tareas.txt exige confirmar el límite esperado antes de corregirlo. No se cambió este comportamiento ni se asumió que deba ser tres.
+
+6. LÍMITES DE ESTA TAREA
+- No se modificaron Services/Auth.js, Services/users.js ni api-config.js.
+- No se modificaron los endpoints operativos ni el ID de Spreadsheet productivo.
+- No se ejecutó migración masiva de contraseñas.
+- No se desplegaron proyectos Apps Script ni se realizaron llamadas HTTP.
+- No se modificaron datos de Google Sheets ni se fusionó la rama hija.
+- La validación funcional confirmada se limita a los casos reportados por el usuario en la rama hija; la matriz funcional consolidada posterior al despliegue sigue pendiente.
+================================================================================

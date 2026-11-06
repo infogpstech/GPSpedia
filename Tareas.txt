@@ -4035,3 +4035,22 @@ Estado: PENDIENTE DE CONFIGURACIÓN ADMINISTRATIVA.
 - Configurar branch protection o ruleset que impida actualizaciones directas no autorizadas y exija el flujo de revisión acordado.
 - No intentar modificar la configuración desde esta tarea documental ni modificar la rama base.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — ETAPA 1: CONSOLIDACIÓN DE AUTH Y USERS
+Fecha: 2026-11-06 | Rama de trabajo: GPSpedia2.2.5_work
+Rama de referencia de pruebas: GPSpedia2.2.5_auth-users-test
+Estado: CÓDIGO PRODUCTIVO YA INTEGRADO; FUENTE DE PRUEBA SINCRONIZADA; DESPLIEGUES Y MATRIZ FUNCIONAL CONSOLIDADA PENDIENTES.
+
+- Se respetó la instrucción de no repetir la auditoría ya realizada en la rama hija.
+- AUTH: Services/Auth.js ya contiene hash sha256$<salt>$<digest>, compatibilidad legacy/hash, migración progresiva tras login correcto, mínimo de ocho caracteres, límite de cinco intentos y bloqueo nominal de quince minutos.
+- USERS: Services/users.js ya contiene hash en creación, actualización administrativa y cambio de contraseña propia; conserva resetUserSessions y rechazo de nombres duplicados sin distinguir mayúsculas/minúsculas ni espacios externos.
+- La rama hija registra confirmación del usuario de que el alta, el hash, el inicio de sesión y el rechazo de duplicados funcionan en el entorno de prueba.
+- Se sincronizó Services/Test/users.js de GPSpedia2.2.5_work con la versión validada de la rama hija. La copia conserva el ID de Spreadsheet de pruebas y deja de generar sufijos para nombres repetidos.
+- No se modificaron los servicios productivos AUTH/USERS ni sus endpoints porque el código correspondiente ya está integrado en GPSpedia2.2.5_work.
+- No se desplegaron AUTH ni USERS. Se mantiene el objetivo de un único despliegue por servicio y una única matriz funcional consolidada después de ambos despliegues.
+- Pendiente antes de cerrar toda la configuración de sesiones: confirmar el límite esperado para el rol «Gefe». El código normaliza ese rol como «gefe», pero SESSION_LIMITS contiene «jefe» y actualmente aplica el valor predeterminado de una sesión. No corregir por inferencia.
+- Pendiente: ejecutar la matriz funcional consolidada en el entorno acordado después de desplegar AUTH una sola vez y USERS una sola vez.
+- No se realizó migración masiva, no se modificó la Spreadsheet productiva, no se cambió api-config.js, no se fusionó la rama hija y no se modificó la rama base.
+================================================================================

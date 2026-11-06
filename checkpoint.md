@@ -2160,3 +2160,76 @@ Después de verificar este commit documental, desplegar de forma controlada los 
 ## Publicación
 Todos los cambios documentales se agruparán en un único commit cuyo padre será el HEAD confirmado 36196020f618270693e3beeed0d03392b21d0c9e. Solo se actualizará GPSpedia2.2.5_work con force:false y expected_sha igual a ese HEAD. La rama base deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — ETAPA 1: CONSOLIDACIÓN DE AUTH Y USERS
+
+**Fecha:** 2026-11-06
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD inicial confirmado:** 82fc81e035b26d23c8d723f586fde61c7b252352
+**Rama base:** GPSpedia2.2.5
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+**Rama hija de referencia:** GPSpedia2.2.5_auth-users-test
+**HEAD de la rama hija:** 047dc76c773956b3f356146d9ba0857b9502a0b6
+
+## Alcance
+Continuar directamente con la Etapa 1 de implementación AUTH/USERS, tomando como referencia la auditoría y pruebas reportadas como exitosas en GPSpedia2.2.5_auth-users-test. No repetir la auditoría ya realizada. Consolidar la fuente de pruebas de USERS en la rama de trabajo y documentar el estado real de implementación, pruebas y pendientes de despliegue.
+
+## Estado inicial verificado
+- Services/Auth.js ya contiene el formato sha256$<salt>$<digest>, compatibilidad legacy/hash, migración progresiva tras login correcto, control de intentos y escritura de Logs en fila 2.
+- Services/users.js ya contiene hash en las rutas de creación, actualización administrativa y cambio de contraseña propia; también contiene resetUserSessions y rechazo de nombres duplicados.
+- La rama hija documenta que el alta, hash, inicio de sesión y rechazo de nombres duplicados fueron confirmados en el entorno de prueba por el usuario.
+- Services/Test/users.js en la rama de trabajo todavía conserva generateUniqueUsername(); la copia validada de la rama hija ya contiene el rechazo de duplicados. Se sincronizará la fuente de prueba para que refleje la versión de USERS.
+- El endpoint live de AUTH/USERS en api-config.js de la rama de trabajo no se modificará.
+- Sigue pendiente confirmar el límite esperado de sesiones para el rol «Gefe»; no se cambiará por inferencia.
+
+## Restricciones
+- No desplegar Apps Script ni ejecutar migraciones o escrituras productivas.
+- No cambiar endpoints live ni el ID de Spreadsheet de producción.
+- No modificar la rama base ni fusionar la rama hija.
+- Mantener exactamente un commit para esta tarea mediante Git Database API.
+
+## Fase
+Checkpoint inicial registrado. La fuente de prueba de USERS y los documentos de trazabilidad se prepararán para un único commit.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — ETAPA 1: CONSOLIDACIÓN DE AUTH Y USERS
+
+**Fecha:** 2026-11-06
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD antes del commit:** 82fc81e035b26d23c8d723f586fde61c7b252352
+**Rama base:** GPSpedia2.2.5
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+**Rama hija de referencia:** GPSpedia2.2.5_auth-users-test
+**HEAD de la rama hija:** 047dc76c773956b3f356146d9ba0857b9502a0b6
+
+## Resultado
+La implementación funcional de AUTH y USERS ya estaba integrada en la rama de trabajo. Se sincronizó Services/Test/users.js con la copia validada en la rama hija y se actualizaron los registros de auditoría, tareas y cambios. No se modificaron los servicios productivos ni los endpoints.
+
+## Archivos incluidos en la tarea
+- Services/Test/users.js
+- Auditoría.txt
+- Tareas.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+## Verificaciones
+- La fuente de prueba USERS utiliza la Spreadsheet independiente y contiene el rechazo de duplicados validado en la rama hija.
+- AUTH productivo y su fuente de prueba coinciden en lógica funcional; solo difiere el comentario que identifica el ID de prueba.
+- USERS productivo y la fuente de prueba de la rama hija coinciden en lógica funcional; difieren el comentario del ID de prueba y líneas en blanco finales.
+- El servicio USERS productivo de GPSpedia2.2.5_work ya contiene el rechazo de duplicados; no se duplicó ni reimplementó ese cambio.
+- Se conservaron los endpoints live y el ID de Spreadsheet productivo.
+- No se ejecutó Apps Script, HTTP ni migración productiva; no se desplegaron servicios ni se modificó la rama base.
+
+## Pendientes
+- Confirmar el límite de sesiones esperado para el rol «Gefe» antes de modificar SESSION_LIMITS.
+- Desplegar AUTH una sola vez y USERS una sola vez cuando se autorice la publicación.
+- Ejecutar la matriz funcional consolidada después de ambos despliegues. Las pruebas ya confirmadas por el usuario en la rama hija no se repetirán como auditoría; se integrarán en el protocolo de validación de la entrega.
+
+## Publicación
+Un único commit con los cinco archivos indicados, padre igual al HEAD confirmado antes de la tarea. Actualizar exclusivamente GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD previo. Verificar que GPSpedia2.2.5 permanezca sin cambios.
+================================================================================
