@@ -1869,3 +1869,105 @@ Actualizar el deployment ADMIN y publicar el frontend de esta rama. Ejecutar una
 - Actualizar exclusivamente GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD inicial.
 - No modificar GPSpedia2.2.5 ni realizar merge.
 ================================================================================
+
+
+# CHECKPOINT INICIAL — GESTIÓN AVANZADA DEL INVENTARIO E HISTORIAL DE IMÁGENES
+
+**Fecha:** 2026-11-06
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**Rama protegida:** GPSpedia2.2.5
+**HEAD de trabajo confirmado:** 7983febec8f4e32c008ec110024be6f9524e8415
+**Árbol del HEAD:** 3ccdcd591703ab8ee91aedad50b42c4306fba025
+**HEAD de rama protegida confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+**Único padre del HEAD de trabajo:** 436b28151631f834feb5e645d8499aacbccfc36e
+
+## Tarea y alcance
+Ampliar el modal del desarrollador para gestionar el inventario de imágenes sin uso detectado y el historial de imágenes reemplazadas. Añadir una columna explícita de clasificación para distinguir ambos tipos; permitir previsualizar imágenes y seleccionar vista de lista con iconos/nombres o cuadrícula con miniaturas; habilitar descarga, envío a papelera y movimiento de archivos; permitir crear carpetas y mover imágenes desde el modal. No desplegar ni publicar ADMIN en Apps Script durante esta tarea.
+
+## Estado real al inicio
+- La persistencia del inventario sin uso se incorporó en el commit anterior, pero la hoja productiva no se consultó ni se modificó.
+- La hoja Imagenes_Reemplazadas conserva once columnas base y ocho metadatos agregados por la implementación anterior. Los registros de inventario se distinguen actualmente por origen_registro = auditoria_drive y tipo_contenido = inventario_sin_uso; los reemplazos históricos usan el esquema existente.
+- El panel actual consulta getReplacedImages desde Spreadsheet y permite enviar a papelera únicamente inventarios confirmados como sin uso. La restauración de imágenes de auditoría está bloqueada.
+- No se ha auditado todavía el flujo completo de Drive para crear carpetas, mover, descargar y previsualizar desde este modal.
+- No se ha ejecutado Apps Script ni se ha accedido a la hoja o al Drive real.
+- No se desplegará ADMIN ni se publicará el frontend como parte de esta tarea.
+
+## Archivos y funcionalidades previstas para auditoría
+- Services/admin.js: esquema de Imagenes_Reemplazadas, consulta, eliminación, validación de referencias, manejo de archivos/carpetas Drive y router ADMIN.
+- ui.js: openReplacedImagesModal(), acciones de gestión, sesión de desarrollador y flujos existentes de comandos Drive.
+- index.html y style.css: estructura y presentación del modal, controles de vista, miniaturas y previsualización.
+- api-config.js: enrutamiento de nuevas acciones ADMIN.
+- Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md.
+
+## Riesgos y dependencias
+- No permitir que el navegador determine por sí solo la clasificación ni la autorización para eliminar/mover. El backend debe volver a validar sesión de desarrollador, referencias activas/no verificables, pertenencia al árbol Cortes y estado del archivo.
+- Las operaciones de Drive deben limitarse al árbol Cortes y no cambiar permisos de archivos.
+- Mantener la compatibilidad con las once columnas originales y los metadatos ya agregados; no mezclar inventario de auditoría con historial de reemplazos.
+- La descarga y previsualización dependen de los permisos actuales del usuario sobre Drive.
+- Crear/mover carpetas requiere validar el destino y prevenir movimientos fuera del árbol autorizado.
+- Cualquier cambio de esquema debe ser compatible con filas existentes y verificarse antes de escribir.
+
+## Estado y siguiente acción
+**Estado:** checkpoint inicial registrado como blob; auditoría formal pendiente.
+**Siguiente acción:** auditar la especificación existente y los archivos/funciones relacionados línea por línea y función por función; documentar hallazgos antes de modificar código y crear respaldos exactos.
+
+
+# CHECKPOINT FINAL — GESTIÓN AVANZADA DEL INVENTARIO E HISTORIAL DE IMÁGENES
+
+**Fecha:** 2026-11-06
+**Estado:** IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; COMMIT ÚNICO PENDIENTE.
+**HEAD base confirmado:** 7983febec8f4e32c008ec110024be6f9524e8415
+**Árbol base:** 3ccdcd591703ab8ee91aedad50b42c4306fba025
+**Padre único previsto:** 7983febec8f4e32c008ec110024be6f9524e8415
+**Rama protegida confirmada:** GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## 1. Archivos finales preparados
+- Services/admin.js: e798020425950351ed17999e200745b3d54fd21c
+- ui.js: 5fd3db3e7eaa164312ff90de51e80e8e6a2c71f9
+- index.html: 1fe4e09430709e21cec57a81ba7fc84cf5911cf8
+- style.css: c0ef889a1af30b0e63a3e259a56033448af63717
+- api-config.js: 7f997f9a0e9f3cbc90c259a736153bc446a04a24
+- Auditoría.txt: d7adc2648d2e5da0845f40a2a454e4432fb5f0c0
+- Tareas.txt: acd79468e6553147f802f016bc66554d8f8846fc
+- ChangesLogs.txt: a50949a031d36b69e98baa6c02268943bc32a928
+- checkpoint.md: blob final pendiente de confirmación en este registro.
+
+## 2. Respaldos exactos previos
+- Services/admin.js: 8878bf38d375e16e609fc91ec609c0c605fbb182
+- ui.js: 224249882edf86c86889dcaa17fc0f203d2c11ad
+- index.html: 31df5e60af5e80eab3e60de6a4ded5cf6f81ee9f
+- style.css: 1f459058d5d418ab598917d60fa9c12489aa4de0
+- api-config.js: de3df6cfab8a7768b197b3afd2b9da9227ca8d94
+- Auditoría.txt: 83b9c3a8ac53acd3115d7e00955b7504bcd3e396
+- ChangesLogs.txt: 537246f7573420b379b48d80fee54b5873b2c04f
+- Tareas.txt: 30214a4bf50ad0be74e7748a350b1edbc2d9f851
+- checkpoint.md: 21a3a89e51c784379836eb227b7b6899ba00fb92
+
+## 3. Implementación
+- Se agregó tipo_registro con los valores sin_uso_detectado y reemplazada; se migran filas antiguas sin mover ni sobrescribir las once columnas históricas.
+- Se actualizaron los nuevos registros históricos y de auditoría para escribir la clasificación explícita.
+- Se agregó consulta de carpetas, creación de subcarpetas, movimiento, descarga validada, papelera y registro de actividad.
+- El modal presenta vista de lista con icono/nombre y previsualización desde el icono; vista de cuadrícula con miniaturas; lightbox con zoom/cierre; selector de carpeta destino y creación de carpetas.
+- Movimiento limitado al árbol Cortes, con validación de referencias y rollback si falla la actualización de Spreadsheet. ubicacion_original se conserva; ubicacion_actual se actualiza.
+- Descarga no cambia permisos. El envío a papelera es reversible; la restauración histórica continúa limitada a registros reemplazados.
+- Las acciones exitosas se registran en ActividadUsuario con el actor autenticado. ActividadUsuario se excluye de referencias activas por ser una bitácora.
+
+## 4. Pruebas realizadas
+- Parseo V8 de Services/admin.js, ui.js y api-config.js: correcto.
+- IDs HTML únicos y controles requeridos presentes; llaves CSS balanceadas.
+- Pruebas aisladas con mocks de Spreadsheet/Drive: migración de clasificación, alta de registros, movimiento, actualización y conservación de ubicaciones, descarga, creación/listado de carpetas, papelera para ambos tipos, bloqueo por referencias activas y destinos externos, exclusión de ActivityUsuario, bitácora de acciones y rollback ante fallo de escritura.
+- No se ejecutó Apps Script ni se accedió a datos reales de Google Sheets/Drive.
+
+## 5. Límites y publicación
+- No se desplegó ADMIN, no se actualizó el deployment de Apps Script y no se publicó frontend.
+- No se leyeron ni modificaron la Spreadsheet o archivos de Drive reales; no se cambiaron permisos ni se hicieron públicos archivos.
+- La vista previa/descarga depende de los permisos de Drive existentes.
+- La validación funcional live queda pendiente después de publicar esta versión de manera controlada.
+
+## 6. Commit controlado pendiente
+- Crear un único árbol con los nueve archivos listados, usando base_tree del HEAD 7983febec8f4e32c008ec110024be6f9524e8415.
+- Crear exactamente un commit con padre único 7983febec8f4e32c008ec110024be6f9524e8415.
+- Actualizar únicamente GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD base.
+- Verificar commit, árbol, nueve paths, padre único, nuevo HEAD y que GPSpedia2.2.5 permanezca en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- No usar Contents API, Git local, commit por archivo, force update ni merge.

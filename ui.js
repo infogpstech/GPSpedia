@@ -3808,158 +3808,323 @@ export async function openReplacedImagesModal() {
     modal.style.display = 'flex';
 
     const closeBtn = document.getElementById('close-replaced-images-modal');
-    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
-
     const listContainer = document.getElementById('replaced-images-list-container');
     const filterInput = document.getElementById('filter-replaced-images-input');
     const refreshBtn = document.getElementById('btn-refresh-replaced-images');
+    const listViewBtn = document.getElementById('btn-replaced-view-list');
+    const gridViewBtn = document.getElementById('btn-replaced-view-grid');
+    const folderSelect = document.getElementById('replaced-images-target-folder');
+    const newFolderInput = document.getElementById('replaced-images-new-folder-name');
+    const createFolderBtn = document.getElementById('btn-create-replaced-images-folder');
+    const folderStatus = document.getElementById('replaced-images-folder-status');
+    const lightbox = document.getElementById('replaced-image-lightbox');
+    const lightboxContent = document.getElementById('replaced-image-lightbox-content');
+    const lightboxImage = document.getElementById('replaced-image-lightbox-image');
+    const lightboxTitle = document.getElementById('replaced-image-lightbox-title');
+    const lightboxClose = document.getElementById('replaced-image-lightbox-close');
 
     let cachedReplaced = [];
+    let currentView = 'grid';
+    let folders = [];
+    let lightboxKeyHandler = null;
+
+    const closeLightbox = () => {
+        if (!lightbox) return;
+        lightbox.style.display = 'none';
+        if (lightboxImage) {
+            lightboxImage.src = '';
+            lightboxImage.classList.remove('is-zoomed');
+        }
+        if (lightboxKeyHandler) {
+            document.removeEventListener('keydown', lightboxKeyHandler);
+            lightboxKeyHandler = null;
+        }
+    };
+
+    const openLightbox = (rep) => {
+        if (!lightbox || !lightboxImage) return;
+        closeLightbox();
+        lightboxImage.src = getImageUrl(rep.url_visualizacion || rep.url_anterior || rep.archivo_drive_id, IMG_SIZE_LARGE);
+        lightboxImage.alt = rep.nombre_archivo || 'Imagen de Google Drive';
+        lightboxImage.onerror = () => {
+            lightboxImage.onerror = null;
+            lightboxImage.src = 'https://placehold.co/800x600/cccccc/333333?text=Vista+no+disponible';
+        };
+        lightboxImage.classList.remove('is-zoomed');
+        if (lightboxTitle) lightboxTitle.textContent = rep.nombre_archivo || 'Vista ampliada';
+        lightbox.style.display = 'flex';
+        lightboxKeyHandler = (event) => {
+            if (event.key === 'Escape') closeLightbox();
+        };
+        document.addEventListener('keydown', lightboxKeyHandler);
+    };
+
+    if (lightbox) lightbox.onclick = closeLightbox;
+    if (lightboxContent) lightboxContent.onclick = (event) => event.stopPropagation();
+    if (lightboxImage) lightboxImage.onclick = () => lightboxImage.classList.toggle('is-zoomed');
+    if (lightboxClose) lightboxClose.onclick = closeLightbox;
+
+    const loadFolders = async (preferredFolderId = '') => {
+        if (!folderSelect) return;
+        try {
+            const response = await routeAction('getCortesImageFolders', getDeveloperSessionPayload());
+            folders = Array.isArray(response.folders) ? response.folders : [];
+            const previousSelection = preferredFolderId || folderSelect.value;
+            folderSelect.innerHTML = '';
+            folders.forEach((folder) => {
+                const option = document.createElement('option');
+                option.value = folder.id;
+                option.textContent = folder.path;
+                folderSelect.appendChild(option);
+            });
+            const selectionExists = folders.some((folder) => folder.id === previousSelection);
+            folderSelect.value = selectionExists ? previousSelection : response.rootFolderId;
+            if (folderStatus) folderStatus.textContent = folders.length + ' carpetas disponibles dentro de Cortes.';
+        } catch (error) {
+            if (folderStatus) folderStatus.textContent = 'No se pudieron consultar las carpetas: ' + error.message;
+        }
+    };
 
     const loadData = async () => {
-        listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Consultando inventario e historial en Spreadsheet...</div>';
+        if (listContainer) {
+            listContainer.innerHTML = '<div class="replaced-images-empty"><i class="fa-solid fa-spinner fa-spin"></i> Consultando inventario e historial en Spreadsheet...</div>';
+        }
         try {
-            const res = await routeAction('getReplacedImages', getDeveloperSessionPayload());
-            cachedReplaced = (res && res.data) ? res.data : [];
+            const response = await routeAction('getReplacedImages', getDeveloperSessionPayload());
+            cachedReplaced = response && Array.isArray(response.data) ? response.data : [];
             renderList(filterInput ? filterInput.value : '');
-        } catch (err) {
-            listContainer.textContent = `Error al cargar el inventario e historial: ${err.message}`;
+        } catch (error) {
+            if (listContainer) listContainer.textContent = 'Error al cargar el inventario e historial: ' + error.message;
+        }
+    };
+
+    const createActionButton = (icon, label, className, handler, title) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn ' + className + ' replaced-image-action';
+        button.innerHTML = '<i class="fa-solid ' + icon + '" aria-hidden="true"></i><span>' + label + '</span>';
+        button.title = title || label;
+        button.onclick = handler;
+        return button;
+    };
+
+    const runButtonAction = async (button, busyLabel, operation) => {
+        const original = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>' + busyLabel + '</span>';
+        try {
+            await operation();
+        } catch (error) {
+            alert(error.message || String(error));
+        } finally {
+            if (button.isConnected) {
+                button.disabled = false;
+                button.innerHTML = original;
+            }
         }
     };
 
     const renderList = (filterText = '') => {
+        if (!listContainer) return;
         listContainer.innerHTML = '';
-        const q = filterText.toLowerCase().trim();
-        const filtered = cachedReplaced.filter(item => {
-            if (!q) return true;
-            return (item.nombre_archivo || '').toLowerCase().includes(q) ||
-                   (item.referencia_texto || '').toLowerCase().includes(q) ||
-                   (item.campo || '').toLowerCase().includes(q) ||
-                   (item.archivo_drive_id || '').toLowerCase().includes(q) ||
-                   String(item.registro_id || '').toLowerCase().includes(q) ||
-                   (item.ubicacion_actual || '').toLowerCase().includes(q) ||
-                   (item.origen_registro || '').toLowerCase().includes(q);
+        listContainer.className = 'replaced-images-list view-' + currentView;
+        const query = String(filterText || '').toLowerCase().trim();
+        const filtered = cachedReplaced.filter((item) => {
+            if (!query) return true;
+            return [
+                item.nombre_archivo, item.referencia_texto, item.campo, item.archivo_drive_id,
+                item.registro_id, item.ubicacion_actual, item.ubicacion_original, item.origen_registro
+            ].some((value) => String(value || '').toLowerCase().includes(query));
         });
 
-        if (filtered.length === 0) {
-            listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron imágenes registradas.</div>';
+        if (!filtered.length) {
+            listContainer.innerHTML = '<div class="replaced-images-empty">No se encontraron imágenes registradas.</div>';
             return;
         }
 
-        filtered.forEach(rep => {
-            const isInventoryRecord = rep.origen_registro === 'auditoria_drive';
-            const card = document.createElement('div');
-            card.style.cssText = "display: flex; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg);";
+        filtered.forEach((rep) => {
+            const type = rep.tipo_registro || (rep.origen_registro === 'auditoria_drive' ? 'sin_uso_detectado' : 'reemplazada');
+            const isUnused = type === 'sin_uso_detectado';
+            const status = String(rep.estado || (isUnused ? 'sin_uso_detectado' : 'historica'));
+            const statusLabel = isUnused
+                ? (status === 'sin_uso_detectado' ? 'Sin uso detectado' : status.replace(/_/g, ' '))
+                : (status === 'historica' ? 'Reemplazada' : status.replace(/_/g, ' '));
+            const canManage = isUnused
+                ? status === 'sin_uso_detectado'
+                : ['historica', 'restablecida'].includes(status);
+            const card = document.createElement('article');
+            card.className = 'replaced-image-card' + (currentView === 'list' ? ' replaced-image-card-list' : '');
 
-            const img = document.createElement('img');
-            img.src = getImageUrl(rep.url_visualizacion || rep.url_anterior, IMG_SIZE_SMALL);
-            img.style.cssText = "width: 70px; height: 70px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0; background: #fff;";
+            if (currentView === 'grid') {
+                const previewButton = document.createElement('button');
+                previewButton.type = 'button';
+                previewButton.className = 'replaced-image-preview';
+                previewButton.title = 'Ver imagen ampliada';
+                previewButton.setAttribute('aria-label', 'Ver ' + (rep.nombre_archivo || 'imagen') + ' en tamaño ampliado');
+                const image = document.createElement('img');
+                image.src = getImageUrl(rep.url_visualizacion || rep.url_anterior || rep.archivo_drive_id, IMG_SIZE_MEDIUM);
+                image.alt = rep.nombre_archivo || 'Imagen de Drive';
+                image.loading = 'lazy';
+                image.onerror = () => {
+                    image.onerror = null;
+                    image.src = 'https://placehold.co/400x300/cccccc/333333?text=Vista+no+disponible';
+                };
+                previewButton.appendChild(image);
+                previewButton.onclick = () => openLightbox(rep);
+                card.appendChild(previewButton);
+            } else {
+                const fileIcon = document.createElement('button');
+                fileIcon.type = 'button';
+                fileIcon.className = 'replaced-image-list-icon';
+                fileIcon.title = 'Ver imagen ampliada';
+                fileIcon.setAttribute('aria-label', 'Ver ' + (rep.nombre_archivo || 'imagen') + ' en tamaño ampliado');
+                fileIcon.innerHTML = '<i class="fa-solid fa-file-image" aria-hidden="true"></i>';
+                fileIcon.onclick = () => openLightbox(rep);
+                card.appendChild(fileIcon);
+            }
 
             const info = document.createElement('div');
-            info.style.cssText = "flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem;";
-            const title = document.createElement('div');
-            title.style.cssText = "font-weight:bold; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
-            title.textContent = isInventoryRecord
-                ? (rep.nombre_archivo || 'Imagen sin uso detectado')
-                : (rep.referencia_texto || `Registro ${rep.registro_id}`);
-
-            const fileDetails = document.createElement('div');
-            fileDetails.style.cssText = "font-size:0.8rem; color:var(--text-disabled);";
-            fileDetails.textContent = isInventoryRecord
-                ? `Archivo: ${rep.nombre_archivo || ''} | Tipo: ${rep.tipo_mime || 'No disponible'}`
-                : `Archivo: ${rep.nombre_archivo || ''} | Campo: ${rep.campo || ''}`;
-
-            const driveDetails = document.createElement('div');
-            driveDetails.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
-            driveDetails.textContent = isInventoryRecord
-                ? `ID Drive: ${rep.archivo_drive_id || ''} | Detectada: ${rep.fecha_deteccion || 'Fecha no disponible'} | Ubicación: ${rep.ubicacion_actual || rep.ubicacion_original || 'No disponible'}`
-                : `ID Drive: ${rep.archivo_drive_id || ''} | Fecha: ${rep.fecha_reemplazo || ''}`;
-
-            const statusDetails = document.createElement('div');
-            statusDetails.style.cssText = "font-size:0.75rem; font-weight:600;";
-            const statusLabel = isInventoryRecord
-                ? (rep.estado === 'sin_uso_detectado' ? 'Sin uso detectado' : String(rep.estado || '').replace(/_/g, ' '))
-                : (rep.estado || 'historica');
-            statusDetails.style.color = isInventoryRecord
-                ? (rep.estado === 'sin_uso_detectado' ? '#e0a800' : '#6c757d')
-                : (rep.estado === 'restablecida' ? '#28a745' :
-                    (['eliminada', 'en_papelera'].includes(rep.estado) ? '#dc3545' :
-                    (rep.estado === 'cancelada' ? '#6c757d' : '#007bff')));
-            statusDetails.textContent = `Estado: ${statusLabel}`;
-
-            info.appendChild(title);
-            info.appendChild(fileDetails);
-            info.appendChild(driveDetails);
-            info.appendChild(statusDetails);
-
-            const btnContainer = document.createElement('div');
-            btnContainer.style.cssText = "display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;";
-
-            if (!isInventoryRecord && rep.estado !== 'cancelada') {
-                const recoverBtn = document.createElement('button');
-                recoverBtn.className = "btn btn-primary";
-                recoverBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; white-space: nowrap;";
-                recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
-                recoverBtn.onclick = async () => {
-                    if (!confirm(`¿Restablecer esta imagen histórica como activa para ${rep.referencia_texto || rep.registro_id}? La versión actual pasará al historial.`)) return;
-                    recoverBtn.disabled = true;
-                    recoverBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                    try {
-                        const recRes = await routeAction('recoverReplacedImage', { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo });
-                        if (recRes && recRes.status === 'success') {
-                            mostrarNotificacion("Imagen histórica restablecida con éxito.", "success");
-                            loadData();
-                        }
-                    } catch (e) {
-                        alert("Error al recuperar imagen: " + e.message);
-                        recoverBtn.disabled = false;
-                        recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
-                    }
-                };
-                btnContainer.appendChild(recoverBtn);
-            }
-
-            const canSendToTrash = isInventoryRecord
-                ? rep.estado === 'sin_uso_detectado'
-                : !['cancelada', 'en_papelera', 'eliminada'].includes(rep.estado);
-            if (canSendToTrash) {
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = "btn btn-danger";
-                deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
-                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
-                deleteBtn.onclick = async () => {
-                    const confirmation = isInventoryRecord
-                        ? "¿Enviar esta imagen sin uso a la papelera de Google Drive? El servidor volverá a comprobar que no tenga referencias activas."
-                        : "¿Enviar esta imagen histórica a la papelera de Google Drive? Podrá recuperarse desde la papelera de Drive.";
-                    if (!confirm(confirmation)) return;
-                    deleteBtn.disabled = true;
-                    deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                    try {
-                        const delRes = await routeAction('deleteReplacedImage', { ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo });
-                        if (delRes && delRes.status === 'success') {
-                            mostrarNotificacion("Imagen enviada a la papelera de Google Drive.", "success");
-                            loadData();
-                        }
-                    } catch (e) {
-                        alert("No se pudo enviar la imagen a la papelera: " + e.message);
-                        deleteBtn.disabled = false;
-                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Enviar a papelera';
-                    }
-                };
-                btnContainer.appendChild(deleteBtn);
-            }
-
-            card.appendChild(img);
+            info.className = 'replaced-image-info';
+            const title = document.createElement('strong');
+            title.className = 'replaced-image-name';
+            title.textContent = rep.nombre_archivo || (isUnused ? 'Imagen sin uso detectado' : (rep.referencia_texto || 'Imagen reemplazada'));
+            const typeLabel = document.createElement('span');
+            typeLabel.className = 'replaced-image-type ' + (isUnused ? 'is-unused' : 'is-replaced');
+            typeLabel.textContent = isUnused ? 'Sin uso detectado' : 'Reemplazada';
+            const details = document.createElement('span');
+            details.className = 'replaced-image-details';
+            details.textContent = 'ID Drive: ' + (rep.archivo_drive_id || 'No disponible') +
+                (rep.tipo_mime ? ' · ' + rep.tipo_mime : '') +
+                (rep.campo ? ' · Campo: ' + rep.campo : '');
+            const location = document.createElement('span');
+            location.className = 'replaced-image-details';
+            location.textContent = 'Ubicación: ' + (rep.ubicacion_actual || rep.ubicacion_original || 'No disponible');
+            const dateDetails = document.createElement('span');
+            dateDetails.className = 'replaced-image-details';
+            dateDetails.textContent = (isUnused
+                ? 'Detectada: ' + (rep.fecha_deteccion || 'Fecha no disponible') + ' · Creada: ' + (rep.fecha_creacion_drive || 'Fecha no disponible')
+                : 'Reemplazada: ' + (rep.fecha_reemplazo || 'Fecha no disponible') + (rep.referencia_texto ? ' · Referencia: ' + rep.referencia_texto : ''));
+            const statusText = document.createElement('span');
+            statusText.className = 'replaced-image-status';
+            statusText.textContent = 'Estado: ' + statusLabel;
+            info.append(title, typeLabel, details, location, dateDetails, statusText);
             card.appendChild(info);
-            card.appendChild(btnContainer);
+
+            const actions = document.createElement('div');
+            actions.className = 'replaced-image-actions';
+
+            const downloadButton = createActionButton('fa-download', 'Descargar', 'btn-secondary', async () => {
+                await runButtonAction(downloadButton, 'Preparando...', async () => {
+                    const response = await routeAction('getReplacedImageDownloadUrl', {
+                        ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
+                    });
+                    const anchor = document.createElement('a');
+                    anchor.href = response.downloadUrl;
+                    anchor.rel = 'noopener noreferrer';
+                    anchor.download = response.fileName || rep.nombre_archivo || '';
+                    document.body.appendChild(anchor);
+                    anchor.click();
+                    anchor.remove();
+                    mostrarNotificacion('Se abrió la descarga de ' + (response.fileName || rep.nombre_archivo || 'la imagen') + '.', 'success');
+                });
+            });
+            downloadButton.disabled = !(isUnused ? status === 'sin_uso_detectado' : ['historica', 'restablecida'].includes(status));
+            actions.appendChild(downloadButton);
+
+            const moveButton = createActionButton('fa-folder-open', 'Mover', 'btn-secondary', async () => {
+                if (!folderSelect || !folderSelect.value) {
+                    alert('No hay una carpeta destino seleccionada.');
+                    return;
+                }
+                const selectedOption = folderSelect.options[folderSelect.selectedIndex];
+                const targetName = selectedOption ? selectedOption.textContent : 'la carpeta seleccionada';
+                if (!confirm('¿Mover "' + (rep.nombre_archivo || 'esta imagen') + '" a "' + targetName + '"?')) return;
+                await runButtonAction(moveButton, 'Moviendo...', async () => {
+                    const response = await routeAction('moveReplacedImage', {
+                        ...getDeveloperSessionPayload(),
+                        id_reemplazo: rep.id_reemplazo,
+                        targetFolderId: folderSelect.value
+                    });
+                    mostrarNotificacion(response.message || 'Imagen movida correctamente.', 'success');
+                    await loadData();
+                });
+            });
+            moveButton.disabled = !canManage;
+            actions.appendChild(moveButton);
+
+            if (!isUnused && status !== 'cancelada') {
+                const recoverButton = createActionButton('fa-clock-rotate-left', 'Restaurar', 'btn-primary', async () => {
+                    if (!confirm('¿Restaurar esta imagen al campo ' + (rep.campo || 'registrado') + '? La imagen actualmente activa pasará al historial.')) return;
+                    await runButtonAction(recoverButton, 'Restaurando...', async () => {
+                        const response = await routeAction('recoverReplacedImage', {
+                            ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
+                        });
+                        mostrarNotificacion(response.message || 'Imagen histórica restablecida.', 'success');
+                        await loadData();
+                    });
+                });
+                actions.appendChild(recoverButton);
+            }
+
+            const deleteButton = createActionButton('fa-trash', 'Enviar a papelera', 'btn-danger', async () => {
+                const description = isUnused
+                    ? '¿Enviar esta imagen sin uso a la papelera de Google Drive?'
+                    : '¿Enviar esta imagen reemplazada a la papelera de Google Drive? La restauración histórica dejará de estar disponible mientras permanezca allí.';
+                if (!confirm(description + ' El servidor volverá a validar las referencias y la ubicación.')) return;
+                await runButtonAction(deleteButton, 'Enviando...', async () => {
+                    const response = await routeAction('deleteReplacedImage', {
+                        ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
+                    });
+                    mostrarNotificacion(response.message || 'Imagen enviada a papelera.', 'success');
+                    await loadData();
+                });
+            });
+            deleteButton.disabled = !canManage;
+            actions.appendChild(deleteButton);
+
+            card.appendChild(actions);
             listContainer.appendChild(card);
         });
     };
 
-    if (filterInput) filterInput.oninput = () => renderList(filterInput.value);
-    if (refreshBtn) refreshBtn.onclick = () => loadData();
+    const setView = (view) => {
+        currentView = view;
+        if (listViewBtn) listViewBtn.setAttribute('aria-pressed', String(view === 'list'));
+        if (gridViewBtn) gridViewBtn.setAttribute('aria-pressed', String(view === 'grid'));
+        renderList(filterInput ? filterInput.value : '');
+    };
 
-    loadData();
+    if (closeBtn) closeBtn.onclick = () => {
+        closeLightbox();
+        modal.style.display = 'none';
+    };
+    if (filterInput) filterInput.oninput = () => renderList(filterInput.value);
+    if (refreshBtn) refreshBtn.onclick = () => { loadData(); loadFolders(); };
+    if (listViewBtn) listViewBtn.onclick = () => setView('list');
+    if (gridViewBtn) gridViewBtn.onclick = () => setView('grid');
+
+    if (createFolderBtn) createFolderBtn.onclick = async () => {
+        const name = newFolderInput ? newFolderInput.value.trim() : '';
+        if (!name) {
+            alert('Escribe el nombre de la nueva carpeta.');
+            return;
+        }
+        await runButtonAction(createFolderBtn, 'Creando...', async () => {
+            const response = await routeAction('createCortesImageFolder', {
+                ...getDeveloperSessionPayload(),
+                name: name,
+                parentFolderId: folderSelect ? folderSelect.value : ''
+            });
+            if (newFolderInput) newFolderInput.value = '';
+            await loadFolders(response.folderId);
+            mostrarNotificacion('Carpeta creada: ' + response.folderPath, 'success');
+        });
+    };
+
+    if (lightbox) lightbox.style.display = 'none';
+    setView(currentView);
+    await loadFolders();
+    await loadData();
 }
 
 /**

@@ -3933,3 +3933,40 @@ VALIDACIÓN PENDIENTE
 - Probar que una imagen activa, histórica, fuera del árbol o con referencias no interpretables no se registre como sin uso.
 - La especificación integral de gestión de imágenes sin uso continúa abierta para las funciones adicionales que no forman parte de esta subtarea.
 ================================================================================
+
+
+
+================================================================================
+CIERRE DE SUBTAREA — ADMINISTRACIÓN DE INVENTARIO E HISTORIAL DESDE EL MODAL
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; PUBLICACIÓN Y VALIDACIÓN LIVE PENDIENTES.
+
+ALCANCE IMPLEMENTADO
+- Columna explícita tipo_registro con los valores sin_uso_detectado y reemplazada; clasificación de filas existentes y escritura explícita en los nuevos registros.
+- Vista de lista con iconos y nombres; el icono abre la imagen ampliada.
+- Vista de cuadrícula con miniaturas clicables y lightbox con zoom y cierre.
+- Descarga de imágenes de ambos tipos mediante enlace Drive validado en backend.
+- Movimiento de imágenes sin uso confirmadas e imágenes reemplazadas históricas/restablecidas a carpetas existentes dentro de Cortes.
+- Creación de carpetas/subcarpetas dentro de Cortes desde el modal y selección de destino para mover.
+- Envío a papelera de ambos tipos, sujeto a referencias y estado; no se realiza eliminación irreversible.
+- Restauración histórica conservada exclusivamente para imágenes clasificadas como reemplazadas.
+- Registro de acciones exitosas en ActividadUsuario con actor autenticado, fecha, registro asociado, ubicación anterior/posterior y resultado.
+- Preservación de ubicacion_original en auditorías posteriores y actualización de ubicacion_actual después de mover.
+
+SEGURIDAD
+- Todas las nuevas acciones requieren sesión autenticada de desarrollador.
+- Validación en servidor de clasificación, referencias activas/no verificables, MIME image/*, estado de papelera, carpeta principal y pertenencia del archivo/destino al árbol Cortes.
+- No se cambian permisos de Drive ni se hacen públicos los archivos.
+- ActividadUsuario se trata como bitácora y no como fuente de referencias activas para evitar que el registro de una operación mantenga un archivo artificialmente en uso.
+
+PRUEBAS
+- Parseo V8 de los archivos JavaScript modificados: correcto.
+- IDs HTML del modal únicos; controles requeridos presentes; CSS balanceado.
+- Pruebas aisladas con servicios simulados de migración de clasificación, alta de registros, movimiento, descarga, creación/listado de carpetas, papelera, bloqueo de referencias activas, bloqueo de destinos externos, preservación de ubicación original, registro de actividad y reversión ante fallo de escritura.
+- No se ejecutó Apps Script ni se consultaron/modificaron datos reales de Spreadsheet o Drive.
+
+PENDIENTE
+- Publicar frontend y actualizar el deployment ADMIN únicamente después de revisar esta implementación.
+- Ejecutar pruebas funcionales en entorno real: consultar imágenes, previsualizar, descargar, mover, crear carpetas, enviar a papelera y restaurar un reemplazo. Confirmar los registros de ActividadUsuario.
+- La especificación integral de gestión de imágenes sin uso conserva cualquier requisito adicional no incluido en este alcance.
+================================================================================

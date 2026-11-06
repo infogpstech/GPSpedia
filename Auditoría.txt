@@ -4023,3 +4023,99 @@ HEAD de rama protegida: d9acc68d889985c2e2f42fe3a02e502efc86ead1
 - La subtarea de persistencia y consulta queda implementada estáticamente. Falta desplegar ADMIN y publicar el frontend, ejecutar una auditoría completa y confirmar que los registros aparezcan en Imagenes_Reemplazadas y se consulten sin volver a auditar.
 - La especificación integral de administración de imágenes sin uso conserva pendientes adicionales (vistas avanzadas, organización y demás acciones no incluidas en esta subtarea); no se declara completada en su totalidad.
 ================================================================================
+
+
+
+================================================================================
+AUDITORÍA TÉCNICA — GESTIÓN AVANZADA DEL INVENTARIO E HISTORIAL DE IMÁGENES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD base confirmado: 7983febec8f4e32c008ec110024be6f9524e8415
+HEAD protegido confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. ARCHIVOS AUDITADOS Y RESPALDOS
+- Se leyó Proceso de desarollo.md y se registró un checkpoint inicial antes de la auditoría y de las modificaciones.
+- Se auditaron Services/admin.js, ui.js, index.html, style.css y api-config.js; también se revisaron los puntos relacionados en Services/write.js, add_cortes.html, main.js y Services/feedback.js.
+- Se revisaron el router doPost(), assertDeveloperSession(), collectActiveDriveReferences(), isFolderInsideCortes(), getFolderPathInsideCortes(), ensureReplacedImagesInventoryColumns(), recordReplacedImage(), handleGetReplacedImages(), handleRecoverReplacedImage(), handleDeleteReplacedImage(), handleSaveUnusedImagesInventory(), handleAuditDriveImagesInCortes() y openReplacedImagesModal().
+- Respaldos exactos previos (SHA del blob original):
+  - Services/admin.js: 8878bf38d375e16e609fc91ec609c0c605fbb182
+  - ui.js: 224249882edf86c86889dcaa17fc0f203d2c11ad
+  - index.html: 31df5e60af5e80eab3e60de6a4ded5cf6f81ee9f
+  - style.css: 1f459058d5d418ab598917d60fa9c12489aa4de0
+  - api-config.js: de3df6cfab8a7768b197b3afd2b9da9227ca8d94
+  - Auditoría.txt: 83b9c3a8ac53acd3115d7e00955b7504bcd3e396
+  - ChangesLogs.txt: 537246f7573420b379b48d80fee54b5873b2c04f
+  - Tareas.txt: 30214a4bf50ad0be74e7748a350b1edbc2d9f851
+  - checkpoint.md: 21a3a89e51c784379836eb227b7b6899ba00fb92
+
+2. HALLAZGOS DE LA IMPLEMENTACIÓN ANTERIOR
+- Imagenes_Reemplazadas conservaba once columnas base y ocho metadatos agregados para el inventario. La clasificación dependía de origen_registro; faltaba una columna explícita tipo_registro.
+- handleGetReplacedImages() consultaba los registros, pero el modal solo mostraba una lista estática con miniaturas y acciones de restaurar/papelera. No existían vista de lista/cuadrícula, vista ampliada, descarga, movimiento ni creación de carpetas desde el modal.
+- handleDeleteReplacedImage() comprobaba referencias activas y referencias no interpretables y enviaba a papelera, pero no validaba que el archivo tuviera una única carpeta principal dentro del árbol Cortes.
+- handleDriveCommand() contiene operaciones genéricas de movimiento y creación de carpetas; no aplica las restricciones específicas requeridas por este modal y no se reutilizó.
+- getImageUrl() ya normaliza IDs y URLs de Drive para miniaturas. Se reutilizó para las tarjetas y la vista ampliada.
+- Services/write.js mantiene su propio flujo de creación de subcarpetas para cargas y no se modificó.
+- Services/feedback.js define el esquema existente de ActividadUsuario: timestamp, usuario, tipo de actividad, elemento asociado y detalle.
+
+3. CAMBIOS IMPLEMENTADOS
+- Services/admin.js (blob final e798020425950351ed17999e200745b3d54fd21c):
+  - Se añadió la columna tipo_registro al final de los metadatos existentes. Valores admitidos: sin_uso_detectado y reemplazada.
+  - ensureReplacedImagesInventoryColumns() mantiene intactas las once cabeceras base, agrega la nueva columna si falta y clasifica filas antiguas según origen_registro. Las filas auditoria_drive se clasifican como sin_uso_detectado; las demás filas históricas como reemplazada.
+  - getReplacedImageRecordType() valida que tipo_registro sea coherente con origen_registro y tipo_contenido antes de permitir operaciones sensibles.
+  - recordReplacedImage() registra explícitamente origen_registro = reemplazo y tipo_registro = reemplazada. handleSaveUnusedImagesInventory() registra tipo_registro = sin_uso_detectado.
+  - handleSaveUnusedImagesInventory() conserva ubicacion_original de cada inventario ya existente y actualiza ubicacion_actual después de auditorías posteriores; mover una imagen no destruye la ubicación inicial.
+  - Se añadieron las acciones ADMIN getCortesImageFolders, createCortesImageFolder, moveReplacedImage y getReplacedImageDownloadUrl, registradas también en api-config.js.
+  - La enumeración de carpetas incluye únicamente carpetas dentro de Cortes y comprueba una única carpeta principal. La creación valida nombre, duplicados y carpeta principal. El movimiento valida archivo y destino, MIME image/*, papelera, referencias activas/no interpretables y pertenencia al árbol Cortes.
+  - El movimiento actualiza ubicacion_actual, conserva ubicacion_original y restaura la ubicación anterior si falla la escritura de metadatos en Spreadsheet. Si la reversión falla, el error informa la ubicación real y se intenta sincronizar el dato de ubicación.
+  - La descarga entrega un enlace Drive export=download para el archivo validado; no cambia permisos ni comparte archivos.
+  - El envío a papelera admite registros sin uso confirmados e imágenes reemplazadas históricas/restablecidas. Se conserva la restauración histórica y no se realiza borrado irreversible.
+  - Se añadió registro de operaciones exitosas en ActividadUsuario con el usuario autenticado, fecha, tipo de acción, ID del registro y detalle de ubicación/resultado. El nombre se obtiene de Users en el servidor, no del payload del navegador.
+  - ActividadUsuario se excluyó de collectActiveDriveReferences() porque es una bitácora, no una fuente de referencias activas. Esto evita que el propio registro administrativo mantenga artificialmente una imagen como activa.
+- ui.js (blob final 5fd3db3e7eaa164312ff90de51e80e8e6a2c71f9):
+  - openReplacedImagesModal() conserva la consulta persistente desde Spreadsheet y agrega selector de vista de lista/cuadrícula.
+  - La vista de lista muestra icono y nombre; el icono permite abrir la vista ampliada. La cuadrícula muestra miniaturas clicables.
+  - Se añadió lightbox con zoom alternable, cierre por botón, clic fuera o tecla Esc.
+  - Cada registro permite preparar descarga, mover a la carpeta seleccionada, enviar a papelera y, solo para reemplazos, restaurar.
+  - El modal consulta carpetas de Cortes, permite crear subcarpetas dentro de la carpeta seleccionada y conserva la selección al actualizar.
+  - Se mantienen la fecha de detección/creación del inventario y la fecha/referencia de reemplazo. Los valores provenientes de Spreadsheet se insertan como texto, no como HTML.
+  - No se usa localStorage, sessionStorage ni IndexedDB para persistir el inventario.
+- index.html (blob final 1fe4e09430709e21cec57a81ba7fc84cf5911cf8): se reemplazó el modal anterior por controles de vista, destino, creación de carpeta y lightbox.
+- style.css (blob final c0ef889a1af30b0e63a3e259a56033448af63717): se añadieron estilos responsive para ambas vistas, miniaturas, controles y lightbox.
+- api-config.js (blob final 7f997f9a0e9f3cbc90c259a736153bc446a04a24): las cuatro nuevas acciones quedaron asignadas al servicio ADMIN.
+- No se modificaron add_cortes.html, Services/write.js ni main.js.
+
+4. SEGURIDAD Y EFECTOS COLATERALES REVISADOS
+- Todas las nuevas acciones se despachan por doPost(), que exige una sesión válida de desarrollador; las operaciones con auditoría reciben el contexto autenticado del servidor.
+- Los IDs, nombres, rutas y destinos enviados por el navegador no se consideran autorización. El servidor vuelve a consultar Spreadsheet y Drive.
+- No se permite mover o enviar a papelera una imagen con referencias activas, referencias no interpretables, MIME distinto de image/*, archivo en papelera, carpeta principal múltiple o ubicación fuera de Cortes.
+- Los registros sin uso que no estén confirmados en la última auditoría no permiten descargar, mover ni enviar a papelera desde el panel.
+- Las imágenes reemplazadas conservan la relación histórica de restauración; el tipo de inventario no puede restaurarse como si fuera un reemplazo.
+- La bitácora utiliza ID de registro (no el ID Drive aislado) como elemento asociado y ActividadUsuario se excluye de las referencias activas para evitar autorreferencias.
+- No se modificaron permisos de Drive, no se hizo público ningún archivo y no se usaron operaciones genéricas de movimiento fuera del árbol Cortes.
+
+5. PRUEBAS ESTÁTICAS Y AISLADAS
+- Sintaxis V8: Services/admin.js, ui.js (imports/exports retirados solo para comprobación de parseo) y api-config.js (exports retirados solo para comprobación de parseo) sin errores.
+- HTML: todos los IDs del modal son únicos y están presentes los controles requeridos.
+- CSS: llaves de apertura/cierre balanceadas.
+- Prueba aislada con Spreadsheet/Drive simulados:
+  - Backfill de filas antiguas a reemplazada y sin_uso_detectado.
+  - Alta de reemplazo e inventario con tipo_registro explícito.
+  - Movimiento de inventario y actualización de ubicacion_actual.
+  - Conservación de ubicacion_original tras movimiento y auditoría posterior.
+  - Consulta de enlace de descarga.
+  - Creación y listado de carpeta dentro de Cortes.
+  - Envío a papelera de ambos tipos.
+  - Bloqueo de movimiento por referencia activa.
+  - Bloqueo de destino externo a Cortes.
+  - Registro de move, download-link, create-folder y trash en ActividadUsuario; comprobación de que esa bitácora no se interpreta como referencia activa.
+- Prueba de reversión aislada: al simular un fallo de escritura de Spreadsheet después del movimiento, el archivo volvió a su carpeta original y la ubicación de Spreadsheet se restauró.
+- No se ejecutaron Apps Script, Google Sheets ni Google Drive reales.
+
+6. LIMITACIONES Y ESTADO
+- Implementación estática y pruebas simuladas completadas. La hoja productiva y la jerarquía real de Drive no fueron consultadas.
+- La vista previa depende de que los permisos actuales permitan leer la imagen. La descarga utiliza el endpoint de Drive y respeta los permisos existentes.
+- «Eliminar» significa enviar a la papelera; no se realiza borrado permanente.
+- No se publicó frontend, no se actualizó ni desplegó ADMIN en Apps Script. La validación live queda pendiente de autorización y despliegue posterior.
+- Esta iteración cubre las funciones solicitadas para el modal, pero no declara completada la especificación integral de gestión de imágenes que contenga otras funciones pendientes.
+================================================================================

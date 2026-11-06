@@ -47,7 +47,11 @@ function assertDeveloperSession(payload) {
 
     const role = String(userRow[3] || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     if (role !== "desarrollador") throw new Error("Acceso denegado: sesión no autorizada.");
-    return { userId: String(userId), role: "Desarrollador" };
+    return {
+        userId: String(userId),
+        role: "Desarrollador",
+        userName: String(userRow[6] || userRow[1] || "Usuario")
+    };
 }
 
 function extractDriveFileIds(value) {
@@ -71,7 +75,7 @@ function extractDriveFileId(value) {
 
 function collectActiveDriveReferences(includeLocations = true) {
     const excludedSheets = new Set([
-        SHEET_NAMES.IMAGENES_REEMPLAZADAS, "Logs", "ActiveSessions", "Users",
+        SHEET_NAMES.IMAGENES_REEMPLAZADAS, "Logs", "ActividadUsuario", "ActiveSessions", "Users",
         SHEET_NAMES.ADMIN_STATE, SHEET_NAMES.IDEMPOTENCIA
     ]);
     const references = new Map();
@@ -329,7 +333,7 @@ function doPost(e) {
         const request = JSON.parse(e.postData.contents);
         const { action, payload } = request;
 
-        if (action !== 'ping') assertDeveloperSession(payload);
+        const developerContext = action !== 'ping' ? assertDeveloperSession(payload) : null;
 
         logMessage("Inicio", `Iniciando acción administrativa: ${action}`);
 
@@ -396,13 +400,25 @@ function doPost(e) {
                 response = handleRecoverReplacedImage(payload, logMessage);
                 break;
             case 'deleteReplacedImage':
-                response = handleDeleteReplacedImage(payload, logMessage);
+                response = handleDeleteReplacedImage(payload, logMessage, developerContext);
                 break;
             case 'auditDriveImagesInCortes':
                 response = handleAuditDriveImagesInCortes(payload, logMessage);
                 break;
             case 'saveUnusedImagesInventory':
                 response = handleSaveUnusedImagesInventory(payload, logMessage);
+                break;
+            case 'getCortesImageFolders':
+                response = handleGetCortesImageFolders(payload, logMessage);
+                break;
+            case 'createCortesImageFolder':
+                response = handleCreateCortesImageFolder(payload, logMessage, developerContext);
+                break;
+            case 'moveReplacedImage':
+                response = handleMoveReplacedImage(payload, logMessage, developerContext);
+                break;
+            case 'getReplacedImageDownloadUrl':
+                response = handleGetReplacedImageDownloadUrl(payload, logMessage, developerContext);
                 break;
             default:
                 throw new Error(`La acción administrativa '${action}' es desconocida o no está soportada.`);
@@ -2609,7 +2625,8 @@ function ensureReplacedImagesInventoryColumns(sheet) {
         "fecha_deteccion",
         "url_visualizacion",
         "ubicacion_actual",
-        "ultima_auditoria_id"
+        "ultima_auditoria_id",
+        "tipo_registro"
     ];
     const lastColumn = Math.max(sheet.getLastColumn(), baseHeaders.length);
     const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0]
@@ -2623,6 +2640,25 @@ function ensureReplacedImagesInventoryColumns(sheet) {
             headers.push(header);
         }
     });
+
+    const lastRow = sheet.getLastRow();
+    const typeColumn = headers.indexOf("tipo_registro") + 1;
+    const originColumn = headers.indexOf("origen_registro") + 1;
+    if (lastRow > 1 && typeColumn > 0 && originColumn > 0) {
+        const typeValues = sheet.getRange(2, typeColumn, lastRow - 1, 1).getValues();
+        const originValues = sheet.getRange(2, originColumn, lastRow - 1, 1).getValues();
+        const idValues = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+        let hasChanges = false;
+        for (let i = 0; i < typeValues.length; i++) {
+            if (!typeValues[i][0] && idValues[i][0]) {
+                typeValues[i][0] = String(originValues[i][0] || "") === "auditoria_drive"
+                    ? "sin_uso_detectado"
+                    : "reemplazada";
+                hasChanges = true;
+            }
+        }
+        if (hasChanges) sheet.getRange(2, typeColumn, lastRow - 1, 1).setValues(typeValues);
+    }
     return headers;
 }
 
@@ -2639,6 +2675,7 @@ function recordReplacedImage(data) {
     }
     const fileName = file.getName();
     const sheet = getOrCreateReplacedImagesSheet();
+    const inventoryHeaders = ensureReplacedImagesInventoryColumns(sheet);
     const newId = "REP-" + Utilities.getUuid();
     const formattedDate = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
     const rowIndex = sheet.getLastRow() + 1;
@@ -2649,6 +2686,8 @@ function recordReplacedImage(data) {
             data.campo || "", driveId, fileName, data.imagenAnteriorUrl || "",
             data.sustituidaPorUrl || "", data.nombreVehiculo || "", "historica"
         ]]);
+        sheet.getRange(rowIndex, inventoryHeaders.indexOf("origen_registro") + 1).setValue("reemplazo");
+        sheet.getRange(rowIndex, inventoryHeaders.indexOf("tipo_registro") + 1).setValue("reemplazada");
         SpreadsheetApp.flush();
     } catch (writeError) {
         try {
@@ -2695,6 +2734,7 @@ function handleGetReplacedImages(payload, logMessage) {
             referencia_texto: row[9],
             estado: row[10] || "historica",
             origen_registro: valueAt(row, "origen_registro") || "reemplazo",
+            tipo_registro: valueAt(row, "tipo_registro") || (String(valueAt(row, "origen_registro") || "") === "auditoria_drive" ? "sin_uso_detectado" : "reemplazada"),
             tipo_mime: valueAt(row, "tipo_mime"),
             ubicacion_original: valueAt(row, "ubicacion_original"),
             fecha_creacion_drive: valueAt(row, "fecha_creacion_drive"),
@@ -2707,6 +2747,26 @@ function handleGetReplacedImages(payload, logMessage) {
 
     logMessage && logMessage("Repositorio de imágenes", `Se consultaron ${result.length} registros de imágenes.`);
     return { status: 'success', data: result.reverse() };
+}
+
+function getReplacedImageRecordType(row, headers) {
+    const typeIndex = headers.indexOf("tipo_registro");
+    const originIndex = headers.indexOf("origen_registro");
+    const origin = originIndex >= 0 ? String(row[originIndex] || "") : "";
+    const storedType = typeIndex >= 0 ? String(row[typeIndex] || "") : "";
+    const type = storedType || (origin === "auditoria_drive" ? "sin_uso_detectado" : "reemplazada");
+    const contentType = String(row[2] || "");
+
+    if (!["sin_uso_detectado", "reemplazada"].includes(type)) {
+        throw new Error("La clasificación del registro de imagen no es válida.");
+    }
+    if (type === "sin_uso_detectado" && (origin !== "auditoria_drive" || contentType !== "inventario_sin_uso")) {
+        throw new Error("La clasificación de inventario no coincide con el origen y tipo de contenido registrados.");
+    }
+    if (type === "reemplazada" && (origin === "auditoria_drive" || contentType === "inventario_sin_uso")) {
+        throw new Error("La clasificación de reemplazo no coincide con el origen y tipo de contenido registrados.");
+    }
+    return type;
 }
 
 /**
@@ -2735,9 +2795,9 @@ function handleRecoverReplacedImage(payload, logMessage) {
         }
         if (!repData) throw new Error("Registro de imagen reemplazada no encontrado.");
 
-        const originIndex = inventoryHeaders.indexOf("origen_registro");
-        if (originIndex >= 0 && String(repData[originIndex] || "") === "auditoria_drive") {
-            throw new Error("Esta imagen fue detectada por la auditoría y no tiene una relación de reemplazo que permita restaurarla.");
+        const recordType = getReplacedImageRecordType(repData, inventoryHeaders);
+        if (recordType !== "reemplazada") {
+            throw new Error("Esta imagen no tiene una relación de reemplazo que permita restaurarla.");
         }
 
         const tipoContenido = String(repData[2] || "").trim().toLowerCase();
@@ -2826,11 +2886,65 @@ function handleRecoverReplacedImage(payload, logMessage) {
 }
 
 /**
- * Handler: Eliminar permanentemente una imagen reemplazada
+ * Registra en ActividadUsuario las acciones de administración de imágenes ejecutadas por un desarrollador.
+ * El registro es informativo: un fallo al escribirlo no revierte una operación ya confirmada en Drive.
  */
-function handleDeleteReplacedImage(payload, logMessage) {
+function recordImageAdministrationActivity(developerContext, activityType, associatedId, details) {
+    try {
+        if (!developerContext || !developerContext.userId) return;
+        const sheet = getSpreadsheet().getSheetByName("ActividadUsuario");
+        if (!sheet) throw new Error("No se encontró la hoja ActividadUsuario.");
+
+        const lastRow = sheet.getLastRow();
+        const newRowNumber = lastRow + 1;
+        const lastColumn = Math.max(sheet.getLastColumn(), 7);
+        if (lastRow >= 2) {
+            const formulaRange = sheet.getRange(2, 1, 1, lastColumn);
+            const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastColumn);
+            formulaRange.copyTo(newRowRange);
+            if (lastColumn > 1) sheet.getRange(newRowNumber, 2, 1, lastColumn - 1).clearContent();
+        }
+
+        sheet.getRange(newRowNumber, 2, 1, 6).setValues([[
+            new Date().toISOString(),
+            developerContext.userId,
+            developerContext.userName || "Usuario",
+            activityType,
+            associatedId || "",
+            details || ""
+        ]]);
+        SpreadsheetApp.flush();
+    } catch (error) {
+        Logger.log("No se pudo registrar la acción de administración de imágenes: " + error.message);
+    }
+}
+
+/**
+ * Valida que un archivo o carpeta tenga una única carpeta principal dentro del árbol Cortes.
+ */
+function getSingleParentFolderInsideCortes(resource, rootFolderId) {
+    const parents = resource.getParents();
+    const validParents = [];
+    while (parents.hasNext()) {
+        const parent = parents.next();
+        if (parent.isTrashed()) throw new Error("Operación bloqueada: la carpeta principal está en la papelera de Google Drive.");
+        if (!isFolderInsideCortes(parent, rootFolderId)) {
+            throw new Error("Operación bloqueada: el recurso tiene una ubicación fuera del árbol «Cortes».");
+        }
+        validParents.push(parent);
+    }
+    if (validParents.length !== 1) {
+        throw new Error("Operación bloqueada: no se pudo confirmar una única carpeta principal dentro de «Cortes».");
+    }
+    return validParents[0];
+}
+
+/**
+ * Envía a la papelera una imagen administrada, conservando la posibilidad de recuperación.
+ */
+function handleDeleteReplacedImage(payload, logMessage, developerContext) {
     const idReemplazo = payload && payload.id_reemplazo;
-    if (!idReemplazo) throw new Error("ID de reemplazo requerido.");
+    if (!idReemplazo) throw new Error("ID de registro de imagen requerido.");
 
     const lock = LockService.getScriptLock();
     try { lock.waitLock(30000); }
@@ -2838,8 +2952,9 @@ function handleDeleteReplacedImage(payload, logMessage) {
 
     try {
         const sheetRep = getOrCreateReplacedImagesSheet();
-        const inventoryHeaders = ensureReplacedImagesInventoryColumns(sheetRep);
+        const headers = ensureReplacedImagesInventoryColumns(sheetRep);
         const rowsRep = sheetRep.getDataRange().getValues();
+        const column = name => headers.indexOf(name);
         let repRowIndex = -1;
         let repData = null;
         for (let r = 1; r < rowsRep.length; r++) {
@@ -2849,56 +2964,348 @@ function handleDeleteReplacedImage(payload, logMessage) {
                 break;
             }
         }
-        if (!repData) throw new Error("Registro histórico no encontrado.");
+        if (!repData) throw new Error("Registro de imagen no encontrado.");
 
-        const originIndex = inventoryHeaders.indexOf("origen_registro");
-        const origin = originIndex >= 0 ? String(repData[originIndex] || "") : "";
-        if (origin === "auditoria_drive" && String(repData[10] || "") !== "sin_uso_detectado") {
+        const type = getReplacedImageRecordType(repData, headers);
+        const status = String(repData[10] || "historica");
+        if (type === "sin_uso_detectado" && status !== "sin_uso_detectado") {
             throw new Error("La imagen ya no está confirmada como sin uso en la última auditoría y no puede enviarse a papelera desde este registro.");
+        }
+        if (type === "reemplazada" && !["historica", "restablecida"].includes(status)) {
+            throw new Error("El estado del registro histórico no permite enviar esta imagen a papelera.");
+        }
+        if (!["sin_uso_detectado", "reemplazada"].includes(type)) {
+            throw new Error("La clasificación del registro no permite administrar esta imagen.");
         }
 
         const driveId = extractDriveFileId(repData[5]) || extractDriveFileId(repData[7]);
-        if (!driveId) throw new Error("El registro histórico no contiene un ID de Drive válido.");
+        if (!driveId) throw new Error("El registro no contiene un ID de Drive válido.");
 
         const referenceSnapshot = collectActiveDriveReferences();
         const activeReferences = referenceSnapshot.references.get(driveId) || [];
         if (activeReferences.length) {
             const locations = activeReferences.slice(0, 5)
-                .map(ref => `${ref.sheet}, fila ${ref.row}, columna ${ref.column}`)
+                .map(ref => ref.sheet + ", fila " + ref.row + ", columna " + ref.column)
                 .join("; ");
-            throw new Error(`Operación bloqueada: la imagen mantiene referencias en uso en la Spreadsheet: ${locations}.`);
+            throw new Error("Operación bloqueada: la imagen mantiene referencias en uso en la Spreadsheet: " + locations + ".");
         }
         if (referenceSnapshot.unverifiableReferenceCount > 0) {
-            throw new Error(`Operación bloqueada: existen ${referenceSnapshot.unverifiableReferenceCount} referencias de Drive que no pudieron interpretarse. No es posible confirmar que el archivo esté sin uso.`);
+            throw new Error("Operación bloqueada: existen " + referenceSnapshot.unverifiableReferenceCount + " referencias de Drive que no pudieron interpretarse. No es posible confirmar que el archivo esté sin uso.");
         }
 
         const file = DriveApp.getFileById(driveId);
+        if (file.isTrashed()) throw new Error("La imagen ya se encuentra en la papelera de Google Drive.");
         if (!String(file.getMimeType()).startsWith("image/")) {
-            throw new Error("El archivo asociado al registro no es una imagen; no se enviará a papelera desde este panel.");
+            throw new Error("El archivo asociado al registro no es una imagen.");
         }
-        const wasAlreadyTrashed = file.isTrashed();
-        if (!wasAlreadyTrashed) file.setTrashed(true);
+        const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+        const sourceFolder = getSingleParentFolderInsideCortes(file, rootFolder.getId());
+        const sourcePath = getFolderPathInsideCortes(sourceFolder, rootFolder.getId());
+
+        file.setTrashed(true);
         try {
             sheetRep.getRange(repRowIndex, 11).setValue("en_papelera");
             SpreadsheetApp.flush();
         } catch (historyError) {
-            if (!wasAlreadyTrashed) {
-                try { file.setTrashed(false); }
-                catch (restoreError) {
-                    throw new Error(`El archivo fue enviado a papelera, falló la actualización del historial y no pudo revertirse: ${historyError.message}; ${restoreError.message}`);
-                }
+            try {
+                file.setTrashed(false);
+                sheetRep.getRange(repRowIndex, 11).setValue(status);
+                SpreadsheetApp.flush();
+            } catch (restoreError) {
+                throw new Error("La imagen fue enviada a papelera, falló la actualización del historial y no pudo revertirse completamente: " + historyError.message + "; " + restoreError.message);
             }
-            throw new Error(`No se pudo actualizar el estado histórico; la operación fue revertida: ${historyError.message}`);
+            throw new Error("No se pudo actualizar el estado del registro; la operación fue revertida: " + historyError.message);
         }
 
-        logMessage && logMessage("Imágenes Reemplazadas", `La imagen histórica '${driveId}' fue enviada a la papelera de Google Drive.`);
+        recordImageAdministrationActivity(developerContext, "admin_image_trash", idReemplazo,
+            "Imagen " + file.getName() + " enviada a papelera desde " + sourcePath + "; resultado: correcto.");
+        logMessage && logMessage("Inventario e historial de imágenes", "La imagen " + driveId + " fue enviada a la papelera de Google Drive.");
         return {
             status: "success",
-            message: "La imagen histórica fue enviada a la papelera de Google Drive. Esta acción no equivale a una eliminación irreversible."
+            message: "La imagen fue enviada a la papelera de Google Drive. Esta acción no equivale a una eliminación irreversible."
         };
     } finally {
         lock.releaseLock();
     }
+}
+
+/**
+ * Devuelve las carpetas disponibles dentro del árbol autorizado Cortes.
+ */
+function handleGetCortesImageFolders(payload, logMessage) {
+    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const folders = [];
+    const visited = new Set();
+    const stack = [{ folder: rootFolder, path: rootFolder.getName(), parentId: "" }];
+
+    while (stack.length) {
+        const current = stack.pop();
+        const folderId = current.folder.getId();
+        if (visited.has(folderId)) continue;
+        visited.add(folderId);
+        folders.push({
+            id: folderId,
+            name: current.folder.getName(),
+            path: current.path,
+            parentId: current.parentId
+        });
+
+        const children = current.folder.getFolders();
+        while (children.hasNext()) {
+            const child = children.next();
+            if (child.isTrashed()) continue;
+            getSingleParentFolderInsideCortes(child, rootFolder.getId());
+            stack.push({
+                folder: child,
+                path: current.path + "/" + child.getName(),
+                parentId: folderId
+            });
+        }
+    }
+
+    folders.sort((a, b) => a.path.localeCompare(b.path));
+    logMessage && logMessage("Carpetas de Cortes", "Se consultaron " + folders.length + " carpetas autorizadas.");
+    return { status: "success", rootFolderId: rootFolder.getId(), folders: folders };
+}
+
+/**
+ * Crea una carpeta únicamente dentro del árbol Cortes.
+ */
+function handleCreateCortesImageFolder(payload, logMessage, developerContext) {
+    const name = String(payload && payload.name || "").trim();
+    const parentFolderId = String(payload && payload.parentFolderId || DRIVE_FOLDER_ID).trim();
+    if (!name) throw new Error("Escribe el nombre de la carpeta.");
+    if (name.length > 100 || /[\\/]/.test(name) || name === "." || name === "..") {
+        throw new Error("El nombre de la carpeta no es válido.");
+    }
+
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); }
+    catch (e) { throw new Error("No se pudo bloquear la creación de la carpeta. Intenta nuevamente."); }
+
+    try {
+        const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+        const parentFolder = DriveApp.getFolderById(parentFolderId);
+        if (parentFolder.isTrashed()) throw new Error("No se puede crear una carpeta dentro de una ubicación que está en la papelera.");
+        if (parentFolder.getId() !== rootFolder.getId()) {
+            getSingleParentFolderInsideCortes(parentFolder, rootFolder.getId());
+        }
+        const siblings = parentFolder.getFoldersByName(name);
+        if (siblings.hasNext()) {
+            throw new Error("Ya existe una carpeta con ese nombre en la ubicación seleccionada.");
+        }
+        const created = parentFolder.createFolder(name);
+        getSingleParentFolderInsideCortes(created, rootFolder.getId());
+        const path = getFolderPathInsideCortes(created, rootFolder.getId());
+        recordImageAdministrationActivity(developerContext, "admin_image_folder_create", created.getId(),
+            "Carpeta creada: " + path + "; carpeta principal: " + getFolderPathInsideCortes(parentFolder, rootFolder.getId()) + "; resultado: correcto.");
+        logMessage && logMessage("Carpetas de Cortes", "Se creó la carpeta " + path + ".");
+        return { status: "success", folderId: created.getId(), folderName: created.getName(), folderPath: path };
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+/**
+ * Mueve una imagen registrada a otra carpeta del árbol Cortes y actualiza su ubicación.
+ */
+function handleMoveReplacedImage(payload, logMessage, developerContext) {
+    const idReemplazo = payload && payload.id_reemplazo;
+    const targetFolderId = String(payload && payload.targetFolderId || "").trim();
+    if (!idReemplazo || !targetFolderId) throw new Error("Selecciona el registro de imagen y una carpeta destino.");
+
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); }
+    catch (e) { throw new Error("No se pudo bloquear el movimiento de la imagen. Intenta nuevamente."); }
+
+    try {
+        const sheet = getOrCreateReplacedImagesSheet();
+        const headers = ensureReplacedImagesInventoryColumns(sheet);
+        const rows = sheet.getDataRange().getValues();
+        const column = name => headers.indexOf(name);
+        let rowIndex = -1;
+        let row = null;
+        for (let r = 1; r < rows.length; r++) {
+            if (String(rows[r][0]) === String(idReemplazo)) {
+                rowIndex = r + 1;
+                row = rows[r];
+                break;
+            }
+        }
+        if (!row) throw new Error("Registro de imagen no encontrado.");
+
+        const type = getReplacedImageRecordType(row, headers);
+        const status = String(row[10] || "historica");
+        if (type === "sin_uso_detectado" && status !== "sin_uso_detectado") {
+            throw new Error("La imagen ya no está confirmada como sin uso en la última auditoría; no puede moverse desde este registro.");
+        }
+        if (type === "reemplazada" && !["historica", "restablecida"].includes(status)) {
+            throw new Error("El estado del registro histórico no permite mover esta imagen.");
+        }
+        if (!["sin_uso_detectado", "reemplazada"].includes(type)) {
+            throw new Error("La clasificación del registro no permite mover esta imagen.");
+        }
+
+        const driveId = extractDriveFileId(row[5]) || extractDriveFileId(row[7]);
+        if (!driveId) throw new Error("El registro no contiene un ID de Drive válido.");
+        const referenceSnapshot = collectActiveDriveReferences();
+        if (referenceSnapshot.references.has(driveId)) {
+            throw new Error("Operación bloqueada: la imagen tiene referencias activas en la Spreadsheet.");
+        }
+        if (referenceSnapshot.unverifiableReferenceCount > 0) {
+            throw new Error("Operación bloqueada: existen referencias de Drive que no pudieron interpretarse; no es posible confirmar que la imagen esté sin uso.");
+        }
+
+        const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+        const file = DriveApp.getFileById(driveId);
+        if (file.isTrashed()) throw new Error("La imagen está en la papelera de Google Drive.");
+        if (!String(file.getMimeType()).startsWith("image/")) throw new Error("El archivo asociado al registro ya no es una imagen.");
+        const sourceFolder = getSingleParentFolderInsideCortes(file, rootFolder.getId());
+        const targetFolder = DriveApp.getFolderById(targetFolderId);
+        if (targetFolder.isTrashed()) throw new Error("La carpeta destino está en la papelera de Google Drive.");
+        if (targetFolder.getId() !== rootFolder.getId()) {
+            getSingleParentFolderInsideCortes(targetFolder, rootFolder.getId());
+        }
+
+        const sourcePath = getFolderPathInsideCortes(sourceFolder, rootFolder.getId());
+        const targetPath = getFolderPathInsideCortes(targetFolder, rootFolder.getId());
+        const metadata = {
+            original: column("ubicacion_original") + 1,
+            current: column("ubicacion_actual") + 1,
+            mime: column("tipo_mime") + 1,
+            visual: column("url_visualizacion") + 1,
+            type: column("tipo_registro") + 1
+        };
+        const previousMetadata = {
+            original: row[metadata.original - 1] || "",
+            current: row[metadata.current - 1] || "",
+            mime: row[metadata.mime - 1] || "",
+            visual: row[metadata.visual - 1] || "",
+            type: row[metadata.type - 1] || type
+        };
+        const writeMetadata = (currentPath) => {
+            if (!previousMetadata.original) sheet.getRange(rowIndex, metadata.original).setValue(sourcePath);
+            sheet.getRange(rowIndex, metadata.current).setValue(currentPath);
+            if (!previousMetadata.mime) sheet.getRange(rowIndex, metadata.mime).setValue(file.getMimeType());
+            if (!previousMetadata.visual) sheet.getRange(rowIndex, metadata.visual).setValue("https://lh3.googleusercontent.com/d/" + driveId);
+            sheet.getRange(rowIndex, metadata.type).setValue(type);
+            SpreadsheetApp.flush();
+        };
+        const restoreMetadata = () => {
+            sheet.getRange(rowIndex, metadata.original).setValue(previousMetadata.original);
+            sheet.getRange(rowIndex, metadata.current).setValue(previousMetadata.current);
+            sheet.getRange(rowIndex, metadata.mime).setValue(previousMetadata.mime);
+            sheet.getRange(rowIndex, metadata.visual).setValue(previousMetadata.visual);
+            sheet.getRange(rowIndex, metadata.type).setValue(previousMetadata.type);
+            SpreadsheetApp.flush();
+        };
+
+        if (sourceFolder.getId() === targetFolder.getId()) {
+            writeMetadata(targetPath);
+            return { status: "success", message: "La imagen ya se encontraba en la carpeta seleccionada.", folderPath: targetPath };
+        }
+
+        try {
+            file.moveTo(targetFolder);
+            const movedParent = getSingleParentFolderInsideCortes(file, rootFolder.getId());
+            if (movedParent.getId() !== targetFolder.getId()) {
+                throw new Error("Drive no confirmó la ubicación destino solicitada.");
+            }
+        } catch (moveError) {
+            try {
+                const currentParent = getSingleParentFolderInsideCortes(file, rootFolder.getId());
+                if (currentParent.getId() !== sourceFolder.getId()) file.moveTo(sourceFolder);
+                const restoredParent = getSingleParentFolderInsideCortes(file, rootFolder.getId());
+                if (restoredParent.getId() !== sourceFolder.getId()) throw new Error("Drive no confirmó la ubicación anterior.");
+            } catch (rollbackError) {
+                throw new Error("Falló el movimiento y tampoco pudo confirmarse la reversión: " + moveError.message + "; " + rollbackError.message);
+            }
+            throw new Error("No se pudo completar el movimiento; se conservó la ubicación anterior: " + moveError.message);
+        }
+
+        try {
+            writeMetadata(targetPath);
+        } catch (historyError) {
+            let driveRollbackError = null;
+            try {
+                file.moveTo(sourceFolder);
+                const restoredParent = getSingleParentFolderInsideCortes(file, rootFolder.getId());
+                if (restoredParent.getId() !== sourceFolder.getId()) throw new Error("Drive no confirmó la ubicación anterior.");
+            } catch (rollbackError) {
+                driveRollbackError = rollbackError;
+            }
+
+            if (driveRollbackError) {
+                try {
+                    sheet.getRange(rowIndex, metadata.current).setValue(targetPath);
+                    SpreadsheetApp.flush();
+                } catch (syncError) {}
+                throw new Error("La imagen se movió a " + targetPath + ", pero falló la actualización de Spreadsheet y tampoco pudo revertirse: " + historyError.message + "; " + driveRollbackError.message);
+            }
+
+            try {
+                restoreMetadata();
+            } catch (metadataRollbackError) {
+                try {
+                    sheet.getRange(rowIndex, metadata.current).setValue(sourcePath);
+                    SpreadsheetApp.flush();
+                } catch (syncError) {}
+                throw new Error("El movimiento fue revertido en Drive, pero no se pudo restaurar toda la metadata de Spreadsheet: " + historyError.message + "; " + metadataRollbackError.message);
+            }
+            throw new Error("No se pudo actualizar la ubicación en Spreadsheet; el movimiento fue revertido: " + historyError.message);
+        }
+
+        recordImageAdministrationActivity(developerContext, "admin_image_move", idReemplazo,
+            "Imagen " + file.getName() + " movida de " + sourcePath + " a " + targetPath + "; resultado: correcto.");
+        logMessage && logMessage("Inventario e historial de imágenes", "La imagen " + driveId + " se movió de " + sourcePath + " a " + targetPath + ".");
+        return { status: "success", message: "Imagen movida correctamente.", folderPath: targetPath };
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+/**
+ * Devuelve un enlace de descarga para una imagen administrada, sin modificar sus permisos.
+ */
+function handleGetReplacedImageDownloadUrl(payload, logMessage, developerContext) {
+    const idReemplazo = payload && payload.id_reemplazo;
+    if (!idReemplazo) throw new Error("ID de registro de imagen requerido.");
+    const sheet = getOrCreateReplacedImagesSheet();
+    const headers = ensureReplacedImagesInventoryColumns(sheet);
+    const rows = sheet.getDataRange().getValues();
+    const column = name => headers.indexOf(name);
+    let row = null;
+    for (let r = 1; r < rows.length; r++) {
+        if (String(rows[r][0]) === String(idReemplazo)) {
+            row = rows[r];
+            break;
+        }
+    }
+    if (!row) throw new Error("Registro de imagen no encontrado.");
+
+    const type = getReplacedImageRecordType(row, headers);
+    const status = String(row[10] || "historica");
+    if (type === "sin_uso_detectado" && status !== "sin_uso_detectado") {
+        throw new Error("La imagen ya no está confirmada como sin uso en la última auditoría.");
+    }
+    if (type === "reemplazada" && !["historica", "restablecida"].includes(status)) {
+        throw new Error("El estado del registro histórico no permite descargar esta imagen.");
+    }
+
+    const driveId = extractDriveFileId(row[5]) || extractDriveFileId(row[7]);
+    if (!driveId) throw new Error("El registro no contiene un ID de Drive válido.");
+    const file = DriveApp.getFileById(driveId);
+    if (file.isTrashed()) throw new Error("La imagen está en la papelera de Google Drive.");
+    if (!String(file.getMimeType()).startsWith("image/")) throw new Error("El archivo asociado al registro ya no es una imagen.");
+    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    getSingleParentFolderInsideCortes(file, rootFolder.getId());
+
+    const downloadUrl = "https://drive.google.com/uc?export=download&id=" + encodeURIComponent(driveId);
+    const folderPath = getFolderPathInsideCortes(getSingleParentFolderInsideCortes(file, rootFolder.getId()), rootFolder.getId());
+    recordImageAdministrationActivity(developerContext, "admin_image_download_link", idReemplazo,
+        "Enlace de descarga generado para " + file.getName() + " desde " + folderPath + "; resultado: enlace preparado.");
+    logMessage && logMessage("Inventario e historial de imágenes", "Se generó un enlace de descarga para " + driveId + ".");
+    return { status: "success", downloadUrl: downloadUrl, fileName: file.getName() };
 }
 
 /**
@@ -3120,6 +3527,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
             if (!rowNumber) setField("id_reemplazo", `INV-${item.fileId}`);
             setField("fecha_reemplazo", "");
             setField("tipo_contenido", "inventario_sin_uso");
+            setField("tipo_registro", "sin_uso_detectado");
             setField("registro_id", "");
             setField("campo", "");
             setField("archivo_drive_id", item.fileId);
@@ -3130,7 +3538,10 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
             setField("estado", "sin_uso_detectado");
             setField("origen_registro", "auditoria_drive");
             setField("tipo_mime", item.mimeType);
-            setField("ubicacion_original", item.folderPath || "Cortes");
+            const previousOriginalLocation = rowNumber
+                ? String(row[column("ubicacion_original") - 1] || "")
+                : "";
+            setField("ubicacion_original", previousOriginalLocation || item.folderPath || "Cortes");
             setField("fecha_creacion_drive", item.createdAt);
             setField("fecha_deteccion", detectedAt);
             setField("url_visualizacion", `https://lh3.googleusercontent.com/d/${item.fileId}`);

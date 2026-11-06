@@ -2879,3 +2879,296 @@ body.dark-mode #dev-tools-modal .dev-tools-card {
         max-height: 60vh;
     }
 }
+
+
+/* ==========================================================================
+   INVENTARIO E HISTORIAL DE IMÁGENES — VISTAS Y ADMINISTRACIÓN
+   ========================================================================== */
+#replaced-images-modal .replaced-images-modal-content {
+    width: 96%;
+    max-width: 1120px;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+#replaced-images-modal .replaced-images-description {
+    margin: 0 0 12px;
+    color: var(--text-disabled);
+    font-size: 0.88rem;
+}
+.replaced-images-toolbar,
+.replaced-images-folder-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.replaced-images-toolbar > input {
+    flex: 1 1 220px;
+    min-width: 150px;
+}
+.replaced-images-view-switch {
+    display: flex;
+    gap: 4px;
+}
+.replaced-images-view-switch button[aria-pressed="true"] {
+    border-color: var(--accent-color);
+    background: var(--accent-color);
+    color: #fff;
+}
+.replaced-images-folder-toolbar label {
+    color: var(--text-color);
+    font-size: 0.86rem;
+    font-weight: 600;
+}
+.replaced-images-folder-toolbar select {
+    flex: 1 1 220px;
+    min-width: 160px;
+}
+.replaced-images-folder-toolbar input {
+    flex: 1 1 170px;
+    min-width: 140px;
+}
+.replaced-images-folder-status {
+    min-height: 18px;
+    margin: -4px 0 8px;
+    color: var(--text-disabled);
+    font-size: 0.78rem;
+}
+.replaced-images-list {
+    min-height: 140px;
+    max-height: 58vh;
+    overflow: auto;
+    padding: 4px 5px 8px 1px;
+}
+.replaced-images-list.view-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    align-content: start;
+    gap: 12px;
+}
+.replaced-images-list.view-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.replaced-image-card {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    background: var(--card-bg);
+}
+.replaced-image-preview {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 7px;
+    background: var(--bg-color);
+    cursor: zoom-in;
+}
+.replaced-image-preview img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+.replaced-image-info {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    font-size: 0.82rem;
+}
+.replaced-image-name {
+    width: 100%;
+    overflow-wrap: anywhere;
+    color: var(--text-color);
+}
+.replaced-image-type {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 7px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+.replaced-image-type.is-unused {
+    color: #8a6200;
+    background: rgba(224, 168, 0, 0.16);
+}
+.replaced-image-type.is-replaced {
+    color: #1769aa;
+    background: rgba(23, 105, 170, 0.13);
+}
+.replaced-image-details,
+.replaced-image-status {
+    color: var(--text-disabled);
+    overflow-wrap: anywhere;
+}
+.replaced-image-status {
+    font-weight: 600;
+}
+.replaced-image-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: auto;
+}
+.replaced-image-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    padding: 6px 8px;
+    font-size: 0.76rem;
+    white-space: nowrap;
+}
+.replaced-image-action:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+.replaced-images-list.view-list .replaced-image-card-list {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
+}
+.replaced-image-list-icon {
+    display: flex;
+    flex: 0 0 42px;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--bg-color);
+    color: var(--accent-color);
+    font-size: 1.2rem;
+    cursor: zoom-in;
+}
+.replaced-images-list.view-list .replaced-image-info {
+    flex: 1 1 auto;
+}
+.replaced-images-list.view-list .replaced-image-actions {
+    flex: 0 0 auto;
+    margin-top: 0;
+    justify-content: flex-end;
+}
+.replaced-images-empty {
+    grid-column: 1 / -1;
+    padding: 24px 12px;
+    color: var(--text-disabled);
+    text-align: center;
+}
+.replaced-image-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 2800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.88);
+}
+.replaced-image-lightbox-content {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    max-width: 96vw;
+    max-height: 94vh;
+    color: #fff;
+}
+.replaced-image-lightbox-content img {
+    display: block;
+    max-width: 92vw;
+    max-height: 78vh;
+    object-fit: contain;
+    cursor: zoom-in;
+    transform: scale(1);
+    transition: transform 0.18s ease;
+}
+.replaced-image-lightbox-content img.is-zoomed {
+    transform: scale(1.8);
+    cursor: zoom-out;
+}
+.replaced-image-lightbox-content p {
+    margin: 0;
+    max-width: 90vw;
+    overflow-wrap: anywhere;
+    text-align: center;
+}
+.replaced-image-lightbox-hint {
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 0.76rem;
+    text-align: center;
+}
+.replaced-image-lightbox-close {
+    position: absolute;
+    top: -14px;
+    right: -14px;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    border: 0;
+    border-radius: 50%;
+    background: #fff;
+    color: #222;
+    cursor: pointer;
+}
+@media (max-width: 680px) {
+    #replaced-images-modal .replaced-images-modal-content {
+        width: 96%;
+        max-height: 94vh;
+        padding: 16px;
+    }
+    .replaced-images-toolbar,
+    .replaced-images-folder-toolbar {
+        align-items: stretch;
+    }
+    .replaced-images-toolbar > input,
+    .replaced-images-folder-toolbar select,
+    .replaced-images-folder-toolbar input,
+    .replaced-images-folder-toolbar button,
+    .replaced-images-toolbar > button {
+        width: 100%;
+        flex-basis: 100%;
+    }
+    .replaced-images-view-switch {
+        width: 100%;
+    }
+    .replaced-images-view-switch button {
+        flex: 1;
+    }
+    .replaced-images-list.view-grid {
+        grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+        gap: 8px;
+    }
+    .replaced-images-list.view-list .replaced-image-card-list {
+        flex-wrap: wrap;
+    }
+    .replaced-images-list.view-list .replaced-image-actions {
+        flex-basis: 100%;
+        justify-content: flex-start;
+    }
+    .replaced-image-action {
+        flex: 1 1 auto;
+    }
+}

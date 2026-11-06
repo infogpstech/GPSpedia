@@ -411,23 +411,46 @@
     </div>
 </div>
 
-<!-- MODAL DE GESTIÓN Y RECUPERACIÓN DE IMÁGENES REEMPLAZADAS (TAREA 2) -->
+<!-- MODAL DE GESTIÓN DEL INVENTARIO E HISTORIAL DE IMÁGENES -->
 <div id="replaced-images-modal" class="info-modal" style="display: none; z-index: 2600;">
-    <div class="info-modal-content" style="max-width: 900px; width: 95%;">
+    <div class="info-modal-content replaced-images-modal-content">
         <span class="info-close-btn" id="close-replaced-images-modal">&times;</span>
         <h2><i class="fa-solid fa-images"></i> Inventario e Historial de Imágenes</h2>
-        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
-            Consulta las imágenes sin uso detectadas por la auditoría y el historial de imágenes reemplazadas. Los registros se leen desde la Spreadsheet; no necesitas ejecutar una auditoría para consultar el inventario guardado.
+        <p class="replaced-images-description">
+            Administra imágenes sin uso detectadas y archivos reemplazados. La información se consulta desde Spreadsheet y las operaciones de Drive se limitan al árbol «Cortes».
         </p>
 
-        <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
-            <input type="text" id="filter-replaced-images-input" placeholder="Filtrar por archivo, ubicación o ID..." class="dev-input" style="flex: 1; min-width: 200px; padding: 6px 10px;">
-            <button id="btn-refresh-replaced-images" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85em;"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
+        <div class="replaced-images-toolbar">
+            <input type="text" id="filter-replaced-images-input" placeholder="Filtrar por archivo, ubicación o ID..." class="dev-input">
+            <div class="replaced-images-view-switch" role="group" aria-label="Tipo de vista">
+                <button type="button" id="btn-replaced-view-list" class="btn btn-secondary" aria-pressed="false" title="Vista de lista"><i class="fa-solid fa-list"></i> Lista</button>
+                <button type="button" id="btn-replaced-view-grid" class="btn btn-secondary" aria-pressed="true" title="Vista de cuadrícula"><i class="fa-solid fa-grip"></i> Cuadrícula</button>
+            </div>
+            <button type="button" id="btn-refresh-replaced-images" class="btn btn-secondary"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
         </div>
 
-        <div id="replaced-images-list-container" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
-            <div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Cargando inventario e historial...</div>
+        <div class="replaced-images-folder-toolbar">
+            <label for="replaced-images-target-folder">Mover a carpeta:</label>
+            <select id="replaced-images-target-folder" class="dev-input">
+                <option value="">Cargando carpetas...</option>
+            </select>
+            <input type="text" id="replaced-images-new-folder-name" class="dev-input" placeholder="Nombre de la nueva carpeta">
+            <button type="button" id="btn-create-replaced-images-folder" class="btn btn-primary"><i class="fa-solid fa-folder-plus"></i> Crear carpeta</button>
         </div>
+        <div id="replaced-images-folder-status" class="replaced-images-folder-status" aria-live="polite"></div>
+
+        <div id="replaced-images-list-container" class="replaced-images-list view-grid" aria-live="polite">
+            <div class="replaced-images-empty"><i class="fa-solid fa-spinner fa-spin"></i> Cargando inventario e historial...</div>
+        </div>
+    </div>
+</div>
+
+<div id="replaced-image-lightbox" class="replaced-image-lightbox" style="display: none;" role="dialog" aria-modal="true" aria-label="Vista ampliada de imagen">
+    <div id="replaced-image-lightbox-content" class="replaced-image-lightbox-content">
+        <button type="button" id="replaced-image-lightbox-close" class="replaced-image-lightbox-close" aria-label="Cerrar vista ampliada"><i class="fa-solid fa-xmark"></i></button>
+        <img id="replaced-image-lightbox-image" src="" alt="Imagen ampliada">
+        <p id="replaced-image-lightbox-title"></p>
+        <span class="replaced-image-lightbox-hint">Pulsa la imagen para acercar o alejar. Pulsa fuera o Esc para cerrar.</span>
     </div>
 </div>
 

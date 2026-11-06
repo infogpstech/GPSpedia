@@ -2719,3 +2719,49 @@ VERIFICACIÓN
 - No se desplegó Apps Script, no se publicaron archivos frontend, no se consultó ni modificó la Spreadsheet real y no se alteraron permisos de Drive.
 - Pendiente validación funcional tras despliegue.
 ================================================================================
+
+
+
+================================================================================
+CAMBIO — GESTIÓN AVANZADA DEL INVENTARIO E HISTORIAL DE IMÁGENES DESDE EL MODAL
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: CÓDIGO PREPARADO; SIN PUBLICACIÓN DE FRONTEND NI DEPLOYMENT ADMIN.
+
+ARCHIVOS DE CÓDIGO
+- Services/admin.js: tipo_registro, migración de filas, validación de clasificación, descarga, movimiento, creación/listado de carpetas, papelera segura, rollback de movimiento y bitácora ActividadUsuario.
+- ui.js: vistas lista/cuadrícula, previsualización/lightbox, descarga, movimiento, creación de carpetas, papelera y restauración histórica.
+- index.html: controles del modal, selector de carpeta y lightbox.
+- style.css: estilos responsive de vistas, tarjetas, miniaturas y lightbox.
+- api-config.js: nuevas acciones ADMIN getCortesImageFolders, createCortesImageFolder, moveReplacedImage y getReplacedImageDownloadUrl.
+
+DOCUMENTACIÓN
+- Auditoría.txt: hallazgos, decisiones, seguridad, pruebas y límites.
+- Tareas.txt: cierre de esta subtarea y publicación/validación live pendiente.
+- ChangesLogs.txt: registro de archivos, respaldos y blobs finales.
+- checkpoint.md: estado final antes del commit.
+
+RESPALDOS EXACTOS PREVIOS
+- Services/admin.js: 8878bf38d375e16e609fc91ec609c0c605fbb182
+- ui.js: 224249882edf86c86889dcaa17fc0f203d2c11ad
+- index.html: 31df5e60af5e80eab3e60de6a4ded5cf6f81ee9f
+- style.css: 1f459058d5d418ab598917d60fa9c12489aa4de0
+- api-config.js: de3df6cfab8a7768b197b3afd2b9da9227ca8d94
+- Auditoría.txt: 83b9c3a8ac53acd3115d7e00955b7504bcd3e396
+- ChangesLogs.txt: 537246f7573420b379b48d80fee54b5873b2c04f
+- Tareas.txt: 30214a4bf50ad0be74e7748a350b1edbc2d9f851
+- checkpoint.md: 21a3a89e51c784379836eb227b7b6899ba00fb92
+
+BLOBS FINALES DE CÓDIGO
+- Services/admin.js: e798020425950351ed17999e200745b3d54fd21c
+- ui.js: 5fd3db3e7eaa164312ff90de51e80e8e6a2c71f9
+- index.html: 1fe4e09430709e21cec57a81ba7fc84cf5911cf8
+- style.css: c0ef889a1af30b0e63a3e259a56033448af63717
+- api-config.js: 7f997f9a0e9f3cbc90c259a736153bc446a04a24
+
+VERIFICACIÓN
+- Sintaxis V8 correcta en Services/admin.js, ui.js y api-config.js.
+- IDs HTML únicos; controles del modal presentes; llaves CSS balanceadas.
+- Pruebas aisladas con servicios simulados: clasificación/migración, inventario e historial, mover, descargar, crear/listar carpetas, papelera, bloqueo por referencias activas, bloqueo de destino externo, preservación de ubicación original, bitácora y reversión ante fallo de escritura.
+- No se ejecutó Apps Script, no se actualizó el deployment ADMIN, no se publicó frontend, no se leyó ni modificó Spreadsheet/Drive reales y no se cambiaron permisos.
+- Se agruparán los nueve archivos modificados en exactamente un commit sobre GPSpedia2.2.5_work, sin merge ni cambios en la rama protegida.
+================================================================================
