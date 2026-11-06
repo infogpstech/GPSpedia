@@ -3641,3 +3641,78 @@ Si columna 43 ya tiene encabezado VIN pero contiene exclusivamente valores escal
 PUBLICACIÓN
 Un único commit en GPSpedia2.2.5_work mediante Git Database API; no modificar GPSpedia2.2.5, no hacer merge ni desplegar.
 ================================================================================
+
+================================================================================
+# CHECKPOINT INICIAL — GENERACIÓN Y FORMATO DE IDENTIFICADORES DE CORTES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: 94c2d04ef327398143b45d3e0dd32170ea746399
+Rama base protegida: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ALCANCE
+Auditar e implementar, si la evidencia técnica permite hacerlo con seguridad, la generación de IDs de Cortes sin depender de copiar fórmulas de filas anteriores. Preservar íntegramente los IDs existentes, su valor, prefijo, ceros a la izquierda y representación visible. Investigar la viabilidad de ampliar la capacidad en un dígito, sin cambiar el formato actual ni introducir longitudes mixtas sin compatibilidad demostrada.
+
+ESTADO INICIAL OBSERVADO
+- La tarea 7.1–7.7 está pendiente en Tareas.txt.
+- El último commit de trabajo conocido es 94c2d04ef327398143b45d3e0dd32170ea746399.
+- La comparación de referencias confirmó que GPSpedia2.2.5_work apunta a ese commit y que GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- No se ha auditado todavía el flujo de creación de filas, fórmulas, escrituras, consumidores de ID ni referencias cruzadas.
+- No se ha modificado código ni Spreadsheet; no se ha desplegado ni ejecutado ninguna acción productiva.
+
+ARCHIVOS/FUNCIONALIDADES A AUDITAR
+Services/write.js, Services/admin.js, Services/catalog.js, add_cortes.html, ui.js, api-config.js y cualquier otro consumidor real de ID detectado durante el inventario; además Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md para la documentación.
+
+RIESGOS Y DEPENDENCIAS
+Preservar la identidad histórica de cada fila; no asumir que el ID equivale a ROW()-1; auditar inserciones, borrados, filas vacías/intermedias, concurrencia, ordenamiento, fórmulas, validaciones, referencias en hojas relacionadas, búsqueda y enlaces. No modificar Spreadsheet productiva ni desplegar. No ampliar el formato sin pruebas aisladas y plan de reversión. Los respaldos exactos deberán generarse antes de editar archivos.
+
+FASE
+Checkpoint inicial registrado antes de la auditoría. Siguiente acción: auditoría completa y registro de hallazgos en Auditoría.txt antes de cualquier cambio de código.
+================================================================================
+
+================================================================================
+# CHECKPOINT FINAL — AUDITORÍA DE GENERACIÓN Y FORMATO DE IDENTIFICADORES DE CORTES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD anterior a esta tarea: 94c2d04ef327398143b45d3e0dd32170ea746399
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+
+ESTADO
+AUDITORÍA ESTÁTICA COMPLETADA; IMPLEMENTACIÓN BLOQUEADA HASTA VALIDAR UNA COPIA AISLADA DE SPREADSHEET Y DEFINIR LA COORDINACIÓN DEL GENERADOR ENTRE WRITE Y ADMIN.
+
+ARCHIVOS MODIFICADOS
+- Auditoría.txt
+- Tareas.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+RESUMEN
+- Se documentó la generación actual por copia y reaplicación de fórmulas en WRITE y ADMIN.
+- Se registró el riesgo de cambio de IDs basados en ROW() al ordenar Cortes desde ADMIN.
+- Se documentó que WRITE y ADMIN son endpoints distintos y que sus ScriptLock no son compartidos.
+- Se confirmó que CATALOG expone el valor numérico de ID y que ui.js realiza ordenamiento numérico.
+- Se dejó constancia de que el prefijo y los ceros de «V-001» no se definen en los archivos de código y que falta inspeccionar el formato real de la columna A.
+- Se registró la dependencia de una copia aislada para probar fórmulas, valores, formato, concurrencia, filas intermedias y ordenamiento.
+- No se modificó ningún archivo de código.
+
+VERIFICACIONES
+- HEAD de GPSpedia2.2.5_work confirmado en 94c2d04ef327398143b45d3e0dd32170ea746399 antes de documentar.
+- HEAD de GPSpedia2.2.5 confirmado en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Auditoría estática de WRITE, ADMIN, CATALOG, FEEDBACK, add_cortes.html, ui.js y api-config.js.
+- Los SHA de los cuatro respaldos documentales coinciden con los SHA originales.
+- Se revisó que los cambios documentales describan solo hallazgos observados y pruebas no realizadas.
+
+LIMITACIONES
+- No se accedió a Spreadsheet productiva ni a una copia de prueba.
+- No se conoce el valor máximo real, la fórmula exacta de cada fila ni el formato numérico de la columna A.
+- No se ejecutó Apps Script ni se realizaron pruebas funcionales en Google Sheets.
+- No se modificaron fórmulas, valores, formatos ni registros; no se desplegó ningún servicio.
+
+SIGUIENTE ACCIÓN
+Obtener una copia aislada de Spreadsheet, verificar los datos y formatos de la columna A y decidir una única arquitectura coordinada para asignar IDs desde WRITE y ADMIN. Después reiniciar el procedimiento de desarrollo desde checkpoint y auditoría antes de implementar.
+
+PUBLICACIÓN
+Un único commit documental en GPSpedia2.2.5_work mediante Git Database API. No modificar GPSpedia2.2.5, no hacer merge ni desplegar.
+================================================================================

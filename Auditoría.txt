@@ -5450,3 +5450,84 @@ PRUEBAS DE CASOS BORDE
 - Encabezado VIN con valores VIN reales: se conservan como VIN.
 - Mezcla de opId y VIN/JSON bajo el mismo encabezado: se aborta el preflight sin limpiar.
 - Resolución de Idempotencia: reutiliza hoja compatible; crea Idempotencia si falta y la alternativa no es compatible; aborta si ambas hojas existentes son incompatibles.
+
+
+================================================================================
+AUDITORÍA — GENERACIÓN Y FORMATO DE IDENTIFICADORES DE CORTES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: 94c2d04ef327398143b45d3e0dd32170ea746399
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+Estado: AUDITORÍA ESTÁTICA COMPLETADA; IMPLEMENTACIÓN BLOQUEADA HASTA VALIDAR UNA COPIA DE SPREADSHEET Y DEFINIR LA COORDINACIÓN DEL GENERADOR DE ID ENTRE WRITE Y ADMIN.
+
+1. ALCANCE Y ARCHIVOS AUDITADOS
+Se revisaron las rutas de creación, consulta y consumo de IDs de Cortes, los escritores WRITE/ADMIN, el servicio CATALOG, las referencias de FEEDBACK, los flujos de alta y los consumidores del frontend.
+
+Archivos y SHA del HEAD auditado:
+- Services/write.js — 006f8e74971811b61800ea7477a8aaf25ee6a448 (1,317 líneas).
+- Services/admin.js — 4a4c2ae6481c4bf0280768ccc2e0e204bc4f51ad (4,182 líneas).
+- Services/catalog.js — 253cbe9f873481114e7abff3aa8902c45e2560af (670 líneas).
+- Services/feedback.js — 0f47359449b5f8feca6ab84101823182dd5b8552 (1,592 líneas).
+- add_cortes.html — c5b0abfe0a9f9f217978bce53a6bebe94f782559 (1,450 líneas).
+- ui.js — 78e71dd3b836df717e73d807e1eb47fd4ad53539 (9,806 líneas).
+- api-config.js — a8a33b20e3fbff549c9789cf3a409421e4a65126 (233 líneas).
+- Documentación de tarea: Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md.
+
+2. HALLAZGOS EN WRITE
+- COLS_CORTES.id está fijado en la columna 1.
+- handleAddOrUpdateCut(), rama de vehículo nuevo (aprox. líneas 425–520), obtiene getLastRow()+1, copia la fila anterior con copyTo(), conserva la fórmula de la columna ID y limpia el contenido desde la columna 2.
+- El código espera el recálculo, lee el valor, intenta reutilizar la fórmula de la fila anterior o aplica =ROW()-1 como fallback y finalmente vuelve a establecer una fórmula en la nueva fila. Por tanto, el flujo no convierte el resultado a valor estático.
+- La asignación de una fila nueva en WRITE no está protegida por un bloqueo que abarque la lectura del último ID y la escritura del nuevo registro. ensureTestigoColumns() utiliza un bloqueo solo durante su propia operación de columnas y lo libera antes de crear el registro.
+- Los flujos de vehículo existente, información suplementaria, idempotencia y recuperación buscan por el valor de ID y conservan su representación al comparar valores; no requieren que el ID se derive del número de fila.
+
+3. HALLAZGOS EN ADMIN
+- handleAddOrUpdateCut() (aprox. líneas 1709–2015) usa LockService.getScriptLock() durante la operación administrativa, pero la rama de vehículo nuevo repite el mecanismo de copiar la fila anterior, conservar fórmula, esperar recálculo y volver a aplicar fórmula (aprox. líneas 1918–1997).
+- ADMIN y WRITE se configuran como endpoints distintos en api-config.js. Los bloqueos de script pertenecen al proyecto de Apps Script que los solicita; el bloqueo de ADMIN no constituye un bloqueo compartido con el proyecto WRITE. Por tanto, dos altas concurrentes que entren por servicios diferentes no quedan coordinadas por esos bloqueos.
+- handleReorganizeDatabase() (aprox. líneas 877–905) ordena todas las filas de Cortes por la columna Marca. No convierte previamente las fórmulas de ID en valores. Si las fórmulas existentes dependen de ROW(), su resultado puede variar al cambiar la posición de la fila.
+- handleCreateSheet() (aprox. líneas 2837–2858) permite establecer idFormula en hojas creadas genéricamente. No se identificó evidencia para tratarlo como escritor de IDs de Cortes; no se propone modificarlo en esta tarea.
+- Las funciones administrativas de edición y restauración localizan los registros mediante el valor de ID, no mediante una relación fija entre ID y número de fila.
+
+4. HALLAZGOS EN CATALOG, FEEDBACK Y FRONTEND
+- Services/catalog.js define id: 1, lee el valor de la celda mediante getValues() y lo expone como propiedad id sin convertirlo ni formatearlo. El filtro de catálogo requiere que la primera celda de la fila tenga un valor.
+- ui.js compara IDs principalmente mediante String(), pero mostrarUltimosAgregados() ordena con b.id - a.id. Esto confirma que el valor subyacente consumido por el frontend debe seguir siendo numérico para conservar ese ordenamiento.
+- add_cortes.html transporta el ID del vehículo seleccionado como vehicleId hacia WRITE o ADMIN; no genera el ID del registro.
+- Services/feedback.js conserva vehicleId como referencia en reportes, likes, actividad y relaciones modelosAsociados; las búsquedas y comparaciones observadas no calculan el ID ni dependen del número de fila.
+- No se encontró en estos consumidores una necesidad de modificar o renumerar IDs existentes. Cambiar el ID de un registro rompería referencias almacenadas en otras hojas y datos asociados.
+
+5. FORMATO Y CAPACIDAD
+- La fórmula =ROW()-1 devuelve un número y el catálogo conserva ese valor numérico. La representación «V-001» no se construye en los archivos JavaScript auditados; el prefijo y los ceros a la izquierda dependen de la configuración de formato de la celda en Spreadsheet o de una configuración externa no presente en el código.
+- No se dispone del valor máximo actual, del formato numérico real de la columna A, de la fórmula actualmente instalada en cada fila ni de la distribución de valores estáticos y fórmulas. Esos datos no pueden deducirse con certeza del repositorio.
+- No es seguro ampliar el formato a cuatro dígitos ni introducir IDs de distinta longitud sin inspeccionar la hoja y definir una transición que preserve la representación histórica. No se modifica el formato en esta tarea.
+
+6. RIESGOS Y BLOQUEOS
+A. Mezcla de IDs estáticos y fórmulas: convertir únicamente la fila nueva a valor estático, dejando fórmulas antiguas dependientes de ROW(), puede provocar cambios o colisiones al ordenar filas. Antes de habilitar el esquema mixto debe definirse y probarse cómo fijar los resultados existentes sin alterar su valor, formato o identidad.
+B. Concurrencia entre microservicios: WRITE y ADMIN son endpoints distintos y sus ScriptLock no son compartidos. Un generador max(ID)+1 implementado independientemente en ambos no garantizaría unicidad ante altas simultáneas. La asignación debe centralizarse en un único escritor coordinado o diseñarse un mecanismo de exclusión compartido verificable.
+C. Fórmula y formato reales: falta una copia aislada de Spreadsheet para verificar las fórmulas, el formato «V-001», los IDs máximos, filas intermedias, duplicados y los efectos de ordenamiento.
+D. Capacidad ampliada: sin el máximo real ni el formato de celda no puede aprobarse una ampliación de dígitos.
+
+7. RESPALDOS EXACTOS
+Antes de editar la documentación se generaron respaldos inmutables mediante Git blobs. El SHA del respaldo coincide con el SHA del archivo original:
+- Tareas.txt — d10e53ce0d0c7e0c889757e75e4f03fd5469cd78.
+- Auditoría.txt — 336d77f33967badb4e8987e88a0ab2c7fe254b50.
+- ChangesLogs.txt — f57c20c0cc02797848527d9c7dac7e0897eec5fb.
+- checkpoint.md — de63418b4a218ae503a8568ab1c0f913169c412e.
+No se modificaron archivos de código.
+
+8. VERIFICACIONES Y LIMITACIONES
+- Confirmación de referencias mediante comparación Git: GPSpedia2.2.5_work = 94c2d04ef327398143b45d3e0dd32170ea746399; GPSpedia2.2.5 = d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Auditoría estática de las rutas de alta WRITE/ADMIN, ordenamiento ADMIN, lectura CATALOG y referencias FEEDBACK/UI.
+- No se ejecutó Apps Script real.
+- No se accedió a una copia de Spreadsheet ni a la Spreadsheet productiva.
+- No se ejecutaron pruebas funcionales, migraciones ni despliegues.
+- No se cambiaron fórmulas, valores, formatos ni registros de la hoja.
+
+9. DECISIÓN
+No implementar todavía un generador de ID estático ni ampliar el formato. La combinación de fórmulas existentes, ordenamiento de filas y escritores distribuidos entre WRITE y ADMIN impide demostrar unicidad y preservación histórica sin validar primero una copia de Spreadsheet y definir un único mecanismo coordinado de asignación.
+
+SIGUIENTE ACCIÓN REQUERIDA
+Obtener una copia aislada de la Spreadsheet y confirmar en ella: fórmulas reales de la columna A, valores calculados y mostrados, formato numérico, ID máximo, duplicados, filas vacías/intermedias y comportamiento después de ordenar. Después, decidir y documentar la centralización del generador para WRITE/ADMIN. Solo entonces continuar con implementación y pruebas de concurrencia, reversión y compatibilidad.
+
+REVISIÓN DE CÓDIGO
+La revisión confirmó que los hallazgos están respaldados por las rutas citadas y que no se introdujeron cambios de código ni correcciones fuera de alcance. La tarea queda parcial/bloqueada, no completada.
+================================================================================

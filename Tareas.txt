@@ -3844,6 +3844,27 @@ El modal del desarrollador debe contabilizar el almacenamiento total de Google D
 7.6. No cambiar el formato actual ni introducir IDs de longitud mixta hasta documentar la compatibilidad y el plan de transición. Cualquier cambio de formato debe preservar la identidad de los registros y contar con estrategia de compatibilidad y reversión.
 7.7. Probar en una copia de Spreadsheet: IDs existentes, alta de filas consecutivas, concurrencia, filas vacías/intermedias, fórmula ausente, valores duplicados, máximo actual y capacidad ampliada. No ejecutar migraciones sobre la hoja productiva durante la auditoría.
 
+
+ESTADO DE IMPLEMENTACIÓN — TAREA 7: GENERACIÓN Y FORMATO DE IDENTIFICADORES DE CORTES
+Fecha: 2026-11-06
+Estado: AUDITORÍA ESTÁTICA COMPLETADA; IMPLEMENTACIÓN BLOQUEADA POR DEPENDENCIAS DE SPREADSHEET Y CONCURRENCIA.
+
+- WRITE y ADMIN copian la fila anterior y mantienen/reaplican fórmulas para generar el ID de una fila nueva.
+- ADMIN ordena la hoja Cortes por Marca; si las fórmulas de ID dependen de ROW(), el resultado puede cambiar al reordenar.
+- WRITE y ADMIN son endpoints distintos. Sus ScriptLock no constituyen un bloqueo compartido; un generador max(ID)+1 duplicado en ambos servicios no garantiza unicidad concurrente.
+- CATALOG expone el ID subyacente sin transformarlo. ui.js utiliza una resta numérica para ordenar los últimos registros; el ID debe conservar tipo numérico.
+- El formato visible «V-001» no está definido en los archivos de código. No se conoce el máximo real ni el formato de celda porque no se inspeccionó una copia de Spreadsheet.
+- No se modificó código, fórmulas, valores, formatos ni datos de ninguna hoja.
+- No se desplegó ni ejecutó Apps Script.
+
+DEPENDENCIAS PARA CONTINUAR
+1. Disponer de una copia aislada de la Spreadsheet para inspeccionar fórmulas, formato, máximo, duplicados, filas intermedias y ordenamiento.
+2. Definir un único mecanismo coordinado de asignación de IDs para WRITE y ADMIN, evitando generadores independientes.
+3. Probar la conversión de fórmulas existentes a valores en la copia, conservando exactamente el resultado numérico y el formato de cada celda.
+4. Resolver la ampliación de capacidad solo después de verificar el máximo actual y un plan de transición que no cambie la representación histórica ni introduzca longitudes mixtas.
+
+No ejecutar cambios sobre la Spreadsheet productiva ni modificar el formato actual hasta completar estas dependencias.
+
 8. DISEÑO, RESPONSIVE Y COMPATIBILIDAD
 8.1. Mantener el modal profesional, compacto y ordenado en escritorio, móvil y PWA, aprovechando el espacio sin ocultar controles necesarios.
 8.2. Utilizar iconografía consistente y etiquetas claras en los botones; no depender exclusivamente del color o del icono para comunicar la acción.

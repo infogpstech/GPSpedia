@@ -3245,3 +3245,25 @@ Pruebas aisladas Node.js con mocks completadas para la lógica de migración, co
 - El resolvedor de Idempotencia conserva hojas incompatibles; crea la hoja primaria si no existe y la alternativa tampoco es compatible; aborta si la primaria y la alternativa existentes son incompatibles.
 
 - Casos borde probados: opId heredado bajo encabezado VIN, preservación de VIN real, aborto por datos mezclados y resolución segura de hojas de idempotencia incompatibles.
+
+
+================================================================================
+AUDITORÍA — GENERACIÓN Y FORMATO DE IDENTIFICADORES DE CORTES
+Fecha: 2026-11-06
+
+Auditoría.txt
+- Añadido inventario de las rutas de generación, lectura y consumo de IDs en WRITE, ADMIN, CATALOG, FEEDBACK y frontend.
+- Registrados los riesgos de fórmulas dependientes de fila, ordenamiento de Cortes y concurrencia entre endpoints WRITE/ADMIN.
+- Documentadas las limitaciones para verificar el formato visible «V-001», el máximo actual y la capacidad ampliada sin una copia aislada de Spreadsheet.
+- Registrados SHA de respaldos exactos y las verificaciones que no pudieron ejecutarse.
+
+Tareas.txt
+- Añadido el estado de la tarea 7: auditoría estática completada; implementación bloqueada hasta validar una copia aislada y definir la asignación coordinada de IDs.
+
+checkpoint.md
+- Añadidos checkpoint inicial y cierre de auditoría de la tarea 7.
+
+ALCANCE
+- Cambios exclusivamente documentales.
+- Sin modificaciones en código, Spreadsheet, fórmulas, valores, formatos, deployments ni rama base.
+================================================================================
