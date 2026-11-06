@@ -257,6 +257,16 @@
                             <div id="services-health-grid" class="dev-services-health-grid">
                                 <span class="dev-empty-state">Iniciando diagnóstico...</span>
                             </div>
+                            <section id="service-health-detail" class="dev-service-detail" aria-live="polite">
+                                <p class="dev-empty-state">Selecciona una tarjeta para consultar sus parámetros.</p>
+                            </section>
+                            <section class="dev-service-traffic-panel">
+                                <h4>Tráfico observado por servicio</h4>
+                                <p>Solicitudes API por minuto iniciadas desde este navegador durante los últimos 15 minutos. No representa el tráfico total ni las ejecuciones internas de Apps Script.</p>
+                                <div id="service-traffic-chart" class="dev-service-traffic-chart">
+                                    <p class="dev-empty-state">Aún no se han observado solicitudes API en esta sesión.</p>
+                                </div>
+                            </section>
                         </div>
                     </section>
 

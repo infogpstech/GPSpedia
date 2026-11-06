@@ -5,7 +5,7 @@ import { vinDifferentialEngine, vinSignatureStore, getClassificationKey } from '
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
@@ -3079,37 +3079,256 @@ function initAdminPanelListeners() {
     }
     window.adminListenersAttached = true;
 
-    // Escaneo de salud de todos los microservicios
-    async function runServicesHealthScan() {
-        const healthGrid = document.getElementById('services-health-grid');
-        if (healthGrid) {
-            healthGrid.innerHTML = `<span style="color: var(--text-disabled); font-style: italic; grid-column: span 2;">Escaneando microservicios...</span>`;
+    let serviceHealthResults = {}, selectedServiceKey = null, isHealthScanRunning = false;
+    function formatServiceCheckTime(value) {
+        if (!value) return "No disponible";
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? "No disponible" : date.toLocaleTimeString();
+    }
+    function createServiceMetric(label, value) {
+        const item = document.createElement("div");
+        item.className = "dev-service-metric";
+        const caption = document.createElement("span");
+        caption.className = "dev-service-metric-label";
+        caption.textContent = label;
+        const content = document.createElement("strong");
+        content.className = "dev-service-metric-value";
+        content.textContent = value;
+        item.append(caption, content);
+        return item;
+    }
+    function renderServiceCards() {
+        const grid = document.getElementById("services-health-grid");
+        if (!grid) return;
+        grid.replaceChildren();
+        const keys = Object.keys(serviceHealthResults);
+        if (!keys.length) {
+            const empty = document.createElement("p");
+            empty.className = "dev-empty-state";
+            empty.textContent = "No hay resultados de diagnóstico disponibles. Ejecuta un escaneo.";
+            grid.appendChild(empty);
+            return;
         }
-        log("[SALUD] Ejecutando diagnóstico de latencia y estado en los microservicios...");
-        try {
-            const healthResults = await checkAllServicesHealth();
-            if (healthGrid) {
-                healthGrid.innerHTML = '';
-                Object.keys(healthResults).forEach(srvKey => {
-                    const item = healthResults[srvKey];
-                    const div = document.createElement('div');
-                    div.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.05); font-size: 0.8em;";
-
-                    const isOnline = item.status === 'online';
-                    const statusDot = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${isOnline ? '#28a745' : '#dc3545'}; margin-right:6px;"></span>`;
-                    div.innerHTML = `<div>${statusDot}<strong>${srvKey}</strong></div><span style="color:${isOnline ? 'var(--text-color)' : '#dc3545'}; font-family:monospace;">${isOnline ? item.latency + 'ms' : 'Error'}</span>`;
-                    healthGrid.appendChild(div);
-                });
-            }
-            log("[SALUD] Escaneo de salud completado.");
-        } catch (e) {
-            log(`[SALUD ERROR] Fallo al escanear servicios: ${e.message}`, false, true);
+        keys.forEach(key => {
+            const item = serviceHealthResults[key];
+            const card = document.createElement("button");
+            card.type = "button";
+            card.className = "dev-service-card";
+            if (selectedServiceKey === key) card.classList.add("is-selected");
+            card.setAttribute("aria-pressed", selectedServiceKey === key ? "true" : "false");
+            const top = document.createElement("span");
+            top.className = "dev-service-card-top";
+            const name = document.createElement("strong");
+            name.textContent = item.metadata?.service || key;
+            const status = document.createElement("span");
+            status.className = `dev-service-status is-${item.status}`;
+            status.textContent = item.status === "online" ? "En línea" : item.status === "error" ? "Con error" : "Sin respuesta";
+            top.append(name, status);
+            const bottom = document.createElement("span");
+            bottom.className = "dev-service-card-bottom";
+            const latency = document.createElement("span");
+            latency.textContent = Number.isFinite(item.latency) ? `${Math.round(item.latency)} ms` : "Latencia no disponible";
+            const version = document.createElement("span");
+            version.textContent = item.metadata?.version ? `v${item.metadata.version}` : "Versión no reportada";
+            bottom.append(latency, version);
+            card.append(top, bottom);
+            card.addEventListener("click", () => { selectedServiceKey = key; renderServiceDashboard(); });
+            grid.appendChild(card);
+        });
+    }
+    function renderServiceDetail() {
+        const detail = document.getElementById("service-health-detail");
+        if (!detail) return;
+        detail.replaceChildren();
+        const item = serviceHealthResults[selectedServiceKey];
+        if (!selectedServiceKey || !item) {
+            const empty = document.createElement("p");
+            empty.className = "dev-empty-state";
+            empty.textContent = "Selecciona una tarjeta para consultar sus parámetros.";
+            detail.appendChild(empty);
+            return;
+        }
+        const events = getServiceMetricsSnapshot().events.filter(event => event.service === selectedServiceKey);
+        const successful = events.filter(event => event.outcome === "success").length;
+        const failed = events.length - successful;
+        const average = events.length ? Math.round(events.reduce((sum, event) => sum + event.durationMs, 0) / events.length) : null;
+        const lastEvent = events.length ? events[events.length - 1] : null;
+        const metadata = item.metadata || {};
+        const heading = document.createElement("div");
+        heading.className = "dev-service-detail-heading";
+        const title = document.createElement("h4");
+        title.textContent = metadata.service || selectedServiceKey;
+        const state = document.createElement("span");
+        state.className = `dev-service-status is-${item.status}`;
+        state.textContent = item.status === "online" ? "En línea" : item.status === "error" ? "Con error" : "Sin respuesta";
+        heading.append(title, state);
+        detail.appendChild(heading);
+        const metrics = document.createElement("div");
+        metrics.className = "dev-service-metrics";
+        metrics.append(
+            createServiceMetric("Versión reportada", metadata.version || "No disponible"),
+            createServiceMetric("Última comprobación", formatServiceCheckTime(item.checkedAt)),
+            createServiceMetric("Latencia del diagnóstico", Number.isFinite(item.latency) ? `${Math.round(item.latency)} ms` : "No disponible"),
+            createServiceMetric("Solicitudes API observadas (15 min)", String(events.length)),
+            createServiceMetric("Solicitudes correctas", String(successful)),
+            createServiceMetric("Solicitudes con error", String(failed)),
+            createServiceMetric("Tiempo medio observado", average === null ? "No disponible" : `${average} ms`)
+        );
+        detail.appendChild(metrics);
+        const note = document.createElement("p");
+        note.className = "dev-service-note";
+        note.textContent = "Las solicitudes, acciones y tiempos se miden desde esta sesión del navegador. El servicio no expone un contador global verificable de ejecuciones internas de Apps Script.";
+        detail.appendChild(note);
+        const dependencies = document.createElement("div");
+        dependencies.className = "dev-service-dependencies";
+        const depTitle = document.createElement("strong");
+        depTitle.textContent = "Información reportada por el backend";
+        dependencies.appendChild(depTitle);
+        const depItems = [];
+        if (Array.isArray(metadata.sheetsAccessed) && metadata.sheetsAccessed.length) depItems.push(`Hojas declaradas: ${metadata.sheetsAccessed.join(", ")}`);
+        if (metadata.cacheStatus && typeof metadata.cacheStatus.isCached === "boolean") depItems.push(`Caché: ${metadata.cacheStatus.isCached ? "con datos" : "sin datos"}`);
+        if (metadata.reportedStatus) depItems.push(`Estado reportado: ${metadata.reportedStatus}`);
+        if (!depItems.length) depItems.push("El endpoint no expone parámetros adicionales de diagnóstico.");
+        depItems.forEach(value => { const p = document.createElement("p"); p.textContent = value; dependencies.appendChild(p); });
+        detail.appendChild(dependencies);
+        const actionsTitle = document.createElement("strong");
+        actionsTitle.className = "dev-service-actions-heading";
+        actionsTitle.textContent = "Acciones API observadas en esta sesión";
+        detail.appendChild(actionsTitle);
+        if (!events.length) {
+            const empty = document.createElement("p");
+            empty.className = "dev-empty-state";
+            empty.textContent = "Todavía no se han observado solicitudes API para este servicio en esta sesión.";
+            detail.appendChild(empty);
+        } else {
+            const list = document.createElement("ul");
+            list.className = "dev-service-events";
+            events.slice(-8).reverse().forEach(event => {
+                const row = document.createElement("li");
+                const action = document.createElement("strong");
+                action.textContent = event.action;
+                const info = document.createElement("span");
+                info.textContent = `${formatServiceCheckTime(event.timestamp)} · ${Math.round(event.durationMs)} ms · ${event.outcome}`;
+                row.append(action, info);
+                list.appendChild(row);
+            });
+            detail.appendChild(list);
+        }
+        if (lastEvent) {
+            const last = document.createElement("p");
+            last.className = "dev-service-note";
+            last.textContent = `Última acción observada: ${lastEvent.action}.`;
+            detail.appendChild(last);
         }
     }
-
-    const scanBtn = document.getElementById('btn-check-services-health');
-    if (scanBtn) {
-        scanBtn.onclick = () => runServicesHealthScan();
+    function renderServiceTrafficChart() {
+        const container = document.getElementById("service-traffic-chart");
+        if (!container) return;
+        container.replaceChildren();
+        const snapshot = getServiceMetricsSnapshot();
+        if (!snapshot.events.length) {
+            const empty = document.createElement("p");
+            empty.className = "dev-empty-state";
+            empty.textContent = "Aún no se han observado solicitudes API en esta sesión.";
+            container.appendChild(empty);
+            return;
+        }
+        const bucketCount = 15, bucketSize = 60000;
+        const currentMinute = Math.floor(Date.now() / bucketSize) * bucketSize;
+        const firstMinute = currentMinute - (bucketCount - 1) * bucketSize;
+        const keys = [...new Set([...Object.keys(serviceHealthResults), ...snapshot.events.map(event => event.service)])];
+        const series = keys.map(service => ({ service, counts: Array(bucketCount).fill(0) }));
+        snapshot.events.forEach(event => {
+            const index = Math.floor((event.timestamp - firstMinute) / bucketSize);
+            if (index >= 0 && index < bucketCount) {
+                const target = series.find(item => item.service === event.service);
+                if (target) target.counts[index]++;
+            }
+        });
+        const maxValue = Math.max(1, ...series.flatMap(item => item.counts));
+        const width = 920, height = 270, left = 48, right = 18, top = 18, bottom = 42;
+        const plotWidth = width - left - right, plotHeight = height - top - bottom;
+        const ns = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        svg.setAttribute("class", "dev-service-traffic-svg");
+        svg.setAttribute("role", "img");
+        svg.setAttribute("aria-label", "Solicitudes API por minuto observadas desde este navegador durante los últimos quince minutos.");
+        [0, Math.ceil(maxValue / 2), maxValue].filter((v, i, arr) => arr.indexOf(v) === i).forEach(value => {
+            const y = top + plotHeight - (value / maxValue) * plotHeight;
+            const line = document.createElementNS(ns, "line");
+            line.setAttribute("x1", left); line.setAttribute("x2", width - right);
+            line.setAttribute("y1", y); line.setAttribute("y2", y);
+            line.setAttribute("class", "dev-service-traffic-gridline");
+            svg.appendChild(line);
+            const label = document.createElementNS(ns, "text");
+            label.setAttribute("x", left - 10); label.setAttribute("y", y + 4);
+            label.setAttribute("text-anchor", "end"); label.setAttribute("class", "dev-service-traffic-axis");
+            label.textContent = String(value); svg.appendChild(label);
+        });
+        [0, 3, 6, 9, 12, 14].forEach(index => {
+            const x = left + (index / (bucketCount - 1)) * plotWidth;
+            const label = document.createElementNS(ns, "text");
+            label.setAttribute("x", x); label.setAttribute("y", height - 12);
+            label.setAttribute("text-anchor", "middle"); label.setAttribute("class", "dev-service-traffic-axis");
+            label.textContent = new Date(firstMinute + index * bucketSize).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            svg.appendChild(label);
+        });
+        series.forEach((item, index) => {
+            const points = item.counts.map((count, bucket) => {
+                const x = left + (bucket / (bucketCount - 1)) * plotWidth;
+                const y = top + plotHeight - (count / maxValue) * plotHeight;
+                return `${x},${y}`;
+            }).join(" ");
+            const line = document.createElementNS(ns, "polyline");
+            line.setAttribute("points", points);
+            line.setAttribute("class", `dev-service-traffic-line dev-service-color-${index % 8}`);
+            svg.appendChild(line);
+        });
+        container.appendChild(svg);
+        const legend = document.createElement("div");
+        legend.className = "dev-service-traffic-legend";
+        series.forEach((item, index) => {
+            const entry = document.createElement("span");
+            entry.className = `dev-service-traffic-legend-item dev-service-color-${index % 8}`;
+            entry.textContent = item.service;
+            legend.appendChild(entry);
+        });
+        container.appendChild(legend);
+    }
+    function renderServiceDashboard() {
+        renderServiceCards();
+        renderServiceDetail();
+        renderServiceTrafficChart();
+    }
+    async function runServicesHealthScan() {
+        if (isHealthScanRunning) return;
+        isHealthScanRunning = true;
+        const grid = document.getElementById("services-health-grid");
+        const button = document.getElementById("btn-check-services-health");
+        if (button) button.disabled = true;
+        if (grid) grid.innerHTML = '<span class="dev-empty-state">Escaneando servicios (máximo 8 segundos por servicio)...</span>';
+        log("[SALUD] Ejecutando diagnóstico independiente de cada servicio...");
+        try {
+            serviceHealthResults = await checkAllServicesHealth();
+            if (!selectedServiceKey || !serviceHealthResults[selectedServiceKey]) selectedServiceKey = Object.keys(serviceHealthResults)[0] || null;
+            renderServiceDashboard();
+            log("[SALUD] Diagnóstico de servicios completado.");
+        } catch (e) {
+            log(`[SALUD ERROR] Fallo al escanear servicios: ${e.message}`, false, true);
+            if (grid) grid.innerHTML = '<span class="dev-empty-state">No fue posible completar el diagnóstico.</span>';
+        } finally {
+            isHealthScanRunning = false;
+            if (button) button.disabled = false;
+        }
+    }
+    const scanBtn = document.getElementById("btn-check-services-health");
+    if (scanBtn) scanBtn.onclick = () => runServicesHealthScan();
+    if (!window.adminServiceMetricsUnsubscribe) {
+        window.adminServiceMetricsUnsubscribe = subscribeServiceMetrics(() => {
+            renderServiceTrafficChart();
+            if (selectedServiceKey) renderServiceDetail();
+        });
     }
 
     // Conectividad automática e inicio

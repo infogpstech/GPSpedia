@@ -4899,3 +4899,50 @@ Tipo: auditoría estática de frontend, IndexedDB, enrutamiento y servicio ADMIN
 - No se probó navegador ni IndexedDB real.
 - El error de Blob/MIME no puede declararse resuelto hasta publicar la versión ADMIN consolidada y ejecutar la prueba funcional.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA Y REVISIÓN DE IMPLEMENTACIÓN — DIAGNÓSTICO Y MONITOREO DE SERVICIOS
+Fecha: 2026-11-06 | HEAD de partida: 06c3b3228844721fe5359c372ebb105ce497ef33
+
+RESPALDOS EXACTOS
+- api-config.js: 7f997f9a0e9f3cbc90c259a736153bc446a04a24
+- ui.js: 302ee7f74b1509046c214739e6e378f5ee684bc2
+- index.html: e478dfd54a1fb0efb05bacf7abdbbaa1c81f7f8b
+- style.css: f418138019c1edb8608d816a057e7ee10604c619
+
+RESULTADO DE LA AUDITORÍA
+- El frontend no recibía ni analizaba el JSON de diagnóstico; checkAllServicesHealth() solo evaluaba HTTP y latencia, sin timeout individual.
+- routeAction() concentra las solicitudes POST de la aplicación. Los servicios backend no exponen un contador uniforme de ejecuciones ni una lista global de funciones internas.
+- Auth escribe eventos en Logs, pero no ofrece una API de consulta de métricas; Users no tiene debug/version; Catalog y Write reportan algunos datos de dependencias; Admin incluye logs/duración solo en respuestas POST; Feedback registra acciones de negocio, no todas las solicitudes.
+- No se encontró una biblioteca de gráficos cargada por index.html.
+- LEGACY y UTILITIES no tienen archivos fuente dentro del repositorio auditado.
+- La medición implementada se limita expresamente a solicitudes POST cursadas por routeAction() desde esta instancia del navegador. No incluye los GET ?debug=true del escaneo de salud ni el tráfico de otros usuarios.
+- El panel muestra acciones API observadas; no las presenta como nombres de funciones internas de Apps Script. El contador interno de ejecuciones se declara no disponible.
+
+REVISIÓN DE LOS CAMBIOS
+- api-config.js, líneas 37-70: registra en memoria service/action/timestamp/duración/resultado/código HTTP, con una ventana de 15 minutos y un máximo de 600 eventos. No almacena payloads, tokens ni identificadores personales.
+- api-config.js, líneas 74-112: routeAction() registra resultados exitosos, HTTP errors, errores API, respuestas inválidas y fallos de red, sin alterar el payload enviado al backend.
+- api-config.js, líneas 184-232: checkAllServicesHealth() impone timeout individual de 8 segundos, analiza JSON disponible y conserva únicamente service/version/status, nombres de hojas declaradas y estado booleano de caché. No conserva spreadsheetId, driveFolderId ni cacheKey.
+- ui.js, líneas 3100-3300: tarjetas accesibles por teclado/clic, detalle de servicio, estado, versión, última comprobación, latencia, conteos de solicitudes de esta sesión, tiempos medios, acciones API recientes y dependencias reportadas.
+- ui.js, líneas 3224-3303: gráfico SVG nativo con series por servicio, buckets de un minuto y ventana de quince minutos; se actualiza cuando termina una solicitud POST observada.
+- index.html, líneas 257-270: contenedores únicos para tarjetas, detalle y gráfico.
+- style.css, líneas 3263-3319: presentación responsive de tarjetas, métricas, eventos y gráfico. No se incorporó una biblioteca externa.
+- Los datos de telemetría se mantienen en memoria de la sesión del navegador y se eliminan al recargar/cerrar la página; no se escriben en Sheets ni en IndexedDB.
+
+PRUEBAS AISLADAS
+- Parseo completo de api-config.js y ui.js sin errores.
+- routeAction(): simulaciones de éxito, HTTP 503, fallo de red, error de aplicación y JSON inválido; las métricas registradas no contienen payload.
+- Suscripción a métricas: se notificó cada evento de solicitud.
+- checkAllServicesHealth(): simulación de todos los endpoints; timeout de UTILITIES aislado sin impedir respuestas de los demás; detección de HTTP 503 y estado backend error.
+- Sanitización: se comprobó que spreadsheetId, driveFolderId y cacheKey no pasan al objeto de metadatos.
+- HTML: IDs services-health-grid, service-health-detail y service-traffic-chart únicos; CSS con llaves balanceadas.
+- No se ejecutó navegador real, no se hicieron solicitudes a servicios productivos y no se consultaron hojas de logs.
+
+LÍMITES QUE DEBEN CONSERVARSE
+- La gráfica representa solicitudes POST observadas desde este navegador, no tráfico global de Apps Script.
+- Los nombres listados son acciones API del cliente, no funciones internas confirmadas.
+- El backend no expone un contador común de ejecuciones; no mostrar una cifra inventada.
+- El máximo de 600 eventos puede truncar eventos más antiguos si se supera ese límite dentro de la ventana de 15 minutos.
+- La validación visual y de conectividad real queda pendiente para la fase de pruebas funcionales consolidada.
+================================================================================

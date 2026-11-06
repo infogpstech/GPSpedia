@@ -3042,3 +3042,43 @@ VERIFICACIONES AISLADAS
 - Se verificó el rechazo de batchAnalyzed ausente/incorrecto, totalAnalyzed incorrecto y complete ausente.
 - No se ejecutó Apps Script real, no se accedió a Drive/Spreadsheet y no se desplegó el servicio ADMIN.
 ================================================================================
+
+
+================================================================================
+CAMBIO — DIAGNÓSTICO Y MONITOREO DE SERVICIOS
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+- api-config.js, líneas 37-70: nuevo registro de métricas de solicitudes POST en memoria, ventana 15 min, máximo 600 eventos, snapshot y suscripción; excluye payloads y credenciales.
+- api-config.js, líneas 74-112: routeAction() registra servicio, acción, timestamp, duración, outcome y HTTP status en un bloque finally sin modificar el contrato de petición.
+- api-config.js, líneas 184-232: checkAllServicesHealth() añade timeout independiente de 8 s, lectura del JSON debug y whitelist de metadatos seguros.
+- ui.js, líneas 3100-3300: tarjetas de estado seleccionables, vista de detalle, métricas de sesión, lista de acciones API observadas y gráfico SVG de 15 min/intervalos de 1 min.
+- index.html, líneas 257-270: contenedores de detalle y gráfico.
+- style.css, líneas 3263-3319: estilos responsive para tarjetas, métricas, lista y gráfico.
+- No se modificaron servicios backend, permisos, rutas, payloads ni esquemas de datos.
+
+RESPALDOS
+- api-config.js: 7f997f9a0e9f3cbc90c259a736153bc446a04a24
+- ui.js: 302ee7f74b1509046c214739e6e378f5ee684bc2
+- index.html: e478dfd54a1fb0efb05bacf7abdbbaa1c81f7f8b
+- style.css: f418138019c1edb8608d816a057e7ee10604c619
+
+ARCHIVOS FINALES
+- api-config.js: 1e7f237c6a5467b91dcc05a69ecf650089d83e93
+- ui.js: 3181a4a5109dbd5145a1373986c3fa520d094d3d
+- index.html: 33ac39d5c0ffe27f15a0cb3a3c6dec810f8f8b32
+- style.css: e100e73d7cacddb3b84bfce23966d44ad0c90896
+
+PRUEBAS AISLADAS
+- Parseo JavaScript: api-config.js y ui.js sin errores.
+- routeAction: éxito, error HTTP, error API, fallo de red y respuesta JSON inválida; evento sin payload.
+- Suscripción: notificación al recibir cada métrica.
+- Health scan: respuesta de todos los endpoints, timeout de un servicio aislado, HTTP 503 y status error reportado por backend.
+- Metadatos: spreadsheetId, driveFolderId y cacheKey excluidos.
+- HTML: IDs nuevos únicos; CSS balanceado.
+- No se ejecutaron llamadas reales a Apps Script ni pruebas de navegador.
+
+PENDIENTE
+- Validar tarjetas, detalle, gráfico y actualización en navegador real.
+- Confirmar conectividad/latencia de servicios en el deployment consolidado.
+- No publicar ni desplegar en esta fase.
+================================================================================

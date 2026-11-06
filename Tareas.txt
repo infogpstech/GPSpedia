@@ -4235,3 +4235,24 @@ Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FU
 - Pendiente: despliegue consolidado de Apps Script y pruebas funcionales reales de Drive, CacheService, Spreadsheet, navegador e IndexedDB. No se declara resuelto el error MIME hasta confirmar el comportamiento en el deployment ADMIN.
 - No se desplegó Apps Script ni se ejecutaron escrituras en Drive o Spreadsheet.
 ================================================================================
+
+
+================================================================================
+SUBTAREA — DIAGNÓSTICO Y MONITOREO DE SERVICIOS EN «OPCIONES DE DESARROLLADOR»
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FUNCIONAL REAL PENDIENTE.
+
+- Se sustituyó la lista simple de estado/latencia por tarjetas seleccionables para los servicios configurados.
+- Cada detalle muestra estado, versión cuando el endpoint la reporta, última comprobación, latencia del diagnóstico, solicitudes POST observadas, solicitudes correctas/con error, tiempo medio y acciones API recientes.
+- Se analizan los metadatos seguros que algunos endpoints devuelven: estado, versión, hojas declaradas y estado booleano de caché. Los IDs de Spreadsheet/Drive y cacheKey no se exponen.
+- checkAllServicesHealth() aplica timeout individual de 8 segundos; un servicio que no responde no impide obtener los resultados de los demás.
+- routeAction() registra en memoria las solicitudes POST de esta instancia: servicio, acción, hora, duración, resultado y código HTTP. Ventana: 15 minutos; límite: 600 eventos; no se guardan payloads ni credenciales.
+- El gráfico SVG presenta solicitudes POST observadas por minuto y servicio. Se actualiza al finalizar cada solicitud.
+- La lista de acciones se denomina «Acciones API observadas» porque los endpoints no exponen los nombres de todas sus funciones internas.
+- El panel declara que no existe un contador backend uniforme de ejecuciones internas. No se simulan métricas ni se presenta el tráfico de este navegador como tráfico global.
+- Los GET ?debug=true del escaneo de salud no se incluyen en la gráfica de solicitudes POST.
+- No se modificaron los archivos Services/*.js ni se añadieron escrituras de telemetría en Sheets. La telemetría del navegador vive solo durante la sesión.
+- Pruebas aisladas: parseo de api-config.js/ui.js, rutas simuladas de routeAction (éxito/HTTP/API/red/JSON inválido), suscripción, timeout individual, estados HTTP/backend, sanitización de metadatos, IDs HTML únicos y balance CSS.
+- Pendiente: verificación en navegador real y conectividad real durante la fase consolidada de pruebas funcionales. No desplegar Apps Script hasta terminar todas las implementaciones.
+
+================================================================================

@@ -34,14 +34,50 @@ export const ACTION_TO_SERVICE_MAP = {
     'logFrontend': 'LEGACY'
 };
 
+const SERVICE_METRIC_WINDOW_MS = 15 * 60 * 1000;
+const SERVICE_METRIC_MAX_EVENTS = 600;
+const serviceMetricEvents = [];
+const serviceMetricListeners = new Set();
+const serviceMetricSessionStartedAt = Date.now();
+function recordServiceMetric(event) {
+    const timestamp = Number(event.timestamp) || Date.now();
+    serviceMetricEvents.push({
+        service: String(event.service || "UNKNOWN"),
+        action: String(event.action || "unknown"),
+        timestamp,
+        durationMs: Math.max(0, Number(event.durationMs) || 0),
+        outcome: String(event.outcome || "unknown"),
+        httpStatus: event.httpStatus === null || event.httpStatus === undefined ? null :
+            Number.isFinite(Number(event.httpStatus)) ? Number(event.httpStatus) : null
+    });
+    const cutoff = Date.now() - SERVICE_METRIC_WINDOW_MS;
+    while (serviceMetricEvents.length > SERVICE_METRIC_MAX_EVENTS ||
+        (serviceMetricEvents.length && serviceMetricEvents[0].timestamp < cutoff)) serviceMetricEvents.shift();
+    const snapshot = getServiceMetricsSnapshot();
+    serviceMetricListeners.forEach(listener => {
+        try { listener(snapshot); } catch (error) { console.error("Error notificando métricas locales:", error); }
+    });
+}
+export function getServiceMetricsSnapshot() {
+    const now = Date.now(), cutoff = now - SERVICE_METRIC_WINDOW_MS;
+    while (serviceMetricEvents.length && serviceMetricEvents[0].timestamp < cutoff) serviceMetricEvents.shift();
+    return { windowMs: SERVICE_METRIC_WINDOW_MS, sessionStartedAt: serviceMetricSessionStartedAt,
+        capturedAt: now, events: serviceMetricEvents.map(event => ({ ...event })) };
+}
+export function subscribeServiceMetrics(listener) {
+    if (typeof listener !== "function") return () => {};
+    serviceMetricListeners.add(listener);
+    return () => serviceMetricListeners.delete(listener);
+}
+
 // 2. LÓGICA DE RUTEO CENTRAL
 export async function routeAction(action, payload = {}, serviceOverride = null) {
     const service = serviceOverride || ACTION_TO_SERVICE_MAP[action];
     if (!service) throw new Error(`Acción no definida: ${action}`);
-
     let targetUrl = API_ENDPOINTS[service];
     if (!targetUrl) targetUrl = API_ENDPOINTS.LEGACY;
-
+    const requestStartedAt = Date.now();
+    let outcome = "network_error", httpStatus = null;
     try {
         const response = await fetch(targetUrl, {
             method: 'POST',
@@ -49,24 +85,34 @@ export async function routeAction(action, payload = {}, serviceOverride = null) 
             body: JSON.stringify({ action, payload }),
             redirect: 'follow'
         });
-
-        if (!response.ok) throw new Error(`Error de red: ${response.status} ${response.statusText}`);
-
+        httpStatus = response.status;
+        if (!response.ok) {
+            outcome = "http_error";
+            throw new Error(`Error de red: ${response.status} ${response.statusText}`);
+        }
         const text = await response.text();
         let result;
-        try {
-            result = JSON.parse(text);
-        } catch (e) {
+        try { result = JSON.parse(text); }
+        catch (e) {
+            outcome = "invalid_response";
             throw new Error("La respuesta del servidor no tiene un formato válido.");
         }
-
+        if (!result || typeof result !== "object") {
+            outcome = "invalid_response";
+            throw new Error("La respuesta del servidor no contiene un objeto válido.");
+        }
         if (result.status === 'error') {
+            outcome = "api_error";
             const errorMessage = result.details ? `${result.message}: ${result.details.errorMessage}` : result.message;
             throw new Error(errorMessage);
         }
+        outcome = "success";
         return result;
-    } catch (error) {
-        throw error;
+    } finally {
+        try {
+            recordServiceMetric({ service, action, timestamp: Date.now(),
+                durationMs: Date.now() - requestStartedAt, outcome, httpStatus });
+        } catch (metricError) { console.error("No se pudo registrar la métrica local:", metricError); }
     }
 }
 
@@ -136,28 +182,44 @@ export async function addTutorial(data) {
 }
 
 export async function checkAllServicesHealth() {
-    const services = Object.keys(API_ENDPOINTS);
-    const results = {};
-
-    await Promise.all(services.map(async (srvKey) => {
-        const url = API_ENDPOINTS[srvKey];
-        const start = Date.now();
+    const services = Object.keys(API_ENDPOINTS), results = {}, timeoutMs = 8000;
+    await Promise.all(services.map(async srvKey => {
+        const url = API_ENDPOINTS[srvKey], start = Date.now();
+        let controller = null, timeoutId = null;
         try {
-            const res = await fetch(`${url}?debug=true`, {
-                method: 'GET',
-                redirect: 'follow'
-            });
-            const duration = Date.now() - start;
-            if (res.ok) {
-                results[srvKey] = { status: 'online', latency: duration };
-            } else {
-                results[srvKey] = { status: 'error', latency: duration, code: res.status };
-            }
+            if (typeof AbortController !== "function") throw new Error("El navegador no admite AbortController para limitar el tiempo de espera.");
+            controller = new AbortController();
+            timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+            const res = await fetch(`${url}?debug=true`, { method: "GET", redirect: "follow", signal: controller.signal });
+            let debugData = null;
+            try { debugData = JSON.parse(await res.text()); } catch (parseError) { debugData = null; }
+            const reportedStatus = debugData && typeof debugData.status === "string" ? debugData.status : null;
+            const reportedFailure = ["error", "offline", "unavailable", "failed"].includes(String(reportedStatus || "").toLowerCase());
+            const metadata = debugData && typeof debugData === "object" ? {
+                service: typeof debugData.service === "string" ? debugData.service : null,
+                version: typeof debugData.version === "string" ? debugData.version : null,
+                reportedStatus,
+                sheetsAccessed: Array.isArray(debugData.sheetsAccessed) ? debugData.sheetsAccessed.filter(v => typeof v === "string") : [],
+                cacheStatus: debugData.cacheStatus && typeof debugData.cacheStatus.isCached === "boolean"
+                    ? { isCached: debugData.cacheStatus.isCached } : null
+            } : null;
+            results[srvKey] = {
+                status: res.ok && !reportedFailure ? "online" : "error",
+                latency: Date.now() - start, code: res.status, checkedAt: new Date().toISOString(),
+                metadata,
+                metadataAvailable: Boolean(metadata && (metadata.service || metadata.version || metadata.reportedStatus || metadata.sheetsAccessed.length || metadata.cacheStatus)),
+                error: !res.ok ? `HTTP ${res.status}` : null
+            };
         } catch (err) {
-            results[srvKey] = { status: 'offline', latency: Date.now() - start, error: err.message };
+            results[srvKey] = {
+                status: "offline", latency: Date.now() - start, checkedAt: new Date().toISOString(),
+                metadata: null, metadataAvailable: false,
+                error: controller && controller.signal.aborted ? `Tiempo de espera agotado (${timeoutMs} ms).` : err.message
+            };
+        } finally {
+            if (timeoutId !== null) clearTimeout(timeoutId);
         }
     }));
-
     return results;
 }
 

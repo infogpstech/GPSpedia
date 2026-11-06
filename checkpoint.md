@@ -2903,3 +2903,88 @@ VALIDACIONES PENDIENTES
 SIGUIENTE ACCIÓN
 Crear un único commit de la tarea mediante Git Database API. Antes de escribir, volver a verificar que GPSpedia2.2.5_work sigue en 9b1f210cf3c3ac14f02d33df7762364f4ad1d3fc y GPSpedia2.2.5 sigue en d9acc68d889985c2e2f42fe3a02e502efc86ead1. Crear un solo árbol, un commit con el HEAD inicial como único padre y actualizar exclusivamente la rama de trabajo con force:false y expected_sha igual al HEAD inicial. Después verificar el commit y que la rama base permanezca intacta. No desplegar ni iniciar pruebas funcionales todavía.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — DIAGNÓSTICO Y MONITOREO DE SERVICIOS
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial verificado: 06c3b3228844721fe5359c372ebb105ce497ef33
+Árbol inicial: 6287a12d516705068a69072611eb534383a77c86
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA
+Auditar e implementar el subalcance «Diagnóstico y monitoreo de servicios» del modal «Opciones de desarrollador», manteniendo la diferencia entre datos backend disponibles y métricas observadas desde el navegador.
+
+ALCANCE
+- Inventariar fuentes de estado/version/latencia/logs por servicio.
+- Medir solicitudes iniciadas desde esta sesión sin registrar payloads ni credenciales.
+- Añadir tarjetas seleccionables, detalle y gráfico de tráfico con unidad/ventana/fuente definidos.
+- No inventar contador de ejecuciones internas ni tráfico global cuando los servicios no lo exponen.
+
+ESTADO INICIAL
+- El panel tenía filas simples de estado y latencia; el escaneo descartaba JSON debug y no tenía timeout individual.
+- routeAction() centraliza POST de aplicación; checkAllServicesHealth() realiza GET ?debug=true.
+- Los servicios no ofrecen una API uniforme de telemetría interna.
+- No se ha desplegado ni ejecutado prueba funcional real.
+
+RIESGOS
+- No confundir solicitudes del navegador con tráfico total del backend.
+- No llamar «funciones internas» a las acciones API del frontend.
+- No exponer spreadsheetId, driveFolderId, cacheKey, payloads ni tokens.
+- Un endpoint lento no debe impedir resultados de otros servicios.
+- No añadir escrituras de telemetría a Sheets sin auditoría de cuotas y efectos.
+
+FASE
+Checkpoint inicial preparado antes de la auditoría. La versión inicial y final se consolidan en el mismo archivo para mantener un único commit por tarea.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — DIAGNÓSTICO Y MONITOREO DE SERVICIOS
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD de partida: 06c3b3228844721fe5359c372ebb105ce497ef33
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO
+Implementación estática completada y pruebas aisladas satisfactorias. Validación funcional en navegador real y conectividad real pendiente. No se desplegó ni publicó Apps Script.
+
+ARCHIVOS DE CÓDIGO
+- api-config.js: original 7f997f9a0e9f3cbc90c259a736153bc446a04a24; final 1e7f237c6a5467b91dcc05a69ecf650089d83e93.
+- ui.js: original 302ee7f74b1509046c214739e6e378f5ee684bc2; final 3181a4a5109dbd5145a1373986c3fa520d094d3d.
+- index.html: original e478dfd54a1fb0efb05bacf7abdbbaa1c81f7f8b; final 33ac39d5c0ffe27f15a0cb3a3c6dec810f8f8b32.
+- style.css: original f418138019c1edb8608d816a057e7ee10604c619; final e100e73d7cacddb3b84bfce23966d44ad0c90896.
+- Services/*.js no se modificaron.
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: original f1f47080137df9ddbcb27d372fdec0040c4a3c77; final 515666f0f4b5da2ce271b560dd1bacafd52d0c15.
+- Tareas.txt: original 260ede2078d4f251697a48e82bad544a3ddc92d6; final 0bfee04022435d6e518e2d6e54cb54d54fa0c5a4.
+- ChangesLogs.txt: original 2579fa03e3a90be3aecaee49517d19350ea36347; final 260f7476009aab1a630c2424307adfef1b9644a6.
+- checkpoint.md: original 18c1aa77da15721bf5499186fe3ea2bc042b7531; el checkpoint final se incorpora en el único commit de esta tarea.
+
+RESUMEN FUNCIONAL
+- Las tarjetas muestran estado, latencia del diagnóstico y versión si el endpoint la reporta.
+- El detalle muestra última comprobación, conteo/resultado/tiempo medio de solicitudes POST observadas en esta sesión, dependencias reportadas y últimas acciones API.
+- El gráfico SVG agrupa solicitudes POST de routeAction() por servicio en buckets de 1 minuto, ventana de 15 minutos y máximo 600 eventos.
+- checkAllServicesHealth() aplica timeout individual de 8 segundos y conserva solo metadatos seguros.
+- Los datos de telemetría viven en memoria durante la sesión y se eliminan al recargar.
+- La gráfica no incluye GET ?debug=true; no representa tráfico global ni ejecuciones internas de Apps Script.
+- Los nombres mostrados son acciones API observadas, no nombres confirmados de funciones internas.
+- El contador backend de ejecuciones internas no está disponible en los servicios auditados; el panel lo declara en lugar de inventar un valor.
+
+VERIFICACIONES
+- Parseo de api-config.js y ui.js sin errores.
+- routeAction probado con éxito, HTTP 503, error API, fallo de red y JSON inválido.
+- Se comprobó que las métricas no guardan payloads y que los suscriptores reciben eventos.
+- Health scan probado con timeout aislado, respuestas HTTP, estado de error reportado y metadatos sanitizados.
+- IDs HTML nuevos únicos y CSS con llaves balanceadas.
+- No se usó navegador real, no se consultaron endpoints productivos ni hojas de registro.
+
+SIGUIENTE ACCIÓN
+Crear un único commit con los cuatro archivos de código y cuatro documentos. Antes de escribir, verificar que GPSpedia2.2.5_work sigue en 06c3b3228844721fe5359c372ebb105ce497ef33 y GPSpedia2.2.5 sigue en d9acc68d889985c2e2f42fe3a02e502efc86ead1. Crear un solo árbol, un commit con el HEAD inicial como único padre y actualizar solo la rama de trabajo con force:false/expected_sha. Después verificar commit, archivos modificados y rama base intacta. No desplegar ni iniciar pruebas funcionales todavía.
+================================================================================
