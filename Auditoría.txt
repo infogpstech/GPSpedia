@@ -3934,3 +3934,42 @@ Tipo: auditoría estática de código y flujo. No se ejecutó Apps Script ni se 
 6. RESULTADO
 AUDITORÍA ESTÁTICA COMPLETADA; CAUSA RAÍZ NO DETERMINADA. La siguiente fase depende de una validación funcional de solo lectura contra el deployment ADMIN y el árbol Cortes reales. No se recomienda cambiar los límites de lote ni alterar el algoritmo hasta obtener esa evidencia.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — ERROR AL REANUDAR EL INVENTARIO DE IMÁGENES EN DRIVE
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+HEAD auditado: 3d74ca1dd7eebe6a802f87efe85dc7b929fb894a
+
+1. ALCANCE Y RESPALDO
+- Se reinició la auditoría formal después de registrar un checkpoint inicial actualizado, debido a que el checkpoint heredado indicaba un HEAD distinto al de la rama real.
+- Se auditó Services/admin.js (3,059 líneas; blob original 18ab493f5528df20d3e1f901468c5777429d3e07), incluidos el router doPost(), el manejo de errores, extracción/recolección de referencias, validación de carpetas, utilidades de estado, handlers administrativos y funciones de almacenamiento, recuperación, limpieza y recorrido del inventario.
+- El blob original de Services/admin.js se conserva sin modificaciones como respaldo exacto previo a la edición: 18ab493f5528df20d3e1f901468c5777429d3e07.
+- Se revisaron específicamente storeAuditDriveReferenceSnapshot(), loadAuditDriveReferenceSnapshot(), clearAuditDriveReferenceSnapshot(), handleAuditDriveImagesInCortes(), collectActiveDriveReferences() e isFolderInsideCortes().
+
+2. FLUJO Y DEPENDENCIAS CONFIRMADOS
+- storeAuditDriveReferenceSnapshot() serializa el snapshot con JSON.stringify(), crea un Blob de tipo application/json, lo comprime con Utilities.gzip(), codifica los bytes en Base64 y almacena fragmentos y manifiesto en ScriptCache con expiración de 21,600 segundos.
+- loadAuditDriveReferenceSnapshot() recupera el manifiesto y todos los fragmentos, concatena el Base64 y decodifica los bytes antes de descomprimirlos.
+- La reconstrucción actual usa Utilities.newBlob(Utilities.base64Decode(encoded)) sin especificar contentType. Ese Blob se entrega inmediatamente a Utilities.ungzip().
+- handleAuditDriveImagesInCortes() invoca loadAuditDriveReferenceSnapshot() al recibir un cursor, antes de continuar la lectura de carpetas/archivos. Por ello, una excepción al reconstruir/descomprimir el snapshot interrumpe la reanudación antes de procesar el siguiente lote.
+- doPost() captura la excepción y devuelve status/estado error, message/mensaje y logs. La finalización de la ejecución de Apps Script no implica que el inventario haya alcanzado complete:true.
+- El primer lote puede devolver una cantidad parcial de archivos y un cursor. El total de 14 no aparece como límite global en este código; los límites configurados son 25 archivos y 20 subcarpetas descubiertas por petición.
+- Los helpers de extracción y recolección de referencias, validación de pertenencia al árbol, manifiesto, fragmentación y limpieza no requieren cambios para corregir el tipo del Blob.
+
+3. CAUSA TÉCNICA IDENTIFICADA
+- El mensaje runtime informado por el usuario («El objeto binario grande no debe tener tipo de contenido nulo para esta operación») coincide con la reconstrucción del Blob sin contentType que se pasa a Utilities.ungzip().
+- El punto de fallo está localizado en loadAuditDriveReferenceSnapshot(), en la llamada Utilities.ungzip(compressed). La reconstrucción omite el tipo MIME que necesita identificar el contenido gzip.
+- El Blob fuente comprimido se produce mediante Utilities.gzip(). La reconstrucción debe asignar explícitamente el tipo MIME gzip compatible con dicho formato; se utilizará application/x-gzip.
+- Esta conclusión identifica el fallo estático compatible con el mensaje reportado. La confirmación de que la corrección resuelve la ejecución real requiere desplegar la versión ADMIN y ejecutar el recorrido de varios lotes hasta complete:true.
+
+4. IMPACTO Y LÍMITES
+- El fallo afecta la lectura del snapshot al reanudar; no demuestra corrupción de los fragmentos ni pérdida de los tokens de Drive.
+- No hay evidencia que justifique cambiar límites de lote, el algoritmo de recorrido, el cursor, el manifiesto, el almacenamiento en CacheService, el frontend o api-config.js.
+- No se ejecutó Apps Script, no se consultaron Drive/Sheets ni se realizaron cambios en datos, permisos o deployments.
+- La discrepancia del checkpoint previo queda registrada: el checkpoint existente indicaba HEAD 8a9c9811bc954785f36966997bc1564a1fb3feac, mientras que la rama confirmada estaba en 3d74ca1dd7eebe6a802f87efe85dc7b929fb894a. Se preservó el historial documental y se creó un checkpoint inicial con el HEAD observado.
+
+5. DECISIÓN DE IMPLEMENTACIÓN
+- Cambio autorizado y acotado: reconstruir el Blob en loadAuditDriveReferenceSnapshot() indicando contentType application/x-gzip antes de llamar Utilities.ungzip().
+- Mantener sin cambios la codificación Base64, fragmentación, claves, manifiesto, expiración, serialización, tokens, límites y algoritmo de recorrido.
+- No modificar otros hallazgos de ADMIN ni las limitaciones de telemetría del frontend dentro de esta tarea.
+================================================================================

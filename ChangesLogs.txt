@@ -2676,3 +2676,15 @@ ALCANCE Y RESULTADO REGISTRADO
 - La causa raíz no se determinó porque no se ejecutó el deployment ni se consultó Drive. Queda pendiente la validación funcional con métricas por lote y verificación del deployment.
 - No se modificaron archivos de código, endpoints, deployments, hojas, registros, permisos, imágenes ni carpetas de Drive.
 ================================================================================
+
+
+================================================================================
+CORRECCIÓN — TIPO MIME DEL SNAPSHOT DE AUDITORÍA DRIVE
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+ARCHIVO MODIFICADO: Services/admin.js
+- loadAuditDriveReferenceSnapshot(), línea 2867: se especificó el tipo MIME application/x-gzip al reconstruir el Blob a partir de los bytes decodificados en Base64, antes de pasarlo a Utilities.ungzip().
+- No se modificaron la serialización JSON, compresión gzip, codificación Base64, fragmentación, claves del CacheService, manifiesto, expiración, límites de lote, cursor ni recorrido de carpetas.
+- El archivo conserva 3,059 líneas. La comparación contra el respaldo exacto identificó una sola línea modificada.
+- La sintaxis JavaScript fue comprobada mediante compilación estática en V8 y no reportó errores.
+- No se ejecutó Apps Script, no se desplegó ADMIN ni se consultaron o modificaron datos de Google Sheets/Drive. La validación funcional de varios lotes hasta complete:true permanece pendiente.
+================================================================================

@@ -1755,3 +1755,50 @@ Ejecutar una prueba funcional de solo lectura contra el deployment ADMIN utiliza
 ## 6. PUBLICACIÓN
 Los cuatro archivos documentales se agruparán en exactamente un commit de GPSpedia2.2.5_work mediante Git Database API. El commit tendrá como único padre el HEAD previo confirmado. La rama protegida permanecerá en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+# CHECKPOINT INICIAL — CORRECCIÓN DE REANUDACIÓN DEL INVENTARIO DE IMÁGENES DRIVE
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD de trabajo confirmado:** 3d74ca1dd7eebe6a802f87efe85dc7b929fb894a
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## Tarea y alcance
+Corregir exclusivamente la reconstrucción del Blob comprimido del snapshot de referencias de la auditoría de imágenes de Google Drive, para permitir la reanudación entre lotes. Preservar el formato de almacenamiento en CacheService, fragmentación, manifiesto, cursor, límites y algoritmo de recorrido. Documentar los hallazgos y el cambio en los registros obligatorios. No desplegar Apps Script ni modificar datos de Drive/Sheets.
+
+## Estado real al inicio
+- La referencia de trabajo apunta a 3d74ca1dd7eebe6a802f87efe85dc7b929fb894a y la rama protegida a d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- El checkpoint previo contenía como HEAD inicial 8a9c9811bc954785f36966997bc1564a1fb3feac, por lo que su estado no coincide con la referencia actual. Se registra esta discrepancia y se reinicia la auditoría formal desde este checkpoint.
+- Durante la recuperación preliminar se leyó el código de Services/admin.js antes de advertir la discrepancia del checkpoint. No se modificó ningún archivo ni se creó ningún objeto Git. La auditoría formal se reinicia después de este registro inicial.
+- El usuario reportó que la interfaz conserva 14 archivos y muestra el error «El objeto binario grande no debe tener tipo de contenido nulo para esta operación» al continuar el inventario.
+- Hipótesis por verificar en auditoría: loadAuditDriveReferenceSnapshot() reconstruye un Blob sin tipo de contenido y lo entrega a Utilities.ungzip().
+
+## Archivos y funcionalidades involucrados
+- Services/admin.js: almacenamiento, recuperación y limpieza del snapshot; handler de auditoría por lotes.
+- Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+
+## Riesgos y dependencias
+- La auditoría afecta una zona de caché/continuación; no alterar estructura ni expiración de CacheService, cursor, tokens ni límites.
+- Confirmar el tipo MIME apropiado mediante el contrato y los blobs reales del código, no por suposición.
+- La corrección en Git no equivale a despliegue ni validación funcional en Apps Script.
+
+## Estado y siguiente acción
+**Estado:** checkpoint inicial actualizado; auditoría formal pendiente.
+**Siguiente acción:** auditar Services/admin.js completo y las funciones relacionadas, registrar hallazgos antes de crear el respaldo y modificar código.
+
+
+# CIERRE DE TAREA — INVENTARIO DRIVE
+
+**Fecha:** 2026-11-05
+**Estado:** Implementación y revisión estática completadas; validación funcional pendiente.
+
+- `Services/admin.js`: se especificó `application/x-gzip` al reconstruir el Blob en `loadAuditDriveReferenceSnapshot()` antes de `Utilities.ungzip()`.
+- Comparación contra respaldo: 3,059 líneas antes/después; una sola línea modificada (2867).
+- Se conservaron gzip, Base64, fragmentación, manifiesto, expiración, cursor, tokens, límites y recorrido.
+- Sintaxis comprobada en V8 sin errores.
+- No se ejecutó Apps Script ni se desplegó ADMIN. No se modificaron datos de Drive/Sheets.
+- Pendiente: desplegar manualmente una nueva versión ADMIN y verificar varios lotes hasta `complete:true` y cobertura del árbol esperado.
+- El commit único incluirá `Services/admin.js`, `Auditoría.txt`, `ChangesLogs.txt`, `Tareas.txt` y `checkpoint.md`; padre previsto: HEAD confirmado al inicio de esta tarea.

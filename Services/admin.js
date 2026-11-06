@@ -2864,7 +2864,7 @@ function loadAuditDriveReferenceSnapshot(auditId) {
         encoded += chunk;
     }
 
-    const compressed = Utilities.newBlob(Utilities.base64Decode(encoded));
+    const compressed = Utilities.newBlob(Utilities.base64Decode(encoded), "application/x-gzip");
     return JSON.parse(Utilities.ungzip(compressed).getDataAsString());
 }
 

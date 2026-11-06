@@ -3886,3 +3886,19 @@ Estado: AUDITORÍA ESTÁTICA COMPLETADA; CAUSA RAÍZ NO DETERMINADA; VALIDACIÓN
 - Siguiente paso: prueba funcional de solo lectura que registre por lote batchAnalyzed, totalAnalyzed, foldersVisited, complete, presencia/cambio del cursor, rootFolderName y folderPath de los resultados. Verificar también que el deployment corresponda al código auditado.
 - No aumentar límites ni modificar iteradores antes de obtener la evidencia anterior.
 ================================================================================
+
+
+================================================================================
+TAREA — CORREGIR LA REANUDACIÓN DEL INVENTARIO DE IMÁGENES EN DRIVE
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+ESTADO: CORRECCIÓN DE CÓDIGO Y REVISIÓN ESTÁTICA COMPLETADAS; VALIDACIÓN FUNCIONAL EN DEPLOYMENT PENDIENTE.
+
+- Causa localizada: loadAuditDriveReferenceSnapshot() reconstruía el Blob comprimido sin contentType y lo entregaba a Utilities.ungzip(), coincidiendo con el error runtime reportado sobre tipo de contenido nulo.
+- Corrección aplicada en Services/admin.js: se asignó application/x-gzip al Blob reconstruido.
+- Alcance preservado: no se cambiaron el snapshot, CacheService, fragmentos, manifiesto, expiración, cursor, tokens, límites de 25 archivos/20 subcarpetas ni algoritmo de recorrido.
+- Respaldo exacto de Services/admin.js: blob 18ab493f5528df20d3e1f901468c5777429d3e07.
+- Comparación: archivo de 3,059 líneas antes y después; una única línea modificada, en loadAuditDriveReferenceSnapshot().
+- Verificaciones estáticas: compilación sintáctica V8 correcta; se confirmó que la escritura gzip, Base64, tamaño de fragmentos, límite codificado, TTL de CacheService, cursor y límites por lote permanecen sin cambios.
+- Pendiente: actualizar manualmente el deployment ADMIN a una versión nueva y ejecutar la auditoría real desde la interfaz. Debe comprobarse la continuidad entre varias peticiones y la respuesta final complete:true, con cobertura del árbol esperado. Hasta entonces no se declara resuelta la incidencia funcional.
+- No se desplegó Apps Script, no se modificaron datos/archivos de Drive o Sheets y no se tocó la rama protegida.
+================================================================================
