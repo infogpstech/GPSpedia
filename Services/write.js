@@ -20,6 +20,7 @@ function getSpreadsheet() {
 const SHEET_NAMES = {
     CORTES: "Cortes",
     IDEMPOTENCIA: "Idempotencia",
+    IDEMPOTENCIA_FALLBACK: "Idempotencia_Cortes",
     USERS: "Users",
     ACTIVE_SESSIONS: "ActiveSessions"
 };
@@ -65,6 +66,11 @@ function ensureTestigoColumns(sheet, lockAlreadyHeld = false) {
         }
         let lastColumn = sheet.getLastColumn();
         if (lastColumn < 1) throw new Error('La hoja «Cortes» no contiene encabezados.');
+        const maxColumns = sheet.getMaxColumns();
+        if (maxColumns < 45) {
+            sheet.insertColumnsAfter(maxColumns, 45 - maxColumns);
+        }
+        lastColumn = Math.max(lastColumn, 45);
         const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
         ['activaTestigo1', 'activaTestigo2', 'activaTestigo3'].forEach(headerName => {
             let headerIndex = headers.findIndex(value => String(value || '').trim() === headerName);
@@ -226,8 +232,9 @@ function handleAddOrUpdateCut(payload) {
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     ensureTestigoColumns(sheet);
     const vinColumnIndex = getVinColumnIndex(sheet);
+    const vinPrefix = cutData.vin ? extractVinPrefix(cutData.vin) : "";
     if (cutData.vin && !vinColumnIndex) {
-        throw new Error("La hoja «Cortes» no contiene una columna «vin»; no se puede guardar el VIN sin alterar otras columnas.");
+        throw new Error("La hoja «Cortes» no contiene el encabezado «VIN»; no se puede guardar el identificador sin alterar otras columnas.");
     }
 
     if (opId) {
@@ -236,6 +243,19 @@ function handleAddOrUpdateCut(payload) {
             const rowIndex = match.rowIndex;
             const rowValues = match.rowValues;
             const rowObj = mapRowToObject(rowValues, COLS_CORTES);
+            let recoveredVinCollection = null;
+            if (vinPrefix) {
+                const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, rowObj.id);
+                if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
+                const existing = parseVinCollection(rowValues[vinColumnIndex - 1]);
+                if (!existing.includes(vinPrefix)) {
+                    const maxAllowed = countEquipmentVersions((vehicleData && vehicleData.versionesAplicables) || rowObj.versionesAplicables);
+                    if (existing.length >= maxAllowed) {
+                        throw new Error("Este vehículo ya alcanzó el máximo de VIN permitido según sus versiones de equipamiento.");
+                    }
+                    recoveredVinCollection = existing.concat(vinPrefix);
+                }
+            }
             const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
             const matchedColName = String(headers[match.colIndex - 1]).toLowerCase();
 
@@ -321,6 +341,9 @@ function handleAddOrUpdateCut(payload) {
                 }
             }
 
+            if (recoveredVinCollection) {
+                sheet.getRange(rowIndex, vinColumnIndex).setValue(JSON.stringify(recoveredVinCollection));
+            }
             SpreadsheetApp.flush();
             return {
                 status: 'success',
@@ -339,6 +362,11 @@ function handleAddOrUpdateCut(payload) {
     let rowIndex;
     let newId;
 
+    if (vinPrefix && !vehicleId) {
+        const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, null);
+        if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
+    }
+
     if (vehicleId) { // --- Lógica para vehículo EXISTENTE ---
         const ids = sheet.getRange(2, 1, sheet.getLastRow(), 1).getValues().flat();
         const existingIndex = ids.findIndex(id => id.toString() == vehicleId.toString());
@@ -347,6 +375,19 @@ function handleAddOrUpdateCut(payload) {
 
         const rowValues = sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
         const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
+        let updatedVinCollection = null;
+        if (vinPrefix) {
+            const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, vehicleId);
+            if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
+            const existingVinCollection = parseVinCollection(rowValues[vinColumnIndex - 1]);
+            if (!existingVinCollection.includes(vinPrefix)) {
+                const maxAllowed = countEquipmentVersions((vehicleData && vehicleData.versionesAplicables) || vehicleInfo.versionesAplicables);
+                if (existingVinCollection.length >= maxAllowed) {
+                    throw new Error("Este vehículo ya alcanzó el máximo de VIN permitido según sus versiones de equipamiento.");
+                }
+                updatedVinCollection = existingVinCollection.concat(vinPrefix);
+            }
+        }
 
         let cutSlotIndex = -1;
         for (let i = 1; i <= 3; i++) {
@@ -371,6 +412,9 @@ function handleAddOrUpdateCut(payload) {
         sheet.getRange(rowIndex, COLS_CORTES[`activaTestigo${cutSlotIndex}`]).setValue(cutData.activaTestigo1 === true);
         sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${cutSlotIndex}`]).setValue(imageUrl);
         sheet.getRange(rowIndex, COLS_CORTES[`colaboradorCorte${cutSlotIndex}`]).setValue(colaboradorName);
+        if (updatedVinCollection) {
+            sheet.getRange(rowIndex, vinColumnIndex).setValue(JSON.stringify(updatedVinCollection));
+        }
         if (opId) {
             recordOpId(opId, newId || vehicleId, cutSlotIndex, formattedDate);
         }
@@ -446,13 +490,6 @@ function handleAddOrUpdateCut(payload) {
         sheet.getRange(rowIndex, COLS_CORTES.activaTestigo1).setValue(cutData.activaTestigo1 === true);
         sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
         sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
-        if (cutData.vin) {
-            const vinPrefix = extractVinPrefix(cutData.vin);
-            if (vinPrefix) {
-                sheet.getRange(rowIndex, vinColumnIndex).setValue(vinPrefix);
-            }
-        }
-
         // 5. Esperar a que la hoja calcule el valor del ID generado por la fórmula.
         SpreadsheetApp.flush();
         Utilities.sleep(1500); // Espera para asegurar que la fórmula se calcule.
@@ -478,6 +515,9 @@ function handleAddOrUpdateCut(payload) {
         SpreadsheetApp.flush();
         Utilities.sleep(500);
         newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
+        if (vinPrefix && newId) {
+            sheet.getRange(rowIndex, vinColumnIndex).setValue(serializeVinCollection([vinPrefix]));
+        }
         if (opId && newId) {
             recordOpId(opId, newId, 1, formattedDate);
         }
@@ -825,14 +865,53 @@ function checkFileIdValid(url) {
 // GESTIÓN DE IDEMPOTENCIA EN HOJA DEDICADA ("Idempotencia")
 // ============================================================================
 
-function getIdempotenciaSheet() {
-    let sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
-    if (!sheet) {
-        sheet = getSpreadsheet().insertSheet(SHEET_NAMES.IDEMPOTENCIA);
-        sheet.appendRow(["opId", "vehicleId", "slotIndex", "timestamp", "status"]);
+const IDEMPOTENCIA_HEADERS = ["opId", "vehicleId", "slotIndex", "timestamp", "status"];
+
+function isIdempotenciaSheetCompatible(sheet) {
+    if (!sheet) return false;
+    if (sheet.getLastRow() === 0 && sheet.getLastColumn() === 0) return true;
+    if (sheet.getLastRow() < 1 || sheet.getLastColumn() < IDEMPOTENCIA_HEADERS.length) return false;
+    const headers = sheet.getRange(1, 1, 1, IDEMPOTENCIA_HEADERS.length).getValues()[0];
+    return IDEMPOTENCIA_HEADERS.every((expected, index) =>
+        String(headers[index] || "").trim().toLowerCase() === expected.toLowerCase()
+    );
+}
+
+function initializeIdempotenciaSheet(sheet) {
+    if (sheet && sheet.getLastRow() === 0) {
+        sheet.getRange(1, 1, 1, IDEMPOTENCIA_HEADERS.length).setValues([IDEMPOTENCIA_HEADERS]);
         sheet.setFrozenRows(1);
     }
-    return sheet;
+}
+
+function getIdempotenciaSheet() {
+    const ss = getSpreadsheet();
+    let sheet = ss.getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
+    if (!sheet) {
+        const fallback = ss.getSheetByName(SHEET_NAMES.IDEMPOTENCIA_FALLBACK);
+        if (fallback && isIdempotenciaSheetCompatible(fallback)) {
+            initializeIdempotenciaSheet(fallback);
+            return fallback;
+        }
+        sheet = ss.insertSheet(SHEET_NAMES.IDEMPOTENCIA);
+        initializeIdempotenciaSheet(sheet);
+        return sheet;
+    }
+    if (isIdempotenciaSheetCompatible(sheet)) {
+        initializeIdempotenciaSheet(sheet);
+        return sheet;
+    }
+    let fallback = ss.getSheetByName(SHEET_NAMES.IDEMPOTENCIA_FALLBACK);
+    if (!fallback) {
+        fallback = ss.insertSheet(SHEET_NAMES.IDEMPOTENCIA_FALLBACK);
+        initializeIdempotenciaSheet(fallback);
+        return fallback;
+    }
+    if (!isIdempotenciaSheetCompatible(fallback)) {
+        throw new Error("Las hojas Idempotencia e Idempotencia_Cortes tienen esquemas incompatibles.");
+    }
+    initializeIdempotenciaSheet(fallback);
+    return fallback;
 }
 
 function recordOpId(opId, vehicleId, slotIndex, timestamp) {
@@ -857,7 +936,7 @@ function findRowByOpId(sheet, opId) {
 
     // 1. Buscar prioritariamente en la hoja dedicada Idempotencia
     try {
-        const idempSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
+        const idempSheet = getIdempotenciaSheet();
         if (idempSheet && idempSheet.getLastRow() > 1) {
             const idempData = idempSheet.getDataRange().getValues();
             for (let r = 1; r < idempData.length; r++) {
@@ -894,8 +973,11 @@ function findRowByOpId(sheet, opId) {
         const vinColumnIndex = headers.findIndex(header => String(header || "").trim().toLowerCase() === "vin") + 1;
         const opIdCols = [];
         for (let c = 0; c < headers.length; c++) {
-            // Excluir «vin» solo cuando exista ese encabezado; no excluir idOperacion1 en la columna 43.
-            if (vinColumnIndex > 0 && c + 1 === vinColumnIndex) continue;
+            // Si la columna VIN aún contiene un opId heredado, permitir su recuperación hasta completar la migración.
+            if (vinColumnIndex > 0 && c + 1 === vinColumnIndex) {
+                if (data.slice(1).some(row => /^OP-[a-zA-Z0-9_-]+$/.test(String(row[c] || "").trim()))) opIdCols.push(c);
+                continue;
+            }
             const h = String(headers[c]).toLowerCase();
             if (h.includes("idoperacion") || h.includes("id_operacion")) {
                 opIdCols.push(c);

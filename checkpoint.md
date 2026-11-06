@@ -3574,3 +3574,70 @@ Iniciar una tarea de implementación con checkpoint propio y auditoría línea p
 PUBLICACIÓN
 Un único commit en GPSpedia2.2.5_work mediante Git Database API; no modificar GPSpedia2.2.5, no hacer merge ni desplegar.
 ================================================================================
+
+================================================================================
+# CHECKPOINT INICIAL — MIGRACIÓN DE IDENTIFICADORES Y HABILITACIÓN DE VIN
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD inicial: e7442d9b161547eb48b6a7254130a35adf3b2631
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+Alcance: trasladar idOperacion1..3 desde Cortes a una hoja Idempotencia compatible o Idempotencia_Cortes alternativa; preservar ID y slot; liberar 43–45; fijar VIN exacto en columna 43; mantener 44–45 vacías; almacenar VIN JSON en una celda.
+Requisito adicional: función ADMIN renameVinColumnHeader para establecer VIN, nunca IdOperacion.
+Estado inicial: WRITE/ADMIN usan Idempotencia con esquema esperado sin validar encabezados; ensureTestigoColumns podía ocupar 44–45; add_cortes.html no transmitía pendingOp.formData.vin; WRITE guardaba VIN escalar y ADMIN no lo procesaba. No se inspeccionó Spreadsheet productiva.
+Desviación: el inventario preliminar se realizó antes del checkpoint; auditoría detallada después, documentada en Auditoría.txt.
+Riesgos: no limpiar origen antes de verificar destino; abortar conflictos; no desplazar columnas; no ejecutar migración ni despliegue sin autorización.
+================================================================================
+
+================================================================================
+# CHECKPOINT FINAL — MIGRACIÓN DE IDENTIFICADORES Y ENCABEZADO VIN
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD anterior: e7442d9b161547eb48b6a7254130a35adf3b2631
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+
+ESTADO
+CÓDIGO IMPLEMENTADO Y PRUEBAS AISLADAS COMPLETADAS; MIGRACIÓN PRODUCTIVA Y DESPLIEGUE PENDIENTES.
+
+ARCHIVOS MODIFICADOS
+Services/admin.js, Services/write.js, add_cortes.html, api-config.js, Tareas.txt, README.md, Auditoría.txt, ChangesLogs.txt y checkpoint.md.
+
+RESULTADO
+- ADMIN expone migrateCortesOperationIds con simulación por defecto y confirm:true para escribir.
+- idOperacion1..3 se trasladan a Idempotencia o Idempotencia_Cortes según compatibilidad; la hoja incompatible se preserva.
+- Los opId se verifican en destino antes de limpiar origen.
+- renameVinColumnHeader fija VIN en columna 43 y rechaza opId residuales.
+- La migración detecta opId escalares heredados aunque la columna 43 ya diga VIN; aborta ante mezcla ambigua.
+- Columnas 44 y 45 quedan libres; ensureTestigoColumns agrega sus campos después de 45.
+- WRITE y ADMIN guardan VIN como colección JSON en alta, vehículo existente y recuperación.
+- add_cortes.html transmite el VIN opcional.
+- CATALOG/UI/navigation/VinDifferentialEngine reconocen encabezado/colección sin cambios.
+
+VERIFICACIONES
+- Pruebas aisladas Node.js con mocks de Sheets para dry-run, migración, asociación vehículo/slot, encabezado VIN, reserva 44–45, reejecución idempotente, conflicto y formato inválido; no ejecutan el Apps Script desplegado.
+- Pruebas aisladas con mocks de columnas de testigo 46–48, colección JSON, truncado VIN y límite de versiones.
+- Verificación estática de definiciones y rutas.
+- Respaldos originales por SHA en Auditoría.txt.
+
+PRUEBAS DE CASOS BORDE COMPLEMENTARIAS
+Se comprobó el tratamiento de opId heredados bajo encabezado VIN, preservación de valores VIN reales, aborto ante mezcla ambigua y selección/creación de hojas de idempotencia sin sobrescribir hojas incompatibles.
+
+LIMITACIONES
+- No se inspeccionó la Spreadsheet productiva ni se ejecutó la acción; no se conocen encabezados/datos reales.
+- No se desplegaron servicios.
+- Si Idempotencia es incompatible, Idempotencia_Cortes será activa y la anterior queda preservada sin reinterpretar automáticamente sus registros.
+- Si ambas hojas de idempotencia existentes son incompatibles, la migración aborta sin modificarlas; si Idempotencia no existe y la alternativa no es compatible, se crea Idempotencia.
+- Tras desplegar, ejecutar primero dry-run; confirm:true solo tras revisar el resultado y recibir autorización expresa.
+
+SIGUIENTE ACCIÓN
+Revisar este commit. Tras autorización de despliegue, ejecutar dry-run de migrateCortesOperationIds, revisar conteos/columnas/destino y solicitar confirmación antes de migrar.
+
+NOTA DE SEGURIDAD
+Si columna 43 ya tiene encabezado VIN pero contiene exclusivamente valores escalares OP-..., se tratan como idOperacion1; si mezcla OP- con VIN/JSON, el preflight detiene la operación sin limpiar. findRowByOpId conserva compatibilidad temporal con esos opId heredados.
+
+PUBLICACIÓN
+Un único commit en GPSpedia2.2.5_work mediante Git Database API; no modificar GPSpedia2.2.5, no hacer merge ni desplegar.
+================================================================================

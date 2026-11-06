@@ -850,26 +850,29 @@ TAREA 3: FORMULARIO GUIADO DE REGISTRO DE VEHÍCULOS, IDEMPOTENCIA Y RESILIENCIA
 ---
 
 ===================================================================
-TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚSQUEDA POR VIN [X]
+TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚSQUEDA POR VIN [~]
 ===================================================================
-- **Estado:** IMPLEMENTACIÓN ORIGINAL COMPLETADA; AJUSTE DE ESQUEMA Y ALMACENAMIENTO PENDIENTE
+- **Estado:** AJUSTE IMPLEMENTADO EN CÓDIGO; MIGRACIÓN CONTROLADA Y VALIDACIÓN FUNCIONAL REAL PENDIENTES
 - **Objetivo principal:** Habilitar la identificación unívoca y segura de vehículos a través del número VIN procesado, permitiendo indexar múltiples versiones por modelo y consultar al instante desde el catálogo.
 - **Tareas originales integradas:** 11.1, 11.2, 11.3, 11.4, 11.5, 11.6, 11.7, 11.8, B34
 - **Justificación técnica de convergencia:** Reúne todas las especificaciones de diseño, almacenamiento, validación y consulta del número de chasis (VIN): migración de idOperacion1..3 a una hoja dedicada de idempotencia, uso de la columna 43 para la colección de VIN por fila, reserva de las columnas 44 y 45, algoritmo de truncado de seguridad (-5 caracteres), soporte en formulario y modal (+), anti-duplicados interactivo y motor de búsqueda global por VIN.
 - **Dependencias técnicas:** Depende de la Tarea 1 (backend operativo) y Tarea 3 (formulario de registro base).
-- **Observaciones sobre implementación existente en código:** Verificado en código: extractVinPrefix implementado, columna 'vin' indexada, modal openAddVinModal en ui.js, detección interactiva de duplicados y filtrado por VIN en navigation.js.
+- **Observaciones sobre implementación existente en código:** extractVinPrefix y la colección JSON ya estaban implementados parcialmente; esta tarea corrige el envío del VIN desde add_cortes.html, la persistencia en WRITE/ADMIN, la migración de idempotencia y la normalización del encabezado físico a VIN. La ejecución real de la migración y las pruebas contra la Spreadsheet productiva siguen pendientes.
 
 ### REQUISITOS TÉCNICOS Y FUNCIONALES DETALLADOS:
 
-#### Especificación Original (11.1): 11.1. Modificación de Google Spreadsheet (Columna vin)
+#### Especificación Original (11.1): 11.1. Modificación de Google Spreadsheet (Columna VIN)
 
-11.1. Modificación de Google Spreadsheet (Columna vin)
+11.1. Modificación de Google Spreadsheet (Columna VIN)
 - Trasladar fuera de la hoja `Cortes` los valores de `idOperacion1`, `idOperacion2` e `idOperacion3`, actualmente ubicados en sus tres últimas columnas (índices 43–45), a una hoja dedicada para los datos de idempotencia. Se deberá conservar cada valor y su asociación inequívoca con el registro de origen; no se permite perder, sobrescribir ni reasignar identificadores durante la migración.
-- Auditar primero la hoja `Idempotencia` existente. Podrá reutilizarse únicamente si su estructura permite conservar íntegramente los tres identificadores y relacionarlos con el registro correspondiente. Si no existe o no resulta adecuada, crear una hoja específica para almacenar esa información.
-- Una vez verificada la migración, destinar la columna 43 liberada en `Cortes` al campo fijo `vin`, sin alterar ni desplazar las columnas 1–42. Las columnas 44 y 45 deberán quedar libres, sin encabezados funcionales ni asignación automática, para futuras implementaciones.
-- El backend deberá reconocer la única columna `vin` para lectura, escritura, validación y consulta, sin depender de una posición fija cuando el esquema se resuelva por encabezados.
-- La columna `vin` almacenará en una misma celda una colección JSON de los VIN procesados correspondientes a las versiones de equipamiento registradas en esa fila.
-- **Estado:** ESPECIFICACIÓN ACTUALIZADA; AJUSTE DE ESQUEMA PENDIENTE
+- Reutilizar una hoja compatible entre `Idempotencia` e `Idempotencia_Cortes`. Si `Idempotencia` no existe y no hay una hoja alternativa compatible, crear `Idempotencia` con los encabezados `opId`, `vehicleId`, `slotIndex`, `timestamp` y `status`. Si `Idempotencia` existe pero su estructura no es compatible, conservarla sin cambios y crear/usar `Idempotencia_Cortes`. Si ambas hojas existen con esquemas incompatibles, detener la operación sin modificar ninguna.
+- Una vez verificada la migración, destinar la columna 43 liberada en `Cortes` al campo fijo `VIN` (encabezado exacto en mayúsculas), sin alterar ni desplazar las columnas 1–42. Las columnas 44 y 45 deberán quedar libres, sin encabezados funcionales ni asignación automática, para futuras implementaciones.
+- El servicio ADMIN deberá exponer la acción `migrateCortesOperationIds`, con simulación por defecto y escritura únicamente cuando se reciba `confirm: true`. La función `renameVinColumnHeader` deberá cambiar el encabezado de la columna 43 exactamente a `VIN`, después de verificar que los identificadores de operación ya fueron persistidos.
+- Si la columna 43 ya tiene encabezado `VIN` pero contiene exclusivamente valores escalares con formato `OP-...`, deberán tratarse como valores heredados de `idOperacion1` y migrarse. Si mezcla identificadores de operación con VIN o colecciones JSON, la migración deberá detenerse sin limpiar el origen para revisión manual.
+- Los servicios WRITE y ADMIN deberán impedir que `ensureTestigoColumns` ocupe las columnas reservadas 44 y 45; las columnas de testigo se agregarán después de la 45.
+- El backend deberá reconocer la única columna física `VIN` para lectura, escritura, validación y consulta, sin depender de una posición fija cuando el esquema se resuelva por encabezados.
+- La columna `VIN` almacenará en una misma celda una colección JSON de los VIN procesados correspondientes a las versiones de equipamiento registradas en esa fila. La propiedad de datos usada por los consumidores puede seguir identificándose como `vin`.
+- **Estado:** FUNCIÓN DE MIGRACIÓN Y RENOMBRADO IMPLEMENTADA EN CÓDIGO; EJECUCIÓN CONTROLADA Y VALIDACIÓN PRODUCTIVA PENDIENTES
 
 #### Especificación Original (11.2): 11.2. Procesamiento y exclusión de los últimos 5 caracteres
 
@@ -882,9 +885,10 @@ TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚS
 
 11.3. Registro de VIN en add_corte.html
 - Incorporar campo de entrada opcional para VIN en la fase de solicitud de fotografía del vehículo (máximo 18 caracteres).
-- Procesar excluyendo los últimos 5 caracteres y almacenar en la columna `vin`.
+- Procesar excluyendo los últimos 5 caracteres y almacenar el prefijo en la colección JSON de la columna física `VIN`.
+- Transmitir el valor opcional de `pendingOp.formData.vin` en `cutData` para que los servicios WRITE y ADMIN reciban el VIN.
 - Validar duplicados antes de guardar mostrando el aviso interactivo si ya existe. Si el usuario no ingresa VIN, continuar con normalidad.
-- **Estado:** COMPLETADA [X]
+- **Estado:** IMPLEMENTADA EN CÓDIGO; VALIDACIÓN FUNCIONAL PENDIENTE [~]
 
 #### Especificación Original (11.4): 11.4. Opción «Agregar VIN» en el botón (+) del modal de detalle
 
@@ -918,11 +922,11 @@ TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚS
 #### Especificación Original (11.7): 11.7. Almacenamiento en una sola celda como colección (Array)
 
 11.7. Almacenamiento en una sola celda como colección (Array)
-- Almacenar todos los VIN procesados de la fila en una sola celda de la única columna `vin`, como colección Array JSON (ej.: `["1HGCM82633A", "2HGCM82633B"]`).
+- Almacenar todos los VIN procesados de la fila en una sola celda de la única columna física `VIN`, como colección Array JSON (ej.: `["1HGCM82633A", "2HGCM82633B"]`).
 - La cantidad de elementos de la colección deberá corresponder al número de versiones de equipamiento registradas para esa fila, respetando el límite funcional definido en 11.6 y la correspondencia entre cada versión y su VIN.
 - No almacenar un VIN por fila ni crear columnas independientes `vin2`, `vin3` o una columna por cada versión. La prohibición se refiere a impedir que la plataforma amplíe automáticamente el esquema de la hoja; no limita el almacenamiento de varios VIN dentro de la colección de la columna fija `vin`.
 - Las columnas 44 y 45 liberadas tras trasladar `idOperacion1..3` permanecerán disponibles para futuras implementaciones y no deberán ocuparse automáticamente.
-- **Estado:** ESPECIFICACIÓN VIGENTE; VALIDACIÓN EN LA IMPLEMENTACIÓN PENDIENTE
+- **Estado:** COLECCIÓN JSON IMPLEMENTADA EN WRITE Y ADMIN; PRUEBAS FUNCIONALES REALES PENDIENTES [~]
 
 #### Especificación Original (11.8): 11.8. Integración con la barra de búsqueda global por VIN
 
@@ -934,10 +938,11 @@ TAREA 4: SISTEMA INTEGRAL DE IDENTIFICACIÓN, ALMACENAMIENTO, COLECCIONES Y BÚS
 #### Especificación Original (B34): 19. **TÍTULO: Registro, almacenamiento, colecciones y búsqueda global por VIN (v2.2.0)**
 
 19. **TÍTULO: Registro, almacenamiento, colecciones y búsqueda global por VIN (v2.2.0)**
-- **Estado:** COMPLETADA [X]
+- **Estado:** IMPLEMENTACIÓN HISTÓRICA PARCIAL; MIGRACIÓN DE ESQUEMA Y VALIDACIÓN REAL PENDIENTES [~]
     - **ALCANCE:** Services/write.js, Services/catalog.js, Services/admin.js, Services/feedback.js, api-config.js, add_cortes.html, ui.js, navigation.js, index.html, style.css, Auditoría.txt, ChangesLogs.txt, Tareas.txt
     - **DESCRIPCIÓN DETALLADA:**
-      - **Objetivo:** Incorporar la identificación de modelos por número VIN (número de chasis) trasladando `idOperacion1..3` a una hoja de idempotencia y reutilizando la columna 43 liberada para `vin`, con las columnas 44 y 45 reservadas.
+      - **Objetivo:** Incorporar la identificación de modelos por número VIN (número de chasis) trasladando `idOperacion1..3` a una hoja de idempotencia y reutilizando la columna 43 liberada para el encabezado físico `VIN`, con las columnas 44 y 45 reservadas.
+      - **Nota de estado:** el traslado y la normalización del encabezado se consideran completos únicamente cuando se ejecute y verifique la acción administrativa `migrateCortesOperationIds` contra la Spreadsheet.
       - **Procesamiento de VIN:** Implementado `extractVinPrefix` para omitir los últimos 5 caracteres y almacenar solo el prefijo.
       - **Colecciones de VINs:** Múltiples VINs para diferentes versiones de equipamiento se almacenan como arrays/colecciones en la misma celda sin crear columnas adicionales. La cantidad máxima permitida (1 a 3) se determina según las versiones en `versionesAplicables`.
       - **Formulario y Modal:** Agregados el campo opcional en `add_cortes.html` y la opción 'Agregar VIN' en el menú (+) de detalles en `ui.js`. Si se detecta un duplicado, se muestra la advertencia `"VIN ya está registrado para:"` con un botón/enlace interactivo al modelo coincidente.

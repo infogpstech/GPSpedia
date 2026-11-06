@@ -5390,3 +5390,63 @@ RESPALDOS PREVIOS A EDICIÓN
 RESULTADO
 Se actualiza 11.1 para migrar idOperacion1..3 y utilizar columna 43 para VIN, reservando 44 y 45. Se aclara 11.7: no crear vin2/vin3 ni columnas por versión significa impedir la expansión automática del esquema, no limitar el arreglo JSON de una sola celda. Implementación y migración pendientes.
 ================================================================================
+
+================================================================================
+AUDITORÍA E IMPLEMENTACIÓN — MIGRACIÓN DE idOperacion1..3 Y COLUMNA VIN
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: e7442d9b161547eb48b6a7254130a35adf3b2631
+
+RESPALDOS EXACTOS PREVIOS
+- Services/write.js — fc61fbb42491bc5a700b4da66558e2f182ccf91c
+- Services/admin.js — 8a3b843c453e52fe7aee3c87c5c1876c92356942
+- Services/catalog.js — 253cbe9f873481114e7abff3aa8902c45e2560af
+- add_cortes.html — 67cf0662a537b661e2a7688e9bbf164d3a612ae2
+- ui.js — 78e71dd3b836df717e73d807e1eb47fd4ad53539
+- navigation.js — 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- api-config.js — 897e308f2408c79a146789db8d09338fbcd5e639
+- VinDifferentialEngine.js — 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- Tareas.txt — 879ef938fb8b61197441c135a5868a47eaaa1894
+- README.md — 36164aadcea66967e2b809ebd0adf193dba39870
+- Auditoría.txt — a06b60a3aae04c0f8ea762814f7f061dc593a93b
+- ChangesLogs.txt — d6c17f0b377ce3288d470ffd12a5648a2d10d2c9
+- checkpoint.md — dce8bece188879acb6dbad50e68dec1242a9ffa7
+
+HALLAZGOS
+1. WRITE y ADMIN usan Idempotencia con encabezados opId, vehicleId, slotIndex, timestamp y status, pero no validaban el esquema preexistente.
+2. ensureTestigoColumns agregaba columnas al final de getLastColumn(); al liberar 44 y 45 podía ocupar los espacios reservados.
+3. WRITE guardaba VIN inicial como texto escalar y no lo agregaba durante recuperación idempotente o alta para vehículo existente.
+4. ADMIN no procesaba cutData.vin en registro silencioso ni recuperación idempotente.
+5. add_cortes.html guardaba el VIN en pendingOp.formData.vin pero no lo transmitía dentro de cutData.
+6. CATALOG reconoce encabezados sin distinguir mayúsculas/minúsculas y expone el valor como propiedad vin; no requirió modificación.
+7. ui.js, navigation.js y VinDifferentialEngine.js ya consumen colecciones JSON; no requirieron modificación.
+8. Services/feedback.js no consulta ni modifica VIN o idOperacion; no requirió cambio.
+
+IMPLEMENTACIÓN
+- ADMIN: acción protegida migrateCortesOperationIds, simulación por defecto, confirmación explícita, validación de encabezados/OP-/ID/slot/unicidad/conflictos, escritura y verificación antes de limpiar origen.
+- ADMIN: función renameVinColumnHeader fija exactamente VIN en la columna 43 y rechaza el renombrado si quedan opId.
+- ADMIN/WRITE: valida esquema de Idempotencia; usa Idempotencia_Cortes si la hoja primaria no existe compatible; conserva la hoja incompatible.
+- ADMIN/WRITE: ensureTestigoColumns salta 44–45 y agrega campos de testigo después de 45.
+- WRITE/ADMIN: almacena VIN como colección JSON en altas nuevas, vehículos existentes y recuperación idempotente.
+- add_cortes.html: transmite pendingOp.formData.vin al backend.
+- api-config.js: enruta migrateCortesOperationIds a ADMIN.
+- La migración detecta opId escalares OP-... en columna 43 incluso si ya estaba rotulada VIN; si mezcla opId con VIN/JSON, aborta sin limpiar. findRowByOpId conserva recuperación temporal de esos opId heredados.
+
+PRUEBAS Y VERIFICACIONES
+- Verificación estática de definiciones únicas de getIdempotenciaSheet, recordOpId, findRowByOpId y ensureTestigoColumns en cada servicio; una definición de renameVinColumnHeader y handleMigrateCortesOperationIds en ADMIN; acción presente en doPost y api-config.
+- Prueba aislada Node.js con mocks de Sheets que reproducen la lógica de migración: dry-run sin mutación; traslado de tres columnas con asociación vehículo/slot; encabezado VIN; columnas 44–45 vacías; reejecución idempotente; conflictos y formato OP inválido bloquean sin borrar origen. No ejecuta el Apps Script real.
+- Prueba aislada Node.js con mocks: reserva de 44–45, campos de testigo en 46–48, parseo JSON vacío/poblado, truncado VIN y límite de versiones. No ejecuta los servicios desplegados.
+- No se accedió a Spreadsheet productiva, no se ejecutó Apps Script y no se desplegaron servicios.
+
+LIMITACIÓN
+Si Idempotencia es incompatible, la hoja original queda preservada y se activa Idempotencia_Cortes. Los registros históricos de la hoja incompatible no se reinterpretan automáticamente y requieren revisión si deben seguir consultándose.
+================================================================================
+
+- Si ambas hojas de idempotencia existen con encabezados incompatibles, el servicio aborta sin sobrescribirlas; si Idempotencia no existe y la alternativa existente no es compatible, se crea Idempotencia.
+
+PRUEBAS DE CASOS BORDE
+- Encabezado VIN con valores escalares OP-... exclusivamente: se identifican como idOperacion1 y se incluyen en la migración.
+- Encabezado VIN con valores VIN reales: se conservan como VIN.
+- Mezcla de opId y VIN/JSON bajo el mismo encabezado: se aborta el preflight sin limpiar.
+- Resolución de Idempotencia: reutiliza hoja compatible; crea Idempotencia si falta y la alternativa no es compatible; aborta si ambas hojas existentes son incompatibles.

@@ -3225,3 +3225,23 @@ ALCANCE
 - Solo documentación; sin cambios en código, Spreadsheet, deployments ni rama base.
 - La inspección de Idempotencia y la migración de datos quedan pendientes para la tarea de implementación.
 ================================================================================
+
+================================================================================
+IMPLEMENTACIÓN — MIGRACIÓN DE idOperacion1..3 Y ENCABEZADO VIN
+Fecha: 2026-11-06
+Rama: GPSpedia2.2.5_work
+
+- Services/admin.js: acción protegida migrateCortesOperationIds; dry-run por defecto; confirmación explícita; validación y verificación antes de limpiar; función renameVinColumnHeader; soporte VIN JSON en flujo normal y recuperación; fallback Idempotencia_Cortes; reserva 44–45; detección de opId bajo encabezado VIN.
+- Services/write.js: fallback Idempotencia; findRowByOpId usa el resolvedor y conserva recuperación temporal de opId heredados bajo VIN; reserva 44–45; VIN JSON en altas, vehículos existentes y recuperación.
+- add_cortes.html: incluye pendingOp.formData.vin en cutData.
+- api-config.js: enruta migrateCortesOperationIds a ADMIN.
+- Tareas.txt/README.md: documentan encabezado VIN, migración, datos mezclados, reserva y estados.
+- Auditoría.txt/checkpoint.md: registran hallazgos, respaldos, pruebas y límites.
+
+VERIFICACIÓN
+Pruebas aisladas Node.js con mocks completadas para la lógica de migración, conflictos, formato inválido, reserva de columnas y colecciones JSON; no son una ejecución del Apps Script desplegado. No se desplegaron servicios ni se modificó la Spreadsheet productiva.
+================================================================================
+
+- El resolvedor de Idempotencia conserva hojas incompatibles; crea la hoja primaria si no existe y la alternativa tampoco es compatible; aborta si la primaria y la alternativa existentes son incompatibles.
+
+- Casos borde probados: opId heredado bajo encabezado VIN, preservación de VIN real, aborto por datos mezclados y resolución segura de hojas de idempotencia incompatibles.
