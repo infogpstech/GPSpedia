@@ -19,7 +19,9 @@ function getSpreadsheet() {
 
 const SHEET_NAMES = {
     CORTES: "Cortes",
-    IDEMPOTENCIA: "Idempotencia"
+    IDEMPOTENCIA: "Idempotencia",
+    USERS: "Users",
+    ACTIVE_SESSIONS: "ActiveSessions"
 };
 
 const COLS_CORTES = {
@@ -35,6 +37,59 @@ const COLS_CORTES = {
     vin: 43
 };
 
+
+
+const COLS_USERS = {
+    ID: 1,
+    Nombre_Completo: 7
+};
+
+const COLS_ACTIVE_SESSIONS = {
+    ID_Usuario: 1,
+    ActiveSessions: 3
+};
+
+/**
+ * Obtiene la identidad personal desde la sesión activa y el perfil almacenados
+ * en Spreadsheet. No utiliza el nombre enviado por el navegador.
+ */
+function getAuthenticatedCollaborator(payload) {
+    const userId = String(payload && payload.userId || '').trim();
+    const sessionToken = String(payload && payload.sessionToken || '');
+    if (!userId || !sessionToken.trim()) {
+        throw new Error("Acceso no autorizado: se requiere una sesión válida.");
+    }
+
+    const ss = getSpreadsheet();
+    const sessionsSheet = ss.getSheetByName(SHEET_NAMES.ACTIVE_SESSIONS);
+    const usersSheet = ss.getSheetByName(SHEET_NAMES.USERS);
+    if (!sessionsSheet || !usersSheet) {
+        throw new Error("Acceso no autorizado: sesión no autorizada.");
+    }
+
+    const sessionsData = sessionsSheet.getDataRange().getValues();
+    const activeSession = sessionsData.slice(1).some(row =>
+        String(row[COLS_ACTIVE_SESSIONS.ID_Usuario - 1] || '').trim() === userId &&
+        String(row[COLS_ACTIVE_SESSIONS.ActiveSessions - 1] || '') === sessionToken
+    );
+    if (!activeSession) {
+        throw new Error("Acceso no autorizado: sesión inválida o expirada.");
+    }
+
+    const usersData = usersSheet.getDataRange().getValues();
+    const userRow = usersData.slice(1).find(row =>
+        String(row[COLS_USERS.ID - 1] || '').trim() === userId
+    );
+    if (!userRow) {
+        throw new Error("Acceso no autorizado: usuario de la sesión no encontrado.");
+    }
+
+    const fullName = String(userRow[COLS_USERS.Nombre_Completo - 1] || '').trim();
+    if (!fullName) {
+        throw new Error("El perfil del usuario no tiene un nombre completo registrado.");
+    }
+    return fullName;
+}
 
 // ============================================================================
 // ROUTER PRINCIPAL (doGet y doPost)
@@ -105,19 +160,19 @@ function doPost(e) {
 
 /* TAREA 3 (4.2, 4.4, B31): REGISTRO Y ACTUALIZACIÓN DE CORTES E IDEMPOTENCIA CON REPARACIÓN */
 function handleAddOrUpdateCut(payload) {
-    const { vehicleData, cutData, vehicleId, colaborador } = payload;
-    if (!cutData || !colaborador) {
-        throw new Error("Datos del corte y del colaborador son requeridos.");
+    payload = payload && typeof payload === 'object' ? payload : {};
+    const { vehicleData, cutData, vehicleId } = payload;
+    if (!cutData) {
+        throw new Error("Los datos del corte son requeridos.");
     }
 
+    const colaboradorName = getAuthenticatedCollaborator(payload);
     let opId = payload.opId || null;
-    let colaboradorName = colaborador;
-    if (colaboradorName) {
-        const opMatch = colaboradorName.match(/\[(OP-[a-zA-Z0-9_-]+)\]/);
-        if (opMatch) {
-            opId = opId || opMatch[1];
-            colaboradorName = colaboradorName.replace(/\s*\[OP-[a-zA-Z0-9_-]+\]/, '').trim();
-        }
+    // Compatibilidad con operaciones antiguas: solo se extrae el opId del campo heredado.
+    // El nombre de colaborador enviado por el cliente nunca se utiliza como identidad.
+    if (!opId && typeof payload.colaborador === 'string') {
+        const opMatch = payload.colaborador.match(/\[(OP-[a-zA-Z0-9_-]+)\]/);
+        if (opMatch) opId = opMatch[1];
     }
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);

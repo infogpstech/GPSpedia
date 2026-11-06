@@ -47,10 +47,12 @@ function assertDeveloperSession(payload) {
 
     const role = String(userRow[3] || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
     if (role !== "desarrollador") throw new Error("Acceso denegado: sesión no autorizada.");
+    const fullName = String(userRow[6] || "").trim();
     return {
         userId: String(userId),
         role: "Desarrollador",
-        userName: String(userRow[6] || userRow[1] || "Usuario")
+        fullName,
+        userName: fullName || String(userRow[1] || "Usuario")
     };
 }
 
@@ -379,7 +381,7 @@ function doPost(e) {
                 response = handleCheckOperation(payload);
                 break;
             case 'addOrUpdateCut':
-                response = handleAddOrUpdateCut(payload, logMessage);
+                response = handleAddOrUpdateCut(payload, logMessage, developerContext);
                 break;
             case 'addSupplementaryInfo':
                 response = handleAddSupplementaryInfo(payload, logMessage);
@@ -1694,7 +1696,7 @@ function handleUploadAdminImage(payload, logMessage) {
 // MICROSERVICIO REGISTRO DE CORTES (Silencioso y Administrativo)
 // ============================================================================
 
-function handleAddOrUpdateCut(payload, logMessage) {
+function handleAddOrUpdateCut(payload, logMessage, developerContext) {
     const lock = LockService.getScriptLock();
     try {
         // Intentar obtener el bloqueo por un máximo de 30 segundos
@@ -1704,22 +1706,24 @@ function handleAddOrUpdateCut(payload, logMessage) {
     }
 
     try {
-        const { vehicleData, cutData, vehicleId, colaborador } = payload;
-        if (!cutData || !colaborador) {
-            throw new Error("Datos del corte y del colaborador son requeridos.");
+        const { vehicleData, cutData, vehicleId } = payload || {};
+        if (!cutData) {
+            throw new Error("Los datos del corte son requeridos.");
+        }
+        const colaboradorName = String(developerContext && developerContext.fullName || "").trim();
+        if (!colaboradorName) {
+            throw new Error("El perfil del usuario autenticado no tiene un nombre completo registrado.");
         }
 
         logMessage("Registro Administrativo", `Procesando addOrUpdateCut administrativo...`);
         const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
 
         let opId = payload.opId || null;
-        let colaboradorName = colaborador;
-        if (colaboradorName) {
-            const opMatch = colaboradorName.match(/\[(OP-[a-zA-Z0-9_-]+)\]/);
-            if (opMatch) {
-                opId = opId || opMatch[1];
-                colaboradorName = colaboradorName.replace(/\s*\[OP-[a-zA-Z0-9_-]+\]/, '').trim();
-            }
+        // Compatibilidad con operaciones antiguas: solo se extrae el opId del campo heredado.
+        // El nombre de colaborador enviado por el cliente nunca se utiliza como identidad.
+        if (!opId && typeof payload.colaborador === 'string') {
+            const opMatch = payload.colaborador.match(/\[(OP-[a-zA-Z0-9_-]+)\]/);
+            if (opMatch) opId = opMatch[1];
         }
 
         if (opId) {

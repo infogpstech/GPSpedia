@@ -6393,6 +6393,10 @@ export function openAddCutForModelModal(item) {
         e.preventDefault();
         const { currentUser } = getState();
         if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
+        if (!currentUser.ID || !currentUser.SessionToken) {
+            showGlobalError("Tu sesión ha expirado. Inicia sesión nuevamente.");
+            return;
+        }
 
         const submitBtn = form.querySelector('button[type="submit"]');
         submitBtn.disabled = true;
@@ -6409,8 +6413,9 @@ export function openAddCutForModelModal(item) {
         }
 
         const payload = {
+            userId: currentUser.ID,
+            sessionToken: currentUser.SessionToken,
             vehicleId: item.id,
-            colaborador: currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
             cutData: {
                 tipo: content.querySelector("#add-cut-tipo").value,
                 configRelay: content.querySelector("#add-cut-relay").value,

@@ -3970,3 +3970,43 @@ PENDIENTE
 - Ejecutar pruebas funcionales en entorno real: consultar imágenes, previsualizar, descargar, mover, crear carpetas, enviar a papelera y restaurar un reemplazo. Confirmar los registros de ActividadUsuario.
 - La especificación integral de gestión de imágenes sin uso conserva cualquier requisito adicional no incluido en este alcance.
 ================================================================================
+
+
+================================================================================
+ACLARACIÓN DE RAMAS VIGENTES — CORRECCIÓN DE REFERENCIAS HISTÓRICAS
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+- La rama de trabajo vigente confirmada por el usuario es GPSpedia2.2.5_work.
+- La rama base protegida para este flujo es GPSpedia2.2.5.
+- La referencia fix/pys-carousel-card-sizing-print-images que aparece en registros históricos y en documentos de contexto anteriores está desactualizada y no debe utilizarse para esta ejecución.
+- No crear una rama nueva para las tareas de esta sesión; continuar sobre GPSpedia2.2.5_work.
+- Esta aclaración no reescribe ni elimina registros históricos anteriores.
+
+================================================================================
+TAREA FUERA DEL ALCANCE — CORREGIR CONTRATO DEL MODAL DE AGREGADO DE CORTES
+Fecha de registro: 2026-11-06
+Referencia: Auditoría.txt, auditoría de atribución del colaborador en WRITE/ADMIN.
+Estado: PENDIENTE DE AUDITORÍA E IMPLEMENTACIÓN INDEPENDIENTE.
+- Auditar openAddCutModal() en ui.js y su contrato con addOrUpdateCut.
+- Actualmente el consumidor envía cutData.tipo, configRelay, ubicacion, colorCable, activaTestigo e imgBase64, mientras los handlers addOrUpdateCut de WRITE/ADMIN consumen tipoCorte1, configRelay1, ubicacionCorte1, colorCableCorte1 e imgCorte1.
+- Determinar el mapeo funcional correcto y verificar cómo deben persistirse activaTestigo e imgBase64 antes de cambiar el contrato.
+- No corregir dentro de la tarea de validación de identidad del colaborador.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — IMPLEMENTACIÓN DE VALIDACIÓN DE IDENTIDAD EN WRITE/ADMIN
+Fecha: 2026-11-06 | Rama de trabajo: GPSpedia2.2.5_work | Base protegida: GPSpedia2.2.5
+Estado: IMPLEMENTACIÓN ESTÁTICA PREPARADA; PRUEBAS FUNCIONALES TRAS DESPLIEGUE PENDIENTES.
+
+- Services/write.js valida userId/sessionToken contra ActiveSessions y obtiene Nombre_Completo desde Users antes de cualquier escritura de addOrUpdateCut.
+- Services/admin.js utiliza el fullName del contexto autenticado por assertDeveloperSession() en el registro silencioso.
+- add_cortes.html y ui.js transmiten el contexto de sesión y dejan de enviar el nombre del colaborador como fuente de identidad.
+- Se conservan los tres slots de colaborador y el marcador opId heredado como compatibilidad de idempotencia, sin utilizar el nombre del cliente.
+- No se modificó el esquema de Spreadsheet, api-config.js ni los endpoints.
+- Verificaciones estáticas y simulaciones documentadas en Auditoría.txt.
+- Pendiente: desplegar WRITE y ADMIN y publicar frontend; ejecutar pruebas funcionales de sesiones ausentes/invalidas/expiradas, suplantación de nombre, alta nueva, vehículo existente, slots 1–3, recuperación idempotente y registro silencioso.
+- No se marca [X] hasta superar las pruebas funcionales. No se desplegó Apps Script ni se modificaron datos reales.
+- La discrepancia de contrato cutData en ui.js openAddCutModal() queda registrada como tarea independiente.
+
+================================================================================

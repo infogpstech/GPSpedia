@@ -356,7 +356,8 @@
             vehicleInfo: {},
             matches: [],
             selectedVehicleId: null,
-            colaborador: '',
+            userId: '',
+            sessionToken: '',
             timestamp: null,
             opId: null,
             restoredFiles: {
@@ -408,6 +409,9 @@
                 return;
             }
 
+            // Esperar a que init() recupere la sesión antes de consultar operaciones protegidas.
+            if (!state.userId || !state.sessionToken) return;
+
             if (!navigator.onLine) {
                 console.log("Device is offline. Will attempt recovery when connection is restored.");
                 return;
@@ -420,7 +424,11 @@
             const serviceOverride = silentVal ? 'ADMIN' : null;
 
             try {
-                const checkRes = await routeAction('checkOperation', { opId: pendingOp.id }, serviceOverride);
+                const checkRes = await routeAction('checkOperation', {
+                    opId: pendingOp.id,
+                    userId: state.userId,
+                    sessionToken: state.sessionToken
+                }, serviceOverride);
 
                 if (checkRes.exists) {
                     console.log("Operation already completed on the server!", checkRes);
@@ -499,7 +507,13 @@
                 return;
             }
             const parsedSession = JSON.parse(sessionData);
-            state.colaborador = parsedSession.Nombre_Completo;
+            state.userId = String(parsedSession.ID || '').trim();
+            state.sessionToken = String(parsedSession.SessionToken || '');
+            if (!state.userId || !state.sessionToken) {
+                alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
+                window.location.href = 'index.html';
+                return;
+            }
             const userRole = parsedSession.Privilegios;
             if (userRole === 'Desarrollador') {
                 const silentContainer = document.getElementById('silent-container');
@@ -1023,7 +1037,6 @@
                 id: opId,
                 stage: 2,
                 vehicleId: state.selectedVehicleId,
-                colaborador: state.colaborador,
                 vehicleInfo: { ...state.vehicleInfo },
                 formData: {
                     tipoCorte1: document.getElementById('tipoCorte1').value,
@@ -1053,7 +1066,11 @@
             try {
                 // First, check if operation already exists on the server to prevent duplicates!
                 console.log("[PING-PONG][5] Comprobando duplicados en el servidor con checkOperation...");
-                const checkRes = await routeAction('checkOperation', { opId }, serviceOverride);
+                const checkRes = await routeAction('checkOperation', {
+                    opId,
+                    userId: state.userId,
+                    sessionToken: state.sessionToken
+                }, serviceOverride);
                 console.log(`[PING-PONG][5a] Respuesta de checkOperation recibida. Existe en el servidor: ${checkRes.exists}`);
 
                 let result;
@@ -1080,6 +1097,8 @@
 
                 console.log("[PING-PONG][6] Enviando datos de registro/actualización de corte al servidor (addOrUpdateCut)...");
                 result = await routeAction('addOrUpdateCut', {
+                    userId: state.userId,
+                    sessionToken: state.sessionToken,
                     vehicleId: state.selectedVehicleId,
                     vehicleData: state.selectedVehicleId ? null : { ...state.vehicleInfo, imagenVehiculo: base64Veh },
                     cutData: {
@@ -1089,7 +1108,6 @@
                         colorCableCorte1: pendingOp.formData.colorCableCorte1,
                         imgCorte1: base64Corte
                     },
-                    colaborador: state.colaborador,
                     opId: opId,
                     silent: silentVal
                 }, serviceOverride);

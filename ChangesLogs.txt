@@ -2765,3 +2765,15 @@ VERIFICACIÓN
 - No se ejecutó Apps Script, no se actualizó el deployment ADMIN, no se publicó frontend, no se leyó ni modificó Spreadsheet/Drive reales y no se cambiaron permisos.
 - Se agruparán los nueve archivos modificados en exactamente un commit sobre GPSpedia2.2.5_work, sin merge ni cambios en la rama protegida.
 ================================================================================
+
+
+================================================================================
+CAMBIO — VALIDACIÓN DE IDENTIDAD DEL COLABORADOR EN REGISTRO DE CORTES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+- Services/write.js: se añadieron referencias a Users/ActiveSessions y getAuthenticatedCollaborator(payload), que valida userId/sessionToken y obtiene Nombre_Completo desde Users. handleAddOrUpdateCut usa esa identidad en recuperación idempotente, alta de corte en vehículo existente y alta de vehículo nuevo.
+- Services/admin.js: assertDeveloperSession devuelve fullName desde Users.Nombre_Completo; el router pasa developerContext a handleAddOrUpdateCut y el handler usa el nombre del perfil autenticado para el registro silencioso.
+- add_cortes.html: el estado de la operación conserva userId/sessionToken en memoria; las consultas checkOperation protegidas y addOrUpdateCut transmiten el contexto de sesión. Se eliminó el nombre del objeto de operación pendiente y del payload de escritura.
+- ui.js: openAddCutModal valida ID/SessionToken y los transmite a addOrUpdateCut; se eliminó el campo colaborador del payload.
+- No se modificaron columnas, esquema de Spreadsheet, endpoints ni deployments.
+================================================================================

@@ -1971,3 +1971,110 @@ Ampliar el modal del desarrollador para gestionar el inventario de imágenes sin
 - Actualizar únicamente GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD base.
 - Verificar commit, árbol, nueve paths, padre único, nuevo HEAD y que GPSpedia2.2.5 permanezca en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - No usar Contents API, Git local, commit por archivo, force update ni merge.
+
+
+---
+
+# CHECKPOINT INICIAL — VALIDAR IDENTIDAD DEL COLABORADOR EN WRITE
+
+**Fecha:** 2026-11-06
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo vigente:** GPSpedia2.2.5_work
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD inicial confirmado:** a1c910017040b1f2bc750a791c4b047d73f4723c
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## Tarea y alcance
+Corregir la atribución del colaborador en el backend WRITE. El servidor deberá validar la sesión mediante la fuente de autenticación existente, recuperar el nombre personal desde Users y no confiar en el campo colaborador enviado por el navegador. Revisar los flujos de alta nueva, vehículo existente y recuperación idempotente. Ajustar el consumidor frontend únicamente si es necesario para transmitir userId/sessionToken.
+
+## Estado real al inicio
+- La rama de trabajo vigente confirmada por el usuario es GPSpedia2.2.5_work; las referencias a fix/pys-carousel-card-sizing-print-images son obsoletas y no se usarán.
+- Services/write.js recibe colaborador desde payload y lo usa para escribir colaboradorCorte1, colaboradorCorte2 y colaboradorCorte3. El router addOrUpdateCut no muestra validación de sesión.
+- add_cortes.html obtiene Nombre_Completo desde la sesión local, pero el payload addOrUpdateCut revisado no transmite userId ni sessionToken.
+- AUTH y WRITE son servicios Apps Script independientes. WRITE utiliza el mismo ID de Spreadsheet configurado en AUTH; la verificación deberá consultar Users y ActiveSessions en el backend, sin aceptar identidad del cliente.
+- La tarea AUTH de no registrar payloads/contraseñas ya no presenta esas escrituras en el código actual: doPost no serializa request.payload y no se encontraron fromSheet/fromClient ni evento Password comparison. La revisión de Logs históricos reales sigue pendiente y no se considera validada.
+- No se ha modificado código, Spreadsheet, Drive ni deployments durante esta tarea.
+
+## Archivos previstos para auditoría
+- Services/write.js
+- add_cortes.html (consumidor que transmite la operación)
+- Services/Auth.js y Services/users.js (contrato de sesión y perfil)
+- Services/Test/Auth.js / Services/Test/users.js (contexto de pruebas aisladas, sin modificar salvo necesidad autorizada)
+- Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md
+
+## Riesgos y dependencias
+- No confiar en colaborador, nombre, rol o userId aislados enviados por el navegador.
+- Verificar que el token exista en ActiveSessions y que el usuario asociado exista en Users; recuperar Nombre_Completo desde esa fila.
+- Preservar el comportamiento idempotente y la atribución de los tres slots.
+- No modificar el esquema de Spreadsheet, columnas ni endpoints.
+- No desplegar Apps Script ni ejecutar escrituras en datos reales. Las pruebas funcionales contra Apps Script se ejecutarán después del despliegue manual del usuario.
+
+**Fase al crear el checkpoint:** inicio documentado; auditoría formal pendiente.
+
+
+---
+
+# CIERRE DE TAREA — VALIDACIÓN DE IDENTIDAD DEL COLABORADOR EN WRITE Y ADMIN
+
+**Fecha:** 2026-11-06  
+**Repositorio:** infogpstech/GPSpedia  
+**Rama de trabajo vigente:** GPSpedia2.2.5_work  
+**Rama base protegida:** GPSpedia2.2.5  
+**HEAD antes de la tarea:** a1c910017040b1f2bc750a791c4b047d73f4723c  
+**HEAD de rama base antes de la tarea:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## Estado final
+**Implementación estática preparada; validación funcional en deployments pendiente.** No marcar la tarea como completada hasta que el usuario despliegue WRITE y ADMIN, publique el frontend y se ejecuten las pruebas funcionales.
+
+## Archivos de código modificados
+- Services/write.js
+- Services/admin.js
+- add_cortes.html
+- ui.js
+
+## Cambios realizados
+- WRITE exige userId/sessionToken, valida la sesión contra ActiveSessions y obtiene el nombre personal desde Users.Nombre_Completo antes de escribir un corte.
+- ADMIN transmite el contexto autenticado al handler de registro silencioso y utiliza el Nombre_Completo de Users, sin aceptar el nombre enviado por el cliente.
+- add_cortes.html conserva userId/sessionToken en memoria, los transmite en checkOperation y addOrUpdateCut y elimina colaborador del payload/registro de operación pendiente.
+- ui.js openAddCutModal transmite ID/SessionToken y elimina el nombre de colaborador del payload.
+- Se conserva la atribución de los tres slots y el uso heredado del marcador opId, sin utilizar el nombre del cliente.
+- No se modificaron columnas, esquema de Spreadsheet, endpoints ni deployments.
+
+## Respaldos originales
+- Services/write.js: 8ba2160038a2d39c4a0a22c412b38960ebd61b6c
+- Services/admin.js: e798020425950351ed17999e200745b3d54fd21c
+- add_cortes.html: 72087d704b9ac570ec4230d2456703ee4bd0dc6c
+- ui.js: 5fd3db3e7eaa164312ff90de51e80e8e6a2c71f9
+- Auditoría.txt: d7adc2648d2e5da0845f40a2a454e4432fb5f0c0
+- Tareas.txt: acd79468e6553147f802f016bc66554d8f8846fc
+- ChangesLogs.txt: a50949a031d36b69e98baa6c02268943bc32a928
+- checkpoint.md: 3aab9f9cc9fe84c858d42e78c45ae96d3422a318
+
+## Blobs finales preparados para el commit único
+- Services/write.js: c5f87b4f3ca383b4f95f6d83625f313a44ec677e
+- Services/admin.js: 5457610252b32e0779eb7a2930534c166d8dc14e
+- add_cortes.html: ca47133bad51565d9f3a9cdf8e44f5b3bef2bfa8
+- ui.js: ff5e0aaead741e4bb85f417a0c7c3bcb615f856b
+- Auditoría.txt: 8fe372b0d70e5fafd3cb214299d06ca70e0e1ef9
+- Tareas.txt: 4c9dc917acf79c5bc5f86d67e642de5e6276a138
+- ChangesLogs.txt: 61105bb4cf726fae7408bba3476746c466203939
+- checkpoint.md: pendiente de SHA del blob final.
+
+## Verificaciones ejecutadas
+- Parseo sintáctico: Services/write.js, Services/admin.js, ui.js y script module de add_cortes.html sin errores (imports/exports retirados únicamente para parseo de módulos).
+- Simulación de sesión WRITE: token válido devolvió el Nombre_Completo del perfil aunque el payload incluía un nombre falsificado.
+- Sesión ausente, token inválido, userId que no corresponde y perfil sin Nombre_Completo: rechazados.
+- Simulación de ADMIN: sesión Desarrollador devolvió fullName del perfil; rol no autorizado fue rechazado.
+- Comprobaciones estáticas: validación antes de escritura; los tres slots de ambos handlers usan el nombre verificado; ambos consumidores de addOrUpdateCut transmiten sesión; checkOperation en el flujo add_cortes transmite sesión a ADMIN.
+- Revisión estática de los bloques modificados y de las rutas consumidoras completada.
+- No se ejecutó Apps Script, HTTP, navegador, Spreadsheet ni Drive reales.
+
+## Pendientes y riesgos
+- Desplegar manualmente WRITE y ADMIN y publicar frontend para alinear el contrato de sesión.
+- Ejecutar la matriz funcional documentada en Auditoría.txt; la tarea permanece abierta hasta aprobarla.
+- La discrepancia preexistente de cutData en ui.js openAddCutModal() se registró como tarea independiente y no se corrigió aquí.
+- La remediación de logs históricos AUTH no se considera validada porque no se inspeccionó la hoja Logs real.
+- No se realizaron despliegues ni escrituras en datos reales.
+
+## Continuidad
+- Siguiente acción: generar un único commit con los cuatro archivos de código y los cuatro documentos de trazabilidad en GPSpedia2.2.5_work; verificar el parent, archivos, HEAD y rama base. Después, el usuario desplegará los servicios y frontend para ejecutar las pruebas una a una.

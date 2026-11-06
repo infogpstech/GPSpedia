@@ -4119,3 +4119,161 @@ HEAD protegido confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
 - No se publicó frontend, no se actualizó ni desplegó ADMIN en Apps Script. La validación live queda pendiente de autorización y despliegue posterior.
 - Esta iteración cubre las funciones solicitadas para el modal, pero no declara completada la especificación integral de gestión de imágenes que contenga otras funciones pendientes.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DE SEGURIDAD — ATRIBUCIÓN DEL COLABORADOR EN LOS FLUJOS WRITE Y ADMIN
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo vigente: GPSpedia2.2.5_work
+HEAD auditado: a1c910017040b1f2bc750a791c4b047d73f4723c
+Rama base protegida: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ALCANCE
+Revisar la validación de sesión y el origen del nombre de colaborador en todas las rutas que ejecutan addOrUpdateCut: WRITE, ADMIN (registro silencioso), add_cortes.html y el modal de agregado de cortes en ui.js. Revisar la fuente de sesiones y perfiles en AUTH/USERS y preservar idempotencia.
+
+HALLAZGOS CONFIRMADOS
+1. WRITE — Services/write.js:
+   - doPost() despacha addOrUpdateCut directamente a handleAddOrUpdateCut(request.payload), sin exigir userId ni sessionToken.
+   - handleAddOrUpdateCut() obtiene colaborador desde payload y lo usa como colaboradorName.
+   - El valor se escribe en colaboradorCorte1, colaboradorCorte2 o colaboradorCorte3 en los flujos de recuperación idempotente, alta en vehículo existente y alta de vehículo nuevo.
+   - No se encontró en WRITE una función de validación de sesión ni lectura de Users/ActiveSessions.
+2. ADMIN — Services/admin.js:
+   - add_cortes.html selecciona el servicio ADMIN cuando silentRegister está activo.
+   - doPost() valida userId/sessionToken mediante assertDeveloperSession() para las acciones distintas de ping.
+   - El contexto autenticado actual contiene userId, role y userName; userName puede ser fallback del nombre de usuario. El handler addOrUpdateCut no recibe ese contexto y sigue tomando colaborador del payload.
+   - Por tanto, el registro silencioso también permite atribución basada en el valor del navegador, aunque el router sí autentique al Desarrollador.
+3. FRONTEND — add_cortes.html:
+   - init() lee gpsepedia_session y obtiene Nombre_Completo para state.colaborador, pero no conserva ID ni SessionToken en el estado usado por la solicitud.
+   - La llamada addOrUpdateCut envía colaborador, opId y datos del vehículo/corte, pero no userId/sessionToken.
+   - El objeto gpsepedia_pending_operation también conserva colaborador; la recuperación consulta checkOperation y, si no existe, restaura el formulario para que el usuario vuelva a enviarlo. El opId se transmite de forma independiente.
+4. FRONTEND — ui.js:
+   - openAddCutModal() es un segundo consumidor de addOrUpdateCut.
+   - Envía colaborador desde currentUser.Nombre_Completo/Nombre_Usuario, pero no envía userId ni SessionToken.
+   - Su contrato de cutData utiliza claves tipo/configRelay/ubicacion/colorCable/imgBase64, distintas de tipoCorte1/configRelay1/ubicacionCorte1/colorCableCorte1/imgCorte1 que espera el handler. Esta inconsistencia es ajena a la atribución y se registra como tarea separada; no se corregirá en esta tarea.
+5. FUENTE DE AUTENTICACIÓN:
+   - USERS.getVerifiedSession() busca el token exacto en ActiveSessions, obtiene el ID de usuario de esa fila y recupera el rol desde Users.
+   - AUTH.handleValidateSession() confirma el token contra ActiveSessions.
+   - El perfil personal se almacena en Users.Nombre_Completo (columna 7); el nombre de usuario está en la columna 2.
+   - ActiveSessions es la fuente de sesiones activas. Users.SessionToken no debe usarse como único criterio porque AUTH permite más de una sesión según el límite configurado y ese campo contiene solo la referencia más reciente.
+6. ALCANCE DE ESCRITURA:
+   - Los únicos handlers addOrUpdateCut localizados son WRITE y ADMIN. Ambos deben utilizar identidad obtenida en servidor.
+   - checkOperation solo consulta el estado de opId; no escribe colaborador. La reanudación posterior vuelve a invocar addOrUpdateCut y debe volver a validar la sesión.
+   - No se encontró otro consumidor de las columnas colaboradorCorte1..3 que escriba esos campos en los servicios revisados.
+
+RIESGOS Y DECISIONES
+- No confiar en colaborador, nombre, rol o userId aislados enviados por el cliente.
+- WRITE validará userId + sessionToken contra ActiveSessions y obtendrá Nombre_Completo desde Users.
+- ADMIN reutilizará el contexto que ya valida assertDeveloperSession(); se añadirá al contexto el Nombre_Completo exacto, sin fallback a Nombre_Usuario para atribución.
+- Los handlers ignorarán el nombre colaborador del payload. Para compatibilidad de operaciones antiguas, si colaborador contiene el marcador [OP-...], únicamente podrá extraerse ese identificador cuando payload.opId no exista; el nombre nunca será utilizado.
+- add_cortes.html y ui.js transmitirán userId/sessionToken desde la sesión autenticada y dejarán de enviar el nombre como autoridad.
+- No se modificarán columnas ni esquema de Spreadsheet.
+- El flujo de registro silencioso de ADMIN queda incluido porque es una ruta efectiva del mismo consumidor y escribe las mismas columnas.
+- La discrepancia de contrato cutData en ui.js se registra fuera del alcance y no se modifica aquí.
+
+RESPALDOS Y VERIFICACIONES
+- HEAD de trabajo confirmado: a1c910017040b1f2bc750a791c4b047d73f4723c.
+- HEAD base protegida confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Respaldos originales por blob:
+  - Services/write.js: 8ba2160038a2d39c4a0a22c412b38960ebd61b6c
+  - Services/admin.js: e798020425950351ed17999e200745b3d54fd21c
+  - add_cortes.html: 72087d704b9ac570ec4230d2456703ee4bd0dc6c
+  - ui.js: 5fd3db3e7eaa164312ff90de51e80e8e6a2c71f9
+  - Auditoría.txt: d7adc2648d2e5da0845f40a2a454e4432fb5f0c0
+  - Tareas.txt: acd79468e6553147f802f016bc66554d8f8846fc
+  - ChangesLogs.txt: a50949a031d36b69e98baa6c02268943bc32a928
+  - checkpoint.md: 3aab9f9cc9fe84c858d42e78c45ae96d3422a318
+- No se modificó código, Spreadsheet, Drive ni deployments durante esta auditoría.
+- No se ejecutaron solicitudes HTTP ni pruebas en Apps Script.
+
+TAREA FUERA DEL ALCANCE — REFERENCIA EN Tareas.txt:
+- El modal openAddCutModal() de ui.js envía un contrato cutData distinto al que consume handleAddOrUpdateCut(). Se requiere auditar y corregir el mapeo de propiedades, validación de imagen y actualización del slot, sin mezclarlo con la corrección de identidad. No se modifica en esta tarea.
+================================================================================
+
+
+================================================================================
+CIERRE DE IMPLEMENTACIÓN ESTÁTICA — ATRIBUCIÓN DEL COLABORADOR EN WRITE Y ADMIN
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD de partida: a1c910017040b1f2bc750a791c4b047d73f4723c
+Rama base protegida: GPSpedia2.2.5
+HEAD de base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. IMPLEMENTACIÓN
+- Services/write.js:
+  - Se añadieron referencias a Users y ActiveSessions y sus índices de columnas necesarios para validar la identidad.
+  - Se incorporó getAuthenticatedCollaborator(payload). La función exige userId y sessionToken, comprueba la pareja contra ActiveSessions, localiza el perfil por ID en Users y devuelve exclusivamente Nombre_Completo.
+  - handleAddOrUpdateCut() obtiene el nombre antes de consultar o modificar Cortes. Se retiró el uso del nombre enviado por el cliente.
+  - Se conservaron las escrituras de atribución en los tres slots y la ruta de recuperación idempotente.
+  - Para compatibilidad de solicitudes antiguas, el campo colaborador solo se inspecciona para extraer un marcador [OP-...] cuando opId no está presente; su contenido nominal no se usa ni se guarda.
+- Services/admin.js:
+  - assertDeveloperSession() conserva la validación de sesión y rol Desarrollador y agrega fullName tomado de Users.Nombre_Completo.
+  - doPost() transmite developerContext al handler addOrUpdateCut.
+  - handleAddOrUpdateCut() exige fullName del contexto autenticado y deja de aceptar colaborador como fuente de identidad.
+  - La ruta silenciosa continúa protegida por assertDeveloperSession().
+- add_cortes.html:
+  - El estado de la página conserva userId y SessionToken obtenidos de gpsepedia_session.
+  - Se comprueba que ambos existan antes de continuar.
+  - Las consultas checkOperation de la ruta ADMIN incluyen el contexto de sesión.
+  - addOrUpdateCut transmite userId/sessionToken y ya no transmite colaborador.
+  - El registro local de operaciones pendientes ya no guarda el nombre como dato de identidad. La recuperación espera a que init() haya cargado la sesión.
+- ui.js:
+  - El consumidor openAddCutModal() comprueba ID y SessionToken y los transmite a addOrUpdateCut.
+  - Se retiró colaborador del payload de ese consumidor.
+
+2. RESPALDOS Y BLOBS RESULTANTES
+Respaldos previos:
+- Services/write.js: 8ba2160038a2d39c4a0a22c412b38960ebd61b6c
+- Services/admin.js: e798020425950351ed17999e200745b3d54fd21c
+- add_cortes.html: 72087d704b9ac570ec4230d2456703ee4bd0dc6c
+- ui.js: 5fd3db3e7eaa164312ff90de51e80e8e6a2c71f9
+- Auditoría.txt: d7adc2648d2e5da0845f40a2a454e4432fb5f0c0
+- Tareas.txt: acd79468e6553147f802f016bc66554d8f8846fc
+- ChangesLogs.txt: a50949a031d36b69e98baa6c02268943bc32a928
+- checkpoint.md: 3aab9f9cc9fe84c858d42e78c45ae96d3422a318
+
+Blobs finales de código:
+- Services/write.js: c5f87b4f3ca383b4f95f6d83625f313a44ec677e
+- Services/admin.js: 5457610252b32e0779eb7a2930534c166d8dc14e
+- add_cortes.html: ca47133bad51565d9f3a9cdf8e44f5b3bef2bfa8
+- ui.js: ff5e0aaead741e4bb85f417a0c7c3bcb615f856b
+
+3. VERIFICACIONES ESTÁTICAS Y SIMULADAS
+- Parseo JavaScript:
+  - Services/write.js: correcto.
+  - Services/admin.js: correcto.
+  - ui.js: correcto después de retirar imports/exports exclusivamente para parseo.
+  - Script module de add_cortes.html: correcto después de retirar imports exclusivamente para parseo.
+- Simulación aislada de getAuthenticatedCollaborator():
+  - Sesión válida con colaborador falsificado en payload: devolvió Nombre Verificado desde Users.
+  - Sesión ausente: rechazada.
+  - Token inválido: rechazado.
+  - userId no correspondiente al token: rechazado.
+  - Perfil sin Nombre_Completo: rechazado.
+- Simulación de assertDeveloperSession():
+  - Sesión de Desarrollador válida: devolvió el nombre completo del perfil.
+  - Rol distinto de Desarrollador: rechazado.
+- Comprobaciones estáticas:
+  - La validación WRITE ocurre antes de acceder al handler de escritura.
+  - Los tres puntos de escritura de cada handler utilizan el nombre verificado en servidor.
+  - Los consumidores add_cortes.html y ui.js envían userId/sessionToken.
+  - No se transmite state.colaborador ni se utiliza el campo colaborador para atribución.
+  - Las dos llamadas checkOperation de add_cortes incluyen el contexto de sesión requerido por la ruta ADMIN.
+  - El handler ADMIN recibe developerContext desde el router autenticado.
+- Revisión de los bloques modificados y de los consumidores encontrados mediante búsqueda global de addOrUpdateCut y colaboradorCorte1..3.
+
+4. HALLAZGO SEPARADO
+- ui.js openAddCutModal() conserva una discrepancia previa entre las claves de cutData que envía y las que esperan los handlers addOrUpdateCut. Se registró una tarea independiente en Tareas.txt. No se modificó el contrato de datos en esta implementación.
+
+5. VALIDACIONES NO REALIZADAS
+- No se ejecutó Apps Script ni se realizaron solicitudes HTTP.
+- No se consultaron ni modificaron las hojas reales Users, ActiveSessions o Cortes.
+- No se subieron imágenes ni se modificaron archivos en Drive.
+- No se desplegaron WRITE ni ADMIN y no se publicó el frontend.
+- La atribución real y la compatibilidad de los flujos completos quedan pendientes de las pruebas funcionales posteriores al despliegue.
+
+6. ESTADO
+Implementación estática preparada. La tarea no se marca como completada hasta ejecutar y aprobar las pruebas funcionales en los deployments correspondientes y publicar el frontend que transmite el nuevo contrato de sesión.
+================================================================================
