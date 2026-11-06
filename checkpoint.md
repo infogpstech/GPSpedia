@@ -2660,3 +2660,71 @@ LÍMITES Y PENDIENTES
 PUBLICACIÓN
 Este checkpoint es el último paso documental previo al commit único de la tarea. El commit se generará mediante Git Database API con el HEAD inicial como único padre, un solo árbol que incluya todos los blobs finales y actualización condicionada exclusiva de GPSpedia2.2.5_work usando force:false y expected_sha igual al HEAD inicial. La rama base GPSpedia2.2.5 debe permanecer sin cambios.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — VISTA DE LISTA COMPACTA DEL INVENTARIO
+Fecha: 2026-11-06
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial: f3f7102d45adec67a3dae95a9ab35cbe00532c20
+Rama base: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA
+Ajustar el modo lista del modal de inventario e historial para mostrar solo el icono, el nombre del archivo y la etiqueta de estado, manteniendo accesibles las acciones por fila y sin alterar la vista cuadrícula.
+
+AUDITORÍA PREVIA
+- ui.js: renderList(), setView() y openReplacedImagesModal().
+- style.css: selectores de tarjeta, bloque informativo, estado, acciones y responsive de vista lista.
+- index.html: botones de vista y contenedor del inventario.
+- Se identificó que renderList() agregaba metadatos, ubicación y fechas a la vista lista, aunque el requisito exige solo nombre y estado.
+- Se confirmó que el icono, lightbox y acciones ya están separados del bloque informativo.
+- No se iniciaron cambios de código al momento de este checkpoint inicial.
+
+RESPALDOS
+- ui.js: d526203409c4a0ab19b2cbd5d14be3922fef24cb
+- style.css: c0ef889a1af30b0e63a3e259a56033448af63717
+- index.html: 3571826a122bd80e07e41fe497d0ebca598b9f83
+
+RESTRICCIONES
+- Un solo commit para esta tarea.
+- No modificar servicios, endpoints, permisos, Spreadsheet ni Drive.
+- No desplegar frontend ni servicios Apps Script.
+- La validación visual real se mantiene para la etapa funcional consolidada.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — VISTA DE LISTA COMPACTA DEL INVENTARIO
+Fecha: 2026-11-06
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial de tarea: f3f7102d45adec67a3dae95a9ab35cbe00532c20
+Rama base: GPSpedia2.2.5
+HEAD base verificado antes del commit: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO
+Implementación estática completada y simulación DOM satisfactoria. Validación visual funcional en navegador queda pendiente para la etapa consolidada.
+
+ARCHIVOS MODIFICADOS
+- ui.js: renderList() agrega únicamente el nombre y la etiqueta de estado en modo lista; conserva la información completa en modo cuadrícula.
+- style.css: presenta nombre y estado en una fila compacta, con ajuste flexible en pantallas estrechas.
+- Auditoría.txt: registra los hallazgos y la decisión de implementación.
+- Tareas.txt: registra el cierre de esta subtarea.
+- ChangesLogs.txt: documenta los cambios y respaldos.
+- checkpoint.md: conserva checkpoint inicial y final.
+
+RESPALDOS EXACTOS
+- ui.js original: d526203409c4a0ab19b2cbd5d14be3922fef24cb
+- style.css original: c0ef889a1af30b0e63a3e259a56033448af63717
+
+VERIFICACIONES
+- Parseo estático de ui.js correcto.
+- CSS con llaves balanceadas.
+- Reconstrucción inversa confirma que ui.js y style.css contienen únicamente los cambios previstos.
+- Simulación DOM: la vista lista muestra solo nombre y estado, no genera miniatura y conserva icono y acciones.
+- Simulación DOM: la vista cuadrícula conserva miniatura y los seis elementos informativos existentes.
+- No se ejecutó navegador real ni se modificaron servicios, permisos, Spreadsheet o Drive.
+
+PUBLICACIÓN
+Este checkpoint es el último paso documental previo al commit único. Crear un único árbol basado en el tree del HEAD inicial, un commit con ese HEAD como único padre y actualizar solo GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD inicial. La rama base GPSpedia2.2.5 debe permanecer intacta.
+================================================================================

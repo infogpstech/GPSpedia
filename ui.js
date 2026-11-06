@@ -4020,7 +4020,11 @@ export async function openReplacedImagesModal() {
             const statusText = document.createElement('span');
             statusText.className = 'replaced-image-status';
             statusText.textContent = 'Estado: ' + statusLabel;
-            info.append(title, typeLabel, details, location, dateDetails, statusText);
+            if (currentView === 'list') {
+                info.append(title, statusText);
+            } else {
+                info.append(title, typeLabel, details, location, dateDetails, statusText);
+            }
             card.appendChild(info);
 
             const actions = document.createElement('div');

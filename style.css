@@ -3061,6 +3061,18 @@ body.dark-mode #dev-tools-modal .dev-tools-card {
 }
 .replaced-images-list.view-list .replaced-image-info {
     flex: 1 1 auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+}
+.replaced-images-list.view-list .replaced-image-name {
+    width: auto;
+    flex: 1 1 200px;
+}
+.replaced-images-list.view-list .replaced-image-status {
+    flex: 0 0 auto;
 }
 .replaced-images-list.view-list .replaced-image-actions {
     flex: 0 0 auto;

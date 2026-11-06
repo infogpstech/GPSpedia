@@ -2953,3 +2953,29 @@ DOCUMENTACIÓN
 - ChangesLogs.txt: se registró el detalle objetivo de archivos y cambios.
 - checkpoint.md: se añadirán checkpoint inicial y final inmediatamente antes del único commit de esta tarea.
 ================================================================================
+
+
+================================================================================
+CAMBIO — VISTA DE LISTA COMPACTA DEL INVENTARIO DE IMÁGENES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+- ui.js: renderList() ahora agrega únicamente title y statusText al bloque informativo cuando currentView es list. La vista grid conserva typeLabel, details, location, dateDetails y statusText.
+- style.css: la información de lista se presenta en fila compacta; el nombre ocupa el espacio flexible y el estado permanece como etiqueta independiente, con ajuste por wrap en pantallas estrechas.
+- Se mantienen icono de archivo, apertura de lightbox, acciones de descarga/movimiento/papelera/restauración y sus condiciones actuales.
+- No se modificaron index.html, offline.js, api-config.js, Services/admin.js, endpoints, permisos, Spreadsheet ni Drive.
+
+RESPALDOS ORIGINALES
+- ui.js: d526203409c4a0ab19b2cbd5d14be3922fef24cb
+- style.css: c0ef889a1af30b0e63a3e259a56033448af63717
+- Auditoría.txt: 9ca8cae74f879c129dc50952f2434febd65b6b06
+- Tareas.txt: 0a416fc74a886a249f9a85aa6485315e76c66331
+- ChangesLogs.txt: bcfaa2572d6041bcd2179ae3a106f6d21fe3bd9e
+- checkpoint.md: bea0324510ce001e0b8dfc8e7e0e2c0c2f1d455d
+
+PRUEBAS AISLADAS
+- Parseo JavaScript correcto.
+- Vista lista: solo nombre y estado; sin miniatura ni metadatos; icono y acciones conservados.
+- Vista cuadrícula: miniatura y contenido informativo completo conservados.
+- Verificación inversa de cambios y balance de llaves CSS satisfactorios.
+- Validación real de navegador móvil/escritorio pendiente para la etapa de pruebas funcionales consolidada.
+================================================================================

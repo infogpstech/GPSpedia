@@ -4700,3 +4700,48 @@ HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
 - El estado local puede contener metadatos antiguos de Drive; no habilita acciones administrativas. Las operaciones de movimiento, papelera y descarga continúan revalidándose en ADMIN.
 - No se ejecutó Apps Script, no se llamó al deployment ADMIN, no se consultó ni modificó Google Sheets/Drive y no se confirmó la causa real del conjunto de 14 archivos.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — PRESENTACIÓN COMPACTA DE LA VISTA DE LISTA DEL INVENTARIO
+Fecha: 2026-11-06
+Rama: GPSpedia2.2.5_work
+HEAD auditado: f3f7102d45adec67a3dae95a9ab35cbe00532c20
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. ALCANCE Y RESPALDOS EXACTOS
+- Se auditó el renderizado del inventario/historial en openReplacedImagesModal(), especialmente renderList(), setView(), los controles de lista/cuadrícula y los elementos asociados a cada fila.
+- Se revisaron los estilos de .replaced-images-list.view-list, .replaced-image-card-list, .replaced-image-info, .replaced-image-type, .replaced-image-details, .replaced-image-status y .replaced-image-actions, incluidos los ajustes responsive.
+- Se revisó el markup del modal en index.html para confirmar los controles y el contenedor existentes.
+- Respaldos exactos:
+  - ui.js: d526203409c4a0ab19b2cbd5d14be3922fef24cb
+  - style.css: c0ef889a1af30b0e63a3e259a56033448af63717
+  - index.html: 3571826a122bd80e07e41fe497d0ebca598b9f83
+  - offline.js: 00000b2d7ef69b571d65757610435dc21eeee6cd
+  - Auditoría.txt: 9ca8cae74f879c129dc50952f2434febd65b6b06
+  - Tareas.txt: 0a416fc74a886a249f9a85aa6485315e76c66331
+  - ChangesLogs.txt: bcfaa2572d6041bcd2179ae3a106f6d21fe3bd9e
+  - checkpoint.md: bea0324510ce001e0b8dfc8e7e0e2c0c2f1d455d
+
+2. HALLAZGOS CONFIRMADOS
+- index.html ya contiene los botones Lista y Cuadrícula y el contenedor único #replaced-images-list-container.
+- openReplacedImagesModal() recupera la vista persistida y setView() guarda la selección. El cambio de vista llama a renderList() y no inicia una auditoría ni una nueva consulta a Spreadsheet por sí mismo.
+- renderList() ya evita crear miniaturas en modo lista y utiliza un botón con icono de archivo para abrir el lightbox.
+- Sin embargo, el bloque de información agrega incondicionalmente title, typeLabel, details, location, dateDetails y statusText tanto en cuadrícula como en lista. Por ello la vista de lista muestra ID Drive, MIME, campo, ubicación y fechas, contradiciendo el requisito de que la lista presente solo el nombre y la etiqueta de estado.
+- .replaced-image-info mantiene flex-direction: column en ambos modos. El estilo de lista organiza la tarjeta como fila, pero no compacta horizontalmente el nombre y el estado.
+- Las acciones se crean de forma independiente dentro de .replaced-image-actions y tienen sus propias reglas de disponibilidad según clasificación. Pueden conservarse sin mostrar metadatos adicionales.
+- La cuadrícula utiliza .replaced-image-preview con miniatura y muestra metadatos. No debe alterarse ese modo.
+- No se encontró necesidad de cambiar contratos ADMIN, acciones API, persistencia, estructura de Spreadsheet, permisos ni operaciones Drive.
+
+3. DECISIÓN DE IMPLEMENTACIÓN
+- Mantener la estructura, el icono de archivo y las acciones existentes en la vista de lista.
+- En modo lista, agregar únicamente el nombre del archivo y statusText como contenido informativo; no agregar typeLabel, details, location ni dateDetails.
+- Mantener el contenido informativo completo y la miniatura en modo cuadrícula.
+- Añadir reglas CSS específicas de vista lista para alinear nombre y estado en una fila compacta, permitiendo que el contenido se adapte en pantallas estrechas.
+- No modificar index.html, offline.js, api-config.js ni Services/admin.js.
+
+4. LÍMITES
+- No se consultaron servicios ni se ejecutaron operaciones de Spreadsheet o Drive.
+- La tarea no cambia las acciones ni sus validaciones.
+- La validación visual en navegador móvil/escritorio se mantiene para la etapa funcional consolidada posterior a todas las implementaciones.
+================================================================================

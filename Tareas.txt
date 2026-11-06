@@ -4173,3 +4173,23 @@ VERIFICACIONES AISLADAS
 SIGUIENTE ETAPA
 Continuar con las demás implementaciones pendientes. La matriz de pruebas funcionales reales se ejecutará después de terminar todas las implementaciones y realizar el despliegue conjunto acordado.
 ================================================================================
+
+
+================================================================================
+SUBTAREA — VISTA DE LISTA COMPACTA DEL INVENTARIO DE IMÁGENES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBA AISLADA COMPLETADAS; VALIDACIÓN VISUAL FUNCIONAL PENDIENTE.
+
+- Se corrigió renderList() para que en vista lista el bloque informativo contenga únicamente el nombre del archivo y su etiqueta de estado.
+- Se conservó el icono de archivo que permite abrir el lightbox y se mantuvieron las acciones habilitadas/deshabilitadas según la clasificación.
+- Se mantuvo la vista cuadrícula sin cambios: miniatura, nombre, tipo, metadatos, ubicación, fechas y estado.
+- Se ajustó .replaced-image-info en vista lista para distribuir nombre y estado en una fila compacta, con adaptación flexible para pantallas estrechas.
+- La preferencia de vista continúa siendo recuperada/guardada mediante la persistencia IndexedDB implementada en la subtarea anterior.
+
+VERIFICACIONES AISLADAS
+- Parseo estático de ui.js correcto y balance de llaves CSS correcto.
+- Reconstrucción inversa confirma que ui.js y style.css contienen únicamente los cambios previstos.
+- Simulación DOM en vista lista: el bloque informativo contiene exactamente nombre y estado; no se genera miniatura; se conserva el icono y el contenedor de acciones.
+- Simulación DOM en cuadrícula: se conserva la miniatura y los seis elementos informativos originales.
+- No se ejecutó navegador real ni se desplegó frontend. La validación visual en móvil y escritorio queda para la etapa funcional consolidada.
+================================================================================
