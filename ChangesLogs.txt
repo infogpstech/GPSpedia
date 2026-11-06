@@ -2777,3 +2777,31 @@ Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
 - ui.js: openAddCutModal valida ID/SessionToken y los transmite a addOrUpdateCut; se eliminó el campo colaborador del payload.
 - No se modificaron columnas, esquema de Spreadsheet, endpoints ni deployments.
 ================================================================================
+
+
+================================================================================
+CAMBIO DOCUMENTAL — ALINEACIÓN DE RAMAS Y REGISTRO DE AUDITORÍA
+Fecha: 2026-11-06 | Rama de trabajo: GPSpedia2.2.5_work | Base del flujo: GPSpedia2.2.5
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Contexto de trabajo.md: sustituida la referencia obsoleta fix/pys-carousel-card-sizing-print-images; se establece GPSpedia2.2.5_work como rama de trabajo y GPSpedia2.2.5 como rama base del flujo. Se documenta que no deben crearse ramas nuevas para esta sesión.
+- contexto_personal.md: añadidas las referencias de rama vigentes y su relación con el procedimiento único Git Database API.
+- Auditoría.txt: añadida la revisión del último commit, la tarea anterior de imágenes, la implementación observada y sus pendientes.
+- Tareas.txt: añadido el estado de auditoría, la discrepancia de cutData y la tarea administrativa pendiente de protección técnica de la rama base.
+- checkpoint.md: añadidos checkpoint inicial y cierre de la actualización documental.
+
+RESPALDOS ORIGINALES (BLOB SHA)
+- Contexto de trabajo.md: dfd9220c3bfad4dd0b574ab7376f2a46ba36016f
+- contexto_personal.md: 0354de5a31116ccd08f7764bee15df27d8baf3c3
+- Auditoría.txt: 8fe372b0d70e5fafd3cb214299d06ca70e0e1ef9
+- Tareas.txt: 4c9dc917acf79c5bc5f86d67e642de5e6276a138
+- ChangesLogs.txt: 61105bb4cf726fae7408bba3476746c466203939
+- checkpoint.md: 2582c5b1e33bef3513ec0d9e04c2c3842616ef32
+
+VERIFICACIONES
+- HEAD de trabajo confirmado antes de escribir: 36196020f618270693e3beeed0d03392b21d0c9e.
+- HEAD de base confirmado antes de escribir: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- No se modificó código de aplicación, servicios Apps Script, endpoints, hojas, archivos de Drive ni deployments.
+- No se ejecutaron pruebas funcionales ni despliegues.
+- Se conservaron los registros históricos y se añadieron entradas al final de los documentos de trazabilidad.
+================================================================================

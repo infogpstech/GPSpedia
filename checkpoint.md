@@ -2078,3 +2078,85 @@ Corregir la atribución del colaborador en el backend WRITE. El servidor deberá
 
 ## Continuidad
 - Siguiente acción: generar un único commit con los cuatro archivos de código y los cuatro documentos de trazabilidad en GPSpedia2.2.5_work; verificar el parent, archivos, HEAD y rama base. Después, el usuario desplegará los servicios y frontend para ejecutar las pruebas una a una.
+
+
+================================================================================
+# CHECKPOINT INICIAL — AUDITORÍA DE ÚLTIMA TAREA Y ALINEACIÓN DE RAMAS
+
+**Fecha:** 2026-11-06
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD inicial confirmado:** 36196020f618270693e3beeed0d03392b21d0c9e
+**Rama base del flujo:** GPSpedia2.2.5
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## Alcance
+Auditar el último commit, identificar la última tarea implementada, revisar los archivos y cambios, verificar tareas pendientes y corregir las referencias de rama en los documentos de contexto del proyecto. No modificar código ni realizar despliegues.
+
+## Estado real observado al inicio
+- La rama GPSpedia2.2.5_work existe y apunta a 3619602.
+- El último commit valida la identidad del colaborador en WRITE y ADMIN.
+- La tarea inmediatamente anterior gestiona el inventario e historial de imágenes desde el modal.
+- La rama base GPSpedia2.2.5 apunta a d9acc68.
+- Contexto de trabajo.md todavía mencionaba fix/pys-carousel-card-sizing-print-images y ordenaba crear ramas nuevas basadas en esa referencia.
+- GitHub API reporta protected:false para ambas ramas.
+- La documentación existente ya contiene registros recientes de estas tareas y de sus pendientes funcionales.
+
+## Restricciones
+- No modificar código ni servicios.
+- No realizar despliegues, peticiones a Apps Script ni operaciones sobre Google Sheets o Drive.
+- No actualizar la rama base.
+- Conservar íntegros los registros históricos.
+- Un único commit documental en GPSpedia2.2.5_work mediante Git Database API.
+
+## Fase
+Auditoría estática iniciada. Los blobs originales de los documentos se conservan como respaldo para comparación.
+
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — AUDITORÍA DE ÚLTIMA TAREA Y ALINEACIÓN DE RAMAS
+
+**Fecha:** 2026-11-06
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD antes de esta tarea:** 36196020f618270693e3beeed0d03392b21d0c9e
+**Rama base del flujo:** GPSpedia2.2.5
+**HEAD de la rama base antes de esta tarea:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## Estado final
+**Auditoría estática completada y documentación de ramas alineada.** No se modificó código ni se validó funcionalidad en deployments.
+
+## Archivos documentales modificados
+- Contexto de trabajo.md: rama de trabajo y base corregidas; se elimina la instrucción obsoleta de crear ramas desde fix/pys-carousel-card-sizing-print-images.
+- contexto_personal.md: referencias de ramas vigentes incorporadas.
+- Auditoría.txt: evidencia del último commit, última tarea, tarea anterior de imágenes, hallazgos y límites.
+- Tareas.txt: estado de auditoría y pendientes independientes.
+- ChangesLogs.txt: registro de la actualización documental.
+- checkpoint.md: checkpoint inicial y cierre de esta tarea.
+
+## Resultado de la auditoría
+- Último commit: 36196020f618270693e3beeed0d03392b21d0c9e — fix: validate authenticated collaborator identity in cut registration.
+- Padre único: a1c910017040b1f2bc750a791c4b047d73f4723c.
+- Última tarea: validar identidad de colaborador en WRITE y ADMIN.
+- Tarea anterior: gestión del inventario e historial de imágenes desde el modal.
+- Pendientes funcionales: desplegar WRITE/ADMIN y frontend para validar identidad; auditar el contrato cutData de ui.js openAddCutModal(); publicar y validar el inventario de imágenes y la auditoría completa de Drive.
+- La fuente actual de Services/admin.js usa MIME explícito application/x-gzip en la reconstrucción del snapshot. El error histórico de tipo de contenido nulo requiere comparar el código desplegado con este HEAD.
+- GitHub API devolvió protected:false para la rama base GPSpedia2.2.5. Se registró una tarea administrativa separada para activar la protección técnica.
+
+## Verificaciones realizadas
+- Confirmación del HEAD de trabajo y del HEAD de la rama base antes de escribir.
+- Revisión estática de los archivos y funciones implicados en el último commit.
+- Revisión de los registros de Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md.
+- Comparación de los blobs originales de los seis documentos contra el contenido preparado: los cambios se limitan a la corrección de referencias de rama y a nuevas entradas documentales.
+- No se ejecutó Apps Script, navegador, HTTP, Google Sheets ni Google Drive.
+- No se desplegó frontend ni backend.
+- No se ejecutaron pruebas funcionales.
+
+## Siguiente acción
+Después de verificar este commit documental, desplegar de forma controlada los servicios y frontend correspondientes para ejecutar la matriz funcional de identidad. Mantener separada la auditoría del contrato cutData y la validación live de gestión de imágenes. No modificar GPSpedia2.2.5.
+
+## Publicación
+Todos los cambios documentales se agruparán en un único commit cuyo padre será el HEAD confirmado 36196020f618270693e3beeed0d03392b21d0c9e. Solo se actualizará GPSpedia2.2.5_work con force:false y expected_sha igual a ese HEAD. La rama base deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

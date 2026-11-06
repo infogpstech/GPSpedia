@@ -4277,3 +4277,115 @@ Blobs finales de código:
 6. ESTADO
 Implementación estática preparada. La tarea no se marca como completada hasta ejecutar y aprobar las pruebas funcionales en los deployments correspondientes y publicar el frontend que transmite el nuevo contrato de sesión.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DE REVISIÓN — ÚLTIMA TAREA, ÚLTIMO COMMIT Y REFERENCIAS DE RAMA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: 36196020f618270693e3beeed0d03392b21d0c9e
+Rama base del flujo: GPSpedia2.2.5
+HEAD de la rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. CONFIRMACIÓN DE RAMA E HISTORIAL
+- GitHub confirmó que GPSpedia2.2.5_work existe y apunta a 36196020f618270693e3beeed0d03392b21d0c9e.
+- El commit 36196020f618270693e3beeed0d03392b21d0c9e es el HEAD de la rama al momento de la auditoría.
+- Mensaje: "fix: validate authenticated collaborator identity in cut registration".
+- Fecha del commit: 2026-11-06 13:17:29 UTC.
+- Padre único: a1c910017040b1f2bc750a791c4b047d73f4723c.
+- La rama base GPSpedia2.2.5 apunta a d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- El HEAD de la rama base no coincide con la rama de trabajo y no se modificó durante esta revisión.
+- La búsqueda de ramas confirma GPSpedia2.2.5_work. La referencia fix/pys-carousel-card-sizing-print-images no es la rama de trabajo de esta sesión.
+- GitHub API devolvió protected:false para GPSpedia2.2.5_work y GPSpedia2.2.5. La protección de la base está documentada por el proceso del proyecto, pero no aparece activada como protección técnica de rama en GitHub.
+- La consulta de workflows asociados al último commit no devolvió ejecuciones. No se puede certificar CI a partir de esa consulta.
+
+2. ÚLTIMO COMMIT — VALIDACIÓN DE IDENTIDAD DEL COLABORADOR
+Commit: 36196020f618270693e3beeed0d03392b21d0c9e
+Mensaje: fix: validate authenticated collaborator identity in cut registration
+Archivos incluidos:
+- Services/admin.js
+- Services/write.js
+- add_cortes.html
+- ui.js
+- Auditoría.txt
+- Tareas.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+Implementación observada:
+A. Services/write.js
+- Se añadieron referencias a Users y ActiveSessions.
+- getAuthenticatedCollaborator(payload) exige userId y sessionToken.
+- Comprueba la pareja de ID/token en ActiveSessions.
+- Busca el perfil del usuario en Users y obtiene Nombre_Completo.
+- handleAddOrUpdateCut() obtiene la identidad desde servidor antes de consultar o escribir en Cortes.
+- El campo colaborador enviado por el navegador dejó de ser fuente de identidad. Se conserva únicamente la extracción heredada del marcador [OP-...] cuando no existe opId, para continuidad de idempotencia.
+B. Services/admin.js
+- assertDeveloperSession(payload) comprueba la sesión activa y el rol Desarrollador.
+- El contexto autenticado incorpora fullName obtenido de Users.Nombre_Completo.
+- doPost() transmite developerContext a handleAddOrUpdateCut().
+- El handler administrativo exige fullName y no utiliza el nombre nominal del payload.
+- La ruta de registro silencioso sigue pasando por la validación del router ADMIN.
+C. add_cortes.html
+- El estado conserva userId y sessionToken de gpsepedia_session.
+- La recuperación de operaciones espera a que la sesión esté disponible.
+- checkOperation y addOrUpdateCut transmiten userId/sessionToken.
+- Se retiró colaborador como dato de identidad del payload y del registro local de operación pendiente.
+D. ui.js
+- openAddCutModal() exige ID y SessionToken y los transmite al servicio.
+- Se retiró colaborador como fuente de identidad del payload.
+
+Estado registrado en Tareas.txt y checkpoint.md:
+- Implementación estática preparada.
+- Pruebas funcionales posteriores al despliegue pendientes.
+- No se ejecutó Apps Script ni se hicieron solicitudes HTTP reales.
+- No se consultaron ni modificaron hojas reales Users, ActiveSessions o Cortes.
+- No se desplegaron WRITE ni ADMIN y no se publicó frontend.
+
+3. HALLAZGO FUERA DEL ALCANCE QUE SIGUE ABIERTO
+- ui.js openAddCutModal() todavía envía cutData con las claves tipo, configRelay, ubicacion, colorCable, activaTestigo e imgBase64.
+- Los handlers addOrUpdateCut() de WRITE y ADMIN consumen tipoCorte1, configRelay1, ubicacionCorte1, colorCableCorte1 e imgCorte1.
+- Esta discrepancia está registrada en Tareas.txt como tarea independiente. No se corrigió en el último commit.
+- Debe auditarse y determinarse el mapeo funcional antes de cambiar el contrato.
+
+4. TAREA INMEDIATAMENTE ANTERIOR — INVENTARIO E HISTORIAL DE IMÁGENES
+Commit: a1c910017040b1f2bc750a791c4b047d73f4723c
+Mensaje: feat: manage unused and replaced images from developer modal
+Padre: 7983febec8f4e32c008ec110024be6f9524e8415
+Archivos incluidos:
+- Services/admin.js
+- ui.js
+- index.html
+- style.css
+- api-config.js
+- Auditoría.txt
+- Tareas.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+Implementación estática registrada:
+- Se añadió tipo_registro para distinguir sin_uso_detectado y reemplazada.
+- Se incorporaron consulta, creación de carpetas, movimiento, descarga validada y envío a papelera.
+- El modal dispone de vista de lista y cuadrícula, miniaturas, lightbox, selección de carpeta destino y creación de carpetas.
+- Las operaciones de movimiento validan referencias y destino dentro del árbol Cortes, conservan ubicacion_original y actualizan ubicacion_actual.
+- Se registran acciones en ActividadUsuario.
+- Se preservaron las reglas de restauración histórica para imágenes reemplazadas.
+- Se registraron pruebas estáticas y aisladas con servicios simulados.
+- No se publicó frontend ni se desplegó ADMIN; la validación funcional real quedó pendiente.
+
+5. HISTORIAL INMEDIATO DE LA AUDITORÍA DE DRIVE
+- Commit 7a4539f1151100d314c07f7a2960e68f56780d9b: fix: optimize Drive image inventory audit batches.
+- Commit 7983febec8f4e32c008ec110024be6f9524e8415: feat: persist unused Drive image inventory in spreadsheet.
+- La versión actual de Services/admin.js en HEAD contiene Utilities.newBlob(Utilities.base64Decode(encoded), "application/x-gzip") antes de Utilities.ungzip(). Las llamadas newBlob() encontradas en Services/admin.js especifican tipo MIME.
+- Por tanto, el error reportado anteriormente sobre un objeto Blob con tipo de contenido nulo no coincide con el código fuente actual de esta rama. Una diferencia de versión entre el código del repositorio y el deployment ADMIN es una hipótesis que debe verificarse; no se afirma como causa confirmada.
+- No se comprobó qué versión está desplegada actualmente en Apps Script. La auditoría completa del árbol de Drive tampoco se ejecutó desde esta revisión.
+
+6. CONCLUSIÓN Y PENDIENTES
+- La rama correcta es GPSpedia2.2.5_work y su HEAD actual es 3619602.
+- La última tarea de código fue la validación de identidad del colaborador en WRITE y ADMIN.
+- La implementación estática está presente en el HEAD, pero falta validación funcional tras despliegue.
+- Continúan pendientes la discrepancia de cutData en ui.js, la validación real de la gestión de imágenes y la confirmación de cobertura completa de la auditoría Drive.
+- Se detectó que GitHub no reporta branch protection activa para la rama base. Debe configurarse mediante una tarea administrativa separada.
+- Esta auditoría fue estática y documental. No se modificó código, servicios, hojas, Drive ni deployments.
+================================================================================

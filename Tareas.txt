@@ -4010,3 +4010,28 @@ Estado: IMPLEMENTACIÓN ESTÁTICA PREPARADA; PRUEBAS FUNCIONALES TRAS DESPLIEGUE
 - La discrepancia de contrato cutData en ui.js openAddCutModal() queda registrada como tarea independiente.
 
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN DE ESTADO — AUDITORÍA DE RAMA Y ÚLTIMO COMMIT
+Fecha: 2026-11-06
+Rama de trabajo confirmada: GPSpedia2.2.5_work
+Rama base del flujo: GPSpedia2.2.5
+
+- Se confirmó que GPSpedia2.2.5_work apunta a 36196020f618270693e3beeed0d03392b21d0c9e.
+- La última tarea de código fue validar la identidad del colaborador en WRITE y ADMIN (commit 3619602). La implementación estática está preparada; las pruebas funcionales siguen pendientes de despliegue.
+- La tarea anterior fue la gestión del inventario e historial de imágenes desde el modal (commit a1c9100). La implementación estática y las pruebas aisladas constan en el historial; publicación y validación live siguen pendientes.
+- Se confirmó que ui.js openAddCutModal() conserva una discrepancia entre las claves de cutData enviadas y las consumidas por los handlers. Mantenerla como tarea independiente hasta auditar el mapeo.
+- En Services/admin.js del HEAD actual, las llamadas Utilities.newBlob() tienen tipo MIME explícito; loadAuditDriveReferenceSnapshot() usa application/x-gzip. El error previo de tipo de contenido nulo no coincide con el código fuente actual; verificar versión desplegada antes de atribuir causa.
+- GitHub API devuelve protected:false para GPSpedia2.2.5. La protección está documentada por procedimiento interno, pero falta activar branch protection/ruleset en GitHub. Tarea administrativa pendiente; no modificar la rama base.
+- La referencia fix/pys-carousel-card-sizing-print-images queda obsoleta para este flujo. Los documentos de contexto se alinean con GPSpedia2.2.5_work y GPSpedia2.2.5.
+- No se ejecutaron pruebas reales, despliegues, solicitudes HTTP ni operaciones en Google Sheets/Drive durante esta revisión.
+================================================================================
+TAREA PENDIENTE — CONFIGURAR PROTECCIÓN TÉCNICA DE LA RAMA BASE
+Fecha de registro: 2026-11-06
+Rama: GPSpedia2.2.5
+Estado: PENDIENTE DE CONFIGURACIÓN ADMINISTRATIVA.
+- GitHub API devolvió protected:false para GPSpedia2.2.5 durante la auditoría.
+- Configurar branch protection o ruleset que impida actualizaciones directas no autorizadas y exija el flujo de revisión acordado.
+- No intentar modificar la configuración desde esta tarea documental ni modificar la rama base.
+================================================================================
