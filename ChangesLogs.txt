@@ -3009,3 +3009,36 @@ PRUEBAS AISLADAS
 - index.html reconstruido desde el original con las transformaciones previstas; style.css original conservado como prefijo.
 - No se ejecutó navegador real ni se publicó frontend.
 ================================================================================
+
+
+================================================================================
+CAMBIO — ROBUSTECER SNAPSHOT TEMPORAL Y VALIDACIÓN DE LOTES DE AUDITORÍA
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+- Services/admin.js, líneas 3362-3442: storeAuditDriveReferenceSnapshot() asigna nombres y tipos MIME explícitos al Blob JSON y al resultado gzip; registra la etapa de operación ante fallos; incorpora la clave temporal al conjunto de limpieza antes de escribirla y protege la limpieza para no sustituir el error original.
+- Services/admin.js, líneas 3417-3441: loadAuditDriveReferenceSnapshot() asigna nombre y tipo MIME al Blob gzip y fija application/json al Blob descomprimido; identifica la etapa de lectura/decodificación/descompresión y valida la estructura del snapshot antes de devolverla.
+- ui.js, líneas 4434-4444: la respuesta ADMIN debe incluir batchAnalyzed y totalAnalyzed como enteros coincidentes con los resultados; response.complete debe ser booleano.
+- Se mantienen sin cambios los tamaños de lote/cache, TTL, rutas ADMIN, autorización, clasificación de archivos, validaciones de Drive/Spreadsheet, persistencia IndexedDB y preferencia de vista.
+
+RESPALDOS ORIGINALES
+- Services/admin.js: cf2e887fd7ff5399064cbda86d0c3992d7f7b49d
+- ui.js: 8500f354704f685b7ef8b051469769f01cd99d52
+- Auditoría.txt: bba21c162a580afeb84fccbc1b6013ce76c6675e
+- Tareas.txt: b647889f18b273c154e66685424e87f10f04002a
+- ChangesLogs.txt: 12c476f3e8bf0511447766dcbcccb1ce60cf74a7
+- checkpoint.md: 28d7dbfe5a2d74e839b1f4893884ce6aacedf129
+
+ARCHIVOS FINALES
+- Services/admin.js: 9d9809f9cd3741f4147e9f5eaa57f3bad4eb75ff
+- ui.js: 302ee7f74b1509046c214739e6e378f5ee684bc2
+- Auditoría.txt: f1f47080137df9ddbcb27d372fdec0040c4a3c77
+
+VERIFICACIONES AISLADAS
+- Parseo JavaScript de admin.js y ui.js completado sin errores.
+- Simulación de almacenamiento/recuperación del snapshot completada con 2 bloques y TTL de 21,600 segundos.
+- Se comprobó que la recuperación informa estado temporal no disponible cuando falta un bloque.
+- Se simuló un error de tipo MIME durante gzip y se verificó que el mensaje identifica la etapa «compresión gzip».
+- Se verificó que el fallo de escritura limpia las claves temporales registradas.
+- Se verificó el rechazo de batchAnalyzed ausente/incorrecto, totalAnalyzed incorrecto y complete ausente.
+- No se ejecutó Apps Script real, no se accedió a Drive/Spreadsheet y no se desplegó el servicio ADMIN.
+================================================================================

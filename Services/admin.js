@@ -3362,65 +3362,112 @@ function handleGetReplacedImageDownloadUrl(payload, logMessage, developerContext
 function storeAuditDriveReferenceSnapshot(auditId, snapshot) {
     const cache = CacheService.getScriptCache();
     const cachePrefix = `gp_audit_refs_${auditId}`;
-    const serialized = JSON.stringify(snapshot);
-    const compressed = Utilities.gzip(Utilities.newBlob(serialized, "application/json"));
-    const encoded = Utilities.base64Encode(compressed.getBytes());
-    const chunkSize = 75000;
-    const maxEncodedSize = 750000;
-
-    if (encoded.length > maxEncodedSize) {
-        throw new Error("El conjunto de referencias supera la capacidad temporal disponible. No se clasificaron archivos; reduce el volumen de datos o solicita una auditoría por etapas.");
-    }
-
-    const chunkCount = Math.ceil(encoded.length / chunkSize);
     const cacheKeys = [];
+    let stage = "serialización JSON";
+
     try {
+        const serialized = JSON.stringify(snapshot);
+        stage = "creación del Blob JSON";
+        const sourceBlob = Utilities.newBlob(serialized, "application/json", "audit-reference-snapshot.json");
+        sourceBlob.setContentType("application/json");
+
+        stage = "compresión gzip";
+        const compressed = Utilities.gzip(sourceBlob);
+        compressed.setContentType("application/x-gzip");
+
+        stage = "codificación Base64";
+        const encoded = Utilities.base64Encode(compressed.getBytes());
+        const chunkSize = 75000;
+        const maxEncodedSize = 750000;
+
+        if (encoded.length > maxEncodedSize) {
+            throw new Error("El conjunto de referencias supera la capacidad temporal disponible. No se clasificaron archivos; reduce el volumen de datos o solicita una auditoría por etapas.");
+        }
+
+        const chunkCount = Math.ceil(encoded.length / chunkSize);
+        stage = "escritura de bloques en CacheService";
         for (let i = 0; i < chunkCount; i++) {
             const key = `${cachePrefix}_${i}`;
             const chunk = encoded.slice(i * chunkSize, (i + 1) * chunkSize);
-            cache.put(key, chunk, 21600);
             cacheKeys.push(key);
+            cache.put(key, chunk, 21600);
         }
 
         const manifestKey = `${cachePrefix}_manifest`;
-        cache.put(manifestKey, JSON.stringify({ chunkCount: chunkCount }), 21600);
+        stage = "escritura del manifiesto en CacheService";
         cacheKeys.push(manifestKey);
+        cache.put(manifestKey, JSON.stringify({ chunkCount: chunkCount }), 21600);
 
-        cacheKeys.forEach((key, index) => {
+        stage = "verificación del estado temporal";
+        cacheKeys.forEach(key => {
             if (cache.get(key) === null) {
                 throw new Error("Google Apps Script no conservó todos los bloques del estado temporal.");
             }
         });
     } catch (error) {
-        cache.removeAll(cacheKeys);
-        throw new Error(`No se pudo conservar el estado temporal de la auditoría: ${error.message}`);
+        try {
+            if (cacheKeys.length) cache.removeAll(cacheKeys);
+        } catch (cleanupError) {
+            console.error("No se pudieron retirar todos los bloques temporales de auditoría:", cleanupError);
+        }
+        throw new Error(`No se pudo conservar el estado temporal de la auditoría durante ${stage}: ${error.message}`);
     }
 }
 
 function loadAuditDriveReferenceSnapshot(auditId) {
     const cache = CacheService.getScriptCache();
     const cachePrefix = `gp_audit_refs_${auditId}`;
-    const manifestText = cache.get(`${cachePrefix}_manifest`);
-    if (!manifestText) {
-        throw new Error("El estado temporal de la auditoría expiró o dejó de estar disponible. Inicia una auditoría nueva.");
-    }
+    let stage = "lectura del manifiesto";
 
-    const manifest = JSON.parse(manifestText);
-    if (!Number.isInteger(manifest.chunkCount) || manifest.chunkCount < 1) {
-        throw new Error("El estado temporal de la auditoría está incompleto. Inicia una auditoría nueva.");
-    }
-
-    let encoded = "";
-    for (let i = 0; i < manifest.chunkCount; i++) {
-        const chunk = cache.get(`${cachePrefix}_${i}`);
-        if (chunk === null) {
-            throw new Error("Falta un bloque del estado temporal de la auditoría. Inicia una auditoría nueva.");
+    try {
+        const manifestText = cache.get(`${cachePrefix}_manifest`);
+        if (!manifestText) {
+            throw new Error("El manifiesto expiró o dejó de estar disponible.");
         }
-        encoded += chunk;
-    }
 
-    const compressed = Utilities.newBlob(Utilities.base64Decode(encoded), "application/x-gzip");
-    return JSON.parse(Utilities.ungzip(compressed).getDataAsString());
+        const manifest = JSON.parse(manifestText);
+        if (!Number.isInteger(manifest.chunkCount) || manifest.chunkCount < 1) {
+            throw new Error("El manifiesto del estado temporal está incompleto.");
+        }
+
+        stage = "lectura de bloques";
+        let encoded = "";
+        for (let i = 0; i < manifest.chunkCount; i++) {
+            const chunk = cache.get(`${cachePrefix}_${i}`);
+            if (chunk === null) {
+                throw new Error(`Falta el bloque temporal ${i}.`);
+            }
+            encoded += chunk;
+        }
+
+        stage = "decodificación Base64";
+        const compressedBytes = Utilities.base64Decode(encoded);
+
+        stage = "creación del Blob comprimido";
+        const compressed = Utilities.newBlob(
+            compressedBytes,
+            "application/x-gzip",
+            "audit-reference-snapshot.json.gz"
+        );
+        compressed.setContentType("application/x-gzip");
+
+        stage = "descompresión gzip";
+        const restored = Utilities.ungzip(compressed);
+        restored.setContentType("application/json");
+
+        stage = "lectura y validación del JSON";
+        const snapshot = JSON.parse(restored.getDataAsString("UTF-8"));
+        if (!snapshot || !Array.isArray(snapshot.activeDriveIds) ||
+            !Array.isArray(snapshot.historicalDriveIds) ||
+            !Number.isFinite(Number(snapshot.unverifiableReferenceCount))) {
+            throw new Error("El contenido recuperado no cumple la estructura del snapshot de referencias.");
+        }
+        return snapshot;
+    } catch (error) {
+        throw new Error(
+            `El estado temporal de la auditoría dejó de estar disponible durante ${stage}: ${error.message}. Inicia una auditoría nueva.`
+        );
+    }
 }
 
 function clearAuditDriveReferenceSnapshot(auditId) {

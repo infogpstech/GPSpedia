@@ -4219,3 +4219,19 @@ VERIFICACIONES AISLADAS
 - No se ejecutó navegador real, no se publicó frontend y no se desplegó Apps Script.
 - La validación visual en escritorio, móvil y PWA queda para la matriz funcional consolidada después de completar las implementaciones restantes.
 ================================================================================
+
+
+================================================================================
+SUBTAREA — ROBUSTECER EL SNAPSHOT TEMPORAL Y EL CONTRATO DE LA AUDITORÍA DRIVE
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN FUNCIONAL EN EL DEPLOYMENT ADMIN PENDIENTE.
+
+- Services/admin.js: se fijó explícitamente el tipo MIME de los blobs JSON, gzip y JSON recuperado; se asignaron nombres a los blobs; se añadieron etapas de diagnóstico para localizar fallos de serialización, compresión, codificación, almacenamiento, lectura y descompresión.
+- Services/admin.js: la recuperación del snapshot ahora convierte la ausencia de manifiesto/bloques y el contenido inválido en un estado temporal no disponible con instrucción para iniciar una auditoría nueva.
+- Services/admin.js: se conserva el TTL de 21,600 segundos, el tamaño de bloque de 75,000 caracteres, el límite codificado de 750,000 caracteres, el contrato de snapshot y las reglas de clasificación.
+- ui.js: batchAnalyzed y totalAnalyzed ahora deben ser enteros válidos y coincidir con los resultados recibidos; ADMIN debe devolver complete como booleano.
+- La persistencia local, reanudación, reintento de registro del inventario y preferencia grid/list ya existían en la rama y no se duplicaron ni modificaron.
+- Pruebas aisladas: parseo completo de admin.js y ui.js; simulación de ida y vuelta del snapshot en dos bloques; verificación del TTL; detección de bloque ausente; identificación de la etapa de error MIME; limpieza de claves temporales tras fallo; rechazo de contadores ausentes/incorrectos y de complete no booleano.
+- Pendiente: despliegue consolidado de Apps Script y pruebas funcionales reales de Drive, CacheService, Spreadsheet, navegador e IndexedDB. No se declara resuelto el error MIME hasta confirmar el comportamiento en el deployment ADMIN.
+- No se desplegó Apps Script ni se ejecutaron escrituras en Drive o Spreadsheet.
+================================================================================

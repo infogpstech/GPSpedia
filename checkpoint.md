@@ -2817,3 +2817,89 @@ SEGURIDAD Y PENDIENTES
 COMMIT
 Este checkpoint es el último paso documental de la subtarea antes del único commit. El commit se creará con parent_sha igual a ef993ce361dd96151a4b89a9d4125568c18672cc, mediante un único árbol Git Database API y actualización condicionada exclusiva de GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD inicial. La referencia de commit que incorpora este checkpoint quedará identificada en el historial Git. La rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — RESILIENCIA DE AUDITORÍA DRIVE E INVENTARIO DE IMÁGENES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial verificado: 9b1f210cf3c3ac14f02d33df7762364f4ad1d3fc
+Árbol del HEAD: 3753740f57ae3c934bee9843e779863138447e1c
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA Y ALCANCE
+Continuar la implementación pendiente para robustecer la auditoría de imágenes en el árbol Drive «Cortes»: asegurar tipos MIME explícitos en el snapshot temporal, identificar la etapa de cualquier fallo de Blob/gzip/CacheService, preservar la capacidad de recuperación de resultados parciales y exigir consistencia en los contadores/indicador de finalización recibidos desde ADMIN.
+
+ESTADO OBSERVADO AL INICIO
+- index.html ya contiene controles para iniciar una auditoría nueva y continuar una auditoría guardada.
+- offline.js ya contiene IndexedDB DB_VERSION 4 y el almacén adminLocalState, con persistencia local del progreso y preferencia grid/list.
+- ui.js ya contiene restauración del progreso, persistencia por lote, reintento de registro del inventario y recuperación de la vista preferida.
+- Services/admin.js conserva el snapshot de IDs activos e históricos mediante CacheService y gzip/base64; el cursor depende de referenceCacheId y stack.
+- El usuario reportó el error «El objeto binario grande no debe tener tipo de contenido nulo para esta operación». La inspección inicial no permite atribuirlo a una única operación transformadora.
+- No se ha ejecutado Apps Script real ni se ha desplegado el servicio ADMIN.
+
+ARCHIVOS Y DEPENDENCIAS A REVISAR
+Services/admin.js, ui.js, offline.js, index.html, api-config.js, service-worker.js y main.js. Solo Services/admin.js y ui.js se identificaron como archivos de código que requieren cambios.
+
+RIESGOS
+- La reanudación depende del snapshot temporal almacenado en CacheService; si falta manifiesto o bloque, no debe continuarse con referencias incompletas.
+- Las clasificaciones «En uso», «Histórica», «Sin uso detectado» y «No verificable» no deben alterarse.
+- El registro en Spreadsheet vuelve a validar referencias activas, MIME, papelera y ubicación dentro del árbol «Cortes»; esas comprobaciones deben permanecer intactas.
+- La auditoría solo puede marcarse completa si ADMIN devuelve explícitamente complete booleano y contadores coherentes con los archivos recibidos.
+
+FASE
+Checkpoint inicial de la tarea preparado antes de la auditoría; el registro inicial y el cierre se incorporan al mismo archivo para conservar el procedimiento de un solo commit por tarea. No se ha creado commit intermedio ni se ha desplegado.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — RESILIENCIA DE AUDITORÍA DRIVE E INVENTARIO DE IMÁGENES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial de la tarea: 9b1f210cf3c3ac14f02d33df7762364f4ad1d3fc
+Rama base protegida: GPSpedia2.2.5
+HEAD de rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+IMPLEMENTACIÓN ESTÁTICA COMPLETADA Y PRUEBAS AISLADAS SATISFACTORIAS. VALIDACIÓN FUNCIONAL REAL EN DEPLOYMENT ADMIN PENDIENTE. No se declara resuelto el error de Blob/MIME hasta confirmar el resultado en Apps Script.
+
+CAMBIOS REALIZADOS
+- Services/admin.js: storeAuditDriveReferenceSnapshot() asigna nombre y tipo MIME explícito al Blob JSON y al Blob comprimido; identifica la etapa de fallo; registra claves antes de escribirlas y protege la limpieza de caché.
+- Services/admin.js: loadAuditDriveReferenceSnapshot() asigna nombre y tipo MIME al Blob gzip y al Blob descomprimido; identifica la etapa de recuperación; valida la estructura del snapshot; informa que el estado temporal no está disponible si faltan bloques o el contenido no puede recuperarse.
+- ui.js: exige batchAnalyzed y totalAnalyzed como enteros válidos y coincidentes con los resultados recibidos; exige response.complete de tipo booleano.
+- La persistencia local, reanudación, reintento de registro en Spreadsheet, preferencia grid/list, HTML y DB_VERSION 4 ya existían en el HEAD inicial y no se duplicaron ni modificaron.
+- No se alteraron rutas ADMIN, permisos, TTL, tamaño de bloque, límite codificado, reglas de clasificación, validaciones de Drive/Spreadsheet ni la rama base.
+
+ARCHIVOS MODIFICADOS Y RESPALDOS
+- Services/admin.js: original cf2e887fd7ff5399064cbda86d0c3992d7f7b49d; final 9d9809f9cd3741f4147e9f5eaa57f3bad4eb75ff.
+- ui.js: original 8500f354704f685b7ef8b051469769f01cd99d52; final 302ee7f74b1509046c214739e6e378f5ee684bc2.
+- Auditoría.txt: original bba21c162a580afeb84fccbc1b6013ce76c6675e; final f1f47080137df9ddbcb27d372fdec0040c4a3c77.
+- Tareas.txt: original b647889f18b273c154e66685424e87f10f04002a; final 260ede2078d4f251697a48e82bad544a3ddc92d6.
+- ChangesLogs.txt: original 12c476f3e8bf0511447766dcbcccb1ce60cf74a7; final 2579fa03e3a90be3aecaee49517d19350ea36347.
+- checkpoint.md: original 28d7dbfe5a2d74e839b1f4893884ce6aacedf129; este checkpoint final se incorpora en el único commit de la tarea.
+- offline.js, index.html, api-config.js, service-worker.js y main.js no se modificaron.
+
+VERIFICACIONES EJECUTADAS
+- Parseo completo de Services/admin.js y ui.js sin errores.
+- Comparación del archivo admin.js: el único bloque reemplazado corresponde a storeAuditDriveReferenceSnapshot() y loadAuditDriveReferenceSnapshot(); el resto del archivo conserva el contenido del respaldo.
+- Comparación de ui.js: el único rango modificado corresponde a las validaciones de batchAnalyzed, totalAnalyzed y complete.
+- Simulación con mocks del almacenamiento/recuperación del snapshot: ida y vuelta correcta con 2 bloques y TTL 21,600 segundos.
+- Simulación de bloque ausente: se informa estado temporal no disponible y el mensaje coincide con la condición de reanudación del frontend.
+- Simulación de error MIME durante gzip: el diagnóstico identifica la etapa «compresión gzip».
+- Simulación de fallo de escritura: se limpian las claves temporales registradas.
+- Simulación de contrato frontend: se acepta una respuesta válida y se rechazan batchAnalyzed ausente/incorrecto, total incorrecto y complete ausente/no booleano.
+- Se verificaron los blobs finales almacenados en GitHub y se confirmó que la rama de trabajo y la rama base no cambiaron durante la preparación.
+
+VALIDACIONES PENDIENTES
+- No se ejecutó Apps Script real ni se probó CacheService real.
+- No se accedió a Drive ni se escribió en Spreadsheet.
+- No se ejecutó navegador real ni IndexedDB real.
+- No se desplegó el servicio ADMIN ni el frontend.
+- La prueba funcional de auditoría completa, continuidad de cursor, clasificación, registro/reintento de inventario y vistas de imágenes queda para la fase consolidada que el usuario solicitó ejecutar después de terminar todas las implementaciones.
+
+SIGUIENTE ACCIÓN
+Crear un único commit de la tarea mediante Git Database API. Antes de escribir, volver a verificar que GPSpedia2.2.5_work sigue en 9b1f210cf3c3ac14f02d33df7762364f4ad1d3fc y GPSpedia2.2.5 sigue en d9acc68d889985c2e2f42fe3a02e502efc86ead1. Crear un solo árbol, un commit con el HEAD inicial como único padre y actualizar exclusivamente la rama de trabajo con force:false y expected_sha igual al HEAD inicial. Después verificar el commit y que la rama base permanezca intacta. No desplegar ni iniciar pruebas funcionales todavía.
+================================================================================

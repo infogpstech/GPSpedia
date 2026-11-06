@@ -4431,12 +4431,15 @@ export async function openAuditDriveModal() {
                 const expectedTotal = allFiles.length + batchSize;
                 const reportedBatch = Number(response.batchAnalyzed);
                 const reportedTotal = Number(response.totalAnalyzed);
-                if (Number.isFinite(reportedBatch) && reportedBatch !== batchSize) {
-                    throw new Error('El contador batchAnalyzed no coincide con la cantidad de archivos recibidos.');
+                if (!Number.isInteger(reportedBatch) || reportedBatch !== batchSize) {
+                    throw new Error('El contador batchAnalyzed no coincide con la cantidad de archivos recibidos o no es válido.');
                 }
-                if (!Number.isFinite(reportedTotal) || reportedTotal !== expectedTotal) {
+                if (!Number.isInteger(reportedTotal) || reportedTotal !== expectedTotal) {
                     throw new Error('El total acumulado informado por ADMIN (' + response.totalAnalyzed +
                         ') no coincide con los resultados recibidos (' + expectedTotal + ').');
+                }
+                if (typeof response.complete !== 'boolean') {
+                    throw new Error('ADMIN no devolvió un indicador booleano válido de finalización de la auditoría.');
                 }
 
                 allFiles.push(...response.files);

@@ -4841,3 +4841,61 @@ REVISIÓN DE SEGURIDAD Y EFECTOS COLATERALES
 - La consola reduce el espacio vertical de los paneles; estos mantienen scroll propio. La validación visual real en escritorio, móvil y PWA queda pendiente de la etapa funcional consolidada.
 - No se desplegó frontend ni Apps Script; no se ejecutaron operaciones administrativas reales.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — RESILIENCIA DEL SNAPSHOT TEMPORAL DE AUDITORÍA DRIVE
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: 9b1f210cf3c3ac14f02d33df7762364f4ad1d3fc
+Tipo: auditoría estática de frontend, IndexedDB, enrutamiento y servicio ADMIN. Sin ejecución de Apps Script ni acceso/escritura a Drive o Spreadsheet.
+
+1. ARCHIVOS Y RESPALDOS EXACTOS
+- Services/admin.js: blob de respaldo exacto cf2e887fd7ff5399064cbda86d0c3992d7f7b49d.
+- ui.js: blob de respaldo exacto 8500f354704f685b7ef8b051469769f01cd99d52.
+- offline.js: blob de referencia 00000b2d7ef69b571d65757610435dc21eeee6cd.
+- index.html: blob de referencia e478dfd54a1fb0efb05bacf7abdbbaa1c81f7f8b.
+- api-config.js: blob de referencia 7f997f9a0e9f3cbc90c259a736153bc446a04a24.
+- service-worker.js: blob de referencia b42272e39e397daa7989d71879839cc23d241202.
+- main.js: blob de referencia e03a2293738abf78a1deb6c293ea96c6a8e0479a.
+- No se modificó ningún archivo durante esta auditoría.
+
+2. FRONTEND Y PERSISTENCIA LOCAL
+- ui.js, línea 4151: openAuditDriveModal() restaura el último estado local y mantiene los resultados parciales; utiliza cursor para continuar y permite iniciar una auditoría nueva.
+- ui.js, línea 4264: persistState() guarda archivos, cursor, contadores, estado de finalización, carpeta raíz y estado del registro en Spreadsheet mediante offline.saveDriveAuditState().
+- ui.js, línea 4287: saveUnusedInventory() intenta registrar las imágenes sin uso después de completar la auditoría y permite reintentar cuando el estado guardado no es «saved».
+- ui.js valida la suma acumulada de archivos recibidos frente al total informado por ADMIN. Hallazgo: la comprobación de batchAnalyzed solo compara cuando Number.isFinite() es verdadero; por tanto, un contador ausente/no numérico no se rechaza expresamente. Tampoco se exige que response.complete sea booleano.
+- ui.js, línea 3817: openReplacedImagesModal() recupera la preferencia de vista desde IndexedDB y setView() la guarda al cambiar entre lista y cuadrícula.
+- offline.js, línea 8: DB_VERSION es 4. El upgrade crea adminLocalState solo si no existe, sin eliminar los almacenes previos.
+- offline.js, líneas 112-188: las funciones de estado administrativo guardan el cursor/resultados sin incluir userId ni SessionToken; la preferencia de vista solo admite «grid» o «list».
+- index.html, líneas 415-480: existen el selector de vista, controles de carpetas, lightbox, botones de iniciar/continuar y contenedores de resumen/resultados.
+- La persistencia, reanudación, reintento de inventario y preferencia grid/list ya están presentes en el HEAD auditado; no requieren duplicar su implementación.
+
+3. CONTRATO Y CACHÉ
+- api-config.js, líneas 32-33: auditDriveImagesInCortes y saveUnusedImagesInventory están asignadas al servicio ADMIN.
+- api-config.js, línea 38 y siguientes: routeAction() envía POST JSON y convierte status:'error' en excepción con el mensaje devuelto por el servicio.
+- service-worker.js utiliza estrategia Network-First para assets GET; el servicio worker no altera el cuerpo de las solicitudes POST de auditoría.
+- Services/admin.js, líneas 3362-3443: storeAuditDriveReferenceSnapshot() y loadAuditDriveReferenceSnapshot() son los únicos helpers de compresión/recuperación del snapshot llamados por el recorrido auditado. La escritura crea un Blob JSON, aplica gzip y codifica sus bytes en Base64; la lectura decodifica Base64, crea un Blob gzip, aplica ungzip y lee el JSON.
+- Los blobs de entrada se crean con contentType explícito, pero el código no vuelve a fijar explícitamente el tipo MIME en los blobs devueltos por Utilities.gzip() y Utilities.ungzip(). La inspección estática no permite determinar en cuál operación se originó el error reportado por el usuario («El objeto binario grande no debe tener tipo de contenido nulo para esta operación»).
+- storeAuditDriveReferenceSnapshot() guarda bloques de 75,000 caracteres, limita el total codificado a 750,000 caracteres, utiliza TTL de 21,600 segundos y verifica que los bloques/manifiesto permanezcan en CacheService.
+- loadAuditDriveReferenceSnapshot() transforma la ausencia de manifiesto o bloques en errores de estado temporal no disponible. El cursor depende de referenceCacheId y stack; si el snapshot desaparece, la continuación no puede reconstruir las referencias usadas para clasificar.
+
+4. INVENTARIO Y SEGURIDAD
+- Services/admin.js, línea 3630: handleAuditDriveImagesInCortes() toma el snapshot al iniciar, valida las carpetas incluidas en el cursor, recorre archivos y subcarpetas por lotes y devuelve batchAnalyzed, totalAnalyzed, foldersVisited, complete, files y cursor.
+- Services/admin.js, línea 3444: handleSaveUnusedImagesInventory() vuelve a recopilar referencias activas, valida IDs, MIME, papelera, pertenencia al árbol «Cortes» y carpeta padre directa; actualiza registros de auditoría existentes por ID y marca los que ya no se confirman. Estas validaciones no deben relajarse.
+- collectActiveDriveReferences() mantiene el modo detallado predeterminado utilizado por handleDeleteReplacedImage(); la auditoría usa el modo de IDs sin ubicaciones. No se debe cambiar el contrato compartido de eliminación.
+- El snapshot se elimina al terminar el recorrido completo; el registro en Spreadsheet se realiza después y tiene su propio estado de reintento local.
+
+5. HALLAZGOS Y ALCANCE DE CORRECCIÓN
+- Hallazgo confirmado: el flujo de Blob/gzip/ungzip no vuelve a fijar explícitamente el contentType de los blobs transformados y no identifica la etapa exacta si falla una operación. Esto es compatible con el tipo de error reportado, pero su origen exacto requiere confirmar el resultado del deployment ADMIN.
+- Hallazgo confirmado: el frontend permite que batchAnalyzed ausente/no numérico pase sin rechazo y no exige tipo booleano para complete.
+- Las funciones de persistencia local, reanudación, reintento del inventario y preferencia de vista ya existen y se conservarán; no se ampliará IndexedDB ni se alterará el esquema.
+- Corrección acotada propuesta: fijar explícitamente application/json y application/x-gzip en los blobs de cada etapa; asignar nombres a los blobs; informar la etapa precisa de fallo; convertir errores de recuperación del snapshot en estado temporal no disponible; exigir contadores enteros y complete booleano en el contrato frontend.
+- No se cambiarán TTL, tamaño de lote, límites de CacheService, reglas de clasificación, autorización, rutas, nombres de hojas ni validaciones de Drive/Spreadsheet.
+
+6. LÍMITES
+- No se ejecutó Apps Script real, no se probó CacheService real, no se accedió a Drive ni se escribió en Spreadsheet.
+- No se probó navegador ni IndexedDB real.
+- El error de Blob/MIME no puede declararse resuelto hasta publicar la versión ADMIN consolidada y ejecutar la prueba funcional.
+================================================================================
