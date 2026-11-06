@@ -4054,3 +4054,15 @@ Estado: CÓDIGO PRODUCTIVO YA INTEGRADO; FUENTE DE PRUEBA SINCRONIZADA; DESPLIEG
 - Pendiente: ejecutar la matriz funcional consolidada en el entorno acordado después de desplegar AUTH una sola vez y USERS una sola vez.
 - No se realizó migración masiva, no se modificó la Spreadsheet productiva, no se cambió api-config.js, no se fusionó la rama hija y no se modificó la rama base.
 ================================================================================
+
+
+================================================================================
+TAREA DOCUMENTAL — VALIDAR Y PRECISAR EL FLUJO DE COMMITS GIT DATABASE API
+Fecha: 2026-11-06
+Estado: IMPLEMENTACIÓN DOCUMENTAL PREPARADA; VALIDACIÓN FINAL SUJETA A LA ACTUALIZACIÓN CONDICIONADA DE LA RAMA.
+- Precisar la estructura de tree_elements: path, mode, type y sha.
+- Exigir una sola llamada create_tree después de generar todos los blobs de la tarea.
+- Crear un único commit con el HEAD anterior como único padre.
+- Actualizar exclusivamente GPSpedia2.2.5_work mediante force:false y expected_sha igual al HEAD inicial.
+- Verificar el commit, el árbol, el padre, los archivos incluidos y que GPSpedia2.2.5 no cambie.
+================================================================================

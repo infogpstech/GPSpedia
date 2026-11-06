@@ -4439,3 +4439,33 @@ HEAD de la rama hija consultada: 047dc76c773956b3f356146d9ba0857b9502a0b6
 - No se modificaron datos de Google Sheets ni se fusionó la rama hija.
 - La validación funcional confirmada se limita a los casos reportados por el usuario en la rama hija; la matriz funcional consolidada posterior al despliegue sigue pendiente.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — VALIDACIÓN DEL PROCEDIMIENTO GIT DATABASE API EN UN SOLO ÁRBOL
+Fecha: 2026-11-06
+Rama: GPSpedia2.2.5_work
+HEAD inicial: 6294ea9b56717c1d31cd8359c1a3e48b7b4ce15e
+
+1. DOCUMENTACIÓN REVISADA
+- Proceso de desarollo.md, sección «CONTROL DE COMMITS POR TAREA» y «PROCEDIMIENTO ÚNICO AUTORIZADO PARA GENERAR Y PUBLICAR COMMITS».
+- Documentación oficial de GitHub mantenida en github/docs: content/rest/git/blobs.md, content/rest/git/trees.md, content/rest/git/commits.md y content/rest/git/refs.md.
+
+2. HALLAZGOS
+- GitHub describe un blob como el objeto que contiene el contenido de cada archivo.
+- Un tree establece la jerarquía entre archivos y directorios del repositorio.
+- Un commit representa una instantánea del tree y de los blobs, con sus padres.
+- Una referencia de rama apunta al SHA del commit y se actualiza para avanzar la rama.
+- La regla del proyecto ya exigía crear un blob por archivo, un solo árbol, un commit único y una actualización condicionada de la rama. No detallaba la forma de cada elemento del array tree_elements ni remarcaba que el único árbol debe crearse después de completar todos los blobs.
+
+3. AJUSTE DOCUMENTAL
+- Se precisó que cada elemento de tree_elements debe incluir path, mode, type y sha.
+- Se indicó usar type="blob", conservar la ruta original y normalmente mode="100644" para archivos regulares.
+- Se aclaró que debe realizarse una sola llamada create_tree después de crear todos los blobs y usando como base_tree_sha el árbol del HEAD confirmado.
+
+4. VALIDACIÓN DE LA EJECUCIÓN
+La secuencia se registrará como comprobada únicamente si el commit final contiene un solo árbol nuevo, un único padre igual al HEAD inicial, todos y únicamente los archivos previstos, y la rama de trabajo se actualiza con force:false y expected_sha igual al HEAD inicial. La rama base deberá permanecer intacta.
+
+5. ALCANCE
+No se modificó código de aplicación, no se desplegaron servicios, no se realizaron llamadas HTTP a Apps Script ni escrituras en hojas reales.
+================================================================================

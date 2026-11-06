@@ -2825,3 +2825,13 @@ VERIFICACIÓN Y LÍMITES
 - No se ejecutó Apps Script, no se desplegaron AUTH/USERS, no se realizaron solicitudes HTTP ni se modificaron hojas reales.
 - La matriz funcional consolidada posterior a los despliegues continúa pendiente.
 ================================================================================
+
+
+================================================================================
+CAMBIO DOCUMENTAL — PROCEDIMIENTO DE COMMITS GIT DATABASE API
+Fecha: 2026-11-06
+Archivo: Proceso de desarollo.md
+Sección: PROCEDIMIENTO ÚNICO AUTORIZADO PARA GENERAR Y PUBLICAR COMMITS, apartado 1, paso 3.
+
+Se añadió la estructura requerida para cada elemento de tree_elements (path, mode, type y sha), se especificó type="blob" y el modo habitual 100644 para archivos regulares, y se aclaró que debe crearse un único árbol después de completar todos los blobs, usando como base el árbol del HEAD confirmado.
+================================================================================
