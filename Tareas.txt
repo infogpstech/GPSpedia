@@ -3869,3 +3869,20 @@ RESTRICCIONES GENERALES
 - No mostrar métricas ficticias ni enlaces incompletos.
 - No debilitar autorización backend, confirmaciones, auditoría ni mecanismos de respaldo.
 ================================================================================
+
+
+================================================================================
+INFORME DE AUDITORÍA ESTÁTICA — REPETICIÓN DEL INVENTARIO DE 14 ARCHIVOS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+Estado: AUDITORÍA ESTÁTICA COMPLETADA; CAUSA RAÍZ NO DETERMINADA; VALIDACIÓN FUNCIONAL DEL DEPLOYMENT PENDIENTE.
+
+- Se auditaron Services/admin.js, api-config.js, ui.js e index.html, incluyendo el recorrido recursivo, los iteradores de archivos/carpetas, los cursores, el snapshot de referencias, el enrutamiento ADMIN y la presentación del resultado.
+- No se encontró un límite total de 14 archivos. El backend procesa hasta 25 archivos y 20 subcarpetas por petición, y devuelve un cursor mientras la pila de carpetas conserve trabajo.
+- El frontend inicia con cursor null y continúa enviando el cursor recibido hasta que el backend devuelve complete:true. No contiene un límite de 14.
+- El snapshot de CacheService almacena IDs de referencias activas e históricas; no almacena ni limita el inventario de archivos de Drive.
+- Se detectó que el código no valida que DRIVE_FOLDER_ID resuelva a una carpeta llamada «Cortes» y que el endpoint debug informa la etiqueta 2.6.0, pero no un identificador de commit/build. No es posible confirmar desde GitHub qué código está ejecutando el deployment.
+- El frontend no compara su acumulado con totalAnalyzed, no muestra batchAnalyzed/foldersVisited y no detecta cursores repetidos o lotes sin avance. Se registra como riesgo de diagnóstico, no como causa demostrada de los 14 archivos.
+- La causa raíz permanece sin determinar porque no se ejecutó el deployment ni se consultó el árbol real de Drive. No se modificó código ni se alteraron datos.
+- Siguiente paso: prueba funcional de solo lectura que registre por lote batchAnalyzed, totalAnalyzed, foldersVisited, complete, presencia/cambio del cursor, rootFolderName y folderPath de los resultados. Verificar también que el deployment corresponda al código auditado.
+- No aumentar límites ni modificar iteradores antes de obtener la evidencia anterior.
+================================================================================

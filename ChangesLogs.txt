@@ -2659,3 +2659,20 @@ RESTRICCIONES REGISTRADAS
 - La retirada de fórmulas de ID, la ampliación de capacidad y la reorganización de imágenes quedan pendientes de auditoría técnica; no se ejecutaron cambios productivos.
 - La nueva especificación complementa las tareas ADMIN existentes y no las reemplaza.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — REPETICIÓN DEL INVENTARIO DE 14 ARCHIVOS
+Fecha: 2026-11-05 | Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: se agregó la revisión estática del recorrido de Drive, paginación, cursores, snapshot de referencias, frontend, enrutamiento ADMIN y límites para identificar el deployment.
+- Tareas.txt: se agregó el resultado parcial de la auditoría y la siguiente validación funcional requerida.
+- checkpoint.md: se incorporaron el checkpoint inicial y el cierre parcial de la tarea.
+
+ALCANCE Y RESULTADO REGISTRADO
+- No se encontró un límite de 14 archivos en el código auditado; el backend usa lotes de hasta 25 archivos y el frontend continúa hasta complete:true.
+- El snapshot temporal contiene referencias activas/históricas, no el inventario de Drive.
+- La causa raíz no se determinó porque no se ejecutó el deployment ni se consultó Drive. Queda pendiente la validación funcional con métricas por lote y verificación del deployment.
+- No se modificaron archivos de código, endpoints, deployments, hojas, registros, permisos, imágenes ni carpetas de Drive.
+================================================================================

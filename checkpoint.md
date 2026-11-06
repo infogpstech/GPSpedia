@@ -1670,3 +1670,88 @@ Iniciar una tarea técnica independiente con auditoría de los archivos y servic
 ## 6. PUBLICACIÓN
 Los cuatro archivos documentales se agruparán en exactamente un commit de GPSpedia2.2.5_work mediante el procedimiento Git Database API autorizado. El commit tendrá como único padre el HEAD previo confirmado. La rama protegida deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+ 
+
+# CHECKPOINT INICIAL — INVESTIGAR INVENTARIO REPETIDO DE 14 ARCHIVOS EN DRIVE
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD inicial confirmado:** 6d3f4550ea4c6b76ef11b8ebf7238aae269f163d
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## 1. TAREA Y ALCANCE
+Investigar por qué la auditoría del inventario de imágenes de Google Drive continúa examinando el mismo conjunto de 14 archivos después de actualizar el servicio ADMIN. El objetivo de esta fase es identificar con evidencia el comportamiento del recorrido, la paginación, los cursores, la persistencia del estado, la clasificación, la respuesta del backend, el procesamiento del frontend y la versión de servicio que realmente se ejecuta. No se atribuirá una causa hasta demostrarla.
+
+## 2. ESTADO REAL AL INICIO
+- La rama de trabajo fue consultada directamente y apunta a 6d3f4550ea4c6b76ef11b8ebf7238aae269f163d.
+- La rama protegida fue consultada directamente y apunta a d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Tareas.txt registra que el usuario observó repetidamente 14 archivos tras actualizar ADMIN; el número es un reporte y no una causa demostrada.
+- La optimización estática anterior de Services/admin.js está documentada como preparada, pero la validación funcional del deployment permanece pendiente.
+- La implementación anterior usa un snapshot temporal de referencias, un identificador referenceCacheId y cursores de recorrido; su comportamiento real en Apps Script/Drive no se ha verificado en esta tarea.
+- No se ha ejecutado código ni se ha consultado Drive/Sheets durante el inicio de esta tarea.
+
+## 3. ARCHIVOS Y COMPONENTES PREVISTOS PARA AUDITORÍA
+- Services/admin.js: handler de auditoría, recorrido de carpetas/archivos, cursor, snapshot y clasificación.
+- api-config.js: mapeo y transporte de la acción administrativa.
+- ui.js e index.html: inicio de auditoría, envío de cursor/estado, procesamiento de lotes, contadores y presentación del resultado.
+- Cualquier helper adicional se incorporará únicamente si las dependencias reales lo requieren.
+- Documentación: Tareas.txt, Auditoría.txt, ChangesLogs.txt y este checkpoint.
+
+## 4. RESTRICCIONES Y RIESGOS
+- No mover, renombrar, borrar, restaurar, compartir ni cambiar permisos de archivos o carpetas reales de Drive.
+- No modificar hojas, registros ni datos de Sheets.
+- No ejecutar respaldos, purgas ni operaciones administrativas ajenas a la auditoría.
+- No desplegar Apps Script ni cambiar endpoints sin autorización expresa.
+- No asumir que el límite de lote, el cursor, CacheService, filtros o el deployment explican el síntoma sin evidencia.
+- No modificar código durante la fase de auditoría.
+
+## 5. FASE ACTUAL
+Checkpoint inicial registrado como blob Git, sin commit ni movimiento de referencias. La siguiente acción es auditar los documentos y el flujo completo en los archivos fuente, conservando el estado original de cada archivo. La validación contra el servicio desplegado requerirá evidencia observable y autorización para cualquier interacción que pueda alterar datos.
+================================================================================
+
+================================================================================
+# CHECKPOINT FINAL — INVESTIGAR INVENTARIO REPETIDO DE 14 ARCHIVOS EN DRIVE
+
+**Fecha:** 2026-11-05
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD previo a la tarea:** 6d3f4550ea4c6b76ef11b8ebf7238aae269f163d
+**Árbol previo:** faed0f27d4a8f1e5faa3c347607cc56b0bfe8f86
+**Rama base protegida:** GPSpedia2.2.5
+**HEAD de rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+## 1. ESTADO FINAL
+AUDITORÍA ESTÁTICA COMPLETADA; CAUSA RAÍZ NO DETERMINADA; VALIDACIÓN FUNCIONAL PENDIENTE. No se declara resuelto el reporte de los 14 archivos.
+
+## 2. ARCHIVOS INCLUIDOS
+- Services/admin.js, api-config.js, ui.js e index.html: auditados estáticamente; sin modificaciones.
+- Auditoría.txt: informe técnico estático, hallazgos y prueba funcional pendiente.
+- Tareas.txt: resultado parcial y siguiente acción.
+- ChangesLogs.txt: registro objetivo de los cambios documentales.
+- checkpoint.md: checkpoint inicial y cierre parcial.
+
+## 3. RESULTADOS VERIFICADOS
+- No hay un límite total de 14 en el código fuente auditado.
+- El backend procesa lotes de hasta 25 archivos y 20 subcarpetas, conserva cursores de iteradores y marca complete cuando la pila queda vacía.
+- El frontend reenvía el cursor y continúa hasta complete:true; no contiene un límite de 14.
+- CacheService conserva IDs de referencias, no el inventario de Drive.
+- El código no valida el nombre real de la carpeta asociada a DRIVE_FOLDER_ID.
+- La respuesta debug identifica el componente como 2.6.0, pero no contiene huella de commit/build para identificar exactamente el código desplegado.
+- El frontend no muestra métricas de lote ni detecta cursor repetido o falta de progreso.
+
+## 4. VALIDACIONES Y LÍMITES
+- Se inspeccionaron estáticamente las funciones y dependencias descritas en Auditoría.txt.
+- No se ejecutó Apps Script ni se hicieron llamadas al deployment.
+- No se consultó Google Drive ni Google Sheets; no se verificó el contenido real de la carpeta raíz ni el número de archivos accesibles.
+- No se comprobó qué versión de código está publicada en la URL ADMIN.
+- No se modificó código, configuración, endpoints, deployments, hojas, registros, permisos, imágenes ni carpetas.
+- Los respaldos exactos de los cuatro archivos documentales previos a edición están registrados en Auditoría.txt.
+
+## 5. PENDIENTE Y SIGUIENTE ACCIÓN
+Ejecutar una prueba funcional de solo lectura contra el deployment ADMIN utilizado por la aplicación. Registrar por lote batchAnalyzed, totalAnalyzed, foldersVisited, complete, presencia/cambio del cursor, rootFolderName y folderPath. Comparar el acumulado del frontend con el contador del backend y verificar la identidad del deployment. No cambiar límites ni algoritmo hasta obtener esos datos.
+
+## 6. PUBLICACIÓN
+Los cuatro archivos documentales se agruparán en exactamente un commit de GPSpedia2.2.5_work mediante Git Database API. El commit tendrá como único padre el HEAD previo confirmado. La rama protegida permanecerá en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

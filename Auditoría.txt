@@ -3857,3 +3857,80 @@ Tipo: auditoría documental de alcance. No se realizó auditoría de código ni 
 5. SIGUIENTE ACCIÓN
 Iniciar una tarea técnica independiente para auditar primero el modal y sus contratos actuales, y dividir la implementación por dependencias verificadas. Priorizar el diagnóstico real de telemetría, el campo compartido de respaldos y la agrupación segura de acciones; auditar por separado la reorganización de imágenes y la generación de IDs antes de modificar Drive o Sheets.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA ESTÁTICA — REPETICIÓN DEL INVENTARIO DE 14 ARCHIVOS EN DRIVE
+Fecha: 2026-11-05
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: 6d3f4550ea4c6b76ef11b8ebf7238aae269f163d
+Tipo: auditoría estática de código y flujo. No se ejecutó Apps Script ni se consultaron Drive/Sheets.
+
+1. ARCHIVOS Y VERSIONES INSPECCIONADOS
+- Services/admin.js — blob 18ab493f5528df20d3e1f901468c5777429d3e07. Se revisaron configuración de raíz y Spreadsheet (líneas 11-18), extracción y recopilación de referencias (68-121), validación de pertenencia de carpetas (123-141), doGet/doPost y enrutamiento del handler (260-397), almacenamiento del snapshot (2807-2883) y recorrido completo (2885-3058).
+- api-config.js — blob a1ee5b014e2c277dc05cba4ddabaccd35d076bed. Se revisaron API_ENDPOINTS, ACTION_TO_SERVICE_MAP y routeAction() (líneas 5-61).
+- ui.js — blob 57f1830ce519f00d2e6bbfad554cee83c52b5a9a. Se revisaron el registro del botón, getDeveloperSessionPayload() y openAuditDriveModal() (líneas 3779-3800 y 3945-4057).
+- index.html — blob b950bec0d212e3bd2c7d7a4a23f848b9a6d500eb. Se revisaron el botón de inicio y el modal de auditoría (líneas 386-392 y 434-447).
+- Los documentos Tareas.txt, ChangesLogs.txt y checkpoint.md se contrastaron con los antecedentes de la optimización anterior y la especificación del inventario.
+
+2. FLUJO CONFIRMADO EN EL CÓDIGO
+2.1. Enrutamiento y autorización
+- api-config.js asigna auditDriveImagesInCortes al servicio ADMIN. routeAction() envía POST con el cuerpo JSON { action, payload } a API_ENDPOINTS.ADMIN.
+- ui.js adjunta userId y sessionToken mediante getDeveloperSessionPayload().
+- Services/admin.js ejecuta assertDeveloperSession(payload) antes de la acción, salvo ping, y enruta auditDriveImagesInCortes a handleAuditDriveImagesInCortes(). No se encontró una omisión de sesión específica en esta ruta.
+
+2.2. Alcance de Drive
+- Services/admin.js fija DRIVE_FOLDER_ID en una constante. El handler obtiene esa carpeta y usa su nombre real para la respuesta.
+- La implementación no comprueba que el nombre de la carpeta obtenida sea literalmente «Cortes»; el alcance efectivo depende del ID configurado. La inspección de GitHub no permite comprobar a qué carpeta real resuelve ese ID.
+- La enumeración usa folder.getFiles() para los archivos directamente contenidos en cada carpeta y folder.getFolders() para descubrir subcarpetas. No hay un filtro que limite la enumeración a 14 elementos ni que seleccione solo archivos de imagen: todos los archivos obtenidos se agregan a files; MIME type interviene en la clasificación.
+
+2.3. Paginación y recorrido
+- El recorrido mantiene una pila de carpetas. Cada elemento conserva folderId, path, fileToken, folderToken, filesDone y foldersDone.
+- El límite estático es de 25 archivos y 20 subcarpetas descubiertas por petición. Al quedar archivos en el iterador se conserva getContinuationToken(); las continuaciones usan DriveApp.continueFileIterator(). Para subcarpetas se conserva y reanuda el token equivalente.
+- Las subcarpetas se agregan a la pila y se procesan antes de continuar con la carpeta padre. La raíz también se procesa, por lo que el código contempla archivos ubicados directamente en ella.
+- La respuesta se considera completa únicamente cuando stack.length === 0. Si queda trabajo, devuelve partial:true y un cursor con la pila, los tokens, los contadores y referenceCacheId.
+- En la revisión estática no se encontró un límite total de 14 ni una instrucción que corte el recorrido al llegar a ese número. La lógica observada es compatible con múltiples peticiones hasta agotar la pila; su comportamiento real con iteradores de Drive aún no está probado.
+
+2.4. Snapshot temporal
+- storeAuditDriveReferenceSnapshot() y loadAuditDriveReferenceSnapshot() almacenan y recuperan IDs de referencias activas e históricas, comprimidos y divididos en bloques de CacheService.
+- El snapshot no contiene el inventario de archivos de Drive ni sustituye el recorrido de carpetas. Por tanto, el snapshot de referencias, por sí solo, no explica que el inventario quede limitado a 14 archivos.
+- Si el estado temporal falta, expira o pierde bloques, el backend lanza un error explícito. El código revisado no convierte esa condición en una respuesta completa de 14 elementos.
+
+2.5. Frontend y presentación
+- openAuditDriveModal() inicia cada ejecución con cursor = null y allFiles vacío. En cada petición envía el cursor anterior, agrega res.files y continúa en un do/while hasta recibir complete === true.
+- Si el backend devuelve un resultado parcial sin cursor, el frontend informa un error parcial. Si ocurre una excepción, muestra el número de archivos recibidos y no afirma que el árbol quedó completo.
+- No existe un límite de 14 en el frontend. El total mostrado se calcula con allFiles.length.
+- El frontend no contrasta allFiles.length con res.totalAnalyzed ni muestra batchAnalyzed, foldersVisited o los logs devueltos por ADMIN. Tampoco detecta que un cursor se repita sin avance ni establece un máximo de iteraciones. Esto es una limitación diagnóstica y un riesgo de bucle, pero no demuestra la causa del conjunto de 14 archivos.
+- Cerrar y volver a abrir el modal inicia otra auditoría desde cursor null; no hay persistencia del cursor en el cliente.
+
+2.6. Identificación de deployment
+- doGet() expone service GPSpedia-Admin y version 2.6.0. Ese valor es una etiqueta estática del componente, no un identificador del commit ni del código desplegado.
+- api-config.js contiene una URL fija para ADMIN, pero el repositorio no contiene metadatos que permitan comprobar qué versión de Apps Script está asociada actualmente a ese deployment.
+- Por tanto, el código de GitHub no permite demostrar que la URL usada por el frontend esté ejecutando el blob auditado ni verificar qué versión se publicó manualmente.
+
+3. HALLAZGOS Y CLASIFICACIÓN
+- HALLAZGO CONFIRMADO: no existe en el código auditado un tope total de 14 archivos. El tamaño de lote configurado es 25 archivos por petición.
+- HALLAZGO CONFIRMADO: el snapshot de CacheService guarda referencias de Sheets/historial, no el inventario de Drive; no constituye un límite de 14 archivos.
+- HALLAZGO CONFIRMADO: el frontend sigue el cursor hasta complete:true y no impone un máximo de 14.
+- HALLAZGO CONFIRMADO: el código no verifica que DRIVE_FOLDER_ID corresponda a la carpeta cuyo nombre esperado es «Cortes».
+- HALLAZGO CONFIRMADO: no hay huella de compilación/commit en la respuesta debug, por lo que no es posible verificar la identidad exacta del código del deployment con la información del repositorio.
+- RIESGO CONFIRMADO, NO CAUSA DEMOSTRADA: el frontend confía en complete:true y no detecta cursores repetidos, lotes sin avance o discrepancias entre contadores del backend y resultados acumulados.
+- CAUSA RAÍZ: NO DETERMINADA. Sin una ejecución contra el deployment y el Drive reales no se puede distinguir entre una carpeta raíz distinta o con 14 archivos accesibles, una versión desplegada diferente, una respuesta prematuramente completa, una limitación de acceso/visibilidad o un comportamiento de los iteradores en runtime.
+
+4. RESPALDOS Y PRESERVACIÓN
+- Se generaron blobs exactos previos a la edición documental: Tareas.txt b2dd8a2c78cd0f44d1c5d7078abc2fa1c0ef9e9f; Auditoría.txt a07e64e87ae10512ae15c54b69c59ac2b0b6313e; ChangesLogs.txt be9d79708132c5ab15e48ddfcab4fa388599ba84; checkpoint.md 5fc8714f4336de2e5b85506414fb21294440b01c.
+- No se modificaron Services/admin.js, ui.js, api-config.js ni index.html.
+- No se ejecutó Apps Script, no se realizaron llamadas al deployment, no se consultaron hojas ni carpetas de Drive y no se modificaron archivos, permisos o datos reales.
+
+5. SIGUIENTE VALIDACIÓN NECESARIA
+- Ejecutar una prueba controlada desde la interfaz con el deployment ADMIN que utiliza actualmente api-config.js.
+- Registrar para cada respuesta: batchAnalyzed, totalAnalyzed, foldersVisited, complete, presencia del cursor y cantidad de elementos en files. No compartir userId, sessionToken ni otros datos de sesión.
+- Confirmar el nombre que devuelve rootFolderName y contrastarlo con la carpeta «Cortes» esperada.
+- Comparar el total acumulado del frontend con totalAnalyzed del backend y comprobar que los cursores cambian y que los contadores avanzan hasta complete:true.
+- Si la respuesta final vuelve a indicar 14, obtener la lista de folderPath y los datos de las respuestas por lote; esto permitirá separar el alcance real del árbol de una terminación prematura.
+- Verificar el deployment exacto. La etiqueta 2.6.0 no basta para identificar el código publicado; se requiere comparar el proyecto/versionado de Apps Script o incorporar posteriormente una huella de build verificable, tras una tarea de implementación autorizada.
+
+6. RESULTADO
+AUDITORÍA ESTÁTICA COMPLETADA; CAUSA RAÍZ NO DETERMINADA. La siguiente fase depende de una validación funcional de solo lectura contra el deployment ADMIN y el árbol Cortes reales. No se recomienda cambiar los límites de lote ni alterar el algoritmo hasta obtener esa evidencia.
+================================================================================
