@@ -4700,3 +4700,19 @@ Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; VALIDACIÓN EN APPS SCRIPT Y DESPL
 - Los archivos históricos de cortes, apertura y alimentación no se trasladan; solo las nuevas cargas usan la jerarquía canónica. Su migración física requiere tarea independiente.
 - Auditoría, riesgos, respaldos, pruebas y limitaciones documentados en Auditoría.txt.
 ================================================================================
+
+
+================================================================================
+CIERRE DE IMPLEMENTACIÓN — AUTORIZACIÓN DE SUGERENCIAS DE AÑO EN FEEDBACK
+Fecha: 2026-11-07 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA INCORPORADA; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+- Las cuentas registradas requieren sesión activa y su identidad se obtiene de Users. Los aportes anónimos se conservan con nombre fijado por servidor y clave seudónima persistente por navegador.
+- Se añadió suggestionActorKey al final de Feedbacks. Las columnas históricas A:I se validan y conservan.
+- El umbral requiere tres claves distintas de aportantes positivos por vehículo/año; se impiden duplicados por actor.
+- Se corrigió el falso positivo de «No útil (Viejo)» y se conserva la información histórica sin clave.
+- La operación se serializa con ScriptLock y valida año, respuesta y vehículo antes de escribir.
+- ui.js y api-config.js transmiten el contexto de actor correspondiente.
+- No se desplegó FEEDBACK, no se publicó frontend ni se modificó Spreadsheet productiva.
+- Pendiente: pruebas aisladas de sesiones válidas/inválidas, suplantación, anonimato, duplicados, concurrencia, actualización de rango y sincronización Drive; confirmar alcance OAuth Drive antes del despliegue.
+================================================================================

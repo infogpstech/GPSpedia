@@ -4723,3 +4723,24 @@ Los SHA de respaldo previos a edición de los diez archivos se conservan en el c
 SIGUIENTE Y ÚNICA ACCIÓN
 Verificar de nuevo los HEAD de GPSpedia2.2.5_work y GPSpedia2.2.5. Si permanecen iguales a los valores iniciales, crear un único árbol y un único commit hijo directo de 2212b4f5fd26e1e29ab7c91ffd99e64700fc6696, y actualizar únicamente GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD confirmado. Después verificar commit, árbol, archivos, HEAD de trabajo y que GPSpedia2.2.5 permanezca en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+---
+
+# CHECKPOINT — AUTORIZACIÓN DE SUGERENCIAS DE AÑO EN FEEDBACK
+
+**Fecha:** 2026-11-07  
+**Rama de trabajo:** GPSpedia2.2.5_work  
+**Rama base:** GPSpedia2.2.5  
+**HEAD inicial:** 8cae98ac03602837f1af360a1c7dccb3d245427a  
+**HEAD base inicial:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+**Estado:** implementación estática preparada; pruebas funcionales y publicación pendientes de la fase consolidada.
+
+**Archivos modificados:** Services/feedback.js, ui.js, api-config.js, Spreadsheet/GPSpedia_DB_columnas.md, Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+
+**Resultado:** sesiones verificadas para cuentas registradas; participación anónima conservada con clave seudónima; conteo de tres actores positivos distintos; deduplicación por actor/vehículo/año; validación de entradas y vehículo; serialización mediante ScriptLock; conservación de columnas A:I y registros históricos sin clave.
+
+**Limitaciones:** la clave anónima identifica un navegador y no una persona física. Los registros históricos sin clave no participan en el nuevo umbral. No se ejecutó Apps Script real, navegador, HTTP ni operaciones productivas; no se desplegó FEEDBACK ni frontend. La dependencia OAuth Drive de FEEDBACK permanece.
+
+**Siguiente acción:** pruebas funcionales aisladas y fase consolidada posterior. No desplegar ni modificar datos productivos desde esta tarea.

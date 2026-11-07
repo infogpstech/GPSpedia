@@ -165,8 +165,13 @@ export async function reportProblem(vehicleId, problemDescription, userId, userN
     return await routeAction('reportProblem', { vehicleId, problemText: problemDescription, userId, userName });
 }
 
-export async function suggestYear(vehicleId, newYear, responseText, userId, userName) {
-    return await routeAction('suggestYear', { vehicleId, newYear, response: responseText, userId, userName });
+export async function suggestYear(vehicleId, newYear, responseText, actorPayload = {}) {
+    const actor = actorPayload && typeof actorPayload === "object" ? {
+        userId: actorPayload.userId,
+        sessionToken: actorPayload.sessionToken,
+        anonymousReporterId: actorPayload.anonymousReporterId
+    } : {};
+    return await routeAction("suggestYear", { ...actor, vehicleId, newYear, response: responseText });
 }
 
 export async function sendContactForm(formData) {

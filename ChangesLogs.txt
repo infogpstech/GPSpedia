@@ -3457,3 +3457,15 @@ ALCANCE
 - Pruebas estáticas: parseo de cinco módulos JS PASS; pruebas mock de ruta, findOrCreate, referencias compartidas y procesamiento por lotes PASS; comprobaciones de integración 16/16 PASS.
 - No se ejecutó Apps Script real, no se movieron archivos Drive, no se modificó Spreadsheet real y no se desplegaron servicios.
 ================================================================================
+
+
+================================================================================
+2026-11-07 — AUTORIZACIÓN Y TRAZABILIDAD DE suggestYear EN FEEDBACK
+- Services/feedback.js: sesiones registradas verificadas contra ActiveSessions/Users; nombre efectivo desde servidor; aportes anónimos conservados con identidad seudónima.
+- Services/feedback.js: suggestionActorKey aditiva, deduplicación por actor/vehículo/año y conteo de actores positivos distintos; ScriptLock para escritura/conteo/actualización.
+- Services/feedback.js: validación de año, respuesta y vehículo; corrección de «No útil (Viejo)» para no contarla como positiva; limpieza posterior conserva filas históricas sin clave.
+- ui.js: ambos flujos envían ID+SessionToken o identificador anónimo persistente.
+- api-config.js: helper transmite contexto de actor y no userName del cliente.
+- Spreadsheet/GPSpedia_DB_columnas.md: extensión documentada; inventario A:I conservado.
+- Sin despliegue FEEDBACK, publicación frontend ni operaciones productivas. Validación funcional consolidada pendiente.
+================================================================================

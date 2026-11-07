@@ -322,3 +322,14 @@ La hoja conserva la relación entre cada identificador de operación, el ID del 
 - En la copia, `Cortes` tiene los encabezados `idOperacion1`, `idOperacion2` e `idOperacion3` en las columnas 43–45; las tres columnas no contienen valores almacenados.
 - La migración estándar creará `Idempotencia` con sus cinco encabezados, establecerá `VIN` en AQ y dejará AR/AS sin encabezado ni contenido.
 - El inventario inicial conserva la estructura física observada en la copia. Esta sección documenta por separado la estructura objetivo para evitar confundir un cambio planeado con una migración ya ejecutada.
+
+
+### Extensión administrada por FEEDBACK — atribución de sugerencias de año
+
+La estructura observada original de `Feedbacks` conserva sus nueve columnas A:I. Al recibir la primera sugerencia de año después de esta implementación, FEEDBACK añade una columna de control al final de los encabezados existentes, sin desplazar ni reinterpretar las columnas históricas.
+
+| Posición prevista en el esquema actual | Letra | Encabezado exacto | Uso |
+|---:|:---:|---|---|
+| 10 | J | `suggestionActorKey` | Clave seudónima para contar una sola aportación por actor, vehículo y año. Para cuentas registradas contiene el ID verificado; para aportes anónimos contiene un hash del identificador persistente del navegador. |
+
+Si la hoja productiva contiene columnas adicionales no reflejadas en este inventario, el servicio añade el campo después de la última columna utilizada. No sobrescribe encabezados existentes. Los registros históricos sin clave de aportante se conservan, pero no se consideran votos verificables para el umbral de tres aportantes distintos.

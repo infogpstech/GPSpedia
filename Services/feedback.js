@@ -73,6 +73,84 @@ function assertFeedbackSession(payload, allowedRoles) {
     };
 }
 
+
+/** Identidad de aportantes de validación de año; el identificador anónimo es seudónimo, no identidad civil. */
+function createAnonymousSuggestionActorKey(reporterId) {
+    const normalizedId = String(reporterId || "").trim();
+    if (!normalizedId) return "anon:unidentified";
+    if (!/^[A-Za-z0-9_-]{20,80}$/.test(normalizedId)) {
+        throw new Error("El identificador anónimo de aportante no tiene un formato válido.");
+    }
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, normalizedId, Utilities.Charset.UTF_8);
+    const hash = digest.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
+    return "anon:" + hash;
+}
+
+function resolveSuggestionYearActor(payload) {
+    const requestedUserId = String(payload && payload.userId !== undefined ? payload.userId : "").trim();
+    if (requestedUserId === "0") {
+        return {
+            userId: "0", userName: "Anónimo", userRole: "Anónimo",
+            suggestionActorKey: createAnonymousSuggestionActorKey(payload.anonymousReporterId)
+        };
+    }
+    const actor = assertFeedbackSession(payload, null);
+    return {
+        userId: actor.userId,
+        userName: actor.userName,
+        userRole: actor.role,
+        suggestionActorKey: "user:" + actor.userId
+    };
+}
+
+function ensureSuggestionActorColumn(sheet) {
+    const expectedHeaders = [
+        "ID", "Usuario", "ID_vehiculo", "Problema", "Respuesta",
+        "Se resolvio", "Responde", "Reporte de util", "anoSugerido"
+    ];
+    const maxColumns = sheet.getMaxColumns();
+    if (maxColumns < expectedHeaders.length) {
+        sheet.insertColumnsAfter(maxColumns, expectedHeaders.length - maxColumns);
+    }
+    const baseHeaders = sheet.getRange(1, 1, 1, expectedHeaders.length).getValues()[0];
+    expectedHeaders.forEach((expected, index) => {
+        if (String(baseHeaders[index] || "").trim() !== expected) {
+            throw new Error("El esquema de Feedbacks no coincide con el esperado; no se modificó la hoja.");
+        }
+    });
+    const headerWidth = Math.max(sheet.getLastColumn(), expectedHeaders.length);
+    const headers = sheet.getRange(1, 1, 1, headerWidth).getValues()[0];
+    const actorPositions = [];
+    headers.forEach((header, index) => {
+        if (String(header || "").trim() === "suggestionActorKey") actorPositions.push(index + 1);
+    });
+    if (actorPositions.length > 1 || (actorPositions.length === 1 && actorPositions[0] <= expectedHeaders.length)) {
+        throw new Error("La columna suggestionActorKey existe en una posición duplicada o incompatible.");
+    }
+    if (actorPositions.length === 1) return actorPositions[0];
+
+    const newColumn = headerWidth + 1;
+    if (sheet.getMaxColumns() < newColumn) {
+        sheet.insertColumnsAfter(sheet.getMaxColumns(), newColumn - sheet.getMaxColumns());
+    }
+    const occupiedHeader = sheet.getRange(1, newColumn).getValue();
+    if (occupiedHeader !== "" && occupiedHeader !== null) {
+        throw new Error("No se puede añadir suggestionActorKey sin sobrescribir un encabezado existente.");
+    }
+    sheet.getRange(1, newColumn).setValue("suggestionActorKey");
+    SpreadsheetApp.flush();
+    return newColumn;
+}
+
+function isPositiveYearSuggestionRow(row) {
+    const problem = String(row[COLS_FEEDBACKS.Problema - 1] || "");
+    const answer = String(row[COLS_FEEDBACKS.Respuesta - 1] || "");
+    if (problem.includes("Sugerencia de ampliar rango") ||
+        problem.includes("Confirmación de funcionamiento")) return true;
+    return problem.includes("Modelo sin generaciones recientes") &&
+        answer.includes("confirmó que se trata de una generación más reciente");
+}
+
 const SHEET_NAMES = {
     CORTES: "Cortes",
     FEEDBACKS: "Feedbacks",
@@ -173,7 +251,10 @@ function doPost(e) {
             addVehicleToProblem: null
         };
 
-        if (Object.prototype.hasOwnProperty.call(actionPermissions, action)) {
+        if (action === "suggestYear") {
+            const actor = resolveSuggestionYearActor(payload);
+            payload = { ...payload, ...actor };
+        } else if (Object.prototype.hasOwnProperty.call(actionPermissions, action)) {
             const actor = assertFeedbackSession(payload, actionPermissions[action]);
             payload = {
                 ...payload,
@@ -514,183 +595,178 @@ function movePrimaryVehicleImageToCanonicalFolder(sheet, rowNumber, vehicleRow) 
 }
 
 function handleSuggestYear(payload) {
-    const { vehicleId, newYear, response, userId, userName } = payload;
-    if (!vehicleId || !newYear || !userId || !userName) {
-        throw new Error("Faltan datos para sugerir año (vehicleId, newYear, userId, userName).");
+    const lock = LockService.getScriptLock();
+    lock.waitLock(15000);
+    try {
+        return handleSuggestYearLocked(payload);
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+function handleSuggestYearLocked(payload) {
+    const { vehicleId, newYear, response, userId, userName, suggestionActorKey } = payload || {};
+    const normalizedVehicleId = String(vehicleId || "").trim();
+    const normalizedResponse = String(response || "").trim();
+    const actorKey = String(suggestionActorKey || "").trim();
+
+    if (!normalizedVehicleId || !userId || !userName || !actorKey) {
+        throw new Error("Faltan datos verificados para registrar la sugerencia de año.");
+    }
+    if (!/^user:[A-Za-z0-9_.-]{1,100}$/.test(actorKey) &&
+        !/^anon:(?:[a-f0-9]{64}|unidentified)$/.test(actorKey)) {
+        throw new Error("La identidad del aportante no tiene un formato válido.");
     }
 
-    const year = parseInt(newYear, 10);
-    if (isNaN(year) || year < 1980 || year > 2099) {
-        throw new Error("El año proporcionado no es un número válido.");
+    const yearText = String(newYear === null || newYear === undefined ? "" : newYear).trim();
+    if (!/^\d{4}$/.test(yearText)) throw new Error("El año debe contener exactamente cuatro dígitos.");
+    const year = Number(yearText);
+    if (year < 1980 || year > 2099) throw new Error("El año proporcionado no es válido.");
+
+    const otherYearMatch = normalizedResponse.match(/^Otro año:\s*(\d{4})$/);
+    const allowedResponses = [
+        "Sí (Funciona)", "Modelo confirmado", "No funciona", "No",
+        "Es más antiguo", "No útil (Viejo)"
+    ];
+    if (!allowedResponses.includes(normalizedResponse) && !otherYearMatch) {
+        throw new Error("La respuesta de validación no es reconocida.");
     }
+    if (otherYearMatch && Number(otherYearMatch[1]) !== year) {
+        throw new Error("El año de la respuesta no coincide con el año enviado.");
+    }
+
+    const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!cortesSheet) throw new Error("Hoja Cortes no encontrada.");
+    const allCortesData = cortesSheet.getDataRange().getValues().slice(1);
+    const vehicleRowIndex = allCortesData.findIndex(row =>
+        String(row[COLS_CORTES.id - 1] || "").trim() === normalizedVehicleId
+    );
+    if (vehicleRowIndex === -1) throw new Error("Vehículo no encontrado para registrar la sugerencia.");
+    const vehicleRow = allCortesData[vehicleRowIndex];
 
     const sheet = getSafeSheet(SHEET_NAMES.SUGERENCIAS_ANO);
-    if (!sheet) throw new Error(`Hoja no encontrada: ${SHEET_NAMES.SUGERENCIAS_ANO}`);
+    if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
+    const actorColumn = ensureSuggestionActorColumn(sheet);
 
-    // 1. Registrar la sugerencia (preservando fórmula de ID 'F-XXX')
-    const lastRow = sheet.getLastRow();
-    const FORMULA_ROW = 2; // Fila que contiene la fórmula base del ID
-    const newRowNumber = lastRow + 1;
-    const lastCol = Math.max(sheet.getLastColumn(), 9);
+    let problema = "Sugerencia de año: " + year;
+    let respuestaText = "La información funciona para el año " + year;
+    let isPositive = false;
+    if (normalizedResponse === "Sí (Funciona)") {
+        problema = "Confirmación de funcionamiento para año " + year;
+        respuestaText = "La información funciona para el año " + year + ".";
+        isPositive = true;
+    } else if (otherYearMatch) {
+        problema = "Sugerencia de ampliar rango al año " + year;
+        respuestaText = "La información funciona para el año " + year + ".";
+        isPositive = true;
+    } else if (normalizedResponse === "Es más antiguo") {
+        problema = "Sugerencia de ampliar rango inferior al año " + year;
+        respuestaText = "El usuario indicó que corresponde a un modelo anterior.";
+        isPositive = true;
+    } else if (normalizedResponse === "No funciona") {
+        problema = "Reporte de información no funcional";
+        respuestaText = "La información no funciona para el año " + year + ". El usuario fue dirigido para agregar un nuevo corte.";
+    } else if (normalizedResponse === "No") {
+        problema = "Reporte de información no funcional";
+        respuestaText = "El usuario indicó que la información no fue útil.";
+    } else if (normalizedResponse === "Modelo confirmado") {
+        problema = "Modelo sin generaciones recientes registradas";
+        respuestaText = "El usuario confirmó que se trata de una generación más reciente.";
+        isPositive = true;
+    } else if (normalizedResponse === "No útil (Viejo)") {
+        problema = "Modelo sin generaciones recientes registradas";
+        respuestaText = "El usuario indicó que la información no fue útil.";
+    }
 
-    if (newRowNumber > FORMULA_ROW) {
-        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
-        const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
-        formulaRange.copyTo(newRowRange);
-        // Limpiar contenido de celdas de datos (col 2 en adelante) preservando la fórmula del ID (col 1)
-        if (lastCol > 1) {
+    const existingData = sheet.getDataRange().getValues().slice(1);
+    const alreadyReported = existingData.some(row =>
+        String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() === normalizedVehicleId &&
+        Number(row[COLS_FEEDBACKS.anoSugerido - 1]) === year &&
+        String(row[actorColumn - 1] || "").trim() === actorKey
+    );
+
+    if (!alreadyReported) {
+        const newRowNumber = sheet.getLastRow() + 1;
+        const lastCol = Math.max(sheet.getLastColumn(), actorColumn, 9);
+        if (newRowNumber > 2) {
+            sheet.getRange(2, 1, 1, lastCol).copyTo(sheet.getRange(newRowNumber, 1, 1, lastCol));
             sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
         }
+        const values = [[userName, normalizedVehicleId, problema, respuestaText, "", "", "", year]];
+        sheet.getRange(newRowNumber, 2, 1, values[0].length).setValues(values);
+        sheet.getRange(newRowNumber, actorColumn).setValue(actorKey);
+        SpreadsheetApp.flush();
+        logUserActivity(userId, userName, "suggest_year", normalizedVehicleId,
+            "Año sugerido: " + year + ". Respuesta: " + normalizedResponse);
     }
 
-    // Mapeo de mensajes descriptivos basados en la respuesta del frontend
-    let problema = `Sugerencia de año: ${year}`;
-    let respuestaText = `La información funciona para el año ${year}`;
-    let isPositive = false;
-    let isLowerRange = false;
-
-    if (response === 'Sí (Funciona)') {
-        problema = `Confirmación de funcionamiento para año ${year}`;
-        respuestaText = `La información funciona para el año ${year}.`;
-        isPositive = true;
-    } else if (response.includes('Otro año')) {
-        problema = `Sugerencia de ampliar rango al año ${year}`;
-        respuestaText = `La información funciona para el año ${year}.`;
-        isPositive = true;
-    } else if (response === 'Es más antiguo') {
-        problema = `Sugerencia de ampliar rango inferior al año ${year}`;
-        respuestaText = `El usuario indicó que corresponde a un modelo anterior.`;
-        isPositive = true;
-        isLowerRange = true;
-    } else if (response === 'No funciona') {
-        problema = `Reporte de información no funcional`;
-        respuestaText = `La información no funciona para el año ${year}. El usuario fue dirigido para agregar un nuevo corte.`;
-        isPositive = false;
-    } else if (response === 'No') {
-        problema = `Reporte de información no funcional`;
-        respuestaText = `El usuario indicó que la información no fue útil.`;
-        isPositive = false;
-    } else if (response === 'Modelo confirmado') {
-        problema = `Modelo sin generaciones recientes registradas`;
-        respuestaText = `El usuario confirmó que se trata de una generación más reciente.`;
-        isPositive = true;
-    } else if (response === 'No útil (Viejo)') {
-        problema = `Modelo sin generaciones recientes registradas`;
-        respuestaText = `El usuario indicó que la información no fue útil.`;
-        isPositive = false;
-    }
-
-    // Asignar valores a columnas específicas según esquema (batch write para mayor robustez)
-    const values = [[
-        userName,                              // Col 2: Usuario
-        vehicleId,                             // Col 3: ID_vehiculo
-        problema,                              // Col 4: Problema
-        respuestaText,                         // Col 5: Respuesta
-        "",                                    // Col 6: Se resolvio
-        "",                                    // Col 7: Responde
-        "",                                    // Col 8: Reporte de util
-        year                                   // Col 9: anoSugerido
-    ]];
-    sheet.getRange(newRowNumber, 2, 1, values[0].length).setValues(values);
-
-    SpreadsheetApp.flush(); // Garantizar persistencia inmediata
-
-    logUserActivity(userId, userName, 'suggest_year', vehicleId, `Año sugerido: ${year}. Respuesta: ${response}`);
-
-    // Solo procesar actualización si la respuesta es positiva
-    if (!isPositive) {
-        return { status: 'success', message: 'Respuesta registrada correctamente.' };
-    }
-
-    // 2. Contar votos para esta combinación (ID_Vehículo + Año_Sugerido)
-    // Se filtran únicamente los reportes positivos que coincidan con el vehículo y año
     const allData = sheet.getDataRange().getValues().slice(1);
-    const voteCount = allData.filter(row => {
-        const rowId = row[COLS_FEEDBACKS.ID_vehiculo - 1];
-        const rowYear = row[COLS_FEEDBACKS.anoSugerido - 1];
-        const rowProb = String(row[COLS_FEEDBACKS.Problema - 1]);
-        const isPositiveReport = rowProb.includes('Sugerencia de ampliar rango') ||
-                                 rowProb.includes('Confirmación de funcionamiento') ||
-                                 rowProb.includes('Modelo sin generaciones recientes');
-        return rowId == vehicleId && rowYear == year && isPositiveReport;
-    }).length;
+    const voteActors = new Set();
+    allData.forEach(row => {
+        const rowId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
+        const rowYear = Number(row[COLS_FEEDBACKS.anoSugerido - 1]);
+        const rowActorKey = String(row[actorColumn - 1] || "").trim();
+        if (rowId === normalizedVehicleId && rowYear === year &&
+            rowActorKey && isPositiveYearSuggestionRow(row)) voteActors.add(rowActorKey);
+    });
+    const voteCount = voteActors.size;
 
-    // 3. El rango únicamente deberá actualizarse cuando existan tres o más reportes válidos (más de dos).
+    if (!isPositive) {
+        return alreadyReported
+            ? { status: "info", message: "Ya existe una respuesta de este aportante para ese vehículo y año; no se duplicó." }
+            : { status: "success", message: "Respuesta registrada correctamente." };
+    }
     if (voteCount < 3) {
-        return { status: 'success', message: `Sugerencia registrada. Votos acumulados: ${voteCount}/3.` };
+        const prefix = alreadyReported ? "Tu aporte ya estaba registrado." : "Sugerencia registrada.";
+        return { status: "success", message: prefix + " Votos distintos confirmados: " + voteCount + "/3." };
     }
 
-    // 4. Si se alcanzan los 3 votos, proceder con la lógica de actualización
-    const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-    const allCortesData = cortesSheet.getDataRange().getValues();
-    const headers = allCortesData.shift();
-    const vehicleRowIndex = allCortesData.findIndex(row => row[COLS_CORTES.id - 1] == vehicleId);
-
-    if (vehicleRowIndex === -1) throw new Error("Vehículo no encontrado para actualizar.");
-
-    const vehicleRow = allCortesData[vehicleRowIndex];
     const anoDesde = parseInt(vehicleRow[COLS_CORTES.anoDesde - 1], 10);
     const anoHasta = parseInt(vehicleRow[COLS_CORTES.anoHasta - 1] || anoDesde, 10);
-
-    // Si el año ya está en el rango, no hacer nada
     if (year >= anoDesde && year <= anoHasta) {
-        return { status: 'info', message: `El año ${year} ya está dentro del rango actual.` };
+        return { status: "info", message: "El año " + year + " ya está dentro del rango actual." };
     }
 
-    // 5. Lógica Anti-colisión
     const marca = String(vehicleRow[COLS_CORTES.marca - 1]).toLowerCase();
     const modelo = String(vehicleRow[COLS_CORTES.modelo - 1]).toLowerCase();
     const categoria = String(vehicleRow[COLS_CORTES.categoria - 1]).toLowerCase();
     const tipoEncendido = String(vehicleRow[COLS_CORTES.tipoEncendido - 1]).toLowerCase();
-
-    const normalizeV = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+    const normalizeV = value => (value || "").toString().toLowerCase()
+        .replace(/[^a-z0-9]/g, " ").split(/\s+/).filter(Boolean).sort().join(" ");
     const versionNormalizada = normalizeV(vehicleRow[COLS_CORTES.versionesAplicables - 1]);
 
     for (const row of allCortesData) {
-        if (row[COLS_CORTES.id - 1] == vehicleId) continue; // No comparar consigo mismo
-
+        if (String(row[COLS_CORTES.id - 1] || "").trim() === normalizedVehicleId) continue;
         const otherMarca = String(row[COLS_CORTES.marca - 1]).toLowerCase();
         const otherModelo = String(row[COLS_CORTES.modelo - 1]).toLowerCase();
         const otherCategoria = String(row[COLS_CORTES.categoria - 1]).toLowerCase();
         const otherTipoEncendido = String(row[COLS_CORTES.tipoEncendido - 1]).toLowerCase();
         const otherVersion = normalizeV(row[COLS_CORTES.versionesAplicables - 1]);
-
         if (otherMarca === marca && otherModelo === modelo && otherCategoria === categoria &&
             otherTipoEncendido === tipoEncendido && otherVersion === versionNormalizada) {
             const otherAnoDesde = parseInt(row[COLS_CORTES.anoDesde - 1], 10);
             const otherAnoHasta = parseInt(row[COLS_CORTES.anoHasta - 1] || otherAnoDesde, 10);
-
-            // Anti-colisión: El año sugerido no debe solaparse con otra generación
-            // ni "saltar" sobre ella si es una generación anterior.
             if (year <= otherAnoHasta) {
-                logUserActivity(userId, userName, 'suggest_year_collision', vehicleId, `Año ${year} colisiona con rango de vehículo ID ${row[COLS_CORTES.id - 1]}`);
-                return { status: 'warning', message: `La sugerencia para el año ${year} no se puede aplicar porque el año ya está cubierto o es anterior a una generación registrada (${otherAnoDesde}-${otherAnoHasta}). Se requiere revisión manual.` };
+                logUserActivity(userId, userName, "suggest_year_collision", normalizedVehicleId,
+                    "Año " + year + " colisiona con rango de vehículo ID " + row[COLS_CORTES.id - 1]);
+                return {
+                    status: "warning",
+                    message: "La sugerencia para el año " + year +
+                        " no se puede aplicar porque el año ya está cubierto o es anterior a una generación registrada (" +
+                        otherAnoDesde + "-" + otherAnoHasta + "). Se requiere revisión manual."
+                };
             }
         }
     }
 
-    // 6. Actualizar el rango
-    let newAnoDesde = anoDesde;
-    let newAnoHasta = anoHasta;
-    let updated = false;
-
-    if (year < anoDesde) {
-        newAnoDesde = year;
-        updated = true;
-    }
-    if (year > anoHasta) {
-        newAnoHasta = year;
-        updated = true;
-    }
+    let newAnoDesde = anoDesde, newAnoHasta = anoHasta, updated = false;
+    if (year < anoDesde) { newAnoDesde = year; updated = true; }
+    if (year > anoHasta) { newAnoHasta = year; updated = true; }
 
     if (updated) {
-        const finalAnoDesde = newAnoDesde;
-        const finalAnoHasta = newAnoHasta;
-        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoDesde).setValue(finalAnoDesde);
-        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoHasta).setValue(finalAnoHasta);
-
-        let folderSyncWarning = false;
-        let folderSyncMessage = "";
+        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoDesde).setValue(newAnoDesde);
+        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoHasta).setValue(newAnoHasta);
+        let folderSyncWarning = false, folderSyncMessage = "";
         try {
             const updatedVehicleRow = cortesSheet.getRange(
                 vehicleRowIndex + 2, 1, 1, cortesSheet.getLastColumn()
@@ -705,52 +781,40 @@ function handleSuggestYear(payload) {
             folderSyncMessage = folderError.message;
             Logger.log("No se pudo sincronizar la carpeta de imagenVehiculo tras ampliar el rango: " + folderError.message);
         }
-
-        logUserActivity(userId, userName, 'apply_year_suggestion', vehicleId,
-            "Rango actualizado a " + finalAnoDesde + "-" + finalAnoHasta +
-            " basado en 3 o más votos para el año " + year +
+        SpreadsheetApp.flush();
+        logUserActivity(userId, userName, "apply_year_suggestion", normalizedVehicleId,
+            "Rango actualizado a " + newAnoDesde + "-" + newAnoHasta +
+            " basado en " + voteCount + " aportantes distintos para el año " + year +
             (folderSyncWarning ? ". Advertencia de carpeta: " + folderSyncMessage : "."));
 
-        // 7. Depuración automática: Eliminar únicamente los registros de Feedback que motivaron esa actualización
         const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
         if (feedbackSheet) {
             const feedbackValues = feedbackSheet.getDataRange().getValues();
-            const isActuallyLowerUpdate = (year < anoDesde);
-
-            // Prefijos permitidos para eliminación según el tipo de actualización realizada
-            const allowedPrefixes = isActuallyLowerUpdate
-                ? ['Sugerencia de ampliar rango inferior']
-                : ['Sugerencia de ampliar rango al año', 'Confirmación de funcionamiento', 'Modelo sin generaciones recientes'];
-
-            // Recorrer de abajo hacia arriba para evitar desajustes de índices al eliminar filas
+            const isActuallyLowerUpdate = year < anoDesde;
             for (let i = feedbackValues.length - 1; i >= 1; i--) {
                 const row = feedbackValues[i];
-                const rowId = row[COLS_FEEDBACKS.ID_vehiculo - 1];
-                const rowYear = row[COLS_FEEDBACKS.anoSugerido - 1];
-                const rowProb = String(row[COLS_FEEDBACKS.Problema - 1]);
-
-                // Solo eliminar reportes del mismo vehículo, mismo año sugerido y que correspondan a la intención de la actualización
-                const hasAllowedPrefix = allowedPrefixes.some(prefix => rowProb.includes(prefix));
-                const isMatch = rowId == vehicleId && rowYear == year && hasAllowedPrefix;
-
-                if (isMatch) {
+                const rowId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
+                const rowYear = Number(row[COLS_FEEDBACKS.anoSugerido - 1]);
+                const rowActorKey = String(row[actorColumn - 1] || "").trim();
+                const rowProblem = String(row[COLS_FEEDBACKS.Problema - 1] || "");
+                const isMatchingPositive = isActuallyLowerUpdate
+                    ? rowProblem.includes("Sugerencia de ampliar rango inferior")
+                    : isPositiveYearSuggestionRow(row);
+                if (rowId === normalizedVehicleId && rowYear === year && rowActorKey && isMatchingPositive) {
                     feedbackSheet.deleteRow(i + 1);
                 }
             }
         }
-
         return {
-            status: 'success',
-            folderSyncWarning: folderSyncWarning,
-            message: "¡Gracias! Con " + voteCount + " votos confirmados, el catálogo se ha actualizado a " +
-                finalAnoDesde + "-" + finalAnoHasta + "." +
+            status: "success",
+            folderSyncWarning,
+            message: "¡Gracias! Con " + voteCount + " aportantes distintos, el catálogo se ha actualizado a " +
+                newAnoDesde + "-" + newAnoHasta + "." +
                 (folderSyncWarning ? " La carpeta de la imagen principal no pudo sincronizarse automáticamente: " + folderSyncMessage : "")
         };
     }
-
-    return { status: 'info', message: 'No se realizaron cambios.' };
+    return { status: "info", message: "No se realizaron cambios." };
 }
-
 function logUserActivity(userId, userName, activityType, associatedId, details) {
     try {
         const sheet = getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);

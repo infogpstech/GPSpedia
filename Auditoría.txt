@@ -6475,3 +6475,58 @@ Rama: GPSpedia2.2.5_work
 12. ESTADO FINAL DE LA FASE DE DESARROLLO
 Implementación estática y Code Review completados. Todos los cambios están preparados para un único commit en GPSpedia2.2.5_work; no se ha movido la referencia de la rama ni se ha tocado GPSpedia2.2.5.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA E IMPLEMENTACIÓN — AUTORIZACIÓN Y TRAZABILIDAD DE suggestYear EN FEEDBACK
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial: 8cae98ac03602837f1af360a1c7dccb3d245427a
+HEAD de base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+HALLAZGOS PREVIOS A EDICIÓN
+- suggestYear no aparecía en actionPermissions y se ejecutaba sin validar sesión.
+- handleSuggestYear aceptaba userId/userName enviados por el navegador sin validar ActiveSessions ni recuperar el nombre desde Users; permitía atribución suplantada.
+- AUTH devuelve ID, Nombre_Completo, Nombre_Usuario y SessionToken; ui.js tenía el objeto currentUser, pero solo transmitía ID/nombre.
+- La interfaz admite aportes anónimos userId «0»; bloquear la acción completamente por sesión habría eliminado esa capacidad.
+- El umbral sumaba filas positivas, no actores distintos; un mismo usuario podía contar varias veces.
+- «Modelo sin generaciones recientes registradas» se usa tanto para «Modelo confirmado» (positivo) como para «No útil (Viejo)» (negativo), y el conteo previo clasificaba ambos como positivos.
+- No había bloqueo alrededor de escritura, conteo y actualización; solicitudes simultáneas podían competir.
+- parseInt() aceptaba años parcialmente numéricos y response.includes() no validaba el tipo/valor de respuesta.
+- El vehículo se buscaba solo al alcanzar el umbral, por lo que podían registrarse IDs inexistentes.
+- Feedbacks tiene nueve columnas observadas A:I; los consumidores revisados leen/escriben posiciones fijas A:I. El mapeo API ya dirige suggestYear a FEEDBACK.
+- LockService ya se utiliza en otras funciones del proyecto. logUserActivity no adquiere otro bloqueo.
+
+DISEÑO E IMPLEMENTACIÓN
+- Usuarios registrados: exigir userId/sessionToken, validar contra ActiveSessions/Users y obtener nombre/ID desde servidor; no se limita el rol para mantener la participación de cualquier cuenta autenticada.
+- Anónimos: conservar userId «0», fijar el nombre «Anónimo» en backend y usar un identificador aleatorio persistente por navegador. FEEDBACK almacena su hash. Los clientes antiguos sin ID anónimo comparten anon:unidentified y cuentan como un solo actor por vehículo/año.
+- Añadir suggestionActorKey al final de Feedbacks sin desplazar A:I. Validar los nueve encabezados y detenerse ante esquemas incompatibles.
+- Contar claves distintas solo de respuestas positivas; los registros históricos sin clave permanecen, pero no cuentan como votos verificables.
+- Impedir duplicados por actor/vehículo/año y serializar la operación con ScriptLock.
+- Validar año exacto, respuesta admitida y vehículo existente antes de escribir.
+- Mantener anti-colisión, actualización de rango y sincronización de imagen. Al depurar aportes tras una actualización, eliminar solo filas positivas nuevas que tengan clave; conservar registros históricos sin identidad verificable.
+
+ARCHIVOS Y CAMBIOS
+- Services/feedback.js: resolución de actor en router; verificación de sesión registrada; hash anónimo; columna aditiva; conteo por actor distinto; deduplicación; validaciones; bloqueo; corrección del falso positivo «No útil (Viejo)».
+- ui.js: ambos puntos de llamada envían ID+SessionToken para cuentas registradas o ID anónimo persistente para visitantes; ya no envían userName como identidad.
+- api-config.js: helper suggestYear transmite el contexto de actor permitido.
+- Spreadsheet/GPSpedia_DB_columnas.md: extensión administrada documentada sin cambiar el inventario observado A:I.
+
+RIESGOS RESIDUALES
+- La clave anónima identifica un navegador, no una persona física. Puede cambiarse borrando almacenamiento o usando otro navegador/dispositivo; es deduplicación seudónima, no prueba de identidad.
+- Los registros históricos sin clave no cuentan en el umbral nuevo y se conservan incluso después de una actualización.
+- La columna se crea en la primera sugerencia posterior al despliegue; no se ejecutó migración ni se modificó la hoja productiva.
+- No se ejecutaron Apps Script, navegador, HTTP, Drive ni Spreadsheet productivos. No se desplegó FEEDBACK ni se publicó frontend.
+- FEEDBACK conserva la dependencia OAuth Drive de la tarea de organización de imágenes.
+
+RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/feedback.js: 11cf4ed3985c0557992f2d00c2c69249953ca236
+- ui.js: 86897c833c9e7e61895e96a13cf2c7cb1c569972
+- api-config.js: 41570b71d872c3949f4971c7ce834f2d6d0a6a99
+- Spreadsheet/GPSpedia_DB_columnas.md: 586cbc5b3033209a4aa397c4e43a44f092676988
+- Auditoría.txt: a8af8a285cbac0402e5cd24266ee82a685c81628
+- ChangesLogs.txt: 12b732af248af15da91851c5447f5f70b357bd4e
+- Tareas.txt: 744103a0c93ecfa4f084c9aa4c1260238ca77053
+- checkpoint.md: c2340d299fec98f93ef3a22d6d43e5b96242debe
+================================================================================
