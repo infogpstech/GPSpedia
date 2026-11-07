@@ -5371,3 +5371,72 @@ PENDIENTES
 SIGUIENTE ACCIÓN
 Verificar el commit único, árbol, seis archivos, nuevo HEAD de GPSpedia2.2.5_work y permanencia de GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1. El commit que contiene este checkpoint será identificable en el historial Git; no crear un commit adicional.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUDITORÍA GLOBAL DE GPSpedia
+Fecha: 2026-11-07
+ID del plan: AUD-PLAN-2026-001
+ID de sesión: AUD-20261107-S001
+ID de checkpoint: AUD-CP-0001
+
+REPOSITORIO Y RAMAS
+- Repositorio: infogpstech/GPSpedia.
+- Rama de trabajo autorizada: GPSpedia2.2.5_work.
+- HEAD inicial confirmado: 5bf20efe24f82dacafa0fe33791ca94a25b7141b.
+- Árbol inicial confirmado: 137302e2386d687112d48eb5c6b394038d327e5f.
+- Rama base: GPSpedia2.2.5.
+- HEAD de base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Estado GitHub: ambas ramas informaron protected=false; no se modificó la configuración.
+- Commit de publicación de este checkpoint: pendiente de creación y verificación.
+
+TAREA Y ALCANCE
+Auditar todas las tareas y funcionalidades incorporadas desde el 2026-01-01 hasta el HEAD inicial. Recuperar historial Git y diffs, vincular cada cambio con su tarea original, evaluar cumplimiento, calidad, seguridad, dependencias, regresiones, cancelaciones y sustituciones. Diseñar fases y registrar hallazgos y nuevas tareas.
+
+FASE DEL PROCEDIMIENTO
+F0 — recuperación histórica, inventario inicial y planificación. El checkpoint se crea antes de iniciar la auditoría de código, conforme a Proceso de desarollo.md.
+
+FUENTES REVISADAS
+- Proceso de desarollo.md: lectura completa de reglas de checkpoint, auditoría estática, hallazgos, Code Review, Safety & Side Effects, reinicio obligatorio y Git Database API.
+- contexto_personal.md: ramas autorizadas y procedimiento único de commit.
+- Historial Git: 700 registros devueltos en siete páginas; desde 2026-01-09 hasta 2026-11-07.
+- Árbol recursivo del HEAD: inventario de módulos frontend, backend, documentación y servicios.
+- checkpoint.md, Tareas.txt, Auditoría.txt y ChangesLogs.txt de GPSpedia2.2.5_work.
+
+ARCHIVOS Y FUNCIONALIDADES INVOLUCRADOS
+Catálogo de 37 unidades AUD-T-001 a AUD-T-037 en Plan_auditoría/Plan_Auditoria.md. Se abarcan App Shell, AUTH/USERS, RBAC/sesiones, WRITE/add_cortes, VIN, catálogo, búsqueda, Lightbox, navegación, PWA/offline, feedback, años, reportes, testigo, PyS, tutoriales/YouTube, rich text, impresión, panel ADMIN, logs, backups, Drive, imágenes reemplazadas/sin uso, esquema, IDs, idempotencia y Utilities.
+
+HALLAZGOS Y RIESGOS CONOCIDOS
+- Ambas ramas aparecen con protected=false.
+- Tareas.txt marca Tarea 1.6 (filtros rápidos en búsqueda) como cancelada y retirada; se verificará la sustitución y no se reintroducirá sin autorización.
+- Tarea 15 mezcla el requisito cancelado de filtros rápidos con estandarización universal de botones; se separarán.
+- Services/Utilities.js está presente en el HEAD actual y fue añadido/renombrado en commits recientes; la coordinación compartida sigue requiriendo auditoría específica.
+- Muchos checkpoints recientes declaran implementación estática y pruebas aisladas, pero no pruebas funcionales reales ni despliegues.
+- Los commits históricos incluyen implementaciones, revisiones, merges, respaldos y limpieza; los IDs AUD-T representan tareas, no commits.
+
+CAMBIOS YA IMPLEMENTADOS Y VERIFICACIONES
+- No se modificó código.
+- No se realizaron pruebas funcionales ni operaciones sobre Apps Script, HTTP, Drive o Spreadsheet.
+- No se actualizaron deployments ni ramas.
+- Se creó el plan de auditoría y el registro inicial de tareas derivadas de hallazgos.
+
+PENDIENTES Y BLOQUEOS
+- Correlacionar exhaustivamente los commits con cada AUD-T y recuperar diffs.
+- Auditar cada tarea archivo por archivo, línea por línea y función por función.
+- Evaluar cancelaciones, sustituciones y posibles regresiones.
+- Ejecutar pruebas solo cuando estén autorizadas y disponibles; distinguir E0–E5.
+- Crear un checkpoint y una sesión independiente por iteración.
+- No modificar código durante las auditorías diagnósticas.
+
+SIGUIENTE ACCIÓN CONCRETA
+Iniciar AUD-T-002 — RBAC, AUTH, USERS, sesiones, roles, identidad y cumplimiento legal, con checkpoint individual y revisión de los commits/diffs relacionados.
+
+ARCHIVOS DE ESTA FASE
+- Plan_auditoría/Plan_Auditoria.md (nuevo).
+- Plan_auditoría/Aug_Tareas.md (nuevo).
+- Auditoría.txt (entrada agregada).
+- ChangesLogs.txt (entrada agregada).
+- checkpoint.md (este checkpoint agregado).
+
+El commit que incorpora este checkpoint se identificará en el historial Git; no se generará un commit independiente para el checkpoint.
+================================================================================

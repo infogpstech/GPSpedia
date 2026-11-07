@@ -3662,3 +3662,22 @@ VERIFICACIONES
 - Comparación post-edición limitada a los bloques identificados.
 - No se ejecutaron pruebas funcionales reales, navegador, Apps Script, HTTP, Drive/Spreadsheet ni despliegues.
 ================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — INICIO DE AUDITORÍA GLOBAL
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S001
+Checkpoint: AUD-CP-0001
+Commit previsto: docs(audit): iniciar auditoria global desde 2026
+
+ARCHIVOS DOCUMENTALES
+- Plan_auditoría/Plan_Auditoria.md: nuevo catálogo de 37 tareas de auditoría, historial preliminar, fases F0–F11, criterios de evaluación y protocolo por iteración.
+- Plan_auditoría/Aug_Tareas.md: nuevo registro de hallazgos preliminares y mecanismo para incorporar tareas derivadas de las auditorías.
+- Auditoría.txt: nueva entrada de checkpoint inicial, línea base Git, fuentes revisadas, resultados y limitaciones.
+- checkpoint.md: nuevo checkpoint inicial AUD-CP-0001 al final del historial.
+- ChangesLogs.txt: registro de los archivos documentales agregados/modificados y sus contenidos.
+
+ALCANCE
+No se modificaron archivos de código, endpoints, servicios, datos productivos, deployments, ramas ni configuraciones administrativas.
+================================================================================

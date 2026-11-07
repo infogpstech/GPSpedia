@@ -7181,3 +7181,48 @@ LIMITACIONES
 - Sin despliegues ni operaciones productivas.
 - Pruebas funcionales consolidadas pendientes.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA GLOBAL — CHECKPOINT INICIAL Y LÍNEA BASE HISTÓRICA
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S001
+Checkpoint: AUD-CP-0001
+Plan: AUD-PLAN-2026-001
+
+ALCANCE
+Auditoría histórica de tareas y funciones implementadas desde 2026-01-01 hasta el HEAD inicial de GPSpedia2.2.5_work. Fase inicial de recuperación de historial, inventario de módulos y diseño del plan de iteraciones. No se modificó código ni se ejecutaron operaciones sobre deployments, Spreadsheet o Drive.
+
+ESTADO GIT CONFIRMADO
+- Repositorio: infogpstech/GPSpedia.
+- Rama de trabajo: GPSpedia2.2.5_work.
+- HEAD inicial: 5bf20efe24f82dacafa0fe33791ca94a25b7141b.
+- Árbol del HEAD inicial: 137302e2386d687112d48eb5c6b394038d327e5f.
+- Rama base: GPSpedia2.2.5.
+- HEAD de base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Ambas ramas informaron protected=false en GitHub; la base no fue modificada.
+
+FUENTES REVISADAS
+- Proceso de desarollo.md, incluidos checkpoint, auditoría línea por línea, registro de hallazgos, Code Review, Safety & Side Effects, zonas seguras y procedimiento único Git Database API.
+- contexto_personal.md y ramas autorizadas.
+- Historial Git desde 2026-01-01: 700 registros recuperados en siete páginas; rango visible desde 2026-01-09 hasta 2026-11-07.
+- Árbol recursivo del HEAD inicial.
+- checkpoint.md, Tareas.txt, Auditoría.txt y ChangesLogs.txt actuales.
+
+RESULTADO PRELIMINAR
+- Se creó el catálogo de 37 unidades de auditoría AUD-T-001 a AUD-T-037 en Plan_auditoría/Plan_Auditoria.md.
+- Se diseñaron las fases F0–F11 y el protocolo de checkpoint/sesión por iteración.
+- Se registraron en Plan_auditoría/Aug_Tareas.md cuatro hallazgos preliminares, diferenciando tareas nuevas de tareas transversales ya existentes.
+- La Tarea 1.6 de filtros rápidos figura como cancelada/retirada en Tareas.txt; se verificará su sustitución sin reintroducirla.
+- Services/Utilities.js aparece en el árbol actual y en commits recientes; su presencia no demuestra que la coordinación entre servicios esté completa.
+- La recuperación de metadatos de commits no sustituye la revisión individual de diffs y código.
+
+LIMITACIONES
+- No se auditó todavía ninguna unidad de código función por función.
+- No se ejecutaron pruebas sintácticas, aisladas, de navegador, HTTP, Apps Script, Drive ni Spreadsheet en esta fase.
+- No se validaron los deployments publicados.
+- No se declararon tareas funcionalmente completadas por esta línea base.
+
+SIGUIENTE ITERACIÓN
+AUD-T-002 — RBAC, AUTH, USERS, sesiones, roles, identidad y cumplimiento legal. Requiere checkpoint individual y recuperación de commits/diffs relacionados antes de inspeccionar los archivos actuales.
+================================================================================
