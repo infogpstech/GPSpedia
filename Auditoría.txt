@@ -6834,3 +6834,88 @@ Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; PRUEBAS AISLADAS APROBADAS; VALIDA
 - No se desplegó ADMIN ni frontend, no se modificó Drive/Spreadsheet productivos y no se alteró la rama base.
 - Antes de publicar, ejecutar pruebas con copias aisladas y despliegues coordinados, incluyendo pérdida de respuesta HTTP después de la confirmación final, fallos en cada flush, expiración de ejecución, archivo en papelera y operaciones simultáneas dentro del proyecto ADMIN.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — INDICADOR DE TESTIGO DE MOTOR EN EL FLUJO «REPORTAR UN PROBLEMA»
+Fecha: 2026-11-07
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: d99ab2d42c6e0d428ea7fd272e605b8a6d3c0dbe
+Tipo: Auditoría estática de frontend, contrato API, persistencia FEEDBACK y compatibilidad del indicador existente.
+
+1. ARCHIVOS Y PUNTOS AUDITADOS
+
+ui.js — blob 40e3c9a818f2613a73736ebcfa76f85c82050231
+- renderCutContent() (aprox. líneas 2174–2183 y 2938–2945): construye cutData.activaTestigo a partir de activaTestigoN y marcadores históricos; el detalle muestra el aviso cuando el valor es verdadero.
+- renderCutContent() (aprox. líneas 3039–3058): el botón de reporte individual pasa vehicleId, número de corte y cutData a openReportCutModal().
+- openReportCutModal() (aprox. líneas 6759–6870): el formulario solo contiene descripción del error, información incorrecta/incompleta e imagen opcional. No existe checkbox ni otro control para indicar que el corte activa el testigo del motor.
+- El envío construye problemText con el número de corte y textos libres; no transmite corteIndex ni indicador de testigo como propiedades independientes.
+- Después del éxito, showReportSuccessModal() permite abrir openSuggestCutModal(); el reporte inicial y la sugerencia posterior son operaciones separadas.
+
+api-config.js — blob 74fe2220d46243f14e1c1c5a63aef99435c10323
+- reportProblem(vehicleId, problemDescription, userId, userName) solo transmite vehicleId, problemText, userId y userName a FEEDBACK.
+- El helper no transmite corteIndex ni un indicador estructurado de testigo.
+
+Services/feedback.js — blob f17da40f3c082634b679289c2883f2c9b91bbe8f
+- doPost() enruta reportProblem a handleReportProblem().
+- handleReportProblem() (aprox. líneas 904–945) valida vehicleId, problemText, userId y userName; copia la fila de fórmula, guarda userName/vehicleId/problemText, ejecuta flush(), genera reportId y registra actividad.
+- El handler no recibe ni persiste un valor estructurado que identifique el número de corte o si el técnico reporta que activa el testigo.
+- El número de corte queda embebido en el texto libre [Corte #N], por lo que no constituye un campo estructurado para filtros o revisión automatizada.
+
+openSuggestCutModal() en ui.js (aprox. líneas 6920–7100)
+- El selector de Check Engine se inicializa consultando currentCutData.checkEngine o currentCutData.activaCheckEngine.
+- El objeto cutData producido por renderCutContent() expone la propiedad activaTestigo, no checkEngine ni activaCheckEngine.
+- Por tanto, el selector no recupera de forma fiable el estado actual del corte y puede abrir con «No aplica / No especificado» aunque el catálogo tenga activaTestigo=true.
+- El payload de sugerencia utiliza la clave activaCheckEngine con valores de texto «Sí», «No» o «No aplica», mientras el contrato del catálogo y de los servicios de escritura utiliza activaTestigoN como booleano.
+- Services/feedback.js guarda proposedValues como JSON dentro del texto del reporte de sugerencia; la auditoría no encontró en el flujo examinado una aplicación automática de esa propuesta sobre Cortes. No debe asumirse que enviar una sugerencia modifica el catálogo.
+
+add_cortes.html — blob c5b0abfe9a9f9f217978bce53a6bebe94f782559
+- El formulario principal ya contiene el checkbox testigoMotor y lo convierte en activaTestigo1 al guardar.
+- Este control pertenece al alta de cortes; no forma parte de openReportCutModal() y no satisface el requisito de marcarlo desde el botón «Reportar un problema».
+
+Services/write.js — blob a1359f9d1b2029e51c99c9d213fd6584e1257987
+Services/admin.js — blob 847a2bb80e53918bede067e530b80e41bfdb6afa
+Services/catalog.js — blob 253cbe9f873481114e7abff3aa8902c45e2560af
+- La implementación existente administra activaTestigo1, activaTestigo2 y activaTestigo3, conserva el indicador al ordenar los cortes y lo entrega al frontend.
+- El detalle y la ficha de impresión ya muestran el aviso cuando el indicador está activo.
+- No se identificó una necesidad para reimplementar esta persistencia en el formulario de reporte; la brecha está en el contrato y almacenamiento del reporte FEEDBACK.
+
+2. HALLAZGOS
+
+H-TESTIGO-REPORT-01 — El modal «Reportar un problema» no permite marcar que el corte activa el testigo del motor.
+Severidad: MEDIA.
+Evidencia: openReportCutModal() carece del control; el helper reportProblem() y handleReportProblem() no transportan ni guardan ese dato.
+Impacto: el técnico no puede comunicar esa condición directamente en el reporte individual; debe acudir al flujo separado de sugerencia de cambio o expresarlo en texto libre.
+Tarea derivada: «Añadir indicador de activación del testigo de motor al modal Reportar un problema».
+
+H-TESTIGO-SUGGEST-02 — El selector de testigo en «Sugerir cambio» no está alineado con el modelo de datos vigente.
+Severidad: MEDIA.
+Evidencia: el catálogo entrega cutData.activaTestigo; el formulario consulta checkEngine/activaCheckEngine y envía activaCheckEngine como texto, mientras el contrato persistente del catálogo usa activaTestigoN booleano.
+Impacto: el valor actual puede no precargarse y la propuesta usa una representación distinta a la del catálogo, aumentando el riesgo de que el administrador interprete o aplique incorrectamente la propuesta.
+Tarea derivada: «Unificar el contrato del indicador de testigo entre detalle, Sugerir cambio y revisión administrativa».
+
+3. DECISIONES DE ALCANCE PARA LAS TAREAS DERIVADAS
+- El control del reporte debe permitir al técnico señalar positivamente «Este corte activa el testigo del motor» desde el modal abierto por el botón del corte.
+- La indicación del reporte debe almacenarse como dato identificable y asociado al reportId, vehicleId y corteIndex; no debe depender exclusivamente de texto libre.
+- Antes de elegir columnas nuevas o modificar la hoja Feedbacks, se deberá auditar su esquema real y sus consumidores. Si se requiere ampliar el esquema, hacerlo de forma aditiva, documentar encabezados y conservar íntegramente los registros históricos.
+- La marca enviada desde un reporte representa una observación/aporte del técnico. No debe modificar automáticamente activaTestigoN en Cortes ni alterar la ficha pública; su aplicación requiere revisión y el flujo administrativo autorizado.
+- La opción de reporte no debe confundirse con «Sugerir cambio». Ambas acciones y sus registros deben conservar su relación por reportId.
+- La tarea de unificación de «Sugerir cambio» deberá conservar compatibilidad con propuestas históricas que utilicen activaCheckEngine y valores de texto, sin reinterpretar registros antiguos silenciosamente.
+- No se modificó código, esquema, Spreadsheet, Drive ni deployments durante esta auditoría.
+
+4. RESPALDOS EXACTOS — BLOB SHA DEL HEAD AUDITADO
+- ui.js: 40e3c9a818f2613a73736ebcfa76f85c82050231
+- api-config.js: 74fe2220d46243f14e1c1c5a63aef99435c10323
+- Services/feedback.js: f17da40f3c082634b679289c2883f2c9b91bbe8f
+- Services/write.js: a1359f9d1b2029e51c99c9d213fd6584e1257987
+- Services/admin.js: 847a2bb80e53918bede067e530b80e41bfdb6afa
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- add_cortes.html: c5b0abfe0a9f9f217978bce53a6bebe94f782559
+- Auditoría.txt antes de esta entrada: 26ac367a9c99d23724f78c244ab873761f89b229
+- Tareas.txt antes de esta entrada: bbdc2176b2a289b49abefc590d9356cdf022b2fc
+- ChangesLogs.txt antes de esta entrada: a10e6b69cbaa5bc2b84bf67c3f3fd91fa5560fb6
+- checkpoint.md antes del checkpoint inicial: 93820ecc463485c3f11b8521336093609df7ac40
+
+5. LIMITACIONES
+Auditoría estática basada en los blobs indicados. No se ejecutó navegador, Apps Script, HTTP ni operaciones sobre Spreadsheet/Drive. No se verificó el comportamiento de los deployments publicados. Las pruebas funcionales se reservan para la fase consolidada posterior a las implementaciones.
+================================================================================

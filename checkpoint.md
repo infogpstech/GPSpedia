@@ -4978,3 +4978,81 @@ COMMIT — ESTADO AL CERRAR ESTE CHECKPOINT
 - Acción autorizada siguiente: verificar nuevamente los HEAD de GPSpedia2.2.5_work y GPSpedia2.2.5; crear un único árbol basado en 36427c0d1ed6aa42254b7d734e8f51ee9be3f269 con estos ocho archivos; crear un único commit hijo directo de ef2db2e5ae0b5e09d1b849f95bf66f8d0a17f109; actualizar únicamente GPSpedia2.2.5_work mediante update_ref con force:false y expected_sha igual al HEAD verificado.
 - Después, verificar parent, árbol, lista exacta de ocho archivos, nuevo HEAD y que GPSpedia2.2.5 permanezca en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUDITORÍA Y REGISTRO DE TAREAS DEL TESTIGO DE MOTOR EN REPORTES
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial de trabajo confirmado: d99ab2d42c6e0d428ea7fd272e605b8a6d3c0dbe
+Árbol inicial: 3e7d8e132cd81f4088ff2b6f50ca5c195f2e10b3
+HEAD inicial de rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+OBJETIVO
+Auditar el flujo «Reportar un problema» asociado a un corte, contrastarlo con la implementación existente de activaTestigo1..3 y con «Sugerir cambio», registrar los hallazgos y definir tareas completas para cerrar las brechas detectadas. No implementar código ni ejecutar todavía las pruebas funcionales consolidadas.
+
+ALCANCE
+- ui.js: renderCutContent(), openReportCutModal(), showReportSuccessModal() y openSuggestCutModal().
+- api-config.js: helper reportProblem() y enrutamiento FEEDBACK.
+- Services/feedback.js: handleReportProblem() y handleSuggestCutChange().
+- Services/write.js, Services/admin.js y Services/catalog.js: contrato, persistencia y lectura de activaTestigo1..3.
+- add_cortes.html: checkbox testigoMotor y su contrato existente.
+- Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md.
+
+ESTADO AL INICIO
+- La rama de trabajo y la base protegida fueron verificadas mediante GitHub API.
+- La implementación anterior de idempotencia in-modal está incorporada en HEAD d99ab2d42c6e0d428ea7fd272e605b8a6d3c0dbe; las pruebas funcionales se reservaron para la etapa consolidada.
+- La inspección preliminar identificó que el modal de reporte no presenta un control de testigo y que el helper/backend reportProblem no transporta ni persiste un indicador estructurado.
+- Se observó una posible discrepancia de nombres entre el campo actual del catálogo (activaTestigo) y el selector de «Sugerir cambio» (checkEngine/activaCheckEngine); debe confirmarse en la auditoría formal.
+- No se ha modificado código, documentación ni datos productivos. No se ha ejecutado Apps Script ni se ha desplegado.
+
+FASE
+Checkpoint inicial registrado. Iniciar ahora la auditoría formal estática, sin modificar código. Las pruebas funcionales se realizarán después de concluir las implementaciones, según la instrucción del usuario.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUDITORÍA Y REGISTRO DE TAREAS DEL TESTIGO DE MOTOR EN REPORTES
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD padre confirmado para el commit documental: d99ab2d42c6e0d428ea7fd272e605b8a6d3c0dbe
+Árbol base confirmado: 3e7d8e132cd81f4088ff2b6f50ca5c195f2e10b3
+HEAD de la rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+AUDITORÍA ESTÁTICA COMPLETADA. DOS TAREAS NUEVAS REGISTRADAS COMO PENDIENTES DE IMPLEMENTACIÓN. No se modificó código ni esquema productivo.
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: se añadió la entrada «INDICADOR DE TESTIGO DE MOTOR EN EL FLUJO REPORTAR UN PROBLEMA», con dos hallazgos y sus evidencias.
+- Tareas.txt: se añadieron dos tareas pendientes con objetivos, alcance, requisitos, criterios de aceptación y restricciones.
+- ChangesLogs.txt: se registraron los cambios documentales y los archivos de código auditados sin modificaciones.
+- checkpoint.md: se conserva todo el historial anterior y se añaden los checkpoints de esta tarea.
+
+BLOBS DOCUMENTALES FINALES
+- Auditoría.txt: c7f02af411ae57a607d770c5776d1d25e1984ce4
+- Tareas.txt: 4717957dcfeda6ce095be54be0094f28717cfd4b
+- ChangesLogs.txt: 40b97c7689bb146d73ddbdaeb42b5f6d8e1fd781
+- checkpoint.md: se incorpora en el árbol de este commit.
+
+RESULTADO DE LA AUDITORÍA
+1. H-TESTIGO-REPORT-01: el modal «Reportar un problema» no incluye el checkbox solicitado; reportProblem() y handleReportProblem() tampoco transportan ni almacenan un indicador estructurado asociado a reportId, vehículo y corte.
+2. H-TESTIGO-SUGGEST-02: «Sugerir cambio» consulta checkEngine/activaCheckEngine aunque el detalle expone activaTestigo; el payload usa activaCheckEngine como texto en vez de un contrato normalizado.
+3. La persistencia existente activaTestigo1..3 en WRITE/ADMIN, lectura en CATALOG y visualización en detalle/impresión se conserva; no se requiere duplicarla en el flujo de reportes.
+
+TAREAS REGISTRADAS
+- Añadir el indicador «Este corte activa el testigo del motor» al modal «Reportar un problema», persistir la observación estructuradamente y no modificar automáticamente el catálogo.
+- Unificar el contrato del indicador entre detalle, «Sugerir cambio» e Inbox, con compatibilidad de lectura para registros históricos.
+
+VERIFICACIONES Y LIMITACIONES
+- Se inspeccionaron estáticamente los siete archivos de código enumerados en Auditoría.txt y sus contratos relacionados.
+- No se modificó JavaScript, HTML, CSS, endpoints ni esquema de Spreadsheet.
+- No se ejecutaron pruebas funcionales, navegador, Apps Script, solicitudes HTTP, Drive ni Spreadsheet. Las pruebas se reservan para la etapa consolidada posterior a todas las implementaciones, según la instrucción del usuario.
+- No se desplegó ningún servicio ni se modificaron datos productivos.
+
+ÚNICA ACCIÓN SIGUIENTE
+Crear un solo árbol basado en 3e7d8e132cd81f4088ff2b6f50ca5c195f2e10b3 con los cuatro archivos documentales; crear un único commit hijo directo de d99ab2d42c6e0d428ea7fd272e605b8a6d3c0dbe; actualizar exclusivamente GPSpedia2.2.5_work con force:false y expected_sha igual a ese HEAD. Después verificar commit, padre, archivos, nuevo HEAD y que GPSpedia2.2.5 permanezca en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

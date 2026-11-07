@@ -4815,3 +4815,87 @@ LIMITACIONES Y SIGUIENTE VALIDACIÓN
 - Antes de publicar, validar en copias aisladas los fallos entre creación de hoja/ledger, createFile, guardado de fileId, registro histórico, escritura/flush de Cortes, renombrado, estado linked y pérdida de respuesta HTTP.
 - Desplegar frontend y ADMIN de forma coordinada para que el nuevo contrato opId esté disponible en ambos extremos.
 ================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — AÑADIR INDICADOR DE TESTIGO DE MOTOR AL MODAL «REPORTAR UN PROBLEMA»
+Fecha de registro: 2026-11-07
+Prioridad: MEDIA
+Estado: PENDIENTE DE IMPLEMENTACIÓN.
+Hallazgo origen: H-TESTIGO-REPORT-01 en Auditoría.txt.
+
+Objetivo:
+Permitir que el técnico indique directamente desde el botón «Reportar un problema» de un corte que ese corte activa el testigo del motor, sin obligarlo a abrir después «Sugerir cambio» ni depender de una descripción escrita manualmente.
+
+Requisitos funcionales:
+1. En openReportCutModal(vehicleId, corteNum, currentCutData), incorporar un checkbox visible con la etiqueta exacta «Este corte activa el testigo del motor».
+2. El control debe estar disponible únicamente en el reporte individual asociado al corte seleccionado; conservar el contexto de vehículo y número de corte.
+3. El control debe expresar una afirmación positiva del técnico. Si no se marca, debe interpretarse como que el reporte no aporta esa confirmación, no como una orden para desactivar el indicador existente.
+4. Al enviar el reporte, transmitir el valor de forma explícita junto con vehicleId, corteIndex, reportId generado por el flujo y los datos actuales de usuario. No depender de que el texto libre contenga una frase determinada.
+5. Ampliar el helper reportProblem() y el contrato de FEEDBACK solo con los campos necesarios, manteniendo compatibilidad con los llamadores históricos que no envíen el nuevo dato.
+6. En handleReportProblem(), persistir el indicador de forma estructurada y recuperable, asociado inequívocamente al reporte, vehículo y corte. Auditar antes el esquema real de Feedbacks y sus consumidores.
+7. Si se requiere ampliar Feedbacks, hacerlo de forma aditiva e idempotente; conservar encabezados, posiciones y filas históricas, y documentar cualquier nuevo encabezado en Spreadsheet/GPSpedia_DB_columnas.md. No sobrescribir ni reinterpretar registros existentes.
+8. El reportId devuelto debe seguir siendo la referencia estable para abrir «Sugerir cambio» y vincular ambas operaciones.
+9. La información reportada no debe actualizar directamente activaTestigo1..3 en Cortes ni cambiar la ficha pública. Su aplicación deberá quedar sujeta a revisión y al flujo administrativo autorizado.
+10. Mantener intactos el envío de descripción, información incorrecta, imagen opcional, registro de actividad y confirmación accesible del reporte.
+11. No duplicar el indicador ni crear una segunda fuente de verdad en el catálogo; reutilizar el contrato existente activaTestigoN cuando una modificación aprobada se aplique al corte.
+
+Archivos y áreas previstos para auditoría de implementación:
+- ui.js: renderCutContent(), openReportCutModal(), showReportSuccessModal().
+- api-config.js: reportProblem().
+- Services/feedback.js: doPost() y handleReportProblem().
+- Esquema Feedbacks y sus consumidores en Inbox.
+- Spreadsheet/GPSpedia_DB_columnas.md si el esquema requiere extensión.
+- Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md.
+
+Criterios de aceptación:
+- El checkbox aparece en el modal abierto desde el botón de reporte del corte correcto.
+- El valor marcado llega a FEEDBACK y queda persistido estructuradamente junto al reportId, vehicleId y corteIndex.
+- Los reportes históricos y los llamadores que no envían el nuevo campo siguen siendo legibles y funcionales.
+- Un reporte con el checkbox marcado no modifica por sí mismo el registro del catálogo.
+- «Sugerir cambio» sigue abriéndose desde la confirmación y conserva el reportId del reporte original.
+- Las pruebas funcionales se ejecutarán en la fase consolidada, una vez terminadas las implementaciones.
+
+Restricciones:
+No desplegar ni operar sobre Spreadsheet/Drive productivos. No modificar los valores del catálogo desde el handler de reporte. No cambiar los controles de autenticación/autorización existentes. Un único commit mediante Git Database API.
+Referencia: Auditoría.txt, hallazgo H-TESTIGO-REPORT-01.
+
+================================================================================
+TAREA PENDIENTE — UNIFICAR EL CONTRATO DEL INDICADOR DE TESTIGO ENTRE DETALLE, «SUGERIR CAMBIO» Y REVISIÓN ADMINISTRATIVA
+Fecha de registro: 2026-11-07
+Prioridad: MEDIA
+Estado: PENDIENTE DE IMPLEMENTACIÓN.
+Hallazgo origen: H-TESTIGO-SUGGEST-02 en Auditoría.txt.
+
+Objetivo:
+Alinear la lectura y representación del indicador de testigo de motor en el detalle del corte y en el formulario «Sugerir cambio», de modo que el valor actual se precargue correctamente y la propuesta utilice un contrato inequívoco compatible con activaTestigo1..3.
+
+Requisitos:
+1. Auditar el ciclo completo desde cutData construido por renderCutContent(), apertura de openSuggestCutModal(), construcción de proposedValues, almacenamiento por handleSuggestCutChange() y lectura/revisión en Inbox.
+2. Utilizar cutData.activaTestigo como fuente actual del detalle. Normalizar booleanos y representaciones históricas explícitamente; no invocar métodos de cadena sobre valores booleanos sin normalizarlos.
+3. Definir un único campo semántico para el valor propuesto, compatible con el significado booleano de activaTestigoN. Evitar que el contrato nuevo dependa de activaCheckEngine como texto libre.
+4. Mantener una representación explícita para «No aplica / no especificado» cuando sea necesaria; no convertirla silenciosamente en false ni confundirla con «No activa».
+5. Mantener compatibilidad de lectura con sugerencias históricas que contienen proposedValues.activaCheckEngine y valores «Sí», «No» o «No aplica».
+6. Revisar el flujo de Inbox y cualquier acción administrativa que consuma estas propuestas. No asumir que handleSuggestCutChange() actualiza Cortes: actualmente almacena una sugerencia independiente. Cualquier aplicación al catálogo deberá permanecer sujeta a la autorización y confirmación administrativa ya existentes, o registrarse como tarea separada si requiere un flujo nuevo.
+7. Conservar la relación reportId, vehicleId y corteIndex, así como los demás valores propuestos, imágenes, detalles y estado de revisión.
+8. No alterar la persistencia actual activaTestigo1..3 en WRITE/ADMIN ni la lectura/ordenamiento en CATALOG salvo que la auditoría de implementación demuestre una necesidad concreta.
+9. Documentar cualquier cambio aditivo de esquema y preservar los registros históricos.
+
+Archivos y áreas previstos:
+- ui.js: renderCutContent(), openSuggestCutModal() y vistas de Inbox.
+- Services/feedback.js: handleSuggestCutChange() y handlers de lectura/revisión.
+- api-config.js solo si el contrato del helper requiere ajuste.
+- Spreadsheet/GPSpedia_DB_columnas.md solo si se modifica el esquema.
+- Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md.
+
+Criterios de aceptación:
+- El selector de «Sugerir cambio» refleja correctamente el estado actual de cutData.activaTestigo.
+- Una propuesta nueva utiliza un contrato único, validado y documentado.
+- Los registros históricos se siguen interpretando sin pérdida ni cambio silencioso de significado.
+- La revisión administrativa muestra claramente el valor propuesto y distingue true, false y no especificado.
+- No se modifica Cortes hasta que una acción administrativa autorizada apruebe expresamente el cambio.
+- Las pruebas funcionales se realizarán en la fase consolidada posterior a las implementaciones.
+
+Restricciones:
+No desplegar ni modificar datos productivos. No cambiar el comportamiento de alta de cortes ni la persistencia actual del catálogo sin auditoría. Un único commit mediante Git Database API.
+================================================================================

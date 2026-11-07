@@ -3561,3 +3561,37 @@ ALCANCE SIN CAMBIOS
 - No se modificaron api-config.js, los permisos de sesión/rol, los encabezados de Cortes, las once columnas históricas de Imagenes_Reemplazadas ni el flujo de guardar/descartar campos del modal.
 - No se ejecutó Apps Script real, no se creó AdminImageUploads en la Spreadsheet productiva, no se operó Drive/Spreadsheet productivos y no se desplegó ADMIN ni frontend.
 ================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUDITORÍA Y NUEVAS TAREAS DEL INDICADOR DE TESTIGO EN REPORTES
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: se añadió la auditoría estática del flujo Reportar un problema, el contrato reportProblem de api-config.js, handleReportProblem() de FEEDBACK, la discrepancia del selector en Sugerir cambio y la compatibilidad con activaTestigo1..3.
+- Tareas.txt: se registraron dos tareas independientes:
+  1. Añadir el indicador «Este corte activa el testigo del motor» al modal Reportar un problema y persistirlo estructuradamente como observación vinculada al reporte, vehículo y corte, sin modificar automáticamente el catálogo.
+  2. Unificar el contrato de testigo entre el detalle, Sugerir cambio e Inbox, preservando compatibilidad con sugerencias históricas.
+- checkpoint.md: se añadieron checkpoint inicial y final de esta auditoría documental.
+
+ARCHIVOS DE CÓDIGO AUDITADOS — SIN MODIFICACIONES
+- ui.js: 40e3c9a818f2613a73736ebcfa76f85c82050231
+- api-config.js: 74fe2220d46243f14e1c1c5a63aef99435c10323
+- Services/feedback.js: f17da40f3c082634b679289c2883f2c9b91bbe8f
+- Services/write.js: a1359f9d1b2029e51c99c9d213fd6584e1257987
+- Services/admin.js: 847a2bb80e53918bede067e530b80e41bfdb6afa
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- add_cortes.html: c5b0abfe0a9f9f217978bce53a6bebe94f782559
+
+LÍNEAS DOCUMENTALES AFECTADAS
+- Auditoría.txt: nueva entrada al final del archivo.
+- Tareas.txt: dos nuevas tareas pendientes al final del archivo.
+- ChangesLogs.txt: nueva entrada de registro al final del archivo.
+- checkpoint.md: checkpoint inicial y checkpoint final añadidos al final del historial.
+
+ALCANCE Y RESULTADO
+- Solo se actualizaron registros documentales. No se modificó JavaScript, HTML, CSS, configuración de endpoints ni esquema de Spreadsheet.
+- No se ejecutaron pruebas funcionales, Apps Script, solicitudes HTTP, operaciones Drive/Spreadsheet ni despliegues.
+- Las pruebas funcionales quedan expresamente reservadas para la fase consolidada, una vez terminadas las implementaciones.
+================================================================================
