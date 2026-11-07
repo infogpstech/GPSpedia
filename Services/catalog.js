@@ -35,9 +35,22 @@ const COLS_CORTES = {
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
     timestamp: 37, notaImportante: 38,
-    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42,
-    vin: 43
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
 };
+
+function getCortesColumnMap(sheet) {
+    const columnMap = { ...COLS_CORTES };
+    const lastColumn = sheet.getLastColumn();
+    if (lastColumn < 1) return columnMap;
+    const headers = sheet.getRange(1, 1, 1, lastColumn).getValues()[0];
+    const vinIndex = headers.findIndex(value => String(value || "").trim().toLowerCase() === "vin");
+    if (vinIndex >= 0) columnMap.vin = vinIndex + 1;
+    ['activaTestigo1', 'activaTestigo2', 'activaTestigo3'].forEach(headerName => {
+        const headerIndex = headers.findIndex(value => String(value || '').trim() === headerName);
+        if (headerIndex !== -1) columnMap[headerName] = headerIndex + 1;
+    });
+    return columnMap;
+}
 
 const COLS_LOGOS_MARCA = {
     id: 1,
@@ -248,12 +261,13 @@ function handleGetCatalogData() {
     const categoryCounts = {};
 
     if (cortesSheet) {
+        const cortesColumnMap = getCortesColumnMap(cortesSheet);
         const data = cortesSheet.getDataRange().getValues();
         data.shift();
         cortesData = data
           .filter(row => row && row[0])
           .map(row => {
-            const vehicle = mapRowToObject(row, COLS_CORTES, IMAGE_FIELDS_CORTES);
+            const vehicle = mapRowToObject(row, cortesColumnMap, IMAGE_FIELDS_CORTES);
             if (!vehicle) return null;
 
             // Contar vehículos por categoría
@@ -284,6 +298,7 @@ function handleGetCatalogData() {
                     config: vehicle[`configRelay${i}`],
                     img: vehicle[`imgCorte${i}`],
                     util: vehicle[`utilCorte${i}`],
+                    activaTestigo: vehicle[`activaTestigo${i}`],
                     colaborador: vehicle[`colaboradorCorte${i}`]
                 };
             }
@@ -297,6 +312,7 @@ function handleGetCatalogData() {
                 orderedVehicle[`configRelay${newIndex}`] = tempCortes[oldIndex].config;
                 orderedVehicle[`imgCorte${newIndex}`] = tempCortes[oldIndex].img;
                 orderedVehicle[`utilCorte${newIndex}`] = tempCortes[oldIndex].util;
+                orderedVehicle[`activaTestigo${newIndex}`] = tempCortes[oldIndex].activaTestigo;
                 orderedVehicle[`colaboradorCorte${newIndex}`] = tempCortes[oldIndex].colaborador;
             });
 

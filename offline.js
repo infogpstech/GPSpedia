@@ -5,7 +5,7 @@
 // - Provide a clean API for offline data access.
 
 const DB_NAME = 'GPSpedia_DB';
-const DB_VERSION = 3; // Incremented for Phase 2 robustness and Validation Cache
+const DB_VERSION = 4; // Añade persistencia local del inventario administrativo.
 
 let dbPromise = null;
 
@@ -70,6 +70,11 @@ export async function initDB() {
             if (!dbInstance.objectStoreNames.contains('validationCache')) {
                 dbInstance.createObjectStore('validationCache', { keyPath: 'vehicleId' });
             }
+
+            // Administrative local state: resumable Drive audit and inventory view preference.
+            if (!dbInstance.objectStoreNames.contains('adminLocalState')) {
+                dbInstance.createObjectStore('adminLocalState', { keyPath: 'key' });
+            }
         };
     });
     return dbPromise;
@@ -98,6 +103,326 @@ async function performOp(storeName, mode, callback) {
         });
     } catch (err) {
         console.error(`Database operation failed on ${storeName}:`, err);
+        return null;
+    }
+}
+
+// --- ADMINISTRATIVE LOCAL STATE ---
+
+const ADMIN_LOCAL_STATE_STORE = 'adminLocalState';
+const DRIVE_AUDIT_STATE_KEY = 'driveAudit:last';
+const REPLACED_IMAGES_VIEW_KEY = 'replacedImages:view';
+
+async function performAdminStateOp(mode, callback) {
+    try {
+        const database = await initDB();
+        if (!database) throw new Error("Could not initialize IndexedDB");
+
+        return await new Promise((resolve, reject) => {
+            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], mode);
+            const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
+            let requestResult;
+
+            transaction.oncomplete = () => resolve(requestResult);
+            transaction.onerror = () => reject(transaction.error || new Error("IndexedDB transaction failed"));
+            transaction.onabort = () => reject(transaction.error || new Error("IndexedDB transaction aborted"));
+
+            const request = callback(store);
+            request.onsuccess = () => { requestResult = request.result; };
+            request.onerror = () => reject(request.error || new Error("IndexedDB request failed"));
+        });
+    } catch (error) {
+        console.error("Administrative IndexedDB operation failed:", error);
+        return null;
+    }
+}
+
+/**
+ * Guarda el último estado de auditoría sin incluir credenciales ni tokens de sesión.
+ * El cursor de Drive puede expirar en el servidor; la copia local conserva los resultados.
+ */
+export async function saveDriveAuditState(state) {
+    if (!state || typeof state !== 'object' || !Array.isArray(state.files)) return null;
+    const entry = {
+        key: DRIVE_AUDIT_STATE_KEY,
+        files: state.files,
+        cursor: state.cursor || null,
+        complete: state.complete === true,
+        status: String(state.status || 'partial'),
+        totalAnalyzed: Math.max(0, Number(state.totalAnalyzed) || 0),
+        foldersVisited: Math.max(0, Number(state.foldersVisited) || 0),
+        batches: Math.max(0, Number(state.batches) || 0),
+        lastBatchAnalyzed: Math.max(0, Number(state.lastBatchAnalyzed) || 0),
+        unverifiableReferences: Math.max(0, Number(state.unverifiableReferences) || 0),
+        rootFolderName: String(state.rootFolderName || ''),
+        rootFolderId: String(state.rootFolderId || ''),
+        resumeUnavailable: state.resumeUnavailable === true,
+        inventoryStatus: String(state.inventoryStatus || ''),
+        inventoryMessage: String(state.inventoryMessage || ''),
+        lastError: String(state.lastError || ''),
+        updatedAt: Date.now()
+    };
+    const result = await performAdminStateOp('readwrite', store => store.put(entry));
+    return result === null ? null : DRIVE_AUDIT_STATE_KEY;
+}
+
+export async function getDriveAuditState() {
+    const entry = await performAdminStateOp('readonly', store => store.get(DRIVE_AUDIT_STATE_KEY));
+    if (!entry || entry.key !== DRIVE_AUDIT_STATE_KEY || !Array.isArray(entry.files)) return null;
+    return entry;
+}
+
+export async function saveReplacedImagesView(view) {
+    if (view !== 'grid' && view !== 'list') return null;
+    const entry = { key: REPLACED_IMAGES_VIEW_KEY, value: view, updatedAt: Date.now() };
+    const result = await performAdminStateOp('readwrite', store => store.put(entry));
+    return result === null ? null : view;
+}
+
+export async function getReplacedImagesView() {
+    const entry = await performAdminStateOp('readonly', store => store.get(REPLACED_IMAGES_VIEW_KEY));
+    return entry && (entry.value === 'grid' || entry.value === 'list') ? entry.value : 'grid';
+}
+
+
+const ADMIN_IMAGE_UPLOAD_PENDING_PREFIX = "adminImageUploadPending:";
+const ADMIN_IMAGE_UPLOAD_FIELDS = new Set([
+    "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
+    "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
+]);
+
+function getAdminImageUploadPendingKey(vehicleId, fieldName) {
+    const cleanVehicleId = String(vehicleId === null || vehicleId === undefined ? "" : vehicleId).trim();
+    const cleanFieldName = String(fieldName || "").trim();
+    if (!cleanVehicleId || !ADMIN_IMAGE_UPLOAD_FIELDS.has(cleanFieldName)) return "";
+    return ADMIN_IMAGE_UPLOAD_PENDING_PREFIX + encodeURIComponent(cleanVehicleId) + ":" + encodeURIComponent(cleanFieldName);
+}
+
+/**
+ * Recupera un reemplazo pendiente sin tratar un fallo de IndexedDB como ausencia de operación.
+ */
+export async function getAdminImageUploadPendingOperation(vehicleId, fieldName) {
+    const key = getAdminImageUploadPendingKey(vehicleId, fieldName);
+    if (!key) return { available: true, operation: null };
+    const entry = await performAdminStateOp("readonly", store => store.get(key));
+    if (entry === null) return { available: false, operation: null };
+    return {
+        available: true,
+        operation: entry && entry.key === key && entry.operation ? entry.operation : null
+    };
+}
+
+/**
+ * Persiste el payload antes de enviarlo. No almacena userId, sessionToken ni credenciales.
+ * Una operación distinta no puede reemplazar una carga pendiente del mismo vehículo/campo.
+ */
+export async function saveAdminImageUploadPendingOperation(operation) {
+    if (!operation || typeof operation !== "object" ||
+        !/^[A-Za-z0-9_-]{20,80}$/.test(String(operation.id || "")) ||
+        operation.vehicleId === null || operation.vehicleId === undefined ||
+        !ADMIN_IMAGE_UPLOAD_FIELDS.has(String(operation.fieldName || "")) ||
+        typeof operation.fileData !== "string" || !/^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(operation.fileData) ||
+        !String(operation.filename || "").trim() ||
+        !/^image\//i.test(String(operation.mimeType || ""))) {
+        return { saved: false, error: true };
+    }
+
+    const key = getAdminImageUploadPendingKey(operation.vehicleId, operation.fieldName);
+    if (!key) return { saved: false, error: true };
+    const savedOperation = {
+        id: String(operation.id),
+        vehicleId: String(operation.vehicleId),
+        fieldName: String(operation.fieldName),
+        fileData: operation.fileData,
+        filename: String(operation.filename),
+        mimeType: String(operation.mimeType),
+        createdAt: Number(operation.createdAt) || Date.now()
+    };
+
+    try {
+        const database = await initDB();
+        return await new Promise((resolve, reject) => {
+            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], "readwrite");
+            const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
+            let result = { saved: false, error: true };
+
+            transaction.oncomplete = () => resolve(result);
+            transaction.onerror = () => reject(transaction.error || new Error("IndexedDB transaction failed"));
+            transaction.onabort = () => reject(transaction.error || new Error("IndexedDB transaction aborted"));
+
+            const getRequest = store.get(key);
+            getRequest.onsuccess = () => {
+                const existing = getRequest.result;
+                if (existing && existing.operation) {
+                    const previous = existing.operation;
+                    if (String(previous.id || "") !== savedOperation.id) {
+                        result = { saved: false, conflict: true, operation: previous };
+                        return;
+                    }
+                    if (previous.fileData !== savedOperation.fileData ||
+                        previous.vehicleId !== savedOperation.vehicleId ||
+                        previous.fieldName !== savedOperation.fieldName ||
+                        previous.filename !== savedOperation.filename ||
+                        previous.mimeType !== savedOperation.mimeType) {
+                        result = { saved: false, conflict: true, operation: previous };
+                        return;
+                    }
+                }
+
+                const putRequest = store.put({ key, operation: savedOperation, updatedAt: Date.now() });
+                putRequest.onsuccess = () => { result = { saved: true, key }; };
+                putRequest.onerror = () => reject(putRequest.error || new Error("No se pudo guardar el reemplazo pendiente"));
+            };
+            getRequest.onerror = () => reject(getRequest.error || new Error("No se pudo consultar el reemplazo pendiente"));
+        });
+    } catch (error) {
+        console.error("No se pudo persistir el reemplazo de imagen pendiente:", error);
+        return { saved: false, error: true };
+    }
+}
+
+/**
+ * Elimina el intento únicamente si el opId coincide con el registro almacenado.
+ */
+export async function removeAdminImageUploadPendingOperation(vehicleId, fieldName, opId) {
+    const key = getAdminImageUploadPendingKey(vehicleId, fieldName);
+    const cleanOpId = String(opId || "").trim();
+    if (!key || !cleanOpId) return false;
+
+    try {
+        const database = await initDB();
+        return await new Promise((resolve, reject) => {
+            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], "readwrite");
+            const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
+            let removed = false;
+
+            transaction.oncomplete = () => resolve(removed);
+            transaction.onerror = () => reject(transaction.error || new Error("IndexedDB transaction failed"));
+            transaction.onabort = () => reject(transaction.error || new Error("IndexedDB transaction aborted"));
+
+            const getRequest = store.get(key);
+            getRequest.onsuccess = () => {
+                const entry = getRequest.result;
+                if (!entry || !entry.operation || String(entry.operation.id || "") !== cleanOpId) return;
+                const deleteRequest = store.delete(key);
+                deleteRequest.onsuccess = () => { removed = true; };
+                deleteRequest.onerror = () => reject(deleteRequest.error || new Error("No se pudo retirar el reemplazo confirmado"));
+            };
+            getRequest.onerror = () => reject(getRequest.error || new Error("No se pudo verificar el reemplazo antes de retirarlo"));
+        });
+    } catch (error) {
+        console.error("No se pudo retirar el reemplazo de imagen confirmado:", error);
+        return null;
+    }
+}
+
+ 
+// --- IDEMPOTENCIA LOCAL DEL MODAL DE AGREGADO DE CORTES ---
+const ADD_CUT_PENDING_KEY_PREFIX = 'addCutPending:';
+
+function getAddCutPendingKey(vehicleId) {
+    const cleanVehicleId = String(vehicleId === null || vehicleId === undefined ? '' : vehicleId).trim();
+    return cleanVehicleId ? ADD_CUT_PENDING_KEY_PREFIX + cleanVehicleId : '';
+}
+
+/**
+ * Recupera la operación pendiente del modal (+) para un vehículo.
+ * available=false indica que IndexedDB no pudo consultarse; no equivale a que no exista operación.
+ */
+export async function getAddCutPendingOperation(vehicleId) {
+    const key = getAddCutPendingKey(vehicleId);
+    if (!key) return { available: true, operation: null };
+    const entry = await performAdminStateOp('readonly', store => store.get(key));
+    if (entry === null) return { available: false, operation: null };
+    return {
+        available: true,
+        operation: entry && entry.key === key && entry.operation ? entry.operation : null
+    };
+}
+
+/**
+ * Persiste el snapshot antes de enviar addOrUpdateCut.
+ * Una operación distinta no puede sobrescribir una operación pendiente del mismo vehículo.
+ */
+export async function saveAddCutPendingOperation(operation) {
+    if (!operation || typeof operation !== 'object' || !operation.id ||
+        operation.vehicleId === null || operation.vehicleId === undefined ||
+        !String(operation.userId || '').trim() ||
+        !operation.cutData || typeof operation.cutData !== 'object') {
+        return { saved: false, error: true };
+    }
+
+    const key = getAddCutPendingKey(operation.vehicleId);
+    const opId = String(operation.id).trim();
+    if (!key || !opId) return { saved: false, error: true };
+
+    try {
+        const database = await initDB();
+        return await new Promise((resolve, reject) => {
+            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], 'readwrite');
+            const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
+            let result = null;
+
+            transaction.oncomplete = () => resolve(result || { saved: false, error: true });
+            transaction.onerror = () => reject(transaction.error || new Error('IndexedDB transaction failed'));
+            transaction.onabort = () => reject(transaction.error || new Error('IndexedDB transaction aborted'));
+
+            const getRequest = store.get(key);
+            getRequest.onsuccess = () => {
+                const existing = getRequest.result;
+                if (existing && (!existing.operation || String(existing.operation.id || '').trim() !== opId)) {
+                    result = { saved: false, conflict: true, operation: existing.operation || null };
+                    return;
+                }
+
+                const entry = {
+                    key,
+                    operation,
+                    updatedAt: Date.now()
+                };
+                const putRequest = store.put(entry);
+                putRequest.onsuccess = () => { result = { saved: true, key }; };
+                putRequest.onerror = () => reject(putRequest.error || new Error('No se pudo guardar la operación pendiente'));
+            };
+            getRequest.onerror = () => reject(getRequest.error || new Error('No se pudo consultar la operación pendiente'));
+        });
+    } catch (error) {
+        console.error('No se pudo persistir la operación pendiente de agregado de corte:', error);
+        return { saved: false, error: true };
+    }
+}
+
+/**
+ * Elimina la operación solo si la clave opId coincide, evitando borrar una operación nueva.
+ */
+export async function removeAddCutPendingOperation(vehicleId, opId) {
+    const key = getAddCutPendingKey(vehicleId);
+    const cleanOpId = String(opId || '').trim();
+    if (!key || !cleanOpId) return false;
+
+    try {
+        const database = await initDB();
+        return await new Promise((resolve, reject) => {
+            const transaction = database.transaction([ADMIN_LOCAL_STATE_STORE], 'readwrite');
+            const store = transaction.objectStore(ADMIN_LOCAL_STATE_STORE);
+            let removed = false;
+
+            transaction.oncomplete = () => resolve(removed);
+            transaction.onerror = () => reject(transaction.error || new Error('IndexedDB transaction failed'));
+            transaction.onabort = () => reject(transaction.error || new Error('IndexedDB transaction aborted'));
+
+            const getRequest = store.get(key);
+            getRequest.onsuccess = () => {
+                const entry = getRequest.result;
+                if (!entry || !entry.operation || String(entry.operation.id || '').trim() !== cleanOpId) return;
+                const deleteRequest = store.delete(key);
+                deleteRequest.onsuccess = () => { removed = true; };
+                deleteRequest.onerror = () => reject(deleteRequest.error || new Error('No se pudo retirar la operación completada'));
+            };
+            getRequest.onerror = () => reject(getRequest.error || new Error('No se pudo verificar la operación antes de eliminarla'));
+        });
+    } catch (error) {
+        console.error('No se pudo retirar la operación pendiente de agregado de corte:', error);
         return null;
     }
 }

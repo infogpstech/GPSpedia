@@ -210,149 +210,316 @@
 </div>
 
 <!-- ========= MODAL DE DESARROLLADOR ========= -->
-<!-- Tarea adicional: Estilos adaptados al tema de la plataforma para el Modal de Desarrollador -->
 <div id="dev-tools-modal" class="info-modal">
-    <div class="info-modal-content" style="max-width: 1000px; width: 95%;">
+    <div class="info-modal-content dev-tools-modal-content">
         <span class="info-close-btn">&times;</span>
-        <h2><i class="fa-solid fa-screwdriver-wrench"></i> Panel Administrativo y Diagnóstico</h2>
+        <h2 class="dev-tools-title"><i class="fa-solid fa-screwdriver-wrench"></i> Opciones de desarrollador</h2>
 
-        <div style="display: flex; gap: 20px; flex-wrap: wrap;">
-            <!-- Panel de Consola y Resultados -->
-            <div style="flex: 1 1 450px; min-width: 300px; display: flex; flex-direction: column; gap: 15px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin: 0;">
-                    <h4 style="margin: 0;"><i class="fa-solid fa-terminal"></i> Consola de Diagnóstico en Tiempo Real</h4>
-                    <button id="btn-copy-console-log" class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.8em; margin: 0;"><i class="fa-solid fa-copy"></i> Copiar registro</button>
-                </div>
-                <div id="dev-console-log" style="height: 300px; border: 1px solid #333; border-radius: 8px; background-color: #121212; color: #00ff66; font-family: monospace; padding: 12px; overflow-y: auto; font-size: 0.85rem; line-height: 1.4; box-shadow: inset 0 0 10px rgba(0,0,0,0.8);">
-                    [SISTEMA] Consola inicializada. Escribe comandos (dir, cd, mkdir, tree) o haz clic en los elementos.
-                </div>
-                <!-- Línea de entrada de comandos de terminal -->
-                <div style="display: flex; gap: 5px; align-items: center;">
-                    <span style="font-family: monospace; font-weight: bold; color: var(--accent-color);">&gt;</span>
-                    <input type="text" id="dev-terminal-input" placeholder="Comando (ej: dir, cd Subcarpeta, cd .., mkdir Pruebas, tree)..." class="dev-input" style="flex: 1; padding: 6px 10px; font-family: monospace; font-size: 0.85rem; height: 32px;">
-                    <button id="btn-terminal-send" class="btn btn-primary" style="padding: 4px 12px; font-size: 0.85em; height: 32px;"><i class="fa-solid fa-terminal"></i> Ejecutar</button>
-                </div>
-                <!-- Barra de Progreso -->
-                <div id="dev-progress-container" style="display: none; background-color: var(--button-bg); border-radius: 8px; height: 24px; overflow: hidden; position: relative; border: 1px solid var(--border-color);">
-                    <div id="dev-progress-bar" style="background-color: var(--accent-color); width: 0%; height: 100%; transition: width 0.3s ease;"></div>
-                    <span id="dev-progress-text" style="position: absolute; width: 100%; text-align: center; top: 0; left: 0; line-height: 24px; color: var(--text-color); font-size: 0.85rem; font-weight: bold;">0%</span>
-                </div>
+        <div class="dev-tools-tabs">
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-diagnostics" checked>
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-backups">
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-database">
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-images">
+            <input class="dev-tab-radio" type="radio" name="dev-tools-section" id="dev-tab-system">
 
-                <!-- Resultados de Respaldos -->
-                <div id="backup-results-panel" class="dev-card" style="padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px; font-size: 0.9rem;">
-                    <strong><i class="fa-solid fa-shield-halved"></i> Accesos Directos a Copias de Seguridad:</strong>
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                        <span>Spreadsheet ID: <input type="text" id="dev-ss-backup-id" readonly class="dev-input" style="width: 140px; padding: 4px; display: inline-block; font-size: 0.8em; font-family: monospace;"></span>
-                        <button id="copy-ss-backup-btn" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8em;">Copiar ID</button>
-                        <button id="link-ss-backup-btn" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8em;" disabled>Enlace</button>
-                    </div>
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px;">
-                        <span>Drive Folder ID: <input type="text" id="dev-drive-backup-id" readonly class="dev-input" style="width: 140px; padding: 4px; display: inline-block; font-size: 0.8em; font-family: monospace;"></span>
-                        <button id="copy-drive-backup-btn" class="btn btn-secondary" style="padding: 4px 8px; font-size: 0.8em;">Copiar ID</button>
-                        <button id="link-drive-backup-btn" class="btn btn-primary" style="padding: 4px 8px; font-size: 0.8em;" disabled>Enlace</button>
-                    </div>
-                </div>
+            <div class="dev-tools-layout">
+                <nav class="dev-tools-sidebar" role="tablist" aria-label="Secciones del panel de desarrollador">
+                    <label class="dev-tab-link" for="dev-tab-diagnostics" role="tab" aria-label="Diagnóstico" title="Diagnóstico">
+                        <i class="fa-solid fa-stethoscope"></i><span>Diagnóstico</span>
+                    </label>
+                    <label class="dev-tab-link" for="dev-tab-backups" role="tab" aria-label="Respaldos" title="Respaldos">
+                        <i class="fa-solid fa-shield-halved"></i><span>Respaldos</span>
+                    </label>
+                    <label class="dev-tab-link" for="dev-tab-database" role="tab" aria-label="Base de datos" title="Base de datos">
+                        <i class="fa-solid fa-database"></i><span>Base de datos</span>
+                    </label>
+                    <label class="dev-tab-link" for="dev-tab-images" role="tab" aria-label="Imágenes y Drive" title="Imágenes y Drive">
+                        <i class="fa-solid fa-images"></i><span>Imágenes y Drive</span>
+                    </label>
+                    <label class="dev-tab-link" for="dev-tab-system" role="tab" aria-label="Sistema" title="Sistema">
+                        <i class="fa-solid fa-gears"></i><span>Sistema</span>
+                    </label>
+                </nav>
 
-                <!-- Panel de Monitoreo de Microservicios -->
-                <div class="dev-card" style="padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px; font-size: 0.85rem;">
-                    <div style="display: flex; justify-content: space-between; align-items: center;">
-                        <strong><i class="fa-solid fa-server"></i> Estado y Métricas de Microservicios:</strong>
-                        <button id="btn-check-services-health" class="btn btn-secondary" style="padding: 3px 8px; font-size: 0.8em;"><i class="fa-solid fa-arrows-rotate"></i> Escanear</button>
-                    </div>
-                    <div id="services-health-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-top: 5px;">
-                        <!-- Se llena dinámicamente -->
-                        <span style="color: var(--text-disabled); font-style: italic;">Iniciando diagnóstico...</span>
-                    </div>
+                <div class="dev-tools-panels">
+                    <!-- Diagnóstico -->
+                    <section class="dev-tab-panel dev-panel-diagnostics" role="tabpanel" aria-labelledby="dev-tab-diagnostics">
+                        <div class="dev-panel-heading">
+                            <h3><i class="fa-solid fa-stethoscope"></i> Diagnóstico</h3>
+                            <p>Estado y diagnóstico de los servicios conectados.</p>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <div class="dev-card-heading">
+                                <strong><i class="fa-solid fa-server"></i> Estado y métricas de microservicios</strong>
+                                <button id="btn-check-services-health" class="btn btn-secondary"><i class="fa-solid fa-arrows-rotate"></i> Escanear</button>
+                            </div>
+                            <div id="services-health-grid" class="dev-services-health-grid">
+                                <span class="dev-empty-state">Iniciando diagnóstico...</span>
+                            </div>
+                            <section id="service-health-detail" class="dev-service-detail" aria-live="polite">
+                                <p class="dev-empty-state">Selecciona una tarjeta para consultar sus parámetros.</p>
+                            </section>
+                            <section class="dev-service-traffic-panel">
+                                <h4>Tráfico observado por servicio</h4>
+                                <p>Solicitudes API por minuto iniciadas desde este navegador durante los últimos 15 minutos. No representa el tráfico total ni las ejecuciones internas de Apps Script.</p>
+                                <div id="service-traffic-chart" class="dev-service-traffic-chart">
+                                    <p class="dev-empty-state">Aún no se han observado solicitudes API en esta sesión.</p>
+                                </div>
+                            </section>
+                        </div>
+                    </section>
+
+                    <!-- Respaldos: acceso secundario a las herramientas ubicadas en Base de datos -->
+                    <section class="dev-tab-panel dev-panel-backups" role="tabpanel" aria-labelledby="dev-tab-backups">
+                        <div class="dev-panel-heading">
+                            <h3><i class="fa-solid fa-shield-halved"></i> Respaldos y restauración</h3>
+                            <p>Las operaciones de respaldo y restauración se administran desde «Base de datos» mediante un único campo compartido.</p>
+                        </div>
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-database"></i> Herramientas centralizadas</strong>
+                            <p>Para crear un respaldo o restaurar una Spreadsheet o carpeta de Drive, abre la sección «Base de datos». Allí encontrarás las cuatro operaciones y el campo compartido para los enlaces.</p>
+                            <label class="btn btn-primary dev-action-full" for="dev-tab-database"><i class="fa-solid fa-arrow-right-to-bracket"></i> Ir a Base de datos</label>
+                        </div>
+                    </section>
+
+                    <!-- Base de datos -->
+                    <section class="dev-tab-panel dev-panel-database" role="tabpanel" aria-labelledby="dev-tab-database">
+                        <div class="dev-panel-heading">
+                            <h3><i class="fa-solid fa-database"></i> Base de datos</h3>
+                            <p>Herramientas de organización, diagnóstico y mantenimiento de registros.</p>
+                        </div>
+
+                        <div id="backup-management-panel" class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-shield-halved"></i> Respaldos y restauración</strong>
+                            <p>Utiliza este mismo campo para consultar el enlace del último respaldo o introducir el enlace completo que deseas restaurar.</p>
+                            <div class="dev-backup-resource-field">
+                                <label for="backup-resource-input">Enlace completo del respaldo</label>
+                                <input type="text" id="backup-resource-input" class="dev-input" placeholder="Enlace de Spreadsheet o carpeta de Drive" autocomplete="off" spellcheck="false" aria-describedby="backup-resource-hint">
+                                <p id="backup-resource-hint" class="dev-empty-state" aria-live="polite">Selecciona una operación. El campo acepta enlaces completos de Spreadsheet o de carpetas de Drive.</p>
+                            </div>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-backup-db" class="btn btn-primary"><i class="fa-solid fa-database"></i> Crear respaldo de Spreadsheet</button>
+                                <button type="button" id="btn-admin-backup-drive" class="btn btn-primary"><i class="fa-brands fa-google-drive"></i> Crear respaldo de Drive</button>
+                            </div>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-restore-db" class="btn btn-warning"><i class="fa-solid fa-table"></i> Restaurar Spreadsheet</button>
+                                <button type="button" id="btn-admin-restore-drive" class="btn btn-warning"><i class="fa-solid fa-folder-closed"></i> Restaurar carpeta de Drive</button>
+                            </div>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-copy-backup-resource-link" class="btn btn-secondary"><i class="fa-solid fa-copy"></i> Copiar enlace</button>
+                                <button type="button" id="btn-open-backup-resource-link" class="btn btn-secondary"><i class="fa-solid fa-arrow-up-right-from-square"></i> Abrir enlace</button>
+                            </div>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-right-left"></i> Migración de VIN e idempotencia</strong>
+                            <p>Genera primero un respaldo de Spreadsheet desde la tarjeta superior. Después ejecuta la simulación para revisar cuántos identificadores se trasladarán y cuál será la hoja de destino. La confirmación solo se habilita con un respaldo verificado y una simulación correcta.</p>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-preview-vin-migration" class="btn btn-secondary" disabled><i class="fa-solid fa-magnifying-glass"></i> Simular migración</button>
+                                <button type="button" id="btn-admin-confirm-vin-migration" class="btn btn-warning" disabled><i class="fa-solid fa-database"></i> Confirmar migración</button>
+                            </div>
+                            <p id="vin-migration-status" class="dev-empty-state" role="status" aria-live="polite">Pendiente. Se requiere un respaldo de Spreadsheet verificado antes de simular.</p>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-barcode"></i> Motor de firmas diferenciales de VIN</strong>
+                            <p>Selecciona una o ambas operaciones. Si seleccionas las dos, se ejecutarán por separado y en orden.</p>
+                            <div class="dev-maintenance-options">
+                                <label class="dev-maintenance-option" for="recalculate-vin-signatures-checkbox">
+                                    <input type="checkbox" id="recalculate-vin-signatures-checkbox">
+                                    <span class="dev-maintenance-option-copy">
+                                        <strong>Recalcular firmas</strong>
+                                        <span>Analizar los VIN del catálogo en memoria y guardar las firmas calculadas en el almacenamiento local.</span>
+                                    </span>
+                                </label>
+                                <label class="dev-maintenance-option" for="diagnose-vin-signatures-checkbox">
+                                    <input type="checkbox" id="diagnose-vin-signatures-checkbox">
+                                    <span class="dev-maintenance-option-copy">
+                                        <strong>Diagnóstico de firmas</strong>
+                                        <span>Consultar las firmas disponibles en memoria y mostrar su distribución por estado.</span>
+                                    </span>
+                                </label>
+                            </div>
+                            <button type="button" id="btn-admin-run-vin-actions" class="btn btn-primary dev-action-full">
+                                <i class="fa-solid fa-play"></i> Ejecutar acciones seleccionadas
+                            </button>
+                            <p id="vin-actions-progress" class="dev-empty-state" role="status" aria-live="polite">No se ha ejecutado ninguna acción en esta sesión.</p>
+                            <div class="dev-vin-action-status">
+                                <p id="vin-recalculate-status" role="status" aria-live="polite">Recalcular firmas: pendiente.</p>
+                                <p id="vin-diagnostic-status" role="status" aria-live="polite">Diagnóstico de firmas: pendiente.</p>
+                            </div>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-list-ol"></i> Organización de registros</strong>
+                            <button id="btn-admin-reorganize-db" class="btn btn-warning dev-action-full"><i class="fa-solid fa-sort-alpha-down"></i> Reorganizar base de datos alfabéticamente (por Marca)</button>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-broom"></i> Limpieza de registros</strong>
+                            <p>Selecciona una o ambas fuentes. Solo se ejecutarán las opciones marcadas.</p>
+                            <div class="dev-maintenance-options">
+                                <label class="dev-maintenance-option" for="clear-activity-logs-checkbox">
+                                    <input type="checkbox" id="clear-activity-logs-checkbox">
+                                    <span class="dev-maintenance-option-copy">
+                                        <strong>Actividad de usuarios</strong>
+                                        <span>Limpiar registros de la hoja ActividadUsuario.</span>
+                                    </span>
+                                </label>
+                                <div class="dev-maintenance-retention">
+                                    <label for="clear-logs-option-select">Alcance de ActividadUsuario</label>
+                                    <select id="clear-logs-option-select" class="dev-input">
+                                        <option value="week">Conservar los últimos 7 días</option>
+                                        <option value="all">Limpiar todos los registros (conservar encabezados)</option>
+                                    </select>
+                                </div>
+                                <label class="dev-maintenance-option" for="clear-sensitive-logs-checkbox">
+                                    <input type="checkbox" id="clear-sensitive-logs-checkbox">
+                                    <span class="dev-maintenance-option-copy">
+                                        <strong>Registro de Logs</strong>
+                                        <span>Retirar únicamente los registros que contienen datos confidenciales; conservar los demás registros y encabezados.</span>
+                                    </span>
+                                </label>
+                            </div>
+                            <button type="button" id="btn-admin-clear-selected-logs" class="btn btn-danger dev-action-full">
+                                <i class="fa-solid fa-trash-can"></i> Ejecutar limpieza seleccionada
+                            </button>
+                            <p id="clear-selected-logs-status" class="dev-empty-state" role="status" aria-live="polite">No se ha ejecutado ninguna limpieza en esta sesión.</p>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-eye-slash"></i> Administración de cortes</strong>
+                            <button id="btn-admin-add-silent-cut" class="btn btn-danger dev-action-full"><i class="fa-solid fa-eye-slash"></i> Agregar corte silenciosamente (Panel Administrativo)</button>
+                        </div>
+                    </section>
+
+                    <!-- Imágenes y Drive -->
+                    <section class="dev-tab-panel dev-panel-images" role="tabpanel" aria-labelledby="dev-tab-images">
+                        <div class="dev-panel-heading">
+                            <h3><i class="fa-solid fa-images"></i> Imágenes y Google Drive</h3>
+                            <p>Organiza archivos, administra logotipos y revisa el historial de imágenes.</p>
+                        </div>
+
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-brands fa-google-drive"></i> Monitor global de almacenamiento de Google Drive</strong>
+                            <p id="drive-storage-monitor-status" aria-live="polite">Consulta pendiente. El uso corresponde a todo Drive, no a la carpeta «Cortes». La cuota puede compartirse con otros servicios de Google.</p>
+                            <div class="dev-action-row">
+                                <span>Usado en Drive: <strong id="drive-storage-used">No disponible</strong></span>
+                                <span>Uso total de la cuota: <strong id="drive-storage-account-used">No disponible</strong></span>
+                                <span>Cuota de la cuenta: <strong id="drive-storage-limit">Consultando...</strong></span>
+                                <span>Disponible en la cuota: <strong id="drive-storage-remaining">No disponible</strong></span>
+                                <span>Porcentaje utilizado: <strong id="drive-storage-percent">No disponible</strong></span>
+                            </div>
+                            <button type="button" id="btn-admin-refresh-drive-storage" class="btn btn-secondary dev-action-full"><i class="fa-solid fa-arrows-rotate"></i> Actualizar almacenamiento global</button>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-images"></i> Organización de imágenes</strong>
+                            <button id="btn-admin-normalize-images" class="btn btn-warning dev-action-full"><i class="fa-solid fa-images"></i> Normalizar nomenclatura y deduplicar imágenes en base de datos</button>
+                            <button id="btn-admin-organize-primary-images" class="btn btn-primary dev-action-full"><i class="fa-solid fa-folder-tree"></i> Organizar únicamente imágenes principales de vehículos</button>
+                            <button id="btn-admin-restore-trash" class="btn btn-warning dev-action-full" style="display: none;"><i class="fa-solid fa-trash-arrow-up"></i> Saneamiento y recuperación exhaustiva de imágenes en papelera</button>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-square-poll-horizontal"></i> Registro de logotipo de fabricante</strong>
+                            <div class="dev-action-row">
+                                <input type="text" id="logo-brand-name-input" placeholder="Nombre de la Marca (ej. Toyota)..." class="dev-input">
+                                <input type="file" id="logo-file-input" accept="image/png, image/svg+xml, image/webp" style="display: none;">
+                                <button onclick="document.getElementById('logo-file-input').click()" class="btn btn-secondary">Seleccionar Imagen</button>
+                            </div>
+                            <span id="selected-logo-file-name" class="dev-empty-state">Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP</span>
+                            <button id="btn-admin-register-logo" class="btn btn-primary dev-action-full"><i class="fa-solid fa-upload"></i> Subir y Registrar Logotipo</button>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-clock-rotate-left"></i> Inventario e historial de imágenes</strong>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-view-replaced-images" class="btn btn-primary"><i class="fa-solid fa-images"></i> Consultar Inventario e Historial</button>
+                                <button type="button" id="btn-admin-audit-drive-images" class="btn btn-secondary"><i class="fa-brands fa-google-drive"></i> Auditar Árbol «Cortes»</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- Sistema -->
+                    <section class="dev-tab-panel dev-panel-system" role="tabpanel" aria-labelledby="dev-tab-system">
+                        <div class="dev-panel-heading">
+                            <h3><i class="fa-solid fa-gears"></i> Sistema</h3>
+                            <p>Herramientas que afectan el almacenamiento local de esta instalación.</p>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-database"></i> Caché local del cliente</strong>
+                            <p class="dev-warning-copy">Esta acción elimina la caché local de IndexedDB/Storage y recarga la aplicación.</p>
+                            <button id="btn-admin-clear-client-cache" class="btn btn-danger dev-action-full"><i class="fa-solid fa-database"></i> Vaciar Caché Local de Cliente (IndexedDB/Storage) y Recargar</button>
+                        </div>
+                    </section>
                 </div>
             </div>
 
-            <!-- Panel de Acciones -->
-            <div style="flex: 1 1 450px; min-width: 300px; display: flex; flex-direction: column; gap: 15px;">
-                <h4 style="margin: 0;"><i class="fa-solid fa-cubes"></i> Acciones Administrativas</h4>
-
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <!-- Respaldos -->
-                    <div class="dev-card" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px;">
-                        <strong style="font-size: 0.9rem;"><i class="fa-solid fa-cloud-arrow-up"></i> Respaldos y Restauración de Seguridad</strong>
-                        <div style="display: flex; gap: 5px;">
-                            <button id="btn-admin-backup-db" class="btn btn-primary" style="flex: 1; font-size: 0.85em; padding: 8px;"><i class="fa-solid fa-database"></i> Respaldar DB</button>
-                            <button id="btn-admin-backup-drive" class="btn btn-primary" style="flex: 1; font-size: 0.85em; padding: 8px;"><i class="fa-brands fa-google-drive"></i> Respaldar Drive</button>
-                        </div>
-                        <div style="display: flex; gap: 5px; align-items: center; margin-top: 5px;">
-                            <input type="text" id="restore-backup-id-input" placeholder="ID del Backup para restaurar..." class="dev-input" style="flex: 1; padding: 6px; font-size: 0.85em; height: 34px;">
-                            <button id="btn-admin-restore-db" class="btn btn-warning" style="font-size: 0.8em; padding: 8px 12px; height: 34px;">Restaurar DB</button>
-                            <button id="btn-admin-restore-drive" class="btn btn-warning" style="font-size: 0.8em; padding: 8px 12px; height: 34px;">Restaurar Drive</button>
-                        </div>
-                    </div>
-
-                    <!-- Mantenimiento -->
-                    <div class="dev-card" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px;">
-                        <strong style="font-size: 0.9rem;"><i class="fa-solid fa-broom"></i> Organización y Mantenimiento</strong>
-                        <div class="dev-card" style="padding: 10px; margin-bottom: 10px; border-left: 3px solid #007bff;">
-                            <h5 style="margin-top:0; margin-bottom:6px; font-size: 0.9em;"><i class="fa-solid fa-barcode"></i> Motor de Firmas Diferenciales de VIN</h5>
-                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
-                                <button type="button" id="btn-recalculate-vin-signatures" class="btn btn-primary" style="padding: 6px 10px; font-size: 0.8em;"><i class="fa-solid fa-sync"></i> Recalcular Firmas</button>
-                                <button type="button" id="btn-view-vin-signatures" class="btn btn-secondary" style="padding: 6px 10px; font-size: 0.8em;"><i class="fa-solid fa-list-check"></i> Diagnóstico de Firmas</button>
-                            </div>
-                        </div>
-                        <button id="btn-admin-reorganize-db"  class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-sort-alpha-down"></i> Reorganizar base de datos alfabéticamente (por Marca)</button>
-                        <button id="btn-admin-normalize-images" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-images"></i> Normalizar nomenclatura y deduplicar imágenes en base de datos</button>
-                        <button id="btn-admin-reorganize-drive" class="btn btn-warning" style="font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-folder-tree"></i> Reorganizar imágenes físicamente en carpetas jerárquicas</button>
-                        <button id="btn-admin-restore-trash" class="btn btn-warning" style="display: none; font-size: 0.85em; text-align: left; padding: 8px 12px;"><i class="fa-solid fa-trash-arrow-up"></i> Saneamiento y recuperación exhaustiva de imágenes en papelera</button>
-                        <button id="btn-admin-clear-client-cache" class="btn btn-danger" style="font-size: 0.85em; text-align: left; padding: 8px 12px; background-color: #dc3545; color: white;"><i class="fa-solid fa-database"></i> Vaciar Caché Local de Cliente (IndexedDB/Storage) y Recargar</button>
-                        <div style="display: flex; gap: 5px; align-items: center; margin-top: 5px;">
-                            <select id="clear-logs-option-select" class="dev-input" style="flex: 1; padding: 6px; font-size: 0.85em; height: 34px;">
-                                <option value="week">Conservar registros de la última semana</option>
-                                <option value="all">Borrar todos los registros de eventos/logs</option>
-                            </select>
-                            <button id="btn-admin-clear-activity-logs" class="btn btn-danger" style="font-size: 0.8em; padding: 8px 12px; height: 34px; background-color: #dc3545; color: white;"><i class="fa-solid fa-trash-can"></i> Purgar Logs</button>
-                        </div>
-                        <button id="btn-admin-add-silent-cut" class="btn btn-danger" style="font-size: 0.85em; text-align: left; padding: 8px 12px; margin-top: 5px;"><i class="fa-solid fa-eye-slash"></i> Agregar corte silenciosamente (Panel Administrativo)</button>
-                    </div>
-
-                    <!-- Carga de Logotipo -->
-                    <div class="dev-card" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px;">
-                        <strong style="font-size: 0.9rem;"><i class="fa-solid fa-square-poll-horizontal"></i> Registro de Logotipo de Fabricante</strong>
-                        <div style="display: flex; gap: 5px; align-items: center;">
-                            <input type="text" id="logo-brand-name-input" placeholder="Nombre de la Marca (ej. Toyota)..." class="dev-input" style="flex: 1; padding: 6px; font-size: 0.85em;">
-                            <input type="file" id="logo-file-input" accept="image/png, image/svg+xml, image/webp" style="display: none;">
-                            <button onclick="document.getElementById('logo-file-input').click()" class="btn btn-secondary" style="font-size: 0.8em; padding: 6px 10px;">Seleccionar Imagen</button>
-                        </div>
-                        <span id="selected-logo-file-name" style="font-size: 0.8em; color: var(--text-disabled); font-style: italic; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">Ningún archivo seleccionado. Formatos soportados: PNG, SVG, WEBP</span>
-                        <button id="btn-admin-register-logo" class="btn btn-primary" style="font-size: 0.85em; padding: 8px;"><i class="fa-solid fa-upload"></i> Subir y Registrar Logotipo</button>
-                    </div>
-
-                    <!-- Tarea 2: Gestión y Recuperación de Imágenes Reemplazadas y Auditoría de Google Drive -->
-                    <div class="dev-card" style="border: 1px solid var(--border-color); padding: 10px; border-radius: 8px; background: var(--card-bg); color: var(--text-color); display: flex; flex-direction: column; gap: 8px;">
-                        <strong style="font-size: 0.9rem;"><i class="fa-solid fa-clock-rotate-left"></i> Imágenes Reemplazadas y Auditoría Drive</strong>
-                        <div style="display: flex; gap: 5px; flex-wrap: wrap;">
-                            <button type="button" id="btn-admin-view-replaced-images" class="btn btn-primary" style="flex: 1; font-size: 0.8em; padding: 8px;"><i class="fa-solid fa-images"></i> Consultar Repositorio Histórico</button>
-                            <button type="button" id="btn-admin-audit-drive-images" class="btn btn-secondary" style="flex: 1; font-size: 0.8em; padding: 8px;"><i class="fa-brands fa-google-drive"></i> Auditar Árbol «Cortes»</button>
-                        </div>
-                    </div>
+            <div class="dev-card dev-tools-card dev-console-shared" aria-label="Consola global del panel de desarrollador">
+                <div class="dev-card-heading">
+                    <h4><i class="fa-solid fa-terminal"></i> &gt;_Consola</h4>
+                    <button id="btn-copy-console-log" class="btn btn-secondary"><i class="fa-solid fa-copy"></i> Copiar registro</button>
+                </div>
+                <div id="dev-console-log" class="dev-console-output" role="log" aria-live="polite" aria-relevant="additions text">
+                    [SISTEMA] Consola inicializada. Escribe comandos (dir, cd, mkdir, tree) o haz clic en los elementos.
+                </div>
+                <div class="dev-terminal-row">
+                    <span class="dev-terminal-prompt">&gt;</span>
+                    <input type="text" id="dev-terminal-input" placeholder="Comando (ej: dir, cd Subcarpeta, cd .., mkdir Pruebas, tree)..." class="dev-input" aria-label="Comando de terminal">
+                    <button id="btn-terminal-send" class="btn btn-primary"><i class="fa-solid fa-terminal"></i> Ejecutar</button>
+                </div>
+                <div id="dev-progress-container" class="dev-progress-container">
+                    <div id="dev-progress-bar" class="dev-progress-bar"></div>
+                    <span id="dev-progress-text" class="dev-progress-text">0%</span>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- MODAL DE GESTIÓN Y RECUPERACIÓN DE IMÁGENES REEMPLAZADAS (TAREA 2) -->
+<!-- MODAL DE GESTIÓN DEL INVENTARIO E HISTORIAL DE IMÁGENES -->
 <div id="replaced-images-modal" class="info-modal" style="display: none; z-index: 2600;">
-    <div class="info-modal-content" style="max-width: 900px; width: 95%;">
+    <div class="info-modal-content replaced-images-modal-content">
         <span class="info-close-btn" id="close-replaced-images-modal">&times;</span>
-        <h2><i class="fa-solid fa-clock-rotate-left"></i> Repositorio Histórico de Imágenes Reemplazadas</h2>
-        <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
-            Consulta, visualiza, recupera o elimina permanentemente versiones anteriores de imágenes sustituidas en Google Drive.
+        <h2><i class="fa-solid fa-images"></i> Gestor de Imágenes sin Uso</h2>
+        <p class="replaced-images-description">
+            Administra imágenes que ya no están referenciadas por los campos de imagen de «Cortes». El escaneo no mueve archivos; al terminar y confirmar el inventario, las imágenes sin uso se trasladan automáticamente a «Cortes/Imagenes_Sin_Uso». Los movimientos posteriores y el envío a papelera siguen sujetos a acciones explícitas.
         </p>
 
-        <div style="display: flex; gap: 10px; margin-bottom: 12px; flex-wrap: wrap;">
-            <input type="text" id="filter-replaced-images-input" placeholder="Filtrar por vehículo, ID o archivo..." class="dev-input" style="flex: 1; min-width: 200px; padding: 6px 10px;">
-            <button id="btn-refresh-replaced-images" class="btn btn-secondary" style="padding: 6px 12px; font-size: 0.85em;"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
+        <div class="replaced-images-toolbar">
+            <input type="text" id="filter-replaced-images-input" placeholder="Filtrar por archivo, ubicación o ID..." class="dev-input">
+            <div class="replaced-images-view-switch" role="group" aria-label="Tipo de vista">
+                <button type="button" id="btn-replaced-view-list" class="btn btn-secondary" aria-pressed="false" title="Vista de lista"><i class="fa-solid fa-list"></i> Lista</button>
+                <button type="button" id="btn-replaced-view-grid" class="btn btn-secondary" aria-pressed="true" title="Vista de cuadrícula"><i class="fa-solid fa-grip"></i> Cuadrícula</button>
+            </div>
+            <button type="button" id="btn-refresh-replaced-images" class="btn btn-secondary"><i class="fa-solid fa-arrows-rotate"></i> Actualizar</button>
         </div>
 
-        <div id="replaced-images-list-container" style="max-height: 400px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px;">
-            <div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Cargando imágenes históricas...</div>
+        <div class="replaced-images-folder-toolbar">
+            <label for="replaced-images-target-folder">Mover a carpeta:</label>
+            <select id="replaced-images-target-folder" class="dev-input">
+                <option value="">Cargando carpetas...</option>
+            </select>
+            <input type="text" id="replaced-images-new-folder-name" class="dev-input" placeholder="Nombre de la nueva carpeta">
+            <button type="button" id="btn-create-replaced-images-folder" class="btn btn-primary"><i class="fa-solid fa-folder-plus"></i> Crear carpeta</button>
         </div>
+        <div id="replaced-images-folder-status" class="replaced-images-folder-status" aria-live="polite"></div>
+
+        <div id="replaced-images-list-container" class="replaced-images-list view-grid" aria-live="polite">
+            <div class="replaced-images-empty"><i class="fa-solid fa-spinner fa-spin"></i> Cargando inventario e historial...</div>
+        </div>
+    </div>
+</div>
+
+<div id="replaced-image-lightbox" class="replaced-image-lightbox" style="display: none;" role="dialog" aria-modal="true" aria-label="Vista ampliada de imagen">
+    <div id="replaced-image-lightbox-content" class="replaced-image-lightbox-content">
+        <button type="button" id="replaced-image-lightbox-close" class="replaced-image-lightbox-close" aria-label="Cerrar vista ampliada"><i class="fa-solid fa-xmark"></i></button>
+        <img id="replaced-image-lightbox-image" src="" alt="Imagen ampliada">
+        <p id="replaced-image-lightbox-title"></p>
+        <span class="replaced-image-lightbox-hint">Pulsa la imagen para acercar o alejar. Pulsa fuera o Esc para cerrar.</span>
     </div>
 </div>
 
@@ -362,8 +529,12 @@
         <span class="info-close-btn" id="close-audit-drive-modal">&times;</span>
         <h2><i class="fa-brands fa-google-drive"></i> Auditoría de Imágenes en Carpeta «Cortes»</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:12px;">
-            Exploración recursiva limitada estrictamente al árbol de la carpeta principal «Cortes».
+            Exploración recursiva limitada estrictamente al árbol de la carpeta principal «Cortes». El progreso y los resultados parciales se conservan localmente.
         </p>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;">
+            <button type="button" id="btn-audit-drive-start" class="btn btn-primary"><i class="fa-solid fa-rotate"></i> Iniciar nueva auditoría</button>
+            <button type="button" id="btn-audit-drive-resume" class="btn btn-secondary" hidden disabled><i class="fa-solid fa-play"></i> Continuar auditoría</button>
+        </div>
         <div id="audit-drive-summary" style="margin-bottom: 10px; font-size: 0.85rem; font-weight: 600;"></div>
         <div id="audit-drive-results-container" style="max-height: 380px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding-right: 5px;">
             <div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol de Drive...</div>
@@ -651,10 +822,7 @@
       <div class="form-group">
         <label for="contact-message">Mensaje</label>
         <!-- TAREA 3.5: Barra de enriquecimiento para Contáctanos -->
-        <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-            <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('contact-message', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-            <input type="color" onchange="applyRichColor('contact-message', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
-        </div>
+<div id="contact-message-toolbar" class="rich-editor-toolbar"></div>
         <textarea id="contact-message" rows="4" required></textarea>
       </div>
       <button type="submit" class="btn">Enviar Mensaje</button>

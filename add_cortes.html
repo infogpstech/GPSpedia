@@ -226,10 +226,7 @@
                     <div class="form-group"><label for="configRelay1">Configuración de Relay</label><select id="configRelay1" required></select></div>
                     <div class="form-group full-width">
                         <label for="ubicacionCorte1">Ubicación del Corte</label>
-                        <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('ubicacionCorte1', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                            <input type="color" onchange="applyRichColor('ubicacionCorte1', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
-                        </div>
+                        <div class="rich-editor-toolbar" id="ubicacionCorte1-rich-toolbar"></div>
                         <textarea id="ubicacionCorte1" rows="3"></textarea>
                     </div>
                     <div class="form-group full-width" style="flex-direction: row; align-items: center; gap: 8px; margin-top: -10px; margin-bottom: 10px;">
@@ -277,10 +274,7 @@
                         <div class="accordion-content form-grid">
                             <div class="form-group full-width">
                                 <label for="apertura">Detalle de Apertura</label>
-                                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('apertura', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                                    <input type="color" onchange="applyRichColor('apertura', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
-                                </div>
+                                <div class="rich-editor-toolbar" id="apertura-rich-toolbar"></div>
                                 <textarea id="apertura" rows="3"></textarea>
                             </div>
                             <div class="form-group full-width"><label>Imagen de Apertura</label><div class="image-upload-group"><img id="imgApertura_preview" class="image-preview" onclick="this.nextElementSibling.click()"><label for="imgApertura" class="btn btn-secondary">Subir</label><input type="file" id="imgApertura" style="display:none;" accept="image/*"></div></div>
@@ -291,10 +285,7 @@
                         <div class="accordion-content form-grid">
                             <div class="form-group full-width">
                                 <label for="cableAlimen">Detalle de Alimentación</label>
-                                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('cableAlimen', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                                    <input type="color" onchange="applyRichColor('cableAlimen', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
-                                </div>
+                                <div class="rich-editor-toolbar" id="cableAlimen-rich-toolbar"></div>
                                 <textarea id="cableAlimen" rows="3"></textarea>
                             </div>
                             <div class="form-group full-width"><label>Imagen de Alimentación</label><div class="image-upload-group"><img id="imgCableAlimen_preview" class="image-preview" onclick="this.nextElementSibling.click()"><label for="imgCableAlimen" class="btn btn-secondary">Subir</label><input type="file" id="imgCableAlimen" style="display:none;" accept="image/*"></div></div>
@@ -329,10 +320,7 @@
                         <div class="accordion-content form-grid">
                             <div class="form-group full-width">
                                 <label for="notaImportante">Nota</label>
-                                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('notaImportante', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                                    <input type="color" onchange="applyRichColor('notaImportante', this.value)" style="width:26px; height:26px; padding:0; border:none; cursor:pointer; border-radius:4px;" title="Color de texto">
-                                </div>
+                                <div class="rich-editor-toolbar" id="notaImportante-rich-toolbar"></div>
                                 <textarea id="notaImportante" rows="3"></textarea>
                             </div>
                         </div>
@@ -351,12 +339,14 @@
         import { routeAction } from './api-config.js';
         import './lightbox.js';
         import { openYouTubeUploadModal } from './youtubeUpload.js';
+        import { createRichTextToolbar, applyRichTextFormat, applyRichTextColor } from './rich-text.js';
         const SESSION_KEY = 'gpsepedia_session';
         const state = {
             vehicleInfo: {},
             matches: [],
             selectedVehicleId: null,
-            colaborador: '',
+            userId: '',
+            sessionToken: '',
             timestamp: null,
             opId: null,
             restoredFiles: {
@@ -408,6 +398,9 @@
                 return;
             }
 
+            // Esperar a que init() recupere la sesión antes de consultar operaciones protegidas.
+            if (!state.userId || !state.sessionToken) return;
+
             if (!navigator.onLine) {
                 console.log("Device is offline. Will attempt recovery when connection is restored.");
                 return;
@@ -420,7 +413,11 @@
             const serviceOverride = silentVal ? 'ADMIN' : null;
 
             try {
-                const checkRes = await routeAction('checkOperation', { opId: pendingOp.id }, serviceOverride);
+                const checkRes = await routeAction('checkOperation', {
+                    opId: pendingOp.id,
+                    userId: state.userId,
+                    sessionToken: state.sessionToken
+                }, serviceOverride);
 
                 if (checkRes.exists) {
                     console.log("Operation already completed on the server!", checkRes);
@@ -499,7 +496,13 @@
                 return;
             }
             const parsedSession = JSON.parse(sessionData);
-            state.colaborador = parsedSession.Nombre_Completo;
+            state.userId = String(parsedSession.ID || '').trim();
+            state.sessionToken = String(parsedSession.SessionToken || '');
+            if (!state.userId || !state.sessionToken) {
+                alert("Tu sesión ha expirado. Por favor, inicia sesión de nuevo.");
+                window.location.href = 'index.html';
+                return;
+            }
             const userRole = parsedSession.Privilegios;
             if (userRole === 'Desarrollador') {
                 const silentContainer = document.getElementById('silent-container');
@@ -612,29 +615,19 @@
         }
 
 
-        window.applyRichFormat = function(targetId, format) {
-            const textarea = document.getElementById(targetId);
-            if (!textarea) return;
-            const start = textarea.selectionStart;
-            const end = textarea.selectionEnd;
-            const selected = textarea.value.substring(start, end);
-            const formatted = `<b>${selected || "texto en negrita"}</b>`;
-            textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
-            textarea.focus();
-        };
-
-        window.applyRichColor = function(targetId, color) {
-            const textarea = document.getElementById(targetId);
-            if (!textarea) return;
-            const start = textarea.selectionStart;
-            const end = textarea.selectionEnd;
-            const selected = textarea.value.substring(start, end);
-            const formatted = `<span style="color:${color}">${selected || "texto"}</span>`;
-            textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
-            textarea.focus();
-        };
+        window.applyRichFormat = applyRichTextFormat;
+        window.applyRichColor = applyRichTextColor;
 
         function setupEventListeners() {
+            const richToolbarFields = ['ubicacionCorte1', 'apertura', 'cableAlimen', 'notaImportante'];
+            richToolbarFields.forEach(targetId => {
+                const toolbar = document.getElementById(`${targetId}-rich-toolbar`);
+                if (toolbar && toolbar.dataset.richMounted !== 'true') {
+                    toolbar.appendChild(createRichTextToolbar(targetId));
+                    toolbar.dataset.richMounted = 'true';
+                }
+            });
+
             const btnBackToStage1 = document.getElementById('btn-back-to-stage1');
             if (btnBackToStage1) {
                 btnBackToStage1.addEventListener('click', () => {
@@ -1023,7 +1016,6 @@
                 id: opId,
                 stage: 2,
                 vehicleId: state.selectedVehicleId,
-                colaborador: state.colaborador,
                 vehicleInfo: { ...state.vehicleInfo },
                 formData: {
                     tipoCorte1: document.getElementById('tipoCorte1').value,
@@ -1053,7 +1045,11 @@
             try {
                 // First, check if operation already exists on the server to prevent duplicates!
                 console.log("[PING-PONG][5] Comprobando duplicados en el servidor con checkOperation...");
-                const checkRes = await routeAction('checkOperation', { opId }, serviceOverride);
+                const checkRes = await routeAction('checkOperation', {
+                    opId,
+                    userId: state.userId,
+                    sessionToken: state.sessionToken
+                }, serviceOverride);
                 console.log(`[PING-PONG][5a] Respuesta de checkOperation recibida. Existe en el servidor: ${checkRes.exists}`);
 
                 let result;
@@ -1080,6 +1076,8 @@
 
                 console.log("[PING-PONG][6] Enviando datos de registro/actualización de corte al servidor (addOrUpdateCut)...");
                 result = await routeAction('addOrUpdateCut', {
+                    userId: state.userId,
+                    sessionToken: state.sessionToken,
                     vehicleId: state.selectedVehicleId,
                     vehicleData: state.selectedVehicleId ? null : { ...state.vehicleInfo, imagenVehiculo: base64Veh },
                     cutData: {
@@ -1087,9 +1085,10 @@
                         configRelay1: pendingOp.formData.configRelay1,
                         ubicacionCorte1: pendingOp.formData.ubicacionCorte1,
                         colorCableCorte1: pendingOp.formData.colorCableCorte1,
-                        imgCorte1: base64Corte
+                        activaTestigo1: pendingOp.formData.testigoMotor === true,
+                        imgCorte1: base64Corte,
+                        vin: pendingOp.formData.vin || ''
                     },
-                    colaborador: state.colaborador,
                     opId: opId,
                     silent: silentVal
                 }, serviceOverride);

@@ -7,6 +7,7 @@
 // CONFIGURACIÓN GLOBAL
 // ============================================================================
 const SPREADSHEET_ID = "1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs"; // <-- ACTUALIZADO A DB V2.0
+const DRIVE_FOLDER_ID = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2";
 let spreadsheet = null;
 
 function getSpreadsheet() {
@@ -29,11 +30,199 @@ function getSafeSheet(name) {
   return sheet;
 }
 
+
+/**
+ * Verifica la sesión contra ActiveSessions y obtiene el privilegio desde Users.
+ * No utiliza el rol, nombre ni ID de actor enviados como datos de autorización por el navegador.
+ */
+function normalizeFeedbackRole(role) {
+    return String(role || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+}
+
+function assertFeedbackSession(payload, allowedRoles) {
+    const userId = payload && payload.userId;
+    const sessionToken = payload && payload.sessionToken;
+    if (!userId || !sessionToken) throw new Error("Acceso denegado: sesión no autorizada.");
+
+    const ss = getSpreadsheet();
+    const sessionsSheet = ss.getSheetByName("ActiveSessions");
+    const usersSheet = ss.getSheetByName("Users");
+    if (!sessionsSheet || !usersSheet) throw new Error("Acceso denegado: sesión no autorizada.");
+
+    const sessions = sessionsSheet.getDataRange().getValues().slice(1);
+    const activeSession = sessions.some(row =>
+        String(row[0] || "").trim() === String(userId).trim() &&
+        String(row[2] || "").trim() === String(sessionToken).trim()
+    );
+    if (!activeSession) throw new Error("Acceso denegado: sesión no autorizada.");
+
+    const users = usersSheet.getDataRange().getValues().slice(1);
+    const userRow = users.find(row => String(row[0] || "").trim() === String(userId).trim());
+    if (!userRow) throw new Error("Acceso denegado: sesión no autorizada.");
+
+    const role = String(userRow[3] || "").trim();
+    if (Array.isArray(allowedRoles) &&
+        !allowedRoles.some(allowed => normalizeFeedbackRole(allowed) === normalizeFeedbackRole(role))) {
+        throw new Error("Acceso denegado: sesión no autorizada.");
+    }
+
+    return {
+        userId: String(userId),
+        role,
+        userName: String(userRow[6] || userRow[1] || "Usuario")
+    };
+}
+
+
+/** Identidad de aportantes de validación de año; el identificador anónimo es seudónimo, no identidad civil. */
+function createAnonymousSuggestionActorKey(reporterId) {
+    const normalizedId = String(reporterId || "").trim();
+    if (!normalizedId) return "anon:unidentified";
+    if (!/^[A-Za-z0-9_-]{20,80}$/.test(normalizedId)) {
+        throw new Error("El identificador anónimo de aportante no tiene un formato válido.");
+    }
+    const digest = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, normalizedId, Utilities.Charset.UTF_8);
+    const hash = digest.map(byte => ((Number(byte) + 256) % 256).toString(16).padStart(2, "0")).join("");
+    return "anon:" + hash;
+}
+
+function resolveSuggestionYearActor(payload) {
+    const requestedUserId = String(payload && payload.userId !== undefined ? payload.userId : "").trim();
+    if (requestedUserId === "0") {
+        return {
+            userId: "0", userName: "Anónimo", userRole: "Anónimo",
+            suggestionActorKey: createAnonymousSuggestionActorKey(payload.anonymousReporterId)
+        };
+    }
+    const actor = assertFeedbackSession(payload, null);
+    return {
+        userId: actor.userId,
+        userName: actor.userName,
+        userRole: actor.role,
+        suggestionActorKey: "user:" + actor.userId
+    };
+}
+
+function ensureSuggestionActorColumn(sheet) {
+    const expectedHeaders = [
+        "ID", "Usuario", "ID_vehiculo", "Problema", "Respuesta",
+        "Se resolvio", "Responde", "Reporte de util", "anoSugerido"
+    ];
+    const maxColumns = sheet.getMaxColumns();
+    if (maxColumns < expectedHeaders.length) {
+        sheet.insertColumnsAfter(maxColumns, expectedHeaders.length - maxColumns);
+    }
+    const baseHeaders = sheet.getRange(1, 1, 1, expectedHeaders.length).getValues()[0];
+    expectedHeaders.forEach((expected, index) => {
+        if (String(baseHeaders[index] || "").trim() !== expected) {
+            throw new Error("El esquema de Feedbacks no coincide con el esperado; no se modificó la hoja.");
+        }
+    });
+    const headerWidth = Math.max(sheet.getLastColumn(), expectedHeaders.length);
+    const headers = sheet.getRange(1, 1, 1, headerWidth).getValues()[0];
+    const actorPositions = [];
+    headers.forEach((header, index) => {
+        if (String(header || "").trim() === "suggestionActorKey") actorPositions.push(index + 1);
+    });
+    if (actorPositions.length > 1 || (actorPositions.length === 1 && actorPositions[0] <= expectedHeaders.length)) {
+        throw new Error("La columna suggestionActorKey existe en una posición duplicada o incompatible.");
+    }
+    if (actorPositions.length === 1) return actorPositions[0];
+
+    const newColumn = headerWidth + 1;
+    if (sheet.getMaxColumns() < newColumn) {
+        sheet.insertColumnsAfter(sheet.getMaxColumns(), newColumn - sheet.getMaxColumns());
+    }
+    const occupiedHeader = sheet.getRange(1, newColumn).getValue();
+    if (occupiedHeader !== "" && occupiedHeader !== null) {
+        throw new Error("No se puede añadir suggestionActorKey sin sobrescribir un encabezado existente.");
+    }
+    sheet.getRange(1, newColumn).setValue("suggestionActorKey");
+    SpreadsheetApp.flush();
+    return newColumn;
+}
+
+function getReportMetadataColumn(sheet) {
+    const maxColumns = sheet.getMaxColumns();
+    if (maxColumns < 10) return 0;
+    const headerWidth = Math.min(Math.max(sheet.getLastColumn(), 9), maxColumns);
+    const headers = sheet.getRange(1, 1, 1, headerWidth).getValues()[0];
+    const positions = [];
+    headers.forEach((header, index) => {
+        if (String(header || "").trim() === "reportMetadata") positions.push(index + 1);
+    });
+    if (positions.length > 1 || (positions.length === 1 && positions[0] <= 9)) {
+        throw new Error("La columna reportMetadata existe en una posición duplicada o incompatible.");
+    }
+    return positions.length ? positions[0] : 0;
+}
+
+function ensureReportMetadataColumn(sheet) {
+    const expectedHeaders = [
+        "ID", "Usuario", "ID_vehiculo", "Problema", "Respuesta",
+        "Se resolvio", "Responde", "Reporte de util", "anoSugerido"
+    ];
+    const maxColumns = sheet.getMaxColumns();
+    if (maxColumns < expectedHeaders.length) {
+        sheet.insertColumnsAfter(maxColumns, expectedHeaders.length - maxColumns);
+    }
+    const baseHeaders = sheet.getRange(1, 1, 1, expectedHeaders.length).getValues()[0];
+    expectedHeaders.forEach((expected, index) => {
+        if (String(baseHeaders[index] || "").trim() !== expected) {
+            throw new Error("El esquema de Feedbacks no coincide con el esperado; no se modificó la hoja.");
+        }
+    });
+
+    const existingColumn = getReportMetadataColumn(sheet);
+    if (existingColumn) return existingColumn;
+
+    const headerWidth = Math.max(sheet.getLastColumn(), expectedHeaders.length);
+    const newColumn = headerWidth + 1;
+    if (sheet.getMaxColumns() < newColumn) {
+        sheet.insertColumnsAfter(sheet.getMaxColumns(), newColumn - sheet.getMaxColumns());
+    }
+    const occupiedHeader = sheet.getRange(1, newColumn).getValue();
+    if (occupiedHeader !== "" && occupiedHeader !== null) {
+        throw new Error("No se puede añadir reportMetadata sin sobrescribir un encabezado existente.");
+    }
+    sheet.getRange(1, newColumn).setValue("reportMetadata");
+    SpreadsheetApp.flush();
+    return newColumn;
+}
+
+function parseReportMetadata(rawValue, rowVehicleId) {
+    if (typeof rawValue !== "string" || !rawValue.trim()) return null;
+    try {
+        const parsed = JSON.parse(rawValue);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+        const reportId = String(parsed.reportId || "").trim();
+        const vehicleId = String(parsed.vehicleId || "").trim();
+        const corteIndex = Number(parsed.corteIndex);
+        if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(reportId) ||
+            !vehicleId || vehicleId !== String(rowVehicleId || "").trim() ||
+            !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3 ||
+            typeof parsed.activaTestigoMotor !== "boolean") return null;
+        return { reportId, vehicleId, corteIndex, activaTestigoMotor: parsed.activaTestigoMotor };
+    } catch (error) {
+        return null;
+    }
+}
+
+function isPositiveYearSuggestionRow(row) {
+    const problem = String(row[COLS_FEEDBACKS.Problema - 1] || "");
+    const answer = String(row[COLS_FEEDBACKS.Respuesta - 1] || "");
+    if (problem.includes("Sugerencia de ampliar rango") ||
+        problem.includes("Confirmación de funcionamiento")) return true;
+    return problem.includes("Modelo sin generaciones recientes") &&
+        answer.includes("confirmó que se trata de una generación más reciente");
+}
+
 const SHEET_NAMES = {
     CORTES: "Cortes",
     FEEDBACKS: "Feedbacks",
     CONTACTANOS: "Contactanos",
     ACTIVIDAD_USUARIO: "ActividadUsuario",
+    LOGS: "Logs",
     SUGERENCIAS_ANO: "Feedbacks"
 };
 
@@ -47,8 +236,7 @@ const COLS_CORTES = {
     configRelay3: 29, imgCorte3: 30, utilCorte3: 31, colaboradorCorte3: 32,
     apertura: 33, imgApertura: 34, cableAlimen: 35, imgCableAlimen: 36,
     timestamp: 37, notaImportante: 38,
-    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42,
-    vin: 43
+    cableAlimen2: 39, imgCableAlimen2: 40, cableAlimen3: 41, imgCableAlimen3: 42
 };
 
 // Mapa de columnas para la hoja "Feedbacks" (v2.0)
@@ -91,8 +279,7 @@ function doGet(e) {
         const serviceState = {
             service: 'GPSpedia-Feedback',
             version: '1.2.1',
-            spreadsheetId: SPREADSHEET_ID,
-            sheetsAccessed: [SHEET_NAMES.CORTES, SHEET_NAMES.FEEDBACKS]
+            status: 'available'
         };
         return ContentService.createTextOutput(JSON.stringify(serviceState, null, 2))
             .setMimeType(ContentService.MimeType.TEXT);
@@ -110,7 +297,41 @@ function doPost(e) {
     try {
         const request = JSON.parse(e.postData.contents);
         const action = request.action;
-        const payload = request.payload || {};
+        let payload = request.payload || {};
+
+        const actionPermissions = {
+            getFeedbackItems: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+            replyToFeedback: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+            markAsResolved: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+            deleteFeedbackItem: ["Desarrollador", "Gefe", "Jefe", "Supervisor"],
+            getActivityLogs: ["Desarrollador", "Gefe", "Supervisor"],
+            clearActivityLogs: ["Desarrollador"],
+            clearSensitiveLogs: ["Desarrollador"],
+            approveVideo: ["Desarrollador", "Gefe", "Supervisor"],
+            rejectVideo: ["Desarrollador", "Gefe", "Supervisor"],
+            removeVehicleFromProblem: ["Desarrollador"],
+            updatePysItem: ["Desarrollador"],
+            updateTutorialItem: ["Desarrollador"],
+            initYouTubeUpload: null,
+            submitVideoForApproval: null,
+            addVehicleToProblem: null
+        };
+
+        if (action === "suggestYear") {
+            const actor = resolveSuggestionYearActor(payload);
+            payload = { ...payload, ...actor };
+        } else if (Object.prototype.hasOwnProperty.call(actionPermissions, action)) {
+            const actor = assertFeedbackSession(payload, actionPermissions[action]);
+            payload = {
+                ...payload,
+                userId: actor.userId,
+                userName: actor.userName,
+                userRole: actor.role
+            };
+            if (action === "replyToFeedback") payload.responderName = actor.userName;
+            if (action === "approveVideo") payload.approverName = actor.userName;
+            if (action === "rejectVideo") payload.rejecterName = actor.userName;
+        }
 
         switch (action) {
             case 'recordLike':
@@ -177,6 +398,9 @@ function doPost(e) {
             case 'clearActivityLogs':
                 response = handleClearActivityLogs(payload);
                 break;
+            case 'clearSensitiveLogs':
+                response = handleClearSensitiveLogs();
+                break;
             case 'initYouTubeUpload':
                 response = handleInitYouTubeUpload(payload);
                 break;
@@ -226,217 +450,437 @@ function handleAssignCollaborator(payload) {
     throw new Error("Vehículo no encontrado.");
 }
 
-function handleSuggestYear(payload) {
-    const { vehicleId, newYear, response, userId, userName } = payload;
-    if (!vehicleId || !newYear || !userId || !userName) {
-        throw new Error("Faltan datos para sugerir año (vehicleId, newYear, userId, userName).");
+
+// ============================================================================
+// SINCRONIZACIÓN DE LA CARPETA DE IMAGEN PRINCIPAL TRAS AMPLIAR AÑOS
+// ============================================================================
+
+function extractDriveFileIds(value) {
+    const text = String(value || "");
+    const ids = new Set();
+    const patterns = [
+        /[?&]id=([a-zA-Z0-9_-]{10,})/g,
+        new RegExp("[/]d/([a-zA-Z0-9_-]{10,})", "g")
+    ];
+    patterns.forEach(pattern => {
+        let match;
+        while ((match = pattern.exec(text)) !== null) ids.add(match[1]);
+    });
+    if (/^[a-zA-Z0-9_-]{20,}$/.test(text.trim())) ids.add(text.trim());
+    return Array.from(ids);
+}
+
+function getCortesRootFolder() {
+    const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const rootId = DriveApp.getRootFolder().getId();
+    if (String(folder.getId()) !== String(DRIVE_FOLDER_ID) ||
+        String(folder.getName() || "").trim().toLowerCase() !== "cortes") {
+        throw new Error("DRIVE_FOLDER_ID no corresponde a la carpeta «Cortes».");
+    }
+    const parents = folder.getParents();
+    let directChild = false;
+    while (parents.hasNext()) if (parents.next().getId() === rootId) directChild = true;
+    if (!directChild) throw new Error("La carpeta «Cortes» no está ubicada directamente en la raíz de Drive.");
+    return folder;
+}
+
+function sanitizeForFolderDisplay(text) {
+    if (text === null || text === undefined) return "";
+    return String(text).replace(/\s+/g, " ").replace(/__+/g, "_").trim();
+}
+
+function getFolderCanonicalName(name) {
+    return String(name || "").normalize("NFD").replace(/\p{M}/gu, "")
+        .toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function findOrCreateSubFolder(parentFolder, desiredName) {
+    if (!parentFolder) throw new Error("No se proporcionó la carpeta padre.");
+    const name = sanitizeForFolderDisplay(desiredName);
+    const canonical = getFolderCanonicalName(name);
+    if (!canonical) throw new Error("El nombre de carpeta no es válido.");
+
+    const matches = [];
+    const folders = parentFolder.getFolders();
+    while (folders.hasNext()) {
+        const folder = folders.next();
+        if (getFolderCanonicalName(folder.getName()) === canonical) matches.push(folder);
     }
 
-    const year = parseInt(newYear, 10);
-    if (isNaN(year) || year < 1980 || year > 2099) {
-        throw new Error("El año proporcionado no es un número válido.");
+    const exactMatches = matches.filter(folder => folder.getName() === name);
+    if (exactMatches.length === 1) return exactMatches[0];
+    if (exactMatches.length > 1 || matches.length > 1) {
+        throw new Error("Existen varias carpetas equivalentes a «" + name + "»; no se fusionaron ni modificaron.");
     }
+    if (matches.length === 1) {
+        matches[0].setName(name);
+        return matches[0];
+    }
+
+    try {
+        return parentFolder.createFolder(name);
+    } catch (error) {
+        const retryMatches = [];
+        const retryFolders = parentFolder.getFolders();
+        while (retryFolders.hasNext()) {
+            const folder = retryFolders.next();
+            if (getFolderCanonicalName(folder.getName()) === canonical) retryMatches.push(folder);
+        }
+        if (retryMatches.length === 1) return retryMatches[0];
+        throw error;
+    }
+}
+
+function getVehicleYearFolderName(vehicleInfo) {
+    const info = vehicleInfo || {};
+    const rawDesde = String(info[COLS_CORTES.anoDesde - 1] === null || info[COLS_CORTES.anoDesde - 1] === undefined ? "" : info[COLS_CORTES.anoDesde - 1]).trim();
+    const rawHasta = String(info[COLS_CORTES.anoHasta - 1] === null || info[COLS_CORTES.anoHasta - 1] === undefined ? "" : info[COLS_CORTES.anoHasta - 1]).trim();
+    const inlineRange = rawDesde.match(/^(\d{4})\s*[-–]\s*(\d{4})$/);
+    let desde = inlineRange ? parseInt(inlineRange[1], 10) : parseInt(rawDesde, 10);
+    let hasta = inlineRange ? parseInt(inlineRange[2], 10) : parseInt(rawHasta, 10);
+    if (!Number.isFinite(desde)) return "Sin_Año";
+    if (!Number.isFinite(hasta)) hasta = desde;
+    const start = Math.min(desde, hasta);
+    const end = Math.max(desde, hasta);
+    return start === end ? String(start) : String(start) + "_" + String(end);
+}
+
+function findOrCreateVehicleFolder(vehicleRow) {
+    const row = vehicleRow || [];
+    const category = sanitizeForFolderDisplay(row[COLS_CORTES.categoria - 1] || "Sin_Categoria");
+    const brand = sanitizeForFolderDisplay(row[COLS_CORTES.marca - 1] || "Sin_Marca");
+    const model = sanitizeForFolderDisplay(row[COLS_CORTES.modelo - 1] || "Sin_Modelo");
+    const versionOrIgnition = sanitizeForFolderDisplay(
+        String(row[COLS_CORTES.versionesAplicables - 1] || "").trim() ||
+        String(row[COLS_CORTES.tipoEncendido - 1] || "").trim() || "Sin_Tipo_de_Encendido"
+    );
+    const yearRange = sanitizeForFolderDisplay(getVehicleYearFolderName(row));
+
+    const categoryFolder = findOrCreateSubFolder(getCortesRootFolder(), category);
+    const brandFolder = findOrCreateSubFolder(categoryFolder, brand);
+    const modelFolder = findOrCreateSubFolder(brandFolder, model);
+    const versionFolder = findOrCreateSubFolder(modelFolder, versionOrIgnition);
+    return findOrCreateSubFolder(versionFolder, yearRange);
+}
+
+function collectCortesImageReferencesForFolderSync(sheet) {
+    const imageFields = [
+        "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
+        "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
+    ];
+    const imageColumns = imageFields.map(field => ({
+        field: field, column: COLS_CORTES[field]
+    })).filter(item => Number.isInteger(item.column) && item.column > 0);
+    const references = new Map();
+    let unverifiableReferenceCount = 0;
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { references: references, unverifiableReferenceCount: 0 };
+
+    const range = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
+    const values = range.getDisplayValues();
+    const formulas = range.getFormulas();
+    const richTextValues = range.getRichTextValues();
+
+    for (let r = 0; r < values.length; r++) {
+        imageColumns.forEach(item => {
+            const columnIndex = item.column - 1;
+            const candidates = [
+                String(values[r][columnIndex] || ""),
+                String((formulas[r] && formulas[r][columnIndex]) || "")
+            ];
+            const richText = richTextValues[r] && richTextValues[r][columnIndex];
+            if (richText) {
+                const link = richText.getLinkUrl();
+                if (link) candidates.push(link);
+                const runs = richText.getRuns ? richText.getRuns() : [];
+                runs.forEach(run => { const runLink = run.getLinkUrl(); if (runLink) candidates.push(runLink); });
+            }
+
+            const cellIds = new Set();
+            let hasUnverifiable = false;
+            candidates.forEach(candidate => {
+                if (!candidate) return;
+                const ids = extractDriveFileIds(candidate);
+                ids.forEach(id => cellIds.add(id));
+                if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) {
+                    hasUnverifiable = true;
+                }
+            });
+
+            cellIds.forEach(id => {
+                if (!references.has(id)) references.set(id, []);
+                references.get(id).push({
+                    row: r + 2, field: item.field, column: item.column
+                });
+            });
+            if (hasUnverifiable) unverifiableReferenceCount++;
+        });
+    }
+    return { references: references, unverifiableReferenceCount: unverifiableReferenceCount };
+}
+
+function movePrimaryVehicleImageToCanonicalFolder(sheet, rowNumber, vehicleRow) {
+    const imageUrl = vehicleRow[COLS_CORTES.imagenVehiculo - 1];
+    const imageIds = extractDriveFileIds(imageUrl);
+    if (!imageIds.length) return { skipped: true };
+
+    const imageId = imageIds[0];
+    const referenceData = collectCortesImageReferencesForFolderSync(sheet);
+    if (referenceData.unverifiableReferenceCount > 0) {
+        return {
+            skipped: true, warning: true,
+            reason: "Existen referencias de imagen de Cortes no verificables; se protegió el archivo."
+        };
+    }
+
+    const locations = referenceData.references.get(imageId) || [];
+    if (!locations.length) return { skipped: true, warning: true, reason: "No se pudo confirmar la referencia de imagenVehiculo." };
+    if (locations.some(location => location.field !== "imagenVehiculo")) {
+        return { skipped: true, warning: true, reason: "La imagen también se utiliza en un campo de corte, apertura o alimentación." };
+    }
+    const primaryLocations = locations.filter(location => location.field === "imagenVehiculo")
+        .sort((a, b) => a.row - b.row);
+    if (primaryLocations.length && primaryLocations[0].row !== rowNumber) {
+        return { skipped: true, reason: "La imagen pertenece al primer registro que la utiliza (fila " + primaryLocations[0].row + ")." };
+    }
+
+    const file = DriveApp.getFileById(imageId);
+    if (file.isTrashed()) return { skipped: true, warning: true, reason: "La imagen principal está en la papelera de Drive." };
+    if (!String(file.getMimeType() || "").toLowerCase().startsWith("image/")) {
+        return { skipped: true, warning: true, reason: "El archivo referenciado no tiene MIME de imagen." };
+    }
+
+    const targetFolder = findOrCreateVehicleFolder(vehicleRow);
+    const parents = file.getParents();
+    while (parents.hasNext()) {
+        if (parents.next().getId() === targetFolder.getId()) return { skipped: true };
+    }
+
+    file.moveTo(targetFolder);
+    return { moved: true, skipped: false };
+}
+
+function handleSuggestYear(payload) {
+    const lock = LockService.getScriptLock();
+    lock.waitLock(15000);
+    try {
+        return handleSuggestYearLocked(payload);
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+function handleSuggestYearLocked(payload) {
+    const { vehicleId, newYear, response, userId, userName, suggestionActorKey } = payload || {};
+    const normalizedVehicleId = String(vehicleId || "").trim();
+    const normalizedResponse = String(response || "").trim();
+    const actorKey = String(suggestionActorKey || "").trim();
+
+    if (!normalizedVehicleId || !userId || !userName || !actorKey) {
+        throw new Error("Faltan datos verificados para registrar la sugerencia de año.");
+    }
+    if (!/^user:[A-Za-z0-9_.-]{1,100}$/.test(actorKey) &&
+        !/^anon:(?:[a-f0-9]{64}|unidentified)$/.test(actorKey)) {
+        throw new Error("La identidad del aportante no tiene un formato válido.");
+    }
+
+    const yearText = String(newYear === null || newYear === undefined ? "" : newYear).trim();
+    if (!/^\d{4}$/.test(yearText)) throw new Error("El año debe contener exactamente cuatro dígitos.");
+    const year = Number(yearText);
+    if (year < 1980 || year > 2099) throw new Error("El año proporcionado no es válido.");
+
+    const otherYearMatch = normalizedResponse.match(/^Otro año:\s*(\d{4})$/);
+    const allowedResponses = [
+        "Sí (Funciona)", "Modelo confirmado", "No funciona", "No",
+        "Es más antiguo", "No útil (Viejo)"
+    ];
+    if (!allowedResponses.includes(normalizedResponse) && !otherYearMatch) {
+        throw new Error("La respuesta de validación no es reconocida.");
+    }
+    if (otherYearMatch && Number(otherYearMatch[1]) !== year) {
+        throw new Error("El año de la respuesta no coincide con el año enviado.");
+    }
+
+    const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!cortesSheet) throw new Error("Hoja Cortes no encontrada.");
+    const allCortesData = cortesSheet.getDataRange().getValues().slice(1);
+    const vehicleRowIndex = allCortesData.findIndex(row =>
+        String(row[COLS_CORTES.id - 1] || "").trim() === normalizedVehicleId
+    );
+    if (vehicleRowIndex === -1) throw new Error("Vehículo no encontrado para registrar la sugerencia.");
+    const vehicleRow = allCortesData[vehicleRowIndex];
 
     const sheet = getSafeSheet(SHEET_NAMES.SUGERENCIAS_ANO);
-    if (!sheet) throw new Error(`Hoja no encontrada: ${SHEET_NAMES.SUGERENCIAS_ANO}`);
+    if (!sheet) throw new Error("Hoja Feedbacks no encontrada.");
+    const actorColumn = ensureSuggestionActorColumn(sheet);
 
-    // 1. Registrar la sugerencia (preservando fórmula de ID 'F-XXX')
-    const lastRow = sheet.getLastRow();
-    const FORMULA_ROW = 2; // Fila que contiene la fórmula base del ID
-    const newRowNumber = lastRow + 1;
-    const lastCol = Math.max(sheet.getLastColumn(), 9);
+    let problema = "Sugerencia de año: " + year;
+    let respuestaText = "La información funciona para el año " + year;
+    let isPositive = false;
+    if (normalizedResponse === "Sí (Funciona)") {
+        problema = "Confirmación de funcionamiento para año " + year;
+        respuestaText = "La información funciona para el año " + year + ".";
+        isPositive = true;
+    } else if (otherYearMatch) {
+        problema = "Sugerencia de ampliar rango al año " + year;
+        respuestaText = "La información funciona para el año " + year + ".";
+        isPositive = true;
+    } else if (normalizedResponse === "Es más antiguo") {
+        problema = "Sugerencia de ampliar rango inferior al año " + year;
+        respuestaText = "El usuario indicó que corresponde a un modelo anterior.";
+        isPositive = true;
+    } else if (normalizedResponse === "No funciona") {
+        problema = "Reporte de información no funcional";
+        respuestaText = "La información no funciona para el año " + year + ". El usuario fue dirigido para agregar un nuevo corte.";
+    } else if (normalizedResponse === "No") {
+        problema = "Reporte de información no funcional";
+        respuestaText = "El usuario indicó que la información no fue útil.";
+    } else if (normalizedResponse === "Modelo confirmado") {
+        problema = "Modelo sin generaciones recientes registradas";
+        respuestaText = "El usuario confirmó que se trata de una generación más reciente.";
+        isPositive = true;
+    } else if (normalizedResponse === "No útil (Viejo)") {
+        problema = "Modelo sin generaciones recientes registradas";
+        respuestaText = "El usuario indicó que la información no fue útil.";
+    }
 
-    if (newRowNumber > FORMULA_ROW) {
-        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
-        const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
-        formulaRange.copyTo(newRowRange);
-        // Limpiar contenido de celdas de datos (col 2 en adelante) preservando la fórmula del ID (col 1)
-        if (lastCol > 1) {
+    const existingData = sheet.getDataRange().getValues().slice(1);
+    const alreadyReported = existingData.some(row =>
+        String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim() === normalizedVehicleId &&
+        Number(row[COLS_FEEDBACKS.anoSugerido - 1]) === year &&
+        String(row[actorColumn - 1] || "").trim() === actorKey
+    );
+
+    if (!alreadyReported) {
+        const newRowNumber = sheet.getLastRow() + 1;
+        const lastCol = Math.max(sheet.getLastColumn(), actorColumn, 9);
+        if (newRowNumber > 2) {
+            sheet.getRange(2, 1, 1, lastCol).copyTo(sheet.getRange(newRowNumber, 1, 1, lastCol));
             sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
         }
+        const values = [[userName, normalizedVehicleId, problema, respuestaText, "", "", "", year]];
+        sheet.getRange(newRowNumber, 2, 1, values[0].length).setValues(values);
+        sheet.getRange(newRowNumber, actorColumn).setValue(actorKey);
+        SpreadsheetApp.flush();
+        logUserActivity(userId, userName, "suggest_year", normalizedVehicleId,
+            "Año sugerido: " + year + ". Respuesta: " + normalizedResponse);
     }
 
-    // Mapeo de mensajes descriptivos basados en la respuesta del frontend
-    let problema = `Sugerencia de año: ${year}`;
-    let respuestaText = `La información funciona para el año ${year}`;
-    let isPositive = false;
-    let isLowerRange = false;
-
-    if (response === 'Sí (Funciona)') {
-        problema = `Confirmación de funcionamiento para año ${year}`;
-        respuestaText = `La información funciona para el año ${year}.`;
-        isPositive = true;
-    } else if (response.includes('Otro año')) {
-        problema = `Sugerencia de ampliar rango al año ${year}`;
-        respuestaText = `La información funciona para el año ${year}.`;
-        isPositive = true;
-    } else if (response === 'Es más antiguo') {
-        problema = `Sugerencia de ampliar rango inferior al año ${year}`;
-        respuestaText = `El usuario indicó que corresponde a un modelo anterior.`;
-        isPositive = true;
-        isLowerRange = true;
-    } else if (response === 'No funciona') {
-        problema = `Reporte de información no funcional`;
-        respuestaText = `La información no funciona para el año ${year}. El usuario fue dirigido para agregar un nuevo corte.`;
-        isPositive = false;
-    } else if (response === 'No') {
-        problema = `Reporte de información no funcional`;
-        respuestaText = `El usuario indicó que la información no fue útil.`;
-        isPositive = false;
-    } else if (response === 'Modelo confirmado') {
-        problema = `Modelo sin generaciones recientes registradas`;
-        respuestaText = `El usuario confirmó que se trata de una generación más reciente.`;
-        isPositive = true;
-    } else if (response === 'No útil (Viejo)') {
-        problema = `Modelo sin generaciones recientes registradas`;
-        respuestaText = `El usuario indicó que la información no fue útil.`;
-        isPositive = false;
-    }
-
-    // Asignar valores a columnas específicas según esquema (batch write para mayor robustez)
-    const values = [[
-        userName,                              // Col 2: Usuario
-        vehicleId,                             // Col 3: ID_vehiculo
-        problema,                              // Col 4: Problema
-        respuestaText,                         // Col 5: Respuesta
-        "",                                    // Col 6: Se resolvio
-        "",                                    // Col 7: Responde
-        "",                                    // Col 8: Reporte de util
-        year                                   // Col 9: anoSugerido
-    ]];
-    sheet.getRange(newRowNumber, 2, 1, values[0].length).setValues(values);
-
-    SpreadsheetApp.flush(); // Garantizar persistencia inmediata
-
-    logUserActivity(userId, userName, 'suggest_year', vehicleId, `Año sugerido: ${year}. Respuesta: ${response}`);
-
-    // Solo procesar actualización si la respuesta es positiva
-    if (!isPositive) {
-        return { status: 'success', message: 'Respuesta registrada correctamente.' };
-    }
-
-    // 2. Contar votos para esta combinación (ID_Vehículo + Año_Sugerido)
-    // Se filtran únicamente los reportes positivos que coincidan con el vehículo y año
     const allData = sheet.getDataRange().getValues().slice(1);
-    const voteCount = allData.filter(row => {
-        const rowId = row[COLS_FEEDBACKS.ID_vehiculo - 1];
-        const rowYear = row[COLS_FEEDBACKS.anoSugerido - 1];
-        const rowProb = String(row[COLS_FEEDBACKS.Problema - 1]);
-        const isPositiveReport = rowProb.includes('Sugerencia de ampliar rango') ||
-                                 rowProb.includes('Confirmación de funcionamiento') ||
-                                 rowProb.includes('Modelo sin generaciones recientes');
-        return rowId == vehicleId && rowYear == year && isPositiveReport;
-    }).length;
+    const voteActors = new Set();
+    allData.forEach(row => {
+        const rowId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
+        const rowYear = Number(row[COLS_FEEDBACKS.anoSugerido - 1]);
+        const rowActorKey = String(row[actorColumn - 1] || "").trim();
+        if (rowId === normalizedVehicleId && rowYear === year &&
+            rowActorKey && isPositiveYearSuggestionRow(row)) voteActors.add(rowActorKey);
+    });
+    const voteCount = voteActors.size;
 
-    // 3. El rango únicamente deberá actualizarse cuando existan tres o más reportes válidos (más de dos).
+    if (!isPositive) {
+        return alreadyReported
+            ? { status: "info", message: "Ya existe una respuesta de este aportante para ese vehículo y año; no se duplicó." }
+            : { status: "success", message: "Respuesta registrada correctamente." };
+    }
     if (voteCount < 3) {
-        return { status: 'success', message: `Sugerencia registrada. Votos acumulados: ${voteCount}/3.` };
+        const prefix = alreadyReported ? "Tu aporte ya estaba registrado." : "Sugerencia registrada.";
+        return { status: "success", message: prefix + " Votos distintos confirmados: " + voteCount + "/3." };
     }
 
-    // 4. Si se alcanzan los 3 votos, proceder con la lógica de actualización
-    const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-    const allCortesData = cortesSheet.getDataRange().getValues();
-    const headers = allCortesData.shift();
-    const vehicleRowIndex = allCortesData.findIndex(row => row[COLS_CORTES.id - 1] == vehicleId);
-
-    if (vehicleRowIndex === -1) throw new Error("Vehículo no encontrado para actualizar.");
-
-    const vehicleRow = allCortesData[vehicleRowIndex];
     const anoDesde = parseInt(vehicleRow[COLS_CORTES.anoDesde - 1], 10);
     const anoHasta = parseInt(vehicleRow[COLS_CORTES.anoHasta - 1] || anoDesde, 10);
-
-    // Si el año ya está en el rango, no hacer nada
     if (year >= anoDesde && year <= anoHasta) {
-        return { status: 'info', message: `El año ${year} ya está dentro del rango actual.` };
+        return { status: "info", message: "El año " + year + " ya está dentro del rango actual." };
     }
 
-    // 5. Lógica Anti-colisión
     const marca = String(vehicleRow[COLS_CORTES.marca - 1]).toLowerCase();
     const modelo = String(vehicleRow[COLS_CORTES.modelo - 1]).toLowerCase();
     const categoria = String(vehicleRow[COLS_CORTES.categoria - 1]).toLowerCase();
     const tipoEncendido = String(vehicleRow[COLS_CORTES.tipoEncendido - 1]).toLowerCase();
-
-    const normalizeV = (v) => (v || "").toString().toLowerCase().replace(/[^a-z0-9]/g, ' ').split(/\s+/).filter(Boolean).sort().join(' ');
+    const normalizeV = value => (value || "").toString().toLowerCase()
+        .replace(/[^a-z0-9]/g, " ").split(/\s+/).filter(Boolean).sort().join(" ");
     const versionNormalizada = normalizeV(vehicleRow[COLS_CORTES.versionesAplicables - 1]);
 
     for (const row of allCortesData) {
-        if (row[COLS_CORTES.id - 1] == vehicleId) continue; // No comparar consigo mismo
-
+        if (String(row[COLS_CORTES.id - 1] || "").trim() === normalizedVehicleId) continue;
         const otherMarca = String(row[COLS_CORTES.marca - 1]).toLowerCase();
         const otherModelo = String(row[COLS_CORTES.modelo - 1]).toLowerCase();
         const otherCategoria = String(row[COLS_CORTES.categoria - 1]).toLowerCase();
         const otherTipoEncendido = String(row[COLS_CORTES.tipoEncendido - 1]).toLowerCase();
         const otherVersion = normalizeV(row[COLS_CORTES.versionesAplicables - 1]);
-
         if (otherMarca === marca && otherModelo === modelo && otherCategoria === categoria &&
             otherTipoEncendido === tipoEncendido && otherVersion === versionNormalizada) {
             const otherAnoDesde = parseInt(row[COLS_CORTES.anoDesde - 1], 10);
             const otherAnoHasta = parseInt(row[COLS_CORTES.anoHasta - 1] || otherAnoDesde, 10);
-
-            // Anti-colisión: El año sugerido no debe solaparse con otra generación
-            // ni "saltar" sobre ella si es una generación anterior.
             if (year <= otherAnoHasta) {
-                logUserActivity(userId, userName, 'suggest_year_collision', vehicleId, `Año ${year} colisiona con rango de vehículo ID ${row[COLS_CORTES.id - 1]}`);
-                return { status: 'warning', message: `La sugerencia para el año ${year} no se puede aplicar porque el año ya está cubierto o es anterior a una generación registrada (${otherAnoDesde}-${otherAnoHasta}). Se requiere revisión manual.` };
+                logUserActivity(userId, userName, "suggest_year_collision", normalizedVehicleId,
+                    "Año " + year + " colisiona con rango de vehículo ID " + row[COLS_CORTES.id - 1]);
+                return {
+                    status: "warning",
+                    message: "La sugerencia para el año " + year +
+                        " no se puede aplicar porque el año ya está cubierto o es anterior a una generación registrada (" +
+                        otherAnoDesde + "-" + otherAnoHasta + "). Se requiere revisión manual."
+                };
             }
         }
     }
 
-    // 6. Actualizar el rango
-    let newAnoDesde = anoDesde;
-    let newAnoHasta = anoHasta;
-    let updated = false;
-
-    if (year < anoDesde) {
-        newAnoDesde = year;
-        updated = true;
-    }
-    if (year > anoHasta) {
-        newAnoHasta = year;
-        updated = true;
-    }
+    let newAnoDesde = anoDesde, newAnoHasta = anoHasta, updated = false;
+    if (year < anoDesde) { newAnoDesde = year; updated = true; }
+    if (year > anoHasta) { newAnoHasta = year; updated = true; }
 
     if (updated) {
-        const finalAnoDesde = newAnoDesde;
-        const finalAnoHasta = newAnoHasta;
-        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoDesde).setValue(finalAnoDesde);
-        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoHasta).setValue(finalAnoHasta);
-        logUserActivity(userId, userName, 'apply_year_suggestion', vehicleId, `Rango actualizado a ${finalAnoDesde}-${finalAnoHasta} basado en 3 o más votos para el año ${year}.`);
+        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoDesde).setValue(newAnoDesde);
+        cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoHasta).setValue(newAnoHasta);
+        let folderSyncWarning = false, folderSyncMessage = "";
+        try {
+            const updatedVehicleRow = cortesSheet.getRange(
+                vehicleRowIndex + 2, 1, 1, cortesSheet.getLastColumn()
+            ).getValues()[0];
+            const folderSyncResult = movePrimaryVehicleImageToCanonicalFolder(
+                cortesSheet, vehicleRowIndex + 2, updatedVehicleRow
+            );
+            folderSyncWarning = Boolean(folderSyncResult && folderSyncResult.warning);
+            folderSyncMessage = folderSyncResult && folderSyncResult.reason ? folderSyncResult.reason : "";
+        } catch (folderError) {
+            folderSyncWarning = true;
+            folderSyncMessage = folderError.message;
+            Logger.log("No se pudo sincronizar la carpeta de imagenVehiculo tras ampliar el rango: " + folderError.message);
+        }
+        SpreadsheetApp.flush();
+        logUserActivity(userId, userName, "apply_year_suggestion", normalizedVehicleId,
+            "Rango actualizado a " + newAnoDesde + "-" + newAnoHasta +
+            " basado en " + voteCount + " aportantes distintos para el año " + year +
+            (folderSyncWarning ? ". Advertencia de carpeta: " + folderSyncMessage : "."));
 
-        // 7. Depuración automática: Eliminar únicamente los registros de Feedback que motivaron esa actualización
         const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
         if (feedbackSheet) {
             const feedbackValues = feedbackSheet.getDataRange().getValues();
-            const isActuallyLowerUpdate = (year < anoDesde);
-
-            // Prefijos permitidos para eliminación según el tipo de actualización realizada
-            const allowedPrefixes = isActuallyLowerUpdate
-                ? ['Sugerencia de ampliar rango inferior']
-                : ['Sugerencia de ampliar rango al año', 'Confirmación de funcionamiento', 'Modelo sin generaciones recientes'];
-
-            // Recorrer de abajo hacia arriba para evitar desajustes de índices al eliminar filas
+            const isActuallyLowerUpdate = year < anoDesde;
             for (let i = feedbackValues.length - 1; i >= 1; i--) {
                 const row = feedbackValues[i];
-                const rowId = row[COLS_FEEDBACKS.ID_vehiculo - 1];
-                const rowYear = row[COLS_FEEDBACKS.anoSugerido - 1];
-                const rowProb = String(row[COLS_FEEDBACKS.Problema - 1]);
-
-                // Solo eliminar reportes del mismo vehículo, mismo año sugerido y que correspondan a la intención de la actualización
-                const hasAllowedPrefix = allowedPrefixes.some(prefix => rowProb.includes(prefix));
-                const isMatch = rowId == vehicleId && rowYear == year && hasAllowedPrefix;
-
-                if (isMatch) {
+                const rowId = String(row[COLS_FEEDBACKS.ID_vehiculo - 1] || "").trim();
+                const rowYear = Number(row[COLS_FEEDBACKS.anoSugerido - 1]);
+                const rowActorKey = String(row[actorColumn - 1] || "").trim();
+                const rowProblem = String(row[COLS_FEEDBACKS.Problema - 1] || "");
+                const isMatchingPositive = isActuallyLowerUpdate
+                    ? rowProblem.includes("Sugerencia de ampliar rango inferior")
+                    : isPositiveYearSuggestionRow(row);
+                if (rowId === normalizedVehicleId && rowYear === year && rowActorKey && isMatchingPositive) {
                     feedbackSheet.deleteRow(i + 1);
                 }
             }
         }
-
-        return { status: 'success', message: `¡Gracias! Con ${voteCount} votos confirmados, el catálogo se ha actualizado a ${finalAnoDesde}-${finalAnoHasta}.` };
+        return {
+            status: "success",
+            folderSyncWarning,
+            message: "¡Gracias! Con " + voteCount + " aportantes distintos, el catálogo se ha actualizado a " +
+                newAnoDesde + "-" + newAnoHasta + "." +
+                (folderSyncWarning ? " La carpeta de la imagen principal no pudo sincronizarse automáticamente: " + folderSyncMessage : "")
+        };
     }
-
-    return { status: 'info', message: 'No se realizaron cambios.' };
+    return { status: "info", message: "No se realizaron cambios." };
 }
-
 function logUserActivity(userId, userName, activityType, associatedId, details) {
     try {
         const sheet = getSafeSheet(SHEET_NAMES.ACTIVIDAD_USUARIO);
@@ -529,41 +973,74 @@ function handleReportProblem(payload) {
         throw new Error("Faltan datos para reportar el problema (vehicleId, problemText, userId, userName).");
     }
 
-    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-    const lastRow = sheet.getLastRow();
-    const newRowNumber = lastRow + 1;
-    const FORMULA_ROW = 2;
-    const lastCol = sheet.getLastColumn() || 8;
-
-    if (lastRow >= FORMULA_ROW) {
-        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
-        const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
-        formulaRange.copyTo(newRowRange);
-        if (lastCol > 1) {
-            sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
+    const hasReportContext = payload.reportId !== undefined ||
+        payload.corteIndex !== undefined || payload.activaTestigoMotor !== undefined;
+    let reportContext = null;
+    if (hasReportContext) {
+        const reportId = String(payload.reportId || "").trim();
+        const corteIndex = Number(payload.corteIndex);
+        if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(reportId)) {
+            throw new Error("El identificador del reporte no tiene un formato válido.");
         }
+        if (!Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
+            throw new Error("El número de corte no es válido.");
+        }
+        if (typeof payload.activaTestigoMotor !== "boolean") {
+            throw new Error("El indicador del testigo del motor debe ser booleano.");
+        }
+        reportContext = {
+            reportId,
+            vehicleId: String(vehicleId),
+            corteIndex,
+            activaTestigoMotor: payload.activaTestigoMotor
+        };
     }
 
-    const values = [[
-        userName,
-        vehicleId,
-        problemText
-    ]];
-    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
-
-    SpreadsheetApp.flush();
-
-    // Tarea 2.1: Retornar identificador único del reporte para vinculación con sugerencias
-    let generatedReportId = `REP-${Date.now()}`;
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    let generatedReportId = "";
     try {
-        const idVal = sheet.getRange(newRowNumber, 1).getValue();
-        if (idVal) generatedReportId = `REP-${idVal}`;
-    } catch(e) {}
+        const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+        const metadataColumn = reportContext ? ensureReportMetadataColumn(sheet) : 0;
+        const lastRow = sheet.getLastRow();
+        const newRowNumber = lastRow + 1;
+        const FORMULA_ROW = 2;
+        const lastCol = reportContext
+            ? Math.max(sheet.getLastColumn(), metadataColumn, 8)
+            : (sheet.getLastColumn() || 8);
+
+        if (lastRow >= FORMULA_ROW) {
+            const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
+            const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
+            formulaRange.copyTo(newRowRange);
+            if (lastCol > 1) {
+                sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
+            }
+        }
+
+        const values = [[userName, vehicleId, problemText]];
+        sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
+
+        if (reportContext) {
+            const metadata = {
+                reportId: reportContext.reportId,
+                vehicleId: String(vehicleId),
+                corteIndex: reportContext.corteIndex,
+                activaTestigoMotor: reportContext.activaTestigoMotor
+            };
+            sheet.getRange(newRowNumber, metadataColumn).setValue(JSON.stringify(metadata));
+        }
+        SpreadsheetApp.flush();
+
+        const idVal = sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).getValue();
+        generatedReportId = reportContext ? reportContext.reportId : `REP-${idVal || Date.now()}`;
+    } finally {
+        lock.releaseLock();
+    }
 
     logUserActivity(userId, userName, 'report_problem', vehicleId, problemText);
     return { status: 'success', message: 'Problema reportado.', reportId: generatedReportId };
 }
-
 function handleSendContactForm(payload) {
     const { name, email, message, userId } = payload;
     if (!name || !email || !message) {
@@ -601,51 +1078,125 @@ function handleSendContactForm(payload) {
 // HANDLERS FOR INBOX SYSTEM
 // ============================================================================
 
+function normalizeSuggestionActivaTestigo(value) {
+    if (value === true || value === false) return value;
+    if (value === null || value === undefined) return null;
+    const normalized = String(value).trim().toLowerCase();
+    if (!normalized || ["no aplica", "no_aplica", "no aplica / no especificado", "no aplica/no especificado", "no especificado", "no especificada", "n/a", "na"].includes(normalized)) return null;
+    if (["true", "sí", "si", "yes", "x", "1"].includes(normalized)) return true;
+    if (["false", "no", "0"].includes(normalized)) return false;
+    throw new Error("El valor propuesto para activaTestigo no es válido.");
+}
+function normalizeSuggestionProposedValues(proposedValues) {
+    if (proposedValues !== undefined && proposedValues !== null &&
+        (typeof proposedValues !== "object" || Array.isArray(proposedValues))) throw new Error("Los valores propuestos deben enviarse como un objeto.");
+    const source = proposedValues || {};
+    const normalized = Object.assign({}, source);
+    const hasCanonical = Object.prototype.hasOwnProperty.call(source, "activaTestigo");
+    const hasLegacy = Object.prototype.hasOwnProperty.call(source, "activaCheckEngine");
+    const canonicalValue = hasCanonical ? normalizeSuggestionActivaTestigo(source.activaTestigo) : null;
+    const legacyValue = hasLegacy ? normalizeSuggestionActivaTestigo(source.activaCheckEngine) : null;
+    if (hasCanonical && hasLegacy && canonicalValue !== legacyValue) throw new Error("Los campos históricos y actuales del testigo contienen valores incompatibles.");
+    normalized.activaTestigo = hasCanonical ? canonicalValue : (hasLegacy ? legacyValue : null);
+    delete normalized.activaCheckEngine;
+    return normalized;
+}
+function normalizeStoredSuggestionProposedValues(proposedValues) {
+    const source = proposedValues && typeof proposedValues === "object" && !Array.isArray(proposedValues) ? proposedValues : {};
+    const normalized = Object.assign({}, source);
+    try {
+        if (Object.prototype.hasOwnProperty.call(source, "activaTestigo")) normalized.activaTestigo = normalizeSuggestionActivaTestigo(source.activaTestigo);
+        else if (Object.prototype.hasOwnProperty.call(source, "activaCheckEngine")) normalized.activaTestigo = normalizeSuggestionActivaTestigo(source.activaCheckEngine);
+        else normalized.activaTestigo = null;
+    } catch (error) { normalized.activaTestigo = null; }
+    delete normalized.activaCheckEngine;
+    return normalized;
+}
+function parseCutSuggestionRecord(rawContent, vehicleId, userName) {
+    const content = String(rawContent || "");
+    if (!content) return null;
+    if (content.trim().startsWith("{")) {
+        try {
+            const parsed = JSON.parse(content);
+            if (parsed && parsed.subType === "suggestion_cut") {
+                const parsedVehicleId = String(parsed.vehicleId || vehicleId || "");
+                const parsedCorteIndex = Number(parsed.corteIndex);
+                if (parsedVehicleId !== String(vehicleId || "") || !Number.isInteger(parsedCorteIndex) || parsedCorteIndex < 1 || parsedCorteIndex > 3) return null;
+                return {
+                    subType: "suggestion_cut", reportId: String(parsed.reportId || "N/A"),
+                    vehicleId: parsedVehicleId, corteIndex: parsedCorteIndex,
+                    userId: String(parsed.userId || ""), userName: String(parsed.userName || userName || ""),
+                    createdAt: String(parsed.createdAt || ""), imageUrl: String(parsed.imageUrl || ""),
+                    details: String(parsed.details || ""),
+                    proposedValues: normalizeStoredSuggestionProposedValues(parsed.proposedValues),
+                    status: String(parsed.status || "pendiente_revision")
+                };
+            }
+        } catch (error) {}
+    }
+    if (!content.startsWith("[SUGERENCIA CORTE #")) return null;
+    const headerMatch = content.match(/^\[SUGERENCIA CORTE #(\d+)\]\s+\(Reporte Origen: ([^)]+)\)\s+\(Fecha: ([^)]+)\)\s*/);
+    const proposedMarker = " | Propuestos: ";
+    const proposedMarkerIndex = content.lastIndexOf(proposedMarker);
+    if (!headerMatch || proposedMarkerIndex < 0) return null;
+    const corteIndex = Number(headerMatch[1]);
+    if (!Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) return null;
+    const imageMarker = " | Img:";
+    const imageMarkerIndex = content.lastIndexOf(imageMarker);
+    const proposedEnd = imageMarkerIndex > proposedMarkerIndex ? imageMarkerIndex : content.length;
+    let legacyProposedValues;
+    try { legacyProposedValues = JSON.parse(content.slice(proposedMarkerIndex + proposedMarker.length, proposedEnd).trim()); }
+    catch (error) { return null; }
+    if (!legacyProposedValues || typeof legacyProposedValues !== "object" || Array.isArray(legacyProposedValues)) return null;
+    return {
+        subType: "suggestion_cut", reportId: String(headerMatch[2] || "N/A"),
+        vehicleId: String(vehicleId || ""), corteIndex, userId: "", userName: String(userName || ""),
+        createdAt: String(headerMatch[3] || ""),
+        imageUrl: imageMarkerIndex > proposedMarkerIndex ? content.slice(imageMarkerIndex + imageMarker.length).trim() : "",
+        details: content.slice(headerMatch[0].length, proposedMarkerIndex).trim(),
+        proposedValues: normalizeStoredSuggestionProposedValues(legacyProposedValues),
+        status: "pendiente_revision"
+    };
+}
 function handleGetFeedbackItems(payload) {
     const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     const contactSheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
+    const reportMetadataColumn = feedbackSheet ? getReportMetadataColumn(feedbackSheet) : 0;
 
     const feedbackData = (!feedbackSheet) ? [] : feedbackSheet.getDataRange().getValues().slice(1).map(row => {
         const rawContent = row[COLS_FEEDBACKS.Problema - 1];
-        let isVideoApproval = false;
+        const rowVehicleId = row[COLS_FEEDBACKS.ID_vehiculo - 1];
+        const rowUserName = row[COLS_FEEDBACKS.Usuario - 1];
+        const reportMetadata = reportMetadataColumn
+            ? parseReportMetadata(row[reportMetadataColumn - 1], rowVehicleId)
+            : null;
         let videoMeta = null;
-        if (typeof rawContent === 'string' && rawContent.startsWith('{') && rawContent.includes('video_approval')) {
-            try {
-                videoMeta = JSON.parse(rawContent);
-                if (videoMeta && videoMeta.subType === 'video_approval') {
-                    isVideoApproval = true;
-                }
-            } catch (e) {}
+        if (typeof rawContent === 'string' && rawContent.trim().startsWith('{')) {
+            try { videoMeta = JSON.parse(rawContent); } catch (e) {}
         }
-
-        if (isVideoApproval && videoMeta) {
+        const isVideoApproval = videoMeta && videoMeta.subType === 'video_approval';
+        if (isVideoApproval) {
             return {
-                type: 'video_approval',
-                id: row[COLS_FEEDBACKS.ID - 1],
+                type: 'video_approval', id: row[COLS_FEEDBACKS.ID - 1],
                 subject: `[Aprobación de Vídeo] ${videoMeta.title}`,
                 content: videoMeta.description || 'Sin descripción',
-                videoUrl: videoMeta.videoUrl,
-                videoId: videoMeta.videoId,
-                contentType: videoMeta.contentType,
-                user: row[COLS_FEEDBACKS.Usuario - 1],
-                vehicleId: row[COLS_FEEDBACKS.ID_vehiculo - 1],
-                approvalStatus: videoMeta.status || 'pending',
-                videoMeta: videoMeta,
+                videoUrl: videoMeta.videoUrl, videoId: videoMeta.videoId, contentType: videoMeta.contentType,
+                user: rowUserName, vehicleId: rowVehicleId,
+                approvalStatus: videoMeta.status || 'pending', videoMeta,
                 reply: row[COLS_FEEDBACKS.Respuesta - 1],
                 isResolved: row[COLS_FEEDBACKS['Se resolvio'] - 1] === true,
                 responder: row[COLS_FEEDBACKS.Responde - 1]
             };
         }
-
+        const suggestionData = parseCutSuggestionRecord(rawContent, rowVehicleId, rowUserName);
+        const isResolved = row[COLS_FEEDBACKS['Se resolvio'] - 1] === true;
+        if (suggestionData) suggestionData.status = isResolved ? "resuelta" : "pendiente_revision";
         return {
-            type: 'problem_report',
-            id: row[COLS_FEEDBACKS.ID - 1],
-            subject: `Reporte en Vehículo #${row[COLS_FEEDBACKS.ID_vehiculo - 1]}`,
-            content: rawContent,
-            user: row[COLS_FEEDBACKS.Usuario - 1],
-            vehicleId: row[COLS_FEEDBACKS.ID_vehiculo - 1],
-            reply: row[COLS_FEEDBACKS.Respuesta - 1],
-            isResolved: row[COLS_FEEDBACKS['Se resolvio'] - 1] === true,
+            type: 'problem_report', id: row[COLS_FEEDBACKS.ID - 1],
+            subject: suggestionData ? `Sugerencia de cambio — Corte #${suggestionData.corteIndex}` : `Reporte en Vehículo #${rowVehicleId}`,
+            content: suggestionData ? (suggestionData.details || 'Sugerencia de cambio de corte.') : rawContent,
+            user: rowUserName, vehicleId: rowVehicleId, reportMetadata, suggestionData,
+            reply: row[COLS_FEEDBACKS.Respuesta - 1], isResolved,
             responder: row[COLS_FEEDBACKS.Responde - 1]
         };
     });
@@ -740,20 +1291,24 @@ function handleGetActivityLogs(payload) {
 
 /* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */
 function handleSuggestCutChange(payload) {
-    const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, proposedValues } = payload;
-    if (!vehicleId || !corteIndex || !userId || !userName) {
-        throw new Error("Faltan datos para sugerir cambio (vehicleId, corteIndex, userId, userName).");
+    const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, proposedValues } = payload || {};
+    const normalizedVehicleId = String(vehicleId || "").trim();
+    const normalizedCorteIndex = Number(corteIndex);
+    if (!normalizedVehicleId || !userId || !userName ||
+        !Number.isInteger(normalizedCorteIndex) || normalizedCorteIndex < 1 || normalizedCorteIndex > 3) {
+        throw new Error("Faltan datos válidos para sugerir cambio (vehicleId, corteIndex 1–3, userId, userName).");
     }
-
+    const normalizedProposedValues = normalizeSuggestionProposedValues(proposedValues);
+    const normalizedReportId = String(reportId || "N/A");
+    const normalizedDetails = String(details || "");
     const createdAt = new Date().toISOString();
-
     let imageUrl = "";
     if (imgBase64) {
         try {
             const folderName = "SugerenciasCortes";
             const folders = DriveApp.getFoldersByName(folderName);
             let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
-            const blob = Utilities.newBlob(Utilities.base64Decode(imgBase64.replace(/^data:image\/[a-z]+;base64,/, "")), "image/jpeg", `sug_${vehicleId}_corte${corteIndex}_${Date.now()}.jpg`);
+            const blob = Utilities.newBlob(Utilities.base64Decode(imgBase64.replace(/^data:image\/[a-z]+;base64,/, "")), "image/jpeg", `sug_${normalizedVehicleId}_corte${normalizedCorteIndex}_${Date.now()}.jpg`);
             const file = folder.createFile(blob);
             file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
             imageUrl = file.getUrl();
@@ -761,59 +1316,35 @@ function handleSuggestCutChange(payload) {
             console.error("Error subiendo imagen de sugerencia:", e);
         }
     }
-
-    // Almacenamiento independiente en la hoja Feedbacks como propuesta pendiente de revisión
+    // La sugerencia se conserva como registro independiente en Feedbacks; no modifica Cortes.
     const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     const lastRow = sheet.getLastRow();
     const newRowNumber = lastRow + 1;
     const FORMULA_ROW = 2;
     const lastCol = sheet.getLastColumn() || 8;
-
     if (lastRow >= FORMULA_ROW) {
         const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
         const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
         formulaRange.copyTo(newRowRange);
-        if (lastCol > 1) {
-            sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
-        }
+        if (lastCol > 1) sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
     }
-
-    // Registro estructurado conservando: reportId, vehículo, corte, fecha, usuario, imagen y valores propuestos
     const suggestionRecord = {
-        tipo: 'sugerencia_corte',
-        reportId: reportId || 'N/A',
-        vehicleId: String(vehicleId),
-        corteIndex: parseInt(corteIndex, 10) || 1,
-        userId: String(userId),
-        userName: String(userName),
-        createdAt: createdAt,
-        imageUrl: imageUrl || '',
-        details: details || '',
-        proposedValues: proposedValues || {},
-        status: 'pendiente_revision'
+        subType: "suggestion_cut", schemaVersion: 2,
+        reportId: normalizedReportId, vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex,
+        userId: String(userId), userName: String(userName), createdAt,
+        imageUrl: imageUrl || "", details: normalizedDetails,
+        proposedValues: normalizedProposedValues, status: "pendiente_revision"
     };
-
-    const problemDesc = `[SUGERENCIA CORTE #${corteIndex}] (Reporte Origen: ${reportId || 'N/A'}) (Fecha: ${createdAt}) ${details || ""} | Propuestos: ${JSON.stringify(proposedValues || {})} ${imageUrl ? " | Img: " + imageUrl : ""}`;
-    const values = [[
-        userName,
-        vehicleId,
-        problemDesc
-    ]];
+    const problemDesc = JSON.stringify(suggestionRecord);
+    const values = [[String(userName), normalizedVehicleId, problemDesc]];
     sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
-
-    // Estado explícito: Pendiente de revisión (Se resolvio = false)
-    if (COLS_FEEDBACKS['Se resolvio']) {
-        sheet.getRange(newRowNumber, COLS_FEEDBACKS['Se resolvio']).setValue(false);
-    }
-
+    if (COLS_FEEDBACKS['Se resolvio']) sheet.getRange(newRowNumber, COLS_FEEDBACKS['Se resolvio']).setValue(false);
     SpreadsheetApp.flush();
-    logUserActivity(userId, userName, "suggest_cut_change", vehicleId, problemDesc);
-
-    // Retornar confirmación completa sin alterar el catálogo
+    logUserActivity(userId, userName, "suggest_cut_change", normalizedVehicleId, problemDesc);
     return {
         status: "success",
         message: "Sugerencia de cambio registrada correctamente como propuesta independiente.",
-        reportId: reportId || ("FB-" + newRowNumber),
+        reportId: normalizedReportId,
         suggestionData: suggestionRecord
     };
 }
@@ -1149,6 +1680,44 @@ function handleClearActivityLogs(payload) {
         SpreadsheetApp.flush();
         return { status: 'success', message: `Se eliminaron ${deletedCount} registros con antigüedad mayor a una semana.`, deletedCount };
     }
+}
+
+
+function handleClearSensitiveLogs() {
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.LOGS);
+    if (!sheet) throw new Error("Hoja Logs no encontrada.");
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow <= 1) {
+        return { status: 'success', message: 'No hay registros en Logs para revisar.', deletedCount: 0 };
+    }
+
+    const lastColumn = Math.max(sheet.getLastColumn(), 4);
+    const data = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+    const rowsToDelete = [];
+
+    for (let i = 0; i < data.length; i++) {
+        const message = String(data[i][2] || "").trim();
+        const details = String(data[i][3] || "");
+        const containsCredentialFields = /"(?:password|sheetPassword|currentPassword|newPassword|fromSheet|fromClient)"\s*:/i.test(details);
+        const containsLoginUsername = message === "handleLogin started." && /"username"\s*:/i.test(details);
+        const isPasswordComparison = message === "Password comparison";
+
+        if (containsCredentialFields || containsLoginUsername || isPasswordComparison) {
+            rowsToDelete.push(i + 2);
+        }
+    }
+
+    for (let i = rowsToDelete.length - 1; i >= 0; i--) {
+        sheet.deleteRow(rowsToDelete[i]);
+    }
+
+    SpreadsheetApp.flush();
+    return {
+        status: 'success',
+        message: `Se eliminaron ${rowsToDelete.length} registros confidenciales de Logs. Se conservaron los encabezados y los demás registros.`,
+        deletedCount: rowsToDelete.length
+    };
 }
 
 // ============================================================================

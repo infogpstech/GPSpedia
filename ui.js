@@ -5,12 +5,53 @@ import { vinDifferentialEngine, vinSignatureStore, getClassificationKey } from '
 // - Contain all functions that directly manipulate the DOM.
 // - Use document.createElement, not HTML strings.
 
-import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, checkAllServicesHealth, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
+import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAsResolved, deleteFeedbackItem, clearActivityLogs, clearSensitiveLogs, checkAllServicesHealth, getServiceMetricsSnapshot, subscribeServiceMetrics, getActivityLogs, routeAction, recordLike, reportProblem, suggestYear, suggestCutChange, approveVideo, rejectVideo } from './api-config.js';
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
+import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
+export { createRichTextToolbar, sanitizeHtmlContent };
+
+function mountRichTextToolbars(root) {
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+    root.querySelectorAll('[data-rich-target]').forEach(container => {
+        const targetId = container.getAttribute('data-rich-target');
+        if (!targetId || container.dataset.richMounted === 'true') return;
+        container.appendChild(createRichTextToolbar(targetId));
+        container.dataset.richMounted = 'true';
+    });
+}
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
+let cachedAnonymousSuggestionReporterId = null;
+
+function getAnonymousSuggestionReporterId() {
+    const storageKey = "gpsepedia_anonymous_suggestion_reporter";
+    const createId = () => {
+        const cryptoApi = window.crypto;
+        if (cryptoApi && typeof cryptoApi.randomUUID === "function") return cryptoApi.randomUUID();
+        if (cryptoApi && typeof cryptoApi.getRandomValues === "function") {
+            const bytes = new Uint8Array(24);
+            cryptoApi.getRandomValues(bytes);
+            return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+        }
+        return "anon_" + Date.now().toString(36) + "_" +
+            Math.random().toString(36).slice(2) + "_" + Math.random().toString(36).slice(2);
+    };
+    if (cachedAnonymousSuggestionReporterId) return cachedAnonymousSuggestionReporterId;
+    try {
+        const stored = localStorage.getItem(storageKey);
+        if (stored && /^[A-Za-z0-9_-]{20,80}$/.test(stored)) {
+            cachedAnonymousSuggestionReporterId = stored;
+            return stored;
+        }
+        cachedAnonymousSuggestionReporterId = createId();
+        localStorage.setItem(storageKey, cachedAnonymousSuggestionReporterId);
+    } catch (error) {
+        if (!cachedAnonymousSuggestionReporterId) cachedAnonymousSuggestionReporterId = createId();
+    }
+    return cachedAnonymousSuggestionReporterId;
+}
 
 export function cleanColaboradorName(name) {
     if (!name || typeof name !== 'string') return name || '';
@@ -34,9 +75,16 @@ export const IMG_SIZE_LARGE = 1600;  // Lightbox / High Resolution
 
 // Variables de control para el Modo Edición In-Modal
 let inEditMode = false;
+let isDriveAuditRunning = false;
 let originalItemBackup = null;
 let editedItemBuffer = null;
 let dropdownOptions = null;
+const ADMIN_IMAGE_UPLOAD_FIELDS = [
+    "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
+    "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
+];
+const pendingAdminImageUploads = new Map();
+const pendingAdminImageUploadsLoaded = new Set();
 
 // Pila de navegación entre modales para prevención de bucles y restauración de contexto
 const modalNavStack = [];
@@ -82,6 +130,14 @@ export function showSavingIndicator(status, message = "") {
                 indicator.style.opacity = "0";
             }
         }, 2000);
+    } else if (status === "warning") {
+        indicator.style.color = "#b7791f";
+        indicator.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>${message || 'Guardado con advertencia'}</span>`;
+        setTimeout(() => {
+            if (indicator.innerHTML.includes("fa-triangle-exclamation")) {
+                indicator.style.opacity = "0";
+            }
+        }, 4000);
     } else if (status === "error") {
         indicator.style.color = "#dc3545";
         indicator.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>${message || 'Error al guardar'}</span>`;
@@ -98,8 +154,12 @@ export function showSavingIndicator(status, message = "") {
 async function saveFieldSilently(vehicleId, fieldName, value) {
     showSavingIndicator("saving", "Guardando...");
     try {
-        await routeAction('updateVehicleField', { vehicleId, fieldName, value });
-        showSavingIndicator("success", "Guardado correctamente");
+        const result = await routeAction('updateVehicleField', { vehicleId, fieldName, value, ...getDeveloperSessionPayload() });
+        if (result && result.folderSyncWarning) {
+            showSavingIndicator("warning", "Guardado; revisa la organización de la imagen principal");
+        } else {
+            showSavingIndicator("success", "Guardado correctamente");
+        }
     } catch (e) {
         console.error(`Error guardando silenciosamente el campo ${fieldName}:`, e);
         showSavingIndicator("error", "Error al guardar");
@@ -170,45 +230,183 @@ async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false) {
     }
 }
 
+function getAdminImageUploadPendingKey(vehicleId, fieldName) {
+    return String(vehicleId) + "::" + String(fieldName);
+}
+
+async function loadPendingAdminImageUploads(vehicleId) {
+    const cleanVehicleId = String(vehicleId);
+    ADMIN_IMAGE_UPLOAD_FIELDS.forEach(fieldName => pendingAdminImageUploads.delete(getAdminImageUploadPendingKey(cleanVehicleId, fieldName)));
+    pendingAdminImageUploadsLoaded.delete(cleanVehicleId);
+
+    const results = await Promise.all(ADMIN_IMAGE_UPLOAD_FIELDS.map(fieldName =>
+        offline.getAdminImageUploadPendingOperation(cleanVehicleId, fieldName)
+    ));
+    if (results.some(result => !result || result.available !== true)) return false;
+
+    results.forEach((result, index) => {
+        if (result.operation) {
+            pendingAdminImageUploads.set(
+                getAdminImageUploadPendingKey(cleanVehicleId, ADMIN_IMAGE_UPLOAD_FIELDS[index]),
+                result.operation
+            );
+        }
+    });
+    pendingAdminImageUploadsLoaded.add(cleanVehicleId);
+    return true;
+}
+
+function createAdminImageUploadOperationId() {
+    const cryptoApi = window.crypto;
+    if (cryptoApi && typeof cryptoApi.randomUUID === "function") return cryptoApi.randomUUID();
+    if (cryptoApi && typeof cryptoApi.getRandomValues === "function") {
+        const bytes = new Uint8Array(24);
+        cryptoApi.getRandomValues(bytes);
+        return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+    throw new Error("El navegador no dispone de un generador seguro para identificar el reemplazo.");
+}
+
+function readAdminImageAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(reader.error || new Error("No se pudo leer el archivo seleccionado."));
+        reader.readAsDataURL(file);
+    });
+}
+
+async function submitAdminImageUploadOperation(operation, imgElement) {
+    const response = await routeAction("uploadAdminImage", {
+        ...getDeveloperSessionPayload(),
+        vehicleId: operation.vehicleId,
+        fileData: operation.fileData,
+        filename: operation.filename,
+        mimeType: operation.mimeType,
+        fieldName: operation.fieldName,
+        opId: operation.id
+    });
+    if (!response || response.status !== "success" || !response.imageUrl) {
+        throw new Error("El servicio no confirmó el reemplazo de imagen.");
+    }
+
+    const key = getAdminImageUploadPendingKey(operation.vehicleId, operation.fieldName);
+    const currentImageUrl = response.superseded
+        ? (response.currentImageUrl === null || response.currentImageUrl === undefined
+            ? String(response.imageUrl) : String(response.currentImageUrl))
+        : String(response.imageUrl);
+    if (editedItemBuffer) editedItemBuffer[operation.fieldName] = currentImageUrl;
+    if (currentImageUrl) imgElement.src = currentImageUrl;
+    else imgElement.removeAttribute("src");
+
+    const removed = await offline.removeAdminImageUploadPendingOperation(
+        operation.vehicleId, operation.fieldName, operation.id
+    );
+    let cleanupConfirmed = removed === true;
+    if (!cleanupConfirmed) {
+        const latest = await offline.getAdminImageUploadPendingOperation(operation.vehicleId, operation.fieldName);
+        if (latest && latest.available === true) {
+            if (latest.operation) pendingAdminImageUploads.set(key, latest.operation);
+            else {
+                pendingAdminImageUploads.delete(key);
+                cleanupConfirmed = true;
+            }
+        } else {
+            pendingAdminImageUploads.set(key, operation);
+        }
+    } else {
+        pendingAdminImageUploads.delete(key);
+    }
+
+    if (response.superseded) {
+        showSavingIndicator("warning", "El intento se completó, pero el campo cambió después. Se conservó la referencia actual.");
+    } else if (!cleanupConfirmed) {
+        showSavingIndicator("warning", "Imagen guardada; el intento local sigue pendiente de limpieza. Reintentar no duplicará la operación.");
+    } else {
+        showSavingIndicator("success", "Imagen guardada");
+    }
+}
+
 function convertImageToEditable(imgElement, vehicleId, fieldName) {
     imgElement.style.cursor = "pointer";
     imgElement.style.border = "2px dashed #007bff";
     imgElement.title = "Haga clic para reemplazar esta imagen";
-    imgElement.onclick = (e) => {
+    let uploadInProgress = false;
+
+    imgElement.onclick = async (e) => {
         e.preventDefault();
         e.stopPropagation();
+        const cleanVehicleId = String(vehicleId);
+        const pendingKey = getAdminImageUploadPendingKey(cleanVehicleId, fieldName);
+
+        if (uploadInProgress) return;
+        if (!pendingAdminImageUploadsLoaded.has(cleanVehicleId)) {
+            showSavingIndicator("error", "No se pudo verificar el estado local del reemplazo. Vuelve a activar el modo de edición.");
+            return;
+        }
+
+        const previousSrc = imgElement.src;
+        const pendingOperation = pendingAdminImageUploads.get(pendingKey);
+        if (pendingOperation) {
+            const shouldRetry = window.confirm(
+                "Existe un reemplazo pendiente para esta imagen. ¿Deseas reintentar el mismo intento guardado? No se iniciará una sustitución nueva hasta resolverlo."
+            );
+            if (!shouldRetry) return;
+
+            uploadInProgress = true;
+            imgElement.src = pendingOperation.fileData;
+            showSavingIndicator("processing", "Recuperando reemplazo pendiente...");
+            try {
+                await submitAdminImageUploadOperation(pendingOperation, imgElement);
+            } catch (error) {
+                imgElement.src = previousSrc;
+                console.error("No se pudo recuperar el reemplazo pendiente:", error);
+                showSavingIndicator("error", "No se pudo confirmar. El intento original quedó guardado; vuelve a hacer clic para reintentar.");
+            } finally {
+                uploadInProgress = false;
+            }
+            return;
+        }
 
         const fileInput = document.createElement("input");
         fileInput.type = "file";
         fileInput.accept = "image/*";
         fileInput.onchange = async () => {
-            const file = fileInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    imgElement.src = event.target.result;
-                    const base64Data = event.target.result;
-                    showSavingIndicator("processing", "Subiendo imagen...");
-                    try {
-                        const res = await routeAction('uploadAdminImage', {
-                            vehicleId: vehicleId,
-                            fileData: base64Data,
-                            filename: file.name || `${fieldName}_${Date.now()}.png`,
-                            mimeType: file.type || "image/png",
-                            fieldName: fieldName
-                        });
-                        if (res && res.imageUrl) {
-                            editedItemBuffer[fieldName] = res.imageUrl;
-                            showSavingIndicator("success", "Imagen guardada");
-                        } else {
-                            showSavingIndicator("error", "Error al subir");
-                        }
-                    } catch (err) {
-                        console.error("Error al subir imagen editada:", err);
-                        showSavingIndicator("error", "Error al subir");
-                    }
+            const file = fileInput.files && fileInput.files[0];
+            if (!file) return;
+            uploadInProgress = true;
+            try {
+                const fileData = await readAdminImageAsDataUrl(file);
+                const operation = {
+                    id: createAdminImageUploadOperationId(),
+                    vehicleId: cleanVehicleId,
+                    fieldName: fieldName,
+                    fileData: fileData,
+                    filename: file.name || (fieldName + "_" + Date.now() + ".png"),
+                    mimeType: file.type || "image/png",
+                    createdAt: Date.now()
                 };
-                reader.readAsDataURL(file);
+                const saved = await offline.saveAdminImageUploadPendingOperation(operation);
+                if (!saved || saved.saved !== true) {
+                    if (saved && saved.operation) pendingAdminImageUploads.set(pendingKey, saved.operation);
+                    if (saved && saved.conflict) {
+                        throw new Error("Ya existe otro reemplazo pendiente para este campo. Reintenta primero la operación original.");
+                    }
+                    throw new Error("No se pudo guardar el intento en IndexedDB. La imagen no se envió al servidor.");
+                }
+
+                pendingAdminImageUploads.set(pendingKey, operation);
+                imgElement.src = fileData;
+                showSavingIndicator("processing", "Subiendo imagen...");
+                await submitAdminImageUploadOperation(operation, imgElement);
+            } catch (error) {
+                imgElement.src = previousSrc;
+                console.error("Error al subir imagen editada:", error);
+                showSavingIndicator("error", error && error.message
+                    ? error.message
+                    : "No se pudo confirmar. El intento pendiente se conserva para reintentar.");
+            } finally {
+                uploadInProgress = false;
             }
         };
         fileInput.click();
@@ -1107,8 +1305,12 @@ function showValidationBanner(item, isOldModel) {
 
     const currentYear = new Date().getFullYear();
     const { currentUser } = getState();
-    const userName = currentUser ? (currentUser.Nombre_Completo || currentUser.Nombre_Usuario) : 'Anónimo';
-    const userId = currentUser ? currentUser.ID : '0';
+    const isRegisteredUser = Boolean(currentUser && currentUser.ID !== undefined &&
+        currentUser.ID !== null && String(currentUser.ID).trim() !== "" &&
+        String(currentUser.ID).trim() !== "0");
+    const suggestionActorPayload = isRegisteredUser
+        ? { userId: String(currentUser.ID), sessionToken: String(currentUser.SessionToken || "") }
+        : { userId: "0", anonymousReporterId: getAnonymousSuggestionReporterId() };
 
     const renderStep = (content) => {
         banner.innerHTML = '';
@@ -1120,7 +1322,7 @@ function showValidationBanner(item, isOldModel) {
 
     const registerAndClose = (response, suggestedYear = null) => {
         // Registro silencioso en backend y luego caché
-        suggestYear(item.id, suggestedYear || currentYear, response, userId, userName).catch(console.error);
+        suggestYear(item.id, suggestedYear || currentYear, response, suggestionActorPayload).catch(console.error);
         offline.saveValidationResponse(item.id, response);
 
         const thanks = document.createElement('div');
@@ -1328,7 +1530,7 @@ function showValidationBanner(item, isOldModel) {
         btnSi.textContent = 'Sí';
         btnSi.onclick = () => {
             // Primero registrar que se trata de una generación más reciente
-            suggestYear(item.id, currentYear, 'Modelo confirmado', userId, userName).catch(console.error);
+            suggestYear(item.id, currentYear, 'Modelo confirmado', suggestionActorPayload).catch(console.error);
             showStepInput();
         };
 
@@ -1436,10 +1638,30 @@ export function showNoResultsMessage(textoBusqueda) {
     document.getElementById("contenido").innerHTML = `<p style="text-align:center; padding: 20px;">No se encontraron resultados para "${textoBusqueda}".</p>`;
 }
 
+// Normaliza el indicador técnico sin convertir «No aplica / no especificado» en false.
+function normalizeActivaTestigoValue(value) {
+    if (value === true || value === false) return value;
+    if (value === null || value === undefined) return null;
+    const normalized = String(value).trim().toLowerCase();
+    if (!normalized || ["no aplica", "no_aplica", "no aplica / no especificado", "no aplica/no especificado", "no especificado", "no especificada", "n/a", "na"].includes(normalized)) return null;
+    if (["true", "sí", "si", "yes", "x", "1"].includes(normalized)) return true;
+    if (["false", "no", "0"].includes(normalized)) return false;
+    return null;
+}
+function getActivaTestigoValue(item, index) {
+    const rawValue = item[`activaTestigo${index}`];
+    const hasExplicitValue = rawValue !== undefined && rawValue !== null && String(rawValue).trim() !== "";
+    if (hasExplicitValue) return normalizeActivaTestigoValue(rawValue);
+    const legacyUtilityMarker = String(item[`utilCorte${index}`] || "").trim().toLowerCase() === "x";
+    const legacyTypeMarker = String(item[`tipoCorte${index}`] || "").toLowerCase().includes("testigo");
+    return legacyUtilityMarker || legacyTypeMarker ? true : null;
+}
+
 // Helper utilitario para crear párrafos de detalle compartidos en modales (Hoisted)
 function createDetailParagraph(label, text) {
     if (text) {
-        const p = document.createElement('p');
+        const p = document.createElement('div');
+        p.style.margin = "1em 0";
         p.innerHTML = `<strong>${label}:</strong> ${sanitizeHtmlContent(text)}`;
         return p;
     }
@@ -1568,6 +1790,10 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                 localStorage.setItem('gpsepedia_edit_backup', JSON.stringify(originalItemBackup));
                 editedItemBuffer = { ...activeItem };
                 await precargarDropdownOptions();
+                const pendingImagesLoaded = await loadPendingAdminImageUploads(activeItem.id);
+                if (!pendingImagesLoaded) {
+                    showSavingIndicator("warning", "No se pudo consultar IndexedDB; los reemplazos de imagen quedarán bloqueados hasta verificar su estado.");
+                }
                 mostrarDetalleModal(editedItemBuffer);
             };
             headerDiv.appendChild(editBtn);
@@ -1948,6 +2174,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         notaLabel.textContent = "Nota Importante / Descripción:";
         notaLabel.style.cssText = "display: block; font-weight: bold; margin-top: 10px; font-size: 0.85em;";
         const notaInput = document.createElement("textarea");
+        notaInput.id = `edit-note-${activeItem.id}`;
         notaInput.rows = 2;
         notaInput.value = activeItem.notaImportante || "";
         notaInput.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); margin-bottom: 10px; box-sizing: border-box;";
@@ -1958,11 +2185,12 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             }
         };
         cont.appendChild(notaLabel);
+        cont.appendChild(createRichTextToolbar(notaInput.id));
         cont.appendChild(notaInput);
     } else if (activeItem.notaImportante) {
-        const p = document.createElement("p");
+        const p = document.createElement("div");
         p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 5px 0;";
-        p.textContent = `⚠️ ${activeItem.notaImportante}`;
+        p.innerHTML = `⚠️ ${sanitizeHtmlContent(activeItem.notaImportante)}`;
         cont.appendChild(p);
     }
 
@@ -1977,6 +2205,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                 configRelay: activeItem[`configRelay${i}`],
                 img: activeItem[`imgCorte${i}`],
                 util: parseInt(activeItem[`utilCorte${i}`] || 0),
+                activaTestigo: getActivaTestigoValue(activeItem, i),
                 colaborador: activeItem[`colaboradorCorte${i}`]
             });
         }
@@ -2690,6 +2919,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         locLabel.textContent = `Ubicación del Corte ${idx}:`;
         locLabel.style.fontSize = "0.85em";
         const locInput = document.createElement('textarea');
+        locInput.id = `edit-cut-location-${vehicleId}-${idx}`;
         locInput.rows = 2;
         locInput.value = cutData.ubicacion || "";
         locInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box; width: 100%;";
@@ -2720,21 +2950,29 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         editCutsWrapper.appendChild(configLabel);
         editCutsWrapper.appendChild(configSelect);
         editCutsWrapper.appendChild(locLabel);
+        editCutsWrapper.appendChild(createRichTextToolbar(locInput.id));
         editCutsWrapper.appendChild(locInput);
         editCutsWrapper.appendChild(colorLabel);
         editCutsWrapper.appendChild(colorInput);
 
         container.appendChild(editCutsWrapper);
     } else {
-        const contentP = document.createElement('p');
+        const contentP = document.createElement('div');
         if (isNoRecomendadoValue(cutData.tipo)) {
             contentP.innerHTML = `<strong>Tipo de Corte:</strong> No recomendado`;
         } else {
-            contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
-                                <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
-                                <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
+            contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${sanitizeHtmlContent(cutData.tipo || 'No especificado')}<br>
+                                <strong>Ubicación:</strong> ${sanitizeHtmlContent(cutData.ubicacion || 'No especificada')}<br>
+                                <strong>Color de Cable:</strong> ${sanitizeHtmlContent(cutData.colorCable || 'No especificado')}`;
         }
         container.appendChild(contentP);
+    }
+
+    if (cutData.activaTestigo && !inEditMode) {
+        const testigoNotice = document.createElement('p');
+        testigoNotice.style.cssText = "color:#b45309; font-weight:bold; background:rgba(245,158,11,0.10); padding:8px; border-left:3px solid #d97706; border-radius:4px; margin:6px 0;";
+        testigoNotice.textContent = "⚠️ Este corte activa el testigo de motor";
+        container.appendChild(testigoNotice);
     }
 
     if (inEditMode || (cutData.img && !isNoRecomendadoValue(cutData.tipo))) {
@@ -2927,6 +3165,8 @@ function renderRelayInfoModal(relayInfo) {
     };
     content.appendChild(img);
 
+    mountRichTextToolbars(content);
+
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -2973,7 +3213,7 @@ export const openDashboard = setupModal('dashboard-modal', async () => {
     logContainer.innerHTML = '<tr><td colspan="4">Cargando actividad...</td></tr>';
 
     try {
-        const result = await getActivityLogs();
+        const result = await getActivityLogs(getDeveloperSessionPayload());
         if (result.status === 'success') {
             logContainer.innerHTML = '';
             result.data.forEach(log => {
@@ -3001,7 +3241,7 @@ export const openInbox = setupModal('inbox-modal', async () => {
     detailContainer.innerHTML = '<p>Selecciona un item para ver los detalles.</p>';
 
     try {
-        const result = await getFeedbackItems();
+        const result = await getFeedbackItems(getDeveloperSessionPayload());
 
         if (result.status === 'success') {
             const data = result.data || result.messages || result.items || [];
@@ -3060,43 +3300,267 @@ function initAdminPanelListeners() {
         consoleLog.scrollTop = consoleLog.scrollHeight;
     }
 
+    let verifiedDatabaseBackupId = null;
+    let vinMigrationPreview = null;
+    let vinMigrationPreviewBackupId = null;
+    let vinMigrationRunning = false;
+
     // Prevenir re-registro de listeners
     if (window.adminListenersAttached) {
         return;
     }
     window.adminListenersAttached = true;
 
-    // Escaneo de salud de todos los microservicios
-    async function runServicesHealthScan() {
-        const healthGrid = document.getElementById('services-health-grid');
-        if (healthGrid) {
-            healthGrid.innerHTML = `<span style="color: var(--text-disabled); font-style: italic; grid-column: span 2;">Escaneando microservicios...</span>`;
+    let serviceHealthResults = {}, selectedServiceKey = null, isHealthScanRunning = false;
+    function formatServiceCheckTime(value) {
+        if (!value) return "No disponible";
+        const date = new Date(value);
+        return Number.isNaN(date.getTime()) ? "No disponible" : date.toLocaleTimeString();
+    }
+    function createServiceMetric(label, value) {
+        const item = document.createElement("div");
+        item.className = "dev-service-metric";
+        const caption = document.createElement("span");
+        caption.className = "dev-service-metric-label";
+        caption.textContent = label;
+        const content = document.createElement("strong");
+        content.className = "dev-service-metric-value";
+        content.textContent = value;
+        item.append(caption, content);
+        return item;
+    }
+    function renderServiceCards() {
+        const grid = document.getElementById("services-health-grid");
+        if (!grid) return;
+        grid.replaceChildren();
+        const keys = Object.keys(serviceHealthResults);
+        if (!keys.length) {
+            const empty = document.createElement("p");
+            empty.className = "dev-empty-state";
+            empty.textContent = "No hay resultados de diagnóstico disponibles. Ejecuta un escaneo.";
+            grid.appendChild(empty);
+            return;
         }
-        log("[SALUD] Ejecutando diagnóstico de latencia y estado en los microservicios...");
-        try {
-            const healthResults = await checkAllServicesHealth();
-            if (healthGrid) {
-                healthGrid.innerHTML = '';
-                Object.keys(healthResults).forEach(srvKey => {
-                    const item = healthResults[srvKey];
-                    const div = document.createElement('div');
-                    div.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 4px 8px; border-radius: 4px; background: rgba(0,0,0,0.05); font-size: 0.8em;";
-
-                    const isOnline = item.status === 'online';
-                    const statusDot = `<span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${isOnline ? '#28a745' : '#dc3545'}; margin-right:6px;"></span>`;
-                    div.innerHTML = `<div>${statusDot}<strong>${srvKey}</strong></div><span style="color:${isOnline ? 'var(--text-color)' : '#dc3545'}; font-family:monospace;">${isOnline ? item.latency + 'ms' : 'Error'}</span>`;
-                    healthGrid.appendChild(div);
-                });
-            }
-            log("[SALUD] Escaneo de salud completado.");
-        } catch (e) {
-            log(`[SALUD ERROR] Fallo al escanear servicios: ${e.message}`, false, true);
+        keys.forEach(key => {
+            const item = serviceHealthResults[key];
+            const card = document.createElement("button");
+            card.type = "button";
+            card.className = "dev-service-card";
+            if (selectedServiceKey === key) card.classList.add("is-selected");
+            card.setAttribute("aria-pressed", selectedServiceKey === key ? "true" : "false");
+            const top = document.createElement("span");
+            top.className = "dev-service-card-top";
+            const name = document.createElement("strong");
+            name.textContent = item.metadata?.service || key;
+            const status = document.createElement("span");
+            status.className = `dev-service-status is-${item.status}`;
+            status.textContent = item.status === "online" ? "En línea" : item.status === "error" ? "Con error" : "Sin respuesta";
+            top.append(name, status);
+            const bottom = document.createElement("span");
+            bottom.className = "dev-service-card-bottom";
+            const latency = document.createElement("span");
+            latency.textContent = Number.isFinite(item.latency) ? `${Math.round(item.latency)} ms` : "Latencia no disponible";
+            const version = document.createElement("span");
+            version.textContent = item.metadata?.version ? `v${item.metadata.version}` : "Versión no reportada";
+            bottom.append(latency, version);
+            card.append(top, bottom);
+            card.addEventListener("click", () => { selectedServiceKey = key; renderServiceDashboard(); });
+            grid.appendChild(card);
+        });
+    }
+    function renderServiceDetail() {
+        const detail = document.getElementById("service-health-detail");
+        if (!detail) return;
+        detail.replaceChildren();
+        const item = serviceHealthResults[selectedServiceKey];
+        if (!selectedServiceKey || !item) {
+            const empty = document.createElement("p");
+            empty.className = "dev-empty-state";
+            empty.textContent = "Selecciona una tarjeta para consultar sus parámetros.";
+            detail.appendChild(empty);
+            return;
+        }
+        const events = getServiceMetricsSnapshot().events.filter(event => event.service === selectedServiceKey);
+        const successful = events.filter(event => event.outcome === "success").length;
+        const failed = events.length - successful;
+        const average = events.length ? Math.round(events.reduce((sum, event) => sum + event.durationMs, 0) / events.length) : null;
+        const lastEvent = events.length ? events[events.length - 1] : null;
+        const metadata = item.metadata || {};
+        const heading = document.createElement("div");
+        heading.className = "dev-service-detail-heading";
+        const title = document.createElement("h4");
+        title.textContent = metadata.service || selectedServiceKey;
+        const state = document.createElement("span");
+        state.className = `dev-service-status is-${item.status}`;
+        state.textContent = item.status === "online" ? "En línea" : item.status === "error" ? "Con error" : "Sin respuesta";
+        heading.append(title, state);
+        detail.appendChild(heading);
+        const metrics = document.createElement("div");
+        metrics.className = "dev-service-metrics";
+        metrics.append(
+            createServiceMetric("Versión reportada", metadata.version || "No disponible"),
+            createServiceMetric("Última comprobación", formatServiceCheckTime(item.checkedAt)),
+            createServiceMetric("Latencia del diagnóstico", Number.isFinite(item.latency) ? `${Math.round(item.latency)} ms` : "No disponible"),
+            createServiceMetric("Solicitudes API observadas (15 min)", String(events.length)),
+            createServiceMetric("Solicitudes correctas", String(successful)),
+            createServiceMetric("Solicitudes con error", String(failed)),
+            createServiceMetric("Tiempo medio observado", average === null ? "No disponible" : `${average} ms`)
+        );
+        detail.appendChild(metrics);
+        const note = document.createElement("p");
+        note.className = "dev-service-note";
+        note.textContent = "Las solicitudes, acciones y tiempos se miden desde esta sesión del navegador. El servicio no expone un contador global verificable de ejecuciones internas de Apps Script.";
+        detail.appendChild(note);
+        const dependencies = document.createElement("div");
+        dependencies.className = "dev-service-dependencies";
+        const depTitle = document.createElement("strong");
+        depTitle.textContent = "Información reportada por el backend";
+        dependencies.appendChild(depTitle);
+        const depItems = [];
+        if (Array.isArray(metadata.sheetsAccessed) && metadata.sheetsAccessed.length) depItems.push(`Hojas declaradas: ${metadata.sheetsAccessed.join(", ")}`);
+        if (metadata.cacheStatus && typeof metadata.cacheStatus.isCached === "boolean") depItems.push(`Caché: ${metadata.cacheStatus.isCached ? "con datos" : "sin datos"}`);
+        if (metadata.reportedStatus) depItems.push(`Estado reportado: ${metadata.reportedStatus}`);
+        if (!depItems.length) depItems.push("El endpoint no expone parámetros adicionales de diagnóstico.");
+        depItems.forEach(value => { const p = document.createElement("p"); p.textContent = value; dependencies.appendChild(p); });
+        detail.appendChild(dependencies);
+        const actionsTitle = document.createElement("strong");
+        actionsTitle.className = "dev-service-actions-heading";
+        actionsTitle.textContent = "Acciones API observadas en esta sesión";
+        detail.appendChild(actionsTitle);
+        if (!events.length) {
+            const empty = document.createElement("p");
+            empty.className = "dev-empty-state";
+            empty.textContent = "Todavía no se han observado solicitudes API para este servicio en esta sesión.";
+            detail.appendChild(empty);
+        } else {
+            const list = document.createElement("ul");
+            list.className = "dev-service-events";
+            events.slice(-8).reverse().forEach(event => {
+                const row = document.createElement("li");
+                const action = document.createElement("strong");
+                action.textContent = event.action;
+                const info = document.createElement("span");
+                info.textContent = `${formatServiceCheckTime(event.timestamp)} · ${Math.round(event.durationMs)} ms · ${event.outcome}`;
+                row.append(action, info);
+                list.appendChild(row);
+            });
+            detail.appendChild(list);
+        }
+        if (lastEvent) {
+            const last = document.createElement("p");
+            last.className = "dev-service-note";
+            last.textContent = `Última acción observada: ${lastEvent.action}.`;
+            detail.appendChild(last);
         }
     }
-
-    const scanBtn = document.getElementById('btn-check-services-health');
-    if (scanBtn) {
-        scanBtn.onclick = () => runServicesHealthScan();
+    function renderServiceTrafficChart() {
+        const container = document.getElementById("service-traffic-chart");
+        if (!container) return;
+        container.replaceChildren();
+        const snapshot = getServiceMetricsSnapshot();
+        if (!snapshot.events.length) {
+            const empty = document.createElement("p");
+            empty.className = "dev-empty-state";
+            empty.textContent = "Aún no se han observado solicitudes API en esta sesión.";
+            container.appendChild(empty);
+            return;
+        }
+        const bucketCount = 15, bucketSize = 60000;
+        const currentMinute = Math.floor(Date.now() / bucketSize) * bucketSize;
+        const firstMinute = currentMinute - (bucketCount - 1) * bucketSize;
+        const keys = [...new Set([...Object.keys(serviceHealthResults), ...snapshot.events.map(event => event.service)])];
+        const series = keys.map(service => ({ service, counts: Array(bucketCount).fill(0) }));
+        snapshot.events.forEach(event => {
+            const index = Math.floor((event.timestamp - firstMinute) / bucketSize);
+            if (index >= 0 && index < bucketCount) {
+                const target = series.find(item => item.service === event.service);
+                if (target) target.counts[index]++;
+            }
+        });
+        const maxValue = Math.max(1, ...series.flatMap(item => item.counts));
+        const width = 920, height = 270, left = 48, right = 18, top = 18, bottom = 42;
+        const plotWidth = width - left - right, plotHeight = height - top - bottom;
+        const ns = "http://www.w3.org/2000/svg";
+        const svg = document.createElementNS(ns, "svg");
+        svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+        svg.setAttribute("class", "dev-service-traffic-svg");
+        svg.setAttribute("role", "img");
+        svg.setAttribute("aria-label", "Solicitudes API por minuto observadas desde este navegador durante los últimos quince minutos.");
+        [0, Math.ceil(maxValue / 2), maxValue].filter((v, i, arr) => arr.indexOf(v) === i).forEach(value => {
+            const y = top + plotHeight - (value / maxValue) * plotHeight;
+            const line = document.createElementNS(ns, "line");
+            line.setAttribute("x1", left); line.setAttribute("x2", width - right);
+            line.setAttribute("y1", y); line.setAttribute("y2", y);
+            line.setAttribute("class", "dev-service-traffic-gridline");
+            svg.appendChild(line);
+            const label = document.createElementNS(ns, "text");
+            label.setAttribute("x", left - 10); label.setAttribute("y", y + 4);
+            label.setAttribute("text-anchor", "end"); label.setAttribute("class", "dev-service-traffic-axis");
+            label.textContent = String(value); svg.appendChild(label);
+        });
+        [0, 3, 6, 9, 12, 14].forEach(index => {
+            const x = left + (index / (bucketCount - 1)) * plotWidth;
+            const label = document.createElementNS(ns, "text");
+            label.setAttribute("x", x); label.setAttribute("y", height - 12);
+            label.setAttribute("text-anchor", "middle"); label.setAttribute("class", "dev-service-traffic-axis");
+            label.textContent = new Date(firstMinute + index * bucketSize).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+            svg.appendChild(label);
+        });
+        series.forEach((item, index) => {
+            const points = item.counts.map((count, bucket) => {
+                const x = left + (bucket / (bucketCount - 1)) * plotWidth;
+                const y = top + plotHeight - (count / maxValue) * plotHeight;
+                return `${x},${y}`;
+            }).join(" ");
+            const line = document.createElementNS(ns, "polyline");
+            line.setAttribute("points", points);
+            line.setAttribute("class", `dev-service-traffic-line dev-service-color-${index % 8}`);
+            svg.appendChild(line);
+        });
+        container.appendChild(svg);
+        const legend = document.createElement("div");
+        legend.className = "dev-service-traffic-legend";
+        series.forEach((item, index) => {
+            const entry = document.createElement("span");
+            entry.className = `dev-service-traffic-legend-item dev-service-color-${index % 8}`;
+            entry.textContent = item.service;
+            legend.appendChild(entry);
+        });
+        container.appendChild(legend);
+    }
+    function renderServiceDashboard() {
+        renderServiceCards();
+        renderServiceDetail();
+        renderServiceTrafficChart();
+    }
+    async function runServicesHealthScan() {
+        if (isHealthScanRunning) return;
+        isHealthScanRunning = true;
+        const grid = document.getElementById("services-health-grid");
+        const button = document.getElementById("btn-check-services-health");
+        if (button) button.disabled = true;
+        if (grid) grid.innerHTML = '<span class="dev-empty-state">Escaneando servicios (máximo 8 segundos por servicio)...</span>';
+        log("[SALUD] Ejecutando diagnóstico independiente de cada servicio...");
+        try {
+            serviceHealthResults = await checkAllServicesHealth();
+            if (!selectedServiceKey || !serviceHealthResults[selectedServiceKey]) selectedServiceKey = Object.keys(serviceHealthResults)[0] || null;
+            renderServiceDashboard();
+            log("[SALUD] Diagnóstico de servicios completado.");
+        } catch (e) {
+            log(`[SALUD ERROR] Fallo al escanear servicios: ${e.message}`, false, true);
+            if (grid) grid.innerHTML = '<span class="dev-empty-state">No fue posible completar el diagnóstico.</span>';
+        } finally {
+            isHealthScanRunning = false;
+            if (button) button.disabled = false;
+        }
+    }
+    const scanBtn = document.getElementById("btn-check-services-health");
+    if (scanBtn) scanBtn.onclick = () => runServicesHealthScan();
+    if (!window.adminServiceMetricsUnsubscribe) {
+        window.adminServiceMetricsUnsubscribe = subscribeServiceMetrics(() => {
+            renderServiceTrafficChart();
+            if (selectedServiceKey) renderServiceDetail();
+        });
     }
 
     // Conectividad automática e inicio
@@ -3152,7 +3616,7 @@ function initAdminPanelListeners() {
 
     // Función genérica para disparar tareas con soporte para lotes automáticos, ETA y estadísticas en tiempo real
     async function runAction(action, payload = {}) {
-        const isBatch = (action === 'normalizeImages' || action === 'reorganizeImagesInDrive');
+        const isBatch = action === 'normalizeImages' || action === 'organizePrimaryVehicleImages';
         const startTime = Date.now();
 
         let lastResource = "N/A";
@@ -3162,7 +3626,7 @@ function initAdminPanelListeners() {
             log(`Enviando comando administrativo '${action}' al servidor...`);
             setProgress(5);
             try {
-                const res = await routeAction(action, payload);
+                const res = await routeAction(action, { ...payload, ...getDeveloperSessionPayload() });
                 setProgress(50);
                 if (res.status === 'success') {
                     if (res.logs) {
@@ -3235,13 +3699,21 @@ ${elapsedSec}s
         let totalCarpetasEliminadas = 0;
         let totalImagenesMovidas = 0;
         let totalImagenesRenombradas = 0;
+        let totalImagenesOmitidas = 0;
+        let totalErroresArchivo = 0;
 
         while (!finished) {
             loopCount++;
             log(`[LOTE] Ejecutando lote ${loopCount}...`);
             try {
-                const res = await routeAction(action, { limit, reset: payload.reset, processId });
-                if (res.status === 'success') {
+                const res = await routeAction(action, { limit, reset: payload.reset, processId, ...getDeveloperSessionPayload() });
+                if (res.status === 'warning') {
+                    errorCount++;
+                    log(`[ADVERTENCIA] ${res.message || 'La operación se detuvo por una condición de seguridad.'}`, false, true);
+                    if (res.logs) await playLogs(res.logs);
+                    finished = true;
+                    setProgress(0);
+                } else if (res.status === 'success') {
                     if (res.logs) {
                         await playLogs(res.logs);
                     }
@@ -3276,6 +3748,8 @@ ${elapsedSec}s
                     if (res.foldersDeleted !== undefined) totalCarpetasEliminadas += res.foldersDeleted;
                     if (res.movedFiles !== undefined) totalImagenesMovidas += res.movedFiles;
                     if (res.imagesRenamed !== undefined) totalImagenesRenombradas += res.imagesRenamed;
+                    if (res.skippedFiles !== undefined) totalImagenesOmitidas += res.skippedFiles;
+                    if (res.itemErrors !== undefined) totalErroresArchivo += res.itemErrors;
 
                     // Extraer último archivo y carpeta procesada de los registros recibidos
                     let lastFile = "Ninguno";
@@ -3320,7 +3794,7 @@ Cantidad procesada en lote: ${res.processedCount} (Total acumulado: ${nextIndex}
                         const totalTimeStr = formatTimeMMSS(Date.now() - startTime);
                         log(`
 ==================================================
-Proceso finalizado con éxito 🎉
+${totalErroresArchivo > 0 ? "Proceso finalizado con advertencias ⚠️" : "Proceso finalizado con éxito 🎉"}
 
 Carpetas verificadas:
 ${totalCarpetasVerificadas}
@@ -3340,7 +3814,13 @@ ${totalImagenesMovidas}
 Imágenes renombradas:
 ${totalImagenesRenombradas}
 
-Errores:
+Imágenes omitidas:
+${totalImagenesOmitidas}
+
+Errores por archivo:
+${totalErroresArchivo}
+
+Errores de lote:
 ${errorCount}
 
 Tiempo total:
@@ -3372,10 +3852,10 @@ ${totalTimeStr}
 🚨 ERROR DETECTADO
 
 Operación:
-${action === 'normalizeImages' ? 'Normalización de imágenes' : (action === 'reorganizeImagesInDrive' ? 'Organización de carpetas' : action)}
+${action === 'normalizeImages' ? 'Normalización de imágenes' : action === 'organizePrimaryVehicleImages' ? 'Organización de imágenes principales' : action}
 
 Etapa:
-${action === 'reorganizeImagesInDrive' ? 'Movimiento de imágenes / Creación de carpetas' : 'Procesamiento de imágenes'}
+Procesamiento de imágenes
 
 Recurso:
 ${lastResource || 'N/A'}
@@ -3440,7 +3920,8 @@ ${elapsedSec}s
             const res = await routeAction('driveCommand', {
                 command: cmd,
                 args: args,
-                currentFolderId: currentTerminalFolderId
+                currentFolderId: currentTerminalFolderId,
+                ...getDeveloperSessionPayload()
             });
 
             if (res && res.status === 'success') {
@@ -3539,91 +4020,429 @@ ${elapsedSec}s
         };
     }
 
-    // 1. Botón Respaldar DB
-    document.getElementById('btn-admin-backup-db').onclick = async () => {
-        const res = await runAction('backupDatabase');
-        if (res && res.backupId) {
-            document.getElementById('dev-ss-backup-id').value = res.backupId;
-            const linkBtn = document.getElementById('link-ss-backup-btn');
-            linkBtn.disabled = false;
-            linkBtn.onclick = () => window.open(res.backupUrl || `https://docs.google.com/spreadsheets/d/${res.backupId}`, '_blank');
-        }
-    };
+    // Respaldos y restauración: un único campo compartido para entrada y salida de enlaces.
+    const backupResourceInput = document.getElementById('backup-resource-input');
+    const backupResourceHint = document.getElementById('backup-resource-hint');
 
-    // 2. Botón Respaldar Drive
-    document.getElementById('btn-admin-backup-drive').onclick = async () => {
-        const res = await runAction('backupDrive');
-        if (res && res.backupId) {
-            document.getElementById('dev-drive-backup-id').value = res.backupId;
-            const linkBtn = document.getElementById('link-drive-backup-btn');
-            linkBtn.disabled = false;
-            linkBtn.onclick = () => window.open(res.backupUrl || `https://drive.google.com/drive/folders/${res.backupId}`, '_blank');
+    function setBackupResourceHint(message, isError = false) {
+        if (backupResourceHint) {
+            backupResourceHint.textContent = message;
+            backupResourceHint.dataset.state = isError ? 'error' : 'info';
         }
-    };
+    }
 
-    // 3. Copiado de IDs
-    document.getElementById('copy-ss-backup-btn').onclick = () => {
-        const idVal = document.getElementById('dev-ss-backup-id').value;
-        if (idVal) {
-            navigator.clipboard.writeText(idVal).then(() => log("ID de Spreadsheet copiado al portapapeles."));
-        }
-    };
-    document.getElementById('copy-drive-backup-btn').onclick = () => {
-        const idVal = document.getElementById('dev-drive-backup-id').value;
-        if (idVal) {
-            navigator.clipboard.writeText(idVal).then(() => log("ID de carpeta de Drive copiado al portapapeles."));
-        }
-    };
+    function setBackupButtonBusy(button, busy) {
+        if (!button) return;
+        button.disabled = busy;
+        button.setAttribute('aria-busy', String(busy));
+    }
 
-    // 4. Restauración
-    document.getElementById('btn-admin-restore-db').onclick = async () => {
-        const backupId = document.getElementById('restore-backup-id-input').value.trim();
-        if (!backupId) {
-            log("[ADVERTENCIA] Por favor introduce un ID de Backup válido para restaurar.", true);
-            return;
-        }
-        if (confirm("¿Estás seguro de que deseas RESTAURAR la base de datos completa? Esto sobreescribirá la información actual de producción.")) {
-            await runAction('restoreDatabase', { backupId });
-        }
-    };
-    document.getElementById('btn-admin-restore-drive').onclick = async () => {
-        const backupId = document.getElementById('restore-backup-id-input').value.trim();
-        if (!backupId) {
-            log("[ADVERTENCIA] Por favor introduce un ID de Backup válido para restaurar.", true);
-            return;
-        }
-        if (confirm("¿Estás seguro de que deseas RESTAURAR toda la estructura de Drive? Esto limpiará y sobreescribirá las imágenes actuales en producción.")) {
-            await runAction('restoreDrive', { backupId });
-        }
-    };
+    function isVerifiedBackupResponse(response, resourceType) {
+        const backupId = String(response && response.backupId || '').trim();
+        const backupUrl = String(response && response.backupUrl || '').trim();
+        if (!backupId || !backupUrl) return false;
+        const expectedPrefix = resourceType === 'spreadsheet'
+            ? `https://docs.google.com/spreadsheets/d/${backupId}`
+            : `https://drive.google.com/drive/folders/${backupId}`;
+        return backupUrl === expectedPrefix || backupUrl.startsWith(expectedPrefix + '/') || backupUrl.startsWith(expectedPrefix + '?');
+    }
 
-    // 5. Mantenimiento y Organización
-    // Listeners para motor de firmas de VIN
-    const recalcVinBtn = document.getElementById('btn-recalculate-vin-signatures');
-    if (recalcVinBtn) {
-        recalcVinBtn.onclick = () => {
-            const catalogData = getState().catalogData;
-            if (!catalogData || !catalogData.cortes) {
-                appendLog('[VIN ENGINE] No hay registros vehiculares en memoria.', 'log-warning');
+    async function createBackup(action, resourceType, button) {
+        const description = resourceType === 'spreadsheet'
+            ? 'Creando y verificando el respaldo de la Spreadsheet...'
+            : 'Creando y verificando el respaldo de la carpeta de Drive...';
+        setBackupResourceHint(description);
+        setBackupButtonBusy(button, true);
+        try {
+            const response = await runAction(action);
+            if (!response) {
+                setBackupResourceHint('No se confirmó la creación del respaldo. Consulta la consola para revisar el resultado.', true);
                 return;
             }
-            appendLog('[VIN ENGINE] Iniciando análisis diferencial de VIN...', 'log-info');
-            const stats = vinDifferentialEngine.calculateSignatures(catalogData.cortes);
-            vinSignatureStore.saveSignatures(vinDifferentialEngine);
-            appendLog(`[VIN ENGINE] Concluido: ${stats.totalVinsAnalyzed} VINs analizados, ${stats.totalClassesAnalyzed} clasificaciones, ${stats.signaturesGenerated} firmas generadas (${stats.validatedCount} validadas, ${stats.pendingCount} pendientes, ${stats.insufficientCount} insuficientes). Conflictos: ${stats.conflictsCount}.`, 'log-info');
+            if (!isVerifiedBackupResponse(response, resourceType)) {
+                log('[ERROR] ADMIN no devolvió un enlace completo verificable para el recurso de respaldo.', false, true);
+                setBackupResourceHint('El servidor no confirmó la identidad y el enlace completo del respaldo. No se mostrará como válido.', true);
+                return;
+            }
+            backupResourceInput.value = response.backupUrl;
+            verifiedDatabaseBackupId = resourceType === 'spreadsheet' ? String(response.backupId) : null;
+            vinMigrationPreview = null;
+            vinMigrationPreviewBackupId = null;
+            updateVinMigrationControls();
+            setBackupResourceHint(resourceType === 'spreadsheet'
+                ? 'Respaldo de Spreadsheet verificado. El enlace completo quedó disponible en este campo.'
+                : 'Respaldo de Drive verificado. El enlace completo quedó disponible en este campo.');
+        } finally {
+            setBackupButtonBusy(button, false);
+        }
+    }
+
+    document.getElementById('btn-admin-backup-db').onclick = async (event) => {
+        await createBackup('backupDatabase', 'spreadsheet', event.currentTarget);
+    };
+
+    document.getElementById('btn-admin-backup-drive').onclick = async (event) => {
+        await createBackup('backupDrive', 'drive', event.currentTarget);
+    };
+
+    function normalizeSpreadsheetBackupId(value) {
+        const input = String(value || '').trim();
+        if (/^[a-zA-Z0-9_-]{20,}$/.test(input)) return input;
+        const match = input.match(/(?:\/d\/|[?&]id=)([a-zA-Z0-9_-]{20,})/);
+        return match ? match[1] : '';
+    }
+
+    function normalizeDriveBackupId(value) {
+        const input = String(value || '').trim();
+        if (/^[a-zA-Z0-9_-]{20,}$/.test(input)) return input;
+        const match = input.match(/(?:\/folders\/|[?&]id=)([a-zA-Z0-9_-]{20,})/);
+        return match ? match[1] : '';
+    }
+
+    async function restoreBackup(action, resourceType, button) {
+        const inputValue = backupResourceInput ? backupResourceInput.value.trim() : '';
+        const backupId = resourceType === 'spreadsheet'
+            ? normalizeSpreadsheetBackupId(inputValue)
+            : normalizeDriveBackupId(inputValue);
+        if (!backupId) {
+            const expected = resourceType === 'spreadsheet'
+                ? 'Introduce un ID o enlace válido de Google Sheets.'
+                : 'Introduce un ID o enlace válido de una carpeta de Google Drive.';
+            log(`[ADVERTENCIA] ${expected}`, true);
+            setBackupResourceHint(expected, true);
+            return;
+        }
+
+        const confirmation = resourceType === 'spreadsheet'
+            ? '¿Estás seguro de que deseas RESTAURAR la base de datos completa? Esto sobreescribirá la información actual de producción.'
+            : '¿Estás seguro de que deseas RESTAURAR toda la estructura de Drive? Esto limpiará y sobreescribirá las imágenes actuales en producción.';
+        if (!confirm(confirmation)) return;
+
+        setBackupResourceHint(resourceType === 'spreadsheet'
+            ? 'Validando el respaldo de Spreadsheet antes de restaurar...'
+            : 'Validando el respaldo de Drive antes de restaurar...');
+        setBackupButtonBusy(button, true);
+        try {
+            const response = await runAction(action, { backupId });
+            if (response && response.status === 'success') {
+                setBackupResourceHint(resourceType === 'spreadsheet'
+                    ? 'La restauración de Spreadsheet finalizó. El enlace utilizado se conserva en el campo.'
+                    : 'La restauración de Drive finalizó. El enlace utilizado se conserva en el campo.');
+            } else {
+                setBackupResourceHint('La restauración no fue confirmada. Consulta la consola antes de volver a intentarlo.', true);
+            }
+        } finally {
+            setBackupButtonBusy(button, false);
+        }
+    }
+
+    document.getElementById('btn-admin-restore-db').onclick = async (event) => {
+        setBackupResourceHint('Para restaurar la base de datos, introduce el enlace completo de una Spreadsheet de respaldo.');
+        await restoreBackup('restoreDatabase', 'spreadsheet', event.currentTarget);
+    };
+
+    document.getElementById('btn-admin-restore-drive').onclick = async (event) => {
+        setBackupResourceHint('Para restaurar Drive, introduce el enlace completo de una carpeta de respaldo.');
+        await restoreBackup('restoreDrive', 'drive', event.currentTarget);
+    };
+
+    const copyBackupResourceLinkButton = document.getElementById('btn-copy-backup-resource-link');
+    if (copyBackupResourceLinkButton) {
+        copyBackupResourceLinkButton.onclick = async () => {
+            const link = backupResourceInput ? backupResourceInput.value.trim() : '';
+            if (!link) {
+                log('[ADVERTENCIA] No hay ningún enlace para copiar.', true);
+                return;
+            }
+            try {
+                await navigator.clipboard.writeText(link);
+                log('[SISTEMA] Enlace del respaldo copiado al portapapeles.');
+            } catch (error) {
+                log(`[ERROR] No se pudo copiar el enlace: ${error.message}`, false, true);
+            }
         };
     }
-    const viewVinBtn = document.getElementById('btn-view-vin-signatures');
-    if (viewVinBtn) {
-        viewVinBtn.onclick = () => {
-            const count = vinDifferentialEngine.signatures.size;
-            appendLog(`[VIN ENGINE] Firmas en memoria: ${count}`, 'log-info');
-            let idx = 1;
-            for (const sig of vinDifferentialEngine.signatures.values()) {
-                if (idx <= 10) {
-                    appendLog(`[FIRMA #${idx}] ${sig.marca} ${sig.modelo} (${sig.rangoAnos}) [${sig.version || 'Gral'}]: ${sig.signatureString || 'N/A'} - Estado: ${sig.status} - Certeza: ${sig.confidence}%`, 'log-info');
-                    idx++;
+
+    const openBackupResourceLinkButton = document.getElementById('btn-open-backup-resource-link');
+    if (openBackupResourceLinkButton) {
+        openBackupResourceLinkButton.onclick = () => {
+            const link = backupResourceInput ? backupResourceInput.value.trim() : '';
+            const isSpreadsheetLink = /^https:\/\/docs\.google\.com\/spreadsheets\/d\/[a-zA-Z0-9_-]{20,}/.test(link);
+            const isDriveFolderLink = /^https:\/\/drive\.google\.com\/drive\/folders\/[a-zA-Z0-9_-]{20,}/.test(link);
+            if (!isSpreadsheetLink && !isDriveFolderLink) {
+                log('[ADVERTENCIA] Introduce un enlace completo y válido de Spreadsheet o carpeta de Drive.', true);
+                return;
+            }
+            window.open(link, '_blank', 'noopener,noreferrer');
+        };
+    };
+
+    // Migración de identificadores heredados y habilitación de la columna física VIN.
+    const previewVinMigrationButton = document.getElementById('btn-admin-preview-vin-migration');
+    const confirmVinMigrationButton = document.getElementById('btn-admin-confirm-vin-migration');
+    const vinMigrationStatus = document.getElementById('vin-migration-status');
+
+    function updateVinMigrationControls() {
+        const currentBackupId = normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '');
+        const backupVerified = Boolean(verifiedDatabaseBackupId && currentBackupId === verifiedDatabaseBackupId);
+        if (previewVinMigrationButton) previewVinMigrationButton.disabled = !backupVerified || vinMigrationRunning;
+        if (confirmVinMigrationButton) {
+            confirmVinMigrationButton.disabled = !backupVerified ||
+                !vinMigrationPreview ||
+                vinMigrationPreviewBackupId !== verifiedDatabaseBackupId ||
+                vinMigrationRunning;
+        }
+    }
+
+    if (backupResourceInput) {
+        backupResourceInput.addEventListener('input', () => {
+            verifiedDatabaseBackupId = null;
+            vinMigrationPreview = null;
+            vinMigrationPreviewBackupId = null;
+            if (vinMigrationStatus) {
+                vinMigrationStatus.textContent = 'El enlace cambió. Genera un nuevo respaldo de Spreadsheet para habilitar la migración.';
+            }
+            updateVinMigrationControls();
+        });
+    }
+
+    if (previewVinMigrationButton) {
+        previewVinMigrationButton.onclick = async () => {
+            if (vinMigrationRunning) return;
+            const currentBackupId = normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '');
+            if (!verifiedDatabaseBackupId || currentBackupId !== verifiedDatabaseBackupId) {
+                if (vinMigrationStatus) vinMigrationStatus.textContent = 'No hay un respaldo de Spreadsheet verificado en esta sesión.';
+                updateVinMigrationControls();
+                return;
+            }
+
+            vinMigrationRunning = true;
+            vinMigrationPreview = null;
+            vinMigrationPreviewBackupId = null;
+            updateVinMigrationControls();
+            if (vinMigrationStatus) vinMigrationStatus.textContent = 'Ejecutando simulación. No se modificarán hojas ni encabezados.';
+            try {
+                const result = await runAction('migrateCortesOperationIds', { backupId: verifiedDatabaseBackupId });
+                if (!result || result.status !== 'success' || result.dryRun !== true) {
+                    if (vinMigrationStatus) vinMigrationStatus.textContent = 'La simulación no fue confirmada. Consulta la consola y vuelve a intentarlo.';
+                    return;
                 }
+
+                vinMigrationPreview = result;
+                vinMigrationPreviewBackupId = verifiedDatabaseBackupId;
+                const sourceText = Array.isArray(result.sourceColumns) && result.sourceColumns.length
+                    ? result.sourceColumns.join(', ')
+                    : 'ninguna';
+                const summary = 'Simulación completada. Valores heredados detectados: ' + result.sourceCount +
+                    '; identificadores únicos: ' + result.uniqueOperationIds +
+                    '; nuevos registros por trasladar: ' + result.recordsToMigrate +
+                    '; ya presentes: ' + result.alreadyPresent +
+                    '; columnas de origen: ' + sourceText +
+                    '; hoja de destino: ' + result.targetSheet + '.';
+                if (vinMigrationStatus) {
+                    vinMigrationStatus.textContent = summary +
+                        (result.sourceCount === 0
+                            ? ' No se detectaron identificadores heredados; la confirmación preparará la hoja de idempotencia y el encabezado VIN.'
+                            : ' La confirmación trasladará los identificadores y verificará sus asociaciones antes de limpiar las columnas de origen.');
+                }
+                log('[VIN MIGRATION] ' + summary);
+            } catch (error) {
+                vinMigrationPreview = null;
+                vinMigrationPreviewBackupId = null;
+                if (vinMigrationStatus) vinMigrationStatus.textContent = 'Error en la simulación: ' + (error.message || String(error));
+                log('[VIN MIGRATION] Error en la simulación: ' + (error.message || String(error)), false, true);
+            } finally {
+                vinMigrationRunning = false;
+                updateVinMigrationControls();
+            }
+        };
+    }
+
+    if (confirmVinMigrationButton) {
+        confirmVinMigrationButton.onclick = async () => {
+            if (vinMigrationRunning || !vinMigrationPreview) return;
+            const currentBackupId = normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '');
+            if (!verifiedDatabaseBackupId ||
+                currentBackupId !== verifiedDatabaseBackupId ||
+                vinMigrationPreviewBackupId !== verifiedDatabaseBackupId) {
+                if (vinMigrationStatus) vinMigrationStatus.textContent = 'El respaldo verificado o la simulación ya no corresponden. Genera el respaldo y simula nuevamente.';
+                vinMigrationPreview = null;
+                vinMigrationPreviewBackupId = null;
+                updateVinMigrationControls();
+                return;
+            }
+
+            const plan = vinMigrationPreview;
+            const confirmation = 'Se ejecutará la migración VIN sobre la Spreadsheet asociada al respaldo verificado.\n\n' +
+                'Hoja de destino: ' + plan.targetSheet + '\n' +
+                'Valores heredados detectados: ' + plan.sourceCount + '\n' +
+                'Registros nuevos por trasladar: ' + plan.recordsToMigrate + '\n' +
+                'Ya presentes: ' + plan.alreadyPresent + '\n' +
+                'Columna 43: VIN; columnas 44 y 45: reservadas y vacías.\n\n' +
+                'El servidor volverá a validar el estado actual y verificará el destino antes de limpiar el origen. ¿Deseas continuar?';
+            if (!confirm(confirmation)) return;
+
+            vinMigrationRunning = true;
+            updateVinMigrationControls();
+            if (vinMigrationStatus) vinMigrationStatus.textContent = 'Ejecutando migración confirmada. No cierres el panel hasta recibir el resultado.';
+            try {
+                const result = await runAction('migrateCortesOperationIds', { confirm: true, backupId: verifiedDatabaseBackupId });
+                if (!result || result.status !== 'success' || result.dryRun !== false) {
+                    if (vinMigrationStatus) vinMigrationStatus.textContent = 'La migración no fue confirmada como completada. Consulta la consola y realiza una nueva simulación antes de reintentar.';
+                    vinMigrationPreview = null;
+                    vinMigrationPreviewBackupId = null;
+                    return;
+                }
+
+                const summary = 'Migración confirmada. Registros trasladados: ' + result.migratedCount +
+                    '; ya presentes: ' + result.alreadyPresent +
+                    '; hoja utilizada: ' + result.targetSheet +
+                    '; encabezado VIN: columna ' + result.vinColumn +
+                    '; columnas reservadas: ' + result.reservedColumns.join(', ') + '.';
+                if (vinMigrationStatus) vinMigrationStatus.textContent = summary;
+                log('[VIN MIGRATION] ' + summary);
+                vinMigrationPreview = null;
+                vinMigrationPreviewBackupId = null;
+            } catch (error) {
+                vinMigrationPreview = null;
+                vinMigrationPreviewBackupId = null;
+                if (vinMigrationStatus) vinMigrationStatus.textContent = 'Error durante la migración: ' + (error.message || String(error));
+                log('[VIN MIGRATION] Error durante la migración: ' + (error.message || String(error)), false, true);
+            } finally {
+                vinMigrationRunning = false;
+                updateVinMigrationControls();
+            }
+        };
+    }
+
+    updateVinMigrationControls();
+
+    // 5. Mantenimiento y Organización
+    // Ejecutar las acciones VIN seleccionadas mediante un único handler.
+    const runVinActionsBtn = document.getElementById('btn-admin-run-vin-actions');
+    if (runVinActionsBtn) {
+        const recalculateVinCheckbox = document.getElementById('recalculate-vin-signatures-checkbox');
+        const diagnoseVinCheckbox = document.getElementById('diagnose-vin-signatures-checkbox');
+        const vinActionsProgress = document.getElementById('vin-actions-progress');
+        const recalculateVinStatus = document.getElementById('vin-recalculate-status');
+        const diagnoseVinStatus = document.getElementById('vin-diagnostic-status');
+
+        const setVinStatus = (element, message) => {
+            if (element) element.textContent = message;
+        };
+        const yieldVinUi = () => new Promise(resolve => window.requestAnimationFrame(resolve));
+
+        runVinActionsBtn.onclick = async () => {
+            if (runVinActionsBtn.disabled) return;
+
+            const recalculateSelected = Boolean(recalculateVinCheckbox && recalculateVinCheckbox.checked);
+            const diagnoseSelected = Boolean(diagnoseVinCheckbox && diagnoseVinCheckbox.checked);
+
+            if (!recalculateSelected && !diagnoseSelected) {
+                const message = 'Selecciona al menos una operación de firmas VIN.';
+                setVinStatus(vinActionsProgress, message);
+                log('[VIN ENGINE] ' + message, true);
+                return;
+            }
+
+            const controls = [recalculateVinCheckbox, diagnoseVinCheckbox].filter(Boolean);
+            runVinActionsBtn.disabled = true;
+            controls.forEach(control => { control.disabled = true; });
+
+            setVinStatus(vinActionsProgress, 'Preparando las operaciones seleccionadas...');
+            setVinStatus(recalculateVinStatus, recalculateSelected ? 'En espera.' : 'No seleccionada en esta ejecución.');
+            setVinStatus(diagnoseVinStatus, diagnoseSelected ? 'En espera.' : 'No seleccionada en esta ejecución.');
+
+            let recalculateFailed = false;
+            try {
+                if (recalculateSelected) {
+                    try {
+                        setVinStatus(recalculateVinStatus, 'En curso: validando los datos del catálogo.');
+                        setVinStatus(vinActionsProgress, 'Recalculando firmas VIN...');
+                        log('[VIN ENGINE] Iniciando recálculo de firmas diferenciales.');
+                        await yieldVinUi();
+
+                        const catalogData = getState().catalogData;
+                        if (!catalogData || !Array.isArray(catalogData.cortes)) {
+                            throw new Error('No hay registros vehiculares válidos en memoria para recalcular las firmas.');
+                        }
+
+                        const stats = vinDifferentialEngine.calculateSignatures(catalogData.cortes);
+                        setVinStatus(recalculateVinStatus, 'Cálculo completado. Guardando las firmas en el almacenamiento local...');
+                        setVinStatus(vinActionsProgress, 'Cálculo terminado; guardando resultados...');
+                        await yieldVinUi();
+
+                        const persisted = vinSignatureStore.saveSignatures(vinDifferentialEngine);
+                        const summary = 'VIN analizados: ' + stats.totalVinsAnalyzed +
+                            '; clasificaciones: ' + stats.totalClassesAnalyzed +
+                            '; firmas generadas: ' + stats.signaturesGenerated +
+                            '; validadas: ' + stats.validatedCount +
+                            '; pendientes: ' + stats.pendingCount +
+                            '; insuficientes: ' + stats.insufficientCount +
+                            '; conflictos: ' + stats.conflictsCount + '.';
+
+                        if (persisted) {
+                            setVinStatus(recalculateVinStatus, 'Completado. ' + summary + ' Persistencia local confirmada.');
+                            log('[VIN ENGINE] Recálculo completado. ' + summary + ' Firmas guardadas en almacenamiento local.');
+                        } else {
+                            setVinStatus(recalculateVinStatus, 'Cálculo completado, pero falló la persistencia local. ' + summary);
+                            log('[VIN ENGINE] El cálculo terminó, pero saveSignatures() no confirmó la persistencia. ' + summary, true);
+                        }
+                    } catch (error) {
+                        recalculateFailed = true;
+                        setVinStatus(recalculateVinStatus, 'Error: ' + (error && error.message ? error.message : String(error)));
+                        log('[VIN ENGINE] Error al recalcular firmas: ' + (error && error.message ? error.message : String(error)), false, true);
+                    }
+                }
+
+                if (diagnoseSelected) {
+                    try {
+                        const diagnosticContext = recalculateFailed ? ' El recálculo anterior falló; se inspeccionará el estado actual del mapa en memoria.' : '';
+                        setVinStatus(diagnoseVinStatus, 'En curso: inspeccionando las firmas disponibles en memoria.' + diagnosticContext);
+                        setVinStatus(vinActionsProgress, 'Ejecutando diagnóstico de firmas VIN...');
+                        log('[VIN ENGINE] Iniciando diagnóstico de las firmas disponibles en memoria.' + diagnosticContext, recalculateFailed);
+                        await yieldVinUi();
+
+                        const signatures = Array.from(vinDifferentialEngine.signatures.values());
+                        const statusCounts = signatures.reduce((counts, signature) => {
+                            const status = signature && signature.status ? signature.status : 'sin_estado';
+                            counts[status] = (counts[status] || 0) + 1;
+                            return counts;
+                        }, {});
+                        const count = signatures.length;
+                        const summary = 'Firmas en memoria: ' + count +
+                            '; validadas: ' + (statusCounts.validada || 0) +
+                            '; calculadas: ' + (statusCounts.calculada || 0) +
+                            '; pendientes de revisión: ' + (statusCounts.pendiente_revision || 0) +
+                            '; insuficientes: ' + (statusCounts.insuficiente || 0) +
+                            '; sin estado: ' + (statusCounts.sin_estado || 0) + '.';
+
+                        log('[VIN ENGINE] ' + summary);
+                        signatures.slice(0, 10).forEach((signature, index) => {
+                            log('[FIRMA #' + (index + 1) + '] ' + signature.marca + ' ' + signature.modelo +
+                                ' (' + (signature.rangoAnos || 'Rango no disponible') + ') [' +
+                                (signature.version || 'Gral') + ']: ' + (signature.signatureString || 'N/A') +
+                                ' - Estado: ' + (signature.status || 'sin_estado') +
+                                ' - Certeza: ' + (signature.confidence ?? 'N/D') + '%');
+                        });
+
+                        const displayed = Math.min(count, 10);
+                        setVinStatus(diagnoseVinStatus, 'Completado. ' + summary + ' Se muestran ' + displayed + ' de ' + count + ' firmas.' + (recalculateFailed ? ' El resultado corresponde al estado en memoria después del error de recálculo.' : ''));
+                        if (count === 0) {
+                            log('[VIN ENGINE] No hay firmas disponibles en memoria para diagnosticar.', true);
+                        }
+                    } catch (error) {
+                        setVinStatus(diagnoseVinStatus, 'Error: ' + (error && error.message ? error.message : String(error)));
+                        log('[VIN ENGINE] Error durante el diagnóstico: ' + (error && error.message ? error.message : String(error)), false, true);
+                    }
+                }
+
+                const recalculateResult = recalculateVinStatus ? recalculateVinStatus.textContent : 'No seleccionada.';
+                const diagnoseResult = diagnoseVinStatus ? diagnoseVinStatus.textContent : 'No seleccionada.';
+                setVinStatus(vinActionsProgress, 'Operaciones finalizadas. Recalcular: ' + recalculateResult + ' Diagnóstico: ' + diagnoseResult);
+            } finally {
+                runVinActionsBtn.disabled = false;
+                controls.forEach(control => { control.disabled = false; });
             }
         };
     }
@@ -3637,10 +4456,14 @@ ${elapsedSec}s
         const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
         await runAction('normalizeImages', { reset: !continueSaved });
     };
-    document.getElementById('btn-admin-reorganize-drive').onclick = async () => {
-        const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
-        await runAction('reorganizeImagesInDrive', { reset: !continueSaved });
-    };
+    const organizePrimaryImagesButton = document.getElementById('btn-admin-organize-primary-images');
+    if (organizePrimaryImagesButton) {
+        organizePrimaryImagesButton.onclick = async () => {
+            const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio.");
+            if (!confirm("Esta operación moverá exclusivamente archivos referenciados por imagenVehiculo. No renombrará archivos, no duplicará imágenes, no modificará URL ni celdas de Spreadsheet y omitirá imágenes compartidas con otros campos. ¿Deseas continuar?")) return;
+            await runAction('organizePrimaryVehicleImages', { reset: !continueSaved });
+        };
+    }
     document.getElementById('btn-admin-restore-trash').onclick = async () => {
         if (confirm("¿Deseas INICIAR el saneamiento y recuperación exhaustiva de imágenes en la papelera?\n\nEsta operación analizará todas las hojas del Spreadsheet, identificará enlaces rotos de Drive y restaurará de la papelera cualquier imagen eliminada. Puede tomar unos minutos.")) {
             await runAction('restoreAllTrashedImages');
@@ -3671,32 +4494,88 @@ ${elapsedSec}s
         };
     }
 
-    // Purgar Logs de Actividad / Eventos
-    const clearLogsBtn = document.getElementById('btn-admin-clear-activity-logs');
-    if (clearLogsBtn) {
-        clearLogsBtn.onclick = async () => {
-            const selectEl = document.getElementById('clear-logs-option-select');
-            const keepLastWeek = selectEl ? selectEl.value === 'week' : false;
-            const promptText = keepLastWeek
-                ? "¿Estás seguro de que deseas ELIMINAR los registros de eventos con antigüedad MAYOR a una semana? (Los de los últimos 7 días se conservarán)."
-                : "¿Estás seguro de que deseas BORRAR TODOS los registros de eventos y logs de actividad?";
+    // Ejecutar únicamente las limpiezas seleccionadas, manteniendo separados sus servicios.
+    const clearSelectedLogsBtn = document.getElementById('btn-admin-clear-selected-logs');
+    if (clearSelectedLogsBtn) {
+        clearSelectedLogsBtn.onclick = async () => {
+            const clearActivityCheckbox = document.getElementById('clear-activity-logs-checkbox');
+            const clearSensitiveCheckbox = document.getElementById('clear-sensitive-logs-checkbox');
+            const retentionSelect = document.getElementById('clear-logs-option-select');
+            const statusElement = document.getElementById('clear-selected-logs-status');
+            const clearActivitySelected = Boolean(clearActivityCheckbox && clearActivityCheckbox.checked);
+            const clearSensitiveSelected = Boolean(clearSensitiveCheckbox && clearSensitiveCheckbox.checked);
 
-            if (confirm(promptText)) {
-                try {
-                    clearLogsBtn.disabled = true;
-                    log(`Iniciando purga de logs de actividad (Conservar última semana: ${keepLastWeek ? 'Sí' : 'No'})...`);
-                    const res = await clearActivityLogs(keepLastWeek);
-                    if (res && res.status === 'success') {
-                        log(`[EXITO] ${res.message}`);
-                        mostrarNotificacion(res.message, 'success');
-                    } else {
-                        log(`[ERROR] No se pudo purgar los logs: ${res ? res.message : 'Error desconocido'}`, false, true);
+            if (!clearActivitySelected && !clearSensitiveSelected) {
+                const message = "Selecciona al menos una fuente para ejecutar la limpieza.";
+                if (statusElement) statusElement.textContent = message;
+                log(`[ADVERTENCIA] ${message}`, true);
+                mostrarNotificacion(message, 'warning');
+                return;
+            }
+
+            const keepLastWeek = retentionSelect ? retentionSelect.value === 'week' : true;
+            const confirmationDetails = [];
+            if (clearActivitySelected) {
+                confirmationDetails.push(keepLastWeek
+                    ? "• Actividad de usuarios: eliminar únicamente registros con más de 7 días y conservar los últimos 7 días y los encabezados."
+                    : "• Actividad de usuarios: limpiar todos los registros de ActividadUsuario y conservar los encabezados.");
+            }
+            if (clearSensitiveSelected) {
+                confirmationDetails.push("• Registro de Logs: eliminar únicamente las filas que coincidan con los patrones de datos confidenciales definidos; conservar encabezados y demás registros.");
+            }
+
+            const confirmation = "Se ejecutarán exclusivamente estas operaciones:\n\n" +
+                confirmationDetails.join("\n") +
+                "\n\nCada fuente se procesará por separado. ¿Deseas continuar?";
+            if (!confirm(confirmation)) return;
+
+            const controls = [clearActivityCheckbox, clearSensitiveCheckbox, retentionSelect].filter(Boolean);
+            clearSelectedLogsBtn.disabled = true;
+            controls.forEach(control => { control.disabled = true; });
+
+            const outcomes = [];
+            try {
+                if (clearActivitySelected) {
+                    try {
+                        const result = await clearActivityLogs(keepLastWeek, getDeveloperSessionPayload());
+                        if (result && result.status && result.status !== 'success') {
+                            throw new Error(result.message || "La operación no terminó correctamente.");
+                        }
+                        const message = result && result.message ? result.message : "Operación finalizada.";
+                        outcomes.push({ label: "Actividad de usuarios", success: true, message });
+                        log(`[EXITO] Actividad de usuarios: ${message}`);
+                    } catch (error) {
+                        outcomes.push({ label: "Actividad de usuarios", success: false, message: error.message });
+                        log(`[EXCEPCION] Error al limpiar ActividadUsuario: ${error.message}`, false, true);
                     }
-                } catch (err) {
-                    log(`[EXCEPCION] Error al purgar logs: ${err.message}`, false, true);
-                } finally {
-                    clearLogsBtn.disabled = false;
                 }
+
+                if (clearSensitiveSelected) {
+                    try {
+                        const result = await clearSensitiveLogs(getDeveloperSessionPayload());
+                        if (result && result.status && result.status !== 'success') {
+                            throw new Error(result.message || "La operación no terminó correctamente.");
+                        }
+                        const message = result && result.message ? result.message : "Operación finalizada.";
+                        outcomes.push({ label: "Registro de Logs", success: true, message });
+                        log(`[EXITO] Registro de Logs: ${message}`);
+                    } catch (error) {
+                        outcomes.push({ label: "Registro de Logs", success: false, message: error.message });
+                        log(`[EXCEPCION] Error al limpiar Logs: ${error.message}`, false, true);
+                    }
+                }
+
+                const succeeded = outcomes.filter(item => item.success).length;
+                const failed = outcomes.length - succeeded;
+                const summary = outcomes.map(item =>
+                    `${item.success ? "Correcto" : "Error"} — ${item.label}: ${item.message}`
+                ).join(" | ");
+                if (statusElement) statusElement.textContent = summary;
+                const notificationType = failed === 0 ? 'success' : (succeeded > 0 ? 'warning' : 'error');
+                mostrarNotificacion(summary, notificationType);
+            } finally {
+                clearSelectedLogsBtn.disabled = false;
+                controls.forEach(control => { control.disabled = false; });
             }
         };
     }
@@ -3762,13 +4641,69 @@ ${elapsedSec}s
     }
 
     const auditDriveBtn = document.getElementById('btn-admin-audit-drive-images');
-    if (auditDriveBtn) {
-        auditDriveBtn.onclick = () => openAuditDriveModal();
+    if (auditDriveBtn) auditDriveBtn.onclick = () => openAuditDriveModal();
+
+    const driveStorageRefreshBtn = document.getElementById('btn-admin-refresh-drive-storage');
+    const driveStorageStatus = document.getElementById('drive-storage-monitor-status');
+    const driveStorageUsed = document.getElementById('drive-storage-used');
+    const driveStorageAccountUsed = document.getElementById('drive-storage-account-used');
+    const driveStorageLimit = document.getElementById('drive-storage-limit');
+    const driveStorageRemaining = document.getElementById('drive-storage-remaining');
+    const driveStoragePercent = document.getElementById('drive-storage-percent');
+    const formatStorageBytes = (value) => {
+        if (value === null || value === undefined || value === '') return 'No disponible';
+        const bytes = Number(value);
+        if (!Number.isFinite(bytes) || bytes < 0) return 'No disponible';
+        if (bytes === 0) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
+        const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+        return (bytes / Math.pow(1024, index)).toFixed(index >= 3 ? 2 : 1) + ' ' + units[index];
+    };
+    const refreshDriveStorage = async () => {
+        if (driveStorageRefreshBtn) driveStorageRefreshBtn.disabled = true;
+        if (driveStorageStatus) driveStorageStatus.textContent = 'Consultando el almacenamiento global de Google Drive...';
+        try {
+            const response = await routeAction('getDriveStorage', getDeveloperSessionPayload());
+            if (!response || response.status !== 'success') throw new Error(response && response.message ? response.message : 'Respuesta no válida del monitor.');
+            if (driveStorageUsed) driveStorageUsed.textContent = formatStorageBytes(response.driveUsedBytes);
+            if (driveStorageAccountUsed) driveStorageAccountUsed.textContent = formatStorageBytes(response.accountUsedBytes);
+            if (driveStorageLimit) driveStorageLimit.textContent = response.quotaStatus === 'available'
+                ? formatStorageBytes(response.limitBytes)
+                : (response.quotaStatus === 'unlimited'
+                    ? 'Ilimitada'
+                    : (response.quotaStatus === 'unlimited_or_not_reported'
+                        ? 'Sin límite reportado (posible cuota ilimitada)'
+                        : 'No disponible'));
+            if (driveStorageRemaining) driveStorageRemaining.textContent = formatStorageBytes(response.remainingBytes);
+            if (driveStoragePercent) driveStoragePercent.textContent =
+                response.usagePercent !== null && response.usagePercent !== undefined && Number.isFinite(Number(response.usagePercent))
+                    ? Number(response.usagePercent).toFixed(2) + '%' : 'No disponible';
+            if (driveStorageStatus) driveStorageStatus.textContent = 'Actualizado: ' +
+                new Date(response.capturedAt || Date.now()).toLocaleString() + '. Fuente: ' +
+                (response.source || 'Google Drive') + '.' + (response.warning ? ' ' + response.warning : '');
+        } catch (error) {
+            if (driveStorageStatus) driveStorageStatus.textContent = 'No se pudo consultar el almacenamiento global: ' + error.message;
+        } finally {
+            if (driveStorageRefreshBtn) driveStorageRefreshBtn.disabled = false;
+        }
+    };
+    if (driveStorageRefreshBtn) driveStorageRefreshBtn.onclick = refreshDriveStorage;
+    refreshDriveStorage();
+}
+
+function getDeveloperSessionPayload() {
+    const currentUser = getState().currentUser;
+    if (!currentUser || !currentUser.ID || !currentUser.SessionToken) {
+        throw new Error("No se encontró una sesión autenticada válida. Vuelve a iniciar sesión.");
     }
+    return {
+        userId: currentUser.ID,
+        sessionToken: currentUser.SessionToken
+    };
 }
 
 /**
- * TAREA 2: Modal de Gestión y Recuperación de Imágenes Reemplazadas
+ * TAREA 2: Modal de Gestión y Consulta del Inventario e Historial de Imágenes
  */
 export async function openReplacedImagesModal() {
     const modal = document.getElementById('replaced-images-modal');
@@ -3776,119 +4711,355 @@ export async function openReplacedImagesModal() {
     modal.style.display = 'flex';
 
     const closeBtn = document.getElementById('close-replaced-images-modal');
-    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
-
     const listContainer = document.getElementById('replaced-images-list-container');
     const filterInput = document.getElementById('filter-replaced-images-input');
     const refreshBtn = document.getElementById('btn-refresh-replaced-images');
+    const listViewBtn = document.getElementById('btn-replaced-view-list');
+    const gridViewBtn = document.getElementById('btn-replaced-view-grid');
+    const folderSelect = document.getElementById('replaced-images-target-folder');
+    const newFolderInput = document.getElementById('replaced-images-new-folder-name');
+    const createFolderBtn = document.getElementById('btn-create-replaced-images-folder');
+    const folderStatus = document.getElementById('replaced-images-folder-status');
+    const lightbox = document.getElementById('replaced-image-lightbox');
+    const lightboxContent = document.getElementById('replaced-image-lightbox-content');
+    const lightboxImage = document.getElementById('replaced-image-lightbox-image');
+    const lightboxTitle = document.getElementById('replaced-image-lightbox-title');
+    const lightboxClose = document.getElementById('replaced-image-lightbox-close');
 
     let cachedReplaced = [];
+    let currentView = await offline.getReplacedImagesView();
+    currentView = currentView === 'list' ? 'list' : 'grid';
+    let folders = [];
+    let lightboxKeyHandler = null;
+
+    const closeLightbox = () => {
+        if (!lightbox) return;
+        lightbox.style.display = 'none';
+        if (lightboxImage) {
+            lightboxImage.src = '';
+            lightboxImage.classList.remove('is-zoomed');
+        }
+        if (lightboxKeyHandler) {
+            document.removeEventListener('keydown', lightboxKeyHandler);
+            lightboxKeyHandler = null;
+        }
+    };
+
+    const openLightbox = (rep) => {
+        if (!lightbox || !lightboxImage) return;
+        closeLightbox();
+        lightboxImage.src = getImageUrl(rep.url_visualizacion || rep.url_anterior || rep.archivo_drive_id, IMG_SIZE_LARGE);
+        lightboxImage.alt = rep.nombre_archivo || 'Imagen de Google Drive';
+        lightboxImage.onerror = () => {
+            lightboxImage.onerror = null;
+            lightboxImage.src = 'https://placehold.co/800x600/cccccc/333333?text=Vista+no+disponible';
+        };
+        lightboxImage.classList.remove('is-zoomed');
+        if (lightboxTitle) lightboxTitle.textContent = rep.nombre_archivo || 'Vista ampliada';
+        lightbox.style.display = 'flex';
+        lightboxKeyHandler = (event) => {
+            if (event.key === 'Escape') closeLightbox();
+        };
+        document.addEventListener('keydown', lightboxKeyHandler);
+    };
+
+    if (lightbox) lightbox.onclick = closeLightbox;
+    if (lightboxContent) lightboxContent.onclick = (event) => event.stopPropagation();
+    if (lightboxImage) lightboxImage.onclick = () => lightboxImage.classList.toggle('is-zoomed');
+    if (lightboxClose) lightboxClose.onclick = closeLightbox;
+
+    const loadFolders = async (preferredFolderId = '') => {
+        if (!folderSelect) return;
+        try {
+            const response = await routeAction('getCortesImageFolders', getDeveloperSessionPayload());
+            folders = Array.isArray(response.folders) ? response.folders : [];
+            const previousSelection = preferredFolderId || folderSelect.value;
+            folderSelect.innerHTML = '';
+            folders.forEach((folder) => {
+                const option = document.createElement('option');
+                option.value = folder.id;
+                option.textContent = folder.path;
+                folderSelect.appendChild(option);
+            });
+            const selectionExists = folders.some((folder) => folder.id === previousSelection);
+            folderSelect.value = selectionExists ? previousSelection : response.rootFolderId;
+            if (folderStatus) folderStatus.textContent = folders.length + ' carpetas disponibles dentro de Cortes.';
+        } catch (error) {
+            if (folderStatus) folderStatus.textContent = 'No se pudieron consultar las carpetas: ' + error.message;
+        }
+    };
 
     const loadData = async () => {
-        listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Consultando imágenes históricas en Drive...</div>';
+        if (listContainer) {
+            listContainer.innerHTML = '<div class="replaced-images-empty"><i class="fa-solid fa-spinner fa-spin"></i> Consultando inventario e historial en Spreadsheet...</div>';
+        }
         try {
-            const res = await routeAction('getReplacedImages');
-            cachedReplaced = (res && res.data) ? res.data : [];
+            const response = await routeAction('getReplacedImages', getDeveloperSessionPayload());
+            cachedReplaced = response && Array.isArray(response.data)
+                ? response.data.filter((item) => {
+                    const type = item.tipo_registro || (item.origen_registro === 'auditoria_drive' ? 'sin_uso_detectado' : 'reemplazada');
+                    const status = String(item.estado || (type === 'sin_uso_detectado' ? 'sin_uso_detectado' : 'historica'));
+                    return type === 'sin_uso_detectado'
+                        ? status === 'sin_uso_detectado'
+                        : type === 'reemplazada' && ['historica', 'restablecida'].includes(status);
+                })
+                : [];
             renderList(filterInput ? filterInput.value : '');
-        } catch (err) {
-            listContainer.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error al cargar repositorio histórico: ${err.message}</div>`;
+        } catch (error) {
+            if (listContainer) listContainer.textContent = 'Error al cargar el inventario e historial: ' + error.message;
+        }
+    };
+
+    const createActionButton = (icon, label, className, handler, title) => {
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'btn ' + className + ' replaced-image-action';
+        button.innerHTML = '<i class="fa-solid ' + icon + '" aria-hidden="true"></i><span>' + label + '</span>';
+        button.title = title || label;
+        button.onclick = handler;
+        return button;
+    };
+
+    const runButtonAction = async (button, busyLabel, operation) => {
+        const original = button.innerHTML;
+        button.disabled = true;
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i><span>' + busyLabel + '</span>';
+        try {
+            await operation();
+        } catch (error) {
+            alert(error.message || String(error));
+        } finally {
+            if (button.isConnected) {
+                button.disabled = false;
+                button.innerHTML = original;
+            }
         }
     };
 
     const renderList = (filterText = '') => {
+        if (!listContainer) return;
         listContainer.innerHTML = '';
-        const q = filterText.toLowerCase().trim();
-        const filtered = cachedReplaced.filter(item => {
-            if (!q) return true;
-            return (item.nombre_archivo || '').toLowerCase().includes(q) ||
-                   (item.referencia_texto || '').toLowerCase().includes(q) ||
-                   (item.campo || '').toLowerCase().includes(q) ||
-                   (item.archivo_drive_id || '').toLowerCase().includes(q) ||
-                   String(item.registro_id || '').toLowerCase().includes(q);
+        listContainer.className = 'replaced-images-list view-' + currentView;
+        const query = String(filterText || '').toLowerCase().trim();
+        const filtered = cachedReplaced.filter((item) => {
+            if (!query) return true;
+            return [
+                item.nombre_archivo, item.referencia_texto, item.campo, item.archivo_drive_id,
+                item.registro_id, item.ubicacion_actual, item.ubicacion_original, item.origen_registro,
+                item.estado_organizacion, item.error_organizacion
+            ].some((value) => String(value || '').toLowerCase().includes(query));
         });
 
-        if (filtered.length === 0) {
-            listContainer.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron imágenes históricas reemplazadas.</div>';
+        if (!filtered.length) {
+            listContainer.innerHTML = '<div class="replaced-images-empty">No hay imágenes sin uso confirmadas en el inventario.</div>';
             return;
         }
 
-        filtered.forEach(rep => {
-            const card = document.createElement('div');
-            card.style.cssText = "display: flex; gap: 12px; align-items: center; padding: 10px; border: 1px solid var(--border-color); border-radius: 8px; background: var(--card-bg);";
+        filtered.forEach((rep) => {
+            const type = rep.tipo_registro || (rep.origen_registro === 'auditoria_drive' ? 'sin_uso_detectado' : 'reemplazada');
+            const isUnused = type === 'sin_uso_detectado';
+            const status = String(rep.estado || (isUnused ? 'sin_uso_detectado' : 'historica'));
+            const statusLabel = isUnused
+                ? (status === 'sin_uso_detectado' ? 'Sin uso detectado' : status.replace(/_/g, ' '))
+                : (status === 'historica' ? 'Reemplazada' : status.replace(/_/g, ' '));
+            const canManage = isUnused
+                ? status === 'sin_uso_detectado'
+                : ['historica', 'restablecida'].includes(status);
+            const card = document.createElement('article');
+            card.className = 'replaced-image-card' + (currentView === 'list' ? ' replaced-image-card-list' : '');
 
-            const img = document.createElement('img');
-            img.src = getImageUrl(rep.url_anterior, IMG_SIZE_SMALL);
-            img.style.cssText = "width: 70px; height: 70px; object-fit: contain; border-radius: 6px; border: 1px solid var(--border-color); flex-shrink: 0; background: #fff;";
-
-            const info = document.createElement('div');
-            info.style.cssText = "flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; font-size: 0.85rem;";
-            info.innerHTML = `
-                <div style="font-weight: bold; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${rep.referencia_texto || 'Registro ' + rep.registro_id}</div>
-                <div style="font-size: 0.8rem; color: var(--text-disabled);"><strong>Archivo:</strong> ${rep.nombre_archivo} | <strong>Campo:</strong> ${rep.campo}</div>
-                <div style="font-size: 0.75rem; color: var(--text-disabled);"><strong>ID Drive:</strong> <code>${rep.archivo_drive_id}</code> | <strong>Fecha:</strong> ${rep.fecha_reemplazo}</div>
-                <div style="font-size: 0.75rem; font-weight: 600; color: ${rep.estado === 'restablecida' ? '#28a745' : (rep.estado === 'eliminada' ? '#dc3545' : '#007bff')};">Estado: ${rep.estado}</div>
-            `;
-
-            const btnContainer = document.createElement('div');
-            btnContainer.style.cssText = "display: flex; flex-direction: column; gap: 6px; flex-shrink: 0;";
-
-            if (rep.estado !== 'eliminada') {
-                const recoverBtn = document.createElement('button');
-                recoverBtn.className = "btn btn-primary";
-                recoverBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; white-space: nowrap;";
-                recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
-                recoverBtn.onclick = async () => {
-                    if (!confirm(`¿Restablecer esta imagen histórica como activa para ${rep.referencia_texto || rep.registro_id}? La versión actual pasará al historial.`)) return;
-                    recoverBtn.disabled = true;
-                    recoverBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                    try {
-                        const recRes = await routeAction('recoverReplacedImage', { id_reemplazo: rep.id_reemplazo });
-                        if (recRes && recRes.status === 'success') {
-                            mostrarNotificacion("Imagen histórica restablecida con éxito.", "success");
-                            loadData();
-                        }
-                    } catch (e) {
-                        alert("Error al recuperar imagen: " + e.message);
-                        recoverBtn.disabled = false;
-                        recoverBtn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i> Recuperar';
-                    }
+            if (currentView === 'grid') {
+                const previewButton = document.createElement('button');
+                previewButton.type = 'button';
+                previewButton.className = 'replaced-image-preview';
+                previewButton.title = 'Ver imagen ampliada';
+                previewButton.setAttribute('aria-label', 'Ver ' + (rep.nombre_archivo || 'imagen') + ' en tamaño ampliado');
+                const image = document.createElement('img');
+                image.src = getImageUrl(rep.url_visualizacion || rep.url_anterior || rep.archivo_drive_id, IMG_SIZE_MEDIUM);
+                image.alt = rep.nombre_archivo || 'Imagen de Drive';
+                image.loading = 'lazy';
+                image.onerror = () => {
+                    image.onerror = null;
+                    image.src = 'https://placehold.co/400x300/cccccc/333333?text=Vista+no+disponible';
                 };
-                btnContainer.appendChild(recoverBtn);
-
-                const deleteBtn = document.createElement('button');
-                deleteBtn.className = "btn btn-danger";
-                deleteBtn.style.cssText = "font-size: 0.8rem; padding: 4px 8px; background-color: #dc3545; color: white; white-space: nowrap;";
-                deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
-                deleteBtn.onclick = async () => {
-                    if (!confirm(`¿Estás seguro de que deseas ELIMINAR permanentemente esta imagen histórica de Google Drive? Esta acción no se puede deshacer.`)) return;
-                    deleteBtn.disabled = true;
-                    deleteBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-                    try {
-                        const delRes = await routeAction('deleteReplacedImage', { id_reemplazo: rep.id_reemplazo });
-                        if (delRes && delRes.status === 'success') {
-                            mostrarNotificacion("Imagen eliminada de forma segura.", "success");
-                            loadData();
-                        }
-                    } catch (e) {
-                        alert("Eliminación bloqueada: " + e.message);
-                        deleteBtn.disabled = false;
-                        deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i> Eliminar';
-                    }
-                };
-                btnContainer.appendChild(deleteBtn);
+                previewButton.appendChild(image);
+                previewButton.onclick = () => openLightbox(rep);
+                card.appendChild(previewButton);
+            } else {
+                const fileIcon = document.createElement('button');
+                fileIcon.type = 'button';
+                fileIcon.className = 'replaced-image-list-icon';
+                fileIcon.title = 'Ver imagen ampliada';
+                fileIcon.setAttribute('aria-label', 'Ver ' + (rep.nombre_archivo || 'imagen') + ' en tamaño ampliado');
+                fileIcon.innerHTML = '<i class="fa-solid fa-file-image" aria-hidden="true"></i>';
+                fileIcon.onclick = () => openLightbox(rep);
+                card.appendChild(fileIcon);
             }
 
-            card.appendChild(img);
+            const info = document.createElement('div');
+            info.className = 'replaced-image-info';
+            const title = document.createElement('strong');
+            title.className = 'replaced-image-name';
+            title.textContent = rep.nombre_archivo || (isUnused ? 'Imagen sin uso detectado' : (rep.referencia_texto || 'Imagen reemplazada'));
+            const typeLabel = document.createElement('span');
+            typeLabel.className = 'replaced-image-type ' + (isUnused ? 'is-unused' : 'is-replaced');
+            typeLabel.textContent = isUnused ? 'Sin uso detectado' : 'Reemplazada';
+            const details = document.createElement('span');
+            details.className = 'replaced-image-details';
+            details.textContent = 'ID Drive: ' + (rep.archivo_drive_id || 'No disponible') +
+                (rep.tipo_mime ? ' · ' + rep.tipo_mime : '') +
+                (rep.campo ? ' · Campo: ' + rep.campo : '');
+            const location = document.createElement('span');
+            location.className = 'replaced-image-details';
+            location.textContent = 'Ubicación: ' + (rep.ubicacion_actual || rep.ubicacion_original || 'No disponible');
+            const dateDetails = document.createElement('span');
+            dateDetails.className = 'replaced-image-details';
+            dateDetails.textContent = (isUnused
+                ? 'Detectada: ' + (rep.fecha_deteccion || 'Fecha no disponible') + ' · Creada: ' + (rep.fecha_creacion_drive || 'Fecha no disponible')
+                : 'Reemplazada: ' + (rep.fecha_reemplazo || 'Fecha no disponible') + (rep.referencia_texto ? ' · Referencia: ' + rep.referencia_texto : ''));
+            const statusText = document.createElement('span');
+            statusText.className = 'replaced-image-status';
+            statusText.textContent = 'Estado: ' + statusLabel;
+            const organizationDetails = document.createElement('span');
+            organizationDetails.className = 'replaced-image-details';
+            const organizationStatus = String(rep.estado_organizacion || '');
+            const organizationError = String(rep.error_organizacion || '');
+            const organizationLabels = {
+                organizada: 'Organizada en Imagenes_Sin_Uso',
+                movida_manual: 'Movida manualmente',
+                pendiente: 'Pendiente de organización',
+                error: 'Error de organización',
+                bloqueada: 'Organización bloqueada',
+                no_confirmada: 'No confirmada'
+            };
+            organizationDetails.textContent = 'Organización: ' +
+                (organizationLabels[organizationStatus] || organizationStatus || 'No registrada') +
+                (organizationError ? ' · ' + organizationError : '');
+            if (organizationError) statusText.title = organizationError;
+            if (currentView === 'list') {
+                info.append(title, statusText);
+            } else {
+                info.append(title, typeLabel, details, location, dateDetails, statusText);
+                if (isUnused) info.append(organizationDetails);
+            }
             card.appendChild(info);
-            card.appendChild(btnContainer);
+
+            const actions = document.createElement('div');
+            actions.className = 'replaced-image-actions';
+
+            const downloadButton = createActionButton('fa-download', 'Descargar', 'btn-secondary', async () => {
+                await runButtonAction(downloadButton, 'Preparando...', async () => {
+                    const response = await routeAction('getReplacedImageDownloadUrl', {
+                        ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
+                    });
+                    const anchor = document.createElement('a');
+                    anchor.href = response.downloadUrl;
+                    anchor.rel = 'noopener noreferrer';
+                    anchor.download = response.fileName || rep.nombre_archivo || '';
+                    document.body.appendChild(anchor);
+                    anchor.click();
+                    anchor.remove();
+                    mostrarNotificacion('Se abrió la descarga de ' + (response.fileName || rep.nombre_archivo || 'la imagen') + '.', 'success');
+                });
+            });
+            downloadButton.disabled = !(isUnused ? status === 'sin_uso_detectado' : ['historica', 'restablecida'].includes(status));
+            actions.appendChild(downloadButton);
+
+            const moveButton = createActionButton('fa-folder-open', 'Mover', 'btn-secondary', async () => {
+                if (!folderSelect || !folderSelect.value) {
+                    alert('No hay una carpeta destino seleccionada.');
+                    return;
+                }
+                const selectedOption = folderSelect.options[folderSelect.selectedIndex];
+                const targetName = selectedOption ? selectedOption.textContent : 'la carpeta seleccionada';
+                if (!confirm('¿Mover "' + (rep.nombre_archivo || 'esta imagen') + '" a "' + targetName + '"?')) return;
+                await runButtonAction(moveButton, 'Moviendo...', async () => {
+                    const response = await routeAction('moveReplacedImage', {
+                        ...getDeveloperSessionPayload(),
+                        id_reemplazo: rep.id_reemplazo,
+                        targetFolderId: folderSelect.value
+                    });
+                    mostrarNotificacion(response.message || 'Imagen movida correctamente.', 'success');
+                    await loadData();
+                });
+            });
+            moveButton.disabled = !canManage;
+            actions.appendChild(moveButton);
+
+            if (!isUnused && status !== 'cancelada') {
+                const recoverButton = createActionButton('fa-clock-rotate-left', 'Restaurar', 'btn-primary', async () => {
+                    if (!confirm('¿Restaurar esta imagen al campo ' + (rep.campo || 'registrado') + '? La imagen actualmente activa pasará al historial.')) return;
+                    await runButtonAction(recoverButton, 'Restaurando...', async () => {
+                        const response = await routeAction('recoverReplacedImage', {
+                            ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
+                        });
+                        mostrarNotificacion(response.message || 'Imagen histórica restablecida.', 'success');
+                        await loadData();
+                    });
+                });
+                actions.appendChild(recoverButton);
+            }
+
+            const deleteButton = createActionButton('fa-trash', 'Enviar a papelera', 'btn-danger', async () => {
+                const description = isUnused
+                    ? '¿Enviar esta imagen sin uso a la papelera de Google Drive?'
+                    : '¿Enviar esta imagen reemplazada a la papelera de Google Drive? La restauración histórica dejará de estar disponible mientras permanezca allí.';
+                if (!confirm(description + ' El servidor volverá a validar las referencias y la ubicación.')) return;
+                await runButtonAction(deleteButton, 'Enviando...', async () => {
+                    const response = await routeAction('deleteReplacedImage', {
+                        ...getDeveloperSessionPayload(), id_reemplazo: rep.id_reemplazo
+                    });
+                    mostrarNotificacion(response.message || 'Imagen enviada a papelera.', 'success');
+                    await loadData();
+                });
+            });
+            deleteButton.disabled = !canManage;
+            actions.appendChild(deleteButton);
+
+            card.appendChild(actions);
             listContainer.appendChild(card);
         });
     };
 
-    if (filterInput) filterInput.oninput = () => renderList(filterInput.value);
-    if (refreshBtn) refreshBtn.onclick = () => loadData();
+    const setView = async (view) => {
+        currentView = view;
+        if (listViewBtn) listViewBtn.setAttribute('aria-pressed', String(view === 'list'));
+        if (gridViewBtn) gridViewBtn.setAttribute('aria-pressed', String(view === 'grid'));
+        await offline.saveReplacedImagesView(view);
+        renderList(filterInput ? filterInput.value : '');
+    };
 
-    loadData();
+    if (closeBtn) closeBtn.onclick = () => {
+        closeLightbox();
+        modal.style.display = 'none';
+    };
+    if (filterInput) filterInput.oninput = () => renderList(filterInput.value);
+    if (refreshBtn) refreshBtn.onclick = () => { loadData(); loadFolders(); };
+    if (listViewBtn) listViewBtn.onclick = () => setView('list');
+    if (gridViewBtn) gridViewBtn.onclick = () => setView('grid');
+
+    if (createFolderBtn) createFolderBtn.onclick = async () => {
+        const name = newFolderInput ? newFolderInput.value.trim() : '';
+        if (!name) {
+            alert('Escribe el nombre de la nueva carpeta.');
+            return;
+        }
+        await runButtonAction(createFolderBtn, 'Creando...', async () => {
+            const response = await routeAction('createCortesImageFolder', {
+                ...getDeveloperSessionPayload(),
+                name: name,
+                parentFolderId: folderSelect ? folderSelect.value : ''
+            });
+            if (newFolderInput) newFolderInput.value = '';
+            await loadFolders(response.folderId);
+            mostrarNotificacion('Carpeta creada: ' + response.folderPath, 'success');
+        });
+    };
+
+    if (lightbox) lightbox.style.display = 'none';
+    await setView(currentView);
+    await loadFolders();
+    await loadData();
 }
 
 /**
@@ -3900,65 +5071,412 @@ export async function openAuditDriveModal() {
     modal.style.display = 'flex';
 
     const closeBtn = document.getElementById('close-audit-drive-modal');
-    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
-
     const summaryEl = document.getElementById('audit-drive-summary');
     const container = document.getElementById('audit-drive-results-container');
+    const auditButton = document.getElementById('btn-admin-audit-drive-images');
+    const startButton = document.getElementById('btn-audit-drive-start');
+    const resumeButton = document.getElementById('btn-audit-drive-resume');
+    if (!summaryEl || !container) return;
+    if (closeBtn) closeBtn.onclick = () => { modal.style.display = 'none'; };
 
-    summaryEl.innerHTML = 'Iniciando exploración recursiva del árbol «Cortes»...';
-    container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Explorando árbol en Google Drive...</div>';
+    summaryEl.innerHTML = `
+        <div style="background:var(--card-bg); padding:10px; border-radius:6px; border:1px solid var(--border-color); display:flex; gap:15px; flex-wrap:wrap;">
+            <span>📁 <strong>Carpeta raíz:</strong> <span id="audit-root-name">Cortes</span> (<code id="audit-root-id"></code>)</span>
+            <span>📊 <strong>Total analizados:</strong> <span id="audit-total-count">0</span></span>
+            <span>📂 <strong>Carpetas recorridas:</strong> <span id="audit-folder-count">0</span></span>
+            <span>🔁 <strong>Lotes recibidos:</strong> <span id="audit-batch-count">0</span></span>
+            <span>⏳ <strong>Carpetas en pila de continuación:</strong> <span id="audit-pending-folder-count">0</span></span>
+            <span style="color:#28a745;">✅ <strong>En uso:</strong> <span id="audit-in-use-count">0</span></span>
+            <span style="color:#007bff;">🕒 <strong>Históricas:</strong> <span id="audit-historical-count">0</span></span>
+            <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> <span id="audit-unused-count">0</span></span>
+            <span style="color:#dc3545;">❓ <strong>No verificables:</strong> <span id="audit-unverified-count">0</span></span>
+            <span><strong>Referencias no interpretables:</strong> <span id="audit-unknown-references">0</span></span>
+            <span id="audit-status" style="font-weight:600;">Recuperando el estado local...</span>
+        </div>
+    `;
 
-    try {
-        const res = await routeAction('auditDriveImagesInCortes');
-        if (res && res.status === 'success') {
-            const files = res.files || [];
-            const inUseCount = files.filter(f => f.classification === 'En uso').length;
-            const histCount = files.filter(f => f.classification === 'Histórica').length;
-            const unusedCount = files.filter(f => f.classification === 'Sin uso detectado').length;
-            const unverifiedCount = files.filter(f => f.classification === 'No verificable').length;
+    const auditStatusEl = document.getElementById('audit-status');
+    const auditTotalEl = document.getElementById('audit-total-count');
+    const auditRootNameEl = document.getElementById('audit-root-name');
+    const auditRootIdEl = document.getElementById('audit-root-id');
+    const auditFolderCountEl = document.getElementById('audit-folder-count');
+    const auditBatchCountEl = document.getElementById('audit-batch-count');
+    const auditPendingFolderCountEl = document.getElementById('audit-pending-folder-count');
+    const allFiles = [];
+    let cursor = null;
+    let complete = false;
+    let totalAnalyzed = 0;
+    let foldersVisited = 0;
+    let batches = 0;
+    let lastBatchAnalyzed = 0;
+    let unverifiableReferences = 0;
+    let rootFolderName = 'Cortes';
+    let rootFolderId = '';
+    let resumeUnavailable = false;
+    let inventoryStatus = '';
+    let inventoryMessage = '';
+    let savedState = null;
+    let isRunning = false;
 
-            summaryEl.innerHTML = `
-                <div style="background: var(--card-bg); padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; gap: 15px; flex-wrap: wrap;">
-                    <span>📁 <strong>Carpeta Raíz:</strong> ${res.rootFolderName} (<code>${res.rootFolderId}</code>)</span>
-                    <span>📊 <strong>Total Analizados:</strong> ${res.totalAnalyzed}</span>
-                    <span style="color:#28a745;">✅ <strong>En uso:</strong> ${inUseCount}</span>
-                    <span style="color:#007bff;">🕒 <strong>Históricas:</strong> ${histCount}</span>
-                    <span style="color:#ffc107;">⚠️ <strong>Sin uso:</strong> ${unusedCount}</span>
-                    <span style="color:#dc3545;">❓ <strong>No verificables:</strong> ${unverifiedCount}</span>
-                </div>
-            `;
+    const appendFiles = (files) => {
+        files.filter(file => file.classification === 'Histórica' || file.classification === 'Sin uso detectado')
+            .forEach(file => {
+            const row = document.createElement('div');
+            row.style.cssText = "display:flex; justify-content:space-between; align-items:center; gap:10px; padding:8px; border:1px solid var(--border-color); border-radius:6px; font-size:0.8rem; background:var(--card-bg);";
+            const info = document.createElement('div');
+            info.style.cssText = "min-width:0; flex:1;";
+            const name = document.createElement('div');
+            name.style.cssText = "font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;";
+            name.textContent = file.fileName || 'Archivo sin nombre';
+            const details = document.createElement('div');
+            details.style.cssText = "font-size:0.75rem; color:var(--text-disabled);";
+            details.textContent = (file.folderPath || '') + ' | ' +
+                ((Number(file.size) || 0) / 1024).toFixed(1) + ' KB | ' +
+                (file.lastUpdated || 'Fecha no disponible');
+            info.appendChild(name);
+            info.appendChild(details);
+            const badge = document.createElement('span');
+            badge.style.cssText = "padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;";
+            const badgeColors = {
+                'En uso': '#28a745',
+                'Histórica': '#007bff',
+                'Sin uso detectado': '#e0a800',
+                'No verificable': '#dc3545'
+            };
+            badge.style.backgroundColor = badgeColors[file.classification] || '#6c757d';
+            badge.style.color = '#fff';
+            badge.textContent = file.classification || 'No verificable';
+            row.appendChild(info);
+            row.appendChild(badge);
+            container.appendChild(row);
+        });
+    };
 
-            container.innerHTML = '';
-            if (files.length === 0) {
-                container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-disabled);">No se encontraron archivos en la carpeta analizada.</div>';
-                return;
+    const updateSummary = (statusText) => {
+        const counts = {
+            inUse: allFiles.filter(file => file.classification === 'En uso').length,
+            historical: allFiles.filter(file => file.classification === 'Histórica').length,
+            unused: allFiles.filter(file => file.classification === 'Sin uso detectado').length,
+            unverified: allFiles.filter(file => file.classification === 'No verificable').length
+        };
+        if (auditTotalEl) auditTotalEl.textContent = String(totalAnalyzed);
+        if (auditFolderCountEl) auditFolderCountEl.textContent = String(foldersVisited);
+        if (auditBatchCountEl) auditBatchCountEl.textContent = String(batches);
+        if (auditPendingFolderCountEl) {
+            auditPendingFolderCountEl.textContent = String(cursor && Array.isArray(cursor.stack) ? cursor.stack.length : 0);
+        }
+        if (auditRootNameEl) auditRootNameEl.textContent = rootFolderName;
+        if (auditRootIdEl) auditRootIdEl.textContent = rootFolderId;
+        const setText = (id, value) => {
+            const element = document.getElementById(id);
+            if (element) element.textContent = String(value);
+        };
+        setText('audit-in-use-count', counts.inUse);
+        setText('audit-historical-count', counts.historical);
+        setText('audit-unused-count', counts.unused);
+        setText('audit-unverified-count', counts.unverified);
+        setText('audit-unknown-references', unverifiableReferences);
+        if (auditStatusEl) auditStatusEl.textContent = statusText || '';
+    };
+
+    const persistState = async (status, extra = {}) => {
+        const state = {
+            files: allFiles,
+            cursor: cursor,
+            complete: complete,
+            status: status,
+            totalAnalyzed: totalAnalyzed,
+            foldersVisited: foldersVisited,
+            batches: batches,
+            lastBatchAnalyzed: lastBatchAnalyzed,
+            unverifiableReferences: unverifiableReferences,
+            rootFolderName: rootFolderName,
+            rootFolderId: rootFolderId,
+            resumeUnavailable: resumeUnavailable,
+            inventoryStatus: inventoryStatus,
+            inventoryMessage: inventoryMessage,
+            lastError: ''
+        };
+        Object.assign(state, extra);
+        const saved = await offline.saveDriveAuditState(state);
+        if (!saved) throw new Error('IndexedDB no confirmó la persistencia del progreso de auditoría.');
+    };
+
+    const saveUnusedInventory = async (alreadyRunning = false) => {
+        if (inventoryStatus === 'saved') return;
+        if (isDriveAuditRunning && !alreadyRunning) return;
+
+        const ownsRun = !alreadyRunning;
+        if (ownsRun) {
+            isRunning = true;
+            isDriveAuditRunning = true;
+            updateControls();
+        }
+
+        inventoryStatus = 'pending';
+        inventoryMessage = 'Auditoría completa. Registrando las imágenes sin uso en la Spreadsheet...';
+        let localPersistenceWarning = '';
+        try {
+            await persistState('complete');
+        } catch (storageError) {
+            localPersistenceWarning = ' No se pudo guardar localmente el estado previo al registro: ' + storageError.message;
+        }
+
+        const unusedFiles = allFiles
+            .filter(file => file.classification === 'Sin uso detectado')
+            .map(file => ({ fileId: file.fileId, folderId: file.folderId }));
+
+        try {
+            const inventoryResult = await routeAction('saveUnusedImagesInventory', {
+                ...getDeveloperSessionPayload(),
+                files: unusedFiles
+            });
+            if (!inventoryResult || inventoryResult.status !== 'success' || !inventoryResult.auditId) {
+                throw new Error(inventoryResult && inventoryResult.message
+                    ? inventoryResult.message
+                    : 'El servicio no confirmó la actualización del inventario.');
             }
 
-            files.forEach(f => {
-                const row = document.createElement('div');
-                row.style.cssText = "display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.8rem; background: var(--card-bg);";
+            let movedCount = 0;
+            let alreadyOrganizedCount = 0;
+            let failedCount = 0;
+            let blockedCount = 0;
+            const organizationBatchSize = 20;
 
-                let badgeColor = "#28a745";
-                if (f.classification === 'Histórica') badgeColor = "#007bff";
-                else if (f.classification === 'Sin uso detectado') badgeColor = "#e0a800";
-                else if (f.classification === 'No verificable') badgeColor = "#dc3545";
+            for (let offset = 0; offset < unusedFiles.length; offset += organizationBatchSize) {
+                const batch = unusedFiles.slice(offset, offset + organizationBatchSize)
+                    .map(file => ({ fileId: file.fileId }));
+                const organizationResult = await routeAction('saveUnusedImagesInventory', {
+                    ...getDeveloperSessionPayload(),
+                    mode: 'organize',
+                    auditId: inventoryResult.auditId,
+                    files: batch
+                });
+                if (!organizationResult || organizationResult.status !== 'success') {
+                    throw new Error(organizationResult && organizationResult.message
+                        ? organizationResult.message
+                        : 'ADMIN no confirmó el lote de organización ' + (Math.floor(offset / organizationBatchSize) + 1) + '.');
+                }
+                movedCount += Math.max(0, Number(organizationResult.movedCount) || 0);
+                alreadyOrganizedCount += Math.max(0, Number(organizationResult.alreadyOrganizedCount) || 0);
+                failedCount += Math.max(0, Number(organizationResult.failedCount) || 0);
+                blockedCount += Math.max(0, Number(organizationResult.blockedCount) || 0);
+                inventoryMessage = 'Inventario registrado. Organización: ' + movedCount + ' movidas, ' +
+                    alreadyOrganizedCount + ' ya organizadas, ' + failedCount + ' fallidas y ' + blockedCount + ' bloqueadas.';
+                await persistState('complete');
+            }
 
-                row.innerHTML = `
-                    <div style="min-width:0; flex:1;">
-                        <div style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">📄 ${f.fileName}</div>
-                        <div style="font-size:0.75rem; color:var(--text-disabled);">${f.folderPath} | ${(f.size / 1024).toFixed(1)} KB | ${f.lastUpdated}</div>
-                    </div>
-                    <span style="background:${badgeColor}; color:white; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; white-space:nowrap;">
-                        ${f.classification}
-                    </span>
-                `;
-                container.appendChild(row);
-            });
-        } else {
-            container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Error: ${res ? res.message : 'Error desconocido'}</div>`;
+            inventoryStatus = 'saved';
+            inventoryMessage = 'Auditoría COMPLETA. ' + inventoryResult.savedCount +
+                ' imágenes sin uso registradas; ' + movedCount + ' trasladadas a Imagenes_Sin_Uso, ' +
+                alreadyOrganizedCount + ' ya estaban allí, ' + failedCount + ' con error y ' +
+                blockedCount + ' bloqueadas. Revisa el detalle de organización en el inventario.';
+        } catch (inventoryError) {
+            inventoryStatus = 'error';
+            inventoryMessage = 'Auditoría COMPLETA, pero el registro u organización del inventario quedó parcial: ' +
+                inventoryError.message + '. Puedes volver a ejecutar la actualización; los movimientos confirmados no se repetirán.';
         }
-    } catch (err) {
-        container.innerHTML = `<div style="text-align:center; padding:20px; color:#dc3545;">Excepción en auditoría: ${err.message}</div>`;
+
+        try {
+            await persistState('complete');
+        } catch (storageError) {
+            localPersistenceWarning += ' No se pudo confirmar el guardado local del resultado de inventario: ' +
+                storageError.message;
+        }
+        updateSummary(inventoryMessage + localPersistenceWarning);
+
+        if (ownsRun) {
+            isRunning = false;
+            isDriveAuditRunning = false;
+            updateControls();
+        }
+    };
+
+    const updateControls = () => {
+        const hasResumableCursor = !complete && !!cursor && !resumeUnavailable;
+        if (startButton) startButton.disabled = isRunning || isDriveAuditRunning;
+        if (resumeButton) {
+            resumeButton.hidden = !hasResumableCursor;
+            resumeButton.disabled = isRunning || isDriveAuditRunning || !hasResumableCursor;
+        }
+        if (auditButton) auditButton.disabled = isRunning || isDriveAuditRunning;
+    };
+
+    const restoreState = (state) => {
+        allFiles.length = 0;
+        if (Array.isArray(state.files)) allFiles.push(...state.files);
+        cursor = state.cursor || null;
+        complete = state.complete === true;
+        totalAnalyzed = Math.max(0, Number(state.totalAnalyzed) || allFiles.length);
+        foldersVisited = Math.max(0, Number(state.foldersVisited) || 0);
+        batches = Math.max(0, Number(state.batches) || 0);
+        lastBatchAnalyzed = Math.max(0, Number(state.lastBatchAnalyzed) || 0);
+        unverifiableReferences = Math.max(0, Number(state.unverifiableReferences) || 0);
+        rootFolderName = state.rootFolderName || 'Cortes';
+        rootFolderId = state.rootFolderId || '';
+        resumeUnavailable = state.resumeUnavailable === true;
+        inventoryStatus = state.inventoryStatus || '';
+        inventoryMessage = state.inventoryMessage || '';
+        savedState = state;
+        container.innerHTML = '';
+        appendFiles(allFiles);
+        const previousError = state.lastError ? ' Último error: ' + state.lastError : '';
+        updateSummary(
+            complete
+                ? (inventoryMessage || 'Auditoría completa recuperada desde el almacenamiento local.')
+                : (resumeUnavailable
+                    ? 'Se conservaron los resultados parciales, pero el cursor ya no está disponible. Inicia una auditoría nueva para completar el recorrido.' + previousError
+                    : (cursor
+                        ? 'Auditoría parcial recuperada. Puedes continuar desde el cursor guardado.' + previousError
+                        : 'Hay resultados parciales guardados, pero no existe un cursor para continuarlos. Inicia una auditoría nueva.' + previousError))
+        );
+    };
+
+    const runAudit = async (resume) => {
+        if (isRunning || isDriveAuditRunning) return;
+        isRunning = true;
+        isDriveAuditRunning = true;
+        updateControls();
+
+        try {
+            if (resume) {
+                if (!cursor || resumeUnavailable) throw new Error('No existe un cursor disponible para reanudar la auditoría.');
+                complete = false;
+            } else {
+                allFiles.length = 0;
+                container.innerHTML = '';
+                cursor = null;
+                complete = false;
+                totalAnalyzed = 0;
+                foldersVisited = 0;
+                batches = 0;
+                lastBatchAnalyzed = 0;
+                unverifiableReferences = 0;
+                rootFolderName = 'Cortes';
+                rootFolderId = '';
+                resumeUnavailable = false;
+                inventoryStatus = '';
+                inventoryMessage = '';
+                savedState = null;
+                updateSummary('Preparando una auditoría nueva...');
+                await persistState('running');
+            }
+
+            const seenCursorSignatures = new Set();
+            if (cursor) seenCursorSignatures.add(JSON.stringify(cursor));
+
+            while (!complete) {
+                const previousTotal = totalAnalyzed;
+                const previousFolders = foldersVisited;
+                const response = await routeAction('auditDriveImagesInCortes', {
+                    ...getDeveloperSessionPayload(),
+                    cursor: cursor
+                });
+
+                if (!response || response.status !== 'success' || !Array.isArray(response.files)) {
+                    throw new Error(response && response.message ? response.message : 'Respuesta inválida del servicio de auditoría.');
+                }
+
+                const batchSize = response.files.length;
+                const expectedTotal = allFiles.length + batchSize;
+                const reportedBatch = Number(response.batchAnalyzed);
+                const reportedTotal = Number(response.totalAnalyzed);
+                if (!Number.isInteger(reportedBatch) || reportedBatch !== batchSize) {
+                    throw new Error('El contador batchAnalyzed no coincide con la cantidad de archivos recibidos o no es válido.');
+                }
+                if (!Number.isInteger(reportedTotal) || reportedTotal !== expectedTotal) {
+                    throw new Error('El total acumulado informado por ADMIN (' + response.totalAnalyzed +
+                        ') no coincide con los resultados recibidos (' + expectedTotal + ').');
+                }
+                if (typeof response.complete !== 'boolean') {
+                    throw new Error('ADMIN no devolvió un indicador booleano válido de finalización de la auditoría.');
+                }
+
+                allFiles.push(...response.files);
+                batches++;
+                lastBatchAnalyzed = batchSize;
+                totalAnalyzed = reportedTotal;
+                foldersVisited = Math.max(0, Number(response.foldersVisited) || 0);
+                unverifiableReferences = Math.max(unverifiableReferences, Number(response.unverifiableReferenceCount) || 0);
+                if (response.rootFolderName) rootFolderName = response.rootFolderName;
+                if (response.rootFolderId) rootFolderId = response.rootFolderId;
+                complete = response.complete === true;
+                cursor = response.cursor || null;
+
+                if (complete && cursor) {
+                    throw new Error('ADMIN marcó la auditoría como completa, pero también devolvió un cursor pendiente.');
+                }
+                if (!complete && !cursor) {
+                    throw new Error('El servicio devolvió un resultado parcial sin cursor de continuación.');
+                }
+                if (!complete) {
+                    const signature = JSON.stringify(cursor);
+                    if (seenCursorSignatures.has(signature) &&
+                        totalAnalyzed === previousTotal && foldersVisited <= previousFolders) {
+                        throw new Error('El cursor de Drive se repitió sin aumentar los archivos analizados ni las carpetas recorridas.');
+                    }
+                    seenCursorSignatures.add(signature);
+                }
+
+                appendFiles(response.files);
+                updateSummary(complete
+                    ? 'Recorrido del árbol finalizado. Verificando el inventario...'
+                    : 'Auditoría en progreso: ' + totalAnalyzed + ' archivos analizados; lote actual: ' + batchSize + '.');
+
+                await persistState(complete ? 'complete' : 'running');
+            }
+
+            if (!allFiles.some(file => file.classification === 'Histórica' || file.classification === 'Sin uso detectado')) {
+                container.textContent = 'No se encontraron imágenes sin uso confirmadas en el árbol «Cortes».';
+            }
+            await saveUnusedInventory(true);
+        } catch (error) {
+            const errorMessage = error && error.message ? error.message : String(error);
+            const cursorExpired = !complete &&
+                /estado temporal.*(expir|disponible)|falta un bloque|estado temporal.*incompleto|inicia una auditoría nueva/i.test(errorMessage);
+            resumeUnavailable = cursorExpired;
+            let statusMessage = complete
+                ? 'AUDITORÍA COMPLETA: se conservaron ' + allFiles.length +
+                    ' resultados, pero ocurrió un error al guardar el estado local. Detalle: ' + errorMessage
+                : (cursorExpired
+                    ? 'AUDITORÍA PARCIAL: el cursor temporal de ADMIN expiró o dejó de estar disponible. Se conservaron los resultados locales; inicia una auditoría nueva para completar el árbol. Detalle: ' + errorMessage
+                    : 'AUDITORÍA PARCIAL: se conservaron ' + allFiles.length + ' resultados. ' +
+                        (cursor ? 'Puedes intentar continuar con el cursor guardado. ' : 'No hay cursor de continuación disponible. ') +
+                        'Detalle: ' + errorMessage);
+            try {
+                await persistState(complete ? 'complete' : 'partial', { lastError: errorMessage });
+            } catch (persistenceError) {
+                statusMessage += ' Además, no se pudo guardar el último estado local: ' + persistenceError.message;
+            }
+            updateSummary(statusMessage);
+        } finally {
+            isRunning = false;
+            isDriveAuditRunning = false;
+            updateControls();
+        }
+    };
+
+    if (startButton) startButton.onclick = () => runAudit(false);
+    if (resumeButton) resumeButton.onclick = () => runAudit(true);
+
+    try {
+        savedState = await offline.getDriveAuditState();
+    } catch (storageError) {
+        savedState = null;
+    }
+
+    if (savedState) {
+        restoreState(savedState);
+        updateControls();
+        if (isDriveAuditRunning) {
+            updateSummary('La auditoría continúa ejecutándose en esta sesión; no inicies otra solicitud.');
+        } else if (complete && inventoryStatus !== 'saved') {
+            await saveUnusedInventory(false);
+        }
+    } else {
+        container.innerHTML = '';
+        updateSummary('No existe un inventario local guardado. Iniciando auditoría nueva...');
+        await runAudit(false);
     }
 }
 
@@ -4002,7 +5520,10 @@ export function renderInboxList(items) {
 
         let iconClass = 'fa-envelope';
         let tipoLabel = 'Mensaje de contacto';
-        if (item.type === 'problem_report') {
+        if (item.suggestionData) {
+            iconClass = 'fa-pen-to-square';
+            tipoLabel = 'Sugerencia de cambio';
+        } else if (item.type === 'problem_report') {
             iconClass = 'fa-triangle-exclamation';
             tipoLabel = 'Reporte de problema';
         } else if (item.type === 'video_approval') {
@@ -4031,93 +5552,12 @@ export function renderInboxList(items) {
 
 /* TAREA 1.7: BARRA DE ENRIQUECIMIENTO DE TEXTO COMPLETA PARA EL EDITOR DEL INBOX */
 export function createInboxRichTextToolbar(targetId) {
-    const toolbar = document.createElement("div");
-    toolbar.className = "inbox-rich-toolbar";
-    toolbar.style.cssText = "display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; padding:6px 8px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ccc); border-radius:6px;";
-
-    const applyTag = (openTag, closeTag) => {
-        const textarea = document.getElementById(targetId);
-        if (!textarea) return;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selected = textarea.value.substring(start, end) || "texto";
-        const formatted = `${openTag}${selected}${closeTag}`;
-        textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
-        textarea.focus();
-        textarea.setSelectionRange(start + openTag.length, start + openTag.length + selected.length);
-    };
-
-    const makeBtn = (html, title, onClick) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "btn btn-secondary btn-sm";
-        btn.title = title;
-        btn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; cursor:pointer;";
-        btn.innerHTML = html;
-        btn.onclick = (e) => { e.preventDefault(); onClick(); };
-        return btn;
-    };
-
-    // 1. Negrita
-    toolbar.appendChild(makeBtn("<strong>B</strong>", "Negrita", () => applyTag("<strong>", "</strong>")));
-    // 2. Cursiva
-    toolbar.appendChild(makeBtn("<em>I</em>", "Cursiva", () => applyTag("<em>", "</em>")));
-    // 3. Subrayado
-    toolbar.appendChild(makeBtn("<u>U</u>", "Subrayado", () => applyTag("<u>", "</u>")));
-    // 4. Tachado
-    toolbar.appendChild(makeBtn("<s>S</s>", "Tachado", () => applyTag("<s>", "</s>")));
-
-    // 5. Selector de Color
-    const colorPicker = document.createElement("input");
-    colorPicker.type = "color";
-    colorPicker.title = "Color de texto";
-    colorPicker.style.cssText = "width:28px; height:28px; padding:0; border:none; cursor:pointer; border-radius:4px;";
-    colorPicker.onchange = (e) => applyTag(`<span style="color:${e.target.value}">`, "</span>");
-    toolbar.appendChild(colorPicker);
-
-    // 6. Selector de Tamaño de Fuente
-    const sizeSelect = document.createElement("select");
-    sizeSelect.title = "Tamaño de fuente";
-    sizeSelect.style.cssText = "padding:2px 4px; font-size:0.82rem; height:28px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);";
-    sizeSelect.innerHTML = `
-        <option value="" disabled selected>Tamaño</option>
-        <option value="0.85em">Pequeño</option>
-        <option value="1em">Normal</option>
-        <option value="1.2em">Grande</option>
-        <option value="1.5em">Encabezado</option>
-    `;
-    sizeSelect.onchange = (e) => {
-        if (e.target.value) {
-            applyTag(`<span style="font-size:${e.target.value}">`, "</span>");
-            e.target.value = "";
-        }
-    };
-    toolbar.appendChild(sizeSelect);
-
-    // 7. Selector de Tipo de Fuente
-    const fontSelect = document.createElement("select");
-    fontSelect.title = "Tipo de fuente";
-    fontSelect.style.cssText = "padding:2px 4px; font-size:0.82rem; height:28px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);";
-    fontSelect.innerHTML = `
-        <option value="" disabled selected>Fuente</option>
-        <option value="Arial, sans-serif">Arial</option>
-        <option value="'Segoe UI', Roboto, sans-serif">Segoe UI</option>
-        <option value="'Courier New', monospace">Monospace</option>
-        <option value="Georgia, serif">Georgia</option>
-    `;
-    fontSelect.onchange = (e) => {
-        if (e.target.value) {
-            applyTag(`<span style="font-family:${e.target.value}">`, "</span>");
-            e.target.value = "";
-        }
-    };
-    toolbar.appendChild(fontSelect);
-
-    // 8. Lista desordenada
-    toolbar.appendChild(makeBtn("<i class='fa-solid fa-list-ul'></i>", "Lista con viñetas", () => applyTag("<ul>\n  <li>", "</li>\n</ul>")));
-    // 9. Lista ordenada
-    toolbar.appendChild(makeBtn("<i class='fa-solid fa-list-ol'></i>", "Lista numerada", () => applyTag("<ol>\n  <li>", "</li>\n</ol>")));
-
+    const toolbar = createRichTextToolbar(targetId);
+    toolbar.classList.add("inbox-rich-toolbar");
+    toolbar.style.marginBottom = "8px";
+    toolbar.style.padding = "6px 8px";
+    toolbar.style.border = "1px solid var(--border-color, #ccc)";
+    toolbar.style.borderRadius = "6px";
     return toolbar;
 }
 
@@ -4137,11 +5577,44 @@ export function renderInboxDetail(item) {
     const isVideoItem = item.type === 'video_approval';
     const userRole = currentUser ? currentUser.Rol : '';
     const canApprove = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+    const reportMetadata = item.type === 'problem_report' && item.reportMetadata ? item.reportMetadata : null;
+    const reportMetadataHtml = reportMetadata ? `
+        <div style="margin:0 0 12px 0; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
+            <p style="margin:0 0 4px 0;"><strong>Identificador del reporte:</strong> ${sanitizeHtmlContent(String(reportMetadata.reportId || ''))}</p>
+            <p style="margin:0 0 4px 0;"><strong>Corte reportado:</strong> #${Number(reportMetadata.corteIndex)}</p>
+            <p style="margin:0;"><strong>Testigo del motor:</strong> ${reportMetadata.activaTestigoMotor === true ? 'El técnico confirma que este corte activa el testigo del motor.' : 'No confirmado en este reporte.'}</p>
+        </div>
+    ` : '';
+
+    const suggestionData = item.type === 'problem_report' && item.suggestionData ? item.suggestionData : null;
+    const proposedValues = suggestionData && suggestionData.proposedValues ? suggestionData.proposedValues : {};
+    const proposedTestigoValue = proposedValues.activaTestigo;
+    const proposedTestigoLabel = proposedTestigoValue === true
+        ? 'Sí: el corte activa el testigo del motor.'
+        : (proposedTestigoValue === false ? 'No: el corte no activa el testigo del motor.' : 'No aplica / no especificado.');
+    const suggestionImageUrl = suggestionData && /^https:\/\/drive\.google\.com\//i.test(String(suggestionData.imageUrl || ""))
+        ? sanitizeHtmlContent(String(suggestionData.imageUrl)) : "";
+    const suggestionMetadataHtml = suggestionData ? `
+        <div style="margin:0 0 12px 0; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
+            <strong>Revisión de sugerencia de corte</strong>
+            <p style="margin:6px 0 4px 0;"><strong>Reporte relacionado:</strong> ${sanitizeHtmlContent(String(suggestionData.reportId || 'No especificado'))}</p>
+            <p style="margin:0 0 4px 0;"><strong>Corte:</strong> #${Number(suggestionData.corteIndex)}</p>
+            <p style="margin:0 0 4px 0;"><strong>Tipo propuesto:</strong> ${sanitizeHtmlContent(String(proposedValues.tipo || 'No especificado'))}</p>
+            <p style="margin:0 0 4px 0;"><strong>Ubicación propuesta:</strong> ${sanitizeHtmlContent(String(proposedValues.ubicacion || 'No especificada'))}</p>
+            <p style="margin:0 0 4px 0;"><strong>Color de cable propuesto:</strong> ${sanitizeHtmlContent(String(proposedValues.colorCable || 'No especificado'))}</p>
+            <p style="margin:0 0 4px 0;"><strong>Configuración de relay propuesta:</strong> ${sanitizeHtmlContent(String(proposedValues.configRelay || 'No especificada'))}</p>
+            <p style="margin:0 0 4px 0;"><strong>Testigo del motor propuesto:</strong> ${proposedTestigoLabel}</p>
+            <p style="margin:0 0 4px 0;"><strong>Estado:</strong> ${sanitizeHtmlContent(String(suggestionData.status || 'pendiente_revision'))}</p>
+            ${suggestionImageUrl ? `<p style="margin:0;"><strong>Imagen:</strong> <a href="${suggestionImageUrl}" target="_blank" rel="noopener noreferrer">Ver imagen de referencia</a></p>` : ''}
+        </div>
+    ` : '';
 
     detailContainer.innerHTML = `
         <h3 class="inbox-detail-title">${item.subject}</h3>
         <p class="inbox-detail-meta"><strong>De:</strong> ${item.user}</p>
         ${item.vehicleId ? `<p class="inbox-detail-meta"><strong>Vehículo:</strong> ${vehicleLabel}</p>` : ''}
+        ${reportMetadataHtml}
+        ${suggestionMetadataHtml}
         ${isVideoItem && item.videoUrl ? `
             <div style="margin-bottom:12px; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
                 <p style="margin:0 0 6px 0;"><strong>Enlace de YouTube:</strong> <a href="${item.videoUrl}" target="_blank" rel="noopener noreferrer" style="color:#007bff; text-decoration:underline;"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Ver vídeo en YouTube</a></p>
@@ -4197,7 +5670,7 @@ export function renderInboxDetail(item) {
                 try {
                     approveVideoBtn.disabled = true;
                     approveVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Aprobando...`;
-                    await approveVideo(item.id, userName, userRole);
+                    await approveVideo(item.id, userName, userRole, getDeveloperSessionPayload());
                     inboxCacheData = null;
                     mostrarNotificacion("Vídeo aprobado con éxito.", "success");
                     openInbox();
@@ -4218,7 +5691,7 @@ export function renderInboxDetail(item) {
                 try {
                     rejectVideoBtn.disabled = true;
                     rejectVideoBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Rechazando...`;
-                    await rejectVideo(item.id, userName, reason, userRole);
+                    await rejectVideo(item.id, userName, reason, userRole, getDeveloperSessionPayload());
                     inboxCacheData = null;
                     mostrarNotificacion("Vídeo rechazado.", "info");
                     openInbox();
@@ -4246,7 +5719,7 @@ export function renderInboxDetail(item) {
         }
         try {
             replyBtn.classList.add('btn-loading');
-            await replyToFeedback(item.id, item.type, replyText, userName);
+            await replyToFeedback(item.id, item.type, replyText, userName, getDeveloperSessionPayload());
             openInbox();
         } catch (error) {
             showGlobalError(`Error al enviar respuesta: ${error.message}`);
@@ -4260,7 +5733,7 @@ export function renderInboxDetail(item) {
         resolveBtn.addEventListener('click', async () => {
              try {
                 resolveBtn.classList.add('btn-loading');
-                await markAsResolved(item.id);
+                await markAsResolved(item.id, getDeveloperSessionPayload());
                 inboxCacheData = null;
                 openInbox();
             } catch (error) {
@@ -4278,7 +5751,7 @@ export function renderInboxDetail(item) {
                 try {
                     deleteBtn.disabled = true;
                     deleteBtn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Eliminando...`;
-                    await deleteFeedbackItem(item.id, item.type);
+                    await deleteFeedbackItem(item.id, item.type, getDeveloperSessionPayload());
                     inboxCacheData = null;
                     mostrarNotificacion("Mensaje eliminado con éxito", "success");
                     openInbox();
@@ -4822,18 +6295,22 @@ export function showApp(user) {
     }
 
     const devToolsBtn = document.getElementById('dev-tools-btn');
-    const userRole = user ? user.Privilegios : '';
-    if (devToolsBtn && userRole === 'Desarrollador') {
-        devToolsBtn.style.display = 'flex';
+    const userRole = String((user && user.Privilegios) || '')
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim()
+        .toLowerCase();
+    if (devToolsBtn) {
+        devToolsBtn.style.display = userRole === 'desarrollador' ? 'flex' : 'none';
     }
 
     const inboxBtn = document.getElementById('inbox-btn');
-    if (inboxBtn && ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole)) {
+    if (inboxBtn && ['desarrollador', 'gefe', 'supervisor'].includes(userRole)) {
         inboxBtn.style.display = 'flex';
     }
 
     const dashboardBtn = document.getElementById('dashboard-btn');
-    if (dashboardBtn && ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole)) {
+    if (dashboardBtn && ['desarrollador', 'gefe', 'supervisor'].includes(userRole)) {
         dashboardBtn.style.display = 'flex';
     }
 
@@ -5299,6 +6776,7 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
     const content = document.createElement("div");
     content.className = "info-modal-content";
     content.style.maxWidth = "500px";
+    const reportId = `REP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
@@ -5313,6 +6791,12 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
                 <textarea id="rep-error" rows="3" placeholder="Describe claramente el problema o fallo detectado..." required></textarea>
             </div>
             <div class="form-group">
+                <label for="rep-testigo-motor" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                    <input type="checkbox" id="rep-testigo-motor">
+                    Este corte activa el testigo del motor
+                </label>
+            </div>
+            <div class="form-group">
                 <label>Información Incorrecta o Incompleta</label>
                 <textarea id="rep-incorrecto" rows="2" placeholder="Indica qué datos específicos considera erróneos o incompletos..."></textarea>
             </div>
@@ -5323,6 +6807,8 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Enviar Reporte</button>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -5356,18 +6842,24 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
         }
 
         try {
+            const activaTestigoMotor = content.querySelector("#rep-testigo-motor").checked;
             const res = await reportProblem(
                 vehicleId,
                 fullProblemText,
                 currentUser.ID,
-                currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+                currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
+                {
+                    reportId,
+                    corteIndex: Number(corteNum),
+                    activaTestigoMotor
+                }
             );
 
-            const reportId = res && res.reportId ? res.reportId : `REP-${Date.now()}`;
+            const confirmedReportId = res && res.reportId ? res.reportId : reportId;
             modal.remove();
 
             // Modal de confirmación con opción accesible de «Sugerir cambio»
-            showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId);
+            showReportSuccessModal(vehicleId, corteNum, currentCutData, confirmedReportId);
         } catch (err) {
             console.error("Error al enviar reporte de corte:", err);
             showGlobalError("Error al enviar el reporte. Por favor inténtalo de nuevo.");
@@ -5413,6 +6905,8 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
             </button>
         </div>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -5473,8 +6967,8 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
         return `<option value="${opt}" ${isSel}>${opt}</option>`;
     }).join("");
 
-    // Opciones para testigo Check Engine
-    const currentCheckEngine = currentCutData.checkEngine || currentCutData.activaCheckEngine || "";
+    // El estado actual procede del mismo contrato normalizado que utiliza el detalle del corte.
+    const currentTestigoValue = normalizeActivaTestigoValue(currentCutData.activaTestigo);
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
@@ -5509,9 +7003,9 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             <div class="form-group">
                 <label for="sug-check-engine">¿El corte activa el testigo de motor (Check Engine)?</label>
                 <select id="sug-check-engine" class="dev-input" style="padding: 6px;">
-                    <option value="No" ${currentCheckEngine.toLowerCase().includes('no') ? 'selected' : ''}>No activa testigo</option>
-                    <option value="Sí" ${currentCheckEngine.toLowerCase().includes('si') || currentCheckEngine.toLowerCase().includes('sí') ? 'selected' : ''}>Sí, activa testigo</option>
-                    <option value="No aplica" ${!currentCheckEngine ? 'selected' : ''}>No aplica / No especificado</option>
+                    <option value="unspecified" ${currentTestigoValue === null ? 'selected' : ''}>No aplica / No especificado</option>
+                    <option value="true" ${currentTestigoValue === true ? 'selected' : ''}>Sí, activa testigo</option>
+                    <option value="false" ${currentTestigoValue === false ? 'selected' : ''}>No activa testigo</option>
                 </select>
             </div>
             <div class="form-group">
@@ -5520,23 +7014,14 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             </div>
             <div class="form-group">
                 <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
-                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('sug-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('sug-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="sug-detalles"></div>
                 <textarea id="sug-detalles" rows="3" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:8px;">Enviar Sugerencia</button>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -5575,7 +7060,8 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
             colorCable: content.querySelector("#sug-color").value.trim(),
             configRelay: content.querySelector("#sug-relay").value.trim() || currentCutData.configRelay || "",
-            activaCheckEngine: content.querySelector("#sug-check-engine").value
+            activaTestigo: content.querySelector("#sug-check-engine").value === "true" ? true :
+                (content.querySelector("#sug-check-engine").value === "false" ? false : null)
         };
 
         const payload = {
@@ -5683,6 +7169,8 @@ export function openExpandMenuModal(item) {
         </div>
     `;
 
+    mountRichTextToolbars(content);
+
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -5769,6 +7257,8 @@ export function openAddVinModal(item) {
         </form>
     `;
 
+    mountRichTextToolbars(content);
+
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -5851,6 +7341,12 @@ export function openAddVinModal(item) {
             isNewTrim = true;
         }
 
+        const { currentUser } = getState();
+        if (!currentUser || !currentUser.ID || !currentUser.SessionToken) {
+            warningEl.textContent = "Debes iniciar sesión nuevamente para registrar un VIN.";
+            warningEl.style.display = "block";
+            return;
+        }
         const btn = form.querySelector("#btn-save-vin");
         btn.disabled = true;
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
@@ -5860,7 +7356,9 @@ export function openAddVinModal(item) {
                 vehicleId: item.id,
                 vin: vinVal,
                 trimLevel: selectedTrim,
-                isNewTrim: isNewTrim
+                isNewTrim: isNewTrim,
+                userId: currentUser.ID,
+                sessionToken: currentUser.SessionToken
             });
             if (res.status === 'success') {
                 if (res.vinCollection) {
@@ -5914,44 +7412,14 @@ export function openAddVinModal(item) {
     };
 }
 
-/* TAREA 1.2: BARRA DE ENRIQUECIMIENTO DE TEXTO EN LOS FORMULARIOS */
-export function createRichTextToolbar(targetId) {
-    const toolbar = document.createElement("div");
-    toolbar.className = "rich-editor-toolbar";
-    toolbar.style.cssText = "display:flex; align-items:center; gap:6px; margin-bottom:4px;";
-
-    const boldBtn = document.createElement("button");
-    boldBtn.type = "button";
-    boldBtn.className = "btn btn-secondary btn-sm";
-    boldBtn.title = "Negrita";
-    boldBtn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:26px; min-width:26px;";
-    boldBtn.innerHTML = "<strong>B</strong>";
-    boldBtn.onclick = () => window.applyRichFormat(targetId, "bold");
-
-    // Botón cuadrado con cuadrícula de 4 colores y capa nativa transparente
-    const colorBtn = document.createElement("div");
-    colorBtn.className = "rich-color-picker-box";
-    colorBtn.title = "Color de texto";
-    colorBtn.style.cssText = "position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;";
-    colorBtn.innerHTML = `
-        <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-            <span style="background:#ff4d4f;"></span>
-            <span style="background:#1890ff;"></span>
-            <span style="background:#52c41a;"></span>
-            <span style="background:#faad14;"></span>
-        </div>
-        <input type="color" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-    `;
-    const colorPicker = colorBtn.querySelector("input");
-    colorPicker.onchange = (e) => window.applyRichColor(targetId, e.target.value);
-
-    toolbar.appendChild(boldBtn);
-    toolbar.appendChild(colorBtn);
-    return toolbar;
-}
-
 /* TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN «+» / TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
 export function openAddCutForModelModal(item) {
+    const vehicleId = String(item && item.id !== undefined && item.id !== null ? item.id : "").trim();
+    if (!vehicleId) {
+        showGlobalError("No se pudo identificar el vehículo para agregar el corte.");
+        return;
+    }
+
     const existing = document.getElementById("add-cut-for-model-modal");
     if (existing) existing.remove();
 
@@ -5968,6 +7436,7 @@ export function openAddCutForModelModal(item) {
         <span class="info-close-btn">&times;</span>
         <h2><i class="fa-solid fa-plus-circle"></i> Agregar Nuevo Corte</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">Modelo: ${item.marca} ${item.modelo}</p>
+        <div id="add-cut-pending-notice" role="status" style="display:none; padding:10px; border-radius:8px; background:var(--surface-secondary, rgba(0,123,255,0.08)); font-size:0.9em;"></div>
 
         <form id="add-cut-model-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
@@ -5988,18 +7457,7 @@ export function openAddCutForModelModal(item) {
             </div>
             <div class="form-group">
                 <label>Ubicación y Detalles del Corte</label>
-                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-cut-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('add-cut-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="add-cut-detalles"></div>
                 <textarea id="add-cut-detalles" rows="3" placeholder="Detalles de ubicación y conexión..." required></textarea>
             </div>
             <div class="form-group">
@@ -6015,16 +7473,84 @@ export function openAddCutForModelModal(item) {
                 <input type="file" id="add-cut-img-file" accept="image/*">
             </div>
             <div class="modal-btn-compact-container">
-                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-plus-circle"></i> Agregar Corte</button>
+                <button type="submit" class="btn btn-primary btn-modal-action-compact" disabled><i class="fa-solid fa-plus-circle"></i> Comprobando operación...</button>
             </div>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
 
     const tipoSelect = content.querySelector("#add-cut-tipo");
     const relaySelect = content.querySelector("#add-cut-relay");
+    const detailsInput = content.querySelector("#add-cut-detalles");
+    const colorInput = content.querySelector("#add-cut-color");
+    const testigoInput = content.querySelector("#add-cut-testigo");
+    const fileInput = content.querySelector("#add-cut-img-file");
+    const pendingNotice = content.querySelector("#add-cut-pending-notice");
+    const form = content.querySelector("#add-cut-model-form");
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const editableControls = [tipoSelect, relaySelect, detailsInput, colorInput, testigoInput, fileInput];
+
+    let pendingOperation = null;
+    let pendingOperationLoadFailed = false;
+    let submitInProgress = false;
+
+    const showPendingNotice = (message) => {
+        pendingNotice.textContent = message;
+        pendingNotice.style.display = "block";
+    };
+
+    const lockFormForPendingOperation = () => {
+        editableControls.forEach(control => { control.disabled = true; });
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Reintentar guardado pendiente";
+    };
+
+    const isValidPendingOperation = (operation) => {
+        const cutData = operation && operation.cutData;
+        return Boolean(
+            operation &&
+            /^OP-[a-zA-Z0-9_-]+$/.test(String(operation.id || "")) &&
+            String(operation.vehicleId) === vehicleId &&
+            String(operation.userId || "").trim() !== "" &&
+            ["processing", "failed", "completed"].includes(String(operation.status || "")) &&
+            cutData && typeof cutData === "object" &&
+            typeof cutData.tipoCorte1 === "string" &&
+            typeof cutData.configRelay1 === "string" &&
+            typeof cutData.ubicacionCorte1 === "string" &&
+            typeof cutData.colorCableCorte1 === "string" &&
+            typeof cutData.activaTestigo1 === "boolean" &&
+            typeof cutData.imgCorte1 === "string"
+        );
+    };
+
+    const applyPendingOperation = (operation) => {
+        if (!isValidPendingOperation(operation)) return false;
+        const { currentUser } = getState();
+        if (!currentUser || !currentUser.ID || String(operation.userId) !== String(currentUser.ID)) return false;
+        pendingOperation = operation;
+        const savedCut = operation.cutData;
+
+        tipoSelect.value = savedCut.tipoCorte1 || "";
+        const savedRelay = String(savedCut.configRelay1 || "");
+        if (savedRelay && !Array.from(relaySelect.options).some(option => option.value === savedRelay)) {
+            const option = document.createElement("option");
+            option.value = savedRelay;
+            option.textContent = savedRelay;
+            relaySelect.appendChild(option);
+        }
+        relaySelect.value = savedRelay;
+        detailsInput.value = savedCut.ubicacionCorte1 || "";
+        colorInput.value = savedCut.colorCableCorte1 || "";
+        testigoInput.checked = savedCut.activaTestigo1 === true;
+        syncNoRecomendadoState();
+        lockFormForPendingOperation();
+        showPendingNotice("Existe un agregado pendiente para este vehículo. Se conservaron los datos originales, incluida la imagen. El reintento utilizará la misma clave para evitar duplicados; los campos permanecen bloqueados para no alterar una operación que pudo haberse completado.");
+        return true;
+    };
 
     const populateRelayOptions = (options) => {
         relaySelect.innerHTML = '<option value="" selected disabled>Seleccione una opción</option>';
@@ -6038,28 +7564,8 @@ export function openAddCutForModelModal(item) {
             el.textContent = opt;
             relaySelect.appendChild(el);
         });
-        if (!relaySelect.value) {
-            relaySelect.value = "";
-        }
+        if (!relaySelect.value) relaySelect.value = "";
     };
-
-    // Cargar opciones desde la configuración de Spreadsheet
-    (async () => {
-        try {
-            const dropdowns = await precargarDropdownOptions();
-            if (dropdowns && dropdowns.configRelay) {
-                populateRelayOptions(dropdowns.configRelay, "Corte a ignición");
-            } else {
-                populateRelayOptions([]);
-            }
-        } catch (e) {
-            console.error("Error cargando opciones de relay para modal:", e);
-            populateRelayOptions([]);
-        }
-
-        // Aplicar estado según tipo inicial
-        syncNoRecomendadoState();
-    })();
 
     function syncNoRecomendadoState() {
         const isNoRec = isNoRecomendadoValue(tipoSelect.value);
@@ -6068,60 +7574,189 @@ export function openAddCutForModelModal(item) {
             relaySelect.required = false;
             relaySelect.value = "";
         } else {
-            relaySelect.disabled = false;
-            relaySelect.required = true;
+            relaySelect.disabled = Boolean(pendingOperation);
+            relaySelect.required = !pendingOperation;
         }
     }
 
     tipoSelect.onchange = syncNoRecomendadoState;
 
-    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+    const relayOptionsPromise = (async () => {
+        try {
+            const dropdowns = await precargarDropdownOptions();
+            if (dropdowns && dropdowns.configRelay) {
+                populateRelayOptions(dropdowns.configRelay);
+            } else {
+                populateRelayOptions([]);
+            }
+        } catch (error) {
+            console.error("Error cargando opciones de relay para modal:", error);
+            populateRelayOptions([]);
+        }
+        syncNoRecomendadoState();
+    })();
 
-    const form = content.querySelector("#add-cut-model-form");
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const { currentUser } = getState();
-        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
-
-        const submitBtn = form.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerText = "Guardando...";
-
-        const fileInput = content.querySelector("#add-cut-img-file");
-        let imgBase64 = "";
-        if (fileInput.files && fileInput.files[0]) {
-            imgBase64 = await new Promise((res) => {
-                const r = new FileReader();
-                r.onload = (re) => res(re.target.result);
-                r.readAsDataURL(fileInput.files[0]);
-            });
+    async function restorePendingOperation() {
+        const stored = await offline.getAddCutPendingOperation(vehicleId);
+        if (!stored || stored.available !== true) {
+            pendingOperationLoadFailed = true;
+            editableControls.forEach(control => { control.disabled = true; });
+            submitBtn.disabled = true;
+            showPendingNotice("No se pudo consultar el almacenamiento local de operaciones pendientes. No se habilitó un nuevo envío para evitar duplicados. Recarga la aplicación e inténtalo nuevamente.");
+            return;
         }
 
-        const payload = {
-            vehicleId: item.id,
-            colaborador: currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
-            cutData: {
-                tipo: content.querySelector("#add-cut-tipo").value,
-                configRelay: content.querySelector("#add-cut-relay").value,
-                ubicacion: content.querySelector("#add-cut-detalles").value,
-                colorCable: content.querySelector("#add-cut-color").value,
-                activaTestigo: content.querySelector("#add-cut-testigo").checked,
-                imgBase64
-            }
-        };
-
-        try {
-            await routeAction("addOrUpdateCut", payload);
-            alert("Corte agregado con éxito.");
-            modal.remove();
-            // Refresh catalog
-            const catRes = await routeAction("getCatalogData");
-            if (catRes && catRes.data) setState({ catalogData: catRes.data });
-        } catch (err) {
-            console.error("Error agregando corte:", err);
-            showGlobalError("Error al agregar corte: " + err.message);
+        if (!stored.operation) {
+            pendingNotice.style.display = "none";
             submitBtn.disabled = false;
             submitBtn.innerText = "Agregar Corte";
+            return;
+        }
+
+        const operation = stored.operation;
+        if (!applyPendingOperation(operation)) {
+            pendingOperationLoadFailed = true;
+            editableControls.forEach(control => { control.disabled = true; });
+            submitBtn.disabled = true;
+            showPendingNotice("Se encontró un registro pendiente con datos incompletos o incompatibles. Se bloqueó un nuevo agregado para evitar duplicaciones. Requiere revisión antes de continuar.");
+        }
+    }
+
+    content.querySelector(".info-close-btn").onclick = () => modal.remove();
+
+    (async () => {
+        try {
+            await relayOptionsPromise;
+            await restorePendingOperation();
+        } catch (error) {
+            console.error("No se pudo recuperar la operación pendiente del modal:", error);
+            pendingOperationLoadFailed = true;
+            editableControls.forEach(control => { control.disabled = true; });
+            submitBtn.disabled = true;
+            showPendingNotice("No se pudo comprobar si existe una operación anterior. No se habilitó un nuevo envío para evitar duplicados.");
+        }
+    })();
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        if (submitInProgress) return;
+        if (pendingOperationLoadFailed) {
+            showGlobalError("No se pudo verificar el estado local de las operaciones pendientes. No se envió el corte.");
+            return;
+        }
+
+        const { currentUser } = getState();
+        if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
+        if (!currentUser.ID || !currentUser.SessionToken) {
+            showGlobalError("Tu sesión ha expirado. Inicia sesión nuevamente.");
+            return;
+        }
+
+        submitInProgress = true;
+        submitBtn.disabled = true;
+        submitBtn.innerText = pendingOperation ? "Reintentando..." : "Guardando...";
+        let persistedForAttempt = Boolean(pendingOperation);
+
+        try {
+            if (!pendingOperation) {
+                const file = fileInput.files && fileInput.files[0];
+                let imgBase64 = "";
+                if (file) {
+                    imgBase64 = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (event) => resolve(event.target.result);
+                        reader.onerror = () => reject(reader.error || new Error("No se pudo leer la imagen seleccionada."));
+                        reader.readAsDataURL(file);
+                    });
+                }
+
+                const cutData = {
+                    tipoCorte1: tipoSelect.value,
+                    configRelay1: relaySelect.value,
+                    ubicacionCorte1: detailsInput.value,
+                    colorCableCorte1: colorInput.value,
+                    activaTestigo1: testigoInput.checked,
+                    imgCorte1: imgBase64
+                };
+                const operation = {
+                    id: "OP-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase(),
+                    vehicleId,
+                    userId: String(currentUser.ID),
+                    cutData,
+                    status: "processing",
+                    createdAt: new Date().toISOString()
+                };
+
+                const saveResult = await offline.saveAddCutPendingOperation(operation);
+                if (!saveResult || saveResult.saved !== true) {
+                    if (saveResult && saveResult.conflict && saveResult.operation) {
+                        if (applyPendingOperation(saveResult.operation)) {
+                            showGlobalError("Ya existe una operación pendiente para este vehículo. Se restauraron sus datos; reintenta esa misma operación.");
+                        } else {
+                            pendingOperationLoadFailed = true;
+                            submitBtn.disabled = true;
+                            showPendingNotice("Existe otra operación pendiente para este vehículo, pero no se pudo recuperar su contenido. No se enviará un nuevo corte.");
+                        }
+                        return;
+                    }
+                    throw new Error("No se pudo guardar la operación pendiente en el almacenamiento local. No se envió el corte para evitar duplicaciones.");
+                }
+
+                pendingOperation = operation;
+                persistedForAttempt = true;
+                lockFormForPendingOperation();
+                showPendingNotice("Operación guardada localmente. Se está enviando al servidor con una clave única de recuperación.");
+            }
+
+            const result = await routeAction("addOrUpdateCut", {
+                userId: currentUser.ID,
+                sessionToken: currentUser.SessionToken,
+                vehicleId: item.id,
+                cutData: pendingOperation.cutData,
+                opId: pendingOperation.id
+            });
+
+            if (!result || result.status !== "success" || String(result.vehicleId) !== vehicleId) {
+                throw new Error("El servicio no confirmó el agregado del corte para el vehículo esperado.");
+            }
+
+            const completedOpId = pendingOperation.id;
+            const removed = await offline.removeAddCutPendingOperation(vehicleId, completedOpId);
+            if (removed !== true) {
+                console.warn("El corte fue confirmado, pero no se pudo retirar el registro local. Un reintento conservará el mismo opId.", completedOpId);
+            }
+
+            pendingOperation = null;
+            alert("Corte agregado con éxito.");
+            modal.remove();
+
+            try {
+                const catalogResult = await routeAction("getCatalogData");
+                if (catalogResult && catalogResult.data) setState({ catalogData: catalogResult.data });
+            } catch (refreshError) {
+                console.error("El corte se guardó, pero no se pudo actualizar el catálogo:", refreshError);
+                showGlobalError("El corte se guardó correctamente, pero no se pudo actualizar el catálogo. Vuelve a cargar la información.");
+            }
+        } catch (error) {
+            console.error("Error agregando corte:", error);
+            if (pendingOperation && persistedForAttempt) {
+                pendingOperation.status = "failed";
+                pendingOperation.lastError = String(error && error.message ? error.message : error);
+                const saveResult = await offline.saveAddCutPendingOperation(pendingOperation);
+                if (saveResult && saveResult.conflict && saveResult.operation) {
+                    applyPendingOperation(saveResult.operation);
+                } else {
+                    lockFormForPendingOperation();
+                    showPendingNotice("No se pudo confirmar la respuesta del servidor. La operación original permanece guardada; reintenta con el mismo opId y los mismos datos para evitar duplicados.");
+                }
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Agregar Corte";
+            }
+            showGlobalError("No se pudo confirmar el agregado del corte: " + String(error && error.message ? error.message : error));
+        } finally {
+            submitInProgress = false;
+            if (pendingOperation && !pendingOperationLoadFailed) submitBtn.disabled = false;
         }
     };
 }
@@ -6148,18 +7783,7 @@ export function openAddAperturaModal(item) {
         <form id="add-apertura-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Detalles de la Apertura</label>
-                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-apertura-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('add-apertura-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="add-apertura-detalles"></div>
                 <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
             </div>
             <div class="form-group">
@@ -6171,6 +7795,8 @@ export function openAddAperturaModal(item) {
             </div>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -6235,18 +7861,7 @@ export function openAddFeedModal(item) {
         <form id="add-feed-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Detalles de la Alimentación</label>
-                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-feed-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('add-feed-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="add-feed-detalles"></div>
                 <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
             </div>
             <div class="form-group">
@@ -6258,6 +7873,8 @@ export function openAddFeedModal(item) {
             </div>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -6389,6 +8006,8 @@ export function openAddVideoModal(item) {
             </form>
         </div>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -6576,18 +8195,7 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
             </div>
             <div class="form-group">
                 <label>Detalle del Problema (Máx 700 caracteres)</label>
-                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-detalle', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('pys-detalle', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="pys-detalle"></div>
                 <textarea id="pys-detalle" maxlength="700" rows="4" required placeholder="Describe el problema..."></textarea>
             </div>
             <div class="form-group" style="display:flex; align-items:center; gap:8px;">
@@ -6596,18 +8204,7 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
             </div>
             <div class="form-group" id="grp-solucion">
                 <label>Solución (Máx 700 caracteres)</label>
-                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-solucion', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('pys-solucion', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="pys-solucion"></div>
                 <textarea id="pys-solucion" maxlength="700" rows="4" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
@@ -6629,6 +8226,8 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar</button>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -6841,6 +8440,8 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
         </div>
     `;
 
+    mountRichTextToolbars(content);
+
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -7010,6 +8611,8 @@ export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
             </div>
         </div>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -7522,23 +9125,14 @@ export function openAddTutorialModal() {
             </div>
             <div class="form-group">
                 <label>Descripción / Detalles (Máx 700 caracteres)</label>
-                <div class="rich-editor-toolbar" style="display:flex; gap:8px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('tut-desc', 'bold')"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('tut-desc', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="tut-desc"></div>
                 <textarea id="tut-desc" maxlength="700" rows="4" placeholder="Detalles del tutorial..."></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Tutorial</button>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -7624,38 +9218,6 @@ window.applyRichColor = function(targetId, color) {
     textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
 };
 
-// TAREA ADICIONAL: PERMITIR CONTENIDO HTML ENRIQUECIDO EN CAMPOS DE TEXTO
-export function sanitizeHtmlContent(htmlStr) {
-    if (!htmlStr) return '';
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlStr, 'text/html');
-    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'EM', 'U', 'S', 'STRIKE', 'OL', 'UL', 'LI', 'A', 'IMG', 'SMALL', 'MARK', 'FONT'];
-
-    function cleanNode(node) {
-        const children = Array.from(node.childNodes);
-        children.forEach(child => {
-            if (child.nodeType === 1) {
-                if (!allowedTags.includes(child.tagName)) {
-                    const textNode = doc.createTextNode(child.outerHTML);
-                    node.replaceChild(textNode, child);
-                } else {
-                    Array.from(child.attributes).forEach(attr => {
-                        const name = attr.name.toLowerCase();
-                        const val = attr.value.toLowerCase();
-                        if (name.startsWith('on') || val.includes('javascript:') || val.includes('data:text/html')) {
-                            child.removeAttribute(attr.name);
-                        }
-                    });
-                    cleanNode(child);
-                }
-            }
-        });
-    }
-
-    cleanNode(doc.body);
-    return doc.body.innerHTML;
-}
-
 let inboxCacheData = null;
 
 /* BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF */
@@ -7681,7 +9243,7 @@ export function exportVehiclePrintSheet(item) {
                 relay: item[`configRelay${i}`],
                 img: item[`imgCorte${i}`],
                 util: parseInt(item[`utilCorte${i}`] || 0),
-                activaTestigo: item[`utilCorte${i}`] === 'x' || String(item[`tipoCorte${i}`] || '').toLowerCase().includes('testigo')
+                activaTestigo: getActivaTestigoValue(item, i)
             });
         }
     }
@@ -7727,9 +9289,9 @@ export function exportVehiclePrintSheet(item) {
             kind: 'cut',
             num: c.num,
             title: `Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}`,
-            infoHtml: `<p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
-                       <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
-                       <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>`,
+            infoHtml: `<div><strong>Ubicación:</strong> ${sanitizeHtmlContent(c.ub || 'No especificada')}</div>
+                       <div><strong>Color de Cable:</strong> ${sanitizeHtmlContent(c.color || 'No especificado')}</div>
+                       <div><strong>Relay:</strong> ${sanitizeHtmlContent(c.relay || 'Sin Relay')}</div>`,
             img: c.img,
             alt: `Corte #${c.num}`,
             extraHtml: c.activaTestigo ? `
@@ -7743,7 +9305,7 @@ export function exportVehiclePrintSheet(item) {
         techItems.push({
             kind: 'feed',
             title: f.title,
-            infoHtml: `<p>${f.desc || 'Conexión estándar'}</p>`,
+            infoHtml: `<div>${sanitizeHtmlContent(f.desc || 'Conexión estándar')}</div>`,
             img: f.img,
             alt: f.title,
             extraHtml: '',
@@ -7754,7 +9316,7 @@ export function exportVehiclePrintSheet(item) {
         techItems.push({
             kind: aperturaItem.kind,
             title: aperturaItem.title,
-            infoHtml: `<p>${aperturaItem.desc}</p>`,
+            infoHtml: `<div>${sanitizeHtmlContent(aperturaItem.desc)}</div>`,
             img: aperturaItem.img,
             alt: aperturaItem.title,
             extraHtml: '',
@@ -7789,7 +9351,7 @@ export function exportVehiclePrintSheet(item) {
     const notasHtml = item.notaImportante ? `
         <tr class="meta-note-row">
             <td colspan="4">
-                <div class="tech-notes"><strong>Nota técnica importante:</strong> ${item.notaImportante}</div>
+                <div class="tech-notes"><strong>Nota técnica importante:</strong> ${sanitizeHtmlContent(item.notaImportante)}</div>
             </td>
         </tr>
     ` : '';
@@ -7830,6 +9392,13 @@ export function exportVehiclePrintSheet(item) {
                     line-height: 1.25;
                     background: #fff;
                 }
+                ul[data-gp-marker] { list-style: none; padding-left: 1.5em; }
+                ul[data-gp-marker] > li { position: relative; }
+                ul[data-gp-marker] > li::before { position: absolute; left: -1.25em; }
+                ul[data-gp-marker="hyphen"] > li::before { content: "-"; }
+                ul[data-gp-marker="arrow"] > li::before { content: "→"; }
+                ul[data-gp-marker="check"] > li::before { content: "✓"; }
+                ul[data-gp-marker="bullet"] > li::before { content: "•"; }
                 .sheet-page-wrapper {
                     height: auto;
                     min-height: 269mm;
@@ -8572,7 +10141,7 @@ export async function loadAndRenderInbox() {
     }
 
     try {
-        const res = await getFeedbackItems();
+        const res = await getFeedbackItems(getDeveloperSessionPayload());
         if (res && res.data) {
             inboxCacheData = res.data;
             renderInboxList(inboxCacheData);
@@ -8615,6 +10184,8 @@ export async function openAssociateExistingProblemModal(vehicle) {
             <div style="text-align:center; padding:15px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Cargando problemas...</div>
         </div>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
