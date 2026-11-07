@@ -5440,3 +5440,75 @@ ARCHIVOS DE ESTA FASE
 
 El commit que incorpora este checkpoint se identificará en el historial Git; no se generará un commit independiente para el checkpoint.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-T-002: RBAC, AUTH, USERS E IDENTIDAD
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S002
+Checkpoint: AUD-CP-0002
+Plan: AUD-PLAN-2026-001
+Rama: GPSpedia2.2.5_work
+HEAD al inicio: f1b68ca74c944867ba2a18f0000963a5137474cf
+Rama base: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: inicio de iteración registrado antes de la auditoría detallada.
+
+ALCANCE
+Auditar RBAC, autenticación, autorización de usuarios, identidad y operaciones del servicio USERS. Excluir de esta iteración la auditoría de términos legales (AUD-T-036), KDF/migración de contraseñas (AUD-T-023) y cierre completo del ciclo de sesión (AUD-T-024), aunque registrar hallazgos de dependencia.
+
+ARCHIVOS PREVISTOS
+Services/Auth.js, Services/users.js, auth.js, users.html, api-config.js, Services/Test/Auth.js, Services/Test/users.js y Services/Test/README.md. Revisar commits, diffs, Tareas.txt, Auditoría.txt y checkpoint.md.
+
+RESTRICCIONES
+Solo lectura; no modificar código, endpoints, roles, datos ni deployments. No ejecutar operaciones en Spreadsheet productiva. Publicar los registros de auditoría en un único commit de documentación con create_blob → un create_tree → create_commit → update_ref force:false y expected_sha igual al HEAD inicial.
+
+================================================================================
+CHECKPOINT FINAL — AUD-T-002: RBAC, AUTH, USERS E IDENTIDAD
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S002
+Checkpoint: AUD-CP-0002
+HEAD auditado: f1b68ca74c944867ba2a18f0000963a5137474cf
+Rama base: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Commit de auditoría: audit(auth): revisar RBAC y ciclo de identidad (SHA se identifica en el historial).
+
+ESTADO
+AUD-T-002 PARCIALMENTE CUMPLIDA; HALLAZGOS ABIERTOS.
+
+ARCHIVOS Y FUNCIONES AUDITADOS
+- Services/Auth.js: SESSION_LIMITS, helpers de contraseña y login, contador de intentos, logToSheet, doGet/doPost, handleLogin, handleValidateSession.
+- Services/users.js: conexión Spreadsheet, getVerifiedSession, handlers get/reset/create/update/delete/profile/changePassword.
+- auth.js: login, checkSession, logout y carga inicial.
+- users.html: inicialización, visibilidad por rol, consulta y gestión de usuarios, cierre remoto, cambio de contraseña y perfil.
+- api-config.js: mapa de acciones y routeAction.
+- Services/Test/Auth.js y Services/Test/users.js comparados con producción; Services/Test/README.md revisado.
+
+HALLAZGOS
+- H-AUD-001 ALTO: eliminación de usuario deja ActiveSessions; AUTH puede validar token huérfano.
+- H-AUD-002 ALTO: logout solo elimina localStorage; no revoca en AUTH.
+- H-AUD-003 MEDIO: no hay expiración aplicada; cambio de contraseña no define revocación de otras sesiones.
+- H-AUD-004 MEDIO: lock local de checkSession no cubre la validación asíncrona.
+- H-AUD-005 MEDIO: createUser no rechaza username vacío en backend.
+- H-AUD-006 MEDIO: cobertura desigual de ScriptLock en USERS y ausencia de coordinación AUTH/USERS.
+
+CAMBIOS Y PRUEBAS
+- No se modificó código.
+- Se revisaron 700 registros de commits históricos y los commits relacionados con la unidad.
+- Se inspeccionaron los archivos fuente actuales y se compararon las copias AUTH/USERS de prueba.
+- No se ejecutaron pruebas nuevas de navegador, Apps Script, HTTP, Sheets ni Drive.
+- No se desplegaron servicios.
+
+CONTINUIDAD Y NO REGRESIÓN
+- La incidencia histórica del límite de sesiones Gefe quedó resuelta por 0666c1d1 y 4bc9ac19; no reabrir.
+- El commit 97eef18 es de cierre documental/comentarios, no el commit que añadió las fuentes completas.
+- Los alcances de legal, hash y ciclo de sesión se mantienen separados en AUD-T-036, AUD-T-023 y AUD-T-024.
+- La coordinación común se vincula a AUD-T-033.
+- Nuevas tareas AUG-005 a AUG-010 registradas.
+
+SIGUIENTE ACCIÓN
+Auditar AUD-T-023 — Seguridad de contraseñas, hashing, logs y migración, con una sesión y checkpoint independientes.
+
+LIMITACIONES
+La auditoría no confirma el estado real de los deployments ni la Spreadsheet productiva. No declarar funcionalmente validada la tarea hasta ejecutar la matriz en el entorno aislado y, cuando proceda, el entorno autorizado.
+================================================================================

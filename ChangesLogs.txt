@@ -3681,3 +3681,22 @@ ARCHIVOS DOCUMENTALES
 ALCANCE
 No se modificaron archivos de código, endpoints, servicios, datos productivos, deployments, ramas ni configuraciones administrativas.
 ================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-002
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S002
+Checkpoint: AUD-CP-0002
+Commit previsto: audit(auth): revisar RBAC y ciclo de identidad
+
+ARCHIVOS DOCUMENTALES
+- Plan_auditoría/Plan_Auditoria.md: actualización de alcance/estado AUD-T-002 y registro de hallazgos, commits, calidad, evidencia y siguiente iteración.
+- Plan_auditoría/Aug_Tareas.md: incorporación de AUG-005 a AUG-010 derivados de hallazgos.
+- Auditoría.txt: auditoría técnica detallada de RBAC/AUTH/USERS.
+- checkpoint.md: checkpoint inicial y final AUD-CP-0002.
+- ChangesLogs.txt: registro objetivo de cambios documentales.
+
+ALCANCE
+No se modificaron Services/Auth.js, Services/users.js, auth.js, users.html, api-config.js ni copias de prueba. No se desplegó Apps Script, no se ejecutó HTTP/navegador y no se modificaron Sheets/Drive.
+================================================================================

@@ -58,3 +58,68 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 ## Historial de actualizaciones
 
 - 2026-11-07 — Creación inicial. Se registran cuatro hallazgos preliminares de planificación; tres enlazan tareas transversales ya existentes y uno queda como entregable del plan. No se ha detectado todavía una nueva tarea de corrección de código validada por auditoría técnica.
+
+
+## Hallazgos derivados de AUD-T-002 — 2026-11-07
+
+### AUG-005 — Revocar sesiones cuando se elimina una cuenta
+- **Hallazgo origen:** H-AUD-001.
+- **Tarea auditada:** AUD-T-002.
+- **Sesión/checkpoint:** AUD-20261107-S002 / AUD-CP-0002.
+- **Prioridad:** Alta.
+- **Evidencia:** Services/users.js handleDeleteUser() (líneas 398–427); Services/Auth.js handleValidateSession() (líneas 377–401).
+- **Problema:** la eliminación de Users no elimina ActiveSessions; AUTH puede validar un token huérfano sin comprobar la existencia del usuario.
+- **Criterios de aceptación:** eliminar la cuenta debe invalidar todas sus sesiones; AUTH debe rechazar tokens asociados a usuarios inexistentes; la operación debe ser consistente e idempotente; definir tratamiento de autodeleción y probarlo explícitamente.
+- **Estado:** NUEVA.
+
+### AUG-006 — Implementar cierre de sesión con revocación backend
+- **Hallazgo origen:** H-AUD-002.
+- **Tarea auditada:** AUD-T-002.
+- **Sesión/checkpoint:** AUD-20261107-S002 / AUD-CP-0002.
+- **Prioridad:** Alta.
+- **Evidencia:** auth.js logout() (líneas 237–241); Services/Auth.js doPost() (líneas 204–227); api-config.js ACTION_TO_SERVICE_MAP.
+- **Problema:** logout elimina únicamente la copia local del token; el servidor conserva la sesión activa.
+- **Criterios de aceptación:** acción AUTH de revocación autenticada por token; eliminar solo la sesión invocante; limpiar Users.SessionToken únicamente si corresponde al token revocado; el logout local debe terminar aunque la red no esté disponible, pero debe informar/registrar el estado de revocación pendiente sin presentar como revocada una sesión que el servidor aún conserva.
+- **Estado:** NUEVA.
+
+### AUG-007 — Definir política de expiración y revocación tras cambio de contraseña
+- **Hallazgo origen:** H-AUD-003.
+- **Tarea auditada:** AUD-T-002.
+- **Sesión/checkpoint:** AUD-20261107-S002 / AUD-CP-0002.
+- **Prioridad:** Media/Alta; requiere decisión de producto.
+- **Evidencia:** ActiveSessions.date; Services/Auth.js handleValidateSession(); Services/users.js getVerifiedSession(), handleChangePassword() y handleUpdateUser().
+- **Problema:** la fecha de sesión no se usa para expirar; cambios de contraseña no revocan otras sesiones.
+- **Criterios de aceptación:** aprobar una política explícita (duración absoluta, inactividad y comportamiento al cambiar/resetear contraseña); validarla en AUTH y USERS de forma consistente; pruebas de expiración, renovación y revocación.
+- **Estado:** NUEVA; DECISIÓN DE POLÍTICA PENDIENTE.
+
+### AUG-008 — Corregir la coordinación de validación de sesión entre pestañas
+- **Hallazgo origen:** H-AUD-004.
+- **Tarea auditada:** AUD-T-002.
+- **Sesión/checkpoint:** AUD-20261107-S002 / AUD-CP-0002.
+- **Prioridad:** Media.
+- **Evidencia:** auth.js checkSession() (líneas 125–221), claves session_validation_lock y LOCK_TIMEOUT.
+- **Problema:** el bloqueo local se elimina inmediatamente y no cubre la validación asíncrona ni ofrece adquisición atómica entre pestañas.
+- **Criterios de aceptación:** coordinar pestañas concurrentes sin suponer atomicidad de localStorage; liberar el estado en éxito, fallo y timeout; evitar validaciones duplicadas y no bloquear el arranque indefinidamente; probar dos o más pestañas.
+- **Estado:** NUEVA.
+
+### AUG-009 — Validar el nombre de usuario en el backend
+- **Hallazgo origen:** H-AUD-005.
+- **Tarea auditada:** AUD-T-002.
+- **Sesión/checkpoint:** AUD-20261107-S002 / AUD-CP-0002.
+- **Prioridad:** Media.
+- **Evidencia:** Services/users.js handleCreateUser() (líneas 269–341); users.html handleUserFormSubmit().
+- **Problema:** se comprueban duplicados, pero no se rechaza explícitamente el nombre vacío tras trim() cuando la llamada evita la validación HTML.
+- **Criterios de aceptación:** rechazar nombre vacío y entradas fuera de la política acordada en backend; mantener comparación normalizada para duplicados; pruebas directas al endpoint sin interfaz.
+- **Estado:** NUEVA.
+
+### AUG-010 — Completar serialización de mutaciones del servicio USERS
+- **Hallazgo origen:** H-AUD-006.
+- **Tarea auditada:** AUD-T-002.
+- **Sesión/checkpoint:** AUD-20261107-S002 / AUD-CP-0002.
+- **Prioridad:** Alta.
+- **Evidencia:** Services/users.js handleCreateUser(), handleResetUserSessions(), handleUpdateUser(), handleDeleteUser(), handleUpdateProfile() y handleChangePassword().
+- **Problema:** solo algunas mutaciones usan ScriptLock; operaciones concurrentes pueden leer/escribir estados incompatibles.
+- **Criterios de aceptación:** inventariar y serializar las mutaciones que comparten filas/hojas; definir orden y límites de lock; probar concurrencia y fallos; coordinar AUTH/USERS mediante el protocolo común, sin asumir que ScriptLock de proyectos distintos sea compartido.
+- **Relación:** subárea vinculada a AUD-T-033 (coordinación de mutaciones entre servicios). Mantener ambos alcances diferenciados.
+- **Estado:** NUEVA; DEPENDIENTE DE AUD-T-033 PARA COORDINACIÓN ENTRE PROYECTOS.
+

@@ -7226,3 +7226,71 @@ LIMITACIONES
 SIGUIENTE ITERACIÓN
 AUD-T-002 — RBAC, AUTH, USERS, sesiones, roles, identidad y cumplimiento legal. Requiere checkpoint individual y recuperación de commits/diffs relacionados antes de inspeccionar los archivos actuales.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA INDIVIDUAL — AUD-T-002: RBAC, AUTH, USERS E IDENTIDAD
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S002
+Checkpoint: AUD-CP-0002
+Plan: AUD-PLAN-2026-001
+Commit principal de tarea: Implementar Tarea 2: RBAC, sesión y cumplimiento legal
+SHA: 97eef18cd5c07eabc1c9a1f68f6b5710f3a3b4bf
+Commits de origen/revisión:
+- 975c59135bf243eb299585691b25a3d22b8d2e8f — Add files via upload (frontend modular inicial).
+- 9e74e6452368229e8eaa6d611853530cd5b79dea — Add files via upload (servicios backend).
+- 2678ee0242a4b78be61d6c799f6a53d6ce8d0715 — Separar purga de Logs y agregar control de sesiones.
+- b441a5be9a04770b2d535490eb73bc9478375e9b — fix: prevent duplicate user accounts.
+- 0666c1d189136dbad66c5c6523f8419b8d447002 — fix(auth): apply confirmed session limits and evict one oldest session.
+- 4bc9ac19b81dd0a9cc38a21e2806973ba3bc5fb3 — fix(auth): serialize concurrent session management.
+
+ALCANCE Y FUENTES
+Revisión estática de Services/Auth.js, Services/users.js, auth.js, users.html, api-config.js, Services/Test/Auth.js, Services/Test/users.js y Services/Test/README.md; además de Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md. El componente legal B02/B03 se separa a AUD-T-036; hashing/migración se profundiza en AUD-T-023; ciclo de sesión en AUD-T-024.
+
+ARCHIVOS Y FUNCIONES AUDITADOS
+- Services/Auth.js (blob fc69357b655c023b5ab3f7dd72cdab6fbb1787ed): SESSION_LIMITS; normalizePassword; digestToHex; createPasswordHash; constantTimeEquals; verifyStoredPassword; getLoginAttemptCacheKey; beginLoginAttempt; resetLoginAttempts; rollbackLoginAttempt; logToSheet; doGet; doPost; handleLogin; handleValidateSession.
+- Services/users.js (blob 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0): getSpreadsheet; helpers de hash; doGet/doPost; getVerifiedSession; handleGetUsers; handleResetUserSessions; handleCreateUser; handleUpdateUser; handleDeleteUser; handleUpdateProfile; handleChangePassword.
+- auth.js (blob 2dc65f2e5903fc208ca14505053e82203a9dbd86): handleLoginSuccess; loadInitialData; processCatalogData; checkSession; login; logout.
+- users.html (blob e41f402675677a4d2783493614737021ec2eade5): remoteLog; inicialización por DOMContentLoaded; displayProfile; postToAction; fetchUsers; renderUserTable; setupEventListeners; openUserModal; handleUserFormSubmit; deleteUser; resetUserSessions; handleChangePasswordSubmit; handleEditNameSubmit.
+- api-config.js (blob a5c718d01b7da50b4b5e650c3bacd91456f4d670): ACTION_TO_SERVICE_MAP, routeAction, login y validateSession.
+- Services/Test/Auth.js (blob f9e522cdc673d1028ad2f6979bc860a2eff752f7) y Services/Test/users.js (blob 83e0ea30dfeccc9d62a9c51f9add002c1850dde6): comparados con los originales; tras normalizar SPREADSHEET_ID solo difieren en comentarios del ID de prueba y dos líneas vacías finales en users.js.
+- Services/Test/README.md confirma que AUTH-TEST y USERS-TEST deben instalarse en proyectos separados; no contiene URLs ni IDs de deployment.
+
+HALLAZGOS
+H-AUD-001 — ALTO: handleDeleteUser() elimina Users pero no ActiveSessions. handleValidateSession() solo busca userId + token en ActiveSessions y no verifica que el usuario exista; puede devolver valid:true para sesión huérfana. Otros servicios pueden rechazarla si validan Users, pero AUTH acepta el estado.
+H-AUD-002 — ALTO: auth.js logout() solo borra localStorage. AUTH doPost() no expone logout/revoke y api-config.js no mapea revocación; el token queda en ActiveSessions.
+H-AUD-003 — MEDIO / POLÍTICA: ActiveSessions.date se escribe pero no se verifica expiración/inactividad. El cambio de contraseña no revoca las demás sesiones. Requiere decisión explícita de política.
+H-AUD-004 — MEDIO: checkSession() usa session_validation_lock/LOCK_TIMEOUT, pero elimina la clave en finally inmediatamente después de programar apiValidateSession(); no cubre la petición asíncrona ni garantiza adquisición atómica entre pestañas.
+H-AUD-005 — MEDIO: handleCreateUser() trim() y deduplica Nombre_Usuario, pero no rechaza explícitamente el resultado vacío en backend. La validación required del formulario puede eludirse.
+H-AUD-006 — MEDIO: solo handleCreateUser() y handleResetUserSessions() usan ScriptLock en USERS; update/delete/profile/password no lo usan. ScriptLock AUTH no coordina con USERS por ser proyectos separados. Vincular con AUD-T-033 sin duplicar la tarea común.
+
+CUMPLIMIENTO
+- RBAC backend básico: implementado para consulta/creación/actualización/eliminación de usuarios y edición de perfil/cambio de contraseña propios.
+- El frontend limita visibilidad por rol, pero backend vuelve a autorizar.
+- Duplicados de usuario se comparan tras trim y lowercase bajo lock en create.
+- SESSION_LIMITS actual contiene gefe:10 y jefe:3; la incidencia histórica del rol Gefe está cerrada en código y documentación.
+- El cierre remoto resetUserSessions está limitado a Desarrollador.
+- La tarea Tarea 2 está marcada COMPLETADA en Tareas.txt, pero el alcance de esta iteración queda parcial por los hallazgos del ciclo de sesión. La parte legal se auditará en AUD-T-036.
+
+CALIDAD
+Fortalezas: verificación de sesión/rol en backend; no se confía en rol del navegador en USERS; comparación de hash en tiempo constante; contador de intentos con lock; límites explícitos; duplicados bajo lock; copias de prueba alineadas.
+Debilidades: sesiones huérfanas; ausencia de revocación al logout; expiración no definida; lock frontend ineficaz; cobertura desigual de locks; falta validación de username vacío; duplicación de helpers de hash (AUD-T-023).
+No se encontró registro directo de contraseña o token en los callsites actuales de logToSheet(); el router registra acción y errores/stack, no request.payload.
+
+EVIDENCIA
+Nivel E1/E2: inspección estática, historial de commits y comparación de copias de prueba. Las pruebas aisladas previas están documentadas pero no se reprodujeron. No se ejecutaron navegador, Apps Script, HTTP ni deployments; no se accedió a Sheets/Drive.
+
+CANCELACIÓN / SUSTITUCIÓN / CONTINUIDAD
+- La incidencia Gefe/jefe quedó resuelta por 0666c1d1 y 4bc9ac19; no reabrir.
+- 97eef18 marca Tarea 2 como completada y agrega comentarios/documentación; las fuentes backend ya habían sido cargadas por 9e74e645 y el frontend modular por 975c591. Se conserva esta distinción histórica.
+- B02/B03 se separa a AUD-T-036.
+- Hash/migración/logs se separa a AUD-T-023.
+- Ciclo de sesión se profundiza en AUD-T-024.
+- Coordinación inter-servicios se enlaza a AUD-T-033.
+
+NUEVAS TAREAS
+AUG-005 a AUG-010, registradas en Plan_auditoría/Aug_Tareas.md. AUG-010 es una subárea vinculada a AUD-T-033.
+
+RESULTADO
+AUD-T-002: PARCIALMENTE CUMPLIDA; HALLAZGOS ABIERTOS. No se modificó código ni datos.
+================================================================================
