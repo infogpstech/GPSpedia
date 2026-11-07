@@ -4876,7 +4876,7 @@ Revisión final de código: completada. Comprobación sintáctica aislada de ui.
 TAREA PENDIENTE — UNIFICAR EL CONTRATO DEL INDICADOR DE TESTIGO ENTRE DETALLE, «SUGERIR CAMBIO» Y REVISIÓN ADMINISTRATIVA
 Fecha de registro: 2026-11-07
 Prioridad: MEDIA
-Estado: PENDIENTE DE IMPLEMENTACIÓN.
+Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; PRUEBAS FUNCIONALES CONSOLIDADAS PENDIENTES.
 Hallazgo origen: H-TESTIGO-SUGGEST-02 en Auditoría.txt.
 
 Objetivo:
@@ -4910,6 +4910,19 @@ Criterios de aceptación:
 
 Restricciones:
 No desplegar ni modificar datos productivos. No cambiar el comportamiento de alta de cortes ni la persistencia actual del catálogo sin auditoría. Un único commit mediante Git Database API.
+
+RESULTADO DE IMPLEMENTACIÓN ESTÁTICA — 2026-11-07
+- ui.js: normalización triestado de activaTestigo en detalle e impresión; selector precargado desde currentCutData.activaTestigo; envío de proposedValues.activaTestigo booleano/null.
+- ui.js: Inbox identifica sugerencias y muestra reportId, corteIndex, valores propuestos, testigo del motor, estado e imagen.
+- Services/feedback.js: valida corteIndex 1–3; normaliza el contrato canónico y acepta activaCheckEngine solo como entrada histórica.
+- Services/feedback.js: guarda nuevas sugerencias como JSON versionado en Feedbacks.Problema; lector compatible con formato nuevo e histórico y mantiene type='problem_report'.
+- null se conserva como «No aplica / no especificado»; false se muestra como «No activa el testigo».
+- Se conservan reportId, vehicleId, corteIndex, detalles, imagen y estado de revisión.
+- No se modificaron api-config.js, columnas de Spreadsheet, Cortes, activaTestigo1..3, autenticación/autorización ni WRITE/ADMIN/CATALOG.
+- Parseo sintáctico estático: ui.js PASS; Services/feedback.js PASS.
+- Pruebas aisladas: UI 8/8; backend 11/11; conflicto de campos canónico/histórico rechazado.
+- No se ejecutaron pruebas funcionales reales, navegador, Apps Script, HTTP, Drive/Spreadsheet ni despliegues.
+
 ================================================================================
 
 

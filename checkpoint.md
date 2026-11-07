@@ -5256,3 +5256,118 @@ RIESGOS Y PENDIENTES
 ÚNICA ACCIÓN SIGUIENTE
 Volver a confirmar inmediatamente los HEAD de GPSpedia2.2.5_work y GPSpedia2.2.5. Crear un único árbol basado en 4e01c4f5274ee80c627d5071e7b5a735ef7ed5b0 con los ocho archivos enumerados; crear un único commit cuyo único parent_sha sea 79230c57b34ab345db318d42b2d851f4faa6588a; actualizar exclusivamente GPSpedia2.2.5_work mediante update_ref con force:false y expected_sha igual a ese HEAD. Verificar el commit, el árbol, los ocho archivos, el nuevo HEAD y que GPSpedia2.2.5 permanezca en d9acc68d889985c2e2f42fe3a02e502efc86ead1. El SHA del commit que incorpora este checkpoint se añadirá únicamente como referencia verificable del historial, sin crear otro commit.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — IMPLEMENTACIÓN H-TESTIGO-SUGGEST-02
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial: 7042e0b60e3bd422284656088cb0ef909ad49bdc
+Árbol inicial: 4c24fe4965c595f32b8ed976fe14ce1dbfebf63e
+Rama base protegida: GPSpedia2.2.5
+HEAD de base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: AUDITORÍA DOCUMENTADA; IMPLEMENTACIÓN EN CURSO.
+
+TAREA
+Unificar el indicador entre detalle, «Sugerir cambio» e Inbox mediante proposedValues.activaTestigo booleano/null; conservar compatibilidad histórica, reportId/vehicleId/corteIndex, imágenes, detalles y estado. No modificar Cortes ni activaTestigo1..3.
+
+ARCHIVOS
+- ui.js: construcción de cutData, impresión, selector de sugerencias y vistas de Inbox.
+- Services/feedback.js: handleSuggestCutChange(), handleGetFeedbackItems() y acciones Inbox.
+- api-config.js: auditado; suggestCutChange() es pass-through y no requiere cambio.
+- Spreadsheet: no se prevé cambio de columnas.
+
+ESTADO
+- Se detectó pérdida del estado no especificado, posible TypeError por toLowerCase() sobre booleano, almacenamiento textual antiguo y ausencia de proyección estructurada.
+- Sin despliegues ni operaciones productivas.
+- Pruebas funcionales consolidadas pendientes.
+
+RESTRICCIONES
+Los blobs exactos auditados están identificados en Auditoría.txt. No modificar servicios ajenos, esquema, controles de autorización ni datos productivos.
+Un único commit Git Database API en GPSpedia2.2.5_work, force:false y expected_sha igual al HEAD confirmado.
+================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — IMPLEMENTACIÓN H-TESTIGO-SUGGEST-02
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial: 7042e0b60e3bd422284656088cb0ef909ad49bdc
+Árbol inicial: 4c24fe4965c595f32b8ed976fe14ce1dbfebf63e
+Rama base protegida: GPSpedia2.2.5
+HEAD de base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: AUDITORÍA DOCUMENTADA; IMPLEMENTACIÓN EN CURSO.
+
+TAREA
+Unificar el indicador entre detalle, «Sugerir cambio» e Inbox mediante proposedValues.activaTestigo booleano/null; conservar compatibilidad histórica, reportId/vehicleId/corteIndex, imágenes, detalles y estado. No modificar Cortes ni activaTestigo1..3.
+
+ARCHIVOS
+- ui.js: construcción de cutData, impresión, selector de sugerencias y vistas de Inbox.
+- Services/feedback.js: handleSuggestCutChange(), handleGetFeedbackItems() y acciones Inbox.
+- api-config.js: auditado; suggestCutChange() es pass-through y no requiere cambio.
+- Spreadsheet: no se prevé cambio de columnas.
+
+ESTADO
+- Se detectó pérdida del estado no especificado, posible TypeError por toLowerCase() sobre booleano, almacenamiento textual antiguo y ausencia de proyección estructurada.
+- Sin despliegues ni operaciones productivas.
+- Pruebas funcionales consolidadas pendientes.
+
+RESTRICCIONES
+Los blobs exactos auditados están identificados en Auditoría.txt. No modificar servicios ajenos, esquema, controles de autorización ni datos productivos.
+Un único commit Git Database API en GPSpedia2.2.5_work, force:false y expected_sha igual al HEAD confirmado.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — IMPLEMENTACIÓN H-TESTIGO-SUGGEST-02
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre: 7042e0b60e3bd422284656088cb0ef909ad49bdc
+Árbol base: 4c24fe4965c595f32b8ed976fe14ce1dbfebf63e
+Rama base protegida: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+IMPLEMENTACIÓN ESTÁTICA Y REVISIÓN DE CÓDIGO COMPLETADAS. PRUEBAS FUNCIONALES CONSOLIDADAS PENDIENTES. NO SE DESPLEGÓ.
+
+RESUMEN
+- ui.js: normalización triestado en detalle/impresión; selector precargado desde currentCutData.activaTestigo; nueva propuesta proposedValues.activaTestigo booleano/null; Inbox identifica y presenta valores propuestos.
+- Services/feedback.js: validación de corteIndex; persistencia JSON versionada en Feedbacks.Problema; parser nuevo e histórico; normalización de activaCheckEngine antiguo; estado derivado de Se resolvio.
+- No se modificaron api-config.js, esquema Spreadsheet, Cortes, activaTestigo1..3, autenticación/autorización, WRITE, ADMIN ni CATALOG.
+- No se incorporó aprobación ni actualización automática del catálogo.
+
+ARCHIVOS Y BLOBS FINALES
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Auditoría.txt: aa8c16458dab60a977c563bdf385a5d8ed491c67
+- Tareas.txt: c68df4d4ffeca42182c87580b3844b366cf51b8e
+- ChangesLogs.txt: 16b545533da86d13f69e5f6263d2e432011985c8
+- checkpoint.md: este blob final se incluye en el único commit.
+
+RESPALDOS EXACTOS
+- ui.js: ce65dae27263a2df7a0908c947192bf7103daa47
+- Services/feedback.js: 1e9a60d1f2ddae9d94f6537271650b2479e1fc47
+- Auditoría.txt: 81a34655a67cf553a64bdbf2a7313a8ba9192a4d
+- Tareas.txt: ca85314e94df96212ac70dca6987f9cd4bacf323
+- ChangesLogs.txt: d225b4277e31a03ef65e4ce9b5760d97d04cfa60
+- checkpoint.md: 838243cd5da4c0e7fa9084702dc0455e1480e2a8
+
+VERIFICACIONES
+- Parseo sintáctico estático: ui.js PASS; Services/feedback.js PASS.
+- Pruebas aisladas: UI 8/8; backend 11/11; conflicto entre campos rechazado.
+- Revisión de alcance: escritura limitada a Feedbacks; sin modificación de Cortes ni activaTestigo1..3.
+- Comparación post-edición limitada a los bloques documentados.
+- Sin pruebas funcionales reales, navegador, Apps Script, HTTP, Drive/Spreadsheet ni despliegues.
+
+PENDIENTES
+- Validar selector e Inbox en navegador.
+- Probar persistencia/lectura con Apps Script y Spreadsheet aislados.
+- Probar compatibilidad con registros históricos reales y acciones de respuesta/resolución/eliminación.
+- Ejecutar la fase funcional consolidada al terminar las implementaciones.
+
+SIGUIENTE ACCIÓN
+Verificar el commit único, árbol, seis archivos, nuevo HEAD de GPSpedia2.2.5_work y permanencia de GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1. El commit que contiene este checkpoint será identificable en el historial Git; no crear un commit adicional.
+================================================================================

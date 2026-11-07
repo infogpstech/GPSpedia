@@ -7082,3 +7082,102 @@ PRUEBAS Y LIMITACIONES
 - La verificación del comportamiento real de la creación de columna y escritura en Spreadsheet queda para la fase funcional consolidada.
 - La tarea puede pasar a la preparación del único commit; no se declara validada funcionalmente.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA DE IMPLEMENTACIÓN — H-TESTIGO-SUGGEST-02
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD auditado: 7042e0b60e3bd422284656088cb0ef909ad49bdc
+Árbol del HEAD auditado: 4c24fe4965c595f32b8ed976fe14ce1dbfebf63e
+Rama base protegida: GPSpedia2.2.5
+HEAD de base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: contrato del indicador desde cutData, formulario «Sugerir cambio», persistencia FEEDBACK y lectura/revisión Inbox. Auditoría estática sin modificaciones de código durante esta fase.
+
+1. ARCHIVOS Y FUNCIONES AUDITADOS
+
+ui.js — blob ce65dae27263a2df7a0908c947192bf7103daa47
+- mostrarDetalleModal(), construcción de cortes (líneas 2178–2195): activaTestigo se construye como true/false; el campo vacío sin heurística positiva termina como false y pierde la distinción con un negativo explícito.
+- renderCutContent() (líneas 2855–aprox. 3090): presenta el aviso solo si cutData.activaTestigo es truthy; admite null.
+- exportVehiclePrintSheet() (líneas 9180 en adelante): reconstruye los cortes con una segunda expresión equivalente y colapsa el estado ausente en false.
+- openSuggestCutModal() (líneas 6882–7046): consulta checkEngine/activaCheckEngine y ejecuta toLowerCase() directamente; un booleano puede producir TypeError. El envío guarda proposedValues.activaCheckEngine como texto.
+- showReportSuccessModal() (líneas 6840–6878): único llamador de openSuggestCutModal(); conserva reportId, vehicleId, corteNum y currentCutData.
+- renderInboxList() y renderInboxDetail() muestran las sugerencias como reportes genéricos y no proyectan proposedValues.
+
+Services/feedback.js — blob 1e9a60d1f2ddae9d94f6537271650b2479e1fc47
+- doPost() enruta suggestCutChange a handleSuggestCutChange() y getFeedbackItems a handleGetFeedbackItems().
+- handleSuggestCutChange() (líneas 1224–1301): recibe proposedValues sin normalizar; guarda texto con JSON incrustado en Feedbacks.Problema; parseInt(corteIndex,10)||1 puede sustituir índice inválido por 1. No actualiza Cortes.
+- handleGetFeedbackItems() (líneas 1081–1149): interpreta JSON video_approval, pero no reconoce sugerencias; las devuelve como problem_report genérico.
+- handleReplyToFeedback(), handleMarkAsResolved() y handleDeleteFeedbackItem() utilizan type='problem_report' e ID de fila; se conserva ese tipo para mantener las acciones.
+- El estado efectivo de revisión está en Feedbacks.Se resolvio.
+
+api-config.js — blob a5c718d01b7da50b4b5e650c3acd91435c10323
+- suggestCutChange(data) transmite el objeto recibido sin transformar proposedValues; no requiere modificación.
+
+2. HALLAZGOS
+
+H-SUG-01 — Fuente inicial del selector no alineada y posible error con booleanos. Severidad MEDIA.
+Decisión: precargar desde currentCutData.activaTestigo y normalizar booleanos/representaciones históricas.
+
+H-SUG-02 — Los mapeos de detalle e impresión colapsan «no especificado» en false. Severidad MEDIA.
+Decisión: representar true/false/null; los valores explícitos prevalecen y las heurísticas utilCorte='x'/tipo con «testigo» solo se aplican cuando el campo está vacío.
+
+H-SUG-03 — Contrato textual activaCheckEngine sin validación semántica. Severidad MEDIA.
+Decisión: nuevas escrituras con proposedValues.activaTestigo booleano/null; activaCheckEngine solo como lectura histórica. «Sí»→true, «No»→false, «No aplica»→null. Campos contradictorios se rechazan.
+
+H-SUG-04 — Inbox no reconstruye la sugerencia como entidad revisable. Severidad MEDIA.
+Decisión: JSON versionado con subType='suggestion_cut' en Feedbacks.Problema; lector compatible con texto histórico; suggestionData adicional manteniendo type='problem_report'.
+
+H-SUG-05 — Índice inválido puede convertirse silenciosamente en corte 1. Severidad MEDIA.
+Decisión: validar entero 1–3 antes de crear archivos o escribir.
+
+H-SUG-06 — Estado de revisión debe seguir la columna histórica. Severidad BAJA.
+Decisión: derivar suggestionData.status desde Se resolvio al leer Inbox.
+
+3. ESQUEMA, COMPATIBILIDAD Y LÍMITES
+- No se agrega ni modifica ninguna columna. El JSON versionado se almacena en Feedbacks.Problema.
+- Se conserva lectura histórica de proposedValues.activaCheckEngine y «Sí», «No», «No aplica».
+- Se conservan reportId, vehicleId, corteIndex, detalles, imagen y estado.
+- Las sugerencias siguen siendo propuestas independientes; no se modifica Cortes ni activaTestigo1..3.
+- No se modifican autenticación/autorización, WRITE, ADMIN, CATALOG ni api-config.js.
+- No se despliega ni se opera sobre datos productivos.
+
+4. RESPALDOS EXACTOS
+- ui.js: ce65dae27263a2df7a0908c947192bf7103daa47
+- Services/feedback.js: 1e9a60d1f2ddae9d94f6537271650b2479e1fc47
+- Auditoría.txt: 81a34655a67cf553a64bdbf2a7313a8ba9192a4d
+- Tareas.txt: ca85314e94df96212ac70dca6987f9cd4bacf323
+- ChangesLogs.txt: d225b4277e31a03ef65e4ce9b5760d97d04cfa60
+- checkpoint.md: 838243cd5da4c0e7fa9084702dc0455e1480e2a8
+- api-config.js auditado sin modificación: a5c718d01b7da50b4b5e650c3acd91456f4d670
+
+5. LIMITACIONES
+Revisión estática. No se inspeccionó ni modificó Spreadsheet/Drive productivos; no se ejecutó Apps Script, navegador, HTTP ni despliegues.
+================================================================================
+
+
+================================================================================
+REVISIÓN FINAL DE CÓDIGO — H-TESTIGO-SUGGEST-02
+Fecha: 2026-11-07
+Blobs finales:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+
+- Detalle, impresión y selector utilizan true/false/null.
+- Valores explícitos prevalecen; heurísticas históricas solo se aplican cuando el campo está vacío.
+- El selector ya no ejecuta toLowerCase() sobre booleanos.
+- Nuevas propuestas escriben proposedValues.activaTestigo; activaCheckEngine solo se lee para compatibilidad.
+- La lectura histórica convierte «Sí»→true, «No»→false y «No aplica»→null.
+- El Inbox conserva type='problem_report' y sus acciones actuales; muestra sugerencia, relación, valores, estado e imagen.
+- El estado se deriva de Se resolvio; corteIndex se valida 1–3.
+- El handler escribe en Feedbacks; no actualiza Cortes ni activaTestigo1..3.
+- No se modificaron api-config.js, esquema, autenticación/autorización ni servicios ajenos.
+- Parseo sintáctico: ui.js PASS; Services/feedback.js PASS.
+- Pruebas aisladas: UI 8/8; backend 11/11; conflicto canónico/histórico rechazado.
+
+LIMITACIONES
+- Sin pruebas de navegador, Apps Script real, HTTP, Drive o Spreadsheet.
+- Sin despliegues ni operaciones productivas.
+- Pruebas funcionales consolidadas pendientes.
+================================================================================

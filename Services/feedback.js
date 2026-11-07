@@ -1078,6 +1078,86 @@ function handleSendContactForm(payload) {
 // HANDLERS FOR INBOX SYSTEM
 // ============================================================================
 
+function normalizeSuggestionActivaTestigo(value) {
+    if (value === true || value === false) return value;
+    if (value === null || value === undefined) return null;
+    const normalized = String(value).trim().toLowerCase();
+    if (!normalized || ["no aplica", "no_aplica", "no aplica / no especificado", "no aplica/no especificado", "no especificado", "no especificada", "n/a", "na"].includes(normalized)) return null;
+    if (["true", "sí", "si", "yes", "x", "1"].includes(normalized)) return true;
+    if (["false", "no", "0"].includes(normalized)) return false;
+    throw new Error("El valor propuesto para activaTestigo no es válido.");
+}
+function normalizeSuggestionProposedValues(proposedValues) {
+    if (proposedValues !== undefined && proposedValues !== null &&
+        (typeof proposedValues !== "object" || Array.isArray(proposedValues))) throw new Error("Los valores propuestos deben enviarse como un objeto.");
+    const source = proposedValues || {};
+    const normalized = Object.assign({}, source);
+    const hasCanonical = Object.prototype.hasOwnProperty.call(source, "activaTestigo");
+    const hasLegacy = Object.prototype.hasOwnProperty.call(source, "activaCheckEngine");
+    const canonicalValue = hasCanonical ? normalizeSuggestionActivaTestigo(source.activaTestigo) : null;
+    const legacyValue = hasLegacy ? normalizeSuggestionActivaTestigo(source.activaCheckEngine) : null;
+    if (hasCanonical && hasLegacy && canonicalValue !== legacyValue) throw new Error("Los campos históricos y actuales del testigo contienen valores incompatibles.");
+    normalized.activaTestigo = hasCanonical ? canonicalValue : (hasLegacy ? legacyValue : null);
+    delete normalized.activaCheckEngine;
+    return normalized;
+}
+function normalizeStoredSuggestionProposedValues(proposedValues) {
+    const source = proposedValues && typeof proposedValues === "object" && !Array.isArray(proposedValues) ? proposedValues : {};
+    const normalized = Object.assign({}, source);
+    try {
+        if (Object.prototype.hasOwnProperty.call(source, "activaTestigo")) normalized.activaTestigo = normalizeSuggestionActivaTestigo(source.activaTestigo);
+        else if (Object.prototype.hasOwnProperty.call(source, "activaCheckEngine")) normalized.activaTestigo = normalizeSuggestionActivaTestigo(source.activaCheckEngine);
+        else normalized.activaTestigo = null;
+    } catch (error) { normalized.activaTestigo = null; }
+    delete normalized.activaCheckEngine;
+    return normalized;
+}
+function parseCutSuggestionRecord(rawContent, vehicleId, userName) {
+    const content = String(rawContent || "");
+    if (!content) return null;
+    if (content.trim().startsWith("{")) {
+        try {
+            const parsed = JSON.parse(content);
+            if (parsed && parsed.subType === "suggestion_cut") {
+                const parsedVehicleId = String(parsed.vehicleId || vehicleId || "");
+                const parsedCorteIndex = Number(parsed.corteIndex);
+                if (parsedVehicleId !== String(vehicleId || "") || !Number.isInteger(parsedCorteIndex) || parsedCorteIndex < 1 || parsedCorteIndex > 3) return null;
+                return {
+                    subType: "suggestion_cut", reportId: String(parsed.reportId || "N/A"),
+                    vehicleId: parsedVehicleId, corteIndex: parsedCorteIndex,
+                    userId: String(parsed.userId || ""), userName: String(parsed.userName || userName || ""),
+                    createdAt: String(parsed.createdAt || ""), imageUrl: String(parsed.imageUrl || ""),
+                    details: String(parsed.details || ""),
+                    proposedValues: normalizeStoredSuggestionProposedValues(parsed.proposedValues),
+                    status: String(parsed.status || "pendiente_revision")
+                };
+            }
+        } catch (error) {}
+    }
+    if (!content.startsWith("[SUGERENCIA CORTE #")) return null;
+    const headerMatch = content.match(/^\[SUGERENCIA CORTE #(\d+)\]\s+\(Reporte Origen: ([^)]+)\)\s+\(Fecha: ([^)]+)\)\s*/);
+    const proposedMarker = " | Propuestos: ";
+    const proposedMarkerIndex = content.lastIndexOf(proposedMarker);
+    if (!headerMatch || proposedMarkerIndex < 0) return null;
+    const corteIndex = Number(headerMatch[1]);
+    if (!Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) return null;
+    const imageMarker = " | Img:";
+    const imageMarkerIndex = content.lastIndexOf(imageMarker);
+    const proposedEnd = imageMarkerIndex > proposedMarkerIndex ? imageMarkerIndex : content.length;
+    let legacyProposedValues;
+    try { legacyProposedValues = JSON.parse(content.slice(proposedMarkerIndex + proposedMarker.length, proposedEnd).trim()); }
+    catch (error) { return null; }
+    if (!legacyProposedValues || typeof legacyProposedValues !== "object" || Array.isArray(legacyProposedValues)) return null;
+    return {
+        subType: "suggestion_cut", reportId: String(headerMatch[2] || "N/A"),
+        vehicleId: String(vehicleId || ""), corteIndex, userId: "", userName: String(userName || ""),
+        createdAt: String(headerMatch[3] || ""),
+        imageUrl: imageMarkerIndex > proposedMarkerIndex ? content.slice(imageMarkerIndex + imageMarker.length).trim() : "",
+        details: content.slice(headerMatch[0].length, proposedMarkerIndex).trim(),
+        proposedValues: normalizeStoredSuggestionProposedValues(legacyProposedValues),
+        status: "pendiente_revision"
+    };
+}
 function handleGetFeedbackItems(payload) {
     const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     const contactSheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
@@ -1085,49 +1165,38 @@ function handleGetFeedbackItems(payload) {
 
     const feedbackData = (!feedbackSheet) ? [] : feedbackSheet.getDataRange().getValues().slice(1).map(row => {
         const rawContent = row[COLS_FEEDBACKS.Problema - 1];
+        const rowVehicleId = row[COLS_FEEDBACKS.ID_vehiculo - 1];
+        const rowUserName = row[COLS_FEEDBACKS.Usuario - 1];
         const reportMetadata = reportMetadataColumn
-            ? parseReportMetadata(row[reportMetadataColumn - 1], row[COLS_FEEDBACKS.ID_vehiculo - 1])
+            ? parseReportMetadata(row[reportMetadataColumn - 1], rowVehicleId)
             : null;
-        let isVideoApproval = false;
         let videoMeta = null;
-        if (typeof rawContent === 'string' && rawContent.startsWith('{') && rawContent.includes('video_approval')) {
-            try {
-                videoMeta = JSON.parse(rawContent);
-                if (videoMeta && videoMeta.subType === 'video_approval') {
-                    isVideoApproval = true;
-                }
-            } catch (e) {}
+        if (typeof rawContent === 'string' && rawContent.trim().startsWith('{')) {
+            try { videoMeta = JSON.parse(rawContent); } catch (e) {}
         }
-
-        if (isVideoApproval && videoMeta) {
+        const isVideoApproval = videoMeta && videoMeta.subType === 'video_approval';
+        if (isVideoApproval) {
             return {
-                type: 'video_approval',
-                id: row[COLS_FEEDBACKS.ID - 1],
+                type: 'video_approval', id: row[COLS_FEEDBACKS.ID - 1],
                 subject: `[Aprobación de Vídeo] ${videoMeta.title}`,
                 content: videoMeta.description || 'Sin descripción',
-                videoUrl: videoMeta.videoUrl,
-                videoId: videoMeta.videoId,
-                contentType: videoMeta.contentType,
-                user: row[COLS_FEEDBACKS.Usuario - 1],
-                vehicleId: row[COLS_FEEDBACKS.ID_vehiculo - 1],
-                approvalStatus: videoMeta.status || 'pending',
-                videoMeta: videoMeta,
+                videoUrl: videoMeta.videoUrl, videoId: videoMeta.videoId, contentType: videoMeta.contentType,
+                user: rowUserName, vehicleId: rowVehicleId,
+                approvalStatus: videoMeta.status || 'pending', videoMeta,
                 reply: row[COLS_FEEDBACKS.Respuesta - 1],
                 isResolved: row[COLS_FEEDBACKS['Se resolvio'] - 1] === true,
                 responder: row[COLS_FEEDBACKS.Responde - 1]
             };
         }
-
+        const suggestionData = parseCutSuggestionRecord(rawContent, rowVehicleId, rowUserName);
+        const isResolved = row[COLS_FEEDBACKS['Se resolvio'] - 1] === true;
+        if (suggestionData) suggestionData.status = isResolved ? "resuelta" : "pendiente_revision";
         return {
-            type: 'problem_report',
-            id: row[COLS_FEEDBACKS.ID - 1],
-            subject: `Reporte en Vehículo #${row[COLS_FEEDBACKS.ID_vehiculo - 1]}`,
-            content: rawContent,
-            user: row[COLS_FEEDBACKS.Usuario - 1],
-            vehicleId: row[COLS_FEEDBACKS.ID_vehiculo - 1],
-            reportMetadata,
-            reply: row[COLS_FEEDBACKS.Respuesta - 1],
-            isResolved: row[COLS_FEEDBACKS['Se resolvio'] - 1] === true,
+            type: 'problem_report', id: row[COLS_FEEDBACKS.ID - 1],
+            subject: suggestionData ? `Sugerencia de cambio — Corte #${suggestionData.corteIndex}` : `Reporte en Vehículo #${rowVehicleId}`,
+            content: suggestionData ? (suggestionData.details || 'Sugerencia de cambio de corte.') : rawContent,
+            user: rowUserName, vehicleId: rowVehicleId, reportMetadata, suggestionData,
+            reply: row[COLS_FEEDBACKS.Respuesta - 1], isResolved,
             responder: row[COLS_FEEDBACKS.Responde - 1]
         };
     });
@@ -1222,20 +1291,24 @@ function handleGetActivityLogs(payload) {
 
 /* TAREA 9 (2.3): ALMACENAMIENTO Y GESTIÓN INDEPENDIENTE DE SUGERENCIAS EN FEEDBACKS */
 function handleSuggestCutChange(payload) {
-    const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, proposedValues } = payload;
-    if (!vehicleId || !corteIndex || !userId || !userName) {
-        throw new Error("Faltan datos para sugerir cambio (vehicleId, corteIndex, userId, userName).");
+    const { reportId, vehicleId, corteIndex, userId, userName, details, imgBase64, proposedValues } = payload || {};
+    const normalizedVehicleId = String(vehicleId || "").trim();
+    const normalizedCorteIndex = Number(corteIndex);
+    if (!normalizedVehicleId || !userId || !userName ||
+        !Number.isInteger(normalizedCorteIndex) || normalizedCorteIndex < 1 || normalizedCorteIndex > 3) {
+        throw new Error("Faltan datos válidos para sugerir cambio (vehicleId, corteIndex 1–3, userId, userName).");
     }
-
+    const normalizedProposedValues = normalizeSuggestionProposedValues(proposedValues);
+    const normalizedReportId = String(reportId || "N/A");
+    const normalizedDetails = String(details || "");
     const createdAt = new Date().toISOString();
-
     let imageUrl = "";
     if (imgBase64) {
         try {
             const folderName = "SugerenciasCortes";
             const folders = DriveApp.getFoldersByName(folderName);
             let folder = folders.hasNext() ? folders.next() : DriveApp.createFolder(folderName);
-            const blob = Utilities.newBlob(Utilities.base64Decode(imgBase64.replace(/^data:image\/[a-z]+;base64,/, "")), "image/jpeg", `sug_${vehicleId}_corte${corteIndex}_${Date.now()}.jpg`);
+            const blob = Utilities.newBlob(Utilities.base64Decode(imgBase64.replace(/^data:image\/[a-z]+;base64,/, "")), "image/jpeg", `sug_${normalizedVehicleId}_corte${normalizedCorteIndex}_${Date.now()}.jpg`);
             const file = folder.createFile(blob);
             file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
             imageUrl = file.getUrl();
@@ -1243,59 +1316,35 @@ function handleSuggestCutChange(payload) {
             console.error("Error subiendo imagen de sugerencia:", e);
         }
     }
-
-    // Almacenamiento independiente en la hoja Feedbacks como propuesta pendiente de revisión
+    // La sugerencia se conserva como registro independiente en Feedbacks; no modifica Cortes.
     const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     const lastRow = sheet.getLastRow();
     const newRowNumber = lastRow + 1;
     const FORMULA_ROW = 2;
     const lastCol = sheet.getLastColumn() || 8;
-
     if (lastRow >= FORMULA_ROW) {
         const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
         const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
         formulaRange.copyTo(newRowRange);
-        if (lastCol > 1) {
-            sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
-        }
+        if (lastCol > 1) sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
     }
-
-    // Registro estructurado conservando: reportId, vehículo, corte, fecha, usuario, imagen y valores propuestos
     const suggestionRecord = {
-        tipo: 'sugerencia_corte',
-        reportId: reportId || 'N/A',
-        vehicleId: String(vehicleId),
-        corteIndex: parseInt(corteIndex, 10) || 1,
-        userId: String(userId),
-        userName: String(userName),
-        createdAt: createdAt,
-        imageUrl: imageUrl || '',
-        details: details || '',
-        proposedValues: proposedValues || {},
-        status: 'pendiente_revision'
+        subType: "suggestion_cut", schemaVersion: 2,
+        reportId: normalizedReportId, vehicleId: normalizedVehicleId, corteIndex: normalizedCorteIndex,
+        userId: String(userId), userName: String(userName), createdAt,
+        imageUrl: imageUrl || "", details: normalizedDetails,
+        proposedValues: normalizedProposedValues, status: "pendiente_revision"
     };
-
-    const problemDesc = `[SUGERENCIA CORTE #${corteIndex}] (Reporte Origen: ${reportId || 'N/A'}) (Fecha: ${createdAt}) ${details || ""} | Propuestos: ${JSON.stringify(proposedValues || {})} ${imageUrl ? " | Img: " + imageUrl : ""}`;
-    const values = [[
-        userName,
-        vehicleId,
-        problemDesc
-    ]];
+    const problemDesc = JSON.stringify(suggestionRecord);
+    const values = [[String(userName), normalizedVehicleId, problemDesc]];
     sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
-
-    // Estado explícito: Pendiente de revisión (Se resolvio = false)
-    if (COLS_FEEDBACKS['Se resolvio']) {
-        sheet.getRange(newRowNumber, COLS_FEEDBACKS['Se resolvio']).setValue(false);
-    }
-
+    if (COLS_FEEDBACKS['Se resolvio']) sheet.getRange(newRowNumber, COLS_FEEDBACKS['Se resolvio']).setValue(false);
     SpreadsheetApp.flush();
-    logUserActivity(userId, userName, "suggest_cut_change", vehicleId, problemDesc);
-
-    // Retornar confirmación completa sin alterar el catálogo
+    logUserActivity(userId, userName, "suggest_cut_change", normalizedVehicleId, problemDesc);
     return {
         status: "success",
         message: "Sugerencia de cambio registrada correctamente como propuesta independiente.",
-        reportId: reportId || ("FB-" + newRowNumber),
+        reportId: normalizedReportId,
         suggestionData: suggestionRecord
     };
 }

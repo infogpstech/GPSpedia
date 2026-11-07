@@ -1638,6 +1638,25 @@ export function showNoResultsMessage(textoBusqueda) {
     document.getElementById("contenido").innerHTML = `<p style="text-align:center; padding: 20px;">No se encontraron resultados para "${textoBusqueda}".</p>`;
 }
 
+// Normaliza el indicador técnico sin convertir «No aplica / no especificado» en false.
+function normalizeActivaTestigoValue(value) {
+    if (value === true || value === false) return value;
+    if (value === null || value === undefined) return null;
+    const normalized = String(value).trim().toLowerCase();
+    if (!normalized || ["no aplica", "no_aplica", "no aplica / no especificado", "no aplica/no especificado", "no especificado", "no especificada", "n/a", "na"].includes(normalized)) return null;
+    if (["true", "sí", "si", "yes", "x", "1"].includes(normalized)) return true;
+    if (["false", "no", "0"].includes(normalized)) return false;
+    return null;
+}
+function getActivaTestigoValue(item, index) {
+    const rawValue = item[`activaTestigo${index}`];
+    const hasExplicitValue = rawValue !== undefined && rawValue !== null && String(rawValue).trim() !== "";
+    if (hasExplicitValue) return normalizeActivaTestigoValue(rawValue);
+    const legacyUtilityMarker = String(item[`utilCorte${index}`] || "").trim().toLowerCase() === "x";
+    const legacyTypeMarker = String(item[`tipoCorte${index}`] || "").toLowerCase().includes("testigo");
+    return legacyUtilityMarker || legacyTypeMarker ? true : null;
+}
+
 // Helper utilitario para crear párrafos de detalle compartidos en modales (Hoisted)
 function createDetailParagraph(label, text) {
     if (text) {
@@ -2186,10 +2205,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                 configRelay: activeItem[`configRelay${i}`],
                 img: activeItem[`imgCorte${i}`],
                 util: parseInt(activeItem[`utilCorte${i}`] || 0),
-                activaTestigo: activeItem[`activaTestigo${i}`] === true ||
-                    String(activeItem[`activaTestigo${i}`] || '').toLowerCase() === 'true' ||
-                    activeItem[`utilCorte${i}`] === 'x' ||
-                    String(activeItem[`tipoCorte${i}`] || '').toLowerCase().includes('testigo'),
+                activaTestigo: getActivaTestigoValue(activeItem, i),
                 colaborador: activeItem[`colaboradorCorte${i}`]
             });
         }
@@ -5504,7 +5520,10 @@ export function renderInboxList(items) {
 
         let iconClass = 'fa-envelope';
         let tipoLabel = 'Mensaje de contacto';
-        if (item.type === 'problem_report') {
+        if (item.suggestionData) {
+            iconClass = 'fa-pen-to-square';
+            tipoLabel = 'Sugerencia de cambio';
+        } else if (item.type === 'problem_report') {
             iconClass = 'fa-triangle-exclamation';
             tipoLabel = 'Reporte de problema';
         } else if (item.type === 'video_approval') {
@@ -5567,11 +5586,35 @@ export function renderInboxDetail(item) {
         </div>
     ` : '';
 
+    const suggestionData = item.type === 'problem_report' && item.suggestionData ? item.suggestionData : null;
+    const proposedValues = suggestionData && suggestionData.proposedValues ? suggestionData.proposedValues : {};
+    const proposedTestigoValue = proposedValues.activaTestigo;
+    const proposedTestigoLabel = proposedTestigoValue === true
+        ? 'Sí: el corte activa el testigo del motor.'
+        : (proposedTestigoValue === false ? 'No: el corte no activa el testigo del motor.' : 'No aplica / no especificado.');
+    const suggestionImageUrl = suggestionData && /^https:\/\/drive\.google\.com\//i.test(String(suggestionData.imageUrl || ""))
+        ? sanitizeHtmlContent(String(suggestionData.imageUrl)) : "";
+    const suggestionMetadataHtml = suggestionData ? `
+        <div style="margin:0 0 12px 0; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
+            <strong>Revisión de sugerencia de corte</strong>
+            <p style="margin:6px 0 4px 0;"><strong>Reporte relacionado:</strong> ${sanitizeHtmlContent(String(suggestionData.reportId || 'No especificado'))}</p>
+            <p style="margin:0 0 4px 0;"><strong>Corte:</strong> #${Number(suggestionData.corteIndex)}</p>
+            <p style="margin:0 0 4px 0;"><strong>Tipo propuesto:</strong> ${sanitizeHtmlContent(String(proposedValues.tipo || 'No especificado'))}</p>
+            <p style="margin:0 0 4px 0;"><strong>Ubicación propuesta:</strong> ${sanitizeHtmlContent(String(proposedValues.ubicacion || 'No especificada'))}</p>
+            <p style="margin:0 0 4px 0;"><strong>Color de cable propuesto:</strong> ${sanitizeHtmlContent(String(proposedValues.colorCable || 'No especificado'))}</p>
+            <p style="margin:0 0 4px 0;"><strong>Configuración de relay propuesta:</strong> ${sanitizeHtmlContent(String(proposedValues.configRelay || 'No especificada'))}</p>
+            <p style="margin:0 0 4px 0;"><strong>Testigo del motor propuesto:</strong> ${proposedTestigoLabel}</p>
+            <p style="margin:0 0 4px 0;"><strong>Estado:</strong> ${sanitizeHtmlContent(String(suggestionData.status || 'pendiente_revision'))}</p>
+            ${suggestionImageUrl ? `<p style="margin:0;"><strong>Imagen:</strong> <a href="${suggestionImageUrl}" target="_blank" rel="noopener noreferrer">Ver imagen de referencia</a></p>` : ''}
+        </div>
+    ` : '';
+
     detailContainer.innerHTML = `
         <h3 class="inbox-detail-title">${item.subject}</h3>
         <p class="inbox-detail-meta"><strong>De:</strong> ${item.user}</p>
         ${item.vehicleId ? `<p class="inbox-detail-meta"><strong>Vehículo:</strong> ${vehicleLabel}</p>` : ''}
         ${reportMetadataHtml}
+        ${suggestionMetadataHtml}
         ${isVideoItem && item.videoUrl ? `
             <div style="margin-bottom:12px; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
                 <p style="margin:0 0 6px 0;"><strong>Enlace de YouTube:</strong> <a href="${item.videoUrl}" target="_blank" rel="noopener noreferrer" style="color:#007bff; text-decoration:underline;"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Ver vídeo en YouTube</a></p>
@@ -6924,8 +6967,8 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
         return `<option value="${opt}" ${isSel}>${opt}</option>`;
     }).join("");
 
-    // Opciones para testigo Check Engine
-    const currentCheckEngine = currentCutData.checkEngine || currentCutData.activaCheckEngine || "";
+    // El estado actual procede del mismo contrato normalizado que utiliza el detalle del corte.
+    const currentTestigoValue = normalizeActivaTestigoValue(currentCutData.activaTestigo);
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
@@ -6960,9 +7003,9 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             <div class="form-group">
                 <label for="sug-check-engine">¿El corte activa el testigo de motor (Check Engine)?</label>
                 <select id="sug-check-engine" class="dev-input" style="padding: 6px;">
-                    <option value="No" ${currentCheckEngine.toLowerCase().includes('no') ? 'selected' : ''}>No activa testigo</option>
-                    <option value="Sí" ${currentCheckEngine.toLowerCase().includes('si') || currentCheckEngine.toLowerCase().includes('sí') ? 'selected' : ''}>Sí, activa testigo</option>
-                    <option value="No aplica" ${!currentCheckEngine ? 'selected' : ''}>No aplica / No especificado</option>
+                    <option value="unspecified" ${currentTestigoValue === null ? 'selected' : ''}>No aplica / No especificado</option>
+                    <option value="true" ${currentTestigoValue === true ? 'selected' : ''}>Sí, activa testigo</option>
+                    <option value="false" ${currentTestigoValue === false ? 'selected' : ''}>No activa testigo</option>
                 </select>
             </div>
             <div class="form-group">
@@ -7017,7 +7060,8 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             ubicacion: content.querySelector("#sug-ubicacion").value.trim(),
             colorCable: content.querySelector("#sug-color").value.trim(),
             configRelay: content.querySelector("#sug-relay").value.trim() || currentCutData.configRelay || "",
-            activaCheckEngine: content.querySelector("#sug-check-engine").value
+            activaTestigo: content.querySelector("#sug-check-engine").value === "true" ? true :
+                (content.querySelector("#sug-check-engine").value === "false" ? false : null)
         };
 
         const payload = {
@@ -9199,10 +9243,7 @@ export function exportVehiclePrintSheet(item) {
                 relay: item[`configRelay${i}`],
                 img: item[`imgCorte${i}`],
                 util: parseInt(item[`utilCorte${i}`] || 0),
-                activaTestigo: item[`activaTestigo${i}`] === true ||
-                    String(item[`activaTestigo${i}`] || '').toLowerCase() === 'true' ||
-                    item[`utilCorte${i}`] === 'x' ||
-                    String(item[`tipoCorte${i}`] || '').toLowerCase().includes('testigo')
+                activaTestigo: getActivaTestigoValue(item, i)
             });
         }
     }

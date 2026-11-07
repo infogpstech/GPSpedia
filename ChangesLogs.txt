@@ -3634,3 +3634,31 @@ Fecha: 2026-11-07
 - No se modificaron Cortes, activaTestigo1..3, Sugerir cambio, autenticación/autorización ni servicios WRITE/ADMIN/CATALOG.
 - No se ejecutaron pruebas funcionales, navegador, Apps Script, HTTP ni despliegues.
 ================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN — H-TESTIGO-SUGGEST-02
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+
+ARCHIVOS Y CAMBIOS
+- ui.js, desde línea 1642: normalización y lectura triestado del indicador.
+- ui.js, líneas 2208 y 9246: mapeos de detalle e impresión conservan true/false/null.
+- ui.js, desde línea 6971: selector precargado desde currentCutData.activaTestigo y envío de proposedValues.activaTestigo booleano/null.
+- ui.js, desde línea 5597: Inbox identifica sugerencias y presenta valores propuestos, relación reportId/vehicleId/corteIndex, estado e imagen.
+- Services/feedback.js, desde línea 1081: normalización del indicador, compatibilidad histórica y parser de sugerencias.
+- Services/feedback.js, desde línea 1191: handleGetFeedbackItems() expone suggestionData y deriva estado desde Se resolvio, conservando type='problem_report'.
+- Services/feedback.js, desde línea 1293: handleSuggestCutChange() valida corteIndex 1–3 y almacena JSON versionado en Feedbacks.Problema.
+
+COMPATIBILIDAD Y ALCANCE
+- Lectura histórica de proposedValues.activaCheckEngine («Sí», «No», «No aplica»); nuevas escrituras utilizan activaTestigo.
+- No se agregaron columnas ni se modificó Spreadsheet/GPSpedia_DB_columnas.md.
+- No se modificaron api-config.js, Cortes, activaTestigo1..3, autenticación/autorización, WRITE, ADMIN ni CATALOG.
+- No se implementó aprobación ni aplicación automática al catálogo.
+
+VERIFICACIONES
+- Parseo sintáctico estático de ui.js y Services/feedback.js: PASS.
+- Casos aislados de normalización y lectura histórica/nueva: PASS.
+- Comparación post-edición limitada a los bloques identificados.
+- No se ejecutaron pruebas funcionales reales, navegador, Apps Script, HTTP, Drive/Spreadsheet ni despliegues.
+================================================================================
