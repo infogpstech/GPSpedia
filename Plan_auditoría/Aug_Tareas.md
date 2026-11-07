@@ -389,3 +389,36 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
 
 ================================================================================
+
+
+================================================================================
+### Adenda a AUG-028 — Integridad del cursor y prueba verificable de auditoría completa
+- **Nuevo origen:** H-AUD-029-001. **Prioridad:** Alta.
+- **Adenda:** ADMIN no debe aceptar una pila de continuación vacía enviada por el cliente como evidencia de que el árbol terminó. El estado de finalización debe estar respaldado por estado de servidor o un marcador firmado/validado; el endpoint de guardado del inventario debe exigir esa evidencia.
+- **Criterios adicionales:** probar cursor vacío, pila truncada, campos omitidos, contadores alterados, cursor de otra raíz y cursor/snapshot inexistente. Ningún caso parcial debe permitir marcar filas ausentes como no confirmadas.
+- **Estado:** EXISTENTE; ampliada; diseño, implementación y pruebas pendientes. No duplicar AUG-028.
+
+### Adenda a AUG-030 — Detección de posición repetida y deduplicación entre lotes
+- **Nuevo origen:** H-AUD-029-002. **Prioridad:** Alta.
+- **Adenda:** la firma de progreso debe representar la posición real de los iteradores/stack y excluir contadores acumulados. La acumulación frontend debe impedir que un mismo fileId se añada varias veces, incluso después de restaurar IndexedDB o reanudar.
+- **Criterios adicionales:** simular token/stack repetido con totalAnalyzed creciente; repetir el mismo fileId en lotes distintos; reanudar después de persistir; verificar que no se produzcan resultados duplicados ni avance ficticio.
+- **Estado:** EXISTENTE; ampliada; implementación y pruebas pendientes. No duplicar AUG-030.
+
+### AUG-031 — Persistencia incremental e aislamiento de auditorías concurrentes en IndexedDB
+- **Origen:** H-AUD-029-003 y H-AUD-029-008. **Prioridad:** Alta.
+- **Problema:** cada lote reescribe todos los resultados acumulados bajo una sola clave local compartida entre pestañas. No hay aislamiento por auditId ni coordinación de dos ejecuciones concurrentes.
+- **Criterios de aceptación:** almacenar metadatos/cursor separados de resultados; persistir páginas o archivos incrementalmente con clave estable; evitar duplicados; mantener recuperación coherente ante fallo entre lote y metadatos; aislar auditorías por ID; impedir que dos pestañas sobrescriban progreso sin aviso; migrar de DB_VERSION 4 sin perder el estado existente.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-032 — Capacidad e integridad del snapshot temporal y política de expiración
+- **Origen:** H-AUD-029-004. **Prioridad:** Media.
+- **Problema:** el snapshot JSON tiene límite fijo de 750,000 caracteres y TTL de seis horas que no se renueva al continuar. La reanudación local puede sobrevivir al estado temporal de servidor.
+- **Criterios de aceptación:** definir capacidad soportada y comportamiento ante exceso; evaluar compresión con MIME explícito o almacenamiento por bloques/páginas; verificar tamaño por bloque; incorporar integridad del manifiesto/contenido; definir renovación/expiración y limpieza; nunca continuar con snapshot parcial; probar pausa y reanudación cerca y después del TTL.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-033 — Rendimiento del recorrido Drive y captura de referencias
+- **Origen:** H-AUD-029-005, H-AUD-029-006 y H-AUD-029-007. **Prioridad:** Media.
+- **Problema:** la captura de referencias materializa matrices de todas las columnas de Cortes; los lotes son fijos y no consideran presupuesto temporal; cada continuación repite recorridos de ancestros para la pila.
+- **Criterios de aceptación:** medir tiempo por etapa y tamaño de datos en entorno de prueba; optimizar lectura de los ocho campos sin perder fórmulas/rich text; definir presupuesto temporal y tamaño de lote seguro; aplicar timeout/reintento cliente sin perder cursor; memoizar validaciones de ancestros dentro de cada petición y conservar validación de pertenencia a Cortes.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+================================================================================

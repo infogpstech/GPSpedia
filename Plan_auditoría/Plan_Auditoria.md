@@ -77,7 +77,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-026 | Telemetría, diagnóstico y health check de microservicios | e1defcb6 — restaurar comunicación/health check; 726727b6 — telemetría de servicios | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-027 | Historial de imágenes reemplazadas y acciones de gestión | 8f97d253 — base; 9e9918c7 — seguridad/consistencia; 91f75de3 — gestor; d99ab2d4 — idempotencia; 693f4825 — organización (observación AUD-T-028) | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-028 | Inventario de imágenes sin uso, clasificación y monitor global de Drive | 7983febe — persistencia; 91f75de3 — gestor/monitor y requisitos 6.1–6.9; 693f4825 — organización automática posterior | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-029 | Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación | 7a4539f1 — optimizar lotes; d305b1ab — MIME gzip; f3f7102d — persistir progreso; 06c3b322 — robustecer snapshot | POR AUDITAR |
+| AUD-T-029 | Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación | 7a4539f1 — optimizar lotes; d305b1ab — MIME gzip; f3f7102d — persistir progreso; 06c3b322 — robustecer snapshot | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-030 | Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones | 6cb4a3cb — contrato de cortes e idempotencia; 94c2d04e — migración IDs/VIN; 7dcd1225 — asignación centralizada de IDs | POR AUDITAR |
 | AUD-T-031 | Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia | 2e41428e — cargas Drive retry-safe; d99ab2d4 — idempotencia de reemplazos in-modal; 2212b4f5 — find-or-create | POR AUDITAR |
 | AUD-T-032 | Identidad autenticada del colaborador en WRITE y ADMIN | 36196020 — validar identidad autenticada; cierre de tarea documentado en checkpoint | POR AUDITAR |
@@ -478,3 +478,32 @@ Inventario de imágenes sin uso, clasificación, escaneo recursivo, persistencia
 - No se modificó código, datos, endpoints, configuración ni deployments.
 - Evidencia E1; no se ejecutaron pruebas HTTP, navegador/PWA, Apps Script, Drive, Spreadsheet, cuota real ni concurrencia.
 - Siguiente unidad: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
+
+
+## 15. Iteración técnica — AUD-T-029
+
+**Sesión:** AUD-20261107-S010  
+**Checkpoint:** AUD-CP-0010  
+**HEAD auditado:** 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Archivos y alcance
+Services/admin.js, ui.js, offline.js, api-config.js e index.html. Se revisaron funciones de snapshot, iteradores Drive, pila de continuación, límites de lote, persistencia IndexedDB y contrato frontend/backend; además se contrastaron los commits 7a4539f1, d305b1ab, f3f7102d, 06c3b322 y la reestructuración 91f75de3.
+
+### Resultado
+- H-AUD-029-001 a H-AUD-029-008 documentados en Auditoría.txt.
+- Se confirmó el recorrido DFS por lotes y snapshot reutilizado entre continuaciones; el snapshot vigente es JSON directo, con máximo 750,000 caracteres y TTL 21,600 segundos.
+- Se detectó que una pila de cursor vacía puede ser interpretada por ADMIN como finalización; la firma de repetición frontend incluye contadores y no representa únicamente la posición del iterador.
+- IndexedDB persiste el arreglo completo por lote bajo una sola clave compartida entre pestañas.
+- Se identificaron costes por lectura amplia de Cortes, lotes fijos y validación repetida de ancestros.
+
+### Tareas derivadas
+- Ampliar AUG-028 y AUG-030.
+- Crear AUG-031, AUG-032 y AUG-033.
+
+### Evidencia y límites
+E1: inspección estática e historial Git. No se ejecutaron pruebas E2–E5, navegador, Apps Script, HTTP, Drive, Spreadsheet ni concurrencia. No se modificó código ni datos productivos.
+
+### Siguiente iteración
+AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.

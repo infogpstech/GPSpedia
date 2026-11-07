@@ -3884,3 +3884,21 @@ ALCANCE
 - No se ejecutaron pruebas funcionales ni operaciones externas.
 - No hubo merge ni despliegue.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-029
+Fecha: 2026-11-07 | Rama: GPSpedia2.2.5_work
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: se agregó el informe E1 de AUD-T-029 y los hallazgos H-AUD-029-001 a H-AUD-029-008.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-029 se actualizó a auditoría estática E1 completada; se registró la iteración 17 y AUD-T-030 como siguiente unidad.
+- Plan_auditoría/Aug_Tareas.md: se ampliaron AUG-028/AUG-030 y se incorporaron AUG-031/AUG-032/AUG-033.
+- Tareas.txt: se agregó el resultado de AUD-T-029 y sus tareas derivadas.
+- contexto_personal.md: se registró el estado y la continuidad de la auditoría.
+- checkpoint.md: se incorporaron los checkpoints inicial y final AUD-CP-0010.
+
+ALCANCE
+- No se modificaron Services/admin.js, ui.js, offline.js, api-config.js, index.html, endpoints, configuraciones, datos productivos, Drive, Spreadsheet ni deployments.
+- No se ejecutaron pruebas funcionales ni operaciones externas.
+- No hubo merge ni despliegue.
+================================================================================

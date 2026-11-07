@@ -78,3 +78,71 @@ Estado final: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓ
 - La rama base conserva d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - Siguiente unidad: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — AUD-T-029: AUDITORÍA RECURSIVA DRIVE, SNAPSHOT, LOTES Y REANUDACIÓN
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial verificado: 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9
+Árbol inicial: b589230be3b127e9a58c2b54b104405d1312cc79
+Rama base: GPSpedia2.2.5
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Sesión/checkpoint: AUD-20261107-S010 / AUD-CP-0010
+
+ALCANCE
+Auditoría estática del recorrido recursivo Drive, snapshot de referencias, lotes, cursor/reanudación, persistencia local IndexedDB y contratos frontend/backend. Sin modificar código ni ejecutar operaciones sobre Drive/Spreadsheet.
+
+ESTADO OBSERVADO
+- AUD-T-028 cerró en commit 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9 y dejó AUD-T-029 como siguiente unidad.
+- HEAD de trabajo y HEAD base fueron confirmados antes de la auditoría.
+- Fuentes de referencia: Services/admin.js ffb120badeb9e8cbe931226a0ce90c0476363012; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670.
+- No se inició implementación ni despliegue.
+================================================================================
+
+================================================================================
+# CHECKPOINT FINAL — AUD-T-029: AUDITORÍA RECURSIVA DRIVE, SNAPSHOT, LOTES Y REANUDACIÓN
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre de la tarea: 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9
+Rama base: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Sesión/checkpoint: AUD-20261107-S010 / AUD-CP-0010
+Estado final: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+RESULTADO
+- H-AUD-029-001 a H-AUD-029-008 documentados.
+- Se ampliaron AUG-028/AUG-030 y se crearon AUG-031/AUG-032/AUG-033.
+- No se modificó código de aplicación, endpoints, configuración, Drive, Spreadsheet ni deployments.
+- No se ejecutaron pruebas E2–E5 ni operaciones externas.
+
+ARCHIVOS DOCUMENTALES Y BLOBS FINALES
+- Auditoría.txt: 4813c98b31916798f59816320c6ecc19c0c62afd
+- Tareas.txt: 7c01b032132f062272090b8f0df36a9e726d413e
+- Plan_auditoría/Plan_Auditoria.md: a9c78e934b54ec592199208f620cdc4a47d62e4c
+- Plan_auditoría/Aug_Tareas.md: 7a67178e2fe7bf5526b922f8b9eaef8550ed3a44
+- ChangesLogs.txt: e93ce6e0cc4fac22756af453d0a7a402fe8e68c5
+- contexto_personal.md: 7cfe7e90864c2132da5b4fdb33663ceb1b9e6cb4
+- checkpoint.md: actualización final incluida en el blob de esta tarea.
+
+RESPALDOS EXACTOS
+- Auditoría.txt: 05c3af104d182a483ad80502d6b660b9f5451718
+- Tareas.txt: fd1fa905d965d478dd92b74e9c92fb7604445f33
+- Plan_auditoría/Plan_Auditoria.md: 3fcb10d0d03a4b5fd05f21d92fa1471abbdbc230
+- Plan_auditoría/Aug_Tareas.md: 757916d9ac8dd2bb4d25e8ec7ad0f207cc8796b4
+- ChangesLogs.txt: 67d48a4a050dc62e65c0e1460d524f504c189a5d
+- contexto_personal.md: d26899f3a98ad91bb9bc2cdb7f450ddbf920a5d1
+- checkpoint.md: a9ab059ff3e3351e6a9e8341580f999c915d0bda
+
+VALIDACIÓN
+- Se verificaron estáticamente las funciones y líneas indicadas en Auditoría.txt y se contrastaron los commits históricos relacionados.
+- No se ejecutaron pruebas sintácticas/aisladas ni pruebas funcionales reales.
+- No se verificó deployment ADMIN, scopes OAuth, cuotas reales de CacheService, Drive ni IndexedDB en navegador.
+
+SIGUIENTE ACCIÓN
+AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
+
+Este checkpoint final es la última actualización documental antes del único commit de la tarea. El commit se publicará mediante Git Database API con parent_sha y expected_sha iguales a 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9; la rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

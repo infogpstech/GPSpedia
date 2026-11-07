@@ -8352,3 +8352,115 @@ Recomendación: validar en el deployment real la correspondencia ID/URL y la car
 - AUD-T-028 queda con auditoría estática E1 completada, hallazgos abiertos y validación funcional pendiente. El monitor global está implementado estáticamente, pero falta probarlo en la identidad y deployment reales.
 - Siguiente unidad: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA E1 — AUD-T-029: AUDITORÍA RECURSIVA DRIVE, RENDIMIENTO, SNAPSHOT, LOTES Y REANUDACIÓN
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9
+Árbol auditado: b589230be3b127e9a58c2b54b104405d1312cc79
+Rama base: GPSpedia2.2.5
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Sesión/checkpoint: AUD-20261107-S010 / AUD-CP-0010
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+## 1. Alcance y criterios
+Se examinó el recorrido recursivo del árbol Drive «Cortes», la creación/recuperación/eliminación del snapshot de referencias, la estructura y validación del cursor, los límites de lotes, los iteradores de Drive, la reanudación desde el frontend, la persistencia incremental/local en IndexedDB y los contratos de enrutamiento. Se revisó la continuidad histórica de los cambios 7a4539f1, d305b1ab, f3f7102d y 06c3b322, además de la reestructuración posterior incorporada por 91f75de3 y el estado vigente en HEAD 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9.
+
+## 2. Archivos y funciones examinados
+- Services/admin.js: collectCortesImageReferences() (líneas 237–275); isFolderInsideCortes() (281–304); storeAuditDriveReferenceSnapshot() (4932–4955); loadAuditDriveReferenceSnapshot() (4957–4981); clearAuditDriveReferenceSnapshot() (4983–4994); handleAuditDriveImagesInCortes() (5369–5548), incluidos validación de cursor, pila DFS, iteradores, límites de lote y respuesta.
+- ui.js: openAuditDriveModal() (5058–5499); persistState() (5182 en adelante); saveUnusedInventory(); runAudit(); restauración local; validación de contadores; control de repetición del cursor y acumulación de resultados.
+- offline.js: initDB()/DB_VERSION 4 y objectStore adminLocalState; performAdminStateOp() (116–141); saveDriveAuditState() (144–167); getDriveAuditState() (169–173).
+- api-config.js: ACTION_TO_SERVICE_MAP (línea 32) y routeAction() (74 en adelante), que enruta auditDriveImagesInCortes a ADMIN.
+- index.html: controles de iniciar/continuar, resumen y descripción de auditoría local; no se encontró una política de expiración visible en la interfaz.
+- Historial/documentación: Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Auditoría.txt y commits relacionados.
+
+## 3. Historial y evolución comprobada
+- 7a4539f1: redujo los límites de lote de 150 archivos/100 carpetas a 25/20; incorporó snapshot temporal y reutilización de referencias entre lotes, evitando volver a recorrer todas las hojas en cada continuación.
+- d305b1ab: corrigió el tipo MIME del Blob gzip utilizado por la recuperación del snapshot.
+- f3f7102d: incorporó IndexedDB DB_VERSION 4, adminLocalState y persistencia del progreso/cursor.
+- 06c3b322: endureció las etapas de compresión/recuperación gzip y la validación del contrato de contadores/complete.
+- 91f75de3 reestructuró el inventario para limitar las referencias activas a los ocho campos de imagen de Cortes y sustituyó el snapshot gzip por JSON directo en bloques. Por ello, el código vigente no utiliza Blob/gzip y no reproduce directamente el fallo MIME histórico; sí conserva un límite de tamaño de snapshot.
+- El HEAD vigente conserva 25 archivos y 20 carpetas por lote, CacheService con TTL de 21,600 segundos, bloques de 75,000 caracteres y límite serializado de 750,000 caracteres.
+
+## 4. Controles positivos confirmados
+- La raíz se obtiene mediante getCortesRootFolder(), que valida ID, nombre «Cortes» y ubicación directa en la raíz de Drive.
+- En una auditoría nueva se captura una sola vez el conjunto de IDs activos de los ocho campos de imagen de Cortes y los IDs históricos elegibles; las continuaciones recuperan ese snapshot y no vuelven a leer esas fuentes.
+- El snapshot se divide en bloques y se escribe un manifiesto; se comprueba que los bloques y el manifiesto puedan leerse inmediatamente después de escribirlos.
+- La recuperación valida estructura del manifiesto, presencia de bloques, longitud serializada y estructura mínima del objeto JSON; ante ausencia/corrupción se detiene con error explícito.
+- La clasificación conserva la precedencia En uso → Histórica → No verificable por MIME/referencia no interpretable → Sin uso detectado.
+- El backend conserva la validación de pertenencia a Cortes para cada carpeta recibida en el cursor y para cada subcarpeta descubierta; no vuelve a recorrer los padres de cada archivo obtenido directamente del iterador de una carpeta validada.
+- El frontend exige batchAnalyzed entero coincidente con la cantidad recibida, totalAnalyzed entero coincidente con el acumulado local y complete booleano; rechaza respuesta parcial sin cursor y respuesta completa con cursor.
+- IndexedDB no almacena userId, SessionToken ni credenciales en el registro del estado de auditoría.
+- La persistencia local espera el evento transaction.oncomplete antes de resolver una escritura administrativa.
+
+## 5. Hallazgos
+
+### H-AUD-029-001 — ALTA: el backend puede aceptar un cursor truncado como auditoría completa
+**Evidencia:** Services/admin.js, líneas 5376–5389 y 5419–5429. Cuando existe cursor, el backend solo exige que cursor.stack sea un arreglo y que referenceCacheId tenga formato UUID. No exige que la pila tenga elementos, no valida de forma integral la estructura de cada elemento ni mantiene un estado de recorrido completo del lado servidor. Una pila vacía pasa la validación, el bucle no procesa carpetas, stack.length === 0 produce complete=true y se elimina el snapshot temporal. totalAnalyzed y foldersVisited también se recuperan desde valores suministrados por el cliente.
+**Impacto:** un cursor truncado o manipulado puede provocar que un recorrido parcial sea presentado como completo. Combinado con handleSaveUnusedImagesInventory(), que no exige un marcador verificable de auditoría completa (H-AUD-028-002/AUG-028), puede permitir que una lista parcial se use como resultado final y que registros anteriores se marquen como no confirmados.
+**Recomendación:** mantener estado de auditoría autoritativo en servidor o un cursor firmado/validado; rechazar una continuación con pila vacía salvo que el servidor tenga constancia de finalización; validar todos los campos y la relación entre snapshot, rootFolderId, iteradores y contadores; exigir que el endpoint de inventario reciba una prueba de finalización emitida por ADMIN.
+
+### H-AUD-029-002 — MEDIA: la detección de cursor repetido no compara la posición real del recorrido
+**Evidencia:** ui.js, líneas 5365 y 5413–5418. La firma usada para detectar repetición es JSON.stringify(cursor), pero el cursor incluye totalAnalyzed y foldersVisited. Si se repite la misma posición de iterador mientras esos contadores aumentan, la firma también cambia. La condición secundaria exige que totalAnalyzed permanezca igual, por lo que tampoco detecta ese caso. Además, allFiles.push() acumula los resultados sin deduplicación por fileId.
+**Impacto:** un iterador que repita una página o una respuesta que repita una posición puede añadir archivos duplicados y mantener el proceso en curso, sin activar el guard de progreso. La comprobación actual detecta un cursor literalmente idéntico sin avance de contadores, no una posición de recorrido repetida con contadores incrementados.
+**Recomendación:** calcular una firma de posición excluyendo contadores acumulados; validar avance del token/stack y mantener un conjunto de fileId procesados a través de lotes y reanudaciones. Relacionar con AUG-030, sin duplicar su tarea de deduplicación global.
+
+### H-AUD-029-003 — ALTA: cada lote vuelve a persistir el arreglo completo de resultados en un único registro IndexedDB
+**Evidencia:** ui.js, línea 5182 y persistState() llamada después de cada lote; offline.js, líneas 144–167. saveDriveAuditState() construye una entrada que contiene state.files completa y ejecuta store.put(entry) bajo una única clave DRIVE_AUDIT_STATE_KEY. A medida que crece allFiles, cada lote vuelve a serializar/estructurar y escribir todos los resultados anteriores.
+**Impacto:** el volumen acumulado de escritura y clonación aumenta con cada lote y puede crecer aproximadamente de forma cuadrática respecto al número de lotes/resultados. En inventarios grandes aumenta latencia, memoria y riesgo de alcanzar cuotas o límites de almacenamiento del navegador; una falla de persistencia puede impedir continuar aunque Drive siga respondiendo.
+**Recomendación:** separar metadatos/cursor de los resultados y persistir resultados por páginas o por fileId mediante un almacén indexado; mantener migración compatible con el registro actual y una reconciliación atómica del lote.
+
+### H-AUD-029-004 — MEDIA: el snapshot tiene capacidad fija y TTL no renovable durante la reanudación
+**Evidencia:** Services/admin.js, líneas 4932–4994 y 5385–5401. El snapshot se serializa como JSON sin compresión, con máximo de 750,000 caracteres, bloques de 75,000 y TTL fijo de 21,600 segundos. loadAuditDriveReferenceSnapshot() lee los bloques pero no renueva su TTL. La reanudación local puede conservar cursor y resultados más tiempo que el estado temporal del servidor.
+**Impacto:** snapshots grandes fallan de forma cerrada antes de comenzar; auditorías que permanezcan activas o pausadas por más de seis horas pierden el estado de referencias y deben reiniciarse, aunque el cursor y resultados sigan en IndexedDB. El límite actual es sobre JSON sin comprimir, distinto de la capacidad que se obtenía con gzip en la implementación histórica.
+**Recomendación:** definir capacidad objetivo y política explícita de expiración; evaluar compresión con MIME explícito o almacenamiento por páginas; renovar TTL de forma segura en continuaciones o persistir snapshot durable; incluir checksum/longitud por bloque y limpieza de estados abandonados. No continuar nunca con snapshot incompleto.
+
+### H-AUD-029-005 — MEDIA: la captura de referencias lee matrices de columnas que no utiliza
+**Evidencia:** Services/admin.js, líneas 237–275, especialmente la lectura de getRange(2, 1, lastRow - 1, sheet.getLastColumn()) y la obtención de getDisplayValues(), getFormulas() y getRichTextValues(). El recorrido solo examina ocho columnas de imagen.
+**Impacto:** se materializan tres matrices para todas las columnas de Cortes aunque la clasificación consulta únicamente ocho campos. El consumo de memoria y tiempo crece con el ancho total de la hoja y puede prolongar la preparación del snapshot antes del primer lote.
+**Recomendación:** medir el coste y evaluar lectura por bloques/columnas requeridas, preservando fórmulas, rich text y las ubicaciones/campos necesarios para los consumidores existentes.
+
+### H-AUD-029-006 — MEDIA: límites fijos de lote y ausencia de presupuesto de ejecución/timeout en el cliente
+**Evidencia:** Services/admin.js, líneas 5436–5437, fija 25 archivos y 20 carpetas por petición. Cada archivo consulta nombre, MIME, tamaño y fecha; cada carpeta descubierta puede ejecutar validación de ancestros. api-config.js routeAction() usa fetch sin AbortController ni timeout para esta acción; la protección de timeout visible en checkAllServicesHealth() no se aplica a routeAction().
+**Impacto:** el coste real por lote depende del volumen y profundidad del árbol, latencia de Drive y estado de Apps Script. Un lote fijo puede ser excesivo en condiciones lentas o innecesariamente pequeño en condiciones rápidas; una solicitud de red que no se resuelva deja la ejecución del modal y el indicador global en estado ocupado.
+**Recomendación:** medir duración real por etapa en deployment de prueba, establecer presupuesto temporal con margen y ajustar lotes según coste; añadir timeout/reintento controlado en cliente sin repetir ni perder el cursor confirmado.
+
+### H-AUD-029-007 — MEDIA: la revalidación de cada elemento de la pila repite recorridos de ancestros
+**Evidencia:** Services/admin.js, líneas 5424–5429 y helper isFolderInsideCortes() líneas 281–304. En cada continuación se vuelve a validar cada carpeta de la pila y cada validación recorre padres hasta Cortes. En jerarquías profundas el trabajo repetido crece con la profundidad y se repite en cada lote.
+**Impacto:** el coste de reanudación puede crecer con la profundidad de la ruta, aun cuando los mismos IDs ya fueron validados en lotes anteriores. No existe memoización de ancestros entre elementos de la pila.
+**Recomendación:** mantener validación de seguridad, pero evaluar memoización por ID dentro de la petición y una representación de ruta/parentId verificable en estado de servidor; no eliminar controles de pertenencia sin una alternativa demostrable.
+
+### H-AUD-029-008 — MEDIA: el estado local usa una sola clave compartida entre pestañas y no serializa auditorías concurrentes
+**Evidencia:** offline.js, líneas 113–114 y 144–173: DRIVE_AUDIT_STATE_KEY es constante y solo existe un registro de última auditoría. ui.js usa isDriveAuditRunning como variable en memoria de la pestaña; no se encontró coordinación entre pestañas para impedir dos recorridos simultáneos.
+**Impacto:** dos pestañas pueden reanudar o iniciar auditorías y sobrescribir el mismo registro local con combinaciones distintas de archivos/cursor/contadores. La última escritura gana y puede dejar un estado local que no corresponda al recorrido visible en la otra pestaña.
+**Recomendación:** identificar cada auditoría local con auditId y usar bloqueo/lease compartido entre pestañas o transacciones de compare-and-set; evitar que una pestaña sobrescriba silenciosamente el progreso de otra.
+
+## 6. Evaluación de calidad y cumplimiento
+- Recorrido DFS y uso de iteradores de continuación: implementados estáticamente, con límites por lote y validación de carpetas dentro de Cortes.
+- Snapshot entre lotes: implementado, pero limitado por tamaño/TTL y sin renovación durante la reanudación.
+- Reanudación: existe en backend y frontend, pero la integridad del cursor no está garantizada por estado autoritativo del servidor.
+- Persistencia local: existe y espera confirmación de transacción, pero reescribe el arreglo completo y comparte una única clave entre pestañas.
+- Progreso: los contadores básicos se validan, pero la detección de posición repetida no es robusta frente a contadores incrementados.
+- Rendimiento: no hay benchmark ni medición real; se identificaron lecturas amplias de Spreadsheet y validaciones repetidas de ancestros.
+- No se encontró evidencia suficiente para atribuir un límite total de 14 archivos al código actual. El comportamiento real sigue sin verificarse en Drive/deployment.
+
+## 7. Tareas derivadas y relaciones
+- Ampliar AUG-028 por H-AUD-029-001: cursor autoritativo, marcador de finalización verificable y rechazo de pila truncada.
+- Ampliar AUG-030 por H-AUD-029-002: firma de posición sin contadores y deduplicación de fileId a través de lotes/reanudaciones.
+- AUG-031: persistencia incremental de resultados e aislamiento de auditorías concurrentes en IndexedDB (H-AUD-029-003 y H-AUD-029-008).
+- AUG-032: capacidad, compresión, TTL, integridad y ciclo de vida del snapshot temporal (H-AUD-029-004).
+- AUG-033: presupuesto de ejecución, lotes adaptativos, lectura eficiente de referencias y memoización segura de ancestros (H-AUD-029-005 a H-AUD-029-007).
+
+## 8. Validaciones y límites
+- Evidencia alcanzada: E1, inspección estática del código vigente, contratos, estructura de IndexedDB, historial de commits y documentación.
+- No se ejecutaron pruebas sintácticas E2, pruebas unitarias E3, navegador/PWA, Apps Script V8, HTTP, Drive, Spreadsheet ni concurrencia real.
+- No se midieron tiempos, tamaño real del snapshot ni volumen real de referencias.
+- No se verificó el deployment ADMIN, scopes OAuth, versión operativa, estado de CacheService ni expiración real de iteradores.
+- No se modificó código, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments.
+
+## 9. Conclusión
+AUD-T-029 queda con auditoría estática E1 completada y hallazgos abiertos. No se declara que la reanudación o el rendimiento estén validados funcionalmente. La siguiente unidad del plan es AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
+================================================================================

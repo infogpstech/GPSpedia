@@ -199,3 +199,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-028, AUG-029 y AUG-030 añadidas. AUG-021, AUG-026 y AUG-003 ampliadas. Rendimiento de CacheService/IndexedDB transferido a AUD-T-029.
 - No se modificó código, configuración ni datos; no se probaron Apps Script, navegador/PWA, HTTP, Drive, Spreadsheet, cuota real ni concurrencia.
 - Siguiente unidad: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
+
+
+## Continuidad de auditoría — AUD-T-029 (2026-11-07)
+- Estado: auditoría estática E1 completada; hallazgos abiertos y validación funcional pendiente.
+- Sesión/checkpoint: AUD-20261107-S010 / AUD-CP-0010.
+- HEAD auditado: 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Hallazgos H-AUD-029-001 a H-AUD-029-008: integridad del cursor, detección de posición repetida, persistencia IndexedDB no incremental/compartida, capacidad y TTL del snapshot, lectura amplia de Spreadsheet, lotes sin presupuesto temporal y validación repetida de ancestros.
+- Se amplían AUG-028 y AUG-030; se crean AUG-031 a AUG-033.
+- No se modificó código ni se ejecutaron pruebas reales de Apps Script, navegador, HTTP, Drive o Spreadsheet.
+- Siguiente unidad: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
