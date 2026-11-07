@@ -75,7 +75,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-024 | Administración de usuarios, privilegios, sesiones y controles de acceso | 2678ee02 — purga Logs y control de sesiones; 0666c1d1 — límites de sesión; 4bc9ac19 — serialización concurrente | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-025 | Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento | babf5ce4 — autorización y purga selectiva; e5c49b1d — enlaces completos en restore; abc7102f — backup/restore compartidos | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-026 | Telemetría, diagnóstico y health check de microservicios | e1defcb6 — restaurar comunicación/health check; 726727b6 — telemetría de servicios | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-027 | Historial de imágenes reemplazadas y acciones de gestión | 8f97d253 — gestión de imágenes reemplazadas; 9e9918c7 — seguridad y consistencia; 91f75de3 — gestor de imágenes sin uso | POR AUDITAR |
+| AUD-T-027 | Historial de imágenes reemplazadas y acciones de gestión | 8f97d253 — base; 9e9918c7 — seguridad/consistencia; 91f75de3 — gestor; d99ab2d4 — idempotencia; 693f4825 — organización (observación AUD-T-028) | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-028 | Inventario de imágenes sin uso, clasificación y monitor global de Drive | 7983febe — persistir inventario en Spreadsheet; 91f75de3 — gestor y monitor global; 693f4825 — organización de imágenes sin uso | POR AUDITAR |
 | AUD-T-029 | Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación | 7a4539f1 — optimizar lotes; d305b1ab — MIME gzip; f3f7102d — persistir progreso; 06c3b322 — robustecer snapshot | POR AUDITAR |
 | AUD-T-030 | Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones | 6cb4a3cb — contrato de cortes e idempotencia; 94c2d04e — migración IDs/VIN; 7dcd1225 — asignación centralizada de IDs | POR AUDITAR |
@@ -199,7 +199,7 @@ No se asignará E4/E5 a una tarea basándose únicamente en documentación. No s
 
 ## 10. Próxima acción
 
-Iniciar la primera iteración técnica de la Fase F1: **AUD-T-002 — RBAC, AUTH, USERS, sesiones, roles, identidad y cumplimiento legal**, con lectura completa de los commits/diffs y revisión de Services/Auth.js, Services/users.js, auth.js, users.html, api-config.js y consumidores reales identificados por referencias. Crear un checkpoint individual antes de comenzar esa auditoría.
+Continuar la Fase F3 con **AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive**. Crear el checkpoint individual antes de comenzar; mantener la auditoría estática y no mover, renombrar, borrar ni compartir archivos reales.
 
 
 ## 11. Iteración técnica — AUD-T-002
@@ -423,3 +423,31 @@ H-AUD-026-001 a H-AUD-026-005. Evidencia, ubicación, impacto y controles positi
 
 ### Siguiente iteración
 AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
+
+
+## 15. Iteración técnica — AUD-T-027
+
+**Sesión:** AUD-20261107-S008  
+**Checkpoint:** AUD-CP-0008  
+**HEAD auditado:** 6932cf19d77c9c020a02e3d766b937f3175b8985  
+**Árbol auditado:** eaaf93248d171c283ca59976579691e777361077  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Alcance
+Historial de reemplazos, editor in-modal, ledger idempotente, consulta, restauración, papelera, descarga, movimiento, carpetas, autorización backend, contratos, esquema y UI.
+
+### Historial principal
+- 8f97d253cae071ba633026cd207af675f570ad9c — implementación base.
+- 9e9918c7e9858fcb6a8be3fc423fb533555cb17a — seguridad/consistencia/restauración.
+- 91f75de3ca1e8d7b64801f00fa0c98adea2809e9 — gestor y monitor.
+- d99ab2d42c6e0d428ea7fd272e605b8a6d3c0dbe — idempotencia in-modal.
+- 693f4825216996e3682c69985c666c0d8b21357c — organización automática; observación transferida a AUD-T-028.
+
+### Resultado
+- Hallazgos H-AUD-027-001 a H-AUD-027-006 y decisiones H-AUD-027-007/008 documentados en Auditoría.txt.
+- AUG-026 y AUG-027 añadidas; AUG-021 ampliada; AUG-003/AUD-T-033 referenciada sin duplicar.
+- AUD-IMG-01, 02, 04, 05, 06 y 07 revisados; AUD-IMG-03 requiere confirmar el alcance vigente.
+- No se modificó código, datos, endpoints, configuración ni deployments.
+- Evidencia E1. No se ejecutaron pruebas HTTP, navegador/PWA, Apps Script, Drive, Spreadsheet o concurrencia.
+- Siguiente unidad: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.

@@ -3840,3 +3840,25 @@ Rama: GPSpedia2.2.5_work
 - Delimitadores balanceados; collector de referencias y auditoría recursiva idénticos a respaldos.
 - No se ejecutó runtime Apps Script, Drive/Spreadsheet real ni despliegue.
 ================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-027: HISTORIAL DE IMÁGENES REEMPLAZADAS Y ACCIONES DE GESTIÓN
+Fecha: 2026-11-07
+Sesión/checkpoint: AUD-20261107-S008 / AUD-CP-0008
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: informe AUD-T-027, controles positivos, hallazgos H-AUD-027-001 a H-AUD-027-008, estado de AUD-IMG-01 a AUD-IMG-07 y observaciones transferidas a AUD-T-028/AUD-T-033.
+- Tareas.txt: actualización de la tarea histórica AUD-IMG y registro de AUG-026/AUG-027/AUG-021.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-027 actualizado a auditoría estática E1 completada; siguiente unidad AUD-T-028; iteración 15.
+- Plan_auditoría/Aug_Tareas.md: adenda a AUG-021 y nuevas tareas AUG-026/AUG-027.
+- contexto_personal.md: estado de auditoría y continuidad del proyecto.
+- checkpoint.md: checkpoint inicial y de cierre AUD-CP-0008.
+
+ALCANCE
+- Solo se actualizaron documentos de trazabilidad.
+- No se modificaron Services/admin.js, Services/write.js, ui.js, offline.js, api-config.js, index.html, style.css ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Spreadsheet, Drive ni deployments.
+- No se ejecutaron pruebas funcionales ni operaciones externas.
+- No hubo merge ni despliegue.
+================================================================================

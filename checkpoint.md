@@ -5991,3 +5991,84 @@ Pendiente: validación funcional en entorno aislado y publicación posterior. Lo
 
 El commit único y el avance de GPSpedia2.2.5_work quedan pendientes de la operación final de GitHub.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — AUD-T-027: HISTORIAL DE IMÁGENES REEMPLAZADAS Y ACCIONES DE GESTIÓN
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: 6932cf19d77c9c020a02e3d766b937f3175b8985
+Árbol inicial: eaaf93248d171c283ca59976579691e777361077
+Rama base: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Sesión/checkpoint: AUD-20261107-S008 / AUD-CP-0008
+
+## Alcance inicial
+Auditar reemplazo in-modal, ledger, historial, consulta, restauración, papelera, descarga, movimiento, carpetas, permisos, contratos, esquema y UI. Mantener la fase estática sin cambios de código ni operaciones sobre Drive/Spreadsheet.
+
+## Estado real al inicio
+- AUD-T-026 era la última unidad con auditoría estática cerrada; AUD-T-027 era la siguiente unidad del plan.
+- La rama de trabajo se confirmó directamente en 6932cf19d77c9c020a02e3d766b937f3175b8985; la rama base se confirmó en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Se contrastaron los commits principales 8f97d253, 9e9918c7, 91f75de3, d99ab2d4 y el cambio de organización 693f4825.
+- No se modificó código, configuración, endpoints, datos ni deployments.
+
+## Respaldos exactos de documentación antes de editar
+- Auditoría.txt: 99272303efb1bb1d81625fdedfbeac0fe726a0a3
+- Tareas.txt: 3dc97aa9d6dcf0a943465f94b746a1faeea562bb
+- ChangesLogs.txt: e7dcd3c31925a90c19443195489c2d49c7a3eb09
+- contexto_personal.md: 3595557f57f8039d881f952145c4149423d2779a
+- checkpoint.md: 4e51dfddc9c95246120dc8ed7fa31a4830fa0f2e
+- Plan_auditoría/Plan_Auditoria.md: ec331b43a98beef71c729232f08ed0db53d2578c
+- Plan_auditoría/Aug_Tareas.md: 384d4659b4953a096d30e8fb7654d2c1e0bcb5c8
+
+## Blobs de código utilizados como línea base
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+
+Fase inicial: baseline y rama/base verificadas; auditoría estática iniciada; sin cambios de código ni operaciones externas.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT DE CIERRE — AUD-T-027: HISTORIAL DE IMÁGENES REEMPLAZADAS Y ACCIONES DE GESTIÓN
+Fecha: 2026-11-07
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre de la tarea: 6932cf19d77c9c020a02e3d766b937f3175b8985
+Rama base: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Sesión/checkpoint: AUD-20261107-S008 / AUD-CP-0008
+Estado final: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+## Archivos documentales preparados para el commit único
+- Auditoría.txt: c5199bea8cceddc6d6acdd06172655be77a0c9f7
+- Tareas.txt: 7615573fd2b41ed4c6afa81f98b4542d41163568
+- ChangesLogs.txt: 37c67e072b8a7ff212d5c58ed579b8b55b5866a2
+- contexto_personal.md: 7704b1fd851463e0e6c62d97ce6445d3453a0786
+- Plan_auditoría/Plan_Auditoria.md: 5ccad141bed895d4aeb742b554af3554653ad770
+- Plan_auditoría/Aug_Tareas.md: 11316a571f09fe32d9fc6d0402ce8a039e1c33e0
+- checkpoint.md: se crea como último blob documental de esta tarea.
+
+## Resultado y revisión
+- Hallazgos H-AUD-027-001 a H-AUD-027-006; decisiones H-AUD-027-007/008; observación automática de organización transferida a AUD-T-028.
+- AUG-026 y AUG-027 registradas; AUG-021 ampliada; coordinación de locks enlazada a AUD-T-033/AUG-003.
+- Se actualizó el estado de AUD-T-027 en el plan y la siguiente acción a AUD-T-028.
+- Solo se modificaron documentos de trazabilidad. Ningún archivo de aplicación fue alterado.
+
+## Validaciones y límites
+- Evidencia E1: inspección estática de código, contratos, esquema, historial y documentación.
+- No se ejecutaron pruebas HTTP, navegador/PWA, Apps Script, Drive, Spreadsheet ni concurrencia.
+- No se verificaron deployments ni datos reales.
+- No hubo merge ni despliegue. La rama base permanece intacta.
+
+## Continuidad
+- El commit único documental de AUD-T-027 se identifica en el historial de GPSpedia2.2.5_work.
+- La rama base conserva d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Siguiente unidad: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
+================================================================================

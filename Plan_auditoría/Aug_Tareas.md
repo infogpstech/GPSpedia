@@ -282,3 +282,43 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
   6. Probar solicitudes largas que crucen minutos, inactividad superior a quince minutos, límite superior a 600 eventos, solicitudes concurrentes, cierre/reapertura del modal y recarga de la aplicación.
 - **Relación:** TAREA ADMIN 2, H-AUD-026-004 y H-AUD-026-005.
 - **Estado:** NUEVA; pendiente.
+
+
+================================================================================
+ADENDA AUD-T-027 — HISTORIAL DE IMÁGENES REEMPLAZADAS Y ACCIONES DE GESTIÓN
+Fecha: 2026-11-07
+Sesión/checkpoint: AUD-20261107-S008 / AUD-CP-0008
+
+### Adenda a AUG-021 — Registro persistente de operaciones administrativas sensibles
+- **Nuevo origen:** H-AUD-027-004. **Prioridad:** Media.
+- **Evidencia:** Services/admin.js doPost() (610, 649–650, 679–680); handleUploadAdminImage() (1955 en adelante); handleRecoverReplacedImage() (4304–4428); recordImageAdministrationActivity() (4434–4462).
+- **Adenda:** incorporar las acciones uploadAdminImage y recoverReplacedImage al registro durable. Actualmente el router valida developerContext, pero no lo pasa a esos handlers y ninguno registra la operación en ActividadUsuario. La fila histórica conserva fecha/URL, pero no actor. El helper actual captura fallos y solo los envía a Logger.log.
+- **Criterios adicionales:** guardar actor autenticado, ID de operación, vehículo/campo, archivo anterior/nuevo, ubicación cuando corresponda, inicio/fin, resultado y compensación; no guardar tokens ni contenido Base64; informar fallos del registro durable y reconciliar operaciones parciales.
+- **Estado:** EXISTENTE; ampliada; implementación y pruebas pendientes. No duplicar AUG-021.
+
+### AUG-026 — Integridad, recuperación y visibilidad de estados del historial de imágenes
+- **Origen:** H-AUD-027-001, H-AUD-027-002, H-AUD-027-003, H-AUD-027-005 y H-AUD-027-006. **Prioridad:** Alta.
+- **Tarea auditada:** AUD-T-027. **Sesión/checkpoint:** AUD-20261107-S008 / AUD-CP-0008.
+- **Problema:** la consulta oculta estados en_papelera/requiere_revision/cancelada; el handler de restauración no valida el estado previo y su rollback no restaura el estado histórico; la consulta descarta filas inválidas sin reporte; algunas acciones no comprueban duplicidad/coincidencia de IDs; doce columnas dinámicas no están reflejadas en el inventario de esquema; abrir la consulta puede modificar la Spreadsheet sin bloqueo.
+- **Criterios de aceptación:**
+  1. Definir y exponer una vista segura para registros históricos recuperables, enviados a papelera o que requieren revisión; no ocultar estados que necesitan intervención.
+  2. Validar transiciones de estado en backend y restaurar tanto la celda activa, el archivo Drive y el estado histórico en cada compensación.
+  3. Validar unicidad de id_reemplazo y coincidencia entre archivo_drive_id, url_anterior y URL de visualización antes de cualquier acción; presentar filas inválidas en una sección de revisión, sin descartarlas silenciosamente.
+  4. Documentar las doce columnas adicionales, sus estados y reglas de migración en Spreadsheet/GPSpedia_DB_columnas.md.
+  5. Separar la inicialización/migración de esquema de la consulta de lectura o protegerla con una operación idempotente y coordinada.
+  6. Probar historica, restablecida, en_papelera, requiere_revision y cancelada; fallos de setValue/flush; archivo en papelera; IDs duplicados/mismatched; MIME inválido; filas parciales y permisos.
+- **Relación:** AUG-021 para trazabilidad; AUD-T-033/AUG-003 para coordinación interproyectos.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-027 — Definir alcance de referencias y separación entre historial e inventario sin uso
+- **Origen:** H-AUD-027-007 y H-AUD-027-008. **Prioridad:** Media; requiere decisión funcional antes de modificar código.
+- **Tarea auditada:** AUD-T-027. **Sesión/checkpoint:** AUD-20261107-S008 / AUD-CP-0008.
+- **Problema:** el requisito histórico AUD-IMG-03 pedía comprobar referencias en todas las hojas, mientras la especificación posterior del gestor compara los campos de imagen de Cortes. Además, el requisito 6.5 dice que el gestor muestre exclusivamente imágenes sin uso confirmado, pero la interfaz actual mezcla esos registros con el historial de reemplazos que conserva acciones de restauración.
+- **Decisiones requeridas:**
+  1. Confirmar si la protección de uso se limita a las columnas de imagen de Cortes o incluye referencias de otras hojas.
+  2. Confirmar si el historial de reemplazos se mantiene en un modal/sección independiente del inventario sin uso o si ambos deben mostrarse juntos con filtros explícitos.
+  3. Confirmar la política de restauración para registros enviados a papelera y estados que requieren revisión.
+- **Criterios de aceptación:** documentar la decisión en Tareas.txt y Auditoría.txt; alinear títulos, filtros, contratos y pruebas con el alcance aprobado; no ampliar ni reducir referencias por inferencia.
+- **Estado:** NUEVA; decisión pendiente. No implementar hasta resolver el alcance.
+
+================================================================================

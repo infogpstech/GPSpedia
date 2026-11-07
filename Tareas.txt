@@ -5233,3 +5233,47 @@ PENDIENTE
 
 NOTA DE PRECEDENCIA DE REQUISITOS
 La instrucción posterior y explícita del usuario de corregir automáticamente los nombres inválidos actualiza la restricción previa de no renombrar archivos durante la organización de imágenes. El renombrado queda autorizado únicamente para aplicar la nomenclatura canónica a imágenes asociadas inequívocamente a registros de Cortes. No autoriza modificar el inventario de auditoría de solo lectura, fusionar carpetas, sobrescribir archivos ni renombrar imágenes huérfanas sin metadatos.
+
+
+================================================================================
+RESULTADO DE AUDITORÍA ESTÁTICA — AUD-T-027: HISTORIAL DE IMÁGENES REEMPLAZADAS Y ACCIONES DE GESTIÓN
+Fecha: 2026-11-07
+Sesión/checkpoint: AUD-20261107-S008 / AUD-CP-0008
+HEAD auditado: 6932cf19d77c9c020a02e3d766b937f3175b8985
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+ACTUALIZACIÓN DE LA TAREA HISTÓRICA «CORREGIR HALLAZGOS DE AUDITORÍA DE GESTIÓN DE IMÁGENES REEMPLAZADAS» (registro original conservado en líneas 2349–2418)
+- AUD-IMG-01: resuelto en código estático por autorización backend central en doPost(); deployment y pruebas de roles pendientes.
+- AUD-IMG-02: resuelto estáticamente mediante ledger AdminImageUploads, opId, escritura histórica antes de cambiar la celda y compensación; pruebas reales pendientes.
+- AUD-IMG-03: alcance pendiente de decisión. La tarea histórica pedía todas las hojas; el requisito posterior del gestor compara las columnas de imagen de Cortes. Ver H-AUD-027-007/AUG-027.
+- AUD-IMG-04: resuelto estáticamente; la operación y los mensajes describen envío a papelera.
+- AUD-IMG-05: el código actual usa lotes/cursor; análisis de rendimiento y reanudación continúa en AUD-T-029.
+- AUD-IMG-06: mejorado estáticamente; las referencias no interpretables bloquean la confirmación de ausencia de uso. Pruebas de formatos pendientes.
+- AUD-IMG-07: alcance de restauración documentado y limitado a vehículos y ocho campos de imagen de Cortes.
+
+HALLAZGOS NUEVOS
+- H-AUD-027-001 (ALTA): los estados en_papelera, requiere_revision y cancelada no aparecen en la consulta/modal. El backend puede retirar de papelera un archivo histórico, pero la interfaz deja de exponer su registro; contradice el criterio histórico de conservar posibilidad de restauración.
+- H-AUD-027-002 (MEDIA): la restauración no valida el estado previo y su compensación no devuelve el estado de la fila histórica al valor anterior si falla después de escribir restablecida.
+- H-AUD-027-003 (MEDIA): filas con clasificación/ID inválidos se omiten sin diagnóstico; delete/move/download/recover no aplican detección uniforme de IDs duplicados ni verifican siempre coincidencia entre archivo_drive_id y URL anterior.
+- H-AUD-027-004 (MEDIA): reemplazo in-modal y restauración no registran evento persistente en ActividadUsuario ni reciben developerContext; ampliar AUG-021.
+- H-AUD-027-005 (MEDIA): Spreadsheet/GPSpedia_DB_columnas.md documenta once columnas históricas, pero el gestor añade doce columnas de inventario no documentadas.
+- H-AUD-027-006 (BAJA): consultar el historial puede crear la hoja, agregar columnas y completar datos; el endpoint de consulta no usa ScriptLock.
+- H-AUD-027-007 (DECISIÓN): confirmar si la validación de referencias debe abarcar todas las hojas o solo los campos de imagen de Cortes.
+- H-AUD-027-008 (DECISIÓN): confirmar si historial y gestor de imágenes sin uso deben permanecer combinados o separarse.
+
+TAREAS DERIVADAS
+- AUG-026 — Integridad, recuperación y visibilidad de estados del historial de imágenes. Implementación y pruebas pendientes.
+- AUG-027 — Definir el alcance de referencias y la separación entre historial de reemplazos e inventario sin uso. Requiere decisión antes de implementar.
+- AUG-021 — Adenda para registrar reemplazos y restauraciones con actor, recurso, ubicación y resultado; tarea existente, no duplicada.
+- La organización automática posterior al inventario se transfiere a AUD-T-028 por la discrepancia entre el código y Tareas.txt 3828–3829. La coordinación de locks entre servicios permanece en AUD-T-033/AUG-003.
+
+ARCHIVOS REVISADOS
+- Services/admin.js, ui.js, offline.js, api-config.js, index.html, style.css, Services/write.js y Spreadsheet/GPSpedia_DB_columnas.md; funciones y contratos detallados en Auditoría.txt.
+
+LIMITACIONES
+- No se ejecutaron pruebas de navegador/PWA, HTTP, Apps Script, Drive, Spreadsheet ni concurrencia.
+- No se verificaron deployments ni datos reales.
+- No se modificó código, configuración, datos o endpoints. No se desplegó ni se hizo merge.
+
+PRÓXIMA UNIDAD: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
+================================================================================

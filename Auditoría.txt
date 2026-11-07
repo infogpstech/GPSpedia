@@ -8077,3 +8077,133 @@ AJUSTE DE CODE REVIEW
 - La normalización de carpetas devuelve los IDs y nombres anterior/nuevo y los registra en el log administrativo.
 - organizePrimaryVehicleImages devuelve y acumula también foldersRenamed, además de imágenes movidas/renombradas.
 - Los errores individuales de setName en carpetas se convierten en advertencias registradas y no abortan el lote completo.
+
+
+================================================================================
+AUDITORÍA ESTÁTICA E1 — AUD-T-027: HISTORIAL DE IMÁGENES REEMPLAZADAS Y ACCIONES DE GESTIÓN
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: 6932cf19d77c9c020a02e3d766b937f3175b8985
+Árbol auditado: eaaf93248d171c283ca59976579691e777361077
+Rama base: GPSpedia2.2.5
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Sesión/checkpoint: AUD-20261107-S008 / AUD-CP-0008
+Estado: AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+## 1. Alcance y método
+Se auditó el historial de imágenes reemplazadas, el reemplazo in-modal, la persistencia de intentos, la consulta del historial, la restauración, el envío a papelera, la descarga, el movimiento, la creación de carpetas, la presentación de lista/cuadrícula, la vista ampliada, la autorización backend y los contratos frontend/backend.
+Se realizó inspección estática de los bloques y funciones relacionados, revisión de referencias y consumidores, y contraste de los commits históricos indicados en el plan. No se ejecutaron operaciones sobre Drive o Spreadsheet.
+
+## 2. Línea base e historial contrastado
+- 8f97d253cae071ba633026cd207af675f570ad9c — feat: implement anti-loop modal navigation & replaced images management. Introduce Imagenes_Reemplazadas, consulta, vista previa, recuperación, eliminación y auditoría limitada al árbol Cortes.
+- 9e9918c7e9858fcb6a8be3fc423fb533555cb17a — Corregir seguridad, consistencia, restauración y auditoría de imágenes. Se contrastó con el código actual.
+- 91f75de3ca1e8d7b64801f00fa0c98adea2809e9 — Implementa gestor de imágenes sin uso y monitor global de Drive.
+- d99ab2d42c6e0d428ea7fd272e605b8a6d3c0dbe — Implementa idempotencia de reemplazos de imágenes in-modal y el ledger AdminImageUploads.
+- 693f4825216996e3682c69985c666c0d8b21357c — feat: auto-organize unused Drive images. Se registra como observación de frontera para AUD-T-028, porque la especificación posterior del gestor requiere acciones explícitas.
+- 6932cf19d77c9c020a02e3d766b937f3175b8985 — HEAD actual de partida, que incluye la normalización automática reciente. Se auditó la fuente vigente, no una versión histórica.
+
+## 3. Archivos, funciones y contratos revisados
+- Services/admin.js: assertDeveloperSession() (73–103), doPost() (586–715), handleUploadAdminImage() (1955–aprox. 2260), findReplacedImageRecordById() (aprox. 1920–1946), getOrCreateReplacedImagesSheet(), ensureReplacedImagesInventoryColumns() (3976–4034), recordReplacedImage() (4039–4141), getReplacedImageRecordType() (4281–4299), handleGetReplacedImages() (4242–4280), handleRecoverReplacedImage() (4304–4428), recordImageAdministrationActivity() (4434–4462), handleDeleteReplacedImage() (4540–4625), manejo de carpetas (4627–4704), handleMoveReplacedImage() (4707–4878) y handleGetReplacedImageDownloadUrl() (4883–4926).
+- ui.js: persistencia y reintento de operaciones de reemplazo (233–414), initAdminPanelListeners() y conexión del botón al modal (4637–4644), getDeveloperSessionPayload() (4694–4703), openReplacedImagesModal() y sus funciones internas de carga, filtros, renderizado, acciones y lightbox (4708–5063), y getImageUrl() (592–630).
+- api-config.js: ACTION_TO_SERVICE_MAP (28–35) y routeAction() (74–117).
+- index.html: botón de consulta y estructura del modal/lightbox (439 y 484–522).
+- style.css: vistas de cuadrícula/lista, tarjetas, acciones y lightbox responsive (2954–3245).
+- offline.js: inicialización de IndexedDB y persistencia del estado administrativo local (7–138 y helpers asociados).
+- Services/write.js: handleAddOrUpdateCutLocked() (420–735) y handleAddSupplementaryInfoLocked() (791–864). No se encontró llamada a recordReplacedImage() ni referencia a Imagenes_Reemplazadas; sus rutas observadas rellenan espacios vacíos o reparan imágenes que ya no son válidas, no sustituyen una imagen válida mediante el editor in-modal.
+- Spreadsheet/GPSpedia_DB_columnas.md: esquema documentado de Imagenes_Reemplazadas (52–69) y AdminImageUploads (338–371).
+
+Blobs de código auditados:
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+
+## 4. Controles positivos confirmados estáticamente
+- doPost() aplica assertDeveloperSession() a todas las acciones salvo ping. La identidad, sesión activa y rol Desarrollador se consultan en ActiveSessions y Users; no se confía en el rol enviado por el navegador.
+- El botón del historial se conecta desde initAdminPanelListeners(); el cliente envía userId y sessionToken y api-config.js enruta las acciones de imágenes a ADMIN.
+- El reemplazo in-modal valida los ocho campos admitidos, MIME de imagen, contenido Base64 y opId. Usa ScriptLock, AdminImageUploads, hash de contenido y una clave idempotente. El historial de la imagen anterior se registra antes de confirmar el nuevo valor activo y existen pasos compensatorios ante errores.
+- Los reemplazos con imagen anterior utilizan REP-<opId>; recordReplacedImage() evita crear duplicados por reintento y verifica la coherencia de vehículo/campo/URL del intento existente.
+- La hoja conserva sus once columnas históricas y el código agrega metadatos de inventario al final, sin desplazar las columnas base.
+- La restauración valida tipo de contenido vehiculo, lista permitida de ocho campos, vehículo, ID/URL coincidentes, MIME y pertenencia al árbol Cortes. La imagen activa que se sustituye se conserva como otro registro histórico.
+- Las acciones de papelera, movimiento y descarga revalidan referencias activas de Cortes, MIME y pertenencia al árbol autorizado. El movimiento tiene compensación para revertir la ubicación o informar de una reversión incompleta.
+- El envío a papelera usa file.setTrashed(true); la respuesta backend y la etiqueta de la interfaz ya no lo describen como eliminación irreversible.
+- La vista reutiliza getImageUrl() para normalizar enlaces Drive/IDs y dispone de cuadrícula, lista, miniaturas, lightbox, filtro y persistencia de la preferencia de vista en IndexedDB.
+- Las acciones manuales de mover, enviar a papelera, descargar y crear carpetas llaman a recordImageAdministrationActivity().
+
+## 5. Hallazgos
+
+### H-AUD-027-001 — ALTA — Los estados en papelera y de revisión no tienen una ruta visible de recuperación/inspección
+Evidencia: handleDeleteReplacedImage() cambia el estado a en_papelera (4600–4603). handleGetReplacedImages() solo devuelve reemplazos en estado historica o restablecida y omite otros estados (4261–4263). ui.js vuelve a filtrar los resultados con la misma lista cerrada (4802–4805). Sin embargo, handleRecoverReplacedImage() contempla retirar el archivo de la papelera mediante file.setTrashed(false) (4381–4386). La confirmación visual indica que la restauración histórica deja de estar disponible mientras el archivo permanezca en papelera (ui.js 5003–5007). Tareas.txt conserva el criterio de mantener la posibilidad de restaurar registros enviados a papelera (línea 2553).
+Impacto: el backend tiene capacidad de recuperación, pero el flujo normal del modal oculta el registro después de enviarlo a papelera; tampoco se presenta una cola para estados requiere_revision o cancelada. La recuperación exige conocer y enviar directamente un ID que la interfaz ya no expone.
+Recomendación: definir una vista explícita de papelera/revisión o confirmar que esos estados son deliberadamente irrecuperables desde el gestor. Si se mantiene la recuperación, mostrar los registros y permitir la restauración controlada.
+
+### H-AUD-027-002 — MEDIA — La restauración no valida la transición de estado y no revierte el estado histórico en todos los fallos
+Evidencia: handleRecoverReplacedImage() valida tipo de registro, tipo de contenido y campo (4327–4345), pero no restringe el estado previo a historica/restablecida. Después de actualizar la celda, escribe restablecida (4381–4386). Si una operación posterior falla, el catch intenta revertir la celda y el archivo (4387–4416), pero no restaura el estado original de la fila histórica.
+Impacto: una llamada directa autorizada puede intentar restaurar registros cancelada o requiere_revision; además, si falla el flush posterior a escribir restablecida, la compensación puede dejar la fila con estado restablecida aunque la referencia activa haya vuelto a su valor anterior.
+Recomendación: validar explícitamente los estados admitidos antes de restaurar y conservar/restaurar el estado previo de la fila como parte de la misma compensación. Probar fallos antes y después de cada escritura y flush.
+
+### H-AUD-027-003 — MEDIA — La consulta y las acciones no validan de forma uniforme la integridad de cada registro
+Evidencia: handleGetReplacedImages() omite silenciosamente filas cuya clasificación lanza error (4259) y filas sin ID de Drive interpretable (4263–4264). La restauración comprueba que archivo_drive_id y url_anterior contengan el mismo ID (4351–4352), pero delete, move y download seleccionan el primer ID disponible sin comprobar que ambos campos coincidan (4576, 4744 y 4908). Los handlers de delete/move/download/recover toman la primera fila que coincide con id_reemplazo; la detección de IDs duplicados existe en findReplacedImageRecordById(), usada por el registro idempotente, pero no se aplica uniformemente a esas acciones.
+Impacto: una fila malformada puede desaparecer sin diagnóstico, mostrarse con metadatos contradictorios o dirigir una acción a un archivo distinto del indicado por su URL. Un ID duplicado puede hacer que una acción afecte solo a la primera fila.
+Recomendación: centralizar la validación del registro antes de exponerlo o modificarlo: unicidad de id_reemplazo, coincidencia de IDs, clasificación, estado, MIME y consistencia de URLs. Informar/cuarentenar filas inválidas en vez de descartarlas silenciosamente.
+
+### H-AUD-027-004 — MEDIA — El registro persistente de actividad no cubre reemplazo ni restauración
+Evidencia: doPost() obtiene developerContext (610), pero llama handleUploadAdminImage(payload, logMessage) y handleRecoverReplacedImage(payload, logMessage) sin pasar ese contexto (649–650 y 679–680). Ninguno de esos handlers llama recordImageAdministrationActivity(). La fila de Imagenes_Reemplazadas registra fecha y relación de imágenes, pero no actor. El helper de actividad captura cualquier error y solo escribe Logger.log (4459–4460).
+Impacto: las operaciones manuales de mover, papelera, descarga y crear carpeta tienen un evento persistente cuando el helper funciona, pero no se conserva el mismo nivel de trazabilidad para quién reemplazó o restauró una imagen. Un fallo del helper tampoco se comunica al flujo llamador.
+Relación: ampliar la tarea existente AUG-021; no crear una tarea duplicada de logs administrativos.
+Recomendación: integrar reemplazo y restauración al registro durable de operaciones, con actor autenticado, recurso, URL/ubicación anterior y posterior, inicio/fin y resultado; hacer visible el fallo de auditoría sin convertir una operación ya confirmada en un éxito silencioso.
+
+### H-AUD-027-005 — MEDIA — La documentación del esquema no incluye las doce columnas añadidas por el gestor
+Evidencia: ensureReplacedImagesInventoryColumns() declara y agrega doce encabezados después de las once columnas base (3976–4013): origen_registro, tipo_mime, ubicacion_original, fecha_creacion_drive, fecha_deteccion, url_visualizacion, ubicacion_actual, ultima_auditoria_id, tipo_registro, estado_organizacion, error_organizacion y fecha_organizacion. Spreadsheet/GPSpedia_DB_columnas.md documenta solo las once columnas originales de Imagenes_Reemplazadas (52–69) y no contiene la extensión.
+Impacto: el inventario de esquema no representa la estructura que el código crea y consume, lo que puede provocar errores al mantener, migrar o integrar lectores de Spreadsheet.
+Recomendación: documentar la extensión completa, sus valores/estados y el carácter aditivo de la migración, conservando la posición de las once columnas históricas.
+
+### H-AUD-027-006 — BAJA — Una consulta del historial puede crear o modificar el esquema de Spreadsheet
+Evidencia: handleGetReplacedImages() llama getOrCreateReplacedImagesSheet() y ensureReplacedImagesInventoryColumns() (4248–4249). Esas funciones pueden crear la hoja, agregar las doce columnas y completar tipo_registro en filas históricas (3976–4033). El handler de consulta no adquiere ScriptLock.
+Impacto: abrir el modal puede producir escrituras de esquema y backfill, aunque la acción se presenta como consulta; además, esa inicialización puede competir con una escritura concurrente del historial.
+Recomendación: separar la migración del endpoint de lectura o protegerla como operación de inicialización explícita, idempotente y coordinada.
+
+### H-AUD-027-007 — DECISIÓN DE ALCANCE — Referencias de otras hojas frente a referencias de Cortes
+Evidencia: la tarea histórica AUD-IMG-03/Tareas.txt (2372–2376) pedía validar referencias activas en todas las hojas/campos pertinentes. La especificación posterior del gestor (Tareas.txt 3825–3828) define la comparación con las columnas de imagen de Cortes. El código vigente usa collectCortesImageReferences() y limita la protección a esos campos.
+Impacto: no se puede declarar resuelto el alcance global histórico sin confirmar si la especificación posterior sustituyó expresamente la cobertura de otras hojas. No se debe ampliar ni reducir la comprobación por inferencia.
+Recomendación: confirmar si la política vigente protege solo referencias de Cortes o cualquier hoja que pueda compartir un ID de Drive. Mantener el resultado como decisión pendiente hasta esa confirmación.
+
+### H-AUD-027-008 — DECISIÓN DE ALCANCE — El mismo modal combina historial y gestor de imágenes sin uso
+Evidencia: handleGetReplacedImages() devuelve tanto tipo_registro reemplazada como sin_uso_detectado (4255–4276); ui.js incluye ambos tipos en cachedReplaced (4797–4805) y los representa con etiquetas diferentes (4858–4906). La especificación 6.5 de Tareas.txt (3829) dice que el gestor debe mostrar exclusivamente imágenes sin uso confirmado, mientras los requisitos históricos previos conservan consulta y restauración de reemplazos.
+Impacto: no queda definido si el historial de reemplazos debe convivir en el gestor de imágenes sin uso o si requiere una sección/modal separado. La etiqueta actual «Gestor de imágenes sin uso» no describe con precisión la mezcla de registros.
+Recomendación: decidir si el historial y el inventario sin uso son dos vistas separadas o una vista combinada con filtros explícitos; ajustar después el contrato y criterios de aceptación.
+
+## 6. Estado de los hallazgos históricos AUD-IMG-01 a AUD-IMG-07
+- AUD-IMG-01: resuelto estáticamente en el código actual. doPost() exige sesión activa y rol Desarrollador para todas las acciones salvo ping. La configuración y el deployment ADMIN reales no se pudieron verificar; pruebas de sesión inválida/rol no autorizado siguen pendientes.
+- AUD-IMG-02: resuelto estáticamente en el flujo actual de reemplazo in-modal mediante AdminImageUploads, opId, registro histórico previo a la actualización de la celda y compensación. La efectividad ante fallos reales de Spreadsheet/Drive sigue pendiente de pruebas aisladas.
+- AUD-IMG-03: no se marca como resuelto globalmente; se registra la decisión de alcance H-AUD-027-007. La implementación actual protege las referencias de los campos de imagen de Cortes.
+- AUD-IMG-04: resuelto estáticamente. El backend usa setTrashed(true) y la interfaz/response lo describen como envío a papelera, no eliminación irreversible.
+- AUD-IMG-05: el código actual usa lotes y cursor de continuación, no el límite histórico fijo de 250 como resultado total. La eficiencia, reanudación y límites quedan para AUD-T-029.
+- AUD-IMG-06: mejorado estáticamente. Las referencias de Drive no interpretables bloquean la clasificación/administración y no se convierten en ausencia confirmada de uso. Los formatos reales requieren pruebas.
+- AUD-IMG-07: alcance documentado y validado estáticamente: restauración limitada a tipo vehiculo y los ocho campos de imagen de Cortes; se valida registro, campo, archivo e ID.
+
+## 7. Observaciones transferidas y dependencias
+- Para AUD-T-028: Tareas.txt 3828–3829 especifica que el escaneo no mueve archivos y que mover/papelera son acciones explícitas. Sin embargo, ui.js (5230–5251) llama automáticamente a saveUnusedImagesInventory con mode organize al completar el inventario, ADMIN expone handleOrganizeUnusedImagesBatch() (5153 en adelante) y index.html (489) anuncia el traslado automático a Cortes/Imagenes_Sin_Uso. El commit 693f4825 introduce ese comportamiento después del commit 91f75de3 que registra la especificación del gestor. Se transfiere el análisis de impacto y corrección a AUD-T-028; no se modificó código en esta iteración.
+- Para AUD-T-033: los bloqueos ScriptLock de proyectos Apps Script separados no coordinan entre sí. La coordinación transversal de escrituras ADMIN/WRITE ya tiene tarea existente AUG-003; se referencia, no se duplica.
+- Para AUD-T-029: rendimiento, lotes, cursor y reanudación del recorrido recursivo se mantienen dentro de su unidad de auditoría.
+
+## 8. Limitaciones y pruebas pendientes
+- Nivel de evidencia: E1, inspección estática de código, contratos, esquema y documentación.
+- No se ejecutaron pruebas de navegador, PWA, HTTP, Apps Script V8, Drive, Spreadsheet ni concurrencia.
+- No se verificó el deployment ADMIN, sus permisos, URLs ni versión operativa.
+- No se inspeccionaron filas reales de Imagenes_Reemplazadas/AdminImageUploads/ActividadUsuario ni archivos reales de Drive.
+- No se probó restauración de un archivo realmente enviado a papelera, fallo de flush, duplicados, filas malformadas, descarga cross-origin ni permisos de URL pública.
+- No se modificó código, configuración, datos, endpoints ni deployments. No hubo merge.
+
+## 9. Tareas derivadas y conclusión
+- AUG-026: integridad, recuperación y visibilidad de estados del historial; hallazgos H-AUD-027-001, 002, 003, 005 y 006.
+- AUG-027: decisión del alcance de referencias y separación entre historial e inventario; hallazgos H-AUD-027-007 y 008.
+- AUG-021: ampliación para incluir el registro durable de reemplazo/restauración, por H-AUD-027-004.
+- AUD-T-027 queda con auditoría estática E1 completada, hallazgos abiertos y validación funcional pendiente. No se declara funcionalmente cerrada.
+- Siguiente unidad del plan: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
+================================================================================

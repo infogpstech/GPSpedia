@@ -177,3 +177,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Implementación estática y revisión de código completadas; pruebas reales de Apps Script/Drive/Spreadsheet y publicación pendientes.
 
 - La instrucción del 2026-11-07 autoriza el renombrado canónico automático en normalizeImages y organizePrimaryVehicleImages y actualiza la restricción previa de no renombrar en esos flujos; no autoriza alterar la auditoría de inventario de solo lectura ni archivos huérfanos sin metadatos.
+
+
+## Estado del proyecto — cierre de AUD-T-027 (2026-11-07)
+- La rama de trabajo GPSpedia2.2.5_work quedó auditada desde HEAD 6932cf19d77c9c020a02e3d766b937f3175b8985; la rama base GPSpedia2.2.5 permaneció en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión: auditoría estática E1 completada; hallazgos H-AUD-027-001 a H-AUD-027-008 abiertos o sujetos a decisión; validación funcional pendiente.
+- Controles confirmados: autorización backend de ADMIN, ledger idempotente AdminImageUploads, registro histórico previo a confirmar el reemplazo, compensación, revalidación de referencias y árbol Cortes en las acciones manuales, envío a papelera descrito correctamente, vistas lista/cuadrícula y lightbox.
+- Pendientes: restauración accesible de estados en papelera/revisión; transiciones y rollback del estado histórico; integridad de IDs/filas; registro persistente de actor para reemplazo/restauración (ampliar AUG-021); documentar doce columnas de inventario; separar migración de esquema de lectura.
+- AUG-026 cubre integridad/recuperación del historial. AUG-027 requiere decisión sobre referencias de todas las hojas frente a Cortes y sobre separar historial e inventario.
+- La organización automática posterior al inventario detectada en ui.js/Services/admin.js se transfiere a AUD-T-028 por su discrepancia con los requisitos 6.4–6.5 de Tareas.txt. La coordinación de ScriptLock entre ADMIN/WRITE continúa en AUD-T-033/AUG-003.
+- No se modificó código ni datos; no se probaron Apps Script, navegador/PWA, HTTP, Drive, Spreadsheet ni deployments.
+- Siguiente unidad: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
