@@ -74,7 +74,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-023 | Seguridad ADMIN 0, registro de credenciales, hashing y migración | ed92f3a9 — reforzar autorización y proteger credenciales; 2e0bbcf7 — SHA-256 y límite de intentos; 6a226c18 — retirar credenciales de logs | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-024 | Administración de usuarios, privilegios, sesiones y controles de acceso | 2678ee02 — purga Logs y control de sesiones; 0666c1d1 — límites de sesión; 4bc9ac19 — serialización concurrente | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-025 | Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento | babf5ce4 — autorización y purga selectiva; e5c49b1d — enlaces completos en restore; abc7102f — backup/restore compartidos | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-026 | Telemetría, diagnóstico y health check de microservicios | e1defcb6 — restaurar comunicación/health check; 726727b6 — telemetría de servicios | POR AUDITAR |
+| AUD-T-026 | Telemetría, diagnóstico y health check de microservicios | e1defcb6 — restaurar comunicación/health check; 726727b6 — telemetría de servicios | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-027 | Historial de imágenes reemplazadas y acciones de gestión | 8f97d253 — gestión de imágenes reemplazadas; 9e9918c7 — seguridad y consistencia; 91f75de3 — gestor de imágenes sin uso | POR AUDITAR |
 | AUD-T-028 | Inventario de imágenes sin uso, clasificación y monitor global de Drive | 7983febe — persistir inventario en Spreadsheet; 91f75de3 — gestor y monitor global; 693f4825 — organización de imágenes sin uso | POR AUDITAR |
 | AUD-T-029 | Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación | 7a4539f1 — optimizar lotes; d305b1ab — MIME gzip; f3f7102d — persistir progreso; 06c3b322 — robustecer snapshot | POR AUDITAR |
@@ -386,3 +386,40 @@ H-AUD-025-001 a H-AUD-025-009. Evidencia, líneas, impacto y referencias cruzada
 
 ### Siguiente iteración
 AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
+ 
+## 14. Iteración técnica — AUD-T-026
+
+**Sesión:** AUD-20261107-S007  
+**Checkpoint:** AUD-CP-0007  
+**HEAD auditado:** eafb425abadc9ccda9964a5abd50d4ac020cf80a  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y VERIFICACIÓN DE BACKEND/DEPLOYMENTS PENDIENTES.
+
+### Alcance y archivos revisados
+api-config.js, ui.js, index.html, style.css, main.js, auth.js, offline.js, youtubeUpload.js, README.md y Services/Test/README.md. Se revisaron los contratos de routeAction()/checkAllServicesHealth(), las tarjetas, el detalle, el gráfico, el inicio del ping, los puntos de llamada y los cambios históricos e1defcb6 y 726727b6.
+
+### Resultado
+- Se confirmó que el monitoreo GET usa timeout individual de ocho segundos y aísla errores por servicio.
+- Se detectó que el ping POST de ADMIN no tiene timeout y precede al escaneo; una solicitud pendiente puede impedir que comience el diagnóstico de todos los servicios.
+- Se detectó que una respuesta HTTP 2xx con cuerpo inválido/no reconocible puede clasificarse como online.
+- No se implementan estados slow, unknown ni stale; tampoco se muestra en el detalle el código HTTP ni el motivo de error que ya devuelve el helper.
+- La vista de métricas no se refresca por el paso del tiempo y puede conservar datos caducados si no llegan nuevas solicitudes.
+- La gráfica usa la hora de finalización de cada solicitud aunque la etiqueta habla de solicitudes iniciadas; la ventana de quince buckets no cubre íntegramente todos los eventos que pueden seguir dentro de la ventana temporal. El límite de 600 eventos no muestra advertencia de truncamiento.
+- Se confirmó que la telemetría es local, temporal y sin payloads/credenciales; no representa tráfico global ni ejecuciones internas.
+- El backend está fuera del repositorio; no se pudieron verificar contratos GET ni deployments. El riesgo histórico de exposición de IDs en respuestas debug queda condicionado a una verificación actual.
+
+### Hallazgos
+H-AUD-026-001 a H-AUD-026-005. Evidencia, ubicación, impacto y controles positivos en Auditoría.txt.
+
+### Tareas derivadas
+- AUG-024 — robustecer el contrato de salud, clasificación de estados, timeout del ping, visibilidad de errores y verificación segura de endpoints/deployments.
+- AUG-025 — corregir vigencia, semántica temporal, ventana y truncamiento de telemetría local.
+
+### Validaciones y límites
+- Evidencia E1 solamente.
+- No se ejecutaron pruebas HTTP, navegador, Apps Script, Sheets, Drive ni pruebas de latencia/concurrencia reales.
+- No se verificaron los deployments ni las fuentes backend privadas.
+- No se modificó código ni se desplegaron servicios.
+
+### Siguiente iteración
+AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.

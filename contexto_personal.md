@@ -148,3 +148,18 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - **Limitaciones:** evidencia E1 únicamente. No se ejecutaron pruebas Apps Script, HTTP, navegador, Drive, Spreadsheet, restauraciones, purgas ni concurrencia real. No se verificaron deployments ni datos reales.
 - **No se modificó código ni se realizaron despliegues.**
 - **Siguiente unidad:** AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
+
+ 
+### Resultado de auditoría estática AUD-T-026 — 2026-11-07
+
+- **Sesión/checkpoint:** AUD-20261107-S007 / AUD-CP-0007.
+- **HEAD auditado:** eafb425abadc9ccda9964a5abd50d4ac020cf80a; rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- **Estado:** auditoría estática E1 completada; hallazgos abiertos; validación funcional y verificación de backend/deployments pendientes.
+- **Fuentes:** api-config.js, ui.js, index.html, style.css, main.js, auth.js, offline.js, youtubeUpload.js, README.md y Services/Test/README.md.
+- **Historial contrastado:** e1defcb6 (recuperación del health check ADMIN) y 726727b6 (telemetría y diagnóstico).
+- **Hallazgos H-AUD-026-001 a H-AUD-026-005:** ping ADMIN sin timeout puede bloquear el escaneo general; HTTP 2xx con cuerpo inválido/no reconocible puede marcarse online; no existen estados slow/unknown/stale ni presentación del código/motivo del error; la vista conserva métricas caducadas hasta el siguiente evento; la gráfica usa timestamp de finalización, puede excluir parte de la ventana y no avisa del límite de 600 eventos.
+- **Controles positivos:** timeout independiente de ocho segundos por GET; aislamiento de errores; métricas locales sin payloads/credenciales; diferenciación expresa entre tráfico observado en este navegador y métricas globales/internas; tarjetas accesibles y gráfico SVG responsive.
+- **Limitación crítica de evidencia:** las fuentes backend actuales y los deployments no están disponibles en el repositorio. El historial muestra respuestas debug que incluían IDs y nombres de hojas, pero no se confirma si la exposición persiste. La whitelist frontend no protege el cuerpo HTTP original.
+- **Tareas:** AUG-024 para contrato seguro/estados/timeout y verificación de deployments; AUG-025 para vigencia y precisión temporal de métricas.
+- **No se ejecutaron pruebas HTTP, navegador, Apps Script, Sheets o Drive. No se modificó código ni se desplegaron servicios.**
+- **Siguiente unidad:** AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.

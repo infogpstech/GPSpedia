@@ -3785,3 +3785,25 @@ ALCANCE
 - No se modificaron endpoints, configuraciones, datos de Spreadsheet/Drive ni deployments.
 - No se ejecutaron pruebas funcionales ni operaciones externas.
 ================================================================================
+
+ 
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-026: TELEMETRÍA, DIAGNÓSTICO Y HEALTH CHECK DE MICROSERVICIOS
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S007
+Checkpoint: AUD-CP-0007
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: se agregó el informe AUD-T-026 y los hallazgos H-AUD-026-001 a H-AUD-026-005, con controles positivos, riesgo histórico condicionado y limitaciones.
+- Plan_auditoría/Plan_Auditoria.md: se actualizó el estado de AUD-T-026 y se incorporó la iteración 14.
+- Plan_auditoría/Aug_Tareas.md: se añadieron AUG-024 y AUG-025.
+- Tareas.txt: se agregó el resultado de la auditoría y las tareas derivadas.
+- contexto_personal.md: se registró el estado de AUD-T-026 y la siguiente unidad.
+- checkpoint.md: se incorporaron checkpoint inicial y cierre AUD-CP-0007.
+
+ALCANCE
+- Solo se actualizaron documentos de trazabilidad.
+- No se modificaron api-config.js, ui.js, index.html, style.css, main.js ni otros archivos de aplicación.
+- No se modificaron endpoints, configuraciones, fuentes backend, datos de Spreadsheet/Drive ni deployments.
+- No se ejecutaron pruebas funcionales ni operaciones externas.
+================================================================================

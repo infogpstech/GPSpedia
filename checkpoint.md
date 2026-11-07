@@ -5853,3 +5853,96 @@ Auditar las herramientas ADMIN de mantenimiento de Spreadsheet y Drive: respaldo
 - La rama base conserva d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - Siguiente tarea: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
 ================================================================================
+
+ 
+================================================================================
+# CHECKPOINT INICIAL — AUD-T-026: TELEMETRÍA, DIAGNÓSTICO Y HEALTH CHECK DE MICROSERVICIOS
+
+**Fecha:** 2026-11-07
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD inicial confirmado:** eafb425abadc9ccda9964a5abd50d4ac020cf80a
+**Árbol inicial:** cfb3ebe73908ac760f8f8dce14b498f0af9240e6
+**Rama base:** GPSpedia2.2.5
+**HEAD de rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+**Sesión/checkpoint:** AUD-20261107-S007 / AUD-CP-0007
+
+## Tarea y alcance
+AUD-T-026 — Telemetría, diagnóstico y health check de microservicios. Auditar la configuración y los contratos de endpoints, routeAction(), métricas POST locales, checkAllServicesHealth(), ping ADMIN, tarjetas, detalle, gráfica, estados, límites temporales, dependencias y seguridad de respuestas debug. Contrastar los cambios históricos e1defcb6 y 726727b6. Mantener la auditoría estática; no modificar código durante esta fase.
+
+## Estado real al inicio
+- AUD-T-025 terminó con el commit documental eafb425abadc9ccda9964a5abd50d4ac020cf80a.
+- El HEAD actual de la rama de trabajo se confirmó directamente mediante Git refs: eafb425abadc9ccda9964a5abd50d4ac020cf80a; el árbol asociado es cfb3ebe73908ac760f8f8dce14b498f0af9240e6.
+- La rama base permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- El plan AUD-PLAN-2026-001 identifica e1defcb6 como recuperación de comunicación/health check ADMIN y 726727b6 como incorporación de telemetría de servicios.
+- README.md indica que los microservicios backend se despliegan por separado y que sus fuentes operativas están fuera del repositorio actual.
+- La interfaz actual muestra tarjetas, detalle y gráfica; la telemetría se describe como observación local del navegador, no como tráfico global ni contador de ejecuciones internas.
+- No se ha autorizado realizar llamadas a endpoints productivos, inspeccionar o modificar deployments, consultar Sheets/Drive ni ejecutar pruebas funcionales.
+
+## Archivos y dependencias previstos
+- api-config.js, ui.js, index.html, style.css.
+- main.js, auth.js, offline.js y youtubeUpload.js para revisar consumidores, ruteo y llamadas de red relacionadas.
+- README.md y Services/Test/README.md.
+- Auditoría.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Tareas.txt, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+- Fuentes backend y deployments: no disponibles en el repositorio; cualquier conclusión sobre su estado actual deberá quedar expresamente limitada.
+
+## Riesgos iniciales
+- Diferencias entre contratos GET debug de servicios independientes.
+- Respuestas HTTP exitosas que no necesariamente acreditan un health check válido.
+- Timeout y aislamiento de solicitudes, estados lentos/desconocidos y vigencia de métricas.
+- Exposición histórica de identificadores/estructura en respuestas debug; verificar sin afirmar que persiste.
+- Métricas locales limitadas por ventana, capacidad y ciclo de vida de la interfaz.
+- No inventar CPU, RAM, sesiones, funciones internas ni ejecuciones backend.
+
+## Fase
+Checkpoint inicial preparado; auditoría estática formal en curso. No se modificó código ni se ejecutaron solicitudes externas.
+================================================================================
+
+ 
+================================================================================
+# CHECKPOINT DE CIERRE — AUD-T-026: TELEMETRÍA, DIAGNÓSTICO Y HEALTH CHECK DE MICROSERVICIOS
+
+**Fecha:** 2026-11-07
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD padre de la tarea:** eafb425abadc9ccda9964a5abd50d4ac020cf80a
+**Rama base:** GPSpedia2.2.5
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+**Sesión/checkpoint:** AUD-20261107-S007 / AUD-CP-0007
+
+## Estado final
+**AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y VERIFICACIÓN DE BACKEND/DEPLOYMENTS PENDIENTES.**
+
+## Resultado
+- Se revisaron la capa API, el registro de métricas, el escaneo GET, el ping ADMIN, la interfaz, el gráfico, los estilos y los consumidores relacionados.
+- Se registraron H-AUD-026-001 a H-AUD-026-005.
+- Se confirmó el timeout individual de ocho segundos en cada GET y el aislamiento de sus errores.
+- Se detectó que el ping POST de ADMIN no tiene timeout y puede bloquear el comienzo del escaneo general.
+- Se detectó que HTTP 2xx con cuerpo inválido/no reconocible puede marcarse online; faltan estados slow/unknown/stale y presentación de errores/códigos HTTP.
+- Se detectaron métricas visualmente caducadas, semántica temporal incoherente en la gráfica y truncamiento silencioso al superar 600 eventos.
+- Se registró como riesgo condicionado la exposición histórica de metadatos en GET debug; no se confirmó su persistencia en deployments actuales.
+- Se añadieron AUG-024 y AUG-025.
+
+## Archivos incluidos en el único commit documental
+- Auditoría.txt
+- Plan_auditoría/Plan_Auditoria.md
+- Plan_auditoría/Aug_Tareas.md
+- Tareas.txt
+- contexto_personal.md
+- ChangesLogs.txt
+- checkpoint.md
+
+## Validaciones y limitaciones
+- Evidencia E1: inspección estática de fuentes, contratos, historial, documentación y referencias.
+- No se ejecutaron pruebas HTTP, navegador, Apps Script, Sheets, Drive, latencia ni concurrencia real.
+- No se inspeccionaron fuentes backend privadas ni deployments.
+- No se modificó código, endpoints, configuración ni datos.
+- No se realizó despliegue ni merge.
+- La rama base permanece intacta.
+
+## Continuidad
+- HEAD padre de la tarea: eafb425abadc9ccda9964a5abd50d4ac020cf80a.
+- El único commit documental de AUD-T-026 se identifica en el historial de GPSpedia2.2.5_work.
+- La rama base conserva d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Siguiente tarea: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
+================================================================================

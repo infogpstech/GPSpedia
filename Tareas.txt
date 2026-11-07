@@ -5139,3 +5139,46 @@ VALIDACIONES Y LÍMITES
 - No se modificó código, endpoints, configuración ni datos productivos.
 - No se desplegó Apps Script ni se realizó merge.
 ================================================================================
+
+ 
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-026: TELEMETRÍA, DIAGNÓSTICO Y HEALTH CHECK DE MICROSERVICIOS
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S007
+Checkpoint: AUD-CP-0007
+HEAD auditado: eafb425abadc9ccda9964a5abd50d4ac020cf80a
+Estado: AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y VERIFICACIÓN DE BACKEND/DEPLOYMENTS PENDIENTES.
+
+HALLAZGOS REGISTRADOS
+- H-AUD-026-001 (Media): el ping POST de ADMIN carece de timeout y puede bloquear el inicio del escaneo GET de todos los servicios.
+- H-AUD-026-002 (Media): HTTP 2xx con cuerpo vacío, inválido o no reconocible puede clasificarse como online.
+- H-AUD-026-003 (Media): no hay estados slow/unknown/stale y no se muestran código HTTP ni motivo del error.
+- H-AUD-026-004 (Baja): la vista de telemetría no se refresca al caducar la ventana de quince minutos y vuelve a renderizar aunque el panel esté oculto.
+- H-AUD-026-005 (Baja): el timestamp corresponde a finalización y no a inicio; la gráfica puede excluir parte del intervalo y no advierte el truncamiento del límite de 600 eventos.
+- Detalle técnico y controles positivos: Auditoría.txt, sección AUD-T-026.
+
+RIESGO HISTÓRICO PENDIENTE DE VERIFICACIÓN
+- Los endpoints GET debug=true llegaron a exponer IDs de Spreadsheet/Drive y nombres de hojas en commits históricos. La lista permitida del frontend no protege la respuesta HTTP original.
+- No se pudo comprobar si la situación persiste en los deployments actuales porque las fuentes backend están fuera del repositorio. No se declara una exposición actual confirmada.
+
+CONTROLES POSITIVOS
+- GET de health check en paralelo con timeout individual de ocho segundos y manejo aislado de errores.
+- Telemetría POST en memoria, ventana de quince minutos y máximo de 600 eventos; no conserva payloads ni credenciales.
+- La interfaz distingue las métricas observadas desde este navegador de las métricas internas/globales que el backend no proporciona.
+- No se inventan CPU, RAM, número de usuarios, contador de ejecuciones internas ni funciones internas ejecutadas.
+- Tarjetas accesibles, gráfico SVG y estilos responsive; IDs de diagnóstico únicos.
+- No se mezclan las transferencias a YouTube ni la carga de imágenes con el tráfico de microservicios GPSpedia.
+
+TAREAS NUEVAS
+- AUG-024 — Robustecer el contrato de health check, clasificación de estados, timeout de ping, errores y verificación segura de endpoints/deployments. Prioridad Alta.
+- AUG-025 — Corregir vigencia, semántica temporal, ventana y truncamiento de telemetría local. Prioridad Media.
+
+VALIDACIONES Y LÍMITES
+- Evidencia E1 únicamente.
+- No se ejecutaron pruebas HTTP, navegador, Apps Script, Sheets, Drive ni pruebas reales de latencia/concurrencia.
+- No se inspeccionaron fuentes backend privadas ni deployments.
+- No se modificó código, endpoints, configuración ni datos productivos.
+- No se desplegó Apps Script ni se realizó merge.
+
+Siguiente unidad: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
+================================================================================

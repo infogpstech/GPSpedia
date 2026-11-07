@@ -7833,3 +7833,116 @@ H-AUD-025-009 — BAJA — Existen acciones ADMIN con handlers sin ruta canónic
 AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; PRUEBAS FUNCIONALES, VALIDACIÓN DE INTEGRIDAD Y REMEDIACIONES PENDIENTES.
 Siguiente unidad del plan: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
 ================================================================================
+
+================================================================================
+AUDITORÍA TÉCNICA — AUD-T-026: TELEMETRÍA, DIAGNÓSTICO Y HEALTH CHECK DE MICROSERVICIOS
+Fecha: 2026-11-07
+Plan: AUD-PLAN-2026-001
+Sesión: AUD-20261107-S007
+Checkpoint: AUD-CP-0007
+HEAD auditado: eafb425abadc9ccda9964a5abd50d4ac020cf80a
+HEAD rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Evidencia: E1 — inspección estática de fuentes, contratos, historial y referencias.
+================================================================================
+
+1. ALCANCE Y FUENTES REVISADAS
+- api-config.js (247 líneas): API_ENDPOINTS, ACTION_TO_SERVICE_MAP, SERVICE_METRIC_WINDOW_MS, SERVICE_METRIC_MAX_EVENTS, recordServiceMetric(), getServiceMetricsSnapshot(), subscribeServiceMetrics(), routeAction() y checkAllServicesHealth().
+- ui.js (10.301 líneas): importaciones de métricas; openDevTools(); initAdminPanelListeners(); renderServiceCards(); renderServiceDetail(); renderServiceTrafficChart(); renderServiceDashboard(); runServicesHealthScan(); window.triggerAdminPanelPing; guardas de inicialización y puntos de llamada a routeAction() relacionados.
+- index.html: sección Diagnóstico, contenedores services-health-grid, service-health-detail y service-traffic-chart.
+- style.css: estilos de tarjetas, estados, métricas, detalle, gráfico SVG, leyenda y reglas responsive.
+- main.js: exposición de routeAction() y orquestación.
+- auth.js: consumo de routeAction() para AUTH y acciones relacionadas.
+- youtubeUpload.js: operaciones de inicialización/aprobación por routeAction() y transferencia XHR directa a YouTube, fuera de los microservicios GPSpedia.
+- offline.js: fetch de recursos visuales/imágenes, no de endpoints de microservicios.
+- README.md y Services/Test/README.md: arquitectura y disponibilidad de fuentes backend.
+- Tareas.txt, Auditoría.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+- Historial contrastado: e1defcb6df1da5c0241b4b96528456f161ee62e1 (recuperación de comunicación/health check ADMIN) y 726727b653dc18177bac0ee3cb9ea7f33e83b2d1 (telemetría de servicios y panel de diagnóstico).
+
+2. RESULTADO DEL INVENTARIO Y TRAZABILIDAD
+- API_ENDPOINTS contiene LEGACY, AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y ADMIN. checkAllServicesHealth() recorre todas las claves configuradas.
+- Las acciones API de la aplicación inspeccionadas se canalizan por routeAction(). Las llamadas XHR de youtubeUpload.js transfieren el archivo a YouTube y el fetch de offline.js recupera recursos visuales; no son solicitudes a los microservicios GPSpedia y no deben sumarse a sus métricas.
+- El escaneo GET ?debug=true es independiente de la telemetría POST. Los GET de salud no se agregan a la gráfica; esta separación está documentada en la interfaz y en el historial.
+- El backend está desplegado de forma independiente y sus fuentes operativas no están incluidas en el repositorio actual. README.md declara que la lógica backend se administra fuera de este repositorio y que los archivos de microservicios fueron retirados. Por ello no fue posible revisar el código vigente de doGet() de cada servicio ni comprobar los deployments reales.
+- El commit histórico e1defcb6 incorporó doGet() en ADMIN. Su respuesta debug=true incluía service, version, spreadsheetId, driveFolderId y sheetsAccessed; la respuesta GET estándar devolvía status success.
+- El historial de auditoría previo registró exposiciones equivalentes de metadatos en endpoints debug de AUTH/ADMIN/FEEDBACK y la ausencia de debug/version uniforme en USERS. El cambio 726727b6 aplicó una lista permitida de metadatos en el frontend, pero ese filtrado ocurre después de recibir el cuerpo HTTP; no sustituye la redacción en el backend.
+- La condición actual de esos endpoints y despliegues no puede afirmarse como confirmada ni como corregida desde este repositorio. Se registra como riesgo de verificación, no como vulnerabilidad actual demostrada.
+
+3. HALLAZGOS
+
+H-AUD-026-001 — MEDIA — El ping POST de ADMIN puede impedir que comience el escaneo independiente de los demás servicios
+- Evidencia: ui.js, openDevTools() e initAdminPanelListeners(), líneas 3235–3315 y 3567–3586; api-config.js, routeAction(), líneas 74–118.
+- Al abrir el modal, openDevTools() inicializa los listeners y después ejecuta window.triggerAdminPanelPing().
+- triggerAdminPanelPing() espera routeAction('ping') antes de invocar runServicesHealthScan(). routeAction() no aplica timeout, AbortController ni límite temporal a las solicitudes POST.
+- Si el fetch del ping queda pendiente sin resolver ni rechazar, la ejecución no alcanza runServicesHealthScan(); por tanto, los GET de salud de AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES y LEGACY tampoco comienzan.
+- El timeout individual de ocho segundos de checkAllServicesHealth() no protege esta fase previa porque todavía no se ha llamado a esa función.
+- Impacto: una única solicitud pendiente al servicio ADMIN puede bloquear el inicio de todo el diagnóstico, pese a que el escaneo GET esté diseñado para tolerar fallos individuales.
+- Relación: nueva AUG-024. Separar el inicio del escaneo del resultado del ping y definir un límite temporal para este último.
+
+H-AUD-026-002 — MEDIA — Una respuesta HTTP exitosa con cuerpo inválido o no reconocible puede clasificarse como servicio en línea
+- Evidencia: api-config.js, checkAllServicesHealth(), líneas 198–237.
+- El cuerpo se intenta convertir a JSON; si el parseo falla, debugData queda en null. Si la respuesta HTTP es 2xx, reportedFailure queda false y el resultado se registra como status online aunque el cuerpo esté vacío, sea HTML, texto no JSON o no contenga un contrato de diagnóstico reconocible.
+- También se aceptan valores JSON que no representan un objeto de diagnóstico válido: la ausencia de metadata no cambia el estado. metadataAvailable se calcula, pero no se utiliza para impedir la clasificación online ni para mostrar estado desconocido.
+- reportedFailure solo reconoce exactamente error, offline, unavailable y failed. Estados como degraded, slow o unknown no reciben tratamiento específico.
+- Impacto: respuestas de proxy, páginas de error HTTP 200, contratos rotos o respuestas vacías pueden producir falsos positivos de disponibilidad.
+- Relación: nueva AUG-024. Definir un contrato verificable y representar respuestas no interpretables como desconocidas, no como disponibilidad confirmada.
+
+H-AUD-026-003 — MEDIA — El panel no distingue servicios lentos/desconocidos ni presenta el código HTTP o el motivo del error
+- Evidencia: api-config.js, checkAllServicesHealth(), líneas 214–235; ui.js, renderServiceCards() y renderServiceDetail(), líneas 3332–3453.
+- Los estados producidos son online, error y offline. No existe umbral configurable para clasificar una respuesta lenta, ni estado unknown para respuestas sin contrato/metadatos suficientes, ni estado stale para resultados vencidos.
+- checkAllServicesHealth() devuelve code y error, pero renderServiceDetail() no muestra ninguno de esos campos. Tampoco se expone el motivo de fallo en la tarjeta. Cuando el backend informa status error con HTTP 2xx, error se asigna a null.
+- La vista de detalle presenta el estado reportado, pero no ofrece el código HTTP ni el motivo asociado cuando están disponibles.
+- Impacto: el usuario puede ver «Con error» o «Sin respuesta» sin información suficiente para diferenciar HTTP, timeout, contrato inválido o fallo declarado por backend; tampoco puede identificar un servicio lento.
+- Relación: nueva AUG-024. Acordar umbrales y estados; mostrar código y explicación segura; conservar desconocido cuando no exista evidencia suficiente.
+
+H-AUD-026-004 — BAJA — Las métricas de ventana móvil pueden permanecer visibles después de caducar
+- Evidencia: api-config.js, getServiceMetricsSnapshot(), líneas 61–65; ui.js, suscripción de métricas y renderServiceTrafficChart()/renderServiceDetail(), líneas 3371–3529 y 3558–3564.
+- getServiceMetricsSnapshot() elimina eventos anteriores a quince minutos cuando se consulta. Sin embargo, el panel solo vuelve a consultar el snapshot al registrarse una solicitud POST, al seleccionar/renderizar una tarjeta o al terminar un escaneo de salud.
+- No existe temporizador ni mecanismo de caducidad visual que vuelva a renderizar el detalle y la gráfica mientras no llegan solicitudes nuevas.
+- Si el usuario deja el panel abierto sin tráfico, el DOM conserva conteos, eventos y puntos que ya superaron la ventana de quince minutos. El dato interno se depurará en la siguiente consulta, pero la vista no se actualiza por el mero paso del tiempo.
+- La suscripción también reconstruye la gráfica y el detalle por cada evento aunque el modal o la pestaña Diagnóstico no estén visibles, generando trabajo de DOM innecesario durante operaciones normales.
+- Impacto: presentación temporalmente obsoleta y renderizados evitables en segundo plano.
+- Relación: nueva AUG-025. Actualizar/caducar la vista por tiempo y limitar los renderizados al contexto visible, manteniendo la captura de métricas independiente de la interfaz.
+
+H-AUD-026-005 — BAJA — La gráfica registra el momento de finalización, aunque su descripción indica solicitudes iniciadas, y el límite de eventos no señala truncamiento
+- Evidencia: api-config.js, routeAction() y recordServiceMetric(), líneas 42–59 y 74–118; ui.js, renderServiceTrafficChart(), líneas 3456–3529; index.html, líneas 263–267.
+- routeAction() toma requestStartedAt al inicio, pero recordServiceMetric() recibe timestamp: Date.now() dentro de finally. El gráfico agrupa por ese timestamp de finalización, mientras que el texto de index.html describe solicitudes iniciadas desde el navegador. Una solicitud larga puede quedar asignada a un minuto posterior al de su inicio.
+- La ventana temporal mantiene SERVICE_METRIC_WINDOW_MS = 15 minutos, pero la gráfica construye quince buckets con firstMinute = currentMinute - 14 minutos. Parte de los eventos que todavía pertenecen a la ventana exacta de quince minutos puede quedar fuera del primer bucket.
+- SERVICE_METRIC_MAX_EVENTS limita el arreglo a 600 eventos. Al superar el límite, se descartan eventos antiguos sin que la interfaz indique que el conjunto está truncado; los conteos y promedios pueden representar solo una parte de las solicitudes observadas durante la ventana.
+- Impacto: discrepancia entre el significado anunciado y la marca temporal real, posible pérdida del primer tramo de la ventana y ausencia de advertencia cuando el límite de retención reduce la muestra.
+- Relación: nueva AUG-025. Definir si la gráfica mide inicio o finalización, alinear la ventana/buckets y señalar explícitamente la truncación.
+
+4. RIESGO DE SEGURIDAD Y LIMITACIÓN DE EVIDENCIA — NO CONFIRMAR COMO DEFECTO ACTUAL
+- Los commits históricos e1defcb6 y la auditoría previa muestran que respuestas GET debug=true llegaron a incluir spreadsheetId, driveFolderId y nombres de hojas.
+- La implementación frontend actual filtra propiedades antes de construir el objeto metadata, pero el cuerpo HTTP original ya fue recibido por el navegador y puede consultarse en las herramientas de red o mediante una llamada directa al endpoint.
+- Como las fuentes backend no están en el repositorio y no se inspeccionaron los deployments, no se puede afirmar que esos identificadores sigan siendo devueltos hoy. Tampoco se puede afirmar que la sanitización histórica del backend esté desplegada.
+- Requiere verificar cada servicio y deployment; la redacción de datos internos debe realizarse en el backend, no depender del filtrado de la interfaz. Se vincula con AUG-024.
+
+5. CONTROLES POSITIVOS Y COMPORTAMIENTO CORRECTO
+- checkAllServicesHealth() ejecuta los GET de los servicios en paralelo y aplica timeout independiente de ocho segundos mediante AbortController. Un error o timeout de una comprobación queda aislado en el resultado de ese servicio.
+- Los errores de red se representan como offline y los códigos HTTP no exitosos como error en el resultado interno.
+- routeAction() registra eventos en finally para respuestas exitosas, errores HTTP, errores de aplicación, JSON inválido y fallos de red, siempre que la solicitud termine.
+- La telemetría almacena únicamente servicio, acción, timestamp, duración, resultado y código HTTP. No conserva payloads, contraseñas, tokens ni identificadores personales.
+- La retención está limitada a quince minutos y 600 eventos en memoria de la instancia del módulo. No se persiste en Sheets ni IndexedDB; se elimina al recargar/cerrar la página.
+- El panel identifica expresamente que el gráfico representa solicitudes API observadas desde este navegador, no tráfico global ni ejecuciones internas de Apps Script.
+- La interfaz denomina «Acciones API observadas» a las acciones registradas y no las presenta como nombres de funciones internas del backend.
+- El detalle diferencia métricas de navegador de metadatos reportados por backend. No inventa CPU, RAM, sesiones, contador interno de ejecuciones ni funciones ejecutadas.
+- Los contenedores HTML del diagnóstico tienen IDs únicos en la versión inspeccionada. Las tarjetas usan botones, foco visible y aria-pressed; el gráfico tiene role=img y aria-label.
+- Se utiliza SVG nativo y CSS responsive, sin introducir una biblioteca de gráficos externa.
+- La inspección de puntos de llamada confirmó que las acciones de API GPSpedia examinadas pasan por routeAction(). Las transferencias XHR a YouTube y fetch de imágenes no se mezclan con las métricas de microservicios.
+
+6. ESTADO DE VALIDACIÓN Y LIMITACIONES
+- Evidencia E1: inspección estática de fuentes, contratos, historial, documentación y referencias.
+- No se ejecutó JavaScript en navegador ni se realizó análisis de sintaxis/runtime en Apps Script.
+- No se ejecutaron solicitudes HTTP a endpoints reales, ni pruebas de timeout, HTTP 503, JSON inválido, respuestas parciales o latencia.
+- No se accedió a los proyectos backend privados, fuentes actuales de ADMIN/AUTH/CATALOG/WRITE/USERS/FEEDBACK/UTILITIES/LEGACY ni despliegues Apps Script.
+- No se verificó si los endpoints GET debug=true actuales exponen identificadores o estructura interna; el riesgo se conserva como pendiente de verificación.
+- No se midió tráfico real global, ejecuciones internas, dependencias Sheets/Drive ni cuotas.
+- No se ejecutaron pruebas de navegador, escritorio, móvil o PWA.
+- No se modificó código, endpoints, configuración, datos de Spreadsheet/Drive ni deployments.
+
+7. ESTADO DE AUD-T-026
+AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y VERIFICACIÓN DE BACKEND/DEPLOYMENTS PENDIENTES.
+Hallazgos: H-AUD-026-001 a H-AUD-026-005.
+Tareas derivadas: AUG-024 y AUG-025.
+Siguiente unidad del plan: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
+================================================================================

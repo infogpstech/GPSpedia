@@ -251,3 +251,34 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Problema:** createSheet/addColumn existen en el router backend, pero no están mapeadas por routeAction ni tienen consumidor frontend identificado.
 - **Criterios de aceptación:** decidir y documentar si son acciones soportadas, internas o heredadas; si se mantienen, definir contrato, autorización, validación y pruebas; si se retiran, hacerlo en tarea autorizada tras comprobar consumidores externos. No eliminar código durante auditoría.
 - **Estado:** NUEVA; pendiente.
+
+ 
+### AUG-024 — Robustecer el contrato de health check y la clasificación de estados de microservicios
+- **Origen:** H-AUD-026-001, H-AUD-026-002 y H-AUD-026-003; riesgo histórico de metadatos debug pendiente de verificación. **Prioridad:** Alta.
+- **Tarea auditada:** AUD-T-026. **Sesión/checkpoint:** AUD-20261107-S007 / AUD-CP-0007.
+- **Problema:** el ping POST de ADMIN no tiene timeout y precede al escaneo GET; una respuesta 2xx con cuerpo vacío/no JSON/no reconocible puede marcarse online; no existen estados slow/unknown/stale y el detalle no muestra código HTTP ni motivo de error. El backend actual y los deployments no están disponibles en el repositorio para verificar el contrato. Históricamente algunos GET debug devolvían IDs de Spreadsheet/Drive y nombres de hojas; el filtrado frontend no protege el cuerpo HTTP original.
+- **Criterios de aceptación:**
+  1. Ejecutar el escaneo de servicios independientemente del ping ADMIN; aplicar timeout explícito al ping y conservar aislamiento de cada comprobación.
+  2. Definir un contrato JSON verificable por servicio, con identidad, estado y versión cuando exista; una respuesta vacía, HTML, JSON inválido, primitivo o contrato desconocido debe quedar como unknown/error, nunca como online por el solo HTTP 2xx.
+  3. Definir umbrales configurables y documentados para slow; diferenciar online, slow, unavailable/offline, error, unknown y stale sin inferir disponibilidad a partir de ausencia de datos.
+  4. Mostrar código HTTP y una explicación segura del fallo; no ocultar el motivo cuando backend reporte error con HTTP 2xx.
+  5. Auditar fuentes backend y deployments actuales de AUTH, CATALOG, WRITE, USERS, FEEDBACK, UTILITIES, ADMIN y LEGACY. Verificar la identidad real del servicio y la uniformidad de respuestas.
+  6. Redactar en backend spreadsheetId, driveFolderId, cacheKey, nombres/estructura interna de hojas, stack traces, tokens y secretos de cualquier endpoint debug público. No depender del filtrado frontend como control de seguridad.
+  7. Incorporar comprobaciones de solo lectura para Sheets/Drive únicamente cuando exista una fuente segura y verificable; separar endpoint disponible de dependencia interna comprobada.
+  8. Probar éxito, HTTP 4xx/5xx, timeout, JSON inválido, HTML, cuerpo vacío, estado backend error/degraded/unknown, endpoint equivocado, dependencia no disponible y servicio lento; un fallo individual no debe bloquear los demás.
+- **Relación:** TAREA ADMIN 2 — Monitor del sistema y estado de servicios; H-AUD-026-001 a H-AUD-026-003.
+- **Estado:** NUEVA; pendiente de acceso a fuentes backend/deployments y diseño del contrato.
+
+### AUG-025 — Corregir vigencia y precisión temporal de la telemetría local
+- **Origen:** H-AUD-026-004 y H-AUD-026-005. **Prioridad:** Media.
+- **Tarea auditada:** AUD-T-026. **Sesión/checkpoint:** AUD-20261107-S007 / AUD-CP-0007.
+- **Problema:** el panel no se vuelve a renderizar cuando eventos salen de la ventana de quince minutos; la suscripción actualiza DOM aunque el panel esté oculto. La marca temporal se toma al finalizar el POST aunque el gráfico describa solicitudes iniciadas. La distribución de quince buckets puede excluir parte del intervalo exacto y el límite de 600 eventos trunca muestras sin advertencia.
+- **Criterios de aceptación:**
+  1. Definir y etiquetar inequívocamente si la serie agrupa por inicio o finalización de solicitud; usar una marca temporal coherente con esa definición.
+  2. Alinear buckets y ventana para incluir exactamente el intervalo declarado, incluyendo límites de minuto y eventos próximos al corte.
+  3. Actualizar/caducar detalle y gráfica cuando transcurra el tiempo aunque no lleguen nuevas solicitudes; no dejar visible como actual una muestra que ya expiró.
+  4. Indicar cuando se alcance el máximo de eventos y la muestra esté truncada; no presentar conteos parciales como si fueran el total completo de la ventana.
+  5. Evitar reconstrucciones de DOM cuando el modal o la sección Diagnóstico no estén visibles; mantener captura independiente y administrar correctamente la suscripción.
+  6. Probar solicitudes largas que crucen minutos, inactividad superior a quince minutos, límite superior a 600 eventos, solicitudes concurrentes, cierre/reapertura del modal y recarga de la aplicación.
+- **Relación:** TAREA ADMIN 2, H-AUD-026-004 y H-AUD-026-005.
+- **Estado:** NUEVA; pendiente.
