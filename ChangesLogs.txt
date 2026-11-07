@@ -4019,3 +4019,14 @@ ALCANCE Y VALIDACIÓN
 - No se ejecutaron pruebas sintácticas, navegador, HTTP, Apps Script V8, YouTube, Drive, Spreadsheet real, aprobación/rechazo, reintentos ni concurrencia.
 - No hubo despliegue ni merge. La rama base GPSpedia2.2.5 permanece sin cambios.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-036
+Fecha 2026-11-07 | Rama GPSpedia2.2.5_work | Sesión AUD-20261107-S017
+- Auditoría.txt: informe E1 y hallazgos H-AUD-036-001 a 005.
+- Tareas.txt: resultado AUD-T-036 y nuevas AUG-045/AUG-046/AUG-047.
+- Plan_auditoría/Plan_Auditoria.md: estado actualizado e iteración 22; siguiente AUD-T-037.
+- Plan_auditoría/Aug_Tareas.md: criterios de aceptación AUG-045/AUG-046/AUG-047.
+- contexto_personal.md y checkpoint.md: continuidad y checkpoints actualizados.
+Solo documentación. Sin cambios de código/assets/endpoints/configuración/Spreadsheet/Drive/deployments. Sin pruebas E2/E3 ni revisión jurídica. Rama base sin cambios; no hubo merge/despliegue.
+================================================================================

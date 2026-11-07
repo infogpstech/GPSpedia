@@ -587,3 +587,39 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 ### Adenda AUD-T-035 — AUG-040: integridad de imagen en alta PYS
 - **Evidencia:** Services/feedback.js, handleAddProblem(). El formulario UI marca imagen required, pero el backend no exige imgBase64; el catch de Drive permite continuar y guardar imageUrl vacío con status success.
 - **Criterio adicional:** definir la imagen como obligatoria también en servidor si ese es el contrato vigente; si la carga Drive falla, no confirmar el alta como completa ni dejar un registro parcial sin estado. Diseñar compensación si se crea el archivo y falla la escritura de la fila; probar fallo de Drive, payload sin imagen y error al guardar la hoja.
+
+
+### AUG-045 — Versionar y hacer trazable la aceptación de Términos y Condiciones
+- Origen: H-AUD-036-001/002. Prioridad alta si se requiere evidencia individual; media si se conserva política local por dispositivo.
+- Criterios:
+  1. Definir si la aceptación se exige por dispositivo o por usuario.
+  2. Asociar la aceptación a una versión/fecha; una versión nueva debe activar reaceptación según política.
+  3. Si se requiere evidencia individual, registrar en backend userId, versión, timestamp y estado; localStorage será solo caché.
+  4. Si se mantiene política por dispositivo, documentar que localStorage no acredita qué persona aceptó.
+  5. Fallar cerrado si falta el modal o no puede leerse el estado; manejar errores de almacenamiento sin desbloquear catálogo.
+  6. Probar dos cuentas en un dispositivo, una cuenta en dos dispositivos, logout/login, storage vacío/alterado/no disponible, versión nueva y markup/JS desalineados.
+- Relación: AUD-T-036; AUD-T-024/AUG-016; AUG-046.
+- Estado: NUEVA; decisión, diseño, implementación y pruebas pendientes.
+
+### AUG-046 — Revisar y aprobar el contenido legal y el aviso de privacidad
+- Origen: H-AUD-036-003. Prioridad alta antes de usarlo como aceptación legal definitiva.
+- Criterios:
+  1. Obtener revisión/aprobación del responsable legal competente para jurisdicción y operación; esta auditoría técnica no es dictamen jurídico.
+  2. Confirmar entidad responsable y denominación legal (Motorlink S.A.) y relación de marca TRACKLINK/GPSpedia.
+  3. Validar categorías de datos, finalidades, conservación, acceso, destinatarios/proveedores, transferencias y canal para consultas/solicitudes, según operación real.
+  4. Revisar uso laboral, cuentas, confidencialidad, propiedad intelectual, extracción, deslinde y suspensión.
+  5. Aprobar texto, versión y fecha efectiva; mantener consistencia con aviso inicial y aceptación.
+  6. Registrar aprobación antes de desplegar versión legal definitiva.
+- Relación: AUD-T-036; AUG-045; AUD-T-023/AUD-T-024.
+- Estado: NUEVA; revisión y aprobación pendientes.
+
+### AUG-047 — Completar accesibilidad, navegación y disponibilidad offline de modales legales
+- Origen: H-AUD-036-004/005. Prioridad baja/media.
+- Criterios:
+  1. Añadir role/aria-modal/aria-labelledby/aria-describedby sin permitir cerrar el aviso obligatorio.
+  2. Definir foco inicial, contención/restauración y teclado para el acuerdo; documentar Escape y botón de cierre.
+  3. Incluir Logo_TemaOscuro.png y tracklink_logo.png en estrategia offline o fallback local.
+  4. Verificar History API al cerrar el acuerdo sobre el aviso, sin entradas modalOpen residuales.
+  5. Probar teclado, lector, móvil, tema claro/oscuro, offline y apertura desde login/footer/aviso.
+- Relación: AUD-T-036/AUD-T-037/AUG-045.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.

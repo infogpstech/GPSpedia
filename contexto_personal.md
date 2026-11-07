@@ -278,3 +278,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Tareas nuevas: AUG-043 (contratos protegidos y ciclo YouTube) y AUG-044 (reconciliar mapa/dispatchers). AUG-040 recibe adenda de integridad de imagen PYS. Se mantienen AUG-039/AUG-040/AUG-041/AUG-042.
 - No se modificó código, endpoints, Spreadsheet, Drive, datos productivos ni deployments. Solo inspección estática; no se ejecutaron E2/E3, navegador, HTTP, Apps Script, YouTube, Drive, Spreadsheet real ni concurrencia.
 - Siguiente unidad: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
+
+## Continuidad — AUD-T-036 (2026-11-07)
+- Sesión/checkpoint AUD-20261107-S017 / AUD-CP-0017.
+- HEAD bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010 en GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1 completada; H-AUD-036-001 a 005 abiertos; pruebas funcionales y revisión legal pendientes.
+- Aviso y acuerdo en index.html; acuerdo actual de 16 secciones; enlaces en login, aviso y footer.
+- gpsepedia_terms_accepted es booleano local por dispositivo, compartido por cuentas, sin userId/timestamp/version; showApp falla abierto si falta terms-modal; localStorage sin manejo de errores.
+- Sección 13 de privacidad general; requiere aprobación legal. Logo_TemaOscuro y tracklink_logo fuera de precache; falta semántica/foco accesible.
+- Tareas AUG-045 aceptación versionada/trazable; AUG-046 revisión legal; AUG-047 accesibilidad/History/offline.
+- Sin cambios de código ni datos; solo E1 estática. Siguiente AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda.

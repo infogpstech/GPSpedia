@@ -5585,3 +5585,17 @@ Se conservan las dependencias AUG-039 (WRITE supplementary), AUG-040 (seguridad 
 VALIDACIÓN Y LÍMITES
 Solo inspección estática E1 e historial documental. No se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script, YouTube, Drive, Spreadsheet real ni concurrencia. No se verificaron deployments publicados. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
 ================================================================================
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-036
+Sesión AUD-20261107-S017 | Checkpoint AUD-CP-0017 | HEAD bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010
+Estado: E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/LEGAL PENDIENTE.
+- H-AUD-036-001 MEDIA/ALTA: aceptación local por dispositivo, compartida por cuentas y sin userId, timestamp o versión.
+- H-AUD-036-002 MEDIA: showApp() falla abierto si falta terms-modal; getItem/setItem sin manejo de excepciones.
+- H-AUD-036-003 MEDIA: sección de privacidad general; falta revisar retención, contacto, derechos, categorías y proveedores. No se emite dictamen jurídico.
+- H-AUD-036-004 BAJA/MEDIA: Logo_TemaOscuro.png y tracklink_logo.png no están en urlsToCache.
+- H-AUD-036-005 BAJA/MEDIA: faltan semántica de diálogo y gestión de foco/teclado; verificar pila History.
+Controles: aviso posterior a autenticación, catálogo/footer ocultos, sin X, bloqueo popstate, acceso al acuerdo desde login/aviso/footer, 16 secciones actuales.
+Tareas: AUG-045 aceptación versionada/trazable; AUG-046 revisión legal; AUG-047 accesibilidad/History/offline.
+Límites: solo E1 estática; sin navegador, PWA offline, pruebas de cuenta/storage, revisión legal externa ni verificación de deployments. No se modificó código ni datos productivos.
+================================================================================

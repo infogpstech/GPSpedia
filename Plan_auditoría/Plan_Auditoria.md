@@ -84,7 +84,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-033 | Coordinación de mutaciones entre servicios y Utilities | 8a3646cc — documentar hallazgos de coordinación; 44d127b3 — Utilities safe order processing; 336915b7/ef2db2e5 — renombramientos de Utilities | E1 COMPLETADA; PROTOCOLO COMPARTIDO AUSENTE; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-034 | Acceso y visibilidad del panel/historial por rol y sesión | e4900b37 — normalización rol desarrollador; 0d4c0d01 — diagnóstico acceso historial; 187839c2 — asegurar acceso a gestión de imágenes | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-035 | Endpoints, separación de servicios y contratos frontend/backend | commits de actualización AUTH/USERS/ADMIN/FEEDBACK/WRITE; 975c5913 y f8cc191f — alta de servicios en el historial | E1 COMPLETADA; CONTRATOS INCONSISTENTES; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-036 | Términos, consentimiento inicial y elementos legales de interfaz | e06791d0 — modal de términos en primer login; 9aa59063 — integración de términos y enlace footer | POR AUDITAR |
+| AUD-T-036 | Términos, consentimiento inicial y elementos legales de interfaz | e06791d0 — modal de términos en primer login; 9aa59063 — integración de términos y enlace footer | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y REVISIÓN LEGAL PENDIENTES |
 | AUD-T-037 | Catálogo, caché, sincronización incremental y búsqueda | f1db85fe — estrategia de caché incremental; 7fae24ac — búsqueda numérica; commits de catálogo y mejoras generales | POR AUDITAR |
 
 ### 4.1. Control de cancelaciones, sustituciones y cambios de alcance
@@ -670,3 +670,12 @@ E1: inspección estática de dispatchers, callsites y contratos. No se ejecutaro
 
 ### Siguiente iteración
 AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
+
+## 22. Iteración técnica — AUD-T-036
+Sesión AUD-20261107-S017 | Checkpoint AUD-CP-0017 | HEAD auditado bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010 | HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y REVISIÓN LEGAL PENDIENTES.
+Alcance: index.html, ui.js, main.js, style.css, auth.js, service-worker.js, assets e historial e06791d0/9aa59063.
+Resultado: H-AUD-036-001 a 005; aceptación local sin versión/identidad, fallo abierto si falta modal, privacidad general pendiente de aprobación, logos fuera del precache y accesibilidad/foco incompletos.
+Tareas: AUG-045, AUG-046, AUG-047.
+Límites: E1 estática; sin pruebas de navegador, teclado/lector, PWA offline, storage, cambio de cuenta, revisión jurídica o verificación de deployments. No se modificó código ni datos.
+Siguiente: AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda.

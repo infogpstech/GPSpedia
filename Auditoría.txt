@@ -8900,3 +8900,52 @@ La auditoría fue estática. No se ejecutaron pruebas de navegador, HTTP, Apps S
 
 Siguiente unidad del plan: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-036: TÉRMINOS, CONSENTIMIENTO INICIAL Y ELEMENTOS LEGALES DE INTERFAZ
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S017 | Checkpoint: AUD-CP-0017
+HEAD auditado: bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010 | Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y REVISIÓN LEGAL PENDIENTES.
+
+ALCANCE
+index.html (login-terms-link, footer-terms-link, terms-modal, terms-link-in-modal, btn-accept-terms, terms-agreement-modal y texto legal); ui.js (setupModal, openTermsAgreement, showApp); main.js (popstate, updateLogos y listeners); style.css (modales y responsive); auth.js (checkSession/login); service-worker.js (precache); assets icon-v3-512x512.png, Logo_TemaOscuro.png y tracklink_logo.png. Historial contrastado: e06791d0 y 9aa59063.
+
+CONTROLES POSITIVOS
+- showApp() consulta gpsepedia_terms_accepted tras autenticación; si no está aceptado y existe terms-modal, oculta .container/.footer y muestra el aviso.
+- El aviso no tiene X; btn-accept-terms es el único control que registra aceptación. main.js intercepta popstate mientras el aviso está visible.
+- El acuerdo puede abrirse desde login, aviso inicial y footer. Su z-index 3200 queda sobre el aviso inicial (3100); cerrar el acuerdo no cierra el aviso subyacente.
+- El acuerdo actual contiene 16 secciones numeradas, incluida la 12 (registro/auditoría) y la 13 (privacidad).
+- Los logos GPSpedia se actualizan para tema claro/oscuro y los tres archivos referenciados existen en la raíz.
+
+HALLAZGOS
+H-AUD-036-001 — MEDIA/ALTA — aceptación local por dispositivo, no constancia individual/versionada.
+showApp() usa un único booleano localStorage gpsepedia_terms_accepted, sin userId, fecha/hora ni versión y sin registro en AUTH/USERS/Spreadsheet. Si una persona acepta, otras cuentas en el mismo navegador omiten el aviso. Cambiar el texto tampoco fuerza reaceptación. Esto coincide con el requisito histórico «primer inicio de sesión por dispositivo», pero no acredita qué cuenta aceptó qué versión. El responsable debe decidir explícitamente si la política es por dispositivo o por usuario.
+
+H-AUD-036-002 — MEDIA — el control falla abierto si falta terms-modal y no maneja errores de almacenamiento.
+La condición if (!termsAccepted && termsModal) solo bloquea si el elemento existe. Si falta por markup/versión desalineada, la rama else muestra el catálogo sin aceptación. getItem/setItem tampoco manejan excepciones; un error de almacenamiento puede interrumpir showApp() o el botón Aceptar sin recuperación. Si la aceptación es obligatoria, el control debe fallar cerrado y distinguir error de aceptación previa.
+
+H-AUD-036-003 — MEDIA — privacidad descrita en términos generales, requiere revisión legal.
+La sección 13 indica finalidades generales (administrar cuentas, controlar accesos, seguridad y mejora), que no se comercializan datos y que se compartirían por obligación legal o autorización. No detalla plazos de conservación, canal de contacto, procedimiento de derechos, categorías concretas por sistema ni proveedores tecnológicos que intervienen en almacenamiento/procesamiento. No es un dictamen jurídico: requiere revisión del responsable legal para la jurisdicción y operación reales. Confirmar también la entidad responsable (Motorlink S.A.) y la relación de marca TRACKLINK/GPSpedia.
+
+H-AUD-036-004 — BAJA/MEDIA — logos del acuerdo no incluidos en precache.
+service-worker.js precarga icon-v3-512x512.png, pero no Logo_TemaOscuro.png ni tracklink_logo.png, aunque main.js/index.html los utilizan. Los archivos existen en el repositorio, pero pueden faltar en una primera visita offline o si nunca se almacenaron localmente.
+
+H-AUD-036-005 — BAJA/MEDIA — accesibilidad y foco de los modales no están implementados explícitamente.
+Los dos modales carecen de role=dialog, aria-modal y relaciones aria-labelledby/aria-describedby. setupModal() solo configura cierre y History API; no gestiona foco inicial, contención/restauración de foco ni Escape. El aviso inicial debe seguir siendo ineludible, pero el acuerdo necesita navegación accesible. También debe comprobarse si cerrar el acuerdo mientras el aviso sigue visible deja entradas modalOpen residuales en History API.
+
+OBSERVACIONES
+- Algunos registros históricos hablan de nueve secciones; index.html vigente contiene 16. Se toma el contenido actual como fuente.
+- El acuerdo está fechado «Julio, 2026» y no tiene ID técnico de versión.
+- La aceptación local persiste tras logout/cambio de cuenta; es coherente con el requisito por dispositivo, pero debe confirmarse como política deliberada.
+
+TAREAS DERIVADAS
+AUG-045: aceptación versionada/trazable, política por usuario/dispositivo, fail-closed y errores de almacenamiento.
+AUG-046: revisión/aprobación legal del acuerdo y aviso de privacidad.
+AUG-047: accesibilidad, History API y disponibilidad offline.
+No se modifica texto legal ni política durante la auditoría.
+
+CONCLUSIÓN Y LÍMITES
+E1 completada. El aviso y acuerdo están integrados y accesibles desde tres puntos; el bloqueo funciona en el flujo estático si el elemento existe y localStorage responde. Permanecen riesgos de aceptación compartida/no versionada, fallo abierto por ausencia de markup, revisión legal, accesibilidad y logos offline.
+No se ejecutaron pruebas de navegador, lector de pantalla, teclado, PWA offline, cambio de cuenta, storage bloqueado o nueva versión legal. No hubo revisión jurídica externa ni verificación de deployments. No se modificó código, assets, endpoints, Spreadsheet, Drive, datos productivos ni deployments.
+Siguiente unidad: AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda.
+================================================================================

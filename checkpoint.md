@@ -355,3 +355,28 @@ CAMBIOS DE APLICACIÓN: NINGUNO. Solo documentación de auditoría y trazabilida
 SIGUIENTE ACCIÓN: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
 Este checkpoint final es la última actualización documental antes del único commit de la tarea. Commit previsto: audit(api): revisar contratos frontend/backend e imagen/video; parent_sha y expected_sha iguales a e13623beb059b33171758545404381fbbf512c16; force=false. El SHA del commit que incorpora este checkpoint quedará identificable en el historial Git. La rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0017
+Fecha 2026-11-07 | Sesión AUD-20261107-S017 | Tarea AUD-T-036.
+Rama GPSpedia2.2.5_work HEAD bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010; base GPSpedia2.2.5 HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Alcance: aviso, acuerdo, consentimiento local, accesos, History API, accesibilidad y precache.
+Referencias e06791d0 y 9aa59063. Sin modificar código/assets/endpoints/configuración/Spreadsheet/Drive/deployments ni operar datos productivos.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0017
+HEAD auditado bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+Estado: E1 completada; H-AUD-036-001 a 005 abiertos; AUG-045/AUG-046/AUG-047 creadas; validación funcional y revisión legal pendientes.
+RESPALDOS EXACTOS:
+- Auditoría.txt: d2111a8afb24414ec15d3da053413d7495d3216b
+- Tareas.txt: 8bd9fe0e9d4cb45a692e0509b23f83972d5da4cd
+- Plan_auditoría/Plan_Auditoria.md: 2d8866ebc91372c5a5932aa747eb8e16af53a8f7
+- Plan_auditoría/Aug_Tareas.md: a6be4becaf917b7cd2e8b93e964347fb95e69887
+- ChangesLogs.txt: 97296e4c41a15c2e07d3bda02f2514b59240be3f
+- contexto_personal.md: fbf01486df75efe17c9e63a0ded5081fc9972643
+- checkpoint.md: 9886c2f80d650cf46b07ecf8a917a39b9a80028a
+Validación: solo E1 estática; sin navegador, PWA offline, pruebas de storage/cuenta, revisión legal externa o deployments.
+Solo documentación; ningún cambio de código/datos productivos.
+Siguiente: AUD-T-037. Commit previsto: audit(legal): revisar consentimiento y términos de GPSpedia; parent/expected bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010; force=false; base debe permanecer d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================
