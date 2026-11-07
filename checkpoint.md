@@ -5512,3 +5512,78 @@ Auditar AUD-T-023 — Seguridad de contraseñas, hashing, logs y migración, con
 LIMITACIONES
 La auditoría no confirma el estado real de los deployments ni la Spreadsheet productiva. No declarar funcionalmente validada la tarea hasta ejecutar la matriz en el entorno aislado y, cuando proceda, el entorno autorizado.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-T-023: SEGURIDAD DE CONTRASEÑAS, HASHING, LOGS Y MIGRACIÓN
+Fecha: 2026-11-07
+Plan: AUD-PLAN-2026-001
+Sesión: AUD-20261107-S003
+Checkpoint: AUD-CP-0003
+
+REPOSITORIO Y RAMAS
+- Repositorio: infogpstech/GPSpedia.
+- Rama de trabajo autorizada: GPSpedia2.2.5_work.
+- HEAD confirmado antes de iniciar: 9becc604474cfea4da16fbf0244beffef729e9ca.
+- Árbol confirmado: 33fcc4c8f7d9f271d7cf9108c0c1f5178cc6f59a.
+- Rama base: GPSpedia2.2.5.
+- HEAD de base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Ambas ramas informaron protected=false; la base permanece protegida por el procedimiento interno.
+- No se modificará la rama base ni se crearán ramas nuevas.
+
+TAREA Y OBJETIVO
+Auditar la implementación vigente de seguridad ADMIN 0, registro y protección de credenciales, hashing, verificación de contraseñas, compatibilidad/migración de credenciales históricas, límites de intentos y protección de logs. Determinar qué problemas históricos se resolvieron, cuáles permanecen, si existen correcciones incompletas y si cambios posteriores introdujeron defectos o regresiones.
+
+HISTORIAL PRINCIPAL Y ARCHIVOS
+- ed92f3a9b383c8d92f53f0ecf0fb146a37bba868: autorización backend ADMIN y protección de credenciales; archivos históricos Services/admin.js y Services/feedback.js, además de documentación y tareas.
+- 2e0bbcf78db6b7d775f59a0eef396084a690059c: SHA-256 y límite de intentos; archivos históricos Services/Auth.js y Services/users.js, además de documentación y checkpoint.
+- 6a226c185637b5ec8f97c00b360aeee37f511041: retirada de credenciales de logs AUTH; Services/Auth.js, documentación y checkpoint.
+- Revisar los archivos vigentes y las pruebas/copias relacionadas; ampliar el inventario solo cuando las dependencias reales lo requieran.
+
+FASE Y RESTRICCIONES
+- Preparación documental de AUD-T-023.
+- La auditoría de código todavía no ha comenzado.
+- La revisión deberá ser archivo por archivo, línea por línea y función por función.
+- No modificar ni corregir código durante la fase diagnóstica.
+- No operar sobre datos productivos ni desplegar servicios.
+- Documentar todos los hallazgos en Auditoría.txt; los problemas fuera de alcance se gestionarán conforme a Proceso de desarollo.md.
+- Aplicar íntegramente el papel del auditor y los criterios ampliados registrados en contexto_personal.md, incluidos condiciones de carrera, errores no resueltos en el HEAD actual, fallos de lógica, sintaxis, typos, inconsistencias, dependencias, duplicación, funciones huérfanas/sin uso, riesgos y efectos colaterales.
+
+RIESGOS Y DEPENDENCIAS CONOCIDOS
+- AUD-T-002 detectó duplicación de helpers de hash entre AUTH y USERS; se debe volver a comprobar el estado actual sin asumir que permanece o que fue resuelta.
+- Los commits históricos no prueban por sí solos que la implementación actual sea correcta.
+- La auditoría estática no equivale a validación funcional ni confirma deployments o datos reales.
+
+SIGUIENTE ACCIÓN
+Recuperar los diffs completos de los tres commits principales y auditar los archivos vigentes y sus dependencias, comenzando por Services/Auth.js, Services/users.js, Services/admin.js y Services/feedback.js. Identificar los archivos de prueba y consumidores relacionados desde el árbol y las referencias reales del código. Registrar hallazgos sin modificar fuentes.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — PREPARACIÓN DOCUMENTAL DE AUD-T-023
+Fecha: 2026-11-07
+Plan: AUD-PLAN-2026-001
+Sesión: AUD-20261107-S003
+Checkpoint: AUD-CP-0003
+HEAD padre de esta actualización: 9becc604474cfea4da16fbf0244beffef729e9ca
+Rama base: GPSpedia2.2.5
+HEAD de base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO
+PREPARACIÓN DOCUMENTAL COMPLETADA. AUD-T-023 SIGUE PENDIENTE DE AUDITORÍA TÉCNICA.
+
+CAMBIOS DOCUMENTALES
+- contexto_personal.md: registrados objetivo general de auditoría, papel obligatorio del auditor, criterios de detección de condiciones de carrera y defectos residuales, procedimiento diagnóstico y alcance de AUD-T-023.
+- ChangesLogs.txt: agregado el registro objetivo de esta actualización.
+- checkpoint.md: agregado este checkpoint inicial y final de preparación.
+
+VERIFICACIONES Y LIMITACIONES
+- HEAD de la rama de trabajo y de la rama base confirmados antes de escribir.
+- No se modificó código ni se ejecutaron pruebas.
+- No se modificaron servicios, endpoints, datos, deployments ni configuraciones.
+- No se realizó la auditoría técnica de contraseñas, hashing, logs o migración.
+- No se declara AUD-T-023 completada ni validada.
+
+SIGUIENTE ACCIÓN CONCRETA
+Confirmar nuevamente ambos HEAD y comenzar la auditoría estática de AUD-T-023, recuperando los diffs históricos y revisando los archivos vigentes, línea por línea y función por función. Registrar los hallazgos en Auditoría.txt sin corregir código durante la fase diagnóstica.
+================================================================================
+

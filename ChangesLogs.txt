@@ -3700,3 +3700,22 @@ ARCHIVOS DOCUMENTALES
 ALCANCE
 No se modificaron Services/Auth.js, Services/users.js, auth.js, users.html, api-config.js ni copias de prueba. No se desplegó Apps Script, no se ejecutó HTTP/navegador y no se modificaron Sheets/Drive.
 ================================================================================
+
+================================================================================
+REGISTRO DOCUMENTAL — PREPARACIÓN Y CRITERIOS DE AUD-T-023
+Fecha: 2026-11-07
+Plan: AUD-PLAN-2026-001
+Sesión: AUD-20261107-S003
+Checkpoint: AUD-CP-0003
+
+ARCHIVOS DOCUMENTALES
+- contexto_personal.md: incorporación del objetivo de la auditoría global, responsabilidades del auditor, detección obligatoria de condiciones de carrera y otros defectos, reglas diagnósticas y alcance de AUD-T-023.
+- checkpoint.md: registro inicial y cierre de la preparación documental de AUD-T-023, con ramas, HEAD, alcance, restricciones y siguiente acción.
+- ChangesLogs.txt: registro de esta actualización documental.
+
+ALCANCE Y LIMITACIONES
+- No se modificaron archivos de código, servicios, pruebas, endpoints, datos, deployments ni configuraciones.
+- No se ejecutaron pruebas funcionales ni operaciones sobre Apps Script, HTTP, Spreadsheet o Drive.
+- La auditoría técnica de AUD-T-023 permanece pendiente; este registro únicamente formaliza su objetivo, alcance y criterios obligatorios.
+================================================================================
+
