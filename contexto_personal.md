@@ -131,3 +131,20 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - **Limitaciones:** evidencia E1 únicamente. No se ejecutaron pruebas de sintaxis/runtime, Apps Script, HTTP, navegador, Spreadsheet, Drive ni concurrencia real. No se verificaron deployments ni datos reales.
 - **No se modificó código ni se realizaron despliegues.**
 - **Siguiente unidad:** AUD-T-025 — herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
+
+
+
+### Resultado de auditoría estática AUD-T-025 — 2026-11-07
+
+- **Sesión/checkpoint:** AUD-20261107-S006 / AUD-CP-0006.
+- **HEAD auditado:** 941dfb166ae5af4631d0711d50ab3d45cf7225c1; rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- **Estado:** auditoría estática E1 completada; hallazgos abiertos y validación funcional pendiente.
+- **Fuentes:** Services/admin.js, Services/feedback.js, ui.js, api-config.js, index.html, README.md y Services/Test/README.md.
+- **Historial contrastado:** babf5ce4, 2678ee02, e5c49b1d, abc7102f, 8001b431 y 06c3b322.
+- **Hallazgos H-AUD-025-001 a H-AUD-025-009:** restore DB sin rollback ni snapshot automático; restore Drive destructivo sin rollback; backup Drive recursivo sin manifiesto/reanudación y artefactos parciales aceptables; terminal Drive no restringida al árbol Cortes; getActivityLogs lee toda la hoja para devolver 100; timestamps inválidos no se clasifican durante la purga; logs ADMIN no persistentes; IndexedDB deleteDatabase no esperado; handlers createSheet/addColumn sin ruta canónica/consumidor.
+- **Hallazgo anterior reconfirmado:** H-AUD-023-005/AUG-013 (purga Logs concurrente con inserciones AUTH); no se duplicó.
+- **Controles positivos:** ADMIN exige Desarrollador para todas las acciones salvo ping; FEEDBACK protege consultas/purgas por rol; backups y restores validan identidad/tipo/nombre/ubicación; frontend mantiene confirmaciones y normalización de enlaces por tipo.
+- **Tareas:** AUG-013 permanece abierta y se amplía; nuevas AUG-018 a AUG-023 documentan recuperación de restore, límite terminal Drive, escalabilidad/retención de actividad, auditoría persistente, borrado IndexedDB y acciones huérfanas.
+- **Limitaciones:** evidencia E1 únicamente. No se ejecutaron pruebas Apps Script, HTTP, navegador, Drive, Spreadsheet, restauraciones, purgas ni concurrencia real. No se verificaron deployments ni datos reales.
+- **No se modificó código ni se realizaron despliegues.**
+- **Siguiente unidad:** AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.

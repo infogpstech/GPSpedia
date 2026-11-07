@@ -5763,3 +5763,93 @@ Auditar el ciclo de vida de sesiones, límites por rol, validación de identidad
 - La rama base conserva d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - Siguiente tarea: AUD-T-025 — herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
 ================================================================================
+
+
+
+================================================================================
+# CHECKPOINT INICIAL — AUD-T-025: HERRAMIENTAS ADMIN, BASE DE DATOS, BACKUP, RESTORE, LOGS Y MANTENIMIENTO
+
+**Fecha:** 2026-11-07
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**Rama base:** GPSpedia2.2.5
+**HEAD inicial confirmado:** 941dfb166ae5af4631d0711d50ab3d45cf7225c1
+**HEAD base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+**Sesión:** AUD-20261107-S006
+**Checkpoint:** AUD-CP-0006
+
+## Alcance
+Auditar las herramientas ADMIN de mantenimiento de Spreadsheet y Drive: respaldo/restauración, reorganización de base de datos, terminal Drive, gestión de logs y purgas, almacenamiento, limpieza de caché y contratos de las acciones administrativas. Revisar frontend, enrutamiento, autorización backend, dependencias y efectos colaterales. No implementar cambios durante la fase diagnóstica.
+
+## Estado real al inicio
+- AUD-T-024 finalizó con commit documental 941dfb166ae5af4631d0711d50ab3d45cf7225c1.
+- La rama base se mantiene en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Los cambios históricos de backup/restore compartidos se registraron en abc7102f; la purga de Logs y autorización en babf5ce4/2678ee02; la normalización del enlace Spreadsheet en e5c49b1d.
+- El panel usa un campo compartido para los enlaces de Spreadsheet/carpeta y conserva confirmaciones para restauración.
+- Los endpoints ADMIN y FEEDBACK están separados. Las validaciones backend deben considerarse autoritativas; la UI no sustituye autorización.
+- La auditoría anterior de backup/restore ya dejó documentado que restoreDrive limpia destino antes de copiar y no implementa rollback; comprobar si el riesgo sigue vigente.
+- H-AUD-023-005/AUG-013 documenta carrera de clearSensitiveLogs frente a inserciones AUTH; no duplicar si continúa vigente.
+- No se han confirmado los deployments actuales ni se dispone de acceso directo a los recursos reales.
+
+## Archivos y funcionalidades
+- Services/admin.js, Services/feedback.js.
+- ui.js, api-config.js, index.html.
+- README.md, Services/Test/README.md.
+- Auditoría.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Tareas.txt, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+
+## Riesgos y dependencias
+- Restauraciones destructivas sobre recursos compartidos.
+- Copias recursivas Drive sin asumir que éxito de creación implica integridad de contenido.
+- ScriptLock no compartido entre proyectos Apps Script.
+- Acciones de purga y crecimiento de registros.
+- Terminal Drive y alcance de los IDs recibidos desde frontend.
+- No desplegar, no modificar datos, no ejecutar backup/restore/purgas reales ni probar sobre Drive/Spreadsheet productivos.
+
+**Fase al registrar el checkpoint inicial:** inicio documentado; auditoría estática en curso.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT DE CIERRE — AUD-T-025: HERRAMIENTAS ADMIN, BASE DE DATOS, BACKUP, RESTORE, LOGS Y MANTENIMIENTO
+
+**Fecha:** 2026-11-07
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD padre de la tarea:** 941dfb166ae5af4631d0711d50ab3d45cf7225c1
+**Rama base:** GPSpedia2.2.5
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+**Sesión/checkpoint:** AUD-20261107-S006 / AUD-CP-0006
+
+## Estado final
+**AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; PRUEBAS FUNCIONALES, VALIDACIÓN DE INTEGRIDAD Y REMEDIACIONES PENDIENTES.**
+
+## Resultado
+- Se revisaron backend ADMIN/FEEDBACK, frontend, contratos de ruteo, panel, historial y documentación.
+- Se registraron H-AUD-025-001 a H-AUD-025-009.
+- Se confirmó autorización Desarrollador en ADMIN (excepto ping) y permisos específicos de FEEDBACK para consulta/purga.
+- Se confirmaron los riesgos de sustitución sin rollback, copia recursiva incompleta, terminal Drive fuera de Cortes, escalabilidad/retención de logs, falta de auditoría persistente y borrado IndexedDB no esperado.
+- H-AUD-023-005/AUG-013 se reconfirmó sin duplicar identificador.
+- Se ampliaron tareas existentes y se registraron AUG-018 a AUG-023.
+
+## Archivos incluidos en el único commit documental
+- Auditoría.txt
+- Plan_auditoría/Plan_Auditoria.md
+- Plan_auditoría/Aug_Tareas.md
+- Tareas.txt
+- contexto_personal.md
+- ChangesLogs.txt
+- checkpoint.md
+
+## Validaciones y limitaciones
+- Evidencia E1: inspección estática de fuentes, contratos, historial y diffs.
+- No se ejecutaron Apps Script V8, HTTP, navegador, DriveApp, SpreadsheetApp, backups, restores, purgas ni pruebas concurrentes reales.
+- No se verificaron deployments ni datos reales.
+- No se modificó código, endpoints, configuración ni datos.
+- No se realizó despliegue ni merge.
+
+## Continuidad
+- HEAD padre de la tarea: 941dfb166ae5af4631d0711d50ab3d45cf7225c1.
+- El commit único que incorpora este checkpoint y todos los documentos se identifica en el historial Git de GPSpedia2.2.5_work.
+- La rama base conserva d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Siguiente tarea: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
+================================================================================

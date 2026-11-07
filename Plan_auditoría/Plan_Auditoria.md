@@ -73,7 +73,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-022 | Panel de desarrollador, navegación por secciones y modal administrativo | da7c146c — reorganizar panel; fd534545 — refinamiento; 9b1f210c — consola global | POR AUDITAR |
 | AUD-T-023 | Seguridad ADMIN 0, registro de credenciales, hashing y migración | ed92f3a9 — reforzar autorización y proteger credenciales; 2e0bbcf7 — SHA-256 y límite de intentos; 6a226c18 — retirar credenciales de logs | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-024 | Administración de usuarios, privilegios, sesiones y controles de acceso | 2678ee02 — purga Logs y control de sesiones; 0666c1d1 — límites de sesión; 4bc9ac19 — serialización concurrente | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-025 | Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento | babf5ce4 — autorización y purga selectiva; e5c49b1d — enlaces completos en restore; abc7102f — backup/restore compartidos | POR AUDITAR |
+| AUD-T-025 | Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento | babf5ce4 — autorización y purga selectiva; e5c49b1d — enlaces completos en restore; abc7102f — backup/restore compartidos | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-026 | Telemetría, diagnóstico y health check de microservicios | e1defcb6 — restaurar comunicación/health check; 726727b6 — telemetría de servicios | POR AUDITAR |
 | AUD-T-027 | Historial de imágenes reemplazadas y acciones de gestión | 8f97d253 — gestión de imágenes reemplazadas; 9e9918c7 — seguridad y consistencia; 91f75de3 — gestor de imágenes sin uso | POR AUDITAR |
 | AUD-T-028 | Inventario de imágenes sin uso, clasificación y monitor global de Drive | 7983febe — persistir inventario en Spreadsheet; 91f75de3 — gestor y monitor global; 693f4825 — organización de imágenes sin uso | POR AUDITAR |
@@ -340,3 +340,49 @@ H-AUD-024-001 a H-AUD-024-010. Evidencia, impacto, severidad y relaciones se enc
 AUD-T-025 — herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
 
 
+
+
+## 13. Iteración técnica — AUD-T-025
+
+**Sesión:** AUD-20261107-S006  
+**Checkpoint:** AUD-CP-0006  
+**HEAD auditado:** 941dfb166ae5af4631d0711d50ab3d45cf7225c1  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Alcance y archivos revisados
+Services/admin.js, Services/feedback.js, ui.js, api-config.js, index.html, README.md y Services/Test/README.md. Se contrastaron los cambios históricos babf5ce4, 2678ee02, e5c49b1d, abc7102f, 8001b431 y 06c3b322.
+
+### Resultado
+- Se confirmó la protección general de ADMIN por sesión Desarrollador para todas las acciones salvo ping.
+- Se verificó la validación de identidad/tipo/ubicación de los recursos de respaldo y el campo compartido de enlaces.
+- Se detectó que restoreDatabase elimina las hojas actuales antes de copiar y no dispone de rollback ni respaldo automático inmediato del destino.
+- Se confirmó que restoreDrive limpia Cortes antes de copiar y no dispone de rollback.
+- La copia recursiva de Drive no genera manifiesto ni mecanismo de reanudación; un contenedor parcial puede conservar un nombre aceptado por restoreDrive.
+- La terminal Drive no verifica que currentFolderId, fileId y targetFolderId permanezcan dentro del árbol Cortes.
+- getActivityLogs carga toda la hoja para devolver solo 100 filas; la purga por antigüedad deja silenciosamente timestamps inválidos.
+- doPost de ADMIN mantiene logs únicamente en el arreglo de respuesta, sin registro persistente.
+- El vaciado de IndexedDB no espera el resultado asíncrono de deleteDatabase.
+- createSheet/addColumn no tienen ruta canónica en ACTION_TO_SERVICE_MAP ni consumidor frontend identificado.
+- H-AUD-023-005/AUG-013 se mantiene vigente para la carrera de purga Logs frente a inserciones AUTH; no se duplica su ID.
+
+### Hallazgos
+H-AUD-025-001 a H-AUD-025-009. Evidencia, líneas, impacto y referencias cruzadas en Auditoría.txt.
+
+### Tareas derivadas
+- AUG-013 se mantiene abierta y se reconfirma por la coordinación de purga Logs/AUTH.
+- AUG-018 — restauraciones recuperables e integridad de respaldos DB/Drive.
+- AUG-019 — limitar la terminal Drive al árbol Cortes.
+- AUG-020 — escalabilidad y tratamiento de timestamps inválidos en ActividadUsuario.
+- AUG-021 — registro persistente de operaciones administrativas sensibles.
+- AUG-022 — esperar y verificar la eliminación asíncrona de IndexedDB.
+- AUG-023 — resolver el estado de acciones ADMIN sin ruta/consumidor.
+
+### Validaciones y límites
+- Evidencia E1 solamente.
+- No se ejecutaron pruebas Apps Script, HTTP, navegador, Drive, Spreadsheet ni restauraciones/purgas reales.
+- No se modificó código ni se desplegaron servicios.
+- La matriz funcional consolidada continúa pendiente.
+
+### Siguiente iteración
+AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.

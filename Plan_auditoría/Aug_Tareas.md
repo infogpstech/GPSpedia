@@ -197,3 +197,57 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 
 ## Historial de AUD-T-024
 - 2026-11-07 — Auditoría estática E1 completada. H-AUD-024-001 a H-AUD-024-010 registrados en Auditoría.txt. No se modificó código ni se ejecutaron pruebas funcionales.
+
+
+
+## Adenda AUD-T-025 — herramientas ADMIN, respaldo/restauración, Logs y mantenimiento
+
+### AUG-013 — Coordinar purga de Logs con inserciones AUTH
+- **Reconfirmación:** H-AUD-023-005 sigue vigente en AUD-T-025.
+- **Evidencia actual:** Services/feedback.js, handleClearSensitiveLogs(), líneas 1686–1720; AUTH y FEEDBACK son proyectos separados.
+- **Adenda:** probar inserciones AUTH simultáneas con el escaneo y borrado por índices de FEEDBACK; conservar todos los logs no sensibles y definir una estrategia coordinada sin asumir ScriptLock compartido.
+- **Estado:** EXISTENTE; abierta; no duplicar.
+
+### AUG-018 — Restauraciones recuperables y verificación integral de respaldos DB/Drive
+- **Origen:** H-AUD-025-001, H-AUD-025-002 y H-AUD-025-003. **Prioridad:** Crítica.
+- **Tarea auditada:** AUD-T-025. **Sesión/checkpoint:** AUD-20261107-S006 / AUD-CP-0006.
+- **Problema:** restoreDatabase elimina las hojas productivas antes de terminar de copiar y restoreDrive vacía Cortes antes de copiar. Ninguno dispone de rollback. BackupDrive recorre el árbol en una ejecución recursiva sin manifiesto, lotes ni reanudación; si falla puede dejar un contenedor parcial que el restore acepta por nombre/ubicación.
+- **Criterios de aceptación:** generar y verificar un respaldo actual del destino antes de cualquier sustitución; diseñar staging/commit de restauración o rollback probado; comparar inventario de hojas y contenido mínimo DB; generar manifiesto de Drive con rutas, IDs/copias, MIME, tamaños y conteos verificables; marcar explícitamente respaldos incompletos; no permitir restaurar contenedores sin estado completo; soportar lotes/reanudación; simular fallos en cada etapa y demostrar recuperación en copias aisladas; coordinar escritores concurrentes mediante AUD-T-033 sin afirmar que ScriptLock de proyectos distintos es compartido.
+- **Relación:** AUD-T-033/AUG-003, AUG-002, H-AUD-025-001/002/003.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-019 — Restringir la terminal Drive al árbol Cortes
+- **Origen:** H-AUD-025-004. **Prioridad:** Media.
+- **Evidencia:** Services/admin.js, handleDriveCommand(), líneas 3750–3841.
+- **Problema:** currentFolderId se acepta sin comprobar ascendencia; cd .. puede salir de Cortes; mkdir y move pueden operar fuera del árbol previsto y move acepta fileId/targetFolderId arbitrarios.
+- **Criterios de aceptación:** comprobar ascendencia de carpeta activa, archivo y destino en cada acción; bloquear navegación al padre de la raíz Cortes; permitir únicamente mkdir/move dentro del árbol autorizado; probar payloads manipulados y carpetas/archivos externos.
+- **Estado:** NUEVA; pendiente.
+
+### AUG-020 — Escalabilidad y tratamiento de datos temporales en ActividadUsuario
+- **Origen:** H-AUD-025-005 y H-AUD-025-006. **Prioridad:** Media.
+- **Evidencia:** Services/feedback.js, handleGetActivityLogs() líneas 1268–1288 y handleClearActivityLogs() líneas 1641–1683.
+- **Problema:** se carga y transforma todo el historial para devolver 100 filas; timestamps vacíos/no válidos no se clasifican ni notifican durante la purga de antigüedad.
+- **Criterios de aceptación:** recuperar solo el rango más reciente requerido; preservar orden y máximo de 100 registros; definir tratamiento explícito de timestamp inválido (cuarentena/reporte/retención controlada, sin borrado inferido); informar cantidad de filas no clasificables; probar hojas grandes y formatos Date/string.
+- **Estado:** NUEVA; pendiente.
+
+### AUG-021 — Registro persistente de operaciones administrativas sensibles
+- **Origen:** H-AUD-025-007. **Prioridad:** Media.
+- **Evidencia:** Services/admin.js, doPost(), líneas 586–748; logMessage() solo agrega a logs local y la respuesta HTTP.
+- **Problema:** el historial de ejecución ADMIN no queda persistido y se pierde si la respuesta no llega al navegador o falla la ejecución.
+- **Criterios de aceptación:** registrar de forma durable actor autenticado, acción, recurso de origen/destino, inicio/fin, resultado, etapa y resultado parcial; excluir tokens, contraseñas y payloads sensibles; restringir lectura/modificación; asegurar que la falla al registrar auditoría no convierta silenciosamente una operación destructiva en éxito sin trazabilidad; definir retención y protección del registro.
+- **Relación:** AUD-T-023/AUG-013 para logs sensibles y AUD-T-033 para coordinación de escrituras.
+- **Estado:** NUEVA; pendiente.
+
+### AUG-022 — Verificar la eliminación asíncrona de IndexedDB
+- **Origen:** H-AUD-025-008. **Prioridad:** Baja.
+- **Evidencia:** ui.js, handler btn-admin-clear-client-cache(), líneas 4473–4494.
+- **Problema:** deleteDatabase() no espera onsuccess/onerror/onblocked y la interfaz reporta éxito inmediatamente.
+- **Criterios de aceptación:** resolver la solicitud IndexedDB mediante sus eventos; diferenciar éxito, error y bloqueo; no anunciar vaciado completo ni recargar como si se hubiera eliminado cuando la operación sigue bloqueada; mantener la limpieza de localStorage y reportar su resultado por separado.
+- **Estado:** NUEVA; pendiente.
+
+### AUG-023 — Resolver acciones ADMIN sin ruta canónica ni consumidor
+- **Origen:** H-AUD-025-009. **Prioridad:** Baja.
+- **Evidencia:** Services/admin.js, switch doPost() y handlers handleCreateSheet()/handleAddColumn(); ACTION_TO_SERVICE_MAP; ui.js/index.html sin referencias de consumo.
+- **Problema:** createSheet/addColumn existen en el router backend, pero no están mapeadas por routeAction ni tienen consumidor frontend identificado.
+- **Criterios de aceptación:** decidir y documentar si son acciones soportadas, internas o heredadas; si se mantienen, definir contrato, autorización, validación y pruebas; si se retiran, hacerlo en tarea autorizada tras comprobar consumidores externos. No eliminar código durante auditoría.
+- **Estado:** NUEVA; pendiente.

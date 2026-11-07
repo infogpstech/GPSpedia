@@ -5088,3 +5088,54 @@ RESTRICCIONES Y LIMITACIONES
 - No se inspeccionaron sesiones ni cuentas reales.
 - No declarar cerrado el ciclo de sesión hasta completar remediaciones y matriz funcional.
 ================================================================================
+
+
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-025: HERRAMIENTAS ADMIN, BASE DE DATOS, BACKUP, RESTORE, LOGS Y MANTENIMIENTO
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S006
+Checkpoint: AUD-CP-0006
+HEAD auditado: 941dfb166ae5af4631d0711d50ab3d45cf7225c1
+Estado: AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+HALLAZGOS REGISTRADOS
+- H-AUD-025-001 (Alta): restoreDatabase elimina hojas productivas antes de terminar la copia; sin rollback ni respaldo automático inmediato del destino.
+- H-AUD-025-002 (Alta): restoreDrive vacía Cortes antes de copiar; no existe rollback.
+- H-AUD-025-003 (Alta): backupDrive es recursivo/síncrono, no genera manifiesto y deja contenedores parciales que restoreDrive puede aceptar.
+- H-AUD-025-004 (Media): terminal Drive permite navegar/crear/mover fuera del árbol Cortes mediante currentFolderId, cd .. y move.
+- H-AUD-025-005 (Media): getActivityLogs carga toda la hoja para devolver solo los últimos 100 registros.
+- H-AUD-025-006 (Baja): purga por antigüedad deja timestamps vacíos/no válidos sin clasificar ni advertir.
+- H-AUD-025-007 (Media): logs de ADMIN se mantienen solo en el arreglo de respuesta HTTP; no hay registro persistente.
+- H-AUD-025-008 (Baja): el handler de limpieza de caché no espera el resultado asíncrono de IndexedDB.deleteDatabase().
+- H-AUD-025-009 (Baja): createSheet/addColumn no tienen mapeo routeAction ni consumidor frontend identificado.
+- Detalle técnico, líneas, impacto y controles positivos: Auditoría.txt, sección AUD-T-025.
+
+HALLAZGOS EXISTENTES RECONFIRMADOS — NO DUPLICAR
+- H-AUD-023-005/AUG-013 sigue vigente: clearSensitiveLogs en FEEDBACK no coordina la purga por índices con las inserciones concurrentes de AUTH.
+- AUD-T-033/AUG-003 mantiene la dependencia de coordinación entre proyectos Apps Script para operaciones sobre recursos compartidos.
+
+CONTROLES POSITIVOS
+- ADMIN exige sesión válida de Desarrollador en backend para todas las acciones salvo ping.
+- FEEDBACK restringe getActivityLogs y ambas purgas según actionPermissions; las dos purgas exigen Desarrollador.
+- BackupDatabase valida ID, MIME, nombre, ubicación, identidad y existencia de Cortes; el respaldo queda asociado a la sesión de Desarrollador para migración VIN.
+- RestoreDatabase y restoreDrive validan tipo/nombre/ubicación e identidad distinta del destino antes de modificar.
+- El frontend mantiene confirmaciones y campo compartido para enlaces; la normalización es específica para Spreadsheet/carpeta.
+- No se modificó código ni se ejecutaron operaciones reales.
+
+TAREAS NUEVAS
+- AUG-018 — Restauraciones recuperables y verificación integral de respaldos DB/Drive. Prioridad Crítica.
+- AUG-019 — Restringir la terminal Drive al árbol Cortes. Prioridad Media.
+- AUG-020 — Escalabilidad y tratamiento de datos temporales en ActividadUsuario. Prioridad Media.
+- AUG-021 — Registro persistente de operaciones administrativas sensibles. Prioridad Media.
+- AUG-022 — Verificar la eliminación asíncrona de IndexedDB. Prioridad Baja.
+- AUG-023 — Resolver acciones ADMIN sin ruta canónica ni consumidor. Prioridad Baja.
+- AUG-013 permanece abierta y se amplía con la reconfirmación AUD-T-025.
+
+VALIDACIONES Y LÍMITES
+- Evidencia E1 únicamente.
+- No se ejecutaron Apps Script V8, HTTP, navegador, DriveApp, SpreadsheetApp, backup, restore, purga ni pruebas concurrentes reales.
+- No se verificaron deployments ni datos reales.
+- No se modificó código, endpoints, configuración ni datos productivos.
+- No se desplegó Apps Script ni se realizó merge.
+================================================================================

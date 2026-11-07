@@ -7549,3 +7549,287 @@ H-AUD-024-010 — ALTA — AUTH valida sesiones sin comprobar la existencia actu
 AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y REMEDIACIONES PENDIENTES.
 Siguiente unidad del plan: AUD-T-025 — herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
 ================================================================================
+
+
+
+================================================================================
+AUDITORÍA TÉCNICA — AUD-T-025: HERRAMIENTAS ADMIN, BASE DE DATOS, BACKUP, RESTORE, LOGS Y MANTENIMIENTO
+Fecha: 2026-11-07
+Plan: AUD-PLAN-2026-001
+Sesión: AUD-20261107-S006
+Checkpoint: AUD-CP-0006
+HEAD auditado: 941dfb166ae5af4631d0711d50ab3d45cf7225c1
+HEAD rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Evidencia: E1 — inspección estática de fuentes e historial Git.
+
+1. ALCANCE Y FUENTES REVISADAS
+- Services/admin.js: doPost(), assertDeveloperSession(), extractDriveFileIds(), extractDriveFileId(), extractBackupFolderId(), isDirectChildOfDriveRoot(), handleBackupDatabase(), handleBackupDrive(), copyFolderRecursively(), handleRestoreDatabase(), handleRestoreDrive(), clearFolderContents(), handleReorganizeDatabase(), validateAndRestoreAllTrashedImagesInSpreadsheet(), handleCreateSheet(), handleAddColumn(), handleDriveCommand() y handleGetDriveStorage().
+- Services/feedback.js: assertFeedbackSession(), actionPermissions, doPost(), handleGetActivityLogs(), handleClearActivityLogs() y handleClearSensitiveLogs().
+- ui.js: runAction(), getDeveloperSessionPayload(), flujo de backup/restore, terminal Drive, controles de purga de logs y vaciado de caché IndexedDB/localStorage.
+- api-config.js: API_ENDPOINTS, ACTION_TO_SERVICE_MAP, routeAction(), clearActivityLogs(), clearSensitiveLogs() y getActivityLogs().
+- index.html: panel «Base de datos», campo compartido, botones de backup/restore, mantenimiento, terminal y controles de logs.
+- README.md y Services/Test/README.md: arquitectura de servicios y separación de proyectos Apps Script.
+- Auditoría.txt, Tareas.txt, ChangesLogs.txt y Aug_Tareas.md: historial de decisiones, requisitos, riesgos previos y tareas relacionadas.
+
+2. HISTORIAL CONTRASTADO
+- babf5ce494fdcf6b32f519d37acbc85d25adf2c7 — corregir autorización y purga selectiva de Logs; se contrastaron cambios de router, FEEDBACK y frontend.
+- 2678ee0242a4b78be61d6c799f6a53d6ce8d0715 — separar purga de Logs y agregar control de sesiones; se verificó separación de ActividadUsuario/Logs.
+- e5c49b1d — normalización del enlace completo de Spreadsheet en restoreDatabase; el código vigente vuelve a normalizar el ID en backend.
+- abc7102fc7a64c7c20ba687fb94d773f00bbbfe0 — campo compartido para backup/restore; se revisaron la auditoría inicial, el Code Review y los límites que quedaron expresamente pendientes.
+- 8001b431e66f2d5b396334bf6f40d410aac6f14f — respaldo verificado asociado a sesión para la migración VIN; se contrastó la asociación por usuario en ScriptCache.
+- 06c3b3228844721fe5359c372ebb105ce497ef33 — robustecimiento del snapshot comprimido de auditoría Drive.
+- Se revisó historial por ruta de Services/admin.js, Services/feedback.js, ui.js, api-config.js e index.html.
+
+3. HALLAZGOS
+
+H-AUD-025-001 — ALTA — Restore de Spreadsheet elimina el destino antes de confirmar la copia completa y no dispone de rollback
+- Evidencia: Services/admin.js, handleRestoreDatabase(), líneas 882–928.
+- El handler valida que el origen sea un archivo Spreadsheet distinto del destino, no esté en papelera, tenga prefijo GPSpedia_DB_BACKUP_ y esté directamente en la raíz de Drive. También abre el origen y comprueba que contenga hojas.
+- Después crea TEMP_RESTORE_HOLDER, elimina todas las hojas que existían en el destino y copia las hojas del respaldo una por una. Si copyTo(), setName(), SpreadsheetApp.flush() u otra operación posterior falla, las hojas originales ya fueron eliminadas y no existe restauración del estado anterior.
+- No se genera automáticamente un respaldo del destino inmediatamente antes de iniciar restoreDatabase. La confirmación frontend advierte que se sobrescribirá producción, pero no constituye recuperación.
+- No hay comprobación de bloqueo compartido con WRITE, USERS, FEEDBACK u otros proyectos que puedan escribir en la Spreadsheet durante la sustitución.
+- Impacto: una excepción, timeout o escritura concurrente puede dejar la base de datos productiva vacía o parcialmente restaurada.
+- Relación: AUD-T-033/AUG-003 para coordinación interproyectos; AUG-002 para prueba controlada. Nueva AUG-018 para restauraciones transaccionales/recuperables.
+
+H-AUD-025-002 — ALTA — Restore de Drive limpia «Cortes» antes de copiar y no puede recuperar el destino si la copia falla
+- Evidencia: Services/admin.js, handleRestoreDrive(), líneas 933–963; clearFolderContents(), líneas 965–974.
+- Se valida que la carpeta origen sea distinta de DRIVE_FOLDER_ID, no esté en papelera, tenga prefijo GPSpedia_Drive_BACKUP_ y esté directamente en la raíz de Drive.
+- Una vez validada, clearFolderContents() retira todos los archivos y subcarpetas del destino. Después copyFolderRecursively() copia el respaldo. No hay staging, copia temporal, rollback ni reconciliación si el proceso falla durante la copia.
+- El handler devuelve success al terminar el recorrido, pero no compara un manifiesto, conteos o huellas de contenido de origen y destino.
+- El Code Review histórico de abc7102f ya advertía que restoreDrive conserva esta secuencia sin rollback; el riesgo continúa vigente en el HEAD actual.
+- Impacto: fallo de ejecución, cuota, permiso o timeout puede dejar incompleta la carpeta productiva.
+- Relación: AUG-018 y AUD-T-033/AUG-003.
+
+H-AUD-025-003 — ALTA — Un respaldo Drive interrumpido puede dejar un artefacto parcial que luego pasa la validación superficial de restoreDrive
+- Evidencia: Services/admin.js, handleBackupDrive(), líneas 793–827; copyFolderRecursively(), líneas 829–844; validación de origen en handleRestoreDrive(), líneas 938–944.
+- La copia recursiva recorre todos los archivos y subcarpetas en una única ejecución síncrona, sin lotes, checkpoint, reanudación, manifiesto, conteo esperado ni limpieza del contenedor si una copia falla.
+- Si makeCopy() o una llamada recursiva falla, la carpeta creada GPSpedia_Drive_BACKUP_<timestamp> permanece en la raíz. El handler devuelve error, pero no la elimina ni la marca como incompleta.
+- restoreDrive valida nombre, ubicación, papelera e ID distinto del destino; no comprueba que el respaldo haya terminado correctamente ni que su contenido esté completo. Una carpeta parcial que conserve el prefijo y ubicación requeridos puede ser aceptada como origen.
+- Impacto: restaurar accidentalmente un respaldo incompleto y perder archivos/subcarpetas que no llegaron a copiarse.
+- Relación: AUG-018; considerar lotes/reanudación y manifiesto de integridad. No declarar completo un respaldo por nombre y ubicación solamente.
+
+H-AUD-025-004 — MEDIA — La terminal Drive no restringe la navegación ni los movimientos al árbol «Cortes»
+- Evidencia: Services/admin.js, handleDriveCommand(), líneas 3750–3841.
+- La función obtiene la carpeta raíz Cortes, pero si recibe currentFolderId utiliza DriveApp.getFolderById() sin comprobar que la carpeta sea descendiente de Cortes.
+- cd .. acepta el padre de la carpeta activa incluso cuando la carpeta activa es la raíz Cortes; por tanto, permite salir de Cortes. mkdir crea en la carpeta activa y puede crear carpetas fuera del árbol previsto.
+- move acepta fileId y targetFolderId arbitrarios y ejecuta file.moveTo(targetDir) sin verificar que el archivo y destino pertenezcan al árbol Cortes.
+- La autorización Desarrollador reduce quién puede invocar la acción, pero no impone el límite de alcance que su inicialización en getCortesRootFolder() aparenta establecer.
+- Impacto: mover archivos ajenos al catálogo o crear carpetas fuera de Cortes por error o por un payload manipulado.
+- Relación: nueva AUG-019. Probar carpetas externas, padres, IDs arbitrarios y movimientos fuera del árbol.
+
+H-AUD-025-005 — MEDIA — Consulta de actividad lee toda la hoja aunque solo devuelve los últimos 100 registros
+- Evidencia: Services/feedback.js, handleGetActivityLogs(), líneas 1268–1288.
+- getDataRange().getValues() carga todos los registros, después elimina encabezado, transforma todas las filas, invierte el arreglo y finalmente aplica slice(0, 100).
+- El costo de memoria y tiempo crece con el historial completo, aunque el consumidor solo recibe cien registros.
+- Impacto: degradación progresiva y posible límite de ejecución al crecer ActividadUsuario.
+- Relación: nueva AUG-020; leer desde el final solo el rango necesario, preservando el orden descendente y el contrato de 100 registros.
+
+H-AUD-025-006 — BAJA — La purga por antigüedad conserva silenciosamente filas con timestamp vacío o inválido
+- Evidencia: Services/feedback.js, handleClearActivityLogs(), líneas 1641–1683.
+- En modo keepLastWeek, entryTime comienza en 0 y se sustituye por new Date(rawTimestamp).getTime() cuando hay valor. Solo elimina cuando entryTime > 0 y la antigüedad supera siete días.
+- Un timestamp vacío, inválido o no interpretable no se elimina ni se contabiliza como error/advertencia. La respuesta puede indicar éxito aunque queden filas que no pudieron clasificarse por antigüedad.
+- Impacto: retención inconsistente y dificultad para detectar registros que no cumplen el formato esperado.
+- Relación: AUG-020. Definir explícitamente el tratamiento de timestamps no válidos sin borrar datos por inferencia.
+
+H-AUD-025-007 — MEDIA — Los logs operativos de ADMIN no constituyen un registro persistente de auditoría
+- Evidencia: Services/admin.js, doPost(), líneas 586–748.
+- logMessage() agrega los eventos a un arreglo local logs; al finalizar, doPost adjunta ese arreglo a la respuesta HTTP. No escribe esos eventos en Logs, ActividadUsuario ni otro almacenamiento persistente.
+- Si el navegador pierde la respuesta, se cierra el modal o la ejecución falla antes de entregar el JSON, los pasos registrados en ese arreglo no quedan disponibles como historial durable. Los errores de autorización tampoco se registran persistentemente por esta ruta.
+- El historial de tareas exige conservar controles y registro de auditoría para backup/restore; el comportamiento actual solo proporciona telemetría temporal de respuesta.
+- Impacto: no es posible reconstruir de forma fiable quién inició una restauración, qué recurso utilizó, qué etapa alcanzó ni si terminó cuando la respuesta no llegó al cliente.
+- Relación: nueva AUG-021. Definir un registro persistente y protegido para operaciones sensibles, con redacción de secretos y resultados parciales.
+
+H-AUD-025-008 — BAJA — La limpieza de IndexedDB se reporta como exitosa sin esperar el resultado asíncrono
+- Evidencia: ui.js, handler btn-admin-clear-client-cache, líneas 4473–4494.
+- indexedDB.deleteDatabase('GPSpedia_DB') devuelve un IDBOpenDBRequest asíncrono. El handler no asigna on success/onerror/onblocked ni espera el resultado.
+- El try/catch solo detecta excepciones síncronas; inmediatamente después elimina dos claves de localStorage, registra «Caché local vaciada correctamente» y programa reload.
+- Si la solicitud queda bloqueada por una conexión abierta o falla de forma asíncrona, la interfaz puede comunicar éxito aunque IndexedDB no haya sido eliminada.
+- Impacto: diagnóstico engañoso y caché persistente tras una operación que el usuario cree completada.
+- Relación: nueva AUG-022.
+
+H-AUD-025-009 — BAJA — Existen acciones ADMIN con handlers sin ruta canónica ni consumidores frontend identificados
+- Evidencia: Services/admin.js, doPost() casos createSheet/addColumn y handlers handleCreateSheet()/handleAddColumn(), líneas 614–645 y 3713–3748; api-config.js ACTION_TO_SERVICE_MAP; búsqueda de referencias en ui.js e index.html.
+- createSheet y addColumn aparecen en el switch backend, pero no tienen entrada en ACTION_TO_SERVICE_MAP y no se encontraron llamadas desde ui.js ni controles en index.html.
+- Las funciones quedan sin ruta desde el flujo normal routeAction() y sin consumidor frontend identificado. No se puede concluir si son funciones reservadas para uso externo/manual o restos de una versión anterior.
+- Impacto: superficie de código sin contrato operativo verificable y posible deriva entre handlers disponibles y acciones oficialmente soportadas.
+- Relación: nueva AUG-023 para decidir documentar, integrar o retirar con autorización; no eliminar en esta auditoría.
+
+4. HALLAZGOS ANTERIORES RECONFIRMADOS — SIN DUPLICAR IDs
+- H-AUD-023-005 / AUG-013: clearSensitiveLogs() en FEEDBACK sigue leyendo una instantánea de Logs y borrando filas por índices calculados, sin coordinación con inserciones concurrentes de AUTH. Los ScriptLock de proyectos separados no constituyen un lock común. Se conserva el hallazgo original y se amplía su seguimiento; no se crea un segundo ID para el mismo defecto.
+- H-AUD-024-003/AUG-016 y AUD-T-033/AUG-003: restoreDatabase, restoreDrive y reorganizeDatabase continúan sin un protocolo de exclusión común con los demás servicios que escriben en recursos compartidos.
+- El router ADMIN conserva assertDeveloperSession(payload) para toda acción distinta de ping. ping solo responde pong y no expone datos de la base de datos.
+- FEEDBACK mantiene actionPermissions para getActivityLogs, clearActivityLogs y clearSensitiveLogs; las purgas están restringidas a Desarrollador y validan userId/sessionToken contra ActiveSessions y Users.
+- ui.js transmite el contexto de sesión mediante getDeveloperSessionPayload() y runAction().
+- El frontend mantiene confirmaciones explícitas para restaurar Spreadsheet y Drive, y el campo compartido valida por separado los formatos de enlace.
+- backupDatabase vuelve a abrir el recurso creado y comprueba ID, MIME de Spreadsheet, nombre, ubicación directa en la raíz y existencia de Cortes; también asocia el respaldo a la sesión de Desarrollador en ScriptCache durante seis horas para la migración VIN.
+- restoreDatabase comprueba origen distinto del destino, MIME, prefijo de nombre, ubicación en raíz y existencia de hojas antes de modificar el destino.
+- restoreDrive comprueba origen distinto del destino, prefijo, estado y ubicación.
+- clearActivityLogs y clearSensitiveLogs conservan encabezados; las acciones y políticas backend permanecen separadas.
+
+5. CONTROLES POSITIVOS Y OBSERVACIONES ADICIONALES
+- El enlace completo de Spreadsheet se normaliza en frontend y backend; el helper global de extracción de IDs no fue alterado por el flujo de carpeta.
+- La interfaz compartida de backup/restore comprueba que backupId y backupUrl correspondan al tipo de recurso esperado antes de mostrar el resultado como válido.
+- La copia de Spreadsheet se valida con el esquema mínimo de existencia de Cortes, pero no se compara una huella integral de hojas, encabezados, fórmulas, datos o permisos.
+- copyFolderRecursively() copia nombres, archivos y jerarquía; no se encontró copia explícita de permisos/ACL, descripciones ni metadatos de compartición. No debe describirse como clonación completa de todos los atributos Drive.
+- handleCreateSheet() y handleAddColumn() no validan nombres/encabezados duplicados ni mantienen un lock local; no se observó consumidor frontend. No se modificaron.
+- handleReorganizeDatabase() genera backupDatabase y solicita a WRITE estabilizar IDs antes de ordenar Cortes. La sección crítica WRITE termina antes del sort; la coordinación global sigue vinculada a AUD-T-033.
+- handleGetDriveStorage() combina DriveApp.getStorageUsed() y Drive API storageQuota; distingue cuota ilimitada/no disponible y no calcula porcentaje si falta un límite válido.
+- El panel de logs presenta resultados independientes por cada fuente; un fallo de una purga no impide intentar la otra.
+- El frontend deshabilita los controles seleccionados durante la limpieza; esto evita doble ejecución desde esa interfaz, no coordina solicitudes externas concurrentes.
+
+6. ESTADO DE VALIDACIÓN Y LIMITACIONES
+- Evidencia E1: inspección estática de fuentes, referencias, contratos y diffs históricos.
+- No se ejecutó Apps Script V8 ni runtime de Google.
+- No se ejecutaron pruebas HTTP, navegador, DriveApp, SpreadsheetApp ni operaciones reales de backup, restore o purga.
+- No se verificó el contenido de los respaldos existentes ni se inspeccionaron carpetas/hojas reales.
+- No se probó concurrencia real con AUTH, WRITE, USERS o FEEDBACK.
+- No se verificó el deployment actual de ADMIN ni FEEDBACK.
+- No se realizó prueba sintáctica de runtime ni prueba de recuperación ante fallos.
+- No se modificó código, endpoints, configuración, datos de Drive/Spreadsheet ni deployments.
+
+7. ESTADO DE AUD-T-025
+AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; PRUEBAS FUNCIONALES, VALIDACIÓN DE INTEGRIDAD Y REMEDIACIONES PENDIENTES.
+Siguiente unidad del plan: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
+================================================================================
+
+
+
+================================================================================
+AUDITORÍA TÉCNICA — AUD-T-025: HERRAMIENTAS ADMIN, BASE DE DATOS, BACKUP, RESTORE, LOGS Y MANTENIMIENTO
+Fecha: 2026-11-07
+Plan: AUD-PLAN-2026-001
+Sesión: AUD-20261107-S006
+Checkpoint: AUD-CP-0006
+HEAD auditado: 941dfb166ae5af4631d0711d50ab3d45cf7225c1
+HEAD rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Evidencia: E1 — inspección estática de fuentes e historial Git.
+
+1. ALCANCE Y FUENTES REVISADAS
+- Services/admin.js: doPost(), assertDeveloperSession(), extractDriveFileIds(), extractDriveFileId(), extractBackupFolderId(), isDirectChildOfDriveRoot(), handleBackupDatabase(), handleBackupDrive(), copyFolderRecursively(), handleRestoreDatabase(), handleRestoreDrive(), clearFolderContents(), handleReorganizeDatabase(), validateAndRestoreAllTrashedImagesInSpreadsheet(), handleCreateSheet(), handleAddColumn(), handleDriveCommand() y handleGetDriveStorage().
+- Services/feedback.js: assertFeedbackSession(), actionPermissions, doPost(), handleGetActivityLogs(), handleClearActivityLogs() y handleClearSensitiveLogs().
+- ui.js: runAction(), getDeveloperSessionPayload(), flujo de backup/restore, terminal Drive, controles de purga de logs y vaciado de caché IndexedDB/localStorage.
+- api-config.js: API_ENDPOINTS, ACTION_TO_SERVICE_MAP, routeAction(), clearActivityLogs(), clearSensitiveLogs() y getActivityLogs().
+- index.html: panel «Base de datos», campo compartido, botones de backup/restore, mantenimiento, terminal y controles de logs.
+- README.md y Services/Test/README.md: arquitectura de servicios y separación de proyectos Apps Script.
+- Auditoría.txt, Tareas.txt, ChangesLogs.txt y Aug_Tareas.md: historial de decisiones, requisitos, riesgos previos y tareas relacionadas.
+
+2. HISTORIAL CONTRASTADO
+- babf5ce494fdcf6b32f519d37acbc85d25adf2c7 — corregir autorización y purga selectiva de Logs; se contrastaron cambios de router, FEEDBACK y frontend.
+- 2678ee0242a4b78be61d6c799f6a53d6ce8d0715 — separar purga de Logs y agregar control de sesiones; se verificó separación de ActividadUsuario/Logs.
+- e5c49b1d — normalización del enlace completo de Spreadsheet en restoreDatabase; el código vigente vuelve a normalizar el ID en backend.
+- abc7102fc7a64c7c20ba687fb94d773f00bbbfe0 — campo compartido para backup/restore; se revisaron la auditoría inicial, el Code Review y los límites que quedaron expresamente pendientes.
+- 8001b431e66f2d5b396334bf6f40d410aac6f14f — respaldo verificado asociado a sesión para la migración VIN; se contrastó la asociación por usuario en ScriptCache.
+- 06c3b3228844721fe5359c372ebb105ce497ef33 — robustecimiento del snapshot comprimido de auditoría Drive.
+- Se revisó historial por ruta de Services/admin.js, Services/feedback.js, ui.js, api-config.js e index.html.
+
+3. HALLAZGOS
+
+H-AUD-025-001 — ALTA — Restore de Spreadsheet elimina el destino antes de confirmar la copia completa y no dispone de rollback
+- Evidencia: Services/admin.js, handleRestoreDatabase(), líneas 882–928.
+- El handler valida que el origen sea un archivo Spreadsheet distinto del destino, no esté en papelera, tenga prefijo GPSpedia_DB_BACKUP_ y esté directamente en la raíz de Drive. También abre el origen y comprueba que contenga hojas.
+- Después crea TEMP_RESTORE_HOLDER, elimina todas las hojas que existían en el destino y copia las hojas del respaldo una por una. Si copyTo(), setName(), SpreadsheetApp.flush() u otra operación posterior falla, las hojas originales ya fueron eliminadas y no existe restauración del estado anterior.
+- No se genera automáticamente un respaldo del destino inmediatamente antes de iniciar restoreDatabase. La confirmación frontend advierte que se sobrescribirá producción, pero no constituye recuperación.
+- No hay comprobación de bloqueo compartido con WRITE, USERS, FEEDBACK u otros proyectos que puedan escribir en la Spreadsheet durante la sustitución.
+- Impacto: una excepción, timeout o escritura concurrente puede dejar la base de datos productiva vacía o parcialmente restaurada.
+- Relación: AUD-T-033/AUG-003 para coordinación interproyectos; AUG-002 para prueba controlada. Nueva AUG-018 para restauraciones transaccionales/recuperables.
+
+H-AUD-025-002 — ALTA — Restore de Drive limpia «Cortes» antes de copiar y no puede recuperar el destino si la copia falla
+- Evidencia: Services/admin.js, handleRestoreDrive(), líneas 933–963; clearFolderContents(), líneas 965–974.
+- Se valida que la carpeta origen sea distinta de DRIVE_FOLDER_ID, no esté en papelera, tenga prefijo GPSpedia_Drive_BACKUP_ y esté directamente en la raíz de Drive.
+- Una vez validada, clearFolderContents() retira todos los archivos y subcarpetas del destino. Después copyFolderRecursively() copia el respaldo. No hay staging, copia temporal, rollback ni reconciliación si el proceso falla durante la copia.
+- El handler devuelve success al terminar el recorrido, pero no compara un manifiesto, conteos o huellas de contenido de origen y destino.
+- El Code Review histórico de abc7102f ya advertía que restoreDrive conserva esta secuencia sin rollback; el riesgo continúa vigente en el HEAD actual.
+- Impacto: fallo de ejecución, cuota, permiso o timeout puede dejar incompleta la carpeta productiva.
+- Relación: AUG-018 y AUD-T-033/AUG-003.
+
+H-AUD-025-003 — ALTA — Un respaldo Drive interrumpido puede dejar un artefacto parcial que luego pasa la validación superficial de restoreDrive
+- Evidencia: Services/admin.js, handleBackupDrive(), líneas 793–827; copyFolderRecursively(), líneas 829–844; validación de origen en handleRestoreDrive(), líneas 938–944.
+- La copia recursiva recorre todos los archivos y subcarpetas en una única ejecución síncrona, sin lotes, checkpoint, reanudación, manifiesto, conteo esperado ni limpieza del contenedor si una copia falla.
+- Si makeCopy() o una llamada recursiva falla, la carpeta creada GPSpedia_Drive_BACKUP_<timestamp> permanece en la raíz. El handler devuelve error, pero no la elimina ni la marca como incompleta.
+- restoreDrive valida nombre, ubicación, papelera e ID distinto del destino; no comprueba que el respaldo haya terminado correctamente ni que su contenido esté completo. Una carpeta parcial que conserve el prefijo y ubicación requeridos puede ser aceptada como origen.
+- Impacto: restaurar accidentalmente un respaldo incompleto y perder archivos/subcarpetas que no llegaron a copiarse.
+- Relación: AUG-018; considerar lotes/reanudación y manifiesto de integridad. No declarar completo un respaldo por nombre y ubicación solamente.
+
+H-AUD-025-004 — MEDIA — La terminal Drive no restringe la navegación ni los movimientos al árbol «Cortes»
+- Evidencia: Services/admin.js, handleDriveCommand(), líneas 3750–3841.
+- La función obtiene la carpeta raíz Cortes, pero si recibe currentFolderId utiliza DriveApp.getFolderById() sin comprobar que la carpeta sea descendiente de Cortes.
+- cd .. acepta el padre de la carpeta activa incluso cuando la carpeta activa es la raíz Cortes; por tanto, permite salir de Cortes. mkdir crea en la carpeta activa y puede crear carpetas fuera del árbol previsto.
+- move acepta fileId y targetFolderId arbitrarios y ejecuta file.moveTo(targetDir) sin verificar que el archivo y destino pertenezcan al árbol Cortes.
+- La autorización Desarrollador reduce quién puede invocar la acción, pero no impone el límite de alcance que su inicialización en getCortesRootFolder() aparenta establecer.
+- Impacto: mover archivos ajenos al catálogo o crear carpetas fuera de Cortes por error o por un payload manipulado.
+- Relación: nueva AUG-019. Probar carpetas externas, padres, IDs arbitrarios y movimientos fuera del árbol.
+
+H-AUD-025-005 — MEDIA — Consulta de actividad lee toda la hoja aunque solo devuelve los últimos 100 registros
+- Evidencia: Services/feedback.js, handleGetActivityLogs(), líneas 1268–1288.
+- getDataRange().getValues() carga todos los registros, después elimina encabezado, transforma todas las filas, invierte el arreglo y finalmente aplica slice(0, 100).
+- El costo de memoria y tiempo crece con el historial completo, aunque el consumidor solo recibe cien registros.
+- Impacto: degradación progresiva y posible límite de ejecución al crecer ActividadUsuario.
+- Relación: nueva AUG-020; leer desde el final solo el rango necesario, preservando el orden descendente y el contrato de 100 registros.
+
+H-AUD-025-006 — BAJA — La purga por antigüedad conserva silenciosamente filas con timestamp vacío o inválido
+- Evidencia: Services/feedback.js, handleClearActivityLogs(), líneas 1641–1683.
+- En modo keepLastWeek, entryTime comienza en 0 y se sustituye por new Date(rawTimestamp).getTime() cuando hay valor. Solo elimina cuando entryTime > 0 y la antigüedad supera siete días.
+- Un timestamp vacío, inválido o no interpretable no se elimina ni se contabiliza como error/advertencia. La respuesta puede indicar éxito aunque queden filas que no pudieron clasificarse por antigüedad.
+- Impacto: retención inconsistente y dificultad para detectar registros que no cumplen el formato esperado.
+- Relación: AUG-020. Definir explícitamente el tratamiento de timestamps no válidos sin borrar datos por inferencia.
+
+H-AUD-025-007 — MEDIA — Los logs operativos de ADMIN no constituyen un registro persistente de auditoría
+- Evidencia: Services/admin.js, doPost(), líneas 586–748.
+- logMessage() agrega los eventos a un arreglo local logs; al finalizar, doPost adjunta ese arreglo a la respuesta HTTP. No escribe esos eventos en Logs, ActividadUsuario ni otro almacenamiento persistente.
+- Si el navegador pierde la respuesta, se cierra el modal o la ejecución falla antes de entregar el JSON, los pasos registrados en ese arreglo no quedan disponibles como historial durable. Los errores de autorización tampoco se registran persistentemente por esta ruta.
+- El historial de tareas exige conservar controles y registro de auditoría para backup/restore; el comportamiento actual solo proporciona telemetría temporal de respuesta.
+- Impacto: no es posible reconstruir de forma fiable quién inició una restauración, qué recurso utilizó, qué etapa alcanzó ni si terminó cuando la respuesta no llegó al cliente.
+- Relación: nueva AUG-021. Definir un registro persistente y protegido para operaciones sensibles, con redacción de secretos y resultados parciales.
+
+H-AUD-025-008 — BAJA — La limpieza de IndexedDB se reporta como exitosa sin esperar el resultado asíncrono
+- Evidencia: ui.js, handler btn-admin-clear-client-cache, líneas 4473–4494.
+- indexedDB.deleteDatabase('GPSpedia_DB') devuelve un IDBOpenDBRequest asíncrono. El handler no asigna on success/onerror/onblocked ni espera el resultado.
+- El try/catch solo detecta excepciones síncronas; inmediatamente después elimina dos claves de localStorage, registra «Caché local vaciada correctamente» y programa reload.
+- Si la solicitud queda bloqueada por una conexión abierta o falla de forma asíncrona, la interfaz puede comunicar éxito aunque IndexedDB no haya sido eliminada.
+- Impacto: diagnóstico engañoso y caché persistente tras una operación que el usuario cree completada.
+- Relación: nueva AUG-022.
+
+H-AUD-025-009 — BAJA — Existen acciones ADMIN con handlers sin ruta canónica ni consumidores frontend identificados
+- Evidencia: Services/admin.js, doPost() casos createSheet/addColumn y handlers handleCreateSheet()/handleAddColumn(), líneas 614–645 y 3713–3748; api-config.js ACTION_TO_SERVICE_MAP; búsqueda de referencias en ui.js e index.html.
+- createSheet y addColumn aparecen en el switch backend, pero no tienen entrada en ACTION_TO_SERVICE_MAP y no se encontraron llamadas desde ui.js ni controles en index.html.
+- Las funciones quedan sin ruta desde el flujo normal routeAction() y sin consumidor frontend identificado. No se puede concluir si son funciones reservadas para uso externo/manual o restos de una versión anterior.
+- Impacto: superficie de código sin contrato operativo verificable y posible deriva entre handlers disponibles y acciones oficialmente soportadas.
+- Relación: nueva AUG-023 para decidir documentar, integrar o retirar con autorización; no eliminar en esta auditoría.
+
+4. HALLAZGOS ANTERIORES RECONFIRMADOS — SIN DUPLICAR IDs
+- H-AUD-023-005 / AUG-013: clearSensitiveLogs() en FEEDBACK sigue leyendo una instantánea de Logs y borrando filas por índices calculados, sin coordinación con inserciones concurrentes de AUTH. Los ScriptLock de proyectos separados no constituyen un lock común. Se conserva el hallazgo original y se amplía su seguimiento; no se crea un segundo ID para el mismo defecto.
+- H-AUD-024-003/AUG-016 y AUD-T-033/AUG-003: restoreDatabase, restoreDrive y reorganizeDatabase continúan sin un protocolo de exclusión común con los demás servicios que escriben en recursos compartidos.
+- El router ADMIN conserva assertDeveloperSession(payload) para toda acción distinta de ping. ping solo responde pong y no expone datos de la base de datos.
+- FEEDBACK mantiene actionPermissions para getActivityLogs, clearActivityLogs y clearSensitiveLogs; las purgas están restringidas a Desarrollador y validan userId/sessionToken contra ActiveSessions y Users.
+- ui.js transmite el contexto de sesión mediante getDeveloperSessionPayload() y runAction().
+- El frontend mantiene confirmaciones explícitas para restaurar Spreadsheet y Drive, y el campo compartido valida por separado los formatos de enlace.
+- backupDatabase vuelve a abrir el recurso creado y comprueba ID, MIME de Spreadsheet, nombre, ubicación directa en la raíz y existencia de Cortes; también asocia el respaldo a la sesión de Desarrollador en ScriptCache durante seis horas para la migración VIN.
+- restoreDatabase comprueba origen distinto del destino, MIME, prefijo de nombre, ubicación en raíz y existencia de hojas antes de modificar el destino.
+- restoreDrive comprueba origen distinto del destino, prefijo, estado y ubicación.
+- clearActivityLogs y clearSensitiveLogs conservan encabezados; las acciones y políticas backend permanecen separadas.
+
+5. CONTROLES POSITIVOS Y OBSERVACIONES ADICIONALES
+- El enlace completo de Spreadsheet se normaliza en frontend y backend; el helper global de extracción de IDs no fue alterado por el flujo de carpeta.
+- La interfaz compartida de backup/restore comprueba que backupId y backupUrl correspondan al tipo de recurso esperado antes de mostrar el resultado como válido.
+- La copia de Spreadsheet se valida con el esquema mínimo de existencia de Cortes, pero no se compara una huella integral de hojas, encabezados, fórmulas, datos o permisos.
+- copyFolderRecursively() copia nombres, archivos y jerarquía; no se encontró copia explícita de permisos/ACL, descripciones ni metadatos de compartición. No debe describirse como clonación completa de todos los atributos Drive.
+- handleCreateSheet() y handleAddColumn() no validan nombres/encabezados duplicados ni mantienen un lock local; no se observó consumidor frontend. No se modificaron.
+- handleReorganizeDatabase() genera backupDatabase y solicita a WRITE estabilizar IDs antes de ordenar Cortes. La sección crítica WRITE termina antes del sort; la coordinación global sigue vinculada a AUD-T-033.
+- handleGetDriveStorage() combina DriveApp.getStorageUsed() y Drive API storageQuota; distingue cuota ilimitada/no disponible y no calcula porcentaje si falta un límite válido.
+- El panel de logs presenta resultados independientes por cada fuente; un fallo de una purga no impide intentar la otra.
+- El frontend deshabilita los controles seleccionados durante la limpieza; esto evita doble ejecución desde esa interfaz, no coordina solicitudes externas concurrentes.
+
+6. ESTADO DE VALIDACIÓN Y LIMITACIONES
+- Evidencia E1: inspección estática de fuentes, referencias, contratos y diffs históricos.
+- No se ejecutó Apps Script V8 ni runtime de Google.
+- No se ejecutaron pruebas HTTP, navegador, DriveApp, SpreadsheetApp ni operaciones reales de backup, restore o purga.
+- No se verificó el contenido de los respaldos existentes ni se inspeccionaron carpetas/hojas reales.
+- No se probó concurrencia real con AUTH, WRITE, USERS o FEEDBACK.
+- No se verificó el deployment actual de ADMIN ni FEEDBACK.
+- No se realizó prueba sintáctica de runtime ni prueba de recuperación ante fallos.
+- No se modificó código, endpoints, configuración, datos de Drive/Spreadsheet ni deployments.
+
+7. ESTADO DE AUD-T-025
+AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; PRUEBAS FUNCIONALES, VALIDACIÓN DE INTEGRIDAD Y REMEDIACIONES PENDIENTES.
+Siguiente unidad del plan: AUD-T-026 — Telemetría, diagnóstico y health check de microservicios.
+================================================================================

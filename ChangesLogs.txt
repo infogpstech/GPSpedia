@@ -3762,3 +3762,26 @@ ALCANCE
 - No se modificaron fuentes de aplicación, pruebas, servicios, endpoints, configuraciones, datos de Spreadsheet/Drive ni deployments.
 - No se ejecutaron pruebas funcionales ni operaciones externas.
 ================================================================================
+
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-025: HERRAMIENTAS ADMIN, BASE DE DATOS, BACKUP, RESTORE, LOGS Y MANTENIMIENTO
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S006
+Checkpoint: AUD-CP-0006
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: se agregó el informe AUD-T-025 y los hallazgos H-AUD-025-001 a H-AUD-025-009.
+- Plan_auditoría/Plan_Auditoria.md: se actualizó el estado AUD-T-025 y se incorporó la iteración 13.
+- Plan_auditoría/Aug_Tareas.md: se amplió AUG-013 y se añadieron AUG-018 a AUG-023.
+- Tareas.txt: se agregó el resultado de auditoría, hallazgos y tareas derivadas.
+- contexto_personal.md: se registró el estado de AUD-T-025 y la siguiente tarea.
+- checkpoint.md: se incorporaron checkpoint inicial y cierre AUD-CP-0006.
+
+ALCANCE
+- Solo se actualizaron documentos de trazabilidad.
+- No se modificaron Services/admin.js, Services/feedback.js, ui.js, api-config.js, index.html ni otros archivos de aplicación.
+- No se modificaron endpoints, configuraciones, datos de Spreadsheet/Drive ni deployments.
+- No se ejecutaron pruebas funcionales ni operaciones externas.
+================================================================================
