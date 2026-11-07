@@ -71,7 +71,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-020 | Saneamiento arquitectural, DRY, anti-debugging y auditorías globales | Tarea 21; 27c9311c — auditoría integral y navegación; d93b3a5e — consolidación global y DRY | POR AUDITAR |
 | AUD-T-021 | Ficha técnica imprimible, paginación y distribución adaptativa de imágenes | 6d7fbb9c — tareas 1.2/1.3; 199ee4be — layouts configurables; cbbcb0cb — cuadrículas 2×2; 04c86ce6 — layout adaptativo | POR AUDITAR |
 | AUD-T-022 | Panel de desarrollador, navegación por secciones y modal administrativo | da7c146c — reorganizar panel; fd534545 — refinamiento; 9b1f210c — consola global | POR AUDITAR |
-| AUD-T-023 | Seguridad ADMIN 0, registro de credenciales, hashing y migración | ed92f3a9 — reforzar autorización y proteger credenciales; 2e0bbcf7 — SHA-256 y límite de intentos; 6a226c18 — retirar credenciales de logs | POR AUDITAR |
+| AUD-T-023 | Seguridad ADMIN 0, registro de credenciales, hashing y migración | ed92f3a9 — reforzar autorización y proteger credenciales; 2e0bbcf7 — SHA-256 y límite de intentos; 6a226c18 — retirar credenciales de logs | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-024 | Administración de usuarios, privilegios, sesiones y controles de acceso | 2678ee02 — purga Logs y control de sesiones; 0666c1d1 — límites de sesión; 4bc9ac19 — serialización concurrente | POR AUDITAR |
 | AUD-T-025 | Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento | babf5ce4 — autorización y purga selectiva; e5c49b1d — enlaces completos en restore; abc7102f — backup/restore compartidos | POR AUDITAR |
 | AUD-T-026 | Telemetría, diagnóstico y health check de microservicios | e1defcb6 — restaurar comunicación/health check; 726727b6 — telemetría de servicios | POR AUDITAR |
@@ -287,3 +287,15 @@ Se auditó RBAC, AUTH, USERS, identidad y operaciones de administración de usua
 
 ### Próxima iteración
 AUD-T-023 — Seguridad de contraseñas, hashing, logs y migración. Después AUD-T-024 — ciclo de vida, límites y concurrencia de sesiones. La parte legal se auditará en AUD-T-036.
+
+
+### Resultado de AUD-T-023 — 2026-11-07
+
+- Sesión/checkpoint: AUD-20261107-S004 / AUD-CP-0004.
+- HEAD auditado: 87d75c38d72e76ed60132d2507661f4e1017a0e8; HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Fuentes revisadas: AUTH, USERS, ADMIN, FEEDBACK, api-config, auth.js, users.html y copias de prueba; diffs históricos y documentación.
+- Hallazgos H-AUD-023-001 a H-AUD-023-008: KDF débil; carrera entre migración legacy y cambio de contraseña; mutaciones de contraseña no serializadas; contador de intentos vulnerable a concurrencia; carrera entre purga e inserción de Logs; migración legacy incompleta para cuentas inactivas; fallback de formatos desconocidos a legacy; discrepancia de validación UI y typo.
+- AUG-011 a AUG-014 se incorporan a Aug_Tareas.md y Tareas.txt. AUG-010 recibe adenda para escrituras de contraseña y coordinación interservicios.
+- Fortalezas: AUTH ya no registra payload/contraseñas en los callsites actuales examinados; las rutas de escritura de USERS generan hash; clearSensitiveLogs está restringida a Desarrollador.
+- Limitaciones: no se inspeccionó Logs real, no se verificaron deployments y no se ejecutaron pruebas Apps Script/HTTP/navegador/Spreadsheet/Drive. Las copias Test no son suite automatizada.
+- No se modificó código ni datos. Evidencia E1/E2. Siguiente unidad: AUD-T-024.

@@ -5587,3 +5587,91 @@ SIGUIENTE ACCIÓN CONCRETA
 Confirmar nuevamente ambos HEAD y comenzar la auditoría estática de AUD-T-023, recuperando los diffs históricos y revisando los archivos vigentes, línea por línea y función por función. Registrar los hallazgos en Auditoría.txt sin corregir código durante la fase diagnóstica.
 ================================================================================
 
+================================================================================
+CHECKPOINT INICIAL — AUD-T-023: SEGURIDAD ADMIN 0, CREDENCIALES, HASHING Y LOGS
+Fecha: 2026-11-07
+Plan: AUD-PLAN-2026-001
+Sesión: AUD-20261107-S004
+Checkpoint: AUD-CP-0004
+
+REPOSITORIO Y RAMAS
+- Repositorio: infogpstech/GPSpedia.
+- Rama de trabajo autorizada: GPSpedia2.2.5_work.
+- HEAD confirmado al inicio: 87d75c38d72e76ed60132d2507661f4e1017a0e8.
+- Árbol confirmado: a842c63bf9f889df685731c32d9ed9cb1706473e.
+- Rama base: GPSpedia2.2.5.
+- HEAD de base: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- No se modificará la rama base ni se crearán ramas nuevas.
+
+TAREA Y ALCANCE
+Auditoría estática de seguridad ADMIN 0: almacenamiento, hashing y verificación de contraseñas; compatibilidad/migración legacy; rutas de escritura USERS; límite de intentos; protección/purga de Logs y autorización relacionada.
+
+FUENTES
+- Services/Auth.js, Services/users.js, Services/admin.js, Services/feedback.js.
+- Services/Test/Auth.js, Services/Test/users.js y Services/Test/README.md.
+- api-config.js, auth.js y users.html.
+- Diffs de ed92f3a9, 2e0bbcf7, 6a226c18, 0666c1d1, 4bc9ac19, b441a5be y babf5ce4.
+- Proceso de desarollo.md, contexto_personal.md, Tareas.txt, Auditoría.txt, ChangesLogs.txt, Plan_auditoría y checkpoints.
+
+RESTRICCIONES
+- Auditoría diagnóstica; no modificar ni corregir código.
+- Revisión archivo por archivo, línea por línea y función por función; buscar condiciones de carrera, errores lógicos/sintácticos, typos, inconsistencias, duplicación, dependencias y efectos colaterales.
+- Registrar hallazgos en Auditoría.txt; conservar registros previos.
+- Problemas fuera de alcance se registran en Tareas.txt y se relacionan con tareas existentes.
+- No operar sobre datos productivos ni desplegar servicios.
+- Publicar registros en un único commit mediante Git Database API, conservando la rama base.
+
+RIESGOS CONOCIDOS
+- Tareas.txt documenta que SHA-256 con salt no es KDF especializada y que CacheService puede desalojar entradas antes del TTL.
+- AUD-T-002 detectó duplicación de helpers de hash y serialización desigual de USERS; reexaminar el estado vigente.
+- No se dispone de acceso confirmado a la Spreadsheet Logs productiva ni a deployments.
+- Las fuentes Test son copias para despliegues aislados; su existencia no demuestra que estén desplegadas.
+
+SIGUIENTE ACCIÓN
+Recuperar diffs históricos y revisar fuentes vigentes y dependencias. No modificar código. Documentar hallazgos y tareas derivadas; distinguir evidencia estática de validación funcional.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-T-023: SEGURIDAD ADMIN 0, CREDENCIALES, HASHING Y LOGS
+Fecha: 2026-11-07
+Plan: AUD-PLAN-2026-001
+Sesión: AUD-20261107-S004
+Checkpoint: AUD-CP-0004
+HEAD padre: 87d75c38d72e76ed60132d2507661f4e1017a0e8
+Rama base: GPSpedia2.2.5
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO
+AUDITORÍA ESTÁTICA COMPLETADA (E1/E2); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y REMEDIACIONES PENDIENTES.
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: informe y hallazgos H-AUD-023-001 a H-AUD-023-008.
+- Plan_auditoría/Plan_Auditoria.md: estado y resultado de AUD-T-023.
+- Plan_auditoría/Aug_Tareas.md: adenda AUG-010 y nuevas AUG-011 a AUG-014.
+- Tareas.txt: registro de hallazgos y tareas derivadas.
+- contexto_personal.md: estado actual y hallazgos principales.
+- ChangesLogs.txt: registro objetivo de la actualización.
+- checkpoint.md: checkpoint inicial/final AUD-CP-0004.
+
+RESULTADOS PRINCIPALES
+- SHA-256 rápido con salt no equivale a KDF especializada.
+- La migración legacy AUTH puede competir con cambio de contraseña USERS y sobrescribir un valor más reciente.
+- Las escrituras de contraseña en USERS no están serializadas.
+- El contador de intentos puede perder fallos por reset/rollback concurrentes.
+- clearSensitiveLogs puede competir con inserciones AUTH en Logs.
+- Cuentas legacy inactivas pueden permanecer en texto claro; formatos desconocidos caen en la ruta legacy.
+- La validación de longitud UI no aplica trim como backend y existe el typo «reincie sesión».
+- Los callsites AUTH examinados no registran contraseñas; no se pudo inspeccionar Logs productiva.
+
+VERIFICACIONES Y LIMITACIONES
+- Se recuperaron y contrastaron diffs históricos y blobs actuales.
+- Las copias AUTH/USERS de Test coinciden con fuentes salvo identificador/formato; no son suite automatizada.
+- No se ejecutaron pruebas Apps Script V8, navegador, HTTP, Spreadsheet o Drive.
+- No se verificaron deployments ni se accedió a Logs real.
+- No se modificó código, datos, servicios, endpoints ni deployments.
+- AUD-T-023 no se declara funcionalmente validada ni libre de hallazgos.
+
+SIGUIENTE ACCIÓN
+Iniciar AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso, con confirmación de ambos HEAD y checkpoint propio. Mantener AUG-010/AUD-T-033 para concurrencia y coordinación interservicios.
+================================================================================

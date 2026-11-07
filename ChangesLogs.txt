@@ -3719,3 +3719,24 @@ ALCANCE Y LIMITACIONES
 - La auditoría técnica de AUD-T-023 permanece pendiente; este registro únicamente formaliza su objetivo, alcance y criterios obligatorios.
 ================================================================================
 
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-023: AUDITORÍA ESTÁTICA DE CREDENCIALES, HASHING Y LOGS
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S004
+Checkpoint: AUD-CP-0004
+HEAD padre: 87d75c38d72e76ed60132d2507661f4e1017a0e8
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: informe AUD-T-023, trazabilidad histórica, hallazgos H-AUD-023-001 a H-AUD-023-008, fortalezas, limitaciones y estado.
+- Plan_auditoría/Plan_Auditoria.md: estado y resultado de AUD-T-023.
+- Plan_auditoría/Aug_Tareas.md: adenda AUG-010 y tareas AUG-011 a AUG-014.
+- Tareas.txt: registro de hallazgos y tareas derivadas.
+- contexto_personal.md: estado de AUD-T-023 y hallazgos principales.
+- checkpoint.md: checkpoint inicial/final AUD-CP-0004.
+
+ALCANCE
+- No se modificaron archivos de código, pruebas, servicios, endpoints, datos, deployments ni configuraciones.
+- No se ejecutaron pruebas funcionales, solicitudes HTTP ni operaciones sobre Apps Script, Spreadsheet o Drive.
+- No se inspeccionó la hoja Logs real.
+- Esta actualización registra resultados de auditoría estática y tareas pendientes.
+================================================================================

@@ -5010,3 +5010,40 @@ RESULTADO DE AUDITORÍA E IMPLEMENTACIÓN — 2026-11-07
 - Revisión final pre-commit: se corrigieron escapes de expresiones regulares en la detección/actualización de listas existentes; comprobación sintáctica del módulo compartido superada.
 
 ================================================================================
+
+================================================================================
+HALLAZGOS Y TAREAS DERIVADAS — AUD-T-023: CREDENCIALES, HASHING Y LOGS
+Fecha: 2026-11-07
+Estado: AUDITORÍA ESTÁTICA COMPLETADA (E1/E2); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+HALLAZGOS
+- H-AUD-023-001 (Alta): SHA-256 de una sola pasada con salt no equivale a KDF especializada.
+- H-AUD-023-002 (Alta): migración legacy de AUTH puede sobrescribir una contraseña nueva escrita concurrentemente por USERS.
+- H-AUD-023-003 (Media): handleUpdateUser y handleChangePassword no serializan escrituras; solicitudes simultáneas pueden responder éxito y dejar vigente solo la última escritura.
+- H-AUD-023-004 (Media): resetLoginAttempts/rollbackLoginAttempt pueden borrar o descontar intentos de otras autenticaciones concurrentes.
+- H-AUD-023-005 (Media): clearSensitiveLogs puede eliminar filas equivocadas o dejar registros sensibles si AUTH inserta mientras FEEDBACK procesa índices calculados previamente.
+- H-AUD-023-006 (Media/decisión): cuentas legacy que no vuelvan a iniciar sesión pueden conservar texto claro indefinidamente.
+- H-AUD-023-007 (Media): formatos no reconocidos como sha256$ se interpretan como contraseña legacy.
+- H-AUD-023-008 (Baja): users.html valida longitud sin trim y contiene el typo «reincie sesión».
+- Detalle y criterios de aceptación: Plan_auditoría/Aug_Tareas.md. No se modificó código ni se ejecutaron pruebas funcionales.
+
+AUG-010 — ADENDA
+Ampliar serialización de USERS para cubrir escrituras Password en handleUpdateUser y handleChangePassword, además de migración legacy AUTH; contemplar que AUTH y USERS son proyectos separados y enlazar con AUD-T-033.
+
+AUG-011 — KDF RESISTENTE Y MIGRACIÓN VERSIONADA (ALTA)
+Seleccionar y medir KDF compatible con Apps Script V8; definir formato versionado, salt y parámetros; compatibilidad temporal legacy/sha256$; rechazo seguro de formatos desconocidos; política de cuentas legacy inactivas y contraseñas antiguas cortas; probar en copia aislada antes de cualquier migración productiva.
+
+AUG-012 — CONTADOR DE INTENTOS CONCURRENTE (MEDIA)
+Evitar que éxito o rollback de una solicitud elimine/descuente fallos de otras; probar fallos, éxito y errores de infraestructura simultáneos; documentar limitación de CacheService.
+
+AUG-013 — PURGA DE LOGS COORDINADA (MEDIA)
+Coordinar clearSensitiveLogs con inserciones AUTH sin asumir que ScriptLock de proyectos diferentes es compartido; evitar índices obsoletos; preservar registros no sensibles y verificar ausencia de credenciales tras la purga.
+
+AUG-014 — VALIDACIÓN DE CONTRASEÑA EN UI (BAJA)
+Alinear longitud validada en users.html con normalización trim del backend y corregir «reincie» por «reinicie».
+
+RELACIONES
+- AUG-010 y AUD-T-033: concurrencia y coordinación AUTH/USERS.
+- AUG-002: validación funcional en deployments aislados y Spreadsheet de prueba.
+- AUD-T-024: ciclo de sesión y revocación, manteniendo separación de alcance.
+================================================================================

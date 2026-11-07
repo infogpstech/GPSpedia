@@ -123,3 +123,31 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Relación:** subárea vinculada a AUD-T-033 (coordinación de mutaciones entre servicios). Mantener ambos alcances diferenciados.
 - **Estado:** NUEVA; DEPENDIENTE DE AUD-T-033 PARA COORDINACIÓN ENTRE PROYECTOS.
 
+
+
+### Adenda AUD-T-023 a AUG-010 — concurrencia de operaciones de contraseña
+- **Hallazgo origen:** H-AUD-023-002 y H-AUD-023-003.
+- **Alcance:** serializar handleUpdateUser() cuando modifica Password, handleChangePassword() y la escritura de migración legacy de AUTH. AUTH y USERS son proyectos Apps Script distintos; sus ScriptLock locales no se comparten.
+- **Criterios adicionales:** dos cambios simultáneos no deben responder éxito con resultados contradictorios; una migración atrasada no debe sobrescribir un hash reciente; verificar y escribir sobre estado confirmado; probar cambios propios, reset administrativo y login legacy concurrentes en copia aislada.
+- **Relación:** mantener AUG-010 y AUD-T-033 sin duplicar coordinación interservicios.
+
+### AUG-011 — Sustituir SHA-256 rápido por KDF resistente y completar migración versionada
+- **Origen:** H-AUD-023-001, H-AUD-023-006 y H-AUD-023-007. **Prioridad:** Alta.
+- **Problema:** SHA-256 de una pasada no es KDF; cuentas legacy pueden quedar en texto claro; formatos desconocidos se interpretan como legacy.
+- **Criterios:** seleccionar KDF compatible con Apps Script V8 y medir rendimiento; formato versionado con parámetros y salt individual; compatibilidad temporal controlada con legacy/sha256$; rechazar formatos codificados desconocidos; definir migración de cuentas inactivas y política para contraseñas legacy cortas; probar reversión en copia aislada.
+- **Restricción:** no migrar ni desplegar producción sin autorización.
+
+### AUG-012 — Hacer consistente el contador de intentos ante autenticaciones concurrentes
+- **Origen:** H-AUD-023-004. **Prioridad:** Media.
+- **Problema:** resetLoginAttempts() y rollbackLoginAttempt() pueden eliminar/descontar intentos de otras solicitudes.
+- **Criterios:** diseñar reservas/identificadores de intento o estrategia equivalente; preservar bloqueo temporal; probar fallos, éxito y errores de infraestructura simultáneos; documentar el límite de CacheService.
+
+### AUG-013 — Coordinar purga de Logs con inserciones AUTH
+- **Origen:** H-AUD-023-005. **Prioridad:** Media.
+- **Problema:** FEEDBACK elimina índices calculados antes de que AUTH inserte nuevas filas; los ScriptLock de proyectos separados no se coordinan.
+- **Criterios:** diseñar coordinación entre proyectos sin asumir lock compartido; evitar índices obsoletos; preservar logs no sensibles; verificar que los formatos históricos objetivo se detectan y no quedan credenciales; probar inserciones simultáneas en copia.
+
+### AUG-014 — Alinear validación de contraseña en UI y corregir texto
+- **Origen:** H-AUD-023-008. **Prioridad:** Baja.
+- **Problema:** users.html valida longitud sin trim mientras backend aplica trim; mensaje contiene «reincie».
+- **Criterios:** aplicar en cliente la misma longitud normalizada sin sustituir validación backend; corregir a «reinicie sesión»; probar espacios externos y longitudes límite.

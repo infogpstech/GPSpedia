@@ -7294,3 +7294,130 @@ AUG-005 a AUG-010, registradas en Plan_auditoría/Aug_Tareas.md. AUG-010 es una 
 RESULTADO
 AUD-T-002: PARCIALMENTE CUMPLIDA; HALLAZGOS ABIERTOS. No se modificó código ni datos.
 ================================================================================
+
+================================================================================
+AUDITORÍA INDIVIDUAL — AUD-T-023: SEGURIDAD ADMIN 0, CREDENCIALES, HASHING, LOGS Y MIGRACIÓN
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S004
+Checkpoint: AUD-CP-0004
+Plan: AUD-PLAN-2026-001
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: 87d75c38d72e76ed60132d2507661f4e1017a0e8
+Árbol auditado: a842c63bf9f889df685731c32d9ed9cb1706473e
+Rama base: GPSpedia2.2.5
+HEAD de base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Tipo: auditoría estática E1/E2, trazabilidad histórica, comparación de fuentes y dependencias. Sin cambios de código.
+
+1. OBJETIVO Y ALCANCE
+Determinar el estado real de la protección de credenciales ADMIN 0: hashing, verificación, normalización, compatibilidad/migración de contraseñas legacy, rutas de escritura USERS, límite de intentos, registro/purga de Logs y autorización relacionada. Detectar defectos residuales, regresiones, errores de lógica, inconsistencias, typos, riesgos y condiciones de carrera.
+
+2. HISTORIAL Y TRAZABILIDAD
+- ed92f3a9b383c8d92f53f0ecf0fb146a37bba868 — autorización ADMIN y FEEDBACK. Su diff no incluye Services/Auth.js, aunque la documentación del commit lo afirmaba.
+- 2e0bbcf78db6b7d775f59a0eef396084a690059c — introduce SHA-256/salt, verificación dual, migración al login, cinco intentos y bloqueo de quince minutos; actualiza tres rutas de escritura USERS.
+- 6a226c185637b5ec8f97c00b360aeee37f511041 — modifica Services/Auth.js y elimina el payload de login, username y valores de comparación de contraseña de los logs.
+- 0666c1d189136dbad66c5c6523f8419b8d447002 y 4bc9ac19b81dd0a9cc38a21e2806973ba3bc5fb3 — ajustes de límites y serialización de gestión de sesiones; no cambian hashing.
+- b441a5be9a04770b2d535490eb73bc9478375e9b — prevención de usuarios duplicados; no cambia hashing.
+- babf5ce494fdcf6b32f519d37acbc85d25adf2c7 — incorpora clearSensitiveLogs en FEEDBACK, restringida a Desarrollador.
+- 6294ea9b56717c1d31cd8359c1a3e48b7b4ce15e — alinea copia aislada de USERS con fuente vigente.
+
+3. ARCHIVOS Y FUNCIONES REVISADOS
+- Services/Auth.js, blob fc69357b655c023b5ab3f7dd72cdab6fbb1787ed, 401 líneas: constantes/columnas, SESSION_LIMITS, normalizePassword, digestToHex, createPasswordHash, constantTimeEquals, verifyStoredPassword, getLoginAttemptCacheKey, beginLoginAttempt, resetLoginAttempts, rollbackLoginAttempt, logToSheet, doGet/doPost, handleLogin y handleValidateSession.
+- Services/users.js, blob 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0, 494 líneas: conexión/columnas, helpers de hash, doGet/doPost, getVerifiedSession, handleGetUsers, handleResetUserSessions, handleCreateUser, handleUpdateUser, handleDeleteUser, handleUpdateProfile y handleChangePassword.
+- Services/admin.js, blob 847a2bb80e53918bede067e530b80e41bfdb6afa, 5.449 líneas: assertDeveloperSession, router doPost y logMessage; todas las acciones salvo ping requieren sesión Desarrollador.
+- Services/feedback.js, blob 3db189523f6cb849d33550f29971c0ec6f386b3a, 2.047 líneas: assertFeedbackSession, permisos de clearSensitiveLogs, router y handleClearSensitiveLogs.
+- api-config.js, blob a5c718d01b7da50b4b5e650c3bacd91456f4d670: mapa de login/USERS/FEEDBACK, routeAction, login y clearSensitiveLogs.
+- auth.js, blob 2dc65f2e5903fc208ca14505053e82203a9dbd86: handleLoginSuccess, checkSession, login y logout. El objeto persistido contiene SessionToken, pero no contraseña.
+- users.html, blob e41f402675677a4d2783493614737021ec2eade5: remoteLog, postToAction, formularios de usuario y cambio de contraseña.
+- Services/Test/Auth.js, blob f9e522cdc673d1028ad2f6979bc860a2eff752f7, y Services/Test/users.js, blob 83e0ea30dfeccc9d62a9c51f9add002c1850dde6: comparados con fuentes productivas.
+- Services/Test/README.md, blob 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff: indica dos proyectos Apps Script separados y Spreadsheet independiente.
+
+4. COMPARACIÓN DE FUENTES Y ESTADO
+- AUTH y USERS utilizan sha256$<salt>$<digest>, salt generado con Utilities.getUuid() y una sola llamada a Utilities.computeDigest(SHA_256).
+- AUTH verifica hash y legacy; después de login legacy correcto escribe el hash derivado en Users.Password.
+- USERS genera hashes al crear, actualizar administrativamente y cambiar la contraseña propia.
+- normalizePassword, digestToHex, constantTimeEquals y verifyStoredPassword coinciden entre AUTH y USERS. createPasswordHash comparte fórmula; AUTH agrega enforceMinimumLength=false para migración legacy.
+- Tras normalizar SPREADSHEET_ID, Test/Auth.js coincide con Auth.js salvo comentario del ID de prueba. Test/users.js coincide con users.js salvo comentario del ID y líneas vacías finales.
+- Services/Test contiene copias desplegables, no una suite automatizada ni resultados reproducibles.
+- No existe KDF especializada ni proceso por lotes para cuentas legacy que no vuelvan a iniciar sesión.
+- CacheService se utiliza para el contador; Tareas.txt ya documenta posible desalojo temprano.
+- Los callsites actuales de AUTH inspeccionados no serializan request.payload ni registran username o valores de contraseña. Los detalles actuales de logToSheet son mensajes, errores/stack y metadatos de sesión; no se encontró un callsite que pase el valor de contraseña.
+- clearSensitiveLogs está restringida a Desarrollador y detecta los formatos históricos examinados.
+- No se accedió a la hoja Logs real; no se puede afirmar si existen registros históricos con credenciales ni si se ejecutó la purga.
+- La validación de longitud del frontend usa longitud sin trim; backend aplica trim antes de contar.
+
+5. HALLAZGOS
+
+H-AUD-023-001 — ALTA — SHA-256 rápido de una sola pasada no es una KDF especializada.
+Evidencia: Services/Auth.js:60–67, 77–86; Services/users.js:56–64, 73–83. Se concatena salt y contraseña y se ejecuta un único SHA-256; no hay work factor ni parámetros de costo. El salt individual dificulta tablas precalculadas, pero no hace costosa la prueba offline de contraseñas candidatas si se obtiene la hoja/hash.
+Impacto: una filtración de Users.Password permite probar contraseñas candidatas con costo muy bajo frente a una KDF.
+Acción: AUG-011. No sustituir formato ni migrar producción durante esta auditoría.
+
+H-AUD-023-002 — ALTA — La migración legacy en AUTH puede sobrescribir una contraseña nueva por una escritura atrasada.
+Evidencia: Services/Auth.js:246–275 lee y verifica el valor legacy y, sin lock, escribe el hash derivado en foundUserIndex + 2. Services/users.js:455–483 cambia la contraseña sin lock; handleUpdateUser():342–390 también escribe Password sin lock.
+Escenario: AUTH lee y valida la contraseña legacy; USERS cambia la contraseña y guarda el hash nuevo; AUTH completa después la migración con el valor antiguo y lo vuelve a escribir. AUTH y USERS son proyectos Apps Script separados; sus ScriptLock no se coordinan.
+Impacto: un cambio de contraseña confirmado puede quedar revertido silenciosamente y permitir la contraseña anterior.
+Relación: H-AUD-006, AUG-010 y AUD-T-033. Ampliar AUG-010; no duplicar coordinación interservicios.
+
+H-AUD-023-003 — MEDIA — Las operaciones de cambio de contraseña en USERS no están serializadas.
+Evidencia: Services/users.js:342–395 (actualización administrativa) y 455–483 (cambio propio) no adquieren ScriptLock.
+Escenario: dos solicitudes concurrentes verifican el mismo hash anterior, escriben hashes distintos y ambas responden success; el último setValue determina la contraseña vigente. También puede competir un reset administrativo con el cambio propio.
+Impacto: resultados dependientes del orden; una solicitud que respondió éxito puede no corresponder a la contraseña finalmente almacenada.
+Relación: H-AUD-006/AUG-010 y AUD-T-033.
+
+H-AUD-023-004 — MEDIA — El contador de intentos puede perder fallos concurrentes por reset o rollback global.
+Evidencia: Services/Auth.js:95–155 protege individualmente beginLoginAttempt(), resetLoginAttempts() y rollbackLoginAttempt(); handleLogin() los invoca en 243, 277 y 368–370.
+Escenario A: dos logins reservan intentos; uno es válido y resetLoginAttempts() elimina todo el estado mientras el otro sigue pendiente y luego falla. Ese fallo no se vuelve a contabilizar.
+Escenario B: una solicitud reserva un intento y termina con error de infraestructura; rollbackLoginAttempt() decrementa el contador agregado actual, que puede incluir el fallo de otra solicitud.
+Impacto: el contador puede quedar por debajo de los fallos reales y el límite de cinco intentos no refleja con exactitud solicitudes simultáneas.
+Limitación adicional: CacheService puede desalojar entradas antes de los quince minutos, ya documentado en Tareas.txt.
+Acción: AUG-012.
+
+H-AUD-023-005 — MEDIA — clearSensitiveLogs puede borrar filas incorrectas o dejar registros sensibles durante una inserción concurrente de AUTH.
+Evidencia: Services/feedback.js:1686–1715 lee Logs, guarda índices numéricos y elimina filas sin lock. Services/Auth.js:160–179 inserta cada nuevo log antes de la fila 2 bajo ScriptLock local a AUTH.
+Escenario: FEEDBACK calcula rowsToDelete; AUTH inserta en fila 2 y desplaza índices; FEEDBACK elimina los índices originales, ahora correspondientes a otros registros. El ScriptLock de AUTH no coordina con FEEDBACK por ser proyectos distintos.
+Impacto: pérdida de logs no sensibles y posible permanencia de registros con credenciales después de una purga que informe éxito.
+Acción: AUG-013, coordinada con AUD-T-033. No ejecutar la purga contra Logs productivos desde esta auditoría.
+
+H-AUD-023-006 — MEDIA / DECISIÓN — Cuentas legacy que no vuelvan a iniciar sesión pueden conservar contraseña en texto claro indefinidamente.
+Evidencia: Services/Auth.js:273–276 migra únicamente después de login correcto. No se encontró migración por lotes ni inventario de cuentas pendientes. Tareas.txt:3377 aprobó migración progresiva al login y 3313 había propuesto evaluar migración por lotes después de validar una copia.
+Impacto: el estado de almacenamiento mixto puede persistir sin fecha de finalización.
+Decisión pendiente: mantener migración perezosa, establecer fecha límite/recambio de contraseña o ejecutar proceso controlado sobre copia validada. No realizar migración masiva sin autorización.
+
+H-AUD-023-007 — MEDIA — Todo formato no reconocido como sha256$ se interpreta como contraseña legacy.
+Evidencia: Services/Auth.js:77–86 y Services/users.js:73–83: solo se reconoce PASSWORD_HASH_PREFIX; cualquier otro valor cae en comparación de texto normalizado y se marca legacy=true.
+Impacto: un formato de hash futuro/desconocido puede tratarse como contraseña literal, creando ruta de downgrade y complicando la migración a KDF.
+Acción: incluir formatos explícitos y rechazo seguro de formatos codificados desconocidos en AUG-011.
+
+H-AUD-023-008 — BAJA — Validación de longitud de UI no aplica la misma normalización que backend y existe un typo.
+Evidencia: users.html:617–619 comprueba newPassword.length sin trim; AUTH/USERS normalizan con trim antes de exigir ocho caracteres (Services/Auth.js:52–63; Services/users.js:48–60). Una contraseña con espacios externos puede superar validación cliente y ser rechazada por backend. users.html:628 contiene «reincie sesión» en lugar de «reinicie sesión».
+Impacto: discrepancia de validación y mensaje con error ortográfico; no permite eludir validación backend.
+Acción: AUG-014.
+
+6. FORTALEZAS Y CONTROLES
+- AUTH no registra request.payload, username ni valores comparados de contraseña en los callsites actuales examinados.
+- Las rutas de escritura de nuevas contraseñas en USERS utilizan createPasswordHash().
+- La verificación de hash compara digest hexadecimal de longitud fija carácter a carácter.
+- La migración legacy solo se ejecuta después de verificar correctamente la contraseña.
+- clearSensitiveLogs exige rol Desarrollador y cubre nombres de campos de los formatos históricos examinados.
+- ADMIN exige sesión/privilegio Desarrollador para todas las acciones salvo ping; FEEDBACK valida acciones protegidas en backend.
+- El objeto user persistido por auth.js contiene SessionToken, pero no el valor de contraseña; el ciclo de vida del token pertenece a AUD-T-024.
+
+7. TAREAS DERIVADAS
+- AUG-010: ampliar criterios para handleUpdateUser(), handleChangePassword(), migración legacy AUTH y coordinación entre proyectos.
+- AUG-011: KDF resistente, formato versionado, migración y rechazo de formatos desconocidos.
+- AUG-012: contador de intentos resistente a concurrencia.
+- AUG-013: purga de Logs coordinada con escrituras AUTH.
+- AUG-014: validación de longitud normalizada en UI y corrección del typo.
+- AUG-002: validar en deployments aislados y Spreadsheet de prueba; las copias fuente no demuestran deployments.
+- AUD-T-024: ciclo de sesión y revocación; mantener separación de alcance.
+
+8. VERIFICACIONES, LIMITACIONES Y ESTADO
+- Se inspeccionaron fuentes vigentes, callsites, copias de prueba, README y diffs históricos.
+- Se contrastaron 2e0bbcf7, 6a226c18, 0666c1d1, 4bc9ac19, b441a5be y babf5ce4.
+- No se ejecutó Apps Script V8, navegador, HTTP, pruebas automatizadas, Spreadsheet ni Drive.
+- No se inspeccionó Logs real ni se verificaron deployments.
+- No se modificó código, datos, servicios ni deployments.
+- Nivel E1/E2; no equivale a validación funcional.
+- Estado: AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y REMEDIACIONES PENDIENTES.
+================================================================================
