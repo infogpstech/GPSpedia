@@ -188,3 +188,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - La organización automática posterior al inventario detectada en ui.js/Services/admin.js se transfiere a AUD-T-028 por su discrepancia con los requisitos 6.4–6.5 de Tareas.txt. La coordinación de ScriptLock entre ADMIN/WRITE continúa en AUD-T-033/AUG-003.
 - No se modificó código ni datos; no se probaron Apps Script, navegador/PWA, HTTP, Drive, Spreadsheet ni deployments.
 - Siguiente unidad: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
+
+
+## Estado del proyecto — cierre de AUD-T-028 (2026-11-07)
+- La rama GPSpedia2.2.5_work se auditó desde HEAD a1e66b81eb4ea146dfc76e9e2980f41b64a8c124; la rama base GPSpedia2.2.5 permaneció en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive: auditoría estática E1 completada; hallazgos H-AUD-028-001 a H-AUD-028-009 abiertos; validación funcional pendiente.
+- No hay límite total de 14 archivos en la fuente actual: lotes de 25 archivos/20 subcarpetas y cursor. La causa del síntoma de 14 no está confirmada; la UI puede restaurar un snapshot local y la lista de detalle filtra categorías.
+- Hallazgos principales: organización automática después del escaneo, sobrescritura del estado movida_manual, ausencia de validación backend de auditoría completa, protección incompleta de requiere_revision, snapshot de referencias único por lote, deduplicación incompleta, guardado de inventario sin resultado por archivo y diagnóstico incompleto.
+- El monitor global de Drive está implementado estáticamente con DriveApp y Drive API about.storageQuota; faltan pruebas con la identidad, scopes y deployment reales. No existe appsscript.json en el árbol auditado.
+- AUG-028, AUG-029 y AUG-030 añadidas. AUG-021, AUG-026 y AUG-003 ampliadas. Rendimiento de CacheService/IndexedDB transferido a AUD-T-029.
+- No se modificó código, configuración ni datos; no se probaron Apps Script, navegador/PWA, HTTP, Drive, Spreadsheet, cuota real ni concurrencia.
+- Siguiente unidad: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.

@@ -8207,3 +8207,148 @@ Recomendación: decidir si el historial y el inventario sin uso son dos vistas s
 - AUD-T-027 queda con auditoría estática E1 completada, hallazgos abiertos y validación funcional pendiente. No se declara funcionalmente cerrada.
 - Siguiente unidad del plan: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA E1 — AUD-T-028: INVENTARIO DE IMÁGENES SIN USO, CLASIFICACIÓN Y MONITOR GLOBAL DE DRIVE
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: a1e66b81eb4ea146dfc76e9e2980f41b64a8c124
+Árbol auditado: 4adb052da52733e812fc9a4f0d0e5d848c879de3
+Rama base: GPSpedia2.2.5
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
+Estado: AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+## 1. Alcance y criterios de referencia
+Se auditó el escaneo recursivo de Cortes, la clasificación En uso/Histórica/Sin uso detectado/No verificable, la construcción y reanudación de cursores, el snapshot de referencias, la persistencia del progreso, el registro de imágenes sin uso en Imagenes_Reemplazadas, la organización física por lotes, el movimiento manual, la creación de la carpeta Imagenes_Sin_Uso, el monitor global de almacenamiento y los contratos frontend/backend.
+Se contrastaron especialmente Tareas.txt 3540–3755 (requisitos históricos de organización automática), Tareas.txt 3823–3835 (aclaración posterior 6.1–6.9), y los hallazgos previos sobre el resultado de 14 archivos. La especificación posterior 6.4/6.5 exige que el escaneo no mueva archivos y que las acciones de Drive sean explícitas y confirmadas; se registra la contradicción con el requisito histórico 7.1.
+
+## 2. Línea base e historial
+- HEAD auditado: a1e66b81eb4ea146dfc76e9e2980f41b64a8c124. El commit padre a1e66b81 documentó AUD-T-027; no alteró código de aplicación.
+- 7983febe0b7b0b4c8d31dd8aefbde3a4f1d5 — persistencia del inventario de imágenes sin uso en Spreadsheet.
+- 91f75de3ca1e8d7b64801f00fa0c98adea2809e9 — gestor de imágenes sin uso y monitor global de Drive; incluye la especificación posterior 6.1–6.9 en Tareas.txt.
+- 693f4825216996e3682c69985c666c0d8b21357c — añade la organización automática posterior al inventario. Es posterior a la aclaración 6.4/6.5 y el comportamiento actual sigue esa automatización.
+- 7a4539f1, d305b1ab, f3f7102d y 06c3b322 quedan como historial técnico de optimización, MIME gzip, persistencia del progreso y robustecimiento del snapshot; su auditoría profunda corresponde a AUD-T-029.
+
+## 3. Archivos y funciones revisados
+- Services/admin.js: getCortesRootFolder() y validación del árbol (130–225); collectCortesImageReferences() (aprox. 230–330); handleGetDriveStorage() (4147–4241); getOrCreateUnusedImagesFolder() y validación de carpetas (4480–4560); storeAuditDriveReferenceSnapshot(), loadAuditDriveReferenceSnapshot() y clearAuditDriveReferenceSnapshot() (4932–4995); handleSaveUnusedImagesInventory() (5002–5147); handleOrganizeUnusedImagesBatch() (5153–5364); handleAuditDriveImagesInCortes() (5369–5548).
+- ui.js: modal de auditoría, restauración de estado, renderizado, resumen, persistencia local, ejecución por lotes y registro/organización del inventario (5100–5481); refreshDriveStorage() y presentación del monitor global (4640–4694).
+- offline.js: IndexedDB, saveDriveAuditState()/getDriveAuditState() y persistencia de la vista del gestor (1–190 y helpers relacionados).
+- api-config.js: ACTION_TO_SERVICE_MAP y routeAction() (28–117), incluyendo auditDriveImagesInCortes, saveUnusedImagesInventory y getDriveStorage.
+- index.html: descripción del flujo de auditoría y organización (aprox. 489), modal de auditoría y monitor global de almacenamiento (440–620).
+- style.css: estilos de las vistas del gestor y del modal/monitor (3245–3485); el contrato de cuadrícula/lista también se contrastó con AUD-T-027.
+- Services/write.js: rutas de alta/reparación de imágenes (420–864); no se encontró un escritor del inventario de imágenes sin uso ni llamada a handleOrganizeUnusedImagesBatch().
+- Spreadsheet/GPSpedia_DB_columnas.md: esquema base de Imagenes_Reemplazadas y AdminImageUploads (52–69 y 338–371); las doce columnas dinámicas añadidas por el gestor ya quedaron señaladas en H-AUD-027-005.
+- Tareas.txt y Auditoría.txt: especificación 6.1–6.9, requisito histórico 7.1, criterios de pruebas y antecedentes del resultado de 14 archivos.
+
+Blobs de código auditados:
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+
+## 4. Controles positivos confirmados estáticamente
+- getCortesRootFolder() valida el ID configurado, el nombre «cortes» y que la carpeta pertenezca directamente a la raíz de Drive. Las subcarpetas descubiertas y los IDs incluidos en el cursor se validan dentro del árbol Cortes.
+- collectCortesImageReferences() compara IDs de las columnas de imagen de Cortes y considera texto, fórmulas y rich text. Los enlaces de Drive que no pueden interpretarse incrementan un contador; mientras exista incertidumbre, el sistema evita confirmar imágenes sin uso.
+- El escaneo recursivo no tiene un límite total fijo de 14. Trabaja con hasta 25 archivos y 20 subcarpetas por lote, devuelve cursor y estado complete/partial, y no finaliza mientras la pila de carpetas tenga elementos.
+- El frontend valida batchAnalyzed, totalAnalyzed, complete y la coherencia entre cursor y estado final. Detecta la repetición del mismo cursor cuando no aumentan archivos ni carpetas recorridas.
+- El progreso y los resultados completos del escaneo se guardan localmente en IndexedDB. El inventario confirmado de imágenes sin uso sí se registra en Imagenes_Reemplazadas, de modo que el gestor consulta Spreadsheet y no depende exclusivamente del estado del navegador.
+- handleSaveUnusedImagesInventory() deduplica IDs recibidos, vuelve a validar referencias activas, estado de papelera, MIME de imagen y pertenencia al árbol Cortes; calcula nombre, URL completa de Drive y ubicación actual desde Drive, no confía en la ruta recibida del navegador.
+- El gestor mantiene un ID estable INV-<fileId> para los registros de inventario y actualiza filas existentes por ID de Drive; el ingreso de una misma lista no genera una nueva fila por cada reintento.
+- handleOrganizeUnusedImagesBatch() valida la fila de inventario, el ID de auditoría del registro, el MIME, la papelera, el padre único y el destino dentro de Cortes. Verifica el movimiento y contiene compensación si falla la actualización de metadatos después de mover.
+- Las acciones manuales de mover/crear carpeta permanecen restringidas al árbol Cortes. El movimiento manual actualiza ubicacion_actual y estado_organizacion a movida_manual.
+- El monitor global usa DriveApp.getStorageUsed() cuando está disponible y consulta Drive API about.storageQuota; diferencia uso de Drive, uso total de cuota, límite, restante, porcentaje, ilimitado/no disponible, advertencia, fuente y hora de captura. La interfaz dispone de actualización manual y muestra el momento de la última consulta.
+- La implementación del monitor consulta la cuota global de la identidad que ejecuta el servicio; no suma archivos de Cortes para simular el almacenamiento total.
+
+## 5. Hallazgos
+
+### H-AUD-028-001 — ALTA — El flujo posterior al escaneo mueve archivos automáticamente y puede deshacer movimientos manuales
+Evidencia: al completar el recorrido, runAudit() llama saveUnusedInventory(true) (ui.js 5429–5432). saveUnusedInventory() guarda el inventario y, sin solicitar una acción separada, ejecuta lotes mode: organize de hasta veinte imágenes (5205–5293, especialmente 5240–5267). Al restaurar una auditoría completa cuyo inventario no figura como guardado, restoreState() vuelve a llamar saveUnusedInventory(false) (5462–5475), lo que también puede disparar movimientos sin una nueva confirmación. El backend ejecuta file.moveTo(destination) (Services/admin.js 5283–5312).
+Evidencia adicional: el movimiento manual establece estado_organizacion = movida_manual (handleMoveReplacedImage(), 4707–4878), pero el siguiente guardado del inventario sobrescribe ese estado con pendiente y borra el error previo (Services/admin.js 5119–5122). La interfaz puede entonces volver a mover la imagen a Imagenes_Sin_Uso.
+Conflicto de requisitos: Tareas.txt 6.4/6.5 (3823–3835) establece que el escaneo no mueve archivos y que mover/papelera son acciones explícitas y confirmadas. El requisito histórico 7.1 pedía organización automática; el commit 693f4825 implementa esa versión antigua después de la aclaración 6.4/6.5.
+Impacto: ejecutar o restaurar una auditoría puede mover físicamente archivos sin una acción explícita del usuario. Además, una ubicación manual puede perderse en la siguiente auditoría y la imagen regresar a la carpeta fija.
+Recomendación: eliminar la invocación automática de mode: organize desde runAudit()/saveUnusedInventory()/restoreState(); conservar el registro persistente y dejar el movimiento solo en una acción explícita con confirmación. Preservar movida_manual y la ubicación elegida al actualizar la auditoría.
+
+### H-AUD-028-002 — ALTA — El backend no exige prueba de auditoría completa antes de marcar registros anteriores como no confirmados
+Evidencia: handleSaveUnusedImagesInventory() recibe únicamente payload.files (5002–5015); no exige complete, auditId de escaneo ni un marcador server-side de finalización. Genera un UUID nuevo para la escritura de inventario (5074) y marca como no_confirmada_en_ultima_auditoria todas las filas existentes que no aparezcan en la lista recibida (5081–5089). El ID de auditoría del escaneo solo vive en referenceCacheId dentro del cursor; al completar, handleAuditDriveImagesInCortes() limpia el snapshot y devuelve cursor:null, sin devolver el ID de escaneo (5524–5547 y 5533).
+El frontend normal llama el guardado después de completar el while (ui.js 5429–5432), pero el endpoint backend no impone ese contrato. El auditId que devuelve el guardado es un ID de operación de inventario, no el ID de la exploración recursiva.
+Impacto: una solicitud directa o una regresión del frontend que envíe una lista parcial puede marcar imágenes válidas anteriores como no confirmadas, aunque nunca se hayan recorrido. También se pierde la correlación verificable entre la exploración que encontró los archivos y la escritura que actualizó el inventario.
+Recomendación: conservar una prueba de finalización del escaneo en backend o correlacionar un auditId emitido/validado por ADMIN; rechazar listas parciales para cualquier operación que marque registros ausentes. Distinguir auditId de exploración de inventoryOperationId.
+
+### H-AUD-028-003 — ALTA — Los registros históricos que requieren revisión no protegen el archivo frente a su clasificación como sin uso
+Evidencia: tanto handleAuditDriveImagesInCortes() como handleSaveUnusedImagesInventory() agregan a historicalDriveIds únicamente registros tipo reemplazada con estado historica o restablecida (Services/admin.js 5393–5401 y 5043–5045). Un registro requiere_revision queda fuera del conjunto. handleOrganizeUnusedImagesBatch() valida el tipo/estado de la fila de inventario y las referencias activas, pero no vuelve a consultar el historial de reemplazos antes de mover (5153–5238).
+Impacto: un archivo que pertenece a un registro histórico incompleto o que requiere revisión puede clasificarse como Sin uso detectado, registrarse como INV-<fileId> y quedar habilitado para movimiento. Esto conecta con H-AUD-027-001/AUG-026: los estados de revisión no deben desaparecer del flujo de protección.
+Recomendación: proteger los archivos de todos los estados históricos no resueltos, incluidos requiere_revision y los estados de papelera/revisión que la política defina; mostrar el conflicto en vez de clasificarlos como sin uso. Revalidar también la pertenencia al historial antes de cualquier movimiento.
+
+### H-AUD-028-004 — MEDIA — La verificación de referencias se toma una vez por lote, no inmediatamente antes de cada movimiento
+Evidencia: handleOrganizeUnusedImagesBatch() ejecuta collectCortesImageReferences(false) una sola vez antes del bucle de archivos (Services/admin.js 5185–5187) y reutiliza ese snapshot para cada elemento (5229–5235). El lote puede contener hasta veinte archivos. El ScriptLock de ADMIN no coordina modificaciones desde otro proyecto Apps Script ni ediciones directas de Spreadsheet.
+Impacto: una referencia puede añadirse después de tomar el snapshot y antes de que se mueva un archivo posterior del mismo lote. Ese archivo podría moverse con una comprobación que ya quedó desactualizada.
+Recomendación: volver a consultar referencias inmediatamente antes de cada movimiento y coordinar escrituras de otros servicios cuando sea posible. Relacionado con AUD-T-033/AUG-003; no duplicar la tarea de locks interproyectos.
+
+### H-AUD-028-005 — MEDIA — El recorrido y el inventario no detectan de forma uniforme archivos/carpetas duplicados
+Evidencia: el cursor de handleAuditDriveImagesInCortes() conserva una pila, pero no incluye un conjunto global de carpetas visitadas o IDs de archivos procesados (5416–5434 y 5442–5517). Cada archivo se agrega a auditResults sin comprobar si ya apareció (5474–5480). El frontend agrega cada lote con allFiles.push(...response.files) sin deduplicación (ui.js 5395). handleSaveUnusedImagesInventory() deduplica los IDs de entrada, pero existingInventoryRows conserva solo la primera fila por ID y no reporta las filas históricas duplicadas (Services/admin.js 5032–5042); handleOrganizeUnusedImagesBatch() también conserva solo la primera fila encontrada (5177–5183).
+Impacto: archivos compartidos por varias carpetas o recorridos repetidos pueden aparecer duplicados en resultados y contadores. Las filas duplicadas ya existentes en Spreadsheet permanecen ocultas para la lógica Map y pueden seguir apareciendo en el gestor.
+Recomendación: mantener seenFolderIds/seenFileIds a través del cursor y la UI; detectar duplicados existentes por Drive ID antes de actualizar o mover y presentarlos para reconciliación, no escoger silenciosamente la primera fila.
+
+### H-AUD-028-006 — MEDIA — Un solo archivo inválido aborta el guardado completo y no hay resultado por elemento
+Evidencia: handleSaveUnusedImagesInventory() valida todos los elementos en un único forEach y lanza excepción si un archivo adquiere referencias, está en papelera, deja de ser imagen o no tiene un padre único dentro de Cortes (5049–5071). La validación se hace antes de las escrituras, por lo que evita guardar el lote inválido, pero no devuelve qué elementos sí se pudieron confirmar. Después, las filas obsoletas y existentes se actualizan con múltiples escrituras individuales y las nuevas se agregan en bloque (5081–5138); no hay una transacción/compensación integral de todas esas escrituras.
+Impacto: un solo archivo movido, eliminado o malformado puede impedir que las demás imágenes válidas del lote se registren. Si falla una escritura después de iniciar la actualización, puede quedar un inventario parcialmente actualizado; la UI informa estado parcial y permite reintentar (ui.js 5274–5277), pero no recibe un desglose durable por archivo.
+Recomendación: devolver resultados por archivo con estados confirmado/bloqueado/error; guardar únicamente los elementos confirmados y reconciliar los fallos de forma idempotente. Definir recuperación de escrituras parciales y conservar el estado previo hasta que la operación se confirme.
+
+### H-AUD-028-007 — MEDIA — Los indicadores y el detalle visible no representan todos los resultados solicitados
+Evidencia: handleAuditDriveImagesInCortes() devuelve batchAnalyzed, totalAnalyzed, foldersVisited, complete/partial, unverifiableReferenceCount, files y cursor (5535–5547), pero no totalDiscovered ni errorCount. foldersVisited aumenta al descubrir subcarpetas, no cuenta la carpeta raíz (5511–5518). El contador de carpetas pendientes de la interfaz muestra cursor.stack.length, que es la profundidad/tamaño de la pila de continuación y no el número real de carpetas aún no recorridas (ui.js 5162–5167). La lista detallada filtra solo Histórica y Sin uso detectado (5121–5123); En uso y No verificable aparecen en contadores, pero no en el detalle. Los archivos que no son MIME image/* también se clasifican como No verificable (admin.js 5465–5469), mezclándose con errores de lectura/metadatos.
+Impacto: el usuario no puede conciliar con precisión total descubierto, total analizado, pendientes y errores; el número de filas visibles puede ser menor que totalAnalyzed. La lista no permite inspeccionar los archivos En uso/No verificable que explican los contadores.
+Recomendación: definir los contadores con semántica exacta, contar la raíz, distinguir archivos no-imagen de errores de lectura y mostrar todas las clasificaciones o etiquetar claramente la lista como subconjunto de elementos administrables.
+
+### H-AUD-028-008 — MEDIA — El estado local restaurado no muestra su fecha y no identifica la versión de ADMIN que produjo el resultado
+Evidencia: el estado de auditoría se guarda en IndexedDB con updatedAt (offline.js y ui.js 5182–5202), pero restoreState() no presenta esa fecha. openAuditDriveModal() restaura el estado guardado y no inicia otro escaneo si ya existe; solo inicia una auditoría nueva cuando no hay estado local (ui.js 5462–5480), o cuando el usuario pulsa el botón de nueva auditoría. El resultado backend no incluye commit/version/build fingerprint (admin.js 5535–5547).
+Impacto: después de actualizar ADMIN, el usuario puede volver a ver el resultado de una auditoría anterior sin distinguirlo visualmente de un escaneo recién ejecutado. Esto es una explicación posible para ver repetidamente los mismos 14 elementos, pero no queda demostrada sin saber si se pulsó Iniciar nueva auditoría y sin inspeccionar el deployment.
+Recomendación: mostrar fecha/hora de la última exploración, estado restaurado/nuevo, rootFolderId y versión/build del servicio; permitir distinguir resultados guardados de una ejecución fresca.
+
+### H-AUD-028-009 — MEDIA — La URL de visualización se construye, pero no se verifica su accesibilidad real
+Evidencia: handleSaveUnusedImagesInventory() conserva file.getUrl() como URL completa de Drive y construye url_visualizacion concatenando https://lh3.googleusercontent.com/d/ con el ID (admin.js 5104–5118). No se observa una comprobación de que la URL se pueda cargar desde el contexto de la aplicación ni una validación de acceso público; el código no modifica permisos de archivos/carpetas.
+Impacto: la estructura de URL puede ser correcta, pero no demuestra que una miniatura vaya a cargar para el usuario de la aplicación si el archivo conserva permisos privados/restringidos.
+Recomendación: validar en el deployment real la correspondencia ID/URL y la carga de la imagen; mantener los permisos existentes y no ampliar el uso compartido de forma general para resolver una miniatura.
+
+## 6. Resultado del síntoma de 14 archivos y hallazgos previos
+- No existe en el código actual un límite total de 14 archivos. El backend procesa 25 archivos y 20 subcarpetas por lote; el frontend continúa mientras complete sea false y valida el total acumulado.
+- La validación del root folder (ID, nombre y ubicación directa en Drive) está presente en getCortesRootFolder(); esto corrige la debilidad señalada en la auditoría histórica.
+- El frontend ya valida batchAnalyzed/totalAnalyzed y detecta un cursor repetido sin progreso; esto corrige la debilidad histórica del control de continuación.
+- El modal restaura un snapshot local si existe. Si el usuario vuelve a abrirlo sin pulsar Iniciar nueva auditoría, puede seguir viendo la exploración anterior. El timestamp se guarda pero no se presenta.
+- La lista de detalle muestra únicamente Histórica y Sin uso detectado; En uso y No verificable solo se reflejan en los contadores. Si los 14 eran filas visibles y no totalAnalyzed, esa diferencia podría explicar la percepción; no se puede confirmar estáticamente.
+- No se verificó el contenido real de la carpeta configurada, la cantidad de archivos en Drive ni la versión desplegada de ADMIN. La causa del síntoma de 14 archivos permanece ABIERTA; no se atribuye a un límite de código.
+
+## 7. Monitor global de almacenamiento de Drive
+- Implementación estática localizada en handleGetDriveStorage() (Services/admin.js 4147–4241) y refreshDriveStorage() (ui.js 4640–4694), conectadas por api-config.js.
+- La consulta usa DriveApp.getStorageUsed() cuando está disponible y Drive API about.storageQuota con ScriptApp.getOAuthToken(); presenta uso de Drive, uso de cuota de la cuenta, límite, espacio restante, porcentaje, estado de cuota, fuente, advertencia y timestamp.
+- La interfaz tiene actualización manual y diferencia ilimitado/no disponible/error; no suma el contenido de Cortes para estimar la cuota global.
+- No existe appsscript.json en el árbol auditado (manifest.json es el manifiesto PWA); por ello no se pudieron comprobar scopes OAuth del proyecto Apps Script. No se ejecutó la consulta contra la cuenta real ni se verificó el deployment. La implementación queda estáticamente presente, con validación funcional pendiente.
+
+## 8. Observaciones transferidas a AUD-T-029 y dependencias
+- El snapshot de referencias usa CacheService con TTL 21600 segundos y límite total de 750000 caracteres (4932–4995). Una colección de referencias mayor puede detener el escaneo aunque no exista límite total de archivos. Profundizar capacidad, expiración y reanudación en AUD-T-029.
+- IndexedDB guarda la lista completa de archivos y vuelve a escribirla después de cada lote (ui.js 5182–5202 y 5426). Para árboles grandes, el coste de serialización/escritura crece con el total acumulado. Auditar memoria, cuota, tiempo y estrategia incremental en AUD-T-029.
+- La coordinación de locks entre ADMIN/WRITE permanece en AUD-T-033/AUG-003.
+- La idempotencia y protección de estados históricos se relacionan con AUD-T-027/AUG-026; esta unidad agrega el riesgo de clasificación y movimiento de requiere_revision.
+
+## 9. Limitaciones y pruebas pendientes
+- Evidencia E1: inspección estática de código, contratos, historial y documentación.
+- No se ejecutaron pruebas de navegador/PWA, HTTP, Apps Script V8, Drive, Spreadsheet, cuota real, permisos, ni concurrencia.
+- No se verificó el deployment ADMIN ni se comparó su versión con el HEAD auditado.
+- No se inspeccionaron archivos reales, MIME reales, carpetas compartidas, referencias reales ni filas de inventario.
+- No se probó una auditoría nueva de extremo a extremo, reanudación tras expiración, archivo con varios padres, duplicados, referencias agregadas durante un lote, fallo parcial de Spreadsheet, carga real de miniaturas ni cuota ilimitada/no disponible.
+- No se modificó código, configuración, datos, endpoints ni deployments. No hubo merge.
+
+## 10. Tareas derivadas y conclusión
+- AUG-028: validación de auditoría completa, consistencia del inventario y resultados por archivo; H-AUD-028-002, 003 y 006.
+- AUG-029: movimiento exclusivamente explícito y conservación de ubicaciones manuales; H-AUD-028-001 y 004.
+- AUG-030: deduplicación y diagnóstico completo del escaneo, estado local y verificación de URL; H-AUD-028-005, 007, 008 y 009.
+- AUG-026 se amplía para proteger requiere_revision y estados históricos no resueltos; AUG-003 se amplía para revalidación por archivo/coordinación; AUG-021 se amplía para auditar la escritura del inventario.
+- AUD-T-028 queda con auditoría estática E1 completada, hallazgos abiertos y validación funcional pendiente. El monitor global está implementado estáticamente, pero falta probarlo en la identidad y deployment reales.
+- Siguiente unidad: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
+================================================================================

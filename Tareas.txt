@@ -5277,3 +5277,49 @@ LIMITACIONES
 
 PRÓXIMA UNIDAD: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
 ================================================================================
+
+
+================================================================================
+RESULTADO DE AUDITORÍA ESTÁTICA — AUD-T-028: INVENTARIO DE IMÁGENES SIN USO, CLASIFICACIÓN Y MONITOR GLOBAL DE DRIVE
+Fecha: 2026-11-07
+Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
+HEAD auditado: a1e66b81eb4ea146dfc76e9e2980f41b64a8c124
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+CONTROLES CONFIRMADOS
+- No existe límite total de 14 en el código; se usan lotes de 25 archivos/20 subcarpetas y cursor de continuación.
+- La raíz Cortes se valida por ID, nombre y ubicación; el frontend valida contadores y cursor repetido sin progreso.
+- El inventario de imágenes sin uso se guarda en Imagenes_Reemplazadas; el gestor consulta Spreadsheet y no depende solo de IndexedDB.
+- La clasificación usa referencias de columnas de imagen de Cortes y bloquea confirmación de ausencia cuando hay enlaces no interpretables.
+- El monitor global de Drive está implementado estáticamente mediante DriveApp y Drive API about.storageQuota; faltan pruebas reales de permisos, cuota y deployment.
+
+HALLAZGOS
+- H-AUD-028-001 (ALTA): el frontend ejecuta automáticamente mode=organize después de guardar el inventario y al restaurar ciertos estados; mueve archivos sin acción explícita. El guardado también reinicia movida_manual a pendiente, por lo que una auditoría posterior puede deshacer una ubicación elegida manualmente.
+- H-AUD-028-002 (ALTA): el backend no valida que la lista recibida provenga de una auditoría completa ni recibe el ID real de la exploración. Una lista parcial puede marcar inventario previo como no confirmado.
+- H-AUD-028-003 (ALTA): solo historica/restablecida protegen un archivo histórico; requiere_revision queda fuera y el organizador no vuelve a consultar el historial antes de mover.
+- H-AUD-028-004 (MEDIA): las referencias activas se toman una vez al inicio de cada lote de organización, no inmediatamente antes de cada archivo.
+- H-AUD-028-005 (MEDIA): el recorrido y la UI no mantienen conjuntos globales de IDs de carpeta/archivo; las filas duplicadas existentes en Spreadsheet no se detectan ni reconcilian.
+- H-AUD-028-006 (MEDIA): un archivo inválido aborta el guardado de todo el lote; no hay resultado por archivo ni transacción/compensación integral de todas las escrituras posteriores.
+- H-AUD-028-007 (MEDIA): no se exponen total descubierto/errorCount; el contador de carpetas no incluye la raíz; la lista solo muestra Histórica/Sin uso, aunque los contadores incluyan En uso/No verificable.
+- H-AUD-028-008 (MEDIA): el estado local restaurado no muestra updatedAt ni versión de ADMIN; puede presentar una auditoría anterior después de actualizar el servicio. Es una posible explicación del síntoma de 14, no una causa confirmada.
+- H-AUD-028-009 (MEDIA): se construye url_visualizacion, pero no se comprueba su accesibilidad real; no se modifican permisos.
+
+ESTADO DEL SÍNTOMA DE 14 ARCHIVOS
+- No hay un tope total de 14 en la fuente auditada. El backend usa 25 por lote y 20 subcarpetas por lote.
+- La raíz y el control de cursor ahora están validados estáticamente. La interfaz restaura resultados locales y el detalle visible filtra categorías; ambas circunstancias pueden influir en lo que se ve.
+- La causa real sigue abierta porque no se verificó Drive ni la versión desplegada.
+
+TAREAS DERIVADAS
+- AUG-028 — Validación de auditoría completa, consistencia del inventario y resultados por archivo.
+- AUG-029 — Movimiento exclusivamente explícito y conservación de ubicaciones manuales.
+- AUG-030 — Deduplicación, diagnóstico completo del escaneo, estado local y verificación de URL.
+- Ampliar AUG-026 (estados históricos), AUG-003 (coordinación/revalidación) y AUG-021 (registro de escritura de inventario).
+- Rendimiento del snapshot de 750000 caracteres, TTL de seis horas e IndexedDB incremental se transfiere a AUD-T-029.
+
+LIMITACIONES
+- No se ejecutaron pruebas de navegador/PWA, Apps Script, HTTP, Drive, Spreadsheet, cuota real ni concurrencia.
+- No se verificó el deployment ADMIN ni sus scopes OAuth; no existe appsscript.json en el árbol auditado.
+- No se modificó código, datos, configuración ni deployments.
+
+PRÓXIMA UNIDAD: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
+================================================================================

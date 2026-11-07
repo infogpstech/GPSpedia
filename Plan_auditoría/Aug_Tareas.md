@@ -322,3 +322,70 @@ Sesión/checkpoint: AUD-20261107-S008 / AUD-CP-0008
 - **Estado:** NUEVA; decisión pendiente. No implementar hasta resolver el alcance.
 
 ================================================================================
+
+
+================================================================================
+ADENDA AUD-T-028 — INVENTARIO DE IMÁGENES SIN USO, CLASIFICACIÓN Y MONITOR GLOBAL DE DRIVE
+Fecha: 2026-11-07
+Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
+
+### Adenda a AUG-021 — Registro persistente de operaciones administrativas sensibles
+- **Nuevo origen:** H-AUD-028-002/H-AUD-028-006. **Prioridad:** Media.
+- **Adenda:** registrar la actualización del inventario (saveUnusedImagesInventory) con actor autenticado, auditId de escaneo, inventoryOperationId, conteos insertados/actualizados/no confirmados, resultados por archivo y resultado final. Actualmente el guardado del inventario usa logMessage, pero no registra un evento durable en ActividadUsuario.
+- **Criterios adicionales:** registrar también errores y reintentos sin guardar tokens ni contenido de archivos; correlacionar cada escritura con la auditoría completa que la originó.
+- **Estado:** EXISTENTE; ampliada; implementación y pruebas pendientes. No duplicar AUG-021.
+
+### Adenda a AUG-026 — Integridad, recuperación y visibilidad de estados del historial
+- **Nuevo origen:** H-AUD-028-003. **Prioridad:** Alta.
+- **Adenda:** los estados requiere_revision y cualquier estado histórico no resuelto deben proteger el archivo frente a clasificación como sin uso. La auditoría, el guardado de inventario y el organizador deben compartir una política única de estados; el movimiento debe volver a consultar el historial antes de ejecutarse.
+- **Criterios adicionales:** probar registros historica, restablecida, requiere_revision, en_papelera y cancelada; ningún estado de revisión debe transformarse silenciosamente en inventario sin uso ni habilitar movimiento.
+- **Estado:** EXISTENTE; ampliada; implementación y pruebas pendientes.
+
+### Adenda a AUG-003 — Coordinación de escrituras y bloqueos entre servicios
+- **Nuevo origen:** H-AUD-028-004. **Prioridad:** Alta.
+- **Adenda:** el organizador toma un único snapshot de referencias antes del bucle de hasta veinte movimientos. Debe volver a comprobar referencias inmediatamente antes de cada archivo y documentar qué modificaciones externas no quedan cubiertas por ScriptLock de ADMIN.
+- **Criterios adicionales:** prueba concurrente de una nueva referencia añadida desde WRITE/Spreadsheet mientras un lote de organización está en curso; un archivo que adquiere referencia no debe moverse.
+- **Estado:** EXISTENTE; ampliada; implementación y pruebas pendientes.
+
+### AUG-028 — Validación de auditoría completa, consistencia del inventario y resultados por archivo
+- **Origen:** H-AUD-028-002, H-AUD-028-003 y H-AUD-028-006. **Prioridad:** Alta.
+- **Tarea auditada:** AUD-T-028. **Sesión/checkpoint:** AUD-20261107-S009 / AUD-CP-0009.
+- **Problema:** el endpoint de guardado no valida que la lista provenga de un escaneo completo ni correlaciona el ID de exploración; puede marcar filas ausentes con una lista parcial. Estados históricos requiere_revision no están protegidos. Un único archivo inválido aborta todo el lote y no existe resultado durable por elemento.
+- **Criterios de aceptación:**
+  1. El backend debe exigir un marcador de auditoría completa emitido/validado por ADMIN; no actualizar filas ausentes si la exploración no está completa.
+  2. Separar auditId de exploración e inventoryOperationId; registrar la correlación en Spreadsheet/log durable.
+  3. Proteger los IDs de archivos de todos los estados históricos no resueltos, incluido requiere_revision.
+  4. Validar por archivo y devolver estado confirmado/bloqueado/error; una fila inválida no debe impedir registrar las demás imágenes verificadas.
+  5. Reconciliar escrituras parciales y reintentos sin duplicar registros ni dejar estados ambiguos.
+  6. Detectar y resolver filas existentes duplicadas por Drive ID antes de actualizar o mover.
+- **Relación:** AUG-026 para integridad del historial; AUG-021 para trazabilidad.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-029 — Movimiento exclusivamente explícito y conservación de ubicaciones manuales
+- **Origen:** H-AUD-028-001 y H-AUD-028-004. **Prioridad:** Alta.
+- **Tarea auditada:** AUD-T-028. **Sesión/checkpoint:** AUD-20261107-S009 / AUD-CP-0009.
+- **Problema:** el frontend llama automáticamente a mode=organize al terminar el escaneo y al restaurar determinados estados; el backend mueve archivos sin una acción explícita separada. El siguiente guardado del inventario sobrescribe movida_manual con pendiente.
+- **Criterios de aceptación:**
+  1. El escaneo y el guardado del inventario no deben mover, renombrar ni enviar archivos a papelera.
+  2. El movimiento debe iniciarse solo desde una acción explícita del usuario, con confirmación y resultado verificable.
+  3. Mantener movida_manual y la ubicación elegida por el usuario durante auditorías posteriores; no reubicar automáticamente una imagen ya movida.
+  4. Revalidar referencias activas e historial inmediatamente antes de cada archivo; si cambia el estado, bloquear ese movimiento.
+  5. Mantener rollback y registro durable para cada movimiento.
+- **Relación:** requisitos posteriores Tareas.txt 6.4/6.5; coordinación AUG-003/AUD-T-033.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-030 — Deduplicación, diagnóstico completo del escaneo, estado local y verificación de URL
+- **Origen:** H-AUD-028-005, H-AUD-028-007, H-AUD-028-008 y H-AUD-028-009. **Prioridad:** Media.
+- **Tarea auditada:** AUD-T-028. **Sesión/checkpoint:** AUD-20261107-S009 / AUD-CP-0009.
+- **Problema:** no hay deduplicación global de archivos/carpetas en el cursor y la UI; el detalle visible filtra categorías; faltan total descubierto/errorCount y la raíz no se cuenta; el estado local no muestra fecha ni versión de servicio; la URL de miniatura no se verifica en el contexto real.
+- **Criterios de aceptación:**
+  1. Mantener IDs de carpetas y archivos ya procesados a través de todos los lotes y reanudaciones.
+  2. Mostrar total descubierto, analizado, pendiente, errores y estado parcial/completo con definiciones consistentes; contar la raíz.
+  3. Mostrar todas las categorías o distinguir explícitamente el subconjunto de imágenes administrables.
+  4. Mostrar fecha/hora del último escaneo, rootFolderId y versión/build del servicio para distinguir un resultado restaurado de uno nuevo.
+  5. Verificar que la URL de visualización corresponde al ID y puede cargarse en el contexto autorizado, sin cambiar permisos de forma amplia.
+  6. Probar duplicados existentes en Spreadsheet y ofrecer reconciliación.
+- **Relación:** AUD-T-029 para capacidad, cache TTL, snapshot y persistencia incremental.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+================================================================================

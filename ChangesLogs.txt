@@ -3862,3 +3862,25 @@ ALCANCE
 - No se ejecutaron pruebas funcionales ni operaciones externas.
 - No hubo merge ni despliegue.
 ================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-028: INVENTARIO DE IMÁGENES SIN USO, CLASIFICACIÓN Y MONITOR GLOBAL DE DRIVE
+Fecha: 2026-11-07
+Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
+
+ARCHIVOS DOCUMENTALES ACTUALIZADOS
+- Auditoría.txt: informe AUD-T-028, controles positivos, hallazgos H-AUD-028-001 a H-AUD-028-009, revisión del síntoma de 14 archivos, monitor global y observaciones transferidas a AUD-T-029.
+- Tareas.txt: resultado de AUD-T-028 y registro de AUG-028/AUG-029/AUG-030; adendas a AUG-021/AUG-026/AUG-003.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-028 actualizado a auditoría estática E1 completada; siguiente unidad AUD-T-029; iteración 16.
+- Plan_auditoría/Aug_Tareas.md: adendas y nuevas tareas derivadas de AUD-T-028.
+- contexto_personal.md: estado de auditoría y continuidad.
+- checkpoint.md: checkpoint inicial y de cierre AUD-CP-0009.
+
+ALCANCE
+- Solo se actualizaron documentos de trazabilidad.
+- No se modificaron Services/admin.js, ui.js, offline.js, api-config.js, index.html, style.css, Services/write.js ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Spreadsheet, Drive ni deployments.
+- No se ejecutaron pruebas funcionales ni operaciones externas.
+- No hubo merge ni despliegue.
+================================================================================
