@@ -4137,3 +4137,99 @@ Completar la implementación de cualquier otro servicio pendiente dentro del alc
 PUBLICACIÓN
 La tarea se publicará mediante un único commit hijo directo del HEAD anterior, exclusivamente en GPSpedia2.2.5_work. GPSpedia2.2.5 permanecerá intacta.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — ORGANIZACIÓN AUTOMÁTICA DE IMÁGENES SIN USO
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD de trabajo inicial: 7dcd12250bfd4c93200dcb48a19e6d6162a213a9
+HEAD de base inicial: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA Y ALCANCE
+Completar la organización automática de imágenes clasificadas como «Sin uso detectado» dentro de Cortes/Imagenes_Sin_Uso, después de finalizar el recorrido recursivo y registrar el inventario en Imagenes_Reemplazadas.
+
+ESTADO EXISTENTE IDENTIFICADO
+- La auditoría recursiva funciona por lotes y devuelve cursor/estado de finalización.
+- ui.js conserva el progreso y resultados de auditoría mediante offline.js e IndexedDB.
+- ADMIN persiste el inventario sin uso de forma idempotente y distingue esos registros del historial de reemplazos.
+- El modal dispone de lista/cuadrícula, lightbox, descarga, movimiento manual, papelera, restauración condicionada y creación de carpetas.
+- Faltaba el traslado automático a una carpeta dedicada después de la auditoría completa, así como registrar el resultado/error de esa organización.
+
+ARCHIVOS Y FUNCIONES INVOLUCRADOS
+- Services/admin.js: router saveUnusedImagesInventory, ensureReplacedImagesInventoryColumns(), handleSaveUnusedImagesInventory(), handleMoveReplacedImage(), getSingleParentFolderInsideCortes(), getFolderPathInsideCortes() y recordImageAdministrationActivity().
+- ui.js: openAuditDriveModal(), saveUnusedInventory(), persistState(), openReplacedImagesModal() y renderList().
+- index.html: descripción del gestor de imágenes.
+- Documentación: Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md.
+
+RESTRICCIONES Y RIESGOS
+- No reorganizar imágenes de modelo por versión/rango.
+- No alterar add_cortes.html, carga/subida/renombramiento ni edición in-modal.
+- No cambiar permisos de Drive ni hacer públicos archivos/carpetas.
+- No operar sobre Drive/Spreadsheet reales ni desplegar.
+- WRITE y ADMIN son proyectos separados; sus ScriptLock no son compartidos.
+- La carpeta destino debe validarse como hija directa de Cortes; los archivos deben seguir teniendo una única carpeta principal dentro del árbol autorizado.
+
+FASE
+Baseline inicial registrado antes de implementar. Auditoría estática completada; cambios de código y verificaciones estáticas en preparación. Las pruebas funcionales permanecen reservadas para la fase consolidada posterior.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — ORGANIZACIÓN AUTOMÁTICA DE IMÁGENES SIN USO
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD anterior a la tarea: 7dcd12250bfd4c93200dcb48a19e6d6162a213a9
+HEAD de base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: IMPLEMENTACIÓN ESTÁTICA INCORPORADA; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+ARCHIVOS MODIFICADOS
+- Services/admin.js
+- ui.js
+- index.html
+- Tareas.txt
+- Auditoría.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+RESUMEN
+- ADMIN crea o reutiliza de forma validada Cortes/Imagenes_Sin_Uso y conserva su ID en ScriptProperties.
+- El inventario registra estado, error y fecha de organización en columnas nuevas al final de Imagenes_Reemplazadas.
+- La organización automática ocurre después del inventario completo, en lotes de hasta 20 imágenes.
+- Antes de mover, ADMIN vuelve a comprobar referencias activas/no interpretables, estado del registro, MIME, papelera, identidad y ubicación.
+- Se verifica la ubicación después del movimiento; se intenta revertir o sincronizar metadatos cuando falla la escritura.
+- ui.js informa cantidades movidas, ya organizadas, fallidas y bloqueadas, y persiste el progreso después de cada lote.
+- El gestor muestra el estado/error de organización en cuadrícula y conserva la vista de lista compacta.
+- No se reorganizan imágenes de modelo por versión/rango y no se alteran los flujos de add_cortes.html ni de edición in-modal.
+
+VERIFICACIONES EJECUTADAS
+- Parseo JavaScript de Services/admin.js: correcto.
+- Parseo JavaScript de ui.js tras retirar únicamente imports/exports para la comprobación: correcto.
+- IDs de index.html: 158 identificadores únicos.
+- Revisión estática del router ADMIN, acción existente, carpeta destino, metadatos, revalidación de referencias y flujo de lotes: correcta.
+- Respaldos exactos registrados en Auditoría.txt.
+- Code Review estático completado; el riesgo de concurrencia entre proyectos Apps Script independientes permanece documentado.
+
+VALIDACIONES NO REALIZADAS
+- No se ejecutaron Apps Script, UrlFetchApp, DriveApp ni SpreadsheetApp reales.
+- No se creó la carpeta en Drive, no se movieron archivos y no se escribieron registros reales.
+- No se probaron lotes reales, fallos parciales, reanudación, permisos, navegador ni PWA.
+- No se desplegó ADMIN ni se publicó el frontend.
+- No se verificó el acceso público de URLs de visualización; no se modificaron permisos.
+
+RIESGOS/PENDIENTES
+- Las pruebas funcionales deben ejecutarse en una copia aislada y con Drive de prueba, según la fase consolidada indicada por el usuario.
+- La coordinación de referencias no es un bloqueo transaccional compartido con WRITE; se revalidan referencias antes de cada lote.
+- La tarea integral de inventario y administración de imágenes no se declara completada hasta aprobar todos sus criterios funcionales.
+- La rama base protegida permanece sin cambios.
+
+SIGUIENTE ACCIÓN
+Continuar en la fase funcional consolidada cuando el usuario lo autorice; actualizar/desplegar ADMIN y publicar el frontend solo con autorización expresa.
+
+COMMIT
+Un único commit previsto para esta tarea: «feat: auto-organize unused Drive images», con padre 7dcd12250bfd4c93200dcb48a19e6d6162a213a9. El SHA final se identificará en el historial Git después de su creación.
+================================================================================

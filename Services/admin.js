@@ -683,7 +683,9 @@ function doPost(e) {
                 response = handleAuditDriveImagesInCortes(payload, logMessage);
                 break;
             case 'saveUnusedImagesInventory':
-                response = handleSaveUnusedImagesInventory(payload, logMessage);
+                response = payload && payload.mode === "organize"
+                    ? handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext)
+                    : handleSaveUnusedImagesInventory(payload, logMessage);
                 break;
             case 'getCortesImageFolders':
                 response = handleGetCortesImageFolders(payload, logMessage);
@@ -3196,7 +3198,10 @@ function ensureReplacedImagesInventoryColumns(sheet) {
         "url_visualizacion",
         "ubicacion_actual",
         "ultima_auditoria_id",
-        "tipo_registro"
+        "tipo_registro",
+        "estado_organizacion",
+        "error_organizacion",
+        "fecha_organizacion"
     ];
     const lastColumn = Math.max(sheet.getLastColumn(), baseHeaders.length);
     const headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0]
@@ -3342,7 +3347,10 @@ function handleGetReplacedImages(payload, logMessage) {
             tipo_registro: type, tipo_mime: valueAt(row, "tipo_mime"), ubicacion_original: valueAt(row, "ubicacion_original"),
             fecha_creacion_drive: valueAt(row, "fecha_creacion_drive"), fecha_deteccion: valueAt(row, "fecha_deteccion"),
             url_visualizacion: valueAt(row, "url_visualizacion"), ubicacion_actual: valueAt(row, "ubicacion_actual"),
-            ultima_auditoria_id: valueAt(row, "ultima_auditoria_id")
+            ultima_auditoria_id: valueAt(row, "ultima_auditoria_id"),
+            estado_organizacion: valueAt(row, "estado_organizacion"),
+            error_organizacion: valueAt(row, "error_organizacion"),
+            fecha_organizacion: valueAt(row, "fecha_organizacion")
         });
     }
     logMessage && logMessage("Gestor de imágenes sin uso", `Se consultaron ${result.length} imágenes sin referencias activas en «Cortes».`);
@@ -3549,6 +3557,59 @@ function getSingleParentFolderInsideCortes(resource, rootFolderId) {
         throw new Error("Operación bloqueada: no se pudo confirmar una única carpeta principal dentro de «Cortes».");
     }
     return validParents[0];
+}
+
+
+/**
+ * Obtiene o crea la carpeta única Cortes/Imagenes_Sin_Uso.
+ * La identidad se conserva en ScriptProperties y se vuelve a validar contra el árbol autorizado.
+ */
+function getOrCreateUnusedImagesFolder(rootFolder) {
+    const folderName = "Imagenes_Sin_Uso";
+    const propertyKey = "GPSpedia_UNUSED_IMAGES_FOLDER_ID";
+    const properties = PropertiesService.getScriptProperties();
+    const storedId = String(properties.getProperty(propertyKey) || "").trim();
+
+    if (storedId) {
+        const storedFolder = DriveApp.getFolderById(storedId);
+        if (storedFolder.isTrashed() || storedFolder.getName() !== folderName) {
+            throw new Error("La carpeta de administración registrada ya no es válida. No se creó otra carpeta para evitar duplicados.");
+        }
+        const storedParent = getSingleParentFolderInsideCortes(storedFolder, rootFolder.getId());
+        if (storedParent.getId() !== rootFolder.getId()) {
+            throw new Error("La carpeta de administración registrada ya no es hija directa de «Cortes».");
+        }
+        return { folder: storedFolder, created: false };
+    }
+
+    const matches = rootFolder.getFoldersByName(folderName);
+    let folder = null;
+    while (matches.hasNext()) {
+        const candidate = matches.next();
+        if (candidate.isTrashed()) continue;
+        if (folder) {
+            throw new Error("Existen varias carpetas «Imagenes_Sin_Uso» directamente dentro de «Cortes». Debe resolverse el duplicado antes de organizar imágenes.");
+        }
+        folder = candidate;
+    }
+
+    let created = false;
+    if (!folder) {
+        folder = rootFolder.createFolder(folderName);
+        created = true;
+    }
+
+    const parent = getSingleParentFolderInsideCortes(folder, rootFolder.getId());
+    if (parent.getId() !== rootFolder.getId()) {
+        throw new Error("La carpeta «Imagenes_Sin_Uso» no quedó ubicada directamente dentro de «Cortes».");
+    }
+
+    try {
+        properties.setProperty(propertyKey, folder.getId());
+    } catch (propertyError) {
+        Logger.log("No se pudo persistir el ID de Imagenes_Sin_Uso: " + propertyError.message);
+    }
+    return { folder: folder, created: created };
 }
 
 /**
@@ -3786,21 +3847,36 @@ function handleMoveReplacedImage(payload, logMessage, developerContext) {
             current: column("ubicacion_actual") + 1,
             mime: column("tipo_mime") + 1,
             visual: column("url_visualizacion") + 1,
-            type: column("tipo_registro") + 1
+            type: column("tipo_registro") + 1,
+            organization: column("estado_organizacion") + 1,
+            organizationError: column("error_organizacion") + 1,
+            organizationDate: column("fecha_organizacion") + 1
         };
         const previousMetadata = {
             original: row[metadata.original - 1] || "",
             current: row[metadata.current - 1] || "",
             mime: row[metadata.mime - 1] || "",
             visual: row[metadata.visual - 1] || "",
-            type: row[metadata.type - 1] || type
+            type: row[metadata.type - 1] || type,
+            organization: row[metadata.organization - 1] || "",
+            organizationError: row[metadata.organizationError - 1] || "",
+            organizationDate: row[metadata.organizationDate - 1] || ""
         };
+        const isUnusedDestination = targetFolder.getName() === "Imagenes_Sin_Uso" &&
+            getSingleParentFolderInsideCortes(targetFolder, rootFolder.getId()).getId() === rootFolder.getId();
         const writeMetadata = (currentPath) => {
             if (!previousMetadata.original) sheet.getRange(rowIndex, metadata.original).setValue(sourcePath);
             sheet.getRange(rowIndex, metadata.current).setValue(currentPath);
             if (!previousMetadata.mime) sheet.getRange(rowIndex, metadata.mime).setValue(file.getMimeType());
             if (!previousMetadata.visual) sheet.getRange(rowIndex, metadata.visual).setValue("https://lh3.googleusercontent.com/d/" + driveId);
             sheet.getRange(rowIndex, metadata.type).setValue(type);
+            if (type === "sin_uso_detectado") {
+                sheet.getRange(rowIndex, metadata.organization).setValue(isUnusedDestination ? "organizada" : "movida_manual");
+                sheet.getRange(rowIndex, metadata.organizationError).setValue("");
+                if (!previousMetadata.organizationDate) {
+                    sheet.getRange(rowIndex, metadata.organizationDate).setValue(Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss"));
+                }
+            }
             SpreadsheetApp.flush();
         };
         const restoreMetadata = () => {
@@ -3809,6 +3885,9 @@ function handleMoveReplacedImage(payload, logMessage, developerContext) {
             sheet.getRange(rowIndex, metadata.mime).setValue(previousMetadata.mime);
             sheet.getRange(rowIndex, metadata.visual).setValue(previousMetadata.visual);
             sheet.getRange(rowIndex, metadata.type).setValue(previousMetadata.type);
+            sheet.getRange(rowIndex, metadata.organization).setValue(previousMetadata.organization);
+            sheet.getRange(rowIndex, metadata.organizationError).setValue(previousMetadata.organizationError);
+            sheet.getRange(rowIndex, metadata.organizationDate).setValue(previousMetadata.organizationDate);
             SpreadsheetApp.flush();
         };
 
@@ -3997,6 +4076,7 @@ function clearAuditDriveReferenceSnapshot(auditId) {
  * Registra de forma idempotente en Imagenes_Reemplazadas las imágenes sin uso
  * confirmadas por una auditoría completa. Cada archivo se vuelve a validar en servidor.
  */
+
 function handleSaveUnusedImagesInventory(payload, logMessage) {
     const submittedFiles = Array.isArray(payload && payload.files) ? payload.files : [];
     const uniqueFiles = [];
@@ -4004,15 +4084,11 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
 
     submittedFiles.forEach(item => {
         const fileId = String(item && item.fileId || "").trim();
-        if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) {
-            throw new Error("El inventario contiene un ID de Drive inválido.");
-        }
+        if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) throw new Error("El inventario contiene un ID de Drive inválido.");
         if (seenIds.has(fileId)) return;
         seenIds.add(fileId);
         const folderId = String(item.folderId || "").trim();
-        if (!/^[a-zA-Z0-9_-]{20,}$/.test(folderId)) {
-            throw new Error("El inventario contiene un ID de carpeta inválido.");
-        }
+        if (!/^[a-zA-Z0-9_-]{20,}$/.test(folderId)) throw new Error("El inventario contiene un ID de carpeta inválido.");
         uniqueFiles.push({ fileId: fileId, folderId: folderId });
     });
 
@@ -4026,6 +4102,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
             throw new Error("No se actualizó el inventario porque existen referencias de Drive que no pudieron verificarse.");
         }
 
+        const rootFolder = getCortesRootFolder();
         const sheet = getOrCreateReplacedImagesSheet();
         const headers = ensureReplacedImagesInventoryColumns(sheet);
         const column = name => headers.indexOf(name) + 1;
@@ -4035,63 +4112,31 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
 
         for (let r = 1; r < rows.length; r++) {
             const row = rows[r];
-            const originIndex = column("origen_registro") - 1;
-            const origin = String(row[originIndex] || "");
+            const origin = String(row[column("origen_registro") - 1] || "");
             const driveId = extractDriveFileId(row[5]) || extractDriveFileId(row[7]);
             if (!driveId) continue;
-
             if (origin === "auditoria_drive") {
                 if (!existingInventoryRows.has(driveId)) existingInventoryRows.set(driveId, r + 1);
             } else {
                 const status = String(row[10] || "historica");
-                const typeIndex = headers.indexOf("tipo_registro");
-                const recordType = typeIndex >= 0
-                    ? String(row[typeIndex] || "reemplazada")
-                    : "reemplazada";
-                if (recordType === "reemplazada" && ["historica", "restablecida"].includes(status)) {
-                    historicalDriveIds.add(driveId);
-                }
+                const recordType = String(row[column("tipo_registro") - 1] || "reemplazada");
+                if (recordType === "reemplazada" && ["historica", "restablecida"].includes(status)) historicalDriveIds.add(driveId);
             }
         }
 
         const validatedFiles = [];
-        const folderPathCache = new Map();
         uniqueFiles.forEach(item => {
             const fileId = item.fileId;
-            if (references.references.has(fileId)) {
-                throw new Error(`La imagen ${fileId} ahora tiene referencias activas; no se registrará como imagen sin uso.`);
-            }
-            if (historicalDriveIds.has(fileId)) {
-                throw new Error(`La imagen ${fileId} ya pertenece al historial de reemplazos y no se registrará como imagen sin uso.`);
-            }
+            if (references.references.has(fileId)) throw new Error("La imagen " + fileId + " ahora tiene referencias activas; no se registrará como imagen sin uso.");
+            if (historicalDriveIds.has(fileId)) throw new Error("La imagen " + fileId + " ya pertenece al historial de reemplazos y no se registrará como imagen sin uso.");
 
             const file = DriveApp.getFileById(fileId);
-            if (file.isTrashed()) throw new Error(`La imagen ${fileId} está en la papelera y no se registrará como inventario activo.`);
+            if (file.isTrashed()) throw new Error("La imagen " + fileId + " está en la papelera y no se registrará como inventario activo.");
             const mimeType = String(file.getMimeType() || "");
-            if (!mimeType.startsWith("image/")) throw new Error(`El archivo ${fileId} ya no es una imagen.`);
+            if (!mimeType.startsWith("image/")) throw new Error("El archivo " + fileId + " ya no es una imagen.");
 
-            let folderPath = folderPathCache.get(item.folderId);
-            if (!folderPath) {
-                const folder = DriveApp.getFolderById(item.folderId);
-                if (!isFolderInsideCortes(folder, DRIVE_FOLDER_ID)) {
-                    throw new Error(`La carpeta ${item.folderId} ya no pertenece al árbol autorizado «Cortes».`);
-                }
-                folderPath = getFolderPathInsideCortes(folder, DRIVE_FOLDER_ID);
-                folderPathCache.set(item.folderId, folderPath);
-            }
-
-            let isDirectChild = false;
-            const parents = file.getParents();
-            while (parents.hasNext()) {
-                if (parents.next().getId() === item.folderId) {
-                    isDirectChild = true;
-                    break;
-                }
-            }
-            if (!isDirectChild) {
-                throw new Error(`La imagen ${fileId} ya no está ubicada en la carpeta indicada por la auditoría.`);
-            }
-
+            const sourceFolder = getSingleParentFolderInsideCortes(file, rootFolder.getId());
+            const folderPath = getFolderPathInsideCortes(sourceFolder, rootFolder.getId());
             let createdAt = "";
             try {
                 const createdDate = file.getDateCreated();
@@ -4099,43 +4144,36 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
             } catch (dateError) {}
 
             validatedFiles.push({
-                fileId: fileId,
-                fileName: file.getName(),
-                mimeType: mimeType,
-                sourceUrl: file.getUrl(),
-                folderPath: folderPath,
-                createdAt: createdAt
+                fileId: fileId, fileName: file.getName(), mimeType: mimeType,
+                sourceUrl: file.getUrl(), folderPath: folderPath, createdAt: createdAt
             });
         });
 
         const auditId = Utilities.getUuid();
         const detectedAt = Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
         const currentIds = new Set(validatedFiles.map(item => item.fileId));
-        let insertedCount = 0;
-        let updatedCount = 0;
-        let staleCount = 0;
+        let insertedCount = 0, updatedCount = 0, staleCount = 0;
         const newRows = [];
         const columnCount = headers.length;
 
         existingInventoryRows.forEach((rowNumber, fileId) => {
             if (currentIds.has(fileId)) return;
             const oldRow = rows[rowNumber - 1] || [];
-            const oldStatus = String(oldRow[10] || "");
-            if (["en_papelera", "eliminada"].includes(oldStatus)) return;
+            if (["en_papelera", "eliminada"].includes(String(oldRow[10] || ""))) return;
             sheet.getRange(rowNumber, column("estado")).setValue("no_confirmada_en_ultima_auditoria");
             sheet.getRange(rowNumber, column("ultima_auditoria_id")).setValue(auditId);
+            sheet.getRange(rowNumber, column("estado_organizacion")).setValue("no_confirmada");
+            sheet.getRange(rowNumber, column("error_organizacion")).setValue("El archivo no apareció como imagen sin uso en la última auditoría completa.");
             staleCount++;
         });
 
         validatedFiles.forEach(item => {
             const rowNumber = existingInventoryRows.get(item.fileId);
-            const row = rowNumber
-                ? (rows[rowNumber - 1] || []).slice(0, columnCount)
-                : Array(columnCount).fill("");
+            const row = rowNumber ? (rows[rowNumber - 1] || []).slice(0, columnCount) : Array(columnCount).fill("");
             while (row.length < columnCount) row.push("");
-
             const setField = (name, value) => { row[column(name) - 1] = value; };
-            if (!rowNumber) setField("id_reemplazo", `INV-${item.fileId}`);
+
+            if (!rowNumber) setField("id_reemplazo", "INV-" + item.fileId);
             setField("fecha_reemplazo", "");
             setField("tipo_contenido", "inventario_sin_uso");
             setField("tipo_registro", "sin_uso_detectado");
@@ -4149,39 +4187,255 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
             setField("estado", "sin_uso_detectado");
             setField("origen_registro", "auditoria_drive");
             setField("tipo_mime", item.mimeType);
-            const previousOriginalLocation = rowNumber
-                ? String(row[column("ubicacion_original") - 1] || "")
-                : "";
+            const previousOriginalLocation = rowNumber ? String(row[column("ubicacion_original") - 1] || "") : "";
+            const previousOrganizationDate = rowNumber ? String(row[column("fecha_organizacion") - 1] || "") : "";
             setField("ubicacion_original", previousOriginalLocation || item.folderPath || "Cortes");
             setField("fecha_creacion_drive", item.createdAt);
             setField("fecha_deteccion", detectedAt);
-            setField("url_visualizacion", `https://lh3.googleusercontent.com/d/${item.fileId}`);
+            setField("url_visualizacion", "https://lh3.googleusercontent.com/d/" + item.fileId);
             setField("ubicacion_actual", item.folderPath || "Cortes");
             setField("ultima_auditoria_id", auditId);
+            setField("estado_organizacion", "pendiente");
+            setField("error_organizacion", "");
+            setField("fecha_organizacion", previousOrganizationDate);
 
             if (rowNumber) {
                 sheet.getRange(rowNumber, 1, 1, columnCount).setValues([row]);
                 updatedCount++;
             } else {
-                newRows.push(row);
+                newRows.push({ fileId: item.fileId, row: row });
                 insertedCount++;
             }
         });
 
         if (newRows.length) {
-            sheet.getRange(sheet.getLastRow() + 1, 1, newRows.length, columnCount).setValues(newRows);
+            const firstNewRow = sheet.getLastRow() + 1;
+            sheet.getRange(firstNewRow, 1, newRows.length, columnCount).setValues(newRows.map(item => item.row));
+            newRows.forEach((item, index) => existingInventoryRows.set(item.fileId, firstNewRow + index));
         }
         SpreadsheetApp.flush();
 
-        logMessage && logMessage("Inventario de imágenes", `Se registraron ${insertedCount} imágenes nuevas, se actualizaron ${updatedCount} y ${staleCount} dejaron de estar confirmadas como imágenes sin uso.`);
-        return {
-            status: "success",
-            savedCount: validatedFiles.length,
-            insertedCount: insertedCount,
-            updatedCount: updatedCount,
-            noLongerConfirmedCount: staleCount,
-            auditId: auditId
-        };
+        logMessage && logMessage("Inventario de imágenes", "Se registraron " + insertedCount + " imágenes nuevas, se actualizaron " +
+            updatedCount + " y " + staleCount + " dejaron de estar confirmadas como imágenes sin uso.");
+        return { status: "success", savedCount: validatedFiles.length, insertedCount: insertedCount,
+            updatedCount: updatedCount, noLongerConfirmedCount: staleCount, auditId: auditId };
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+/**
+ * Organiza por lotes imágenes sin uso ya registradas en Imagenes_Reemplazadas.
+ * Cada lote vuelve a validar referencias, identidad, MIME, papelera y pertenencia al árbol Cortes.
+ */
+function handleOrganizeUnusedImagesBatch(payload, logMessage, developerContext) {
+    const auditId = String(payload && payload.auditId || "").trim();
+    const submittedFiles = Array.isArray(payload && payload.files) ? payload.files : [];
+    if (!/^[0-9a-f-]{36}$/i.test(auditId)) throw new Error("ID de auditoría inválido para organizar imágenes.");
+    if (!submittedFiles.length || submittedFiles.length > 20) throw new Error("El lote de organización debe contener entre 1 y 20 imágenes.");
+
+    const fileIds = [];
+    const seenIds = new Set();
+    submittedFiles.forEach(item => {
+        const fileId = String(item && item.fileId || "").trim();
+        if (!/^[a-zA-Z0-9_-]{20,}$/.test(fileId)) throw new Error("El lote contiene un ID de Drive inválido.");
+        if (!seenIds.has(fileId)) { seenIds.add(fileId); fileIds.push(fileId); }
+    });
+
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); }
+    catch (e) { throw new Error("No se pudo bloquear la organización de imágenes. Intenta nuevamente."); }
+
+    try {
+        const rootFolder = getCortesRootFolder();
+        const sheet = getOrCreateReplacedImagesSheet();
+        const headers = ensureReplacedImagesInventoryColumns(sheet);
+        const column = name => headers.indexOf(name) + 1;
+        const rows = sheet.getDataRange().getValues();
+        const inventoryRows = new Map();
+        for (let r = 1; r < rows.length; r++) {
+            const row = rows[r];
+            if (String(row[column("origen_registro") - 1] || "") !== "auditoria_drive") continue;
+            const driveId = extractDriveFileId(row[5]) || extractDriveFileId(row[7]);
+            if (driveId && !inventoryRows.has(driveId)) inventoryRows.set(driveId, { rowIndex: r + 1, row: row });
+        }
+
+        const referenceSnapshot = collectCortesImageReferences(false);
+        let destination = null, destinationPath = "", destinationCreationError = "";
+        if (referenceSnapshot.unverifiableReferenceCount === 0) {
+            try {
+                const destinationResult = getOrCreateUnusedImagesFolder(rootFolder);
+                destination = destinationResult.folder;
+                destinationPath = getFolderPathInsideCortes(destination, rootFolder.getId());
+                if (destinationResult.created) {
+                    recordImageAdministrationActivity(developerContext, "admin_image_folder_create", destination.getId(),
+                        "Carpeta de administración creada automáticamente: " + destinationPath + "; resultado: correcto.");
+                }
+            } catch (folderError) { destinationCreationError = folderError.message || String(folderError); }
+        }
+
+        let movedCount = 0, alreadyOrganizedCount = 0, failedCount = 0, blockedCount = 0;
+        fileIds.forEach(fileId => {
+            const record = inventoryRows.get(fileId);
+            if (!record) {
+                failedCount++;
+                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", "INV-" + fileId,
+                    "No se encontró el registro de inventario para la imagen " + fileId + "; resultado: fallido.");
+                return;
+            }
+
+            const rowIndex = record.rowIndex, row = record.row;
+            const recordId = String(row[0] || "");
+            const status = String(row[10] || "");
+            const type = getReplacedImageRecordType(row, headers);
+            const storedAuditId = String(row[column("ultima_auditoria_id") - 1] || "");
+            if (type !== "sin_uso_detectado" || status !== "sin_uso_detectado" || storedAuditId !== auditId ||
+                (extractDriveFileId(row[5]) || extractDriveFileId(row[7])) !== fileId) {
+                blockedCount++;
+                return;
+            }
+
+            const updateOrganization = values => {
+                if (values.location !== undefined) sheet.getRange(rowIndex, column("ubicacion_actual")).setValue(values.location);
+                if (values.state !== undefined) sheet.getRange(rowIndex, column("estado_organizacion")).setValue(values.state);
+                if (values.error !== undefined) sheet.getRange(rowIndex, column("error_organizacion")).setValue(values.error);
+                if (values.date !== undefined) sheet.getRange(rowIndex, column("fecha_organizacion")).setValue(values.date);
+                if (values.status !== undefined) sheet.getRange(rowIndex, column("estado")).setValue(values.status);
+                SpreadsheetApp.flush();
+            };
+
+            if (referenceSnapshot.unverifiableReferenceCount > 0 || referenceSnapshot.references.has(fileId)) {
+                const reason = referenceSnapshot.unverifiableReferenceCount > 0
+                    ? "No se pudo confirmar la ausencia de referencias porque existen enlaces de Drive no interpretables en la Spreadsheet."
+                    : "La imagen volvió a tener referencias activas en «Cortes» antes del movimiento.";
+                try { updateOrganization({ state: "bloqueada", error: reason, status: "no_confirmada_en_ultima_auditoria" }); } catch (writeError) {}
+                blockedCount++;
+                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId, "Organización bloqueada para " + fileId + ": " + reason);
+                return;
+            }
+
+            if (destinationCreationError || !destination) {
+                const reason = destinationCreationError || "No se pudo obtener la carpeta destino.";
+                try { updateOrganization({ state: "error", error: reason }); } catch (writeError) {}
+                failedCount++;
+                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId, "No se pudo crear o validar la carpeta destino para " + fileId + ": " + reason);
+                return;
+            }
+
+            let file, sourceFolder, sourcePath;
+            try {
+                file = DriveApp.getFileById(fileId);
+                if (file.isTrashed()) throw new Error("La imagen está en la papelera de Google Drive.");
+                if (!String(file.getMimeType() || "").startsWith("image/")) throw new Error("El archivo ya no tiene un tipo MIME de imagen.");
+                sourceFolder = getSingleParentFolderInsideCortes(file, rootFolder.getId());
+                sourcePath = getFolderPathInsideCortes(sourceFolder, rootFolder.getId());
+            } catch (validationError) {
+                try {
+                    updateOrganization({ state: "bloqueada", error: validationError.message || String(validationError), status: "no_confirmada_en_ultima_auditoria" });
+                } catch (writeError) {}
+                blockedCount++;
+                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId, "No se pudo validar la imagen " + fileId + ": " + (validationError.message || String(validationError)));
+                return;
+            }
+
+            const organizationDate = String(row[column("fecha_organizacion") - 1] || "") ||
+                Utilities.formatDate(new Date(), "GMT-6", "yyyy-MM-dd HH:mm:ss");
+            if (sourceFolder.getId() === destination.getId()) {
+                try {
+                    updateOrganization({ location: destinationPath, state: "organizada", error: "", date: organizationDate });
+                    alreadyOrganizedCount++;
+                } catch (writeError) {
+                    failedCount++;
+                    try { updateOrganization({ location: sourcePath, state: "error", error: writeError.message || String(writeError) }); } catch (syncError) {}
+                }
+                return;
+            }
+
+            const previousMetadata = {
+                location: String(row[column("ubicacion_actual") - 1] || sourcePath),
+                state: String(row[column("estado_organizacion") - 1] || "pendiente"),
+                error: String(row[column("error_organizacion") - 1] || ""),
+                date: String(row[column("fecha_organizacion") - 1] || "")
+            };
+            let moveError = null;
+            try { file.moveTo(destination); } catch (error) { moveError = error; }
+            let movedParent = null;
+            try { movedParent = getSingleParentFolderInsideCortes(file, rootFolder.getId()); }
+            catch (parentError) { moveError = moveError || parentError; }
+
+            if (!movedParent || movedParent.getId() !== destination.getId()) {
+                let actualPath = "Ubicación no verificable dentro de Cortes";
+                try {
+                    const actualParents = file.getParents();
+                    const actualPaths = [];
+                    while (actualParents.hasNext()) {
+                        const actualParent = actualParents.next();
+                        if (!actualParent.isTrashed() && isFolderInsideCortes(actualParent, rootFolder.getId())) {
+                            actualPaths.push(getFolderPathInsideCortes(actualParent, rootFolder.getId()));
+                        }
+                    }
+                    if (actualPaths.length) actualPath = actualPaths.join(" | ");
+                } catch (pathError) {}
+                const reason = "Drive no confirmó el traslado a «Imagenes_Sin_Uso»." + (moveError ? " Detalle: " + moveError.message : "");
+                try { updateOrganization({ location: actualPath, state: "error", error: reason }); } catch (writeError) {}
+                failedCount++;
+                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId, "Falló el movimiento de " + fileId + " desde " + sourcePath + "; ubicación detectada: " + actualPath + ": " + reason);
+                return;
+            }
+
+            try {
+                updateOrganization({ location: destinationPath, state: "organizada", error: "", date: organizationDate });
+                movedCount++;
+                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId,
+                    "Imagen " + file.getName() + " movida automáticamente de " + sourcePath + " a " + destinationPath + "; resultado: correcto.");
+            } catch (historyError) {
+                let rollbackError = null;
+                try {
+                    file.moveTo(sourceFolder);
+                    const restoredParent = getSingleParentFolderInsideCortes(file, rootFolder.getId());
+                    if (restoredParent.getId() !== sourceFolder.getId()) throw new Error("Drive no confirmó la ubicación anterior.");
+                } catch (error) { rollbackError = error; }
+
+                if (!rollbackError) {
+                    try {
+                        updateOrganization({
+                            location: previousMetadata.location, state: "error",
+                            error: "Falló el registro de la nueva ubicación; el movimiento fue revertido: " + historyError.message,
+                            date: previousMetadata.date
+                        });
+                    } catch (restoreError) {}
+                } else {
+                    let actualPath = "Ubicación no verificable dentro de Cortes";
+                    try {
+                        const actualParents = file.getParents();
+                        const actualPaths = [];
+                        while (actualParents.hasNext()) {
+                            const actualParent = actualParents.next();
+                            if (!actualParent.isTrashed() && isFolderInsideCortes(actualParent, rootFolder.getId())) {
+                                actualPaths.push(getFolderPathInsideCortes(actualParent, rootFolder.getId()));
+                            }
+                        }
+                        if (actualPaths.length) actualPath = actualPaths.join(" | ");
+                    } catch (pathError) {}
+                    try {
+                        updateOrganization({
+                            location: actualPath, state: "error",
+                            error: "Falló la actualización del inventario y no se pudo revertir el movimiento: " +
+                                historyError.message + "; " + rollbackError.message
+                        });
+                    } catch (syncError) {}
+                }
+                failedCount++;
+                recordImageAdministrationActivity(developerContext, "admin_image_auto_organize", recordId,
+                    "La organización de " + fileId + " requirió reversión o sincronización: " + historyError.message +
+                    (rollbackError ? "; reversión fallida: " + rollbackError.message : "; movimiento revertido."));
+            }
+        });
+
+        logMessage && logMessage("Organización de imágenes sin uso", "Movidas: " + movedCount +
+            "; ya organizadas: " + alreadyOrganizedCount + "; fallidas: " + failedCount + "; bloqueadas: " + blockedCount + ".");
+        return { status: "success", auditId: auditId, folderPath: destinationPath, processedCount: fileIds.length,
+            movedCount: movedCount, alreadyOrganizedCount: alreadyOrganizedCount, failedCount: failedCount, blockedCount: blockedCount };
     } finally {
         lock.releaseLock();
     }

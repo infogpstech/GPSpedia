@@ -3382,3 +3382,18 @@ ALCANCE
 - api-config.js: añadidos los mapeos allocateVehicleId y freezeCortesIds hacia WRITE.
 - No se modificaron columnas, hojas, valores, fórmulas ni formatos de la Spreadsheet real; no se desplegaron servicios ni se modificó la rama base.
 ================================================================================
+
+
+================================================================================
+2026-11-06 — ORGANIZACIÓN AUTOMÁTICA DE IMÁGENES SIN USO EN DRIVE
+- Services/admin.js: saveUnusedImagesInventory diferencia la persistencia del inventario y la organización por lotes mediante el modo organize.
+- Services/admin.js: getOrCreateUnusedImagesFolder() valida o crea Cortes/Imagenes_Sin_Uso y conserva su ID en ScriptProperties.
+- Services/admin.js: Imagenes_Reemplazadas agrega estado_organizacion, error_organizacion y fecha_organizacion al final de sus metadatos.
+- Services/admin.js: handleOrganizeUnusedImagesBatch() valida referencias, clasificación, MIME, papelera, identidad y ubicación antes de mover; verifica el destino y registra errores/ubicación.
+- Services/admin.js: handleMoveReplacedImage() actualiza el estado de organización de los registros sin uso en movimientos manuales.
+- ui.js: después de guardar el inventario completo, solicita la organización en lotes de hasta 20 y acumula resultados; conserva el progreso en IndexedDB.
+- ui.js: la cuadrícula muestra el estado y el error de organización; la lista conserva nombre y estado.
+- index.html: se actualizó la descripción del gestor para informar la organización automática posterior a la auditoría completa.
+- No se modificaron add_cortes.html, Services/write.js, api-config.js, offline.js ni style.css.
+- No se ejecutaron operaciones reales de Drive/Spreadsheet ni despliegues.
+================================================================================

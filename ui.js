@@ -4590,7 +4590,8 @@ export async function openReplacedImagesModal() {
             if (!query) return true;
             return [
                 item.nombre_archivo, item.referencia_texto, item.campo, item.archivo_drive_id,
-                item.registro_id, item.ubicacion_actual, item.ubicacion_original, item.origen_registro
+                item.registro_id, item.ubicacion_actual, item.ubicacion_original, item.origen_registro,
+                item.estado_organizacion, item.error_organizacion
             ].some((value) => String(value || '').toLowerCase().includes(query));
         });
 
@@ -4664,10 +4665,27 @@ export async function openReplacedImagesModal() {
             const statusText = document.createElement('span');
             statusText.className = 'replaced-image-status';
             statusText.textContent = 'Estado: ' + statusLabel;
+            const organizationDetails = document.createElement('span');
+            organizationDetails.className = 'replaced-image-details';
+            const organizationStatus = String(rep.estado_organizacion || '');
+            const organizationError = String(rep.error_organizacion || '');
+            const organizationLabels = {
+                organizada: 'Organizada en Imagenes_Sin_Uso',
+                movida_manual: 'Movida manualmente',
+                pendiente: 'Pendiente de organización',
+                error: 'Error de organización',
+                bloqueada: 'Organización bloqueada',
+                no_confirmada: 'No confirmada'
+            };
+            organizationDetails.textContent = 'Organización: ' +
+                (organizationLabels[organizationStatus] || organizationStatus || 'No registrada') +
+                (organizationError ? ' · ' + organizationError : '');
+            if (organizationError) statusText.title = organizationError;
             if (currentView === 'list') {
                 info.append(title, statusText);
             } else {
                 info.append(title, typeLabel, details, location, dateDetails, statusText);
+                if (isUnused) info.append(organizationDetails);
             }
             card.appendChild(info);
 
@@ -4958,18 +4976,50 @@ export async function openAuditDriveModal() {
                 ...getDeveloperSessionPayload(),
                 files: unusedFiles
             });
-            if (!inventoryResult || inventoryResult.status !== 'success') {
+            if (!inventoryResult || inventoryResult.status !== 'success' || !inventoryResult.auditId) {
                 throw new Error(inventoryResult && inventoryResult.message
                     ? inventoryResult.message
                     : 'El servicio no confirmó la actualización del inventario.');
             }
+
+            let movedCount = 0;
+            let alreadyOrganizedCount = 0;
+            let failedCount = 0;
+            let blockedCount = 0;
+            const organizationBatchSize = 20;
+
+            for (let offset = 0; offset < unusedFiles.length; offset += organizationBatchSize) {
+                const batch = unusedFiles.slice(offset, offset + organizationBatchSize)
+                    .map(file => ({ fileId: file.fileId }));
+                const organizationResult = await routeAction('saveUnusedImagesInventory', {
+                    ...getDeveloperSessionPayload(),
+                    mode: 'organize',
+                    auditId: inventoryResult.auditId,
+                    files: batch
+                });
+                if (!organizationResult || organizationResult.status !== 'success') {
+                    throw new Error(organizationResult && organizationResult.message
+                        ? organizationResult.message
+                        : 'ADMIN no confirmó el lote de organización ' + (Math.floor(offset / organizationBatchSize) + 1) + '.');
+                }
+                movedCount += Math.max(0, Number(organizationResult.movedCount) || 0);
+                alreadyOrganizedCount += Math.max(0, Number(organizationResult.alreadyOrganizedCount) || 0);
+                failedCount += Math.max(0, Number(organizationResult.failedCount) || 0);
+                blockedCount += Math.max(0, Number(organizationResult.blockedCount) || 0);
+                inventoryMessage = 'Inventario registrado. Organización: ' + movedCount + ' movidas, ' +
+                    alreadyOrganizedCount + ' ya organizadas, ' + failedCount + ' fallidas y ' + blockedCount + ' bloqueadas.';
+                await persistState('complete');
+            }
+
             inventoryStatus = 'saved';
             inventoryMessage = 'Auditoría COMPLETA. ' + inventoryResult.savedCount +
-                ' imágenes sin uso quedaron registradas en la Spreadsheet.';
+                ' imágenes sin uso registradas; ' + movedCount + ' trasladadas a Imagenes_Sin_Uso, ' +
+                alreadyOrganizedCount + ' ya estaban allí, ' + failedCount + ' con error y ' +
+                blockedCount + ' bloqueadas. Revisa el detalle de organización en el inventario.';
         } catch (inventoryError) {
             inventoryStatus = 'error';
-            inventoryMessage = 'Auditoría COMPLETA, pero no se pudo actualizar el inventario de la Spreadsheet: ' +
-                inventoryError.message;
+            inventoryMessage = 'Auditoría COMPLETA, pero el registro u organización del inventario quedó parcial: ' +
+                inventoryError.message + '. Puedes volver a ejecutar la actualización; los movimientos confirmados no se repetirán.';
         }
 
         try {

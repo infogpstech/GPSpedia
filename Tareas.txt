@@ -4550,3 +4550,47 @@ ALCANCE
 - Modificados: Services/write.js, Services/admin.js y api-config.js.
 - No se ejecutaron acciones sobre Spreadsheet/Drive reales, no se desplegaron servicios y no se modificó la rama base.
 ================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN ESTÁTICA — ORGANIZACIÓN AUTOMÁTICA DE IMÁGENES SIN USO EN DRIVE
+Fecha: 2026-11-06
+Rama: GPSpedia2.2.5_work
+HEAD de partida: 7dcd12250bfd4c93200dcb48a19e6d6162a213a9
+Estado: IMPLEMENTACIÓN DE SERVICIOS E INTERFAZ INCORPORADA; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+ALCANCE
+- Completar el requisito 7 «Organización automática de imágenes sin uso» de la tarea «Completar el inventario y la gestión integral de imágenes sin uso en Google Drive».
+- La organización se ejecuta después de finalizar el recorrido completo y persistir el inventario, no durante el escaneo.
+- La carpeta de destino es «Cortes/Imagenes_Sin_Uso». Se identifica mediante ScriptProperties y se valida como hija directa de la raíz autorizada.
+- La operación se procesa en lotes de hasta 20 archivos para limitar el trabajo de cada petición.
+- Antes de mover, ADMIN vuelve a validar referencias actuales, clasificación, tipo MIME, papelera, identidad y ubicación única dentro del árbol Cortes.
+- Se conservan la ubicación original, la ubicación actual y el registro del estado/error de organización.
+- Si una imagen ya está en la carpeta administrada, se reconoce como organizada y no se vuelve a mover.
+- El movimiento manual existente actualiza el estado de organización cuando se administra un registro de inventario.
+
+ARCHIVOS MODIFICADOS
+- Services/admin.js: helper de carpeta dedicada, handler de organización por lotes, metadatos de estado/error/fecha, validación y trazabilidad de movimientos.
+- ui.js: invocación de lotes de organización después del registro del inventario, persistencia del progreso y resumen de resultados.
+- index.html: descripción del comportamiento posterior a la auditoría.
+
+RESTRICCIONES CONSERVADAS
+- No se reorganizan físicamente imágenes de modelo por versión/rango.
+- No se modifican add_cortes.html, sus flujos de guardado/subida/renombramiento ni la edición in-modal.
+- No se modifican permisos de Drive ni se hacen públicos archivos o carpetas.
+- No se ejecutan movimientos reales ni escrituras en Drive/Spreadsheet desde esta tarea.
+- No se despliegan servicios ni se publica el frontend.
+
+VERIFICACIONES ESTÁTICAS
+- Parseo JavaScript de Services/admin.js y ui.js: correcto.
+- IDs de index.html: únicos.
+- Se verificó la ruta autenticada ADMIN y el uso de la acción existente saveUnusedImagesInventory para persistencia y lotes de organización.
+- Se verificó que la carpeta destino se valida bajo Cortes y que los movimientos comprueban referencias activas/no interpretables.
+- La revisión funcional de Apps Script, Drive, Spreadsheet, navegador y PWA permanece pendiente, según la fase consolidada indicada por el usuario.
+
+PENDIENTES
+- Probar con copia aislada y Drive de prueba: creación/reutilización de carpeta, más de 20 imágenes, lotes consecutivos, reanudación tras interrupción, archivos ya organizados, referencias que reaparecen, permisos y fallos parciales.
+- Confirmar que la ubicación real y los metadatos de Imagenes_Reemplazadas coincidan después de movimientos y reversiones.
+- Confirmar el deployment ADMIN y la publicación del frontend cuando el usuario autorice esa fase.
+- No declarar completa la tarea integral de inventario y administración de imágenes hasta validar también los demás criterios funcionales pendientes.
+================================================================================

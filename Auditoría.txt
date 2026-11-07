@@ -5863,3 +5863,96 @@ HEAD auditado: 8001b431e66f2d5b396334bf6f40d410aac6f14f
 - Si la asignación o verificación falla en ADMIN, se intenta retirar únicamente la fila nueva todavía vacía.
 - La reorganización no continúa si el respaldo o la estabilización de IDs falla.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — ORGANIZACIÓN AUTOMÁTICA DE IMÁGENES SIN USO EN DRIVE
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD de partida confirmado: 7dcd12250bfd4c93200dcb48a19e6d6162a213a9
+HEAD base protegida confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. CHECKPOINT INICIAL Y ALCANCE
+- Se confirmó el HEAD de la rama de trabajo y el HEAD de la rama base antes de preparar cambios.
+- Tarea: completar la organización automática de imágenes clasificadas como «Sin uso detectado», posterior a la auditoría completa y al registro persistente.
+- La especificación exige una carpeta administrada dentro de la raíz Cortes, idempotencia, verificación de referencias, actualización de ubicación y trazabilidad de fallos.
+- La especificación también prohíbe reorganizar físicamente imágenes de modelo por versión/rango. Esa operación queda fuera del alcance.
+- No se autorizaron operaciones productivas de Drive/Spreadsheet ni despliegues.
+
+2. ARCHIVOS Y DEPENDENCIAS AUDITADOS
+- Services/admin.js: doPost(), assertDeveloperSession(), getCortesRootFolder(), collectCortesImageReferences(), getSingleParentFolderInsideCortes(), getFolderPathInsideCortes(), ensureReplacedImagesInventoryColumns(), getReplacedImageRecordType(), handleSaveUnusedImagesInventory(), handleMoveReplacedImage(), handleGetReplacedImages(), handleAuditDriveImagesInCortes() y recordImageAdministrationActivity().
+- ui.js: openAuditDriveModal(), persistState(), saveUnusedInventory(), runAudit(), openReplacedImagesModal(), renderList(), setView() y llamadas routeAction() relacionadas.
+- index.html: controles de auditoría, inventario, vistas y lightbox.
+- style.css: reglas de lista, cuadrícula, tarjetas y lightbox.
+- api-config.js: asignación de saveUnusedImagesInventory al servicio ADMIN.
+- offline.js: persistencia IndexedDB mediante saveDriveAuditState()/getDriveAuditState() y saveReplacedImagesView()/getReplacedImagesView().
+- add_cortes.html, main.js, Services/write.js y Services/feedback.js: dependencias y flujos colaterales; no se requieren cambios para la organización automática.
+- Spreadsheet/GPSpedia_DB_columnas.md: esquema de Cortes e Imagenes_Reemplazadas. La hoja Imagenes_Reemplazadas conserva once columnas históricas base y metadatos agregados al final.
+- Proceso de desarollo.md y Tareas.txt: procedimiento y requisitos vigentes.
+
+3. RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/admin.js: 3635cb960bd3b99b2ab6e07161a8c25c8243a82b
+- ui.js: f71c5d320bc3f8e7c945d20657e96b4a70128e3c
+- index.html: e915b080ce9db7524cf23cdf3aa8a31bd0b46e64
+- Tareas.txt: 0c1dbbf08a1fb464c826cf1434a4a5474c23271b
+- Auditoría.txt: e68e181842abc1828992e112aa0bac1f00bd93e5
+- ChangesLogs.txt: 53e772998287905f6e4c5844eb641251a5cc6a0a
+- checkpoint.md: 2d4b42ad0f6edcd4e7c2654189c73098da1cf52e
+
+4. HALLAZGOS
+- handleSaveUnusedImagesInventory() persistía los archivos sin uso de forma idempotente, pero no ejecutaba el traslado automático a una carpeta dedicada.
+- El modal ya persistía los resultados de auditoría y su cursor en IndexedDB; la persistencia no requería una segunda implementación.
+- El frontend ya llamaba al guardado del inventario únicamente después de que el recorrido completo terminara.
+- El backend ya tenía validación de referencias activas/no interpretables, MIME, papelera y pertenencia al árbol Cortes en los flujos manuales de movimiento.
+- La administración manual de carpetas y movimientos ya existía, pero no garantizaba una carpeta única y estable para la organización automática.
+- La interfaz no mostraba el estado ni el error específico de organización de cada registro.
+- No se encontró necesidad de modificar los flujos de guardado/subida/renombramiento de add_cortes.html ni el editor in-modal.
+
+5. DISEÑO E IMPLEMENTACIÓN
+- Services/admin.js:
+  - La acción autenticada saveUnusedImagesInventory diferencia el guardado del inventario y la operación por lotes mediante el modo organize.
+  - Se añadió getOrCreateUnusedImagesFolder(), que valida el ID persistido en ScriptProperties o encuentra/crea una única carpeta «Imagenes_Sin_Uso» como hija directa de Cortes.
+  - Se agregaron al final de los metadatos las columnas estado_organizacion, error_organizacion y fecha_organizacion, sin desplazar las once columnas históricas ni los metadatos existentes.
+  - El guardado del inventario valida la ubicación real actual del archivo y conserva ubicacion_original.
+  - handleOrganizeUnusedImagesBatch() procesa hasta 20 imágenes por petición. Verifica que el registro pertenezca al auditId recibido, que siga siendo inventario sin uso confirmado y que el archivo no tenga referencias activas ni referencias no interpretables.
+  - Se verifican MIME image/*, estado de papelera, identidad y única carpeta principal dentro del árbol Cortes antes de mover.
+  - El movimiento se confirma leyendo nuevamente la carpeta principal. Los archivos ya ubicados en Imagenes_Sin_Uso no se mueven otra vez.
+  - Los errores de destino, permisos, Drive o Spreadsheet quedan registrados en el inventario; cuando procede, se intenta revertir el movimiento o sincronizar la ubicación real.
+  - Se registran las acciones automáticas y la creación de la carpeta mediante ActividadUsuario.
+  - El movimiento manual actualiza estado_organizacion y limpia el error anterior cuando corresponde.
+- ui.js:
+  - Después de guardar el inventario completo, solicita los movimientos en lotes de 20.
+  - Acumula cantidades movidas, ya organizadas, fallidas y bloqueadas.
+  - Persiste el progreso después de cada lote; una reanudación puede repetir lotes sin volver a mover archivos ya organizados.
+  - La vista de cuadrícula muestra estado/error de organización. La vista de lista conserva el contenido compacto solicitado (nombre y estado).
+- index.html:
+  - Se actualizó la descripción para distinguir el escaneo —que no mueve archivos— de la organización automática posterior al inventario completo.
+
+6. SEGURIDAD Y EFECTOS COLATERALES
+- El router ADMIN valida sesión y privilegio Desarrollador antes de ambas modalidades de saveUnusedImagesInventory.
+- El navegador no determina el destino autorizado: ADMIN resuelve y valida la carpeta bajo DRIVE_FOLDER_ID.
+- No se reutiliza driveCommand() ni se permite operar fuera del árbol Cortes.
+- Una referencia activa o no interpretable bloquea la organización. Un archivo que deja de estar confirmado se marca como no confirmado y no queda habilitado para acciones administrativas.
+- No se modifica la carpeta raíz, no se cambian permisos y no se publica ningún archivo.
+- La organización no altera los campos de imagen de Cortes ni los flujos de carga, reemplazo o renombramiento.
+- WRITE y ADMIN son proyectos Apps Script separados; sus ScriptLock no coordinan escrituras concurrentes entre servicios. La implementación vuelve a consultar referencias inmediatamente antes de cada lote, pero no constituye un bloqueo transaccional compartido con WRITE.
+
+7. VERIFICACIONES ESTÁTICAS Y CODE REVIEW
+- Parseo JavaScript de Services/admin.js: correcto.
+- Parseo JavaScript de ui.js tras retirar únicamente imports/exports para la comprobación: correcto.
+- IDs de index.html: únicos.
+- Se comprobó que el router usa la acción ADMIN ya existente y que no se añadió una nueva URL ni un endpoint no mapeado.
+- Se comprobó que la carpeta destino se valida como hija directa de Cortes y se conserva su ID en ScriptProperties.
+- Se comprobó que los campos de organización se agregan al final de la hoja y se devuelven a la interfaz.
+- Se comprobó que la lista mantiene solo nombre/estado y que la información adicional de organización se presenta en cuadrícula.
+- No se ejecutaron pruebas funcionales reales ni simulaciones de Drive/Spreadsheet, de acuerdo con la instrucción de reservarlas para la fase consolidada.
+
+8. LIMITACIONES Y PENDIENTES
+- No se ejecutó Apps Script, UrlFetchApp, DriveApp ni SpreadsheetApp contra servicios reales.
+- No se creó la carpeta real, no se movieron archivos, no se escribieron filas y no se alteraron permisos.
+- No se verificó el comportamiento de cuotas/tiempos con grandes inventarios en el deployment ADMIN.
+- No se confirmó el acceso público de las URLs de visualización; la implementación no cambia permisos. Esa validación debe permanecer separada de la organización física.
+- La prueba funcional de más de 20 imágenes, reanudación, referencias que reaparecen, fallos parciales y reversión queda pendiente.
+- No se desplegó ADMIN ni se publicó el frontend.
+================================================================================
