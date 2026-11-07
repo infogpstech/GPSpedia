@@ -4408,3 +4408,104 @@ Auditar e implementar la idempotencia de openAddCutForModelModal() como tarea in
 PUBLICACIÓN
 Un único commit hijo directo de b456902049cd157836b7420348fe4f5dbff23885, exclusivamente en GPSpedia2.2.5_work. La rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 permanece intacta. El SHA final se identificará en el historial Git.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — IDEMPOTENCIA DEL MODAL (+) DE AGREGADO DE CORTES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 463bd23f9ca8d73b3c587376d8c1e4a2cf154707
+HEAD de base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA Y ALCANCE
+Incorporar idempotencia al modal openAddCutForModelModal() para evitar que un reintento tras una respuesta de red perdida registre un segundo corte. Mantener la misma clave opId durante el ciclo de reintento de una operación y descartarla solo tras confirmación inequívoca.
+
+ESTADO PREVIO
+- La tarea fue registrada durante la auditoría del contrato del modal.
+- El modal envía correctamente las claves cutData que consumen WRITE y ADMIN, pero no envía opId ni persiste la operación pendiente.
+- WRITE y ADMIN ya cuentan con registro pending/completed y recuperación por opId cuando reciben esa clave.
+- El flujo principal add_cortes.html ya conserva opId y el estado de operación en almacenamiento local; se auditó como referencia.
+- No se había iniciado la auditoría formal ni se había modificado código.
+
+ARCHIVOS PREVISTOS PARA AUDITORÍA
+- ui.js: modal, generación/uso de opId, persistencia temporal y tratamiento de errores/respuestas.
+- offline.js: IndexedDB y almacenamiento local reutilizable.
+- Services/write.js: findRowByOpId(), recordOpId(), handleCheckOperation() y handleAddOrUpdateCutLocked().
+- Services/admin.js: contrato equivalente si la ruta administrativa participa en reintentos.
+- add_cortes.html: patrón de operación pendiente y recuperación existente.
+- Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md.
+
+RESTRICCIONES
+- No modificar el contrato cutData ya alineado.
+- No reutilizar una clave entre operaciones diferentes.
+- No borrar una operación pendiente cuando el resultado del servidor sea ambiguo.
+- No cambiar la autoridad de identidad de sesión ni el cálculo del slot de corte.
+- No operar sobre Spreadsheet/Drive reales, no desplegar y no tocar la rama base.
+- Las pruebas funcionales quedan para la fase consolidada; se permiten verificaciones estáticas con mocks.
+- Un único commit para esta tarea mediante Git Database API.
+
+FASE
+Checkpoint inicial registrado antes de la auditoría formal. No se había modificado código.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — IDEMPOTENCIA DEL MODAL (+) DE AGREGADO DE CORTES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD anterior a la tarea: 463bd23f9ca8d73b3c587376d8c1e4a2cf154707
+HEAD base verificado al inicio: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+IMPLEMENTACIÓN ESTÁTICA INCORPORADA. EL MODAL (+) AHORA PERSISTE UNA OPERACIÓN ÚNICA ANTES DEL ENVÍO Y REUTILIZA EL MISMO opId/cutData EN LOS REINTENTOS. VALIDACIÓN FUNCIONAL PENDIENTE.
+
+ARCHIVOS MODIFICADOS
+- ui.js
+- offline.js
+- Auditoría.txt
+- Tareas.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+RESULTADO
+- Se agregó almacenamiento de operaciones pendientes en el object store existente adminLocalState, sin cambiar DB_VERSION.
+- La clave local se delimita por vehicleId; una transacción impide sobrescribir una operación distinta pendiente para ese vehículo.
+- El snapshot conserva userId, cutData, opId, estado y fecha; no almacena sessionToken.
+- El modal restaura operaciones pendientes, bloquea sus campos y reintenta con el mismo snapshot.
+- Si no se puede consultar o guardar en IndexedDB, no se envía la petición.
+- La eliminación local requiere confirmación success y coincidencia del opId.
+- El refresco del catálogo ya no altera el resultado de la operación guardada.
+- WRITE/ADMIN no se modificaron; el backend ya soporta pending/completed y recuperación por opId.
+
+VERIFICACIONES EJECUTADAS
+- Parseo sintáctico de ui.js: PASS.
+- Parseo sintáctico de offline.js: PASS.
+- 13 comprobaciones estáticas del flujo: PASS.
+- No se ejecutaron pruebas funcionales reales de navegador, IndexedDB, Apps Script, Drive o Spreadsheet.
+
+VALIDACIONES PENDIENTES
+- Pérdida de respuesta después de completar la escritura y reintento.
+- Recarga de página con operación processing/failed.
+- Dos pestañas intentando iniciar operaciones para el mismo vehículo.
+- Conflicto de opId, operación pendiente corrupta y fallo de IndexedDB.
+- Imágenes Base64 y persistencia del corte en entorno aislado.
+- Error de refresco del catálogo después de un guardado confirmado.
+
+RESPALDOS EXACTOS
+- ui.js: 273a6ace3eb7d5f979c1c78c718bec4e67335f3c
+- offline.js: 00000b2d7ef69b571d65757610435dc21eeee6cd
+- Auditoría.txt: 330c16d0239a46219dfdf08b0c1019d92c42200e
+- Tareas.txt: d39db2bfa4d5dfc26a91812e390a18df58d6a30b
+- ChangesLogs.txt: 498cea3aa2217aa68d4fa42294d571c29f5d0f70
+- checkpoint.md: 83dc93b2a3c6c9b903a7dc0e43e22523ae035e45
+
+SIGUIENTE ACCIÓN
+Continuar con el siguiente pendiente independiente de Tareas.txt, sin realizar pruebas funcionales reales hasta la fase consolidada.
+
+PUBLICACIÓN
+Un único commit hijo directo de 463bd23f9ca8d73b3c587376d8c1e4a2cf154707, exclusivamente en GPSpedia2.2.5_work. La rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 debe permanecer intacta.
+================================================================================

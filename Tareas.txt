@@ -4635,3 +4635,18 @@ Estado: PENDIENTE DE AUDITORÍA E IMPLEMENTACIÓN INDEPENDIENTE.
 - Incluir pruebas aisladas de respuesta perdida, reintento, operación pending/completed y recuperación sin duplicar filas ni cortes.
 - No modificar en esta tarea el contrato de campos ya alineado. Aplicar el procedimiento obligatorio y un único commit.
 ================================================================================
+
+
+================================================================================
+CIERRE DE IMPLEMENTACIÓN ESTÁTICA — IDEMPOTENCIA DEL MODAL (+) DE AGREGADO DE CORTES
+Fecha: 2026-11-06
+Estado: IMPLEMENTACIÓN ESTÁTICA INCORPORADA; PRUEBAS FUNCIONALES PENDIENTES PARA LA FASE CONSOLIDADA.
+- ui.js ahora genera un opId único, guarda el snapshot en IndexedDB antes de enviar y reintenta con el mismo opId/cutData.
+- offline.js reutiliza adminLocalState sin modificar DB_VERSION; las operaciones se separan por vehicleId y una transacción readwrite impide sobrescribir una operación diferente pendiente del mismo vehículo.
+- Los reintentos restauran el snapshot y bloquean la edición. La operación está vinculada al userId original; no se persisten tokens de sesión.
+- La operación local se retira solo tras respuesta success con vehicleId coincidente y verificación del mismo opId.
+- WRITE/ADMIN no requirieron cambios porque ya implementan pending/completed y recuperación por opId.
+- Code review estático y parseo sintáctico de ui.js/offline.js: PASS. No se ejecutaron pruebas funcionales reales.
+- Auditoría, respaldos y limitaciones en Auditoría.txt, entrada «IDEMPOTENCIA DEL MODAL (+) DE AGREGADO DE CORTES».
+- No se desplegó ni se modificó Spreadsheet/Drive real.
+================================================================================

@@ -6087,3 +6087,108 @@ Los SHA anteriores identifican los blobs exactos existentes en el HEAD antes de 
 - No se consideran pruebas funcionales de Apps Script, Drive, Spreadsheet o navegador.
 
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — IDEMPOTENCIA DEL MODAL (+) DE AGREGADO DE CORTES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: 463bd23f9ca8d73b3c587376d8c1e4a2cf154707
+HEAD base protegido: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. ALCANCE Y ARCHIVOS AUDITADOS
+- ui.js: openAddCutForModelModal(), generación de payload, control del botón, manejo de errores y cierre/refresco del modal.
+- offline.js: initDB(), store adminLocalState y performAdminStateOp(), para determinar si existe persistencia local reutilizable sin modificar la versión/esquema de IndexedDB.
+- Services/write.js: doPost(), handleAddOrUpdateCut(), handleAddOrUpdateCutLocked(), recordOpId(), findRowByOpId() y handleCheckOperation().
+- Services/admin.js: handleAddOrUpdateCut(), recordOpId(), findRowByOpId() y recuperación de operaciones.
+- api-config.js: destino de addOrUpdateCut.
+- add_cortes.html: getOrGenerateOpId(), persistencia de gpsepedia_pending_operation y envío de opId.
+
+2. HALLAZGOS
+- openAddCutForModelModal() no genera ni envía opId. Tampoco guarda un snapshot del payload antes de llamar a routeAction("addOrUpdateCut").
+- El botón se deshabilita mientras la petición está en curso, pero se habilita de nuevo en catch. Si WRITE completó la escritura y el navegador perdió la respuesta, el siguiente envío no tiene clave para identificar la operación anterior y puede ocupar otro slot de corte.
+- api-config.js enruta addOrUpdateCut a WRITE. El servicio WRITE ya implementa el contrato de idempotencia: cuando recibe opId, busca la operación antes de escribir; para un vehículo existente registra pending antes de subir/escribir los datos y cambia a completed después de SpreadsheetApp.flush(). La recuperación usa la asociación vehicleId/slotIndex guardada en Idempotencia.
+- ADMIN mantiene la misma secuencia pending/completed y la misma recuperación cuando su handler recibe opId.
+- El flujo principal add_cortes.html ya genera un opId, conserva un snapshot y lo envía al backend. Sin embargo, guarda el snapshot completo —incluido Base64— en localStorage y, si falla por cuota, continúa con el envío. Ese fallback no garantiza recuperación y no debe copiarse en el modal (+).
+- offline.js ya inicializa IndexedDB y dispone del object store adminLocalState, con keyPath "key" y helpers privados de lectura/escritura. Se puede reutilizar el store existente sin aumentar DB_VERSION ni crear otro object store.
+- La respuesta de addOrUpdateCut incluye status y vehicleId. El modal actual no valida el resultado antes de mostrar éxito y después incluye el refresco del catálogo dentro del mismo try; un fallo del refresco puede confundirse con un fallo de guardado.
+
+3. DISEÑO DE CORRECCIÓN
+- Persistir el snapshot de cada operación en IndexedDB, usando una clave local por vehicleId. No almacenar userId, sessionToken ni credenciales dentro del snapshot.
+- Generar un opId único para cada operación nueva y persistirlo junto con vehicleId y cutData antes de enviar la petición.
+- La escritura local debe ser atómica: crear el registro si no existe, permitir actualizarlo solo si el opId coincide y rechazar una segunda operación diferente pendiente para el mismo vehículo. Esto evita que dos pestañas generen claves distintas para el mismo modal simultáneamente.
+- Si existe una operación pendiente al abrir el modal, restaurar sus campos y reutilizar exactamente el mismo cutData/opId. Bloquear la edición mientras se reintenta para impedir que el mismo opId se asocie a datos distintos.
+- Si IndexedDB no está disponible o no se puede leer/escribir el registro, impedir el envío. No continuar sin persistencia porque se perdería la garantía de reintento.
+- Enviar opId en addOrUpdateCut. Si el servidor completó la escritura pero la respuesta se perdió, el reintento llegará con el mismo opId y WRITE recuperará el vehicleId/slotIndex existentes en lugar de crear otro corte.
+- Retirar el registro local únicamente después de una respuesta success con vehicleId coincidente. Si la eliminación local falla, el siguiente reintento conserva la misma clave y el backend responde mediante recuperación idempotente.
+- Separar el refresco de catálogo de la confirmación del guardado para no informar que falló el registro cuando únicamente falla la actualización visual.
+
+4. ALCANCE Y RIESGOS
+- Cambios previstos: ui.js y offline.js, además de documentación.
+- No se requiere modificar Services/write.js, Services/admin.js ni api-config.js: sus contratos de opId ya existen.
+- El uso de adminLocalState evita una migración de IndexedDB; las nuevas entradas usan un prefijo de clave exclusivo para operaciones de agregado de cortes.
+- Las operaciones pendientes se conservan por vehículo. Una operación distinta para el mismo vehículo no debe sobrescribir una operación anterior.
+- No se consultaron deployments, Spreadsheet ni Drive reales. No se ejecutaron pruebas funcionales de Apps Script.
+- Las pruebas funcionales reales de respuesta perdida, recuperación, concurrencia entre pestañas, imagen y persistencia quedan reservadas para la fase consolidada.
+
+5. RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- ui.js: 273a6ace3eb7d5f979c1c78c718bec4e67335f3c
+- offline.js: 00000b2d7ef69b571d65757610435dc21eeee6cd
+- Services/write.js (solo auditoría): fcb784af25f04170905c3d62aafed2846e0469d0
+- Services/admin.js (solo auditoría): 341ff40f8a2f40d35abe8a4a60e8eb08a0eefd07
+- add_cortes.html (solo auditoría): c5b0abfe0a9f9f217978bce53a6bebe94f782559
+- Tareas.txt: d39db2bfa4d5dfc26a91812e390a18df58d6a30b
+- Auditoría.txt: 330c16d0239a46219dfdf08b0c1019d92c42200e
+- ChangesLogs.txt: 498cea3aa2217aa68d4fa42294d571c29f5d0f70
+- checkpoint.md: 83dc93b2a3c6c9b903a7dc0e43e22523ae035e45
+
+================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN — IDEMPOTENCIA DEL MODAL (+) DE AGREGADO DE CORTES
+Fecha: 2026-11-06
+Estado: IMPLEMENTACIÓN ESTÁTICA INCORPORADA; VALIDACIÓN FUNCIONAL RESERVADA PARA LA FASE CONSOLIDADA.
+
+1. CAMBIOS REALIZADOS
+- offline.js:
+  - Se reutiliza el object store existente adminLocalState; no se cambia DB_VERSION ni se crea otro store.
+  - Se agregan getAddCutPendingOperation(), saveAddCutPendingOperation() y removeAddCutPendingOperation().
+  - La clave local usa el prefijo addCutPending: y el vehicleId, manteniendo operaciones de vehículos distintos separadas.
+  - La escritura usa una transacción readwrite que consulta el registro antes de guardar. Permite actualizar la misma operación cuando el opId coincide y rechaza una operación distinta pendiente para el mismo vehículo; esto protege también frente a dos pestañas.
+  - La eliminación verifica el opId dentro de la transacción y no elimina una operación posterior con otra clave.
+  - El snapshot exige userId, vehicleId, opId y cutData. No almacena sessionToken ni credenciales.
+- ui.js:
+  - openAddCutForModelModal() consulta IndexedDB antes de habilitar el envío.
+  - Si encuentra una operación válida, restaura el snapshot, bloquea los campos y permite reintentar con el mismo opId y exactamente el mismo cutData.
+  - La operación nueva se persiste antes de llamar a routeAction("addOrUpdateCut"). Si IndexedDB no está disponible o no puede guardar, no se envía la solicitud.
+  - Se transmite opId al servicio WRITE. El snapshot conserva userId, pero nunca sessionToken.
+  - La restauración valida vehicleId, userId, opId, estado y tipos de los campos; un registro inválido bloquea el envío en lugar de generar otra operación.
+  - Si el servidor no confirma success con el vehicleId esperado, el snapshot permanece disponible para reintentar.
+  - La operación local solo se elimina después de una confirmación válida y únicamente si el opId almacenado sigue coincidiendo.
+  - El refresco de catálogo se separa del guardado; un fallo de actualización visual ya no se presenta como fallo del registro.
+- Services/write.js y Services/admin.js:
+  - No se modifican. Sus handlers ya reservan opId como pending antes de escribir y recuperan el vehicleId/slotIndex asociado en un reintento.
+
+2. CODE REVIEW Y VERIFICACIONES ESTÁTICAS
+- Parseo sintáctico de ui.js y offline.js: PASS, retirando imports/exports únicamente para la comprobación de sintaxis.
+- 13 comprobaciones estáticas del flujo de idempotencia: PASS.
+- Se verificó persistencia local anterior a la petición, transmisión de opId, reuso del mismo snapshot, bloqueo de campos, validación de identidad, ausencia de sessionToken en el snapshot, protección de conflictos entre operaciones y eliminación condicional.
+- Se verificó que DB_VERSION permanece en 4 y que no se añadió un object store ni una migración.
+- La edición de ui.js se limita a openAddCutForModelModal(); offline.js incorpora únicamente los tres helpers y la constante/key builder del almacenamiento pendiente.
+- No se modificaron las claves de cutData ni los handlers backend.
+
+3. LIMITACIONES
+- No se ejecutó IndexedDB real ni se simuló el navegador completo.
+- No se ejecutó Apps Script, UrlFetchApp, DriveApp o SpreadsheetApp.
+- Quedan pendientes pruebas funcionales de pérdida de respuesta, reintento después de confirmación remota, recuperación tras recarga, dos pestañas, conflicto entre operaciones, fallo de IndexedDB, imágenes Base64 y refresco de catálogo.
+- No se desplegó WRITE/ADMIN ni se modificaron datos reales.
+
+4. IDENTIFICADORES DE LOS CAMBIOS PREPARADOS
+- ui.js final: 39ac7ec0d8a2f7dc9ab4f79c03d035b5349e6cdb
+- offline.js final: b587f43181007deda1bcc1a2bd9786ec4bf6a189
+- Respaldo ui.js: 273a6ace3eb7d5f979c1c78c718bec4e67335f3c
+- Respaldo offline.js: 00000b2d7ef69b571d65757610435dc21eeee6cd
+
+================================================================================

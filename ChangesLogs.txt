@@ -3417,3 +3417,15 @@ ALCANCE
 - Verificaciones estáticas: 15/15 PASS.
 - No se ejecutaron pruebas funcionales reales, deployments ni operaciones sobre Drive/Spreadsheet.
 ================================================================================
+
+
+================================================================================
+2026-11-06 — IMPLEMENTACIÓN DE IDEMPOTENCIA DEL MODAL (+) DE AGREGADO DE CORTES
+- ui.js: openAddCutForModelModal() persiste y reutiliza opId/cutData para reintentos, restaura operaciones pendientes y separa el refresco del catálogo del resultado del guardado.
+- offline.js: nuevos helpers de IndexedDB en adminLocalState con escritura atómica por vehículo y eliminación condicionada por opId; DB_VERSION no cambia.
+- Auditoría.txt: documentados hallazgos, diseño, implementación, respaldos y pruebas estáticas.
+- Tareas.txt: actualizada la tarea con implementación estática incorporada y pruebas funcionales pendientes.
+- No se modificaron Services/write.js, Services/admin.js, api-config.js ni el contrato cutData.
+- Parseo sintáctico de ambos archivos y 13 comprobaciones estáticas: PASS.
+- No se ejecutaron pruebas funcionales reales, deployments ni operaciones sobre Drive/Spreadsheet.
+================================================================================

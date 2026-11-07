@@ -7231,6 +7231,12 @@ export function createRichTextToolbar(targetId) {
 
 /* TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN «+» / TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
 export function openAddCutForModelModal(item) {
+    const vehicleId = String(item && item.id !== undefined && item.id !== null ? item.id : "").trim();
+    if (!vehicleId) {
+        showGlobalError("No se pudo identificar el vehículo para agregar el corte.");
+        return;
+    }
+
     const existing = document.getElementById("add-cut-for-model-modal");
     if (existing) existing.remove();
 
@@ -7247,6 +7253,7 @@ export function openAddCutForModelModal(item) {
         <span class="info-close-btn">&times;</span>
         <h2><i class="fa-solid fa-plus-circle"></i> Agregar Nuevo Corte</h2>
         <p style="font-size:0.85em; color:var(--text-disabled); margin-bottom:15px;">Modelo: ${item.marca} ${item.modelo}</p>
+        <div id="add-cut-pending-notice" role="status" style="display:none; padding:10px; border-radius:8px; background:var(--surface-secondary, rgba(0,123,255,0.08)); font-size:0.9em;"></div>
 
         <form id="add-cut-model-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
@@ -7294,7 +7301,7 @@ export function openAddCutForModelModal(item) {
                 <input type="file" id="add-cut-img-file" accept="image/*">
             </div>
             <div class="modal-btn-compact-container">
-                <button type="submit" class="btn btn-primary btn-modal-action-compact"><i class="fa-solid fa-plus-circle"></i> Agregar Corte</button>
+                <button type="submit" class="btn btn-primary btn-modal-action-compact" disabled><i class="fa-solid fa-plus-circle"></i> Comprobando operación...</button>
             </div>
         </form>
     `;
@@ -7304,6 +7311,72 @@ export function openAddCutForModelModal(item) {
 
     const tipoSelect = content.querySelector("#add-cut-tipo");
     const relaySelect = content.querySelector("#add-cut-relay");
+    const detailsInput = content.querySelector("#add-cut-detalles");
+    const colorInput = content.querySelector("#add-cut-color");
+    const testigoInput = content.querySelector("#add-cut-testigo");
+    const fileInput = content.querySelector("#add-cut-img-file");
+    const pendingNotice = content.querySelector("#add-cut-pending-notice");
+    const form = content.querySelector("#add-cut-model-form");
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const editableControls = [tipoSelect, relaySelect, detailsInput, colorInput, testigoInput, fileInput];
+
+    let pendingOperation = null;
+    let pendingOperationLoadFailed = false;
+    let submitInProgress = false;
+
+    const showPendingNotice = (message) => {
+        pendingNotice.textContent = message;
+        pendingNotice.style.display = "block";
+    };
+
+    const lockFormForPendingOperation = () => {
+        editableControls.forEach(control => { control.disabled = true; });
+        submitBtn.disabled = false;
+        submitBtn.innerText = "Reintentar guardado pendiente";
+    };
+
+    const isValidPendingOperation = (operation) => {
+        const cutData = operation && operation.cutData;
+        return Boolean(
+            operation &&
+            /^OP-[a-zA-Z0-9_-]+$/.test(String(operation.id || "")) &&
+            String(operation.vehicleId) === vehicleId &&
+            String(operation.userId || "").trim() !== "" &&
+            ["processing", "failed", "completed"].includes(String(operation.status || "")) &&
+            cutData && typeof cutData === "object" &&
+            typeof cutData.tipoCorte1 === "string" &&
+            typeof cutData.configRelay1 === "string" &&
+            typeof cutData.ubicacionCorte1 === "string" &&
+            typeof cutData.colorCableCorte1 === "string" &&
+            typeof cutData.activaTestigo1 === "boolean" &&
+            typeof cutData.imgCorte1 === "string"
+        );
+    };
+
+    const applyPendingOperation = (operation) => {
+        if (!isValidPendingOperation(operation)) return false;
+        const { currentUser } = getState();
+        if (!currentUser || !currentUser.ID || String(operation.userId) !== String(currentUser.ID)) return false;
+        pendingOperation = operation;
+        const savedCut = operation.cutData;
+
+        tipoSelect.value = savedCut.tipoCorte1 || "";
+        const savedRelay = String(savedCut.configRelay1 || "");
+        if (savedRelay && !Array.from(relaySelect.options).some(option => option.value === savedRelay)) {
+            const option = document.createElement("option");
+            option.value = savedRelay;
+            option.textContent = savedRelay;
+            relaySelect.appendChild(option);
+        }
+        relaySelect.value = savedRelay;
+        detailsInput.value = savedCut.ubicacionCorte1 || "";
+        colorInput.value = savedCut.colorCableCorte1 || "";
+        testigoInput.checked = savedCut.activaTestigo1 === true;
+        syncNoRecomendadoState();
+        lockFormForPendingOperation();
+        showPendingNotice("Existe un agregado pendiente para este vehículo. Se conservaron los datos originales, incluida la imagen. El reintento utilizará la misma clave para evitar duplicados; los campos permanecen bloqueados para no alterar una operación que pudo haberse completado.");
+        return true;
+    };
 
     const populateRelayOptions = (options) => {
         relaySelect.innerHTML = '<option value="" selected disabled>Seleccione una opción</option>';
@@ -7317,28 +7390,8 @@ export function openAddCutForModelModal(item) {
             el.textContent = opt;
             relaySelect.appendChild(el);
         });
-        if (!relaySelect.value) {
-            relaySelect.value = "";
-        }
+        if (!relaySelect.value) relaySelect.value = "";
     };
-
-    // Cargar opciones desde la configuración de Spreadsheet
-    (async () => {
-        try {
-            const dropdowns = await precargarDropdownOptions();
-            if (dropdowns && dropdowns.configRelay) {
-                populateRelayOptions(dropdowns.configRelay, "Corte a ignición");
-            } else {
-                populateRelayOptions([]);
-            }
-        } catch (e) {
-            console.error("Error cargando opciones de relay para modal:", e);
-            populateRelayOptions([]);
-        }
-
-        // Aplicar estado según tipo inicial
-        syncNoRecomendadoState();
-    })();
 
     function syncNoRecomendadoState() {
         const isNoRec = isNoRecomendadoValue(tipoSelect.value);
@@ -7347,18 +7400,77 @@ export function openAddCutForModelModal(item) {
             relaySelect.required = false;
             relaySelect.value = "";
         } else {
-            relaySelect.disabled = false;
-            relaySelect.required = true;
+            relaySelect.disabled = Boolean(pendingOperation);
+            relaySelect.required = !pendingOperation;
         }
     }
 
     tipoSelect.onchange = syncNoRecomendadoState;
 
+    const relayOptionsPromise = (async () => {
+        try {
+            const dropdowns = await precargarDropdownOptions();
+            if (dropdowns && dropdowns.configRelay) {
+                populateRelayOptions(dropdowns.configRelay);
+            } else {
+                populateRelayOptions([]);
+            }
+        } catch (error) {
+            console.error("Error cargando opciones de relay para modal:", error);
+            populateRelayOptions([]);
+        }
+        syncNoRecomendadoState();
+    })();
+
+    async function restorePendingOperation() {
+        const stored = await offline.getAddCutPendingOperation(vehicleId);
+        if (!stored || stored.available !== true) {
+            pendingOperationLoadFailed = true;
+            editableControls.forEach(control => { control.disabled = true; });
+            submitBtn.disabled = true;
+            showPendingNotice("No se pudo consultar el almacenamiento local de operaciones pendientes. No se habilitó un nuevo envío para evitar duplicados. Recarga la aplicación e inténtalo nuevamente.");
+            return;
+        }
+
+        if (!stored.operation) {
+            pendingNotice.style.display = "none";
+            submitBtn.disabled = false;
+            submitBtn.innerText = "Agregar Corte";
+            return;
+        }
+
+        const operation = stored.operation;
+        if (!applyPendingOperation(operation)) {
+            pendingOperationLoadFailed = true;
+            editableControls.forEach(control => { control.disabled = true; });
+            submitBtn.disabled = true;
+            showPendingNotice("Se encontró un registro pendiente con datos incompletos o incompatibles. Se bloqueó un nuevo agregado para evitar duplicaciones. Requiere revisión antes de continuar.");
+        }
+    }
+
     content.querySelector(".info-close-btn").onclick = () => modal.remove();
 
-    const form = content.querySelector("#add-cut-model-form");
+    (async () => {
+        try {
+            await relayOptionsPromise;
+            await restorePendingOperation();
+        } catch (error) {
+            console.error("No se pudo recuperar la operación pendiente del modal:", error);
+            pendingOperationLoadFailed = true;
+            editableControls.forEach(control => { control.disabled = true; });
+            submitBtn.disabled = true;
+            showPendingNotice("No se pudo comprobar si existe una operación anterior. No se habilitó un nuevo envío para evitar duplicados.");
+        }
+    })();
+
     form.onsubmit = async (e) => {
         e.preventDefault();
+        if (submitInProgress) return;
+        if (pendingOperationLoadFailed) {
+            showGlobalError("No se pudo verificar el estado local de las operaciones pendientes. No se envió el corte.");
+            return;
+        }
+
         const { currentUser } = getState();
         if (!currentUser) { showGlobalError("Debes estar conectado."); return; }
         if (!currentUser.ID || !currentUser.SessionToken) {
@@ -7366,46 +7478,111 @@ export function openAddCutForModelModal(item) {
             return;
         }
 
-        const submitBtn = form.querySelector('button[type="submit"]');
+        submitInProgress = true;
         submitBtn.disabled = true;
-        submitBtn.innerText = "Guardando...";
-
-        const fileInput = content.querySelector("#add-cut-img-file");
-        let imgBase64 = "";
-        if (fileInput.files && fileInput.files[0]) {
-            imgBase64 = await new Promise((res) => {
-                const r = new FileReader();
-                r.onload = (re) => res(re.target.result);
-                r.readAsDataURL(fileInput.files[0]);
-            });
-        }
-
-        const payload = {
-            userId: currentUser.ID,
-            sessionToken: currentUser.SessionToken,
-            vehicleId: item.id,
-            cutData: {
-                tipoCorte1: content.querySelector("#add-cut-tipo").value,
-                configRelay1: content.querySelector("#add-cut-relay").value,
-                ubicacionCorte1: content.querySelector("#add-cut-detalles").value,
-                colorCableCorte1: content.querySelector("#add-cut-color").value,
-                activaTestigo1: content.querySelector("#add-cut-testigo").checked,
-                imgCorte1: imgBase64
-            }
-        };
+        submitBtn.innerText = pendingOperation ? "Reintentando..." : "Guardando...";
+        let persistedForAttempt = Boolean(pendingOperation);
 
         try {
-            await routeAction("addOrUpdateCut", payload);
+            if (!pendingOperation) {
+                const file = fileInput.files && fileInput.files[0];
+                let imgBase64 = "";
+                if (file) {
+                    imgBase64 = await new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = (event) => resolve(event.target.result);
+                        reader.onerror = () => reject(reader.error || new Error("No se pudo leer la imagen seleccionada."));
+                        reader.readAsDataURL(file);
+                    });
+                }
+
+                const cutData = {
+                    tipoCorte1: tipoSelect.value,
+                    configRelay1: relaySelect.value,
+                    ubicacionCorte1: detailsInput.value,
+                    colorCableCorte1: colorInput.value,
+                    activaTestigo1: testigoInput.checked,
+                    imgCorte1: imgBase64
+                };
+                const operation = {
+                    id: "OP-" + Date.now() + "-" + Math.random().toString(36).substring(2, 9).toUpperCase(),
+                    vehicleId,
+                    userId: String(currentUser.ID),
+                    cutData,
+                    status: "processing",
+                    createdAt: new Date().toISOString()
+                };
+
+                const saveResult = await offline.saveAddCutPendingOperation(operation);
+                if (!saveResult || saveResult.saved !== true) {
+                    if (saveResult && saveResult.conflict && saveResult.operation) {
+                        if (applyPendingOperation(saveResult.operation)) {
+                            showGlobalError("Ya existe una operación pendiente para este vehículo. Se restauraron sus datos; reintenta esa misma operación.");
+                        } else {
+                            pendingOperationLoadFailed = true;
+                            submitBtn.disabled = true;
+                            showPendingNotice("Existe otra operación pendiente para este vehículo, pero no se pudo recuperar su contenido. No se enviará un nuevo corte.");
+                        }
+                        return;
+                    }
+                    throw new Error("No se pudo guardar la operación pendiente en el almacenamiento local. No se envió el corte para evitar duplicaciones.");
+                }
+
+                pendingOperation = operation;
+                persistedForAttempt = true;
+                lockFormForPendingOperation();
+                showPendingNotice("Operación guardada localmente. Se está enviando al servidor con una clave única de recuperación.");
+            }
+
+            const result = await routeAction("addOrUpdateCut", {
+                userId: currentUser.ID,
+                sessionToken: currentUser.SessionToken,
+                vehicleId: item.id,
+                cutData: pendingOperation.cutData,
+                opId: pendingOperation.id
+            });
+
+            if (!result || result.status !== "success" || String(result.vehicleId) !== vehicleId) {
+                throw new Error("El servicio no confirmó el agregado del corte para el vehículo esperado.");
+            }
+
+            const completedOpId = pendingOperation.id;
+            const removed = await offline.removeAddCutPendingOperation(vehicleId, completedOpId);
+            if (removed !== true) {
+                console.warn("El corte fue confirmado, pero no se pudo retirar el registro local. Un reintento conservará el mismo opId.", completedOpId);
+            }
+
+            pendingOperation = null;
             alert("Corte agregado con éxito.");
             modal.remove();
-            // Refresh catalog
-            const catRes = await routeAction("getCatalogData");
-            if (catRes && catRes.data) setState({ catalogData: catRes.data });
-        } catch (err) {
-            console.error("Error agregando corte:", err);
-            showGlobalError("Error al agregar corte: " + err.message);
-            submitBtn.disabled = false;
-            submitBtn.innerText = "Agregar Corte";
+
+            try {
+                const catalogResult = await routeAction("getCatalogData");
+                if (catalogResult && catalogResult.data) setState({ catalogData: catalogResult.data });
+            } catch (refreshError) {
+                console.error("El corte se guardó, pero no se pudo actualizar el catálogo:", refreshError);
+                showGlobalError("El corte se guardó correctamente, pero no se pudo actualizar el catálogo. Vuelve a cargar la información.");
+            }
+        } catch (error) {
+            console.error("Error agregando corte:", error);
+            if (pendingOperation && persistedForAttempt) {
+                pendingOperation.status = "failed";
+                pendingOperation.lastError = String(error && error.message ? error.message : error);
+                const saveResult = await offline.saveAddCutPendingOperation(pendingOperation);
+                if (saveResult && saveResult.conflict && saveResult.operation) {
+                    applyPendingOperation(saveResult.operation);
+                } else {
+                    lockFormForPendingOperation();
+                    showPendingNotice("No se pudo confirmar la respuesta del servidor. La operación original permanece guardada; reintenta con el mismo opId y los mismos datos para evitar duplicados.");
+                }
+            } else {
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Agregar Corte";
+            }
+            showGlobalError("No se pudo confirmar el agregado del corte: " + String(error && error.message ? error.message : error));
+        } finally {
+            submitInProgress = false;
+            if (pendingOperation && !pendingOperationLoadFailed) submitBtn.disabled = false;
         }
     };
 }
