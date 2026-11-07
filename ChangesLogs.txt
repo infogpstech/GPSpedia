@@ -3617,3 +3617,20 @@ REVISIÓN DE CÓDIGO PRE-COMMIT — 2026-11-07
 - No se ejecutaron pruebas funcionales ni se desplegó.
 
 - rich-text.js: se corrigieron escapes de expresiones regulares de selección de listas; comprobación sintáctica del módulo compartido superada antes del commit.
+
+
+
+
+================================================================================
+IMPLEMENTACIÓN — H-TESTIGO-REPORT-01
+Fecha: 2026-11-07
+
+- ui.js, líneas 6724–6829: se añadió el checkbox «Este corte activa el testigo del motor» al modal individual; se genera reportId antes del envío y se transmiten reportId, corteIndex y activaTestigoMotor. Líneas 5545–5724: renderInboxDetail() muestra los metadatos del reporte por separado del texto libre.
+- api-config.js, líneas 164–176: reportProblem() acepta un argumento contextual opcional y transmite reportId, corteIndex y activaTestigoMotor; conserva los cuatro argumentos históricos.
+- Services/feedback.js, líneas 145–210: se añadieron funciones para localizar/crear reportMetadata de forma aditiva, validar encabezados y parsear metadatos vinculados al vehículo. Líneas 970–1041: handleReportProblem() valida el contexto, conserva la compatibilidad histórica y escribe el JSON junto con los campos del reporte antes de una única llamada flush(). Líneas 1079–1148: handleGetFeedbackItems() expone reportMetadata validado en problem_report.
+- Spreadsheet/GPSpedia_DB_columnas.md, líneas 374–391: se documentó el encabezado reportMetadata, el formato JSON, su ubicación dinámica y la compatibilidad histórica.
+- Tareas.txt, líneas 4821–4873: se actualizó el estado de H-TESTIGO-REPORT-01 y se registraron implementación, revisión y limitaciones.
+- Auditoría.txt: se añadieron auditoría de implementación, H-TR-01 a H-TR-07, reinicios y resultado de revisión final.
+- No se modificaron Cortes, activaTestigo1..3, Sugerir cambio, autenticación/autorización ni servicios WRITE/ADMIN/CATALOG.
+- No se ejecutaron pruebas funcionales, navegador, Apps Script, HTTP ni despliegues.
+================================================================================

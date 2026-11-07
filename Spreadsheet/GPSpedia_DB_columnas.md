@@ -369,3 +369,22 @@ Si la hoja productiva contiene columnas adicionales no reflejadas en este invent
 **Protecciones de esquema:** si ya existe una hoja llamada `AdminImageUploads` con encabezados incompatibles, ADMIN detiene la operación y no reescribe sus encabezados. La hoja se añade como una nueva hoja independiente; no se agregan columnas a `Cortes`, no se desplazan las once columnas históricas de `Imagenes_Reemplazadas` y no se altera el esquema de `AdminState`.
 
 **Relación con el historial:** para reemplazos que sí tienen imagen anterior, `id_reemplazo` utiliza el formato determinista `REP-<opId>`. La fila histórica se busca y reutiliza por ese ID. Si el campo no tenía imagen anterior, el intento queda registrado únicamente en `AdminImageUploads`, sin crear una fila ficticia en `Imagenes_Reemplazadas`.
+
+
+## Extensión administrada por FEEDBACK — metadatos estructurados de reportes individuales
+
+**Estado:** definida por H-TESTIGO-REPORT-01. La columna se crea bajo demanda al recibir un reporte individual que incluya el contexto estructurado. No se modifica la hoja productiva durante la implementación en GitHub.
+
+- **Hoja:** Feedbacks.
+- **Encabezado exacto:** `reportMetadata`.
+- **Ubicación:** se agrega después del último encabezado utilizado en la hoja. No se fija una letra porque la extensión existente `suggestionActorKey` y otras extensiones pueden haber sido creadas en distinto orden.
+- **Compatibilidad:** las nueve columnas históricas A:I conservan sus posiciones. La función valida sus encabezados antes de agregar la nueva columna, reutiliza una única columna `reportMetadata` existente y se detiene si encuentra duplicados o una ubicación incompatible.
+- **Formato:** objeto JSON por fila, separado del texto libre de Problema.
+
+Propiedades almacenadas:
+- `reportId`: identificador estable generado por el frontend antes del envío.
+- `vehicleId`: identificador del vehículo, coincidente con la columna C `ID_vehiculo`.
+- `corteIndex`: número de corte individual (1, 2 o 3).
+- `activaTestigoMotor`: booleano enviado explícitamente por el checkbox. `true` representa la confirmación positiva del técnico; `false` representa que no marcó la confirmación y nunca una orden para desactivar el testigo.
+
+Los reportes históricos sin metadatos permanecen válidos y se devuelven desde Inbox con `reportMetadata=null`. El lector valida el JSON y su asociación con el vehículo antes de exponerlo. La columna no sustituye ni modifica `Cortes.activaTestigo1..3`.

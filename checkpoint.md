@@ -5133,3 +5133,126 @@ VERIFICACIÓN Y RESTRICCIONES
 - Sin despliegues.
 - Un único commit por Git Database API; padre a0474f90b4e590f591b4518c279df1d61856f203; actualizar exclusivamente GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD padre.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — IMPLEMENTACIÓN H-TESTIGO-REPORT-01
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo autorizada: GPSpedia2.2.5_work
+HEAD inicial confirmado de trabajo: 79230c57b34ab345db318d42b2d851f4faa6588a
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado de base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: INICIO REGISTRADO; AUDITORÍA TÉCNICA PENDIENTE.
+
+TAREA Y ALCANCE
+H-TESTIGO-REPORT-01 — incorporar en el modal individual «Reportar un problema» el indicador positivo «Este corte activa el testigo del motor» y transportarlo/persistirlo estructuradamente, asociado al reporte, vehículo y corte. No modificar el catálogo ni los campos activaTestigo1..3. Mantener el flujo actual de descripción, información incorrecta, imagen opcional, actividad, confirmación accesible y vínculo reportId con «Sugerir cambio».
+
+ARCHIVOS Y ÁREAS A AUDITAR
+- ui.js: renderCutContent(), openReportCutModal(), showReportSuccessModal() y llamadores/contexto.
+- api-config.js: reportProblem() y routeAction/contrato FEEDBACK.
+- Services/feedback.js: enrutamiento doPost, handleReportProblem(), esquema/lectura Inbox y compatibilidad histórica.
+- Spreadsheet/GPSpedia_DB_columnas.md: esquema real documentado y eventual extensión aditiva.
+- Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md.
+
+ESTADO OBSERVADO ANTES DE AUDITAR
+- La tarea está registrada en Tareas.txt como pendiente de implementación.
+- La auditoría previa identificó ausencia del checkbox y de transporte/persistencia estructurada del indicador.
+- El modal y helper/backend aún deben auditarse contra el HEAD actual; no se asume que el estado anterior siga idéntico.
+- La tarea H-TESTIGO-SUGGEST-02 queda fuera de alcance.
+- No se han modificado código, esquema, datos productivos ni deployments en esta tarea.
+- No se ejecutarán todavía pruebas funcionales consolidadas; se reservarán para después de completar las implementaciones.
+
+RIESGOS Y RESTRICCIONES
+- Auditar el esquema real de Feedbacks y sus consumidores antes de elegir la persistencia.
+- Cualquier extensión será aditiva e idempotente, sin reinterpretar ni sobrescribir filas históricas.
+- El valor no marcado significa ausencia de confirmación en este reporte, no instrucción para desactivar el indicador.
+- No desplegar ni operar sobre Spreadsheet/Drive productivos.
+- Publicación mediante un único commit Git Database API: create_blob → create_tree → create_commit → update_ref, exclusivamente en GPSpedia2.2.5_work, force:false y expected_sha igual al HEAD verificado.
+
+SIGUIENTE ACCIÓN
+Completar auditoría estática línea por línea y función por función sin modificar código; documentar hallazgos antes de crear respaldos e implementar.
+================================================================================
+
+
+================================================================================
+CHECKPOINT DE REINICIO — REVISIÓN PRELIMINAR H-TESTIGO-REPORT-01
+Fecha: 2026-11-07
+Estado: REVISIÓN PRELIMINAR DETECTÓ DOS AJUSTES DE ROBUSTEZ; PROCEDIMIENTO REINICIADO.
+Versión de código revisada (blobs no publicados):
+- ui.js: ce65dae27263a2df7a0908c947192bf7103daa47
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js: 8dbccfed07dbbbb2877bc42b234fe823713fd2d8
+
+OBSERVACIONES QUE MOTIVAN EL REINICIO
+1. En handleReportProblem(), la primera versión ejecutaba flush() después de escribir los campos históricos y un segundo flush() después de escribir reportMetadata. Se ajustará para escribir ambos conjuntos antes de un único flush, reduciendo el riesgo de dejar un reporte nuevo sin metadatos estructurados.
+2. getReportMetadataColumn() consultaba un ancho mínimo de nueve columnas sin limitarlo al máximo físico de la hoja. Se ajustará para tratar hojas con menos de diez columnas físicas como carentes de reportMetadata, evitando una lectura fuera de rango en esquemas incompletos.
+
+ACCIÓN
+Reiniciar desde auditoría estática de las versiones revisadas, sin desplegar ni modificar datos productivos. Después de registrar los hallazgos, generar respaldos exactos de la versión revisada, aplicar únicamente los dos ajustes, repetir comparación, validación sintáctica e integridad y ejecutar una nueva revisión final. Se mantiene un único commit para H-TESTIGO-REPORT-01.
+================================================================================
+
+
+NOTA DE REAUDITORÍA — COMPATIBILIDAD DE LLAMADORES HISTÓRICOS
+Se detectó que el cálculo inicial del ancho de fila podía alterar el rango de copia/limpieza en reportes históricos si la hoja tuviera menos de ocho columnas utilizadas. Se restauró el cálculo previo para solicitudes sin contexto estructurado y se mantiene la ampliación solo para el nuevo flujo. Versión corregida de Services/feedback.js: 1e9a60d1f2ddae9d94f6537271650b2479e1fc47. Respaldo exacto previo: 59073806e710aab97821730005f03ec70db6d908.
+
+
+================================================================================
+CHECKPOINT FINAL — IMPLEMENTACIÓN H-TESTIGO-REPORT-01
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD padre confirmado antes de la tarea: 79230c57b34ab345db318d42b2d851f4faa6588a
+Árbol base del HEAD confirmado: 4e01c4f5274ee80c627d5071e7b5a735ef7ed5b0
+Rama base protegida: GPSpedia2.2.5
+HEAD de base confirmado antes de la tarea: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+IMPLEMENTACIÓN DE CÓDIGO Y DOCUMENTACIÓN COMPLETADA; REVISIÓN ESTÁTICA FINAL APROBADA. PRUEBAS FUNCIONALES CONSOLIDADAS PENDIENTES. NO SE HA CREADO NI PUBLICADO EL COMMIT TODAVÍA.
+
+RESUMEN DE IMPLEMENTACIÓN
+- ui.js: el modal individual incorpora el checkbox «Este corte activa el testigo del motor»; genera reportId antes del envío y transmite reportId, corteIndex y activaTestigoMotor. Inbox recupera y muestra los metadatos en un bloque independiente.
+- api-config.js: reportProblem() incorpora un argumento contextual opcional y conserva compatibilidad con los llamadores históricos de cuatro argumentos.
+- Services/feedback.js: se añadió la columna dinámica reportMetadata con validación de esquema y encabezado; el backend valida, persiste y recupera los metadatos asociados al reporte/vehículo/corte. El valor false significa ausencia de confirmación, no desactivación.
+- Spreadsheet/GPSpedia_DB_columnas.md: documenta la extensión aditiva y el JSON almacenado.
+- Auditoría.txt: registra auditoría, hallazgos H-TR-01 a H-TR-07, reinicios y revisión final.
+- Tareas.txt: H-TESTIGO-REPORT-01 actualizada; H-TESTIGO-SUGGEST-02 permanece pendiente e independiente.
+- ChangesLogs.txt: registra archivos y líneas afectadas.
+- No se modificaron Cortes, activaTestigo1..3, Sugerir cambio, autenticación/autorización ni servicios WRITE/ADMIN/CATALOG.
+
+ARCHIVOS Y BLOBS FINALES
+- ui.js: ce65dae27263a2df7a0908c947192bf7103daa47
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js: 1e9a60d1f2ddae9d94f6537271650b2479e1fc47
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- Auditoría.txt: 81a34655a67cf553a64bdbf2a7313a8ba9192a4d
+- Tareas.txt: ca85314e94df96212ac70dca6987f9cd4bacf323
+- ChangesLogs.txt: d225b4277e31a03ef65e4ce9b5760d97d04cfa60
+- checkpoint.md: este blob final será incluido en el único commit.
+
+RESPALDOS EXACTOS DEL ESTADO ANTERIOR A LA IMPLEMENTACIÓN
+- ui.js: c82500c55e495f4b0163ef7c64d106290028dbd3
+- api-config.js: 74fe2220d46243f14e1c1c5a63aef99435c10323
+- Services/feedback.js: f17da40f3c082634b679289c2883f2c9b91bbe8f
+- Spreadsheet/GPSpedia_DB_columnas.md: a109ff4e97dc0ad0e82a50f2818a6b03005c0e4a
+- Auditoría.txt: 341d3dd1f9631026fbb1720d0b57a262333d22cb
+- Tareas.txt: 2ad60bc3d231f68ced7a07711a616169327b2ac1
+- ChangesLogs.txt: f36f4c88b8adfa41ff2b06b37a120d208ad414ee
+- checkpoint.md antes de esta tarea: 6caa9523695c09a52cca59a131263664f99984f9
+
+VERIFICACIONES REALIZADAS
+- Parseo sintáctico aislado: ui.js PASS; api-config.js PASS; Services/feedback.js PASS.
+- Revisión estática de los bloques modificados y comparación contra los blobs originales: PASS; los cambios de código se limitan a H-TESTIGO-REPORT-01.
+- Comprobaciones estáticas: persistencia JSON antes de un único flush; columna aditiva con control de duplicados; lectura tolerante de registros históricos; validación de vehículo e índice; compatibilidad de helper histórico; ausencia de escrituras a Cortes/activaTestigo1..3.
+- H-TR-05, H-TR-06 y H-TR-07 corregidos durante la revisión.
+- No se ejecutaron pruebas funcionales, navegador, Apps Script real, HTTP ni operaciones sobre Spreadsheet/Drive. No hubo despliegues.
+
+RIESGOS Y PENDIENTES
+- Confirmar en la fase funcional consolidada la creación bajo demanda de reportMetadata, persistencia real, lectura en Inbox y compatibilidad de reportes históricos.
+- Verificar el comportamiento visual del checkbox en navegador y el envío/confirmación entre frontend y FEEDBACK.
+- No declarar la tarea validada funcionalmente hasta completar esas pruebas.
+- H-TESTIGO-SUGGEST-02 continúa fuera de alcance.
+
+ÚNICA ACCIÓN SIGUIENTE
+Volver a confirmar inmediatamente los HEAD de GPSpedia2.2.5_work y GPSpedia2.2.5. Crear un único árbol basado en 4e01c4f5274ee80c627d5071e7b5a735ef7ed5b0 con los ocho archivos enumerados; crear un único commit cuyo único parent_sha sea 79230c57b34ab345db318d42b2d851f4faa6588a; actualizar exclusivamente GPSpedia2.2.5_work mediante update_ref con force:false y expected_sha igual a ese HEAD. Verificar el commit, el árbol, los ocho archivos, el nuevo HEAD y que GPSpedia2.2.5 permanezca en d9acc68d889985c2e2f42fe3a02e502efc86ead1. El SHA del commit que incorpora este checkpoint se añadirá únicamente como referencia verificable del historial, sin crear otro commit.
+================================================================================

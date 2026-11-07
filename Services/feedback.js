@@ -142,6 +142,72 @@ function ensureSuggestionActorColumn(sheet) {
     return newColumn;
 }
 
+function getReportMetadataColumn(sheet) {
+    const maxColumns = sheet.getMaxColumns();
+    if (maxColumns < 10) return 0;
+    const headerWidth = Math.min(Math.max(sheet.getLastColumn(), 9), maxColumns);
+    const headers = sheet.getRange(1, 1, 1, headerWidth).getValues()[0];
+    const positions = [];
+    headers.forEach((header, index) => {
+        if (String(header || "").trim() === "reportMetadata") positions.push(index + 1);
+    });
+    if (positions.length > 1 || (positions.length === 1 && positions[0] <= 9)) {
+        throw new Error("La columna reportMetadata existe en una posición duplicada o incompatible.");
+    }
+    return positions.length ? positions[0] : 0;
+}
+
+function ensureReportMetadataColumn(sheet) {
+    const expectedHeaders = [
+        "ID", "Usuario", "ID_vehiculo", "Problema", "Respuesta",
+        "Se resolvio", "Responde", "Reporte de util", "anoSugerido"
+    ];
+    const maxColumns = sheet.getMaxColumns();
+    if (maxColumns < expectedHeaders.length) {
+        sheet.insertColumnsAfter(maxColumns, expectedHeaders.length - maxColumns);
+    }
+    const baseHeaders = sheet.getRange(1, 1, 1, expectedHeaders.length).getValues()[0];
+    expectedHeaders.forEach((expected, index) => {
+        if (String(baseHeaders[index] || "").trim() !== expected) {
+            throw new Error("El esquema de Feedbacks no coincide con el esperado; no se modificó la hoja.");
+        }
+    });
+
+    const existingColumn = getReportMetadataColumn(sheet);
+    if (existingColumn) return existingColumn;
+
+    const headerWidth = Math.max(sheet.getLastColumn(), expectedHeaders.length);
+    const newColumn = headerWidth + 1;
+    if (sheet.getMaxColumns() < newColumn) {
+        sheet.insertColumnsAfter(sheet.getMaxColumns(), newColumn - sheet.getMaxColumns());
+    }
+    const occupiedHeader = sheet.getRange(1, newColumn).getValue();
+    if (occupiedHeader !== "" && occupiedHeader !== null) {
+        throw new Error("No se puede añadir reportMetadata sin sobrescribir un encabezado existente.");
+    }
+    sheet.getRange(1, newColumn).setValue("reportMetadata");
+    SpreadsheetApp.flush();
+    return newColumn;
+}
+
+function parseReportMetadata(rawValue, rowVehicleId) {
+    if (typeof rawValue !== "string" || !rawValue.trim()) return null;
+    try {
+        const parsed = JSON.parse(rawValue);
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+        const reportId = String(parsed.reportId || "").trim();
+        const vehicleId = String(parsed.vehicleId || "").trim();
+        const corteIndex = Number(parsed.corteIndex);
+        if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(reportId) ||
+            !vehicleId || vehicleId !== String(rowVehicleId || "").trim() ||
+            !Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3 ||
+            typeof parsed.activaTestigoMotor !== "boolean") return null;
+        return { reportId, vehicleId, corteIndex, activaTestigoMotor: parsed.activaTestigoMotor };
+    } catch (error) {
+        return null;
+    }
+}
+
 function isPositiveYearSuggestionRow(row) {
     const problem = String(row[COLS_FEEDBACKS.Problema - 1] || "");
     const answer = String(row[COLS_FEEDBACKS.Respuesta - 1] || "");
@@ -907,41 +973,74 @@ function handleReportProblem(payload) {
         throw new Error("Faltan datos para reportar el problema (vehicleId, problemText, userId, userName).");
     }
 
-    const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
-    const lastRow = sheet.getLastRow();
-    const newRowNumber = lastRow + 1;
-    const FORMULA_ROW = 2;
-    const lastCol = sheet.getLastColumn() || 8;
-
-    if (lastRow >= FORMULA_ROW) {
-        const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
-        const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
-        formulaRange.copyTo(newRowRange);
-        if (lastCol > 1) {
-            sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
+    const hasReportContext = payload.reportId !== undefined ||
+        payload.corteIndex !== undefined || payload.activaTestigoMotor !== undefined;
+    let reportContext = null;
+    if (hasReportContext) {
+        const reportId = String(payload.reportId || "").trim();
+        const corteIndex = Number(payload.corteIndex);
+        if (!/^REP-[A-Za-z0-9_-]{1,80}$/.test(reportId)) {
+            throw new Error("El identificador del reporte no tiene un formato válido.");
         }
+        if (!Number.isInteger(corteIndex) || corteIndex < 1 || corteIndex > 3) {
+            throw new Error("El número de corte no es válido.");
+        }
+        if (typeof payload.activaTestigoMotor !== "boolean") {
+            throw new Error("El indicador del testigo del motor debe ser booleano.");
+        }
+        reportContext = {
+            reportId,
+            vehicleId: String(vehicleId),
+            corteIndex,
+            activaTestigoMotor: payload.activaTestigoMotor
+        };
     }
 
-    const values = [[
-        userName,
-        vehicleId,
-        problemText
-    ]];
-    sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
-
-    SpreadsheetApp.flush();
-
-    // Tarea 2.1: Retornar identificador único del reporte para vinculación con sugerencias
-    let generatedReportId = `REP-${Date.now()}`;
+    const lock = LockService.getScriptLock();
+    lock.waitLock(10000);
+    let generatedReportId = "";
     try {
-        const idVal = sheet.getRange(newRowNumber, 1).getValue();
-        if (idVal) generatedReportId = `REP-${idVal}`;
-    } catch(e) {}
+        const sheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
+        const metadataColumn = reportContext ? ensureReportMetadataColumn(sheet) : 0;
+        const lastRow = sheet.getLastRow();
+        const newRowNumber = lastRow + 1;
+        const FORMULA_ROW = 2;
+        const lastCol = reportContext
+            ? Math.max(sheet.getLastColumn(), metadataColumn, 8)
+            : (sheet.getLastColumn() || 8);
+
+        if (lastRow >= FORMULA_ROW) {
+            const formulaRange = sheet.getRange(FORMULA_ROW, 1, 1, lastCol);
+            const newRowRange = sheet.getRange(newRowNumber, 1, 1, lastCol);
+            formulaRange.copyTo(newRowRange);
+            if (lastCol > 1) {
+                sheet.getRange(newRowNumber, 2, 1, lastCol - 1).clearContent();
+            }
+        }
+
+        const values = [[userName, vehicleId, problemText]];
+        sheet.getRange(newRowNumber, COLS_FEEDBACKS.Usuario, 1, values[0].length).setValues(values);
+
+        if (reportContext) {
+            const metadata = {
+                reportId: reportContext.reportId,
+                vehicleId: String(vehicleId),
+                corteIndex: reportContext.corteIndex,
+                activaTestigoMotor: reportContext.activaTestigoMotor
+            };
+            sheet.getRange(newRowNumber, metadataColumn).setValue(JSON.stringify(metadata));
+        }
+        SpreadsheetApp.flush();
+
+        const idVal = sheet.getRange(newRowNumber, COLS_FEEDBACKS.ID).getValue();
+        generatedReportId = reportContext ? reportContext.reportId : `REP-${idVal || Date.now()}`;
+    } finally {
+        lock.releaseLock();
+    }
 
     logUserActivity(userId, userName, 'report_problem', vehicleId, problemText);
     return { status: 'success', message: 'Problema reportado.', reportId: generatedReportId };
 }
-
 function handleSendContactForm(payload) {
     const { name, email, message, userId } = payload;
     if (!name || !email || !message) {
@@ -982,9 +1081,13 @@ function handleSendContactForm(payload) {
 function handleGetFeedbackItems(payload) {
     const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
     const contactSheet = getSafeSheet(SHEET_NAMES.CONTACTANOS);
+    const reportMetadataColumn = feedbackSheet ? getReportMetadataColumn(feedbackSheet) : 0;
 
     const feedbackData = (!feedbackSheet) ? [] : feedbackSheet.getDataRange().getValues().slice(1).map(row => {
         const rawContent = row[COLS_FEEDBACKS.Problema - 1];
+        const reportMetadata = reportMetadataColumn
+            ? parseReportMetadata(row[reportMetadataColumn - 1], row[COLS_FEEDBACKS.ID_vehiculo - 1])
+            : null;
         let isVideoApproval = false;
         let videoMeta = null;
         if (typeof rawContent === 'string' && rawContent.startsWith('{') && rawContent.includes('video_approval')) {
@@ -1022,6 +1125,7 @@ function handleGetFeedbackItems(payload) {
             content: rawContent,
             user: row[COLS_FEEDBACKS.Usuario - 1],
             vehicleId: row[COLS_FEEDBACKS.ID_vehiculo - 1],
+            reportMetadata,
             reply: row[COLS_FEEDBACKS.Respuesta - 1],
             isResolved: row[COLS_FEEDBACKS['Se resolvio'] - 1] === true,
             responder: row[COLS_FEEDBACKS.Responde - 1]

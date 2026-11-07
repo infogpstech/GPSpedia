@@ -6931,3 +6931,154 @@ REVISIÓN DE CÓDIGO PRE-COMMIT — 2026-11-07
 
 H-RTE-11 — Escapes de expresiones regulares en la detección de listas seleccionadas.
 Durante la revisión final se detectó que los patrones de detección de listas/espacios tenían escapes dobles en el borrador del módulo. Se corrigieron y se volvió a ejecutar la comprobación sintáctica del módulo rich-text.js, que pasó. La corrección queda incorporada en el blob final.
+
+================================================================================
+AUDITORÍA DE IMPLEMENTACIÓN — H-TESTIGO-REPORT-01
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: 79230c57b34ab345db318d42b2d851f4faa6588a
+Rama base protegida: GPSpedia2.2.5
+HEAD de base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: auditoría estática de la implementación del reporte individual y su recuperación en Inbox. Sin modificaciones de código durante esta fase.
+
+1. ARCHIVOS Y FUNCIONES AUDITADOS
+
+ui.js — blob c82500c55e495f4b0163ef7c64d106290028dbd3
+- renderCutContent() (líneas 2855–3090): utiliza cutData.index como número del corte; el botón individual abre openReportCutModal(vehicleId, corteNum, cutData). La relación con el corte seleccionado está disponible y no requiere inferir el índice desde el texto libre.
+- El detalle ya muestra «⚠️ Este corte activa el testigo de motor» cuando cutData.activaTestigo es verdadero. Este dato corresponde a la ficha del catálogo; no debe utilizarse como valor inicial del reporte, porque el reporte registra una observación independiente del técnico.
+- openReportCutModal() (líneas 6715–6810): el formulario actual solo incluye descripción obligatoria, información incorrecta/incompleta opcional e imagen opcional. No presenta checkbox para el testigo.
+- El envío actual construye problemText con [Corte #N] y llama reportProblem() con cuatro argumentos. No transmite corteIndex ni un reportId generado por el cliente.
+- showReportSuccessModal() conserva el reportId devuelto y lo pasa a openSuggestCutModal(); esta continuidad debe mantenerse sin alterar el flujo de sugerencia.
+
+ui.js — Inbox (líneas 5480–5635)
+- renderInboxList() distingue problem_report y abre renderInboxDetail(item).
+- renderInboxDetail() muestra remitente, vehículo, contenido, respuesta y acciones; no existe una presentación para metadatos estructurados del corte o del testigo.
+- El contenido del reporte se renderiza mediante sanitizeHtmlContent(). Los metadatos deberán presentarse en un bloque separado, sin concatenarlos al texto libre ni modificar su sanitización.
+- La caché inboxCacheData conserva los objetos devueltos por FEEDBACK; no requiere cambio de contrato adicional fuera de las nuevas propiedades del item.
+
+api-config.js — blob 74fe2220d46243f14e1c1c5a63aef99435c10323
+- reportProblem() (línea 164) envía vehicleId, problemText, userId y userName a la acción reportProblem de FEEDBACK.
+- El helper admite ampliación con un argumento contextual opcional; los llamadores históricos de cuatro argumentos pueden continuar funcionando si el nuevo argumento tiene valor por defecto.
+- routeAction() serializa el objeto payload sin transformar sus propiedades. ACTION_TO_SERVICE_MAP ya enruta reportProblem a FEEDBACK; no requiere modificación.
+
+Services/feedback.js — blob f17da40f3c082634b679289c2883f2c9b91bbe8f
+- doPost() (líneas 229–320 aprox.) enruta reportProblem directamente a handleReportProblem(payload). No se encontró una validación de sesión específica para esta acción; los controles de autenticación existentes quedan fuera de alcance y no se modificarán.
+- COLS_FEEDBACKS define las nueve columnas históricas A:I: ID, Usuario, ID_vehiculo, Problema, Respuesta, Se resolvio, Responde, Reporte de util y anoSugerido.
+- ensureSuggestionActorColumn() valida las nueve columnas base y agrega suggestionActorKey al final de los encabezados existentes. Por ello, no se puede asumir que una nueva columna de metadatos ocupará siempre J; debe localizarse por encabezado y agregarse después de la última columna de encabezado utilizada, conservando cualquier extensión existente.
+- handleReportProblem() (líneas 904–945 aprox.) copia la fila de fórmulas, limpia las columnas de datos, escribe Usuario/ID_vehiculo/Problema, ejecuta flush(), deriva reportId de la columna ID y registra actividad. No persiste corteIndex ni indicador estructurado.
+- handleGetFeedbackItems() (líneas 982–1030 aprox.) transforma cada fila en problem_report usando índices fijos para las nueve columnas históricas. Puede recuperar metadatos desde una columna identificada por encabezado sin cambiar el significado de los índices históricos.
+- handleReplyToFeedback(), handleMarkAsResolved() y handleDeleteFeedbackItem() operan sobre ID y columnas históricas; una columna adicional al final no desplaza ni altera sus referencias.
+
+Spreadsheet/GPSpedia_DB_columnas.md — blob a109ff4e97dc0ad0e82a50f2818a6b03005c0e4a
+- Documenta Feedbacks con sus nueve encabezados originales A:I.
+- Documenta suggestionActorKey como una extensión dinámica que se agrega después de los encabezados existentes; la posición efectiva puede variar si ya hay otras extensiones.
+- No se inspeccionó la Spreadsheet productiva ni se ejecutaron operaciones de lectura/escritura sobre ella. La implementación deberá validar encabezados en tiempo de ejecución y detenerse ante duplicados o incompatibilidad, sin sobrescribirlos.
+
+2. HALLAZGOS DE IMPLEMENTACIÓN
+
+H-TR-01 — El reporte individual no transmite contexto estructurado del corte.
+Severidad: MEDIA.
+Evidencia: openReportCutModal() envía solo vehicleId, problemText, userId y userName. El corte aparece únicamente como texto [Corte #N].
+Decisión técnica: transmitir corteIndex y reportId explícitos desde el frontend, junto con el indicador del checkbox, a través de un argumento contextual opcional de reportProblem().
+
+H-TR-02 — Feedbacks no dispone de un campo documentado para metadatos del reporte individual.
+Severidad: MEDIA.
+Evidencia: esquema base A:I y extensión dinámica suggestionActorKey; no existe reportMetadata.
+Decisión técnica: añadir de forma aditiva una columna JSON reportMetadata, localizándola por encabezado y agregándola después de cualquier extensión existente. Validar las nueve columnas base, rechazar encabezados duplicados y conservar todas las columnas/filas existentes. El objeto almacenará reportId, vehicleId, corteIndex y el booleano explícito del checkbox. El valor false significará «sin confirmación en este reporte», nunca una orden de desactivación.
+Riesgo: las extensiones pueden existir en distinto orden; no fijar la posición física de reportMetadata.
+
+H-TR-03 — El Inbox no expone los metadatos del reporte.
+Severidad: MEDIA.
+Evidencia: handleGetFeedbackItems() no lee campos adicionales y renderInboxDetail() solo muestra contenido libre.
+Decisión técnica: recuperar reportMetadata por encabezado, validar/parsear JSON de forma tolerante para filas históricas y devolverlo como propiedad independiente del problem_report. Mostrar corte, reportId y estado de confirmación en un bloque separado. Los reportes históricos sin metadatos deben seguir mostrándose sin error.
+
+H-TR-04 — El reportId actual se genera en el servidor después de insertar la fila.
+Severidad: MEDIA.
+Evidencia: handleReportProblem() deriva REP-<ID> después de flush(); por ello el valor no está disponible en la solicitud inicial.
+Decisión técnica: para el nuevo flujo, generar reportId en el cliente antes del envío y transmitirlo explícitamente. El backend lo validará, persistirá dentro de reportMetadata y devolverá el mismo valor. Para llamadores históricos sin reportId, conservar la generación heredada REP-<ID>. El flujo de confirmación seguirá pasando exactamente el reportId devuelto a Sugerir cambio.
+
+3. DECISIONES Y LÍMITES DE ALCANCE
+- Checkbox con etiqueta exacta: «Este corte activa el testigo del motor».
+- Checkbox marcado: activaTestigoMotor=true. No marcado: activaTestigoMotor=false, mostrado en Inbox como «No confirmado en este reporte», nunca como «No activa».
+- El reporte individual conservará vehicleId y corteIndex explícitos. Se validará que el índice corresponda a uno de los tres cortes.
+- No se leerá ni actualizará Cortes desde handleReportProblem(); no se modificará activaTestigo1..3 ni la ficha pública.
+- No se modificará openSuggestCutModal(), el contrato de sugerencias, el flujo administrativo de aprobación ni las funciones de WRITE/ADMIN/CATALOG.
+- No se cambiarán controles de autenticación/autorización.
+- No se cambiarán imágenes ni el comportamiento de adjuntar la imagen opcional; el envío actual registra el nombre del archivo en el texto, no sube el archivo desde este modal.
+- No se desplegará FEEDBACK ni frontend, ni se operará sobre Spreadsheet/Drive productivos.
+- Las pruebas funcionales consolidadas quedan pendientes hasta completar las implementaciones previstas por el usuario.
+
+4. RESPALDOS DE REFERENCIA — BLOBS EXACTOS DEL HEAD AUDITADO
+- ui.js: c82500c55e495f4b0163ef7c64d106290028dbd3
+- api-config.js: 74fe2220d46243f14e1c1c5a63aef99435c10323
+- Services/feedback.js: f17da40f3c082634b679289c2883f2c9b91bbe8f
+- Auditoría.txt antes de esta entrada: 341d3dd1f9631026fbb1720d0b57a262333d22cb
+- ChangesLogs.txt antes del registro de implementación: f36f4c88b8adfa41ff2b06b37a120d208ad414ee
+- Tareas.txt: 2ad60bc3d231f68ced7a07711a616169327b2ac1
+- Spreadsheet/GPSpedia_DB_columnas.md: a109ff4e97dc0ad0e82a50f2818a6b03005c0e4a
+
+5. LIMITACIONES
+Auditoría estática de los archivos indicados y del contrato documentado. No se inspeccionó la Spreadsheet productiva, no se ejecutó Apps Script, navegador ni HTTP, y no se modificaron datos ni deployments. Los tests funcionales se reservan para la fase consolidada.
+================================================================================
+
+
+================================================================================
+REVISIÓN PRELIMINAR Y REINICIO — H-TESTIGO-REPORT-01
+Fecha: 2026-11-07
+Código revisado (blobs no publicados):
+- ui.js: ce65dae27263a2df7a0908c947192bf7103daa47
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js: 8dbccfed07dbbbb2877bc42b234fe823713fd2d8
+
+H-TR-05 — Escritura del reporte y sus metadatos en dos operaciones flush separadas.
+Severidad: BAJA.
+Evidencia: handleReportProblem() confirmaba primero los campos históricos y después escribía reportMetadata con un segundo flush. Un fallo entre ambas operaciones podía dejar un reporte nuevo sin la información estructurada requerida.
+Decisión: escribir los campos históricos y el JSON reportMetadata antes de una única llamada SpreadsheetApp.flush() para el flujo estructurado. Mantener la generación heredada de reportId para llamadores antiguos.
+
+H-TR-06 — Lectura del encabezado dinámico sin limitarse al máximo físico de columnas.
+Severidad: BAJA.
+Evidencia: getReportMetadataColumn() calculaba un ancho mínimo de nueve columnas, sin limitarlo por getMaxColumns(); en una hoja físicamente incompleta podía solicitar un rango fuera de sus límites.
+Decisión: limitar el ancho consultado a getMaxColumns() y devolver ausencia de metadatos cuando no exista físicamente una columna posterior a I.
+
+REINICIO OBLIGATORIO
+Se reinicia la auditoría desde la versión revisada, se documentan estos hallazgos antes de corregir, se respalda la versión revisada y se repiten comparación, validación sintáctica y revisión final. No se ejecutan pruebas funcionales consolidadas ni operaciones productivas.
+================================================================================
+
+
+H-TR-07 — La primera versión ampliaba el ancho de copia/limpieza para llamadores históricos.
+Severidad: BAJA.
+Evidencia: el cálculo de lastCol utilizaba Math.max(..., 8) también cuando no se recibía contexto estructurado, mientras la versión anterior utilizaba getLastColumn() || 8.
+Decisión: conservar exactamente el cálculo histórico para llamadores sin reportContext y ampliar el ancho solo para el nuevo flujo estructurado. La corrección queda en el blob Services/feedback.js 1e9a60d1f2ddae9d94f6537271650b2479e1fc47. El blob anterior usado como respaldo fue 59073806e710aab97821730005f03ec70db6d908.
+
+
+================================================================================
+REVISIÓN FINAL DE CÓDIGO — H-TESTIGO-REPORT-01
+Fecha: 2026-11-07
+Versiones revisadas:
+- ui.js: ce65dae27263a2df7a0908c947192bf7103daa47
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js: 1e9a60d1f2ddae9d94f6537271650b2479e1fc47
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- Tareas.txt: f72b5a0b618e4afb4a09ab94aeb1b7e4c61aae44
+- ChangesLogs.txt (registro previo a esta revisión): cc45d1b7a8676ce9452f64aa0adff4104ce158a1
+
+RESULTADO DE LA REVISIÓN
+- Se revisaron los bloques modificados de ui.js, api-config.js y Services/feedback.js, incluidos el modal individual, el helper, el handler, el lector de Inbox y el renderizado de metadatos.
+- H-TR-05: corregido; campos históricos y reportMetadata se escriben antes de una única llamada flush().
+- H-TR-06: corregido; la lectura de encabezados se limita al máximo físico de columnas y retorna ausencia si no existe una columna posterior a I.
+- H-TR-07: corregido; los llamadores históricos conservan el cálculo previo de lastCol.
+- La comparación contra los blobs originales confirma que los cambios de código están limitados al checkbox/contexto del reporte, helper opcional, persistencia/lectura de reportMetadata y presentación de metadatos en Inbox.
+- La columna reportMetadata se añade después de las extensiones existentes; no desplaza las nueve columnas históricas, no sobrescribe encabezados y se rechazan duplicados.
+- El parser de metadatos descarta JSON inválido, referencias de vehículo no coincidentes, índices fuera de 1–3 y valores no booleanos.
+- La ruta de reporte no escribe en Cortes ni modifica activaTestigo1..3. Sugerir cambio, autenticación/autorización y servicios WRITE/ADMIN/CATALOG permanecen fuera de los bloques editados.
+- El estado false se presenta únicamente como «No confirmado en este reporte».
+- Compatibilidad estática confirmada para llamadores históricos de reportProblem() con cuatro argumentos y para filas de Feedbacks sin metadatos.
+- Comprobación sintáctica aislada con parser JavaScript: ui.js PASS; api-config.js PASS; Services/feedback.js PASS.
+
+PRUEBAS Y LIMITACIONES
+- No se ejecutaron pruebas funcionales, pruebas de navegador, Apps Script real, solicitudes HTTP ni pruebas contra Spreadsheet/Drive.
+- No se desplegó frontend ni FEEDBACK; no se modificaron datos productivos.
+- La verificación del comportamiento real de la creación de columna y escritura en Spreadsheet queda para la fase funcional consolidada.
+- La tarea puede pasar a la preparación del único commit; no se declara validada funcionalmente.
+================================================================================

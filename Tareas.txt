@@ -4821,7 +4821,7 @@ LIMITACIONES Y SIGUIENTE VALIDACIÓN
 TAREA PENDIENTE — AÑADIR INDICADOR DE TESTIGO DE MOTOR AL MODAL «REPORTAR UN PROBLEMA»
 Fecha de registro: 2026-11-07
 Prioridad: MEDIA
-Estado: PENDIENTE DE IMPLEMENTACIÓN.
+Estado: IMPLEMENTACIÓN DE CÓDIGO Y DOCUMENTACIÓN COMPLETADA; PRUEBAS FUNCIONALES CONSOLIDADAS PENDIENTES.
 Hallazgo origen: H-TESTIGO-REPORT-01 en Auditoría.txt.
 
 Objetivo:
@@ -4860,7 +4860,19 @@ Restricciones:
 No desplegar ni operar sobre Spreadsheet/Drive productivos. No modificar los valores del catálogo desde el handler de reporte. No cambiar los controles de autenticación/autorización existentes. Un único commit mediante Git Database API.
 Referencia: Auditoría.txt, hallazgo H-TESTIGO-REPORT-01.
 
-================================================================================
+
+Resultado de implementación estática:
+- ui.js: checkbox exacto, reportId generado antes del envío, corteIndex y estado booleano transmitidos; Inbox presenta los metadatos estructurados por separado del contenido libre.
+- api-config.js: helper ampliado con contexto opcional; los llamadores históricos de cuatro argumentos conservan compatibilidad.
+- Services/feedback.js: columna JSON reportMetadata aditiva, validada por encabezado, persistencia vinculada a reportId/vehicleId/corteIndex e inclusión validada en la respuesta de Inbox. Los llamadores históricos sin contexto conservan el formato de reportId anterior.
+- Spreadsheet/GPSpedia_DB_columnas.md: documenta el encabezado y el objeto JSON sin fijar una posición física que pueda entrar en conflicto con otras extensiones.
+- No se modifica Cortes ni activaTestigo1..3. El valor false se presenta como «No confirmado en este reporte».
+- No se modifican Sugerir cambio, autenticación/autorización ni servicios WRITE/ADMIN/CATALOG.
+- No se ejecutaron pruebas funcionales, Apps Script, navegador, HTTP ni despliegues. La validación funcional permanece pendiente para la fase consolidada.
+
+
+
+Revisión final de código: completada. Comprobación sintáctica aislada de ui.js, api-config.js y Services/feedback.js: PASS. H-TR-05, H-TR-06 y H-TR-07 corregidos. Sin pruebas funcionales ni despliegues; continúan pendientes para la fase consolidada.
 TAREA PENDIENTE — UNIFICAR EL CONTRATO DEL INDICADOR DE TESTIGO ENTRE DETALLE, «SUGERIR CAMBIO» Y REVISIÓN ADMINISTRATIVA
 Fecha de registro: 2026-11-07
 Prioridad: MEDIA

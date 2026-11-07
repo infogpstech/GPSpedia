@@ -161,8 +161,17 @@ export async function recordLike(vehicleId, corteIndex, userId, userName) {
     return await routeAction('recordLike', { vehicleId, corteIndex, userId, userName });
 }
 
-export async function reportProblem(vehicleId, problemDescription, userId, userName) {
-    return await routeAction('reportProblem', { vehicleId, problemText: problemDescription, userId, userName });
+export async function reportProblem(vehicleId, problemDescription, userId, userName, reportContext = {}) {
+    const context = reportContext && typeof reportContext === "object" ? reportContext : {};
+    return await routeAction('reportProblem', {
+        vehicleId,
+        problemText: problemDescription,
+        userId,
+        userName,
+        reportId: context.reportId,
+        corteIndex: context.corteIndex,
+        activaTestigoMotor: context.activaTestigoMotor
+    });
 }
 
 export async function suggestYear(vehicleId, newYear, responseText, actorPayload = {}) {

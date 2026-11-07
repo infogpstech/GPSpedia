@@ -5558,11 +5558,20 @@ export function renderInboxDetail(item) {
     const isVideoItem = item.type === 'video_approval';
     const userRole = currentUser ? currentUser.Rol : '';
     const canApprove = ['Desarrollador', 'Gefe', 'Supervisor'].includes(userRole);
+    const reportMetadata = item.type === 'problem_report' && item.reportMetadata ? item.reportMetadata : null;
+    const reportMetadataHtml = reportMetadata ? `
+        <div style="margin:0 0 12px 0; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
+            <p style="margin:0 0 4px 0;"><strong>Identificador del reporte:</strong> ${sanitizeHtmlContent(String(reportMetadata.reportId || ''))}</p>
+            <p style="margin:0 0 4px 0;"><strong>Corte reportado:</strong> #${Number(reportMetadata.corteIndex)}</p>
+            <p style="margin:0;"><strong>Testigo del motor:</strong> ${reportMetadata.activaTestigoMotor === true ? 'El técnico confirma que este corte activa el testigo del motor.' : 'No confirmado en este reporte.'}</p>
+        </div>
+    ` : '';
 
     detailContainer.innerHTML = `
         <h3 class="inbox-detail-title">${item.subject}</h3>
         <p class="inbox-detail-meta"><strong>De:</strong> ${item.user}</p>
         ${item.vehicleId ? `<p class="inbox-detail-meta"><strong>Vehículo:</strong> ${vehicleLabel}</p>` : ''}
+        ${reportMetadataHtml}
         ${isVideoItem && item.videoUrl ? `
             <div style="margin-bottom:12px; padding:10px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ddd); border-radius:6px;">
                 <p style="margin:0 0 6px 0;"><strong>Enlace de YouTube:</strong> <a href="${item.videoUrl}" target="_blank" rel="noopener noreferrer" style="color:#007bff; text-decoration:underline;"><i class="fa-brands fa-youtube" style="color:#ff0000;"></i> Ver vídeo en YouTube</a></p>
@@ -6724,6 +6733,7 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
     const content = document.createElement("div");
     content.className = "info-modal-content";
     content.style.maxWidth = "500px";
+    const reportId = `REP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
     content.innerHTML = `
         <span class="info-close-btn">&times;</span>
@@ -6736,6 +6746,12 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
             <div class="form-group">
                 <label>Descripción del Error Detectado *</label>
                 <textarea id="rep-error" rows="3" placeholder="Describe claramente el problema o fallo detectado..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label for="rep-testigo-motor" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                    <input type="checkbox" id="rep-testigo-motor">
+                    Este corte activa el testigo del motor
+                </label>
             </div>
             <div class="form-group">
                 <label>Información Incorrecta o Incompleta</label>
@@ -6783,18 +6799,24 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
         }
 
         try {
+            const activaTestigoMotor = content.querySelector("#rep-testigo-motor").checked;
             const res = await reportProblem(
                 vehicleId,
                 fullProblemText,
                 currentUser.ID,
-                currentUser.Nombre_Completo || currentUser.Nombre_Usuario
+                currentUser.Nombre_Completo || currentUser.Nombre_Usuario,
+                {
+                    reportId,
+                    corteIndex: Number(corteNum),
+                    activaTestigoMotor
+                }
             );
 
-            const reportId = res && res.reportId ? res.reportId : `REP-${Date.now()}`;
+            const confirmedReportId = res && res.reportId ? res.reportId : reportId;
             modal.remove();
 
             // Modal de confirmación con opción accesible de «Sugerir cambio»
-            showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId);
+            showReportSuccessModal(vehicleId, corteNum, currentCutData, confirmedReportId);
         } catch (err) {
             console.error("Error al enviar reporte de corte:", err);
             showGlobalError("Error al enviar el reporte. Por favor inténtalo de nuevo.");
