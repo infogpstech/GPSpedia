@@ -5799,3 +5799,67 @@ LIMITACIONES
 - La Tarea 7 continúa bloqueada; no se modificó.
 - No hubo despliegues, merge ni cambios en la rama base.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA E IMPLEMENTACIÓN — GENERACIÓN Y ESTABILIZACIÓN DE IDs DE CORTES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+HEAD auditado: 8001b431e66f2d5b396334bf6f40d410aac6f14f
+
+1. ALCANCE Y FUENTES
+- Se utilizó Spreadsheet/GPSpedia_DB_columnas.md como mapa estructural de referencia.
+- La hoja Cortes contiene el encabezado id en la columna A y 45 columnas físicas en el inventario original.
+- El mapa no contiene valores de registros, fórmulas, máximo numérico ni formatos de celda; esos elementos no se presumieron.
+- Se auditaron Services/write.js, Services/admin.js, Services/catalog.js, Services/feedback.js, api-config.js y los consumidores de ID identificados en ui.js.
+
+2. HALLAZGOS
+- WRITE y ADMIN copiaban la fila anterior y heredaban la fórmula de ID; además volvían a aplicar la fórmula anterior o el fallback =ROW()-1.
+- La generación basada en ROW() puede cambiar el valor subyacente cuando las filas se ordenan.
+- ADMIN reorganiza Cortes por Marca mediante Range.sort(). Por tanto, las fórmulas dependientes de la fila no garantizan identidad estable después del ordenamiento.
+- WRITE y ADMIN son proyectos Apps Script separados: sus ScriptLock no se comparten. Mantener un contador independiente en cada servicio permitiría colisiones.
+- CATALOG expone el ID de Cortes como valor numérico y ui.js lo utiliza en operaciones de ordenamiento numérico. Se conserva ese contrato.
+- Services/feedback.js contiene fórmulas de otras hojas, pero no es escritor de nuevas filas de Cortes en los puntos auditados.
+- handleReorganizeDatabase llamaba handleBackupDatabase sin pasar developerContext, aunque la validación del respaldo requiere asociarlo a la sesión del desarrollador.
+
+3. DISEÑO IMPLEMENTADO
+- WRITE se establece como autoridad única de asignación. Su ScriptLock serializa las solicitudes de WRITE y las solicitudes remotas de ADMIN.
+- ScriptProperties mantiene el último ID asignado dentro del proyecto WRITE. Antes de asignar, el servicio compara el contador con los IDs existentes y avanza a un entero seguro superior; el contador se persiste antes de devolver el valor, por lo que un fallo posterior consume el ID y no lo reutiliza.
+- La inspección de IDs considera filas con datos y valores estáticos reservados; ignora fórmulas heredadas en filas completamente vacías. Un ID no numérico, ausente en una fila con datos o duplicado bloquea la asignación en lugar de continuar con un valor potencialmente inseguro.
+- WRITE copia formato/validaciones de la fila plantilla, limpia el contenido heredado y establece un ID numérico estático. Ya no conserva ni replica la fórmula de ID en la fila nueva.
+- ADMIN solicita el ID a WRITE mediante UrlFetchApp y valida la respuesta antes de escribirlo. No mantiene un generador local.
+- Se añadió freezeCortesIds en WRITE, protegido por sesión Desarrollador y respaldo de Spreadsheet verificado. La acción es dry-run por defecto; con confirm:true convierte fórmulas existentes en sus valores calculados y elimina fórmulas de filas completamente vacías. Comprueba duplicados y valores inválidos antes de escribir y verifica que no queden fórmulas en la columna ID.
+- La conversión utiliza setValues sobre la columna A sin modificar el formato numérico de las celdas.
+- ADMIN reorganiza Cortes únicamente después de crear/verificar un respaldo y completar la estabilización de IDs mediante WRITE. También se corrigió el paso de developerContext a handleBackupDatabase.
+- api-config.js incorpora allocateVehicleId y freezeCortesIds con destino WRITE.
+
+4. CONSUMIDORES Y COMPATIBILIDAD
+- Se conserva el ID como entero numérico subyacente; el frontend continúa recibiendo el valor numérico desde CATALOG.
+- La copia de formato de la fila anterior conserva el formato numérico existente; setValue/setValues no modifica el formato de la celda.
+- No se cambió el prefijo visible, el número de ceros, la longitud ni la representación de IDs existentes.
+- No se creó una hoja o columna nueva y no se modificó el esquema de Spreadsheet.
+- La ampliación de capacidad no se implementó porque requiere conocer el máximo real y validar la representación actual antes de cambiarla.
+
+5. RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/write.js: ab6c9daa7e7b08401f08773af679e716ccd44b1a
+- Services/admin.js: 949e7349c9663642af825d292bf0c5fdcc1ec7bd
+- api-config.js: a8a33b20e3fbff549c9789cf3a409421e4a65126
+- Tareas.txt: a564506299373a5a725c19893b1d0b220378fa68
+- Auditoría.txt: 91c6cc841be84d63488909162c49aaa9a5c3c89d
+- ChangesLogs.txt: 7874b6e5c3319eb9d07e5577bf8b25e48bc6d715
+- checkpoint.md: d1346ca8b46a92195f217cd5480658f59769a7bb
+
+6. LIMITACIONES Y PRUEBAS PENDIENTES
+- No se ejecutó Apps Script, UrlFetchApp, Drive ni Google Sheets reales.
+- No se verificó que WRITE_SERVICE_URL siga correspondiendo al deployment que se utilizará al publicar; se tomó la URL actualmente declarada en api-config.js.
+- La primera invocación de UrlFetchApp desde ADMIN puede requerir autorización de scopes en el proyecto Apps Script.
+- La concurrencia entre los dos servicios queda coordinada únicamente para asignación de IDs, porque ambos solicitan la asignación al proyecto WRITE. Las ediciones manuales o escritores externos que no utilicen este endpoint quedan fuera de esa coordinación.
+- No se inspeccionaron el máximo actual, los duplicados reales ni el formato visible «V-001». El asignador falla de forma cerrada si encuentra IDs inválidos o duplicados; la prueba funcional deberá confirmar el comportamiento con la copia aislada.
+- No se realizó despliegue ni modificación de la Spreadsheet productiva.
+
+7. REVISIÓN DE SEGURIDAD Y EFECTOS COLATERALES
+- allocateVehicleId valida sesión activa antes de asignar y utiliza el bloqueo central de WRITE.
+- freezeCortesIds requiere sesión activa, privilegio Desarrollador y un respaldo Google Sheets no productivo, no enviado a papelera, con nombre de respaldo esperado y hoja Cortes.
+- La conversión no cambia IDs numéricos calculados ni formatos; filas vacías que solo contenían fórmula dejan de reservar identificadores ficticios.
+- Si la asignación o verificación falla en ADMIN, se intenta retirar únicamente la fila nueva todavía vacía.
+- La reorganización no continúa si el respaldo o la estabilización de IDs falla.
+================================================================================

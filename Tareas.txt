@@ -4518,3 +4518,35 @@ PENDIENTES
 - La Tarea 7 de IDs permanece bloqueada: la estructura fue confirmada sin cambios, pero no se verificaron máximo, formato real, duplicados, fórmulas ni comportamiento al ordenar. No se modificó el generador ni la fórmula.
 - No se modificó Spreadsheet ni Drive reales; no se ejecutó Apps Script desplegado; no se desplegó ni se hizo merge.
 ================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — IMPLEMENTACIÓN DEL ASIGNADOR CENTRAL DE IDs DE CORTES
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA DE SERVICIOS INCORPORADA; PRUEBAS FUNCIONALES RESERVADAS PARA LA FASE CONSOLIDADA.
+
+IMPLEMENTACIÓN
+- Services/write.js: se añadió un asignador central de IDs protegido por el ScriptLock del proyecto WRITE y respaldado por ScriptProperties. Antes de asignar, inspecciona los IDs de los registros existentes, detecta valores no numéricos, IDs ausentes en filas con datos y duplicados; ante cualquiera de esas condiciones falla de forma segura.
+- WRITE: las altas nuevas dejan de copiar/reaplicar la fórmula heredada. Copian la plantilla de formato y validaciones, limpian la fórmula de la columna A y escriben un ID numérico estático.
+- WRITE: se añadieron las acciones autenticadas allocateVehicleId y freezeCortesIds. La primera permite que ADMIN utilice el mismo asignador. La segunda requiere privilegio Desarrollador y un respaldo de Spreadsheet verificado; simula por defecto y convierte las fórmulas existentes a valores solo con confirmación explícita.
+- La conversión conserva los valores calculados y no cambia el formato numérico de las celdas. Las fórmulas de filas completamente vacías se retiran; los IDs de registros con datos se validan y se conservan.
+- Services/admin.js: las altas administrativas solicitan el ID al servicio WRITE; no mantienen un contador independiente.
+- Services/admin.js: reorganizeDatabase pasa el contexto autenticado a backupDatabase, crea/verifica el respaldo y solicita a WRITE estabilizar los IDs antes de ordenar Cortes por Marca.
+- api-config.js: se añadieron los mapeos allocateVehicleId y freezeCortesIds hacia WRITE.
+
+DECISIONES DE COMPATIBILIDAD
+- Se mantienen los IDs como valores numéricos para conservar los consumidores que realizan comparaciones y ordenamientos numéricos.
+- El nuevo ID hereda el formato de celda de la fila plantilla; no se modifica el formato actual, el prefijo visible ni los ceros a la izquierda.
+- No se amplía la capacidad del identificador ni se introducen longitudes mixtas.
+- No se crea ninguna hoja ni columna adicional en Spreadsheet.
+- La autoridad de asignación es el proyecto WRITE; ADMIN la invoca por su URL de servicio y reenvía userId/sessionToken para validar la sesión activa.
+
+PRUEBAS FUNCIONALES POSPUESTAS
+- Según la instrucción del usuario, primero se completan las implementaciones de servicios. Las pruebas funcionales de Apps Script, UrlFetchApp, Spreadsheet, Drive, ordenamiento, concurrencia y persistencia se ejecutarán en una fase consolidada posterior.
+- No se inspeccionaron valores de registros, máximo actual ni formatos de celda porque el mapa estructural documenta encabezados y posiciones, no datos ni formatos.
+- La ampliación de capacidad queda pendiente hasta disponer de los resultados funcionales y verificar la representación real.
+
+ALCANCE
+- Modificados: Services/write.js, Services/admin.js y api-config.js.
+- No se ejecutaron acciones sobre Spreadsheet/Drive reales, no se desplegaron servicios y no se modificó la rama base.
+================================================================================

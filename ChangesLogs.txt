@@ -3369,3 +3369,16 @@ ALCANCE
 - Tareas.txt, Auditoría.txt y checkpoint.md actualizados.
 - Sin cambios en Spreadsheet/Drive reales, despliegues, merge ni rama base.
 ================================================================================
+
+
+================================================================================
+2026-11-06 — ASIGNADOR CENTRAL Y ESTABILIZACIÓN DE IDs DE CORTES
+================================================================================
+- Services/write.js: añadido getNextCortesVehicleIdLocked(), con ScriptLock del proyecto WRITE, contador persistente en ScriptProperties, lectura de IDs existentes, detección de duplicados/valores inválidos y asignación de enteros seguros.
+- Services/write.js: las altas nuevas dejan de copiar fórmulas de ID; copian la plantilla de fila y escriben un ID numérico estático con verificación de persistencia.
+- Services/write.js: añadidos los endpoints allocateVehicleId y freezeCortesIds. La conversión de fórmulas requiere sesión Desarrollador y respaldo verificado; opera en dry-run por defecto y conserva los valores calculados y formatos de celda al confirmar.
+- Services/admin.js: las altas administrativas consumen IDs mediante el endpoint central de WRITE; se elimina el generador/fórmula local para nuevos vehículos.
+- Services/admin.js: reorganizeDatabase ahora pasa developerContext al respaldo y estabiliza IDs mediante WRITE antes de ordenar Cortes por Marca.
+- api-config.js: añadidos los mapeos allocateVehicleId y freezeCortesIds hacia WRITE.
+- No se modificaron columnas, hojas, valores, fórmulas ni formatos de la Spreadsheet real; no se desplegaron servicios ni se modificó la rama base.
+================================================================================

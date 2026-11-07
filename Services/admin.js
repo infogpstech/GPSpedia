@@ -13,6 +13,52 @@ const SPREADSHEET_ID = "1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs";
 const DRIVE_FOLDER_ID = '1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2';
 let spreadsheet = null;
 
+
+const WRITE_SERVICE_URL = "https://script.google.com/macros/s/AKfycbwsRkcK8-q8hiOpaUNrU1e79WD2SH87MsZkfaFU3S19ayAC9ZMhxDuZUv0cx9iaW7cPlw/exec";
+
+/** WRITE es la autoridad única para asignar y estabilizar IDs de Cortes. */
+function callWriteServiceAction(action, payload) {
+    const response = UrlFetchApp.fetch(WRITE_SERVICE_URL, {
+        method: "post",
+        contentType: "text/plain",
+        payload: JSON.stringify({ action, payload }),
+        muteHttpExceptions: true,
+        followRedirects: true
+    });
+    const httpStatus = response.getResponseCode();
+    let result;
+    try {
+        result = JSON.parse(response.getContentText());
+    } catch (error) {
+        throw new Error(`WRITE no devolvió JSON válido para ${action} (HTTP ${httpStatus}).`);
+    }
+    if (httpStatus < 200 || httpStatus >= 300 || !result || result.status !== "success") {
+        const detail = result && result.details && result.details.errorMessage;
+        throw new Error(detail || (result && result.message) || `WRITE rechazó ${action} (HTTP ${httpStatus}).`);
+    }
+    return result;
+}
+
+function requestNextVehicleIdFromWriteService(payload) {
+    const result = callWriteServiceAction("allocateVehicleId", {
+        userId: payload && payload.userId,
+        sessionToken: payload && payload.sessionToken
+    });
+    const vehicleId = Number(result.vehicleId);
+    if (!Number.isSafeInteger(vehicleId) || vehicleId < 1) throw new Error("WRITE devolvió un ID de vehículo inválido.");
+    return vehicleId;
+}
+
+function requestCortesIdFreezeFromWriteService(payload, backupId) {
+    return callWriteServiceAction("freezeCortesIds", {
+        userId: payload && payload.userId,
+        sessionToken: payload && payload.sessionToken,
+        backupId,
+        confirm: true
+    });
+}
+
+
 function getSpreadsheet() {
   if (spreadsheet === null) {
     spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID);
@@ -582,7 +628,7 @@ function doPost(e) {
                 response = handleRestoreDrive(payload, logMessage);
                 break;
             case 'reorganizeDatabase':
-                response = handleReorganizeDatabase(payload, logMessage);
+                response = handleReorganizeDatabase(payload, logMessage, developerContext);
                 break;
             case 'normalizeImages':
                 response = handleNormalizeImages(payload, logMessage);
@@ -920,9 +966,12 @@ function clearFolderContents(folder) {
 /**
  * 3. Organización automática de la base de datos (por Marca)
  */
-function handleReorganizeDatabase(payload, logMessage) {
+function handleReorganizeDatabase(payload, logMessage, developerContext) {
     logMessage("Reorganización DB", "Ejecutando copia de seguridad preventiva antes de reorganizar...");
-    const backupInfo = handleBackupDatabase(payload, logMessage);
+    const backupInfo = handleBackupDatabase(payload, logMessage, developerContext);
+    logMessage("Reorganización DB", "Estabilizando los IDs de Cortes antes de cambiar el orden de las filas...");
+    const idFreezeResult = requestCortesIdFreezeFromWriteService(payload, backupInfo.backupId);
+    logMessage("Reorganización DB", `IDs estabilizados: ${idFreezeResult.formulasToFreeze || 0} fórmulas convertidas y ${idFreezeResult.emptyFormulaRowsToClear || 0} fórmulas vacías retiradas.`);
 
     logMessage("Reorganización DB", "Iniciando reordenamiento alfabético por marca en la hoja Cortes...");
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
@@ -1972,34 +2021,27 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         rowIndex = lastRow + 1;
         const lastColumn = sheet.getLastColumn();
 
-        // 1. Copiar la fila anterior para heredar TODAS las validaciones, formatos y FÓRMULAS (incluyendo ID).
+        // Copiar la plantilla de formato/validación y retirar la fórmula heredada de ID.
         const previousRowRange = sheet.getRange(lastRow, 1, 1, lastColumn);
         const newRowRange = sheet.getRange(rowIndex, 1, 1, lastColumn);
         previousRowRange.copyTo(newRowRange);
 
-        // 2. Limpiar el contenido de las columnas de DATOS para eliminar datos viejos, preservando la fórmula del ID.
         const dataRange = sheet.getRange(rowIndex, 2, 1, lastColumn - 1);
         dataRange.clearContent();
-        
-        // Resolver el ID antes de escribir datos de negocio y reservar la operación.
+        sheet.getRange(rowIndex, COLS_CORTES.id).clearContent();
         SpreadsheetApp.flush();
-        Utilities.sleep(1500);
-        newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
-        if (!newId) {
-            const previousFormula = sheet.getRange(lastRow, COLS_CORTES.id).getFormula();
-            sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(previousFormula || `=ROW()-1`);
+
+        // ADMIN solicita el ID al asignador central de WRITE; nunca genera uno localmente.
+        try {
+            newId = requestNextVehicleIdFromWriteService(payload);
+            sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId);
             SpreadsheetApp.flush();
-            Utilities.sleep(500);
-            newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
-        }
-        sheet.getRange(rowIndex, COLS_CORTES.id).setValue("");
-        sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(sheet.getRange(lastRow, COLS_CORTES.id).getFormula() || `=ROW()-1`);
-        SpreadsheetApp.flush();
-        Utilities.sleep(500);
-        newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
-        if (!newId) {
+            if (Number(sheet.getRange(rowIndex, COLS_CORTES.id).getValue()) !== newId) {
+                throw new Error("La celda ID no conservó el valor asignado por WRITE.");
+            }
+        } catch (allocationError) {
             removeEmptyPendingCutRow(sheet, rowIndex, lastColumn);
-            throw new Error("No se pudo generar el ID del nuevo vehículo; no se guardó el corte.");
+            throw new Error("No se pudo asignar un ID centralizado al nuevo vehículo: " + allocationError.message);
         }
         if (opId) {
             try {

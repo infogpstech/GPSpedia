@@ -196,6 +196,12 @@ function doPost(e) {
             case 'addVinToVehicle':
                 response = handleAddVinToVehicle(request.payload);
                 break;
+            case 'allocateVehicleId':
+                response = handleAllocateVehicleId(request.payload);
+                break;
+            case 'freezeCortesIds':
+                response = handleFreezeCortesIds(request.payload);
+                break;
             default:
                 throw new Error(`La acción '${request.action}' es desconocida.`);
         }
@@ -220,6 +226,196 @@ function handleAddOrUpdateCut(payload) {
     try { return handleAddOrUpdateCutLocked(payload); }
     finally { lock.releaseLock(); }
 }
+
+
+const CORTES_ID_COUNTER_PROPERTY = "GPSpedia_CORTES_LAST_ID";
+
+/** Asignador único de IDs; debe ejecutarse bajo el ScriptLock del proyecto WRITE. */
+function getNextCortesVehicleIdLocked(sheet) {
+    if (!sheet) throw new Error("No se encontró la hoja «Cortes».");
+    if (String(sheet.getRange(1, COLS_CORTES.id).getValue() || "").trim() !== "id") {
+        throw new Error("El encabezado de la primera columna de «Cortes» no es «id».");
+    }
+
+    let maxSheetId = 0;
+    const seenIds = new Set();
+    const lastRow = sheet.getLastRow();
+    const lastColumn = sheet.getLastColumn();
+    if (lastRow > 1) {
+        const rows = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+        const formulas = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getFormulas();
+        rows.forEach((row, index) => {
+            const rawId = row[COLS_CORTES.id - 1];
+            const hasData = row.slice(1).some(value => value !== "" && value !== null && value !== undefined);
+            const hasId = rawId !== "" && rawId !== null && rawId !== undefined;
+            if (!hasData && formulas[index][0]) return;
+            if (!hasData && !hasId) return;
+            if (!hasId) throw new Error(`La fila ${index + 2} contiene datos, pero no tiene ID.`);
+
+            const id = typeof rawId === "number" ? rawId : Number(String(rawId).trim());
+            if (!Number.isSafeInteger(id) || id < 1) {
+                throw new Error(`El ID de la fila ${index + 2} no es un entero numérico positivo seguro.`);
+            }
+            if (seenIds.has(id)) throw new Error(`Se detectó el ID duplicado ${id} en «Cortes»; no se asignó otro ID.`);
+            seenIds.add(id);
+            maxSheetId = Math.max(maxSheetId, id);
+        });
+    }
+
+    const properties = PropertiesService.getScriptProperties();
+    const storedValue = properties.getProperty(CORTES_ID_COUNTER_PROPERTY);
+    const storedId = storedValue === null ? 0 : Number(storedValue);
+    if (!Number.isSafeInteger(storedId) || storedId < 0) {
+        throw new Error("El contador central de IDs de Cortes contiene un valor inválido.");
+    }
+    const nextId = Math.max(maxSheetId, storedId) + 1;
+    if (!Number.isSafeInteger(nextId) || nextId < 1) throw new Error("Se alcanzó el límite seguro del ID numérico de Cortes.");
+    properties.setProperty(CORTES_ID_COUNTER_PROPERTY, String(nextId));
+    return nextId;
+}
+
+/** Endpoint autenticado para que ADMIN solicite un ID al asignador central. */
+function handleAllocateVehicleId(payload) {
+    getAuthenticatedCollaborator(payload);
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); }
+    catch (error) { throw new Error("No se pudo obtener el bloqueo central de IDs. Intente nuevamente."); }
+    try {
+        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+        return { status: "success", vehicleId: getNextCortesVehicleIdLocked(sheet) };
+    } finally {
+        lock.releaseLock();
+    }
+}
+
+function assertDeveloperForIdMaintenance(payload) {
+    getAuthenticatedCollaborator(payload);
+    const userId = String(payload && payload.userId || "").trim();
+    const usersSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.USERS);
+    if (!usersSheet) throw new Error("No se encontró la hoja Users.");
+    const rows = usersSheet.getDataRange().getValues();
+    const user = rows.slice(1).find(row => String(row[COLS_USERS.ID - 1] || "").trim() === userId);
+    const role = String(user && user[3] || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").trim().toLowerCase();
+    if (role !== "desarrollador") throw new Error("La conversión de IDs requiere privilegio Desarrollador.");
+}
+
+function verifyCortesIdsBackup(value) {
+    const raw = String(value || "").trim();
+    const match = raw.match(/\/d\/([a-zA-Z0-9_-]{20,})/) || raw.match(/[?&]id=([a-zA-Z0-9_-]{20,})/);
+    const backupId = match ? match[1] : raw;
+    if (!/^[a-zA-Z0-9_-]{20,}$/.test(backupId) || backupId === SPREADSHEET_ID) {
+        throw new Error("Se requiere un respaldo de Spreadsheet válido y distinto de producción.");
+    }
+    const file = DriveApp.getFileById(backupId);
+    if (file.isTrashed() || file.getMimeType() !== MimeType.GOOGLE_SHEETS ||
+        !String(file.getName() || "").startsWith("GPSpedia_DB_BACKUP_")) {
+        throw new Error("El recurso indicado no es un respaldo de Spreadsheet válido.");
+    }
+    const rootId = DriveApp.getRootFolder().getId();
+    const parents = file.getParents();
+    let rootChild = false;
+    while (parents.hasNext()) if (parents.next().getId() === rootId) rootChild = true;
+    if (!rootChild) throw new Error("El respaldo debe estar directamente en la raíz de Drive.");
+    const backup = SpreadsheetApp.openById(backupId);
+    const backupCortes = backup.getSheetByName(SHEET_NAMES.CORTES);
+    if (!backupCortes || backupCortes.getLastColumn() < 45) {
+        throw new Error("El respaldo no contiene una hoja Cortes compatible con la estructura inventariada.");
+    }
+    return backupId;
+}
+
+function buildCortesIdFreezePlan(sheet) {
+    if (!sheet) throw new Error("No se encontró la hoja «Cortes».");
+    const lastRow = sheet.getLastRow();
+    const lastColumn = sheet.getLastColumn();
+    if (lastRow < 2) return { finalValues: [], formulasToFreeze: 0, emptyFormulaRowsToClear: 0, rowsWithData: 0, maxId: 0 };
+
+    const rows = sheet.getRange(2, 1, lastRow - 1, lastColumn).getValues();
+    const formulas = sheet.getRange(2, COLS_CORTES.id, lastRow - 1, 1).getFormulas();
+    const seenIds = new Set();
+    const finalValues = [];
+    let formulasToFreeze = 0, emptyFormulaRowsToClear = 0, rowsWithData = 0, maxId = 0;
+
+    rows.forEach((row, index) => {
+        const rawId = row[COLS_CORTES.id - 1];
+        const hasData = row.slice(1).some(value => value !== "" && value !== null && value !== undefined);
+        const hasId = rawId !== "" && rawId !== null && rawId !== undefined;
+        const hasFormula = Boolean(formulas[index][0]);
+        if (hasData) {
+            rowsWithData++;
+            if (!hasId) throw new Error(`La fila ${index + 2} contiene datos, pero no tiene ID.`);
+        }
+        if (hasFormula && !hasData) {
+            emptyFormulaRowsToClear++;
+            finalValues.push([""]);
+            return;
+        }
+        if (hasId) {
+            const id = typeof rawId === "number" ? rawId : Number(String(rawId).trim());
+            if (!Number.isSafeInteger(id) || id < 1) throw new Error(`El ID de la fila ${index + 2} no es un entero numérico positivo seguro.`);
+            if (seenIds.has(id)) throw new Error(`Se detectó el ID duplicado ${id}; no se modificó ninguna fórmula.`);
+            seenIds.add(id);
+            maxId = Math.max(maxId, id);
+        }
+        if (hasFormula) {
+            if (!hasId) throw new Error(`La fórmula de ID de la fila ${index + 2} no devuelve un valor válido.`);
+            formulasToFreeze++;
+        }
+        finalValues.push([rawId]);
+    });
+    return { finalValues, formulasToFreeze, emptyFormulaRowsToClear, rowsWithData, maxId };
+}
+
+/** Convierte fórmulas heredadas en valores sin alterar los valores calculados ni el formato de celda. */
+function handleFreezeCortesIds(payload) {
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); }
+    catch (error) { throw new Error("No se pudo obtener el bloqueo central para estabilizar los IDs de Cortes."); }
+    try {
+        assertDeveloperForIdMaintenance(payload);
+        const backupId = verifyCortesIdsBackup(payload && payload.backupId);
+        const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+        const plan = buildCortesIdFreezePlan(sheet);
+        const summary = {
+            backupId,
+            rowsWithData: plan.rowsWithData,
+            formulasToFreeze: plan.formulasToFreeze,
+            emptyFormulaRowsToClear: plan.emptyFormulaRowsToClear,
+            maxId: plan.maxId
+        };
+        if (!payload || payload.confirm !== true) {
+            return { status: "success", dryRun: true, ...summary, message: "Simulación completada; no se modificó Cortes." };
+        }
+
+        const properties = PropertiesService.getScriptProperties();
+        const storedValue = properties.getProperty(CORTES_ID_COUNTER_PROPERTY);
+        const storedId = storedValue === null ? 0 : Number(storedValue);
+        if (!Number.isSafeInteger(storedId) || storedId < 0) throw new Error("El contador central de IDs contiene un valor inválido.");
+        properties.setProperty(CORTES_ID_COUNTER_PROPERTY, String(Math.max(storedId, plan.maxId)));
+
+        if (plan.finalValues.length) {
+            const idRange = sheet.getRange(2, COLS_CORTES.id, plan.finalValues.length, 1);
+            idRange.setValues(plan.finalValues);
+            SpreadsheetApp.flush();
+            const valuesAfter = idRange.getValues();
+            const formulasAfter = idRange.getFormulas();
+            for (let index = 0; index < plan.finalValues.length; index++) {
+                if (String(valuesAfter[index][0] ?? "") !== String(plan.finalValues[index][0] ?? "") || formulasAfter[index][0]) {
+                    throw new Error(`No se pudo verificar la conversión estática del ID en la fila ${index + 2}.`);
+                }
+            }
+        }
+        return {
+            status: "success",
+            dryRun: false,
+            ...summary,
+            message: "Las fórmulas heredadas se convirtieron en valores estáticos y se conservaron los formatos de celda."
+        };
+    } finally {
+        lock.releaseLock();
+    }
+}
+
 
 function handleAddOrUpdateCutLocked(payload) {
     payload = payload && typeof payload === 'object' ? payload : {};
@@ -443,34 +639,24 @@ function handleAddOrUpdateCutLocked(payload) {
         rowIndex = lastRow + 1;
         const lastColumn = sheet.getLastColumn();
 
-        // 1. Copiar la fila anterior para heredar TODAS las validaciones, formatos y FÓRMULAS (incluyendo ID).
+        // Copiar la plantilla de formato/validación; el nuevo ID será un valor estático.
         const previousRowRange = sheet.getRange(lastRow, 1, 1, lastColumn);
         const newRowRange = sheet.getRange(rowIndex, 1, 1, lastColumn);
         previousRowRange.copyTo(newRowRange);
 
-        // 2. Limpiar el contenido de las columnas de DATOS para eliminar datos viejos, preservando la fórmula del ID.
+        // Limpiar los datos heredados y retirar expresamente la fórmula copiada de la columna ID.
         const dataRange = sheet.getRange(rowIndex, 2, 1, lastColumn - 1);
         dataRange.clearContent();
-        
-        // Resolver el ID antes de escribir datos de negocio y reservar la operación.
+        sheet.getRange(rowIndex, COLS_CORTES.id).clearContent();
         SpreadsheetApp.flush();
-        Utilities.sleep(1500);
-        newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
-        if (!newId) {
-            const previousFormula = sheet.getRange(lastRow, COLS_CORTES.id).getFormula();
-            sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(previousFormula || `=ROW()-1`);
-            SpreadsheetApp.flush();
-            Utilities.sleep(500);
-            newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
-        }
-        sheet.getRange(rowIndex, COLS_CORTES.id).setValue("");
-        sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(sheet.getRange(lastRow, COLS_CORTES.id).getFormula() || `=ROW()-1`);
+
+        // La asignación se realiza bajo el bloqueo exclusivo de WRITE.
+        newId = getNextCortesVehicleIdLocked(sheet);
+        sheet.getRange(rowIndex, COLS_CORTES.id).setValue(newId);
         SpreadsheetApp.flush();
-        Utilities.sleep(500);
-        newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
-        if (!newId) {
+        if (Number(sheet.getRange(rowIndex, COLS_CORTES.id).getValue()) !== newId) {
             removeEmptyPendingCutRow(sheet, rowIndex, lastColumn);
-            throw new Error("No se pudo generar el ID del nuevo vehículo; no se guardó el corte.");
+            throw new Error("No se pudo verificar el ID estático del nuevo vehículo; no se guardó el corte.");
         }
         if (opId) {
             try {

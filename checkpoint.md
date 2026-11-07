@@ -4039,3 +4039,101 @@ PUBLICACIÓN
 Commit de cierre: «fix: harden VIN registration and admin safeguards».
 Único commit con padre a9c3f2377bdeb87e3de5e94a7c1b174a13e7f8d7, solo en GPSpedia2.2.5_work; la rama base permanece intacta.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — ASIGNADOR CENTRAL DE IDs DE CORTES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 8001b431e66f2d5b396334bf6f40d410aac6f14f
+HEAD de la rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+OBJETIVO
+Completar la implementación de servicios para generar IDs numéricos estáticos en Cortes, coordinar la asignación entre WRITE y ADMIN y estabilizar las fórmulas heredadas antes de ordenar registros.
+
+ESTADO INICIAL
+- El mapa estructural Spreadsheet/GPSpedia_DB_columnas.md confirma la hoja Cortes, encabezado id en columna A y la estructura física de 45 columnas descrita en el inventario.
+- WRITE y ADMIN copiaban fórmulas de ID desde la fila anterior y podían utilizar =ROW()-1.
+- ADMIN ordena Cortes por Marca, por lo que una fórmula dependiente de fila puede cambiar el ID de un registro al reordenar.
+- WRITE y ADMIN son proyectos Apps Script independientes y sus ScriptLock no se comparten.
+- CATALOG expone el ID numérico y ui.js utiliza operaciones numéricas para ordenar.
+- No se dispone en el mapa de valores de registros, máximo real ni formato de celda; no se presumieron.
+- La rama de trabajo parte del commit 8001b431; la rama base permanece en d9acc68d.
+
+ALCANCE
+- Auditar los escritores y consumidores de IDs de Cortes.
+- Implementar una autoridad única de asignación en WRITE, consumida también por ADMIN.
+- Retirar la fórmula heredada en altas nuevas.
+- Incorporar conversión controlada de fórmulas existentes a valores, protegida por respaldo.
+- Asegurar que la reorganización cree respaldo y estabilice IDs antes de ordenar.
+- Actualizar Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md.
+
+RESTRICCIONES
+- No cambiar el esquema de Spreadsheet ni crear hojas/columnas.
+- No modificar prefijo, ceros, longitud ni representación existente.
+- No ampliar capacidad hasta comprobar el máximo y compatibilidad.
+- No ejecutar operaciones reales de Spreadsheet/Drive ni desplegar servicios en esta etapa.
+- Un solo commit en GPSpedia2.2.5_work; no modificar GPSpedia2.2.5.
+
+FASE
+Checkpoint inicial de la tarea. Respaldos exactos de los archivos de trabajo registrados en Auditoría.txt. Implementación estática en curso; las pruebas funcionales quedan para la fase consolidada solicitada por el usuario.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — IMPLEMENTACIÓN DEL ASIGNADOR CENTRAL DE IDs DE CORTES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD anterior a la tarea: 8001b431e66f2d5b396334bf6f40d410aac6f14f
+HEAD de la rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+IMPLEMENTACIÓN ESTÁTICA DE LOS SERVICIOS INCORPORADA. LA VALIDACIÓN FUNCIONAL SE POSPONE A LA FASE CONSOLIDADA SOLICITADA POR EL USUARIO. LA TAREA NO SE DECLARA FUNCIONALMENTE COMPLETADA.
+
+ARCHIVOS MODIFICADOS
+- Services/write.js
+- Services/admin.js
+- api-config.js
+- Tareas.txt
+- Auditoría.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+RESUMEN DE IMPLEMENTACIÓN
+- WRITE mantiene el asignador central de IDs con ScriptLock y ScriptProperties.
+- WRITE y ADMIN utilizan la misma autoridad de asignación; ADMIN solicita los IDs a WRITE mediante su endpoint autenticado.
+- Las altas nuevas escriben IDs numéricos estáticos y dejan de copiar/reaplicar fórmulas heredadas.
+- WRITE ofrece freezeCortesIds con autorización Desarrollador, respaldo verificado, dry-run por defecto y confirmación explícita.
+- La reorganización administrativa crea y verifica el respaldo, estabiliza los IDs y después ordena Cortes.
+- api-config.js enruta allocateVehicleId y freezeCortesIds a WRITE.
+- No se alteró el esquema de Spreadsheet ni se amplió la longitud o representación de IDs.
+
+REVISIÓN ESTÁTICA
+- Se comprobó que los bloques de asignación por fórmula fueron retirados de las altas nuevas de Cortes en WRITE y ADMIN.
+- Se comprobó la existencia de las dos rutas WRITE y sus mapeos en api-config.js.
+- Se comprobó que ADMIN llama al asignador central y estabiliza IDs antes de reorganizar.
+- Se revisaron las validaciones de sesión, privilegio Desarrollador, respaldo, IDs duplicados, valores numéricos y verificación posterior.
+- Conteos estructurales de delimitadores en Services/write.js, Services/admin.js y api-config.js: balanceados.
+- Las fórmulas restantes de ADMIN corresponden a otras operaciones/hojas, no a la generación de IDs de Cortes.
+
+PRUEBAS NO EJECUTADAS
+- Por instrucción expresa del usuario, no se realizaron pruebas funcionales en esta etapa.
+- Pendientes para la fase posterior: autorización UrlFetchApp, endpoint WRITE desplegado, asignación concurrente desde WRITE/ADMIN, contador ScriptProperties, formatos numéricos reales, conversión de fórmulas, reordenamiento, filas vacías/intermedias, duplicados y recuperación tras fallos.
+- No se accedió ni modificó la Spreadsheet productiva o Drive real; no se desplegó ningún servicio.
+
+LIMITACIONES CONOCIDAS
+- El mapa estructural confirma encabezados y posiciones, pero no el máximo real, valores, duplicados ni formato visible de las celdas.
+- La ampliación de capacidad del identificador no se implementó; no se cambió el formato actual ni se introdujeron longitudes mixtas.
+- La coordinación de IDs cubre los escritores WRITE y ADMIN que utilizan el asignador central. Escrituras manuales o externas quedan fuera de ese mecanismo.
+- La autorización inicial de UrlFetchApp y la URL del deployment WRITE deberán comprobarse durante la fase funcional.
+
+SIGUIENTE ACCIÓN
+Completar la implementación de cualquier otro servicio pendiente dentro del alcance. Después ejecutar conjuntamente las pruebas funcionales en entornos aislados y revisar sus resultados antes de autorizar despliegues.
+
+PUBLICACIÓN
+La tarea se publicará mediante un único commit hijo directo del HEAD anterior, exclusivamente en GPSpedia2.2.5_work. GPSpedia2.2.5 permanecerá intacta.
+================================================================================
