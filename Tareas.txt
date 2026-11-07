@@ -4611,3 +4611,27 @@ Estado: IMPLEMENTACIÓN ESTÁTICA INCORPORADA; VALIDACIÓN FUNCIONAL RESERVADA P
 - Pendiente: pruebas funcionales en la fase consolidada para cuota disponible, límite omitido, campos de uso ausentes/null/vacíos, cero real, respuesta HTTP/API fallida y autorización OAuth.
 
 ================================================================================
+
+
+================================================================================
+RESOLUCIÓN DE AUDITORÍA — CONTRATO DEL MODAL DE AGREGADO DE CORTES
+Fecha: 2026-11-06
+Referencia: pendiente «CORREGIR CONTRATO DEL MODAL DE AGREGADO DE CORTES» registrado anteriormente.
+Estado: DISCREPANCIA ESTÁTICA NO PRESENTE EN EL HEAD ACTUAL; VALIDACIÓN FUNCIONAL PENDIENTE.
+- El nombre real de la función es openAddCutForModelModal(item), no openAddCutModal().
+- El payload actual ya envía tipoCorte1, configRelay1, ubicacionCorte1, colorCableCorte1, activaTestigo1 e imgCorte1.
+- WRITE y ADMIN consumen esas mismas claves. activaTestigo1 se guarda como booleano y imgCorte1 se convierte en archivo de Drive; la hoja conserva la URL, no el Base64.
+- No se modificó código porque el supuesto desajuste ya no existe en el HEAD auditado. Se conserva el registro histórico original y esta resolución lo complementa.
+- Auditoría detallada y SHA de respaldos en Auditoría.txt, entrada «CONTRATO DEL MODAL DE AGREGADO DE CORTES CON WRITE/ADMIN».
+- La comprobación funcional real queda pendiente para la fase consolidada; no se desplegó ni se operó sobre datos reales.
+
+TAREA NUEVA REGISTRADA — IDEMPOTENCIA DEL MODAL (+) DE AGREGADO DE CORTES
+Prioridad: ALTA.
+Estado: PENDIENTE DE AUDITORÍA E IMPLEMENTACIÓN INDEPENDIENTE.
+- Diseñar una clave opId por intento de agregado desde openAddCutForModelModal() y conservarla durante los reintentos hasta recibir confirmación inequívoca.
+- Revisar la persistencia temporal del formulario y la compatibilidad con findRowByOpId()/recordOpId() en WRITE y ADMIN.
+- Evitar que una respuesta de red perdida después de una escritura completada permita crear un segundo corte al reintentar.
+- Mantener la identidad de sesión y la selección del slot de corte; no reutilizar un opId entre operaciones distintas.
+- Incluir pruebas aisladas de respuesta perdida, reintento, operación pending/completed y recuperación sin duplicar filas ni cortes.
+- No modificar en esta tarea el contrato de campos ya alineado. Aplicar el procedimiento obligatorio y un único commit.
+================================================================================

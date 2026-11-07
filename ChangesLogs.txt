@@ -3406,3 +3406,14 @@ ALCANCE
 - No se modificaron index.html, api-config.js, scopes, permisos, datos ni deployments.
 - Pruebas funcionales reales quedan pospuestas para la fase consolidada solicitada.
 ================================================================================
+
+
+================================================================================
+2026-11-06 — AUDITORÍA DEL CONTRATO DEL MODAL DE AGREGADO DE CORTES
+- Auditoría.txt: documentada la revisión de openAddCutForModelModal(), el mapeo de cutData con WRITE/ADMIN y el tratamiento de activaTestigo1 e imgCorte1.
+- Tareas.txt: añadida resolución del pendiente histórico; el supuesto desajuste no existe en el HEAD actual. Registrada por separado la falta de opId en el modal (+) como tarea pendiente.
+- checkpoint.md: añadidos checkpoint inicial y final de esta auditoría.
+- No se modificó código porque el contrato actual ya coincide con los consumidores backend.
+- Verificaciones estáticas: 15/15 PASS.
+- No se ejecutaron pruebas funcionales reales, deployments ni operaciones sobre Drive/Spreadsheet.
+================================================================================

@@ -6005,3 +6005,85 @@ HEAD base protegido: d9acc68d889985c2e2f42fe3a02e502efc86ead1
 - La semántica de cuota y los valores reales de la cuenta deberán validarse en la fase funcional consolidada, sin usar producción durante esta tarea.
 - No se ejecutaron consultas HTTP, Apps Script, DriveApp ni SpreadsheetApp reales.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — CONTRATO DEL MODAL DE AGREGADO DE CORTES CON WRITE/ADMIN
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: b456902049cd157836b7420348fe4f5dbff23885
+HEAD base protegido: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. ALCANCE Y ARCHIVOS AUDITADOS
+- ui.js: openAddCutForModelModal(), construcción de cutData, captura de checkbox e imagen, sesión y llamada routeAction().
+- api-config.js: ACTION_TO_SERVICE_MAP para addOrUpdateCut.
+- Services/write.js: doPost(), handleAddOrUpdateCut(), handleAddOrUpdateCutLocked(), recuperación idempotente, escritura de datos e imágenes.
+- Services/admin.js: router ADMIN y handleAddOrUpdateCut(), contexto de desarrollador, recuperación y escritura de datos e imágenes.
+- add_cortes.html: payload de referencia de la etapa de registro y su operación idempotente.
+- Tareas.txt: registro de la discrepancia pendiente.
+- ChangesLogs.txt y checkpoint.md: trazabilidad de la tarea.
+
+2. IDENTIFICACIÓN DEL COMPONENTE REAL
+- El símbolo descrito en el pendiente como openAddCutModal() no existe con ese nombre en el HEAD auditado.
+- La función real es openAddCutForModelModal(item), en ui.js, líneas 7233–7407.
+- El modal corresponde al formulario de agregado de un corte desde el menú (+) del detalle de un vehículo existente.
+
+3. HALLAZGO PRINCIPAL: LA DISCREPANCIA DOCUMENTADA NO ESTÁ PRESENTE EN EL HEAD ACTUAL
+- Tareas.txt describía un payload antiguo con claves cutData.tipo, configRelay, ubicacion, colorCable, activaTestigo e imgBase64.
+- En ui.js, líneas 7383–7395, el payload actual utiliza exactamente:
+  - tipoCorte1
+  - configRelay1
+  - ubicacionCorte1
+  - colorCableCorte1
+  - activaTestigo1
+  - imgCorte1
+- Por tanto, las claves del consumidor coinciden con las que leen WRITE y ADMIN. La observación histórica corresponde a una versión anterior del código y no justifica modificar el contrato actual.
+- api-config.js, línea 21, enruta addOrUpdateCut al servicio WRITE. El handler ADMIN también conserva el mismo contrato de cutData para su flujo administrativo, aunque la ruta general del frontend se dirige a WRITE.
+
+4. MAPEO Y PERSISTENCIA CONFIRMADOS
+- Tipo de corte: #add-cut-tipo.value → cutData.tipoCorte1 → COLS_CORTES.tipoCorte{slot}.
+- Configuración Relay: #add-cut-relay.value → cutData.configRelay1 → COLS_CORTES.configRelay{slot}.
+- Ubicación/detalles: #add-cut-detalles.value → cutData.ubicacionCorte1 → COLS_CORTES.ubicacionCorte{slot}.
+- Color del cable: #add-cut-color.value → cutData.colorCableCorte1 → COLS_CORTES.colorCableCorte{slot}.
+- Testigo: checkbox.checked (booleano) → cutData.activaTestigo1 → COLS_CORTES.activaTestigo{slot}. WRITE y ADMIN escriben el booleano; en recuperación idempotente se completa el campo solo si está vacío.
+- Imagen: FileReader.readAsDataURL() produce un Data URL Base64 en la variable local imgBase64; el payload lo transmite como cutData.imgCorte1. No se almacena el Base64 en Spreadsheet. uploadImageToDrive() decodifica el Data URL, crea el archivo en Drive y devuelve una URL; WRITE/ADMIN escriben esa URL en COLS_CORTES.imgCorte{slot}. Cuando no se adjunta archivo, la función de carga devuelve cadena vacía.
+- Sesión: el modal envía userId y sessionToken. WRITE valida la sesión y obtiene la identidad del colaborador en servidor; ADMIN utiliza developerContext.fullName validado por su router. La identidad no depende de un nombre proporcionado por el modal.
+
+5. REFERENCIA CON EL FORMULARIO PRINCIPAL
+- add_cortes.html, líneas 1099–1115, también envía tipoCorte1, configRelay1, ubicacionCorte1, colorCableCorte1, activaTestigo1 e imgCorte1.
+- El formulario principal agrega además VIN y opId, de acuerdo con su flujo de registro/reanudación. Esos campos adicionales no alteran el contrato común de datos del corte.
+
+6. HALLAZGO FUERA DEL ALCANCE: IDEMPOTENCIA DEL MODAL (+)
+- openAddCutForModelModal() no incluye opId en su payload ni conserva una operación pendiente para reintentar con la misma clave.
+- WRITE y ADMIN solo activan su registro/recuperación idempotente cuando reciben opId. El backend no puede deduplicar un reintento de este modal si la primera escritura llegó a completarse y el cliente perdió la respuesta.
+- El botón se deshabilita durante la petición, pero vuelve a habilitarse en catch; esto no cubre una respuesta de red perdida después de la persistencia.
+- Se registra como tarea independiente en Tareas.txt. No se amplió el alcance actual para diseñar una persistencia local ni alterar el flujo de reintentos.
+
+7. CONCLUSIÓN Y DECISIÓN DE IMPLEMENTACIÓN
+- La discrepancia de nombres cutData descrita en el pendiente ya está corregida en el código presente en el HEAD auditado.
+- activaTestigo e imagen Base64 tienen mapeo y persistencia definidos en WRITE y ADMIN.
+- No se requiere modificar ui.js, Services/write.js, Services/admin.js, api-config.js ni add_cortes.html para corregir el contrato; hacerlo introduciría cambios redundantes y sin justificación.
+- Se cierra la discrepancia estática mediante documentación, sin declarar aprobadas las pruebas funcionales.
+- No se ejecutaron Apps Script, DriveApp, SpreadsheetApp, UrlFetchApp ni solicitudes HTTP reales. No se modificaron datos ni deployments.
+
+8. RESPALDOS EXACTOS PREVIOS A LA EDICIÓN DOCUMENTAL
+- Tareas.txt: f9b87b7d4c7b47051d44e7f345a03e3fe8a8ba75
+- Auditoría.txt: 42d87392b4753cc504cde2bbd9d8c0cce0b4ef43
+- ChangesLogs.txt: b4fdc18e2b896372d21cd2e1e2643bb2358a86a7
+- checkpoint.md: cb77e0ede3942d32e1b5c3dc3137710eae0c4ed2
+Los SHA anteriores identifican los blobs exactos existentes en el HEAD antes de editar los documentos; se utilizaron como respaldo inmutable para la comparación.
+
+9. IDENTIFICADORES DE LOS ARCHIVOS DE CÓDIGO AUDITADOS
+- ui.js: 273a6ace3eb7d5f979c1c78c718bec4e67335f3c
+- Services/write.js: fcb784af25f04170905c3d62aafed2846e0469d0
+- Services/admin.js: 341ff40f8a2f40d35abe8a4a60e8eb08a0eefd07
+- api-config.js: ee46092a78b87ea8a1a7b56d238c1175af6be85b
+- add_cortes.html: c5b0abfe0a9f9f217978bce53a6bebe94f782559
+
+10. VERIFICACIÓN ESTÁTICA
+- 15 comprobaciones estáticas ejecutadas; todas PASS.
+- Se comprobó el nombre real de la función, las seis claves del payload, ausencia de las claves antiguas en el objeto enviado, lectura Data URL, booleano del checkbox, enrutamiento WRITE, consumidores WRITE/ADMIN, carga de imagen, persistencia del testigo y compatibilidad con el formulario principal.
+- No se consideran pruebas funcionales de Apps Script, Drive, Spreadsheet o navegador.
+
+================================================================================

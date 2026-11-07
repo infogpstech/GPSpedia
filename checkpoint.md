@@ -4312,3 +4312,99 @@ PENDIENTES
 PUBLICACIÓN
 Un único commit hijo directo de 693f4825216996e3682c69985c666c0d8b21357c, exclusivamente en GPSpedia2.2.5_work. La rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 permanece intacta.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUDITORÍA DEL CONTRATO DEL MODAL DE AGREGADO DE CORTES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: b456902049cd157836b7420348fe4f5dbff23885
+HEAD de base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA Y ALCANCE
+Auditar el contrato de datos del modal de agregado de cortes abierto desde el botón (+), comprobar la correspondencia entre el frontend y las acciones addOrUpdateCut de WRITE/ADMIN y determinar el tratamiento de activaTestigo e imgBase64 antes de implementar cambios.
+
+ESTADO PREVIO
+- Tareas.txt registra una discrepancia histórica entre las claves de cutData enviadas por el modal y las consumidas por WRITE/ADMIN.
+- El símbolo descrito en la tarea como openAddCutModal() debe contrastarse con el nombre real de la función en el HEAD actual.
+- La rama de trabajo contiene el commit b456902049cd157836b7420348fe4f5dbff23885; la base permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- No se había iniciado la auditoría formal ni se había modificado código.
+
+ARCHIVOS PREVISTOS PARA AUDITORÍA
+- ui.js: modal, construcción del payload, carga de imagen, sesión y llamada a addOrUpdateCut.
+- api-config.js: enrutamiento de addOrUpdateCut.
+- Services/write.js: recepción, persistencia, recuperación idempotente y carga de imagen.
+- Services/admin.js: contrato de recepción, persistencia, recuperación y atribución autenticada.
+- add_cortes.html: flujo de referencia que también envía addOrUpdateCut.
+- Documentación: Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md.
+
+RESTRICCIONES
+- No inferir nombres de propiedades ni columnas; confirmar su uso en el código y el mapa estructural.
+- No duplicar carga de imágenes ni alterar el flujo normal de WRITE.
+- No modificar Spreadsheet/Drive reales, deployments, endpoints operativos ni la rama base.
+- Las pruebas funcionales reales permanecen para la fase consolidada; se permiten verificaciones estáticas y aisladas.
+- Un único commit para toda la tarea mediante Git Database API; no crear commits intermedios.
+
+FASE
+Checkpoint inicial registrado antes de la auditoría formal. Los hallazgos y cualquier implementación se documentan después de concluir la revisión diagnóstica.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUDITORÍA DEL CONTRATO DEL MODAL DE AGREGADO DE CORTES
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD anterior a la tarea: b456902049cd157836b7420348fe4f5dbff23885
+HEAD de base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+AUDITORÍA ESTÁTICA COMPLETADA. LA DISCREPANCIA DE CONTRATO DOCUMENTADA NO ESTÁ PRESENTE EN EL HEAD ACTUAL; NO SE REQUIRIERON CAMBIOS DE CÓDIGO. VALIDACIÓN FUNCIONAL PENDIENTE.
+
+ARCHIVOS MODIFICADOS
+- Auditoría.txt
+- Tareas.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+RESULTADO
+- Se confirmó que la función real es openAddCutForModelModal(item).
+- El payload ya utiliza las seis claves que consumen WRITE y ADMIN.
+- activaTestigo1 se transmite como booleano y se escribe en la columna de testigo correspondiente.
+- imgBase64 se convierte en Data URL y se transmite como imgCorte1; el backend crea el archivo en Drive y almacena su URL en la columna de imagen.
+- api-config.js dirige addOrUpdateCut a WRITE; el handler ADMIN conserva el mismo contrato para su ruta administrativa.
+- Se documentó que el modal no envía opId; se registró una tarea independiente para prevenir duplicados tras pérdida de respuesta.
+- No se modificaron ui.js, Services/write.js, Services/admin.js, api-config.js ni add_cortes.html.
+
+VERIFICACIONES EJECUTADAS
+- 15 comprobaciones estáticas del contrato, todas PASS.
+- Comparación documental contra los blobs previos: los cambios se limitan a entradas nuevas de auditoría, trazabilidad, resolución de tarea y checkpoints.
+- No se ejecutaron pruebas funcionales reales de Apps Script, Drive, Spreadsheet, UrlFetchApp ni navegador.
+
+VALIDACIONES NO REALIZADAS
+- Flujo real desde navegador al deployment WRITE.
+- Persistencia real del testigo y URL de imagen en Spreadsheet.
+- Creación real de imagen en Drive.
+- Ruta administrativa real de ADMIN.
+- Pérdida de respuesta y reintento del modal.
+
+RIESGOS Y PENDIENTES
+- La falta de opId en openAddCutForModelModal() puede permitir un segundo agregado si el servidor completa la escritura y el cliente pierde la respuesta; quedó registrada como tarea independiente.
+- La validación funcional debe ejecutarse en la fase consolidada, usando deployments y Spreadsheet aislados.
+- No se desplegó ningún servicio, no se publicó el frontend y no se consultaron ni modificaron datos reales.
+
+RESPALDOS EXACTOS
+- Tareas.txt: f9b87b7d4c7b47051d44e7f345a03e3fe8a8ba75
+- Auditoría.txt: 42d87392b4753cc504cde2bbd9d8c0cce0b4ef43
+- ChangesLogs.txt: b4fdc18e2b896372d21cd2e1e2643bb2358a86a7
+- checkpoint.md: cb77e0ede3942d32e1b5c3dc3137710eae0c4ed2
+
+SIGUIENTE ACCIÓN
+Auditar e implementar la idempotencia de openAddCutForModelModal() como tarea independiente, manteniendo el contrato de cutData ya alineado. Las pruebas funcionales permanecen reservadas para la fase consolidada.
+
+PUBLICACIÓN
+Un único commit hijo directo de b456902049cd157836b7420348fe4f5dbff23885, exclusivamente en GPSpedia2.2.5_work. La rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 permanece intacta. El SHA final se identificará en el historial Git.
+================================================================================
