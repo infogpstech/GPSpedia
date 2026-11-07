@@ -3795,3 +3795,92 @@ CONTINUIDAD
 PUBLICACIÓN
 Un único commit mediante create_blob → create_tree → create_commit → update_ref, con expected_sha igual al HEAD anterior. La rama base GPSpedia2.2.5 no se modifica.
 ================================================================================
+
+================================================================================
+# CHECKPOINT INICIAL — CONTINUACIÓN DE IMPLEMENTACIÓN VIN
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 67ce3fcd4fbc8d8f6acbf88a130cae779d9e62cb
+HEAD de rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+OBJETIVO
+Completar el control de ejecución de la migración VIN ya implementada en ADMIN y actualizar el mapeo de Spreadsheet para reflejar la hoja y columnas del esquema objetivo.
+
+ESTADO INICIAL OBSERVADO
+- ADMIN ya expone migrateCortesOperationIds con dry-run por defecto y confirmación explícita.
+- api-config.js ya enruta la acción a ADMIN.
+- No existían controles visibles en el panel de desarrollador para ejecutar la simulación y confirmación.
+- La copia XLSX analizada contiene 13 hojas; Cortes tiene 45 encabezados y las columnas 43–45 no contienen valores almacenados.
+- La copia no contiene Idempotencia ni Idempotencia_Cortes; el esquema estándar creará Idempotencia con cinco encabezados.
+- No se ha ejecutado la migración sobre la copia ni sobre la Spreadsheet productiva.
+
+ALCANCE
+- Añadir controles seguros de simulación/confirmación al panel de desarrollador.
+- Exigir un respaldo de Spreadsheet verificado en la sesión antes de habilitar la migración.
+- Actualizar Spreadsheet/GPSpedia_DB_columnas.md con el esquema objetivo, manteniendo separado el inventario observado.
+- Registrar la matriz de pruebas funcionales para la fase posterior.
+
+RIESGOS Y RESTRICCIONES
+- No ejecutar migración ni desplegar Apps Script en esta fase.
+- No modificar datos de la copia XLSX ni de la Spreadsheet productiva.
+- Conservar 44–45 reservadas y documentar las columnas de testigo solo como columnas administradas bajo demanda.
+- Un único commit en GPSpedia2.2.5_work; no modificar la rama base.
+
+FASE
+Checkpoint inicial capturado antes de las ediciones. La revisión de fuentes y esquema se realiza sin mutaciones; respaldos exactos de los archivos a editar fueron creados.
+================================================================================
+
+================================================================================
+# CHECKPOINT FINAL — CONTROL DE MIGRACIÓN VIN Y MAPEO DE SPREADSHEET
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD anterior a esta tarea: 67ce3fcd4fbc8d8f6acbf88a130cae779d9e62cb
+HEAD de la rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+IMPLEMENTACIÓN ESTÁTICA DEL CONTROL DE MIGRACIÓN COMPLETADA; MIGRACIÓN REAL, DESPLIEGUE Y PRUEBAS FUNCIONALES PENDIENTES.
+
+ARCHIVOS MODIFICADOS
+- index.html
+- ui.js
+- Spreadsheet/GPSpedia_DB_columnas.md
+- Tareas.txt
+- Auditoría.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+RESUMEN
+- Se añadió el control de simulación y confirmación de migración VIN en Base de datos.
+- La confirmación requiere un respaldo de Spreadsheet generado y verificado en la sesión y una simulación exitosa.
+- Se invalida el plan si cambia el enlace del respaldo.
+- El mapeo distingue la copia física recibida del esquema objetivo e incluye Idempotencia y las columnas VIN/testigo.
+- Se añadió la matriz de pruebas funcionales pendientes y una tarea independiente para el riesgo de persistencia de opId.
+
+VERIFICACIONES EJECUTADAS
+- Parseo estático de ui.js: correcto.
+- IDs duplicados en index.html: ninguno.
+- Controles HTML, llamadas de simulación/confirmación, validación de respaldo y condiciones dryRun revisados.
+- Confirmado el enrutamiento existente en api-config.js y el handler ADMIN.
+- Respaldos exactos de los siete archivos modificados registrados en Auditoría.txt.
+
+VALIDACIONES NO REALIZADAS
+- No se ejecutó navegador real, Apps Script, HTTP ni la acción de migración.
+- No se modificó la copia XLSX ni la Spreadsheet productiva.
+- No se desplegó ADMIN ni frontend.
+- No se ejecutó la matriz funcional; queda para la fase posterior acordada.
+
+RIESGOS Y PENDIENTES
+- La copia analizada no contiene valores en las columnas 43–45; la Spreadsheet productiva debe someterse a simulación antes de confirmar.
+- El esquema alternativo Idempotencia_Cortes solo se utilizará si Idempotencia es incompatible y la alternativa es compatible.
+- La persistencia fallida de recordOpId() queda registrada como tarea separada.
+
+SIGUIENTE ACCIÓN
+Crear y verificar un respaldo desde el panel, ejecutar la simulación en el entorno de prueba, revisar el resultado y posteriormente ejecutar la migración confirmada. Después desplegar los servicios y frontend acordados y ejecutar la matriz funcional.
+
+PUBLICACIÓN
+Un único commit de esta tarea en GPSpedia2.2.5_work, como hijo directo del HEAD anterior. La rama base GPSpedia2.2.5 permanece intacta.
+================================================================================

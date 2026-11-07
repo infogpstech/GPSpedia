@@ -281,3 +281,44 @@ La hoja `Cortes` contiene 45 columnas con encabezado. Sus tres últimas columnas
 | 45 | AS | `idOperacion3` |
 
 Este inventario registra únicamente los encabezados físicos encontrados en la copia recibida. No establece el uso funcional esperado de estas columnas ni propone cambios al esquema; esas decisiones corresponden a los requisitos vigentes y al historial de implementación del proyecto.
+
+
+## Estructura objetivo de la implementación VIN
+
+**Estado:** esquema objetivo definido por el código y los requisitos. La copia analizada aún no ha recibido la migración; esta sección no afirma que la hoja de cálculo productiva ya esté modificada.
+
+### Hoja `Cortes` después de la migración
+
+Las columnas 1–42 conservan exactamente los encabezados del inventario de la copia recibida. La reorganización prevista para las columnas finales es:
+
+| Posición | Letra | Encabezado objetivo | Uso |
+|---:|:---:|---|---|
+| 43 | AQ | `VIN` | Colección JSON de VIN procesados por registro |
+| 44 | AR | Sin encabezado | Reservada; no asignar automáticamente |
+| 45 | AS | Sin encabezado | Reservada; no asignar automáticamente |
+| 46 | AT | `activaTestigo1` | Indicador del primer corte |
+| 47 | AU | `activaTestigo2` | Indicador del segundo corte |
+| 48 | AV | `activaTestigo3` | Indicador del tercer corte |
+
+**Nota sobre las columnas 46–48:** WRITE y ADMIN las administran mediante `ensureTestigoColumns`. En la copia recibida, que termina en la columna 45, se agregarán después de las dos columnas reservadas cuando se ejecute por primera vez una operación que requiera esos campos. La acción de migración VIN no las crea por sí sola.
+
+### Nueva hoja `Idempotencia`
+
+En el escenario estándar de la copia recibida, la migración agrega esta hoja y el total pasa de 13 a 14 hojas. Cuando no exista una hoja primaria o alternativa compatible, la implementación crea `Idempotencia` con estos encabezados:
+
+| Posición | Letra | Encabezado exacto |
+|---:|:---:|---|
+| 1 | A | `opId` |
+| 2 | B | `vehicleId` |
+| 3 | C | `slotIndex` |
+| 4 | D | `timestamp` |
+| 5 | E | `status` |
+
+La hoja conserva la relación entre cada identificador de operación, el ID del vehículo y el slot del corte. Si `Idempotencia` existe con estructura incompatible, se conserva y se utiliza `Idempotencia_Cortes` únicamente si esta última es compatible. Si ambas son incompatibles, la operación se detiene.
+
+### Diferencia entre la copia recibida y el esquema objetivo
+
+- La copia recibida contiene 13 hojas y no contiene `Idempotencia` ni `Idempotencia_Cortes`.
+- En la copia, `Cortes` tiene los encabezados `idOperacion1`, `idOperacion2` e `idOperacion3` en las columnas 43–45; las tres columnas no contienen valores almacenados.
+- La migración estándar creará `Idempotencia` con sus cinco encabezados, establecerá `VIN` en AQ y dejará AR/AS sin encabezado ni contenido.
+- El inventario inicial conserva la estructura física observada en la copia. Esta sección documenta por separado la estructura objetivo para evitar confundir un cambio planeado con una migración ya ejecutada.

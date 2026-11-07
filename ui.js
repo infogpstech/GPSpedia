@@ -3073,6 +3073,11 @@ function initAdminPanelListeners() {
         consoleLog.scrollTop = consoleLog.scrollHeight;
     }
 
+    let verifiedDatabaseBackupId = null;
+    let vinMigrationPreview = null;
+    let vinMigrationPreviewBackupId = null;
+    let vinMigrationRunning = false;
+
     // Prevenir re-registro de listeners
     if (window.adminListenersAttached) {
         return;
@@ -3817,6 +3822,10 @@ ${elapsedSec}s
                 return;
             }
             backupResourceInput.value = response.backupUrl;
+            verifiedDatabaseBackupId = resourceType === 'spreadsheet' ? String(response.backupId) : null;
+            vinMigrationPreview = null;
+            vinMigrationPreviewBackupId = null;
+            updateVinMigrationControls();
             setBackupResourceHint(resourceType === 'spreadsheet'
                 ? 'Respaldo de Spreadsheet verificado. El enlace completo quedó disponible en este campo.'
                 : 'Respaldo de Drive verificado. El enlace completo quedó disponible en este campo.');
@@ -3924,6 +3933,146 @@ ${elapsedSec}s
             window.open(link, '_blank', 'noopener,noreferrer');
         };
     };
+
+    // Migración de identificadores heredados y habilitación de la columna física VIN.
+    const previewVinMigrationButton = document.getElementById('btn-admin-preview-vin-migration');
+    const confirmVinMigrationButton = document.getElementById('btn-admin-confirm-vin-migration');
+    const vinMigrationStatus = document.getElementById('vin-migration-status');
+
+    function updateVinMigrationControls() {
+        const currentBackupId = normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '');
+        const backupVerified = Boolean(verifiedDatabaseBackupId && currentBackupId === verifiedDatabaseBackupId);
+        if (previewVinMigrationButton) previewVinMigrationButton.disabled = !backupVerified || vinMigrationRunning;
+        if (confirmVinMigrationButton) {
+            confirmVinMigrationButton.disabled = !backupVerified ||
+                !vinMigrationPreview ||
+                vinMigrationPreviewBackupId !== verifiedDatabaseBackupId ||
+                vinMigrationRunning;
+        }
+    }
+
+    if (backupResourceInput) {
+        backupResourceInput.addEventListener('input', () => {
+            verifiedDatabaseBackupId = null;
+            vinMigrationPreview = null;
+            vinMigrationPreviewBackupId = null;
+            if (vinMigrationStatus) {
+                vinMigrationStatus.textContent = 'El enlace cambió. Genera un nuevo respaldo de Spreadsheet para habilitar la migración.';
+            }
+            updateVinMigrationControls();
+        });
+    }
+
+    if (previewVinMigrationButton) {
+        previewVinMigrationButton.onclick = async () => {
+            if (vinMigrationRunning) return;
+            const currentBackupId = normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '');
+            if (!verifiedDatabaseBackupId || currentBackupId !== verifiedDatabaseBackupId) {
+                if (vinMigrationStatus) vinMigrationStatus.textContent = 'No hay un respaldo de Spreadsheet verificado en esta sesión.';
+                updateVinMigrationControls();
+                return;
+            }
+
+            vinMigrationRunning = true;
+            vinMigrationPreview = null;
+            vinMigrationPreviewBackupId = null;
+            updateVinMigrationControls();
+            if (vinMigrationStatus) vinMigrationStatus.textContent = 'Ejecutando simulación. No se modificarán hojas ni encabezados.';
+            try {
+                const result = await runAction('migrateCortesOperationIds');
+                if (!result || result.status !== 'success' || result.dryRun !== true) {
+                    if (vinMigrationStatus) vinMigrationStatus.textContent = 'La simulación no fue confirmada. Consulta la consola y vuelve a intentarlo.';
+                    return;
+                }
+
+                vinMigrationPreview = result;
+                vinMigrationPreviewBackupId = verifiedDatabaseBackupId;
+                const sourceText = Array.isArray(result.sourceColumns) && result.sourceColumns.length
+                    ? result.sourceColumns.join(', ')
+                    : 'ninguna';
+                const summary = 'Simulación completada. Valores heredados detectados: ' + result.sourceCount +
+                    '; identificadores únicos: ' + result.uniqueOperationIds +
+                    '; nuevos registros por trasladar: ' + result.recordsToMigrate +
+                    '; ya presentes: ' + result.alreadyPresent +
+                    '; columnas de origen: ' + sourceText +
+                    '; hoja de destino: ' + result.targetSheet + '.';
+                if (vinMigrationStatus) {
+                    vinMigrationStatus.textContent = summary +
+                        (result.sourceCount === 0
+                            ? ' No se detectaron identificadores heredados; la confirmación preparará la hoja de idempotencia y el encabezado VIN.'
+                            : ' La confirmación trasladará los identificadores y verificará sus asociaciones antes de limpiar las columnas de origen.');
+                }
+                log('[VIN MIGRATION] ' + summary);
+            } catch (error) {
+                vinMigrationPreview = null;
+                vinMigrationPreviewBackupId = null;
+                if (vinMigrationStatus) vinMigrationStatus.textContent = 'Error en la simulación: ' + (error.message || String(error));
+                log('[VIN MIGRATION] Error en la simulación: ' + (error.message || String(error)), false, true);
+            } finally {
+                vinMigrationRunning = false;
+                updateVinMigrationControls();
+            }
+        };
+    }
+
+    if (confirmVinMigrationButton) {
+        confirmVinMigrationButton.onclick = async () => {
+            if (vinMigrationRunning || !vinMigrationPreview) return;
+            const currentBackupId = normalizeSpreadsheetBackupId(backupResourceInput ? backupResourceInput.value : '');
+            if (!verifiedDatabaseBackupId ||
+                currentBackupId !== verifiedDatabaseBackupId ||
+                vinMigrationPreviewBackupId !== verifiedDatabaseBackupId) {
+                if (vinMigrationStatus) vinMigrationStatus.textContent = 'El respaldo verificado o la simulación ya no corresponden. Genera el respaldo y simula nuevamente.';
+                vinMigrationPreview = null;
+                vinMigrationPreviewBackupId = null;
+                updateVinMigrationControls();
+                return;
+            }
+
+            const plan = vinMigrationPreview;
+            const confirmation = 'Se ejecutará la migración VIN sobre la Spreadsheet asociada al respaldo verificado.\n\n' +
+                'Hoja de destino: ' + plan.targetSheet + '\n' +
+                'Valores heredados detectados: ' + plan.sourceCount + '\n' +
+                'Registros nuevos por trasladar: ' + plan.recordsToMigrate + '\n' +
+                'Ya presentes: ' + plan.alreadyPresent + '\n' +
+                'Columna 43: VIN; columnas 44 y 45: reservadas y vacías.\n\n' +
+                'El servidor volverá a validar el estado actual y verificará el destino antes de limpiar el origen. ¿Deseas continuar?';
+            if (!confirm(confirmation)) return;
+
+            vinMigrationRunning = true;
+            updateVinMigrationControls();
+            if (vinMigrationStatus) vinMigrationStatus.textContent = 'Ejecutando migración confirmada. No cierres el panel hasta recibir el resultado.';
+            try {
+                const result = await runAction('migrateCortesOperationIds', { confirm: true });
+                if (!result || result.status !== 'success' || result.dryRun !== false) {
+                    if (vinMigrationStatus) vinMigrationStatus.textContent = 'La migración no fue confirmada como completada. Consulta la consola y realiza una nueva simulación antes de reintentar.';
+                    vinMigrationPreview = null;
+                    vinMigrationPreviewBackupId = null;
+                    return;
+                }
+
+                const summary = 'Migración confirmada. Registros trasladados: ' + result.migratedCount +
+                    '; ya presentes: ' + result.alreadyPresent +
+                    '; hoja utilizada: ' + result.targetSheet +
+                    '; encabezado VIN: columna ' + result.vinColumn +
+                    '; columnas reservadas: ' + result.reservedColumns.join(', ') + '.';
+                if (vinMigrationStatus) vinMigrationStatus.textContent = summary;
+                log('[VIN MIGRATION] ' + summary);
+                vinMigrationPreview = null;
+                vinMigrationPreviewBackupId = null;
+            } catch (error) {
+                vinMigrationPreview = null;
+                vinMigrationPreviewBackupId = null;
+                if (vinMigrationStatus) vinMigrationStatus.textContent = 'Error durante la migración: ' + (error.message || String(error));
+                log('[VIN MIGRATION] Error durante la migración: ' + (error.message || String(error)), false, true);
+            } finally {
+                vinMigrationRunning = false;
+                updateVinMigrationControls();
+            }
+        };
+    }
+
+    updateVinMigrationControls();
 
     // 5. Mantenimiento y Organización
     // Ejecutar las acciones VIN seleccionadas mediante un único handler.

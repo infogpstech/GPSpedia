@@ -4395,3 +4395,49 @@ VERIFICACIÓN
 PUBLICACIÓN
 Todos los archivos documentales de esta tarea se agrupan en un único commit de GPSpedia2.2.5_work mediante Git Database API. La rama base GPSpedia2.2.5 permanece intacta.
 ================================================================================
+
+
+================================================================================
+CONTINUACIÓN — CONTROL DE MIGRACIÓN VIN E INVENTARIO DEL ESQUEMA OBJETIVO
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: CONTROL DE INTERFAZ IMPLEMENTADO EN CÓDIGO; MIGRACIÓN REAL Y PRUEBAS FUNCIONALES PENDIENTES.
+
+- index.html: añadido el panel «Migración de VIN e idempotencia» en Base de datos, con botones separados para simulación y confirmación.
+- ui.js: la simulación llama migrateCortesOperationIds sin confirm; la confirmación solo se habilita después de generar un respaldo de Spreadsheet verificado en la sesión y obtener una simulación exitosa. Si cambia el enlace del respaldo, se invalida la simulación y se bloquea la confirmación.
+- La confirmación solicita aprobación explícita, envía confirm: true y muestra los resultados devueltos por ADMIN. No se ejecutó la acción desde esta implementación.
+- api-config.js ya enruta migrateCortesOperationIds a ADMIN; Services/admin.js ya valida la sesión de desarrollador, simula por defecto, valida las asociaciones y verifica el destino antes de limpiar las columnas de origen.
+- Spreadsheet/GPSpedia_DB_columnas.md: se añadió el esquema objetivo de Cortes (VIN en AQ, AR/AS reservadas y columnas de testigo AT–AV administradas bajo demanda) y la hoja Idempotencia con sus cinco encabezados.
+- La copia analizada contiene 13 hojas, no contiene Idempotencia/Idempotencia_Cortes y no presenta valores almacenados en las columnas 43–45 de Cortes. La migración estándar creará Idempotencia; no hay registros heredados que trasladar en esa copia.
+- No se modificó ni se migró el archivo XLSX adjunto. No se accedió a la Spreadsheet productiva, no se desplegó Apps Script y no se publicaron cambios frontend.
+
+MATRIZ DE PRUEBAS FUNCIONALES PENDIENTES — TAREA VIN
+
+1. Respaldo y simulación:
+   - No permitir simulación ni confirmación sin respaldo de Spreadsheet generado y verificado en la sesión.
+   - Confirmar que el modo predeterminado no escribe, no crea hojas y no cambia encabezados.
+   - Mostrar sourceCount, identificadores únicos, registros nuevos, ya existentes, columnas de origen y hoja de destino.
+2. Migración y asociación:
+   - Migrar los tres slots y verificar opId → vehicleId → slotIndex → timestamp/status.
+   - Crear Idempotencia con los encabezados exactos cuando no exista ninguna hoja compatible.
+   - Reutilizar Idempotencia_Cortes compatible; conservar una Idempotencia incompatible; detenerse si ambas hojas son incompatibles.
+   - Verificar destino antes de limpiar las columnas de origen.
+   - Confirmar AQ = VIN y AR/AS sin encabezado ni valores.
+   - Repetir la migración y comprobar idempotencia, sin duplicar filas ni perder asociaciones.
+3. Casos de conflicto:
+   - opId mal formado, vehicleId vacío, ID de vehículo duplicado y opId duplicado con asociaciones distintas.
+   - Columna VIN con opId escalares exclusivamente, con VIN real exclusivamente y con mezcla de VIN/opId/JSON.
+   - Encabezado VIN duplicado fuera de AQ; encabezados de operación fuera de 43–45; datos en columna reservada sin encabezado reconocido.
+   - Falla de escritura o verificación en destino: el origen debe permanecer disponible para recuperación.
+4. Integración VIN:
+   - Alta nueva, vehículo existente, reintento idempotente, recuperación y registro silencioso.
+   - Truncado estricto de los últimos cinco caracteres; no almacenar el VIN completo.
+   - Colección JSON en una sola celda, límite según versiones y preservación de VIN anteriores.
+   - Duplicados entre vehículos y dentro de colecciones; búsqueda global por coincidencia exacta.
+   - Columnas activaTestigo1..3 después de 45, sin ocupar AR/AS.
+5. Regresión:
+   - Catálogo, formulario add_cortes.html, modal de detalle, ordenamiento, búsqueda, operaciones de corte, sesiones y modo offline.
+   - Confirmar que la migración no altera las columnas 1–42 ni el timestamp de los registros.
+
+RIESGO FUERA DEL ALCANCE — NUEVA TAREA PENDIENTE
+- Services/write.js y Services/admin.js implementan recordOpId() con captura de excepciones que solo registra el error. Si appendRow() falla, el flujo llamador puede continuar sin confirmar la persistencia del opId. Auditar y diseñar el manejo transaccional/reintento en una tarea separada; no se modificó este comportamiento aquí.
+================================================================================

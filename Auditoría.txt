@@ -5568,3 +5568,60 @@ Los SHA anteriores corresponden a blobs creados desde el contenido exacto existe
 - No se ejecutaron pruebas funcionales de Google Sheets ni Apps Script; no forman parte del alcance de esta tarea documental.
 - No se modificó la Spreadsheet, no se desplegaron servicios y no se tocó la rama base.
 ================================================================================
+
+================================================================================
+AUDITORÍA — CONTROL DE MIGRACIÓN VIN Y ESQUEMA OBJETIVO
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: 67ce3fcd4fbc8d8f6acbf88a130cae779d9e62cb
+
+1. ESTADO PREVIO
+- Services/admin.js ya expone migrateCortesOperationIds, exige sesión de desarrollador, ejecuta simulación por defecto y solo modifica datos con confirm: true.
+- api-config.js ya enruta migrateCortesOperationIds a ADMIN.
+- La migración ya valida los encabezados, el formato OP-, el ID de vehículo, el slot y las asociaciones; persiste y verifica el destino antes de limpiar las columnas de origen.
+- getIdempotenciaSheet() crea Idempotencia con los cinco encabezados requeridos cuando no existe una hoja compatible; conserva una hoja primaria incompatible y recurre a Idempotencia_Cortes si es compatible.
+- ensureTestigoColumns() conserva 44–45 y agrega activaTestigo1..3 después de la columna 45.
+- index.html y ui.js no ofrecían controles visibles para ejecutar la simulación y la confirmación de esta migración.
+
+2. INSPECCIÓN DE LA COPIA XLSX
+- La copia recibida contiene 13 hojas y no incluye Idempotencia ni Idempotencia_Cortes.
+- Cortes tiene 45 encabezados; AQ/AR/AS corresponden a idOperacion1/idOperacion2/idOperacion3.
+- La inspección de las columnas 43–45 no encontró valores almacenados en esas columnas. No se extrajeron ni se incorporaron valores de registros a la documentación.
+- En el escenario estándar, la migración creará Idempotencia vacía, establecerá AQ como VIN y dejará AR/AS sin encabezado ni contenido.
+- Las columnas AT–AV son agregadas bajo demanda por ensureTestigoColumns en la primera operación WRITE/ADMIN que las necesite; la acción de migración VIN no las crea.
+
+3. IMPLEMENTACIÓN DE INTERFAZ
+- index.html: agregado el panel de migración con acciones separadas de simulación y confirmación.
+- ui.js: el control requiere un respaldo de Spreadsheet creado y verificado en la sesión; modificar el enlace invalida el respaldo verificado y la simulación.
+- La confirmación se habilita únicamente después de una simulación exitosa y un respaldo verificado. Envía confirm: true solo tras confirmación explícita del desarrollador.
+- La interfaz presenta los contadores, columnas de origen y hoja destino; no ejecuta la migración automáticamente.
+- No se modificaron Services/admin.js ni api-config.js porque la acción y el enrutamiento ya estaban implementados.
+
+4. HALLAZGO FUERA DEL ALCANCE
+- recordOpId() en Services/write.js y Services/admin.js captura errores de appendRow() y solo los registra. El flujo llamador puede continuar sin confirmar la persistencia del opId. Se registró una tarea independiente en Tareas.txt; no se modificó este comportamiento en la tarea actual.
+
+5. RESPALDOS EXACTOS
+- index.html — fa826e06a2351c1f810aec1974a42e1c05eb9b1f
+- ui.js — 78e71dd3b836df717e73d807e1eb47fd4ad53539
+- Spreadsheet/GPSpedia_DB_columnas.md — f2751bee1a28bd6f153a001cde4158268e112fa7
+- Tareas.txt — e433a2c76b228c79037caaef201d2f69946b8c5b
+- Auditoría.txt — e262e433224cc606d6ab88c420c87da0d533074d
+- ChangesLogs.txt — 72bf46bb707c5f003a816a000e2da32f440ac6eb
+- checkpoint.md — 0c9d981f8c1182aa381405ef43d631eb73d3cb45
+
+6. VERIFICACIONES
+- Parseo estático de ui.js después de retirar las declaraciones de módulo: correcto.
+- IDs HTML duplicados en index.html: ninguno.
+- Controles de simulación y confirmación presentes; la confirmación requiere respaldo verificado y resultado dryRun exitoso.
+- Confirmado que la ruta migrateCortesOperationIds ya existe en api-config.js y que el handler ADMIN distingue dry-run de confirmación.
+- El mapeo incluye la hoja Idempotencia, sus cinco encabezados, VIN en AQ, reserva AR/AS y las columnas AT–AV administradas bajo demanda.
+
+7. LIMITACIONES
+- No se ejecutó navegador real, Apps Script, HTTP ni la acción migrateCortesOperationIds.
+- No se migró la copia XLSX ni la Spreadsheet productiva; no se desplegó ADMIN ni frontend.
+- La matriz de pruebas funcionales se registró para la fase consolidada posterior a las implementaciones.
+
+DECISIÓN
+La interfaz de ejecución controlada y la documentación del esquema objetivo quedan implementadas estáticamente. La migración real y las pruebas funcionales permanecen pendientes. La nueva tarea sobre errores de persistencia de opId queda fuera del alcance actual.
+================================================================================

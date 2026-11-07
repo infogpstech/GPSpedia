@@ -3292,3 +3292,34 @@ ALCANCE
 - Solo documentación del repositorio.
 - Sin cambios en código, XLSX, datos de Google Sheets, servicios, deployments o rama base.
 ================================================================================
+
+================================================================================
+IMPLEMENTACIÓN — CONTROL DE MIGRACIÓN VIN Y ACTUALIZACIÓN DEL MAPEO
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+index.html (líneas 316–325)
+- Añadido panel de migración VIN con botones separados para simular y confirmar.
+
+ui.js (líneas 3937–4084)
+- Añadido control de respaldo de Spreadsheet verificado en sesión, simulación por defecto, invalidación del plan al cambiar el respaldo y confirmación explícita.
+- Se muestran contadores de migración, columnas de origen, hoja destino y resultado final.
+
+Spreadsheet/GPSpedia_DB_columnas.md (líneas 286–325)
+- Añadido el esquema objetivo de Cortes: AQ = VIN; AR/AS reservadas; AT–AV para activaTestigo1..3 bajo demanda.
+- Añadida la hoja Idempotencia con opId, vehicleId, slotIndex, timestamp y status.
+- Se conserva separado el inventario físico de la copia recibida y el esquema objetivo pendiente de ejecución.
+
+Tareas.txt (líneas 4399–4444)
+- Registrado el control de migración y la matriz de pruebas funcionales pendientes.
+- Registrada como tarea independiente la revisión del manejo de errores de recordOpId().
+
+Auditoría.txt (líneas 5572–5627)
+- Documentados el estado previo, el análisis de la copia, los controles agregados, respaldos, verificaciones y limitaciones.
+
+checkpoint.md (líneas 3799–3886)
+- Añadidos el checkpoint inicial y el cierre de esta tarea, conservando el historial previo.
+
+ALCANCE
+- No se modificaron los servicios ADMIN/WRITE ni api-config.js porque la acción y el enrutamiento ya existían.
+- No se ejecutó la migración ni se modificó ninguna Spreadsheet; no hubo despliegue.
+================================================================================

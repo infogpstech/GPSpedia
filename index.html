@@ -313,6 +313,16 @@
                         </div>
 
                         <div class="dev-card dev-tools-card">
+                            <strong><i class="fa-solid fa-right-left"></i> Migración de VIN e idempotencia</strong>
+                            <p>Genera primero un respaldo de Spreadsheet desde la tarjeta superior. Después ejecuta la simulación para revisar cuántos identificadores se trasladarán y cuál será la hoja de destino. La confirmación solo se habilita con un respaldo verificado y una simulación correcta.</p>
+                            <div class="dev-action-row">
+                                <button type="button" id="btn-admin-preview-vin-migration" class="btn btn-secondary" disabled><i class="fa-solid fa-magnifying-glass"></i> Simular migración</button>
+                                <button type="button" id="btn-admin-confirm-vin-migration" class="btn btn-warning" disabled><i class="fa-solid fa-database"></i> Confirmar migración</button>
+                            </div>
+                            <p id="vin-migration-status" class="dev-empty-state" role="status" aria-live="polite">Pendiente. Se requiere un respaldo de Spreadsheet verificado antes de simular.</p>
+                        </div>
+
+                        <div class="dev-card dev-tools-card">
                             <strong><i class="fa-solid fa-barcode"></i> Motor de firmas diferenciales de VIN</strong>
                             <p>Selecciona una o ambas operaciones. Si seleccionas las dos, se ejecutarán por separado y en orden.</p>
                             <div class="dev-maintenance-options">
