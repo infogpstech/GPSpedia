@@ -256,3 +256,16 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-034 se amplía; AUG-040 cubre seguridad/integridad FEEDBACK; AUG-041 cubre autorización, contrato y recuperación UTILITIES. AUG-003 queda auditada, pero el coordinador sigue pendiente.
 - No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet ni concurrencia. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
+
+## Continuidad de auditoría — AUD-T-034 (2026-11-07)
+- Sesión/checkpoint: AUD-20261107-S015 / AUD-CP-0015.
+- HEAD auditado: 3819d0d73368982a5a463fb89515e13ec452dde3; rama GPSpedia2.2.5_work. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-034 — acceso y visibilidad del panel/historial por rol y sesión: auditoría estática E1 completada; hallazgos abiertos y validación funcional pendiente.
+- ADMIN protege el panel y el historial de imágenes con assertDeveloperSession; FEEDBACK y USERS vuelven a validar rol en backend.
+- logout solo elimina localStorage; no limpia currentUser/token en memoria ni cierra/limpia los modales privilegiados. El token remoto sigue activo hasta completar AUG-006; window.state/window.ui quedan expuestos.
+- updateUser cambia Privilegios sin revocar/actualizar sesiones; validateSession solo devuelve valid. La UI puede mantener el rol anterior aunque backend reevalúa el rol actual.
+- showApp no oculta expresamente Inbox/Dashboard para roles no permitidos; getFeedbackItems permite Jefe pero la UI no muestra Inbox a Jefe.
+- renderInboxDetail usa currentUser.Rol, pero AUTH entrega Privilegios; botones de aprobación/rechazo pueden quedar ocultos.
+- AUG-006/AUG-016/AUG-017 se amplían; AUG-042 cubre sincronización de rol y limpieza del estado privilegiado.
+- No se ejecutaron pruebas de navegador, HTTP, Apps Script, sesiones reales ni cambios de rol; no se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.

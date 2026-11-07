@@ -3981,3 +3981,22 @@ ALCANCE Y VALIDACIÓN
 - No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet ni concurrencia.
 - No hubo despliegue ni merge. La rama base GPSpedia2.2.5 permanece sin cambios.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-034
+Fecha: 2026-11-07 | Rama: GPSpedia2.2.5_work | Sesión: AUD-20261107-S015
+DOCUMENTOS ACTUALIZADOS
+- Auditoría.txt: informe E1 de acceso/visibilidad por rol y sesión; hallazgos H-AUD-034-001 a H-AUD-034-004.
+- Tareas.txt: resultado AUD-T-034, adendas a AUG-006/AUG-016/AUG-017 y nueva AUG-042.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-034 actualizado a E1 completada; se agregó iteración 20 y AUD-T-035 como siguiente unidad.
+- Plan_auditoría/Aug_Tareas.md: adendas de sesión/rol y nueva AUG-042.
+- contexto_personal.md: continuidad actualizada.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0015.
+
+ALCANCE Y VALIDACIÓN
+- Solo se modificaron documentos de auditoría y trazabilidad.
+- No se modificaron ui.js, auth.js, main.js, index.html, users.html, Services/Auth.js, Services/admin.js, Services/feedback.js, Services/users.js ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+- No se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script ni sesiones/cambios de rol reales.
+- No hubo despliegue ni merge. La rama base GPSpedia2.2.5 permanece sin cambios.
+================================================================================

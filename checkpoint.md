@@ -284,3 +284,38 @@ CAMBIOS DE APLICACIÓN: NINGUNO. Solo documentación de auditoría y trazabilida
 SIGUIENTE ACCIÓN: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
 Este checkpoint final es la última actualización documental antes del único commit de la tarea. Commit previsto: audit(concurrency): revisar coordinación interservicios y Utilities; parent_sha y expected_sha iguales a 32b4898e967aea45a9372aa127cb0735aed99fc5; force=false. El SHA del commit que incorpora este checkpoint quedará identificable en el historial Git. La rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0015
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S015
+Tarea: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
+Rama de trabajo: GPSpedia2.2.5_work | HEAD inicial: 3819d0d73368982a5a463fb89515e13ec452dde3 | tree: 96fb07b57fa3c9c27362f893cc23dfbd2e57793c
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: auditoría estática de visibilidad del panel, historial de imágenes, Inbox, Dashboard, gestión de usuarios, cambio de rol, cierre de sesión y autorización backend.
+Restricciones: no modificar código, endpoints, Spreadsheet, Drive, datos productivos ni deployments; no ejecutar operaciones reales durante diagnóstico.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0015
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S015
+Tarea: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
+HEAD auditado: 3819d0d73368982a5a463fb89515e13ec452dde3
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: E1 completada; H-AUD-034-001 a H-AUD-034-004 abiertos; AUG-006/AUG-016/AUG-017 ampliadas; AUG-042 creada; validación funcional pendiente.
+Documentación actualizada: Auditoría.txt, Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+RESPALDOS EXACTOS (blob SHA antes de editar):
+- Auditoría.txt: 5bb82a4a444c7bd7ded3c95e1133380a3d886c4c
+- Tareas.txt: a94d35516d309bdb4bc9117c28cedf9e883b21f9
+- Plan_auditoría/Plan_Auditoria.md: 352d93e94a7dded90a6e69c36643f67f3941b648
+- Plan_auditoría/Aug_Tareas.md: 37b9e8e477595d97fc7f7df9fed6c7efb00fbc36
+- ChangesLogs.txt: aa26870e0a13422f63e28f9a5fbbaed228f57508
+- contexto_personal.md: 153f958cd2fe68bd5683f3bedda7c34d50ccad5f
+- checkpoint.md: fdd7a1d70114849484d6aaeec65fa5530acae93c
+VALIDACIÓN
+- Inspección estática de rutas, roles, sesiones, modales, visibilidad y contrato AUTH/UI.
+- No se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script, sesión real, cambio de rol ni cuenta compartida.
+- No se verificó el deployment publicado.
+CAMBIOS DE APLICACIÓN: NINGUNO. Solo documentación de auditoría y trazabilidad.
+SIGUIENTE ACCIÓN: AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.
+Este checkpoint final es la última actualización documental antes del único commit de la tarea. Commit previsto: audit(access): revisar visibilidad del panel e historial por rol/sesión; parent_sha y expected_sha iguales a 3819d0d73368982a5a463fb89515e13ec452dde3; force=false. El SHA del commit que incorpora este checkpoint quedará identificable en el historial Git. La rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

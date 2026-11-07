@@ -5515,3 +5515,43 @@ VALIDACIÓN Y LÍMITES
 - No se verificó el deployment UTILITIES ni otros deployments publicados.
 - No se modificó código, endpoints, Spreadsheet, Drive, datos productivos ni deployments. No hubo despliegue ni merge.
 ================================================================================
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-034: ACCESO Y VISIBILIDAD DEL PANEL/HISTORIAL POR ROL Y SESIÓN
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S015 | Checkpoint: AUD-CP-0015
+HEAD auditado: 3819d0d73368982a5a463fb89515e13ec452dde3
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+HALLAZGOS
+- H-AUD-034-001 (ALTA): logout solo elimina localStorage; no limpia currentUser/token en memoria ni cierra/limpia los modales privilegiados. window.state/window.ui siguen expuestos; mientras el token remoto no se revoque (AUG-006), puede seguir utilizándose y los datos DOM pueden reaparecer para otra cuenta.
+- H-AUD-034-002 (MEDIA/ALTA): cambio de Privilegios no revoca ni refresca la sesión; updateUser no invalida ActiveSessions y validateSession solo devuelve valid. La UI puede conservar el rol anterior aunque el backend vuelva a comprobar el rol vigente.
+- H-AUD-034-003 (MEDIA): showApp no oculta expresamente Inbox/Dashboard para roles no permitidos; getFeedbackItems permite Jefe pero la UI no muestra Inbox a Jefe.
+- H-AUD-034-004 (MEDIA): renderInboxDetail usa currentUser.Rol, pero AUTH devuelve Privilegios; los botones de aprobación/rechazo pueden quedar ocultos para todos los roles autorizados.
+
+CONTROLES POSITIVOS
+- ADMIN exige sesión de Desarrollador para todas las acciones POST salvo ping; historial de imágenes protegido.
+- FEEDBACK valida roles para Inbox, Dashboard, aprobaciones y purgas.
+- USERS valida el rol actual en backend y filtra la lista de usuarios por jerarquía.
+- Dashboard y getActivityLogs coinciden en los roles permitidos; clearActivityLogs/clearSensitiveLogs son solo Desarrollador.
+- El botón de desarrollador se muestra solo a Desarrollador y el historial está dentro de la pestaña Imágenes y Drive.
+
+TAREA NUEVA — AUG-042: SINCRONIZAR EL ROL Y LIMPIAR EL ESTADO PRIVILEGIADO EN EL CLIENTE
+Prioridad: ALTA. Estado: NUEVA; diseño, implementación y pruebas pendientes.
+Criterios mínimos:
+1. En logout, sesión inválida o cambio de cuenta, limpiar currentUser y SessionToken en memoria, cerrar y resetear dev-tools-modal, replaced-images-modal, inbox-modal y dashboard-modal, y vaciar sus contenidos/listas/consolas/caches antes de mostrar la siguiente sesión.
+2. Completar AUG-006 con revocación backend de la sesión invocante; no dejar que window.state/window.ui puedan reutilizar credenciales anteriores después del cierre local. Si la red falla, representar explícitamente la revocación pendiente.
+3. Tras un cambio de Privilegios, actualizar el perfil de sesión desde servidor o revocar/forzar reautenticación de las sesiones objetivo; no conservar una interfaz de Desarrollador basada en un objeto local obsoleto.
+4. Mantener el backend como autoridad; agregar guardas frontend a openDevTools/openReplacedImagesModal/openInbox/openDashboard para no abrir controles incompatibles con el rol vigente.
+5. Alinear el campo de rol en toda la UI con Privilegios (o introducir un contrato único) y probar aprobación/rechazo de vídeo.
+6. Probar logout con cada modal abierto, cambio Developer→Técnico en la misma pestaña, ascenso de rol, sesión revocada, dos cuentas consecutivas en el mismo navegador y llamadas directas a funciones globales.
+
+ADENDAS A TAREAS EXISTENTES
+- AUG-006: la limpieza local debe eliminar también currentUser/token de memoria y cerrar/limpiar los modales; la revocación remota sigue siendo la autoridad para invalidar ActiveSessions.
+- AUG-016: incluir cambio de Privilegios y actualización/revocación de sesiones; handleValidateSession no devuelve rol actual y handleUpdateUser no invalida sesiones al cambiarlo.
+- AUG-017: además de asignar explícitamente display para Inbox/Dashboard en cada showApp, resolver la discrepancia Jefe/getFeedbackItems y el uso de currentUser.Rol frente a Privilegios en renderInboxDetail.
+
+VALIDACIÓN Y LÍMITES
+- Solo inspección estática E1 e historial Git. No se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script, cambio de rol real ni sesiones reales.
+- No se verificó el deployment publicado.
+- No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. No hubo despliegue ni merge.
+================================================================================

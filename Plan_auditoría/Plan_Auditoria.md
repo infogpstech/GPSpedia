@@ -82,7 +82,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-031 | Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia | 2e41428e — cargas Drive retry-safe; d99ab2d4 — idempotencia de reemplazos in-modal; 2212b4f5 — find-or-create | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-032 | Identidad autenticada del colaborador en WRITE y ADMIN | 36196020 — validar identidad autenticada; cierre de tarea documentado en checkpoint | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-033 | Coordinación de mutaciones entre servicios y Utilities | 8a3646cc — documentar hallazgos de coordinación; 44d127b3 — Utilities safe order processing; 336915b7/ef2db2e5 — renombramientos de Utilities | E1 COMPLETADA; PROTOCOLO COMPARTIDO AUSENTE; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-034 | Acceso y visibilidad del panel/historial por rol y sesión | e4900b37 — normalización rol desarrollador; 0d4c0d01 — diagnóstico acceso historial; 187839c2 — asegurar acceso a gestión de imágenes | POR AUDITAR |
+| AUD-T-034 | Acceso y visibilidad del panel/historial por rol y sesión | e4900b37 — normalización rol desarrollador; 0d4c0d01 — diagnóstico acceso historial; 187839c2 — asegurar acceso a gestión de imágenes | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-035 | Endpoints, separación de servicios y contratos frontend/backend | commits de actualización AUTH/USERS/ADMIN/FEEDBACK/WRITE; 975c5913 y f8cc191f — alta de servicios en el historial | POR AUDITAR |
 | AUD-T-036 | Términos, consentimiento inicial y elementos legales de interfaz | e06791d0 — modal de términos en primer login; 9aa59063 — integración de términos y enlace footer | POR AUDITAR |
 | AUD-T-037 | Catálogo, caché, sincronización incremental y búsqueda | f1db85fe — estrategia de caché incremental; 7fae24ac — búsqueda numérica; commits de catálogo y mejoras generales | POR AUDITAR |
@@ -614,3 +614,30 @@ E1: inspección estática de funciones, rutas y callsites. No se ejecutaron Apps
 
 ### Siguiente iteración
 AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
+
+## 20. Iteración técnica — AUD-T-034
+
+**Sesión:** AUD-20261107-S015  
+**Checkpoint:** AUD-CP-0015  
+**HEAD auditado:** 3819d0d73368982a5a463fb89515e13ec452dde3  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Controles de backend
+ADMIN exige Desarrollador para todas las acciones POST salvo ping; getReplacedImages/historial está protegido. FEEDBACK y USERS vuelven a validar sesión y rol desde servidor. El botón de desarrollador se muestra solo para Privilegios=Desarrollador. El historial se encuentra dentro de la pestaña Imágenes y Drive.
+
+### Hallazgos
+- H-AUD-034-001 a H-AUD-034-004 documentados en Auditoría.txt.
+- logout no limpia estado privilegiado en memoria ni modales; el token remoto sigue activo hasta completar AUG-006.
+- cambio de Privilegios no actualiza ni invalida la sesión del objetivo; la interfaz puede quedar obsoleta aunque el backend vuelva a comprobar el rol.
+- showApp no oculta expresamente Inbox/Dashboard en todos los casos; Jefe está permitido por getFeedbackItems pero no ve el botón.
+- renderInboxDetail consulta currentUser.Rol, mientras AUTH devuelve Privilegios; los botones de aprobación pueden no aparecer.
+
+### Tareas derivadas
+AUG-006, AUG-016 y AUG-017 reciben adendas. Se crea AUG-042 para sincronizar rol y limpiar el estado privilegiado en el cliente. No se duplica la revocación backend ya registrada en AUG-006 ni la coordinación de sesiones de AUG-016.
+
+### Evidencia y límites
+E1: inspección estática de AUTH, USERS, ADMIN, FEEDBACK, UI, HTML y llamadas. No se ejecutaron pruebas de navegador, HTTP, Apps Script, sesión real, cambio de rol ni cuenta compartida. No se verificó el deployment publicado. No se modificó código ni datos productivos.
+
+### Siguiente iteración
+AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.

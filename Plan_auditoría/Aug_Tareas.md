@@ -527,3 +527,32 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   6. No tratar este servicio como coordinador hasta que exista un protocolo interproyectos demostrado.
 - **Relación:** AUG-003 (auditoría completada), AUG-034/AUD-T-033 (coordinación).
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### Adenda AUD-T-034 — ampliación de AUG-006, AUG-016 y AUG-017
+
+**AUG-006 — cierre de sesión con revocación backend**
+- Además de revocar ActiveSessions en servidor, el cierre local debe borrar currentUser y SessionToken del estado en memoria, cerrar/resetear modales privilegiados y limpiar sus datos DOM. La eliminación de localStorage por sí sola no invalida la sesión remota ni elimina el token que sigue en window.state.
+- Si falla la revocación por desconexión, informar estado pendiente sin dejar disponibles acciones privilegiadas desde la instancia.
+
+**AUG-016 — consistencia del ciclo de sesión**
+- Incluir cambios de Privilegios: handleUpdateUser modifica el rol sin revocar sesiones y handleValidateSession solo devuelve valid, no el perfil/rol vigente.
+- Definir si un cambio de rol invalida las sesiones objetivo o si el cliente recibe un perfil actualizado; una sesión no debe conservar permisos visuales obsoletos.
+
+**AUG-017 — restablecer controles de navegación**
+- showApp debe asignar explícitamente display para Inbox y Dashboard tanto en roles permitidos como no permitidos.
+- Resolver la diferencia: getFeedbackItems permite Jefe, pero showApp no muestra Inbox a Jefe. Mantener Dashboard/getActivityLogs fuera de Jefe si esa es la política aprobada.
+- renderInboxDetail usa currentUser.Rol, pero AUTH entrega Privilegios; corregir el contrato para que los botones de aprobación coincidan con FEEDBACK actionPermissions.
+- Cerrar/resetear modales y contenidos al cambiar de cuenta/rol; no dejar que el contenedor oculto conserve vistas privilegiadas que reaparecen al mostrarlo.
+
+### AUG-042 — Sincronizar el rol y limpiar el estado privilegiado en el cliente
+- **Origen:** H-AUD-034-001 a H-AUD-034-004. **Prioridad:** Alta.
+- **Problema:** logout conserva currentUser/token en memoria y no cierra/limpia modales; el cambio de rol no refresca la sesión; la navegación no oculta siempre controles y hay un contrato de rol inconsistente en Inbox.
+- **Criterios de aceptación:**
+  1. Limpiar currentUser/SessionToken en memoria y cerrar/resetear dev-tools-modal, replaced-images-modal, inbox-modal y dashboard-modal ante logout, invalidación o cambio de cuenta; vaciar listas, consola, detalles y caches sensibles.
+  2. Integrar con AUG-006 para revocar la sesión invocante en ActiveSessions. No permitir que window.state/window.ui reutilicen el token anterior después del cierre local.
+  3. Actualizar el rol desde el servidor o invalidar sesiones al cambiar Privilegios; definir explícitamente el comportamiento de auto-cambio de rol y de sesiones abiertas en otros dispositivos.
+  4. Guardas frontend para abrir panel, historial, Inbox y Dashboard según rol vigente, manteniendo la autorización backend.
+  5. Unificar el campo de rol usado por AUTH, UI y renderInboxDetail; probar botones approve/reject para Desarrollador, Gefe y Supervisor.
+  6. Matriz de pruebas: logout con modal abierto; Developer→Técnico y Supervisor→Jefe en la misma instancia; ascenso de rol; sesión remota revocada; login consecutivo de dos cuentas; llamada directa a funciones globales; Jefe/Inbox según política aprobada.
+- **Relación:** AUG-006, AUG-016, AUG-017; AUD-T-024 y AUD-T-034.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.

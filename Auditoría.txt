@@ -8755,3 +8755,79 @@ AUD-T-033 queda con auditoría estática E1 completada, pero el protocolo compar
 No se modificó código, endpoints, Spreadsheet, Drive, datos productivos ni deployments. No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, restauraciones, operaciones Drive/Spreadsheet ni concurrencia. No se verificó el deployment actual.
 Siguiente unidad: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-034: ACCESO Y VISIBILIDAD DEL PANEL/HISTORIAL POR ROL Y SESIÓN
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S015 | Checkpoint: AUD-CP-0015
+HEAD auditado: 3819d0d73368982a5a463fb89515e13ec452dde3
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+1. OBJETIVO Y ALCANCE
+Verificar visibilidad y acceso al panel de desarrollador, historial/inventario de imágenes, Inbox, Dashboard y gestión de usuarios. Contrastar las condiciones del frontend con los permisos efectivos de ADMIN, FEEDBACK, AUTH y USERS; revisar cambio de rol, cierre de sesión y conservación de información privilegiada en la misma instancia del navegador.
+
+2. ARCHIVOS Y FUNCIONES REVISADOS
+- ui.js: showApp(), openDevTools(), openInbox(), openDashboard(), openReplacedImagesModal(), getDeveloperSessionPayload(), renderInboxDetail().
+- auth.js: handleLoginSuccess(), checkSession(), logout().
+- main.js: exposición window.ui/window.state y listeners de navegación.
+- index.html: #dev-tools-btn, #dev-tools-modal, #inbox-modal, #dashboard-modal, #replaced-images-modal y contenedor principal.
+- users.html: carga de sesión, visibilidad de user-management-section, fetchUsers(), actualización de usuarios y cierre remoto de sesiones.
+- Services/Auth.js: handleLogin() y handleValidateSession().
+- Services/admin.js: assertDeveloperSession(), doPost() y getReplacedImages.
+- Services/feedback.js: actionPermissions, getFeedbackItems, getActivityLogs, approveVideo/rejectVideo y purgas.
+- Services/users.js: getVerifiedSession(), handleGetUsers(), handleUpdateUser() y handleResetUserSessions().
+- Historial contrastado: auditoría complementaria de acceso a inventario/historial del 2026-11-06, AUD-T-024, AUD-T-025 y commits e4900b37, 0d4c0d01 y 187839c2.
+
+3. MATRIZ ESTÁTICA DE PERMISOS
+
+| Función | Permiso backend | Visibilidad frontend |
+|---|---|---|
+| Panel de desarrollador e historial de imágenes | Desarrollador; ADMIN valida sesión/rol en todas las acciones salvo ping | #dev-tools-btn solo se muestra a Desarrollador; historial está dentro de la pestaña Imágenes y Drive |
+| Inbox / getFeedbackItems | Desarrollador, Gefe, Jefe, Supervisor | showApp solo muestra Inbox a Desarrollador, Gefe y Supervisor |
+| Dashboard / getActivityLogs | Desarrollador, Gefe, Supervisor | showApp muestra Dashboard a esos mismos roles |
+| Aprobar/rechazar vídeo | Desarrollador, Gefe, Supervisor | renderInboxDetail consulta currentUser.Rol, pero AUTH entrega Privilegios |
+| Gestión de usuarios / getUsers | Desarrollador, Gefe, Jefe, Supervisor, con filtro jerárquico de usuarios | users.html muestra user-management-section a esos mismos roles |
+| clearActivityLogs / clearSensitiveLogs | Solo Desarrollador | controles dentro del panel de desarrollador |
+
+4. CONTROLES POSITIVOS CONFIRMADOS
+- showApp normaliza Privilegios y muestra el botón de desarrollador únicamente al rol Desarrollador.
+- ADMIN aplica assertDeveloperSession() a todas las acciones POST salvo ping. getReplacedImages y las operaciones de historial se ejecutan dentro de ese router protegido.
+- FEEDBACK valida sesión y rol para getFeedbackItems, getActivityLogs, approveVideo/rejectVideo y las acciones de administración del Inbox.
+- USERS obtiene el rol vigente desde Users mediante getVerifiedSession(); getUsers aplica filtros jerárquicos en servidor, no confía en la visibilidad de users.html.
+- La gestión de usuarios en users.html muestra su sección a Desarrollador/Gefe/Jefe/Supervisor y envía sessionToken; el backend vuelve a comprobar rol.
+- La lista de ActivityLogs coincide con los roles permitidos por backend. El acceso a historial de imágenes sigue siendo exclusivo del Desarrollador en backend.
+- openDevTools(), openInbox(), openDashboard() y openReplacedImagesModal() no son por sí mismos barreras de seguridad; las acciones de datos se protegen en backend. La falta de guardas frontend es una inconsistencia de experiencia, no un bypass de la autorización del servidor.
+
+5. HALLAZGOS
+
+H-AUD-034-001 — ALTA — logout no limpia la identidad en memoria ni el estado visual privilegiado.
+auth.js logout() solo elimina SESSION_KEY de localStorage y llama showLoginScreen(). No llama setState({currentUser:null}), no cierra ni limpia dev-tools-modal, replaced-images-modal, inbox-modal o dashboard-modal y no borra su contenido. showLoginScreen() oculta .container y .footer, pero los modales permanecen con su display/contenido; showApp() vuelve a mostrar .container en el siguiente login sin restablecer esos modales. main.js expone window.state y window.ui; getDeveloperSessionPayload() obtiene ID/SessionToken desde currentUser en memoria. Como el logout remoto sigue pendiente en AUG-006, el token anterior puede permanecer activo y utilizable desde la misma instancia; además, los datos privilegiados cargados pueden reaparecer para la siguiente cuenta. Requiere revocación backend y limpieza inmediata de estado/DOM.
+
+H-AUD-034-002 — MEDIA/ALTA — el rol de la sesión no se refresca al cambiar Privilegios.
+users.html updateUser modifica Privilegios y actualiza la tabla, pero no revoca las sesiones del usuario ni actualiza el objeto currentUser almacenado. Services/users.js handleUpdateUser() tampoco invalida ActiveSessions al cambiar el rol. Services/Auth.js handleValidateSession() solo devuelve valid:true/false por coincidencia userId/token; no devuelve el rol actual. auth.js checkSession() rehidrata el objeto local y llama handleLoginSuccess()/showApp() antes de validar el token en segundo plano. El backend vuelve a consultar Users y por ello rechaza acciones que ya no corresponden al rol vigente, pero la interfaz puede conservar controles y datos del rol anterior; un ascenso también puede quedar oculto hasta volver a iniciar sesión. No se detectó una elevación directa de permisos backend por el rol obsoleto; sí una exposición visual de datos previamente cargados y un estado de navegación incorrecto.
+
+H-AUD-034-003 — MEDIA — visibilidad Inbox/Dashboard no se restablece y la política de Inbox para Jefe es inconsistente.
+showApp() solo asigna display:flex a inbox-btn y dashboard-btn cuando el rol pertenece a la lista permitida; no establece display:none para el caso contrario. Al cambiar de Desarrollador/Gefe/Supervisor a una cuenta inferior en la misma instancia, los botones pueden conservar la visibilidad previa. Además, getFeedbackItems permite Jefe en actionPermissions, pero showApp() no muestra Inbox a Jefe. getActivityLogs excluye Jefe y Dashboard también, lo que sí coincide. Definir si Jefe debe tener Inbox; alinear backend y UI en cualquiera de las dos decisiones. AUG-017 continúa pendiente.
+
+H-AUD-034-004 — MEDIA — los controles de aprobación de vídeo consultan una propiedad de rol que AUTH no entrega.
+renderInboxDetail() evalúa currentUser.Rol para calcular canApprove. Services/Auth.js handleLogin() devuelve Privilegios y no incluye Rol; handleLoginSuccess() conserva ese objeto. Por tanto, canApprove queda falso para las sesiones nuevas aunque FEEDBACK actionPermissions autorice approveVideo/rejectVideo a Desarrollador, Gefe y Supervisor. El backend conserva la validación correcta, pero los botones Aprobar/Rechazar pueden no mostrarse a ningún usuario autorizado. Usar una única propiedad canónica y probar la matriz de roles.
+
+6. OBSERVACIONES DE SESIÓN Y MODALES
+- checkSession() muestra la sesión local inmediatamente y valida en segundo plano; si la respuesta es inválida, llama logout(). El objeto y las vistas no se limpian antes de mostrar la pantalla de login.
+- handleValidateSession() solo verifica ActiveSessions y no devuelve perfil/rol; el hallazgo previo H-AUD-024-010 sobre existencia del usuario sigue vigente.
+- handleUpdateUser() permite cambiar Privilegios sin invalidar la sesión del objetivo; resetUserSessions es una acción separada y no se ejecuta desde el formulario de actualización.
+- getDeveloperSessionPayload() solo comprueba ID y SessionToken en memoria; no comprueba rol en frontend. Esto es aceptable únicamente porque ADMIN vuelve a comprobar el rol en servidor, pero amplifica el riesgo del logout local que no revoca.
+- Los modales auditados están dentro de .container. Ocultar el contenedor durante el login no equivale a cerrar/resetear cada modal ni a borrar su contenido.
+- La opción de historial está dentro de Imágenes y Drive, no en la pestaña inicial Diagnóstico; el recorrido y el listener ya se habían confirmado estáticamente en la auditoría complementaria anterior.
+
+7. TAREAS RELACIONADAS
+- AUG-006: revocación backend al cerrar sesión; añadir limpieza de currentUser, credenciales en memoria y modales como condición local complementaria.
+- AUG-016: consistencia de sesiones; ampliar para cambios de rol y revalidación del perfil vigente.
+- AUG-017: visibilidad de navegación; mantener y ampliar con el caso Jefe/Inbox y el campo canónico Privilegios.
+- AUG-042: sincronizar rol y limpiar estado privilegiado al cerrar sesión, invalidar sesión o cambiar de cuenta/rol.
+
+8. CONCLUSIÓN Y LÍMITES
+El backend mantiene controles positivos importantes: ADMIN exige Desarrollador y FEEDBACK/USERS verifican roles desde el servidor. No obstante, el estado de sesión y los modales no se limpian correctamente, el rol puede quedar obsoleto y hay discrepancias concretas en la matriz de Inbox y aprobación de vídeos. El historial de imágenes está protegido en backend; el riesgo principal es la conservación de datos/credenciales ya cargados en el cliente y el estado visual tras cambiar de cuenta.
+Auditoría estática E1 únicamente. No se ejecutaron pruebas en navegador, HTTP, Apps Script, sesiones reales, cambio de rol real ni cuenta compartida; no se comprobó el deployment publicado. No se modificó código, configuración, datos ni deployments.
+Siguiente unidad: AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.
+================================================================================
