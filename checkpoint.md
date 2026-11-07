@@ -319,3 +319,39 @@ CAMBIOS DE APLICACIÓN: NINGUNO. Solo documentación de auditoría y trazabilida
 SIGUIENTE ACCIÓN: AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.
 Este checkpoint final es la última actualización documental antes del único commit de la tarea. Commit previsto: audit(access): revisar visibilidad del panel e historial por rol/sesión; parent_sha y expected_sha iguales a 3819d0d73368982a5a463fb89515e13ec452dde3; force=false. El SHA del commit que incorpora este checkpoint quedará identificable en el historial Git. La rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0016
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S016
+Tarea: AUD-T-035 — Endpoints, separación de servicios y contratos frontend/backend.
+Rama de trabajo: GPSpedia2.2.5_work | HEAD inicial confirmado: e13623beb059b33171758545404381fbbf512c16
+Rama base: GPSpedia2.2.5 | HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: auditoría estática E1 de action routing, dispatchers, helpers, contratos de sesión/payload/respuesta, flujos de imagen y subida/aprobación de vídeo.
+Riesgos conocidos: AUG-039/AUG-040/AUG-041/AUG-042 abiertos; observación de enlace manual transferida desde AUD-T-032; no asumir que el deployment publicado coincide con los archivos del repositorio.
+Restricciones: no modificar código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments; no ejecutar operaciones reales durante diagnóstico.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0016
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S016
+Tarea: AUD-T-035 — Endpoints, separación de servicios y contratos frontend/backend.
+HEAD auditado: e13623beb059b33171758545404381fbbf512c16
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: auditoría estática E1 completada; H-AUD-035-001 a H-AUD-035-006 abiertos; AUG-043/AUG-044 creadas; AUG-040 ampliada; validación funcional y de deployments pendiente.
+Documentación actualizada: Auditoría.txt, Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+RESPALDOS EXACTOS (blob SHA antes de editar):
+- Auditoría.txt: ff8cb96c49d8d32578b6a6af32daa62ee231ff1a
+- Tareas.txt: 06b6231731fb14b4f282ad54ef7f0b0b430b1c38
+- Plan_auditoría/Plan_Auditoria.md: 84404f5c97c1381881f05485fdc16cca457207ec
+- Plan_auditoría/Aug_Tareas.md: 927571f2ad8a81a02a57e0f1cf71c04a387b8e83
+- ChangesLogs.txt: 968611a47cd1f35f30e5b590b74e864a6152830f
+- contexto_personal.md: 5f9da4fbe9a080345c3c51f0bc5fcc44f00a313f
+- checkpoint.md: 85fe0c434384bd0168895b6c76535823826d9ec2
+VALIDACIÓN
+- Inspección estática E1 de mapa, dispatchers, helpers, payloads, respuestas y callsites.
+- No se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script V8, YouTube, Drive, Spreadsheet real, aprobación/rechazo, reintentos ni concurrencia.
+- No se verificó que los deployments publicados coincidan con el HEAD de la rama.
+CAMBIOS DE APLICACIÓN: NINGUNO. Solo documentación de auditoría y trazabilidad.
+SIGUIENTE ACCIÓN: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
+Este checkpoint final es la última actualización documental antes del único commit de la tarea. Commit previsto: audit(api): revisar contratos frontend/backend e imagen/video; parent_sha y expected_sha iguales a e13623beb059b33171758545404381fbbf512c16; force=false. El SHA del commit que incorpora este checkpoint quedará identificable en el historial Git. La rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

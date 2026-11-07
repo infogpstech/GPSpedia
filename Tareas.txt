@@ -5555,3 +5555,33 @@ VALIDACIÓN Y LÍMITES
 - No se verificó el deployment publicado.
 - No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. No hubo despliegue ni merge.
 ================================================================================
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-035: ENDPOINTS, SEPARACIÓN DE SERVICIOS Y CONTRATOS FRONTEND/BACKEND
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S016 | Checkpoint: AUD-CP-0016
+HEAD auditado: e13623beb059b33171758545404381fbbf512c16
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+HALLAZGOS
+- H-AUD-035-001 (ALTA): addVehicleToProblem, removeVehicleFromProblem, updatePysItem, updateTutorialItem, initYouTubeUpload y submitVideoForApproval requieren userId/sessionToken en assertFeedbackSession; los consumidores actuales omiten las credenciales. youtubeUpload.js usa currentUser.id en vez de currentUser.ID y no transmite SessionToken.
+- H-AUD-035-002 (MEDIA/ALTA): openAddVideoModal envía fieldName/fieldValue a addSupplementaryInfo, pero WRITE/ADMIN no procesan esos campos; puede devolver éxito sin guardar videoGuiaDesarmeUrl.
+- H-AUD-035-003 (ALTA): los flujos PYS/Tutorial guardan videoUrl antes de aprobar; approveVideo solo asocia contentType=corte y rejectVideo no retira enlaces ya guardados.
+- H-AUD-035-004 (ALTA): opVideoId se devuelve como videoId provisional, youtubeUpload.js lo interpreta como ID real; no se propaga en submitVideoForApproval ni existe idempotencia de la solicitud. Puede generarse una URL inválida y duplicarse el registro.
+- H-AUD-035-005 (MEDIA): addCorte está mapeada a WRITE sin handler; migrateYearRanges está mapeada a UTILITIES sin handler; getHeaders y assignCollaborator tienen handler pero no mapeo ni callsite actual. logFrontend depende del servicio LEGACY externo no disponible en el repositorio.
+- H-AUD-035-006 (MEDIA): handleAddProblem puede crear registro PYS y devolver success aunque falle la carga Drive de la imagen requerida.
+
+CONTROLES POSITIVOS
+- AUTH devuelve ID y SessionToken; FEEDBACK valida ActiveSessions/Users y obtiene rol/nombre del servidor para las acciones declaradas.
+- approveVideo/rejectVideo y el reemplazo de imágenes ADMIN envían payload de sesión; ADMIN vuelve a validar los privilegios.
+- routeAction centraliza el ruteo y valida respuesta JSON.
+- sendContactForm se mantiene como ruta pública deliberada.
+
+TAREAS DERIVADAS
+AUG-043 — alinear contratos de acciones protegidas y ciclo de aprobación de YouTube.
+AUG-044 — reconciliar mapa de acciones, dispatchers y rutas huérfanas.
+Adenda a AUG-040 — impedir alta PYS exitosa con imagen requerida ausente o fallida.
+Se conservan las dependencias AUG-039 (WRITE supplementary), AUG-040 (seguridad FEEDBACK), AUG-041 (Utilities) y AUG-042 (estado/rol cliente).
+
+VALIDACIÓN Y LÍMITES
+Solo inspección estática E1 e historial documental. No se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script, YouTube, Drive, Spreadsheet real ni concurrencia. No se verificaron deployments publicados. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+================================================================================

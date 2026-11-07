@@ -556,3 +556,34 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   6. Matriz de pruebas: logout con modal abierto; Developer→Técnico y Supervisor→Jefe en la misma instancia; ascenso de rol; sesión remota revocada; login consecutivo de dos cuentas; llamada directa a funciones globales; Jefe/Inbox según política aprobada.
 - **Relación:** AUG-006, AUG-016, AUG-017; AUD-T-024 y AUD-T-034.
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-043 — Alinear contratos de acciones protegidas y ciclo de aprobación de YouTube
+- **Origen:** H-AUD-035-001 a H-AUD-035-004. **Prioridad:** Alta.
+- **Problema:** varios consumidores FEEDBACK omiten userId/sessionToken requeridos; youtubeUpload.js utiliza currentUser.id en vez de currentUser.ID; el enlace manual de vídeo envía campos no reconocidos; el flujo de aprobación PYS/Tutorial publica antes de aprobar; opVideoId se confunde con videoId y no se conserva para idempotencia.
+- **Criterios de aceptación:**
+  1. Corregir los callsites de addVehicleToProblem, removeVehicleFromProblem, updatePysItem, updateTutorialItem, initYouTubeUpload y submitVideoForApproval para enviar ID canónico y SessionToken de la sesión vigente. No confiar en userRole del navegador; mantener la matriz de roles en backend.
+  2. En youtubeUpload.js, comprobar que existe una sesión válida antes de iniciar; utilizar currentUser.ID y currentUser.SessionToken; no degradar a usuario genérico ni enviar credenciales incompletas.
+  3. Separar opVideoId de videoId real. Persistir y transmitir opVideoId durante todo el flujo; hacer idempotente submitVideoForApproval para que un reintento de la misma operación no cree una segunda solicitud.
+  4. Confirmar que la subida terminó y que YouTube devolvió un ID real antes de crear la solicitud. No construir enlaces watch?v= con IDs provisionales, timestamps o valores ficticios; ante respuesta incompleta, detener y dejar la operación en estado recuperable.
+  5. Definir y aplicar la política de aprobación para contentType corte, pys y tutorial. Ninguna URL pendiente debe quedar publicada en Cortes/pys/Tutorial antes de aprobar; la aprobación debe vincular el vídeo al destino correcto y el rechazo no debe dejar un enlace visible.
+  6. Resolver el enlace manual de openAddVideoModal: implementar una acción backend explícita con sesión/validación que actualice videoGuiaDesarmeUrl, o retirar la opción manual. No enviar fieldName/fieldValue a addSupplementaryInfo si el handler no los procesa.
+  7. Probar cada acción protegida con sesión válida, ausente, inválida, revocada, userId/token no coincidentes y rol no permitido; verificar los callsites desde UI.
+  8. Probar subida completa, error de YouTube, respuesta sin ID, cancelación, pérdida de respuesta, reintento, doble envío, aprobación y rechazo para cada contentType; comprobar que no hay publicaciones ni solicitudes duplicadas.
+- **Relación:** AUD-T-035; AUG-006/AUG-016/AUG-042 (sesión/rol cliente); AUG-040 (seguridad y consistencia FEEDBACK); AUG-039 (acciones suplementarias WRITE/ADMIN).
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-044 — Reconciliar mapa central de acciones y dispatchers de servicios
+- **Origen:** H-AUD-035-005. **Prioridad:** Media.
+- **Problema:** ACTION_TO_SERVICE_MAP contiene rutas sin handler (addCorte, migrateYearRanges); WRITE/FEEDBACK conservan handlers sin mapeo (getHeaders, assignCollaborator); la acción LEGACY logFrontend depende de una fuente/deployment externo no presente en el repositorio.
+- **Criterios de aceptación:**
+  1. Definir una fuente de verdad de acciones cliente: cada acción mapeada debe existir en el dispatcher del servicio indicado; cada handler expuesto al cliente debe tener mapeo explícito o documentarse/retirarse como interno/obsoleto.
+  2. Implementar addCorte y migrateYearRanges solo si siguen siendo requisitos vigentes; si están sustituidas, retirar el mapeo y conservar trazabilidad de la sustitución.
+  3. Para getHeaders y assignCollaborator, decidir si siguen soportadas; si no, retirar handlers obsoletos de forma controlada; si sí, añadir el mapeo y validar contrato/seguridad, especialmente assignCollaborator bajo AUG-040.
+  4. Verificar el destino y contrato LEGACY/logFrontend; documentar la fuente del servicio o mantenerlo explícitamente como dependencia externa.
+  5. Agregar pruebas estáticas/automatizadas que comparen ACTION_TO_SERVICE_MAP con los dispatchers y detecten rutas sin handler, handlers sin mapa y destinos incorrectos.
+- **Relación:** AUD-T-035; AUG-040 (assignCollaborator); AUG-041 (Utilities/migrateYearRanges); AUD-T-026/AUG-024 (health check y endpoints).
+- **Estado:** NUEVA; decisión de alcance, implementación y pruebas pendientes.
+
+### Adenda AUD-T-035 — AUG-040: integridad de imagen en alta PYS
+- **Evidencia:** Services/feedback.js, handleAddProblem(). El formulario UI marca imagen required, pero el backend no exige imgBase64; el catch de Drive permite continuar y guardar imageUrl vacío con status success.
+- **Criterio adicional:** definir la imagen como obligatoria también en servidor si ese es el contrato vigente; si la carga Drive falla, no confirmar el alta como completa ni dejar un registro parcial sin estado. Diseñar compensación si se crea el archivo y falla la escritura de la fila; probar fallo de Drive, payload sin imagen y error al guardar la hoja.

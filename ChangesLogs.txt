@@ -4000,3 +4000,22 @@ ALCANCE Y VALIDACIÓN
 - No se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script ni sesiones/cambios de rol reales.
 - No hubo despliegue ni merge. La rama base GPSpedia2.2.5 permanece sin cambios.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-035
+Fecha: 2026-11-07 | Rama: GPSpedia2.2.5_work | Sesión: AUD-20261107-S016
+DOCUMENTOS ACTUALIZADOS
+- Auditoría.txt: informe E1 de endpoints, dispatchers, contratos FEEDBACK y flujos imagen/vídeo; hallazgos H-AUD-035-001 a H-AUD-035-006.
+- Tareas.txt: resultado AUD-T-035, nuevas AUG-043/AUG-044 y adenda a AUG-040.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-035 actualizado a E1 completada; se agregó iteración 21 y AUD-T-036 como siguiente unidad.
+- Plan_auditoría/Aug_Tareas.md: criterios de aceptación AUG-043/AUG-044 y adenda a AUG-040.
+- contexto_personal.md: continuidad actualizada.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0016.
+
+ALCANCE Y VALIDACIÓN
+- Solo se modificaron documentos de auditoría y trazabilidad.
+- No se modificaron api-config.js, Services/Auth.js, Services/catalog.js, Services/write.js, Services/users.js, Services/feedback.js, Services/Utilities.js, Services/admin.js, ui.js, auth.js, main.js, add_cortes.html, users.html ni youtubeUpload.js.
+- No se modificaron endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+- No se ejecutaron pruebas sintácticas, navegador, HTTP, Apps Script V8, YouTube, Drive, Spreadsheet real, aprobación/rechazo, reintentos ni concurrencia.
+- No hubo despliegue ni merge. La rama base GPSpedia2.2.5 permanece sin cambios.
+================================================================================

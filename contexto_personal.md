@@ -269,3 +269,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-006/AUG-016/AUG-017 se amplían; AUG-042 cubre sincronización de rol y limpieza del estado privilegiado.
 - No se ejecutaron pruebas de navegador, HTTP, Apps Script, sesiones reales ni cambios de rol; no se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.
+
+## Continuidad de auditoría — AUD-T-035 (2026-11-07)
+- Sesión/checkpoint: AUD-20261107-S016 / AUD-CP-0016.
+- HEAD auditado: e13623beb059b33171758545404381fbbf512c16; rama GPSpedia2.2.5_work. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-035 — endpoints, separación de servicios y contratos frontend/backend: auditoría estática E1 completada; H-AUD-035-001 a H-AUD-035-006 abiertos; validación funcional y verificación de deployments pendientes.
+- Hallazgos principales: consumidores FEEDBACK protegidos omiten userId/sessionToken; youtubeUpload.js usa currentUser.id aunque AUTH entrega ID y no envía SessionToken; enlace manual de vídeo usa fieldName/fieldValue que addSupplementaryInfo no procesa; PYS/Tutorial guardan URL antes de aprobar; opVideoId se confunde con videoId real y no se conserva para idempotencia; hay acciones mapeadas sin handler/handlers sin mapeo; handleAddProblem puede devolver success sin imagen Drive.
+- Tareas nuevas: AUG-043 (contratos protegidos y ciclo YouTube) y AUG-044 (reconciliar mapa/dispatchers). AUG-040 recibe adenda de integridad de imagen PYS. Se mantienen AUG-039/AUG-040/AUG-041/AUG-042.
+- No se modificó código, endpoints, Spreadsheet, Drive, datos productivos ni deployments. Solo inspección estática; no se ejecutaron E2/E3, navegador, HTTP, Apps Script, YouTube, Drive, Spreadsheet real ni concurrencia.
+- Siguiente unidad: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.

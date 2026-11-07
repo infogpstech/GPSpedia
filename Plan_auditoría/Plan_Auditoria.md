@@ -83,7 +83,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-032 | Identidad autenticada del colaborador en WRITE y ADMIN | 36196020 — validar identidad autenticada; cierre de tarea documentado en checkpoint | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-033 | Coordinación de mutaciones entre servicios y Utilities | 8a3646cc — documentar hallazgos de coordinación; 44d127b3 — Utilities safe order processing; 336915b7/ef2db2e5 — renombramientos de Utilities | E1 COMPLETADA; PROTOCOLO COMPARTIDO AUSENTE; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-034 | Acceso y visibilidad del panel/historial por rol y sesión | e4900b37 — normalización rol desarrollador; 0d4c0d01 — diagnóstico acceso historial; 187839c2 — asegurar acceso a gestión de imágenes | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-035 | Endpoints, separación de servicios y contratos frontend/backend | commits de actualización AUTH/USERS/ADMIN/FEEDBACK/WRITE; 975c5913 y f8cc191f — alta de servicios en el historial | POR AUDITAR |
+| AUD-T-035 | Endpoints, separación de servicios y contratos frontend/backend | commits de actualización AUTH/USERS/ADMIN/FEEDBACK/WRITE; 975c5913 y f8cc191f — alta de servicios en el historial | E1 COMPLETADA; CONTRATOS INCONSISTENTES; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-036 | Términos, consentimiento inicial y elementos legales de interfaz | e06791d0 — modal de términos en primer login; 9aa59063 — integración de términos y enlace footer | POR AUDITAR |
 | AUD-T-037 | Catálogo, caché, sincronización incremental y búsqueda | f1db85fe — estrategia de caché incremental; 7fae24ac — búsqueda numérica; commits de catálogo y mejoras generales | POR AUDITAR |
 
@@ -641,3 +641,32 @@ E1: inspección estática de AUTH, USERS, ADMIN, FEEDBACK, UI, HTML y llamadas. 
 
 ### Siguiente iteración
 AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.
+
+## 21. Iteración técnica — AUD-T-035
+
+**Sesión:** AUD-20261107-S016  
+**Checkpoint:** AUD-CP-0016  
+**HEAD auditado:** e13623beb059b33171758545404381fbbf512c16  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Alcance
+Se contrastaron ACTION_TO_SERVICE_MAP, los dispatchers de AUTH/CATALOG/WRITE/USERS/FEEDBACK/UTILITIES/ADMIN, helpers routeAction y consumidores de ui.js, auth.js, main.js, add_cortes.html, users.html y youtubeUpload.js. Se revisaron contratos de sesión, payloads, respuestas, imágenes y aprobación de vídeos.
+
+### Resultado
+- H-AUD-035-001 a H-AUD-035-006 documentados en Auditoría.txt.
+- Varias acciones FEEDBACK protegidas no reciben userId/sessionToken desde sus consumidores; youtubeUpload.js usa currentUser.id en vez de ID y no transmite SessionToken.
+- El enlace manual de vídeo utiliza un payload que addSupplementaryInfo no procesa.
+- PYS/Tutorial publican el enlace antes de la aprobación; la aprobación/rechazo no sincroniza esos destinos.
+- opVideoId se interpreta como videoId real y no se usa para idempotencia.
+- El mapa contiene addCorte/migrateYearRanges sin handler; getHeaders/assignCollaborator carecen de mapeo/callsites.
+- handleAddProblem puede confirmar alta aunque falle la imagen Drive.
+
+### Tareas derivadas
+AUG-043 — contratos protegidos y ciclo de aprobación YouTube. AUG-044 — reconciliar mapa y dispatchers. AUG-040 recibe adenda por integridad de imagen en PYS. Se conservan AUG-039/AUG-040/AUG-041/AUG-042.
+
+### Evidencia y límites
+E1: inspección estática de dispatchers, callsites y contratos. No se ejecutaron pruebas de navegador, HTTP, Apps Script V8, YouTube, Drive, Spreadsheet real, aprobación/rechazo, reintentos ni concurrencia. No se verificaron deployments publicados. No se modificó código ni datos productivos.
+
+### Siguiente iteración
+AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.

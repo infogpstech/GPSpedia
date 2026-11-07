@@ -8831,3 +8831,72 @@ El backend mantiene controles positivos importantes: ADMIN exige Desarrollador y
 Auditoría estática E1 únicamente. No se ejecutaron pruebas en navegador, HTTP, Apps Script, sesiones reales, cambio de rol real ni cuenta compartida; no se comprobó el deployment publicado. No se modificó código, configuración, datos ni deployments.
 Siguiente unidad: AUD-T-035 — Contratos de acciones frontend/backend y flujos de imagen/vídeo.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-035: ENDPOINTS, SEPARACIÓN DE SERVICIOS Y CONTRATOS FRONTEND/BACKEND
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S016 | Checkpoint: AUD-CP-0016
+HEAD auditado: e13623beb059b33171758545404381fbbf512c16
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; CONTRATOS INCONSISTENTES; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+1. OBJETIVO Y ALCANCE
+Contrastar ACTION_TO_SERVICE_MAP, los dispatchers doPost de cada microservicio, los helpers de api-config.js y los consumidores frontend. Revisar contratos de sesión, payload y respuesta en las acciones protegidas de FEEDBACK, los flujos de imágenes y la subida/aprobación de vídeos. Identificar rutas mapeadas sin handler, handlers sin ruta y endpoints cuyo deployment no puede comprobarse desde el repositorio.
+
+2. ARCHIVOS Y FUNCIONES REVISADOS
+- api-config.js: API_ENDPOINTS, ACTION_TO_SERVICE_MAP, routeAction(), helpers login(), validateSession(), recordLike(), reportProblem(), suggestYear(), approveVideo(), rejectVideo(), addTutorial() y checkAllServicesHealth().
+- Services/Auth.js: doPost(), handleLogin() y estructura del objeto user devuelto.
+- Services/catalog.js: dispatcher de acciones de catálogo.
+- Services/write.js: doPost(), handleAddSupplementaryInfo(), handleAddSupplementaryInfoLocked() y handleCheckOperation().
+- Services/users.js: dispatcher de acciones de usuarios.
+- Services/feedback.js: assertFeedbackSession(), doPost(), handleAddVehicleToProblem(), handleRemoveVehicleFromProblem(), handleUpdatePysItem(), handleUpdateTutorialItem(), handleInitYouTubeUpload(), handleSubmitVideoForApproval(), handleApproveVideo(), handleRejectVideo() y handleAddProblem().
+- Services/Utilities.js: doPost() y migrateTimestampsSafe().
+- Services/admin.js: dispatcher ADMIN, handleAddSupplementaryInfoLocked() y handleUploadAdminImage().
+- Frontend: ui.js, auth.js, main.js, add_cortes.html, users.html y youtubeUpload.js.
+- Historial y trazabilidad: tareas AUG-039, AUG-040, AUG-041 y AUG-042; hallazgo de enlace manual transferido desde AUD-T-032.
+
+3. CONTROLES POSITIVOS CONFIRMADOS
+- AUTH devuelve el objeto de sesión con las propiedades canónicas ID, Nombre_Usuario, Nombre_Completo, Privilegios y SessionToken.
+- assertFeedbackSession() exige userId y sessionToken, verifica la pareja contra ActiveSessions, obtiene el usuario/rol desde Users y reemplaza en payload los campos de identidad enviados por el cliente.
+- Las acciones approveVideo y rejectVideo pasan por getDeveloperSessionPayload() desde sus consumidores del Inbox; el backend vuelve a validar sesión y rol.
+- La sustitución de imágenes del panel usa getDeveloperSessionPayload(), envía opId/campo/vehículo y valida la respuesta imageUrl antes de retirar la operación pendiente local.
+- El flujo principal add_cortes envía userId/sessionToken a checkOperation y addOrUpdateCut. La falta de credenciales en addSupplementaryInfo ya está registrada en AUG-039.
+- sendContactForm es una ruta pública separada de las acciones administrativas; no se considera por sí misma un error que no requiera sesión.
+- routeAction() centraliza el destino según ACTION_TO_SERVICE_MAP, valida la estructura JSON de respuesta y registra métricas locales.
+
+4. HALLAZGOS
+
+H-AUD-035-001 — ALTA — varios consumidores de acciones FEEDBACK protegidas no transmiten las credenciales exigidas por el backend.
+Services/feedback.js declara en actionPermissions addVehicleToProblem: null, removeVehicleFromProblem: ["Desarrollador"], updatePysItem: ["Desarrollador"], updateTutorialItem: ["Desarrollador"], initYouTubeUpload: null y submitVideoForApproval: null. Aunque el rol permitido sea null, assertFeedbackSession() sigue exigiendo userId y sessionToken; null significa que no se filtra por rol, no que la acción sea anónima.
+Los consumidores actuales de ui.js para addVehicleToProblem, removeVehicleFromProblem, updatePysItem y updateTutorialItem envían problemId/vehicleId o userRole, pero no userId/sessionToken. Por tanto, el backend los rechaza antes de ejecutar el handler. En youtubeUpload.js se envía currentUser.id (AUTH devuelve ID en mayúsculas) y tampoco se envía SessionToken a initYouTubeUpload ni submitVideoForApproval. La carga de vídeo falla en la primera petición protegida y las acciones de asociación/edición protegidas tampoco pueden completar su contrato. Debe corregirse coordinadamente el payload de cada callsite sin confiar en userRole local.
+
+H-AUD-035-002 — MEDIA/ALTA — el formulario de enlace manual de vídeo informa éxito sin actualizar el campo.
+ui.js mantiene visible openAddVideoModal() desde la opción «Agregar enlace de vídeo». El formulario llama addSupplementaryInfo con vehicleId, fieldName="videoGuiaDesarmeUrl" y fieldValue. Los handlers WRITE y ADMIN de addSupplementaryInfo solo reconocen apertura, imágenes de apertura/alimentación, cables y notaImportante; no leen fieldName/fieldValue ni escriben videoGuiaDesarmeUrl. La ruta puede terminar con status success aunque el enlace no se guarde. El hallazgo histórico transferido desde AUD-T-032 queda confirmado; debe implementarse una acción/contrato explícito con autorización o retirarse la opción manual, no reutilizar un payload que el handler ignora.
+
+H-AUD-035-003 — ALTA — la aprobación previa de YouTube no se aplica de forma consistente a PYS y Tutorial.
+youtubeUpload.js llama openYouTubeUploadModal() con contentType="pys" o "tutorial" y referenceId=null. Al completarse la subida, los consumidores de ui.js colocan inmediatamente data.videoUrl en el formulario; handleAddProblem() y handleAddTutorial() guardan esa URL directamente en las hojas pys/Tutorial antes de que se apruebe la solicitud de Feedbacks. handleApproveVideo() solo asocia automáticamente el vídeo a Cortes cuando contentType="corte"; no actualiza pys ni Tutorial. handleRejectVideo() cambia el estado de Feedbacks, pero no retira la URL que ya quedó guardada en pys/Tutorial. Por tanto, el vídeo puede quedar visible antes de la aprobación y continuar visible después del rechazo. Se requiere definir un destino persistente para cada contentType y hacer que la publicación dependa del estado aprobado.
+
+H-AUD-035-004 — ALTA — el identificador de operación de YouTube se confunde con el ID real del vídeo y no se propaga para idempotencia.
+handleInitYouTubeUpload() genera opVideoId, pero retorna videoId: videoId || opVideoId; la variable videoId se inicializa en null y no se establece con una respuesta de YouTube dentro de esa función. youtubeUpload.js inicializa finalVideoId con initRes.videoId, por lo que trata el identificador yt_ de la operación como si fuera un ID real de YouTube. Si el cuerpo de la respuesta XHR no se puede parsear o no contiene id, el código conserva ese valor y construye una URL watch?v=yt_... que no identifica el vídeo subido. Además, aunque la respuesta incluye opVideoId, el frontend no lo envía en submitVideoForApproval; handleSubmitVideoForApproval genera un nuevo vid-... en cada llamada y no verifica que videoId/videoUrl correspondan a una carga finalizada. Los reintentos pueden duplicar solicitudes y una respuesta incompleta puede producir un enlace inválido presentado como éxito.
+
+H-AUD-035-005 — MEDIA — el registro central de acciones no coincide completamente con los dispatchers.
+ACTION_TO_SERVICE_MAP dirige addCorte a WRITE, pero Services/write.js doPost() no tiene ese case. También dirige migrateYearRanges a UTILITIES, pero Services/Utilities.js doPost() solo admite migrateTimestamps. En sentido inverso, WRITE mantiene getHeaders y FEEDBACK mantiene assignCollaborator, pero ninguna acción está en ACTION_TO_SERVICE_MAP; no se encontraron callsites frontend actuales para estas cuatro rutas. migrateTimestamps sí tiene dispatcher en Utilities. logFrontend se dirige a LEGACY y users.html hace POST directo al endpoint legacy; el código fuente de ese servicio externo no está incluido en este repositorio y su deployment no se verificó. Las rutas obsoletas o requeridas deben decidirse expresamente, no dejarse como contratos ambiguos.
+
+H-AUD-035-006 — MEDIA — el registro PYS puede informar éxito aunque falle la carga de la imagen requerida.
+El formulario de ui.js marca el archivo de imagen como required, pero handleAddProblem() no exige imgBase64 en backend. Si la creación del archivo en Drive falla, el catch registra el error y continúa; el registro se agrega a pys con imageUrl vacío y la acción devuelve status success. La validación HTML no protege llamadas directas ni evita que un fallo de Drive se presente como alta completa. Definir si la imagen es obligatoria también en servidor y aplicar compensación/estado parcial explícito ante fallo.
+
+5. OBSERVACIONES RELACIONADAS Y TAREAS EXISTENTES
+- H-AUD-035-001 se registra en AUG-043. Las adendas de AUG-006/AUG-016/AUG-017/AUG-042 siguen siendo necesarias para limpiar y refrescar el estado de sesión, pero no sustituyen el envío de credenciales por cada consumidor.
+- H-AUD-035-002 se registra en AUG-043 y confirma la observación transferida desde AUD-T-032/AUG-039.
+- H-AUD-035-003 y H-AUD-035-004 se registran en AUG-043; H-AUD-033-005/AUG-040 ya cubre la consistencia transaccional de approveVideo/rejectVideo entre Feedbacks y Cortes.
+- H-AUD-035-005 se registra en AUG-044. migrateTimestamps y migrateYearRanges siguen sujetos a AUG-041; la discrepancia del mapa no sustituye la revisión del deployment UTILITIES.
+- H-AUD-035-006 se transfiere como adenda a AUG-040 para completar la integridad de las escrituras FEEDBACK y sus archivos Drive.
+- AUG-039 sigue cubriendo la sesión faltante en addSupplementaryInfo WRITE/ADMIN y sus consumidores de apertura/alimentación/etapa 3.
+- No se modificaron ni se dieron por cerradas AUG-039, AUG-040, AUG-041 o AUG-042.
+
+6. CONCLUSIÓN Y LÍMITES
+AUD-T-035 queda con auditoría estática E1 completada y hallazgos abiertos. Hay acciones FEEDBACK protegidas cuyos consumidores no cumplen el contrato de sesión; el uploader de YouTube usa un campo de ID incorrecto y omite el token; el enlace manual de vídeo no se persiste; la aprobación no se aplica de forma uniforme a PYS/Tutorial; el identificador de operación no se conserva para reintentos; y el mapa central contiene rutas no implementadas o no registradas. La subida de imágenes PYS puede terminar en éxito sin imagen.
+La auditoría fue estática. No se ejecutaron pruebas de navegador, HTTP, Apps Script V8, YouTube Data API, Drive, Spreadsheet real, aprobación/rechazo real, reintentos ni concurrencia. No se verificó que los deployments publicados correspondan a los archivos de la rama. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+
+Siguiente unidad del plan: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
+================================================================================
