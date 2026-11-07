@@ -146,3 +146,37 @@ AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones
 
 Este checkpoint final es la última actualización documental antes del único commit de la tarea. El commit se publicará mediante Git Database API con parent_sha y expected_sha iguales a 4061bbb67bcf1fc0c2786185fc42ed2ea804b9e9; la rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0011
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S011
+Tarea: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
+Rama de trabajo: GPSpedia2.2.5_work | HEAD inicial confirmado: c8c971ed061f08fca212f6879b35c857d9a0192c
+Rama base: GPSpedia2.2.5 | HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: auditoría estática E1 de esquema, migración VIN, hoja Idempotencia, identificadores de operación, asignación centralizada de IDs y consumidores frontend/backend.
+Restricciones: no modificar código, Spreadsheet, Drive, endpoints ni deployments durante la fase diagnóstica; no desplegar; no interpretar como defecto la ausencia de estructuras futuras aún no migradas.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0011
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S011
+Tarea: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
+HEAD auditado: c8c971ed061f08fca212f6879b35c857d9a0192c
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: auditoría estática E1 completada; H-AUD-030-001 a H-AUD-030-008 abiertos; AUG-034 a AUG-036 registradas; validación funcional pendiente.
+Documentación actualizada: Auditoría.txt, Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Respaldo exacto (blob SHA antes de editar):
+- Auditoría.txt: 4813c98b31916798f59816320c6ecc19c0c62afd
+- Tareas.txt: 7c01b032132f062272090b8f0df36a9e726d413e
+- Plan_auditoría/Plan_Auditoria.md: a9c78e934b54ec592199208f620cdc4a47d62e4c
+- Plan_auditoría/Aug_Tareas.md: 7a67178e2fe7bf5526b922f8b9eaef8550ed3a44
+- ChangesLogs.txt: e93ce6e0cc4fac22756af453d0a7a402fe8e68c5
+- contexto_personal.md: 7cfe7e90864c2132da5b4fdb33663ceb1b9e6cb4
+- checkpoint.md: bf5ffb2f31a25d29f2ad7289fc758ac47420c8d7
+Validación: inspección estática de archivos/funciones y contraste de commits históricos; sin pruebas sintácticas, mocks, Apps Script, HTTP, navegador, Drive, Spreadsheet real ni concurrencia.
+Cambios de aplicación: ninguno.
+Siguiente unidad: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
+Este checkpoint final es la última actualización documental antes del único commit de esta tarea. Commit con parent_sha=c8c971ed061f08fca212f6879b35c857d9a0192c, actualización de rama con force=false y expected_sha=c8c971ed061f08fca212f6879b35c857d9a0192c. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

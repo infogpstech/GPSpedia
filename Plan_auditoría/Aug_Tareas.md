@@ -422,3 +422,24 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - **Criterios de aceptación:** medir tiempo por etapa y tamaño de datos en entorno de prueba; optimizar lectura de los ocho campos sin perder fórmulas/rich text; definir presupuesto temporal y tamaño de lote seguro; aplicar timeout/reintento cliente sin perder cursor; memoizar validaciones de ancestros dentro de cada petición y conservar validación de pertenencia a Cortes.
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
 ================================================================================
+
+
+### AUG-034 — Coordinación compartida de mutaciones y ventana segura de migración WRITE/ADMIN
+- **Origen:** H-AUD-030-001. **Prioridad:** Alta.
+- **Problema:** los ScriptLock de WRITE y ADMIN pertenecen a proyectos Apps Script distintos. La migración VIN se ejecuta en ADMIN mientras las mutaciones de Cortes/opId se ejecutan en WRITE; no existe exclusión mutua compartida.
+- **Criterios de aceptación:** diseñar un protocolo compartido de mantenimiento que impida iniciar nuevas mutaciones y permita identificar/drenar operaciones en curso; aplicarlo de forma consistente en WRITE y ADMIN; evitar que la migración lea y modifique el mapa de idempotencia mientras cambia; definir recuperación si el proceso se interrumpe; probar alta WRITE, alta ADMIN y migración concurrentes en copias aisladas; no declarar atomicidad entre proyectos sin evidencia.
+- **Relación:** AUD-T-033/AUG-003; no duplicar la tarea general de coordinación interservicios.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-035 — Integridad estricta y reconciliación de la hoja Idempotencia
+- **Origen:** H-AUD-030-002, H-AUD-030-003, H-AUD-030-004 y H-AUD-030-005. **Prioridad:** Alta.
+- **Problema:** la lectura del mapa de migración no valida status ni unicidad de opId; la inicialización puede completar encabezados vacíos sobre columnas con datos; el registro/runtime acepta duplicados con la misma asociación; la recuperación devuelve la primera fila de Cortes para un vehicleId sin exigir unicidad.
+- **Criterios de aceptación:** validar encabezados y contenido antes de reparar; detenerse si una columna sin encabezado contiene datos; validar opId, vehicleId, slotIndex, timestamp y status con reglas documentadas; detectar duplicados incluso cuando la asociación coincide; no limpiar columnas heredadas hasta verificar todas las filas destino y sus estados; definir reconciliación no destructiva de duplicados; exigir exactamente una fila Cortes por vehicleId al recuperar; probar corrupción, duplicados, pending, status desconocido, asociaciones incompatibles, fallo parcial y reintentos en Spreadsheet aislada.
+- **Relación:** AUD-T-030, AUD-T-031 para idempotencia de archivos, AUD-T-033 para coordinación.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-036 — Contrato unívoco de columnas VIN/testigo y parsers compatibles
+- **Origen:** H-AUD-030-006, H-AUD-030-007 y H-AUD-030-008. **Prioridad:** Media.
+- **Problema:** la documentación fija testigo en AT:AV pero el código agrega campos después de la última columna usada; la resolución runtime de VIN acepta el primer encabezado aunque haya duplicados; frontend/backend difieren en delimitadores heredados de VIN.
+- **Criterios de aceptación:** definir y documentar si AT:AV es posición obligatoria o si los campos se ubican dinámicamente; detectar encabezados duplicados de VIN/testigo y detener escrituras ambiguas; unificar parser y serialización frontend/backend; mantener el JSON como formato canónico y especificar compatibilidad heredada; probar hojas con columnas adicionales, encabezados duplicados, VIN JSON, delimitadores heredados y datos inválidos.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.

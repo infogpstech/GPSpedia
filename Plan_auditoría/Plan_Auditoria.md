@@ -78,7 +78,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-027 | Historial de imágenes reemplazadas y acciones de gestión | 8f97d253 — base; 9e9918c7 — seguridad/consistencia; 91f75de3 — gestor; d99ab2d4 — idempotencia; 693f4825 — organización (observación AUD-T-028) | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-028 | Inventario de imágenes sin uso, clasificación y monitor global de Drive | 7983febe — persistencia; 91f75de3 — gestor/monitor y requisitos 6.1–6.9; 693f4825 — organización automática posterior | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-029 | Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación | 7a4539f1 — optimizar lotes; d305b1ab — MIME gzip; f3f7102d — persistir progreso; 06c3b322 — robustecer snapshot | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-030 | Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones | 6cb4a3cb — contrato de cortes e idempotencia; 94c2d04e — migración IDs/VIN; 7dcd1225 — asignación centralizada de IDs | POR AUDITAR |
+| AUD-T-030 | Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones | 6cb4a3cb — contrato de cortes e idempotencia; 94c2d04e — migración IDs/VIN; 7dcd1225 — asignación centralizada de IDs | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-031 | Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia | 2e41428e — cargas Drive retry-safe; d99ab2d4 — idempotencia de reemplazos in-modal; 2212b4f5 — find-or-create | POR AUDITAR |
 | AUD-T-032 | Identidad autenticada del colaborador en WRITE y ADMIN | 36196020 — validar identidad autenticada; cierre de tarea documentado en checkpoint | POR AUDITAR |
 | AUD-T-033 | Coordinación de mutaciones entre servicios y Utilities | 8a3646cc — documentar hallazgos de coordinación; 44d127b3 — Utilities safe order processing; 336915b7/ef2db2e5 — renombramientos de Utilities | POR AUDITAR; no asumir protocolo terminado |
@@ -507,3 +507,30 @@ E1: inspección estática e historial Git. No se ejecutaron pruebas E2–E5, nav
 
 ### Siguiente iteración
 AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
+
+
+## 16. Iteración técnica — AUD-T-030
+
+**Sesión:** AUD-20261107-S011  
+**Checkpoint:** AUD-CP-0011  
+**HEAD auditado:** c8c971ed061f08fca212f6879b35c857d9a0192c  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Archivos y alcance
+Spreadsheet/GPSpedia_DB_columnas.md; Services/write.js; Services/admin.js; ui.js; add_cortes.html; api-config.js. Se revisaron los helpers de esquema e idempotencia, asignación de IDs, migración VIN, validación de respaldo, recuperación de operaciones y contratos frontend/backend. Historial contrastado: 6cb4a3cb, 94c2d04e, 7dcd1225 y 36196020.
+
+### Resultado
+- La ausencia de la hoja Idempotencia y de columnas objetivo en la copia original no constituye por sí misma un defecto: el código las crea/migra bajo demanda.
+- La asignación de IDs está centralizada en WRITE y ADMIN delega en ese servicio.
+- H-AUD-030-001 a H-AUD-030-008 documentados en Auditoría.txt.
+- Los riesgos prioritarios son la falta de coordinación de la migración con mutaciones WRITE y la aceptación de registros de idempotencia con estados/duplicados no validados.
+
+### Tareas derivadas
+AUG-034, AUG-035 y AUG-036; H-AUD-030-005 se incorpora a la matriz de recuperación de AUG-035. Relación con AUD-T-033/AUG-003.
+
+### Evidencia y límites
+E1: inspección estática e historial Git. No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador/PWA, Drive, Spreadsheet real, migración ni concurrencia. No se modificó código ni datos productivos.
+
+### Siguiente iteración
+AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.

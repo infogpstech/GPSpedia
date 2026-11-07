@@ -8464,3 +8464,80 @@ Se examinó el recorrido recursivo del árbol Drive «Cortes», la creación/rec
 ## 9. Conclusión
 AUD-T-029 queda con auditoría estática E1 completada y hallazgos abiertos. No se declara que la reanudación o el rendimiento estén validados funcionalmente. La siguiente unidad del plan es AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-030
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S011 | Checkpoint: AUD-CP-0011
+HEAD auditado: c8c971ed061f08fca212f6879b35c857d9a0192c
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+1. OBJETIVO Y ALCANCE
+Revisar la compatibilidad entre el esquema físico documentado de GPSpedia_DB_v2.0 y el esquema objetivo de la implementación; la creación y selección de la hoja Idempotencia; los identificadores heredados idOperacion1..3; la migración hacia VIN; el almacenamiento y recuperación de opId; la asignación centralizada de IDs de Cortes; y los consumidores frontend/backend relacionados.
+
+Se respetó la aclaración del usuario: la ausencia de hojas o columnas objetivo en la copia original no constituye por sí misma un defecto. Se evaluó si el código las crea o migra bajo demanda y si preserva datos preexistentes.
+
+2. ARCHIVOS Y FUNCIONES REVISADOS
+- Spreadsheet/GPSpedia_DB_columnas.md: inventario original de 13 hojas/140 columnas; Cortes A:AS con idOperacion1, idOperacion2 e idOperacion3 en AQ:AS; esquema objetivo VIN en AQ, AR/AS reservadas, testigo AT:AV bajo demanda y hoja Idempotencia A:E.
+- Services/write.js: SHEET_NAMES/COLS_CORTES; getVinColumnIndex(); ensureTestigoColumns(); handleAddOrUpdateCut()/handleAddOrUpdateCutLocked(); getNextCortesVehicleIdLocked(); handleAllocateVehicleId(); getIdempotenciaHeaderState(); initializeIdempotenciaSheet(); createIdempotenciaSheetIfMissing(); findOrCreateIdempotenciaSheet(); recordOpId(); findRowByOpId(); handleCheckOperation(); parseVinCollection(); serializeVinCollection(); addVinToAvailableSlot(); extractVinPrefix(); checkVinDuplicateInSheet(); handleCheckVinDuplicate(); handleAddVinToVehicle().
+- Services/admin.js: WRITE_SERVICE_URL/callWriteServiceAction()/requestNextVehicleIdFromWriteService(); assertDeveloperSession(); verifyVinMigrationBackup(); ensureTestigoColumns(); handleAddOrUpdateCut(); helpers de hoja Idempotencia; normalizeIdempotenciaHeader(); inspectIdempotenciaMigrationTarget(); readIdempotenciaOperationMap(); buildCortesOperationIdMigrationPlan(); getNewIdempotenciaEntries(); renameVinColumnHeader(); handleMigrateCortesOperationIds(); handleCheckOperation().
+- ui.js: parseVinCollection()/mapVersionsWithVins(); controles de simulación y confirmación de migración VIN (aprox. líneas 4180–4300).
+- add_cortes.html: estado opId, getOrGenerateOpId(), checkAndRecoverPendingOperation(), validación VIN y envío/reintento de addOrUpdateCut (aprox. líneas 340–440 y 940–1120).
+- api-config.js: enrutamiento de allocateVehicleId, addOrUpdateCut, checkOperation, checkVinDuplicate y migrateCortesOperationIds.
+- Historial: commits 6cb4a3cb, 94c2d04e, 7dcd1225 y 36196020.
+
+3. CONTROLES POSITIVOS CONFIRMADOS
+- La ausencia inicial de Idempotencia/Idempotencia_Cortes está contemplada: WRITE/ADMIN crean bajo demanda la hoja compatible con encabezados opId, vehicleId, slotIndex, timestamp y status; se conserva una hoja incompatible y se contempla la alternativa Idempotencia_Cortes.
+- La migración exige contexto de desarrollador y un respaldo verificado en la sesión. La interfaz separa simulación y confirmación y vuelve a validar el estado en servidor.
+- El plan de migración valida los encabezados de origen, el formato de opId, vehicleId vacío, IDs de vehículo duplicados, opId con asociaciones distintas, encabezados VIN fuera de AQ y mezclas ambiguas de VIN/opId. Verifica el destino antes de limpiar columnas de origen.
+- WRITE y ADMIN reservan el opId como pending antes de completar los campos de negocio y cambian a completed después de flush/verificación. Los errores de persistencia se propagan en el código vigente.
+- WRITE es la autoridad única para asignar IDs: valida encabezado id, IDs numéricos positivos y seguros, duplicados y contador ScriptProperties. ADMIN solicita el ID al endpoint autenticado de WRITE; no mantiene contador propio.
+- La copia original puede continuar con 13 hojas. La creación de Idempotencia y de columnas de testigo se realiza bajo demanda; no se exige que existan antes del despliegue.
+
+4. HALLAZGOS
+H-AUD-030-001 — ALTA — La migración no comparte exclusión mutua con las escrituras WRITE.
+Services/admin.js: handleMigrateCortesOperationIds() utiliza ScriptLock del proyecto ADMIN. handleAddOrUpdateCut() y recordOpId() de Services/write.js utilizan ScriptLock del proyecto WRITE. LockService no coordina bloqueos entre proyectos Apps Script. La migración lee el mapa de destino y después agrega registros; una escritura WRITE simultánea puede insertar/actualizar el mismo opId o crear la hoja mientras la migración inspecciona/actualiza el destino. La verificación posterior reduce errores, pero no constituye una barrera global ni evita todas las carreras de lectura-modificación-escritura. Requiere protocolo compartido de mantenimiento/coordinación antes de ejecutar la migración en producción. Relación: AUD-T-033/AUG-003.
+
+H-AUD-030-002 — ALTA — La migración no valida de forma suficiente el estado ni la unicidad de los registros preexistentes en Idempotencia.
+Services/admin.js: readIdempotenciaOperationMap() valida vehicleId y slotIndex, pero no valida que status pertenezca a pending/completed ni rechaza opId duplicados con la misma asociación. getNewIdempotenciaEntries() considera ya presente cualquier asociación coincidente sin comprobar status. Después la migración verifica solo vehicleId y slotIndex antes de limpiar el origen. Un registro preexistente pending puede conservar ese estado aunque el origen representa una operación heredada completada; un status desconocido puede pasar la migración y luego ser rechazado por findRowByOpId(); duplicados iguales permanecen. Debe bloquearse o reconciliarse cualquier fila inválida/duplicada y verificar status/timestamp según una regla explícita antes de limpiar el origen.
+
+H-AUD-030-003 — MEDIA — La reparación de encabezados vacíos puede reinterpretar columnas con datos.
+Services/write.js y Services/admin.js: getIdempotenciaHeaderState() considera reparables los encabezados A:E vacíos, salvo que la hoja tenga filas y cero encabezados reconocidos. initializeIdempotenciaSheet() escribe los encabezados esperados en esas celdas sin comprobar si las columnas correspondientes contienen datos preexistentes. Una hoja parcial con al menos un encabezado reconocido y datos en otra columna sin encabezado puede recibir un nuevo significado sin revisión. Verificar que cada columna sin encabezado esté realmente vacía antes de completar su encabezado; si contiene datos, detenerse y preservar.
+
+H-AUD-030-004 — MEDIA — El registro runtime permite conservar duplicados del mismo opId y asociación.
+Services/write.js y Services/admin.js: recordOpId() acepta múltiples filas coincidentes si vehicleId/slotIndex son iguales y verifica cada fila, pero no las consolida ni falla por duplicidad. findRowByOpId() también admite varias filas iguales. La unicidad de opId es requisito de integridad de la hoja y debe verificarse en altas, recuperaciones y migración; hoy solo se rechazan asociaciones contradictorias.
+
+H-AUD-030-005 — MEDIA — La recuperación por vehicleId devuelve la primera coincidencia sin verificar unicidad en Cortes.
+Services/write.js y Services/admin.js: findRowByOpId() recorre Cortes y devuelve la primera fila cuyo ID coincide con el vehicleId dedicado. La migración sí rechaza IDs de vehículo duplicados en el conjunto de origen, y el asignador detecta duplicados cuando genera un ID nuevo, pero la recuperación runtime no comprueba que exista exactamente una fila destino. Ante datos históricos duplicados podría reparar/escribir sobre la fila equivocada. Rechazar cero o más de una coincidencia y exigir reconciliación.
+
+H-AUD-030-006 — MEDIA — La posición documentada AT:AV para testigo no está garantizada si hay columnas adicionales.
+Spreadsheet/GPSpedia_DB_columnas.md define activaTestigo1..3 en AT:AV. ensureTestigoColumns() busca encabezados existentes y, si faltan, los agrega después de getLastColumn(); si existen columnas adicionales usadas después de AS, los nuevos campos quedan más allá de AV. El mapeo dinámico permite que los servicios los utilicen, pero el esquema físico documentado no describe ese caso. Definir si AT:AV es posición obligatoria o si la ubicación es dinámica; alinear código/documentación y probar hojas con columnas adicionales.
+
+H-AUD-030-007 — MEDIA — La resolución runtime de VIN no rechaza encabezados duplicados.
+getVinColumnIndex() devuelve la primera columna cuyo encabezado equivale a VIN. La migración rechaza VIN fuera de AQ en el momento de migrar, pero las operaciones normales no detectan posteriormente un segundo encabezado VIN. Una hoja alterada manualmente podría provocar lecturas/escrituras sobre una columna ambigua. Exigir exactamente un encabezado VIN cuando la función VIN vaya a utilizarse.
+
+H-AUD-030-008 — BAJA — Los parsers frontend y backend no comparten exactamente los delimitadores heredados.
+Services/write.js parseVinCollection() contempla punto y coma como separador; ui.js parseVinCollection() no lo contempla. El formato objetivo JSON reduce el riesgo, pero datos históricos no JSON con punto y coma podrían interpretarse de forma distinta en la interfaz y backend. Unificar contrato/parser o eliminar explícitamente el formato heredado mediante migración validada.
+
+5. ASIGNACIÓN DE IDs
+La centralización introducida por 7dcd1225 está presente en el HEAD actual. getNextCortesVehicleIdLocked() escanea IDs existentes, valida enteros positivos seguros y duplicados, compara el contador de ScriptProperties y reserva el siguiente valor bajo el lock del proyecto WRITE. ADMIN llama allocateVehicleId en WRITE. La reserva puede producir huecos si la operación posterior falla; no se observó reutilización de IDs. No se ejecutaron pruebas concurrentes ni se verificó el estado real de ScriptProperties, fórmulas o secuencia productiva. La tarea de validación real de IDs continúa pendiente; no afirmar el comportamiento de producción solo por inspección estática.
+
+6. MIGRACIÓN Y COMPATIBILIDAD DEL ESQUEMA
+- La migración no requiere que Idempotencia exista de antemano: crea la hoja cuando no existe un destino compatible.
+- La migración VIN es una acción administrativa explícita, no una migración automática al abrir la aplicación.
+- Después del despliegue, si aún no se ejecutó la migración, las operaciones que envíen VIN fallan de forma explícita al no encontrar el encabezado VIN; los registros sin VIN pueden seguir usando los flujos que no dependan de esa columna y crear Idempotencia bajo demanda.
+- No considerar bloqueante la ausencia física actual de Idempotencia ni de columnas de testigo en la copia original. Sí es requisito controlar el momento de la migración VIN y ejecutar la matriz de pruebas antes de habilitar su uso operativo.
+
+7. TAREAS DERIVADAS
+- AUG-034: coordinación compartida de mutaciones y ventana segura de migración entre WRITE/ADMIN (H-AUD-030-001; dependencia AUD-T-033/AUG-003).
+- AUG-035: validación estricta de esquema, unicidad, estado y reconciliación de registros Idempotencia (H-AUD-030-002 a H-AUD-030-004).
+- AUG-036: unicidad y ubicación contractual de encabezados VIN/testigo y compatibilidad de parsers (H-AUD-030-006 a H-AUD-030-008).
+- H-AUD-030-005 se vincula a AUG-035 y a la matriz de recuperación.
+
+8. VALIDACIONES Y LÍMITES
+E1: inspección estática de funciones, consumidores, documentación y commits históricos. No se ejecutaron pruebas E2 sintácticas, E3 aisladas, navegador/PWA, Apps Script V8, HTTP, Spreadsheet/Drive reales ni concurrencia. No se ejecutó simulación/confirmación VIN y no se modificaron datos productivos, endpoints ni deployments.
+
+9. CONCLUSIÓN
+AUD-T-030 queda con auditoría estática E1 completada y hallazgos abiertos. La estructura objetivo ausente en la copia original no es el problema. Antes de ejecutar la migración en producción deben resolverse la coordinación con WRITE y la validación de registros preexistentes de Idempotencia. La implementación y la matriz funcional de estos hallazgos quedan pendientes. Siguiente unidad: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
+================================================================================

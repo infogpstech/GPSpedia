@@ -3902,3 +3902,23 @@ ALCANCE
 - No se ejecutaron pruebas funcionales ni operaciones externas.
 - No hubo merge ni despliegue.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-030
+Fecha: 2026-11-07 | Rama: GPSpedia2.2.5_work | Sesión: AUD-20261107-S011
+DOCUMENTOS ACTUALIZADOS
+- Auditoría.txt: informe E1 y hallazgos H-AUD-030-001 a H-AUD-030-008.
+- Tareas.txt: resultado de AUD-T-030 y tareas derivadas.
+- Plan_auditoría/Plan_Auditoria.md: estado de AUD-T-030 y registro de iteración 18.
+- Plan_auditoría/Aug_Tareas.md: nuevas AUG-034, AUG-035 y AUG-036.
+- contexto_personal.md: continuidad y estado actualizado del proyecto.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0011; actualización final como último paso documental.
+
+ALCANCE
+- Solo se modificó documentación de auditoría y trazabilidad.
+- No se modificaron Services/write.js, Services/admin.js, ui.js, add_cortes.html, api-config.js ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+- No se ejecutaron pruebas funcionales reales, migración VIN ni concurrencia.
+- No hubo merge ni despliegue.
+================================================================================

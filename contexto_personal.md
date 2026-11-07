@@ -209,3 +209,15 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Se amplían AUG-028 y AUG-030; se crean AUG-031 a AUG-033.
 - No se modificó código ni se ejecutaron pruebas reales de Apps Script, navegador, HTTP, Drive o Spreadsheet.
 - Siguiente unidad: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
+
+
+## Continuidad de auditoría — AUD-T-030 (2026-11-07)
+- Sesión/checkpoint: AUD-20261107-S011 / AUD-CP-0011.
+- HEAD auditado: c8c971ed061f08fca212f6879b35c857d9a0192c; rama de trabajo GPSpedia2.2.5_work. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-030 — esquema Spreadsheet, IDs de Cortes, opId/idOperacion y migraciones: auditoría estática E1 completada; hallazgos H-AUD-030-001 a H-AUD-030-008 abiertos; validación funcional pendiente.
+- La ausencia inicial de Idempotencia/Idempotencia_Cortes y columnas objetivo en la copia original de 13 hojas no se clasifica como defecto: el código las crea/migra bajo demanda.
+- Controles positivos: migración VIN protegida por respaldo verificado y simulación/confirmación; asignación de IDs centralizada en WRITE, utilizada también por ADMIN.
+- Hallazgos principales: migración ADMIN no comparte lock con escrituras WRITE; mapa de idempotencia no valida estados/duplicados; inicialización puede escribir encabezados sobre columnas con datos; runtime admite duplicados y recuperación no verifica unicidad de vehicleId; ubicación dinámica de testigo y encabezados VIN duplicados; parsers frontend/backend difieren.
+- AUG-034 coordinación compartida WRITE/ADMIN; AUG-035 integridad/reconciliación Idempotencia; AUG-036 contrato VIN/testigo/parsers. Relación con AUD-T-033/AUG-003.
+- No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet real, migración ni concurrencia. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.

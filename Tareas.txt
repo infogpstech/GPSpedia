@@ -5355,3 +5355,37 @@ LÍMITES
 
 SIGUIENTE UNIDAD: AUD-T-030 — Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones.
 ================================================================================
+
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-030: ESQUEMA SPREADSHEET, IDs DE CORTES, opId/idOperacion Y MIGRACIONES
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S011 | Checkpoint: AUD-CP-0011
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+ACLARACIÓN DE ESQUEMA
+La ausencia de Idempotencia/Idempotencia_Cortes y de columnas objetivo en la copia original de 13 hojas no se clasifica como error: el código crea la hoja de idempotencia y las columnas de testigo bajo demanda; la migración VIN es una acción administrativa explícita. El inventario físico original conserva AQ:AS como idOperacion1..3; el esquema objetivo documenta VIN en AQ, AR/AS reservadas y testigo AT:AV.
+
+HALLAZGOS
+- H-AUD-030-001 (ALTA): la migración ejecutada en ADMIN no comparte ScriptLock con mutaciones WRITE; posible carrera al leer/actualizar Idempotencia y reorganizar columnas. Requiere coordinación compartida AUD-T-033/AUG-003.
+- H-AUD-030-002 (ALTA): readIdempotenciaOperationMap/getNewIdempotenciaEntries no validan estados ni duplicados de opId con asociación igual; una fila pending/desconocida puede pasar la migración y el origen puede limpiarse verificando solo vehicleId/slotIndex.
+- H-AUD-030-003 (MEDIA): inicialización completa encabezados vacíos sin comprobar si esas columnas contienen datos.
+- H-AUD-030-004 (MEDIA): recordOpId/findRowByOpId aceptan duplicados del mismo opId y asociación.
+- H-AUD-030-005 (MEDIA): recuperación por vehicleId devuelve la primera fila sin comprobar unicidad.
+- H-AUD-030-006 (MEDIA): ensureTestigoColumns agrega campos después de getLastColumn(); AT:AV no queda garantizado cuando existen columnas usadas adicionales.
+- H-AUD-030-007 (MEDIA): getVinColumnIndex selecciona el primer VIN sin rechazar encabezados duplicados.
+- H-AUD-030-008 (BAJA): delimitadores heredados diferentes entre parser frontend y backend (punto y coma).
+
+CONTROLES POSITIVOS
+- Creación bajo demanda de Idempotencia y fallback Idempotencia_Cortes.
+- Respaldo verificado por sesión, simulación separada de confirmación y validación del destino antes de limpiar columnas heredadas.
+- WRITE centraliza la asignación de IDs y ADMIN solicita IDs al servicio WRITE.
+- La ausencia física de nuevas hojas/columnas en la copia original no bloquea por sí sola el despliegue del código.
+
+TAREAS DERIVADAS
+- AUG-034: coordinación compartida de mutaciones y ventana segura de migración WRITE/ADMIN.
+- AUG-035: validación estricta de esquema, unicidad, estado y reconciliación de Idempotencia.
+- AUG-036: unicidad/ubicación contractual de encabezados VIN/testigo y contrato común de parsers.
+
+VALIDACIÓN
+Solo E1 estática e historial Git. Sin pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet real, migración VIN ni concurrencia. No se modificó código ni datos productivos.
+================================================================================
