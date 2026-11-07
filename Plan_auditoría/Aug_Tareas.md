@@ -486,3 +486,44 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
   6. Mantener sin regresiones los controles existentes de addOrUpdateCut, addVinToVehicle y freezeCortesIds; no confiar en nombres o roles enviados por el cliente.
 - **Relación:** AUD-T-032; AUD-T-024/AUG-016 para ciclo de sesión; AUD-T-033/AUG-003 para coordinación entre proyectos; AUD-T-035 para contratos frontend/backend.
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### Resultado AUD-T-033 — cierre de auditoría AUG-003
+- La fuente se localizó en **Services/Utilities.js** (U mayúscula). La ruta en minúsculas de registros anteriores no coincide por capitalización.
+- La versión 1.3.0 solo implementa migrateTimestamps; no implementa migrateYearRanges. api-config.js mantiene ambas acciones mapeadas. No se encontraron callsites frontend actuales.
+- El servicio declara AUTH: NONE, no usa LockService ni contiene mecanismo de adquisición/propietario/expiración/liberación. migrateTimestamps limpia Hoja 1 antes de escribir el resultado.
+- **Estado:** auditoría del contrato y alcance completada; se confirma que Utilities no es el coordinador compartido. El deployment publicado no fue verificado. La protección y alineación del servicio se trasladan a AUG-041; la coordinación interproyectos permanece en AUG-034.
+
+### Adenda AUD-T-033 — ampliar AUG-034: coordinación compartida de mutaciones
+- **Evidencia:** revisión actual de Services/write.js, Services/admin.js, Services/feedback.js y Services/Utilities.js.
+- **Escritores FEEDBACK de Cortes:** suggestYear (lock local), recordLike (lock local), assignCollaborator (sin lock) y approveVideo (sin lock). Los locks locales no excluyen WRITE/ADMIN.
+- **Rutas ADMIN sin lock local revalidado:** backupDatabase/backupDrive, restoreDatabase/restoreDrive, reorganizeDatabase, normalizeImages, organizePrimaryVehicleImages, validateAndRestoreAllTrashedImagesInSpreadsheet, updateVehicleField y driveCommand. Las rutas con lock local también deben participar en el coordinador común.
+- **Rutas con lock local, no compartido:** addOrUpdateCut y addSupplementaryInfo en WRITE/ADMIN; VIN/IDs en WRITE; migración opId, uploadAdminImage, recuperación/borrado/movimiento de imágenes e inventario en ADMIN; suggestYear y recordLike en FEEDBACK.
+- **Riesgos de snapshot:** organizePrimaryVehicleImages reutiliza referenceData en el lote; organizeUnusedImagesBatch reutiliza un referenceSnapshot para todos los archivos del lote. Un escritor de otro proyecto puede añadir una referencia después del snapshot.
+- **Mantenimiento:** restoreDatabase reemplaza hojas; restoreDrive limpia y copia el árbol; reorganizeDatabase solicita freeze a WRITE pero ordena después de liberarse el lock WRITE. Deben usar ventana exclusiva y drenaje de operaciones.
+- **Diseño:** contemplar lease/propietario/expiración/recuperación, liberación ante error, exclusión de mantenimiento y llamadas anidadas ADMIN→WRITE sin deadlock. No aceptar lock tokens del navegador ni afirmar atomicidad sin pruebas.
+
+### AUG-040 — Asegurar las escrituras de FEEDBACK sobre Cortes
+- **Origen:** H-AUD-033-002 a H-AUD-033-005. **Prioridad:** Alta.
+- **Problema:** assignCollaborator escribe Cortes sin sesión/rol ni lock; recordLike confía en userId/userName del cliente; suggestYear permite identificadores anónimos fabricables que cuentan para el umbral automático; approveVideo valida rol, pero no coordina ni garantiza la actualización conjunta Feedbacks/Cortes.
+- **Criterios de aceptación:**
+  1. Declarar explícitamente acciones públicas y protegidas; las acciones no declaradas deben rechazarse.
+  2. Retirar assignCollaborator si no tiene consumidor vigente; si se conserva, validar sesión/rol, derivar Nombre_Completo desde Users y validar slot.
+  3. Validar sesión para recordLike y deduplicar likes en backend por actor/vehículo/corte; si se permiten likes anónimos, establecer límites server-side.
+  4. No contar IDs de localStorage como prueba de aportantes distintos para modificar Cortes automáticamente; requerir actor verificable o revisión para votos anónimos.
+  5. Aprobar vídeos con lock/coordinación, confirmar que el vehículo existe y que videoGuiaDesarmeUrl quedó escrito; implementar idempotencia/reconciliación si falla una de las dos hojas.
+  6. Probar peticiones directas, identidad falsificada, roles, votos duplicados/anónimos, destino ausente y concurrencia interservicios.
+- **Relación:** AUD-T-033/AUG-034; AUD-T-035 para contratos de acciones.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-041 — Asegurar y alinear el servicio UTILITIES
+- **Origen:** H-AUD-033-006 y H-AUD-033-007; adenda a AUG-003. **Prioridad:** Alta.
+- **Problema:** Services/Utilities.js v1.3.0 declara AUTH: NONE; migrateTimestamps limpia Hoja 1 antes de escribir y no usa lock. migrateYearRanges está mapeada, pero el handler no existe. El deployment no fue verificado.
+- **Criterios de aceptación:**
+  1. Verificar el código exacto del deployment UTILITIES y compararlo con el archivo del repositorio.
+  2. Implementar migrateYearRanges o retirar su mapeo si ya no es un requisito vigente.
+  3. Proteger migrateTimestamps con autorización backend o retirarlo si está obsoleto.
+  4. Generar y verificar el resultado en staging antes de sustituir Hoja 1; soportar rollback/recuperación y serializar ejecuciones.
+  5. Probar llamadas no autorizadas, dos ejecuciones simultáneas, timeout/fallo después de staging, origen vacío y destino incompatible.
+  6. No tratar este servicio como coordinador hasta que exista un protocolo interproyectos demostrado.
+- **Relación:** AUG-003 (auditoría completada), AUG-034/AUD-T-033 (coordinación).
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.

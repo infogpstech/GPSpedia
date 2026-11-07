@@ -81,7 +81,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-030 | Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones | 6cb4a3cb — contrato de cortes e idempotencia; 94c2d04e — migración IDs/VIN; 7dcd1225 — asignación centralizada de IDs | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-031 | Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia | 2e41428e — cargas Drive retry-safe; d99ab2d4 — idempotencia de reemplazos in-modal; 2212b4f5 — find-or-create | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-032 | Identidad autenticada del colaborador en WRITE y ADMIN | 36196020 — validar identidad autenticada; cierre de tarea documentado en checkpoint | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-033 | Coordinación de mutaciones entre servicios y Utilities | 8a3646cc — documentar hallazgos de coordinación; 44d127b3 — Utilities safe order processing; 336915b7/ef2db2e5 — renombramientos de Utilities | POR AUDITAR; no asumir protocolo terminado |
+| AUD-T-033 | Coordinación de mutaciones entre servicios y Utilities | 8a3646cc — documentar hallazgos de coordinación; 44d127b3 — Utilities safe order processing; 336915b7/ef2db2e5 — renombramientos de Utilities | E1 COMPLETADA; PROTOCOLO COMPARTIDO AUSENTE; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-034 | Acceso y visibilidad del panel/historial por rol y sesión | e4900b37 — normalización rol desarrollador; 0d4c0d01 — diagnóstico acceso historial; 187839c2 — asegurar acceso a gestión de imágenes | POR AUDITAR |
 | AUD-T-035 | Endpoints, separación de servicios y contratos frontend/backend | commits de actualización AUTH/USERS/ADMIN/FEEDBACK/WRITE; 975c5913 y f8cc191f — alta de servicios en el historial | POR AUDITAR |
 | AUD-T-036 | Términos, consentimiento inicial y elementos legales de interfaz | e06791d0 — modal de términos en primer login; 9aa59063 — integración de términos y enlace footer | POR AUDITAR |
@@ -588,3 +588,29 @@ E1: inspección estática e historial Git. No se ejecutaron pruebas E2/E3, Apps 
 
 ### Siguiente iteración
 AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.
+
+## 19. Iteración técnica — AUD-T-033
+
+**Sesión:** AUD-20261107-S014  
+**Checkpoint:** AUD-CP-0014  
+**HEAD auditado:** 32b4898e967aea45a9372aa127cb0735aed99fc5  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** AUDITORÍA ESTÁTICA E1 COMPLETADA; PROTOCOLO COMPARTIDO AUSENTE; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Utilities
+La fuente se localizó en Services/Utilities.js (U mayúscula), versión 1.3.0. Solo implementa migrateTimestamps; no implementa migrateYearRanges aunque api-config.js mapea ambas acciones. No se encontraron callsites frontend actuales. El servicio declara AUTH: NONE, no usa lock y limpia Hoja 1 antes de reconstruirla. No es un coordinador de mutaciones. El deployment publicado no fue verificado.
+
+### Coordinación interservicios
+No existe autoridad común, lease ni lock compartido en WRITE, ADMIN, FEEDBACK y UTILITIES. Los ScriptLock/ScriptProperties/ScriptCache revisados son locales al proyecto. Se reafirman los riesgos de restauración/reorganización, movimientos de imágenes, migración VIN/opId y snapshots que pueden competir con escritores de otro deployment. ADMIN reorganiza Cortes después de que WRITE libera el lock. FEEDBACK también escribe Cortes mediante suggestYear, recordLike, assignCollaborator y approveVideo.
+
+### Hallazgos
+- H-AUD-033-001 a H-AUD-033-007 documentados en Auditoría.txt.
+- AUG-003 queda auditada: fuente identificada, contrato parcial y ausencia de coordinador demostrada.
+- AUG-034 se amplía para cubrir todos los escritores y operaciones de mantenimiento identificados.
+- AUG-040 cubre seguridad/integridad de FEEDBACK; AUG-041 cubre autorización, contrato y recuperación de UTILITIES.
+
+### Evidencia y límites
+E1: inspección estática de funciones, rutas y callsites. No se ejecutaron Apps Script, HTTP, navegador, Drive, Spreadsheet real ni concurrencia. No se verificó el deployment publicado de UTILITIES. No se modificó código ni datos productivos.
+
+### Siguiente iteración
+AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.

@@ -8682,3 +8682,76 @@ Validación realizada: inspección estática de las funciones y callsites enumer
 
 Siguiente unidad del plan: AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-033: COORDINACIÓN DE MUTACIONES ENTRE SERVICIOS Y UTILITIES
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S014 | Checkpoint: AUD-CP-0014
+HEAD auditado: 32b4898e967aea45a9372aa127cb0735aed99fc5
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; PROTOCOLO COMPARTIDO AUSENTE; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+1. OBJETIVO
+Inventariar escritores de Cortes y del árbol Drive Cortes en WRITE, ADMIN, FEEDBACK y UTILITIES; comprobar si existe una autoridad de coordinación común, si los bloqueos cubren todas las operaciones y si las llamadas anidadas ADMIN→WRITE pueden ejecutarse sin deadlock.
+
+2. FUENTES REVISADAS
+- Services/write.js: handlers de alta/actualización de Cortes, datos suplementarios, VIN, asignación central de IDs, congelación de IDs, idempotencia y subida de imágenes.
+- Services/admin.js: backup/restore DB y Drive, reorganización, normalización/organización de imágenes, edición de campos, restauración de papelera, terminal Drive, migración VIN/opId, subidas y gestión del inventario de imágenes.
+- Services/feedback.js: doPost/actionPermissions, resolveSuggestionYearActor(), handleAssignCollaborator(), handleSuggestYearLocked(), handleRecordLike(), handleApproveVideo().
+- Services/Utilities.js: doGet(), doPost(), migrateTimestampsSafe(), resetTarget(), getOrCreateTargetSheet().
+- api-config.js: ACTION_TO_SERVICE_MAP y rutas UTILITIES/FEEDBACK.
+- ui.js: getAnonymousSuggestionReporterId(), envío de suggestYear y recordLike, aprobación de vídeo.
+- Historial: 8a3646cc, 44d127b3, 336915b7 y ef2db2e5; auditorías y tareas previas relacionadas con AUG-003/AUG-034.
+
+3. RESULTADO DEL CONTRATO UTILITIES
+- La fuente existe en la rama como Services/Utilities.js (U mayúscula); la ruta Services/utilities.js de registros anteriores no coincide por capitalización.
+- El archivo es versión 1.3.0 y declara AUTH: NONE.
+- doPost() acepta únicamente migrateTimestamps. No existe migrateYearRanges(), aunque api-config.js mantiene ambas acciones mapeadas a UTILITIES.
+- No se encontraron callsites de migrateYearRanges ni migrateTimestamps en ui.js, main.js, index.html o add_cortes.html; el mapeo permite enrutar acciones, pero no demuestra que haya un consumidor actual.
+- migrateTimestampsSafe() lee la columna I de Cortes, limpia Hoja 1 mediante clearContents() y después escribe las fechas en columna A. No modifica Cortes, pero sí escribe en la Spreadsheet productiva y puede dejar Hoja 1 vacía/parcial si la ejecución termina después de limpiar y antes de completar setValues().
+- Utilities no contiene LockService, PropertiesService, lease, propietario, expiración, adquisición ni liberación. No es un coordinador de locks.
+- No se pudo comprobar si el deployment UTILITIES publicado corresponde exactamente a esta fuente; el endpoint configurado puede estar ejecutando otra versión.
+
+4. AUSENCIA DE COORDINACIÓN COMPARTIDA
+En los servicios revisados no existe una autoridad común, token de lock, lease ni protocolo de adquisición/liberación entre proyectos. WRITE, ADMIN y FEEDBACK usan LockService.getScriptLock() local; PropertiesService.getScriptProperties() y CacheService.getScriptCache() aparecen dentro de sus respectivos proyectos, no como coordinación interproyectos. Utilities no implementa bloqueo.
+Controles locales confirmados: WRITE serializa sus propias operaciones de Cortes; ADMIN serializa algunas rutas como uploadAdminImage, alta suplementaria, migración opId, recuperación/borrado/movimiento de imágenes y organización por lotes; FEEDBACK serializa suggestYear y recordLike, entre otras acciones. Ninguno de esos locks excluye escrituras del otro deployment.
+Se reafirman los riesgos ya enlazados a H-AUD-025, H-AUD-029, H-AUD-030 y H-AUD-031: restore/reorganize, migración VIN/opId, reemplazo y organización de imágenes pueden competir con escritores externos a su proyecto. handleReorganizeDatabase() solicita freeze a WRITE, pero el lock de WRITE termina antes de que ADMIN ordene Cortes. handleOrganizePrimaryVehicleImages() toma una instantánea de referencias para todo el lote y no mantiene exclusión frente a cambios posteriores.
+ADMIN también tiene rutas que escriben o mueven recursos sin lock local: handleRestoreDatabase(), handleRestoreDrive(), handleReorganizeDatabase(), handleNormalizeImages(), handleOrganizePrimaryVehicleImages(), validateAndRestoreAllTrashedImagesInSpreadsheet(), handleUpdateVehicleField() y handleDriveCommand(). BackupDatabase/BackupDrive no coordinan el snapshot con escritores. Otras rutas sí tienen lock local, pero este no se comparte con WRITE/FEEDBACK.
+FEEDBACK añade escritores de Cortes: suggestYear (lock local), recordLike (lock local), assignCollaborator (sin lock) y approveVideo (sin lock). La sincronización de imágenes en suggestYear también opera sobre una fila/imagen obtenida de una lectura que puede quedar obsoleta por ordenamiento o edición concurrente.
+Las operaciones de imágenes reemplazadas y sin uso verifican referencias, pero su lock ADMIN no impide que WRITE/FEEDBACK cree una nueva referencia después del snapshot y antes de mover/enviar a papelera el archivo. handleOrganizeUnusedImagesBatch() reutiliza un único referenceSnapshot para el lote.
+
+5. HALLAZGOS
+
+H-AUD-033-001 — ALTA — No existe exclusión mutua compartida entre los proyectos.
+Los ScriptLock locales no coordinan WRITE, ADMIN, FEEDBACK ni UTILITIES. Existen operaciones concurrentes que leen índices de fila, actualizan Cortes, cambian el orden de filas o mueven archivos basándose en referencias. Un lock local no protege frente a otro deployment. El caso más claro es ADMIN reorganizando Cortes después de que WRITE ya liberó su lock; también restauraciones completas DB/Drive y movimientos de imágenes. AUG-034 debe ser la autoridad de implementación, ampliada con los escritores FEEDBACK y las rutas ADMIN identificadas aquí.
+
+H-AUD-033-002 — ALTA — assignCollaborator modifica Cortes sin autorización backend ni bloqueo.
+FEEDBACK doPost() solo ejecuta assertFeedbackSession() para acciones incluidas en actionPermissions. assignCollaborator no está en esa lista ni en ACTION_TO_SERVICE_MAP y no se encontró un consumidor frontend actual, pero sigue aceptado por el switch de doPost y llama a handleAssignCollaborator(). El handler acepta vehicleId, corteIndex y userName del payload, busca la fila y escribe colaboradorCorteN sin validar sesión/rol ni adquirir lock. Si el deployment permite POST externo, la ruta puede alterar la atribución de colaboradores mediante llamada directa. Determinar si la acción está obsoleta y retirarla o protegerla con sesión/rol y nombre derivado de Users.
+
+H-AUD-033-003 — MEDIA — recordLike confía en identidad del cliente.
+La interfaz exige currentUser antes de mostrar el voto, pero la llamada recordLike envía userId y userName sin sessionToken. FEEDBACK doPost no aplica assertFeedbackSession a recordLike; handleRecordLike acepta esos valores, incrementa utilCorteN y registra actividad con la identidad recibida. La protección visual no impide peticiones directas, suplantación de usuario ni incrementos repetidos. Definir si el voto exige sesión y deduplicación server-side; si es público, implementar límites antiabuso y no atribuir identidades no verificadas.
+
+H-AUD-033-004 — ALTA — La identidad anónima de suggestYear es controlable por el cliente y puede activar cambios automáticos.
+ui.js guarda gpsepedia_anonymous_suggestion_reporter en localStorage y envía su valor como anonymousReporterId. El backend solo valida el formato y calcula SHA-256; no demuestra que cada identificador corresponda a una persona o dispositivo distinto. handleSuggestYearLocked() cuenta tres suggestionActorKey positivos distintos y, al alcanzar el umbral, amplía automáticamente anoDesde/anoHasta en Cortes y sincroniza la carpeta de imagen. Un cliente puede cambiar/crear varios IDs y fabricar el umbral. Mantener sugerencias anónimas solo si existe una protección antiabuso verificable; de lo contrario, no permitir que votos anónimos disparen la modificación automática sin revisión.
+
+H-AUD-033-005 — MEDIA — approveVideo no coordina la actualización Feedbacks/Cortes.
+La acción sí valida sesión y rol desde actionPermissions, pero handleApproveVideo() no adquiere lock. Primero marca la solicitud como approved en Feedbacks y después busca el vehículo y actualiza videoGuiaDesarmeUrl en Cortes. Si el vehículo no existe o falla la segunda escritura, la solicitud permanece aprobada y la función puede devolver success sin confirmar la publicación en Cortes. Requiere coordinación, verificación de destino y una estrategia idempotente de recuperación/reconciliación.
+
+H-AUD-033-006 — ALTA — Utilities expone una mutación sin autenticación y sin bloqueo.
+Services/Utilities.js declara AUTH: NONE y doPost() ejecuta migrateTimestampsSafe() sin validar sesión. La función limpia Hoja 1 antes de escribir el resultado y no usa lock ni staging/rollback. La acción está mapeada a UTILITIES y escribe en la Spreadsheet configurada. La exposición efectiva depende de la configuración del deployment, que no se verificó; el código no ofrece protección propia.
+
+H-AUD-033-007 — MEDIA — El contrato migrateYearRanges está mapeado pero no implementado en la fuente.
+api-config.js enruta migrateYearRanges a UTILITIES, pero Services/Utilities.js rechaza toda acción distinta de migrateTimestamps. No se encontró consumidor frontend actual. Confirmar si el mapeo es legado y retirarlo o aportar la implementación/deployment correcto antes de depender de esa acción.
+
+6. CONTROLES POSITIVOS Y DEPENDENCIAS
+- ADMIN protege sus acciones POST con sesión de Desarrollador salvo ping; approveVideo en FEEDBACK obtiene rol del actor autenticado desde el router.
+- suggestYear valida userId/sessionToken para usuarios registrados; la brecha se limita al modo anónimo cuyo identificador es client-controlled.
+- suggestYear y recordLike tienen lock local FEEDBACK, pero no coordinan con WRITE/ADMIN.
+- WRITE y varias rutas ADMIN tienen locks locales y controles de referencia/idempotencia; estos controles reducen riesgos dentro de cada proyecto, pero no proporcionan exclusión global.
+- El diseño futuro debe resolver las llamadas anidadas ADMIN→WRITE (allocateVehicleId/freezeCortesIds) sin deadlock ni aceptación de tokens de lock aportados por el navegador.
+- Services/Test no contiene harness/copia aislada de FEEDBACK ni UTILITIES; tampoco pruebas de concurrencia interproyectos. No se verificó el deployment publicado de UTILITIES.
+
+7. CONCLUSIÓN Y LÍMITES
+AUD-T-033 queda con auditoría estática E1 completada, pero el protocolo compartido no existe en el código revisado. AUG-003 queda auditada: la fuente Utilities fue localizada, aunque no implementa el contrato completo ni un coordinador. AUG-034 debe cubrir el lock común y las rutas concurrentes; AUG-040 cubre seguridad/integridad de FEEDBACK; AUG-041 cubre el servicio UTILITIES.
+No se modificó código, endpoints, Spreadsheet, Drive, datos productivos ni deployments. No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, restauraciones, operaciones Drive/Spreadsheet ni concurrencia. No se verificó el deployment actual.
+Siguiente unidad: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.
+================================================================================

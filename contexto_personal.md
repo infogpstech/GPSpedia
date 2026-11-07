@@ -245,3 +245,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - La coordinación de revocación entre AUTH/USERS/WRITE/ADMIN permanece relacionada con AUD-T-024/AUG-016 y AUD-T-033/AUG-003.
 - No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet ni concurrencia. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.
+
+## Continuidad de auditoría — AUD-T-033 (2026-11-07)
+- Sesión/checkpoint: AUD-20261107-S014 / AUD-CP-0014.
+- HEAD auditado: 32b4898e967aea45a9372aa127cb0735aed99fc5; rama GPSpedia2.2.5_work. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-033 — coordinación de mutaciones entre servicios y Utilities: auditoría estática E1 completada; el protocolo compartido no existe en el código revisado; hallazgos abiertos y validación funcional pendiente.
+- La fuente está en Services/Utilities.js (U mayúscula), versión 1.3.0. Solo implementa migrateTimestamps, no migrateYearRanges; declara AUTH: NONE, no usa lock y limpia Hoja 1 antes de escribir. El deployment publicado no fue verificado.
+- No existe coordinador compartido: los locks de WRITE, ADMIN y FEEDBACK son locales a cada proyecto; Utilities no implementa protocolo.
+- FEEDBACK contiene rutas que escriben Cortes: assignCollaborator sin autenticación/lock; recordLike sin validación de sesión backend; suggestYear permite identificadores anónimos client-controlled que cuentan para el umbral automático; approveVideo valida rol pero no coordina las escrituras Feedbacks/Cortes.
+- AUG-034 se amplía; AUG-040 cubre seguridad/integridad FEEDBACK; AUG-041 cubre autorización, contrato y recuperación UTILITIES. AUG-003 queda auditada, pero el coordinador sigue pendiente.
+- No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet ni concurrencia. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-034 — Acceso y visibilidad del panel/historial por rol y sesión.

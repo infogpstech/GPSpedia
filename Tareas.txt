@@ -5465,3 +5465,53 @@ VALIDACIONES Y LÍMITES
 - Services/Test contiene únicamente copias aisladas de AUTH y USERS; no se verificaron deployments WRITE/ADMIN.
 - No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. No hubo despliegue ni merge.
 ================================================================================
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-033: COORDINACIÓN DE MUTACIONES ENTRE SERVICIOS Y UTILITIES
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S014 | Checkpoint: AUD-CP-0014
+HEAD auditado: 32b4898e967aea45a9372aa127cb0735aed99fc5
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; PROTOCOLO COMPARTIDO AUSENTE; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+UTILITIES — ADENDA A LA DEPENDENCIA HISTÓRICA
+La fuente sí está en el repositorio, pero el nombre exacto es Services/Utilities.js (U mayúscula), no Services/utilities.js. El archivo versión 1.3.0 solo implementa migrateTimestamps, declara AUTH: NONE, no usa lock y limpia/reconstruye Hoja 1. No contiene migrateYearRanges, aunque api-config.js mapea ambas acciones. No se hallaron callsites en el frontend actual y no se verificó que el deployment publicado corresponda a esta fuente. La dependencia de fuente faltante queda parcialmente resuelta; el contrato y la seguridad siguen pendientes.
+
+HALLAZGOS
+- H-AUD-033-001 (ALTA): no existe coordinación/lock compartido entre proyectos Apps Script. Los ScriptLock, ScriptProperties y ScriptCache revisados son locales al proyecto. Las rutas de restauración, reorganización y operaciones Drive pueden competir con WRITE/FEEDBACK.
+- H-AUD-033-002 (ALTA): FEEDBACK assignCollaborator sigue aceptado por doPost, aunque no figura en actionPermissions ni en el mapeo frontend; modifica colaboradorCorteN con userName del payload, sin sesión ni lock.
+- H-AUD-033-003 (MEDIA): recordLike exige currentUser solo en UI; el backend no valida sesión y confía en userId/userName recibidos.
+- H-AUD-033-004 (ALTA): suggestYear acepta anonymousReporterId client-controlled guardado en localStorage; tres IDs fabricables pueden activar la ampliación automática del rango en Cortes.
+- H-AUD-033-005 (MEDIA): approveVideo valida rol, pero actualiza Feedbacks antes de Cortes, no usa lock ni confirma que el vehículo haya sido actualizado.
+- H-AUD-033-006 (ALTA): Utilities ejecuta migrateTimestamps sin autenticación ni lock y limpia Hoja 1 antes de reconstruirla.
+- H-AUD-033-007 (MEDIA): migrateYearRanges está mapeada a UTILITIES, pero no existe en Services/Utilities.js; no se encontró consumidor frontend actual.
+
+ADENDA A LA TAREA PENDIENTE — COORDINACIÓN COMPARTIDA DE MUTACIONES
+La dependencia de obtener Services/utilities.js se actualiza: fuente localizada con U mayúscula, pero no es un coordinador y no contiene migrateYearRanges. El protocolo común sigue ausente. Se confirma que debe cubrir WRITE, ADMIN, FEEDBACK y las operaciones UTILITIES que lean/escriban recursos compartidos; incluir locks locales que hoy no se coordinan, operaciones sin lock, restauraciones, reorganización, backups consistentes, movimientos de imágenes y el flujo anidado ADMIN→WRITE. Relación: AUG-003 y AUG-034.
+
+TAREA NUEVA — AUG-040: ASEGURAR LAS ESCRITURAS DE FEEDBACK SOBRE CORTES
+Prioridad: ALTA. Estado: NUEVA; diseño, implementación y pruebas pendientes.
+Criterios mínimos:
+1. Definir explícitamente qué acciones FEEDBACK son públicas y cuáles requieren sesión; aplicar un esquema deny-by-default para acciones no declaradas.
+2. Retirar assignCollaborator si está obsoleta; si sigue vigente, exigir sesión/rol, derivar el nombre desde Users, validar corteIndex y coordinar la escritura.
+3. Para recordLike, validar sesión en backend y no confiar en userId/userName del cliente; deduplicar por usuario/vehículo/corte o definir límites antiabuso si se admite voto público.
+4. Para suggestYear, impedir que IDs arbitrarios de localStorage se consideren aportantes independientes capaces de modificar automáticamente Cortes; usar identidad verificable o requerir revisión para votos anónimos.
+5. Para approveVideo, conservar validación de rol, coordinar la operación, verificar la fila Cortes y recuperar/reconciliar si la actualización de Feedbacks y Cortes falla parcialmente.
+6. Probar POST directo sin sesión, identidad falsificada, roles no permitidos, likes repetidos, múltiples IDs anónimos, vehículo inexistente y concurrencia con WRITE/ADMIN.
+
+TAREA NUEVA — AUG-041: ASEGURAR Y ALINEAR EL SERVICIO UTILITIES
+Prioridad: ALTA. Estado: NUEVA; diseño, implementación y pruebas pendientes.
+Criterios mínimos:
+1. Verificar que el deployment UTILITIES publicado corresponde a Services/Utilities.js o incorporar la fuente exportada exacta.
+2. Resolver migrateYearRanges: implementar el handler correcto o retirar el mapeo si es legado; no dejar una acción que el router no soporta.
+3. Proteger migrateTimestamps con autorización backend adecuada o retirar su exposición si ya no se usa.
+4. Evitar clearContents() sobre Hoja 1 antes de tener un resultado completo verificable; usar staging/backup/commit o rollback y serializar ejecuciones.
+5. Probar en Spreadsheet aislada llamadas sin sesión, error/timeout tras preparar el resultado, dos ejecuciones simultáneas, origen vacío y destino incompatible.
+6. No usar Utilities como coordinador compartido hasta implementar y demostrar explícitamente ese protocolo.
+
+ADENDA A AUG-034
+Ampliar el inventario del coordinador a FEEDBACK (suggestYear, recordLike, assignCollaborator, approveVideo), Utilities, handleNormalizeImages, handleRestoreAllTrashedImagesInSpreadsheet, handleDriveCommand, handleBackupDatabase/Drive, handleRestoreDatabase/Drive, handleUpdateVehicleField y handleOrganizePrimaryVehicleImages. Incluir las rutas con lock local que aún pueden competir entre proyectos: alta/actualización WRITE/ADMIN, migración opId, subida de imágenes, recuperación/borrado/movimiento de imágenes e inventario sin uso. Mantener exclusión durante reorganización/restauración y resolver ADMIN→WRITE sin deadlock.
+
+VALIDACIÓN Y LÍMITES
+- Auditoría estática E1 e inspección de rutas/funciones. No se ejecutaron E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet real, restauraciones ni concurrencia.
+- No se verificó el deployment UTILITIES ni otros deployments publicados.
+- No se modificó código, endpoints, Spreadsheet, Drive, datos productivos ni deployments. No hubo despliegue ni merge.
+================================================================================
