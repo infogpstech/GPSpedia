@@ -72,7 +72,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-021 | Ficha técnica imprimible, paginación y distribución adaptativa de imágenes | 6d7fbb9c — tareas 1.2/1.3; 199ee4be — layouts configurables; cbbcb0cb — cuadrículas 2×2; 04c86ce6 — layout adaptativo | POR AUDITAR |
 | AUD-T-022 | Panel de desarrollador, navegación por secciones y modal administrativo | da7c146c — reorganizar panel; fd534545 — refinamiento; 9b1f210c — consola global | POR AUDITAR |
 | AUD-T-023 | Seguridad ADMIN 0, registro de credenciales, hashing y migración | ed92f3a9 — reforzar autorización y proteger credenciales; 2e0bbcf7 — SHA-256 y límite de intentos; 6a226c18 — retirar credenciales de logs | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-024 | Administración de usuarios, privilegios, sesiones y controles de acceso | 2678ee02 — purga Logs y control de sesiones; 0666c1d1 — límites de sesión; 4bc9ac19 — serialización concurrente | POR AUDITAR |
+| AUD-T-024 | Administración de usuarios, privilegios, sesiones y controles de acceso | 2678ee02 — purga Logs y control de sesiones; 0666c1d1 — límites de sesión; 4bc9ac19 — serialización concurrente | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-025 | Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento | babf5ce4 — autorización y purga selectiva; e5c49b1d — enlaces completos en restore; abc7102f — backup/restore compartidos | POR AUDITAR |
 | AUD-T-026 | Telemetría, diagnóstico y health check de microservicios | e1defcb6 — restaurar comunicación/health check; 726727b6 — telemetría de servicios | POR AUDITAR |
 | AUD-T-027 | Historial de imágenes reemplazadas y acciones de gestión | 8f97d253 — gestión de imágenes reemplazadas; 9e9918c7 — seguridad y consistencia; 91f75de3 — gestor de imágenes sin uso | POR AUDITAR |
@@ -299,3 +299,44 @@ AUD-T-023 — Seguridad de contraseñas, hashing, logs y migración. Después AU
 - Fortalezas: AUTH ya no registra payload/contraseñas en los callsites actuales examinados; las rutas de escritura de USERS generan hash; clearSensitiveLogs está restringida a Desarrollador.
 - Limitaciones: no se inspeccionó Logs real, no se verificaron deployments y no se ejecutaron pruebas Apps Script/HTTP/navegador/Spreadsheet/Drive. Las copias Test no son suite automatizada.
 - No se modificó código ni datos. Evidencia E1/E2. Siguiente unidad: AUD-T-024.
+
+
+## 12. Iteración técnica — AUD-T-024
+
+**Sesión:** AUD-20261107-S005  
+**Checkpoint:** AUD-CP-0005  
+**HEAD auditado:** 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Alcance y archivos revisados
+Services/Auth.js, Services/users.js, Services/Test/Auth.js, Services/Test/users.js, auth.js, users.html, api-config.js, main.js, ui.js, state.js, index.html y Services/Test/README.md. Se recuperaron y contrastaron los diffs de 2678ee02, 0666c1d1, 4bc9ac19 y b441a5be.
+
+### Resultado
+- Se confirmó que los límites de sesión por rol están corregidos y que AUTH serializa su propia sección crítica de login.
+- Se confirmó que USERS deriva el rol desde el token y protege resetUserSessions en backend para Desarrollador.
+- Continúan abiertos los problemas de revocación al logout, expiración, sesiones huérfanas tras eliminación y validación AUTH sin consulta a Users.
+- Se detectó carrera entre login AUTH y resetUserSessions USERS por tratarse de proyectos separados con ScriptLock independientes.
+- Se detectaron riesgos de escritura parcial en la creación de sesión y en el cierre remoto de varias sesiones.
+- checkSession conserva la coordinación defectuosa entre pestañas y una respuesta asíncrona obsoleta puede borrar una sesión nueva.
+- showApp puede mantener visibles Inbox/Dashboard después de cambiar a una cuenta con menor privilegio; backend continúa siendo la barrera efectiva.
+
+### Hallazgos
+H-AUD-024-001 a H-AUD-024-010. Evidencia, impacto, severidad y relaciones se encuentran en Auditoría.txt.
+
+### Tareas relacionadas
+- Ampliar AUG-005, AUG-006, AUG-007 y AUG-008 con la evidencia confirmada.
+- Relacionar AUG-010 y AUD-T-033 con la coordinación entre AUTH y USERS.
+- Crear AUG-016 para consistencia y recuperación de mutaciones de sesión.
+- Crear AUG-017 para restablecer visibilidad de navegación según el rol de cada sesión.
+
+### Validaciones y límites
+- Evidencia E1: revisión estática de fuentes, historial y diffs.
+- No se ejecutaron pruebas sintácticas E2, Apps Script, HTTP, navegador, Spreadsheet, Drive ni pruebas concurrentes reales.
+- No se modificó código ni se desplegaron servicios.
+- La matriz funcional consolidada continúa pendiente.
+
+### Siguiente iteración
+AUD-T-025 — herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
+
+

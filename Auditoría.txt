@@ -7421,3 +7421,131 @@ Acción: AUG-014.
 - Nivel E1/E2; no equivale a validación funcional.
 - Estado: AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y REMEDIACIONES PENDIENTES.
 ================================================================================
+
+
+
+================================================================================
+AUDITORÍA TÉCNICA — AUD-T-024: ADMINISTRACIÓN DE USUARIOS, PRIVILEGIOS, SESIONES Y CONTROLES DE ACCESO
+Fecha: 2026-11-07
+Plan: AUD-PLAN-2026-001
+Sesión: AUD-20261107-S005
+Checkpoint: AUD-CP-0005
+HEAD auditado: 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec
+HEAD rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Evidencia alcanzada: E1 — inspección estática de fuentes y diffs históricos.
+
+1. ALCANCE Y FUENTES
+Se revisó el ciclo de sesión y los controles de acceso en:
+- Services/Auth.js: SESSION_LIMITS, beginLoginAttempt(), resetLoginAttempts(), rollbackLoginAttempt(), logToSheet(), doGet(), doPost(), handleLogin() y handleValidateSession().
+- Services/users.js: getSpreadsheet(), doGet(), doPost(), getVerifiedSession(), handleGetUsers(), handleResetUserSessions(), handleCreateUser(), handleUpdateUser(), handleDeleteUser(), handleUpdateProfile() y handleChangePassword().
+- Services/Test/Auth.js y Services/Test/users.js: comparación completa con las fuentes productivas.
+- auth.js: handleLoginSuccess(), checkSession(), login() y logout().
+- users.html: inicialización de sesión, postToAction(), fetchUsers(), renderUserTable(), openUserModal(), gestión de usuarios, resetUserSessions(), cambio de contraseña y actualización de perfil.
+- api-config.js: API_ENDPOINTS, ACTION_TO_SERVICE_MAP, routeAction(), login() y validateSession().
+- main.js: listener de cierre de sesión y llamada inicial a checkSession().
+- ui.js: getDeveloperSessionPayload(), showLoginScreen() y showApp().
+- state.js: getState(), setState() y estado currentUser.
+- Services/Test/README.md: separación de los proyectos Apps Script de prueba.
+- README.md: estructura y separación de servicios.
+
+2. HISTORIAL Y CAMBIOS CONTRASTADOS
+- 2678ee0242a4b78be61d6c799f6a53d6ce8d0715 — separación de purga, cierre remoto de sesiones y cambios de registro AUTH. Se revisó el diff completo de las secciones relevantes.
+- 0666c1d189136dbad66c5c6523f8419b8d447002 — límites de sesión por rol y expulsión de una sola sesión antigua. Se contrastó el diff con la fuente vigente.
+- 4bc9ac19b81dd0a9cc38a21e2806973ba3bc5fb3 — serialización de la gestión de sesiones AUTH. Se verificó el bloque crítico vigente y el uso de LockService.
+- b441a5be9a04770b2d535490eb73bc9478375e9b — alta de usuarios y bloqueo de duplicados; se revisó el impacto de su ScriptLock y la diferencia con otras mutaciones.
+- Se consultó el historial por ruta para AUTH, USERS, auth.js, users.html y api-config.js. No se encontró una corrección posterior que elimine los defectos de ciclo de sesión descritos a continuación.
+
+3. HALLAZGOS
+
+H-AUD-024-001 — ALTA — Una validación asíncrona antigua puede cerrar una sesión nueva
+- Evidencia: auth.js, checkSession(), líneas 181–208; logout(), líneas 237–241.
+- La validación captura el objeto user y su token desde la sesión leída al inicio. Si otra pestaña inicia sesión con otra cuenta mientras la solicitud sigue pendiente, una respuesta tardía valid:false ejecuta logout() sin comparar el token validado con la sesión que actualmente está almacenada.
+- logout() elimina SESSION_KEY sin comprobar su contenido actual. Por tanto, una respuesta de la sesión anterior puede borrar una sesión nueva compartida mediante localStorage.
+- Impacto: pérdida inesperada de la sesión recién iniciada y cierre de una cuenta distinta a la que originó la validación.
+- Relación: ampliar AUG-008 para cubrir respuestas asíncronas obsoletas y comparación de identidad/token antes de mutar el estado compartido.
+
+H-AUD-024-002 — MEDIA — El bloqueo entre pestañas no ofrece exclusión y puede dejar una pestaña en splash
+- Evidencia: auth.js, líneas 160–172 y 217–220.
+- La secuencia getItem()/setItem() de localStorage no es una adquisición atómica. Dos pestañas pueden observar la ausencia del bloqueo y continuar simultáneamente.
+- checkSession() programa apiValidateSession(...).then(...) sin esperarla; el finally elimina LOCK_KEY inmediatamente después de programar la promesa, no al terminar la validación HTTP.
+- Si otra pestaña encuentra LOCK_KEY dentro de los cinco segundos, retorna antes de mostrar login/app. En esa pestaña el splash puede permanecer visible sin que otra pestaña pueda modificar su DOM.
+- Impacto: validaciones duplicadas, coordinación no garantizada y posible pantalla inicial bloqueada.
+- Relación: AUG-008 existente; no crear una tarea duplicada.
+
+H-AUD-024-003 — ALTA — resetUserSessions puede dejar activa una sesión creada concurrentemente por AUTH
+- Evidencia: Services/users.js, handleResetUserSessions(), líneas 217–255; Services/Auth.js, handleLogin(), líneas 284–337; Services/Test/README.md.
+- USERS y AUTH usan LockService.getScriptLock() en proyectos Apps Script separados. El README de pruebas confirma que ambos servicios deben instalarse en proyectos independientes; sus ScriptLock no forman una sección crítica compartida.
+- resetUserSessions() obtiene una instantánea de ActiveSessions y elimina las filas que aparecen en ella. Un login concurrente puede insertar una fila después de esa lectura o después del recorrido de eliminación. La acción administrativa puede responder success aunque la sesión recién creada permanezca válida.
+- Impacto: el cierre remoto no garantiza revocación completa ante login concurrente.
+- Relación: AUD-T-033 y AUG-003 (coordinación entre proyectos); AUG-010 (mutaciones USERS). Se incorpora el criterio específico de sesiones a AUG-016.
+
+H-AUD-024-004 — ALTA — La interfaz permite al Desarrollador eliminar su propia cuenta y quedan sesiones huérfanas
+- Evidencia: users.html, renderUserTable(), líneas 400–410; Services/users.js, handleDeleteUser(), líneas 398–425; Services/Auth.js, handleValidateSession(), líneas 377–395.
+- El rol Desarrollador recibe todos los usuarios en handleGetUsers(). La interfaz genera el botón Eliminar para cada fila, incluida la cuenta actual. En backend, la regla de Desarrollador permite eliminar cualquier rol y no existe una prohibición de autodeleción.
+- handleDeleteUser() elimina únicamente la fila de Users; no elimina las filas ActiveSessions.
+- AUTH valida userId + sessionToken contra ActiveSessions, pero no consulta si el usuario continúa existiendo en Users. Por ello, un token de una cuenta eliminada puede seguir obteniendo valid:true mientras conserve su fila de ActiveSessions.
+- Impacto: autodeshabilitación accidental de la cuenta administradora y sesiones huérfanas que AUTH continúa aceptando.
+- Relación: H-AUD-001 de AUD-T-002 y AUG-005. Ampliar la tarea existente; no duplicarla.
+
+H-AUD-024-005 — MEDIA — La creación de sesión AUTH puede dejar escrituras parciales
+- Evidencia: Services/Auth.js, handleLogin(), líneas 313–337.
+- Cuando se alcanza el límite, primero se elimina la sesión antigua; después se escribe Users.SessionToken y finalmente se ejecuta appendRow() en ActiveSessions.
+- Si falla setValue() o appendRow() después de eliminar la sesión anterior, no existe rollback ni reconciliación de la eliminación. Si appendRow() falla después de setValue(), la columna SessionToken queda apuntando a un token que no existe en ActiveSessions.
+- Impacto: login fallido con sesión anterior ya revocada, o referencia SessionToken inconsistente. LockService serializa concurrencia dentro de AUTH, pero no convierte varias escrituras de Spreadsheet en una transacción.
+- Relación: nueva tarea AUG-016; coordinación entre servicios en AUD-T-033.
+
+H-AUD-024-006 — MEDIA — El cierre remoto puede quedar parcialmente aplicado si falla una eliminación
+- Evidencia: Services/users.js, handleResetUserSessions(), líneas 247–256.
+- La función elimina varias filas ActiveSessions una por una, en orden descendente. Si una llamada deleteRow() falla después de eliminar filas anteriores, la excepción detiene el flujo; no hay restauración de las filas ya eliminadas ni resultado parcial que indique cuántas sesiones fueron revocadas. Users.SessionToken no llega a limpiarse.
+- Impacto: el endpoint devuelve error aunque algunas sesiones ya hayan sido cerradas; el estado final requiere reconciliación o reintento.
+- Relación: AUG-016 y AUD-T-033. Mantener separada la autorización del rol Desarrollador, que sí existe.
+
+H-AUD-024-007 — BAJA — Inbox y Dashboard pueden conservar visibilidad de un rol anterior
+- Evidencia: ui.js, showApp(), líneas 6307–6315.
+- dev-tools-btn recibe explícitamente flex/none según el rol. En cambio, inbox-btn y dashboard-btn solo reciben display:flex cuando el rol está permitido; no existe rama else que los oculte.
+- Si una cuenta con rol Desarrollador/Gefe/Supervisor cierra sesión y otra cuenta de menor privilegio inicia sesión en la misma instancia, los botones pueden permanecer visibles por el estado visual anterior.
+- Impacto: exposición visual de controles no autorizados y errores de uso. Los endpoints protegidos continúan siendo la barrera de seguridad backend; no se demuestra una elevación de privilegios por este defecto.
+- Relación: nueva tarea AUG-017.
+
+H-AUD-024-008 — MEDIA — logout no revoca el token en el servidor
+- Evidencia: auth.js, logout(), líneas 237–241; api-config.js, ACTION_TO_SERVICE_MAP, líneas 18–22; Services/Auth.js, doPost(), líneas 204–227.
+- logout() elimina únicamente gpsepedia_session del localStorage y muestra login. AUTH solo enruta login y validateSession; no existe acción de revocación individual.
+- Impacto: el token permanece en ActiveSessions y continúa siendo aceptado por los servicios que lo validan hasta que otra operación lo elimine o se aplique otra política.
+- Relación: H-AUD-002 y AUG-006. Hallazgo anterior confirmado como vigente.
+
+H-AUD-024-009 — MEDIA / DECISIÓN DE POLÍTICA — Las sesiones no expiran por antigüedad ni inactividad
+- Evidencia: Services/Auth.js, handleLogin() escribe date en ActiveSessions, líneas 328–333; handleValidateSession(), líneas 377–395; Services/users.js, getVerifiedSession(), líneas 135–171.
+- La fecha se almacena al crear la sesión, pero ninguno de los validadores comprueba antigüedad, duración absoluta o inactividad.
+- Impacto: una sesión no revocada puede permanecer válida indefinidamente. No se presume una duración correcta: se requiere una decisión explícita de política.
+- Relación: H-AUD-003 y AUG-007. Hallazgo anterior confirmado como vigente.
+
+H-AUD-024-010 — ALTA — AUTH valida sesiones sin comprobar la existencia actual del usuario
+- Evidencia: Services/Auth.js, handleValidateSession(), líneas 384–395; contraste con Services/users.js, getVerifiedSession(), líneas 157–171.
+- AUTH devuelve valid:true al encontrar la pareja userId/sessionToken en ActiveSessions, sin confirmar que exista la fila del usuario en Users. USERS sí realiza esa comprobación en getVerifiedSession().
+- Impacto: validación positiva de sesiones huérfanas después de eliminación de cuenta; la interfaz puede rehidratar el acceso aunque otras acciones backend las rechacen.
+- Relación: H-AUD-001 y AUG-005. Hallazgo anterior confirmado como vigente; no duplicar tarea.
+
+4. CONTROLES POSITIVOS Y ESTADO REAL
+- SESSION_LIMITS vigente: Desarrollador Infinity, Gefe 10, Jefe 3 (alias), Supervisor 3, Técnico 2 y Técnico exterior 1; el valor desconocido utiliza fallback 1. La corrección histórica de Gefe permanece aplicada.
+- handleLogin() protege lectura, conteo, eliminación de una sesión antigua, actualización de Users.SessionToken y appendRow() con ScriptLock dentro de AUTH; libera en finally y difiere logToSheet() hasta liberar el bloqueo.
+- Si falla deleteRow() de la sesión antigua, el login se interrumpe antes de crear la nueva.
+- USERS obtiene el rol desde la fila asociada al token; no confía en el rol remitido por el navegador.
+- handleResetUserSessions() exige sesión válida y rol Desarrollador en backend, rechaza como objetivo al propio solicitante, elimina filas desde abajo y limpia Users.SessionToken cuando termina sin error.
+- handleCreateUser() y handleResetUserSessions() usan ScriptLock local a USERS. handleUpdateUser(), handleDeleteUser(), handleUpdateProfile() y handleChangePassword() no tienen una sección crítica equivalente; esta cobertura desigual ya está relacionada con AUG-010.
+- Los límites y el cierre remoto tienen controles visuales en users.html, pero la seguridad efectiva permanece en backend.
+- Después de normalizar SPREADSHEET_ID, Services/Test/Auth.js coincide con Services/Auth.js salvo el comentario de configuración; Services/Test/users.js coincide con Services/users.js salvo el comentario de configuración y líneas vacías finales. Las copias están alineadas estáticamente, pero no son una suite automatizada.
+
+5. CALIDAD, DEPENDENCIAS Y LIMITACIONES
+- No se identificaron cambios posteriores en las rutas auditadas que eliminen los hallazgos de revocación, expiración o coordinación.
+- Las operaciones AUTH y USERS son proyectos independientes; ScriptLock no coordina sus secciones críticas.
+- La secuencia de varias operaciones Spreadsheet no ofrece rollback transaccional en los handlers examinados.
+- No se confirmó desde el repositorio qué versiones de AUTH/USERS están actualmente desplegadas.
+- No se accedió a Users, ActiveSessions ni a los deployments reales.
+- No se ejecutaron pruebas de navegador, HTTP, Apps Script V8, concurrencia real, Spreadsheet ni Drive.
+- No se realizó comprobación sintáctica mediante runtime; la evidencia se limita a inspección estática E1.
+- No se modificó código, endpoints, configuraciones, datos ni deployments.
+
+6. ESTADO DE AUD-T-024
+AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y REMEDIACIONES PENDIENTES.
+Siguiente unidad del plan: AUD-T-025 — herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
+================================================================================

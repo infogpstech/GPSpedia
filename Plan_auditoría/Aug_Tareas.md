@@ -151,3 +151,49 @@ Las siguientes secciones se completarán únicamente cuando una auditoría indiv
 - **Origen:** H-AUD-023-008. **Prioridad:** Baja.
 - **Problema:** users.html valida longitud sin trim mientras backend aplica trim; mensaje contiene «reincie».
 - **Criterios:** aplicar en cliente la misma longitud normalizada sin sustituir validación backend; corregir a «reinicie sesión»; probar espacios externos y longitudes límite.
+
+
+
+## Adenda AUD-T-024 — verificación de tareas existentes
+
+### AUG-005 — ampliar revocación y eliminación de cuentas
+- **Hallazgos confirmados:** H-AUD-024-004 y H-AUD-024-010.
+- **Adenda:** impedir o definir expresamente la autodeleción del Desarrollador; la eliminación de cualquier cuenta debe retirar sus sesiones; AUTH debe comprobar que el usuario siga existiendo antes de validar el token.
+- **Estado:** EXISTENTE; no duplicar.
+
+### AUG-006 — cierre de sesión con revocación backend
+- **Hallazgo confirmado:** H-AUD-024-008.
+- **Adenda:** el cierre local debe distinguir entre token retirado del navegador y token efectivamente revocado en AUTH. Conservar comportamiento seguro ante desconexión y reportar revocación pendiente sin afirmar éxito remoto.
+- **Estado:** EXISTENTE; no duplicar.
+
+### AUG-007 — política de expiración y revocación
+- **Hallazgo confirmado:** H-AUD-024-009.
+- **Adenda:** la fecha de ActiveSessions debe participar en la política aprobada; definir duración absoluta e inactividad y aplicar criterios compatibles en AUTH y USERS.
+- **Estado:** EXISTENTE; decisión de política pendiente.
+
+### AUG-008 — coordinación de validación de sesión entre pestañas
+- **Hallazgos confirmados:** H-AUD-024-001 y H-AUD-024-002.
+- **Adenda:** además de coordinar solicitudes concurrentes, una respuesta de validación solo podrá modificar/cerrar la sesión si sigue correspondiendo al mismo userId/token que se validó. Una respuesta obsoleta no debe borrar una sesión nueva. Toda pestaña debe resolver su estado visual si otra pestaña está validando; evitar retornos que dejen el splash sin transición.
+- **Estado:** EXISTENTE; ampliada con evidencia AUD-T-024.
+
+### AUG-016 — Consistencia y recuperación de mutaciones del ciclo de sesión
+- **Origen:** H-AUD-024-003, H-AUD-024-005 y H-AUD-024-006. **Prioridad:** Alta.
+- **Tarea auditada:** AUD-T-024.
+- **Sesión/checkpoint:** AUD-20261107-S005 / AUD-CP-0005.
+- **Evidencia:** Services/Auth.js handleLogin() (bloque de sesión, líneas 284–337); Services/users.js handleResetUserSessions() (líneas 217–265); Services/Test/README.md (proyectos separados).
+- **Problema:** AUTH y USERS mantienen ScriptLock independientes; resetUserSessions puede competir con un login y no revocar una sesión creada después de su instantánea. Además, la creación de sesión y la eliminación de varias sesiones contienen escrituras secuenciales sin rollback/reconciliación ante fallos parciales.
+- **Criterios de aceptación:** definir coordinación interproyectos compatible con AUD-T-033; probar login simultáneo a cierre remoto; impedir que una revocación confirmada deje pasar una sesión concurrente; diseñar operaciones idempotentes y recuperación/reconciliación ante fallo de setValue, appendRow o deleteRow; no afirmar atomicidad de Spreadsheet sin evidencia; validar en copia aislada.
+- **Relación:** AUD-T-033 y AUG-003 (coordinación de proyectos); AUG-010 (serialización USERS); AUG-005 y AUG-006 (revocación).
+- **Estado:** NUEVA; implementación y pruebas pendientes.
+
+### AUG-017 — Restablecer controles de navegación al cambiar de cuenta/rol
+- **Origen:** H-AUD-024-007. **Prioridad:** Baja.
+- **Tarea auditada:** AUD-T-024.
+- **Sesión/checkpoint:** AUD-20261107-S005 / AUD-CP-0005.
+- **Evidencia:** ui.js showApp(), líneas 6297–6315.
+- **Problema:** inbox-btn y dashboard-btn solo se muestran para roles autorizados, pero no se ocultan expresamente cuando la siguiente cuenta tiene un rol inferior; el estado visual previo puede permanecer.
+- **Criterios de aceptación:** establecer explícitamente el estado visible/oculto de cada control en cada llamada a showApp(); probar cambio de Developer/Gefe/Supervisor a Técnico y Técnico exterior en la misma instancia; mantener las validaciones backend como barrera efectiva.
+- **Estado:** NUEVA; implementación y pruebas pendientes.
+
+## Historial de AUD-T-024
+- 2026-11-07 — Auditoría estática E1 completada. H-AUD-024-001 a H-AUD-024-010 registrados en Auditoría.txt. No se modificó código ni se ejecutaron pruebas funcionales.

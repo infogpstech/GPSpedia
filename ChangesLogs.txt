@@ -3740,3 +3740,25 @@ ALCANCE
 - No se inspeccionó la hoja Logs real.
 - Esta actualización registra resultados de auditoría estática y tareas pendientes.
 ================================================================================
+
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-024: ADMINISTRACIÓN DE USUARIOS, PRIVILEGIOS, SESIONES Y CONTROLES DE ACCESO
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S005
+Checkpoint: AUD-CP-0005
+
+ARCHIVOS DOCUMENTALES
+- Auditoría.txt: se agregó el informe AUD-T-024, los hallazgos H-AUD-024-001 a H-AUD-024-010, controles positivos, relaciones y limitaciones.
+- Plan_auditoría/Plan_Auditoria.md: se actualizó el estado AUD-T-024 y se incorporó el resultado de la iteración.
+- Plan_auditoría/Aug_Tareas.md: se ampliaron AUG-005 a AUG-008 y se agregaron AUG-016 y AUG-017.
+- Tareas.txt: se agregó el resultado de auditoría y la referencia a tareas existentes/nuevas.
+- contexto_personal.md: se agregó el estado y los hallazgos principales de AUD-T-024.
+- checkpoint.md: se incorporaron checkpoint inicial y cierre AUD-CP-0005.
+
+ALCANCE
+- Solo se actualizaron documentos de trazabilidad.
+- No se modificaron fuentes de aplicación, pruebas, servicios, endpoints, configuraciones, datos de Spreadsheet/Drive ni deployments.
+- No se ejecutaron pruebas funcionales ni operaciones externas.
+================================================================================

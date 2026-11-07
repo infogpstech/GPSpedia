@@ -5047,3 +5047,44 @@ RELACIONES
 - AUG-002: validación funcional en deployments aislados y Spreadsheet de prueba.
 - AUD-T-024: ciclo de sesión y revocación, manteniendo separación de alcance.
 ================================================================================
+
+
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-024: ADMINISTRACIÓN DE USUARIOS, PRIVILEGIOS, SESIONES Y CONTROLES DE ACCESO
+Fecha: 2026-11-07
+Sesión: AUD-20261107-S005
+Checkpoint: AUD-CP-0005
+HEAD auditado: 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec
+Estado: AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+HALLAZGOS REGISTRADOS
+- H-AUD-024-001: respuesta de validación asíncrona antigua puede borrar una sesión nueva.
+- H-AUD-024-002: bloqueo local entre pestañas no es atómico, se libera antes de terminar la validación y puede dejar una pestaña en splash.
+- H-AUD-024-003: resetUserSessions puede competir con login AUTH y dejar una sesión nueva activa.
+- H-AUD-024-004: el Desarrollador puede eliminar su propia cuenta; quedan sesiones huérfanas.
+- H-AUD-024-005: fallo parcial en creación de sesión puede dejar Users.SessionToken inconsistente o revocar la sesión anterior sin crear la nueva.
+- H-AUD-024-006: fallo durante eliminación múltiple puede dejar resetUserSessions parcialmente aplicado.
+- H-AUD-024-007: Inbox/Dashboard pueden permanecer visibles al cambiar a una cuenta de menor privilegio.
+- H-AUD-024-008: logout continúa siendo exclusivamente local; no revoca el token backend.
+- H-AUD-024-009: no se aplica expiración por antigüedad ni inactividad; requiere decisión de política.
+- H-AUD-024-010: AUTH valida ActiveSessions sin comprobar que el usuario siga existiendo en Users.
+- Detalle técnico, líneas, impacto y controles positivos: Auditoría.txt, sección AUD-T-024.
+
+TAREAS EXISTENTES RELACIONADAS — NO DUPLICAR
+- AUG-005: ampliar eliminación de cuentas, autodeleción y validación de existencia.
+- AUG-006: revocación backend al cerrar sesión.
+- AUG-007: definir y aplicar expiración/revocación.
+- AUG-008: corregir coordinación entre pestañas y respuestas asíncronas obsoletas.
+- AUG-010 y AUD-T-033/AUG-003: serialización y coordinación entre proyectos Apps Script.
+
+NUEVAS TAREAS DERIVADAS
+- AUG-016 — Consistencia y recuperación de mutaciones del ciclo de sesión. Prioridad Alta. Coordinar login AUTH y resetUserSessions USERS; diseñar idempotencia y recuperación de fallos parciales de setValue/appendRow/deleteRow; validar en copia aislada.
+- AUG-017 — Restablecer controles de navegación al cambiar de cuenta/rol. Prioridad Baja. Definir explícitamente visibilidad de Inbox/Dashboard en cada showApp y probar cambios de rol en la misma instancia.
+
+RESTRICCIONES Y LIMITACIONES
+- No se modificó código, endpoints, servicios, datos, configuraciones ni deployments.
+- No se ejecutaron pruebas E2/E3/E4/E5, navegador, HTTP, Apps Script, Spreadsheet, Drive ni concurrencia real.
+- No se inspeccionaron sesiones ni cuentas reales.
+- No declarar cerrado el ciclo de sesión hasta completar remediaciones y matriz funcional.
+================================================================================

@@ -5675,3 +5675,91 @@ VERIFICACIONES Y LIMITACIONES
 SIGUIENTE ACCIÓN
 Iniciar AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso, con confirmación de ambos HEAD y checkpoint propio. Mantener AUG-010/AUD-T-033 para concurrencia y coordinación interservicios.
 ================================================================================
+
+
+
+================================================================================
+# CHECKPOINT INICIAL — AUD-T-024: ADMINISTRACIÓN DE USUARIOS, PRIVILEGIOS, SESIONES Y CONTROLES DE ACCESO
+
+**Fecha:** 2026-11-07
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**Rama base protegida por procedimiento:** GPSpedia2.2.5
+**HEAD inicial confirmado:** 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec
+**HEAD de la rama base confirmado:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+**Último commit conocido:** 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec
+**Sesión:** AUD-20261107-S005
+**Checkpoint:** AUD-CP-0005
+
+## Tarea y alcance
+Auditar el ciclo de vida de sesiones, límites por rol, validación de identidad, revocación, cierre remoto, privilegios y controles de acceso en AUTH/USERS y sus consumidores frontend. Contrastar la implementación vigente con los commits históricos 2678ee02, 0666c1d1, 4bc9ac19 y cambios relacionados. No implementar correcciones durante la fase diagnóstica.
+
+## Estado real al inicio
+- AUD-T-023 finalizó en auditoría estática E1/E2 con hallazgos abiertos; el HEAD de trabajo actual incorpora su commit documental.
+- La auditoría anterior dejó abiertas tareas para revocación al eliminar usuarios, logout remoto, expiración y coordinación entre pestañas.
+- AUTH y USERS mantienen fuentes productivas y copias de prueba bajo Services/Test/.
+- El README de prueba indica que AUTH y USERS deben instalarse en proyectos Apps Script separados y que api-config.js no apunta a los deployments de prueba.
+- Los límites AUTH y la serialización del bloque de login se encuentran implementados en la fuente vigente; falta validar su comportamiento real.
+- No se ha confirmado el estado de deployments ni se ha accedido a Users/ActiveSessions reales.
+
+## Archivos y funcionalidades involucrados
+- Services/Auth.js y Services/users.js.
+- Services/Test/Auth.js y Services/Test/users.js.
+- auth.js, users.html, api-config.js, main.js, ui.js, state.js e index.html.
+- Services/Test/README.md y README.md.
+- Auditoría.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Tareas.txt, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+
+## Riesgos y dependencias conocidos
+- Los ScriptLock de proyectos Apps Script separados no coordinan operaciones AUTH y USERS.
+- Las secuencias de escritura sobre Spreadsheet pueden fallar parcialmente.
+- La revocación, expiración y validación de usuarios eliminados deben comprobarse en código vigente.
+- No desplegar servicios, no modificar datos, no acceder a sesiones reales ni ejecutar pruebas externas durante esta iteración sin autorización.
+- No modificar código durante la auditoría; documentar hallazgos y tareas derivadas sin duplicar las existentes.
+
+**Fase al registrar el checkpoint inicial:** inicio documentado; auditoría estática en curso.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT DE CIERRE — AUD-T-024: ADMINISTRACIÓN DE USUARIOS, PRIVILEGIOS, SESIONES Y CONTROLES DE ACCESO
+
+**Fecha:** 2026-11-07
+**Repositorio:** infogpstech/GPSpedia
+**Rama de trabajo:** GPSpedia2.2.5_work
+**HEAD padre de la tarea:** 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec
+**Rama base:** GPSpedia2.2.5
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1
+**Sesión/checkpoint:** AUD-20261107-S005 / AUD-CP-0005
+
+## Estado final
+**AUDITORÍA ESTÁTICA COMPLETADA (E1); HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y REMEDIACIONES PENDIENTES.**
+
+## Resultado
+- Se revisaron las fuentes AUTH/USERS, copias de prueba, consumidores frontend, router, estado de aplicación y diffs históricos.
+- Se registraron H-AUD-024-001 a H-AUD-024-010.
+- Se confirmaron los límites por rol y la serialización de la sección crítica AUTH dentro del mismo proyecto.
+- Se confirmó que continúan abiertos los defectos de revocación, expiración, sesiones huérfanas, coordinación interproyectos y respuestas asíncronas obsoletas.
+- Se registraron ampliaciones de AUG-005 a AUG-008 y nuevas tareas AUG-016/AUG-017.
+
+## Archivos incluidos en el único commit documental
+- Auditoría.txt
+- Plan_auditoría/Plan_Auditoria.md
+- Plan_auditoría/Aug_Tareas.md
+- Tareas.txt
+- contexto_personal.md
+- ChangesLogs.txt
+- checkpoint.md
+
+## Verificaciones y limitaciones
+- Evidencia E1: inspección estática de fuentes, historial y diffs.
+- No se ejecutaron pruebas sintácticas/runtime E2, pruebas aisladas E3, navegador/HTTP/Apps Script E4 ni validaciones reales E5.
+- No se accedió a Google Sheets/Drive, no se verificaron deployments, no se ejecutaron pruebas concurrentes reales.
+- No se modificó código, endpoints, servicios, configuraciones ni datos.
+- No se desplegó Apps Script ni se hizo merge.
+
+## Continuidad
+- HEAD anterior a la tarea: 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec.
+- El commit único que incorpora este checkpoint y todos los documentos se identifica en el historial de Git de GPSpedia2.2.5_work.
+- La rama base conserva d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Siguiente tarea: AUD-T-025 — herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.
+================================================================================
