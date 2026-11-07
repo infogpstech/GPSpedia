@@ -4594,3 +4594,20 @@ PENDIENTES
 - Confirmar el deployment ADMIN y la publicación del frontend cuando el usuario autorice esa fase.
 - No declarar completa la tarea integral de inventario y administración de imágenes hasta validar también los demás criterios funcionales pendientes.
 ================================================================================
+
+================================================================================
+TAREA DE CORRECCIÓN — PRECISIÓN DEL MONITOR GLOBAL DE ALMACENAMIENTO DRIVE
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA INCORPORADA; VALIDACIÓN FUNCIONAL RESERVADA PARA LA FASE CONSOLIDADA.
+
+- Services/admin.js: handleGetDriveStorage() valida valores antes de convertirlos a bytes; null, undefined y cadenas vacías quedan como no disponibles y no se convierten en cero.
+- Se conserva el cero real como valor válido.
+- La cuota se clasifica como available cuando existe un límite numérico positivo; como unlimited cuando Drive API omite limit en un objeto storageQuota válido que contiene datos de uso; y como unavailable ante error, límite presente inválido u objeto sin datos verificables.
+- El uso total de cuenta, restante y porcentaje permanecen no disponibles cuando faltan sus valores de origen.
+- ui.js presenta «Ilimitada» para el estado confirmado y mantiene compatibilidad con el estado anterior unlimited_or_not_reported.
+- El router autenticado, el mapeo getDriveStorage y el monitor de index.html se conservan.
+- No se modificaron scopes, permisos, index.html, endpoints ni datos.
+- No se ejecutaron consultas reales a Drive/Spreadsheet, Apps Script, despliegues ni publicación frontend.
+- Pendiente: pruebas funcionales en la fase consolidada para cuota disponible, límite omitido, campos de uso ausentes/null/vacíos, cero real, respuesta HTTP/API fallida y autorización OAuth.
+
+================================================================================

@@ -3397,3 +3397,12 @@ ALCANCE
 - No se modificaron add_cortes.html, Services/write.js, api-config.js, offline.js ni style.css.
 - No se ejecutaron operaciones reales de Drive/Spreadsheet ni despliegues.
 ================================================================================
+
+================================================================================
+2026-11-06 — PRECISIÓN DEL MONITOR GLOBAL DE ALMACENAMIENTO DRIVE
+- Services/admin.js: handleGetDriveStorage() deja de convertir campos null/undefined/vacíos a cero; valida los valores de uso y límite antes de calcular cuota restante y porcentaje.
+- Services/admin.js: separa los estados available, unlimited y unavailable; solo clasifica como ilimitada una respuesta storageQuota válida sin campo limit y con datos de uso verificables.
+- ui.js: muestra «Ilimitada» para el estado confirmado y conserva compatibilidad con el estado anterior unlimited_or_not_reported.
+- No se modificaron index.html, api-config.js, scopes, permisos, datos ni deployments.
+- Pruebas funcionales reales quedan pospuestas para la fase consolidada solicitada.
+================================================================================

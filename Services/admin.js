@@ -3283,38 +3283,98 @@ function recordReplacedImage(data) {
  */
 
 function handleGetDriveStorage(payload, logMessage) {
+    const parseBytes = value => {
+        if ((typeof value !== "number" && typeof value !== "string") ||
+            (typeof value === "string" && value.trim() === "")) return null;
+        const parsed = Number(value);
+        return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+    };
+
     let quota = null, quotaWarning = "", driveUsedBytes = null, accountUsedBytes = null, limitBytes = null;
-    let driveUsageSource = "", quotaSource = "";
+    let driveUsageSource = "", quotaSource = "", quotaStatus = "unavailable";
+
     try {
         if (typeof DriveApp.getStorageUsed === "function") {
-            const used = Number(DriveApp.getStorageUsed());
-            if (Number.isFinite(used) && used >= 0) { driveUsedBytes = used; driveUsageSource = "DriveApp.getStorageUsed"; }
+            const used = parseBytes(DriveApp.getStorageUsed());
+            if (used !== null) {
+                driveUsedBytes = used;
+                driveUsageSource = "DriveApp.getStorageUsed";
+            }
         }
-    } catch (error) { quotaWarning = "DriveApp no pudo consultar el uso global: " + error.message; }
+    } catch (error) {
+        quotaWarning = "DriveApp no pudo consultar el uso global: " + error.message;
+    }
+
     try {
         const response = UrlFetchApp.fetch("https://www.googleapis.com/drive/v3/about?fields=storageQuota", {
             method: "get", headers: { Authorization: "Bearer " + ScriptApp.getOAuthToken() }, muteHttpExceptions: true
         });
         const code = response.getResponseCode();
         if (code < 200 || code >= 300) throw new Error("Drive API respondió HTTP " + code + ".");
+
         const body = JSON.parse(response.getContentText() || "{}");
-        quota = body && body.storageQuota ? body.storageQuota : null;
-        if (!quota) throw new Error("Drive API no devolvió storageQuota.");
-        const driveUsage = Number(quota.usageInDrive), accountUsage = Number(quota.usage), limit = Number(quota.limit);
-        if (Number.isFinite(driveUsage) && driveUsage >= 0) { driveUsedBytes = driveUsage; driveUsageSource = "Google Drive API usageInDrive"; }
-        if (Number.isFinite(accountUsage) && accountUsage >= 0) accountUsedBytes = accountUsage;
-        if (Number.isFinite(limit) && limit > 0) limitBytes = limit;
+        quota = body && body.storageQuota && typeof body.storageQuota === "object" && !Array.isArray(body.storageQuota)
+            ? body.storageQuota : null;
+        if (!quota) throw new Error("Drive API no devolvió un objeto storageQuota válido.");
+
+        const driveUsage = parseBytes(quota.usageInDrive);
+        const accountUsage = parseBytes(quota.usage);
+        if (driveUsage !== null) {
+            driveUsedBytes = driveUsage;
+            driveUsageSource = "Google Drive API usageInDrive";
+        }
+        if (accountUsage !== null) accountUsedBytes = accountUsage;
+
+        const hasLimitField = Object.prototype.hasOwnProperty.call(quota, "limit");
+        if (hasLimitField) {
+            const limit = parseBytes(quota.limit);
+            if (limit !== null && limit > 0) {
+                limitBytes = limit;
+                quotaStatus = "available";
+            } else {
+                quotaStatus = "unavailable";
+                quotaWarning = [quotaWarning, "Drive API devolvió un campo limit vacío o no válido; no se calcularán cuota restante ni porcentaje."].filter(Boolean).join(" ");
+            }
+        } else if (driveUsage !== null || accountUsage !== null) {
+            // Drive API omite storageQuota.limit cuando la cuenta no tiene un límite aplicable.
+            quotaStatus = "unlimited";
+        } else {
+            throw new Error("Drive API devolvió storageQuota sin valores de uso ni un límite verificable.");
+        }
+
         quotaSource = "Google Drive API storageQuota";
-    } catch (error) { quotaWarning = [quotaWarning, "No se pudo consultar la cuota de Drive: " + error.message].filter(Boolean).join(" "); }
-    if (driveUsedBytes === null) throw new Error("No se pudo obtener el uso global de Google Drive. " + quotaWarning);
-    const remainingBytes = limitBytes !== null && accountUsedBytes !== null ? Math.max(0, limitBytes - accountUsedBytes) : null;
-    const usagePercent = limitBytes !== null && accountUsedBytes !== null ? Math.min(100, Math.max(0, accountUsedBytes / limitBytes * 100)) : null;
-    const quotaStatus = limitBytes !== null ? "available" : (quota ? "unlimited_or_not_reported" : "unavailable");
-    logMessage && logMessage("Almacenamiento global de Drive", "Uso de Drive consultado: " + driveUsedBytes + " bytes; cuota: " +
-        (limitBytes === null ? "sin límite reportado/no disponible" : limitBytes + " bytes") + ".");
+    } catch (error) {
+        quotaStatus = "unavailable";
+        quotaWarning = [quotaWarning, "No se pudo consultar la cuota de Drive: " + error.message].filter(Boolean).join(" ");
+    }
+
+    if (driveUsedBytes === null) {
+        throw new Error("No se pudo obtener el uso global de Google Drive. " + quotaWarning);
+    }
+
+    const remainingBytes = limitBytes !== null && accountUsedBytes !== null
+        ? Math.max(0, limitBytes - accountUsedBytes) : null;
+    const usagePercent = limitBytes !== null && accountUsedBytes !== null
+        ? Math.min(100, Math.max(0, accountUsedBytes / limitBytes * 100)) : null;
+    const quotaDescription = quotaStatus === "available"
+        ? limitBytes + " bytes"
+        : (quotaStatus === "unlimited" ? "ilimitada según Drive API" : "no disponible");
+
+    logMessage && logMessage("Almacenamiento global de Drive",
+        "Uso de Drive consultado: " + driveUsedBytes + " bytes; cuota: " + quotaDescription + ".");
     const source = [driveUsageSource, quotaSource].filter(Boolean).join(" + ");
-    return { status: "success", driveUsedBytes, accountUsedBytes, limitBytes, remainingBytes, usagePercent,
-        quotaStatus, source, warning: quotaWarning, capturedAt: new Date().toISOString() };
+    return {
+        status: "success",
+        driveUsedBytes,
+        accountUsedBytes,
+        limitBytes,
+        remainingBytes,
+        usagePercent,
+        quotaStatus,
+        source,
+        warning: quotaWarning,
+        capturedAt: new Date().toISOString()
+    };
 }
 
 function handleGetReplacedImages(payload, logMessage) {

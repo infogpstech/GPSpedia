@@ -4418,7 +4418,11 @@ ${elapsedSec}s
             if (driveStorageAccountUsed) driveStorageAccountUsed.textContent = formatStorageBytes(response.accountUsedBytes);
             if (driveStorageLimit) driveStorageLimit.textContent = response.quotaStatus === 'available'
                 ? formatStorageBytes(response.limitBytes)
-                : (response.quotaStatus === 'unlimited_or_not_reported' ? 'Sin límite reportado (posible cuota ilimitada)' : 'No disponible');
+                : (response.quotaStatus === 'unlimited'
+                    ? 'Ilimitada'
+                    : (response.quotaStatus === 'unlimited_or_not_reported'
+                        ? 'Sin límite reportado (posible cuota ilimitada)'
+                        : 'No disponible'));
             if (driveStorageRemaining) driveStorageRemaining.textContent = formatStorageBytes(response.remainingBytes);
             if (driveStoragePercent) driveStoragePercent.textContent =
                 response.usagePercent !== null && response.usagePercent !== undefined && Number.isFinite(Number(response.usagePercent))

@@ -5956,3 +5956,52 @@ HEAD base protegida confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
 - La prueba funcional de más de 20 imágenes, reanudación, referencias que reaparecen, fallos parciales y reversión queda pendiente.
 - No se desplegó ADMIN ni se publicó el frontend.
 ================================================================================
+
+================================================================================
+AUDITORÍA TÉCNICA — PRECISIÓN DEL MONITOR GLOBAL DE ALMACENAMIENTO DRIVE
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: 693f4825216996e3682c69985c666c0d8b21357c
+HEAD base protegido: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. ALCANCE Y ARCHIVOS AUDITADOS
+- Services/admin.js: doPost(), protección assertDeveloperSession() y handleGetDriveStorage().
+- api-config.js: mapeo de getDriveStorage hacia ADMIN.
+- ui.js: initAdminPanelListeners(), refreshDriveStorage() y presentación de quotaStatus.
+- index.html: bloque del monitor y sus identificadores.
+- Tareas.txt: requisito 6.7 de monitor global de almacenamiento.
+- No se modificaron otros servicios ni los flujos de inventario/movimiento de imágenes.
+
+2. RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/admin.js: 198a79faa331f9124b759ea2f35162ceb626f814
+- ui.js: 08563ff744acf2130564805f6c0ee18db3d9ec36
+- Auditoría.txt: 3dfb0e2f592900c526cb941f4b1364546349d209
+- ChangesLogs.txt: ab8ccd889e1beac5a52639814a6d981201d3da7b
+- Tareas.txt: 85bd57af6f79ebb2ea78d112ed288435c7f6edba
+- checkpoint.md: 5282666448f487699240bb150885fef044fcfebe
+
+3. HALLAZGOS
+- El router ADMIN contiene getDriveStorage y ejecuta assertDeveloperSession(payload) antes de procesar las acciones distintas de ping.
+- api-config.js enruta getDriveStorage a ADMIN.
+- ui.js envía getDeveloperSessionPayload() y presenta el consumo de Drive, uso total de cuota, límite, restante, porcentaje, fuente y advertencias.
+- index.html contiene los seis elementos requeridos para mostrar el estado y los valores del monitor.
+- En handleGetDriveStorage(), Number(quota.usageInDrive) y Number(quota.usage) se ejecutaban sin comprobar si los campos existían o contenían null/cadena vacía. Number(null) y Number("") producen 0, lo que podía mostrar un consumo no medido como cero.
+- El handler clasificaba como unlimited_or_not_reported tanto la omisión del límite como una respuesta de cuota incompleta; el frontend no distinguía cuota ilimitada de cuota no disponible.
+- La cuota restante y el porcentaje dependen del límite y del uso total de cuenta; no deben calcularse si alguno de esos valores no está disponible.
+- DriveApp.getStorageUsed() es una fuente independiente para el uso global de Drive y puede conservarse como respaldo del valor usageInDrive. No representa por sí sola el límite de cuota de la cuenta.
+
+4. CAMBIO ESTRICTAMENTE NECESARIO
+- Añadir validación de valores antes de convertirlos a bytes.
+- Tratar como desconocidos null, undefined y cadenas vacías; conservar el cero numérico/string "0" como valor válido.
+- Interpretar limit omitido como ilimitado solo cuando el objeto storageQuota es válido y contiene al menos un valor de uso verificable, conforme al contrato de Drive API.
+- Tratar limit presente pero vacío/no válido, objeto incompleto y error HTTP/API como cuota no disponible.
+- Mantener restantes y porcentaje en null cuando no existan los operandos necesarios.
+- Actualizar ui.js para presentar «Ilimitada» cuando el backend confirme ese estado y conservar compatibilidad temporal con unlimited_or_not_reported.
+- No se requiere cambiar index.html ni api-config.js.
+
+5. RIESGOS Y LÍMITES
+- La autorización real de UrlFetchApp y los scopes efectivos del deployment ADMIN no se pueden confirmar mediante lectura estática.
+- La semántica de cuota y los valores reales de la cuenta deberán validarse en la fase funcional consolidada, sin usar producción durante esta tarea.
+- No se ejecutaron consultas HTTP, Apps Script, DriveApp ni SpreadsheetApp reales.
+================================================================================

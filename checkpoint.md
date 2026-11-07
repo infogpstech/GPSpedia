@@ -4233,3 +4233,82 @@ Continuar en la fase funcional consolidada cuando el usuario lo autorice; actual
 COMMIT
 Un único commit previsto para esta tarea: «feat: auto-organize unused Drive images», con padre 7dcd12250bfd4c93200dcb48a19e6d6162a213a9. El SHA final se identificará en el historial Git después de su creación.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — PRECISIÓN DEL MONITOR GLOBAL DE ALMACENAMIENTO DRIVE
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 693f4825216996e3682c69985c666c0d8b21357c
+HEAD de la rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+OBJETIVO
+Corregir la interpretación de campos ausentes o inválidos en la respuesta storageQuota del monitor global de Google Drive, evitando presentar datos desconocidos como cero y distinguiendo una cuota ilimitada de una consulta no disponible.
+
+ESTADO INICIAL
+- ADMIN consulta DriveApp.getStorageUsed() y Google Drive API v3 about?fields=storageQuota.
+- El handler convertía directamente quota.usageInDrive y quota.usage con Number(). JavaScript convierte null y cadenas vacías a 0, por lo que una respuesta incompleta podía mostrarse como consumo cero.
+- El estado unlimited_or_not_reported agrupaba la ausencia de límite y una respuesta sin información verificable.
+- El frontend reconocía available y unlimited_or_not_reported, pero no un estado ilimitada inequívoco.
+- La interfaz, el mapeo getDriveStorage y la validación de sesión Desarrollador ya existen.
+
+ALCANCE
+- Validar los valores numéricos antes de convertirlos.
+- No calcular cuota restante ni porcentaje si falta el uso total de la cuenta o el límite.
+- Reconocer cuota ilimitada solo cuando la respuesta storageQuota es válida, no contiene el campo limit y contiene al menos un valor de uso verificable.
+- Mantener no disponible para errores, objetos incompletos o límites inválidos.
+- Actualizar la presentación del estado ilimitada y conservar compatibilidad visual con la respuesta anterior.
+
+RESTRICCIONES
+- No consultar ni modificar Drive/Spreadsheet reales.
+- No desplegar ADMIN ni publicar frontend.
+- No cambiar permisos ni scopes sin evidencia funcional.
+- No modificar la rama base.
+- Un único commit en GPSpedia2.2.5_work.
+
+FASE
+Checkpoint inicial registrado en esta tarea antes de la auditoría formal y de la modificación de código. Los respaldos exactos se identifican por los SHA de los blobs existentes en HEAD.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — PRECISIÓN DEL MONITOR GLOBAL DE ALMACENAMIENTO DRIVE
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD anterior a la tarea: 693f4825216996e3682c69985c666c0d8b21357c
+HEAD de la rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+IMPLEMENTACIÓN ESTÁTICA INCORPORADA. LA VALIDACIÓN FUNCIONAL REAL SE POSPONE A LA FASE CONSOLIDADA SOLICITADA POR EL USUARIO.
+
+ARCHIVOS MODIFICADOS
+- Services/admin.js
+- ui.js
+- Tareas.txt
+- Auditoría.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+RESULTADO
+- El monitor ya no presenta null, undefined ni cadenas vacías como 0 bytes.
+- Los ceros reales se conservan como valores válidos.
+- El backend distingue cuota disponible, ilimitada confirmada y no disponible.
+- La cuota restante y el porcentaje solo se calculan con límite y uso total de cuenta válidos.
+- El frontend presenta «Ilimitada» para el estado confirmado y mantiene compatibilidad con respuestas del backend anteriores.
+- La autorización ADMIN, el endpoint existente y el mapeo no cambiaron.
+
+VERIFICACIONES
+- Se revisaron estáticamente router, autenticación, mapeo, HTML y consumidores UI.
+- No se modificaron index.html ni api-config.js.
+- Las pruebas funcionales de Drive API, scopes OAuth, cuota real, errores HTTP, Apps Script y navegador no se ejecutaron.
+
+PENDIENTES
+- Validar en entorno aislado una cuota numérica disponible, limit omitido, campos usage/usageInDrive ausentes o null, cadena vacía, cero real, límite inválido y error de API.
+- Verificar permisos/scopes efectivos del deployment ADMIN en la fase funcional.
+- No desplegar ni consultar cuentas productivas en esta tarea.
+
+PUBLICACIÓN
+Un único commit hijo directo de 693f4825216996e3682c69985c666c0d8b21357c, exclusivamente en GPSpedia2.2.5_work. La rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 permanece intacta.
+================================================================================
