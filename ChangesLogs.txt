@@ -3595,3 +3595,17 @@ ALCANCE Y RESULTADO
 - No se ejecutaron pruebas funcionales, Apps Script, solicitudes HTTP, operaciones Drive/Spreadsheet ni despliegues.
 - Las pruebas funcionales quedan expresamente reservadas para la fase consolidada, una vez terminadas las implementaciones.
 ================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — NUEVO REQUERIMIENTO DE LISTAS Y SALTOS DE LÍNEA EN TEXTO ENRIQUECIDO
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+
+- Se añadió al final de Tareas.txt una tarea pendiente para ampliar las barras de texto enriquecido asociadas a campos multilínea.
+- El requerimiento contempla listas ordenadas y no ordenadas, selección de marcadores (guion, flecha, verificación, viñeta y otros equivalentes), conservación de la estructura y representación automática de saltos de línea naturales.
+- Se incluyeron requisitos de compatibilidad con contenido histórico, sanitización, auditoría previa de todos los formularios afectados, criterios de aceptación y restricciones de despliegue/datos productivos.
+- No se modificó código ni se ejecutó una auditoría de implementación en esta fase. La auditoría técnica de los editores y del ciclo de renderizado/almacenamiento forma parte obligatoria de la tarea antes de codificar.
+- No se ejecutaron pruebas funcionales, Apps Script ni operaciones sobre Drive/Spreadsheet.
+- checkpoint.md conserva el historial y registra el checkpoint inicial/final de esta actualización documental.
+================================================================================

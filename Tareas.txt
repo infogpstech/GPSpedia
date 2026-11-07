@@ -4899,3 +4899,76 @@ Criterios de aceptación:
 Restricciones:
 No desplegar ni modificar datos productivos. No cambiar el comportamiento de alta de cortes ni la persistencia actual del catálogo sin auditoría. Un único commit mediante Git Database API.
 ================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — AMPLIAR LAS BARRAS DE TEXTO ENRIQUECIDO CON LISTAS Y RESPETO AUTOMÁTICO DE SALTOS DE LÍNEA
+Fecha de registro: 2026-11-07
+Prioridad: MEDIA
+Estado: PENDIENTE DE AUDITORÍA TÉCNICA E IMPLEMENTACIÓN.
+Origen: Nuevo requerimiento solicitado por el usuario.
+
+OBJETIVO
+Ampliar las barras de herramientas de texto enriquecido de los formularios GPSpedia, específicamente las asociadas a campos de texto multilínea (textarea / inputs de más de una línea), para permitir crear listas ordenadas y no ordenadas con distintos estilos de marcadores. Además, hacer que los saltos de línea que el usuario introduce naturalmente al escribir se reflejen automáticamente en el contenido mostrado, sin exigir que escriba etiquetas HTML como <br>.
+
+REQUISITOS FUNCIONALES
+
+A. LISTAS ORDENADAS Y NO ORDENADAS
+1. Incorporar en las barras de texto enriquecido de los campos multilínea controles para crear listas ordenadas y listas no ordenadas.
+2. Permitir seleccionar entre varios estilos de marcador para listas no ordenadas. Como mínimo, evaluar y ofrecer los siguientes estilos solicitados:
+   - Guion: -
+   - Flecha: →
+   - Marca de verificación: ✓
+   - Viñeta: •
+   - Otros marcadores visuales equivalentes, siempre que su representación sea legible y consistente.
+3. Las listas ordenadas deberán numerar sus elementos automáticamente y conservar el orden al editar o visualizar el contenido.
+4. Permitir aplicar formato de lista al texto seleccionado o convertir líneas existentes en elementos de lista, sin perder el texto ni duplicarlo.
+5. Permitir continuar una lista al presionar Enter y salir de ella mediante el comportamiento habitual del editor, si el diseño técnico actual lo permite.
+6. La selección de un estilo de marcador debe afectar únicamente a la lista o bloque seleccionado y no modificar listas independientes del mismo campo.
+7. Mantener una presentación uniforme de listas en los formularios y en las vistas donde se consulta el contenido guardado.
+
+B. SALTOS DE LÍNEA NATURALES
+1. Detectar y conservar los saltos de línea introducidos directamente por el usuario al escribir o pegar texto en un campo multilínea.
+2. Al presentar el contenido, reflejar esos saltos como saltos de línea visibles, sin que el usuario tenga que insertar manualmente etiquetas HTML <br>.
+3. Al editar contenido existente, conservar los saltos de línea originales y evitar que se concatenen párrafos o se creen saltos duplicados.
+4. Diferenciar los saltos de línea normales de los párrafos y de los elementos de listas, evitando que la conversión automática altere la estructura del contenido.
+5. La conversión debe realizarse de forma controlada en el proceso de guardar/renderizar, según la arquitectura existente; no introducir HTML sin sanitización ni confiar en contenido proporcionado por el usuario.
+6. Mantener compatibilidad con registros existentes que ya contienen etiquetas <br>, párrafos HTML, listas u otras marcas admitidas. Evitar duplicar saltos al procesar contenido histórico.
+
+C. INTEGRACIÓN Y COMPATIBILIDAD
+1. Auditar todas las barras de texto enriquecido existentes y localizar cuáles están asociadas a campos multilínea. No limitar el cambio a un solo formulario si el componente o patrón se comparte.
+2. Identificar si existe un editor/componente común y priorizar su reutilización para evitar implementaciones divergentes.
+3. Mantener los formatos de texto enriquecido ya disponibles (por ejemplo, negrita, cursiva, subrayado u otros controles existentes), sin regresiones.
+4. Revisar el ciclo completo de contenido: captura, edición, validación, sanitización, almacenamiento, recuperación y renderizado.
+5. Conservar compatibilidad con el contenido histórico y con formularios que no utilicen la barra de texto enriquecido.
+6. Los marcadores seleccionables deberán almacenarse de manera que puedan recuperarse y renderizarse consistentemente. Preferir semántica estructurada de listas cuando sea compatible con el formato existente; si se requiere una representación HTML, sanitizarla mediante los mecanismos autorizados del proyecto.
+7. No modificar el contenido de registros históricos en bloque ni ejecutar migraciones productivas como parte de esta tarea, salvo autorización expresa y una tarea específica aprobada.
+
+D. AUDITORÍA PREVIA OBLIGATORIA
+Antes de implementar:
+1. Inventariar los formularios y campos multilínea que cuentan con barra de texto enriquecido.
+2. Identificar los componentes, funciones y utilidades responsables de insertar formato, obtener el valor, sanitizar HTML y mostrar el contenido.
+3. Determinar cómo se almacenan actualmente los saltos de línea y cómo se interpretan en cada vista.
+4. Revisar riesgos de XSS, HTML no permitido, contenido pegado desde fuentes externas y compatibilidad con registros históricos.
+5. Registrar en Auditoría.txt los archivos, funciones, líneas, hallazgos y respaldos exactos.
+6. Registrar en Tareas.txt cualquier problema adicional que quede fuera del alcance de esta tarea, sin ampliarla silenciosamente.
+
+CRITERIOS DE ACEPTACIÓN
+- Las barras de texto enriquecido de los campos multilínea incluyen acciones para listas ordenadas y no ordenadas.
+- El usuario puede seleccionar entre los marcadores requeridos (guion, flecha, verificación y viñeta) y los marcadores se conservan al guardar y volver a editar.
+- Las listas ordenadas conservan su numeración y estructura.
+- Los saltos de línea introducidos naturalmente se muestran correctamente sin que el usuario escriba <br>.
+- Editar y volver a guardar contenido no genera saltos duplicados, pérdida de párrafos ni alteraciones de listas.
+- El contenido histórico con <br> y estructuras HTML admitidas continúa visualizándose correctamente.
+- El contenido se sanitiza y no permite ejecutar HTML o scripts no autorizados.
+- Los controles de formato existentes mantienen su funcionamiento.
+- La solución se aplica de forma coherente a todos los formularios multilínea identificados en la auditoría, o se documentan justificadamente las excepciones.
+- Las pruebas funcionales se ejecutarán en la fase consolidada, una vez terminadas todas las implementaciones, conforme a la planificación del usuario.
+
+RESTRICCIONES
+- No introducir nombres de funciones, variables, archivos o componentes nuevos sin identificarlos primero en la auditoría.
+- No reemplazar ni eliminar reglas existentes del procedimiento de desarrollo.
+- No modificar registros productivos ni realizar migraciones masivas sin autorización expresa.
+- No desplegar hasta contar con autorización expresa.
+- Un único commit por tarea, mediante el procedimiento autorizado de Git Database API.
+================================================================================

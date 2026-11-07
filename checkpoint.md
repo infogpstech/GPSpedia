@@ -5056,3 +5056,37 @@ VERIFICACIONES Y LIMITACIONES
 ÚNICA ACCIÓN SIGUIENTE
 Crear un solo árbol basado en 3e7d8e132cd81f4088ff2b6f50ca5c195f2e10b3 con los cuatro archivos documentales; crear un único commit hijo directo de d99ab2d42c6e0d428ea7fd272e605b8a6d3c0dbe; actualizar exclusivamente GPSpedia2.2.5_work con force:false y expected_sha igual a ese HEAD. Después verificar commit, padre, archivos, nuevo HEAD y que GPSpedia2.2.5 permanezca en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — REGISTRO DE REQUERIMIENTO DE LISTAS Y SALTOS DE LÍNEA
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+HEAD inicial confirmado: 1c10a03df30c2c3f05f30ea7d16809920ee440af
+Árbol inicial: 0f450074a1e84a8725b1a1ef8611fe404d19764f
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Objetivo: registrar un nuevo requerimiento de listas ordenadas/no ordenadas y saltos de línea naturales en las barras de texto enriquecido de formularios multilínea.
+Alcance de esta actualización: documentación de la tarea y registro de cambios. No incluye auditoría de código ni implementación; ambas quedan incluidas como pasos obligatorios de la nueva tarea.
+No se modificó código, esquema, datos productivos ni deployments.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — REGISTRO DE REQUERIMIENTO DE LISTAS Y SALTOS DE LÍNEA
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+HEAD padre previsto: 1c10a03df30c2c3f05f30ea7d16809920ee440af
+Árbol base: 0f450074a1e84a8725b1a1ef8611fe404d19764f
+Rama base protegida: GPSpedia2.2.5 (sin cambios).
+
+RESULTADO
+- Nuevo requerimiento registrado en Tareas.txt como pendiente de auditoría técnica e implementación.
+- Incluye listas ordenadas, listas no ordenadas con marcadores seleccionables (guion, flecha, verificación, viñeta y otros equivalentes) y representación automática de saltos de línea naturales.
+- Incluye compatibilidad histórica, sanitización, inventario previo de formularios multilínea y criterios de aceptación.
+- ChangesLogs.txt actualizado.
+- Auditoría.txt no se modifica en esta fase porque todavía no se ha inspeccionado el código de los editores; la auditoría de implementación es un requisito previo dentro de la tarea registrada.
+- No se modificó código ni se ejecutaron pruebas funcionales. No hubo despliegues ni cambios de datos productivos.
+
+ÚNICA ACCIÓN SIGUIENTE
+Crear un único árbol documental basado en 0f450074a1e84a8725b1a1ef8611fe404d19764f, crear un único commit hijo directo de 1c10a03df30c2c3f05f30ea7d16809920ee440af y actualizar exclusivamente GPSpedia2.2.5_work mediante update_ref force:false y expected_sha igual al HEAD confirmado. Verificar el commit, sus archivos, el nuevo HEAD y que la rama base siga intacta.
+================================================================================
