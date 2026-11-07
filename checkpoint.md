@@ -4509,3 +4509,104 @@ Continuar con el siguiente pendiente independiente de Tareas.txt, sin realizar p
 PUBLICACIÓN
 Un único commit hijo directo de 463bd23f9ca8d73b3c587376d8c1e4a2cf154707, exclusivamente en GPSpedia2.2.5_work. La rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 debe permanecer intacta.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — ROBUSTECER FIND OR CREATE DE LA HOJA IDEMPOTENCIA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 2eaeb4761be4531f0bdc656062e97a8175866b1e
+HEAD de rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Comparación: GPSpedia2.2.5_work está 182 commits adelante y 0 atrás de GPSpedia2.2.5.
+
+TAREA Y ALCANCE
+Robustecer la búsqueda o creación bajo demanda de la hoja «Idempotencia» en los servicios WRITE y ADMIN. Cuando la hoja no exista, crearla con los encabezados opId, vehicleId, slotIndex, timestamp y status. Cuando exista con encabezados esperados incompletos, completar exclusivamente celdas de encabezado vacías, sin sobrescribir encabezados incompatibles ni datos. Mantener compatibilidad con Idempotencia_Cortes cuando corresponda.
+
+ESTADO REAL AL INICIO
+- El HEAD actual de la rama de trabajo es 2eaeb4761be4531f0bdc656062e97a8175866b1e; su commit padre y el HEAD de la rama base fueron verificados por separado.
+- Services/write.js y Services/admin.js ya contienen IDEMPOTENCIA_HEADERS, isIdempotenciaSheetCompatible(), initializeIdempotenciaSheet() y getIdempotenciaSheet().
+- La lógica actual crea la hoja si no existe y escribe los cinco encabezados cuando la hoja está completamente vacía.
+- Si la hoja tiene filas/datos y uno o más encabezados esperados están vacíos, la validación actual la considera incompatible; puede usar o crear Idempotencia_Cortes en lugar de completar los encabezados vacíos.
+- WRITE y ADMIN consultan getIdempotenciaSheet() desde recordOpId() y findRowByOpId(); ADMIN también usa la compatibilidad en la inspección del destino de migración histórica.
+- No se han modificado archivos, hojas de cálculo, deployments ni datos reales durante el inicio de esta tarea.
+- La información de Cortes AQ/AR/AS no forma parte del alcance. AQ permanece como VIN y AR/AS no serán tocadas.
+
+ARCHIVOS PREVISTOS
+- Services/write.js
+- Services/admin.js
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+RIESGOS Y RESTRICCIONES
+- No sobrescribir encabezados no vacíos ni alterar filas existentes.
+- No reinterpretar una hoja con datos y sin encabezados reconocibles como Idempotencia.
+- Mantener el fallback y la compatibilidad con registros históricos.
+- No tocar Cortes, VIN, AQ, AR ni AS.
+- No acceder ni modificar Spreadsheet/Drive reales; no desplegar servicios; no actualizar la rama base.
+- Un único commit para toda la tarea mediante Git Database API, con parent y expected_sha iguales al HEAD confirmado.
+
+FASE
+Checkpoint inicial documentado. Auditoría formal de funciones y dependencias en curso; todavía no se ha modificado código.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — ROBUSTECER FIND OR CREATE DE LA HOJA IDEMPOTENCIA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD anterior a la tarea: 2eaeb4761be4531f0bdc656062e97a8175866b1e
+HEAD de base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+IMPLEMENTACIÓN ESTÁTICA INCORPORADA EN WRITE Y ADMIN. LAS PRUEBAS FUNCIONALES EN APPS SCRIPT CONTRA UNA SPREADSHEET AISLADA SIGUEN PENDIENTES; NO SE DECLARA VALIDADA EN PRODUCCIÓN.
+
+ARCHIVOS MODIFICADOS
+- Services/write.js
+- Services/admin.js
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+RESULTADO
+- Se incorporó findOrCreateIdempotenciaSheet() en ambos servicios y se conservó getIdempotenciaSheet() como wrapper para mantener compatibilidad.
+- Una hoja inexistente se crea bajo demanda con los encabezados A:E: opId, vehicleId, slotIndex, timestamp y status.
+- En hojas existentes, solo se completan celdas vacías de encabezado que correspondan a posiciones esperadas; no se sustituyen encabezados incompatibles ni se alteran filas de datos.
+- Se amplía la capacidad de columnas únicamente si la hoja dispone de menos de cinco columnas físicas.
+- Se conserva el fallback Idempotencia_Cortes y se maneja una colisión concurrente de insertSheet mediante una nueva búsqueda del nombre.
+- Una hoja con registros y sin ningún encabezado reconocido se mantiene como incompatible para evitar reinterpretar datos desconocidos.
+- No se modificaron recordOpId(), findRowByOpId(), el contrato A:E, los estados pending/completed ni el flujo de migración VIN.
+- AQ/VIN, AR y AS no fueron modificadas.
+
+VERIFICACIONES EJECUTADAS
+- Parseo sintáctico del archivo completo Services/write.js actualizado: PASS.
+- Parseo sintáctico del archivo completo Services/admin.js actualizado: PASS.
+- Comparación de cada archivo contra su respaldo: PASS; el único bloque sustituido es la gestión de Idempotencia.
+- Pruebas con mocks de Spreadsheet: 8/8 PASS (creación, reparación parcial, preservación de datos, rechazo de encabezados incompatibles, rechazo de datos sin encabezados reconocibles, ampliación de columnas, fallback y colisión de creación).
+- Revisión de dependencias de ADMIN: inspectIdempotenciaMigrationTarget() mantiene su carácter de diagnóstico de solo lectura; la migración confirmada conserva la verificación del destino.
+
+VALIDACIONES NO REALIZADAS / LIMITACIONES
+- No se ejecutó Apps Script contra una Spreadsheet real ni se confirmó la existencia/contenido de las hojas Idempotencia e Idempotencia_Cortes en producción.
+- No se probaron dos ejecuciones concurrentes reales; la colisión de creación se verificó mediante mock.
+- No se desplegaron WRITE ni ADMIN y no se modificaron datos de Sheets/Drive.
+- La prueba funcional en una copia aislada debe validar creación, reparación parcial con registros, fallback incompatible y escrituras pending/completed.
+
+RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/write.js: fcb784af25f04170905c3d62aafed2846e0469d0
+- Services/admin.js: 341ff40f8a2f40d35abe8a4a60e8eb08a0eefd07
+- Auditoría.txt: 1a679996483cdc59fc3f31ce717bbd25a6298703
+- ChangesLogs.txt: ee0716411c1220f403711983b0d36b453a8c5446
+- Tareas.txt: 954c7c146b53ab1425ae84a9c7fa6c2fa9045fdc
+- checkpoint.md: 0ba8fca9fcbd45508dc75c4a2679fc42b25fd670
+
+CONTINUIDAD
+- La siguiente acción es validar los helpers en una Spreadsheet de prueba aislada y confirmar la persistencia pending/completed sin tocar producción.
+- El commit único de esta tarea se creará como hijo directo de 2eaeb4761be4531f0bdc656062e97a8175866b1e, únicamente en GPSpedia2.2.5_work. Su SHA será identificable en el historial Git.
+- La rama base GPSpedia2.2.5 debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

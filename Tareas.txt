@@ -4650,3 +4650,20 @@ Estado: IMPLEMENTACIÓN ESTÁTICA INCORPORADA; PRUEBAS FUNCIONALES PENDIENTES PA
 - Auditoría, respaldos y limitaciones en Auditoría.txt, entrada «IDEMPOTENCIA DEL MODAL (+) DE AGREGADO DE CORTES».
 - No se desplegó ni se modificó Spreadsheet/Drive real.
 ================================================================================
+
+
+================================================================================
+CIERRE DE TAREA — ROBUSTECER FIND OR CREATE DE LA HOJA IDEMPOTENCIA
+Fecha: 2026-11-06
+Estado: IMPLEMENTACIÓN ESTÁTICA INCORPORADA; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PENDIENTE.
+
+- Services/write.js y Services/admin.js ahora comparten el mismo flujo findOrCreateIdempotenciaSheet().
+- Si la hoja no existe, se crea bajo demanda con los encabezados opId, vehicleId, slotIndex, timestamp y status.
+- Si existen encabezados esperados incompletos, se completan solo las celdas vacías A1:E1; los encabezados incompatibles y los registros se conservan sin cambios.
+- Se mantiene Idempotencia_Cortes como fallback y se recupera una posible colisión concurrente al crear una hoja.
+- getIdempotenciaSheet() se conserva como wrapper para mantener compatibilidad con los consumidores existentes.
+- Parseo sintáctico de ambos servicios: PASS. Pruebas estáticas con mocks: 8/8 PASS. Comparación contra respaldos: cambios limitados a los helpers de idempotencia.
+- No se ejecutó Apps Script, no se accedió a Sheets/Drive reales y no se desplegaron servicios.
+- AQ/VIN, AR y AS permanecen fuera del alcance y no fueron modificadas.
+- La auditoría, respaldos, pruebas y limitaciones se documentan en Auditoría.txt.
+================================================================================

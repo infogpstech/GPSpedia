@@ -2375,51 +2375,130 @@ function checkFileIdValid(url) {
 
 const IDEMPOTENCIA_HEADERS = ["opId", "vehicleId", "slotIndex", "timestamp", "status"];
 
-function isIdempotenciaSheetCompatible(sheet) {
-    if (!sheet) return false;
-    if (sheet.getLastRow() === 0 && sheet.getLastColumn() === 0) return true;
-    if (sheet.getLastRow() < 1 || sheet.getLastColumn() < IDEMPOTENCIA_HEADERS.length) return false;
-    const headers = sheet.getRange(1, 1, 1, IDEMPOTENCIA_HEADERS.length).getValues()[0];
-    return IDEMPOTENCIA_HEADERS.every((expected, index) =>
-        String(headers[index] || "").trim().toLowerCase() === expected.toLowerCase()
-    );
+/**
+ * Comprueba el esquema A:E sin modificar la hoja.
+ * Los encabezados vacíos son reparables; los encabezados no vacíos distintos
+ * del esquema esperado hacen que la hoja sea incompatible.
+ */
+function getIdempotenciaHeaderState(sheet) {
+    if (!sheet) return { compatible: false, missingIndexes: [] };
+
+    const maxColumns = Math.max(0, Number(sheet.getMaxColumns()) || 0);
+    const availableColumns = Math.min(maxColumns, IDEMPOTENCIA_HEADERS.length);
+    const headers = availableColumns > 0
+        ? sheet.getRange(1, 1, 1, availableColumns).getValues()[0]
+        : [];
+    const missingIndexes = [];
+    let recognizedHeaders = 0;
+
+    for (let index = 0; index < IDEMPOTENCIA_HEADERS.length; index++) {
+        const rawHeader = index < availableColumns ? String(headers[index] || "").trim() : "";
+        if (!rawHeader) {
+            missingIndexes.push(index);
+            continue;
+        }
+        if (rawHeader.toLowerCase() !== IDEMPOTENCIA_HEADERS[index].toLowerCase()) {
+            return { compatible: false, missingIndexes: [] };
+        }
+        recognizedHeaders++;
+    }
+
+    // Una hoja con registros pero sin ningún encabezado reconocible no debe
+    // reinterpretarse automáticamente como una tabla de idempotencia.
+    if (sheet.getLastRow() > 1 && recognizedHeaders === 0) {
+        return { compatible: false, missingIndexes: [] };
+    }
+
+    return { compatible: true, missingIndexes: missingIndexes };
 }
 
+function isIdempotenciaSheetCompatible(sheet) {
+    return getIdempotenciaHeaderState(sheet).compatible;
+}
+
+/**
+ * Completa únicamente encabezados vacíos. Nunca reemplaza encabezados
+ * incompatibles ni modifica las filas de datos existentes.
+ */
 function initializeIdempotenciaSheet(sheet) {
-    if (sheet && sheet.getLastRow() === 0) {
+    if (!sheet) throw new Error("No se puede inicializar una hoja de idempotencia inexistente.");
+
+    let state = getIdempotenciaHeaderState(sheet);
+    if (!state.compatible) {
+        throw new Error("La hoja «" + sheet.getName() + "» contiene encabezados incompatibles; no se modificó.");
+    }
+
+    const maxColumns = sheet.getMaxColumns();
+    if (maxColumns < IDEMPOTENCIA_HEADERS.length) {
+        sheet.insertColumnsAfter(maxColumns, IDEMPOTENCIA_HEADERS.length - maxColumns);
+    }
+
+    const isEmptySheet = sheet.getLastRow() === 0 && sheet.getLastColumn() === 0;
+    if (isEmptySheet) {
         sheet.getRange(1, 1, 1, IDEMPOTENCIA_HEADERS.length).setValues([IDEMPOTENCIA_HEADERS]);
         sheet.setFrozenRows(1);
+    } else {
+        state.missingIndexes.forEach(index => {
+            sheet.getRange(1, index + 1).setValue(IDEMPOTENCIA_HEADERS[index]);
+        });
+    }
+
+    SpreadsheetApp.flush();
+    state = getIdempotenciaHeaderState(sheet);
+    if (!state.compatible || state.missingIndexes.length) {
+        throw new Error("No se pudo verificar la estructura A:E de la hoja «" + sheet.getName() + "».");
+    }
+    return sheet;
+}
+
+/**
+ * Crea una hoja de forma tolerante a dos ejecuciones simultáneas.
+ * Si insertSheet falla, vuelve a consultar el nombre antes de propagar el error.
+ */
+function createIdempotenciaSheetIfMissing(ss, sheetName) {
+    let sheet = ss.getSheetByName(sheetName);
+    if (sheet) return sheet;
+
+    try {
+        return ss.insertSheet(sheetName);
+    } catch (error) {
+        sheet = ss.getSheetByName(sheetName);
+        if (sheet) return sheet;
+        throw error;
     }
 }
 
-function getIdempotenciaSheet() {
+function findOrCreateIdempotenciaSheet() {
     const ss = getSpreadsheet();
     let sheet = ss.getSheetByName(SHEET_NAMES.IDEMPOTENCIA);
+
     if (!sheet) {
         const fallback = ss.getSheetByName(SHEET_NAMES.IDEMPOTENCIA_FALLBACK);
         if (fallback && isIdempotenciaSheetCompatible(fallback)) {
-            initializeIdempotenciaSheet(fallback);
-            return fallback;
+            return initializeIdempotenciaSheet(fallback);
         }
-        sheet = ss.insertSheet(SHEET_NAMES.IDEMPOTENCIA);
-        initializeIdempotenciaSheet(sheet);
-        return sheet;
+        sheet = createIdempotenciaSheetIfMissing(ss, SHEET_NAMES.IDEMPOTENCIA);
+        return initializeIdempotenciaSheet(sheet);
     }
+
     if (isIdempotenciaSheetCompatible(sheet)) {
-        initializeIdempotenciaSheet(sheet);
-        return sheet;
+        return initializeIdempotenciaSheet(sheet);
     }
+
     let fallback = ss.getSheetByName(SHEET_NAMES.IDEMPOTENCIA_FALLBACK);
     if (!fallback) {
-        fallback = ss.insertSheet(SHEET_NAMES.IDEMPOTENCIA_FALLBACK);
-        initializeIdempotenciaSheet(fallback);
-        return fallback;
+        fallback = createIdempotenciaSheetIfMissing(ss, SHEET_NAMES.IDEMPOTENCIA_FALLBACK);
+        return initializeIdempotenciaSheet(fallback);
     }
     if (!isIdempotenciaSheetCompatible(fallback)) {
         throw new Error("Las hojas Idempotencia e Idempotencia_Cortes tienen esquemas incompatibles.");
     }
-    initializeIdempotenciaSheet(fallback);
-    return fallback;
+    return initializeIdempotenciaSheet(fallback);
+}
+
+// Alias conservado para no alterar los consumidores existentes.
+function getIdempotenciaSheet() {
+    return findOrCreateIdempotenciaSheet();
 }
 
 function removeEmptyPendingCutRow(sheet, rowIndex, lastColumn) {

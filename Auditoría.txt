@@ -6192,3 +6192,92 @@ Estado: IMPLEMENTACIÓN ESTÁTICA INCORPORADA; VALIDACIÓN FUNCIONAL RESERVADA P
 - Respaldo offline.js: 00000b2d7ef69b571d65757610435dc21eeee6cd
 
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — ROBUSTECER FIND OR CREATE DE LA HOJA IDEMPOTENCIA
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: 2eaeb4761be4531f0bdc656062e97a8175866b1e
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. ALCANCE Y ARCHIVOS AUDITADOS
+- Services/write.js: configuración de Spreadsheet, SHEET_NAMES, IDEMPOTENCIA_HEADERS, isIdempotenciaSheetCompatible(), initializeIdempotenciaSheet(), getIdempotenciaSheet(), recordOpId(), findRowByOpId() y sus consumidores.
+- Services/admin.js: configuración de Spreadsheet, SHEET_NAMES, las mismas funciones de idempotencia, recordOpId(), findRowByOpId(), inspectIdempotenciaMigrationTarget(), readIdempotenciaOperationMap() y handleMigrateCortesOperationIds().
+- Auditoría documental de los puntos de entrada de registro, consulta y migración que consumen estas funciones.
+- Los bloques de idempotencia de WRITE y ADMIN son idénticos en el HEAD auditado.
+
+2. ESTADO ACTUAL CONFIRMADO
+- Ambos servicios definen el esquema fijo A:E: opId, vehicleId, slotIndex, timestamp y status.
+- getIdempotenciaSheet() ya busca «Idempotencia», reutiliza «Idempotencia_Cortes» cuando corresponde y crea la hoja primaria o alternativa si no encuentra un destino compatible.
+- initializeIdempotenciaSheet() solo escribe los cinco encabezados cuando getLastRow() es 0.
+- isIdempotenciaSheetCompatible() exige que las cinco celdas A1:E1 coincidan exactamente (sin distinguir mayúsculas/minúsculas) y exige getLastColumn() >= 5 para hojas no vacías.
+- Por tanto, una hoja existente con registros y una o más celdas de encabezado vacías se considera incompatible. El flujo puede desviar escrituras al fallback o detenerse si ambas hojas son incompatibles, aunque los encabezados faltantes podrían completarse sin modificar datos.
+- La creación usa insertSheet() directamente y no vuelve a consultar el nombre si otra ejecución crea la hoja entre getSheetByName() e insertSheet().
+
+3. DEPENDENCIAS Y EFECTOS
+- WRITE llama getIdempotenciaSheet() desde recordOpId() y findRowByOpId(); ambos leen/escriben el esquema A:E y no necesitan cambios de contrato.
+- ADMIN tiene los mismos consumidores y funciones de lectura/escritura.
+- ADMIN usa isIdempotenciaSheetCompatible() en inspectIdempotenciaMigrationTarget(), y usa getIdempotenciaSheet() en la fase confirmada de handleMigrateCortesOperationIds(). El diagnóstico de migración no debe crear hojas ni escribir encabezados; la fase confirmada debe conservar la comprobación de que el destino no cambió.
+- readIdempotenciaOperationMap() presupone que los datos permanecen en A:E. La corrección deberá completar solo celdas de encabezado vacías en esas posiciones, sin desplazar columnas ni reordenar datos.
+- La compatibilidad histórica de findRowByOpId() con identificadores antiguos se mantiene fuera del cambio.
+- Los nombres de hoja y el esquema son iguales en ambos servicios. La Spreadsheet configurada es la misma, pero no se consultó la instancia real.
+
+4. RIESGOS Y DISEÑO DE CORRECCIÓN
+- Considerar compatible una hoja si cada encabezado no vacío coincide con el esperado en su posición y los espacios restantes están vacíos; si hay datos pero no existe ningún encabezado reconocido, tratarla como incompatible para evitar reinterpretar una hoja ajena.
+- initializeIdempotenciaSheet() debe crear el encabezado completo en una hoja vacía; en una hoja existente debe escribir exclusivamente las celdas vacías A1:E1 y verificar después los cinco valores.
+- Si existe un encabezado no vacío distinto al esperado, no modificarlo. Mantener la ruta de fallback existente o detenerse si tampoco es compatible.
+- Si la hoja tiene menos de cinco columnas físicas, ampliar solo la capacidad de columnas necesaria antes de completar los encabezados; no mover ni borrar datos.
+- Centralizar la selección en findOrCreateIdempotenciaSheet() y conservar getIdempotenciaSheet() como wrapper para no romper consumidores existentes.
+- Al crear una hoja, si insertSheet() falla por una carrera de creación, volver a consultar el nombre y reutilizarla solo si existe y supera la validación; de lo contrario propagar el error original.
+- No cambiar recordOpId(), findRowByOpId(), el contrato A:E, estados pending/completed, el esquema de Cortes ni la migración VIN.
+
+5. ARCHIVOS Y RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/write.js: fcb784af25f04170905c3d62aafed2846e0469d0
+- Services/admin.js: 341ff40f8a2f40d35abe8a4a60e8eb08a0eefd07
+- Auditoría.txt: 1a679996483cdc59fc3f31ce717bbd25a6298703
+- ChangesLogs.txt: ee0716411c1220f403711983b0d36b453a8c5446
+- Tareas.txt: 954c7c146b53ab1425ae84a9c7fa6c2fa9045fdc
+- checkpoint.md: 0ba8fca9fcbd45508dc75c4a2679fc42b25fd670
+
+6. LIMITACIONES DE LA AUDITORÍA
+- No hay acceso confirmado a la Spreadsheet en vivo mediante esta sesión; no se puede afirmar si «Idempotencia» existe en producción ni si contiene datos.
+- No se ejecutó Apps Script ni se modificó ninguna hoja, deployment o dato real.
+- Las pruebas funcionales con Spreadsheet real y concurrencia de dos ejecuciones quedan pendientes de un entorno aislado.
+
+7. CONCLUSIÓN
+La función de búsqueda/creación ya existe, pero la inicialización no repara encabezados vacíos de una hoja parcialmente configurada y la creación no contempla una colisión concurrente de nombre. La corrección queda acotada a los helpers de idempotencia de WRITE y ADMIN y a la documentación de esta tarea. No se detectó necesidad de modificar AQ/VIN, AR/AS ni el contrato de datos.
+================================================================================
+
+
+IMPLEMENTACIÓN Y CODE REVIEW — ROBUSTECER FIND OR CREATE DE LA HOJA IDEMPOTENCIA
+Fecha: 2026-11-06
+Estado: CAMBIO ESTÁTICO INCORPORADO; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PENDIENTE.
+
+CAMBIOS REALIZADOS
+- Services/write.js (bloque de idempotencia, líneas 1084–1210): se añadió getIdempotenciaHeaderState() para validar A:E sin escribir; isIdempotenciaSheetCompatible() ahora acepta únicamente encabezados esperados o celdas vacías reparables; initializeIdempotenciaSheet() crea los cinco encabezados en hojas vacías y completa únicamente las celdas vacías en hojas existentes.
+- Services/write.js: se añadió ampliación de capacidad física de columnas cuando la hoja tiene menos de cinco, verificación posterior de encabezados y createIdempotenciaSheetIfMissing() para recuperar colisiones de creación mediante una nueva búsqueda.
+- Services/write.js: se incorporó findOrCreateIdempotenciaSheet(); getIdempotenciaSheet() permanece como wrapper para conservar todos los consumidores existentes.
+- Services/admin.js (bloque de idempotencia, líneas 2376–2502): se incorporó el mismo comportamiento y las mismas protecciones.
+- Se conserva el fallback Idempotencia_Cortes. Un encabezado no vacío incompatible no se modifica; si hay registros y ningún encabezado reconocible, la hoja se considera incompatible.
+- No se modificaron recordOpId(), findRowByOpId(), readIdempotenciaOperationMap(), el contrato A:E, los estados pending/completed, ni las columnas de Cortes.
+
+VERIFICACIONES Y CODE REVIEW
+- Parseo sintáctico del archivo completo Services/write.js actualizado: PASS.
+- Parseo sintáctico del archivo completo Services/admin.js actualizado: PASS.
+- Comparación contra los respaldos Git: PASS; en cada servicio el único bloque sustituido es el bloque de gestión de Idempotencia.
+- Pruebas con mocks de Spreadsheet: 8/8 PASS (creación vacía, reparación parcial sin pérdida de datos, rechazo de encabezados incompatibles, rechazo de hoja con datos sin encabezados reconocibles, ampliación de columnas, reutilización del fallback, colisión concurrente de creación y preservación de la hoja primaria incompatible).
+- Los bloques de helpers se mantienen equivalentes entre WRITE y ADMIN.
+- La inspección de migración ADMIN permanece de solo lectura durante el diagnóstico; la fase confirmada continúa usando getIdempotenciaSheet() y verifica que el destino no cambie.
+
+LIMITACIONES
+- No se ejecutó Apps Script contra Spreadsheet real ni se probó concurrencia real de ejecuciones.
+- No se confirmó la existencia ni el contenido actual de Idempotencia o Idempotencia_Cortes en producción.
+- No se desplegó WRITE/ADMIN ni se modificaron datos de Sheets/Drive.
+- AQ/VIN, AR y AS no fueron modificadas.
+
+RESPALDOS EXACTOS
+- Services/write.js: fcb784af25f04170905c3d62aafed2846e0469d0
+- Services/admin.js: 341ff40f8a2f40d35abe8a4a60e8eb08a0eefd07
+================================================================================

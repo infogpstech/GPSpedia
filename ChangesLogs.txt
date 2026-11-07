@@ -3429,3 +3429,14 @@ ALCANCE
 - Parseo sintáctico de ambos archivos y 13 comprobaciones estáticas: PASS.
 - No se ejecutaron pruebas funcionales reales, deployments ni operaciones sobre Drive/Spreadsheet.
 ================================================================================
+
+
+================================================================================
+2026-11-06 — ROBUSTECER FIND OR CREATE DE LA HOJA IDEMPOTENCIA
+- Services/write.js (líneas 1084–1210): se añadió validación de encabezados A:E, inicialización de encabezados faltantes, verificación posterior, ampliación de columnas y recuperación de colisión al crear la hoja.
+- Services/write.js: se añadió findOrCreateIdempotenciaSheet(); getIdempotenciaSheet() conserva su interfaz como wrapper.
+- Services/admin.js (líneas 2376–2502): se incorporó el mismo flujo de búsqueda/creación e inicialización.
+- Se mantiene el fallback Idempotencia_Cortes y se evita sobrescribir encabezados no vacíos incompatibles.
+- No se modificaron recordOpId(), findRowByOpId(), el esquema A:E ni las columnas AQ/VIN, AR y AS de Cortes.
+- Parseo sintáctico de ambos servicios: PASS. Pruebas estáticas con mocks: 8/8 PASS. No se ejecutaron pruebas reales de Apps Script ni despliegues.
+================================================================================
