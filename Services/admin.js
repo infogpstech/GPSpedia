@@ -91,11 +91,42 @@ function isDirectChildOfDriveRoot(resource) {
     }
     return false;
 }
+function getCortesRootFolder() {
+    const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    if (String(folder.getId()) !== String(DRIVE_FOLDER_ID) ||
+        String(folder.getName() || "").trim().toLowerCase() !== "cortes" ||
+        !isDirectChildOfDriveRoot(folder)) {
+        throw new Error("DRIVE_FOLDER_ID no corresponde a la carpeta raíz «Cortes» ubicada directamente en Drive.");
+    }
+    return folder;
+}
 
 function isBackupUrlForResource(backupUrl, expectedPrefix) {
     return backupUrl === expectedPrefix ||
         backupUrl.startsWith(expectedPrefix + "/") ||
         backupUrl.startsWith(expectedPrefix + "?");
+}
+function getVinMigrationBackupCacheKey(userId) {
+    return "VIN_MIGRATION_BACKUP_" + String(userId || "").trim();
+}
+function verifyVinMigrationBackup(backupId, developerContext) {
+    const cleanBackupId = String(backupId || "").trim();
+    const userId = String(developerContext && developerContext.userId || "").trim();
+    if (!userId || !/^[a-zA-Z0-9_-]{20,}$/.test(cleanBackupId)) throw new Error("La migración VIN requiere el ID de un respaldo de Spreadsheet válido.");
+    if (cleanBackupId === String(SPREADSHEET_ID)) throw new Error("La Spreadsheet operativa no puede utilizarse como respaldo de sí misma.");
+    const cachedBackupId = CacheService.getScriptCache().get(getVinMigrationBackupCacheKey(userId));
+    if (cachedBackupId !== cleanBackupId) throw new Error("El respaldo no fue generado y verificado por esta sesión de desarrollador. Genera un nuevo respaldo antes de continuar.");
+    const backupFile = DriveApp.getFileById(cleanBackupId);
+    if (backupFile.isTrashed() || backupFile.getMimeType() !== "application/vnd.google-apps.spreadsheet" ||
+        !String(backupFile.getName() || "").startsWith("GPSpedia_DB_BACKUP_") || !isDirectChildOfDriveRoot(backupFile)) {
+        throw new Error("El ID proporcionado no corresponde a un respaldo de Spreadsheet válido y disponible en Drive.");
+    }
+    const backupSpreadsheet = SpreadsheetApp.openById(cleanBackupId);
+    const backupCortesSheet = backupSpreadsheet.getSheetByName(SHEET_NAMES.CORTES);
+    if (backupSpreadsheet.getId() !== cleanBackupId || !backupCortesSheet || backupCortesSheet.getMaxColumns() < 45) {
+        throw new Error("El respaldo no contiene una hoja «Cortes» compatible con la migración VIN.");
+    }
+    return { backupId: cleanBackupId, backupName: backupFile.getName() };
 }
 
 function collectActiveDriveReferences(includeLocations = true) {
@@ -290,19 +321,34 @@ function parseVinCollectionForAdmin(rawVin) {
     if (!rawVin) return [];
     const text = String(rawVin).trim();
     if (!text) return [];
-    let values = [];
+    const normalizeValue = value => {
+        const normalized = String(value || "").trim().toUpperCase();
+        return !normalized || normalized.startsWith("OP-") || normalized.startsWith("OP_") || normalized.includes("IDOPERACION") ? "" : normalized;
+    };
     if (text.startsWith("[") && text.endsWith("]")) {
         try {
             const parsed = JSON.parse(text);
-            if (Array.isArray(parsed)) {
-                return parsed.map(value => String(value || "").trim().toUpperCase())
-                    .filter(value => value && !value.startsWith("OP-") && !value.startsWith("OP_") && !value.includes("IDOPERACION"));
-            }
+            if (Array.isArray(parsed)) return parsed.map(normalizeValue);
         } catch (error) {}
     }
-    values = text.split(/[,/\\;]+/);
-    return values.map(value => String(value || "").trim().toUpperCase())
-        .filter(value => value && !value.startsWith("OP-") && !value.startsWith("OP_") && !value.includes("IDOPERACION"));
+    return text.split(/[,/\\;]+/).map(normalizeValue).filter(Boolean);
+}
+function addVinToAvailableSlot(existingCollection, vinPrefix, maxAllowed, requestedIndex) {
+    const prefix = String(vinPrefix || "").trim().toUpperCase();
+    const limit = Math.max(1, Math.min(3, Math.floor(Number(maxAllowed) || 1)));
+    const original = Array.isArray(existingCollection) ? existingCollection.map(value => String(value || "").trim().toUpperCase()) : [];
+    if (!prefix) throw new Error("El prefijo VIN está vacío.");
+    if (original.slice(limit).some(Boolean)) throw new Error("La colección VIN contiene identificadores fuera del máximo permitido para las versiones registradas.");
+    const collection = original.slice(0, limit);
+    const duplicateIndex = collection.findIndex(value => value === prefix);
+    if (duplicateIndex >= 0) return { alreadyPresent: true, duplicateIndex, slotIndex: duplicateIndex, collection };
+    let slotIndex = Number.isInteger(requestedIndex) ? requestedIndex : collection.findIndex(value => !value);
+    if (slotIndex < 0) slotIndex = collection.length;
+    if (slotIndex >= limit || slotIndex < 0) throw new Error("Este vehículo ya alcanzó el máximo de VIN permitido según sus versiones de equipamiento.");
+    if (collection[slotIndex]) throw new Error("La versión de equipamiento seleccionada ya tiene un VIN registrado. No se sobrescribió el identificador existente.");
+    while (collection.length <= slotIndex) collection.push("");
+    collection[slotIndex] = prefix;
+    return { alreadyPresent: false, duplicateIndex: -1, slotIndex, collection };
 }
 
 function extractVinPrefixForAdmin(vinRaw) {
@@ -343,10 +389,8 @@ function prepareVinCollectionForAdmin(sheet, rowValues, vehicleId, vinColumnInde
     const duplicate = findVinDuplicateForAdmin(sheet, vinPrefix, vehicleId);
     if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
     const maxAllowed = countEquipmentVersionsForAdmin(versionsOverride || rowValues[COLS_CORTES.versionesAplicables - 1]);
-    if (existing.length >= maxAllowed) {
-        throw new Error("Este vehículo ya alcanzó el máximo de VIN permitido según sus versiones de equipamiento.");
-    }
-    return existing.concat(vinPrefix);
+    const update = addVinToAvailableSlot(existing, vinPrefix, maxAllowed);
+    return update.alreadyPresent ? null : update.collection;
 }
 
 /**
@@ -526,7 +570,7 @@ function doPost(e) {
                 response = { status: 'success', message: 'pong' };
                 break;
             case 'backupDatabase':
-                response = handleBackupDatabase(payload, logMessage);
+                response = handleBackupDatabase(payload, logMessage, developerContext);
                 break;
             case 'backupDrive':
                 response = handleBackupDrive(payload, logMessage);
@@ -646,7 +690,7 @@ function doPost(e) {
 /**
  * 1. Respaldo automático de la base de datos (Spreadsheet completo)
  */
-function handleBackupDatabase(payload, logMessage) {
+function handleBackupDatabase(payload, logMessage, developerContext) {
     logMessage("Respaldo", "Generando respaldo completo de la hoja de cálculo de la base de datos...");
 
     const ss = getSpreadsheet();
@@ -671,9 +715,11 @@ function handleBackupDatabase(payload, logMessage) {
     }
 
     const verifiedSpreadsheet = SpreadsheetApp.openById(backupId);
-    if (verifiedSpreadsheet.getId() !== backupId) {
-        throw new Error("La Spreadsheet creada no coincide con el identificador del respaldo.");
+    if (verifiedSpreadsheet.getId() !== backupId || !verifiedSpreadsheet.getSheetByName(SHEET_NAMES.CORTES)) {
+        throw new Error("La Spreadsheet creada no coincide con el identificador del respaldo o no contiene la hoja Cortes.");
     }
+    if (!developerContext || !developerContext.userId) throw new Error("No se pudo asociar el respaldo verificado con la sesión de desarrollador.");
+    CacheService.getScriptCache().put(getVinMigrationBackupCacheKey(developerContext.userId), backupId, 21600);
 
     logMessage("Respaldo", `Recurso de respaldo de base de datos creado y verificado. ID: ${backupId}`);
     return {
@@ -691,7 +737,7 @@ function handleBackupDatabase(payload, logMessage) {
 function handleBackupDrive(payload, logMessage) {
     logMessage("Respaldo Drive", "Iniciando respaldo completo de la estructura de carpetas de Drive...");
 
-    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const rootFolder = getCortesRootFolder();
     const parentFolder = DriveApp.getRootFolder();
     const timestamp = Utilities.formatDate(new Date(), "GMT-6", "yyyyMMdd_HHmmss");
     const backupFolderName = `GPSpedia_Drive_BACKUP_${timestamp}`;
@@ -841,7 +887,7 @@ function handleRestoreDrive(payload, logMessage) {
         throw new Error("La carpeta indicada no es un respaldo de Drive válido dentro de la ubicación autorizada.");
     }
 
-    const targetFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const targetFolder = getCortesRootFolder();
     if (backupFolder.getId() === targetFolder.getId()) {
         throw new Error("La carpeta de respaldo debe ser distinta de la carpeta productiva.");
     }
@@ -1469,7 +1515,7 @@ function handleAddLogo(payload, logMessage) {
     logMessage("Registro Logo", `Iniciando registro de logotipo para la marca: ${nombreMarca}`);
 
     // Obtener la carpeta de logos (usualmente dentro de la carpeta raíz o una subcarpeta Logos)
-    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const rootFolder = getCortesRootFolder();
     const logosFolder = getOrCreateSubFolder(rootFolder, "Logos");
 
     // Subir el archivo de logotipo manteniendo su extensión y transparencia originales
@@ -1611,7 +1657,7 @@ function handleUploadAdminImage(payload, logMessage) {
         }
 
         if (!genFolder) {
-            const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+            const rootFolder = getCortesRootFolder();
             const catFolder = getOrCreateSubFolder(rootFolder, sanitizeForFolderDisplay(categoria));
             const marFolder = getOrCreateSubFolder(catFolder, sanitizeForFolderDisplay(marca));
             const modFolder = getOrCreateSubFolder(marFolder, sanitizeForFolderDisplay(modelo));
@@ -2196,7 +2242,7 @@ function isYearInRange(inputYear, anoDesde, anoHasta) {
 }
 
 function getOrCreateFolder(categoria, marca, modelo, anio) {
-    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const rootFolder = getCortesRootFolder();
     const cat = sanitizeForFolderDisplay(categoria || 'Sin_Categoria');
     const mar = sanitizeForFolderDisplay(marca || 'Sin_Marca');
     const mod = sanitizeForFolderDisplay(modelo || 'Sin_Modelo');
@@ -2724,6 +2770,7 @@ function handleMigrateCortesOperationIds(payload, logMessage, developerContext) 
             throw new Error("La migración de identificadores requiere una sesión de desarrollador válida.");
         }
         const options = payload || {};
+        verifyVinMigrationBackup(options.backupId, developerContext);
         const confirm = options.confirm === true;
         const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
         const migrationPlan = buildCortesOperationIdMigrationPlan(cortesSheet);
@@ -2962,7 +3009,7 @@ function handleAddColumn(payload, logMessage) {
 
 function handleDriveCommand(payload, logMessage) {
     const { command, currentFolderId, args } = payload;
-    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const rootFolder = getCortesRootFolder();
     let activeFolder = currentFolderId ? DriveApp.getFolderById(currentFolderId) : rootFolder;
 
     const cmd = (command || '').toLowerCase().trim();
@@ -3326,13 +3373,17 @@ function handleRecoverReplacedImage(payload, logMessage) {
         }
 
         const urlHistorica = String(repData[7] || "").trim();
-        const driveId = extractDriveFileId(repData[5]) || extractDriveFileId(urlHistorica);
-        if (!urlHistorica || !driveId) throw new Error("El registro histórico no contiene una URL/ID de Drive válido.");
-
+        const urlDriveId = extractDriveFileId(urlHistorica);
+        const recordedDriveId = extractDriveFileId(repData[5]);
+        const driveId = recordedDriveId || urlDriveId;
+        if (!urlHistorica || !driveId || !urlDriveId || driveId !== urlDriveId) {
+            throw new Error("El registro histórico no contiene una URL y un ID de Drive coincidentes.");
+        }
         const file = DriveApp.getFileById(driveId);
         if (!String(file.getMimeType()).startsWith("image/")) throw new Error("El archivo histórico no es una imagen y no puede restaurarse.");
-        if (file.isTrashed()) file.setTrashed(false);
-
+        const fileWasTrashed = file.isTrashed();
+        getCortesRootFolder();
+        if (!isFileInsideCortes(file, DRIVE_FOLDER_ID)) throw new Error("El archivo histórico no pertenece al árbol autorizado de la carpeta «Cortes».");
         const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
         if (!cortesSheet || cortesSheet.getLastRow() < 2) throw new Error("No se pudo localizar la hoja Cortes o no contiene vehículos.");
         const ids = cortesSheet.getRange(2, 1, cortesSheet.getLastRow() - 1, 1).getValues().flat();
@@ -3356,6 +3407,7 @@ function handleRecoverReplacedImage(payload, logMessage) {
         }
 
         try {
+            if (fileWasTrashed) file.setTrashed(false);
             activeCell.setValue(urlHistorica);
             SpreadsheetApp.flush();
             sheetRep.getRange(repRowIndex, 11).setValue("restablecida");
@@ -3373,6 +3425,14 @@ function handleRecoverReplacedImage(payload, logMessage) {
                 rollbackErrorMessage = rollbackError.message;
             }
 
+            if (fileWasTrashed && !file.isTrashed()) {
+                try {
+                    file.setTrashed(true);
+                } catch (fileRollbackError) {
+                    rollbackFailed = true;
+                    rollbackErrorMessage += (rollbackErrorMessage ? "; " : "") + "No se pudo devolver el archivo a la papelera: " + fileRollbackError.message;
+                }
+            }
             if (swappedRecord) {
                 try {
                     sheetRep.getRange(swappedRecord.rowIndex, 11).setValue(rollbackFailed ? "requiere_revision" : "cancelada");
@@ -3508,7 +3568,7 @@ function handleDeleteReplacedImage(payload, logMessage, developerContext) {
         if (!String(file.getMimeType()).startsWith("image/")) {
             throw new Error("El archivo asociado al registro no es una imagen.");
         }
-        const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+        const rootFolder = getCortesRootFolder();
         const sourceFolder = getSingleParentFolderInsideCortes(file, rootFolder.getId());
         const sourcePath = getFolderPathInsideCortes(sourceFolder, rootFolder.getId());
 
@@ -3543,7 +3603,7 @@ function handleDeleteReplacedImage(payload, logMessage, developerContext) {
  * Devuelve las carpetas disponibles dentro del árbol autorizado Cortes.
  */
 function handleGetCortesImageFolders(payload, logMessage) {
-    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const rootFolder = getCortesRootFolder();
     const folders = [];
     const visited = new Set();
     const stack = [{ folder: rootFolder, path: rootFolder.getName(), parentId: "" }];
@@ -3594,7 +3654,7 @@ function handleCreateCortesImageFolder(payload, logMessage, developerContext) {
     catch (e) { throw new Error("No se pudo bloquear la creación de la carpeta. Intenta nuevamente."); }
 
     try {
-        const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+        const rootFolder = getCortesRootFolder();
         const parentFolder = DriveApp.getFolderById(parentFolderId);
         if (parentFolder.isTrashed()) throw new Error("No se puede crear una carpeta dentro de una ubicación que está en la papelera.");
         if (parentFolder.getId() !== rootFolder.getId()) {
@@ -3666,7 +3726,7 @@ function handleMoveReplacedImage(payload, logMessage, developerContext) {
             throw new Error("Operación bloqueada: existen referencias de Drive que no pudieron interpretarse; no es posible confirmar que la imagen esté sin uso.");
         }
 
-        const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+        const rootFolder = getCortesRootFolder();
         const file = DriveApp.getFileById(driveId);
         if (file.isTrashed()) throw new Error("La imagen está en la papelera de Google Drive.");
         if (!String(file.getMimeType()).startsWith("image/")) throw new Error("El archivo asociado al registro ya no es una imagen.");
@@ -3811,7 +3871,7 @@ function handleGetReplacedImageDownloadUrl(payload, logMessage, developerContext
     const file = DriveApp.getFileById(driveId);
     if (file.isTrashed()) throw new Error("La imagen está en la papelera de Google Drive.");
     if (!String(file.getMimeType()).startsWith("image/")) throw new Error("El archivo asociado al registro ya no es una imagen.");
-    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const rootFolder = getCortesRootFolder();
     getSingleParentFolderInsideCortes(file, rootFolder.getId());
 
     const downloadUrl = "https://drive.google.com/uc?export=download&id=" + encodeURIComponent(driveId);
@@ -4089,7 +4149,7 @@ function handleSaveUnusedImagesInventory(payload, logMessage) {
  * Handler: Auditoría de imágenes en Google Drive limitada estrictamente a la carpeta "Cortes"
  */
 function handleAuditDriveImagesInCortes(payload, logMessage) {
-    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const rootFolder = getCortesRootFolder();
     if (!rootFolder) throw new Error("No se pudo acceder a la carpeta principal 'Cortes'.");
 
     const cursor = payload && payload.cursor ? payload.cursor : null;

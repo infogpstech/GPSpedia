@@ -253,15 +253,12 @@ function handleAddOrUpdateCutLocked(payload) {
             const rowObj = mapRowToObject(rowValues, COLS_CORTES);
             let recoveredVinCollection = null;
             if (vinPrefix) {
-                const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, rowObj.id);
-                if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
                 const existing = parseVinCollection(rowValues[vinColumnIndex - 1]);
                 if (!existing.includes(vinPrefix)) {
+                    const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, rowObj.id);
+                    if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
                     const maxAllowed = countEquipmentVersions((vehicleData && vehicleData.versionesAplicables) || rowObj.versionesAplicables);
-                    if (existing.length >= maxAllowed) {
-                        throw new Error("Este vehículo ya alcanzó el máximo de VIN permitido según sus versiones de equipamiento.");
-                    }
-                    recoveredVinCollection = existing.concat(vinPrefix);
+                    recoveredVinCollection = addVinToAvailableSlot(existing, vinPrefix, maxAllowed).collection;
                 }
             }
             const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -391,15 +388,12 @@ function handleAddOrUpdateCutLocked(payload) {
         const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
         let updatedVinCollection = null;
         if (vinPrefix) {
-            const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, vehicleId);
-            if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
             const existingVinCollection = parseVinCollection(rowValues[vinColumnIndex - 1]);
             if (!existingVinCollection.includes(vinPrefix)) {
+                const duplicate = checkVinDuplicateInSheet(sheet, vinPrefix, vehicleId);
+                if (duplicate) throw new Error("VIN ya está registrado para: " + duplicate.modelName);
                 const maxAllowed = countEquipmentVersions((vehicleData && vehicleData.versionesAplicables) || vehicleInfo.versionesAplicables);
-                if (existingVinCollection.length >= maxAllowed) {
-                    throw new Error("Este vehículo ya alcanzó el máximo de VIN permitido según sus versiones de equipamiento.");
-                }
-                updatedVinCollection = existingVinCollection.concat(vinPrefix);
+                updatedVinCollection = addVinToAvailableSlot(existingVinCollection, vinPrefix, maxAllowed).collection;
             }
         }
 
@@ -790,8 +784,20 @@ function isYearInRange(inputYear, anoDesde, anoHasta) {
     return inputYear >= desde && inputYear <= hasta;
 }
 
+function getCortesRootFolder() {
+    const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    if (String(folder.getId()) !== String(DRIVE_FOLDER_ID) || String(folder.getName() || "").trim().toLowerCase() !== "cortes") {
+        throw new Error("DRIVE_FOLDER_ID no corresponde a la carpeta «Cortes».");
+    }
+    const driveRootId = DriveApp.getRootFolder().getId();
+    const parents = folder.getParents();
+    let isDirectChild = false;
+    while (parents.hasNext()) if (parents.next().getId() === driveRootId) isDirectChild = true;
+    if (!isDirectChild) throw new Error("La carpeta «Cortes» no está ubicada directamente en la raíz de Drive.");
+    return folder;
+}
 function getOrCreateFolder(categoria, marca, modelo, anio) {
-    const rootFolder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const rootFolder = getCortesRootFolder();
     const cat = sanitizeForFilename(categoria || 'Sin_Categoria');
     const mar = sanitizeForFilename(marca || 'Sin_Marca');
     const mod = sanitizeForFilename(modelo || 'Sin_Modelo');
@@ -1238,24 +1244,38 @@ function countEquipmentVersions(versionesStr) {
 }
 
 function parseVinCollection(rawVin) {
-  if (!rawVin) return [];
-  const str = String(rawVin).trim();
-  if (!str) return [];
-  if (str.startsWith("[") && str.endsWith("]")) {
-    try {
-      const arr = JSON.parse(str);
-      if (Array.isArray(arr)) {
-        return arr.map(v => String(v).trim().toUpperCase()).filter(Boolean);
-      }
-    } catch (e) {}
-  }
-  return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
+   if (!rawVin) return [];
+   const str = String(rawVin).trim();
+   if (!str) return [];
+   if (str.startsWith("[") && str.endsWith("]")) {
+     try {
+       const arr = JSON.parse(str);
+       if (Array.isArray(arr)) return arr.map(value => String(value || "").trim().toUpperCase());
+     } catch (e) {}
+   }
+   return str.split(/[,/\\;]+/).map(v => String(v).trim().toUpperCase()).filter(Boolean);
 }
-
 function serializeVinCollection(vinArray) {
-  if (!vinArray || vinArray.length === 0) return "";
-  const unique = Array.from(new Set(vinArray.map(v => String(v).trim().toUpperCase()).filter(Boolean)));
-  return JSON.stringify(unique);
+   if (!Array.isArray(vinArray) || vinArray.length === 0) return "";
+   const normalized = vinArray.map(value => String(value || "").trim().toUpperCase());
+   return normalized.some(Boolean) ? JSON.stringify(normalized) : "";
+}
+function addVinToAvailableSlot(existingCollection, vinPrefix, maxAllowed, requestedIndex) {
+   const prefix = String(vinPrefix || "").trim().toUpperCase();
+   const limit = Math.max(1, Math.min(3, Math.floor(Number(maxAllowed) || 1)));
+   const original = Array.isArray(existingCollection) ? existingCollection.map(value => String(value || "").trim().toUpperCase()) : [];
+   if (!prefix) throw new Error("El prefijo VIN está vacío.");
+   if (original.slice(limit).some(Boolean)) throw new Error("La colección VIN contiene identificadores fuera del máximo permitido para las versiones registradas.");
+   const collection = original.slice(0, limit);
+   const duplicateIndex = collection.findIndex(value => value === prefix);
+   if (duplicateIndex >= 0) return { alreadyPresent: true, duplicateIndex, slotIndex: duplicateIndex, collection };
+   let slotIndex = Number.isInteger(requestedIndex) ? requestedIndex : collection.findIndex(value => !value);
+   if (slotIndex < 0) slotIndex = collection.length;
+   if (slotIndex >= limit || slotIndex < 0) throw new Error("Este vehículo ya alcanzó el máximo de VIN permitido según sus versiones de equipamiento.");
+   if (collection[slotIndex]) throw new Error("La versión de equipamiento seleccionada ya tiene un VIN registrado. No se sobrescribió el identificador existente.");
+   while (collection.length <= slotIndex) collection.push("");
+   collection[slotIndex] = prefix;
+   return { alreadyPresent: false, duplicateIndex: -1, slotIndex, collection };
 }
 
 /* TAREA 4 (11.1, 11.2, 11.7, B34): EXCLUSIÓN DE ÚLTIMOS 5 CARACTERES Y PROCESAMIENTO DE VIN */
@@ -1320,88 +1340,91 @@ function handleCheckVinDuplicate(payload) {
 }
 
 function handleAddVinToVehicle(payload) {
-  const { vehicleId, vin, trimLevel, trimIndex, isNewTrim } = payload;
-  const prefix = extractVinPrefix(vin);
-  if (!vehicleId || !prefix) {
-    return { status: 'error', message: 'ID de vehículo y VIN son requeridos.' };
-  }
-  const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-  const vinColumnIndex = getVinColumnIndex(sheet);
-  if (!vinColumnIndex) {
-    return { status: 'error', message: 'La hoja «Cortes» no contiene una columna «vin».' };
-  }
-  const match = checkVinDuplicateInSheet(sheet, prefix, vehicleId);
-  if (match) {
-    return {
-      status: 'duplicate',
-      message: `El VIN ya está registrado para: ${match.modelName}`,
-      vehicleId: match.vehicleId,
-      modelName: match.modelName
-    };
-  }
-
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2) {
-    return { status: 'error', message: 'No se encontraron vehículos registrados.' };
-  }
-
-  const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
-  let targetRowIndex = -1;
-  let targetRow = null;
-  for (let i = 0; i < data.length; i++) {
-    if (String(data[i][COLS_CORTES.id - 1]) === String(vehicleId)) {
-      targetRowIndex = i + 2;
-      targetRow = data[i];
-      break;
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); }
+    catch (error) { return { status: "error", message: "No se pudo obtener el bloqueo para registrar el VIN. Intenta nuevamente." }; }
+    try { return handleAddVinToVehicleLocked(payload || {}); }
+    catch (error) { return { status: "error", message: error && error.message ? error.message : "No se pudo registrar el VIN." }; }
+    finally { lock.releaseLock(); }
+}
+function handleAddVinToVehicleLocked(payload) {
+    getAuthenticatedCollaborator(payload);
+    const vehicleId = String(payload.vehicleId || "").trim();
+    const prefix = extractVinPrefix(payload.vin);
+    if (!vehicleId || !prefix) return { status: "error", message: "ID de vehículo y VIN son requeridos." };
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    const vinColumnIndex = getVinColumnIndex(sheet);
+    if (!vinColumnIndex) return { status: "error", message: "La hoja «Cortes» no contiene una columna «VIN»." };
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { status: "error", message: "No se encontraron vehículos registrados." };
+    const data = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn()).getValues();
+    let targetRowIndex = -1, targetRow = null;
+    for (let i = 0; i < data.length; i++) {
+        if (String(data[i][COLS_CORTES.id - 1]).trim() === vehicleId) {
+            targetRowIndex = i + 2; targetRow = data[i]; break;
+        }
     }
-  }
-
-  if (targetRowIndex === -1 || !targetRow) {
-    return { status: 'error', message: 'Vehículo no encontrado.' };
-  }
-
-  let versionesStr = String(targetRow[COLS_CORTES.versionesAplicables - 1] || "").trim();
-  let versions = parseEquipmentVersions(versionesStr);
-
-  const existingVinRaw = targetRow[vinColumnIndex - 1] || "";
-  let vinCollection = parseVinCollection(existingVinRaw);
-
-  const cleanTrim = trimLevel ? String(trimLevel).trim() : "";
-
-  // Si se solicitó registrar una nueva versión o el trim especificado no existe en la lista de versiones
-  if (cleanTrim && (isNewTrim || !versions.some(v => v.toLowerCase() === cleanTrim.toLowerCase()))) {
-    versions.push(cleanTrim);
-    versionesStr = versions.join(" / ");
-    sheet.getRange(targetRowIndex, COLS_CORTES.versionesAplicables).setValue(versionesStr);
-  }
-
-  const maxAllowed = versions.length > 0 ? versions.length : 1;
-
-  let targetIdx = -1;
-  if (typeof trimIndex === 'number' && trimIndex >= 0 && trimIndex < maxAllowed) {
-    targetIdx = trimIndex;
-  } else if (cleanTrim && versions.length > 0) {
-    targetIdx = versions.findIndex(v => v.toLowerCase() === cleanTrim.toLowerCase());
-  }
-
-  if (targetIdx !== -1) {
-    while (vinCollection.length <= targetIdx) {
-      vinCollection.push("");
+    if (targetRowIndex === -1 || !targetRow) return { status: "error", message: "Vehículo no encontrado." };
+    const currentVersionsStr = String(targetRow[COLS_CORTES.versionesAplicables - 1] || "").trim();
+    const versions = parseEquipmentVersions(currentVersionsStr);
+    if (versions.length > 3) return { status: "error", message: "El vehículo contiene más de tres versiones de equipamiento; se requiere revisar su configuración antes de agregar VIN." };
+    const cleanTrim = String(payload.trimLevel || "").trim();
+    if (!cleanTrim) return { status: "error", message: "Selecciona una versión de equipamiento para asociar el VIN." };
+    const nextVersions = versions.slice();
+    const existingTrimIndex = versions.findIndex(value => value.toLowerCase() === cleanTrim.toLowerCase());
+    let targetIndex = -1;
+    if (payload.isNewTrim === true) {
+        if (existingTrimIndex >= 0) return { status: "error", message: "La versión de equipamiento ya existe. Selecciona la versión registrada en lugar de crearla nuevamente." };
+        if (versions.length >= 3) return { status: "error", message: "Este vehículo ya alcanzó el máximo de tres versiones de equipamiento." };
+        nextVersions.push(cleanTrim); targetIndex = nextVersions.length - 1;
+    } else {
+        if (existingTrimIndex < 0) return { status: "error", message: "La versión seleccionada ya no existe en el registro del vehículo. Actualiza el catálogo e inténtalo nuevamente." };
+        targetIndex = existingTrimIndex;
     }
-    vinCollection[targetIdx] = prefix;
-  } else {
-    if (vinCollection.includes(prefix)) {
-      return { status: 'success', message: 'El VIN ya está en la colección de este vehículo.', vinCollection, versionesAplicables: versionesStr };
+    const maxAllowed = Math.max(1, nextVersions.length);
+    if (targetIndex < 0 || targetIndex >= maxAllowed || targetIndex > 2) return { status: "error", message: "La versión seleccionada no corresponde a una posición VIN válida." };
+    const existingCollection = parseVinCollection(targetRow[vinColumnIndex - 1]);
+    const sameVehicleIndex = existingCollection.findIndex(value => value === prefix);
+    const modelName = [targetRow[COLS_CORTES.marca - 1] || "", targetRow[COLS_CORTES.modelo - 1] || ""].join(" ").trim() +
+        " (" + String(targetRow[COLS_CORTES.anoDesde - 1] || "") +
+        (targetRow[COLS_CORTES.anoHasta - 1] ? "-" + targetRow[COLS_CORTES.anoHasta - 1] : "") + ")";
+    if (sameVehicleIndex >= 0) {
+        if (sameVehicleIndex === targetIndex) return {
+            status: "success", message: "El VIN ya está registrado para esta versión de equipamiento.",
+            vinPrefix: prefix, vinCollection: existingCollection, versionesAplicables: currentVersionsStr
+        };
+        return { status: "duplicate", message: "El VIN ya está registrado en otra versión de este mismo vehículo.",
+            vehicleId, modelName, vinPrefix: prefix, vinCollection: existingCollection };
     }
-    if (vinCollection.length >= maxAllowed) {
-      return { status: 'error', message: `Este vehículo solo permite un máximo de ${maxAllowed} VIN(s) según sus versiones.` };
+    const duplicate = checkVinDuplicateInSheet(sheet, prefix, vehicleId);
+    if (duplicate) return { status: "duplicate", message: "El VIN ya está registrado para: " + duplicate.modelName,
+        vehicleId: duplicate.vehicleId, modelName: duplicate.modelName, vinPrefix: prefix };
+    const update = addVinToAvailableSlot(existingCollection, prefix, maxAllowed, targetIndex);
+    if (update.alreadyPresent) return { status: "success", message: "El VIN ya está registrado para esta versión de equipamiento.",
+        vinPrefix: prefix, vinCollection: update.collection, versionesAplicables: currentVersionsStr };
+    const previousVinValue = targetRow[vinColumnIndex - 1];
+    const previousVersionsValue = targetRow[COLS_CORTES.versionesAplicables - 1];
+    const updatedVersionsStr = nextVersions.join(" / ");
+    const serialized = serializeVinCollection(update.collection);
+    try {
+        if (updatedVersionsStr !== currentVersionsStr) sheet.getRange(targetRowIndex, COLS_CORTES.versionesAplicables).setValue(updatedVersionsStr);
+        sheet.getRange(targetRowIndex, vinColumnIndex).setValue(serialized);
+        SpreadsheetApp.flush();
+        const persistedVersions = String(sheet.getRange(targetRowIndex, COLS_CORTES.versionesAplicables).getValue() || "").trim();
+        const persistedCollection = parseVinCollection(sheet.getRange(targetRowIndex, vinColumnIndex).getValue());
+        if (persistedVersions !== updatedVersionsStr || JSON.stringify(persistedCollection) !== JSON.stringify(update.collection)) {
+            throw new Error("No se pudo verificar la persistencia de la versión de equipamiento y su VIN.");
+        }
+    } catch (operationError) {
+        let rollbackError = null;
+        try {
+            sheet.getRange(targetRowIndex, COLS_CORTES.versionesAplicables).setValue(previousVersionsValue);
+            sheet.getRange(targetRowIndex, vinColumnIndex).setValue(previousVinValue);
+            SpreadsheetApp.flush();
+        } catch (error) { rollbackError = error; }
+        if (rollbackError) throw new Error("Falló el registro del VIN y también la reversión de los datos: " + operationError.message + "; " + rollbackError.message);
+        throw operationError;
     }
-    vinCollection.push(prefix);
-  }
-
-  const serialized = JSON.stringify(vinCollection);
-  sheet.getRange(targetRowIndex, vinColumnIndex).setValue(serialized);
-
-  // NOTA OBLIGATORIA: Agregar VIN no debe actualizar la fecha de registro (timestamp)
-  return { status: 'success', message: 'VIN registrado correctamente.', vinPrefix: prefix, vinCollection, versionesAplicables: versionesStr };
+    return { status: "success", message: "VIN registrado correctamente.", vinPrefix: prefix,
+        vinCollection: update.collection, versionesAplicables: updatedVersionsStr };
 }

@@ -3857,6 +3857,9 @@ Estado: AUDITORÍA ESTÁTICA COMPLETADA; IMPLEMENTACIÓN BLOQUEADA POR DEPENDENC
 - No se modificó código, fórmulas, valores, formatos ni datos de ninguna hoja.
 - No se desplegó ni ejecutó Apps Script.
 
+ACTUALIZACIÓN DEL USUARIO — 2026-11-06
+El usuario confirmó que la estructura de la Spreadsheet no ha cambiado y coincide con la estructura inventariada. Esta confirmación no acredita el máximo numérico, formato real de celda, duplicados, filas intermedias ni efectos del ordenamiento; la Tarea 7 permanece bloqueada hasta verificar esos datos en una copia accesible.
+
 DEPENDENCIAS PARA CONTINUAR
 1. Disponer de una copia aislada de la Spreadsheet para inspeccionar fórmulas, formato, máximo, duplicados, filas intermedias y ordenamiento.
 2. Definir un único mecanismo coordinado de asignación de IDs para WRITE y ADMIN, evitando generadores independientes.
@@ -4485,4 +4488,33 @@ RIESGOS PENDIENTES / TAREAS SEPARADAS
 ALCANCE
 - No se modificaron add_cortes.html, api-config.js, la estructura de Spreadsheet, datos reales, deployments ni la rama base GPSpedia2.2.5.
 - No se ejecutaron llamadas HTTP, Apps Script ni operaciones sobre la Spreadsheet productiva.
+================================================================================
+
+
+================================================================================
+ACTUALIZACIÓN — ENDURECIMIENTO DEL REGISTRO VIN Y CONTROLES ADMINISTRATIVOS
+Fecha: 2026-11-06
+Estado: IMPLEMENTACIÓN ESTÁTICA REALIZADA; VALIDACIÓN FUNCIONAL REAL PENDIENTE.
+
+CAMBIOS
+- WRITE: handleAddVinToVehicle() exige sesión activa, utiliza ScriptLock, comprueba duplicados dentro del mismo vehículo y en otros vehículos, rechaza sobrescribir un VIN asignado y verifica la persistencia.
+- WRITE/ADMIN: las colecciones JSON conservan posiciones vacías para mantener la correspondencia entre índice y versión de equipamiento; las ampliaciones ocupan el primer slot disponible.
+- ui.js: el formulario VIN envía userId/sessionToken; simulación y confirmación de migración envían backupId.
+- ADMIN: backupDatabase registra el respaldo verificado en caché por usuario; migrateCortesOperationIds valida backupId en servidor antes de simular o confirmar.
+- ADMIN: la restauración valida coincidencia URL/ID, MIME type, pertenencia al árbol Cortes, vehículo y campo antes de retirar el archivo de papelera; intenta revertir papelera y celda si falla.
+- WRITE/ADMIN: DRIVE_FOLDER_ID se valida como carpeta «Cortes» ubicada directamente en la raíz de Drive.
+
+PRUEBAS AISLADAS
+- Parseo JavaScript de WRITE, ADMIN y ui.js: correcto.
+- Mocks de alta VIN, sesión inválida, duplicados, slot ocupado, nueva versión y máximo de tres versiones: correctos.
+- Parseo/serialización posicional y asignación a slot vacío: correctos.
+- Comprobación estática de backupId, orden de restauración y raíz Drive: correcta.
+
+PENDIENTES
+- Pruebas funcionales reales de Apps Script, Drive, Spreadsheet y navegador en deployments aislados.
+- Verificar en Drive real la ubicación de la carpeta «Cortes» antes de desplegar.
+- Probar CacheService y la simulación/confirmación de migración VIN en runtime.
+- Los ScriptLock de WRITE y ADMIN siguen siendo independientes; no existe bloqueo global entre proyectos.
+- La Tarea 7 de IDs permanece bloqueada: la estructura fue confirmada sin cambios, pero no se verificaron máximo, formato real, duplicados, fórmulas ni comportamiento al ordenar. No se modificó el generador ni la fórmula.
+- No se modificó Spreadsheet ni Drive reales; no se ejecutó Apps Script desplegado; no se desplegó ni se hizo merge.
 ================================================================================

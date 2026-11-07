@@ -3979,7 +3979,7 @@ ${elapsedSec}s
             updateVinMigrationControls();
             if (vinMigrationStatus) vinMigrationStatus.textContent = 'Ejecutando simulación. No se modificarán hojas ni encabezados.';
             try {
-                const result = await runAction('migrateCortesOperationIds');
+                const result = await runAction('migrateCortesOperationIds', { backupId: verifiedDatabaseBackupId });
                 if (!result || result.status !== 'success' || result.dryRun !== true) {
                     if (vinMigrationStatus) vinMigrationStatus.textContent = 'La simulación no fue confirmada. Consulta la consola y vuelve a intentarlo.';
                     return;
@@ -4043,7 +4043,7 @@ ${elapsedSec}s
             updateVinMigrationControls();
             if (vinMigrationStatus) vinMigrationStatus.textContent = 'Ejecutando migración confirmada. No cierres el panel hasta recibir el resultado.';
             try {
-                const result = await runAction('migrateCortesOperationIds', { confirm: true });
+                const result = await runAction('migrateCortesOperationIds', { confirm: true, backupId: verifiedDatabaseBackupId });
                 if (!result || result.status !== 'success' || result.dryRun !== false) {
                     if (vinMigrationStatus) vinMigrationStatus.textContent = 'La migración no fue confirmada como completada. Consulta la consola y realiza una nueva simulación antes de reintentar.';
                     vinMigrationPreview = null;
@@ -7068,6 +7068,12 @@ export function openAddVinModal(item) {
             isNewTrim = true;
         }
 
+        const { currentUser } = getState();
+        if (!currentUser || !currentUser.ID || !currentUser.SessionToken) {
+            warningEl.textContent = "Debes iniciar sesión nuevamente para registrar un VIN.";
+            warningEl.style.display = "block";
+            return;
+        }
         const btn = form.querySelector("#btn-save-vin");
         btn.disabled = true;
         btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Guardando...`;
@@ -7077,7 +7083,9 @@ export function openAddVinModal(item) {
                 vehicleId: item.id,
                 vin: vinVal,
                 trimLevel: selectedTrim,
-                isNewTrim: isNewTrim
+                isNewTrim: isNewTrim,
+                userId: currentUser.ID,
+                sessionToken: currentUser.SessionToken
             });
             if (res.status === 'success') {
                 if (res.vinCollection) {

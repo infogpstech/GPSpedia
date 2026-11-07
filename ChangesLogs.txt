@@ -3356,3 +3356,16 @@ ALCANCE
 - No se modificaron add_cortes.html, api-config.js, Spreadsheet/GPSpedia_DB_columnas.md, endpoints, deployments, datos reales ni rama base.
 - No se ejecutaron operaciones reales de Apps Script, Spreadsheet o Drive.
 ================================================================================
+
+
+================================================================================
+2026-11-06 — ENDURECIMIENTO VIN Y VALIDACIONES ADMINISTRATIVAS
+- WRITE: sesión activa y ScriptLock en addVinToVehicle; detección de duplicados dentro del vehículo/entre vehículos, rechazo de sobrescrituras y verificación de persistencia.
+- WRITE/ADMIN: conservación de posiciones vacías de colecciones JSON y asignación a slots libres.
+- ADMIN: backend valida backupId para simulación y confirmación de migración VIN; respaldo verificado asociado a usuario mediante ScriptCache.
+- ADMIN: restauración de imágenes valida URL/ID, tipo, árbol Cortes, vehículo y campo antes de retirar de papelera; rollback si falla.
+- WRITE/ADMIN: comprobación de identidad/ubicación de la carpeta raíz Cortes.
+- ui.js: envío de sesión para registrar VIN y backupId para migración.
+- Tareas.txt, Auditoría.txt y checkpoint.md actualizados.
+- Sin cambios en Spreadsheet/Drive reales, despliegues, merge ni rama base.
+================================================================================

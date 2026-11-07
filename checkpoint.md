@@ -3976,3 +3976,66 @@ Preparar una copia aislada de Spreadsheet y deployments de prueba separados para
 PUBLICACIÓN
 La tarea se publicará en un único commit sobre GPSpedia2.2.5_work, con parent igual al HEAD anterior indicado. La rama base GPSpedia2.2.5 no se actualizará ni fusionará.
 ================================================================================
+
+================================================================================
+# CHECKPOINT INICIAL — ENDURECIMIENTO VIN Y VALIDACIONES ADMINISTRATIVAS
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo autorizada: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial de trabajo: a9c3f2377bdeb87e3de5e94a7c1b174a13e7f8d7
+HEAD inicial de base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO OBSERVADO
+- AQ/43 es la columna VIN; AR/AS se reservan; los opId heredados se migran a Idempotencia.
+- WRITE addVinToVehicle no validaba sesión ni bloqueo y podía sobrescribir un VIN existente.
+- Las colecciones JSON perdían posiciones vacías.
+- ADMIN no validaba backupId en backend para la migración.
+- La restauración podía retirar archivos de papelera antes de validar el destino.
+- DRIVE_FOLDER_ID no se comprobaba como raíz Cortes.
+- Tarea 7 de IDs sigue bloqueada por falta de inspección del máximo y formato reales en una copia accesible.
+
+RESTRICCIONES
+Sin cambios en Spreadsheet/Drive reales, sin despliegues, sin merge ni actualización de GPSpedia2.2.5.
+================================================================================
+
+================================================================================
+# CHECKPOINT FINAL — ENDURECIMIENTO VIN Y VALIDACIONES ADMINISTRATIVAS
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD anterior: a9c3f2377bdeb87e3de5e94a7c1b174a13e7f8d7
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO
+Implementación estática y pruebas aisladas completadas. Validación funcional real en Apps Script/Drive/Spreadsheet pendiente. No autoriza despliegue.
+
+ARCHIVOS MODIFICADOS
+- Services/write.js
+- Services/admin.js
+- ui.js
+- Tareas.txt
+- Auditoría.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+RESUMEN
+- WRITE valida sesión y bloquea el registro VIN; evita duplicados y sobrescrituras.
+- Las colecciones JSON conservan posiciones y su relación con versiones.
+- ADMIN exige respaldo verificado en backend antes de simular/confirmar migración.
+- La restauración valida el archivo y destino antes de retirarlo de papelera y aplica rollback.
+- WRITE/ADMIN validan la carpeta raíz Cortes.
+- Se conserva AQ=VIN; AR/AS reservadas; opId en Idempotencia.
+- Tarea 7 de IDs sin cambios y aún bloqueada.
+
+VERIFICACIONES
+Sintaxis de WRITE/ADMIN/UI correcta; mocks VIN y comprobaciones estructurales correctos. Respaldos exactos previos registrados en Auditoría.txt.
+
+PENDIENTES
+Pruebas reales de Apps Script/Drive/Spreadsheet, CacheService, ubicación de carpeta raíz y restauración. No se ejecutó migración VIN ni se modificó Spreadsheet. No se desplegó ni se realizó merge. Los ScriptLock de WRITE y ADMIN siguen siendo independientes.
+
+PUBLICACIÓN
+Commit de cierre: «fix: harden VIN registration and admin safeguards».
+Único commit con padre a9c3f2377bdeb87e3de5e94a7c1b174a13e7f8d7, solo en GPSpedia2.2.5_work; la rama base permanece intacta.
+================================================================================

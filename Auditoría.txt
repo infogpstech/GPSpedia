@@ -5739,3 +5739,63 @@ Services/admin.js
 DECISIÓN DE CODE REVIEW
 La implementación estática cumple el alcance de endurecimiento de opId y no se identificaron bloqueos sintácticos en los archivos revisados. La tarea permanece con validación funcional pendiente; no debe promoverse a producción hasta completar la matriz de Tareas.txt y evaluar los riesgos inter-servicios indicados.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA E IMPLEMENTACIÓN — ENDURECIMIENTO VIN Y VALIDACIONES ADMINISTRATIVAS
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: a9c3f2377bdeb87e3de5e94a7c1b174a13e7f8d7
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+HALLAZGOS
+1. WRITE: handleAddVinToVehicle() no adquiría bloqueo ni validaba sesión; podía sobrescribir el VIN de una versión y no detectaba duplicados entre versiones del mismo vehículo.
+2. WRITE/ADMIN: los parsers/serializadores eliminaban posiciones vacías del arreglo JSON y las rutas de ampliación usaban length/concat, desplazando la relación entre VIN y versión.
+3. ADMIN: migrateCortesOperationIds() no recibía ni validaba backupId en backend; la interfaz era la única barrera.
+4. ADMIN: handleRecoverReplacedImage() retiraba el archivo de papelera antes de validar vehículo/campo y no comprobaba pertenencia al árbol Cortes ni coincidencia URL/ID.
+5. WRITE/ADMIN: DRIVE_FOLDER_ID se utilizaba sin comprobar nombre «Cortes» ni ubicación directa en la raíz.
+6. TAREA 7: la estructura de Spreadsheet se confirmó sin cambios, pero siguen sin verificarse el máximo, formato real, duplicados, filas intermedias y efectos del ordenamiento. No se modificó la fórmula ni el generador.
+
+ESQUEMA VIN CONSERVADO
+- AQ/43 = VIN como colección JSON.
+- AR/44 y AS/45 quedan reservadas/vacías.
+- Los tres opId heredados se trasladan a Idempotencia con vehículo, slot, fecha y estado.
+- No se crean tres columnas VIN ni se cambian encabezados fuera de la migración especificada.
+
+RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/write.js: 7e08dd461377b1147fd51125f335dabdf5407895
+- Services/admin.js: ea7b20d4173191f86abca0761629cff440489b5e
+- ui.js: 0de90fe07a46fefa7d073268e81d3e8e772418dd
+- Tareas.txt: 612d3c4317f030930b3e74fe9dacbc51c834a33a
+- Auditoría.txt: 6b0e390d882a76f8d448a08562aae265e46eb5fe
+- ChangesLogs.txt: 35fcfbb0746f5bb7fcc0d4fe176b3bd920a5fbf5
+- checkpoint.md: ea04b5a5f1386b7b47c514c5cb3fc4626235ef46
+
+IMPLEMENTACIÓN
+- WRITE: sesión activa, ScriptLock, duplicados internos/externos, rechazo de sobrescritura, verificación de persistencia y rollback.
+- WRITE/ADMIN: conservación de posiciones vacías y asignación a slot disponible.
+- ADMIN: respaldo verificado asociado a usuario en ScriptCache; backend exige backupId en dry-run y confirmación.
+- ADMIN: validación de URL/ID, MIME type, árbol Cortes, vehículo y campo antes de retirar de papelera; rollback del archivo si falla la restauración.
+- WRITE/ADMIN: validación de la carpeta raíz Cortes.
+- ui.js: payloads de sesión y backupId.
+
+VERIFICACIONES
+- Parseo JavaScript de WRITE, ADMIN y ui.js: correcto.
+- Mocks aislados del handler VIN: alta, reintento idempotente, duplicado en otra versión, rechazo de sobrescritura, alta de nueva versión, sesión inválida, duplicado entre vehículos y límite de tres versiones: correctos.
+- Parseo y asignación posicional VIN en ADMIN: correctos.
+- Comprobaciones estáticas de backupId, orden de validación y raíz Drive: correctas.
+
+CODE REVIEW
+- WRITE serializa sus propias solicitudes; los ScriptLock de WRITE y ADMIN siguen siendo independientes y no garantizan exclusión mutua global.
+- La migración exige un respaldo creado/verificado por el servicio y asociado al usuario actual; el servidor vuelve a validar ID, MIME type, ubicación, nombre y hoja Cortes.
+- Restauración de imagen: no cambia Drive antes de validar la ubicación autorizada y el destino; ante fallo intenta revertir celda y papelera.
+- La carpeta raíz incorrecta/reubicada provoca fallo cerrado.
+- No se alteró el esquema de Cortes, el formato de IDs, la fórmula ni los datos reales.
+
+LIMITACIONES
+- No se ejecutaron Apps Script desplegados ni operaciones reales de Google Sheets/Drive.
+- No se verificó en runtime CacheService ni la ubicación real de DRIVE_FOLDER_ID.
+- La Tarea 7 continúa bloqueada; no se modificó.
+- No hubo despliegues, merge ni cambios en la rama base.
+================================================================================
