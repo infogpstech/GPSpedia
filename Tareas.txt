@@ -4441,3 +4441,48 @@ MATRIZ DE PRUEBAS FUNCIONALES PENDIENTES — TAREA VIN
 RIESGO FUERA DEL ALCANCE — NUEVA TAREA PENDIENTE
 - Services/write.js y Services/admin.js implementan recordOpId() con captura de excepciones que solo registra el error. Si appendRow() falla, el flujo llamador puede continuar sin confirmar la persistencia del opId. Auditar y diseñar el manejo transaccional/reintento en una tarea separada; no se modificó este comportamiento aquí.
 ================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN — PERSISTENCIA Y RECUPERACIÓN SEGURA DE opId
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA INCORPORADA; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PENDIENTE.
+
+RESULTADO DE CÓDIGO
+- Services/write.js y Services/admin.js ahora registran cada operación con estado pending antes de modificar los campos de negocio del corte.
+- recordOpId() valida opId, vehicleId, slotIndex y status; detecta asociaciones incompatibles; evita agregar una segunda fila para una asociación ya registrada; propaga errores y verifica la persistencia mediante lectura posterior.
+- El estado cambia a completed después de SpreadsheetApp.flush() y de finalizar las escrituras de Cortes.
+- La recuperación de una operación pending completa los campos que falten, conserva el timestamp de la reserva y actualiza el estado a completed.
+- findRowByOpId() ya no oculta errores de lectura de la hoja dedicada; las asociaciones incompletas, conflictivas o sin vehículo correspondiente detienen el flujo.
+- checkOperation devuelve exists:false y pending:true para operaciones no completadas. El frontend existente vuelve a enviar el mismo opId; no se modificó add_cortes.html.
+- WRITE ahora mantiene un ScriptLock durante handleAddOrUpdateCut(); ADMIN conserva el bloqueo que ya utilizaba.
+- En altas nuevas, se obtiene el ID de la fórmula y se reserva el opId antes de escribir los datos del vehículo y del corte. Si no se puede generar el ID, se intenta retirar únicamente la fila nueva que siga vacía y al final de la hoja.
+- Se conservan los cinco encabezados de Idempotencia; no se agregaron columnas ni hojas nuevas al esquema documentado.
+
+PRUEBAS ESTÁTICAS Y AISLADAS EJECUTADAS
+- Parseo JavaScript de Services/write.js y Services/admin.js: correcto.
+- Pruebas aisladas con mocks de Spreadsheet: creación pending, recuperación de asociación y slot, transición pending → completed, no degradación de completed, prevención de duplicados, rechazo de asociación conflictiva, propagación de fallo appendRow(), detección de escritura no persistida, fallo cerrado si el vehicleId no existe y respuesta exists:false para pending: correctas.
+- Se comprobó que las rutas de alta nueva y vehículo existente reservan pending antes de escribir los campos de negocio.
+- Se comprobó que ambos servicios conservan el mismo contrato de persistencia y recuperación.
+
+PRUEBAS FUNCIONALES PENDIENTES EN ENTORNO AISLADO
+1. WRITE: alta de corte en vehículo nuevo y existente; verificar una sola asociación opId y status completed.
+2. WRITE: provocar fallo de appendRow y comprobar que no se escriban los campos de negocio cuando no existe reserva.
+3. WRITE: provocar fallo después de la reserva pending y antes de terminar las escrituras; reintentar con el mismo opId y comprobar recuperación sin crear otro corte.
+4. WRITE: provocar fallo al cambiar status a completed; reintentar y comprobar que el registro pending se complete.
+5. ADMIN: repetir los casos anteriores mediante el flujo silencioso, comprobando timestamp y colaborador administrativo.
+6. checkOperation: pending debe devolver exists:false; completed y registros históricos deben devolver exists:true.
+7. Duplicados: mismo opId y misma asociación no debe agregar otra fila; mismo opId con vehículo/slot distinto debe detenerse.
+8. Integridad: verificar que los cinco encabezados de Idempotencia, los datos existentes, VIN, timestamp y columnas de Cortes se conserven.
+9. Regresión: reintento desde add_cortes.html, recuperación después de recargar la página y flujo offline/online.
+10. Ejecutar pruebas separadas para los deployments WRITE y ADMIN apuntando a una Spreadsheet aislada; no utilizar los endpoints operativos.
+
+RIESGOS PENDIENTES / TAREAS SEPARADAS
+- LockService utiliza ámbitos de proyecto: el bloqueo de WRITE no es compartido con ADMIN. La reserva pending y la validación de asociaciones reducen la ventana de duplicación, pero no equivalen a un bloqueo transaccional global entre ambos deployments. Diseñar y probar una coordinación compartida antes de afirmar exclusión mutua inter-servicios.
+- La carga de imágenes a Drive y la escritura de URL en Spreadsheet no constituyen una transacción única; un fallo entre ambas operaciones puede dejar archivos sin referencia. Diseñar reconciliación de archivos para reintentos en una tarea independiente.
+- Services/Test actualmente documenta un entorno aislado para AUTH/USERS, no para WRITE/ADMIN. Se requiere preparar deployments de prueba separados y una copia de Spreadsheet antes de ejecutar la matriz.
+
+ALCANCE
+- No se modificaron add_cortes.html, api-config.js, la estructura de Spreadsheet, datos reales, deployments ni la rama base GPSpedia2.2.5.
+- No se ejecutaron llamadas HTTP, Apps Script ni operaciones sobre la Spreadsheet productiva.
+================================================================================

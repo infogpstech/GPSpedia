@@ -214,6 +214,14 @@ function doPost(e) {
 
 /* TAREA 3 (4.2, 4.4, B31): REGISTRO Y ACTUALIZACIÓN DE CORTES E IDEMPOTENCIA CON REPARACIÓN */
 function handleAddOrUpdateCut(payload) {
+    const lock = LockService.getScriptLock();
+    try { lock.waitLock(30000); }
+    catch (error) { throw new Error("No se pudo obtener el bloqueo para registrar el corte. Por favor reintente en unos instantes."); }
+    try { return handleAddOrUpdateCutLocked(payload); }
+    finally { lock.releaseLock(); }
+}
+
+function handleAddOrUpdateCutLocked(payload) {
     payload = payload && typeof payload === 'object' ? payload : {};
     const { vehicleData, cutData, vehicleId } = payload;
     if (!cutData) {
@@ -230,7 +238,7 @@ function handleAddOrUpdateCut(payload) {
     }
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-    ensureTestigoColumns(sheet);
+    ensureTestigoColumns(sheet, true);
     const vinColumnIndex = getVinColumnIndex(sheet);
     const vinPrefix = cutData.vin ? extractVinPrefix(cutData.vin) : "";
     if (cutData.vin && !vinColumnIndex) {
@@ -344,12 +352,18 @@ function handleAddOrUpdateCut(payload) {
             if (recoveredVinCollection) {
                 sheet.getRange(rowIndex, vinColumnIndex).setValue(JSON.stringify(recoveredVinCollection));
             }
+            if (match.timestamp && (match.status === "pending" || !rowObj.timestamp)) {
+                sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(match.timestamp);
+            }
             SpreadsheetApp.flush();
+            if (opId && rowObj.id) {
+                recordOpId(opId, rowObj.id, slotIndex, match.timestamp || rowObj.timestamp, "completed");
+            }
             return {
                 status: 'success',
                 message: 'La operación ya fue completada (recuperada, reparada y completada).',
                 vehicleId: rowObj.id,
-                timestamp: rowObj.timestamp
+                timestamp: match.timestamp || rowObj.timestamp
             };
         }
     }
@@ -398,6 +412,8 @@ function handleAddOrUpdateCut(payload) {
         }
         if (cutSlotIndex === -1) throw new Error("No hay espacios disponibles para más cortes.");
 
+        if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "pending");
+
         let imageUrl = '';
         if (cutData.imgCorte1) {
             const folder = getOrCreateFolder(vehicleInfo.categoria, vehicleInfo.marca, vehicleInfo.modelo, vehicleInfo.anoDesde);
@@ -415,10 +431,9 @@ function handleAddOrUpdateCut(payload) {
         if (updatedVinCollection) {
             sheet.getRange(rowIndex, vinColumnIndex).setValue(JSON.stringify(updatedVinCollection));
         }
-        if (opId) {
-            recordOpId(opId, newId || vehicleId, cutSlotIndex, formattedDate);
-        }
         sheet.getRange(rowIndex, COLS_CORTES.timestamp).setValue(formattedDate);
+        SpreadsheetApp.flush();
+        if (opId) recordOpId(opId, vehicleId, cutSlotIndex, formattedDate, "completed");
 
         newId = vehicleId;
 
@@ -442,6 +457,44 @@ function handleAddOrUpdateCut(payload) {
         // 2. Limpiar el contenido de las columnas de DATOS para eliminar datos viejos, preservando la fórmula del ID.
         const dataRange = sheet.getRange(rowIndex, 2, 1, lastColumn - 1);
         dataRange.clearContent();
+        
+        // Resolver el ID antes de escribir datos de negocio y reservar la operación.
+        SpreadsheetApp.flush();
+        Utilities.sleep(1500);
+        newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
+        if (!newId) {
+            const previousFormula = sheet.getRange(lastRow, COLS_CORTES.id).getFormula();
+            sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(previousFormula || `=ROW()-1`);
+            SpreadsheetApp.flush();
+            Utilities.sleep(500);
+            newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
+        }
+        sheet.getRange(rowIndex, COLS_CORTES.id).setValue("");
+        sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(sheet.getRange(lastRow, COLS_CORTES.id).getFormula() || `=ROW()-1`);
+        SpreadsheetApp.flush();
+        Utilities.sleep(500);
+        newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
+        if (!newId) {
+            removeEmptyPendingCutRow(sheet, rowIndex, lastColumn);
+            throw new Error("No se pudo generar el ID del nuevo vehículo; no se guardó el corte.");
+        }
+        if (opId) {
+            try {
+                recordOpId(opId, newId, 1, formattedDate, "pending");
+            } catch (error) {
+                try {
+                    const persistedOperation = findRowByOpId(sheet, opId);
+                    if (!persistedOperation || persistedOperation.rowIndex !== rowIndex) removeEmptyPendingCutRow(sheet, rowIndex, lastColumn);
+                } catch (verificationError) {
+                    Logger.log("No se pudo determinar si la reserva de opId quedó persistida: " + verificationError.message);
+                }
+                throw error;
+            }
+        }
+        if (vinPrefix) {
+            sheet.getRange(rowIndex, vinColumnIndex).setValue(serializeVinCollection([vinPrefix]));
+        }
+
 
         // 3. Preparar los datos que se van a escribir.
         // Parsear año...
@@ -490,37 +543,8 @@ function handleAddOrUpdateCut(payload) {
         sheet.getRange(rowIndex, COLS_CORTES.activaTestigo1).setValue(cutData.activaTestigo1 === true);
         sheet.getRange(rowIndex, COLS_CORTES.imgCorte1).setValue(corteImageUrl);
         sheet.getRange(rowIndex, COLS_CORTES.colaboradorCorte1).setValue(colaboradorName);
-        // 5. Esperar a que la hoja calcule el valor del ID generado por la fórmula.
         SpreadsheetApp.flush();
-        Utilities.sleep(1500); // Espera para asegurar que la fórmula se calcule.
-        newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
-
-        // 6. Si el ID sigue vacío, intentar forzar la fórmula de la fila anterior o usar una genérica
-        if (!newId) {
-            const previousFormula = sheet.getRange(lastRow, COLS_CORTES.id).getFormula();
-            if (previousFormula) {
-                sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(previousFormula);
-            } else {
-                // Fallback: Si no hay fórmula, usar una basada en la fila (común en este proyecto)
-                sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(`=ROW()-1`);
-            }
-            SpreadsheetApp.flush();
-            Utilities.sleep(500);
-            newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
-        }
-
-        // Limpiar explícitamente cualquier celda residual de ID que no deba estar compartida
-        sheet.getRange(rowIndex, COLS_CORTES.id).setValue("");
-        sheet.getRange(rowIndex, COLS_CORTES.id).setFormula(sheet.getRange(lastRow, COLS_CORTES.id).getFormula() || `=ROW()-1`);
-        SpreadsheetApp.flush();
-        Utilities.sleep(500);
-        newId = sheet.getRange(rowIndex, COLS_CORTES.id).getValue();
-        if (vinPrefix && newId) {
-            sheet.getRange(rowIndex, vinColumnIndex).setValue(serializeVinCollection([vinPrefix]));
-        }
-        if (opId && newId) {
-            recordOpId(opId, newId, 1, formattedDate);
-        }
+        if (opId) recordOpId(opId, newId, 1, formattedDate, "completed");
     }
 
     return { status: 'success', message: `Corte agregado exitosamente.`, vehicleId: newId, timestamp: formattedDate };
@@ -914,101 +938,163 @@ function getIdempotenciaSheet() {
     return fallback;
 }
 
-function recordOpId(opId, vehicleId, slotIndex, timestamp) {
-    if (!opId) return;
+function removeEmptyPendingCutRow(sheet, rowIndex, lastColumn) {
     try {
-        const sheet = getIdempotenciaSheet();
-        sheet.appendRow([
-            String(opId).trim(),
-            String(vehicleId || ""),
-            String(slotIndex || 1),
-            String(timestamp || new Date().toISOString()),
-            "completed"
-        ]);
-    } catch (e) {
-        Logger.log("Error recording opId in Idempotencia sheet: " + e.message);
+        if (!sheet || sheet.getLastRow() !== rowIndex) return false;
+        const width = Math.max(0, lastColumn - 1);
+        if (width > 0) {
+            const values = sheet.getRange(rowIndex, 2, 1, width).getValues()[0];
+            if (values.some(value => value !== "" && value !== null && value !== undefined)) return false;
+        }
+        sheet.deleteRow(rowIndex);
+        return true;
+    } catch (error) {
+        Logger.log("No se pudo retirar la fila vacía de una operación sin reservar: " + error.message);
+        return false;
     }
+}
+
+function recordOpId(opId, vehicleId, slotIndex, timestamp, status = "completed") {
+    const cleanOpId = String(opId || "").trim();
+    if (!cleanOpId) return null;
+    const cleanVehicleId = String(vehicleId || "").trim();
+    const cleanSlotIndex = Number(slotIndex);
+    const cleanTimestamp = String(timestamp || new Date().toISOString());
+    const targetStatus = String(status || "completed").trim().toLowerCase();
+    if (!cleanVehicleId) throw new Error("No se puede registrar el opId sin un vehicleId válido.");
+    if (![1, 2, 3].includes(cleanSlotIndex)) throw new Error("No se puede registrar el opId con un slotIndex distinto de 1, 2 o 3.");
+    if (!["pending", "completed"].includes(targetStatus)) throw new Error("Estado de idempotencia no válido: " + targetStatus);
+    const sheet = getIdempotenciaSheet();
+    const lastRow = sheet.getLastRow();
+    const rows = lastRow > 1 ? sheet.getRange(2, 1, lastRow - 1, IDEMPOTENCIA_HEADERS.length).getValues() : [];
+    const matches = [];
+    rows.forEach((row, index) => {
+        if (String(row[0] || "").trim() !== cleanOpId) return;
+        const savedVehicleId = String(row[1] || "").trim();
+        const savedSlotIndex = parseInt(row[2], 10);
+        const savedStatus = String(row[4] || "completed").trim().toLowerCase();
+        if (savedVehicleId !== cleanVehicleId || savedSlotIndex !== cleanSlotIndex) throw new Error("El opId " + cleanOpId + " ya está asociado a otro vehículo o slot.");
+        if (!["pending", "completed"].includes(savedStatus)) throw new Error("El opId " + cleanOpId + " tiene un estado no reconocido: " + savedStatus);
+        matches.push({ rowIndex: index + 2, status: savedStatus });
+    });
+    if (matches.length) {
+        const effectiveStatus = targetStatus === "completed" || matches.some(match => match.status === "completed")
+            ? "completed" : "pending";
+        if (effectiveStatus === "completed") {
+            matches.forEach(match => { if (match.status !== "completed") sheet.getRange(match.rowIndex, 5).setValue("completed"); });
+        }
+        SpreadsheetApp.flush();
+        matches.forEach(match => {
+            const row = sheet.getRange(match.rowIndex, 1, 1, IDEMPOTENCIA_HEADERS.length).getValues()[0];
+            if (String(row[0] || "").trim() !== cleanOpId || String(row[1] || "").trim() !== cleanVehicleId ||
+                parseInt(row[2], 10) !== cleanSlotIndex ||
+                String(row[4] || "").trim().toLowerCase() !== effectiveStatus) {
+                throw new Error("No se pudo verificar la actualización del opId " + cleanOpId + ".");
+            }
+        });
+        return { opId: cleanOpId, vehicleId: cleanVehicleId, slotIndex: cleanSlotIndex, status: effectiveStatus };
+    }
+    sheet.appendRow([cleanOpId, cleanVehicleId, String(cleanSlotIndex), cleanTimestamp, targetStatus]);
+    SpreadsheetApp.flush();
+    let afterLastRow = sheet.getLastRow();
+    let afterRows = afterLastRow > 1 ? sheet.getRange(2, 1, afterLastRow - 1, IDEMPOTENCIA_HEADERS.length).getValues() : [];
+    const persisted = afterRows.filter(row => String(row[0] || "").trim() === cleanOpId);
+    if (!persisted.length || persisted.some(row => String(row[1] || "").trim() !== cleanVehicleId ||
+        parseInt(row[2], 10) !== cleanSlotIndex ||
+        !["pending", "completed"].includes(String(row[4] || "").trim().toLowerCase()))) {
+        throw new Error("No se pudo verificar la persistencia del opId " + cleanOpId + " en Idempotencia.");
+    }
+    const effectiveStatus = targetStatus === "completed" || persisted.some(row => String(row[4] || "").trim().toLowerCase() === "completed")
+        ? "completed" : "pending";
+    if (effectiveStatus === "completed") {
+        persisted.forEach(row => {
+            const rowIndex = afterRows.indexOf(row) + 2;
+            if (String(row[4] || "").trim().toLowerCase() !== "completed") sheet.getRange(rowIndex, 5).setValue("completed");
+        });
+        SpreadsheetApp.flush();
+        afterLastRow = sheet.getLastRow();
+        afterRows = afterLastRow > 1 ? sheet.getRange(2, 1, afterLastRow - 1, IDEMPOTENCIA_HEADERS.length).getValues() : [];
+        const verified = afterRows.filter(row => String(row[0] || "").trim() === cleanOpId);
+        if (!verified.length || verified.some(row => String(row[4] || "").trim().toLowerCase() !== "completed")) {
+            throw new Error("No se pudo verificar la finalización del opId " + cleanOpId + ".");
+        }
+    }
+    return { opId: cleanOpId, vehicleId: cleanVehicleId, slotIndex: cleanSlotIndex, status: effectiveStatus };
 }
 
 function findRowByOpId(sheet, opId) {
     if (!opId) return null;
     const cleanOpId = String(opId).trim();
-
-    // 1. Buscar prioritariamente en la hoja dedicada Idempotencia
-    try {
-        const idempSheet = getIdempotenciaSheet();
-        if (idempSheet && idempSheet.getLastRow() > 1) {
-            const idempData = idempSheet.getDataRange().getValues();
-            for (let r = 1; r < idempData.length; r++) {
-                const row = idempData[r];
-                if (String(row[0]).trim() === cleanOpId) {
-                    const savedVehicleId = String(row[1]).trim();
-                    const savedSlotIndex = parseInt(row[2]) || 1;
-                    const cortesSheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
-                    if (cortesSheet && savedVehicleId) {
-                        const cortesData = cortesSheet.getDataRange().getValues();
-                        for (let cr = 1; cr < cortesData.length; cr++) {
-                            if (String(cortesData[cr][COLS_CORTES.id - 1]) === savedVehicleId) {
-                                return {
-                                    rowIndex: cr + 1,
-                                    rowValues: cortesData[cr],
-                                    colIndex: COLS_CORTES[`colaboradorCorte${savedSlotIndex}`] || COLS_CORTES.colaboradorCorte1,
-                                    slotIndex: savedSlotIndex,
-                                    fromIdempotenciaSheet: true
-                                };
-                            }
-                        }
-                    }
-                }
+    const idempSheet = getIdempotenciaSheet();
+    let dedicatedMatch = null;
+    if (idempSheet && idempSheet.getLastRow() > 1) {
+        const idempData = idempSheet.getRange(2, 1, idempSheet.getLastRow() - 1, IDEMPOTENCIA_HEADERS.length).getValues();
+        for (let r = 0; r < idempData.length; r++) {
+            const row = idempData[r];
+            if (String(row[0] || "").trim() !== cleanOpId) continue;
+            const savedVehicleId = String(row[1] || "").trim();
+            const savedSlotIndex = parseInt(row[2], 10);
+            const savedStatus = String(row[4] || "completed").trim().toLowerCase();
+            if (!savedVehicleId || ![1, 2, 3].includes(savedSlotIndex)) throw new Error("El opId " + cleanOpId + " tiene una asociación incompleta o inválida en Idempotencia.");
+            if (!["pending", "completed"].includes(savedStatus)) throw new Error("El opId " + cleanOpId + " tiene un estado no reconocido: " + savedStatus);
+            if (dedicatedMatch && (dedicatedMatch.vehicleId !== savedVehicleId || dedicatedMatch.slotIndex !== savedSlotIndex)) {
+                throw new Error("El opId " + cleanOpId + " aparece asociado a vehículos o slots distintos en Idempotencia.");
+            }
+            if (!dedicatedMatch) dedicatedMatch = { vehicleId: savedVehicleId, slotIndex: savedSlotIndex, timestamp: row[3] || "", status: savedStatus };
+            else if (savedStatus === "completed") dedicatedMatch.status = "completed";
+        }
+    }
+    if (dedicatedMatch) {
+        const cortesSheet = sheet || getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+        if (!cortesSheet) throw new Error("No se encontró la hoja «Cortes» para recuperar el opId " + cleanOpId + ".");
+        const cortesData = cortesSheet.getDataRange().getValues();
+        for (let cr = 1; cr < cortesData.length; cr++) {
+            if (String(cortesData[cr][COLS_CORTES.id - 1]).trim() === dedicatedMatch.vehicleId) {
+                return { rowIndex: cr + 1, rowValues: cortesData[cr],
+                    colIndex: COLS_CORTES[`colaboradorCorte${dedicatedMatch.slotIndex}`],
+                    slotIndex: dedicatedMatch.slotIndex, timestamp: dedicatedMatch.timestamp,
+                    status: dedicatedMatch.status, fromIdempotenciaSheet: true };
             }
         }
-    } catch (e) {
-        Logger.log("Error checking Idempotencia sheet: " + e.message);
+        throw new Error("El opId " + cleanOpId + " existe en Idempotencia, pero su vehicleId no está presente en «Cortes». Se requiere reconciliación.");
     }
-
-    // 2. Búsqueda de compatibilidad histórica en la hoja Cortes (sin contaminar la columna 43 VIN)
+    // Compatibilidad histórica con opId almacenados en columnas antiguas de Cortes.
     if (sheet && sheet.getLastRow() > 1) {
         const data = sheet.getDataRange().getValues();
         const headers = data[0];
         const vinColumnIndex = headers.findIndex(header => String(header || "").trim().toLowerCase() === "vin") + 1;
         const opIdCols = [];
         for (let c = 0; c < headers.length; c++) {
-            // Si la columna VIN aún contiene un opId heredado, permitir su recuperación hasta completar la migración.
             if (vinColumnIndex > 0 && c + 1 === vinColumnIndex) {
                 if (data.slice(1).some(row => /^OP-[a-zA-Z0-9_-]+$/.test(String(row[c] || "").trim()))) opIdCols.push(c);
                 continue;
             }
-            const h = String(headers[c]).toLowerCase();
-            if (h.includes("idoperacion") || h.includes("id_operacion")) {
-                opIdCols.push(c);
-            }
+            const header = String(headers[c] || "").toLowerCase();
+            if (header.includes("idoperacion") || header.includes("id_operacion")) opIdCols.push(c);
         }
-
         for (let r = 1; r < data.length; r++) {
             const row = data[r];
             for (let i = 0; i < opIdCols.length; i++) {
-                const idx = opIdCols[i];
-                const cellVal = row[idx];
-                if (cellVal && String(cellVal).trim() === cleanOpId) {
-                    return { rowIndex: r + 1, rowValues: row, colIndex: idx + 1 };
+                const index = opIdCols[i];
+                if (row[index] && String(row[index]).trim() === cleanOpId) {
+                    return { rowIndex: r + 1, rowValues: row, colIndex: index + 1,
+                        status: "completed", timestamp: row[COLS_CORTES.timestamp - 1] || "" };
                 }
             }
         }
-
-        // Fallback for old tagged collaborator format (excluyendo columna vin)
-        const tag = `[${cleanOpId}]`;
+        const tag = "[" + cleanOpId + "]";
         for (let r = 1; r < data.length; r++) {
             const row = data[r];
             for (let c = 0; c < row.length; c++) {
                 if (vinColumnIndex > 0 && c + 1 === vinColumnIndex) continue;
                 const cell = row[c];
                 if (cell && typeof cell === "string" && (cell.indexOf(tag) !== -1 || cell === cleanOpId)) {
-                    return { rowIndex: r + 1, rowValues: row, colIndex: c + 1 };
+                    return { rowIndex: r + 1, rowValues: row, colIndex: c + 1,
+                        status: "completed", timestamp: row[COLS_CORTES.timestamp - 1] || "" };
                 }
             }
         }
     }
-
     return null;
 }
 
@@ -1019,6 +1105,10 @@ function handleCheckOperation(payload) {
 
     const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
     const match = findRowByOpId(sheet, opId);
+    if (match && match.status !== "completed") {
+        return { status: "success", exists: false, pending: true, operationStatus: match.status,
+            vehicleId: mapRowToObject(match.rowValues, COLS_CORTES).id, timestamp: match.timestamp || "" };
+    }
     if (match) {
         const rowObj = mapRowToObject(match.rowValues, COLS_CORTES);
         const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
@@ -1037,6 +1127,7 @@ function handleCheckOperation(payload) {
         return {
             status: 'success',
             exists: true,
+            operationStatus: "completed",
             vehicleId: rowObj.id,
             timestamp: rowObj.timestamp,
             slotIndex: slotIndex,

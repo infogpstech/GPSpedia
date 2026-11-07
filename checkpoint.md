@@ -3884,3 +3884,95 @@ Crear y verificar un respaldo desde el panel, ejecutar la simulación en el ento
 PUBLICACIÓN
 Un único commit de esta tarea en GPSpedia2.2.5_work, como hijo directo del HEAD anterior. La rama base GPSpedia2.2.5 permanece intacta.
 ================================================================================
+
+
+================================================================================
+# CHECKPOINT INICIAL — PERSISTENCIA DE IDEMPOTENCIA opId
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD de trabajo verificado: 6f81b489522102b4d1795ed713cb63039e64e2f2
+HEAD de base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA Y ALCANCE
+Auditar e implementar el manejo seguro de fallas de persistencia de opId en Services/write.js y Services/admin.js. Revisar los puntos de escritura, recuperación, lectura, sincronización y concurrencia que intervienen en el contrato de idempotencia.
+
+ESTADO INICIAL
+La tarea está pendiente de auditoría completa. Se confirmó que ambos servicios contienen recordOpId() con appendRow() dentro de try/catch y que la excepción se registra sin propagarse. Los llamadores pueden continuar y devolver éxito aunque el registro de idempotencia no se haya confirmado.
+
+ARCHIVOS Y FUNCIONALIDADES INVOLUCRADOS
+- Services/write.js: handleAddOrUpdateCut(), recordOpId(), findRowByOpId(), resolución y creación de hoja Idempotencia.
+- Services/admin.js: handleAddOrUpdateCut(), recordOpId(), findRowByOpId(), resolución y creación de hoja Idempotencia.
+- Tareas.txt, Auditoría.txt, ChangesLogs.txt y checkpoint.md para trazabilidad.
+
+RIESGOS Y DEPENDENCIAS CONOCIDOS
+- La escritura del registro de idempotencia ocurre después de modificar la hoja Cortes.
+- findRowByOpId() también captura errores al consultar Idempotencia y continúa con búsqueda histórica, lo que puede ocultar que el registro dedicado no pudo leerse.
+- WRITE y ADMIN usan copias de la misma lógica en proyectos de Apps Script distintos; sus LockService no constituyen un bloqueo compartido entre servicios.
+- No se ha confirmado un entorno aislado de pruebas para WRITE/ADMIN. La carpeta Services/Test existente documenta únicamente AUTH/USERS.
+- La rama base es de producción y no se actualizará, fusionará ni desplegará desde esta tarea.
+
+CAMBIOS Y VERIFICACIONES PREVIAS
+- No se ha modificado código ni se han realizado operaciones sobre Spreadsheet/Drive.
+- Se verificaron los HEAD de ambas ramas y la identidad del último commit de trabajo.
+- Se inició una inspección preliminar de los puntos de entrada y las funciones de idempotencia; la auditoría formal continuará después de este checkpoint.
+
+SIGUIENTE ACCIÓN
+Completar la auditoría línea por línea y función por función, registrar todos los hallazgos antes de editar y definir una estrategia que no informe éxito si la persistencia del opId falla.
+================================================================================
+
+
+================================================================================
+# CHECKPOINT FINAL — PERSISTENCIA Y RECUPERACIÓN SEGURA DE opId
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD anterior a esta tarea: 6f81b489522102b4d1795ed713cb63039e64e2f2
+HEAD de la rama base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+IMPLEMENTACIÓN ESTÁTICA REALIZADA; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PENDIENTE. NO AUTORIZA PROMOCIÓN A PRODUCCIÓN.
+
+ARCHIVOS MODIFICADOS
+- Services/write.js
+- Services/admin.js
+- Tareas.txt
+- Auditoría.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+RESUMEN
+- Se incorporó la secuencia pending/completed en WRITE y ADMIN.
+- La reserva de opId precede a las escrituras de negocio; completed se establece después de flush.
+- Se valida y verifica la persistencia, se rechazan asociaciones conflictivas y se propagan errores.
+- La búsqueda de idempotencia falla de forma segura ante errores o asociaciones inválidas.
+- Los reintentos recuperan operaciones pending y checkOperation no las presenta como completadas.
+- WRITE mantiene un ScriptLock durante el handler; ADMIN conserva su bloqueo existente.
+- Se mantuvo el esquema de cinco columnas de Idempotencia y no se modificó el formulario protegido ni el router.
+
+VERIFICACIONES EJECUTADAS
+- Parseo JavaScript completo de Services/write.js y Services/admin.js: correcto.
+- Pruebas aisladas con mocks para reserva, transición, duplicados, conflictos, append fallido, append no persistido, asociación sin vehículo y checkOperation: correctas.
+- Revisión estática de orden de escrituras, recuperación y compatibilidad con registros históricos.
+- Comparación de los bloques modificados con respaldos exactos; no se detectaron cambios ajenos al alcance.
+
+VALIDACIONES NO REALIZADAS
+- No se ejecutó Apps Script real, navegador, HTTP ni los deployments WRITE/ADMIN.
+- No se ejecutó la matriz funcional completa ni pruebas concurrentes entre servicios.
+- No se modificó la Spreadsheet productiva ni se realizaron operaciones en Drive.
+- No se desplegó ningún servicio.
+
+RIESGOS Y PENDIENTES
+- LockService de WRITE y ADMIN no es compartido entre proyectos Apps Script; la coordinación inter-servicios queda pendiente.
+- La subida de imágenes a Drive y la escritura de sus URL no son transaccionales; queda pendiente la reconciliación de archivos huérfanos.
+- Deben prepararse deployments aislados de WRITE y ADMIN apuntando a una copia de Spreadsheet y ejecutarse las pruebas descritas en Tareas.txt.
+- La promoción a GPSpedia2.2.5 queda bloqueada hasta completar y aprobar la lista de pruebas funcionales.
+
+SIGUIENTE ACCIÓN
+Preparar una copia aislada de Spreadsheet y deployments de prueba separados para WRITE y ADMIN; ejecutar la matriz de alta, reintento, recuperación, fallos de persistencia, modo silencioso y regresión. Mantener GPSpedia2.2.5 intacta hasta la aprobación expresa de los resultados.
+
+PUBLICACIÓN
+La tarea se publicará en un único commit sobre GPSpedia2.2.5_work, con parent igual al HEAD anterior indicado. La rama base GPSpedia2.2.5 no se actualizará ni fusionará.
+================================================================================

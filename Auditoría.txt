@@ -5625,3 +5625,117 @@ HEAD auditado: 67ce3fcd4fbc8d8f6acbf88a130cae779d9e62cb
 DECISIÓN
 La interfaz de ejecución controlada y la documentación del esquema objetivo quedan implementadas estáticamente. La migración real y las pruebas funcionales permanecen pendientes. La nueva tarea sobre errores de persistencia de opId queda fuera del alcance actual.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA INICIAL — PERSISTENCIA Y RECUPERACIÓN DE opId
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+HEAD auditado: 6f81b489522102b4d1795ed713cb63039e64e2f2
+
+1. ARCHIVOS Y PUNTOS DE ENTRADA
+
+Services/write.js
+- doPost() enruta addOrUpdateCut a handleAddOrUpdateCut() y checkOperation a handleCheckOperation(). Las excepciones de handlers llegan al catch de doPost(), que devuelve status:error.
+- handleAddOrUpdateCut() no adquiere un bloqueo global de la operación. Llama ensureTestigoColumns(sheet), que obtiene y libera su propio ScriptLock antes de continuar con las escrituras.
+- En el flujo de vehículo existente, el slot se determina y los campos del corte, imagen, colaborador y VIN se escriben antes de recordOpId(); timestamp se escribe después.
+- En el flujo de vehículo nuevo, se copia y limpia una fila, se escriben los datos y se suben imágenes; el ID se resuelve mediante fórmula al final y solo entonces se llama recordOpId().
+- El camino de recuperación usa findRowByOpId(), completa campos vacíos y devuelve success, pero no actualiza el estado de la operación ni garantiza que un registro pendiente pase a completed.
+- handleCheckOperation() considera cualquier coincidencia como exists:true; no diferencia una operación pendiente de una completada.
+
+Services/admin.js
+- doPost() enruta addOrUpdateCut y checkOperation a los handlers correspondientes.
+- handleAddOrUpdateCut() mantiene un ScriptLock durante el proceso completo y llama ensureTestigoColumns(sheet, true), evitando un bloqueo anidado.
+- Los flujos de vehículo existente y nuevo presentan el mismo orden de persistencia observado en WRITE: los datos se escriben antes del registro de opId.
+- El camino de recuperación tampoco cambia status a completed.
+- handleCheckOperation() considera cualquier coincidencia como exists:true, sin diferenciar estados.
+
+2. FUNCIONES COMPARTIDAS Y CONTRATO DE LA HOJA
+- Ambos servicios declaran los encabezados exactos opId, vehicleId, slotIndex, timestamp y status.
+- getIdempotenciaSheet() reutiliza Idempotencia si es compatible; si no, conserva la hoja primaria incompatible y utiliza Idempotencia_Cortes cuando procede. Si no existe ninguna hoja compatible, crea una hoja nueva.
+- recordOpId() agrega una fila con status completed, pero captura cualquier excepción y solo la registra. No valida los argumentos, no detecta opId duplicados y no verifica la lectura posterior.
+- findRowByOpId() captura errores al acceder a la hoja dedicada y continúa buscando en columnas históricas de Cortes. Esto puede tratar una falla de lectura como ausencia de operación.
+- findRowByOpId() utiliza vehicleId y slotIndex de la hoja dedicada para localizar el registro en Cortes; el resultado incluye colIndex, utilizado por la recuperación y checkOperation para identificar el slot.
+- En ADMIN, findRowByOpId() también es utilizado por handleCheckOperation() y por el flujo de migración/compatibilidad; no se debe alterar el contrato de retorno requerido por esos consumidores.
+- readIdempotenciaOperationMap() valida vehicleId y slotIndex, conserva status y acepta status vacío como completed; admite filas duplicadas si mantienen la misma asociación, pero aborta asociaciones distintas.
+
+3. DEPENDENCIAS FRONTEND
+- add_cortes.html llama checkOperation antes de addOrUpdateCut y en la recuperación automática de operaciones pendientes.
+- Cuando exists:true, el frontend elimina el registro local y continúa a la etapa 3; cuando exists:false, conserva/restaura el formulario y permite volver a enviar el mismo opId.
+- Por compatibilidad, el servidor debe devolver exists:true únicamente para operaciones completed. Una operación pending debe devolver exists:false y un indicador pending, permitiendo que el flujo actual vuelva a enviar el mismo opId y active la recuperación del servidor.
+- No se identificó necesidad de modificar add_cortes.html para distinguir pending; el contrato existente exists controla ambas rutas.
+
+4. RIESGOS Y EFECTOS COLATERALES
+- La falla actual puede producir una respuesta success sin persistencia de opId y permitir que un reintento genere otra operación.
+- Propagar únicamente la excepción no resuelve la ventana de fallo porque los datos de Cortes ya se escribieron antes de recordOpId().
+- La hoja admite status, por lo que se puede implementar una reserva pending previa a la escritura de los campos de negocio y transición a completed después de flush y verificación.
+- En vehículos nuevos, el ID se genera por fórmula independiente de los campos de negocio en la copia XLSX recibida (fórmula observada en la columna A); aun así, la generación debe comprobarse antes de reservar el opId. Si falla la reserva, la fila recién creada debe retirarse solo si continúa vacía y es la última fila.
+- LockService de WRITE y ADMIN no es compartido entre proyectos Apps Script distintos. ADMIN ya serializa su handler; WRITE requiere serialización interna. No puede afirmarse exclusión mutua global entre ambos deployments.
+- La subida de imágenes a Drive no es transaccional con las celdas; un fallo entre la subida y el guardado de URL puede dejar archivos sin referencia. Este riesgo preexistente no se amplía a una limpieza automática dentro de esta tarea.
+- La migración existente conserva el campo status y valida asociaciones; no se deben cambiar los cinco encabezados ni añadir columnas a Idempotencia.
+
+5. DECISIONES DE ALCANCE
+- Endurecer recordOpId() para validar asociación, evitar duplicados, persistir pending/completed, propagar errores y verificar la escritura.
+- Hacer que findRowByOpId() falle de forma segura ante errores o asociaciones inválidas de la hoja dedicada, sin ocultarlos mediante búsqueda histórica.
+- Registrar pending antes de modificar campos de negocio, completar status después de flush y completar operaciones pendientes durante la recuperación.
+- Hacer que checkOperation informe exists:true solo cuando la operación esté completed; pending se reporta como exists:false para conservar el flujo actual de add_cortes.html.
+- No modificar add_cortes.html, api-config.js, esquema de Spreadsheet, deployments, datos reales ni rama base.
+
+6. RESPALDOS Y VERIFICACIÓN
+- Auditoría realizada sobre los bloques de entrada, persistencia, recuperación, consulta y consumidores identificados en Services/write.js, Services/admin.js y add_cortes.html.
+- Respaldos exactos previos a edición se registrarán por SHA de blob de GitHub antes de implementar.
+- No se ejecutaron servicios Apps Script, solicitudes HTTP ni operaciones reales de Spreadsheet/Drive.
+================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN Y CODE REVIEW — PERSISTENCIA DE opId
+Fecha: 2026-11-06 | Rama: GPSpedia2.2.5_work
+
+1. RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/write.js: 006f8e74971811b61800ea7477a8aaf25ee6a448
+- Services/admin.js: 4a4c2ae6481c4bf0280768ccc2e0e204bc4f51ad
+- Tareas.txt: c1291b2288876ed00711417e4c7d4c6eaddc7a38
+- Auditoría.txt: bd5915afe67d4f8e6b8c211c91293f3c9e7b5824
+- ChangesLogs.txt: 421392fdabf85e4e0b5561321f047393131bfe97
+- checkpoint.md: 0872f00df36ceb9059293026a08e1d6ca6936282
+
+2. CAMBIOS IMPLEMENTADOS
+Services/write.js
+- handleAddOrUpdateCut() ahora adquiere ScriptLock y delega el flujo a handleAddOrUpdateCutLocked(); ensureTestigoColumns() recibe lockAlreadyHeld=true para evitar un bloqueo anidado.
+- La ruta de vehículo existente registra pending antes de subir la imagen y escribir campos; tras escribir timestamp y ejecutar flush registra completed.
+- La ruta de vehículo nuevo resuelve primero el ID de fórmula, registra pending antes de escribir datos de negocio y registra completed después de flush.
+- Si falla la reserva de una fila nueva, se consulta nuevamente el opId y solo se retira la fila si no quedó asociada a la operación y continúa vacía al final de la hoja.
+- La recuperación completa timestamp cuando la reserva sigue pending y marca completed después de flush.
+- recordOpId() valida asociación y estado, detecta conflictos, evita nuevas filas para opId ya registrado, verifica lectura posterior y propaga errores.
+- findRowByOpId() valida los registros dedicados, falla ante asociaciones sin vehículo o inconsistentes y conserva la búsqueda histórica cuando no existe coincidencia dedicada.
+- handleCheckOperation() informa exists:false para pending y exists:true para completed.
+
+Services/admin.js
+- Se aplicó el mismo contrato pending/completed, verificación, detección de conflicto y recuperación.
+- Se conserva el ScriptLock existente del handler administrativo.
+- La consulta checkOperation distingue pending de completed sin modificar el router ni el frontend.
+
+3. CODE REVIEW — SAFETY & SIDE EFFECTS
+- Los errores de persistencia ya no quedan absorbidos por recordOpId(); doPost recibe la excepción y puede devolver status:error.
+- La reserva pending precede a las escrituras de negocio en ambos flujos, y completed se registra después de flush.
+- Los reintentos localizan la fila mediante vehicleId/slotIndex y completan los campos faltantes sin abrir un segundo slot.
+- La consulta de la hoja dedicada deja de tratar una falla de lectura como ausencia de operación.
+- No se modificó el esquema de cinco columnas, la migración VIN, la configuración de endpoints, el formulario protegido ni las columnas de Cortes.
+- No se detectaron cambios fuera del alcance en las transformaciones aplicadas; los cambios se limitaron a los bloques de persistencia, recuperación, consulta y serialización del handler WRITE.
+
+4. VERIFICACIONES
+- Parseo JavaScript de ambos archivos completos: correcto.
+- Mocks aislados: pending, transición a completed, no degradación de completed, duplicado con misma asociación, asociación conflictiva, appendRow fallido, append sin persistencia, asociación cuyo vehículo no existe y checkOperation pending/completed: resultados correctos.
+- Verificación estática de orden: pending se registra antes de los campos de negocio en altas nuevas y vehículos existentes.
+- Comparación contra los blobs de respaldo: se conservaron las funciones y secciones ajenas a los bloques descritos; no se introdujeron cambios en otros archivos de aplicación.
+
+5. LIMITACIONES Y RIESGOS
+- No se ejecutaron los servicios desplegados ni se realizaron pruebas de extremo a extremo en Apps Script.
+- LockService de WRITE y ADMIN pertenece a proyectos diferentes; no constituye un bloqueo compartido entre deployments. La concurrencia inter-servicios requiere una solución compartida separada.
+- Drive y Spreadsheet no comparten una transacción; una interrupción entre uploadImageToDrive() y el guardado de la URL puede dejar un archivo sin referencia.
+- La recuperación de una fila nueva requiere que la fórmula de ID se calcule antes de reservar; la fórmula de la copia XLSX recibida usa ROW()-1, pero debe verificarse en una Spreadsheet de prueba real.
+- No se desplegó WRITE ni ADMIN, no se modificó la Spreadsheet productiva y no se actualizó la rama base.
+
+DECISIÓN DE CODE REVIEW
+La implementación estática cumple el alcance de endurecimiento de opId y no se identificaron bloqueos sintácticos en los archivos revisados. La tarea permanece con validación funcional pendiente; no debe promoverse a producción hasta completar la matriz de Tareas.txt y evaluar los riesgos inter-servicios indicados.
+================================================================================

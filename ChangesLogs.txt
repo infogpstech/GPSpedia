@@ -3323,3 +3323,36 @@ ALCANCE
 - No se modificaron los servicios ADMIN/WRITE ni api-config.js porque la acción y el enrutamiento ya existían.
 - No se ejecutó la migración ni se modificó ninguna Spreadsheet; no hubo despliegue.
 ================================================================================
+
+
+================================================================================
+2026-11-06 — PERSISTENCIA Y RECUPERACIÓN SEGURA DE opId
+================================================================================
+Services/write.js (líneas 216–224, 241, 355–367, 415–436, 461–495, 546–547, 941–1105)
+- Se añadió un bloqueo de script alrededor del handler WRITE y se evitó el bloqueo anidado al preparar columnas de testigo.
+- Se trasladó el registro de operación a una secuencia pending/completed: reserva antes de las escrituras de negocio y confirmación después de flush.
+- En altas nuevas se resuelve el ID de fórmula antes de escribir los datos y se reserva el opId; se agregó retirada condicionada de filas nuevas vacías cuando no se puede confirmar la reserva.
+- La recuperación completa el timestamp pendiente y actualiza el estado a completed.
+- recordOpId() valida argumentos y asociaciones, actualiza estados sin degradarlos, evita agregar filas repetidas y verifica la persistencia por lectura posterior. Los errores se propagan.
+- findRowByOpId() valida registros dedicados y asociaciones; ya no absorbe errores de lectura y mantiene compatibilidad con opId históricos.
+- handleCheckOperation() distingue operaciones pending de completed y no declara completed una reserva pendiente.
+
+Services/admin.js (líneas 1709–1856, 1892–1913, 1938–1973, 2022–2023, 2335–2476, 2804–2821)
+- Se aplicó la misma secuencia pending/completed a los flujos administrativo de vehículo existente y nuevo.
+- Se reutilizó el bloqueo de script ya presente en handleAddOrUpdateCut().
+- Se añadió recuperación del timestamp y actualización del estado después de flush.
+- Se alinearon recordOpId(), findRowByOpId() y handleCheckOperation() con el contrato de WRITE.
+
+Tareas.txt
+- Se registró el estado de implementación estática, la matriz de pruebas funcionales pendiente y los riesgos que requieren tareas separadas.
+
+Auditoría.txt
+- Se añadieron auditoría inicial, respaldos exactos, resultados de verificación, Code Review, Safety & Side Effects y limitaciones.
+
+checkpoint.md
+- Se añadieron checkpoint inicial y final de la tarea, conservando el historial previo.
+
+ALCANCE
+- No se modificaron add_cortes.html, api-config.js, Spreadsheet/GPSpedia_DB_columnas.md, endpoints, deployments, datos reales ni rama base.
+- No se ejecutaron operaciones reales de Apps Script, Spreadsheet o Drive.
+================================================================================
