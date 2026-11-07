@@ -4889,3 +4889,92 @@ RESPALDOS EXACTOS PREVIOS A LA ACTUALIZACIÓN DOCUMENTAL
 CONTINUIDAD
 La siguiente acción requerida es incorporar la fuente Services/utilities.js (o exportación equivalente del proyecto Apps Script UTILITIES) para completar la auditoría de todos los escritores de Cortes. Después se definirá y probará el coordinador compartido; la idempotencia de uploadAdminImage() permanece como tarea independiente. No desplegar ni modificar datos productivos.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — IDEMPOTENCIA DE REEMPLAZOS DE IMÁGENES IN-MODAL
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial de trabajo: ef2db2e5ae0b5e09d1b849f95bf66f8d0a17f109
+Árbol inicial de trabajo: 36427c0d1ed6aa42254b7d734e8f51ee9be3f269
+HEAD inicial de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+OBJETIVO
+Evitar archivos Drive e historiales duplicados cuando handleUploadAdminImage() completa una sustitución, pero la respuesta HTTP no llega al navegador. Conservar el mismo opId y payload hasta confirmación inequívoca, incluida la carga inicial cuando el campo no tenía imagen anterior.
+
+ESTADO BASE AUDITADO
+- El HEAD de trabajo y el HEAD protegido se verificaron mediante GitHub API.
+- handleUploadAdminImage() no recibía opId, siempre creaba un archivo y recordReplacedImage() generaba un REP-UUID aleatorio.
+- ui.js enviaba la imagen sin persistir el intento; offline.js ya disponía del almacén adminLocalState y no requería un nuevo object store.
+- Imagenes_Reemplazadas conserva once columnas históricas fijas y columnas dinámicas de inventario; Cortes no requiere cambios.
+- Se determinó que una hoja ledger independiente es necesaria para mantener la idempotencia incluso si urlAnterior está vacía. La justificación está registrada como adenda en Auditoría.txt.
+- Los blobs preparados para la propuesta no se habían incorporado a ningún árbol, commit ni referencia de rama. No se había desplegado ni ejecutado código en producción.
+
+ARCHIVOS RESPALDADOS — SHA EXACTO DEL HEAD INICIAL
+- Services/admin.js: 8807279a269b09b8d1c224d7720a0643c04cd6ca
+- ui.js: 16f1e7c50304d7f08d0884bfdfba24044b5c3d0a
+- offline.js: b587f43181007deda1bcc1a2bd9786ec4bf6a189
+- Spreadsheet/GPSpedia_DB_columnas.md: fd8d1a33c01cac13ed47c3715a539f2bc7e4254d
+- Auditoría.txt: 8e68608e7b47964b3cf177757dd5089d0c23283e
+- ChangesLogs.txt: 4df4dfaaf71b5952d40fd79cc4f6431bcac3a3da
+- Tareas.txt: 60ae06a7b6b3209c098cd19df54a30b4badfa956
+- checkpoint.md: f6ed0581378f6c834f707be3e2ed779f505d8317
+
+ALCANCE PREVISTO
+- Services/admin.js, ui.js, offline.js, Spreadsheet/GPSpedia_DB_columnas.md, Auditoría.txt, ChangesLogs.txt, Tareas.txt y checkpoint.md.
+- No modificar api-config.js, permisos de sesión/rol, Cortes ni los encabezados históricos de Imagenes_Reemplazadas.
+- No desplegar ni modificar Drive/Spreadsheet productivos.
+- Un único commit en GPSpedia2.2.5_work mediante Git Database API; no actualizar GPSpedia2.2.5.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — IMPLEMENTACIÓN ESTÁTICA DE IDEMPOTENCIA IN-MODAL
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD padre confirmado para el commit: ef2db2e5ae0b5e09d1b849f95bf66f8d0a17f109
+Árbol base confirmado: 36427c0d1ed6aa42254b7d734e8f51ee9be3f269
+HEAD protegido confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+IMPLEMENTACIÓN PREPARADA — BLOBS FINALES
+- Services/admin.js: 847a2bb80e53918bede067e530b80e41bfdb6afa
+- ui.js: 40e3c9a818f2613a73736ebcfa76f85c82050231
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- Spreadsheet/GPSpedia_DB_columnas.md: a109ff4e97dc0ad0e82a50f2818a6b03005c0e4a
+- Auditoría.txt: 26ac367a9c99d23724f78c244ab873761f89b229
+- ChangesLogs.txt: a10e6b69cbaa5bc2b84bf67c3f3fd91fa5560fb6
+- Tareas.txt: bbdc2176b2a289b49abefc590d9356cdf022b2fc
+- checkpoint.md: este documento; conserva el historial previo y añade los checkpoints de esta tarea.
+
+ARCHIVOS PREPARADOS
+1. Services/admin.js: ledger AdminImageUploads con doce encabezados; validación de opId, vehículo, campo, contenido SHA-256, MIME y nombre; recuperación del mismo fileId; control de referencias concurrentes; estados pending/linked/cancelled/requires_review; compensación y verificación posterior a flush. recordReplacedImage() usa REP-<opId> de forma opcional y conserva el comportamiento histórico cuando no recibe operationId.
+2. ui.js: carga de intentos pendientes al entrar al modo edición; opId criptográficamente aleatorio; persistencia previa al envío; reintento del mismo payload; sesión obtenida nuevamente en cada solicitud; bloqueo de una sustitución nueva mientras exista una pendiente.
+3. offline.js: consulta, guardado y eliminación condicionada por opId en adminLocalState; no guarda tokens ni credenciales; no cambia DB_VERSION ni crea object stores.
+4. Spreadsheet/GPSpedia_DB_columnas.md: documenta la nueva hoja y los doce encabezados; la hoja se crea bajo demanda tras el despliegue, no durante esta tarea.
+5. Auditoría.txt, ChangesLogs.txt y Tareas.txt: hallazgos, decisiones, respaldos, líneas modificadas, pruebas y limitaciones documentados.
+
+VALIDACIONES AISLADAS
+- Parseo sintáctico de Services/admin.js, ui.js y offline.js: PASS.
+- Backend con mocks: repetición del mismo opId, ausencia de duplicados, rechazo de payload diferente, recuperación tras fallo simulado de flush, recuperación cuando falta el archivo previo, protección ante referencia actualizada por otra operación y carga sin URL anterior: PASS.
+- IndexedDB con mocks: lectura, guardado, conflicto, eliminación con opId incorrecto y eliminación con opId coincidente: PASS.
+- Frontend con mocks: recuperación del intento, transmisión del mismo opId y obtención de sesión actual: PASS.
+- Inicialización de AdminImageUploads vacía y reutilización de encabezados: PASS.
+- Revisión de compatibilidad de recordReplacedImage() para su llamador histórico sin operationId: PASS.
+
+LIMITACIONES Y RIESGOS PENDIENTES
+- Las pruebas son simuladas; no sustituyen ejecución real de Apps Script, Drive, Spreadsheet, navegador ni HTTP.
+- No se probó cuota/tamaño real de IndexedDB, permisos OAuth, tiempos de Drive, pérdida real de respuesta ni expiración real de ejecución.
+- No se creó AdminImageUploads en la Spreadsheet productiva; se creará bajo demanda después del despliegue.
+- No se desplegó ADMIN ni frontend, no se modificó Drive/Spreadsheet productivos y no se modificó api-config.js.
+- ADMIN y frontend deben desplegarse coordinadamente porque el nuevo handler exige opId.
+- La coordinación global entre proyectos Apps Script sigue pendiente y fuera del alcance de esta tarea.
+
+COMMIT — ESTADO AL CERRAR ESTE CHECKPOINT
+- No se ha creado todavía el árbol ni el commit de esta tarea.
+- Acción autorizada siguiente: verificar nuevamente los HEAD de GPSpedia2.2.5_work y GPSpedia2.2.5; crear un único árbol basado en 36427c0d1ed6aa42254b7d734e8f51ee9be3f269 con estos ocho archivos; crear un único commit hijo directo de ef2db2e5ae0b5e09d1b849f95bf66f8d0a17f109; actualizar únicamente GPSpedia2.2.5_work mediante update_ref con force:false y expected_sha igual al HEAD verificado.
+- Después, verificar parent, árbol, lista exacta de ocho archivos, nuevo HEAD y que GPSpedia2.2.5 permanezca en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

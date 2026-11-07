@@ -333,3 +333,39 @@ La estructura observada original de `Feedbacks` conserva sus nueve columnas A:I.
 | 10 | J | `suggestionActorKey` | Clave seudónima para contar una sola aportación por actor, vehículo y año. Para cuentas registradas contiene el ID verificado; para aportes anónimos contiene un hash del identificador persistente del navegador. |
 
 Si la hoja productiva contiene columnas adicionales no reflejadas en este inventario, el servicio añade el campo después de la última columna utilizada. No sobrescribe encabezados existentes. Los registros históricos sin clave de aportante se conservan, pero no se consideran votos verificables para el umbral de tres aportantes distintos.
+
+
+## Hoja técnica adicional creada bajo demanda — `AdminImageUploads`
+
+**Estado:** estructura definida por la implementación de ADMIN. Esta hoja no forma parte de la copia original de 13 hojas descrita en el inventario anterior. ADMIN la crea cuando recibe el primer reemplazo de imagen in-modal después de desplegar esta versión. No se ha creado ni modificado ninguna hoja productiva durante la implementación en GitHub.
+
+**Finalidad:** conservar un registro durable por `opId` para recuperar una carga de imagen ante una respuesta HTTP perdida, incluso cuando el campo de `Cortes` no tenía una URL anterior. No sustituye a `Imagenes_Reemplazadas`; esta última sigue registrando únicamente imágenes anteriores reales.
+
+- **Fila de encabezados:** 1
+- **Columnas con encabezado:** 12
+- **Una fila por intento:** el valor `opId` debe ser único. Si aparece duplicado, ADMIN detiene la operación por integridad.
+
+| Posición | Letra | Encabezado exacto | Uso |
+|---:|:---:|---|---|
+| 1 | A | `opId` | Identificador estable del intento generado por el navegador |
+| 2 | B | `vehicleId` | Identificador del vehículo en `Cortes` |
+| 3 | C | `fieldName` | Campo de imagen que se reemplaza |
+| 4 | D | `urlAnterior` | URL activa al iniciar el intento |
+| 5 | E | `urlNueva` | URL del archivo Drive asociado al intento |
+| 6 | F | `archivoDriveId` | ID del archivo Drive creado o recuperado |
+| 7 | G | `contentHash` | Huella SHA-256 del contenido recibido |
+| 8 | H | `tipoMime` | Tipo MIME de la imagen |
+| 9 | I | `nombreArchivo` | Nombre recibido desde el navegador |
+| 10 | J | `estado` | Estado técnico del intento |
+| 11 | K | `fechaCreacion` | Fecha de creación del registro |
+| 12 | L | `fechaActualizacion` | Última actualización del estado |
+
+**Estados utilizados por ADMIN:**
+- `pending`: intento registrado y todavía no confirmado como vinculado.
+- `linked`: archivo y referencia de `Cortes` confirmados.
+- `cancelled`: se ejecutó la compensación y se conservó/restauró la referencia anterior.
+- `requires_review`: ocurrió un fallo de compensación o conflicto que requiere revisión.
+
+**Protecciones de esquema:** si ya existe una hoja llamada `AdminImageUploads` con encabezados incompatibles, ADMIN detiene la operación y no reescribe sus encabezados. La hoja se añade como una nueva hoja independiente; no se agregan columnas a `Cortes`, no se desplazan las once columnas históricas de `Imagenes_Reemplazadas` y no se altera el esquema de `AdminState`.
+
+**Relación con el historial:** para reemplazos que sí tienen imagen anterior, `id_reemplazo` utiliza el formato determinista `REP-<opId>`. La fila histórica se busca y reutiliza por ese ID. Si el campo no tenía imagen anterior, el intento queda registrado únicamente en `AdminImageUploads`, sin crear una fila ficticia en `Imagenes_Reemplazadas`.

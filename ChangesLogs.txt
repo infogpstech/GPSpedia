@@ -3530,3 +3530,34 @@ Fecha: 2026-11-07
 - checkpoint.md: se añadió el checkpoint inicial y el cierre de auditoría bloqueada.
 - No se modificó código de servicios, frontend, endpoints ni datos de Spreadsheet/Drive. No se ejecutó Apps Script ni se desplegó.
 ================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN — IDEMPOTENCIA DE REEMPLAZOS DE IMÁGENES IN-MODAL
+Fecha: 2026-11-07
+
+ARCHIVOS Y CAMBIOS VERIFICABLES
+- Services/admin.js, líneas 1790–1895: constantes, esquema y funciones de acceso al ledger AdminImageUploads, búsqueda de operación, guardado de estado, hash SHA-256, metadatos Drive y búsqueda de ID histórico.
+- Services/admin.js, líneas 1896–2226: handleUploadAdminImage() recibe opId; valida identidad del intento y payload; crea/recupera el archivo; registra estados pending/linked/cancelled/requires_review; verifica la escritura de Cortes después de flush; evita sobrescribir una referencia modificada posteriormente y mantiene la compensación.
+- Services/admin.js, líneas 3940–4047: recordReplacedImage() admite operationId opcional y usa REP-<opId> para evitar duplicar la fila del mismo intento. Sin operationId conserva REP-UUID y valida el archivo anterior antes de crear/modificar el historial.
+- ui.js, líneas 71–75: estado en memoria para intentos pendientes del modal.
+- ui.js, líneas 222–317: carga de operaciones pendientes, generación segura de opId, lectura de imagen y envío/reintento con sesión obtenida nuevamente.
+- ui.js, líneas 319–409: convertImageToEditable() persiste primero el intento, bloquea nuevas sustituciones mientras exista uno pendiente y recupera el mismo payload ante error/respuesta incierta.
+- ui.js, líneas 1762–1766: carga el estado de reemplazos pendientes al entrar al modo de edición.
+- offline.js, líneas 189–320: métodos IndexedDB para consultar, guardar y retirar operaciones pendientes, usando adminLocalState existente y sin guardar tokens.
+- Spreadsheet/GPSpedia_DB_columnas.md, líneas 339–372: definición de la hoja técnica AdminImageUploads y sus doce encabezados/estados.
+- Tareas.txt, líneas 4799–4818: estado y limitaciones de la implementación estática.
+- Auditoría.txt, líneas 6784–6837: revisión final, decisiones de esquema, pruebas simuladas y limitaciones.
+
+BLOBS FINALES DE CÓDIGO Y DOCUMENTACIÓN
+- Services/admin.js: 847a2bb80e53918bede067e530b80e41bfdb6afa
+- ui.js: 40e3c9a818f2613a73736ebcfa76f85c82050231
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- Spreadsheet/GPSpedia_DB_columnas.md: a109ff4e97dc0ad0e82a50f2818a6b03005c0e4a
+- Tareas.txt: efbc8ea4f146bf878f10f1d9aa9d715015c203de
+- Auditoría.txt: 9aaf513a491fae4c7dbcc5368c45cd94c7da245e
+
+ALCANCE SIN CAMBIOS
+- No se modificaron api-config.js, los permisos de sesión/rol, los encabezados de Cortes, las once columnas históricas de Imagenes_Reemplazadas ni el flujo de guardar/descartar campos del modal.
+- No se ejecutó Apps Script real, no se creó AdminImageUploads en la Spreadsheet productiva, no se operó Drive/Spreadsheet productivos y no se desplegó ADMIN ni frontend.
+================================================================================

@@ -67,6 +67,12 @@ let isDriveAuditRunning = false;
 let originalItemBackup = null;
 let editedItemBuffer = null;
 let dropdownOptions = null;
+const ADMIN_IMAGE_UPLOAD_FIELDS = [
+    "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
+    "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
+];
+const pendingAdminImageUploads = new Map();
+const pendingAdminImageUploadsLoaded = new Set();
 
 // Pila de navegación entre modales para prevención de bucles y restauración de contexto
 const modalNavStack = [];
@@ -212,46 +218,183 @@ async function exitModalEditMode(saveChanges, vehicleId, skipReopen = false) {
     }
 }
 
+function getAdminImageUploadPendingKey(vehicleId, fieldName) {
+    return String(vehicleId) + "::" + String(fieldName);
+}
+
+async function loadPendingAdminImageUploads(vehicleId) {
+    const cleanVehicleId = String(vehicleId);
+    ADMIN_IMAGE_UPLOAD_FIELDS.forEach(fieldName => pendingAdminImageUploads.delete(getAdminImageUploadPendingKey(cleanVehicleId, fieldName)));
+    pendingAdminImageUploadsLoaded.delete(cleanVehicleId);
+
+    const results = await Promise.all(ADMIN_IMAGE_UPLOAD_FIELDS.map(fieldName =>
+        offline.getAdminImageUploadPendingOperation(cleanVehicleId, fieldName)
+    ));
+    if (results.some(result => !result || result.available !== true)) return false;
+
+    results.forEach((result, index) => {
+        if (result.operation) {
+            pendingAdminImageUploads.set(
+                getAdminImageUploadPendingKey(cleanVehicleId, ADMIN_IMAGE_UPLOAD_FIELDS[index]),
+                result.operation
+            );
+        }
+    });
+    pendingAdminImageUploadsLoaded.add(cleanVehicleId);
+    return true;
+}
+
+function createAdminImageUploadOperationId() {
+    const cryptoApi = window.crypto;
+    if (cryptoApi && typeof cryptoApi.randomUUID === "function") return cryptoApi.randomUUID();
+    if (cryptoApi && typeof cryptoApi.getRandomValues === "function") {
+        const bytes = new Uint8Array(24);
+        cryptoApi.getRandomValues(bytes);
+        return Array.from(bytes, byte => byte.toString(16).padStart(2, "0")).join("");
+    }
+    throw new Error("El navegador no dispone de un generador seguro para identificar el reemplazo.");
+}
+
+function readAdminImageAsDataUrl(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ""));
+        reader.onerror = () => reject(reader.error || new Error("No se pudo leer el archivo seleccionado."));
+        reader.readAsDataURL(file);
+    });
+}
+
+async function submitAdminImageUploadOperation(operation, imgElement) {
+    const response = await routeAction("uploadAdminImage", {
+        ...getDeveloperSessionPayload(),
+        vehicleId: operation.vehicleId,
+        fileData: operation.fileData,
+        filename: operation.filename,
+        mimeType: operation.mimeType,
+        fieldName: operation.fieldName,
+        opId: operation.id
+    });
+    if (!response || response.status !== "success" || !response.imageUrl) {
+        throw new Error("El servicio no confirmó el reemplazo de imagen.");
+    }
+
+    const key = getAdminImageUploadPendingKey(operation.vehicleId, operation.fieldName);
+    const currentImageUrl = response.superseded
+        ? (response.currentImageUrl === null || response.currentImageUrl === undefined
+            ? String(response.imageUrl) : String(response.currentImageUrl))
+        : String(response.imageUrl);
+    if (editedItemBuffer) editedItemBuffer[operation.fieldName] = currentImageUrl;
+    if (currentImageUrl) imgElement.src = currentImageUrl;
+    else imgElement.removeAttribute("src");
+
+    const removed = await offline.removeAdminImageUploadPendingOperation(
+        operation.vehicleId, operation.fieldName, operation.id
+    );
+    let cleanupConfirmed = removed === true;
+    if (!cleanupConfirmed) {
+        const latest = await offline.getAdminImageUploadPendingOperation(operation.vehicleId, operation.fieldName);
+        if (latest && latest.available === true) {
+            if (latest.operation) pendingAdminImageUploads.set(key, latest.operation);
+            else {
+                pendingAdminImageUploads.delete(key);
+                cleanupConfirmed = true;
+            }
+        } else {
+            pendingAdminImageUploads.set(key, operation);
+        }
+    } else {
+        pendingAdminImageUploads.delete(key);
+    }
+
+    if (response.superseded) {
+        showSavingIndicator("warning", "El intento se completó, pero el campo cambió después. Se conservó la referencia actual.");
+    } else if (!cleanupConfirmed) {
+        showSavingIndicator("warning", "Imagen guardada; el intento local sigue pendiente de limpieza. Reintentar no duplicará la operación.");
+    } else {
+        showSavingIndicator("success", "Imagen guardada");
+    }
+}
+
 function convertImageToEditable(imgElement, vehicleId, fieldName) {
     imgElement.style.cursor = "pointer";
     imgElement.style.border = "2px dashed #007bff";
     imgElement.title = "Haga clic para reemplazar esta imagen";
-    imgElement.onclick = (e) => {
+    let uploadInProgress = false;
+
+    imgElement.onclick = async (e) => {
         e.preventDefault();
         e.stopPropagation();
+        const cleanVehicleId = String(vehicleId);
+        const pendingKey = getAdminImageUploadPendingKey(cleanVehicleId, fieldName);
+
+        if (uploadInProgress) return;
+        if (!pendingAdminImageUploadsLoaded.has(cleanVehicleId)) {
+            showSavingIndicator("error", "No se pudo verificar el estado local del reemplazo. Vuelve a activar el modo de edición.");
+            return;
+        }
+
+        const previousSrc = imgElement.src;
+        const pendingOperation = pendingAdminImageUploads.get(pendingKey);
+        if (pendingOperation) {
+            const shouldRetry = window.confirm(
+                "Existe un reemplazo pendiente para esta imagen. ¿Deseas reintentar el mismo intento guardado? No se iniciará una sustitución nueva hasta resolverlo."
+            );
+            if (!shouldRetry) return;
+
+            uploadInProgress = true;
+            imgElement.src = pendingOperation.fileData;
+            showSavingIndicator("processing", "Recuperando reemplazo pendiente...");
+            try {
+                await submitAdminImageUploadOperation(pendingOperation, imgElement);
+            } catch (error) {
+                imgElement.src = previousSrc;
+                console.error("No se pudo recuperar el reemplazo pendiente:", error);
+                showSavingIndicator("error", "No se pudo confirmar. El intento original quedó guardado; vuelve a hacer clic para reintentar.");
+            } finally {
+                uploadInProgress = false;
+            }
+            return;
+        }
 
         const fileInput = document.createElement("input");
         fileInput.type = "file";
         fileInput.accept = "image/*";
         fileInput.onchange = async () => {
-            const file = fileInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = async (event) => {
-                    imgElement.src = event.target.result;
-                    const base64Data = event.target.result;
-                    showSavingIndicator("processing", "Subiendo imagen...");
-                    try {
-                        const res = await routeAction('uploadAdminImage', {
-                            ...getDeveloperSessionPayload(),
-                            vehicleId: vehicleId,
-                            fileData: base64Data,
-                            filename: file.name || `${fieldName}_${Date.now()}.png`,
-                            mimeType: file.type || "image/png",
-                            fieldName: fieldName
-                        });
-                        if (res && res.imageUrl) {
-                            editedItemBuffer[fieldName] = res.imageUrl;
-                            showSavingIndicator("success", "Imagen guardada");
-                        } else {
-                            showSavingIndicator("error", "Error al subir");
-                        }
-                    } catch (err) {
-                        console.error("Error al subir imagen editada:", err);
-                        showSavingIndicator("error", "Error al subir");
-                    }
+            const file = fileInput.files && fileInput.files[0];
+            if (!file) return;
+            uploadInProgress = true;
+            try {
+                const fileData = await readAdminImageAsDataUrl(file);
+                const operation = {
+                    id: createAdminImageUploadOperationId(),
+                    vehicleId: cleanVehicleId,
+                    fieldName: fieldName,
+                    fileData: fileData,
+                    filename: file.name || (fieldName + "_" + Date.now() + ".png"),
+                    mimeType: file.type || "image/png",
+                    createdAt: Date.now()
                 };
-                reader.readAsDataURL(file);
+                const saved = await offline.saveAdminImageUploadPendingOperation(operation);
+                if (!saved || saved.saved !== true) {
+                    if (saved && saved.operation) pendingAdminImageUploads.set(pendingKey, saved.operation);
+                    if (saved && saved.conflict) {
+                        throw new Error("Ya existe otro reemplazo pendiente para este campo. Reintenta primero la operación original.");
+                    }
+                    throw new Error("No se pudo guardar el intento en IndexedDB. La imagen no se envió al servidor.");
+                }
+
+                pendingAdminImageUploads.set(pendingKey, operation);
+                imgElement.src = fileData;
+                showSavingIndicator("processing", "Subiendo imagen...");
+                await submitAdminImageUploadOperation(operation, imgElement);
+            } catch (error) {
+                imgElement.src = previousSrc;
+                console.error("Error al subir imagen editada:", error);
+                showSavingIndicator("error", error && error.message
+                    ? error.message
+                    : "No se pudo confirmar. El intento pendiente se conserva para reintentar.");
+            } finally {
+                uploadInProgress = false;
             }
         };
         fileInput.click();
@@ -1615,6 +1758,10 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
                 localStorage.setItem('gpsepedia_edit_backup', JSON.stringify(originalItemBackup));
                 editedItemBuffer = { ...activeItem };
                 await precargarDropdownOptions();
+                const pendingImagesLoaded = await loadPendingAdminImageUploads(activeItem.id);
+                if (!pendingImagesLoaded) {
+                    showSavingIndicator("warning", "No se pudo consultar IndexedDB; los reemplazos de imagen quedarán bloqueados hasta verificar su estado.");
+                }
                 mostrarDetalleModal(editedItemBuffer);
             };
             headerDiv.appendChild(editBtn);

@@ -4773,7 +4773,7 @@ Referencia: Auditoría.txt, entrada «COORDINACIÓN DE ESCRITURAS Y OPERACIONES 
 TAREA PENDIENTE — IDEMPOTENCIA DEL REEMPLAZO DE IMÁGENES IN-MODAL
 Fecha de registro: 2026-11-07
 Prioridad: MEDIA
-Estado: PENDIENTE DE AUDITORÍA E IMPLEMENTACIÓN INDEPENDIENTE.
+Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; PRUEBAS AISLADAS APROBADAS; VALIDACIÓN EN APPS SCRIPT PENDIENTE.
 
 Objetivo:
 Hacer que handleUploadAdminImage() pueda reconocer y recuperar el mismo intento de reemplazo cuando Drive y Spreadsheet completaron la operación, pero la respuesta HTTP no llegó al navegador.
@@ -4791,4 +4791,27 @@ Restricciones:
 No alterar los campos ni encabezados actuales de Cortes e Imagenes_Reemplazadas sin auditoría y justificación. No desplegar ni operar sobre datos productivos. Un único commit mediante Git Database API.
 Referencia: Auditoría.txt, entrada «COORDINACIÓN DE ESCRITURAS Y OPERACIONES DRIVE ENTRE SERVICIOS».
 
+================================================================================
+
+
+================================================================================
+AVANCE DE IMPLEMENTACIÓN — IDEMPOTENCIA DEL REEMPLAZO DE IMÁGENES IN-MODAL
+Fecha: 2026-11-07
+Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; NO DESPLEGADA.
+
+- ADMIN crea bajo demanda la hoja técnica AdminImageUploads con una fila única por opId, hash de contenido, vehículo, campo, URL anterior/nueva, ID Drive, MIME, nombre, estado y fechas; si una ejecución se interrumpe después de crear la hoja vacía, el siguiente intento inicializa los encabezados esperados.
+- El handler valida que un opId existente conserve vehículo, campo, contenido, MIME y nombre; recupera el archivo asociado y verifica su hash antes de reutilizarlo.
+- Los estados pending, linked, cancelled y requires_review permiten continuar una operación interrumpida y conservar la compensación ante fallos reales.
+- Los reemplazos con imagen anterior reutilizan id_reemplazo determinista REP-<opId>; no se agregan columnas a Cortes ni a Imagenes_Reemplazadas. Los campos sin imagen anterior quedan registrados solo en AdminImageUploads.
+- ui.js conserva el payload y el opId en IndexedDB antes del envío; al reabrir el modo de edición recupera los intentos pendientes y permite reintentar el mismo contenido. La sesión se obtiene de nuevo y no se almacena localmente.
+- offline.js agrega lectura, guardado y eliminación condicionada por opId en el almacén adminLocalState existente; no requiere aumentar DB_VERSION.
+- Pruebas aisladas con mocks: repetición de opId sin duplicar archivo/historial; recuperación después de compensación; recuperación cuando el archivo previo desaparece; protección de una referencia modificada posteriormente; carga inicial sin URL anterior; rechazo de reutilización de opId con contenido o nombre diferente; persistencia local, conflicto y eliminación por opId: PASS.
+- Parseo sintáctico estático de Services/admin.js, ui.js y offline.js: PASS.
+- Spreadsheet/GPSpedia_DB_columnas.md documenta la hoja nueva y sus doce encabezados. La hoja solo se creará en la Spreadsheet cuando se ejecute el servicio desplegado.
+
+LIMITACIONES Y SIGUIENTE VALIDACIÓN
+- Las pruebas son aisladas y simuladas; no sustituyen pruebas reales con Apps Script, Drive, Spreadsheet, navegador ni respuesta HTTP perdida.
+- No se ejecutó ninguna operación productiva, no se creó AdminImageUploads en la Spreadsheet real y no se desplegaron ADMIN ni frontend.
+- Antes de publicar, validar en copias aisladas los fallos entre creación de hoja/ledger, createFile, guardado de fileId, registro histórico, escritura/flush de Cortes, renombrado, estado linked y pérdida de respuesta HTTP.
+- Desplegar frontend y ADMIN de forma coordinada para que el nuevo contrato opId esté disponible en ambos extremos.
 ================================================================================

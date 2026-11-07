@@ -6670,3 +6670,167 @@ No se implementó un mecanismo parcial que pudiera dar una falsa garantía de ex
 7. LIMITACIONES
 Auditoría estática de los archivos fuente disponibles en GitHub. No se ejecutó Apps Script, no se realizaron solicitudes HTTP, no se modificó Spreadsheet/Drive y no se desplegó ningún servicio. La auditoría de UTILITIES queda pendiente por falta de fuente.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — IDEMPOTENCIA DE REEMPLAZOS DE IMÁGENES IN-MODAL
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: ef2db2e5ae0b5e09d1b849f95bf66f8d0a17f109
+Árbol auditado: 36427c0d1ed6aa42254b7d734e8f51ee9be3f269
+Rama base: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: AUDITORÍA ESTÁTICA COMPLETADA; IMPLEMENTACIÓN AÚN NO INICIADA EN ESTA ENTRADA.
+
+1. ARCHIVOS Y FUENTES AUDITADAS
+- Services/admin.js (blob 8807279a269b09b8d1c224d7720a0643c04cd6ca): doPost() y autorización de sesión; handleUploadAdminImage() (líneas 1792–1919); getOrCreateReplacedImagesSheet(), ensureReplacedImagesInventoryColumns() y recordReplacedImage() (líneas 3552–3680); recuperación histórica handleRecoverReplacedImage() (aprox. línea 3849); helpers de carga de imágenes y búsqueda/reutilización existentes (aprox. líneas 2580–2695).
+- ui.js (blob 16f1e7c50304d7f08d0884bfdfba24044b5c3d0a): getDeveloperSessionPayload(), convertImageToEditable() (líneas 235–272), entrada/salida del modo edición y sus llamadas para imagenVehiculo, imgCorte1–3, imgApertura e imágenes de alimentación.
+- offline.js (blob b587f43181007deda1bcc1a2bd9786ec4bf6a189): initDB(), almacén adminLocalState y operaciones de persistencia local (incluidas las funciones existentes para operaciones pendientes del modal de agregado de cortes).
+- api-config.js (blob 74fe2220d46243f14e1c1c5a63aef99435c10323): ACTION_TO_SERVICE_MAP y routeAction().
+- Spreadsheet/GPSpedia_DB_columnas.md (blob fd8d1a33c01cac13ed47c3715a539f2bc7e4254d): inventario de la hoja Imagenes_Reemplazadas.
+
+2. HALLAZGOS CONFIRMADOS
+
+A. Backend — handleUploadAdminImage()
+- El router ADMIN invoca handleUploadAdminImage(payload, logMessage) para la acción uploadAdminImage, después de validar la sesión activa y el rol Desarrollador mediante assertDeveloperSession().
+- El handler adquiere ScriptLock local durante un máximo de 30 segundos.
+- Valida vehículo, datos, nombre, MIME y campo de imagen permitido; localiza la fila del vehículo, lee la URL anterior y obtiene/crea la carpeta del vehículo.
+- Crea siempre un archivo nuevo mediante genFolder.createFile(); no recibe ni valida opId, no busca archivos de intentos anteriores ni marca el archivo con metadatos de operación.
+- Si existe URL anterior, llama recordReplacedImage(), que genera un id_reemplazo aleatorio.
+- Después escribe la nueva URL en Cortes y ejecuta SpreadsheetApp.flush(), sin una lectura posterior de confirmación.
+- Si ocurre un error, intenta restaurar la URL anterior, envía el archivo nuevo a papelera y marca el registro histórico como cancelada o requiere_revision. El catch no distingue entre archivo recién creado y archivo que pudiera reutilizarse en una recuperación futura.
+
+B. Historial de imágenes
+- Imagenes_Reemplazadas tiene once columnas históricas fijas: id_reemplazo, fecha_reemplazo, tipo_contenido, registro_id, campo, archivo_drive_id, nombre_archivo, url_anterior, sustituida_por_url, referencia_texto y estado.
+- ensureReplacedImagesInventoryColumns() añade columnas de inventario al final y conserva las once columnas base.
+- recordReplacedImage() crea un REP-UUID aleatorio, por lo que una repetición del mismo reemplazo puede añadir una segunda fila.
+- recordReplacedImage() tiene otro llamador en el flujo de recuperación histórica. La ampliación deberá ser opcional: cuando no reciba operationId debe conservar exactamente el comportamiento aleatorio actual.
+- Decisión de diseño derivada de la auditoría: usar un ID determinista REP-<opId> en la columna id_reemplazo existente. Esto permite buscar y reutilizar el mismo registro sin agregar columnas ni alterar el esquema de Cortes o los encabezados actuales de Imagenes_Reemplazadas.
+
+C. Frontend — ui.js
+- convertImageToEditable() constituye el único punto de envío encontrado para uploadAdminImage y se reutiliza en las imágenes del vehículo, cortes y secciones suplementarias.
+- El navegador convierte el archivo a Data URL mediante FileReader y envía vehículo, contenido, nombre, MIME, campo y sesión; actualmente no envía identificador estable.
+- La vista previa cambia antes de recibir confirmación. Si la llamada falla, se muestra un indicador de error, pero no se conserva un intento recuperable ni se restaura expresamente la vista previa.
+- getDeveloperSessionPayload() obtiene userId y sessionToken desde getState().currentUser en el momento de cada solicitud. El token no debe persistirse junto al intento.
+- exitModalEditMode() conserva el respaldo de edición en localStorage; la nueva persistencia del intento de imagen deberá ser independiente y no alterar el flujo de guardar/descartar campos.
+
+D. Persistencia local — offline.js
+- IndexedDB usa GPSpedia_DB versión 4 y contiene adminLocalState con keyPath key.
+- El almacén ya admite operaciones pendientes del modal de agregado de cortes. Puede alojar un registro independiente por vehículo/campo sin crear otro object store ni incrementar DB_VERSION.
+- performAdminStateOp() devuelve null cuando falla la operación; los métodos nuevos deberán distinguir ese caso de una clave inexistente y no enviar la imagen si no se pudo persistir primero.
+- El registro local deberá contener solo opId, vehículo, campo, Data URL, nombre, MIME y fecha; quedan excluidos userId, sessionToken y cualquier credencial.
+
+E. Enrutamiento y seguridad
+- api-config.js asigna uploadAdminImage a ADMIN y routeAction() serializa el payload sin reconstruir ni filtrar sus propiedades. No requiere cambio para transmitir opId.
+- doPost() autentica la sesión y el rol antes de despachar la acción. Se conserva este control y no se confía en el opId como mecanismo de autorización.
+- El ScriptLock de ADMIN serializa las repeticiones que llegan al mismo proyecto; no se considera coordinador global entre proyectos y no se amplía ese alcance en esta tarea.
+
+3. RIESGOS Y REQUISITOS DE IMPLEMENTACIÓN
+- Un reintento con el mismo opId debe recuperar el archivo Drive creado previamente, verificar que corresponde al mismo contenido, vehículo y campo y no crear otro archivo.
+- El archivo debe conservar una marca de operación que permita localizarlo aunque el nombre definitivo ya haya sido aplicado.
+- La misma operación debe reutilizar el registro REP-<opId>; si el registro ya existe, debe validar sus referencias antes de devolverlo o reactivarlo después de una compensación.
+- La escritura de Cortes debe verificarse después de flush. Si el campo ya apunta al archivo de la operación, el handler debe devolver el resultado existente sin repetir historial.
+- Si el campo fue modificado posteriormente por otra operación, el reintento no debe sobrescribir esa referencia; debe devolver un resultado de operación ya completada/superada o un conflicto verificable.
+- La compensación debe conservarse ante fallos reales, pero no debe enviar a papelera un archivo reutilizado que pueda pertenecer a una operación completada.
+- El frontend debe persistir el intento en IndexedDB antes del envío, conservarlo ante error o respuesta incierta y reintentar con el mismo opId y contenido. Una operación pendiente del mismo vehículo/campo debe resolverse antes de iniciar otra sustitución.
+- No agregar columnas, hojas ni encabezados. No modificar la estructura de Cortes ni las once columnas históricas de Imagenes_Reemplazadas.
+
+4. ALCANCE Y DEPENDENCIAS NO MODIFICADAS
+- No se modificará api-config.js porque el enrutamiento actual ya transmite el payload completo.
+- No se modificará el control de sesión/rol.
+- No se modificará handleRecoverReplacedImage() ni el flujo de historial no relacionado; recordReplacedImage() mantendrá su modo aleatorio cuando no reciba operationId.
+- No se modificará exitModalEditMode() ni el contrato de edición de campos.
+- No se implementará coordinación global entre microservicios en esta tarea.
+
+5. RESPALDOS EXACTOS ANTES DE EDITAR (BLOBS DEL HEAD AUDITADO)
+- Services/admin.js: 8807279a269b09b8d1c224d7720a0643c04cd6ca
+- ui.js: 16f1e7c50304d7f08d0884bfdfba24044b5c3d0a
+- offline.js: b587f43181007deda1bcc1a2bd9786ec4bf6a189
+- Spreadsheet/GPSpedia_DB_columnas.md: fd8d1a33c01cac13ed47c3715a539f2bc7e4254d
+- Auditoría.txt antes de esta entrada: 8e68608e7b47964b3cf177757dd5089d0c23283e
+- ChangesLogs.txt: 4df4dfaaf71b5952d40fd79cc4f6431bcac3a3da
+- Tareas.txt: 60ae06a7b6b3209c098cd19df54a30b4badfa956
+- checkpoint.md antes del checkpoint inicial: f6ed0581378f6c834f707be3e2ed779f505d8317
+
+6. LIMITACIONES
+Auditoría estática sobre el HEAD indicado. No se ejecutó Apps Script, no se realizaron solicitudes HTTP, no se accedió a Drive/Spreadsheet productivos, no se probaron fallos reales ni se desplegó ningún servicio. Las pruebas aisladas se ejecutarán después de implementar y antes de la revisión final.
+================================================================================
+
+
+================================================================================
+ADENDA DE AUDITORÍA — REGISTRO DURADERO DE INTENTOS SIN IMAGEN ANTERIOR
+Fecha: 2026-11-07
+
+Durante la definición del protocolo de recuperación se identificó un caso que exige ampliar la solución: cuando el campo de imagen estaba vacío antes de la carga, recordReplacedImage() no crea una fila en Imagenes_Reemplazadas. Si posteriormente otra operación modifica ese campo, la URL activa ya no permite identificar el archivo del intento original; depender exclusivamente de la búsqueda de Drive no proporciona una referencia determinista de estado.
+
+DECISIÓN COMPLEMENTARIA
+- Se añadirá una hoja independiente «AdminImageUploads» como ledger técnico de operaciones, con una fila por opId y estados pending, linked, cancelled o requires_review.
+- La hoja almacenará opId, vehículo, campo, URL anterior, URL nueva, ID Drive, hash de contenido, MIME, nombre de archivo y marcas de tiempo.
+- La hoja se crea y valida desde ADMIN al recibir la primera operación. Si existe con encabezados incompatibles, la operación se detiene sin alterar su estructura.
+- El ledger no reemplaza Imagenes_Reemplazadas: el historial seguirá registrando solo imágenes anteriores reales.
+- Para los reemplazos con imagen anterior, id_reemplazo se derivará como REP-<opId> y se comprobará antes de insertar, conservando las once columnas históricas y evitando duplicados.
+- Cortes y los encabezados actuales de Imagenes_Reemplazadas permanecen sin cambios.
+
+JUSTIFICACIÓN
+El ledger independiente es necesario para recuperar también cargas iniciales sin URL anterior, verificar el hash del mismo archivo, conservar el resultado aunque el campo sea actualizado posteriormente y distinguir una operación pendiente de otra ya completada. La búsqueda de archivos en Drive y la persistencia local del navegador, por sí solas, no proporcionan una fuente de estado autoritativa y determinista para todos esos casos.
+
+La adenda amplía la decisión técnica sin eliminar ni sobrescribir los hallazgos y respaldos de la auditoría anterior. La implementación de la hoja y su estructura deberá documentarse en Spreadsheet/GPSpedia_DB_columnas.md. No se ejecutará su creación en la Spreadsheet productiva durante esta tarea.
+================================================================================
+
+
+================================================================================
+REVISIÓN FINAL E IMPLEMENTACIÓN ESTÁTICA — IDEMPOTENCIA DE REEMPLAZOS IN-MODAL
+Fecha: 2026-11-07
+Rama auditada: GPSpedia2.2.5_work
+HEAD de partida: ef2db2e5ae0b5e09d1b849f95bf66f8d0a17f109
+Árbol de partida: 36427c0d1ed6aa42254b7d734e8f51ee9be3f269
+Rama base protegida: GPSpedia2.2.5
+HEAD base de partida: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; PRUEBAS AISLADAS APROBADAS; VALIDACIÓN REAL EN APPS SCRIPT PENDIENTE.
+
+1. IMPLEMENTACIÓN REVISADA
+- Services/admin.js (blob final 847a2bb80e53918bede067e530b80e41bfdb6afa): hoja técnica AdminImageUploads, búsqueda/validación de opId, hash SHA-256, recuperación del mismo archivo por fileId, control de conflicto sobre la referencia activa, verificación posterior a flush, estados de operación y compensación; recordReplacedImage() reutiliza REP-<opId> cuando se proporciona operationId y conserva REP-UUID aleatorio para el flujo de recuperación histórica que no lo proporciona.
+- ui.js (blob final 40e3c9a818f2613a73736ebcfa76f85c82050231): carga de operaciones pendientes al activar modo edición; generación segura de opId; persistencia antes del envío; reintento del mismo payload; obtención nueva de la sesión en cada solicitud; conservación de la operación si la respuesta es incierta.
+- offline.js (blob final c68e8698c74ef45a1c9bb534c6b2be77df817c34): get/save/remove de operaciones pendientes en adminLocalState; comparación de opId y payload; no almacena userId, sessionToken ni credenciales; no requiere incrementar DB_VERSION.
+- Spreadsheet/GPSpedia_DB_columnas.md (blob final a109ff4e97dc0ad0e82a50f2818a6b03005c0e4a): documenta AdminImageUploads y sus doce encabezados, estados y creación bajo demanda.
+- Tareas.txt (blob final efbc8ea4f146bf878f10f1d9aa9d715015c203de): estado actualizado a implementación estática completada y validación Apps Script pendiente.
+
+2. DECISIONES DE ESQUEMA Y COMPATIBILIDAD
+- Se conserva sin cambios la estructura de Cortes.
+- Se conservan las once columnas históricas de Imagenes_Reemplazadas y sus columnas dinámicas de inventario existentes. No se añadió op_id ni otro encabezado a esa hoja.
+- AdminImageUploads es una hoja independiente, creada bajo demanda en la primera carga después del despliegue. Si ya existe completamente vacía, ADMIN inicializa sus encabezados; si contiene encabezados incompatibles o una estructura parcial, el handler se detiene sin reescribirla.
+- Una operación con imagen anterior usa id_reemplazo determinista REP-<opId>; una carga sin imagen anterior se registra solo en AdminImageUploads y no genera una fila ficticia en Imagenes_Reemplazadas.
+- No se modificó api-config.js ni el contrato de autenticación/autorización. El nuevo frontend y ADMIN deben desplegarse coordinadamente porque el handler ahora exige opId.
+- La coordinación global entre proyectos Apps Script sigue fuera del alcance de esta tarea; el ScriptLock empleado continúa siendo local al proyecto ADMIN.
+
+3. PRUEBAS AISLADAS EJECUTADAS
+- Parseo sintáctico de Services/admin.js: PASS.
+- Parseo de módulo ui.js tras retirar import/export para validación sintáctica: PASS.
+- Parseo de módulo offline.js tras retirar export para validación sintáctica: PASS.
+- Integración estática UI/offline: los tres métodos nuevos están exportados e invocados; la única llamada uploadAdminImage transmite opId: PASS.
+- Mocks backend — mismo opId repetido: se reutiliza el mismo archivo/URL, una fila en AdminImageUploads y una fila histórica con ID REP-<opId>: PASS.
+- Mocks backend — fallo simulado en flush después de registrar historial: se restaura la URL anterior, se compensa el archivo y se marca cancelada; el siguiente intento restaura/reutiliza el mismo archivo y reactiva el mismo registro: PASS.
+- Mocks backend — archivo previamente vinculado desaparecido: el primer reintento detecta el archivo faltante y no conserva una referencia rota; el siguiente recupera el intento con un archivo válido y actualiza la misma fila histórica: PASS.
+- Mocks backend — campo sin URL anterior: se crea ledger, no se crea historial ficticio; si el campo cambia después, el reintento devuelve superseded y conserva el valor más reciente: PASS.
+- Mocks backend — contenido o nombre diferente para un opId ya registrado: se rechaza sin crear otra sustitución: PASS.
+- Mocks IndexedDB — ausencia, guardado, conflicto de operación distinta, rechazo de eliminación con opId incorrecto y eliminación con opId coincidente: PASS.
+- Mock de inicialización del ledger — una hoja AdminImageUploads ausente o creada previamente pero todavía vacía recibe los doce encabezados una sola vez; la segunda lectura reutiliza la hoja: PASS.
+- Mock frontend — recupera el intento pendiente, transmite el mismo opId y obtiene la sesión actual en el envío; al confirmar elimina la operación local: PASS.
+- Revisión de compatibilidad de recordReplacedImage(): el llamador histórico sin operationId conserva ID aleatorio y valida el archivo anterior antes de crear/alterar la hoja histórica.
+
+4. REVISIÓN DE EFECTOS SECUNDARIOS
+- No se alteran los encabezados ni posiciones de Cortes.
+- No se desplazan ni amplían los encabezados históricos de Imagenes_Reemplazadas.
+- No se modifican los otros llamadores de recordReplacedImage() ni el flujo handleRecoverReplacedImage(); el parámetro operationId es opcional.
+- No se modifica el respaldo gpsepedia_edit_backup, el flujo guardar/descartar del modal ni el contrato de updateVehicleField.
+- Si IndexedDB no está disponible, el reemplazo de imagen queda bloqueado antes del envío; no se inicia una operación que no pueda recuperarse localmente.
+- Si el campo fue modificado después de completar el intento, el servidor no sobrescribe la referencia nueva y el frontend retira el intento ya resuelto mostrando advertencia.
+
+5. LIMITACIONES Y VALIDACIÓN PENDIENTE
+- Todas las pruebas anteriores son simuladas con mocks y validaciones estáticas; no se ejecutó Apps Script real ni se hicieron solicitudes HTTP reales.
+- No se probaron cuotas reales de IndexedDB, tamaño máximo de Data URL, Drive real, permisos OAuth, tiempos de indexación ni fallos reales de red.
+- No se creó AdminImageUploads en la Spreadsheet productiva; la hoja se creará bajo demanda después del despliegue.
+- No se desplegó ADMIN ni frontend, no se modificó Drive/Spreadsheet productivos y no se alteró la rama base.
+- Antes de publicar, ejecutar pruebas con copias aisladas y despliegues coordinados, incluyendo pérdida de respuesta HTTP después de la confirmación final, fallos en cada flush, expiración de ejecución, archivo en papelera y operaciones simultáneas dentro del proyecto ADMIN.
+================================================================================
