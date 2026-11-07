@@ -3440,3 +3440,20 @@ ALCANCE
 - No se modificaron recordOpId(), findRowByOpId(), el esquema A:E ni las columnas AQ/VIN, AR y AS de Cortes.
 - Parseo sintáctico de ambos servicios: PASS. Pruebas estáticas con mocks: 8/8 PASS. No se ejecutaron pruebas reales de Apps Script ni despliegues.
 ================================================================================
+
+
+================================================================================
+2026-11-06 — ORGANIZAR IMÁGENES PRINCIPALES Y UNIFICAR RUTAS DE CARPETAS
+- Services/write.js: añadidos findOrCreateSubFolder()/findOrCreateVehicleFolder(); carga inicial, reparaciones, cortes y carga suplementaria usan Categoría/Marca/Modelo/Versión o TipoEncendido/Rango.
+- Services/admin.js: misma jerarquía para cortes, suplementarias y reemplazos; updateVehicleField sincroniza imagenVehiculo al editar metadatos; nueva acción organizePrimaryVehicleImages por lotes, exclusiva para imagenVehiculo.
+- Services/feedback.js: tras actualizar anoDesde/anoHasta por tres reportes positivos, sincroniza la carpeta de imagenVehiculo y registra advertencia si Drive no permite moverla; se añadió dependencia DriveApp.
+- api-config.js: acción organizePrimaryVehicleImages en ADMIN.
+- index.html: botón separado para organizar imágenes principales.
+- ui.js: soporte por lotes, progreso, resumen y advertencias de sincronización de carpeta.
+- No se modificó handleNormalizeImages(); no se renombraron archivos ni se actualizaron URL/celdas de imagen durante la organización.
+- Referencias compartidas: primera fila para imagenVehiculo; si el ID también aparece en un campo de corte/apertura/alimentación, se omite el movimiento.
+- Auditoría.txt: documentados análisis, diseño, Safety & Side Effects, respaldos, pruebas y limitaciones.
+- Tareas.txt: tarea registrada como implementación estática completada; revisión de trazabilidad de suggestYear permanece pendiente por separado.
+- Pruebas estáticas: parseo de cinco módulos JS PASS; pruebas mock de ruta, findOrCreate, referencias compartidas y procesamiento por lotes PASS; comprobaciones de integración 16/16 PASS.
+- No se ejecutó Apps Script real, no se movieron archivos Drive, no se modificó Spreadsheet real y no se desplegaron servicios.
+================================================================================

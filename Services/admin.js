@@ -633,6 +633,9 @@ function doPost(e) {
             case 'normalizeImages':
                 response = handleNormalizeImages(payload, logMessage);
                 break;
+            case 'organizePrimaryVehicleImages':
+                response = handleOrganizePrimaryVehicleImages(payload, logMessage);
+                break;
             case 'restoreAllTrashedImages':
                 validateAndRestoreAllTrashedImagesInSpreadsheet(logMessage);
                 response = { status: 'success', message: 'Saneamiento exhaustivo de papelera completado exitosamente.' };
@@ -705,7 +708,12 @@ function doPost(e) {
 
         const endTime = new Date();
         const durationSec = ((endTime - startTime) / 1000).toFixed(2);
-        logMessage("Finalización", `Tarea completada con éxito. Duración total: ${durationSec}s`);
+        if (action === 'organizePrimaryVehicleImages' &&
+            (response.status === 'warning' || Number(response.itemErrors) > 0)) {
+            logMessage("Finalización", "Organización finalizada con advertencias. Duración total: " + durationSec + "s", 0, 0, true);
+        } else {
+            logMessage("Finalización", `Tarea completada con éxito. Duración total: ${durationSec}s`);
+        }
 
         response.logs = logs;
         response.duration = durationSec;
@@ -1202,6 +1210,120 @@ function handleNormalizeImages(payload, logMessage) {
     };
 }
 
+function handleOrganizePrimaryVehicleImages(payload, logMessage) {
+    currentStage = "Organización de imágenes principales";
+    const options = payload || {};
+    const limit = Math.max(1, Math.min(50, parseInt(options.limit, 10) || 10));
+    const reset = options.reset === true;
+    const processId = options.processId || ("P-" + Date.now());
+
+    let startIndex = 0;
+    let lote = 1;
+    let filaInicial = 2;
+    if (reset) {
+        clearAdminState('organizePrimaryVehicleImages');
+    } else {
+        const savedState = getAdminState('organizePrimaryVehicleImages');
+        if (savedState) {
+            startIndex = savedState.lastIndex;
+            lote = (savedState.lote || 0) + 1;
+            filaInicial = savedState.ultimaFilaProcesada + 1;
+        }
+    }
+    currentLote = lote;
+
+    const sheet = getSpreadsheet().getSheetByName(SHEET_NAMES.CORTES);
+    if (!sheet) throw new Error('No se encontró la hoja «Cortes».');
+    const data = sheet.getDataRange().getValues();
+    data.shift();
+    const totalVehicles = data.length;
+
+    if (startIndex >= totalVehicles) {
+        clearAdminState('organizePrimaryVehicleImages');
+        return {
+            status: 'success', processedCount: 0, totalVehicles: totalVehicles,
+            movedFiles: 0, skippedFiles: 0, itemErrors: 0, nextIndex: startIndex,
+            lote: lote, filaInicial: filaInicial, ultimaFilaProcesada: filaInicial - 1,
+            estado: 'completado'
+        };
+    }
+
+    const referenceData = collectCortesImageReferences(true);
+    if (referenceData.unverifiableReferenceCount > 0) {
+        clearAdminState('organizePrimaryVehicleImages');
+        const message = 'La organización se detuvo: existen ' + referenceData.unverifiableReferenceCount +
+            ' referencias de Drive no verificables en los campos de imagen de Cortes. No se movió ningún archivo.';
+        logMessage('Organización de imágenes principales', message, 0, totalVehicles, true);
+        return {
+            status: 'warning', message: message, processedCount: 0, totalVehicles: totalVehicles,
+            movedFiles: 0, skippedFiles: 0, itemErrors: 0, nextIndex: startIndex,
+            lote: lote, filaInicial: filaInicial, ultimaFilaProcesada: filaInicial - 1,
+            estado: 'bloqueado'
+        };
+    }
+
+    const batchData = data.slice(startIndex, startIndex + limit);
+    let movedFiles = 0;
+    let skippedFiles = 0;
+    let itemErrors = 0;
+
+    batchData.forEach((row, index) => {
+        const rowNumber = startIndex + index + 2;
+        const vehicleInfo = mapRowToObject(row, COLS_CORTES);
+        const imageUrl = String(vehicleInfo.imagenVehiculo || '').trim();
+        if (!imageUrl) {
+            skippedFiles++;
+            return;
+        }
+        if (!extractDriveFileId(imageUrl)) {
+            skippedFiles++;
+            logMessage('Organización de imágenes principales', 'Fila ' + rowNumber + ': imagenVehiculo no contiene un ID de Drive reconocible; se omitió.', index + 1, batchData.length, true);
+            return;
+        }
+
+        try {
+            const result = movePrimaryVehicleImageToCanonicalFolder(
+                sheet, rowNumber, vehicleInfo, referenceData, null
+            );
+            if (result.moved) {
+                movedFiles++;
+                logMessage('Organización de imágenes principales', 'Fila ' + rowNumber + ': imagen principal movida a la carpeta canónica.', index + 1, batchData.length);
+            } else {
+                skippedFiles++;
+                if (result.warning) itemErrors++;
+                if (result.reason) {
+                    logMessage('Organización de imágenes principales', 'Fila ' + rowNumber + ': ' + result.reason, index + 1, batchData.length, Boolean(result.warning), Boolean(result.warning));
+                }
+            }
+        } catch (error) {
+            itemErrors++;
+            logMessage('Organización de imágenes principales', 'Fila ' + rowNumber + ': no se pudo organizar imagenVehiculo. Motivo: ' + error.message, index + 1, batchData.length, true, true);
+        }
+    });
+
+    const nextIndex = startIndex + batchData.length;
+    const ultimaFilaProcesada = nextIndex + 1;
+    const percentage = totalVehicles > 0 ? Math.round((nextIndex / totalVehicles) * 100) : 100;
+    const estado = nextIndex >= totalVehicles ? 'completado' : 'pendiente';
+    if (nextIndex >= totalVehicles) {
+        clearAdminState('organizePrimaryVehicleImages');
+    } else {
+        saveAdminState('organizePrimaryVehicleImages', nextIndex, totalVehicles, percentage, processId, lote, filaInicial, ultimaFilaProcesada, estado);
+    }
+
+    logMessage('Organización de imágenes principales',
+        'Lote ' + lote + ' finalizado. Imágenes movidas: ' + movedFiles +
+        '; omitidas: ' + skippedFiles + '; errores: ' + itemErrors + '.',
+        nextIndex, totalVehicles, itemErrors > 0, itemErrors > 0);
+
+    return {
+        status: 'success', processedCount: batchData.length, totalVehicles: totalVehicles,
+        movedFiles: movedFiles, skippedFiles: skippedFiles, itemErrors: itemErrors,
+        imagesRenamed: 0, nextIndex: nextIndex, lote: lote, filaInicial: filaInicial,
+        ultimaFilaProcesada: ultimaFilaProcesada, estado: estado
+    };
+}
+
 function getExtensionFromName(filename) {
     const dotIndex = filename.lastIndexOf(".");
     return dotIndex !== -1 ? filename.substring(dotIndex) : ".jpg";
@@ -1636,10 +1758,31 @@ function handleUpdateVehicleField(payload, logMessage) {
     sheet.getRange(actualRow, colIndex).setValue(value !== undefined ? value : "");
     SpreadsheetApp.flush();
 
-    logMessage("Edición In-Modal", `Campo '${fieldName}' actualizado silenciosamente con éxito.`);
+    let folderSyncWarning = false;
+    const folderMetadataFields = new Set([
+        "categoria", "marca", "modelo", "versionesAplicables", "tipoEncendido", "anoDesde", "anoHasta"
+    ]);
+    if (folderMetadataFields.has(fieldName)) {
+        try {
+            const updatedValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
+            const syncResult = movePrimaryVehicleImageToCanonicalFolder(
+                sheet, actualRow, mapRowToObject(updatedValues, COLS_CORTES), null, logMessage
+            );
+            folderSyncWarning = Boolean(syncResult && syncResult.warning);
+            if (folderSyncWarning && syncResult.reason) {
+                logMessage("Edición In-Modal", "El metadato se guardó, pero la imagen principal no se movió: " + syncResult.reason, 0, 0, true);
+            }
+        } catch (syncError) {
+            folderSyncWarning = true;
+            logMessage("Edición In-Modal", "El campo se guardó, pero no se pudo sincronizar la carpeta de imagenVehiculo: " + syncError.message, 0, 0, true, true);
+        }
+    }
+
+    logMessage("Edición In-Modal", "Campo '" + fieldName + "' actualizado silenciosamente con éxito.");
     return {
         status: 'success',
-        message: `El campo '${fieldName}' fue guardado silenciosamente en el registro de la fila ${actualRow}.`
+        folderSyncWarning: folderSyncWarning,
+        message: "El campo '" + fieldName + "' fue guardado silenciosamente en el registro de la fila " + actualRow + "."
     };
 }
 
@@ -1688,33 +1831,12 @@ function handleUploadAdminImage(payload, logMessage) {
             throw new Error("No se puede reemplazar la imagen porque la URL anterior no contiene un ID de Drive reconocible; se conserva la referencia activa.");
         }
 
-        const categoria = rowValues[COLS_CORTES.categoria - 1] || "Sin_Categoria";
-        const marca = rowValues[COLS_CORTES.marca - 1] || "Sin_Marca";
-        const modelo = rowValues[COLS_CORTES.modelo - 1] || "Sin_Modelo";
-        const versionEncendido = (rowValues[COLS_CORTES.versionesAplicables - 1] || "SRV") + "_" + (rowValues[COLS_CORTES.tipoEncendido - 1] || "BTN");
-        const generacion = rowValues[COLS_CORTES.anoDesde - 1] || "Sin_Ano";
-
-        let genFolder = null;
-        if (originalUrl) {
-            const originalFile = DriveApp.getFileById(extractDriveFileId(originalUrl));
-            const parents = originalFile.getParents();
-            while (parents.hasNext()) {
-                const candidateFolder = parents.next();
-                if (isFolderInsideCortes(candidateFolder, DRIVE_FOLDER_ID)) {
-                    genFolder = candidateFolder;
-                    break;
-                }
-            }
-        }
-
-        if (!genFolder) {
-            const rootFolder = getCortesRootFolder();
-            const catFolder = getOrCreateSubFolder(rootFolder, sanitizeForFolderDisplay(categoria));
-            const marFolder = getOrCreateSubFolder(catFolder, sanitizeForFolderDisplay(marca));
-            const modFolder = getOrCreateSubFolder(marFolder, sanitizeForFolderDisplay(modelo));
-            const verFolder = getOrCreateSubFolder(modFolder, sanitizeForFolderDisplay(versionEncendido));
-            genFolder = getOrCreateSubFolder(verFolder, sanitizeForFolderDisplay(generacion));
-        }
+        const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
+        const categoria = vehicleInfo.categoria || "Sin_Categoria";
+        const marca = vehicleInfo.marca || "Sin_Marca";
+        const modelo = vehicleInfo.modelo || "Sin_Modelo";
+        const generacion = vehicleInfo.anoDesde || "Sin_Ano";
+        const genFolder = findOrCreateVehicleFolder(vehicleInfo);
 
         const nameModelo = sanitizeForNomenclature(String(rowValues[COLS_CORTES.modelo - 1] || "").trim());
         const nameVersion = sanitizeForNomenclature(String(rowValues[COLS_CORTES.versionesAplicables - 1] || "").trim());
@@ -1860,7 +1982,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 if (vehicleData && vehicleData.imagenVehiculo) {
                     const currentImg = rowObj.imagenVehiculo;
                     if (!checkFileIdValid(currentImg)) {
-                        const folder = getOrCreateFolder(rowObj.categoria, rowObj.marca, rowObj.modelo, rowObj.anoDesde);
+                        const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
                         const filename = `${sanitizeForFilename(rowObj.marca)}_${sanitizeForFilename(rowObj.modelo)}_${sanitizeForFilename(rowObj.tipoEncendido)}_${rowObj.anoDesde}_Vehiculo_repaired`;
                         const newUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder);
                         sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(newUrl);
@@ -1871,7 +1993,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                 if (cutData && cutData.imgCorte1 && cutData.tipoCorte1 !== 'No recomendado') {
                     const currentCorteImg = rowObj[`imgCorte${slotIndex}`];
                     if (!checkFileIdValid(currentCorteImg)) {
-                        const folder = getOrCreateFolder(rowObj.categoria, rowObj.marca, rowObj.modelo, rowObj.anoDesde);
+                        const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
                         const filename = `${sanitizeForFilename(rowObj.marca)}_${sanitizeForFilename(rowObj.modelo)}_${sanitizeForFilename(rowObj.tipoEncendido)}_${rowObj.anoDesde}_Corte${slotIndex}_repaired`;
                         const newCorteImgUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder);
                         sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(newCorteImgUrl);
@@ -1990,7 +2112,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
 
         let imageUrl = '';
         if (cutData.imgCorte1) {
-            const folder = getOrCreateFolder(vehicleInfo.categoria, vehicleInfo.marca, vehicleInfo.modelo, vehicleInfo.anoDesde);
+            const folder = findOrCreateVehicleFolder(vehicleInfo);
             const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Corte${cutSlotIndex}`;
             imageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder);
         }
@@ -2078,7 +2200,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         anioParaFolder = anoDesde;
 
         // Subir imágenes y obtener URLs...
-        const folder = getOrCreateFolder(vehicleData.categoria, vehicleData.marca, vehicleData.modelo, anioParaFolder);
+        const folder = findOrCreateVehicleFolder(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }));
         let vehiculoImageUrl = '';
         if (vehicleData.imagenVehiculo) {
             const filename = `${sanitizeForFilename(vehicleData.marca)}_${sanitizeForFilename(vehicleData.modelo)}_${sanitizeForFilename(vehicleData.tipoEncendido)}_${yearInput}_Vehiculo`;
@@ -2139,7 +2261,7 @@ function handleAddSupplementaryInfo(payload, logMessage) {
     const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
     const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
 
-    const folder = getOrCreateFolder(vehicleInfo.categoria, vehicleInfo.marca, vehicleInfo.modelo, vehicleInfo.anoDesde);
+    const folder = findOrCreateVehicleFolder(vehicleInfo);
 
     // Actualizar campos de texto si se proporcionaron
     if (apertura) sheet.getRange(actualRow, COLS_CORTES.apertura).setValue(apertura);
@@ -2285,17 +2407,139 @@ function isYearInRange(inputYear, anoDesde, anoHasta) {
     return inputYear >= desde && inputYear <= hasta;
 }
 
-function getOrCreateFolder(categoria, marca, modelo, anio) {
-    const rootFolder = getCortesRootFolder();
-    const cat = sanitizeForFolderDisplay(categoria || 'Sin_Categoria');
-    const mar = sanitizeForFolderDisplay(marca || 'Sin_Marca');
-    const mod = sanitizeForFolderDisplay(modelo || 'Sin_Modelo');
-    const an = sanitizeForFolderDisplay(anio || 'Sin_Año');
+function getFolderCanonicalName(name) {
+    return String(name || '').normalize('NFD').replace(/\p{M}/gu, '')
+        .toLowerCase().replace(/[^a-z0-9]/g, '');
+}
 
-    const categoriaFolder = getOrCreateSubFolder(rootFolder, cat);
-    const marcaFolder = getOrCreateSubFolder(categoriaFolder, mar);
-    const modeloFolder = getOrCreateSubFolder(marcaFolder, mod);
-    return getOrCreateSubFolder(modeloFolder, an);
+function findOrCreateSubFolder(parentFolder, desiredName) {
+    if (!parentFolder) throw new Error('No se proporcionó la carpeta padre.');
+    const name = sanitizeForFolderDisplay(desiredName);
+    const canonical = getFolderCanonicalName(name);
+    if (!canonical) throw new Error('El nombre de carpeta no es válido.');
+
+    const matches = [];
+    const folders = parentFolder.getFolders();
+    while (folders.hasNext()) {
+        const folder = folders.next();
+        if (getFolderCanonicalName(folder.getName()) === canonical) matches.push(folder);
+    }
+
+    const exactMatches = matches.filter(folder => folder.getName() === name);
+    if (exactMatches.length === 1) return exactMatches[0];
+    if (exactMatches.length > 1 || matches.length > 1) {
+        throw new Error('Existen varias carpetas equivalentes a «' + name + '»; no se fusionaron ni modificaron.');
+    }
+    if (matches.length === 1) {
+        matches[0].setName(name);
+        return matches[0];
+    }
+
+    try {
+        return parentFolder.createFolder(name);
+    } catch (error) {
+        const retryMatches = [];
+        const retryFolders = parentFolder.getFolders();
+        while (retryFolders.hasNext()) {
+            const folder = retryFolders.next();
+            if (getFolderCanonicalName(folder.getName()) === canonical) retryMatches.push(folder);
+        }
+        if (retryMatches.length === 1) return retryMatches[0];
+        throw error;
+    }
+}
+
+function mergeVehicleFolderInfo(existingInfo, incomingInfo) {
+    const merged = Object.assign({}, existingInfo || {});
+    const incoming = incomingInfo || {};
+    ['categoria', 'marca', 'modelo', 'versionesAplicables', 'tipoEncendido', 'anoDesde', 'anoHasta'].forEach(key => {
+        const current = String(merged[key] === null || merged[key] === undefined ? '' : merged[key]).trim();
+        const next = String(incoming[key] === null || incoming[key] === undefined ? '' : incoming[key]).trim();
+        if (!current && next) merged[key] = incoming[key];
+    });
+    return merged;
+}
+
+function getVehicleYearFolderName(vehicleInfo) {
+    const info = vehicleInfo || {};
+    const rawDesde = String(info.anoDesde === null || info.anoDesde === undefined ? '' : info.anoDesde).trim();
+    const rawHasta = String(info.anoHasta === null || info.anoHasta === undefined ? '' : info.anoHasta).trim();
+    const inlineRange = rawDesde.match(/^(\\d{4})\\s*[-–]\\s*(\\d{4})$/);
+    let desde = inlineRange ? parseInt(inlineRange[1], 10) : parseInt(rawDesde, 10);
+    let hasta = inlineRange ? parseInt(inlineRange[2], 10) : parseInt(rawHasta, 10);
+    if (!Number.isFinite(desde)) return 'Sin_Año';
+    if (!Number.isFinite(hasta)) hasta = desde;
+    const start = Math.min(desde, hasta);
+    const end = Math.max(desde, hasta);
+    return start === end ? String(start) : String(start) + '_' + String(end);
+}
+
+function findOrCreateVehicleFolder(vehicleInfo) {
+    const info = vehicleInfo || {};
+    const rootFolder = getCortesRootFolder();
+    const category = sanitizeForFolderDisplay(info.categoria || 'Sin_Categoria');
+    const brand = sanitizeForFolderDisplay(info.marca || 'Sin_Marca');
+    const model = sanitizeForFolderDisplay(info.modelo || 'Sin_Modelo');
+    const versionOrIgnition = sanitizeForFolderDisplay(
+        String(info.versionesAplicables || '').trim() || String(info.tipoEncendido || '').trim() || 'Sin_Tipo_de_Encendido'
+    );
+    const yearRange = sanitizeForFolderDisplay(getVehicleYearFolderName(info));
+
+    const categoryFolder = findOrCreateSubFolder(rootFolder, category);
+    const brandFolder = findOrCreateSubFolder(categoryFolder, brand);
+    const modelFolder = findOrCreateSubFolder(brandFolder, model);
+    const versionFolder = findOrCreateSubFolder(modelFolder, versionOrIgnition);
+    return findOrCreateSubFolder(versionFolder, yearRange);
+}
+
+// Compatibilidad para consumidores heredados que solo proporcionen un año.
+function getOrCreateFolder(categoria, marca, modelo, anio) {
+    return findOrCreateVehicleFolder({
+        categoria: categoria, marca: marca, modelo: modelo,
+        anoDesde: anio, anoHasta: anio
+    });
+}
+
+function movePrimaryVehicleImageToCanonicalFolder(sheet, rowNumber, vehicleInfo, referenceData, logMessage) {
+    const imageId = extractDriveFileId(vehicleInfo && vehicleInfo.imagenVehiculo);
+    if (!imageId) return { skipped: true, reason: 'No hay una URL de imagenVehiculo verificable.' };
+
+    const references = referenceData || collectCortesImageReferences(true);
+    if (references.unverifiableReferenceCount > 0) {
+        const message = 'Existen enlaces de imagen de Cortes no verificables; se omitió el movimiento para proteger referencias compartidas.';
+        if (logMessage) logMessage('Organización imagen principal', message, 0, 0, true);
+        return { skipped: true, warning: true, reason: message };
+    }
+
+    const locations = references.references.get(imageId) || [];
+    if (!locations.length) return { skipped: true, warning: true, reason: 'No se pudo confirmar la referencia activa de imagenVehiculo.' };
+    if (locations.some(location => location.field !== 'imagenVehiculo')) {
+        return { skipped: true, warning: true, reason: 'La imagen también está referenciada por un campo de corte, apertura o alimentación.' };
+    }
+
+    const primaryLocations = locations.filter(location => location.field === 'imagenVehiculo')
+        .sort((a, b) => a.row - b.row);
+    if (primaryLocations.length && primaryLocations[0].row !== rowNumber) {
+        return { skipped: true, reason: 'La imagen principal pertenece al primer registro que la utiliza (fila ' + primaryLocations[0].row + ').' };
+    }
+
+    const file = DriveApp.getFileById(imageId);
+    if (file.isTrashed()) return { skipped: true, warning: true, reason: 'La imagen principal está en la papelera de Drive.' };
+    if (!String(file.getMimeType() || '').toLowerCase().startsWith('image/')) {
+        return { skipped: true, warning: true, reason: 'El archivo referenciado por imagenVehiculo no tiene MIME de imagen.' };
+    }
+
+    const targetFolder = findOrCreateVehicleFolder(vehicleInfo);
+    const parents = file.getParents();
+    while (parents.hasNext()) {
+        if (parents.next().getId() === targetFolder.getId()) {
+            return { moved: false, skipped: true, reason: 'La imagen ya está en la carpeta correcta.' };
+        }
+    }
+
+    file.moveTo(targetFolder);
+    if (logMessage) logMessage('Organización imagen principal', 'Imagen principal movida a la carpeta correspondiente del vehículo ID ' + vehicleInfo.id + '.', 0, 0);
+    return { moved: true, skipped: false };
 }
 
 function uploadImageToDrive(imageData, filename, folder) {

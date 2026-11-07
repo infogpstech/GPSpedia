@@ -6281,3 +6281,197 @@ RESPALDOS EXACTOS
 - Services/write.js: fcb784af25f04170905c3d62aafed2846e0469d0
 - Services/admin.js: 341ff40f8a2f40d35abe8a4a60e8eb08a0eefd07
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — ORGANIZAR IMÁGENES PRINCIPALES Y UNIFICAR RUTA DE GUARDADO
+Fecha: 2026-11-06
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: 2212b4f5fd26e1e29ab7c91ffd99e64700fc6696
+HEAD de rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+1. ALCANCE CONFIRMADO
+Jerarquía solicitada:
+Cortes / Categoría / Marca / Modelo / (Versión si existe; de lo contrario Tipo de encendido) / Rango de años.
+El rango se representa como un solo año cuando Desde = Hasta, o Desde_Hasta cuando son distintos. Si se confirma un año fuera del rango, el rango se amplía de forma continua (ejemplo 2018_2022 -> 2018_2024 aunque 2023 no se haya confirmado).
+Actualizar la ubicación de la imagen principal cuando el desarrollador edite Categoría, Marca, Modelo, VersionesAplicables, TipoEncendido, anoDesde o anoHasta desde el modal; también cuando suggestYear amplíe el rango tras alcanzar su umbral actual.
+Organizar las imágenes existentes únicamente desde el campo imagenVehiculo. No renombrar el archivo, no modificar su URL ni la celda de Spreadsheet, no duplicar imágenes compartidas. Si el mismo ID aparece en varios registros imagenVehiculo, prevalece el primer registro en orden de filas. Si el ID también está referenciado por un campo de corte, apertura o alimentación, protegerlo y no moverlo.
+Actualizar las rutas de nuevas imágenes de cortes y de información suplementaria para usar la jerarquía canónica y crear las carpetas faltantes mediante findOrCreate. La ruta de guardado de información suplementaria es compartida por apertura y alimentación en handleAddSupplementaryInfo.
+
+2. ARCHIVOS Y FUNCIONES AUDITADOS
+- Services/write.js:
+  - handleAddOrUpdateCutLocked(): recuperación de imagen principal/corte, registro existente, registro nuevo, análisis de año y carga de imagen principal/corte.
+  - handleAddSupplementaryInfo(): carga de imágenes de apertura y alimentación.
+  - sanitizeForFilename(), getCortesRootFolder(), getOrCreateFolder(), getOrCreateSubFolder(), uploadImageToDrive().
+  - Se verificaron todos los puntos de llamada a getOrCreateFolder en este archivo (filas aproximadas 472, 483, 609, 694 y 796).
+- Services/admin.js:
+  - doPost(): router y autorización Desarrollador.
+  - getAdminState(), saveAdminState(), clearAdminState(): persistencia de lotes.
+  - collectCortesImageReferences(), extractDriveFileIds(), extractDriveFileId(), isFolderInsideCortes(), getCortesRootFolder().
+  - handleNormalizeImages(): auditoría de incompatibilidad con el alcance solicitado.
+  - sanitizeForFolderDisplay(), getCanonicalName(), getOrCreateSubFolder(), mergeFolders().
+  - handleUpdateVehicleField(): edición in-modal.
+  - handleUploadAdminImage(): reemplazo de imágenes.
+  - handleAddOrUpdateCut(): recuperación, registro existente/nuevo y carga de imágenes.
+  - handleAddSupplementaryInfo(): carga de apertura y alimentación.
+  - getOrCreateFolder(), uploadImageToDrive().
+  - Se verificaron todos los puntos de llamada a getOrCreateFolder en el archivo (filas aproximadas 1863, 1874, 1993, 2081 y 2142).
+- Services/feedback.js:
+  - doPost(), actionPermissions y router.
+  - handleSuggestYear(): registro de votos, umbral actual de tres reportes, comprobación anti-colisión, actualización continua de anoDesde/anoHasta y limpieza de feedback.
+  - COLS_CORTES y configuración global.
+- api-config.js:
+  - ACTION_TO_SERVICE_MAP y routeAction().
+- ui.js:
+  - saveFieldSilently(), controles de edición de metadatos del modal, runAction() y botón actual de normalizeImages.
+  - suggestYear() se invoca desde el banner de validación; el helper existente transmite userId/userName.
+- index.html:
+  - tarjeta «Organización de imágenes» y botón existente btn-admin-normalize-images.
+
+3. ESTADO ACTUAL Y HALLAZGOS
+A. WRITE:
+- getOrCreateFolder() solo construye Cortes/Categoría/Marca/Modelo/Año; no utiliza VersionesAplicables ni TipoEncendido y solo recibe el año inicial.
+- Los flujos de registro nuevo y reparación/registro existente llaman al mismo helper con cuatro argumentos; en el registro nuevo ya se calculan anoDesde y anoHasta, pero la carpeta se crea solo con anoDesde.
+- handleAddSupplementaryInfo() utiliza el mismo helper para imgApertura e imágenes imgCableAlimen*, por lo que su ruta puede unificarse sin modificar las URL ni los campos de la Spreadsheet.
+- sanitizeForFilename() es para nombres de archivo y sustituye caracteres; no es el normalizador de visualización de carpetas.
+
+B. ADMIN:
+- getOrCreateFolder() también omite versión/encendido y anoHasta.
+- handleUploadAdminImage() reutiliza la carpeta padre anterior cuando está dentro de Cortes, incluso si no corresponde a los metadatos actuales. Si no encuentra carpeta válida, crea Modelo/Versiones_TipoEncendido/AñoInicial; esa ruta no coincide con la regla nueva.
+- handleUpdateVehicleField() escribe el campo y no sincroniza la ubicación de imagenVehiculo.
+- handleAddOrUpdateCut() usa getOrCreateFolder() en reparaciones, registros existentes y registros nuevos.
+- handleAddSupplementaryInfo() usa el helper compartido para apertura/alimentación.
+- collectCortesImageReferences() ya identifica los IDs y ubicaciones de los ocho campos de imagen de Cortes, incluyendo valores, fórmulas y enlaces enriquecidos. Puede proteger imágenes compartidas sin reutilizar el normalizador general.
+- getOrCreateSubFolder() existente puede fusionar carpetas y, ante errores, devolver el padre. No se debe utilizar para la nueva operación de movimiento selectivo, porque puede afectar archivos ajenos al alcance.
+- handleNormalizeImages() procesa los ocho campos, renombra archivos, duplica imágenes compartidas y modifica URL de Spreadsheet; es incompatible y no se reutilizará ni modificará en esta tarea.
+- getAdminState()/saveAdminState()/clearAdminState() permiten implementar una operación específica por lotes sin cambiar el mecanismo existente.
+
+C. FEEDBACK:
+- handleSuggestYear() solo modifica el rango después de tres reportes positivos válidos y la comprobación anti-colisión.
+- Cuando actualiza anoDesde/anoHasta, no sincroniza la carpeta de imagenVehiculo.
+- Services/feedback.js no declara DRIVE_FOLDER_ID ni usa DriveApp actualmente; añadir el movimiento requiere incorporar la constante de raíz y el permiso de Drive al servicio. La autorización OAuth/deployment real queda pendiente y no se ejecutará en esta tarea.
+- La acción suggestYear no aparece en actionPermissions y actualmente recibe userId/userName desde el cliente. No se amplía ni modifica este mecanismo de autorización en el alcance actual; se registra como tarea separada.
+
+D. FRONTEND:
+- api-config.js enruta updateVehicleField a ADMIN y suggestYear a FEEDBACK; no necesita cambiar la URL de endpoints.
+- saveFieldSilently() ignora el objeto de respuesta, por lo que deberá reflejar una advertencia de sincronización de carpeta si el backend informa que el metadato se guardó pero el movimiento no se pudo completar.
+- runAction() solo reconoce normalizeImages como operación por lotes; se requiere incorporar una acción independiente para organizar exclusivamente imagenVehiculo.
+- index.html ya dispone de la tarjeta de organización de imágenes donde se puede añadir un control separado. No se debe reutilizar el botón normalizeImages.
+
+4. DISEÑO Y CONTROLES DE SEGURIDAD
+- Añadir findOrCreateSubFolder() y findOrCreateVehicleFolder() en WRITE y ADMIN, usando el formato de carpeta de presentación existente (espacios normalizados, underscores repetidos colapsados y trim), con versión preferente y tipo de encendido como fallback, y rango Desde_Hasta.
+- No reutilizar el helper ADMIN que fusiona carpetas. La nueva búsqueda debe reutilizar coincidencias canónicas de forma conservadora, renombrar solo una coincidencia inequívoca al formato requerido y crear cuando no exista; si hay ambigüedad de carpetas duplicadas, no fusionarlas.
+- Actualizar las rutas de carga/reparación de imagen principal y corte, reemplazo in-modal y carga suplementaria para crear la jerarquía correcta.
+- Añadir acción ADMIN independiente y procesada por lotes para mover solo imagenVehiculo. No renombrar archivos ni escribir celdas de Spreadsheet.
+- Antes de mover, comprobar referencias: si el ID aparece en otro campo de imagen, no mover; si aparece en más de un imagenVehiculo, solo el registro con menor número de fila puede determinar la carpeta; los demás no duplican ni mueven el archivo.
+- Si existen enlaces de Drive de imagen no verificables que impiden descartar referencias compartidas, detener el movimiento y devolver advertencia; no asumir que el archivo es exclusivo.
+- En edición in-modal y ampliación de año, sincronizar solo la imagen principal del registro canónico. No borrar carpetas antiguas ni mover imágenes de corte/apertura/alimentación.
+- No cambiar nombres de archivo, URL, celdas de imagen ni contenido de imágenes.
+- El batch debe guardar progreso en AdminState, permitir continuar/reiniciar y operar únicamente sobre imagenVehiculo.
+- No ejecutar DriveApp, SpreadsheetApp, deployments ni operaciones reales de movimiento durante el desarrollo estático.
+
+5. HALLAZGOS FUERA DE ALCANCE
+- FEEDBACK suggestYear carece de validación de sesión en actionPermissions y utiliza identidad suministrada por cliente. Registrar revisión independiente; no modificar autorización en esta tarea.
+- La operación normalizeImages continúa renombrando/duplicando ocho tipos de imagen y escribiendo URL; se mantiene fuera del alcance y no debe usarse para organizar imagenVehiculo.
+- El helper general getOrCreateSubFolder() de ADMIN tiene efectos de fusión y fallback al padre ante errores; su revisión general queda fuera de alcance porque se añadirá un helper aislado.
+
+6. RESPALDOS EXACTOS PREVIOS A EDICIÓN (blobs Git)
+- Services/write.js: dd36132debb5e7711b29978e30592408af860897
+- Services/admin.js: ed0b68ca66f89899cce24df050c252e58bf837ab
+- Services/feedback.js: 0f47359449b5f8feca6ab84101823182dd5b8552
+- api-config.js: ee46092a78b87ea8a1a7b56d238c1175af6be85b
+- ui.js: 39ac7ec0d8a2f7dc9ab4f79c03d035b5349e6cdb
+- index.html: 2b0862911f21cb0b5406148afb04c2b701929e1e
+- Auditoría.txt: 934d70c27d3f42bd82cabfc9595b2e383a03497e
+- ChangesLogs.txt: 185006bb1e62488208dc2c4138bbb40b3d8c65bd
+- Tareas.txt: af2ab8d097dcee740ab2e63868e8f325704c9a56
+- checkpoint.md: e9d496e5e7abe8c3b2ad5a7e83fc6f0ecef06f59
+
+7. LIMITACIONES Y ESTADO
+- No se ha accedido a Drive o Spreadsheet reales; no se movió ningún archivo ni se modificó ningún registro.
+- No se ejecutó código Apps Script ni se desplegó ningún servicio.
+- No se validaron permisos OAuth de Drive para FEEDBACK.
+- La auditoría estática de las funciones y dependencias relacionadas quedó registrada; implementación todavía no iniciada.
+================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN ESTÁTICA Y CODE REVIEW — ORGANIZAR IMÁGENES PRINCIPALES Y UNIFICAR RUTAS
+Fecha: 2026-11-06
+HEAD de partida: 2212b4f5fd26e1e29ab7c91ffd99e64700fc6696
+Rama: GPSpedia2.2.5_work
+
+7. IMPLEMENTACIÓN REALIZADA
+- Services/write.js:
+  - Se incorporaron findOrCreateSubFolder() y findOrCreateVehicleFolder().
+  - La ruta de carga inicial, reparación de registros, carga de nuevos cortes y carga suplementaria ahora usa Categoría/Marca/Modelo/(VersionesAplicables o, si está vacío, TipoEncendido)/Rango.
+  - mergeVehicleFolderInfo() permite completar datos de carpeta desde vehicleData cuando se repara un registro parcialmente guardado.
+  - Se mantiene getOrCreateFolder() como wrapper de compatibilidad.
+- Services/admin.js:
+  - Se incorporaron los mismos helpers findOrCreate y la construcción de rango.
+  - handleAddOrUpdateCut(), handleAddSupplementaryInfo() y handleUploadAdminImage() usan la ruta canónica; el reemplazo ya no reutiliza una carpeta padre anterior que pueda no corresponder a los metadatos.
+  - handleUpdateVehicleField() sincroniza la ubicación de imagenVehiculo cuando se modifica categoría, marca, modelo, versiones, tipo de encendido o rango. Si Drive no permite mover el archivo o una protección impide hacerlo, el campo se conserva y la interfaz muestra advertencia.
+  - Se añadió handleOrganizePrimaryVehicleImages(), acción ADMIN independiente por lotes, con progreso en AdminState, reanudación y reinicio.
+  - La acción mueve exclusivamente archivos referenciados por imagenVehiculo; no renombra el archivo ni escribe la URL/celda de imagen.
+  - El archivo se asigna al registro con menor número de fila entre las referencias imagenVehiculo. Si el ID también aparece en imgCorte1/2/3, imgApertura o imgCableAlimen*, no se mueve.
+  - Las referencias de imagen no verificables bloquean el lote completo para evitar movimientos potencialmente inseguros.
+  - El helper nuevo no fusiona carpetas. Si hay una única coincidencia canónica con nombre distinto, la normaliza; si hay duplicados ambiguos, lanza error en lugar de elegir o fusionar arbitrariamente.
+- Services/feedback.js:
+  - Se añadió sincronización Drive posterior a la actualización del rango en handleSuggestYear(), una vez alcanzados los tres reportes positivos y superada la comprobación anti-colisión existente.
+  - La ampliación 2018–2022 a 2018–2024 genera la carpeta 2018_2024, sin requerir confirmación de 2023.
+  - Se incorporó DRIVE_FOLDER_ID y los helpers de carpeta/referencias necesarios para el servicio FEEDBACK. La sincronización informa advertencia si Drive no puede completarse; no altera la URL de imagenVehiculo.
+- api-config.js: se añadió organizePrimaryVehicleImages -> ADMIN.
+- index.html: se añadió un botón separado «Organizar únicamente imágenes principales de vehículos»; el botón normalizeImages existente no se reutiliza.
+- ui.js: runAction() admite la nueva operación por lotes; muestra progreso, imágenes movidas/omitidas/errores y advertencia cuando la sincronización de carpeta tras una edición no se completa.
+- No se modificó el comportamiento interno de handleNormalizeImages().
+
+8. VERIFICACIONES EJECUTADAS
+- Parseo sintáctico mediante V8/new Function: PASS en Services/write.js, Services/admin.js, Services/feedback.js, api-config.js y ui.js.
+- Pruebas con mocks de carpetas:
+  - Con versión definida: se usa la versión y se crea rango 2018_2024.
+  - Sin versión: se usa TipoEncendido y el año único/rango correspondiente.
+  - Coincidencia canónica con formato distinto: renombrado al formato requerido.
+  - Carpetas duplicadas equivalentes (incluidas coincidencias exactas múltiples): se rechazan sin fusionarlas.
+- Pruebas con mocks de movimiento:
+  - Una imagen referenciada por dos registros imagenVehiculo queda bajo el primer registro; el segundo no la mueve ni duplica.
+  - Si el mismo ID aparece también en imgCorte1, se omite el movimiento y se devuelve advertencia.
+  - En FEEDBACK, la ampliación de rango resuelve 2018_2024 y mueve solo cuando la referencia es exclusiva de imagenVehiculo.
+- Prueba de orquestación por lotes: lote de dos registros, un registro sin imagen y otro con imagen principal; procesado 2/3, una imagen movida y estado persistido para continuar.
+- Comprobaciones estáticas de integración y alcance: 16/16 PASS.
+- Comparación funcional: handleNormalizeImages() y collectCortesImageReferences() permanecen idénticas a sus respaldos.
+- La inspección confirma que el nuevo organizador no llama setValue() ni setName() sobre archivos; solo usa file.moveTo() para imagenVehiculo. Los nombres de carpetas pueden normalizarse por findOrCreate.
+
+9. CODE REVIEW — SAFETY & SIDE EFFECTS
+- La operación por lotes es independiente de normalizeImages y está protegida por la validación de sesión Desarrollador del router ADMIN.
+- No se cambian URL, nombres ni contenido de archivos de imagenVehiculo; no se actualizan celdas de imagen en Cortes. El progreso se registra en AdminState.
+- Los IDs compartidos con otros campos de imagen se protegen; los IDs compartidos por varios imagenVehiculo se conservan bajo el primer registro por orden de fila.
+- Las carpetas antiguas no se eliminan ni se fusionan. Si cambia la metadata, se busca/crea la nueva ruta y se mueve únicamente la imagen principal; los archivos históricos de cortes, apertura y alimentación no se trasladan individualmente.
+- Las nuevas cargas suplementarias pasan por el helper común de handleAddSupplementaryInfo(), que incluye imgApertura e imágenes de alimentación. Por ello ambos tipos nuevos usan la jerarquía canónica; no se mueven los archivos antiguos de esos campos.
+- Si el movimiento falla después de editar metadata o actualizar el rango, la modificación de metadata/rango permanece guardada; se registra advertencia y no se intenta revertir el dato de catálogo.
+- findOrCreate no fusiona carpetas ni borra contenido. Duplicados ambiguos generan error para evitar seleccionar una carpeta arbitraria.
+- El helper general getOrCreateSubFolder() de ADMIN y handleNormalizeImages() permanecen sin cambios.
+- suggestYear continúa admitiendo aportes anónimos como ya hace la interfaz; la trazabilidad de identidad de usuarios registrados queda registrada como revisión separada en Tareas.txt.
+- No se encontraron observaciones bloqueantes en el Code Review estático.
+
+10. LIMITACIONES Y VALIDACIÓN PENDIENTE
+- No se ejecutó Apps Script real, no se movió ningún archivo de Drive, no se modificó ninguna Spreadsheet real y no se desplegaron servicios.
+- FEEDBACK ahora utiliza DriveApp; el despliegue de ese microservicio requerirá conceder/verificar el alcance OAuth de Drive y autorizar la nueva dependencia.
+- No se probó el flujo en navegador real ni la ejecución de lotes en el servicio ADMIN desplegado.
+- Los archivos históricos de cortes, apertura y alimentación permanecen en sus ubicaciones actuales. Las nuevas cargas usarán la ruta canónica; su migración física, si se desea, requiere una tarea separada.
+- La revisión de trazabilidad de identidad en suggestYear permanece fuera del alcance.
+
+11. RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/write.js: dd36132debb5e7711b29978e30592408af860897
+- Services/admin.js: ed0b68ca66f89899cce24df050c252e58bf837ab
+- Services/feedback.js: 0f47359449b5f8feca6ab84101823182dd5b8552
+- api-config.js: ee46092a78b87ea8a1a7b56d238c1175af6be85b
+- ui.js: 39ac7ec0d8a2f7dc9ab4f79c03d035b5349e6cdb
+- index.html: 2b0862911f21cb0b5406148afb04c2b701929e1e
+- Auditoría.txt: 934d70c27d3f42bd82cabfc9595b2e383a03497e
+- ChangesLogs.txt: 185006bb1e62488208dc2c4138bbb40b3d8c65bd
+- Tareas.txt: af2ab8d097dcee740ab2e63868e8f325704c9a56
+- checkpoint.md: e9d496e5e7abe8c3b2ad5a7e83fc6f0ecef06f59
+
+12. ESTADO FINAL DE LA FASE DE DESARROLLO
+Implementación estática y Code Review completados. Todos los cambios están preparados para un único commit en GPSpedia2.2.5_work; no se ha movido la referencia de la rama ni se ha tocado GPSpedia2.2.5.
+================================================================================

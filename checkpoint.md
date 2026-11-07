@@ -4610,3 +4610,116 @@ CONTINUIDAD
 - El commit único de esta tarea se creará como hijo directo de 2eaeb4761be4531f0bdc656062e97a8175866b1e, únicamente en GPSpedia2.2.5_work. Su SHA será identificable en el historial Git.
 - La rama base GPSpedia2.2.5 debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — ORGANIZAR IMÁGENES PRINCIPALES Y UNIFICAR RUTA DE GUARDADO
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo autorizada: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 2212b4f5fd26e1e29ab7c91ffd99e64700fc6696
+HEAD de rama base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Comparación confirmada: rama de trabajo 183 commits adelante y 0 atrás.
+Árbol del HEAD inicial: bcc22f2aab6e2f03ffe75ae6867dd157b80939a7
+
+TAREA Y ALCANCE AUTORIZADO
+1. Jerarquía de carpetas: Cortes/Categoría/Marca/Modelo/(Versión si existe; en su ausencia Tipo de encendido)/Rango de años.
+2. El rango se nombra Desde_Hasta cuando son distintos y con un solo año cuando coinciden. La ampliación 2018–2022 a 2018–2024 produce 2018_2024, aunque 2023 no se haya confirmado.
+3. Actualizar la ruta de guardado de imágenes principales, imágenes de cortes e imágenes de información suplementaria para que encuentren o creen la jerarquía faltante mediante findOrCreate.
+4. Organizar las imágenes principales existentes de Cortes, exclusivamente campo imagenVehiculo, mediante una acción ADMIN por lotes.
+5. Si cambia Categoría, Marca, Modelo, VersionesAplicables, TipoEncendido, anoDesde o anoHasta desde el modal, sincronizar la ubicación de imagenVehiculo.
+6. Si suggestYear amplía el rango tras tres votos válidos, sincronizar la ubicación de imagenVehiculo.
+7. No renombrar el archivo principal ni cambiar su URL o su celda en Spreadsheet. No duplicar imágenes compartidas. Si el mismo ID aparece en varios imagenVehiculo, prevalece la primera fila; si también aparece en otro campo de imagen, no moverlo.
+8. No mover individualmente imágenes de cortes, apertura o alimentación durante la organización de imágenes existentes. No borrar carpetas antiguas.
+
+ARCHIVOS PREVISTOS
+- Services/write.js
+- Services/admin.js
+- Services/feedback.js
+- api-config.js
+- ui.js
+- index.html
+- Auditoría.txt
+- ChangesLogs.txt
+- Tareas.txt
+- checkpoint.md
+
+HALLAZGOS Y DEPENDENCIAS
+- WRITE y ADMIN actualmente guardan en jerarquías diferentes/incompletas que no incluyen simultáneamente versión o tipo de encendido y rango completo.
+- handleUpdateVehicleField() no sincroniza Drive tras editar metadatos.
+- handleSuggestYear() actualiza anoDesde/anoHasta tras tres votos positivos, pero no sincroniza Drive.
+- handleUploadAdminImage() puede reutilizar una carpeta antigua que no corresponde a los metadatos.
+- collectCortesImageReferences() ya obtiene referencias de los ocho campos de imagen de Cortes y ubicaciones; sirve para proteger archivos compartidos.
+- handleNormalizeImages() es incompatible: procesa ocho campos, renombra, duplica y cambia URL. No se reutilizará.
+- El ADMIN getOrCreateSubFolder() puede fusionar carpetas y devolver el padre ante errores; el nuevo helper debe ser independiente y no fusionar.
+- FEEDBACK no tiene DRIVE_FOLDER_ID ni permisos de Drive explícitos; la sincronización posterior a suggestYear requerirá código de DriveApp y autorización OAuth al desplegar.
+- suggestYear no está protegido por actionPermissions; se registró revisión de autorización como tarea independiente y no se cambiará en esta tarea.
+- ui.js runAction() solo procesa normalizeImages en lotes; se añadirá una acción específica para imagenVehiculo en la tarjeta de organización de imágenes.
+
+RESPALDOS EXACTOS PREVIOS A EDICIÓN
+- Services/write.js: dd36132debb5e7711b29978e30592408af860897
+- Services/admin.js: ed0b68ca66f89899cce24df050c252e58bf837ab
+- Services/feedback.js: 0f47359449b5f8feca6ab84101823182dd5b8552
+- api-config.js: ee46092a78b87ea8a1a7b56d238c1175af6be85b
+- ui.js: 39ac7ec0d8a2f7dc9ab4f79c03d035b5349e6cdb
+- index.html: 2b0862911f21cb0b5406148afb04c2b701929e1e
+- Auditoría.txt: 934d70c27d3f42bd82cabfc9595b2e383a03497e
+- ChangesLogs.txt: 185006bb1e62488208dc2c4138bbb40b3d8c65bd
+- Tareas.txt: af2ab8d097dcee740ab2e63868e8f325704c9a56
+- checkpoint.md: e9d496e5e7abe8c3b2ad5a7e83fc6f0ecef06f59
+
+ESTADO
+- Checkpoint inicial creado antes de la auditoría.
+- Auditoría de funciones relacionadas y dependencias registrada en Auditoría.txt.
+- Hallazgo fuera de alcance registrado en Tareas.txt.
+- Respaldos exactos creados como blobs Git.
+- No se ha modificado código, no se han movido archivos de Drive, no se han cambiado datos de Spreadsheet y no se han desplegado servicios.
+- Siguiente acción: iniciar implementación limitada a las funciones y archivos auditados, seguida de pruebas estáticas y Code Review.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — ORGANIZAR IMÁGENES PRINCIPALES Y UNIFICAR RUTAS DE CARPETAS
+Fecha: 2026-11-06
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD de partida: 2212b4f5fd26e1e29ab7c91ffd99e64700fc6696
+HEAD base de partida: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+HEAD de trabajo aún no actualizado; commit único pendiente.
+
+IMPLEMENTACIÓN FINAL PREPARADA
+- Services/write.js: e49a8f3e0d304c8d5739852fe7a1bacbd1c33277
+- Services/admin.js: b8deffa9f04c77522c45dd015056b1b7edde242d
+- Services/feedback.js: 11cf4ed3985c0557992f2d00c2c69249953ca236
+- api-config.js: 41570b71d872c3949f4971c7ce834f2d6d0a6a99
+- ui.js: 86897c833c9e7e61895e96a13cf2c7cb1c569972
+- index.html: fc7769ea4b1332e459e9bd1314e70965e233d1ca
+
+DOCUMENTACIÓN FINAL PREPARADA
+- Auditoría.txt: a8af8a285cbac0402e5cd24266ee82a685c81628
+- ChangesLogs.txt: 12b732af248af15da91851c5447f5f70b357bd4e
+- Tareas.txt: 744103a0c93ecfa4f084c9aa4c1260238ca77053
+- checkpoint.md: pendiente de este blob final.
+
+VALIDACIONES
+- Parseo sintáctico PASS en WRITE, ADMIN, FEEDBACK, api-config y ui.js.
+- Mocks PASS: ruta por versión, fallback por tipo de encendido, rango Desde_Hasta, normalización canónica, detección de carpetas duplicadas, primera fila propietaria, protección de referencias compartidas, sincronización FEEDBACK y progreso de lotes.
+- Comprobaciones estáticas de integración: 16/16 PASS.
+- handleNormalizeImages() y collectCortesImageReferences() comparados con sus respaldos: sin cambios.
+- Code Review estático y Safety & Side Effects: sin observaciones bloqueantes.
+
+LIMITACIONES Y PROTECCIONES
+- No se ejecutó Apps Script real; no se movieron archivos Drive; no se modificó Spreadsheet real; no se desplegó ningún servicio.
+- FEEDBACK ahora requiere alcance OAuth de Drive antes de desplegar.
+- Las imágenes antiguas de cortes, apertura y alimentación no se trasladaron; las nuevas cargas usarán la ruta canónica.
+- La revisión de trazabilidad de identidad en suggestYear queda pendiente por separado.
+- No se cambió normalizeImages ni se alteró la rama base.
+
+RESPALDOS EXACTOS
+Los SHA de respaldo previos a edición de los diez archivos se conservan en el checkpoint inicial de esta misma tarea y en Auditoría.txt, sección 11.
+
+SIGUIENTE Y ÚNICA ACCIÓN
+Verificar de nuevo los HEAD de GPSpedia2.2.5_work y GPSpedia2.2.5. Si permanecen iguales a los valores iniciales, crear un único árbol y un único commit hijo directo de 2212b4f5fd26e1e29ab7c91ffd99e64700fc6696, y actualizar únicamente GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD confirmado. Después verificar commit, árbol, archivos, HEAD de trabajo y que GPSpedia2.2.5 permanezca en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

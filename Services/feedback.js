@@ -7,6 +7,7 @@
 // CONFIGURACIÓN GLOBAL
 // ============================================================================
 const SPREADSHEET_ID = "1M6zAVch_EGKGGRXIo74Nbn_ihH1APZ7cdr2kNdWfiDs"; // <-- ACTUALIZADO A DB V2.0
+const DRIVE_FOLDER_ID = "1-8QqhS-wtEFFwyBG8CmnEOp5i8rxSM-2";
 let spreadsheet = null;
 
 function getSpreadsheet() {
@@ -302,6 +303,216 @@ function handleAssignCollaborator(payload) {
     throw new Error("Vehículo no encontrado.");
 }
 
+
+// ============================================================================
+// SINCRONIZACIÓN DE LA CARPETA DE IMAGEN PRINCIPAL TRAS AMPLIAR AÑOS
+// ============================================================================
+
+function extractDriveFileIds(value) {
+    const text = String(value || "");
+    const ids = new Set();
+    const patterns = [
+        /[?&]id=([a-zA-Z0-9_-]{10,})/g,
+        new RegExp("[/]d/([a-zA-Z0-9_-]{10,})", "g")
+    ];
+    patterns.forEach(pattern => {
+        let match;
+        while ((match = pattern.exec(text)) !== null) ids.add(match[1]);
+    });
+    if (/^[a-zA-Z0-9_-]{20,}$/.test(text.trim())) ids.add(text.trim());
+    return Array.from(ids);
+}
+
+function getCortesRootFolder() {
+    const folder = DriveApp.getFolderById(DRIVE_FOLDER_ID);
+    const rootId = DriveApp.getRootFolder().getId();
+    if (String(folder.getId()) !== String(DRIVE_FOLDER_ID) ||
+        String(folder.getName() || "").trim().toLowerCase() !== "cortes") {
+        throw new Error("DRIVE_FOLDER_ID no corresponde a la carpeta «Cortes».");
+    }
+    const parents = folder.getParents();
+    let directChild = false;
+    while (parents.hasNext()) if (parents.next().getId() === rootId) directChild = true;
+    if (!directChild) throw new Error("La carpeta «Cortes» no está ubicada directamente en la raíz de Drive.");
+    return folder;
+}
+
+function sanitizeForFolderDisplay(text) {
+    if (text === null || text === undefined) return "";
+    return String(text).replace(/\s+/g, " ").replace(/__+/g, "_").trim();
+}
+
+function getFolderCanonicalName(name) {
+    return String(name || "").normalize("NFD").replace(/\p{M}/gu, "")
+        .toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function findOrCreateSubFolder(parentFolder, desiredName) {
+    if (!parentFolder) throw new Error("No se proporcionó la carpeta padre.");
+    const name = sanitizeForFolderDisplay(desiredName);
+    const canonical = getFolderCanonicalName(name);
+    if (!canonical) throw new Error("El nombre de carpeta no es válido.");
+
+    const matches = [];
+    const folders = parentFolder.getFolders();
+    while (folders.hasNext()) {
+        const folder = folders.next();
+        if (getFolderCanonicalName(folder.getName()) === canonical) matches.push(folder);
+    }
+
+    const exactMatches = matches.filter(folder => folder.getName() === name);
+    if (exactMatches.length === 1) return exactMatches[0];
+    if (exactMatches.length > 1 || matches.length > 1) {
+        throw new Error("Existen varias carpetas equivalentes a «" + name + "»; no se fusionaron ni modificaron.");
+    }
+    if (matches.length === 1) {
+        matches[0].setName(name);
+        return matches[0];
+    }
+
+    try {
+        return parentFolder.createFolder(name);
+    } catch (error) {
+        const retryMatches = [];
+        const retryFolders = parentFolder.getFolders();
+        while (retryFolders.hasNext()) {
+            const folder = retryFolders.next();
+            if (getFolderCanonicalName(folder.getName()) === canonical) retryMatches.push(folder);
+        }
+        if (retryMatches.length === 1) return retryMatches[0];
+        throw error;
+    }
+}
+
+function getVehicleYearFolderName(vehicleInfo) {
+    const info = vehicleInfo || {};
+    const rawDesde = String(info[COLS_CORTES.anoDesde - 1] === null || info[COLS_CORTES.anoDesde - 1] === undefined ? "" : info[COLS_CORTES.anoDesde - 1]).trim();
+    const rawHasta = String(info[COLS_CORTES.anoHasta - 1] === null || info[COLS_CORTES.anoHasta - 1] === undefined ? "" : info[COLS_CORTES.anoHasta - 1]).trim();
+    const inlineRange = rawDesde.match(/^(\d{4})\s*[-–]\s*(\d{4})$/);
+    let desde = inlineRange ? parseInt(inlineRange[1], 10) : parseInt(rawDesde, 10);
+    let hasta = inlineRange ? parseInt(inlineRange[2], 10) : parseInt(rawHasta, 10);
+    if (!Number.isFinite(desde)) return "Sin_Año";
+    if (!Number.isFinite(hasta)) hasta = desde;
+    const start = Math.min(desde, hasta);
+    const end = Math.max(desde, hasta);
+    return start === end ? String(start) : String(start) + "_" + String(end);
+}
+
+function findOrCreateVehicleFolder(vehicleRow) {
+    const row = vehicleRow || [];
+    const category = sanitizeForFolderDisplay(row[COLS_CORTES.categoria - 1] || "Sin_Categoria");
+    const brand = sanitizeForFolderDisplay(row[COLS_CORTES.marca - 1] || "Sin_Marca");
+    const model = sanitizeForFolderDisplay(row[COLS_CORTES.modelo - 1] || "Sin_Modelo");
+    const versionOrIgnition = sanitizeForFolderDisplay(
+        String(row[COLS_CORTES.versionesAplicables - 1] || "").trim() ||
+        String(row[COLS_CORTES.tipoEncendido - 1] || "").trim() || "Sin_Tipo_de_Encendido"
+    );
+    const yearRange = sanitizeForFolderDisplay(getVehicleYearFolderName(row));
+
+    const categoryFolder = findOrCreateSubFolder(getCortesRootFolder(), category);
+    const brandFolder = findOrCreateSubFolder(categoryFolder, brand);
+    const modelFolder = findOrCreateSubFolder(brandFolder, model);
+    const versionFolder = findOrCreateSubFolder(modelFolder, versionOrIgnition);
+    return findOrCreateSubFolder(versionFolder, yearRange);
+}
+
+function collectCortesImageReferencesForFolderSync(sheet) {
+    const imageFields = [
+        "imagenVehiculo", "imgCorte1", "imgCorte2", "imgCorte3",
+        "imgApertura", "imgCableAlimen", "imgCableAlimen2", "imgCableAlimen3"
+    ];
+    const imageColumns = imageFields.map(field => ({
+        field: field, column: COLS_CORTES[field]
+    })).filter(item => Number.isInteger(item.column) && item.column > 0);
+    const references = new Map();
+    let unverifiableReferenceCount = 0;
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { references: references, unverifiableReferenceCount: 0 };
+
+    const range = sheet.getRange(2, 1, lastRow - 1, sheet.getLastColumn());
+    const values = range.getDisplayValues();
+    const formulas = range.getFormulas();
+    const richTextValues = range.getRichTextValues();
+
+    for (let r = 0; r < values.length; r++) {
+        imageColumns.forEach(item => {
+            const columnIndex = item.column - 1;
+            const candidates = [
+                String(values[r][columnIndex] || ""),
+                String((formulas[r] && formulas[r][columnIndex]) || "")
+            ];
+            const richText = richTextValues[r] && richTextValues[r][columnIndex];
+            if (richText) {
+                const link = richText.getLinkUrl();
+                if (link) candidates.push(link);
+                const runs = richText.getRuns ? richText.getRuns() : [];
+                runs.forEach(run => { const runLink = run.getLinkUrl(); if (runLink) candidates.push(runLink); });
+            }
+
+            const cellIds = new Set();
+            let hasUnverifiable = false;
+            candidates.forEach(candidate => {
+                if (!candidate) return;
+                const ids = extractDriveFileIds(candidate);
+                ids.forEach(id => cellIds.add(id));
+                if (!ids.length && /drive\.google\.com\/(?:uc|thumbnail|file|open)|googleusercontent\.com/i.test(candidate)) {
+                    hasUnverifiable = true;
+                }
+            });
+
+            cellIds.forEach(id => {
+                if (!references.has(id)) references.set(id, []);
+                references.get(id).push({
+                    row: r + 2, field: item.field, column: item.column
+                });
+            });
+            if (hasUnverifiable) unverifiableReferenceCount++;
+        });
+    }
+    return { references: references, unverifiableReferenceCount: unverifiableReferenceCount };
+}
+
+function movePrimaryVehicleImageToCanonicalFolder(sheet, rowNumber, vehicleRow) {
+    const imageUrl = vehicleRow[COLS_CORTES.imagenVehiculo - 1];
+    const imageIds = extractDriveFileIds(imageUrl);
+    if (!imageIds.length) return { skipped: true };
+
+    const imageId = imageIds[0];
+    const referenceData = collectCortesImageReferencesForFolderSync(sheet);
+    if (referenceData.unverifiableReferenceCount > 0) {
+        return {
+            skipped: true, warning: true,
+            reason: "Existen referencias de imagen de Cortes no verificables; se protegió el archivo."
+        };
+    }
+
+    const locations = referenceData.references.get(imageId) || [];
+    if (!locations.length) return { skipped: true, warning: true, reason: "No se pudo confirmar la referencia de imagenVehiculo." };
+    if (locations.some(location => location.field !== "imagenVehiculo")) {
+        return { skipped: true, warning: true, reason: "La imagen también se utiliza en un campo de corte, apertura o alimentación." };
+    }
+    const primaryLocations = locations.filter(location => location.field === "imagenVehiculo")
+        .sort((a, b) => a.row - b.row);
+    if (primaryLocations.length && primaryLocations[0].row !== rowNumber) {
+        return { skipped: true, reason: "La imagen pertenece al primer registro que la utiliza (fila " + primaryLocations[0].row + ")." };
+    }
+
+    const file = DriveApp.getFileById(imageId);
+    if (file.isTrashed()) return { skipped: true, warning: true, reason: "La imagen principal está en la papelera de Drive." };
+    if (!String(file.getMimeType() || "").toLowerCase().startsWith("image/")) {
+        return { skipped: true, warning: true, reason: "El archivo referenciado no tiene MIME de imagen." };
+    }
+
+    const targetFolder = findOrCreateVehicleFolder(vehicleRow);
+    const parents = file.getParents();
+    while (parents.hasNext()) {
+        if (parents.next().getId() === targetFolder.getId()) return { skipped: true };
+    }
+
+    file.moveTo(targetFolder);
+    return { moved: true, skipped: false };
+}
+
 function handleSuggestYear(payload) {
     const { vehicleId, newYear, response, userId, userName } = payload;
     if (!vehicleId || !newYear || !userId || !userName) {
@@ -477,7 +688,28 @@ function handleSuggestYear(payload) {
         const finalAnoHasta = newAnoHasta;
         cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoDesde).setValue(finalAnoDesde);
         cortesSheet.getRange(vehicleRowIndex + 2, COLS_CORTES.anoHasta).setValue(finalAnoHasta);
-        logUserActivity(userId, userName, 'apply_year_suggestion', vehicleId, `Rango actualizado a ${finalAnoDesde}-${finalAnoHasta} basado en 3 o más votos para el año ${year}.`);
+
+        let folderSyncWarning = false;
+        let folderSyncMessage = "";
+        try {
+            const updatedVehicleRow = cortesSheet.getRange(
+                vehicleRowIndex + 2, 1, 1, cortesSheet.getLastColumn()
+            ).getValues()[0];
+            const folderSyncResult = movePrimaryVehicleImageToCanonicalFolder(
+                cortesSheet, vehicleRowIndex + 2, updatedVehicleRow
+            );
+            folderSyncWarning = Boolean(folderSyncResult && folderSyncResult.warning);
+            folderSyncMessage = folderSyncResult && folderSyncResult.reason ? folderSyncResult.reason : "";
+        } catch (folderError) {
+            folderSyncWarning = true;
+            folderSyncMessage = folderError.message;
+            Logger.log("No se pudo sincronizar la carpeta de imagenVehiculo tras ampliar el rango: " + folderError.message);
+        }
+
+        logUserActivity(userId, userName, 'apply_year_suggestion', vehicleId,
+            "Rango actualizado a " + finalAnoDesde + "-" + finalAnoHasta +
+            " basado en 3 o más votos para el año " + year +
+            (folderSyncWarning ? ". Advertencia de carpeta: " + folderSyncMessage : "."));
 
         // 7. Depuración automática: Eliminar únicamente los registros de Feedback que motivaron esa actualización
         const feedbackSheet = getSafeSheet(SHEET_NAMES.FEEDBACKS);
@@ -507,7 +739,13 @@ function handleSuggestYear(payload) {
             }
         }
 
-        return { status: 'success', message: `¡Gracias! Con ${voteCount} votos confirmados, el catálogo se ha actualizado a ${finalAnoDesde}-${finalAnoHasta}.` };
+        return {
+            status: 'success',
+            folderSyncWarning: folderSyncWarning,
+            message: "¡Gracias! Con " + voteCount + " votos confirmados, el catálogo se ha actualizado a " +
+                finalAnoDesde + "-" + finalAnoHasta + "." +
+                (folderSyncWarning ? " La carpeta de la imagen principal no pudo sincronizarse automáticamente: " + folderSyncMessage : "")
+        };
     }
 
     return { status: 'info', message: 'No se realizaron cambios.' };

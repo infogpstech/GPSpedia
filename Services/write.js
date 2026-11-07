@@ -469,7 +469,7 @@ function handleAddOrUpdateCutLocked(payload) {
             if (vehicleData && vehicleData.imagenVehiculo) {
                 const currentImg = rowObj.imagenVehiculo;
                 if (!checkFileIdValid(currentImg)) {
-                    const folder = getOrCreateFolder(rowObj.categoria, rowObj.marca, rowObj.modelo, rowObj.anoDesde);
+                    const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
                     const filename = `${sanitizeForFilename(rowObj.marca)}_${sanitizeForFilename(rowObj.modelo)}_${sanitizeForFilename(rowObj.tipoEncendido)}_${rowObj.anoDesde}_Vehiculo_repaired`;
                     const newUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder);
                     sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(newUrl);
@@ -480,7 +480,7 @@ function handleAddOrUpdateCutLocked(payload) {
             if (cutData && cutData.imgCorte1 && cutData.tipoCorte1 !== 'No recomendado') {
                 const currentCorteImg = rowObj[`imgCorte${slotIndex}`];
                 if (!checkFileIdValid(currentCorteImg)) {
-                    const folder = getOrCreateFolder(rowObj.categoria, rowObj.marca, rowObj.modelo, rowObj.anoDesde);
+                    const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
                     const filename = `${sanitizeForFilename(rowObj.marca)}_${sanitizeForFilename(rowObj.modelo)}_${sanitizeForFilename(rowObj.tipoEncendido)}_${rowObj.anoDesde}_Corte${slotIndex}_repaired`;
                     const newCorteImgUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder);
                     sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(newCorteImgUrl);
@@ -606,7 +606,7 @@ function handleAddOrUpdateCutLocked(payload) {
 
         let imageUrl = '';
         if (cutData.imgCorte1) {
-            const folder = getOrCreateFolder(vehicleInfo.categoria, vehicleInfo.marca, vehicleInfo.modelo, vehicleInfo.anoDesde);
+            const folder = findOrCreateVehicleFolder(vehicleInfo);
             const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Corte${cutSlotIndex}`;
             imageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder);
         }
@@ -691,7 +691,7 @@ function handleAddOrUpdateCutLocked(payload) {
         anioParaFolder = anoDesde;
 
         // Subir imágenes y obtener URLs...
-        const folder = getOrCreateFolder(vehicleData.categoria, vehicleData.marca, vehicleData.modelo, anioParaFolder);
+        const folder = findOrCreateVehicleFolder(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }));
         let vehiculoImageUrl = '';
         if (vehicleData.imagenVehiculo) {
             const filename = `${sanitizeForFilename(vehicleData.marca)}_${sanitizeForFilename(vehicleData.modelo)}_${sanitizeForFilename(vehicleData.tipoEncendido)}_${yearInput}_Vehiculo`;
@@ -793,7 +793,7 @@ function handleAddSupplementaryInfo(payload) {
     const rowValues = sheet.getRange(actualRow, 1, 1, sheet.getLastColumn()).getValues()[0];
     const vehicleInfo = mapRowToObject(rowValues, COLS_CORTES);
 
-    const folder = getOrCreateFolder(vehicleInfo.categoria, vehicleInfo.marca, vehicleInfo.modelo, vehicleInfo.anoDesde);
+    const folder = findOrCreateVehicleFolder(vehicleInfo);
 
     // Actualizar campos de texto si se proporcionaron
     if (apertura) sheet.getRange(actualRow, COLS_CORTES.apertura).setValue(apertura);
@@ -982,23 +982,106 @@ function getCortesRootFolder() {
     if (!isDirectChild) throw new Error("La carpeta «Cortes» no está ubicada directamente en la raíz de Drive.");
     return folder;
 }
-function getOrCreateFolder(categoria, marca, modelo, anio) {
-    const rootFolder = getCortesRootFolder();
-    const cat = sanitizeForFilename(categoria || 'Sin_Categoria');
-    const mar = sanitizeForFilename(marca || 'Sin_Marca');
-    const mod = sanitizeForFilename(modelo || 'Sin_Modelo');
-    const an = sanitizeForFilename(anio || 'Sin_Año');
+function sanitizeForFolderDisplay(text) {
+    if (text === null || text === undefined) return '';
+    return String(text).replace(/\s+/g, ' ').replace(/__+/g, '_').trim();
+}
 
-    const categoriaFolder = getOrCreateSubFolder(rootFolder, cat);
-    const marcaFolder = getOrCreateSubFolder(categoriaFolder, mar);
-    const modeloFolder = getOrCreateSubFolder(marcaFolder, mod);
-    return getOrCreateSubFolder(modeloFolder, an);
+function getFolderCanonicalName(name) {
+    return String(name || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+        .toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function findOrCreateSubFolder(parentFolder, desiredName) {
+    if (!parentFolder) throw new Error('No se proporcionó la carpeta padre.');
+    const name = sanitizeForFolderDisplay(desiredName);
+    const canonical = getFolderCanonicalName(name);
+    if (!canonical) throw new Error('El nombre de carpeta no es válido.');
+
+    const matches = [];
+    const folders = parentFolder.getFolders();
+    while (folders.hasNext()) {
+        const folder = folders.next();
+        if (getFolderCanonicalName(folder.getName()) === canonical) matches.push(folder);
+    }
+
+    const exactMatches = matches.filter(folder => folder.getName() === name);
+    if (exactMatches.length === 1) return exactMatches[0];
+    if (exactMatches.length > 1 || matches.length > 1) {
+        throw new Error('Existen varias carpetas equivalentes a «' + name + '»; no se fusionaron ni modificaron.');
+    }
+    if (matches.length === 1) {
+        matches[0].setName(name);
+        return matches[0];
+    }
+
+    try {
+        return parentFolder.createFolder(name);
+    } catch (error) {
+        const retryMatches = [];
+        const retryFolders = parentFolder.getFolders();
+        while (retryFolders.hasNext()) {
+            const folder = retryFolders.next();
+            if (getFolderCanonicalName(folder.getName()) === canonical) retryMatches.push(folder);
+        }
+        if (retryMatches.length === 1) return retryMatches[0];
+        throw error;
+    }
+}
+
+function mergeVehicleFolderInfo(existingInfo, incomingInfo) {
+    const merged = Object.assign({}, existingInfo || {});
+    const incoming = incomingInfo || {};
+    ['categoria', 'marca', 'modelo', 'versionesAplicables', 'tipoEncendido', 'anoDesde', 'anoHasta'].forEach(key => {
+        const current = String(merged[key] === null || merged[key] === undefined ? '' : merged[key]).trim();
+        const next = String(incoming[key] === null || incoming[key] === undefined ? '' : incoming[key]).trim();
+        if (!current && next) merged[key] = incoming[key];
+    });
+    return merged;
+}
+
+function getVehicleYearFolderName(vehicleInfo) {
+    const info = vehicleInfo || {};
+    const rawDesde = String(info.anoDesde === null || info.anoDesde === undefined ? '' : info.anoDesde).trim();
+    const rawHasta = String(info.anoHasta === null || info.anoHasta === undefined ? '' : info.anoHasta).trim();
+    const inlineRange = rawDesde.match(/^(\d{4})\s*[-–]\s*(\d{4})$/);
+    let desde = inlineRange ? parseInt(inlineRange[1], 10) : parseInt(rawDesde, 10);
+    let hasta = inlineRange ? parseInt(inlineRange[2], 10) : parseInt(rawHasta, 10);
+    if (!Number.isFinite(desde)) return 'Sin_Año';
+    if (!Number.isFinite(hasta)) hasta = desde;
+    const start = Math.min(desde, hasta);
+    const end = Math.max(desde, hasta);
+    return start === end ? String(start) : String(start) + '_' + String(end);
+}
+
+function findOrCreateVehicleFolder(vehicleInfo) {
+    const info = vehicleInfo || {};
+    const rootFolder = getCortesRootFolder();
+    const category = sanitizeForFolderDisplay(info.categoria || 'Sin_Categoria');
+    const brand = sanitizeForFolderDisplay(info.marca || 'Sin_Marca');
+    const model = sanitizeForFolderDisplay(info.modelo || 'Sin_Modelo');
+    const versionOrIgnition = sanitizeForFolderDisplay(
+        String(info.versionesAplicables || '').trim() || String(info.tipoEncendido || '').trim() || 'Sin_Tipo_de_Encendido'
+    );
+    const yearRange = sanitizeForFolderDisplay(getVehicleYearFolderName(info));
+
+    const categoryFolder = findOrCreateSubFolder(rootFolder, category);
+    const brandFolder = findOrCreateSubFolder(categoryFolder, brand);
+    const modelFolder = findOrCreateSubFolder(brandFolder, model);
+    const versionFolder = findOrCreateSubFolder(modelFolder, versionOrIgnition);
+    return findOrCreateSubFolder(versionFolder, yearRange);
+}
+
+// Compatibilidad para consumidores heredados que solo proporcionen un año.
+function getOrCreateFolder(categoria, marca, modelo, anio) {
+    return findOrCreateVehicleFolder({
+        categoria: categoria, marca: marca, modelo: modelo,
+        anoDesde: anio, anoHasta: anio
+    });
 }
 
 function getOrCreateSubFolder(parentFolder, name) {
-    const folders = parentFolder.getFoldersByName(name);
-    if (folders.hasNext()) return folders.next();
-    return parentFolder.createFolder(name);
+    return findOrCreateSubFolder(parentFolder, name);
 }
 
 function uploadImageToDrive(imageData, filename, folder) {

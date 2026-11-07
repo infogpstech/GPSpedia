@@ -83,6 +83,14 @@ export function showSavingIndicator(status, message = "") {
                 indicator.style.opacity = "0";
             }
         }, 2000);
+    } else if (status === "warning") {
+        indicator.style.color = "#b7791f";
+        indicator.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <span>${message || 'Guardado con advertencia'}</span>`;
+        setTimeout(() => {
+            if (indicator.innerHTML.includes("fa-triangle-exclamation")) {
+                indicator.style.opacity = "0";
+            }
+        }, 4000);
     } else if (status === "error") {
         indicator.style.color = "#dc3545";
         indicator.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>${message || 'Error al guardar'}</span>`;
@@ -99,8 +107,12 @@ export function showSavingIndicator(status, message = "") {
 async function saveFieldSilently(vehicleId, fieldName, value) {
     showSavingIndicator("saving", "Guardando...");
     try {
-        await routeAction('updateVehicleField', { vehicleId, fieldName, value, ...getDeveloperSessionPayload() });
-        showSavingIndicator("success", "Guardado correctamente");
+        const result = await routeAction('updateVehicleField', { vehicleId, fieldName, value, ...getDeveloperSessionPayload() });
+        if (result && result.folderSyncWarning) {
+            showSavingIndicator("warning", "Guardado; revisa la organización de la imagen principal");
+        } else {
+            showSavingIndicator("success", "Guardado correctamente");
+        }
     } catch (e) {
         console.error(`Error guardando silenciosamente el campo ${fieldName}:`, e);
         showSavingIndicator("error", "Error al guardar");
@@ -3389,7 +3401,7 @@ function initAdminPanelListeners() {
 
     // Función genérica para disparar tareas con soporte para lotes automáticos, ETA y estadísticas en tiempo real
     async function runAction(action, payload = {}) {
-        const isBatch = action === 'normalizeImages';
+        const isBatch = action === 'normalizeImages' || action === 'organizePrimaryVehicleImages';
         const startTime = Date.now();
 
         let lastResource = "N/A";
@@ -3472,13 +3484,21 @@ ${elapsedSec}s
         let totalCarpetasEliminadas = 0;
         let totalImagenesMovidas = 0;
         let totalImagenesRenombradas = 0;
+        let totalImagenesOmitidas = 0;
+        let totalErroresArchivo = 0;
 
         while (!finished) {
             loopCount++;
             log(`[LOTE] Ejecutando lote ${loopCount}...`);
             try {
                 const res = await routeAction(action, { limit, reset: payload.reset, processId, ...getDeveloperSessionPayload() });
-                if (res.status === 'success') {
+                if (res.status === 'warning') {
+                    errorCount++;
+                    log(`[ADVERTENCIA] ${res.message || 'La operación se detuvo por una condición de seguridad.'}`, false, true);
+                    if (res.logs) await playLogs(res.logs);
+                    finished = true;
+                    setProgress(0);
+                } else if (res.status === 'success') {
                     if (res.logs) {
                         await playLogs(res.logs);
                     }
@@ -3513,6 +3533,8 @@ ${elapsedSec}s
                     if (res.foldersDeleted !== undefined) totalCarpetasEliminadas += res.foldersDeleted;
                     if (res.movedFiles !== undefined) totalImagenesMovidas += res.movedFiles;
                     if (res.imagesRenamed !== undefined) totalImagenesRenombradas += res.imagesRenamed;
+                    if (res.skippedFiles !== undefined) totalImagenesOmitidas += res.skippedFiles;
+                    if (res.itemErrors !== undefined) totalErroresArchivo += res.itemErrors;
 
                     // Extraer último archivo y carpeta procesada de los registros recibidos
                     let lastFile = "Ninguno";
@@ -3557,7 +3579,7 @@ Cantidad procesada en lote: ${res.processedCount} (Total acumulado: ${nextIndex}
                         const totalTimeStr = formatTimeMMSS(Date.now() - startTime);
                         log(`
 ==================================================
-Proceso finalizado con éxito 🎉
+${totalErroresArchivo > 0 ? "Proceso finalizado con advertencias ⚠️" : "Proceso finalizado con éxito 🎉"}
 
 Carpetas verificadas:
 ${totalCarpetasVerificadas}
@@ -3577,7 +3599,13 @@ ${totalImagenesMovidas}
 Imágenes renombradas:
 ${totalImagenesRenombradas}
 
-Errores:
+Imágenes omitidas:
+${totalImagenesOmitidas}
+
+Errores por archivo:
+${totalErroresArchivo}
+
+Errores de lote:
 ${errorCount}
 
 Tiempo total:
@@ -3609,7 +3637,7 @@ ${totalTimeStr}
 🚨 ERROR DETECTADO
 
 Operación:
-${action === 'normalizeImages' ? 'Normalización de imágenes' : action}
+${action === 'normalizeImages' ? 'Normalización de imágenes' : action === 'organizePrimaryVehicleImages' ? 'Organización de imágenes principales' : action}
 
 Etapa:
 Procesamiento de imágenes
@@ -4213,6 +4241,14 @@ ${elapsedSec}s
         const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio (Fila 1).");
         await runAction('normalizeImages', { reset: !continueSaved });
     };
+    const organizePrimaryImagesButton = document.getElementById('btn-admin-organize-primary-images');
+    if (organizePrimaryImagesButton) {
+        organizePrimaryImagesButton.onclick = async () => {
+            const continueSaved = confirm("¿Deseas CONTINUAR desde el último punto de progreso guardado?\n\n- Presiona 'Aceptar' para continuar donde terminó.\n- Presiona 'Cancelar' para iniciar desde el principio.");
+            if (!confirm("Esta operación moverá exclusivamente archivos referenciados por imagenVehiculo. No renombrará archivos, no duplicará imágenes, no modificará URL ni celdas de Spreadsheet y omitirá imágenes compartidas con otros campos. ¿Deseas continuar?")) return;
+            await runAction('organizePrimaryVehicleImages', { reset: !continueSaved });
+        };
+    }
     document.getElementById('btn-admin-restore-trash').onclick = async () => {
         if (confirm("¿Deseas INICIAR el saneamiento y recuperación exhaustiva de imágenes en la papelera?\n\nEsta operación analizará todas las hojas del Spreadsheet, identificará enlaces rotos de Drive y restaurará de la papelera cualquier imagen eliminada. Puede tomar unos minutos.")) {
             await runAction('restoreAllTrashedImages');

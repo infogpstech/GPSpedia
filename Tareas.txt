@@ -4667,3 +4667,36 @@ Estado: IMPLEMENTACIÓN ESTÁTICA INCORPORADA; VALIDACIÓN FUNCIONAL EN APPS SCR
 - AQ/VIN, AR y AS permanecen fuera del alcance y no fueron modificadas.
 - La auditoría, respaldos, pruebas y limitaciones se documentan en Auditoría.txt.
 ================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — REVISAR AUTORIZACIÓN DE SUGERENCIAS DE AÑO EN FEEDBACK
+Fecha: 2026-11-06
+Prioridad: MEDIA
+Hallazgo: Services/feedback.js mantiene suggestYear fuera de actionPermissions. La interfaz admite expresamente aportes anónimos (ui.js transmite userId «0» y nombre «Anónimo»); para usuarios registrados, userId/userName también llegan desde el cliente y no se validan contra una sesión en FEEDBACK.
+Riesgo: la atribución de aportes registrados puede ser suplantada y el umbral actual de tres reportes no garantiza que correspondan a tres usuarios distintos.
+Alcance de revisión futura: verificar la trazabilidad de usuarios registrados y anónimos, el contrato de ui.js/api-config.js y las medidas antiabuso; diseñar controles compatibles con aportes anónimos sin bloquear la validación comunitaria prevista.
+Restricción: no modificar actionPermissions ni el contrato de suggestYear durante la tarea de organización de imágenes.
+Referencia: Auditoría.txt, entrada «AUDITORÍA TÉCNICA — ORGANIZAR IMÁGENES PRINCIPALES Y UNIFICAR RUTA DE GUARDADO», sección 5.
+Estado: PENDIENTE.
+================================================================================
+
+
+================================================================================
+CIERRE DE TAREA — ORGANIZAR IMÁGENES PRINCIPALES Y UNIFICAR RUTAS DE CARPETAS
+Fecha: 2026-11-06
+Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; VALIDACIÓN EN APPS SCRIPT Y DESPLIEGUE PENDIENTES.
+- Jerarquía aplicada: Cortes/Categoría/Marca/Modelo/(VersionesAplicables o TipoEncendido)/Rango de años.
+- WRITE y ADMIN encuentran o crean la ruta para imagen principal, imágenes de cortes, reemplazos y cargas suplementarias. El rango se guarda como año único o Desde_Hasta.
+- ADMIN sincroniza imagenVehiculo al editar metadata desde el modal y dispone de una acción independiente por lotes para organizar exclusivamente imagenVehiculo.
+- FEEDBACK sincroniza imagenVehiculo después de la ampliación de rango confirmada por tres reportes positivos.
+- Si varias filas usan el mismo ID en imagenVehiculo, prevalece la primera fila. Si el ID también aparece en otro campo de imagen, se protege y no se mueve.
+- El organizador no renombra archivos, no duplica imágenes y no modifica URL/celdas de imagen en Cortes. Las carpetas antiguas no se eliminan.
+- Se añadió el botón de organización exclusiva en la tarjeta de Organización de imágenes; normalizeImages permanece intacto y separado.
+- Parseo sintáctico de WRITE, ADMIN, FEEDBACK, api-config y ui.js: PASS.
+- Pruebas mock de jerarquía, findOrCreate, duplicados ambiguos, referencias compartidas, primera fila y lote con progreso: PASS. Comprobaciones estáticas de integración: 16/16 PASS.
+- Code Review estático: sin observaciones bloqueantes.
+- Limitaciones: no se ejecutó Apps Script real, no se movieron archivos Drive, no se modificó Spreadsheet real y no se desplegaron servicios. FEEDBACK requerirá autorización OAuth de Drive antes del despliegue.
+- Los archivos históricos de cortes, apertura y alimentación no se trasladan; solo las nuevas cargas usan la jerarquía canónica. Su migración física requiere tarea independiente.
+- Auditoría, riesgos, respaldos, pruebas y limitaciones documentados en Auditoría.txt.
+================================================================================
