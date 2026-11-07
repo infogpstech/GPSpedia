@@ -6584,3 +6584,89 @@ G. No se necesita agregar columnas ni hojas a Spreadsheet. La hoja Idempotencia 
 6. LIMITACIONES DE LA AUDITORÍA
 La auditoría fue estática sobre el HEAD indicado. No se inspeccionaron datos productivos ni archivos reales de Drive y no se ejecutó Apps Script. La confirmación funcional queda reservada para la fase consolidada en entorno aislado.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — COORDINACIÓN DE ESCRITURAS Y OPERACIONES DRIVE ENTRE SERVICIOS
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: 2e41428eec6c73cedc2f42f8d557775e7ba0b765
+Árbol auditado: 4334bf99e3026f8554bbe48eec338b0a01f6805d
+Rama base: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: AUDITORÍA ESTÁTICA COMPLETADA; IMPLEMENTACIÓN BLOQUEADA POR DEPENDENCIA DE CÓDIGO FUENTE Y ALCANCE INTERSERVICIOS.
+
+1. ARCHIVOS Y SUPERFICIE AUDITADA
+- Services/write.js (blob a1359f9d1b2029e51c99c9d213fd6584e1257987): doPost(), handleAddOrUpdateCut()/handleAddOrUpdateCutLocked(), handleAddSupplementaryInfo()/handleAddSupplementaryInfoLocked(), handleAddVinToVehicle()/handleAddVinToVehicleLocked(), handleAllocateVehicleId(), handleFreezeCortesIds(), helpers de carga de imagen y asignación de IDs.
+- Services/admin.js (blob 8807279a269b09b8d1c224d7720a0643c04cd6ca): router doPost(), handleRestoreDatabase(), handleReorganizeDatabase(), handleOrganizePrimaryVehicleImages(), handleUpdateVehicleField(), handleUploadAdminImage(), handleAddOrUpdateCut(), handleAddSupplementaryInfo(), handleRecoverReplacedImage(), handleDeleteReplacedImage(), handleOrganizeUnusedImagesBatch() y sus helpers.
+- Services/feedback.js (blob f17da40f3c082634b679289c2883f2c9b91bbe8f): handleSuggestYear()/handleSuggestYearLocked(), handleRecordLike() y handleApproveVideo().
+- Services/catalog.js (blob 253cbe9f873481114e7abff3aa8902c45e2560af): revisión de operaciones sobre Cortes; no se encontraron escrituras, eliminaciones, ordenamientos ni movimientos de Drive.
+- api-config.js (blob 74fe2220d46243f14e1c1c5a63aef99435c10323): ACTION_TO_SERVICE_MAP y endpoints.
+- Se consultó el directorio Services del HEAD auditado. No contiene utilities.js. La lectura de Services/utilities.js devolvió HTTP 404. api-config.js sí enruta migrateYearRanges y migrateTimestamps al servicio UTILITIES.
+
+2. HALLAZGOS CONFIRMADOS
+
+A. Los ScriptLock de WRITE, ADMIN y FEEDBACK pertenecen a proyectos Apps Script distintos. No constituyen un bloqueo común aunque los tres proyectos utilicen el mismo Spreadsheet y la misma carpeta Drive. La huella SHA-256 de cargas tampoco proporciona exclusión mutua entre ejecuciones concurrentes.
+
+B. WRITE mantiene bloqueo local durante:
+- altas/actualizaciones de cortes;
+- registro de información suplementaria;
+- asignación y estabilización de IDs;
+- alta de VIN.
+El bloqueo protege solicitudes dentro del proyecto WRITE, pero no evita que ADMIN o FEEDBACK modifiquen los mismos registros simultáneamente.
+
+C. ADMIN presenta rutas con bloqueo local y rutas sin bloqueo:
+- handleUpdateVehicleField() (líneas 1738–1787) escribe en Cortes y puede sincronizar la carpeta de imagenVehiculo sin adquirir ScriptLock.
+- handleOrganizePrimaryVehicleImages() (1213–1325) obtiene una instantánea de referencias y mueve archivos sin adquirir ScriptLock. Una referencia puede cambiar desde otro servicio después de la instantánea.
+- handleReorganizeDatabase() (979–1006) solicita a WRITE estabilizar IDs y luego ordena Cortes. El bloqueo de WRITE termina antes del sort; ADMIN no mantiene un bloqueo durante la secuencia completa.
+- handleRestoreDatabase() (882–928) reemplaza las hojas de la Spreadsheet sin adquirir ScriptLock.
+- handleUploadAdminImage(), handleAddOrUpdateCut(), handleAddSupplementaryInfo(), handleRecoverReplacedImage() y handleDeleteReplacedImage() sí tienen ScriptLock local; este no coordina con WRITE ni FEEDBACK.
+- handleOrganizeUnusedImagesBatch() tiene ScriptLock local y vuelve a comprobar referencias, pero ese bloqueo tampoco impide cambios concurrentes originados en otros proyectos.
+
+D. FEEDBACK presenta estas rutas:
+- handleSuggestYear() mantiene ScriptLock local durante la validación y ampliación de anoDesde/anoHasta, además de la sincronización de la carpeta de imagenVehiculo.
+- handleRecordLike() mantiene ScriptLock local al incrementar utilCorteN.
+- handleApproveVideo() actualiza videoGuiaDesarmeUrl en Cortes sin adquirir ScriptLock.
+Estos bloqueos locales no se comparten con WRITE ni ADMIN.
+
+E. api-config.js dirige addOrUpdateCut y addSupplementaryInfo a WRITE. El router ADMIN conserva handlers para las mismas acciones, de modo que el servicio ADMIN mantiene rutas alternativas de escritura aunque no sean el destino por defecto del mapa de frontend.
+
+F. handleUploadAdminImage() (ADMIN, 1792–1922) crea directamente un archivo mediante createFile(), registra el historial y actualiza la celda. No utiliza opId ni la huella de recuperación introducida en uploadImageToDrive(). Si la respuesta HTTP se pierde después de completar la operación y el usuario repite el envío, puede crearse otro archivo y una nueva entrada de historial. Este hallazgo es independiente de la coordinación de bloqueos.
+
+G. UTILITIES expone en api-config.js las acciones migrateYearRanges y migrateTimestamps, pero su fuente no está presente en el directorio Services del HEAD auditado y fetch_file no pudo recuperarla. No se puede determinar estáticamente si modifica Cortes, qué bloqueo usa ni cómo interactúa con los demás escritores.
+
+3. RIESGOS Y EFECTOS POSIBLES
+- Dos proyectos pueden leer el mismo estado de Cortes y escribir valores incompatibles o sobrescribirse.
+- La selección de slots libres y las actualizaciones de metadata pueden basarse en lecturas obsoletas.
+- Una reorganización puede ordenar filas mientras otro servicio crea o modifica registros.
+- Un organizador puede mover o enviar a papelera una imagen después de validar referencias que cambian desde otro proyecto.
+- La restauración integral de Spreadsheet puede intercalarse con operaciones de lectura/escritura de otros servicios.
+- El flujo de reemplazo de imágenes no puede reconocer un reintento de la misma operación tras perder la respuesta HTTP.
+
+4. DECISIÓN TÉCNICA Y BLOQUEO
+No se añadió un bloqueo local adicional como solución, porque no resolvería la concurrencia entre proyectos. La solución debe definir una autoridad de coordinación común y aplicarse a todas las operaciones que escriben Cortes o que mueven/retiran archivos basándose en sus referencias.
+
+Antes de implementar es necesario:
+- obtener y auditar la fuente real del servicio UTILITIES;
+- inventariar y clasificar todas las operaciones de escritura y movimientos protegidos por referencias;
+- definir un protocolo compartido con adquisición, propietario, expiración, liberación y recuperación ante terminación inesperada;
+- resolver expresamente las llamadas anidadas ADMIN→WRITE, en particular allocateVehicleId y freezeCortesIds, para evitar deadlocks;
+- definir qué operaciones largas pueden mantener la sección crítica y cómo se comporta el sistema si expira el bloqueo;
+- probar solicitudes simultáneas y fallos intermedios en proyectos y copias aisladas.
+
+No se implementó un mecanismo parcial que pudiera dar una falsa garantía de exclusión global.
+
+5. TAREAS INDEPENDIENTES
+- Se registra en Tareas.txt la coordinación compartida de mutaciones WRITE/ADMIN/FEEDBACK/UTILITIES como tarea de prioridad alta, bloqueada hasta disponer del código UTILITIES y aprobar el diseño del coordinador.
+- Se registra por separado la idempotencia de handleUploadAdminImage() ante pérdida de respuesta HTTP, para evitar mezclarla con el diseño de exclusión mutua.
+
+6. RESPALDOS EXACTOS DE DOCUMENTACIÓN ANTES DE ESTA ACTUALIZACIÓN
+- Auditoría.txt: 0e517b59a667258f7af37a1d6b76ce569563aefe
+- Tareas.txt: d2889fd48d88aa710b3817dbc5055da9739e7177
+- ChangesLogs.txt: a49b9184023f3a482d927f5534efb88ccb9be8a9
+- checkpoint.md: 026122152e57e3bfc7291cc1aa3fdaffc1935b4e
+
+7. LIMITACIONES
+Auditoría estática de los archivos fuente disponibles en GitHub. No se ejecutó Apps Script, no se realizaron solicitudes HTTP, no se modificó Spreadsheet/Drive y no se desplegó ningún servicio. La auditoría de UTILITIES queda pendiente por falta de fuente.
+================================================================================

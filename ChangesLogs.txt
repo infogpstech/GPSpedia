@@ -3520,3 +3520,13 @@ LIMITACIONES
 - handleAddSupplementaryInfo() puede conservar cambios de texto realizados antes de un error posterior de imagen; no se convirtió toda la actualización de texto e imágenes en una transacción única.
 - La compensación de handleUploadAdminImage() no se amplió a reintentos HTTP con respuesta perdida.
 ================================================================================
+
+
+================================================================================
+REGISTRO DOCUMENTAL — AUDITORÍA DE COORDINACIÓN ENTRE SERVICIOS
+Fecha: 2026-11-07
+- Auditoría.txt: se añadió una auditoría estática de las rutas de escritura y administración de imágenes de WRITE, ADMIN y FEEDBACK, el enrutamiento de api-config.js y la ausencia de Services/utilities.js en el HEAD auditado.
+- Tareas.txt: se registró la coordinación compartida de mutaciones como tarea de prioridad alta, bloqueada por la fuente UTILITIES y el diseño del protocolo; se registró por separado la idempotencia de uploadAdminImage().
+- checkpoint.md: se añadió el checkpoint inicial y el cierre de auditoría bloqueada.
+- No se modificó código de servicios, frontend, endpoints ni datos de Spreadsheet/Drive. No se ejecutó Apps Script ni se desplegó.
+================================================================================

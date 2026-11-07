@@ -4734,3 +4734,61 @@ Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; VALIDACIÓN FUNCIONAL EN APPS SCRI
 - Pendiente: probar en copias aisladas de Spreadsheet y Drive los fallos entre createFile, setDescription, escritura de URL, flush y actualización completed; verificar la recuperación con deployments WRITE y ADMIN.
 - No se modificaron datos productivos, Drive real, deployments ni rama base.
 ================================================================================
+
+
+================================================================================
+TAREA PENDIENTE — COORDINACIÓN COMPARTIDA DE MUTACIONES ENTRE SERVICIOS
+Fecha de registro: 2026-11-07
+Prioridad: ALTA
+Estado: BLOQUEADA HASTA OBTENER Y AUDITAR LA FUENTE DEL SERVICIO UTILITIES Y DEFINIR EL PROTOCOLO COMPARTIDO.
+
+Objetivo:
+Evitar escrituras incompatibles y movimientos de archivos basados en referencias obsoletas cuando WRITE, ADMIN, FEEDBACK y UTILITIES acceden a la misma Spreadsheet «Cortes» y al árbol Drive «Cortes».
+
+Alcance mínimo:
+- Inventariar todas las operaciones que escriben, ordenan, restauran o eliminan datos en Cortes.
+- Inventariar los movimientos, reemplazos, restauraciones y envíos a papelera de imágenes cuya seguridad depende de las referencias de Cortes.
+- Diseñar una autoridad única de coordinación entre proyectos Apps Script, con adquisición, propietario, expiración, liberación y recuperación ante terminación inesperada.
+- Integrar el protocolo en WRITE, ADMIN y FEEDBACK, y en UTILITIES una vez disponible su fuente.
+- Resolver las llamadas anidadas ADMIN→WRITE para allocateVehicleId y freezeCortesIds sin bloqueo reentrante ni deadlock.
+- Mantener los controles de sesión y rol existentes; no confiar en un token de bloqueo enviado por el navegador.
+- Probar concurrencia, expiración, liberación ante error, recuperación tras timeout, restauración, reorganización y movimientos de imágenes en copias aisladas.
+
+Hallazgos que originan la tarea:
+- ScriptLock de cada proyecto Apps Script no es compartido entre deployments.
+- ADMIN: handleUpdateVehicleField() y handleApproveVideo() (en FEEDBACK) tienen escrituras en Cortes sin bloqueo local.
+- ADMIN: handleReorganizeDatabase() libera la coordinación WRITE antes de ordenar; handleRestoreDatabase() y handleOrganizePrimaryVehicleImages() no mantienen bloqueo local.
+- FEEDBACK: handleSuggestYear() y handleRecordLike() usan bloqueos locales que no coordinan con WRITE/ADMIN.
+- Las operaciones de reemplazo/organización de imágenes verifican referencias que pueden cambiar desde otro proyecto.
+- UTILITIES enruta migrateYearRanges y migrateTimestamps, pero Services/utilities.js no está disponible en el HEAD auditado.
+
+Dependencia obligatoria:
+Proporcionar Services/utilities.js o la fuente exportada del proyecto Apps Script UTILITIES que corresponde al endpoint configurado, incluyendo las funciones migrateYearRanges y migrateTimestamps y sus dependencias.
+
+Restricciones:
+No desplegar, no modificar Spreadsheet/Drive productivos, no cambiar endpoints ni alterar los controles de autorización. Un único commit mediante Git Database API cuando la implementación completa esté lista.
+Referencia: Auditoría.txt, entrada «COORDINACIÓN DE ESCRITURAS Y OPERACIONES DRIVE ENTRE SERVICIOS».
+
+================================================================================
+TAREA PENDIENTE — IDEMPOTENCIA DEL REEMPLAZO DE IMÁGENES IN-MODAL
+Fecha de registro: 2026-11-07
+Prioridad: MEDIA
+Estado: PENDIENTE DE AUDITORÍA E IMPLEMENTACIÓN INDEPENDIENTE.
+
+Objetivo:
+Hacer que handleUploadAdminImage() pueda reconocer y recuperar el mismo intento de reemplazo cuando Drive y Spreadsheet completaron la operación, pero la respuesta HTTP no llegó al navegador.
+
+Alcance:
+- Auditar el flujo de selección, conversión, envío, confirmación y reintento en ui.js.
+- Definir opId estable por intento y conservarlo hasta confirmación inequívoca.
+- Persistir el estado necesario para recuperar el intento tras una respuesta perdida o recarga, sin almacenar tokens de sesión.
+- Reutilizar el archivo Drive creado por el mismo intento.
+- Evitar duplicar el registro en Imagenes_Reemplazadas y evitar registrar como nueva sustitución la misma URL ya aplicada.
+- Mantener la compensación actual cuando falle una fase real de la operación.
+- Probar fallos entre createFile, registro de historial, escritura de URL, flush y respuesta HTTP.
+
+Restricciones:
+No alterar los campos ni encabezados actuales de Cortes e Imagenes_Reemplazadas sin auditoría y justificación. No desplegar ni operar sobre datos productivos. Un único commit mediante Git Database API.
+Referencia: Auditoría.txt, entrada «COORDINACIÓN DE ESCRITURAS Y OPERACIONES DRIVE ENTRE SERVICIOS».
+
+================================================================================

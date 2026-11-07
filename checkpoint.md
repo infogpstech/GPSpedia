@@ -4806,3 +4806,86 @@ LIMITACIONES
 - La validación funcional se reserva para la fase consolidada con copias aisladas.
 - No se desplegó ni se modificó la rama base.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUDITORÍA DE COORDINACIÓN ENTRE SERVICIOS
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial confirmado: 2e41428eec6c73cedc2f42f8d557775e7ba0b765
+Árbol inicial: 4334bf99e3026f8554bbe48eec338b0a01f6805d
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+TAREA Y ALCANCE
+Auditar y resolver, según los hallazgos, la coordinación de operaciones compartidas entre WRITE y ADMIN sobre Cortes y Drive. La inspección preliminar amplió la superficie a FEEDBACK y detectó rutas UTILITIES cuyo código no está disponible; la auditoría formal incluye esos límites y dependencias.
+
+ESTADO REAL AL INICIO
+- HEAD y rama base verificados por GitHub API.
+- Última implementación incorporada: recuperación segura de cargas de imágenes Drive/Spreadsheet.
+- WRITE y ADMIN tienen ScriptLock propios; FEEDBACK también mantiene bloqueos locales.
+- api-config.js enruta migrateYearRanges y migrateTimestamps a UTILITIES.
+- No se ha modificado código, documentación ni datos productivos durante la fase de reconocimiento.
+- No se ha ejecutado Apps Script ni se ha desplegado ningún servicio.
+
+ARCHIVOS Y FUNCIONALIDADES PREVISTOS
+- Services/write.js, Services/admin.js, Services/feedback.js, Services/catalog.js y api-config.js.
+- Services/utilities.js como dependencia requerida; su ausencia deberá registrarse si no se encuentra.
+- Auditoría.txt, Tareas.txt, ChangesLogs.txt y checkpoint.md.
+
+RIESGOS Y DEPENDENCIAS
+- Los bloqueos locales no coordinan proyectos Apps Script independientes.
+- Una solución incompleta puede crear falsa garantía de atomicidad.
+- Las llamadas anidadas ADMIN→WRITE pueden producir deadlocks si se introduce un bloqueo compartido sin diseñar el protocolo.
+- No modificar endpoints, despliegues, datos productivos ni rama base.
+- Aplicar el único flujo Git Database API y un único commit documental para este cierre de auditoría.
+
+FASE
+Checkpoint inicial registrado en el historial de esta tarea. Auditoría estática formal completada; implementación de código aún no iniciada.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUDITORÍA DE COORDINACIÓN ENTRE SERVICIOS
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD anterior a la tarea: 2e41428eec6c73cedc2f42f8d557775e7ba0b765
+HEAD base verificado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+ESTADO FINAL
+AUDITORÍA ESTÁTICA COMPLETADA. IMPLEMENTACIÓN DE CÓDIGO BLOQUEADA HASTA OBTENER LA FUENTE UTILITIES Y DEFINIR UNA COORDINACIÓN INTERSERVICIOS COMPLETA. No se introdujo un bloqueo parcial que pudiera aparentar exclusión global.
+
+ARCHIVOS MODIFICADOS
+- Auditoría.txt
+- Tareas.txt
+- ChangesLogs.txt
+- checkpoint.md
+
+RESULTADO
+- Confirmado que ScriptLock es local a cada proyecto Apps Script.
+- Identificadas escrituras de Cortes y operaciones Drive dependientes de referencias en WRITE, ADMIN y FEEDBACK.
+- Identificadas rutas ADMIN sin bloqueo local y una aprobación de vídeo en FEEDBACK sin bloqueo local.
+- Confirmado que reorganizeDatabase libera el bloqueo de WRITE antes de ordenar Cortes.
+- Confirmado que handleUploadAdminImage() no dispone de idempotencia ante respuesta HTTP perdida.
+- Services/catalog.js no contiene escrituras a Cortes.
+- Services/utilities.js no existe en el directorio Services del HEAD auditado y su lectura devuelve 404; no se pudo auditar migrateYearRanges ni migrateTimestamps.
+- Se registraron dos tareas: coordinación compartida (prioridad alta, bloqueada por UTILITIES) e idempotencia de reemplazo in-modal (prioridad media).
+
+VERIFICACIONES
+- Se verificaron los HEAD de rama de trabajo y base antes de preparar la actualización documental.
+- Se inspeccionaron los handlers y las rutas de enrutamiento en los blobs indicados en Auditoría.txt.
+- No se ejecutó JavaScript en Apps Script, no se realizaron solicitudes HTTP ni pruebas de concurrencia reales.
+- No se ejecutaron operaciones en Spreadsheet/Drive, no se desplegaron servicios y no se modificó código.
+
+RESPALDOS EXACTOS PREVIOS A LA ACTUALIZACIÓN DOCUMENTAL
+- Auditoría.txt: 0e517b59a667258f7af37a1d6b76ce569563aefe
+- Tareas.txt: d2889fd48d88aa710b3817dbc5055da9739e7177
+- ChangesLogs.txt: a49b9184023f3a482d927f5534efb88ccb9be8a9
+- checkpoint.md: 026122152e57e3bfc7291cc1aa3fdaffc1935b4e
+
+CONTINUIDAD
+La siguiente acción requerida es incorporar la fuente Services/utilities.js (o exportación equivalente del proyecto Apps Script UTILITIES) para completar la auditoría de todos los escritores de Cortes. Después se definirá y probará el coordinador compartido; la idempotencia de uploadAdminImage() permanece como tarea independiente. No desplegar ni modificar datos productivos.
+================================================================================
