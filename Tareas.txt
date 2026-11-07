@@ -4716,3 +4716,21 @@ Estado: IMPLEMENTACIÓN ESTÁTICA INCORPORADA; VALIDACIÓN FUNCIONAL PENDIENTE.
 - No se desplegó FEEDBACK, no se publicó frontend ni se modificó Spreadsheet productiva.
 - Pendiente: pruebas aisladas de sesiones válidas/inválidas, suplantación, anonimato, duplicados, concurrencia, actualización de rango y sincronización Drive; confirmar alcance OAuth Drive antes del despliegue.
 ================================================================================
+
+
+================================================================================
+CIERRE DE IMPLEMENTACIÓN — REINTENTOS SEGUROS DE CARGA DE IMÁGENES DRIVE/SPREADSHEET
+Fecha: 2026-11-07
+Referencia: riesgo de reconciliación registrado en la sección «PERSISTENCIA Y RECUPERACIÓN SEGURA DE opId».
+Estado: IMPLEMENTACIÓN ESTÁTICA COMPLETADA; VALIDACIÓN FUNCIONAL EN APPS SCRIPT PENDIENTE.
+
+- WRITE y ADMIN ahora generan una huella SHA-256 por operación/vehículo/campo/carpeta/MIME/contenido.
+- Si Drive ya creó el archivo pero no se guardó su URL en Cortes, el reintento localiza y reutiliza el mismo archivo en lugar de crear otro.
+- El archivo permanece temporal y marcado como pending hasta que SpreadsheetApp.flush() confirma la URL; después recupera el nombre original y cambia a linked.
+- Los errores HTTP, MIME, Base64 y contenido vacío ya no se convierten en una URL vacía ni permiten completar el registro.
+- Se serializó el registro de información suplementaria en WRITE y ADMIN.
+- Se conservaron la hoja Idempotencia A:E, las columnas y encabezados de Cortes y el flujo de reemplazo in-modal.
+- Parseo sintáctico y pruebas aisladas de reintento/validación: PASS.
+- Pendiente: probar en copias aisladas de Spreadsheet y Drive los fallos entre createFile, setDescription, escritura de URL, flush y actualización completed; verificar la recuperación con deployments WRITE y ADMIN.
+- No se modificaron datos productivos, Drive real, deployments ni rama base.
+================================================================================

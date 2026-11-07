@@ -3469,3 +3469,54 @@ ALCANCE
 - Spreadsheet/GPSpedia_DB_columnas.md: extensión documentada; inventario A:I conservado.
 - Sin despliegue FEEDBACK, publicación frontend ni operaciones productivas. Validación funcional consolidada pendiente.
 ================================================================================
+
+
+================================================================================
+CORRECCIÓN — REINTENTOS SEGUROS DE CARGA DE IMÁGENES DRIVE/SPREADSHEET
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y PRUEBAS AISLADAS COMPLETADAS; VALIDACIÓN EN APPS SCRIPT PENDIENTE.
+
+ARCHIVOS MODIFICADOS
+- Services/write.js
+- Services/admin.js
+
+LÍNEAS AFECTADAS
+- Services/write.js: 420–737 (recuperación/alta de cortes), 783–865 (información suplementaria), 1104–1204 (helpers y carga de imágenes).
+- Services/admin.js: 1928–2249 (recuperación/alta administrativa), 2250–2338 (información suplementaria), 2560–2660 (helpers y carga de imágenes).
+
+CAMBIOS EN WRITE
+- Se añadieron buildImageUploadOperationKey(), buildImageUploadToken(), findExistingImageUpload() y markImageUploadLinked().
+- uploadImageToDrive() valida respuestas HTTP, MIME, Base64 y contenido no vacío; los errores se propagan en lugar de devolver una URL vacía.
+- Los nueve puntos de carga de imagen transmiten una clave estable asociada a operación/vehículo/campo.
+- Las imágenes se crean con nombre temporal y marcador de operación. Un reintento reutiliza el archivo ya creado, verifica MIME y tamaño y evita duplicarlo.
+- Tras SpreadsheetApp.flush(), el archivo se marca como vinculado y recupera su nombre original.
+- handleAddSupplementaryInfo() quedó serializado mediante ScriptLock y ahora confirma el flush y el vínculo de las imágenes antes de responder éxito.
+
+CAMBIOS EN ADMIN
+- Se incorporó la misma lógica determinista de carga y recuperación que en WRITE.
+- Los nueve puntos de carga de addOrUpdateCut() y addSupplementaryInfo() utilizan claves estables.
+- Se marca el archivo vinculado después de confirmar las escrituras de Cortes.
+- handleAddSupplementaryInfo() quedó serializado mediante ScriptLock.
+- handleUploadAdminImage() y su compensación/historial se conservaron sin cambios.
+
+COMPATIBILIDAD Y PROTECCIONES
+- No se agregaron hojas, columnas ni encabezados.
+- Se conserva Idempotencia A:E y el contrato de Cortes.
+- No se modificaron ui.js, api-config.js, offline.js, la hoja productiva, Drive real ni los deployments.
+- El nombre temporal se elimina al vincular la imagen; se restaura el nombre de archivo previsto por el flujo actual.
+
+VERIFICACIONES
+- Parseo JavaScript completo de Services/write.js y Services/admin.js: PASS.
+- Mocks de Drive: reintento antes de guardar URL reutiliza el mismo archivo; reintento después de marcar vinculado recupera el mismo archivo; restauración de nombre original y estado linked: PASS.
+- Validación negativa: Base64 vacío, respuesta HTTP no exitosa y MIME no imagen se rechazan: PASS.
+- Integración: 9/9 llamadores de carga en WRITE y 9/9 en ADMIN reciben clave determinista.
+- No quedan llamadas de carga dentro de estos flujos sin clave.
+- Comparación contra respaldos: cambios limitados a los helpers de carga, sus llamadores, confirmación posterior a flush y bloqueo de información suplementaria.
+
+LIMITACIONES
+- No se ejecutó Apps Script, Drive, Spreadsheet ni navegador reales.
+- No se verificó concurrencia entre los proyectos WRITE y ADMIN, cuyos ScriptLock son independientes. La serialización cubre cada proyecto por separado; una misma operación ejecutada simultáneamente por ambos deployments requeriría coordinación global adicional.
+- handleAddSupplementaryInfo() puede conservar cambios de texto realizados antes de un error posterior de imagen; no se convirtió toda la actualización de texto e imágenes en una transacción única.
+- La compensación de handleUploadAdminImage() no se amplió a reintentos HTTP con respuesta perdida.
+================================================================================

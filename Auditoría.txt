@@ -6530,3 +6530,57 @@ RESPALDOS EXACTOS PREVIOS A EDICIÓN
 - Tareas.txt: 744103a0c93ecfa4f084c9aa4c1260238ca77053
 - checkpoint.md: c2340d299fec98f93ef3a22d6d43e5b96242debe
 ================================================================================
+
+
+================================================================================
+AUDITORÍA — RECONCILIACIÓN DE CARGAS DE IMÁGENES ENTRE DRIVE Y SPREADSHEET
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: aa57c4de806ba2780e64925b80449209559624aa
+Rama base: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado inicial: RIESGO CONFIRMADO; SIN CAMBIOS DE CÓDIGO DURANTE LA AUDITORÍA.
+
+1. ARCHIVOS Y BLOQUES AUDITADOS
+- Services/write.js (blob e49a8f3e0d304c8d5739852fe7a1bacbd1c33277): handleAddOrUpdateCut() / handleAddOrUpdateCutLocked() (líneas 222–731); handleAddSupplementaryInfo() (778–851); uploadImageToDrive() (1087–1138); recordOpId()/findRowByOpId()/handleCheckOperation() (1311–1490).
+- Services/admin.js (blob b8deffa9f04c77522c45dd015056b1b7edde242d): handleUploadAdminImage() (1792–1927); handleAddOrUpdateCut() (1928–2244); handleAddSupplementaryInfo() (2245–2323); uploadImageToDrive() (2545–2581); recordOpId()/findRowByOpId()/handleCheckOperation() (2764–3245).
+- ui.js (blob 16f1e7c50304d7f08d0884bfdfba24044b5c3d0a): convertImageToEditable() (215–258); persistencia y reintento del agregado de cortes (aprox. 7560–7660); formularios de apertura y alimentación (7700–7850).
+- api-config.js (blob 74fe2220d46243f14e1c1c5a63aef99435c10323): mapeo de addOrUpdateCut, addSupplementaryInfo y uploadAdminImage.
+- offline.js (blob b587f43181007deda1bcc1a2bd9786ec4bf6a189): persistencia IndexedDB utilizada por el reintento del modal de agregado.
+- Tareas.txt: riesgo independiente registrado en la sección de persistencia de opId, líneas 4483–4486.
+
+2. HALLAZGOS CONFIRMADOS
+A. WRITE y ADMIN contienen implementaciones duplicadas de uploadImageToDrive(). Ante error de descarga, decodificación o formato, ambas devolvían una cadena vacía en vez de propagar el fallo. Los llamadores podían escribir una URL vacía en Cortes, completar el resto de la operación y marcar opId como completed.
+B. Después de folder.createFile(blob), si una escritura posterior en Spreadsheet fallaba antes de persistir la URL, el archivo quedaba sin referencia. El reintento de addOrUpdateCut() recuperaba la fila mediante opId, pero no tenía una clave que permitiera localizar y reutilizar el archivo ya creado; podía generar otro archivo.
+C. handleAddSupplementaryInfo() no tenía bloqueo propio ni identificador de operación. WRITE no forzaba SpreadsheetApp.flush() antes de responder éxito; ADMIN sí lo hacía, pero ninguno de los dos servicios podía identificar el archivo de un intento previo.
+D. La interfaz ya conserva opId y el snapshot de addOrUpdateCut() en IndexedDB. No se requiere cambiar el contrato del formulario ni la acción de API para ese flujo.
+E. Los formularios suplementarios no transmiten opId. Una clave determinista basada en vehículo/campo y el contenido de la imagen permite reutilizar el archivo cuando se repite exactamente el mismo envío, sin alterar el payload público.
+F. handleUploadAdminImage() ya implementa compensación: intenta restaurar la URL anterior, enviar a papelera el archivo nuevo y actualizar el registro histórico cuando falla el reemplazo. Se conserva intacto; la repetición deliberada tras perder la respuesta HTTP queda fuera de este alcance.
+G. No se necesita agregar columnas ni hojas a Spreadsheet. La hoja Idempotencia conserva su contrato A:E y Cortes mantiene sus columnas actuales.
+
+3. DECISIÓN TÉCNICA
+- Generar una huella SHA-256 determinista por operación, vehículo, campo, carpeta, MIME y bytes de imagen; el nombre original queda fuera de la huella para permitir recuperar una carga aunque cambie el nombre usado por el flujo de reparación.
+- Crear el archivo inicialmente con un nombre temporal independiente del nombre comercial y guardar la huella/estado/nombre original en la descripción; la huella no depende del nombre para que la recuperación funcione si el flujo usa el sufijo «repaired».
+- Antes de crear, buscar en la carpeta del vehículo un archivo temporal o ya vinculado con la misma huella; verificar unicidad, MIME y tamaño y reutilizarlo.
+- Después de SpreadsheetApp.flush(), marcar el archivo como vinculado, restaurar su nombre original y cambiar state=pending a state=linked.
+- Los errores de descarga, HTTP, MIME, Base64 y contenido vacío deben detener el flujo; no se aceptará guardar una URL vacía como éxito.
+- Serializar handleAddSupplementaryInfo() mediante ScriptLock en cada proyecto para evitar que dos envíos concurrentes del mismo servicio creen archivos duplicados.
+
+4. ALCANCE Y EXCLUSIONES
+- Modificar solo Services/write.js y Services/admin.js.
+- Mantener el contrato A:E de Idempotencia, los encabezados y posiciones de Cortes, el esquema de datos, la API pública y el frontend.
+- No modificar handleUploadAdminImage(), el historial de imágenes reemplazadas, la organización de carpetas ni los archivos existentes.
+- No realizar llamadas a Apps Script real, no mover ni crear archivos en Drive real, no modificar Spreadsheet real y no desplegar.
+
+5. RESPALDOS EXACTOS PREVIOS A LA EDICIÓN
+- Services/write.js: e49a8f3e0d304c8d5739852fe7a1bacbd1c33277
+- Services/admin.js: b8deffa9f04c77522c45dd015056b1b7edde242d
+- Auditoría.txt: 46879b8ef47a7e886a7c0a73c6ca90213bd042e6
+- ChangesLogs.txt: 3f519c198ba5914ac49d0e5b7df256e25ac9ee69
+- Tareas.txt: 45d242fca38de276af0629f491055a106fcad015
+- checkpoint.md: 03b365b0ece350bb62b69664ebcc604fbe2a3db1
+
+6. LIMITACIONES DE LA AUDITORÍA
+La auditoría fue estática sobre el HEAD indicado. No se inspeccionaron datos productivos ni archivos reales de Drive y no se ejecutó Apps Script. La confirmación funcional queda reservada para la fase consolidada en entorno aislado.
+================================================================================

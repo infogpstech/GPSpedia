@@ -4744,3 +4744,65 @@ Verificar de nuevo los HEAD de GPSpedia2.2.5_work y GPSpedia2.2.5. Si permanecen
 **Limitaciones:** la clave anónima identifica un navegador y no una persona física. Los registros históricos sin clave no participan en el nuevo umbral. No se ejecutó Apps Script real, navegador, HTTP ni operaciones productivas; no se desplegó FEEDBACK ni frontend. La dependencia OAuth Drive de FEEDBACK permanece.
 
 **Siguiente acción:** pruebas funcionales aisladas y fase consolidada posterior. No desplegar ni modificar datos productivos desde esta tarea.
+
+
+================================================================================
+CHECKPOINT INICIAL — RECONCILIACIÓN DE CARGAS DE IMÁGENES DRIVE/SPREADSHEET
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base protegida: GPSpedia2.2.5
+HEAD inicial: aa57c4de806ba2780e64925b80449209559624aa
+Árbol inicial: a1cb2af5a7aecdbbd7929ac2c8dea7e23f056857
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+OBJETIVO
+Resolver la falta de recuperación de archivos Drive cuando la escritura de su URL en Spreadsheet falla durante altas de cortes e información suplementaria.
+
+ESTADO INICIAL
+- Riesgo documentado en Tareas.txt, líneas 4483–4486.
+- Auditoría estática de WRITE, ADMIN, UI, API y persistencia de opId iniciada.
+- No se modificó código, no se escribieron datos en Drive/Spreadsheet y no se desplegó.
+- Respaldos exactos de los seis archivos de trabajo preparados; SHA registrados en Auditoría.txt.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — REINTENTOS SEGUROS DE CARGA DE IMÁGENES DRIVE/SPREADSHEET
+Fecha: 2026-11-07
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5
+HEAD de partida: aa57c4de806ba2780e64925b80449209559624aa
+
+IMPLEMENTACIÓN PREPARADA
+- Services/write.js: carga de imagen con huella determinista, búsqueda/reutilización, validación estricta y confirmación linked después de flush.
+- Services/admin.js: misma lógica para altas de cortes e información suplementaria.
+- handleAddSupplementaryInfo() en ambos proyectos: ScriptLock, flush explícito y marcado de imágenes vinculadas.
+- No se modificó UI/API ni el esquema de Spreadsheet.
+
+RESPALDOS EXACTOS
+- Services/write.js: e49a8f3e0d304c8d5739852fe7a1bacbd1c33277
+- Services/admin.js: b8deffa9f04c77522c45dd015056b1b7edde242d
+- Auditoría.txt: 46879b8ef47a7e886a7c0a73c6ca90213bd042e6
+- ChangesLogs.txt: 3f519c198ba5914ac49d0e5b7df256e25ac9ee69
+- Tareas.txt: 45d242fca38de276af0629f491055a106fcad015
+- checkpoint.md: 03b365b0ece350bb62b69664ebcc604fbe2a3db1
+
+VALIDACIONES ESTÁTICAS
+- Parseo completo WRITE/ADMIN: PASS.
+- Pruebas aisladas de reutilización antes/después de vincular, nombre original, estado linked y rechazo de entradas inválidas: PASS.
+- 18/18 puntos de carga con clave determinista: PASS.
+- Code Review estático: sin observaciones bloqueantes en los bloques modificados.
+
+BLOBS DE IMPLEMENTACIÓN PREPARADOS
+- Services/write.js: a1359f9d1b2029e51c99c9d213fd6584e1257987
+- Services/admin.js: 8807279a269b09b8d1c224d7720a0643c04cd6ca
+- Auditoría.txt: 0e517b59a667258f7af37a1d6b76ce569563aefe
+- ChangesLogs.txt: a49b9184023f3a482d927f5534efb88ccb9be8a9
+- Tareas.txt: d2889fd48d88aa710b3817dbc5055da9739e7177
+
+LIMITACIONES
+- No se ejecutó Apps Script real, Drive, Spreadsheet ni navegador.
+- La validación funcional se reserva para la fase consolidada con copias aisladas.
+- No se desplegó ni se modificó la rama base.
+================================================================================
