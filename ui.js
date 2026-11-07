@@ -9,6 +9,18 @@ import { getFeedbackItems, sendContactForm, addTutorial, replyToFeedback, markAs
 import { getState, setState, subscribe } from './state.js';
 import * as offline from './offline.js';
 import { openYouTubeUploadModal } from './youtubeUpload.js';
+import { createRichTextToolbar, sanitizeHtmlContent } from './rich-text.js';
+export { createRichTextToolbar, sanitizeHtmlContent };
+
+function mountRichTextToolbars(root) {
+    if (!root || typeof root.querySelectorAll !== 'function') return;
+    root.querySelectorAll('[data-rich-target]').forEach(container => {
+        const targetId = container.getAttribute('data-rich-target');
+        if (!targetId || container.dataset.richMounted === 'true') return;
+        container.appendChild(createRichTextToolbar(targetId));
+        container.dataset.richMounted = 'true';
+    });
+}
 
 const backSvg = '<svg style="width:20px;height:20px;margin-right:5px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>';
 let cachedAnonymousSuggestionReporterId = null;
@@ -1629,7 +1641,8 @@ export function showNoResultsMessage(textoBusqueda) {
 // Helper utilitario para crear párrafos de detalle compartidos en modales (Hoisted)
 function createDetailParagraph(label, text) {
     if (text) {
-        const p = document.createElement('p');
+        const p = document.createElement('div');
+        p.style.margin = "1em 0";
         p.innerHTML = `<strong>${label}:</strong> ${sanitizeHtmlContent(text)}`;
         return p;
     }
@@ -2142,6 +2155,7 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
         notaLabel.textContent = "Nota Importante / Descripción:";
         notaLabel.style.cssText = "display: block; font-weight: bold; margin-top: 10px; font-size: 0.85em;";
         const notaInput = document.createElement("textarea");
+        notaInput.id = `edit-note-${activeItem.id}`;
         notaInput.rows = 2;
         notaInput.value = activeItem.notaImportante || "";
         notaInput.style.cssText = "width: 100%; padding: 6px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); margin-bottom: 10px; box-sizing: border-box;";
@@ -2152,11 +2166,12 @@ export function mostrarDetalleModal(item, isNavigation = false, navOptions = {})
             }
         };
         cont.appendChild(notaLabel);
+        cont.appendChild(createRichTextToolbar(notaInput.id));
         cont.appendChild(notaInput);
     } else if (activeItem.notaImportante) {
-        const p = document.createElement("p");
+        const p = document.createElement("div");
         p.style.cssText = "color:#cc0000; font-weight: bold; background: #ffe0e0; padding: 10px; border-radius: 5px; border-left: 4px solid #cc0000; margin: 5px 0;";
-        p.textContent = `⚠️ ${activeItem.notaImportante}`;
+        p.innerHTML = `⚠️ ${sanitizeHtmlContent(activeItem.notaImportante)}`;
         cont.appendChild(p);
     }
 
@@ -2888,6 +2903,7 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         locLabel.textContent = `Ubicación del Corte ${idx}:`;
         locLabel.style.fontSize = "0.85em";
         const locInput = document.createElement('textarea');
+        locInput.id = `edit-cut-location-${vehicleId}-${idx}`;
         locInput.rows = 2;
         locInput.value = cutData.ubicacion || "";
         locInput.style.cssText = "padding: 4px; border: 1px solid #007bff; border-radius: 4px; background: var(--bg-color); color: var(--text-color); box-sizing: border-box; width: 100%;";
@@ -2918,19 +2934,20 @@ function renderCutContent(container, cutData, datosRelay, vehicleId, isLazy = fa
         editCutsWrapper.appendChild(configLabel);
         editCutsWrapper.appendChild(configSelect);
         editCutsWrapper.appendChild(locLabel);
+        editCutsWrapper.appendChild(createRichTextToolbar(locInput.id));
         editCutsWrapper.appendChild(locInput);
         editCutsWrapper.appendChild(colorLabel);
         editCutsWrapper.appendChild(colorInput);
 
         container.appendChild(editCutsWrapper);
     } else {
-        const contentP = document.createElement('p');
+        const contentP = document.createElement('div');
         if (isNoRecomendadoValue(cutData.tipo)) {
             contentP.innerHTML = `<strong>Tipo de Corte:</strong> No recomendado`;
         } else {
-            contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${cutData.tipo || 'No especificado'}<br>
-                                <strong>Ubicación:</strong> ${cutData.ubicacion || 'No especificada'}<br>
-                                <strong>Color de Cable:</strong> ${cutData.colorCable || 'No especificado'}`;
+            contentP.innerHTML = `<strong>Tipo de Corte:</strong> ${sanitizeHtmlContent(cutData.tipo || 'No especificado')}<br>
+                                <strong>Ubicación:</strong> ${sanitizeHtmlContent(cutData.ubicacion || 'No especificada')}<br>
+                                <strong>Color de Cable:</strong> ${sanitizeHtmlContent(cutData.colorCable || 'No especificado')}`;
         }
         container.appendChild(contentP);
     }
@@ -3131,6 +3148,8 @@ function renderRelayInfoModal(relayInfo) {
         window.abrirLightbox(highResImgUrl, 'lightboxImg');
     };
     content.appendChild(img);
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -5514,93 +5533,12 @@ export function renderInboxList(items) {
 
 /* TAREA 1.7: BARRA DE ENRIQUECIMIENTO DE TEXTO COMPLETA PARA EL EDITOR DEL INBOX */
 export function createInboxRichTextToolbar(targetId) {
-    const toolbar = document.createElement("div");
-    toolbar.className = "inbox-rich-toolbar";
-    toolbar.style.cssText = "display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin-bottom:8px; padding:6px 8px; background:var(--card-bg, #f8f9fa); border:1px solid var(--border-color, #ccc); border-radius:6px;";
-
-    const applyTag = (openTag, closeTag) => {
-        const textarea = document.getElementById(targetId);
-        if (!textarea) return;
-        const start = textarea.selectionStart;
-        const end = textarea.selectionEnd;
-        const selected = textarea.value.substring(start, end) || "texto";
-        const formatted = `${openTag}${selected}${closeTag}`;
-        textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
-        textarea.focus();
-        textarea.setSelectionRange(start + openTag.length, start + openTag.length + selected.length);
-    };
-
-    const makeBtn = (html, title, onClick) => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "btn btn-secondary btn-sm";
-        btn.title = title;
-        btn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:28px; display:inline-flex; align-items:center; justify-content:center; border-radius:4px; cursor:pointer;";
-        btn.innerHTML = html;
-        btn.onclick = (e) => { e.preventDefault(); onClick(); };
-        return btn;
-    };
-
-    // 1. Negrita
-    toolbar.appendChild(makeBtn("<strong>B</strong>", "Negrita", () => applyTag("<strong>", "</strong>")));
-    // 2. Cursiva
-    toolbar.appendChild(makeBtn("<em>I</em>", "Cursiva", () => applyTag("<em>", "</em>")));
-    // 3. Subrayado
-    toolbar.appendChild(makeBtn("<u>U</u>", "Subrayado", () => applyTag("<u>", "</u>")));
-    // 4. Tachado
-    toolbar.appendChild(makeBtn("<s>S</s>", "Tachado", () => applyTag("<s>", "</s>")));
-
-    // 5. Selector de Color
-    const colorPicker = document.createElement("input");
-    colorPicker.type = "color";
-    colorPicker.title = "Color de texto";
-    colorPicker.style.cssText = "width:28px; height:28px; padding:0; border:none; cursor:pointer; border-radius:4px;";
-    colorPicker.onchange = (e) => applyTag(`<span style="color:${e.target.value}">`, "</span>");
-    toolbar.appendChild(colorPicker);
-
-    // 6. Selector de Tamaño de Fuente
-    const sizeSelect = document.createElement("select");
-    sizeSelect.title = "Tamaño de fuente";
-    sizeSelect.style.cssText = "padding:2px 4px; font-size:0.82rem; height:28px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);";
-    sizeSelect.innerHTML = `
-        <option value="" disabled selected>Tamaño</option>
-        <option value="0.85em">Pequeño</option>
-        <option value="1em">Normal</option>
-        <option value="1.2em">Grande</option>
-        <option value="1.5em">Encabezado</option>
-    `;
-    sizeSelect.onchange = (e) => {
-        if (e.target.value) {
-            applyTag(`<span style="font-size:${e.target.value}">`, "</span>");
-            e.target.value = "";
-        }
-    };
-    toolbar.appendChild(sizeSelect);
-
-    // 7. Selector de Tipo de Fuente
-    const fontSelect = document.createElement("select");
-    fontSelect.title = "Tipo de fuente";
-    fontSelect.style.cssText = "padding:2px 4px; font-size:0.82rem; height:28px; border-radius:4px; border:1px solid var(--border-color, #ccc); background:var(--modal-bg, #fff); color:var(--text-color, #333);";
-    fontSelect.innerHTML = `
-        <option value="" disabled selected>Fuente</option>
-        <option value="Arial, sans-serif">Arial</option>
-        <option value="'Segoe UI', Roboto, sans-serif">Segoe UI</option>
-        <option value="'Courier New', monospace">Monospace</option>
-        <option value="Georgia, serif">Georgia</option>
-    `;
-    fontSelect.onchange = (e) => {
-        if (e.target.value) {
-            applyTag(`<span style="font-family:${e.target.value}">`, "</span>");
-            e.target.value = "";
-        }
-    };
-    toolbar.appendChild(fontSelect);
-
-    // 8. Lista desordenada
-    toolbar.appendChild(makeBtn("<i class='fa-solid fa-list-ul'></i>", "Lista con viñetas", () => applyTag("<ul>\n  <li>", "</li>\n</ul>")));
-    // 9. Lista ordenada
-    toolbar.appendChild(makeBtn("<i class='fa-solid fa-list-ol'></i>", "Lista numerada", () => applyTag("<ol>\n  <li>", "</li>\n</ol>")));
-
+    const toolbar = createRichTextToolbar(targetId);
+    toolbar.classList.add("inbox-rich-toolbar");
+    toolbar.style.marginBottom = "8px";
+    toolbar.style.padding = "6px 8px";
+    toolbar.style.border = "1px solid var(--border-color, #ccc)";
+    toolbar.style.borderRadius = "6px";
     return toolbar;
 }
 
@@ -6811,6 +6749,8 @@ export function openReportCutModal(vehicleId, corteNum, currentCutData) {
         </form>
     `;
 
+    mountRichTextToolbars(content);
+
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -6900,6 +6840,8 @@ function showReportSuccessModal(vehicleId, corteNum, currentCutData, reportId) {
             </button>
         </div>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -7007,23 +6949,14 @@ export function openSuggestCutModal(vehicleId, corteNum, currentCutData = {}, re
             </div>
             <div class="form-group">
                 <label for="sug-detalles">Explicación y Justificación del Cambio *</label>
-                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('sug-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('sug-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="sug-detalles"></div>
                 <textarea id="sug-detalles" rows="3" placeholder="Explica claramente por qué propones este cambio en el corte..." required></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:8px;">Enviar Sugerencia</button>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -7170,6 +7103,8 @@ export function openExpandMenuModal(item) {
         </div>
     `;
 
+    mountRichTextToolbars(content);
+
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -7255,6 +7190,8 @@ export function openAddVinModal(item) {
             </div>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -7409,42 +7346,6 @@ export function openAddVinModal(item) {
     };
 }
 
-/* TAREA 1.2: BARRA DE ENRIQUECIMIENTO DE TEXTO EN LOS FORMULARIOS */
-export function createRichTextToolbar(targetId) {
-    const toolbar = document.createElement("div");
-    toolbar.className = "rich-editor-toolbar";
-    toolbar.style.cssText = "display:flex; align-items:center; gap:6px; margin-bottom:4px;";
-
-    const boldBtn = document.createElement("button");
-    boldBtn.type = "button";
-    boldBtn.className = "btn btn-secondary btn-sm";
-    boldBtn.title = "Negrita";
-    boldBtn.style.cssText = "padding:2px 8px; font-size:0.85rem; height:26px; min-width:26px;";
-    boldBtn.innerHTML = "<strong>B</strong>";
-    boldBtn.onclick = () => window.applyRichFormat(targetId, "bold");
-
-    // Botón cuadrado con cuadrícula de 4 colores y capa nativa transparente
-    const colorBtn = document.createElement("div");
-    colorBtn.className = "rich-color-picker-box";
-    colorBtn.title = "Color de texto";
-    colorBtn.style.cssText = "position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;";
-    colorBtn.innerHTML = `
-        <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-            <span style="background:#ff4d4f;"></span>
-            <span style="background:#1890ff;"></span>
-            <span style="background:#52c41a;"></span>
-            <span style="background:#faad14;"></span>
-        </div>
-        <input type="color" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-    `;
-    const colorPicker = colorBtn.querySelector("input");
-    colorPicker.onchange = (e) => window.applyRichColor(targetId, e.target.value);
-
-    toolbar.appendChild(boldBtn);
-    toolbar.appendChild(colorBtn);
-    return toolbar;
-}
-
 /* TAREA 1.1: CONFIGURACIÓN DE RELAY EN EL FORMULARIO DE AGREGAR CORTE DEL BOTÓN «+» / TAREA 5 (3.2): AGREGAR UN NUEVO CORTE DESDE EL MODAL DE DETALLE */
 export function openAddCutForModelModal(item) {
     const vehicleId = String(item && item.id !== undefined && item.id !== null ? item.id : "").trim();
@@ -7490,18 +7391,7 @@ export function openAddCutForModelModal(item) {
             </div>
             <div class="form-group">
                 <label>Ubicación y Detalles del Corte</label>
-                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-cut-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('add-cut-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="add-cut-detalles"></div>
                 <textarea id="add-cut-detalles" rows="3" placeholder="Detalles de ubicación y conexión..." required></textarea>
             </div>
             <div class="form-group">
@@ -7521,6 +7411,8 @@ export function openAddCutForModelModal(item) {
             </div>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -7825,18 +7717,7 @@ export function openAddAperturaModal(item) {
         <form id="add-apertura-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Detalles de la Apertura</label>
-                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-apertura-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('add-apertura-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="add-apertura-detalles"></div>
                 <textarea id="add-apertura-detalles" rows="3" placeholder="Ubicación y color de cables de apertura..." required></textarea>
             </div>
             <div class="form-group">
@@ -7848,6 +7729,8 @@ export function openAddAperturaModal(item) {
             </div>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -7912,18 +7795,7 @@ export function openAddFeedModal(item) {
         <form id="add-feed-form" style="display:flex; flex-direction:column; gap:12px;">
             <div class="form-group">
                 <label>Detalles de la Alimentación</label>
-                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('add-feed-detalles', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('add-feed-detalles', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="add-feed-detalles"></div>
                 <textarea id="add-feed-detalles" rows="3" placeholder="Detalles del cable positivo y tierra..." required></textarea>
             </div>
             <div class="form-group">
@@ -7935,6 +7807,8 @@ export function openAddFeedModal(item) {
             </div>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -8066,6 +7940,8 @@ export function openAddVideoModal(item) {
             </form>
         </div>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -8253,18 +8129,7 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
             </div>
             <div class="form-group">
                 <label>Detalle del Problema (Máx 700 caracteres)</label>
-                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-detalle', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('pys-detalle', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="pys-detalle"></div>
                 <textarea id="pys-detalle" maxlength="700" rows="4" required placeholder="Describe el problema..."></textarea>
             </div>
             <div class="form-group" style="display:flex; align-items:center; gap:8px;">
@@ -8273,18 +8138,7 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
             </div>
             <div class="form-group" id="grp-solucion">
                 <label>Solución (Máx 700 caracteres)</label>
-                <div class="rich-editor-toolbar" style="display:flex; align-items:center; gap:6px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('pys-solucion', 'bold')" title="Negrita" style="padding:2px 8px; font-size:0.85rem; height:26px;"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('pys-solucion', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="pys-solucion"></div>
                 <textarea id="pys-solucion" maxlength="700" rows="4" placeholder="Explica la solución..."></textarea>
             </div>
             <div class="form-group">
@@ -8306,6 +8160,8 @@ export function openAddProblemModal(preAssociatedVehicle = null) {
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar</button>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -8518,6 +8374,8 @@ export function openSearchVehicleForPysAssociationModal(problemId, onAssociated,
         </div>
     `;
 
+    mountRichTextToolbars(content);
+
     modal.appendChild(content);
     document.body.appendChild(modal);
 
@@ -8687,6 +8545,8 @@ export function openConfirmVehicleForPysModal(vehicle, onConfirm) {
             </div>
         </div>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -9199,23 +9059,14 @@ export function openAddTutorialModal() {
             </div>
             <div class="form-group">
                 <label>Descripción / Detalles (Máx 700 caracteres)</label>
-                <div class="rich-editor-toolbar" style="display:flex; gap:8px; margin-bottom:4px;">
-                    <button type="button" class="btn btn-secondary btn-sm" onclick="applyRichFormat('tut-desc', 'bold')"><strong>B</strong></button>
-                    <div class="rich-color-picker-box" title="Color de texto" style="position:relative; width:26px; height:26px; min-width:26px; border-radius:4px; border:1px solid #ccc; cursor:pointer; overflow:hidden; display:inline-block;">
-                    <div style="display:grid; grid-template-columns:1fr 1fr; width:100%; height:100%;">
-                        <span style="background:#ff4d4f;"></span>
-                        <span style="background:#1890ff;"></span>
-                        <span style="background:#52c41a;"></span>
-                        <span style="background:#faad14;"></span>
-                    </div>
-                    <input type="color" onchange="applyRichColor('tut-desc', this.value)" style="position:absolute; top:0; left:0; width:100%; height:100%; opacity:0; cursor:pointer; border:none; padding:0; margin:0;" title="Color de texto">
-                </div>
-                </div>
+                <div class="rich-editor-toolbar" data-rich-target="tut-desc"></div>
                 <textarea id="tut-desc" maxlength="700" rows="4" placeholder="Detalles del tutorial..."></textarea>
             </div>
             <button type="submit" class="btn btn-primary" style="margin-top:10px;">Agregar Tutorial</button>
         </form>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);
@@ -9301,38 +9152,6 @@ window.applyRichColor = function(targetId, color) {
     textarea.value = textarea.value.substring(0, start) + formatted + textarea.value.substring(end);
 };
 
-// TAREA ADICIONAL: PERMITIR CONTENIDO HTML ENRIQUECIDO EN CAMPOS DE TEXTO
-export function sanitizeHtmlContent(htmlStr) {
-    if (!htmlStr) return '';
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(htmlStr, 'text/html');
-    const allowedTags = ['B', 'STRONG', 'SPAN', 'BR', 'P', 'DIV', 'I', 'EM', 'U', 'S', 'STRIKE', 'OL', 'UL', 'LI', 'A', 'IMG', 'SMALL', 'MARK', 'FONT'];
-
-    function cleanNode(node) {
-        const children = Array.from(node.childNodes);
-        children.forEach(child => {
-            if (child.nodeType === 1) {
-                if (!allowedTags.includes(child.tagName)) {
-                    const textNode = doc.createTextNode(child.outerHTML);
-                    node.replaceChild(textNode, child);
-                } else {
-                    Array.from(child.attributes).forEach(attr => {
-                        const name = attr.name.toLowerCase();
-                        const val = attr.value.toLowerCase();
-                        if (name.startsWith('on') || val.includes('javascript:') || val.includes('data:text/html')) {
-                            child.removeAttribute(attr.name);
-                        }
-                    });
-                    cleanNode(child);
-                }
-            }
-        });
-    }
-
-    cleanNode(doc.body);
-    return doc.body.innerHTML;
-}
-
 let inboxCacheData = null;
 
 /* BLOQUE 7: AJUSTAR DISTRIBUCIÓN, DISEÑO Y CONTENIDO DE LA FICHA TÉCNICA PARA IMPRESIÓN Y EXPORTACIÓN A PDF */
@@ -9407,9 +9226,9 @@ export function exportVehiclePrintSheet(item) {
             kind: 'cut',
             num: c.num,
             title: `Corte #${c.num}: ${c.tipo || 'Sin tipo especificado'}`,
-            infoHtml: `<p><strong>Ubicación:</strong> ${c.ub || 'No especificada'}</p>
-                       <p><strong>Color de Cable:</strong> ${c.color || 'No especificado'}</p>
-                       <p><strong>Relay:</strong> ${c.relay || 'Sin Relay'}</p>`,
+            infoHtml: `<div><strong>Ubicación:</strong> ${sanitizeHtmlContent(c.ub || 'No especificada')}</div>
+                       <div><strong>Color de Cable:</strong> ${sanitizeHtmlContent(c.color || 'No especificado')}</div>
+                       <div><strong>Relay:</strong> ${sanitizeHtmlContent(c.relay || 'Sin Relay')}</div>`,
             img: c.img,
             alt: `Corte #${c.num}`,
             extraHtml: c.activaTestigo ? `
@@ -9423,7 +9242,7 @@ export function exportVehiclePrintSheet(item) {
         techItems.push({
             kind: 'feed',
             title: f.title,
-            infoHtml: `<p>${f.desc || 'Conexión estándar'}</p>`,
+            infoHtml: `<div>${sanitizeHtmlContent(f.desc || 'Conexión estándar')}</div>`,
             img: f.img,
             alt: f.title,
             extraHtml: '',
@@ -9434,7 +9253,7 @@ export function exportVehiclePrintSheet(item) {
         techItems.push({
             kind: aperturaItem.kind,
             title: aperturaItem.title,
-            infoHtml: `<p>${aperturaItem.desc}</p>`,
+            infoHtml: `<div>${sanitizeHtmlContent(aperturaItem.desc)}</div>`,
             img: aperturaItem.img,
             alt: aperturaItem.title,
             extraHtml: '',
@@ -9469,7 +9288,7 @@ export function exportVehiclePrintSheet(item) {
     const notasHtml = item.notaImportante ? `
         <tr class="meta-note-row">
             <td colspan="4">
-                <div class="tech-notes"><strong>Nota técnica importante:</strong> ${item.notaImportante}</div>
+                <div class="tech-notes"><strong>Nota técnica importante:</strong> ${sanitizeHtmlContent(item.notaImportante)}</div>
             </td>
         </tr>
     ` : '';
@@ -9510,6 +9329,13 @@ export function exportVehiclePrintSheet(item) {
                     line-height: 1.25;
                     background: #fff;
                 }
+                ul[data-gp-marker] { list-style: none; padding-left: 1.5em; }
+                ul[data-gp-marker] > li { position: relative; }
+                ul[data-gp-marker] > li::before { position: absolute; left: -1.25em; }
+                ul[data-gp-marker="hyphen"] > li::before { content: "-"; }
+                ul[data-gp-marker="arrow"] > li::before { content: "→"; }
+                ul[data-gp-marker="check"] > li::before { content: "✓"; }
+                ul[data-gp-marker="bullet"] > li::before { content: "•"; }
                 .sheet-page-wrapper {
                     height: auto;
                     min-height: 269mm;
@@ -10295,6 +10121,8 @@ export async function openAssociateExistingProblemModal(vehicle) {
             <div style="text-align:center; padding:15px; color:var(--text-disabled);"><i class="fa-solid fa-spinner fa-spin"></i> Cargando problemas...</div>
         </div>
     `;
+
+    mountRichTextToolbars(content);
 
     modal.appendChild(content);
     document.body.appendChild(modal);

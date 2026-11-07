@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gpsepedia-cache-v13';
+const CACHE_NAME = 'gpsepedia-cache-v14';
 const urlsToCache = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const urlsToCache = [
   './main.js',
   './auth.js',
   './ui.js',
+  './rich-text.js',
   './state.js',
   './navigation.js',
   './offline.js',

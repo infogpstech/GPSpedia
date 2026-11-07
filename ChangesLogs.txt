@@ -3609,3 +3609,11 @@ Rama: GPSpedia2.2.5_work
 - No se ejecutaron pruebas funcionales, Apps Script ni operaciones sobre Drive/Spreadsheet.
 - checkpoint.md conserva el historial y registra el checkpoint inicial/final de esta actualización documental.
 ================================================================================
+
+
+REVISIÓN DE CÓDIGO PRE-COMMIT — 2026-11-07
+- rich-text.js: conversión de listas existentes y selección de párrafos/BR, y corrección de posición del cursor al salir de LI vacío.
+- ui.js: wrappers de detalle, nota y corte cambiados a DIV para alojar contenido HTML sanitizado con párrafos sin anidamiento P inválido.
+- No se ejecutaron pruebas funcionales ni se desplegó.
+
+- rich-text.js: se corrigieron escapes de expresiones regulares de selección de listas; comprobación sintáctica del módulo compartido superada antes del commit.

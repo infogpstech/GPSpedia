@@ -5090,3 +5090,46 @@ RESULTADO
 ÚNICA ACCIÓN SIGUIENTE
 Crear un único árbol documental basado en 0f450074a1e84a8725b1a1ef8611fe404d19764f, crear un único commit hijo directo de 1c10a03df30c2c3f05f30ea7d16809920ee440af y actualizar exclusivamente GPSpedia2.2.5_work mediante update_ref force:false y expected_sha igual al HEAD confirmado. Verificar el commit, sus archivos, el nuevo HEAD y que la rama base siga intacta.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — EDITORES ENRIQUECIDOS
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work | HEAD: a0474f90b4e590f591b4518c279df1d61856f203
+Rama base protegida: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Árbol base: 30cb77e762e8782c6f633a80f10bb46047331bb2
+Respaldos: ui.js 40e3c9a818f2613a73736ebcfa76f85c82050231; main.js e03a2293738abf78a1deb6c293ea96c6a8e0479a; add_cortes.html c5b0abfe9a9f9f217978bce53a6bebe94f782559; index.html fc7769ea4b1332e459e9bd1314e70965e233d1ca; style.css d43bd4c32f176a66963c74654dd39cf66775eabc; service-worker.js b42272e39e397daa7989d71879839cc23d241202.
+Respaldos documentales iniciales registrados en la auditoría. Estado inicial: sin cambios de código, despliegues ni datos productivos.
+================================================================================
+
+
+================================================================================
+REVISIÓN FINAL PRE-COMMIT
+- Se corrigieron los escapes de expresiones regulares usados para detectar listas existentes y espacios periféricos.
+- La comprobación sintáctica de rich-text.js se ejecutó nuevamente y pasó.
+- La revisión final también confirmó la conversión de listas existentes, selección de párrafos con BR, posición del cursor al salir de LI vacío y wrappers DIV para contenido HTML.
+
+CHECKPOINT FINAL — IMPLEMENTACIÓN DE EDITORES ENRIQUECIDOS
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work | HEAD padre previsto: a0474f90b4e590f591b4518c279df1d61856f203
+Árbol base: 30cb77e762e8782c6f633a80f10bb46047331bb2
+Rama base protegida GPSpedia2.2.5: sin cambios; HEAD confirmado d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+
+RESULTADO
+- Nuevo módulo compartido rich-text.js para formato, barra y sanitización.
+- Unificación de barras del Inbox, formularios dinámicos, contacto y alta de cortes.
+- Listas ordenadas y no ordenadas con marcadores por lista: guion, flecha, verificación y viñeta.
+- Conversión de líneas seleccionadas, selección de listas existentes, párrafos con BR, preservación de formato inline y comportamiento Enter para continuar/salir de listas.
+- Saltos de línea naturales convertidos al renderizar, preservando BR explícitos, párrafos y listas.
+- Saneamiento ampliado de etiquetas, atributos, protocolos URL y propiedades CSS.
+- Corrección de detalle de cortes, nota importante e impresión; barras añadidas a edición in-modal de ubicación y nota.
+- service-worker.js actualizado a caché v14 y precarga de rich-text.js.
+- Revisión de código pre-commit: corregidos casos de listas existentes, párrafos con BR, posición del cursor en LI vacío y wrappers HTML anidados.
+
+VERIFICACIÓN Y RESTRICCIONES
+- Revisión estática de estructura, imports, destinos de toolbar, atributos permitidos y precarga offline realizada.
+- No se ejecutaron pruebas funcionales ni navegador; quedan diferidas a la fase consolidada.
+- Sin cambios en servicios backend, contratos, esquemas, registros históricos, Sheets o Drive.
+- Sin despliegues.
+- Un único commit por Git Database API; padre a0474f90b4e590f591b4518c279df1d61856f203; actualizar exclusivamente GPSpedia2.2.5_work con force:false y expected_sha igual al HEAD padre.
+================================================================================

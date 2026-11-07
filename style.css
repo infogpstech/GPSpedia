@@ -3412,3 +3412,31 @@ body.dark-mode #dev-tools-modal .dev-tools-card {
     margin: 0;
     font-size: 0.8rem;
 }
+
+
+/* Listas enriquecidas: cada lista conserva su propio marcador. */
+.rich-editor-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+.rich-editor-toolbar select {
+    max-width: 150px;
+    min-width: 72px;
+}
+ul[data-gp-marker] {
+    list-style: none;
+    padding-left: 1.5em;
+}
+ul[data-gp-marker] > li {
+    position: relative;
+}
+ul[data-gp-marker] > li::before {
+    position: absolute;
+    left: -1.25em;
+}
+ul[data-gp-marker="hyphen"] > li::before { content: "-"; }
+ul[data-gp-marker="arrow"] > li::before { content: "→"; }
+ul[data-gp-marker="check"] > li::before { content: "✓"; }
+ul[data-gp-marker="bullet"] > li::before { content: "•"; }

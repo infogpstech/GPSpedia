@@ -4905,7 +4905,7 @@ No desplegar ni modificar datos productivos. No cambiar el comportamiento de alt
 TAREA PENDIENTE — AMPLIAR LAS BARRAS DE TEXTO ENRIQUECIDO CON LISTAS Y RESPETO AUTOMÁTICO DE SALTOS DE LÍNEA
 Fecha de registro: 2026-11-07
 Prioridad: MEDIA
-Estado: PENDIENTE DE AUDITORÍA TÉCNICA E IMPLEMENTACIÓN.
+Estado: AUDITORÍA COMPLETADA; IMPLEMENTACIÓN REGISTRADA; PENDIENTE DE PRUEBAS FUNCIONALES CONSOLIDADAS.
 Origen: Nuevo requerimiento solicitado por el usuario.
 
 OBJETIVO
@@ -4971,4 +4971,17 @@ RESTRICCIONES
 - No modificar registros productivos ni realizar migraciones masivas sin autorización expresa.
 - No desplegar hasta contar con autorización expresa.
 - Un único commit por tarea, mediante el procedimiento autorizado de Git Database API.
+RESULTADO DE AUDITORÍA E IMPLEMENTACIÓN — 2026-11-07
+- Auditoría técnica registrada en Auditoría.txt con inventario, funciones, líneas, hallazgos y respaldos exactos.
+- Se centralizó la lógica de formato en rich-text.js y se unificaron las barras del Inbox, formularios dinámicos, contacto y alta de cortes.
+- Se agregaron listas UL/OL y marcadores independientes por lista (guion, flecha, verificación y viñeta), conversión de líneas seleccionadas, continuación con Enter y salida al presionar Enter en un elemento vacío.
+- Se reforzó el manejo de listas ya existentes, párrafos con BR internos y la posición del cursor al salir de un LI vacío durante la revisión de código.
+- Se agregó representación de saltos de línea naturales y se reforzó el saneamiento de etiquetas, atributos, URL y CSS.
+- Se corrigieron vistas de detalle e impresión y se agregaron barras en la edición in-modal de ubicación y nota importante.
+- service-worker.js incluye el nuevo módulo en caché v14.
+- No se modificaron servicios backend, contratos, esquemas ni registros históricos. No se desplegó.
+- Implementación registrada; pruebas funcionales pendientes de la fase consolidada.
+
+- Revisión final pre-commit: se corrigieron escapes de expresiones regulares en la detección/actualización de listas existentes; comprobación sintáctica del módulo compartido superada.
+
 ================================================================================

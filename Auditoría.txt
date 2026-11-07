@@ -6919,3 +6919,15 @@ Tarea derivada: «Unificar el contrato del indicador de testigo entre detalle, S
 5. LIMITACIONES
 Auditoría estática basada en los blobs indicados. No se ejecutó navegador, Apps Script, HTTP ni operaciones sobre Spreadsheet/Drive. No se verificó el comportamiento de los deployments publicados. Las pruebas funcionales se reservan para la fase consolidada posterior a las implementaciones.
 ================================================================================
+
+
+REVISIÓN DE CÓDIGO PRE-COMMIT — 2026-11-07
+- Se revisó el nuevo módulo compartido y las integraciones con ui.js, main.js, add_cortes.html, index.html y service-worker.js.
+- H-RTE-07: la selección de una lista existente podía crear una lista anidada en vez de modificar el marcador/tipo de esa lista; corregido para actualizar el marcador UL seleccionado y convertir UL/OL seleccionado sin duplicar el bloque.
+- H-RTE-08: una selección que contenía párrafos con BR internos no convertía cada línea en elemento independiente; corregido mediante descomposición recursiva de bloques P/DIV y sus BR.
+- H-RTE-09: al salir con Enter de un elemento vacío intermedio, el cursor podía quedar fuera del siguiente LI; corregido para situarlo dentro del siguiente elemento.
+- H-RTE-10: los wrappers P podían contener P/DIV saneados y generar HTML anidado inválido; corregidos los wrappers de detalle, nota, corte e impresión a DIV.
+- Se verificó nuevamente que los servicios backend y esquemas no requieren cambios. No se ejecutaron pruebas funcionales.
+
+H-RTE-11 — Escapes de expresiones regulares en la detección de listas seleccionadas.
+Durante la revisión final se detectó que los patrones de detección de listas/espacios tenían escapes dobles en el borrador del módulo. Se corrigieron y se volvió a ejecutar la comprobación sintáctica del módulo rich-text.js, que pasó. La corrección queda incorporada en el blob final.
