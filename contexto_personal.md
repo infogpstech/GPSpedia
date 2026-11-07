@@ -232,3 +232,16 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-037: reconciliación durable de cargas generales y verificación de contenido. AUG-038: compensación coherente de reemplazos in-modal y descarte. AUG-034 ampliada para reemplazos; AUG-035 ampliada para unicidad de vehicleId.
 - No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet real, fallos inducidos ni concurrencia. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
+
+
+## Continuidad de auditoría — AUD-T-032 (2026-11-07)
+- Sesión/checkpoint: AUD-20261107-S013 / AUD-CP-0013.
+- HEAD auditado: ad13f5340152ff42b552f06184d2a2adb17117c9; rama GPSpedia2.2.5_work. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-032 — identidad autenticada del colaborador en WRITE y ADMIN: auditoría estática E1 completada; hallazgos H-AUD-032-001 a H-AUD-032-003 abiertos; validación funcional pendiente.
+- La atribución de addOrUpdateCut está protegida en WRITE mediante ActiveSessions/Users y en ADMIN mediante assertDeveloperSession/developerContext.
+- Hallazgo principal: addSupplementaryInfo modifica Cortes y puede subir imágenes a Drive sin validar sesión en WRITE; los consumidores omiten userId/sessionToken y el flujo silentRegister dirigido a ADMIN no incluye las credenciales.
+- También se detectó checkOperation sin validación en WRITE y con devolución de rowData completo, y allocateVehicleId sin restricción de rol Desarrollador.
+- AUG-039 recoge la autorización de addSupplementaryInfo, la minimización de checkOperation y la restricción de allocateVehicleId. AUG-024 recibe adenda por IDs internos expuestos en WRITE debug. La ruta manual de enlace de vídeo se transfiere a AUD-T-035.
+- La coordinación de revocación entre AUTH/USERS/WRITE/ADMIN permanece relacionada con AUD-T-024/AUG-016 y AUD-T-033/AUG-003.
+- No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet ni concurrencia. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.

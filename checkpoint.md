@@ -213,3 +213,39 @@ Cambios de aplicación: ninguno.
 Siguiente unidad: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
 Este checkpoint final es la última actualización documental antes del único commit de esta tarea. Commit con parent_sha=71058f8b1924d59924fa289f66226aeaac41b7bc, actualización de rama con force=false y expected_sha=71058f8b1924d59924fa289f66226aeaac41b7bc. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0013
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S013
+Tarea: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
+Rama de trabajo: GPSpedia2.2.5_work | HEAD inicial confirmado: ad13f5340152ff42b552f06184d2a2adb17117c9
+Rama base: GPSpedia2.2.5 | HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: auditoría estática E1 de validación de sesión, atribución de colaborador, autorización de acciones WRITE/ADMIN, consumidores frontend y pruebas aisladas disponibles.
+Restricciones: no modificar código, endpoints, Spreadsheet, Drive, datos productivos ni deployments; no ejecutar operaciones reales durante la fase diagnóstica.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0013
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S013
+Tarea: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
+HEAD auditado: ad13f5340152ff42b552f06184d2a2adb17117c9
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: auditoría estática E1 completada; H-AUD-032-001 a H-AUD-032-003 abiertos; AUG-039 creada; adendas a AUG-024 y AUD-T-035 registradas; validación funcional pendiente.
+Documentación actualizada: Auditoría.txt, Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+RESPALDOS EXACTOS (blob SHA antes de editar):
+- Auditoría.txt: eef8ec2654ad698bb23e4226d757bda6fc611667
+- Tareas.txt: 0df150f3d166e57e92d93f6e5b6b5e3db2e24bf0
+- Plan_auditoría/Plan_Auditoria.md: 6a11bb16bf7c0626acef80cdf31c70247eea4c09
+- Plan_auditoría/Aug_Tareas.md: 8e87145db7af4f8d158c3329b30ed51a6c94792b
+- ChangesLogs.txt: ccf0e6f18bef2b621443584cc3bf05b18a0a54f9
+- contexto_personal.md: bec98fbaacbb3c89b7ecd1b009d00418a6b4643e
+- checkpoint.md: 2e49c19d87b52c23d83a33ab052b1498379d7347
+VALIDACIÓN
+- Inspección estática de las funciones/callsites indicados y contraste con commit 36196020.
+- No se ejecutaron pruebas sintácticas E2, mocks E3, Apps Script V8, HTTP, navegador/PWA, Drive, Spreadsheet real, revocación concurrente ni pruebas de deployment.
+- Services/Test contiene copias aisladas AUTH/USERS, no WRITE/ADMIN.
+CAMBIOS DE APLICACIÓN: NINGUNO. Solo documentación de auditoría y trazabilidad.
+SIGUIENTE ACCIÓN: AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.
+Este checkpoint final es la última actualización documental antes del único commit de la tarea. Commit previsto: audit(security): revisar identidad y autorización WRITE/ADMIN; parent_sha y expected_sha iguales a ad13f5340152ff42b552f06184d2a2adb17117c9; force=false. El SHA del commit que incorpora este checkpoint quedará identificable en el historial Git. La rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

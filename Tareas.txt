@@ -5423,3 +5423,45 @@ TAREAS DERIVADAS
 VALIDACIÓN
 Solo E1 estática e historial Git. No hubo pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet real, pérdida de respuesta ni concurrencia. No se modificó código ni datos productivos.
 ================================================================================
+
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-032: IDENTIDAD AUTENTICADA DEL COLABORADOR EN WRITE Y ADMIN
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S013 | Checkpoint: AUD-CP-0013
+HEAD auditado: ad13f5340152ff42b552f06184d2a2adb17117c9
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+CONTROLES CONFIRMADOS
+- La atribución de addOrUpdateCut está protegida en WRITE por userId/sessionToken verificados contra ActiveSessions; Nombre_Completo procede de Users.
+- ADMIN exige sesión de Desarrollador en todas las acciones POST excepto ping y atribuye addOrUpdateCut desde developerContext.fullName.
+- add_cortes.html y el modal actual de agregado de cortes en ui.js transmiten credenciales a addOrUpdateCut.
+- AUTH y USERS utilizan ActiveSessions como fuente de sesión activa; no se debe sustituir por Users.SessionToken como único criterio.
+
+HALLAZGOS ABIERTOS
+- H-AUD-032-001 (ALTA): addSupplementaryInfo modifica Cortes y puede subir imágenes a Drive desde WRITE sin validar sesión. Los consumidores ui.js y add_cortes.html omiten userId/sessionToken; el flujo silentRegister dirigido a ADMIN no incluye las credenciales.
+- H-AUD-032-002 (MEDIA): checkOperation no valida sesión en WRITE y devuelve rowData completo; el frontend no consume ese objeto.
+- H-AUD-032-003 (MEDIA): allocateVehicleId acepta cualquier colaborador autenticado, aunque solo ADMIN lo utiliza y la acción incrementa el contador central.
+
+TAREA NUEVA — AUG-039: COMPLETAR AUTORIZACIÓN Y MINIMIZACIÓN DE DATOS EN WRITE
+Prioridad: ALTA.
+Estado: NUEVA; diseño, implementación y pruebas pendientes.
+Alcance mínimo:
+1. Exigir sesión válida antes de cualquier mutación de addSupplementaryInfo en WRITE.
+2. Actualizar los consumidores ui.js (apertura/alimentación) y add_cortes.html (handleStage3Submit) para transmitir userId/sessionToken; conservar el contrato de ADMIN y el registro silencioso.
+3. Exigir sesión válida en checkOperation y devolver solo los campos que necesita el frontend; no enviar rowData completo.
+4. Restringir allocateVehicleId al rol Desarrollador o a un mecanismo de autorización de servicio equivalente; mantener ADMIN como consumidor previsto.
+5. Probar en copias aisladas sesiones válidas, ausentes, inválidas, userId/token no coincidentes y revocadas; comprobar que una petición rechazada no modifica Cortes ni Drive; probar roles ordinarios/Desarrollador, reserva de IDs y contrato frontend.
+6. Conservar los controles ya implementados en addOrUpdateCut, addVinToVehicle y freezeCortesIds.
+Relación: AUD-T-032; coordinación de sesión AUD-T-033/AUG-003 y AUD-T-024/AUG-016; contratos frontend/backend AUD-T-035.
+
+ADENDA A AUG-024 — ENDPOINT DEBUG DE WRITE
+Services/write.js doGet(debug=true) devuelve spreadsheetId, driveFolderId y sheetsAccessed. Verificar el deployment actual y redactar estos identificadores en la respuesta pública, conforme a los criterios existentes de AUG-024. No duplicar una tarea nueva.
+
+OBSERVACIÓN TRANSFERIDA A AUD-T-035 — CONTRATO DEL ENLACE MANUAL DE VÍDEO
+ui.js openAddVideoModal() envía fieldName/fieldValue a addSupplementaryInfo, pero el handler WRITE no procesa esos campos. Determinar si la ruta manual sigue soportada o quedó sustituida por la aprobación de YouTube; no mezclar su corrección con AUG-039.
+
+VALIDACIONES Y LÍMITES
+- Solo inspección estática E1 e historial Git. No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet ni concurrencia.
+- Services/Test contiene únicamente copias aisladas de AUTH y USERS; no se verificaron deployments WRITE/ADMIN.
+- No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. No hubo despliegue ni merge.
+================================================================================

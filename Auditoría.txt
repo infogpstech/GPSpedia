@@ -8623,3 +8623,62 @@ E1: inspección estática de servicios, UI, IndexedDB, esquema e historial Git. 
 8. CONCLUSIÓN
 AUD-T-031 queda con auditoría estática E1 completada y hallazgos abiertos. La idempotencia in-modal tiene controles importantes, pero la semántica de descarte, la verificación del helper general y la reconciliación de archivos pending deben resolverse antes de considerar confiables todos los flujos de carga. La validación funcional con copias aisladas de Drive/Spreadsheet y deployments ADMIN/WRITE sigue pendiente. Siguiente unidad: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-032: IDENTIDAD AUTENTICADA DEL COLABORADOR EN WRITE Y ADMIN
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S013 | Checkpoint: AUD-CP-0013
+HEAD auditado: ad13f5340152ff42b552f06184d2a2adb17117c9
+Rama de trabajo: GPSpedia2.2.5_work
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+1. OBJETIVO Y ALCANCE
+Revisar la validación de sesión, la resolución de identidad desde Users/ActiveSessions, la atribución de colaboradores y la autorización de las rutas de escritura de WRITE y ADMIN. Contrastar AUTH y USERS como fuentes de sesión, revisar los consumidores frontend de las acciones protegidas y comprobar la cobertura de pruebas aisladas disponible.
+
+2. ARCHIVOS Y FUNCIONES REVISADOS
+- Services/write.js: getAuthenticatedCollaborator(); doGet(); doPost(); handleAddOrUpdateCut()/handleAddOrUpdateCutLocked(); handleAddSupplementaryInfo()/handleAddSupplementaryInfoLocked(); handleCheckOperation(); handleAllocateVehicleId(); assertDeveloperForIdMaintenance(); handleAddVinToVehicleLocked().
+- Services/admin.js: assertDeveloperSession(); doGet(); doPost(); requestNextVehicleIdFromWriteService(); handleAddOrUpdateCut(); handleAddSupplementaryInfo().
+- Services/Auth.js: handleLogin(); creación de ActiveSessions; handleValidateSession().
+- Services/users.js: getVerifiedSession(); handleResetUserSessions(); comprobaciones de identidad en updateProfile/changePassword.
+- api-config.js: ACTION_TO_SERVICE_MAP y routeAction().
+- add_cortes.html: carga de sesión, checkOperation, addOrUpdateCut y handleStage3Submit().
+- ui.js: modal de agregado de cortes, openAddAperturaModal(), openAddFeedModal(), openAddVideoModal() y getDeveloperSessionPayload().
+- Services/Test/README.md, Services/Test/Auth.js y Services/Test/users.js.
+- Historial contrastado: commit 36196020 — fix: validate authenticated collaborator identity in cut registration; y registros previos de Auditoría.txt/Tareas.txt.
+
+3. CONTROLES POSITIVOS CONFIRMADOS
+- WRITE: getAuthenticatedCollaborator() exige userId y sessionToken, verifica la pareja contra ActiveSessions y obtiene Nombre_Completo desde Users. No utiliza el nombre enviado por el navegador.
+- WRITE: handleAddOrUpdateCutLocked() obtiene la identidad antes de consultar/modificar Cortes y usa el nombre autenticado en los tres slots, también durante la recuperación idempotente.
+- WRITE: addVinToVehicle valida la sesión; freezeCortesIds exige sesión, rol Desarrollador y respaldo verificado.
+- ADMIN: assertDeveloperSession() valida la pareja de sesión y el rol obtenido de Users. doPost() aplica esa validación a todas las acciones excepto ping; ping solo devuelve pong.
+- ADMIN: handleAddOrUpdateCut() usa developerContext.fullName y rechaza un perfil sin Nombre_Completo; no acepta el colaborador del payload como autoridad.
+- add_cortes.html y el modal actual de agregado de cortes en ui.js transmiten userId/sessionToken a addOrUpdateCut. Las dos consultas checkOperation de add_cortes también envían ese contexto.
+- api-config.js transmite el payload recibido sin agregar identidades implícitas; la autorización depende correctamente del backend y no del mapeo frontend.
+- AUTH crea tokens UUID y registra sesiones en ActiveSessions; validateSession comprueba userId/token. USERS obtiene identidad y rol desde ActiveSessions y Users, no desde el nombre o rol enviados por el navegador.
+- Users.SessionToken no se usa como autoridad única: ActiveSessions admite varias sesiones por usuario y es la fuente correcta para comprobar tokens activos.
+
+4. HALLAZGOS
+
+H-AUD-032-001 — ALTA — addSupplementaryInfo permite mutaciones WRITE sin autenticar.
+Services/write.js doPost() despacha addSupplementaryInfo directamente a handleAddSupplementaryInfo(); ni el router ni handleAddSupplementaryInfoLocked() llaman a getAuthenticatedCollaborator(). La función modifica campos de Cortes y puede crear/subir imágenes a Drive. Los consumidores normales de ui.js (apertura y alimentación) no envían userId/sessionToken. add_cortes.html handleStage3Submit() tampoco los agrega al payload: en modo normal la petición llega a WRITE y puede modificar datos sin sesión; en modo silentRegister se enruta a ADMIN, cuyo doPost sí exige sesión de Desarrollador, por lo que la misma operación es rechazada por falta de credenciales. La diferencia entre servicios deja una ruta de escritura sin control y rompe el flujo silencioso. Corregir backend y todos los consumidores de forma coordinada; no confiar en que la interfaz o el inicio de sesión visual protejan el endpoint.
+
+H-AUD-032-002 — MEDIA — checkOperation no exige sesión en WRITE y devuelve datos de la fila completa.
+Services/write.js doPost() despacha checkOperation sin validación. handleCheckOperation() acepta únicamente opId y, si encuentra una operación completada, devuelve rowData completo generado desde la fila Cortes. add_cortes.html envía userId/sessionToken, pero WRITE no los verifica. El frontend consume exists, vehicleId y timestamp; no utiliza rowData. Un opId no es una credencial de autenticación y no debe habilitar por sí solo la lectura del registro completo. Exigir sesión válida y limitar la respuesta a los campos estrictamente necesarios; revisar si la política requiere además vincular la operación al actor original.
+
+H-AUD-032-003 — MEDIA — allocateVehicleId no restringe el rol aunque está destinado al servicio ADMIN.
+handleAllocateVehicleId() valida una sesión de cualquier colaborador mediante getAuthenticatedCollaborator(), pero no comprueba el rol Desarrollador. La función incrementa el contador central GPSpedia_CORTES_LAST_ID y devuelve el ID reservado. El único consumidor localizado es requestNextVehicleIdFromWriteService() en ADMIN, cuyo router ya exige rol Desarrollador. Un usuario autenticado ordinario puede invocar directamente la acción WRITE y consumir reservas, generando saltos innecesarios en la secuencia de IDs. Restringir el endpoint al rol previsto o definir una autorización de servicio equivalente que no dependa de una llamada directa del navegador.
+
+5. OBSERVACIONES TRANSFERIDAS Y DEPENDENCIAS
+- AUD-T-035: ui.js openAddVideoModal() envía addSupplementaryInfo con fieldName=videoGuiaDesarmeUrl y fieldValue, pero handleAddSupplementaryInfoLocked() no procesa esos campos y puede responder success sin guardar el enlace. Determinar si el formulario manual sigue siendo una ruta soportada o fue sustituido por el flujo de aprobación de YouTube; corregir el contrato solo dentro de AUD-T-035.
+- AUG-024: Services/write.js doGet(debug=true) devuelve spreadsheetId, driveFolderId y sheetsAccessed. El código ADMIN actual devuelve solo identidad/versión/estado del servicio. La exposición efectiva depende del deployment vigente, que no se pudo verificar; AUG-024 ya exige redactar identificadores y detalles internos de endpoints debug públicos.
+- AUD-T-033/AUG-003 y AUD-T-024/AUG-016: la validación de sesión es una comprobación puntual. Los ScriptLock de AUTH, USERS, WRITE y ADMIN pertenecen a proyectos distintos y no coordinan una revocación concurrente con una operación larga que ya superó la validación. Mantener esta dependencia en la coordinación interservicios y recuperación del ciclo de sesión; no duplicar tareas.
+- Services/Test contiene copias aisladas únicamente de AUTH y USERS. No existe en el repositorio un harness/copia equivalente para WRITE y ADMIN; las pruebas de identidad de esos servicios siguen dependiendo de preparar deployments y Spreadsheet aislados.
+
+6. CONCLUSIÓN Y LÍMITES
+AUD-T-032 queda con auditoría estática E1 completada y hallazgos abiertos. La atribución de addOrUpdateCut en WRITE y ADMIN está implementada estáticamente, pero la cobertura de autorización no es completa: addSupplementaryInfo permite escrituras sin sesión, checkOperation expone rowData sin validación en WRITE y allocateVehicleId no aplica el rol esperado. AUG-039 recoge las correcciones necesarias. No se modificó código, endpoints, configuración, Spreadsheet, Drive ni deployments.
+
+Validación realizada: inspección estática de las funciones y callsites enumerados, comparación con la implementación histórica 36196020 y revisión del entorno Services/Test. No se ejecutaron parseo E2, mocks E3, Apps Script V8, HTTP, navegador/PWA, operaciones Drive/Spreadsheet ni pruebas de sesión revocada o concurrencia. No se comprobó el estado de los deployments actuales.
+
+Siguiente unidad del plan: AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.
+================================================================================

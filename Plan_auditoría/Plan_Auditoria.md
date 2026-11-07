@@ -80,7 +80,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-029 | Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación | 7a4539f1 — optimizar lotes; d305b1ab — MIME gzip; f3f7102d — persistir progreso; 06c3b322 — robustecer snapshot | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-030 | Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones | 6cb4a3cb — contrato de cortes e idempotencia; 94c2d04e — migración IDs/VIN; 7dcd1225 — asignación centralizada de IDs | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-031 | Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia | 2e41428e — cargas Drive retry-safe; d99ab2d4 — idempotencia de reemplazos in-modal; 2212b4f5 — find-or-create | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-032 | Identidad autenticada del colaborador en WRITE y ADMIN | 36196020 — validar identidad autenticada; cierre de tarea documentado en checkpoint | POR AUDITAR |
+| AUD-T-032 | Identidad autenticada del colaborador en WRITE y ADMIN | 36196020 — validar identidad autenticada; cierre de tarea documentado en checkpoint | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-033 | Coordinación de mutaciones entre servicios y Utilities | 8a3646cc — documentar hallazgos de coordinación; 44d127b3 — Utilities safe order processing; 336915b7/ef2db2e5 — renombramientos de Utilities | POR AUDITAR; no asumir protocolo terminado |
 | AUD-T-034 | Acceso y visibilidad del panel/historial por rol y sesión | e4900b37 — normalización rol desarrollador; 0d4c0d01 — diagnóstico acceso historial; 187839c2 — asegurar acceso a gestión de imágenes | POR AUDITAR |
 | AUD-T-035 | Endpoints, separación de servicios y contratos frontend/backend | commits de actualización AUTH/USERS/ADMIN/FEEDBACK/WRITE; 975c5913 y f8cc191f — alta de servicios en el historial | POR AUDITAR |
@@ -561,3 +561,30 @@ E1: inspección estática e historial Git. No se ejecutaron pruebas E2/E3, Apps 
 
 ### Siguiente iteración
 AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
+
+
+## 18. Iteración técnica — AUD-T-032
+
+**Sesión:** AUD-20261107-S013  
+**Checkpoint:** AUD-CP-0013  
+**HEAD auditado:** ad13f5340152ff42b552f06184d2a2adb17117c9  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Archivos y alcance
+Services/write.js, Services/admin.js, Services/Auth.js, Services/users.js, api-config.js, add_cortes.html, ui.js y Services/Test. Se revisaron validación de sesiones, atribución en addOrUpdateCut, mutaciones suplementarias, checkOperation, asignación de IDs y consumidores frontend. Historial contrastado: commit 36196020.
+
+### Resultado
+- H-AUD-032-001 a H-AUD-032-003 documentados en Auditoría.txt.
+- La atribución de addOrUpdateCut se mantiene protegida en WRITE y ADMIN.
+- Se detectó una mutación WRITE sin autenticación en addSupplementaryInfo; checkOperation no valida sesión y devuelve rowData completo; allocateVehicleId no restringe el rol.
+- Services/Test solo contiene copias aisladas AUTH/USERS; faltan entornos equivalentes WRITE/ADMIN.
+
+### Tareas derivadas
+AUG-039 — completar autorización y minimización de datos en WRITE. AUG-024 recibe adenda por los identificadores expuestos en doGet(debug=true). La discrepancia del enlace manual de vídeo se transfiere a AUD-T-035. La coordinación de revocación permanece en AUD-T-024/AUG-016 y AUD-T-033/AUG-003.
+
+### Evidencia y límites
+E1: inspección estática e historial Git. No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador/PWA, Drive, Spreadsheet real, sesiones revocadas ni concurrencia. No se modificó código ni datos productivos.
+
+### Siguiente iteración
+AUD-T-033 — Coordinación de mutaciones entre servicios y Utilities.

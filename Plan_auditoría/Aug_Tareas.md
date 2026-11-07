@@ -466,3 +466,23 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 ### Adenda AUD-T-031 — unicidad de vehicleId en reemplazos
 - **Origen:** H-AUD-031-010. **Relación:** AUG-035.
 - **Criterio adicional:** handleUploadAdminImage() debe exigir exactamente una fila Cortes para vehicleId; cero o más de una coincidencia debe detener la operación sin tocar Drive ni Spreadsheet.
+
+
+### Adenda AUD-T-032 — endpoint debug público de WRITE
+- **Origen:** inspección complementaria durante AUD-T-032. **Relación:** AUG-024.
+- **Evidencia:** Services/write.js, doGet(), rama debug=true.
+- **Hallazgo:** la respuesta contiene spreadsheetId, driveFolderId y sheetsAccessed; esos identificadores y detalles internos no son necesarios para el health check público.
+- **Criterio adicional:** verificar el deployment actual y devolver únicamente identidad del servicio, versión y estado seguro; no exponer IDs internos, nombres/estructura de hojas, cache keys, stack traces ni credenciales.
+
+### AUG-039 — Completar autorización y minimización de datos en WRITE
+- **Origen:** H-AUD-032-001, H-AUD-032-002 y H-AUD-032-003. **Prioridad:** Alta.
+- **Problema:** addSupplementaryInfo muta Cortes/Drive sin validar sesión; checkOperation devuelve rowData completo sin comprobar sesión; allocateVehicleId permite a cualquier colaborador autenticado incrementar el contador aunque su consumidor previsto sea ADMIN.
+- **Criterios de aceptación:**
+  1. Validar userId/sessionToken contra ActiveSessions y resolver la identidad en Users antes de ejecutar addSupplementaryInfo; ninguna escritura en Cortes/Drive debe ocurrir si la sesión falta, no coincide o fue revocada antes de iniciar la operación.
+  2. Actualizar todos los callsites de ui.js para apertura/alimentación y add_cortes.html handleStage3Submit() para transmitir el contexto de sesión. El flujo silentRegister debe seguir enviando credenciales al router ADMIN y superar assertDeveloperSession().
+  3. Exigir sesión válida en checkOperation y limitar su respuesta a exists, pending/operationStatus cuando aplique, vehicleId, timestamp, slotIndex y filesStatus si son necesarios. No devolver rowData completo. Definir si además se requiere vincular el opId al actor que lo creó.
+  4. Restringir allocateVehicleId al rol Desarrollador o a una autorización de servicio equivalente verificable en servidor; no permitir reservas arbitrarias por usuarios ordinarios.
+  5. Probar en una copia aislada sesiones válidas, ausentes, inválidas, userId/token no coincidentes y sesiones revocadas; comprobar ausencia de mutaciones ante rechazo; probar roles ordinarios y Desarrollador, contador de IDs, respuesta mínima de checkOperation y todos los consumidores frontend.
+  6. Mantener sin regresiones los controles existentes de addOrUpdateCut, addVinToVehicle y freezeCortesIds; no confiar en nombres o roles enviados por el cliente.
+- **Relación:** AUD-T-032; AUD-T-024/AUG-016 para ciclo de sesión; AUD-T-033/AUG-003 para coordinación entre proyectos; AUD-T-035 para contratos frontend/backend.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
