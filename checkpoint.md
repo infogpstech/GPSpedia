@@ -180,3 +180,36 @@ Cambios de aplicación: ninguno.
 Siguiente unidad: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
 Este checkpoint final es la última actualización documental antes del único commit de esta tarea. Commit con parent_sha=c8c971ed061f08fca212f6879b35c857d9a0192c, actualización de rama con force=false y expected_sha=c8c971ed061f08fca212f6879b35c857d9a0192c. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0012
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S012
+Tarea: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
+Rama de trabajo: GPSpedia2.2.5_work | HEAD inicial confirmado: 71058f8b1924d59924fa289f66226aeaac41b7bc
+Rama base: GPSpedia2.2.5 | HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: auditoría estática E1 de cargas generales y reemplazos in-modal, ledger, historial, IndexedDB, reintentos y compensaciones.
+Restricciones: no modificar código, Spreadsheet, Drive, endpoints ni deployments durante fase diagnóstica; no ejecutar cargas reales ni despliegues.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0012
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S012
+Tarea: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
+HEAD auditado: 71058f8b1924d59924fa289f66226aeaac41b7bc
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: auditoría estática E1 completada; H-AUD-031-001 a H-AUD-031-010 abiertos; AUG-037 y AUG-038 registradas; AUG-034/AUG-035 ampliadas; validación funcional pendiente.
+Documentación actualizada: Auditoría.txt, Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+RESPALDOS EXACTOS (blob SHA antes de editar):
+- Auditoría.txt: f655135d24e42850e78e9559f8ecdc5843d61a2d
+- Tareas.txt: 0df150f3d166e57e92d93f6e5b6b5e3db2e24bf0
+- Plan_auditoría/Plan_Auditoria.md: 6a11bb16bf7c0626acef80cdf31c70247eea4c09
+- Plan_auditoría/Aug_Tareas.md: 8e87145db7af4f8d158c3329b30ed51a6c94792b
+- ChangesLogs.txt: ccf0e6f18bef2b621443584cc3bf05b18a0a54f9
+- contexto_personal.md: bec98fbaacbb3c89b7ecd1b009d00418a6b4643e
+- checkpoint.md: bf5ffb2f31a25d29f2ad7289fc758ac47420c8d7
+Validación: inspección estática de servicios, UI, IndexedDB, esquema e historial Git; sin pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet real, fallos inducidos ni concurrencia.
+Cambios de aplicación: ninguno.
+Siguiente unidad: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
+Este checkpoint final es la última actualización documental antes del único commit de esta tarea. Commit con parent_sha=71058f8b1924d59924fa289f66226aeaac41b7bc, actualización de rama con force=false y expected_sha=71058f8b1924d59924fa289f66226aeaac41b7bc. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

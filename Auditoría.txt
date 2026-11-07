@@ -8541,3 +8541,85 @@ E1: inspección estática de funciones, consumidores, documentación y commits h
 9. CONCLUSIÓN
 AUD-T-030 queda con auditoría estática E1 completada y hallazgos abiertos. La estructura objetivo ausente en la copia original no es el problema. Antes de ejecutar la migración en producción deben resolverse la coordinación con WRITE y la validación de registros preexistentes de Idempotencia. La implementación y la matriz funcional de estos hallazgos quedan pendientes. Siguiente unidad: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-031
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S012 | Checkpoint: AUD-CP-0012
+HEAD auditado: 71058f8b1924d59924fa289f66226aeaac41b7bc
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+1. OBJETIVO Y ALCANCE
+Revisar las cargas de imágenes a Drive, reintentos tras fallos entre Drive y Spreadsheet, persistencia de operaciones, idempotencia de reemplazos in-modal, historial Imagenes_Reemplazadas, ledger AdminImageUploads, estado local IndexedDB y consistencia de compensaciones.
+
+2. ARCHIVOS Y FUNCIONES REVISADOS
+- Services/write.js y Services/admin.js: buildImageUploadOperationKey(), buildImageUploadToken(), findExistingImageUpload(), markImageUploadLinked(), uploadImageToDrive(), call sites de registro/reparación y guardado de imágenes, flush y finalización de operaciones.
+- Services/admin.js: ADMIN_IMAGE_UPLOAD_HEADERS; getOrCreateAdminImageUploadsSheet(); findAdminImageUploadOperation(); saveAdminImageUploadOperation(); calculateAdminImageUploadHash(); verifyAdminImageUploadFile(); findReplacedImageRecordById(); handleUploadAdminImage(); getOrCreateReplacedImagesSheet(); ensureReplacedImagesInventoryColumns(); recordReplacedImage(); handleUpdateVehicleField().
+- ui.js: createAdminImageUploadOperationId(); readAdminImageAsDataUrl(); loadPendingAdminImageUploads(); submitAdminImageUploadOperation(); convertImageToEditable(); saveFieldSilently(); exitModalEditMode().
+- offline.js: initDB()/DB_VERSION 4; performAdminStateOp(); getAdminImageUploadPendingOperation(); saveAdminImageUploadPendingOperation(); removeAdminImageUploadPendingOperation().
+- add_cortes.html: getOrGenerateOpId(), persistencia local del intento, reintento de addOrUpdateCut y tratamiento de fallo al guardar localStorage.
+- Spreadsheet/GPSpedia_DB_columnas.md: estructura documentada de AdminImageUploads y relación REP-<opId>.
+- Historial contrastado: 2e41428e (reintentos Drive/Spreadsheet), d99ab2d4 (reemplazo in-modal idempotente) y 2212b4f5 (find-or-create Idempotencia).
+
+3. CONTROLES POSITIVOS CONFIRMADOS
+- El reemplazo in-modal genera un opId, persiste el payload en IndexedDB antes de enviarlo y no guarda credenciales ni tokens de sesión.
+- Una operación pendiente por vehículo/campo bloquea que otra operación distinta la sobrescriba localmente; la eliminación local exige coincidencia de opId.
+- ADMIN crea AdminImageUploads bajo demanda, valida encabezados, rechaza opId duplicados, vincula opId a vehículo/campo/contenido/MIME/nombre y verifica el hash SHA-256 completo del archivo Drive antes de reutilizarlo.
+- Los estados pending, linked, cancelled y requires_review representan etapas y compensaciones; el handler compara la URL activa antes de escribir y después de la carga para detectar cambios concurrentes.
+- Los reemplazos con URL anterior utilizan REP-<opId> y recordReplacedImage() evita duplicar o sobrescribir registros históricos incompatibles.
+- En errores, el handler intenta restaurar la URL anterior, enviar a papelera el archivo recién creado y actualizar ledger/historial.
+- Las cargas generales WRITE/ADMIN calculan un token a partir de operación, vehículo, campo, carpeta, MIME y bytes; los reintentos buscan reutilizar el archivo en vez de crear otro.
+- El flujo in-modal bloquea la edición de imágenes si no puede verificar IndexedDB; no envía una nueva imagen si el snapshot local no pudo guardarse.
+
+4. HALLAZGOS
+H-AUD-031-001 — ALTA — «Descartar cambios» puede revertir la URL de una imagen ya confirmada sin compensar ledger, historial ni archivo.
+ui.js: submitAdminImageUploadOperation() actualiza editedItemBuffer inmediatamente después de que ADMIN confirma el reemplazo. Sin embargo, exitModalEditMode(false) compara editedItemBuffer con originalItemBackup y llama saveFieldSilently() para restaurar todos los campos diferentes, incluidos los campos de imagen. saveFieldSilently() utiliza updateVehicleField(), que cambia la celda de Cortes pero no revierte AdminImageUploads, no actualiza REP-<opId> y no envía a papelera el archivo nuevo. El resultado puede ser: Cortes vuelve a urlAnterior, AdminImageUploads permanece linked y el historial continúa como historica apuntando a una sustitución que ya no está activa. Definir semántica: los reemplazos inmediatos no deben incluirse en «descartar», o se requiere una compensación explícita coordinada que actualice los tres recursos y compruebe el archivo.
+
+H-AUD-031-002 — ALTA — Las cargas generales pueden reutilizar un archivo existente sin verificar que sus bytes sigan correspondiendo al token.
+Services/write.js y Services/admin.js: buildImageUploadToken() calcula SHA-256 de operación/carpeta/MIME/contenido y conserva 16 bytes del digest. Sin embargo, findExistingImageUpload() acepta un archivo encontrado por nombre temporal o descripción si coincide el MIME y el tamaño; no vuelve a calcular el token sobre file.getBlob().getBytes(). Si el archivo fue modificado conservando tamaño/MIME o se encontró por nombre temporal sin metadatos concordantes, el reintento puede asociar contenido distinto al payload original. La carga in-modal sí realiza verificación completa SHA-256; el helper general no. Recalcular y comparar el hash/token del archivo recuperado y validar que nombre temporal y metadatos correspondan a la misma operación.
+
+H-AUD-031-003 — ALTA — El reemplazo in-modal no tiene coordinación compartida con otros proyectos que modifican Cortes.
+handleUploadAdminImage() usa ScriptLock de ADMIN y hace comprobaciones de URL antes y después de operaciones Drive/Spreadsheet. WRITE y FEEDBACK usan proyectos Apps Script distintos y sus ScriptLock no son compartidos; además, las comprobaciones de URL y setValue no son una operación atómica. Una mutación externa puede ocurrir entre la última lectura y la escritura. Relación: AUD-T-033/AUG-003 y AUG-034; ampliar la coordinación común para cubrir reemplazos de imágenes y operaciones dependientes de referencias.
+
+H-AUD-031-004 — MEDIA — Un fallo al actualizar el estado del historial durante rollback no cambia rollbackFailed.
+En el catch de handleUploadAdminImage(), si falla la escritura/flush del estado de Imagenes_Reemplazadas, se agrega rollbackMessage pero no se establece rollbackFailed = true. El ledger puede quedar cancelled cuando el historial sigue historica, aunque la compensación no quedó completa. Marcar requires_review cuando no pueda confirmarse cada compensación y devolver un resultado inequívoco.
+
+H-AUD-031-005 — MEDIA — saveAdminImageUploadOperation() no verifica mediante lectura posterior la fila escrita.
+La función ejecuta setValues() y SpreadsheetApp.flush(), pero no relee y compara opId, vehicleId, fieldName, URL, fileId, hash y estado. El flujo depende de que no haya una escritura silenciosa/incompleta. Incorporar verificación del registro antes de avanzar de pending a linked o de confirmar al cliente.
+
+H-AUD-031-006 — MEDIA — La falla de markImageUploadLinked() se ignora y no existe reconciliador para estados pending de cargas generales.
+markImageUploadLinked() captura excepciones y devuelve false; los call sites continúan y pueden responder éxito aunque el archivo conserve state=pending. En las cargas generales el marcador de Drive es la única señal de estado adicional; no se encontró un proceso que contraste archivos pending con URLs de Cortes, confirme linked o identifique huérfanos para revisión/limpieza. Una pérdida de estado local puede dejar un archivo pending sin reintento durable. Definir reconciliación verificable y no declarar el estado linked si no se pudo confirmar.
+
+H-AUD-031-007 — MEDIA — La restauración de un archivo en estado linked puede deshacer una acción posterior de papelera.
+En la rama de recuperación status === linked, si Cortes todavía contiene newImageUrl, el handler ejecuta setTrashed(false) cuando el archivo está en papelera y devuelve éxito. No distingue si la papelera fue consecuencia de una interrupción previa o de una acción posterior deliberada. Definir si el retry debe restaurar automáticamente o detenerse y solicitar revisión; probar ambos escenarios.
+
+H-AUD-031-008 — MEDIA — «Descartar cambios» y la compensación no verifican el resultado de cada restauración de campo.
+saveFieldSilently() muestra éxito cuando routeAction retorna sin excepción, pero no compara el valor resultante de Cortes ni devuelve una confirmación de valor leído. exitModalEditMode(false) continúa cerrando el modal aunque una restauración de campo haya fallado y no conserva una lista de campos pendientes de revertir. Alinear la respuesta backend con verificación de valor y no cerrar como si el descarte estuviera completo ante fallos parciales. Relación directa con H-AUD-031-001.
+
+H-AUD-031-009 — BAJA — El intento local de add_cortes puede enviarse aunque localStorage no haya guardado el snapshot.
+add_cortes.html captura el error de localStorage.setItem() y continúa el envío. Si la respuesta se pierde y el navegador se recarga, puede no conservar el opId ni el payload para reintentar la misma operación. No es exclusivo de imágenes, pero afecta la recuperación de cargas de alta de vehículo/corte. Revisar el contrato de envío: si no hay persistencia local durable, exigir otra vía de recuperación server-side o bloquear el envío cuando la idempotencia dependa de ese snapshot.
+
+H-AUD-031-010 — MEDIA — El handler in-modal localiza la primera fila por vehicleId sin validar unicidad.
+handleUploadAdminImage() usa findIndex() sobre IDs de Cortes y opera en la primera coincidencia. En caso de IDs duplicados podría reemplazar la imagen de una fila arbitraria. Relación: H-AUD-030-005/AUG-035; exigir exactamente una coincidencia antes de escribir.
+
+5. VALIDACIÓN DE ESQUEMA Y PERSISTENCIA LOCAL
+- AdminImageUploads se crea bajo demanda con 12 encabezados; no forma parte de la Spreadsheet original de 13 hojas.
+- El almacén adminLocalState existe en DB_VERSION 4. La operación local conserva fileData, vehicleId, fieldName, filename, MIME, opId y createdAt; no persiste credenciales.
+- getAdminImageUploadPendingOperation distingue ausencia de entrada (undefined) de fallo de IndexedDB (null); la interfaz bloquea edición de imágenes cuando la lectura no es confiable.
+- save/remove usan transacciones readwrite y esperan transaction.oncomplete; la eliminación es condicional por opId.
+- Imagenes_Reemplazadas mantiene sus 11 columnas base y añade columnas de inventario al final; recordReplacedImage usa REP-<opId> para idempotencia.
+
+6. TAREAS DERIVADAS
+- Ampliar AUG-034/AUD-T-033 para coordinación compartida durante reemplazos de imágenes (H-AUD-031-003).
+- AUG-037: reconciliación durable de cargas generales Drive/Spreadsheet, verificación del contenido recuperado y estado pending/linked (H-AUD-031-002, H-AUD-031-005 y H-AUD-031-006).
+- AUG-038: compensación coherente de reemplazos in-modal, descarte de edición y estados de ledger/historial/Drive (H-AUD-031-001, H-AUD-031-004, H-AUD-031-007 y H-AUD-031-008).
+- Ampliar AUG-035 para validar unicidad de vehicleId en handleUploadAdminImage() (H-AUD-031-010).
+- H-AUD-031-009 queda relacionado con la matriz de recuperación de add_cortes y la tarea de persistencia del modal de agregado.
+
+7. VALIDACIONES Y LÍMITES
+E1: inspección estática de servicios, UI, IndexedDB, esquema e historial Git. No se ejecutaron pruebas E2 sintácticas, E3 aisladas, navegador/PWA, Apps Script V8, HTTP, Drive ni Spreadsheet reales. No se provocaron pérdidas de respuesta, fallos de flush, errores de compensación ni concurrencia real. No se modificó código ni datos productivos.
+
+8. CONCLUSIÓN
+AUD-T-031 queda con auditoría estática E1 completada y hallazgos abiertos. La idempotencia in-modal tiene controles importantes, pero la semántica de descarte, la verificación del helper general y la reconciliación de archivos pending deben resolverse antes de considerar confiables todos los flujos de carga. La validación funcional con copias aisladas de Drive/Spreadsheet y deployments ADMIN/WRITE sigue pendiente. Siguiente unidad: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
+================================================================================

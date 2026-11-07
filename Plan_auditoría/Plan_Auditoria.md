@@ -79,7 +79,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-028 | Inventario de imágenes sin uso, clasificación y monitor global de Drive | 7983febe — persistencia; 91f75de3 — gestor/monitor y requisitos 6.1–6.9; 693f4825 — organización automática posterior | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-029 | Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación | 7a4539f1 — optimizar lotes; d305b1ab — MIME gzip; f3f7102d — persistir progreso; 06c3b322 — robustecer snapshot | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-030 | Esquema Spreadsheet, IDs de cortes, opId/idOperacion y migraciones | 6cb4a3cb — contrato de cortes e idempotencia; 94c2d04e — migración IDs/VIN; 7dcd1225 — asignación centralizada de IDs | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
-| AUD-T-031 | Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia | 2e41428e — cargas Drive retry-safe; d99ab2d4 — idempotencia de reemplazos in-modal; 2212b4f5 — find-or-create | POR AUDITAR |
+| AUD-T-031 | Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia | 2e41428e — cargas Drive retry-safe; d99ab2d4 — idempotencia de reemplazos in-modal; 2212b4f5 — find-or-create | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-032 | Identidad autenticada del colaborador en WRITE y ADMIN | 36196020 — validar identidad autenticada; cierre de tarea documentado en checkpoint | POR AUDITAR |
 | AUD-T-033 | Coordinación de mutaciones entre servicios y Utilities | 8a3646cc — documentar hallazgos de coordinación; 44d127b3 — Utilities safe order processing; 336915b7/ef2db2e5 — renombramientos de Utilities | POR AUDITAR; no asumir protocolo terminado |
 | AUD-T-034 | Acceso y visibilidad del panel/historial por rol y sesión | e4900b37 — normalización rol desarrollador; 0d4c0d01 — diagnóstico acceso historial; 187839c2 — asegurar acceso a gestión de imágenes | POR AUDITAR |
@@ -534,3 +534,30 @@ E1: inspección estática e historial Git. No se ejecutaron pruebas E2/E3, Apps 
 
 ### Siguiente iteración
 AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
+
+
+## 17. Iteración técnica — AUD-T-031
+
+**Sesión:** AUD-20261107-S012  
+**Checkpoint:** AUD-CP-0012  
+**HEAD auditado:** 71058f8b1924d59924fa289f66226aeaac41b7bc  
+**HEAD base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Archivos y alcance
+Services/write.js, Services/admin.js, ui.js, offline.js, add_cortes.html y Spreadsheet/GPSpedia_DB_columnas.md. Se revisaron cargas generales, recuperación por token, ledger AdminImageUploads, historial REP-<opId>, compensaciones, IndexedDB y descarte del modal. Historial contrastado: 2e41428e, d99ab2d4 y 2212b4f5.
+
+### Resultado
+- H-AUD-031-001 a H-AUD-031-010 documentados en Auditoría.txt.
+- El flujo in-modal tiene persistencia local previa, hash SHA-256 y ledger, pero el descarte de cambios puede revertir la URL sin compensar ledger/historial/Drive.
+- El helper general de Drive no verifica de nuevo el contenido de un archivo recuperado; MIME/tamaño no sustituyen una comparación de hash.
+- No se encontró un reconciliador general de archivos pending.
+
+### Tareas derivadas
+Ampliar AUG-034 y AUG-035; crear AUG-037 y AUG-038.
+
+### Evidencia y límites
+E1: inspección estática e historial Git. No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador/PWA, Drive, Spreadsheet real, fallos inducidos ni concurrencia.
+
+### Siguiente iteración
+AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.

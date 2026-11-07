@@ -443,3 +443,26 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 - **Problema:** la documentación fija testigo en AT:AV pero el código agrega campos después de la última columna usada; la resolución runtime de VIN acepta el primer encabezado aunque haya duplicados; frontend/backend difieren en delimitadores heredados de VIN.
 - **Criterios de aceptación:** definir y documentar si AT:AV es posición obligatoria o si los campos se ubican dinámicamente; detectar encabezados duplicados de VIN/testigo y detener escrituras ambiguas; unificar parser y serialización frontend/backend; mantener el JSON como formato canónico y especificar compatibilidad heredada; probar hojas con columnas adicionales, encabezados duplicados, VIN JSON, delimitadores heredados y datos inválidos.
 - **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+
+### Adenda AUD-T-031 — ampliación de coordinación interservicios
+- **Origen:** H-AUD-031-003. **Relación:** AUG-034/AUD-T-033.
+- **Alcance adicional:** incluir handleUploadAdminImage(), reemplazos in-modal, updateVehicleField() y cualquier operación que pueda modificar el mismo campo de imagen durante la validación de referencias. El protocolo debe cubrir la ventana lectura→Drive→escritura→confirmación y no depender solo de comparar la URL antes/después.
+
+### AUG-037 — Reconciliación durable de cargas generales Drive/Spreadsheet
+- **Origen:** H-AUD-031-002, H-AUD-031-005 y H-AUD-031-006. **Prioridad:** Alta.
+- **Problema:** las cargas generales reutilizan archivos por token/nombre, MIME y tamaño sin volver a verificar los bytes; markImageUploadLinked() puede fallar sin bloquear el éxito; no se encontró un proceso que reconcilie archivos pending con referencias de Spreadsheet o detecte huérfanos recuperables.
+- **Criterios de aceptación:** recalcular hash del archivo recuperado y compararlo con el payload/token esperado; verificar operación, carpeta, MIME, tamaño y contenido; confirmar por lectura posterior el registro durable y el estado de Drive; definir un ledger o mecanismo durable para relacionar operación↔archivo↔referencia; reconciliar pending en los casos referencia presente, referencia ausente, archivo faltante, archivo alterado y respuesta perdida; evitar borrar archivos sin evidencia; definir límites de tamaño y comportamiento cuando la persistencia local del intento no esté disponible; probar WRITE y ADMIN en copias aisladas.
+- **Relación:** AUD-T-031, AUD-T-033/AUG-034 y tareas de recuperación de add_cortes.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-038 — Compensación coherente de reemplazos in-modal y descarte de edición
+- **Origen:** H-AUD-031-001, H-AUD-031-004, H-AUD-031-007 y H-AUD-031-008. **Prioridad:** Alta.
+- **Problema:** el reemplazo se confirma inmediatamente, pero exitModalEditMode(false) puede restaurar la URL anterior sin actualizar AdminImageUploads, historial REP-<opId> ni archivo Drive; los fallos al actualizar historial no siempre escalan a requires_review; la restauración de campos no se verifica.
+- **Criterios de aceptación:** definir si un reemplazo confirmado es irreversible desde «Descartar cambios» o si debe existir compensación transaccional explícita; mantener coherentes URL activa, ledger, historial y estado del archivo; no declarar cancelled si una fase de rollback no se confirmó; marcar requires_review y conservar evidencia cuando falle cualquier compensación; verificar por lectura posterior cada campo restaurado; definir política de reactivación de archivos en papelera después de una operación linked; probar descarte después de reemplazo exitoso, fallos parciales, respuesta perdida, cambios concurrentes y archivo eliminado posteriormente.
+- **Relación:** AUD-T-031, AUD-T-033/AUG-034 y AUG-037.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### Adenda AUD-T-031 — unicidad de vehicleId en reemplazos
+- **Origen:** H-AUD-031-010. **Relación:** AUG-035.
+- **Criterio adicional:** handleUploadAdminImage() debe exigir exactamente una fila Cortes para vehicleId; cero o más de una coincidencia debe detener la operación sin tocar Drive ni Spreadsheet.

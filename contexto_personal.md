@@ -221,3 +221,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-034 coordinación compartida WRITE/ADMIN; AUG-035 integridad/reconciliación Idempotencia; AUG-036 contrato VIN/testigo/parsers. Relación con AUD-T-033/AUG-003.
 - No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet real, migración ni concurrencia. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
+
+
+## Continuidad de auditoría — AUD-T-031 (2026-11-07)
+- Sesión/checkpoint: AUD-20261107-S012 / AUD-CP-0012.
+- HEAD auditado: 71058f8b1924d59924fa289f66226aeaac41b7bc; rama de trabajo GPSpedia2.2.5_work. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-031 — cargas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia: auditoría estática E1 completada; H-AUD-031-001 a H-AUD-031-010 abiertos; validación funcional pendiente.
+- Controles positivos: persistencia IndexedDB previa al reemplazo in-modal, opId estable, hash SHA-256 del payload, ledger AdminImageUploads, historial REP-<opId>, comprobación de URL activa y compensaciones de rollback.
+- Hallazgos principales: «Descartar cambios» puede revertir URL sin compensar ledger/historial/Drive; helper general no recalcula hash del archivo recuperado; falta coordinación compartida entre ADMIN/WRITE/FEEDBACK; fallo al actualizar historial no siempre escala a requires_review; no hay reconciliador general para archivos pending; la recuperación linked puede restaurar un archivo posteriormente enviado a papelera.
+- AUG-037: reconciliación durable de cargas generales y verificación de contenido. AUG-038: compensación coherente de reemplazos in-modal y descarte. AUG-034 ampliada para reemplazos; AUG-035 ampliada para unicidad de vehicleId.
+- No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet real, fallos inducidos ni concurrencia. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.

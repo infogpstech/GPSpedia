@@ -5389,3 +5389,37 @@ TAREAS DERIVADAS
 VALIDACIÓN
 Solo E1 estática e historial Git. Sin pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet real, migración VIN ni concurrencia. No se modificó código ni datos productivos.
 ================================================================================
+
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-031: SUBIDAS DE IMÁGENES, REINTENTOS, RECONCILIACIÓN DRIVE/SPREADSHEET E IDEMPOTENCIA
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S012 | Checkpoint: AUD-CP-0012
+Estado: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+HALLAZGOS
+- H-AUD-031-001 (ALTA): «Descartar cambios» restaura la URL anterior después de un reemplazo in-modal ya confirmado, pero no compensa AdminImageUploads, REP-<opId> ni el archivo nuevo.
+- H-AUD-031-002 (ALTA): findExistingImageUpload() reutiliza archivos por nombre/token, MIME y tamaño, pero no recalcula el hash del contenido Drive para verificar que sus bytes sigan correspondiendo al intento.
+- H-AUD-031-003 (ALTA): ScriptLock de ADMIN no coordina con mutaciones WRITE/FEEDBACK; las comprobaciones de URL no eliminan la carrera entre lectura y escritura.
+- H-AUD-031-004 (MEDIA): un error al actualizar el historial durante rollback no marca rollbackFailed; el ledger puede indicar cancelled con historial sin compensar.
+- H-AUD-031-005 (MEDIA): saveAdminImageUploadOperation() no verifica mediante lectura posterior el estado guardado.
+- H-AUD-031-006 (MEDIA): markImageUploadLinked() puede fallar y ser ignorado; no se encontró reconciliador de archivos pending de cargas generales.
+- H-AUD-031-007 (MEDIA): recuperación de operación linked restaura automáticamente archivos en papelera cuando la URL sigue activa, sin distinguir una eliminación posterior deliberada.
+- H-AUD-031-008 (MEDIA): el descarte no verifica ni conserva resultados parciales de cada restauración de campo.
+- H-AUD-031-009 (BAJA): add_cortes continúa enviando aunque localStorage no haya persistido el snapshot/opId.
+- H-AUD-031-010 (MEDIA): handleUploadAdminImage() selecciona la primera fila por vehicleId sin validar unicidad.
+
+CONTROLES POSITIVOS
+- IndexedDB persiste payload y opId antes del reemplazo in-modal, no guarda credenciales y elimina solo por coincidencia de opId.
+- AdminImageUploads conserva 12 campos, hash SHA-256, IDs Drive y estados; los reemplazos históricos usan REP-<opId>.
+- ADMIN compara referencias activas, verifica hash/MIME del reemplazo in-modal y ejecuta compensaciones de URL, archivo, ledger e historial.
+- Las cargas generales tienen token por operación/contenido y mecanismo de reutilización por reintento.
+
+TAREAS DERIVADAS
+- Ampliar AUG-034 con coordinación durante reemplazos de imágenes.
+- AUG-037: reconciliación durable y verificación de contenido para cargas generales.
+- AUG-038: compensación coherente entre descarte in-modal, ledger, historial y Drive.
+- Ampliar AUG-035 con unicidad de vehicleId en el handler de reemplazo.
+
+VALIDACIÓN
+Solo E1 estática e historial Git. No hubo pruebas E2/E3, Apps Script, HTTP, navegador, Drive, Spreadsheet real, pérdida de respuesta ni concurrencia. No se modificó código ni datos productivos.
+================================================================================
