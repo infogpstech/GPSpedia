@@ -163,3 +163,17 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - **Tareas:** AUG-024 para contrato seguro/estados/timeout y verificación de deployments; AUG-025 para vigencia y precisión temporal de métricas.
 - **No se ejecutaron pruebas HTTP, navegador, Apps Script, Sheets o Drive. No se modificó código ni se desplegaron servicios.**
 - **Siguiente unidad:** AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
+
+
+## Normalización automática de nombres — 2026-11-07
+- Rama de trabajo confirmada: GPSpedia2.2.5_work; rama base protegida: GPSpedia2.2.5.
+- Se unificó la nomenclatura de imágenes en Services/admin.js y Services/write.js: modelo_versionesAplicables_tipoEncendido_anoDesde_tipoImagen.extensión.
+- Los ocho campos de imagen usan sufijos estables; imagenVehiculo no agrega sufijo.
+- normalizeImages corrige nombres de imágenes y segmentos de carpetas asociados a registros de Cortes cuando la coincidencia de carpeta es inequívoca.
+- organizePrimaryVehicleImages también corrige el nombre de imagenVehiculo al organizar su ubicación.
+- Corrección silenciosa por elemento; no hay confirmación individual. Los cambios/conflictos se registran en logs administrativos.
+- Se conserva extensión, ID y URL. Las colisiones se omiten sin sobrescribir. Las referencias compartidas conservan las protecciones existentes.
+- Imágenes huérfanas sin metadatos identificables y carpetas no asociables inequívocamente no se renombran por inferencia.
+- Implementación estática y revisión de código completadas; pruebas reales de Apps Script/Drive/Spreadsheet y publicación pendientes.
+
+- La instrucción del 2026-11-07 autoriza el renombrado canónico automático en normalizeImages y organizePrimaryVehicleImages y actualiza la restricción previa de no renombrar en esos flujos; no autoriza alterar la auditoría de inventario de solo lectura ni archivos huérfanos sin metadatos.

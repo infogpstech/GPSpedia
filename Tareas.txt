@@ -5182,3 +5182,54 @@ VALIDACIONES Y LÍMITES
 
 Siguiente unidad: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
 ================================================================================
+
+
+================================================================================
+TAREA — NORMALIZACIÓN AUTOMÁTICA Y SILENCIOSA DE NOMBRES DE IMÁGENES Y CARPETAS
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+Estado: IMPLEMENTACIÓN ESTÁTICA Y CODE REVIEW COMPLETADOS; VALIDACIÓN FUNCIONAL REAL PENDIENTE.
+
+REQUISITOS CONFIRMADOS
+- Corregir automáticamente los nombres que no cumplan la nomenclatura oficial, sin pedir confirmación ni mostrar avisos individuales.
+- Conservar la extensión original del archivo; si falta, inferirla únicamente desde un MIME de imagen reconocido.
+- Evitar nombres duplicados o colisiones. Si el nombre destino ya pertenece a otro ID, conservar el nombre actual y registrar el conflicto; no sobrescribir, fusionar ni borrar.
+- Mantener la identidad del archivo y su URL al renombrar. Solo actualizar una celda/URL cuando la operación preexistente de separación de imágenes compartidas crea una copia independiente.
+- Registrar los cambios y resultados de cada lote en los logs administrativos.
+
+NOMENCLATURA APLICADA
+- Imágenes: modelo_versionesAplicables_tipoEncendido_anoDesde_tipoImagen.extensión.
+- Sufijos: imagenVehiculo sin sufijo; imgCorte1/2/3 = _corte1/_corte2/_corte3; imgApertura = _apert; imgCableAlimen/2/3 = _alimen/_alimen2/_alimen3.
+- Reparaciones conservan el marcador adicional _repaired.
+- Carpetas: Cortes/Categoría/Marca/Modelo/(VersionesAplicables o TipoEncendido)/RangoDesde_Hasta.
+
+IMPLEMENTACIÓN
+- Services/admin.js: helper único de construcción de nombre canónico; normalización de los ocho campos en normalizeImages; normalización conservadora de segmentos de carpeta existentes solo cuando existe una coincidencia canónica única; comprobación de colisiones antes de renombrar o copiar; estadísticas de imágenes renombradas, copias independientes, carpetas renombradas y conflictos omitidos.
+- Services/admin.js: organizePrimaryVehicleImages también normaliza el nombre de imagenVehiculo al moverla a su carpeta canónica. Conserva las protecciones de referencias compartidas/no verificables; omite colisiones y archivos con varios padres; intenta revertir el movimiento si falla el renombrado.
+- Services/admin.js y Services/write.js: las rutas de alta, reparación, cortes, imagenVehiculo, apertura y alimentación utilizan la misma construcción de nombre oficial. Los reintentos de WRITE actualizan el nombre esperado en el ledger de idempotencia.
+- No se modificaron ui.js, api-config.js ni index.html: los controles y la orquestación por lotes ya soportan normalizeImages, organizePrimaryVehicleImages, imágenes renombradas y carpetas renombradas.
+- handleAuditDriveImagesInCortes permanece de solo lectura. collectCortesImageReferences() permanece sin cambios.
+
+SEGURIDAD Y LÍMITES
+- Las carpetas solo se renombran si la coincidencia canónica es única. Si falta el segmento o hay carpetas equivalentes duplicadas, no se crea, fusiona ni selecciona una carpeta arbitrariamente.
+- Las imágenes sin metadatos de vehículo o sin referencia identificable en Cortes no reciben un nombre semántico inferido. La normalización de archivos huérfanos queda pendiente de una regla independiente.
+- Los conflictos de nombre se omiten de forma automática y quedan registrados; no se altera el archivo que ocupa el nombre destino.
+- No se ejecutaron operaciones reales de Drive/Spreadsheet ni despliegues.
+
+VALIDACIONES ESTÁTICAS Y MOCKS
+- Casos representativos de nombre oficial para imagenVehiculo, corte, versión + encendido y fallback sin versión: 6/6 comprobaciones de nomenclatura/extensión correctas.
+- Comprobación aislada de carpeta con coincidencia única: se normalizan cuatro segmentos; ruta ambigua: se omite sin elegir; conflicto de nombre de archivo: detectado.
+- Conteos de delimitadores en Services/admin.js y Services/write.js balanceados.
+- collectCortesImageReferences() y handleAuditDriveImagesInCortes() comparados con sus respaldos y permanecen idénticos.
+- Las llamadas de carga en ADMIN y WRITE usan el helper canónico; no quedan callsites de construcción heredada con sanitizeForFilename().
+- No se ejecutó parseo en runtime V8 de Apps Script, navegador, DriveApp, SpreadsheetApp ni prueba funcional contra datos reales.
+
+PENDIENTE
+- Validar en entorno aislado de Apps Script/Drive/Spreadsheet el renombrado, colisiones, imágenes compartidas, recuperación de papelera, extensiones MIME y reanudación de lotes.
+- Publicar los servicios únicamente después de superar esas pruebas.
+- Definir por separado la nomenclatura de imágenes huérfanas/sin metadatos si se requiere normalizarlas.
+================================================================================
+
+
+NOTA DE PRECEDENCIA DE REQUISITOS
+La instrucción posterior y explícita del usuario de corregir automáticamente los nombres inválidos actualiza la restricción previa de no renombrar archivos durante la organización de imágenes. El renombrado queda autorizado únicamente para aplicar la nomenclatura canónica a imágenes asociadas inequívocamente a registros de Cortes. No autoriza modificar el inventario de auditoría de solo lectura, fusionar carpetas, sobrescribir archivos ni renombrar imágenes huérfanas sin metadatos.

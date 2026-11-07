@@ -5946,3 +5946,48 @@ Checkpoint inicial preparado; auditoría estática formal en curso. No se modifi
 - La rama base conserva d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 - Siguiente tarea: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — NORMALIZACIÓN AUTOMÁTICA DE NOMBRES
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+HEAD de partida: 131abd2339bbddf6c74c61a36b1854739c2fb566
+Árbol de partida: af4712537fc7eee18b54f772a9a04a2650c6da39
+Rama base: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+
+Tarea: alinear y corregir automáticamente, sin confirmación individual, nombres de carpetas e imágenes de Drive que no cumplan la nomenclatura oficial. Conservar extensión, evitar colisiones, preservar IDs/URLs y registrar cambios.
+
+Respaldos exactos previos a edición:
+- Services/admin.js: 847a2bb80e53918bede067e530b80e41bfdb6afa
+- Services/write.js: a1359f9d1b2029e51c99c9d213fd6584e1257987
+
+Fase inicial: rama y base verificadas; auditoría estática pendiente. No se modificó código ni se ejecutaron operaciones externas.
+================================================================================
+
+================================================================================
+CHECKPOINT DE CIERRE — NORMALIZACIÓN AUTOMÁTICA DE NOMBRES
+Fecha: 2026-11-07
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD de partida: 131abd2339bbddf6c74c61a36b1854739c2fb566
+
+Archivos de código preparados para el commit único:
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+
+Archivos documentales por actualizar en el mismo commit:
+- Auditoría.txt
+- Tareas.txt
+- ChangesLogs.txt
+- contexto_personal.md
+- checkpoint.md
+
+Code Review: helper canónico único por servicio; ocho campos de imagen cubiertos; las cargas de ADMIN/WRITE alineadas; colisiones omitidas; extensión preservada; imágenes compartidas protegidas; collector de referencias y auditoría recursiva sin cambios. Las carpetas se renombran solo con coincidencia canónica única.
+
+Validación: 6/6 comprobaciones lógicas de nomenclatura/extensión; mocks de carpeta única/ambigua y colisión; delimitadores balanceados. Sin ejecución V8 de Apps Script, Drive/Spreadsheet reales, pruebas de navegador ni despliegues.
+
+Pendiente: validación funcional en entorno aislado y publicación posterior. Los archivos huérfanos sin metadatos identificables quedan fuera de la normalización semántica.
+
+El commit único y el avance de GPSpedia2.2.5_work quedan pendientes de la operación final de GitHub.
+================================================================================

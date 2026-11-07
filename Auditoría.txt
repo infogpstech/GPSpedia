@@ -7946,3 +7946,134 @@ Hallazgos: H-AUD-026-001 a H-AUD-026-005.
 Tareas derivadas: AUG-024 y AUG-025.
 Siguiente unidad del plan: AUD-T-027 — Historial de imágenes reemplazadas y acciones de gestión.
 ================================================================================
+
+
+================================================================================
+AUDITORÍA TÉCNICA — NORMALIZACIÓN AUTOMÁTICA DE NOMBRES DE CARPETAS E IMÁGENES
+Fecha: 2026-11-07
+Repositorio: infogpstech/GPSpedia
+Rama: GPSpedia2.2.5_work
+HEAD auditado: 131abd2339bbddf6c74c61a36b1854739c2fb566
+HEAD rama base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Evidencia: E1 — inspección estática de código, contratos, consumidores y documentación.
+================================================================================
+
+1. ALCANCE Y ARCHIVOS REVISADOS
+- Services/admin.js: doPost/router y acciones normalizeImages, organizePrimaryVehicleImages, uploadAdminImage, creación de carpetas, referencias de imágenes, helpers de nomenclatura, creación/subida idempotente, movimiento y auditoría recursiva del árbol Cortes.
+- Services/write.js: rutas de reparación, alta de vehículos, alta de cortes, carga suplementaria, jerarquía de carpetas, sanitización, tokens de idempotencia, creación y vinculación de archivos.
+- ui.js: botones y orquestación por lotes de normalizeImages y organizePrimaryVehicleImages; creación de carpetas; auditoría recursiva de Drive.
+- api-config.js: mapeo de acciones ADMIN/WRITE.
+- index.html: controles existentes de normalización y organización de imágenes.
+- Auditoría.txt, Tareas.txt, ChangesLogs.txt, checkpoint.md, contexto_personal.md y README.md.
+
+2. ESTÁNDAR VIGENTE IDENTIFICADO
+- La nomenclatura explícitamente documentada como oficial en ChangesLogs.txt (registro histórico de handleUploadAdminImage) es: modelo_versionEquipamiento_tipoEncendido_año_tipoImagen.extensión.
+- Para los campos actuales, los sufijos implementados por handleUploadAdminImage son: imagenVehiculo sin sufijo; imgCorte1/2/3 con _corte1/_corte2/_corte3; imgApertura con _apert; imgCableAlimen/2/3 con _alimen/_alimen2/_alimen3.
+- La carpeta canónica construida por findOrCreateVehicleFolder es: Cortes/Categoría/Marca/Modelo/(VersionesAplicables o, si está vacío, TipoEncendido)/RangoDesde_Hasta. Los nombres de presentación colapsan espacios, colapsan underscores repetidos y eliminan espacios externos.
+- El estándar se toma de la implementación ADMIN más reciente y de su registro explícito como nomenclatura oficial. Las construcciones anteriores de WRITE y normalizeImages se consideran inconsistencias heredadas que deben alinearse.
+
+3. HALLAZGOS
+H-NORM-001 — MEDIA — Los servicios WRITE y ADMIN generan nombres de imagen diferentes al estándar oficial
+- Evidencia: Services/write.js, líneas 473–484, 612, 700–705 y 822–846; Services/admin.js, líneas 2284–2295, 2416, 2507–2512 y 2588–2612.
+- Las rutas de registro, reparación y carga suplementaria generan nombres con marca_modelo_tipoEncendido_año_tipo, omitiendo VersionesAplicables y utilizando un orden distinto al estándar oficial.
+- El editor in-modal ADMIN utiliza modelo_versionEquipamiento_tipoEncendido_año_tipoImagen.extensión.
+- Impacto: una misma imagen puede recibir nomenclaturas diferentes según el flujo que la suba o repare.
+
+H-NORM-002 — MEDIA — normalizeImages utiliza una nomenclatura heredada y no corrige de forma completa la ruta de carpetas
+- Evidencia: Services/admin.js, handleNormalizeImages(), líneas 1011–1208.
+- La función construye modelo_(version o encendido)_año_tipo y no incluye simultáneamente versión y tipo de encendido como el estándar oficial.
+- Renombra archivos a partir de filas de Cortes, pero no normaliza de forma sistemática los segmentos existentes de la jerarquía de carpetas.
+- La operación ya maneja imágenes compartidas mediante copia y actualización de URL; cualquier cambio debe conservar la protección de referencias y la idempotencia por lote.
+
+H-NORM-003 — MEDIA — organizePrimaryVehicleImages normaliza la carpeta, pero no el nombre del archivo
+- Evidencia: Services/admin.js, handleOrganizePrimaryVehicleImages(), líneas 1213–1325; movePrimaryVehicleImageToCanonicalFolder(), líneas 2810–2855.
+- findOrCreateVehicleFolder() y findOrCreateSubFolder() normalizan una coincidencia canónica única mediante setName() y rechazan carpetas equivalentes ambiguas sin fusionarlas.
+- movePrimaryVehicleImageToCanonicalFolder() mueve imagenVehiculo a la carpeta canónica, pero retorna sin corregir el nombre cuando ya está en destino y no aplica la nomenclatura oficial al archivo.
+- Impacto: una imagen puede quedar en la carpeta correcta con nombre heredado.
+
+H-NORM-004 — MEDIA — Las operaciones de renombrado no comprueban colisiones de nombre en la carpeta
+- Evidencia: handleNormalizeImages() y movePrimaryVehicleImageToCanonicalFolder() no consultan archivos hermanos antes de setName().
+- Google Drive permite nombres duplicados dentro de una carpeta; el renombrado puede crear ambigüedad aunque el ID del archivo permanezca estable.
+- Criterio de seguridad: comprobar el nombre destino y omitir el renombrado si ya existe otro archivo con ese nombre; no elegir, sobrescribir ni enviar archivos a papelera automáticamente.
+
+H-NORM-005 — BAJA — Los reintentos de carga pueden conservar un nombre previo en la descripción de idempotencia
+- Evidencia: Services/write.js y Services/admin.js, uploadImageToDrive(), bloques savedOriginalName/previousName; markImageUploadLinked().
+- El token de idempotencia se calcula con operación, vehículo/campo, carpeta, MIME y bytes, no con el nombre. Si se reutiliza el mismo token después de cambiar la nomenclatura, el archivo existente puede conservar en su descripción el nombre de una ejecución previa.
+- El nombre guardado en la descripción se restaura al vincular. La actualización debe permitir que el nombre canónico vigente reemplace el nombre guardado en un reintento de la misma operación, sin cambiar el token ni crear otro archivo.
+
+4. CONTROLES POSITIVOS Y DEPENDENCIAS
+- collectCortesImageReferences() identifica IDs y ubicaciones de los ocho campos de imagen de Cortes y contempla valores, fórmulas y enlaces enriquecidos.
+- handleNormalizeImages() construye un mapa de usos compartidos y crea copia para usos posteriores; el cambio debe conservar las referencias y solo escribir URL cuando se crea una copia.
+- movePrimaryVehicleImageToCanonicalFolder() impide mover imágenes compartidas con campos de corte/apertura/alimentación y asigna la imagen principal al primer registro por orden de fila.
+- findOrCreateSubFolder() rechaza coincidencias canónicas múltiples y no fusiona carpetas.
+- getCortesRootFolder() valida ID, nombre Cortes y ubicación directa en la raíz de Drive.
+- handleAuditDriveImagesInCortes() es un recorrido de inventario de solo lectura y el requisito existente de Tareas.txt establece que la auditoría no debe mover, renombrar ni eliminar archivos. No se modificará su comportamiento.
+- api-config.js ya enruta normalizeImages y organizePrimaryVehicleImages; ui.js ya proporciona progreso por lotes y controles de continuidad/reinicio.
+- handleUploadAdminImage() ya construye la nomenclatura oficial del editor in-modal y debe mantenerse compatible.
+
+5. RIESGOS, LÍMITES Y DECISIONES DE ALCANCE
+- Los cambios se limitarán a imágenes asociadas a registros identificables de la hoja Cortes y a segmentos de carpeta que puedan asociarse inequívocamente con los metadatos de esos registros.
+- No se inferirá un nombre semántico para imágenes huérfanas/sin metadatos de vehículo. La auditoría de inventario permanecerá de solo lectura; cualquier normalización de archivos huérfanos requiere una regla independiente.
+- Las carpetas con coincidencias canónicas duplicadas no se fusionarán ni se renombrarán arbitrariamente.
+- Si el nombre destino ya existe para otro ID, no se renombrará el archivo ni se sobrescribirá el existente; el caso quedará registrado en el resultado del lote.
+- Se conservarán IDs, URLs y contenido binario de las imágenes cuando solo se cambie el nombre. La URL/celda solo cambiará cuando la lógica preexistente de imágenes compartidas cree una copia independiente.
+- No se realizarán operaciones contra Drive/Spreadsheet reales ni despliegues durante el desarrollo estático.
+
+6. RESPALDOS EXACTOS ANTES DE EDICIÓN
+- Services/admin.js: blob original 847a2bb80e53918bede067e530b80e41bfdb6afa.
+- Services/write.js: blob original a1359f9d1b2029e51c99c9d213fd6584e1257987.
+- Ambos blobs corresponden al HEAD auditado 131abd2339bbddf6c74c61a36b1854739c2fb566 y se conservan como respaldos inmutables para la comparación posterior.
+
+7. ESTADO DE AUDITORÍA
+Auditoría estática de las funciones y dependencias identificadas completada (E1). No se modificó código durante la auditoría. No se ejecutaron pruebas V8, Apps Script, DriveApp, SpreadsheetApp, navegador ni operaciones reales.
+================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN Y CODE REVIEW — NORMALIZACIÓN AUTOMÁTICA DE NOMBRES
+Fecha: 2026-11-07
+HEAD de partida: 131abd2339bbddf6c74c61a36b1854739c2fb566
+Rama: GPSpedia2.2.5_work
+
+1. ARCHIVOS MODIFICADOS
+- Services/admin.js: helper canónico, normalización de ocho campos, normalización conservadora de carpetas, detección de colisiones, estadísticas y corrección del nombre durante organización de imagenVehiculo; todos los callsites de carga/reparación/suplementarios ADMIN alineados.
+- Services/write.js: helper equivalente y todos los callsites de alta/reparación/corte/suplementarios WRITE alineados; el nombre canónico se actualiza en la descripción de idempotencia.
+- Trazabilidad: Tareas.txt, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+- Sin cambios en ui.js, api-config.js, index.html, endpoints, configuración o deployments.
+
+2. CODE REVIEW
+- El nombre canónico deriva del registro y del campo de imagen; no se infiere a partir del nombre anterior.
+- La extensión existente se conserva. Cuando falta, solo se asigna una extensión para MIME conocido; MIME desconocido provoca omisión.
+- Las colisiones con otro ID no se resuelven arbitrariamente: se conserva el nombre actual y se registra el caso.
+- La separación de imágenes compartidas solo se conserva para usos que requieren nombres distintos; el URL se escribe después de crear y renombrar la copia.
+- La organización de imagenVehiculo mantiene las protecciones de referencias activas, referencias no verificables y orden de primera fila. Omite múltiples padres cuando sería necesario mover y aplica rollback de ubicación si falla el renombrado.
+- La normalización de carpetas solo cambia una coincidencia canónica única. No fusiona ni crea carpetas desde el flujo de normalización. El organizador existente puede crear la ruta canónica como parte de su función.
+- handleAuditDriveImagesInCortes permanece de solo lectura; collectCortesImageReferences() permanece idéntica al respaldo.
+- No se añadió confirmación ni aviso individual. La operación conserva el progreso por lotes y registra los cambios en la consola administrativa.
+
+3. COMPROBACIONES
+- Nomenclatura y extensión: 6/6 casos representativos.
+- Mock de jerarquía única: normalización de cuatro segmentos; mock ambiguo: sin selección ni fusión; mock de nombre ocupado: conflicto detectado.
+- Conteos de delimitadores balanceados en ambos archivos JavaScript.
+- Se comprobó que los callsites de carga en ADMIN y WRITE usan el generador canónico y que no permanecen construcciones heredadas con sanitizeForFilename().
+- Comparación exacta: collectCortesImageReferences() y handleAuditDriveImagesInCortes() no cambiaron.
+
+4. LIMITACIONES
+- No se ejecutó parseo/runtime V8 de Apps Script, navegador, DriveApp, SpreadsheetApp ni pruebas reales.
+- No se ejecutaron despliegues.
+- Imágenes huérfanas sin metadatos de vehículo y carpetas sin asociación inequívoca no se renombran por inferencia.
+- Colisiones, MIME no reconocido y jerarquías ambiguas se omiten y quedan registradas.
+
+5. ESTADO
+Implementación estática y Code Review completados. Validación funcional real y publicación pendientes. No se modificó la rama base ni se realizó merge.
+================================================================================
+
+
+NOTA DE PRECEDENCIA
+La instrucción actual del usuario autoriza el renombrado canónico automático en normalizeImages y organizePrimaryVehicleImages, aunque una tarea previa había evitado renombrar imágenes durante la organización. La autorización queda limitada a los archivos con metadatos identificables y no cambia la regla de solo lectura de handleAuditDriveImagesInCortes.
+
+
+AJUSTE DE CODE REVIEW
+- La normalización de carpetas devuelve los IDs y nombres anterior/nuevo y los registra en el log administrativo.
+- organizePrimaryVehicleImages devuelve y acumula también foldersRenamed, además de imágenes movidas/renombradas.
+- Los errores individuales de setName en carpetas se convierten en advertencias registradas y no abortan el lote completo.

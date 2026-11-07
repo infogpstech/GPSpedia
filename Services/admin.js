@@ -1050,6 +1050,9 @@ function handleNormalizeImages(payload, logMessage) {
             processedCount: 0,
             totalVehicles: totalVehicles,
             imagesRenamed: 0,
+            imagesDuplicated: 0,
+            foldersRenamed: 0,
+            imagesSkippedConflicts: 0,
             nextIndex: startIndex,
             lote: lote,
             filaInicial: filaInicial,
@@ -1060,6 +1063,9 @@ function handleNormalizeImages(payload, logMessage) {
 
     logMessage("Normalización Imágenes", `Iniciando normalización de Lote ${lote}: filas del ${filaInicial} al ${filaInicial + limit - 1}...`);
     let imagesRenamed = 0;
+    let imagesDuplicated = 0;
+    let imagesSkippedConflicts = 0;
+    let foldersRenamed = 0;
 
     const imgFields = ['imagenVehiculo', 'imgCorte1', 'imgCorte2', 'imgCorte3', 'imgApertura', 'imgCableAlimen', 'imgCableAlimen2', 'imgCableAlimen3'];
 
@@ -1087,20 +1093,19 @@ function handleNormalizeImages(payload, logMessage) {
     batchData.forEach((row, index) => {
         const rowNum = startIndex + index + 2;
 
-        // Obtener datos reales para la nomenclatura
-        const rawModelo = (row[COLS_CORTES.modelo - 1] || "").toString().trim();
-        const rawVersion = (row[COLS_CORTES.versionesAplicables - 1] || "").toString().trim();
-        const rawEncendido = (row[COLS_CORTES.tipoEncendido - 1] || "").toString().trim();
-        const rawAnio = (row[COLS_CORTES.anoDesde - 1] || "").toString().trim();
-
-        const versionPart = rawVersion ? rawVersion : rawEncendido;
-
-        // Sanitización para nomenclatura uniforme
-        const modelo = sanitizeForNomenclature(rawModelo);
-        const version = sanitizeForNomenclature(versionPart);
-        const anio = sanitizeForNomenclature(rawAnio || "XXXX");
-
-        const baseName = `${modelo}_${version}_${anio}`.toLowerCase();
+        const vehicleInfo = mapRowToObject(row, COLS_CORTES);
+        const rowHasImages = imgFields.some(field => String(row[COLS_CORTES[field] - 1] || "").trim());
+        if (rowHasImages) {
+            try {
+                const folderResult = normalizeExistingVehicleFolderPath(vehicleInfo);
+                foldersRenamed += folderResult.renamed;
+                (folderResult.renamedItems || []).forEach(item =>
+                    logMessage("Normalización Imágenes", `Carpeta '${item.from}' renombrada a '${item.to}' (ID ${item.id}).`));
+                if (folderResult.warning) logMessage("Normalización Imágenes", `Fila ${rowNum}: ${folderResult.warning}`, 0, 0, true);
+            } catch (folderError) {
+                logMessage("Normalización Imágenes", `Fila ${rowNum}: no se pudo normalizar la ruta de carpetas; las imágenes se procesarán sin alterar esa ruta. Motivo: ${folderError.message}`, 0, 0, true);
+            }
+        }
 
         imgFields.forEach(field => {
             const colIndex = COLS_CORTES[field] - 1;
@@ -1121,20 +1126,11 @@ function handleNormalizeImages(payload, logMessage) {
                         }
 
                         let fileToProcess = file;
-
-                        // Determinar el tipoFuncion de nomenclatura según el campo
-                        let typeFuncion = "";
-                        if (field === "imagenVehiculo") typeFuncion = "";
-                        else if (field === "imgCorte1") typeFuncion = "_corte1";
-                        else if (field === "imgCorte2") typeFuncion = "_corte2";
-                        else if (field === "imgCorte3") typeFuncion = "_corte3";
-                        else if (field === "imgApertura") typeFuncion = "_apert";
-                        else if (field === "imgCableAlimen") typeFuncion = "_alimen";
-                        else if (field === "imgCableAlimen2") typeFuncion = "_alimen2";
-                        else if (field === "imgCableAlimen3") typeFuncion = "_alimen3";
-
-                        const extension = getExtensionFromName(fileToProcess.getName());
-                        const newFilename = `${baseName}${typeFuncion}${extension}`;
+                        if (!String(file.getMimeType() || "").toLowerCase().startsWith("image/")) {
+                            logMessage("Normalización Imágenes", `Fila ${rowNum}: el recurso ID '${id}' no tiene MIME de imagen; se omitió.`, 0, 0, true);
+                            return;
+                        }
+                        const newFilename = buildCanonicalImageFilename(vehicleInfo, field, file);
 
                         // --- OPTIMIZACIÓN: EVITAR RENOMBRADO SI YA ESTÁ CORRECTO Y UBICADO EN LA GENERACIÓN ---
                         const parents = fileToProcess.getParents();
@@ -1155,22 +1151,38 @@ function handleNormalizeImages(payload, logMessage) {
                             return;
                         }
 
-                        // Si se comparte entre más de un registro, crear copia física propia para este vehículo
+                        // Separar referencias compartidas solo cuando sus nombres canónicos sean distintos.
                         if (usages && usages.length > 1) {
                             const usageIndexForThisRow = usages.findIndex(u => u.rowNum === rowNum && u.field === field);
-                            if (usageIndexForThisRow > 0) { // Solo duplicar a partir del segundo uso
-                                logMessage("Normalización Imágenes", `Fila ${rowNum}: Imagen compartida para el campo ${field}. Duplicando archivo en Drive...`);
+                            if (usageIndexForThisRow > 0 && file.getName() !== newFilename) {
                                 const currentFolders = file.getParents();
                                 const parentFolder = currentFolders.hasNext() ? currentFolders.next() : DriveApp.getRootFolder();
+                                if (hasDriveFilenameConflictInParents(file, newFilename)) {
+                                    imagesSkippedConflicts++;
+                                    logMessage("Normalización Imágenes", `Fila ${rowNum}: ya existe otro archivo llamado '${newFilename}' en la carpeta; no se duplicó ni renombró.`, 0, 0, true);
+                                    return;
+                                }
                                 fileToProcess = file.makeCopy(file.getName(), parentFolder);
+                                if (hasDriveFilenameConflictInParents(fileToProcess, newFilename)) {
+                                    fileToProcess.setTrashed(true);
+                                    imagesSkippedConflicts++;
+                                    logMessage("Normalización Imágenes", `Fila ${rowNum}: apareció un conflicto con '${newFilename}' durante la copia; se descartó la copia.`, 0, 0, true);
+                                    return;
+                                }
+                                fileToProcess.setName(newFilename);
                                 imgUrl = `https://drive.google.com/uc?export=view&id=${fileToProcess.getId()}`;
                                 sheet.getRange(rowNum, colIndex + 1).setValue(imgUrl);
+                                imagesDuplicated++;
                                 imagesRenamed++;
                             }
                         }
-
                         if (fileToProcess.getName() !== newFilename) {
-                            logMessage("Normalización Imágenes", `Fila ${rowNum}: Renombrando '${fileToProcess.getName()}' a '${newFilename}'`);
+                            if (hasDriveFilenameConflictInParents(fileToProcess, newFilename)) {
+                                imagesSkippedConflicts++;
+                                logMessage("Normalización Imágenes", `Fila ${rowNum}: ya existe otro archivo llamado '${newFilename}' en la carpeta; se conservó el nombre actual.`, 0, 0, true);
+                                return;
+                            }
+                            logMessage("Normalización Imágenes", `Fila ${rowNum}: renombrando '${fileToProcess.getName()}' a '${newFilename}'.`);
                             fileToProcess.setName(newFilename);
                             imagesRenamed++;
                         }
@@ -1195,13 +1207,16 @@ function handleNormalizeImages(payload, logMessage) {
         saveAdminState('normalizeImages', nextIndex, totalVehicles, percentage, processId, lote, filaInicial, ultimaFilaProcesada, estado);
     }
 
-    logMessage("Normalización Imágenes", `Lote ${lote} finalizado. Filas del ${filaInicial} al ${ultimaFilaProcesada} procesadas. Archivos modificados: ${imagesRenamed}`);
+    logMessage("Normalización Imágenes", `Lote ${lote} finalizado. Filas del ${filaInicial} al ${ultimaFilaProcesada} procesadas. Imágenes renombradas: ${imagesRenamed}; copias independientes: ${imagesDuplicated}; carpetas renombradas: ${foldersRenamed}; conflictos omitidos: ${imagesSkippedConflicts}.`);
 
     return {
         status: 'success',
         processedCount: batchData.length,
         totalVehicles: totalVehicles,
         imagesRenamed: imagesRenamed,
+        imagesDuplicated: imagesDuplicated,
+        foldersRenamed: foldersRenamed,
+        imagesSkippedConflicts: imagesSkippedConflicts,
         nextIndex: nextIndex,
         lote: lote,
         filaInicial: filaInicial,
@@ -1264,6 +1279,8 @@ function handleOrganizePrimaryVehicleImages(payload, logMessage) {
 
     const batchData = data.slice(startIndex, startIndex + limit);
     let movedFiles = 0;
+    let renamedFiles = 0;
+    let foldersRenamed = 0;
     let skippedFiles = 0;
     let itemErrors = 0;
 
@@ -1283,17 +1300,20 @@ function handleOrganizePrimaryVehicleImages(payload, logMessage) {
 
         try {
             const result = movePrimaryVehicleImageToCanonicalFolder(
-                sheet, rowNumber, vehicleInfo, referenceData, null
+                sheet, rowNumber, vehicleInfo, referenceData, logMessage
             );
-            if (result.moved) {
-                movedFiles++;
-                logMessage('Organización de imágenes principales', 'Fila ' + rowNumber + ': imagen principal movida a la carpeta canónica.', index + 1, batchData.length);
+            if (result.moved) movedFiles++;
+            if (result.renamed) renamedFiles++;
+            foldersRenamed += result.foldersRenamed || 0;
+            if (result.moved || result.renamed) {
+                logMessage('Organización de imágenes principales', 'Fila ' + rowNumber + ': ' +
+                    (result.moved ? 'imagen principal movida a la carpeta canónica; ' : '') +
+                    (result.renamed ? 'nombre de imagen normalizado.' : 'nombre ya canónico.'),
+                    index + 1, batchData.length);
             } else {
                 skippedFiles++;
                 if (result.warning) itemErrors++;
-                if (result.reason) {
-                    logMessage('Organización de imágenes principales', 'Fila ' + rowNumber + ': ' + result.reason, index + 1, batchData.length, Boolean(result.warning), Boolean(result.warning));
-                }
+                if (result.reason) logMessage('Organización de imágenes principales', 'Fila ' + rowNumber + ': ' + result.reason, index + 1, batchData.length, Boolean(result.warning), Boolean(result.warning));
             }
         } catch (error) {
             itemErrors++;
@@ -1313,13 +1333,13 @@ function handleOrganizePrimaryVehicleImages(payload, logMessage) {
 
     logMessage('Organización de imágenes principales',
         'Lote ' + lote + ' finalizado. Imágenes movidas: ' + movedFiles +
-        '; omitidas: ' + skippedFiles + '; errores: ' + itemErrors + '.',
+        '; renombradas: ' + renamedFiles + '; carpetas renombradas: ' + foldersRenamed + '; omitidas: ' + skippedFiles + '; errores: ' + itemErrors + '.',
         nextIndex, totalVehicles, itemErrors > 0, itemErrors > 0);
 
     return {
         status: 'success', processedCount: batchData.length, totalVehicles: totalVehicles,
-        movedFiles: movedFiles, skippedFiles: skippedFiles, itemErrors: itemErrors,
-        imagesRenamed: 0, nextIndex: nextIndex, lote: lote, filaInicial: filaInicial,
+        movedFiles: movedFiles, renamedFiles: renamedFiles, foldersRenamed: foldersRenamed, skippedFiles: skippedFiles, itemErrors: itemErrors,
+        imagesRenamed: renamedFiles, nextIndex: nextIndex, lote: lote, filaInicial: filaInicial,
         ultimaFilaProcesada: ultimaFilaProcesada, estado: estado
     };
 }
@@ -1338,6 +1358,46 @@ function sanitizeForNomenclature(text) {
         .replace(/__+/g, '_') // Eliminar guiones bajos múltiples
         .replace(/^_+|_+$/g, ''); // Limpiar extremos
 }
+
+
+function buildCanonicalImageBaseName(vehicleInfo, fieldName, extraSuffix) {
+    const info = vehicleInfo || {};
+    const suffixes = { imagenVehiculo: "", imgCorte1: "_corte1", imgCorte2: "_corte2", imgCorte3: "_corte3",
+        imgApertura: "_apert", imgCableAlimen: "_alimen", imgCableAlimen2: "_alimen2", imgCableAlimen3: "_alimen3" };
+    if (!Object.prototype.hasOwnProperty.call(suffixes, fieldName)) throw new Error("El campo de imagen no tiene una nomenclatura canónica definida.");
+    const parts = [sanitizeForNomenclature(info.modelo), sanitizeForNomenclature(info.versionesAplicables),
+        sanitizeForNomenclature(info.tipoEncendido), sanitizeForNomenclature(info.anoDesde || "XXXX")].filter(Boolean);
+    if (!parts.length) throw new Error("No hay metadatos suficientes para construir el nombre canónico de la imagen.");
+    return (parts.join("_") + suffixes[fieldName] + String(extraSuffix || "")).toLowerCase();
+}
+function getCanonicalImageExtension(file) {
+    const name = String(file && file.getName ? file.getName() : "");
+    const match = name.match(/(\.[A-Za-z0-9]{2,5})$/);
+    if (match) return match[1];
+    const mime = String(file && file.getMimeType ? file.getMimeType() : "").toLowerCase();
+    const extensions = { "image/jpeg":".jpg", "image/jpg":".jpg", "image/pjpeg":".jpg",
+        "image/png":".png", "image/x-png":".png", "image/gif":".gif", "image/webp":".webp",
+        "image/svg+xml":".svg", "image/bmp":".bmp", "image/x-ms-bmp":".bmp", "image/tiff":".tiff",
+        "image/heic":".heic", "image/heif":".heif", "image/avif":".avif",
+        "image/x-icon":".ico", "image/vnd.microsoft.icon":".ico" };
+    return extensions[mime] || "";
+}
+function buildCanonicalImageFilename(vehicleInfo, fieldName, file, extraSuffix) {
+    const extension = getCanonicalImageExtension(file);
+    if (!extension) throw new Error("No se pudo determinar una extensión compatible sin alterar el archivo original.");
+    return buildCanonicalImageBaseName(vehicleInfo, fieldName, extraSuffix) + extension;
+}
+function hasDriveFilenameConflictInFolder(folder, filename, currentFileId) {
+    const matches = folder.getFilesByName(filename);
+    while (matches.hasNext()) if (String(matches.next().getId()) !== String(currentFileId || "")) return true;
+    return false;
+}
+function hasDriveFilenameConflictInParents(file, filename) {
+    const parents = file.getParents();
+    while (parents.hasNext()) if (hasDriveFilenameConflictInFolder(parents.next(), filename, file.getId())) return true;
+    return false;
+}
+
 
 // Contadores de rendimiento para el lote actual
 let foldersCheckedCount = 0;
@@ -1954,16 +2014,9 @@ function handleUploadAdminImage(payload, logMessage) {
         const decodedData = Utilities.base64Decode(cleanBase64);
         if (!decodedData || !decodedData.length) throw new Error("La imagen recibida está vacía.");
         const contentHash = calculateAdminImageUploadHash(decodedData);
-        const extension = getExtensionFromName(filename);
-        const newFilename = [
-            sanitizeForNomenclature(String(rowValues[COLS_CORTES.modelo - 1] || "").trim()),
-            sanitizeForNomenclature(String(rowValues[COLS_CORTES.versionesAplicables - 1] || "").trim()),
-            sanitizeForNomenclature(String(rowValues[COLS_CORTES.tipoEncendido - 1] || "").trim()),
-            sanitizeForNomenclature(String(rowValues[COLS_CORTES.anoDesde - 1] || "XXXX").trim())
-        ].filter(Boolean).join("_").toLowerCase() + ({
-            imagenVehiculo: "", imgCorte1: "_corte1", imgCorte2: "_corte2", imgCorte3: "_corte3",
-            imgApertura: "_apert", imgCableAlimen: "_alimen", imgCableAlimen2: "_alimen2", imgCableAlimen3: "_alimen3"
-        }[fieldName]) + extension;
+        const extension = getCanonicalImageExtension({ getName: () => filename, getMimeType: () => actualMimeType });
+        if (!extension) throw new Error("No se pudo determinar la extensión original de la imagen a partir del nombre o MIME.");
+        const newFilename = buildCanonicalImageBaseName(mapRowToObject(rowValues, COLS_CORTES), fieldName) + extension;
         const temporaryFilename = "__GPSpediaAdminUpload_" + operationId + extension;
 
         const currentUrl = String(activeCell.getValue() || "").trim();
@@ -2281,7 +2334,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                     const currentImg = rowObj.imagenVehiculo;
                     if (!checkFileIdValid(currentImg)) {
                         const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-                        const filename = `${sanitizeForFilename(rowObj.marca)}_${sanitizeForFilename(rowObj.modelo)}_${sanitizeForFilename(rowObj.tipoEncendido)}_${rowObj.anoDesde}_Vehiculo_repaired`;
+const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo", "_repaired");
                         const newUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imagenVehiculo"));
                         sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(newUrl);
                     }
@@ -2292,7 +2345,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
                     const currentCorteImg = rowObj[`imgCorte${slotIndex}`];
                     if (!checkFileIdValid(currentCorteImg)) {
                         const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-                        const filename = `${sanitizeForFilename(rowObj.marca)}_${sanitizeForFilename(rowObj.modelo)}_${sanitizeForFilename(rowObj.tipoEncendido)}_${rowObj.anoDesde}_Corte${slotIndex}_repaired`;
+const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_repaired");
                         const newCorteImgUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imgCorte" + slotIndex));
                         sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(newCorteImgUrl);
                     }
@@ -2413,7 +2466,7 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         let imageUrl = '';
         if (cutData.imgCorte1) {
             const folder = findOrCreateVehicleFolder(vehicleInfo);
-            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Corte${cutSlotIndex}`;
+const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIndex);
             imageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, vehicleId, "imgCorte" + cutSlotIndex));
         }
 
@@ -2504,12 +2557,12 @@ function handleAddOrUpdateCut(payload, logMessage, developerContext) {
         const folder = findOrCreateVehicleFolder(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }));
         let vehiculoImageUrl = '';
         if (vehicleData.imagenVehiculo) {
-            const filename = `${sanitizeForFilename(vehicleData.marca)}_${sanitizeForFilename(vehicleData.modelo)}_${sanitizeForFilename(vehicleData.tipoEncendido)}_${yearInput}_Vehiculo`;
+const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }), "imagenVehiculo");
             vehiculoImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, newId, "imagenVehiculo"));
         }
         let corteImageUrl = '';
         if (cutData.imgCorte1) {
-            const filename = `${sanitizeForFilename(vehicleData.marca)}_${sanitizeForFilename(vehicleData.modelo)}_${sanitizeForFilename(vehicleData.tipoEncendido)}_${anioParaFolder}_Corte1`;
+const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }), "imgCorte1");
             corteImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, newId, "imgCorte1"));
         }
 
@@ -2585,7 +2638,7 @@ function handleAddSupplementaryInfoLocked(payload, logMessage) {
     if (imgApertura) {
         const currentAperturaImg = rowValues[COLS_CORTES.imgApertura - 1];
         if (!checkFileIdValid(currentAperturaImg)) {
-            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Apertura`;
+const filename = buildCanonicalImageBaseName(vehicleInfo, "imgApertura");
             const imageUrl = uploadImageToDrive(imgApertura, filename, folder, buildImageUploadOperationKey(payload.opId, vehicleId, "imgApertura"));
             sheet.getRange(actualRow, COLS_CORTES.imgApertura).setValue(imageUrl);
         }
@@ -2593,7 +2646,7 @@ function handleAddSupplementaryInfoLocked(payload, logMessage) {
     if (imgCableAlimen) {
         const currentAlimenImg = rowValues[COLS_CORTES.imgCableAlimen - 1];
         if (!checkFileIdValid(currentAlimenImg)) {
-            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion`;
+const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCableAlimen");
             const imageUrl = uploadImageToDrive(imgCableAlimen, filename, folder, buildImageUploadOperationKey(payload.opId, vehicleId, "imgCableAlimen"));
             sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen).setValue(imageUrl);
         }
@@ -2601,7 +2654,7 @@ function handleAddSupplementaryInfoLocked(payload, logMessage) {
     if (imgCableAlimen2) {
         const currentAlimenImg2 = rowValues[COLS_CORTES.imgCableAlimen2 - 1];
         if (!checkFileIdValid(currentAlimenImg2)) {
-            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion2`;
+const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCableAlimen2");
             const imageUrl = uploadImageToDrive(imgCableAlimen2, filename, folder, buildImageUploadOperationKey(payload.opId, vehicleId, "imgCableAlimen2"));
             sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen2).setValue(imageUrl);
         }
@@ -2609,7 +2662,7 @@ function handleAddSupplementaryInfoLocked(payload, logMessage) {
     if (imgCableAlimen3) {
         const currentAlimenImg3 = rowValues[COLS_CORTES.imgCableAlimen3 - 1];
         if (!checkFileIdValid(currentAlimenImg3)) {
-            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion3`;
+const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCableAlimen3");
             const imageUrl = uploadImageToDrive(imgCableAlimen3, filename, folder, buildImageUploadOperationKey(payload.opId, vehicleId, "imgCableAlimen3"));
             sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen3).setValue(imageUrl);
         }
@@ -2805,6 +2858,47 @@ function findOrCreateVehicleFolder(vehicleInfo) {
     return findOrCreateSubFolder(versionFolder, yearRange);
 }
 
+
+function normalizeExistingVehicleFolderPath(vehicleInfo) {
+    const info = vehicleInfo || {};
+    const root = getCortesRootFolder();
+    const expected = [
+        sanitizeForFolderDisplay(info.categoria || "Sin_Categoria"),
+        sanitizeForFolderDisplay(info.marca || "Sin_Marca"),
+        sanitizeForFolderDisplay(info.modelo || "Sin_Modelo"),
+        sanitizeForFolderDisplay(String(info.versionesAplicables || "").trim() || String(info.tipoEncendido || "").trim() || "Sin_Tipo_de_Encendido"),
+        sanitizeForFolderDisplay(getVehicleYearFolderName(info))
+    ];
+    let parent = root, renamed = 0;
+    const renamedItems = [];
+    for (const expectedName of expected) {
+        const canonical = getFolderCanonicalName(expectedName);
+        if (!canonical) return { renamed: renamed, warning: "segmento esperado sin nombre canónico." };
+        const matches = [], iterator = parent.getFolders();
+        while (iterator.hasNext()) {
+            const folder = iterator.next();
+            if (getFolderCanonicalName(folder.getName()) === canonical) matches.push(folder);
+        }
+        if (matches.length !== 1) return { renamed: renamed, renamedItems: renamedItems, warning: matches.length > 1
+            ? "hay varias carpetas equivalentes a «" + expectedName + "»; no se eligió ni fusionó ninguna."
+            : "no existe una coincidencia inequívoca para «" + expectedName + "»; no se creó ninguna carpeta." };
+        const folder = matches[0];
+        if (folder.getName() !== expectedName) {
+            const previousName = folder.getName();
+            try {
+                folder.setName(expectedName);
+                renamed++;
+                renamedItems.push({ id: folder.getId(), from: previousName, to: expectedName });
+            } catch (renameError) {
+                return { renamed: renamed, renamedItems: renamedItems, warning: "no se pudo renombrar «" + previousName + "» a «" + expectedName + "»: " + renameError.message };
+            }
+        }
+        parent = folder;
+    }
+    return { renamed: renamed, renamedItems: renamedItems, warning: "" };
+}
+
+
 // Compatibilidad para consumidores heredados que solo proporcionen un año.
 function getOrCreateFolder(categoria, marca, modelo, anio) {
     return findOrCreateVehicleFolder({
@@ -2816,45 +2910,54 @@ function getOrCreateFolder(categoria, marca, modelo, anio) {
 function movePrimaryVehicleImageToCanonicalFolder(sheet, rowNumber, vehicleInfo, referenceData, logMessage) {
     const imageId = extractDriveFileId(vehicleInfo && vehicleInfo.imagenVehiculo);
     if (!imageId) return { skipped: true, reason: 'No hay una URL de imagenVehiculo verificable.' };
-
     const references = referenceData || collectCortesImageReferences(true);
     if (references.unverifiableReferenceCount > 0) {
         const message = 'Existen enlaces de imagen de Cortes no verificables; se omitió el movimiento para proteger referencias compartidas.';
         if (logMessage) logMessage('Organización imagen principal', message, 0, 0, true);
         return { skipped: true, warning: true, reason: message };
     }
-
     const locations = references.references.get(imageId) || [];
     if (!locations.length) return { skipped: true, warning: true, reason: 'No se pudo confirmar la referencia activa de imagenVehiculo.' };
-    if (locations.some(location => location.field !== 'imagenVehiculo')) {
-        return { skipped: true, warning: true, reason: 'La imagen también está referenciada por un campo de corte, apertura o alimentación.' };
-    }
-
-    const primaryLocations = locations.filter(location => location.field === 'imagenVehiculo')
-        .sort((a, b) => a.row - b.row);
-    if (primaryLocations.length && primaryLocations[0].row !== rowNumber) {
-        return { skipped: true, reason: 'La imagen principal pertenece al primer registro que la utiliza (fila ' + primaryLocations[0].row + ').' };
-    }
-
+    if (locations.some(location => location.field !== 'imagenVehiculo')) return { skipped: true, warning: true, reason: 'La imagen también está referenciada por un campo de corte, apertura o alimentación.' };
+    const primaryLocations = locations.filter(location => location.field === 'imagenVehiculo').sort((a, b) => a.row - b.row);
+    if (primaryLocations.length && primaryLocations[0].row !== rowNumber) return { skipped: true, reason: 'La imagen principal pertenece al primer registro que la utiliza (fila ' + primaryLocations[0].row + ').' };
     const file = DriveApp.getFileById(imageId);
     if (file.isTrashed()) return { skipped: true, warning: true, reason: 'La imagen principal está en la papelera de Drive.' };
-    if (!String(file.getMimeType() || '').toLowerCase().startsWith('image/')) {
-        return { skipped: true, warning: true, reason: 'El archivo referenciado por imagenVehiculo no tiene MIME de imagen.' };
-    }
-
-    const targetFolder = findOrCreateVehicleFolder(vehicleInfo);
+    if (!String(file.getMimeType() || '').toLowerCase().startsWith('image/')) return { skipped: true, warning: true, reason: 'El archivo referenciado por imagenVehiculo no tiene MIME de imagen.' };
+    const folderNormalization = normalizeExistingVehicleFolderPath(vehicleInfo);
+    const foldersRenamed = folderNormalization.renamed || 0;
+    (folderNormalization.renamedItems || []).forEach(item => {
+        if (logMessage) logMessage("Carpetas de Cortes", `Carpeta '${item.from}' renombrada a '${item.to}' (ID ${item.id}).`);
+    });
+    const target = findOrCreateVehicleFolder(vehicleInfo);
+    const canonicalName = buildCanonicalImageFilename(vehicleInfo, "imagenVehiculo", file);
+    if (hasDriveFilenameConflictInFolder(target, canonicalName, imageId)) return { skipped: true, warning: true, foldersRenamed: foldersRenamed, reason: 'Ya existe otro archivo con el nombre canónico «' + canonicalName + '» en la carpeta destino; no se movió ni renombró la imagen.' };
     const parents = file.getParents();
+    let source = null, parentCount = 0, alreadyInTarget = false;
     while (parents.hasNext()) {
-        if (parents.next().getId() === targetFolder.getId()) {
-            return { moved: false, skipped: true, reason: 'La imagen ya está en la carpeta correcta.' };
-        }
+        const parent = parents.next(); parentCount++;
+        if (!source) source = parent;
+        if (parent.getId() === target.getId()) alreadyInTarget = true;
     }
-
-    file.moveTo(targetFolder);
-    if (logMessage) logMessage('Organización imagen principal', 'Imagen principal movida a la carpeta correspondiente del vehículo ID ' + vehicleInfo.id + '.', 0, 0);
-    return { moved: true, skipped: false };
+    if (!alreadyInTarget && parentCount > 1) return { skipped: true, warning: true, foldersRenamed: foldersRenamed, reason: 'La imagen tiene varios padres en Drive; se omitió el movimiento para no alterar otras ubicaciones.' };
+    if (!source && parentCount === 0) source = DriveApp.getRootFolder();
+    const originalName = file.getName();
+    let moved = false, renamed = false;
+    try {
+        if (!alreadyInTarget) { file.moveTo(target); moved = true; }
+        if (file.getName() !== canonicalName) { file.setName(canonicalName); renamed = true; }
+    } catch (error) {
+        let rollback = "";
+        if (moved && source) { try { file.moveTo(source); } catch (e) { rollback += " No se pudo restaurar la ubicación anterior: " + e.message; } }
+        if (renamed) { try { file.setName(originalName); } catch (e) { rollback += " No se pudo restaurar el nombre anterior: " + e.message; } }
+        throw new Error(error.message + rollback);
+    }
+    if (logMessage && (moved || renamed)) logMessage('Organización imagen principal',
+        'Imagen principal del vehículo ID ' + vehicleInfo.id + ': ' +
+        (moved ? 'movida a la carpeta canónica; ' : '') +
+        (renamed ? 'renombrada a ' + canonicalName : 'nombre ya canónico') + '.', 0, 0);
+    return { moved: moved, renamed: renamed, foldersRenamed: foldersRenamed, skipped: !moved && !renamed };
 }
-
 function buildImageUploadOperationKey(opId, vehicleId, fieldName) {
     const operationId = String(opId || "").trim() || "legacy";
     return operationId + "|" + String(vehicleId || "").trim() + "|" + String(fieldName || "").trim();
@@ -2943,12 +3046,8 @@ function uploadImageToDrive(imageData, filename, folder, operationKey) {
     blob.setName(temporaryFilename);
     const file = findExistingImageUpload(folder, temporaryFilename, blob.getBytes().length, token) || folder.createFile(blob);
 
-    let savedOriginalName = originalFilename;
+    const savedOriginalName = originalFilename;
     const previousDescription = String(file.getDescription() || "");
-    const previousName = previousDescription.match(/(?:^|\|)name=([^|]*)/);
-    if (previousDescription.startsWith("GPSpediaImageUpload|") && previousName) {
-        savedOriginalName = decodeURIComponent(previousName[1]) || originalFilename;
-    }
     const description = "GPSpediaImageUpload|token=" + token + "|state=pending|name=" + encodeURIComponent(savedOriginalName);
     if (previousDescription !== description) file.setDescription(description);
     return "https://drive.google.com/uc?export=view&id=" + file.getId();
@@ -2957,15 +3056,16 @@ function uploadImageToDrive(imageData, filename, folder, operationKey) {
 
 function getExtensionFromMimeType(mimeType) {
     const mimeMap = {
-        'image/jpeg': '.jpg',
-        'image/png': '.png',
-        'image/gif': '.gif',
-        'image/webp': '.webp',
-        'image/svg+xml': '.svg',
-        'image/bmp': '.bmp',
-        'image/tiff': '.tiff'
+        'image/jpeg': '.jpg', 'image/jpg': '.jpg', 'image/pjpeg': '.jpg',
+        'image/png': '.png', 'image/x-png': '.png', 'image/gif': '.gif',
+        'image/webp': '.webp', 'image/svg+xml': '.svg', 'image/bmp': '.bmp',
+        'image/x-ms-bmp': '.bmp', 'image/tiff': '.tiff', 'image/heic': '.heic',
+        'image/heif': '.heif', 'image/avif': '.avif', 'image/x-icon': '.ico',
+        'image/vnd.microsoft.icon': '.ico'
     };
-    return mimeMap[mimeType] || '.jpg';
+    const extension = mimeMap[String(mimeType || "").toLowerCase()];
+    if (!extension) throw new Error("No se reconoce una extensión para el MIME de imagen: " + mimeType);
+    return extension;
 }
 
 function checkFileIdValid(url) {

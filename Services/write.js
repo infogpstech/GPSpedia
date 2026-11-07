@@ -470,7 +470,7 @@ function handleAddOrUpdateCutLocked(payload) {
                 const currentImg = rowObj.imagenVehiculo;
                 if (!checkFileIdValid(currentImg)) {
                     const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-                    const filename = `${sanitizeForFilename(rowObj.marca)}_${sanitizeForFilename(rowObj.modelo)}_${sanitizeForFilename(rowObj.tipoEncendido)}_${rowObj.anoDesde}_Vehiculo_repaired`;
+const filename = buildCanonicalImageBaseName(rowObj, "imagenVehiculo", "_repaired");
                     const newUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imagenVehiculo"));
                     sheet.getRange(rowIndex, COLS_CORTES.imagenVehiculo).setValue(newUrl);
                 }
@@ -481,7 +481,7 @@ function handleAddOrUpdateCutLocked(payload) {
                 const currentCorteImg = rowObj[`imgCorte${slotIndex}`];
                 if (!checkFileIdValid(currentCorteImg)) {
                     const folder = findOrCreateVehicleFolder(mergeVehicleFolderInfo(rowObj, vehicleData));
-                    const filename = `${sanitizeForFilename(rowObj.marca)}_${sanitizeForFilename(rowObj.modelo)}_${sanitizeForFilename(rowObj.tipoEncendido)}_${rowObj.anoDesde}_Corte${slotIndex}_repaired`;
+const filename = buildCanonicalImageBaseName(rowObj, "imgCorte" + slotIndex, "_repaired");
                     const newCorteImgUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, rowObj.id, "imgCorte" + slotIndex));
                     sheet.getRange(rowIndex, COLS_CORTES[`imgCorte${slotIndex}`]).setValue(newCorteImgUrl);
                 }
@@ -609,7 +609,7 @@ function handleAddOrUpdateCutLocked(payload) {
         let imageUrl = '';
         if (cutData.imgCorte1) {
             const folder = findOrCreateVehicleFolder(vehicleInfo);
-            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Corte${cutSlotIndex}`;
+const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCorte" + cutSlotIndex);
             imageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, vehicleId, "imgCorte" + cutSlotIndex));
         }
 
@@ -697,12 +697,12 @@ function handleAddOrUpdateCutLocked(payload) {
         const folder = findOrCreateVehicleFolder(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }));
         let vehiculoImageUrl = '';
         if (vehicleData.imagenVehiculo) {
-            const filename = `${sanitizeForFilename(vehicleData.marca)}_${sanitizeForFilename(vehicleData.modelo)}_${sanitizeForFilename(vehicleData.tipoEncendido)}_${yearInput}_Vehiculo`;
+const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }), "imagenVehiculo");
             vehiculoImageUrl = uploadImageToDrive(vehicleData.imagenVehiculo, filename, folder, buildImageUploadOperationKey(opId, newId, "imagenVehiculo"));
         }
         let corteImageUrl = '';
         if (cutData.imgCorte1) {
-            const filename = `${sanitizeForFilename(vehicleData.marca)}_${sanitizeForFilename(vehicleData.modelo)}_${sanitizeForFilename(vehicleData.tipoEncendido)}_${anioParaFolder}_Corte1`;
+const filename = buildCanonicalImageBaseName(Object.assign({}, vehicleData, { anoDesde: anoDesde, anoHasta: anoHasta }), "imgCorte1");
             corteImageUrl = uploadImageToDrive(cutData.imgCorte1, filename, folder, buildImageUploadOperationKey(opId, newId, "imgCorte1"));
         }
 
@@ -819,7 +819,7 @@ function handleAddSupplementaryInfoLocked(payload) {
     if (imgApertura) {
         const currentAperturaImg = rowValues[COLS_CORTES.imgApertura - 1];
         if (!checkFileIdValid(currentAperturaImg)) {
-            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Apertura`;
+const filename = buildCanonicalImageBaseName(vehicleInfo, "imgApertura");
             const imageUrl = uploadImageToDrive(imgApertura, filename, folder, buildImageUploadOperationKey(payload.opId, vehicleId, "imgApertura"));
             sheet.getRange(actualRow, COLS_CORTES.imgApertura).setValue(imageUrl);
         }
@@ -827,7 +827,7 @@ function handleAddSupplementaryInfoLocked(payload) {
     if (imgCableAlimen) {
         const currentAlimenImg = rowValues[COLS_CORTES.imgCableAlimen - 1];
         if (!checkFileIdValid(currentAlimenImg)) {
-            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion`;
+const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCableAlimen");
             const imageUrl = uploadImageToDrive(imgCableAlimen, filename, folder, buildImageUploadOperationKey(payload.opId, vehicleId, "imgCableAlimen"));
             sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen).setValue(imageUrl);
         }
@@ -835,7 +835,7 @@ function handleAddSupplementaryInfoLocked(payload) {
     if (imgCableAlimen2) {
         const currentAlimenImg2 = rowValues[COLS_CORTES.imgCableAlimen2 - 1];
         if (!checkFileIdValid(currentAlimenImg2)) {
-            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion2`;
+const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCableAlimen2");
             const imageUrl = uploadImageToDrive(imgCableAlimen2, filename, folder, buildImageUploadOperationKey(payload.opId, vehicleId, "imgCableAlimen2"));
             sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen2).setValue(imageUrl);
         }
@@ -843,7 +843,7 @@ function handleAddSupplementaryInfoLocked(payload) {
     if (imgCableAlimen3) {
         const currentAlimenImg3 = rowValues[COLS_CORTES.imgCableAlimen3 - 1];
         if (!checkFileIdValid(currentAlimenImg3)) {
-            const filename = `${sanitizeForFilename(vehicleInfo.marca)}_${sanitizeForFilename(vehicleInfo.modelo)}_${sanitizeForFilename(vehicleInfo.tipoEncendido)}_${vehicleInfo.anoDesde}_Alimentacion3`;
+const filename = buildCanonicalImageBaseName(vehicleInfo, "imgCableAlimen3");
             const imageUrl = uploadImageToDrive(imgCableAlimen3, filename, folder, buildImageUploadOperationKey(payload.opId, vehicleId, "imgCableAlimen3"));
             sheet.getRange(actualRow, COLS_CORTES.imgCableAlimen3).setValue(imageUrl);
         }
@@ -970,6 +970,27 @@ function sanitizeForFilename(text) {
     if (text === null || text === undefined) return '';
     return String(text).replace(/[^a-zA-Z0-9.-]/g, '_').replace(/\s+/g, '_');
 }
+
+
+function sanitizeForNomenclature(text) {
+    if (text === null || text === undefined) return "";
+    return String(text).toLowerCase()
+        .replace(/[\/,]/g, "_")
+        .replace(/[^a-z0-9_.-]/g, "_")
+        .replace(/__+/g, "_")
+        .replace(/^_+|_+$/g, "");
+}
+function buildCanonicalImageBaseName(vehicleInfo, fieldName, extraSuffix) {
+    const info = vehicleInfo || {};
+    const suffixes = { imagenVehiculo: "", imgCorte1: "_corte1", imgCorte2: "_corte2", imgCorte3: "_corte3",
+        imgApertura: "_apert", imgCableAlimen: "_alimen", imgCableAlimen2: "_alimen2", imgCableAlimen3: "_alimen3" };
+    if (!Object.prototype.hasOwnProperty.call(suffixes, fieldName)) throw new Error("El campo de imagen no tiene una nomenclatura canónica definida.");
+    const parts = [sanitizeForNomenclature(info.modelo), sanitizeForNomenclature(info.versionesAplicables),
+        sanitizeForNomenclature(info.tipoEncendido), sanitizeForNomenclature(info.anoDesde || "XXXX")].filter(Boolean);
+    if (!parts.length) throw new Error("No hay metadatos suficientes para construir el nombre canónico de la imagen.");
+    return (parts.join("_") + suffixes[fieldName] + String(extraSuffix || "")).toLowerCase();
+}
+
 
 function mapRowToObject(row, colMap) {
     const obj = {};
@@ -1189,12 +1210,8 @@ function uploadImageToDrive(imageData, filename, folder, operationKey) {
     blob.setName(temporaryFilename);
     const file = findExistingImageUpload(folder, temporaryFilename, blob.getBytes().length, token) || folder.createFile(blob);
 
-    let savedOriginalName = originalFilename;
+    const savedOriginalName = originalFilename;
     const previousDescription = String(file.getDescription() || "");
-    const previousName = previousDescription.match(/(?:^|\|)name=([^|]*)/);
-    if (previousDescription.startsWith("GPSpediaImageUpload|") && previousName) {
-        savedOriginalName = decodeURIComponent(previousName[1]) || originalFilename;
-    }
     const description = "GPSpediaImageUpload|token=" + token + "|state=pending|name=" + encodeURIComponent(savedOriginalName);
     if (previousDescription !== description) file.setDescription(description);
     return "https://drive.google.com/uc?export=view&id=" + file.getId();
@@ -1203,15 +1220,16 @@ function uploadImageToDrive(imageData, filename, folder, operationKey) {
 
 function getExtensionFromMimeType(mimeType) {
     const mimeMap = {
-        'image/jpeg': '.jpg',
-        'image/png': '.png',
-        'image/gif': '.gif',
-        'image/webp': '.webp',
-        'image/svg+xml': '.svg',
-        'image/bmp': '.bmp',
-        'image/tiff': '.tiff'
+        'image/jpeg': '.jpg', 'image/jpg': '.jpg', 'image/pjpeg': '.jpg',
+        'image/png': '.png', 'image/x-png': '.png', 'image/gif': '.gif',
+        'image/webp': '.webp', 'image/svg+xml': '.svg', 'image/bmp': '.bmp',
+        'image/x-ms-bmp': '.bmp', 'image/tiff': '.tiff', 'image/heic': '.heic',
+        'image/heif': '.heif', 'image/avif': '.avif', 'image/x-icon': '.ico',
+        'image/vnd.microsoft.icon': '.ico'
     };
-    return mimeMap[mimeType] || '.jpg'; // Fallback a .jpg si no se reconoce el tipo
+    const extension = mimeMap[String(mimeType || "").toLowerCase()];
+    if (!extension) throw new Error("No se reconoce una extensión para el MIME de imagen: " + mimeType);
+    return extension;
 }
 
 function checkFileIdValid(url) {

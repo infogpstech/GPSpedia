@@ -3807,3 +3807,36 @@ ALCANCE
 - No se modificaron endpoints, configuraciones, fuentes backend, datos de Spreadsheet/Drive ni deployments.
 - No se ejecutaron pruebas funcionales ni operaciones externas.
 ================================================================================
+
+
+================================================================================
+IMPLEMENTACIÓN — NORMALIZACIÓN AUTOMÁTICA DE NOMBRES DE IMÁGENES Y CARPETAS
+Fecha: 2026-11-07
+Rama: GPSpedia2.2.5_work
+
+**Services/admin.js**
+- Unificada la construcción de nombres según la nomenclatura oficial: modelo, versiones aplicables, tipo de encendido, año inicial y sufijo del campo de imagen.
+- normalizeImages normaliza los ocho campos de imagen y los segmentos existentes de la jerarquía de carpetas cuando hay una coincidencia canónica única.
+- Se preserva la extensión existente; si no existe, se deriva de MIME de imagen reconocido. Si no puede determinarse, se omite el renombrado.
+- Antes de renombrar/copiar se comprueba que el nombre no esté ocupado por otro ID. Los conflictos se registran y se omiten sin sobrescribir.
+- Las imágenes compartidas se separan solo cuando los usos requieren nombres distintos; la URL se actualiza únicamente para la copia nueva.
+- organizePrimaryVehicleImages también corrige el nombre de imagenVehiculo al moverla a la carpeta canónica. Conserva controles de referencias y agrega rollback de ubicación si falla el renombrado.
+- Las rutas de alta, reparación, carga suplementaria y edición in-modal usan la misma nomenclatura.
+
+**Services/write.js**
+- Las rutas de alta, reparación, corte, imagenVehiculo, apertura y alimentación usan el mismo generador canónico de nombres que ADMIN.
+- El nombre canónico vigente se guarda en la descripción de idempotencia de ambos servicios para que un reintento no restaure una nomenclatura heredada.
+
+**Integridad y alcance**
+- No se modificaron URLs/IDs al renombrar archivos existentes.
+- No se modificó handleAuditDriveImagesInCortes ni collectCortesImageReferences().
+- No se modificaron frontend, mapeo de acciones, endpoints, configuración, datos productivos ni deployments.
+- Los nombres de destino en conflicto se omiten; no se crean sufijos arbitrarios ni se borran archivos.
+- Las imágenes huérfanas sin metadatos identificables quedan fuera de esta normalización semántica.
+
+**Validación**
+- Comprobaciones lógicas aisladas de nomenclatura/extensión: 6/6.
+- Mocks de coincidencia única de carpeta, ambigüedad y conflicto de nombre: resultados esperados.
+- Delimitadores balanceados; collector de referencias y auditoría recursiva idénticos a respaldos.
+- No se ejecutó runtime Apps Script, Drive/Spreadsheet real ni despliegue.
+================================================================================
