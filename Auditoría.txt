@@ -9565,3 +9565,69 @@ E1 estática: revisión de funciones, consumidores, HTML/CSS, contratos de Histo
 AUD-T-008 queda con E1 estática completada y cuatro hallazgos nuevos abiertos. La estructura básica de deep linking, compartir e indicador minimalista está presente; la precisión depende de la unicidad de búsqueda, el parser de año puede tomar un número de otro campo, el fallback de compartir es incompleto y el hash malformado no está protegido. Se confirman además dependencias ya registradas en búsqueda global y espera indefinida de catálogo.
 Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-009: PWA, OFFLINE, INDEXEDDB, CACHÉ, SERVICE WORKER Y COMPATIBILIDAD iOS
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S027 | Checkpoint: AUD-CP-0027
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac | Árbol: 9617c2c588190a50fde235bfe2d32b3ebee7b7ba
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+Estado: E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE.
+
+1. ALCANCE Y FUENTES
+Revisión estática del ciclo PWA y offline: manifiesto, precarga y actualización del Service Worker, grafo de módulos, fallback de navegación, persistencia IndexedDB, catálogo local, miniaturas, sesión local, limpieza de almacenamiento e instalación iOS/iPadOS.
+Archivos revisados:
+- service-worker.js, manifest.json, index.html, main.js y style.css.
+- offline.js, auth.js, ui.js, navigation.js y state.js.
+- VinDifferentialEngine.js, youtubeUpload.js y api-config.js.
+- add_cortes.html y users.html como consumidores del grafo modular.
+Contraste histórico: 825a1aea — persistencia IndexedDB y modo offline; 9f8b84a9 — estabilidad offline; d9476ab0 — instalación PWA dinámica e instrucciones iOS. Se contrastaron además H-AUD-037-008 a H-AUD-037-012, H-AUD-038-003/004, AUG-022, AUG-051/AUG-052 y AUD-T-006/AUD-T-008.
+
+2. HALLAZGOS NUEVOS
+
+H-AUD-009-001 — ALTA — El precache no contiene todo el grafo estático de módulos ES.
+Evidencia: service-worker.js:2–20 enumera los recursos de urlsToCache, pero no incluye youtubeUpload.js ni VinDifferentialEngine.js. ui.js:1 y 11 importa ambos módulos estáticamente; add_cortes.html:339–342 también importa youtubeUpload.js. La aplicación principal carga ui.js desde main.js.
+Impacto: en una instalación nueva, el Service Worker puede completar la precarga declarada sin haber almacenado estos módulos. Si el usuario vuelve a abrir la PWA sin conexión antes de que esas dependencias hayan sido almacenadas por una navegación controlada posterior, el navegador no puede resolver el grafo ESM y puede abortar la carga de la aplicación. La ausencia de VinDifferentialEngine.js ya estaba registrada en H-AUD-037-011; este hallazgo amplía el mismo riesgo con youtubeUpload.js y con el consumidor add_cortes.html.
+Acción: ampliar AUG-052; conservar H-AUD-037-011 como antecedente y no duplicar su causa original.
+
+H-AUD-009-002 — MEDIA — La instalación del Service Worker depende de una precarga atómica sin diagnóstico del registro.
+Evidencia: service-worker.js:23–30 ejecuta cache.addAll(urlsToCache) dentro de event.waitUntil. Si cualquiera de los recursos de la lista falla o responde con un estado no almacenable, la promesa completa rechaza y la instalación del worker no se completa. main.js:775–780 llama navigator.serviceWorker.register('./service-worker.js') sin await, catch ni actualización visible del estado.
+Impacto: un recurso ausente, temporalmente inaccesible o con ruta incorrecta puede impedir la instalación/actualización completa del Service Worker. La interfaz no presenta un estado recuperable que permita distinguir una PWA sin worker de una PWA preparada para offline.
+Acción: ampliar AUG-052 para separar recursos obligatorios/opcionales, registrar fallos de precarga y manejar explícitamente el rechazo de register(). No se afirma que un recurso concreto de la lista actual esté ausente; no se ejecutó la instalación real.
+
+H-AUD-009-003 — MEDIA — La detección de iOS no cubre de forma fiable iPadOS con agente de usuario de escritorio.
+Evidencia: main.js:665–667 identifica iOS únicamente mediante /iPad|iPhone|iPod/ sobre navigator.userAgent. En iPadOS, cuando Safari solicita o utiliza el agente de usuario de escritorio, el identificador puede presentarse como Macintosh y no coincidir con esa expresión. index.html:4–12 declara viewport, favicon, manifest y CSS, pero no declara apple-touch-icon ni metadatos Apple de web app. manifest.json:1–25 define display standalone e iconos PWA estándar, pero no sustituye una verificación de los mecanismos específicos de instalación de las versiones iOS soportadas.
+Impacto: en el escenario de iPadOS con UA de escritorio, el botón de instalación puede no mostrarse y el modal de instrucciones iOS no queda accesible desde ese flujo. La ausencia de icono/metadatos Apple específicos deja sin verificar la presentación del icono y el modo de apertura en versiones que dependan de esos mecanismos.
+Acción: nueva AUG-074 para detección iPadOS, recursos Apple y pruebas reales de instalación. No se concluye que la instalación falle en todas las versiones de iOS.
+
+3. HALLAZGOS EXISTENTES CONFIRMADOS — NO DUPLICAR
+- H-AUD-037-008/AUG-051: performOp() resuelve en request.onsuccess sin esperar transaction.oncomplete ni observar abort/error de la transacción; initDB() no cierra conexiones mediante onversionchange; no hay política de cuota/evicción, límite de memoryUrlCache ni revocación de object URLs; cacheItemImages() omite imgApertura y dispara compresiones sin límite; no existe limpieza por antigüedad de miniaturas.
+- H-AUD-037-009/AUG-051: searchHistory permanece global entre cuentas y sin retención; getSearchHistory() limita la presentación, no el volumen almacenado.
+- H-AUD-037-010/AUG-052: loadInitialData() limita la lectura local mediante Promise.race, pero fetchCatalogData()/routeAction() no tienen timeout/cancelación general; el polling de restauración de búsqueda sigue siendo una dependencia separada ya registrada.
+- H-AUD-037-011/AUG-052: se confirma que cache.put() no está asociado a event.waitUntil() y que VinDifferentialEngine.js no figura en urlsToCache. H-AUD-009-001 amplía la lista incompleta con youtubeUpload.js.
+- H-AUD-038-003/AUG-051: viewedItems y validationCache no tienen política explícita de cuenta/retención.
+- H-AUD-038-004 y H-AUD-025-008/AUG-022: la limpieza de IndexedDB no espera los eventos de deleteDatabase() y no representa todo el almacenamiento utilizado.
+- H-AUD-006-001/AUG-065: el almacenamiento de imágenes no separa variantes por tamaño; no recrear esa tarea en AUD-T-009.
+
+4. CONTROLES POSITIVOS CONFIRMADOS
+- manifest.json declara name, short_name, start_url, display: standalone, scope, theme_color y dos iconos PWA de 192/512 px.
+- service-worker.js limita la interceptación a GET, precarga index.html, add_cortes.html, users.html, módulos base e iconos; en navegación intenta red y recurre a caché/index.html; en activate elimina cachés antiguas según su whitelist y ejecuta clients.claim().
+- offline.js define GPSpedia_DB en versión 4 y crea de forma condicional catalog, searchHistory, viewedItems, thumbnails, validationCache y adminLocalState.
+- performAdminStateOp() espera transaction.oncomplete y maneja onerror/onabort; las operaciones administrativas de estado local no deben confundirse con performOp().
+- auth.js intenta rehidratar el catálogo desde IndexedDB antes de red, limita la espera local a tres segundos y contempla el uso de caché si falla la consulta de red.
+- main.js incluye un flujo manual de instrucciones de instalación para iPhone y comprueba display-mode: standalone/navigator.standalone para reconocer una PWA ya instalada.
+
+5. TAREAS DERIVADAS Y RELACIONES
+- Nueva AUG-074 — Completar la detección e instalación PWA en iOS/iPadOS.
+- AUG-052 recibe adenda: incluir youtubeUpload.js y comprobar el grafo ESM completo; cubrir la atomicidad de cache.addAll(), diagnóstico de recursos requeridos/opcionales y rechazo de navigator.serviceWorker.register(); probar la primera recarga offline sin navegación controlada previa.
+- H-AUD-037-011/AUG-052 se mantienen como antecedente de cache.put() sin event.waitUntil() y ausencia de VinDifferentialEngine.js; no duplicar esa tarea.
+- H-AUD-037-008/009 y H-AUD-038-003/004 conservan la cobertura de transacciones, miniaturas, privacidad/retención y limpieza local.
+
+6. VALIDACIÓN Y LÍMITES
+E1 estática: inspección de archivos, funciones, imports, rutas de módulos, manifiesto, handlers del Service Worker, consumidores IndexedDB, historial de commits y documentación previa. No se ejecutaron pruebas E2/E3, instalación/actualización real del Service Worker, recarga offline en navegador, CacheStorage/cuota, IndexedDB real, transacciones abortadas, cambio de cuenta, Android/iOS/iPadOS, Add to Home Screen, modo standalone, lector de pantalla, CDN, red interrumpida ni pruebas de deployments.
+No se modificaron archivos de aplicación, assets, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments. Solo se preparan registros documentales de auditoría.
+
+7. CONCLUSIÓN
+AUD-T-009 queda con E1 estática completada y tres hallazgos nuevos abiertos. La base PWA, el manifiesto, el fallback de navegación y la persistencia IndexedDB están presentes, pero el precache no cubre el grafo ESM completo, la instalación del worker carece de diagnóstico ante fallos y la detección de instalación no contempla de forma fiable iPadOS con UA de escritorio. Los problemas generales de transacciones, cuotas, miniaturas, privacidad y timeout se mantienen en H-AUD-037/H-AUD-038 y sus tareas existentes.
+Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+================================================================================

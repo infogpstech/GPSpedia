@@ -4146,3 +4146,22 @@ ALCANCE
 - No se ejecutaron pruebas E2/E3, navegador, Web Share, Clipboard, lector de pantalla, HTTP, Apps Script ni operaciones externas.
 - No hubo merge ni despliegue. La rama base GPSpedia2.2.5 permanece sin cambios.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-009
+Fecha: 2026-11-08 | Rama GPSpedia2.2.5_work | Sesión AUD-20261108-S027
+- Auditoría.txt: líneas 9569–9633; tres hallazgos H-AUD-009-001 a 003 y controles/limitaciones E1.
+- Tareas.txt: líneas 6042–6052; resultado de AUD-T-009, nueva AUG-074 y adenda a AUG-052.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-009 actualizada en línea 60; iteración 32 en líneas 788–795.
+- Plan_auditoría/Aug_Tareas.md: líneas 1029–1048; AUG-074 y adenda a AUG-052.
+- Plan_auditoría/Consolidacion_Auditoria.md: cabecera/estado, índice AUG, VAL-14 y líneas 215–223.
+- contexto_personal.md: líneas 385–394; continuidad AUD-T-009.
+- checkpoint.md: checkpoints inicial/final AUD-CP-0027 en líneas 688–765; HEAD/base, árbol, respaldos exactos, límites y siguiente acción.
+- ChangesLogs.txt: líneas 4150–4167; registro del conjunto documental en el commit único.
+ALCANCE
+- Solo documentación de auditoría y trazabilidad.
+- No se modificaron service-worker.js, manifest.json, index.html, main.js, offline.js, auth.js, ui.js, navigation.js, state.js, VinDifferentialEngine.js, youtubeUpload.js, add_cortes.html, users.html, style.css ni otros archivos de aplicación/assets.
+- No se modificaron endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments.
+- No se ejecutaron pruebas E2/E3, navegador, Service Worker, CacheStorage, IndexedDB real, cuota, Android/iOS/iPadOS, Add to Home Screen ni pruebas de red.
+- No hubo merge ni despliegue. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

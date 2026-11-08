@@ -57,7 +57,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-006 | Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom | 7f57e2fd — Implementar Tarea 6: Lightbox y miniaturas PNG transparentes; af9caed8 — navegación de cables de alimentación en lightbox; 5ff81bde — Lightbox zoom y navegación | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN VISUAL/MÓVIL/RENDIMIENTO PENDIENTE |
 | AUD-T-007 | Navegación, History API, popstate, overlays y gesto atrás | 09c7a448 — Implementar Tarea 7: Navegación, historial y cierre de overlays; a45f394d — navegación back-gesture; 414c4258 — History API | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MÓVIL PENDIENTE |
 | AUD-T-008 | Deep links, compartir, enlaces precisos e indicador de red | 7714b985 — Implementar Tarea 8: Deep linking, compartir e indicador de red; 76d44aff — connection indicator, sharing and deep linking; 20290cdd — precisión de enlaces compartidos | AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE |
-| AUD-T-009 | PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS | 825a1aea — modo offline con persistencia IndexedDB; 9f8b84a9 — estabilidad offline; d9476ab0 — instalación PWA dinámica e iOS | POR AUDITAR |
+| AUD-T-009 | PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS | 825a1aea — modo offline con persistencia IndexedDB; 9f8b84a9 — estabilidad offline; d9476ab0 — instalación PWA dinámica e iOS | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE |
 | AUD-T-010 | Reportes de problemas y sugerencias de cambios en cortes | 64d8d044 — Implementar Tarea 9: Reporte y sugerencia de cambios; fb7f2fcf — reporte individual; db6951ed — modal de sugerencia; db0eee87 — almacenamiento independiente de sugerencias | POR AUDITAR |
 | AUD-T-011 | Módulo Problemas y Soluciones (PyS), formularios y visualización | f93ad12f — Implementar Tarea 10: Módulo PyS; 73d1fd91 — revisión PyS IV; 0e93ec25 — correcciones de carrusel y ficha | POR AUDITAR |
 | AUD-T-012 | Vinculación bidireccional PyS–vehículos y navegación sin ciclos | Implementar Tarea 11; f6299fcf — asociación de vehículo/problema y navegación anti-ciclo; 20ff5611 — contexto de carrusel PyS | POR AUDITAR |
@@ -784,3 +784,12 @@ E1: inspección estática de funciones, consumidores, HTML/CSS, contratos de his
 
 ### Siguiente iteración
 AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
+
+## 32. Iteración técnica — AUD-T-009
+Sesión AUD-20261108-S027 | Checkpoint AUD-CP-0027 | HEAD auditado c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac | árbol 9617c2c588190a50fde235bfe2d32b3ebee7b7ba | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-009-001 a 003 abiertos; validación funcional, PWA offline, CacheStorage, IndexedDB real e instalación iOS/iPadOS pendiente.
+Alcance: service-worker.js, manifest.json, index.html, main.js, style.css, offline.js, auth.js, ui.js, navigation.js, state.js, VinDifferentialEngine.js, youtubeUpload.js, add_cortes.html y users.html. Contraste con commits 825a1aea, 9f8b84a9 y d9476ab0; auditorías AUD-T-006/AUD-T-008/AUD-T-037/AUD-T-038.
+Hallazgos: grafo ESM de precache incompleto (youtubeUpload.js no está incluido; VinDifferentialEngine.js ya constaba en H-AUD-037-011); cache.addAll() puede abortar la instalación completa y register() no maneja el rechazo; la detección de iOS no reconoce de forma fiable iPadOS con UA de escritorio y faltan metadatos Apple específicos.
+Tareas: nueva AUG-074; adenda a AUG-052. H-AUD-037-008/009/010/011, H-AUD-038-003/004, AUG-022/AUG-051/AUG-052/AUG-065 se mantienen como antecedentes, sin duplicar sus causas.
+Límites: E1 estática; sin pruebas sintácticas, navegador, instalación/actualización Service Worker, recarga offline, CacheStorage, IndexedDB real, cuota, Android/iOS/iPadOS, Add to Home Screen, red real ni deployments. Sin cambios de aplicación/datos.
+Siguiente: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.

@@ -381,3 +381,14 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Tareas nuevas: AUG-072 y AUG-073. AUG-049 y AUG-052 reciben adendas.
 - Límites: sin navegador, Web Share, Clipboard, móvil/PWA, lector de pantalla, enlaces malformados, colisiones de catálogo, HTTP/health check, Apps Script, datos productivos ni deployments. Solo E1 estática; sin cambios de aplicación.
 - Siguiente: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
+
+## Continuidad — AUD-T-009 (2026-11-08)
+- Sesión/checkpoint: AUD-20261108-S027 / AUD-CP-0027.
+- Repositorio: infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac; árbol 9617c2c588190a50fde235bfe2d32b3ebee7b7ba; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+- AUD-T-009 — PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS: E1 estática completada; H-AUD-009-001 a 003 abiertos. No se modificó código.
+- Alcance: service-worker.js, manifest.json, index.html, main.js, style.css, offline.js, auth.js, ui.js, navigation.js, state.js, VinDifferentialEngine.js, youtubeUpload.js, add_cortes.html y users.html. Commits ancla 825a1aea, 9f8b84a9 y d9476ab0.
+- Hallazgos: falta youtubeUpload.js en urlsToCache y se confirma la ausencia de VinDifferentialEngine.js ya registrada; cache.addAll() puede abortar toda la instalación y register() no maneja el rechazo; la detección de iOS puede omitir iPadOS con UA de escritorio y no hay metadatos Apple específicos.
+- H-AUD-037-008/009/010/011, H-AUD-038-003/004 y tareas AUG-022/AUG-051/AUG-052/AUG-065 se mantienen como antecedentes; no duplicar transacciones, privacidad/retención, timeout, cache.put ni variantes de imagen.
+- Nueva AUG-074; adenda a AUG-052. Inventario: 73 IDs AUG únicos dentro de AUG-001 a AUG-074; AUG-015 continúa ausente.
+- Límites: sin pruebas E2/E3, navegador, instalación/actualización Service Worker, recarga offline, CacheStorage, IndexedDB real, cuota, Android/iOS/iPadOS, Add to Home Screen, red real ni deployments. Sin cambios de aplicación, assets, endpoints, configuración ni datos productivos.
+- Siguiente: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.

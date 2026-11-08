@@ -6038,3 +6038,15 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S026 | Checkpoint AUD-CP-0026
 - contexto_personal.md y checkpoint.md: continuidad y checkpoints AUD-CP-0026.
 Solo documentación. No se modificaron archivos de aplicación, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. No se ejecutaron pruebas E2/E3 ni operaciones externas. Rama base sin cambios.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-009
+Fecha: 2026-11-08 | Sesión AUD-20261108-S027 | Checkpoint AUD-CP-0027
+- Auditoría.txt: líneas 9569–9633; informe E1 y hallazgos H-AUD-009-001 a H-AUD-009-003.
+- Tareas.txt: resultado AUD-T-009; nueva AUG-074 y adenda a AUG-052.
+- Plan_auditoría/Plan_Auditoria.md: AUD-T-009 actualizado a E1 completada; iteración 32; siguiente AUD-T-010.
+- Plan_auditoría/Aug_Tareas.md: nueva AUG-074 y adenda de grafo ESM/instalación de Service Worker a AUG-052.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura actualizada a 23 E1/1 parcial/14 pendientes; inventario AUG a 73 IDs; VAL-14 ampliada.
+- contexto_personal.md y checkpoint.md: continuidad y checkpoints AUD-CP-0027.
+Solo documentación de auditoría y trazabilidad. No se modificaron archivos de aplicación, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments. No se ejecutaron pruebas E2/E3 ni operaciones externas. La rama base permanece sin cambios.
+================================================================================

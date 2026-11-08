@@ -1025,3 +1025,24 @@ ADENDA AUD-T-003 — AMPLIACIÓN DE AUG-043
   5. Probar lector de pantalla, estado online/offline, red disponible con backend inaccesible y movimiento reducido.
 
 - 2026-11-08 — AUD-T-008: nuevas AUG-072/AUG-073; adendas AUG-049/AUG-052. Inventario: 72 IDs únicos dentro de AUG-001 a AUG-073; AUG-015 continúa ausente.
+
+================================================================================
+### Adenda derivada de AUD-T-009 — AUG-052
+- Completar el grafo de módulos estáticos que debe estar disponible offline. Además de VinDifferentialEngine.js, incluir youtubeUpload.js, importado por ui.js y add_cortes.html, y verificar las dependencias alcanzables desde main.js, add_cortes.html y users.html.
+- Revisar el comportamiento atómico de cache.addAll(urlsToCache): distinguir recursos obligatorios del App Shell y recursos opcionales; un recurso obligatorio ausente debe producir un diagnóstico identificable y una instalación fallida recuperable, mientras que un recurso opcional no debe invalidar innecesariamente el App Shell.
+- Manejar explícitamente el rechazo de navigator.serviceWorker.register('./service-worker.js'); registrar de forma segura el estado de registro/instalación y ofrecer diagnóstico sin bloquear el uso online.
+- Conservar los criterios existentes de AUG-052 sobre cache.put() asociado a event.waitUntil(), cuota y estrategia de catálogo.
+- Probar instalación limpia, primera recarga offline antes de una navegación controlada posterior, módulo requerido ausente/404, recurso opcional fallido, actualización del worker, fallo de red y cuota de CacheStorage.
+
+### AUG-074 — Completar la detección e instalación PWA en iOS/iPadOS
+- **Origen:** H-AUD-009-003. **Prioridad:** Media.
+- **Problema:** la detección usa exclusivamente los tokens iPad/iPhone/iPod del userAgent; puede omitir iPadOS cuando Safari utiliza un agente de usuario de escritorio. index.html no declara apple-touch-icon ni metadatos Apple específicos para web apps.
+- **Criterios de aceptación:**
+  1. Detectar iPadOS con UA de escritorio mediante una comprobación compatible y acotada (por ejemplo, plataforma Macintosh combinada con capacidad táctil), sin clasificar equipos Mac de escritorio como iPad.
+  2. Definir y añadir el icono Apple y los metadatos de web app que correspondan a las versiones iOS/iPadOS soportadas, manteniendo el manifest.json como fuente PWA estándar.
+  3. Mostrar las instrucciones manuales de instalación en Safari iPhone/iPad cuando la app no esté en modo standalone; ocultar el botón cuando ya esté instalada.
+  4. Mantener el flujo de beforeinstallprompt para navegadores que lo soporten, sin depender de ese evento en iOS.
+  5. Probar iPhone Safari, iPadOS con UA móvil y de escritorio, apertura instalada en standalone, apertura en navegador normal y un Mac de escritorio como control negativo.
+- **Relación:** AUD-T-009 y AUG-052; no duplicar los criterios generales de instalación/actualización del Service Worker.
+
+- 2026-11-08 — AUD-T-009: nueva AUG-074; adenda a AUG-052. Inventario: 73 IDs únicos dentro de AUG-001 a AUG-074; AUG-015 continúa ausente.

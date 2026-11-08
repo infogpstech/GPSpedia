@@ -684,3 +684,82 @@ Cambios de aplicación/assets: ninguno. Endpoints/configuración/datos productiv
 Commit único previsto: docs(audit): auditar deep links, compartir e indicador de conectividad; parent_sha y expected_sha: f3d7558abeef482957582fea08f2041490b54f34; force:false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente acción: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0027
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S027 | Tarea: AUD-T-009.
+Repositorio: infogpstech/GPSpedia | Rama de trabajo: GPSpedia2.2.5_work.
+HEAD inicial confirmado: c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac | Árbol inicial: 9617c2c588190a50fde235bfe2d32b3ebee7b7ba.
+Rama base: GPSpedia2.2.5 | HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado inicial: AUD-T-008 E1 completada; AUD-T-009 por auditar según Plan_Auditoria.md.
+Alcance: PWA, instalación iOS/iPadOS, manifiesto, Service Worker, grafo de módulos offline, IndexedDB, miniaturas, sesión local, limpieza y fallback del catálogo.
+Restricciones: auditoría E1 estática; no modificar código, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments; no ejecutar operaciones reales.
+RESPALDOS EXACTOS (blob SHA previo):
+- Auditoría.txt: f5b113b0a4d2ab2ce1d8187d658205b6898a561d
+- Tareas.txt: ea5acdffae7cef64f562ad5528cc317914312f7f
+- Plan_auditoría/Plan_Auditoria.md: 416085246d4bb1e419900999b0ca545006352a11
+- Plan_auditoría/Aug_Tareas.md: e05a88b784234d4fe71548a8f516ca0e91ad78b3
+- Plan_auditoría/Consolidacion_Auditoria.md: 7ca1a24df47f7a0eed723dfa5b6767031b1cdc37
+- ChangesLogs.txt: e0f3a6da419ce46575822ff0feccc961e7652756
+- contexto_personal.md: e98d5fe4efd1e9c3843fc8b6e49231cd485f3131
+- checkpoint.md: 691f5efab5f8f975949a9531b52de10d2e98d50c
+BLOBS DE CÓDIGO DE REFERENCIA:
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- manifest.json: 4634b82d1ad767a4fbd2d59a945eb33fb1b668b9
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+Fase inicial: rama/base, HEAD, árbol y respaldos documentales verificados; sin cambios de aplicación ni operaciones externas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0027
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S027 | Tarea: AUD-T-009.
+HEAD auditado/padre previsto: c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac | árbol inicial: 9617c2c588190a50fde235bfe2d32b3ebee7b7ba.
+Rama de trabajo: GPSpedia2.2.5_work | rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado final: AUDITORÍA ESTÁTICA E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE.
+
+RESULTADO
+- H-AUD-009-001 a H-AUD-009-003 documentados.
+- H-AUD-037-011 se confirma y amplía mediante la omisión adicional de youtubeUpload.js; AUG-052 recibe adenda.
+- Nueva AUG-074 para detección/instalación iOS/iPadOS.
+- No se modificó código de aplicación, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments.
+
+ARCHIVOS DOCUMENTALES Y RESPALDOS EXACTOS (blob SHA previo)
+- Auditoría.txt: f5b113b0a4d2ab2ce1d8187d658205b6898a561d
+- Tareas.txt: ea5acdffae7cef64f562ad5528cc317914312f7f
+- Plan_auditoría/Plan_Auditoria.md: 416085246d4bb1e419900999b0ca545006352a11
+- Plan_auditoría/Aug_Tareas.md: e05a88b784234d4fe71548a8f516ca0e91ad78b3
+- Plan_auditoría/Consolidacion_Auditoria.md: 7ca1a24df47f7a0eed723dfa5b6767031b1cdc37
+- ChangesLogs.txt: e0f3a6da419ce46575822ff0feccc961e7652756
+- contexto_personal.md: e98d5fe4efd1e9c3843fc8b6e49231cd485f3131
+- checkpoint.md: 691f5efab5f8f975949a9531b52de10d2e98d50c
+
+DOCUMENTACIÓN ACTUALIZADA
+- Auditoría.txt: líneas 9569–9633.
+- Tareas.txt: líneas 6042–6052.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-009 línea 60 e iteración 32 líneas 788–795.
+- Plan_auditoría/Aug_Tareas.md: líneas 1029–1048.
+- Plan_auditoría/Consolidacion_Auditoria.md: cabecera/estado, índice AUG, VAL-14 y líneas 215–223.
+- contexto_personal.md: líneas 385–394.
+- ChangesLogs.txt: líneas 4150–4167.
+- checkpoint.md: checkpoints inicial/final; actualización final como último paso documental antes del único commit.
+
+VALIDACIÓN Y LÍMITES
+- E1: revisión estática de archivos, funciones, imports, rutas, manifiesto, Service Worker, IndexedDB, consumidores y commits históricos.
+- No se ejecutaron pruebas E2/E3, navegador, instalación/actualización Service Worker, recarga offline, CacheStorage, IndexedDB real, cuota, Android/iOS/iPadOS, Add to Home Screen, red real ni deployments.
+- No hubo cambios de aplicación ni operaciones externas. No hubo merge ni despliegue.
+
+CONTINUIDAD
+- Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+- El commit único documental se publicará con mensaje: docs(audit): auditar PWA, offline e IndexedDB.
+- parent_sha y expected_sha deberán ser c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac; force:false. La rama base GPSpedia2.2.5 deberá permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- El SHA del commit que incorpora este checkpoint será identificable en el historial de GPSpedia2.2.5_work.
+================================================================================
