@@ -709,3 +709,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Se confirman los riesgos de KDF, migración legacy, serialización de contraseñas, contador de intentos, purga de Logs, legacy inactivo, formato de hash desconocido y validación UI. ADMIN 0 conserva gate de sesión/rol para acciones distintas de ping.
 - No se ejecutaron Apps Script V8, HTTP, login real, acceso a Sheets/Logs, KDF benchmark, migración, concurrencia, CacheService, deployments, navegador ni E2/E3. Sin cambios funcionales ni operaciones productivas.
 - Siguiente: AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso.
+
+
+## Continuidad AUD-T-024 — 2026-11-08
+- Revalidación AUD-20261108-S069/AUD-CP-0068; E1 histórica 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec; HEAD 2f627a9f11a2e0c6282903d515b8ef893cd15b96; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 65 commits posteriores; los 12 archivos funcionales/auxiliares de alcance mantienen SHA E1. Los dos archivos de código del diff global (Services/admin.js y Services/write.js) están fuera del alcance.
+- H-AUD-024-001 a 010 permanecen abiertos. Se conservan AUG-005 a AUG-008, AUG-010/AUD-T-033/AUG-003, AUG-016 y AUG-017, sin duplicación.
+- Controles positivos: USERS valida token, usuario y rol en getVerifiedSession y protege resetUserSessions para Desarrollador. Persisten riesgos de coordinación AUTH/USERS, respuestas obsoletas, fallos parciales, logout local y expiración no definida.
+- No se ejecutaron pruebas reales de navegador, multi-pestaña, HTTP, Apps Script, revocación, expiración, concurrencia, roles ni deployments. Sin cambios funcionales ni datos productivos.
+- Siguiente: AUD-T-025 — Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento.

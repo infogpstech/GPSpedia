@@ -1292,3 +1292,63 @@ Documentos actualizados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Cons
 Commit documental único: docs(audit): verify AUD-T-023 continuity; parent 843818e9199e0952ca575196e79efa09f5bffb87.
 Siguiente unidad: AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso (revalidación de continuidad E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0068
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S069
+Tarea: AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso; revalidación de continuidad E1.
+E1 histórica: AUD-20261107-S005 / AUD-CP-0005; commit 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec.
+HEAD inicial de GPSpedia2.2.5_work: 2f627a9f11a2e0c6282903d515b8ef893cd15b96; árbol 948c7398f5afa6421f79ea917ca3a2f8efdf1ed4. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Alcance: Services/Auth.js, Services/users.js, Services/Test/Auth.js, Services/Test/users.js, auth.js, users.html, api-config.js, main.js, ui.js, state.js, index.html y Services/Test/README.md.
+Estado inicial: E1 estática histórica completada; continuidad pendiente. H-AUD-024-001 a 010 abiertos. Tareas y adendas existentes AUG-005 a AUG-008, AUG-010, AUG-016 y AUG-017; no duplicar.
+Respaldos documentales previos:
+- Plan_auditoría/Plan_Auditoria.md: 953fbecda78ee1969dcd0d44175411a42992cfa7
+- Plan_auditoría/Consolidacion_Auditoria.md: 17aed29f1565cd88825b63523e0b14d36480fe29
+- ChangesLogs.txt: 6296cbad10166c91869461bd0a2eefa4a2462a6f
+- contexto_personal.md: be6536825307c2602ed4716b5af4fdce805d5a23
+- checkpoint.md: 89b4884ae49066dd8228ef62a4d24f14ea103669
+Sin cambios funcionales, pruebas de autenticación real, acceso a datos productivos ni ejecuciones sobre servicios. Checkpoint inicial/final se publica en un solo commit documental.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0068
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S069
+Tarea: AUD-T-024 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-024-001 a 010 permanecen abiertos; tareas existentes y adendas se conservan sin duplicación.
+E1 histórica: 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec (AUD-20261107-S005 / AUD-CP-0005). HEAD auditado: 2f627a9f11a2e0c6282903d515b8ef893cd15b96; árbol 948c7398f5afa6421f79ea917ca3a2f8efdf1ed4; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Comparación E1→HEAD: 65 commits posteriores. El diff global contiene 10 archivos; únicamente Services/admin.js y Services/write.js son archivos funcionales modificados. Ambos están fuera del alcance de AUD-T-024. Los 12 archivos funcionales/auxiliares de AUD-T-024 conservan exactamente sus SHA de E1; no hay deriva de código en el alcance.
+SHA verificados:
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+Hallazgos revalidados por continuidad exacta de código:
+- H-AUD-024-001: una respuesta asíncrona de validación antigua puede borrar una sesión nueva.
+- H-AUD-024-002: el bloqueo local entre pestañas no es atómico y se libera antes de concluir la validación; puede dejar otra pestaña sin transición del splash.
+- H-AUD-024-003: resetUserSessions de USERS puede competir con login de AUTH y dejar activa una sesión creada después de la instantánea.
+- H-AUD-024-004: la autodeleción del Desarrollador puede dejar sesiones huérfanas.
+- H-AUD-024-005: un fallo parcial al crear sesión puede dejar Users.SessionToken inconsistente o revocar la sesión anterior sin crear la nueva.
+- H-AUD-024-006: un fallo durante eliminación múltiple puede dejar resetUserSessions parcialmente aplicado.
+- H-AUD-024-007: Inbox/Dashboard pueden permanecer visibles al cambiar a una cuenta de menor privilegio.
+- H-AUD-024-008: logout continúa siendo exclusivamente local y no revoca el token backend.
+- H-AUD-024-009: no se aplica expiración por antigüedad ni inactividad; requiere decisión de política.
+- H-AUD-024-010: AUTH valida ActiveSessions sin comprobar que el usuario siga existiendo en Users.
+Controles positivos observados en el código E1, sin cambio hasta HEAD: USERS getVerifiedSession() valida token, encuentra usuario y deriva rol de Users; handleResetUserSessions() exige Desarrollador y rechaza el cierre remoto de la propia sesión; AUTH conserva sección crítica local para login. Estos controles no resuelven la coordinación entre proyectos Apps Script ni los fallos parciales descritos.
+Relaciones y tareas existentes, sin duplicar: AUG-005 a AUG-008 (adendas AUD-T-024); AUG-010/AUD-T-033/AUG-003 para serialización/coordinación interservicios; AUG-016 para consistencia y recuperación de mutaciones de sesión; AUG-017 para visibilidad de navegación según rol.. AUG-007 continúa pendiente de decisión de política; AUG-016 depende de coordinación interproyectos y debe mantener relación con AUD-T-033/AUG-003.
+Validaciones ejecutadas: verificación de HEAD/árbol/base; comparación Git E1→HEAD; SHA individual de los 12 archivos; inspección puntual de handleValidateSession, handleLogin, getVerifiedSession, handleResetUserSessions, handleDeleteUser, checkSession, logout y showApp.
+No ejecutadas: navegador/multi-pestaña, HTTP, Apps Script V8, login real, revocación remota, expiración, pruebas concurrentes, fallos inyectados en Spreadsheet, pruebas de roles, despliegues, accesibilidad ni E2/E3. E1 estática no certifica comportamiento funcional o productivo.
+Sin cambios de código, endpoints, contratos, configuración, credenciales, hojas, Drive, Spreadsheet ni datos productivos. Sin despliegue ni merge. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: los diez hallazgos y las tareas ya están registrados.
+Documentos actualizados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Commit documental único: docs(audit): verify AUD-T-024 continuity; parent 2f627a9f11a2e0c6282903d515b8ef893cd15b96.
+Siguiente unidad: AUD-T-025 — Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento (revalidación de continuidad E1).
+================================================================================

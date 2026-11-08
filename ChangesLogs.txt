@@ -4615,3 +4615,15 @@ Sesión AUD-20261108-S068 | Checkpoint AUD-CP-0067 | E1 87d75c38d72e76ed60132d25
 - Sin Apps Script V8, HTTP, login real, acceso a Logs/Sheets, KDF benchmark, migración, concurrencia real, CacheService, deployments, navegador ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
 Siguiente unidad: AUD-T-024.
 ================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-024 — revalidación de continuidad E1
+Sesión AUD-20261108-S069 | Checkpoint AUD-CP-0068 | E1 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec | HEAD 2f627a9f11a2e0c6282903d515b8ef893cd15b96 | árbol 948c7398f5afa6421f79ea917ca3a2f8efdf1ed4.
+- Comparación E1→HEAD: 65 commits posteriores; 10 archivos en diff global. Services/admin.js y Services/write.js cambiaron fuera del alcance. Los 12 archivos auditados conservan SHA E1.
+- H-AUD-024-001 a 010 permanecen abiertos; se conservan AUG-005 a AUG-008, AUG-010/AUD-T-033/AUG-003, AUG-016 y AUG-017 sin duplicación.
+- Se confirman por continuidad los riesgos de validación obsoleta, coordinación multi-pestaña, concurrencia AUTH/USERS, sesiones huérfanas, escrituras parciales, navegación residual, logout local y falta de política de expiración. Los controles backend positivos de USERS permanecen.
+- Se actualizan Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md.
+- Sin navegador, multi-pestaña, HTTP, Apps Script V8, login real, revocación, expiración, concurrencia, fallos inyectados, pruebas de roles, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Siguiente unidad: AUD-T-025.
+================================================================================

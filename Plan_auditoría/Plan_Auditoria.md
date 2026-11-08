@@ -1353,3 +1353,13 @@ Sesión AUD-20261108-S068 | Checkpoint AUD-CP-0067 | E1 histórica 87d75c38d72e7
 - AUG-010 a AUG-014 siguen siendo las tareas correctivas; conservar relación AUD-T-033/AUG-003 y separación AUD-T-024. Sin hallazgos/tareas duplicados.
 - Sin Apps Script V8, HTTP, login real, acceso a Sheets/Logs, benchmark KDF, migración, concurrencia real, CacheService, locks entre proyectos, deployments, navegador ni E2/E3. Validación funcional pendiente; no se afirma purga/migración productiva.
 - Sin cambios de código, endpoints, contratos, configuración, credenciales ni datos productivos. No se modifican Auditoría.txt, Tareas.txt ni Aug_Tareas.md. Siguiente: AUD-T-024.
+
+
+## 53. Continuidad verificada — AUD-T-024
+Sesión AUD-20261108-S069 | Checkpoint AUD-CP-0068 | E1 histórica 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec | HEAD auditado 2f627a9f11a2e0c6282903d515b8ef893cd15b96 | árbol 948c7398f5afa6421f79ea917ca3a2f8efdf1ed4 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- Comparación E1→HEAD: 65 commits posteriores; 10 archivos en diff global. Services/admin.js y Services/write.js son los únicos archivos funcionales cambiados y ambos están fuera del alcance. Los 12 archivos funcionales/auxiliares de AUD-T-024 conservan SHA idénticos a E1.
+- H-AUD-024-001 a 010 permanecen abiertos: respuesta asíncrona obsoleta; lock local no atómico entre pestañas; carrera login/resetUserSessions; autodeleción y sesiones huérfanas; creación parcial de sesión; reset múltiple parcial; navegación residual tras cambio de rol; logout solo local; falta de política de expiración; AUTH no comprueba existencia del usuario.
+- Controles positivos: USERS valida token/usuario/rol en getVerifiedSession y restringe resetUserSessions a Desarrollador; no se asume que los ScriptLock de AUTH y USERS sean compartidos.
+- Se conservan AUG-005 a 008 y sus adendas; AUG-010/AUD-T-033/AUG-003; AUG-016 y AUG-017. Sin tareas duplicadas.
+- Sin navegador, multi-pestaña, HTTP, Apps Script V8, login/revocación/expiración reales, concurrencia, fallos inyectados, pruebas de roles, deployments ni E2/E3. E1 no certifica comportamiento funcional.
+- Sin cambios de código, endpoints, contratos, configuración, credenciales ni datos productivos. No se modifican Auditoría.txt, Tareas.txt ni Aug_Tareas.md. Siguiente: AUD-T-025.

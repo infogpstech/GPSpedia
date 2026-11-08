@@ -705,3 +705,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-010 a AUG-014 permanecen pendientes; no duplicar. Mantener coordinación AUTH/USERS en AUD-T-033 y separar ciclo de sesiones en AUD-T-024.
 - No se ejecutaron Apps Script V8, HTTP, login, acceso a Sheets/Logs, benchmark KDF, migración, concurrencia, CacheService, deployments, navegador ni E2/E3. La continuidad no certifica comportamiento productivo.
 - Sin cambios de código, configuración, credenciales, Sheets, Drive ni datos productivos. Siguiente unidad: AUD-T-024.
+
+
+## 42. Continuidad AUD-T-024 — usuarios, privilegios y ciclo de sesión
+- Sesión AUD-20261108-S069; checkpoint AUD-CP-0068; E1 histórica 3e458bbf67fce2a95847f4f5a0bf5d72170d4eec; HEAD 2f627a9f11a2e0c6282903d515b8ef893cd15b96; árbol 948c7398f5afa6421f79ea917ca3a2f8efdf1ed4; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 65 commits posteriores; Services/admin.js y Services/write.js son cambios funcionales globales fuera del alcance. Los 12 archivos de AUD-T-024 conservan SHA idénticos a E1.
+- H-AUD-024-001 a 010 siguen abiertos; no se detectan hallazgos nuevos. Persisten riesgos de respuesta obsoleta, coordinación multi-pestaña, carrera AUTH/USERS, sesiones huérfanas, fallos parciales, estado de navegación, logout sin revocación y política de expiración no definida.
+- Se conservan AUG-005 a AUG-008, AUG-010/AUD-T-033/AUG-003, AUG-016 y AUG-017. No duplicar.
+- Controles backend positivos observados: USERS verifica token/usuario/rol y limita resetUserSessions a Desarrollador. Los locks son locales a cada proyecto; no se consideran una transacción compartida.
+- No se ejecutaron navegador, multi-pestaña, HTTP, Apps Script V8, login real, revocación, expiración, concurrencia, fallos parciales, pruebas de roles, deployments ni E2/E3. Validación funcional pendiente.
+- Sin cambios funcionales, datos productivos, merge ni despliegue. Siguiente: AUD-T-025.
