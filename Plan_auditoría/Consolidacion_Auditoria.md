@@ -567,3 +567,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, red/308, XSS, deployments ni E2/E3.
 - No se recalcula cobertura global ni se modifican estados de otras unidades. Sin cambios de código o datos productivos. Sin merge ni despliegue; base intacta.
 - Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+
+
+## 27. Actualización de cobertura — continuidad AUD-T-014
+- E1 de AUD-T-014 completada históricamente en AUD-20261108-S032/AUD-CP-0032 sobre deefa3a8ceca4aae892c61d0e99fec73c3e44837.
+- Comparación hasta 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11: 21 commits posteriores; el diff contiene ocho archivos documentales. Los siete archivos funcionales de alcance mantienen exactamente sus SHA históricos; no hay deriva funcional.
+- H-AUD-014-001 a 003 permanecen abiertos: falta de saneamiento autoritativo en WRITE/FEEDBACK; dos sinks descriptivos en ui.js omiten sanitizeHtmlContent; modo estricto/avanzado gpsepedia_rich_text_mode no conectado.
+- AUG-095 a AUG-097 continúan pendientes; VAL-23 planificada. No se crean hallazgos ni tareas duplicadas. La Tarea 13 conserva su estado histórico COMPLETADA.
+- Se conserva cobertura global de 38/38 unidades con E1 estática completada. Esta continuidad no modifica estados funcionales ni certifica E2/E3.
+- No se ejecutaron navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, concurrencia, service worker en dispositivo ni pruebas E2/E3. Sin cambios funcionales, operaciones productivas, despliegue ni merge; base intacta.
+- Siguiente unidad secuencial: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos.

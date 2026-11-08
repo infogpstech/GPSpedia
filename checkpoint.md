@@ -565,3 +565,50 @@ No se modificó código, OAuth scopes, Google Cloud, endpoints, configuración, 
 Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
 Commit único esperado: docs(audit): verify AUD-T-013 continuity; parent f90be001f1c1bf23e67f144bc5a57d36d4cad58a.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0053
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S054
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work | HEAD observado: 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11 | árbol: 76cff9eb079795c0e6b5ccf0022bced3232a012c.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificará.
+Tarea: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea; revalidación de continuidad E1 histórica.
+E1 histórica: AUD-20261108-S032/AUD-CP-0032 | HEAD deefa3a8ceca4aae892c61d0e99fec73c3e44837 | árbol af44c6c3d2c911f72e6891f9b935a83fdcb83a38.
+Estado inicial: E1 estática completada históricamente; continuidad pendiente de revalidación.
+Alcance: rich-text.js, ui.js, add_cortes.html, Services/write.js, Services/feedback.js, style.css y service-worker.js.
+Hallazgos conocidos: H-AUD-014-001 a H-AUD-014-003. Tareas AUG-095 a AUG-097; VAL-23 planificada.
+Comparación inicial: 21 commits posteriores a E1; ocho archivos documentales modificados; los siete archivos funcionales del alcance conservan los SHA históricos.
+Respaldos documentales previos:
+- Plan_auditoría/Plan_Auditoria.md: 2092a034a21f7b52e6c090ec491bfe45dd1b068a
+- Plan_auditoría/Consolidacion_Auditoria.md: 14f0a4d4f9a6c3a35318a78723ab2a4005828dcd
+- ChangesLogs.txt: 2df8d0e38c6c3dd94e8a78d8b612690147801ee7
+- contexto_personal.md: 7448d60c96eee57abea11ee005ba68f50a36d02b
+- checkpoint.md: 69e49b3d61e10b04c4f1ee49551dba7820de4a93
+No se realizarán cambios funcionales ni operaciones productivas.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0053
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S054
+Resultado: AUD-T-014 E1 ESTÁTICA COMPLETADA Y VIGENTE POR IDENTIDAD EXACTA DE LOS SIETE ARCHIVOS FUNCIONALES. Comparación histórica: 21 commits posteriores; ocho archivos documentales modificados.
+HEAD padre: 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11; árbol inicial: 76cff9eb079795c0e6b5ccf0022bced3232a012c. Rama: GPSpedia2.2.5_work.
+Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Hallazgos abiertos: H-AUD-014-001 a H-AUD-014-003. Tareas AUG-095 a AUG-097 pendientes; VAL-23 planificada. Sin hallazgos/tareas nuevos.
+Archivos de alcance y SHA históricos:
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+Hallazgos revalidados: WRITE/FEEDBACK persisten HTML sin saneamiento autoritativo; dos sinks en ui.js insertan activeCable.content/activeContent sin sanitizeHtmlContent; gpsepedia_rich_text_mode estricto/avanzado no está conectado. Los controles positivos de editor/listas/sanitizador/LF-CRLF siguen presentes estáticamente.
+No se ejecutaron navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, concurrencia, service worker en dispositivo ni E2/E3.
+Documentos modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: hallazgos y tareas ya documentados; sin hallazgos/tareas nuevos.
+No se modificó código, servicios, contratos, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin merge ni despliegue.
+Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; mantener cancelada la función de filtros rápidos.
+Commit único esperado: docs(audit): verify AUD-T-014 continuity; parent 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11.
+================================================================================

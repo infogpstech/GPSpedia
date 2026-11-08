@@ -1114,3 +1114,23 @@ Controles positivos estáticos: módulo unificado youtubeUpload.js; formulario t
 No se ejecutaron YouTube Data API, OAuth real, XHR contra YouTube, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, cancelación/red interrumpida, HTTP 308, XSS ni deployments. E2/E3 permanecen pendientes.
 Límites: continuidad E1 estática y comparación Git únicamente. Sin cambios de aplicación, OAuth scopes, Google Cloud, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin merge ni despliegue; base intacta.
 Siguiente unidad: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+
+
+## 38. Continuidad verificada — AUD-T-014
+Sesión AUD-20261108-S054 | Checkpoint AUD-CP-0053 | HEAD E1 deefa3a8ceca4aae892c61d0e99fec73c3e44837 | árbol histórico af44c6c3d2c911f72e6891f9b935a83fdcb83a38 | HEAD actual 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11 | árbol actual 76cff9eb079795c0e6b5ccf0022bced3232a012c | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 histórica de AUD-T-014 se completó en AUD-20261108-S032/AUD-CP-0032. La comparación hasta el HEAD actual registra 21 commits posteriores; los únicos ocho archivos modificados son documentales. Los siete archivos de aplicación del alcance conservan exactamente sus SHA históricos:
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+No existe deriva funcional desde la E1. Revalidación estática:
+- H-AUD-014-001 sigue vigente: los handlers de WRITE/FEEDBACK almacenan contenido enriquecido recibido sin aplicar saneamiento HTML autoritativo antes de persistir. Evidencia en Services/write.js, handleAddSupplementaryInfoLocked (campos apertura, cableAlimen/cableAlimen2/cableAlimen3 y notaImportante), y Services/feedback.js, handleAddProblem, handleAddSolution, handleAddPrevention y handleUpdatePysItem.
+- H-AUD-014-002 sigue vigente: ui.js conserva dos sinks descriptivos sin sanitizeHtmlContent: updateSlide() inserta activeCable.content en slideText.innerHTML (línea 5905 aprox.) y la vista sin carrusel inserta activeContent en contentP.innerHTML (líneas 5998–6004 aprox.). Otros consumidores sí llaman al sanitizador, por lo que existe una aplicación desigual.
+- H-AUD-014-003 sigue vigente: no se conecta el ajuste gpsepedia_rich_text_mode estricto/avanzado descrito en el requisito. rich-text.js mantiene una allow-list fija ampliada y createRichTextToolbar expone controles ampliados sin leer ese modo.
+Se conservan los controles positivos presentes: editor compartido, toolbar de formato, listas UL/OL y marcadores, comportamiento de Enter para listas, sanitizador DOMParser con allow-list, filtrado de atributos/URLs/estilos, normalización LF/CRLF y precache del módulo en service worker. Su presencia estática no certifica la seguridad ni el comportamiento del navegador.
+H-AUD-014-001 a H-AUD-014-003 permanecen abiertos. AUG-095 a AUG-097 siguen pendientes y VAL-23 permanece planificada. La Tarea 13 conserva su estado histórico COMPLETADA; no se crean hallazgos ni tareas duplicadas.
+No se ejecutaron navegador, DOMParser real, XSS controlado, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, pruebas de persistencia/concurrencia, service worker en dispositivo ni E2/E3. Sin cambios de aplicación, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue; base intacta.
+Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; respetar la cancelación documentada de filtros rápidos.

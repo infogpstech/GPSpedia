@@ -574,3 +574,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-092 a AUG-094 pendientes; adendas AUG-043/AUG-068; coordinación AUG-040; VAL-22 planificada. No se crean tareas duplicadas.
 - Tarea 12 permanece históricamente COMPLETADA. No se ejecutaron YouTube API/OAuth/XHR, navegador/Playwright, Apps Script, Spreadsheet/Drive real, concurrencia, red/308, XSS, deployments ni E2/E3.
 - Sin cambios de aplicación, scopes OAuth, Google Cloud, endpoints, configuración, assets o datos productivos. Siguiente: AUD-T-014 — Texto enriquecido, sanitización, listas, párrafos y saltos de línea.
+
+
+## Continuidad — AUD-T-014 (revalidación, 2026-11-08)
+- Sesión/checkpoint: AUD-20261108-S054 / AUD-CP-0053.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD histórico E1 deefa3a8ceca4aae892c61d0e99fec73c3e44837, árbol af44c6c3d2c911f72e6891f9b935a83fdcb83a38; HEAD previo actual 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11, árbol 76cff9eb079795c0e6b5ccf0022bced3232a012c; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 21 commits posteriores, ocho archivos documentales; los siete archivos funcionales de texto enriquecido conservan exactamente sus SHA históricos.
+- AUD-T-014 mantiene E1 estática completada; H-AUD-014-001 a 003 continúan abiertos: saneamiento backend no autoritativo, dos sinks HTML sin sanitización y modo estricto/avanzado no conectado.
+- AUG-095 a AUG-097 pendientes; VAL-23 planificada. Sin nuevos hallazgos/tareas ni duplicación. Tarea 13 conserva su estado histórico COMPLETADA.
+- No se ejecutaron navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, concurrencia, service worker en dispositivo ni E2/E3. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; respetar la cancelación documentada de filtros rápidos.
