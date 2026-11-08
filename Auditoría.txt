@@ -9385,3 +9385,90 @@ AUD-T-006 queda con E1 estática completada y tres hallazgos nuevos abiertos. La
 Tareas nuevas: AUG-065 a AUG-067. Adenda: AUG-064. No se modificó ningún archivo de aplicación ni dato productivo.
 Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-007: NAVEGACIÓN, HISTORY API, POPSTATE, OVERLAYS Y GESTO ATRÁS
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S025 | Checkpoint: AUD-CP-0025
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e | Árbol de aplicación auditado: código heredado del padre 5ab07e75513b05a51a4c62fbc731e451105eb1a
+Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios)
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-007-001 a H-AUD-007-005 abiertos; validación de navegador, móvil/PWA y secuencias reales pendiente.
+
+1. ALCANCE Y FUENTES
+Revisión de TAREA 7 y especificaciones B05, B06, B07, B08, B27 y B18 en Tareas.txt. Se incluyó la revisión posterior Forward-Stack del commit a45f394d842a38444ce31aff510deae1f0245660 y el commit 414c42583293f660f65df412780ba1d31bde7c5f, que incorpora History API en users.html. Commit de implementación principal: 09c7a448fff0bc38af01436648616b2950282c8f.
+
+Archivos y funciones revisados:
+- main.js: initializeApp(), inicialización de history.state, listeners focus/blur, listener popstate, prioridad de cierre, restauración de búsqueda y secciones, listeners de menú, formularios y zoom.
+- navigation.js: irAPaginaPrincipal(), filtrarContenido(), estados de búsqueda, replaceState/pushState y restauración de resultados.
+- ui.js: mostrarMarcas(), mostrarModelosPorMarca(), navegarADetallesDeModelo(), mostrarModelos(), mostrarTiposEncendido(), mostrarVersiones(), regresarABusqueda(), mostrarVersionesEquipamiento(), mostrarResultadosDeBusqueda(), mostrarDetalleModal(), openPysDetailModal(), renderRelayInfoModal(), setupModal(), openSideMenu(), closeSideMenu(), mostrarSeccion(), mostrarDetalleTutorialModal(), mostrarDetalleRelayModal() y constructores de modales dinámicos.
+- users.html: setupEventListeners(), closeModal(), openUserModal(), apertura de cambio de contraseña/edición de nombre y cierres posteriores al submit.
+- add_cortes.html: reglas user-select y excepciones de campos, importación de lightbox.js, listener popstate propio y navegación de fases del formulario.
+- youtubeUpload.js: openYouTubeUploadModal(), closeModal(), cancelación/abort de carga y cierre posterior a la aprobación.
+- index.html: #side-menu, #menu-overlay, #modalDetalle, #lightbox, modales de información y modales legales.
+- style.css: z-index de menú, detalle, lightbox, info-modal, submodales visibles y overlays legales.
+- lightbox.js: abrirLightbox() y cerrarLightbox().
+- state.js: estructura navigationState, getState(), setState() y suscripción.
+- Contraste documental: Tareas.txt, Auditoría.txt, Plan_Auditoria.md, AUG-047, H-AUD-005-008 y auditorías AUD-T-005/AUD-T-006/AUD-T-036/AUD-T-037.
+
+2. CONTROLES POSITIVOS CONFIRMADOS
+- main.js registra un único listener popstate para el App Shell y procesa overlays antes de restaurar búsqueda o contenido.
+- El menú lateral y el lightbox tienen detección explícita; cerrar desde popstate evita volver a llamar history.back() mediante los flags isFromPopState.
+- El modal de detalle se cierra después de menú, lightbox e info-modals; se detienen/limpian iframes de PyS y se conserva una pila contextual para retorno entre ficha de vehículo y PyS.
+- El flujo de búsqueda implementa la estrategia Forward-Stack: al primer foco desde un estado no-búsqueda crea entradas busqueda y busqueda_focused; la escritura continua reemplaza el estado enfocado. El commit a45f394d cambia el primer retroceso a replaceState, evitando el pushState de búsqueda dentro del popstate.
+- navigation.js usa isRestoring para no volver a abrir automáticamente el modal cuando restaura resultados desde popstate.
+- Los niveles de catálogo almacenan origin y los renderizadores restauran marcas, modelos, tipos de encendido, versiones y equipamiento según el estado recibido.
+- El lightbox registra lightboxOpen y cerrarLightbox(true) evita un ciclo de history.back().
+- setupModal() registra modalOpen para los modales estáticos administrados por ese helper.
+- users.html incorpora pushState para los modales de usuario, contraseña y nombre, y closeModal() distingue cierres manuales de cierres por popstate.
+- add_cortes.html aplica user-select:none al body y restablece user-select:text en input/textarea/select; su listener popstate cierra el lightbox y la navegación interna del formulario se limita a las fases.
+- lightbox.js comparte el control de apertura/cierre en el formulario independiente; add_cortes.html tiene un listener popstate propio porque no carga main.js.
+- La pantalla inicial de términos intenta impedir que el usuario abandone el requisito de aceptación mediante retroceso.
+
+3. HALLAZGOS NUEVOS
+
+H-AUD-007-001 — ALTA — Los submodales dinámicos no son detectados por el controlador popstate.
+Evidencia: main.js:220–228 consulta .info-modal y solo considera visible un elemento si modal.style.display === 'flex'. En ui.js:6771–6774, 6877–6880, 6933–6936, 7148–7151, 7203–7206, 7426–7430, 7769–7772, 7847–7850, 7974–7977, 8158–8161, 8413–8416, 8585–8588, 9096–9099 y 10162–10165 se crean submodales con className = 'info-modal visible', sin asignar display inline. style.css:970–973 hace visible el elemento por medio de .info-modal.visible { display:flex !important; }, pero eso no cambia modal.style.display. Además, youtubeUpload.js:33–36 crea #youtube-upload-modal con la misma clase, sin pushState; su closeModal() (líneas 122–134) confirma/cancela la carga solo cuando se usa X/Cancelar. El popstate del App Shell y el listener propio de add_cortes.html no invocan ese cierre.
+Impacto: el submodal puede permanecer visible al retroceder. Si está abierto sobre #modalDetalle, el controlador puede continuar y cerrar el modal padre; si no hay padre, puede restaurar el estado de contenido sin cerrar el overlay. El mismo patrón afecta formularios del modal (+), reportes, VIN, asociación PyS, creación de tutoriales y el modal compartido de subida YouTube. En add_cortes.html, el retroceso durante una carga puede abandonar la página sin pasar por la confirmación de cancelación de youtubeUpload.js.
+Relación: amplía el caso ya transferido desde H-AUD-005-008; no duplicar la observación aislada del modal de apertura/alimentación.
+Acción: registrar todos los overlays dinámicos en un gestor común o en una pila explícita; unificar la fuente de verdad de visibilidad; asignar una entrada de historial por overlay y cerrar el overlay superior sin ocultar su padre. Verificar los 14 constructores de ui.js y el constructor compartido de youtubeUpload.js (15 overlays dinámicos en total), incluida una carga YouTube activa.
+
+H-AUD-007-002 — ALTA — Los botones internos «Volver» crean entradas nuevas y dejan la vista anterior en el historial.
+Evidencia: los backAction de mostrarModelosPorMarca(), mostrarModelos(), mostrarTiposEncendido(), mostrarVersiones(), mostrarVersionesEquipamiento() y otras vistas llaman directamente a renderizadores de nivel anterior. Esos renderizadores ejecutan pushState cuando el nivel actual del historial es distinto (ui.js:856–858, 898–900, 1011–1013, 1066–1068, 1126–1128 y 1189–1191). regresarABusqueda() llama filtrarContenido(), que puede ejecutar pushState (navigation.js:230–246). irAPaginaPrincipal() llama mostrarSeccion('cortes', false), que también registra un estado nuevo (ui.js:6428–6447).
+Impacto: el botón visual vuelve a una pantalla anterior, pero no consume ni reemplaza la entrada profunda que acaba de abandonar. El siguiente retroceso físico/gestual puede reabrir esa pantalla; la secuencia visible y la pila del navegador dejan de representar la misma navegación. Esto contradice el requisito B18 de retorno limpio sin bucles.
+Acción: unificar la navegación atrás para que use la entrada previa cuando corresponda o reemplace el estado actual al realizar una navegación interna; conservar query, origin y sección; impedir que un botón «Volver» cree un ciclo. Probar todas las rutas desde categoría, marca y búsqueda.
+
+H-AUD-007-003 — MEDIA — Un solo popstate puede cerrar todos los modales de información en vez del overlay superior.
+Evidencia: main.js:219–228 recorre todos los .info-modal y pone display:none a cada uno que tenga display inline flex. users.html:465–473 repite el patrón sobre todos los .modal con display:block. Ninguno limita el cierre a un único modal ni mantiene una pila ordenada por apertura/capa.
+Impacto: cuando coexisten overlays anidados, una sola pulsación atrás puede cerrar varios niveles. El cierre no garantiza conservar el modal padre y no equivale a un cierre secuencial.
+Acción: resolver el overlay superior activo y cerrar solo ese elemento por popstate; preservar los niveles subyacentes y sincronizar el historial de la misma manera en users.html. Probar modales apilados, backdrop, botones de cierre y retroceso consecutivo.
+
+H-AUD-007-004 — MEDIA — La creación y el cierre de overlays no mantienen una relación simétrica con las entradas del historial.
+Evidencia:
+- openSideMenu() siempre agrega {sideMenuOpen:true} (ui.js:6406–6416). Los listeners de Dashboard, Inbox y Changelog abren primero el modal —setupModal agrega {modalOpen:true}— y después llaman closeSideMenu() (main.js:559–587, 629–645). Como closeSideMenu() solo hace history.back() si el estado actual contiene sideMenuOpen (ui.js:6419–6425), después de abrir el modal el estado actual ya es modalOpen y queda una entrada sideMenuOpen obsoleta.
+- El envío exitoso de contact-form oculta contact-modal directamente (main.js:762–767), sin consumir ni reemplazar su entrada modalOpen.
+- openReplacedImagesModal() y openAuditDriveModal() muestran modales con display:flex (ui.js:4710–4712 y 5068–5072) sin registrar una entrada propia; sus cierres también ocultan el modal directamente.
+- Hay otros cierres directos por display:none/remove() en overlays que se abren con mecanismos distintos.
+Impacto: el historial puede conservar overlays ya cerrados o carecer de una entrada propia para un overlay visible. El siguiente retroceso puede consumir un estado de navegación ajeno, resetear la vista o salir antes de lo esperado.
+Acción: centralizar open/close para que cada apertura agregue una sola entrada y cada cierre manual/por formulario/por menú/popstate la consuma o reemplace de forma consistente. Evitar duplicados al reabrir un overlay ya visible y limpiar entradas al cambiar de contexto.
+
+H-AUD-007-005 — MEDIA — El bloqueo del modal inicial de términos tiene prioridad sobre el acuerdo de términos que aparece encima.
+Evidencia: main.js:194–199 intercepta popstate si #terms-modal está visible y retorna antes de revisar .info-modal. index.html contiene #terms-modal y #terms-agreement-modal; style.css asigna z-index 3100 al inicial y 3200 al acuerdo. openTermsAgreement() usa setupModal(), registra modalOpen y muestra el acuerdo (ui.js:3178–3205 y 5499–5501). El botón de cierre de setupModal() detecta que terms-modal sigue activo y oculta el acuerdo directamente, sin consumir su entrada modalOpen.
+Impacto: el botón Atrás no puede cerrar primero el acuerdo superior mientras el aviso inicial permanece activo; además, el cierre por X puede dejar un estado modalOpen residual.
+Relación: adenda a AUG-047/AUD-T-036; no duplicar la política legal ni sus pruebas generales.
+Acción: respetar el orden real de capas: cerrar primero el acuerdo superior y mantener el bloqueo del aviso inicial debajo; reconciliar la entrada del acuerdo al cerrarlo. Probar apertura desde el aviso inicial, desde login/footer y aceptación posterior.
+
+4. HALLAZGOS EXISTENTES RELACIONADOS — NO DUPLICAR
+- H-AUD-005-008: la incompatibilidad entre .info-modal.visible y el detector de style.display ya se había observado en el modal (+). H-AUD-007-001 amplía el alcance a todos los constructores dinámicos, por lo que se conserva la referencia original y no se crea una tarea paralela por cada modal.
+- AUG-047/AUD-T-036: aceptación legal, accesibilidad y navegación de modales legales; H-AUD-007-005 se incorpora como adenda específica del orden de capas y del historial del acuerdo.
+- AUG-049/AUD-T-037: búsqueda global y clasificación de resultados; AUD-T-007 solo registra la interacción de navegación/historial al volver, sin duplicar la lógica de búsqueda.
+- AUD-T-005/AUD-T-006: el cierre del lightbox y los submodales dinámicos se revisan como consumidores de popstate; no se duplica su contenido funcional.
+- El historial de perfil de usuarios de users.html pertenece al mismo alcance de TAREA 7 y se incluye en H-AUD-007-003; no se crea una auditoría separada.
+
+5. LÍMITES
+E1 estática. No se ejecutaron pruebas en navegador, Android, iOS, PWA standalone, gesto nativo del sistema, teclado virtual, modales simultáneos, navegación por deep link, submit real de formularios, lector de pantalla, ni comparación con deployments. No se midieron entradas reales del historial del navegador. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+
+6. RESULTADO
+AUD-T-007 queda con E1 estática completada y cinco hallazgos abiertos. El Forward-Stack de búsqueda y la restauración de niveles de catálogo están presentes, pero el cierre de overlays dinámicos, la navegación interna atrás y la sincronización entre visibilidad y entradas del historial siguen siendo inconsistentes. Se amplía el caso transferido desde H-AUD-005-008, se crea una adenda a AUG-047 y se incluyen los listeners de users.html.
+Tareas nuevas: AUG-068 a AUG-071. Adenda: AUG-047. No se modificó código ni datos productivos.
+Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+================================================================================

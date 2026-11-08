@@ -614,3 +614,35 @@ Cambios de aplicación/assets: ninguno. Datos productivos: sin cambios.
 Commit único previsto: docs(audit): auditar lightbox, resolución de imágenes y gestos de carrusel; parent_sha y expected_sha: 5ab07e75513b05a51a4c62fbc731e451105eb1a8; force:false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 Siguiente acción: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
 ================================================================================
+
+CHECKPOINT INICIAL — AUD-CP-0025
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S025 | Tarea: AUD-T-007.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work.
+HEAD inicial verificado: 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e.
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado inicial observado: AUD-T-006 E1 estática completada; AUD-T-007 por auditar; siguiente unidad AUD-T-007 según Plan_Auditoria.md.
+Alcance: TAREA 7/B05/B06/B07/B08/B27/B18; main.js, navigation.js, ui.js, users.html, add_cortes.html, youtubeUpload.js, index.html, style.css, lightbox.js y state.js.
+Commits ancla: 09c7a448fff0bc38af01436648616b2950282c8f; a45f394d842a38444ce31aff510deae1f0245660; 414c42583293f660f65df412780ba1d31bde7c5f.
+Estado de inicio: TAREA 7 marcada COMPLETADA en Tareas.txt; auditoría técnica específica pendiente. Hallazgos previos relacionados: H-AUD-005-008; AUG-047/AUD-T-036; AUG-049/AUD-T-037.
+Respaldo exacto previo (blob SHA):
+- Auditoría.txt: 49f701f7e9de21c099cda96a7a08c10081e90d48
+- Tareas.txt: ffcf3f1446550d0c7ce5596d7d6132b78ff9ca1f
+- Plan_auditoría/Plan_Auditoria.md: 1d4362c2a6afb72157345b04d15bc37b4d42dd99
+- Plan_auditoría/Aug_Tareas.md: 19beb812aa72fe1d7ad34291ef205601f9952881
+- Plan_auditoría/Consolidacion_Auditoria.md: 08121a1c79c96adceef782ede5843ff0cba3411b
+- ChangesLogs.txt: 1c8679d959f39edcf504024f17bd5e9ec12089af
+- contexto_personal.md: 49e47f3d8e4ba448fe7f703456b75ce65470c8d2
+- checkpoint.md: a11f0c9e4bb4d44fdb2a5a87dc21110497abb3a8
+Límite: auditoría E1 estática; sin cambios de código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments.
+
+CHECKPOINT FINAL — AUD-CP-0025
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S025 | Tarea: AUD-T-007.
+HEAD auditado/padre previsto: 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e | base: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-007-001 a 005 abiertos; validación funcional, móvil/PWA y de secuencias reales pendiente.
+Resultado: cinco hallazgos sobre overlays dinámicos no reconocidos, botones Volver que agregan entradas, cierre simultáneo de modales, entradas de historial asimétricas y bloqueo de terms-agreement por el aviso inicial.
+Tareas: AUG-068 a AUG-071 nuevas; adenda AUG-047. H-AUD-005-008 ampliado sin duplicar. Inventario AUG: 70 IDs únicos; AUG-015 continúa ausente.
+Archivos documentales modificados: Auditoría.txt; Tareas.txt; Plan_auditoría/Plan_Auditoria.md; Plan_auditoría/Aug_Tareas.md; Plan_auditoría/Consolidacion_Auditoria.md; ChangesLogs.txt; contexto_personal.md; checkpoint.md.
+Verificaciones: revisión estática de funciones, consumidores, estilos, markup, estados History API e historial de commits. No se ejecutaron pruebas E2/E3, navegador, Android/iOS, PWA, gestos nativos, teclado virtual, submits reales, deep links ejecutados ni medición de historial.
+Cambios de aplicación: ninguno. Endpoints/configuración/datos productivos/Drive/Spreadsheet/deployments: sin cambios.
+Commit único previsto: docs(audit): auditar navegación y cierre secuencial de overlays; parent_sha y expected_sha 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e; force:false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Siguiente acción: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.

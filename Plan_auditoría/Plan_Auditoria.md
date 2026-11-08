@@ -55,7 +55,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-004 | VIN: identificación, colecciones, almacenamiento, búsqueda y diferencial | 5bab8779 — Implementar Tarea 4: Identificación, colecciones y búsqueda por VIN; df8e5cf7 — motor diferencial VIN; 94c2d04e — migrar IDs de operación y normalizar VIN | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-005 | Modal de detalle, ampliación dinámica y acciones contextuales | d72a1e61 — Implementar Tarea 5: Ampliación dinámica en modal de detalle; 183cff59 — recuperación del botón expand plus | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD PENDIENTE |
 | AUD-T-006 | Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom | 7f57e2fd — Implementar Tarea 6: Lightbox y miniaturas PNG transparentes; af9caed8 — navegación de cables de alimentación en lightbox; 5ff81bde — Lightbox zoom y navegación | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN VISUAL/MÓVIL/RENDIMIENTO PENDIENTE |
-| AUD-T-007 | Navegación, History API, popstate, overlays y gesto atrás | 09c7a448 — Implementar Tarea 7: Navegación, historial y cierre de overlays; a45f394d — navegación back-gesture; 414c4258 — History API | POR AUDITAR |
+| AUD-T-007 | Navegación, History API, popstate, overlays y gesto atrás | 09c7a448 — Implementar Tarea 7: Navegación, historial y cierre de overlays; a45f394d — navegación back-gesture; 414c4258 — History API | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MÓVIL PENDIENTE |
 | AUD-T-008 | Deep links, compartir, enlaces precisos e indicador de red | 7714b985 — Implementar Tarea 8: Deep linking, compartir e indicador de red; 76d44aff — connection indicator, sharing and deep linking; 20290cdd — precisión de enlaces compartidos | POR AUDITAR |
 | AUD-T-009 | PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS | 825a1aea — modo offline con persistencia IndexedDB; 9f8b84a9 — estabilidad offline; d9476ab0 — instalación PWA dinámica e iOS | POR AUDITAR |
 | AUD-T-010 | Reportes de problemas y sugerencias de cambios en cortes | 64d8d044 — Implementar Tarea 9: Reporte y sugerencia de cambios; fb7f2fcf — reporte individual; db6951ed — modal de sugerencia; db0eee87 — almacenamiento independiente de sugerencias | POR AUDITAR |
@@ -746,3 +746,13 @@ Hallazgos: tamaño de imagen ignorado y cachés sin variante; mix-blend-mode gen
 Tareas: AUG-065 a AUG-067 nuevas; AUG-064 ampliada. No duplicar caché general AUD-T-009/AUG-051 ni navegación global AUD-T-007.
 Límites: E1 estática; sin navegador, móviles/PWA, CDN, IndexedDB real, pruebas visuales, medición de rendimiento ni gestos reales. Sin cambios de aplicación/datos.
 Siguiente: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+
+## 30. Iteración técnica — AUD-T-007
+Sesión AUD-20261108-S025 | Checkpoint AUD-CP-0025 | HEAD auditado 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-007-001 a 005 abiertos; validación funcional, móvil/PWA y de secuencias reales pendiente.
+Alcance: TAREA 7/B05/B06/B07/B08/B27/B18; main.js, navigation.js, ui.js, users.html, add_cortes.html, youtubeUpload.js, index.html, style.css, lightbox.js y state.js. Contraste con commits 09c7a448, a45f394d y 414c4258; auditorías AUD-T-005/AUD-T-006/AUD-T-036/AUD-T-037.
+Hallazgos: overlays dinámicos no detectados por popstate; botones internos «Volver» crean entradas nuevas; el listener cierra todos los modales visibles en vez de uno; aperturas/cierres no reconciliados dejan entradas obsoletas; el bloqueo de terms-modal impide cerrar primero terms-agreement-modal.
+Tareas: AUG-068 a AUG-071 nuevas; adenda a AUG-047. H-AUD-005-008 se amplía sin duplicar su ID.
+No duplicar: AUG-047/AUD-T-036 (política legal), AUG-049/AUD-T-037 (búsqueda), AUG-017/AUG-042 (limpieza de overlays privilegiados por cambio de cuenta).
+Límites: E1 estática; sin navegador, Android/iOS, PWA, gesto nativo, teclado virtual, submits reales, deep links ejecutados ni medición de historial. Sin cambios de código/datos.
+Siguiente: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.

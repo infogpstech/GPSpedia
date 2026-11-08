@@ -359,3 +359,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Tareas nuevas: AUG-065 a AUG-067; adenda a AUG-064. Inventario: 66 IDs únicos; AUG-015 continúa ausente.
 - No duplicar caché general de AUD-T-009/AUG-051 ni History API global de AUD-T-007. Siguiente: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
 - Límites: E1 estática; sin navegador, móviles/PWA, CDN, IndexedDB real, canvas, mediciones ni gestos reales. Sin cambios de código, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos o deployments.
+
+## Continuidad — AUD-T-007 (2026-11-08)
+- Sesión/checkpoint: AUD-20261108-S025 / AUD-CP-0025.
+- Repositorio: infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e; base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás: auditoría estática E1 completada; H-AUD-007-001 a 005 abiertos. No se modificó código.
+- Alcance: main.js, navigation.js, ui.js, users.html, add_cortes.html, youtubeUpload.js, index.html, style.css, lightbox.js y state.js; commits ancla 09c7a448, a45f394d y 414c4258.
+- Hallazgos: overlays dinámicos .info-modal.visible no detectados por popstate; botones internos Volver crean entradas nuevas; main.js/users.html cierran todos los modales a la vez; aperturas/cierres de menú y modales dejan entradas obsoletas; terms-modal bloquea el cierre del acuerdo superior.
+- Tareas nuevas: AUG-068 a AUG-071. Adenda: AUG-047. H-AUD-005-008 ampliado sin duplicar.
+- Límites: sin navegador, Android/iOS, PWA, gestos nativos, teclado virtual, submits reales, deep links ejecutados ni medición de historial. Sin cambios de aplicación/datos.
+- Siguiente: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.

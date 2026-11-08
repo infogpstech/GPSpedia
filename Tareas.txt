@@ -5955,3 +5955,72 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-006-001 a H-AUD-006-003 abiertos; validac
 - Probar payloads HTML activos en el segundo y tercer cable, no solo en el primer slot o en la presentación individual.
 
 - 2026-11-07 — AUD-T-006: nuevas AUG-065 a AUG-067; adenda AUG-064. Inventario: 66 IDs únicos dentro de AUG-001 a AUG-067; AUG-015 continúa ausente.
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-007: NAVEGACIÓN, HISTORY API, POPSTATE, OVERLAYS Y GESTO ATRÁS
+Fecha: 2026-11-08 | Sesión AUD-20261108-S025 | Checkpoint AUD-CP-0025
+HEAD auditado: 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e | Rama GPSpedia2.2.5_work | Base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-007-001 a 005 abiertos; pruebas de navegador, móvil/PWA y secuencias reales pendientes.
+- Alcance: TAREA 7/B05/B06/B07/B08/B27/B18; main.js, navigation.js, ui.js, users.html, add_cortes.html, youtubeUpload.js, index.html, style.css, lightbox.js y state.js. Contraste con commits 09c7a448, a45f394d y 414c4258.
+- Controles positivos: Forward-Stack de búsqueda; replaceState durante escritura y primer retroceso; restauración isRestoring; propagación de origin; prioridad general de overlays sobre navegación; history para lightbox y modales estáticos.
+- Hallazgos: submodales dinámicos .info-modal.visible no detectados por style.display; botones internos «Volver» agregan entradas y dejan vistas profundas; popstate cierra todos los info-modals/users modals a la vez; historial asimétrico entre aperturas/cierres de menú y modales; el bloqueo de terms-modal impide cerrar primero terms-agreement-modal.
+- Tareas nuevas: AUG-068 a AUG-071. Adenda: AUG-047. H-AUD-005-008 se amplía en alcance, sin duplicar su observación original.
+- No duplicar: AUG-047/AUD-T-036 (política legal), AUG-049/AUD-T-037 (clasificación de búsqueda), AUG-017/AUG-042 (cambio de cuenta y limpieza de overlays privilegiados).
+- Límites: E1 estática; sin navegador, Android/iOS, PWA, gesto nativo, teclado virtual, submits reales, deep links ejecutados ni medición de historial. Sin cambios de código, endpoints, configuración o datos productivos.
+- Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+
+### AUG-068 — Unificar el registro y el cierre por historial de overlays dinámicos
+- **Origen:** H-AUD-007-001. **Prioridad:** Alta.
+- **Problema:** los modales creados dinámicamente usan .info-modal.visible sin display inline ni una entrada modalOpen; el listener popstate solo detecta style.display === 'flex'. El overlay puede quedar abierto mientras se cierra el padre o se restaura otra vista.
+- **Criterios de aceptación:**
+  1. Inventariar y registrar todos los constructores dinámicos de overlays, incluidos reportes, VIN, formularios del modal (+), asociación PyS, tutoriales y youtubeUpload.js.
+  2. Usar una única fuente de verdad para visibilidad y pila de overlays; no mezclar classList, display inline y registros independientes sin reconciliación.
+  3. Cada overlay debe crear una entrada de historial al abrirse y cerrarla al recibir popstate o al cerrarse manualmente; una sola pulsación cierra solo el overlay superior.
+  4. Mantener visible el padre al cerrar el submodal; no cerrar #modalDetalle ni restaurar catálogo mientras exista un overlay hijo.
+  5. Probar todos los constructores, backdrop, X, submit, cancelación, overlays anidados, apertura desde ficha de vehículo y retroceso durante una carga YouTube activa en add_cortes.html.
+- **Relación:** AUD-T-007; amplía H-AUD-005-008 sin duplicarlo.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-069 — Sincronizar los botones internos «Volver» con el historial nativo
+- **Origen:** H-AUD-007-002. **Prioridad:** Alta.
+- **Problema:** los botones internos vuelven mediante llamadas directas a renderizadores que agregan otra entrada pushState; la vista profunda permanece en el historial y puede reaparecer al pulsar atrás.
+- **Criterios de aceptación:**
+  1. Definir una única operación de retroceso para navegación por categoría, marca, modelo, equipamiento, tipo de encendido, años y búsqueda.
+  2. Usar history.back() cuando la entrada previa corresponda al destino; si no corresponde, reemplazar el estado actual y renderizar el destino sin dejar una entrada obsoleta.
+  3. Preservar query, origin, categoría, marca, modelo, equipamiento y sección al retroceder.
+  4. Evitar pushState redundante al volver al mismo nivel o seleccionar repetidamente una sección.
+  5. Probar botón interno, botón físico, gesto nativo, Forward, búsqueda, deep link y secuencias de ida/vuelta sin bucles.
+- **Relación:** AUD-T-007; no duplicar AUG-049 (clasificación de búsqueda) ni AUG-047 (acuerdo legal).
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-070 — Cerrar secuencialmente el overlay superior en App Shell y perfil de usuarios
+- **Origen:** H-AUD-007-003. **Prioridad:** Media.
+- **Problema:** main.js y users.html recorren todos los modales visibles y los cierran en el mismo popstate, sin conservar el modal padre ni identificar el nivel superior.
+- **Criterios de aceptación:**
+  1. Determinar el overlay superior según la pila de apertura y la capa efectiva, no por una lista de tipos fija ni por un forEach que cierre todos.
+  2. Cerrar exactamente un overlay por evento popstate y conservar los demás visibles.
+  3. Mantener sincronizados menú, lightbox, modal de detalle, info-modals, overlays legales y modales de users.html.
+  4. Detener reproductores/limpiar recursos solo cuando corresponda al overlay que se cierra; no destruir contenido de niveles subyacentes.
+  5. Probar al menos tres capas anidadas, capas con z-index distinto, modal de perfil, lightbox sobre ficha y retrocesos consecutivos.
+- **Relación:** AUD-T-007; AUG-047 para el caso legal y AUG-068 para registro dinámico.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-071 — Reconciliar las entradas History API al abrir/cerrar menú y modales
+- **Origen:** H-AUD-007-004. **Prioridad:** Media.
+- **Problema:** algunas aperturas no crean entrada, algunos cierres directos no la consumen y abrir un modal desde el menú puede dejar una entrada sideMenuOpen obsoleta.
+- **Criterios de aceptación:**
+  1. Centralizar el ciclo open/close para menú lateral, modales estáticos, modales dinámicos y vistas administrativas.
+  2. Cada apertura debe generar como máximo una entrada propia; reabrir un overlay ya visible no debe duplicarla.
+  3. Cualquier cierre manual, por X, backdrop, submit exitoso, cambio de sección o popstate debe reconciliar la entrada correspondiente sin consumir la entrada de la vista padre.
+  4. Al abrir Inbox/Dashboard/Changelog desde el menú, cerrar el menú y su entrada sin dejar sideMenuOpen obsoleto debajo del modal.
+  5. Cubrir openAuditDriveModal(), openReplacedImagesModal(), envío de contact-form y demás cierres directos; probar historial previo de búsqueda/sección.
+- **Relación:** AUD-T-007; AUG-017/AUG-042 para cambio de cuenta y cierre de overlays privilegiados, sin duplicar su limpieza de sesión.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### Adenda derivada de AUD-T-007 — AUG-047
+- Incluir el caso #terms-modal + #terms-agreement-modal: el aviso inicial permanece como capa inferior y el acuerdo superior debe cerrarse primero mediante Atrás.
+- Al cerrar el acuerdo por X o por popstate, consumir/reconciliar su entrada modalOpen; no dejar una entrada residual cuando el aviso inicial continúa activo.
+- Probar acuerdo abierto desde el aviso inicial, login/footer, cierre por X, Atrás, aceptación del aviso y retroceso posterior.
+- No alterar la regla de que el aviso inicial impide abandonar la aceptación obligatoria.
+
+- 2026-11-08 — AUD-T-007: nuevas AUG-068 a AUG-071; adenda AUG-047. Inventario: 70 IDs únicos dentro de AUG-001 a AUG-071; AUG-015 continúa ausente.

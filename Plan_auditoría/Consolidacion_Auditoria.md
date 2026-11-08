@@ -1,12 +1,12 @@
 # Consolidación de auditoría y matriz de validación — GPSpedia
 
 **Plan:** AUD-PLAN-2026-001  
-**Sesión:** AUD-20261107-S024  
-**Checkpoint:** AUD-CP-0024  
-**Fecha:** 2026-11-07  
+**Sesión:** AUD-20261108-S025  
+**Checkpoint:** AUD-CP-0025  
+**Fecha:** 2026-11-08  
 **Repositorio:** infogpstech/GPSpedia  
 **Rama de trabajo:** GPSpedia2.2.5_work  
-**HEAD de referencia al inicio:** 5ab07e75513b05a51a4c62fbc731e451105eb1a8  
+**HEAD de referencia al inicio:** 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e  
 **Rama base:** GPSpedia2.2.5  
 **HEAD de la base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
 
@@ -22,18 +22,18 @@ El plan contiene 38 unidades AUD-T. Según la tabla de estado vigente:
 
 | Estado documental | Unidades | Cantidad |
 |---|---|---:|
-| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 a AUD-T-006 y AUD-T-023 a AUD-T-038 | 20 |
+| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 a AUD-T-007 y AUD-T-023 a AUD-T-038 | 21 |
 | Auditada parcialmente | AUD-T-002 | 1 |
-| Por auditar | AUD-T-001 y AUD-T-007 a AUD-T-022 | 17 |
+| Por auditar | AUD-T-001 y AUD-T-008 a AUD-T-022 | 16 |
 | **Total** | **AUD-T-001 a AUD-T-038** | **38** |
 
-**Corrección de continuidad:** no es correcto afirmar que las 37 unidades AUD-T tienen auditoría estática completada. AUD-T-001 y AUD-T-004 a AUD-T-022 siguen marcadas POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 a AUD-T-006 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
+**Corrección de continuidad:** no es correcto afirmar que las 37 unidades AUD-T tienen auditoría estática completada. AUD-T-001 y AUD-T-008 a AUD-T-022 siguen marcadas POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 a AUD-T-007 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
 
 AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario — se auditó en AUD-20261107-S020. Su E1 está completada; permanecen hallazgos y validaciones funcionales/privacidad pendientes.
 
 ## 3. Inventario consolidado de tareas AUG
 
-El archivo Plan_auditoría/Aug_Tareas.md contiene **66 identificadores AUG únicos** dentro del rango AUG-001 a AUG-067. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
+El archivo Plan_auditoría/Aug_Tareas.md contiene **70 identificadores AUG únicos** dentro del rango AUG-001 a AUG-071. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
 
 Algunos encabezados AUG se repiten en el archivo porque las auditorías posteriores agregaron adendas a tareas existentes. Esas repeticiones no constituyen tareas nuevas. Deben conservarse las adendas y sus referencias históricas.
 
@@ -52,6 +52,7 @@ Algunos encabezados AUG se repiten en el archivo porque las auditorías posterio
 | Registro, idempotencia y recuperación de add_cortes | AUG-055 a AUG-058 | Ciclo durable/vinculación de opId; disponibilidad dinámica; errores FileReader; recuperación automática serializada |
 | Modal de detalle y ampliaciones contextuales | AUG-061 a AUG-064 | Cupos suplementarios; refresh del detalle; selectores desde Sheets; sanitización de apertura/alimentación |
 | Visualización técnica, transparencia y gestos | AUG-065 a AUG-067 | Resolución y cachés por variante; tratamiento de PNG transparente; discriminación de gestos del carrusel |
+| Navegación, History API y overlays | AUG-068 a AUG-071 | Registro de overlays dinámicos; retroceso interno sincronizado; cierre secuencial; reconciliación de entradas de historial |
 
 El índice no reemplaza los criterios de aceptación detallados de Aug_Tareas.md. La implementación debe seguir consultando cada ficha completa, incluidas sus adendas, evidencias, decisiones y dependencias.
 
@@ -99,6 +100,7 @@ Las pruebas deben ejecutarse en entornos aislados y con cuentas/datos de prueba.
 | VAL-14 | PWA, deep links y rendimiento — AUG-033, AUG-049, AUG-052, AUG-055, AUG-057, AUG-058, AUG-067 | Instalación limpia, precache del grafo requerido, runtime cache, offline, deep link sin catálogo, red lenta/interrumpida, catálogo grande | Recursos disponibles offline, reintentos acotados, cancelación/timeout, tiempos medidos y comportamiento sin espera infinita |
 | VAL-15 | Regresión integral y deployments — AUG-002 y todas las tareas afectadas | Repetir flujos críticos después de cada corrección; comparar HEAD con cada deployment autorizado; probar roles y navegadores/dispositivos soportados | SHA de código, URL/identidad del deployment, fecha, ambiente, navegador, pasos, resultado, logs sanitizados y aprobación |
 | VAL-16 | Modal de detalle y ampliaciones contextuales — AUG-043, AUG-050, AUG-057, AUG-061 a AUG-064 | Payloads XSS; apertura/alimentación con slots vacíos/ocupados e imágenes huérfanas; dos usuarios por último slot; payload vacío; refresh fallido tras guardar; re-render; dropdowns de Sheets; FileReader success/error/abort; vídeo existente y confirmación; contador VIN; navegación atrás | Evidencia de sanitización, respuesta backend/slot, datos antes/después, escritura separada de refresh, listas de Sheets, estado del formulario y cierre de overlays |
+| VAL-17 | Navegación, History API y overlays — AUG-047, AUG-068 a AUG-071 | Back/Forward desde cada nivel; botones internos Volver; búsqueda Forward-Stack; 2–3 overlays anidados; modal dinámico sobre ficha; menú→Inbox/Dashboard/Changelog; cierre por X/backdrop/submit; términos iniciales y acuerdo; perfil users.html; carga YouTube activa en add_cortes.html; deep links y secciones | Secuencia de history.state/URL, overlay superior antes/después, vista y query restauradas, cantidad de entradas y ausencia de overlays o estados residuales |
 
 ### 5.1. Reglas de ejecución de la matriz
 
@@ -185,3 +187,13 @@ Sesión AUD-20261107-S024 | Checkpoint AUD-CP-0024 | HEAD auditado 5ab07e75513b0
 - AUG-065 a AUG-067 nuevas: variantes/caché por tamaño, tratamiento de transparencia y discriminación de gestos. AUG-064 se amplía con el sink slideText.innerHTML de updateSlide().
 - VAL-13 incorpora variantes y caché de imágenes (AUG-065/AUG-066); VAL-14 incorpora gestos del carrusel (AUG-067); VAL-09 mantiene la cobertura de sanitización mediante AUG-064.
 - No se ejecutaron pruebas E2/E3, navegador, dispositivos móviles, PWA, CDN, IndexedDB real, canvas, mediciones de rendimiento ni gestos reales. No se modificó código, assets, configuración ni datos productivos.
+
+## 14. Actualización de cobertura — AUD-T-007
+Sesión AUD-20261108-S025 | Checkpoint AUD-CP-0025 | HEAD auditado 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-007 tiene E1 estática completada; H-AUD-007-001 a 005 abiertos; validación funcional, móvil/PWA y de secuencias reales pendiente.
+- Catálogo AUD-T: 38 unidades; 21 con E1 completada, 1 parcial y 16 por auditar.
+- Catálogo AUG: 70 IDs únicos dentro de AUG-001 a AUG-071; AUG-015 continúa ausente y no se infiere ni renumera.
+- AUG-068 a AUG-071 nuevas: overlays dinámicos, navegación interna atrás, cierre secuencial y reconciliación de entradas History API. AUG-047 recibe adenda para terms-modal/terms-agreement-modal.
+- H-AUD-005-008 se amplía al conjunto de submodales dinámicos; no se crea una tarea duplicada.
+- VAL-10 conserva la política legal y AUG-047; VAL-17 agrega secuencias de navegación, overlays, users.html y carga YouTube desde add_cortes.html.
+- No se ejecutaron pruebas E2/E3, navegador, Android/iOS, PWA, gestos nativos, teclado virtual, submits reales, deep links ejecutados ni medición de history.state. No se modificó código, endpoints, configuración ni datos productivos.
