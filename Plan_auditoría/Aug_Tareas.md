@@ -686,8 +686,52 @@ Sesión/checkpoint: AUD-20261107-S009 / AUD-CP-0009
 ================================================================================
 CONTROL DE INVENTARIO DE IDENTIFICADORES AUG — AUD-CP-0019
 Fecha: 2026-11-07 | Sesión AUD-20261107-S019
-La revisión de encabezados y referencias del archivo identifica 51 IDs AUG únicos en el rango AUG-001 a AUG-052. AUG-015 no aparece en el contenido consultado. No crear, inferir, reutilizar ni renumerar ese identificador sin evidencia histórica.
+La revisión de encabezados y referencias del archivo identifica 53 IDs AUG únicos en el rango AUG-001 a AUG-054. AUG-015 no aparece en el contenido consultado. No crear, inferir, reutilizar ni renumerar ese identificador sin evidencia histórica.
 Los encabezados repetidos para AUG-005, AUG-006, AUG-007, AUG-008 y AUG-013, además de las ampliaciones posteriores, se conservan como adendas/actualizaciones de tareas existentes; no representan por sí solos tareas adicionales.
 AUG-001, AUG-002 y AUG-004 se mantienen como entregables transversales/equivalentes ya documentados según sus propias fichas; no duplicarlos como tareas de implementación.
 La matriz de validación consolidada está en Plan_auditoría/Consolidacion_Auditoria.md. Este inventario no modifica criterios de aceptación ni prioridades.
+================================================================================
+
+================================================================================
+ADENDA AUD-T-038 — AMPLIACIÓN DE TAREAS EXISTENTES
+Fecha: 2026-11-07 | Sesión AUD-20261107-S020
+
+AUG-022 — ampliar criterios:
+- Inventariar claves localStorage/sessionStorage, object stores y Cache Storage utilizados por la versión vigente.
+- Distinguir cachés reconstruibles, preferencias, aceptación legal, sesión y operaciones pendientes recuperables.
+- Definir qué elimina «Vaciar caché local» y qué conserva; no borrar una operación pendiente sin resolver su estado remoto o preservar una recuperación verificable.
+- Esperar los eventos de deleteDatabase y manejar éxito, error y bloqueo; no declarar vaciado total si una parte permanece.
+
+AUG-051 — ampliar criterios:
+- Incluir viewedItems (registro completo consultado y timestamp) además de searchHistory en la política de aislamiento/retención.
+- Clasificar validationCache y decidir si es colaborativa/por dispositivo o individual; no inferir la política.
+- Probar dos cuentas en el mismo navegador, historial/vistos, respuestas de validación, VIN, expiración y limpieza.
+================================================================================
+
+### AUG-053 — Aislar, proteger y depurar snapshots locales de operaciones por cuenta
+- **Hallazgos origen:** H-AUD-038-001/002. **Prioridad:** Alta.
+- **Problema:** gpsepedia_pending_operation guarda datos de vehículo, VIN y archivos Base64 sin identidad creadora; adminImageUploadPending y gpsepedia_edit_backup tampoco tienen owner ni retención.
+- **Criterios de aceptación:**
+  1. Asociar cada snapshot pendiente con owner estable (userId/tipo de operación); no persistir SessionToken ni credenciales.
+  2. Antes de restaurar, mostrar o reintentar, comprobar que la cuenta actual coincide con el owner; ante diferencia, aislar el registro y no enviarlo con credenciales de otra cuenta.
+  3. Definir si los reemplazos ADMIN son privados por iniciador o compartidos entre Desarrolladores; aplicar la política aprobada.
+  4. Asociar gpsepedia_edit_backup a cuenta/vehículo y evitar restaurarlo en otra sesión.
+  5. Establecer retención/expiración y limpieza segura para Data URLs/snapshots, preservando idempotencia ante respuestas inciertas.
+  6. No registrar payloads completos, VIN ni Data URLs en consola; sanitizar errores.
+  7. Resolver addCutPending: conservar comprobación userId y evitar bloqueo indefinido por operaciones de otra cuenta con la misma vehicleId.
+  8. Probar logout, cambio de cuenta, sesión invalidada, dos cuentas Desarrollador, operación pendiente/confirmada, reintento, recarga, dos pestañas, expiración y fallo de almacenamiento.
+- **Relación:** AUD-T-038; AUD-T-031; AUD-T-034/AUG-042; AUG-051.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-054 — Autenticar checkOperation y minimizar su respuesta
+- **Hallazgo origen:** H-AUD-038-005. **Prioridad:** Alta.
+- **Evidencia:** Services/write.js doPost() enruta checkOperation a handleCheckOperation(); el handler busca por opId sin validar sesión y puede devolver rowData completo.
+- **Criterios de aceptación:**
+  1. Definir si la acción es protegida y validar userId/sessionToken contra ActiveSessions/Users antes de consultar; no confiar en opId como credencial.
+  2. Definir relación actor-operación para impedir consultas cruzadas cuando la política requiera propiedad.
+  3. Devolver solo estado, vehicleId, timestamp y datos mínimos de recuperación; no enviar rowData completo si no es necesario.
+  4. Revisar entropía del opId y mantener idempotencia sin usarlo como autorización.
+  5. Probar petición anónima, token inválido, otro usuario, opId inexistente, pendiente/completada y respuesta minimizada.
+- **Relación:** AUD-T-031, AUD-T-035 y AUD-T-038.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
 ================================================================================

@@ -306,3 +306,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Nuevo Plan_auditoría/Consolidacion_Auditoria.md con matriz VAL-01 a VAL-15; matriz preparada, no ejecutada.
 - Siguiente: AUD-T-038, previa revisión de no duplicidad con AUG-051/AUD-T-037.
 - Solo documentación; sin pruebas funcionales ni cambios de aplicación/datos productivos.
+
+## Continuidad — AUD-T-038 (2026-11-07)
+- Sesión/checkpoint: AUD-20261107-S020 / AUD-CP-0020.
+- HEAD auditado: bfcdf8e57d4e09c1c920cf904265301c4554b334 en GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1 estática completada; H-AUD-038-001 a 005 abiertos; validación funcional/privacidad pendiente.
+- add_cortes guarda gpsepedia_pending_operation con VIN/datos/archivos Base64 sin owner y recupera con la cuenta activa; adminImageUploadPending y gpsepedia_edit_backup carecen de owner/retención; viewedItems/validationCache requieren política; vaciado local incompleto; WRITE checkOperation no valida sesión y devuelve rowData.
+- AUG-053: aislamiento/retención de snapshots; AUG-054: autorización/minimización de checkOperation. AUG-051 se amplía a viewedItems/validationCache; AUG-022 a inventario/semántica de limpieza. No duplicar AUG-006/AUG-042/AUG-045 ni H-AUD-037-008/009.
+- Controles: modal (+) compara operation.userId; ADMIN valida sesión/rol; API POST y Service Worker ignora POST; métricas solo memoria; VinSignatureStore no persiste el VIN introducido.
+- Sin cambios de aplicación, endpoints, configuración, Drive, Spreadsheet, datos productivos o deployments. Solo E1 estática; sin pruebas E2/E3 ni operaciones reales.
+- Siguiente: AUD-T-003 — Registro de vehículos y cortes, idempotencia y resiliencia de red.

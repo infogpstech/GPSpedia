@@ -9038,3 +9038,56 @@ Plan_auditoría/Consolidacion_Auditoria.md documenta el índice AUG, la secuenci
 CONCLUSIÓN
 Consolidación documental completada. Se mantienen abiertos los hallazgos y tareas AUG; no se autoriza por esta entrada ninguna modificación funcional ni operación sobre datos productivos.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-038: SEGURIDAD DEL ALMACENAMIENTO LOCAL Y CICLO DE DATOS DE USUARIO
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S020 | Checkpoint: AUD-CP-0020
+HEAD auditado: bfcdf8e57d4e09c1c920cf904265301c4554b334 | Rama: GPSpedia2.2.5_work | Base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Estado: E1 COMPLETADA; H-AUD-038-001 a 005 abiertos; validación funcional/privacidad pendiente.
+
+ALCANCE Y FUENTES
+Se revisaron las rutas de persistencia y sus consumidores: offline.js (initDB, performOp, performAdminStateOp, stores catalog/searchHistory/viewedItems/thumbnails/validationCache/adminLocalState y operaciones pendientes); auth.js (login, checkSession, logout, loadInitialData); state.js; ui.js (identidad anónima, respaldos, cargas ADMIN, historial/vistos, validación, vaciado local, showApp y caché PyS); add_cortes.html (sesión, gpsepedia_pending_operation y recuperación); users.html; main.js; VinDifferentialEngine.js; api-config.js; service-worker.js; Services/Auth.js; Services/users.js; Services/write.js; Services/admin.js. Se contrastó con AUD-T-024/031/034/036/037 y AUG-005/006/007/008/022/042/045/051.
+
+HALLAZGOS
+H-AUD-038-001 — ALTA — snapshot de add_cortes recuperable bajo otra cuenta.
+add_cortes.html guarda gpsepedia_pending_operation en localStorage con vehicleInfo, formulario, VIN y archivos Base64. El objeto no incluye userId/owner ni expiración. checkAndRecoverPendingOperation() solo comprueba que exista una sesión actual; no compara su identidad con la cuenta creadora. Después consulta checkOperation con el userId/sessionToken actuales y, si no existe coincidencia remota, restaura los datos anteriores en el formulario. Así, otra cuenta en el mismo navegador puede ver/reintentar datos previos bajo su propia sesión. La recuperación además registra el objeto completo en console.log, incluidos datos y Data URLs.
+
+H-AUD-038-002 — MEDIA/ALTA — snapshots ADMIN y respaldo de edición sin propietario ni retención.
+offline.js persiste adminImageUploadPending con fileData Base64, vehículo, campo, nombre, MIME e ID de operación, pero sin identidad iniciadora ni vencimiento. ui.js loadPendingAdminImageUploads() recupera por vehículo/campo sin filtrar por cuenta y submitAdminImageUploadOperation() reintenta usando la sesión de Desarrollador activa. ui.js también guarda gpsepedia_edit_backup globalmente, sin cuenta/fecha; exitModalEditMode() puede recuperarlo si no hay respaldo en memoria. logout() no elimina estos snapshots. Una segunda cuenta Desarrollador puede encontrar/reintentar una operación anterior. El modal (+) sí guarda userId y compara con currentUser, pero su clave es solo vehicleId: una operación ajena puede bloquear el formulario en lugar de aplicar una política explícita de aislamiento.
+
+H-AUD-038-003 — MEDIA — viewedItems y validationCache no tienen política explícita de cuenta/retención.
+searchHistory ya está cubierto por H-AUD-037-009/AUG-051. Además, viewedItems guarda el registro completo consultado y timestamp bajo una clave global por id; validationCache guarda respuesta/timestamp por vehicleId, sin userId ni política de retención. checkSession() rehidrata historial y vistos antes de resolver la cuenta. No se concluye que validationCache deba ser individual: debe definirse si su semántica es colaborativa/por dispositivo o personal. Ampliar AUG-051, sin duplicar searchHistory.
+
+H-AUD-038-004 — MEDIA — «Vaciar caché local» no representa el inventario real de almacenamiento.
+ui.js solicita indexedDB.deleteDatabase('GPSpedia_DB') sin esperar onsuccess/onerror/onblocked y después elimina únicamente gpsepedia_catalog_cache y gpsepedia_pending_operation. Esas dos claves no representan todo el almacenamiento utilizado. Permanecen otras claves y no se define si los snapshots durables deben conservarse para recuperación. La parte asíncrona coincide con H-AUD-025-008/AUG-022; ampliar esa tarea para inventario y semántica de limpieza.
+
+H-AUD-038-005 — ALTA — checkOperation no valida sesión y puede devolver rowData completo.
+Services/write.js doPost() enruta checkOperation directamente a handleCheckOperation(); el handler solo exige opId, llama findRowByOpId() y puede devolver rowData completo. No valida userId/sessionToken ni relación actor-operación, aunque el frontend envía credenciales. El opId se genera en add_cortes con Date.now() y Math.random(), por lo que no debe tratarse como autorización. Se deriva AUG-054 para AUD-T-031/AUD-T-035; no se modifica el endpoint en esta auditoría.
+
+HALLAZGOS YA CUBIERTOS; NO DUPLICAR
+- H-AUD-037-008/AUG-051: performOp resuelve en request.onsuccess sin esperar transaction.complete; initDB no maneja onversionchange; miniaturas/object URLs sin política de evicción/liberación.
+- H-AUD-037-009/AUG-051: searchHistory global entre cuentas, puede contener VIN y no tiene caducidad/limpieza.
+- AUD-T-034/AUG-006/AUG-042: logout solo elimina gpsepedia_session; no revoca la sesión remota ni limpia currentUser/token, modales privilegiados y contenidos.
+- AUD-T-036/AUG-045: gpsepedia_terms_accepted es aceptación por dispositivo compartida entre cuentas; su política se decide en esa tarea.
+- AUD-T-024/AUG-005/AUG-007/AUG-008: eliminación de cuenta, expiración y coordinación de validación.
+- AUD-T-025/AUG-022: eliminación asíncrona de IndexedDB.
+Se enlazan las tareas existentes y no se crean IDs duplicados.
+
+CONTROLES POSITIVOS
+- El modal (+) persiste userId y applyPendingOperation() exige coincidencia con currentUser.
+- La subida ADMIN no persiste SessionToken/credenciales; el envío usa getDeveloperSessionPayload() y Services/admin.js valida sesión y rol Desarrollador.
+- Services/Auth.js valida userId/token contra ActiveSessions.
+- routeAction usa POST y el Service Worker ignora métodos distintos de GET; no se observó caché de respuestas API POST.
+- Las métricas api-config.js viven en memoria (ventana 15 min, máximo 600 eventos).
+- VinSignatureStore guarda firmas derivadas del catálogo, no el VIN introducido.
+
+TAREAS DERIVADAS
+- AUG-053: aislar, proteger y depurar snapshots locales de operaciones pendientes y respaldos por cuenta.
+- AUG-054: autenticar checkOperation y minimizar su respuesta.
+- Ampliar AUG-051 para viewedItems y clasificación/retención de validationCache.
+- Ampliar AUG-022 para inventario completo y semántica de limpieza.
+- No duplicar AUG-006/AUG-042/AUG-045 ni H-AUD-037-008/009.
+
+CONCLUSIÓN Y LÍMITES
+E1 estática completada. Se identifican dos áreas nuevas: aislamiento/retención de snapshots locales y autorización/minimización de checkOperation. Las demás observaciones se vinculan a tareas existentes. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. Sin pruebas E2/E3, navegador, IndexedDB real, cuota, cambio de cuenta, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni verificación de deployments.
+================================================================================

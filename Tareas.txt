@@ -5659,3 +5659,62 @@ ENTREGABLE
 LÍMITES
 Solo documentación. No se modificó código, endpoints, configuración, Spreadsheet, Drive, datos productivos ni deployments. No se ejecutaron pruebas funcionales, HTTP, navegador, Apps Script, Drive, Spreadsheet, concurrencia ni verificación de deployments.
 ================================================================================
+
+================================================================================
+RESULTADO DE AUDITORÍA — AUD-T-038: SEGURIDAD DEL ALMACENAMIENTO LOCAL Y CICLO DE DATOS DE USUARIO
+Fecha: 2026-11-07 | Sesión AUD-20261107-S020 | Checkpoint AUD-CP-0020
+HEAD auditado: bfcdf8e57d4e09c1c920cf904265301c4554b334
+Estado: E1 COMPLETADA; H-AUD-038-001 a 005 abiertos; validación funcional/privacidad pendiente.
+- H-AUD-038-001 (ALTA): add_cortes persiste VIN/datos/archivos Base64 sin owner y recupera con la cuenta activa; payload completo en consola.
+- H-AUD-038-002 (MEDIA/ALTA): adminImageUploadPending y gpsepedia_edit_backup sin owner/retención; pueden reutilizarse entre cuentas. addCutPending compara userId, pero la clave por vehicleId puede bloquear a otra cuenta.
+- H-AUD-038-003 (MEDIA): viewedItems/validationCache sin política de cuenta/retención; searchHistory ya está en AUG-051.
+- H-AUD-038-004 (MEDIA): vaciado local no espera deleteDatabase y solo elimina dos claves; ampliar AUG-022.
+- H-AUD-038-005 (ALTA): checkOperation no valida sesión y devuelve rowData; crear AUG-054 para AUD-T-031/AUD-T-035.
+TAREAS: AUG-053/AUG-054 nuevas; adendas a AUG-022/AUG-051. No duplicar AUG-006/AUG-042/AUG-045 ni H-AUD-037-008/009.
+CONTROLES: modal (+) compara operation.userId; ADMIN valida sesión/rol; API usa POST y Service Worker no cachea POST; métricas solo memoria; VinSignatureStore no persiste el VIN ingresado.
+LÍMITES: E1 estática; sin navegador, cambio de cuenta, IndexedDB real, cuota, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni deployments. Sin cambios de código/datos.
+================================================================================
+
+================================================================================
+ADENDA AUD-T-038 — AMPLIACIÓN DE TAREAS EXISTENTES
+Fecha: 2026-11-07 | Sesión AUD-20261107-S020
+
+AUG-022 — ampliar criterios:
+- Inventariar claves localStorage/sessionStorage, object stores y Cache Storage utilizados por la versión vigente.
+- Distinguir cachés reconstruibles, preferencias, aceptación legal, sesión y operaciones pendientes recuperables.
+- Definir qué elimina «Vaciar caché local» y qué conserva; no borrar una operación pendiente sin resolver su estado remoto o preservar una recuperación verificable.
+- Esperar los eventos de deleteDatabase y manejar éxito, error y bloqueo; no declarar vaciado total si una parte permanece.
+
+AUG-051 — ampliar criterios:
+- Incluir viewedItems (registro completo consultado y timestamp) además de searchHistory en la política de aislamiento/retención.
+- Clasificar validationCache y decidir si es colaborativa/por dispositivo o individual; no inferir la política.
+- Probar dos cuentas en el mismo navegador, historial/vistos, respuestas de validación, VIN, expiración y limpieza.
+================================================================================
+
+### AUG-053 — Aislar, proteger y depurar snapshots locales de operaciones por cuenta
+- **Hallazgos origen:** H-AUD-038-001/002. **Prioridad:** Alta.
+- **Problema:** gpsepedia_pending_operation guarda datos de vehículo, VIN y archivos Base64 sin identidad creadora; adminImageUploadPending y gpsepedia_edit_backup tampoco tienen owner ni retención.
+- **Criterios de aceptación:**
+  1. Asociar cada snapshot pendiente con owner estable (userId/tipo de operación); no persistir SessionToken ni credenciales.
+  2. Antes de restaurar, mostrar o reintentar, comprobar que la cuenta actual coincide con el owner; ante diferencia, aislar el registro y no enviarlo con credenciales de otra cuenta.
+  3. Definir si los reemplazos ADMIN son privados por iniciador o compartidos entre Desarrolladores; aplicar la política aprobada.
+  4. Asociar gpsepedia_edit_backup a cuenta/vehículo y evitar restaurarlo en otra sesión.
+  5. Establecer retención/expiración y limpieza segura para Data URLs/snapshots, preservando idempotencia ante respuestas inciertas.
+  6. No registrar payloads completos, VIN ni Data URLs en consola; sanitizar errores.
+  7. Resolver addCutPending: conservar comprobación userId y evitar bloqueo indefinido por operaciones de otra cuenta con la misma vehicleId.
+  8. Probar logout, cambio de cuenta, sesión invalidada, dos cuentas Desarrollador, operación pendiente/confirmada, reintento, recarga, dos pestañas, expiración y fallo de almacenamiento.
+- **Relación:** AUD-T-038; AUD-T-031; AUD-T-034/AUG-042; AUG-051.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-054 — Autenticar checkOperation y minimizar su respuesta
+- **Hallazgo origen:** H-AUD-038-005. **Prioridad:** Alta.
+- **Evidencia:** Services/write.js doPost() enruta checkOperation a handleCheckOperation(); el handler busca por opId sin validar sesión y puede devolver rowData completo.
+- **Criterios de aceptación:**
+  1. Definir si la acción es protegida y validar userId/sessionToken contra ActiveSessions/Users antes de consultar; no confiar en opId como credencial.
+  2. Definir relación actor-operación para impedir consultas cruzadas cuando la política requiera propiedad.
+  3. Devolver solo estado, vehicleId, timestamp y datos mínimos de recuperación; no enviar rowData completo si no es necesario.
+  4. Revisar entropía del opId y mantener idempotencia sin usarlo como autorización.
+  5. Probar petición anónima, token inválido, otro usuario, opId inexistente, pendiente/completada y respuesta minimizada.
+- **Relación:** AUD-T-031, AUD-T-035 y AUD-T-038.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+================================================================================

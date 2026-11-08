@@ -18,22 +18,22 @@ La matriz es una planificación de pruebas, no evidencia de que estas se hayan e
 
 ## 2. Estado real del catálogo AUD-T
 
-El plan contiene 37 unidades AUD-T. Según la tabla de estado vigente:
+El plan contiene 38 unidades AUD-T. Según la tabla de estado vigente:
 
 | Estado documental | Unidades | Cantidad |
 |---|---|---:|
-| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-023 a AUD-T-037 | 15 |
+| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-023 a AUD-T-038 | 16 |
 | Auditada parcialmente | AUD-T-002 | 1 |
 | Por auditar | AUD-T-001 y AUD-T-003 a AUD-T-022 | 21 |
-| **Total** | **AUD-T-001 a AUD-T-037** | **37** |
+| **Total** | **AUD-T-001 a AUD-T-038** | **38** |
 
-**Corrección de continuidad:** no es correcto afirmar que las 37 unidades AUD-T tienen auditoría estática completada. Las unidades AUD-T-001 y AUD-T-003 a AUD-T-022 siguen marcadas POR AUDITAR; AUD-T-002 está auditada parcialmente. Las 15 unidades AUD-T-023 a AUD-T-037 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
+**Corrección de continuidad:** no es correcto afirmar que las 37 unidades AUD-T tienen auditoría estática completada. Las unidades AUD-T-001 y AUD-T-003 a AUD-T-022 siguen marcadas POR AUDITAR; AUD-T-002 está auditada parcialmente. Las 16 unidades AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
 
-La siguiente unidad prevista en el plan es AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario. Su inicio queda después de esta consolidación y de la aprobación del orden de trabajo; esta consolidación no sustituye ni marca como completada AUD-T-038.
+AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario — se auditó en AUD-20261107-S020. Su E1 está completada; permanecen hallazgos y validaciones funcionales/privacidad pendientes.
 
 ## 3. Inventario consolidado de tareas AUG
 
-El archivo Plan_auditoría/Aug_Tareas.md contiene **51 identificadores AUG únicos** dentro del rango observado. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
+El archivo Plan_auditoría/Aug_Tareas.md contiene **53 identificadores AUG únicos** dentro del rango AUG-001 a AUG-054. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
 
 Algunos encabezados AUG se repiten en el archivo porque las auditorías posteriores agregaron adendas a tareas existentes. Esas repeticiones no constituyen tareas nuevas. Deben conservarse las adendas y sus referencias históricas.
 
@@ -48,6 +48,7 @@ Algunos encabezados AUG se repiten en el archivo porque las auditorías posterio
 | Coordinación y contratos entre servicios | AUG-034 a AUG-044 | Locks compartidos, idempotencia, contrato VIN/testigo, reconciliación de cargas, compensaciones, seguridad WRITE/FEEDBACK/UTILITIES, rol cliente, YouTube y mapa de acciones |
 | Términos, privacidad y accesibilidad | AUG-045 a AUG-047 | Aceptación versionada, revisión legal y accesibilidad/navegación/offline de modales legales |
 | Catálogo, búsqueda, VIN y PWA | AUG-048 a AUG-052 | Snapshot y sincronización, búsqueda, motor VIN, IndexedDB/miniaturas/privacidad local, startup/deep links/Service Worker/backend |
+| Ciclo local de operaciones y seguridad de endpoints | AUG-053/AUG-054 | Aislamiento/retención de snapshots por cuenta; autenticación y minimización de checkOperation |
 
 El índice no reemplaza los criterios de aceptación detallados de Aug_Tareas.md. La implementación debe seguir consultando cada ficha completa, incluidas sus adendas, evidencias, decisiones y dependencias.
 
@@ -78,7 +79,7 @@ Las pruebas deben ejecutarse en entornos aislados y con cuentas/datos de prueba.
 
 | ID de matriz | Área y tareas relacionadas | Casos mínimos que deben comprobarse | Evidencia exigida |
 |---|---|---|---|
-| VAL-01 | Identidad, sesiones y roles — AUG-005 a AUG-009, AUG-016, AUG-017, AUG-042 | Login/logout, revocación, cuenta eliminada, contraseña/caducidad según política aprobada, varias pestañas, cambio de cuenta/rol, modal privilegiado y navegación | Actor/rol efectivo, resultado del backend, estado cliente antes/después, sesiones invalidadas y ausencia de acceso residual |
+| VAL-01 | Identidad, sesiones y roles — AUG-005 a AUG-009, AUG-016, AUG-017, AUG-042, AUG-054 | Login/logout, revocación, cuenta eliminada, contraseña/caducidad según política aprobada, varias pestañas, cambio de cuenta/rol, modal privilegiado y navegación | Actor/rol efectivo, resultado del backend, estado cliente antes/después, sesiones invalidadas y ausencia de acceso residual |
 | VAL-02 | Seguridad y consistencia AUTH/USERS — AUG-010 a AUG-014 | Mutaciones simultáneas, intentos concurrentes, purga de Logs con inserciones, validación de usuario/contraseña, migración de credenciales | Resultado por operación, conteos antes/después, ausencia de pérdida/duplicación y evidencia de migración reversible o recuperable |
 | VAL-03 | WRITE/FEEDBACK/UTILITIES y contratos — AUG-003, AUG-034, AUG-039 a AUG-044 | Sesión ausente/expirada, rol insuficiente, payload incompleto o manipulado, acciones sin handler y handlers sin mapeo, escritura concurrente desde servicios distintos | Matriz acción→servicio→handler→consumidor, HTTP/JSON, actor autenticado, rechazo de operaciones no autorizadas y consistencia de registros |
 | VAL-04 | Backup/restore y operaciones ADMIN — AUG-018 a AUG-023 | Backup completo/incompleto, manifiesto, restore con fallo inducido por etapa, rollback, terminal fuera de Cortes, logs grandes/fechas inválidas, acciones huérfanas, borrado IndexedDB bloqueado | Identificador y manifiesto de respaldo, comparación origen/destino, recuperación demostrada, límites de ruta y estados reales de cada operación |
@@ -90,7 +91,7 @@ Las pruebas deben ejecutarse en entornos aislados y con cuentas/datos de prueba.
 | VAL-10 | Términos y accesibilidad — AUG-045 a AUG-047 | Primera aceptación, nueva versión, cambio de cuenta/dispositivo, almacenamiento bloqueado, modal ausente, teclado, foco, lector de pantalla, History API y offline | Versión/identidad/fecha conforme a decisión aprobada, bloqueo seguro, foco y navegación correctos, revisión legal documentada |
 | VAL-11 | Catálogo, caché y sincronización — AUG-048/AUG-052 | Alta, edición y eliminación de registros; cambios con igual cardinalidad; reinicio offline; instantánea y delta; timeouts y respuestas inválidas | Comparación de datos de origen y caché, ausencia de registros retirados, sincronización recuperable y estado terminal visible |
 | VAL-12 | Búsqueda y VIN — AUG-036, AUG-049/AUG-050 | Acentos, mayúsculas, espacios, campos de cada sección, coincidencia exacta/parcial, años/modelos numéricos ambiguos, VIN exacto/prefijo y variantes múltiples | Conjunto de resultados esperado, ranking, sección/modal correcto, ambigüedades explícitas y variante identificada sin selección arbitraria |
-| VAL-13 | IndexedDB, miniaturas y privacidad local — AUG-022, AUG-031/AUG-032, AUG-051 | Transacción complete/abort/error, upgrade bloqueado, cuota/evicción, URLs de objeto, tamaños de miniatura, cuentas distintas, retención y limpieza | Confirmación de transacción, límites de almacenamiento, ausencia de datos cruzados entre cuentas y revocación/liberación de recursos |
+| VAL-13 | IndexedDB, miniaturas y privacidad local — AUG-022, AUG-031/AUG-032, AUG-051, AUG-053 | Transacción complete/abort/error, upgrade bloqueado, cuota/evicción, URLs de objeto, tamaños de miniatura, cuentas distintas, retención y limpieza | Confirmación de transacción, límites de almacenamiento, ausencia de datos cruzados entre cuentas y revocación/liberación de recursos |
 | VAL-14 | PWA, deep links y rendimiento — AUG-033, AUG-049, AUG-052 | Instalación limpia, precache del grafo requerido, runtime cache, offline, deep link sin catálogo, red lenta/interrumpida, catálogo grande | Recursos disponibles offline, reintentos acotados, cancelación/timeout, tiempos medidos y comportamiento sin espera infinita |
 | VAL-15 | Regresión integral y deployments — AUG-002 y todas las tareas afectadas | Repetir flujos críticos después de cada corrección; comparar HEAD con cada deployment autorizado; probar roles y navegadores/dispositivos soportados | SHA de código, URL/identidad del deployment, fecha, ambiente, navegador, pasos, resultado, logs sanitizados y aprobación |
 
@@ -119,8 +120,8 @@ Las pruebas deben ejecutarse en entornos aislados y con cuentas/datos de prueba.
 
 **Estado:** CONSOLIDACIÓN DOCUMENTAL COMPLETADA; MATRIZ DE VALIDACIÓN PREPARADA; EJECUCIÓN DE PRUEBAS PENDIENTE.
 
-- Catálogo AUD-T: 37 unidades; 15 con E1 completada, 1 parcial y 21 por auditar.
-- Catálogo AUG: 51 IDs únicos; AUG-015 ausente del registro actual y pendiente de investigación histórica.
+- Catálogo AUD-T: 38 unidades; 16 con E1 completada, 1 parcial y 21 por auditar.
+- Catálogo AUG: 53 IDs únicos; AUG-015 ausente del registro actual y pendiente de investigación histórica.
 - Repeticiones de encabezados AUG: se interpretan como adendas hasta comprobar lo contrario; no se eliminan ni renumeran.
 - La matriz VAL-01 a VAL-15 organiza los casos que deben ejecutarse; no acredita pruebas ya realizadas.
 - No se ejecutaron pruebas funcionales, HTTP, navegador, Apps Script, Drive, Spreadsheet, concurrencia ni deployments.
@@ -128,4 +129,12 @@ Las pruebas deben ejecutarse en entornos aislados y con cuentas/datos de prueba.
 
 ## 8. Próxima acción
 
-Continuar con AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario, después de confirmar que el alcance de esa auditoría no duplica AUG-051 ni las observaciones ya registradas en AUD-T-037. Mantener el alcance diagnóstico y actualizar el plan si la comparación de archivos/call-sites demuestra que debe dividirse o integrarse con una tarea existente.
+Continuar con AUD-T-003 — registro de vehículos y cortes, idempotencia y resiliencia de red (fase F2 crítica). Mantener AUG-053/AUG-054 y las adendas a AUG-022/AUG-051 como pendientes independientes; no tratarlos como implementados.
+
+## 9. Actualización de cobertura — AUD-T-038
+Sesión AUD-20261107-S020 | Checkpoint AUD-CP-0020 | HEAD auditado bfcdf8e57d4e09c1c920cf904265301c4554b334.
+- AUD-T-038 tiene E1 estática completada; H-AUD-038-001 a 005 abiertos y validación funcional/privacidad pendiente.
+- AUG pasa de 51 a 53 IDs únicos: se agregan AUG-053/AUG-054. AUG-015 continúa ausente; no se infiere ni renumera.
+- AUG-051 se amplía para viewedItems y clasificación de validationCache; AUG-022 se amplía para inventario y semántica de limpieza.
+- VAL-01 incluye AUG-054; VAL-13 incluye AUG-053.
+- Sin pruebas E2/E3, navegador, IndexedDB real, cambio de cuenta, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni deployments.

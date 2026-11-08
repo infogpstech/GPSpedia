@@ -86,6 +86,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-035 | Endpoints, separación de servicios y contratos frontend/backend | commits de actualización AUTH/USERS/ADMIN/FEEDBACK/WRITE; 975c5913 y f8cc191f — alta de servicios en el historial | E1 COMPLETADA; CONTRATOS INCONSISTENTES; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-036 | Términos, consentimiento inicial y elementos legales de interfaz | e06791d0 — modal de términos en primer login; 9aa59063 — integración de términos y enlace footer | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL Y REVISIÓN LEGAL PENDIENTES |
 | AUD-T-037 | Catálogo, caché, sincronización incremental y búsqueda | f1db85fe — estrategia de caché incremental; 7fae24ac — búsqueda numérica; commits de catálogo y mejoras generales | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/RENDIMIENTO PENDIENTE |
+| AUD-T-038 | Seguridad del almacenamiento local y ciclo de datos de usuario | Continuidad propuesta después de AUD-T-037 y consolidación S019 | E1 COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/PRIVACIDAD PENDIENTE |
 
 ### 4.1. Control de cancelaciones, sustituciones y cambios de alcance
 
@@ -99,7 +100,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 
 | Fase | Alcance | IDs principales | Prioridad |
 |---|---|---|---|
-| F0 | Baseline, historial, clasificación inicial y trazabilidad | AUD-T-001 a AUD-T-037 (inventario) | En curso |
+| F0 | Baseline, historial, clasificación inicial y trazabilidad | AUD-T-001 a AUD-T-038 (inventario) | En curso |
 | F1 | Seguridad, AUTH, USERS, RBAC, sesiones, legal y contratos de servicios | 002, 023, 024, 034, 035, 018 | Crítica |
 | F2 | Escrituras, registro de cortes, VIN, opId, esquema e identidad | 003, 004, 030, 031, 032 | Crítica |
 | F3 | Drive, historial/reemplazo, inventario sin uso, snapshot y coordinación | 027, 028, 029, 031, 033 | Crítica |
@@ -698,3 +699,12 @@ Aug_Tareas.md contiene 51 IDs AUG únicos; AUG-015 no aparece. Los encabezados r
 Se crea Plan_auditoría/Consolidacion_Auditoria.md con índice por dominio, dependencias, matriz VAL-01 a VAL-15 y reglas de ejecución.
 Límites: trabajo documental; sin pruebas E2/E3, navegador, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni verificación de deployments. Sin cambios de aplicación ni datos productivos.
 Siguiente: AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario, previa comprobación de no duplicidad con AUG-051 y AUD-T-037.
+
+## 25. Iteración técnica — AUD-T-038
+Sesión AUD-20261107-S020 | Checkpoint AUD-CP-0020 | HEAD bfcdf8e57d4e09c1c920cf904265301c4554b334 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 COMPLETADA; H-AUD-038-001 a 005 abiertos; validación funcional/privacidad pendiente.
+Alcance: localStorage, IndexedDB, Cache Storage, Service Worker, sesión, snapshots pendientes, historial/vistos, respaldos locales, limpieza y recuperación entre cuentas.
+Fuentes: offline.js, auth.js, state.js, ui.js (funciones de persistencia), add_cortes.html, users.html, main.js, VinDifferentialEngine.js, api-config.js, service-worker.js, Services/Auth.js, Services/users.js, Services/write.js y Services/admin.js.
+Tareas: AUG-053/AUG-054 nuevas; adendas a AUG-022/AUG-051. Se mantienen AUG-006/AUG-042/AUG-045 y H-AUD-037-008/009 sin duplicación.
+Límites: E1 estática; sin navegador, cambio de cuenta, IndexedDB real, cuota, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni deployments. Sin cambios de aplicación/datos.
+Siguiente: AUD-T-003 — Registro de vehículos y cortes, idempotencia y resiliencia de red (fase F2 crítica).

@@ -447,3 +447,38 @@ Cambios de aplicación: ninguno. Datos productivos: sin cambios.
 Siguiente acción: AUD-T-038, previa revisión de solapamiento con AUG-051 y AUD-T-037.
 El checkpoint final se incluye en el único commit de esta tarea. parent_sha y expected_sha serán eb3b72e205ad8d772a4bd5cdad94fb3e26533917; force=false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0020
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S020
+Tarea: AUD-T-038 — Seguridad del almacenamiento local y ciclo de datos de usuario.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD: bfcdf8e57d4e09c1c920cf904265301c4554b334 | Árbol: 2d65382ae9db49b8cd80ab3bb8a888f26ff32a80
+Rama base: GPSpedia2.2.5 | HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: localStorage, IndexedDB, Cache Storage, Service Worker, sesión, snapshots pendientes, historial/vistos, respaldos locales, limpieza y recuperación al cambiar de cuenta.
+Contexto: AUD-T-037 dejó H-AUD-037-008/009 y AUG-051; AUD-T-034 dejó AUG-006/AUG-042; AUD-T-025 dejó AUG-022; AUD-T-036 dejó AUG-045.
+Estado inicial: consolidación S019 completada; 37 AUD-T (15 E1, 1 parcial, 21 por auditar); 51 IDs AUG; AUG-015 ausente.
+Restricciones: diagnóstico E1; no modificar código, endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments; sin pruebas funcionales/operaciones reales.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0020
+Fecha: 2026-11-07 | Sesión: AUD-20261107-S020 | Tarea: AUD-T-038.
+HEAD auditado/padre previsto: bfcdf8e57d4e09c1c920cf904265301c4554b334 | base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Estado: E1 COMPLETADA; H-AUD-038-001 a 005 abiertos; validación funcional/privacidad pendiente.
+Resultado: recuperación cruzada de add_cortes; snapshots ADMIN/edit sin owner/retención; viewedItems/validationCache sin política; vaciado local incompleto; checkOperation sin validación de sesión y con rowData.
+Tareas: AUG-053/AUG-054 nuevas; adendas AUG-022/AUG-051. Mantener AUG-006/AUG-042/AUG-045 y H-AUD-037-008/009 sin duplicación.
+Archivos documentales modificados: Auditoría.txt; Tareas.txt; Plan_auditoría/Plan_Auditoria.md; Plan_auditoría/Aug_Tareas.md; Plan_auditoría/Consolidacion_Auditoria.md; ChangesLogs.txt; contexto_personal.md; checkpoint.md.
+RESPALDOS EXACTOS (blob SHA previo):
+- Auditoría.txt: efba4f595ef32f2e77b6cddd0628c07d709d1cd1
+- ChangesLogs.txt: ce3aa2a1e30edb2692b6a3f6f112eaaed1501369
+- Plan_auditoría/Aug_Tareas.md: f20a771fd120e2e6ed8a0b5a0410a53c57f0b2f9
+- Plan_auditoría/Consolidacion_Auditoria.md: 107f5602080ebb10b2a8d4c31cb2a0ff5f81902e
+- Plan_auditoría/Plan_Auditoria.md: ac170957ca4391bbecadcd285c5da4b015703f29
+- Tareas.txt: 9fdbe264ecefb86931886f0ec9cc43fef76cd135
+- checkpoint.md: cabb7e7ab9876de6850d81dc45739aa31d41cbb9
+- contexto_personal.md: bdcd7df105f4d663497e19d1b1a1fefe12d3525f
+Verificación: inspección estática de rutas/funciones y call-sites; sin pruebas E2/E3, navegador, IndexedDB real, cuota, cambio de cuenta, HTTP, Apps Script, Drive, Spreadsheet, concurrencia ni deployments.
+Cambios de aplicación: ninguno. Datos productivos: sin cambios.
+Siguiente acción: AUD-T-003 — Registro de vehículos y cortes, idempotencia y resiliencia de red.
+Este checkpoint final es la última actualización documental antes del único commit. parent_sha y expected_sha: bfcdf8e57d4e09c1c920cf904265301c4554b334; force:false. La rama base debe permanecer en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================
