@@ -916,3 +916,35 @@ No se modificaron archivos de aplicación, servicios, contratos, endpoints, conf
 Commit único esperado: docs(audit): verify AUD-T-020 continuity; parent 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1.
 Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0060
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S061
+Tarea: AUD-T-021 — revalidación de continuidad E1 de ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
+Estado inicial: E1 histórica completada en 3339694150823f8f8adca6ffbad6211c708a8960, árbol ebe322745a0458df1dbf749a28517ce97e36eb08; pendiente comprobar continuidad y documentarla.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: b10057cbdb0d6e8fa638571034e95d210e0c947a | Árbol: 435cb6f3507bae8cdcd3ab519d15d16cceb7dd91.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios.
+Respaldos SHA de los cinco documentos antes de editar:
+Plan_auditoría/Plan_Auditoria.md: f1980e4f5aa4448f66122b0a5177573c5b2e36ac
+Plan_auditoría/Consolidacion_Auditoria.md: 2724aa94a0ba9f432e997e06fbb7f018d64bddca
+ChangesLogs.txt: 6ee69d602dd6e2a29356ea14d8e963079a7f7f0d
+contexto_personal.md: ef15ece1f3f354789226efaab2d129ae073f67cf
+checkpoint.md: 23d1d5875b6a4ec894cf6d78cf8a5efbf635f9d4
+La comparación E1→HEAD actual reporta 22 commits posteriores y únicamente ocho archivos modificados, todos documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. No hay cambios en archivos funcionales, CSS, HTML de aplicación ni assets desde el árbol E1; por ello, los SHA de los artefactos de implementación revisados, incluidos ui.js, rich-text.js y style.css, siguen siendo idénticos.
+Alcance funcional histórico: ui.js exportVehiclePrintSheet(), botón invocador, getImageUrl(), getActivaTestigoValue(), sanitizer de rich-text.js, estilos de impresión, assets referenciados y documentación de Tarea 2.2/Bloque 7/README/ChangesLogs/plan maestro.
+No se ejecutaron pruebas de impresión, navegador, PDF, QR, Node/lint ni servicios productivos.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0060
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S061
+Tarea: AUD-T-021 — revalidación de continuidad E1.
+Estado final: continuidad confirmada; H-AUD-021-001 a 009 permanecen registrados; AUG-140 a AUG-145 pendientes; AUG-146 pendiente; AUG-096 ampliada; VAL-30 planificada/no ejecutada. Sin hallazgos ni tareas duplicados.
+HEAD padre: b10057cbdb0d6e8fa638571034e95d210e0c947a; árbol inicial 435cb6f3507bae8cdcd3ab519d15d16cceb7dd91; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+La comparación E1→HEAD actual reporta 22 commits posteriores y únicamente ocho archivos modificados, todos documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. No hay cambios en archivos funcionales, CSS, HTML de aplicación ni assets desde el árbol E1; por ello, los SHA de los artefactos de implementación revisados, incluidos ui.js, rich-text.js y style.css, siguen siendo idénticos.
+Ocho documentos cambiaron desde E1; no hubo deriva en archivos funcionales ni assets. Los cinco documentos de continuidad se actualizan. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin modificación porque no existen hallazgos, tareas o correcciones nuevas.
+No se ejecutaron navegador, impresión, PDF, QR/escaneo, Node/lint, pruebas móviles, red externa, Apps Script, Drive, Spreadsheet ni E2/E3. Sin cambios funcionales, CSS, HTML de aplicación, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue.
+Commit único esperado: docs(audit): verify AUD-T-021 continuity; parent b10057cbdb0d6e8fa638571034e95d210e0c947a.
+Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+================================================================================
