@@ -776,3 +776,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-034/AUG-035/AUG-036 continúan pendientes; AUD-T-033/AUG-003 conserva la dependencia de coordinación. Sin hallazgos ni tareas nuevas.
 - Solo continuidad E1 y revisión documental. Sin pruebas E2/E3, Apps Script, HTTP, navegador, Spreadsheet/Drive real, migración VIN ni concurrencia. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
+
+
+## 49. AUD-T-031 — continuidad E1 y revalidación de cargas/idempotencia
+- Sesión AUD-20261108-S076; checkpoint AUD-CP-0075; E1 71058f8b1924d59924fa289f66226aeaac41b7bc; árbol E1 760be8de0dc0ed8ab4784646ebb57ced680af958; HEAD b82069f10233b6feb678ea1679fdc790d9e5d72c; árbol actual 1c05c80bac8eb53348add897b7e3fd411262734e; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los seis archivos de código/esquema de AUD-T-031 conservan SHA idénticos a E1.
+- H-AUD-031-001 a 010 permanecen abiertos por continuidad: descarte que revierte URL sin ledger/historial/Drive, reutilización de archivo sin revalidar bytes, coordinación interproyectos, rollback histórico, verificación de escritura ledger, reconciliación pending, reintento linked que puede sacar de papelera, verificación de restauraciones, persistencia local de add_cortes y unicidad de vehicleId.
+- AUG-037/AUG-038 continúan pendientes; AUG-034/AUD-T-033 y AUG-035 conservan sus relaciones. H-AUD-031-009 queda en la matriz de recuperación existente. Sin hallazgos ni tareas nuevas.
+- Solo continuidad E1 y revisión documental. Sin pruebas E2/E3, navegador, Apps Script, HTTP, Drive, Spreadsheet, fallos inducidos ni concurrencia real. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.

@@ -1620,3 +1620,46 @@ No se ejecutaron pruebas E2 sintácticas, E3 aisladas, navegador/PWA, Apps Scrip
 
 ### Siguiente iteración
 AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
+
+
+## 60. Revalidación de continuidad — AUD-T-031
+
+**Sesión:** AUD-20261108-S076  
+**Checkpoint:** AUD-CP-0075  
+**E1 original:** 71058f8b1924d59924fa289f66226aeaac41b7bc (AUD-20261107-S012 / AUD-CP-0012)  
+**Árbol E1:** 760be8de0dc0ed8ab4784646ebb57ced680af958  
+**HEAD revalidado:** b82069f10233b6feb678ea1679fdc790d9e5d72c  
+**Árbol actual:** 1c05c80bac8eb53348add897b7e3fd411262734e  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-031-001 A 010 ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE.
+
+### Alcance y comparación
+Se revalidó la carga de imágenes a Drive, reintentos Drive/Spreadsheet, persistencia de operaciones, idempotencia de reemplazos in-modal, historial Imagenes_Reemplazadas, ledger AdminImageUploads, IndexedDB y compensaciones. Archivos: Services/write.js, Services/admin.js, ui.js, offline.js, add_cortes.html y Spreadsheet/GPSpedia_DB_columnas.md.
+
+La comparación E1→HEAD muestra 64 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los seis archivos del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+
+### Revalidación de hallazgos y tareas
+- H-AUD-031-001 a H-AUD-031-010 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- Persisten las brechas de semántica de «descartar cambios» frente a reemplazos ya confirmados; verificación de bytes al reutilizar cargas generales; coordinación compartida ADMIN/WRITE/FEEDBACK; rollback incompleto del historial; verificación posterior de filas ledger; reconciliación de cargas pending; restauración de papelera en reintentos linked; verificación de valores revertidos; persistencia local de opId en add_cortes; y unicidad de vehicleId antes de reemplazar.
+- AUG-034/AUD-T-033 mantienen la dependencia de coordinación compartida entre proyectos.
+- AUG-037 continúa pendiente para reconciliación durable de cargas generales, verificación de contenido y estados pending/linked.
+- AUG-038 continúa pendiente para compensación coherente de reemplazos in-modal, descarte y estados ledger/historial/Drive.
+- AUG-035 conserva la ampliación de unicidad de vehicleId para handleUploadAdminImage().
+- H-AUD-031-009 permanece relacionado con la matriz de recuperación de add_cortes y persistencia del formulario; no se crea tarea duplicada.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 64 commits posteriores, el diff global, los SHA exactos de los seis archivos de alcance y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a validación funcional.
+
+No se ejecutaron pruebas E2 sintácticas, E3 aisladas, navegador/PWA, Apps Script V8, HTTP, Drive, Spreadsheet real, pérdida de respuestas, fallos de flush, compensaciones ni concurrencia. No se verificó la identidad/versión de deployments ADMIN/WRITE ni se inspeccionaron ledgers o filas reales. No se modificó código ni datos productivos.
+
+### Siguiente iteración
+AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.

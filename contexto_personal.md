@@ -775,3 +775,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - La ausencia física de hojas/columnas bajo demanda no es defecto por sí sola; la migración VIN sigue siendo explícita. AUG-034/AUG-035/AUG-036 pendientes; AUD-T-033/AUG-003 como dependencia.
 - No se ejecutaron pruebas E2/E3, Apps Script, HTTP, navegador, Spreadsheet/Drive real, migración ni concurrencia. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-031 — Subidas de imágenes, reintentos, reconciliación Drive/Spreadsheet e idempotencia.
+
+
+## Continuidad AUD-T-031 — 2026-11-08 | AUD-20261108-S076
+- Revalidación AUD-20261108-S076/AUD-CP-0075; E1 histórica 71058f8b1924d59924fa289f66226aeaac41b7bc (AUD-20261107-S012/AUD-CP-0012); HEAD b82069f10233b6feb678ea1679fdc790d9e5d72c; árbol actual 1c05c80bac8eb53348add897b7e3fd411262734e; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. Services/write.js, Services/admin.js, ui.js, offline.js, add_cortes.html y Spreadsheet/GPSpedia_DB_columnas.md conservan exactamente sus SHA E1.
+- H-AUD-031-001 a 010 permanecen abiertos: descarte/compensación, hash de archivo recuperado, coordinación interproyectos, rollback histórico, verificación ledger, reconciliación pending, papelera, restauración de campos, persistencia local opId y unicidad vehicleId.
+- AUG-037/AUG-038 pendientes; AUG-034/AUD-T-033 y AUG-035 como dependencias; H-AUD-031-009 en la matriz de recuperación existente. Sin hallazgos ni tareas nuevas.
+- No se ejecutaron pruebas E2/E3, navegador, HTTP, Apps Script, Drive, Spreadsheet, fallos inducidos ni concurrencia. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-032 — Identidad autenticada del colaborador en WRITE y ADMIN.
