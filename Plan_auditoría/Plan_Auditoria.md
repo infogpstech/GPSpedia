@@ -2183,3 +2183,51 @@ No se ejecutaron pruebas de navegador, dispositivos móviles, PWA standalone, ge
 
 ### Siguiente iteración
 AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+
+
+## 72. Revalidación de continuidad — AUD-T-007
+
+**Sesión:** AUD-20261108-S088  
+**Checkpoint:** AUD-CP-0087  
+**E1 original:** 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e (AUD-20261108-S025 / AUD-CP-0025)  
+**Árbol E1:** 59192fbc2190b98e6c71ebf3d0f9e108f9eaadc7  
+**HEAD revalidado:** e81eae5219427be7ede9c6ac90b67f780902bb8d  
+**Árbol actual:** 76cd9db57623fb7ec8e54f6ef7c5830acdc52a03  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-007-001 A 005 ABIERTOS; VALIDACIÓN DE NAVEGADOR/MÓVIL/PWA PENDIENTE.
+
+### Alcance y comparación
+Se revalidaron History API, popstate, overlays, gesto atrás, navegación de catálogo, búsqueda/Forward-Stack, restauración de estado, menú lateral, lightbox, modales de usuario, add_cortes y subida YouTube. Archivos: main.js, navigation.js, ui.js, users.html, add_cortes.html, youtubeUpload.js, index.html, style.css, lightbox.js y state.js.
+
+La comparación E1→HEAD muestra 63 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los diez archivos de código del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- lightbox.js: 841f44a54fe12b867c0c58cc560ce4474cde3e03
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+
+### Revalidación de hallazgos y tareas
+- H-AUD-007-001 a H-AUD-007-005 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- Los overlays dinámicos siguen sin registrarse/cerrarse mediante una pila común; los botones internos «Volver» pueden crear entradas nuevas; un popstate puede cerrar varios modales; apertura/cierre manual no mantiene simetría con el historial; el aviso inicial de términos intercepta antes de cerrar el acuerdo superior.
+- AUG-068 continúa pendiente para gestión común de overlays dinámicos y cierre secuencial.
+- AUG-069 continúa pendiente para navegación interna atrás sin duplicar entradas.
+- AUG-070 continúa pendiente para cierre de un solo overlay superior por popstate.
+- AUG-071 continúa pendiente para sincronizar apertura/cierre manual y entradas de historial.
+- AUG-047 recibe adenda específica para el orden de capas e historial del acuerdo de términos.
+- H-AUD-005-008 queda ampliado dentro de H-AUD-007-001; no se crea tarea paralela por cada modal. El flujo de búsqueda de AUG-049 se conserva separado de su navegación.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 63 commits posteriores, el diff global, los SHA exactos de los diez archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a prueba de secuencias reales del navegador.
+
+No se ejecutaron pruebas en navegador, Android, iOS, PWA standalone, gesto nativo, teclado virtual, overlays simultáneos, deep links, submit real, lector de pantalla ni comparación con deployments. No se midieron entradas reales del historial. No se modificó código, endpoints, configuración, Spreadsheet, Drive ni datos productivos.
+
+### Siguiente iteración
+AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.

@@ -883,3 +883,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-065/AUG-066/AUG-067 pendientes; AUD-T-009/AUG-051/AUD-T-038 y AUD-T-007 mantienen sus ámbitos.
 - No se ejecutaron navegador, móviles, PWA, gestos, pinch zoom, CDN, IndexedDB, canvas ni mediciones. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+
+
+## Continuidad AUD-T-007 — 2026-11-08 | AUD-20261108-S088
+- Revalidación AUD-20261108-S088/AUD-CP-0087; E1 histórica 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e (AUD-20261108-S025/AUD-CP-0025); HEAD e81eae5219427be7ede9c6ac90b67f780902bb8d; árbol actual 76cd9db57623fb7ec8e54f6ef7c5830acdc52a03; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. main.js, navigation.js, ui.js, users.html, add_cortes.html, youtubeUpload.js, index.html, style.css, lightbox.js y state.js conservan exactamente sus SHA E1.
+- H-AUD-007-001 a 005 permanecen abiertos: overlays dinámicos, navegación interna atrás, cierre de un solo overlay, simetría historial/visibilidad y prioridad del acuerdo legal.
+- AUG-068/AUG-069/AUG-070/AUG-071 pendientes; AUG-047 con adenda. H-AUD-005-008 ampliado; búsqueda separada en AUG-049.
+- No se ejecutaron pruebas de navegador, móvil/PWA, gestos, overlays simultáneos, deep links, lector de pantalla ni historial real. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.

@@ -885,3 +885,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - H-AUD-005-001/AUG-064 conserva el sink adicional slideText.innerHTML. AUG-065/AUG-066/AUG-067 pendientes; AUD-T-009/AUG-051/AUD-T-038 y AUD-T-007 mantienen sus ámbitos.
 - Solo continuidad E1 y revisión documental. Sin navegador, móviles, PWA, gestos, zoom, comparación visual, CDN, IndexedDB, canvas ni mediciones. Sin cambios funcionales, assets, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+
+
+## 61. AUD-T-007 — continuidad E1 y revalidación de navegación/History API
+- Sesión AUD-20261108-S088; checkpoint AUD-CP-0087; E1 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e; árbol E1 59192fbc2190b98e6c71ebf3d0f9e108f9eaadc7; HEAD e81eae5219427be7ede9c6ac90b67f780902bb8d; árbol actual 76cd9db57623fb7ec8e54f6ef7c5830acdc52a03; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los diez archivos de código del alcance conservan SHA idénticos a E1.
+- H-AUD-007-001 a 005 permanecen abiertos: overlays dinámicos no detectados; botones «Volver» agregan entradas; popstate cierra múltiples modales; apertura/cierre no simétricos; acuerdo de términos no respeta prioridad de capas.
+- AUG-068/AUG-069/AUG-070/AUG-071 pendientes; AUG-047 con adenda. H-AUD-005-008 se amplía sin duplicación; la lógica de búsqueda de AUG-049 permanece separada.
+- Solo continuidad E1 y revisión documental. Sin navegador, Android/iOS, PWA, gestos nativos, teclado virtual, overlays simultáneos, deep links, lector de pantalla ni medición de historial. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.

@@ -1915,3 +1915,34 @@ Sin cambios funcionales, assets, endpoints, configuración, hojas, datos product
 Commit documental único: docs(audit): verify AUD-T-006 continuity; parent 31fdacb038620c7e203b70d3d2e348ee6c15cf3b; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
 Siguiente tarea: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0087
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S088
+Tarea: AUD-T-007 — revalidación de continuidad E1 de navegación, History API, popstate, overlays y gesto atrás.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: e81eae5219427be7ede9c6ac90b67f780902bb8d; árbol 76cd9db57623fb7ec8e54f6ef7c5830acdc52a03; HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e; árbol E1 59192fbc2190b98e6c71ebf3d0f9e108f9eaadc7; sesión original AUD-20261108-S025 / AUD-CP-0025.
+Alcance: main.js, navigation.js, ui.js, users.html, add_cortes.html, youtubeUpload.js, index.html, style.css, lightbox.js y state.js.
+Hallazgos conocidos: H-AUD-007-001 a 005. Tareas derivadas: AUG-068/AUG-069/AUG-070/AUG-071; adenda a AUG-047.
+Estado observado: E1 estática completada históricamente; revalidación de continuidad pendiente. Preflight Git de solo lectura: E1 es ancestro de HEAD con 63 commits posteriores; los diez archivos del alcance conservan SHA E1; base sin cambios. No se realizaron escrituras en el repositorio.
+Riesgos y dependencias: overlays dinámicos sin gestor común, navegación interna que no consume entradas, cierre múltiple, simetría de historial y prioridad de términos.
+Sin cambios de código, configuración, sesiones, datos productivos, merge ni despliegue.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0087
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S088
+Tarea: AUD-T-007 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-007-001 A 005 ABIERTOS; VALIDACIÓN DE NAVEGADOR/MÓVIL/PWA PENDIENTE.
+HEAD auditado: e81eae5219427be7ede9c6ac90b67f780902bb8d; árbol 76cd9db57623fb7ec8e54f6ef7c5830acdc52a03; rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: 61c9898309ef2c27438eaa65a5aa00ff8a1f7b0e; árbol E1 59192fbc2190b98e6c71ebf3d0f9e108f9eaadc7; 63 commits posteriores.
+Los diez archivos del alcance conservan SHA E1: main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; users.html e41f402675677a4d2783493614737021ec2eade5; add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329; youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; lightbox.js 841f44a54fe12b867c0c58cc560ce4474cde3e03; state.js f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f.
+Hallazgos revalidados: H-AUD-007-001 a 005 permanecen sin cambios. AUG-068/AUG-069/AUG-070/AUG-071 pendientes; AUG-047 con adenda. Sin hallazgos ni tareas nuevas; Auditoría.txt, Tareas.txt y Aug_Tareas.md no se modifican.
+Archivos documentales modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Verificaciones: comparación Git E1→HEAD, ascendencia, lista de archivos cambiados, SHA exactos de diez archivos y revisión de consistencia documental. No ejecutadas: navegador, móvil/PWA, gestos, overlays simultáneos, deep links, lector de pantalla ni historial real.
+Sin cambios funcionales, endpoints, configuración, sesiones, hojas, datos productivos ni operaciones Drive/Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-007 continuity; parent e81eae5219427be7ede9c6ac90b67f780902bb8d; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
+Siguiente tarea: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+================================================================================
