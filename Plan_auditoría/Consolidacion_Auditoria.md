@@ -903,3 +903,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - H-AUD-037-003/H-AUD-037-006/H-AUD-037-010 se amplían sin duplicación; AUG-049/AUG-052 conservan adendas. AUG-072/AUG-073 pendientes; AUD-T-007 mantiene History API/overlays.
 - Solo continuidad E1 y revisión documental. Sin navegador, Web Share, Clipboard, móvil/PWA, enlaces malformados, colisiones, lector de pantalla, red real, health checks ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
+
+
+## 63. AUD-T-009 — continuidad E1 y revalidación PWA/offline/iOS
+- Sesión AUD-20261108-S090; checkpoint AUD-CP-0089; E1 c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac; árbol E1 9617c2c588190a50fde235bfe2d32b3ebee7b7ba; HEAD 31205e431c84ac917c2971aa7a0a0fa820bc2302; árbol actual 0772990f14e1a7203ca959d79c6f729244485a99; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los quince archivos del alcance conservan SHA idénticos a E1.
+- H-AUD-009-001 a 003 permanecen abiertos: precache omite módulos ESM; instalación/registro del worker carece de diagnóstico; detección iPadOS/UA escritorio incompleta.
+- H-AUD-037-008 a 012 y H-AUD-038-003/004 se confirman por continuidad; AUG-051/AUG-052/AUG-022 conservan las tareas existentes. AUG-074 pendiente; AUG-052 ampliada.
+- Solo continuidad E1 y revisión documental. Sin instalación PWA, offline real, CacheStorage/IndexedDB, cuota, iOS/iPadOS, standalone, lector de pantalla, CDN, red interrumpida ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.

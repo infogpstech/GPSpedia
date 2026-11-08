@@ -901,3 +901,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-072/AUG-073 pendientes; AUG-049/AUG-052 con adendas; AUD-T-007 mantiene History API/overlays.
 - No se ejecutaron navegador, Web Share, Clipboard, móvil/PWA, lector de pantalla, red real, health checks ni deployments. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
+
+
+## Continuidad AUD-T-009 — 2026-11-08 | AUD-20261108-S090
+- Revalidación AUD-20261108-S090/AUD-CP-0089; E1 histórica c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac (AUD-20261108-S027/AUD-CP-0027); HEAD 31205e431c84ac917c2971aa7a0a0fa820bc2302; árbol actual 0772990f14e1a7203ca959d79c6f729244485a99; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. service-worker.js, manifest.json, index.html, main.js, style.css, offline.js, auth.js, ui.js, navigation.js, state.js, VinDifferentialEngine.js, youtubeUpload.js, api-config.js, add_cortes.html y users.html conservan exactamente sus SHA E1.
+- H-AUD-009-001 a 003 permanecen abiertos: precache incompleto, instalación/registro SW sin diagnóstico y detección iPadOS/UA escritorio incompleta.
+- H-AUD-037-008 a 012 y H-AUD-038-003/004 confirmados por continuidad; AUG-051/AUG-052/AUG-022 conservan sus tareas. AUG-074 pendiente y AUG-052 ampliada.
+- No se ejecutaron pruebas PWA/offline, CacheStorage/IndexedDB, cuota, iOS/iPadOS, standalone, lector de pantalla, CDN, red interrumpida ni deployments. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.

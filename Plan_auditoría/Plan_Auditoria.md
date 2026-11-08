@@ -2276,3 +2276,56 @@ No se ejecutaron navegador, Web Share API, portapapeles, Android/iOS, PWA instal
 
 ### Siguiente iteración
 AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
+
+
+## 74. Revalidación de continuidad — AUD-T-009
+
+**Sesión:** AUD-20261108-S090  
+**Checkpoint:** AUD-CP-0089  
+**E1 original:** c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac (AUD-20261108-S027 / AUD-CP-0027)  
+**Árbol E1:** 9617c2c588190a50fde235bfe2d32b3ebee7b7ba  
+**HEAD revalidado:** 31205e431c84ac917c2971aa7a0a0fa820bc2302  
+**Árbol actual:** 0772990f14e1a7203ca959d79c6f729244485a99  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-009-001 A 003 ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE.
+
+### Alcance y comparación
+Se revalidaron manifiesto PWA, precache/actualización del Service Worker, grafo de módulos ES, fallback offline, persistencia IndexedDB, catálogo/miniaturas, sesión local, limpieza de almacenamiento e instalación iOS/iPadOS. Archivos: service-worker.js, manifest.json, index.html, main.js, style.css, offline.js, auth.js, ui.js, navigation.js, state.js, VinDifferentialEngine.js, youtubeUpload.js, api-config.js, add_cortes.html y users.html.
+
+La comparación E1→HEAD muestra 63 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los quince archivos del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- manifest.json: 4634b82d1ad767a4fbd2d59a945eb33fb1b668b9
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- youtubeUpload.js: 01559b95d4fff7b03c7833d5903496ab41dbc161
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+
+### Revalidación de hallazgos y tareas
+- H-AUD-009-001 a H-AUD-009-003 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- El precache sigue sin incluir youtubeUpload.js y VinDifferentialEngine.js, aunque forman parte del grafo ESM; se mantiene la ampliación de H-AUD-037-011/AUG-052.
+- La instalación del Service Worker sigue dependiendo de cache.addAll() atómico y register() no expone diagnóstico/recuperación visible ante fallos.
+- La detección de iOS sigue basada en userAgent /iPad|iPhone|iPod/ y no cubre de forma fiable iPadOS con UA de escritorio; siguen sin verificarse apple-touch-icon/metadatos específicos.
+- H-AUD-037-008/009/010/011/012 y H-AUD-038-003/004 permanecen confirmados por continuidad: transacciones IndexedDB, retención, timeout, cache.put() sin waitUntil, grafo incompleto, vistas/validationCache y limpieza local.
+- AUG-074 continúa pendiente para detección iPadOS, recursos Apple y pruebas reales de instalación.
+- AUG-052 recibe adenda para grafo ESM completo, atomicidad/diagnóstico de cache.addAll(), rechazo de register() y primera recarga offline sin navegación previa.
+- AUG-051/AUG-022 mantienen las tareas de transacciones, miniaturas, retención y limpieza; no duplicar.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 63 commits posteriores, el diff global, los SHA exactos de los quince archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a instalación PWA o prueba offline real.
+
+No se ejecutaron pruebas E2/E3, instalación/actualización real del Service Worker, recarga offline, CacheStorage/cuota, IndexedDB real, transacciones abortadas, cambio de cuenta, Android/iOS/iPadOS, Add to Home Screen, standalone, lector de pantalla, CDN, red interrumpida ni deployments.
+
+### Siguiente iteración
+AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.

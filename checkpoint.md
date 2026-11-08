@@ -1977,3 +1977,34 @@ Sin cambios funcionales, assets, endpoints, configuración, hojas, datos product
 Commit documental único: docs(audit): verify AUD-T-008 continuity; parent 82dc7f9a2429d30dd57002f9a846ca2b66877325; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
 Siguiente tarea: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0089
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S090
+Tarea: AUD-T-009 — revalidación de continuidad E1 de PWA, offline, IndexedDB, caché, Service Worker y compatibilidad iOS.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: 31205e431c84ac917c2971aa7a0a0fa820bc2302; árbol 0772990f14e1a7203ca959d79c6f729244485a99; HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac; árbol E1 9617c2c588190a50fde235bfe2d32b3ebee7b7ba; sesión original AUD-20261108-S027 / AUD-CP-0027.
+Alcance: service-worker.js, manifest.json, index.html, main.js, style.css, offline.js, auth.js, ui.js, navigation.js, state.js, VinDifferentialEngine.js, youtubeUpload.js, api-config.js, add_cortes.html y users.html.
+Hallazgos conocidos: H-AUD-009-001 a 003; confirmaciones H-AUD-037-008 a 012 y H-AUD-038-003/004. Tareas derivadas: AUG-074; adendas a AUG-052/AUG-051/AUG-022.
+Estado observado: E1 estática completada históricamente; revalidación de continuidad pendiente. Preflight Git de solo lectura: E1 es ancestro de HEAD con 63 commits posteriores; los quince archivos del alcance conservan SHA E1; base sin cambios. No se realizaron escrituras en el repositorio.
+Riesgos y dependencias: grafo ESM/precache, instalación atómica y diagnóstico del SW, detección iPadOS, transacciones IndexedDB, retención, timeout y limpieza local.
+Sin cambios de código, assets, configuración, datos productivos, operaciones Drive/Spreadsheet, merge ni despliegue.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0089
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S090
+Tarea: AUD-T-009 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-009-001 A 003 ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE.
+HEAD auditado: 31205e431c84ac917c2971aa7a0a0fa820bc2302; árbol 0772990f14e1a7203ca959d79c6f729244485a99; rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: c2f9cdd29dfc9efca1db8a1c3b9675f29ed809ac; árbol E1 9617c2c588190a50fde235bfe2d32b3ebee7b7ba; 63 commits posteriores.
+Los quince archivos del alcance conservan SHA E1: service-worker.js 6779c97db87a574149eb44c7e97729ac7f18f4f5; manifest.json 4634b82d1ad767a4fbd2d59a945eb33fb1b668b9; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34; auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0; state.js f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f; VinDifferentialEngine.js 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4; youtubeUpload.js 01559b95d4fff7b03c7833d5903496ab41dbc161; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329; users.html e41f402675677a4d2783493614737021ec2eade5.
+Hallazgos revalidados: H-AUD-009-001 a 003 permanecen sin cambios; H-AUD-037-008 a 012 y H-AUD-038-003/004 confirmados por continuidad. AUG-074 pendiente; AUG-052/AUG-051/AUG-022 con tareas/adendas existentes. Sin hallazgos ni tareas nuevas; Auditoría.txt, Tareas.txt y Aug_Tareas.md no se modifican.
+Archivos documentales modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Verificaciones: comparación Git E1→HEAD, ascendencia, lista de archivos cambiados, SHA exactos de quince archivos y revisión de consistencia documental. No ejecutadas: PWA, offline, CacheStorage, IndexedDB, cuota, iOS/iPadOS, standalone, lector de pantalla, CDN, red real ni deployments.
+Sin cambios funcionales, assets, endpoints, configuración, hojas, datos productivos ni operaciones Drive/Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-009 continuity; parent 31205e431c84ac917c2971aa7a0a0fa820bc2302; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
+Siguiente tarea: AUD-T-010 — Reportes de problemas y sugerencias de cambios en cortes.
+================================================================================
