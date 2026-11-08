@@ -1278,3 +1278,59 @@ HEAD padre 2daf88c96d29999cbc734c968ef94355ee5324ca; base d9acc68d889985c2e2f42f
 El commit documental se publicará con parent_sha/expected_sha 2daf88c96d29999cbc734c968ef94355ee5324ca, force:false. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 deberá permanecer intacta.
 Siguiente unidad: AUD-T-017 — Gestión colaborativa de años y validación comunitaria.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0035
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S035
+Tarea: AUD-T-017 — Gestión colaborativa de años y validación comunitaria.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: 11d617cbf6401748a017fbe69f89ab63fa08800e
+Árbol inicial: f2fb8eee6b69ad0542659f152aa484ada148d9dd
+Rama base: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: E1 estática de Tarea 17/B21; banner, elegibilidad, respuestas, identidad, cache IndexedDB, anti-colisión, deduplicación, tres votos, actualización de Cortes, sincronización de imagen y esquema.
+Restricciones: no modificar código durante auditoría; no ejecutar escrituras en Spreadsheet/Drive ni deployments; no realizar pruebas productivas.
+Estado observado: AUD-T-016 es la última unidad documentada en el plan; Tarea 17 figura históricamente COMPLETADA; no hay implementación iniciada para esta unidad de auditoría.
+Respaldos exactos (blob SHA):
+- Auditoría.txt: bd48cbc600fd4557d9b76e9c56783e1da087082f
+- Tareas.txt: ef8ec2e26429de776ffb1626ea6332443dd1c19f
+- Plan_auditoría/Plan_Auditoria.md: 378ae2ee838d7246e4019bf03ebf929e9025e7ab
+- Plan_auditoría/Aug_Tareas.md: df98961cf4806cba2d114d09d9e7878c4b984dda
+- Plan_auditoría/Consolidacion_Auditoria.md: 1a3b276069b08e90312a2d7bcc8bebb0a9b8d276
+- ChangesLogs.txt: 3756dee83f043323af8d3395017d1becd4f191e1
+- contexto_personal.md: c4e1ed9c6d0f314e74bd84f9ac8bc1a804864f33
+- checkpoint.md: 81f527b2a82fe09de81bf51821b3a98850f7a0d8
+Blobs de aplicación auditados:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+Fase inicial: HEAD/base y blobs verificados; auditoría estática E1; sin cambios de código ni operaciones externas.
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0035
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S035
+Tarea: AUD-T-017 — Gestión colaborativa de años y validación comunitaria.
+Estado final: E1 ESTÁTICA COMPLETADA; H-AUD-017-001 a H-AUD-017-007 abiertos; VAL-26 pendiente.
+HEAD padre de la tarea: 11d617cbf6401748a017fbe69f89ab63fa08800e
+Árbol inicial: f2fb8eee6b69ad0542659f152aa484ada148d9dd
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Rama de trabajo: GPSpedia2.2.5_work
+Resultado: controles positivos confirmados; siete hallazgos documentados; AUG-106 a AUG-112 registradas; VAL-26 planificada.
+Archivos documentales modificados:
+- Auditoría.txt: 4d71f00827f9d0631559430e9516e126aab65647
+- Tareas.txt: d0a4dac2830f8597be167f9cdeb790d68c26d436
+- Plan_auditoría/Plan_Auditoria.md: 0531aeb31a8f3e93f409b7afbc1034a6727c0d5d
+- Plan_auditoría/Aug_Tareas.md: 1b0778c6918728cfe1c709105c62eb58e9a7c0a5
+- Plan_auditoría/Consolidacion_Auditoria.md: 5b66d38db974c748f59af5c7ef63d47bb4d3c2ab
+- ChangesLogs.txt: 069e85492b64e9e8b7562610214f4b7d40b1b3d8
+- contexto_personal.md: 9c6b3a8e47ac3a308ed01779d4f27398cc09553c
+- checkpoint.md: se crea como último blob documental de la tarea.
+Archivos de aplicación auditados sin modificación: ui.js, offline.js, api-config.js, Services/feedback.js y Spreadsheet/GPSpedia_DB_columnas.md.
+Validaciones: inspección estática de funciones, callsites, contrato FEEDBACK, persistencia local y esquema documentado. No se ejecutaron navegador, IndexedDB real, Apps Script, HTTP, Spreadsheet productivo, LockService concurrente, Drive, pruebas de identidad/abuso, deployments ni E2/E3.
+Respaldos exactos: los SHA del checkpoint inicial; no se generaron archivos .bak porque no se editó código ni archivos de aplicación.
+Commit único: docs(audit): complete AUD-T-017 collaborative year validation review (SHA identificable en el historial de GPSpedia2.2.5_work; parent 11d617cbf6401748a017fbe69f89ab63fa08800e).
+Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
+No hubo cambios de código, configuración, endpoints, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.

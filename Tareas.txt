@@ -6356,3 +6356,15 @@ REGISTRO DE TAREAS DERIVADAS — AUD-T-016
 - Estado: PLANIFICADA; no ejecutada.
 
 ================================================================================
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-017
+Fecha: 2026-11-08 | Sesión AUD-20261108-S035 | Checkpoint AUD-CP-0035
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-017-001 a H-AUD-017-007 abiertos; VAL-26 planificada.
+- Tarea 17 permanece históricamente COMPLETADA; esta auditoría estática no certifica validación funcional.
+- Controles confirmados: banner, elegibilidad, validación cliente, ScriptLock, deduplicación técnica, umbral de tres actores y actualización del rango con intento de sincronización de imagen.
+- Hallazgos: colisión backend demasiado amplia; cache local antes de confirmación; cache no individual por usuario; identidad anónima regenerable; banner acoplado a onload; esquema Feedbacks incompleto; registro AUD-T-016 ausente de Auditoría.txt.
+- Nuevas tareas: AUG-106 a AUG-112. VAL-26 planificada, no ejecutada.
+- Solo auditoría estática; no se modificaron archivos de aplicación ni datos productivos.
+- Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
+================================================================================

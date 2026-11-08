@@ -1437,3 +1437,54 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
 - Problema: formularios y modales pueden quedar comprimidos en teléfonos; la tabla depende de scroll horizontal sin un ajuste de layout específico.
 - Criterios: adaptar la cuadrícula a una columna; ajustar modal y controles móviles; conservar acceso a acciones y evitar overflow; probar anchos 320–1440 px y orientación horizontal.
 - Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+## Hallazgos derivados de AUD-T-017 — 2026-11-08
+
+### AUG-106 — Corregir la condición de colisión entre rangos de generaciones
+- Origen: H-AUD-017-001. Sesión/checkpoint: AUD-20261108-S035/AUD-CP-0035. Prioridad: Alta.
+- Evidencia: Services/feedback.js:815 compara year <= otherAnoHasta, sin comprobar otherAnoDesde; ui.js:1486–1493 comprueba ambos límites.
+- Problema: años ubicados en huecos o antes del rango de otra generación pueden rechazarse como colisión.
+- Criterios: comparar ambos extremos inclusivos en backend; mantener validación autoritativa; probar límites, huecos y rangos solapados.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-107 — Confirmar el registro backend antes de marcar la validación como completada
+- Origen: H-AUD-017-002. Prioridad: Alta.
+- Evidencia: ui.js:1323–1324 envía suggestYear sin await y guarda de inmediato validationCache.
+- Problema: fallos de red/servicio pueden ocultar la consulta aunque el aporte no se haya registrado.
+- Criterios: estados pendiente/confirmado/fallido; confirmación backend antes de completar o cola recuperable; reintento idempotente; pruebas de timeout, offline y recarga.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-108 — Individualizar validationCache por usuario y vehículo
+- Origen: H-AUD-017-003. Prioridad: Media.
+- Evidencia: offline.js:499–508 usa vehicleId como única clave; ui.js:1249–1250 bloquea por cualquier respuesta encontrada.
+- Problema: una respuesta en un dispositivo compartido suprime la consulta para otros instaladores.
+- Criterios: clave compuesta actor/vehicleId; definir cambio de cuenta y anónimos; probar dos cuentas en un perfil y sesiones separadas.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-109 — Definir controles de confianza para aportaciones anónimas
+- Origen: H-AUD-017-004. Prioridad: Alta.
+- Evidencia: ui.js:28–50 genera y persiste anonymousReporterId en cliente; Services/feedback.js:78–86 lo hashea; el conteo usa claves distintas.
+- Problema: claves distintas no demuestran aportantes humanos distintos y pueden regenerarse desde el cliente.
+- Criterios: definir política de confianza; aplicar controles verificables de abuso si votos anónimos activan cambios; separar o ponderar votos autenticados/anónimos; probar repetición y regeneración.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-110 — Desacoplar la validación comunitaria de la carga de imágenes
+- Origen: H-AUD-017-005. Prioridad: Media.
+- Evidencia: ui.js:2991–2995 inicia elegibilidad desde img.onload; la ruta lazy no instala ese callback.
+- Problema: sin imagen, con error de carga o en ruta lazy puede no aparecer el banner.
+- Criterios: iniciar validación desde ciclo del modal; evitar duplicados; probar imágenes ausentes/rotas/lazy y varios cortes.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-111 — Documentar suggestionActorKey en el esquema de Feedbacks
+- Origen: H-AUD-017-006. Prioridad: Media.
+- Evidencia: Services/feedback.js:106–139 crea la columna; Spreadsheet/GPSpedia_DB_columnas.md:215–230 solo enumera nueve columnas.
+- Problema: el esquema documentado no refleja la columna auxiliar usada para deduplicar aportantes.
+- Criterios: documentar encabezado, ubicación, formatos user:/anon:, creación idempotente, compatibilidad histórica y backup/restore.
+- Estado: NUEVA; documentación y pruebas de esquema pendientes.
+
+### AUG-112 — Reconciliar la entrada de AUD-T-016 en Auditoría.txt
+- Origen: H-AUD-017-007. Prioridad: Media.
+- Evidencia: Auditoría.txt termina en AUD-T-015; Plan_Auditoria.md, Consolidacion_Auditoria.md, ChangesLogs.txt y checkpoint.md registran AUD-T-016.
+- Problema: los hallazgos de AUD-T-016 no aparecen en el registro principal obligatorio.
+- Criterios: reconstruir H-AUD-016-001 a 004 únicamente con los documentos existentes; preservar el historial; verificar referencias AUG-102 a AUG-105.
+- Estado: NUEVA; reconciliación documental pendiente.

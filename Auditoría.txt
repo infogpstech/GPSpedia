@@ -10226,3 +10226,141 @@ No se ejecutaron casos de VAL-24.
 E1 estática. No se ejecutaron navegador, DOM, XSS, Playwright, pruebas de catálogo real, Apps Script/Spreadsheet, carga concurrente, medición de rendimiento, lector de pantalla, pruebas móviles, modo oscuro real ni E2/E3. No se verificó deployment. No se modificaron código, estilos, HTML de aplicación, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments.
 Resultado: E1 COMPLETADA; H-AUD-015-001 a H-AUD-015-004 abiertos; H-AUD-037-003 a 006 revalidados; VAL-24 pendiente.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-017: GESTIÓN COLABORATIVA DE AÑOS Y VALIDACIÓN COMUNITARIA
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S035 | Checkpoint: AUD-CP-0035
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: 11d617cbf6401748a017fbe69f89ab63fa08800e | Árbol: f2fb8eee6b69ad0542659f152aa484ada148d9dd
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+1. ALCANCE Y MÉTODO
+E1 estática de Tarea 17/B21: banner de validación en modal de vehículo, elegibilidad, flujos de modelos recientes/antiguos, respuestas de año, control anti-colisión, identidad de aportantes, deduplicación, umbral de tres votos, persistencia IndexedDB, escritura en Feedbacks, actualización de Cortes y sincronización de carpeta de imagen principal.
+Revisión de funciones, callsites, contrato FEEDBACK, esquema Spreadsheet y estilos asociados. No se ejecutaron servicios, navegador, IndexedDB real, Spreadsheet, Drive ni pruebas concurrentes.
+
+2. ARCHIVOS Y BLOBS REVISADOS
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb.
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34.
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670.
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a.
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05.
+
+3. CONTROLES POSITIVOS CONFIRMADOS
+- ui.js implementa checkValidationEligibility() (líneas 1243–1278) y el banner de validación (1289–1540 aprox.); agrupa por marca, modelo, categoría, encendido y versión normalizada, y oculta el aviso si existe una generación posterior o el rango alcanza el año actual.
+- El formulario valida cuatro dígitos, el intervalo 1980–año actual + 2 y comprueba la inclusión del año dentro de rangos de otras generaciones (ui.js:1441–1518).
+- El backend deriva la identidad de usuarios registrados mediante assertFeedbackSession(); para anónimos genera una clave SHA-256 desde anonymousReporterId (Services/feedback.js:78–103).
+- handleSuggestYear() utiliza ScriptLock (Services/feedback.js:663–670); valida vehículo, año y respuesta; registra la clave del aportante en una columna auxiliar y evita duplicar por vehículo/año/actor.
+- El backend cuenta actores distintos con Set y requiere al menos tres respuestas positivas antes de modificar anoDesde/anoHasta (Services/feedback.js:673–900).
+- Tras modificar el rango, intenta sincronizar la imagen principal con la carpeta canónica y devuelve una advertencia si la sincronización falla.
+- IndexedDB declara validationCache (offline.js:8, 70–72) y ofrece saveValidationResponse()/getValidationResponse() (499–509).
+- api-config.js enruta suggestYear al servicio FEEDBACK (líneas 23 y 177–184).
+
+4. HALLAZGOS NUEVOS
+
+H-AUD-017-001 — ALTA — El control anti-colisión del backend rechaza años que no pertenecen al rango de otra generación.
+Evidencia:
+- Services/feedback.js:815 compara únicamente year <= otherAnoHasta.
+- No exige year >= otherAnoDesde, aunque obtiene ambos extremos.
+- ui.js:1486–1493 sí comprueba ambos límites para la validación en cliente.
+Impacto: un año ubicado en un intervalo libre anterior al límite superior de otra generación puede rechazarse como colisión. Ejemplo: al extender un rango 2000–2005, una generación distinta 2010–2015 puede provocar que 2006 sea rechazado porque 2006 <= 2015, aunque no pertenezca a 2010–2015.
+Criterios:
+1. Aplicar una condición de pertenencia inclusiva al rango completo: year >= otherAnoDesde && year <= otherAnoHasta.
+2. Mantener protección contra rangos realmente ocupados y generaciones incompatibles.
+3. Alinear la regla backend con la validación cliente, sin confiar exclusivamente en el cliente.
+4. Probar años justo antes, dentro y después de cada rango, además de huecos intergeneracionales.
+Tarea derivada: AUG-106.
+
+H-AUD-017-002 — ALTA — La respuesta local se marca como completada antes de confirmar el registro backend.
+Evidencia:
+- ui.js:1323–1324 invoca suggestYear(...).catch(console.error) sin await y ejecuta inmediatamente offline.saveValidationResponse().
+- El banner presenta el agradecimiento y se cierra sin esperar el resultado de FEEDBACK.
+- offline.js:499–509 almacena la respuesta por vehicleId.
+Impacto: un fallo de red, rechazo de sesión o error del servicio puede dejar la validación guardada localmente aunque no exista registro en Feedbacks. checkValidationEligibility() verá la entrada y no volverá a mostrar el aviso; el aporte se pierde y no hay ruta visible de reintento.
+Criterios:
+1. Diferenciar estado pendiente, confirmado y fallido.
+2. No marcar como completada la validación local hasta recibir confirmación backend, o mantener una cola recuperable con reintento idempotente.
+3. Mostrar feedback de error y permitir reintento sin duplicar aportaciones.
+4. Probar timeout, HTTP/API error, recarga, offline y recuperación.
+Tarea derivada: AUG-107.
+
+H-AUD-017-003 — MEDIA — validationCache no distingue al usuario que respondió.
+Evidencia:
+- offline.js:499–508 usa vehicleId como keyPath y consulta únicamente String(vehicleId).
+- ui.js:1249–1250 excluye el banner si existe cualquier respuesta local para ese vehículo.
+- Tarea 17/B21 describe evitar que un usuario vuelva a recibir la consulta para el mismo vehículo; el registro local no incluye userId, actorKey ni ámbito anónimo/registrado.
+Impacto: en un dispositivo compartido, la respuesta de una persona impide que otros instaladores del mismo dispositivo respondan sobre ese vehículo. El comportamiento no corresponde a una marca por usuario.
+Criterios:
+1. Definir clave compuesta por identidad local/actor y vehicleId, respetando el caso anónimo.
+2. Definir el comportamiento cuando cambia la cuenta o se cierra sesión.
+3. Mantener deduplicación por usuario sin bloquear a otros usuarios del mismo navegador.
+4. Probar dos cuentas y un usuario anónimo en un mismo perfil, además de varias sesiones/dispositivos.
+Tarea derivada: AUG-108.
+
+H-AUD-017-004 — ALTA — Las tres claves anónimas distintas no garantizan tres instaladores distintos.
+Evidencia:
+- ui.js:28–50 genera anonymousReporterId en el cliente y lo persiste en localStorage; si se pierde o cambia el almacenamiento, se genera otro identificador.
+- Services/feedback.js:78–86 solo valida el formato y aplica SHA-256 al identificador recibido.
+- Services/feedback.js:845–858 cuenta claves anónimas distintas como actores distintos para alcanzar el umbral.
+Impacto: un mismo cliente puede generar varias claves modificando/limpiando su almacenamiento, y tres claves diferentes pueden representar a una sola persona. El umbral verifica tres identificadores técnicos, no tres instaladores humanos; el catálogo puede actualizarse mediante aportes anónimos no independientes.
+Criterios:
+1. Definir explícitamente el nivel de confianza aceptado para votos anónimos.
+2. Si se mantiene su capacidad de activar actualizaciones, incorporar controles verificables de abuso/duplicación que no dependan solo de un valor controlado por el cliente.
+3. Separar el conteo de usuarios autenticados del conteo anónimo o establecer una política de umbral distinta.
+4. Probar repetición de un ID, IDs regenerados, manipulación de localStorage y combinación de cuentas/anónimos.
+Tarea derivada: AUG-109.
+
+H-AUD-017-005 — MEDIA — El banner depende del evento onload de una imagen de corte para iniciar la validación.
+Evidencia:
+- ui.js:2991–2995 asigna checkValidationEligibility() y showValidationBanner() dentro de img.onload.
+- La ruta solo se ejecuta para imágenes no lazy; el bloque de imagen también requiere cutData.img y excluye valores No recomendado.
+- No se identifica un disparador alternativo del banner desde la apertura del modal.
+Impacto: si el vehículo no tiene imagen de corte aplicable, la imagen no carga o la representación usa la ruta lazy, no se inicia la validación aunque el modal de detalle esté abierto.
+Criterios:
+1. Disparar la comprobación desde el ciclo de renderizado/apertura del modal, independientemente de la disponibilidad de una imagen.
+2. Evitar invocaciones duplicadas durante el render de varios cortes.
+3. Probar vehículo sin imágenes, imagen rota, lazy loading, varios cortes y cambio rápido entre vehículos.
+Tarea derivada: AUG-110.
+
+H-AUD-017-006 — MEDIA — El esquema documentado de Feedbacks no incluye la columna auxiliar usada para deduplicar aportantes.
+Evidencia:
+- Services/feedback.js:106–139 crea suggestionActorKey al final de Feedbacks cuando no existe.
+- Spreadsheet/GPSpedia_DB_columnas.md:215–230 documenta nueve columnas, hasta anoSugerido, y no registra suggestionActorKey ni su política de migración.
+Impacto: la documentación del esquema no representa el contrato que el backend crea y consulta. Una copia, restauración o revisión manual de la hoja puede omitir la columna necesaria para distinguir aportantes.
+Criterios:
+1. Documentar suggestionActorKey, ubicación dinámica y formato de claves user:/anon:.
+2. Describir creación idempotente y validación de encabezados.
+3. Aclarar compatibilidad de filas históricas sin clave.
+4. Verificar backup/restore y primera ejecución sobre hoja con nueve columnas.
+Tarea derivada: AUG-111.
+
+H-AUD-017-007 — MEDIA — El registro de AUD-T-016 no aparece en Auditoría.txt pese a constar como completado en los demás documentos de continuidad.
+Evidencia:
+- Auditoría.txt termina con H-AUD-015-001 a H-AUD-015-004 y VAL-24; no contiene AUD-T-016.
+- Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt y checkpoint.md registran AUD-T-016 como E1 completada.
+Impacto: los hallazgos de AUD-T-016 no están en el registro principal obligatorio Auditoría.txt, rompiendo la trazabilidad entre el plan y el repositorio de hallazgos.
+Criterios:
+1. Reconstruir la entrada únicamente a partir de evidencia existente en plan, consolidación y checkpoint.
+2. Preservar todos los registros anteriores y evitar inventar datos.
+3. Verificar que los cuatro hallazgos H-AUD-016-001 a 004 queden íntegros y vinculados a AUG-102 a 105.
+Tarea derivada: AUG-112.
+
+5. MATRIZ DE VALIDACIÓN — VAL-26
+Estado: PLANIFICADA; no ejecutada.
+1. Verificar rangos solapados, contiguos y huecos intergeneracionales; confirmar que el servidor solo rechace años realmente contenidos en otra generación.
+2. Simular éxito, timeout, fallo HTTP/API, expiración de sesión y recuperación offline; verificar que el cache local no oculte aportes no confirmados.
+3. Probar dos usuarios distintos en el mismo navegador y el mismo usuario en sesiones/dispositivos diferentes.
+4. Probar identidad anónima repetida, regenerada y manipulada; comprobar la política de conteo y controles antiabuso.
+5. Abrir detalles con imagen ausente, rota, lazy, varios cortes y valores No recomendado; confirmar que el banner se evalúe una sola vez.
+6. Verificar encabezados Feedbacks de nueve columnas, creación de suggestionActorKey, segunda ejecución idempotente y restauración de una copia.
+7. Ejecutar tres votos positivos de actores distintos y comprobar una sola ampliación del rango.
+8. Ejecutar dos votos del mismo actor y uno de otro; no debe alcanzar tres actores.
+9. Probar respuestas negativas, modelos antiguos, años inferiores/superiores y respuestas repetidas.
+10. Ejecutar tres solicitudes concurrentes; comprobar serialización, deduplicación y ausencia de doble actualización.
+11. Verificar que la actualización de Cortes y la sincronización de carpeta/imagen informen claramente cualquier fallo parcial.
+12. Recargar catálogo y comprobar el rango final; revisar que las aportaciones procesadas se limpien sin borrar registros ajenos.
+No se ejecutaron casos de VAL-26.
+
+6. LÍMITES
+E1 estática. No se ejecutaron navegador, IndexedDB real, Apps Script, FEEDBACK HTTP, Spreadsheet productivo, LockService concurrente, Drive, pruebas de identidad/abuso, visualización móvil ni E2/E3. No se verificó deployment. No se modificaron código, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments.
+Resultado: E1 ESTÁTICA COMPLETADA; H-AUD-017-001 a H-AUD-017-007 abiertos; AUG-106 a AUG-112 nuevas; VAL-26 pendiente.
+================================================================================

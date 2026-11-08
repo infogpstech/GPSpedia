@@ -22,18 +22,18 @@ El plan contiene 38 unidades AUD-T. Según la tabla de estado vigente:
 
 | Estado documental | Unidades | Cantidad |
 |---|---|---:|
-| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 a AUD-T-011 y AUD-T-023 a AUD-T-038 | 25 |
+| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 a AUD-T-011, AUD-T-012 a AUD-T-017 y AUD-T-023 a AUD-T-038 | 31 |
 | Auditada parcialmente | AUD-T-002 | 1 |
-| Por auditar | AUD-T-001 y AUD-T-012 a AUD-T-022 | 12 |
+| Por auditar | AUD-T-001 y AUD-T-018 a AUD-T-022 | 6 |
 | **Total** | **AUD-T-001 a AUD-T-038** | **38** |
 
-**Corrección de continuidad:** no es correcto afirmar que las 37 unidades AUD-T tienen auditoría estática completada. AUD-T-001 y AUD-T-012 a AUD-T-022 siguen marcadas POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 a AUD-T-011 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
+**Corrección de continuidad:** no es correcto afirmar que las 37 unidades AUD-T tienen auditoría estática completada. AUD-T-001 y AUD-T-018 a AUD-T-022 siguen marcadas POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 a AUD-T-011 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
 
 AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario — se auditó en AUD-20261107-S020. Su E1 está completada; permanecen hallazgos y validaciones funcionales/privacidad pendientes.
 
 ## 3. Inventario consolidado de tareas AUG
 
-El archivo Plan_auditoría/Aug_Tareas.md contiene **86 identificadores AUG únicos** dentro del rango AUG-001 a AUG-087. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
+El archivo Plan_auditoría/Aug_Tareas.md contiene **111 identificadores AUG únicos** dentro del rango AUG-001 a AUG-112. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
 
 Algunos encabezados AUG se repiten en el archivo porque las auditorías posteriores agregaron adendas a tareas existentes. Esas repeticiones no constituyen tareas nuevas. Deben conservarse las adendas y sus referencias históricas.
 
@@ -352,7 +352,19 @@ Sesión AUD-20261108-S034 | Checkpoint AUD-CP-0034 | HEAD 2daf88c96d29999cbc734c
 - Controles: persistencia de tema, intercambio de logos, variables CSS, flex-wrap del encabezado y footer con sentinel/IntersectionObserver.
 - Hallazgos: regla oscura del banner no coincide con body.dark-mode; --text-primary no está definido; tokens separados entre páginas y colores fijos; zoom bloqueado; layout móvil incompleto en add_cortes/users.
 - Nuevas AUG-102 a AUG-105.
-- Cobertura: 38 unidades; 30 con E1 completada, 1 parcial y 7 por auditar. AUG: 104 IDs únicos dentro de AUG-001 a AUG-105; AUG-015 continúa ausente.
+- Cobertura: 38 unidades; 31 con E1 completada, 1 parcial y 6 por auditar. AUG: 111 IDs únicos dentro de AUG-001 a AUG-112; AUG-015 continúa ausente.
 - VAL-25: temas/contraste, zoom, formularios, tabla/modal, footer, PWA y accesibilidad responsive; planificada, no ejecutada.
 - Sin pruebas de navegador, contraste medido, zoom real, lectores de pantalla, dispositivos móviles ni E2/E3. Sin cambios de aplicación.
+================================================================================
+
+================================================================================
+ACTUALIZACIÓN DE COBERTURA — AUD-T-017
+Sesión AUD-20261108-S035 | Checkpoint AUD-CP-0035 | HEAD 11d617cbf6401748a017fbe69f89ab63fa08800e | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-017 E1 estática completada; H-AUD-017-001 a H-AUD-017-007 abiertos; VAL-26 planificada.
+- Controles positivos: elegibilidad por generación, validación de año, ScriptLock, deduplicación técnica, umbral de tres claves distintas y actualización de rango con intento de sincronización de imagen.
+- Hallazgos: colisión backend sin límite inferior; cache prematuro y no individualizado; identidad anónima regenerable; banner acoplado a onload; esquema auxiliar no documentado; falta entrada AUD-T-016 en Auditoría.txt.
+- Nuevas AUG-106 a AUG-112. Inventario: 111 IDs únicos dentro de AUG-001 a AUG-112; AUG-015 continúa ausente.
+- Cobertura: 38 unidades; 31 E1 completadas, 1 parcial y 6 por auditar.
+- VAL-26: rangos y huecos; confirmación backend/cache; identidad y dispositivos compartidos; anonimato/abuso; imágenes ausentes/lazy; esquema; tres votos; concurrencia; sincronización Drive.
+- No se ejecutaron pruebas de navegador, IndexedDB, Apps Script, HTTP, Spreadsheet, Drive, concurrencia ni E2/E3. Sin cambios de aplicación.
 ================================================================================

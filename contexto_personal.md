@@ -470,3 +470,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Nuevas tareas AUG-102 a AUG-105; VAL-25 planificada.
 - Límites: sin navegador, mediciones WCAG, zoom real, lectores de pantalla, Android/iOS, PWA, rotación ni E2/E3. Sin cambios de aplicación/configuración/datos.
 - Siguiente: AUD-T-017 — Gestión colaborativa de años y validación comunitaria.
+
+## Continuidad de auditoría — AUD-T-017
+- Fecha: 2026-11-08. Sesión AUD-20261108-S035; checkpoint AUD-CP-0035.
+- Repositorio: infogpstech/GPSpedia. Rama de trabajo GPSpedia2.2.5_work; HEAD auditado 11d617cbf6401748a017fbe69f89ab63fa08800e; base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-017 — Gestión colaborativa de años y validación comunitaria: E1 estática completada; Tarea 17 conserva su estado histórico COMPLETADA; H-AUD-017-001 a H-AUD-017-007 abiertos; VAL-26 pendiente.
+- Hallazgos principales: colisión backend demasiado amplia; IndexedDB se marca antes de confirmar FEEDBACK; cache sin identidad de usuario; claves anónimas regenerables; banner dependiente de onload; esquema Feedbacks incompleto; falta registro AUD-T-016 en Auditoría.txt.
+- Nuevas tareas AUG-106 a AUG-112. Siguiente unidad: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
+- No se modificó código de aplicación, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments. No hubo merge ni despliegue.

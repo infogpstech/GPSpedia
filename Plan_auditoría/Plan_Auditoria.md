@@ -65,7 +65,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-014 | Texto enriquecido, sanitización, listas, párrafos y saltos de línea | Tarea 13; 79230c57 — unificar editores enriquecidos y soporte de listas | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD PENDIENTE |
 | AUD-T-015 | Búsqueda global, filtros rápidos y resultados jerárquicos | Tarea 14 y Tarea 15; 7fae24ac — búsqueda de modelos numéricos; 2b2c5b57 — jerarquía de resultados | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-24 PENDIENTE |
 | AUD-T-016 | Diseño visual global, modo oscuro, contraste, footer y responsive | Tarea 16; 4b136cd0 — consolidación de modo oscuro; 28f4ace5 — footer dinámico; a9b15e5f — mejoras UI | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-25 PENDIENTE |
-| AUD-T-017 | Gestión colaborativa de años y validación comunitaria | Tarea 17; dc0862d0 — collaborative year update; 45eece6c — actualización integral; aa57c4de — autorización y deduplicación suggestYear | POR AUDITAR |
+| AUD-T-017 | Gestión colaborativa de años y validación comunitaria | Tarea 17; dc0862d0 — collaborative year update; 45eece6c — actualización integral; aa57c4de — autorización y deduplicación suggestYear | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-26 PENDIENTE |
 | AUD-T-018 | Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK | Tarea 18; 27760cf7 — transmisión de sesión Inbox/Dashboard; 58f58b0e — endpoint FEEDBACK; 5bf20efe — contrato testigo sugerencias | POR AUDITAR |
 | AUD-T-019 | Validaciones de integridad backend y pruebas automatizadas | Tarea 19; commits de pruebas aisladas AUTH/USERS y pruebas de WRITE/ADMIN/FEEDBACK | POR AUDITAR |
 | AUD-T-020 | Saneamiento arquitectural, DRY, anti-debugging y auditorías globales | Tarea 21; 27c9311c — auditoría integral y navegación; d93b3a5e — consolidación global y DRY | POR AUDITAR |
@@ -869,4 +869,13 @@ Siguiente: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y
 - Hallazgos: selector data-theme no alineado con body.dark-mode y --text-primary sin definición; tokens/colores fragmentados entre páginas; zoom bloqueado en add_cortes; formulario de dos columnas y página de usuarios sin breakpoints dedicados.
 - Nuevas tareas AUG-102 a AUG-105; VAL-25 planificada.
 - Límites: sin navegador, mediciones WCAG, zoom real, lectores de pantalla, Android/iOS, PWA, rotación ni E2/E3. Sin cambios de aplicación/configuración/datos.
-- Siguiente: AUD-T-017 — Gestión colaborativa de años y validación comunitaria.
+- Siguiente: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.
+
+## 39. Iteración técnica — AUD-T-017
+Sesión AUD-20261108-S035 | Checkpoint AUD-CP-0035 | HEAD auditado 11d617cbf6401748a017fbe69f89ab63fa08800e | árbol f2fb8eee6b69ad0542659f152aa484ada148d9dd | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-017-001 a H-AUD-017-007 abiertos; VAL-26 pendiente.
+Alcance: Tarea 17/B21, ui.js, offline.js, api-config.js, Services/feedback.js y esquema Spreadsheet.
+Hallazgos: condición de colisión backend no verifica límite inferior; IndexedDB se marca antes de respuesta backend; cache no distingue usuario; IDs anónimos controlados por cliente no prueban tres instaladores; banner depende de onload de imagen; esquema no documenta suggestionActorKey; AUD-T-016 falta en Auditoría.txt.
+Nuevas tareas AUG-106 a AUG-112. Tarea 17 conserva estado histórico COMPLETADA; E1 no equivale a validación funcional.
+Límites: sin navegador, IndexedDB, Apps Script, HTTP, Spreadsheet, Drive, concurrencia, despliegue ni pruebas E2/E3. Sin cambios de aplicación/datos.
+Siguiente: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK.

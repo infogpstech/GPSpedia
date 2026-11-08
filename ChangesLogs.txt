@@ -4271,3 +4271,17 @@ Fecha 2026-11-08 | Sesión AUD-20261108-S034 | Checkpoint AUD-CP-0034
 - Archivos documentales actualizados: Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
 Solo documentación; sin cambios de código, HTML/CSS de aplicación, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
 ================================================================================
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-017
+Fecha: 2026-11-08 | Sesión AUD-20261108-S035 | Checkpoint AUD-CP-0035
+Archivos modificados:
+- Auditoría.txt: líneas 10230–10367. Añadida auditoría estática AUD-T-017, H-AUD-017-001 a 007 y VAL-26.
+- Tareas.txt: líneas 6360–6371. Añadido resultado de AUD-T-017, estado E1, hallazgos, VAL-26 y siguiente unidad.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-017 actualizada en línea 68; iteración 39 añadida en líneas 874–882 y continuidad hacia AUD-T-018.
+- Plan_auditoría/Aug_Tareas.md: líneas 1441–1491. Añadidas fichas AUG-106 a AUG-112.
+- Plan_auditoría/Consolidacion_Auditoria.md: conteos actualizados; sección AUD-T-017 añadida en líneas 360–371.
+- ChangesLogs.txt: líneas 4275–4288. Añadido este registro documental.
+- contexto_personal.md: líneas 474–481. Añadida continuidad AUD-T-017.
+- checkpoint.md: líneas 1282–1337. Añadidos checkpoint inicial y final AUD-CP-0035 como último blob documental.
+No se modificaron archivos de aplicación, HTML, CSS, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
