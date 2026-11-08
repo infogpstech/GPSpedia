@@ -2257,3 +2257,45 @@ No se modificaron archivos funcionales, tests, servicios, endpoints, configuraci
 Commit único esperado: docs(audit): revalidate AUD-T-018 quality; parent 4e82cb75ec16abff180915efa8d3767099dc8147.
 Siguiente unidad: AUD-T-019 — revalidación ampliada de continuidad E1.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0098
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S099
+Tarea: AUD-T-019 — revalidación ampliada de continuidad E1, integridad backend y pruebas automatizadas.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: a4246145bace0844e90b65c56d39d980a1c9d61f | Árbol: 681b94b050aac7345c60bc38b3b0d8f7d01fb33f
+Base: GPSpedia2.2.5 | HEAD d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios; protected=false).
+E1: 6f0f901179c10833cbeedcb2767a25fcdd085b0d | Continuidad previa: 7fc728ab34e55674f1826713a3f868d72b9f8830.
+Alcance: 15 archivos funcionales/técnicos listados en Plan_Auditoria; H-AUD-019-001 a 014; AUG-122 a AUG-135; VAL-28.
+Acción: comprobar continuidad, estados, infraestructura de pruebas y matriz de calidad; sin cambios funcionales ni operaciones productivas.
+================================================================================
+
+CHECKPOINT FINAL — AUD-CP-0098
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S099
+Tarea: AUD-T-019 — revalidación ampliada de continuidad y calidad backend.
+- Sesión AUD-20261108-S099/AUD-CP-0098; E1 histórica 6f0f901179c10833cbeedcb2767a25fcdd085b0d; continuidad previa S059/CP-0058 7fc728ab34e55674f1826713a3f868d72b9f8830; HEAD inicial a4246145bace0844e90b65c56d39d980a1c9d61f; árbol 681b94b050aac7345c60bc38b3b0d8f7d01fb33f; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 62 commits; CP-0058→HEAD: 41 commits. Ambos diffs muestran únicamente ocho documentos, sin divergencia funcional.
+- Los 15 archivos funcionales/técnicos del alcance conservan exactamente SHA E1. H-AUD-019-001 a 014 permanecen abiertos; AUG-122 a AUG-135 pendientes; VAL-28 planificada/no ejecutada. Sin hallazgos ni tareas duplicadas.
+- Matriz ampliada: cumplimiento parcial/no certificado por falta de ejecución verificable de pruebas 31–38 y riesgos de autenticación/integridad; calidad afectada por validación tardía, falsos éxitos, esquema Tutoriales/Tutorial divergente y mapa de acciones desincronizado; seguridad positiva parcial en AUTH/USERS/ADMIN/FEEDBACK, pero no cubre WRITE.addSupplementaryInfo ni UTILITIES.migrateTimestamps; rendimiento y concurrencia no certificados; mantenibilidad afectada por contratos divergentes y falta de runner reproducible.
+- Services/Test contiene copias aisladas AUTH/USERS y README de preparación; exige proyectos/deployments Apps Script separados y manuales, y no acredita que existan. El árbol no contiene runner/framework/specs/package.json/workflow CI identificable. README raíz describe microservicios como despliegues separados, mientras el árbol contiene sus fuentes; política de publicación, ACL y deployments quedan sin certificar.
+- No se ejecutaron Apps Script V8, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, pruebas automatizadas ni E2/E3. Sin cambios funcionales/productivos, merge o despliegue.
+SHA E1 confirmados para los 15 archivos:
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Utilities.js: 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- README.md: 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+No se ejecutaron pruebas Apps Script, HTTP, Spreadsheet/Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, runner automatizado ni E2/E3. No se modificaron aplicación, servicios, contratos, endpoints, configuración, assets, pruebas ni datos productivos. Sin merge ni despliegue.
+Siguiente: continuar con la siguiente unidad pendiente, sin duplicar AUD-T-019.
+================================================================================
