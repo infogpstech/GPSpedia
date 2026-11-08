@@ -9796,3 +9796,117 @@ Evidencia E1: inspección estática de funciones, handlers, consumidores, contra
 
 Conclusión: el módulo tiene una estructura principal presente y controles visuales/funcionales parciales, pero conserva riesgos de seguridad, identidad, almacenamiento, unicidad, validación, concurrencia y rendimiento. H-AUD-011-001 a H-AUD-011-007 permanecen abiertos hasta implementar las tareas derivadas y ejecutar la matriz correspondiente.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-012: VINCULACIÓN BIDIRECCIONAL PyS–VEHÍCULOS Y NAVEGACIÓN SIN CICLOS
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S030 | Checkpoint: AUD-CP-0030
+Repositorio: infogpstech/GPSpedia
+Rama auditada: GPSpedia2.2.5_work
+HEAD auditado: 2afdde923d14e4f3dd078d347007b15e5ab09b2b
+Árbol auditado: 06fc72da78912df18227e2f45ce0d33349fa7cc5
+Rama base: GPSpedia2.2.5
+HEAD base: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Árbol base: 56353d01cde57f57ab08135f5c49d91027a137c0
+
+ALCANCE
+Auditoría E1 estática de TAREA 11 y revisiones posteriores: asociación desde PyS hacia vehículos, asociación desde vehículo hacia problemas existentes/nuevos, filtro de relaciones existentes, almacenamiento/lectura de modelos_asociados, renderizado del acordeón y carrusel, origen contextual, pila modal, retorno manual/History API, prevención de ciclos, permisos, contratos FEEDBACK y concurrencia. Contraste histórico con f6299fcf9e6f64618394b7748a87652d9500f4f6 y 20ff56119e8f55aefa8d906824b1273ce79da0af.
+
+ARCHIVOS Y BLOBS REVISADOS
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb.
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a.
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670.
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77.
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0.
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af.
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a.
+- Tareas.txt: 1981c0fd39f237758af7b998f5e0a352ef49b8f2.
+- Plan_auditoría/Plan_Auditoria.md: 1ab9a7a475f7c858c82f56ebc8cfbb0655695c5e.
+
+REQUISITOS REVALIDADOS COMO PRESENTES
+1. El formulario PyS permite alcance General/Modelo específico y la preselección de un vehículo al crear un problema desde su ficha (ui.js:8154–8407).
+2. El buscador de asociación desde PyS excluye IDs ya asociados y selecciones de la sesión; presenta imagen, marca/modelo, versión o encendido y rango de años; permite selección múltiple y confirmación visual (ui.js:8409–8578).
+3. La lectura backend parsea JSON y formatos heredados de modelos_asociados; la respuesta expone modelosAsociados como array (Services/feedback.js:1352–1384).
+4. El modal de vehículo permite asociar problemas existentes no generales y excluye los que ya están asociados al vehículo actual (ui.js:10158–10300).
+5. La relación se persiste en la columna 10 de pys; el alta evita duplicados en una ejecución secuencial y la desvinculación se restringe en servidor al rol Desarrollador (Services/feedback.js:1565–1638).
+6. El modal PyS oculta el carrusel de vehículos si originModal='vehicle'; el modal de vehículo oculta el acordeón si originModal='pys' en la apertura inicial (ui.js:2680–2685 y 8926–9037).
+7. La pila contextual es compartida con main.js y el listener popstate contempla tipos vehicle y pys (ui.js:90–94; main.js:234–273).
+8. La corrección de origen de createPysCard introducida por 20ff5611 evita que la apertura independiente desde PyS se clasifique por defecto como origen vehicle.
+
+H-AUD-012-001 — La protección anti-ciclos se pierde después de asociar un problema desde un vehículo anidado
+Prioridad: Alta.
+Evidencia:
+- renderPosiblesProblemasAccordion() retorna si navOptions.originModal === 'pys' (ui.js:2680–2685).
+- Al crear un problema preasociado, openAddProblemModal() vuelve a llamar renderPosiblesProblemsAccordion(panel, preAssociatedVehicle) sin reenviar navOptions (ui.js:8396–8399).
+- Al asociar un problema existente, openAssociateExistingProblemModal() también llama renderPosiblesProblemsAccordion(panel, vehicle) sin reenviar navOptions (ui.js:10272–10283).
+Impacto: si un vehículo fue abierto desde un modal PyS, la apertura inicial suprime correctamente el acordeón; después de una asociación nueva o existente, el callback puede recrearlo sin el origen PyS. Se vuelve a habilitar la ruta hacia problemas relacionados y se puede reconstruir el ciclo PyS → vehículo → PyS. La relación de datos no debe eliminarse para resolverlo; la restricción debe conservarse en la navegación.
+Criterio: propagar y respetar el contexto de origen en ambos callbacks, incluidos los flujos de problema nuevo y existente; verificar que el acordeón siga oculto durante toda la visita anidada.
+
+H-AUD-012-002 — La pila modal se duplica o se pierde al volver a renderizar detalles durante la edición
+Prioridad: Alta.
+Evidencia:
+- openPysDetailModal() agrega fromOriginModal a modalNavStack sin distinguir una transición real de una reconstrucción del mismo modal (ui.js:8641–8650).
+- El botón de edición y el de descartar vuelven a invocar openPysDetailModal(item, navOptions, ...) conservando fromOriginModal (ui.js:8680–8698); el guardado vuelve a abrir el modal con navOptions (ui.js:8829–8848). Esas reconstrucciones pueden insertar entradas duplicadas.
+- En el sentido inverso, el botón de edición de vehículo llama mostrarDetalleModal(editedItemBuffer) sin reenviar navOptions (ui.js:1782–1798). La función interpreta la llamada como apertura independiente y limpia modalNavStack (ui.js:1690–1699), perdiendo el retorno al problema que originó el vehículo.
+- main.js restaura el contexto a partir de modalNavStack en popstate (main.js:234–273).
+Impacto: después de editar, descartar o guardar un modal anidado, la pila puede contener entradas repetidas o perder el contexto PyS. El cierre o el botón Atrás puede restaurar un modal equivocado o dejar de regresar al origen.
+Criterio: diferenciar navegación de re-renderizado; crear una sola entrada por transición; propagar navOptions en edición de vehículo; armonizar cierre manual y popstate; probar edición, descarte y guardado en ambos sentidos.
+
+H-AUD-012-003 — No se conserva la posición horizontal del carrusel al regresar al modal anterior
+Prioridad: Media.
+Evidencia:
+- La pila guarda type, item y navOptions, pero no scrollLeft ni estado de acordeón (ui.js:1690–1695 y 8641–8647).
+- El carrusel de problemas relacionados usa scrollLeft local para desplazar tarjetas (ui.js:2784–2807).
+- Al cerrar PyS desde vehículo se vuelve a ejecutar mostrarDetalleModal(), que limpia y reconstruye detalleCompleto (ui.js:1816–1822 y 1701–1702).
+Impacto: si el usuario abre una tarjeta desde una posición intermedia del carrusel y regresa, el modal reconstruido inicia el carrusel desde el comienzo. La misma reconstrucción de la ficha PyS puede perder posición de lectura/scroll.
+Criterio: guardar y restaurar el estado de scroll horizontal/vertical y acordeón de cada contexto; verificar retorno desde ambas direcciones y desde la posición intermedia/final del carrusel.
+
+H-AUD-012-004 — Los callsites de asociación y desvinculación no envían las credenciales exigidas por FEEDBACK
+Prioridad: Alta; antecedente existente, no duplicar AUG-043.
+Evidencia:
+- assertFeedbackSession() exige userId y sessionToken, valida ActiveSessions y Users y deriva el rol desde servidor (Services/feedback.js:42–74).
+- addVehicleToProblem está declarado con allowedRoles=null, pero doPost() sigue llamando assertFeedbackSession(); null significa cualquier rol autenticado, no una acción anónima (Services/feedback.js:302–375).
+- El guardado desde PyS envía solo problemId y vehicleId (ui.js:8551–8565); la asociación desde vehículo hace lo mismo (ui.js:10268–10275).
+- Los dos callsites de desvinculación envían problemId, vehicleId y userRole, pero no userId/sessionToken (ui.js:2654–2675 y 8981–8990).
+Impacto: las llamadas directas a addVehicleToProblem y removeVehicleFromProblem son rechazadas por la validación de sesión aunque el usuario tenga sesión en la interfaz. userRole del navegador no sustituye la identidad del servidor. El backend restringe removeVehicleFromProblem a Desarrollador.
+Tratamiento: mantener el hallazgo vinculado a AUG-043, que ya exige corregir los callsites y probar sesión/rol; revalidar su vigencia con los puntos de llamada actuales. No crear tarea duplicada.
+
+H-AUD-012-005 — Las mutaciones de relación no garantizan integridad referencial ni atomicidad
+Prioridad: Alta.
+Evidencia:
+- handleAddVehicleToProblem() valida presencia de problemId/vehicleId y existencia de la fila PyS, pero no verifica que vehicleId corresponda a exactamente un vehículo existente en Cortes (Services/feedback.js:1565–1598).
+- La función lee modelos_asociados, modifica la colección y escribe la celda sin LockService.
+- handleRemoveVehicleFromProblem() también realiza lectura/modificación/escritura sin LockService (Services/feedback.js:1601–1638).
+Impacto: una llamada directa puede guardar un ID de vehículo inexistente; la UI luego omite silenciosamente las tarjetas cuyo ID no encuentra en catalogData.cortes (ui.js:8958–8960). Dos altas simultáneas para el mismo problema, o una alta concurrente con una desvinculación, pueden sobrescribir la colección completa y perder una relación.
+Criterio: validar en backend que el vehículo exista de forma unívoca; serializar lectura/validación/escritura de alta y baja con LockService y relectura dentro del lock; normalizar y deduplicar IDs; devolver el estado final persistido; probar concurrencia, IDs inexistentes y datos heredados.
+
+H-AUD-012-006 — El título del acordeón no coincide con el texto exacto requerido
+Prioridad: Baja.
+Evidencia:
+- Tareas.txt exige el título exacto «Problemas relacionados a este vehículo» (líneas 1511–1521).
+- ui.js renderiza «Posibles problemas» (líneas 2720–2723).
+Impacto: inconsistencia verificable entre especificación y UI.
+Criterio: alinear el texto del acordeón con el requisito aprobado o documentar una sustitución formal del texto.
+
+H-AUD-012-007 — La lectura de PyS repite solicitudes aun cuando hay datos en estado
+Prioridad: Media; antecedente existente, no duplicar AUG-087.
+Evidencia:
+- renderPosiblesProblemsAccordion() utiliza cachedPys si está disponible y aun así llama siempre routeAction('getPysData') (ui.js:2853–2866).
+- openAssociateExistingProblemModal() vuelve a solicitar getPysData en cada apertura (ui.js:10202–10208).
+Impacto: solicitudes repetidas y posibilidad de respuestas fuera de orden o vistas inconsistentes. Se mantiene en AUG-087; agregar estos consumidores como evidencia, sin duplicar tarea.
+
+H-AUD-012-008 — No hay pruebas automatizadas reproducibles de asociación/navegación en el árbol actual
+Prioridad: Validación pendiente.
+Evidencia:
+- El commit f6299fcf documenta pruebas Playwright para asociación y anti-ciclos; el árbol actual solo contiene Services/Test/Auth.js y Services/Test/users.js, sin suite Playwright ni casos PyS–vehículo.
+Impacto: los resultados históricos declarados no pueden repetirse desde los artefactos versionados actuales.
+Criterio: incorporar los recorridos de esta unidad a la matriz de validación consolidada; no declarar validación funcional a partir de la inspección estática.
+
+OBSERVACIONES DE POLÍTICA
+- El requisito de Tarea 12.4 habla de usuarios autorizados para agregar vehículos desde el carrusel; la UI actual muestra la tarjeta de adición sin comprobar rol y el backend permite cualquier rol con sesión válida (allowedRoles=null). La política exacta de roles para vincular debe quedar explícita; no se presume una restricción que el requisito no define.
+- El buscador desde vehículo sí excluye problemas generales y ya relacionados; la búsqueda desde PyS excluye vehículos ya asociados/seleccionados y presenta el formato requerido.
+- La desvinculación se limita visualmente y en servidor a Desarrollador, aunque sus callsites actuales omiten las credenciales de sesión.
+
+LÍMITES DE LA FASE
+Auditoría E1 estática; no se ejecutaron pruebas Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, pruebas de permisos en deployment ni flujos E2/E3. No se modificaron código, assets, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments.
+Resultado: E1 COMPLETADA; H-AUD-012-001 a H-AUD-012-008 abiertos o vinculados a tareas existentes. La validación funcional, seguridad, integridad y navegación sigue pendiente.
+================================================================================

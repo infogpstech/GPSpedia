@@ -60,7 +60,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-009 | PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS | 825a1aea — modo offline con persistencia IndexedDB; 9f8b84a9 — estabilidad offline; d9476ab0 — instalación PWA dinámica e iOS | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA PENDIENTE |
 | AUD-T-010 | Reportes de problemas y sugerencias de cambios en cortes | 64d8d044 — Implementar Tarea 9: Reporte y sugerencia de cambios; fb7f2fcf — reporte individual; db6951ed — modal de sugerencia; db0eee87 — almacenamiento independiente de sugerencias | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE |
 | AUD-T-011 | Módulo Problemas y Soluciones (PyS), formularios y visualización | f93ad12f — Implementar Tarea 10: Módulo PyS; 73d1fd91 — revisión PyS IV; 0e93ec25 — correcciones de carrusel y ficha | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/INTEGRACIÓN PENDIENTE |
-| AUD-T-012 | Vinculación bidireccional PyS–vehículos y navegación sin ciclos | Implementar Tarea 11; f6299fcf — asociación de vehículo/problema y navegación anti-ciclo; 20ff5611 — contexto de carrusel PyS | POR AUDITAR |
+| AUD-T-012 | Vinculación bidireccional PyS–vehículos y navegación sin ciclos | Implementar Tarea 11; f6299fcf — asociación de vehículo/problema y navegación anti-ciclo; 20ff5611 — contexto de carrusel PyS | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/INTEGRIDAD/NAVEGACIÓN PENDIENTE |
 | AUD-T-013 | Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación | Tarea 12; 5fa1427a — subida directa YouTube y aprobación; bd8e2fe3 — integración en vehículos, PyS y tutoriales | POR AUDITAR |
 | AUD-T-014 | Texto enriquecido, sanitización, listas, párrafos y saltos de línea | Tarea 13; 79230c57 — unificar editores enriquecidos y soporte de listas | POR AUDITAR |
 | AUD-T-015 | Búsqueda global, filtros rápidos y resultados jerárquicos | Tarea 14 y Tarea 15; 7fae24ac — búsqueda de modelos numéricos; 2b2c5b57 — jerarquía de resultados | POR AUDITAR; incluye cancelación |
@@ -814,3 +814,13 @@ Hallazgos: stored XSS en title/colaborador/vídeo; acciones de escritura sin ses
 Tareas: nuevas AUG-082 a AUG-087; adendas a AUG-040/AUG-057. H-AUD-035-001/003/006 y H-AUD-037-005 se mantienen como antecedentes, sin duplicar.
 Límites: E1 estática; sin E2/E3, navegador, FileReader real, HTTP, Apps Script, Drive/Spreadsheet, XSS controlado, concurrencia ni deployments. Sin cambios de aplicación/datos.
 Siguiente: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
+
+## 35. Iteración técnica — AUD-T-012
+Sesión AUD-20261108-S030 | Checkpoint AUD-CP-0030 | HEAD auditado 2afdde923d14e4f3dd078d347007b15e5ab09b2b | árbol 06fc72da78912df18227e2f45ce0d33349fa7cc5 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-012-001 a H-AUD-012-008 abiertos o vinculados a tareas existentes; validación funcional, integridad, seguridad y navegación pendiente.
+Alcance: Tarea 11 (12.1–12.5), relación bidireccional PyS–vehículos, formularios de asociación existente/nueva, columna modelos_asociados, filtros, carrusel, acordeón, originModal, modalNavStack, popstate y permisos FEEDBACK. Contraste con f6299fcf y 20ff5611.
+Controles: filtros de vehículos ya asociados/seleccionados; formato imagen/versión o encendido/años; confirmación visual; parseo JSON y compatibilidad heredada; restricción de desvinculación al rol Desarrollador; supresión inicial de carrusel/acordeón por origen.
+Hallazgos: los callbacks de asociación recrean el acordeón sin originModal y pueden reabrir ciclos; la pila se duplica o pierde al editar/re-renderizar; no se conserva scroll del carrusel; los callsites add/remove omiten credenciales requeridas (AUG-043); add/remove no serializan la colección ni validan vehicleId contra Cortes (AUG-090); el título difiere del requisito; getPysData redundante (AUG-087); pruebas Playwright históricas no están presentes en el árbol actual.
+Tareas: nuevas AUG-088 a AUG-091; adendas a AUG-043 y AUG-087. H-AUD-011-007/AUG-087 se mantiene como antecedente; no duplicar.
+Límites: E1 estática; sin E2/E3, Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos en deployment ni pruebas de navegación real. Sin cambios de aplicación/datos.
+Siguiente: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.

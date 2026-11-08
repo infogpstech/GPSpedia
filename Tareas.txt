@@ -6132,3 +6132,26 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029 | Checkpoint AUD-CP-0029
 - ChangesLogs.txt: registro del conjunto documental en el commit único.
 Solo documentación. No se modificaron archivos de aplicación, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments. No se ejecutaron pruebas E2/E3 ni operaciones externas. La rama base permanece sin cambios.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-012
+Fecha: 2026-11-08 | Sesión AUD-20261108-S030 | Checkpoint AUD-CP-0030
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-012-001 a H-AUD-012-008 abiertos o vinculados a tareas existentes; validación funcional/integridad/navegación pendiente.
+HEAD auditado: 2afdde923d14e4f3dd078d347007b15e5ab09b2b | árbol: 06fc72da78912df18227e2f45ce0d33349fa7cc5.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+RESULTADO
+- Se revalidó la asociación desde PyS y desde vehículo, los filtros anti-duplicado, la confirmación visual, la columna modelos_asociados, el renderizado de carrusel/acordeón y el origen contextual.
+- Hallazgos: reaparición del acordeón después de una asociación desde vehículo anidado; pila modal duplicada/perdida durante edición; posición del carrusel no restaurada; callsites sin credenciales de sesión; mutaciones sin integridad referencial/lock; título distinto al requisito; lecturas PyS redundantes; pruebas automatizadas no reproducibles en el árbol actual.
+- Nuevas tareas: AUG-088 a AUG-091.
+- Adendas: AUG-043 (credenciales de asociación/desvinculación) y AUG-087 (lecturas getPysData desde acordeón y modal de asociación).
+- Se mantienen los hallazgos de consultas PyS redundantes dentro de AUG-087 y la ausencia de validación funcional consolidada dentro de AUG-002/VAL-21; no se duplican.
+- El commit histórico f6299fcf declara pruebas Playwright, pero el árbol actual no conserva una suite de esas pruebas; no se atribuye validación funcional a esa referencia histórica.
+
+ALCANCE Y LÍMITES
+- Solo documentación de auditoría y trazabilidad.
+- No se modificaron ui.js, Services/feedback.js, api-config.js, main.js, navigation.js, Services/catalog.js, index.html ni otros archivos de aplicación.
+- No se modificaron endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments.
+- No se ejecutaron Playwright, navegador, HTTP, Apps Script, concurrencia, permisos en deployment ni pruebas E2/E3.
+- No hubo merge ni despliegue. La rama base GPSpedia2.2.5 permanece en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+================================================================================

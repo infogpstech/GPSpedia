@@ -1198,3 +1198,70 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
 
 - 2026-11-08 — AUD-T-011: nuevas AUG-082 a AUG-087; adendas a AUG-040 y AUG-057. Inventario: 86 IDs únicos dentro de AUG-001 a AUG-087; AUG-015 continúa ausente y no se infiere ni renumera.
 ================================================================================
+
+## Hallazgos derivados de AUD-T-012 — 2026-11-08
+
+### AUG-088 — Mantener el contexto anti-ciclo después de asociar problemas desde un vehículo anidado
+- **Hallazgo origen:** H-AUD-012-001.
+- **Tarea auditada:** AUD-T-012.
+- **Sesión/checkpoint:** AUD-20261108-S030 / AUD-CP-0030.
+- **Prioridad:** Alta.
+- **Evidencia:** ui.js renderPosiblesProblemsAccordion() (2680–2685), openAddProblemModal() (8396–8399), openAssociateExistingProblemModal() (10272–10283).
+- **Problema:** el modal de vehículo abierto desde PyS suprime el acordeón mediante originModal='pys', pero los callbacks de alta de problema nuevo y asociación de problema existente vuelven a renderizar el acordeón sin reenviar navOptions. La protección anti-ciclos se pierde después de una mutación.
+- **Criterios de aceptación:**
+  1. Propagar el origen y las opciones de navegación en los flujos de asociación existente y creación preasociada.
+  2. Mantener oculto el acordeón cuando el vehículo fue abierto desde PyS, incluso después de una asociación exitosa.
+  3. No borrar ni alterar la relación persistida para evitar ciclos; controlar únicamente la navegación contextual.
+  4. Probar ambas rutas (problema nuevo y existente) desde un vehículo abierto desde PyS y comprobar que no reaparece el enlace recursivo.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-089 — Preservar la pila modal y la posición de navegación en recorridos PyS–vehículo
+- **Hallazgos origen:** H-AUD-012-002 y H-AUD-012-003.
+- **Tarea auditada:** AUD-T-012.
+- **Sesión/checkpoint:** AUD-20261108-S030 / AUD-CP-0030.
+- **Prioridad:** Alta.
+- **Evidencia:** ui.js modalNavStack (90–94, 1690–1699, 8641–8650), mostrarDetalleModal() edición/cierre (1782–1798, 1816–1822), openPysDetailModal() edición/cierre (8680–8719), carrusel de problemas (2784–2807); main.js popstate (234–273).
+- **Problema:** los re-renderizados de PyS pueden volver a insertar el mismo contexto en la pila; la edición de vehículo desde un contexto PyS no reenvía navOptions y limpia la pila. La pila no guarda scrollLeft/scrollTop ni estado del acordeón, por lo que el retorno reconstruye la vista desde el inicio.
+- **Criterios de aceptación:**
+  1. Registrar una entrada únicamente al navegar a otro modal, no al editar, guardar, descartar o reconstruir el modal actual.
+  2. Conservar navOptions y el contexto de origen al editar vehículos abiertos desde PyS.
+  3. Guardar/restaurar scroll horizontal del carrusel, scroll vertical del modal y estado abierto del acordeón.
+  4. Hacer coherentes el cierre manual y popstate: cada acción debe retroceder exactamente un nivel y no dejar entradas duplicadas.
+  5. Probar navegación PyS→vehículo y vehículo→PyS, edición, descarte, guardado, cierre X, botón Atrás y varios niveles.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-090 — Garantizar integridad referencial y atomicidad de relaciones PyS–vehículos
+- **Hallazgo origen:** H-AUD-012-005.
+- **Tarea auditada:** AUD-T-012.
+- **Sesión/checkpoint:** AUD-20261108-S030 / AUD-CP-0030.
+- **Prioridad:** Alta.
+- **Evidencia:** Services/feedback.js handleAddVehicleToProblem() (1565–1598) y handleRemoveVehicleFromProblem() (1601–1638); ui.js renderTrackVehicles() (8958–8960).
+- **Problema:** el backend no verifica que vehicleId exista de forma unívoca en Cortes y las operaciones add/remove realizan lectura-modificación-escritura sin LockService. La concurrencia puede perder asociaciones; los IDs inexistentes quedan persistidos pero no se renderizan.
+- **Criterios de aceptación:**
+  1. Verificar que problemId exista de forma unívoca y que vehicleId corresponda a exactamente un registro de Cortes.
+  2. Validar y normalizar el formato de modelos_asociados, mantener compatibilidad heredada y eliminar duplicados de forma segura.
+  3. Serializar alta y baja con LockService, releer la colección dentro del lock y liberar en finally.
+  4. Hacer idempotentes las altas/bajas y devolver la colección final realmente persistida.
+  5. Probar IDs ausentes/inexistentes, IDs duplicados en Cortes, datos heredados, dos altas concurrentes, alta/baja concurrentes y reintentos.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-091 — Alinear el título del acordeón con la especificación de PyS
+- **Hallazgo origen:** H-AUD-012-006.
+- **Tarea auditada:** AUD-T-012.
+- **Sesión/checkpoint:** AUD-20261108-S030 / AUD-CP-0030.
+- **Prioridad:** Baja.
+- **Evidencia:** Tareas.txt, requisito 12.5 (1511–1521); ui.js renderPosiblesProblemsAccordion() (2720–2723).
+- **Problema:** la especificación exige «Problemas relacionados a este vehículo», mientras que la interfaz muestra «Posibles problemas».
+- **Criterios de aceptación:** utilizar el texto exacto aprobado en el acordeón o documentar formalmente la sustitución; comprobar el título en modo claro/oscuro y móvil.
+- **Estado:** NUEVA; cambio y verificación visual pendientes.
+
+### Adenda AUD-T-012 — AUG-043: credenciales en acciones de asociación PyS
+- **Evidencia:** Services/feedback.js assertFeedbackSession() (42–74) y actionPermissions/addVehicleToProblem (302–375); ui.js openSearchVehicleForPysAssociationModal() (8551–8565), createPysCard() (2654–2675 y 8981–8990) y openAssociateExistingProblemModal() (10268–10275).
+- **Confirmación:** addVehicleToProblem con allowedRoles=null sigue exigiendo sesión válida; los callsites actuales no transmiten userId/sessionToken. removeVehicleFromProblem exige además rol Desarrollador y tampoco recibe las credenciales requeridas.
+- **Tratamiento:** mantener la corrección de los callsites y pruebas de sesión/rol dentro de AUG-043; no duplicar tarea.
+
+### Adenda AUD-T-012 — AUG-087: consumidores adicionales de getPysData
+- **Evidencia:** ui.js renderPosiblesProblemsAccordion() (2853–2866) consulta FEEDBACK incluso con cachedPys disponible; openAssociateExistingProblemModal() (10202–10208) solicita los datos en cada apertura.
+- **Criterio adicional:** incluir acordeón vehicular y modal de asociación existente en la estrategia común de frescura, deduplicación de promesas e invalidación; comprobar que la sincronización no sobrescriba una relación más reciente con una respuesta antigua.
+
+- 2026-11-08 — AUD-T-012: nuevas AUG-088 a AUG-091; adendas a AUG-043 y AUG-087. Inventario: 90 IDs únicos dentro de AUG-001 a AUG-091; AUG-015 continúa ausente y no se infiere ni renumera.

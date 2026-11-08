@@ -905,3 +905,88 @@ Validación documental: los siete blobs nuevos se recuperaron y comprobaron por 
 Pruebas no ejecutadas: E2/E3, navegador, FileReader real, HTTP, Apps Script V8, Drive/Spreadsheet, XSS controlado, concurrencia y deployments. No afirmar funcionalidad validada.
 Siguiente acción: publicar un único commit documental en GPSpedia2.2.5_work mediante create_tree sobre el árbol verificado, create_commit con padre bba61f0cd16e5a35d6f709e048ebd31d8709a193 y update_ref force:false/expected_sha igual a ese HEAD; después verificar commit, archivos exactos, nuevo HEAD y base intacta.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0030
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S030
+Tarea: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work
+HEAD inicial confirmado: 2afdde923d14e4f3dd078d347007b15e5ab09b2b
+Árbol inicial: 06fc72da78912df18227e2f45ce0d33349fa7cc5
+Rama base: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Árbol base: 56353d01cde57f57ab08135f5c49d91027a137c0
+Estado inicial: AUD-T-011 E1 documentada en 2afdde923d14e4f3dd078d347007b15e5ab09b2b; AUD-T-012 por auditar; sin cambios de aplicación iniciados.
+
+ALCANCE
+Auditoría estática de la vinculación bidireccional PyS–vehículos, filtros, persistencia, renderizado, originModal, modalNavStack, popstate, permisos FEEDBACK, integridad referencial y concurrencia. No ejecutar operaciones sobre datos productivos ni deployments.
+
+BLOBS DE REFERENCIA EN EL HEAD INICIAL
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- Auditoría.txt: 0e1d88056a7c3b9b67d44f1494c09ba4797841c8
+- Tareas.txt: 1981c0fd39f237758af7b998f5e0a352ef49b8f2
+- Plan_auditoría/Plan_Auditoria.md: 1ab9a7a475f7c858c82f56ebc8cfbb0655695c5e
+- Plan_auditoría/Aug_Tareas.md: 5f98e1fabd09921fc210bfa0cc36ce317999f699
+- Plan_auditoría/Consolidacion_Auditoria.md: 72e90e89f8ff260812e4e9e86afdf23dbdac7a86
+- ChangesLogs.txt: dda9009269568e9799efde854ba18557bfe9a770
+- contexto_personal.md: d9d1a9e95dc08acd5feffa19e039cc0283a27a87
+- checkpoint.md: 3841d14c88b69be840084904f93cc21959c99d3c
+
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0030
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S030
+Tarea: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
+Estado final: E1 ESTÁTICA COMPLETADA; H-AUD-012-001 a H-AUD-012-008 ABIERTOS O VINCULADOS A TAREAS EXISTENTES; VALIDACIÓN FUNCIONAL/INTEGRIDAD/NAVEGACIÓN PENDIENTE.
+HEAD padre de la tarea: 2afdde923d14e4f3dd078d347007b15e5ab09b2b
+Árbol inicial: 06fc72da78912df18227e2f45ce0d33349fa7cc5
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Rama de trabajo: GPSpedia2.2.5_work.
+
+RESULTADO
+- H-AUD-012-001 a H-AUD-012-008 documentados.
+- Nuevas AUG-088 a AUG-091; adendas a AUG-043 y AUG-087.
+- Requisitos revalidados: filtros anti-duplicado, confirmación de vehículo, parseo JSON/legacy, relación en ambos sentidos, restricciones iniciales de carrusel/acordeón y retorno contextual básico.
+- Riesgos abiertos: callbacks de asociación pierden originModal; pila modal duplicada o limpiada al editar; scroll del carrusel no se conserva; callsites add/remove omiten credenciales; mutaciones sin lock ni validación referencial; título distinto al requisito; solicitudes getPysData redundantes.
+- El commit histórico f6299fcf declara pruebas Playwright, pero no existe suite PyS–vehículo en el árbol actual. No se considera validación funcional reproducible.
+- No se modificó código, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos ni deployments.
+
+ARCHIVOS DOCUMENTALES Y BLOBS NUEVOS
+- Auditoría.txt: 8fb6634f5ef78089da11696aa4303e0336472336
+- Tareas.txt: 1b1c16e73d04e4af2523e7359bc05e52ec56522e
+- Plan_auditoría/Plan_Auditoria.md: f80703b3506001c73b896e837977329f4cd296ca
+- Plan_auditoría/Aug_Tareas.md: b73d66848371313c7d6c85d44c878eef6302055f
+- Plan_auditoría/Consolidacion_Auditoria.md: 60b77713a699ba66d56b57b8e14e6a0f4f122666
+- ChangesLogs.txt: 5952c41df7c003efd37bdd1409b4a9791ab10185
+- contexto_personal.md: 3ac6da80458bad4c5c701271b689abe525112fdd
+- checkpoint.md: este checkpoint final, incluido en el mismo árbol y commit.
+
+RESPALDOS EXACTOS — BLOBS ORIGINALES
+- Auditoría.txt: 0e1d88056a7c3b9b67d44f1494c09ba4797841c8
+- Tareas.txt: 1981c0fd39f237758af7b998f5e0a352ef49b8f2
+- Plan_auditoría/Plan_Auditoria.md: 1ab9a7a475f7c858c82f56ebc8cfbb0655695c5e
+- Plan_auditoría/Aug_Tareas.md: 5f98e1fabd09921fc210bfa0cc36ce317999f699
+- Plan_auditoría/Consolidacion_Auditoria.md: 72e90e89f8ff260812e4e9e86afdf23dbdac7a86
+- ChangesLogs.txt: dda9009269568e9799efde854ba18557bfe9a770
+- contexto_personal.md: d9d1a9e95dc08acd5feffa19e039cc0283a27a87
+- checkpoint.md: 3841d14c88b69be840084904f93cc21959c99d3c
+
+VALIDACIÓN Y LÍMITES
+- Se mantuvo intacta la línea base de código; únicamente se prepararon blobs documentales.
+- No se ejecutaron E2/E3, Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos en deployment ni pruebas funcionales.
+- No hubo merge ni despliegue.
+- El commit único documental se publicará en GPSpedia2.2.5_work con parent_sha y expected_sha 2afdde923d14e4f3dd078d347007b15e5ab09b2b, force:false.
+- El SHA del commit que incorpora este checkpoint será identificable en el historial de la rama.
+
+CONTINUIDAD
+- Siguiente unidad: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
+================================================================================

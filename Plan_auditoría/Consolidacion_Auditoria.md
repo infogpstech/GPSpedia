@@ -247,3 +247,14 @@ Sesión AUD-20261108-S029 | Checkpoint AUD-CP-0029 | HEAD auditado bba61f0cd16e5
 - VAL-20 incorpora alta, lectura, renderizado seguro, identidad, imagen, esquema/ID, solución/prevención, edición y rendimiento del módulo PyS. VAL-03, VAL-09, VAL-13 y VAL-14 conservan las pruebas transversales de sesión, cargas, caché y rendimiento.
 - H-AUD-035-001/003/006 y H-AUD-037-005 se mantienen como antecedentes y no se duplican.
 - No se ejecutaron E2/E3, navegador, FileReader real, HTTP, Apps Script, Drive/Spreadsheet, XSS controlado, concurrencia ni deployments. No se modificó código, assets, endpoints, configuración ni datos productivos.
+
+## 19. Actualización de cobertura — AUD-T-012
+Sesión AUD-20261108-S030 | Checkpoint AUD-CP-0030 | HEAD auditado 2afdde923d14e4f3dd078d347007b15e5ab09b2b | árbol 06fc72da78912df18227e2f45ce0d33349fa7cc5 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-012 tiene E1 estática completada; H-AUD-012-001 a H-AUD-012-008 abiertos o vinculados a tareas existentes; validación funcional, integridad y navegación pendiente.
+- Catálogo AUD-T: 38 unidades; 26 con E1 completada, 1 parcial y 11 por auditar.
+- Catálogo AUG: 90 IDs únicos dentro de AUG-001 a AUG-091; AUG-015 continúa ausente y no se infiere ni renumera.
+- Nuevas AUG-088 a AUG-091: mantener el origen anti-ciclo después de asociar, preservar pila modal y posición de carrusel, validar integridad/atomicidad de relaciones, y alinear el título exacto del acordeón.
+- AUG-043 recibe adenda: los callsites de add/remove siguen omitiendo userId/sessionToken, pese a que assertFeedbackSession los exige. AUG-087 recibe adenda: renderPosiblesProblemsAccordion y openAssociateExistingProblemModal hacen consultas getPysData redundantes.
+- VAL-21 agrega recorridos bidireccionales, asociaciones nueva/existente, supresión anti-ciclos tras mutación, retorno con scroll/estado, edición y popstate, sesión/rol, integridad referencial y concurrencia. VAL-03 y AUG-043 mantienen las pruebas transversales de sesión/RBAC; AUG-002 mantiene la validación funcional consolidada.
+- El commit f6299fcf declara pruebas Playwright para esta funcionalidad, pero el árbol actual solo contiene pruebas aisladas de AUTH/USERS; no hay suite PyS–vehículo reproducible.
+- No se ejecutaron E2/E3, Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos en deployment ni deployments. No se modificó código, assets, endpoints, configuración ni datos productivos.

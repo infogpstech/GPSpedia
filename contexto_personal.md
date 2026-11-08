@@ -414,3 +414,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Nuevas AUG-082 a AUG-087; adendas a AUG-040/AUG-057. Se mantienen H-AUD-035-001/003/006 y H-AUD-037-005 sin duplicar.
 - Límites: solo E1 estática; sin navegador, FileReader real, HTTP, Apps Script, Drive/Spreadsheet, XSS controlado, concurrencia ni deployments. Sin cambios de aplicación ni datos productivos.
 - Siguiente: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
+
+## Continuidad — AUD-T-012 (2026-11-08)
+- Sesión/checkpoint: AUD-20261108-S030 / AUD-CP-0030.
+- Repositorio: infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado 2afdde923d14e4f3dd078d347007b15e5ab09b2b; árbol 06fc72da78912df18227e2f45ce0d33349fa7cc5; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos: E1 estática completada; H-AUD-012-001 a H-AUD-012-008 abiertos o vinculados a tareas existentes; validación funcional, integridad y navegación pendiente.
+- Hallazgos principales: los callbacks de asociación vuelven a renderizar el acordeón sin originModal y pueden reabrir ciclos; la pila modal se duplica o pierde contexto al editar; no se restaura la posición del carrusel; los callsites de asociación/desvinculación omiten userId/sessionToken; add/remove carecen de lock e integridad referencial del vehicleId; el título del acordeón difiere del requisito; getPysData se consulta repetidamente.
+- Nuevas AUG-088 a AUG-091; adendas a AUG-043/AUG-087. La ausencia de pruebas funcionales reproducibles se vincula a AUG-002 y VAL-21.
+- Fuentes principales: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; Services/feedback.js 3db189523f6cb849d33550f29971c0ec6f386b3a; api-config.js a5c718d01b7da50b4b5e650c3bacd91456f4d670; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0.
+- Límites: E1 estática; sin Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos en deployment ni E2/E3. Sin cambios de aplicación, assets, endpoints, configuración ni datos productivos.
+- Siguiente: AUD-T-013 — Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación.
