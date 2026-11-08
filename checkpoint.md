@@ -612,3 +612,50 @@ No se modificó código, servicios, contratos, endpoints, configuración, assets
 Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; mantener cancelada la función de filtros rápidos.
 Commit único esperado: docs(audit): verify AUD-T-014 continuity; parent 8b09d684c6bd43e2dc43a0cd04feebedd0f40b11.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0054
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S055
+Tarea: AUD-T-015 — revalidación de continuidad E1 de búsqueda global, filtros rápidos cancelados y resultados jerárquicos.
+Estado inicial observado: E1 histórica completada; pendiente confirmar ausencia de deriva funcional y registrar continuidad.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: 503ed0678a718b4c9179b3c28d2373263cb8cc86 | Árbol: efba6192e1d1cf2eed28ce80486b904bb1f11e5c.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios.
+Alcance funcional: navigation.js, ui.js, main.js, style.css, index.html, users.html, add_cortes.html, Services/catalog.js y VinDifferentialEngine.js.
+Restricción: auditoría E1 estática; no modificar código ni reactivar filtros rápidos.
+Respaldos exactos (blob SHA antes de esta documentación):
+- Plan_auditoría/Plan_Auditoria.md: c04d262bea67e39590470d0517d50a968c331d5d
+- Plan_auditoría/Consolidacion_Auditoria.md: 326e25256aaffb6f15c62d38084dd7ceedbefff4
+- ChangesLogs.txt: 1b0f68d5db36293e95b660c85a945b6f89da6047
+- contexto_personal.md: b023920e11649e3a930d57dee532979e46a019d7
+- checkpoint.md: 56cfdb68eb4111d3da6314eba311722f5f36d5a9
+Auditoría estática y comparación Git realizadas antes del registro documental; no se ejecutaron pruebas funcionales ni operaciones productivas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0054
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S055
+Tarea: AUD-T-015 — revalidación de continuidad E1.
+Estado final: continuidad E1 confirmada; H-AUD-015-001 a 004 abiertos; H-AUD-037-003 a 006 revalidados; AUG-098 a AUG-101 y VAL-24 pendientes. Sin hallazgos ni tareas nuevas.
+HEAD padre: 503ed0678a718b4c9179b3c28d2373263cb8cc86; árbol inicial efba6192e1d1cf2eed28ce80486b904bb1f11e5c. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Comparación: E1 c4f61a1f8dc402c9fec6802032ca7d7f9c304695 → HEAD actual 503ed0678a718b4c9179b3c28d2373263cb8cc86; 21 commits posteriores; solo ocho archivos documentales modificados. Los nueve archivos funcionales mantienen SHA idénticos:
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+Documentos modificados:
+- Plan_auditoría/Plan_Auditoria.md
+- Plan_auditoría/Consolidacion_Auditoria.md
+- ChangesLogs.txt
+- contexto_personal.md
+- checkpoint.md (este blob final documental).
+No se modificaron Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: no existen hallazgos/tareas nuevos y los existentes ya están registrados.
+No se modificaron archivos de aplicación, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles ni E2/E3. Sin merge ni despliegue.
+Commit único esperado: docs(audit): verify AUD-T-015 continuity; parent 503ed0678a718b4c9179b3c28d2373263cb8cc86.
+Siguiente unidad: AUD-T-016 — revalidación de continuidad E1.
+================================================================================

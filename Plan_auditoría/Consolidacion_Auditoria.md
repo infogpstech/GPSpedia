@@ -577,3 +577,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Se conserva cobertura global de 38/38 unidades con E1 estática completada. Esta continuidad no modifica estados funcionales ni certifica E2/E3.
 - No se ejecutaron navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, concurrencia, service worker en dispositivo ni pruebas E2/E3. Sin cambios funcionales, operaciones productivas, despliegue ni merge; base intacta.
 - Siguiente unidad secuencial: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos.
+
+
+## 28. Continuidad AUD-T-015 — verificación E1
+- Sesión AUD-20261108-S055; checkpoint AUD-CP-0054; E1 histórica c4f61a1f8dc402c9fec6802032ca7d7f9c304695; HEAD actual 503ed0678a718b4c9179b3c28d2373263cb8cc86; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 21 commits posteriores; solo ocho documentos cambiaron. Los nueve archivos funcionales del alcance mantienen los SHA de la E1; sin deriva funcional.
+- H-AUD-015-001 a 004 continúan abiertos; H-AUD-037-003 a 006 se conservan como revalidaciones vinculadas a AUG-049.
+- AUG-098 a AUG-101 pendientes; VAL-24 pendiente. No se crean hallazgos/tareas duplicados. Filtros rápidos permanecen cancelados.
+- La cobertura E1 existente no cambia; esta continuidad no certifica E2/E3 ni validación funcional.
+- Sin cambios funcionales, pruebas reales, operaciones productivas, despliegue ni merge. Siguiente: AUD-T-016.

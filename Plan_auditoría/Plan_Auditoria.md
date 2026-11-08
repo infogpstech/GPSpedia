@@ -1134,3 +1134,22 @@ Se conservan los controles positivos presentes: editor compartido, toolbar de fo
 H-AUD-014-001 a H-AUD-014-003 permanecen abiertos. AUG-095 a AUG-097 siguen pendientes y VAL-23 permanece planificada. La Tarea 13 conserva su estado histórico COMPLETADA; no se crean hallazgos ni tareas duplicadas.
 No se ejecutaron navegador, DOMParser real, XSS controlado, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, pruebas de persistencia/concurrencia, service worker en dispositivo ni E2/E3. Sin cambios de aplicación, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue; base intacta.
 Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; respetar la cancelación documentada de filtros rápidos.
+
+
+## 39. Continuidad verificada — AUD-T-015
+Sesión AUD-20261108-S055 | Checkpoint AUD-CP-0054 | HEAD E1 c4f61a1f8dc402c9fec6802032ca7d7f9c304695 | árbol E1 adda8ff26199530c2ec30d739510128efa060cb3 | HEAD actual 503ed0678a718b4c9179b3c28d2373263cb8cc86 | árbol actual efba6192e1d1cf2eed28ce80486b904bb1f11e5c | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 histórica de AUD-T-015 ya estaba completada. La comparación Git confirma 21 commits posteriores y exclusivamente ocho archivos documentales modificados. Los nueve archivos funcionales del alcance conservan exactamente sus SHA históricos; no existe deriva funcional desde la E1.
+Revalidación: H-AUD-015-001 a H-AUD-015-004 continúan vigentes sin evidencia de corrección funcional. H-AUD-037-003 a H-AUD-037-006 permanecen vinculados a la adenda AUG-049. No se crean hallazgos ni tareas duplicadas.
+Se mantienen pendientes AUG-098 a AUG-101 y VAL-24. Se conserva expresamente la cancelación de filtros rápidos; no se propone restaurarlos. No se modifican Tareas.txt ni Plan_auditoría/Aug_Tareas.md porque el estado histórico y las tareas derivadas ya están documentados.
+Archivos funcionales con identidad SHA comprobada:
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles ni E2/E3. Sin cambios de aplicación, configuración, datos productivos, Drive, Spreadsheet, deployments, merge ni despliegue.
+Siguiente unidad secuencial: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive; realizar revalidación de continuidad E1 sin duplicar hallazgos.

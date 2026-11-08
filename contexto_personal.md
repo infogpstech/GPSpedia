@@ -584,3 +584,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-095 a AUG-097 pendientes; VAL-23 planificada. Sin nuevos hallazgos/tareas ni duplicación. Tarea 13 conserva su estado histórico COMPLETADA.
 - No se ejecutaron navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, Spreadsheet/Drive real, concurrencia, service worker en dispositivo ni E2/E3. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; respetar la cancelación documentada de filtros rápidos.
+
+
+## Continuidad AUD-T-015 — 2026-11-08
+- Revalidación E1 en AUD-20261108-S055/AUD-CP-0054; HEAD histórico c4f61a1f8dc402c9fec6802032ca7d7f9c304695; HEAD actual 503ed0678a718b4c9179b3c28d2373263cb8cc86; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 21 commits posteriores, exclusivamente documentales. Los nueve archivos funcionales de búsqueda, jerarquía, filtros cancelados y botones conservan exactamente sus SHA de la E1.
+- H-AUD-015-001 a 004 siguen abiertos; H-AUD-037-003 a 006 continúan vinculados a AUG-049. AUG-098 a AUG-101 y VAL-24 pendientes. Sin hallazgos/tareas duplicados.
+- La cancelación de filtros rápidos se mantiene como restricción. No ejecutar cambios de código durante E1.
+- Sin navegador, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, pruebas móviles ni E2/E3. Siguiente unidad: AUD-T-016, revalidación de continuidad.
