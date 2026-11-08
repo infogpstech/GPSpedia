@@ -1946,3 +1946,34 @@ Sin cambios funcionales, endpoints, configuración, sesiones, hojas, datos produ
 Commit documental único: docs(audit): verify AUD-T-007 continuity; parent e81eae5219427be7ede9c6ac90b67f780902bb8d; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
 Siguiente tarea: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0088
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S089
+Tarea: AUD-T-008 — revalidación de continuidad E1 de deep links, compartir, enlaces precisos e indicador de red.
+Repositorio: infogpstech/GPSpedia; rama de trabajo GPSpedia2.2.5_work; rama base GPSpedia2.2.5.
+HEAD inicial: 82dc7f9a2429d30dd57002f9a846ca2b66877325; árbol 836dc578a99cde074566f9679a9e44440dac352d; HEAD base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+E1 histórica: f3d7558abeef482957582fea08f2041490b54f34; árbol E1 e76c3c4fca2535e9436176ffcbe932691ac8d852; sesión original AUD-20261108-S026 / AUD-CP-0026.
+Alcance: ui.js, main.js, navigation.js, index.html, style.css, auth.js y state.js.
+Hallazgos conocidos: H-AUD-008-001 a 004. Tareas derivadas: AUG-072/AUG-073; adendas a AUG-049/AUG-052.
+Estado observado: E1 estática completada históricamente; revalidación de continuidad pendiente. Preflight Git de solo lectura: E1 es ancestro de HEAD con 63 commits posteriores; los siete archivos del alcance conservan SHA E1; base sin cambios. No se realizaron escrituras en el repositorio.
+Riesgos y dependencias: identidad textual de enlaces, fallback de compartir, decodeURIComponent, semántica/accesibilidad del indicador, disponibilidad real de endpoints y dependencias de búsqueda/catálogo.
+Sin cambios de código, assets, endpoints, configuración, Drive, Spreadsheet, datos productivos, merge ni despliegue.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0088
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S089
+Tarea: AUD-T-008 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-008-001 A 004 ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA/RED PENDIENTE.
+HEAD auditado: 82dc7f9a2429d30dd57002f9a846ca2b66877325; árbol 836dc578a99cde074566f9679a9e44440dac352d; rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta. E1: f3d7558abeef482957582fea08f2041490b54f34; árbol E1 e76c3c4fca2535e9436176ffcbe932691ac8d852; 63 commits posteriores.
+Los siete archivos del alcance conservan SHA E1: ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77; navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; auth.js 2dc65f2e5903fc208ca14505053e82203a9dbd86; state.js f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f.
+Hallazgos revalidados: H-AUD-008-001 a 004 permanecen sin cambios. AUG-072/AUG-073 pendientes; AUG-049/AUG-052 con adendas. Sin hallazgos ni tareas nuevas; Auditoría.txt, Tareas.txt y Aug_Tareas.md no se modifican.
+Archivos documentales modificados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Verificaciones: comparación Git E1→HEAD, ascendencia, lista de archivos cambiados, SHA exactos de siete archivos y revisión de consistencia documental. No ejecutadas: navegador, Web Share, Clipboard, móvil/PWA, enlaces malformados, lector de pantalla, red real, health checks ni deployments.
+Sin cambios funcionales, assets, endpoints, configuración, hojas, datos productivos ni operaciones Drive/Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-008 continuity; parent 82dc7f9a2429d30dd57002f9a846ca2b66877325; el commit que incorpora este checkpoint queda identificado en el historial Git por ese mensaje.
+Siguiente tarea: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
+================================================================================

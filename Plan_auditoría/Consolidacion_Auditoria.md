@@ -894,3 +894,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-068/AUG-069/AUG-070/AUG-071 pendientes; AUG-047 con adenda. H-AUD-005-008 se amplía sin duplicación; la lógica de búsqueda de AUG-049 permanece separada.
 - Solo continuidad E1 y revisión documental. Sin navegador, Android/iOS, PWA, gestos nativos, teclado virtual, overlays simultáneos, deep links, lector de pantalla ni medición de historial. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+
+
+## 62. AUD-T-008 — continuidad E1 y revalidación de deep links/compartir/red
+- Sesión AUD-20261108-S089; checkpoint AUD-CP-0088; E1 f3d7558abeef482957582fea08f2041490b54f34; árbol E1 e76c3c4fca2535e9436176ffcbe932691ac8d852; HEAD 82dc7f9a2429d30dd57002f9a846ca2b66877325; árbol actual 836dc578a99cde074566f9679a9e44440dac352d; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; ui.js, main.js, navigation.js, index.html, style.css, auth.js y state.js conservan SHA idénticos a E1.
+- H-AUD-008-001 a 004 permanecen abiertos: identidad textual no estable, fallback Web Share/Clipboard incompleto, decodeURIComponent sin protección e indicador de red sin ARIA ni comprobación backend.
+- H-AUD-037-003/H-AUD-037-006/H-AUD-037-010 se amplían sin duplicación; AUG-049/AUG-052 conservan adendas. AUG-072/AUG-073 pendientes; AUD-T-007 mantiene History API/overlays.
+- Solo continuidad E1 y revisión documental. Sin navegador, Web Share, Clipboard, móvil/PWA, enlaces malformados, colisiones, lector de pantalla, red real, health checks ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.

@@ -892,3 +892,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-068/AUG-069/AUG-070/AUG-071 pendientes; AUG-047 con adenda. H-AUD-005-008 ampliado; búsqueda separada en AUG-049.
 - No se ejecutaron pruebas de navegador, móvil/PWA, gestos, overlays simultáneos, deep links, lector de pantalla ni historial real. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+
+
+## Continuidad AUD-T-008 — 2026-11-08 | AUD-20261108-S089
+- Revalidación AUD-20261108-S089/AUD-CP-0088; E1 histórica f3d7558abeef482957582fea08f2041490b54f34 (AUD-20261108-S026/AUD-CP-0026); HEAD 82dc7f9a2429d30dd57002f9a846ca2b66877325; árbol actual 836dc578a99cde074566f9679a9e44440dac352d; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. ui.js, main.js, navigation.js, index.html, style.css, auth.js y state.js conservan exactamente sus SHA E1.
+- H-AUD-008-001 a 004 permanecen abiertos: enlace sin ID estable, fallback compartir, hash malformado e indicador sin ARIA/health check.
+- AUG-072/AUG-073 pendientes; AUG-049/AUG-052 con adendas; AUD-T-007 mantiene History API/overlays.
+- No se ejecutaron navegador, Web Share, Clipboard, móvil/PWA, lector de pantalla, red real, health checks ni deployments. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.

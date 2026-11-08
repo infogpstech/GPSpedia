@@ -2231,3 +2231,48 @@ No se ejecutaron pruebas en navegador, Android, iOS, PWA standalone, gesto nativ
 
 ### Siguiente iteración
 AUD-T-008 — Deep links, compartir, enlaces precisos e indicador de red.
+
+
+## 73. Revalidación de continuidad — AUD-T-008
+
+**Sesión:** AUD-20261108-S089  
+**Checkpoint:** AUD-CP-0088  
+**E1 original:** f3d7558abeef482957582fea08f2041490b54f34 (AUD-20261108-S026 / AUD-CP-0026)  
+**Árbol E1:** e76c3c4fca2535e9436176ffcbe932691ac8d852  
+**HEAD revalidado:** 82dc7f9a2429d30dd57002f9a846ca2b66877325  
+**Árbol actual:** 836dc578a99cde074566f9679a9e44440dac352d  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-008-001 A 004 ABIERTOS; VALIDACIÓN FUNCIONAL/MULTIPLATAFORMA/RED PENDIENTE.
+
+### Alcance y comparación
+Se revalidaron deep links, restauración de búsqueda, enlaces compartidos, precisión de consulta, Web Share/Clipboard, indicador de red y sus dependencias de carga inicial/History API. Archivos: ui.js, main.js, navigation.js, index.html, style.css, auth.js y state.js.
+
+La comparación E1→HEAD muestra 63 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los siete archivos de código del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+
+### Revalidación de hallazgos y tareas
+- H-AUD-008-001 a H-AUD-008-004 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- El enlace compartido sigue dependiendo de unicidad textual y no incorpora ID estable; el fallback de compartir no cubre todos los rechazos/ausencia de Clipboard API ni ofrece feedback visible.
+- El decodeURIComponent del hash sigue sin protección ante secuencias porcentuales malformadas.
+- El indicador de red sigue siendo visual, sin semántica ARIA persistente, y navigator.onLine no comprueba disponibilidad de Internet ni salud de endpoints.
+- H-AUD-037-003/AUG-049 mantiene el problema de autoapertura para resultados no-Corte; H-AUD-037-006/AUG-049 conserva la ambigüedad de números de cuatro dígitos; H-AUD-037-010/AUG-052 conserva espera indefinida de catálogo y se amplía con hash malformado.
+- AUG-072 continúa pendiente para identidad estable y fallback de enlaces compartidos.
+- AUG-073 continúa pendiente para accesibilidad y precisión semántica del indicador.
+- AUG-049/AUG-052 reciben las adendas existentes; AUD-T-007/AUG-068 a 071 mantiene el alcance de overlays/History API.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 63 commits posteriores, el diff global, los SHA exactos de los siete archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a prueba multiplataforma o conectividad real.
+
+No se ejecutaron navegador, Web Share API, portapapeles, Android/iOS, PWA instalada, enlaces malformados, colisiones de catálogo, lector de pantalla, eventos online/offline reales, health checks HTTP, Apps Script ni pruebas de red. No se verificaron deployments. No se modificó código, assets, endpoints, configuración, Drive, Spreadsheet ni datos productivos.
+
+### Siguiente iteración
+AUD-T-009 — PWA, offline, IndexedDB, caché, service worker y compatibilidad iOS.
