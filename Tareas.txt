@@ -6392,3 +6392,17 @@ Estado: E1 ESTÁTICA COMPLETADA; H-AUD-019-001 a H-AUD-019-014 abiertos; VAL-28 
 - No se modificaron archivos de aplicación, servicios, endpoints, configuración, assets ni datos productivos.
 - Siguiente unidad: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
 ================================================================================
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-020
+Fecha: 2026-11-08 | Sesión AUD-20261108-S038 | Checkpoint AUD-CP-0038
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-020-001 a H-AUD-020-004 abiertos; H-AUD-020-005 corregido documentalmente; VAL-29 planificada.
+- Controles positivos: hoist de createDetailParagraph conservado; funciones retiradas históricamente continúan ausentes; sin archivos temporales en el árbol; renombrado automático de carpeta equivalente con protección ante duplicados ambiguos.
+- Hallazgos: bloqueos anti-inspección eludibles y zoom restringido; logs de recuperación imprimen pendingOp con imágenes Base64; parsers VIN/versiones y helpers Drive duplicados con diferencias; funciones huérfanas y markup de depuración sin referencias.
+- Adendas: AUG-036 para parsers VIN/versiones; AUG-104 para zoom global y add_cortes.
+- Nuevas tareas: AUG-136 a AUG-139. VAL-29 planificada, no ejecutada.
+- La Tarea 21 conserva su estado histórico COMPLETADA; E1 no certifica pruebas funcionales.
+- Se corrigió la tabla vigente de cobertura de Consolidacion_Auditoria.md.
+- No se modificaron archivos funcionales, endpoints, configuración, assets ni datos productivos; no hubo ejecución de Apps Script, navegador, Drive, Spreadsheet, YouTube, concurrencia ni despliegues.
+- Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
+================================================================================

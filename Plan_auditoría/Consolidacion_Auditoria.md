@@ -22,18 +22,18 @@ El plan contiene 38 unidades AUD-T. Según la tabla de estado vigente:
 
 | Estado documental | Unidades | Cantidad |
 |---|---|---:|
-| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 a AUD-T-011, AUD-T-012 a AUD-T-019 y AUD-T-023 a AUD-T-038 | 33 |
+| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 a AUD-T-011, AUD-T-012 a AUD-T-020 y AUD-T-023 a AUD-T-038 | 34 |
 | Auditada parcialmente | AUD-T-002 | 1 |
-| Por auditar | AUD-T-001 y AUD-T-019 a AUD-T-022 | 5 |
+| Por auditar | AUD-T-001 y AUD-T-021 a AUD-T-022 | 3 |
 | **Total** | **AUD-T-001 a AUD-T-038** | **38** |
 
-**Corrección de continuidad:** no es correcto afirmar que las 37 unidades AUD-T tienen auditoría estática completada. AUD-T-001 y AUD-T-020 a AUD-T-022 siguen marcadas POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 a AUD-T-011 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
+**Corrección de continuidad:** AUD-T-001 y AUD-T-021 a AUD-T-022 siguen POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 a AUD-T-011, AUD-T-012 a AUD-T-020 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
 
 AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario — se auditó en AUD-20261107-S020. Su E1 está completada; permanecen hallazgos y validaciones funcionales/privacidad pendientes.
 
 ## 3. Inventario consolidado de tareas AUG
 
-El archivo Plan_auditoría/Aug_Tareas.md contiene **134 identificadores AUG únicos** dentro del rango AUG-001 a AUG-135. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
+El archivo Plan_auditoría/Aug_Tareas.md contiene **138 identificadores AUG únicos** dentro del rango AUG-001 a AUG-139. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
 
 Algunos encabezados AUG se repiten en el archivo porque las auditorías posteriores agregaron adendas a tareas existentes. Esas repeticiones no constituyen tareas nuevas. Deben conservarse las adendas y sus referencias históricas.
 
@@ -390,3 +390,16 @@ Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036 | HEAD f9c47bad48fa8050a4acac
 - VAL-28: permisos, payloads inválidos, rollback de restore, compatibilidad de Tutoriales, relaciones PyS, aprobaciones, VIN, pruebas 31–38, paridad de rutas y regresión integral.
 - Tarea 19 conserva estado histórico COMPLETADA; E1 no certifica funcionalmente las pruebas 31–38.
 - No se modificó código, configuración, endpoints, assets ni datos productivos. No hubo ejecución de Apps Script, Spreadsheet, Drive, YouTube, concurrencia, estrés ni deployments.
+
+
+## 12. Actualización de cobertura — AUD-T-020
+- AUD-T-020 tiene E1 estática completada; H-AUD-020-001 a H-AUD-020-004 abiertos; H-AUD-020-005 corregido documentalmente; VAL-29 planificada, no ejecutada.
+- Cobertura: 38 unidades; 34 E1 completadas, 1 parcial y 3 por auditar (AUD-T-001, AUD-T-021 y AUD-T-022).
+- Catálogo AUG: 138 IDs únicos dentro de AUG-001 a AUG-139; AUG-015 continúa ausente y no se infiere ni renumera.
+- Hallazgos: bloqueos anti-inspección eludibles y zoom restringido; consola de add_cortes registra pendingOp con Base64; parsers y helpers Drive duplicados con contratos divergentes; funciones internas y markup de depuración sin referencias.
+- Adendas: AUG-036 (parsers VIN/versiones) y AUG-104 (zoom global). Nuevas tareas: AUG-136 a AUG-139.
+- Tarea 21 conserva estado histórico COMPLETADA; E1 no certifica pruebas funcionales ni sustituye la validación VAL-29.
+- VAL-29: sintaxis/lint; parsers y delimitadores; normalización/renombrado Drive; zoom y accesibilidad; logs de recuperación; call graph; regresión de VIN, imágenes, PyS y offline.
+- No se ejecutaron Node/lint, navegador, Apps Script, HTTP, Spreadsheet, Drive, YouTube, concurrencia, restauraciones, migraciones ni despliegues. No se modificó código ni datos productivos.
+- Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
+================================================================================

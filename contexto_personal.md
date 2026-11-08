@@ -494,3 +494,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Hallazgos principales: WRITE.addSupplementaryInfo y UTILITIES.migrateTimestamps sin auth; alta de Tutoriales desconectada de CATALOG y edición fallback con columnas incompatibles; restore DB/Drive sin rollback; payload de corte validado tarde; vídeo suplementario ignorado con success; PyS acepta referencias no verificadas; ADMIN puede editar ID; USERS puede escribir parcialmente; approveVideo no verifica destino; VIN sin formato estricto; falta suite automatizada; mapa API desincronizado; README contradice fuentes presentes en el árbol.
 - Nuevas tareas AUG-122 a AUG-135. Siguiente unidad AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
 - No se modificó código de aplicación, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+
+## Continuidad de auditoría — AUD-T-020
+- Fecha: 2026-11-08. Sesión AUD-20261108-S038; checkpoint AUD-CP-0038.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado 25d5d548edd79f812ab6b2bf9411d8c77fb30188; árbol 011980eae1ae02143377faffcf5148c7067bfad7; base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales: E1 estática completada; H-AUD-020-001 a H-AUD-020-004 abiertos; H-AUD-020-005 corregido documentalmente; VAL-29 pendiente.
+- Hallazgos principales: bloqueos frontend no son seguridad y restringen zoom; logs add_cortes imprimen pendingOp con Base64; parsers VIN/versiones y helpers Drive duplicados con diferencias; funciones huérfanas y markup de depuración sin consumidores encontrados.
+- Nuevas tareas AUG-136 a AUG-139; adendas a AUG-036 y AUG-104. La cobertura se actualizó a 34 E1, 1 parcial y 3 por auditar.
+- No se modificó código, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. No hubo ejecución funcional.
+- Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.

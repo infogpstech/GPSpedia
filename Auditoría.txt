@@ -10720,3 +10720,88 @@ No se ejecutaron casos de VAL-28.
 E1 estática. No se ejecutaron navegador, Apps Script, llamadas HTTP, Spreadsheet productiva o de pruebas, Drive, YouTube, restauraciones, migraciones, concurrencia, pruebas de estrés ni despliegues. No se verificó la ACL real de deployments, Spreadsheet o Drive. No se modificaron código, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments.
 Resultado: E1 ESTÁTICA COMPLETADA; H-AUD-019-001 a H-AUD-019-014 abiertos; AUG-122 a AUG-135 nuevas; VAL-28 pendiente. Tarea 19 conserva estado histórico COMPLETADA, sin certificación funcional de las pruebas 31–38.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-020: SANEAMIENTO ARQUITECTURAL, DRY, ANTI-DEBUGGING Y AUDITORÍAS GLOBALES
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S038 | Checkpoint: AUD-CP-0038
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: 25d5d548edd79f812ab6b2bf9411d8c77fb30188 | Árbol: 011980eae1ae02143377faffcf5148c7067bfad7
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+1. ALCANCE Y MÉTODO
+E1 estática de Tarea 21 y requisitos 13.1, B01, B14, B15, B17, B20, B28, B29 y B30. Se revisaron la arquitectura frontend y sus módulos (index.html, main.js, ui.js, navigation.js, add_cortes.html, api-config.js, auth.js, state.js, lightbox.js, offline.js, VinDifferentialEngine.js, rich-text.js, youtubeUpload.js, service-worker.js, users.html y style.css), los microservicios Services/Auth.js, catalog.js, feedback.js, write.js, users.js, admin.js y Utilities.js, los archivos de prueba y README.md. Se contrastaron los commits históricos 27c9311c (auditoría integral/navegación) y d93b3a5e (saneamiento global/DRY), además del inventario del árbol actual.
+La revisión es estática. No se ejecutaron navegador, Node, Apps Script, HTTP, Spreadsheet, Drive, YouTube, pruebas de concurrencia, despliegues ni operaciones sobre datos productivos.
+
+2. CONTROLES POSITIVOS CONFIRMADOS
+- El hoist histórico de createDetailParagraph permanece: una sola declaración en ui.js y sus llamadas internas; no se encontró una segunda definición.
+- Las funciones históricamente retiradas getDatosFiltrados, isYearInRangeV2, isFlexibleModelMatch y getVerifiedRole no aparecen en los módulos actuales revisados.
+- El árbol actual contiene 71 rutas y no contiene archivos .bak, .tmp, .log, .old, .orig ni .backup. server_output.log ya no está en el árbol; se mantienen los archivos históricos explícitos bajo Olds/ y las copias Services/Test como material de referencia/entorno aislado.
+- findOrCreateSubFolder, presente en FEEDBACK, WRITE y ADMIN, renombra automáticamente una única carpeta equivalente al nombre canónico y se detiene si encuentra varias equivalentes; esto respeta la regla de no fusionar ni alterar duplicados ambiguos. La ejecución real sobre Drive no se probó.
+- La repetición de doGet/doPost/getSpreadsheet entre microservicios se considera boilerplate de proyectos Apps Script desplegados por separado; no se clasifica por sí sola como código muerto ni se recomienda eliminarla sin una estrategia de biblioteca/versionado compartido.
+- No se encontraron sentencias debugger en los módulos JavaScript inspeccionados.
+
+3. HALLAZGOS NUEVOS
+
+H-AUD-020-001 — MEDIA — Los bloqueos anti-inspección no constituyen una barrera de seguridad y las restricciones de zoom afectan la accesibilidad.
+Evidencia:
+- main.js:782–839 bloquea contextmenu, F12, Ctrl+Shift+I/J/C, Ctrl+U, zoom por rueda/teclado y gestos multitáctiles fuera del Lightbox.
+- add_cortes.html:1383–1415 repite los bloqueos; add_cortes.html:6 fija maximum-scale=1.0 y user-scalable=no.
+- index.html:6 permite el viewport escalable, pero main.js cancela los gestos y atajos de zoom.
+- README.md:66–68 presenta el bloqueo de menú contextual/comandos del sistema como protección de datos técnicos.
+Impacto: los manejadores del navegador pueden eludirse desde menús, herramientas externas o inspección del código cliente; no protegen secretos ni sustituyen autenticación, autorización y validación backend. Además, impiden ampliar la interfaz fuera del Lightbox y contradicen el objetivo de accesibilidad ya registrado para add_cortes.
+Criterios: documentar el alcance real de estas restricciones; no tratarlas como control de seguridad; mantener toda autorización y protección de datos en backend; decidir si los bloqueos se conservan solo como disuasión; retirar las restricciones de zoom y validar 200%/400% en la aplicación principal y add_cortes.
+Relación: adenda a AUG-104 para el bloqueo global en main.js; nueva AUG-139 para la política anti-debugging.
+
+H-AUD-020-002 — MEDIA — La recuperación de add_cortes escribe objetos de operación completos en la consola, incluidos datos Base64 de imágenes.
+Evidencia:
+- add_cortes.html:409 y 432 ejecuta console.log(..., pendingOp) durante la recuperación offline.
+- La estructura pendingOp se construye con vehicleInfo, formData y files.imagenVehiculo/imgCorte1 Base64 (add_cortes.html:1020–1035).
+- add_cortes.html contiene 24 llamadas console.log, 1 console.warn y 9 console.error; 19 mensajes pertenecen al flujo [PING-PONG]. La respuesta result también se imprime completa en la línea 1096.
+Impacto: la consola conserva y expone contenido de imagen y metadatos de la operación, genera salida voluminosa y contradice el propósito de limitar la inspección. No se observó que esos mensajes impriman sessionToken, pero sí el payload local completo.
+Criterios: no registrar pendingOp, Base64, imágenes ni payloads completos; usar un logger con niveles y activación explícita de diagnóstico; en producción registrar únicamente etapa, identificador no sensible y resultado resumido; comprobar recuperación online/offline y reintentos sin revelar contenido.
+Tarea derivada: AUG-138.
+
+H-AUD-020-003 — MEDIA — Existen utilidades duplicadas entre frontend y microservicios con contratos de normalización diferentes.
+Evidencia:
+- ui.js:423 parseEquipmentVersions divide por coma/diagonal/diagonal inversa y deduplica sin distinguir mayúsculas; Services/write.js:1668 también admite punto y coma y no deduplica; VinDifferentialEngine.js:34 mantiene otra implementación de parseVersionsList.
+- ui.js:439 parseVinCollection acepta arrays/JSON y filtra OP-/OP_/IDOPERACION; ui.js:7124, navigation.js:78 y Services/write.js:1684 admiten punto y coma, pero navigation/WRITE no aplican el mismo filtro de tokens.
+- FEEDBACK (Services/feedback.js:473–548), WRITE (Services/write.js:1011–1114) y ADMIN (Services/admin.js:140, 2776–2843) repiten la lógica de carpetas Drive. write.js elimina marcas combinantes con el rango U+0300–U+036F, mientras feedback/admin usan \p{M}; las funciones findOrCreateVehicleFolder reciben estructuras distintas (fila vs objeto).
+- uploadImageToDrive y helpers de idempotencia de imágenes están duplicados entre WRITE y ADMIN. mapRowToObject también se repite entre CATALOG, WRITE y ADMIN con semánticas distintas para celdas vacías y normalización de imágenes.
+- isNoRecomendadoValue y getImageUrl están duplicadas entre ui.js y add_cortes.html, con diferencias de alcance/normalización.
+Impacto: una misma entrada puede interpretarse de forma diferente al mostrar, buscar o guardar VIN/versiones; los nombres canónicos de carpetas y las reglas de imagen pueden divergir entre servicios. Las diferencias de mapRowToObject pueden ser deliberadas, pero no están expresadas como contratos separados.
+Criterios: definir contratos comunes para parsers y utilidades Drive; unificar o documentar expresamente las diferencias; si se mantienen proyectos Apps Script independientes, sincronizar la fuente común mediante biblioteca o proceso versionado; probar delimitadores, duplicados, tokens OP, diacríticos, carpetas equivalentes, conflictos y cargas idempotentes.
+Relación: ampliar AUG-036 con los parsers concretos; nueva AUG-136 para utilidades compartidas de Drive/imagen.
+
+H-AUD-020-004 — BAJA — Permanecen funciones internas y markup de depuración sin referencias de uso en el repositorio.
+Evidencia:
+- Services/admin.js:178 collectActiveDriveReferences, :846 attemptRestoreImage, :1347 getExtensionFromName, :1540 cleanUpDuplicatesInBrandTree y :2690 getActiveImageUrls aparecen como declaraciones sin referencias en el código actual revisado.
+- ui.js:93 clearModalNavStack y :10133 loadAndRenderInbox son exports sin consumidores internos encontrados; window.ui expone el módulo, por lo que deben confirmarse consumidores externos antes de retirarlos.
+- index.html:18–28 contiene #debug-console, #debug-header, #debug-clear, #debug-close, #debug-log y #debug-resize-handle; no se encontraron referencias funcionales a esos IDs. #dev-console-log es otro componente y sí se usa.
+Impacto: aumenta el código y markup que debe mantenerse, dificulta identificar rutas activas y puede conservar implementaciones obsoletas. No se eliminaron funciones ni elementos durante esta auditoría.
+Criterios: confirmar referencias internas, triggers y consumidores externos; retirar solo los elementos sin contrato activo; conservar las funciones usadas por rutas dinámicas; probar consola administrativa, navegación, restauración e inventario Drive.
+Tarea derivada: AUG-137.
+
+H-AUD-020-005 — BAJA — La tabla de cobertura de Consolidacion_Auditoria.md duplicaba AUD-T-019 entre completadas y pendientes.
+Evidencia: sección 2 listaba AUD-T-019 dentro de E1 completadas y también dentro de «Por auditar», con total 5; el párrafo correctivo y la sección 11 indicaban 4 pendientes. AUD-T-019 ya estaba completada en la sesión S037.
+Acción: corregido en esta tarea el resumen vigente: AUD-T-001 y AUD-T-021 a AUD-T-022 quedan pendientes; AUD-T-020 pasa a E1 completada. No se crea AUG porque la inconsistencia documental se corrige en el mismo registro.
+
+4. OBSERVACIONES TRANSVERSALES
+- H-AUD-019-014 permanece abierto: README.md afirma que los microservicios fueron retirados, pero el árbol actual contiene Services/Auth.js, catalog.js, feedback.js, write.js, admin.js, users.js y Utilities.js. No se duplica ese hallazgo.
+- La Tarea 21 conserva su estado histórico COMPLETADA; esta E1 identifica deuda residual y no certifica pruebas funcionales.
+- El renombrado automático de una carpeta equivalente está implementado en el helper, pero no se ejecutó contra Drive ni se validaron datos reales.
+- Las funciones repetidas de VIN y Drive requieren decisión de contrato antes de refactorizar; no se alteraron fuentes funcionales.
+
+5. MATRIZ VAL-29 — PLANIFICADA, NO EJECUTADA
+1. Ejecutar comprobación de sintaxis/lint de todos los módulos JS y HTML con un entorno reproducible.
+2. Probar parsers de versiones/VIN con arrays, JSON, coma, diagonal, diagonal inversa, punto y coma, duplicados por mayúsculas y tokens OP-/OP_/IDOPERACION.
+3. Simular normalización de nombres Drive con diacríticos, espacios, carpetas equivalentes únicas y múltiples; verificar renombrado automático y detención ante ambigüedad.
+4. Probar zoom 200%/400%, teclado, menú contextual y Lightbox en index.html y add_cortes.html, escritorio y móvil.
+5. Verificar recuperación de operaciones interrumpidas sin registrar objetos pendingOp, Base64 ni payloads completos.
+6. Confirmar call graph de funciones huérfanas, exports UI y markup #debug-console; verificar triggers/consumidores externos antes de retirar.
+7. Ejecutar regresión de búsqueda VIN, asociación de versiones, subida/reemplazo de imágenes, navegación PyS y recuperación offline en entornos aislados.
+No se ejecutó ningún caso de VAL-29.
+
+6. LÍMITES
+E1 estática. No se ejecutaron Node/lint, navegador, Apps Script, HTTP, Spreadsheet, Drive, YouTube, restauraciones, migraciones, concurrencia, estrés, ACL de deployments ni E2/E3. No se modificaron código, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments.
+Resultado: E1 ESTÁTICA COMPLETADA; H-AUD-020-001 a H-AUD-020-004 abiertos; H-AUD-020-005 corregido documentalmente; AUG-136 a AUG-139 nuevas; AUG-036 y AUG-104 ampliadas; VAL-29 pendiente.
+================================================================================

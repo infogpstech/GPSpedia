@@ -1640,3 +1640,42 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
 - Evidencia: README.md:102–105; árbol de GPSpedia2.2.5_work contiene Services/Auth.js, catalog.js, feedback.js, write.js, admin.js, users.js y Utilities.js.
 - Criterios: decidir visibilidad de fuentes; retirar fuentes y revisar historial si deben ser privadas, o documentar su publicación y separar configuración; verificar ACL de Spreadsheet/Drive y deployments.
 - Estado: NUEVA; decisión, implementación y revisión de exposición pendientes.
+
+## Hallazgos derivados de AUD-T-020 — 2026-11-08
+
+### Adenda AUD-T-020 a AUG-036 — parsers VIN/versiones divergentes
+- **Nueva evidencia:** ui.js:423, 439 y 7124; navigation.js:78; Services/write.js:1668 y 1684; VinDifferentialEngine.js:34.
+- **Ampliación:** unificar los delimitadores admitidos y el tratamiento de arrays/JSON; definir si punto y coma es válido; deduplicar versiones de forma consistente; aplicar el mismo filtro de tokens OP-/OP_/IDOPERACION en visualización, búsqueda y backend.
+- **Pruebas adicionales:** valores con coma/diagonal/diagonal inversa/punto y coma, arrays, JSON, duplicados por mayúsculas, valores vacíos y tokens de idempotencia.
+- **Estado:** EXISTENTE; ampliada; diseño, implementación y pruebas pendientes. No duplicar AUG-036.
+
+### Adenda AUD-T-020 a AUG-104 — zoom global de la aplicación
+- **Nueva evidencia:** main.js:816–839 bloquea zoom por rueda, teclado y gestos multitáctiles en toda la aplicación principal; index.html:6 permite escalado, pero los listeners lo cancelan. add_cortes.html:6 y :1398–1415 mantienen restricciones propias.
+- **Ampliación:** retirar restricciones de zoom en index.html/main.js además de add_cortes.html; probar 200% y 400%, reflujo, foco, controles, orientación y Lightbox.
+- **Estado:** EXISTENTE; ampliada; implementación y pruebas pendientes. No duplicar AUG-104.
+
+### AUG-136 — Unificar utilidades compartidas de Drive, nomenclatura e imágenes
+- **Origen:** H-AUD-020-003. **Prioridad:** Media.
+- **Problema:** FEEDBACK, WRITE y ADMIN mantienen copias de helpers de carpetas, normalización, nombres canónicos y cargas de imágenes. La normalización Unicode y las estructuras de entrada no son idénticas; los cambios pueden divergir entre deployments independientes.
+- **Criterios:** definir un contrato común/versionado para getCortesRootFolder, getFolderCanonicalName, findOrCreateSubFolder, findOrCreateVehicleFolder, nombres de imágenes y uploadImageToDrive; si los proyectos Apps Script siguen separados, utilizar biblioteca compartida o fuente generada/versionada; documentar deliberadamente los contratos distintos de mapRowToObject; probar diacríticos, espacios, carpetas equivalentes, colisiones, renombrado automático, raíces inválidas e idempotencia de cargas.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-137 — Retirar funciones huérfanas y markup de depuración obsoleto
+- **Origen:** H-AUD-020-004. **Prioridad:** Baja.
+- **Problema:** hay helpers internos sin referencias y un contenedor #debug-console sin consumidores encontrados; también existen exports UI sin uso interno aparente.
+- **Criterios:** construir call graph del código y revisar triggers/consumidores externos; confirmar el contrato público de clearModalNavStack y loadAndRenderInbox; retirar solo funciones/markup sin consumidores; mantener separado el panel activo #dev-console-log; probar navegación, Inbox, consola administrativa y operaciones Drive afectadas.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-138 — Sanitizar logs de recuperación y operaciones en add_cortes
+- **Origen:** H-AUD-020-002. **Prioridad:** Media.
+- **Problema:** la recuperación imprime pendingOp completo, incluidos campos Base64 de imágenes; existen mensajes PING-PONG y respuestas completas de servicios en consola.
+- **Criterios:** no registrar objetos pendingOp, Base64, imágenes, tokens ni payloads completos; incorporar logger con niveles y activación explícita; limitar producción a etapa, identificador no sensible y estado resumido; probar recuperación offline, reintentos, error de cuota y respuesta perdida.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-139 — Definir la política real de protección anti-debugging
+- **Origen:** H-AUD-020-001. **Prioridad:** Media.
+- **Problema:** los bloqueos de contextmenu y atajos F12/Ctrl+Shift+I/J/C/Ctrl+U son eludibles y no protegen código cliente ni datos; la documentación los presenta como protección técnica.
+- **Criterios:** separar disuasión de seguridad real; no depender de bloqueos frontend para proteger datos/operaciones; verificar autenticación, autorización y validación backend; decidir explícitamente si se mantienen atajos como disuasión; actualizar README para no prometer protección que el navegador no puede garantizar; coordinar el zoom con AUG-104.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+- 2026-11-08 — AUD-T-020: AUG-136 a AUG-139 nuevas; AUG-036 y AUG-104 ampliadas. Inventario: 138 IDs únicos dentro de AUG-001 a AUG-139; AUG-015 continúa ausente y no se infiere ni renumera.

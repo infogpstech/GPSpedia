@@ -1461,3 +1461,77 @@ Commit único: docs(audit): complete AUD-T-019 backend integrity and test covera
 Siguiente unidad: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
 No hubo cambios de código, configuración, endpoints, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
 ================================================================================
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0038
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S038
+Tarea: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo autorizada: GPSpedia2.2.5_work
+HEAD inicial confirmado: 25d5d548edd79f812ab6b2bf9411d8c77fb30188
+Árbol inicial confirmado: 011980eae1ae02143377faffcf5148c7067bfad7
+Rama base: GPSpedia2.2.5
+HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
+Alcance: Tarea 21 y requisitos 13.1, B01, B14, B15, B17, B20, B28, B29 y B30. E1 estática de arquitectura, duplicación DRY, funciones huérfanas/código muerto, restricciones anti-debugging, registros de depuración, navegación y auditorías históricas globales.
+Fase: auditoría diagnóstica. No modificar código, servicios, endpoints, configuración, assets ni datos productivos. No ejecutar Apps Script, Drive, Spreadsheet, YouTube, navegador, despliegues ni migraciones.
+Reconocimiento de continuidad: se efectuó una lectura estática preliminar de solo lectura para recuperar el contexto de la última sesión antes de preparar este checkpoint. No se modificó ningún archivo ni recurso. La revisión formal E1 se reinicia desde este checkpoint y revalida los puntos documentados.
+Archivos funcionales incluidos en el alcance y SHA de HEAD:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- lightbox.js: 841f44a54fe12b867c0c58cc560ce4474cde3e03
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Utilities.js: 1d99373e58c4f0c7ffec06e1db9b53a30d282e33
+- README.md: 4a944ac44602152a1a4ad8e985dcf12e4e33331c
+Archivos documentales y respaldos exactos (SHA de los blobs en HEAD inicial):
+- Auditoría.txt: 264ef882d919bb16b78afe7c62553a4445ed7dd4
+- Tareas.txt: 1bf856552ef55166ce3f36a66b0e8a8461234eb0
+- Plan_auditoría/Plan_Auditoria.md: 33ac2d99baee5fa5226c12fa90b65592aa336b7e
+- Plan_auditoría/Aug_Tareas.md: f5cff5352d1e4ecabfed8dbf25048e1e520c6275
+- Plan_auditoría/Consolidacion_Auditoria.md: 96b22597b4e12d07cb4b710e1599e06d19526408
+- ChangesLogs.txt: 4d001269cba1a2940b1b7233c1d46ffb76bbbd7a
+- contexto_personal.md: c87506d6aaba53995cf28910b12f78d2ec487961
+- checkpoint.md: 4d4aa649d1800bee614aa25426b27aba38a53504
+Contexto heredado: AUD-T-019 tiene E1 estática completada, H-AUD-019-001 a H-AUD-019-014 abiertos y VAL-28 pendiente. No se certificaron pruebas funcionales 31–38. AUD-T-020 es la siguiente unidad.
+Inventario de árbol confirmado mediante Git Tree API: 71 rutas, sin archivos .bak, .tmp, .log, .old, .orig ni .backup. Las fuentes de microservicios permanecen en Services; la discrepancia README ya está registrada en H-AUD-019-014.
+Pendientes iniciales: completar revisión formal de módulos y helpers duplicados, comprobar referencias de funciones candidatas, verificar restricciones anti-debugging y zoom, revisar logs que incluyan objetos de operación, contrastar auditorías históricas y consolidar hallazgos sin modificar código.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0038
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S038
+Tarea: AUD-T-020 — Saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
+Estado final: E1 ESTÁTICA COMPLETADA; H-AUD-020-001 a H-AUD-020-004 abiertos; H-AUD-020-005 corregido documentalmente; VAL-29 pendiente.
+HEAD padre de la tarea: 25d5d548edd79f812ab6b2bf9411d8c77fb30188
+Árbol inicial: 011980eae1ae02143377faffcf5148c7067bfad7
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Rama de trabajo: GPSpedia2.2.5_work
+Resultado: cuatro hallazgos abiertos; una inconsistencia documental corregida; AUG-136 a AUG-139 nuevas; AUG-036 y AUG-104 ampliadas.
+Archivos documentales modificados:
+- Auditoría.txt: 3fb6a6bd8e607e371d56e0740d0ed32509255193
+- Tareas.txt: 6b896fb94407fc1a537413cd43f102df5b1ca41c
+- Plan_auditoría/Plan_Auditoria.md: 7d3d8b55016cb9cd0c830eba7871e31156d1a111
+- Plan_auditoría/Aug_Tareas.md: 910943665889219e1d013d4bcd84c42bce99b5ae
+- Plan_auditoría/Consolidacion_Auditoria.md: fa83e5065a53124caccb066af80e446ba457c9a6
+- ChangesLogs.txt: dd83a56a2f5f2d45aa514d474470fa1c1ab57e0d
+- contexto_personal.md: 16ec7c7a8cac74f4cd004e4a2b8e07b2d2dcef5e
+- checkpoint.md: este blob se crea como último paso documental antes del único commit.
+Archivos funcionales auditados sin modificación: index.html, main.js, ui.js, navigation.js, add_cortes.html, api-config.js, auth.js, state.js, lightbox.js, offline.js, VinDifferentialEngine.js, rich-text.js, youtubeUpload.js, service-worker.js, users.html, style.css, Services/Auth.js, Services/Test/Auth.js, Services/Test/users.js, Services/Utilities.js, Services/admin.js, Services/catalog.js, Services/feedback.js, Services/users.js y Services/write.js.
+Validaciones ejecutadas: revisión estática de arquitectura, duplicación DRY, parsers, helpers Drive, logs, referencias de funciones, anti-debugging, zoom, historial de saneamiento y árbol de archivos. No se ejecutaron Node/lint, navegador, Apps Script, HTTP, Spreadsheet, Drive, YouTube, concurrencia, estrés, restauraciones, migraciones, ACL de deployments ni E2/E3.
+Respaldos exactos: SHAs de los ocho documentos consignados en el CHECKPOINT INICIAL AUD-CP-0038. No se generaron .bak porque no se modificó código ni archivos funcionales.
+Commit único: docs(audit): complete AUD-T-020 architectural and anti-debugging review; parent 25d5d548edd79f812ab6b2bf9411d8c77fb30188. SHA identificable en el historial después de publicar.
+Siguiente unidad: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
+No hubo cambios de código, configuración, endpoints, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+================================================================================
