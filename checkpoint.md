@@ -229,3 +229,41 @@ Cobertura: 38/38 E1 estáticas completadas, 0 parciales, 0 pendientes.
 Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
 Commit único esperado: docs(audit): verify AUD-T-005 continuity; parent 548d6b380ad11bf6bd957fd250d4320f50fa00ec.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0045
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S046
+Tarea: continuidad de AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
+E1 histórica: AUD-20261107-S024 / AUD-CP-0024; HEAD auditado 5ab07e75513b05a51a4c62fbc731e451105eb1a8.
+HEAD observado: 864086253babd5e54ea698312bbd3e984371566a; árbol 2fa873bf4ec499143b8eefa9db5318bd10286dcb. Rama GPSpedia2.2.5_work; base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1, sin cambios.
+Estado inicial: E1 histórica completada; revalidación de continuidad pendiente. Hallazgos H-AUD-006-001 a 003; AUG-065 a AUG-067; adenda AUG-064. Validaciones VAL-13, VAL-14 y VAL-09 pendientes.
+Alcance funcional: lightbox.js, ui.js, offline.js, style.css, index.html y main.js.
+Respaldos exactos previos a documentación:
+- Plan_auditoría/Plan_Auditoria.md: 52823137436c07adb6be83b9cc2e804e8476e41b
+- Plan_auditoría/Consolidacion_Auditoria.md: 65ac8cf80eeda4f2b96bdbb48fdd4427a8c72be7
+- checkpoint.md: 8400c22eb49ce75e22ac69b5870610094e1c1d98
+No se modifican archivos funcionales ni se realizan operaciones sobre datos productivos.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0045
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S046
+Resultado: AUD-T-006 permanece E1 ESTÁTICA COMPLETADA y vigente; 21 commits posteriores al HEAD histórico contienen exclusivamente cambios documentales. Sin deriva funcional.
+HEAD padre de la tarea: 864086253babd5e54ea698312bbd3e984371566a; árbol: 2fa873bf4ec499143b8eefa9db5318bd10286dcb. Rama GPSpedia2.2.5_work. Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Hallazgos abiertos: H-AUD-006-001 a H-AUD-006-003. Tareas: AUG-065 a AUG-067; adenda AUG-064. Sin hallazgos ni tareas nuevas.
+Archivos funcionales revalidados y SHA actuales:
+- lightbox.js: 841f44a54fe12b867c0c58cc560ce4474cde3e03
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+Revalidaciones: tamaño ignorado y caché sin variante; mix-blend-mode aplicado a imágenes opacas; swipe del carrusel del modal sin discriminación de eje vertical; swipe interno del Lightbox compara X/Y y comprueba zoom/multitouch; sink slideText.innerHTML permanece cubierto por AUG-064.
+Validaciones pendientes: VAL-13, VAL-14 y VAL-09. No se ejecutaron navegador, móviles/PWA, CDN, IndexedDB real, mediciones visuales/rendimiento, gestos reales ni pruebas de sanitización.
+No se modificaron código, HTML, CSS, servicios, endpoints, contratos, configuración, assets, permisos, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+Archivos documentales del commit: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md y checkpoint.md (último blob documental). Auditoría.txt, Tareas.txt, Plan_auditoría/Aug_Tareas.md y ChangesLogs.txt no se modifican: no se agregaron hallazgos ni tareas nuevas.
+Cobertura: 38/38 E1 estáticas completadas; 0 parciales, 0 pendientes de auditoría estática. Las validaciones funcionales siguen abiertas.
+Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
+Commit único esperado: docs(audit): verify AUD-T-006 continuity; parent 864086253babd5e54ea698312bbd3e984371566a.
+================================================================================

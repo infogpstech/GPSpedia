@@ -467,3 +467,14 @@ Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036 | HEAD f9c47bad48fa8050a4acac
 - H-AUD-005-001 a 008 siguen abiertos; AUG-061 a AUG-064 y adendas AUG-043/AUG-050/AUG-057 permanecen pendientes. H-AUD-005-008 se transfiere a AUD-T-007.
 - VAL-03, VAL-09, VAL-14 y VAL-16 no ejecutadas; VAL-17 conserva las pruebas de navegación transferidas.
 - Cobertura global se mantiene en 38/38 E1 estáticas completadas, 0 parciales y 0 pendientes; esto no cierra las validaciones funcionales.
+
+
+## 19. Continuidad verificada — AUD-T-006
+- E1 completada en AUD-20261107-S024 / AUD-CP-0024 sobre 5ab07e75513b05a51a4c62fbc731e451105eb1a8.
+- Comparación hasta 864086253babd5e54ea698312bbd3e984371566a: 21 commits posteriores; todos los cambios fueron documentales. Los seis archivos funcionales de alcance conservan sus SHA: lightbox.js 841f44a54fe12b867c0c58cc560ce4474cde3e03; ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb; offline.js c68e8698c74ef45a1c9bb534c6b2be77df817c34; style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9; index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a; main.js c15f5462d78fa907d14c71e15970ae29a3b3de77.
+- H-AUD-006-001 a 003 permanecen abiertos: variantes/caché por tamaño; mezcla de imágenes opacas en modo oscuro; swipe del carrusel de cables sin discriminación vertical. AUG-065 a AUG-067 continúan pendientes.
+- AUG-064 mantiene la adenda por el uso de slideText.innerHTML en updateSlide(); no se duplica.
+- No se detectaron hallazgos nuevos. VAL-13, VAL-14 y VAL-09 no se ejecutaron; siguen pendientes pruebas reales de imágenes, transparencia, caché, gestos y sanitización.
+- Cobertura global: 38 unidades con E1 estática completada; esto no representa validación funcional E2–E5.
+- No se modificaron código, assets, configuración, endpoints ni datos productivos. Sin despliegue ni merge.
+- Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.

@@ -966,3 +966,15 @@ La E1 de AUD-T-005 fue completada en AUD-20261107-S023 / AUD-CP-0023. La compara
 Se conservan H-AUD-005-001 a 008, AUG-061 a AUG-064 y las adendas a AUG-043/AUG-050/AUG-057. No se crean hallazgos ni tareas duplicadas; H-AUD-005-008 se mantiene transferido a AUD-T-007.
 VAL-03, VAL-09, VAL-14 y VAL-16 siguen pendientes; VAL-17 cubre la navegación transferida. Sin pruebas funcionales ni integración real. Sin cambios de aplicación ni datos productivos.
 Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
+
+
+## 49. Continuidad verificada — AUD-T-006
+Sesión AUD-20261108-S046 | Checkpoint AUD-CP-0045 | HEAD E1 5ab07e75513b05a51a4c62fbc731e451105eb1a8 | HEAD actual 864086253babd5e54ea698312bbd3e984371566a | árbol actual 2fa873bf4ec499143b8eefa9db5318bd10286dcb | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 de AUD-T-006 fue completada en AUD-20261107-S024 / AUD-CP-0024. La comparación entre el HEAD histórico y el actual arroja 21 commits posteriores, todos con cambios exclusivamente documentales. Los seis archivos funcionales del alcance conservan exactamente sus SHA históricos: lightbox.js, ui.js, offline.js, style.css, index.html y main.js.
+Revalidación estática de H-AUD-006-001/AUG-065: getImageUrl(fileId, size) no utiliza size al construir la URL; setOptimizedImage() y la lectura/escritura de miniaturas mantienen claves basadas solo en el ID, sin variante de resolución. Se conserva el riesgo de servir una miniatura almacenada en un contexto que requiere más resolución.
+Revalidación estática de H-AUD-006-002/AUG-066: mix-blend-mode: lighten continúa aplicado en modo oscuro a selectores generales de imágenes de tarjetas/miniaturas, sin identificar si el asset tiene transparencia; puede alterar imágenes opacas.
+Revalidación estática de H-AUD-006-003/AUG-067: el swipe del carrusel dentro del acordeón solo registra screenX; no discrimina desplazamiento vertical/diagonal ni contempla touchcancel. El swipe interno del Lightbox sí compara ambos ejes y bloquea el cambio cuando detecta zoom o multitouch.
+La adenda existente AUG-064 permanece vigente: updateSlide() inserta activeCable.label y activeCable.content mediante slideText.innerHTML sin sanitización en ese punto. No se crea duplicado.
+Se mantienen H-AUD-006-001 a H-AUD-006-003 abiertos; AUG-065 a AUG-067 y la adenda AUG-064 siguen pendientes. No se detectaron hallazgos adicionales que justifiquen otra AUG. VAL-13, VAL-14 y la cobertura de sanitización VAL-09 permanecen pendientes de ejecución.
+Límites: E1 estática; sin navegador, dispositivos móviles/PWA, CDN real, IndexedDB real, pruebas visuales, medición de rendimiento ni gestos reales. Sin cambios funcionales, assets, configuración, datos productivos, Drive, Spreadsheet o deployments.
+Siguiente unidad: AUD-T-007 — Navegación, History API, popstate, overlays y gesto atrás.
