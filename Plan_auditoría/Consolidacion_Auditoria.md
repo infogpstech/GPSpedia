@@ -957,3 +957,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - H-AUD-014-001 a 003 continúan abiertos: falta saneamiento autoritativo backend; dos sinks descriptivos en ui.js omiten sanitizeHtmlContent; gpsepedia_rich_text_mode estricto/avanzado no conectado. AUG-095 a AUG-097 pendientes; VAL-23 planificada.
 - Controles positivos presentes de forma estática; sin prueba dinámica. No se crean hallazgos ni tareas duplicadas.
 - No ejecutados: navegador/DOMParser real, XSS, Playwright, HTTP, Apps Script, persistencia/concurrencia, service worker en dispositivo ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue.
+
+
+## 30. Continuidad AUD-T-015 — revalidación incremental
+- Sesión AUD-20261108-S096; checkpoint AUD-CP-0095; E1 histórica c4f61a1f8dc402c9fec6802032ca7d7f9c304695; checkpoint S055 503ed0678a718b4c9179b3c28d2373263cb8cc86; HEAD actual 21270704a549d4a1bbd13ae1ad6bcee4b220c9e5; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación desde S055: 42 commits posteriores, sin divergencia; solo ocho documentos modificados: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md.
+- Comparación desde E1: 63 commits posteriores, sin divergencia; los mismos ocho documentos son los únicos archivos modificados.
+- Los nueve archivos funcionales del alcance conservan SHA E1: navigation.js (39ec9f5ed34f8f81b506222f3b7b02494f866ad0), ui.js (f00f48a42ee9bf0fd200f21959eb741f113363eb), main.js (c15f5462d78fa907d14c71e15970ae29a3b3de77), style.css (dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9), index.html (6dd0b86981e7f92b10b2f7a0a1634bb6395a479a), users.html (e41f402675677a4d2783493614737021ec2eade5), add_cortes.html (8a5e4bf51b3cd602224016a1267f478ce55ee329), Services/catalog.js (253cbe9f873481114e7abff3aa8902c45e2560af) y VinDifferentialEngine.js (7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4).
+- Sin deriva funcional. H-AUD-015-001 a 004 continúan abiertos; H-AUD-037-003 a 006 siguen asociados a AUG-049; AUG-098 a AUG-101 y VAL-24 continúan pendientes.
+- Se mantiene la cancelación de filtros rápidos; no se reintroducen. Sin hallazgos/tareas duplicados. E1 estática y continuidad no sustituyen E2/E3 ni pruebas dinámicas.
+- Sin cambios funcionales, pruebas reales, operaciones productivas, merge ni despliegue. Siguiente unidad: AUD-T-016.

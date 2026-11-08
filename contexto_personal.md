@@ -954,3 +954,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-014-001 a 003 permanecen abiertos; AUG-095 a AUG-097 pendientes; VAL-23 planificada. Sin hallazgos ni tareas duplicadas.
 - No se ejecutaron pruebas dinámicas, navegador/DOMParser real, XSS, Playwright, HTTP, Apps Script, persistencia/concurrencia, service worker en dispositivo ni E2/E3. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-015; su continuidad ya está registrada, no duplicar.
+
+
+## Continuidad AUD-T-015 — 2026-11-08 (revalidación incremental S096)
+- Sesión/checkpoint: AUD-20261108-S096/AUD-CP-0095; E1 histórica c4f61a1f8dc402c9fec6802032ca7d7f9c304695; checkpoint S055 503ed0678a718b4c9179b3c28d2373263cb8cc86; HEAD actual 21270704a549d4a1bbd13ae1ad6bcee4b220c9e5; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- 42 commits desde el checkpoint anterior y 63 desde E1; ambas comparaciones muestran únicamente ocho archivos documentales modificados, sin divergencia.
+- Los nueve archivos funcionales de búsqueda, jerarquía, filtros cancelados, botones y VIN conservan sus SHA de E1; no hay deriva funcional.
+- H-AUD-015-001 a 004 siguen abiertos; H-AUD-037-003 a 006 continúan vinculados a AUG-049. AUG-098 a AUG-101 y VAL-24 pendientes. No duplicar hallazgos ni tareas.
+- La cancelación de filtros rápidos se mantiene; no restaurarlos. E1/continuidad estática no certifica pruebas dinámicas ni E2/E3.
+- Sin cambios de aplicación, configuración, datos productivos, operaciones externas, merge o despliegue. Siguiente: AUD-T-016, revalidación de continuidad.

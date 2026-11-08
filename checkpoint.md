@@ -2162,3 +2162,37 @@ Sin cambios funcionales, endpoints, configuración, assets, Drive, Spreadsheet, 
 Commit documental único: docs(audit): verify AUD-T-014 continuity; parent e8a533219006742d30cc7bddf506da777eb83319.
 Siguiente unidad: AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos; su continuidad previa ya está registrada.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0095
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S096
+Tarea: AUD-T-015 — revalidación incremental de continuidad E1 de búsqueda global, jerarquía, filtros cancelados y estandarización de botones.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD inicial: 21270704a549d4a1bbd13ae1ad6bcee4b220c9e5 | Árbol: f3f2bd25932de51a700127dc4b6a67d856411a97.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios.
+E1 histórica: c4f61a1f8dc402c9fec6802032ca7d7f9c304695. Continuidad anterior S055/CP-0054: 503ed0678a718b4c9179b3c28d2373263cb8cc86.
+
+RESULTADO DE REVALIDACIÓN
+- Comparación desde CP-0054 hasta HEAD: 42 commits posteriores; merge-base coincide con el checkpoint; sin divergencia. Ocho archivos documentales modificados y ningún archivo funcional.
+- Comparación desde E1 hasta HEAD: 63 commits posteriores; merge-base coincide con E1; sin divergencia. Los mismos ocho documentos son los únicos archivos modificados.
+- Nueve archivos funcionales comparados por SHA y todos idénticos a E1:
+  navigation.js 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+  ui.js f00f48a42ee9bf0fd200f21959eb741f113363eb
+  main.js c15f5462d78fa907d14c71e15970ae29a3b3de77
+  style.css dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+  index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+  users.html e41f402675677a4d2783493614737021ec2eade5
+  add_cortes.html 8a5e4bf51b3cd602224016a1267f478ce55ee329
+  Services/catalog.js 253cbe9f873481114e7abff3aa8902c45e2560af
+  VinDifferentialEngine.js 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- H-AUD-015-001 a 004 siguen abiertos. H-AUD-037-003 a 006 permanecen relacionados con AUG-049. AUG-098 a AUG-101 y VAL-24 siguen pendientes.
+- Filtros rápidos: cancelados/retirados; no reintroducir.
+- No se crean hallazgos ni tareas duplicados.
+
+LÍMITES
+Solo verificación Git, identidad SHA y continuidad documental/estática. No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles ni E2/E3. No se modificó código funcional, servicios, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin merge ni despliegue; base intacta.
+
+Commit documental único previsto: docs(audit): verify AUD-T-015 continuity; parent 21270704a549d4a1bbd13ae1ad6bcee4b220c9e5.
+Siguiente unidad: AUD-T-016 — revalidación de continuidad E1.
+================================================================================

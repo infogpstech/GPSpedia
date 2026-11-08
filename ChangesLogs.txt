@@ -4960,3 +4960,16 @@ Sesión AUD-20261108-S095 | Checkpoint AUD-CP-0094 | E1 deefa3a8ceca4aae892c61d0
 - Sin hallazgos/tareas nuevos ni duplicación. Sin pruebas dinámicas, navegador, DOMParser real, XSS, Playwright, HTTP, Apps Script, persistencia/concurrencia, service worker en dispositivo ni E2/E3.
 - Solo documentación de continuidad. Sin cambios de código, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos, merge o despliegue.
 ================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-015 — revalidación incremental de continuidad E1
+Sesión AUD-20261108-S096 | Checkpoint AUD-CP-0095 | E1 c4f61a1f8dc402c9fec6802032ca7d7f9c304695 | checkpoint previo 503ed0678a718b4c9179b3c28d2373263cb8cc86 | HEAD 21270704a549d4a1bbd13ae1ad6bcee4b220c9e5.
+- Comparación checkpoint→HEAD: 42 commits posteriores, sin divergencia; solo ocho documentos cambiaron.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia; solo los mismos ocho documentos cambiaron.
+- Los nueve archivos funcionales de AUD-T-015 conservan SHA idénticos a E1.
+- H-AUD-015-001 a 004 permanecen abiertos; H-AUD-037-003 a 006 continúan enlazados a AUG-049; AUG-098 a AUG-101 y VAL-24 siguen pendientes.
+- No se crean hallazgos/tareas duplicados. Filtros rápidos continúan cancelados y retirados.
+- Se actualizan Plan_Auditoria, Consolidacion_Auditoria, contexto_personal y checkpoint. Auditoría.txt, Tareas.txt y Aug_Tareas.md no requieren cambios de estado.
+- Sin modificaciones de aplicación, servicios, endpoints, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin E2/E3, merge o despliegue. Base intacta.
+================================================================================

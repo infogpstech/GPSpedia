@@ -2556,3 +2556,13 @@ Solo continuidad E1 y comparación documental/estática. No se ejecutaron navega
 
 ### Siguiente unidad
 AUD-T-015 — Búsqueda global, filtros rápidos y resultados jerárquicos (continuidad ya registrada; continuar según orden vigente sin duplicar su registro).
+
+
+## 40. Continuidad verificada — AUD-T-015
+Sesión AUD-20261108-S096 | Checkpoint AUD-CP-0095 | HEAD E1 c4f61a1f8dc402c9fec6802032ca7d7f9c304695 | checkpoint anterior 503ed0678a718b4c9179b3c28d2373263cb8cc86 | HEAD actual 21270704a549d4a1bbd13ae1ad6bcee4b220c9e5 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Revalidación incremental de la E1 histórica de las implementaciones de Tarea 14 y Tarea 15. La comparación checkpoint anterior→HEAD actual confirma 42 commits posteriores, sin divergencia, y únicamente ocho archivos documentales modificados. La comparación E1→HEAD actual confirma 63 commits posteriores y los mismos ocho documentos como únicos archivos modificados.
+Los nueve archivos funcionales del alcance conservan exactamente sus SHA de E1: navigation.js, ui.js, main.js, style.css, index.html, users.html, add_cortes.html, Services/catalog.js y VinDifferentialEngine.js. No existe deriva funcional respecto de la E1 ni cambios de implementación desde la continuidad S055.
+H-AUD-015-001 a H-AUD-015-004 permanecen abiertos; H-AUD-037-003 a H-AUD-037-006 siguen vinculados a la adenda AUG-049. AUG-098 a AUG-101 y VAL-24 permanecen pendientes. No se crean hallazgos ni tareas duplicados.
+Se conserva la cancelación y retirada de filtros rápidos: no reintroducirlos. La continuidad verifica identidad de archivos y trazabilidad estática; no acredita ejecución correcta, seguridad dinámica ni validación funcional.
+No se ejecutaron navegador/DOM, payloads XSS, Playwright, catálogo real, Apps Script/Spreadsheet, concurrencia, lector de pantalla, pruebas móviles ni E2/E3. Sin cambios de aplicación, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet o deployments. Sin merge ni despliegue; rama base intacta.
+Siguiente unidad secuencial: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive; su continuidad previa debe respetarse sin duplicar registros.
