@@ -663,3 +663,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - La E1 estática no certifica arranque, sesión, catálogo, deep links ni ADMIN en ejecución. Sin navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, multi-pestaña, concurrencia, accesibilidad, despliegues ni E2/E3.
 - Se detecta resumen agregado obsoleto en Tareas.txt que marca AUD-T-001 por auditar pese al registro individual E1 completada/CP-0041; queda anotado, sin alterar el registro maestro.
 - Siguiente: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.
+
+
+## Continuidad AUD-T-002 — 2026-11-08
+- Revalidación E1 en AUD-20261108-S064/AUD-CP-0063; E1 1136f20ee25778cceac857b4a3145aa2f405ba54 (árbol 5904f6ec4449fa94e7a2cbf6149ae0a885ca128f); HEAD previo 139c03443c6ab83173c357fbb421decf6a0294cb (árbol 256455de848d87adb8f724c5aecce1f5324d51d0); rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 22 commits posteriores, únicamente siete documentos modificados; los cinco archivos funcionales del alcance conservan SHA de E1. Sin deriva funcional.
+- H-AUD-001 a H-AUD-006 abiertos; AUG-005 a AUG-010 siguen vigentes. No se crean hallazgos ni tareas duplicados. Se conservan los vínculos con AUD-T-023, AUD-T-024, AUD-T-033 y AUD-T-036.
+- La E1 estática no certifica roles, sesiones, revocación, expiración, cambios de contraseña, concurrencia ni multi-pestaña. Validación funcional/deployments pendiente.
+- Sin navegador, Node/lint, HTTP, Apps Script V8, Spreadsheet, pruebas reales, concurrencia, accesibilidad, deployments ni E2/E3. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.

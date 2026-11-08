@@ -1037,3 +1037,50 @@ No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, mu
 Commit documental único: docs(audit): verify AUD-T-001 continuity; parent 787df40810778acf35cca65ee52f84d2dcf2a991.
 Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0063
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S064
+Tarea: AUD-T-002 — revalidación de continuidad E1.
+HEAD inicial de GPSpedia2.2.5_work: 139c03443c6ab83173c357fbb421decf6a0294cb; árbol: 256455de848d87adb8f724c5aecce1f5324d51d0.
+HEAD de GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+E1 histórica: 1136f20ee25778cceac857b4a3145aa2f405ba54; árbol E1: 5904f6ec4449fa94e7a2cbf6149ae0a885ca128f.
+Respaldos SHA de documentos antes de modificar:
+- Plan_auditoría/Plan_Auditoria.md: caba993e30914d341206a7288433f8e833641af5
+- Plan_auditoría/Consolidacion_Auditoria.md: 3f34852e397b3b4a9d1bc0e9e68faf40b550f1bd
+- ChangesLogs.txt: 2c34ad0d75d9598a19563aac62ffa78a1b4e7d89
+- contexto_personal.md: 03c3039b0b15412947815e4e7ea4654e02d9a45a
+- checkpoint.md: 9122d3f3121e26b3dbac712016a1f1102e8058b1
+Alcance funcional de referencia (SHA esperados de E1):
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+Checkpoint creado antes de cualquier modificación documental. Sin cambios funcionales ni operaciones productivas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0063
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S064
+Tarea: AUD-T-002 — revalidación de continuidad E1.
+Estado final: continuidad E1 confirmada; H-AUD-001 a H-AUD-006 abiertos; AUG-005 a AUG-010 vigentes/revalidadas; sin hallazgos ni tareas nuevas. Validación funcional y de deployments pendiente.
+HEAD padre: 139c03443c6ab83173c357fbb421decf6a0294cb; árbol inicial 256455de848d87adb8f724c5aecce1f5324d51d0. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Comparación E1 1136f20ee25778cceac857b4a3145aa2f405ba54 → HEAD 139c03443c6ab83173c357fbb421decf6a0294cb: 22 commits posteriores; siete archivos documentales en el diff y ningún archivo funcional del alcance. SHA funcionales idénticos a E1:
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+Documentos modificados en este commit:
+- Plan_auditoría/Plan_Auditoria.md
+- Plan_auditoría/Consolidacion_Auditoria.md
+- ChangesLogs.txt
+- contexto_personal.md
+- checkpoint.md (último blob documental)
+No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: no hay hallazgos/tareas nuevos ni correcciones implementadas.
+No se ejecutaron navegador, Node/lint, HTTP, Apps Script V8, Spreadsheet, roles/sesiones reales, concurrencia, multi-pestaña, accesibilidad, deployments ni E2/E3. Sin cambios funcionales, endpoints, contratos, configuración, permisos, credenciales, assets, datos productivos, Drive ni Spreadsheet. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-002 continuity.
+Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+================================================================================

@@ -1291,3 +1291,18 @@ Archivos funcionales del alcance, SHA idénticos a E1:
 No se crean hallazgos ni tareas duplicados. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque H-AUD-001-001/002, AUG-151, las adendas AUG-008/AUG-049, la revalidación AUG-099 y VAL-32 ya constan en el registro histórico.
 Observación documental: un resumen agregado antiguo dentro de Tareas.txt aún clasifica AUD-T-001 como «por auditar», aunque el registro individual y CP-0041 documentan E1 completada. No se altera el registro maestro en esta continuidad; queda anotada la discrepancia para conciliación documental.
 Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (continuidad desde AUD-CP-0002).
+
+
+## 48. Continuidad verificada — AUD-T-002
+Sesión AUD-20261108-S064 | Checkpoint AUD-CP-0063 | E1 histórica 1136f20ee25778cceac857b4a3145aa2f405ba54 | árbol E1 5904f6ec4449fa94e7a2cbf6149ae0a885ca128f | HEAD previo 139c03443c6ab83173c357fbb421decf6a0294cb | árbol previo 256455de848d87adb8f724c5aecce1f5324d51d0 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 estática de AUD-T-002 se completó en AUD-20261108-S042/AUD-CP-0042, continuando desde AUD-CP-0002. La comparación E1→HEAD actual registra 22 commits posteriores y únicamente siete archivos documentales modificados: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, checkpoint.md y contexto_personal.md. No aparece ningún archivo funcional del alcance en el diff.
+Los cinco archivos funcionales del alcance mantienen exactamente sus SHA históricos de E1:
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- users.html: e41f402675677a4d2783493614737021ec2eade5
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+Se confirma continuidad sin deriva funcional en los artefactos auditados. H-AUD-001 a H-AUD-006 permanecen abiertos; AUG-005 a AUG-010 continúan existentes y revalidadas. No se crean hallazgos, tareas ni adendas duplicadas. Se conservan los vínculos con AUD-T-023 (hashing/credenciales), AUD-T-024 (ciclo avanzado de sesiones y controles), AUD-T-033 (coordinación interservicios) y AUD-T-036 (legal/consentimiento). VAL funcional de roles, sesiones, revocación, expiración, concurrencia y deployments permanece pendiente.
+La E1 es estática y la presente revalidación es documental/Git: no certifica ejecución real de roles, sesiones, logout/revocación, expiración, cambios de contraseña, concurrencia ni coordinación multi-pestaña. No se ejecutaron navegador, Node/lint, HTTP, Apps Script V8, Spreadsheet, pruebas de roles/sesiones, concurrencia, multi-pestaña, accesibilidad, deployments ni E2/E3. Sin cambios funcionales, endpoints, contratos, configuración, permisos, credenciales, assets, datos productivos, Drive o Spreadsheet; sin merge ni despliegue.
+No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: hallazgos y tareas ya están registrados, sin novedades que justifiquen duplicación. La comparación histórica lista siete documentos; este commit actualiza únicamente los cinco documentos de continuidad establecidos.
+Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
