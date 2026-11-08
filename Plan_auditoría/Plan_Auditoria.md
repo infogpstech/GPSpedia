@@ -1849,3 +1849,51 @@ No se ejecutaron pruebas de navegador, HTTP, Apps Script V8, YouTube Data API, D
 
 ### Siguiente iteración
 AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
+
+
+## 65. Revalidación de continuidad — AUD-T-036
+
+**Sesión:** AUD-20261108-S081  
+**Checkpoint:** AUD-CP-0080  
+**E1 original:** bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010 (AUD-20261107-S017 / AUD-CP-0017)  
+**Árbol E1:** 1942a7d8a385c9e5492cc8f2a4dd52c8425e8d90  
+**HEAD revalidado:** fe0fafb4b799a27108580303fb07caa10c37f0eb  
+**Árbol actual:** 84fac81b7fa2b5269661e5482d540cd8ce49f36b  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-036-001 A 005 ABIERTOS; REVISIÓN LEGAL Y VALIDACIÓN FUNCIONAL PENDIENTES.
+
+### Alcance y comparación
+Se revalidaron los términos, consentimiento inicial, acuerdo legal, modales, navegación/History API, logos y disponibilidad offline. Archivos: index.html, ui.js, main.js, style.css, auth.js, service-worker.js y assets icon-v3-512x512.png, Logo_TemaOscuro.png y tracklink_logo.png.
+
+La comparación E1→HEAD muestra 64 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los seis archivos de código y tres assets del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- service-worker.js: 6779c97db87a574149eb44c7e97729ac7f18f4f5
+- icon-v3-512x512.png: c5990f19eb0acfa13f831fe0288bdb82947d3350
+- Logo_TemaOscuro.png: 1776253dbef2cd02bcd9d0f21fe01150901d71c9
+- tracklink_logo.png: edb1904e3faba5bbe11601f6a2dd030dad4ce012
+
+### Revalidación de hallazgos y tareas
+- H-AUD-036-001 a H-AUD-036-005 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- La aceptación sigue siendo un booleano local por dispositivo, sin userId, fecha ni versión; la política por dispositivo/usuario requiere decisión expresa.
+- El control depende de que terms-modal exista y de que localStorage responda; la condición no falla cerrada si falta markup y no maneja excepciones de almacenamiento.
+- La sección de privacidad sigue siendo general y requiere revisión legal por jurisdicción/operación reales, incluida la entidad responsable y relación de marca.
+- Los logos del acuerdo no se incluyen todos en precache; persisten los riesgos de disponibilidad offline.
+- Los modales carecen de semántica ARIA y manejo explícito de foco/teclado; debe revisarse también History API al cerrar el acuerdo sobre el aviso inicial.
+- AUG-045 continúa pendiente para aceptación versionada/trazable, política por usuario/dispositivo y fail-closed/errores de storage.
+- AUG-046 continúa pendiente de revisión/aprobación legal del acuerdo y aviso de privacidad.
+- AUG-047 continúa pendiente para accesibilidad, History API y disponibilidad offline.
+- No se modifica texto legal ni política durante esta revalidación. No se identifican hallazgos ni tareas nuevas; no se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 64 commits posteriores, el diff global, los SHA exactos de nueve elementos del alcance y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a prueba de aceptación en navegador ni a dictamen jurídico.
+
+No se ejecutaron pruebas de navegador, lector de pantalla, teclado, PWA offline, cambio de cuenta, storage bloqueado ni nueva versión legal. No hubo revisión jurídica externa ni verificación de deployments. No se modificó código, assets, endpoints, Spreadsheet, Drive, datos productivos ni deployments.
+
+### Siguiente iteración
+AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda.

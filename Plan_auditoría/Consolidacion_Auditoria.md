@@ -821,3 +821,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-043/AUG-044 pendientes; AUG-039/AUG-040/AUG-041/AUG-042 conservan relaciones existentes. No se crean hallazgos ni tareas nuevas.
 - Solo continuidad E1 y revisión documental. Sin pruebas navegador, HTTP, Apps Script, YouTube, Drive, Spreadsheet, aprobación/rechazo ni concurrencia. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
+
+
+## 54. AUD-T-036 — continuidad E1 y revalidación de términos/consentimiento
+- Sesión AUD-20261108-S081; checkpoint AUD-CP-0080; E1 bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010; árbol E1 1942a7d8a385c9e5492cc8f2a4dd52c8425e8d90; HEAD fe0fafb4b799a27108580303fb07caa10c37f0eb; árbol actual 84fac81b7fa2b5269661e5482d540cd8ce49f36b; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los seis archivos de código y tres assets conservan SHA idénticos a E1.
+- H-AUD-036-001 a 005 permanecen abiertos: aceptación local no versionada, control fail-open/storage errors, privacidad general pendiente de revisión legal, logos no precargados y accesibilidad/foco/History API.
+- AUG-045/AUG-046/AUG-047 continúan pendientes. No se modifica texto legal ni política en una revalidación documental.
+- Solo continuidad E1 y revisión documental. Sin pruebas de navegador, lector de pantalla, teclado, PWA offline, cambio de cuenta, storage bloqueado, revisión jurídica externa ni deployments. Sin cambios funcionales, assets, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda.

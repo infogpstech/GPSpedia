@@ -820,3 +820,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-043/AUG-044 pendientes; AUG-039/AUG-040/AUG-041/AUG-042 conservan sus dependencias. Sin hallazgos ni tareas nuevas.
 - No se ejecutaron pruebas de navegador, HTTP, Apps Script, YouTube, Drive, Spreadsheet, aprobación/rechazo ni concurrencia. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-036 — Términos, consentimiento inicial y elementos legales de interfaz.
+
+
+## Continuidad AUD-T-036 — 2026-11-08 | AUD-20261108-S081
+- Revalidación AUD-20261108-S081/AUD-CP-0080; E1 histórica bf420789e5aeafa73f2bb3ee1118f5c8bf2ff010 (AUD-20261107-S017/AUD-CP-0017); HEAD fe0fafb4b799a27108580303fb07caa10c37f0eb; árbol actual 84fac81b7fa2b5269661e5482d540cd8ce49f36b; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. index.html, ui.js, main.js, style.css, auth.js, service-worker.js y los tres logos conservan exactamente sus SHA E1.
+- H-AUD-036-001 a 005 permanecen abiertos: aceptación local no versionada, control fail-open/storage errors, privacidad pendiente de revisión legal, logos offline y accesibilidad/foco/History API.
+- AUG-045/AUG-046/AUG-047 pendientes. No se modifica texto legal ni política durante la revalidación.
+- No se ejecutaron pruebas de navegador, lector de pantalla, teclado, PWA offline, cambio de cuenta, storage bloqueado ni revisión jurídica externa. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-037 — Catálogo, caché, sincronización incremental y búsqueda.
