@@ -857,7 +857,7 @@ CHECKPOINT INICIAL — AUD-CP-0059
 Fecha: 2026-11-08 | Sesión: AUD-20261108-S060
 Tarea: AUD-T-020 — revalidación de continuidad E1 de saneamiento arquitectural, DRY, anti-debugging y auditorías globales.
 Estado inicial observado: E1 histórica completada sobre el árbol 011980eae1ae02143377faffcf5148c7067bfad7; pendiente confirmar ausencia de deriva funcional y registrar continuidad.
-Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1 | Árbol: 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1 | Árbol: 2b576931a644b89006bbc12460b1458a28b641b7.
 Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios.
 HEAD funcional E1 de AUD-T-020: 25d5d548edd79f812ab6b2bf9411d8c77fb30188 | árbol: 011980eae1ae02143377faffcf5148c7067bfad7.
 Alcance funcional revalidado: 16 módulos frontend, siete microservicios, dos archivos Services/Test, README de pruebas y README raíz (27 archivos).
@@ -876,7 +876,7 @@ CHECKPOINT FINAL — AUD-CP-0059
 Fecha: 2026-11-08 | Sesión: AUD-20261108-S060
 Tarea: AUD-T-020 — revalidación de continuidad E1.
 Estado final: continuidad E1 confirmada; H-AUD-020-001 a H-AUD-020-004 permanecen abiertos; H-AUD-020-005 continúa corregido documentalmente; AUG-136 a AUG-139 pendientes; AUG-036/AUG-104 ampliadas; VAL-29 pendiente. Sin hallazgos ni tareas nuevas.
-HEAD padre: 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1; árbol inicial 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+HEAD padre: 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1; árbol inicial 2b576931a644b89006bbc12460b1458a28b641b7. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
 Comparación: E1 25d5d548edd79f812ab6b2bf9411d8c77fb30188 → HEAD 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1; 21 commits posteriores; únicamente ocho documentos modificados. Los 27 archivos del alcance mantienen SHA idénticos:
 - index.html 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
 - main.js c15f5462d78fa907d14c71e15970ae29a3b3de77

@@ -1209,7 +1209,7 @@ Siguiente unidad secuencial: AUD-T-020 — Saneamiento arquitectural, DRY, anti-
 
 
 ## 44. Continuidad verificada — AUD-T-020
-Sesión AUD-20261108-S060 | Checkpoint AUD-CP-0059 | HEAD E1 25d5d548edd79f812ab6b2bf9411d8c77fb30188 | árbol E1 011980eae1ae02143377faffcf5148c7067bfad7 | HEAD previo 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1 | árbol previo 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Sesión AUD-20261108-S060 | Checkpoint AUD-CP-0059 | HEAD E1 25d5d548edd79f812ab6b2bf9411d8c77fb30188 | árbol E1 011980eae1ae02143377faffcf5148c7067bfad7 | HEAD previo 8eb216b79dbfcc1d765342d69ff10fe9fa19b7e1 | árbol previo 2b576931a644b89006bbc12460b1458a28b641b7 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
 La E1 histórica de AUD-T-020 ya estaba completada. La comparación Git confirma 21 commits posteriores y únicamente ocho archivos documentales modificados. Los 27 archivos funcionales/técnicos del alcance conservan exactamente sus SHA históricos; no existe deriva funcional desde la E1.
 Se revalidan H-AUD-020-001 a H-AUD-020-004 sin evidencia de corrección en los artefactos: bloqueos anti-inspección eludibles que restringen zoom; logs de recuperación que exponen pendingOp y Base64; parsers VIN/versiones y helpers Drive duplicados con contratos divergentes; funciones internas y markup de depuración sin referencias internas confirmadas. H-AUD-020-005 permanece corregido documentalmente en la tabla de cobertura.
 AUG-136 a AUG-139 continúan pendientes; AUG-036 y AUG-104 conservan sus adendas; VAL-29 sigue planificada y no ejecutada. No se crean hallazgos ni tareas duplicados. La Tarea 21 conserva su estado histórico COMPLETADA; E1 estática no certifica comportamiento funcional.

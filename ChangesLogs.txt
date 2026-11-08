@@ -4520,3 +4520,6 @@ Sesión AUD-20261108-S060 | Checkpoint AUD-CP-0059 | HEAD E1 25d5d548edd79f812ab
 - checkpoint.md: checkpoints inicial/final AUD-CP-0059, comparación, SHA de alcance y límites.
 Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican: H-AUD-020-001 a 004, H-AUD-020-005 corregido, AUG-136 a AUG-139, adendas AUG-036/AUG-104 y VAL-29 ya están documentados; no hay hallazgos ni tareas nuevas. Los 27 archivos del alcance mantienen sus SHA históricos. Sin cambios funcionales, operaciones productivas, E2/E3, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
 ================================================================================
+
+
+- Corrección de trazabilidad AUD-T-020/AUD-CP-0059: se rectificó el SHA del árbol del HEAD previo (2b576931a644b89006bbc12460b1458a28b641b7) en Plan_Auditoria.md y checkpoint.md; no cambia la auditoría ni los archivos funcionales.
