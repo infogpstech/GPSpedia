@@ -746,3 +746,14 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUD-IMG-01, 02, 04, 05, 06 y 07 mantienen su estado estático documentado; AUD-IMG-03 queda condicionado a la decisión H-AUD-027-007.
 - Solo continuidad E1 y revisión documental. Sin pruebas de navegador, HTTP, Apps Script V8, Drive, Spreadsheet, concurrencia, recuperación real ni deployments. Sin cambios funcionales, datos productivos, renombrados, merge o despliegue.
 - Siguiente: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
+
+
+## 46. AUD-T-028 — continuidad E1 y revalidación del inventario Drive
+- Sesión AUD-20261108-S073; checkpoint AUD-CP-0072; E1 a1e66b81eb4ea146dfc76e9e2980f41b64a8c124; árbol E1 4adb052da52733e812fc9a4f0d0e5d848c879de3; HEAD e1087bfa98a9949d179bd4f61f769e6874b52593; árbol actual 252cae25831fd63503aafa0be278091e6328e2e4; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los ocho archivos de código/esquema de AUD-T-028 conservan SHA idénticos a E1.
+- H-AUD-028-001 a 009 permanecen abiertos por continuidad. El límite total de 14 no existe en la fuente estática; el síntoma real permanece sin causa confirmada por falta de datos Drive y verificación del deployment.
+- El monitor global de almacenamiento está presente estáticamente; scopes OAuth, identidad, cuota y deployment real pendientes.
+- AUG-028, AUG-029 y AUG-030 continúan pendientes; AUG-026/AUG-003/AUG-021 mantienen sus adendas. El rendimiento de snapshot, TTL e IndexedDB continúa en AUD-T-029.
+- La normalización automática de nombres autorizada para imágenes asociadas inequívocamente a Cortes no autoriza movimientos automáticos ni modificaciones del inventario de solo lectura. No se realizaron renombrados ni operaciones en Drive/Spreadsheet.
+- Solo continuidad E1 y revisión documental. Sin pruebas de navegador, HTTP, Apps Script V8, Drive, Spreadsheet, cuota real, permisos, scopes, concurrencia ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.

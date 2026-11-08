@@ -1485,3 +1485,53 @@ No se ejecutaron pruebas de navegador/PWA, HTTP, Apps Script V8, Drive, Spreadsh
 
 ### Siguiente iteración
 AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
+
+
+## 57. Revalidación de continuidad — AUD-T-028
+
+**Sesión:** AUD-20261108-S073  
+**Checkpoint:** AUD-CP-0072  
+**E1 original:** a1e66b81eb4ea146dfc76e9e2980f41b64a8c124 (AUD-20261107-S009 / AUD-CP-0009)  
+**Árbol E1:** 4adb052da52733e812fc9a4f0d0e5d848c879de3  
+**HEAD revalidado:** e1087bfa98a9949d179bd4f61f769e6874b52593  
+**Árbol actual:** 252cae25831fd63503aafa0be278091e6328e2e4  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-028-001 A 009 ABIERTOS; VALIDACIÓN FUNCIONAL Y DE DEPLOYMENT PENDIENTE.
+
+### Alcance y comparación
+Se revalidó el alcance de AUD-T-028: escaneo recursivo de Cortes; clasificación En uso/Histórica/Sin uso detectado/No verificable; cursores y lotes; snapshot de referencias; persistencia local e inventario Spreadsheet; organización/movimiento de archivos; monitor global de almacenamiento; síntoma de 14 archivos y contratos frontend/backend.
+
+La comparación E1→HEAD muestra 64 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los ocho archivos de código/esquema del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+
+### Revalidación de hallazgos
+- H-AUD-028-001 a H-AUD-028-009 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- El síntoma de 14 archivos continúa sin causa confirmada: el código estático no contiene un límite total de 14; la UI puede restaurar un snapshot local y filtra algunas categorías del detalle. No se inspeccionaron los datos reales ni la versión desplegada.
+- El monitor global de Drive permanece implementado estáticamente; uso de cuota, scopes OAuth, identidad, permisos y deployment reales siguen sin verificar.
+- La autorización explícita para normalizar nombres inválidos se limita a aplicar la nomenclatura canónica a imágenes asociadas inequívocamente a Cortes. No autoriza movimientos automáticos, cambios al inventario de solo lectura, fusiones, sobrescrituras ni renombrado semántico de archivos huérfanos sin metadatos. Esta revalidación no ejecutó renombrados ni operaciones de Drive.
+- La regla de acciones explícitas de movimiento/papelera se mantiene separada de la normalización de nombres: renombrar un archivo no equivale a moverlo ni a organizarlo automáticamente.
+
+### Tareas derivadas y dependencias
+- AUG-028 continúa pendiente para validar auditoría completa, correlación del escaneo, consistencia del inventario y resultados por archivo.
+- AUG-029 continúa pendiente para impedir movimientos automáticos y conservar ubicaciones manuales. Sus criterios de escaneo/guardado de inventario no deben confundirse con la operación independiente de normalización canónica autorizada.
+- AUG-030 continúa pendiente para deduplicación, diagnóstico, estado local y verificación de URL.
+- AUG-026 conserva la adenda para proteger estados históricos no resueltos; AUG-003/AUD-T-033 mantiene la coordinación interservicios; AUG-021 conserva la adenda de trazabilidad durable del guardado de inventario.
+- El rendimiento de snapshot, TTL, capacidad e IndexedDB incremental permanece transferido a AUD-T-029.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 64 commits posteriores, el diff global, los SHA exactos de los ocho archivos de alcance y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a validación funcional.
+
+No se ejecutaron pruebas de navegador/PWA, HTTP, Apps Script V8, Drive, Spreadsheet, cuota real, permisos, scopes OAuth, concurrencia, reanudación, expiración del snapshot, duplicados ni carga de miniaturas. No se verificó el deployment ADMIN ni se inspeccionaron datos/archivos reales. Sin renombrados, movimientos, escrituras ni operaciones productivas.
+
+### Siguiente iteración
+AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.

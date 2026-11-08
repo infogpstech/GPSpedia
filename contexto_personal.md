@@ -747,3 +747,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUD-IMG-01/02/04/05/06/07 mantienen el estado estático documentado; AUD-IMG-03 no se declara resuelto globalmente.
 - No se ejecutaron pruebas reales de navegador, HTTP, Apps Script, Drive, Spreadsheet, concurrencia, recuperación ni deployments. Sin cambios funcionales ni operaciones productivas; no se realizaron renombrados en esta revalidación.
 - Siguiente unidad: AUD-T-028 — Inventario de imágenes sin uso, clasificación y monitor global de Drive.
+
+
+## Continuidad AUD-T-028 — 2026-11-08 | AUD-20261108-S073
+- Revalidación AUD-20261108-S073/AUD-CP-0072; E1 histórica a1e66b81eb4ea146dfc76e9e2980f41b64a8c124 (AUD-20261107-S009/AUD-CP-0009); HEAD e1087bfa98a9949d179bd4f61f769e6874b52593; árbol actual 252cae25831fd63503aafa0be278091e6328e2e4; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 64 commits posteriores, sin divergencia. Los ocho archivos del alcance (Services/admin.js, ui.js, offline.js, api-config.js, index.html, style.css, Services/write.js y Spreadsheet/GPSpedia_DB_columnas.md) conservan exactamente sus SHA E1.
+- H-AUD-028-001 a 009 permanecen abiertos. El síntoma de 14 archivos no tiene causa confirmada; el monitor global está implementado estáticamente, pero scopes OAuth/deployment/cuota real no verificados.
+- AUG-028/AUG-029/AUG-030 pendientes; AUG-026/AUG-003/AUG-021 conservan adendas. Rendimiento, snapshot, TTL e IndexedDB incremental se mantienen en AUD-T-029.
+- La normalización automática de nombres autorizada se limita a imágenes vinculadas inequívocamente a Cortes; no autoriza mover archivos automáticamente ni modificar el inventario de solo lectura. Sin renombrados ni operaciones productivas durante esta revalidación.
+- No se ejecutaron pruebas reales de navegador, HTTP, Apps Script, Drive, Spreadsheet, cuota, permisos, concurrencia ni deployments.
+- Siguiente unidad: AUD-T-029 — Auditoría recursiva Drive, rendimiento, snapshot, lotes y reanudación.
