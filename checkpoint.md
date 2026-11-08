@@ -992,3 +992,48 @@ No se ejecutaron navegador, teclado real, lector de pantalla, logout/revocación
 Commit documental único: docs(audit): verify AUD-T-022 continuity; parent e6e59bafd7d66b7e8d7654d7079ed276ec7cdce0.
 Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0062
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S063
+Tarea: AUD-T-001 — revalidación de continuidad E1 del App Shell, arranque e inicialización.
+Estado inicial: E1 histórica completada en 35446ac7dd3697b4cd318895c9040e3bf239720c; verificar ausencia de deriva funcional desde esa E1.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: 787df40810778acf35cca65ee52f84d2dcf2a991 | árbol: c253c8e0672f4f97e9637b66e36592ff8cecc095.
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios.
+E1 histórica: commit 35446ac7dd3697b4cd318895c9040e3bf239720c | árbol 0d9e88098c57b7550334e84bf74feecf6fef83ae.
+Alcance: main.js, auth.js, ui.js, state.js, index.html, style.css, api-config.js, Services/admin.js y Services/Auth.js; commits ancla 2251d499 y 4445f2c7.
+Respaldos SHA de los cinco documentos antes de esta actualización:
+- Plan_auditoría/Plan_Auditoria.md: 73752429b0781dd7344bb166e9bbc2e65db669f1
+- Plan_auditoría/Consolidacion_Auditoria.md: 25f6833cd4673162e93f7412a7bd726b55ae93c0
+- ChangesLogs.txt: c28bb1da6217566b7bb9a2bff4d5ac0c63aba7ee
+- contexto_personal.md: 30d95e599cf1c0dc4dae4ef6a2ec9209d580e331
+- checkpoint.md: 5b3cae339b53567c7d7ba55e8c81ef1988590e8d
+Comparación Git E1→HEAD: 22 commits posteriores; únicamente ocho documentos modificados; ningún archivo funcional del alcance aparece en el diff.
+No se ejecutaron pruebas funcionales ni operaciones productivas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0062
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S063
+Tarea: AUD-T-001 — revalidación de continuidad E1.
+Estado final: continuidad E1 confirmada; H-AUD-001-001/002 abiertos; AUG-151 pendiente; adendas AUG-008/AUG-049 y revalidación AUG-099 conservadas; VAL-32 pendiente/no ejecutada. Sin hallazgos ni tareas duplicados.
+HEAD padre: 787df40810778acf35cca65ee52f84d2dcf2a991; árbol inicial c253c8e0672f4f97e9637b66e36592ff8cecc095. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Comparación E1 35446ac7dd3697b4cd318895c9040e3bf239720c → HEAD 787df40810778acf35cca65ee52f84d2dcf2a991: 22 commits posteriores; únicamente ocho documentos modificados; los nueve archivos funcionales mantienen SHA idénticos:
+Archivos funcionales del alcance, SHA idénticos a E1:
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+Documentos modificados en este commit: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md; hallazgos, tareas, adendas y validación ya están registrados.
+Observación documental: resumen agregado heredado de Tareas.txt clasifica AUD-T-001 como por auditar, en contradicción con su registro individual y CP-0041 que indican E1 completada. Se deja para conciliación documental; no se reescribe el registro maestro en esta continuidad.
+No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, multi-pestaña, concurrencia, accesibilidad, despliegues ni E2/E3. Sin cambios funcionales, contratos, configuración, assets, permisos, datos productivos ni deployments. Sin merge ni despliegue.
+Commit documental único: docs(audit): verify AUD-T-001 continuity; parent 787df40810778acf35cca65ee52f84d2dcf2a991.
+Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.
+================================================================================

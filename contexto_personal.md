@@ -654,3 +654,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-022-001 a 004 siguen abiertos; AUG-147 a AUG-150 pendientes; VAL-31 pendiente/no ejecutada. Sin hallazgos ni tareas duplicados.
 - La E1 estática no certifica logout/revocación, foco/ARIA real, lector de pantalla ni respuestas HTTP. Sin navegador, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, deployments ni E2/E3.
 - Sin cambios funcionales ni operaciones productivas. Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
+
+
+## Continuidad AUD-T-001 — 2026-11-08
+- Revalidación E1 en AUD-20261108-S063/AUD-CP-0062; E1 35446ac7dd3697b4cd318895c9040e3bf239720c (árbol 0d9e88098c57b7550334e84bf74feecf6fef83ae); HEAD previo 787df40810778acf35cca65ee52f84d2dcf2a991 (árbol c253c8e0672f4f97e9637b66e36592ff8cecc095); rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 22 commits posteriores, únicamente ocho documentos modificados; los nueve archivos funcionales del alcance conservan SHA de E1. Sin deriva funcional.
+- H-AUD-001-001/002 abiertos; AUG-151 pendiente; adendas AUG-008/AUG-049 y revalidación AUG-099 conservadas; VAL-32 pendiente/no ejecutada. No se duplican hallazgos ni tareas.
+- La E1 estática no certifica arranque, sesión, catálogo, deep links ni ADMIN en ejecución. Sin navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, multi-pestaña, concurrencia, accesibilidad, despliegues ni E2/E3.
+- Se detecta resumen agregado obsoleto en Tareas.txt que marca AUD-T-001 por auditar pese al registro individual E1 completada/CP-0041; queda anotado, sin alterar el registro maestro.
+- Siguiente: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario.

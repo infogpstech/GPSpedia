@@ -1271,3 +1271,23 @@ Alcance funcional histórico (SHA idénticos a E1):
 - Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
 No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: H-AUD-022-001 a 004, AUG-147 a AUG-150 y VAL-31 ya están registrados; no hay novedades ni duplicados.
 Siguiente unidad secuencial: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
+
+
+## 47. Continuidad verificada — AUD-T-001
+Sesión AUD-20261108-S063 | Checkpoint AUD-CP-0062 | E1 histórica 35446ac7dd3697b4cd318895c9040e3bf239720c | árbol E1 0d9e88098c57b7550334e84bf74feecf6fef83ae | HEAD previo 787df40810778acf35cca65ee52f84d2dcf2a991 | árbol previo c253c8e0672f4f97e9637b66e36592ff8cecc095 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 de AUD-T-001 se completó en AUD-20261108-S041/AUD-CP-0041. La comparación E1→HEAD comprende 22 commits posteriores y enumera únicamente ocho documentos modificados: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Ningún archivo funcional del alcance aparece en el diff; los nueve archivos listados conservan sus SHA históricos. No hay deriva funcional desde E1.
+Se conservan sin duplicación H-AUD-001-001 y H-AUD-001-002: (1) espera/polling del deep link sin límite ni cancelación cuando el catálogo permanece vacío/no disponible; (2) processCatalogData absorbe errores y los llamadores pueden establecer catalogLoaded=true sin confirmar que el catálogo se actualizó. Se mantienen AUG-151 como tarea nueva, las adendas existentes AUG-008/AUG-049 y la revalidación de H-AUD-015-002/AUG-099. VAL-32 continúa planificada y no ejecutada.
+La E1 es estática: no certifica arranque real, transiciones de sesión, recuperación de catálogo, deep links, comportamiento multi-pestaña ni endpoint ADMIN. No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, concurrencia, pruebas multi-pestaña, accesibilidad, despliegues ni E2/E3. Sin cambios funcionales, permisos, contratos, configuración, assets, datos productivos ni deployments; sin merge ni despliegue.
+Archivos funcionales del alcance, SHA idénticos a E1:
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+No se crean hallazgos ni tareas duplicados. Auditoría.txt, Tareas.txt y Plan_auditoría/Aug_Tareas.md permanecen sin cambios porque H-AUD-001-001/002, AUG-151, las adendas AUG-008/AUG-049, la revalidación AUG-099 y VAL-32 ya constan en el registro histórico.
+Observación documental: un resumen agregado antiguo dentro de Tareas.txt aún clasifica AUD-T-001 como «por auditar», aunque el registro individual y CP-0041 documentan E1 completada. No se altera el registro maestro en esta continuidad; queda anotada la discrepancia para conciliación documental.
+Siguiente unidad: AUD-T-002 — RBAC, AUTH, USERS, roles y autorización de operaciones de usuario (continuidad desde AUD-CP-0002).

@@ -649,3 +649,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Se conservan los cuatro hallazgos históricos sobre cierre/logout, estado de sesión, semántica/foco del diálogo, ARIA de pestañas y normalización de errores ADMIN.
 - No se ejecutaron navegador, teclado/lector de pantalla, logout/revocación real, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, deployments ni E2/E3. Sin cambios funcionales, operaciones productivas, merge ni despliegue.
 - Siguiente: AUD-T-001.
+
+
+## 36. Continuidad AUD-T-001 — verificación E1
+- Sesión AUD-20261108-S063; checkpoint AUD-CP-0062; E1 35446ac7dd3697b4cd318895c9040e3bf239720c (árbol 0d9e88098c57b7550334e84bf74feecf6fef83ae); HEAD previo 787df40810778acf35cca65ee52f84d2dcf2a991 (árbol c253c8e0672f4f97e9637b66e36592ff8cecc095); base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 22 commits posteriores; diff exclusivamente ocho documentos. Los nueve archivos funcionales de alcance conservan SHA de E1; sin deriva funcional.
+- Se conservan sin duplicación H-AUD-001-001 y H-AUD-001-002: (1) espera/polling del deep link sin límite ni cancelación cuando el catálogo permanece vacío/no disponible; (2) processCatalogData absorbe errores y los llamadores pueden establecer catalogLoaded=true sin confirmar que el catálogo se actualizó. Se mantienen AUG-151 como tarea nueva, las adendas existentes AUG-008/AUG-049 y la revalidación de H-AUD-015-002/AUG-099. VAL-32 continúa planificada y no ejecutada.
+- VAL-32 sigue planificada/no ejecutada. La E1 estática no certifica los flujos reales de inicio, sesión, catálogo, deep link o ADMIN.
+- No se ejecutaron navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, multi-pestaña, concurrencia, accesibilidad, despliegues ni E2/E3. Sin cambios funcionales ni operaciones productivas, merge o despliegue.
+- Discrepancia documental observada: resumen agregado heredado de Tareas.txt marca AUD-T-001 por auditar, mientras el registro individual y CP-0041 indican E1 completada. Se deja anotada, sin modificar el registro maestro en esta continuidad.
+- Siguiente: AUD-T-002.

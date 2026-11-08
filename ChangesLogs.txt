@@ -4547,3 +4547,15 @@ Sesión AUD-20261108-S062 | Checkpoint AUD-CP-0061 | E1 histórica 8f5d6d74f8f6b
 - Sin navegador, lector de pantalla, pruebas de logout, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, deployments ni E2/E3. Sin cambios funcionales, operaciones productivas, merge ni despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
 Siguiente unidad: AUD-T-001.
 ================================================================================
+
+
+================================================================================
+2026-11-08 — AUD-T-001 — revalidación de continuidad E1
+Sesión AUD-20261108-S063 | Checkpoint AUD-CP-0062 | E1 35446ac7dd3697b4cd318895c9040e3bf239720c | árbol E1 0d9e88098c57b7550334e84bf74feecf6fef83ae | HEAD previo 787df40810778acf35cca65ee52f84d2dcf2a991 | árbol previo c253c8e0672f4f97e9637b66e36592ff8cecc095.
+- 22 commits posteriores; compare_commits muestra exclusivamente ocho documentos modificados. Los nueve archivos funcionales de alcance mantienen SHA idénticos a E1.
+- H-AUD-001-001/002 siguen abiertos; AUG-151 pendiente; adendas AUG-008/AUG-049 y revalidación AUG-099 conservadas; VAL-32 pendiente/no ejecutada. Sin hallazgos ni tareas duplicados.
+- Se actualizan Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md.
+- Discrepancia heredada en resumen agregado de Tareas.txt: AUD-T-001 aparece como por auditar pese a su registro individual E1 completada/CP-0041; queda anotada para conciliación documental.
+- Sin navegador, Node/lint, HTTP, Apps Script, Drive, Spreadsheet, multi-pestaña, concurrencia, accesibilidad, deployments ni E2/E3. Sin cambios funcionales, datos productivos, merge ni despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Siguiente unidad: AUD-T-002.
+================================================================================
