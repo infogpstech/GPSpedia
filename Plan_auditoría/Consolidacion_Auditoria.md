@@ -695,3 +695,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - La inspección puntual confirma que los sinks de contenido enriquecido, la validación de slots suplementarios, la actualización del detalle, los selectores, la recuperación FileReader y los contratos contextuales permanecen como en E1. Sin tareas duplicadas.
 - No se ejecutaron navegador, XSS dinámico, FileReader real, concurrencia, HTTP, Apps Script V8, Spreadsheet/Drive, YouTube, móvil/PWA, deployments ni E2/E3. Validación funcional/seguridad/integración pendiente.
 - Sin cambios funcionales, datos productivos, merge ni despliegue. Siguiente: AUD-T-006.
+
+
+## 41. Continuidad AUD-T-023 — credenciales, hashing, Logs y ADMIN 0
+- Sesión AUD-20261108-S068; checkpoint AUD-CP-0067; E1 histórica 87d75c38d72e76ed60132d2507661f4e1017a0e8; HEAD 843818e9199e0952ca575196e79efa09f5bffb87; árbol 39ca9cfe52d1aa2d5bf0695f28d874b8c0411a02; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- E1→HEAD: 65 commits posteriores. Nueve de diez archivos del alcance conservan SHA E1. Services/admin.js cambió, pero assertDeveloperSession y la guardia de doPost antes del switch son idénticas byte por byte. Services/write.js también cambió, fuera de este alcance.
+- H-AUD-023-001 a 008 siguen abiertos. Se confirman por continuidad los riesgos de SHA-256 de una pasada, migración legacy atrasada, escrituras USERS concurrentes, contador de intentos, purga Logs, cuentas legacy inactivas, downgrade de formatos desconocidos y validación de contraseña en UI.
+- ADMIN 0 continúa exigiendo sesión activa y rol Desarrollador para toda acción distinta de ping. No se detectaron nuevas líneas de log en admin.js que incorporen contraseñas o tokens.
+- AUG-010 a AUG-014 permanecen pendientes; no duplicar. Mantener coordinación AUTH/USERS en AUD-T-033 y separar ciclo de sesiones en AUD-T-024.
+- No se ejecutaron Apps Script V8, HTTP, login, acceso a Sheets/Logs, benchmark KDF, migración, concurrencia, CacheService, deployments, navegador ni E2/E3. La continuidad no certifica comportamiento productivo.
+- Sin cambios de código, configuración, credenciales, Sheets, Drive ni datos productivos. Siguiente unidad: AUD-T-024.

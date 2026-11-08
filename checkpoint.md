@@ -1235,3 +1235,60 @@ Sin cambios de código, HTML, CSS, servicios, endpoints, contratos, configuraci�
 Commit documental único: docs(audit): verify AUD-T-005 continuity; parent c7ad01b89f7228622f9732c5d38850cd987a207a.
 Siguiente unidad: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom (revalidación de continuidad E1).
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0067
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S068
+Tarea: AUD-T-023 — Seguridad ADMIN 0, registro de credenciales, hashing y migración; revalidación de continuidad E1.
+E1 histórica: AUD-20261107-S004 / AUD-CP-0004; HEAD auditado 87d75c38d72e76ed60132d2507661f4e1017a0e8; árbol a842c63bf9f889df685731c32d9ed9cb1706473e.
+HEAD inicial de GPSpedia2.2.5_work: 843818e9199e0952ca575196e79efa09f5bffb87; árbol 39ca9cfe52d1aa2d5bf0695f28d874b8c0411a02. Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Alcance: Services/Auth.js, Services/users.js, Services/admin.js, Services/feedback.js, api-config.js, auth.js, users.html, Services/Test/Auth.js, Services/Test/users.js y Services/Test/README.md.
+Estado inicial: E1/E2 histórica completada; revalidación de continuidad pendiente. Hallazgos H-AUD-023-001 a 008 abiertos; AUG-010 a AUG-014 existentes. No duplicar ni migrar producción.
+Respaldos documentales previos:
+- Plan_auditoría/Plan_Auditoria.md: f0c2c39a155e888377479f673d2247d6cfde9025
+- Plan_auditoría/Consolidacion_Auditoria.md: ad51848e937d8528125261f0f6dc273d64c625de
+- ChangesLogs.txt: b8a1323cc9ddd2e6cfeaf5c8599c05307769fd98
+- contexto_personal.md: 4a9d3fb7b4231b145dc15a804663259ca72b75d4
+- checkpoint.md: cda3dc31463f7c993f0a2ee306ab6c1603be7c41
+Sin cambios funcionales, acceso a credenciales/hojas productivas ni ejecuciones sobre servicios. El checkpoint inicial y final se publican juntos en el único commit documental.
+================================================================================
+
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0067
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S068
+Tarea: AUD-T-023 — revalidación de continuidad E1.
+Estado: CONTINUIDAD E1 CONFIRMADA; H-AUD-023-001 a H-AUD-023-008 permanecen abiertos. AUG-010 a AUG-014 conservan sus criterios y relaciones; sin hallazgos ni tareas nuevas.
+E1 histórica: 87d75c38d72e76ed60132d2507661f4e1017a0e8 (AUD-20261107-S004 / AUD-CP-0004); árbol histórico a842c63bf9f889df685731c32d9ed9cb1706473e.
+HEAD auditado: 843818e9199e0952ca575196e79efa09f5bffb87; árbol 39ca9cfe52d1aa2d5bf0695f28d874b8c0411a02; rama GPSpedia2.2.5_work. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Comparación E1→HEAD: 65 commits posteriores; dos archivos de código funcional aparecen modificados en el diff global (Services/admin.js y Services/write.js). Services/write.js está fuera del alcance de AUD-T-023. Nueve de los diez archivos del alcance mantienen SHA idénticos a E1; Services/admin.js cambió, pero assertDeveloperSession(), el prefijo de autorización de doPost() y la secuencia que exige sesión antes de despachar acciones son idénticos byte por byte a E1.
+Archivos del alcance y SHA E1:
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed — sin cambios
+- Services/users.js: 9b7ce20b40e5fdac1f1c106e769f9e539ad858b0 — sin cambios
+- Services/admin.js: 847a2bb80e53918bede067e530b80e41bfdb6afa — modificado; guardia intacta
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a — sin cambios
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670 — sin cambios
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86 — sin cambios
+- users.html: e41f402675677a4d2783493614737021ec2eade5 — sin cambios
+- Services/Test/Auth.js: f9e522cdc673d1028ad2f6979bc860a2eff752f7 — sin cambios
+- Services/Test/users.js: 83e0ea30dfeccc9d62a9c51f9add002c1850dde6 — sin cambios
+- Services/Test/README.md: 1e8da5f26942cb7eb88a6579a1c9512f86b9d9ff — sin cambios
+Revalidación de hallazgos:
+- H-AUD-023-001: confirmado. AUTH/USERS siguen usando una única operación SHA-256 con salt; no hay KDF especializada ni work factor.
+- H-AUD-023-002: confirmado. La migración legacy de AUTH verifica y luego escribe el hash sin coordinación con escrituras de contraseña de USERS; persiste el escenario de sobrescritura atrasada.
+- H-AUD-023-003: confirmado. handleUpdateUser() y handleChangePassword() continúan escribiendo Password sin serialización común.
+- H-AUD-023-004: confirmado. resetLoginAttempts() elimina el estado agregado y rollbackLoginAttempt() decrementa el contador global; ambos conservan la carrera descrita.
+- H-AUD-023-005: confirmado. FEEDBACK calcula filas de Logs y las elimina por índices sin coordinación con inserciones AUTH de otro proyecto.
+- H-AUD-023-006: confirmado. No hay migración por lotes observada para cuentas legacy que nunca vuelvan a iniciar sesión; la migración continúa ligada al login correcto.
+- H-AUD-023-007: confirmado. verifyStoredPassword() reconoce el prefijo sha256$ y trata los demás valores como legacy, sin rechazo explícito de formatos codificados desconocidos.
+- H-AUD-023-008: confirmado. users.html valida newPassword.length sin trim y conserva el texto «reincie sesión».
+ADMIN 0: assertDeveloperSession() continúa validando sesión activa y rol obtenido de Users; doPost() aplica esa validación a toda acción distinta de ping antes del switch. La comparación exacta de los bloques de autorización E1/HEAD no detecta cambios. Las líneas nuevas detectadas en admin.js registran operaciones/filas/archivos, sin introducir logs de password, credential, secret o token.
+Tareas existentes, sin duplicar: AUG-010 (serialización de Password y coordinación AUTH/USERS), AUG-011 (KDF y migración versionada), AUG-012 (contador concurrente), AUG-013 (purga coordinada Logs), AUG-014 (validación UI). Se conserva vínculo con AUD-T-033/AUG-003 y separación de AUD-T-024.
+Validaciones ejecutadas: verificación HEAD/base; comparación Git E1→HEAD; SHA de diez archivos; comparación byte por byte de assertDeveloperSession y guardia inicial doPost; inspección de funciones hash/verify, migración legacy, contador, escrituras USERS, purga Logs, validación UI y nuevas líneas relevantes de log en admin.js.
+No ejecutadas: Apps Script V8, HTTP, login real, dataset de credenciales, acceso a Sheets/Logs, KDF benchmark, migración, concurrencia real, CacheService, lock entre proyectos, deployments, navegador ni E2/E3. No se afirma que Logs productivos hayan sido purgados ni que cuentas legacy hayan sido migradas.
+Sin cambios de código, endpoints, contratos, configuración, credenciales, hojas, Drive, Spreadsheet ni datos productivos. Sin despliegue ni merge. Services/write.js modificado fuera de alcance no se inspeccionó bajo esta unidad.
+Documentos actualizados: Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md (último blob documental). No se modifican Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: los ocho hallazgos y AUG-010 a AUG-014 ya constan; no hay duplicados.
+Commit documental único: docs(audit): verify AUD-T-023 continuity; parent 843818e9199e0952ca575196e79efa09f5bffb87.
+Siguiente unidad: AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso (revalidación de continuidad E1).
+================================================================================

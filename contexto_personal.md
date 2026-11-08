@@ -700,3 +700,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Se confirman por continuidad de código los riesgos de sanitización, cupos/respuestas suplementarias, sincronización de detalle, selectores, FileReader, enlace de vídeo y contador VIN. No se duplican registros.
 - Validación funcional, seguridad dinámica e integración pendientes. Sin navegador, XSS dinámico, FileReader real, concurrencia, Apps Script V8, HTTP, Spreadsheet/Drive, YouTube, móvil/PWA, deployments ni E2/E3.
 - Sin cambios funcionales ni operaciones productivas. Siguiente: AUD-T-006 — Lightbox, imágenes técnicas, carrusel de cables, PNG transparente y zoom.
+
+
+## Continuidad AUD-T-023 — 2026-11-08
+- Revalidación en AUD-20261108-S068/AUD-CP-0067; E1 histórica 87d75c38d72e76ed60132d2507661f4e1017a0e8; HEAD 843818e9199e0952ca575196e79efa09f5bffb87; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 65 commits posteriores; nueve de diez archivos del alcance conservan SHA. Services/admin.js cambió, pero guardia assertDeveloperSession/doPost idéntica; Services/write.js cambió fuera del alcance.
+- H-AUD-023-001 a 008 abiertos; AUG-010 a AUG-014 siguen pendientes, sin duplicación.
+- Se confirman los riesgos de KDF, migración legacy, serialización de contraseñas, contador de intentos, purga de Logs, legacy inactivo, formato de hash desconocido y validación UI. ADMIN 0 conserva gate de sesión/rol para acciones distintas de ping.
+- No se ejecutaron Apps Script V8, HTTP, login real, acceso a Sheets/Logs, KDF benchmark, migración, concurrencia, CacheService, deployments, navegador ni E2/E3. Sin cambios funcionales ni operaciones productivas.
+- Siguiente: AUD-T-024 — Administración de usuarios, privilegios, sesiones y controles de acceso.
