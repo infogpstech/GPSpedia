@@ -70,7 +70,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-019 | Validaciones de integridad backend y pruebas automatizadas | Tarea 19; commits de pruebas aisladas AUTH/USERS y pruebas de WRITE/ADMIN/FEEDBACK | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-28 PENDIENTE |
 | AUD-T-020 | Saneamiento arquitectural, DRY, anti-debugging y auditorías globales | Tarea 21; 27c9311c — auditoría integral y navegación; d93b3a5e — consolidación global y DRY | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-29 PENDIENTE |
 | AUD-T-021 | Ficha técnica imprimible, paginación y distribución adaptativa de imágenes | 6d7fbb9c — tareas 1.2/1.3; 199ee4be — layouts configurables; cbbcb0cb — cuadrículas 2×2; 04c86ce6 — layout adaptativo | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-30 PENDIENTE |
-| AUD-T-022 | Panel de desarrollador, navegación por secciones y modal administrativo | da7c146c — reorganizar panel; fd534545 — refinamiento; 9b1f210c — consola global | POR AUDITAR |
+| AUD-T-022 | Panel de desarrollador, navegación por secciones y modal administrativo | da7c146c — reorganizar panel; fd534545 — refinamiento; 9b1f210c — consola global | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-31 PENDIENTE |
 | AUD-T-023 | Seguridad ADMIN 0, registro de credenciales, hashing y migración | ed92f3a9 — reforzar autorización y proteger credenciales; 2e0bbcf7 — SHA-256 y límite de intentos; 6a226c18 — retirar credenciales de logs | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-024 | Administración de usuarios, privilegios, sesiones y controles de acceso | 2678ee02 — purga Logs y control de sesiones; 0666c1d1 — límites de sesión; 4bc9ac19 — serialización concurrente | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
 | AUD-T-025 | Herramientas ADMIN: base de datos, backup, restore, logs y mantenimiento | babf5ce4 — autorización y purga selectiva; e5c49b1d — enlaces completos en restore; abc7102f — backup/restore compartidos | AUDITORÍA ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL PENDIENTE |
@@ -916,3 +916,13 @@ Nuevas tareas: AUG-140 a AUG-146; adenda a AUG-096. VAL-30 planificada, no ejecu
 Nota de trazabilidad: la referencia 6d7fbb9c de la fila AUD-T-021 corresponde a tareas del panel de desarrollador y formulario PyS, no a impresión; se conserva registrada hasta su corrección mediante AUG-146. Los commits de impresión revisados son 199ee4be, cbbcb0cb y 04c86ce6.
 Límites: sin navegador, impresión, PDF, QR real, Node/lint, Apps Script, HTTP, Spreadsheet, Drive, concurrencia, migraciones, despliegues ni E2/E3. Sin cambios de aplicación.
 Siguiente: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+
+## 44. Iteración técnica — AUD-T-022
+Sesión AUD-20261108-S040 | Checkpoint AUD-CP-0040 | HEAD auditado 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b | árbol e0c80e7334378847c24e9ada5020248a539cb168 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-022-001 a H-AUD-022-004 abiertos; VAL-31 pendiente.
+Alcance: acceso por rol, menú, modal, cinco pestañas, consola global, terminal, listeners, acciones ADMIN, ruteo API, sesión, logout, autorización backend y accesibilidad.
+Controles: rol de menú normalizado; cinco secciones y consola única; listener guard; sin IDs duplicados; acciones frontend ADMIN alineadas con mapa y switch; assertDeveloperSession protege todo excepto ping.
+Hallazgos: logout no revoca token ni limpia currentUser; el modal no se cierra al mostrar login; faltan semántica y gestión de foco del diálogo; ARIA de pestañas incoherente; errores siempre muestran HTTP 500.
+Nuevas tareas: AUG-147 a AUG-150. VAL-31 planificada, no ejecutada.
+Límites: sin navegador, lector de pantalla, pruebas de sesión/logout, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés ni E2/E3. Sin cambios de aplicación.
+Siguiente: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.

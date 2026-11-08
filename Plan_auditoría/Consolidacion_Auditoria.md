@@ -22,18 +22,18 @@ El plan contiene 38 unidades AUD-T. Según la tabla de estado vigente:
 
 | Estado documental | Unidades | Cantidad |
 |---|---|---:|
-| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 a AUD-T-011, AUD-T-012 a AUD-T-021 y AUD-T-023 a AUD-T-038 | 35 |
+| Auditoría estática E1 completada, con hallazgos y/o validaciones pendientes | AUD-T-003 a AUD-T-011, AUD-T-012 a AUD-T-022 y AUD-T-023 a AUD-T-038 | 36 |
 | Auditada parcialmente | AUD-T-002 | 1 |
-| Por auditar | AUD-T-001 y AUD-T-022 | 2 |
+| Por auditar | AUD-T-001 | 1 |
 | **Total** | **AUD-T-001 a AUD-T-038** | **38** |
 
-**Corrección de continuidad:** AUD-T-001 y AUD-T-022 siguen POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 a AUD-T-011, AUD-T-012 a AUD-T-021 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
+**Corrección de continuidad:** AUD-T-001 sigue POR AUDITAR; AUD-T-002 está auditada parcialmente. AUD-T-003 a AUD-T-011, AUD-T-012 a AUD-T-022 y AUD-T-023 a AUD-T-038 tienen E1 completada, pero conservan hallazgos y validaciones funcionales pendientes.
 
 AUD-T-038 — seguridad del almacenamiento local y ciclo de datos de usuario — se auditó en AUD-20261107-S020. Su E1 está completada; permanecen hallazgos y validaciones funcionales/privacidad pendientes.
 
 ## 3. Inventario consolidado de tareas AUG
 
-El archivo Plan_auditoría/Aug_Tareas.md contiene **145 identificadores AUG únicos** dentro del rango AUG-001 a AUG-146. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
+El archivo Plan_auditoría/Aug_Tareas.md contiene **149 identificadores AUG únicos** dentro del rango AUG-001 a AUG-150. El identificador AUG-015 no aparece en el registro consultado. No se debe crear, inferir, renumerar ni reutilizar AUG-015 sin recuperar evidencia histórica.
 
 Algunos encabezados AUG se repiten en el archivo porque las auditorías posteriores agregaron adendas a tareas existentes. Esas repeticiones no constituyen tareas nuevas. Deben conservarse las adendas y sus referencias históricas.
 
@@ -58,6 +58,7 @@ Algunos encabezados AUG se repiten en el archivo porque las auditorías posterio
 | Reportes y sugerencias de cortes | AUG-075 a AUG-081 | Sesión/identidad de actor, prevención de stored XSS, adjuntos de reporte, vínculo reportId/vehículo/corte, carga y privacidad de imágenes, concurrencia/idempotencia y validación de payloads |
 | Módulo Problemas y Soluciones (PyS) | AUG-082 a AUG-087; adendas AUG-040/AUG-057 | Stored XSS, autenticación/identidad, imágenes Drive, esquema/ID/idempotencia, límites/URL, contribuciones concurrentes y caché/rendimiento |
 | Impresión y ficha técnica | AUG-140 a AUG-146; adenda AUG-096 | Márgenes, paginación, Check Engine, recursos, orden de tarjetas, QR, selector y trazabilidad histórica |
+| Panel de desarrollador y sesión administrativa | AUG-147 a AUG-150 | Revocación de sesión, limpieza de estado/overlays, diálogo accesible, pestañas accesibles y diagnóstico de errores HTTP |
 
 El índice no reemplaza los criterios de aceptación detallados de Aug_Tareas.md. La implementación debe seguir consultando cada ficha completa, incluidas sus adendas, evidencias, decisiones y dependencias.
 
@@ -415,4 +416,16 @@ Sesión AUD-20261108-S036 | Checkpoint AUD-CP-0036 | HEAD f9c47bad48fa8050a4acac
 - VAL-30: Carta/márgenes; 0–7 imágenes y relaciones de aspecto; metadatos/QR/foto/notas por página; orden/prioridad; testigo/Check Engine; carga/fallo/offline; privacidad/escaneo QR; selector; XSS; popup/diálogo.
 - No se ejecutaron Node/lint, navegador, impresión, PDF, QR real, red externa, Apps Script, HTTP, Spreadsheet, Drive, concurrencia ni despliegues. No se modificó código ni datos productivos.
 - Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+================================================================================
+
+## 14. Actualización de cobertura — AUD-T-022
+- AUD-T-022 tiene E1 estática completada; H-AUD-022-001 a H-AUD-022-004 abiertos; VAL-31 planificada, no ejecutada.
+- Cobertura: 38 unidades; 36 E1 completadas, 1 parcial y 1 por auditar (AUD-T-001).
+- Catálogo AUG: 149 IDs únicos dentro de AUG-001 a AUG-150; AUG-015 continúa ausente y no se infiere ni renumera.
+- Hallazgos: logout no revoca ActiveSessions ni limpia currentUser; modal no se cierra al mostrar login; diálogo sin semántica/foco accesible; tabs mezclan radio y tablist sin ARIA coherente; consola reporta siempre HTTP 500.
+- Nuevas tareas: AUG-147 a AUG-150. VAL-31 planificada, no ejecutada.
+- Controles: autorización backend por sesión/rol; acciones frontend ADMIN alineadas con el dispatch; cinco secciones y consola única; listener guard; sin IDs HTML duplicados.
+- VAL-31: logout/revocación, expiración, cambio de cuenta, autorización de roles, pestañas/diálogo con teclado y lector de pantalla, History API, listeners, errores HTTP/red y responsive.
+- No se ejecutaron navegador, lector de pantalla, pruebas de sesión, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia ni despliegues. Sin cambios funcionales.
+- Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
 ================================================================================

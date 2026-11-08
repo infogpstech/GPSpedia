@@ -1,50 +1,23 @@
 ================================================================================
-CHECKPOINT INICIAL — AUD-CP-0039
-Fecha: 2026-11-08 | Sesión: AUD-20261108-S039
-Tarea: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
-Repositorio: infogpstech/GPSpedia
-Rama de trabajo autorizada: GPSpedia2.2.5_work
-HEAD inicial confirmado: 3339694150823f8f8adca6ffbad6211c708a8960
-Árbol inicial confirmado: ebe322745a0458df1dbf749a28517ce97e36eb08
-Rama base protegida por procedimiento: GPSpedia2.2.5
-HEAD base confirmado: d9acc68d889985c2e2f42fe3a02e502efc86ead1
-Estado inicial: AUD-T-020 E1 estática completada; siguiente unidad AUD-T-021 POR AUDITAR. Rama base sin cambios.
-Alcance E1: ui.js/exportVehiclePrintSheet(), estilos y marcado de la ventana de impresión, paginación, agrupación adaptativa, recursos de imagen, QR, cabecera, metadatos, pies, sanitización de contenido y enlace desde el modal. Contrastar Tarea 2.2, Bloque 7 y README, así como los commits históricos 6d7fbb9c, 199ee4be, cbbcb0cb y 04c86ce6.
-Archivos funcionales principales y SHA en HEAD:
-- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
-- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
-- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
-- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
-- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
-- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
-- assets referenciados: icon-v3-512x512.png (c5990f19eb0acfa13f831fe0288bdb82947d3350); tracklink_logo.png (edb1904e3faba5bbe11601f6a2dd030dad4ce012).
-Documentos y respaldos exactos (blob SHA antes de iniciar esta tarea):
-- Auditoría.txt: 3fb6a6bd8e607e371d56e0740d0ed32509255193
-- Tareas.txt: 6b896fb94407fc1a537413cd43f102df5b1ca41c
-- ChangesLogs.txt: dd83a56a2f5f2d45aa514d474470fa1c1ab57e0d
-- Plan_auditoría/Plan_Auditoria.md: 7d3d8b55016cb9cd0c830eba7871e31156d1a111
-- Plan_auditoría/Aug_Tareas.md: 910943665889219e1d013d4bcd84c42bce99b5ae
-- Plan_auditoría/Consolidacion_Auditoria.md: fa83e5065a53124caccb066af80e446ba457c9a6
-- contexto_personal.md: 16ec7c7a8cac74f4cd004e4a2b8e07b2d2dcef5e
-- README.md: 4a944ac44602152a1a4ad8e985dcf12e4e33331c
-- checkpoint.md: 9c1bb04b6defd0d418513a4caa08333f59ef1fc3
-Método: E1 estática y lectura comparativa de requisitos/historial. No ejecutar navegador, impresión real, PDF, Node/lint, Apps Script, servicios, Drive ni Spreadsheet. No modificar código, estilos, assets, contratos, datos productivos ni deployments. Registrar hallazgos antes de cualquier implementación.
-Reconocimiento de continuidad: antes del checkpoint se realizó recuperación de contexto y una exploración estática de solo lectura para confirmar alcance y localizar fuentes; no se alteró el repositorio. La revisión formal E1 se reinicia desde este checkpoint y revalida las observaciones.
-Riesgos heredados conocidos por revisar, no asumidos como hallazgos confirmados: diferencia documental de márgenes (README/Tarea 2.2: 10 mm; historial de impresión: 5 mm); cambio desde una página única hacia paginación adaptativa; falta histórica de pruebas de navegador/PDF.
-Siguiente acción: completar inspección formal línea por línea de exportVehiclePrintSheet y sus dependencias, contrastar los requisitos y registrar H-AUD-021/VAL-30 sin modificar código.
-================================================================================
-
-================================================================================
-CHECKPOINT FINAL — AUD-CP-0039
-Fecha: 2026-11-08 | Sesión: AUD-20261108-S039
-Tarea: AUD-T-021 — Ficha técnica imprimible, paginación y distribución adaptativa de imágenes.
-Estado final: E1 ESTÁTICA COMPLETADA; H-AUD-021-001 a H-AUD-021-009 abiertos; VAL-30 pendiente; AUG-140 a AUG-146 nuevas; AUG-096 ampliada.
-HEAD padre de la tarea: 3339694150823f8f8adca6ffbad6211c708a8960
-Árbol inicial: ebe322745a0458df1dbf749a28517ce97e36eb08
+CHECKPOINT FINAL — AUD-CP-0040
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S040
+Tarea: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+Estado final: E1 ESTÁTICA COMPLETADA; H-AUD-022-001 a H-AUD-022-004 abiertos; VAL-31 pendiente; AUG-147 a AUG-150 nuevas.
+HEAD padre de la tarea: 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b
+Árbol inicial: e0c80e7334378847c24e9ada5020248a539cb168
 Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
 Rama de trabajo: GPSpedia2.2.5_work
-Resultado: nueve hallazgos estáticos abiertos; siete tareas derivadas; una adenda de sanitización; ninguna corrección funcional.
-Archivos documentales modificados:
+Resultado: cuatro hallazgos estáticos; cuatro tareas derivadas; ninguna corrección funcional.
+Archivos documentales:
+- Auditoría.txt: 4cd34bf0f36a14637312bf6cabf7135c5a5b1613
+- Tareas.txt: faa67450d28adcc3dbf266c8ca77d654d4c3578e
+- Plan_auditoría/Plan_Auditoria.md: c83184c4310f7d77205fedcb2013bc058cb279ca
+- Plan_auditoría/Aug_Tareas.md: d61ddf32b43128a6fcab303b5db7ed32078b0332
+- Plan_auditoría/Consolidacion_Auditoria.md: d6e240109a2e69d9d6db1401f57152ff02f6d2a3
+- ChangesLogs.txt: 9275b1ce4a37a8f338700a9c9e2b36fdd707de22
+- contexto_personal.md: 3446ca971a90fab735361353cdcf9f7ce293fc65
+- checkpoint.md: este blob final.
+Respaldos exactos previos:
 - Auditoría.txt: 726ee69ac46f3ad603a8224a4d51e14f45e2ea31
 - Tareas.txt: d5f6e8a5517a233004e6add7814948ed49a632f7
 - Plan_auditoría/Plan_Auditoria.md: 2b2f5e15e28b14f378704929af2161164a7b0bca
@@ -52,28 +25,21 @@ Archivos documentales modificados:
 - Plan_auditoría/Consolidacion_Auditoria.md: d00c28a67cf54934f4a2579f914d9430f38e588b
 - ChangesLogs.txt: e3dcf4c3dffb556e2dce85d161be0b716ec99015
 - contexto_personal.md: 7065b6300baaca94fad5a4955d0497f0a6340e7c
-- checkpoint.md: este blob final se crea como último paso documental antes del único commit.
-Respaldos exactos previos a esta tarea (blobs Git originales):
-- Auditoría.txt: 3fb6a6bd8e607e371d56e0740d0ed32509255193
-- Tareas.txt: 6b896fb94407fc1a537413cd43f102df5b1ca41c
-- Plan_auditoría/Plan_Auditoria.md: 7d3d8b55016cb9cd0c830eba7871e31156d1a111
-- Plan_auditoría/Aug_Tareas.md: 910943665889219e1d013d4bcd84c42bce99b5ae
-- Plan_auditoría/Consolidacion_Auditoria.md: fa83e5065a53124caccb066af80e446ba457c9a6
-- ChangesLogs.txt: dd83a56a2f5f2d45aa514d474470fa1c1ab57e0d
-- contexto_personal.md: 16ec7c7a8cac74f4cd004e4a2b8e07b2d2dcef5e
-- checkpoint.md: 9c1bb04b6defd0d418513a4caa08333f59ef1fc3
-Checkpoint inicial AUD-CP-0039 creado como blob: 78e463793c425b686d0f80737b4fba584f07e2fd.
+- checkpoint.md: 85c871119d5722752b59f451a010b51cdd9ec806
+Checkpoint inicial: 987e5b953800708c4b35a226c1e788b85ba177da.
 Archivos funcionales auditados sin modificación:
 - ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
-- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
-- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
 - main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- auth.js: 2dc65f2e5903fc208ca14505053e82203a9dbd86
+- state.js: f2f18b66bdf72a999d6b83a7d2af4756eb07ba7f
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
 - style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
 - api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
-- Assets: icon-v3-512x512.png c5990f19eb0acfa13f831fe0288bdb82947d3350; tracklink_logo.png edb1904e3faba5bbe11601f6a2dd030dad4ce012.
-Validaciones ejecutadas: lectura estática de la función completa, disparador del modal, helpers de imagen/testigo/sanitización, estilos inline, recursos, requisitos, README, historial de cambios y commits fuente.
-Validaciones no ejecutadas: Node/lint, navegador, impresión física, PDF, QR real, pruebas móviles/responsive, recursos lentos/rotos/offline, XSS runtime, Apps Script, HTTP, Spreadsheet, Drive, migraciones, concurrencia, estrés, deployments y E2/E3. VAL-30 queda planificada.
-Sin cambios de código, CSS, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
-Commit único: docs(audit): complete AUD-T-021 printable technical sheet review; parent 3339694150823f8f8adca6ffbad6211c708a8960. SHA identificable en el historial después de publicar.
-Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/Auth.js: fc69357b655c023b5ab3f7dd72cdab6fbb1787ed
+Validaciones ejecutadas: lectura estática de acceso/rol, modal, cinco secciones, consola, listeners, referencias HTML, acciones frontend, mapa API, dispatch ADMIN, assertDeveloperSession, AUTH, ActiveSessions, estado en memoria, logout, estilos y commits históricos.
+Validaciones no ejecutadas: navegador, teclado real, lector de pantalla, logout/revocación real, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés, despliegues y E2/E3. VAL-31 queda planificada.
+Sin cambios de código, HTML, CSS, servicios, endpoints, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+Commit único: docs(audit): complete AUD-T-022 developer panel review; parent 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b.
+Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
 ================================================================================

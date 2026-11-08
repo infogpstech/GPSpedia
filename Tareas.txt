@@ -6431,3 +6431,23 @@ TAREAS DERIVADAS DE AUD-T-021 — DISEÑO/IMPLEMENTACIÓN/PRUEBAS PENDIENTES
 - AUG-146: corregir la referencia de commits históricos de AUD-T-021 en Plan_Auditoria.md.
 - Adenda AUG-096: escapar/sanitizar título, metadatos, tipo de corte, VIN, versiones y URLs de imagen en la ventana de impresión.
 ================================================================================
+
+================================================================================
+REGISTRO DE AUDITORÍA — AUD-T-022
+Fecha: 2026-11-08 | Sesión AUD-20261108-S040 | Checkpoint AUD-CP-0040
+Estado: E1 ESTÁTICA COMPLETADA; H-AUD-022-001 a H-AUD-022-004 abiertos; VAL-31 planificada, no ejecutada.
+- Alcance: menú y visibilidad por rol; modal; cinco secciones; consola/terminal; listeners; acciones administrativas; ruteo API; autorización ADMIN; logout/estado/sesión; accesibilidad.
+- Controles confirmados: acceso de menú por Privilegios normalizado; cinco secciones únicas; consola única global; listeners protegidos contra duplicación; IDs HTML sin duplicados; acciones ADMIN del frontend presentes en el mapa y switch backend; assertDeveloperSession protege todas las acciones excepto ping y consulta sesión/rol en servidor.
+- Hallazgos: logout elimina solo localStorage y no limpia currentUser ni revoca ActiveSessions; el modal administrativo no se cierra al mostrar login; falta semántica/foco de diálogo; tabs mezclan radio y tablist sin ARIA coherente; errores se registran siempre como HTTP 500.
+- Tareas nuevas: AUG-147 a AUG-150.
+- VAL-31 planificada para roles/autorización, logout/revocación, expiración, cambio de cuenta, teclado/lector de pantalla, foco/History API, listeners, acciones, errores HTTP/red y responsive. No ejecutada.
+- No se modificaron archivos funcionales, CSS, HTML, servicios, endpoints, permisos, contratos, configuración, assets ni datos productivos. Sin navegador, HTTP, Apps Script, Drive, Spreadsheet, Node/lint ni despliegue.
+- Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.
+================================================================================
+
+TAREAS DERIVADAS DE AUD-T-022 — DISEÑO/IMPLEMENTACIÓN/PRUEBAS PENDIENTES
+- AUG-147: revocar sesión en servidor y limpiar estado/overlays al cerrar sesión.
+- AUG-148: dotar al modal de desarrollador de semántica de diálogo y gestión accesible del foco/teclado.
+- AUG-149: unificar el patrón accesible de las cinco pestañas y sus paneles.
+- AUG-150: conservar el status HTTP real y distinguir errores de red, HTTP y aplicación en la consola.
+================================================================================

@@ -1731,3 +1731,31 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
 - **Estado:** NUEVA; corrección documental pendiente.
 
 - 2026-11-08 — AUD-T-021: AUG-140 a AUG-146 nuevas; AUG-096 ampliada. Inventario: 145 IDs únicos dentro de AUG-001 a AUG-146; AUG-015 continúa ausente y no se infiere ni renumera.
+
+## Hallazgos derivados de AUD-T-022 — 2026-11-08
+
+### AUG-147 — Revocar sesión en servidor y limpiar estado/overlays al cerrar sesión
+- **Origen:** H-AUD-022-001. **Prioridad:** Alta.
+- **Problema:** auth.logout() elimina solo la clave local y muestra login; no limpia state.currentUser ni elimina el registro de ActiveSessions. getDeveloperSessionPayload() usa el estado en memoria, y window.state/window.ui están expuestos. El modal de desarrollador tampoco se oculta al mostrar login.
+- **Criterios:** crear una acción AUTH de logout/revocación que valide userId+sessionToken y elimine exclusivamente la sesión activa correspondiente bajo LockService; limpiar currentUser y estado transitorio en cliente; borrar almacenamiento local; cerrar modales y overlays; ocultar accesos de rol; rechazar el token revocado en AUTH y ADMIN; probar logout, expiración, cierre remoto, cambio de cuenta y acciones después de logout.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-148 — Implementar semántica accesible y gestión de foco del modal de desarrollador
+- **Origen:** H-AUD-022-002. **Prioridad:** Media.
+- **Problema:** #dev-tools-modal no declara dialog/aria-modal/aria-labelledby; el cierre es un span sin nombre ni teclado; no hay foco inicial, contención, restauración ni Escape.
+- **Criterios:** botón real con aria-label; role=dialog, aria-modal y nombre asociado; foco inicial al abrir; focus trap; restauración al disparador; Escape y botón de cierre coordinados con History API; pruebas con teclado y lector de pantalla.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-149 — Unificar la semántica accesible de pestañas y paneles del desarrollador
+- **Origen:** H-AUD-022-003. **Prioridad:** Media.
+- **Problema:** input radio y label role=tab se mezclan dentro de tablist; faltan aria-controls/aria-selected y el panel referencia al input en lugar de un tab semánticamente consistente.
+- **Criterios:** elegir pestañas ARIA completas o grupo nativo de radios; relacionar control/panel; expresar selección y foco; implementar flechas/Home/End si se elige tablist; validar las cinco secciones con teclado y lector de pantalla.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-150 — Reportar correctamente los errores HTTP, de red y de aplicación en consola ADMIN
+- **Origen:** H-AUD-022-004. **Prioridad:** Baja.
+- **Problema:** las rutas individual y por lotes asignan literalmente HTTP 500 a cualquier excepción; en la ruta por lotes ambas ramas del ternario devuelven 500.
+- **Criterios:** propagar status HTTP estructurado desde routeAction; distinguir error HTTP, fallo sin respuesta, JSON inválido y status:error de aplicación; no inventar status; probar 401, 403, 404, 500, desconexión, timeout, JSON inválido y error lógico.
+- **Estado:** NUEVA; diseño, implementación y pruebas pendientes.
+
+- 2026-11-08 — AUD-T-022: AUG-147 a AUG-150 nuevas. Inventario: 149 IDs únicos dentro de AUG-001 a AUG-150; AUG-015 continúa ausente y no se infiere ni renumera.

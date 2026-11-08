@@ -4341,3 +4341,17 @@ Archivos documentales modificados:
 - ChangesLogs.txt: registro de documentación añadido al final.
 - checkpoint.md: checkpoint inicial AUD-CP-0039 y final AUD-CP-0039; el checkpoint final se crea como último blob documental.
 No se modificaron ui.js, rich-text.js, index.html, main.js, style.css, api-config.js, assets, servicios, endpoints, contratos, configuración ni datos productivos. Sin navegador, impresión, PDF, Apps Script, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-022
+Fecha: 2026-11-08 | Sesión AUD-20261108-S040 | Checkpoint AUD-CP-0040
+Archivos documentales:
+- Auditoría.txt: líneas 10948–11044. E1 AUD-T-022 y hallazgos H-AUD-022-001 a 004.
+- Tareas.txt: líneas 6436–6454. Registro AUD-T-022, VAL-31 y AUG-147 a AUG-150.
+- Plan_auditoría/Plan_Auditoria.md: fila AUD-T-022 actualizada en línea 73; iteración 44 en líneas 920–929.
+- Plan_auditoría/Aug_Tareas.md: líneas 1735–1762. AUG-147 a AUG-150.
+- Plan_auditoría/Consolidacion_Auditoria.md: cobertura actualizada a 36 E1, 1 parcial y 1 pendiente; sección 14 en líneas 421–431.
+- contexto_personal.md: líneas 516–525.
+- ChangesLogs.txt: este registro documental.
+- checkpoint.md: checkpoint inicial y final AUD-CP-0040; final como último blob documental.
+No se modificaron ui.js, main.js, auth.js, state.js, index.html, style.css, api-config.js, Services/admin.js ni Services/Auth.js. Sin navegador, lector de pantalla, logout/revocación funcional, HTTP, Apps Script, Drive, Spreadsheet, Node/lint ni despliegues. Sin merge ni despliegue.

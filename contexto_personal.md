@@ -512,3 +512,13 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - Nuevas tareas AUG-140 a AUG-146; adenda AUG-096. Cobertura consolidada: 35 E1, 1 parcial y 2 por auditar.
 - No se modificó código, CSS, assets, servicios, endpoints, contratos, configuración, datos productivos, Drive, Spreadsheet ni deployments. No hubo navegador, impresión, PDF ni QR real.
 - Siguiente unidad: AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo.
+
+## Continuidad de auditoría — AUD-T-022
+- Fecha: 2026-11-08. Sesión AUD-20261108-S040; checkpoint AUD-CP-0040.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b; árbol e0c80e7334378847c24e9ada5020248a539cb168; base GPSpedia2.2.5 en d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-022 — Panel de desarrollador, navegación por secciones y modal administrativo: E1 estática completada; H-AUD-022-001 a H-AUD-022-004 abiertos; VAL-31 pendiente.
+- Hallazgos: logout no revoca ActiveSessions ni limpia currentUser; modal permanece al mostrar login; faltan semántica y gestión de foco de diálogo; ARIA de pestañas incoherente; errores de consola siempre se muestran como HTTP 500.
+- Controles: backend ADMIN valida sesión activa y rol desde servidor para todas las acciones excepto ping; acciones del panel alineadas con mapa y dispatch; cinco secciones; consola única; listeners protegidos; sin IDs HTML duplicados.
+- Nuevas tareas AUG-147 a AUG-150. Cobertura: 36 E1, 1 parcial y 1 pendiente (AUD-T-001). Inventario AUG: 149 IDs; AUG-015 sigue ausente.
+- No se modificó código, HTML, CSS, servicios, endpoints, permisos, contratos, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin navegador, lector de pantalla, pruebas de logout, HTTP ni Apps Script.
+- Siguiente unidad: AUD-T-001 — Recuperación del App Shell, arranque, inicialización y estabilización general.

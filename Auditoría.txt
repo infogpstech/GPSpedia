@@ -10943,3 +10943,101 @@ No se ejecutó ningún caso de VAL-30.
 E1 estática. No se ejecutaron Node/lint, navegador, impresión física, generación PDF, escaneo QR, pruebas visuales responsive, red externa, Apps Script, HTTP, Spreadsheet, Drive, migraciones, concurrencia, estrés ni E2/E3. No se modificaron código, estilos, assets, servicios, endpoints, contratos, configuración, datos productivos ni deployments.
 Resultado: E1 ESTÁTICA COMPLETADA; H-AUD-021-001 a H-AUD-021-009 abiertos; VAL-30 planificada; AUG-140 a AUG-146 nuevas; AUG-096 ampliada. Sin cambios funcionales.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-022: PANEL DE DESARROLLADOR, NAVEGACIÓN POR SECCIONES Y MODAL ADMINISTRATIVO
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S040 | Checkpoint: AUD-CP-0040
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: 8f5d6d74f8f6b156ef67f3b21b6c0eeacf59d07b | árbol: e0c80e7334378847c24e9ada5020248a539cb168
+Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin modificaciones).
+
+1. ALCANCE Y MÉTODO
+E1 estática del acceso, modal administrativo, cinco secciones, consola compartida, terminal, listeners, acciones del panel, ruteo API, autorización ADMIN, ciclo de sesión/logout y accesibilidad.
+Archivos revisados:
+- index.html:46, 213–466 (menú, modal, radios, pestañas, paneles, controles y consola).
+- ui.js:3178–3268 (setupModal/openDevTools); 3272–4705 (initAdminPanelListeners, consola, diagnóstico, terminal, acciones, respaldos, VIN, limpieza y payload de sesión); 6230–6305 (showLoginScreen/showApp).
+- main.js:27–35 (exposición global), 190–260 (popstate) y 554–557 (logout).
+- auth.js:12–18, 125–219 y 223–241; state.js:1–40.
+- api-config.js:18–118; Services/admin.js:73–104 y 586–738; Services/Auth.js:204–232, 280–363 y 377–394.
+- style.css:1678–1688, 2373–2478, 2691–2771 y 2893–2955.
+Se contrastaron los commits ancla da7c146c (reorganización del panel), fd534545 (acabado responsive) y 9b1f210c (consola global), además del historial documental existente.
+La revisión es estática. No se ejecutaron navegador, lector de pantalla, teclado real, pruebas de sesión, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia ni despliegues.
+
+2. CONTROLES POSITIVOS CONFIRMADOS
+- showApp normaliza Privilegios y muestra el acceso al panel únicamente cuando el rol equivale a Desarrollador; main.js conecta el botón con ui.openDevTools() y cierra el menú lateral.
+- El modal contiene cinco secciones únicas: Diagnóstico, Respaldos, Base de datos, Imágenes y Drive, y Sistema.
+- Los cinco radios comparten el mismo name y sus IDs corresponden a las etiquetas y paneles CSS; el panel de Diagnóstico se selecciona inicialmente.
+- La consola es una única instancia compartida fuera de los cinco paneles. Salida, copia, terminal y progreso conservan sus IDs y consumidores.
+- setupModal registra el listener del botón de cierre una sola vez mediante dataset.listenerSet y usa History API; el listener popstate de main.js cierra los .info-modal visibles.
+- initAdminPanelListeners usa window.adminListenersAttached para evitar registrar repetidamente todos los listeners. La suscripción a métricas también se crea una sola vez.
+- La salida de consola creada por log() usa textContent; las tarjetas de diagnóstico se construyen con createElement/textContent.
+- Se contrastaron las acciones administrativas invocadas por ui.js con ACTION_TO_SERVICE_MAP y el switch de Services/admin.js: no se encontró discrepancia entre las acciones ADMIN identificadas y sus casos de backend.
+- Services/admin.js ejecuta assertDeveloperSession(payload) antes del switch para toda acción salvo ping. La validación coteja userId y sessionToken con ActiveSessions y obtiene el rol de Users en el servidor; no confía en un rol proporcionado por el navegador.
+- ping devuelve únicamente estado básico de disponibilidad y es la única acción ADMIN que evita la validación de sesión en este dispatch.
+- Se comprobaron 160 IDs HTML sin duplicados. Los siete IDs audit-* no encontrados por el cruce estático pertenecen al modal de auditoría Drive y no se clasifican como controles ausentes del panel de desarrollador.
+- No se modificaron código, HTML, CSS, servicios, endpoints, permisos, contratos, configuración, assets ni datos.
+
+3. HALLAZGOS
+
+H-AUD-022-001 — ALTA — Logout local no revoca la sesión administrativa ni limpia el estado en memoria.
+Evidencia:
+- main.js:554–557 llama auth.logout() desde el botón de cierre de sesión.
+- auth.js:237–241 elimina únicamente gpsepedia_session de localStorage y llama showLoginScreen(); no ejecuta una acción remota de logout ni setState({currentUser:null}).
+- state.js:6–8 mantiene currentUser en el estado; setState() realiza una fusión superficial y no lo limpia automáticamente.
+- auth.js:14–17 guarda el usuario en el estado en memoria al iniciar sesión.
+- Services/Auth.js:204–225 solo despacha login y validateSession; no existe acción logout/revoke. El login inserta el token en ActiveSessions (aprox. 328–333), y validateSession sigue considerando válido el par userId/token si permanece en esa hoja.
+- ui.js:4694–4701 obtiene el payload administrativo desde getState().currentUser y devuelve ID y SessionToken, no desde localStorage.
+- main.js:27–35 expone window.state y window.ui; por tanto, el estado previo sigue accesible después del logout local.
+- Services/admin.js:73–104 valida contra ActiveSessions; si el registro no se revoca, el token anterior continúa siendo aceptable para acciones protegidas.
+- ui.js:6230–6248 showLoginScreen() no oculta ni cierra #dev-tools-modal ni otros .info-modal. style.css:1678–1682 asigna z-index 2100 a .info-modal, mientras #login-modal usa z-index 2000 (style.css:777–789); si el panel está abierto cuando se invoca showLoginScreen(), el modal administrativo permanece por encima del login.
+Impacto: quitar la sesión del almacenamiento local no invalida la credencial que permanece en memoria ni el registro servidor. El usuario que recibe el navegador después del logout puede encontrar el panel aún visible si el cierre se produjo desde otro flujo; además, el estado anterior sigue expuesto mediante window.state y puede volver a alimentar getDeveloperSessionPayload(). La autorización backend es correcta, pero no puede rechazar un token que nunca fue revocado. No se ejecutó una explotación; el impacto se deduce de las rutas estáticas conectadas.
+Criterios: implementar revocación server-side de la sesión activa bajo control de concurrencia; limpiar currentUser y datos transitorios de sesión en el cliente; cerrar y ocultar modales/overlays administrativos al salir o expirar; asegurar que todas las llamadas posteriores al logout carezcan de token; probar logout manual, expiración, cierre remoto y cambio de cuenta; comprobar que el token anterior es rechazado por AUTH y ADMIN.
+Tarea derivada: AUG-147.
+
+H-AUD-022-002 — MEDIA — El modal de desarrollador carece de semántica de diálogo y gestión de foco accesible.
+Evidencia:
+- index.html:213–215 declara #dev-tools-modal como div sin role="dialog", aria-modal="true" ni aria-labelledby; el encabezado no tiene un ID asociado.
+- El control de cierre es un span.info-close-btn (index.html:215), no un button; no tiene type, aria-label ni tabindex.
+- ui.js:3178–3206 registra únicamente click en el cierre y navegación History API; no se observa gestión de foco inicial, contención del foco, restauración del foco al disparador ni cierre por Escape.
+- main.js:190–260 cierra overlays al recibir popstate, pero eso no sustituye el control de teclado ni el patrón de diálogo accesible.
+Impacto: lectores de pantalla no reciben una declaración explícita de diálogo modal ni su nombre accesible; el control de cierre no es operable de forma fiable mediante teclado y el foco puede desplazarse fuera del modal.
+Criterios: usar botón real con nombre accesible; declarar role/aria-modal/aria-labelledby; mover el foco al abrir; mantenerlo dentro mientras el modal esté abierto; restaurarlo al disparador al cerrar; soportar Escape sin crear ciclos de History API; comprobar teclado y lector de pantalla.
+Tarea derivada: AUG-148.
+
+H-AUD-022-003 — MEDIA — Las pestañas mezclan semántica de radio y tablist sin relaciones ARIA completas.
+Evidencia:
+- index.html:219–223 usa cinco input[type=radio] con name compartido.
+- index.html:226–240 declara nav role="tablist" y asigna role="tab" a elementos label.
+- index.html:246, 274, 287, 398 y 446 declara role="tabpanel" y aria-labelledby con el ID del input radio.
+- No se encontraron aria-controls ni aria-selected en las etiquetas de pestaña; el elemento con role=tab es el label y el elemento referenciado por aria-labelledby es el input.
+- style.css:2396–2405 oculta visualmente los radios mediante recorte/clipping, mientras el estilo activo se calcula con :checked.
+Impacto: el estado visual funciona mediante CSS, pero la relación semántica expuesta a tecnologías de asistencia no identifica de forma coherente pestaña seleccionada, panel controlado y nombre del panel. La mezcla de roles puede provocar anuncios inconsistentes; no se ejecutó lector de pantalla.
+Criterios: escoger un patrón único: pestañas reales con button/role=tab, aria-selected, aria-controls, tabindex roving y panel relacionado; o grupo nativo de radios sin roles tablist/tab. Definir navegación con flechas, Home/End y foco visible; verificar cinco secciones en teclado y lector de pantalla.
+Tarea derivada: AUG-149.
+
+H-AUD-022-004 — BAJA — La consola reporta HTTP 500 para errores que no necesariamente son HTTP 500.
+Evidencia:
+- ui.js:runAction(), ruta individual (aprox. 3650–3670), imprime literalmente «Código HTTP: 500» para cualquier excepción.
+- En la ruta por lotes (aprox. 3855–3878), la expresión error.message.includes('500') ? '500' : '500' devuelve siempre 500.
+- api-config.js:74–118 distingue errores HTTP, de red, JSON inválido y errores de aplicación, pero propaga Error sin un campo estructurado de status HTTP para que la consola lo consuma.
+Impacto: fallos de red, errores de parseo, rechazos de aplicación y respuestas HTTP 4xx se registran como 500, dificultando el diagnóstico y pudiendo atribuir falsamente el problema al servidor.
+Criterios: propagar status HTTP real en un error estructurado; distinguir ausencia de respuesta HTTP, error HTTP y error lógico de aplicación; no inventar 500 cuando no existe status; probar 401/403/404/500, timeout/red, JSON inválido y status:error.
+Tarea derivada: AUG-150.
+
+4. MATRIZ VAL-31 — PLANIFICADA, NO EJECUTADA
+1. Iniciar sesión como Desarrollador, abrir/cerrar el panel y verificar las cinco secciones, consola única y menú lateral.
+2. Probar usuarios sin privilegio y roles alternativos; verificar menú oculto y rechazo backend de todas las acciones ADMIN distintas de ping.
+3. Abrir el panel, cerrar sesión por el flujo normal y comprobar revocación de ActiveSessions, limpieza de currentUser, cierre de modales y rechazo del token anterior.
+4. Simular sesión expirada/revocada mientras el panel está abierto; verificar que el login quede visible y que ninguna acción pueda seguir usando el token anterior.
+5. Cambiar de cuenta en el mismo navegador; verificar que no se reutilice identidad, token, consola sensible ni estado administrativo de la cuenta anterior.
+6. Probar navegación por pestañas con teclado, lector de pantalla, foco visible, estado seleccionado y relación pestaña/panel.
+7. Probar apertura/cierre del diálogo con Tab/Shift+Tab, Escape, botón de cierre, History API y restauración del foco.
+8. Abrir/cerrar/reabrir repetidamente; comprobar ausencia de listeners duplicados, solicitudes concurrentes inesperadas y entradas residuales de historial.
+9. Probar cada acción visible del panel y contrastar respuesta, autorización, errores, progreso y logs; incluir respuestas 4xx, 5xx, JSON inválido y pérdida de red.
+10. Verificar escritorio, tablet y móvil en 760px/520px y tamaños inferiores; comprobar scroll independiente de paneles y consola.
+No se ejecutó ningún caso de VAL-31.
+
+5. LÍMITES Y RESULTADO
+E1 estática completada. No se ejecutaron navegador, pruebas de teclado/lector de pantalla, pruebas de logout o revocación, HTTP, Apps Script, Drive, Spreadsheet, Node/lint, concurrencia, estrés ni E2/E3. No se verificó el deployment actualmente activo.
+Resultado: H-AUD-022-001 a H-AUD-022-004 abiertos; VAL-31 planificada; AUG-147 a AUG-150 nuevas. Sin cambios funcionales ni de datos.
+================================================================================
