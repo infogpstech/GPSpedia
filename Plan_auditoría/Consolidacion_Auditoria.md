@@ -930,3 +930,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-082 a AUG-087 pendientes. AUG-040/AUG-043/AUG-057 mantienen adendas; H-AUD-035-001/003/006 y H-AUD-037-005 son antecedentes relacionados, no hallazgos duplicados.
 - Solo continuidad E1 y revisión documental. Sin parseo E2, mocks E3, navegador, FileReader, HTTP, Apps Script, Drive, Spreadsheet, cargas, concurrencia, XSS ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
+
+
+## 66. AUD-T-012 — continuidad E1 y revalidación de asociación PyS–vehículos
+- Sesión AUD-20261108-S093; checkpoint AUD-CP-0092; E1 2afdde923d14e4f3dd078d347007b15e5ab09b2b; árbol E1 06fc72da78912df18227e2f45ce0d33349fa7cc5; HEAD eb49d689dd1dec087db46ca11640942491ec6d9a; árbol actual f8db12e0bfeb1f9cced1bc083ce09fb353b7e7f9; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; ui.js, Services/feedback.js, api-config.js, main.js, navigation.js, Services/catalog.js e index.html conservan SHA idénticos a E1.
+- H-AUD-012-001 a 008 permanecen abiertos o vinculados: anti-ciclos se pierde tras asociación; pila modal duplicada/perdida; scroll no restaurado; callsites sin credenciales; relaciones sin validación unívoca/lock; título distinto; getPysData redundante; ausencia de suite Playwright reproducible.
+- AUG-088/AUG-089/AUG-090 pendientes; AUG-043/AUG-087/AUG-068 a 071 conservan sus ámbitos. No duplicar.
+- Solo continuidad E1 y revisión documental. Sin Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, permisos/deployment, gestos, modales ni pruebas multiusuario. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-013 — Tutoriales, reproducción, carga y ciclo de aprobación YouTube.

@@ -2421,3 +2421,53 @@ No se ejecutaron parseo E2, mocks E3, navegador, FileReader real, HTTP, Apps Scr
 
 ### Siguiente iteración
 AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
+
+
+## 77. Revalidación de continuidad — AUD-T-012
+
+**Sesión:** AUD-20261108-S093  
+**Checkpoint:** AUD-CP-0092  
+**E1 original:** 2afdde923d14e4f3dd078d347007b15e5ab09b2b (AUD-20261108-S030 / AUD-CP-0030)  
+**Árbol E1:** 06fc72da78912df18227e2f45ce0d33349fa7cc5  
+**HEAD revalidado:** eb49d689dd1dec087db46ca11640942491ec6d9a  
+**Árbol actual:** f8db12e0bfeb1f9cced1bc083ce09fb353b7e7f9  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-012-001 A 008 ABIERTOS O VINCULADOS A TAREAS EXISTENTES; VALIDACIÓN FUNCIONAL/INTEGRIDAD/NAVEGACIÓN PENDIENTE.
+
+### Alcance y comparación
+Se revalidaron asociación bidireccional PyS–vehículos, filtro de relaciones existentes, modelos_asociados, acordeón/carrusel, origen contextual, pila modal, retorno manual/History API, prevención de ciclos, permisos, contratos FEEDBACK y concurrencia. Archivos: ui.js, Services/feedback.js, api-config.js, main.js, navigation.js, Services/catalog.js e index.html.
+
+La comparación E1→HEAD muestra 63 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los siete archivos de código del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+
+### Revalidación de hallazgos y tareas
+- H-AUD-012-001 a H-AUD-012-008 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- La protección anti-ciclos se pierde después de asociar problema nuevo/existente desde un vehículo anidado porque los callbacks no propagan navOptions.originModal.
+- La pila modal puede duplicarse al re-renderizar PyS o perderse al editar vehículo sin reenviar navOptions.
+- No se conserva scroll horizontal/vertical ni estado del acordeón al regresar.
+- Call sites addVehicleToProblem/removeVehicleFromProblem siguen omitiendo userId/sessionToken exigidos por assertFeedbackSession.
+- Las mutaciones de relación siguen sin verificar existencia unívoca de vehículo ni usar LockService para serializar alta/baja.
+- El texto del acordeón sigue sin coincidir con el título exacto especificado.
+- Las lecturas getPysData continúan redundantes en consumidores distintos; H-AUD-012-007 se mantiene en AUG-087 sin duplicar.
+- No hay suite Playwright versionada que reproduzca asociación/anti-ciclos; la validación funcional continúa pendiente.
+- AUG-088 continúa pendiente para conservar contexto de origen durante asociaciones y callbacks.
+- AUG-089 continúa pendiente para evitar duplicación/pérdida de pila modal y restaurar scroll/estado.
+- AUG-090 continúa pendiente para validar relaciones de forma atómica y bajo lock.
+- AUG-043 mantiene la corrección de credenciales de sesión en callsites de asociación/desvinculación; AUG-087 mantiene deduplicación getPysData; AUG-068 a AUG-071 mantienen History API/overlays.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 63 commits posteriores, el diff global, los SHA exactos de los siete archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a prueba de navegación, integridad referencial o concurrencia.
+
+No se ejecutaron Playwright, navegador, HTTP, Apps Script, Spreadsheet real, concurrencia, pruebas de permisos/deployment, gestos, edición/descartar/guardar de modales ni pruebas multiusuario. No se modificó código, assets, endpoints, configuración, Drive, Spreadsheet ni datos productivos.
+
+### Siguiente iteración
+AUD-T-013 — Tutoriales, reproducción, carga y ciclo de aprobación YouTube.

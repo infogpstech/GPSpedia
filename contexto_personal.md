@@ -928,3 +928,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-082/AUG-083/AUG-084/AUG-085/AUG-086/AUG-087 pendientes; AUG-040/AUG-043/AUG-057 con adendas. AUD-T-012/013 mantienen su alcance.
 - No se ejecutaron parseo/mocks, navegador, FileReader, HTTP, Apps Script, Drive, Spreadsheet, cargas, concurrencia, XSS ni deployments. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos, búsqueda, carruseles y navegación anti-ciclo.
+
+
+## Continuidad AUD-T-012 — 2026-11-08 | AUD-20261108-S093
+- Revalidación AUD-20261108-S093/AUD-CP-0092; E1 histórica 2afdde923d14e4f3dd078d347007b15e5ab09b2b (AUD-20261108-S030/AUD-CP-0030); HEAD eb49d689dd1dec087db46ca11640942491ec6d9a; árbol actual f8db12e0bfeb1f9cced1bc083ce09fb353b7e7f9; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. ui.js, Services/feedback.js, api-config.js, main.js, navigation.js, Services/catalog.js e index.html conservan exactamente sus SHA E1.
+- H-AUD-012-001 a 008 permanecen abiertos o relacionados: pérdida anti-ciclos, pila modal, scroll, credenciales, integridad/lock de relaciones, título, lecturas repetidas y pruebas reproducibles.
+- AUG-088/AUG-089/AUG-090 pendientes; AUG-043/AUG-087/AUG-068 a 071 mantienen sus tareas. Sin hallazgos ni tareas nuevas.
+- No se ejecutaron Playwright, navegador, HTTP, Apps Script, Spreadsheet, concurrencia, permisos, gestos, modales ni pruebas multiusuario. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-013 — Tutoriales, reproducción, carga y ciclo de aprobación YouTube.
