@@ -702,3 +702,47 @@ No se modificaron archivos de aplicación, CSS, HTML, servicios, endpoints, conf
 Commit único esperado: docs(audit): verify AUD-T-016 continuity; parent 39d35bbe4bb0e6497ab444ced3afae62b679724c.
 Siguiente unidad: AUD-T-017 — revalidación de continuidad E1.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0056
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S057
+Tarea: AUD-T-017 — revalidación de continuidad E1 de gestión colaborativa de años y validación comunitaria.
+Estado inicial observado: E1 histórica completada; pendiente confirmar ausencia de deriva funcional y registrar continuidad.
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work | HEAD inicial: 75ba652774610832dd4de1db86e40d75c4ef9484 | Árbol: 8bea66b3d9e49d203410566111a87615b1796f9b.
+Rama base: GPSpedia2.2.5 | HEAD: d9acc68d889985c2e2f42fe3a02e502efc86ead1; sin cambios.
+Alcance: ui.js, offline.js, api-config.js, Services/feedback.js y artefactos de esquema Spreadsheet.
+Respaldos exactos (blob SHA antes de esta documentación):
+- Plan_auditoría/Plan_Auditoria.md: 1a2dc923dd06b2eba2fc7fb2aaf0bc7526be78fa
+- Plan_auditoría/Consolidacion_Auditoria.md: 8d1bd967d01dbfbb50d9ab813ad3afdde0ff4faa
+- ChangesLogs.txt: 6f39a102de52557a81f57ee1fee117ace16109d2
+- contexto_personal.md: bbef474dce1288dc1bde3c3c6686c50e6dc3c470
+- checkpoint.md: f16ee18a085994aeb06ffb8d21fda6b375275da1
+Comparación Git y revisión estática de identidad SHA realizadas; no se ejecutaron pruebas funcionales ni operaciones productivas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0056
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S057
+Tarea: AUD-T-017 — revalidación de continuidad E1.
+Estado final: continuidad E1 confirmada; H-AUD-017-001 a 007 abiertos; AUG-106 a AUG-112 pendientes; VAL-26 pendiente. Sin hallazgos ni tareas nuevas.
+HEAD padre: 75ba652774610832dd4de1db86e40d75c4ef9484; árbol inicial 8bea66b3d9e49d203410566111a87615b1796f9b. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+Comparación: E1 11d617cbf6401748a017fbe69f89ab63fa08800e → HEAD actual 75ba652774610832dd4de1db86e40d75c4ef9484; 21 commits posteriores; únicamente ocho documentos cambiaron. Los archivos de aplicación y esquema del alcance conservan SHA idénticos:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Spreadsheet (tree): 527317d85bbdbfb3ceaf555c6ddef83aea3d8812
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- Spreadsheet/Text.txt: 8b137891791fe96927ad78e64b0aad7bded08bdc
+Documentos modificados:
+- Plan_auditoría/Plan_Auditoria.md
+- Plan_auditoría/Consolidacion_Auditoria.md
+- ChangesLogs.txt
+- contexto_personal.md
+- checkpoint.md (este blob final documental).
+No se modificaron Auditoría.txt, Tareas.txt ni Plan_auditoría/Aug_Tareas.md: no hay hallazgos ni tareas nuevos. H-AUD-017-007 sigue abierto respecto a la ausencia de AUD-T-016 en Auditoría.txt.
+No se modificaron archivos de aplicación, servicios, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. No se ejecutaron navegador, IndexedDB, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia, despliegue ni E2/E3. Sin merge ni despliegue.
+Commit único esperado: docs(audit): verify AUD-T-017 continuity; parent 75ba652774610832dd4de1db86e40d75c4ef9484.
+Siguiente unidad: AUD-T-018 — revalidación de continuidad E1.
+================================================================================

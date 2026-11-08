@@ -1169,3 +1169,20 @@ Archivos funcionales con identidad SHA comprobada:
 - add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
 No se ejecutaron navegador, mediciones WCAG, zoom real, lectores de pantalla, Android/iOS, PWA standalone, rotación ni E2/E3. Sin cambios funcionales, configuración, datos productivos, Drive, Spreadsheet, deployments, merge ni despliegue.
 Siguiente unidad secuencial: AUD-T-017 — Gestión colaborativa de años y validación comunitaria; revalidar continuidad E1.
+
+
+## 41. Continuidad verificada — AUD-T-017
+Sesión AUD-20261108-S057 | Checkpoint AUD-CP-0056 | HEAD E1 11d617cbf6401748a017fbe69f89ab63fa08800e | árbol E1 f2fb8eee6b69ad0542659f152aa484ada148d9dd | HEAD actual 75ba652774610832dd4de1db86e40d75c4ef9484 | árbol actual 8bea66b3d9e49d203410566111a87615b1796f9b | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 histórica de AUD-T-017 ya estaba completada. La comparación Git confirma 21 commits posteriores, con cambios exclusivamente en ocho documentos. Los cuatro archivos de aplicación y los tres artefactos de esquema Spreadsheet del alcance conservan exactamente sus SHA históricos; no hay deriva funcional/documental dentro del alcance de esta unidad.
+Se revalidan H-AUD-017-001 a H-AUD-017-007 sin evidencia de corrección en los artefactos auditados. Se mantienen los riesgos previamente descritos: límite inferior ausente en colisión backend; marcado prematuro y caché no individualizada en IndexedDB; identidad anónima regenerable/controlada por cliente; banner acoplado a onload; esquema auxiliar no documentado; y omisión histórica de AUD-T-016 en Auditoría.txt. Esta revalidación no inspecciona ni modifica datos vivos de Spreadsheet/Drive.
+AUG-106 a AUG-112 continúan pendientes; VAL-26 pendiente. No se crean hallazgos ni tareas duplicadas. La Tarea 17 conserva su estado histórico COMPLETADA; E1 estática no certifica validación funcional.
+Archivos/artefactos con identidad SHA comprobada:
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- offline.js: c68e8698c74ef45a1c9bb534c6b2be77df817c34
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- Spreadsheet (tree): 527317d85bbdbfb3ceaf555c6ddef83aea3d8812
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- Spreadsheet/Text.txt: 8b137891791fe96927ad78e64b0aad7bded08bdc
+No se ejecutaron navegador, IndexedDB, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia, despliegue ni E2/E3. Sin cambios de aplicación, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue.
+Siguiente unidad secuencial: AUD-T-018 — Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK; revalidar continuidad E1.

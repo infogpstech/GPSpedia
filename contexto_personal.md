@@ -600,3 +600,11 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - H-AUD-016-001 a 004 siguen abiertos; AUG-102 a AUG-105 pendientes; VAL-25 planificada. Sin hallazgos/tareas duplicados.
 - Los hallazgos de botones siguen vinculados a AUG-100. Sin navegador, mediciones WCAG, zoom real, lectores de pantalla, Android/iOS, PWA ni E2/E3.
 - Siguiente unidad: AUD-T-017, revalidación de continuidad E1.
+
+
+## Continuidad AUD-T-017 — 2026-11-08
+- Revalidación E1 en AUD-20261108-S057/AUD-CP-0056; HEAD histórico 11d617cbf6401748a017fbe69f89ab63fa08800e; HEAD actual 75ba652774610832dd4de1db86e40d75c4ef9484; rama GPSpedia2.2.5_work; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 21 commits posteriores, únicamente documentales. ui.js, offline.js, api-config.js, Services/feedback.js y artefactos Spreadsheet mantienen exactamente sus SHA históricos.
+- H-AUD-017-001 a 007 continúan abiertos; AUG-106 a AUG-112 pendientes; VAL-26 pendiente. Sin hallazgos/tareas duplicados.
+- La omisión de AUD-T-016 en Auditoría.txt sigue abierta como H-AUD-017-007; no se altera durante E1.
+- No se ejecutaron navegador, IndexedDB, Apps Script, HTTP, Spreadsheet/Drive real, concurrencia ni E2/E3. Siguiente: AUD-T-018, continuidad E1.

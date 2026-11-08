@@ -595,3 +595,12 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - Sin hallazgos/tareas duplicados; los estilos de botones continúan en AUG-100.
 - Esta continuidad no certifica contraste WCAG medido, zoom, responsive real ni E2/E3.
 - Sin cambios funcionales, pruebas reales, operaciones productivas, despliegue ni merge. Siguiente: AUD-T-017.
+
+
+## 30. Continuidad AUD-T-017 — verificación E1
+- Sesión AUD-20261108-S057; checkpoint AUD-CP-0056; E1 histórica 11d617cbf6401748a017fbe69f89ab63fa08800e; HEAD actual 75ba652774610832dd4de1db86e40d75c4ef9484; base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación: 21 commits posteriores; únicamente ocho documentos modificados. Los cuatro archivos de aplicación y tres artefactos de esquema Spreadsheet mantienen SHA idénticos; sin deriva en el alcance.
+- H-AUD-017-001 a 007 permanecen abiertos; AUG-106 a AUG-112 pendientes; VAL-26 pendiente.
+- La omisión de AUD-T-016 en Auditoría.txt permanece como hallazgo H-AUD-017-007; no se corrige durante revalidación E1 ni se duplica.
+- Tarea 17 conserva su estado histórico COMPLETADA; E1 no certifica ejecución funcional ni datos reales.
+- Sin pruebas de navegador, IndexedDB, Apps Script, HTTP, Spreadsheet/Drive, concurrencia, despliegue ni E2/E3. Sin cambios funcionales. Siguiente: AUD-T-018.
