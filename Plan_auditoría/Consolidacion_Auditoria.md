@@ -344,3 +344,15 @@ Sesión AUD-20261108-S033 | Checkpoint AUD-CP-0033 | HEAD c4f61a1f8dc402c9fec680
 11. Focus-visible, disabled, loading, hover/active, contraste y modo claro/oscuro.
 12. Responsive móvil/escritorio; no alterar inputs/selects.
 - Estado VAL-24: PLANIFICADA; no ejecutada.
+
+================================================================================
+ACTUALIZACIÓN DE COBERTURA — AUD-T-016
+Sesión AUD-20261108-S034 | Checkpoint AUD-CP-0034 | HEAD 2daf88c96d29999cbc734c968ef94355ee5324ca | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- AUD-T-016 E1 estática completada; H-AUD-016-001 a H-AUD-016-004 abiertos; VAL-25 planificada.
+- Controles: persistencia de tema, intercambio de logos, variables CSS, flex-wrap del encabezado y footer con sentinel/IntersectionObserver.
+- Hallazgos: regla oscura del banner no coincide con body.dark-mode; --text-primary no está definido; tokens separados entre páginas y colores fijos; zoom bloqueado; layout móvil incompleto en add_cortes/users.
+- Nuevas AUG-102 a AUG-105.
+- Cobertura: 38 unidades; 30 con E1 completada, 1 parcial y 7 por auditar. AUG: 104 IDs únicos dentro de AUG-001 a AUG-105; AUG-015 continúa ausente.
+- VAL-25: temas/contraste, zoom, formularios, tabla/modal, footer, PWA y accesibilidad responsive; planificada, no ejecutada.
+- Sin pruebas de navegador, contraste medido, zoom real, lectores de pantalla, dispositivos móviles ni E2/E3. Sin cambios de aplicación.
+================================================================================

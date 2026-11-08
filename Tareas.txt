@@ -6225,3 +6225,134 @@ RESULTADOS
 LÍMITES
 Solo E1 estática. No se ejecutaron navegador, DOM, XSS, Playwright, catálogo real, Apps Script/Spreadsheet, carga concurrente, lector de pantalla, pruebas móviles ni E2/E3. Sin cambios de aplicación/configuración/datos, merge o despliegue. Base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
 ================================================================================
+
+================================================================================
+AUDITORÍA ESTÁTICA — AUD-T-016: DISEÑO VISUAL GLOBAL, MODO OSCURO, CONTRASTE, FOOTER Y RESPONSIVE
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S034 | Checkpoint: AUD-CP-0034
+Repositorio: infogpstech/GPSpedia | Rama: GPSpedia2.2.5_work
+HEAD auditado: 2daf88c96d29999cbc734c968ef94355ee5324ca | Rama base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+
+1. ALCANCE Y MÉTODO
+E1 estática de Tarea 16 y sus requisitos integrados B13/B19: encabezados adaptativos, contraste de logos en modo oscuro, persistencia del tema, pie de página dinámico, layout responsive y consistencia entre index.html, users.html y add_cortes.html. Contraste histórico con 4b136cd0a2c0436e2a324e2c7e02939e31d42636 (modo oscuro), 28f4ace569cf91e18359a9cc5b03cfe30a901a6a (footer dinámico) y a9b15e5f6cd2c53225c001a120afa662175a7233 (mejoras UI).
+Se revisaron hojas/estilos, markup, lógica de tema, footer, breakpoints, reglas de overflow y componentes dinámicos. No se ejecutaron navegadores ni pruebas visuales.
+
+2. ARCHIVOS Y BLOBS REVISADOS
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a.
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9.
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77.
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb.
+- users.html: e41f402675677a4d2783493614737021ec2eade5.
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329.
+- Tareas.txt: 6b4a0297283c7bf204445c59f1ea132f5b72b5f2.
+- Se contrastaron las fichas históricas de Tarea 16 y los commits indicados arriba.
+
+3. CONTROLES POSITIVOS CONFIRMADOS
+3.1. Modo oscuro
+- index.html expone #dark-mode-toggle.
+- main.js:472–532 aplica body.dark-mode, guarda darkMode en localStorage y actualiza logos de encabezado, splash, login y términos.
+- style.css:38–69 define variables base y sus equivalentes en body.dark-mode; existen reglas específicas para tarjetas, navegación, modales, formularios y logos.
+- users.html y add_cortes.html leen la misma clave localStorage darkMode al inicializar y aplican body.dark-mode.
+3.2. Encabezados y responsive
+- ui.js crea el encabezado del modal de detalle y aplica flex-wrap al contenedor del título/logo para evitar desbordamiento horizontal.
+- style.css incorpora breakpoints (480, 520, 600, 680, 760 y 768 px), además de flex-wrap en el selector de secciones y componentes.
+- users.html contiene scroll horizontal acotado para la tabla de usuarios.
+3.3. Footer
+- index.html coloca #footer-sentinel al final de .container y el elemento footer fuera de ese contenedor.
+- main.js:612–628 observa el sentinel con IntersectionObserver y alterna la clase visible.
+- style.css:1628–1660 define footer fijo, transición y sentinel de 100 px; existen ajustes compactos en móvil.
+- La arquitectura vigente coincide con el commit histórico 28f4ace5: footer fuera del contenedor scrollable y sentinel dentro.
+
+4. HALLAZGOS NUEVOS
+
+H-AUD-016-001 — MEDIA — La variante oscura del banner de validación no coincide con el mecanismo de tema activo y usa un token de texto no definido.
+Evidencia:
+- main.js:517–532 alterna únicamente la clase body.dark-mode; no establece data-theme="dark".
+- No se encontró asignación de data-theme en index.html, main.js ni ui.js.
+- style.css:1260 define [data-theme="dark"] .validation-banner, por lo que esa variante no se activa con el mecanismo actual.
+- style.css:1253, 1322 y 1337 usa var(--text-primary), pero el token --text-primary no está declarado en la hoja revisada.
+Impacto: el banner no recibe las reglas oscuras específicas previstas; la declaración de color basada en un custom property inexistente es inválida y depende del color heredado. No se afirma una relación de contraste exacta sin renderizado.
+Criterios:
+1. Unificar el selector del banner con body.dark-mode o establecer de forma consistente el atributo de tema.
+2. Definir los tokens usados o reemplazarlos por tokens existentes.
+3. Verificar el banner y sus estados en ambos temas, incluidos texto, borde, fondo y botones.
+Tarea derivada: AUG-102.
+
+H-AUD-016-002 — MEDIA — El sistema de colores del tema está fragmentado entre páginas y conserva colores fijos fuera de los tokens.
+Evidencia:
+- style.css:38–69 declara un conjunto de variables para index.html.
+- users.html:12–30 mantiene otro conjunto independiente (--background-color, --card-background, --primary-color, etc.).
+- add_cortes.html:12–26 mantiene un tercer conjunto (--bg-color, --card-bg, --primary-color, etc.).
+- Hay colores fijos en reglas globales y estilos inline de index.html, users.html y add_cortes.html; por ejemplo, add_cortes.html:32–37 fija el color de párrafos y estilos de controles, y index.html:18–27 define una consola con colores propios.
+Impacto: los cambios de tema deben mantenerse en varios sistemas y excepciones locales; algunos elementos no participan de una fuente común de colores. Aumenta el riesgo de diferencias entre páginas y de regresiones al ajustar contraste.
+Criterios:
+1. Definir una fuente común de tokens semánticos claro/oscuro para fondo, superficie, texto primario/secundario/deshabilitado, bordes, acento, estados y overlays.
+2. Migrar colores fijos de componentes compartidos; documentar excepciones deliberadas (p. ej. consola o estados de alerta).
+3. Mantener compatibilidad de las páginas independientes sin acoplar estilos no relacionados.
+4. Revisar contraste de texto normal, texto pequeño, enlaces, iconos, estados y controles en todas las páginas.
+Tarea derivada: AUG-103.
+
+H-AUD-016-003 — MEDIA — add_cortes.html impide ampliar la página mediante el zoom del navegador.
+Evidencia:
+- add_cortes.html:6 declara maximum-scale=1.0 y user-scalable=no en la meta viewport.
+Impacto: limita la ampliación manual del contenido en dispositivos móviles, afectando a usuarios que necesitan zoom para leer formularios y mensajes.
+Criterios:
+1. Permitir el zoom del navegador y evitar restricciones innecesarias de escala.
+2. Verificar ampliación al 200 % y 400 %, reflujo del formulario y ausencia de pérdida de controles.
+3. Mantener el tamaño de viewport responsive sin impedir las ayudas de accesibilidad.
+Tarea derivada: AUG-104.
+
+H-AUD-016-004 — MEDIA — El formulario de add_cortes y la vista de usuarios no tienen una adaptación completa de layout para anchos pequeños.
+Evidencia:
+- add_cortes.html:58 fija .form-grid en dos columnas 1fr 1fr; no se encontró @media en el documento que cambie esa cuadrícula a una columna.
+- users.html no contiene breakpoints @media; .user-table usa width:max-content y white-space:nowrap, dependiendo de .table-scroll-container con overflow-x:auto.
+- users.html:124–140 mantiene el modal con width:80% y margen superior porcentual, sin ajuste específico para pantallas estrechas.
+Impacto: en teléfonos estrechos el formulario conserva dos columnas y puede comprimir campos; la tabla requiere desplazamiento horizontal y el modal no dispone de una regla específica para ajustar su ancho/espaciado. La severidad visual real debe confirmarse en dispositivos.
+Criterios:
+1. Adaptar .form-grid a una columna en anchos reducidos y revisar campos, etiquetas, imágenes y botones.
+2. Definir el comportamiento del modal de usuarios en móviles y mantener el acceso a todos sus controles.
+3. Mantener la tabla desplazable sin recortar acciones ni provocar scroll horizontal de toda la página.
+4. Probar 320, 360, 390, 600, 768, 1024 y 1440 px, además de orientación horizontal.
+Tarea derivada: AUG-105.
+
+5. OBSERVACIONES Y NO DUPLICACIÓN
+- El footer dinámico se mantiene estructuralmente según el commit 28f4ace5; no se crea un hallazgo por el mero uso de position:fixed.
+- El cambio de logos por tema y la persistencia en localStorage están implementados; el hallazgo se limita a reglas/tokens que no coinciden con el mecanismo de tema.
+- El encabezado del modal de detalle sí aplica flex-wrap en ui.js; no se registra como defecto.
+- Los estilos de botones fragmentados ya están registrados en H-AUD-015-003/AUG-100. AUG-103 aborda tokens de color/tema, no duplica el sistema de botones.
+- No se afirma incumplimiento WCAG medido: no se ejecutaron cálculos completos ni herramientas de contraste en navegador.
+
+6. MATRIZ DE VALIDACIÓN — VAL-25
+Estado: PLANIFICADA; no ejecutada.
+1. Cambiar tema claro/oscuro en index.html y verificar persistencia tras recarga.
+2. Verificar sincronía de logos en encabezado, splash, login, términos y modales.
+3. Verificar banner de validación, texto, botones y bordes en ambos temas; comprobar selector y tokens.
+4. Revisar visualmente todos los componentes con colores fijos en index.html, users.html y add_cortes.html.
+5. Medir contraste WCAG para texto normal, texto pequeño, enlaces, controles, iconos y estados en ambos temas.
+6. Probar perfil, tabla y modales de users.html en escritorio y móvil.
+7. Probar formulario add_cortes.html en 320/360/390/600/768/1024/1440 px, vertical y horizontal.
+8. Confirmar zoom del navegador al 200 % y 400 %, reflujo y acceso a todos los controles.
+9. Verificar tabla horizontal sin desbordar la página y sin ocultar acciones.
+10. Probar footer con scroll al final/mitad, búsqueda activa, login, términos, modales, contenido vacío y PWA standalone.
+11. Verificar que el footer no tape el último control ni quede visible antes de alcanzar el sentinel.
+12. Revisar teclado, foco visible, objetivos táctiles y movimiento reducido.
+No se ejecutaron casos de VAL-25.
+
+7. LÍMITES
+E1 estática. No se ejecutaron navegador, capturas, mediciones de contraste, zoom real, lectores de pantalla, Android/iOS, PWA standalone, rotación, resoluciones reales ni pruebas E2/E3. No se verificó deployment. No se modificaron código, HTML, CSS, assets, servicios, endpoints, configuración, datos productivos, Drive, Spreadsheet ni deployments.
+Resultado: E1 COMPLETADA; H-AUD-016-001 a H-AUD-016-004 abiertos; VAL-25 pendiente.
+================================================================================
+
+================================================================================
+REGISTRO DE TAREAS DERIVADAS — AUD-T-016
+- AUG-102: alinear selector del tema oscuro y tokens del banner.
+- AUG-103: consolidar tokens de color/tema entre páginas.
+- AUG-104: permitir zoom del navegador en add_cortes.html.
+- AUG-105: completar responsive de formulario y gestión de usuarios.
+
+## VAL-25 — Diseño visual, temas, contraste, footer y responsive
+- Alcance: index.html, style.css, main.js, ui.js, users.html y add_cortes.html.
+- Casos: persistencia de tema; logos; banner; colores fijos; contraste WCAG; zoom 200/400 %; layout de formularios; modal/tabla de usuarios; footer/sentinel; búsqueda/login/términos; PWA; teclado/foco/targets táctiles.
+- Viewports: 320, 360, 390, 600, 768, 1024 y 1440 px; vertical y horizontal.
+- Estado: PLANIFICADA; no ejecutada.
+
+================================================================================

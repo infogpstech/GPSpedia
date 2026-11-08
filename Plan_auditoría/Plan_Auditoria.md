@@ -64,7 +64,7 @@ Los IDs siguientes identifican unidades de auditoría, no commits individuales. 
 | AUD-T-013 | Tutoriales, multimedia y carga directa de vídeos YouTube con aprobación | Tarea 12; 5fa1427a — subida directa YouTube y aprobación; bd8e2fe3 — integración en vehículos, PyS y tutoriales | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD/YOUTUBE PENDIENTE |
 | AUD-T-014 | Texto enriquecido, sanitización, listas, párrafos y saltos de línea | Tarea 13; 79230c57 — unificar editores enriquecidos y soporte de listas | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VALIDACIÓN FUNCIONAL/SEGURIDAD PENDIENTE |
 | AUD-T-015 | Búsqueda global, filtros rápidos y resultados jerárquicos | Tarea 14 y Tarea 15; 7fae24ac — búsqueda de modelos numéricos; 2b2c5b57 — jerarquía de resultados | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-24 PENDIENTE |
-| AUD-T-016 | Diseño visual global, modo oscuro, contraste, footer y responsive | Tarea 16; 4b136cd0 — consolidación de modo oscuro; 28f4ace5 — footer dinámico; a9b15e5f — mejoras UI | POR AUDITAR |
+| AUD-T-016 | Diseño visual global, modo oscuro, contraste, footer y responsive | Tarea 16; 4b136cd0 — consolidación de modo oscuro; 28f4ace5 — footer dinámico; a9b15e5f — mejoras UI | E1 ESTÁTICA COMPLETADA; HALLAZGOS ABIERTOS; VAL-25 PENDIENTE |
 | AUD-T-017 | Gestión colaborativa de años y validación comunitaria | Tarea 17; dc0862d0 — collaborative year update; 45eece6c — actualización integral; aa57c4de — autorización y deduplicación suggestYear | POR AUDITAR |
 | AUD-T-018 | Usuarios, Inbox, dashboard, actividad y flujos de FEEDBACK | Tarea 18; 27760cf7 — transmisión de sesión Inbox/Dashboard; 58f58b0e — endpoint FEEDBACK; 5bf20efe — contrato testigo sugerencias | POR AUDITAR |
 | AUD-T-019 | Validaciones de integridad backend y pruebas automatizadas | Tarea 19; commits de pruebas aisladas AUTH/USERS y pruebas de WRITE/ADMIN/FEEDBACK | POR AUDITAR |
@@ -858,3 +858,15 @@ Adenda AUG-049: persisten autoapertura no-Corte, falta de acentos/ranking/campos
 Nuevas tareas: AUG-098 a AUG-101; VAL-24 planificada.
 Límites: E1 estática; sin DOM/browser/XSS/Playwright, catálogo real, Apps Script/Spreadsheet, carga concurrente, lector de pantalla, pruebas móviles ni E2/E3. Sin cambios de aplicación.
 Siguiente: AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive.
+
+
+## Continuidad — AUD-T-016 (AUD-20261108-S034)
+- Sesión/checkpoint: AUD-20261108-S034 / AUD-CP-0034.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD auditado 2daf88c96d29999cbc734c968ef94355ee5324ca; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 sin cambios.
+- AUD-T-016 — Diseño visual global, modo oscuro, contraste, footer y responsive: E1 estática completada; H-AUD-016-001 a H-AUD-016-004 abiertos; VAL-25 pendiente.
+- Alcance: Tarea 16/B13/B19; commits 4b136cd0, 28f4ace5 y a9b15e5f; index.html, style.css, main.js, ui.js, users.html y add_cortes.html.
+- Controles positivos: persistencia darkMode en localStorage; intercambio de logos; variables CSS; flex-wrap en encabezado del modal; footer fuera del contenedor con sentinel e IntersectionObserver.
+- Hallazgos: selector data-theme no alineado con body.dark-mode y --text-primary sin definición; tokens/colores fragmentados entre páginas; zoom bloqueado en add_cortes; formulario de dos columnas y página de usuarios sin breakpoints dedicados.
+- Nuevas tareas AUG-102 a AUG-105; VAL-25 planificada.
+- Límites: sin navegador, mediciones WCAG, zoom real, lectores de pantalla, Android/iOS, PWA, rotación ni E2/E3. Sin cambios de aplicación/configuración/datos.
+- Siguiente: AUD-T-017 — Gestión colaborativa de años y validación comunitaria.

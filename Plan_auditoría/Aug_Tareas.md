@@ -1408,3 +1408,32 @@ Fecha: 2026-11-08 | Sesión AUD-20261108-S029
   2. No inferir marca desde valores sintéticos de Relay/Tutorial/PyS.
   3. Probar consulta por sección, título exacto, nombre de marca y resultados mixtos.
 - Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+
+### AUG-102 — Alinear el tema oscuro del banner de validación y completar sus tokens
+- Origen: H-AUD-016-001. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
+- Evidencia: main.js:517–532 alterna body.dark-mode sin establecer data-theme; style.css:1260 depende de [data-theme="dark"]; style.css:1253/1322/1337 usa --text-primary sin declaración.
+- Problema: la variante oscura del banner no coincide con el selector activo y el color textual usa un token inexistente.
+- Criterios: unificar selector/atributo de tema; definir tokens semánticos; probar banner, mensajes, botones y contraste en tema claro/oscuro.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-103 — Consolidar tokens de color y tema entre las páginas
+- Origen: H-AUD-016-002. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
+- Evidencia: style.css:38–69, users.html:12–30 y add_cortes.html:12–26 mantienen sistemas separados; persisten colores fijos en reglas y estilos inline.
+- Problema: las páginas tienen contratos de color independientes y excepciones que dificultan mantener contraste y consistencia.
+- Criterios: definir tokens semánticos comunes; aplicarlos en index/users/add_cortes; documentar excepciones; validar contraste en ambos temas.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-104 — Permitir zoom del navegador en add_cortes.html
+- Origen: H-AUD-016-003. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
+- Evidencia: add_cortes.html:6 limita maximum-scale=1.0 y establece user-scalable=no.
+- Problema: los usuarios móviles no pueden ampliar libremente el formulario mediante el zoom del navegador.
+- Criterios: retirar restricciones innecesarias de zoom; probar 200 % y 400 % con reflujo, foco y controles accesibles; confirmar que no aparezca scroll horizontal global.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.
+
+### AUG-105 — Completar el layout responsive de formularios y gestión de usuarios
+- Origen: H-AUD-016-004. AUD-T-016/Tarea 16. Sesión/checkpoint: AUD-20261108-S034/AUD-CP-0034. Prioridad: Media.
+- Evidencia: add_cortes.html:58 mantiene grid-template-columns:1fr 1fr sin breakpoint; users.html carece de @media y usa tabla nowrap con scroll horizontal y modal width:80%.
+- Problema: formularios y modales pueden quedar comprimidos en teléfonos; la tabla depende de scroll horizontal sin un ajuste de layout específico.
+- Criterios: adaptar la cuadrícula a una columna; ajustar modal y controles móviles; conservar acceso a acciones y evitar overflow; probar anchos 320–1440 px y orientación horizontal.
+- Estado: NUEVA; diseño, implementación y pruebas pendientes.

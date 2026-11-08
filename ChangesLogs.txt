@@ -4261,3 +4261,13 @@ Fecha 2026-11-08 | Sesión AUD-20261108-S033 | Checkpoint AUD-CP-0033
 - ChangesLogs.txt, contexto_personal.md y checkpoint.md: continuidad y trazabilidad.
 Solo documentación; no se modificaron código, HTML, CSS, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
 ================================================================================
+
+================================================================================
+REGISTRO DOCUMENTAL — AUD-T-016
+Fecha 2026-11-08 | Sesión AUD-20261108-S034 | Checkpoint AUD-CP-0034
+- Auditoría estática de Tarea 16/B13/B19; commits históricos 4b136cd0, 28f4ace5 y a9b15e5f.
+- H-AUD-016-001 a H-AUD-016-004; AUG-102 a AUG-105; VAL-25 planificada.
+- Archivos de código revisados: index.html, style.css, main.js, ui.js, users.html y add_cortes.html. No se modificaron.
+- Archivos documentales actualizados: Tareas.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md.
+Solo documentación; sin cambios de código, HTML/CSS de aplicación, servicios, contratos, endpoints, configuración, assets, datos productivos, Drive, Spreadsheet ni deployments. Sin merge ni despliegue. Rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+================================================================================
