@@ -424,3 +424,48 @@ La continuidad no equivale a certificación funcional E2/E3.
 Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización.
 Commit único esperado: docs(audit): verify AUD-T-010 continuity; parent a669f8a0a696a00da40f4013ae0a0d3dca604968.
 ================================================================================
+
+
+================================================================================
+CHECKPOINT INICIAL — AUD-CP-0050
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S051
+Repositorio: infogpstech/GPSpedia
+Rama de trabajo: GPSpedia2.2.5_work | HEAD observado: 2a966d3fe9f56b24125c109f257959bceb8940e0 | árbol: 0d0a4771ef652819fdbd5425047bff90d617bbe9.
+Rama base: GPSpedia2.2.5 | HEAD observado: d9acc68d889985c2e2f42fe3a02e502efc86ead1; no se modificará.
+Tarea: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización; revalidación de continuidad de E1 histórica.
+Estado inicial: E1 histórica completada en AUD-20261108-S029/AUD-CP-0029 (bba61f0cd16e5a35d6f709e048ebd31d8709a193); continuidad pendiente de verificar.
+Alcance: index.html, main.js, ui.js, api-config.js, Services/feedback.js, rich-text.js, Spreadsheet/GPSpedia_DB_columnas.md y style.css.
+Hallazgos conocidos: H-AUD-011-001 a H-AUD-011-007; tareas AUG-082 a AUG-087; adendas AUG-040/AUG-057. Validaciones VAL-20, VAL-03, VAL-09, VAL-13 y VAL-14 pendientes.
+Respaldos exactos previos a la documentación (blob SHA):
+- Auditoría.txt: 652ce766ac6511cff8be0a5553c0180c9951fa32
+- Plan_auditoría/Plan_Auditoria.md: bfc1078c3ea12924eee4ae8bd0f3f6d45dfaa13f
+- Plan_auditoría/Consolidacion_Auditoria.md: 96563243a1c6bb8a22ec9554e0d4643a89420183
+- ChangesLogs.txt: 93c6887258b6707d0c748a88ad50a5a1374c1a7b
+- contexto_personal.md: 58ae4d79b5939945f6e784466409ecd6b5beea79
+- checkpoint.md: 235045200456e31cdd802b325f803241022e24d9
+Sin cambios funcionales ni operaciones productivas.
+================================================================================
+
+================================================================================
+CHECKPOINT FINAL — AUD-CP-0050
+Fecha: 2026-11-08 | Sesión: AUD-20261108-S051
+Resultado: AUD-T-011 permanece E1 ESTÁTICA COMPLETADA y vigente por identidad exacta de los ocho archivos funcionales/esquema. Comparación histórica: 21 commits posteriores, solo ocho archivos documentales.
+HEAD padre de esta tarea: 2a966d3fe9f56b24125c109f257959bceb8940e0; árbol inicial: 0d0a4771ef652819fdbd5425047bff90d617bbe9. Rama: GPSpedia2.2.5_work.
+Base GPSpedia2.2.5: d9acc68d889985c2e2f42fe3a02e502efc86ead1 (sin cambios).
+Hallazgos abiertos: H-AUD-011-001 a H-AUD-011-007. Tareas pendientes: AUG-082 a AUG-087; adendas AUG-040/AUG-057. Sin hallazgos ni tareas nuevas.
+SHA revalidados:
+- index.html: 6dd0b86981e7f92b10b2f7a0a1634bb6395a479a
+- main.js: c15f5462d78fa907d14c71e15970ae29a3b3de77
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Services/feedback.js: 3db189523f6cb849d33550f29971c0ec6f386b3a
+- rich-text.js: a7180766bb5097be510153edd851f4dfa939912c
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+- style.css: dbcef5d28225c4ef1861fe0e0c11ad530f64ebd9
+Revalidaciones: stored XSS en título/colaborador/vídeo; acciones de alta/solución/prevención sin guard de sesión/actor; alta puede persistir sin imagen tras error Drive; carpeta/MIME/permisos y FileReader incompletos; ID/esquema/idempotencia; límites/tipos/URL inconsistentes; solución/prevención sin lock ni comprobación de estado; lecturas getPysData repetidas sin TTL/deduplicación.
+Validaciones pendientes: VAL-20, VAL-03, VAL-09, VAL-13 y VAL-14. No se ejecutaron navegador/Playwright, XSS controlado, FileReader real, HTTP, Apps Script, Drive/Spreadsheet, concurrencia ni deployments.
+Archivos documentales modificados: Auditoría.txt, Plan_auditoría/Plan_Auditoria.md, Plan_auditoría/Consolidacion_Auditoria.md, ChangesLogs.txt, contexto_personal.md y checkpoint.md. Tareas.txt y Plan_auditoría/Aug_Tareas.md no se modifican por no existir nuevos hallazgos ni tareas.
+No se modificó código, servicios, endpoints, esquema productivo, configuración, assets, Drive, Spreadsheet, datos productivos ni deployments. Sin merge ni despliegue.
+El checkpoint se incorpora en el commit único: docs(audit): verify AUD-T-011 continuity; parent 2a966d3fe9f56b24125c109f257959bceb8940e0.
+Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
+================================================================================

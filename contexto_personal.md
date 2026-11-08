@@ -543,3 +543,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - No se crearon hallazgos ni tareas nuevas. Se mantienen vínculos con AUD-T-023 (hashing/credenciales), AUD-T-024 (ciclo avanzado de sesiones y controles), AUD-T-033 (coordinación interservicios) y AUD-T-036 (legal/consentimiento).
 - E1 no incluye pruebas de navegador, Apps Script, HTTP, Spreadsheet, roles, sesiones, concurrencia, múltiples pestañas ni deployments. No se modificó código, configuración ni datos productivos.
 - Siguiente unidad: AUD-T-003 — Registro de vehículos y cortes, add_cortes, idempotencia y resiliencia de red.
+
+
+## Continuidad de auditoría — AUD-T-011
+- Fecha: 2026-11-08. Sesión AUD-20261108-S051; checkpoint AUD-CP-0050.
+- Repositorio infogpstech/GPSpedia; rama GPSpedia2.2.5_work; HEAD previo 2a966d3fe9f56b24125c109f257959bceb8940e0; árbol 0d0a4771ef652819fdbd5425047bff90d617bbe9; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- E1 histórica AUD-20261108-S029/AUD-CP-0029 en bba61f0cd16e5a35d6f709e048ebd31d8709a193. Comparación: 21 commits posteriores, exclusivamente ocho archivos documentales; los ocho archivos funcionales/esquema de PyS conservan los mismos SHA.
+- AUD-T-011 permanece E1 estática completada; H-AUD-011-001 a 007 abiertos; AUG-082 a 087 pendientes; adendas AUG-040/AUG-057. No hay nuevos hallazgos/tareas.
+- VAL-20, VAL-03, VAL-09, VAL-13 y VAL-14 continúan pendientes. No se ejecutaron pruebas E2/E3 ni servicios, Drive, Spreadsheet, navegador, XSS, FileReader, concurrencia o deployments.
+- No se modificó código ni datos productivos. Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.

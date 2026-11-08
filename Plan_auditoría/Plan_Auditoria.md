@@ -1034,3 +1034,22 @@ Se mantienen H-AUD-010-001 a H-AUD-010-007 abiertos y AUG-075 a AUG-081 pendient
 Validaciones pendientes: VAL-19 (ciclo de reportes/sugerencias y adjuntos), VAL-03 (sesión/RBAC) y VAL-09 (ciclo de cargas), además de pruebas E2/E3. No se ejecutaron navegador, XSS controlado, FileReader real, Apps Script, HTTP, Drive/Spreadsheet, concurrencia ni deployments.
 Límites: E1 estática y continuidad Git. Sin cambios de código, servicios, endpoints, esquema productivo, configuración, assets, Drive, Spreadsheet, datos ni deployments. Sin merge ni despliegue. La rama base permanece intacta.
 Siguiente unidad secuencial: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización; continuar mediante revalidación de continuidad.
+
+
+## 35. Continuidad verificada — AUD-T-011
+Sesión AUD-20261108-S051 | Checkpoint AUD-CP-0050 | HEAD E1 bba61f0cd16e5a35d6f709e048ebd31d8709a193 | HEAD actual 2a966d3fe9f56b24125c109f257959bceb8940e0 | árbol actual 0d0a4771ef652819fdbd5425047bff90d617bbe9 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+La E1 histórica de AUD-T-011 se completó en AUD-20261108-S029/AUD-CP-0029. La comparación hasta el HEAD actual contiene 21 commits posteriores y solo ocho archivos documentales. Los ocho archivos funcionales/esquema del alcance (index.html, main.js, ui.js, api-config.js, Services/feedback.js, rich-text.js, Spreadsheet/GPSpedia_DB_columnas.md y style.css) mantienen exactamente los SHA históricos. Sin deriva funcional desde la E1.
+Revalidación por identidad exacta de blobs y lectura estática focal:
+- H-AUD-011-001: stored XSS permanece en overlay.innerHTML con item.Problema; colDiv.innerHTML con cleanColaboradorName(item.Colaborador), que solo elimina sufijo OP; href/iframe derivado de item.Video con validación por subcadena/fallback embed/ sin allowlist de origen.
+- H-AUD-011-002: addProblem/addSolution/addPrevention siguen fuera de actionPermissions; no invocan assertFeedbackSession. El alta conserva userId/userName del cliente y no recibe sessionToken.
+- H-AUD-011-003: imagen no es obligatoria en backend; fallo Drive queda capturado y la fila puede guardarse con Imagen vacía; carpeta localizada globalmente/creada en raíz, bytes forzados a image/jpeg y FileReader del alta sin error/abort.
+- H-AUD-011-004: ID isue-### deriva de getLastRow; no verifica máximo/unicidad/esquema existente ni usa opId/idempotencia.
+- H-AUD-011-005: formulario/backend siguen en título 30 y descripción 700 frente a requisitos históricos 15/200; botón de prevención anuncia 100 mientras backend permite 700; tipos y URL no tienen validación estricta.
+- H-AUD-011-006: addSolution/addPrevention escriben directamente sin LockService ni comprobación del estado destino dentro de sección crítica.
+- H-AUD-011-007: renderPysSection presenta caché y después consulta getPysData en cada navegación, sin TTL/deduplicación ni aviso de posible obsolescencia.
+
+Se mantienen abiertos H-AUD-011-001 a H-AUD-011-007 y pendientes AUG-082 a AUG-087, junto con adendas AUG-040/AUG-057. No se crean hallazgos ni tareas nuevas. H-AUD-035-001/003/006 y H-AUD-037-005 siguen como referencias, sin duplicación.
+Controles positivos estáticos conservados: tarjeta + primera, orden inverso, lectura inicial desde caché, normalización modelosAsociados, Sin solución, LockService en alta y sanitización de contenido enriquecido. No implican validación funcional.
+VAL-20, VAL-03, VAL-09, VAL-13 y VAL-14 permanecen pendientes de ejecución real; no se ejecutaron navegador/Playwright, XSS controlado, FileReader, HTTP, Apps Script, Drive/Spreadsheet, concurrencia ni deployments.
+Sin cambios funcionales ni operaciones sobre datos productivos. Sin merge ni despliegue; base intacta.
+Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.

@@ -523,3 +523,15 @@ Sesión AUD-20261108-S050 | Checkpoint AUD-CP-0049 | HEAD E1 9b1401d37ea8c7b78a7
 - Cobertura E1 global se conserva sin recalcular ni alterar los estados de otras unidades. La continuidad no certifica E2/E3.
 - Sin cambios funcionales ni operaciones sobre datos productivos. Sin merge ni despliegue; la rama base permanece intacta.
 - Siguiente unidad: AUD-T-011 — Módulo Problemas y Soluciones (PyS), formularios y visualización; continuar mediante revalidación de continuidad.
+
+
+## 24. Continuidad verificada — AUD-T-011
+Sesión AUD-20261108-S051 | Checkpoint AUD-CP-0050 | HEAD E1 bba61f0cd16e5a35d6f709e048ebd31d8709a193 | HEAD actual 2a966d3fe9f56b24125c109f257959bceb8940e0 | base d9acc68d889985c2e2f42fe3a02e502efc86ead1.
+- 21 commits posteriores al E1; el diff Git contiene solo ocho archivos documentales.
+- Los ocho archivos funcionales/esquema de AUD-T-011 mantienen sus SHA históricos; la evidencia estática no presenta deriva.
+- H-AUD-011-001 a H-AUD-011-007 continúan abiertos; AUG-082 a AUG-087 pendientes; adendas AUG-040/AUG-057 conservadas. Sin nuevos IDs ni duplicados.
+- Se revalidan los sinks HTML de título/colaborador/vídeo, ausencia de sesión/actor backend en addProblem/addSolution/addPrevention, persistencia de alta aunque falle imagen, carpeta/MIME/permisos de Drive, generación de ID/esquema/idempotencia, límites/tipos/URL, ausencia de lock para solución/prevención y lecturas getPysData repetidas.
+- VAL-20 y las validaciones transversales VAL-03, VAL-09, VAL-13 y VAL-14 siguen pendientes. No se ejecutaron E2/E3 ni integraciones reales.
+- No se recalcula la cobertura global ni se modifican estados de otras unidades. E1 no certifica E2/E3.
+- Sin cambios de código ni operaciones productivas. Sin merge ni despliegue; la base permanece intacta.
+- Siguiente unidad: AUD-T-012 — Vinculación bidireccional PyS–vehículos y navegación sin ciclos.
