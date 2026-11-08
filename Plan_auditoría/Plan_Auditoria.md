@@ -2040,3 +2040,51 @@ No se ejecutaron navegador, FileReader real, localStorage con cuota bloqueada, p
 
 ### Siguiente iteración
 AUD-T-004 — VIN, identificación, colecciones, almacenamiento, búsqueda y diferencial.
+
+
+## 69. Revalidación de continuidad — AUD-T-004
+
+**Sesión:** AUD-20261108-S085  
+**Checkpoint:** AUD-CP-0084  
+**E1 original:** 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 (AUD-20261107-S022 / AUD-CP-0022)  
+**Árbol E1:** 3ba54bd14d53dc1a0ffd9565f1ad1b536df3fed4  
+**HEAD revalidado:** 7364a4a40dd5754fb7b0f3dfe570209ca685f2fa  
+**Árbol actual:** c497db9afbba4593f7edf015198fd913bb9e5796  
+**HEAD de la rama base:** d9acc68d889985c2e2f42fe3a02e502efc86ead1  
+**Estado:** CONTINUIDAD E1 CONFIRMADA; H-AUD-004-001 A 003 ABIERTOS; H-AUD-037-007/AUG-050 AMPLIADO; VALIDACIÓN FUNCIONAL/MIGRACIÓN PENDIENTE.
+
+### Alcance y comparación
+Se revalidaron VIN, identificación, colecciones, almacenamiento, búsqueda/diferencial y migración; presentación de colecciones, editor administrativo, validación backend, motor de firmas, resolución de variantes y esquema Spreadsheet. Archivos: VinDifferentialEngine.js, navigation.js, ui.js, add_cortes.html, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js y Spreadsheet/GPSpedia_DB_columnas.md.
+
+La comparación E1→HEAD muestra 63 commits posteriores y estado ahead, sin divergencia del ancestro E1. El diff global contiene únicamente cambios documentales: Auditoría.txt, ChangesLogs.txt, Plan_auditoría/Aug_Tareas.md, Plan_auditoría/Consolidacion_Auditoria.md, Plan_auditoría/Plan_Auditoria.md, Tareas.txt, checkpoint.md y contexto_personal.md. Los nueve archivos del alcance mantienen SHA idénticos a E1.
+
+SHA idénticos entre E1 y HEAD:
+- VinDifferentialEngine.js: 7a018e3a2c66e10f6ac2bf2fdcedf0875fc240e4
+- navigation.js: 39ec9f5ed34f8f81b506222f3b7b02494f866ad0
+- ui.js: f00f48a42ee9bf0fd200f21959eb741f113363eb
+- add_cortes.html: 8a5e4bf51b3cd602224016a1267f478ce55ee329
+- Services/write.js: 0c603ce8b56a871a6d9396bd5b047e364f9f580e
+- Services/admin.js: ffb120badeb9e8cbe931226a0ce90c0476363012
+- Services/catalog.js: 253cbe9f873481114e7abff3aa8902c45e2560af
+- api-config.js: a5c718d01b7da50b4b5e650c3bacd91456f4d670
+- Spreadsheet/GPSpedia_DB_columnas.md: 21e353fd74ad97496de4ff15677d03a3cf9b5f05
+
+### Revalidación de hallazgos y tareas
+- H-AUD-004-001 a H-AUD-004-003 permanecen vigentes por continuidad; no se identifican cambios en los archivos que permitan cerrar o alterar los hallazgos.
+- La presentación de colección VIN continúa perdiendo posiciones vacías y vuelve a recortar prefijos ya normalizados; puede asociar una versión con otro VIN y producir dígitos distintivos incorrectos.
+- El editor administrativo sigue enviando fieldName='vin' a un mapa fijo que no incluye la columna dinámica; el handler no usa getVinColumnIndex() en esa acción.
+- Los servicios siguen sin imponer longitud máxima VIN en backend y pueden descartar silenciosamente entradas cortas mientras responden success.
+- H-AUD-037-007/AUG-050 se mantiene como hallazgo único ampliado: ambigüedad, coincidencia parcial, falta de carga/huella de firmas, uso de versión/años, umbral de muestras no aplicado y validación de posiciones compartidas.
+- AUG-059 continúa pendiente para completar edición y validación autoritativa de colecciones VIN.
+- AUG-060 continúa pendiente para corregir posición/índice de slots y recorte duplicado en la presentación.
+- AUG-050 conserva la ampliación algorítmica. H-AUD-037-009/AUG-051, H-AUD-030/AUG-036, H-AUD-033-001/AUG-034 y H-AUD-038-001/AUG-053 mantienen sus tareas; no duplicar.
+- Los controles positivos de columna dinámica, duplicados en backend, ScriptLock local y migración con respaldo se mantienen estáticamente presentes. La migración no se ejecutó ni se considera aplicada.
+- No se identifican hallazgos ni tareas nuevas. No se duplican IDs ni se modifican Auditoría.txt, Tareas.txt o Plan_auditoría/Aug_Tareas.md.
+
+### Validaciones y límites
+Se verificaron la ascendencia E1→HEAD, los 63 commits posteriores, el diff global, los SHA exactos de los nueve archivos y la permanencia de la rama base. Revisión de continuidad estática E1; no equivale a validación de datos VIN, migración ni búsqueda diferencial.
+
+No se ejecutaron pruebas E2/E3, dataset VIN real, navegador, PWA offline, localStorage, HTTP, Apps Script V8, Spreadsheet/Drive, simulación/confirmación de migración, concurrencia ni deployments. No se modificó código, configuración, endpoints, Spreadsheet, Drive ni datos productivos.
+
+### Siguiente iteración
+AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.

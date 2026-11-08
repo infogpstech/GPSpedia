@@ -857,3 +857,13 @@ Sesión AUD-20261108-S053 | Checkpoint AUD-CP-0052 | HEAD E1 d8a164c2974f4dc472f
 - AUG-055/AUG-056/AUG-057/AUG-058 continúan pendientes. Mantener relaciones con AUG-043/AUG-039/AUG-034/AUG-053/AUG-054 y AUD-T-031; no duplicar.
 - Es revalidación posterior a la continuidad anterior de AUD-T-003; se comparó directamente con E1. Solo revisión documental E1. Sin navegador, FileReader, storage bloqueado, HTTP, Apps Script, Drive/Spreadsheet, concurrencia ni pruebas de dos usuarios. Sin cambios funcionales, datos productivos, merge o despliegue.
 - Siguiente: AUD-T-004 — VIN, identificación, colecciones, almacenamiento, búsqueda y diferencial.
+
+
+## 58. AUD-T-004 — continuidad E1 y revalidación de VIN/colecciones/diferencial
+- Sesión AUD-20261108-S085; checkpoint AUD-CP-0084; E1 24f68780e6b7ad5ad835ce76c1d6abda0a80a528; árbol E1 3ba54bd14d53dc1a0ffd9565f1ad1b536df3fed4; HEAD 7364a4a40dd5754fb7b0f3dfe570209ca685f2fa; árbol actual c497db9afbba4593f7edf015198fd913bb9e5796; rama base d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. El diff global contiene únicamente ocho archivos documentales; los nueve archivos del alcance conservan SHA idénticos a E1.
+- H-AUD-004-001 a 003 permanecen abiertos: presentación VIN desplaza slots y recorta dos veces; editor ADMIN no persiste fieldName=vin; backend no valida longitud y puede descartar VIN silenciosamente.
+- H-AUD-037-007/AUG-050 se amplía sin duplicar: resolución VIN, firmas, umbrales, ambigüedad, año/rango y versión.
+- AUG-059/AUG-060 pendientes; AUG-050 ampliada. H-AUD-037-009/AUG-051, H-AUD-030/AUG-036, H-AUD-033-001/AUG-034 y H-AUD-038-001/AUG-053 mantienen sus tareas.
+- Solo continuidad E1 y revisión documental. Sin dataset VIN, navegador, PWA, HTTP, Apps Script, Spreadsheet/Drive, migración, concurrencia ni deployments. Sin cambios funcionales, datos productivos, merge o despliegue.
+- Siguiente: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.

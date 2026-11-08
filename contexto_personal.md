@@ -856,3 +856,12 @@ La incorporación de estas reglas no sustituye el procedimiento único de commit
 - AUG-055/AUG-056/AUG-057/AUG-058 pendientes; dependencias AUG-043/AUG-039/AUG-034/AUG-053/AUG-054 y AUD-T-031. Esta revalidación sigue la continuidad previa y compara de nuevo con E1.
 - No se ejecutaron navegador, FileReader real, storage bloqueado, HTTP, Apps Script, Drive/Spreadsheet, concurrencia ni pruebas multiusuario. Sin cambios funcionales ni operaciones productivas.
 - Siguiente unidad: AUD-T-004 — VIN, identificación, colecciones, almacenamiento, búsqueda y diferencial.
+
+
+## Continuidad AUD-T-004 — 2026-11-08 | AUD-20261108-S085
+- Revalidación AUD-20261108-S085/AUD-CP-0084; E1 histórica 24f68780e6b7ad5ad835ce76c1d6abda0a80a528 (AUD-20261107-S022/AUD-CP-0022); HEAD 7364a4a40dd5754fb7b0f3dfe570209ca685f2fa; árbol actual c497db9afbba4593f7edf015198fd913bb9e5796; rama GPSpedia2.2.5_work; base GPSpedia2.2.5 d9acc68d889985c2e2f42fe3a02e502efc86ead1 intacta.
+- Comparación E1→HEAD: 63 commits posteriores, sin divergencia. VinDifferentialEngine.js, navigation.js, ui.js, add_cortes.html, Services/write.js, Services/admin.js, Services/catalog.js, api-config.js y Spreadsheet/GPSpedia_DB_columnas.md conservan exactamente sus SHA E1.
+- H-AUD-004-001 a 003 permanecen abiertos: slots/prefijos mal presentados; editor ADMIN no persiste VIN; backend no valida longitud y puede descartar entradas. H-AUD-037-007/AUG-050 ampliado, sin duplicar.
+- AUG-059/AUG-060 pendientes; AUG-050 ampliada; AUG-051/AUG-036/AUG-034/AUG-053 conservan dependencias. Migración VIN no ejecutada.
+- No se ejecutaron pruebas VIN reales, navegador, HTTP, Apps Script, Spreadsheet/Drive, migración, concurrencia ni deployments. Sin cambios funcionales ni operaciones productivas.
+- Siguiente unidad: AUD-T-005 — Modal de detalle, ampliación dinámica y acciones contextuales.
